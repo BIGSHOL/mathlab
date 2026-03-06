@@ -23,5 +23,5 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "data", "prisma/seed-questions.ts", "prisma/seed-concepts.ts", "prisma/seed-keywords-blanks.ts"]
+  "exclude": ["node_modules", "data", "prisma/seed-questions.ts", "prisma/seed-concepts.ts", "prisma/seed-keywords-blanks.ts", "src/mocks"]
 }
