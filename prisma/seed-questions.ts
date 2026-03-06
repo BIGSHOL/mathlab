@@ -36,7 +36,7 @@ const TYPE_MAP: Record<string, 'MULTIPLE_CHOICE' | 'SHORT_ANSWER' | 'ESSAY'> = {
 function sanitize(s: string | null | undefined): string | null {
   if (s == null) return null;
   // eslint-disable-next-line no-control-regex
-  return s.replace(/\x00/g, '').trim();
+  return s.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '').trim();
 }
 
 async function loadQuestions(filePath: string): Promise<RawQuestion[]> {
@@ -48,7 +48,6 @@ async function loadQuestions(filePath: string): Promise<RawQuestion[]> {
 async function main() {
   const jsonFiles = [
     path.join(__dirname, '..', 'data', 'questions.json'),
-    path.join(__dirname, '..', 'data', 'questions-elementary.json'),
   ];
 
   let questions: RawQuestion[] = [];

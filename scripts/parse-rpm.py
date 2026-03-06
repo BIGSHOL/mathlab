@@ -211,16 +211,31 @@ def fix_math(text):
         for i, p in enumerate(parts)
     )
 
-    # 곱셈: _ → × (수학 맥락에서, 공백 허용, LaTeX $...$ 뒤/앞 포함)
-    text = re.sub(
-        r'(?<=[\d²³⁴⁵⁶⁷⁸⁹a-zA-Z\)\$]) *_ *(?=[\d²³⁴⁵⁶⁷⁸⁹a-zA-Z\(\$])',
-        '×', text
-    )
-
     # ≤ 기호
     text = text.replace('\u00c9', '≤')
     # ≥ 기호
     text = text.replace('\u00be', '≥')
+
+    # PDF 폰트 PUA(Private Use Area) 문자 → 유니코드 변환 (곱셈 변환 전에 실행)
+    PUA_MAP = {
+        '\ue22d': '□',   # 빈칸 (□ 안에 알맞은 수)
+        '\ue284': '□',   # 빈칸 (자릿수 위치)
+        '\ue286': 'β',   # 이차함수 근 변수
+        '\ue287': '○',   # 정답 표시 (맞히면 ○)
+        '\ue289': 'α',   # 이차함수 근 변수 / 도형 변수
+        '\ue34c': '',    # 채점 마커 (제거)
+        '\ue47e': '∥',   # 평행 기호
+    }
+    for old, new in PUA_MAP.items():
+        text = text.replace(old, new)
+    # 나머지 PUA 문자 제거
+    text = re.sub(r'[\ue000-\uf8ff]', '', text)
+
+    # 곱셈: _ → × (수학 맥락에서, 공백 허용, LaTeX $...$ 뒤/앞 포함)
+    text = re.sub(
+        r'(?<=[\d²³⁴⁵⁶⁷⁸⁹a-zA-Z\)\$□α]) *_ *(?=[\d²³⁴⁵⁶⁷⁸⁹a-zA-Z\(\$□α])',
+        '×', text
+    )
 
     # 채점 마커 제거: ◀60%
     text = re.sub(r'◀\d+%', '', text)
@@ -456,39 +471,80 @@ def _latexify_math(text):
     # 독립 -/+ 를 뒤따르는 $...$ 에 흡수 (-$\frac{1}{2}$ → $-\frac{1}{2}$)
     text = re.sub(r'(?<![a-zA-Z0-9\$])-\$([^$]+)\$', r'$-\1$', text)
 
-    # Step 2: 기존 $...$ 보호
+    # Step 2: 기존 $...$ 보호 (PUA 문자로 치환, 정규식 매칭 방지)
+    # U+F800+ 사용 (PDF 폰트 PUA 영역 U+E000~E4FF 와 충돌 방지)
     _ph = {}
     def _protect(m):
-        key = f'\x00P{len(_ph)}\x00'
+        key = chr(0xF800 + len(_ph))
         _ph[key] = m.group(0)
         return key
     text = re.sub(r'\$[^$]+\$', _protect, text)
 
-    # Step 3: 연산자/거듭제곱 포함 수식을 $...$ 로 감싸기
+    # Step 2.5: 단위를 \mathrm{} 로만체 + \, 얇은 공백으로 분리
+    # 다중문자 단위 (항상 감지, 모호성 없음)
+    _UNITS_MULTI = ['mL', 'dL', 'kL', 'km', 'cm', 'mm', 'kg', 'mg']
+    # 단일문자 단위 (소문자 변수/숫자 뒤에만 감지)
+    _UNITS_SINGLE = ['L', 'g', 'm']
+
+    _multi_alt = '|'.join(re.escape(u) for u in
+                          sorted(_UNITS_MULTI, key=len, reverse=True))
+    _single_alt = '|'.join(re.escape(u) for u in _UNITS_SINGLE)
+
+    def _unit_to_roman(m):
+        unit = m.group(1)
+        key = chr(0xF800 + len(_ph))
+        _ph[key] = f'$\\,\\mathrm{{{unit}}}$'
+        return key
+
+    # 다중문자 단위 (모호성 없으므로 항상 치환)
+    text = re.sub(rf'({_multi_alt})', _unit_to_roman, text)
+    # 단일문자 단위 (소문자/숫자/공백/괄호닫기/플레이스홀더 뒤에만)
+    text = re.sub(
+        rf'(?<=[a-z0-9 )\uf800-\uf8ff])({_single_alt})(?![a-zA-Z])',
+        _unit_to_roman, text
+    )
+
+    # Step 3: 수식, 변수, 숫자를 $...$ 로 감싸기 (KaTeX 폰트 통일)
+    UNITS = {'cm', 'mm', 'km', 'kg', 'ml', 'kl', 'dl', 'mg'}
     def _do_wrap(m):
         expr = m.group(0)
         stripped = expr.strip()
-        if not stripped or len(stripped) < 2:
+        if not stripped:
             return expr
-        # 연산자/거듭제곱 필수
+        if not re.search(r'[a-zA-Z0-9]', stripped):
+            return expr
+
+        lead = len(expr) - len(expr.lstrip())
+        trail = len(expr) - len(expr.rstrip())
+        pre = expr[:lead] if lead else ''
+        suf = expr[len(expr) - trail:] if trail else ''
+
+        # 연산자/거듭제곱 포함 → 감싸기
         has_op = bool(re.search(r'[×÷=<>≤≥²³⁴⁵⁶⁷⁸⁹]', stripped))
         has_pm = bool(re.search(
             r'(?<=[a-zA-Z0-9)²³⁴⁵⁶⁷⁸⁹])\s*[+\-]\s*(?=[a-zA-Z0-9(])',
             stripped
         ))
-        if not (has_op or has_pm):
-            return expr
-        # 숫자/문자 최소 1개
-        if not re.search(r'[a-zA-Z0-9]', stripped):
-            return expr
-        # 순수 숫자/쉼표만이면 스킵
+        if has_op or has_pm:
+            if re.match(r'^[\d.,\s]+$', stripped):
+                return expr
+            latex = _to_latex(stripped)
+            return f'{pre}${latex}${suf}'
+
+        # 순수 숫자 → 감싸기
+        if re.match(r'^\d+$', stripped):
+            return f'{pre}${stripped}${suf}'
+        # 쉼표 포함 숫자 (3,000) → 스킵
         if re.match(r'^[\d.,\s]+$', stripped):
             return expr
-        lead = len(expr) - len(expr.lstrip())
-        trail = len(expr) - len(expr.rstrip())
+        # 단위 (cm, kg 등) → \mathrm{} 로만체
+        if stripped.lower() in UNITS:
+            return f'{pre}$\\mathrm{{{stripped}}}${suf}'
+        # 3자 이상 순수 영문 → 영단어, 스킵
+        if re.match(r'^[a-zA-Z]{3,}$', stripped):
+            return expr
+        # 나머지 (변수, 숫자+변수 등) → 감싸기
         latex = _to_latex(stripped)
-        pre = expr[:lead] if lead else ''
-        suf = expr[len(expr) - trail:] if trail else ''
         return f'{pre}${latex}${suf}'
 
     text = re.sub(
@@ -514,6 +570,18 @@ def _latexify_math(text):
             r'\$([^$]+)\$([×÷=+\-<>≤≥() .,]*)\$([^$]+)\$',
             _merge2, text, count=1
         )
+
+    # Step 6: 괄호 흡수 ($...$) → $...()$ 등)
+    text = re.sub(r'\$([^$]+)\$\)', r'$\1)$', text)
+    text = re.sub(r'\(\$([^$]+)\$', r'$(\1$', text)
+    # 이중 $ 정리
+    text = text.replace('$$', '')
+
+    # Step 7: \mathrm{} 앞뒤 얇은 공백 정리
+    # 표현식 맨 앞 불필요한 \, 제거: $\,\mathrm{...} → $\mathrm{...}
+    text = re.sub(r'\$\\,\\mathrm', r'$\\mathrm', text)
+    # 표현식 맨 뒤 불필요한 \, 제거 (있을 경우)
+    text = re.sub(r'\\,\$', '$', text)
 
     return text
 
@@ -868,6 +936,8 @@ def clean_explanation(text):
     text = '\n'.join(cleaned).strip()
     # 선택지 번호 앞 줄바꿈 추가 (①②③④⑤ 해설 구분)
     text = re.sub(r'\s*([②③④⑤])', r'\n\1', text)
+    # 괄호 번호 앞 줄바꿈 (⑴⑵⑶⑷⑸ 소문항)
+    text = re.sub(r'\s*([⑵⑶⑷⑸])', r'\n\1', text)
     # '따라서' 앞 줄바꿈 추가
     text = re.sub(r'\s+(따라서)', r'\n\1', text)
     return text.strip()
@@ -954,6 +1024,19 @@ def main():
         by_diff[q["difficulty"]] = by_diff.get(q["difficulty"], 0) + 1
     for d in ["MEDIUM", "HIGH", "HIGHEST"]:
         print(f"  {d}: {by_diff.get(d, 0)}")
+
+    # 후처리: 줄바꿈 + LaTeX 수식 통일
+    print("\nLaTeX 수식 변환 중...")
+    for q in all_questions:
+        # 소문항 줄바꿈 (⑵⑶⑷⑸) - _collapse_visual_fractions 이후 재적용
+        q["content"] = re.sub(r'\s*([⑵⑶⑷⑸])', r'\n\1', q["content"])
+        q["content"] = _latexify_math(q["content"])
+        if q.get("choices"):
+            q["choices"] = [_latexify_math(c) for c in q["choices"]]
+        if q.get("answer"):
+            q["answer"] = _latexify_math(q["answer"])
+        if q.get("explanation"):
+            q["explanation"] = _latexify_math(q["explanation"])
 
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
         json.dump(all_questions, f, ensure_ascii=False, indent=2)

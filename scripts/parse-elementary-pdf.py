@@ -111,10 +111,31 @@ def extract_choices(content):
     return None
 
 
+def decode_math_chars(text):
+    """PDF 수학 기호 제어문자를 실제 문자로 디코딩"""
+    # 큐브수학 PDF에서 숫자/연산기호가 제어문자로 인코딩됨
+    MATH_CHAR_MAP = {
+        '\x11': '0', '\x12': '1', '\x13': '2', '\x14': '3', '\x15': '4',
+        '\x16': '5', '\x17': '6', '\x18': '7', '\x19': '8', '\x1a': '9',
+        '\x0c': '+', '\x0e': '-', '\x1e': '=',
+        '\x1d': '<', '\x1f': '>',
+        '\x96': '÷',
+        '@': '×',
+        '\x03': '', '\x0f': '', '\x10': '',  # 서식 마커 제거
+        '\x1b': '', '\x1c': '',  # 구분자 제거
+    }
+    result = []
+    for ch in text:
+        result.append(MATH_CHAR_MAP.get(ch, ch))
+    return ''.join(result)
+
+
 def clean_text(text):
-    """제어문자 제거 및 텍스트 정리"""
-    # 제어문자 제거 (탭/개행 제외)
-    text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', text)
+    """제어문자 디코딩 및 텍스트 정리"""
+    # 먼저 수학 기호 디코딩 (제어문자 제거 전에!)
+    text = decode_math_chars(text)
+    # 나머지 제어문자 제거 (탭/개행 제외, 이미 디코딩된 것은 없음)
+    text = re.sub(r'[\x00-\x08\x0b\x7f]', '', text)
     # 페이지 하단 푸터 제거 (페이지번호 + 교재명)
     text = re.sub(r'\n\d{3}\n수학\s+\d[－-]\d\s*$', '', text, flags=re.MULTILINE)
     text = re.sub(r'\n\d{3}\s*$', '', text, flags=re.MULTILINE)
@@ -159,13 +180,8 @@ def is_valid_question(content):
     if any(kw in content[:80] for kw in junk_kw):
         return False
 
-    # @ 기호가 과도하게 많은 경우 (이미지 placeholder)
-    at_count = content.count('@')
-    if at_count >= 3 and at_count > len(content) / 20:
-        return False
-
-    # 내용이 대부분 @와 공백/줄바꿈
-    cleaned = re.sub(r'[@\s\n⑴⑵⑶]', '', content)
+    # 내용이 대부분 공백/줄바꿈/기호
+    cleaned = re.sub(r'[×÷+\-=\s\n⑴⑵⑶()\d]', '', content)
     if len(cleaned) < 8:
         return False
 
@@ -252,7 +268,7 @@ def parse_textbook(filepath, book_code, series):
 
     for page_num in range(4, len(doc)):
         page = doc[page_num]
-        text = page.get_text()
+        text = decode_math_chars(page.get_text())
         if not text or not text.strip():
             continue
 
@@ -290,7 +306,7 @@ def parse_answer_pdf(filepath, book_code):
 
     for page_num in range(len(doc)):
         page = doc[page_num]
-        text = page.get_text()
+        text = decode_math_chars(page.get_text())
         if not text:
             continue
 

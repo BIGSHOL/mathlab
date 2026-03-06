@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Search,
   Plus,
@@ -16,11 +16,14 @@ import {
   X,
   Save,
   Check,
+  FunctionSquare,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Pagination } from '@/components/ui/Pagination';
 import { MathRenderer } from '@/components/math/MathRenderer';
+import { MathLivePopup } from '@/components/math/MathLivePopup';
+import { EditableMathRenderer } from '@/components/math/EditableMathRenderer';
 import { DIFFICULTY_LABELS, TYPE_LABELS, BOOK_LABELS } from '@/types';
 import type { QuestionDifficulty, QuestionType } from '@/types';
 
@@ -111,8 +114,9 @@ export default function QuestionsPage() {
   const [bookCounts, setBookCounts] = useState<Record<string, number>>({});
   const [, setTotalCount] = useState(0);
 
-  // Edit state
-  const [editingQuestion, setEditingQuestion] = useState<QuestionItem | null>(null);
+  // View / Edit modal
+  const [selectedQuestion, setSelectedQuestion] = useState<QuestionItem | null>(null);
+  const [modalMode, setModalMode] = useState<'view' | 'edit'>('view');
   const [editForm, setEditForm] = useState({
     content: '',
     answer: '',
@@ -127,6 +131,82 @@ export default function QuestionsPage() {
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  // MathLive 수식 에디터
+  const [mathPopup, setMathPopup] = useState<{
+    open: boolean;
+    field: 'content' | 'answer' | 'explanation' | 'choice';
+    choiceIndex?: number;
+    initialLatex: string;
+    replaceRange?: { start: number; end: number };
+  }>({ open: false, field: 'content', initialLatex: '' });
+  const contentRef = useRef<HTMLTextAreaElement>(null);
+  const explanationRef = useRef<HTMLTextAreaElement>(null);
+  const answerRef = useRef<HTMLInputElement>(null);
+  const choiceRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const cursorPosRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
+
+  // "수식" 버튼 → 새 수식 삽입
+  const openMathPopup = (field: 'content' | 'answer' | 'explanation' | 'choice', choiceIndex?: number) => {
+    let el: HTMLTextAreaElement | HTMLInputElement | null = null;
+    if (field === 'content') el = contentRef.current;
+    else if (field === 'explanation') el = explanationRef.current;
+    else if (field === 'answer') el = answerRef.current;
+    else if (field === 'choice' && choiceIndex !== undefined) el = choiceRefs.current[choiceIndex];
+
+    let initialLatex = '';
+    if (el) {
+      const start = el.selectionStart ?? 0;
+      const end = el.selectionEnd ?? 0;
+      cursorPosRef.current = { start, end };
+      if (start !== end) {
+        const selected = el.value.substring(start, end);
+        const m = selected.match(/^\$([^$]+)\$$/);
+        initialLatex = m ? m[1] : selected;
+      }
+    }
+    setMathPopup({ open: true, field, choiceIndex, initialLatex });
+  };
+
+  // 미리보기에서 수식 클릭 → 기존 수식 편집
+  const openMathEdit = (
+    field: 'content' | 'answer' | 'explanation' | 'choice',
+    latex: string,
+    start: number,
+    end: number,
+    choiceIndex?: number,
+  ) => {
+    setMathPopup({
+      open: true,
+      field,
+      choiceIndex,
+      initialLatex: latex,
+      replaceRange: { start, end },
+    });
+  };
+
+  const handleMathInsert = useCallback((latex: string) => {
+    const wrapped = `$${latex}$`;
+    const { field, choiceIndex, replaceRange } = mathPopup;
+    const { start, end } = replaceRange ?? cursorPosRef.current;
+
+    const splice = (text: string) =>
+      text.substring(0, start) + wrapped + text.substring(end);
+
+    if (field === 'content') {
+      setEditForm((p) => ({ ...p, content: splice(p.content) }));
+    } else if (field === 'explanation') {
+      setEditForm((p) => ({ ...p, explanation: splice(p.explanation) }));
+    } else if (field === 'answer') {
+      setEditForm((p) => ({ ...p, answer: splice(p.answer) }));
+    } else if (field === 'choice' && choiceIndex !== undefined) {
+      setEditForm((p) => {
+        const choices = [...p.choices];
+        choices[choiceIndex] = splice(choices[choiceIndex] || '');
+        return { ...p, choices };
+      });
+    }
+  }, [mathPopup]);
 
   // Fetch book counts (once on mount)
   useEffect(() => {
@@ -197,11 +277,14 @@ export default function QuestionsPage() {
     fetchQuestions();
   }, [fetchQuestions]);
 
-  // Edit handlers
-  const startEditing = (q: QuestionItem) => {
-    setEditingQuestion(q);
+  // View / Edit handlers
+  const openQuestion = (q: QuestionItem) => {
+    setSelectedQuestion(q);
+    setModalMode('view');
+  };
+
+  const populateEditForm = (q: QuestionItem) => {
     const existingChoices = q.choices ? [...(q.choices as string[])] : [];
-    // Ensure exactly 5 choices for MULTIPLE_CHOICE
     while (existingChoices.length < 5) existingChoices.push('');
     setEditForm({
       content: q.content,
@@ -214,16 +297,25 @@ export default function QuestionsPage() {
       section: q.section || '',
       sourceTag: q.sourceTag || '',
     });
+  };
+
+  const startEditing = (q?: QuestionItem) => {
+    const target = q || selectedQuestion;
+    if (!target) return;
+    setSelectedQuestion(target);
+    setModalMode('edit');
+    populateEditForm(target);
     setSaveSuccess(false);
   };
 
-  const cancelEditing = () => {
-    setEditingQuestion(null);
+  const closeModal = () => {
+    setSelectedQuestion(null);
+    setModalMode('view');
     setSaveSuccess(false);
   };
 
   const saveQuestion = async () => {
-    if (!editingQuestion) return;
+    if (!selectedQuestion) return;
     setSaving(true);
     try {
       const body: Record<string, unknown> = {
@@ -242,7 +334,7 @@ export default function QuestionsPage() {
         body.choices = null;
       }
 
-      const res = await fetch(`/api/questions/${editingQuestion.id}`, {
+      const res = await fetch(`/api/questions/${selectedQuestion.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -250,8 +342,21 @@ export default function QuestionsPage() {
 
       if (res.ok) {
         setSaveSuccess(true);
+        const updatedQ: QuestionItem = {
+          ...selectedQuestion,
+          content: editForm.content,
+          answer: editForm.answer,
+          explanation: editForm.explanation || null,
+          difficulty: editForm.difficulty,
+          type: editForm.type,
+          choices: editForm.type === 'MULTIPLE_CHOICE' ? editForm.choices : null,
+          chapter: editForm.chapter,
+          section: editForm.section || null,
+          sourceTag: editForm.sourceTag || null,
+        };
         setTimeout(() => {
-          setEditingQuestion(null);
+          setSelectedQuestion(updatedQ);
+          setModalMode('view');
           setSaveSuccess(false);
           fetchQuestions();
         }, 800);
@@ -268,6 +373,7 @@ export default function QuestionsPage() {
       const res = await fetch(`/api/questions/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setDeleteConfirm(null);
+        if (selectedQuestion?.id === id) closeModal();
         fetchQuestions();
       }
     } catch {
@@ -494,7 +600,8 @@ export default function QuestionsPage() {
                 questions.map((q) => (
                   <Card
                     key={q.id}
-                    className="p-5 flex flex-col gap-4 hover:shadow-hover transition-shadow"
+                    className="p-5 flex flex-col gap-4 hover:shadow-hover transition-shadow cursor-pointer"
+                    onClick={() => openQuestion(q)}
                   >
                     <div className="flex justify-between items-start gap-4">
                       <div className="flex gap-2 flex-wrap">
@@ -519,14 +626,14 @@ export default function QuestionsPage() {
                       </div>
                       <div className="flex gap-1 text-text-secondary">
                         <button
-                          onClick={() => startEditing(q)}
+                          onClick={(e) => { e.stopPropagation(); startEditing(q); }}
                           className="p-1 hover:text-primary transition-colors rounded hover:bg-slate-100"
                           title="수정"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         {deleteConfirm === q.id ? (
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                             <button
                               onClick={() => deleteQuestion(q.id)}
                               className="p-1 text-red-500 hover:bg-red-50 rounded text-xs font-bold"
@@ -542,7 +649,7 @@ export default function QuestionsPage() {
                           </div>
                         ) : (
                           <button
-                            onClick={() => setDeleteConfirm(q.id)}
+                            onClick={(e) => { e.stopPropagation(); setDeleteConfirm(q.id); }}
                             className="p-1 hover:text-red-500 transition-colors rounded hover:bg-red-50"
                             title="삭제"
                           >
@@ -569,9 +676,10 @@ export default function QuestionsPage() {
                         정답: <MathRenderer content={q.answer} className="inline" />
                       </div>
                       <button
-                        onClick={() =>
-                          setExpandedExplanation(expandedExplanation === q.id ? null : q.id)
-                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExpandedExplanation(expandedExplanation === q.id ? null : q.id);
+                        }}
                         className="text-xs font-bold text-primary hover:underline"
                       >
                         {expandedExplanation === q.id ? '해설 닫기' : '해설 보기'}
@@ -610,176 +718,385 @@ export default function QuestionsPage() {
         )}
       </section>
 
-      {/* Edit Modal */}
-      {editingQuestion && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 rounded-t-2xl flex items-center justify-between">
+      {/* View / Edit Modal */}
+      {selectedQuestion && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={closeModal}>
+          <div
+            className={`bg-white rounded-2xl shadow-2xl w-full max-h-[90vh] flex flex-col overflow-hidden transition-all ${
+              modalMode === 'edit' ? 'max-w-6xl' : 'max-w-2xl'
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="shrink-0 border-b border-slate-200 px-6 py-4 flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-bold">문제 수정</h2>
+                <h2 className="text-lg font-bold">
+                  {modalMode === 'view' ? '문제 조회' : '문제 수정'}
+                </h2>
                 <p className="text-xs text-text-secondary mt-0.5">
-                  {BOOK_LABELS[editingQuestion.bookCode] || editingQuestion.bookCode} · #{editingQuestion.questionNum}
+                  {BOOK_LABELS[selectedQuestion.bookCode] || selectedQuestion.bookCode} · #{selectedQuestion.questionNum}
                 </p>
               </div>
-              <button onClick={cancelEditing} className="p-2 hover:bg-slate-100 rounded-lg">
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                {modalMode === 'view' && (
+                  <Button variant="secondary" size="sm" onClick={() => startEditing()}>
+                    <Edit className="w-4 h-4 mr-1.5" />
+                    수정
+                  </Button>
+                )}
+                <button onClick={closeModal} className="p-2 hover:bg-slate-100 rounded-lg">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
-            <div className="px-6 py-5 flex flex-col gap-5">
-              {/* 단원 */}
-              <div>
-                <label className="block text-sm font-bold mb-1.5">단원</label>
-                <input
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                  value={editForm.chapter}
-                  onChange={(e) => setEditForm((p) => ({ ...p, chapter: e.target.value }))}
-                />
-              </div>
-
-              {/* 소단원 */}
-              <div>
-                <label className="block text-sm font-bold mb-1.5">소단원 <span className="text-text-secondary font-normal">(선택)</span></label>
-                <input
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                  value={editForm.section}
-                  onChange={(e) => setEditForm((p) => ({ ...p, section: e.target.value }))}
-                  placeholder="소단원을 입력하세요"
-                />
-              </div>
-
-              {/* 난이도 / 유형 */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-bold mb-1.5">난이도</label>
-                  <select
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                    value={editForm.difficulty}
-                    onChange={(e) =>
-                      setEditForm((p) => ({ ...p, difficulty: e.target.value as QuestionDifficulty }))
-                    }
-                  >
-                    <option value="BASIC">하</option>
-                    <option value="MEDIUM">중</option>
-                    <option value="HIGH">상</option>
-                    <option value="HIGHEST">최상</option>
-                  </select>
+            {modalMode === 'view' ? (
+              /* ── View Mode ── */
+              <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5 min-h-0">
+                {/* Badges */}
+                <div className="flex gap-2 flex-wrap">
+                  <span className="px-2.5 py-1 bg-primary/10 text-primary text-xs font-bold rounded">
+                    {BOOK_LABELS[selectedQuestion.bookCode] || selectedQuestion.bookCode}
+                  </span>
+                  <span className={`px-2.5 py-1 text-xs font-bold rounded ${getTopicBadgeColor(selectedQuestion.chapter)}`}>
+                    {selectedQuestion.chapter}
+                  </span>
+                  {selectedQuestion.section && (
+                    <span className="px-2.5 py-1 border border-slate-200 text-text-secondary text-xs font-bold rounded">
+                      {selectedQuestion.section}
+                    </span>
+                  )}
+                  <span className={`px-2.5 py-1 text-xs font-bold rounded ${getDifficultyBadgeColor(DIFFICULTY_LABELS[selectedQuestion.difficulty])}`}>
+                    {DIFFICULTY_LABELS[selectedQuestion.difficulty]}
+                  </span>
+                  <span className="px-2.5 py-1 border border-slate-200 text-text-secondary text-xs font-bold rounded">
+                    {TYPE_LABELS[selectedQuestion.type]}
+                  </span>
                 </div>
-                <div>
-                  <label className="block text-sm font-bold mb-1.5">유형</label>
-                  <select
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                    value={editForm.type}
-                    onChange={(e) => {
-                      const newType = e.target.value as QuestionType;
-                      setEditForm((p) => {
-                        const updated = { ...p, type: newType };
-                        if (newType === 'MULTIPLE_CHOICE' && updated.choices.length < 5) {
-                          const padded = [...updated.choices];
-                          while (padded.length < 5) padded.push('');
-                          updated.choices = padded;
-                        }
-                        return updated;
-                      });
-                    }}
-                  >
-                    <option value="MULTIPLE_CHOICE">객관식</option>
-                    <option value="SHORT_ANSWER">단답형</option>
-                    <option value="ESSAY">서술형</option>
-                  </select>
+
+                {/* Content */}
+                <div className="text-sm">
+                  <MathRenderer content={selectedQuestion.content} />
                 </div>
-              </div>
 
-              {/* 문제 내용 */}
-              <div>
-                <label className="block text-sm font-bold mb-1.5">문제 내용</label>
-                <textarea
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary min-h-[120px] resize-y"
-                  value={editForm.content}
-                  onChange={(e) => setEditForm((p) => ({ ...p, content: e.target.value }))}
-                />
-                {editForm.content && (
-                  <div className="mt-2 p-3 bg-slate-50 rounded-lg border border-slate-100 text-sm">
-                    <p className="text-xs text-text-secondary mb-1 font-bold">미리보기</p>
-                    <MathRenderer content={editForm.content} />
-                  </div>
-                )}
-              </div>
-
-              {/* 선택지 (객관식) */}
-              {editForm.type === 'MULTIPLE_CHOICE' && (
-                <div>
-                  <label className="block text-sm font-bold mb-1.5">선택지</label>
-                  <div className="flex flex-col gap-2">
-                    {editForm.choices.map((c, i) => (
-                      <input
-                        key={i}
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                        value={c}
-                        onChange={(e) => updateChoice(i, e.target.value)}
-                        placeholder={`선택지 ${i + 1}`}
-                      />
+                {/* Choices */}
+                {selectedQuestion.choices && Array.isArray(selectedQuestion.choices) && (
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    {(selectedQuestion.choices as string[]).map((c, i) => (
+                      <div key={i} className="px-3 py-2 bg-slate-50 rounded-lg border border-slate-100">
+                        <MathRenderer content={c} />
+                      </div>
                     ))}
                   </div>
+                )}
+
+                {/* Answer */}
+                <div className="border-t border-slate-200 pt-4">
+                  <h3 className="text-sm font-bold mb-2 flex items-center gap-1.5">
+                    <KeyRound className="w-4 h-4 text-primary" />
+                    정답
+                  </h3>
+                  <div className="px-3 py-2 bg-primary/5 rounded-lg text-sm">
+                    <MathRenderer content={selectedQuestion.answer} />
+                  </div>
                 </div>
-              )}
 
-              {/* 정답 */}
-              <div>
-                <label className="block text-sm font-bold mb-1.5">정답</label>
-                <textarea
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary min-h-[60px] resize-y"
-                  value={editForm.answer}
-                  onChange={(e) => setEditForm((p) => ({ ...p, answer: e.target.value }))}
-                />
-              </div>
+                {/* Explanation */}
+                <div className="border-t border-slate-200 pt-4">
+                  <h3 className="text-sm font-bold mb-2">해설</h3>
+                  {selectedQuestion.explanation ? (
+                    <div className="px-3 py-2 bg-slate-50 rounded-lg border border-slate-100 text-sm">
+                      <MathRenderer content={selectedQuestion.explanation} />
+                    </div>
+                  ) : (
+                    <p className="text-sm text-text-secondary italic">해설이 등록되지 않았습니다.</p>
+                  )}
+                </div>
 
-              {/* 해설 */}
-              <div>
-                <label className="block text-sm font-bold mb-1.5">해설 <span className="text-text-secondary font-normal">(선택)</span></label>
-                <textarea
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary min-h-[80px] resize-y"
-                  value={editForm.explanation}
-                  onChange={(e) => setEditForm((p) => ({ ...p, explanation: e.target.value }))}
-                  placeholder="해설을 입력하세요"
-                />
+                {/* Source Tag */}
+                {selectedQuestion.sourceTag && (
+                  <div className="text-xs text-text-secondary pt-2 border-t border-slate-100">
+                    출처: {selectedQuestion.sourceTag}
+                  </div>
+                )}
               </div>
+            ) : (
+              /* ── Edit Mode ── */
+              <div className="flex-1 flex divide-x divide-slate-200 min-h-0">
+                {/* Left: Editors */}
+                <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-text-secondary mb-1">단원</label>
+                      <input
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                        value={editForm.chapter}
+                        onChange={(e) => setEditForm((p) => ({ ...p, chapter: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-text-secondary mb-1">소단원</label>
+                      <input
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                        value={editForm.section}
+                        onChange={(e) => setEditForm((p) => ({ ...p, section: e.target.value }))}
+                        placeholder="소단원"
+                      />
+                    </div>
+                  </div>
 
-              {/* 출처 태그 */}
-              <div>
-                <label className="block text-sm font-bold mb-1.5">출처 태그 <span className="text-text-secondary font-normal">(선택)</span></label>
-                <input
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                  value={editForm.sourceTag}
-                  onChange={(e) => setEditForm((p) => ({ ...p, sourceTag: e.target.value }))}
-                  placeholder="출처 태그를 입력하세요"
-                />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-text-secondary mb-1">난이도</label>
+                      <select
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                        value={editForm.difficulty}
+                        onChange={(e) =>
+                          setEditForm((p) => ({ ...p, difficulty: e.target.value as QuestionDifficulty }))
+                        }
+                      >
+                        <option value="BASIC">하</option>
+                        <option value="MEDIUM">중</option>
+                        <option value="HIGH">상</option>
+                        <option value="HIGHEST">최상</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-text-secondary mb-1">유형</label>
+                      <select
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                        value={editForm.type}
+                        onChange={(e) => {
+                          const newType = e.target.value as QuestionType;
+                          setEditForm((p) => {
+                            const updated = { ...p, type: newType };
+                            if (newType === 'MULTIPLE_CHOICE' && updated.choices.length < 5) {
+                              const padded = [...updated.choices];
+                              while (padded.length < 5) padded.push('');
+                              updated.choices = padded;
+                            }
+                            return updated;
+                          });
+                        }}
+                      >
+                        <option value="MULTIPLE_CHOICE">객관식</option>
+                        <option value="SHORT_ANSWER">단답형</option>
+                        <option value="ESSAY">서술형</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-bold text-text-secondary">문제 내용</label>
+                      <button
+                        type="button"
+                        onClick={() => openMathPopup('content')}
+                        className="flex items-center gap-1 px-2 py-0.5 text-xs text-primary hover:bg-primary/10 rounded transition-colors"
+                        title="수식 삽입"
+                      >
+                        <FunctionSquare className="w-3.5 h-3.5" />
+                        수식
+                      </button>
+                    </div>
+                    <textarea
+                      ref={contentRef}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary min-h-[100px] resize-y"
+                      value={editForm.content}
+                      onChange={(e) => setEditForm((p) => ({ ...p, content: e.target.value }))}
+                    />
+                  </div>
+
+                  {editForm.type === 'MULTIPLE_CHOICE' && (
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-bold text-text-secondary">선택지</label>
+                        <button
+                          type="button"
+                          onClick={() => openMathPopup('choice', 0)}
+                          className="flex items-center gap-1 px-2 py-0.5 text-xs text-primary hover:bg-primary/10 rounded transition-colors"
+                          title="수식 삽입"
+                        >
+                          <FunctionSquare className="w-3.5 h-3.5" />
+                          수식
+                        </button>
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        {editForm.choices.map((c, i) => (
+                          <div key={i} className="flex gap-1">
+                            <input
+                              ref={(el) => { choiceRefs.current[i] = el; }}
+                              className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                              value={c}
+                              onChange={(e) => updateChoice(i, e.target.value)}
+                              placeholder={`선택지 ${i + 1}`}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => openMathPopup('choice', i)}
+                              className="px-1.5 text-slate-400 hover:text-primary transition-colors shrink-0"
+                              title="수식 삽입"
+                            >
+                              <FunctionSquare className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-bold text-text-secondary">정답</label>
+                      <button
+                        type="button"
+                        onClick={() => openMathPopup('answer')}
+                        className="flex items-center gap-1 px-2 py-0.5 text-xs text-primary hover:bg-primary/10 rounded transition-colors"
+                        title="수식 삽입"
+                      >
+                        <FunctionSquare className="w-3.5 h-3.5" />
+                        수식
+                      </button>
+                    </div>
+                    <input
+                      ref={answerRef}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                      value={editForm.answer}
+                      onChange={(e) => setEditForm((p) => ({ ...p, answer: e.target.value }))}
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-bold text-text-secondary">해설</label>
+                      <button
+                        type="button"
+                        onClick={() => openMathPopup('explanation')}
+                        className="flex items-center gap-1 px-2 py-0.5 text-xs text-primary hover:bg-primary/10 rounded transition-colors"
+                        title="수식 삽입"
+                      >
+                        <FunctionSquare className="w-3.5 h-3.5" />
+                        수식
+                      </button>
+                    </div>
+                    <textarea
+                      ref={explanationRef}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary min-h-[80px] resize-y"
+                      value={editForm.explanation}
+                      onChange={(e) => setEditForm((p) => ({ ...p, explanation: e.target.value }))}
+                      placeholder="해설을 입력하세요"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-text-secondary mb-1">출처 태그</label>
+                    <input
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                      value={editForm.sourceTag}
+                      onChange={(e) => setEditForm((p) => ({ ...p, sourceTag: e.target.value }))}
+                      placeholder="출처"
+                    />
+                  </div>
+                </div>
+
+                {/* Right: Live Preview (수식 클릭 → 편집) */}
+                <div className="flex-1 overflow-y-auto px-6 py-5 bg-slate-50/50">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">미리보기</h3>
+                    <span className="text-[10px] text-slate-400">수식을 클릭하면 편집할 수 있습니다</span>
+                  </div>
+
+                  <div className="text-sm">
+                    <EditableMathRenderer
+                      content={editForm.content}
+                      onMathClick={(latex, start, end) => openMathEdit('content', latex, start, end)}
+                    />
+                  </div>
+
+                  {editForm.type === 'MULTIPLE_CHOICE' && editForm.choices.some((c) => c) && (
+                    <div className="grid grid-cols-2 gap-2 mt-4 text-sm">
+                      {editForm.choices.map((c, i) =>
+                        c ? (
+                          <div key={i} className="px-3 py-2 bg-white rounded-lg border border-slate-200">
+                            <EditableMathRenderer
+                              content={c}
+                              onMathClick={(latex, start, end) => openMathEdit('choice', latex, start, end, i)}
+                            />
+                          </div>
+                        ) : null
+                      )}
+                    </div>
+                  )}
+
+                  {editForm.answer && (
+                    <div className="border-t border-slate-200 pt-3 mt-4">
+                      <h4 className="text-xs font-bold text-text-secondary mb-1.5 flex items-center gap-1">
+                        <KeyRound className="w-3.5 h-3.5" />
+                        정답
+                      </h4>
+                      <div className="px-3 py-2 bg-primary/5 rounded-lg text-sm">
+                        <EditableMathRenderer
+                          content={editForm.answer}
+                          onMathClick={(latex, start, end) => openMathEdit('answer', latex, start, end)}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {editForm.explanation && (
+                    <div className="border-t border-slate-200 pt-3 mt-4">
+                      <h4 className="text-xs font-bold text-text-secondary mb-1.5">해설</h4>
+                      <div className="px-3 py-2 bg-white rounded-lg border border-slate-100 text-sm">
+                        <EditableMathRenderer
+                          content={editForm.explanation}
+                          onMathClick={(latex, start, end) => openMathEdit('explanation', latex, start, end)}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Footer */}
-            <div className="sticky bottom-0 bg-white border-t border-slate-200 px-6 py-4 rounded-b-2xl flex justify-end gap-3">
-              <Button variant="secondary" size="sm" onClick={cancelEditing}>
-                취소
-              </Button>
-              <Button
-                size="sm"
-                onClick={saveQuestion}
-                disabled={saving || !editForm.content || !editForm.answer}
-              >
-                {saving ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : saveSuccess ? (
-                  <Check className="w-4 h-4 mr-2" />
-                ) : (
-                  <Save className="w-4 h-4 mr-2" />
-                )}
-                {saving ? '저장 중...' : saveSuccess ? '저장됨' : '저장'}
-              </Button>
+            <div className="shrink-0 border-t border-slate-200 px-6 py-4 flex justify-end gap-3">
+              {modalMode === 'view' ? (
+                <Button variant="secondary" size="sm" onClick={closeModal}>
+                  닫기
+                </Button>
+              ) : (
+                <>
+                  <Button variant="secondary" size="sm" onClick={() => setModalMode('view')}>
+                    취소
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={saveQuestion}
+                    disabled={saving || !editForm.content || !editForm.answer}
+                  >
+                    {saving ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : saveSuccess ? (
+                      <Check className="w-4 h-4 mr-2" />
+                    ) : (
+                      <Save className="w-4 h-4 mr-2" />
+                    )}
+                    {saving ? '저장 중...' : saveSuccess ? '저장됨' : '저장'}
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
       )}
+
+      {/* MathLive 수식 편집 팝업 */}
+      <MathLivePopup
+        isOpen={mathPopup.open}
+        onClose={() => setMathPopup((p) => ({ ...p, open: false }))}
+        onInsert={handleMathInsert}
+        initialLatex={mathPopup.initialLatex}
+      />
     </div>
   );
 }
