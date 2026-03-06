@@ -1,0 +1,234 @@
+// MathLab Database Schema
+// Based on docs/planning/04-database-design.md
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// FEAT-0: User Management
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  username      String    @unique @db.VarChar(50)
+  passwordHash  String    @db.VarChar(255)
+  name          String    @db.VarChar(50)
+  role          Role      @default(STUDENT)
+  grade         Int?
+  profileImage  String?   @db.VarChar(500)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  sessions       Session[]
+  profile        StudentProfile?
+  progress       LearningProgress[]
+  transactions   PointTransaction[]
+
+  @@index([role])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  sessionToken String   @unique
+  expires      DateTime
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// FEAT-1: Subject & Concept
+model Subject {
+  id          String   @id @default(cuid())
+  title       String   @db.VarChar(200)
+  description String?  @db.Text
+  gradeLevel  Int
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  concepts Concept[]
+
+  @@index([gradeLevel])
+  @@index([sortOrder])
+}
+
+model Concept {
+  id           String   @id @default(cuid())
+  subjectId    String
+  title        String   @db.VarChar(200)
+  fullContent  String   @db.Text
+  visualAssets Json?
+  sortOrder    Int      @default(0)
+  conceptCode  String?  @unique @db.VarChar(20)
+  grade        String?  @db.VarChar(20)
+  category     String?  @db.VarChar(20)
+  part         String?  @db.VarChar(20)
+  keywords     String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  subject          Subject              @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  blanks           BlankExercise[]
+  progress         LearningProgress[]
+  prerequisiteFor  ConceptPrerequisite[] @relation("PrerequisiteFor")
+  prerequisites    ConceptPrerequisite[] @relation("HasPrerequisite")
+
+  @@index([subjectId])
+  @@index([subjectId, sortOrder])
+  @@index([conceptCode])
+}
+
+model BlankExercise {
+  id           String   @id @default(cuid())
+  conceptId    String
+  level        Int      // 1=easy, 2=hard
+  blanks       Json     // [{position, answer, hint}]
+  templateText String   @db.Text
+  createdAt    DateTime @default(now())
+
+  concept Concept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+
+  @@index([conceptId, level])
+}
+
+// FEAT-1: Learning Progress
+enum Stage {
+  READING
+  BLANK_EASY
+  BLANK_HARD
+  BLANK_PAGE
+}
+
+model LearningProgress {
+  id          String    @id @default(cuid())
+  userId      String
+  conceptId   String
+  stage       Stage
+  completed   Boolean   @default(false)
+  attempts    Int       @default(0)
+  score       Int?
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  updatedAt   DateTime  @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  concept Concept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, conceptId, stage])
+  @@index([userId, conceptId])
+  @@index([userId, stage])
+  @@index([userId, completed])
+}
+
+// FEAT-1: Gamification
+enum PointTransactionType {
+  EARN
+  SPEND
+}
+
+model PointTransaction {
+  id          String               @id @default(cuid())
+  userId      String
+  amount      Int
+  type        PointTransactionType
+  reason      String               @db.VarChar(50)
+  referenceId String?
+  createdAt   DateTime             @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model StudentProfile {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  totalXp        Int       @default(0)
+  level          Int       @default(1)
+  currentStreak  Int       @default(0)
+  longestStreak  Int       @default(0)
+  lastActiveAt   DateTime?
+  updatedAt      DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([totalXp(sort: Desc), level(sort: Desc)])
+}
+
+// FEAT-2: Question Bank
+enum QuestionDifficulty {
+  BASIC   // 하
+  MEDIUM  // 중
+  HIGH    // 상
+  HIGHEST // 최상
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE // 객관식
+  SHORT_ANSWER    // 단답형
+  ESSAY           // 서술형
+}
+
+model Question {
+  id          String             @id @default(cuid())
+  bookCode    String             @db.VarChar(10)   // "1-1" ~ "3-2"
+  chapter     String             @db.VarChar(200)  // 대단원
+  section     String?            @db.VarChar(200)  // 중단원/코너
+  questionNum Int                                  // 문제 번호
+  pageNum     Int?                                 // PDF 페이지
+
+  difficulty  QuestionDifficulty
+  type        QuestionType
+  content     String             @db.Text
+  choices     Json?                                // ["①...", "②...", ...]
+  answer      String             @db.Text
+  explanation String?            @db.Text
+  sourceTag   String?            @db.VarChar(100)  // "핵심문제 익히기" 등
+
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([bookCode])
+  @@index([bookCode, chapter])
+  @@index([difficulty])
+  @@index([type])
+}
+
+// Concept Prerequisites (self-referencing many-to-many)
+model ConceptPrerequisite {
+  id              String  @id @default(cuid())
+  conceptId       String
+  prerequisiteId  String
+
+  concept       Concept @relation("HasPrerequisite", fields: [conceptId], references: [id], onDelete: Cascade)
+  prerequisite  Concept @relation("PrerequisiteFor", fields: [prerequisiteId], references: [id], onDelete: Cascade)
+
+  @@unique([conceptId, prerequisiteId])
+  @@index([conceptId])
+  @@index([prerequisiteId])
+}
+
+// School Information
+model School {
+  id          String   @id @default(cuid())
+  name        String   @unique @db.VarChar(100)
+  city        String   @db.VarChar(50)
+  district    String   @db.VarChar(50)
+  schoolType  String   @db.VarChar(20)
+  createdAt   DateTime @default(now())
+
+  @@index([city, district])
+  @@index([schoolType])
+}

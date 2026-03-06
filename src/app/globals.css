@@ -1,0 +1,222 @@
+@import 'tailwindcss';
+
+/* ============================================
+   MathLab Design Tokens
+   Unified from 6 HTML mockups + Design System
+   ============================================ */
+
+@theme {
+  /* Primary Colors */
+  --color-primary: #135bec;
+  --color-primary-hover: #0e4bcc;
+  --color-primary-light: #DDD6FE;
+  --color-secondary: #F97316;
+  --color-accent: #0052FF;
+
+  /* Stage Colors */
+  --color-stage-reading: #3B82F6;
+  --color-stage-blank-easy: #10B981;
+  --color-stage-blank-hard: #F97316;
+  --color-stage-blank-page: #7C3AED;
+
+  /* Feedback Colors */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-info: #3B82F6;
+  --color-xp-gold: #EAB308;
+
+  /* Surface Colors */
+  --color-surface: #F8FAFC;
+  --color-background: #f6f6f8;
+  --color-text-primary: #1E293B;
+  --color-text-secondary: #64748B;
+
+  /* Shadows */
+  --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  --shadow-hover: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+
+  /* Border Radius */
+  --radius-card: 12px;
+  --radius-button: 12px;
+  --radius-input: 8px;
+
+  /* Font Families */
+  --font-display: 'Lexend', 'Pretendard', system-ui, sans-serif;
+  --font-mono: 'Roboto Mono', monospace;
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
+
+body {
+  font-family: var(--font-display);
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
+  font-size: 15px;
+  line-height: 1.8;
+  word-spacing: 0.5px;
+}
+
+/* ============================================
+   Special CSS Patterns (from HTML mockups)
+   ============================================ */
+
+/* admin-dashboard.html: Glass Card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* problem-solving.html: Math Grid Background */
+.math-grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* problem-solving.html: Memo Lines */
+.memo-lines {
+  background-image: linear-gradient(transparent, transparent 27px, rgba(0, 0, 0, 0.05) 28px);
+  background-size: 100% 28px;
+  line-height: 28px;
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+
+@keyframes bounce-in {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.05); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+@keyframes slide-down {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.5s ease-out;
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-out;
+}
+
+.animate-slide-down {
+  animation: slide-down 0.3s ease-out;
+}
+
+/* ============================================
+   Math Rendering
+   ============================================ */
+
+/* Math italic serif font for variables and expressions */
+.math {
+  font-family: 'Times New Roman', 'Latin Modern Math', 'STIX Two Math', 'Cambria Math', Georgia, serif;
+  font-style: italic;
+  letter-spacing: 0.02em;
+}
+
+/* Non-italic for operators, functions, numbers */
+.math-op {
+  font-family: 'Times New Roman', 'Latin Modern Math', 'STIX Two Math', 'Cambria Math', Georgia, serif;
+  font-style: normal;
+}
+
+/* Integral / Sigma with limits */
+.math-bigop {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  vertical-align: middle;
+  line-height: 1;
+  margin: 0 2px;
+}
+.math-bigop-symbol {
+  font-family: 'Times New Roman', 'Latin Modern Math', Georgia, serif;
+  font-style: normal;
+  font-size: 2.2em;
+  line-height: 0.9;
+}
+.math-bigop-upper,
+.math-bigop-lower {
+  font-family: 'Times New Roman', Georgia, serif;
+  font-style: italic;
+  font-size: 0.55em;
+  line-height: 1;
+}
+
+/* Fraction */
+.math-frac {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  vertical-align: middle;
+  line-height: 1;
+  margin: 0 3px;
+}
+.math-frac-num,
+.math-frac-den {
+  font-family: 'Times New Roman', Georgia, serif;
+  font-style: italic;
+  padding: 0 4px;
+  text-align: center;
+}
+.math-frac-num {
+  border-bottom: 1.5px solid currentColor;
+  padding-bottom: 2px;
+  margin-bottom: 2px;
+}
+.math-frac-den {
+  padding-top: 1px;
+}
+
+/* Superscript / subscript in math */
+.math sup {
+  font-size: 0.65em;
+  vertical-align: super;
+  line-height: 0;
+}
+.math sub {
+  font-size: 0.65em;
+  vertical-align: sub;
+  line-height: 0;
+}
+
+/* Limit notation */
+.math-lim {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  vertical-align: middle;
+  margin: 0 4px;
+}
+.math-lim-label {
+  font-family: 'Times New Roman', Georgia, serif;
+  font-style: normal;
+  font-size: 1em;
+}
+.math-lim-sub {
+  font-family: 'Times New Roman', Georgia, serif;
+  font-style: italic;
+  font-size: 0.6em;
+  line-height: 1;
+}

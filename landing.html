@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html class="dark" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MathLogic Lab 랜딩 페이지</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0052cc",
+                        "background-light": "#ffffff",
+                        "background-dark": "#0a192f",
+                    },
+                    fontFamily: {
+                        "display": ["'Noto Sans KR'", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col selection:bg-primary/30">
+<div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#f0f2f4] px-10 py-3 bg-white">
+<div class="flex items-center gap-4 text-[#111418]">
+<div class="size-6">
+<svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M24 4C25.7818 14.2173 33.7827 22.2182 44 24C33.7827 25.7818 25.7818 33.7827 24 44C22.2182 33.7827 14.2173 25.7818 4 24C14.2173 22.2182 22.2182 14.2173 24 4Z" fill="currentColor"></path>
+</svg>
+</div>
+<h2 class="text-[#111418] text-lg font-bold leading-tight tracking-[-0.015em]">MathLogic Lab</h2>
+</div>
+<div class="flex flex-1 justify-end gap-8">
+<div class="flex items-center gap-9">
+<a class="text-[#111418] text-sm font-medium leading-normal" href="#">홈</a>
+<a class="text-[#111418] text-sm font-medium leading-normal" href="#">기능 소개</a>
+<a class="text-[#111418] text-sm font-medium leading-normal" href="#">이용 안내</a>
+<a class="text-[#111418] text-sm font-medium leading-normal" href="#">문의하기</a>
+</div>
+<div class="flex gap-2">
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-[#f0f2f4] text-[#111418] text-sm font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">로그인</span>
+</button>
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-[#0052cc] text-white text-sm font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">시작하기</span>
+</button>
+</div>
+</div>
+</header>
+<main class="flex-1 w-full max-w-[1200px] mx-auto">
+<section class="@container">
+<div class="flex flex-col gap-16 px-4 py-24 md:py-32 @[864px]:flex-row items-center">
+<div class="flex flex-col gap-10 @[480px]:min-w-[400px] @[864px]:justify-center flex-1 order-2 @[864px]:order-1">
+<div class="flex flex-col gap-6 text-left">
+<div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 dark:bg-blue-900/30 text-primary dark:text-blue-400 text-sm font-bold w-fit tracking-wide">
+<span class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span>
+                                            프리미엄 수학 연구 플랫폼
+                                        </div>
+<h1 class="text-slate-900 dark:text-white text-5xl font-black leading-[1.15] tracking-tight @[480px]:text-6xl lg:text-[4rem] break-keep">
+                                            수학 연구의 정점,<br/><span class="text-primary bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400">MathLogic Lab</span>
+</h1>
+<p class="text-slate-600 dark:text-slate-300 text-lg font-normal leading-relaxed @[480px]:text-xl max-w-xl break-keep mt-2">
+                                            강사와 학생을 위한 차세대 수학 실험실 플랫폼. 맞춤형 AI 학습, 실시간 데이터 분석, 그리고 강력한 수식 입력 도구로 교육의 새로운 패러다임을 제시합니다.
+                                        </p>
+</div>
+<div class="flex flex-wrap gap-4 mt-2">
+<button class="flex min-w-[160px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 px-8 bg-primary hover:bg-blue-700 transition-colors text-white text-lg font-bold leading-normal tracking-wide shadow-lg shadow-primary/30 hover:shadow-xl hover:-translate-y-0.5 transform duration-200">
+<span class="truncate">무료 체험 시작</span>
+</button>
+<button class="flex min-w-[160px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 px-8 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-slate-900 dark:text-white text-lg font-bold leading-normal tracking-wide border border-slate-200 dark:border-slate-700 hover:-translate-y-0.5 transform duration-200">
+<span class="truncate">데모 시연 보기</span>
+</button>
+</div>
+<div class="flex flex-col gap-3 mt-8 pt-8 border-t border-slate-100 dark:border-slate-800/60">
+<span class="text-sm font-semibold text-slate-400 uppercase tracking-widest">신뢰할 수 있는 파트너</span>
+<div class="flex items-center gap-8 opacity-60 grayscale hover:grayscale-0 transition-all duration-300">
+<span class="text-xl font-bold font-serif">Seoul National Univ.</span>
+<span class="text-xl font-bold font-serif">KAIST</span>
+<span class="text-xl font-bold font-serif">POSTECH</span>
+</div>
+</div>
+</div>
+<div class="w-full flex-1 aspect-square md:aspect-[4/3] rounded-3xl overflow-hidden shadow-[0_20px_50px_-12px_rgba(0,82,204,0.3)] order-1 @[864px]:order-2 relative bg-gradient-to-br from-slate-50 to-blue-50/50 dark:from-slate-800 dark:to-slate-900/50 border border-slate-200/50 dark:border-slate-700/50 flex items-center justify-center">
+<div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1635070041078-e363dbe005cb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80')] bg-cover bg-center mix-blend-multiply dark:mix-blend-overlay opacity-90"></div>
+<div class="absolute inset-0 bg-gradient-to-tr from-primary/20 via-transparent to-purple-500/10 mix-blend-color"></div>
+</div>
+</div>
+</section>
+<section class="flex flex-col gap-16 px-4 py-28 md:py-36 @container border-t border-slate-100 dark:border-slate-800/50 bg-slate-50/30 dark:bg-transparent">
+<div class="flex flex-col gap-6 text-center items-center">
+<span class="text-primary font-bold text-sm tracking-[0.2em] uppercase">Core Capabilities</span>
+<h2 class="text-slate-900 dark:text-white tracking-tight text-4xl md:text-5xl font-black leading-tight max-w-[800px] break-keep">
+                                    프리미엄 핵심 기능
+                                </h2>
+<p class="text-slate-600 dark:text-slate-300 text-lg md:text-xl font-normal leading-relaxed max-w-[720px] break-keep">
+                                    MathLogic Lab만의 독보적인 기술력으로 완성된 강력한 교육 도구를 경험하세요.
+                                </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 p-0 mt-8">
+<div class="flex flex-1 gap-8 rounded-3xl border border-slate-200/60 dark:border-slate-700/60 bg-white dark:bg-slate-800/80 p-10 flex-col hover:border-primary/50 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 group">
+<div class="text-primary bg-blue-50 dark:bg-blue-900/30 w-16 h-16 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors duration-300 shadow-sm">
+<span class="material-symbols-outlined text-[36px]">psychology</span>
+</div>
+<div class="flex flex-col gap-4">
+<h3 class="text-slate-900 dark:text-white text-2xl font-bold leading-tight">AI 맞춤형 학습 솔루션</h3>
+<p class="text-slate-600 dark:text-slate-400 text-base font-normal leading-relaxed break-keep">고도화된 AI 알고리즘이 학생의 학습 패턴을 실시간으로 분석하여, 최적화된 학습 경로와 맞춤형 문제를 제공합니다.</p>
+</div>
+<a class="mt-auto pt-6 text-primary font-semibold text-base flex items-center gap-2 group/link hover:underline" href="#">
+                                    상세 기능 보기 <span class="material-symbols-outlined text-[18px] group-hover/link:translate-x-1.5 transition-transform">arrow_forward</span>
+</a>
+</div>
+<div class="flex flex-1 gap-8 rounded-3xl border border-slate-200/60 dark:border-slate-700/60 bg-white dark:bg-slate-800/80 p-10 flex-col hover:border-primary/50 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 group">
+<div class="text-primary bg-blue-50 dark:bg-blue-900/30 w-16 h-16 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors duration-300 shadow-sm">
+<span class="material-symbols-outlined text-[36px]">monitoring</span>
+</div>
+<div class="flex flex-col gap-4">
+<h3 class="text-slate-900 dark:text-white text-2xl font-bold leading-tight">실시간 데이터 분석 시스템</h3>
+<p class="text-slate-600 dark:text-slate-400 text-base font-normal leading-relaxed break-keep">직관적인 대시보드를 통해 학업 성취도를 다각도로 추적하고, 시각화된 인사이트 리포트를 자동으로 생성합니다.</p>
+</div>
+<a class="mt-auto pt-6 text-primary font-semibold text-base flex items-center gap-2 group/link hover:underline" href="#">
+                                    상세 기능 보기 <span class="material-symbols-outlined text-[18px] group-hover/link:translate-x-1.5 transition-transform">arrow_forward</span>
+</a>
+</div>
+<div class="flex flex-1 gap-8 rounded-3xl border border-slate-200/60 dark:border-slate-700/60 bg-white dark:bg-slate-800/80 p-10 flex-col hover:border-primary/50 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 group">
+<div class="text-primary bg-blue-50 dark:bg-blue-900/30 w-16 h-16 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors duration-300 shadow-sm">
+<span class="material-symbols-outlined text-[36px]">function</span>
+</div>
+<div class="flex flex-col gap-4">
+<h3 class="text-slate-900 dark:text-white text-2xl font-bold leading-tight">전문적인 수식 입력 시스템</h3>
+<p class="text-slate-600 dark:text-slate-400 text-base font-normal leading-relaxed break-keep">LaTeX 기반의 강력한 수식 편집기를 제공하여, 복잡한 증명 과정과 방정식을 빠르고 정확하게 작성할 수 있습니다.</p>
+</div>
+<a class="mt-auto pt-6 text-primary font-semibold text-base flex items-center gap-2 group/link hover:underline" href="#">
+                                    상세 기능 보기 <span class="material-symbols-outlined text-[18px] group-hover/link:translate-x-1.5 transition-transform">arrow_forward</span>
+</a>
+</div>
+</div>
+</section>
+<section class="flex flex-col gap-12 px-8 py-24 md:py-32 border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-[2.5rem] mx-4 mb-24 shadow-sm relative overflow-hidden">
+<div class="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+<div class="flex flex-col gap-5 items-center text-center px-4 relative z-10">
+<h2 class="text-slate-900 dark:text-white text-4xl md:text-5xl font-black leading-tight tracking-tight">통합 커리큘럼 아키텍처</h2>
+<p class="text-slate-600 dark:text-slate-400 max-w-2xl text-xl">기초부터 심화까지, 완벽하게 구조화된 수학 교육 모듈을 제공합니다.</p>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 p-4 relative z-10">
+<div class="flex flex-col items-center text-center gap-5 p-8 rounded-3xl bg-slate-50/50 dark:bg-slate-800/30 hover:bg-white dark:hover:bg-slate-800 transition-all duration-300 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:shadow-xl group">
+<div class="w-20 h-20 rounded-2xl bg-white dark:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-300 shadow-sm mb-2 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-[40px]">calculate</span>
+</div>
+<div class="flex flex-col gap-3">
+<h3 class="text-slate-900 dark:text-white text-xl font-bold leading-tight">대수학 (Algebra)</h3>
+<p class="text-slate-500 dark:text-slate-400 text-base font-normal leading-relaxed break-keep">기초 방정식부터 추상 대수학까지 단계별 개념 학습.</p>
+</div>
+</div>
+<div class="flex flex-col items-center text-center gap-5 p-8 rounded-3xl bg-slate-50/50 dark:bg-slate-800/30 hover:bg-white dark:hover:bg-slate-800 transition-all duration-300 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:shadow-xl group">
+<div class="w-20 h-20 rounded-2xl bg-white dark:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-300 shadow-sm mb-2 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-[40px]">all_inclusive</span>
+</div>
+<div class="flex flex-col gap-3">
+<h3 class="text-slate-900 dark:text-white text-xl font-bold leading-tight">미적분학 (Calculus)</h3>
+<p class="text-slate-500 dark:text-slate-400 text-base font-normal leading-relaxed break-keep">극한, 미분, 적분 및 급수에 대한 심층적인 분석과 응용.</p>
+</div>
+</div>
+<div class="flex flex-col items-center text-center gap-5 p-8 rounded-3xl bg-slate-50/50 dark:bg-slate-800/30 hover:bg-white dark:hover:bg-slate-800 transition-all duration-300 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:shadow-xl group">
+<div class="w-20 h-20 rounded-2xl bg-white dark:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-300 shadow-sm mb-2 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-[40px]">change_history</span>
+</div>
+<div class="flex flex-col gap-3">
+<h3 class="text-slate-900 dark:text-white text-xl font-bold leading-tight">기하학 (Geometry)</h3>
+<p class="text-slate-500 dark:text-slate-400 text-base font-normal leading-relaxed break-keep">유클리드 및 비유클리드 기하학, 벡터 기반 공간 분석.</p>
+</div>
+</div>
+<div class="flex flex-col items-center text-center gap-5 p-8 rounded-3xl bg-slate-50/50 dark:bg-slate-800/30 hover:bg-white dark:hover:bg-slate-800 transition-all duration-300 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:shadow-xl group">
+<div class="w-20 h-20 rounded-2xl bg-white dark:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-300 shadow-sm mb-2 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-[40px]">pie_chart</span>
+</div>
+<div class="flex flex-col gap-3">
+<h3 class="text-slate-900 dark:text-white text-xl font-bold leading-tight">통계학 (Statistics)</h3>
+<p class="text-slate-500 dark:text-slate-400 text-base font-normal leading-relaxed break-keep">데이터 분석, 확률 이론 및 통계적 방법론 연구.</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<footer class="flex justify-center">
+<div class="flex max-w-[960px] flex-1 flex-col">
+<footer class="flex flex-col gap-6 px-5 py-10 text-center @container">
+<div class="flex flex-wrap items-center justify-center gap-6 @[480px]:flex-row @[480px]:justify-around">
+<a class="text-[#4e7397] text-base font-normal leading-normal min-w-40" href="#">이용약관</a>
+<a class="text-[#4e7397] text-base font-normal leading-normal min-w-40" href="#">개인정보처리방침</a>
+<a class="text-[#4e7397] text-base font-normal leading-normal min-w-40" href="#">고객지원</a>
+<a class="text-[#4e7397] text-base font-normal leading-normal min-w-40" href="#">연구 성과</a>
+</div>
+<div class="flex flex-wrap justify-center gap-4">
+<a href="#">
+<div class="text-[#4e7397]" data-icon="Facebook" data-size="24px" data-weight="regular">
+<svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+<path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm8,191.63V152h24a8,8,0,0,0,0-16H136V112a16,16,0,0,1,16-16h16a8,8,0,0,0,0-16H152a32,32,0,0,0-32,32v24H96a8,8,0,0,0,0,16h24v63.63a88,88,0,1,1,16,0Z"></path>
+</svg>
+</div>
+</a>
+<a href="#">
+<div class="text-[#4e7397]" data-icon="Twitter" data-size="24px" data-weight="regular">
+<svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+<path d="M247.39,68.94A8,8,0,0,0,240,64h-4.26a86.84,86.84,0,0,0-18.06-19.62l.06-.06A46.06,46.06,0,0,0,148,84v4.11c-47.51-1.67-88.76-25-115.48-60.65a8,8,0,0,0-13.84,5.33c0,42.41,22.1,84.74,56.88,106.86a24.18,24.18,0,0,1-5.63-2.67,8,8,0,0,0-11,11.83A134.78,134.78,0,0,0,94.21,180.1,51.52,51.52,0,0,1,72,184a8,8,0,0,0-5.59,13.72C91.13,222.13,130.9,232,168,232c74.49,0,124.64-55.63,135.8-125.86a117,117,0,0,0,18.89-21.84A8,8,0,0,0,247.39,68.94Zm-25.07,17.43a8,8,0,0,0-2.31,6.86C227.67,143.25,188,187.94,138.83,205.54,115.11,214,92.59,216,70.83,212.19,103.58,193.37,128,157.06,128,120a8,8,0,0,0-8-8c-29.08,0-50.62-13.56-65.41-29.42C80.89,95.55,116,98,144,98a8,8,0,0,0,8-8V84a30.06,30.06,0,0,1,30-30A70.78,70.78,0,0,1,195,65.65,8,8,0,0,0,203.49,68,91.24,91.24,0,0,1,222.32,86.37Z"></path>
+</svg>
+</div>
+</a>
+<a href="#">
+<div class="text-[#4e7397]" data-icon="Instagram" data-size="24px" data-weight="regular">
+<svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+<path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160ZM176,24H80A56.06,56.06,0,0,0,24,80v96a56.06,56.06,0,0,0,56,56h96a56.06,56.06,0,0,0,56-56V80A56.06,56.06,0,0,0,176,24Zm40,152a40,40,0,0,1-40,40H80a40,40,0,0,1-40-40V80A40,40,0,0,1,80,40h96a40,40,0,0,1,40,40ZM192,76a12,12,0,1,1-12-12A12,12,0,0,1,192,76Z"></path>
+</svg>
+</div>
+</a>
+<a href="#">
+<div class="text-[#4e7397]" data-icon="LinkedIn" data-size="24px" data-weight="regular">
+<svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+<path d="M216,24H40A16,16,0,0,0,24,40V216a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V40A16,16,0,0,0,216,24Zm0,192H40V40H216V216ZM96,112v64a8,8,0,0,1-16,0V112a8,8,0,0,1,16,0Zm88,28v36a8,8,0,0,1-16,0V140a20,20,0,0,0-40,0v36a8,8,0,0,1-16,0V112a8,8,0,0,1,15.79-1.78A36,36,0,0,1,184,140ZM100,84A12,12,0,1,1,88,72,12,12,0,0,1,100,84Z"></path>
+</svg>
+</div>
+</a>
+<a href="#">
+<div class="text-[#4e7397]" data-icon="YouTube" data-size="24px" data-weight="regular">
+<svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+<path d="M228.1,71.05a24.1,24.1,0,0,0-17-17C196.1,50,128,50,128,50s-68.1,0-83.05,4a24.1,24.1,0,0,0-17,17C24,86.1,24,128,24,128s0,41.9,4,56.95a24.1,24.1,0,0,0,17,17C60,206,128,206,128,206s68.1,0,83.05-4a24.1,24.1,0,0,0,17-17C232,169.9,232,128,232,128S232,86.1,228.1,71.05Zm-15.42,109.4a8,8,0,0,1-5.63,5.63C193.36,190,128,190,128,190s-65.36,0-79.05-3.92a8,8,0,0,1-5.63-5.63C39.4,166.71,40,128,40,128s-.6-38.71,3.32-52.45a8,8,0,0,1,5.63-5.63C62.64,66,128,66,128,66s65.36,0,79.05,3.92a8,8,0,0,1,5.63,5.63C216.6,89.29,216,128,216,128S216.6,166.71,212.68,180.45ZM104,168l64-40-64-40Z"></path>
+</svg>
+</div>
+</a>
+</div>
+<p class="text-[#4e7397] text-base font-normal leading-normal">@ 2024 MathLogic Lab. All rights reserved.</p>
+</footer>
+</div>
+</footer>
+</div>
+</body></html>

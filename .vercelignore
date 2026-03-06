@@ -1,0 +1,6 @@
+data/
+e2e/
+docs/
+contracts/
+*.pdf
+.claude/

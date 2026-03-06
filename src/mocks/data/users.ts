@@ -1,0 +1,65 @@
+export const mockUsers = [
+  {
+    id: 'teacher-1',
+    username: 'teacher01',
+    password: 'pass1234',
+    name: '김선생',
+    role: 'TEACHER' as const,
+    grade: null,
+    createdAt: '2025-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'student-1',
+    username: 'student01',
+    password: 'pass1234',
+    name: '이수학',
+    role: 'STUDENT' as const,
+    grade: 5,
+    createdAt: '2025-01-10T00:00:00.000Z',
+  },
+  {
+    id: 'student-2',
+    username: 'student02',
+    password: 'pass1234',
+    name: '박영희',
+    role: 'STUDENT' as const,
+    grade: 6,
+    createdAt: '2025-01-15T00:00:00.000Z',
+  },
+  {
+    id: 'student-3',
+    username: 'student03',
+    password: 'pass1234',
+    name: '최민수',
+    role: 'STUDENT' as const,
+    grade: 5,
+    createdAt: '2025-01-20T00:00:00.000Z',
+  },
+];
+
+export const mockStudentProfiles = [
+  {
+    userId: 'student-1',
+    totalXp: 280,
+    level: 3,
+    currentStreak: 5,
+    longestStreak: 12,
+    lastActiveAt: '2025-03-04T10:00:00.000Z',
+  },
+  {
+    userId: 'student-2',
+    totalXp: 150,
+    level: 2,
+    currentStreak: 3,
+    longestStreak: 7,
+    lastActiveAt: '2025-03-04T09:00:00.000Z',
+  },
+  {
+    userId: 'student-3',
+    totalXp: 520,
+    level: 4,
+    currentStreak: 10,
+    longestStreak: 10,
+    lastActiveAt: '2025-03-05T08:00:00.000Z',
+  },
+];
