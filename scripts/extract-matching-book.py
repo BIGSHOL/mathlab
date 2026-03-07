@@ -132,6 +132,29 @@ def detect_page_meta(text, grade_semester):
             section = sec_name
             break
 
+    # 섹션명 감지 실패 시 STEP 번호로 결정
+    if not section:
+        text_no_space = text.replace(' ', '')
+        if 'STEP1' in text_no_space:
+            section = "개념 완성하기"
+        elif 'STEP2' in text_no_space:
+            section = "실력 다지기"
+        elif 'STEP3' in text_no_space:
+            section = "서술형 해결하기"
+
+    # NanumGothicExtraBold 깨진 폰트 매핑 (5-2, 6-2 등)
+    if not section:
+        GARBLED_SECTION_MAP = {
+            'ѐ֛\x01৮ࢿೞӝ': "개념 완성하기",
+            'प۱\x01\u05ee\u0ad1ӝ': "실력 다지기",
+            'ࢲࣿഋ\x01೧Ѿೞӝ': "서술형 해결하기",
+            'ױਗ\x01ಣо': "단원 평가",
+        }
+        for garbled, sec_name in GARBLED_SECTION_MAP.items():
+            if garbled in text:
+                section = sec_name
+                break
+
     m = re.search(r'정답\s*(\d+)쪽', text)
     if m:
         answer_page = int(m.group(1))
@@ -185,21 +208,60 @@ def crop_questions(page, q_positions, output_dir, book_code, page_idx):
     return results
 
 
+def _extract_page_range(lines, ref_line, col_split=300):
+    """STEP/섹션 헤더 근처에서 페이지 참조 추출"""
+    ref_col = 0 if ref_line["x"] < col_split else 1
+    page_range = set()
+    for other in lines:
+        other_col = 0 if other["x"] < col_split else 1
+        if other_col != ref_col:
+            continue
+        if abs(other["y"] - ref_line["y"]) < 20:
+            m = re.search(r'(\d+)~(\d+)쪽', other["text"])
+            if m:
+                for p in range(int(m.group(1)), int(m.group(2)) + 1):
+                    page_range.add(p)
+            else:
+                m = re.search(r'(\d+)쪽', other["text"])
+                if m:
+                    page_range.add(int(m.group(1)))
+    return page_range
+
+
+def _clean_answer(full_ans):
+    """정답 텍스트 정리"""
+    # "/ 답" 형태에서 최종 답 추출
+    slash_match = re.search(r'/\s*(.+)$', full_ans)
+    if slash_match:
+        final = slash_match.group(1).strip()
+        final = re.sub(r'\d점\s*$', '', final).strip()
+        if final:
+            return final
+    full_ans = re.sub(r'^예⃝\s*', '', full_ans)
+    full_ans = re.sub(r'\d점\s*$', '', full_ans).strip()
+    return full_ans
+
+
 def parse_answer_pdf(filepath, grade_semester):
-    """정답 PDF 파싱 (위치 기반).
+    """정답 PDF 파싱 (위치 기반, 읽기 순서: 왼쪽→오른쪽 컬럼).
     Returns: {(matching_book_page, qnum): answer_text}
-    매칭북 페이지 참조(예: '01쪽', '02~04쪽')를 이용해 정확히 매핑.
     """
     if not os.path.exists(filepath):
         print(f"  [SKIP] Answer PDF not found: {filepath}")
         return {}
 
     doc = fitz.open(filepath)
-    answer_map = {}  # (matching_book_page, qnum) → answer
+    answer_map = {}
     chapters = CHAPTERS.get(grade_semester, [])
 
     in_matching = False
     current_chapter = None
+    COL_SPLIT = 300
+
+    # 섹션 상태 (페이지 간 유지)
+    carry_section = None   # (section_name, page_range_set)
+
+    skip_keywords = {'STEP', '개념', '실력', '서술형', '단원'}
 
     for pg_idx in range(len(doc)):
         page = doc[pg_idx]
@@ -210,7 +272,6 @@ def parse_answer_pdf(filepath, grade_semester):
         if not in_matching:
             continue
 
-        # 단원 감지
         for ch in chapters:
             if ch in raw_text:
                 current_chapter = ch
@@ -220,7 +281,7 @@ def parse_answer_pdf(filepath, grade_semester):
 
         # 위치 기반 텍스트 추출
         blocks = page.get_text("dict")["blocks"]
-        positioned_lines = []  # [{x, y, text}, ...]
+        positioned_lines = []
 
         for block in blocks:
             if "lines" not in block:
@@ -239,19 +300,23 @@ def parse_answer_pdf(filepath, grade_semester):
                         "text": full,
                     })
 
-        # STEP/섹션 헤더 감지 + 매칭북 페이지 참조 추출
-        # 같은 y 근처(±10px)의 라인들을 합쳐서 감지
-        sections = []  # [(y, section_name, page_range_set), ...]
+        # 섹션 감지: STEP 헤더 (같은 컬럼 내 근접 텍스트로 섹션명/페이지 파악)
+        # 읽기 순서 키: (col, y)
+        def rk(line):
+            return (0 if line["x"] < COL_SPLIT else 1, line["y"])
 
-        # STEP 라인 찾기
+        page_sections = []  # [(reading_key, section_name, page_range)]
         step_lines = [l for l in positioned_lines if 'STEP' in l["text"]]
         for step_line in step_lines:
-            # 같은 높이의 모든 텍스트 합치기
-            nearby_text = ' '.join(
-                l["text"] for l in positioned_lines
+            step_col = 0 if step_line["x"] < COL_SPLIT else 1
+            nearby = [
+                l for l in positioned_lines
                 if abs(l["y"] - step_line["y"]) < 10
-            )
+                and (0 if l["x"] < COL_SPLIT else 1) == step_col
+            ]
+            nearby_text = ' '.join(l["text"] for l in nearby)
 
+            # 섹션명: 텍스트 키워드 → STEP 번호 fallback
             section_name = None
             if '개념' in nearby_text:
                 section_name = "개념 완성하기"
@@ -260,107 +325,149 @@ def parse_answer_pdf(filepath, grade_semester):
             elif '서술형' in nearby_text:
                 section_name = "서술형 해결하기"
 
+            # 키워드 매칭 실패 시 STEP 번호로 결정
+            if not section_name:
+                step_text = step_line["text"].replace(' ', '')
+                if 'STEP1' in step_text:
+                    section_name = "개념 완성하기"
+                elif 'STEP2' in step_text:
+                    section_name = "실력 다지기"
+                elif 'STEP3' in step_text:
+                    section_name = "서술형 해결하기"
+
             if not section_name:
                 continue
 
-            # 페이지 참조 추출
-            page_range = set()
-            for other in positioned_lines:
-                if abs(other["y"] - step_line["y"]) < 10:
-                    m = re.search(r'(\d+)~(\d+)쪽', other["text"])
-                    if m:
-                        for p in range(int(m.group(1)), int(m.group(2)) + 1):
-                            page_range.add(p)
-                    else:
-                        m = re.search(r'(\d+)쪽', other["text"])
-                        if m:
-                            page_range.add(int(m.group(1)))
-
+            page_range = _extract_page_range(positioned_lines, step_line, COL_SPLIT)
             if page_range:
-                sections.append((step_line["y"], section_name, page_range))
+                page_sections.append((rk(step_line), section_name, page_range))
 
-        if not sections:
-            # 단원 평가 페이지: "N. 단원이름" + "NN~MM쪽" 형태
+        # 단원 평가 fallback
+        if not page_sections:
+            found = False
             for line in positioned_lines:
-                text = line["text"]
-                # "1. 덧셈과 뺄셈" 같은 단원 헤더 감지
-                if re.match(r'^\d+\.\s', text):
+                if re.match(r'^\d+\.\s', line["text"]):
                     for ch in chapters:
-                        if ch in text:
-                            current_chapter = ch
-                            # 근처에서 페이지 참조 찾기
-                            page_range = set()
-                            for other in positioned_lines:
-                                if abs(other["y"] - line["y"]) < 10:
-                                    m = re.search(r'(\d+)~(\d+)쪽', other["text"])
-                                    if m:
-                                        for p in range(int(m.group(1)), int(m.group(2)) + 1):
-                                            page_range.add(p)
-                                    else:
-                                        m = re.search(r'(\d+)쪽', other["text"])
-                                        if m:
-                                            page_range.add(int(m.group(1)))
+                        if ch in line["text"]:
+                            page_range = _extract_page_range(positioned_lines, line, COL_SPLIT)
                             if page_range:
-                                sections.append((line["y"], "단원 평가", page_range))
+                                page_sections.append((rk(line), "단원 평가", page_range))
+                                found = True
+                            break
+            # 챕터명 깨진 경우: 페이지 상단(y<130)에 "NN~MM쪽" 있으면 단원 평가
+            if not found:
+                for line in positioned_lines:
+                    if line["y"] < 150:
+                        m = re.search(r'(\d+)~(\d+)쪽', line["text"])
+                        if m and '매칭북' not in line["text"]:
+                            page_range = set(range(int(m.group(1)), int(m.group(2)) + 1))
+                            page_sections.append((rk(line), "단원 평가", page_range))
                             break
 
-        # 왼쪽 컬럼만 (x < 300), y 순서로 정렬
-        left_lines = sorted(
-            [l for l in positioned_lines if l["x"] < 300],
-            key=lambda l: l["y"]
-        )
+        page_sections.sort()
 
-        # 각 라인이 어느 섹션에 속하는지 결정
-        sections.sort(key=lambda s: s[0])
+        # 읽기 순서로 모든 라인 정렬
+        ordered_lines = sorted(positioned_lines, key=rk)
 
-        for line in left_lines:
-            y = line["y"]
-            x = line["x"]
+        # 컬럼별 라인 (다중행 답 수집용)
+        left_lines = sorted([l for l in positioned_lines if l["x"] < COL_SPLIT], key=lambda l: l["y"])
+        right_lines = sorted([l for l in positioned_lines if l["x"] >= COL_SPLIT], key=lambda l: l["y"])
+
+        # 현재 섹션 (이전 페이지에서 이월)
+        cur_name = carry_section[0] if carry_section else None
+        cur_pages = carry_section[1] if carry_section else None
+        sec_idx = 0
+
+        for line in ordered_lines:
+            line_rk = rk(line)
             text = line["text"]
 
-            # 이 라인의 섹션 결정
-            current_section = None
-            current_pages = None
-            for sy, sname, spages in reversed(sections):
-                if y >= sy:
-                    current_section = sname
-                    current_pages = spages
-                    break
+            # 섹션 헤더 갱신
+            while sec_idx < len(page_sections) and page_sections[sec_idx][0] <= line_rk:
+                _, cur_name, cur_pages = page_sections[sec_idx]
+                sec_idx += 1
 
-            if not current_section or not current_pages:
+            if not cur_name or not cur_pages:
                 continue
 
-            # 정답 추출
-            if current_section == "개념 완성하기" and x >= 65:
-                # STEP 1 압축 형식: "N answer" 또는 "N ans1 N ans2"
-                # 단일 숫자 문제번호 (1-8)
+            # 섹션 헤더/키워드 스킵
+            if any(kw in text for kw in skip_keywords):
+                continue
+            if re.search(r'\d+쪽$', text):
+                continue
+
+            # 같은 컬럼의 라인 목록 (다중행 수집용)
+            col_lines = left_lines if line["x"] < COL_SPLIT else right_lines
+
+            if cur_name == "개념 완성하기":
+                # STEP 1 압축 형식: "N answer N answer ..."
                 matches = re.findall(r'(\d)\s+(.+?)(?=\s\d\s|$)', text)
                 for qnum_str, ans in matches:
                     qnum = int(qnum_str)
                     ans = ans.strip()
                     if qnum > 0 and ans:
-                        for mp in current_pages:
+                        for mp in cur_pages:
                             key = (mp, qnum)
                             if key not in answer_map:
                                 answer_map[key] = ans
             else:
-                # STEP 2/3, 단원 평가: "NN answer" 또는 "NNanswer"
+                # STEP 2/3, 단원 평가: "NN..." 형식
+                # 한 줄에 여러 답이 있는 경우 처리: "01 ans1 02 ans2"
+                compact = re.findall(r'(\d{2})\s+(.+?)(?=\s\d{2}\s|$)', text)
+                if len(compact) >= 2:
+                    for qnum_str, ans in compact:
+                        qnum = int(qnum_str)
+                        ans = ans.strip()
+                        if qnum > 0 and ans:
+                            for mp in cur_pages:
+                                key = (mp, qnum)
+                                if key not in answer_map:
+                                    answer_map[key] = ans
+                    continue
+
                 m = re.match(r'^(\d{2})\s*(.*)', text)
-                if m:
-                    qnum = int(m.group(1))
-                    ans = m.group(2).strip()
-                    # 서술형 "/ 최종답" 처리: 첫줄에 있으면 추출
-                    if not ans:
+                if not m:
+                    continue
+                qnum = int(m.group(1))
+                ans = m.group(2).strip()
+                if qnum <= 0:
+                    continue
+
+                # 같은 컬럼 내 다음 문제번호까지 텍스트 수집
+                y = line["y"]
+                answer_lines = [ans] if ans else []
+                for next_line in col_lines:
+                    if next_line["y"] <= y:
                         continue
-                    # "예⃝" 제거
-                    ans = re.sub(r'^예⃝\s*', '', ans)
-                    # "❶" 등 채점기호 제거
-                    ans = re.sub(r'^[❶❷❸]\s*', '', ans)
-                    if qnum > 0 and ans:
-                        for mp in current_pages:
-                            key = (mp, qnum)
-                            if key not in answer_map:
-                                answer_map[key] = ans
+                    nt = next_line["text"]
+                    # 다음 문제번호면 중단 (숫자 뒤 공백 or 줄끝만 매칭)
+                    if re.match(r'^\d{2}($|\s)', nt):
+                        break
+                    # STEP 헤더면 중단
+                    if any(kw in nt for kw in skip_keywords):
+                        break
+                    # 채점기준/점수 스킵
+                    if '채점' in nt or '기준' in nt:
+                        continue
+                    if re.match(r'^[❶❷❸❹❺]', nt):
+                        continue
+                    if re.match(r'^\d점$', nt):
+                        continue
+                    answer_lines.append(nt.strip())
+
+                full_ans = _clean_answer(' '.join(answer_lines).strip())
+                if full_ans:
+                    for mp in cur_pages:
+                        key = (mp, qnum)
+                        if key not in answer_map:
+                            answer_map[key] = full_ans
+
+        # 페이지 끝: 마지막 활성 섹션 이월
+        if page_sections:
+            _, last_name, last_pages = page_sections[-1]
+            carry_section = (last_name, last_pages)
+        elif cur_name:
+            carry_section = (cur_name, cur_pages)
 
     doc.close()
     return answer_map
@@ -439,37 +546,47 @@ def extract_book(matching_pdf, answer_pdf, grade_semester, output_dir):
     return all_questions
 
 
+ALL_GRADES = ["3-1", "3-2", "4-1", "4-2", "5-1", "5-2", "6-1", "6-2"]
+
+
 def main():
     DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
     OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'public', 'questions')
 
-    # 큐브수학 실력 3-1만 처리
-    gs = "3-1"
-    matching_pdf = os.path.join(DATA_DIR, f"큐브수학 실력/{gs} 큐브실력/큐브수학 실력 {gs}_매칭북.pdf")
-    answer_pdf = os.path.join(DATA_DIR, f"큐브수학 실력/{gs} 큐브실력/큐브수학실력{gs}정답(01~64).pdf")
+    # CLI 인자: 특정 학년만 처리 (없으면 전체)
+    targets = sys.argv[1:] if len(sys.argv) > 1 else ALL_GRADES
+    for gs in targets:
+        if gs not in CHAPTERS:
+            print(f"[SKIP] Unknown grade-semester: {gs}")
+            continue
 
-    questions = extract_book(matching_pdf, answer_pdf, gs, OUTPUT_DIR)
+        matching_pdf = os.path.join(DATA_DIR, f"큐브수학 실력/{gs} 큐브실력/큐브수학 실력 {gs}_매칭북.pdf")
+        answer_pdf = os.path.join(DATA_DIR, f"큐브수학 실력/{gs} 큐브실력/큐브수학실력{gs}정답(01~64).pdf")
 
-    # JSON 저장
-    json_path = os.path.join(DATA_DIR, f"questions-실력-{gs}.json")
-    with open(json_path, 'w', encoding='utf-8') as f:
-        json.dump(questions, f, ensure_ascii=False, indent=2)
+        if not os.path.exists(matching_pdf):
+            print(f"[SKIP] Not found: {matching_pdf}")
+            continue
 
-    print(f"\n{'='*60}")
-    print(f"Total: {len(questions)} questions")
-    print(f"Images saved to: {OUTPUT_DIR}")
-    print(f"JSON saved to: {json_path}")
+        questions = extract_book(matching_pdf, answer_pdf, gs, OUTPUT_DIR)
 
-    # 통계
-    by_ch = {}
-    for q in questions:
-        by_ch[q["chapter"]] = by_ch.get(q["chapter"], 0) + 1
-    print("\nBy chapter:")
-    for ch, cnt in by_ch.items():
-        print(f"  {ch}: {cnt}")
+        # JSON 저장
+        json_path = os.path.join(DATA_DIR, f"questions-실력-{gs}.json")
+        with open(json_path, 'w', encoding='utf-8') as f:
+            json.dump(questions, f, ensure_ascii=False, indent=2)
 
-    with_answer = sum(1 for q in questions if q["answer"])
-    print(f"\nWith answers: {with_answer}/{len(questions)}")
+        # 통계
+        by_ch = {}
+        for q in questions:
+            by_ch[q["chapter"]] = by_ch.get(q["chapter"], 0) + 1
+
+        with_answer = sum(1 for q in questions if q["answer"])
+
+        print(f"\n{'='*60}")
+        print(f"큐브수학 실력 {gs}: {len(questions)} questions, {with_answer} with answers")
+        print(f"  JSON: {json_path}")
+        for ch, cnt in by_ch.items():
+            print(f"  {ch}: {cnt}")
+        print()
 
 
 if __name__ == "__main__":

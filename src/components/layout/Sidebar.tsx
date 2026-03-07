@@ -12,6 +12,7 @@ import {
   Sparkles,
   BookOpen,
   Eye,
+  ClipboardCheck,
 } from 'lucide-react';
 
 const menuItems = [
@@ -20,6 +21,7 @@ const menuItems = [
   { label: '개념 관리', href: '/concepts', icon: BookOpen },
   { label: '문제 은행', href: '/questions', icon: Database },
   { label: 'AI 문제 생성', href: '/questions/generate', icon: Sparkles, disabled: true },
+  { label: '시험 관리', href: '/tests', icon: ClipboardCheck },
   { label: '학습 분석', href: '/analytics', icon: BarChart3 },
 ];
 

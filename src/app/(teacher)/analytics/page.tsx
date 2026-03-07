@@ -13,7 +13,11 @@ import {
   Download,
   Printer,
   ChevronDown,
+  Timer,
+  Zap,
+  Target,
 } from 'lucide-react';
+import { useSpeedAnalytics } from '@/hooks/useSpeed';
 
 // --- Types ---
 interface Student {
@@ -23,33 +27,19 @@ interface Student {
   profile: { totalXp: number; level: number } | null;
 }
 
-interface SubjectScore {
-  name: string;
-  studentScore: number;
-  avgScore: number;
-}
-
 interface DayActivity {
   day: number;
-  level: 0 | 1 | 2 | 3 | 4; // 0 = no activity, 4 = very active
+  level: 0 | 1 | 2 | 3 | 4;
 }
 
-// --- Mock Data for Report ---
-const MOCK_SUBJECTS: SubjectScore[] = [
-  { name: '방정식', studentScore: 92, avgScore: 75 },
-  { name: '함수', studentScore: 85, avgScore: 78 },
-  { name: '도형의 성질', studentScore: 65, avgScore: 72 },
-  { name: '확률', studentScore: 88, avgScore: 80 },
-];
-
-const MOCK_STRENGTHS = ['일차방정식', '경우의 수', '연립방정식'];
-const MOCK_WEAKNESSES = ['삼각형의 성질', '사각형의 성질'];
+const DIFFICULTY_KR: Record<string, string> = {
+  BASIC: '하', MEDIUM: '중', HIGH: '상', HIGHEST: '최상',
+};
 
 function generateMockCalendar(): DayActivity[] {
   const days: DayActivity[] = [];
   for (let d = 1; d <= 31; d++) {
-    const dayOfWeek = new Date(2026, 2, d).getDay(); // March 2026
-    // weekends are less active
+    const dayOfWeek = new Date(2026, 2, d).getDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
     const rand = Math.random();
     let level: 0 | 1 | 2 | 3 | 4;
@@ -64,11 +54,7 @@ function generateMockCalendar(): DayActivity[] {
 }
 
 const ACTIVITY_COLORS = [
-  'bg-slate-100',
-  'bg-primary/20',
-  'bg-primary/40',
-  'bg-primary/70',
-  'bg-primary',
+  'bg-slate-100', 'bg-primary/20', 'bg-primary/40', 'bg-primary/70', 'bg-primary',
 ] as const;
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -78,6 +64,9 @@ export default function AnalyticsPage() {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
   const [calendarData] = useState<DayActivity[]>(() => generateMockCalendar());
+
+  // Speed analytics for selected student
+  const { data: speedData, loading: speedLoading } = useSpeedAnalytics(selectedStudent?.id);
 
   const fetchStudents = useCallback(async () => {
     try {
@@ -89,7 +78,7 @@ export default function AnalyticsPage() {
         if (studentList.length > 0) setSelectedStudent(studentList[0]);
       }
     } catch {
-      // API not available, use empty
+      // ignore
     }
     setLoading(false);
   }, []);
@@ -102,14 +91,32 @@ export default function AnalyticsPage() {
   const totalXp = student?.profile?.totalXp ?? 0;
   const activeDays = calendarData.filter((d) => d.level > 0).length;
 
-  // Generate calendar grid with padding for the first day
-  const firstDayOfMonth = new Date(2026, 2, 1).getDay(); // March 2026
+  // Calendar grid
+  const firstDayOfMonth = new Date(2026, 2, 1).getDay();
   const paddedCalendar: (DayActivity | null)[] = [
     ...Array(firstDayOfMonth).fill(null),
     ...calendarData,
   ];
-  // Pad to complete the last week
   while (paddedCalendar.length % 7 !== 0) paddedCalendar.push(null);
+
+  // Derive strengths/weaknesses from speed data
+  const strengths = speedData?.byChapter
+    .filter((c) => c.accuracy >= 80)
+    .sort((a, b) => b.accuracy - a.accuracy)
+    .slice(0, 3)
+    .map((c) => c.chapter) ?? [];
+  const weaknesses = speedData?.byChapter
+    .filter((c) => c.accuracy < 60)
+    .sort((a, b) => a.accuracy - b.accuracy)
+    .slice(0, 3)
+    .map((c) => c.chapter) ?? [];
+
+  // Total study time from speed data
+  const totalTimeMin = speedData?.overall.totalTimeSeconds
+    ? Math.floor(speedData.overall.totalTimeSeconds / 60)
+    : 0;
+  const totalTimeHours = Math.floor(totalTimeMin / 60);
+  const totalTimeRemainMin = totalTimeMin % 60;
 
   return (
     <div className="flex-1 flex justify-center py-8 px-4 sm:px-6 lg:px-8">
@@ -124,7 +131,6 @@ export default function AnalyticsPage() {
             <h1 className="text-3xl md:text-4xl font-black leading-tight tracking-tight text-text-primary">
               월간 분석 리포트
             </h1>
-            {/* Student Selector */}
             <div className="flex items-center gap-2 mt-1">
               <span className="text-text-secondary text-lg font-medium">학생 이름:</span>
               <div className="relative">
@@ -173,134 +179,202 @@ export default function AnalyticsPage() {
             <h2 className="text-xl font-bold leading-tight tracking-tight mb-4 text-text-primary flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-primary" /> 핵심 요약
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <SummaryCard
-                label="총 학습 시간"
-                value="45"
-                unit="시간"
-                subValue="30"
-                subUnit="분"
-                trend="+5시간 10분"
-                trendPositive
+                label="총 시험 시간"
+                value={totalTimeHours > 0 ? String(totalTimeHours) : String(totalTimeRemainMin)}
+                unit={totalTimeHours > 0 ? '시간' : '분'}
+                subValue={totalTimeHours > 0 ? String(totalTimeRemainMin) : undefined}
+                subUnit={totalTimeHours > 0 ? '분' : undefined}
               />
               <SummaryCard
-                label="완료 스테이지"
-                value={String(totalXp > 0 ? Math.floor(totalXp / 30) : 42)}
-                unit="스테이지"
-                trend="+8 스테이지"
-                trendPositive
+                label="풀이한 문제"
+                value={String(speedData?.overall.totalQuestions ?? 0)}
+                unit="문제"
+              />
+              <SummaryCard
+                label="평균 풀이 속도"
+                value={String(speedData?.overall.avgSeconds ?? 0)}
+                unit="초/문제"
               />
               <SummaryCard
                 label="총 획득 XP"
-                value={totalXp > 0 ? totalXp.toLocaleString() : '1,250'}
+                value={totalXp > 0 ? totalXp.toLocaleString() : '0'}
                 unit="XP"
-                trend="+150 XP"
-                trendPositive
               />
             </div>
           </section>
 
-          {/* Chart + Strengths/Weaknesses */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Bar Chart */}
-            <section>
-              <h2 className="text-xl font-bold leading-tight tracking-tight mb-4 text-text-primary flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-primary" /> 단원별 성취도 (학생 vs 학급)
-              </h2>
-              <div className="rounded-xl border border-slate-200 p-6 flex flex-col h-[300px]">
-                <div className="flex gap-4 mb-4 justify-end">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-primary" />
-                    <span className="text-xs text-text-secondary">{student?.name ?? '학생'}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-slate-300" />
-                    <span className="text-xs text-text-secondary">학급 평균</span>
-                  </div>
-                </div>
-                <div className="flex-1 flex items-end justify-between px-2 sm:px-8 gap-2 mt-auto">
-                  {MOCK_SUBJECTS.map((sub) => (
-                    <div key={sub.name} className="flex flex-col items-center gap-2 w-full">
-                      <div className="flex items-end gap-1 w-full justify-center h-[180px]">
-                        <div
-                          className="w-1/3 max-w-[24px] bg-primary rounded-t-sm transition-all"
-                          style={{ height: `${sub.studentScore}%` }}
-                          title={`${student?.name}: ${sub.studentScore}점`}
-                        />
-                        <div
-                          className="w-1/3 max-w-[24px] bg-slate-300 rounded-t-sm transition-all"
-                          style={{ height: `${sub.avgScore}%` }}
-                          title={`평균: ${sub.avgScore}점`}
-                        />
-                      </div>
-                      <span className="text-xs font-medium text-text-secondary whitespace-nowrap">
-                        {sub.name}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
+          {/* Speed Analytics Section */}
+          <section>
+            <h2 className="text-xl font-bold leading-tight tracking-tight mb-4 text-text-primary flex items-center gap-2">
+              <Timer className="w-5 h-5 text-primary" /> 풀이 속도 분석
+            </h2>
 
-            {/* Strengths / Weaknesses */}
-            <section>
-              <h2 className="text-xl font-bold leading-tight tracking-tight mb-4 text-text-primary flex items-center gap-2">
-                <FileText className="w-5 h-5 text-primary" /> 학습 상태 분석
-              </h2>
-              <div className="grid grid-rows-2 gap-4 h-[300px]">
-                {/* Strengths */}
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-5 flex flex-col justify-center">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
-                      <Star className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="text-base font-bold text-text-primary mb-1">
-                        우수 단원 (마스터)
-                      </h3>
-                      <p className="text-sm text-text-secondary mb-2">
-                        높은 이해도와 정답률을 보이는 영역입니다.
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {MOCK_STRENGTHS.map((s) => (
-                          <span
-                            key={s}
-                            className="px-2.5 py-1 bg-white border border-emerald-200 text-emerald-700 text-xs font-semibold rounded-md shadow-sm"
-                          >
-                            {s}
+            {speedLoading ? (
+              <div className="text-center py-8 text-text-secondary">분석 데이터를 불러오는 중...</div>
+            ) : !speedData || speedData.overall.totalQuestions === 0 ? (
+              <div className="rounded-xl border border-slate-200 p-8 text-center text-text-secondary">
+                아직 시험 응시 데이터가 없습니다. 학생이 시험을 완료하면 여기에 풀이 속도가 표시됩니다.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* By difficulty */}
+                <div className="rounded-xl border border-slate-200 p-6">
+                  <h3 className="text-base font-bold text-text-primary mb-4 flex items-center gap-2">
+                    <Target className="w-4 h-4 text-primary" /> 난이도별 평균 풀이 시간
+                  </h3>
+                  <div className="space-y-3">
+                    {speedData.byDifficulty.map((d) => {
+                      const maxTime = Math.max(...speedData.byDifficulty.map((x) => x.avgSeconds), 1);
+                      return (
+                        <div key={d.difficulty} className="flex items-center gap-3">
+                          <span className={`w-8 text-center px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                            d.difficulty === 'BASIC' ? 'bg-green-100 text-green-700' :
+                            d.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
+                            d.difficulty === 'HIGH' ? 'bg-red-100 text-red-700' :
+                            'bg-purple-100 text-purple-700'
+                          }`}>
+                            {DIFFICULTY_KR[d.difficulty]}
                           </span>
-                        ))}
-                      </div>
-                    </div>
+                          <div className="flex-1 h-6 bg-slate-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-blue-400 rounded-full transition-all flex items-center justify-end pr-2"
+                              style={{ width: `${Math.max((d.avgSeconds / maxTime) * 100, 10)}%` }}
+                            >
+                              <span className="text-[10px] font-bold text-white">{d.avgSeconds}초</span>
+                            </div>
+                          </div>
+                          <span className="text-xs text-slate-400 w-12 text-right">{d.count}문제</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-                {/* Weaknesses */}
-                <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 flex flex-col justify-center">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
-                      <MoveRight className="w-5 h-5" />
+
+                {/* Speed trend */}
+                <div className="rounded-xl border border-slate-200 p-6">
+                  <h3 className="text-base font-bold text-text-primary mb-4 flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-primary" /> 시험별 풀이 속도 추세
+                  </h3>
+                  {speedData.trend.length === 0 ? (
+                    <p className="text-sm text-text-secondary text-center py-4">데이터가 부족합니다</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {speedData.trend.map((t, idx) => {
+                        const maxAvg = Math.max(...speedData.trend.map((x) => x.avgSeconds), 1);
+                        const isImproving = idx > 0 && t.avgSeconds < speedData.trend[idx - 1].avgSeconds;
+                        return (
+                          <div key={idx} className="flex items-center gap-3">
+                            <span className="text-xs text-text-secondary w-24 truncate" title={t.testTitle}>
+                              {t.testTitle}
+                            </span>
+                            <div className="flex-1 h-5 bg-slate-100 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all flex items-center justify-end pr-2 ${
+                                  isImproving ? 'bg-emerald-400' : 'bg-blue-400'
+                                }`}
+                                style={{ width: `${Math.max((t.avgSeconds / maxAvg) * 100, 10)}%` }}
+                              >
+                                <span className="text-[10px] font-bold text-white">{t.avgSeconds}초</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {speedData.trend.length >= 2 && (
+                        <p className="text-xs text-text-secondary mt-2">
+                          {speedData.trend[speedData.trend.length - 1].avgSeconds < speedData.trend[0].avgSeconds
+                            ? '풀이 속도가 향상되고 있습니다!'
+                            : '꾸준한 연습이 필요합니다.'
+                          }
+                        </p>
+                      )}
                     </div>
-                    <div>
-                      <h3 className="text-base font-bold text-text-primary mb-1">보완 필요 단원</h3>
-                      <p className="text-sm text-text-secondary mb-2">
-                        오답률이 높아 추가 학습이 필요한 영역입니다.
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {MOCK_WEAKNESSES.map((w) => (
-                          <span
-                            key={w}
-                            className="px-2.5 py-1 bg-white border border-amber-200 text-amber-700 text-xs font-semibold rounded-md shadow-sm"
-                          >
-                            {w}
-                          </span>
-                        ))}
+                  )}
+                </div>
+
+                {/* By chapter (top 6) */}
+                <div className="rounded-xl border border-slate-200 p-6 lg:col-span-2">
+                  <h3 className="text-base font-bold text-text-primary mb-4 flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 text-primary" /> 단원별 풀이 시간 & 정답률
+                  </h3>
+                  <div className="space-y-3">
+                    {speedData.byChapter.slice(0, 8).map((ch) => (
+                      <div key={ch.chapter} className="flex items-center gap-3">
+                        <span className="text-xs text-text-secondary w-32 truncate" title={ch.chapter}>
+                          {ch.chapter}
+                        </span>
+                        <div className="flex-1 h-6 bg-slate-100 rounded-full overflow-hidden relative">
+                          <div
+                            className="h-full bg-primary/70 rounded-full transition-all"
+                            style={{ width: `${Math.max((ch.avgSeconds / Math.max(...speedData.byChapter.map((x) => x.avgSeconds), 1)) * 100, 10)}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-medium text-text-primary w-12 text-right">{ch.avgSeconds}초</span>
+                        <span className={`text-xs font-bold w-10 text-right ${
+                          ch.accuracy >= 80 ? 'text-emerald-600' :
+                          ch.accuracy >= 60 ? 'text-yellow-600' :
+                          'text-red-600'
+                        }`}>
+                          {ch.accuracy}%
+                        </span>
                       </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+
+          {/* Strengths/Weaknesses */}
+          <section>
+            <h2 className="text-xl font-bold leading-tight tracking-tight mb-4 text-text-primary flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary" /> 학습 상태 분석
+            </h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-5 flex flex-col justify-center">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
+                    <Star className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-text-primary mb-1">우수 단원 (정답률 80%+)</h3>
+                    <p className="text-sm text-text-secondary mb-2">높은 정답률을 보이는 영역입니다.</p>
+                    <div className="flex flex-wrap gap-2">
+                      {strengths.length > 0 ? strengths.map((s) => (
+                        <span key={s} className="px-2.5 py-1 bg-white border border-emerald-200 text-emerald-700 text-xs font-semibold rounded-md shadow-sm">
+                          {s}
+                        </span>
+                      )) : (
+                        <span className="text-xs text-text-secondary">데이터 부족</span>
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
-            </section>
-          </div>
+              <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 flex flex-col justify-center">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
+                    <MoveRight className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-text-primary mb-1">보완 필요 단원 (정답률 60% 미만)</h3>
+                    <p className="text-sm text-text-secondary mb-2">추가 학습이 필요한 영역입니다.</p>
+                    <div className="flex flex-wrap gap-2">
+                      {weaknesses.length > 0 ? weaknesses.map((w) => (
+                        <span key={w} className="px-2.5 py-1 bg-white border border-amber-200 text-amber-700 text-xs font-semibold rounded-md shadow-sm">
+                          {w}
+                        </span>
+                      )) : (
+                        <span className="text-xs text-text-secondary">데이터 부족</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
 
           {/* Calendar Heatmap */}
           <section>
@@ -309,7 +383,6 @@ export default function AnalyticsPage() {
             </h2>
             <div className="rounded-xl border border-slate-200 p-6 bg-white overflow-x-auto">
               <div className="min-w-[500px]">
-                {/* Legend */}
                 <div className="flex justify-end items-center gap-3 mb-4 text-xs text-text-secondary">
                   <span>학습량 적음</span>
                   <div className="flex gap-1">
@@ -319,45 +392,30 @@ export default function AnalyticsPage() {
                   </div>
                   <span>학습량 많음</span>
                 </div>
-
-                {/* Day headers */}
                 <div className="grid grid-cols-7 gap-2">
                   {WEEKDAYS.map((day) => (
-                    <div
-                      key={day}
-                      className="text-center text-xs font-medium text-slate-400 py-1"
-                    >
+                    <div key={day} className="text-center text-xs font-medium text-slate-400 py-1">
                       {day}
                     </div>
                   ))}
-
-                  {/* Calendar cells */}
                   {paddedCalendar.map((cell, i) => (
                     <div
                       key={i}
                       className={`aspect-square rounded-md flex items-center justify-center text-xs ${
                         cell
                           ? `${ACTIVITY_COLORS[cell.level]} ${
-                              cell.level >= 3
-                                ? 'font-medium text-white'
-                                : cell.level >= 1
-                                  ? 'font-medium text-slate-700'
-                                  : 'text-slate-400'
+                              cell.level >= 3 ? 'font-medium text-white' :
+                              cell.level >= 1 ? 'font-medium text-slate-700' : 'text-slate-400'
                             }`
                           : 'bg-transparent'
                       }`}
                       title={
                         cell
                           ? `${cell.day}일: ${
-                              cell.level === 0
-                                ? '학습 안함'
-                                : cell.level === 1
-                                  ? '30분 미만'
-                                  : cell.level === 2
-                                    ? '30분~1시간'
-                                    : cell.level === 3
-                                      ? '1~2시간'
-                                      : '2시간 이상'
+                              cell.level === 0 ? '학습 안함' :
+                              cell.level === 1 ? '30분 미만' :
+                              cell.level === 2 ? '30분~1시간' :
+                              cell.level === 3 ? '1~2시간' : '2시간 이상'
                             }`
                           : ''
                       }
@@ -404,16 +462,12 @@ function SummaryCard({
   unit,
   subValue,
   subUnit,
-  trend,
-  trendPositive,
 }: {
   label: string;
   value: string;
   unit: string;
   subValue?: string;
   subUnit?: string;
-  trend: string;
-  trendPositive: boolean;
 }) {
   return (
     <div className="flex flex-col gap-2 rounded-xl p-6 bg-slate-50 border border-slate-100">
@@ -429,16 +483,6 @@ function SummaryCard({
           </>
         )}
       </p>
-      <div
-        className={`flex items-center gap-1 mt-2 text-sm font-medium px-2 py-1 rounded w-fit ${
-          trendPositive
-            ? 'text-emerald-600 bg-emerald-50'
-            : 'text-rose-600 bg-rose-50'
-        }`}
-      >
-        <TrendingUp className="w-4 h-4" />
-        <span>전월 대비 {trend}</span>
-      </div>
     </div>
   );
 }

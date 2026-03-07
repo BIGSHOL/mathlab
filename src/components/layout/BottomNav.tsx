@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, BookOpen, Trophy, User } from 'lucide-react';
+import { Home, BookOpen, Trophy, User, ClipboardCheck } from 'lucide-react';
 
 const navItems = [
   { label: '홈', href: '/dashboard', icon: Home },
   { label: '학습', href: '/subjects', icon: BookOpen },
+  { label: '시험', href: '/my-tests', icon: ClipboardCheck },
   { label: '랭킹', href: '/ranking', icon: Trophy },
   { label: '프로필', href: '/profile', icon: User },
 ];

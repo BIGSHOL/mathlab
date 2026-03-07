@@ -74,12 +74,14 @@ CHAPTERS = {
 
 # 섹션별 난이도
 SECTION_DIFFICULTY = {
+    'textbook': 'BASIC',
     'type': 'MEDIUM',
     'skill': 'HIGH',
     'essay': 'HIGHEST',
 }
 
 SECTION_LABELS = {
+    'textbook': '교과서문제 정복하기',
     'type': '유형 익히기',
     'skill': '실력',
     'essay': '서술형 주관식',
@@ -215,6 +217,19 @@ def fix_math(text):
     text = text.replace('\u00c9', '≤')
     # ≥ 기호
     text = text.replace('\u00be', '≥')
+
+    # EHsang-Plain 폰트 특수 글리프 변환
+    text = text.replace('Ó', '')     # 선분 바(̄) → 제거 (장식적 기호, ABÓ → AB)
+    text = text.replace('ù', '°')   # 각도 기호 (18ù → 18°)
+
+    # NPSUSP 폰트: s + 대문자 → △ (삼각형 기호, sABC → △ABC)
+    text = re.sub(r's([A-Z]{2,})', r'△\1', text)
+
+    # ± 제거 (도형/이미지 아티팩트, 인라인 포함)
+    text = text.replace('±', '')
+
+    # EHyak 폰트: ª → ≅ (합동 기호, 분수 디코딩에서 사용되지 않은 잔여분)
+    text = text.replace('ª', '≅')
 
     # PDF 폰트 PUA(Private Use Area) 문자 → 유니코드 변환 (곱셈 변환 전에 실행)
     PUA_MAP = {
@@ -398,11 +413,11 @@ def classify_page(text, prev_section):
 
     # 문제번호가 있으면 이전 섹션 유지 (연속 페이지)
     if re.search(r'(?:^|\n)\s*\d{4}\s*\n', text):
-        if prev_section in ('type', 'skill', 'essay'):
+        if prev_section in ('textbook', 'type', 'skill', 'essay'):
             return prev_section
 
     # 이전 섹션이 추출 가능 섹션이면 유지
-    if prev_section in ('type', 'skill', 'essay'):
+    if prev_section in ('textbook', 'type', 'skill', 'essay'):
         return prev_section
 
     return 'skip'
@@ -668,14 +683,20 @@ def extract_choices(content):
     choices = re.findall(r'([①②③④⑤][^①②③④⑤]*)', content)
     if len(choices) >= 2:
         cleaned = [c.strip() for c in choices]
+        # 최대 5개만 (①~⑤)
+        cleaned = cleaned[:5]
         # 마지막 선택지에서 다음 문제 내용 누출 제거
+        last = cleaned[-1]
+        # 4자리 문제번호가 들어있으면 그 앞에서 자름
+        qnum_match = re.search(r'\s\d{4}\s', last)
+        if qnum_match:
+            last = last[:qnum_match.start()].strip()
+        # 줄바꿈 기준으로도 자르기 (마지막 보기가 비정상적으로 길 때)
         if len(cleaned) >= 2:
             avg_len = sum(len(c) for c in cleaned[:-1]) / len(cleaned[:-1])
-            last = cleaned[-1]
-            if len(last) > avg_len * 3 and '\n' in last:
-                first_line = last.split('\n')[0].strip()
-                if len(first_line) >= 3:
-                    cleaned[-1] = first_line
+            if len(last) > avg_len * 2.5 and '\n' in last:
+                last = last.split('\n')[0].strip()
+        cleaned[-1] = last
         # 시각적 분수 인라인 변환 + 줄바꿈 제거
         cleaned = [_collapse_visual_fractions(c) for c in cleaned]
         return cleaned
@@ -777,6 +798,9 @@ def extract_questions_from_page(text, page_num, book_code, chapter, section, dif
                 idx = content.find('①')
                 if idx > 0:
                     content = content[:idx].strip()
+            else:
+                # 보기 추출 실패 (도형/이미지 보기) → 단답형으로 재분류
+                q_type = "SHORT_ANSWER"
 
         # 시각적 분수 인라인 변환 (content)
         content = _collapse_visual_fractions(content)
@@ -834,8 +858,8 @@ def parse_answer_pdf(pdf_path):
         end = matches[i + 1].start() if i + 1 < len(matches) else len(full_text)
         block = full_text[start:end].strip()
 
-        # "답" 키워드로 정답 추출
-        answer_match = re.search(r'(?:^|\n)\s*답\s+(.+?)(?:\n|$)', block)
+        # "답" 또는 "정답" 키워드로 정답 추출
+        answer_match = re.search(r'(?:^|\n)\s*(?:답|정답)\s+(.+?)(?:\n|$)', block)
 
         if answer_match:
             answer = answer_match.group(1).strip()
@@ -895,7 +919,7 @@ def parse_student_pdf(book_config):
         current_section = section
 
         # 추출 가능 섹션만 처리
-        if section not in ('type', 'skill', 'essay'):
+        if section not in ('textbook', 'type', 'skill', 'essay'):
             continue
 
         difficulty = SECTION_DIFFICULTY.get(section, 'MEDIUM')
@@ -1022,7 +1046,7 @@ def main():
     by_diff = {}
     for q in all_questions:
         by_diff[q["difficulty"]] = by_diff.get(q["difficulty"], 0) + 1
-    for d in ["MEDIUM", "HIGH", "HIGHEST"]:
+    for d in ["BASIC", "MEDIUM", "HIGH", "HIGHEST"]:
         print(f"  {d}: {by_diff.get(d, 0)}")
 
     # 후처리: 줄바꿈 + LaTeX 수식 통일
