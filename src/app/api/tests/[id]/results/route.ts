@@ -21,7 +21,15 @@ export async function GET(
     where: { testId: id },
     include: {
       student: { select: { name: true, grade: true } },
-      answers: { select: { timeSpentSeconds: true } },
+      answers: {
+        select: {
+          timeSpentSeconds: true,
+          isCorrect: true,
+          questionId: true,
+          flagged: true,
+          flagReason: true,
+        },
+      },
     },
     orderBy: { score: 'desc' },
   });

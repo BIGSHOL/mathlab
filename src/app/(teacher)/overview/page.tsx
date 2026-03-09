@@ -19,6 +19,7 @@ import { redirect } from 'next/navigation';
 import { formatNumber } from '@/lib/utils/format';
 import Link from 'next/link';
 import MonthlyChart from '@/components/charts/MonthlyChart';
+import DashboardAnalytics from '@/components/charts/DashboardAnalytics';
 
 function getAchievementColor(percent: number) {
   if (percent < 55) return { bg: 'bg-red-100', text: 'text-red-600', badge: 'text-red-500' };
@@ -35,8 +36,16 @@ export default async function TeacherDashboard() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
+  const isAdmin = user.role === 'ADMIN';
+
   // --- Data queries ---
   const totalStudents = await prisma.user.count({ where: { role: 'STUDENT', deletedAt: null } });
+  const totalTeachers = isAdmin
+    ? await prisma.user.count({ where: { role: 'TEACHER', deletedAt: null } })
+    : 0;
+  const pendingInquiries = isAdmin
+    ? await prisma.inquiry.count({ where: { status: 'PENDING' } })
+    : 0;
 
   const profiles = await prisma.studentProfile.findMany({
     select: { totalXp: true, level: true, lastActiveAt: true, currentStreak: true },
@@ -125,18 +134,19 @@ export default async function TeacherDashboard() {
   };
 
   const stats = [
+    ...(isAdmin ? [{
+      label: '등록 선생님',
+      value: formatNumber(totalTeachers),
+      suffix: '명',
+      icon: <GraduationCap className="w-8 h-8 text-primary opacity-20" />,
+      trend: { value: '활동 중', positive: true },
+    }] : []),
     {
       label: '전체 학생 수',
       value: formatNumber(totalStudents),
       suffix: '명',
       icon: <Users className="w-8 h-8 text-primary opacity-20" />,
       trend: { value: '+5%', positive: true },
-    },
-    {
-      label: '평균 레벨',
-      value: avgLevel.toFixed(1),
-      icon: <GraduationCap className="w-8 h-8 text-primary opacity-20" />,
-      trend: { value: '+2%', positive: true },
     },
     {
       label: '주간 활동률',
@@ -147,6 +157,20 @@ export default async function TeacherDashboard() {
         ? { value: '양호', positive: true }
         : { value: '관리 필요', positive: false },
     },
+    ...(isAdmin ? [{
+      label: '대기 문의',
+      value: formatNumber(pendingInquiries),
+      suffix: '건',
+      icon: <MessageCircleQuestion className="w-8 h-8 text-primary opacity-20" />,
+      trend: pendingInquiries > 0
+        ? { value: '답변 필요', positive: false }
+        : { value: '없음', positive: true },
+    }] : [{
+      label: '평균 레벨',
+      value: avgLevel.toFixed(1),
+      icon: <GraduationCap className="w-8 h-8 text-primary opacity-20" />,
+      trend: { value: '+2%', positive: true },
+    }]),
     {
       label: '총 학습 기록',
       value: formatNumber(totalProgress),
@@ -163,7 +187,7 @@ export default async function TeacherDashboard() {
         <div>
           <p className="text-sm font-medium text-primary mb-1">환영합니다, {user.name}님</p>
           <h2 className="text-text-primary text-2xl md:text-3xl font-black leading-tight tracking-tight">
-            통합 대시보드
+            {isAdmin ? '시스템 관리 대시보드' : '통합 대시보드'}
           </h2>
         </div>
         <div className="flex gap-3">
@@ -273,6 +297,9 @@ export default async function TeacherDashboard() {
           </div>
         </Card>
       </div>
+
+      {/* Row 2.5: Weekly Analytics (client-side fetched) */}
+      <DashboardAnalytics />
 
       {/* Row 3: Ranking + Grade Distribution + Recent Activity */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

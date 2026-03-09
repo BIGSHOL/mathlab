@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth';
 import { awardPointsSchema } from '@/lib/schemas/gamification';
 import { calculateLevel } from '@/lib/utils/xp';
 
-// POST /api/gamification/award (internal use)
+// POST /api/gamification/award
 export async function POST(request: NextRequest) {
+  const currentUser = await getCurrentUser();
+  if (!currentUser) {
+    return NextResponse.json(
+      { error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } },
+      { status: 401 }
+    );
+  }
+
   const body = await request.json();
   const parsed = awardPointsSchema.safeParse(body);
   if (!parsed.success) {

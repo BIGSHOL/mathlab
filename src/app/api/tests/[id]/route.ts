@@ -72,7 +72,7 @@ export async function PUT(
 
   const { id } = await params;
   const body = await request.json();
-  const { title, description, grade, testType, questionIds, timeLimitMin, shuffleOptions, isActive } = body;
+  const { title, description, grade, testType, questionIds, timeLimitMin, shuffleOptions, isActive, maxAttempts, defaultDueDate, allowLateSubmission } = body;
 
   const test = await prisma.test.update({
     where: { id },
@@ -85,6 +85,9 @@ export async function PUT(
       ...(timeLimitMin !== undefined && { timeLimitMin }),
       ...(shuffleOptions !== undefined && { shuffleOptions }),
       ...(isActive !== undefined && { isActive }),
+      ...(maxAttempts !== undefined && { maxAttempts }),
+      ...(defaultDueDate !== undefined && { defaultDueDate: defaultDueDate ? new Date(defaultDueDate) : null }),
+      ...(allowLateSubmission !== undefined && { allowLateSubmission }),
     },
   });
 

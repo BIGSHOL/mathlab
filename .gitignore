@@ -52,6 +52,12 @@ node_modules
 # claude
 .claude/
 
+# User-uploaded files
+public/uploads/
+
+# Question answer images (managed locally)
+public/questions/
+
 # Python
 __pycache__/
 *.pyc

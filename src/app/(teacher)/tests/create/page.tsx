@@ -9,6 +9,7 @@ import {
   ClipboardCheck,
   Loader2,
   Check,
+  Copy,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
@@ -42,8 +43,11 @@ export default function CreateTestPage() {
   const [testType, setTestType] = useState('concept');
   const [timeLimitMin, setTimeLimitMin] = useState<number | ''>('');
   const [shuffleOptions, setShuffleOptions] = useState(false);
+  const [maxAttempts, setMaxAttempts] = useState<number | ''>('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [variantCount, setVariantCount] = useState(2);
+  const [generatingVariants, setGeneratingVariants] = useState(false);
 
   // Question browser state
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
@@ -93,12 +97,47 @@ export default function CreateTestPage() {
         questionIds: selectedIds,
         timeLimitMin: timeLimitMin || undefined,
         shuffleOptions,
+        maxAttempts: maxAttempts || null,
       });
       router.push('/tests');
     } catch {
       alert('시험 생성 실패');
     }
     setSaving(false);
+  };
+
+  const handleGenerateVariants = async () => {
+    if (!title.trim()) return alert('시험 제목을 입력하세요');
+    if (selectedIds.length === 0) return alert('문제를 1개 이상 선택하세요');
+
+    setGeneratingVariants(true);
+    try {
+      const res = await fetch('/api/tests/variants', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sourceQuestionIds: selectedIds,
+          variantCount,
+          title: title.trim(),
+          grade,
+          testType,
+          timeLimitMin: timeLimitMin || undefined,
+          shuffleOptions,
+          maxAttempts: maxAttempts || null,
+        }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        alert(`변형 시험지 ${json.data.length}개가 생성되었습니다!`);
+        router.push('/tests');
+      } else {
+        const json = await res.json();
+        alert(json.error?.message || '변형 시험지 생성 실패');
+      }
+    } catch {
+      alert('변형 시험지 생성 실패');
+    }
+    setGeneratingVariants(false);
   };
 
   return (
@@ -166,6 +205,19 @@ export default function CreateTestPage() {
               />
             </label>
 
+            <label className="block mb-3">
+              <span className="text-sm font-medium text-text-secondary">응시 횟수 제한 (선택)</span>
+              <input
+                type="number"
+                value={maxAttempts}
+                onChange={(e) => setMaxAttempts(e.target.value ? Number(e.target.value) : '')}
+                placeholder="무제한"
+                min={1}
+                className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40"
+              />
+              <span className="text-xs text-slate-400 mt-0.5 block">비워두면 무제한 재시험 가능</span>
+            </label>
+
             <label className="flex items-center gap-2 mb-4">
               <input
                 type="checkbox"
@@ -205,6 +257,40 @@ export default function CreateTestPage() {
               <ClipboardCheck className="w-4 h-4 mr-1" />
               시험 저장 ({selectedIds.length}문제)
             </Button>
+
+            {/* Variant generation */}
+            {selectedIds.length >= 3 && (
+              <div className="mt-3 pt-3 border-t border-slate-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <Copy className="w-3.5 h-3.5 text-violet-500" />
+                  <span className="text-xs font-semibold text-text-secondary">변형 시험지 생성</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={variantCount}
+                    onChange={(e) => setVariantCount(Number(e.target.value))}
+                    className="px-2 py-1 border border-slate-200 rounded text-xs"
+                  >
+                    {[2, 3, 4, 5].map((n) => (
+                      <option key={n} value={n}>{n}개</option>
+                    ))}
+                  </select>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="flex-1 text-xs"
+                    onClick={handleGenerateVariants}
+                    loading={generatingVariants}
+                    disabled={!title.trim() || selectedIds.length === 0}
+                  >
+                    변형 생성
+                  </Button>
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1">
+                  같은 유형/난이도의 다른 문제로 구성된 시험지를 자동 생성합니다
+                </p>
+              </div>
+            )}
           </Card>
         </div>
 

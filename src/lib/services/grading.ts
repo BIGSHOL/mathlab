@@ -5,6 +5,7 @@
 
 import { prisma } from '@/lib/db';
 import { calculateLevel } from '@/lib/utils/xp';
+import { checkAnswer } from '@/lib/services/cheat-detection';
 
 /** 콤보 보너스 배율 계산 */
 export function getComboMultiplier(comboCount: number): number {
@@ -37,8 +38,9 @@ export async function submitAnswer(params: {
   questionId: string;
   selectedAnswer: string;
   timeSpentSeconds: number;
+  tabSwitchCount?: number;
 }) {
-  const { attemptId, questionId, selectedAnswer, timeSpentSeconds } = params;
+  const { attemptId, questionId, selectedAnswer, timeSpentSeconds, tabSwitchCount } = params;
 
   // 시도와 문제 조회
   const [attempt, question] = await Promise.all([
@@ -82,6 +84,14 @@ export async function submitAnswer(params: {
     ? Math.round(basePoints * getComboMultiplier(newCombo))
     : 0;
 
+  // 부정행위 감지
+  const flag = checkAnswer({
+    timeSpentSeconds,
+    difficulty: question.difficulty,
+    questionType: question.type,
+    tabSwitchCount,
+  });
+
   // AnswerLog 생성 + TestAttempt 업데이트 (트랜잭션)
   await prisma.$transaction(async (tx) => {
     const log = await tx.answerLog.create({
@@ -93,6 +103,8 @@ export async function submitAnswer(params: {
         timeSpentSeconds,
         comboCount: newCombo,
         pointsEarned,
+        flagged: flag.flagged,
+        flagReason: flag.reason,
       },
     });
 
@@ -179,6 +191,27 @@ export async function completeAttempt(attemptId: string) {
       });
     }
 
+    // TestAssignment bestScore 갱신
+    if (attempt.assignmentId) {
+      const assignment = await tx.testAssignment.findUnique({
+        where: { id: attempt.assignmentId },
+      });
+      if (assignment && (assignment.bestScore === null || totalPoints > assignment.bestScore)) {
+        await tx.testAssignment.update({
+          where: { id: attempt.assignmentId },
+          data: {
+            bestScore: totalPoints,
+            bestAttemptId: attemptId,
+            status: 'COMPLETED',
+          },
+        });
+      } else if (assignment && assignment.status !== 'COMPLETED') {
+        await tx.testAssignment.update({
+          where: { id: attempt.assignmentId },
+          data: { status: 'COMPLETED' },
+        });
+      }
+    }
   });
 
   return {

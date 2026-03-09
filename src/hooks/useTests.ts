@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import type { AssignmentStatus } from '@/types';
 
 interface Test {
   id: string;
@@ -13,13 +14,22 @@ interface Test {
   timeLimitMin: number | null;
   shuffleOptions: boolean;
   isActive: boolean;
+  maxAttempts: number | null;
   createdAt: string;
   creator: { name: string };
-  _count: { attempts: number };
+  _count: { attempts: number; assignments: number };
   myAttempt?: {
     completed: boolean;
     score: number;
     maxScore: number;
+  } | null;
+  attemptCount?: number;
+  assignment?: {
+    testId: string;
+    dueDate: string | null;
+    status: AssignmentStatus;
+    bestScore: number | null;
+    allowLateSubmission: boolean;
   } | null;
 }
 
@@ -51,6 +61,7 @@ interface AttemptResult {
   totalCount: number;
   xpEarned: number;
   comboMax: number;
+  attemptNumber: number;
   questionOrder: string[];
   currentQuestionIndex: number;
   nextQuestionId: string | null;
@@ -122,6 +133,9 @@ export function useTests(filters?: { grade?: number; testType?: string }) {
     questionIds: string[];
     timeLimitMin?: number;
     shuffleOptions?: boolean;
+    maxAttempts?: number | null;
+    defaultDueDate?: string;
+    allowLateSubmission?: boolean;
   }) => {
     const res = await fetch('/api/tests', {
       method: 'POST',
@@ -170,7 +184,10 @@ export function useTestAttempt() {
     setLoading(true);
     try {
       const res = await fetch(`/api/tests/${testId}/attempt`, { method: 'POST' });
-      if (!res.ok) throw new Error('시험 시작 실패');
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error?.message || '시험 시작 실패');
+      }
       const json = await res.json();
 
       // 시도 상세 조회
@@ -188,11 +205,12 @@ export function useTestAttempt() {
     questionId: string,
     selectedAnswer: string,
     timeSpentSeconds: number,
+    tabSwitchCount?: number,
   ): Promise<SubmitResult> => {
     const res = await fetch(`/api/tests/attempts/${attemptId}/answer`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ questionId, selectedAnswer, timeSpentSeconds }),
+      body: JSON.stringify({ questionId, selectedAnswer, timeSpentSeconds, tabSwitchCount }),
     });
     if (!res.ok) {
       const err = await res.json();

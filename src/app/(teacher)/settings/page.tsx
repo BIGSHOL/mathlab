@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/hooks/useAuth';
 
 const TABS = [
   { id: 'profile', label: '프로필 설정', icon: User },
@@ -22,6 +23,8 @@ const TABS = [
 type TabId = (typeof TABS)[number]['id'];
 
 export default function SettingsPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
   const [activeTab, setActiveTab] = useState<TabId>('profile');
 
   return (
@@ -66,22 +69,22 @@ export default function SettingsPage() {
                   <label className="text-sm font-semibold text-text-primary">이름</label>
                   <input
                     className="h-11 px-4 rounded-lg border border-slate-200 bg-white text-text-primary placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all text-[15px]"
-                    defaultValue="관리자"
+                    defaultValue={user?.name ?? ''}
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-primary">이메일</label>
+                  <label className="text-sm font-semibold text-text-primary">아이디</label>
                   <input
-                    className="h-11 px-4 rounded-lg border border-slate-200 bg-white text-text-primary placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all text-[15px]"
-                    defaultValue="admin@mathlogic.lab"
-                    type="email"
+                    className="h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 text-text-secondary text-[15px] cursor-not-allowed"
+                    value={user?.username ?? ''}
+                    disabled
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-text-primary">역할</label>
                   <input
                     className="h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 text-text-secondary text-[15px] cursor-not-allowed"
-                    value="선생님"
+                    value={isAdmin ? '관리자' : '선생님'}
                     disabled
                   />
                 </div>
@@ -146,6 +149,10 @@ export default function SettingsPage() {
                   { label: '학습 완료 알림', desc: '학생이 스테이지를 완료하면 알림을 받습니다.', defaultChecked: false },
                   { label: '주간 리포트', desc: '매주 월요일 학습 요약 리포트를 받습니다.', defaultChecked: true },
                   { label: '시스템 공지', desc: '시스템 업데이트 및 공지사항을 받습니다.', defaultChecked: true },
+                  ...(isAdmin ? [
+                    { label: '문의 접수 알림', desc: '선생님이 새 문의를 등록하면 알림을 받습니다.', defaultChecked: true },
+                    { label: '선생님 가입 알림', desc: '새 선생님이 가입하면 알림을 받습니다.', defaultChecked: true },
+                  ] : []),
                 ].map((item) => (
                   <label
                     key={item.label}

@@ -17,7 +17,7 @@ export async function POST(
 
   const { attemptId } = await params;
   const body = await request.json();
-  const { questionId, selectedAnswer, timeSpentSeconds } = body;
+  const { questionId, selectedAnswer, timeSpentSeconds, tabSwitchCount } = body;
 
   if (!questionId || selectedAnswer === undefined || timeSpentSeconds === undefined) {
     return NextResponse.json(
@@ -32,6 +32,7 @@ export async function POST(
       questionId,
       selectedAnswer: String(selectedAnswer),
       timeSpentSeconds: Math.max(0, Math.round(timeSpentSeconds)),
+      tabSwitchCount: tabSwitchCount ? Math.max(0, Number(tabSwitchCount)) : undefined,
     });
 
     return NextResponse.json({ data: result });

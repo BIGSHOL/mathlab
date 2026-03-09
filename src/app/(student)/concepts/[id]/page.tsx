@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, BookOpen, CheckCircle } from 'lucide-react';
+import { ArrowLeft, BookOpen, CheckCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
@@ -48,6 +48,7 @@ export default function ConceptPage() {
   const [toast, setToast] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [showHints, setShowHints] = useState<Record<number, boolean>>({});
+  const [loading, setLoading] = useState(true);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -58,7 +59,8 @@ export default function ConceptPage() {
   useEffect(() => {
     fetch(`/api/concepts/${id}`)
       .then((r) => r.json())
-      .then((json) => { if (json.data) setConcept(json.data); });
+      .then((json) => { if (json.data) setConcept(json.data); })
+      .finally(() => setLoading(false));
   }, [id]);
 
   // Fetch progress
@@ -159,8 +161,12 @@ export default function ConceptPage() {
     }
   };
 
-  if (!concept) {
-    return <div className="flex items-center justify-center min-h-[50vh] text-text-secondary">로딩 중...</div>;
+  if (loading || !concept) {
+    return (
+      <div className="flex justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   const currentStage = stageConfig[currentStageIdx];

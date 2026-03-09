@@ -13,10 +13,22 @@ import {
   BookOpen,
   Eye,
   ClipboardCheck,
+  Shield,
+  UserCog,
 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
-const menuItems = [
+interface MenuItem {
+  label: string;
+  href: string;
+  icon: typeof LayoutDashboard;
+  disabled?: boolean;
+  adminOnly?: boolean;
+}
+
+const menuItems: MenuItem[] = [
   { label: '대시보드', href: '/overview', icon: LayoutDashboard },
+  { label: '선생님 관리', href: '/students?tab=teachers', icon: UserCog, adminOnly: true },
   { label: '학생 관리', href: '/students', icon: Users },
   { label: '개념 관리', href: '/concepts', icon: BookOpen },
   { label: '문제 은행', href: '/questions', icon: Database },
@@ -33,15 +45,29 @@ const systemItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
+
+  const visibleMenuItems = menuItems.filter((item) => !item.adminOnly || isAdmin);
 
   return (
     <aside className="w-64 flex-col bg-white/50 backdrop-blur-sm border-r border-slate-200/50 py-6 px-4 shrink-0 overflow-y-auto hidden md:flex">
       <div className="flex flex-col gap-1.5">
+        {/* Admin badge */}
+        {isAdmin && (
+          <div className="flex items-center gap-2 px-3 py-2 mb-3 rounded-lg bg-violet-50 border border-violet-200">
+            <Shield className="w-4 h-4 text-violet-600" />
+            <span className="text-xs font-bold text-violet-700">관리자 모드</span>
+          </div>
+        )}
+
         <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-3">
           메인 메뉴
         </p>
-        {menuItems.map((item) => {
-          const isActive = pathname === item.href || (item.href !== '/overview' && pathname.startsWith(item.href + '/'));
+        {visibleMenuItems.map((item) => {
+          const isActive = item.adminOnly
+            ? pathname === '/students' && typeof window !== 'undefined' && window.location.search.includes('tab=teachers')
+            : pathname === item.href || (item.href !== '/overview' && !item.adminOnly && pathname.startsWith(item.href + '/'));
 
           if (item.disabled) {
             return (
@@ -60,7 +86,7 @@ export function Sidebar() {
 
           return (
             <Link
-              key={item.href}
+              key={item.label}
               href={item.href}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all font-medium text-sm ${
                 isActive

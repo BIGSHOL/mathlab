@@ -36,6 +36,9 @@ model User {
   transactions   PointTransaction[]
   createdTests   Test[]          @relation("TestCreator")
   testAttempts   TestAttempt[]   @relation("StudentAttempts")
+  assignments    TestAssignment[] @relation("StudentAssignments")
+  inquiries      Inquiry[]       @relation("InquiryAuthor")
+  repliedInquiries Inquiry[]     @relation("InquiryReplier")
 
   @@index([role])
 }
@@ -224,22 +227,26 @@ model ConceptPrerequisite {
 
 // FEAT-3: Test System
 model Test {
-  id             String   @id @default(cuid())
-  title          String   @db.VarChar(200)
-  description    String?  @db.Text
-  grade          Int
-  testType       String   @db.VarChar(30)  // concept, cumulative, chapter_final
-  questionIds    Json                       // String[] - Question ID 배열
-  questionCount  Int
-  timeLimitMin   Int?                       // 제한 시간 (분)
-  shuffleOptions Boolean  @default(false)
-  isActive       Boolean  @default(true)
-  createdBy      String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  title               String   @db.VarChar(200)
+  description         String?  @db.Text
+  grade               Int
+  testType            String   @db.VarChar(30)  // concept, cumulative, chapter_final
+  questionIds         Json                       // String[] - Question ID 배열
+  questionCount       Int
+  timeLimitMin        Int?                       // 제한 시간 (분)
+  shuffleOptions      Boolean  @default(false)
+  isActive            Boolean  @default(true)
+  maxAttempts         Int?                       // null=무제한, 1=재시험불가
+  defaultDueDate      DateTime?                  // 배정 시 기본 마감일
+  allowLateSubmission Boolean  @default(false)   // 기한 후 지각 제출 허용
+  createdBy           String
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
-  creator   User          @relation("TestCreator", fields: [createdBy], references: [id])
-  attempts  TestAttempt[]
+  creator     User              @relation("TestCreator", fields: [createdBy], references: [id])
+  attempts    TestAttempt[]
+  assignments TestAssignment[]
 
   @@index([grade])
   @@index([createdBy])
@@ -247,26 +254,59 @@ model Test {
 }
 
 model TestAttempt {
-  id            String    @id @default(cuid())
-  testId        String
-  studentId     String
-  startedAt     DateTime  @default(now())
-  completedAt   DateTime?
-  score         Int       @default(0)
-  maxScore      Int       @default(0)
-  correctCount  Int       @default(0)
-  totalCount    Int       @default(0)
-  xpEarned      Int       @default(0)
-  comboMax      Int       @default(0)
-  createdAt     DateTime  @default(now())
+  id             String    @id @default(cuid())
+  testId         String
+  studentId      String
+  attemptNumber  Int       @default(1)
+  assignmentId   String?
+  startedAt      DateTime  @default(now())
+  completedAt    DateTime?
+  score          Int       @default(0)
+  maxScore       Int       @default(0)
+  correctCount   Int       @default(0)
+  totalCount     Int       @default(0)
+  xpEarned       Int       @default(0)
+  comboMax       Int       @default(0)
+  createdAt      DateTime  @default(now())
 
-  test       Test        @relation(fields: [testId], references: [id], onDelete: Cascade)
-  student    User        @relation("StudentAttempts", fields: [studentId], references: [id], onDelete: Cascade)
+  test       Test              @relation(fields: [testId], references: [id], onDelete: Cascade)
+  student    User              @relation("StudentAttempts", fields: [studentId], references: [id], onDelete: Cascade)
+  assignment TestAssignment?   @relation(fields: [assignmentId], references: [id])
   answers    AnswerLog[]
 
   @@index([studentId])
   @@index([testId])
   @@index([studentId, completedAt])
+  @@index([assignmentId])
+}
+
+enum AssignmentStatus {
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  OVERDUE
+}
+
+model TestAssignment {
+  id                  String           @id @default(cuid())
+  testId              String
+  studentId           String
+  assignedAt          DateTime         @default(now())
+  dueDate             DateTime?
+  allowLateSubmission Boolean          @default(false)
+  status              AssignmentStatus @default(ASSIGNED)
+  bestScore           Int?
+  bestAttemptId       String?
+  updatedAt           DateTime         @updatedAt
+
+  test     Test          @relation(fields: [testId], references: [id], onDelete: Cascade)
+  student  User          @relation("StudentAssignments", fields: [studentId], references: [id], onDelete: Cascade)
+  attempts TestAttempt[]
+
+  @@unique([testId, studentId])
+  @@index([studentId])
+  @@index([testId])
+  @@index([studentId, status])
 }
 
 model AnswerLog {
@@ -278,12 +318,120 @@ model AnswerLog {
   timeSpentSeconds Int
   comboCount       Int      @default(0)
   pointsEarned     Int      @default(0)
+  flagged          Boolean  @default(false)
+  flagReason       String?  @db.VarChar(100)
   createdAt        DateTime @default(now())
 
   attempt  TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
 
   @@index([attemptId])
   @@index([questionId])
+}
+
+// FEAT: Support Inquiry System
+enum InquiryStatus {
+  PENDING
+  ANSWERED
+}
+
+model Inquiry {
+  id         String        @id @default(cuid())
+  userId     String
+  title      String        @db.VarChar(200)
+  category   String        @db.VarChar(50)
+  content    String        @db.Text
+  status     InquiryStatus @default(PENDING)
+  reply      String?       @db.Text
+  repliedAt  DateTime?
+  repliedBy  String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  user       User          @relation("InquiryAuthor", fields: [userId], references: [id])
+  replier    User?         @relation("InquiryReplier", fields: [repliedBy], references: [id])
+
+  @@index([userId])
+  @@index([status])
+}
+
+// FEAT: Diagnostic Test Results
+model DiagnosticResult {
+  id              String   @id @default(cuid())
+  attemptId       String   @unique
+  studentId       String
+  diagnosticType  String   @db.VarChar(20)  // ENTRANCE, UNIT, LEVEL
+  recommendLevel  String   @db.VarChar(20)  // 추천 레벨
+  weakAreas       Json                       // 취약 영역 배열 [{chapter, accuracy}]
+  strongAreas     Json                       // 우수 영역 배열
+  overallAccuracy Int                        // 전체 정답률 (%)
+  createdAt       DateTime @default(now())
+
+  @@index([studentId])
+  @@index([studentId, diagnosticType])
+}
+
+// FEAT: Parent & Report System
+model Parent {
+  id        String   @id @default(cuid())
+  studentId String
+  name      String   @db.VarChar(50)
+  phone     String   @db.VarChar(20)
+  createdAt DateTime @default(now())
+
+  @@index([studentId])
+}
+
+model ReportHistory {
+  id        String   @id @default(cuid())
+  studentId String
+  type      String   @db.VarChar(30)  // WEEKLY, TEST_RESULT, DIAGNOSTIC
+  content   Json                       // 리포트 내용 JSON
+  sentAt    DateTime @default(now())
+  channel   String   @db.VarChar(20)  // KAKAO, SMS, EMAIL
+
+  @@index([studentId])
+  @@index([studentId, type])
+}
+
+// FEAT: Real-time Quiz Battle
+enum QuizStatus {
+  WAITING
+  ACTIVE
+  COMPLETED
+}
+
+model QuizSession {
+  id          String     @id @default(cuid())
+  title       String     @db.VarChar(200)
+  hostId      String
+  questionIds Json                          // String[]
+  status      QuizStatus @default(WAITING)
+  currentQ    Int        @default(0)
+  joinCode    String     @unique @db.VarChar(6)
+  startedAt   DateTime?
+  endedAt     DateTime?
+  createdAt   DateTime   @default(now())
+
+  participants QuizParticipant[]
+
+  @@index([hostId])
+  @@index([joinCode])
+  @@index([status])
+}
+
+model QuizParticipant {
+  id           String @id @default(cuid())
+  sessionId    String
+  studentId    String
+  studentName  String @db.VarChar(50)
+  score        Int    @default(0)
+  correctCount Int    @default(0)
+  rank         Int?
+
+  session QuizSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, studentId])
+  @@index([sessionId])
 }
 
 // School Information

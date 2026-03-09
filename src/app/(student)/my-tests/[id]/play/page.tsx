@@ -52,6 +52,9 @@ export default function TestPlayPage() {
   const [elapsed, setElapsed] = useState(0);
   const questionStartRef = useRef(Date.now());
 
+  // Tab switch detection
+  const tabSwitchRef = useRef(0);
+
   // Initialize test
   useEffect(() => {
     async function init() {
@@ -81,12 +84,24 @@ export default function TestPlayPage() {
   // Per-question timer
   useEffect(() => {
     questionStartRef.current = Date.now();
+    tabSwitchRef.current = 0;
     setElapsed(0);
     const timer = setInterval(() => {
       setElapsed(Math.floor((Date.now() - questionStartRef.current) / 1000));
     }, 1000);
     return () => clearInterval(timer);
   }, [currentIndex]);
+
+  // Tab visibility change detection
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden) {
+        tabSwitchRef.current++;
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
 
   const currentQuestion = questions[currentIndex];
   const isLastQuestion = currentIndex >= questions.length - 1;
@@ -103,7 +118,8 @@ export default function TestPlayPage() {
         attempt.id,
         currentQuestion.id,
         selectedAnswer,
-        timeSpent
+        timeSpent,
+        tabSwitchRef.current
       );
 
       setFeedback(result);

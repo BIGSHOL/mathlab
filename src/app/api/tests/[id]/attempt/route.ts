@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 
-/** POST: 시험 시작 → TestAttempt 생성 */
+/** POST: 시험 시작 → TestAttempt 생성 (재시험/마감일/배정 지원) */
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -22,6 +22,32 @@ export async function POST(
     return NextResponse.json(
       { error: { code: 'NOT_FOUND', message: '시험을 찾을 수 없습니다' } },
       { status: 404 }
+    );
+  }
+
+  // 배정 확인
+  const assignment = await prisma.testAssignment.findUnique({
+    where: { testId_studentId: { testId, studentId: currentUser.id } },
+  });
+
+  // 마감일 체크
+  if (assignment?.dueDate && new Date() > assignment.dueDate && !assignment.allowLateSubmission) {
+    return NextResponse.json(
+      { error: { code: 'DEADLINE_PASSED', message: '마감 기한이 지났습니다' } },
+      { status: 403 }
+    );
+  }
+
+  // 완료된 시도 수 확인
+  const completedAttempts = await prisma.testAttempt.count({
+    where: { testId, studentId: currentUser.id, completedAt: { not: null } },
+  });
+
+  // maxAttempts 초과 체크
+  if (test.maxAttempts !== null && completedAttempts >= test.maxAttempts) {
+    return NextResponse.json(
+      { error: { code: 'MAX_ATTEMPTS', message: `최대 응시 횟수(${test.maxAttempts}회)를 초과했습니다` } },
+      { status: 403 }
     );
   }
 
@@ -59,8 +85,18 @@ export async function POST(
       studentId: currentUser.id,
       totalCount: orderedIds.length,
       maxScore,
+      attemptNumber: completedAttempts + 1,
+      assignmentId: assignment?.id ?? null,
     },
   });
+
+  // 배정 상태 업데이트 (ASSIGNED → IN_PROGRESS)
+  if (assignment && assignment.status === 'ASSIGNED') {
+    await prisma.testAssignment.update({
+      where: { id: assignment.id },
+      data: { status: 'IN_PROGRESS' },
+    });
+  }
 
   return NextResponse.json({
     data: {

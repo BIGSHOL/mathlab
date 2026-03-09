@@ -10,10 +10,14 @@ import {
   Trash2,
   BarChart3,
   Loader2,
+  UserPlus,
+  RotateCcw,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useTests } from '@/hooks/useTests';
+import { useAuth } from '@/hooks/useAuth';
+import { AssignPanel } from '@/components/test/AssignPanel';
 
 const TEST_TYPE_LABELS: Record<string, string> = {
   concept: '단원별',
@@ -22,9 +26,13 @@ const TEST_TYPE_LABELS: Record<string, string> = {
 };
 
 export default function TestsPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
   const [gradeFilter, setGradeFilter] = useState<number | undefined>();
-  const { tests, loading, deleteTest } = useTests({ grade: gradeFilter });
+  const { tests, loading, deleteTest, refresh } = useTests({ grade: gradeFilter });
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [assigningTestId, setAssigningTestId] = useState<string | null>(null);
+  const assigningTest = tests.find((t) => t.id === assigningTestId);
 
   const handleDelete = async (id: string) => {
     if (!confirm('이 시험을 삭제하시겠습니까?')) return;
@@ -105,6 +113,12 @@ export default function TestsPage() {
                     <span className="px-2 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-600">
                       {TEST_TYPE_LABELS[test.testType] || test.testType}
                     </span>
+                    {test.maxAttempts !== null && (
+                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-600 flex items-center gap-1">
+                        <RotateCcw className="w-3 h-3" />
+                        {test.maxAttempts}회
+                      </span>
+                    )}
                   </div>
                   <h3 className="text-lg font-bold text-text-primary">{test.title}</h3>
                   {test.description && (
@@ -125,9 +139,29 @@ export default function TestsPage() {
                       <Users className="w-4 h-4" />
                       {test._count.attempts}명 응시
                     </span>
+                    {test._count.assignments > 0 && (
+                      <span className="flex items-center gap-1 text-primary font-medium">
+                        <UserPlus className="w-4 h-4" />
+                        {test._count.assignments}명 배정
+                      </span>
+                    )}
+                    {isAdmin && test.creator && (
+                      <span className="text-xs text-violet-600 font-medium">
+                        출제: {test.creator.name}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setAssigningTestId(test.id)}
+                    className="text-primary"
+                  >
+                    <UserPlus className="w-4 h-4 mr-1" />
+                    배정
+                  </Button>
                   <Link href={`/tests/${test.id}/results`}>
                     <Button variant="ghost" size="sm">
                       <BarChart3 className="w-4 h-4 mr-1" />
@@ -148,6 +182,16 @@ export default function TestsPage() {
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Assign Panel */}
+      {assigningTestId && assigningTest && (
+        <AssignPanel
+          testId={assigningTestId}
+          testGrade={assigningTest.grade}
+          onClose={() => setAssigningTestId(null)}
+          onAssigned={() => refresh()}
+        />
       )}
     </div>
   );

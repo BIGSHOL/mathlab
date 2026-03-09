@@ -8,15 +8,20 @@ import {
   Clock,
   Zap,
   Star,
-  CheckCircle2,
-  XCircle,
   ArrowLeft,
   Loader2,
   Target,
+  RotateCcw,
+  History,
+  Shuffle,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { MathRenderer } from '@/components/math/MathRenderer';
+import { MathStatusBadge } from '@/components/ui/MathStatusBadge';
+import { classifyAnswer, getStatusSummary } from '@/lib/utils/answer-status';
 import { DIFFICULTY_LABELS } from '@/types';
 
 interface AnswerDetail {
@@ -39,6 +44,17 @@ interface QuestionInfo {
   questionNum: number;
 }
 
+interface AttemptHistory {
+  id: string;
+  attemptNumber: number;
+  score: number;
+  maxScore: number;
+  correctCount: number;
+  totalCount: number;
+  completedAt: string | null;
+  xpEarned: number;
+}
+
 export default function TestResultPage() {
   const { id: testId } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
@@ -49,10 +65,34 @@ export default function TestResultPage() {
     totalCount: number;
     xpEarned: number;
     comboMax: number;
+    attemptNumber: number;
     answers: AnswerDetail[];
-    test: { title: string };
+    test: { title: string; maxAttempts: number | null };
   } | null>(null);
   const [questions, setQuestions] = useState<QuestionInfo[]>([]);
+  const [attemptHistory, setAttemptHistory] = useState<AttemptHistory[]>([]);
+  const [canRetake, setCanRetake] = useState(false);
+  const [expandedSimilar, setExpandedSimilar] = useState<string | null>(null);
+  const [similarQuestions, setSimilarQuestions] = useState<Record<string, QuestionInfo[]>>({});
+  const [similarLoading, setSimilarLoading] = useState<string | null>(null);
+
+  const loadSimilar = async (questionId: string) => {
+    if (expandedSimilar === questionId) {
+      setExpandedSimilar(null);
+      return;
+    }
+    setExpandedSimilar(questionId);
+    if (similarQuestions[questionId]) return;
+    setSimilarLoading(questionId);
+    try {
+      const res = await fetch(`/api/questions/similar?questionId=${questionId}&limit=3`);
+      if (res.ok) {
+        const json = await res.json();
+        setSimilarQuestions((prev) => ({ ...prev, [questionId]: json.data.similar ?? [] }));
+      }
+    } catch { /* ignore */ }
+    setSimilarLoading(null);
+  };
 
   useEffect(() => {
     async function load() {
@@ -80,7 +120,21 @@ export default function TestResultPage() {
                 setAttempt(detailJson.data);
               }
             }
+
+            // Check retake
+            const attemptCount = test.attemptCount ?? 0;
+            const maxAttempts = test.maxAttempts;
+            setCanRetake(maxAttempts === null || attemptCount < maxAttempts);
           }
+        }
+
+        // 시도 이력 조회
+        const histRes = await fetch(`/api/tests/${testId}/attempts`);
+        if (histRes.ok) {
+          const histJson = await histRes.json();
+          setAttemptHistory(
+            (histJson.data ?? []).filter((a: AttemptHistory) => a.completedAt)
+          );
         }
       } catch {
         // ignore
@@ -135,6 +189,14 @@ export default function TestResultPage() {
           <span className="text-2xl text-primary/60">/{attempt.maxScore}</span>
         </p>
         <p className="text-text-secondary mt-1">점수</p>
+        {canRetake && (
+          <Link href={`/my-tests/${testId}/play`} className="inline-block mt-4">
+            <Button variant="secondary" size="sm">
+              <RotateCcw className="w-4 h-4 mr-1" />
+              다시 풀기
+            </Button>
+          </Link>
+        )}
       </Card>
 
       {/* Stats */}
@@ -161,6 +223,78 @@ export default function TestResultPage() {
         </Card>
       </div>
 
+      {/* 시도 이력 */}
+      {attemptHistory.length > 1 && (
+        <div className="mb-6">
+          <h2 className="text-lg font-bold text-text-primary mb-3 flex items-center gap-2">
+            <History className="w-5 h-5 text-slate-500" />
+            응시 이력
+          </h2>
+          <div className="grid gap-2">
+            {attemptHistory.map((h) => (
+              <Card key={h.id} className="p-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-bold text-text-secondary">{h.attemptNumber}회차</span>
+                  <span className="text-sm font-semibold text-text-primary">
+                    {h.score}/{h.maxScore}점
+                  </span>
+                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
+                    (h.correctCount / h.totalCount) >= 0.8 ? 'bg-emerald-100 text-emerald-700' :
+                    (h.correctCount / h.totalCount) >= 0.6 ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-red-100 text-red-700'
+                  }`}>
+                    {Math.round((h.correctCount / h.totalCount) * 100)}%
+                  </span>
+                </div>
+                <span className="text-xs text-text-secondary">
+                  +{h.xpEarned} XP
+                </span>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 학습 상태 요약 */}
+      {(() => {
+        const statuses = attempt.answers.map((ans) => {
+          const q = questionMap.get(ans.questionId);
+          return classifyAnswer({
+            isCorrect: ans.isCorrect,
+            timeSpentSeconds: ans.timeSpentSeconds,
+            difficulty: q?.difficulty ?? 'MEDIUM',
+          }).status;
+        });
+        const summary = getStatusSummary(statuses);
+        return (
+          <Card className="p-4 mb-6">
+            <h3 className="text-sm font-bold text-text-primary mb-3">학습 상태 분석</h3>
+            <div className="grid grid-cols-4 gap-2 text-center">
+              <div>
+                <span className="text-lg font-bold text-emerald-600">○</span>
+                <p className="text-xs text-text-secondary">정답</p>
+                <p className="text-sm font-bold text-text-primary">{summary.correct}</p>
+              </div>
+              <div>
+                <span className="text-lg font-bold text-amber-600">△</span>
+                <p className="text-xs text-text-secondary">풀이 미흡</p>
+                <p className="text-sm font-bold text-text-primary">{summary.partial}</p>
+              </div>
+              <div>
+                <span className="text-lg font-bold text-orange-600">●</span>
+                <p className="text-xs text-text-secondary">계산 실수</p>
+                <p className="text-sm font-bold text-text-primary">{summary.calcError}</p>
+              </div>
+              <div>
+                <span className="text-lg font-bold text-red-600">★</span>
+                <p className="text-xs text-text-secondary">개념 부족</p>
+                <p className="text-sm font-bold text-text-primary">{summary.conceptWeak}</p>
+              </div>
+            </div>
+          </Card>
+        );
+      })()}
+
       {/* Answer review */}
       <h2 className="text-lg font-bold text-text-primary mb-4">문제별 결과</h2>
       <div className="space-y-3">
@@ -171,13 +305,12 @@ export default function TestResultPage() {
           return (
             <Card key={ans.questionId} className="p-4">
               <div className="flex items-start gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  ans.isCorrect ? 'bg-emerald-100' : 'bg-red-100'
-                }`}>
-                  {ans.isCorrect
-                    ? <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                    : <XCircle className="w-5 h-5 text-red-600" />
-                  }
+                <div className="flex-shrink-0 pt-0.5">
+                  <MathStatusBadge
+                    isCorrect={ans.isCorrect}
+                    timeSpentSeconds={ans.timeSpentSeconds}
+                    difficulty={q.difficulty}
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
@@ -210,17 +343,68 @@ export default function TestResultPage() {
                       <> · 정답: <span className="text-emerald-600 font-medium">{q.answer}</span></>
                     )}
                   </div>
+                  {!ans.isCorrect && (
+                    <button
+                      onClick={() => loadSimilar(ans.questionId)}
+                      className="mt-2 flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                    >
+                      <Shuffle className="w-3 h-3" />
+                      유사 문제
+                      {expandedSimilar === ans.questionId ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    </button>
+                  )}
                 </div>
               </div>
+              {expandedSimilar === ans.questionId && (
+                <div className="mt-3 pt-3 border-t border-slate-100">
+                  {similarLoading === ans.questionId ? (
+                    <div className="flex items-center gap-2 text-xs text-text-secondary py-2">
+                      <Loader2 className="w-3 h-3 animate-spin" /> 유사 문제 찾는 중...
+                    </div>
+                  ) : (similarQuestions[ans.questionId] ?? []).length === 0 ? (
+                    <p className="text-xs text-text-secondary py-2">유사 문제를 찾을 수 없습니다</p>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">유사 문제 {(similarQuestions[ans.questionId] ?? []).length}개</p>
+                      {(similarQuestions[ans.questionId] ?? []).map((sq) => (
+                        <div key={sq.id} className="bg-slate-50 rounded-lg p-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[10px] text-text-secondary">{sq.chapter}</span>
+                            <span className={`px-1 py-0.5 rounded text-[9px] font-bold ${
+                              sq.difficulty === 'BASIC' ? 'bg-green-100 text-green-700' :
+                              sq.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
+                              sq.difficulty === 'HIGH' ? 'bg-red-100 text-red-700' :
+                              'bg-purple-100 text-purple-700'
+                            }`}>
+                              {DIFFICULTY_LABELS[sq.difficulty as keyof typeof DIFFICULTY_LABELS]}
+                            </span>
+                          </div>
+                          <div className="text-sm text-text-primary line-clamp-2">
+                            <MathRenderer content={sq.content.slice(0, 150)} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </Card>
           );
         })}
       </div>
 
-      <div className="mt-8 text-center">
+      <div className="mt-8 text-center flex justify-center gap-3">
         <Link href="/my-tests">
           <Button variant="secondary">시험 목록으로 돌아가기</Button>
         </Link>
+        {canRetake && (
+          <Link href={`/my-tests/${testId}/play`}>
+            <Button>
+              <RotateCcw className="w-4 h-4 mr-1" />
+              다시 풀기
+            </Button>
+          </Link>
+        )}
       </div>
     </div>
   );

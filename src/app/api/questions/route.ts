@@ -32,9 +32,20 @@ export async function GET(request: NextRequest) {
 
   const { bookCode, chapter, difficulty, type, search, page, limit } = parsed.data;
 
+  // bookCodePrefix: 학교급 필터 (E = 초등, 빈 문자열 = 중등)
+  const bookCodePrefix = searchParams.get('bookCodePrefix');
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const where: Record<string, any> = {};
-  if (bookCode) where.bookCode = bookCode;
+  if (bookCode) {
+    where.bookCode = bookCode;
+  } else if (bookCodePrefix !== null) {
+    if (bookCodePrefix) {
+      where.bookCode = { startsWith: bookCodePrefix };
+    } else {
+      where.bookCode = { not: { startsWith: 'E' } };
+    }
+  }
   if (chapter) where.chapter = chapter;
   if (difficulty) where.difficulty = difficulty;
   if (type) where.type = type;

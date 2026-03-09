@@ -17,12 +17,14 @@ import {
   Save,
   Check,
   FunctionSquare,
+  ImageIcon,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Pagination } from '@/components/ui/Pagination';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { MathLivePopup } from '@/components/math/MathLivePopup';
+import { ImageUploadPopup } from '@/components/math/ImageUploadButton';
 import { EditableMathRenderer } from '@/components/math/EditableMathRenderer';
 import { DIFFICULTY_LABELS, TYPE_LABELS, BOOK_LABELS } from '@/types';
 import type { QuestionDifficulty, QuestionType } from '@/types';
@@ -33,6 +35,17 @@ const ELEMENTARY_BOOK_CODES = ['E3-1', 'E3-2', 'E4-1', 'E4-2', 'E5-1', 'E5-2', '
 const DIFFICULTY_OPTIONS = ['전체', '하', '중', '상', '최상'] as const;
 const TYPE_OPTIONS = ['객관식', '단답형', '서술형'] as const;
 const ITEMS_PER_PAGE = 10;
+
+const CHAPTERS_BY_BOOK: Record<string, string[]> = {
+  'E3-1': ['덧셈과 뺄셈', '평면도형', '나눗셈', '곱셈', '길이와 시간', '분수와 소수'],
+  'E3-2': ['곱셈', '나눗셈', '원', '분수', '들이와 무게', '자료의 정리'],
+  'E4-1': ['큰 수', '각도', '곱셈과 나눗셈', '평면도형의 이동', '막대그래프', '규칙 찾기'],
+  'E4-2': ['분수의 덧셈과 뺄셈', '삼각형', '소수의 덧셈과 뺄셈', '사각형', '꺾은선그래프', '다각형'],
+  'E5-1': ['자연수의 혼합 계산', '약수와 배수', '규칙과 대응', '약분과 통분', '분수의 덧셈과 뺄셈', '다각형의 둘레와 넓이'],
+  'E5-2': ['수의 범위와 어림', '분수의 곱셈', '합동과 대칭', '소수의 곱셈', '직육면체', '평균과 가능성'],
+  'E6-1': ['분수의 나눗셈', '각기둥과 각뿔', '소수의 나눗셈', '비와 비율', '여러 가지 그래프', '직육면체의 부피와 겉넓이'],
+  'E6-2': ['분수의 나눗셈', '소수의 나눗셈', '공간과 입체', '비례식과 비례배분', '원의 넓이', '원기둥 원뿔 구'],
+};
 
 const DIFFICULTY_TO_ENUM: Record<string, QuestionDifficulty> = {
   하: 'BASIC',
@@ -146,7 +159,29 @@ export default function QuestionsPage() {
   const choiceRefs = useRef<(HTMLInputElement | null)[]>([]);
   const cursorPosRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
 
-  // "수식" 버튼 → 새 수식 삽입
+  // 이미지 업로드 팝업
+  const [imagePopup, setImagePopup] = useState<{
+    open: boolean;
+    field: 'content' | 'explanation';
+  }>({ open: false, field: 'content' });
+
+  // 새 문제 추가
+  const [isCreateMode, setIsCreateMode] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    bookCode: 'E3-1',
+    chapter: '',
+    section: '',
+    questionNum: 1,
+    difficulty: 'BASIC' as QuestionDifficulty,
+    type: 'SHORT_ANSWER' as QuestionType,
+    content: '',
+    choices: ['', '', '', '', ''],
+    answer: '',
+    explanation: '',
+    sourceTag: '',
+  });
+
+  // "수식" 버튼 → 커서가 $...$ 안이면 기존 수식 편집, 아니면 새 삽입
   const openMathPopup = (field: 'content' | 'answer' | 'explanation' | 'choice', choiceIndex?: number) => {
     let el: HTMLTextAreaElement | HTMLInputElement | null = null;
     if (field === 'content') el = contentRef.current;
@@ -155,17 +190,36 @@ export default function QuestionsPage() {
     else if (field === 'choice' && choiceIndex !== undefined) el = choiceRefs.current[choiceIndex];
 
     let initialLatex = '';
+    let replaceRange: { start: number; end: number } | undefined;
     if (el) {
-      const start = el.selectionStart ?? 0;
-      const end = el.selectionEnd ?? 0;
-      cursorPosRef.current = { start, end };
-      if (start !== end) {
-        const selected = el.value.substring(start, end);
-        const m = selected.match(/^\$([^$]+)\$$/);
-        initialLatex = m ? m[1] : selected;
+      const cursor = el.selectionStart ?? 0;
+      const selEnd = el.selectionEnd ?? 0;
+      const text = el.value;
+
+      // 커서가 $...$ 수식 안에 있는지 감지
+      const dollarRegex = /\$([^$]+)\$/g;
+      let match;
+      while ((match = dollarRegex.exec(text)) !== null) {
+        const mStart = match.index;
+        const mEnd = match.index + match[0].length;
+        if (cursor >= mStart && cursor <= mEnd) {
+          initialLatex = match[1];
+          replaceRange = { start: mStart, end: mEnd };
+          break;
+        }
+      }
+
+      // 수식 안이 아니면 선택된 텍스트 확인
+      if (!replaceRange) {
+        cursorPosRef.current = { start: cursor, end: selEnd };
+        if (cursor !== selEnd) {
+          const selected = text.substring(cursor, selEnd);
+          const m = selected.match(/^\$([^$]+)\$$/);
+          initialLatex = m ? m[1] : selected;
+        }
       }
     }
-    setMathPopup({ open: true, field, choiceIndex, initialLatex });
+    setMathPopup({ open: true, field, choiceIndex, initialLatex, replaceRange });
   };
 
   // 미리보기에서 수식 클릭 → 기존 수식 편집
@@ -193,20 +247,112 @@ export default function QuestionsPage() {
     const splice = (text: string) =>
       text.substring(0, start) + wrapped + text.substring(end);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const setter = (isCreateMode ? setCreateForm : setEditForm) as React.Dispatch<React.SetStateAction<any>>;
     if (field === 'content') {
-      setEditForm((p) => ({ ...p, content: splice(p.content) }));
+      setter((p: Record<string, unknown>) => ({ ...p, content: splice(p.content as string) }));
     } else if (field === 'explanation') {
-      setEditForm((p) => ({ ...p, explanation: splice(p.explanation) }));
+      setter((p: Record<string, unknown>) => ({ ...p, explanation: splice(p.explanation as string) }));
     } else if (field === 'answer') {
-      setEditForm((p) => ({ ...p, answer: splice(p.answer) }));
+      setter((p: Record<string, unknown>) => ({ ...p, answer: splice(p.answer as string) }));
     } else if (field === 'choice' && choiceIndex !== undefined) {
-      setEditForm((p) => {
-        const choices = [...p.choices];
+      setter((p: Record<string, unknown>) => {
+        const choices = [...(p.choices as string[])];
         choices[choiceIndex] = splice(choices[choiceIndex] || '');
         return { ...p, choices };
       });
     }
-  }, [mathPopup]);
+  }, [mathPopup, isCreateMode]);
+
+  // 이미지 삽입
+  const openImagePopup = (field: 'content' | 'explanation') => {
+    const el = field === 'content' ? contentRef.current : explanationRef.current;
+    if (el) {
+      cursorPosRef.current = { start: el.selectionStart ?? el.value.length, end: el.selectionEnd ?? el.value.length };
+    }
+    setImagePopup({ open: true, field });
+  };
+
+  const handleImageInsert = useCallback((markdown: string) => {
+    const { field } = imagePopup;
+    const { start, end } = cursorPosRef.current;
+    const splice = (text: string) =>
+      text.substring(0, start) + markdown + text.substring(end);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const setter = (isCreateMode ? setCreateForm : setEditForm) as React.Dispatch<React.SetStateAction<any>>;
+    if (field === 'content') {
+      setter((p: Record<string, unknown>) => ({ ...p, content: splice(p.content as string) }));
+    } else if (field === 'explanation') {
+      setter((p: Record<string, unknown>) => ({ ...p, explanation: splice(p.explanation as string) }));
+    }
+  }, [imagePopup, isCreateMode]);
+
+  // 새 문제 추가
+  const openCreateModal = () => {
+    setIsCreateMode(true);
+    setSelectedQuestion(null);
+    setModalMode('edit');
+    setCreateForm({
+      bookCode: bookFilter || (schoolLevel === 'elementary' ? 'E3-1' : '1-1'),
+      chapter: '',
+      section: '',
+      questionNum: 1,
+      difficulty: 'BASIC',
+      type: 'SHORT_ANSWER',
+      content: '',
+      choices: ['', '', '', '', ''],
+      answer: '',
+      explanation: '',
+      sourceTag: '',
+    });
+    setSaveSuccess(false);
+  };
+
+  const closeCreateModal = () => {
+    setIsCreateMode(false);
+    setSaveSuccess(false);
+  };
+
+  const createQuestion = async () => {
+    setSaving(true);
+    try {
+      const body: Record<string, unknown> = {
+        bookCode: createForm.bookCode,
+        chapter: createForm.chapter,
+        section: createForm.section || null,
+        questionNum: createForm.questionNum,
+        difficulty: createForm.difficulty,
+        type: createForm.type,
+        content: createForm.content,
+        answer: createForm.answer,
+        explanation: createForm.explanation || null,
+        sourceTag: createForm.sourceTag || null,
+      };
+      if (createForm.type === 'MULTIPLE_CHOICE') {
+        const filtered = createForm.choices.filter((c) => c.trim());
+        if (filtered.length >= 2) body.choices = filtered;
+      }
+
+      const res = await fetch('/api/questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        setSaveSuccess(true);
+        setTimeout(() => {
+          closeCreateModal();
+          fetchQuestions();
+        }, 800);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Fetch book counts (once on mount)
   useEffect(() => {
@@ -241,7 +387,12 @@ export default function QuestionsPage() {
   const fetchQuestions = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
-    if (bookFilter) params.set('bookCode', bookFilter);
+    if (bookFilter) {
+      params.set('bookCode', bookFilter);
+    } else {
+      // 전체 보기: 학교급에 맞는 bookCode 프리픽스 필터
+      params.set('bookCodePrefix', schoolLevel === 'elementary' ? 'E' : '');
+    }
     if (difficultyFilter !== '전체') params.set('difficulty', DIFFICULTY_TO_ENUM[difficultyFilter]);
 
     // Handle type filter
@@ -271,7 +422,7 @@ export default function QuestionsPage() {
     } finally {
       setLoading(false);
     }
-  }, [bookFilter, difficultyFilter, typeFilters, searchDebounced, currentPage]);
+  }, [bookFilter, difficultyFilter, typeFilters, searchDebounced, currentPage, schoolLevel]);
 
   useEffect(() => {
     fetchQuestions();
@@ -550,7 +701,7 @@ export default function QuestionsPage() {
               <Download className="w-4 h-4 mr-2" />
               PDF 내보내기
             </Button>
-            <Button size="sm">
+            <Button size="sm" onClick={openCreateModal}>
               <Plus className="w-4 h-4 mr-2" />
               새 문제 추가
             </Button>
@@ -889,15 +1040,26 @@ export default function QuestionsPage() {
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="text-xs font-bold text-text-secondary">문제 내용</label>
-                      <button
-                        type="button"
-                        onClick={() => openMathPopup('content')}
-                        className="flex items-center gap-1 px-2 py-0.5 text-xs text-primary hover:bg-primary/10 rounded transition-colors"
-                        title="수식 삽입"
-                      >
-                        <FunctionSquare className="w-3.5 h-3.5" />
-                        수식
-                      </button>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          onClick={() => openMathPopup('content')}
+                          className="flex items-center gap-1 px-2 py-0.5 text-xs text-primary hover:bg-primary/10 rounded transition-colors"
+                          title="수식 삽입"
+                        >
+                          <FunctionSquare className="w-3.5 h-3.5" />
+                          수식
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openImagePopup('content')}
+                          className="flex items-center gap-1 px-2 py-0.5 text-xs text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                          title="이미지 삽입"
+                        >
+                          <ImageIcon className="w-3.5 h-3.5" />
+                          이미지
+                        </button>
+                      </div>
                     </div>
                     <textarea
                       ref={contentRef}
@@ -969,15 +1131,26 @@ export default function QuestionsPage() {
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="text-xs font-bold text-text-secondary">해설</label>
-                      <button
-                        type="button"
-                        onClick={() => openMathPopup('explanation')}
-                        className="flex items-center gap-1 px-2 py-0.5 text-xs text-primary hover:bg-primary/10 rounded transition-colors"
-                        title="수식 삽입"
-                      >
-                        <FunctionSquare className="w-3.5 h-3.5" />
-                        수식
-                      </button>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          onClick={() => openMathPopup('explanation')}
+                          className="flex items-center gap-1 px-2 py-0.5 text-xs text-primary hover:bg-primary/10 rounded transition-colors"
+                          title="수식 삽입"
+                        >
+                          <FunctionSquare className="w-3.5 h-3.5" />
+                          수식
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openImagePopup('explanation')}
+                          className="flex items-center gap-1 px-2 py-0.5 text-xs text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                          title="이미지 삽입"
+                        >
+                          <ImageIcon className="w-3.5 h-3.5" />
+                          이미지
+                        </button>
+                      </div>
                     </div>
                     <textarea
                       ref={explanationRef}
@@ -1090,12 +1263,308 @@ export default function QuestionsPage() {
         </div>
       )}
 
+      {/* ── 새 문제 추가 모달 ── */}
+      {isCreateMode && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={closeCreateModal}>
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="shrink-0 border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold">새 문제 추가</h2>
+              <button onClick={closeCreateModal} className="p-2 hover:bg-slate-100 rounded-lg">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 flex divide-x divide-slate-200 min-h-0">
+              {/* Left: Form */}
+              <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-4">
+                {/* 교재/단원/번호 */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-text-secondary mb-1">교재</label>
+                    <select
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40"
+                      value={createForm.bookCode}
+                      onChange={(e) => setCreateForm((p) => ({ ...p, bookCode: e.target.value, chapter: '' }))}
+                    >
+                      {[...ELEMENTARY_BOOK_CODES, ...MIDDLE_BOOK_CODES].map((code) => (
+                        <option key={code} value={code}>{BOOK_LABELS[code] || code}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-text-secondary mb-1">단원</label>
+                    {CHAPTERS_BY_BOOK[createForm.bookCode] ? (
+                      <select
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40"
+                        value={createForm.chapter}
+                        onChange={(e) => setCreateForm((p) => ({ ...p, chapter: e.target.value }))}
+                      >
+                        <option value="">선택</option>
+                        {CHAPTERS_BY_BOOK[createForm.bookCode].map((ch) => (
+                          <option key={ch} value={ch}>{ch}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40"
+                        value={createForm.chapter}
+                        onChange={(e) => setCreateForm((p) => ({ ...p, chapter: e.target.value }))}
+                        placeholder="단원명 입력"
+                      />
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-text-secondary mb-1">문제 번호</label>
+                    <input
+                      type="number"
+                      min={1}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40"
+                      value={createForm.questionNum}
+                      onChange={(e) => setCreateForm((p) => ({ ...p, questionNum: parseInt(e.target.value) || 1 }))}
+                    />
+                  </div>
+                </div>
+
+                {/* 코너/난이도/유형 */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-text-secondary mb-1">코너 (선택)</label>
+                    <input
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40"
+                      value={createForm.section}
+                      onChange={(e) => setCreateForm((p) => ({ ...p, section: e.target.value }))}
+                      placeholder="개념 완성하기, 실력 다지기 등"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-text-secondary mb-1">난이도</label>
+                    <select
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40"
+                      value={createForm.difficulty}
+                      onChange={(e) => setCreateForm((p) => ({ ...p, difficulty: e.target.value as QuestionDifficulty }))}
+                    >
+                      <option value="BASIC">하</option>
+                      <option value="MEDIUM">중</option>
+                      <option value="HIGH">상</option>
+                      <option value="HIGHEST">최상</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-text-secondary mb-1">유형</label>
+                    <select
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40"
+                      value={createForm.type}
+                      onChange={(e) => setCreateForm((p) => ({ ...p, type: e.target.value as QuestionType }))}
+                    >
+                      <option value="MULTIPLE_CHOICE">객관식</option>
+                      <option value="SHORT_ANSWER">단답형</option>
+                      <option value="ESSAY">서술형</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* 문제 내용 */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-text-secondary">문제 내용</label>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => openMathPopup('content')}
+                        className="flex items-center gap-1 px-2 py-0.5 text-xs text-primary hover:bg-primary/10 rounded transition-colors"
+                      >
+                        <FunctionSquare className="w-3.5 h-3.5" />
+                        수식
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openImagePopup('content')}
+                        className="flex items-center gap-1 px-2 py-0.5 text-xs text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                      >
+                        <ImageIcon className="w-3.5 h-3.5" />
+                        이미지
+                      </button>
+                    </div>
+                  </div>
+                  <textarea
+                    ref={contentRef}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 min-h-[120px] resize-y"
+                    value={createForm.content}
+                    onChange={(e) => setCreateForm((p) => ({ ...p, content: e.target.value }))}
+                    placeholder="문제 내용을 입력하세요. 이미지 버튼으로 그림을 추가할 수 있습니다."
+                  />
+                </div>
+
+                {/* 선택지 (객관식) */}
+                {createForm.type === 'MULTIPLE_CHOICE' && (
+                  <div>
+                    <label className="text-xs font-bold text-text-secondary mb-1 block">선택지</label>
+                    <div className="space-y-2">
+                      {createForm.choices.map((c, i) => (
+                        <input
+                          key={i}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40"
+                          value={c}
+                          onChange={(e) => {
+                            setCreateForm((p) => {
+                              const choices = [...p.choices];
+                              choices[i] = e.target.value;
+                              return { ...p, choices };
+                            });
+                          }}
+                          placeholder={`${i + 1}번 선택지`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 정답 */}
+                <div>
+                  <label className="block text-xs font-bold text-text-secondary mb-1">정답</label>
+                  <input
+                    ref={answerRef}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40"
+                    value={createForm.answer}
+                    onChange={(e) => setCreateForm((p) => ({ ...p, answer: e.target.value }))}
+                    placeholder="정답 입력"
+                  />
+                </div>
+
+                {/* 해설 */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-text-secondary">해설 (선택)</label>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => openMathPopup('explanation')}
+                        className="flex items-center gap-1 px-2 py-0.5 text-xs text-primary hover:bg-primary/10 rounded transition-colors"
+                      >
+                        <FunctionSquare className="w-3.5 h-3.5" />
+                        수식
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openImagePopup('explanation')}
+                        className="flex items-center gap-1 px-2 py-0.5 text-xs text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                      >
+                        <ImageIcon className="w-3.5 h-3.5" />
+                        이미지
+                      </button>
+                    </div>
+                  </div>
+                  <textarea
+                    ref={explanationRef}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 min-h-[80px] resize-y"
+                    value={createForm.explanation}
+                    onChange={(e) => setCreateForm((p) => ({ ...p, explanation: e.target.value }))}
+                    placeholder="해설을 입력하세요"
+                  />
+                </div>
+
+                {/* 출처 태그 */}
+                <div>
+                  <label className="block text-xs font-bold text-text-secondary mb-1">출처 태그 (선택)</label>
+                  <input
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40"
+                    value={createForm.sourceTag}
+                    onChange={(e) => setCreateForm((p) => ({ ...p, sourceTag: e.target.value }))}
+                    placeholder="출처"
+                  />
+                </div>
+              </div>
+
+              {/* Right: Live Preview */}
+              <div className="flex-1 overflow-y-auto px-6 py-5 bg-slate-50/50">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">미리보기</h3>
+                </div>
+
+                <div className="text-sm">
+                  {createForm.content ? (
+                    <MathRenderer content={createForm.content} />
+                  ) : (
+                    <p className="text-slate-400 italic text-sm">문제 내용을 입력하면 미리보기가 표시됩니다</p>
+                  )}
+                </div>
+
+                {createForm.type === 'MULTIPLE_CHOICE' && createForm.choices.some((c) => c) && (
+                  <div className="grid grid-cols-2 gap-2 mt-4 text-sm">
+                    {createForm.choices.map((c, i) =>
+                      c ? (
+                        <div key={i} className="px-3 py-2 bg-white rounded-lg border border-slate-200">
+                          <MathRenderer content={c} />
+                        </div>
+                      ) : null
+                    )}
+                  </div>
+                )}
+
+                {createForm.answer && (
+                  <div className="border-t border-slate-200 pt-3 mt-4">
+                    <h4 className="text-xs font-bold text-text-secondary mb-1.5 flex items-center gap-1">
+                      <KeyRound className="w-3.5 h-3.5" />
+                      정답
+                    </h4>
+                    <div className="px-3 py-2 bg-primary/5 rounded-lg text-sm">
+                      <MathRenderer content={createForm.answer} />
+                    </div>
+                  </div>
+                )}
+
+                {createForm.explanation && (
+                  <div className="border-t border-slate-200 pt-3 mt-4">
+                    <h4 className="text-xs font-bold text-text-secondary mb-1.5">해설</h4>
+                    <div className="px-3 py-2 bg-white rounded-lg border border-slate-100 text-sm">
+                      <MathRenderer content={createForm.explanation} />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="shrink-0 border-t border-slate-200 px-6 py-4 flex justify-end gap-3">
+              <Button variant="secondary" size="sm" onClick={closeCreateModal}>
+                취소
+              </Button>
+              <Button
+                size="sm"
+                onClick={createQuestion}
+                disabled={saving || !createForm.content || !createForm.answer || !createForm.chapter}
+              >
+                {saving ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : saveSuccess ? (
+                  <Check className="w-4 h-4 mr-2" />
+                ) : (
+                  <Plus className="w-4 h-4 mr-2" />
+                )}
+                {saving ? '저장 중...' : saveSuccess ? '저장됨' : '추가'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MathLive 수식 편집 팝업 */}
       <MathLivePopup
         isOpen={mathPopup.open}
         onClose={() => setMathPopup((p) => ({ ...p, open: false }))}
         onInsert={handleMathInsert}
         initialLatex={mathPopup.initialLatex}
+      />
+
+      {/* 이미지 업로드 팝업 */}
+      <ImageUploadPopup
+        isOpen={imagePopup.open}
+        onClose={() => setImagePopup((p) => ({ ...p, open: false }))}
+        onInsert={handleImageInsert}
       />
     </div>
   );

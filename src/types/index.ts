@@ -137,6 +137,24 @@ export const BOOK_LABELS: Record<string, string> = {
   'E6-2': '초6-2',
 };
 
+// FEAT-3: Test Assignment
+export type AssignmentStatus = 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED' | 'OVERDUE';
+
+export interface TestAssignment {
+  testId: string;
+  dueDate: string | null;
+  status: AssignmentStatus;
+  bestScore: number | null;
+  allowLateSubmission: boolean;
+}
+
+export const ASSIGNMENT_STATUS_LABELS: Record<AssignmentStatus, string> = {
+  ASSIGNED: '배정됨',
+  IN_PROGRESS: '진행중',
+  COMPLETED: '완료',
+  OVERDUE: '기한초과',
+};
+
 export interface ApiResponse<T> {
   data: T;
   meta?: {
