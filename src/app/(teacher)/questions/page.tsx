@@ -36,7 +36,8 @@ const DIFFICULTY_OPTIONS = ['전체', '하', '중', '상', '최상'] as const;
 const TYPE_OPTIONS = ['객관식', '단답형', '서술형'] as const;
 const ITEMS_PER_PAGE = 10;
 
-const CHAPTERS_BY_BOOK: Record<string, string[]> = {
+// 새 문제 추가 모달에서 사용하는 기본 단원 목록 (fallback)
+const CHAPTERS_BY_BOOK_DEFAULT: Record<string, string[]> = {
   'E3-1': ['덧셈과 뺄셈', '평면도형', '나눗셈', '곱셈', '길이와 시간', '분수와 소수'],
   'E3-2': ['곱셈', '나눗셈', '원', '분수', '들이와 무게', '자료의 정리'],
   'E4-1': ['큰 수', '각도', '곱셈과 나눗셈', '평면도형의 이동', '막대그래프', '규칙 찾기'],
@@ -114,6 +115,8 @@ export default function QuestionsPage() {
   const [searchDebounced, setSearchDebounced] = useState('');
   const [schoolLevel, setSchoolLevel] = useState<'middle' | 'elementary'>('middle');
   const [bookFilter, setBookFilter] = useState<string | null>(null);
+  const [chapterFilter, setChapterFilter] = useState<string | null>(null);
+  const [sectionFilter, setSectionFilter] = useState<string | null>(null);
   const [difficultyFilter, setDifficultyFilter] = useState<string>('전체');
   const [typeFilters, setTypeFilters] = useState<Set<string>>(new Set(TYPE_OPTIONS));
   const [currentPage, setCurrentPage] = useState(1);
@@ -123,9 +126,11 @@ export default function QuestionsPage() {
   const [meta, setMeta] = useState<Meta>({ page: 1, total: 0, totalPages: 1 });
   const [loading, setLoading] = useState(true);
 
-  // Book counts from stats API
+  // Book counts + chapters/sections from stats API
   const [bookCounts, setBookCounts] = useState<Record<string, number>>({});
   const [, setTotalCount] = useState(0);
+  const [chaptersByBook, setChaptersByBook] = useState<Record<string, { chapter: string; count: number }[]>>({});
+  const [sectionsByBook, setSectionsByBook] = useState<Record<string, { section: string; count: number }[]>>({});
 
   // View / Edit modal
   const [selectedQuestion, setSelectedQuestion] = useState<QuestionItem | null>(null);
@@ -366,6 +371,8 @@ export default function QuestionsPage() {
           });
           setBookCounts(counts);
           setTotalCount(json.data.total);
+          if (json.data.chaptersByBook) setChaptersByBook(json.data.chaptersByBook);
+          if (json.data.sectionsByBook) setSectionsByBook(json.data.sectionsByBook);
         }
       })
       .catch(() => {});
@@ -393,6 +400,8 @@ export default function QuestionsPage() {
       // 전체 보기: 학교급에 맞는 bookCode 프리픽스 필터
       params.set('bookCodePrefix', schoolLevel === 'elementary' ? 'E' : '');
     }
+    if (chapterFilter) params.set('chapter', chapterFilter);
+    if (sectionFilter) params.set('section', sectionFilter);
     if (difficultyFilter !== '전체') params.set('difficulty', DIFFICULTY_TO_ENUM[difficultyFilter]);
 
     // Handle type filter
@@ -422,7 +431,7 @@ export default function QuestionsPage() {
     } finally {
       setLoading(false);
     }
-  }, [bookFilter, difficultyFilter, typeFilters, searchDebounced, currentPage, schoolLevel]);
+  }, [bookFilter, chapterFilter, sectionFilter, difficultyFilter, typeFilters, searchDebounced, currentPage, schoolLevel]);
 
   useEffect(() => {
     fetchQuestions();
@@ -572,7 +581,7 @@ export default function QuestionsPage() {
           {/* School Level Toggle */}
           <div className="flex rounded-lg bg-slate-100 p-1">
             <button
-              onClick={() => { setSchoolLevel('elementary'); setBookFilter(null); setCurrentPage(1); }}
+              onClick={() => { setSchoolLevel('elementary'); setBookFilter(null); setChapterFilter(null); setSectionFilter(null); setCurrentPage(1); }}
               className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors ${
                 schoolLevel === 'elementary' ? 'bg-white text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'
               }`}
@@ -580,7 +589,7 @@ export default function QuestionsPage() {
               초등 (3~6학년)
             </button>
             <button
-              onClick={() => { setSchoolLevel('middle'); setBookFilter(null); setCurrentPage(1); }}
+              onClick={() => { setSchoolLevel('middle'); setBookFilter(null); setChapterFilter(null); setSectionFilter(null); setCurrentPage(1); }}
               className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors ${
                 schoolLevel === 'middle' ? 'bg-white text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'
               }`}
@@ -593,6 +602,8 @@ export default function QuestionsPage() {
             <button
               onClick={() => {
                 setBookFilter(null);
+                setChapterFilter(null);
+                setSectionFilter(null);
                 setCurrentPage(1);
               }}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition-colors text-left ${
@@ -616,6 +627,8 @@ export default function QuestionsPage() {
                 key={code}
                 onClick={() => {
                   setBookFilter(code);
+                  setChapterFilter(null);
+                  setSectionFilter(null);
                   setCurrentPage(1);
                 }}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition-colors text-left ${
@@ -639,6 +652,76 @@ export default function QuestionsPage() {
             ))}
           </nav>
         </Card>
+
+        {/* Chapter Filter - 특정 학기 선택 시에만 표시 */}
+        {bookFilter && chaptersByBook[bookFilter]?.length > 0 && (
+          <Card className="p-5 flex flex-col gap-4">
+            <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">
+              단원 필터
+            </h3>
+            <div className="flex flex-col gap-1 max-h-64 overflow-y-auto">
+              <button
+                onClick={() => { setChapterFilter(null); setSectionFilter(null); setCurrentPage(1); }}
+                className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors text-left ${
+                  chapterFilter === null
+                    ? 'bg-primary text-white'
+                    : 'bg-slate-100 hover:bg-slate-200 text-text-secondary'
+                }`}
+              >
+                전체
+              </button>
+              {chaptersByBook[bookFilter].map((ch) => (
+                <button
+                  key={ch.chapter}
+                  onClick={() => { setChapterFilter(ch.chapter); setSectionFilter(null); setCurrentPage(1); }}
+                  className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors text-left flex justify-between items-center ${
+                    chapterFilter === ch.chapter
+                      ? 'bg-primary text-white'
+                      : 'bg-slate-100 hover:bg-slate-200 text-text-secondary'
+                  }`}
+                >
+                  <span>{ch.chapter}</span>
+                  <span className={`text-[10px] ${chapterFilter === ch.chapter ? 'text-white/70' : 'text-text-tertiary'}`}>{ch.count}</span>
+                </button>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Section Filter - 특정 학기 선택 시에만 표시 */}
+        {bookFilter && sectionsByBook[bookFilter]?.length > 0 && (
+          <Card className="p-5 flex flex-col gap-4">
+            <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">
+              유형/코너 필터
+            </h3>
+            <div className="flex flex-col gap-1">
+              <button
+                onClick={() => { setSectionFilter(null); setCurrentPage(1); }}
+                className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors text-left ${
+                  sectionFilter === null
+                    ? 'bg-primary text-white'
+                    : 'bg-slate-100 hover:bg-slate-200 text-text-secondary'
+                }`}
+              >
+                전체
+              </button>
+              {sectionsByBook[bookFilter].map((s) => (
+                <button
+                  key={s.section}
+                  onClick={() => { setSectionFilter(s.section); setCurrentPage(1); }}
+                  className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors text-left flex justify-between items-center ${
+                    sectionFilter === s.section
+                      ? 'bg-primary text-white'
+                      : 'bg-slate-100 hover:bg-slate-200 text-text-secondary'
+                  }`}
+                >
+                  <span>{s.section}</span>
+                  <span className={`text-[10px] ${sectionFilter === s.section ? 'text-white/70' : 'text-text-tertiary'}`}>{s.count}</span>
+                </button>
+              ))}
+            </div>
+          </Card>
+        )}
 
         {/* Type Filter */}
         <Card className="p-5 flex flex-col gap-4">
@@ -665,7 +748,7 @@ export default function QuestionsPage() {
           <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">
             난이도
           </h3>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-1.5">
             {DIFFICULTY_OPTIONS.map((d) => (
               <button
                 key={d}
@@ -673,7 +756,7 @@ export default function QuestionsPage() {
                   setDifficultyFilter(d);
                   setCurrentPage(1);
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   difficultyFilter === d
                     ? 'bg-primary text-white'
                     : 'bg-slate-100 hover:bg-slate-200 text-text-secondary'
@@ -764,6 +847,11 @@ export default function QuestionsPage() {
                         >
                           {q.chapter}
                         </span>
+                        {q.section && (
+                          <span className="px-2.5 py-1 border border-slate-200 text-text-secondary text-xs font-bold rounded">
+                            {q.section}
+                          </span>
+                        )}
                         <span
                           className={`px-2.5 py-1 text-xs font-bold rounded ${getDifficultyBadgeColor(
                             DIFFICULTY_LABELS[q.difficulty]
@@ -1297,14 +1385,14 @@ export default function QuestionsPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-text-secondary mb-1">단원</label>
-                    {CHAPTERS_BY_BOOK[createForm.bookCode] ? (
+                    {(chaptersByBook[createForm.bookCode]?.length || CHAPTERS_BY_BOOK_DEFAULT[createForm.bookCode]) ? (
                       <select
                         className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40"
                         value={createForm.chapter}
                         onChange={(e) => setCreateForm((p) => ({ ...p, chapter: e.target.value }))}
                       >
                         <option value="">선택</option>
-                        {CHAPTERS_BY_BOOK[createForm.bookCode].map((ch) => (
+                        {(chaptersByBook[createForm.bookCode]?.map(c => c.chapter) || CHAPTERS_BY_BOOK_DEFAULT[createForm.bookCode] || []).map((ch) => (
                           <option key={ch} value={ch}>{ch}</option>
                         ))}
                       </select>

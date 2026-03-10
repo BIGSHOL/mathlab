@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   BarChart3,
   Calendar,
@@ -69,6 +69,11 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [calendarData] = useState<DayActivity[]>(() => generateMockCalendar());
 
+  // Teacher comment
+  const [commentText, setCommentText] = useState('');
+  const commentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const currentMonth = '2026-03';
+
   // Speed analytics for selected student
   const { data: speedData, loading: speedLoading } = useSpeedAnalytics(selectedStudent?.id);
 
@@ -87,7 +92,31 @@ export default function AnalyticsPage() {
         if (json?.data) setAchievementData(json.data);
       })
       .catch(() => {});
+
+    // Fetch saved comment
+    fetch(`/api/analytics/comments?studentId=${selectedStudent.id}&month=${currentMonth}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((json) => { setCommentText(json?.data ?? ''); })
+      .catch(() => setCommentText(''));
   }, [selectedStudent]);
+
+  const saveComment = useCallback((text: string) => {
+    if (!selectedStudent) return;
+    if (commentTimerRef.current) clearTimeout(commentTimerRef.current);
+    commentTimerRef.current = setTimeout(() => {
+      fetch('/api/analytics/comments', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId: selectedStudent.id, month: currentMonth, content: text }),
+      }).catch(() => {});
+    }, 1000);
+  }, [selectedStudent]);
+
+  const handleCommentChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const text = e.target.value;
+    setCommentText(text);
+    saveComment(text);
+  }, [saveComment]);
 
   const fetchStudents = useCallback(async () => {
     try {
@@ -567,11 +596,8 @@ export default function AnalyticsPage() {
               <textarea
                 className="w-full text-sm text-text-secondary leading-relaxed bg-white border border-slate-200 rounded-lg p-4 min-h-[120px] focus:ring-2 focus:ring-primary/40 focus:border-primary resize-y"
                 placeholder="학생에 대한 종합 의견을 작성해주세요. 이 의견은 학부모 리포트에 포함됩니다."
-                defaultValue={
-                  student
-                    ? `${student.name} 학생은 이번 달 학습에 성실히 참여하고 있습니다. 특히 대수학 영역에서 학급 평균을 상회하는 우수한 성취도를 보여주었습니다. 꾸준한 학습 습관이 잘 형성되어 있어 칭찬할 만합니다.`
-                    : ''
-                }
+                value={commentText}
+                onChange={handleCommentChange}
               />
             </div>
           </section>

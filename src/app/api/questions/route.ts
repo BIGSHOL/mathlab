@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
   const parsed = questionQuerySchema.safeParse({
     bookCode: searchParams.get('bookCode') ?? undefined,
     chapter: searchParams.get('chapter') ?? undefined,
+    section: searchParams.get('section') ?? undefined,
     difficulty: searchParams.get('difficulty') ?? undefined,
     type: searchParams.get('type') ?? undefined,
     search: searchParams.get('search') ?? undefined,
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { bookCode, chapter, difficulty, type, search, page, limit } = parsed.data;
+  const { bookCode, chapter, section, difficulty, type, search, page, limit } = parsed.data;
 
   // bookCodePrefix: 학교급 필터 (E = 초등, 빈 문자열 = 중등)
   const bookCodePrefix = searchParams.get('bookCodePrefix');
@@ -47,6 +48,7 @@ export async function GET(request: NextRequest) {
     }
   }
   if (chapter) where.chapter = chapter;
+  if (section) where.section = section;
   if (difficulty) where.difficulty = difficulty;
   if (type) where.type = type;
   if (search) {

@@ -9,6 +9,7 @@ import {
   Trophy,
   RotateCcw,
   Zap,
+  Star,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -34,6 +35,7 @@ export default function ArithmeticPracticePage() {
   const [level, setLevel] = useState<ArithmeticLevel>('easy');
   const [count, setCount] = useState(10);
   const [problems, setProblems] = useState<GeneratedProblem[]>([]);
+  const [attemptId, setAttemptId] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState('');
   const [feedback, setFeedback] = useState<boolean | null>(null);
@@ -42,7 +44,10 @@ export default function ArithmeticPracticePage() {
   const [finished, setFinished] = useState(false);
   const [loading, setLoading] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [xpEarned, setXpEarned] = useState(0);
+  const [leveledUp, setLeveledUp] = useState(false);
   const startRef = useRef(Date.now());
+  const questionStartRef = useRef(Date.now());
 
   // Timer
   useEffect(() => {
@@ -56,21 +61,25 @@ export default function ArithmeticPracticePage() {
   const handleStart = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/arithmetic/generate', {
+      const res = await fetch('/api/arithmetic/attempts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ category, level, count }),
       });
       if (res.ok) {
         const json = await res.json();
-        setProblems(json.data);
+        setAttemptId(json.data.attemptId);
+        setProblems(json.data.problems);
         setCurrentIndex(0);
         setSelectedAnswer('');
         setFeedback(null);
         setScore(0);
         setCombo(0);
         setFinished(false);
+        setXpEarned(0);
+        setLeveledUp(false);
         startRef.current = Date.now();
+        questionStartRef.current = Date.now();
         setElapsed(0);
       }
     } catch { /* ignore */ }
@@ -80,7 +89,8 @@ export default function ArithmeticPracticePage() {
   const handleAnswer = (answer: string) => {
     if (feedback !== null) return;
     setSelectedAnswer(answer);
-    const isCorrect = answer === problems[currentIndex].answer;
+    const current = problems[currentIndex];
+    const isCorrect = answer === current.answer;
     setFeedback(isCorrect);
     if (isCorrect) {
       setScore((s) => s + 1);
@@ -88,11 +98,45 @@ export default function ArithmeticPracticePage() {
     } else {
       setCombo(0);
     }
+
+    // DB 저장 (비동기, UI 블로킹 없음)
+    if (attemptId) {
+      const timeSpent = Math.floor((Date.now() - questionStartRef.current) / 1000);
+      fetch(`/api/arithmetic/attempts/${attemptId}/answer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          problemIndex: currentIndex,
+          content: current.content,
+          choices: current.choices,
+          selectedAnswer: answer,
+          correctAnswer: current.answer,
+          isCorrect,
+          timeSpentSeconds: timeSpent,
+        }),
+      }).catch(() => {});
+    }
   };
 
   const handleNext = () => {
+    questionStartRef.current = Date.now();
     if (currentIndex >= problems.length - 1) {
       setFinished(true);
+      // 완료 API 호출
+      if (attemptId) {
+        fetch(`/api/arithmetic/attempts/${attemptId}/complete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        })
+          .then((r) => r.json())
+          .then((json) => {
+            if (json.data) {
+              setXpEarned(json.data.xpEarned);
+              setLeveledUp(json.data.leveledUp);
+            }
+          })
+          .catch(() => {});
+      }
     } else {
       setCurrentIndex((i) => i + 1);
       setSelectedAnswer('');
@@ -187,6 +231,13 @@ export default function ArithmeticPracticePage() {
         <Card className="p-8 text-center space-y-4">
           <Trophy className="w-12 h-12 text-yellow-500 mx-auto" />
           <h2 className="text-2xl font-black text-text-primary">연습 완료!</h2>
+          {xpEarned > 0 && (
+            <div className="flex items-center justify-center gap-2 text-amber-600 bg-amber-50 rounded-lg py-2">
+              <Star className="w-5 h-5" />
+              <span className="font-bold">+{xpEarned} XP 획득!</span>
+              {leveledUp && <span className="text-xs bg-amber-200 rounded px-2 py-0.5">레벨 업!</span>}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-slate-50 rounded-lg p-3">
               <p className="text-2xl font-black text-primary">{score}/{problems.length}</p>
@@ -212,7 +263,7 @@ export default function ArithmeticPracticePage() {
               <RotateCcw className="w-4 h-4 mr-1" />
               다시 풀기
             </Button>
-            <Button className="flex-1" variant="secondary" onClick={() => setProblems([])}>
+            <Button className="flex-1" variant="secondary" onClick={() => { setProblems([]); setAttemptId(null); }}>
               설정 변경
             </Button>
           </div>
@@ -305,7 +356,7 @@ export default function ArithmeticPracticePage() {
                 <>
                   <XCircle className="w-5 h-5 text-red-600" />
                   <span className="font-bold text-red-700">오답</span>
-                  <span className="text-sm text-red-600 ml-1">정답: {current.answer}</span>
+                  <span className="text-sm text-red-600 ml-1">정답: <MathRenderer content={current.answer} /></span>
                 </>
               )}
             </div>

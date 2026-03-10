@@ -46,6 +46,7 @@ export default function QuizPlayPage() {
   const [feedback, setFeedback] = useState<{ isCorrect: boolean; correctAnswer: string } | null>(null);
   const [myScore, setMyScore] = useState(0);
   const lastQuestionRef = useRef(-1);
+  const questionStartRef = useRef<number>(Date.now());
 
   const fetchQuiz = useCallback(async () => {
     try {
@@ -56,6 +57,7 @@ export default function QuizPlayPage() {
         // Reset state when question changes
         if (json.data.currentQ !== lastQuestionRef.current) {
           lastQuestionRef.current = json.data.currentQ;
+          questionStartRef.current = Date.now();
           setSelectedAnswer('');
           setSubmitted(false);
           setFeedback(null);
@@ -75,6 +77,8 @@ export default function QuizPlayPage() {
     if (!quiz?.currentQuestion || submitted) return;
     setSubmitted(true);
 
+    const timeSpentSeconds = Math.round((Date.now() - questionStartRef.current) / 1000);
+
     try {
       const res = await fetch(`/api/quiz/${id}/answer`, {
         method: 'POST',
@@ -82,6 +86,7 @@ export default function QuizPlayPage() {
         body: JSON.stringify({
           questionId: quiz.currentQuestion.id,
           selectedAnswer,
+          timeSpentSeconds,
         }),
       });
       if (res.ok) {

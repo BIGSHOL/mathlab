@@ -53,6 +53,7 @@ export async function POST(request: NextRequest) {
       completed: passed,
       completedAt: passed ? new Date() : null,
       attempts: { increment: 1 },
+      submittedText: parsed.data.content,
     },
     create: {
       userId: currentUser.id,
@@ -62,6 +63,7 @@ export async function POST(request: NextRequest) {
       completed: passed,
       completedAt: passed ? new Date() : null,
       attempts: 1,
+      submittedText: parsed.data.content,
     },
   });
 

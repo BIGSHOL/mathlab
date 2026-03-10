@@ -6,6 +6,7 @@
 import { prisma } from '@/lib/db';
 import { calculateLevel } from '@/lib/utils/xp';
 import { checkAnswer } from '@/lib/services/cheat-detection';
+import { classifyAnswer } from '@/lib/utils/answer-status';
 
 /** 콤보 보너스 배율 계산 */
 export function getComboMultiplier(comboCount: number): number {
@@ -94,6 +95,13 @@ export async function submitAnswer(params: {
 
   // AnswerLog 생성 + TestAttempt 업데이트 (트랜잭션)
   await prisma.$transaction(async (tx) => {
+    // 학습 상태 분류
+    const statusInfo = classifyAnswer({
+      isCorrect,
+      timeSpentSeconds,
+      difficulty: question.difficulty,
+    });
+
     const log = await tx.answerLog.create({
       data: {
         attemptId,
@@ -103,6 +111,7 @@ export async function submitAnswer(params: {
         timeSpentSeconds,
         comboCount: newCombo,
         pointsEarned,
+        statusClassification: statusInfo.status,
         flagged: flag.flagged,
         flagReason: flag.reason,
       },

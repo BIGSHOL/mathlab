@@ -59,13 +59,13 @@ function generateChoices(correct: number, count: number = 4): string[] {
 function generateFractionChoices(numCorrect: number, denCorrect: number, count: number = 4): string[] {
   const choices = new Set<string>();
   const g = gcd(Math.abs(numCorrect), denCorrect);
-  choices.add(`${numCorrect / g}/${denCorrect / g}`);
+  choices.add(`$\\frac{${numCorrect / g}}{${denCorrect / g}}$`);
   while (choices.size < count) {
     const n = numCorrect + rand(-3, 3);
     const d = denCorrect + rand(-1, 1);
     if (d > 0 && !(n === numCorrect && d === denCorrect)) {
       const g2 = gcd(Math.abs(n), d);
-      choices.add(`${n / g2}/${d / g2}`);
+      choices.add(`$\\frac{${n / g2}}{${d / g2}}$`);
     }
   }
   return shuffle([...choices]);
@@ -77,12 +77,15 @@ const RANGE: Record<ArithmeticLevel, [number, number]> = {
   hard: [50, 999],
 };
 
+// 답안 칸 (인쇄용 네모 박스) — $...$는 content 전체에서 감싼다
+const BOX = '\\boxed{\\phantom{000}}';
+
 function genAddition(level: ArithmeticLevel): GeneratedProblem {
   const [min, max] = RANGE[level];
   const a = rand(min, max), b = rand(min, max);
   const answer = a + b;
   return {
-    content: `${a} + ${b} = ?`,
+    content: `$${a} + ${b} = ${BOX}$`,
     answer: String(answer),
     choices: generateChoices(answer),
     category: 'addition',
@@ -96,7 +99,7 @@ function genSubtraction(level: ArithmeticLevel): GeneratedProblem {
   if (a < b) [a, b] = [b, a];
   const answer = a - b;
   return {
-    content: `${a} - ${b} = ?`,
+    content: `$${a} - ${b} = ${BOX}$`,
     answer: String(answer),
     choices: generateChoices(answer),
     category: 'subtraction',
@@ -114,7 +117,7 @@ function genMultiplication(level: ArithmeticLevel): GeneratedProblem {
   const a = rand(min, max), b = rand(min, max);
   const answer = a * b;
   return {
-    content: `${a} × ${b} = ?`,
+    content: `$${a} \\times ${b} = ${BOX}$`,
     answer: String(answer),
     choices: generateChoices(answer),
     category: 'multiplication',
@@ -133,7 +136,7 @@ function genDivision(level: ArithmeticLevel): GeneratedProblem {
   const answer = rand(min, max);
   const a = b * answer;
   return {
-    content: `${a} ÷ ${b} = ?`,
+    content: `$${a} \\div ${b} = ${BOX}$`,
     answer: String(answer),
     choices: generateChoices(answer),
     category: 'division',
@@ -149,8 +152,8 @@ function genFractionAdd(level: ArithmeticLevel): GeneratedProblem {
   const resultNum = n1 * (commonD / d1) + n2 * (commonD / d2);
   const g = gcd(Math.abs(resultNum), commonD);
   return {
-    content: `\\frac{${n1}}{${d1}} + \\frac{${n2}}{${d2}} = ?`,
-    answer: `${resultNum / g}/${commonD / g}`,
+    content: `$\\frac{${n1}}{${d1}} + \\frac{${n2}}{${d2}} = ${BOX}$`,
+    answer: `$\\frac{${resultNum / g}}{${commonD / g}}$`,
     choices: generateFractionChoices(resultNum, commonD),
     category: 'fraction_add',
     level,
@@ -170,8 +173,8 @@ function genFractionSub(level: ArithmeticLevel): GeneratedProblem {
   }
   const g = gcd(Math.abs(resultNum), commonD);
   return {
-    content: `\\frac{${n1}}{${d1}} - \\frac{${n2}}{${d2}} = ?`,
-    answer: `${resultNum / g}/${commonD / g}`,
+    content: `$\\frac{${n1}}{${d1}} - \\frac{${n2}}{${d2}} = ${BOX}$`,
+    answer: `$\\frac{${resultNum / g}}{${commonD / g}}$`,
     choices: generateFractionChoices(resultNum, commonD),
     category: 'fraction_sub',
     level,
@@ -186,8 +189,8 @@ function genFractionMul(level: ArithmeticLevel): GeneratedProblem {
   const resultDen = d1 * d2;
   const g = gcd(resultNum, resultDen);
   return {
-    content: `\\frac{${n1}}{${d1}} × \\frac{${n2}}{${d2}} = ?`,
-    answer: `${resultNum / g}/${resultDen / g}`,
+    content: `$\\frac{${n1}}{${d1}} \\times \\frac{${n2}}{${d2}} = ${BOX}$`,
+    answer: `$\\frac{${resultNum / g}}{${resultDen / g}}$`,
     choices: generateFractionChoices(resultNum, resultDen),
     category: 'fraction_mul',
     level,
@@ -202,8 +205,8 @@ function genFractionDiv(level: ArithmeticLevel): GeneratedProblem {
   const resultDen = d1 * n2;
   const g = gcd(resultNum, resultDen);
   return {
-    content: `\\frac{${n1}}{${d1}} ÷ \\frac{${n2}}{${d2}} = ?`,
-    answer: `${resultNum / g}/${resultDen / g}`,
+    content: `$\\frac{${n1}}{${d1}} \\div \\frac{${n2}}{${d2}} = ${BOX}$`,
+    answer: `$\\frac{${resultNum / g}}{${resultDen / g}}$`,
     choices: generateFractionChoices(resultNum, resultDen),
     category: 'fraction_div',
     level,
@@ -220,9 +223,9 @@ function genDecimal(level: ArithmeticLevel): GeneratedProblem {
   let answer: number;
   let content: string;
   switch (op) {
-    case '+': answer = a + b; content = `${a} + ${b} = ?`; break;
-    case '-': answer = Math.abs(a - b); content = `${Math.max(a, b)} - ${Math.min(a, b)} = ?`; break;
-    case '×': answer = parseFloat((a * b).toFixed(decimals)); content = `${a} × ${b} = ?`; break;
+    case '+': answer = a + b; content = `$${a} + ${b} = ${BOX}$`; break;
+    case '-': answer = Math.abs(a - b); content = `$${Math.max(a, b)} - ${Math.min(a, b)} = ${BOX}$`; break;
+    case '×': answer = parseFloat((a * b).toFixed(decimals)); content = `$${a} \\times ${b} = ${BOX}$`; break;
   }
   const roundedAnswer = parseFloat(answer!.toFixed(decimals));
   return {

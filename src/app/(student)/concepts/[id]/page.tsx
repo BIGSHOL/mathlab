@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, BookOpen, CheckCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
@@ -49,6 +49,8 @@ export default function ConceptPage() {
   const [submitting, setSubmitting] = useState(false);
   const [showHints, setShowHints] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(true);
+  const [memoContent, setMemoContent] = useState('');
+  const memoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -79,6 +81,31 @@ export default function ConceptPage() {
         setCurrentStageIdx(Math.min(idx, 3));
       });
   }, [id]);
+
+  // Fetch memo
+  useEffect(() => {
+    fetch(`/api/concepts/${id}/memo`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((json) => { if (json?.data) setMemoContent(json.data); })
+      .catch(() => {});
+  }, [id]);
+
+  const saveMemo = useCallback((text: string) => {
+    if (memoTimerRef.current) clearTimeout(memoTimerRef.current);
+    memoTimerRef.current = setTimeout(() => {
+      fetch(`/api/concepts/${id}/memo`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: text }),
+      }).catch(() => {});
+    }, 1000);
+  }, [id]);
+
+  const handleMemoChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const text = e.target.value;
+    setMemoContent(text);
+    saveMemo(text);
+  }, [saveMemo]);
 
   // Fetch blanks when on blank stages
   useEffect(() => {
@@ -119,26 +146,43 @@ export default function ConceptPage() {
 
   const handleBlankSubmit = async () => {
     if (!blanks) return;
+
+    // 클라이언트 유효성 검사: 빈칸이 비어있으면 제출 차단
+    const emptyBlanks = blanks.blanks.filter((b) => !blankAnswers[b.position]?.trim());
+    if (emptyBlanks.length > 0) {
+      showToast(`빈칸을 모두 채워주세요! (${emptyBlanks.length}개 남음)`);
+      return;
+    }
+
     setSubmitting(true);
     const answers = blanks.blanks.map((b) => ({
       position: b.position,
       value: blankAnswers[b.position] ?? '',
     }));
-    const res = await fetch('/api/learning/blank-submit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ exerciseId: blanks.id, answers }),
-    });
-    const json = await res.json();
-    setSubmitting(false);
-    if (json.data) {
-      setBlankResults(json.data.results);
-      if (json.data.allCorrect) {
-        showToast(`정답! +${json.data.xpAwarded} XP 획득!`);
-        await handleCompleteStage();
-      } else {
-        showToast('오답이 있습니다. 다시 확인해보세요!');
+    try {
+      const res = await fetch('/api/learning/blank-submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ exerciseId: blanks.id, answers }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        showToast(json.error?.message ?? '제출에 실패했습니다. 다시 시도해주세요.');
+        return;
       }
+      if (json.data) {
+        setBlankResults(json.data.results);
+        if (json.data.allCorrect) {
+          showToast(`정답! +${json.data.xpAwarded} XP 획득!`);
+          await handleCompleteStage();
+        } else {
+          showToast('오답이 있습니다. 다시 확인해보세요!');
+        }
+      }
+    } catch {
+      showToast('네트워크 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -271,6 +315,8 @@ export default function ConceptPage() {
                   <textarea
                     className="w-full h-full resize-none bg-transparent border-none focus:ring-0 text-text-secondary p-0 m-0 memo-lines outline-none text-[15px]"
                     placeholder="여기에 메모를 자유롭게 작성하세요..."
+                    value={memoContent}
+                    onChange={handleMemoChange}
                   />
                 </div>
               </>
@@ -369,7 +415,7 @@ function renderBlanksTemplate(
     const isWrong = result && !result.correct;
 
     return (
-      <span key={idx} className="inline-flex items-center gap-1 mx-1">
+      <span key={idx} className="inline-flex items-center gap-0.5 mx-0.5 align-middle">
         <input
           type="text"
           value={answers[position] ?? ''}
@@ -385,17 +431,24 @@ function renderBlanksTemplate(
         />
         {isCorrect && <span className="text-emerald-500 text-sm">&#10003;</span>}
         {isWrong && <span className="text-red-500 text-sm">&#10007;</span>}
-        <button
-          type="button"
-          onClick={() => setShowHints((prev) => ({ ...prev, [position]: !prev[position] }))}
-          className="text-amber-500 hover:text-amber-600 text-xs font-bold"
-          title="힌트"
-        >
-          ?
-        </button>
-        {showHints[position] && blank && (
-          <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded">{blank.hint}</span>
-        )}
+        <span className="relative inline-block">
+          <button
+            type="button"
+            onClick={() => setShowHints((prev) => ({ ...prev, [position]: !prev[position] }))}
+            className={`w-5 h-5 rounded-full text-[11px] font-bold leading-none transition-all ${
+              showHints[position]
+                ? 'bg-amber-400 text-white shadow-sm'
+                : 'bg-amber-100 text-amber-500 hover:bg-amber-200'
+            }`}
+          >
+            ?
+          </button>
+          {showHints[position] && blank && (
+            <span className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-3 py-1.5 bg-slate-800 text-white text-xs font-medium rounded-lg shadow-lg whitespace-nowrap z-50 animate-fade-in before:content-[''] before:absolute before:bottom-full before:left-1/2 before:-translate-x-1/2 before:border-4 before:border-transparent before:border-b-slate-800">
+              {blank.hint}
+            </span>
+          )}
+        </span>
       </span>
     );
   });

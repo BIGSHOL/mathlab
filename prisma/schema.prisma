@@ -39,6 +39,11 @@ model User {
   assignments    TestAssignment[] @relation("StudentAssignments")
   inquiries      Inquiry[]       @relation("InquiryAuthor")
   repliedInquiries Inquiry[]     @relation("InquiryReplier")
+  arithmeticAttempts ArithmeticAttempt[]
+  conceptMemos       ConceptMemo[]
+  teacherComments    TeacherComment[] @relation("TeacherComments")
+  studentComments    TeacherComment[] @relation("StudentComments")
+  generationLogs     QuestionGenerationLog[]
 
   @@index([role])
 }
@@ -77,8 +82,13 @@ model Concept {
   sortOrder    Int      @default(0)
   conceptCode  String?  @unique @db.VarChar(20)
   grade        String?  @db.VarChar(20)
+  semester     Int?                        // 학기: 1 또는 2
+  chapter      String?  @db.VarChar(100)   // 대단원: "자연수의 혼합 계산"
+  section      String?  @db.VarChar(100)   // 중단원: "덧셈과 뺄셈이 섞여 있는 식"
+  sectionSub   String?  @db.VarChar(100)   // 소단원
   category     String?  @db.VarChar(20)
   part         String?  @db.VarChar(20)
+  source       String?  @db.VarChar(200)   // 출처
   keywords     String?  @db.Text
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -122,10 +132,11 @@ model LearningProgress {
   stage       Stage
   completed   Boolean   @default(false)
   attempts    Int       @default(0)
-  score       Int?
-  startedAt   DateTime  @default(now())
-  completedAt DateTime?
-  updatedAt   DateTime  @updatedAt
+  score         Int?
+  submittedText String?   @db.Text
+  startedAt     DateTime  @default(now())
+  completedAt   DateTime?
+  updatedAt     DateTime  @updatedAt
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   concept Concept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
@@ -318,6 +329,7 @@ model AnswerLog {
   timeSpentSeconds Int
   comboCount       Int      @default(0)
   pointsEarned     Int      @default(0)
+  statusClassification String?  @db.VarChar(20)
   flagged          Boolean  @default(false)
   flagReason       String?  @db.VarChar(100)
   createdAt        DateTime @default(now())
@@ -428,7 +440,8 @@ model QuizParticipant {
   correctCount Int    @default(0)
   rank         Int?
 
-  session QuizSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  session QuizSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  answers QuizAnswerLog[]
 
   @@unique([sessionId, studentId])
   @@index([sessionId])
@@ -445,4 +458,120 @@ model School {
 
   @@index([city, district])
   @@index([schoolType])
+}
+
+// FEAT: Arithmetic Practice Results
+model ArithmeticAttempt {
+  id               String    @id @default(cuid())
+  studentId        String
+  category         String    @db.VarChar(30)
+  level            String    @db.VarChar(10)
+  problemCount     Int
+  correctCount     Int       @default(0)
+  score            Int       @default(0)
+  xpEarned         Int       @default(0)
+  comboMax         Int       @default(0)
+  totalTimeSeconds Int       @default(0)
+  completedAt      DateTime?
+  createdAt        DateTime  @default(now())
+
+  student User               @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  answers ArithmeticAnswer[]
+
+  @@index([studentId])
+  @@index([studentId, createdAt(sort: Desc)])
+}
+
+model ArithmeticAnswer {
+  id               String   @id @default(cuid())
+  attemptId        String
+  problemIndex     Int
+  content          String   @db.Text
+  choices          Json
+  selectedAnswer   String   @db.Text
+  correctAnswer    String   @db.Text
+  isCorrect        Boolean
+  timeSpentSeconds Int      @default(0)
+  comboCount       Int      @default(0)
+  pointsEarned     Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  attempt ArithmeticAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@index([attemptId])
+}
+
+// FEAT: Quiz Answer Detail Log
+model QuizAnswerLog {
+  id               String   @id @default(cuid())
+  participantId    String
+  questionId       String
+  questionIndex    Int
+  selectedAnswer   String   @db.Text
+  correctAnswer    String   @db.Text
+  isCorrect        Boolean
+  timeSpentSeconds Int      @default(0)
+  pointsEarned     Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  participant QuizParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@unique([participantId, questionId])
+  @@index([participantId])
+}
+
+// FEAT: Student Concept Memo
+model ConceptMemo {
+  id        String   @id @default(cuid())
+  userId    String
+  conceptId String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, conceptId])
+  @@index([userId])
+}
+
+// FEAT: Teacher Comment on Student Analytics
+model TeacherComment {
+  id        String   @id @default(cuid())
+  teacherId String
+  studentId String
+  month     String   @db.VarChar(7)
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teacher User @relation("TeacherComments", fields: [teacherId], references: [id], onDelete: Cascade)
+  student User @relation("StudentComments", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, studentId, month])
+  @@index([teacherId])
+  @@index([studentId])
+}
+
+// FEAT: AI Question Generation Log
+model QuestionGenerationLog {
+  id           String   @id @default(cuid())
+  teacherId    String
+  mode         String   @db.VarChar(20)
+  schoolLevel  String?  @db.VarChar(20)
+  grade        String?  @db.VarChar(20)
+  mainUnit     String?  @db.VarChar(200)
+  subUnit      String?  @db.VarChar(200)
+  detailUnit   String?  @db.VarChar(200)
+  difficulty   String?  @db.VarChar(20)
+  problemType  String?  @db.VarChar(20)
+  questionId   String?
+  success      Boolean
+  errorMessage String?  @db.Text
+  createdAt    DateTime @default(now())
+
+  teacher User @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId])
+  @@index([teacherId, createdAt(sort: Desc)])
 }

@@ -6,6 +6,7 @@ const questionTypeEnum = z.enum(['MULTIPLE_CHOICE', 'SHORT_ANSWER', 'ESSAY']);
 export const questionQuerySchema = z.object({
   bookCode: z.string().optional(),
   chapter: z.string().optional(),
+  section: z.string().optional(),
   difficulty: questionDifficultyEnum.optional(),
   type: questionTypeEnum.optional(),
   search: z.string().optional(),

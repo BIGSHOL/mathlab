@@ -12,6 +12,9 @@ export async function GET(request: NextRequest) {
     grade: searchParams.get('grade') ?? undefined,
     category: searchParams.get('category') ?? undefined,
     part: searchParams.get('part') ?? undefined,
+    semester: searchParams.get('semester') ?? undefined,
+    chapter: searchParams.get('chapter') ?? undefined,
+    section: searchParams.get('section') ?? undefined,
     search: searchParams.get('search') ?? undefined,
     page: searchParams.get('page') ?? undefined,
     limit: searchParams.get('limit') ?? undefined,
@@ -24,7 +27,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { subjectId, gradeLevel, grade, category, part, search, page, limit } = parsed.data;
+  const { subjectId, gradeLevel, grade, category, part, semester, chapter, section, search, page, limit } = parsed.data;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const where: Record<string, any> = {};
@@ -33,6 +36,9 @@ export async function GET(request: NextRequest) {
   if (grade) where.grade = grade;
   if (category) where.category = category;
   if (part) where.part = part;
+  if (semester) where.semester = semester;
+  if (chapter) where.chapter = chapter;
+  if (section) where.section = section;
   if (search) {
     where.OR = [
       { title: { contains: search } },
@@ -52,6 +58,10 @@ export async function GET(request: NextRequest) {
         fullContent: true,
         conceptCode: true,
         grade: true,
+        semester: true,
+        chapter: true,
+        section: true,
+        sectionSub: true,
         category: true,
         part: true,
         keywords: true,

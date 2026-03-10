@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateMathProblem } from '@/lib/services/mathgen';
 import { prisma } from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth';
 import { SelectionState, SchoolLevel, Difficulty, ProblemType, AnswerType } from '@/types/mathgen';
 import type { QuestionDifficulty, QuestionType } from '@/types';
 
@@ -35,6 +36,8 @@ function mapQuestionType(answerType: AnswerType): QuestionType {
 }
 
 export async function POST(request: NextRequest) {
+  const currentUser = await getCurrentUser();
+
   try {
     const body = await request.json();
 
@@ -81,6 +84,25 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // AI 문제 생성 로그 기록
+    if (currentUser) {
+      await prisma.questionGenerationLog.create({
+        data: {
+          teacherId: currentUser.id,
+          mode: selection.mode,
+          schoolLevel: selection.schoolLevel,
+          grade: selection.grade,
+          mainUnit: selection.mainUnit || null,
+          subUnit: selection.subUnit || null,
+          detailUnit: selection.detailUnit || null,
+          difficulty: selection.difficulty,
+          problemType: selection.problemType,
+          questionId: saved.id,
+          success: true,
+        },
+      }).catch(() => {}); // 로그 실패는 무시
+    }
+
     return NextResponse.json({
       data: problem,
       saved: { id: saved.id, bookCode, chapter, questionNum },
@@ -88,6 +110,19 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Math generation error:', error);
+
+    // AI 문제 생성 실패 로그
+    if (currentUser) {
+      await prisma.questionGenerationLog.create({
+        data: {
+          teacherId: currentUser.id,
+          mode: 'curriculum',
+          success: false,
+          errorMessage: error instanceof Error ? error.message : String(error),
+        },
+      }).catch(() => {});
+    }
+
     return NextResponse.json(
       { error: { code: 'GENERATION_FAILED', message: '문제 생성에 실패했습니다. 잠시 후 다시 시도해주세요.' } },
       { status: 500 }

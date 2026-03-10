@@ -54,15 +54,41 @@ export async function POST(
     );
   }
 
-  if (isCorrect) {
-    await prisma.quizParticipant.update({
-      where: { id: participant.id },
-      data: {
-        score: { increment: 10 },
-        correctCount: { increment: 1 },
+  const pointsEarned = isCorrect ? 10 : 0;
+
+  // 퀴즈 답변 상세 + 점수 업데이트 (트랜잭션)
+  await prisma.$transaction(async (tx) => {
+    // 답변 상세 로그 저장
+    await tx.quizAnswerLog.upsert({
+      where: { participantId_questionId: { participantId: participant.id, questionId } },
+      update: {
+        selectedAnswer: String(selectedAnswer),
+        isCorrect,
+        pointsEarned,
+        timeSpentSeconds: body.timeSpentSeconds || 0,
+      },
+      create: {
+        participantId: participant.id,
+        questionId,
+        questionIndex: session.currentQ,
+        selectedAnswer: String(selectedAnswer),
+        correctAnswer: question.answer,
+        isCorrect,
+        pointsEarned,
+        timeSpentSeconds: body.timeSpentSeconds || 0,
       },
     });
-  }
+
+    if (isCorrect) {
+      await tx.quizParticipant.update({
+        where: { id: participant.id },
+        data: {
+          score: { increment: 10 },
+          correctCount: { increment: 1 },
+        },
+      });
+    }
+  });
 
   return NextResponse.json({
     data: {
