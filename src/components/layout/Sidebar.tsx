@@ -21,6 +21,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Calculator,
+  GraduationCap,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -41,6 +42,7 @@ const menuItems: MenuItem[] = [
   { label: '연산 생성기', href: '/questions/arithmetic', icon: Calculator },
   { label: 'AI 문제 생성', href: '/questions/generate', icon: Sparkles, disabled: true },
   { label: '시험 관리', href: '/tests', icon: ClipboardCheck },
+  { label: '레벨테스트', href: '/level-test', icon: GraduationCap },
   { label: '학습 분석', href: '/analytics', icon: BarChart3 },
 ];
 
@@ -59,7 +61,7 @@ export function Sidebar() {
   const visibleMenuItems = menuItems.filter((item) => !item.adminOnly || isAdmin);
 
   return (
-    <aside className={`flex flex-col bg-white border-r border-slate-200 shrink-0 overflow-hidden transition-all duration-200 ${collapsed ? 'w-14' : 'w-48'}`}>
+    <aside className={`flex flex-col bg-white border-r border-slate-200 shrink-0 overflow-hidden transition-all duration-200 print:hidden ${collapsed ? 'w-14' : 'w-48'}`}>
       {/* Logo */}
       <div className="shrink-0 px-3 py-3 border-b border-slate-100 flex items-center justify-between">
         <Link href="/overview" className="flex items-center gap-2 min-w-0">

@@ -60,6 +60,23 @@ body {
   overflow: hidden;
 }
 
+/* ============================================
+   Print Styles
+   ============================================ */
+
+@page {
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    overflow: visible !important;
+    height: auto !important;
+    background: white !important;
+  }
+}
+
 body {
   font-family: var(--font-display);
   color: var(--color-text-primary);

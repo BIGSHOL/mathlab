@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const problemCount = Math.min(Math.max(1, count || 10), 50);
+  const problemCount = Math.min(Math.max(1, count || 10), 1000);
   const problems = generateProblems(category, level, problemCount);
 
   return NextResponse.json({ data: problems });

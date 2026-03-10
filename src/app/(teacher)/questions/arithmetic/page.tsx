@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { Calculator, Printer, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { Calculator, Printer, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import {
@@ -52,18 +52,130 @@ const CATEGORIES_BY_GRADE: Record<string, ArithmeticCategory[]> = {
   'middle-3': ['addition', 'subtraction', 'multiplication', 'division', 'mixed', 'fraction_add', 'fraction_sub', 'fraction_mul', 'fraction_div', 'decimal'],
 };
 
+const PROBLEMS_PER_PAGE = 20; // 2열 × 10행
+
+function PrintablePage({
+  pageIdx, page, totalPages, globalOffset,
+  schoolLevel, grade, category, level,
+  totalProblems, allProblems, showAnswers, isLastPage,
+}: {
+  pageIdx: number;
+  page: GeneratedProblem[];
+  totalPages: number;
+  globalOffset: number;
+  schoolLevel: SchoolLevel;
+  grade: string;
+  category: ArithmeticCategory;
+  level: ArithmeticLevel;
+  totalProblems: number;
+  allProblems: GeneratedProblem[];
+  showAnswers: boolean;
+  isLastPage: boolean;
+}) {
+  return (
+    <div className="flex flex-col h-full">
+      {/* 헤더 — 모든 페이지 고정 높이로 문제 간격 통일 */}
+      <div className="shrink-0 h-[48px] flex flex-col justify-center pb-2 mb-2 border-b border-slate-300">
+        {pageIdx === 0 ? (
+          <>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-black tracking-tight leading-none">연산 연습 문제</h2>
+              <span className="text-[11px] text-slate-400 leading-none">
+                {SCHOOL_LABELS[schoolLevel]} {grade}학년 · {CATEGORY_LABELS[category]} · {LEVEL_LABELS[level]}
+              </span>
+            </div>
+            <div className="mt-1.5 flex justify-between text-[11px] text-slate-600 leading-none">
+              <span className="flex items-baseline gap-1">이름:<span className="inline-block w-24 border-b border-slate-400" /></span>
+              <span className="flex items-baseline gap-1">날짜:<span className="inline-block w-24 border-b border-slate-400" /></span>
+              <span className="flex items-baseline gap-1">점수:<span className="inline-block w-10 border-b border-slate-400" />/ {totalProblems}</span>
+            </div>
+          </>
+        ) : (
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-black text-text-primary leading-none">연산 연습 문제</span>
+            <span className="text-[11px] text-slate-400 leading-none">
+              {SCHOOL_LABELS[schoolLevel]} {grade}학년 · {CATEGORY_LABELS[category]}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Problems */}
+      <div className="flex-1 grid grid-cols-2 gap-x-10 gap-y-[52px] content-start">
+        {page.map((p, idx) => {
+          const globalIdx = globalOffset + idx;
+          return (
+            <div key={globalIdx} className="flex items-center gap-3 py-1 border-b border-slate-100">
+              <span className="text-lg font-bold text-slate-400 w-9 text-right shrink-0 tabular-nums">
+                {globalIdx + 1}.
+              </span>
+              <div className="flex-1 text-lg font-semibold text-text-primary">
+                <MathRenderer content={p.content} />
+              </div>
+              {showAnswers && (
+                <span className="text-lg font-bold text-primary shrink-0">
+                  <MathRenderer content={p.answer} />
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Answer key — last page only */}
+      {showAnswers && isLastPage && (
+        <div className="mt-6 pt-3 border-t-2 border-slate-800">
+          <h3 className="text-sm font-bold text-text-primary mb-2">정답</h3>
+          <div className="grid grid-cols-10 gap-1 text-xs">
+            {allProblems.map((p, idx) => (
+              <div key={idx} className="text-center">
+                <span className="text-slate-400">{idx + 1}.</span>{' '}
+                <span className="font-bold text-text-primary"><MathRenderer content={p.answer} /></span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Page number — pushed to bottom */}
+      {totalPages > 1 && (
+        <div className="mt-auto pt-4 text-center text-xs text-slate-400">
+          — {pageIdx + 1} / {totalPages} —
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ArithmeticGeneratorPage() {
   const [schoolLevel, setSchoolLevel] = useState<SchoolLevel>('elementary');
   const [grade, setGrade] = useState('3');
   const [category, setCategory] = useState<ArithmeticCategory>('addition');
   const [level, setLevel] = useState<ArithmeticLevel>('easy');
-  const [count, setCount] = useState(20);
+  const [count, setCount] = useState(30);
+  const [countWarning, setCountWarning] = useState(false);
   const [problems, setProblems] = useState<GeneratedProblem[]>([]);
   const [loading, setLoading] = useState(false);
   const [showAnswers, setShowAnswers] = useState(false);
-  const [currentPage, setCurrentPage] = useState(0);
+  const galleryRef = useRef<HTMLDivElement>(null);
+  const [previewScale, setPreviewScale] = useState(0.7);
 
-  const PROBLEMS_PER_PAGE = 20; // 2열 × 10행
+  const updateScale = useCallback(() => {
+    const el = galleryRef.current;
+    if (!el) return;
+    const containerH = el.clientHeight;
+    const a4H = 297 * 3.7795275591; // mm → px (1mm ≈ 3.78px)
+    const padding = 32; // p-4 top + bottom
+    const scale = Math.min((containerH - padding) / a4H, 0.85);
+    setPreviewScale(Math.max(0.4, scale));
+  }, []);
+
+  useEffect(() => {
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, [updateScale]);
+
   const pages = useMemo(() => {
     const result: GeneratedProblem[][] = [];
     for (let i = 0; i < problems.length; i += PROBLEMS_PER_PAGE) {
@@ -84,7 +196,6 @@ export default function ArithmeticGeneratorPage() {
         const json = await res.json();
         setProblems(json.data);
         setShowAnswers(false);
-        setCurrentPage(0);
       }
     } catch { /* ignore */ }
     setLoading(false);
@@ -174,15 +285,29 @@ export default function ArithmeticGeneratorPage() {
           {/* Count */}
           <div>
             <label className="text-xs font-semibold text-text-secondary block mb-1.5">문제 수</label>
-            <select
+            <input
+              type="number"
+              min={1}
               value={count}
-              onChange={(e) => setCount(Number(e.target.value))}
+              onChange={(e) => {
+                const v = Number(e.target.value) || 1;
+                if (v > 1000) {
+                  setCount(1000);
+                  setCountWarning(true);
+                  setTimeout(() => setCountWarning(false), 2000);
+                } else {
+                  setCount(Math.max(1, v));
+                  setCountWarning(false);
+                }
+              }}
               className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
-            >
-              {[10, 20, 30, 50].map((n) => (
-                <option key={n} value={n}>{n}문제</option>
-              ))}
-            </select>
+            />
+            {countWarning && (
+              <p className="text-[11px] text-warning mt-1 flex items-center gap-1">
+                <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-warning text-white text-[9px] font-bold shrink-0">!</span>
+                최대 1000문제까지 가능합니다
+              </p>
+            )}
           </div>
 
           {/* Generate button */}
@@ -227,174 +352,66 @@ export default function ArithmeticGeneratorPage() {
           </div>
         ) : (
           <>
-            {/* Page navigation bar */}
-            <div className="shrink-0 flex items-center justify-center gap-3 py-2 bg-white border-b border-slate-200 print:hidden">
-              <button
-                disabled={currentPage === 0}
-                onClick={() => setCurrentPage((p) => p - 1)}
-                className="p-1 rounded hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <span className="text-xs font-semibold text-text-secondary">
-                {currentPage + 1} / {pages.length} 페이지
-              </span>
-              <button
-                disabled={currentPage >= pages.length - 1}
-                onClick={() => setCurrentPage((p) => p + 1)}
-                className="p-1 rounded hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Preview area (single page view) */}
-            <div className="flex-1 overflow-y-auto p-6 flex justify-center print:p-0 print:overflow-visible">
-              <div className="bg-white shadow-lg border border-slate-200 rounded-sm w-full max-w-[210mm] h-fit min-h-[297mm] px-12 py-10 print:shadow-none print:border-none print:rounded-none print:px-0 print:py-0 print:hidden">
-                {/* Header — first page only */}
-                {currentPage === 0 && (
-                  <div className="text-center mb-8 pb-5 border-b-2 border-slate-800">
-                    <h2 className="text-xl font-black tracking-tight">연산 연습 문제</h2>
-                    <p className="text-sm text-slate-500 mt-1.5">
-                      {SCHOOL_LABELS[schoolLevel]} {grade}학년 · {CATEGORY_LABELS[category]} · {LEVEL_LABELS[level]}
-                    </p>
-                    <p className="text-xs text-slate-400 mt-1">빈칸에 알맞은 답을 써넣으세요.</p>
-                    <div className="mt-4 flex justify-center gap-8 text-sm text-slate-700">
-                      <span>이름: _______________</span>
-                      <span>날짜: _______________</span>
-                      <span>점수: ______ / {problems.length}</span>
-                    </div>
-                  </div>
-                )}
-                {/* Continuation header — page 2+ */}
-                {currentPage > 0 && (
-                  <div className="flex items-center justify-between mb-6 pb-3 border-b border-slate-300">
-                    <span className="text-sm font-bold text-text-primary">연산 연습 문제</span>
-                    <span className="text-xs text-slate-400">
-                      {SCHOOL_LABELS[schoolLevel]} {grade}학년 · {CATEGORY_LABELS[category]}
-                    </span>
-                  </div>
-                )}
-
-                {/* Problems for current page */}
-                <div className="grid grid-cols-2 gap-x-10 gap-y-4">
-                  {pages[currentPage]?.map((p, idx) => {
-                    const globalIdx = currentPage * PROBLEMS_PER_PAGE + idx;
-                    return (
-                      <div
-                        key={globalIdx}
-                        className="flex items-center gap-3 py-1.5 border-b border-slate-100"
-                      >
-                        <span className="text-xs font-bold text-slate-400 w-6 text-right shrink-0">
-                          {globalIdx + 1}.
-                        </span>
-                        <div className="flex-1 text-sm text-text-primary">
-                          <MathRenderer content={p.content} />
-                        </div>
-                        {showAnswers && (
-                          <span className="text-sm font-bold text-primary shrink-0">
-                            <MathRenderer content={p.answer} />
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Answer key — last page only */}
-                {showAnswers && currentPage === pages.length - 1 && (
-                  <div className="mt-8 pt-4 border-t-2 border-slate-800">
-                    <h3 className="text-sm font-bold text-text-primary mb-3">정답</h3>
-                    <div className="grid grid-cols-10 gap-1 text-xs">
-                      {problems.map((p, idx) => (
-                        <div key={idx} className="text-center">
-                          <span className="text-slate-400">{idx + 1}.</span>{' '}
-                          <span className="font-bold text-text-primary"><MathRenderer content={p.answer} /></span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Page number */}
-                {pages.length > 1 && (
-                  <div className="mt-auto pt-6 text-center text-xs text-slate-400">
-                    — {currentPage + 1} / {pages.length} —
-                  </div>
-                )}
-              </div>
-
-              {/* Print: render ALL pages (hidden in screen, visible in print) */}
-              <div className="hidden print:block">
+            {/* Screen: horizontal scroll gallery — scaled to fit viewport */}
+            <div ref={galleryRef} className="flex-1 overflow-x-auto overflow-y-hidden p-4 print:hidden">
+              <div className="flex gap-6 h-full items-start">
                 {pages.map((page, pageIdx) => (
                   <div
                     key={pageIdx}
-                    className="w-full min-h-[297mm] px-12 py-10"
-                    style={{ pageBreakAfter: pageIdx < pages.length - 1 ? 'always' : 'auto' }}
+                    className="shrink-0"
+                    style={{
+                      width: `${210 * 3.7795275591 * previewScale}px`,
+                      height: `${297 * 3.7795275591 * previewScale}px`,
+                    }}
                   >
-                    {pageIdx === 0 && (
-                      <div className="text-center mb-8 pb-5 border-b-2 border-slate-800">
-                        <h2 className="text-xl font-black tracking-tight">연산 연습 문제</h2>
-                        <p className="text-sm text-slate-500 mt-1.5">
-                          {SCHOOL_LABELS[schoolLevel]} {grade}학년 · {CATEGORY_LABELS[category]} · {LEVEL_LABELS[level]}
-                        </p>
-                        <p className="text-xs text-slate-400 mt-1">빈칸에 알맞은 답을 써넣으세요.</p>
-                        <div className="mt-4 flex justify-center gap-8 text-sm text-slate-700">
-                          <span>이름: _______________</span>
-                          <span>날짜: _______________</span>
-                          <span>점수: ______ / {problems.length}</span>
-                        </div>
-                      </div>
-                    )}
-                    {pageIdx > 0 && (
-                      <div className="flex items-center justify-between mb-6 pb-3 border-b border-slate-300">
-                        <span className="text-sm font-bold">연산 연습 문제</span>
-                        <span className="text-xs text-slate-400">
-                          {SCHOOL_LABELS[schoolLevel]} {grade}학년 · {CATEGORY_LABELS[category]}
-                        </span>
-                      </div>
-                    )}
-                    <div className="grid grid-cols-2 gap-x-10 gap-y-4">
-                      {page.map((p, idx) => {
-                        const globalIdx = pageIdx * PROBLEMS_PER_PAGE + idx;
-                        return (
-                          <div key={globalIdx} className="flex items-center gap-3 py-1.5 border-b border-slate-100">
-                            <span className="text-xs font-bold text-slate-400 w-6 text-right shrink-0">
-                              {globalIdx + 1}.
-                            </span>
-                            <div className="flex-1 text-sm">
-                              <MathRenderer content={p.content} />
-                            </div>
-                            {showAnswers && (
-                              <span className="text-sm font-bold shrink-0">
-                                <MathRenderer content={p.answer} />
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
+                    <div
+                      className="bg-white shadow-lg border border-slate-200 rounded-sm w-[210mm] h-[297mm] px-12 py-10 origin-top-left"
+                      style={{ transform: `scale(${previewScale})` }}
+                    >
+                      <PrintablePage
+                        pageIdx={pageIdx}
+                        page={page}
+                        totalPages={pages.length}
+                        globalOffset={pageIdx * PROBLEMS_PER_PAGE}
+                        schoolLevel={schoolLevel}
+                        grade={grade}
+                        category={category}
+                        level={level}
+                        totalProblems={problems.length}
+                        allProblems={problems}
+                        showAnswers={showAnswers}
+                        isLastPage={pageIdx === pages.length - 1}
+                      />
                     </div>
-                    {showAnswers && pageIdx === pages.length - 1 && (
-                      <div className="mt-8 pt-4 border-t-2 border-slate-800">
-                        <h3 className="text-sm font-bold mb-3">정답</h3>
-                        <div className="grid grid-cols-10 gap-1 text-xs">
-                          {problems.map((p, i) => (
-                            <div key={i} className="text-center">
-                              <span className="text-slate-400">{i + 1}.</span>{' '}
-                              <span className="font-bold"><MathRenderer content={p.answer} /></span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {pages.length > 1 && (
-                      <div className="mt-6 text-center text-xs text-slate-400">
-                        — {pageIdx + 1} / {pages.length} —
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Print: render ALL pages */}
+            <div className="hidden print:block">
+              {pages.map((page, pageIdx) => (
+                <div
+                  key={pageIdx}
+                  className="w-full h-[297mm] px-12 py-10"
+                  style={{ pageBreakAfter: pageIdx < pages.length - 1 ? 'always' : 'auto' }}
+                >
+                  <PrintablePage
+                    pageIdx={pageIdx}
+                    page={page}
+                    totalPages={pages.length}
+                    globalOffset={pageIdx * PROBLEMS_PER_PAGE}
+                    schoolLevel={schoolLevel}
+                    grade={grade}
+                    category={category}
+                    level={level}
+                    totalProblems={problems.length}
+                    allProblems={problems}
+                    showAnswers={showAnswers}
+                    isLastPage={pageIdx === pages.length - 1}
+                  />
+                </div>
+              ))}
             </div>
           </>
         )}

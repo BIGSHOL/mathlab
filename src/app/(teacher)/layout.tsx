@@ -12,9 +12,9 @@ export default async function TeacherLayout({
   if (user.role !== 'TEACHER' && user.role !== 'ADMIN') redirect('/dashboard');
 
   return (
-    <div className="h-screen flex bg-background overflow-hidden">
+    <div className="h-screen flex bg-background overflow-hidden print:h-auto print:overflow-visible print:bg-white">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto overflow-x-hidden">{children}</main>
+      <main className="flex-1 overflow-y-auto overflow-x-hidden print:overflow-visible">{children}</main>
     </div>
   );
 }
