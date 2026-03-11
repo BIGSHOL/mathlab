@@ -6,15 +6,12 @@ import { Button } from '@/components/ui/Button';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import {
   CATEGORY_LABELS,
-  LEVEL_LABELS,
+  IMPLEMENTED_CATEGORIES,
 } from '@/lib/services/arithmetic-generator';
 import type {
   ArithmeticCategory,
-  ArithmeticLevel,
   GeneratedProblem,
 } from '@/lib/services/arithmetic-generator';
-
-const LEVELS: ArithmeticLevel[] = ['easy', 'medium', 'hard'];
 
 type SchoolLevel = 'elementary' | 'middle';
 
@@ -39,24 +36,25 @@ const GRADES_BY_SCHOOL: Record<SchoolLevel, { value: string; label: string }[]> 
   ],
 };
 
-// 학년별 포함 연산 매핑 (한국 수학 교육과정 기준)
+// 학년별 세부 연산 유형 매핑 (2022 개정 교육과정 기준)
 const CATEGORIES_BY_GRADE: Record<string, ArithmeticCategory[]> = {
-  'elementary-1': ['addition', 'subtraction'],
-  'elementary-2': ['addition', 'subtraction'],
-  'elementary-3': ['addition', 'subtraction', 'multiplication', 'division', 'mixed'],
-  'elementary-4': ['addition', 'subtraction', 'multiplication', 'division', 'mixed'],
-  'elementary-5': ['addition', 'subtraction', 'multiplication', 'division', 'mixed', 'fraction_add', 'fraction_sub', 'decimal'],
-  'elementary-6': ['addition', 'subtraction', 'multiplication', 'division', 'mixed', 'fraction_add', 'fraction_sub', 'fraction_mul', 'fraction_div', 'decimal'],
-  'middle-1': ['addition', 'subtraction', 'multiplication', 'division', 'mixed', 'fraction_add', 'fraction_sub', 'fraction_mul', 'fraction_div', 'decimal'],
-  'middle-2': ['addition', 'subtraction', 'multiplication', 'division', 'mixed', 'fraction_add', 'fraction_sub', 'fraction_mul', 'fraction_div', 'decimal'],
-  'middle-3': ['addition', 'subtraction', 'multiplication', 'division', 'mixed', 'fraction_add', 'fraction_sub', 'fraction_mul', 'fraction_div', 'decimal'],
+  // 초1: 한 자리 덧셈/뺄셈
+  'elementary-1': ['add_1digit', 'sub_1digit'],
+  'elementary-2': ['add_2digit', 'sub_2digit', 'mul_table', 'unit_convert'],
+  'elementary-3': ['add_3digit', 'sub_3digit', 'mul_2x1', 'div_basic', 'div_remainder', 'time_calc'],
+  'elementary-4': ['mul_large', 'div_large', 'frac_add_same', 'frac_sub_same', 'dec_add', 'dec_sub', 'angle_calc', 'sequence_pattern'],
+  'elementary-5': ['mixed_calc', 'frac_add_diff', 'frac_sub_diff', 'frac_mul', 'dec_mul', 'gcd_lcm', 'avg_calc', 'area_calc'],
+  'elementary-6': ['frac_div', 'dec_div', 'ratio_calc', 'percent_calc', 'circle_area'],
+  'middle-1': ['int_add', 'int_sub', 'int_mul', 'int_div', 'abs_calc', 'prime_factor', 'proportion', 'quadrant'],
+  'middle-2': ['exp_calc', 'exp_law', 'mono_mul', 'mono_div', 'poly_add', 'poly_sub', 'linear_eq', 'pythagoras', 'similarity'],
+  'middle-3': ['poly_mul', 'mul_formula', 'factoring', 'sqrt_simplify', 'sqrt_add', 'sqrt_mul', 'sqrt_rationalize', 'discriminant', 'trig_value', 'inscribed_angle', 'median_calc', 'variance_calc'],
 };
 
 const PROBLEMS_PER_PAGE = 20; // 2열 × 10행
 
 function PrintablePage({
   pageIdx, page, totalPages, globalOffset,
-  schoolLevel, grade, category, level,
+  schoolLevel, grade, category,
   totalProblems, allProblems, showAnswers, isLastPage,
 }: {
   pageIdx: number;
@@ -66,7 +64,6 @@ function PrintablePage({
   schoolLevel: SchoolLevel;
   grade: string;
   category: ArithmeticCategory;
-  level: ArithmeticLevel;
   totalProblems: number;
   allProblems: GeneratedProblem[];
   showAnswers: boolean;
@@ -81,7 +78,7 @@ function PrintablePage({
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-black tracking-tight leading-none">연산 연습 문제</h2>
               <span className="text-[11px] text-slate-400 leading-none">
-                {SCHOOL_LABELS[schoolLevel]} {grade}학년 · {CATEGORY_LABELS[category]} · {LEVEL_LABELS[level]}
+                {SCHOOL_LABELS[schoolLevel]} {grade}학년 · {CATEGORY_LABELS[category]}
               </span>
             </div>
             <div className="mt-1.5 flex justify-between text-[11px] text-slate-600 leading-none">
@@ -150,8 +147,7 @@ function PrintablePage({
 export default function ArithmeticGeneratorPage() {
   const [schoolLevel, setSchoolLevel] = useState<SchoolLevel>('elementary');
   const [grade, setGrade] = useState('3');
-  const [category, setCategory] = useState<ArithmeticCategory>('addition');
-  const [level, setLevel] = useState<ArithmeticLevel>('easy');
+  const [category, setCategory] = useState<ArithmeticCategory>('add_1digit');
   const [count, setCount] = useState(30);
   const [countWarning, setCountWarning] = useState(false);
   const [problems, setProblems] = useState<GeneratedProblem[]>([]);
@@ -190,7 +186,7 @@ export default function ArithmeticGeneratorPage() {
       const res = await fetch('/api/arithmetic/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category, level, count }),
+        body: JSON.stringify({ category, level: 'medium', count }),
       });
       if (res.ok) {
         const json = await res.json();
@@ -225,7 +221,8 @@ export default function ArithmeticGeneratorPage() {
                 const firstGrade = GRADES_BY_SCHOOL[sl][0].value;
                 setGrade(firstGrade);
                 const cats = CATEGORIES_BY_GRADE[`${sl}-${firstGrade}`] ?? [];
-                if (cats.length > 0 && !cats.includes(category)) setCategory(cats[0]);
+                const implemented = cats.filter((c) => IMPLEMENTED_CATEGORIES.has(c));
+                if (implemented.length > 0 && !implemented.includes(category)) setCategory(implemented[0]);
               }}
               className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
             >
@@ -244,7 +241,8 @@ export default function ArithmeticGeneratorPage() {
                 const g = e.target.value;
                 setGrade(g);
                 const cats = CATEGORIES_BY_GRADE[`${schoolLevel}-${g}`] ?? [];
-                if (cats.length > 0 && !cats.includes(category)) setCategory(cats[0]);
+                const implemented = cats.filter((c) => IMPLEMENTED_CATEGORIES.has(c));
+                if (implemented.length > 0 && !implemented.includes(category)) setCategory(implemented[0]);
               }}
               className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
             >
@@ -259,25 +257,16 @@ export default function ArithmeticGeneratorPage() {
             <label className="text-xs font-semibold text-text-secondary block mb-1.5">연산 유형</label>
             <select
               value={category}
-              onChange={(e) => setCategory(e.target.value as ArithmeticCategory)}
+              onChange={(e) => {
+                const val = e.target.value as ArithmeticCategory;
+                if (IMPLEMENTED_CATEGORIES.has(val)) setCategory(val);
+              }}
               className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
             >
               {(CATEGORIES_BY_GRADE[`${schoolLevel}-${grade}`] ?? []).map((c) => (
-                <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Level */}
-          <div>
-            <label className="text-xs font-semibold text-text-secondary block mb-1.5">난이도</label>
-            <select
-              value={level}
-              onChange={(e) => setLevel(e.target.value as ArithmeticLevel)}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
-            >
-              {LEVELS.map((l) => (
-                <option key={l} value={l}>{LEVEL_LABELS[l]}</option>
+                <option key={c} value={c} disabled={!IMPLEMENTED_CATEGORIES.has(c)}>
+                  {CATEGORY_LABELS[c]}{!IMPLEMENTED_CATEGORIES.has(c) ? ' (준비중)' : ''}
+                </option>
               ))}
             </select>
           </div>
@@ -320,7 +309,7 @@ export default function ArithmeticGeneratorPage() {
           {problems.length > 0 && (
             <div className="pt-3 border-t border-slate-200 space-y-3">
               <p className="text-xs text-text-secondary">
-                {CATEGORY_LABELS[category]} · {LEVEL_LABELS[level]} · {problems.length}문제
+                {CATEGORY_LABELS[category]} · {problems.length}문제
               </p>
               <label className="flex items-center gap-2 text-xs text-text-secondary cursor-pointer">
                 <input
@@ -376,7 +365,6 @@ export default function ArithmeticGeneratorPage() {
                         schoolLevel={schoolLevel}
                         grade={grade}
                         category={category}
-                        level={level}
                         totalProblems={problems.length}
                         allProblems={problems}
                         showAnswers={showAnswers}
@@ -404,7 +392,6 @@ export default function ArithmeticGeneratorPage() {
                     schoolLevel={schoolLevel}
                     grade={grade}
                     category={category}
-                    level={level}
                     totalProblems={problems.length}
                     allProblems={problems}
                     showAnswers={showAnswers}

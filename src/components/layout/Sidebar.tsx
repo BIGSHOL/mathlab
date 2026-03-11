@@ -22,6 +22,8 @@ import {
   PanelLeftOpen,
   Calculator,
   GraduationCap,
+  CalendarCheck,
+  Newspaper,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -40,6 +42,7 @@ const menuItems: MenuItem[] = [
   { label: '개념 관리', href: '/concepts', icon: BookOpen },
   { label: '문제 은행', href: '/questions', icon: Database },
   { label: '연산 생성기', href: '/questions/arithmetic', icon: Calculator },
+  { label: '연산 숙제', href: '/homework', icon: CalendarCheck },
   { label: 'AI 문제 생성', href: '/questions/generate', icon: Sparkles, disabled: true },
   { label: '시험 관리', href: '/tests', icon: ClipboardCheck },
   { label: '레벨테스트', href: '/level-test', icon: GraduationCap },
@@ -47,6 +50,7 @@ const menuItems: MenuItem[] = [
 ];
 
 const systemItems = [
+  { label: '업데이트', href: '/updates', icon: Newspaper },
   { label: '설정', href: '/settings', icon: Settings },
   { label: '고객지원', href: '/support', icon: HelpCircle },
   { label: '목업 미리보기', href: '/mockups', icon: Eye },

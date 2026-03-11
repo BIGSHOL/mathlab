@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { generateProblems } from '@/lib/services/arithmetic-generator';
+import { generateProblems, IMPLEMENTED_CATEGORIES } from '@/lib/services/arithmetic-generator';
 import type { ArithmeticCategory, ArithmeticLevel } from '@/lib/services/arithmetic-generator';
 
-const VALID_CATEGORIES: ArithmeticCategory[] = [
-  'addition', 'subtraction', 'multiplication', 'division', 'mixed',
-  'fraction_add', 'fraction_sub', 'fraction_mul', 'fraction_div', 'decimal',
-];
 const VALID_LEVELS: ArithmeticLevel[] = ['easy', 'medium', 'hard'];
 
 /** POST: 연산 연습 세션 시작 → ArithmeticAttempt 생성 + 문제 반환 */
@@ -23,7 +19,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { category, level, count } = body;
 
-  if (!VALID_CATEGORIES.includes(category)) {
+  if (!IMPLEMENTED_CATEGORIES.has(category as ArithmeticCategory)) {
     return NextResponse.json(
       { error: { code: 'VALIDATION_ERROR', message: '유효하지 않은 연산 유형입니다' } },
       { status: 400 }
