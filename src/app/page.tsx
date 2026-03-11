@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BookOpen, BarChart3, Trophy, Sparkles, ArrowRight } from 'lucide-react';
+import { BookOpen, BarChart3, Trophy, Sparkles, ArrowRight, Newspaper } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 
@@ -71,6 +71,10 @@ export default function LandingPage() {
           <h2 className="text-lg font-bold tracking-tight text-text-primary">MathLab</h2>
         </div>
         <div className="flex items-center gap-3">
+          <Link href="/updates" className="text-sm text-text-secondary hover:text-primary transition-colors font-medium flex items-center gap-1.5">
+            <Newspaper className="w-4 h-4" />
+            업데이트
+          </Link>
           <Link href="/login">
             <Button variant="ghost" size="sm">
               로그인
@@ -183,6 +187,9 @@ export default function LandingPage() {
             <span>&copy; 2024 MathLab. All rights reserved.</span>
           </div>
           <div className="flex gap-6 text-sm text-text-secondary">
+            <Link href="/updates" className="hover:text-primary transition-colors">
+              업데이트
+            </Link>
             <a href="#" className="hover:text-primary transition-colors">
               이용약관
             </a>
