@@ -24,7 +24,7 @@ export async function GET() {
       grade: true,
       createdAt: true,
       profile: {
-        select: { totalXp: true, level: true },
+        select: { totalXp: true, level: true, currentStreak: true, longestStreak: true, lastActiveAt: true },
       },
     },
     orderBy: { createdAt: 'desc' },

@@ -50,7 +50,7 @@ export const updateConceptSchema = z.object({
 });
 
 export const blankQuerySchema = z.object({
-  level: z.coerce.number().int().min(1).max(2),
+  level: z.coerce.number().int().min(1).max(3),
 });
 
 export const bulkConceptItemSchema = z.object({
@@ -77,5 +77,26 @@ export type ConceptQuery = z.infer<typeof conceptQuerySchema>;
 export type CreateConceptInput = z.infer<typeof createConceptSchema>;
 export type UpdateConceptInput = z.infer<typeof updateConceptSchema>;
 export type BlankQuery = z.infer<typeof blankQuerySchema>;
+export const bulkBlankItemSchema = z.object({
+  position: z.number().int().min(1),
+  answer: z.string().min(1),
+  hint: z.string(),
+  difficulty: z.enum(['easy', 'hard', 'full']).optional().default('easy'),
+});
+
+export const bulkBlankExerciseSchema = z.object({
+  conceptId: z.string().min(1),
+  exercises: z.array(z.object({
+    level: z.number().int().min(1).max(2),
+    templateText: z.string().min(1),
+    blanks: z.array(bulkBlankItemSchema).min(1),
+  })).min(1),
+});
+
+export const bulkCreateBlanksSchema = z.object({
+  items: z.array(bulkBlankExerciseSchema).min(1).max(200),
+});
+
 export type BulkConceptItem = z.infer<typeof bulkConceptItemSchema>;
 export type BulkCreateConceptInput = z.infer<typeof bulkCreateConceptSchema>;
+export type BulkCreateBlanksInput = z.infer<typeof bulkCreateBlanksSchema>;

@@ -68,7 +68,7 @@ export function MathRenderer({ content, className = '' }: MathRendererProps) {
                   src={src}
                   alt={alt || ''}
                   style={style}
-                  className="float-left mr-4 mb-2 rounded-lg"
+                  className="float-left mr-4 mb-2 rounded-sm"
                 />
               );
             }
@@ -79,7 +79,7 @@ export function MathRenderer({ content, className = '' }: MathRendererProps) {
                   src={src}
                   alt={alt || ''}
                   style={style}
-                  className="float-right ml-4 mb-2 rounded-lg"
+                  className="float-right ml-4 mb-2 rounded-sm"
                 />
               );
             }
@@ -91,7 +91,7 @@ export function MathRenderer({ content, className = '' }: MathRendererProps) {
                   src={src}
                   alt={alt || ''}
                   style={style}
-                  className="rounded-lg"
+                  className="rounded-sm"
                 />
               </span>
             );

@@ -33,7 +33,10 @@ export async function GET(request: NextRequest) {
   const where: Record<string, any> = {};
   if (subjectId) where.subjectId = subjectId;
   if (gradeLevel) where.subject = { gradeLevel };
-  if (grade) where.grade = grade;
+  if (grade) {
+    const grades = grade.split(',').filter(Boolean);
+    where.grade = grades.length === 1 ? grades[0] : { in: grades };
+  }
   if (category) where.category = category;
   if (part) where.part = part;
   if (semester) where.semester = semester;

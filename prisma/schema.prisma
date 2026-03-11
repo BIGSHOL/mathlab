@@ -44,6 +44,8 @@ model User {
   teacherComments    TeacherComment[] @relation("TeacherComments")
   studentComments    TeacherComment[] @relation("StudentComments")
   generationLogs     QuestionGenerationLog[]
+  createdHomeworkPlans   ArithmeticHomeworkPlan[]        @relation("HomeworkPlanCreator")
+  homeworkEnrollments    ArithmeticHomeworkEnrollment[]   @relation("HomeworkEnrollments")
 
   @@index([role])
 }
@@ -98,6 +100,7 @@ model Concept {
   progress         LearningProgress[]
   prerequisiteFor  ConceptPrerequisite[] @relation("PrerequisiteFor")
   prerequisites    ConceptPrerequisite[] @relation("HasPrerequisite")
+  questions        Question[]
 
   @@index([subjectId])
   @@index([subjectId, sortOrder])
@@ -122,6 +125,7 @@ enum Stage {
   READING
   BLANK_EASY
   BLANK_HARD
+  BLANK_FULL
   BLANK_PAGE
 }
 
@@ -169,14 +173,15 @@ model PointTransaction {
 }
 
 model StudentProfile {
-  id             String    @id @default(cuid())
-  userId         String    @unique
-  totalXp        Int       @default(0)
-  level          Int       @default(1)
-  currentStreak  Int       @default(0)
-  longestStreak  Int       @default(0)
-  lastActiveAt   DateTime?
-  updatedAt      DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  totalXp         Int       @default(0)
+  level           Int       @default(1)
+  currentStreak   Int       @default(0)
+  longestStreak   Int       @default(0)
+  lastActiveAt    DateTime?
+  conceptNavMode  String    @default("curriculum") // curriculum | chain:<체인명>
+  updatedAt       DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -213,6 +218,12 @@ model Question {
   explanation String?            @db.Text
   sourceTag   String?            @db.VarChar(100)  // "핵심문제 익히기" 등
 
+  // 4대 영역 & 계통도 연결
+  domain      String?            @db.VarChar(30)   // CALCULATION | UNDERSTANDING | PROBLEM_SOLVING | REASONING
+  conceptId   String?                              // 연결된 개념 (계통도 분석용)
+
+  concept     Concept?           @relation(fields: [conceptId], references: [id], onDelete: SetNull)
+
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
 
@@ -220,6 +231,8 @@ model Question {
   @@index([bookCode, chapter])
   @@index([difficulty])
   @@index([type])
+  @@index([domain])
+  @@index([conceptId])
 }
 
 // Concept Prerequisites (self-referencing many-to-many)
@@ -255,9 +268,10 @@ model Test {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
-  creator     User              @relation("TestCreator", fields: [createdBy], references: [id])
-  attempts    TestAttempt[]
-  assignments TestAssignment[]
+  creator         User              @relation("TestCreator", fields: [createdBy], references: [id])
+  attempts        TestAttempt[]
+  assignments     TestAssignment[]
+  levelTestConfig LevelTestConfig?
 
   @@index([grade])
   @@index([createdBy])
@@ -376,10 +390,22 @@ model DiagnosticResult {
   weakAreas       Json                       // 취약 영역 배열 [{chapter, accuracy}]
   strongAreas     Json                       // 우수 영역 배열
   overallAccuracy Int                        // 전체 정답률 (%)
+  domainScores    Json?                      // 4대 영역 점수 { CALCULATION: {total,correct,accuracy}, ... }
   createdAt       DateTime @default(now())
 
   @@index([studentId])
   @@index([studentId, diagnosticType])
+}
+
+// FEAT: Level Test Configuration
+model LevelTestConfig {
+  id              String @id @default(cuid())
+  testId          String @unique
+  questionDomains Json   // { [questionId]: "CALCULATION"|"UNDERSTANDING"|"PROBLEM_SOLVING"|"REASONING" }
+
+  test Test @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  @@index([testId])
 }
 
 // FEAT: Parent & Report System
@@ -475,11 +501,17 @@ model ArithmeticAttempt {
   completedAt      DateTime?
   createdAt        DateTime  @default(now())
 
-  student User               @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  answers ArithmeticAnswer[]
+  homeworkPlanId   String?
+  homeworkDayIndex Int?
+
+  student      User                    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  answers      ArithmeticAnswer[]
+  homeworkPlan ArithmeticHomeworkPlan?  @relation("HomeworkAttempts", fields: [homeworkPlanId], references: [id])
 
   @@index([studentId])
   @@index([studentId, createdAt(sort: Desc)])
+  @@index([homeworkPlanId, homeworkDayIndex])
+  @@index([studentId, homeworkPlanId])
 }
 
 model ArithmeticAnswer {
@@ -499,6 +531,50 @@ model ArithmeticAnswer {
   attempt ArithmeticAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
 
   @@index([attemptId])
+}
+
+// FEAT: Arithmetic Homework Plans
+model ArithmeticHomeworkPlan {
+  id              String   @id @default(cuid())
+  title           String   @db.VarChar(200)
+  createdBy       String
+  categories      Json     // ArithmeticCategory[]
+  level           String   @db.VarChar(10)
+  dailyCount      Int
+  totalDays       Int
+  startDate       DateTime @db.Date
+  dailyProblems   Json     // GeneratedProblem[][]
+  progressionMode String   @default("sequential") @db.VarChar(20) // sequential | round_robin | weekday
+  weekdayMap      Json?    // weekday mode: { "1": "add_1digit", ... } (0=Sun...6=Sat)
+  passingScore    Int      @default(80)    // 통과 점수 (정답률 %)
+  retryOnFail     Boolean  @default(false) // 미통과 시 재시도 필수
+  retryMode       String   @default("wrong_same") @db.VarChar(20) // wrong_same | wrong_new | all_same | all_new
+  maxRetries      Int      @default(3)     // 최대 재시도 횟수
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  creator     User                          @relation("HomeworkPlanCreator", fields: [createdBy], references: [id])
+  enrollments ArithmeticHomeworkEnrollment[]
+  attempts    ArithmeticAttempt[]           @relation("HomeworkAttempts")
+
+  @@index([createdBy])
+  @@index([isActive])
+  @@index([startDate])
+}
+
+model ArithmeticHomeworkEnrollment {
+  id         String   @id @default(cuid())
+  planId     String
+  studentId  String
+  enrolledAt DateTime @default(now())
+
+  plan    ArithmeticHomeworkPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  student User                  @relation("HomeworkEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, studentId])
+  @@index([studentId])
+  @@index([planId])
 }
 
 // FEAT: Quiz Answer Detail Log

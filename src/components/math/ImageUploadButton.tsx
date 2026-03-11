@@ -116,7 +116,7 @@ export function ImageUploadPopup({
       <div className="absolute inset-0 bg-black/40" onClick={() => { onClose(); reset(); }} />
 
       <div
-        className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4"
+        className="relative bg-white rounded-sm shadow-2xl w-full max-w-lg mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -127,7 +127,7 @@ export function ImageUploadPopup({
           </h3>
           <button
             onClick={() => { onClose(); reset(); }}
-            className="p-1 hover:bg-slate-100 rounded-lg transition-colors"
+            className="p-1 hover:bg-slate-100 rounded-sm transition-colors"
           >
             <X className="w-5 h-5 text-slate-400" />
           </button>
@@ -138,7 +138,7 @@ export function ImageUploadPopup({
           {/* 업로드 영역 */}
           {!uploadedUrl ? (
             <div
-              className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
+              className={`border-2 border-dashed rounded-sm p-8 text-center transition-colors ${
                 dragOver ? 'border-primary bg-primary/5' : 'border-slate-300 hover:border-slate-400'
               }`}
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -180,12 +180,12 @@ export function ImageUploadPopup({
             /* 미리보기 + 설정 */
             <div className="space-y-3">
               {/* 미리보기 */}
-              <div className="bg-slate-50 rounded-lg p-3 flex justify-center">
+              <div className="bg-slate-50 rounded-sm p-3 flex justify-center">
                 <img
                   src={uploadedUrl}
                   alt={altText || '미리보기'}
                   style={{ width }}
-                  className="rounded-lg max-h-[200px] object-contain"
+                  className="rounded-sm max-h-[200px] object-contain"
                 />
               </div>
 
@@ -204,7 +204,7 @@ export function ImageUploadPopup({
               <div>
                 <label className="block text-xs font-bold text-slate-500 mb-1">설명 (alt)</label>
                 <input
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
                   value={altText}
                   onChange={(e) => setAltText(e.target.value)}
                   placeholder="도형, 표, 그래프 등"
@@ -220,7 +220,7 @@ export function ImageUploadPopup({
                       key={w}
                       type="button"
                       onClick={() => setWidth(w)}
-                      className={`flex-1 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                      className={`flex-1 py-1.5 text-xs font-medium rounded-sm border transition-colors ${
                         width === w
                           ? 'bg-primary text-white border-primary'
                           : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
@@ -241,7 +241,7 @@ export function ImageUploadPopup({
                       key={a.value}
                       type="button"
                       onClick={() => setAlignment(a.value)}
-                      className={`flex-1 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                      className={`flex-1 py-1.5 text-xs font-medium rounded-sm border transition-colors ${
                         alignment === a.value
                           ? 'bg-primary text-white border-primary'
                           : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
@@ -264,14 +264,14 @@ export function ImageUploadPopup({
         <div className="flex justify-end gap-2 px-5 py-3.5 border-t border-slate-200">
           <button
             onClick={() => { onClose(); reset(); }}
-            className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-sm transition-colors"
           >
             취소
           </button>
           <button
             onClick={handleInsert}
             disabled={!uploadedUrl}
-            className="px-5 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-medium"
+            className="px-5 py-2 text-sm bg-primary text-white rounded-sm hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-medium"
           >
             삽입
           </button>

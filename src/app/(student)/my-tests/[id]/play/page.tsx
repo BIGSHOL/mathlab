@@ -250,7 +250,7 @@ export default function TestPlayPage() {
                       key={idx}
                       disabled={!!feedback}
                       onClick={() => setSelectedAnswer(choiceNum)}
-                      className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all text-sm ${
+                      className={`w-full text-left px-4 py-3 rounded-sm border-2 transition-all text-sm ${
                         showResult
                           ? isCorrectAnswer
                             ? 'border-emerald-400 bg-emerald-50'
@@ -284,7 +284,7 @@ export default function TestPlayPage() {
                   onChange={(e) => setSelectedAnswer(e.target.value)}
                   disabled={!!feedback}
                   placeholder="정답을 입력하세요"
-                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl text-base focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50"
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-sm text-base focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !feedback) handleSubmit();
                   }}
@@ -294,7 +294,7 @@ export default function TestPlayPage() {
 
             {/* Feedback */}
             {feedback && (
-              <div className={`mt-6 p-4 rounded-xl ${
+              <div className={`mt-6 p-4 rounded-sm ${
                 feedback.isCorrect ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'
               }`}>
                 <div className="flex items-center gap-2 mb-2">

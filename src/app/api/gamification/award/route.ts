@@ -35,26 +35,32 @@ export async function POST(request: NextRequest) {
 
   const previousLevel = profile.level;
 
-  // Create transaction and update profile
-  await prisma.pointTransaction.create({
-    data: { userId, amount, type: 'EARN', reason, referenceId },
-  });
+  // Create transaction and update profile (atomic)
+  const updatedProfile = await prisma.$transaction(async (tx) => {
+    await tx.pointTransaction.create({
+      data: { userId, amount, type: 'EARN', reason, referenceId },
+    });
 
-  const updatedProfile = await prisma.studentProfile.update({
-    where: { userId },
-    data: {
-      totalXp: { increment: amount },
-      lastActiveAt: new Date(),
-    },
+    const profile = await tx.studentProfile.update({
+      where: { userId },
+      data: {
+        totalXp: { increment: amount },
+        lastActiveAt: new Date(),
+      },
+    });
+
+    const newLevel = calculateLevel(profile.totalXp);
+    if (newLevel !== profile.level) {
+      return tx.studentProfile.update({
+        where: { userId },
+        data: { level: newLevel },
+      });
+    }
+
+    return profile;
   });
 
   const newLevel = calculateLevel(updatedProfile.totalXp);
-  if (newLevel !== updatedProfile.level) {
-    await prisma.studentProfile.update({
-      where: { userId },
-      data: { level: newLevel },
-    });
-  }
 
   return NextResponse.json({
     data: {

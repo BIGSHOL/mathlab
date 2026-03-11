@@ -92,22 +92,29 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Create all concepts in a transaction
+  // Create all concepts in a transaction (individual creates to get IDs)
   const data = concepts.map((c) => ({
     subjectId,
     title: c.title,
     fullContent: c.fullContent,
     conceptCode: c.conceptCode || null,
     grade: c.grade || null,
+    semester: c.semester ?? null,
+    chapter: c.chapter || null,
+    section: c.section || null,
+    sectionSub: c.sectionSub || null,
     category: c.category || null,
     part: c.part || null,
+    source: c.source || null,
     keywords: c.keywords || null,
   }));
 
-  const result = await prisma.concept.createMany({ data });
+  const created = await prisma.$transaction(
+    data.map((d) => prisma.concept.create({ data: d, select: { id: true } }))
+  );
 
   return NextResponse.json(
-    { data: { created: result.count, total: concepts.length } },
+    { data: { created: created.length, total: concepts.length, conceptIds: created.map((c) => c.id) } },
     { status: 201 }
   );
 }

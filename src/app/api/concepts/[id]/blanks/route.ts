@@ -47,13 +47,16 @@ export async function GET(
   }
 
   // Filter blanks by difficulty based on requested level
+  // Level 1 (1단계): easy blanks only
+  // Level 2 (2단계): easy + hard blanks
+  // Level 3 (통문장): all blanks (easy + hard + full)
   const level = parsed.data.level;
   const allBlanks = exercise.blanks as Array<{ position: number; answer: string; hint: string; difficulty?: string }>;
   const filteredBlanks = allBlanks.filter((b) => {
-    const diff = b.difficulty || 'both';
+    const diff = b.difficulty || 'easy';
     if (level === 1) return diff === 'easy' || diff === 'both';
-    if (level === 2) return diff === 'hard' || diff === 'both';
-    return true;
+    if (level === 2) return diff === 'easy' || diff === 'hard' || diff === 'both';
+    return true; // level 3: show all
   });
 
   // Rebuild template: only keep {{N}} markers for filtered blanks

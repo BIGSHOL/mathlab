@@ -45,7 +45,7 @@ export default function QuizJoinPage() {
           onChange={(e) => setCode(e.target.value.toUpperCase())}
           placeholder="참가 코드 (6자리)"
           maxLength={6}
-          className="w-full px-4 py-4 text-center text-2xl font-mono font-bold bg-slate-700 border-2 border-slate-600 rounded-xl text-white placeholder-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/30 tracking-widest"
+          className="w-full px-4 py-4 text-center text-2xl font-mono font-bold bg-slate-700 border-2 border-slate-600 rounded-sm text-white placeholder-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/30 tracking-widest"
           onKeyDown={(e) => { if (e.key === 'Enter') handleJoin(); }}
         />
 

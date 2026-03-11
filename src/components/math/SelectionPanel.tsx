@@ -181,7 +181,7 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
                         grade: newGrades[0] || '',
                       });
                     }}
-                    className={`flex-1 px-3 py-2 text-sm rounded-lg transition-colors border text-center ${
+                    className={`flex-1 px-3 py-2 text-sm rounded-sm transition-colors border text-center ${
                       selection.schoolLevel === level
                         ? 'bg-primary/10 border-primary/30 text-primary font-medium'
                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -194,7 +194,7 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
               <select
                 value={selection.grade}
                 onChange={(e) => handleChange('grade', e.target.value)}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 outline-none"
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 outline-none"
               >
                 {grades.map((g) => (
                   <option key={g} value={g}>
@@ -214,7 +214,7 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
                   <select
                     value={selection.mainUnit}
                     onChange={(e) => handleChange('mainUnit', e.target.value)}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-primary transition-colors"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-sm outline-none focus:border-primary transition-colors"
                   >
                     {availableMainUnits.length > 0 ? (
                       availableMainUnits.map((u) => (
@@ -232,7 +232,7 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
                   <select
                     value={selection.subUnit}
                     onChange={(e) => handleChange('subUnit', e.target.value)}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-primary transition-colors"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-sm outline-none focus:border-primary transition-colors"
                     disabled={availableSubUnits.length === 0}
                   >
                     {availableSubUnits.length > 0 ? (
@@ -252,7 +252,7 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
                     <select
                       value={selection.detailUnit}
                       onChange={(e) => handleChange('detailUnit', e.target.value)}
-                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/40"
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-sm outline-none focus:ring-2 focus:ring-primary/40"
                     >
                       {availableDetailUnits.map((u) => (
                         <option key={u.name} value={u.name}>
@@ -266,7 +266,7 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
                       value={selection.detailUnit}
                       onChange={(e) => handleChange('detailUnit', e.target.value)}
                       placeholder="직접 입력"
-                      className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/40"
+                      className="w-full p-2.5 bg-white border border-slate-200 rounded-sm text-sm outline-none focus:ring-2 focus:ring-primary/40"
                     />
                   )}
                 </div>
@@ -278,7 +278,7 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
         {/* IMAGE MODE */}
         {selection.mode === 'image' && (
           <div className="space-y-4">
-            <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 text-xs text-blue-700 mb-2">
+            <div className="bg-blue-50 p-3 rounded-sm border border-blue-100 text-xs text-blue-700 mb-2">
               <strong>유사 문제 생성:</strong> 문제 사진을 업로드하면 AI가 분석하여 같은 개념, 비슷한
               난이도의 <strong>새로운 문제</strong>를 만들어줍니다.
             </div>
@@ -289,7 +289,7 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
 
             {!selection.sourceImage ? (
               <div
-                className="border-2 border-dashed border-slate-300 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-slate-50 transition-colors cursor-pointer"
+                className="border-2 border-dashed border-slate-300 rounded-sm p-8 flex flex-col items-center justify-center text-center hover:bg-slate-50 transition-colors cursor-pointer"
                 onClick={() => fileInputRef.current?.click()}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={handleDrop}
@@ -305,7 +305,7 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
                 </p>
               </div>
             ) : (
-              <div className="relative rounded-xl overflow-hidden border border-slate-200 shadow-sm group">
+              <div className="relative rounded-sm overflow-hidden border border-slate-200 shadow-sm group">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={selection.sourceImage}
@@ -315,7 +315,7 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <button
                     onClick={() => handleChange('sourceImage', null)}
-                    className="bg-white text-red-500 px-4 py-2 rounded-lg font-medium shadow-lg hover:bg-red-50 transition-colors flex items-center gap-2"
+                    className="bg-white text-red-500 px-4 py-2 rounded-sm font-medium shadow-lg hover:bg-red-50 transition-colors flex items-center gap-2"
                   >
                     <X size={16} /> 이미지 삭제
                   </button>
@@ -348,7 +348,7 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
               <select
                 value={selection.difficulty}
                 onChange={(e) => handleChange('difficulty', e.target.value)}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-sm outline-none"
               >
                 {Object.values(Difficulty).map((d) => (
                   <option key={d} value={d}>
@@ -359,7 +359,7 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
               <select
                 value={selection.problemType}
                 onChange={(e) => handleChange('problemType', e.target.value)}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-sm outline-none"
               >
                 {Object.values(ProblemType).map((t) => (
                   <option key={t} value={t}>
@@ -370,12 +370,12 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
             </div>
 
             {/* Answer Type Toggle */}
-            <div className="flex bg-slate-50 p-1 rounded-lg border border-slate-200">
+            <div className="flex bg-slate-50 p-1 rounded-sm border border-slate-200">
               {Object.values(AnswerType).map((type) => (
                 <button
                   key={type}
                   onClick={() => handleChange('answerType', type)}
-                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+                  className={`flex-1 py-2 text-sm font-medium rounded-sm transition-all ${
                     selection.answerType === type
                       ? 'bg-white text-primary shadow-sm border border-slate-100'
                       : 'text-slate-500 hover:text-slate-700'
@@ -394,7 +394,7 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
         <button
           onClick={onGenerate}
           disabled={isGenerateDisabled()}
-          className={`w-full py-3.5 rounded-xl text-white font-bold shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer ${
+          className={`w-full py-3.5 rounded-sm text-white font-bold shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer ${
             isGenerateDisabled()
               ? 'bg-primary/40 cursor-not-allowed'
               : 'bg-primary hover:bg-primary-hover hover:shadow-xl active:scale-95'

@@ -171,7 +171,7 @@ export default function ArithmeticPracticePage() {
                 <button
                   key={c}
                   onClick={() => setCategory(c)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-3 py-2 rounded-sm text-sm font-medium transition-colors ${
                     category === c
                       ? 'bg-primary text-white'
                       : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
@@ -190,7 +190,7 @@ export default function ArithmeticPracticePage() {
                 <button
                   key={l}
                   onClick={() => setLevel(l)}
-                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex-1 px-3 py-2 rounded-sm text-sm font-medium transition-colors ${
                     level === l
                       ? 'bg-primary text-white'
                       : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
@@ -209,7 +209,7 @@ export default function ArithmeticPracticePage() {
                 <button
                   key={n}
                   onClick={() => setCount(n)}
-                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex-1 px-3 py-2 rounded-sm text-sm font-medium transition-colors ${
                     count === n
                       ? 'bg-primary text-white'
                       : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
@@ -239,26 +239,26 @@ export default function ArithmeticPracticePage() {
           <Trophy className="w-12 h-12 text-yellow-500 mx-auto" />
           <h2 className="text-2xl font-black text-text-primary">연습 완료!</h2>
           {xpEarned > 0 && (
-            <div className="flex items-center justify-center gap-2 text-amber-600 bg-amber-50 rounded-lg py-2">
+            <div className="flex items-center justify-center gap-2 text-amber-600 bg-amber-50 rounded-sm py-2">
               <Star className="w-5 h-5" />
               <span className="font-bold">+{xpEarned} XP 획득!</span>
               {leveledUp && <span className="text-xs bg-amber-200 rounded px-2 py-0.5">레벨 업!</span>}
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-slate-50 rounded-lg p-3">
+            <div className="bg-slate-50 rounded-sm p-3">
               <p className="text-2xl font-black text-primary">{score}/{problems.length}</p>
               <p className="text-xs text-text-secondary">정답</p>
             </div>
-            <div className="bg-slate-50 rounded-lg p-3">
+            <div className="bg-slate-50 rounded-sm p-3">
               <p className="text-2xl font-black text-text-primary">{accuracy}%</p>
               <p className="text-xs text-text-secondary">정답률</p>
             </div>
-            <div className="bg-slate-50 rounded-lg p-3">
+            <div className="bg-slate-50 rounded-sm p-3">
               <p className="text-2xl font-black text-text-primary">{totalTime}초</p>
               <p className="text-xs text-text-secondary">총 소요시간</p>
             </div>
-            <div className="bg-slate-50 rounded-lg p-3">
+            <div className="bg-slate-50 rounded-sm p-3">
               <p className="text-2xl font-black text-text-primary">
                 {problems.length > 0 ? (totalTime / problems.length).toFixed(1) : 0}초
               </p>
@@ -331,7 +331,7 @@ export default function ArithmeticPracticePage() {
                   key={idx}
                   disabled={feedback !== null}
                   onClick={() => handleAnswer(choice)}
-                  className={`px-4 py-4 rounded-xl border-2 text-lg font-bold transition-all ${
+                  className={`px-4 py-4 rounded-sm border-2 text-lg font-bold transition-all ${
                     showResult
                       ? isCorrectChoice
                         ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
@@ -351,7 +351,7 @@ export default function ArithmeticPracticePage() {
 
           {/* Feedback */}
           {feedback !== null && (
-            <div className={`mt-6 p-4 rounded-xl flex items-center gap-2 ${
+            <div className={`mt-6 p-4 rounded-sm flex items-center gap-2 ${
               feedback ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'
             }`}>
               {feedback ? (

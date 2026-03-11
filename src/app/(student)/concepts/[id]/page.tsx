@@ -2,17 +2,17 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, BookOpen, CheckCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, CheckCircle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import type { LearningStage } from '@/types';
 
 const stageConfig = [
-  { key: 'READING' as LearningStage, label: '개념 읽기', color: 'bg-stage-reading', icon: '1' },
-  { key: 'BLANK_EASY' as LearningStage, label: '빈칸 (쉬움)', color: 'bg-stage-blank-easy', icon: '2' },
-  { key: 'BLANK_HARD' as LearningStage, label: '빈칸 (어려움)', color: 'bg-stage-blank-hard', icon: '3' },
-  { key: 'BLANK_PAGE' as LearningStage, label: '백지 쓰기', color: 'bg-stage-blank-page', icon: '4' },
+  { key: 'READING' as LearningStage, label: '개념학습', color: 'bg-stage-reading', icon: '1' },
+  { key: 'BLANK_EASY' as LearningStage, label: '빈칸 1단계', color: 'bg-stage-blank-easy', icon: '2' },
+  { key: 'BLANK_HARD' as LearningStage, label: '빈칸 2단계', color: 'bg-stage-blank-hard', icon: '3' },
+  { key: 'BLANK_FULL' as LearningStage, label: '통문장 암기', color: 'bg-stage-blank-page', icon: '4' },
 ];
 
 interface ConceptData {
@@ -43,14 +43,13 @@ export default function ConceptPage() {
   const [blanks, setBlanks] = useState<BlankData | null>(null);
   const [blankAnswers, setBlankAnswers] = useState<Record<number, string>>({});
   const [blankResults, setBlankResults] = useState<Array<{ position: number; correct: boolean }> | null>(null);
-  const [blankPageContent, setBlankPageContent] = useState('');
-  const [blankPageResult, setBlankPageResult] = useState<{ score: number; passed: boolean; feedback: string } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [showHints, setShowHints] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [memoContent, setMemoContent] = useState('');
   const memoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [adjacent, setAdjacent] = useState<{ prev: { id: string; title: string } | null; next: { id: string; title: string } | null }>({ prev: null, next: null });
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -65,6 +64,14 @@ export default function ConceptPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  // Fetch adjacent concepts (이전/다음)
+  useEffect(() => {
+    fetch(`/api/concepts/${id}/adjacent`)
+      .then((r) => r.json())
+      .then((json) => { if (json.data) setAdjacent(json.data); })
+      .catch(() => {});
+  }, [id]);
+
   // Fetch progress
   useEffect(() => {
     fetch(`/api/learning/progress?conceptId=${id}`)
@@ -72,7 +79,7 @@ export default function ConceptPage() {
       .then((json) => {
         const p = json.data ?? [];
         setProgress(p);
-        const stages: LearningStage[] = ['READING', 'BLANK_EASY', 'BLANK_HARD', 'BLANK_PAGE'];
+        const stages: LearningStage[] = ['READING', 'BLANK_EASY', 'BLANK_HARD', 'BLANK_FULL'];
         let idx = 0;
         for (let i = 0; i < stages.length; i++) {
           const found = p.find((pr: Progress) => pr.stage === stages[i] && pr.completed);
@@ -110,8 +117,8 @@ export default function ConceptPage() {
   // Fetch blanks when on blank stages
   useEffect(() => {
     const stage = stageConfig[currentStageIdx]?.key;
-    if (stage === 'BLANK_EASY' || stage === 'BLANK_HARD') {
-      const level = stage === 'BLANK_EASY' ? 1 : 2;
+    if (stage === 'BLANK_EASY' || stage === 'BLANK_HARD' || stage === 'BLANK_FULL') {
+      const level = stage === 'BLANK_EASY' ? 1 : stage === 'BLANK_HARD' ? 2 : 3;
       fetch(`/api/concepts/${id}/blanks?level=${level}`)
         .then((r) => r.json())
         .then((json) => {
@@ -186,24 +193,6 @@ export default function ConceptPage() {
     }
   };
 
-  const handleBlankPageSubmit = async () => {
-    setSubmitting(true);
-    const res = await fetch('/api/learning/blank-page-submit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ conceptId: id, content: blankPageContent }),
-    });
-    const json = await res.json();
-    setSubmitting(false);
-    if (json.data) {
-      setBlankPageResult(json.data);
-      if (json.data.passed) {
-        showToast(`스테이지 클리어! +${json.data.xpAwarded} XP!`);
-      } else {
-        showToast(`${json.data.score}점 - 70점 이상이 필요합니다.`);
-      }
-    }
-  };
 
   if (loading || !concept) {
     return (
@@ -219,7 +208,7 @@ export default function ConceptPage() {
     <div className="min-h-screen flex flex-col">
       {/* Toast */}
       {toast && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-primary text-white px-6 py-3 rounded-xl shadow-lg font-bold animate-slide-down">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-primary text-white px-6 py-3 rounded-sm shadow-lg font-bold animate-slide-down">
           {toast}
         </div>
       )}
@@ -229,7 +218,7 @@ export default function ConceptPage() {
         <div className="max-w-[1200px] mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/subjects">
-              <button className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
+              <button className="p-2 rounded-sm hover:bg-slate-100 text-slate-500 transition-colors">
                 <ArrowLeft className="w-5 h-5" />
               </button>
             </Link>
@@ -261,10 +250,38 @@ export default function ConceptPage() {
         </div>
       </div>
 
+      {/* 이전/다음 개념 네비게이션 */}
+      {(adjacent.prev || adjacent.next) && (
+        <div className="border-b border-slate-200 bg-slate-50/50 px-6 py-2">
+          <div className="max-w-[1200px] mx-auto flex items-center justify-between">
+            {adjacent.prev ? (
+              <button
+                onClick={() => router.push(`/concepts/${adjacent.prev!.id}`)}
+                className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-primary transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span className="hidden sm:inline truncate max-w-[200px]">{adjacent.prev.title}</span>
+                <span className="sm:hidden">이전</span>
+              </button>
+            ) : <span />}
+            {adjacent.next ? (
+              <button
+                onClick={() => router.push(`/concepts/${adjacent.next!.id}`)}
+                className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-primary transition-colors"
+              >
+                <span className="hidden sm:inline truncate max-w-[200px]">{adjacent.next.title}</span>
+                <span className="sm:hidden">다음</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            ) : <span />}
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <div className="flex-1 max-w-[1440px] w-full mx-auto p-6 flex flex-col lg:flex-row gap-6">
         {/* Left Panel: Content / Instructions */}
-        <section className="flex-1 lg:max-w-[45%] flex flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <section className="flex-1 lg:max-w-[45%] flex flex-col bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-slate-50">
             <div className={`w-8 h-8 rounded-full ${currentStage.color} text-white flex items-center justify-center font-bold text-sm`}>
               <BookOpen className="w-4 h-4" />
@@ -275,29 +292,18 @@ export default function ConceptPage() {
             {currentStage.key === 'READING' && (
               <div className="prose prose-slate max-w-none" dangerouslySetInnerHTML={{ __html: concept.fullContent.replace(/\n/g, '<br/>') }} />
             )}
-            {(currentStage.key === 'BLANK_EASY' || currentStage.key === 'BLANK_HARD') && (
+            {(currentStage.key === 'BLANK_EASY' || currentStage.key === 'BLANK_HARD' || currentStage.key === 'BLANK_FULL') && (
               <div>
                 <p className="text-text-secondary mb-4">
                   {currentStage.key === 'BLANK_EASY'
                     ? '핵심 키워드를 빈칸에 채워보세요.'
-                    : '대부분의 내용이 빈칸입니다. 기억을 더듬어 채워보세요!'}
+                    : currentStage.key === 'BLANK_HARD'
+                      ? '더 많은 내용이 빈칸입니다. 기억을 더듬어 채워보세요!'
+                      : '연결 글자를 제외한 거의 모든 단어가 빈칸입니다. 전체 문장을 암기해보세요!'}
                 </p>
-                <div className="bg-blue-50 p-4 rounded-lg text-sm text-blue-700">
+                <div className="bg-blue-50 p-4 rounded-sm text-sm text-blue-700">
                   힌트가 필요하면 빈칸 옆의 ? 버튼을 눌러보세요.
                 </div>
-              </div>
-            )}
-            {currentStage.key === 'BLANK_PAGE' && (
-              <div>
-                <p className="text-text-secondary mb-4">
-                  배운 개념을 아무것도 보지 않고 직접 작성해보세요. 70점 이상이면 통과입니다.
-                </p>
-                {blankPageResult && (
-                  <div className={`p-4 rounded-lg ${blankPageResult.passed ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
-                    <p className="font-bold">{blankPageResult.score}점 {blankPageResult.passed ? '- 통과!' : '- 미달'}</p>
-                    <p className="text-sm mt-1">{blankPageResult.feedback}</p>
-                  </div>
-                )}
               </div>
             )}
           </div>
@@ -305,7 +311,7 @@ export default function ConceptPage() {
 
         {/* Right Panel: Workspace */}
         <section className="flex-[1.2] flex flex-col gap-6">
-          <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
+          <div className="flex-1 bg-white rounded-sm shadow-sm border border-slate-200 flex flex-col overflow-hidden">
             {currentStage.key === 'READING' && (
               <>
                 <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
@@ -322,10 +328,12 @@ export default function ConceptPage() {
               </>
             )}
 
-            {(currentStage.key === 'BLANK_EASY' || currentStage.key === 'BLANK_HARD') && blanks && (
+            {(currentStage.key === 'BLANK_EASY' || currentStage.key === 'BLANK_HARD' || currentStage.key === 'BLANK_FULL') && blanks && (
               <>
                 <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
-                  <h3 className="font-bold text-text-primary text-sm">빈칸 채우기</h3>
+                  <h3 className="font-bold text-text-primary text-sm">
+                    {currentStage.key === 'BLANK_FULL' ? '통문장 암기' : '빈칸 채우기'}
+                  </h3>
                 </div>
                 <div className="p-6 flex-1 overflow-y-auto">
                   <div className="text-[15px] leading-8">
@@ -334,26 +342,10 @@ export default function ConceptPage() {
                 </div>
               </>
             )}
-
-            {currentStage.key === 'BLANK_PAGE' && (
-              <>
-                <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
-                  <h3 className="font-bold text-text-primary text-sm">백지 쓰기</h3>
-                </div>
-                <div className="flex-1 p-4">
-                  <textarea
-                    className="w-full h-full resize-none bg-transparent border-none focus:ring-0 text-text-primary p-0 m-0 memo-lines outline-none text-[15px]"
-                    placeholder="배운 개념을 기억나는 대로 작성해보세요..."
-                    value={blankPageContent}
-                    onChange={(e) => setBlankPageContent(e.target.value)}
-                  />
-                </div>
-              </>
-            )}
           </div>
 
           {/* Action Area */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <div className="bg-white rounded-sm shadow-sm border border-slate-200 p-6">
             <ProgressBar
               value={Math.round(((currentStageIdx + (progress.some((p) => p.stage === currentStage.key && p.completed) ? 1 : 0)) / 4) * 100)}
               label="학습 진행도"
@@ -366,25 +358,23 @@ export default function ConceptPage() {
                   {submitting ? '처리 중...' : '읽기 완료 (+5 XP)'}
                 </Button>
               )}
-              {(currentStage.key === 'BLANK_EASY' || currentStage.key === 'BLANK_HARD') && (
+              {(currentStage.key === 'BLANK_EASY' || currentStage.key === 'BLANK_HARD' || currentStage.key === 'BLANK_FULL') && (
                 <Button size="lg" onClick={handleBlankSubmit} disabled={submitting}>
                   {submitting ? '채점 중...' : '제출하기'}
                 </Button>
               )}
-              {currentStage.key === 'BLANK_PAGE' && !blankPageResult?.passed && (
-                <Button size="lg" onClick={handleBlankPageSubmit} disabled={submitting || blankPageContent.length < 10}>
-                  {submitting ? '채점 중...' : '제출하기 (+30 XP)'}
-                </Button>
-              )}
-              {blankPageResult?.passed && (
-                <Button size="lg" onClick={() => router.push('/subjects')}>
-                  학습 완료! 목록으로 돌아가기
-                </Button>
-              )}
-              {blankPageResult && !blankPageResult.passed && (
-                <Button variant="ghost" onClick={() => { setCurrentStageIdx(1); setBlankPageResult(null); setBlankPageContent(''); }}>
-                  Stage 2로 복귀
-                </Button>
+              {currentStageIdx === stageConfig.length - 1 && progress.some((p) => p.stage === currentStage.key && p.completed) && (
+                <>
+                  {adjacent.next ? (
+                    <Button size="lg" onClick={() => router.push(`/concepts/${adjacent.next!.id}`)}>
+                      다음 개념으로 <ArrowRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  ) : (
+                    <Button size="lg" onClick={() => router.push('/subjects')}>
+                      학습 완료! 목록으로 돌아가기
+                    </Button>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -420,7 +410,7 @@ function renderBlanksTemplate(
           type="text"
           value={answers[position] ?? ''}
           onChange={(e) => setAnswers((prev) => ({ ...prev, [position]: e.target.value }))}
-          className={`inline-block w-24 px-2 py-1 border-2 border-dashed rounded-lg text-center font-semibold text-sm transition-all outline-none ${
+          className={`inline-block w-24 px-2 py-1 border-2 border-dashed rounded-sm text-center font-semibold text-sm transition-all outline-none ${
             isCorrect
               ? 'border-emerald-400 bg-emerald-50 text-emerald-700 animate-bounce-in'
               : isWrong
@@ -444,7 +434,7 @@ function renderBlanksTemplate(
             ?
           </button>
           {showHints[position] && blank && (
-            <span className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-3 py-1.5 bg-slate-800 text-white text-xs font-medium rounded-lg shadow-lg whitespace-nowrap z-50 animate-fade-in before:content-[''] before:absolute before:bottom-full before:left-1/2 before:-translate-x-1/2 before:border-4 before:border-transparent before:border-b-slate-800">
+            <span className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-3 py-1.5 bg-slate-800 text-white text-xs font-medium rounded-sm shadow-lg whitespace-nowrap z-50 animate-fade-in before:content-[''] before:absolute before:bottom-full before:left-1/2 before:-translate-x-1/2 before:border-4 before:border-transparent before:border-b-slate-800">
               {blank.hint}
             </span>
           )}

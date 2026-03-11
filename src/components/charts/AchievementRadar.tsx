@@ -162,7 +162,7 @@ export default function AchievementRadar({ data }: AchievementRadarProps) {
 
       {/* Tooltip */}
       {hoveredIdx !== null && (
-        <div className="absolute top-2 right-2 bg-slate-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-10">
+        <div className="absolute top-2 right-2 bg-slate-800 text-white text-xs rounded-sm px-3 py-2 shadow-lg z-10">
           <p className="font-bold">{items[hoveredIdx].label}</p>
           <p className="text-slate-300">
             정답률:{' '}

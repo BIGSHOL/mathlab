@@ -1,4 +1,4 @@
-import { Award, Star, CheckCircle, Flame, Play, BookOpen, ArrowRight } from 'lucide-react';
+import { Award, Star, CheckCircle, Flame, Play, BookOpen, ArrowRight, CalendarCheck } from 'lucide-react';
 import { StatCard } from '@/components/ui/StatCard';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Button } from '@/components/ui/Button';
@@ -8,6 +8,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { redirect } from 'next/navigation';
 import { xpToNextLevel } from '@/lib/utils/xp';
+import { getTodayHomework } from '@/lib/services/homework';
 
 export default async function StudentDashboard() {
   const user = await getCurrentUser();
@@ -48,11 +49,39 @@ export default async function StudentDashboard() {
     BLANK_PAGE: 'Stage 4 - 백지 쓰기',
   };
 
+  // Today's homework
+  const todayHomework = await getTodayHomework(user.id);
+  const pendingHomework = todayHomework.filter((h) => h.status !== 'COMPLETED');
+
   const completedCount = completedConcepts.length;
   const progressPercent = totalConcepts > 0 ? Math.round((completedCount / totalConcepts) * 100) : 0;
 
   return (
     <div className="px-4 md:px-10 py-8 max-w-[1200px] mx-auto w-full">
+      {/* Homework banner */}
+      {pendingHomework.length > 0 && (
+        <Link href="/practice/arithmetic/homework" className="block mb-6">
+          <div className="bg-gradient-to-r from-indigo-500 to-violet-500 rounded-sm p-4 text-white hover:from-indigo-600 hover:to-violet-600 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <CalendarCheck className="w-8 h-8 opacity-90" />
+                <div>
+                  <p className="text-xs font-medium opacity-80">오늘의 연산 숙제</p>
+                  <p className="font-bold">
+                    {pendingHomework[0].planTitle} · {pendingHomework[0].dayLabel} · {pendingHomework[0].dailyCount}문제
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 bg-white/20 rounded-sm px-4 py-2">
+                <Play className="w-4 h-4" />
+                <span className="font-bold text-sm">풀기</span>
+                <ArrowRight className="w-4 h-4" />
+              </div>
+            </div>
+          </div>
+        </Link>
+      )}
+
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold tracking-tight text-text-primary">대시보드</h1>
@@ -104,8 +133,8 @@ export default async function StudentDashboard() {
                 <p className="text-text-secondary text-center py-8">아직 시작한 학습이 없습니다. 단원 목록에서 학습을 시작해보세요!</p>
               ) : (
                 recentProgress.map((p) => (
-                  <div key={p.id} className="flex flex-col sm:flex-row sm:items-center gap-4 p-5 rounded-xl bg-slate-50 border border-slate-100 hover:border-blue-200 transition-all group">
-                    <div className="flex-shrink-0 h-12 w-12 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
+                  <div key={p.id} className="flex flex-col sm:flex-row sm:items-center gap-4 p-5 rounded-sm bg-slate-50 border border-slate-100 hover:border-blue-200 transition-all group">
+                    <div className="flex-shrink-0 h-12 w-12 rounded-sm bg-blue-100 text-blue-600 flex items-center justify-center">
                       <BookOpen className="w-6 h-6" />
                     </div>
                     <div className="flex-1">

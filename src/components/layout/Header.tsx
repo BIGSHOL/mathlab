@@ -13,6 +13,7 @@ const studentNav = [
   { label: '단원 목록', href: '/subjects' },
   { label: '연산 연습', href: '/practice/arithmetic' },
   { label: '랭킹', href: '/ranking' },
+  { label: '업데이트', href: '/updates' },
   { label: '프로필', href: '/profile' },
 ];
 
@@ -34,7 +35,7 @@ export function Header({ role, userName = '사용자' }: HeaderProps) {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
-            className="h-9 w-48 pl-9 pr-4 rounded-lg border border-slate-200 bg-slate-50 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+            className="h-9 w-48 pl-9 pr-4 rounded-sm border border-slate-200 bg-slate-50 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
             placeholder="검색"
           />
         </div>
@@ -46,7 +47,7 @@ export function Header({ role, userName = '사용자' }: HeaderProps) {
             <Link
               key={item.href}
               href={item.href}
-              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+              className={`px-3 py-1.5 text-sm font-medium rounded-sm transition-colors ${
                 item.active
                   ? 'text-primary bg-primary/5 font-bold'
                   : 'text-text-secondary hover:text-text-primary hover:bg-slate-50'
@@ -57,7 +58,7 @@ export function Header({ role, userName = '사용자' }: HeaderProps) {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <button className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors relative">
+          <button className="p-1.5 rounded-sm text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors relative">
             <Bell className="w-5 h-5" />
           </button>
           <div className="h-5 w-px bg-slate-200" />

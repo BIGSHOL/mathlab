@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { blankSubmitSchema } from '@/lib/schemas/learning';
-import { XP_REWARDS } from '@/lib/utils/xp';
+import { XP_REWARDS, calculateLevel } from '@/lib/utils/xp';
 
 interface BlankItem {
   position: number;
@@ -51,11 +51,65 @@ export async function POST(request: NextRequest) {
   });
 
   const allCorrect = results.every((r) => r.correct);
+  const stage = exercise.level === 1 ? 'BLANK_EASY' : 'BLANK_HARD';
   const xpAwarded = allCorrect
     ? exercise.level === 1
       ? XP_REWARDS.BLANK_EASY
       : XP_REWARDS.BLANK_HARD
     : 0;
+
+  // Record progress + award XP in a transaction
+  const correctCount = results.filter((r) => r.correct).length;
+  const score = Math.round((correctCount / results.length) * 100);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.learningProgress.upsert({
+      where: {
+        userId_conceptId_stage: { userId: currentUser.id, conceptId: exercise.conceptId, stage },
+      },
+      update: {
+        score,
+        completed: allCorrect,
+        completedAt: allCorrect ? new Date() : null,
+        attempts: { increment: 1 },
+      },
+      create: {
+        userId: currentUser.id,
+        conceptId: exercise.conceptId,
+        stage,
+        score,
+        completed: allCorrect,
+        completedAt: allCorrect ? new Date() : null,
+        attempts: 1,
+      },
+    });
+
+    if (xpAwarded > 0) {
+      await tx.pointTransaction.create({
+        data: {
+          userId: currentUser.id,
+          amount: xpAwarded,
+          type: 'EARN',
+          reason: stage,
+          referenceId: exercise.id,
+        },
+      });
+
+      const profile = await tx.studentProfile.upsert({
+        where: { userId: currentUser.id },
+        update: { totalXp: { increment: xpAwarded }, lastActiveAt: new Date() },
+        create: { userId: currentUser.id, totalXp: xpAwarded, lastActiveAt: new Date() },
+      });
+
+      const newLevel = calculateLevel(profile.totalXp);
+      if (newLevel !== profile.level) {
+        await tx.studentProfile.update({
+          where: { userId: currentUser.id },
+          data: { level: newLevel },
+        });
+      }
+    }
+  });
 
   return NextResponse.json({
     data: { correct: allCorrect, results, allCorrect, xpAwarded },

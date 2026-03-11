@@ -27,6 +27,8 @@ export const createQuestionSchema = z.object({
   answer: z.string().min(1, '정답을 입력해주세요'),
   explanation: z.string().optional(),
   sourceTag: z.string().max(100).optional(),
+  domain: z.string().max(30).optional().nullable(),
+  conceptId: z.string().optional().nullable(),
 });
 
 export const updateQuestionSchema = z.object({
@@ -39,6 +41,8 @@ export const updateQuestionSchema = z.object({
   answer: z.string().min(1).optional(),
   explanation: z.string().optional().nullable(),
   sourceTag: z.string().max(100).optional().nullable(),
+  domain: z.string().max(30).optional().nullable(),
+  conceptId: z.string().optional().nullable(),
 });
 
 export type QuestionQuery = z.infer<typeof questionQuerySchema>;

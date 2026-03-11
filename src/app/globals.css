@@ -5,6 +5,21 @@
   font-family: var(--font-serif-kr), 'Batang', '바탕', serif;
 }
 
+/* 빈칸 편집: textarea ↔ highlight overlay 렌더링 일치 */
+.template-textarea-overlay,
+.template-highlight-overlay {
+  font-variant-ligatures: none;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: normal;
+  word-spacing: normal;
+  -webkit-text-size-adjust: 100%;
+}
+.template-textarea-overlay::selection {
+  color: transparent;
+  background: rgba(59, 130, 246, 0.3);
+}
+
 /* ============================================
    MathLab Design Tokens
    Unified from 6 HTML mockups + Design System

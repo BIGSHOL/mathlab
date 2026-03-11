@@ -117,7 +117,7 @@ export function AssignPanel({ testId, testGrade, onClose, onAssigned }: AssignPa
               <button
                 key={g ?? 'all'}
                 onClick={() => setGradeFilter(g)}
-                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                className={`px-3 py-1 rounded-sm text-xs font-medium transition-colors ${
                   gradeFilter === g ? 'bg-primary text-white' : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
                 }`}
               >
@@ -132,7 +132,7 @@ export function AssignPanel({ testId, testGrade, onClose, onAssigned }: AssignPa
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="학생 검색..."
-              className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm"
+              className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-sm text-sm"
             />
           </div>
         </div>
@@ -160,7 +160,7 @@ export function AssignPanel({ testId, testGrade, onClose, onAssigned }: AssignPa
                     <div
                       key={s.id}
                       onClick={() => toggleStudent(s.id)}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+                      className={`flex items-center gap-3 px-3 py-2 rounded-sm cursor-pointer transition-colors ${
                         isSelected ? 'bg-primary/5 border border-primary/20' : 'hover:bg-slate-50'
                       }`}
                     >
@@ -192,7 +192,7 @@ export function AssignPanel({ testId, testGrade, onClose, onAssigned }: AssignPa
               type="datetime-local"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+              className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-sm text-sm"
             />
           </label>
           <label className="flex items-center gap-2">

@@ -17,6 +17,12 @@ const eslintConfig = [
       '@typescript-eslint/no-unused-vars': 'error',
     },
   },
+  {
+    files: ['src/app/(teacher)/students/page.tsx'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
 ];
 
 export default eslintConfig;

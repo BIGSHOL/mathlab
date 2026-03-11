@@ -31,6 +31,8 @@ interface QuestionItem {
   type: QuestionType;
   content: string;
   choices: string[] | null;
+  domain: string | null;
+  conceptId: string | null;
 }
 
 export default function CreateTestPage() {
@@ -141,20 +143,20 @@ export default function CreateTestPage() {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-3 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-2 mb-3">
         <Link href="/tests" className="text-text-secondary hover:text-text-primary">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <h1 className="text-2xl font-bold text-text-primary">시험 만들기</h1>
+        <h1 className="text-base font-bold text-text-primary">시험 만들기</h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* Left: Test settings */}
-        <div className="lg:col-span-1 space-y-4">
-          <Card className="p-5">
-            <h2 className="text-base font-bold text-text-primary mb-4">시험 정보</h2>
+        <div className="lg:col-span-1 space-y-2">
+          <Card className="p-3">
+            <h2 className="text-base font-bold text-text-primary mb-2">시험 정보</h2>
 
             <label className="block mb-3">
               <span className="text-sm font-medium text-text-secondary">시험 제목 *</span>
@@ -163,7 +165,7 @@ export default function CreateTestPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="예: 중1 방정식 단원평가"
-                className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
               />
             </label>
 
@@ -172,7 +174,7 @@ export default function CreateTestPage() {
               <select
                 value={grade}
                 onChange={(e) => setGrade(Number(e.target.value))}
-                className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40"
+                className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40"
               >
                 <option value={7}>중1</option>
                 <option value={8}>중2</option>
@@ -185,7 +187,7 @@ export default function CreateTestPage() {
               <select
                 value={testType}
                 onChange={(e) => setTestType(e.target.value)}
-                className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40"
+                className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40"
               >
                 <option value="concept">단원별</option>
                 <option value="cumulative">종합</option>
@@ -201,7 +203,7 @@ export default function CreateTestPage() {
                 onChange={(e) => setTimeLimitMin(e.target.value ? Number(e.target.value) : '')}
                 placeholder="제한 없음"
                 min={1}
-                className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40"
+                className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40"
               />
             </label>
 
@@ -213,24 +215,24 @@ export default function CreateTestPage() {
                 onChange={(e) => setMaxAttempts(e.target.value ? Number(e.target.value) : '')}
                 placeholder="무제한"
                 min={1}
-                className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40"
+                className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40"
               />
               <span className="text-xs text-slate-400 mt-0.5 block">비워두면 무제한 재시험 가능</span>
             </label>
 
-            <label className="flex items-center gap-2 mb-4">
+            <label className="flex items-center gap-2 mb-2">
               <input
                 type="checkbox"
                 checked={shuffleOptions}
                 onChange={(e) => setShuffleOptions(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary/40"
+                className="w-4 h-4 rounded-sm border-slate-300 text-primary focus:ring-primary/40"
               />
               <span className="text-sm text-text-secondary">문제 순서 섞기</span>
             </label>
           </Card>
 
           {/* Selected questions */}
-          <Card className="p-5">
+          <Card className="p-3">
             <h2 className="text-base font-bold text-text-primary mb-3">
               선택된 문제 ({selectedIds.length})
             </h2>
@@ -239,7 +241,7 @@ export default function CreateTestPage() {
             ) : (
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {selectedIds.map((id, idx) => (
-                  <div key={id} className="flex items-center justify-between px-2 py-1.5 bg-slate-50 rounded text-sm">
+                  <div key={id} className="flex items-center justify-between px-2 py-1.5 bg-slate-50 rounded-sm text-sm">
                     <span className="text-text-secondary">{idx + 1}. {id.slice(-6)}</span>
                     <button onClick={() => toggleQuestion(id)} className="text-red-400 hover:text-red-600">
                       <X className="w-3.5 h-3.5" />
@@ -249,7 +251,7 @@ export default function CreateTestPage() {
               </div>
             )}
             <Button
-              className="w-full mt-4"
+              className="w-full mt-2"
               onClick={handleSubmit}
               loading={saving}
               disabled={!title.trim() || selectedIds.length === 0}
@@ -269,7 +271,7 @@ export default function CreateTestPage() {
                   <select
                     value={variantCount}
                     onChange={(e) => setVariantCount(Number(e.target.value))}
-                    className="px-2 py-1 border border-slate-200 rounded text-xs"
+                    className="px-2 py-1 border border-slate-200 rounded-sm text-xs"
                   >
                     {[2, 3, 4, 5].map((n) => (
                       <option key={n} value={n}>{n}개</option>
@@ -296,15 +298,15 @@ export default function CreateTestPage() {
 
         {/* Right: Question browser */}
         <div className="lg:col-span-2">
-          <Card className="p-5">
-            <h2 className="text-base font-bold text-text-primary mb-4">문제 선택</h2>
+          <Card className="p-3">
+            <h2 className="text-base font-bold text-text-primary mb-2">문제 선택</h2>
 
             {/* Filters */}
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-wrap gap-2 mb-2">
               <select
                 value={bookCode}
                 onChange={(e) => setBookCode(e.target.value)}
-                className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm"
+                className="px-3 py-1.5 border border-slate-200 rounded-sm text-sm"
               >
                 {BOOK_CODES.map((c) => (
                   <option key={c} value={c}>{BOOK_LABELS[c]}</option>
@@ -313,7 +315,7 @@ export default function CreateTestPage() {
               <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value)}
-                className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm"
+                className="px-3 py-1.5 border border-slate-200 rounded-sm text-sm"
               >
                 {DIFFICULTY_OPTIONS.map((d) => (
                   <option key={d} value={d}>
@@ -328,34 +330,34 @@ export default function CreateTestPage() {
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
                   placeholder="문제 검색..."
-                  className="w-full pl-9 pr-3 py-1.5 border border-slate-200 rounded-lg text-sm"
+                  className="w-full pl-9 pr-3 py-1.5 border border-slate-200 rounded-sm text-sm"
                 />
               </div>
             </div>
 
             {/* Question list */}
             {searchLoading ? (
-              <div className="flex justify-center py-12">
+              <div className="flex justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div>
             ) : questions.length === 0 ? (
-              <p className="text-center text-text-secondary py-12">검색 결과가 없습니다</p>
+              <p className="text-center text-text-secondary py-8">검색 결과가 없습니다</p>
             ) : (
-              <div className="space-y-3 max-h-[600px] overflow-y-auto">
+              <div className="space-y-2 max-h-[600px] overflow-y-auto">
                 {questions.map((q) => {
                   const isSelected = selectedIds.includes(q.id);
                   return (
                     <div
                       key={q.id}
                       onClick={() => toggleQuestion(q.id)}
-                      className={`p-4 rounded-lg border cursor-pointer transition-all ${
+                      className={`p-2.5 rounded-sm border cursor-pointer transition-all ${
                         isSelected
                           ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
                           : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                       }`}
                     >
-                      <div className="flex items-start gap-3">
-                        <div className={`w-5 h-5 mt-0.5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                      <div className="flex items-start gap-2">
+                        <div className={`w-5 h-5 mt-0.5 rounded-sm border-2 flex items-center justify-center flex-shrink-0 ${
                           isSelected ? 'bg-primary border-primary' : 'border-slate-300'
                         }`}>
                           {isSelected && <Check className="w-3 h-3 text-white" />}
@@ -365,7 +367,7 @@ export default function CreateTestPage() {
                             <span className="text-xs font-medium text-slate-500">
                               {q.chapter} #{q.questionNum}
                             </span>
-                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                            <span className={`px-1.5 py-0.5 rounded-sm text-[10px] font-bold ${
                               q.difficulty === 'BASIC' ? 'bg-green-100 text-green-700' :
                               q.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
                               q.difficulty === 'HIGH' ? 'bg-red-100 text-red-700' :
@@ -373,7 +375,7 @@ export default function CreateTestPage() {
                             }`}>
                               {DIFFICULTY_LABELS[q.difficulty]}
                             </span>
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">
+                            <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-medium bg-slate-100 text-slate-600">
                               {TYPE_LABELS[q.type]}
                             </span>
                           </div>

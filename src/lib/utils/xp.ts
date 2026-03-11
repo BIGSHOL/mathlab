@@ -45,6 +45,7 @@ export const XP_REWARDS = {
   READING_COMPLETE: 5,
   BLANK_EASY: 10,
   BLANK_HARD: 15,
+  BLANK_FULL: 20,
   BLANK_PAGE: 30,
   BONUS: 5,
 } as const;

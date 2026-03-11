@@ -14,7 +14,7 @@ export default async function TeacherLayout({
   return (
     <div className="h-screen flex bg-background overflow-hidden print:h-auto print:overflow-visible print:bg-white">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto overflow-x-hidden print:overflow-visible">{children}</main>
+      <main className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden print:overflow-visible">{children}</main>
     </div>
   );
 }

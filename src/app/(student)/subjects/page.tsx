@@ -68,7 +68,7 @@ export default async function SubjectsPage() {
           {subjects.map((subject) => (
             <Card key={subject.id} className="p-6">
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-blue-50 rounded-xl">
+                <div className="p-3 bg-blue-50 rounded-sm">
                   <BookOpen className="w-6 h-6 text-primary" />
                 </div>
                 <div>
@@ -82,7 +82,7 @@ export default async function SubjectsPage() {
                   const progressPct = getProgressPercent(concept.progress);
                   return (
                     <Link key={concept.id} href={`/concepts/${concept.id}`}>
-                      <div className="flex items-center gap-4 p-4 rounded-xl hover:bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all group cursor-pointer">
+                      <div className="flex items-center gap-4 p-4 rounded-sm hover:bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all group cursor-pointer">
                         <div className="flex-1">
                           <h3 className="font-semibold text-text-primary group-hover:text-primary transition-colors">
                             {concept.title}

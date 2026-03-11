@@ -138,7 +138,7 @@ export function EditableMathRenderer({
               src={seg.src}
               alt={seg.alt || ''}
               style={style}
-              className="rounded-lg inline-block"
+              className="rounded-sm inline-block"
             />
           );
 

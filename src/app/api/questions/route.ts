@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { questionQuerySchema, createQuestionSchema } from '@/lib/schemas/question';
+import { autoTag } from '@/lib/services/question-tagger';
 
 export async function GET(request: NextRequest) {
   const currentUser = await getCurrentUser();
@@ -51,6 +52,11 @@ export async function GET(request: NextRequest) {
   if (section) where.section = section;
   if (difficulty) where.difficulty = difficulty;
   if (type) where.type = type;
+  const domain = searchParams.get('domain');
+  if (domain) where.domain = domain;
+  const hasDomain = searchParams.get('hasDomain');
+  if (hasDomain === 'true') where.domain = { not: null };
+  else if (hasDomain === 'false') where.domain = null;
   if (search) {
     where.OR = [
       { content: { contains: search } },
@@ -75,6 +81,8 @@ export async function GET(request: NextRequest) {
         answer: true,
         explanation: true,
         sourceTag: true,
+        domain: true,
+        conceptId: true,
       },
       orderBy: [{ bookCode: 'asc' }, { chapter: 'asc' }, { questionNum: 'asc' }],
       skip: (page - 1) * limit,
@@ -113,6 +121,55 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const question = await prisma.question.create({ data: parsed.data });
+  // 자동 태깅: domain/conceptId가 없으면 chapter 기반으로 자동 결정
+  const data = { ...parsed.data };
+  if (!data.domain || !data.conceptId) {
+    const tags = await autoTag({
+      chapter: data.chapter,
+      section: data.section,
+      difficulty: data.difficulty,
+    });
+    if (!data.domain && tags.domain) data.domain = tags.domain;
+    if (!data.conceptId && tags.conceptId) data.conceptId = tags.conceptId;
+  }
+
+  const question = await prisma.question.create({ data });
   return NextResponse.json({ data: question }, { status: 201 });
+}
+
+/** PATCH: 문제 대량 업데이트 (domain, conceptId 태깅) */
+export async function PATCH(request: NextRequest) {
+  const currentUser = await getCurrentUser();
+  if (!currentUser || currentUser.role === 'STUDENT') {
+    return NextResponse.json(
+      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
+      { status: 403 }
+    );
+  }
+
+  const body = await request.json();
+  const { updates } = body as {
+    updates: Array<{ id: string; domain?: string | null; conceptId?: string | null }>;
+  };
+
+  if (!updates?.length) {
+    return NextResponse.json(
+      { error: { code: 'VALIDATION_ERROR', message: 'updates 배열이 필요합니다' } },
+      { status: 400 }
+    );
+  }
+
+  let updated = 0;
+  for (const upd of updates) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data: Record<string, any> = {};
+    if (upd.domain !== undefined) data.domain = upd.domain;
+    if (upd.conceptId !== undefined) data.conceptId = upd.conceptId;
+    if (Object.keys(data).length > 0) {
+      await prisma.question.update({ where: { id: upd.id }, data });
+      updated++;
+    }
+  }
+
+  return NextResponse.json({ data: { updated } });
 }

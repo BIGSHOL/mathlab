@@ -102,15 +102,15 @@ function PrintablePage({
         {page.map((p, idx) => {
           const globalIdx = globalOffset + idx;
           return (
-            <div key={globalIdx} className="flex items-center gap-3 py-1 border-b border-slate-100">
-              <span className="text-lg font-bold text-slate-400 w-9 text-right shrink-0 tabular-nums">
+            <div key={globalIdx} className="flex items-center gap-2 py-1 border-b border-slate-100">
+              <span className="text-sm font-semibold text-slate-400 w-9 text-right shrink-0 tabular-nums">
                 {globalIdx + 1}.
               </span>
-              <div className="flex-1 text-lg font-semibold text-text-primary">
+              <div className="flex-1 text-sm font-semibold text-text-primary">
                 <MathRenderer content={p.content} />
               </div>
               {showAnswers && (
-                <span className="text-lg font-bold text-primary shrink-0">
+                <span className="text-sm font-semibold text-primary shrink-0">
                   <MathRenderer content={p.answer} />
                 </span>
               )}
@@ -121,7 +121,7 @@ function PrintablePage({
 
       {/* Answer key — last page only */}
       {showAnswers && isLastPage && (
-        <div className="mt-6 pt-3 border-t-2 border-slate-800">
+        <div className="mt-3 pt-3 border-t-2 border-slate-800">
           <h3 className="text-sm font-bold text-text-primary mb-2">정답</h3>
           <div className="grid grid-cols-10 gap-1 text-xs">
             {allProblems.map((p, idx) => (
@@ -136,7 +136,7 @@ function PrintablePage({
 
       {/* Page number — pushed to bottom */}
       {totalPages > 1 && (
-        <div className="mt-auto pt-4 text-center text-xs text-slate-400">
+        <div className="mt-auto pt-2.5 text-center text-xs text-slate-400">
           — {pageIdx + 1} / {totalPages} —
         </div>
       )}
@@ -209,7 +209,7 @@ export default function ArithmeticGeneratorPage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-4">
+        <div className="flex-1 overflow-y-auto p-2.5 space-y-2">
           {/* School Level */}
           <div>
             <label className="text-xs font-semibold text-text-secondary block mb-1.5">학제</label>
@@ -224,7 +224,7 @@ export default function ArithmeticGeneratorPage() {
                 const implemented = cats.filter((c) => IMPLEMENTED_CATEGORIES.has(c));
                 if (implemented.length > 0 && !implemented.includes(category)) setCategory(implemented[0]);
               }}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+              className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm bg-white"
             >
               {(Object.keys(SCHOOL_LABELS) as SchoolLevel[]).map((sl) => (
                 <option key={sl} value={sl}>{SCHOOL_LABELS[sl]}</option>
@@ -244,7 +244,7 @@ export default function ArithmeticGeneratorPage() {
                 const implemented = cats.filter((c) => IMPLEMENTED_CATEGORIES.has(c));
                 if (implemented.length > 0 && !implemented.includes(category)) setCategory(implemented[0]);
               }}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+              className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm bg-white"
             >
               {GRADES_BY_SCHOOL[schoolLevel].map((g) => (
                 <option key={g.value} value={g.value}>{g.label}</option>
@@ -261,7 +261,7 @@ export default function ArithmeticGeneratorPage() {
                 const val = e.target.value as ArithmeticCategory;
                 if (IMPLEMENTED_CATEGORIES.has(val)) setCategory(val);
               }}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+              className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm bg-white"
             >
               {(CATEGORIES_BY_GRADE[`${schoolLevel}-${grade}`] ?? []).map((c) => (
                 <option key={c} value={c} disabled={!IMPLEMENTED_CATEGORIES.has(c)}>
@@ -289,7 +289,7 @@ export default function ArithmeticGeneratorPage() {
                   setCountWarning(false);
                 }
               }}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+              className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm bg-white"
             />
             {countWarning && (
               <p className="text-[11px] text-warning mt-1 flex items-center gap-1">
@@ -307,7 +307,7 @@ export default function ArithmeticGeneratorPage() {
 
           {/* Options (shown after generation) */}
           {problems.length > 0 && (
-            <div className="pt-3 border-t border-slate-200 space-y-3">
+            <div className="pt-2 border-t border-slate-200 space-y-2">
               <p className="text-xs text-text-secondary">
                 {CATEGORY_LABELS[category]} · {problems.length}문제
               </p>
@@ -316,7 +316,7 @@ export default function ArithmeticGeneratorPage() {
                   type="checkbox"
                   checked={showAnswers}
                   onChange={(e) => setShowAnswers(e.target.checked)}
-                  className="w-3.5 h-3.5 rounded border-slate-300"
+                  className="w-3.5 h-3.5 rounded-sm border-slate-300"
                 />
                 정답 표시
               </label>
@@ -342,8 +342,8 @@ export default function ArithmeticGeneratorPage() {
         ) : (
           <>
             {/* Screen: horizontal scroll gallery — scaled to fit viewport */}
-            <div ref={galleryRef} className="flex-1 overflow-x-auto overflow-y-hidden p-4 print:hidden">
-              <div className="flex gap-6 h-full items-start">
+            <div ref={galleryRef} className="flex-1 overflow-x-auto overflow-y-hidden p-2.5 print:hidden">
+              <div className="flex gap-3 h-full items-start">
                 {pages.map((page, pageIdx) => (
                   <div
                     key={pageIdx}

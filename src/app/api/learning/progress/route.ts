@@ -27,6 +27,7 @@ const STAGE_XP: Record<string, number> = {
   READING: XP_REWARDS.READING_COMPLETE,
   BLANK_EASY: XP_REWARDS.BLANK_EASY,
   BLANK_HARD: XP_REWARDS.BLANK_HARD,
+  BLANK_FULL: XP_REWARDS.BLANK_FULL,
   BLANK_PAGE: XP_REWARDS.BLANK_PAGE,
 };
 
@@ -49,60 +50,62 @@ export async function POST(request: NextRequest) {
   const { conceptId, stage } = parsed.data;
   const xpAmount = STAGE_XP[stage] ?? 0;
 
-  // Upsert learning progress
-  const progress = await prisma.learningProgress.upsert({
-    where: {
-      userId_conceptId_stage: { userId: currentUser.id, conceptId, stage },
-    },
-    update: {
-      completed: true,
-      completedAt: new Date(),
-      attempts: { increment: 1 },
-    },
-    create: {
-      userId: currentUser.id,
-      conceptId,
-      stage,
-      completed: true,
-      completedAt: new Date(),
-      attempts: 1,
-    },
-  });
-
-  // Award XP
-  if (xpAmount > 0) {
-    await prisma.pointTransaction.create({
-      data: {
-        userId: currentUser.id,
-        amount: xpAmount,
-        type: 'EARN',
-        reason: stage,
-        referenceId: progress.id,
+  // Upsert learning progress + award XP (atomic)
+  const progress = await prisma.$transaction(async (tx) => {
+    const prog = await tx.learningProgress.upsert({
+      where: {
+        userId_conceptId_stage: { userId: currentUser.id, conceptId, stage },
       },
-    });
-
-    const profile = await prisma.studentProfile.upsert({
-      where: { userId: currentUser.id },
       update: {
-        totalXp: { increment: xpAmount },
-        lastActiveAt: new Date(),
+        completed: true,
+        completedAt: new Date(),
+        attempts: { increment: 1 },
       },
       create: {
         userId: currentUser.id,
-        totalXp: xpAmount,
-        lastActiveAt: new Date(),
+        conceptId,
+        stage,
+        completed: true,
+        completedAt: new Date(),
+        attempts: 1,
       },
     });
 
-    // Update level
-    const newLevel = calculateLevel(profile.totalXp);
-    if (newLevel !== profile.level) {
-      await prisma.studentProfile.update({
-        where: { userId: currentUser.id },
-        data: { level: newLevel },
+    if (xpAmount > 0) {
+      await tx.pointTransaction.create({
+        data: {
+          userId: currentUser.id,
+          amount: xpAmount,
+          type: 'EARN',
+          reason: stage,
+          referenceId: prog.id,
+        },
       });
+
+      const profile = await tx.studentProfile.upsert({
+        where: { userId: currentUser.id },
+        update: {
+          totalXp: { increment: xpAmount },
+          lastActiveAt: new Date(),
+        },
+        create: {
+          userId: currentUser.id,
+          totalXp: xpAmount,
+          lastActiveAt: new Date(),
+        },
+      });
+
+      const newLevel = calculateLevel(profile.totalXp);
+      if (newLevel !== profile.level) {
+        await tx.studentProfile.update({
+          where: { userId: currentUser.id },
+          data: { level: newLevel },
+        });
+      }
     }
-  }
+
+    return prog;
+  });
 
   return NextResponse.json({
     data: {

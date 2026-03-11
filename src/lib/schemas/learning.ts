@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const stageEnum = z.enum(['READING', 'BLANK_EASY', 'BLANK_HARD', 'BLANK_PAGE']);
+const stageEnum = z.enum(['READING', 'BLANK_EASY', 'BLANK_HARD', 'BLANK_FULL', 'BLANK_PAGE']);
 
 export const completeStageSchema = z.object({
   conceptId: z.string().min(1, '개념 ID가 필요합니다'),

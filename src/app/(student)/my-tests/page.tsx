@@ -20,6 +20,7 @@ const TEST_TYPE_LABELS: Record<string, string> = {
   concept: '단원별',
   cumulative: '종합',
   chapter_final: '단원 마무리',
+  level_test: '레벨테스트',
 };
 
 export default function StudentTestsPage() {

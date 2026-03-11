@@ -183,7 +183,7 @@ export default function WeeklyTrendChart({
             transform: 'translate(-50%, -120%)',
           }}
         >
-          <div className="bg-slate-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg whitespace-nowrap">
+          <div className="bg-slate-800 text-white text-xs rounded-sm px-3 py-2 shadow-lg whitespace-nowrap">
             <p className="font-bold">{tooltip.point.week}</p>
             <p className="text-slate-300">
               {label}:{' '}

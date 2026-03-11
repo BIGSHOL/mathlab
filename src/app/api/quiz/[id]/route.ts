@@ -98,20 +98,22 @@ export async function PATCH(
   } else if (action === 'next') {
     const nextQ = session.currentQ + 1;
     if (nextQ >= questionIds.length) {
-      // Quiz ended — calculate ranks
-      const participants = await prisma.quizParticipant.findMany({
-        where: { sessionId: id },
-        orderBy: { score: 'desc' },
-      });
-      for (let i = 0; i < participants.length; i++) {
-        await prisma.quizParticipant.update({
-          where: { id: participants[i].id },
-          data: { rank: i + 1 },
+      // Quiz ended — calculate ranks + update session (atomic)
+      await prisma.$transaction(async (tx) => {
+        const participants = await tx.quizParticipant.findMany({
+          where: { sessionId: id },
+          orderBy: { score: 'desc' },
         });
-      }
-      await prisma.quizSession.update({
-        where: { id },
-        data: { status: 'COMPLETED', endedAt: new Date(), currentQ: nextQ },
+        for (let i = 0; i < participants.length; i++) {
+          await tx.quizParticipant.update({
+            where: { id: participants[i].id },
+            data: { rank: i + 1 },
+          });
+        }
+        await tx.quizSession.update({
+          where: { id },
+          data: { status: 'COMPLETED', endedAt: new Date(), currentQ: nextQ },
+        });
       });
     } else {
       await prisma.quizSession.update({
@@ -120,19 +122,21 @@ export async function PATCH(
       });
     }
   } else if (action === 'end') {
-    const participants = await prisma.quizParticipant.findMany({
-      where: { sessionId: id },
-      orderBy: { score: 'desc' },
-    });
-    for (let i = 0; i < participants.length; i++) {
-      await prisma.quizParticipant.update({
-        where: { id: participants[i].id },
-        data: { rank: i + 1 },
+    await prisma.$transaction(async (tx) => {
+      const participants = await tx.quizParticipant.findMany({
+        where: { sessionId: id },
+        orderBy: { score: 'desc' },
       });
-    }
-    await prisma.quizSession.update({
-      where: { id },
-      data: { status: 'COMPLETED', endedAt: new Date() },
+      for (let i = 0; i < participants.length; i++) {
+        await tx.quizParticipant.update({
+          where: { id: participants[i].id },
+          data: { rank: i + 1 },
+        });
+      }
+      await tx.quizSession.update({
+        where: { id },
+        data: { status: 'COMPLETED', endedAt: new Date() },
+      });
     });
   }
 

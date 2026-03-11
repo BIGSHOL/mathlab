@@ -368,7 +368,7 @@ export default function SolvePage() {
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-xl shadow-lg font-bold text-sm animate-slide-down ${
+          className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-sm shadow-lg font-bold text-sm animate-slide-down ${
             toast.includes('정답')
               ? 'bg-emerald-500 text-white'
               : 'bg-red-500 text-white'
@@ -393,7 +393,7 @@ export default function SolvePage() {
                 문제 {currentIdx + 1} / {TOTAL_PROBLEMS}
               </span>
             </div>
-            <div className="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-lg border border-slate-200">
+            <div className="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-sm border border-slate-200">
               <Timer className="w-4 h-4 text-text-secondary" />
               <div className="flex flex-col">
                 <span className="text-[10px] text-text-secondary font-medium leading-none mb-0.5">남은 시간</span>
@@ -402,7 +402,7 @@ export default function SolvePage() {
                 </span>
               </div>
             </div>
-            <button className="flex items-center gap-2 px-3 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors text-sm font-bold">
+            <button className="flex items-center gap-2 px-3 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-sm transition-colors text-sm font-bold">
               <HelpCircle className="w-4 h-4" />
               <span className="hidden sm:inline">도움 요청</span>
             </button>
@@ -413,7 +413,7 @@ export default function SolvePage() {
       {/* Main Workspace */}
       <div className="flex-1 max-w-[1440px] w-full mx-auto p-4 md:p-6 flex flex-col lg:flex-row gap-6">
         {/* Left: Problem Display */}
-        <section className="flex-1 lg:max-w-[45%] flex flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <section className="flex-1 lg:max-w-[45%] flex flex-col bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-4 md:p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
@@ -424,7 +424,7 @@ export default function SolvePage() {
             <div className="flex gap-2">
               <button
                 onClick={toggleBookmark}
-                className={`p-2 rounded-lg transition-colors ${
+                className={`p-2 rounded-sm transition-colors ${
                   bookmarked.has(problem.id)
                     ? 'text-amber-500 bg-amber-50'
                     : 'text-slate-400 hover:text-primary hover:bg-slate-100'
@@ -441,14 +441,14 @@ export default function SolvePage() {
             <p className="text-base leading-relaxed text-text-primary">{problem.question}</p>
 
             {/* Equation Display */}
-            <div className="my-4 p-6 md:p-8 bg-slate-50 rounded-lg border border-slate-100 flex justify-center items-center min-h-[100px]">
+            <div className="my-4 p-6 md:p-8 bg-slate-50 rounded-sm border border-slate-100 flex justify-center items-center min-h-[100px]">
               {problem.equation}
             </div>
 
             {/* Result feedback */}
             {submitted[problem.id] && (
               <div
-                className={`p-4 rounded-lg font-bold text-sm ${
+                className={`p-4 rounded-sm font-bold text-sm ${
                   submitted[problem.id] === 'correct'
                     ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                     : 'bg-red-50 text-red-700 border border-red-200'
@@ -462,7 +462,7 @@ export default function SolvePage() {
 
             {/* Hint */}
             {showHint && (
-              <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg text-sm text-text-secondary flex gap-3">
+              <div className="p-4 bg-primary/5 border border-primary/20 rounded-sm text-sm text-text-secondary flex gap-3">
                 <Lightbulb className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                 <p>{problem.hint}</p>
               </div>
@@ -504,7 +504,7 @@ export default function SolvePage() {
         {/* Right: Workspace */}
         <section className="flex-[1.2] flex flex-col gap-6">
           {/* Smart Memo */}
-          <div className="flex-[1.5] bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden min-h-[240px]">
+          <div className="flex-[1.5] bg-white rounded-sm shadow-sm border border-slate-200 flex flex-col overflow-hidden min-h-[240px]">
             <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50">
               <h3 className="font-bold flex items-center gap-2 text-text-primary text-sm">
                 <Pencil className="w-4 h-4 text-primary" />
@@ -537,7 +537,7 @@ export default function SolvePage() {
           </div>
 
           {/* Answer Entry & Math Keyboard */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col">
+          <div className="bg-white rounded-sm shadow-sm border border-slate-200 flex flex-col">
             <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
               <h3 className="font-bold flex items-center gap-2 text-text-primary text-sm">
                 답안 입력
@@ -554,7 +554,7 @@ export default function SolvePage() {
                   type="text"
                   value={answer}
                   onChange={(e) => setAnswers((prev) => ({ ...prev, [problem.id]: e.target.value }))}
-                  className={`block w-full pl-14 pr-10 py-4 text-lg math tracking-wider bg-slate-50 border-2 rounded-xl focus:ring-0 transition-colors text-text-primary ${
+                  className={`block w-full pl-14 pr-10 py-4 text-lg math tracking-wider bg-slate-50 border-2 rounded-sm focus:ring-0 transition-colors text-text-primary ${
                     submitted[problem.id] === 'correct'
                       ? 'border-emerald-400 bg-emerald-50'
                       : submitted[problem.id] === 'wrong'
@@ -579,7 +579,7 @@ export default function SolvePage() {
                   <button
                     key={key.label}
                     onClick={() => insertSymbol(key.value)}
-                    className={`py-2 rounded-lg text-sm transition-colors border border-slate-200 ${getKeyStyle(key.style)}`}
+                    className={`py-2 rounded-sm text-sm transition-colors border border-slate-200 ${getKeyStyle(key.style)}`}
                   >
                     {key.label}
                   </button>
@@ -591,7 +591,7 @@ export default function SolvePage() {
                 <button
                   onClick={handleSubmit}
                   disabled={!answer.trim()}
-                  className="px-8 py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm shadow-sm transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md hover:-translate-y-0.5"
+                  className="px-8 py-3 bg-primary hover:bg-primary-hover text-white rounded-sm font-bold text-sm shadow-sm transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md hover:-translate-y-0.5"
                 >
                   답안 제출
                   <Send className="w-4 h-4" />

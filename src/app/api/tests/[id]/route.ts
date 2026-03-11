@@ -44,8 +44,9 @@ export async function GET(
       type: true,
       content: true,
       choices: true,
-      // 학생에게는 정답 숨기기
-      ...(currentUser.role !== 'STUDENT' ? { answer: true, explanation: true } : {}),
+      answer: true,
+      explanation: true,
+      domain: true,
     },
   });
 

@@ -26,7 +26,7 @@ export function LevelUpModal({ isOpen, newLevel, onClose }: LevelUpModalProps) {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.3, opacity: 0 }}
             transition={{ type: 'spring', damping: 15, stiffness: 300 }}
-            className="bg-white rounded-2xl p-10 text-center shadow-2xl max-w-sm mx-4"
+            className="bg-white rounded-sm p-10 text-center shadow-2xl max-w-sm mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             <motion.div

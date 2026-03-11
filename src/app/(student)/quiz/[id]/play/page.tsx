@@ -141,7 +141,7 @@ export default function QuizPlayPage() {
               {sorted.map((p, idx) => (
                 <div
                   key={p.id}
-                  className={`flex items-center justify-between px-4 py-3 rounded-xl ${
+                  className={`flex items-center justify-between px-4 py-3 rounded-sm ${
                     idx === 0 ? 'bg-yellow-500/20 ring-2 ring-yellow-400' :
                     idx === 1 ? 'bg-slate-600/50' :
                     idx === 2 ? 'bg-amber-700/20' : 'bg-slate-700/50'
@@ -213,7 +213,7 @@ export default function QuizPlayPage() {
                       key={idx}
                       disabled={submitted}
                       onClick={() => { setSelectedAnswer(choiceNum); }}
-                      className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all text-sm ${
+                      className={`w-full text-left px-4 py-3 rounded-sm border-2 transition-all text-sm ${
                         showResult
                           ? isCorrectChoice
                             ? 'border-emerald-400 bg-emerald-500/20 text-white'
@@ -244,13 +244,13 @@ export default function QuizPlayPage() {
                 onChange={(e) => setSelectedAnswer(e.target.value)}
                 disabled={submitted}
                 placeholder="정답 입력"
-                className="w-full px-4 py-3 bg-slate-700 border-2 border-slate-600 rounded-xl text-white text-base focus:border-yellow-400"
+                className="w-full px-4 py-3 bg-slate-700 border-2 border-slate-600 rounded-sm text-white text-base focus:border-yellow-400"
                 onKeyDown={(e) => { if (e.key === 'Enter' && !submitted) handleSubmit(); }}
               />
             )}
 
             {feedback && (
-              <div className={`mt-4 p-3 rounded-xl text-center font-bold ${
+              <div className={`mt-4 p-3 rounded-sm text-center font-bold ${
                 feedback.isCorrect ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
               }`}>
                 {feedback.isCorrect ? '정답!' : `오답 (정답: ${feedback.correctAnswer})`}

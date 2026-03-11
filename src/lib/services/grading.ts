@@ -43,47 +43,11 @@ export async function submitAnswer(params: {
 }) {
   const { attemptId, questionId, selectedAnswer, timeSpentSeconds, tabSwitchCount } = params;
 
-  // 시도와 문제 조회
-  const [attempt, question] = await Promise.all([
-    prisma.testAttempt.findUniqueOrThrow({
-      where: { id: attemptId },
-      include: { answers: { orderBy: { createdAt: 'desc' }, take: 1 } },
-    }),
-    prisma.question.findUniqueOrThrow({ where: { id: questionId } }),
-  ]);
-
-  if (attempt.completedAt) {
-    throw new Error('이미 완료된 시험입니다');
-  }
-
-  // 이미 답한 문제인지 확인
-  const existing = await prisma.answerLog.findFirst({
-    where: { attemptId, questionId },
-  });
-  if (existing) {
-    throw new Error('이미 답한 문제입니다');
-  }
+  // 문제 조회 (변하지 않는 데이터이므로 트랜잭션 밖에서 조회)
+  const question = await prisma.question.findUniqueOrThrow({ where: { id: questionId } });
 
   // 채점
   const { isCorrect } = gradeAnswer(selectedAnswer, question.answer);
-
-  // 연속 정답 수 계산
-  const allAnswers = await prisma.answerLog.findMany({
-    where: { attemptId },
-    orderBy: { createdAt: 'desc' },
-  });
-  let streak = 0;
-  for (const a of allAnswers) {
-    if (a.isCorrect) streak++;
-    else break;
-  }
-  const newCombo = isCorrect ? streak + 1 : 0;
-
-  // 점수 계산 (콤보 보너스 적용)
-  const basePoints = DIFFICULTY_POINTS[question.difficulty] ?? 20;
-  const pointsEarned = isCorrect
-    ? Math.round(basePoints * getComboMultiplier(newCombo))
-    : 0;
 
   // 부정행위 감지
   const flag = checkAnswer({
@@ -93,8 +57,42 @@ export async function submitAnswer(params: {
     tabSwitchCount,
   });
 
-  // AnswerLog 생성 + TestAttempt 업데이트 (트랜잭션)
-  await prisma.$transaction(async (tx) => {
+  // 중복 체크 + 콤보 계산 + AnswerLog 생성 + TestAttempt 업데이트 (단일 트랜잭션)
+  const { questionsRemaining, newCombo, pointsEarned } = await prisma.$transaction(async (tx) => {
+    const attempt = await tx.testAttempt.findUniqueOrThrow({
+      where: { id: attemptId },
+    });
+
+    if (attempt.completedAt) {
+      throw new Error('이미 완료된 시험입니다');
+    }
+
+    // 이미 답한 문제인지 확인 (트랜잭션 내에서 체크하여 race condition 방지)
+    const existing = await tx.answerLog.findFirst({
+      where: { attemptId, questionId },
+    });
+    if (existing) {
+      throw new Error('이미 답한 문제입니다');
+    }
+
+    // 연속 정답 수 계산
+    const allAnswers = await tx.answerLog.findMany({
+      where: { attemptId },
+      orderBy: { createdAt: 'desc' },
+    });
+    let streak = 0;
+    for (const a of allAnswers) {
+      if (a.isCorrect) streak++;
+      else break;
+    }
+    const combo = isCorrect ? streak + 1 : 0;
+
+    // 점수 계산 (콤보 보너스 적용)
+    const basePoints = DIFFICULTY_POINTS[question.difficulty] ?? 20;
+    const earned = isCorrect
+      ? Math.round(basePoints * getComboMultiplier(combo))
+      : 0;
+
     // 학습 상태 분류
     const statusInfo = classifyAnswer({
       isCorrect,
@@ -102,15 +100,15 @@ export async function submitAnswer(params: {
       difficulty: question.difficulty,
     });
 
-    const log = await tx.answerLog.create({
+    await tx.answerLog.create({
       data: {
         attemptId,
         questionId,
         selectedAnswer,
         isCorrect,
         timeSpentSeconds,
-        comboCount: newCombo,
-        pointsEarned,
+        comboCount: combo,
+        pointsEarned: earned,
         statusClassification: statusInfo.status,
         flagged: flag.flagged,
         flagReason: flag.reason,
@@ -120,18 +118,20 @@ export async function submitAnswer(params: {
     await tx.testAttempt.update({
       where: { id: attemptId },
       data: {
-        score: { increment: pointsEarned },
+        score: { increment: earned },
         correctCount: isCorrect ? { increment: 1 } : undefined,
-        comboMax: newCombo > attempt.comboMax ? newCombo : undefined,
+        comboMax: combo > attempt.comboMax ? combo : undefined,
       },
     });
 
-    return log;
+    const count = allAnswers.length + 1;
+    return {
+      answeredCount: count,
+      questionsRemaining: attempt.totalCount - count,
+      newCombo: combo,
+      pointsEarned: earned,
+    };
   });
-
-  // 남은 문제 수
-  const answeredCount = allAnswers.length + 1;
-  const questionsRemaining = attempt.totalCount - answeredCount;
 
   return {
     isCorrect,
@@ -145,22 +145,22 @@ export async function submitAnswer(params: {
 
 /** 시험 완료 처리 — 점수 집계 + XP 부여 */
 export async function completeAttempt(attemptId: string) {
-  const attempt = await prisma.testAttempt.findUniqueOrThrow({
-    where: { id: attemptId },
-    include: { answers: true },
-  });
+  // 모든 읽기 + 쓰기를 단일 트랜잭션으로 처리
+  const result = await prisma.$transaction(async (tx) => {
+    const attempt = await tx.testAttempt.findUniqueOrThrow({
+      where: { id: attemptId },
+      include: { answers: true },
+    });
 
-  if (attempt.completedAt) {
-    throw new Error('이미 완료된 시험입니다');
-  }
+    if (attempt.completedAt) {
+      throw new Error('이미 완료된 시험입니다');
+    }
 
-  // 총 점수/XP 집계
-  const totalPoints = attempt.answers.reduce((sum, a) => sum + a.pointsEarned, 0);
-  const xpEarned = Math.floor(totalPoints / 2);
-  const totalTime = attempt.answers.reduce((sum, a) => sum + a.timeSpentSeconds, 0);
+    // 총 점수/XP 집계
+    const totalPoints = attempt.answers.reduce((sum, a) => sum + a.pointsEarned, 0);
+    const xpEarned = Math.floor(totalPoints / 2);
+    const totalTime = attempt.answers.reduce((sum, a) => sum + a.timeSpentSeconds, 0);
 
-  // TestAttempt 완료 + StudentProfile XP 갱신 (트랜잭션)
-  await prisma.$transaction(async (tx) => {
     await tx.testAttempt.update({
       where: { id: attemptId },
       data: {
@@ -221,18 +221,20 @@ export async function completeAttempt(attemptId: string) {
         });
       }
     }
+
+    return {
+      score: totalPoints,
+      maxScore: attempt.maxScore,
+      correctCount: attempt.correctCount,
+      totalCount: attempt.totalCount,
+      xpEarned,
+      comboMax: attempt.comboMax,
+      totalTimeSeconds: totalTime,
+      averageTimeSeconds: attempt.totalCount > 0
+        ? Math.round(totalTime / attempt.totalCount)
+        : 0,
+    };
   });
 
-  return {
-    score: totalPoints,
-    maxScore: attempt.maxScore,
-    correctCount: attempt.correctCount,
-    totalCount: attempt.totalCount,
-    xpEarned,
-    comboMax: attempt.comboMax,
-    totalTimeSeconds: totalTime,
-    averageTimeSeconds: attempt.totalCount > 0
-      ? Math.round(totalTime / attempt.totalCount)
-      : 0,
-  };
+  return result;
 }

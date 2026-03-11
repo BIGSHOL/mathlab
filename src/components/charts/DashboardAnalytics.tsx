@@ -56,14 +56,14 @@ export default function DashboardAnalytics() {
       <div className="lg:col-span-3 flex flex-col gap-4">
         {/* Week summary mini cards */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-sm">
+          <div className="bg-white rounded-sm p-3 border border-slate-100 shadow-sm">
             <div className="flex items-center gap-1.5 mb-1">
               <BarChart3 className="w-3.5 h-3.5 text-primary" />
               <span className="text-[11px] font-semibold text-text-secondary">이번 주 풀이</span>
             </div>
             <p className="text-xl font-black text-text-primary">{weekSummary.totalAnswers}<span className="text-sm text-slate-400 font-bold ml-0.5">문제</span></p>
           </div>
-          <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-sm">
+          <div className="bg-white rounded-sm p-3 border border-slate-100 shadow-sm">
             <div className="flex items-center gap-1.5 mb-1">
               <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
               <span className="text-[11px] font-semibold text-text-secondary">이번 주 오답률</span>
@@ -75,7 +75,7 @@ export default function DashboardAnalytics() {
               {weekSummary.wrongRate}<span className="text-sm text-slate-400 font-bold ml-0.5">%</span>
             </p>
           </div>
-          <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-sm">
+          <div className="bg-white rounded-sm p-3 border border-slate-100 shadow-sm">
             <div className="flex items-center gap-1.5 mb-1">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
               <span className="text-[11px] font-semibold text-text-secondary">완료된 시험</span>
@@ -105,19 +105,19 @@ export default function DashboardAnalytics() {
             <Clock className="w-4 h-4 text-primary" /> 배정 현황
           </h3>
           <div className="grid grid-cols-2 gap-2 mb-3">
-            <div className="bg-blue-50 rounded-lg p-2.5 text-center">
+            <div className="bg-blue-50 rounded-sm p-2.5 text-center">
               <p className="text-lg font-black text-blue-600">{assignmentStats.assigned}</p>
               <p className="text-[10px] text-text-secondary font-medium">배정됨</p>
             </div>
-            <div className="bg-amber-50 rounded-lg p-2.5 text-center">
+            <div className="bg-amber-50 rounded-sm p-2.5 text-center">
               <p className="text-lg font-black text-amber-600">{assignmentStats.inProgress}</p>
               <p className="text-[10px] text-text-secondary font-medium">진행 중</p>
             </div>
-            <div className="bg-emerald-50 rounded-lg p-2.5 text-center">
+            <div className="bg-emerald-50 rounded-sm p-2.5 text-center">
               <p className="text-lg font-black text-emerald-600">{assignmentStats.completed}</p>
               <p className="text-[10px] text-text-secondary font-medium">완료</p>
             </div>
-            <div className="bg-red-50 rounded-lg p-2.5 text-center">
+            <div className="bg-red-50 rounded-sm p-2.5 text-center">
               <p className="text-lg font-black text-red-600">{assignmentStats.overdue}</p>
               <p className="text-[10px] text-text-secondary font-medium">기한 초과</p>
             </div>

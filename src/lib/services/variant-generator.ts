@@ -51,51 +51,49 @@ export async function generateVariants(config: VariantConfig) {
     candidatePool.set(sq.id, candidates.map((c) => c.id));
   }
 
-  const createdTests: { id: string; title: string; questionIds: string[] }[] = [];
-
   // 이전 변형에서 사용된 문제 추적 (중복 방지)
   const usedIds = new Set(sourceQuestionIds);
 
+  // 변형별 문제 조합을 먼저 계산 (DB 밖에서)
+  const variantQuestionSets: string[][] = [];
   for (let v = 0; v < variantCount; v++) {
     const variantQuestionIds: string[] = [];
-
     for (const sq of sourceQuestions) {
       const pool = candidatePool.get(sq.id) ?? [];
-      // 아직 사용되지 않은 후보 중 하나 선택
       const available = pool.filter((id) => !usedIds.has(id));
-
       if (available.length > 0) {
-        // 랜덤 선택
         const picked = available[Math.floor(Math.random() * available.length)];
         variantQuestionIds.push(picked);
         usedIds.add(picked);
       } else {
-        // 대체 불가 → 원본 유지
         variantQuestionIds.push(sq.id);
       }
     }
-
-    // 변형 시험 생성
-    const test = await prisma.test.create({
-      data: {
-        title: `${title} (변형 ${String.fromCharCode(65 + v)})`,
-        grade,
-        testType,
-        questionIds: variantQuestionIds,
-        questionCount: variantQuestionIds.length,
-        timeLimitMin: timeLimitMin ?? null,
-        shuffleOptions: shuffleOptions ?? false,
-        maxAttempts: maxAttempts ?? null,
-        createdBy,
-      },
-    });
-
-    createdTests.push({
-      id: test.id,
-      title: test.title,
-      questionIds: variantQuestionIds,
-    });
+    variantQuestionSets.push(variantQuestionIds);
   }
+
+  // 모든 변형 시험을 트랜잭션으로 일괄 생성
+  const createdTests = await prisma.$transaction(async (tx) => {
+    const results: { id: string; title: string; questionIds: string[] }[] = [];
+    for (let v = 0; v < variantCount; v++) {
+      const variantQuestionIds = variantQuestionSets[v];
+      const test = await tx.test.create({
+        data: {
+          title: `${title} (변형 ${String.fromCharCode(65 + v)})`,
+          grade,
+          testType,
+          questionIds: variantQuestionIds,
+          questionCount: variantQuestionIds.length,
+          timeLimitMin: timeLimitMin ?? null,
+          shuffleOptions: shuffleOptions ?? false,
+          maxAttempts: maxAttempts ?? null,
+          createdBy,
+        },
+      });
+      results.push({ id: test.id, title: test.title, questionIds: variantQuestionIds });
+    }
+    return results;
+  });
 
   return createdTests;
 }

@@ -1,6 +1,6 @@
 export type UserRole = 'STUDENT' | 'TEACHER' | 'ADMIN';
 
-export type LearningStage = 'READING' | 'BLANK_EASY' | 'BLANK_HARD' | 'BLANK_PAGE';
+export type LearningStage = 'READING' | 'BLANK_EASY' | 'BLANK_HARD' | 'BLANK_FULL' | 'BLANK_PAGE';
 
 export type PointType = 'EARN' | 'SPEND';
 
@@ -8,6 +8,7 @@ export type PointReason =
   | 'READING_COMPLETE'
   | 'BLANK_EASY'
   | 'BLANK_HARD'
+  | 'BLANK_FULL'
   | 'BLANK_PAGE'
   | 'BONUS';
 
@@ -103,6 +104,8 @@ export interface Question {
   answer: string;
   explanation: string | null;
   sourceTag: string | null;
+  domain: string | null;
+  conceptId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -170,3 +173,28 @@ export interface ApiError {
     details?: Array<{ field: string; message: string }>;
   };
 }
+
+// FEAT: Level Test
+export type LevelTestDomain = 'CALCULATION' | 'UNDERSTANDING' | 'PROBLEM_SOLVING' | 'REASONING';
+
+export const DOMAIN_LABELS: Record<LevelTestDomain, string> = {
+  CALCULATION: '계산력',
+  UNDERSTANDING: '이해력',
+  PROBLEM_SOLVING: '문제해결력',
+  REASONING: '추론력',
+};
+
+export const DOMAIN_COLORS: Record<LevelTestDomain, { bg: string; text: string }> = {
+  CALCULATION: { bg: 'bg-blue-100', text: 'text-blue-700' },
+  UNDERSTANDING: { bg: 'bg-green-100', text: 'text-green-700' },
+  PROBLEM_SOLVING: { bg: 'bg-orange-100', text: 'text-orange-700' },
+  REASONING: { bg: 'bg-purple-100', text: 'text-purple-700' },
+};
+
+export const LEVEL_COLORS: Record<string, { bg: string; text: string }> = {
+  '심화': { bg: 'bg-violet-100', text: 'text-violet-700' },
+  '상': { bg: 'bg-blue-100', text: 'text-blue-700' },
+  '중': { bg: 'bg-green-100', text: 'text-green-700' },
+  '기초': { bg: 'bg-yellow-100', text: 'text-yellow-700' },
+  '기초보충': { bg: 'bg-red-100', text: 'text-red-700' },
+};

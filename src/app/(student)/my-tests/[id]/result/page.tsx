@@ -21,6 +21,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { MathStatusBadge } from '@/components/ui/MathStatusBadge';
+import { LevelTestResultCard } from '@/components/level-test/LevelTestResultCard';
 import { classifyAnswer, getStatusSummary } from '@/lib/utils/answer-status';
 import { DIFFICULTY_LABELS } from '@/types';
 
@@ -42,6 +43,7 @@ interface QuestionInfo {
   difficulty: string;
   chapter: string;
   questionNum: number;
+  domain?: string | null;
 }
 
 interface AttemptHistory {
@@ -67,7 +69,9 @@ export default function TestResultPage() {
     comboMax: number;
     attemptNumber: number;
     answers: AnswerDetail[];
-    test: { title: string; maxAttempts: number | null };
+    test: { title: string; maxAttempts: number | null; testType: string };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    diagnosticResult: any | null;
   } | null>(null);
   const [questions, setQuestions] = useState<QuestionInfo[]>([]);
   const [attemptHistory, setAttemptHistory] = useState<AttemptHistory[]>([]);
@@ -223,6 +227,21 @@ export default function TestResultPage() {
         </Card>
       </div>
 
+      {/* 레벨테스트 결과 */}
+      {attempt.test?.testType === 'level_test' && attempt.diagnosticResult && (
+        <div className="mb-6">
+          <LevelTestResultCard
+            recommendLevel={attempt.diagnosticResult.recommendLevel}
+            overallAccuracy={attempt.diagnosticResult.overallAccuracy}
+            domainScores={attempt.diagnosticResult.domainScores ?? {}}
+            weakAreas={attempt.diagnosticResult.weakAreas ?? []}
+            strongAreas={attempt.diagnosticResult.strongAreas ?? []}
+            answers={attempt.answers}
+            questions={questions}
+          />
+        </div>
+      )}
+
       {/* 시도 이력 */}
       {attemptHistory.length > 1 && (
         <div className="mb-6">
@@ -367,7 +386,7 @@ export default function TestResultPage() {
                     <div className="space-y-2">
                       <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">유사 문제 {(similarQuestions[ans.questionId] ?? []).length}개</p>
                       {(similarQuestions[ans.questionId] ?? []).map((sq) => (
-                        <div key={sq.id} className="bg-slate-50 rounded-lg p-3">
+                        <div key={sq.id} className="bg-slate-50 rounded-sm p-3">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-[10px] text-text-secondary">{sq.chapter}</span>
                             <span className={`px-1 py-0.5 rounded text-[9px] font-bold ${

@@ -18,7 +18,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           className={`
-            h-11 px-4 rounded-lg border border-slate-200 bg-white
+            h-11 px-4 rounded-sm border border-slate-200 bg-white
             text-text-primary placeholder:text-slate-400
             focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary
             transition-all text-[15px]
@@ -45,7 +45,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         <input
           ref={ref}
           className={`
-            h-10 w-full pl-10 pr-4 rounded-lg border border-slate-200 bg-slate-50
+            h-10 w-full pl-10 pr-4 rounded-sm border border-slate-200 bg-slate-50
             text-text-primary placeholder:text-slate-400
             focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary
             transition-all text-sm
