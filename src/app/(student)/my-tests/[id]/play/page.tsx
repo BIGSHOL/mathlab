@@ -28,7 +28,7 @@ interface QuestionData {
 }
 
 export default function TestPlayPage() {
-  const { id: testId } = useParams<{ id: string }>();
+  const { id: testSeq } = useParams<{ id: string }>();
   const router = useRouter();
   const { attempt, loading, startAttempt, submitAnswer, completeAttempt } = useTestAttempt();
 
@@ -59,11 +59,11 @@ export default function TestPlayPage() {
   useEffect(() => {
     async function init() {
       try {
-        const att = await startAttempt(testId);
+        const att = await startAttempt(testSeq);
         if (!att) return;
 
         // Fetch questions
-        const res = await fetch(`/api/tests/${testId}`);
+        const res = await fetch(`/api/tests/${testSeq}`);
         if (res.ok) {
           const json = await res.json();
           const qOrder = att.questionOrder as string[];
@@ -79,7 +79,7 @@ export default function TestPlayPage() {
     }
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [testId]);
+  }, [testSeq]);
 
   // Per-question timer
   useEffect(() => {
@@ -144,7 +144,7 @@ export default function TestPlayPage() {
       setCompleting(true);
       try {
         await completeAttempt(attempt.id);
-        router.push(`/my-tests/${testId}/result`);
+        router.push(`/my-tests/${testSeq}/result`);
       } catch {
         alert('시험 완료 실패');
       }
@@ -154,7 +154,7 @@ export default function TestPlayPage() {
       setSelectedAnswer('');
       setFeedback(null);
     }
-  }, [isLastQuestion, attempt, completeAttempt, testId, router]);
+  }, [isLastQuestion, attempt, completeAttempt, testSeq, router]);
 
   if (loading || questions.length === 0) {
     return (

@@ -20,6 +20,7 @@ enum Role {
 
 model User {
   id            String    @id @default(cuid())
+  seq           Int       @unique @default(autoincrement())
   username      String    @unique @db.VarChar(50)
   passwordHash  String    @db.VarChar(255)
   name          String    @db.VarChar(50)
@@ -252,6 +253,7 @@ model ConceptPrerequisite {
 // FEAT-3: Test System
 model Test {
   id                  String   @id @default(cuid())
+  seq                 Int      @unique @default(autoincrement())
   title               String   @db.VarChar(200)
   description         String?  @db.Text
   grade               Int
@@ -314,6 +316,7 @@ enum AssignmentStatus {
 
 model TestAssignment {
   id                  String           @id @default(cuid())
+  seq                 Int              @unique @default(autoincrement())
   testId              String
   studentId           String
   assignedAt          DateTime         @default(now())
@@ -401,7 +404,9 @@ model DiagnosticResult {
 model LevelTestConfig {
   id              String @id @default(cuid())
   testId          String @unique
-  questionDomains Json   // { [questionId]: "CALCULATION"|"UNDERSTANDING"|"PROBLEM_SOLVING"|"REASONING" }
+  questionDomains  Json   // { [questionId]: "CALCULATION"|"UNDERSTANDING"|"PROBLEM_SOLVING"|"REASONING" }
+  questionsPerPage Int?   // null = 자동, 숫자 = 페이지당 고정 문제 수
+  spacing          String? @db.VarChar(10) // 문제 간 여백: compact, normal, wide (기본 normal)
 
   test Test @relation(fields: [testId], references: [id], onDelete: Cascade)
 
@@ -536,6 +541,7 @@ model ArithmeticAnswer {
 // FEAT: Arithmetic Homework Plans
 model ArithmeticHomeworkPlan {
   id              String   @id @default(cuid())
+  seq             Int      @unique @default(autoincrement())
   title           String   @db.VarChar(200)
   createdBy       String
   categories      Json     // ArithmeticCategory[]

@@ -42,7 +42,7 @@ export async function POST(
   });
 
   if (existing) {
-    return NextResponse.json({ data: { sessionId: session.id, participantId: existing.id } });
+    return NextResponse.json({ data: { sessionId: session.id, joinCode: session.joinCode, participantId: existing.id } });
   }
 
   const participant = await prisma.quizParticipant.create({
@@ -53,5 +53,5 @@ export async function POST(
     },
   });
 
-  return NextResponse.json({ data: { sessionId: session.id, participantId: participant.id } });
+  return NextResponse.json({ data: { sessionId: session.id, joinCode: session.joinCode, participantId: participant.id } });
 }

@@ -15,9 +15,14 @@ export async function POST(
     );
   }
 
-  const { id: testId } = await params;
+  const { id: rawId } = await params;
 
-  const test = await prisma.test.findUnique({ where: { id: testId } });
+  // Resolve by seq (numeric) or id (cuid)
+  const seqNum = Number(rawId);
+  const test = !isNaN(seqNum) && String(seqNum) === rawId
+    ? await prisma.test.findUnique({ where: { seq: seqNum } })
+    : await prisma.test.findUnique({ where: { id: rawId } });
+  const testId = test?.id ?? rawId;
   if (!test || !test.isActive) {
     return NextResponse.json(
       { error: { code: 'NOT_FOUND', message: '시험을 찾을 수 없습니다' } },

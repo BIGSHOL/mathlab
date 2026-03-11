@@ -27,7 +27,7 @@ export default function EnrollWizardPage() {
   const [step, setStep] = useState<Step>(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [createdStudentId, setCreatedStudentId] = useState<string | null>(null);
+  const [createdStudentSeq, setCreatedStudentSeq] = useState<number | null>(null);
 
   const [form, setForm] = useState({
     name: '',
@@ -57,7 +57,7 @@ export default function EnrollWizardPage() {
         return;
       }
       const json = await res.json();
-      setCreatedStudentId(json.data?.id ?? null);
+      setCreatedStudentSeq(json.data?.seq ?? null);
       setStep(3);
     } catch {
       setError('네트워크 오류');
@@ -185,10 +185,10 @@ export default function EnrollWizardPage() {
               <p><span className="text-text-secondary">학년:</span> <strong>{form.grade <= 6 ? `초등 ${form.grade}학년` : `중등 ${form.grade - 6}학년`}</strong></p>
             </div>
             <div className="flex justify-center gap-3 pt-2">
-              {createdStudentId && (
+              {createdStudentSeq && (
                 <Button
                   variant="secondary"
-                  onClick={() => router.push(`/students/${createdStudentId}/wrong-answers`)}
+                  onClick={() => router.push(`/students/${createdStudentSeq}/wrong-answers`)}
                 >
                   학생 관리 페이지
                 </Button>

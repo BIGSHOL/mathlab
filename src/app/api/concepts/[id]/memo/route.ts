@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 
+/** Resolve concept by conceptCode or cuid id */
+async function resolveConceptId(rawId: string): Promise<string | null> {
+  const byCode = await prisma.concept.findUnique({ where: { conceptCode: rawId }, select: { id: true } });
+  if (byCode) return byCode.id;
+  const byId = await prisma.concept.findUnique({ where: { id: rawId }, select: { id: true } });
+  return byId?.id ?? null;
+}
+
 /** GET: 개념 메모 조회 */
 export async function GET(
   request: NextRequest,
@@ -15,7 +23,8 @@ export async function GET(
     );
   }
 
-  const { id: conceptId } = await params;
+  const { id: rawId } = await params;
+  const conceptId = await resolveConceptId(rawId) ?? rawId;
 
   const memo = await prisma.conceptMemo.findUnique({
     where: { userId_conceptId: { userId: currentUser.id, conceptId } },
@@ -37,7 +46,8 @@ export async function PUT(
     );
   }
 
-  const { id: conceptId } = await params;
+  const { id: rawId } = await params;
+  const conceptId = await resolveConceptId(rawId) ?? rawId;
   const body = await request.json();
   const { content } = body;
 

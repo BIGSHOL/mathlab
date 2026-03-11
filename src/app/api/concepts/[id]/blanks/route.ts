@@ -3,13 +3,22 @@ import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { blankQuerySchema } from '@/lib/schemas/concept';
 
+/** Resolve concept by conceptCode or cuid id */
+async function resolveConceptId(id: string): Promise<string | null> {
+  const byCode = await prisma.concept.findUnique({ where: { conceptCode: id }, select: { id: true } });
+  if (byCode) return byCode.id;
+  const byId = await prisma.concept.findUnique({ where: { id }, select: { id: true } });
+  return byId?.id ?? null;
+}
+
 // GET /api/concepts/:id/blanks?level=1  (student: single exercise)
 // GET /api/concepts/:id/blanks?all=true  (teacher: all exercises)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
+  const { id: rawId } = await params;
+  const id = await resolveConceptId(rawId) ?? rawId;
   const { searchParams } = new URL(request.url);
 
   // Teacher/Admin: return all blank exercises for this concept
@@ -78,7 +87,8 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
+  const { id: rawId } = await params;
+  const id = await resolveConceptId(rawId) ?? rawId;
   const currentUser = await getCurrentUser();
   if (!currentUser || currentUser.role === 'STUDENT') {
     return NextResponse.json(
@@ -128,7 +138,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
+  const { id: rawId } = await params;
+  const id = await resolveConceptId(rawId) ?? rawId;
   const currentUser = await getCurrentUser();
   if (!currentUser || currentUser.role === 'STUDENT') {
     return NextResponse.json(
@@ -174,7 +185,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
+  const { id: rawId } = await params;
+  const id = await resolveConceptId(rawId) ?? rawId;
   const currentUser = await getCurrentUser();
   if (!currentUser || currentUser.role === 'STUDENT') {
     return NextResponse.json(

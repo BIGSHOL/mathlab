@@ -235,6 +235,18 @@ export default function HomeworkGridPage({ params }: { params: Promise<{ planId:
     return map;
   }, [data]);
 
+  // 실제 숙제 배정일 (쉬는날 제외)
+  const homeworkDays = useMemo(() => {
+    if (!data) return new Set<string>();
+    const set = new Set<string>();
+    data.dates.forEach((dateStr, idx) => {
+      if (data.dailyCompletionRates[idx] !== -2) {
+        set.add(dateStr);
+      }
+    });
+    return set;
+  }, [data]);
+
   // Compute available months that span the plan period
   const months = useMemo(() => {
     if (!data) return [] as string[];
@@ -440,9 +452,8 @@ export default function HomeworkGridPage({ params }: { params: Promise<{ planId:
                 return (
                   <th
                     key={i}
-                    className={`border-b border-slate-200 py-1.5 text-center ${
-                      isToday ? 'bg-primary/5' : !isPlanDay ? 'bg-slate-50/50' : 'bg-blue-50/40'
-                    }`}
+                    className="border-b border-slate-200 py-1.5 text-center"
+                    style={homeworkDays.has(calDay.dateStr) ? { backgroundColor: isToday ? '#bae6fd' : '#e0f2fe' } : undefined}
                   >
                     <div className={`text-[10px] font-bold ${
                       isToday ? 'text-primary' : !isPlanDay ? 'text-slate-300' : 'text-slate-500'
@@ -490,19 +501,21 @@ export default function HomeworkGridPage({ params }: { params: Promise<{ planId:
 
                   if (!isPlanDay) {
                     return (
-                      <td key={i} className="border-b border-slate-100 bg-slate-50/30" />
+                      <td key={i} className="border-b border-slate-100" />
                     );
                   }
 
+                  const isHomeworkDay = homeworkDays.has(calDay.dateStr);
                   const cell = student.completions[planIdx];
-                  if (!cell) return <td key={i} className="border-b border-slate-100 bg-blue-50/40" />;
+                  if (!cell) return <td key={i} className="border-b border-slate-100" style={isHomeworkDay ? { backgroundColor: '#e0f2fe' } : undefined} />;
 
                   const clickable = cell.status !== 'FUTURE' && cell.status !== 'REST';
 
                   return (
                     <td
                       key={i}
-                      className={`border-b border-slate-100 py-1 text-center ${isToday ? 'bg-primary/5' : 'bg-blue-50/40'} ${clickable ? 'cursor-pointer hover:bg-slate-100' : ''}`}
+                      className={`border-b border-slate-100 py-1 text-center ${clickable ? 'cursor-pointer hover:bg-sky-200' : ''}`}
+                      style={isHomeworkDay ? { backgroundColor: isToday ? '#bae6fd' : '#e0f2fe' } : undefined}
                       onClick={clickable ? () => openDetail(student.id, student.name, planIdx, calDay.dateStr, cell.isEarly) : undefined}
                     >
                       <div className="group relative flex items-center justify-center">
@@ -519,13 +532,22 @@ export default function HomeworkGridPage({ params }: { params: Promise<{ planId:
                   );
                 })}
                 <td className="sticky right-0 z-10 bg-white border-b border-l border-slate-100 px-1 py-1.5 text-center">
-                  <span className={`text-[10px] font-bold ${
-                    student.completionRate >= 80 ? 'text-emerald-600' :
-                    student.completionRate >= 50 ? 'text-amber-600' :
-                    'text-red-500'
-                  }`}>
-                    {student.completionRate}%
-                  </span>
+                  {student.completionRate > 100 ? (
+                    <span
+                      className="inline-block text-[11px] font-bold text-transparent bg-clip-text whitespace-nowrap"
+                      style={{ backgroundImage: 'linear-gradient(135deg, #f59e0b, #ef4444, #8b5cf6)' }}
+                    >
+                      {student.completionRate}%
+                    </span>
+                  ) : (
+                    <span className={`text-[10px] font-bold ${
+                      student.completionRate >= 80 ? 'text-emerald-600' :
+                      student.completionRate >= 50 ? 'text-amber-600' :
+                      'text-red-500'
+                    }`}>
+                      {student.completionRate}%
+                    </span>
+                  )}
                 </td>
                 <td className="border-b border-slate-100 px-1 py-1.5 text-center">
                   <span className={`text-[10px] font-bold ${
@@ -554,12 +576,12 @@ export default function HomeworkGridPage({ params }: { params: Promise<{ planId:
                 const isPlanDay = planIdx !== undefined;
 
                 if (!isPlanDay) {
-                  return <td key={i} className="border-t-2 border-slate-200 bg-slate-50/30" />;
+                  return <td key={i} className="border-t-2 border-slate-200" />;
                 }
 
                 const rate = dailyCompletionRates[planIdx];
                 return (
-                  <td key={i} className={`border-t-2 border-slate-200 py-1.5 text-center ${isToday ? 'bg-primary/5' : 'bg-blue-50/40'}`}>
+                  <td key={i} className="border-t-2 border-slate-200 py-1.5 text-center" style={homeworkDays.has(calDay.dateStr) ? { backgroundColor: isToday ? '#bae6fd' : '#e0f2fe' } : undefined}>
                     {rate === -2 ? (
                       <span className="text-[10px] text-slate-200">-</span>
                     ) : rate >= 0 ? (
@@ -758,23 +780,21 @@ export default function HomeworkGridPage({ params }: { params: Promise<{ planId:
                           {answer.choices.map((choice: string, ci: number) => {
                             const isSelected = answer.selectedAnswer === choice;
                             const isWrongSelected = isSelected && !answer.isCorrect;
+                            const isCorrectChoice = choice === answer.correctAnswer;
                             return (
-                              <div key={ci} className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] ${isWrongSelected ? 'bg-red-100 text-red-600 font-semibold' : 'text-text-secondary'}`}>
+                              <div key={ci} className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] ${
+                                isWrongSelected ? 'bg-red-100 text-red-600 font-semibold' :
+                                isCorrectChoice ? 'bg-blue-50 text-blue-600 font-semibold' :
+                                'text-text-secondary'
+                              }`}>
                                 <span className="w-3 text-center text-[10px] shrink-0">{ci + 1}</span>
                                 <MathRenderer content={choice} className="[&_p]:my-0 [&_.katex]:text-xs inline" />
                                 {isWrongSelected && <span className="ml-auto text-[9px] shrink-0">선택</span>}
+                                {isCorrectChoice && <span className="ml-auto text-[9px] shrink-0">정답</span>}
                               </div>
                             );
                           })}
                         </div>
-                        {!answer.isCorrect && (
-                          <div className="mt-1.5 flex items-center gap-1 text-[10px] text-red-500">
-                            <span>학생 답:</span>
-                            <MathRenderer content={answer.selectedAnswer} className="inline font-semibold [&_p]:my-0 [&_.katex]:text-xs" />
-                            <span>→ 정답:</span>
-                            <MathRenderer content={answer.correctAnswer} className="inline font-semibold text-emerald-600 [&_p]:my-0 [&_.katex]:text-xs" />
-                          </div>
-                        )}
                       </div>
                     ))
                   ) : (
@@ -818,23 +838,21 @@ export default function HomeworkGridPage({ params }: { params: Promise<{ planId:
                             {problem.choices.map((choice, ci) => {
                               const isSelected = answer?.selectedAnswer === choice;
                               const isWrongSelected = isSelected && !answer?.isCorrect;
+                              const isCorrectChoice = choice === problem.answer;
                               return (
-                                <div key={ci} className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] ${isWrongSelected ? 'bg-red-100 text-red-600 font-semibold' : 'text-text-secondary'}`}>
+                                <div key={ci} className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] ${
+                                  isWrongSelected ? 'bg-red-100 text-red-600 font-semibold' :
+                                  isCorrectChoice && answer ? 'bg-blue-50 text-blue-600 font-semibold' :
+                                  'text-text-secondary'
+                                }`}>
                                   <span className="w-3 text-center text-[10px] shrink-0">{ci + 1}</span>
                                   <MathRenderer content={choice} className="[&_p]:my-0 [&_.katex]:text-xs inline" />
                                   {isWrongSelected && <span className="ml-auto text-[9px] shrink-0">선택</span>}
+                                  {isCorrectChoice && answer && <span className="ml-auto text-[9px] shrink-0">정답</span>}
                                 </div>
                               );
                             })}
                           </div>
-                          {answer && !answer.isCorrect && (
-                            <div className="mt-1.5 flex items-center gap-1 text-[10px] text-red-500">
-                              <span>학생 답:</span>
-                              <MathRenderer content={answer.selectedAnswer} className="inline font-semibold [&_p]:my-0 [&_.katex]:text-xs" />
-                              <span>→ 정답:</span>
-                              <MathRenderer content={problem.answer} className="inline font-semibold text-emerald-600 [&_p]:my-0 [&_.katex]:text-xs" />
-                            </div>
-                          )}
                         </div>
                       );
                     })

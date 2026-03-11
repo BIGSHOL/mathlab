@@ -16,11 +16,12 @@ export async function GET(
   }
 
   const { planId } = await params;
+  const seq = Number(planId);
   const { searchParams } = new URL(request.url);
   const gradeParam = searchParams.get('grade');
 
   try {
-    const grid = await getHomeworkGrid(planId, {
+    const grid = await getHomeworkGrid(seq, {
       grade: gradeParam ? Number(gradeParam) : undefined,
     });
     return NextResponse.json({ data: grid });

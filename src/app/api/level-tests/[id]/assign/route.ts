@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { assignTest } from '@/lib/services/assignment';
 
@@ -15,7 +16,24 @@ export async function POST(
     );
   }
 
-  const { id: testId } = await params;
+  const { id } = await params;
+  const seq = Number(id);
+
+  if (isNaN(seq)) {
+    return NextResponse.json(
+      { error: { code: 'VALIDATION_ERROR', message: '잘못된 시험 번호입니다' } },
+      { status: 400 }
+    );
+  }
+
+  const test = await prisma.test.findUnique({ where: { seq }, select: { id: true } });
+  if (!test) {
+    return NextResponse.json(
+      { error: { code: 'NOT_FOUND', message: '레벨테스트를 찾을 수 없습니다' } },
+      { status: 404 }
+    );
+  }
+
   const body = await request.json();
   const { studentIds, dueDate, allowLateSubmission } = body;
 
@@ -26,7 +44,7 @@ export async function POST(
     );
   }
 
-  const result = await assignTest({ testId, studentIds, dueDate, allowLateSubmission });
+  const result = await assignTest({ testId: test.id, studentIds, dueDate, allowLateSubmission });
 
   return NextResponse.json({ data: result }, { status: 201 });
 }

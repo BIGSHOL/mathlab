@@ -40,6 +40,7 @@ import { CATEGORY_LABELS } from '@/lib/services/arithmetic-generator';
 
 interface UserItem {
   id: string;
+  seq: number;
   username: string;
   name: string;
   role: string;
@@ -665,7 +666,7 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
         <div className="flex flex-wrap gap-2">
           {!showTeachers && (
             <Link
-              href={`/students/${user.id}/wrong-answers`}
+              href={`/students/${user.seq}/wrong-answers`}
               className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-sm transition-colors"
             >
               <AlertTriangle className="w-3.5 h-3.5" />

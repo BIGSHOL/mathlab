@@ -107,13 +107,26 @@ export async function analyzeLevelTest(attemptId: string, studentId: string) {
   const weakAreas = areaStats.filter((a) => a.accuracy < 60).sort((a, b) => a.accuracy - b.accuracy);
   const strongAreas = areaStats.filter((a) => a.accuracy >= 80).sort((a, b) => b.accuracy - a.accuracy);
 
-  // 6. 계통도 분석: 틀린 문제의 개념 → 선수학습 추적
+  // 6. 계통도 분석: 틀린 문제 → 개념 → 선수학습 체인 (2단계까지 추적)
+  interface PrereqChain {
+    wrongConcept: { code: string; title: string; chapter: string };
+    prerequisites: { code: string; title: string; chapter: string; depth: number }[];
+  }
   let prerequisiteWeaknesses: PrerequisiteWeakness[] = [];
+  let prerequisiteChains: PrereqChain[] = [];
+
   if (wrongConceptIds.length > 0) {
     const uniqueConceptIds = [...new Set(wrongConceptIds)];
 
-    // 틀린 문제와 연결된 개념의 선수학습 조회
-    const prereqs = await prisma.conceptPrerequisite.findMany({
+    // 틀린 개념 정보 조회
+    const wrongConcepts = await prisma.concept.findMany({
+      where: { id: { in: uniqueConceptIds } },
+      select: { id: true, conceptCode: true, title: true, chapter: true },
+    });
+    const wrongConceptMap = new Map(wrongConcepts.map(c => [c.id, c]));
+
+    // 1단계 선수학습 조회
+    const depth1 = await prisma.conceptPrerequisite.findMany({
       where: { conceptId: { in: uniqueConceptIds } },
       include: {
         prerequisite: {
@@ -122,39 +135,88 @@ export async function analyzeLevelTest(attemptId: string, studentId: string) {
       },
     });
 
-    // 선수학습 개념별 취약도 집계
-    const prereqMap = new Map<string, PrerequisiteWeakness>();
-    for (const pr of prereqs) {
-      const p = pr.prerequisite;
-      if (!prereqMap.has(p.id)) {
-        prereqMap.set(p.id, {
-          conceptCode: p.conceptCode ?? p.id,
-          conceptTitle: p.title,
-          relatedChapter: p.chapter ?? '',
-          accuracy: 0,
+    // 2단계 선수학습 조회 (1단계의 선수학습)
+    const depth1Ids = [...new Set(depth1.map(d => d.prerequisite.id))];
+    const depth2 = depth1Ids.length > 0
+      ? await prisma.conceptPrerequisite.findMany({
+          where: { conceptId: { in: depth1Ids } },
+          include: {
+            prerequisite: {
+              select: { id: true, conceptCode: true, title: true, chapter: true },
+            },
+          },
+        })
+      : [];
+
+    // depth1 역매핑: prerequisiteId → 상위 conceptIds
+    const depth2Map = new Map<string, typeof depth2>();
+    for (const d of depth2) {
+      const arr = depth2Map.get(d.conceptId) ?? [];
+      arr.push(d);
+      depth2Map.set(d.conceptId, arr);
+    }
+
+    // 체인 구성: 틀린 개념별로 선수학습 트리
+    const chainMap = new Map<string, PrereqChain>();
+    for (const d1 of depth1) {
+      const wrongConcept = wrongConceptMap.get(d1.conceptId);
+      if (!wrongConcept) continue;
+
+      if (!chainMap.has(d1.conceptId)) {
+        chainMap.set(d1.conceptId, {
+          wrongConcept: {
+            code: wrongConcept.conceptCode ?? wrongConcept.id,
+            title: wrongConcept.title,
+            chapter: wrongConcept.chapter ?? '',
+          },
+          prerequisites: [],
         });
       }
-    }
 
-    // 선수학습 개념에 연결된 문제의 정답률 계산
-    if (prereqMap.size > 0) {
-      const prereqConceptIds = [...prereqMap.keys()];
-      const prereqQuestions = await prisma.question.findMany({
-        where: { conceptId: { in: prereqConceptIds }, id: { in: questionIds } },
-        select: { id: true, conceptId: true },
-      });
-
-      for (const pq of prereqQuestions) {
-        if (!pq.conceptId) continue;
-        const ans = answers.find((a) => a.questionId === pq.id);
-        const pw = prereqMap.get(pq.conceptId);
-        if (pw && ans) {
-          pw.accuracy = ans.isCorrect ? 100 : 0;
-        }
+      const chain = chainMap.get(d1.conceptId)!;
+      const p = d1.prerequisite;
+      // 1단계 선수학습 추가 (중복 방지)
+      if (!chain.prerequisites.some(pr => pr.code === (p.conceptCode ?? p.id))) {
+        chain.prerequisites.push({
+          code: p.conceptCode ?? p.id,
+          title: p.title,
+          chapter: p.chapter ?? '',
+          depth: 1,
+        });
       }
 
-      prerequisiteWeaknesses = [...prereqMap.values()].filter((pw) => pw.accuracy < 60);
+      // 2단계 선수학습 추가
+      const d2Items = depth2Map.get(p.id) ?? [];
+      for (const d2 of d2Items) {
+        const p2 = d2.prerequisite;
+        if (!chain.prerequisites.some(pr => pr.code === (p2.conceptCode ?? p2.id))) {
+          chain.prerequisites.push({
+            code: p2.conceptCode ?? p2.id,
+            title: p2.title,
+            chapter: p2.chapter ?? '',
+            depth: 2,
+          });
+        }
+      }
     }
+
+    prerequisiteChains = [...chainMap.values()];
+
+    // 하위호환: 기존 flat 리스트도 유지
+    const prereqSet = new Map<string, PrerequisiteWeakness>();
+    for (const chain of prerequisiteChains) {
+      for (const pr of chain.prerequisites) {
+        if (!prereqSet.has(pr.code)) {
+          prereqSet.set(pr.code, {
+            conceptCode: pr.code,
+            conceptTitle: pr.title,
+            relatedChapter: pr.chapter,
+            accuracy: 0,
+          });
+        }
+      }
+    }
+    prerequisiteWeaknesses = [...prereqSet.values()];
   }
 
   // 7. Level determination
@@ -176,6 +238,7 @@ export async function analyzeLevelTest(attemptId: string, studentId: string) {
       domainScores: JSON.parse(JSON.stringify({
         ...domainScores,
         _prerequisiteWeaknesses: prerequisiteWeaknesses,
+        _prerequisiteChains: prerequisiteChains,
       })),
     },
     create: {
@@ -189,6 +252,7 @@ export async function analyzeLevelTest(attemptId: string, studentId: string) {
       domainScores: JSON.parse(JSON.stringify({
         ...domainScores,
         _prerequisiteWeaknesses: prerequisiteWeaknesses,
+        _prerequisiteChains: prerequisiteChains,
       })),
     },
   });

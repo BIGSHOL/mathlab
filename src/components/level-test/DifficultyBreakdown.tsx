@@ -49,23 +49,23 @@ export function DifficultyBreakdown({ stats }: DifficultyBreakdownProps) {
       </div>
 
       {/* 난이도별 상세 */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="space-y-2">
         {stats.map((s) => {
           const style = DIFFICULTY_STYLES[s.difficulty] ?? { bar: 'bg-slate-400', bg: 'bg-slate-50', text: 'text-slate-700' };
           const label = DIFFICULTY_LABELS[s.difficulty as keyof typeof DIFFICULTY_LABELS] ?? s.difficulty;
           return (
-            <div key={s.difficulty} className={`rounded-sm p-2.5 ${style.bg} border border-opacity-20`}>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className={`text-xs font-bold ${style.text}`}>{label}</span>
-                <span className="text-[10px] text-slate-500">{s.correct}/{s.total}</span>
-              </div>
-              <div className="h-1.5 rounded-full bg-white/60 overflow-hidden">
+            <div key={s.difficulty} className="flex items-center gap-3">
+              <span className={`text-xs font-bold w-8 shrink-0 ${style.text}`}>{label}</span>
+              <div className="flex-1 h-5 bg-slate-100 rounded-full overflow-hidden relative">
                 <div
                   className={`h-full rounded-full transition-all duration-700 ${style.bar}`}
                   style={{ width: `${s.accuracy}%` }}
                 />
+                <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-slate-700">
+                  {s.accuracy}%
+                </span>
               </div>
-              <p className={`text-right text-[11px] font-bold mt-1 ${style.text}`}>{s.accuracy}%</p>
+              <span className="text-[10px] text-slate-500 shrink-0 w-10 text-right">{s.correct}/{s.total}</span>
             </div>
           );
         })}

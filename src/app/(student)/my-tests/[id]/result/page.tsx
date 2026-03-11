@@ -58,7 +58,7 @@ interface AttemptHistory {
 }
 
 export default function TestResultPage() {
-  const { id: testId } = useParams<{ id: string }>();
+  const { id: testSeq } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
   const [attempt, setAttempt] = useState<{
     score: number;
@@ -102,7 +102,7 @@ export default function TestResultPage() {
     async function load() {
       try {
         // Get test details with questions
-        const testRes = await fetch(`/api/tests/${testId}`);
+        const testRes = await fetch(`/api/tests/${testSeq}`);
         if (testRes.ok) {
           const testJson = await testRes.json();
           setQuestions(testJson.data.questions ?? []);
@@ -112,10 +112,10 @@ export default function TestResultPage() {
         const testsRes = await fetch('/api/tests');
         if (testsRes.ok) {
           const testsJson = await testsRes.json();
-          const test = testsJson.data?.find((t: { id: string }) => t.id === testId);
+          const test = testsJson.data?.find((t: { seq: number }) => String(t.seq) === testSeq);
           if (test) {
             // Fetch attempt details
-            const attRes = await fetch(`/api/tests/${testId}/attempt`, { method: 'POST' });
+            const attRes = await fetch(`/api/tests/${testSeq}/attempt`, { method: 'POST' });
             if (attRes.ok) {
               const attJson = await attRes.json();
               const detailRes = await fetch(`/api/tests/attempts/${attJson.data.id}`);
@@ -133,7 +133,7 @@ export default function TestResultPage() {
         }
 
         // 시도 이력 조회
-        const histRes = await fetch(`/api/tests/${testId}/attempts`);
+        const histRes = await fetch(`/api/tests/${testSeq}/attempts`);
         if (histRes.ok) {
           const histJson = await histRes.json();
           setAttemptHistory(
@@ -146,7 +146,7 @@ export default function TestResultPage() {
       setLoading(false);
     }
     load();
-  }, [testId]);
+  }, [testSeq]);
 
   if (loading) {
     return (
@@ -194,7 +194,7 @@ export default function TestResultPage() {
         </p>
         <p className="text-text-secondary mt-1">점수</p>
         {canRetake && (
-          <Link href={`/my-tests/${testId}/play`} className="inline-block mt-4">
+          <Link href={`/my-tests/${testSeq}/play`} className="inline-block mt-4">
             <Button variant="secondary" size="sm">
               <RotateCcw className="w-4 h-4 mr-1" />
               다시 풀기
@@ -417,7 +417,7 @@ export default function TestResultPage() {
           <Button variant="secondary">시험 목록으로 돌아가기</Button>
         </Link>
         {canRetake && (
-          <Link href={`/my-tests/${testId}/play`}>
+          <Link href={`/my-tests/${testSeq}/play`}>
             <Button>
               <RotateCcw className="w-4 h-4 mr-1" />
               다시 풀기

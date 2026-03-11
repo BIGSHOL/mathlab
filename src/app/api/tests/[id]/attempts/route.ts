@@ -15,7 +15,15 @@ export async function GET(
     );
   }
 
-  const { id: testId } = await params;
+  const { id: rawId } = await params;
+
+  // Resolve by seq (numeric) or id (cuid)
+  let testId = rawId;
+  const seqNum = Number(rawId);
+  if (!isNaN(seqNum) && String(seqNum) === rawId) {
+    const test = await prisma.test.findUnique({ where: { seq: seqNum }, select: { id: true } });
+    if (test) testId = test.id;
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const where: Record<string, any> = { testId };

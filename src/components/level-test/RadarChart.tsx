@@ -8,11 +8,12 @@ interface RadarChartProps {
   size?: number;
 }
 
+// 가독성 높은 진한 색상
 const DOMAIN_HEX: Record<LevelTestDomain, string> = {
-  CALCULATION: '#3b82f6',
-  UNDERSTANDING: '#22c55e',
-  PROBLEM_SOLVING: '#f97316',
-  REASONING: '#a855f7',
+  CALCULATION: '#2563eb',
+  UNDERSTANDING: '#059669',
+  PROBLEM_SOLVING: '#d97706',
+  REASONING: '#7c3aed',
 };
 
 /**
@@ -20,10 +21,12 @@ const DOMAIN_HEX: Record<LevelTestDomain, string> = {
  * 계산력(상) · 이해력(우) · 문제해결력(하) · 추론력(좌)
  */
 export function RadarChart({ data, size = 260 }: RadarChartProps) {
-  const cx = size / 2;
-  const cy = size / 2;
-  const radius = size * 0.36;
-  const labelOffset = radius + 28;
+  // 라벨 여백 확보: viewBox를 확장하여 잘림 방지
+  const vbSize = size + 80;
+  const cx = vbSize / 2;
+  const cy = vbSize / 2;
+  const radius = size * 0.28;
+  const labelOffset = radius + 16;
 
   // 4축 각도: 상(0°), 우(90°), 하(180°), 좌(270°)
   const angles = [0, 90, 180, 270];
@@ -47,7 +50,7 @@ export function RadarChart({ data, size = 260 }: RadarChartProps) {
 
   return (
     <div className="flex flex-col items-center">
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <svg width={size} height={size} viewBox={`0 0 ${vbSize} ${vbSize}`}>
         {/* 배경 그리드 */}
         {gridLevels.map((level) => {
           const r = (level / 100) * radius;
@@ -111,32 +114,27 @@ export function RadarChart({ data, size = 260 }: RadarChartProps) {
           />
         ))}
 
-        {/* 축 라벨 */}
+        {/* 축 라벨 — 라벨과 퍼센트를 한 줄에 표시 */}
         {data.map((d, i) => {
           const pos = getPoint(angles[i], labelOffset);
           const anchor = i === 1 ? 'start' : i === 3 ? 'end' : 'middle';
-          const dy = i === 0 ? -4 : i === 2 ? 12 : 4;
+          const dy = i === 0 ? -4 : i === 2 ? 4 : 0;
+          const dx = i === 1 ? 4 : i === 3 ? -4 : 0;
+          const baseline = i === 0 ? 'auto' : i === 2 ? 'hanging' : 'central';
           return (
-            <g key={d.domain}>
-              <text
-                x={pos.x}
-                y={pos.y + dy}
-                textAnchor={anchor}
-                className="text-[11px] font-bold"
-                fill={DOMAIN_HEX[d.domain]}
-              >
-                {DOMAIN_LABELS[d.domain]}
-              </text>
-              <text
-                x={pos.x}
-                y={pos.y + dy + 14}
-                textAnchor={anchor}
-                className="text-[10px] font-semibold"
-                fill="#64748b"
-              >
-                {d.value}%
-              </text>
-            </g>
+            <text
+              key={d.domain}
+              x={pos.x + dx}
+              y={pos.y + dy}
+              textAnchor={anchor}
+              dominantBaseline={baseline}
+              fontSize={11}
+              fontWeight={700}
+              fill="#1e293b"
+            >
+              {DOMAIN_LABELS[d.domain]}
+              <tspan fill={DOMAIN_HEX[d.domain]} dx={3} fontSize={10} fontWeight={600}>{d.value}%</tspan>
+            </text>
           );
         })}
 
@@ -148,7 +146,7 @@ export function RadarChart({ data, size = 260 }: RadarChartProps) {
               key={level}
               x={cx + 4}
               y={cy - r - 2}
-              className="text-[9px]"
+              fontSize={9}
               fill="#94a3b8"
             >
               {level}

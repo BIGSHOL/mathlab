@@ -30,6 +30,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 
   const { planId } = await params;
+  const seq = Number(planId);
   const dayIndex = Number(request.nextUrl.searchParams.get('dayIndex'));
   const studentId = request.nextUrl.searchParams.get('studentId');
 
@@ -42,8 +43,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
   // Fetch plan's dailyProblems for this day
   const plan = await prisma.arithmeticHomeworkPlan.findUnique({
-    where: { id: planId },
+    where: { seq },
     select: {
+      id: true,
       dailyProblems: true,
       totalDays: true,
       dailyCount: true,
@@ -77,7 +79,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   // Fetch ALL student attempts for this day (oldest first for pagination)
   const attempts = await prisma.arithmeticAttempt.findMany({
     where: {
-      homeworkPlanId: planId,
+      homeworkPlanId: plan.id,
       homeworkDayIndex: dayIndex,
       studentId,
     },

@@ -76,11 +76,15 @@ export async function PATCH(
     );
   }
 
-  const { id } = await params;
+  const { id: rawId } = await params;
   const body = await request.json();
   const { action } = body;
 
-  const session = await prisma.quizSession.findUnique({ where: { id } });
+  // Resolve by id or joinCode
+  let session = await prisma.quizSession.findUnique({ where: { id: rawId } });
+  if (!session) {
+    session = await prisma.quizSession.findUnique({ where: { joinCode: rawId.toUpperCase() } });
+  }
   if (!session || session.hostId !== currentUser.id) {
     return NextResponse.json(
       { error: { code: 'NOT_FOUND', message: '퀴즈를 찾을 수 없습니다' } },
@@ -88,11 +92,12 @@ export async function PATCH(
     );
   }
 
+  const sessionId = session.id;
   const questionIds = session.questionIds as string[];
 
   if (action === 'start') {
     await prisma.quizSession.update({
-      where: { id },
+      where: { id: sessionId },
       data: { status: 'ACTIVE', startedAt: new Date(), currentQ: 0 },
     });
   } else if (action === 'next') {
@@ -101,7 +106,7 @@ export async function PATCH(
       // Quiz ended — calculate ranks + update session (atomic)
       await prisma.$transaction(async (tx) => {
         const participants = await tx.quizParticipant.findMany({
-          where: { sessionId: id },
+          where: { sessionId },
           orderBy: { score: 'desc' },
         });
         for (let i = 0; i < participants.length; i++) {
@@ -111,20 +116,20 @@ export async function PATCH(
           });
         }
         await tx.quizSession.update({
-          where: { id },
+          where: { id: sessionId },
           data: { status: 'COMPLETED', endedAt: new Date(), currentQ: nextQ },
         });
       });
     } else {
       await prisma.quizSession.update({
-        where: { id },
+        where: { id: sessionId },
         data: { currentQ: nextQ },
       });
     }
   } else if (action === 'end') {
     await prisma.$transaction(async (tx) => {
       const participants = await tx.quizParticipant.findMany({
-        where: { sessionId: id },
+        where: { sessionId },
         orderBy: { score: 'desc' },
       });
       for (let i = 0; i < participants.length; i++) {
@@ -134,7 +139,7 @@ export async function PATCH(
         });
       }
       await tx.quizSession.update({
-        where: { id },
+        where: { id: sessionId },
         data: { status: 'COMPLETED', endedAt: new Date() },
       });
     });

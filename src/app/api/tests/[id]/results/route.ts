@@ -15,10 +15,24 @@ export async function GET(
     );
   }
 
-  const { id } = await params;
+  const { id: rawId } = await params;
+
+  // Resolve by seq (numeric) or id (cuid)
+  let testId = rawId;
+  const seqNum = Number(rawId);
+  if (!isNaN(seqNum) && String(seqNum) === rawId) {
+    const test = await prisma.test.findUnique({ where: { seq: seqNum }, select: { id: true } });
+    if (!test) {
+      return NextResponse.json(
+        { error: { code: 'NOT_FOUND', message: '시험을 찾을 수 없습니다' } },
+        { status: 404 }
+      );
+    }
+    testId = test.id;
+  }
 
   const attempts = await prisma.testAttempt.findMany({
-    where: { testId: id },
+    where: { testId },
     include: {
       student: { select: { name: true, grade: true } },
       answers: {

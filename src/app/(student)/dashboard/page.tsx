@@ -143,7 +143,7 @@ export default async function StudentDashboard() {
                       </h3>
                       <p className="text-text-secondary text-sm">{stageLabels[p.stage] ?? p.stage}</p>
                     </div>
-                    <Link href={`/concepts/${p.conceptId}`}>
+                    <Link href={`/concepts/${p.concept.conceptCode ?? p.conceptId}`}>
                       <Button size="sm">이어서 하기</Button>
                     </Link>
                   </div>

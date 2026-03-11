@@ -47,6 +47,8 @@ export default function CreateLevelTestPage() {
   const [title, setTitle] = useState('');
   const [grade, setGrade] = useState(7);
   const [timeLimitMin, setTimeLimitMin] = useState<number | ''>('');
+  const [questionsPerPage, setQuestionsPerPage] = useState<number | ''>(''); // '' = 자동
+  const [spacing, setSpacing] = useState<'compact' | 'normal' | 'wide'>('normal');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [questionDomains, setQuestionDomains] = useState<Record<string, LevelTestDomain>>({});
   const [saving, setSaving] = useState(false);
@@ -137,6 +139,8 @@ export default function CreateLevelTestPage() {
           questionIds: selectedIds,
           questionDomains,
           timeLimitMin: timeLimitMin || null,
+          questionsPerPage: questionsPerPage || null,
+          spacing,
         }),
       });
       if (res.ok) {
@@ -200,6 +204,50 @@ export default function CreateLevelTestPage() {
               min={1}
               className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40"
             />
+          </label>
+        </Card>
+
+        {/* Print layout settings */}
+        <Card className="p-5">
+          <h2 className="text-base font-bold text-text-primary mb-4">인쇄 설정</h2>
+
+          <label className="block mb-3">
+            <span className="text-sm font-medium text-text-secondary">페이지당 문제 수</span>
+            <input
+              type="number"
+              value={questionsPerPage}
+              onChange={(e) => setQuestionsPerPage(e.target.value ? Number(e.target.value) : '')}
+              placeholder="자동 (문제 길이 기반)"
+              min={1}
+              max={30}
+              className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40"
+            />
+            <span className="text-[11px] text-slate-400 mt-1 block">
+              비워두면 문제 길이에 따라 자동 배분
+            </span>
+          </label>
+
+          <label className="block">
+            <span className="text-sm font-medium text-text-secondary">풀이 여백</span>
+            <div className="mt-1.5 flex gap-2">
+              {(['compact', 'normal', 'wide'] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setSpacing(s)}
+                  className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
+                    spacing === s
+                      ? 'bg-primary text-white border-primary'
+                      : 'bg-white text-text-secondary border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  {s === 'compact' ? '좁게' : s === 'normal' ? '보통' : '넓게'}
+                </button>
+              ))}
+            </div>
+            <span className="text-[11px] text-slate-400 mt-1 block">
+              풀이 공간 여백 크기를 조절합니다
+            </span>
           </label>
         </Card>
 

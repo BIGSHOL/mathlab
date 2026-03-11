@@ -49,7 +49,7 @@ export default function ConceptPage() {
   const [loading, setLoading] = useState(true);
   const [memoContent, setMemoContent] = useState('');
   const memoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [adjacent, setAdjacent] = useState<{ prev: { id: string; title: string } | null; next: { id: string; title: string } | null }>({ prev: null, next: null });
+  const [adjacent, setAdjacent] = useState<{ prev: { id: string; conceptCode: string | null; title: string } | null; next: { id: string; conceptCode: string | null; title: string } | null }>({ prev: null, next: null });
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -72,9 +72,10 @@ export default function ConceptPage() {
       .catch(() => {});
   }, [id]);
 
-  // Fetch progress
+  // Fetch progress (uses real concept ID)
   useEffect(() => {
-    fetch(`/api/learning/progress?conceptId=${id}`)
+    if (!concept) return;
+    fetch(`/api/learning/progress?conceptId=${concept.id}`)
       .then((r) => r.json())
       .then((json) => {
         const p = json.data ?? [];
@@ -87,7 +88,7 @@ export default function ConceptPage() {
         }
         setCurrentStageIdx(Math.min(idx, 3));
       });
-  }, [id]);
+  }, [concept]);
 
   // Fetch memo
   useEffect(() => {
@@ -138,7 +139,7 @@ export default function ConceptPage() {
     const res = await fetch('/api/learning/progress', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ conceptId: id, stage }),
+      body: JSON.stringify({ conceptId: concept!.id, stage }),
     });
     const json = await res.json();
     setSubmitting(false);
@@ -256,7 +257,7 @@ export default function ConceptPage() {
           <div className="max-w-[1200px] mx-auto flex items-center justify-between">
             {adjacent.prev ? (
               <button
-                onClick={() => router.push(`/concepts/${adjacent.prev!.id}`)}
+                onClick={() => router.push(`/concepts/${adjacent.prev!.conceptCode ?? adjacent.prev!.id}`)}
                 className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-primary transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -266,7 +267,7 @@ export default function ConceptPage() {
             ) : <span />}
             {adjacent.next ? (
               <button
-                onClick={() => router.push(`/concepts/${adjacent.next!.id}`)}
+                onClick={() => router.push(`/concepts/${adjacent.next!.conceptCode ?? adjacent.next!.id}`)}
                 className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-primary transition-colors"
               >
                 <span className="hidden sm:inline truncate max-w-[200px]">{adjacent.next.title}</span>
@@ -366,7 +367,7 @@ export default function ConceptPage() {
               {currentStageIdx === stageConfig.length - 1 && progress.some((p) => p.stage === currentStage.key && p.completed) && (
                 <>
                   {adjacent.next ? (
-                    <Button size="lg" onClick={() => router.push(`/concepts/${adjacent.next!.id}`)}>
+                    <Button size="lg" onClick={() => router.push(`/concepts/${adjacent.next!.conceptCode ?? adjacent.next!.id}`)}>
                       다음 개념으로 <ArrowRight className="w-4 h-4 ml-1" />
                     </Button>
                   ) : (

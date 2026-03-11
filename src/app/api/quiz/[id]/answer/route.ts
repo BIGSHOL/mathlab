@@ -15,11 +15,15 @@ export async function POST(
     );
   }
 
-  const { id: sessionId } = await params;
+  const { id: rawId } = await params;
   const body = await request.json();
   const { questionId, selectedAnswer } = body;
 
-  const session = await prisma.quizSession.findUnique({ where: { id: sessionId } });
+  // Resolve by id or joinCode
+  let session = await prisma.quizSession.findUnique({ where: { id: rawId } });
+  if (!session) {
+    session = await prisma.quizSession.findUnique({ where: { joinCode: rawId.toUpperCase() } });
+  }
   if (!session || session.status !== 'ACTIVE') {
     return NextResponse.json(
       { error: { code: 'INVALID_STATE', message: '퀴즈가 진행 중이 아닙니다' } },
@@ -44,7 +48,7 @@ export async function POST(
 
   // Update participant score
   const participant = await prisma.quizParticipant.findUnique({
-    where: { sessionId_studentId: { sessionId, studentId: currentUser.id } },
+    where: { sessionId_studentId: { sessionId: session.id, studentId: currentUser.id } },
   });
 
   if (!participant) {

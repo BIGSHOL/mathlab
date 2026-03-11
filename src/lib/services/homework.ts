@@ -525,11 +525,11 @@ export interface HomeworkGridData {
 }
 
 export async function getHomeworkGrid(
-  planId: string,
+  planSeq: number,
   filters?: { grade?: number }
 ): Promise<HomeworkGridData> {
   const plan = await prisma.arithmeticHomeworkPlan.findUniqueOrThrow({
-    where: { id: planId },
+    where: { seq: planSeq },
     select: {
       id: true,
       title: true,
@@ -549,7 +549,7 @@ export async function getHomeworkGrid(
   });
 
   // Get enrolled students
-  const enrollmentWhere: Record<string, unknown> = { planId };
+  const enrollmentWhere: Record<string, unknown> = { planId: plan.id };
   if (filters?.grade) {
     enrollmentWhere.student = { grade: filters.grade };
   }
@@ -565,7 +565,7 @@ export async function getHomeworkGrid(
   // Get all attempts for this plan
   const studentIds = enrollments.map((e) => e.student.id);
   const attempts = await prisma.arithmeticAttempt.findMany({
-    where: { homeworkPlanId: planId, studentId: { in: studentIds } },
+    where: { homeworkPlanId: plan.id, studentId: { in: studentIds } },
     select: {
       id: true,
       studentId: true,

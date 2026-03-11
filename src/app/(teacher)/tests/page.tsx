@@ -34,6 +34,10 @@ export default function TestsPage() {
   const { tests, loading, deleteTest, refresh } = useTests({ grade: gradeFilter });
   const [deleting, setDeleting] = useState<string | null>(null);
   const [assigningTestId, setAssigningTestId] = useState<string | null>(null);
+  const assigningTestSeq = (() => {
+    const t = tests.find((t) => t.id === assigningTestId);
+    return t ? String(t.seq) : null;
+  })();
   const assigningTest = tests.find((t) => t.id === assigningTestId);
 
   const [selectedTestId, setSelectedTestId] = useState<string | null>(null);
@@ -41,12 +45,12 @@ export default function TestsPage() {
 
   const selectedTest = tests.find((t) => t.id === selectedTestId);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (test: { id: string; seq: number }) => {
     if (!confirm('이 시험을 삭제하시겠습니까?')) return;
-    setDeleting(id);
+    setDeleting(test.id);
     try {
-      await deleteTest(id);
-      if (selectedTestId === id) setSelectedTestId(null);
+      await deleteTest(test.seq);
+      if (selectedTestId === test.id) setSelectedTestId(null);
     } catch {
       alert('삭제 실패');
     }
@@ -271,7 +275,7 @@ export default function TestsPage() {
                   <UserPlus className="w-4 h-4 mr-1" />
                   배정
                 </Button>
-                <Link href={`/tests/${selectedTest.id}/results`}>
+                <Link href={`/tests/${selectedTest.seq}/results`}>
                   <Button variant="secondary" size="sm">
                     <BarChart3 className="w-4 h-4 mr-1" />
                     결과 보기
@@ -280,7 +284,7 @@ export default function TestsPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleDelete(selectedTest.id)}
+                  onClick={() => handleDelete(selectedTest)}
                   loading={deleting === selectedTest.id}
                   className="text-red-500 hover:text-red-600 hover:bg-red-50 ml-auto"
                 >
@@ -290,10 +294,10 @@ export default function TestsPage() {
               </div>
 
               {/* Inline AssignPanel */}
-              {assigningTestId === selectedTest.id && assigningTest && (
+              {assigningTestId === selectedTest.id && assigningTest && assigningTestSeq && (
                 <div className="mb-3">
                   <AssignPanel
-                    testId={assigningTestId}
+                    testId={assigningTestSeq}
                     testGrade={assigningTest.grade}
                     onClose={() => setAssigningTestId(null)}
                     onAssigned={() => refresh()}
@@ -306,9 +310,9 @@ export default function TestsPage() {
       </main>
 
       {/* Assign Panel (for non-selected test, e.g. if assign was triggered before selection) */}
-      {assigningTestId && assigningTest && selectedTestId !== assigningTestId && (
+      {assigningTestId && assigningTest && assigningTestSeq && selectedTestId !== assigningTestId && (
         <AssignPanel
-          testId={assigningTestId}
+          testId={assigningTestSeq}
           testGrade={assigningTest.grade}
           onClose={() => setAssigningTestId(null)}
           onAssigned={() => refresh()}

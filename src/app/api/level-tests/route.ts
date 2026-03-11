@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { title, grade, questionIds, questionDomains, timeLimitMin } = body;
+  const { title, grade, questionIds, questionDomains, timeLimitMin, questionsPerPage, spacing } = body;
 
   if (!title || !grade || !questionIds?.length || !questionDomains) {
     return NextResponse.json(
@@ -80,6 +80,8 @@ export async function POST(request: NextRequest) {
       data: {
         testId: created.id,
         questionDomains,
+        questionsPerPage: questionsPerPage || null,
+        spacing: spacing || 'normal',
       },
     });
 

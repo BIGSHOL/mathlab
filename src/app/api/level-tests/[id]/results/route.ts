@@ -16,7 +16,38 @@ export async function GET(
     );
   }
 
-  const { id: testId } = await params;
+  const { id } = await params;
+  const seq = Number(id);
+
+  if (isNaN(seq)) {
+    return NextResponse.json(
+      { error: { code: 'VALIDATION_ERROR', message: '잘못된 시험 번호입니다' } },
+      { status: 400 }
+    );
+  }
+
+  const testRecord = await prisma.test.findUnique({ where: { seq }, select: { id: true } });
+  if (!testRecord) {
+    return NextResponse.json(
+      { error: { code: 'NOT_FOUND', message: '레벨테스트를 찾을 수 없습니다' } },
+      { status: 404 }
+    );
+  }
+
+  const testId = testRecord.id;
+
+  // 시험 정보 (questionIds 포함)
+  const test = await prisma.test.findUnique({
+    where: { id: testId },
+    select: { id: true, questionIds: true },
+  });
+  const questionIds = (test?.questionIds as string[]) ?? [];
+
+  // 문제 정보 조회
+  const questions = await prisma.question.findMany({
+    where: { id: { in: questionIds } },
+    select: { id: true, chapter: true, difficulty: true, domain: true, answer: true, questionNum: true },
+  });
 
   // 완료된 시도 조회
   const attempts = await prisma.testAttempt.findMany({
@@ -34,8 +65,26 @@ export async function GET(
   });
   const diagMap = new Map(diagnostics.map((d) => [d.attemptId, d]));
 
+  // AnswerLog 조회 (전체)
+  const answerLogs = await prisma.answerLog.findMany({
+    where: { attemptId: { in: attemptIds } },
+    select: { attemptId: true, questionId: true, selectedAnswer: true, isCorrect: true, timeSpentSeconds: true },
+  });
+  const answersByAttempt = new Map<string, typeof answerLogs>();
+  for (const log of answerLogs) {
+    const arr = answersByAttempt.get(log.attemptId) ?? [];
+    arr.push(log);
+    answersByAttempt.set(log.attemptId, arr);
+  }
+
   const results = attempts.map((attempt) => {
     const diag = diagMap.get(attempt.id);
+    const answers = (answersByAttempt.get(attempt.id) ?? []).map((a) => ({
+      questionId: a.questionId,
+      selectedAnswer: a.selectedAnswer,
+      isCorrect: a.isCorrect,
+      timeSpentSeconds: a.timeSpentSeconds,
+    }));
     return {
       attemptId: attempt.id,
       student: attempt.student,
@@ -44,6 +93,7 @@ export async function GET(
       correctCount: attempt.correctCount,
       totalCount: attempt.totalCount,
       completedAt: attempt.completedAt,
+      answers,
       diagnostic: diag
         ? {
             recommendLevel: diag.recommendLevel,
@@ -63,7 +113,7 @@ export async function GET(
   });
 
   return NextResponse.json({
-    data: { results, assignments },
+    data: { results, assignments, questions },
   });
 }
 
@@ -80,7 +130,25 @@ export async function POST(
     );
   }
 
-  const { id: testId } = await params;
+  const { id } = await params;
+  const seq = Number(id);
+
+  if (isNaN(seq)) {
+    return NextResponse.json(
+      { error: { code: 'VALIDATION_ERROR', message: '잘못된 시험 번호입니다' } },
+      { status: 400 }
+    );
+  }
+
+  const testRecord = await prisma.test.findUnique({ where: { seq }, select: { id: true } });
+  if (!testRecord) {
+    return NextResponse.json(
+      { error: { code: 'NOT_FOUND', message: '레벨테스트를 찾을 수 없습니다' } },
+      { status: 404 }
+    );
+  }
+
+  const testId = testRecord.id;
 
   // 완료되었지만 DiagnosticResult가 없는 시도 찾기
   const attempts = await prisma.testAttempt.findMany({

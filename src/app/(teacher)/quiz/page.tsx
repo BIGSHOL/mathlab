@@ -77,7 +77,7 @@ export default function QuizPage() {
       });
       if (res.ok) {
         const json = await res.json();
-        router.push(`/quiz/${json.data.id}/host`);
+        router.push(`/quiz/${json.data.joinCode}/host`);
       }
     } catch { /* ignore */ }
     setCreating(false);
@@ -168,7 +168,7 @@ export default function QuizPage() {
             <Card
               key={s.id}
               className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors"
-              onClick={() => router.push(`/quiz/${s.id}/host`)}
+              onClick={() => router.push(`/quiz/${s.joinCode}/host`)}
             >
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-yellow-100 rounded-lg">

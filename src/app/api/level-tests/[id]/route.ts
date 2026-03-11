@@ -16,9 +16,17 @@ export async function GET(
   }
 
   const { id } = await params;
+  const seq = Number(id);
+
+  if (isNaN(seq)) {
+    return NextResponse.json(
+      { error: { code: 'VALIDATION_ERROR', message: '잘못된 시험 번호입니다' } },
+      { status: 400 }
+    );
+  }
 
   const test = await prisma.test.findUnique({
-    where: { id },
+    where: { seq },
     include: {
       creator: { select: { name: true } },
       levelTestConfig: true,
@@ -72,7 +80,15 @@ export async function DELETE(
   }
 
   const { id } = await params;
-  await prisma.test.delete({ where: { id } });
+  const seq = Number(id);
+  if (isNaN(seq)) {
+    return NextResponse.json(
+      { error: { code: 'VALIDATION_ERROR', message: '잘못된 시험 번호입니다' } },
+      { status: 400 }
+    );
+  }
+
+  await prisma.test.delete({ where: { seq } });
 
   return NextResponse.json({ success: true });
 }

@@ -18,6 +18,7 @@ export async function GET() {
     where: { deletedAt: null },
     select: {
       id: true,
+      seq: true,
       username: true,
       name: true,
       role: true,
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
       grade: parsed.data.grade,
       profile: { create: {} },
     },
-    select: { id: true, username: true, name: true, role: true, grade: true },
+    select: { id: true, seq: true, username: true, name: true, role: true, grade: true },
   });
 
   return NextResponse.json({ data: user }, { status: 201 });

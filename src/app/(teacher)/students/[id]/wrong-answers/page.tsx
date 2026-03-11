@@ -54,40 +54,55 @@ interface WrongAnswerStats {
 }
 
 export default function WrongAnswersPage() {
-  const { id: studentId } = useParams<{ id: string }>();
+  const { id: studentSeq } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<WrongAnswerItem[]>([]);
   const [stats, setStats] = useState<WrongAnswerStats | null>(null);
   const [studentName, setStudentName] = useState('');
+  const [studentId, setStudentId] = useState<string | null>(null);
   const [filterChapter, setFilterChapter] = useState('');
   const [filterDifficulty, setFilterDifficulty] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [similarMap, setSimilarMap] = useState<Record<string, SimilarQuestion[]>>({});
 
+  // Resolve student seq to real ID
   useEffect(() => {
+    async function resolveStudent() {
+      try {
+        const res = await fetch('/api/users?role=STUDENT');
+        if (res.ok) {
+          const json = await res.json();
+          const seqNum = Number(studentSeq);
+          const student = (json.data ?? []).find(
+            (u: { id: string; seq: number }) =>
+              (!isNaN(seqNum) && u.seq === seqNum) || u.id === studentSeq
+          );
+          if (student) {
+            setStudentId(student.id);
+            setStudentName(student.name);
+          }
+        }
+      } catch { /* ignore */ }
+    }
+    resolveStudent();
+  }, [studentSeq]);
+
+  useEffect(() => {
+    if (!studentId) return;
     async function load() {
       try {
-        const params = new URLSearchParams({ studentId });
+        const params = new URLSearchParams({ studentId: studentId! });
         if (filterChapter) params.set('chapter', filterChapter);
         if (filterDifficulty) params.set('difficulty', filterDifficulty);
 
-        const [wrongRes, userRes] = await Promise.all([
-          fetch(`/api/questions/wrong-answers?${params}`),
-          fetch(`/api/users?role=STUDENT`),
-        ]);
+        const wrongRes = await fetch(`/api/questions/wrong-answers?${params}`);
 
         if (wrongRes.ok) {
           const json = await wrongRes.json();
           setItems(json.data ?? []);
           setStats(json.stats ?? null);
           setSimilarMap(json.similarQuestions ?? {});
-        }
-
-        if (userRes.ok) {
-          const json = await userRes.json();
-          const student = (json.data ?? []).find((u: { id: string }) => u.id === studentId);
-          if (student) setStudentName(student.name);
         }
       } catch {
         // ignore
@@ -132,7 +147,7 @@ export default function WrongAnswersPage() {
       if (res.ok) {
         const json = await res.json();
         alert(`오답 기반 시험이 생성되었습니다! (${questionIds.length}문제)`);
-        window.location.href = `/tests/${json.data.id}/results`;
+        window.location.href = `/tests/${json.data.seq}/results`;
       }
     } catch {
       alert('시험 생성에 실패했습니다');

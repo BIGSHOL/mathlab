@@ -15,9 +15,10 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
   }
 
   const { planId } = await params;
+  const seq = Number(planId);
 
   const plan = await prisma.arithmeticHomeworkPlan.findUnique({
-    where: { id: planId },
+    where: { seq },
     include: {
       creator: { select: { name: true } },
       enrollments: {
@@ -49,13 +50,21 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   }
 
   const { planId } = await params;
+  const seq = Number(planId);
   const body = await request.json();
   const { isActive, addStudentIds, removeStudentIds } = body;
+
+  // seq → id 조회
+  const target = await prisma.arithmeticHomeworkPlan.findUnique({ where: { seq }, select: { id: true } });
+  if (!target) {
+    return NextResponse.json({ error: { code: 'NOT_FOUND', message: '플랜을 찾을 수 없습니다' } }, { status: 404 });
+  }
+  const realId = target.id;
 
   await prisma.$transaction(async (tx) => {
     if (isActive !== undefined) {
       await tx.arithmeticHomeworkPlan.update({
-        where: { id: planId },
+        where: { id: realId },
         data: { isActive },
       });
     }
@@ -63,7 +72,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     if (addStudentIds?.length) {
       await tx.arithmeticHomeworkEnrollment.createMany({
         data: addStudentIds.map((studentId: string) => ({
-          planId,
+          planId: realId,
           studentId,
         })),
         skipDuplicates: true,
@@ -72,13 +81,13 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     if (removeStudentIds?.length) {
       await tx.arithmeticHomeworkEnrollment.deleteMany({
-        where: { planId, studentId: { in: removeStudentIds } },
+        where: { planId: realId, studentId: { in: removeStudentIds } },
       });
     }
   });
 
   const updated = await prisma.arithmeticHomeworkPlan.findUnique({
-    where: { id: planId },
+    where: { seq },
     include: { _count: { select: { enrollments: true } } },
   });
 
@@ -96,7 +105,8 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   }
 
   const { planId } = await params;
-  await prisma.arithmeticHomeworkPlan.delete({ where: { id: planId } });
+  const seq = Number(planId);
+  await prisma.arithmeticHomeworkPlan.delete({ where: { seq } });
 
   return NextResponse.json({ success: true });
 }

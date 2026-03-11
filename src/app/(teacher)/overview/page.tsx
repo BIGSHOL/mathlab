@@ -20,7 +20,6 @@ import { formatNumber } from '@/lib/utils/format';
 import Link from 'next/link';
 import MonthlyChart from '@/components/charts/MonthlyChart';
 import DashboardAnalytics from '@/components/charts/DashboardAnalytics';
-import { DashboardShell } from '@/components/layout/DashboardShell';
 
 function getAchievementColor(percent: number) {
   if (percent < 55) return { bg: 'bg-red-100', text: 'text-red-600', badge: 'text-red-500' };
@@ -182,10 +181,6 @@ export default async function TeacherDashboard() {
   ];
 
   return (
-    <DashboardShell
-      isAdmin={isAdmin}
-      stats={{ students: totalStudents, activeRate: attendanceRate, pending: pendingInquiries }}
-    >
       <div className="flex flex-col grow min-w-0 max-w-[1400px] w-full mx-auto p-2.5 sm:p-3 md:p-4 gap-3">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2">
@@ -438,6 +433,5 @@ export default async function TeacherDashboard() {
           </Card>
         </div>
       </div>
-    </DashboardShell>
   );
 }

@@ -142,7 +142,7 @@ export default function HomeworkPracticePage() {
 
     if (attemptId) {
       const timeSpent = Math.floor((Date.now() - questionStartRef.current) / 1000);
-      fetch(`/api/arithmetic/attempts/${attemptId}/answer`, {
+      const answerPromise = fetch(`/api/arithmetic/attempts/${attemptId}/answer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -155,6 +155,24 @@ export default function HomeworkPracticePage() {
           timeSpentSeconds: timeSpent,
         }),
       }).catch(() => {});
+
+      // 마지막 문제 답 제출 시 자동 complete (답 저장 후)
+      if (currentIndex >= problems.length - 1) {
+        answerPromise.then(() => {
+          fetch(`/api/arithmetic/attempts/${attemptId}/complete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          })
+            .then((r) => r.json())
+            .then((json) => {
+              if (json.data) {
+                setXpEarned(json.data.xpEarned);
+                setLeveledUp(json.data.leveledUp);
+              }
+            })
+            .catch(() => {});
+        });
+      }
     }
   };
 
@@ -162,20 +180,6 @@ export default function HomeworkPracticePage() {
     questionStartRef.current = Date.now();
     if (currentIndex >= problems.length - 1) {
       setFinished(true);
-      if (attemptId) {
-        fetch(`/api/arithmetic/attempts/${attemptId}/complete`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        })
-          .then((r) => r.json())
-          .then((json) => {
-            if (json.data) {
-              setXpEarned(json.data.xpEarned);
-              setLeveledUp(json.data.leveledUp);
-            }
-          })
-          .catch(() => {});
-      }
     } else {
       setCurrentIndex((i) => i + 1);
       setSelectedAnswer('');

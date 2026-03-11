@@ -3,13 +3,22 @@ import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { CROSS_GRADE_CHAINS } from '@/lib/constants/concepts';
 
+/** Resolve concept by conceptCode or cuid id */
+async function resolveConceptId(rawId: string): Promise<string | null> {
+  const byCode = await prisma.concept.findUnique({ where: { conceptCode: rawId }, select: { id: true } });
+  if (byCode) return byCode.id;
+  const byId = await prisma.concept.findUnique({ where: { id: rawId }, select: { id: true } });
+  return byId?.id ?? null;
+}
+
 // GET /api/concepts/:id/adjacent — 이전/다음 개념
 // mode가 없으면 학생 본인의 conceptNavMode 설정을 따름
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { id } = await params;
+  const { id: rawId } = await params;
+  const id = await resolveConceptId(rawId) ?? rawId;
   const { searchParams } = new URL(request.url);
   let mode = searchParams.get('mode'); // curriculum | chain:<체인명>
 

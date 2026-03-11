@@ -5,6 +5,7 @@ import type { AssignmentStatus } from '@/types';
 
 interface Test {
   id: string;
+  seq: number;
   title: string;
   description: string | null;
   grade: number;
@@ -148,8 +149,8 @@ export function useTests(filters?: { grade?: number; testType?: string }) {
     return json.data;
   };
 
-  const deleteTest = async (id: string) => {
-    const res = await fetch(`/api/tests/${id}`, { method: 'DELETE' });
+  const deleteTest = async (seq: number) => {
+    const res = await fetch(`/api/tests/${seq}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('시험 삭제 실패');
     await fetchTests();
   };

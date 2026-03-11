@@ -91,6 +91,7 @@ export default function StudentTestsPage() {
 function TestCard({ test, isAssigned }: {
   test: {
     id: string;
+    seq: number;
     title: string;
     testType: string;
     questionCount: number;
@@ -171,13 +172,13 @@ function TestCard({ test, isAssigned }: {
         <div className="ml-4 flex flex-col gap-2">
           {isCompleted ? (
             <>
-              <Link href={`/my-tests/${test.id}/result`}>
+              <Link href={`/my-tests/${test.seq}/result`}>
                 <Button variant="secondary" size="sm">
                   결과 보기
                 </Button>
               </Link>
               {canRetake && (
-                <Link href={`/my-tests/${test.id}/play`}>
+                <Link href={`/my-tests/${test.seq}/play`}>
                   <Button size="sm" variant="ghost">
                     <RotateCcw className="w-3.5 h-3.5 mr-1" />
                     다시 풀기
@@ -186,7 +187,7 @@ function TestCard({ test, isAssigned }: {
               )}
             </>
           ) : (
-            <Link href={`/my-tests/${test.id}/play`}>
+            <Link href={`/my-tests/${test.seq}/play`}>
               <Button size="sm">
                 <Play className="w-4 h-4 mr-1" />
                 시험 시작

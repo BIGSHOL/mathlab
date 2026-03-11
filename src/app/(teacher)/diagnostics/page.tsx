@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/Button';
 
 interface DiagnosticTest {
   id: string;
+  seq: number;
   title: string;
   grade: number;
   testType: string;
@@ -77,7 +78,7 @@ export default function DiagnosticsPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {tests.map((t) => (
-            <Link key={t.id} href={`/tests/${t.id}/results`}>
+            <Link key={t.id} href={`/tests/${t.seq}/results`}>
               <Card className="p-5 hover:shadow-md transition-shadow cursor-pointer">
                 <div className="flex items-start justify-between mb-3">
                   <div>

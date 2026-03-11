@@ -21,7 +21,7 @@ export default function QuizJoinPage() {
       const res = await fetch(`/api/quiz/${code.trim().toUpperCase()}/join`, { method: 'POST' });
       if (res.ok) {
         const json = await res.json();
-        router.push(`/quiz/${json.data.sessionId}/play`);
+        router.push(`/quiz/${json.data.joinCode}/play`);
       } else {
         const json = await res.json();
         setError(json.error?.message || '참가 실패');
