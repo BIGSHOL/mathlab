@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, use } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -168,8 +169,8 @@ function getFullMonthDays(yearMonth: string): { date: number; dayOfWeek: number;
   return result;
 }
 
-export default function HomeworkGridPage({ params }: { params: Promise<{ planId: string }> }) {
-  const { planId } = use(params);
+export default function HomeworkGridPage() {
+  const { planId } = useParams<{ planId: string }>();
   const [data, setData] = useState<GridData | null>(null);
   const [loading, setLoading] = useState(true);
   const [gradeFilter, setGradeFilter] = useState<number | undefined>();
@@ -181,6 +182,7 @@ export default function HomeworkGridPage({ params }: { params: Promise<{ planId:
   const [attemptPage, setAttemptPage] = useState(0); // 0 = initial, 1+ = retries
 
   const fetchGrid = useCallback(async () => {
+    if (!planId || planId === 'undefined') return;
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -197,6 +199,7 @@ export default function HomeworkGridPage({ params }: { params: Promise<{ planId:
   useEffect(() => { fetchGrid(); }, [fetchGrid]);
 
   const fetchDayDetail = useCallback(async (studentId: string, dayIndex: number) => {
+    if (!planId || planId === 'undefined') return;
     setDetailLoading(true);
     setDetailData(null);
     try {

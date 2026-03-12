@@ -93,6 +93,7 @@ export async function GET(
       correctCount: attempt.correctCount,
       totalCount: attempt.totalCount,
       completedAt: attempt.completedAt,
+      entryMethod: attempt.entryMethod ?? 'online',
       answers,
       diagnostic: diag
         ? {

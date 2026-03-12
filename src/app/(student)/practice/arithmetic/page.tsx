@@ -17,6 +17,7 @@ import { MathRenderer } from '@/components/math/MathRenderer';
 import {
   CATEGORY_LABELS,
   LEVEL_LABELS,
+  IMPLEMENTED_CATEGORIES,
 } from '@/lib/services/arithmetic-generator';
 import type {
   ArithmeticCategory,
@@ -24,17 +25,7 @@ import type {
   GeneratedProblem,
 } from '@/lib/services/arithmetic-generator';
 
-const CATEGORIES: ArithmeticCategory[] = [
-  'add_1digit', 'sub_1digit',
-  'add_2digit', 'sub_2digit', 'mul_table', 'unit_convert',
-  'add_3digit', 'sub_3digit', 'mul_2x1', 'div_basic', 'div_remainder', 'time_calc',
-  'mul_large', 'div_large', 'frac_add_same', 'frac_sub_same', 'dec_add', 'dec_sub', 'angle_calc', 'sequence_pattern',
-  'mixed_calc', 'frac_add_diff', 'frac_sub_diff', 'frac_mul', 'dec_mul', 'gcd_lcm', 'avg_calc', 'area_calc',
-  'frac_div', 'dec_div', 'ratio_calc', 'percent_calc', 'circle_area',
-  'int_add', 'int_sub', 'int_mul', 'int_div', 'abs_calc', 'prime_factor', 'proportion', 'quadrant',
-  'exp_calc', 'exp_law', 'mono_mul', 'mono_div', 'poly_add', 'poly_sub', 'linear_eq', 'pythagoras', 'similarity',
-  'poly_mul', 'mul_formula', 'factoring', 'sqrt_simplify', 'sqrt_add', 'sqrt_mul', 'sqrt_rationalize', 'discriminant', 'trig_value', 'inscribed_angle', 'median_calc', 'variance_calc',
-];
+const CATEGORIES = Array.from(IMPLEMENTED_CATEGORIES);
 const LEVELS: ArithmeticLevel[] = ['easy', 'medium', 'hard'];
 
 export default function ArithmeticPracticePage() {

@@ -93,7 +93,7 @@ export default function TestsPage() {
           <>
             {/* Action button */}
             <div className="p-3 border-b border-slate-100">
-              <Link href="/tests/create" className="block">
+              <Link href="/worksheet/create?mode=test" className="block">
                 <Button className="w-full text-sm" size="sm">
                   <Plus className="w-3.5 h-3.5 mr-1" />
                   시험 만들기

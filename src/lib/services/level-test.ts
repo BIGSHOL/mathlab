@@ -219,13 +219,17 @@ export async function analyzeLevelTest(attemptId: string, studentId: string) {
     prerequisiteWeaknesses = [...prereqSet.values()];
   }
 
-  // 7. Level determination
+  // 7. Level determination (9등급 체계)
   let recommendLevel: string;
-  if (overallAccuracy >= 90) recommendLevel = '심화';
-  else if (overallAccuracy >= 75) recommendLevel = '상';
-  else if (overallAccuracy >= 60) recommendLevel = '중';
-  else if (overallAccuracy >= 40) recommendLevel = '기초';
-  else recommendLevel = '기초보충';
+  if (overallAccuracy >= 96) recommendLevel = '1등급';
+  else if (overallAccuracy >= 89) recommendLevel = '2등급';
+  else if (overallAccuracy >= 77) recommendLevel = '3등급';
+  else if (overallAccuracy >= 60) recommendLevel = '4등급';
+  else if (overallAccuracy >= 40) recommendLevel = '5등급';
+  else if (overallAccuracy >= 23) recommendLevel = '6등급';
+  else if (overallAccuracy >= 11) recommendLevel = '7등급';
+  else if (overallAccuracy >= 4) recommendLevel = '8등급';
+  else recommendLevel = '9등급';
 
   // 8. Save DiagnosticResult (upsert to handle re-analysis)
   const result = await prisma.diagnosticResult.upsert({

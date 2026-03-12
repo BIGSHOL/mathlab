@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
+import { prisma } from '@/lib/db';
 import { generateProblems, IMPLEMENTED_CATEGORIES } from '@/lib/services/arithmetic-generator';
 import type { ArithmeticCategory, ArithmeticLevel } from '@/lib/services/arithmetic-generator';
 
@@ -34,6 +35,16 @@ export async function POST(request: NextRequest) {
 
   const problemCount = Math.min(Math.max(1, count || 10), 1000);
   const problems = generateProblems(category, level, problemCount);
+
+  // 선생님 활동 로깅
+  await prisma.questionGenerationLog.create({
+    data: {
+      teacherId: currentUser.id,
+      mode: 'arithmetic',
+      grade: category,
+      success: true,
+    },
+  }).catch(() => {});
 
   return NextResponse.json({ data: problems });
 }

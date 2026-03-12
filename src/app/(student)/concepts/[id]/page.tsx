@@ -58,6 +58,7 @@ export default function ConceptPage() {
 
   // Fetch concept
   useEffect(() => {
+    if (!id) return;
     fetch(`/api/concepts/${id}`)
       .then((r) => r.json())
       .then((json) => { if (json.data) setConcept(json.data); })
@@ -66,6 +67,7 @@ export default function ConceptPage() {
 
   // Fetch adjacent concepts (이전/다음)
   useEffect(() => {
+    if (!id) return;
     fetch(`/api/concepts/${id}/adjacent`)
       .then((r) => r.json())
       .then((json) => { if (json.data) setAdjacent(json.data); })

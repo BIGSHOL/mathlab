@@ -192,6 +192,16 @@ export const DOMAIN_COLORS: Record<LevelTestDomain, { bg: string; text: string }
 };
 
 export const LEVEL_COLORS: Record<string, { bg: string; text: string }> = {
+  '1등급': { bg: 'bg-violet-100', text: 'text-violet-700' },
+  '2등급': { bg: 'bg-indigo-100', text: 'text-indigo-700' },
+  '3등급': { bg: 'bg-blue-100', text: 'text-blue-700' },
+  '4등급': { bg: 'bg-sky-100', text: 'text-sky-700' },
+  '5등급': { bg: 'bg-green-100', text: 'text-green-700' },
+  '6등급': { bg: 'bg-lime-100', text: 'text-lime-700' },
+  '7등급': { bg: 'bg-yellow-100', text: 'text-yellow-700' },
+  '8등급': { bg: 'bg-orange-100', text: 'text-orange-700' },
+  '9등급': { bg: 'bg-red-100', text: 'text-red-700' },
+  // 하위호환
   '심화': { bg: 'bg-violet-100', text: 'text-violet-700' },
   '상': { bg: 'bg-blue-100', text: 'text-blue-700' },
   '중': { bg: 'bg-green-100', text: 'text-green-700' },

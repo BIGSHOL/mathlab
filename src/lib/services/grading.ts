@@ -17,7 +17,7 @@ export function getComboMultiplier(comboCount: number): number {
 }
 
 /** 기본 배점 (난이도별) */
-const DIFFICULTY_POINTS: Record<string, number> = {
+export const DIFFICULTY_POINTS: Record<string, number> = {
   BASIC: 10,
   MEDIUM: 20,
   HIGH: 30,

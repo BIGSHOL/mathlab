@@ -13,6 +13,10 @@ import {
   Zap,
   Clock,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  FileEdit,
+  CalendarDays,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
@@ -39,11 +43,19 @@ interface ActivityItem {
   userId: string;
   userName: string;
   userRole: string;
-  activityType: 'TEST_ATTEMPT' | 'ARITHMETIC_ATTEMPT' | 'LEARNING_PROGRESS';
+  activityType: 'TEST_ATTEMPT' | 'ARITHMETIC_ATTEMPT' | 'LEARNING_PROGRESS' | 'QUESTION_GENERATION';
   description: string;
   detail: string;
   xpEarned: number;
   timestamp: string;
+}
+
+interface DaySummary {
+  total: number;
+  test: number;
+  arithmetic: number;
+  learning: number;
+  generation: number;
 }
 
 interface Summary {
@@ -75,7 +87,10 @@ const ACTIVITY_CONFIG = {
   TEST_ATTEMPT: { icon: ClipboardCheck, color: 'bg-blue-100 text-blue-600', label: '시험' },
   ARITHMETIC_ATTEMPT: { icon: Calculator, color: 'bg-amber-100 text-amber-600', label: '연산' },
   LEARNING_PROGRESS: { icon: BookOpen, color: 'bg-emerald-100 text-emerald-600', label: '개념' },
+  QUESTION_GENERATION: { icon: FileEdit, color: 'bg-violet-100 text-violet-600', label: '생성' },
 };
+
+const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
 
 // ── Page ──
 
@@ -100,6 +115,13 @@ export default function AdminUsersPage() {
 
   // 요약
   const [summary, setSummary] = useState<Summary>({ totalUsers: 0, activeToday: 0, activeThisWeek: 0 });
+
+  // 달력
+  const [calYear, setCalYear] = useState(new Date().getFullYear());
+  const [calMonth, setCalMonth] = useState(new Date().getMonth()); // 0-indexed
+  const [calendarData, setCalendarData] = useState<Record<string, DaySummary>>({});
+  const [calendarLoading, setCalendarLoading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   // 패널
   const [leftCollapsed, setLeftCollapsed] = useState(false);
@@ -132,9 +154,11 @@ export default function AdminUsersPage() {
 
   // 선택된 사용자의 활동 로드
   const fetchActivities = useCallback(
-    (userId: string, page: number, append = false) => {
+    (userId: string, page: number, date?: string | null, append = false) => {
       setActivityLoading(true);
-      fetch(`/api/admin/activity?userId=${userId}&page=${page}&limit=20`)
+      let url = `/api/admin/activity?userId=${userId}&page=${page}&limit=20`;
+      if (date) url += `&date=${date}`;
+      fetch(url)
         .then((r) => r.json())
         .then((res) => {
           if (res.data?.activities) {
@@ -150,18 +174,65 @@ export default function AdminUsersPage() {
     [],
   );
 
+  // 달력 데이터 로드
+  const fetchCalendar = useCallback(
+    (userId: string, year: number, month: number) => {
+      setCalendarLoading(true);
+      fetch(`/api/admin/activity?view=calendar&userId=${userId}&year=${year}&month=${month + 1}`)
+        .then((r) => r.json())
+        .then((res) => {
+          if (res.data?.calendar) setCalendarData(res.data.calendar);
+        })
+        .finally(() => setCalendarLoading(false));
+    },
+    [],
+  );
+
   const handleSelectUser = (user: AdminUser) => {
     setSelectedUser(user);
     setActivityPage(1);
     setActivities([]);
+    setSelectedDate(null);
     fetchActivities(user.id, 1);
+    fetchCalendar(user.id, calYear, calMonth);
+  };
+
+  // 달력 월 변경 시 재조회
+  const handleMonthChange = (delta: number) => {
+    let newMonth = calMonth + delta;
+    let newYear = calYear;
+    if (newMonth < 0) { newMonth = 11; newYear--; }
+    if (newMonth > 11) { newMonth = 0; newYear++; }
+    setCalMonth(newMonth);
+    setCalYear(newYear);
+    setSelectedDate(null);
+    if (selectedUser) {
+      fetchCalendar(selectedUser.id, newYear, newMonth);
+      setActivityPage(1);
+      fetchActivities(selectedUser.id, 1);
+    }
+  };
+
+  // 날짜 클릭
+  const handleDateClick = (dateKey: string) => {
+    if (!selectedUser) return;
+    if (selectedDate === dateKey) {
+      // 같은 날짜 재클릭 → 선택 해제
+      setSelectedDate(null);
+      setActivityPage(1);
+      fetchActivities(selectedUser.id, 1);
+    } else {
+      setSelectedDate(dateKey);
+      setActivityPage(1);
+      fetchActivities(selectedUser.id, 1, dateKey);
+    }
   };
 
   const handleLoadMore = () => {
     if (!selectedUser || activityPage >= activityTotalPages) return;
     const next = activityPage + 1;
     setActivityPage(next);
-    fetchActivities(selectedUser.id, next, true);
+    fetchActivities(selectedUser.id, next, selectedDate, true);
   };
 
   // 필터링 + 정렬
@@ -354,10 +425,130 @@ export default function AdminUsersPage() {
               </div>
             </div>
 
+            {/* 활동 달력 히트맵 */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="w-4 h-4 text-primary" />
+                  <h3 className="text-sm font-bold text-text-primary">활동 달력</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleMonthChange(-1)}
+                    className="p-1 rounded hover:bg-slate-100 text-slate-500 transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="text-sm font-semibold text-text-primary min-w-[100px] text-center">
+                    {calYear}년 {calMonth + 1}월
+                  </span>
+                  <button
+                    onClick={() => handleMonthChange(1)}
+                    className="p-1 rounded hover:bg-slate-100 text-slate-500 transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {calendarLoading ? (
+                <div className="flex items-center justify-center py-6 text-text-secondary text-xs">
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" /> 불러오는 중...
+                </div>
+              ) : (
+                <>
+                  {/* 요일 헤더 */}
+                  <div className="grid grid-cols-7 gap-1 mb-1">
+                    {DAY_NAMES.map((d) => (
+                      <div key={d} className={`text-center text-[10px] font-medium py-1 ${d === '일' ? 'text-red-400' : d === '토' ? 'text-blue-400' : 'text-text-secondary'}`}>
+                        {d}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* 날짜 그리드 */}
+                  <div className="grid grid-cols-7 gap-1">
+                    {(() => {
+                      const firstDay = new Date(calYear, calMonth, 1).getDay();
+                      const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+                      const today = new Date();
+                      const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                      const cells = [];
+
+                      // 빈 셀 (이전 달)
+                      for (let i = 0; i < firstDay; i++) {
+                        cells.push(<div key={`empty-${i}`} />);
+                      }
+
+                      // 날짜 셀
+                      for (let day = 1; day <= daysInMonth; day++) {
+                        const dateKey = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                        const summary = calendarData[dateKey];
+                        const total = summary?.total ?? 0;
+                        const isToday = dateKey === todayKey;
+                        const isSelected = dateKey === selectedDate;
+
+                        let bgClass = 'bg-slate-50 text-slate-400';
+                        if (total >= 11) bgClass = 'bg-primary text-white';
+                        else if (total >= 6) bgClass = 'bg-primary/60 text-white';
+                        else if (total >= 3) bgClass = 'bg-primary/30 text-slate-700';
+                        else if (total >= 1) bgClass = 'bg-primary/15 text-slate-700';
+
+                        cells.push(
+                          <button
+                            key={dateKey}
+                            onClick={() => handleDateClick(dateKey)}
+                            title={total > 0 ? `${dateKey}: ${total}건 (시험 ${summary?.test ?? 0}, 연산 ${summary?.arithmetic ?? 0}, 개념 ${summary?.learning ?? 0}, 생성 ${summary?.generation ?? 0})` : dateKey}
+                            className={`aspect-square rounded-md text-[11px] font-medium flex items-center justify-center transition-all cursor-pointer hover:scale-110 ${bgClass} ${isToday ? 'ring-2 ring-primary ring-offset-1' : ''} ${isSelected ? 'ring-2 ring-secondary ring-offset-1' : ''}`}
+                          >
+                            {day}
+                          </button>
+                        );
+                      }
+
+                      return cells;
+                    })()}
+                  </div>
+
+                  {/* 범례 */}
+                  <div className="flex items-center gap-3 mt-3 text-[10px] text-text-secondary justify-end">
+                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-slate-50 border border-slate-200" />없음</span>
+                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-primary/15" />1-2</span>
+                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-primary/30" />3-5</span>
+                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-primary/60" />6-10</span>
+                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-primary" />11+</span>
+                  </div>
+
+                  {/* 선택된 날짜 표시 */}
+                  {selectedDate && (
+                    <div className="mt-2 flex items-center gap-2 text-xs text-text-secondary">
+                      <span className="px-2 py-0.5 rounded bg-secondary/10 text-secondary font-medium">
+                        {selectedDate} 선택됨
+                      </span>
+                      <button
+                        onClick={() => {
+                          setSelectedDate(null);
+                          if (selectedUser) {
+                            setActivityPage(1);
+                            fetchActivities(selectedUser.id, 1);
+                          }
+                        }}
+                        className="text-[10px] text-text-secondary hover:text-primary underline"
+                      >
+                        전체 보기
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
             {/* 활동 타임라인 */}
             <div className="flex items-center gap-2 mb-4">
               <Clock className="w-4 h-4 text-primary" />
-              <h3 className="text-sm font-bold text-text-primary">최근 활동</h3>
+              <h3 className="text-sm font-bold text-text-primary">
+                {selectedDate ? `${selectedDate} 활동` : '최근 활동'}
+              </h3>
               <span className="text-[11px] text-text-secondary">({activityTotal}건)</span>
             </div>
 

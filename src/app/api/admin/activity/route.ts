@@ -16,11 +16,19 @@ interface ActivityItem {
   userId: string;
   userName: string;
   userRole: string;
-  activityType: 'TEST_ATTEMPT' | 'ARITHMETIC_ATTEMPT' | 'LEARNING_PROGRESS';
+  activityType: 'TEST_ATTEMPT' | 'ARITHMETIC_ATTEMPT' | 'LEARNING_PROGRESS' | 'QUESTION_GENERATION';
   description: string;
   detail: string;
   xpEarned: number;
   timestamp: string;
+}
+
+interface DaySummary {
+  total: number;
+  test: number;
+  arithmetic: number;
+  learning: number;
+  generation: number;
 }
 
 export async function GET(request: NextRequest) {
@@ -33,10 +41,110 @@ export async function GET(request: NextRequest) {
   }
 
   const { searchParams } = new URL(request.url);
-  const page = Math.max(1, parseInt(searchParams.get('page') ?? '1'));
-  const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') ?? '20')));
+  const view = searchParams.get('view');
   const userId = searchParams.get('userId');
   const role = searchParams.get('role');
+
+  // view=calendar: 월별 일별 집계
+  if (view === 'calendar') {
+    return handleCalendarView(searchParams, userId, role);
+  }
+
+  // 기본: 타임라인 뷰
+  return handleTimelineView(searchParams, userId, role);
+}
+
+// ── 달력 뷰: 일별 집계 ──
+
+async function handleCalendarView(
+  searchParams: URLSearchParams,
+  userId: string | null,
+  role: string | null,
+) {
+  const year = parseInt(searchParams.get('year') ?? String(new Date().getFullYear()));
+  const month = parseInt(searchParams.get('month') ?? String(new Date().getMonth() + 1));
+
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 1);
+
+  // 대상 사용자
+  const userWhere: Record<string, unknown> = { deletedAt: null };
+  if (userId) userWhere.id = userId;
+  if (role && (role === 'STUDENT' || role === 'TEACHER')) userWhere.role = role;
+
+  const targetUsers = await prisma.user.findMany({
+    where: userWhere,
+    select: { id: true },
+  });
+  const targetUserIds = targetUsers.map((u) => u.id);
+
+  // 4개 테이블 병렬 조회
+  const [testAttempts, arithmeticAttempts, learningProgress, generationLogs] = await Promise.all([
+    prisma.testAttempt.findMany({
+      where: { studentId: { in: targetUserIds }, startedAt: { gte: startDate, lt: endDate } },
+      select: { startedAt: true, completedAt: true },
+    }),
+    prisma.arithmeticAttempt.findMany({
+      where: { studentId: { in: targetUserIds }, createdAt: { gte: startDate, lt: endDate } },
+      select: { createdAt: true },
+    }),
+    prisma.learningProgress.findMany({
+      where: { userId: { in: targetUserIds }, startedAt: { gte: startDate, lt: endDate } },
+      select: { startedAt: true },
+    }),
+    prisma.questionGenerationLog.findMany({
+      where: { teacherId: { in: targetUserIds }, createdAt: { gte: startDate, lt: endDate } },
+      select: { createdAt: true },
+    }),
+  ]);
+
+  // 일별 집계
+  const calendar: Record<string, DaySummary> = {};
+
+  const toDateKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  const ensureDay = (key: string) => {
+    if (!calendar[key]) calendar[key] = { total: 0, test: 0, arithmetic: 0, learning: 0, generation: 0 };
+  };
+
+  for (const ta of testAttempts) {
+    const key = toDateKey(ta.completedAt ?? ta.startedAt);
+    ensureDay(key);
+    calendar[key].test++;
+    calendar[key].total++;
+  }
+  for (const aa of arithmeticAttempts) {
+    const key = toDateKey(aa.createdAt);
+    ensureDay(key);
+    calendar[key].arithmetic++;
+    calendar[key].total++;
+  }
+  for (const lp of learningProgress) {
+    const key = toDateKey(lp.startedAt);
+    ensureDay(key);
+    calendar[key].learning++;
+    calendar[key].total++;
+  }
+  for (const gl of generationLogs) {
+    const key = toDateKey(gl.createdAt);
+    ensureDay(key);
+    calendar[key].generation++;
+    calendar[key].total++;
+  }
+
+  return NextResponse.json({ data: { calendar } });
+}
+
+// ── 타임라인 뷰 ──
+
+async function handleTimelineView(
+  searchParams: URLSearchParams,
+  userId: string | null,
+  role: string | null,
+) {
+  const page = Math.max(1, parseInt(searchParams.get('page') ?? '1'));
+  const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') ?? '20')));
+  const dateFilter = searchParams.get('date'); // YYYY-MM-DD
 
   // 대상 사용자 조회
   const userWhere: Record<string, unknown> = { deletedAt: null };
@@ -50,26 +158,43 @@ export async function GET(request: NextRequest) {
   const targetUserIds = targetUsers.map((u) => u.id);
   const userMap = new Map(targetUsers.map((u) => [u.id, u]));
 
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  // 날짜 범위 결정
+  let dateStart: Date;
+  let dateEnd: Date | undefined;
+  if (dateFilter) {
+    dateStart = new Date(dateFilter + 'T00:00:00');
+    dateEnd = new Date(dateFilter + 'T23:59:59.999');
+  } else {
+    dateStart = new Date();
+    dateStart.setDate(dateStart.getDate() - 30);
+  }
 
-  // 3개 테이블 병렬 조회
-  const [testAttempts, arithmeticAttempts, learningProgress] = await Promise.all([
+  const dateRange = dateEnd
+    ? { gte: dateStart, lte: dateEnd }
+    : { gte: dateStart };
+
+  // 4개 테이블 병렬 조회
+  const [testAttempts, arithmeticAttempts, learningProgress, generationLogs] = await Promise.all([
     prisma.testAttempt.findMany({
-      where: { studentId: { in: targetUserIds }, startedAt: { gte: thirtyDaysAgo } },
+      where: { studentId: { in: targetUserIds }, startedAt: dateRange },
       include: { test: { select: { title: true } } },
       orderBy: { startedAt: 'desc' },
       take: 200,
     }),
     prisma.arithmeticAttempt.findMany({
-      where: { studentId: { in: targetUserIds }, createdAt: { gte: thirtyDaysAgo } },
+      where: { studentId: { in: targetUserIds }, createdAt: dateRange },
       orderBy: { createdAt: 'desc' },
       take: 200,
     }),
     prisma.learningProgress.findMany({
-      where: { userId: { in: targetUserIds }, startedAt: { gte: thirtyDaysAgo } },
+      where: { userId: { in: targetUserIds }, startedAt: dateRange },
       include: { concept: { select: { title: true } } },
       orderBy: { updatedAt: 'desc' },
+      take: 200,
+    }),
+    prisma.questionGenerationLog.findMany({
+      where: { teacherId: { in: targetUserIds }, createdAt: dateRange },
+      orderBy: { createdAt: 'desc' },
       take: 200,
     }),
   ]);
@@ -110,6 +235,17 @@ export async function GET(request: NextRequest) {
       detail: lp.completed ? '완료' : '진행 중',
       xpEarned: 0,
       timestamp: (lp.completedAt ?? lp.startedAt).toISOString(),
+    })),
+    ...generationLogs.map((gl) => ({
+      id: `gen-${gl.id}`,
+      userId: gl.teacherId,
+      userName: userMap.get(gl.teacherId)?.name ?? '알 수 없음',
+      userRole: userMap.get(gl.teacherId)?.role ?? 'TEACHER',
+      activityType: 'QUESTION_GENERATION' as const,
+      description: `문제 생성 (${gl.mode})`,
+      detail: gl.success ? '성공' : `실패: ${gl.errorMessage ?? '알 수 없음'}`,
+      xpEarned: 0,
+      timestamp: gl.createdAt.toISOString(),
     })),
   ];
 

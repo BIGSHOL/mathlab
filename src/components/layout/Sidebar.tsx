@@ -25,6 +25,8 @@ import {
   CalendarCheck,
   Newspaper,
   Activity,
+  FileSpreadsheet,
+  PenLine,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -44,7 +46,9 @@ const mainItems: MenuItem[] = [
   { label: '연산 생성기', href: '/questions/arithmetic', icon: Calculator },
   { label: '연산 숙제', href: '/homework', icon: CalendarCheck },
   { label: '시험 관리', href: '/tests', icon: ClipboardCheck },
+  { label: '학습지', href: '/worksheet/create', icon: FileSpreadsheet },
   { label: '레벨테스트', href: '/level-test', icon: GraduationCap },
+  { label: '수기 채점', href: '/manual-grading', icon: PenLine },
   { label: '학습 분석', href: '/analytics', icon: BarChart3 },
 ];
 

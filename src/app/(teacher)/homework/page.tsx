@@ -517,12 +517,14 @@ export default function HomeworkPage() {
                   <h2 className="text-lg font-bold text-text-primary">{selectedPlan.title}</h2>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
-                  <Link href={`/homework/${selectedPlan.seq}/grid`}>
-                    <Button size="sm" variant="secondary" className="text-xs">
-                      <BarChart3 className="w-3.5 h-3.5 mr-1" />
-                      숙제부
-                    </Button>
-                  </Link>
+                  {selectedPlan.seq != null && (
+                    <Link href={`/homework/${selectedPlan.seq}/grid`}>
+                      <Button size="sm" variant="secondary" className="text-xs">
+                        <BarChart3 className="w-3.5 h-3.5 mr-1" />
+                        숙제부
+                      </Button>
+                    </Link>
+                  )}
                   <Button
                     size="sm"
                     variant="secondary"

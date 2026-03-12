@@ -32,6 +32,26 @@ function parseImageTitle(title: string | undefined): { width?: string; align?: s
 export function MathRenderer({ content, className = '' }: MathRendererProps) {
   return (
     <div className={`prose prose-slate max-w-none prose-p:my-2 prose-headings:my-3 ${className}`}>
+      <style jsx global>{`
+        /* 인라인 수식을 원자적 단위로 — 등호/답 부분이 줄 끝에서 분리되지 않도록 */
+        .katex {
+          display: inline-block;
+        }
+        .katex-display {
+          overflow-x: auto;
+          overflow-y: hidden;
+          padding: 0.5em 0;
+        }
+        /* 인쇄 시 수식이 너무 길면 크기 축소 */
+        @media print {
+          .katex {
+            font-size: 0.95em !important;
+          }
+          .katex-display {
+            overflow: visible !important;
+          }
+        }
+      `}</style>
       <ReactMarkdown
         remarkPlugins={[remarkMath, remarkBreaks]}
         rehypePlugins={[rehypeRaw, rehypeKatex]}

@@ -14,6 +14,8 @@ import {
   ChevronRight,
   Printer,
   X,
+  PenLine,
+  FileText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -73,6 +75,7 @@ interface ResultItem {
   correctCount: number;
   totalCount: number;
   completedAt: string | null;
+  entryMethod?: string;
   answers: AnswerData[];
   diagnostic: DiagnosticResult | null;
 }
@@ -98,6 +101,7 @@ export default function LevelTestResultsPage() {
   const [selectedAttemptId, setSelectedAttemptId] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
+    if (!id) return;
     try {
       const [testRes, resultsRes] = await Promise.all([
         fetch(`/api/level-tests/${id}`),
@@ -241,16 +245,23 @@ export default function LevelTestResultsPage() {
                 <p className="text-sm text-text-secondary">{classStats?.count ?? 0}명 응시 완료</p>
               </div>
             </div>
-            <Button size="sm" onClick={handleAnalyze} loading={analyzing}>
-              {analyzing ? (
-                '분석 중...'
-              ) : (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-1" />
-                  분석 실행
-                </>
-              )}
-            </Button>
+            <div className="flex items-center gap-2 shrink-0">
+              <Link href={`/manual-grading?testSeq=${id}`}>
+                <Button size="sm" variant="secondary" className="whitespace-nowrap">
+                  <PenLine className="w-4 h-4 mr-1" />수기 채점
+                </Button>
+              </Link>
+              <Button size="sm" onClick={handleAnalyze} loading={analyzing} className="whitespace-nowrap">
+                {analyzing ? (
+                  '분석 중...'
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-1" />
+                    분석 실행
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
 
           {classStats && classStats.count > 0 && !selectedResult && (
@@ -397,6 +408,9 @@ export default function LevelTestResultsPage() {
                         >
                           <td className="px-5 py-3">
                             <span className="font-medium text-text-primary text-sm">{result.student.name}</span>
+                            {result.entryMethod === 'manual' && (
+                              <span className="ml-1 px-1 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-600">수기</span>
+                            )}
                           </td>
                           <td className="text-center px-4 py-3">
                             <span
@@ -475,6 +489,14 @@ export default function LevelTestResultsPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {selectedResult.diagnostic && (
+                <Link href={`/level-test/${id}/report?attemptId=${selectedResult.attemptId}`}>
+                  <Button size="sm" variant="secondary">
+                    <FileText className="w-3.5 h-3.5 mr-1" />
+                    보고서
+                  </Button>
+                </Link>
+              )}
               <Button size="sm" variant="secondary" onClick={() => window.print()}>
                 <Printer className="w-3.5 h-3.5 mr-1" />
                 인쇄

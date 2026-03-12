@@ -53,10 +53,10 @@ const CATEGORIES_BY_GRADE: Record<string, ArithmeticCategory[]> = {
   'elementary-3': ['add_3digit', 'sub_3digit', 'mul_2x1', 'div_basic', 'div_remainder', 'time_calc'],
   'elementary-4': ['mul_large', 'div_large', 'frac_add_same', 'frac_sub_same', 'dec_add', 'dec_sub', 'angle_calc', 'sequence_pattern'],
   'elementary-5': ['mixed_calc', 'frac_add_diff', 'frac_sub_diff', 'frac_mul', 'dec_mul', 'gcd_lcm', 'avg_calc', 'area_calc'],
-  'elementary-6': ['frac_div', 'dec_div', 'ratio_calc', 'percent_calc', 'circle_area'],
-  'middle-1': ['int_add', 'int_sub', 'int_mul', 'int_div', 'abs_calc', 'prime_factor', 'proportion', 'quadrant'],
-  'middle-2': ['exp_calc', 'exp_law', 'mono_mul', 'mono_div', 'poly_add', 'poly_sub', 'linear_eq', 'pythagoras', 'similarity'],
-  'middle-3': ['poly_mul', 'mul_formula', 'factoring', 'sqrt_simplify', 'sqrt_add', 'sqrt_mul', 'sqrt_rationalize', 'discriminant', 'trig_value', 'inscribed_angle', 'median_calc', 'variance_calc'],
+  'elementary-6': ['frac_div', 'dec_div', 'ratio_calc', 'percent_calc', 'circle_area', 'frac_all', 'dec_all'],
+  'middle-1': ['int_add', 'int_sub', 'int_mul', 'int_div', 'int_all', 'abs_basic', 'abs_add', 'abs_sub', 'abs_mul', 'abs_mixed', 'abs_all', 'pf_exponent', 'pf_find', 'pf_value', 'pf_all', 'proportion', 'quadrant'],
+  'middle-2': ['exp_calc', 'exp_law', 'mono_mul', 'mono_div', 'poly_add', 'poly_sub', 'linear_eq', 'pythagoras', 'similarity', 'poly_all'],
+  'middle-3': ['poly_mul', 'mul_formula', 'factoring', 'sqrt_simplify', 'sqrt_add', 'sqrt_mul', 'sqrt_rationalize', 'sqrt_all', 'discriminant', 'trig_value', 'inscribed_angle', 'median_calc', 'variance_calc'],
 };
 
 const GRADE_SECTIONS = [

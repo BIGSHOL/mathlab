@@ -294,6 +294,8 @@ model TestAttempt {
   totalCount     Int       @default(0)
   xpEarned       Int       @default(0)
   comboMax       Int       @default(0)
+  entryMethod    String    @default("online") @db.VarChar(20)
+  enteredBy      String?
   createdAt      DateTime  @default(now())
 
   test       Test              @relation(fields: [testId], references: [id], onDelete: Cascade)
@@ -353,6 +355,7 @@ model AnswerLog {
 
   attempt  TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
 
+  @@unique([attemptId, questionId])
   @@index([attemptId])
   @@index([questionId])
 }

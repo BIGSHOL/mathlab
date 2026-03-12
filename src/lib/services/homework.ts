@@ -1,18 +1,23 @@
 import { prisma } from '@/lib/db';
 import {
-  generateProblems,
-  IMPLEMENTED_CATEGORIES,
   type ArithmeticCategory,
   type ArithmeticLevel,
   type GeneratedProblem,
 } from './arithmetic-generator';
+import {
+  type ProgressionMode,
+  type RetryMode,
+  type CountMode,
+  type SlotConfig,
+} from './homework/types';
+
+export type { ProgressionMode, RetryMode, CountMode, SlotConfig };
+import { getAssignmentStrategy } from './homework/strategies';
 
 // ─── Day Computation (크론잡 불필요) ───
 
 /** KST 기준 날짜 계산 (오전 6시 기준으로 하루 전환) */
 function toKSTDate(date: Date): Date {
-  // UTC → KST (+9h), 그 후 -6h (6시 기준이므로)
-  // 즉, UTC+3h 기준으로 날짜를 산출
   const adjusted = new Date(date.getTime() + 3 * 60 * 60 * 1000);
   return new Date(adjusted.getFullYear(), adjusted.getMonth(), adjusted.getDate());
 }
@@ -33,8 +38,6 @@ function getDayDate(startDate: Date, dayIndex: number): Date {
 }
 
 export type HomeworkDayStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FUTURE' | 'MISSED' | 'REST';
-export type RetryMode = 'wrong_same' | 'wrong_new' | 'all_same' | 'all_new';
-export type ProgressionMode = 'sequential' | 'round_robin' | 'weekday';
 
 export function getDayStatus(
   dayIndex: number,
@@ -45,7 +48,6 @@ export function getDayStatus(
 ): HomeworkDayStatus {
   if (isRestDay) return 'REST';
   if (dayIndex >= totalDays) return 'FUTURE';
-  // 미리풀기: 미래 날짜라도 완료된 시도가 있으면 COMPLETED 표시
   if (attempt?.completedAt) return 'COMPLETED';
   if (dayIndex > currentDayIndex) return attempt ? 'IN_PROGRESS' : 'FUTURE';
   if (attempt) return 'IN_PROGRESS';
@@ -55,127 +57,53 @@ export function getDayStatus(
 
 // ─── Plan Creation ───
 
-export type CountMode = 'total' | 'per_category';
-
-export interface SlotConfig {
-  categories: ArithmeticCategory[];
-  days: number;
-}
-
 interface CreatePlanParams {
   title: string;
   createdBy: string;
   progressionMode: ProgressionMode;
   countMode: CountMode;
   dailyCount: number;
-  perCatCounts?: Record<string, number>; // per-category individual counts
-  startDate: string; // 'YYYY-MM-DD'
+  perCatCounts?: Record<string, number>;
+  startDate: string;
   studentIds: string[];
-  passingScore?: number;   // 통과 점수 (정답률 %, default 80)
-  retryOnFail?: boolean;   // 미통과 시 재시도 필수
-  retryMode?: RetryMode;   // 재시도 방식
-  maxRetries?: number;     // 최대 재시도 횟수 (0=무제한)
-  // Sequential mode: ordered slots (each can have multiple categories)
+  passingScore?: number;
+  retryOnFail?: boolean;
+  retryMode?: RetryMode;
+  maxRetries?: number;
   slots?: SlotConfig[];
-  // Round-robin mode
   categories?: ArithmeticCategory[];
   daysPerCategory?: number;
-  // Weekday mode (supports multiple categories per weekday)
   weekdayMap?: Record<string, ArithmeticCategory[]>;
   weeks?: number;
 }
 
-/** 하루치 문제 생성 (복수 카테고리 지원) */
-function generateDayProblems(
-  cats: ArithmeticCategory[],
-  level: ArithmeticLevel,
-  dailyCount: number,
-  countMode: CountMode,
-  perCatCounts?: Record<string, number>,
-): GeneratedProblem[] {
-  if (cats.length === 0) return [];
-  if (countMode === 'per_category') {
-    return cats.flatMap((cat) => {
-      const count = perCatCounts?.[cat] ?? dailyCount;
-      return generateProblems(cat, level, count);
-    });
-  }
-  // total mode: split evenly
-  const perCat = Math.max(1, Math.ceil(dailyCount / cats.length));
-  const all = cats.flatMap((cat) => generateProblems(cat, level, perCat));
-  return all.slice(0, dailyCount);
-}
-
 export async function createHomeworkPlan(params: CreatePlanParams) {
   const {
-    title, createdBy, progressionMode, countMode, dailyCount, perCatCounts,
-    startDate, studentIds, passingScore, retryOnFail, retryMode, maxRetries,
-    slots, categories, daysPerCategory, weekdayMap, weeks,
+    title, createdBy, progressionMode, studentIds, startDate,
+    passingScore, retryOnFail, retryMode, maxRetries, dailyCount
   } = params;
 
+  // 1. 전략 패턴 적용: 배정 전략 선택 및 실행
+  const strategy = getAssignmentStrategy(progressionMode);
   const level: ArithmeticLevel = 'easy';
-  const dailyProblems: GeneratedProblem[][] = [];
-  const allCategorySet = new Set<ArithmeticCategory>();
-
-  if (progressionMode === 'sequential' && slots?.length) {
-    // Sequential: slot-based (each slot = [categories] × days)
-    for (const slot of slots) {
-      const validCats = slot.categories.filter((c) => IMPLEMENTED_CATEGORIES.has(c));
-      if (validCats.length === 0) continue;
-      validCats.forEach((c) => allCategorySet.add(c));
-      for (let d = 0; d < slot.days; d++) {
-        dailyProblems.push(generateDayProblems(validCats, level, dailyCount, countMode, perCatCounts));
-      }
-    }
-  } else if (progressionMode === 'round_robin' && categories?.length) {
-    const validCats = categories.filter((c) => IMPLEMENTED_CATEGORIES.has(c));
-    if (validCats.length === 0) throw new Error('유효한 카테고리가 없습니다');
-    validCats.forEach((c) => allCategorySet.add(c));
-    const dpc = Math.min(Math.max(1, daysPerCategory || 5), 30);
-    const total = validCats.length * dpc;
-    for (let day = 0; day < total; day++) {
-      const cat = validCats[day % validCats.length];
-      dailyProblems.push(generateDayProblems([cat], level, dailyCount, countMode, perCatCounts));
-    }
-  } else if (progressionMode === 'weekday' && weekdayMap) {
-    const numWeeks = Math.min(Math.max(1, weeks || 4), 52);
-    const totalDays = numWeeks * 7;
-    const start = new Date(startDate);
-    for (let day = 0; day < totalDays; day++) {
-      const date = new Date(start);
-      date.setDate(date.getDate() + day);
-      const wd = date.getDay();
-      const cats = (weekdayMap[String(wd)] ?? []).filter((c) =>
-        IMPLEMENTED_CATEGORIES.has(c as ArithmeticCategory)
-      ) as ArithmeticCategory[];
-      if (cats.length > 0) {
-        cats.forEach((c) => allCategorySet.add(c));
-        dailyProblems.push(generateDayProblems(cats, level, dailyCount, countMode, perCatCounts));
-      } else {
-        dailyProblems.push([]); // rest day
-      }
-    }
-  } else {
-    throw new Error('유효한 배정 설정이 없습니다');
-  }
+  const { dailyProblems, allCategories } = strategy.generate({ ...params, level });
 
   if (dailyProblems.length === 0) throw new Error('유효한 카테고리가 없습니다');
 
-  const usedCategories = [...allCategorySet];
-
+  // 2. DB 저장
   const plan = await prisma.$transaction(async (tx) => {
     const created = await tx.arithmeticHomeworkPlan.create({
       data: {
         title,
         createdBy,
-        categories: usedCategories,
+        categories: allCategories,
         level,
         dailyCount,
         totalDays: dailyProblems.length,
         startDate: new Date(startDate),
         dailyProblems: JSON.parse(JSON.stringify(dailyProblems)),
         progressionMode,
-        weekdayMap: progressionMode === 'weekday' ? weekdayMap : undefined,
+        weekdayMap: progressionMode === 'weekday' ? params.weekdayMap : undefined,
         passingScore: passingScore ?? 80,
         retryOnFail: retryOnFail ?? false,
         retryMode: retryOnFail ? (retryMode ?? 'wrong_same') : 'wrong_same',
@@ -222,15 +150,14 @@ export interface TodayHomework {
   score?: number;
   correctCount?: number;
   totalCount?: number;
-  isAdvance?: boolean; // 미리풀기 (다음 회차)
-  // 재시도 관련
-  needsRetry?: boolean;      // 재시도 필요 여부
-  retryCount?: number;       // 현재까지 시도 횟수
-  maxRetries?: number;       // 최대 재시도 횟수 (0=무제한)
-  retryMode?: RetryMode;     // 재시도 방식
-  retryExhausted?: boolean;  // 재시도 횟수 초과 (통과 실패)
-  passingScore?: number;     // 통과 기준
-  accuracy?: number;         // 최근 시도 정답률
+  isAdvance?: boolean;
+  needsRetry?: boolean;
+  retryCount?: number;
+  maxRetries?: number;
+  retryMode?: RetryMode;
+  retryExhausted?: boolean;
+  passingScore?: number;
+  accuracy?: number;
 }
 
 export async function getTodayHomework(studentId: string): Promise<TodayHomework[]> {
@@ -266,12 +193,10 @@ export async function getTodayHomework(studentId: string): Promise<TodayHomework
     const dayIndex = computeDayIndex(plan.startDate);
     if (dayIndex < 0 || dayIndex >= plan.totalDays) continue;
 
-    // Check if today is a rest day (weekday mode: empty problems array)
     const allProblems = plan.dailyProblems as unknown as GeneratedProblem[][];
     const todayProblems = allProblems[dayIndex];
-    if (!todayProblems || todayProblems.length === 0) continue; // rest day — skip
+    if (!todayProblems || todayProblems.length === 0) continue;
 
-    // Get ALL attempts for today (including retries)
     const allAttempts = await prisma.arithmeticAttempt.findMany({
       where: {
         studentId,
@@ -286,7 +211,6 @@ export async function getTodayHomework(studentId: string): Promise<TodayHomework
     const completedAttempts = allAttempts.filter((a) => a.completedAt);
     const attemptCount = completedAttempts.length;
 
-    // Check if passed (any completed attempt meets passing score)
     const latestCompleted = completedAttempts[0];
     const latestAccuracy = latestCompleted && latestCompleted.problemCount > 0
       ? Math.round((latestCompleted.correctCount / latestCompleted.problemCount) * 100)
@@ -295,9 +219,8 @@ export async function getTodayHomework(studentId: string): Promise<TodayHomework
 
     const status = getDayStatus(dayIndex, dayIndex, plan.totalDays, latestAttempt);
 
-    // Retry logic
     const needsRetry = plan.retryOnFail && status === 'COMPLETED' && !hasPassed;
-    const retryExhausted = needsRetry && plan.maxRetries > 0 && attemptCount >= plan.maxRetries + 1; // +1 for initial attempt
+    const retryExhausted = needsRetry && plan.maxRetries > 0 && attemptCount >= plan.maxRetries + 1;
 
     const hwItem: TodayHomework = {
       planId: plan.id,
@@ -307,13 +230,13 @@ export async function getTodayHomework(studentId: string): Promise<TodayHomework
       dailyCount: plan.dailyCount,
       categories: plan.categories as unknown as ArithmeticCategory[],
       level: plan.level as ArithmeticLevel,
-      status: needsRetry && !retryExhausted ? 'NOT_STARTED' : status, // Show as "ready to retry"
+      status: needsRetry && !retryExhausted ? 'NOT_STARTED' : status,
       existingAttemptId: latestAttempt?.id,
       score: latestCompleted?.score ?? undefined,
       correctCount: latestCompleted?.correctCount ?? undefined,
       totalCount: latestCompleted?.problemCount ?? undefined,
       needsRetry: needsRetry && !retryExhausted,
-      retryCount: attemptCount > 0 ? attemptCount - 1 : 0, // exclude initial attempt
+      retryCount: attemptCount > 0 ? attemptCount - 1 : 0,
       maxRetries: plan.retryOnFail ? plan.maxRetries : undefined,
       retryMode: plan.retryOnFail ? plan.retryMode as RetryMode : undefined,
       retryExhausted,
@@ -323,7 +246,6 @@ export async function getTodayHomework(studentId: string): Promise<TodayHomework
 
     results.push(hwItem);
 
-    // If completed & passed (or no retry needed), offer advance practice
     const canAdvance = status === 'COMPLETED' && (!plan.retryOnFail || hasPassed || retryExhausted);
     if (canAdvance) {
       const nextDay = findNextSession(allProblems, dayIndex + 1, plan.totalDays);
@@ -366,7 +288,6 @@ export async function startHomeworkAttempt(
   dayIndex: number,
   isRetry?: boolean
 ): Promise<{ attemptId: string; problems: GeneratedProblem[]; isRetry?: boolean }> {
-  // Validate enrollment
   const enrollment = await prisma.arithmeticHomeworkEnrollment.findUnique({
     where: { planId_studentId: { planId, studentId } },
     include: { plan: true },
@@ -379,7 +300,6 @@ export async function startHomeworkAttempt(
   const currentDay = computeDayIndex(plan.startDate);
   if (dayIndex < 0 || dayIndex >= plan.totalDays) throw new Error('유효하지 않은 날짜입니다');
 
-  // Allow advance practice: if today's homework is completed (and passed), allow next session
   if (dayIndex > currentDay) {
     const allProblems = plan.dailyProblems as unknown as GeneratedProblem[][];
     const nextSession = findNextSession(allProblems, currentDay + 1, plan.totalDays);
@@ -390,7 +310,6 @@ export async function startHomeworkAttempt(
     if (!todayCompleted) throw new Error('오늘 숙제를 먼저 완료해야 합니다');
   }
 
-  // Get problems from pre-generated pool
   const dailyProblems = plan.dailyProblems as unknown as GeneratedProblem[][];
   const originalProblems = dailyProblems[dayIndex];
   if (!originalProblems) throw new Error('문제 데이터를 찾을 수 없습니다');
@@ -398,7 +317,6 @@ export async function startHomeworkAttempt(
   const categories = plan.categories as unknown as ArithmeticCategory[];
   const category = categories[0] ?? 'add_1digit';
 
-  // Get all completed attempts for retry logic
   const completedAttempts = await prisma.arithmeticAttempt.findMany({
     where: { studentId, homeworkPlanId: planId, homeworkDayIndex: dayIndex, completedAt: { not: null } },
     orderBy: { createdAt: 'desc' },
@@ -410,25 +328,20 @@ export async function startHomeworkAttempt(
   let retryActive = false;
 
   if (attemptCount > 0 && plan.retryOnFail) {
-    // Check if latest attempt passed
     const latest = completedAttempts[0];
     const accuracy = latest.problemCount > 0 ? Math.round((latest.correctCount / latest.problemCount) * 100) : 0;
     if (accuracy >= plan.passingScore) {
-      // Already passed — no retry allowed, but advance practice may be ok (handled above)
       if (!isRetry) throw new Error('이미 통과한 숙제입니다');
     }
 
-    // Check retry limit (maxRetries = max RETRY count, first attempt doesn't count)
     if (plan.maxRetries > 0 && attemptCount > plan.maxRetries) {
       throw new Error('재시도 횟수를 초과했습니다');
     }
 
-    // Build retry problem set based on retryMode
     const retryMode = plan.retryMode as RetryMode;
     retryActive = true;
 
     if (retryMode === 'wrong_same' || retryMode === 'wrong_new') {
-      // Get wrong answers from latest attempt
       const latestAnswers = await prisma.arithmeticAnswer.findMany({
         where: { attemptId: latest.id, isCorrect: false },
         select: { problemIndex: true },
@@ -436,30 +349,27 @@ export async function startHomeworkAttempt(
       const wrongIndices = new Set(latestAnswers.map((a) => a.problemIndex));
 
       if (retryMode === 'wrong_same') {
-        // Same problems, same numbers
         problems = originalProblems.filter((_, i) => wrongIndices.has(i));
       } else {
-        // Wrong problems but regenerate with new numbers
+        const { generateProblems: genProbs } = await import('./arithmetic-generator');
         const wrongProblems = originalProblems.filter((_, i) => wrongIndices.has(i));
         problems = wrongProblems.map((prob) => {
-          const newProbs = generateProblems(prob.category as ArithmeticCategory, plan.level as ArithmeticLevel, 1);
+          const newProbs = genProbs(prob.category as ArithmeticCategory, plan.level as ArithmeticLevel, 1);
           return newProbs[0] ?? prob;
         });
       }
     } else if (retryMode === 'all_same') {
-      // All problems, same numbers
       problems = originalProblems;
     } else {
-      // all_new: All problems, regenerated numbers
+      const { generateProblems: genProbs } = await import('./arithmetic-generator');
       problems = originalProblems.map((prob) => {
-        const newProbs = generateProblems(prob.category as ArithmeticCategory, plan.level as ArithmeticLevel, 1);
+        const newProbs = genProbs(prob.category as ArithmeticCategory, plan.level as ArithmeticLevel, 1);
         return newProbs[0] ?? prob;
       });
     }
 
-    if (problems.length === 0) problems = originalProblems; // fallback
+    if (problems.length === 0) problems = originalProblems;
   } else if (attemptCount > 0 && !isRetry) {
-    // Already completed, not retry mode — block unless advance
     throw new Error('이미 완료한 숙제입니다');
   }
 
@@ -496,10 +406,10 @@ export interface HomeworkGridCell {
   totalCount?: number;
   accuracy?: number;
   attemptId?: string;
-  isEarly?: boolean; // 미리풀기 (날짜 이전에 완료)
-  retryCount?: number;    // 재시도 횟수
-  hasPassed?: boolean;    // 통과 여부
-  retryExhausted?: boolean; // 재시도 횟수 초과 (통과 실패)
+  isEarly?: boolean;
+  retryCount?: number;
+  hasPassed?: boolean;
+  retryExhausted?: boolean;
 }
 
 export interface HomeworkGridData {
@@ -548,7 +458,6 @@ export async function getHomeworkGrid(
     },
   });
 
-  // Get enrolled students
   const enrollmentWhere: Record<string, unknown> = { planId: plan.id };
   if (filters?.grade) {
     enrollmentWhere.student = { grade: filters.grade };
@@ -562,7 +471,6 @@ export async function getHomeworkGrid(
     orderBy: { student: { name: 'asc' } },
   });
 
-  // Get all attempts for this plan
   const studentIds = enrollments.map((e) => e.student.id);
   const attempts = await prisma.arithmeticAttempt.findMany({
     where: { homeworkPlanId: plan.id, studentId: { in: studentIds } },
@@ -578,7 +486,6 @@ export async function getHomeworkGrid(
     },
   });
 
-  // Build attempt lookup: studentId → dayIndex → latest attempt + count
   type AttemptEntry = { latest: (typeof attempts)[0]; completedCount: number };
   const attemptMap = new Map<string, Map<number, AttemptEntry>>();
   for (const att of attempts) {
@@ -592,7 +499,6 @@ export async function getHomeworkGrid(
       });
     } else {
       if (att.completedAt) existing.completedCount++;
-      // Keep most recently completed, or most recent if none completed
       if (att.completedAt && (!existing.latest.completedAt || att.createdAt > existing.latest.createdAt)) {
         existing.latest = att;
       } else if (!existing.latest.completedAt && att.createdAt > existing.latest.createdAt) {
@@ -603,7 +509,6 @@ export async function getHomeworkGrid(
 
   const currentDayIndex = computeDayIndex(plan.startDate);
 
-  // Build dates array
   const dates: string[] = [];
   for (let d = 0; d < plan.totalDays; d++) {
     const date = new Date(plan.startDate);
@@ -611,14 +516,12 @@ export async function getHomeworkGrid(
     dates.push(date.toISOString().split('T')[0]);
   }
 
-  // Build rest day map from dailyProblems
   const allProblems = plan.dailyProblems as unknown as GeneratedProblem[][];
   const restDays = new Set<number>();
   for (let d = 0; d < plan.totalDays; d++) {
     if (!allProblems[d] || allProblems[d].length === 0) restDays.add(d);
   }
 
-  // Build student grid
   const dailyCompletedCounts = new Array(plan.totalDays).fill(0);
 
   const students: HomeworkGridStudent[] = enrollments.map((enrollment) => {
@@ -637,7 +540,6 @@ export async function getHomeworkGrid(
         ? Math.round((att.correctCount / att.problemCount) * 100)
         : undefined;
 
-      // Retry tracking
       const retryCount = entry ? Math.max(0, entry.completedCount - 1) : 0;
       const hasPassed = accuracy !== undefined && accuracy >= plan.passingScore;
       const retryExhausted = plan.retryOnFail && !hasPassed && status === 'COMPLETED'
@@ -652,7 +554,6 @@ export async function getHomeworkGrid(
         }
       }
 
-      // Check if solved early (attempt created before the day's actual date)
       let isEarly = false;
       if (att?.completedAt && att.createdAt) {
         const dayDate = getDayDate(plan.startDate, d);
@@ -675,7 +576,6 @@ export async function getHomeworkGrid(
       });
     }
 
-    // Exclude rest days from completion rate calculation
     let activePastDays = 0;
     for (let d = 0; d < Math.min(currentDayIndex + 1, plan.totalDays); d++) {
       if (!restDays.has(d)) activePastDays++;
@@ -696,11 +596,10 @@ export async function getHomeworkGrid(
   const pastDays = Math.min(currentDayIndex + 1, plan.totalDays);
   const totalStudents = students.length;
   const dailyCompletionRates = dailyCompletedCounts.map((count, d) =>
-    restDays.has(d) ? -2 : // rest day marker
+    restDays.has(d) ? -2 :
     d < pastDays && totalStudents > 0 ? Math.round((count / totalStudents) * 100) : -1
   );
 
-  // Count actual homework sessions (non-rest days)
   const totalSessions = plan.totalDays - restDays.size;
   let pastSessions = 0;
   for (let d = 0; d < Math.min(currentDayIndex + 1, plan.totalDays); d++) {

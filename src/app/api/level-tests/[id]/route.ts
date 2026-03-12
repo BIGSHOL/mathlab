@@ -66,6 +66,79 @@ export async function GET(
   });
 }
 
+/** PATCH: 레벨테스트 문항 교체 */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const currentUser = await getCurrentUser();
+  if (!currentUser || currentUser.role === 'STUDENT') {
+    return NextResponse.json(
+      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
+      { status: 403 }
+    );
+  }
+
+  const { id } = await params;
+  const seq = Number(id);
+  if (isNaN(seq)) {
+    return NextResponse.json(
+      { error: { code: 'VALIDATION_ERROR', message: '잘못된 시험 번호입니다' } },
+      { status: 400 }
+    );
+  }
+
+  const test = await prisma.test.findUnique({
+    where: { seq },
+    include: { levelTestConfig: true },
+  });
+
+  if (!test || test.testType !== 'level_test') {
+    return NextResponse.json(
+      { error: { code: 'NOT_FOUND', message: '레벨테스트를 찾을 수 없습니다' } },
+      { status: 404 }
+    );
+  }
+
+  const body = await request.json();
+  const { questionIds, questionDomains } = body;
+
+  if (!questionIds?.length || !questionDomains) {
+    return NextResponse.json(
+      { error: { code: 'VALIDATION_ERROR', message: '필수 항목이 누락되었습니다' } },
+      { status: 400 }
+    );
+  }
+
+  // 모든 문제에 영역이 지정되었는지 확인
+  const untagged = (questionIds as string[]).filter((qid: string) => !questionDomains[qid]);
+  if (untagged.length > 0) {
+    return NextResponse.json(
+      { error: { code: 'VALIDATION_ERROR', message: `영역이 지정되지 않은 문제가 ${untagged.length}개 있습니다` } },
+      { status: 400 }
+    );
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.test.update({
+      where: { seq },
+      data: {
+        questionIds,
+        questionCount: questionIds.length,
+      },
+    });
+
+    if (test.levelTestConfig) {
+      await tx.levelTestConfig.update({
+        where: { id: test.levelTestConfig.id },
+        data: { questionDomains },
+      });
+    }
+  });
+
+  return NextResponse.json({ data: { success: true } });
+}
+
 /** DELETE: 레벨테스트 삭제 */
 export async function DELETE(
   _request: NextRequest,
