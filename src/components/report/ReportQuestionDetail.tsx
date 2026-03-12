@@ -73,7 +73,7 @@ export function ReportQuestionDetail({
           <line x1="16" y1="17" x2="8" y2="17" />
           <polyline points="10 9 9 9 8 9" />
         </svg>
-        <h2 className="text-lg font-bold text-slate-900">문제별 상세 분석</h2>
+        <h2 className="text-base font-bold text-slate-900">문제별 상세 분석</h2>
         {startIdx > 0 && (
           <span
             className="text-[9px] font-bold px-2 py-0.5 rounded-full text-slate-500"

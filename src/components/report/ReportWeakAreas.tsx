@@ -27,7 +27,7 @@ export function ReportWeakAreas({
           <line x1="12" y1="9" x2="12" y2="13" />
           <line x1="12" y1="17" x2="12.01" y2="17" />
         </svg>
-        <h2 className="text-lg font-bold text-slate-900">취약 영역 · 선수학습 결손 분석</h2>
+        <h2 className="text-base font-bold text-slate-900">취약 영역 · 선수학습 결손 분석</h2>
       </div>
 
       {/* 강점 / 취약 비교 */}
@@ -95,7 +95,7 @@ export function ReportWeakAreas({
               <line x1="15" y1="15" x2="21" y2="21" />
               <line x1="4" y1="4" x2="9" y2="9" />
             </svg>
-            <h3 className="text-base font-bold text-slate-900">선수학습 결손 분석</h3>
+            <h3 className="text-sm font-bold text-slate-900">선수학습 결손 분석</h3>
             <span
               className="text-[9px] font-bold px-2 py-0.5 rounded-full text-white"
               style={{ backgroundColor: '#7c3aed', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } as React.CSSProperties}

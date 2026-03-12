@@ -22,6 +22,18 @@ const LEVEL_HEX: Record<string, string> = {
   '기초': '#eab308', '기초보충': '#ef4444',
 };
 
+const GRADE_SCALE = [
+  { label: '1등급', color: '#7c3aed', light: '#ede9fe' },
+  { label: '2등급', color: '#6366f1', light: '#e0e7ff' },
+  { label: '3등급', color: '#3b82f6', light: '#dbeafe' },
+  { label: '4등급', color: '#0ea5e9', light: '#e0f2fe' },
+  { label: '5등급', color: '#22c55e', light: '#dcfce7' },
+  { label: '6등급', color: '#84cc16', light: '#ecfccb' },
+  { label: '7등급', color: '#eab308', light: '#fef9c3' },
+  { label: '8등급', color: '#f97316', light: '#ffedd5' },
+  { label: '9등급', color: '#ef4444', light: '#fee2e2' },
+];
+
 const DOMAIN_ORDER: LevelTestDomain[] = ['CALCULATION', 'UNDERSTANDING', 'PROBLEM_SOLVING', 'REASONING'];
 const DOMAIN_HEX: Record<LevelTestDomain, string> = {
   CALCULATION: '#2563eb',
@@ -57,55 +69,57 @@ export function ReportSummary({
     ? Math.round(DOMAIN_ORDER.reduce((s, d) => s + (domainScores[d]?.accuracy ?? 0) * (domainScores[d]?.total ?? 0), 0) / totalDomainQ)
     : overallAccuracy;
 
+  const showGradeScale = GRADE_SCALE.some((g) => g.label === recommendLevel);
+
   return (
     <div className="h-full px-10 py-6 flex flex-col">
       {/* Title */}
-      <div className="flex items-center gap-3 mb-5">
+      <div className="flex items-center gap-3 mb-4">
         <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center"
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
           style={{ backgroundColor: 'rgba(19,91,236,0.1)', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } as React.CSSProperties}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#135bec" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#135bec" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
           </svg>
         </div>
         <div>
-          <h2 className="text-xl font-bold leading-tight tracking-tight text-slate-900">종합 분석 보고서</h2>
-          <p className="text-[11px] text-slate-500 font-medium">학습 역량 및 성취도 진단</p>
+          <h2 className="text-lg font-bold leading-tight tracking-tight text-slate-900">종합 분석 보고서</h2>
+          <p className="text-[10px] text-slate-400 font-medium">학습 역량 및 성취도 진단</p>
         </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 flex items-center justify-between">
+      <div className="grid grid-cols-2 gap-3 mb-2">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
           <div>
-            <p className="text-slate-500 text-xs font-semibold mb-1">진단 등급</p>
-            <h3 className="text-3xl font-black" style={{ color: levelColor }}>{recommendLevel}</h3>
+            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">진단 등급</p>
+            <h3 className="text-2xl font-black leading-none" style={{ color: levelColor }}>{recommendLevel}</h3>
           </div>
           <div
-            className="h-12 w-12 rounded-2xl flex items-center justify-center"
-            style={{ backgroundColor: 'rgba(19,91,236,0.1)', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } as React.CSSProperties}
+            className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+            style={{ backgroundColor: 'rgba(19,91,236,0.08)', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } as React.CSSProperties}
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="#135bec">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#135bec">
               <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
             </svg>
           </div>
         </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 flex items-center justify-between">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
           <div>
-            <p className="text-slate-500 text-xs font-semibold mb-1">정답률</p>
-            <div className="flex items-baseline gap-1">
-              <h3 className="text-3xl font-black" style={{ color: overallAccuracy >= 60 ? '#059669' : '#ef4444' }}>
+            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">정답률</p>
+            <div className="flex items-baseline gap-1.5">
+              <h3 className="text-2xl font-black leading-none" style={{ color: overallAccuracy >= 60 ? '#059669' : '#ef4444' }}>
                 {overallAccuracy}%
               </h3>
               <span className="text-[10px] text-slate-400 font-medium">{correctCount}/{totalCount}</span>
             </div>
           </div>
           <div
-            className="h-12 w-12 rounded-2xl flex items-center justify-center"
-            style={{ backgroundColor: 'rgba(19,91,236,0.1)', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } as React.CSSProperties}
+            className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+            style={{ backgroundColor: 'rgba(19,91,236,0.08)', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } as React.CSSProperties}
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#135bec" strokeWidth="2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#135bec" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
               <circle cx="12" cy="12" r="6" />
               <circle cx="12" cy="12" r="2" />
@@ -114,21 +128,58 @@ export function ReportSummary({
         </div>
       </div>
 
+      {/* 9등급 Scale */}
+      {showGradeScale && (
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-1 px-0.5">
+            <span className="text-[7px] font-medium text-slate-300">우수</span>
+            <span className="text-[7px] font-medium text-slate-300">취약</span>
+          </div>
+          <div className="flex gap-0.5 items-end">
+            {GRADE_SCALE.map((g, i) => {
+              const isActive = g.label === recommendLevel;
+              return (
+                <div key={i} className="flex-1 flex flex-col items-center">
+                  <div
+                    className="w-full rounded-[3px]"
+                    style={{
+                      height: isActive ? '16px' : '8px',
+                      backgroundColor: isActive ? g.color : g.light,
+                      printColorAdjust: 'exact',
+                      WebkitPrintColorAdjust: 'exact',
+                    } as React.CSSProperties}
+                  />
+                  <span
+                    className="text-[7px] mt-0.5 leading-none"
+                    style={{
+                      color: isActive ? g.color : '#cbd5e1',
+                      fontWeight: isActive ? 800 : 400,
+                    }}
+                  >
+                    {i + 1}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Radar + Summary */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 mb-4">
-        <h4 className="text-sm font-bold mb-3 flex items-center gap-2 text-slate-900">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#135bec" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-3">
+        <h4 className="text-xs font-bold mb-2 flex items-center gap-2 text-slate-900">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#135bec" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M2 12h4l3-9 4 18 3-9h4" />
           </svg>
           영역별 역량 분석
         </h4>
-        <div className="flex gap-6 items-center">
-          <div className="shrink-0" style={{ width: '200px' }}>
+        <div className="flex gap-5 items-center">
+          <div className="shrink-0" style={{ width: '170px' }}>
             <Radar data={radarData} />
           </div>
           <div className="flex-1">
             <div
-              className="rounded-2xl p-4 border"
+              className="rounded-xl p-3.5 border"
               style={{
                 backgroundColor: 'rgba(19,91,236,0.03)',
                 borderColor: 'rgba(19,91,236,0.1)',
@@ -136,12 +187,12 @@ export function ReportSummary({
                 WebkitPrintColorAdjust: 'exact',
               } as React.CSSProperties}
             >
-              <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: '#135bec' }}>종합 성취도</p>
-              <div className="flex items-baseline gap-2 mb-2">
-                <span className="text-4xl font-black text-slate-900">{weightedAvg}%</span>
-                <span className="text-slate-500 font-medium text-xs">가중치 점수</span>
+              <p className="text-[9px] font-bold uppercase tracking-wider mb-1" style={{ color: '#135bec' }}>종합 성취도</p>
+              <div className="flex items-baseline gap-2 mb-1.5">
+                <span className="text-3xl font-black text-slate-900">{weightedAvg}%</span>
+                <span className="text-slate-400 font-medium text-[10px]">가중치 점수</span>
               </div>
-              <p className="text-[11px] text-slate-600 leading-relaxed">
+              <p className="text-[10px] text-slate-500 leading-relaxed">
                 {studentName ? `${studentName} 학생은 ` : ''}{feedback}
               </p>
             </div>
@@ -150,7 +201,7 @@ export function ReportSummary({
       </div>
 
       {/* Domain Score Cards */}
-      <div className="grid grid-cols-2 gap-3 flex-1 min-h-0">
+      <div className="grid grid-cols-2 gap-2.5">
         {DOMAIN_ORDER.map((domain) => {
           const score = domainScores[domain];
           if (!score) return null;
@@ -158,11 +209,11 @@ export function ReportSummary({
           const domainFeedback = getDomainFeedback(domain, score.accuracy);
 
           return (
-            <div key={domain} className="bg-white p-3.5 rounded-xl border border-slate-200">
-              <div className="flex justify-between items-start mb-2">
-                <h5 className="font-bold text-slate-900 text-xs">{DOMAIN_LABELS[domain]}</h5>
+            <div key={domain} className="bg-white p-2.5 rounded-xl border border-slate-200">
+              <div className="flex justify-between items-center mb-1">
+                <h5 className="font-bold text-slate-900 text-[11px]">{DOMAIN_LABELS[domain]}</h5>
                 <span
-                  className="text-[9px] font-bold px-2 py-0.5 rounded"
+                  className="text-[8px] font-bold px-1.5 py-0.5 rounded"
                   style={{
                     backgroundColor: badge.bg,
                     color: badge.color,
@@ -173,11 +224,11 @@ export function ReportSummary({
                   {badge.label}
                 </span>
               </div>
-              <div className="flex justify-between text-[10px] font-bold mb-1">
+              <div className="flex justify-between text-[9px] font-bold mb-1">
                 <span className="text-slate-400">{score.correct}/{score.total} 정답</span>
                 <span style={{ color: DOMAIN_HEX[domain] }}>{score.accuracy}%</span>
               </div>
-              <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden mb-2">
+              <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden mb-1.5">
                 <div
                   className="h-full rounded-full"
                   style={{
@@ -188,7 +239,7 @@ export function ReportSummary({
                   } as React.CSSProperties}
                 />
               </div>
-              <p className="text-[10px] text-slate-500 leading-relaxed">{domainFeedback}</p>
+              <p className="text-[9px] text-slate-500 leading-snug line-clamp-2">{domainFeedback}</p>
             </div>
           );
         })}
@@ -198,7 +249,7 @@ export function ReportSummary({
 }
 
 function Radar({ data }: { data: { domain: LevelTestDomain; value: number }[] }) {
-  const size = 200;
+  const size = 170;
   const vbSize = size + 50;
   const cx = vbSize / 2;
   const cy = vbSize / 2;
@@ -241,15 +292,15 @@ function Radar({ data }: { data: { domain: LevelTestDomain; value: number }[] })
           <circle key={i} cx={p.x} cy={p.y} r={4} fill={DOMAIN_HEX[data[i].domain]} stroke="white" strokeWidth={2} />
         ))}
         {data.map((d, i) => {
-          const pos = getPoint(angles[i], radius + 18);
+          const pos = getPoint(angles[i], radius + 16);
           const anchor = i === 1 ? 'start' : i === 3 ? 'end' : 'middle';
           const dy = i === 0 ? -3 : i === 2 ? 3 : 0;
           const dx = i === 1 ? 3 : i === 3 ? -3 : 0;
           const baseline = i === 0 ? 'auto' : i === 2 ? 'hanging' : 'central';
           return (
-            <text key={d.domain} x={pos.x + dx} y={pos.y + dy} textAnchor={anchor} dominantBaseline={baseline} fontSize={10} fontWeight={700} fill="#1e293b">
+            <text key={d.domain} x={pos.x + dx} y={pos.y + dy} textAnchor={anchor} dominantBaseline={baseline} fontSize={9} fontWeight={700} fill="#1e293b">
               {DOMAIN_LABELS[d.domain]}
-              <tspan fill={DOMAIN_HEX[d.domain]} dx={2} fontSize={10} fontWeight={700}>{d.value}%</tspan>
+              <tspan fill={DOMAIN_HEX[d.domain]} dx={2} fontSize={9} fontWeight={700}>{d.value}%</tspan>
             </text>
           );
         })}

@@ -65,26 +65,26 @@ export function ReportDifficultyChapter({ difficultyStats, chapterStats, difficu
             <rect x="10" y="7" width="4" height="14" rx="1" />
             <rect x="17" y="3" width="4" height="18" rx="1" />
           </svg>
-          <h3 className="text-lg font-bold text-slate-900">난이도별 분석</h3>
+          <h3 className="text-base font-bold text-slate-900">난이도별 분석</h3>
         </div>
 
         <div
-          className="rounded-2xl p-5 border border-slate-100"
+          className="rounded-2xl p-4 border border-slate-100"
           style={{ backgroundColor: 'rgba(248,250,252,0.5)', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } as React.CSSProperties}
         >
           {/* 총 문항수 + 분포 바 */}
-          <div className="mb-5">
-            <div className="flex justify-between items-end mb-3">
+          <div className="mb-4">
+            <div className="flex justify-between items-end mb-2.5">
               <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">문항 분포</p>
-                <p className="text-3xl font-black" style={{ color: '#135bec' }}>
-                  {totalQuestions} <span className="text-sm font-bold text-slate-400 uppercase">Total</span>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">문항 분포</p>
+                <p className="text-2xl font-black" style={{ color: '#135bec' }}>
+                  {totalQuestions} <span className="text-xs font-bold text-slate-400 uppercase">Total</span>
                 </p>
               </div>
             </div>
 
             {/* Stacked Bar */}
-            <div className="h-10 w-full flex rounded-xl overflow-hidden bg-slate-200">
+            <div className="h-8 w-full flex rounded-xl overflow-hidden bg-slate-200">
               {sortedDiff.map((d) => {
                 const pct = totalQuestions > 0 ? (d.total / totalQuestions) * 100 : 0;
                 if (pct === 0) return null;
@@ -131,17 +131,17 @@ export function ReportDifficultyChapter({ difficultyStats, chapterStats, difficu
           {/* Achievement Cards */}
           <div className={`grid ${gridCols} gap-3`}>
             {sortedDiff.map((d) => (
-              <div key={d.difficulty} className="p-3.5 rounded-xl border border-white bg-white">
-                <p className="text-xs font-bold text-slate-400 mb-1">
-                  {DIFFICULTY_LABELS[d.difficulty as QuestionDifficulty] ?? d.difficulty} 난이도
+              <div key={d.difficulty} className="p-3 rounded-xl border border-white bg-white">
+                <p className="text-[10px] font-bold text-slate-400 mb-0.5">
+                  {DIFFICULTY_LABELS[d.difficulty as QuestionDifficulty] ?? d.difficulty}
                 </p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-black" style={{ color: DIFF_HEX[d.difficulty] }}>{d.accuracy}%</span>
-                  <span className="text-[10px] font-bold text-slate-400">성취도</span>
+                  <span className="text-xl font-black" style={{ color: DIFF_HEX[d.difficulty] }}>{d.accuracy}%</span>
+                  <span className="text-[9px] font-bold text-slate-400">성취도</span>
                 </div>
-                <div className="mt-2 w-full bg-slate-100 rounded-full h-1.5">
+                <div className="mt-1.5 w-full bg-slate-100 rounded-full h-1">
                   <div
-                    className="h-1.5 rounded-full"
+                    className="h-1 rounded-full"
                     style={{
                       width: `${d.accuracy}%`,
                       backgroundColor: DIFF_HEX[d.difficulty],
@@ -179,7 +179,7 @@ export function ReportDifficultyChapter({ difficultyStats, chapterStats, difficu
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
               <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
             </svg>
-            <h3 className="text-lg font-bold text-slate-900">단원별 성취도</h3>
+            <h3 className="text-base font-bold text-slate-900">단원별 성취도</h3>
           </div>
         </div>
 

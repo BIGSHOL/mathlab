@@ -36,7 +36,7 @@ export function ReportTeacherComment({
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
-            <h2 className="text-lg font-bold text-slate-900">종합 총평</h2>
+            <h2 className="text-base font-bold text-slate-900">종합 총평</h2>
             <span
               className="text-[9px] font-bold px-2 py-0.5 rounded-full text-white"
               style={{ backgroundColor: '#7c3aed', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } as React.CSSProperties}
@@ -67,7 +67,7 @@ export function ReportTeacherComment({
               <line x1="12" y1="16" x2="12" y2="12" />
               <line x1="12" y1="8" x2="12.01" y2="8" />
             </svg>
-            <h2 className="text-lg font-bold text-slate-900">분석 도움말</h2>
+            <h2 className="text-base font-bold text-slate-900">분석 도움말</h2>
           </div>
           <div
             className="rounded-2xl border p-5"
@@ -89,7 +89,7 @@ export function ReportTeacherComment({
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#135bec" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
           </svg>
-          <h2 className="text-lg font-bold text-slate-900">학습 방향 제안</h2>
+          <h2 className="text-base font-bold text-slate-900">학습 방향 제안</h2>
         </div>
 
         <div
@@ -146,14 +146,7 @@ export function ReportTeacherComment({
         </div>
         <div className="flex-1 rounded-2xl border border-slate-200 bg-white p-4">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-6"
-              style={{
-                borderBottom: '1px solid #e2e8f0',
-                ...(i === 0 ? {} : {}),
-              }}
-            />
+            <div key={i} className="h-7 border-b border-slate-200" />
           ))}
         </div>
       </div>

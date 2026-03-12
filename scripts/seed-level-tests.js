@@ -41,9 +41,9 @@ const gradeConfig = [
 ];
 
 const levels = [
-  { label: '상', rate: 0.88 },
-  { label: '중', rate: 0.60 },
-  { label: '하', rate: 0.28 },
+  { label: '우수', rate: 0.92 },
+  { label: '보통', rate: 0.68 },
+  { label: '취약', rate: 0.32 },
 ];
 
 async function main() {
@@ -185,7 +185,7 @@ async function main() {
       }
 
       const overall = Math.round(lvl.rate * 100);
-      const recLvl = overall >= 90 ? '심화' : overall >= 75 ? '상' : overall >= 55 ? '중' : overall >= 35 ? '기초' : '기초보충';
+      const recLvl = overall >= 96 ? '1등급' : overall >= 89 ? '2등급' : overall >= 77 ? '3등급' : overall >= 60 ? '4등급' : overall >= 40 ? '5등급' : overall >= 23 ? '6등급' : overall >= 11 ? '7등급' : overall >= 4 ? '8등급' : '9등급';
 
       await prisma.diagnosticResult.create({
         data: {
