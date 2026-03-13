@@ -35,6 +35,7 @@ import type {
 } from '@/types/pdf-extract';
 import { mapDifficulty, mapType, embedBoxItems } from '@/types/pdf-extract';
 import { getCurriculumForGrade, type SemesterEntry } from '@/lib/utils/curriculumMapping';
+import { useAuth } from '@/hooks/useAuth';
 
 /** bookCode → gradeCode 변환 (예: '1-1' → 'middle_1', 'E3-2' → 'elementary_3') */
 function bookCodeToGradeCode(bookCode: string): string {
@@ -52,6 +53,14 @@ function bookCodeToSemester(bookCode: string): number {
   return parseInt(parts[1]) || 1;
 }
 
+/** bookCode → gradeLevel (DB 기준: 초3=3, 중1=7 등) */
+function bookCodeToGradeLevel(bookCode: string): number {
+  if (bookCode.startsWith('E')) {
+    return parseInt(bookCode.charAt(1)); // E3 → 3, E4 → 4, ...
+  }
+  return parseInt(bookCode.split('-')[0]) + 6; // 1 → 7, 2 → 8, 3 → 9
+}
+
 /** bookCode에 해당하는 대단원 목록 반환 */
 function getChaptersForBook(bookCode: string): string[] {
   const gradeCode = bookCodeToGradeCode(bookCode);
@@ -60,6 +69,29 @@ function getChaptersForBook(bookCode: string): string[] {
   const entry = entries.find((e) => e.semesterNumber === semester);
   if (!entry) return [];
   return entry.chapters.map((c) => c.name);
+}
+
+/**
+ * sectionHeader(예: "유형 01 소수와 합성수")를 선택된 대단원 목록에서 매칭.
+ * 대단원명이 sectionHeader에 포함되거나, 키워드가 겹치면 매칭.
+ */
+function matchChapter(sectionHeader: string, selectedChapters: string[]): string | null {
+  if (selectedChapters.length === 0) return null;
+  if (selectedChapters.length === 1) return selectedChapters[0];
+  // 정확히 포함
+  for (const ch of selectedChapters) {
+    if (sectionHeader.includes(ch) || ch.includes(sectionHeader)) return ch;
+  }
+  // 키워드 매칭: sectionHeader에서 "유형 XX" 접두사 제거 후 비교
+  const cleaned = sectionHeader.replace(/^유형\s*\d+\s*/, '').trim();
+  for (const ch of selectedChapters) {
+    // 대단원 키워드가 2글자 이상 겹치면 매칭
+    const chWords = ch.split(/\s+/);
+    for (const w of chWords) {
+      if (w.length >= 2 && cleaned.includes(w)) return ch;
+    }
+  }
+  return null;
 }
 
 /**
@@ -84,6 +116,47 @@ function autoWrapMath(text: string): string {
     .join('');
 }
 
+/** 개념 내용에서 번호 항목 사이에 줄바꿈 삽입: (2), (3)... 앞에 \n */
+function formatConceptContent(text: string): string {
+  if (!text) return text;
+  // (2) 이상 번호 앞에 줄바꿈 (이미 줄바꿈이 있으면 스킵)
+  return text.replace(/(?<!\n)\s*(\(\d+\))/g, (match, group, offset) => {
+    // (1) 맨 처음은 그대로
+    if (group === '(1)' && offset < 5) return match;
+    return '\n' + group;
+  }).trim();
+}
+
+/** base64 data URL → File 객체 변환 */
+function dataURLtoFile(dataUrl: string, filename: string): File {
+  const [header, base64] = dataUrl.split(',');
+  const mime = header.match(/:(.*?);/)?.[1] || 'image/png';
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new File([bytes], filename, { type: mime });
+}
+
+/** [그림] / [그림N] 플레이스홀더를 마크다운 이미지로 교체 */
+function replaceImagePlaceholders(
+  content: string,
+  images: { url: string; label: string }[]
+): string {
+  if (images.length === 0) return content;
+  if (images.length === 1) {
+    // [그림] 또는 [그림1] 교체
+    return content
+      .replace(/\[그림1?\]/, `![${images[0].label}](${images[0].url} "50% center")`);
+  }
+  // 여러 이미지: [그림1], [그림2], ... 순서대로 교체
+  let result = content;
+  for (let i = 0; i < images.length; i++) {
+    const placeholder = `[그림${i + 1}]`;
+    result = result.replace(placeholder, `![${images[i].label}](${images[i].url} "50% center")`);
+  }
+  return result;
+}
+
 // --- 상수 ---
 const MIDDLE_BOOK_CODES = ['1-1', '1-2', '2-1', '2-2', '3-1', '3-2'];
 const ELEMENTARY_BOOK_CODES = ['E3-1', 'E3-2', 'E4-1', 'E4-2', 'E5-1', 'E5-2', 'E6-1', 'E6-2'];
@@ -105,6 +178,9 @@ const TYPE_OPTIONS: { value: QuestionType; label: string }[] = [
 const STEPS = ['업로드 & 설정', '페이지 선택', 'AI 추출 & 미리보기', '저장 완료'] as const;
 
 export default function PdfImportPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
+
   // 단계 관리
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
 
@@ -113,7 +189,7 @@ export default function PdfImportPage() {
   const [pdfDoc, setPdfDoc] = useState<import('pdfjs-dist').PDFDocumentProxy | null>(null);
   const [pages, setPages] = useState<PdfPageInfo[]>([]);
   const [bookCode, setBookCode] = useState('1-1');
-  const [chapter, setChapter] = useState('');
+  const [chapters, setChapters] = useState<string[]>([]);
   const [loadingPdf, setLoadingPdf] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -155,10 +231,20 @@ export default function PdfImportPage() {
       .then((json) => {
         const list = json.data || [];
         setSubjects(list);
-        if (list.length > 0) setSubjectId(list[0].id);
       })
       .catch(() => {});
   }, []);
+
+  // bookCode 변경 시 해당 학년 과목 자동 선택
+  const filteredSubjects = subjects.filter((s) => s.gradeLevel === bookCodeToGradeLevel(bookCode));
+  const displaySubjects = filteredSubjects.length > 0 ? filteredSubjects : subjects;
+  useEffect(() => {
+    const filtered = subjects.filter((s) => s.gradeLevel === bookCodeToGradeLevel(bookCode));
+    const list = filtered.length > 0 ? filtered : subjects;
+    if (list.length > 0 && !list.some((s) => s.id === subjectId)) {
+      setSubjectId(list[0].id);
+    }
+  }, [bookCode, subjects, subjectId]);
 
   // --- PDF 로드 ---
   const handleFileSelect = useCallback(async (file: File) => {
@@ -247,7 +333,7 @@ export default function PdfImportPage() {
     const sortedPages = Array.from(selectedPages).sort((a, b) => a - b);
     setProgress({ done: 0, total: sortedPages.length });
 
-    const { renderPageForAI } = await import('@/lib/utils/pdf-processor');
+    const { renderPageForAI, cropImageFromPage } = await import('@/lib/utils/pdf-processor');
     const allProblems: ExtractedProblem[] = [];
     const allConcepts: ExtractedConcept[] = [];
 
@@ -266,7 +352,7 @@ export default function PdfImportPage() {
           body: JSON.stringify({
             pages: [{ pageNum, imageBase64, textLayer }],
             bookCode,
-            chapter: chapter || undefined,
+            chapter: chapters.length > 0 ? chapters[0] : undefined,
           }),
         });
 
@@ -283,23 +369,48 @@ export default function PdfImportPage() {
             allConcepts.push({
               sectionHeader: c.sectionHeader || '',
               title: autoWrapMath(c.title),
-              content: autoWrapMath(c.content),
+              content: autoWrapMath(formatConceptContent(c.content)),
             });
           }
         }
 
         for (const p of pageResults) {
+          const images = Array.isArray(p.images) ? p.images : [];
+          let contentText = p.boxItems?.length > 0
+            ? embedBoxItems(p.content || '', p.boxItems)
+            : p.content || '';
+
+          // 이미지 바운딩 박스가 있으면 크롭 → 업로드 → 플레이스홀더 교체
+          const croppedImages: { url: string; label: string }[] = [];
+          if (images.length > 0 && pdfDoc) {
+            for (let imgIdx = 0; imgIdx < images.length; imgIdx++) {
+              try {
+                const img = images[imgIdx];
+                const croppedDataUrl = await cropImageFromPage(pdfDoc, pageNum, img.box);
+                const file = dataURLtoFile(croppedDataUrl, `q${p.questionNum}-img${imgIdx + 1}.png`);
+                const formData = new FormData();
+                formData.append('file', file);
+                const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
+                if (uploadRes.ok) {
+                  const uploadJson = await uploadRes.json();
+                  croppedImages.push({ url: uploadJson.data.url, label: img.label || '도형' });
+                }
+              } catch (cropErr) {
+                console.warn(`문제 ${p.questionNum} 이미지 ${imgIdx + 1} 크롭 실패:`, cropErr);
+              }
+            }
+            if (croppedImages.length > 0) {
+              contentText = replaceImagePlaceholders(contentText, croppedImages);
+            }
+          }
+
           allProblems.push({
             questionNum: p.questionNum,
             pageNum,
             sectionHeader: p.sectionHeader || '',
             difficultyTag: p.difficultyTag || '',
             problemType: p.problemType || '주관식',
-            content: autoWrapMath(
-              p.boxItems?.length > 0
-                ? embedBoxItems(p.content || '', p.boxItems)
-                : p.content || ''
-            ),
+            content: autoWrapMath(contentText),
             choices: (p.choices || []).map((c: string) => autoWrapMath(c)),
             boxItems: p.boxItems || [],
             answer: p.answer || '',
@@ -307,6 +418,8 @@ export default function PdfImportPage() {
             sourceTag: ['서술형', '객관식', '주관식'].includes(p.sourceTag || '') ? '' : (p.sourceTag || ''),
             difficulty: mapDifficulty(p.difficultyTag || ''),
             type: mapType(p.problemType || '주관식'),
+            imageBboxes: images.length > 0 ? images : undefined,
+            croppedImages: croppedImages.length > 0 ? croppedImages : undefined,
           });
         }
       } catch (err) {
@@ -367,14 +480,14 @@ export default function PdfImportPage() {
     setMatchingSolutions(true);
     setMatchResult(null);
     try {
-      const { renderPageFullRes } = await import('@/lib/utils/pdf-processor');
+      const { renderPageForAI } = await import('@/lib/utils/pdf-processor');
       const allSolutions: ExtractedSolution[] = [];
       setSolutionProgress({ done: 0, total: targetPages.length });
 
       for (let i = 0; i < targetPages.length; i++) {
         const pageNum = targetPages[i];
         setSolutionProgress({ done: i, total: targetPages.length });
-        
+
         // 이미지 + 텍스트 레이어 동시 추출 (하이브리드)
         const { imageBase64, textLayer } = await renderPageForAI(solutionPdfDoc, pageNum);
         
@@ -427,10 +540,11 @@ export default function PdfImportPage() {
     setError('');
     try {
       // 1. 문제 일괄 저장
+      const defaultChapter = chapters.length > 0 ? chapters[0] : '미분류';
       const questions = problems.map((p) => ({
         bookCode,
-        chapter: chapter || '미분류',
-        section: p.sectionHeader || null,
+        chapter: p.sectionHeader ? matchChapter(p.sectionHeader, chapters) || defaultChapter : defaultChapter,
+        section: p.sectionHeader || undefined,
         questionNum: p.questionNum,
         pageNum: p.pageNum,
         difficulty: p.difficulty,
@@ -457,7 +571,7 @@ export default function PdfImportPage() {
       let conceptsCreated = 0;
 
       // 2. 개념 일괄 저장 (옵션)
-      if (saveConcepts && concepts.length > 0 && subjectId) {
+      if (isAdmin && saveConcepts && concepts.length > 0 && subjectId) {
         const gradeCode = bookCodeToGradeCode(bookCode);
         const semester = bookCodeToSemester(bookCode);
         try {
@@ -471,8 +585,9 @@ export default function PdfImportPage() {
                 fullContent: c.content,
                 grade: gradeCode,
                 semester,
-                chapter: chapter || undefined,
+                chapter: matchChapter(c.sectionHeader, chapters) || (chapters.length > 0 ? chapters[0] : undefined),
                 section: c.sectionHeader || undefined,
+                category: 'concept',
                 source: `PDF 추출 (${bookCode})`,
               })),
             }),
@@ -480,10 +595,12 @@ export default function PdfImportPage() {
           if (conceptRes.ok) {
             const conceptJson = await conceptRes.json();
             conceptsCreated = conceptJson.data?.created || 0;
+          } else {
+            const errJson = await conceptRes.json().catch(() => null);
+            console.error('개념 저장 실패:', errJson?.error?.message);
           }
-        } catch {
-          // 개념 저장 실패해도 문제 저장은 성공으로 처리
-          console.error('개념 저장 실패');
+        } catch (e) {
+          console.error('개념 저장 실패:', e);
         }
       }
 
@@ -563,7 +680,7 @@ export default function PdfImportPage() {
                 <label className="block text-sm font-medium text-slate-700 mb-1">교재 코드</label>
                 <select
                   value={bookCode}
-                  onChange={(e) => { setBookCode(e.target.value); setChapter(''); }}
+                  onChange={(e) => { setBookCode(e.target.value); setChapters([]); }}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary"
                 >
                   {ALL_BOOK_CODES.map((code) => (
@@ -574,30 +691,51 @@ export default function PdfImportPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">대단원</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  대단원 <span className="text-xs text-slate-400 font-normal">(복수 선택 가능)</span>
+                </label>
                 {(() => {
-                  const chapters = getChaptersForBook(bookCode);
-                  return chapters.length > 0 ? (
-                    <select
-                      value={chapter}
-                      onChange={(e) => setChapter(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary"
-                    >
-                      <option value="">선택하세요</option>
-                      {chapters.map((ch) => (
-                        <option key={ch} value={ch}>{ch}</option>
-                      ))}
-                    </select>
-                  ) : (
+                  const chapterList = getChaptersForBook(bookCode);
+                  if (chapterList.length === 0) return (
                     <input
                       type="text"
-                      value={chapter}
-                      onChange={(e) => setChapter(e.target.value)}
+                      value={chapters.join(', ')}
+                      onChange={(e) => setChapters(e.target.value ? [e.target.value] : [])}
                       placeholder="대단원명 직접 입력"
                       className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary"
                     />
                   );
+                  const allSelected = chapters.length === chapterList.length;
+                  return (
+                    <div className="border border-slate-300 rounded-lg p-2 max-h-40 overflow-y-auto space-y-1">
+                      <label className="flex items-center gap-2 px-2 py-1 rounded hover:bg-slate-50 cursor-pointer border-b border-slate-100 pb-2 mb-1">
+                        <input
+                          type="checkbox"
+                          checked={allSelected}
+                          onChange={() => setChapters(allSelected ? [] : [...chapterList])}
+                          className="rounded border-slate-300 text-primary"
+                        />
+                        <span className="text-sm font-medium text-primary">전체 선택</span>
+                      </label>
+                      {chapterList.map((ch) => (
+                        <label key={ch} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-slate-50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={chapters.includes(ch)}
+                            onChange={() => setChapters((prev) =>
+                              prev.includes(ch) ? prev.filter((c) => c !== ch) : [...prev, ch]
+                            )}
+                            className="rounded border-slate-300 text-primary"
+                          />
+                          <span className="text-sm">{ch}</span>
+                        </label>
+                      ))}
+                    </div>
+                  );
                 })()}
+                {chapters.length > 0 && (
+                  <p className="text-xs text-primary mt-1">{chapters.length}개 단원 선택됨</p>
+                )}
               </div>
             </div>
           </Card>
@@ -869,8 +1007,8 @@ export default function PdfImportPage() {
                 </div>
               </Card>
 
-              {/* 추출된 개념 미리보기 */}
-              {concepts.length > 0 && (
+              {/* 추출된 개념 미리보기 (ADMIN만) */}
+              {isAdmin && concepts.length > 0 && (
                 <Card className="p-4 mb-4">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="flex items-center gap-2">
@@ -888,13 +1026,13 @@ export default function PdfImportPage() {
                       />
                       개념 관리에 함께 저장
                     </label>
-                    {saveConcepts && subjects.length > 0 && (
+                    {saveConcepts && displaySubjects.length > 0 && (
                       <select
                         value={subjectId}
                         onChange={(e) => setSubjectId(e.target.value)}
                         className="text-sm px-2 py-1 border border-slate-300 rounded"
                       >
-                        {subjects.map((s) => (
+                        {displaySubjects.map((s) => (
                           <option key={s.id} value={s.id}>{s.title}</option>
                         ))}
                       </select>
@@ -983,7 +1121,7 @@ export default function PdfImportPage() {
                 </Button>
                 <Button onClick={handleSave} disabled={submitting || problems.length === 0} className="flex items-center gap-2">
                   {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                  {problems.length}개 문제{saveConcepts && concepts.length > 0 ? ` + ${concepts.length}개 개념` : ''} 저장
+                  {problems.length}개 문제{isAdmin && saveConcepts && concepts.length > 0 ? ` + ${concepts.length}개 개념` : ''} 저장
                 </Button>
               </div>
             </>
@@ -1092,9 +1230,9 @@ function ProblemCard({ problem, isEditing, isExpanded, onToggleExpand, onEdit, o
 
             {/* 객관식 보기 */}
             {problem.choices.length > 0 && (
-              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1">
+              <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
                 {problem.choices.map((choice, i) => (
-                  <div key={i} className="text-sm text-slate-700">
+                  <div key={i} className="px-3 py-2 bg-slate-50 rounded-sm border border-slate-100">
                     <MathRenderer content={choice} />
                   </div>
                 ))}
@@ -1160,12 +1298,29 @@ function EditForm({ problem, onUpdate, onClose }: EditFormProps) {
     setMathPopupOpen(true);
   };
 
-  // 새 수식 삽입 (커서 위치에)
+  // 수식 삽입/편집 (커서가 $...$ 안이면 기존 수식 편집, 아니면 새로 삽입)
   const handleInsertNewMath = (field: string) => {
+    let text = '';
     let cursorPos = 0;
-    if (field === 'content') cursorPos = contentRef.current?.selectionStart ?? content.length;
-    else if (field === 'answer') cursorPos = answerRef.current?.selectionStart ?? answer.length;
-    else if (field === 'explanation') cursorPos = explanationRef.current?.selectionStart ?? explanation.length;
+    if (field === 'content') { text = content; cursorPos = contentRef.current?.selectionStart ?? content.length; }
+    else if (field === 'answer') { text = answer; cursorPos = answerRef.current?.selectionStart ?? answer.length; }
+    else if (field === 'explanation') { text = explanation; cursorPos = explanationRef.current?.selectionStart ?? explanation.length; }
+
+    // 커서가 $...$ 수식 안에 있으면 해당 수식을 편집 모드로 열기
+    const mathRegex = /\$([^$]+)\$/g;
+    let match;
+    while ((match = mathRegex.exec(text)) !== null) {
+      const start = match.index;
+      const end = match.index + match[0].length;
+      if (cursorPos >= start && cursorPos <= end) {
+        setMathPopupLatex(match[1]);
+        setMathEditRange({ field, start, end });
+        setMathPopupOpen(true);
+        return;
+      }
+    }
+
+    // 수식 밖이면 새로 삽입
     setMathPopupLatex('');
     setMathEditRange({ field, start: cursorPos, end: cursorPos });
     setMathPopupOpen(true);
@@ -1353,9 +1508,9 @@ function EditForm({ problem, onUpdate, onClose }: EditFormProps) {
 
           {/* 보기 미리보기 */}
           {choices.length > 0 && (
-            <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1">
+            <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
               {choices.map((choice, i) => (
-                <div key={i} className="text-sm text-slate-700">
+                <div key={i} className="px-3 py-2 bg-slate-50 rounded-sm border border-slate-100">
                   <MathRenderer content={choice} />
                 </div>
               ))}

@@ -58,12 +58,27 @@ export async function extractPageText(
   try {
     const page = await pdf.getPage(pageNum);
     const textContent = await page.getTextContent();
-    const strings = textContent.items.map((item: any) => item.str);
+    const strings = textContent.items
+      .filter((item): item is { str: string } & typeof item => 'str' in item)
+      .map((item) => item.str);
     return strings.join(' ').trim();
   } catch (err) {
     console.warn(`[pdf-processor] 페이지 ${pageNum} 텍스트 추출 실패:`, err);
     return '';
   }
+}
+
+/** 페이지 고해상도 base64 이미지 렌더링 */
+async function renderPageFullRes(
+  pdf: PDFDocumentProxy,
+  pageNum: number,
+  scale: number
+): Promise<string> {
+  const canvas = await renderToCanvas(pdf, pageNum, scale);
+  const dataUrl = canvas.toDataURL('image/png');
+  canvas.width = 0;
+  canvas.height = 0;
+  return dataUrl;
 }
 
 /** 페이지 고해상도 이미지 + 텍스트 추출 (AI 하이브리드용) */
@@ -77,6 +92,69 @@ export async function renderPageForAI(
     extractPageText(pdf, pageNum),
   ]);
   return { imageBase64, textLayer };
+}
+
+/**
+ * PDF 페이지에서 바운딩 박스 영역을 크롭하여 base64 PNG로 반환
+ * @param pdf - PDF 문서
+ * @param pageNum - 페이지 번호 (1-based)
+ * @param bbox - [y_min, x_min, y_max, x_max] 정규화 좌표 (0~1000)
+ * @param scale - 렌더링 스케일 (기본 2.0)
+ * @param margin - 마진 비율 (기본 0.05 = 5%)
+ */
+export async function cropImageFromPage(
+  pdf: PDFDocumentProxy,
+  pageNum: number,
+  bbox: [number, number, number, number],
+  scale = 2.0,
+  margin = 0.05
+): Promise<string> {
+  const canvas = await renderToCanvas(pdf, pageNum, scale);
+  const [yMin, xMin, yMax, xMax] = bbox;
+
+  // 정규화 좌표(0~1000) → 픽셀 변환
+  const w = canvas.width;
+  const h = canvas.height;
+  let px1 = (xMin / 1000) * w;
+  let py1 = (yMin / 1000) * h;
+  let px2 = (xMax / 1000) * w;
+  let py2 = (yMax / 1000) * h;
+
+  // 마진 추가 (Gemini 좌표 부정확성 보정)
+  const mw = (px2 - px1) * margin;
+  const mh = (py2 - py1) * margin;
+  px1 = Math.max(0, px1 - mw);
+  py1 = Math.max(0, py1 - mh);
+  px2 = Math.min(w, px2 + mw);
+  py2 = Math.min(h, py2 + mh);
+
+  const cropW = px2 - px1;
+  const cropH = py2 - py1;
+
+  // 비정상 크롭 검증 (면적 0.5% 미만 or 70% 초과)
+  const areaRatio = (cropW * cropH) / (w * h);
+  if (areaRatio < 0.005 || areaRatio > 0.7) {
+    canvas.width = 0;
+    canvas.height = 0;
+    throw new Error(`Invalid crop area: ${(areaRatio * 100).toFixed(1)}%`);
+  }
+
+  // 크롭 캔버스 생성
+  const cropCanvas = document.createElement('canvas');
+  cropCanvas.width = cropW;
+  cropCanvas.height = cropH;
+  const ctx = cropCanvas.getContext('2d')!;
+  ctx.drawImage(canvas, px1, py1, cropW, cropH, 0, 0, cropW, cropH);
+
+  const dataUrl = cropCanvas.toDataURL('image/png');
+
+  // 메모리 정리
+  canvas.width = 0;
+  canvas.height = 0;
+  cropCanvas.width = 0;
+  cropCanvas.height = 0;
+
+  return dataUrl;
 }
 
 /**

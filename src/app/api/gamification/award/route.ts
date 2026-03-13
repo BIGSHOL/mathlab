@@ -4,6 +4,8 @@ import { getCurrentUser } from '@/lib/auth';
 import { awardPointsSchema } from '@/lib/schemas/gamification';
 import { calculateLevel } from '@/lib/utils/xp';
 
+export const dynamic = 'force-dynamic';
+
 // POST /api/gamification/award
 export async function POST(request: NextRequest) {
   const currentUser = await getCurrentUser();

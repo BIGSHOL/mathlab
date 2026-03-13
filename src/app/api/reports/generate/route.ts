@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 /** POST: 학생 학습 리포트 생성 */
 export async function POST(request: NextRequest) {
   const currentUser = await getCurrentUser();

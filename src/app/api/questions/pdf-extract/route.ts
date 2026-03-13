@@ -33,6 +33,25 @@ const PDF_EXTRACT_SCHEMA = {
           },
           answer: { type: Type.STRING, description: '정답 (보이면 입력, 아니면 빈 문자열)' },
           sourceTag: { type: Type.STRING, description: '태그: 대표문제, 서술형 등 (없으면 빈 문자열)' },
+          images: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                box: {
+                  type: Type.ARRAY,
+                  items: { type: Type.NUMBER },
+                  description: '바운딩 박스 [y_min, x_min, y_max, x_max] (0~1000 정규화 좌표)',
+                },
+                label: {
+                  type: Type.STRING,
+                  description: '도형/이미지 설명 (예: "원", "삼각형", "좌표평면", "그래프")',
+                },
+              },
+              required: ['box', 'label'],
+            },
+            description: '문제에 포함된 도형/이미지의 바운딩 박스. 없으면 빈 배열',
+          },
         },
         required: ['questionNum', 'content', 'problemType'],
       },
@@ -65,7 +84,12 @@ const SYSTEM_PROMPT = `당신은 한국 수학 교재 분석 전문가입니다.
 5. 난이도 태그가 문제번호 옆에 있으면 difficultyTag에 저장
 6. 페이지 상단의 유형/단원 헤더를 sectionHeader에 저장
 7. "대표문제" 같은 특수 태그는 sourceTag에 저장. "서술형"은 problemType으로만 분류 (sourceTag에 넣지 않음)
-8. 이미지/도형이 포함된 부분은 [그림] 표시
+8. 이미지/도형이 포함된 부분:
+   - content에 [그림] 또는 [그림1], [그림2] 표시 (여러 개면 번호 부여)
+   - images 배열에 해당 도형/이미지의 바운딩 박스를 [y_min, x_min, y_max, x_max] 형식으로 반환
+   - 좌표는 이미지 전체 크기 대비 0~1000 범위의 정규화 좌표
+   - label에는 도형 종류 (예: "원", "삼각형", "좌표평면", "수직선")
+   - images 순서와 [그림] 번호가 대응. 도형 없으면 images 빈 배열
 9. 정답이 같은 페이지에 보이면 answer에 포함, 아니면 빈 문자열
 10. 유형 설명 박스(개념 요약)가 있으면 concepts 배열에 추출하세요. title은 개념 제목, content는 전체 설명 (번호 포함). 문제 번호가 없는 설명/정의 박스가 대상입니다.
 11. **중요** 문제 안에 테두리/네모박스/사각형 박스가 있으면 그 안의 내용을 content에 반드시 포함하세요.
@@ -188,6 +212,7 @@ export async function POST(request: NextRequest) {
         boxItems: Array.isArray(p.boxItems) ? p.boxItems.map(fixLatexEscaping) : p.boxItems,
         answer: fixLatexEscaping(p.answer),
         sectionHeader: fixLatexEscaping(p.sectionHeader),
+        images: Array.isArray(p.images) ? p.images : [],
       }));
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const fixedConcepts = (data.concepts || []).map((c: any) => ({

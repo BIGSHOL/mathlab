@@ -71,10 +71,35 @@ export interface GeneratedBlankExercise {
   blanks: GeneratedBlankItem[];
 }
 
+/** $...$ LaTeX 영역의 범위 계산 */
+function getLatexRanges(text: string): [number, number][] {
+  const ranges: [number, number][] = [];
+  const regex = /\$[^$]+\$/g;
+  let m;
+  while ((m = regex.exec(text)) !== null) {
+    ranges.push([m.index, m.index + m[0].length]);
+  }
+  return ranges;
+}
+
+/** 위치가 LaTeX 영역과 겹치는지 확인 */
+function overlapsLatex(idx: number, len: number, ranges: [number, number][]): boolean {
+  return ranges.some(([s, e]) => idx < e && idx + len > s);
+}
+
+/** (1), (2) 같은 번호 매기기 패턴인지 확인 */
+function isNumberingPattern(text: string, idx: number, term: string): boolean {
+  if (!/^\d+$/.test(term)) return false;
+  return idx > 0 && text[idx - 1] === '(' &&
+    idx + term.length < text.length && text[idx + term.length] === ')';
+}
+
 /**
  * Build a merged exercise from fullContent + terms with difficulty.
  * Finds ALL occurrences, processes longer terms first to avoid substring conflicts.
  * Returns ONE exercise with per-blank difficulty.
+ *
+ * LaTeX $...$ 내부와 (1), (2) 번호 패턴은 빈칸 처리하지 않음.
  *
  * @param mergeSameTerms - true: 같은 단어는 같은 빈칸번호 사용, false: 각 출현마다 별도 번호
  */
@@ -87,6 +112,9 @@ export function buildMergedExercise(
 
   // Sort terms by length descending (longer terms first to avoid substring matches)
   const sortedTerms = [...terms].sort((a, b) => b.term.length - a.term.length);
+
+  // Compute protected ranges: LaTeX $...$
+  const latexRanges = getLatexRanges(fullContent);
 
   // Track which character positions are already claimed
   const used = new Set<number>();
@@ -106,7 +134,11 @@ export function buildMergedExercise(
         if (used.has(c)) { overlap = true; break; }
       }
 
-      if (!overlap) {
+      // LaTeX 용어($...$)는 자체가 LaTeX이므로 overlapsLatex 검사 생략
+      // 일반 용어는 LaTeX 영역 내부에서 부분 매칭 금지
+      const isLatexTerm = t.term.startsWith('$') && t.term.endsWith('$');
+      if (!overlap && (isLatexTerm || !overlapsLatex(idx, t.term.length, latexRanges))
+          && !isNumberingPattern(fullContent, idx, t.term)) {
         occurrences.push({ term: t.term, difficulty: t.difficulty, idx });
         for (let c = idx; c < idx + t.term.length; c++) used.add(c);
       }
@@ -188,41 +220,63 @@ export function addFullSentenceBlanks(
       continue;
     }
 
-    // Process remaining text: find content words to blank
-    // Split into tokens by Korean word boundaries
-    // Pattern: sequences of Korean chars (possibly with embedded numbers/special)
-    const tokenPattern = /([가-힣\uAC00-\uD7A3]{1,}[0-9]*|[0-9]+[가-힣]*|[a-zA-Z]+)/g;
-    let lastEnd = 0;
-    let match;
+    // Further split by LaTeX $...$ regions to protect them
+    const latexSplit = seg.split(/(\$[^$]+\$)/g);
 
-    while ((match = tokenPattern.exec(seg)) !== null) {
-      const token = match[0];
-      const tokenIdx = match.index;
-
-      // Add text before this token
-      newTemplate += seg.substring(lastEnd, tokenIdx);
-
-      // Decide if this token should be blanked
-      const shouldBlank = !isParticleOrConnector(token) && token.length >= 1;
-
-      if (shouldBlank) {
+    for (const part of latexSplit) {
+      // LaTeX $...$ → 통째로 하나의 빈칸으로 처리 (부분 빈칸 절대 금지)
+      if (part.startsWith('$') && part.endsWith('$') && part.length > 2) {
+        const latexInner = part.slice(1, -1);
         newTemplate += `{{${nextPosition}}}`;
         newBlanks.push({
           position: nextPosition,
-          answer: token,
-          hint: getInitials(token),
+          answer: part, // $...$  포함하여 정답으로 저장 → 렌더링 시 수식으로 표시
+          hint: latexInner.length <= 3 ? '수식' : latexInner.substring(0, 2) + '…',
           difficulty: 'full',
         });
         nextPosition++;
-      } else {
-        newTemplate += token;
+        continue;
       }
 
-      lastEnd = tokenIdx + token.length;
-    }
+      // Process remaining text: find content words to blank
+      const tokenPattern = /([가-힣\uAC00-\uD7A3]{1,}[0-9]*|[0-9]+[가-힣]*|[a-zA-Z]+)/g;
+      let lastEnd = 0;
+      let match;
 
-    // Add remaining text after last token
-    newTemplate += seg.substring(lastEnd);
+      while ((match = tokenPattern.exec(part)) !== null) {
+        const token = match[0];
+        const tokenIdx = match.index;
+
+        // Add text before this token
+        newTemplate += part.substring(lastEnd, tokenIdx);
+
+        // Skip (N) numbering patterns — check surrounding chars
+        const charBefore = tokenIdx > 0 ? part[tokenIdx - 1] : '';
+        const charAfter = tokenIdx + token.length < part.length ? part[tokenIdx + token.length] : '';
+        const isNumbering = /^\d+$/.test(token) && charBefore === '(' && charAfter === ')';
+
+        // Decide if this token should be blanked
+        const shouldBlank = !isParticleOrConnector(token) && token.length >= 1 && !isNumbering;
+
+        if (shouldBlank) {
+          newTemplate += `{{${nextPosition}}}`;
+          newBlanks.push({
+            position: nextPosition,
+            answer: token,
+            hint: getInitials(token),
+            difficulty: 'full',
+          });
+          nextPosition++;
+        } else {
+          newTemplate += token;
+        }
+
+        lastEnd = tokenIdx + token.length;
+      }
+
+      // Add remaining text after last token
+      newTemplate += part.substring(lastEnd);
+    }
   }
 
   return { templateText: newTemplate, blanks: newBlanks };

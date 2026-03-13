@@ -38,13 +38,15 @@ function parseImageTitle(title: string | undefined): { width?: string; align?: s
   return { width, align };
 }
 
-/** 원본 content에서 blockquote (> ) 줄의 문자 범위 계산 */
+/** 원본 content에서 blockquote (> 또는 >) 줄의 문자 범위 계산 */
 function computeBlockquoteRanges(content: string): [number, number][] {
   const ranges: [number, number][] = [];
   let pos = 0;
   for (const line of content.split('\n')) {
     const nextPos = pos + line.length + 1;
-    if (line.trimStart().startsWith('> ')) {
+    const trimmed = line.trimStart();
+    // '> ...' 또는 빈 '>' (continuation)도 블록인용으로 인식
+    if (trimmed.startsWith('> ') || trimmed === '>') {
       if (ranges.length > 0 && ranges[ranges.length - 1][1] >= pos) {
         ranges[ranges.length - 1][1] = nextPos;
       } else {
@@ -150,16 +152,32 @@ export function EditableMathRenderer({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [segments, bqRanges]);
 
+  /** 텍스트 내 **bold** 마크다운을 <strong>으로 변환 */
+  const renderTextWithBold = (text: string, keyPrefix: string) => {
+    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={`${keyPrefix}-b${i}`}>{part.slice(2, -2)}</strong>;
+      }
+      return <React.Fragment key={`${keyPrefix}-t${i}`}>{part}</React.Fragment>;
+    });
+  };
+
   const renderSegment = (seg: Segment, key: string) => {
     if (seg.type === 'text') {
       const lines = seg.text.split('\n');
       return lines.map((line, j) => {
-        // blockquote 마커 제거
-        const display = line.trimStart().startsWith('> ') ? line.trimStart().slice(2) : line;
+        const trimmed = line.trimStart();
+        // blockquote 마커 제거: '> ...' 또는 빈 '>'
+        const display = trimmed.startsWith('> ') ? trimmed.slice(2) : trimmed === '>' ? '' : line;
+        // 빈 blockquote continuation 줄은 건너뛰기
+        if (trimmed === '>') {
+          return <React.Fragment key={`${key}-${j}`} />;
+        }
         return (
           <React.Fragment key={`${key}-${j}`}>
             {j > 0 && <br />}
-            {display}
+            {renderTextWithBold(display, `${key}-${j}`)}
           </React.Fragment>
         );
       });

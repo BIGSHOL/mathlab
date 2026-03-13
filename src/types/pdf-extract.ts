@@ -1,5 +1,19 @@
 import type { QuestionDifficulty, QuestionType } from './index';
 
+/** Gemini가 반환하는 이미지/도형 바운딩 박스 (정규화 좌표 0~1000) */
+export interface ImageBoundingBox {
+  /** [y_min, x_min, y_max, x_max] 정규화 좌표 (0~1000) */
+  box: [number, number, number, number];
+  /** 도형 설명 (예: "원", "삼각형", "좌표평면 그래프") */
+  label: string;
+}
+
+/** 크롭 후 업로드 완료된 이미지 정보 */
+export interface CroppedImage {
+  url: string;
+  label: string;
+}
+
 /** Gemini AI가 추출한 개별 문제 */
 export interface ExtractedProblem {
   // AI 추출 원본
@@ -18,6 +32,10 @@ export interface ExtractedProblem {
   // 매핑된 값
   difficulty: QuestionDifficulty;
   type: QuestionType;
+
+  // 이미지/도형 크롭
+  imageBboxes?: ImageBoundingBox[];
+  croppedImages?: CroppedImage[];
 }
 
 /** PDF 페이지 정보 */

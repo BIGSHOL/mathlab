@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { bulkCreateQuestionsSchema } from '@/lib/schemas/question';
+import { autoTag } from '@/lib/services/question-tagger';
 
 // POST /api/questions/bulk — 문제 일괄 생성
 export async function POST(request: NextRequest) {
@@ -26,9 +27,23 @@ export async function POST(request: NextRequest) {
   const { questions } = parsed.data;
 
   try {
+    // domain/conceptId 미지정 시 자동 태깅
+    const taggedQuestions = await Promise.all(
+      questions.map(async (q) => {
+        let domain = q.domain || null;
+        let conceptId = q.conceptId || null;
+        if (!domain) {
+          const tag = await autoTag({ chapter: q.chapter, section: q.section, difficulty: q.difficulty });
+          domain = tag.domain;
+          conceptId = conceptId || tag.conceptId;
+        }
+        return { ...q, domain, conceptId };
+      })
+    );
+
     const result = await prisma.$transaction(async (tx) => {
       const created = await tx.question.createMany({
-        data: questions.map((q) => ({
+        data: taggedQuestions.map((q) => ({
           bookCode: q.bookCode,
           chapter: q.chapter,
           section: q.section || null,

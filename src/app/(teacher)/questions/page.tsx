@@ -975,9 +975,11 @@ export default function QuestionsPage() {
                     <div className="text-sm leading-relaxed font-medium text-text-primary">
                       <MathRenderer content={q.content} />
                       {q.choices && Array.isArray(q.choices) && (
-                        <div className="grid grid-cols-2 gap-2 mt-2 text-text-secondary">
+                        <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
                           {(q.choices as string[]).map((c, i) => (
-                            <MathRenderer key={i} content={c} className="inline" />
+                            <div key={i} className="px-3 py-2 bg-slate-50 rounded-sm border border-slate-100">
+                              <MathRenderer content={c} />
+                            </div>
                           ))}
                         </div>
                       )}
@@ -1398,7 +1400,7 @@ export default function QuestionsPage() {
                     <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
                       {editForm.choices.map((c, i) =>
                         c ? (
-                          <div key={i} className="px-3 py-2 bg-white rounded-sm border border-slate-200">
+                          <div key={i} className="px-3 py-2 bg-slate-50 rounded-sm border border-slate-100">
                             <EditableMathRenderer
                               content={c}
                               onMathClick={(latex, start, end) => openMathEdit('choice', latex, start, end, i)}

@@ -7,7 +7,21 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { MathRenderer } from '@/components/math/MathRenderer';
+import { MathLivePopup } from '@/components/math/MathLivePopup';
 import type { LearningStage } from '@/types';
+
+/** 정답이 LaTeX 수식($...$)인지 판별 */
+function isLatexAnswer(answer: string): boolean {
+  return answer.startsWith('$') && answer.endsWith('$') && answer.length > 2;
+}
+
+/** 복잡한 수식인지 판별 (MathLive 입력기 필요 여부) */
+function isComplexLatex(answer: string): boolean {
+  if (!isLatexAnswer(answer)) return false;
+  const inner = answer.slice(1, -1);
+  // 단순: 숫자, 영문자, 공백, 콤마, 점, +, -, = 만
+  return !/^[0-9a-zA-Z\s,.\-+=]+$/.test(inner);
+}
 
 const stageConfig = [
   { key: 'READING' as LearningStage, label: '개념학습', color: 'bg-stage-reading', icon: '1' },
@@ -47,6 +61,7 @@ export default function ConceptPage() {
   const [toast, setToast] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [showHints, setShowHints] = useState<Record<number, boolean>>({});
+  const [mathPopup, setMathPopup] = useState<{ position: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [memoContent, setMemoContent] = useState('');
   const memoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -342,8 +357,20 @@ export default function ConceptPage() {
                 </div>
                 <div className="p-6 flex-1 overflow-y-auto">
                   <div className="text-[15px] leading-8">
-                    {renderBlanksTemplate(blanks, blankAnswers, setBlankAnswers, blankResults, showHints, setShowHints)}
+                    {renderBlanksTemplate(blanks, blankAnswers, setBlankAnswers, blankResults, showHints, setShowHints, mathPopup, setMathPopup)}
                   </div>
+                  {/* 수식 입력 팝업 (복잡한 수식 빈칸용) */}
+                  <MathLivePopup
+                    isOpen={!!mathPopup}
+                    onClose={() => setMathPopup(null)}
+                    onInsert={(latex) => {
+                      if (mathPopup) {
+                        setBlankAnswers((prev) => ({ ...prev, [mathPopup.position]: latex }));
+                      }
+                      setMathPopup(null);
+                    }}
+                    initialLatex={mathPopup ? (blankAnswers[mathPopup.position] ?? '') : ''}
+                  />
                 </div>
               </>
             )}
@@ -396,6 +423,8 @@ function renderBlanksTemplate(
   results: Array<{ position: number; correct: boolean }> | null,
   showHints: Record<number, boolean>,
   setShowHints: (fn: (prev: Record<number, boolean>) => Record<number, boolean>) => void,
+  mathPopup: { position: number } | null,
+  setMathPopup: (v: { position: number } | null) => void,
 ) {
   const parts = blanks.templateText.split(/(\{\{\d+\}\})/g);
 
@@ -408,22 +437,47 @@ function renderBlanksTemplate(
     const result = results?.find((r) => r.position === position);
     const isCorrect = result?.correct;
     const isWrong = result && !result.correct;
+    const needsMathInput = blank && isComplexLatex(blank.answer);
 
     return (
       <span key={idx} className="inline-flex items-center gap-0.5 mx-0.5 align-middle">
-        <input
-          type="text"
-          value={answers[position] ?? ''}
-          onChange={(e) => setAnswers((prev) => ({ ...prev, [position]: e.target.value }))}
-          className={`inline-block w-24 px-2 py-1 border-2 border-dashed rounded-sm text-center font-semibold text-sm transition-all outline-none ${
-            isCorrect
-              ? 'border-emerald-400 bg-emerald-50 text-emerald-700 animate-bounce-in'
-              : isWrong
-                ? 'border-red-400 bg-red-50 text-red-700 animate-shake'
-                : 'border-slate-300 bg-white focus:border-primary'
-          }`}
-          placeholder={`(${position})`}
-        />
+        {needsMathInput ? (
+          /* 복잡한 수식 빈칸 → 클릭하면 MathLive 팝업 */
+          <button
+            type="button"
+            onClick={() => !result && setMathPopup({ position })}
+            className={`inline-flex items-center justify-center min-w-[96px] px-2 py-1 border-2 border-dashed rounded-sm text-center font-semibold text-sm transition-all ${
+              isCorrect
+                ? 'border-emerald-400 bg-emerald-50 text-emerald-700 animate-bounce-in'
+                : isWrong
+                  ? 'border-red-400 bg-red-50 text-red-700 animate-shake'
+                  : answers[position]
+                    ? 'border-primary/50 bg-primary/5 text-slate-800'
+                    : 'border-slate-300 bg-white hover:border-primary/40 hover:bg-primary/5'
+            }`}
+          >
+            {answers[position] ? (
+              <MathRenderer content={`$${answers[position]}$`} />
+            ) : (
+              <span className="text-slate-400 text-xs">수식 입력</span>
+            )}
+          </button>
+        ) : (
+          /* 일반 텍스트 / 단순 수식 빈칸 → 텍스트 입력 */
+          <input
+            type="text"
+            value={answers[position] ?? ''}
+            onChange={(e) => setAnswers((prev) => ({ ...prev, [position]: e.target.value }))}
+            className={`inline-block w-24 px-2 py-1 border-2 border-dashed rounded-sm text-center font-semibold text-sm transition-all outline-none ${
+              isCorrect
+                ? 'border-emerald-400 bg-emerald-50 text-emerald-700 animate-bounce-in'
+                : isWrong
+                  ? 'border-red-400 bg-red-50 text-red-700 animate-shake'
+                  : 'border-slate-300 bg-white focus:border-primary'
+            }`}
+            placeholder={`(${position})`}
+          />
+        )}
         {isCorrect && <span className="text-emerald-500 text-sm">&#10003;</span>}
         {isWrong && <span className="text-red-500 text-sm">&#10007;</span>}
         <span className="relative inline-block">
