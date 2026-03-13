@@ -72,7 +72,7 @@ export function MathRenderer({ content, className = '' }: MathRendererProps) {
             );
           },
           blockquote: ({ children }) => (
-            <div className="border border-slate-500 p-4 my-6 rounded-sm bg-white text-slate-900 not-italic shadow-[2px_2px_0px_0px_rgba(0,0,0,0.05)]">
+            <div className="border border-slate-300 px-6 py-3 my-3 rounded-md bg-slate-50 text-slate-900 not-italic w-fit max-w-full">
               {children}
             </div>
           ),

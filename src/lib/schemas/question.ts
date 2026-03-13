@@ -45,6 +45,11 @@ export const updateQuestionSchema = z.object({
   conceptId: z.string().optional().nullable(),
 });
 
+export const bulkCreateQuestionsSchema = z.object({
+  questions: z.array(createQuestionSchema).min(1).max(200),
+});
+
 export type QuestionQuery = z.infer<typeof questionQuerySchema>;
 export type CreateQuestionInput = z.infer<typeof createQuestionSchema>;
 export type UpdateQuestionInput = z.infer<typeof updateQuestionSchema>;
+export type BulkCreateQuestionsInput = z.infer<typeof bulkCreateQuestionsSchema>;

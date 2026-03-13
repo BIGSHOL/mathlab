@@ -27,6 +27,7 @@ import {
   Activity,
   FileSpreadsheet,
   PenLine,
+  FileText,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -63,6 +64,7 @@ const systemItems: MenuItem[] = [
 const adminItems: MenuItem[] = [
   { label: '선생님 관리', href: '/students?tab=teachers', icon: UserCog },
   { label: '사용자 관리', href: '/admin/users', icon: Activity },
+  { label: 'PDF 문제 추출', href: '/questions/pdf-import', icon: FileText },
   { label: 'AI 문제 생성', href: '/questions/generate', icon: Sparkles, disabled: true },
   { label: '화면 미리보기', href: '/mockups', icon: Eye },
 ];

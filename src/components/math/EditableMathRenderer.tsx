@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import katex from 'katex';
 
 interface Segment {
@@ -10,7 +10,6 @@ interface Segment {
   html?: string;
   start: number;
   end: number;
-  // image fields
   src?: string;
   alt?: string;
   width?: string;
@@ -39,10 +38,28 @@ function parseImageTitle(title: string | undefined): { width?: string; align?: s
   return { width, align };
 }
 
+/** 원본 content에서 blockquote (> ) 줄의 문자 범위 계산 */
+function computeBlockquoteRanges(content: string): [number, number][] {
+  const ranges: [number, number][] = [];
+  let pos = 0;
+  for (const line of content.split('\n')) {
+    const nextPos = pos + line.length + 1;
+    if (line.trimStart().startsWith('> ')) {
+      if (ranges.length > 0 && ranges[ranges.length - 1][1] >= pos) {
+        ranges[ranges.length - 1][1] = nextPos;
+      } else {
+        ranges.push([pos, nextPos]);
+      }
+    }
+    pos = nextPos;
+  }
+  return ranges;
+}
+
 /**
  * MathRenderer의 편집 모드 버전.
  * $...$ 수식을 클릭하면 onMathClick 콜백을 호출하여 수식 편집기를 열 수 있다.
- * ![alt](src "title") 이미지도 인라인 렌더링.
+ * > blockquote와 ![alt](src) 이미지도 지원.
  */
 export function EditableMathRenderer({
   content,
@@ -51,7 +68,6 @@ export function EditableMathRenderer({
 }: EditableMathRendererProps) {
   const segments = useMemo(() => {
     const result: Segment[] = [];
-    // 수식과 이미지를 모두 매칭하는 통합 regex
     const combinedRegex = /!\[([^\]]*)\]\(([^)]+?)(?:\s+"([^"]*)")?\)|\$([^$]+)\$/g;
     let lastEnd = 0;
     let match;
@@ -67,7 +83,6 @@ export function EditableMathRenderer({
       }
 
       if (match[4] !== undefined) {
-        // 수식: $...$
         let html: string;
         try {
           html = katex.renderToString(match[4], {
@@ -87,7 +102,6 @@ export function EditableMathRenderer({
           end: match.index + match[0].length,
         });
       } else {
-        // 이미지: ![alt](src "title")
         const { width, align } = parseImageTitle(match[3]);
         result.push({
           type: 'image',
@@ -116,62 +130,99 @@ export function EditableMathRenderer({
     return result;
   }, [content]);
 
+  // blockquote 범위 계산 (줄 단위)
+  const bqRanges = useMemo(() => computeBlockquoteRanges(content), [content]);
+  const isInBq = (pos: number) => bqRanges.some(([s, e]) => pos >= s && pos < e);
+
+  // 세그먼트를 blockquote/normal 블록으로 그룹화
+  const blocks = useMemo(() => {
+    const result: { inBq: boolean; segs: Segment[] }[] = [];
+    for (const seg of segments) {
+      const bq = isInBq(seg.start);
+      const last = result[result.length - 1];
+      if (last && last.inBq === bq) {
+        last.segs.push(seg);
+      } else {
+        result.push({ inBq: bq, segs: [seg] });
+      }
+    }
+    return result;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [segments, bqRanges]);
+
+  const renderSegment = (seg: Segment, key: string) => {
+    if (seg.type === 'text') {
+      const lines = seg.text.split('\n');
+      return lines.map((line, j) => {
+        // blockquote 마커 제거
+        const display = line.trimStart().startsWith('> ') ? line.trimStart().slice(2) : line;
+        return (
+          <React.Fragment key={`${key}-${j}`}>
+            {j > 0 && <br />}
+            {display}
+          </React.Fragment>
+        );
+      });
+    }
+
+    if (seg.type === 'image') {
+      const style: React.CSSProperties = {};
+      if (seg.width) style.width = seg.width;
+      if (!seg.width) style.maxWidth = '100%';
+      const imgEl = (
+        <img
+          src={seg.src}
+          alt={seg.alt || ''}
+          style={style}
+          className="rounded-sm inline-block"
+        />
+      );
+      if (seg.align === 'center' || !seg.align) {
+        return (
+          <span key={key} className="flex justify-center my-2">
+            {imgEl}
+          </span>
+        );
+      }
+      return <span key={key} className="my-1 inline-block">{imgEl}</span>;
+    }
+
+    // Math segment
+    if (onMathClick && seg.latex !== undefined) {
+      return (
+        <span
+          key={key}
+          className="cursor-pointer hover:bg-blue-100 rounded-sm px-0.5 -mx-0.5 transition-colors"
+          onClick={() => onMathClick(seg.latex!, seg.start, seg.end)}
+          title="클릭하여 수식 편집"
+          dangerouslySetInnerHTML={{ __html: seg.html! }}
+        />
+      );
+    }
+
+    return (
+      <span
+        key={key}
+        dangerouslySetInnerHTML={{ __html: seg.html! }}
+      />
+    );
+  };
+
   return (
     <div className={`leading-relaxed text-slate-800 ${className}`}>
-      {segments.map((seg, i) => {
-        if (seg.type === 'text') {
-          const lines = seg.text.split('\n');
-          return lines.map((line, j) => (
-            <span key={`${i}-${j}`}>
-              {j > 0 && <br />}
-              {line}
-            </span>
-          ));
-        }
-
-        if (seg.type === 'image') {
-          const style: React.CSSProperties = {};
-          if (seg.width) style.width = seg.width;
-          if (!seg.width) style.maxWidth = '100%';
-
-          const imgEl = (
-            <img
-              src={seg.src}
-              alt={seg.alt || ''}
-              style={style}
-              className="rounded-sm inline-block"
-            />
-          );
-
-          if (seg.align === 'center' || !seg.align) {
-            return (
-              <span key={i} className="flex justify-center my-2">
-                {imgEl}
-              </span>
-            );
-          }
-          return <span key={i} className="my-1 inline-block">{imgEl}</span>;
-        }
-
-        // Math segment
-        if (onMathClick && seg.latex !== undefined) {
+      {blocks.map((block, bi) => {
+        const inner = block.segs.map((seg, si) => renderSegment(seg, `${bi}-${si}`));
+        if (block.inBq) {
           return (
-            <span
-              key={i}
-              className="cursor-pointer hover:bg-blue-100 rounded-sm px-0.5 -mx-0.5 transition-colors"
-              onClick={() => onMathClick(seg.latex!, seg.start, seg.end)}
-              title="클릭하여 수식 편집"
-              dangerouslySetInnerHTML={{ __html: seg.html! }}
-            />
+            <div
+              key={bi}
+              className="border border-slate-300 px-6 py-3 my-2 rounded-md bg-slate-50 w-fit max-w-full"
+            >
+              {inner}
+            </div>
           );
         }
-
-        return (
-          <span
-            key={i}
-            dangerouslySetInnerHTML={{ __html: seg.html! }}
-          />
-        );
+        return <React.Fragment key={bi}>{inner}</React.Fragment>;
       })}
     </div>
   );

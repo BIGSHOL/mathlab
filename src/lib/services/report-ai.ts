@@ -1,6 +1,6 @@
 /**
  * 레벨테스트 보고서 AI 멘트 생성
- * - 총평: Claude Sonnet (고품질 한국어 서술)
+ * - 총평: Claude Haiku (비용 최적화, 고품질 한국어 서술)
  * - Fallback: static 멘트 (API 실패 시)
  */
 
@@ -95,7 +95,7 @@ ${chapterText}
 }`;
 
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-3-5-haiku-20241022',
       max_tokens: 1024,
       messages: [{ role: 'user', content: prompt }],
     });

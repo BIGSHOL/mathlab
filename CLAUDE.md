@@ -13,7 +13,7 @@
 | Language | TypeScript 5.8 |
 | Database | PostgreSQL + Prisma 6 |
 | Auth | NextAuth 4 (Credentials, JWT) |
-| AI | Google Gemini 2.5 Flash Lite (`@google/genai`) |
+| AI | Google Gemini 2.5 Flash (`@google/genai`) |
 | Styling | Tailwind CSS v4, Framer Motion |
 | Math | KaTeX, MathLive, remark-math |
 | State | Zustand 5 |
@@ -76,7 +76,7 @@ if (currentUser.role !== 'ADMIN') → 403     // 관리자 전용
 ### 5. AI (Gemini) 사용 규칙
 
 - 호출 전 **내용 사전 검증**: 최소 20자, 한글 5자 이상, 의미 있는 단어 3개 이상
-- 모델: `gemini-2.5-flash-lite` (가장 저렴, 충분한 성능)
+- 모델: `gemini-2.5-flash` (이미지/도형 분석 및 성능에 최적)
 - 구조화 출력: `responseMimeType: 'application/json'` + `responseSchema`
 - 환경변수: `GEMINI_API_KEY`
 
@@ -175,6 +175,7 @@ npm run db:seed      # 시드 데이터
 - 파일명: kebab-case, 컴포넌트: PascalCase
 - 경로 alias: `@/` = `src/`
 - 수학 수식: `$...$` (인라인), `$$...$$` (블록)
+- **수학 문제/개념의 모든 숫자와 영문 변수는 반드시 KaTeX로 감싸기**: `$25$`, `$a$`, `$a+b$` 등. 보기 번호(①②③④⑤)와 ㄱㄴㄷ은 제외
 - 빌드 확인: 기능 구현 후 `npm run build`로 타입 에러 없는지 확인
 
 ## Skills
