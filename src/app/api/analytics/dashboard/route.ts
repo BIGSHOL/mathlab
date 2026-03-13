@@ -14,31 +14,33 @@ export async function GET() {
 
   const now = new Date();
 
-  // --- 1. 주간 오답률 추이 (최근 4주) ---
-  const weeklyWrongRate: { week: string; total: number; wrong: number; rate: number }[] = [];
-  for (let i = 3; i >= 0; i--) {
+  // --- 1. 주간 오답률 추이 (최근 4주) — 8개 쿼리를 한번에 병렬 실행 ---
+  const weekRanges = Array.from({ length: 4 }, (_, idx) => {
+    const i = 3 - idx;
     const weekStart = new Date(now);
     weekStart.setDate(weekStart.getDate() - (i + 1) * 7);
     const weekEnd = new Date(now);
     weekEnd.setDate(weekEnd.getDate() - i * 7);
+    return { weekStart, weekEnd };
+  });
 
-    const [totalCount, wrongCount] = await Promise.all([
-      prisma.answerLog.count({
-        where: { createdAt: { gte: weekStart, lt: weekEnd } },
-      }),
-      prisma.answerLog.count({
-        where: { createdAt: { gte: weekStart, lt: weekEnd }, isCorrect: false },
-      }),
-    ]);
+  const weekCounts = await Promise.all(
+    weekRanges.flatMap(({ weekStart, weekEnd }) => [
+      prisma.answerLog.count({ where: { createdAt: { gte: weekStart, lt: weekEnd } } }),
+      prisma.answerLog.count({ where: { createdAt: { gte: weekStart, lt: weekEnd }, isCorrect: false } }),
+    ])
+  );
 
-    const label = `${weekStart.getMonth() + 1}/${weekStart.getDate()}`;
-    weeklyWrongRate.push({
-      week: label,
-      total: totalCount,
-      wrong: wrongCount,
-      rate: totalCount > 0 ? Math.round((wrongCount / totalCount) * 100) : 0,
-    });
-  }
+  const weeklyWrongRate = weekRanges.map(({ weekStart }, idx) => {
+    const total = weekCounts[idx * 2];
+    const wrong = weekCounts[idx * 2 + 1];
+    return {
+      week: `${weekStart.getMonth() + 1}/${weekStart.getDate()}`,
+      total,
+      wrong,
+      rate: total > 0 ? Math.round((wrong / total) * 100) : 0,
+    };
+  });
 
   // --- 2. 단원별 성취도 (최근 30일, 상위 8개 단원) ---
   const thirtyDaysAgo = new Date(now);

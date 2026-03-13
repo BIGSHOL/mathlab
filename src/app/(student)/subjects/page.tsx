@@ -16,7 +16,7 @@ const stageColors = [
 ];
 
 function getStageIndex(progress: Array<{ stage: string; completed: boolean }>): number {
-  const stages = ['READING', 'BLANK_EASY', 'BLANK_HARD', 'BLANK_PAGE'];
+  const stages = ['READING', 'BLANK_EASY', 'BLANK_HARD', 'BLANK_FULL'];
   for (let i = stages.length - 1; i >= 0; i--) {
     const p = progress.find((pr) => pr.stage === stages[i]);
     if (p?.completed) return Math.min(i + 1, 4);
@@ -24,7 +24,7 @@ function getStageIndex(progress: Array<{ stage: string; completed: boolean }>): 
   // Check if any stage is started but not completed
   if (progress.length > 0) {
     const stages_started = progress.map((p) => stages.indexOf(p.stage));
-    return Math.max(...stages_started);
+    return Math.max(...stages_started.filter((i) => i >= 0));
   }
   return 0;
 }

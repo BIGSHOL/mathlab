@@ -159,17 +159,21 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  let updated = 0;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ops: { id: string; data: Record<string, any> }[] = [];
   for (const upd of updates) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: Record<string, any> = {};
     if (upd.domain !== undefined) data.domain = upd.domain;
     if (upd.conceptId !== undefined) data.conceptId = upd.conceptId;
-    if (Object.keys(data).length > 0) {
-      await prisma.question.update({ where: { id: upd.id }, data });
-      updated++;
-    }
+    if (Object.keys(data).length > 0) ops.push({ id: upd.id, data });
   }
 
-  return NextResponse.json({ data: { updated } });
+  if (ops.length > 0) {
+    await prisma.$transaction(
+      ops.map((op) => prisma.question.update({ where: { id: op.id }, data: op.data }))
+    );
+  }
+
+  return NextResponse.json({ data: { updated: ops.length } });
 }

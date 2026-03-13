@@ -237,7 +237,7 @@ export function genAngleCalc(level: ArithmeticLevel): GeneratedProblem {
   const answer = 180 - a1 - a2;
   if (answer <= 0) return genAngleCalc(level); // retry if invalid
   return {
-    content: `삼각형 두 각 $${a1}°$, $${a2}°$일 때 나머지 각 $= ${BOX}°$`,
+    content: `삼각형 두 각 $${a1}°$, $${a2}°$ 일 때 나머지 각 $= ${BOX}°$`,
     answer: String(answer),
     choices: generateChoices(answer),
     category: 'angle_calc', level,
@@ -339,7 +339,7 @@ export function genGcdLcm(level: ArithmeticLevel): GeneratedProblem {
     const b = rand(6, level === 'hard' ? 48 : 30);
     const answer = gcd(a, b);
     return {
-      content: `$${a}$과(와) $${b}$의 최대공약수는 $${BOX}$`,
+      content: `$${a}$ 과(와) $${b}$ 의 최대공약수는 $${BOX}$`,
       answer: String(answer),
       choices: generateChoices(answer),
       category: 'gcd_lcm', level,
@@ -351,7 +351,7 @@ export function genGcdLcm(level: ArithmeticLevel): GeneratedProblem {
     const b = rand(4, level === 'hard' ? 24 : 15);
     const answer = lcm(a, b);
     return {
-      content: `$${a}$과(와) $${b}$의 최소공배수는 $${BOX}$`,
+      content: `$${a}$ 과(와) $${b}$ 의 최소공배수는 $${BOX}$`,
       answer: String(answer),
       choices: generateChoices(answer),
       category: 'gcd_lcm', level,
@@ -364,7 +364,7 @@ export function genGcdLcm(level: ArithmeticLevel): GeneratedProblem {
     const g = gcd(a, b);
     const l = lcm(a, b);
     return {
-      content: `$${a}$, $${b}$의 최대공약수 $${g}$일 때 최소공배수 $= ${BOX}$`,
+      content: `$${a}$, $${b}$ 의 최대공약수 $${g}$ 일 때 최소공배수 $= ${BOX}$`,
       answer: String(l),
       choices: generateChoices(l),
       category: 'gcd_lcm', level,
@@ -377,7 +377,7 @@ export function genGcdLcm(level: ArithmeticLevel): GeneratedProblem {
   const n = rand(2, 4);
   const answer = l * n;
   return {
-    content: `$${a}$, $${b}$의 공배수 중 ${n}번째 $= ${BOX}$`,
+    content: `$${a}$, $${b}$ 의 공배수 중 ${n}번째 $= ${BOX}$`,
     answer: String(answer),
     choices: generateChoices(answer),
     category: 'gcd_lcm', level,
@@ -398,7 +398,7 @@ export function genAvgCalc(level: ArithmeticLevel): GeneratedProblem {
   }
   nums.push(sum);
   return {
-    content: `$${nums.join(',\\ ')}$의 평균은 $${BOX}$`,
+    content: `$${nums.join(',\\ ')}$ 의 평균은 $${BOX}$`,
     answer: String(avg),
     choices: generateChoices(avg),
     category: 'avg_calc', level,
@@ -415,7 +415,7 @@ export function genAreaCalc(level: ArithmeticLevel): GeneratedProblem {
     const base = w * 2; // ensure integer area
     const area = (base * h) / 2;
     return {
-      content: `밑변 $${base}$, 높이 $${h}$인 삼각형 넓이 $= ${BOX}\\text{cm}^2$`,
+      content: `밑변 $${base}$, 높이 $${h}$ 인 삼각형 넓이 $= ${BOX}\\text{cm}^2$`,
       answer: String(area),
       choices: generateChoices(area),
       category: 'area_calc', level,
@@ -423,7 +423,7 @@ export function genAreaCalc(level: ArithmeticLevel): GeneratedProblem {
   }
   const area = w * h;
   return {
-    content: `가로 $${w}$, 세로 $${h}$인 직사각형 넓이 $= ${BOX}\\text{cm}^2$`,
+    content: `가로 $${w}$, 세로 $${h}$ 인 직사각형 넓이 $= ${BOX}\\text{cm}^2$`,
     answer: String(area),
     choices: generateChoices(area),
     category: 'area_calc', level,
@@ -494,7 +494,7 @@ export function genPercentCalc(level: ArithmeticLevel): GeneratedProblem {
   const base = rand(2, 20) * 10;
   const answer = base * p / 100;
   return {
-    content: `$${base}$의 $${p}\\%$ $= ${BOX}$`,
+    content: `$${base}$ 의 $${p}\\%$ $= ${BOX}$`,
     answer: String(answer),
     choices: generateChoices(answer),
     category: 'percent_calc', level,
@@ -509,7 +509,7 @@ export function genCircleArea(level: ArithmeticLevel): GeneratedProblem {
   if (isArea) {
     const coeff = r * r;
     return {
-      content: `반지름 $${r}$인 원의 넓이 $= ${BOX}\\pi~\\text{cm}^2$`,
+      content: `반지름 $${r}$ 인 원의 넓이 $= ${BOX}\\pi~\\text{cm}^2$`,
       answer: String(coeff),
       choices: generateChoices(coeff),
       category: 'circle_area', level,
@@ -517,7 +517,7 @@ export function genCircleArea(level: ArithmeticLevel): GeneratedProblem {
   }
   const coeff = 2 * r;
   return {
-    content: `반지름 $${r}$인 원의 둘레 $= ${BOX}\\pi~\\text{cm}$`,
+    content: `반지름 $${r}$ 인 원의 둘레 $= ${BOX}\\pi~\\text{cm}$`,
     answer: String(coeff),
     choices: generateChoices(coeff),
     category: 'circle_area', level,

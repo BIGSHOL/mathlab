@@ -95,8 +95,8 @@ export function QuestionPreview() {
         {answer && (
           <div className="flex items-center gap-2 mt-1.5">
             <span className="text-xs font-bold text-slate-500">학생 답:</span>
-            <span className={`text-sm font-bold ${answer.isCorrect ? 'text-emerald-600' : 'text-red-500'}`}>
-              {answer.selectedAnswer}
+            <span className={`text-sm font-bold [&_p]:inline [&_p]:m-0 ${answer.isCorrect ? 'text-emerald-600' : 'text-red-500'}`}>
+              <MathRenderer content={answer.selectedAnswer} />
             </span>
             <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
               answer.isCorrect ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'

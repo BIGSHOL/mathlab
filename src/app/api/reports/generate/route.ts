@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
   // 학생 정보
   const student = await prisma.user.findUnique({
     where: { id: studentId },
-    include: { profile: true },
+    include: { profile: { select: { level: true, totalXp: true } } },
   });
   if (!student) {
     return NextResponse.json(

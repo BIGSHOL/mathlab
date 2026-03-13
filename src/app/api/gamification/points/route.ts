@@ -12,6 +12,7 @@ export async function GET() {
 
   const profile = await prisma.studentProfile.findUnique({
     where: { userId: currentUser.id },
+    select: { totalXp: true, level: true, currentStreak: true, longestStreak: true },
   });
 
   if (!profile) {

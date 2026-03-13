@@ -173,6 +173,7 @@ export async function completeAttempt(attemptId: string) {
     // StudentProfile XP 갱신
     const profile = await tx.studentProfile.findUnique({
       where: { userId: attempt.studentId },
+      select: { totalXp: true, level: true },
     });
 
     if (profile) {

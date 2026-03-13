@@ -83,6 +83,7 @@ export function InlineMathText({ text, className = '' }: InlineMathTextProps) {
               throwOnError: false,
               displayMode: false,
               output: 'html',
+              strict: false,
             });
             return (
               <span

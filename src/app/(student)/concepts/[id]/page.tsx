@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, BookOpen, CheckCircle, ChevronLeft, ChevronRight
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { MathRenderer } from '@/components/math/MathRenderer';
 import type { LearningStage } from '@/types';
 
 const stageConfig = [
@@ -183,7 +184,6 @@ export default function ConceptPage() {
       if (json.data) {
         setBlankResults(json.data.results);
         if (json.data.allCorrect) {
-          showToast(`정답! +${json.data.xpAwarded} XP 획득!`);
           await handleCompleteStage();
         } else {
           showToast('오답이 있습니다. 다시 확인해보세요!');
@@ -293,7 +293,9 @@ export default function ConceptPage() {
           </div>
           <div className="p-8 flex-1 overflow-y-auto">
             {currentStage.key === 'READING' && (
-              <div className="prose prose-slate max-w-none" dangerouslySetInnerHTML={{ __html: concept.fullContent.replace(/\n/g, '<br/>') }} />
+              <div className="prose prose-slate max-w-none">
+                <MathRenderer content={concept.fullContent.replace(/\n/g, '<br/>')} />
+              </div>
             )}
             {(currentStage.key === 'BLANK_EASY' || currentStage.key === 'BLANK_HARD' || currentStage.key === 'BLANK_FULL') && (
               <div>
@@ -399,7 +401,7 @@ function renderBlanksTemplate(
 
   return parts.map((part, idx) => {
     const match = part.match(/\{\{(\d+)\}\}/);
-    if (!match) return <span key={idx}>{part}</span>;
+    if (!match) return <span key={idx} className="[&_p]:inline [&_p]:m-0"><MathRenderer content={part} /></span>;
 
     const position = parseInt(match[1], 10);
     const blank = blanks.blanks.find((b) => b.position === position);

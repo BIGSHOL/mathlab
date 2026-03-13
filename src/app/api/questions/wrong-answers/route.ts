@@ -105,18 +105,23 @@ export async function GET(request: NextRequest) {
     chapterDiffGroups.get(key)!.add(item.question.id);
   }
 
-  for (const [key, excludeIds] of chapterDiffGroups) {
-    const [ch, diff] = key.split('__');
-    const similar = await prisma.question.findMany({
-      where: {
-        chapter: ch,
-        difficulty: diff as 'BASIC' | 'MEDIUM' | 'HIGH' | 'HIGHEST',
-        id: { notIn: [...excludeIds] },
-      },
-      select: { id: true, questionNum: true, difficulty: true, section: true, bookCode: true },
-      take: 5,
-    });
+  const similarResults = await Promise.all(
+    [...chapterDiffGroups.entries()].map(async ([key, excludeIds]) => {
+      const [ch, diff] = key.split('__');
+      const similar = await prisma.question.findMany({
+        where: {
+          chapter: ch,
+          difficulty: diff as 'BASIC' | 'MEDIUM' | 'HIGH' | 'HIGHEST',
+          id: { notIn: [...excludeIds] },
+        },
+        select: { id: true, questionNum: true, difficulty: true, section: true, bookCode: true },
+        take: 5,
+      });
+      return { excludeIds, similar };
+    })
+  );
 
+  for (const { excludeIds, similar } of similarResults) {
     for (const excId of excludeIds) {
       similarMap[excId] = similar;
     }

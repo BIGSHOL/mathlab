@@ -250,10 +250,10 @@ export function ReportSummary({
 
 function Radar({ data }: { data: { domain: LevelTestDomain; value: number }[] }) {
   const size = 170;
-  const vbSize = size + 50;
+  const vbSize = size + 100;
   const cx = vbSize / 2;
   const cy = vbSize / 2;
-  const radius = size * 0.34;
+  const radius = size * 0.32;
   const angles = [0, 90, 180, 270];
   const toRad = (deg: number) => (deg * Math.PI) / 180;
   const getPoint = (angle: number, r: number) => ({

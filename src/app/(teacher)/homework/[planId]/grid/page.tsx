@@ -693,7 +693,7 @@ export default function HomeworkGridPage() {
           {/* Panel content */}
           <div className="flex-1 overflow-y-auto">
             {detailLoading ? (
-              <div className="flex items-center justify-center py-12">
+              <div className="flex-1 flex items-center justify-center">
                 <Loader2 className="w-5 h-5 animate-spin text-primary" />
               </div>
             ) : !detailData ? (

@@ -108,5 +108,5 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   const seq = Number(planId);
   await prisma.arithmeticHomeworkPlan.delete({ where: { seq } });
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ data: { success: true } });
 }

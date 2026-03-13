@@ -95,16 +95,14 @@ function estimateQuestionHeight(q: PreviewQuestion, solveArea: number, choiceGap
 const COLUMN_AVAILABLE_HEIGHT = 920;
 
 function PrintablePage({
-  pageIdx, page, totalPages, globalOffset, test, allQuestions, showAnswers, isLastPage,
+  pageIdx, page, totalPages, globalOffset, test, showAnswers,
 }: {
   pageIdx: number;
   page: PreviewQuestion[];
   totalPages: number;
   globalOffset: number;
   test: LevelTest;
-  allQuestions: PreviewQuestion[];
   showAnswers: boolean;
-  isLastPage: boolean;
 }) {
   return (
     <div className="flex flex-col h-full text-left">
@@ -176,24 +174,80 @@ function PrintablePage({
         );
       })()}
 
-      {showAnswers && isLastPage && (
-        <div className="mt-3 pt-2 border-t-2 border-slate-800 break-inside-avoid">
-          <h3 className="text-[11px] font-bold text-text-primary mb-1">정답표</h3>
-          <div className="flex flex-wrap gap-2 text-[10px]">
-            {allQuestions.map((q, idx) => (
-              <span key={q.id} className="text-text-secondary">
-                {idx + 1}. <span className="font-bold text-text-primary">{q.answer}</span>
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
       {totalPages > 1 && (
         <div className="mt-auto pt-1 text-center text-[10px] text-slate-400">
           — {pageIdx + 1} / {totalPages} —
         </div>
       )}
+    </div>
+  );
+}
+
+/** 정답 및 해설 별도 페이지 */
+function AnswerPage({
+  test, allQuestions, pageIdx, totalPages,
+}: {
+  test: LevelTest;
+  allQuestions: PreviewQuestion[];
+  pageIdx: number;
+  totalPages: number;
+}) {
+  const hasAnyExplanation = allQuestions.some((q) => q.explanation);
+  return (
+    <div className="flex flex-col h-full text-left">
+      <PrintableHeader
+        title={test.title}
+        subtitle="정답 및 해설"
+        gradeBadge={`중${test.grade - 6}`}
+        isFirstPage={false}
+        totalScore={test.questionCount * 4}
+        problemCount={test.questionCount}
+        pageInfo={`${pageIdx + 1} / ${totalPages}`}
+      />
+
+      {/* 정답표 */}
+      <div className="mb-4">
+        <h3 className="text-[12px] font-bold text-text-primary mb-2 pb-1 border-b-2 border-slate-800">정답표</h3>
+        <div className="grid gap-x-4 gap-y-1 text-[10px]" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+          {allQuestions.map((q, idx) => (
+            <div key={q.id} className="flex items-center gap-1">
+              <span className="text-text-secondary w-5 text-right shrink-0">{idx + 1}.</span>
+              <span className="font-bold text-text-primary">
+                <MathRenderer content={q.answer} className="inline [&_p]:inline [&_.katex]:text-[10px]" />
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 해설 */}
+      {hasAnyExplanation && (
+        <div>
+          <h3 className="text-[12px] font-bold text-text-primary mb-2 pb-1 border-b-2 border-slate-800">해설</h3>
+          <div style={{ columns: 2, columnGap: '2rem', columnRule: '1px solid #cbd5e1' }}>
+            {allQuestions.map((q, idx) => {
+              if (!q.explanation) return null;
+              return (
+                <div key={q.id} className="break-inside-avoid mb-2 pb-1.5 border-b border-slate-100">
+                  <div className="flex items-baseline gap-1 mb-0.5">
+                    <span className="text-[10px] font-bold text-text-primary shrink-0">{idx + 1}.</span>
+                    <span className="text-[9px] text-blue-600 font-semibold">
+                      정답: <MathRenderer content={q.answer} className="inline [&_p]:inline [&_.katex]:text-[9px]" />
+                    </span>
+                  </div>
+                  <div className="ml-[16px] text-[9.5px] text-text-secondary leading-[1.6]">
+                    <MathRenderer content={q.explanation} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="mt-auto pt-1 text-center text-[10px] text-slate-400">
+        — {pageIdx + 1} / {totalPages} —
+      </div>
     </div>
   );
 }
@@ -384,7 +438,7 @@ export default function LevelTestPage() {
                 <div className="flex items-center gap-3">
                   <button onClick={() => setShowPreview(false)} className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary"><ArrowLeft className="w-4 h-4" />돌아가기</button>
                   <span className="text-sm font-bold text-text-primary">{selectedTest.title}</span>
-                  <span className="text-xs text-text-secondary">{pages.length}페이지</span>
+                  <span className="text-xs text-text-secondary">{pages.length + (showAnswers ? 1 : 0)}페이지</span>
                 </div>
               }
               extraControls={
@@ -401,21 +455,45 @@ export default function LevelTestPage() {
               <>
                 <div ref={galleryRef} className="flex-1 overflow-x-auto overflow-y-auto p-2.5 bg-slate-100 print:hidden">
                   <div className="flex gap-3 h-full items-start">
-                    {pages.map((page, pageIdx) => (
-                      <A4Page key={pageIdx} scale={scale}>
-                        <PrintablePage pageIdx={pageIdx} page={page} totalPages={pages.length} globalOffset={pages.slice(0, pageIdx).reduce((sum, p) => sum + p.length, 0)}
-                          test={selectedTest} allQuestions={sortedQuestions} showAnswers={showAnswers} isLastPage={pageIdx === pages.length - 1} />
-                      </A4Page>
-                    ))}
+                    {(() => {
+                      const totalPages = pages.length + (showAnswers ? 1 : 0);
+                      return (
+                        <>
+                          {pages.map((page, pageIdx) => (
+                            <A4Page key={pageIdx} scale={scale}>
+                              <PrintablePage pageIdx={pageIdx} page={page} totalPages={totalPages} globalOffset={pages.slice(0, pageIdx).reduce((sum, p) => sum + p.length, 0)}
+                                test={selectedTest} showAnswers={showAnswers} />
+                            </A4Page>
+                          ))}
+                          {showAnswers && (
+                            <A4Page key="answers" scale={scale}>
+                              <AnswerPage test={selectedTest} allQuestions={sortedQuestions} pageIdx={pages.length} totalPages={totalPages} />
+                            </A4Page>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
                 <div className="hidden print:block">
-                  {pages.map((page, pageIdx) => (
-                    <A4PrintPage key={pageIdx}>
-                      <PrintablePage pageIdx={pageIdx} page={page} totalPages={pages.length} globalOffset={pages.slice(0, pageIdx).reduce((sum, p) => sum + p.length, 0)}
-                        test={selectedTest} allQuestions={sortedQuestions} showAnswers={showAnswers} isLastPage={pageIdx === pages.length - 1} />
-                    </A4PrintPage>
-                  ))}
+                  {(() => {
+                    const totalPages = pages.length + (showAnswers ? 1 : 0);
+                    return (
+                      <>
+                        {pages.map((page, pageIdx) => (
+                          <A4PrintPage key={pageIdx}>
+                            <PrintablePage pageIdx={pageIdx} page={page} totalPages={totalPages} globalOffset={pages.slice(0, pageIdx).reduce((sum, p) => sum + p.length, 0)}
+                              test={selectedTest} showAnswers={showAnswers} />
+                          </A4PrintPage>
+                        ))}
+                        {showAnswers && (
+                          <A4PrintPage key="answers">
+                            <AnswerPage test={selectedTest} allQuestions={sortedQuestions} pageIdx={pages.length} totalPages={totalPages} />
+                          </A4PrintPage>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               </>
             )}

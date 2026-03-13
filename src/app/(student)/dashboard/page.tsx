@@ -27,7 +27,7 @@ export default async function StudentDashboard() {
 
   const completedConcepts = await prisma.learningProgress.groupBy({
     by: ['conceptId'],
-    where: { userId: user.id, stage: 'BLANK_PAGE', completed: true },
+    where: { userId: user.id, stage: 'BLANK_FULL', completed: true },
   });
 
   const totalConcepts = await prisma.concept.count({
@@ -46,7 +46,8 @@ export default async function StudentDashboard() {
     READING: 'Stage 1 - 개념 읽기',
     BLANK_EASY: 'Stage 2 - 빈칸 채우기 (쉬움)',
     BLANK_HARD: 'Stage 3 - 빈칸 채우기 (어려움)',
-    BLANK_PAGE: 'Stage 4 - 백지 쓰기',
+    BLANK_FULL: 'Stage 4 - 통문장 암기',
+    BLANK_PAGE: 'Stage 4 - 통문장 암기',
   };
 
   // Today's homework

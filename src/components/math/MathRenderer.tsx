@@ -54,7 +54,7 @@ export function MathRenderer({ content, className = '' }: MathRendererProps) {
       `}</style>
       <ReactMarkdown
         remarkPlugins={[remarkMath, remarkBreaks]}
-        rehypePlugins={[rehypeRaw, rehypeKatex]}
+        rehypePlugins={[rehypeRaw, [rehypeKatex, { strict: false }]]}
         components={{
           p: ({ children, ...props }) => {
             // 자식이 img만인 경우 div로 감싸기 (블록 레이아웃)

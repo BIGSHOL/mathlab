@@ -22,10 +22,10 @@ const DOMAIN_HEX: Record<LevelTestDomain, string> = {
  */
 export function RadarChart({ data, size = 260 }: RadarChartProps) {
   // 라벨 여백 확보: viewBox를 확장하여 잘림 방지
-  const vbSize = size + 80;
+  const vbSize = size + 110;
   const cx = vbSize / 2;
   const cy = vbSize / 2;
-  const radius = size * 0.28;
+  const radius = size * 0.27;
   const labelOffset = radius + 16;
 
   // 4축 각도: 상(0°), 우(90°), 하(180°), 좌(270°)

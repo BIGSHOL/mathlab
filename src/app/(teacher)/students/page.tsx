@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
+import { MathRenderer } from '@/components/math/MathRenderer';
 import { useAuth } from '@/hooks/useAuth';
 import { useSearchParams } from 'next/navigation';
 import { CATEGORY_LABELS } from '@/lib/services/arithmetic-generator';
@@ -423,15 +424,15 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
                                     <div key={ans.problemIndex} className="bg-white rounded-sm border border-red-100 px-2.5 py-2">
                                       <div className="flex items-start justify-between gap-2">
                                         <div className="flex-1 min-w-0">
-                                          <div className="text-xs text-text-primary font-medium mb-1">
-                                            #{ans.problemIndex + 1}. {ans.content}
+                                          <div className="text-xs text-text-primary font-medium mb-1 [&_p]:inline [&_p]:m-0">
+                                            #{ans.problemIndex + 1}. <MathRenderer content={ans.content} />
                                           </div>
                                           <div className="flex items-center gap-3 text-[10px]">
-                                            <span className="text-red-500">
-                                              학생: <span className="font-semibold">{ans.selectedAnswer}</span>
+                                            <span className="text-red-500 [&_p]:inline [&_p]:m-0">
+                                              학생: <span className="font-semibold"><MathRenderer content={ans.selectedAnswer} /></span>
                                             </span>
-                                            <span className="text-emerald-600">
-                                              정답: <span className="font-semibold">{ans.correctAnswer}</span>
+                                            <span className="text-emerald-600 [&_p]:inline [&_p]:m-0">
+                                              정답: <span className="font-semibold"><MathRenderer content={ans.correctAnswer} /></span>
                                             </span>
                                           </div>
                                         </div>
@@ -633,15 +634,15 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
                             <div key={i} className="bg-white rounded-sm border border-red-100 px-2.5 py-2">
                               <div className="flex items-start justify-between gap-2">
                                 <div className="flex-1 min-w-0">
-                                  <div className="text-xs text-text-primary font-medium mb-1">
-                                    #{wa.problemIndex + 1}. {wa.content}
+                                  <div className="text-xs text-text-primary font-medium mb-1 [&_p]:inline [&_p]:m-0">
+                                    #{wa.problemIndex + 1}. <MathRenderer content={wa.content} />
                                   </div>
                                   <div className="flex items-center gap-3 text-[10px]">
-                                    <span className="text-red-500">
-                                      학생: <span className="font-semibold">{wa.selectedAnswer}</span>
+                                    <span className="text-red-500 [&_p]:inline [&_p]:m-0">
+                                      학생: <span className="font-semibold"><MathRenderer content={wa.selectedAnswer} /></span>
                                     </span>
-                                    <span className="text-emerald-600">
-                                      정답: <span className="font-semibold">{wa.correctAnswer}</span>
+                                    <span className="text-emerald-600 [&_p]:inline [&_p]:m-0">
+                                      정답: <span className="font-semibold"><MathRenderer content={wa.correctAnswer} /></span>
                                     </span>
                                   </div>
                                 </div>

@@ -355,11 +355,11 @@ export default function TestResultPage() {
                     <MathRenderer content={q.content.slice(0, 200)} />
                   </div>
                   <div className="text-xs text-text-secondary">
-                    내 답: <span className={ans.isCorrect ? 'text-emerald-600 font-medium' : 'text-red-600 font-medium'}>
-                      {ans.selectedAnswer}
+                    내 답: <span className={`${ans.isCorrect ? 'text-emerald-600 font-medium' : 'text-red-600 font-medium'} [&_p]:inline [&_p]:m-0`}>
+                      <MathRenderer content={ans.selectedAnswer} />
                     </span>
                     {!ans.isCorrect && (
-                      <> · 정답: <span className="text-emerald-600 font-medium">{q.answer}</span></>
+                      <> · 정답: <span className="text-emerald-600 font-medium [&_p]:inline [&_p]:m-0"><MathRenderer content={q.answer} /></span></>
                     )}
                   </div>
                   {!ans.isCorrect && (

@@ -31,14 +31,11 @@ export async function GET(request: NextRequest) {
         completedAt: { not: null },
       },
     },
-    include: {
-      attempt: {
-        select: {
-          testId: true,
-          completedAt: true,
-          test: { select: { title: true } },
-        },
-      },
+    select: {
+      questionId: true,
+      isCorrect: true,
+      timeSpentSeconds: true,
+      attemptId: true,
     },
   });
 

@@ -294,8 +294,8 @@ export default function WrongAnswersPage() {
                       <MathRenderer content={q.content.slice(0, 200)} />
                     </div>
                     <div className="text-xs text-text-secondary flex items-center gap-2 flex-wrap">
-                      학생 답: <span className="text-red-600 font-medium">{item.lastWrongAnswer}</span>
-                      · 정답: <span className="text-emerald-600 font-medium">{q.answer}</span>
+                      학생 답: <span className="text-red-600 font-medium [&_p]:inline [&_p]:m-0"><MathRenderer content={item.lastWrongAnswer} /></span>
+                      · 정답: <span className="text-emerald-600 font-medium [&_p]:inline [&_p]:m-0"><MathRenderer content={q.answer} /></span>
                       <span className="flex items-center gap-0.5"><Clock className="w-3 h-3" />{item.timeSpent}초</span>
                       {similar.length > 0 && (
                         <span className="text-primary font-semibold flex items-center gap-0.5">

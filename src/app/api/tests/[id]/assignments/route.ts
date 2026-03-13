@@ -62,5 +62,5 @@ export async function DELETE(
 
   await prisma.testAssignment.delete({ where: { id: assignmentId } });
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ data: { success: true } });
 }

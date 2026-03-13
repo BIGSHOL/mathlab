@@ -182,7 +182,7 @@ export function genPfExponent(level: ArithmeticLevel): GeneratedProblem {
   const other = PF_PRIMES.filter(x => x !== p)[rand(0, 2)];
   const n = Math.pow(p, exp) * other;
   return {
-    content: `$${n}$을 소인수분해할 때, $${p}$의 지수는 $${BOX}$`,
+    content: `$${n}$ 을 소인수분해할 때, $${p}$ 의 지수는 $${BOX}$`,
     answer: String(exp),
     choices: pfChoices(exp),
     category: 'pf_exponent', level,
@@ -272,7 +272,7 @@ export function genProportion(level: ArithmeticLevel): GeneratedProblem {
     const x = rand(2, level === 'hard' ? 8 : 5);
     const y = k * x;
     return {
-      content: `$y = ${k}x$일 때, $x = ${x}$이면 $y = ${BOX}$`,
+      content: `$y = ${k}x$ 일 때, $x = ${x}$ 이면 $y = ${BOX}$`,
       answer: String(y),
       choices: generateChoices(y),
       category: 'proportion', level,
@@ -283,7 +283,7 @@ export function genProportion(level: ArithmeticLevel): GeneratedProblem {
     const x = rand(2, level === 'hard' ? 8 : 5);
     const kVal = k * x;
     return {
-      content: `$y = \\dfrac{${kVal}}{x}$일 때, $x = ${x}$이면 $y = ${BOX}$`,
+      content: `$y = \\dfrac{${kVal}}{x}$ 일 때, $x = ${x}$ 이면 $y = ${BOX}$`,
       answer: String(k),
       choices: generateChoices(k),
       category: 'proportion', level,
@@ -294,7 +294,7 @@ export function genProportion(level: ArithmeticLevel): GeneratedProblem {
     const x = rand(2, 6);
     const y = k * x;
     return {
-      content: `정비례 $y=ax$에서 $x=${x}, y=${y}$이면 $a = ${BOX}$`,
+      content: `정비례 $y=ax$ 에서 $x=${x}, y=${y}$ 이면 $a = ${BOX}$`,
       answer: String(k),
       choices: generateChoices(k),
       category: 'proportion', level,
@@ -305,7 +305,7 @@ export function genProportion(level: ArithmeticLevel): GeneratedProblem {
     const x = rand(2, 7);
     const y = k * x;
     return {
-      content: `$y = ${k}x$일 때, $y = ${y}$이면 $x = ${BOX}$`,
+      content: `$y = ${k}x$ 일 때, $y = ${y}$ 이면 $x = ${BOX}$`,
       answer: String(x),
       choices: generateChoices(x),
       category: 'proportion', level,
@@ -315,7 +315,7 @@ export function genProportion(level: ArithmeticLevel): GeneratedProblem {
   const y = rand(2, 6);
   const k = x * y;
   return {
-    content: `반비례 $y=\\frac{k}{x}$에서 $x=${x}, y=${y}$이면 $k = ${BOX}$`,
+    content: `반비례 $y=\\frac{k}{x}$ 에서 $x=${x}, y=${y}$ 이면 $k = ${BOX}$`,
     answer: String(k),
     choices: generateChoices(k),
     category: 'proportion', level,
@@ -340,7 +340,7 @@ export function genQuadrant(level: ArithmeticLevel): GeneratedProblem {
     const quadrant = rand(1, 4);
     const [x, y] = makeCoords(quadrant);
     return {
-      content: `점 $(${x},\\ ${y})$는 제 $${BOX}$ 사분면`,
+      content: `점 $(${x},\\ ${y})$ 는 제 $${BOX}$ 사분면`,
       answer: String(quadrant),
       choices: shuffle(['1', '2', '3', '4']),
       category: 'quadrant', level,
@@ -353,7 +353,7 @@ export function genQuadrant(level: ArithmeticLevel): GeneratedProblem {
     const y = isXAxis ? 0 : v;
     const answer = isXAxis ? 'x' : 'y';
     return {
-      content: `점 $(${x},\\ ${y})$는 $${BOX}$축 위의 점`,
+      content: `점 $(${x},\\ ${y})$ 는 $${BOX}$ 축 위의 점`,
       answer,
       choices: shuffle(['x', 'y']),
       category: 'quadrant', level,
@@ -365,7 +365,7 @@ export function genQuadrant(level: ArithmeticLevel): GeneratedProblem {
     const nx = -x;
     const newQ = nx > 0 && y > 0 ? 1 : nx < 0 && y > 0 ? 2 : nx < 0 && y < 0 ? 3 : 4;
     return {
-      content: `점 $(${x},\\ ${y})$를 $y$축 대칭하면 제 $${BOX}$ 사분면`,
+      content: `점 $(${x},\\ ${y})$ 를 $y$ 축 대칭하면 제 $${BOX}$ 사분면`,
       answer: String(newQ),
       choices: shuffle(['1', '2', '3', '4']),
       category: 'quadrant', level,
@@ -376,7 +376,7 @@ export function genQuadrant(level: ArithmeticLevel): GeneratedProblem {
   const ny = -y;
   const newQ = x > 0 && ny > 0 ? 1 : x < 0 && ny > 0 ? 2 : x < 0 && ny < 0 ? 3 : 4;
   return {
-    content: `점 $(${x},\\ ${y})$를 $x$축 대칭하면 제 $${BOX}$ 사분면`,
+    content: `점 $(${x},\\ ${y})$ 를 $x$ 축 대칭하면 제 $${BOX}$ 사분면`,
     answer: String(newQ),
     choices: shuffle(['1', '2', '3', '4']),
     category: 'quadrant', level,
@@ -507,7 +507,7 @@ export function genPythagoras(level: ArithmeticLevel): GeneratedProblem {
   const known = values.filter(v => v !== -1);
   if (missing === 2) {
     return {
-      content: `직각삼각형 $a=${known[0]}$, $b=${known[1]}$일 때 $c = ${BOX}$`,
+      content: `직각삼각형 $a=${known[0]}$, $b=${known[1]}$ 일 때 $c = ${BOX}$`,
       answer: String(answer),
       choices: generateChoices(answer),
       category: 'pythagoras', level,
@@ -516,7 +516,7 @@ export function genPythagoras(level: ArithmeticLevel): GeneratedProblem {
   const otherLabel = missing === 0 ? 'a' : 'b';
   const knownLabel = missing === 0 ? 'b' : 'a';
   return {
-    content: `직각삼각형 $${knownLabel}=${known[0]}$, $c=${triple[2]}$일 때 $${otherLabel} = ${BOX}$`,
+    content: `직각삼각형 $${knownLabel}=${known[0]}$, $c=${triple[2]}$ 일 때 $${otherLabel} = ${BOX}$`,
     answer: String(answer),
     choices: generateChoices(answer),
     category: 'pythagoras', level,
@@ -531,7 +531,7 @@ export function genSimilarity(level: ArithmeticLevel): GeneratedProblem {
   const side = rand(2, 10) * ratio1;
   const answer = (side / ratio1) * ratio2;
   return {
-    content: `닮음비 $${ratio1}:${ratio2}$, 한 변 $${side}$cm일 때 대응변 $= ${BOX}\\text{cm}$`,
+    content: `닮음비 $${ratio1}:${ratio2}$, 한 변 $${side}$ cm 일 때 대응변 $= ${BOX}\\text{cm}$`,
     answer: String(answer),
     choices: generateChoices(answer),
     category: 'similarity', level,
@@ -719,7 +719,7 @@ export function genInscribedAngle(level: ArithmeticLevel): GeneratedProblem {
     const central = rand(2, 89) * 2;
     const answer = central / 2;
     return {
-      content: `중심각 $${central}°$일 때 원주각 $= ${BOX}°$`,
+      content: `중심각 $${central}°$ 일 때 원주각 $= ${BOX}°$`,
       answer: String(answer),
       choices: generateChoices(answer),
       category: 'inscribed_angle', level,
@@ -729,7 +729,7 @@ export function genInscribedAngle(level: ArithmeticLevel): GeneratedProblem {
     const inscribed = rand(10, 85);
     const answer = inscribed * 2;
     return {
-      content: `원주각 $${inscribed}°$일 때 중심각 $= ${BOX}°$`,
+      content: `원주각 $${inscribed}°$ 일 때 중심각 $= ${BOX}°$`,
       answer: String(answer),
       choices: generateChoices(answer),
       category: 'inscribed_angle', level,
@@ -738,7 +738,7 @@ export function genInscribedAngle(level: ArithmeticLevel): GeneratedProblem {
   const angle = rand(30, 150);
   const answer = 180 - angle;
   return {
-    content: `원 내접 사각형에서 한 각 $${angle}°$일 때 대각 $= ${BOX}°$`,
+    content: `원 내접 사각형에서 한 각 $${angle}°$ 일 때 대각 $= ${BOX}°$`,
     answer: String(answer),
     choices: generateChoices(answer),
     category: 'inscribed_angle', level,
@@ -754,7 +754,7 @@ export function genMedianCalc(level: ArithmeticLevel): GeneratedProblem {
   const sorted = [...nums].sort((a, b) => a - b);
   const median = sorted[Math.floor(n / 2)];
   return {
-    content: `$${nums.join(',\\ ')}$의 중앙값은 $${BOX}$`,
+    content: `$${nums.join(',\\ ')}$ 의 중앙값은 $${BOX}$`,
     answer: String(median),
     choices: generateChoices(median),
     category: 'median_calc', level,
@@ -814,7 +814,7 @@ export function genModeCalc(level: ArithmeticLevel): GeneratedProblem {
   }
   const shuffled = shuffle(nums);
   return {
-    content: `$${shuffled.join(',\\ ')}$의 최빈값은 $${BOX}$`,
+    content: `$${shuffled.join(',\\ ')}$ 의 최빈값은 $${BOX}$`,
     answer: String(modeVal),
     choices: generateChoices(modeVal),
     category: 'mode_calc', level,
@@ -842,7 +842,7 @@ export function genDeviationSum(level: ArithmeticLevel): GeneratedProblem {
   const answer = devs[hideIdx];
 
   return {
-    content: `평균 $${mean}$인 자료에서 편차가 $${knownDevs.join(',\\ ')}$이고 나머지 한 편차는 $${BOX}$`,
+    content: `평균 $${mean}$ 인 자료에서 편차가 $${knownDevs.join(',\\ ')}$ 이고 나머지 한 편차는 $${BOX}$`,
     answer: String(answer),
     choices: generateChoices(answer, 4, -20),
     category: 'deviation_sum', level,
@@ -869,7 +869,7 @@ export function genVarianceCalc(level: ArithmeticLevel): GeneratedProblem {
   const data = shuffle(devs.map(d => mean + d));
   const variance = devs.reduce((s, v) => s + v * v, 0) / devs.length;
   return {
-    content: `$${data.join(',\\ ')}$의 분산은 $${BOX}$`,
+    content: `$${data.join(',\\ ')}$ 의 분산은 $${BOX}$`,
     answer: String(variance),
     choices: generateChoices(variance),
     category: 'variance_calc', level,

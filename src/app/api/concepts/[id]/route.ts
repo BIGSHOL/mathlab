@@ -3,21 +3,13 @@ import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { updateConceptSchema } from '@/lib/schemas/concept';
 
-/** Resolve concept by conceptCode or cuid id */
+/** Resolve concept by conceptCode or cuid id (single query) */
 async function resolveConceptId(id: string): Promise<string | null> {
-  // Try conceptCode first (shorter, human-readable)
-  const byCode = await prisma.concept.findUnique({
-    where: { conceptCode: id },
+  const found = await prisma.concept.findFirst({
+    where: { OR: [{ conceptCode: id }, { id }] },
     select: { id: true },
   });
-  if (byCode) return byCode.id;
-
-  // Fall back to cuid id
-  const byId = await prisma.concept.findUnique({
-    where: { id },
-    select: { id: true },
-  });
-  return byId?.id ?? null;
+  return found?.id ?? null;
 }
 
 // GET /api/concepts/:id — id can be conceptCode or cuid

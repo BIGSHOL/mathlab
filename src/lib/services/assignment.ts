@@ -50,7 +50,9 @@ export async function getMyAssignments(studentId: string) {
     where: { studentId },
     include: {
       test: {
-        include: {
+        select: {
+          id: true, seq: true, title: true, grade: true, testType: true,
+          questionCount: true, timeLimitMin: true, defaultDueDate: true,
           creator: { select: { name: true } },
           _count: { select: { attempts: true } },
         },

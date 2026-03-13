@@ -26,15 +26,19 @@ import { DOMAIN_LABELS, DOMAIN_COLORS, LEVEL_COLORS } from '@/types';
 import type { LevelTestDomain } from '@/types';
 
 const DOMAIN_ORDER: LevelTestDomain[] = ['CALCULATION', 'UNDERSTANDING', 'PROBLEM_SOLVING', 'REASONING'];
-const LEVEL_ORDER = ['심화', '상', '중', '기초', '기초보충'];
+const LEVEL_ORDER = ['1등급', '2등급', '3등급', '4등급', '5등급', '6등급', '7등급', '8등급', '9등급'];
 
 // 인라인 스타일용 레벨 바 색상 (Tailwind 퍼지 문제 방지)
 const LEVEL_BAR_COLORS: Record<string, string> = {
-  '심화': '#8b5cf6',
-  '상': '#3b82f6',
-  '중': '#22c55e',
-  '기초': '#eab308',
-  '기초보충': '#ef4444',
+  '1등급': '#7c3aed',
+  '2등급': '#6366f1',
+  '3등급': '#3b82f6',
+  '4등급': '#0ea5e9',
+  '5등급': '#22c55e',
+  '6등급': '#84cc16',
+  '7등급': '#eab308',
+  '8등급': '#f97316',
+  '9등급': '#ef4444',
 };
 
 interface DomainScoreData {

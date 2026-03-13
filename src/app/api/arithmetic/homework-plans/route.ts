@@ -77,7 +77,11 @@ export async function GET() {
 
   const plans = await prisma.arithmeticHomeworkPlan.findMany({
     where,
-    include: {
+    select: {
+      id: true, seq: true, title: true, totalDays: true, dailyCount: true,
+      categories: true, level: true, isActive: true, createdAt: true,
+      startDate: true, progressionMode: true, passingScore: true,
+      retryOnFail: true, retryMode: true, maxRetries: true,
       _count: { select: { enrollments: true, attempts: true } },
       creator: { select: { name: true } },
     },

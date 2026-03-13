@@ -125,24 +125,24 @@ async function getStudentStats(userId: string) {
     }),
   ]);
 
-  // 집계
-  const allTests = await prisma.testAttempt.aggregate({
-    where: { studentId: userId, completedAt: { not: null } },
-    _count: true,
-    _avg: { score: true },
-  });
-
-  const allArithmetic = await prisma.arithmeticAttempt.aggregate({
-    where: { studentId: userId, completedAt: { not: null } },
-    _count: true,
-    _sum: { correctCount: true, problemCount: true, totalTimeSeconds: true },
-  });
-
-  const allLearning = await prisma.learningProgress.groupBy({
-    by: ['completed'],
-    where: { userId },
-    _count: true,
-  });
+  // 집계 (위 Promise.all과 별도로 병렬 실행)
+  const [allTests, allArithmetic, allLearning] = await Promise.all([
+    prisma.testAttempt.aggregate({
+      where: { studentId: userId, completedAt: { not: null } },
+      _count: true,
+      _avg: { score: true },
+    }),
+    prisma.arithmeticAttempt.aggregate({
+      where: { studentId: userId, completedAt: { not: null } },
+      _count: true,
+      _sum: { correctCount: true, problemCount: true, totalTimeSeconds: true },
+    }),
+    prisma.learningProgress.groupBy({
+      by: ['completed'],
+      where: { userId },
+      _count: true,
+    }),
+  ]);
 
   const completedCount = allLearning.find((g) => g.completed)?._count ?? 0;
   const totalLearning = allLearning.reduce((sum, g) => sum + g._count, 0);
@@ -182,46 +182,46 @@ async function getTeacherStats(userId: string) {
     prisma.questionGenerationLog.count({ where: { teacherId: userId } }),
   ]);
 
-  const recentTests = await prisma.test.findMany({
-    where: { createdBy: userId },
-    select: {
-      id: true,
-      title: true,
-      grade: true,
-      questionCount: true,
-      createdAt: true,
-      _count: { select: { attempts: true, assignments: true } },
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 5,
-  });
-
-  const recentHomework = await prisma.arithmeticHomeworkPlan.findMany({
-    where: { createdBy: userId },
-    select: {
-      id: true,
-      title: true,
-      totalDays: true,
-      dailyCount: true,
-      isActive: true,
-      createdAt: true,
-      _count: { select: { enrollments: true } },
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 5,
-  });
-
-  const recentComments = await prisma.teacherComment.findMany({
-    where: { teacherId: userId },
-    select: {
-      month: true,
-      content: true,
-      createdAt: true,
-      student: { select: { name: true } },
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 5,
-  });
+  const [recentTests, recentHomework, recentComments] = await Promise.all([
+    prisma.test.findMany({
+      where: { createdBy: userId },
+      select: {
+        id: true,
+        title: true,
+        grade: true,
+        questionCount: true,
+        createdAt: true,
+        _count: { select: { attempts: true, assignments: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    }),
+    prisma.arithmeticHomeworkPlan.findMany({
+      where: { createdBy: userId },
+      select: {
+        id: true,
+        title: true,
+        totalDays: true,
+        dailyCount: true,
+        isActive: true,
+        createdAt: true,
+        _count: { select: { enrollments: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    }),
+    prisma.teacherComment.findMany({
+      where: { teacherId: userId },
+      select: {
+        month: true,
+        content: true,
+        createdAt: true,
+        student: { select: { name: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    }),
+  ]);
 
   return {
     type: 'teacher' as const,

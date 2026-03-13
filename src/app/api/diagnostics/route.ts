@@ -59,6 +59,7 @@ export async function GET() {
     where,
     select: {
       id: true,
+      seq: true,
       title: true,
       grade: true,
       testType: true,

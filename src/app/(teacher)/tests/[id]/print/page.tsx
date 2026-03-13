@@ -146,8 +146,8 @@ export default function PrintWorksheetPage() {
                     </div>
                   )}
                   {showAnswers && (
-                    <div className="mt-1 text-xs text-emerald-600 font-semibold print:text-[10px]">
-                      정답: {q.answer}
+                    <div className="mt-1 text-xs text-emerald-600 font-semibold print:text-[10px] [&_p]:inline [&_p]:m-0">
+                      정답: <MathRenderer content={q.answer} />
                     </div>
                   )}
                 </div>
@@ -163,7 +163,7 @@ export default function PrintWorksheetPage() {
             <div className="flex flex-wrap gap-3 text-xs print:text-[10px]">
               {test.questions.map((q, idx) => (
                 <span key={q.id} className="text-text-secondary">
-                  {idx + 1}. <span className="font-bold text-text-primary">{q.answer}</span>
+                  {idx + 1}. <span className="font-bold text-text-primary [&_p]:inline [&_p]:m-0"><MathRenderer content={q.answer} /></span>
                 </span>
               ))}
             </div>

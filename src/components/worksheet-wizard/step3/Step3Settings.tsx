@@ -348,7 +348,7 @@ function PrintPreview({ title, grade, questions, spacing, columns, showAnswerKey
           <div className="flex flex-wrap gap-2 text-[10px]">
             {questions.map((q, idx) => (
               <span key={q.id} className="text-text-secondary">
-                {idx + 1}. <span className="font-bold text-text-primary">{q.answer}</span>
+                {idx + 1}. <span className="font-bold text-text-primary [&_p]:inline [&_p]:m-0"><MathRenderer content={q.answer} /></span>
               </span>
             ))}
           </div>

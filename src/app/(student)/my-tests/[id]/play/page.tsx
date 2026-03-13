@@ -313,8 +313,8 @@ export default function TestPlayPage() {
                     <>
                       <XCircle className="w-5 h-5 text-red-600" />
                       <span className="font-bold text-red-700">오답</span>
-                      <span className="text-sm text-red-600">
-                        정답: {feedback.correctAnswer}
+                      <span className="text-sm text-red-600 [&_p]:inline [&_p]:m-0">
+                        정답: <MathRenderer content={feedback.correctAnswer} />
                       </span>
                     </>
                   )}

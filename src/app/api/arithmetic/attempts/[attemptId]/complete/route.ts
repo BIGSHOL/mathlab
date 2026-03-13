@@ -20,7 +20,7 @@ export async function POST(
 
   const attempt = await prisma.arithmeticAttempt.findUnique({
     where: { id: attemptId },
-    include: { answers: true },
+    include: { answers: { select: { pointsEarned: true } } },
   });
 
   if (!attempt || attempt.studentId !== currentUser.id) {
@@ -54,6 +54,7 @@ export async function POST(
 
     const profile = await tx.studentProfile.findUnique({
       where: { userId: currentUser!.id },
+      select: { totalXp: true, level: true },
     });
 
     if (profile) {

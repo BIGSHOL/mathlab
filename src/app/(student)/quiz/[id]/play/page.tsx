@@ -260,7 +260,7 @@ export default function QuizPlayPage() {
               <div className={`mt-4 p-3 rounded-sm text-center font-bold ${
                 feedback.isCorrect ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
               }`}>
-                {feedback.isCorrect ? '정답!' : `오답 (정답: ${feedback.correctAnswer})`}
+                {feedback.isCorrect ? '정답!' : <span className="[&_p]:inline [&_p]:m-0">오답 (정답: <MathRenderer content={feedback.correctAnswer} />)</span>}
               </div>
             )}
 

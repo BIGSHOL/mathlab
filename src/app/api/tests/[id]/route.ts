@@ -143,5 +143,5 @@ export async function DELETE(
 
   await prisma.test.delete({ where: { id: testId } });
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ data: { success: true } });
 }

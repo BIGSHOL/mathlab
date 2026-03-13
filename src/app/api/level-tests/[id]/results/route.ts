@@ -164,16 +164,11 @@ export async function POST(
   const diagSet = new Set(existingDiags.map((d) => d.attemptId));
 
   const unanalyzed = attempts.filter((a) => !diagSet.has(a.id));
-  let analyzed = 0;
 
-  for (const attempt of unanalyzed) {
-    try {
-      await analyzeLevelTest(attempt.id, attempt.studentId);
-      analyzed++;
-    } catch {
-      // Non-fatal
-    }
-  }
+  const settledResults = await Promise.allSettled(
+    unanalyzed.map((attempt) => analyzeLevelTest(attempt.id, attempt.studentId))
+  );
+  const analyzed = settledResults.filter((r) => r.status === 'fulfilled').length;
 
   return NextResponse.json({ data: { analyzed, total: unanalyzed.length } });
 }

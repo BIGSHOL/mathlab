@@ -57,28 +57,28 @@ export async function GET(request: NextRequest) {
 
   if (conceptId) {
     // 특정 개념의 선수/후행 관계 탐색
-    const prerequisites = await prisma.conceptPrerequisite.findMany({
-      where: { conceptId },
-      select: {
-        prerequisite: {
-          select: { id: true, conceptCode: true, title: true, grade: true },
+    const [prerequisites, dependents, concept] = await Promise.all([
+      prisma.conceptPrerequisite.findMany({
+        where: { conceptId },
+        select: {
+          prerequisite: {
+            select: { id: true, conceptCode: true, title: true, grade: true },
+          },
         },
-      },
-    });
-
-    const dependents = await prisma.conceptPrerequisite.findMany({
-      where: { prerequisiteId: conceptId },
-      select: {
-        concept: {
-          select: { id: true, conceptCode: true, title: true, grade: true },
+      }),
+      prisma.conceptPrerequisite.findMany({
+        where: { prerequisiteId: conceptId },
+        select: {
+          concept: {
+            select: { id: true, conceptCode: true, title: true, grade: true },
+          },
         },
-      },
-    });
-
-    const concept = await prisma.concept.findUnique({
-      where: { id: conceptId },
-      select: { id: true, conceptCode: true, title: true, grade: true },
-    });
+      }),
+      prisma.concept.findUnique({
+        where: { id: conceptId },
+        select: { id: true, conceptCode: true, title: true, grade: true },
+      }),
+    ]);
 
     if (!concept) {
       return NextResponse.json(

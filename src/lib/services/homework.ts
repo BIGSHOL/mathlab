@@ -184,31 +184,47 @@ export async function getTodayHomework(studentId: string): Promise<TodayHomework
     },
   });
 
-  const results: TodayHomework[] = [];
-
-  for (const enrollment of enrollments) {
-    const plan = enrollment.plan;
-    if (!plan.isActive) continue;
-
-    const dayIndex = computeDayIndex(plan.startDate);
-    if (dayIndex < 0 || dayIndex >= plan.totalDays) continue;
-
-    const allProblems = plan.dailyProblems as unknown as GeneratedProblem[][];
-    const todayProblems = allProblems[dayIndex];
-    if (!todayProblems || todayProblems.length === 0) continue;
-
-    const allAttempts = await prisma.arithmeticAttempt.findMany({
-      where: {
-        studentId,
-        homeworkPlanId: plan.id,
-        homeworkDayIndex: dayIndex,
-      },
-      select: { id: true, completedAt: true, score: true, correctCount: true, problemCount: true },
-      orderBy: { createdAt: 'desc' },
+  // 활성 플랜의 dayIndex 계산 및 필터링
+  const activePlans = enrollments
+    .filter((e) => e.plan.isActive)
+    .map((e) => {
+      const dayIndex = computeDayIndex(e.plan.startDate);
+      return { plan: e.plan, dayIndex };
+    })
+    .filter(({ plan, dayIndex }) => {
+      if (dayIndex < 0 || dayIndex >= plan.totalDays) return false;
+      const allProblems = plan.dailyProblems as unknown as GeneratedProblem[][];
+      const todayProblems = allProblems[dayIndex];
+      return todayProblems && todayProblems.length > 0;
     });
 
-    const latestAttempt = allAttempts[0] ?? null;
-    const completedAttempts = allAttempts.filter((a) => a.completedAt);
+  if (activePlans.length === 0) return [];
+
+  // 모든 플랜의 시도를 한번에 조회 (N+1 제거)
+  const planIds = activePlans.map((p) => p.plan.id);
+  const allFetchedAttempts = await prisma.arithmeticAttempt.findMany({
+    where: { studentId, homeworkPlanId: { in: planIds } },
+    select: { id: true, completedAt: true, score: true, correctCount: true, problemCount: true, homeworkPlanId: true, homeworkDayIndex: true, createdAt: true },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  // planId+dayIndex로 그룹화
+  const attemptMap = new Map<string, typeof allFetchedAttempts>();
+  for (const att of allFetchedAttempts) {
+    const key = `${att.homeworkPlanId}__${att.homeworkDayIndex}`;
+    const arr = attemptMap.get(key) ?? [];
+    arr.push(att);
+    attemptMap.set(key, arr);
+  }
+
+  const results: TodayHomework[] = [];
+
+  for (const { plan, dayIndex } of activePlans) {
+    const allProblems = plan.dailyProblems as unknown as GeneratedProblem[][];
+    const dayAttempts = attemptMap.get(`${plan.id}__${dayIndex}`) ?? [];
+
+    const latestAttempt = dayAttempts[0] ?? null;
+    const completedAttempts = dayAttempts.filter((a) => a.completedAt);
     const attemptCount = completedAttempts.length;
 
     const latestCompleted = completedAttempts[0];
@@ -250,10 +266,8 @@ export async function getTodayHomework(studentId: string): Promise<TodayHomework
     if (canAdvance) {
       const nextDay = findNextSession(allProblems, dayIndex + 1, plan.totalDays);
       if (nextDay !== null) {
-        const nextAttempt = await prisma.arithmeticAttempt.findFirst({
-          where: { studentId, homeworkPlanId: plan.id, homeworkDayIndex: nextDay },
-          select: { id: true, completedAt: true, score: true, correctCount: true, problemCount: true },
-        });
+        const nextDayAttempts = attemptMap.get(`${plan.id}__${nextDay}`) ?? [];
+        const nextAttempt = nextDayAttempts[0] ?? null;
         const nextStatus = nextAttempt?.completedAt ? 'COMPLETED' as const
           : nextAttempt ? 'IN_PROGRESS' as const
           : 'NOT_STARTED' as const;

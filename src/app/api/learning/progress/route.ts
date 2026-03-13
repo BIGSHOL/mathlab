@@ -17,6 +17,10 @@ export async function GET(request: NextRequest) {
 
   const progress = await prisma.learningProgress.findMany({
     where,
+    select: {
+      id: true, conceptId: true, stage: true, completed: true,
+      score: true, completedAt: true, startedAt: true, updatedAt: true, attempts: true,
+    },
     orderBy: { startedAt: 'asc' },
   });
 

@@ -73,6 +73,7 @@ export function EditableMathRenderer({
           html = katex.renderToString(match[4], {
             throwOnError: false,
             output: 'html',
+            strict: false,
           });
         } catch {
           html = `<span>${match[0]}</span>`;

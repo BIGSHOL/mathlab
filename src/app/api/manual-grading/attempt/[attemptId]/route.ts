@@ -34,6 +34,10 @@ export async function GET(
   const questionIds = attempt.test.questionIds as string[];
   const questions = await prisma.question.findMany({
     where: { id: { in: questionIds } },
+    select: {
+      id: true, content: true, choices: true, answer: true, explanation: true,
+      difficulty: true, chapter: true, section: true, questionNum: true, domain: true,
+    },
   });
   const orderedQuestions = questionIds
     .map((qid) => questions.find((q) => q.id === qid))

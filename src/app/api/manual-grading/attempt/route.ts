@@ -45,11 +45,18 @@ export async function POST(req: NextRequest) {
     teacherId: currentUser.id,
   });
 
-  // 시험 문제 목록도 함께 반환
-  const test = await prisma.test.findUniqueOrThrow({ where: { id: resolvedTestId } });
-  const questionIds = test.questionIds as string[];
+  // 시험 문제 목록도 함께 반환 (이미 조회한 resolvedTestId 재사용)
+  const testForQuestions = await prisma.test.findUniqueOrThrow({
+    where: { id: resolvedTestId },
+    select: { questionIds: true },
+  });
+  const questionIds = testForQuestions.questionIds as string[];
   const questions = await prisma.question.findMany({
     where: { id: { in: questionIds } },
+    select: {
+      id: true, content: true, choices: true, answer: true, explanation: true,
+      difficulty: true, chapter: true, section: true, questionNum: true, domain: true,
+    },
   });
   // questionIds 순서 유지
   const orderedQuestions = questionIds

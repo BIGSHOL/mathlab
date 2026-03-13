@@ -104,22 +104,19 @@ export async function PATCH(
     const nextQ = session.currentQ + 1;
     if (nextQ >= questionIds.length) {
       // Quiz ended — calculate ranks + update session (atomic)
-      await prisma.$transaction(async (tx) => {
-        const participants = await tx.quizParticipant.findMany({
-          where: { sessionId },
-          orderBy: { score: 'desc' },
-        });
-        for (let i = 0; i < participants.length; i++) {
-          await tx.quizParticipant.update({
-            where: { id: participants[i].id },
-            data: { rank: i + 1 },
-          });
-        }
-        await tx.quizSession.update({
+      const participants = await prisma.quizParticipant.findMany({
+        where: { sessionId },
+        orderBy: { score: 'desc' },
+      });
+      await prisma.$transaction([
+        ...participants.map((p, i) =>
+          prisma.quizParticipant.update({ where: { id: p.id }, data: { rank: i + 1 } })
+        ),
+        prisma.quizSession.update({
           where: { id: sessionId },
           data: { status: 'COMPLETED', endedAt: new Date(), currentQ: nextQ },
-        });
-      });
+        }),
+      ]);
     } else {
       await prisma.quizSession.update({
         where: { id: sessionId },
@@ -127,23 +124,20 @@ export async function PATCH(
       });
     }
   } else if (action === 'end') {
-    await prisma.$transaction(async (tx) => {
-      const participants = await tx.quizParticipant.findMany({
-        where: { sessionId },
-        orderBy: { score: 'desc' },
-      });
-      for (let i = 0; i < participants.length; i++) {
-        await tx.quizParticipant.update({
-          where: { id: participants[i].id },
-          data: { rank: i + 1 },
-        });
-      }
-      await tx.quizSession.update({
+    const participants = await prisma.quizParticipant.findMany({
+      where: { sessionId },
+      orderBy: { score: 'desc' },
+    });
+    await prisma.$transaction([
+      ...participants.map((p, i) =>
+        prisma.quizParticipant.update({ where: { id: p.id }, data: { rank: i + 1 } })
+      ),
+      prisma.quizSession.update({
         where: { id: sessionId },
         data: { status: 'COMPLETED', endedAt: new Date() },
-      });
-    });
+      }),
+    ]);
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ data: { success: true } });
 }
