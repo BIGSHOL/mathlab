@@ -18,10 +18,14 @@ import {
   Search,
   X,
   Filter,
+  BookOpen,
+  Calculator,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { CATEGORY_LABELS } from '@/lib/services/arithmetic-generator';
 import type { ArithmeticCategory } from '@/lib/services/arithmetic-generator';
+import ConceptHomeworkTab from '@/components/homework/ConceptHomeworkTab';
+import QuestionHomeworkTab from '@/components/homework/QuestionHomeworkTab';
 
 interface HomeworkPlan {
   id: string;
@@ -67,7 +71,10 @@ interface Student {
   role: string;
 }
 
+type HomeworkTab = 'arithmetic' | 'concept' | 'question';
+
 export default function HomeworkPage() {
+  const [activeTab, setActiveTab] = useState<HomeworkTab>('arithmetic');
   const [plans, setPlans] = useState<HomeworkPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'active'>('active');
@@ -289,7 +296,35 @@ export default function HomeworkPage() {
   const enrolledStudents = detailPlan?.enrollments?.map((e) => e.student) ?? [];
 
   return (
-    <div className="flex-1 flex min-h-0 w-full overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 w-full overflow-hidden">
+      {/* Tab Switcher */}
+      <div className="shrink-0 flex items-center gap-1 px-4 py-2 border-b border-slate-200 bg-white">
+        {([
+          { key: 'arithmetic' as const, label: '연산 숙제', icon: Calculator },
+          { key: 'concept' as const, label: '개념 숙제', icon: BookOpen },
+          { key: 'question' as const, label: '문제 숙제', icon: CalendarCheck },
+        ]).map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => setActiveTab(key)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              activeTab === key
+                ? 'bg-primary text-white'
+                : 'text-text-secondary hover:bg-slate-100'
+            }`}
+          >
+            <Icon className="w-4 h-4" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'concept' ? (
+        <ConceptHomeworkTab />
+      ) : activeTab === 'question' ? (
+        <QuestionHomeworkTab />
+      ) : (
+      <div className="flex-1 flex min-h-0 w-full overflow-hidden">
       {/* Left Panel */}
       <aside
         className={`shrink-0 border-r border-slate-200 bg-slate-50/30 flex flex-col transition-all duration-200 ${
@@ -781,6 +816,8 @@ export default function HomeworkPage() {
           </div>
         )}
       </main>
+    </div>
+      )}
     </div>
   );
 }

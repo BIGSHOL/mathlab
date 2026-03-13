@@ -19,7 +19,7 @@ async function findPort(start, max = start + 10) {
 const port = await findPort(3000);
 if (port !== 3000) console.log(`\x1b[33m⚠ 포트 3000 사용 중 → ${port}번으로 시작합니다\x1b[0m\n`);
 
-const child = spawn('npx', ['next', 'dev', '--turbopack', '-p', String(port)], {
+const child = spawn(`npx next dev --turbopack -p ${port}`, {
   stdio: 'inherit',
   shell: true,
 });

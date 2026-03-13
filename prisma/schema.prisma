@@ -47,6 +47,11 @@ model User {
   generationLogs     QuestionGenerationLog[]
   createdHomeworkPlans   ArithmeticHomeworkPlan[]        @relation("HomeworkPlanCreator")
   homeworkEnrollments    ArithmeticHomeworkEnrollment[]   @relation("HomeworkEnrollments")
+  createdConceptHomeworkPlans ConceptHomeworkPlan[]       @relation("ConceptHomeworkPlanCreator")
+  conceptHomeworkEnrollments  ConceptHomeworkEnrollment[] @relation("ConceptHomeworkEnrollments")
+  createdQuestionHomeworkPlans QuestionHomeworkPlan[]     @relation("QuestionHomeworkPlanCreator")
+  questionHomeworkEnrollments  QuestionHomeworkEnrollment[] @relation("QuestionHomeworkEnrollments")
+  questionHomeworkAttempts     QuestionHomeworkAttempt[]
 
   @@index([role])
 }
@@ -585,6 +590,98 @@ model ArithmeticHomeworkEnrollment {
   @@unique([planId, studentId])
   @@index([studentId])
   @@index([planId])
+}
+
+// FEAT: Concept Homework Plans
+model ConceptHomeworkPlan {
+  id            String   @id @default(cuid())
+  seq           Int      @unique @default(autoincrement())
+  title         String   @db.VarChar(200)
+  createdBy     String
+  startDate     DateTime @db.Date
+  totalDays     Int
+  dailyConcepts Json     // string[][] - 날짜별 개념 ID 배열
+  requiredStage Stage    @default(BLANK_FULL) // 완료로 인정할 최소 단계
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  creator     User                        @relation("ConceptHomeworkPlanCreator", fields: [createdBy], references: [id])
+  enrollments ConceptHomeworkEnrollment[]
+
+  @@index([createdBy])
+  @@index([isActive])
+  @@index([startDate])
+}
+
+model ConceptHomeworkEnrollment {
+  id         String   @id @default(cuid())
+  planId     String
+  studentId  String
+  enrolledAt DateTime @default(now())
+
+  plan    ConceptHomeworkPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  student User               @relation("ConceptHomeworkEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, studentId])
+  @@index([studentId])
+  @@index([planId])
+}
+
+// FEAT: Question Homework Plans (문제은행 숙제)
+model QuestionHomeworkPlan {
+  id              String   @id @default(cuid())
+  seq             Int      @unique @default(autoincrement())
+  title           String   @db.VarChar(200)
+  createdBy       String
+  startDate       DateTime @db.Date
+  totalDays       Int
+  dailyQuestions  Json     // string[][] - 날짜별 문제 ID 배열
+  passingScore    Int      @default(80)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  creator     User                          @relation("QuestionHomeworkPlanCreator", fields: [createdBy], references: [id])
+  enrollments QuestionHomeworkEnrollment[]
+  attempts    QuestionHomeworkAttempt[]
+
+  @@index([createdBy])
+  @@index([isActive])
+  @@index([startDate])
+}
+
+model QuestionHomeworkEnrollment {
+  id         String   @id @default(cuid())
+  planId     String
+  studentId  String
+  enrolledAt DateTime @default(now())
+
+  plan    QuestionHomeworkPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  student User                @relation("QuestionHomeworkEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, studentId])
+  @@index([studentId])
+  @@index([planId])
+}
+
+model QuestionHomeworkAttempt {
+  id           String    @id @default(cuid())
+  planId       String
+  studentId    String
+  dayIndex     Int
+  answers      Json      // { questionId: string, selectedAnswer: string, isCorrect: boolean }[]
+  correctCount Int       @default(0)
+  totalCount   Int       @default(0)
+  score        Int       @default(0) // 정답률 %
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  plan    QuestionHomeworkPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  student User               @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([planId, studentId, dayIndex])
+  @@index([studentId])
 }
 
 // FEAT: Quiz Answer Detail Log

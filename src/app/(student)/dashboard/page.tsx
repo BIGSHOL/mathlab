@@ -9,6 +9,7 @@ import { prisma } from '@/lib/db';
 import { redirect } from 'next/navigation';
 import { xpToNextLevel } from '@/lib/utils/xp';
 import { getTodayHomework } from '@/lib/services/homework';
+import { getTodayConceptHomework } from '@/lib/services/concept-homework';
 
 export default async function StudentDashboard() {
   const user = await getCurrentUser();
@@ -54,14 +55,20 @@ export default async function StudentDashboard() {
   const todayHomework = await getTodayHomework(user.id);
   const pendingHomework = todayHomework.filter((h) => h.status !== 'COMPLETED');
 
+  // Today's concept homework
+  const todayConceptHw = await getTodayConceptHomework(user.id);
+  const pendingConceptHw = todayConceptHw.filter((hw) =>
+    hw.concepts.some((c) => !c.allCompleted)
+  );
+
   const completedCount = completedConcepts.length;
   const progressPercent = totalConcepts > 0 ? Math.round((completedCount / totalConcepts) * 100) : 0;
 
   return (
     <div className="px-4 md:px-10 py-8 max-w-[1200px] mx-auto w-full">
-      {/* Homework banner */}
+      {/* Homework banners */}
       {pendingHomework.length > 0 && (
-        <Link href="/practice/arithmetic/homework" className="block mb-6">
+        <Link href="/practice/arithmetic/homework" className="block mb-4">
           <div className="bg-gradient-to-r from-indigo-500 to-violet-500 rounded-sm p-4 text-white hover:from-indigo-600 hover:to-violet-600 transition-colors">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -81,6 +88,46 @@ export default async function StudentDashboard() {
             </div>
           </div>
         </Link>
+      )}
+
+      {pendingConceptHw.length > 0 && (
+        <div className="mb-6">
+          {pendingConceptHw.map((hw) => {
+            const pending = hw.concepts.filter((c) => !c.allCompleted);
+            const firstConcept = pending[0];
+            return (
+              <Link key={hw.planId} href={firstConcept ? `/concepts/${firstConcept.id}` : '/subjects'} className="block mb-2 last:mb-0">
+                <div className="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-sm p-4 text-white hover:from-emerald-600 hover:to-teal-600 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <BookOpen className="w-8 h-8 opacity-90" />
+                      <div>
+                        <p className="text-xs font-medium opacity-80">오늘의 개념 숙제 · {hw.dayLabel}</p>
+                        <p className="font-bold">
+                          {hw.planTitle} · {pending.length}개 남음
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {hw.concepts.map((c) => (
+                        <div key={c.id} className="flex gap-0.5">
+                          {c.stages.map((s, i) => (
+                            <div
+                              key={i}
+                              className={`w-2 h-2 rounded-sm ${
+                                s.completed ? 'bg-white' : 'bg-white/30'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       )}
 
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
