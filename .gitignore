@@ -47,7 +47,6 @@ prisma/migrations/
 # IDE
 .idea
 .vscode
-node_modules
 
 # claude
 .claude/
@@ -65,5 +64,3 @@ __pycache__/
 # Data files (PDFs, textbooks, etc.)
 /data/
 !src/lib/data/
-
-.vercel
