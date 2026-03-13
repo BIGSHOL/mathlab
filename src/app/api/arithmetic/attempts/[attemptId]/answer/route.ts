@@ -70,19 +70,20 @@ export async function POST(
         selectedAnswer: String(selectedAnswer),
         correctAnswer: String(correctAnswer),
         isCorrect,
-        timeSpentSeconds: timeSpentSeconds || 0,
+        timeSpentSeconds: Math.max(0, Math.min(Math.round(Number(timeSpentSeconds) || 0), 3600)),
         comboCount: newCombo,
         pointsEarned,
       },
     });
 
+    const safeTime = Math.max(0, Math.min(Math.round(Number(timeSpentSeconds) || 0), 3600));
     await tx.arithmeticAttempt.update({
       where: { id: attemptId },
       data: {
         score: { increment: pointsEarned },
         correctCount: isCorrect ? { increment: 1 } : undefined,
         comboMax: newCombo > attempt.comboMax ? newCombo : undefined,
-        totalTimeSeconds: { increment: timeSpentSeconds || 0 },
+        totalTimeSeconds: { increment: safeTime },
       },
     });
   });

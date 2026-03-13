@@ -30,9 +30,12 @@ export function classifyAnswer(params: {
     return { status: 'conceptWeak', ...STATUS_MAP.conceptWeak };
   }
 
-  // 기본 난이도에서 충분한 시간을 들이고도 오답 → 계산 실수 가능성
-  if (difficulty === 'BASIC' && timeSpentSeconds >= 15) {
-    return { status: 'calcError', ...STATUS_MAP.calcError };
+  // 기본 난이도: 10~14초 오답 → 개념 부족 (쉬운 문제를 빠르게 틀림)
+  // 기본 난이도: 15초 이상 오답 → 계산 실수 (충분히 시도했으나 계산에서 실수)
+  if (difficulty === 'BASIC') {
+    return timeSpentSeconds >= 15
+      ? { status: 'calcError', ...STATUS_MAP.calcError }
+      : { status: 'conceptWeak', ...STATUS_MAP.conceptWeak };
   }
 
   // 중간 난이도 이상에서 빠르게(10~20초) 오답 → 개념 부족

@@ -182,6 +182,14 @@ export function ReportQuestionDetail({
 }
 
 function formatSeconds(sec: number): string {
+  if (sec <= 0) return '-';
   if (sec < 60) return `${sec}초`;
-  return `${Math.floor(sec / 60)}분 ${sec % 60}초`;
+  const min = Math.floor(sec / 60);
+  const rem = sec % 60;
+  if (min >= 60) {
+    const hr = Math.floor(min / 60);
+    const rm = min % 60;
+    return rm > 0 ? `${hr}시간 ${rm}분` : `${hr}시간`;
+  }
+  return rem > 0 ? `${min}분 ${rem}초` : `${min}분`;
 }

@@ -452,11 +452,12 @@ model QuizSession {
   hostId      String
   questionIds Json                          // String[]
   status      QuizStatus @default(WAITING)
-  currentQ    Int        @default(0)
-  joinCode    String     @unique @db.VarChar(6)
-  startedAt   DateTime?
-  endedAt     DateTime?
-  createdAt   DateTime   @default(now())
+  currentQ          Int        @default(0)
+  joinCode          String     @unique @db.VarChar(6)
+  startedAt         DateTime?
+  endedAt           DateTime?
+  questionChangedAt DateTime?              // 문제 전환 시각 (클라이언트 시간 보정용)
+  createdAt         DateTime   @default(now())
 
   participants QuizParticipant[]
 

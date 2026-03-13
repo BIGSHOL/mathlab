@@ -57,7 +57,14 @@ export default function QuizPlayPage() {
         // Reset state when question changes
         if (json.data.currentQ !== lastQuestionRef.current) {
           lastQuestionRef.current = json.data.currentQ;
-          questionStartRef.current = Date.now();
+          // 서버의 문제 전환 시각이 있으면 폴링 지연 보정
+          const changedAt = json.data.questionChangedAt
+            ? new Date(json.data.questionChangedAt).getTime()
+            : 0;
+          const serverOffset = changedAt > 0
+            ? Math.max(0, Date.now() - changedAt)
+            : 0;
+          questionStartRef.current = Date.now() - serverOffset;
           setSelectedAnswer('');
           setSubmitted(false);
           setFeedback(null);

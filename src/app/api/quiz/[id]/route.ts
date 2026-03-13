@@ -98,7 +98,7 @@ export async function PATCH(
   if (action === 'start') {
     await prisma.quizSession.update({
       where: { id: sessionId },
-      data: { status: 'ACTIVE', startedAt: new Date(), currentQ: 0 },
+      data: { status: 'ACTIVE', startedAt: new Date(), currentQ: 0, questionChangedAt: new Date() },
     });
   } else if (action === 'next') {
     const nextQ = session.currentQ + 1;
@@ -123,7 +123,7 @@ export async function PATCH(
     } else {
       await prisma.quizSession.update({
         where: { id: sessionId },
-        data: { currentQ: nextQ },
+        data: { currentQ: nextQ, questionChangedAt: new Date() },
       });
     }
   } else if (action === 'end') {

@@ -31,7 +31,7 @@ export async function POST(
       attemptId,
       questionId,
       selectedAnswer: String(selectedAnswer),
-      timeSpentSeconds: Math.max(0, Math.round(timeSpentSeconds)),
+      timeSpentSeconds: Math.max(0, Math.min(Math.round(timeSpentSeconds), 3600)),
       tabSwitchCount: tabSwitchCount ? Math.max(0, Number(tabSwitchCount)) : undefined,
     });
 

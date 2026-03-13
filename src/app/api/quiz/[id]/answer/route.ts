@@ -59,6 +59,7 @@ export async function POST(
   }
 
   const pointsEarned = isCorrect ? 10 : 0;
+  const safeTime = Math.max(0, Math.min(Math.round(Number(body.timeSpentSeconds) || 0), 3600));
 
   // 퀴즈 답변 상세 + 점수 업데이트 (트랜잭션)
   await prisma.$transaction(async (tx) => {
@@ -69,7 +70,7 @@ export async function POST(
         selectedAnswer: String(selectedAnswer),
         isCorrect,
         pointsEarned,
-        timeSpentSeconds: body.timeSpentSeconds || 0,
+        timeSpentSeconds: safeTime,
       },
       create: {
         participantId: participant.id,
@@ -79,7 +80,7 @@ export async function POST(
         correctAnswer: question.answer,
         isCorrect,
         pointsEarned,
-        timeSpentSeconds: body.timeSpentSeconds || 0,
+        timeSpentSeconds: safeTime,
       },
     });
 
