@@ -1,0 +1,100 @@
+import { CoordinatePlaneParams } from '../types';
+import { svgWrap, line, text, circle, arrowHead, COLORS } from '../shared/svg-utils';
+
+/** 좌표평면 SVG 생성 */
+export function renderCoordinatePlane(params: CoordinatePlaneParams): string {
+  const { xRange, yRange, gridStep = 1, points = [], lines: lineSegments = [] } = params;
+  const [xMin, xMax] = xRange;
+  const [yMin, yMax] = yRange;
+
+  const cellSize = 30;
+  const xCells = Math.round((xMax - xMin) / gridStep);
+  const yCells = Math.round((yMax - yMin) / gridStep);
+  const gridW = xCells * cellSize;
+  const gridH = yCells * cellSize;
+  const pad = 30;
+  const totalW = gridW + pad * 2;
+  const totalH = gridH + pad * 2;
+
+  // 좌표 → 픽셀 변환
+  const toX = (v: number) => pad + ((v - xMin) / (xMax - xMin)) * gridW;
+  const toY = (v: number) => pad + ((yMax - v) / (yMax - yMin)) * gridH; // y축 반전
+
+  const parts: string[] = [];
+
+  // 격자
+  for (let i = 0; i <= xCells; i++) {
+    const x = pad + i * cellSize;
+    parts.push(line(x, pad, x, pad + gridH, { stroke: '#E5E7EB', strokeWidth: 0.5 }));
+  }
+  for (let i = 0; i <= yCells; i++) {
+    const y = pad + i * cellSize;
+    parts.push(line(pad, y, pad + gridW, y, { stroke: '#E5E7EB', strokeWidth: 0.5 }));
+  }
+
+  // x축, y축
+  const originX = toX(0);
+  const originY = toY(0);
+  const axisColor = '#333';
+
+  // x축
+  if (yMin <= 0 && yMax >= 0) {
+    parts.push(line(pad - 10, originY, pad + gridW + 15, originY, { stroke: axisColor, strokeWidth: 1.5 }));
+    parts.push(arrowHead(pad + gridW + 15, originY, 0, 6));
+    parts.push(text(pad + gridW + 20, originY, 'x', { fontSize: 13, anchor: 'start', fontWeight: 'bold' }));
+  }
+  // y축
+  if (xMin <= 0 && xMax >= 0) {
+    parts.push(line(originX, pad + gridH + 10, originX, pad - 15, { stroke: axisColor, strokeWidth: 1.5 }));
+    parts.push(arrowHead(originX, pad - 15, -90, 6));
+    parts.push(text(originX, pad - 20, 'y', { fontSize: 13, fontWeight: 'bold' }));
+  }
+
+  // 축 눈금 라벨
+  for (let v = xMin; v <= xMax; v += gridStep) {
+    if (v === 0) continue;
+    const x = toX(v);
+    if (yMin <= 0 && yMax >= 0) {
+      parts.push(line(x, originY - 3, x, originY + 3, { stroke: axisColor }));
+    }
+    parts.push(text(x, (yMin <= 0 && yMax >= 0 ? originY : pad + gridH) + 16, v.toString(), { fontSize: 10 }));
+  }
+  for (let v = yMin; v <= yMax; v += gridStep) {
+    if (v === 0) continue;
+    const y = toY(v);
+    if (xMin <= 0 && xMax >= 0) {
+      parts.push(line(originX - 3, y, originX + 3, y, { stroke: axisColor }));
+    }
+    parts.push(text((xMin <= 0 && xMax >= 0 ? originX : pad) - 14, y, v.toString(), { fontSize: 10 }));
+  }
+  // 원점 O
+  if (xMin <= 0 && xMax >= 0 && yMin <= 0 && yMax >= 0) {
+    parts.push(text(originX - 12, originY + 14, 'O', { fontSize: 11, fontWeight: 'bold' }));
+  }
+
+  // 직선/선분
+  const lineColors = [COLORS.primary, COLORS.red, COLORS.green, COLORS.purple];
+  lineSegments.forEach((seg, i) => {
+    const color = seg.color || lineColors[i % lineColors.length];
+    const dash = seg.style === 'dashed' ? '6,4' : seg.style === 'dotted' ? '2,3' : undefined;
+    for (let j = 0; j < seg.points.length - 1; j++) {
+      const p1 = seg.points[j];
+      const p2 = seg.points[j + 1];
+      parts.push(line(toX(p1.x), toY(p1.y), toX(p2.x), toY(p2.y), {
+        stroke: color, strokeWidth: 2, dashArray: dash,
+      }));
+    }
+  });
+
+  // 점
+  points.forEach((p) => {
+    const px = toX(p.x);
+    const py = toY(p.y);
+    parts.push(circle(px, py, 4, { fill: COLORS.red, stroke: COLORS.red }));
+    if (p.label) {
+      parts.push(text(px + 10, py - 10, p.label, { fontSize: 11, anchor: 'start', fontWeight: 'bold', fill: COLORS.red }));
+    }
+  });
+
+  return svgWrap(parts.join('\n    '), totalW, totalH);
+}

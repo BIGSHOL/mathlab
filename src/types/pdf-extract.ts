@@ -1,5 +1,13 @@
 import type { QuestionDifficulty, QuestionType } from './index';
 
+/** SVG 다이어그램 구조화 데이터 */
+export interface DiagramData {
+  type: 'number_line' | 'fraction_circle' | 'fraction_rect' | 'place_value' | 'dot_array'
+    | 'flow_chart' | 'coordinate_plane' | 'circle' | 'triangle' | 'quadrilateral'
+    | 'function_graph' | 'venn_diagram' | 'regular_polygon';
+  params: Record<string, unknown>;
+}
+
 /** Gemini가 반환하는 이미지/도형 바운딩 박스 (정규화 좌표 0~1000) */
 export interface ImageBoundingBox {
   /** [y_min, x_min, y_max, x_max] 정규화 좌표 (0~1000) */
@@ -36,6 +44,9 @@ export interface ExtractedProblem {
   // 이미지/도형 크롭
   imageBboxes?: ImageBoundingBox[];
   croppedImages?: CroppedImage[];
+
+  // SVG 다이어그램 (AI 구조화 데이터)
+  diagrams?: DiagramData[];
 }
 
 /** PDF 페이지 정보 */
@@ -49,6 +60,7 @@ export interface PdfExtractProgress {
   done: number;
   total: number;
   currentPage?: number;
+  skipped?: number;
 }
 
 /** AI 추출 API 요청 */

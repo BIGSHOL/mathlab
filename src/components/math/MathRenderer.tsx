@@ -36,11 +36,31 @@ export function MathRenderer({ content, className = '' }: MathRendererProps) {
         /* 인라인 수식을 원자적 단위로 — 등호/답 부분이 줄 끝에서 분리되지 않도록 */
         .katex {
           display: inline-block;
+          font-size: 1.3em;
+        }
+        /* 분수의 분자/분모 크기를 일반 숫자와 동일하게 */
+        .katex .mfrac .mfrac-num .sizing,
+        .katex .mfrac .mfrac-den .sizing,
+        .katex .mfrac .frac-line ~ span .mord {
+          font-size: 1em;
+        }
+        .katex .mfrac .reset-textstyle.scriptstyle {
+          font-size: 1em;
         }
         .katex-display {
           overflow-x: auto;
           overflow-y: hidden;
           padding: 0.5em 0;
+        }
+        /* 세로셈(세로 연산) 스타일 */
+        .katex .arraycolsep {
+          width: 0.2em !important;
+        }
+        .katex .vertical-separator {
+          width: 0 !important;
+        }
+        .katex-display > .katex {
+          text-align: left;
         }
         /* 인쇄 시 수식이 너무 길면 크기 축소 */
         @media print {

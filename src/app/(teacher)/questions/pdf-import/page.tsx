@@ -100,11 +100,11 @@ function matchChapter(sectionHeader: string, selectedChapters: string[]): string
  */
 function autoWrapMath(text: string): string {
   if (!text) return text;
-  // $...$ 영역과 일반 텍스트를 분리
-  const parts = text.split(/(\$[^$]*\$)/g);
+  // $...$ 영역, 마크다운 이미지 ![...](...), 코드블록 ```...```을 보호
+  const parts = text.split(/(\$[^$]*\$|!\[[^\]]*\]\([^)]*\)|```[\s\S]*?```)/g);
   return parts
     .map((part, i) => {
-      // 홀수 인덱스 = $...$ 내부 → 그대로
+      // 홀수 인덱스 = 보호 영역 ($...$, 이미지, 코드블록) → 그대로
       if (i % 2 === 1) return part;
       // 일반 텍스트에서 숫자(2자리 이상 또는 소수점 포함)와 단독 변수를 $...$로 래핑
       return part
@@ -157,10 +157,26 @@ function replaceImagePlaceholders(
   return result;
 }
 
+/** SVG 다이어그램 플레이스홀더를 인라인 SVG data URL로 교체 */
+function replaceDiagramPlaceholders(
+  content: string,
+  diagrams: { svg: string; label: string }[]
+): string {
+  if (diagrams.length === 0) return content;
+  // SVG를 data URL로 변환하여 이미지로 삽입
+  let result = content;
+  for (let i = 0; i < diagrams.length; i++) {
+    const dataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(diagrams[i].svg)))}`;
+    const placeholder = diagrams.length === 1 ? /\[그림1?\]/ : `[그림${i + 1}]`;
+    result = result.replace(placeholder, `![${diagrams[i].label}](${dataUrl} "60% center")`);
+  }
+  return result;
+}
+
 // --- 상수 ---
 const MIDDLE_BOOK_CODES = ['1-1', '1-2', '2-1', '2-2', '3-1', '3-2'];
 const ELEMENTARY_BOOK_CODES = ['E3-1', 'E3-2', 'E4-1', 'E4-2', 'E5-1', 'E5-2', 'E6-1', 'E6-2'];
-const ALL_BOOK_CODES = [...MIDDLE_BOOK_CODES, ...ELEMENTARY_BOOK_CODES];
+
 
 const DIFFICULTY_OPTIONS: { value: QuestionDifficulty; label: string }[] = [
   { value: 'BASIC', label: '하' },
@@ -196,6 +212,8 @@ export default function PdfImportPage() {
   // Step 2: 페이지 선택
   const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set());
   const [rangeInput, setRangeInput] = useState('');
+  const [thumbPage, setThumbPage] = useState(1);
+  const THUMBS_PER_PAGE = 30;
 
   // Step 3: AI 추출 & 미리보기
   const [problems, setProblems] = useState<ExtractedProblem[]>([]);
@@ -333,16 +351,25 @@ export default function PdfImportPage() {
     const sortedPages = Array.from(selectedPages).sort((a, b) => a - b);
     setProgress({ done: 0, total: sortedPages.length });
 
-    const { renderPageForAI, cropImageFromPage } = await import('@/lib/utils/pdf-processor');
+    const { renderPageForAI, cropImageFromPage, isProblemPage, extractPageText } = await import('@/lib/utils/pdf-processor');
     const allProblems: ExtractedProblem[] = [];
     const allConcepts: ExtractedConcept[] = [];
+    let skippedCount = 0;
 
     // 페이지별 순차 처리 (각 API 호출은 1페이지)
     for (let i = 0; i < sortedPages.length; i++) {
       const pageNum = sortedPages[i];
-      setProgress({ done: i, total: sortedPages.length, currentPage: pageNum });
+      setProgress({ done: i, total: sortedPages.length, currentPage: pageNum, skipped: skippedCount });
 
       try {
+        // 텍스트 레이어로 문제 페이지 여부 사전 판별 (API 비용 절감)
+        const preText = await extractPageText(pdfDoc, pageNum);
+        if (!isProblemPage(preText)) {
+          console.log(`[pdf-import] p.${pageNum} 비문제 페이지 스킵`);
+          skippedCount++;
+          continue;
+        }
+
         // 이미지 + 텍스트 레이어 동시 추출 (하이브리드)
         const { imageBase64, textLayer } = await renderPageForAI(pdfDoc, pageNum);
 
@@ -376,14 +403,33 @@ export default function PdfImportPage() {
 
         for (const p of pageResults) {
           const images = Array.isArray(p.images) ? p.images : [];
+          const diagramDefs = Array.isArray(p.diagrams) ? p.diagrams : [];
           let contentText = p.boxItems?.length > 0
             ? embedBoxItems(p.content || '', p.boxItems)
             : p.content || '';
+
+          // SVG 다이어그램 생성 (우선) + 크롭 이미지 (폴백)
+          const svgResults: { svg: string; label: string }[] = [];
+          if (diagramDefs.length > 0) {
+            const { renderDiagram } = await import('@/lib/utils/svg-diagrams');
+            for (const diag of diagramDefs) {
+              try {
+                const svg = renderDiagram({ type: diag.type, params: diag.params || {} });
+                if (svg) {
+                  svgResults.push({ svg, label: diag.type });
+                }
+              } catch {
+                // SVG 생성 실패 시 크롭으로 폴백
+              }
+            }
+          }
 
           // 이미지 바운딩 박스가 있으면 크롭 → 업로드 → 플레이스홀더 교체
           const croppedImages: { url: string; label: string }[] = [];
           if (images.length > 0 && pdfDoc) {
             for (let imgIdx = 0; imgIdx < images.length; imgIdx++) {
+              // SVG가 이미 해당 인덱스를 커버하면 크롭 스킵
+              if (imgIdx < svgResults.length && svgResults[imgIdx]) continue;
               try {
                 const img = images[imgIdx];
                 const croppedDataUrl = await cropImageFromPage(pdfDoc, pageNum, img.box);
@@ -395,13 +441,18 @@ export default function PdfImportPage() {
                   const uploadJson = await uploadRes.json();
                   croppedImages.push({ url: uploadJson.data.url, label: img.label || '도형' });
                 }
-              } catch (cropErr) {
-                console.warn(`문제 ${p.questionNum} 이미지 ${imgIdx + 1} 크롭 실패:`, cropErr);
+              } catch {
+                // 크롭 실패 시 조용히 스킵 (바운딩 박스 부정확 등)
               }
             }
-            if (croppedImages.length > 0) {
-              contentText = replaceImagePlaceholders(contentText, croppedImages);
-            }
+          }
+
+          // 플레이스홀더 교체: SVG 우선, 크롭 폴백
+          if (svgResults.length > 0) {
+            contentText = replaceDiagramPlaceholders(contentText, svgResults);
+          }
+          if (croppedImages.length > 0) {
+            contentText = replaceImagePlaceholders(contentText, croppedImages);
           }
 
           allProblems.push({
@@ -420,6 +471,7 @@ export default function PdfImportPage() {
             type: mapType(p.problemType || '주관식'),
             imageBboxes: images.length > 0 ? images : undefined,
             croppedImages: croppedImages.length > 0 ? croppedImages : undefined,
+            diagrams: diagramDefs.length > 0 ? diagramDefs : undefined,
           });
         }
       } catch (err) {
@@ -429,7 +481,7 @@ export default function PdfImportPage() {
 
     setProblems(allProblems);
     setConcepts(allConcepts);
-    setProgress({ done: sortedPages.length, total: sortedPages.length });
+    setProgress({ done: sortedPages.length, total: sortedPages.length, skipped: skippedCount });
     setExtracting(false);
     if (allProblems.length === 0) {
       setError('추출된 문제가 없습니다. 다른 페이지를 선택해보세요.');
@@ -683,11 +735,16 @@ export default function PdfImportPage() {
                   onChange={(e) => { setBookCode(e.target.value); setChapters([]); }}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary"
                 >
-                  {ALL_BOOK_CODES.map((code) => (
-                    <option key={code} value={code}>
-                      {BOOK_LABELS[code] || code}
-                    </option>
-                  ))}
+                  <optgroup label="초등">
+                    {ELEMENTARY_BOOK_CODES.map((code) => (
+                      <option key={code} value={code}>{BOOK_LABELS[code] || code}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="중등">
+                    {MIDDLE_BOOK_CODES.map((code) => (
+                      <option key={code} value={code}>{BOOK_LABELS[code] || code}</option>
+                    ))}
+                  </optgroup>
                 </select>
               </div>
               <div>
@@ -856,43 +913,85 @@ export default function PdfImportPage() {
             </div>
           </Card>
 
-          {/* 썸네일 그리드 */}
-          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3 mb-6">
-            {pages.map((page) => {
-              const isSelected = selectedPages.has(page.pageNum);
-              return (
-                <div
-                  key={page.pageNum}
-                  onClick={() => togglePage(page.pageNum)}
-                  className={`cursor-pointer rounded-lg border-2 transition-all overflow-hidden ${
-                    isSelected
-                      ? 'border-primary ring-2 ring-primary/30 shadow-md'
-                      : 'border-slate-200 hover:border-slate-400'
-                  }`}
-                >
-                  {page.thumbnail ? (
-                    <img
-                      src={page.thumbnail}
-                      alt={`페이지 ${page.pageNum}`}
-                      className="w-full aspect-[3/4] object-cover"
-                      draggable={false}
-                    />
-                  ) : (
-                    <div className="w-full aspect-[3/4] bg-slate-100 flex items-center justify-center">
-                      <Loader2 className="w-4 h-4 text-slate-300 animate-spin" />
-                    </div>
-                  )}
-                  <div
-                    className={`text-center text-xs py-1 font-medium ${
-                      isSelected ? 'bg-primary text-white' : 'bg-slate-50 text-slate-600'
-                    }`}
-                  >
-                    p.{page.pageNum}
-                  </div>
+          {/* 썸네일 그리드 (페이지네이션) */}
+          {(() => {
+            const totalThumbPages = Math.ceil(pages.length / THUMBS_PER_PAGE);
+            const startIdx = (thumbPage - 1) * THUMBS_PER_PAGE;
+            const visiblePages = pages.slice(startIdx, startIdx + THUMBS_PER_PAGE);
+            return (
+              <>
+                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3 mb-4">
+                  {visiblePages.map((page) => {
+                    const isSelected = selectedPages.has(page.pageNum);
+                    return (
+                      <div
+                        key={page.pageNum}
+                        onClick={() => togglePage(page.pageNum)}
+                        className={`cursor-pointer rounded-lg border-2 transition-all overflow-hidden ${
+                          isSelected
+                            ? 'border-primary ring-2 ring-primary/30 shadow-md'
+                            : 'border-slate-200 hover:border-slate-400'
+                        }`}
+                      >
+                        {page.thumbnail ? (
+                          <img
+                            src={page.thumbnail}
+                            alt={`페이지 ${page.pageNum}`}
+                            className="w-full aspect-[3/4] object-cover"
+                            draggable={false}
+                          />
+                        ) : (
+                          <div className="w-full aspect-[3/4] bg-slate-100 flex items-center justify-center">
+                            <Loader2 className="w-4 h-4 text-slate-300 animate-spin" />
+                          </div>
+                        )}
+                        <div
+                          className={`text-center text-xs py-1 font-medium ${
+                            isSelected ? 'bg-primary text-white' : 'bg-slate-50 text-slate-600'
+                          }`}
+                        >
+                          p.{page.pageNum}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
-          </div>
+                {totalThumbPages > 1 && (
+                  <div className="flex items-center justify-center gap-2 mb-6">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={thumbPage <= 1}
+                      onClick={() => setThumbPage((p) => p - 1)}
+                    >
+                      ‹ 이전
+                    </Button>
+                    {Array.from({ length: totalThumbPages }, (_, i) => i + 1).map((p) => (
+                      <button
+                        key={p}
+                        onClick={() => setThumbPage(p)}
+                        className={`w-8 h-8 rounded text-sm font-medium transition-colors ${
+                          p === thumbPage
+                            ? 'bg-primary text-white'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={thumbPage >= totalThumbPages}
+                      onClick={() => setThumbPage((p) => p + 1)}
+                    >
+                      다음 ›
+                    </Button>
+                  </div>
+                )}
+              </>
+            );
+          })()}
 
           {/* 하단 버튼 */}
           <div className="flex justify-between">
@@ -924,6 +1023,7 @@ export default function PdfImportPage() {
                 <span className="text-sm font-medium">
                   AI 추출 중... ({progress.done}/{progress.total} 페이지)
                   {progress.currentPage && ` — 현재 p.${progress.currentPage}`}
+                  {(progress.skipped ?? 0) > 0 && ` (${progress.skipped}페이지 자동 스킵)`}
                 </span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-2">
