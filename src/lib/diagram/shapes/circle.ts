@@ -3,8 +3,10 @@ import * as prim from '../primitives';
 import { toRadians } from '../utils';
 
 export function renderCircle(spec: CircleDiagram): string {
-  const { center, radius, showRadius, showDiameter, chords, arcs, labels } = spec;
-  const [cx, cy] = center;
+  const { showRadius, showDiameter, chords, arcs, labels } = spec;
+  const cx = spec.center?.[0] ?? 150;
+  const cy = spec.center?.[1] ?? 150;
+  const radius = spec.radius ?? 80;
   const parts: string[] = [];
 
   // 원 본체

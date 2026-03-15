@@ -3,7 +3,8 @@ import * as prim from '../primitives';
 
 /** 입체도형 2D 투영 렌더러 */
 export function renderSolid(spec: SolidFigureDiagram): string {
-  const { shape, dimensions, labels, showDimensions } = spec;
+  const { shape, labels, showDimensions } = spec;
+  const dimensions = spec.dimensions ?? { size: 100 };
 
   switch (shape) {
     case 'cube':

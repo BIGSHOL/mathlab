@@ -1,5 +1,6 @@
 import { DiagramSpec, Point } from '@/types/diagram';
 import { computeViewBox } from './utils';
+import { normalizeDiagram } from './normalize';
 import { renderTriangle } from './shapes/triangle';
 import { renderCircle } from './shapes/circle';
 import { renderQuadrilateral } from './shapes/quadrilateral';
@@ -8,9 +9,12 @@ import { renderSolid, solidViewBox } from './shapes/solid';
 
 /**
  * DiagramSpec → 완성된 SVG 문자열 변환
- * AI가 생성한 구조화된 도형 명세를 정확한 SVG로 렌더링
+ *
+ * 1. normalize: AI 출력을 검증/보정 (프리셋→좌표 계산, 스케일 조정, 범위 자동 계산)
+ * 2. render: 정규화된 spec을 정확한 SVG로 변환
  */
-export function renderDiagram(spec: DiagramSpec): string {
+export function renderDiagram(rawSpec: DiagramSpec): string {
+  const spec = normalizeDiagram(rawSpec);
   const viewBox = getViewBox(spec);
   const content = renderShape(spec);
 
@@ -43,23 +47,24 @@ function renderShape(spec: DiagramSpec): string {
 function getViewBox(spec: DiagramSpec): string {
   switch (spec.type) {
     case 'triangle':
-      return computeViewBox(spec.vertices);
+      return computeViewBox(spec.vertices ?? [[0,0],[150,0],[0,150]]);
     case 'circle': {
-      const { center, radius } = spec;
+      const cx = spec.center?.[0] ?? 150;
+      const cy = spec.center?.[1] ?? 150;
+      const r = spec.radius ?? 80;
       const points: Point[] = [
-        [center[0] - radius, center[1] - radius],
-        [center[0] + radius, center[1] + radius],
+        [cx - r, cy - r],
+        [cx + r, cy + r],
       ];
       return computeViewBox(points, 50);
     }
     case 'quadrilateral':
-      return computeViewBox(spec.vertices);
+      return computeViewBox(spec.vertices ?? [[0,0],[150,0],[150,150],[0,150]]);
     case 'coordinatePlane':
       return coordinatePlaneViewBox(spec);
     case 'solid':
       return solidViewBox(spec);
     case 'composite': {
-      // 모든 하위 요소의 포인트를 수집하여 전체 viewBox 계산
       const allPoints = collectPoints(spec);
       return allPoints.length > 0 ? computeViewBox(allPoints, 50) : '0 0 400 300';
     }
@@ -71,24 +76,19 @@ function getViewBox(spec: DiagramSpec): string {
 function collectPoints(spec: DiagramSpec): Point[] {
   switch (spec.type) {
     case 'triangle':
-      return [...spec.vertices];
-    case 'circle':
-      return [
-        [spec.center[0] - spec.radius, spec.center[1] - spec.radius],
-        [spec.center[0] + spec.radius, spec.center[1] + spec.radius],
-      ];
+      return [...(spec.vertices ?? [[0,0],[150,0],[0,150]])];
+    case 'circle': {
+      const cx = spec.center?.[0] ?? 150;
+      const cy = spec.center?.[1] ?? 150;
+      const r = spec.radius ?? 80;
+      return [[cx - r, cy - r], [cx + r, cy + r]];
+    }
     case 'quadrilateral':
-      return [...spec.vertices];
+      return [...(spec.vertices ?? [[0,0],[150,0],[150,150],[0,150]])];
     case 'coordinatePlane':
-      return [
-        [0, 0],
-        [400, 360],
-      ];
+      return [[0, 0], [400, 360]];
     case 'solid':
-      return [
-        [0, 0],
-        [300, 280],
-      ];
+      return [[0, 0], [300, 280]];
     case 'composite':
       return spec.elements.flatMap(collectPoints);
     default:

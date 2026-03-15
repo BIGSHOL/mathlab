@@ -11,7 +11,8 @@ import {
 } from '../utils';
 
 export function renderQuadrilateral(spec: QuadrilateralDiagram): string {
-  const { vertices, labels, showAngles, angleValues, showLengths, diagonals } = spec;
+  const vertices = spec.vertices ?? [[0, 150], [150, 150], [150, 0], [0, 0]];
+  const { labels, showAngles, angleValues, showLengths, diagonals } = spec;
   const parts: string[] = [];
   const center: Point = [
     (vertices[0][0] + vertices[1][0] + vertices[2][0] + vertices[3][0]) / 4,

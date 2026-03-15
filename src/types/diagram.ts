@@ -15,11 +15,39 @@ export interface EdgeLength {
   value: string;
 }
 
+// ─── 삼각형 프리셋 ────────────────────────────────────
+// AI는 좌표 대신 preset + sides/angles만 지정하면 렌더러가 좌표를 자동 계산
+
+export type TrianglePreset =
+  | 'right'           // 직각삼각형
+  | 'equilateral'     // 정삼각형
+  | 'isosceles'       // 이등변삼각형
+  | 'scalene'         // 부등변삼각형
+  | 'right-isosceles'; // 직각이등변삼각형
+
+// ─── 사각형 프리셋 ────────────────────────────────────
+export type QuadrilateralPreset =
+  | 'square'          // 정사각형
+  | 'rectangle'       // 직사각형
+  | 'parallelogram'   // 평행사변형
+  | 'rhombus'         // 마름모
+  | 'trapezoid'       // 사다리꼴
+  | 'general';        // 일반 사각형
+
 // ─── 도형 유형 ────────────────────────────────────────
 
 export interface TriangleDiagram {
   type: 'triangle';
-  vertices: [Point, Point, Point];
+  /** 프리셋 사용 시 좌표 자동 계산 (AI가 좌표를 몰라도 됨) */
+  preset?: TrianglePreset;
+  /** 프리셋 사용 시: 변의 길이 (예: { a: 3, b: 4, c: 5 }) */
+  sides?: { a?: number; b?: number; c?: number };
+  /** 프리셋 사용 시: 각도 (도 단위, 예: { A: 90, B: 60, C: 30 }) */
+  angles?: { A?: number; B?: number; C?: number };
+  /** 꼭짓점 이름 (기본: ["A", "B", "C"]) */
+  vertexLabels?: [string, string, string];
+  /** 직접 좌표 지정 (프리셋 없을 때만 사용) */
+  vertices?: [Point, Point, Point];
   labels?: DiagramLabel[];
   /** 각도를 표시할 꼭짓점 인덱스 */
   showAngles?: number[];
@@ -32,8 +60,8 @@ export interface TriangleDiagram {
 
 export interface CircleDiagram {
   type: 'circle';
-  center: Point;
-  radius: number;
+  center?: Point;
+  radius?: number;
   showRadius?: boolean;
   showDiameter?: boolean;
   /** 현(chord): 원 위 두 점의 각도(degree) */
@@ -42,15 +70,17 @@ export interface CircleDiagram {
   tangentLines?: { angle: number; label?: string }[];
   /** 호: 시작/끝 각도(degree) */
   arcs?: { from: number; to: number; label?: string }[];
+  /** 내접/외접 삼각형 등 */
+  inscribedPolygon?: { sides: number; rotation?: number; labels?: string[] };
   labels?: DiagramLabel[];
 }
 
 export interface CoordinatePlaneDiagram {
   type: 'coordinatePlane';
-  xRange: [number, number];
-  yRange: [number, number];
+  xRange?: [number, number];
+  yRange?: [number, number];
   showGrid?: boolean;
-  /** 함수 그래프 */
+  /** 함수 그래프 - 수식 문자열만 주면 범위/좌표 자동 계산 */
   functions?: {
     expr: string;
     color?: string;
@@ -68,7 +98,14 @@ export interface CoordinatePlaneDiagram {
 
 export interface QuadrilateralDiagram {
   type: 'quadrilateral';
-  vertices: [Point, Point, Point, Point];
+  /** 프리셋 사용 시 좌표 자동 계산 */
+  preset?: QuadrilateralPreset;
+  /** 프리셋 사용 시: 변의 길이 */
+  sides?: { width?: number; height?: number; top?: number };
+  /** 꼭짓점 이름 (기본: ["A", "B", "C", "D"]) */
+  vertexLabels?: [string, string, string, string];
+  /** 직접 좌표 지정 (프리셋 없을 때만 사용) */
+  vertices?: [Point, Point, Point, Point];
   labels?: DiagramLabel[];
   showAngles?: number[];
   angleValues?: string[];
@@ -80,7 +117,7 @@ export interface QuadrilateralDiagram {
 export interface SolidFigureDiagram {
   type: 'solid';
   shape: 'cube' | 'cylinder' | 'cone' | 'sphere' | 'prism' | 'pyramid';
-  dimensions: Record<string, number>;
+  dimensions?: Record<string, number>;
   labels?: DiagramLabel[];
   showDimensions?: boolean;
 }

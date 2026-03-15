@@ -12,7 +12,8 @@ import {
 } from '../utils';
 
 export function renderTriangle(spec: TriangleDiagram): string {
-  const { vertices, labels, showAngles, angleValues, showLengths, rightAngle } = spec;
+  const vertices = spec.vertices ?? [[0, 150], [150, 150], [0, 0]];
+  const { labels, showAngles, angleValues, showLengths, rightAngle } = spec;
   const parts: string[] = [];
 
   // 삼각형 본체

@@ -14,6 +14,8 @@ import {
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { MathRenderer } from '@/components/math/MathRenderer';
+import { DiagramRenderer } from '@/components/math/DiagramRenderer';
+import type { DiagramSpec } from '@/types/diagram';
 import { useTestAttempt } from '@/hooks/useTests';
 import { DIFFICULTY_LABELS } from '@/types';
 
@@ -25,6 +27,8 @@ interface QuestionData {
   type: string;
   chapter: string;
   questionNum: number;
+  diagramSpec?: Record<string, unknown> | null;
+  diagramSVG?: string | null;
 }
 
 export default function TestPlayPage() {
@@ -217,6 +221,24 @@ export default function TestPlayPage() {
             {/* Question content */}
             <div className="text-base text-text-primary leading-relaxed mb-6">
               <MathRenderer content={currentQuestion.content} />
+              {/* 도형 표시 */}
+              {(currentQuestion.diagramSpec || currentQuestion.diagramSVG) && (
+                <div className="my-4 flex justify-center">
+                  <div className="w-full max-w-sm">
+                    {currentQuestion.diagramSpec ? (
+                      <DiagramRenderer
+                        spec={currentQuestion.diagramSpec as unknown as DiagramSpec}
+                        className="rounded-lg border border-slate-100 bg-white p-4"
+                      />
+                    ) : (
+                      <div
+                        className="w-full overflow-hidden rounded-lg border border-slate-100 bg-white p-4 [&_svg]:w-full [&_svg]:h-auto"
+                        dangerouslySetInnerHTML={{ __html: currentQuestion.diagramSVG! }}
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Answer area */}

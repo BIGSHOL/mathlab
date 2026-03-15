@@ -12,10 +12,10 @@ export function renderCoordinatePlane(spec: CoordinatePlaneDiagram): string {
   const plotW = 320;
   const plotH = 280;
 
-  const xMin = xRange[0];
-  const xMax = xRange[1];
-  const yMin = yRange[0];
-  const yMax = yRange[1];
+  const xMin = xRange?.[0] ?? -5;
+  const xMax = xRange?.[1] ?? 5;
+  const yMin = yRange?.[0] ?? -5;
+  const yMax = yRange?.[1] ?? 5;
 
   const scaleX = plotW / (xMax - xMin);
   const scaleY = plotH / (yMax - yMin);

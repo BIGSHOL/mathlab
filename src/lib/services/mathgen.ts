@@ -44,15 +44,18 @@ const RESPONSE_SCHEMA = {
     },
     diagramSpec: {
       type: Type.OBJECT,
-      description: `Structured diagram specification (preferred over diagramSVG). Supported types:
-- triangle: { type:"triangle", vertices:[[x,y],[x,y],[x,y]], labels?:[{text,position:[x,y]}], showAngles?:[indices], angleValues?:["90°"], showLengths?:[{edge:[0,1],value:"5"}], rightAngle?:vertexIndex }
-- circle: { type:"circle", center:[x,y], radius:number, showRadius?:bool, chords?:[{from:deg,to:deg}], arcs?:[{from:deg,to:deg,label?}], labels?:[] }
-- coordinatePlane: { type:"coordinatePlane", xRange:[min,max], yRange:[min,max], showGrid?:bool, functions?:[{expr:"x^2-2*x+1",label?,color?,domain?}], points?:[{coord:[x,y],label?}], lines?:[{from,to,dashed?,label?}] }
-- quadrilateral: { type:"quadrilateral", vertices:[[x,y]x4], diagonals?:bool, showAngles?,showLengths? }
-- solid: { type:"solid", shape:"cube"|"cylinder"|"cone"|"sphere"|"prism"|"pyramid", dimensions:{radius?,height?,width?,size?}, showDimensions?:bool }
-- composite: { type:"composite", elements:[...diagram specs] }
+      description: `Structured diagram spec. Do NOT provide coordinates — use presets and the system calculates geometry automatically.
 
-IMPORTANT: Use mathematical coordinates. The renderer handles SVG conversion automatically. Provide coordinates that make geometric sense (e.g., right triangle at origin with legs along axes).`,
+TYPES:
+1. triangle: { type:"triangle", preset:"right"|"equilateral"|"isosceles"|"scalene"|"right-isosceles", sides?:{a:3,b:4,c:5}, angles?:{A:90,B:60,C:30}, vertexLabels?:["A","B","C"] }
+2. circle: { type:"circle", showRadius?:true, showDiameter?:true, chords?:[{from:30,to:150}], arcs?:[{from:0,to:90,label:"l"}] }
+3. coordinatePlane: { type:"coordinatePlane", functions?:[{expr:"x^2-2*x+1",label:"y=f(x)"}], points?:[{coord:[1,0],label:"P"}], showGrid?:true }
+   (xRange/yRange auto-calculated from functions)
+4. quadrilateral: { type:"quadrilateral", preset:"square"|"rectangle"|"parallelogram"|"rhombus"|"trapezoid", sides?:{width:8,height:5,top:4}, vertexLabels?:["A","B","C","D"], diagonals?:true }
+5. solid: { type:"solid", shape:"cube"|"cylinder"|"cone"|"sphere"|"prism"|"pyramid", dimensions?:{radius:5,height:10}, showDimensions?:true }
+6. composite: { type:"composite", elements:[...specs] }
+
+RULES: Use preset names, NOT coordinates. Provide side lengths/angles from the problem. The system handles all geometry.`,
       nullable: true,
       properties: {
         type: { type: Type.STRING, description: 'Diagram type' },
@@ -91,21 +94,19 @@ const COMMON_INSTRUCTIONS = `
          - The first line inside the blockquote MUST be \`**<보 기>**\`.
          - Each item (ㄱ, ㄴ, ㄷ...) MUST be on a NEW LINE.
 
-    5. [Visuals & Diagrams - STRUCTURED SPEC REQUIRED]
-       - **When to generate**: If the topic involves **Geometry** (Plane/Solid), **Functions** (Graphs), or **Statistics** (Charts/Histograms).
-       - **Use "diagramSpec" (NOT "diagramSVG")**: Provide a structured JSON object in "diagramSpec". Our system renders accurate SVG from this spec automatically.
-       - **Diagram Types & Examples**:
-         - **Triangle**: { "type":"triangle", "vertices":[[0,0],[6,0],[0,4]], "rightAngle":0, "showLengths":[{"edge":[0,1],"value":"6"},{"edge":[0,2],"value":"4"}] }
-         - **Circle**: { "type":"circle", "center":[150,150], "radius":80, "showRadius":true, "chords":[{"from":30,"to":150}] }
-         - **Coordinate Plane**: { "type":"coordinatePlane", "xRange":[-5,5], "yRange":[-3,7], "showGrid":true, "functions":[{"expr":"x^2-2*x+1","label":"y=x²-2x+1"}], "points":[{"coord":[1,0],"label":"꼭짓점"}] }
-         - **Quadrilateral**: { "type":"quadrilateral", "vertices":[[0,0],[8,0],[8,5],[0,5]], "showLengths":[{"edge":[0,1],"value":"8"},{"edge":[1,2],"value":"5"}] }
-         - **Solid Figure**: { "type":"solid", "shape":"cylinder", "dimensions":{"radius":5,"height":10}, "showDimensions":true }
-         - **Composite**: { "type":"composite", "elements":[...multiple specs] }
-       - **Coordinate Rules**:
-         - Use mathematical coordinates (the system handles Y-axis inversion for SVG).
-         - For triangles/quadrilaterals: use reasonable scale (e.g., side lengths 50-200 for pixel coordinates, or small numbers if using mathematical scale).
-         - For coordinate planes: functions use the expression format "x^2+3*x-1" (supports +,-,*,/,^,sin,cos,tan,sqrt,abs,log,ln,pi,e).
-       - **Do NOT provide raw SVG in "diagramSVG"** unless the diagram type is not supported by diagramSpec.
+    5. [Visuals & Diagrams - USE PRESETS, NOT COORDINATES]
+       - **When to generate**: If the topic involves **Geometry**, **Functions/Graphs**, or **Statistics**.
+       - **Use "diagramSpec"**: Provide a preset-based JSON. Do NOT calculate coordinates — our system does it automatically.
+       - **Examples**:
+         - 직각삼각형 (밑변 3, 높이 4): { "type":"triangle", "preset":"right", "sides":{"b":4,"c":3} }
+         - 정삼각형 (한 변 6): { "type":"triangle", "preset":"equilateral", "sides":{"a":6} }
+         - 원 (반지름 표시): { "type":"circle", "showRadius":true }
+         - 이차함수 그래프: { "type":"coordinatePlane", "functions":[{"expr":"x^2-2*x+1","label":"y=x²-2x+1"}], "showGrid":true }
+         - 직사각형 (가로 8, 세로 5): { "type":"quadrilateral", "preset":"rectangle", "sides":{"width":8,"height":5} }
+         - 원기둥 (반지름 5, 높이 10): { "type":"solid", "shape":"cylinder", "dimensions":{"radius":5,"height":10}, "showDimensions":true }
+       - **CRITICAL**: Use the actual numbers from your problem in sides/dimensions.
+       - **Functions format**: "x^2+3*x-1" (supports +,-,*,/,^,sin,cos,tan,sqrt,abs,log,ln,pi,e).
+       - **Do NOT provide raw SVG in "diagramSVG"**.
 
     6. [Solution Quality - WORKBOOK STYLE]
        - Provide a professional, detailed solution similar to famous Korean workbooks (like Ssen, Black Label).
