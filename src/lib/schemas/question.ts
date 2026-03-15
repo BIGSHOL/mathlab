@@ -6,6 +6,7 @@ const questionTypeEnum = z.enum(['MULTIPLE_CHOICE', 'SHORT_ANSWER', 'ESSAY']);
 export const questionQuerySchema = z.object({
   bookCode: z.string().optional(),
   chapter: z.string().optional(),
+  section: z.string().optional(),
   difficulty: questionDifficultyEnum.optional(),
   type: questionTypeEnum.optional(),
   search: z.string().optional(),
@@ -26,6 +27,8 @@ export const createQuestionSchema = z.object({
   answer: z.string().min(1, '정답을 입력해주세요'),
   explanation: z.string().optional(),
   sourceTag: z.string().max(100).optional(),
+  domain: z.string().max(30).optional().nullable(),
+  conceptId: z.string().optional().nullable(),
 });
 
 export const updateQuestionSchema = z.object({
@@ -38,8 +41,15 @@ export const updateQuestionSchema = z.object({
   answer: z.string().min(1).optional(),
   explanation: z.string().optional().nullable(),
   sourceTag: z.string().max(100).optional().nullable(),
+  domain: z.string().max(30).optional().nullable(),
+  conceptId: z.string().optional().nullable(),
+});
+
+export const bulkCreateQuestionsSchema = z.object({
+  questions: z.array(createQuestionSchema).min(1).max(200),
 });
 
 export type QuestionQuery = z.infer<typeof questionQuerySchema>;
 export type CreateQuestionInput = z.infer<typeof createQuestionSchema>;
 export type UpdateQuestionInput = z.infer<typeof updateQuestionSchema>;
+export type BulkCreateQuestionsInput = z.infer<typeof bulkCreateQuestionsSchema>;

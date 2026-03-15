@@ -23,12 +23,12 @@ export function StatCard({
   children,
 }: StatCardProps) {
   return (
-    <div className="flex flex-col gap-3 rounded-2xl p-6 bg-white shadow-soft border border-slate-100 relative overflow-hidden group hover:shadow-hover transition-all duration-300">
+    <div className="flex flex-col gap-3 rounded-sm p-6 bg-white shadow-soft border border-slate-100 relative overflow-hidden group hover:shadow-hover transition-all duration-300">
       <div className="flex justify-between items-start mb-2">
-        <div className={`p-3 ${iconBg} rounded-xl`}>{icon}</div>
+        <div className={`p-3 ${iconBg} rounded-sm`}>{icon}</div>
         {trend && (
           <span
-            className={`px-2.5 py-1 text-xs font-semibold rounded-full flex items-center gap-1 ${
+            className={`px-2.5 py-1 text-xs font-semibold rounded-sm flex items-center gap-1 ${
               trend.positive
                 ? 'bg-emerald-50 text-emerald-600'
                 : 'bg-red-50 text-red-600'

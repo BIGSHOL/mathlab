@@ -47,16 +47,20 @@ prisma/migrations/
 # IDE
 .idea
 .vscode
-node_modules
 
 # claude
 .claude/
+
+# User-uploaded files
+public/uploads/
+
+# Question answer images (managed locally)
+public/questions/
 
 # Python
 __pycache__/
 *.pyc
 
 # Data files (PDFs, textbooks, etc.)
-data/
-
-.vercel
+/data/
+!src/lib/data/

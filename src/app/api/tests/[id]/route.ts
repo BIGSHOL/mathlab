@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 
+/** Resolve test by seq (numeric) or id (cuid) */
+async function resolveTestId(id: string): Promise<string | null> {
+  const seq = Number(id);
+  if (!isNaN(seq) && String(seq) === id) {
+    const test = await prisma.test.findUnique({ where: { seq }, select: { id: true } });
+    return test?.id ?? null;
+  }
+  return id;
+}
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -14,10 +24,17 @@ export async function GET(
     );
   }
 
-  const { id } = await params;
+  const { id: rawId } = await params;
+  const testId = await resolveTestId(rawId);
+  if (!testId) {
+    return NextResponse.json(
+      { error: { code: 'NOT_FOUND', message: '시험을 찾을 수 없습니다' } },
+      { status: 404 }
+    );
+  }
 
   const test = await prisma.test.findUnique({
-    where: { id },
+    where: { id: testId },
     include: {
       creator: { select: { name: true } },
       _count: { select: { attempts: true } },
@@ -44,8 +61,9 @@ export async function GET(
       type: true,
       content: true,
       choices: true,
-      // 학생에게는 정답 숨기기
-      ...(currentUser.role !== 'STUDENT' ? { answer: true, explanation: true } : {}),
+      answer: true,
+      explanation: true,
+      domain: true,
     },
   });
 
@@ -70,12 +88,20 @@ export async function PUT(
     );
   }
 
-  const { id } = await params;
+  const { id: rawId } = await params;
+  const testId = await resolveTestId(rawId);
+  if (!testId) {
+    return NextResponse.json(
+      { error: { code: 'NOT_FOUND', message: '시험을 찾을 수 없습니다' } },
+      { status: 404 }
+    );
+  }
+
   const body = await request.json();
-  const { title, description, grade, testType, questionIds, timeLimitMin, shuffleOptions, isActive } = body;
+  const { title, description, grade, testType, questionIds, timeLimitMin, shuffleOptions, isActive, maxAttempts, defaultDueDate, allowLateSubmission } = body;
 
   const test = await prisma.test.update({
-    where: { id },
+    where: { id: testId },
     data: {
       ...(title !== undefined && { title }),
       ...(description !== undefined && { description }),
@@ -85,6 +111,9 @@ export async function PUT(
       ...(timeLimitMin !== undefined && { timeLimitMin }),
       ...(shuffleOptions !== undefined && { shuffleOptions }),
       ...(isActive !== undefined && { isActive }),
+      ...(maxAttempts !== undefined && { maxAttempts }),
+      ...(defaultDueDate !== undefined && { defaultDueDate: defaultDueDate ? new Date(defaultDueDate) : null }),
+      ...(allowLateSubmission !== undefined && { allowLateSubmission }),
     },
   });
 
@@ -103,8 +132,16 @@ export async function DELETE(
     );
   }
 
-  const { id } = await params;
-  await prisma.test.delete({ where: { id } });
+  const { id: rawId } = await params;
+  const testId = await resolveTestId(rawId);
+  if (!testId) {
+    return NextResponse.json(
+      { error: { code: 'NOT_FOUND', message: '시험을 찾을 수 없습니다' } },
+      { status: 404 }
+    );
+  }
 
-  return NextResponse.json({ success: true });
+  await prisma.test.delete({ where: { id: testId } });
+
+  return NextResponse.json({ data: { success: true } });
 }

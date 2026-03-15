@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   BarChart3,
   Calendar,
@@ -18,6 +18,8 @@ import {
   Target,
 } from 'lucide-react';
 import { useSpeedAnalytics } from '@/hooks/useSpeed';
+import { useAuth } from '@/hooks/useAuth';
+import AchievementRadar from '@/components/charts/AchievementRadar';
 
 // --- Types ---
 interface Student {
@@ -60,13 +62,61 @@ const ACTIVITY_COLORS = [
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
 export default function AnalyticsPage() {
+  const { user: currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'ADMIN';
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
   const [calendarData] = useState<DayActivity[]>(() => generateMockCalendar());
 
+  // Teacher comment
+  const [commentText, setCommentText] = useState('');
+  const commentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const currentMonth = '2026-03';
+
   // Speed analytics for selected student
   const { data: speedData, loading: speedLoading } = useSpeedAnalytics(selectedStudent?.id);
+
+  // Achievement data for radar chart
+  const [achievementData, setAchievementData] = useState<{
+    chapters: { chapter: string; accuracy: number; total: number; avgTime: number; sections: { section: string; accuracy: number; total: number }[] }[];
+    overall: { total: number; correct: number; accuracy: number };
+  } | null>(null);
+
+  useEffect(() => {
+    if (!selectedStudent) return;
+    setAchievementData(null);
+    fetch(`/api/analytics/achievement?studentId=${selectedStudent.id}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json) => {
+        if (json?.data) setAchievementData(json.data);
+      })
+      .catch(() => {});
+
+    // Fetch saved comment
+    fetch(`/api/analytics/comments?studentId=${selectedStudent.id}&month=${currentMonth}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((json) => { setCommentText(json?.data ?? ''); })
+      .catch(() => setCommentText(''));
+  }, [selectedStudent]);
+
+  const saveComment = useCallback((text: string) => {
+    if (!selectedStudent) return;
+    if (commentTimerRef.current) clearTimeout(commentTimerRef.current);
+    commentTimerRef.current = setTimeout(() => {
+      fetch('/api/analytics/comments', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId: selectedStudent.id, month: currentMonth, content: text }),
+      }).catch(() => {});
+    }, 1000);
+  }, [selectedStudent]);
+
+  const handleCommentChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const text = e.target.value;
+    setCommentText(text);
+    saveComment(text);
+  }, [saveComment]);
 
   const fetchStudents = useCallback(async () => {
     try {
@@ -119,7 +169,37 @@ export default function AnalyticsPage() {
   const totalTimeRemainMin = totalTimeMin % 60;
 
   return (
-    <div className="flex-1 flex justify-center py-8 px-4 sm:px-6 lg:px-8">
+    <div className="flex-1 flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8 gap-4">
+      {/* Admin: System summary */}
+      {isAdmin && students.length > 0 && (
+        <div className="max-w-[1024px] w-full grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="bg-violet-50 border border-violet-200 rounded-xl p-4 text-center">
+            <p className="text-2xl font-black text-violet-700">{students.length}</p>
+            <p className="text-xs text-violet-600 font-medium mt-1">전체 학생 수</p>
+          </div>
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+            <p className="text-2xl font-black text-blue-700">
+              {students.filter((s) => s.profile && s.profile.totalXp > 0).length}
+            </p>
+            <p className="text-xs text-blue-600 font-medium mt-1">학습 참여 학생</p>
+          </div>
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
+            <p className="text-2xl font-black text-emerald-700">
+              {students.length > 0
+                ? (students.reduce((s, st) => s + (st.profile?.level ?? 1), 0) / students.length).toFixed(1)
+                : 0}
+            </p>
+            <p className="text-xs text-emerald-600 font-medium mt-1">평균 레벨</p>
+          </div>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
+            <p className="text-2xl font-black text-amber-700">
+              {students.reduce((s, st) => s + (st.profile?.totalXp ?? 0), 0).toLocaleString()}
+            </p>
+            <p className="text-xs text-amber-600 font-medium mt-1">총 XP 합계</p>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col max-w-[1024px] flex-1 w-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         {/* Report Header */}
         <div className="p-8 border-b border-slate-100 flex flex-col md:flex-row md:items-end justify-between gap-6 bg-slate-50">
@@ -327,6 +407,82 @@ export default function AnalyticsPage() {
             )}
           </section>
 
+          {/* Achievement Radar */}
+          {achievementData && achievementData.chapters.length >= 3 && (
+            <section>
+              <h2 className="text-xl font-bold leading-tight tracking-tight mb-4 text-text-primary flex items-center gap-2">
+                <Target className="w-5 h-5 text-primary" /> 유형별 성취도 분석
+              </h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="rounded-xl border border-slate-200 p-6 flex flex-col items-center">
+                  <h3 className="text-sm font-bold text-text-primary mb-2 self-start">단원별 정답률 레이더</h3>
+                  <AchievementRadar
+                    data={achievementData.chapters.slice(0, 8).map((ch) => ({
+                      label: ch.chapter,
+                      value: ch.accuracy,
+                      count: ch.total,
+                    }))}
+                  />
+                  <p className="text-xs text-text-secondary mt-2">
+                    전체 정답률: <span className="font-bold text-primary">{achievementData.overall.accuracy}%</span>
+                    {' '}({achievementData.overall.correct}/{achievementData.overall.total})
+                  </p>
+                </div>
+                <div className="rounded-xl border border-slate-200 p-6">
+                  <h3 className="text-sm font-bold text-text-primary mb-3">단원별 상세</h3>
+                  <div className="space-y-3 max-h-[320px] overflow-y-auto">
+                    {achievementData.chapters.map((ch) => (
+                      <div key={ch.chapter} className="border-b border-slate-50 pb-2 last:border-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-semibold text-text-primary truncate max-w-[180px]" title={ch.chapter}>
+                            {ch.chapter}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-text-secondary">{ch.total}문제 · {ch.avgTime}초</span>
+                            <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
+                              ch.accuracy >= 80 ? 'bg-emerald-100 text-emerald-700' :
+                              ch.accuracy >= 60 ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-red-100 text-red-700'
+                            }`}>
+                              {ch.accuracy}%
+                            </span>
+                          </div>
+                        </div>
+                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              ch.accuracy >= 80 ? 'bg-emerald-400' :
+                              ch.accuracy >= 60 ? 'bg-amber-400' :
+                              'bg-red-400'
+                            }`}
+                            style={{ width: `${ch.accuracy}%` }}
+                          />
+                        </div>
+                        {ch.sections.length > 1 && (
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {ch.sections.slice(0, 4).map((sec) => (
+                              <span
+                                key={sec.section}
+                                className={`text-[9px] px-1.5 py-0.5 rounded-full ${
+                                  sec.accuracy >= 80 ? 'bg-emerald-50 text-emerald-600' :
+                                  sec.accuracy >= 60 ? 'bg-amber-50 text-amber-600' :
+                                  'bg-red-50 text-red-600'
+                                }`}
+                                title={`${sec.section}: ${sec.accuracy}% (${sec.total}문제)`}
+                              >
+                                {sec.section.length > 10 ? sec.section.slice(0, 10) + '…' : sec.section} {sec.accuracy}%
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* Strengths/Weaknesses */}
           <section>
             <h2 className="text-xl font-bold leading-tight tracking-tight mb-4 text-text-primary flex items-center gap-2">
@@ -440,11 +596,8 @@ export default function AnalyticsPage() {
               <textarea
                 className="w-full text-sm text-text-secondary leading-relaxed bg-white border border-slate-200 rounded-lg p-4 min-h-[120px] focus:ring-2 focus:ring-primary/40 focus:border-primary resize-y"
                 placeholder="학생에 대한 종합 의견을 작성해주세요. 이 의견은 학부모 리포트에 포함됩니다."
-                defaultValue={
-                  student
-                    ? `${student.name} 학생은 이번 달 학습에 성실히 참여하고 있습니다. 특히 대수학 영역에서 학급 평균을 상회하는 우수한 성취도를 보여주었습니다. 꾸준한 학습 습관이 잘 형성되어 있어 칭찬할 만합니다.`
-                    : ''
-                }
+                value={commentText}
+                onChange={handleCommentChange}
               />
             </div>
           </section>

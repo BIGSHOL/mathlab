@@ -20,7 +20,7 @@ export default async function ProfilePage() {
 
   const completedConcepts = await prisma.learningProgress.groupBy({
     by: ['conceptId'],
-    where: { userId: user.id, stage: 'BLANK_PAGE', completed: true },
+    where: { userId: user.id, stage: 'BLANK_FULL', completed: true },
   });
 
   const blankPageCompleted = completedConcepts.length;

@@ -59,24 +59,24 @@ export function ProblemDisplay({ problem, isLoading }: ProblemDisplayProps) {
         {/* Actions Bar */}
         <div className="flex justify-between items-center print:hidden">
           <div className="flex items-center gap-2">
-            <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold tracking-wide">
+            <span className="bg-primary/10 text-primary px-3 py-1 rounded-sm text-xs font-semibold tracking-wide">
               {problem.topic}
             </span>
-            <span className="bg-slate-200 text-slate-700 px-3 py-1 rounded-full text-xs font-semibold">
+            <span className="bg-slate-200 text-slate-700 px-3 py-1 rounded-sm text-xs font-semibold">
               난이도: {problem.difficulty}
             </span>
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => handlePrint('problem')}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors text-sm font-medium shadow-sm"
+              className="flex items-center gap-2 px-3 py-2 rounded-sm bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors text-sm font-medium shadow-sm"
             >
               <Printer size={16} />
               문제지 인쇄
             </button>
             <button
               onClick={() => handlePrint('solution')}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors text-sm font-medium shadow-sm"
+              className="flex items-center gap-2 px-3 py-2 rounded-sm bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors text-sm font-medium shadow-sm"
             >
               <FileText size={16} />
               해설지 인쇄
@@ -85,9 +85,9 @@ export function ProblemDisplay({ problem, isLoading }: ProblemDisplayProps) {
         </div>
 
         {/* Question Card */}
-        <div className="bg-white rounded-2xl shadow-soft border border-slate-200 overflow-hidden print:shadow-none print:border-none print:rounded-none">
+        <div className="bg-white rounded-sm shadow-soft border border-slate-200 overflow-hidden print:shadow-none print:border-none print:rounded-none">
           <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex items-center gap-2 print:bg-transparent print:border-b print:border-slate-300 print:px-0 print:py-2">
-            <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-white font-bold text-lg print:bg-black print:w-6 print:h-6 print:text-sm print:rounded-md">
+            <span className="flex items-center justify-center w-8 h-8 rounded-sm bg-primary text-white font-bold text-lg print:bg-black print:w-6 print:h-6 print:text-sm print:rounded-sm">
               Q
             </span>
             <span className="font-semibold text-slate-700 print:text-black">문제</span>
@@ -132,7 +132,7 @@ export function ProblemDisplay({ problem, isLoading }: ProblemDisplayProps) {
                 ))}
               </div>
             ) : (
-              <div className="hidden print:block mt-8 h-48 border border-slate-300 rounded-lg p-4 bg-white">
+              <div className="hidden print:block mt-8 h-48 border border-slate-300 rounded-sm p-4 bg-white">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-slate-500 text-xs font-semibold">[답안 작성란]</span>
                   <span className="text-slate-300 text-xs">풀이 과정을 자세히 기술하세요.</span>
@@ -146,7 +146,7 @@ export function ProblemDisplay({ problem, isLoading }: ProblemDisplayProps) {
         <div className="flex justify-end print:hidden">
           <button
             onClick={() => setShowSolution(!showSolution)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm text-sm font-medium"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-sm bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm text-sm font-medium"
           >
             {showSolution ? <EyeOff size={18} /> : <Eye size={18} />}
             {showSolution ? '정답 및 해설 숨기기' : '정답 및 해설 확인'}
@@ -157,7 +157,7 @@ export function ProblemDisplay({ problem, isLoading }: ProblemDisplayProps) {
         {showSolution && (
           <div className="space-y-6 print:space-y-4 print:mt-8 animate-slide-down">
             {/* Answer */}
-            <div className="bg-green-50 rounded-xl border border-green-100 p-6 flex items-start gap-4 print:bg-transparent print:border-none print:p-0 print:block">
+            <div className="bg-green-50 rounded-sm border border-green-100 p-6 flex items-start gap-4 print:bg-transparent print:border-none print:p-0 print:block">
               <div className="flex items-center gap-2 mb-2 print:mb-1">
                 <CheckCircle className="text-green-600 flex-shrink-0 print:text-black" size={24} />
                 <h4 className="text-green-800 font-bold print:text-black">정답</h4>
@@ -168,7 +168,7 @@ export function ProblemDisplay({ problem, isLoading }: ProblemDisplayProps) {
             </div>
 
             {/* Solution */}
-            <div className="bg-white rounded-2xl shadow-soft border border-slate-200 overflow-hidden print:shadow-none print:border-none print:rounded-none print:break-inside-avoid">
+            <div className="bg-white rounded-sm shadow-soft border border-slate-200 overflow-hidden print:shadow-none print:border-none print:rounded-none print:break-inside-avoid">
               <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex items-center gap-2 print:hidden">
                 <HelpCircle className="text-slate-500" size={20} />
                 <span className="font-semibold text-slate-700">상세 풀이</span>

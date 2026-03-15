@@ -3,15 +3,32 @@ import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { updateConceptSchema } from '@/lib/schemas/concept';
 
-// GET /api/concepts/:id
+/** Resolve concept by conceptCode or cuid id (single query) */
+async function resolveConceptId(id: string): Promise<string | null> {
+  const found = await prisma.concept.findFirst({
+    where: { OR: [{ conceptCode: id }, { id }] },
+    select: { id: true },
+  });
+  return found?.id ?? null;
+}
+
+// GET /api/concepts/:id — id can be conceptCode or cuid
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const conceptId = await resolveConceptId(id);
+
+  if (!conceptId) {
+    return NextResponse.json(
+      { error: { code: 'NOT_FOUND', message: '개념을 찾을 수 없습니다' } },
+      { status: 404 }
+    );
+  }
 
   const concept = await prisma.concept.findUnique({
-    where: { id },
+    where: { id: conceptId },
     include: {
       subject: { select: { title: true, gradeLevel: true } },
       prerequisites: {
@@ -57,6 +74,14 @@ export async function PATCH(
     );
   }
 
+  const conceptId = await resolveConceptId(id);
+  if (!conceptId) {
+    return NextResponse.json(
+      { error: { code: 'NOT_FOUND', message: '개념을 찾을 수 없습니다' } },
+      { status: 404 }
+    );
+  }
+
   const body = await request.json();
   const parsed = updateConceptSchema.safeParse(body);
   if (!parsed.success) {
@@ -66,23 +91,15 @@ export async function PATCH(
     );
   }
 
-  const existing = await prisma.concept.findUnique({ where: { id } });
-  if (!existing) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '개념을 찾을 수 없습니다' } },
-      { status: 404 }
-    );
-  }
-
   const { prerequisites, ...data } = parsed.data;
 
   const updated = await prisma.$transaction(async (tx) => {
     if (prerequisites !== undefined) {
-      await tx.conceptPrerequisite.deleteMany({ where: { conceptId: id } });
+      await tx.conceptPrerequisite.deleteMany({ where: { conceptId } });
       if (prerequisites.length > 0) {
         await tx.conceptPrerequisite.createMany({
           data: prerequisites.map((prereqId) => ({
-            conceptId: id,
+            conceptId,
             prerequisiteId: prereqId,
           })),
         });
@@ -90,7 +107,7 @@ export async function PATCH(
     }
 
     return tx.concept.update({
-      where: { id },
+      where: { id: conceptId },
       data,
       include: {
         subject: { select: { title: true, gradeLevel: true } },
@@ -125,14 +142,14 @@ export async function DELETE(
     );
   }
 
-  const existing = await prisma.concept.findUnique({ where: { id } });
-  if (!existing) {
+  const conceptId = await resolveConceptId(id);
+  if (!conceptId) {
     return NextResponse.json(
       { error: { code: 'NOT_FOUND', message: '개념을 찾을 수 없습니다' } },
       { status: 404 }
     );
   }
 
-  await prisma.concept.delete({ where: { id } });
-  return NextResponse.json({ data: { id } });
+  await prisma.concept.delete({ where: { id: conceptId } });
+  return NextResponse.json({ data: { id: conceptId } });
 }

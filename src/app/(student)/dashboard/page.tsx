@@ -1,4 +1,4 @@
-import { Award, Star, CheckCircle, Flame, Play, BookOpen, ArrowRight } from 'lucide-react';
+import { Award, Star, CheckCircle, Flame, Play, BookOpen, ArrowRight, CalendarCheck } from 'lucide-react';
 import { StatCard } from '@/components/ui/StatCard';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Button } from '@/components/ui/Button';
@@ -8,6 +8,8 @@ import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { redirect } from 'next/navigation';
 import { xpToNextLevel } from '@/lib/utils/xp';
+import { getTodayHomework } from '@/lib/services/homework';
+import { getTodayConceptHomework } from '@/lib/services/concept-homework';
 
 export default async function StudentDashboard() {
   const user = await getCurrentUser();
@@ -26,7 +28,7 @@ export default async function StudentDashboard() {
 
   const completedConcepts = await prisma.learningProgress.groupBy({
     by: ['conceptId'],
-    where: { userId: user.id, stage: 'BLANK_PAGE', completed: true },
+    where: { userId: user.id, stage: 'BLANK_FULL', completed: true },
   });
 
   const totalConcepts = await prisma.concept.count({
@@ -45,14 +47,89 @@ export default async function StudentDashboard() {
     READING: 'Stage 1 - 개념 읽기',
     BLANK_EASY: 'Stage 2 - 빈칸 채우기 (쉬움)',
     BLANK_HARD: 'Stage 3 - 빈칸 채우기 (어려움)',
-    BLANK_PAGE: 'Stage 4 - 백지 쓰기',
+    BLANK_FULL: 'Stage 4 - 통문장 암기',
+    BLANK_PAGE: 'Stage 4 - 통문장 암기',
   };
+
+  // Today's homework
+  const todayHomework = await getTodayHomework(user.id);
+  const pendingHomework = todayHomework.filter((h) => h.status !== 'COMPLETED');
+
+  // Today's concept homework
+  const todayConceptHw = await getTodayConceptHomework(user.id);
+  const pendingConceptHw = todayConceptHw.filter((hw) =>
+    hw.concepts.some((c) => !c.allCompleted)
+  );
 
   const completedCount = completedConcepts.length;
   const progressPercent = totalConcepts > 0 ? Math.round((completedCount / totalConcepts) * 100) : 0;
 
   return (
     <div className="px-4 md:px-10 py-8 max-w-[1200px] mx-auto w-full">
+      {/* Homework banners */}
+      {pendingHomework.length > 0 && (
+        <Link href="/practice/arithmetic/homework" className="block mb-4">
+          <div className="bg-gradient-to-r from-indigo-500 to-violet-500 rounded-sm p-4 text-white hover:from-indigo-600 hover:to-violet-600 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <CalendarCheck className="w-8 h-8 opacity-90" />
+                <div>
+                  <p className="text-xs font-medium opacity-80">오늘의 연산 숙제</p>
+                  <p className="font-bold">
+                    {pendingHomework[0].planTitle} · {pendingHomework[0].dayLabel} · {pendingHomework[0].dailyCount}문제
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 bg-white/20 rounded-sm px-4 py-2">
+                <Play className="w-4 h-4" />
+                <span className="font-bold text-sm">풀기</span>
+                <ArrowRight className="w-4 h-4" />
+              </div>
+            </div>
+          </div>
+        </Link>
+      )}
+
+      {pendingConceptHw.length > 0 && (
+        <div className="mb-6">
+          {pendingConceptHw.map((hw) => {
+            const pending = hw.concepts.filter((c) => !c.allCompleted);
+            const firstConcept = pending[0];
+            return (
+              <Link key={hw.planId} href={firstConcept ? `/concepts/${firstConcept.id}` : '/subjects'} className="block mb-2 last:mb-0">
+                <div className="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-sm p-4 text-white hover:from-emerald-600 hover:to-teal-600 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <BookOpen className="w-8 h-8 opacity-90" />
+                      <div>
+                        <p className="text-xs font-medium opacity-80">오늘의 개념 숙제 · {hw.dayLabel}</p>
+                        <p className="font-bold">
+                          {hw.planTitle} · {pending.length}개 남음
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {hw.concepts.map((c) => (
+                        <div key={c.id} className="flex gap-0.5">
+                          {c.stages.map((s, i) => (
+                            <div
+                              key={i}
+                              className={`w-2 h-2 rounded-sm ${
+                                s.completed ? 'bg-white' : 'bg-white/30'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold tracking-tight text-text-primary">대시보드</h1>
@@ -104,8 +181,8 @@ export default async function StudentDashboard() {
                 <p className="text-text-secondary text-center py-8">아직 시작한 학습이 없습니다. 단원 목록에서 학습을 시작해보세요!</p>
               ) : (
                 recentProgress.map((p) => (
-                  <div key={p.id} className="flex flex-col sm:flex-row sm:items-center gap-4 p-5 rounded-xl bg-slate-50 border border-slate-100 hover:border-blue-200 transition-all group">
-                    <div className="flex-shrink-0 h-12 w-12 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
+                  <div key={p.id} className="flex flex-col sm:flex-row sm:items-center gap-4 p-5 rounded-sm bg-slate-50 border border-slate-100 hover:border-blue-200 transition-all group">
+                    <div className="flex-shrink-0 h-12 w-12 rounded-sm bg-blue-100 text-blue-600 flex items-center justify-center">
                       <BookOpen className="w-6 h-6" />
                     </div>
                     <div className="flex-1">
@@ -114,7 +191,7 @@ export default async function StudentDashboard() {
                       </h3>
                       <p className="text-text-secondary text-sm">{stageLabels[p.stage] ?? p.stage}</p>
                     </div>
-                    <Link href={`/concepts/${p.conceptId}`}>
+                    <Link href={`/concepts/${p.concept.conceptCode ?? p.conceptId}`}>
                       <Button size="sm">이어서 하기</Button>
                     </Link>
                   </div>

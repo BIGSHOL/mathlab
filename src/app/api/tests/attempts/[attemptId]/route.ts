@@ -54,12 +54,21 @@ export async function GET(
   const questionOrder = attempt.test.questionIds as string[];
   const currentIndex = answeredIds.length;
 
+  // 레벨테스트인 경우 진단 결과 포함
+  let diagnosticResult = null;
+  if (attempt.test.testType === 'level_test' && attempt.completedAt) {
+    diagnosticResult = await prisma.diagnosticResult.findUnique({
+      where: { attemptId },
+    });
+  }
+
   return NextResponse.json({
     data: {
       ...attempt,
       currentQuestionIndex: currentIndex,
       nextQuestionId: questionOrder[currentIndex] ?? null,
       questionOrder,
+      diagnosticResult,
     },
   });
 }

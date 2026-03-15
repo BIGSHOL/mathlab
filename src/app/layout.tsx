@@ -1,11 +1,18 @@
 import type { Metadata } from 'next';
-import { Lexend } from 'next/font/google';
+import { Lexend, Noto_Serif_KR } from 'next/font/google';
 import { SessionProvider } from '@/components/providers/SessionProvider';
 import './globals.css';
 
 const lexend = Lexend({
   subsets: ['latin'],
   variable: '--font-lexend',
+  display: 'swap',
+});
+
+const notoSerifKR = Noto_Serif_KR({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-serif-kr',
   display: 'swap',
 });
 
@@ -28,7 +35,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
       </head>
-      <body className={`${lexend.variable} font-[family-name:var(--font-lexend)] antialiased`}>
+      <body className={`${lexend.variable} ${notoSerifKR.variable} font-[family-name:var(--font-lexend)] antialiased overflow-hidden`}>
         <SessionProvider>{children}</SessionProvider>
       </body>
     </html>

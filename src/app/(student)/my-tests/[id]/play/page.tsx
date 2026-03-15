@@ -32,7 +32,7 @@ interface QuestionData {
 }
 
 export default function TestPlayPage() {
-  const { id: testId } = useParams<{ id: string }>();
+  const { id: testSeq } = useParams<{ id: string }>();
   const router = useRouter();
   const { attempt, loading, startAttempt, submitAnswer, completeAttempt } = useTestAttempt();
 
@@ -56,15 +56,18 @@ export default function TestPlayPage() {
   const [elapsed, setElapsed] = useState(0);
   const questionStartRef = useRef(Date.now());
 
+  // Tab switch detection
+  const tabSwitchRef = useRef(0);
+
   // Initialize test
   useEffect(() => {
     async function init() {
       try {
-        const att = await startAttempt(testId);
+        const att = await startAttempt(testSeq);
         if (!att) return;
 
         // Fetch questions
-        const res = await fetch(`/api/tests/${testId}`);
+        const res = await fetch(`/api/tests/${testSeq}`);
         if (res.ok) {
           const json = await res.json();
           const qOrder = att.questionOrder as string[];
@@ -80,17 +83,29 @@ export default function TestPlayPage() {
     }
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [testId]);
+  }, [testSeq]);
 
   // Per-question timer
   useEffect(() => {
     questionStartRef.current = Date.now();
+    tabSwitchRef.current = 0;
     setElapsed(0);
     const timer = setInterval(() => {
       setElapsed(Math.floor((Date.now() - questionStartRef.current) / 1000));
     }, 1000);
     return () => clearInterval(timer);
   }, [currentIndex]);
+
+  // Tab visibility change detection
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden) {
+        tabSwitchRef.current++;
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
 
   const currentQuestion = questions[currentIndex];
   const isLastQuestion = currentIndex >= questions.length - 1;
@@ -107,7 +122,8 @@ export default function TestPlayPage() {
         attempt.id,
         currentQuestion.id,
         selectedAnswer,
-        timeSpent
+        timeSpent,
+        tabSwitchRef.current
       );
 
       setFeedback(result);
@@ -132,7 +148,7 @@ export default function TestPlayPage() {
       setCompleting(true);
       try {
         await completeAttempt(attempt.id);
-        router.push(`/my-tests/${testId}/result`);
+        router.push(`/my-tests/${testSeq}/result`);
       } catch {
         alert('시험 완료 실패');
       }
@@ -142,7 +158,7 @@ export default function TestPlayPage() {
       setSelectedAnswer('');
       setFeedback(null);
     }
-  }, [isLastQuestion, attempt, completeAttempt, testId, router]);
+  }, [isLastQuestion, attempt, completeAttempt, testSeq, router]);
 
   if (loading || questions.length === 0) {
     return (
@@ -256,7 +272,7 @@ export default function TestPlayPage() {
                       key={idx}
                       disabled={!!feedback}
                       onClick={() => setSelectedAnswer(choiceNum)}
-                      className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all text-sm ${
+                      className={`w-full text-left px-4 py-3 rounded-sm border-2 transition-all text-sm ${
                         showResult
                           ? isCorrectAnswer
                             ? 'border-emerald-400 bg-emerald-50'
@@ -290,7 +306,7 @@ export default function TestPlayPage() {
                   onChange={(e) => setSelectedAnswer(e.target.value)}
                   disabled={!!feedback}
                   placeholder="정답을 입력하세요"
-                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl text-base focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50"
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-sm text-base focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !feedback) handleSubmit();
                   }}
@@ -300,7 +316,7 @@ export default function TestPlayPage() {
 
             {/* Feedback */}
             {feedback && (
-              <div className={`mt-6 p-4 rounded-xl ${
+              <div className={`mt-6 p-4 rounded-sm ${
                 feedback.isCorrect ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'
               }`}>
                 <div className="flex items-center gap-2 mb-2">
@@ -319,8 +335,8 @@ export default function TestPlayPage() {
                     <>
                       <XCircle className="w-5 h-5 text-red-600" />
                       <span className="font-bold text-red-700">오답</span>
-                      <span className="text-sm text-red-600">
-                        정답: {feedback.correctAnswer}
+                      <span className="text-sm text-red-600 [&_p]:inline [&_p]:m-0">
+                        정답: <MathRenderer content={feedback.correctAnswer} />
                       </span>
                     </>
                   )}

@@ -23,7 +23,7 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage <= 1}
-        className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="p-2 rounded-sm border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         <ChevronLeft className="w-4 h-4" />
       </button>
@@ -36,7 +36,7 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
             {showEllipsis && <span className="text-slate-400 px-1">...</span>}
             <button
               onClick={() => onPageChange(page)}
-              className={`w-9 h-9 rounded-lg text-sm font-semibold transition-colors ${
+              className={`w-9 h-9 rounded-sm text-sm font-semibold transition-colors ${
                 page === currentPage
                   ? 'bg-primary text-white'
                   : 'border border-slate-200 hover:bg-slate-50 text-text-secondary'
@@ -50,7 +50,7 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage >= totalPages}
-        className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="p-2 rounded-sm border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         <ChevronRight className="w-4 h-4" />
       </button>

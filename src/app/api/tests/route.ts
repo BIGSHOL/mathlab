@@ -29,34 +29,61 @@ export async function GET(request: NextRequest) {
     where,
     include: {
       creator: { select: { name: true } },
-      _count: { select: { attempts: true } },
+      _count: { select: { attempts: true, assignments: true } },
     },
     orderBy: { createdAt: 'desc' },
   });
 
-  // 학생인 경우 본인 시도 정보 추가
-  let testsWithStatus = tests;
+  // 학생인 경우 본인 시도 정보 + 배정 정보 추가
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let testsWithStatus: any[] = tests;
   if (currentUser.role === 'STUDENT') {
-    const attempts = await prisma.testAttempt.findMany({
-      where: {
-        studentId: currentUser.id,
-        testId: { in: tests.map((t) => t.id) },
-      },
-      select: { testId: true, completedAt: true, score: true, maxScore: true },
-    });
-    const attemptMap = new Map(attempts.map((a) => [a.testId, a]));
+    const [attempts, assignments] = await Promise.all([
+      prisma.testAttempt.findMany({
+        where: {
+          studentId: currentUser.id,
+          testId: { in: tests.map((t) => t.id) },
+        },
+        select: { testId: true, completedAt: true, score: true, maxScore: true, attemptNumber: true },
+        orderBy: { score: 'desc' },
+      }),
+      prisma.testAssignment.findMany({
+        where: {
+          studentId: currentUser.id,
+          testId: { in: tests.map((t) => t.id) },
+        },
+        select: { testId: true, dueDate: true, status: true, bestScore: true, allowLateSubmission: true },
+      }),
+    ]);
+
+    // 시도: testId별로 그룹
+    const attemptsByTest = new Map<string, typeof attempts>();
+    for (const a of attempts) {
+      const list = attemptsByTest.get(a.testId) ?? [];
+      list.push(a);
+      attemptsByTest.set(a.testId, list);
+    }
+    const assignmentMap = new Map(assignments.map((a) => [a.testId, a]));
 
     testsWithStatus = tests.map((t) => {
-      const attempt = attemptMap.get(t.id);
+      const testAttempts = attemptsByTest.get(t.id) ?? [];
+      const completedAttempts = testAttempts.filter((a) => a.completedAt);
+      const bestAttempt = completedAttempts[0]; // sorted by score desc
+      const assignment = assignmentMap.get(t.id);
+
       return {
         ...t,
-        myAttempt: attempt
+        myAttempt: bestAttempt
           ? {
-              completed: !!attempt.completedAt,
-              score: attempt.score,
-              maxScore: attempt.maxScore,
+              completed: true,
+              score: bestAttempt.score,
+              maxScore: bestAttempt.maxScore,
             }
-          : null,
+          : testAttempts.length > 0
+            ? { completed: false, score: testAttempts[0].score, maxScore: testAttempts[0].maxScore }
+            : null,
+        attemptCount: completedAttempts.length,
+        assignment: assignment ?? null,
       };
     });
   }
@@ -74,7 +101,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { title, description, grade, testType, questionIds, timeLimitMin, shuffleOptions } = body;
+  const { title, description, grade, testType, questionIds, timeLimitMin, shuffleOptions, maxAttempts, defaultDueDate, allowLateSubmission } = body;
 
   if (!title || !grade || !questionIds?.length) {
     return NextResponse.json(
@@ -93,6 +120,9 @@ export async function POST(request: NextRequest) {
       questionCount: questionIds.length,
       timeLimitMin: timeLimitMin || null,
       shuffleOptions: shuffleOptions || false,
+      maxAttempts: maxAttempts ?? null,
+      defaultDueDate: defaultDueDate ? new Date(defaultDueDate) : null,
+      allowLateSubmission: allowLateSubmission || false,
       createdBy: currentUser.id,
     },
   });

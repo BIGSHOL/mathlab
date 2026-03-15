@@ -48,6 +48,15 @@ async function loadQuestions(filePath: string): Promise<RawQuestion[]> {
 async function main() {
   const jsonFiles = [
     path.join(__dirname, '..', 'data', 'questions.json'),
+    // 초등 큐브수학 실력
+    path.join(__dirname, '..', 'data', 'questions-실력-3-1.json'),
+    path.join(__dirname, '..', 'data', 'questions-실력-3-2.json'),
+    path.join(__dirname, '..', 'data', 'questions-실력-4-1.json'),
+    path.join(__dirname, '..', 'data', 'questions-실력-4-2.json'),
+    path.join(__dirname, '..', 'data', 'questions-실력-5-1.json'),
+    path.join(__dirname, '..', 'data', 'questions-실력-5-2.json'),
+    path.join(__dirname, '..', 'data', 'questions-실력-6-1.json'),
+    path.join(__dirname, '..', 'data', 'questions-실력-6-2.json'),
   ];
 
   let questions: RawQuestion[] = [];

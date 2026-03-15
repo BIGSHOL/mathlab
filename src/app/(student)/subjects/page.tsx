@@ -16,7 +16,7 @@ const stageColors = [
 ];
 
 function getStageIndex(progress: Array<{ stage: string; completed: boolean }>): number {
-  const stages = ['READING', 'BLANK_EASY', 'BLANK_HARD', 'BLANK_PAGE'];
+  const stages = ['READING', 'BLANK_EASY', 'BLANK_HARD', 'BLANK_FULL'];
   for (let i = stages.length - 1; i >= 0; i--) {
     const p = progress.find((pr) => pr.stage === stages[i]);
     if (p?.completed) return Math.min(i + 1, 4);
@@ -24,7 +24,7 @@ function getStageIndex(progress: Array<{ stage: string; completed: boolean }>): 
   // Check if any stage is started but not completed
   if (progress.length > 0) {
     const stages_started = progress.map((p) => stages.indexOf(p.stage));
-    return Math.max(...stages_started);
+    return Math.max(...stages_started.filter((i) => i >= 0));
   }
   return 0;
 }
@@ -68,7 +68,7 @@ export default async function SubjectsPage() {
           {subjects.map((subject) => (
             <Card key={subject.id} className="p-6">
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-blue-50 rounded-xl">
+                <div className="p-3 bg-blue-50 rounded-sm">
                   <BookOpen className="w-6 h-6 text-primary" />
                 </div>
                 <div>
@@ -81,8 +81,8 @@ export default async function SubjectsPage() {
                   const stageIdx = getStageIndex(concept.progress);
                   const progressPct = getProgressPercent(concept.progress);
                   return (
-                    <Link key={concept.id} href={`/concepts/${concept.id}`}>
-                      <div className="flex items-center gap-4 p-4 rounded-xl hover:bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all group cursor-pointer">
+                    <Link key={concept.id} href={`/concepts/${concept.conceptCode ?? concept.id}`}>
+                      <div className="flex items-center gap-4 p-4 rounded-sm hover:bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all group cursor-pointer">
                         <div className="flex-1">
                           <h3 className="font-semibold text-text-primary group-hover:text-primary transition-colors">
                             {concept.title}

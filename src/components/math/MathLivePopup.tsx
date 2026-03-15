@@ -101,7 +101,7 @@ export function MathLivePopup({
 
       {/* Popup */}
       <div
-        className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4"
+        className="relative bg-white rounded-sm shadow-2xl w-full max-w-lg mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -112,7 +112,7 @@ export function MathLivePopup({
           </h3>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-slate-100 rounded-lg transition-colors"
+            className="p-1 hover:bg-slate-100 rounded-sm transition-colors"
           >
             <X className="w-5 h-5 text-slate-400" />
           </button>
@@ -125,7 +125,7 @@ export function MathLivePopup({
             <label className="block text-xs font-bold text-text-secondary mb-1.5">
               수식 입력 (클릭하여 편집)
             </label>
-            <div className="border-2 border-primary/30 rounded-lg bg-white focus-within:border-primary/60 transition-colors">
+            <div className="border-2 border-primary/30 rounded-sm bg-white focus-within:border-primary/60 transition-colors">
               <div ref={containerRef} className="min-h-[80px]" />
               {!loaded && (
                 <div className="h-[60px] flex items-center justify-center text-sm text-slate-400">
@@ -141,7 +141,7 @@ export function MathLivePopup({
               LaTeX 코드
             </label>
             <input
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono text-slate-700 focus:ring-2 focus:ring-primary/40 focus:border-primary"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-sm text-sm font-mono text-slate-700 focus:ring-2 focus:ring-primary/40 focus:border-primary"
               value={rawLatex}
               onChange={(e) => {
                 setRawLatex(e.target.value);
@@ -160,14 +160,14 @@ export function MathLivePopup({
         <div className="flex justify-end gap-2 px-5 py-3.5 border-t border-slate-200">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-sm transition-colors"
           >
             취소
           </button>
           <button
             onClick={handleInsert}
             disabled={!rawLatex.trim()}
-            className="px-5 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-medium"
+            className="px-5 py-2 text-sm bg-primary text-white rounded-sm hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-medium"
           >
             삽입
           </button>

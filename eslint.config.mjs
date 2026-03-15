@@ -14,7 +14,13 @@ const eslintConfig = [
   {
     rules: {
       'no-console': 'warn',
-      '@typescript-eslint/no-unused-vars': 'error',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    },
+  },
+  {
+    files: ['src/app/(teacher)/students/page.tsx'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
 ];
