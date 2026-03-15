@@ -28,6 +28,8 @@ export interface CurriculumUnit {
   subUnits?: CurriculumUnit[];
 }
 
+import { DiagramSpec } from './diagram';
+
 export interface GeneratedProblem {
   question: string;
   choices?: string[];
@@ -36,6 +38,8 @@ export interface GeneratedProblem {
   topic: string;
   difficulty: string;
   diagramSVG?: string | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  diagramSpec?: DiagramSpec | any | null;
 }
 
 export type GenerationMode = 'curriculum' | 'image';

@@ -223,6 +223,8 @@ model Question {
   answer      String             @db.Text
   explanation String?            @db.Text
   sourceTag   String?            @db.VarChar(100)  // "핵심문제 익히기" 등
+  diagramSpec Json?                                // 구조화된 도형 명세 (다형성 JSON)
+  diagramSVG  String?            @db.Text          // 레거시 raw SVG (하위 호환)
 
   // 4대 영역 & 계통도 연결
   domain      String?            @db.VarChar(30)   // CALCULATION | UNDERSTANDING | PROBLEM_SOLVING | REASONING

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { GeneratedProblem } from '@/types/mathgen';
 import { MathRenderer } from './MathRenderer';
+import { DiagramRenderer } from './DiagramRenderer';
 import { Eye, EyeOff, CheckCircle, HelpCircle, FileText, Printer } from 'lucide-react';
 
 interface ProblemDisplayProps {
@@ -94,14 +95,21 @@ export function ProblemDisplay({ problem, isLoading }: ProblemDisplayProps) {
           <div className="p-6 md:p-8 print:px-0 print:py-4">
             <MathRenderer content={problem.question} className="text-lg md:text-xl text-slate-800 print:text-black" />
 
-            {/* SVG Diagram */}
-            {problem.diagramSVG && (
+            {/* SVG Diagram: 구조화된 spec 우선, 레거시 raw SVG 폴백 */}
+            {(problem.diagramSpec || problem.diagramSVG) && (
               <div className="my-8 flex justify-center print:my-4">
                 <div className="w-full max-w-lg">
-                  <div
-                    className="w-full overflow-hidden rounded-sm border border-slate-100 bg-white p-6 shadow-sm print:shadow-none print:border-none print:p-0 [&_svg]:w-full [&_svg]:h-auto"
-                    dangerouslySetInnerHTML={{ __html: problem.diagramSVG }}
-                  />
+                  {problem.diagramSpec ? (
+                    <DiagramRenderer
+                      spec={problem.diagramSpec}
+                      className="rounded-lg border border-slate-100 bg-white p-6 shadow-sm print:shadow-none print:border-none print:p-0"
+                    />
+                  ) : (
+                    <div
+                      className="w-full overflow-hidden rounded-lg border border-slate-100 bg-white p-6 shadow-sm print:shadow-none print:border-none print:p-0 [&_svg]:w-full [&_svg]:h-auto"
+                      dangerouslySetInnerHTML={{ __html: problem.diagramSVG! }}
+                    />
+                  )}
                 </div>
               </div>
             )}

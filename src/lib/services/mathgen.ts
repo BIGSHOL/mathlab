@@ -39,8 +39,27 @@ const RESPONSE_SCHEMA = {
     },
     diagramSVG: {
       type: Type.STRING,
-      description: 'SVG code or null. For fractions, construct them vertically using text/line elements.',
+      description: 'DEPRECATED. Use diagramSpec instead. Raw SVG fallback only if diagramSpec cannot represent the diagram.',
       nullable: true,
+    },
+    diagramSpec: {
+      type: Type.OBJECT,
+      description: `Structured diagram spec. Do NOT provide coordinates — use presets and the system calculates geometry automatically.
+
+TYPES:
+1. triangle: { type:"triangle", preset:"right"|"equilateral"|"isosceles"|"scalene"|"right-isosceles", sides?:{a:3,b:4,c:5}, angles?:{A:90,B:60,C:30}, vertexLabels?:["A","B","C"] }
+2. circle: { type:"circle", showRadius?:true, showDiameter?:true, chords?:[{from:30,to:150}], arcs?:[{from:0,to:90,label:"l"}] }
+3. coordinatePlane: { type:"coordinatePlane", functions?:[{expr:"x^2-2*x+1",label:"y=f(x)"}], points?:[{coord:[1,0],label:"P"}], showGrid?:true }
+   (xRange/yRange auto-calculated from functions)
+4. quadrilateral: { type:"quadrilateral", preset:"square"|"rectangle"|"parallelogram"|"rhombus"|"trapezoid", sides?:{width:8,height:5,top:4}, vertexLabels?:["A","B","C","D"], diagonals?:true }
+5. solid: { type:"solid", shape:"cube"|"cylinder"|"cone"|"sphere"|"prism"|"pyramid", dimensions?:{radius:5,height:10}, showDimensions?:true }
+6. composite: { type:"composite", elements:[...specs] }
+
+RULES: Use preset names, NOT coordinates. Provide side lengths/angles from the problem. The system handles all geometry.`,
+      nullable: true,
+      properties: {
+        type: { type: Type.STRING, description: 'Diagram type' },
+      },
     },
   },
   required: ['question', 'answer', 'solution', 'topic', 'difficulty'],
@@ -75,19 +94,19 @@ const COMMON_INSTRUCTIONS = `
          - The first line inside the blockquote MUST be \`**<보 기>**\`.
          - Each item (ㄱ, ㄴ, ㄷ...) MUST be on a NEW LINE.
 
-    5. [Visuals & Diagrams - HIGH QUALITY REQUIRED]
-       - **When to generate**: If the topic involves **Geometry** (Plane/Solid), **Functions** (Graphs), or **Statistics** (Charts/Histograms).
-       - **SVG Requirements**:
-         - **Code**: Provide raw, valid SVG string in "diagramSVG".
-         - **Style**:
-           - **ViewBox**: Appropriately sized (e.g., "0 0 400 300"). Ensure enough width for composite diagrams.
-           - **Stroke**: Black (#000). Main object lines: width **2px**. Axes/Auxiliary lines: width **1px**.
-           - **Background**: Transparent.
-         - **Text Labels (CRITICAL - FRACTIONS)**:
-           - **NO LaTeX in SVG**: Browsers CANNOT render LaTeX ($...$) inside SVG <text>.
-           - **Fractions**: You MUST render fractions **VERTICALLY** using pure SVG elements.
-           - **Symbols**: Use Unicode (π, θ, √, α, β).
-           - **Readability**: Ensure font-size is large enough (>= 14px) and labels do not overlap lines.
+    5. [Visuals & Diagrams - USE PRESETS, NOT COORDINATES]
+       - **When to generate**: If the topic involves **Geometry**, **Functions/Graphs**, or **Statistics**.
+       - **Use "diagramSpec"**: Provide a preset-based JSON. Do NOT calculate coordinates — our system does it automatically.
+       - **Examples**:
+         - 직각삼각형 (밑변 3, 높이 4): { "type":"triangle", "preset":"right", "sides":{"b":4,"c":3} }
+         - 정삼각형 (한 변 6): { "type":"triangle", "preset":"equilateral", "sides":{"a":6} }
+         - 원 (반지름 표시): { "type":"circle", "showRadius":true }
+         - 이차함수 그래프: { "type":"coordinatePlane", "functions":[{"expr":"x^2-2*x+1","label":"y=x²-2x+1"}], "showGrid":true }
+         - 직사각형 (가로 8, 세로 5): { "type":"quadrilateral", "preset":"rectangle", "sides":{"width":8,"height":5} }
+         - 원기둥 (반지름 5, 높이 10): { "type":"solid", "shape":"cylinder", "dimensions":{"radius":5,"height":10}, "showDimensions":true }
+       - **CRITICAL**: Use the actual numbers from your problem in sides/dimensions.
+       - **Functions format**: "x^2+3*x-1" (supports +,-,*,/,^,sin,cos,tan,sqrt,abs,log,ln,pi,e).
+       - **Do NOT provide raw SVG in "diagramSVG"**.
 
     6. [Solution Quality - WORKBOOK STYLE]
        - Provide a professional, detailed solution similar to famous Korean workbooks (like Ssen, Black Label).
@@ -197,6 +216,15 @@ export async function generateMathProblem(selection: SelectionState): Promise<Ge
       .replace(/^```(xml|svg)?/i, '')
       .replace(/```$/, '')
       .trim();
+  }
+
+  // diagramSpec이 문자열로 반환된 경우 파싱
+  if (data.diagramSpec && typeof data.diagramSpec === 'string') {
+    try {
+      data.diagramSpec = JSON.parse(data.diagramSpec);
+    } catch {
+      data.diagramSpec = null;
+    }
   }
 
   return data;
