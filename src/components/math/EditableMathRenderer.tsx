@@ -16,10 +16,16 @@ interface Segment {
   align?: string;
 }
 
+interface DiagramSvgItem {
+  svg: string;
+  label: string;
+}
+
 interface EditableMathRendererProps {
   content: string;
   onMathClick?: (latex: string, start: number, end: number) => void;
   className?: string;
+  diagramSvgs?: DiagramSvgItem[];
 }
 
 function parseImageTitle(title: string | undefined): { width?: string; align?: string } {
@@ -67,6 +73,7 @@ export function EditableMathRenderer({
   content,
   onMathClick,
   className = '',
+  diagramSvgs,
 }: EditableMathRendererProps) {
   const segments = useMemo(() => {
     const result: Segment[] = [];
@@ -163,6 +170,40 @@ export function EditableMathRenderer({
     });
   };
 
+  // [그림] / [그림N] 플레이스홀더를 SVG로 교체하는 헬퍼
+  const diagramIdxRef = React.useRef(0);
+  // 렌더 시작 시 인덱스 리셋
+  diagramIdxRef.current = 0;
+
+  const renderTextWithDiagrams = (text: string, keyPrefix: string) => {
+    if (!diagramSvgs || diagramSvgs.length === 0) {
+      return renderTextWithBold(text, keyPrefix);
+    }
+    // [그림] 또는 [그림N] 패턴 분리
+    const parts = text.split(/(\[그림\d*\])/g);
+    return parts.map((part, i) => {
+      const numMatch = part.match(/^\[그림(\d*)\]$/);
+      if (numMatch) {
+        let idx: number;
+        if (numMatch[1]) {
+          idx = parseInt(numMatch[1]) - 1;
+        } else {
+          idx = diagramIdxRef.current++;
+        }
+        if (idx >= 0 && idx < diagramSvgs!.length) {
+          return (
+            <span
+              key={`${keyPrefix}-svg${i}`}
+              className="diagram-svg-inline flex justify-center my-2"
+              dangerouslySetInnerHTML={{ __html: diagramSvgs![idx].svg }}
+            />
+          );
+        }
+      }
+      return <React.Fragment key={`${keyPrefix}-d${i}`}>{renderTextWithBold(part, `${keyPrefix}-d${i}`)}</React.Fragment>;
+    });
+  };
+
   const renderSegment = (seg: Segment, key: string) => {
     if (seg.type === 'text') {
       const lines = seg.text.split('\n');
@@ -177,7 +218,7 @@ export function EditableMathRenderer({
         return (
           <React.Fragment key={`${key}-${j}`}>
             {j > 0 && <br />}
-            {renderTextWithBold(display, `${key}-${j}`)}
+            {renderTextWithDiagrams(display, `${key}-${j}`)}
           </React.Fragment>
         );
       });

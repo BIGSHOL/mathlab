@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { GoogleGenAI, Type } from '@google/genai';
+import { renderDiagram } from '@/lib/utils/svg-diagrams';
 
 function getClient() {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -52,24 +53,58 @@ const PDF_EXTRACT_SCHEMA = {
             },
             description: '문제에 포함된 도형/이미지의 바운딩 박스. 없으면 빈 배열',
           },
-          diagrams: {
+          diagramSvgs: {
             type: Type.ARRAY,
             items: {
               type: Type.OBJECT,
               properties: {
-                type: {
+                svg: {
                   type: Type.STRING,
-                  description: '다이어그램 종류: number_line, fraction_circle, fraction_rect, place_value, dot_array, flow_chart, coordinate_plane, circle, triangle, quadrilateral, function_graph, venn_diagram, regular_polygon',
+                  description: '완전한 SVG 코드 문자열. <svg>...</svg> 형태. viewBox 필수, width/height 300 이하',
                 },
-                params: {
-                  type: Type.OBJECT,
-                  description: '다이어그램 파라미터 (타입별 상이). number_line: {min,max,step,marks}, fraction_circle: {totalParts,coloredParts,label}, fraction_rect: {rows,cols,coloredCells,label}, place_value: {hundreds,tens,ones}, dot_array: {rows,cols}, coordinate_plane: {xRange,yRange,points,lines}, triangle: {vertices,sides,angles}, circle: {radius,labels,arcs}, quadrilateral: {vertices,sides,type}, function_graph: {xRange,yRange,functions,points}, venn_diagram: {sets,intersection}, regular_polygon: {sides,labels,diagonals}',
-                  properties: {},
+                label: {
+                  type: Type.STRING,
+                  description: '도형 설명 (예: "분수 원", "수직선", "좌표평면")',
                 },
               },
-              required: ['type', 'params'],
+              required: ['svg', 'label'],
             },
-            description: '도형/그래프를 SVG로 생성하기 위한 구조화 데이터. 수직선, 분수원, 좌표평면, 삼각형 등 텍스트로 표현 불가한 시각 요소에 사용. 없으면 빈 배열',
+            description: '(폴백 전용) diagramParams로 표현 불가한 도형만 직접 SVG 코드 작성. 가능하면 diagramParams 사용',
+          },
+          diagramParams: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                diagramType: {
+                  type: Type.STRING,
+                  description: 'fraction_circle | fraction_rect | number_line | place_value | dot_array | coordinate_plane | triangle | quadrilateral | circle | function_graph | venn_diagram | regular_polygon | flow_chart',
+                },
+                label: {
+                  type: Type.STRING,
+                  description: '도형 설명 (예: "분수 원 3개 5등분", "수직선 0~1")',
+                },
+                // fraction_circle용
+                totalParts: { type: Type.NUMBER, description: '원 등분 수 (예: 5등분이면 5). fraction_circle 전용' },
+                coloredParts: { type: Type.NUMBER, description: '색칠된 조각 수. fraction_circle 전용' },
+                count: { type: Type.NUMBER, description: '원/사각형 개수. fraction_circle, fraction_rect 공용' },
+                // fraction_rect용
+                rows: { type: Type.NUMBER, description: '행 수. fraction_rect, dot_array 공용' },
+                cols: { type: Type.NUMBER, description: '열 수. fraction_rect, dot_array 공용' },
+                coloredCount: { type: Type.NUMBER, description: '색칠할 칸 수 (앞에서부터). fraction_rect 전용' },
+                hatching: { type: Type.BOOLEAN, description: '빗금(사선) 패턴 사용 여부. 교재에서 색칠 대신 빗금이면 true. fraction_rect 전용' },
+                // number_line용
+                min: { type: Type.NUMBER, description: '수직선 최솟값. number_line 전용' },
+                max: { type: Type.NUMBER, description: '수직선 최댓값. number_line 전용' },
+                step: { type: Type.NUMBER, description: '눈금 간격. number_line 전용' },
+                // place_value용
+                hundreds: { type: Type.NUMBER, description: '백 자리. place_value 전용' },
+                tens: { type: Type.NUMBER, description: '십 자리. place_value 전용' },
+                ones: { type: Type.NUMBER, description: '일 자리. place_value 전용' },
+              },
+              required: ['diagramType', 'label'],
+            },
+            description: '구조화된 다이어그램. content에 [그림] 플레이스홀더와 대응. 서버에서 SVG로 렌더링. 사용하지 않는 필드는 0으로',
           },
         },
         required: ['questionNum', 'content', 'problemType'],
@@ -95,6 +130,12 @@ const PDF_EXTRACT_SCHEMA = {
 const SYSTEM_PROMPT = `당신은 한국 수학 교재 분석 전문가입니다.
 주어진 수학 교재 페이지 이미지를 분석하여 모든 문제를 추출하세요.
 
+⚠️ 최우선 규칙 — 빈칸에 정답 채우기 절대 금지!
+원본 교재에서 □, ( ), 빈칸으로 되어 있는 답란은 반드시 \\\\boxed{\\\\phantom{0}}로 비워두세요.
+정답 숫자를 content에 넣으면 학생이 문제를 풀 수 없게 됩니다. 정답은 answer 필드에만!
+예: 원본 "$\\\\dfrac{5}{9} \\div 3 = \\\\dfrac{□}{27}$" → "$\\\\dfrac{5}{9} \\\\div 3 = \\\\dfrac{\\\\boxed{\\\\phantom{0}}}{27}$" ✅
+예: "$\\\\dfrac{5}{9} \\\\div 3 = \\\\dfrac{5}{27}$" ← ❌ 정답 5가 채워짐!
+
 [규칙]
 1. 각 문제의 번호, 유형(객관식/주관식/서술형), 난이도 태그를 식별
 2. 문제 본문은 마크다운으로 작성. 모든 수식은 $...$로 감싸기 (예: $2^3 \\\\times 3^2$)
@@ -103,21 +144,25 @@ const SYSTEM_PROMPT = `당신은 한국 수학 교재 분석 전문가입니다.
 5. 난이도 태그가 문제번호 옆에 있으면 difficultyTag에 저장
 6. 페이지 상단의 유형/단원 헤더를 sectionHeader에 저장
 7. "대표문제" 같은 특수 태그는 sourceTag에 저장. "서술형"은 problemType으로만 분류 (sourceTag에 넣지 않음)
-8. 이미지/도형이 포함된 부분:
-   - content에 [그림] 또는 [그림1], [그림2] 표시 (여러 개면 번호 부여)
-   - images 배열에 해당 도형/이미지의 바운딩 박스를 [y_min, x_min, y_max, x_max] 형식으로 반환
-   - 좌표는 이미지 전체 크기 대비 0~1000 범위의 정규화 좌표
-   - label에는 도형 종류 (예: "원", "삼각형", "좌표평면", "수직선")
-   - images 순서와 [그림] 번호가 대응. 도형 없으면 images 빈 배열
-   - **바운딩 박스는 그림/도형 영역만 최소한으로 잡으세요.** 주변 텍스트, 문제 번호, 수식은 절대 포함하지 마세요.
-   - **수식/숫자/분수는 이미지가 아닙니다.** $\\\\frac{1}{4}$, $216 + 432 = \\\\boxed{}$ 등은 텍스트로 표현하세요. 이미지로 처리하면 안 됩니다.
-   - 이미지로 처리해야 하는 것: 색칠된 도형, 수직선, 그래프, 사진, 수 모형, 색깔 블록 등 **텍스트/수식으로 표현 불가능한 시각 요소**만
+8. 도형/다이어그램 처리 (SVG 렌더링 시스템):
+   - 모든 도형은 **diagramParams 배열**로 출력 → 서버가 정확한 SVG로 렌더링합니다.
+   - content에는 **[그림1], [그림2], [그림3]...** 플레이스홀더만 넣으세요. 1개라도 [그림1] 사용!
+   - **[그림N] 배치 규칙:**
+     - 독립 도형: 별도 줄에 배치. "텍스트\\n\\n[그림1]\\n\\n수식"
+     - 인용블록(>) 안의 도형: **반드시 > 안에 포함!** 해당 텍스트 줄 끝에 붙이세요.
+       ✅: "> $1 \\\\div 3 = \\\\dfrac{\\\\boxed{\\\\phantom{0}}}{3}$ 이고 [그림1]"
+       ❌: "> 텍스트 이고\\n\\n[그림1]" (blockquote 밖으로 빠지면 안 됨!)
+     - **문장 중간에 [그림N]을 넣지 마세요!** "3÷5를 [그림1]으로" ← 이런 식은 금지
+   - **"그림"이라는 한국어 단어와 [그림N] 플레이스홀더를 혼동하지 마세요!** "그림으로 나타내고"의 "그림"은 일반 텍스트이고, [그림1]은 도형 위치 표시입니다.
+   - images 배열은 사용하지 않아도 됩니다 (빈 배열). diagramParams만 정확히 채우세요.
+   - **수식/숫자/분수는 도형이 아닙니다.** 텍스트/KaTeX로 표현하세요.
 9. 정답이 같은 페이지에 보이면 answer에 포함, 아니면 빈 문자열
 10. 유형 설명 박스(개념 요약)가 있으면 concepts 배열에 추출하세요. title은 개념 제목, content는 전체 설명 (번호 포함). 문제 번호가 없는 설명/정의 박스가 대상입니다.
-11. **중요** 문제 안에 테두리/네모박스/사각형 박스가 있으면 그 안의 내용을 content에 반드시 포함하세요.
-    - "보기" 라벨이 없는 단순 숫자/수식 박스 → content 본문 뒤에 줄바꿈 2번 후 마크다운 인용블록(>)으로 포함
-    - 예시: "다음 중 소수는 몇 개인지 구하시오.\\n\\n> 1, 7, 21, 33, 47, 91, 113, 169"
-    - 이 박스 내용이 누락되면 문제를 풀 수 없으므로 절대 생략하지 마세요
+11. **중요** 문제 안에 테두리/네모박스/사각형 박스/색 배경 영역이 있으면 그 안의 내용을 반드시 마크다운 인용블록(>)으로 감싸세요.
+    - 숫자/수식 나열 박스: "다음 중 소수는 몇 개인지 구하시오.\\n\\n> 1, 7, 21, 33, 47, 91, 113, 169"
+    - 풀이 과정 박스 (단계별 유도): 각 줄을 > 로 감싸기
+      예시: "> $1 \\\\div 3 = \\\\dfrac{\\\\boxed{\\\\phantom{0}}}{3}$ 이고\\n> $4 \\\\div 3$는 $\\\\dfrac{1}{3}$이 $\\\\boxed{\\\\phantom{0}}$개입니다.\\n> $\\\\Rightarrow 4 \\\\div 3 = \\\\dfrac{\\\\boxed{\\\\phantom{0}}}{3} = \\\\boxed{\\\\phantom{0}}\\\\dfrac{\\\\boxed{\\\\phantom{0}}}{3}$"
+    - 원본에서 박스/테두리 안에 있는 내용은 반드시 > 인용블록으로 감싸세요. 누락하면 안 됩니다.
 12. 수식에서 곱셈은 반드시 \\\\times 사용 (예: $2^{3} \\\\times 3^{2}$). 거듭제곱은 ^{} 사용 (예: $a^{2}$). 분수는 반드시 \\\\dfrac 사용 (예: $\\\\dfrac{1}{4}$). \\\\frac 대신 \\\\dfrac을 써야 분자/분모가 작아지지 않습니다.
 13. **중요** 문제 본문과 보기의 모든 숫자와 수학 변수(a, b, x, y, n 등)는 반드시 $...$로 감싸세요.
     - 예: "25 미만의 자연수" → "$25$ 미만의 자연수"
@@ -146,6 +191,8 @@ const SYSTEM_PROMPT = `당신은 한국 수학 교재 분석 전문가입니다.
     - 여러 빈칸: 각각 \\\\boxed{\\\\phantom{000}} 사용
     - 빈칸 답란은 절대 생략하지 마세요. 초등 수학에서 답란은 문제의 핵심입니다.
     - "□ 안에"와 같은 문구는 원본 그대로 보존하세요
+    - **절대 금지: 빈칸에 정답을 채워 넣지 마세요!** 원본에서 비어있는 □는 반드시 \\\\boxed{\\\\phantom{0}}로 빈 상태 유지! 정답은 오직 answer 필드에만! content의 빈칸에 답(1, 4, 3 등)을 넣으면 학생이 풀 수 없습니다. 이 규칙을 위반하면 문제가 쓸모없어집니다.
+    - 예: "$1 \\\\div 3 = \\\\dfrac{1}{3}$" ← ❌ 정답 1이 채워짐. "$1 \\\\div 3 = \\\\dfrac{\\\\boxed{\\\\phantom{0}}}{3}$" ← ✅ 빈칸 유지
 16. **시각적 구조(흐름도, 배수표 등)** 화살표, 배수표, 흐름도 등 시각적 요소가 포함된 문제는:
     - **반드시** 텍스트+수식으로 내용을 먼저 표현하고, 추가로 [그림]과 images 바운딩 박스도 포함
     - [그림]만 넣고 텍스트 내용을 생략하면 안 됩니다. 이미지가 표시되지 않을 수 있으므로 텍스트가 반드시 있어야 합니다.
@@ -162,29 +209,34 @@ const SYSTEM_PROMPT = `당신은 한국 수학 교재 분석 전문가입니다.
     - "선으로 이으세요" → "짝지어 쓰세요"
 23. **텍스트 우선 원칙** 수직선, 도형 등 텍스트로 표현 불가능한 것은 [그림]+images로 처리하되, 표/흐름도/계산과정 등 텍스트로 표현 가능한 것은 반드시 텍스트로 먼저 표현하세요.
 24. **AI 난이도 판단** 교재에 난이도 태그가 없으면(difficultyTag가 빈 문자열), 문제 내용을 분석하여 난이도를 판단하세요:
-    - "하": 단순 계산, 한 단계 풀이, 개념 확인 (예: 단순 덧셈/뺄셈, 구구단)
-    - "중하": 2단계 이내 풀이, 기본 응용 (예: 받아올림 있는 덧셈, 기본 약수 구하기)
-    - "중": 2~3단계 풀이, 보통 응용 (예: 혼합계산, 규칙 찾기)
-    - "중상": 3~4단계 풀이, 심화 응용 (예: 여러 조건 결합, 서술형)
-    - "상": 4단계 이상, 고난이도 사고력 (예: 복합 문장제, 증명)
+    - "하": 단순 계산, 한 단계 풀이, 개념 확인 (예: 단순 덧셈/뺄셈, 구구단, 기본 분수 표현, 그림 보고 답 쓰기)
+    - "중하": 2단계 이내 풀이, 기본 응용 (예: 받아올림 있는 덧셈, 기본 약수 구하기, 단위 변환)
+    - "중": 2~3단계 풀이, 보통 응용 (예: 혼합계산, 규칙 찾기, 분수의 덧셈/뺄셈)
+    - "중상": 3~4단계 풀이, 심화 응용 (예: 여러 조건 결합, 서술형, 분수/소수 복합)
+    - "상": 4단계 이상, 고난이도 사고력 (예: 복합 문장제, 증명, 창의력 문제)
     - 판단한 난이도를 difficultyTag에 넣으세요.
-25. **다이어그램 구조화 데이터** 도형/그래프가 포함된 문제는 images(바운딩 박스)와 함께 diagrams 배열에 SVG 생성용 구조화 데이터를 제공하세요.
-    - 지원 타입과 필수 파라미터:
-      - number_line: {min, max, step, marks: [{value, label}], highlights: [{from, to}]}
-      - fraction_circle: {totalParts, coloredParts, label}
-      - fraction_rect: {rows, cols, coloredCells: [0-based index], label}
-      - place_value: {hundreds, tens, ones}
-      - dot_array: {rows, cols}
-      - coordinate_plane: {xRange: [min,max], yRange: [min,max], points: [{x,y,label}], lines: [{points,style}]}
-      - triangle: {vertices: [{x,y,label},{x,y,label},{x,y,label}], sides: [{from,to,label}], angles: [{vertex,value}]}
-      - circle: {radius, labels: [{text, angle}], arcs: [{startAngle, endAngle, label}]}
-      - quadrilateral: {vertices: [4개 {x,y,label}], sides, type: "rectangle"|"square"|"parallelogram"|"trapezoid"|"rhombus"}
-      - function_graph: {xRange, yRange, functions: [{expression, label}], points}
-      - venn_diagram: {sets: [{label, elements}], intersection: {elements}}
-      - regular_polygon: {sides, labels: [{vertex, text}], diagonals, sideLength}
-    - 수직선에 점 표시 → number_line, 분수 색칠 원 → fraction_circle, 좌표평면 그래프 → coordinate_plane 또는 function_graph
-    - 사진/실물 이미지는 diagrams에 넣지 말고 images만 사용
-    - diagrams와 images를 함께 제공하면 SVG 우선, 실패시 크롭 이미지를 폴백으로 사용합니다`;
+    - **초등 저학년 기본 문제는 대부분 "하" 또는 "중하"입니다.** 무조건 "중"으로 넣지 마세요. 그림 보고 빈칸 채우기, 분수 표현하기 등 단순한 문제는 "하"입니다.
+25. **다이어그램: diagramParams 사용** 도형/그래프가 포함된 문제는 **diagramParams** 배열에 파라미터를 출력하세요. 서버가 정확한 SVG로 렌더링합니다.
+    - **content에는 반드시 [그림1], [그림2], [그림3]... 플레이스홀더를 넣으세요.** 1개라도 [그림1] 사용!
+    - [분수 원], [수직선] 같은 라벨 텍스트를 content에 넣지 마세요. 반드시 [그림N] 형식만 사용!
+    - **diagramParams 배열의 순서와 [그림N] 번호가 1:1 대응.** diagramParams[0]이 [그림1], diagramParams[1]이 [그림2]...
+    - **단계별 다이어그램은 반드시 분리!** 한 문제에 여러 단계의 도형이 나오면 각 단계를 별도의 diagramParams 항목 + 별도 [그림N]으로 분리하세요.
+      예: "1÷3 = 1/3이고 [그림1], 4÷3는 1/3이 4개 [그림2], → 4÷3 = 4/3 [그림3]"
+      → diagramParams: [{fraction_rect 1개 3등분 1칸 색칠}, {fraction_rect 4개 3등분 전체 색칠}, {fraction_rect 1개 3등분 4칸 색칠}]
+    - **복잡한 다단계 시각 설명(화살표+여러 색상+단계별 변환 과정 등)은 diagramParams로 무리하지 말고 images 바운딩 박스로 크롭하세요.**
+    - **diagramType별 필수 필드값 (정확히 채우세요!):**
+      - **fraction_circle**: totalParts(등분수, 예:5), coloredParts(색칠수, 예:3), count(원 개수, 예:3)
+        예: "3÷5 원 3개 5등분" → diagramType:"fraction_circle", totalParts:5, coloredParts:0, count:3
+      - **fraction_rect**: rows(행), cols(열), coloredCount(색칠 칸수), count(사각형 개수), hatching(빗금 여부)
+        예: "1/4 색칠" → diagramType:"fraction_rect", rows:4, cols:1, coloredCount:1, count:1
+        예: "세로 3등분" → rows:3, cols:1. "가로 4등분" → rows:1, cols:4
+        예: "빗금 표시된 사각형" → hatching:true (교재에서 사선 빗금이 그려져 있으면 true)
+      - **number_line**: min(최솟값), max(최댓값), step(눈금간격)
+        예: "0~1 수직선 8등분" → diagramType:"number_line", min:0, max:1, step:0.125
+        **수직선에 점이나 호(arc)가 있으면 반드시 marks/highlights도 출력!** (현재 Gemini 스키마에서 지원 안 되므로 images 크롭 병행)
+      - **place_value**: hundreds, tens, ones
+    - **중요:** 사용하지 않는 숫자 필드는 0으로 넣으세요. 비워두면 안 됩니다.
+    - 사진/실물 이미지는 images 바운딩 박스만 사용`;
 
 /**
  * JSON 파싱 후 LaTeX 이스케이프 복원
@@ -197,7 +249,10 @@ function fixLatexEscaping(text: string): string {
     .replace(/\t/g, '\\t')
     .replace(/\f/g, '\\f')
     .replace(/\x08/g, '\\b')
-    .replace(/\r(?!\n)/g, '\\r');
+    .replace(/\r(?!\n)/g, '\\r')
+    // Gemini가 \\n을 리터럴로 출력하는 경우 실제 줄바꿈으로 변환
+    // \nabla, \newcommand 등 LaTeX 명령어는 보호 (뒤에 알파벳이 오지 않는 경우만)
+    .replace(/\\n(?![a-zA-Z])/g, '\n');
 }
 
 interface PageInput {
@@ -288,16 +343,43 @@ export async function POST(request: NextRequest) {
       const data = JSON.parse(jsonStr);
       // LaTeX 이스케이프 복원 (\times → tab 등 JSON 파싱 부작용 수정)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const fixedProblems = (data.problems || []).map((p: any) => ({
-        ...p,
-        content: fixLatexEscaping(p.content),
-        choices: Array.isArray(p.choices) ? p.choices.map(fixLatexEscaping) : p.choices,
-        boxItems: Array.isArray(p.boxItems) ? p.boxItems.map(fixLatexEscaping) : p.boxItems,
-        answer: fixLatexEscaping(p.answer),
-        sectionHeader: fixLatexEscaping(p.sectionHeader),
-        images: Array.isArray(p.images) ? p.images : [],
-        diagrams: Array.isArray(p.diagrams) ? p.diagrams : [],
-      }));
+      const fixedProblems = (data.problems || []).map((p: any) => {
+        // diagramParams (플랫 필드) → renderDiagram으로 정확한 SVG 생성
+        const paramSvgs: { svg: string; label: string }[] = [];
+        if (Array.isArray(p.diagramParams)) {
+          for (const dp of p.diagramParams) {
+            const dtype = dp.diagramType || dp.type;
+            if (!dtype) continue;
+            // 플랫 필드를 params 객체로 변환
+            const params: Record<string, unknown> = dp.params || {};
+            // 플랫 필드 병합 (스키마에서 명시적으로 정의된 필드들)
+            for (const key of ['totalParts', 'coloredParts', 'count', 'rows', 'cols', 'coloredCount',
+                               'hatching', 'min', 'max', 'step', 'hundreds', 'tens', 'ones']) {
+              if (dp[key] !== undefined && dp[key] !== 0) {
+                params[key] = dp[key];
+              }
+            }
+            const svg = renderDiagram({ type: dtype, params });
+            if (svg) {
+              paramSvgs.push({ svg, label: dp.label || dtype });
+            }
+          }
+        }
+        // 기존 diagramSvgs (Gemini 직접 생성)와 병합 — paramSvgs 우선
+        const rawSvgs: { svg: string; label: string }[] = Array.isArray(p.diagramSvgs) ? p.diagramSvgs : [];
+        const mergedSvgs = paramSvgs.length > 0 ? paramSvgs : rawSvgs;
+
+        return {
+          ...p,
+          content: fixLatexEscaping(p.content),
+          choices: Array.isArray(p.choices) ? p.choices.map(fixLatexEscaping) : p.choices,
+          boxItems: Array.isArray(p.boxItems) ? p.boxItems.map(fixLatexEscaping) : p.boxItems,
+          answer: fixLatexEscaping(p.answer),
+          sectionHeader: fixLatexEscaping(p.sectionHeader),
+          images: Array.isArray(p.images) ? p.images : [],
+          diagramSvgs: mergedSvgs,
+        };
+      });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const fixedConcepts = (data.concepts || []).map((c: any) => ({
         ...c,

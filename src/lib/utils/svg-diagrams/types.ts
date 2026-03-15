@@ -23,12 +23,14 @@ export interface NumberLineParams {
   max: number;
   step: number;
   marks?: { value: number; label?: string; color?: string }[];
-  highlights?: { from: number; to: number; color?: string }[];
+  highlights?: { from: number; to: number; color?: string; label?: string }[];
+  label?: string;
 }
 
 export interface FractionCircleParams {
-  totalParts: number;
-  coloredParts: number;
+  totalParts: number;      // N등분
+  coloredParts: number;    // 색칠할 부분 수
+  count?: number;          // 원 개수 (기본 1)
   color?: string;
   label?: string;
 }
@@ -36,8 +38,11 @@ export interface FractionCircleParams {
 export interface FractionRectParams {
   rows: number;
   cols: number;
-  coloredCells?: number[]; // 0-based index of colored cells
+  coloredCells?: number[]; // 0-based index
+  coloredCount?: number;   // coloredCells 대신 앞에서부터 N개 색칠
+  count?: number;          // 사각형 개수 (기본 1)
   color?: string;
+  hatching?: boolean;      // 빗금 패턴 사용 여부
   label?: string;
 }
 
@@ -57,8 +62,8 @@ export interface DotArrayParams {
 export interface FlowChartNode {
   id: string;
   text: string;
-  x: number;
-  y: number;
+  x?: number;
+  y?: number;
 }
 
 export interface FlowChartArrow {
@@ -69,7 +74,7 @@ export interface FlowChartArrow {
 
 export interface FlowChartParams {
   nodes: FlowChartNode[];
-  arrows: FlowChartArrow[];
+  arrows?: FlowChartArrow[];
 }
 
 // --- 중등 ---
@@ -98,7 +103,7 @@ export interface CircleParams {
   cx?: number;
   cy?: number;
   radius?: number;
-  labels?: { text: string; angle: number }[]; // angle in degrees
+  labels?: { text: string; angle: number }[];
   arcs?: { startAngle: number; endAngle: number; label?: string }[];
 }
 
@@ -116,7 +121,7 @@ export interface QuadrilateralParams {
 }
 
 export interface FunctionDef {
-  expression: string; // e.g. "2*x+1"
+  expression: string;
   color?: string;
   label?: string;
 }
@@ -144,7 +149,7 @@ export interface RegularPolygonParams {
   sides: number;
   labels?: { vertex: number; text: string }[];
   diagonals?: boolean;
-  sideLength?: string; // label
+  sideLength?: string;
 }
 
 // 통합 파라미터 유니온

@@ -127,52 +127,6 @@ function formatConceptContent(text: string): string {
   }).trim();
 }
 
-/** base64 data URL → File 객체 변환 */
-function dataURLtoFile(dataUrl: string, filename: string): File {
-  const [header, base64] = dataUrl.split(',');
-  const mime = header.match(/:(.*?);/)?.[1] || 'image/png';
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return new File([bytes], filename, { type: mime });
-}
-
-/** [그림] / [그림N] 플레이스홀더를 마크다운 이미지로 교체 */
-function replaceImagePlaceholders(
-  content: string,
-  images: { url: string; label: string }[]
-): string {
-  if (images.length === 0) return content;
-  if (images.length === 1) {
-    // [그림] 또는 [그림1] 교체
-    return content
-      .replace(/\[그림1?\]/, `![${images[0].label}](${images[0].url} "50% center")`);
-  }
-  // 여러 이미지: [그림1], [그림2], ... 순서대로 교체
-  let result = content;
-  for (let i = 0; i < images.length; i++) {
-    const placeholder = `[그림${i + 1}]`;
-    result = result.replace(placeholder, `![${images[i].label}](${images[i].url} "50% center")`);
-  }
-  return result;
-}
-
-/** SVG 다이어그램 플레이스홀더를 인라인 SVG data URL로 교체 */
-function replaceDiagramPlaceholders(
-  content: string,
-  diagrams: { svg: string; label: string }[]
-): string {
-  if (diagrams.length === 0) return content;
-  // SVG를 data URL로 변환하여 이미지로 삽입
-  let result = content;
-  for (let i = 0; i < diagrams.length; i++) {
-    const dataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(diagrams[i].svg)))}`;
-    const placeholder = diagrams.length === 1 ? /\[그림1?\]/ : `[그림${i + 1}]`;
-    result = result.replace(placeholder, `![${diagrams[i].label}](${dataUrl} "60% center")`);
-  }
-  return result;
-}
-
 // --- 상수 ---
 const MIDDLE_BOOK_CODES = ['1-1', '1-2', '2-1', '2-2', '3-1', '3-2'];
 const ELEMENTARY_BOOK_CODES = ['E3-1', 'E3-2', 'E4-1', 'E4-2', 'E5-1', 'E5-2', 'E6-1', 'E6-2'];
@@ -351,7 +305,7 @@ export default function PdfImportPage() {
     const sortedPages = Array.from(selectedPages).sort((a, b) => a - b);
     setProgress({ done: 0, total: sortedPages.length });
 
-    const { renderPageForAI, cropImageFromPage, isProblemPage, extractPageText } = await import('@/lib/utils/pdf-processor');
+    const { renderPageForAI, isProblemPage, extractPageText } = await import('@/lib/utils/pdf-processor');
     const allProblems: ExtractedProblem[] = [];
     const allConcepts: ExtractedConcept[] = [];
     let skippedCount = 0;
@@ -403,57 +357,14 @@ export default function PdfImportPage() {
 
         for (const p of pageResults) {
           const images = Array.isArray(p.images) ? p.images : [];
-          const diagramDefs = Array.isArray(p.diagrams) ? p.diagrams : [];
-          let contentText = p.boxItems?.length > 0
+          const diagramSvgs: { svg: string; label: string }[] = Array.isArray(p.diagramSvgs) ? p.diagramSvgs : [];
+          const contentText = p.boxItems?.length > 0
             ? embedBoxItems(p.content || '', p.boxItems)
             : p.content || '';
 
-          // SVG 다이어그램 생성 (우선) + 크롭 이미지 (폴백)
-          const svgResults: { svg: string; label: string }[] = [];
-          if (diagramDefs.length > 0) {
-            const { renderDiagram } = await import('@/lib/utils/svg-diagrams');
-            for (const diag of diagramDefs) {
-              try {
-                const svg = renderDiagram({ type: diag.type, params: diag.params || {} });
-                if (svg) {
-                  svgResults.push({ svg, label: diag.type });
-                }
-              } catch {
-                // SVG 생성 실패 시 크롭으로 폴백
-              }
-            }
-          }
-
-          // 이미지 바운딩 박스가 있으면 크롭 → 업로드 → 플레이스홀더 교체
-          const croppedImages: { url: string; label: string }[] = [];
-          if (images.length > 0 && pdfDoc) {
-            for (let imgIdx = 0; imgIdx < images.length; imgIdx++) {
-              // SVG가 이미 해당 인덱스를 커버하면 크롭 스킵
-              if (imgIdx < svgResults.length && svgResults[imgIdx]) continue;
-              try {
-                const img = images[imgIdx];
-                const croppedDataUrl = await cropImageFromPage(pdfDoc, pageNum, img.box);
-                const file = dataURLtoFile(croppedDataUrl, `q${p.questionNum}-img${imgIdx + 1}.png`);
-                const formData = new FormData();
-                formData.append('file', file);
-                const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
-                if (uploadRes.ok) {
-                  const uploadJson = await uploadRes.json();
-                  croppedImages.push({ url: uploadJson.data.url, label: img.label || '도형' });
-                }
-              } catch {
-                // 크롭 실패 시 조용히 스킵 (바운딩 박스 부정확 등)
-              }
-            }
-          }
-
-          // 플레이스홀더 교체: SVG 우선, 크롭 폴백
-          if (svgResults.length > 0) {
-            contentText = replaceDiagramPlaceholders(contentText, svgResults);
-          }
-          if (croppedImages.length > 0) {
-            contentText = replaceImagePlaceholders(contentText, croppedImages);
-          }
+          // 도형 처리: diagramParams→SVG만 사용 (크롭/generate-svg 제거)
+          // 서버가 diagramParams로 정확한 SVG를 렌더링하고, MathRenderer에서 [그림N] → SVG 교체
+          const svgResults: { svg: string; label: string }[] = [...diagramSvgs];
 
           allProblems.push({
             questionNum: p.questionNum,
@@ -470,8 +381,7 @@ export default function PdfImportPage() {
             difficulty: mapDifficulty(p.difficultyTag || ''),
             type: mapType(p.problemType || '주관식'),
             imageBboxes: images.length > 0 ? images : undefined,
-            croppedImages: croppedImages.length > 0 ? croppedImages : undefined,
-            diagrams: diagramDefs.length > 0 ? diagramDefs : undefined,
+            diagramSvgs: svgResults.length > 0 ? svgResults : undefined,
           });
         }
       } catch (err) {
@@ -1325,7 +1235,7 @@ function ProblemCard({ problem, isEditing, isExpanded, onToggleExpand, onEdit, o
           <>
             {/* 문제 내용 */}
             <div className="prose prose-sm max-w-none">
-              <MathRenderer content={problem.content} />
+              <MathRenderer content={problem.content} diagramSvgs={problem.diagramSvgs} />
             </div>
 
             {/* 객관식 보기 */}
@@ -1603,7 +1513,7 @@ function EditForm({ problem, onUpdate, onClose }: EditFormProps) {
 
           {/* 문제 내용 미리보기 */}
           <div className="prose prose-sm max-w-none">
-            <EditableMathRenderer content={content} onMathClick={handleMathClick('content')} />
+            <EditableMathRenderer content={content} onMathClick={handleMathClick('content')} diagramSvgs={problem.diagramSvgs} />
           </div>
 
           {/* 보기 미리보기 */}

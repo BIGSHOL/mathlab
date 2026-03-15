@@ -1,5 +1,5 @@
-/** SVG 다이어그램 생성 디스패처 */
-import { DiagramType } from './types';
+/** SVG 다이어그램 생성 디스패처 — Gemini 파라미터 정규화 포함 */
+import type { DiagramType } from './types';
 import type {
   NumberLineParams, FractionCircleParams, FractionRectParams,
   PlaceValueParams, DotArrayParams, FlowChartParams,
@@ -27,42 +27,142 @@ export interface DiagramData {
   params: Record<string, unknown>;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type P = Record<string, any>;
+
+/** 숫자 추출 헬퍼 */
+function num(v: unknown, fallback: number): number {
+  const n = Number(v);
+  return isNaN(n) ? fallback : n;
+}
+
+/** 배열 추출 헬퍼 */
+function arr<T>(v: unknown): T[] {
+  return Array.isArray(v) ? v : [];
+}
+
+/**
+ * Gemini의 불규칙한 파라미터를 정규화
+ * 여러 가지 가능한 필드명을 모두 처리
+ */
+function normalizeFractionCircle(p: P): FractionCircleParams {
+  return {
+    totalParts: num(p.totalParts ?? p.parts ?? p.denominator ?? p.divisions ?? p.segments, 1),
+    coloredParts: num(p.coloredParts ?? p.colored ?? p.numerator ?? p.filled ?? p.shaded, 0),
+    count: num(p.count ?? p.circles ?? p.copies ?? p.num, 1),
+    color: p.color,
+    label: p.label,
+  };
+}
+
+function normalizeFractionRect(p: P): FractionRectParams {
+  return {
+    rows: num(p.rows ?? p.row ?? 1, 1),
+    cols: num(p.cols ?? p.col ?? p.columns ?? p.denominator ?? p.parts, 1),
+    coloredCells: arr(p.coloredCells ?? p.colored_cells),
+    coloredCount: num(p.coloredCount ?? p.colored ?? p.numerator ?? p.filled ?? p.shaded, 0),
+    count: num(p.count ?? p.rectangles ?? p.copies ?? p.num, 1),
+    color: p.color,
+    hatching: !!p.hatching,
+    label: p.label,
+  };
+}
+
+function normalizeNumberLine(p: P): NumberLineParams {
+  const min = num(p.min ?? p.start ?? p.from, 0);
+  const max = num(p.max ?? p.end ?? p.to, min + 1);
+  const range = max - min;
+  return {
+    min,
+    max,
+    step: num(p.step ?? p.interval ?? p.tick, range > 0 ? range / Math.min(10, range) : 1),
+    marks: arr(p.marks ?? p.points ?? p.markers),
+    highlights: arr(p.highlights ?? p.arcs ?? p.jumps ?? p.regions),
+    label: p.label,
+  };
+}
+
+function normalizePlaceValue(p: P): PlaceValueParams {
+  return {
+    hundreds: num(p.hundreds ?? p.hundred ?? p.h, 0),
+    tens: num(p.tens ?? p.ten ?? p.t, 0),
+    ones: num(p.ones ?? p.one ?? p.o, 0),
+  };
+}
+
+function normalizeDotArray(p: P): DotArrayParams {
+  return {
+    rows: num(p.rows ?? p.row, 1),
+    cols: num(p.cols ?? p.col ?? p.columns, 1),
+    symbol: p.symbol,
+    label: p.label,
+  };
+}
+
+function normalizeFlowChart(p: P): FlowChartParams {
+  const nodes = arr<P>(p.nodes ?? p.steps);
+  const normalized = nodes.map((n, i) => ({
+    id: n.id ?? `node_${i}`,
+    text: String(n.text ?? n.label ?? n.value ?? ''),
+    x: n.x != null ? num(n.x, 0) : undefined,
+    y: n.y != null ? num(n.y, i * 60) : undefined,
+  }));
+  return {
+    nodes: normalized,
+    arrows: arr(p.arrows ?? p.edges ?? p.connections),
+  };
+}
+
+function normalizeCoordinatePlane(p: P): CoordinatePlaneParams {
+  const xRange = Array.isArray(p.xRange) ? p.xRange : [-5, 5];
+  const yRange = Array.isArray(p.yRange) ? p.yRange : [-5, 5];
+  return {
+    xRange: [num(xRange[0], -5), num(xRange[1], 5)],
+    yRange: [num(yRange[0], -5), num(yRange[1], 5)],
+    gridStep: num(p.gridStep ?? p.step, 1),
+    points: arr(p.points),
+    lines: arr(p.lines),
+  };
+}
+
 /**
  * 다이어그램 데이터로 SVG 문자열 생성
  * @returns SVG 문자열 또는 null (알 수 없는 타입)
  */
 export function renderDiagram(data: DiagramData): string | null {
+  const p = data.params || {};
+
   try {
     switch (data.type) {
       // 초등
       case 'number_line':
-        return renderNumberLine(data.params as unknown as NumberLineParams);
+        return renderNumberLine(normalizeNumberLine(p));
       case 'fraction_circle':
-        return renderFractionCircle(data.params as unknown as FractionCircleParams);
+        return renderFractionCircle(normalizeFractionCircle(p));
       case 'fraction_rect':
-        return renderFractionRect(data.params as unknown as FractionRectParams);
+        return renderFractionRect(normalizeFractionRect(p));
       case 'place_value':
-        return renderPlaceValue(data.params as unknown as PlaceValueParams);
+        return renderPlaceValue(normalizePlaceValue(p));
       case 'dot_array':
-        return renderDotArray(data.params as unknown as DotArrayParams);
+        return renderDotArray(normalizeDotArray(p));
       case 'flow_chart':
-        return renderFlowChart(data.params as unknown as FlowChartParams);
+        return renderFlowChart(normalizeFlowChart(p));
 
       // 중등
       case 'coordinate_plane':
-        return renderCoordinatePlane(data.params as unknown as CoordinatePlaneParams);
+        return renderCoordinatePlane(normalizeCoordinatePlane(p));
       case 'circle':
-        return renderCircle(data.params as unknown as CircleParams);
+        return renderCircle(p as unknown as CircleParams);
       case 'triangle':
-        return renderTriangle(data.params as unknown as TriangleParams);
+        return renderTriangle(p as unknown as TriangleParams);
       case 'quadrilateral':
-        return renderQuadrilateral(data.params as unknown as QuadrilateralParams);
+        return renderQuadrilateral(p as unknown as QuadrilateralParams);
       case 'function_graph':
-        return renderFunctionGraph(data.params as unknown as FunctionGraphParams);
+        return renderFunctionGraph(p as unknown as FunctionGraphParams);
       case 'venn_diagram':
-        return renderVennDiagram(data.params as unknown as VennDiagramParams);
+        return renderVennDiagram(p as unknown as VennDiagramParams);
       case 'regular_polygon':
-        return renderRegularPolygon(data.params as unknown as RegularPolygonParams);
+        return renderRegularPolygon(p as unknown as RegularPolygonParams);
 
       default:
         return null;

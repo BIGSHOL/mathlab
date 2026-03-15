@@ -166,7 +166,7 @@ export function renderCoordinatePlane(spec: CoordinatePlaneDiagram): string {
 }
 
 /** viewBox 계산을 위한 좌표평면 바운딩 포인트 반환 */
-export function coordinatePlaneViewBox(spec: CoordinatePlaneDiagram): string {
+export function coordinatePlaneViewBox(_spec: CoordinatePlaneDiagram): string {
   return `0 0 ${320 + 80} ${280 + 80}`;
 }
 

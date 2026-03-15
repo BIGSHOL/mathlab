@@ -7,9 +7,15 @@ import remarkBreaks from 'remark-breaks';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 
+interface DiagramSvgItem {
+  svg: string;
+  label: string;
+}
+
 interface MathRendererProps {
   content: string;
   className?: string;
+  diagramSvgs?: DiagramSvgItem[];
 }
 
 function parseImageTitle(title: string | undefined): { width?: string; align?: string } {
@@ -29,7 +35,62 @@ function parseImageTitle(title: string | undefined): { width?: string; align?: s
   return { width, align };
 }
 
-export function MathRenderer({ content, className = '' }: MathRendererProps) {
+export function MathRenderer({ content, className = '', diagramSvgs }: MathRendererProps) {
+  // [그림] / [그림1] / [그림2] 플레이스홀더를 diagramSvgs의 인라인 SVG로 교체
+  let svgReplacedContent = content;
+  if (diagramSvgs && diagramSvgs.length > 0) {
+    // SVG 교체 헬퍼: blockquote(>) 안이면 인라인, 밖이면 블록
+    const replaceSvg = (fullMatch: string, svg: string, input: string, offset: number) => {
+      // offset 이전의 마지막 줄이 '>'로 시작하면 blockquote 안
+      const before = input.substring(0, offset);
+      const lastNewline = before.lastIndexOf('\n');
+      const currentLine = before.substring(lastNewline + 1);
+      const inBlockquote = currentLine.trimStart().startsWith('>');
+      if (inBlockquote) {
+        // blockquote 안: 인라인 span으로 (줄 끊지 않음)
+        return `<span class="diagram-svg-inline-bq">${svg}</span>`;
+      }
+      // 일반: 블록 div로
+      return `\n\n<div class="diagram-svg-inline">${svg}</div>\n\n`;
+    };
+
+    // [그림N] → N번째(0-indexed) SVG로 교체
+    svgReplacedContent = svgReplacedContent.replace(
+      /\[그림(\d+)\]/g,
+      (match, numStr, offset, input) => {
+        const idx = parseInt(numStr) - 1;
+        if (idx >= 0 && idx < diagramSvgs!.length) {
+          return replaceSvg(match, diagramSvgs![idx].svg, input, offset);
+        }
+        return match;
+      }
+    );
+    // [그림] (번호 없음) → 순서대로 교체
+    let nextIdx = 0;
+    svgReplacedContent = svgReplacedContent.replace(
+      /\[그림\](?!\d)/g,
+      (match, offset, input) => {
+        if (nextIdx < diagramSvgs!.length) {
+          const svg = diagramSvgs![nextIdx].svg;
+          nextIdx++;
+          return replaceSvg(match, svg, input, offset);
+        }
+        return match;
+      }
+    );
+  }
+
+  // [한글 설명] 패턴을 스타일링된 HTML 플레이스홀더로 변환
+  // 단, 마크다운 이미지 ![alt](url) 안의 [alt] 부분은 건드리지 않음
+  const processedContent = svgReplacedContent.replace(
+    /(?<!!)\[([가-힣\s\d/,×÷+\-a-zA-Z]+)\](?!\()/g,
+    (match, desc) => {
+      // 보기 항목(ㄱ,ㄴ,ㄷ)이나 그림 번호는 제외
+      if (/^[ㄱ-ㅎ]/.test(desc) || /^그림/.test(desc)) return match;
+      return `<span class="diagram-placeholder">${desc}</span>`;
+    }
+  );
+
   return (
     <div className={`prose prose-slate max-w-none prose-p:my-2 prose-headings:my-3 ${className}`}>
       <style jsx global>{`
@@ -37,6 +98,38 @@ export function MathRenderer({ content, className = '' }: MathRendererProps) {
         .katex {
           display: inline-block;
           font-size: 1.3em;
+        }
+        /* SVG 다이어그램 인라인 렌더링 */
+        .diagram-svg-inline {
+          display: flex;
+          justify-content: center;
+          margin: 8px 0;
+        }
+        .diagram-svg-inline svg {
+          max-width: 100%;
+          height: auto;
+        }
+        /* blockquote 안 인라인 SVG */
+        .diagram-svg-inline-bq {
+          display: inline-block;
+          vertical-align: middle;
+          margin-left: 8px;
+        }
+        .diagram-svg-inline-bq svg {
+          max-height: 80px;
+          width: auto;
+        }
+        /* 도형 설명 플레이스홀더 박스 */
+        .diagram-placeholder {
+          display: inline-block;
+          background: #F1F5F9;
+          border: 1px dashed #94A3B8;
+          border-radius: 6px;
+          padding: 4px 10px;
+          margin: 2px 4px;
+          color: #64748B;
+          font-size: 0.85em;
+          vertical-align: middle;
         }
         /* 분수의 분자/분모 크기를 일반 숫자와 동일하게 */
         .katex .mfrac .mfrac-num .sizing,
@@ -86,7 +179,7 @@ export function MathRenderer({ content, className = '' }: MathRendererProps) {
               return <div className="my-2">{children}</div>;
             }
             return (
-              <p className="leading-relaxed text-slate-800 mb-2 last:mb-0" {...props}>
+              <p className="text-slate-800 mb-2 last:mb-0" style={{ lineHeight: '2.2' }} {...props}>
                 {children}
               </p>
             );
@@ -97,6 +190,8 @@ export function MathRenderer({ content, className = '' }: MathRendererProps) {
             </div>
           ),
           img: ({ src, alt, title }) => {
+            // src가 비어있으면 렌더링하지 않음 (콘솔 에러 방지)
+            if (!src) return <span className="text-slate-400 text-sm">[{alt || '이미지'}]</span>;
             const { width, align } = parseImageTitle(title ?? undefined);
             const style: React.CSSProperties = {};
             if (width) style.width = width;
@@ -138,7 +233,7 @@ export function MathRenderer({ content, className = '' }: MathRendererProps) {
           },
         }}
       >
-        {content}
+        {processedContent}
       </ReactMarkdown>
     </div>
   );

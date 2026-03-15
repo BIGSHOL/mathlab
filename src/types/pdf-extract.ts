@@ -1,11 +1,9 @@
 import type { QuestionDifficulty, QuestionType } from './index';
 
-/** SVG 다이어그램 구조화 데이터 */
-export interface DiagramData {
-  type: 'number_line' | 'fraction_circle' | 'fraction_rect' | 'place_value' | 'dot_array'
-    | 'flow_chart' | 'coordinate_plane' | 'circle' | 'triangle' | 'quadrilateral'
-    | 'function_graph' | 'venn_diagram' | 'regular_polygon';
-  params: Record<string, unknown>;
+/** Gemini가 직접 생성한 SVG 다이어그램 */
+export interface DiagramSvg {
+  svg: string;   // 완전한 SVG 코드 (<svg>...</svg>)
+  label: string; // 도형 설명
 }
 
 /** Gemini가 반환하는 이미지/도형 바운딩 박스 (정규화 좌표 0~1000) */
@@ -45,8 +43,18 @@ export interface ExtractedProblem {
   imageBboxes?: ImageBoundingBox[];
   croppedImages?: CroppedImage[];
 
-  // SVG 다이어그램 (AI 구조화 데이터)
-  diagrams?: DiagramData[];
+  // SVG 다이어그램 (Gemini 직접 생성 또는 diagramParams에서 렌더링)
+  diagramSvgs?: DiagramSvg[];
+
+  // 구조화된 다이어그램 파라미터 (서버에서 SVG로 렌더링됨)
+  diagramParams?: DiagramParam[];
+}
+
+/** 구조화된 다이어그램 파라미터 (Gemini → 서버 렌더링) */
+export interface DiagramParam {
+  type: string;   // DiagramType (fraction_circle, number_line 등)
+  label: string;  // 도형 설명
+  params: Record<string, unknown>;  // 타입별 파라미터
 }
 
 /** PDF 페이지 정보 */

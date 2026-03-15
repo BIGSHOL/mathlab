@@ -2,7 +2,7 @@ import { TriangleDiagram, Point } from '@/types/diagram';
 import { polygon, renderLabels } from '../primitives';
 import * as prim from '../primitives';
 import {
-  vertexAngle,
+  vertexAngle as _vertexAngle,
   angleBetween,
   toDegrees,
   arcPath,

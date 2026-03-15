@@ -24,7 +24,7 @@ export function renderSolid(spec: SolidFigureDiagram): string {
   }
 }
 
-export function solidViewBox(spec: SolidFigureDiagram): string {
+export function solidViewBox(_spec: SolidFigureDiagram): string {
   return '0 0 300 280';
 }
 

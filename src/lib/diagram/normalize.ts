@@ -7,7 +7,7 @@ import {
   SolidFigureDiagram,
   Point,
 } from '@/types/diagram';
-import { toRadians } from './utils';
+import { toRadians as _toRadians } from './utils';
 import { evaluateExpr } from './shapes/coordinate';
 
 /**
