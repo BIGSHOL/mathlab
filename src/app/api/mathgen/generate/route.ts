@@ -78,6 +78,8 @@ export async function POST(request: NextRequest) {
         answer: problem.answer,
         explanation: problem.solution || undefined,
         sourceTag: 'AI 생성',
+        diagramSpec: problem.diagramSpec ?? undefined,
+        diagramSVG: problem.diagramSVG ?? undefined,
       },
     });
 

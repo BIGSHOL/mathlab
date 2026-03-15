@@ -39,8 +39,24 @@ const RESPONSE_SCHEMA = {
     },
     diagramSVG: {
       type: Type.STRING,
-      description: 'SVG code or null. For fractions, construct them vertically using text/line elements.',
+      description: 'DEPRECATED. Use diagramSpec instead. Raw SVG fallback only if diagramSpec cannot represent the diagram.',
       nullable: true,
+    },
+    diagramSpec: {
+      type: Type.OBJECT,
+      description: `Structured diagram specification (preferred over diagramSVG). Supported types:
+- triangle: { type:"triangle", vertices:[[x,y],[x,y],[x,y]], labels?:[{text,position:[x,y]}], showAngles?:[indices], angleValues?:["90°"], showLengths?:[{edge:[0,1],value:"5"}], rightAngle?:vertexIndex }
+- circle: { type:"circle", center:[x,y], radius:number, showRadius?:bool, chords?:[{from:deg,to:deg}], arcs?:[{from:deg,to:deg,label?}], labels?:[] }
+- coordinatePlane: { type:"coordinatePlane", xRange:[min,max], yRange:[min,max], showGrid?:bool, functions?:[{expr:"x^2-2*x+1",label?,color?,domain?}], points?:[{coord:[x,y],label?}], lines?:[{from,to,dashed?,label?}] }
+- quadrilateral: { type:"quadrilateral", vertices:[[x,y]x4], diagonals?:bool, showAngles?,showLengths? }
+- solid: { type:"solid", shape:"cube"|"cylinder"|"cone"|"sphere"|"prism"|"pyramid", dimensions:{radius?,height?,width?,size?}, showDimensions?:bool }
+- composite: { type:"composite", elements:[...diagram specs] }
+
+IMPORTANT: Use mathematical coordinates. The renderer handles SVG conversion automatically. Provide coordinates that make geometric sense (e.g., right triangle at origin with legs along axes).`,
+      nullable: true,
+      properties: {
+        type: { type: Type.STRING, description: 'Diagram type' },
+      },
     },
   },
   required: ['question', 'answer', 'solution', 'topic', 'difficulty'],
@@ -75,19 +91,21 @@ const COMMON_INSTRUCTIONS = `
          - The first line inside the blockquote MUST be \`**<보 기>**\`.
          - Each item (ㄱ, ㄴ, ㄷ...) MUST be on a NEW LINE.
 
-    5. [Visuals & Diagrams - HIGH QUALITY REQUIRED]
+    5. [Visuals & Diagrams - STRUCTURED SPEC REQUIRED]
        - **When to generate**: If the topic involves **Geometry** (Plane/Solid), **Functions** (Graphs), or **Statistics** (Charts/Histograms).
-       - **SVG Requirements**:
-         - **Code**: Provide raw, valid SVG string in "diagramSVG".
-         - **Style**:
-           - **ViewBox**: Appropriately sized (e.g., "0 0 400 300"). Ensure enough width for composite diagrams.
-           - **Stroke**: Black (#000). Main object lines: width **2px**. Axes/Auxiliary lines: width **1px**.
-           - **Background**: Transparent.
-         - **Text Labels (CRITICAL - FRACTIONS)**:
-           - **NO LaTeX in SVG**: Browsers CANNOT render LaTeX ($...$) inside SVG <text>.
-           - **Fractions**: You MUST render fractions **VERTICALLY** using pure SVG elements.
-           - **Symbols**: Use Unicode (π, θ, √, α, β).
-           - **Readability**: Ensure font-size is large enough (>= 14px) and labels do not overlap lines.
+       - **Use "diagramSpec" (NOT "diagramSVG")**: Provide a structured JSON object in "diagramSpec". Our system renders accurate SVG from this spec automatically.
+       - **Diagram Types & Examples**:
+         - **Triangle**: { "type":"triangle", "vertices":[[0,0],[6,0],[0,4]], "rightAngle":0, "showLengths":[{"edge":[0,1],"value":"6"},{"edge":[0,2],"value":"4"}] }
+         - **Circle**: { "type":"circle", "center":[150,150], "radius":80, "showRadius":true, "chords":[{"from":30,"to":150}] }
+         - **Coordinate Plane**: { "type":"coordinatePlane", "xRange":[-5,5], "yRange":[-3,7], "showGrid":true, "functions":[{"expr":"x^2-2*x+1","label":"y=x²-2x+1"}], "points":[{"coord":[1,0],"label":"꼭짓점"}] }
+         - **Quadrilateral**: { "type":"quadrilateral", "vertices":[[0,0],[8,0],[8,5],[0,5]], "showLengths":[{"edge":[0,1],"value":"8"},{"edge":[1,2],"value":"5"}] }
+         - **Solid Figure**: { "type":"solid", "shape":"cylinder", "dimensions":{"radius":5,"height":10}, "showDimensions":true }
+         - **Composite**: { "type":"composite", "elements":[...multiple specs] }
+       - **Coordinate Rules**:
+         - Use mathematical coordinates (the system handles Y-axis inversion for SVG).
+         - For triangles/quadrilaterals: use reasonable scale (e.g., side lengths 50-200 for pixel coordinates, or small numbers if using mathematical scale).
+         - For coordinate planes: functions use the expression format "x^2+3*x-1" (supports +,-,*,/,^,sin,cos,tan,sqrt,abs,log,ln,pi,e).
+       - **Do NOT provide raw SVG in "diagramSVG"** unless the diagram type is not supported by diagramSpec.
 
     6. [Solution Quality - WORKBOOK STYLE]
        - Provide a professional, detailed solution similar to famous Korean workbooks (like Ssen, Black Label).
@@ -197,6 +215,15 @@ export async function generateMathProblem(selection: SelectionState): Promise<Ge
       .replace(/^```(xml|svg)?/i, '')
       .replace(/```$/, '')
       .trim();
+  }
+
+  // diagramSpec이 문자열로 반환된 경우 파싱
+  if (data.diagramSpec && typeof data.diagramSpec === 'string') {
+    try {
+      data.diagramSpec = JSON.parse(data.diagramSpec);
+    } catch {
+      data.diagramSpec = null;
+    }
   }
 
   return data;

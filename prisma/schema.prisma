@@ -198,6 +198,8 @@ model Question {
   answer      String             @db.Text
   explanation String?            @db.Text
   sourceTag   String?            @db.VarChar(100)  // "핵심문제 익히기" 등
+  diagramSpec Json?                                // 구조화된 도형 명세 (다형성 JSON)
+  diagramSVG  String?            @db.Text          // 레거시 raw SVG (하위 호환)
 
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
