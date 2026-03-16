@@ -1,15 +1,10 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireTeacher, isResponse } from '@/lib/api';
 
 export async function GET() {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const [total, byBook, byDifficulty, byType, chapterGroups, sectionGroups] = await Promise.all([
     prisma.question.count(),

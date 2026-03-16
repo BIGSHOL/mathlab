@@ -1,15 +1,10 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAdmin, isResponse } from '@/lib/api';
 
 export async function GET() {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role !== 'ADMIN') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '관리자 권한이 필요합니다' } },
-      { status: 403 },
-    );
-  }
+  const user = await requireAdmin();
+  if (isResponse(user)) return user;
 
   const users = await prisma.user.findMany({
     where: { deletedAt: null },

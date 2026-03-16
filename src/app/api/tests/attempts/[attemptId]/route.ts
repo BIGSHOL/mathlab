@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAuth, isResponse, notFound, forbidden } from '@/lib/api';
 
 /** GET: 진행 중인 시도 상태 조회 */
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ attemptId: string }> }
 ) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } },
-      { status: 401 }
-    );
-  }
+  const currentUser = await requireAuth();
+  if (isResponse(currentUser)) return currentUser;
 
   const { attemptId } = await params;
 
@@ -36,18 +31,12 @@ export async function GET(
   });
 
   if (!attempt) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '시도를 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+    return notFound('시도를 찾을 수 없습니다');
   }
 
   // 본인 시도만 조회 가능 (교사는 모두 조회 가능)
   if (currentUser.role === 'STUDENT' && attempt.studentId !== currentUser.id) {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
+    return forbidden();
   }
 
   const answeredIds = attempt.answers.map((a) => a.questionId);

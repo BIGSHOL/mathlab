@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireTeacher, validateBody, isResponse, conflict } from '@/lib/api';
 import { createUserSchema } from '@/lib/schemas/auth';
 
 // GET /api/users - List students
 export async function GET() {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const users = await prisma.user.findMany({
     where: { deletedAt: null },
@@ -39,50 +34,28 @@ export async function GET() {
 
 // POST /api/users - Create student account
 export async function POST(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || (currentUser.role !== 'TEACHER' && currentUser.role !== 'ADMIN')) {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '선생님 권한이 필요합니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
-  const body = await request.json();
-  const parsed = createUserSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      {
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: '입력값이 올바르지 않습니다',
-          details: parsed.error.errors.map((e) => ({ field: e.path.join('.'), message: e.message })),
-        },
-      },
-      { status: 400 }
-    );
-  }
+  const parsed = await validateBody(request, createUserSchema);
+  if (isResponse(parsed)) return parsed;
 
-  const existing = await prisma.user.findUnique({ where: { username: parsed.data.username } });
-  if (existing) {
-    return NextResponse.json(
-      { error: { code: 'CONFLICT', message: '이미 사용 중인 아이디입니다' } },
-      { status: 409 }
-    );
-  }
+  const existing = await prisma.user.findUnique({ where: { username: parsed.username } });
+  if (existing) return conflict('이미 사용 중인 아이디입니다');
 
-  const passwordHash = await bcrypt.hash(parsed.data.password, 10);
+  const passwordHash = await bcrypt.hash(parsed.password, 10);
 
-  const user = await prisma.user.create({
+  const created = await prisma.user.create({
     data: {
-      username: parsed.data.username,
+      username: parsed.username,
       passwordHash,
-      name: parsed.data.name,
+      name: parsed.name,
       role: 'STUDENT',
-      grade: parsed.data.grade,
+      grade: parsed.grade,
       profile: { create: {} },
     },
     select: { id: true, seq: true, username: true, name: true, role: true, grade: true },
   });
 
-  return NextResponse.json({ data: user }, { status: 201 });
+  return NextResponse.json({ data: created }, { status: 201 });
 }

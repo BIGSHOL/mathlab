@@ -1,13 +1,6 @@
-import { GoogleGenAI, Type } from '@google/genai';
+import { Type } from '@google/genai';
 import { GeneratedProblem, SelectionState } from '@/types/mathgen';
-
-function getClient() {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error('GEMINI_API_KEY is missing. Set it in .env.local');
-  }
-  return new GoogleGenAI({ apiKey });
-}
+import { getGeminiClient, stripCodeFence } from './gemini';
 
 const RESPONSE_SCHEMA = {
   type: Type.OBJECT,
@@ -168,7 +161,7 @@ function sanitizeText(text: string): string {
 }
 
 export async function generateMathProblem(selection: SelectionState): Promise<GeneratedProblem> {
-  const ai = getClient();
+  const ai = getGeminiClient();
   let contents: unknown;
 
   if (selection.mode === 'image' && selection.sourceImage) {
@@ -199,14 +192,7 @@ export async function generateMathProblem(selection: SelectionState): Promise<Ge
     throw new Error('No content generated.');
   }
 
-  let jsonString = response.text.trim();
-  if (jsonString.startsWith('```json')) {
-    jsonString = jsonString.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-  } else if (jsonString.startsWith('```')) {
-    jsonString = jsonString.replace(/^```\s*/, '').replace(/\s*```$/, '');
-  }
-
-  const data = JSON.parse(jsonString) as GeneratedProblem;
+  const data = JSON.parse(stripCodeFence(response.text!)) as GeneratedProblem;
 
   if (data.question) data.question = sanitizeText(data.question);
   if (data.solution) data.solution = sanitizeText(data.solution);

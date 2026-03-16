@@ -1,27 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { requireTeacher, isResponse, badRequest } from '@/lib/api';
 import { prisma } from '@/lib/db';
 import { CATEGORY_LABELS } from '@/lib/services/arithmetic-generator';
 
 /** GET: 연산 숙제 오답 조회 */
 export async function GET(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const { searchParams } = new URL(request.url);
   const studentId = searchParams.get('studentId');
   const period = searchParams.get('period') ?? 'all'; // 7d, 30d, 90d, all
 
   if (!studentId) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: 'studentId가 필요합니다' } },
-      { status: 400 }
-    );
+    return badRequest('studentId가 필요합니다');
   }
 
   // 기간 필터 계산

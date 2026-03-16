@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireTeacher, isResponse, notFound, serverError } from '@/lib/api';
 import { GoogleGenAI, Type } from '@google/genai';
 
 const DIAGRAM_SCHEMA = {
@@ -27,13 +27,8 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 },
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const { id } = await params;
   const question = await prisma.question.findUnique({
@@ -42,19 +37,13 @@ export async function PATCH(
   });
 
   if (!question) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '문제를 찾을 수 없습니다' } },
-      { status: 404 },
-    );
+    return notFound('문제를 찾을 수 없습니다');
   }
 
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return NextResponse.json(
-        { error: { code: 'CONFIG_ERROR', message: 'GEMINI_API_KEY가 설정되지 않았습니다' } },
-        { status: 500 },
-      );
+      return serverError('GEMINI_API_KEY가 설정되지 않았습니다');
     }
 
     const ai = new GoogleGenAI({ apiKey });
@@ -83,10 +72,7 @@ If the problem does not need a diagram, set needsDiagram to false.`;
     });
 
     if (!response.text) {
-      return NextResponse.json(
-        { error: { code: 'GENERATION_FAILED', message: '도형 생성에 실패했습니다' } },
-        { status: 500 },
-      );
+      return serverError('도형 생성에 실패했습니다');
     }
 
     const result = JSON.parse(response.text.trim());
@@ -113,9 +99,6 @@ If the problem does not need a diagram, set needsDiagram to false.`;
     });
   } catch (error) {
     console.error('Diagram generation error:', error);
-    return NextResponse.json(
-      { error: { code: 'GENERATION_FAILED', message: '도형 생성에 실패했습니다' } },
-      { status: 500 },
-    );
+    return serverError('도형 생성에 실패했습니다');
   }
 }

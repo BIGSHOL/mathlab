@@ -1,40 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireTeacher, validateQuery, validateBody, isResponse } from '@/lib/api';
 import { questionQuerySchema, createQuestionSchema } from '@/lib/schemas/question';
 import { autoTag } from '@/lib/services/question-tagger';
 
 export async function GET(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
-  const { searchParams } = new URL(request.url);
-  const parsed = questionQuerySchema.safeParse({
-    bookCode: searchParams.get('bookCode') ?? undefined,
-    chapter: searchParams.get('chapter') ?? undefined,
-    section: searchParams.get('section') ?? undefined,
-    difficulty: searchParams.get('difficulty') ?? undefined,
-    type: searchParams.get('type') ?? undefined,
-    search: searchParams.get('search') ?? undefined,
-    page: searchParams.get('page') ?? undefined,
-    limit: searchParams.get('limit') ?? undefined,
-  });
+  const params = validateQuery(request, questionQuerySchema);
+  if (isResponse(params)) return params;
 
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: '잘못된 쿼리 파라미터' } },
-      { status: 400 }
-    );
-  }
-
-  const { bookCode, chapter, section, difficulty, type, search, page, limit } = parsed.data;
+  const { bookCode, chapter, section, difficulty, type, search, page = 1, limit = 20 } = params;
 
   // bookCodePrefix: 학교급 필터 (E = 초등, 빈 문자열 = 중등)
+  const { searchParams } = new URL(request.url);
   const bookCodePrefix = searchParams.get('bookCodePrefix');
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -98,31 +78,14 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
-  const body = await request.json();
-  const parsed = createQuestionSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      {
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: '입력값이 올바르지 않습니다',
-          details: parsed.error.errors.map((e) => ({ field: e.path.join('.'), message: e.message })),
-        },
-      },
-      { status: 400 }
-    );
-  }
+  const parsed = await validateBody(request, createQuestionSchema);
+  if (isResponse(parsed)) return parsed;
 
   // 자동 태깅: domain/conceptId가 없으면 chapter 기반으로 자동 결정
-  const data = { ...parsed.data };
+  const data = { ...parsed };
   if (!data.domain || !data.conceptId) {
     const tags = await autoTag({
       chapter: data.chapter,
@@ -139,13 +102,8 @@ export async function POST(request: NextRequest) {
 
 /** PATCH: 문제 대량 업데이트 (domain, conceptId 태깅) */
 export async function PATCH(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const body = await request.json();
   const { updates } = body as {

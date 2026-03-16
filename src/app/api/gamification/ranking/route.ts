@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAuth, isResponse } from '@/lib/api';
 import { rankingQuerySchema } from '@/lib/schemas/gamification';
 
 // GET /api/gamification/ranking?limit=10
 export async function GET(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } }, { status: 401 });
-  }
+  const user = await requireAuth();
+  if (isResponse(user)) return user;
 
   const { searchParams } = new URL(request.url);
   const parsed = rankingQuerySchema.safeParse({
@@ -31,7 +29,7 @@ export async function GET(request: NextRequest) {
     name: p.user.name,
     level: p.level,
     totalXp: p.totalXp,
-    isMe: p.userId === currentUser.id,
+    isMe: p.userId === user.id,
   }));
 
   return NextResponse.json({ data });

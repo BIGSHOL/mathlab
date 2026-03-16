@@ -1,5 +1,5 @@
 import { CoordinatePlaneParams } from '../types';
-import { svgWrap, line, text, circle, arrowHead, COLORS } from '../shared/svg-utils';
+import { svgWrap, line, circle, arrowHead, katexLabel, COLORS, createCoordinateMapper } from '../shared/svg-utils';
 
 /** 좌표평면 SVG 생성 */
 export function renderCoordinatePlane(params: CoordinatePlaneParams): string {
@@ -17,8 +17,11 @@ export function renderCoordinatePlane(params: CoordinatePlaneParams): string {
   const totalH = gridH + pad * 2;
 
   // 좌표 → 픽셀 변환
-  const toX = (v: number) => pad + ((v - xMin) / (xMax - xMin)) * gridW;
-  const toY = (v: number) => pad + ((yMax - v) / (yMax - yMin)) * gridH; // y축 반전
+  const { toX, toY } = createCoordinateMapper({
+    xMin, xMax, yMin, yMax,
+    width: gridW, height: gridH,
+    padLeft: pad, padTop: pad,
+  });
 
   const parts: string[] = [];
 
@@ -41,13 +44,13 @@ export function renderCoordinatePlane(params: CoordinatePlaneParams): string {
   if (yMin <= 0 && yMax >= 0) {
     parts.push(line(pad - 10, originY, pad + gridW + 15, originY, { stroke: axisColor, strokeWidth: 1.5 }));
     parts.push(arrowHead(pad + gridW + 15, originY, 0, 6));
-    parts.push(text(pad + gridW + 20, originY, 'x', { fontSize: 13, anchor: 'start', fontWeight: 'bold' }));
+    parts.push(katexLabel(pad + gridW + 20, originY, 'x', { fontSize: 13, anchor: 'start' }));
   }
   // y축
   if (xMin <= 0 && xMax >= 0) {
     parts.push(line(originX, pad + gridH + 10, originX, pad - 15, { stroke: axisColor, strokeWidth: 1.5 }));
     parts.push(arrowHead(originX, pad - 15, -90, 6));
-    parts.push(text(originX, pad - 20, 'y', { fontSize: 13, fontWeight: 'bold' }));
+    parts.push(katexLabel(originX, pad - 20, 'y', { fontSize: 13 }));
   }
 
   // 축 눈금 라벨
@@ -57,7 +60,7 @@ export function renderCoordinatePlane(params: CoordinatePlaneParams): string {
     if (yMin <= 0 && yMax >= 0) {
       parts.push(line(x, originY - 3, x, originY + 3, { stroke: axisColor }));
     }
-    parts.push(text(x, (yMin <= 0 && yMax >= 0 ? originY : pad + gridH) + 16, v.toString(), { fontSize: 10 }));
+    parts.push(katexLabel(x, (yMin <= 0 && yMax >= 0 ? originY : pad + gridH) + 16, v.toString(), { fontSize: 11 }));
   }
   for (let v = yMin; v <= yMax; v += gridStep) {
     if (v === 0) continue;
@@ -65,11 +68,11 @@ export function renderCoordinatePlane(params: CoordinatePlaneParams): string {
     if (xMin <= 0 && xMax >= 0) {
       parts.push(line(originX - 3, y, originX + 3, y, { stroke: axisColor }));
     }
-    parts.push(text((xMin <= 0 && xMax >= 0 ? originX : pad) - 14, y, v.toString(), { fontSize: 10 }));
+    parts.push(katexLabel((xMin <= 0 && xMax >= 0 ? originX : pad) - 14, y, v.toString(), { fontSize: 11 }));
   }
   // 원점 O
   if (xMin <= 0 && xMax >= 0 && yMin <= 0 && yMax >= 0) {
-    parts.push(text(originX - 12, originY + 14, 'O', { fontSize: 11, fontWeight: 'bold' }));
+    parts.push(katexLabel(originX - 12, originY + 14, 'O', { fontSize: 12 }));
   }
 
   // 직선/선분
@@ -92,7 +95,7 @@ export function renderCoordinatePlane(params: CoordinatePlaneParams): string {
     const py = toY(p.y);
     parts.push(circle(px, py, 4, { fill: COLORS.red, stroke: COLORS.red }));
     if (p.label) {
-      parts.push(text(px + 10, py - 10, p.label, { fontSize: 11, anchor: 'start', fontWeight: 'bold', fill: COLORS.red }));
+      parts.push(katexLabel(px + 10, py - 10, p.label, { fontSize: 11, anchor: 'start' }));
     }
   });
 

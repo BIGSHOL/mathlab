@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateMathProblem } from '@/lib/services/mathgen';
 import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
+import { serverError } from '@/lib/api';
 import { SelectionState, SchoolLevel, Difficulty, ProblemType, AnswerType } from '@/types/mathgen';
 import type { QuestionDifficulty, QuestionType } from '@/types';
 
@@ -125,9 +126,6 @@ export async function POST(request: NextRequest) {
       }).catch(() => {});
     }
 
-    return NextResponse.json(
-      { error: { code: 'GENERATION_FAILED', message: '문제 생성에 실패했습니다. 잠시 후 다시 시도해주세요.' } },
-      { status: 500 }
-    );
+    return serverError('문제 생성에 실패했습니다. 잠시 후 다시 시도해주세요.');
   }
 }

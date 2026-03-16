@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAuth, requireTeacher, isResponse, badRequest } from '@/lib/api';
 
 /** GET: 레벨테스트 목록 */
 export async function GET(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } },
-      { status: 401 }
-    );
-  }
+  const currentUser = await requireAuth();
+  if (isResponse(currentUser)) return currentUser;
 
   const { searchParams } = new URL(request.url);
   const grade = searchParams.get('grade');
@@ -34,31 +29,20 @@ export async function GET(request: NextRequest) {
 
 /** POST: 레벨테스트 생성 */
 export async function POST(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const currentUser = await requireTeacher();
+  if (isResponse(currentUser)) return currentUser;
 
   const body = await request.json();
   const { title, grade, questionIds, questionDomains, timeLimitMin, questionsPerPage, spacing } = body;
 
   if (!title || !grade || !questionIds?.length || !questionDomains) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: '필수 항목이 누락되었습니다' } },
-      { status: 400 }
-    );
+    return badRequest('필수 항목이 누락되었습니다');
   }
 
   // 모든 문제에 영역이 지정되었는지 확인
   const untagged = (questionIds as string[]).filter((id: string) => !questionDomains[id]);
   if (untagged.length > 0) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: `영역이 지정되지 않은 문제가 ${untagged.length}개 있습니다` } },
-      { status: 400 }
-    );
+    return badRequest(`영역이 지정되지 않은 문제가 ${untagged.length}개 있습니다`);
   }
 
   const test = await prisma.$transaction(async (tx) => {

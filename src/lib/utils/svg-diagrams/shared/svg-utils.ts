@@ -1,3 +1,5 @@
+import katex from 'katex';
+
 /** 공통 SVG 유틸리티 */
 
 export function svgWrap(
@@ -48,13 +50,15 @@ export function rect(
 
 export function text(
   x: number, y: number, content: string,
-  opts: { anchor?: string; fontSize?: number; fill?: string; fontWeight?: string } = {}
+  opts: { anchor?: string; fontSize?: number; fill?: string; fontWeight?: string; fontStyle?: string; dominantBaseline?: string } = {}
 ): string {
   const anchor = opts.anchor || 'middle';
   const fs = opts.fontSize || 13;
   const fill = opts.fill || '#333';
   const fw = opts.fontWeight ? ` font-weight="${opts.fontWeight}"` : '';
-  return `<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="${fs}" fill="${fill}"${fw} dominant-baseline="central">${escapeXml(content)}</text>`;
+  const fst = opts.fontStyle ? ` font-style="${opts.fontStyle}"` : '';
+  const db = opts.dominantBaseline || 'central';
+  return `<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="${fs}" fill="${fill}"${fw}${fst} dominant-baseline="${db}">${escapeXml(content)}</text>`;
 }
 
 export function polygon(
@@ -108,6 +112,53 @@ export function fractionText(num: number, den: number): string {
   return `${num}⁄${den}`; // fraction slash U+2044
 }
 
+/**
+ * foreignObject + KaTeX로 수식 렌더링 — 문제 본문과 완전히 동일한 글씨체
+ * @param x 중심 x좌표
+ * @param topY foreignObject 상단 y좌표
+ * @param latex KaTeX 수식 문자열 (예: "\\frac{3}{8}", "1", "x")
+ * @param opts w/h: foreignObject 크기, fontSize: 기본 폰트 크기
+ */
+export function katexFO(
+  x: number, topY: number,
+  latex: string,
+  opts: { w?: number; h?: number; fontSize?: number; anchor?: 'start' | 'middle' | 'end' } = {}
+): string {
+  const fs = opts.fontSize || 14;
+  const w = opts.w || 50;
+  const h = opts.h || 40;
+  const anchor = opts.anchor || 'middle';
+  const leftX = anchor === 'middle' ? x - w / 2 : anchor === 'start' ? x : x - w;
+  const justify = anchor === 'middle' ? 'center' : anchor === 'start' ? 'flex-start' : 'flex-end';
+  const html = katex.renderToString(latex, { throwOnError: false, output: 'html' });
+  return `<foreignObject x="${leftX.toFixed(1)}" y="${topY.toFixed(1)}" width="${w}" height="${h}"><div xmlns="http://www.w3.org/1999/xhtml" style="display:flex;align-items:flex-start;justify-content:${justify};height:100%;font-size:${fs}px;">${html}</div></foreignObject>`;
+}
+
+/** katexFO 센터 정렬 — y가 텍스트 중심 (기존 text() 대체용) */
+export function katexLabel(
+  x: number, cy: number,
+  latex: string,
+  opts: { fontSize?: number; anchor?: 'start' | 'middle' | 'end' } = {}
+): string {
+  const fs = opts.fontSize || 13;
+  const h = fs * 1.8;
+  const w = Math.max(20, latex.length * fs * 0.65 + 8);
+  return katexFO(x, cy - h / 2, latex, { w, h, fontSize: fs, anchor: opts.anchor });
+}
+
+/** fractionFO — katexFO 래퍼 (분수 전용, 크기 자동 계산) */
+export function fractionFO(
+  x: number, topY: number,
+  numer: string, denom: string,
+  opts: { fontSize?: number } = {}
+): string {
+  const fs = opts.fontSize || 14;
+  const maxLen = Math.max(numer.length, denom.length);
+  const w = Math.max(30, maxLen * fs * 0.8 + 16);
+  const h = fs * 3;
+  return katexFO(x, topY, `\\frac{${numer}}{${denom}}`, { w, h, fontSize: fs });
+}
+
 /** 색상 기본값 */
 export const COLORS = {
   primary: '#3B82F6',   // blue
@@ -118,3 +169,55 @@ export const COLORS = {
   yellow: '#F59E0B',
   gray: '#9CA3AF',
 };
+
+/** 데이터셋 색상 순환 배열 (차트/그래프 공용) */
+export const DATASET_COLORS = [COLORS.primary, COLORS.red, COLORS.green, COLORS.purple, COLORS.secondary];
+
+/** 빗금(사선) 패턴 SVG defs — fraction-circle, fraction-rect 등 공용 */
+export function hatchPatternDef(id: string, color: string, opacity = 0.6): string {
+  return `<defs><pattern id="${id}" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="${color}" stroke-width="1.5" stroke-opacity="${opacity}"/></pattern></defs>`;
+}
+
+/**
+ * 좌표 변환 팩토리 — 데이터 좌표 → SVG 좌표
+ * coordinate-plane, function-graph, histogram, scatter-plot, bar-chart, number-line 등 공용
+ */
+export function createCoordinateMapper(opts: {
+  xMin: number; xMax: number;
+  yMin: number; yMax: number;
+  width: number; height: number;
+  padLeft?: number; padTop?: number;
+}) {
+  const padLeft = opts.padLeft ?? 0;
+  const padTop = opts.padTop ?? 0;
+  const xRange = opts.xMax - opts.xMin || 1;
+  const yRange = opts.yMax - opts.yMin || 1;
+
+  return {
+    toX: (v: number) => padLeft + ((v - opts.xMin) / xRange) * opts.width,
+    toY: (v: number) => padTop + ((opts.yMax - v) / yRange) * opts.height,
+  };
+}
+
+/**
+ * 점 배열을 캔버스에 맞게 스케일링
+ * shapes.ts의 triangle, quadrilateral에서 반복되던 패턴 통합
+ */
+export function fitPointsToCanvas(
+  points: { x: number; y: number }[],
+  targetSize: number,
+  padding: number
+): { scale: number; toSvg: (p: { x: number; y: number }) => [number, number] } {
+  const xs = points.map(p => p.x);
+  const ys = points.map(p => p.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const rangeX = maxX - minX || 1;
+  const rangeY = maxY - minY || 1;
+  const scale = Math.min(targetSize / rangeX, targetSize / rangeY);
+
+  return {
+    scale,
+    toSvg: (p) => [padding + (p.x - minX) * scale, padding + (p.y - minY) * scale],
+  };
+}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAdmin, isResponse, badRequest } from '@/lib/api';
 import { GoogleGenAI, Type } from '@google/genai';
 import { renderDiagram } from '@/lib/utils/svg-diagrams';
 
@@ -263,39 +263,25 @@ interface PageInput {
 
 // POST /api/questions/pdf-extract — PDF 페이지에서 문제 추출
 export async function POST(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role !== 'ADMIN') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '관리자만 사용 가능합니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireAdmin();
+  if (isResponse(user)) return user;
 
   const body = await request.json();
   const { pages, bookCode } = body as { pages: PageInput[]; bookCode: string; chapter?: string };
 
   if (!pages || !Array.isArray(pages) || pages.length === 0) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: 'pages 배열이 필요합니다' } },
-      { status: 400 }
-    );
+    return badRequest('pages 배열이 필요합니다');
   }
 
   if (!bookCode) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: 'bookCode가 필요합니다' } },
-      { status: 400 }
-    );
+    return badRequest('bookCode가 필요합니다');
   }
 
   // 페이지당 이미지 크기 제한 (5MB)
   for (const page of pages) {
     const sizeBytes = (page.imageBase64.length * 3) / 4;
     if (sizeBytes > 5 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: { code: 'VALIDATION_ERROR', message: `페이지 ${page.pageNum}의 이미지가 너무 큽니다 (5MB 제한)` } },
-        { status: 400 }
-      );
+      return badRequest(`페이지 ${page.pageNum}의 이미지가 너무 큽니다 (5MB 제한)`);
     }
   }
 
@@ -315,9 +301,9 @@ export async function POST(request: NextRequest) {
             role: 'user',
             parts: [
               { inlineData: { mimeType: 'image/png', data: base64Data } },
-              { text: page.textLayer 
+              { text: page.textLayer
                   ? `${SYSTEM_PROMPT}\n\n[OCR Text Content for Reference]\n${page.textLayer}\n\n위의 텍스트 레이어 정보를 참고하여 이미지 속의 문제를 오타 없이 완벽하게 추출하세요.`
-                  : SYSTEM_PROMPT 
+                  : SYSTEM_PROMPT
               },
             ],
           },
@@ -369,6 +355,23 @@ export async function POST(request: NextRequest) {
         const rawSvgs: { svg: string; label: string }[] = Array.isArray(p.diagramSvgs) ? p.diagramSvgs : [];
         const mergedSvgs = paramSvgs.length > 0 ? paramSvgs : rawSvgs;
 
+        // 정규화된 diagramParams 반환 (클라이언트 편집기용)
+        const normalizedParams: { type: string; label: string; params: Record<string, unknown> }[] = [];
+        if (Array.isArray(p.diagramParams)) {
+          for (const dp of p.diagramParams) {
+            const dtype = dp.diagramType || dp.type;
+            if (!dtype) continue;
+            const paramObj: Record<string, unknown> = dp.params || {};
+            for (const key of ['totalParts', 'coloredParts', 'count', 'rows', 'cols', 'coloredCount',
+                               'hatching', 'min', 'max', 'step', 'hundreds', 'tens', 'ones']) {
+              if (dp[key] !== undefined && dp[key] !== 0) {
+                paramObj[key] = dp[key];
+              }
+            }
+            normalizedParams.push({ type: dtype, label: dp.label || dtype, params: paramObj });
+          }
+        }
+
         return {
           ...p,
           content: fixLatexEscaping(p.content),
@@ -378,6 +381,7 @@ export async function POST(request: NextRequest) {
           sectionHeader: fixLatexEscaping(p.sectionHeader),
           images: Array.isArray(p.images) ? p.images : [],
           diagramSvgs: mergedSvgs,
+          diagramParams: normalizedParams,
         };
       });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

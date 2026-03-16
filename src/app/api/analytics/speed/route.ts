@@ -1,26 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAuth, isResponse, forbidden } from '@/lib/api';
 
 /** GET: 풀이 속도 분석 */
 export async function GET(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } },
-      { status: 401 }
-    );
-  }
+  const user = await requireAuth();
+  if (isResponse(user)) return user;
 
   const { searchParams } = new URL(request.url);
-  const studentId = searchParams.get('studentId') || currentUser.id;
+  const studentId = searchParams.get('studentId') || user.id;
 
   // 학생은 자기 데이터만
-  if (currentUser.role === 'STUDENT' && studentId !== currentUser.id) {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
+  if (user.role === 'STUDENT' && studentId !== user.id) {
+    return forbidden();
   }
 
   // 해당 학생의 모든 완료된 시험 답안 조회

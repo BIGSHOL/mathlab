@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { requireTeacher, isResponse, badRequest, serverError } from '@/lib/api';
 import { GoogleGenAI, Type } from '@google/genai';
 
 const METADATA_SCHEMA = {
@@ -39,22 +39,14 @@ function getClient() {
 
 // POST /api/concepts/extract-metadata — AI 메타데이터 + 맞춤법 추출
 export async function POST(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const body = await request.json();
   const { title, fullContent, currentKeywords } = body as { title?: string; fullContent: string; currentKeywords?: string };
 
   if (!fullContent || fullContent.trim().length < 10) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: '개념 내용이 너무 짧습니다' } },
-      { status: 400 }
-    );
+    return badRequest('개념 내용이 너무 짧습니다');
   }
 
   const ai = getClient();
@@ -107,10 +99,7 @@ ${title ? `제목: ${title}\n` : ''}${fullContent.substring(0, 2000)}
     });
 
     if (!response.text) {
-      return NextResponse.json(
-        { error: { code: 'AI_ERROR', message: 'AI 응답이 비어있습니다' } },
-        { status: 500 }
-      );
+      return serverError('AI 응답이 비어있습니다');
     }
 
     let jsonStr = response.text.trim();
@@ -148,9 +137,6 @@ ${title ? `제목: ${title}\n` : ''}${fullContent.substring(0, 2000)}
       },
     });
   } catch {
-    return NextResponse.json(
-      { error: { code: 'AI_ERROR', message: 'AI 메타데이터 추출에 실패했습니다' } },
-      { status: 500 }
-    );
+    return serverError('AI 메타데이터 추출에 실패했습니다');
   }
 }

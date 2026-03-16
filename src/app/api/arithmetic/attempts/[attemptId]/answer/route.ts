@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAuth, isResponse, notFound, badRequest } from '@/lib/api';
 import { prisma } from '@/lib/db';
 import { getComboMultiplier } from '@/lib/services/grading';
 
@@ -14,13 +14,8 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ attemptId: string }> }
 ) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } },
-      { status: 401 }
-    );
-  }
+  const user = await requireAuth();
+  if (isResponse(user)) return user;
 
   const { attemptId } = await params;
   const body = await request.json();
@@ -30,18 +25,12 @@ export async function POST(
     where: { id: attemptId },
   });
 
-  if (!attempt || attempt.studentId !== currentUser.id) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '연습 세션을 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+  if (!attempt || attempt.studentId !== user.id) {
+    return notFound('연습 세션을 찾을 수 없습니다');
   }
 
   if (attempt.completedAt) {
-    return NextResponse.json(
-      { error: { code: 'ALREADY_COMPLETED', message: '이미 완료된 연습입니다' } },
-      { status: 400 }
-    );
+    return badRequest('이미 완료된 연습입니다');
   }
 
   // 콤보 계산

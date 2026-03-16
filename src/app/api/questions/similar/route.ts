@@ -1,26 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAuth, isResponse, badRequest, notFound } from '@/lib/api';
 
 /** GET: 유사 문제 추천 (같은 단원+난이도, 본인 제외) */
 export async function GET(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } },
-      { status: 401 }
-    );
-  }
+  const user = await requireAuth();
+  if (isResponse(user)) return user;
 
   const { searchParams } = new URL(request.url);
   const questionId = searchParams.get('questionId');
   const limit = Math.min(Number(searchParams.get('limit') ?? '5'), 20);
 
   if (!questionId) {
-    return NextResponse.json(
-      { error: { code: 'BAD_REQUEST', message: 'questionId가 필요합니다' } },
-      { status: 400 }
-    );
+    return badRequest('questionId가 필요합니다');
   }
 
   // 원본 문제 조회
@@ -30,10 +22,7 @@ export async function GET(request: NextRequest) {
   });
 
   if (!source) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '문제를 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+    return notFound('문제를 찾을 수 없습니다');
   }
 
   // 1순위: 같은 단원 + 같은 섹션 + 같은 난이도

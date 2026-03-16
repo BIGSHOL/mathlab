@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { requireTeacher, isResponse, notFound } from '@/lib/api';
 import { getConceptHomeworkGrid } from '@/lib/services/concept-homework';
 
 type Params = { params: Promise<{ seq: string }> };
 
 /** GET: 개념 숙제 그리드 데이터 */
 export async function GET(request: NextRequest, { params }: Params) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json({ error: { code: 'FORBIDDEN', message: '권한이 없습니다' } }, { status: 403 });
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const { seq } = await params;
   const { searchParams } = new URL(request.url);
@@ -19,9 +17,6 @@ export async function GET(request: NextRequest, { params }: Params) {
     const grid = await getConceptHomeworkGrid(Number(seq), { grade });
     return NextResponse.json({ data: grid });
   } catch {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '플랜을 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+    return notFound('플랜을 찾을 수 없습니다');
   }
 }

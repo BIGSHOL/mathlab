@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireTeacher, isResponse, notFound, validateBody } from '@/lib/api';
 import { updateConceptSchema } from '@/lib/schemas/concept';
 
 /** Resolve concept by conceptCode or cuid id (single query) */
@@ -21,10 +21,7 @@ export async function GET(
   const conceptId = await resolveConceptId(id);
 
   if (!conceptId) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '개념을 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+    return notFound('개념을 찾을 수 없습니다');
   }
 
   const concept = await prisma.concept.findUnique({
@@ -45,10 +42,7 @@ export async function GET(
   });
 
   if (!concept) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '개념을 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+    return notFound('개념을 찾을 수 없습니다');
   }
 
   return NextResponse.json({
@@ -66,32 +60,18 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const conceptId = await resolveConceptId(id);
   if (!conceptId) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '개념을 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+    return notFound('개념을 찾을 수 없습니다');
   }
 
-  const body = await request.json();
-  const parsed = updateConceptSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: '입력값이 올바르지 않습니다' } },
-      { status: 400 }
-    );
-  }
+  const parsed = await validateBody(request, updateConceptSchema);
+  if (isResponse(parsed)) return parsed;
 
-  const { prerequisites, ...data } = parsed.data;
+  const { prerequisites, ...data } = parsed;
 
   const updated = await prisma.$transaction(async (tx) => {
     if (prerequisites !== undefined) {
@@ -134,20 +114,12 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const conceptId = await resolveConceptId(id);
   if (!conceptId) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '개념을 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+    return notFound('개념을 찾을 수 없습니다');
   }
 
   await prisma.concept.delete({ where: { id: conceptId } });

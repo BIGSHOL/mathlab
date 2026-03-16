@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAuth, isResponse, validateBody, requireResource } from '@/lib/api';
 import { blankSubmitSchema } from '@/lib/schemas/learning';
 
 interface BlankItem {
@@ -39,34 +39,21 @@ function matchBlankAnswer(expected: string, submitted: string): boolean {
 
 // POST /api/learning/blank-submit
 export async function POST(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } }, { status: 401 });
-  }
+  const user = await requireAuth();
+  if (isResponse(user)) return user;
 
-  const body = await request.json();
-  const parsed = blankSubmitSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: '입력값이 올바르지 않습니다' } },
-      { status: 400 }
-    );
-  }
+  const parsed = await validateBody(request, blankSubmitSchema);
+  if (isResponse(parsed)) return parsed;
 
-  const exercise = await prisma.blankExercise.findUnique({
-    where: { id: parsed.data.exerciseId },
-  });
-
-  if (!exercise) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '문제를 찾을 수 없습니다' } },
-      { status: 404 }
-    );
-  }
+  const exercise = await requireResource(
+    () => prisma.blankExercise.findUnique({ where: { id: parsed.exerciseId } }),
+    '문제를 찾을 수 없습니다'
+  );
+  if (isResponse(exercise)) return exercise;
 
   const blanks = exercise.blanks as unknown as BlankItem[];
 
-  const results = parsed.data.answers.map((a) => {
+  const results = parsed.answers.map((a) => {
     const blank = blanks.find((b) => b.position === a.position);
     const isCorrect = blank ? matchBlankAnswer(blank.answer, a.value) : false;
     return {
@@ -86,7 +73,7 @@ export async function POST(request: NextRequest) {
 
   await prisma.learningProgress.upsert({
     where: {
-      userId_conceptId_stage: { userId: currentUser.id, conceptId: exercise.conceptId, stage },
+      userId_conceptId_stage: { userId: user.id, conceptId: exercise.conceptId, stage },
     },
     update: {
       score,
@@ -95,7 +82,7 @@ export async function POST(request: NextRequest) {
       attempts: { increment: 1 },
     },
     create: {
-      userId: currentUser.id,
+      userId: user.id,
       conceptId: exercise.conceptId,
       stage,
       score,

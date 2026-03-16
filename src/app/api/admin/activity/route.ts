@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAdmin, isResponse } from '@/lib/api';
 import { CATEGORY_LABELS } from '@/lib/services/arithmetic-generator';
 
 const STAGE_LABELS: Record<string, string> = {
@@ -32,13 +32,8 @@ interface DaySummary {
 }
 
 export async function GET(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role !== 'ADMIN') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '관리자 권한이 필요합니다' } },
-      { status: 403 },
-    );
-  }
+  const user = await requireAdmin();
+  if (isResponse(user)) return user;
 
   const { searchParams } = new URL(request.url);
   const view = searchParams.get('view');

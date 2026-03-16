@@ -1,18 +1,6 @@
 import { prisma } from '@/lib/db';
-
-// ─── Day Computation ───
-
-function toKSTDate(date: Date): Date {
-  const adjusted = new Date(date.getTime() + 3 * 60 * 60 * 1000);
-  return new Date(adjusted.getFullYear(), adjusted.getMonth(), adjusted.getDate());
-}
-
-export function computeDayIndex(startDate: Date, targetDate?: Date): number {
-  const target = targetDate ?? new Date();
-  const startMs = toKSTDate(startDate).getTime();
-  const targetMs = toKSTDate(target).getTime();
-  return Math.floor((targetMs - startMs) / 86_400_000);
-}
+import { computeDayIndex } from '@/lib/utils/date-engine';
+export { computeDayIndex } from '@/lib/utils/date-engine';
 
 // ─── Types ───
 

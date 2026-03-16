@@ -1,28 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAuth, requireTeacher, isResponse, notFound, badRequest } from '@/lib/api';
 
 /** GET: 레벨테스트 상세 (문제 포함) */
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } },
-      { status: 401 }
-    );
-  }
+  const currentUser = await requireAuth();
+  if (isResponse(currentUser)) return currentUser;
 
   const { id } = await params;
   const seq = Number(id);
 
   if (isNaN(seq)) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: '잘못된 시험 번호입니다' } },
-      { status: 400 }
-    );
+    return badRequest('잘못된 시험 번호입니다');
   }
 
   const test = await prisma.test.findUnique({
@@ -35,10 +27,7 @@ export async function GET(
   });
 
   if (!test || test.testType !== 'level_test') {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '레벨테스트를 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+    return notFound('레벨테스트를 찾을 수 없습니다');
   }
 
   // 문제 상세 조회
@@ -71,21 +60,13 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const currentUser = await requireTeacher();
+  if (isResponse(currentUser)) return currentUser;
 
   const { id } = await params;
   const seq = Number(id);
   if (isNaN(seq)) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: '잘못된 시험 번호입니다' } },
-      { status: 400 }
-    );
+    return badRequest('잘못된 시험 번호입니다');
   }
 
   const test = await prisma.test.findUnique({
@@ -94,29 +75,20 @@ export async function PATCH(
   });
 
   if (!test || test.testType !== 'level_test') {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '레벨테스트를 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+    return notFound('레벨테스트를 찾을 수 없습니다');
   }
 
   const body = await request.json();
   const { questionIds, questionDomains } = body;
 
   if (!questionIds?.length || !questionDomains) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: '필수 항목이 누락되었습니다' } },
-      { status: 400 }
-    );
+    return badRequest('필수 항목이 누락되었습니다');
   }
 
   // 모든 문제에 영역이 지정되었는지 확인
   const untagged = (questionIds as string[]).filter((qid: string) => !questionDomains[qid]);
   if (untagged.length > 0) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: `영역이 지정되지 않은 문제가 ${untagged.length}개 있습니다` } },
-      { status: 400 }
-    );
+    return badRequest(`영역이 지정되지 않은 문제가 ${untagged.length}개 있습니다`);
   }
 
   await prisma.$transaction(async (tx) => {
@@ -144,21 +116,13 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const currentUser = await requireTeacher();
+  if (isResponse(currentUser)) return currentUser;
 
   const { id } = await params;
   const seq = Number(id);
   if (isNaN(seq)) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: '잘못된 시험 번호입니다' } },
-      { status: 400 }
-    );
+    return badRequest('잘못된 시험 번호입니다');
   }
 
   await prisma.test.delete({ where: { seq } });

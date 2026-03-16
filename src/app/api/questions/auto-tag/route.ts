@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { requireTeacher, isResponse, badRequest } from '@/lib/api';
 import { autoTag, getChapterDomainMap, getChapterConceptMap } from '@/lib/services/question-tagger';
 
 /** GET: 매핑 테이블 반환 (UI에서 참조용) */
 export async function GET() {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   return NextResponse.json({
     data: {
@@ -22,13 +17,8 @@ export async function GET() {
 
 /** POST: chapter/section/difficulty로 자동 태깅 결과 미리보기 */
 export async function POST(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const body = await request.json();
   const { chapter, section, difficulty } = body as {
@@ -38,10 +28,7 @@ export async function POST(request: NextRequest) {
   };
 
   if (!chapter) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: 'chapter가 필요합니다' } },
-      { status: 400 }
-    );
+    return badRequest('chapter가 필요합니다');
   }
 
   const result = await autoTag({ chapter, section, difficulty });

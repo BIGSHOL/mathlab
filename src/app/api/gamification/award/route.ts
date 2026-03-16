@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAuth, isResponse, validateBody, notFound } from '@/lib/api';
 import { awardPointsSchema } from '@/lib/schemas/gamification';
 import { calculateLevel } from '@/lib/utils/xp';
 
@@ -8,31 +8,17 @@ export const dynamic = 'force-dynamic';
 
 // POST /api/gamification/award
 export async function POST(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } },
-      { status: 401 }
-    );
-  }
+  const user = await requireAuth();
+  if (isResponse(user)) return user;
 
-  const body = await request.json();
-  const parsed = awardPointsSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: '입력값이 올바르지 않습니다' } },
-      { status: 400 }
-    );
-  }
+  const parsed = await validateBody(request, awardPointsSchema);
+  if (isResponse(parsed)) return parsed;
 
-  const { userId, amount, reason, referenceId } = parsed.data;
+  const { userId, amount, reason, referenceId } = parsed;
 
   const profile = await prisma.studentProfile.findUnique({ where: { userId } });
   if (!profile) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '학생 프로필을 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+    return notFound('학생 프로필을 찾을 수 없습니다');
   }
 
   const previousLevel = profile.level;
@@ -43,7 +29,7 @@ export async function POST(request: NextRequest) {
       data: { userId, amount, type: 'EARN', reason, referenceId },
     });
 
-    const profile = await tx.studentProfile.update({
+    const txProfile = await tx.studentProfile.update({
       where: { userId },
       data: {
         totalXp: { increment: amount },
@@ -51,15 +37,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const newLevel = calculateLevel(profile.totalXp);
-    if (newLevel !== profile.level) {
+    const newLevel = calculateLevel(txProfile.totalXp);
+    if (newLevel !== txProfile.level) {
       return tx.studentProfile.update({
         where: { userId },
         data: { level: newLevel },
       });
     }
 
-    return profile;
+    return txProfile;
   });
 
   const newLevel = calculateLevel(updatedProfile.totalXp);

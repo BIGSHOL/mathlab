@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAuth, requireTeacher, isResponse, badRequest } from '@/lib/api';
 
 export async function GET(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } },
-      { status: 401 }
-    );
-  }
+  const currentUser = await requireAuth();
+  if (isResponse(currentUser)) return currentUser;
 
   const { searchParams } = new URL(request.url);
   const grade = searchParams.get('grade');
@@ -92,22 +87,14 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const currentUser = await requireTeacher();
+  if (isResponse(currentUser)) return currentUser;
 
   const body = await request.json();
   const { title, description, grade, testType, questionIds, timeLimitMin, shuffleOptions, maxAttempts, defaultDueDate, allowLateSubmission } = body;
 
   if (!title || !grade || !questionIds?.length) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: '필수 항목이 누락되었습니다' } },
-      { status: 400 }
-    );
+    return badRequest('필수 항목이 누락되었습니다');
   }
 
   const test = await prisma.test.create({

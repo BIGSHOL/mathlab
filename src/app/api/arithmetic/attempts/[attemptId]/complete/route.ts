@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAuth, isResponse, notFound, badRequest } from '@/lib/api';
 import { prisma } from '@/lib/db';
 import { calculateLevel } from '@/lib/utils/xp';
 
@@ -8,13 +8,8 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ attemptId: string }> }
 ) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } },
-      { status: 401 }
-    );
-  }
+  const user = await requireAuth();
+  if (isResponse(user)) return user;
 
   const { attemptId } = await params;
 
@@ -23,18 +18,12 @@ export async function POST(
     include: { answers: { select: { pointsEarned: true } } },
   });
 
-  if (!attempt || attempt.studentId !== currentUser.id) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '연습 세션을 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+  if (!attempt || attempt.studentId !== user.id) {
+    return notFound('연습 세션을 찾을 수 없습니다');
   }
 
   if (attempt.completedAt) {
-    return NextResponse.json(
-      { error: { code: 'ALREADY_COMPLETED', message: '이미 완료된 연습입니다' } },
-      { status: 400 }
-    );
+    return badRequest('이미 완료된 연습입니다');
   }
 
   const totalPoints = attempt.answers.reduce((sum, a) => sum + a.pointsEarned, 0);
@@ -53,7 +42,7 @@ export async function POST(
     });
 
     const profile = await tx.studentProfile.findUnique({
-      where: { userId: currentUser!.id },
+      where: { userId: user.id },
       select: { totalXp: true, level: true },
     });
 
@@ -63,7 +52,7 @@ export async function POST(
       leveledUp = newLevel > profile.level;
 
       await tx.studentProfile.update({
-        where: { userId: currentUser!.id },
+        where: { userId: user.id },
         data: {
           totalXp: newTotalXp,
           level: newLevel,
@@ -75,7 +64,7 @@ export async function POST(
     if (xpEarned > 0) {
       await tx.pointTransaction.create({
         data: {
-          userId: currentUser!.id,
+          userId: user.id,
           amount: xpEarned,
           type: 'EARN',
           reason: '연산 연습 완료',

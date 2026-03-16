@@ -1,27 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireTeacher, isResponse, badRequest, notFound } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
 
 /** POST: 학생 학습 리포트 생성 */
 export async function POST(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const body = await request.json();
   const { studentId, type } = body;
 
   if (!studentId || !type) {
-    return NextResponse.json(
-      { error: { code: 'BAD_REQUEST', message: 'studentId와 type이 필요합니다' } },
-      { status: 400 }
-    );
+    return badRequest('studentId와 type이 필요합니다');
   }
 
   // 학생 정보
@@ -30,10 +22,7 @@ export async function POST(request: NextRequest) {
     include: { profile: { select: { level: true, totalXp: true } } },
   });
   if (!student) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '학생을 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+    return notFound('학생을 찾을 수 없습니다');
   }
 
   // 최근 30일 시험 결과

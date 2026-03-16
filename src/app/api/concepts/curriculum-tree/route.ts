@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { badRequest } from '@/lib/api';
 import { getCurriculumForGrade } from '@/lib/utils/curriculumMapping';
 
 // GET /api/concepts/curriculum-tree?grade=middle_1
@@ -8,10 +9,7 @@ export async function GET(request: NextRequest) {
   const grade = searchParams.get('grade');
 
   if (!grade) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: 'grade 파라미터가 필요합니다' } },
-      { status: 400 },
-    );
+    return badRequest('grade 파라미터가 필요합니다');
   }
 
   // 해당 학년의 모든 개념 조회 (학년당 10~40개이므로 페이지네이션 불필요)

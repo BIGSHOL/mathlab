@@ -1,38 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { requireTeacher, isResponse, requireResource } from '@/lib/api';
 import { prisma } from '@/lib/db';
 
 type Params = { params: Promise<{ seq: string }> };
 
 export async function GET(_request: NextRequest, { params }: Params) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json({ error: { code: 'FORBIDDEN', message: '권한이 없습니다' } }, { status: 403 });
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const { seq } = await params;
-  const plan = await prisma.questionHomeworkPlan.findUnique({
-    where: { seq: Number(seq) },
-    include: {
-      enrollments: { include: { student: { select: { id: true, name: true, grade: true } } }, orderBy: { student: { name: 'asc' } } },
-      creator: { select: { name: true } },
-    },
-  });
+  const plan = await requireResource(
+    () => prisma.questionHomeworkPlan.findUnique({
+      where: { seq: Number(seq) },
+      include: {
+        enrollments: { include: { student: { select: { id: true, name: true, grade: true } } }, orderBy: { student: { name: 'asc' } } },
+        creator: { select: { name: true } },
+      },
+    }),
+    '플랜을 찾을 수 없습니다'
+  );
+  if (isResponse(plan)) return plan;
 
-  if (!plan) return NextResponse.json({ error: { code: 'NOT_FOUND', message: '플랜을 찾을 수 없습니다' } }, { status: 404 });
   return NextResponse.json({ data: plan });
 }
 
 export async function PATCH(request: NextRequest, { params }: Params) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json({ error: { code: 'FORBIDDEN', message: '권한이 없습니다' } }, { status: 403 });
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const { seq } = await params;
   const body = await request.json();
-  const plan = await prisma.questionHomeworkPlan.findUnique({ where: { seq: Number(seq) } });
-  if (!plan) return NextResponse.json({ error: { code: 'NOT_FOUND', message: '플랜을 찾을 수 없습니다' } }, { status: 404 });
+  const plan = await requireResource(
+    () => prisma.questionHomeworkPlan.findUnique({ where: { seq: Number(seq) } }),
+    '플랜을 찾을 수 없습니다'
+  );
+  if (isResponse(plan)) return plan;
 
   if (typeof body.isActive === 'boolean') {
     await prisma.questionHomeworkPlan.update({ where: { id: plan.id }, data: { isActive: body.isActive } });
@@ -57,10 +59,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_request: NextRequest, { params }: Params) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json({ error: { code: 'FORBIDDEN', message: '권한이 없습니다' } }, { status: 403 });
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const { seq } = await params;
   await prisma.questionHomeworkPlan.delete({ where: { seq: Number(seq) } });

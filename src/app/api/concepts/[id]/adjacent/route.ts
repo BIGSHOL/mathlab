@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
+import { notFound } from '@/lib/api';
 import { CROSS_GRADE_CHAINS } from '@/lib/constants/concepts';
 
 /** Resolve concept by conceptCode or cuid id */
@@ -82,10 +83,7 @@ export async function GET(
   });
 
   if (!current || !current.grade) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '개념을 찾을 수 없습니다' } },
-      { status: 404 },
-    );
+    return notFound('개념을 찾을 수 없습니다');
   }
 
   const [prev, next] = await Promise.all([

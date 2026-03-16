@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
+import { forbidden, notFound } from '@/lib/api';
 
 /** POST: 시험 시작 → TestAttempt 생성 (재시험/마감일/배정 지원) */
 export async function POST(
@@ -9,10 +10,7 @@ export async function POST(
 ) {
   const currentUser = await getCurrentUser();
   if (!currentUser || currentUser.role !== 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '학생만 시험에 응시할 수 있습니다' } },
-      { status: 403 }
-    );
+    return forbidden('학생만 시험에 응시할 수 있습니다');
   }
 
   const { id: rawId } = await params;
@@ -24,10 +22,7 @@ export async function POST(
     : await prisma.test.findUnique({ where: { id: rawId } });
   const testId = test?.id ?? rawId;
   if (!test || !test.isActive) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '시험을 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+    return notFound('시험을 찾을 수 없습니다');
   }
 
   // 배정 확인
@@ -37,10 +32,7 @@ export async function POST(
 
   // 마감일 체크
   if (assignment?.dueDate && new Date() > assignment.dueDate && !assignment.allowLateSubmission) {
-    return NextResponse.json(
-      { error: { code: 'DEADLINE_PASSED', message: '마감 기한이 지났습니다' } },
-      { status: 403 }
-    );
+    return forbidden('마감 기한이 지났습니다');
   }
 
   // 완료된 시도 수 확인
@@ -50,10 +42,7 @@ export async function POST(
 
   // maxAttempts 초과 체크
   if (test.maxAttempts !== null && completedAttempts >= test.maxAttempts) {
-    return NextResponse.json(
-      { error: { code: 'MAX_ATTEMPTS', message: `최대 응시 횟수(${test.maxAttempts}회)를 초과했습니다` } },
-      { status: 403 }
-    );
+    return forbidden(`최대 응시 횟수(${test.maxAttempts}회)를 초과했습니다`);
   }
 
   // 진행 중인 시도가 있는지 확인

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireTeacher, isResponse, badRequest } from '@/lib/api';
 
 function generateJoinCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -11,13 +11,8 @@ function generateJoinCode(): string {
 
 /** GET: 퀴즈 세션 목록 (교사용) */
 export async function GET() {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const currentUser = await requireTeacher();
+  if (isResponse(currentUser)) return currentUser;
 
   const sessions = await prisma.quizSession.findMany({
     where: { hostId: currentUser.id },
@@ -31,22 +26,14 @@ export async function GET() {
 
 /** POST: 퀴즈 세션 생성 */
 export async function POST(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const currentUser = await requireTeacher();
+  if (isResponse(currentUser)) return currentUser;
 
   const body = await request.json();
   const { title, questionIds } = body;
 
   if (!title || !questionIds?.length) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: '제목과 문제를 선택하세요' } },
-      { status: 400 }
-    );
+    return badRequest('제목과 문제를 선택하세요');
   }
 
   // Generate unique join code

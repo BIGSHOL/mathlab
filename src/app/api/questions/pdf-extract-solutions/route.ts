@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAdmin, isResponse, badRequest } from '@/lib/api';
 import { GoogleGenAI, Type } from '@google/genai';
 
 function getClient() {
@@ -55,22 +55,14 @@ interface PageInput {
 
 // POST /api/questions/pdf-extract-solutions — 해설 PDF에서 정답/풀이 추출
 export async function POST(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role !== 'ADMIN') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '관리자만 사용 가능합니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireAdmin();
+  if (isResponse(user)) return user;
 
   const body = await request.json();
   const { pages } = body as { pages: PageInput[] };
 
   if (!pages || !Array.isArray(pages) || pages.length === 0) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: 'pages 배열이 필요합니다' } },
-      { status: 400 }
-    );
+    return badRequest('pages 배열이 필요합니다');
   }
 
   const ai = getClient();
@@ -87,9 +79,9 @@ export async function POST(request: NextRequest) {
             role: 'user',
             parts: [
               { inlineData: { mimeType: 'image/png', data: base64Data } },
-              { text: page.textLayer 
+              { text: page.textLayer
                   ? `${SOLUTION_PROMPT}\n\n[OCR Text Content for Reference]\n${page.textLayer}\n\n위의 텍스트 레이어 정보를 참고하여 이미지 속의 정답과 해설을 오타 없이 완벽하게 추출하세요.`
-                  : SOLUTION_PROMPT 
+                  : SOLUTION_PROMPT
               },
             ],
           },

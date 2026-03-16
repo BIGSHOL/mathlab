@@ -1,23 +1,15 @@
 import { FractionRectParams } from '../types';
-import { svgWrap, text, COLORS } from '../shared/svg-utils';
-
-/** 빗금 패턴 <defs> 생성 */
-function hatchPatternDef(id: string, color: string): string {
-  return `<defs>
-    <pattern id="${id}" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
-      <line x1="0" y1="0" x2="0" y2="6" stroke="${color}" stroke-width="1.5" stroke-opacity="0.6"/>
-    </pattern>
-  </defs>`;
-}
+import { svgWrap, text, COLORS, hatchPatternDef } from '../shared/svg-utils';
 
 /** 단일 분수 사각형 렌더링 */
 function renderSingleRect(
   ox: number, oy: number,
   rows: number, cols: number,
   coloredIndices: Set<number>,
+  hatchedIndices: Set<number>,
   color: string,
   cellW: number, cellH: number,
-  hatching: boolean,
+  globalHatching: boolean,
   patternId: string
 ): string {
   const parts: string[] = [];
@@ -28,18 +20,20 @@ function renderSingleRect(
       const x = ox + c * cellW;
       const y = oy + r * cellH;
       const isColored = coloredIndices.has(idx);
+      // 개별 셀 빗금: hatchedCells에 있거나, 전역 hatching + colored일 때
+      const isHatched = hatchedIndices.has(idx) || (isColored && globalHatching);
 
-      // 셀 배경
-      if (isColored && hatching) {
-        // 빗금 모드: 흰 배경 + 빗금 패턴
-        parts.push(`<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" fill="white" stroke="#555" stroke-width="1"/>`);
+      if (isHatched) {
+        // 빗금 셀: 색칠도 함께면 연한 배경 + 빗금, 아니면 흰 배경 + 빗금
+        const bg = isColored ? color : 'white';
+        const bgOpacity = isColored ? 0.2 : 1;
+        parts.push(`<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" fill="${bg}" fill-opacity="${bgOpacity}" stroke="#555" stroke-width="1"/>`);
         parts.push(`<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" fill="url(#${patternId})" stroke="none"/>`);
+      } else if (isColored) {
+        parts.push(`<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" fill="${color}" fill-opacity="0.35" stroke="#555" stroke-width="1"/>`);
+        parts.push(`<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" fill="${color}" fill-opacity="0.15" stroke="none"/>`);
       } else {
-        parts.push(`<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" fill="${isColored ? color : 'white'}" fill-opacity="${isColored ? 0.35 : 1}" stroke="#555" stroke-width="1"/>`);
-        // 색칠 추가 레이어
-        if (isColored) {
-          parts.push(`<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" fill="${color}" fill-opacity="0.15" stroke="none"/>`);
-        }
+        parts.push(`<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" fill="white" stroke="#555" stroke-width="1"/>`);
       }
     }
   }
@@ -59,7 +53,7 @@ export function renderFractionRect(params: FractionRectParams): string {
   const cols = Math.max(1, Math.min(20, Math.round(Number(params.cols) || 1)));
   const count = Math.max(1, Math.min(10, Math.round(Number(params.count) || 1)));
   const color = params.color || COLORS.primary;
-  const hatching = !!params.hatching;
+  const globalHatching = !!params.hatching;
   const label = params.label;
   const totalCells = rows * cols;
 
@@ -68,18 +62,21 @@ export function renderFractionRect(params: FractionRectParams): string {
   if (Array.isArray(params.coloredCells) && params.coloredCells.length > 0) {
     coloredSet = new Set(params.coloredCells.map(Number).filter(n => !isNaN(n)));
   } else if (params.coloredCount != null) {
-    const n = Math.min(totalCells * count, Math.max(0, Math.round(Number(params.coloredCount))));
-    // 각 사각형 내에서 아래쪽(마지막 행)부터 색칠
-    let remaining = n;
-    for (let g = 0; g < count && remaining > 0; g++) {
-      const cellsInThis = Math.min(totalCells, remaining);
-      for (let i = 0; i < cellsInThis; i++) {
-        // 아래쪽부터: totalCells-1-i → 마지막 셀부터 역순
+    // coloredCount = 사각형당 색칠할 셀 수 (모든 사각형에 동일 적용)
+    const n = Math.min(totalCells, Math.max(0, Math.round(Number(params.coloredCount))));
+    for (let g = 0; g < count; g++) {
+      for (let i = 0; i < n; i++) {
         coloredSet.add(g * totalCells + (totalCells - 1 - i));
       }
-      remaining -= cellsInThis;
     }
   }
+
+  // 빗금 처리할 셀 (개별 지정)
+  const hatchedSet = new Set<number>(
+    Array.isArray(params.hatchedCells) ? params.hatchedCells.map(Number).filter(n => !isNaN(n)) : []
+  );
+  // 빗금 패턴이 필요한지 판단: 개별 hatchedCells가 있거나 전역 hatching일 때
+  const needsHatch = hatchedSet.size > 0 || globalHatching;
 
   const cellW = 32;
   const cellH = 32;
@@ -91,21 +88,20 @@ export function renderFractionRect(params: FractionRectParams): string {
   const parts: string[] = [];
   const patternId = 'hatch-' + color.replace('#', '');
 
-  // 빗금 패턴 정의 (hatching 모드일 때만)
-  if (hatching) {
+  // 빗금 패턴 정의
+  if (needsHatch) {
     parts.push(hatchPatternDef(patternId, color));
   }
 
   for (let g = 0; g < count; g++) {
     const ox = g * (gridW + gap);
-    // 이 사각형에 해당하는 색칠 인덱스 계산
-    const localSet = new Set<number>();
+    const localColoredSet = new Set<number>();
+    const localHatchedSet = new Set<number>();
     for (let i = 0; i < totalCells; i++) {
-      if (coloredSet.has(g * totalCells + i)) {
-        localSet.add(i);
-      }
+      if (coloredSet.has(g * totalCells + i)) localColoredSet.add(i);
+      if (hatchedSet.has(g * totalCells + i)) localHatchedSet.add(i);
     }
-    parts.push(renderSingleRect(ox, 0, rows, cols, localSet, color, cellW, cellH, hatching, patternId));
+    parts.push(renderSingleRect(ox, 0, rows, cols, localColoredSet, localHatchedSet, color, cellW, cellH, globalHatching, patternId));
   }
 
   // 레이블

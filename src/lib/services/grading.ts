@@ -4,7 +4,7 @@
  */
 
 import { prisma } from '@/lib/db';
-import { calculateLevel } from '@/lib/utils/xp';
+import { awardXp } from '@/lib/utils/xp';
 import { checkAnswer } from '@/lib/services/cheat-detection';
 import { classifyAnswer } from '@/lib/utils/answer-status';
 
@@ -170,36 +170,8 @@ export async function completeAttempt(attemptId: string) {
       },
     });
 
-    // StudentProfile XP 갱신
-    const profile = await tx.studentProfile.findUnique({
-      where: { userId: attempt.studentId },
-      select: { totalXp: true, level: true },
-    });
-
-    if (profile) {
-      const newTotalXp = profile.totalXp + xpEarned;
-      await tx.studentProfile.update({
-        where: { userId: attempt.studentId },
-        data: {
-          totalXp: newTotalXp,
-          level: calculateLevel(newTotalXp),
-          lastActiveAt: new Date(),
-        },
-      });
-    }
-
-    // PointTransaction 기록
-    if (xpEarned > 0) {
-      await tx.pointTransaction.create({
-        data: {
-          userId: attempt.studentId,
-          amount: xpEarned,
-          type: 'EARN',
-          reason: '시험 완료',
-          referenceId: attemptId,
-        },
-      });
-    }
+    // StudentProfile XP 갱신 + PointTransaction 기록
+    await awardXp(tx, attempt.studentId, xpEarned, '시험 완료', attemptId);
 
     // TestAssignment bestScore 갱신
     if (attempt.assignmentId) {

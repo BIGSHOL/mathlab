@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { requireTeacher, isResponse } from '@/lib/api';
 import { getHomeworkGrid } from '@/lib/services/homework';
 
 /** GET: 월 숙제부 그리드 데이터 */
@@ -7,13 +7,8 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ planId: string }> }
 ) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const { planId } = await params;
   const seq = Number(planId);

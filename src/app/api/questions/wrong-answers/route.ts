@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireTeacher, isResponse, badRequest } from '@/lib/api';
 
 /** GET: 학생별 오답 문제 조회 */
 export async function GET(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const { searchParams } = new URL(request.url);
   const studentId = searchParams.get('studentId');
@@ -18,10 +13,7 @@ export async function GET(request: NextRequest) {
   const difficulty = searchParams.get('difficulty');
 
   if (!studentId) {
-    return NextResponse.json(
-      { error: { code: 'BAD_REQUEST', message: 'studentId가 필요합니다' } },
-      { status: 400 }
-    );
+    return badRequest('studentId가 필요합니다');
   }
 
   // 해당 학생의 오답 AnswerLog 조회 (가장 최근 시도 기준, 중복 제거)

@@ -1,5 +1,5 @@
 import { FunctionGraphParams } from '../types';
-import { svgWrap, line, text, circle, arrowHead, COLORS } from '../shared/svg-utils';
+import { svgWrap, line, circle, arrowHead, katexLabel, COLORS, createCoordinateMapper } from '../shared/svg-utils';
 
 /** 함수 그래프 SVG 생성 (좌표평면 + 함수 곡선) */
 export function renderFunctionGraph(params: FunctionGraphParams): string {
@@ -16,8 +16,11 @@ export function renderFunctionGraph(params: FunctionGraphParams): string {
   const totalW = gridW + pad * 2;
   const totalH = gridH + pad * 2;
 
-  const toX = (v: number) => pad + ((v - xMin) / (xMax - xMin)) * gridW;
-  const toY = (v: number) => pad + ((yMax - v) / (yMax - yMin)) * gridH;
+  const { toX, toY } = createCoordinateMapper({
+    xMin, xMax, yMin, yMax,
+    width: gridW, height: gridH,
+    padLeft: pad, padTop: pad,
+  });
 
   const parts: string[] = [];
 
@@ -38,22 +41,23 @@ export function renderFunctionGraph(params: FunctionGraphParams): string {
   if (yMin <= 0 && yMax >= 0) {
     parts.push(line(pad - 10, originY, pad + gridW + 15, originY, { stroke: '#333', strokeWidth: 1.5 }));
     parts.push(arrowHead(pad + gridW + 15, originY, 0, 6));
-    parts.push(text(pad + gridW + 20, originY, 'x', { fontSize: 13, fontWeight: 'bold' }));
+    parts.push(katexLabel(pad + gridW + 20, originY, 'x', { fontSize: 13, anchor: 'start' }));
   }
   if (xMin <= 0 && xMax >= 0) {
     parts.push(line(originX, pad + gridH + 10, originX, pad - 15, { stroke: '#333', strokeWidth: 1.5 }));
     parts.push(arrowHead(originX, pad - 15, -90, 6));
-    parts.push(text(originX, pad - 20, 'y', { fontSize: 13, fontWeight: 'bold' }));
+    parts.push(katexLabel(originX, pad - 20, 'y', { fontSize: 13 }));
   }
 
-  // 눈금
+  // 눈금 — KaTeX foreignObject로 렌더링 (흰색 배경 불필요 — foreignObject 자체가 배경)
   for (let v = xMin; v <= xMax; v += gridStep) {
     if (v === 0) continue;
     const x = toX(v);
     if (yMin <= 0 && yMax >= 0) {
       parts.push(line(x, originY - 3, x, originY + 3, { stroke: '#333' }));
     }
-    parts.push(text(x, (yMin <= 0 && yMax >= 0 ? originY : pad + gridH) + 16, v.toString(), { fontSize: 10 }));
+    const ty = (yMin <= 0 && yMax >= 0 ? originY : pad + gridH) + 16;
+    parts.push(katexLabel(x, ty, v.toString(), { fontSize: 11 }));
   }
   for (let v = yMin; v <= yMax; v += gridStep) {
     if (v === 0) continue;
@@ -61,17 +65,22 @@ export function renderFunctionGraph(params: FunctionGraphParams): string {
     if (xMin <= 0 && xMax >= 0) {
       parts.push(line(originX - 3, y, originX + 3, y, { stroke: '#333' }));
     }
-    parts.push(text((xMin <= 0 && xMax >= 0 ? originX : pad) - 14, y, v.toString(), { fontSize: 10 }));
+    const tx = (xMin <= 0 && xMax >= 0 ? originX : pad) - 14;
+    parts.push(katexLabel(tx, y, v.toString(), { fontSize: 11 }));
   }
   if (xMin <= 0 && xMax >= 0 && yMin <= 0 && yMax >= 0) {
-    parts.push(text(originX - 12, originY + 14, 'O', { fontSize: 11, fontWeight: 'bold' }));
+    parts.push(katexLabel(originX - 12, originY + 14, 'O', { fontSize: 12 }));
   }
 
+  // 클리핑 영역 — 함수 곡선이 격자 바깥으로 나가지 않도록
+  parts.push(`<defs><clipPath id="fn-clip"><rect x="${pad}" y="${pad}" width="${gridW}" height="${gridH}"/></clipPath></defs>`);
+  parts.push(`<g clip-path="url(#fn-clip)">`);
+
   // 함수 곡선
-  const funcColors = [COLORS.primary, COLORS.red, COLORS.green, COLORS.purple];
   for (let fi = 0; fi < funcs.length; fi++) {
     const fn = funcs[fi];
-    const color = fn.color || funcColors[fi % funcColors.length];
+    const color = fn.color || '#333';
+    const dashAttr = fn.dashed ? ' stroke-dasharray="6 4"' : '';
     const step = (xMax - xMin) / 200;
     const pathParts: string[] = [];
     let started = false;
@@ -79,7 +88,7 @@ export function renderFunctionGraph(params: FunctionGraphParams): string {
     for (let xVal = xMin; xVal <= xMax; xVal += step) {
       try {
         const yVal = evaluateExpression(fn.expression, xVal);
-        if (!isFinite(yVal) || yVal < yMin - 5 || yVal > yMax + 5) {
+        if (!isFinite(yVal)) {
           started = false;
           continue;
         }
@@ -93,14 +102,38 @@ export function renderFunctionGraph(params: FunctionGraphParams): string {
     }
 
     if (pathParts.length > 0) {
-      parts.push(`<path d="${pathParts.join(' ')}" fill="none" stroke="${color}" stroke-width="2"/>`);
+      parts.push(`<path d="${pathParts.join(' ')}" fill="none" stroke="${color}" stroke-width="2"${dashAttr}/>`);
     }
+  }
 
-    // 함수 라벨
-    if (fn.label) {
-      const labelX = pad + gridW - 10;
-      const labelY = pad + 16 + fi * 18;
-      parts.push(text(labelX, labelY, fn.label, { fontSize: 11, fill: color, anchor: 'end', fontWeight: 'bold' }));
+  parts.push('</g>');
+
+  // 함수 라벨 — 각 곡선 위에 배치
+  for (let fi = 0; fi < funcs.length; fi++) {
+    const fn = funcs[fi];
+    if (!fn.label) continue;
+
+    // 곡선 중간~우측 적절한 위치에 라벨 배치
+    let placed = false;
+    const tryXPositions = [0.7, 0.6, 0.8, 0.5, 0.3];
+    for (const ratio of tryXPositions) {
+      const xVal = xMin + (xMax - xMin) * ratio;
+      try {
+        const yVal = evaluateExpression(fn.expression, xVal);
+        if (isFinite(yVal) && yVal >= yMin && yVal <= yMax) {
+          const lx = toX(xVal);
+          const ly = toY(yVal);
+          // 라벨 배경 (가독성)
+          parts.push(`<rect x="${lx + 4}" y="${ly - 18}" width="${fn.label.length * 7 + 8}" height="16" fill="white" fill-opacity="0.85" rx="2"/>`);
+          parts.push(katexLabel(lx + 8, ly - 10, fn.label, { fontSize: 10, anchor: 'start' }));
+          placed = true;
+          break;
+        }
+      } catch { /* skip */ }
+    }
+    if (!placed) {
+      // fallback: 우측 상단
+      parts.push(katexLabel(pad + gridW + 8, pad + 14 + fi * 18, fn.label, { fontSize: 11, anchor: 'start' }));
     }
   }
 
@@ -110,7 +143,7 @@ export function renderFunctionGraph(params: FunctionGraphParams): string {
     const py = toY(p.y);
     parts.push(circle(px, py, 4, { fill: COLORS.red, stroke: COLORS.red }));
     if (p.label) {
-      parts.push(text(px + 10, py - 10, p.label, { fontSize: 11, anchor: 'start', fontWeight: 'bold', fill: COLORS.red }));
+      parts.push(katexLabel(px + 10, py - 10, p.label, { fontSize: 11, anchor: 'start' }));
     }
   }
 

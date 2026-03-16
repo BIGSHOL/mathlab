@@ -1,33 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { requireTeacher, isResponse, badRequest } from '@/lib/api';
 import { createConceptHomeworkPlan, listConceptHomeworkPlans } from '@/lib/services/concept-homework';
 import { Stage } from '@prisma/client';
 
 /** POST: 개념 숙제 플랜 생성 */
 export async function POST(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const body = await request.json();
   const { title, startDate, conceptIds, conceptsPerDay, requiredStage, studentIds } = body;
 
   if (!title?.trim()) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: '제목을 입력하세요' } },
-      { status: 400 }
-    );
+    return badRequest('제목을 입력하세요');
   }
 
   if (!Array.isArray(conceptIds) || conceptIds.length === 0) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: '개념을 1개 이상 선택하세요' } },
-      { status: 400 }
-    );
+    return badRequest('개념을 1개 이상 선택하세요');
   }
 
   const validStages: Stage[] = [Stage.READING, Stage.BLANK_EASY, Stage.BLANK_HARD, Stage.BLANK_FULL];
@@ -35,7 +24,7 @@ export async function POST(request: NextRequest) {
   try {
     const plan = await createConceptHomeworkPlan({
       title: title.trim(),
-      createdBy: currentUser.id,
+      createdBy: user.id,
       startDate,
       conceptIds,
       conceptsPerDay: Math.min(Math.max(1, conceptsPerDay || 1), 10),
@@ -45,24 +34,16 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data: plan }, { status: 201 });
   } catch (err) {
-    return NextResponse.json(
-      { error: { code: 'CREATE_FAILED', message: (err as Error).message } },
-      { status: 400 }
-    );
+    return badRequest((err as Error).message);
   }
 }
 
 /** GET: 개념 숙제 플랜 목록 */
 export async function GET() {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
-  const createdBy = currentUser.role === 'TEACHER' ? currentUser.id : undefined;
+  const createdBy = user.role === 'TEACHER' ? user.id : undefined;
   const plans = await listConceptHomeworkPlans(createdBy);
 
   return NextResponse.json({ data: plans });

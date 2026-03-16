@@ -30,6 +30,22 @@ export const TYPE_CONFIG: Record<UpdateType, { label: string; color: string }> =
 };
 
 export const ALL_UPDATES: UpdateLog[] = [
+  // ── 선생님용 ──
+  {
+    date: '2026-03-16',
+    title: 'PDF 도형 편집기 대폭 개선 & 다이어그램 26종 지원',
+    audience: ['teacher', 'admin'],
+    entries: [
+      { type: 'feature', text: '다이어그램 26종 지원 (막대그래프, 꺾은선, 그림그래프, 원그래프, 띠그래프, 각도, 시계, 히스토그램, 줄기와잎, 입체도형, 전개도, 수형도, 산점도 추가)' },
+      { type: 'feature', text: '분수 사각형 셀 클릭 편집 — 여러 개 사각형 각각 개별 셀 색칠/빗금 지원' },
+      { type: 'feature', text: '분수 원 조각 클릭 편집 — 파이 조각별 색칠/빗금 직접 클릭' },
+      { type: 'add', text: '도형 정렬 옵션 (왼쪽/가운데/오른쪽)' },
+      { type: 'add', text: '수직선 마크 점 표시/숨기기 옵션 및 점 색상 커스텀' },
+      { type: 'add', text: '도형 편집기 팝업에 [그림N] 라벨 표시' },
+      { type: 'fix', text: '분수 사각형 빗금(hatching)이 미리보기에 표시되지 않던 버그 수정' },
+      { type: 'fix', text: 'Backspace 키로 텍스트 삭제 시 브라우저 뒤로가기 발생하던 문제 수정' },
+    ],
+  },
   // ── 어드민 전용 ──
   {
     date: '2025-03-11',

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireTeacher, isResponse, notFound, conflict, badRequest } from '@/lib/api';
 import { blankQuerySchema } from '@/lib/schemas/concept';
 
 /** Resolve concept by conceptCode or cuid id */
@@ -36,10 +36,7 @@ export async function GET(
   });
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: 'level은 1 또는 2여야 합니다' } },
-      { status: 400 }
-    );
+    return badRequest('level은 1 또는 2여야 합니다');
   }
 
   // Find any exercise for this concept (per-blank difficulty replaces per-exercise level)
@@ -49,10 +46,7 @@ export async function GET(
   });
 
   if (!exercise) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '빈칸 문제를 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+    return notFound('빈칸 문제를 찾을 수 없습니다');
   }
 
   // Filter blanks by difficulty based on requested level
@@ -89,20 +83,12 @@ export async function POST(
 ) {
   const { id: rawId } = await params;
   const id = await resolveConceptId(rawId) ?? rawId;
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const concept = await prisma.concept.findUnique({ where: { id } });
   if (!concept) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '개념을 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+    return notFound('개념을 찾을 수 없습니다');
   }
 
   // Check if exercise already exists for this concept
@@ -110,20 +96,14 @@ export async function POST(
     where: { conceptId: id },
   });
   if (existingExercise) {
-    return NextResponse.json(
-      { error: { code: 'CONFLICT', message: '이미 빈칸 문제가 존재합니다. 수정(PUT)을 사용하세요.' } },
-      { status: 409 }
-    );
+    return conflict('이미 빈칸 문제가 존재합니다. 수정(PUT)을 사용하세요.');
   }
 
   const body = await request.json();
   const { level, templateText, blanks } = body;
 
   if (!templateText || !Array.isArray(blanks) || blanks.length === 0) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: 'templateText, blanks가 필요합니다' } },
-      { status: 400 }
-    );
+    return badRequest('templateText, blanks가 필요합니다');
   }
 
   const exercise = await prisma.blankExercise.create({
@@ -140,32 +120,21 @@ export async function PUT(
 ) {
   const { id: rawId } = await params;
   const id = await resolveConceptId(rawId) ?? rawId;
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const body = await request.json();
   const { exerciseId, level, templateText, blanks } = body;
 
   if (!exerciseId) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: 'exerciseId가 필요합니다' } },
-      { status: 400 }
-    );
+    return badRequest('exerciseId가 필요합니다');
   }
 
   const existing = await prisma.blankExercise.findFirst({
     where: { id: exerciseId, conceptId: id },
   });
   if (!existing) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '빈칸 문제를 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+    return notFound('빈칸 문제를 찾을 수 없습니다');
   }
 
   const updated = await prisma.blankExercise.update({
@@ -187,32 +156,21 @@ export async function DELETE(
 ) {
   const { id: rawId } = await params;
   const id = await resolveConceptId(rawId) ?? rawId;
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const { searchParams } = new URL(request.url);
   const exerciseId = searchParams.get('exerciseId');
 
   if (!exerciseId) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: 'exerciseId가 필요합니다' } },
-      { status: 400 }
-    );
+    return badRequest('exerciseId가 필요합니다');
   }
 
   const existing = await prisma.blankExercise.findFirst({
     where: { id: exerciseId, conceptId: id },
   });
   if (!existing) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '빈칸 문제를 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+    return notFound('빈칸 문제를 찾을 수 없습니다');
   }
 
   await prisma.blankExercise.delete({ where: { id: exerciseId } });

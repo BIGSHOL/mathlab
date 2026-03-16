@@ -1,38 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
 import { getDifficultyComment, getChapterComment } from '@/lib/utils/level-test-feedback';
 import { generateReportAI } from '@/lib/services/report-ai';
+import { requireTeacher, isResponse, notFound, badRequest } from '@/lib/api';
 
 /** GET: 레벨테스트 진단 보고서 데이터 (단일 학생) */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const currentUser = await requireTeacher();
+  if (isResponse(currentUser)) return currentUser;
 
   const { id } = await params;
   const seq = Number(id);
 
   if (isNaN(seq)) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: '잘못된 시험 번호입니다' } },
-      { status: 400 }
-    );
+    return badRequest('잘못된 시험 번호입니다');
   }
 
   const attemptId = request.nextUrl.searchParams.get('attemptId');
   if (!attemptId) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: 'attemptId가 필요합니다' } },
-      { status: 400 }
-    );
+    return badRequest('attemptId가 필요합니다');
   }
 
   // 시험 조회
@@ -45,10 +34,7 @@ export async function GET(
     },
   });
   if (!test) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '시험을 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+    return notFound('시험을 찾을 수 없습니다');
   }
 
   // 시도 조회
@@ -57,10 +43,7 @@ export async function GET(
     include: { student: { select: { id: true, name: true, grade: true } } },
   });
   if (!attempt || attempt.testId !== test.id) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '시도를 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+    return notFound('시도를 찾을 수 없습니다');
   }
 
   // 진단 결과
@@ -68,10 +51,7 @@ export async function GET(
     where: { attemptId },
   });
   if (!diagnostic) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '진단 결과가 없습니다. 먼저 분석을 실행해주세요.' } },
-      { status: 404 }
-    );
+    return notFound('진단 결과가 없습니다. 먼저 분석을 실행해주세요.');
   }
 
   // 문제 조회 (questionIds 순서 유지)

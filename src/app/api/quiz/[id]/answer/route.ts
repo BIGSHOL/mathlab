@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAuth, isResponse, notFound, badRequest } from '@/lib/api';
 
 /** POST: 퀴즈 답안 제출 */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } },
-      { status: 401 }
-    );
-  }
+  const currentUser = await requireAuth();
+  if (isResponse(currentUser)) return currentUser;
 
   const { id: rawId } = await params;
   const body = await request.json();
@@ -25,10 +20,7 @@ export async function POST(
     session = await prisma.quizSession.findUnique({ where: { joinCode: rawId.toUpperCase() } });
   }
   if (!session || session.status !== 'ACTIVE') {
-    return NextResponse.json(
-      { error: { code: 'INVALID_STATE', message: '퀴즈가 진행 중이 아닙니다' } },
-      { status: 400 }
-    );
+    return badRequest('퀴즈가 진행 중이 아닙니다');
   }
 
   // Get question and check answer
@@ -37,10 +29,7 @@ export async function POST(
     select: { answer: true },
   });
   if (!question) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '문제를 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+    return notFound('문제를 찾을 수 없습니다');
   }
 
   const normalize = (s: string) => s.trim().replace(/\s+/g, ' ').toUpperCase();
@@ -52,10 +41,7 @@ export async function POST(
   });
 
   if (!participant) {
-    return NextResponse.json(
-      { error: { code: 'NOT_JOINED', message: '퀴즈에 참가하지 않았습니다' } },
-      { status: 400 }
-    );
+    return badRequest('퀴즈에 참가하지 않았습니다');
   }
 
   const pointsEarned = isCorrect ? 10 : 0;

@@ -1,18 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAuth, isResponse, validateBody } from '@/lib/api';
 import { completeStageSchema } from '@/lib/schemas/learning';
 import { XP_REWARDS, calculateLevel } from '@/lib/utils/xp';
 
 // GET /api/learning/progress?conceptId=xxx
 export async function GET(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } }, { status: 401 });
-  }
+  const user = await requireAuth();
+  if (isResponse(user)) return user;
 
   const conceptId = new URL(request.url).searchParams.get('conceptId');
-  const where: Record<string, unknown> = { userId: currentUser.id };
+  const where: Record<string, unknown> = { userId: user.id };
   if (conceptId) where.conceptId = conceptId;
 
   const progress = await prisma.learningProgress.findMany({
@@ -37,28 +35,20 @@ const STAGE_XP: Record<string, number> = {
 
 // POST /api/learning/progress - Complete a stage
 export async function POST(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } }, { status: 401 });
-  }
+  const user = await requireAuth();
+  if (isResponse(user)) return user;
 
-  const body = await request.json();
-  const parsed = completeStageSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: '입력값이 올바르지 않습니다' } },
-      { status: 400 }
-    );
-  }
+  const parsed = await validateBody(request, completeStageSchema);
+  if (isResponse(parsed)) return parsed;
 
-  const { conceptId, stage } = parsed.data;
+  const { conceptId, stage } = parsed;
   const xpAmount = STAGE_XP[stage] ?? 0;
 
   // Upsert learning progress + award XP (atomic)
   const progress = await prisma.$transaction(async (tx) => {
     const prog = await tx.learningProgress.upsert({
       where: {
-        userId_conceptId_stage: { userId: currentUser.id, conceptId, stage },
+        userId_conceptId_stage: { userId: user.id, conceptId, stage },
       },
       update: {
         completed: true,
@@ -66,7 +56,7 @@ export async function POST(request: NextRequest) {
         attempts: { increment: 1 },
       },
       create: {
-        userId: currentUser.id,
+        userId: user.id,
         conceptId,
         stage,
         completed: true,
@@ -78,7 +68,7 @@ export async function POST(request: NextRequest) {
     if (xpAmount > 0) {
       await tx.pointTransaction.create({
         data: {
-          userId: currentUser.id,
+          userId: user.id,
           amount: xpAmount,
           type: 'EARN',
           reason: stage,
@@ -87,13 +77,13 @@ export async function POST(request: NextRequest) {
       });
 
       const profile = await tx.studentProfile.upsert({
-        where: { userId: currentUser.id },
+        where: { userId: user.id },
         update: {
           totalXp: { increment: xpAmount },
           lastActiveAt: new Date(),
         },
         create: {
-          userId: currentUser.id,
+          userId: user.id,
           totalXp: xpAmount,
           lastActiveAt: new Date(),
         },
@@ -102,7 +92,7 @@ export async function POST(request: NextRequest) {
       const newLevel = calculateLevel(profile.totalXp);
       if (newLevel !== profile.level) {
         await tx.studentProfile.update({
-          where: { userId: currentUser.id },
+          where: { userId: user.id },
           data: { level: newLevel },
         });
       }

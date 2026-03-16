@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { notFound } from '@/lib/api';
 import { CROSS_GRADE_CHAINS } from '@/lib/constants/concepts';
 
 // GET /api/concepts/prerequisite-chain?chain=분수 계통
@@ -15,10 +16,7 @@ export async function GET(request: NextRequest) {
     // 특정 체인의 개념들 조회
     const conceptCodes = CROSS_GRADE_CHAINS[chainName];
     if (!conceptCodes || conceptCodes.length === 0) {
-      return NextResponse.json(
-        { error: { code: 'NOT_FOUND', message: '해당 체인을 찾을 수 없습니다' } },
-        { status: 404 },
-      );
+      return notFound('해당 체인을 찾을 수 없습니다');
     }
 
     const concepts = await prisma.concept.findMany({
@@ -81,10 +79,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     if (!concept) {
-      return NextResponse.json(
-        { error: { code: 'NOT_FOUND', message: '개념을 찾을 수 없습니다' } },
-        { status: 404 },
-      );
+      return notFound('개념을 찾을 수 없습니다');
     }
 
     const allNodes = [

@@ -1,5 +1,5 @@
 import { PlaceValueParams } from '../types';
-import { svgWrap, rect, text, COLORS } from '../shared/svg-utils';
+import { svgWrap, rect, katexLabel, COLORS } from '../shared/svg-utils';
 
 /** 수 모형 SVG 생성 (백의 자리=큰 사각형, 십의 자리=막대, 일의 자리=작은 정사각형) */
 export function renderPlaceValue(params: PlaceValueParams): string {
@@ -22,7 +22,7 @@ export function renderPlaceValue(params: PlaceValueParams): string {
       parts.push(`<line x1="${gx}" y1="0" x2="${gx}" y2="${hundredSize}" stroke="#333" stroke-width="0.3"/>`);
       parts.push(`<line x1="${x}" y1="${gy}" x2="${x + hundredSize}" y2="${gy}" stroke="#333" stroke-width="0.3"/>`);
     }
-    parts.push(text(x + hundredSize / 2, hundredSize + 14, '100', { fontSize: 10 }));
+    parts.push(katexLabel(x + hundredSize / 2, hundredSize + 14, '100', { fontSize: 10 }));
     xOffset += hundredSize + gap;
   }
 
@@ -42,7 +42,7 @@ export function renderPlaceValue(params: PlaceValueParams): string {
     xOffset += tenW + 3;
   }
   if (tens > 0) {
-    parts.push(text(xOffset - (tens * (tenW + 3)) / 2, tenH + 14, `${tens}0`, { fontSize: 10 }));
+    parts.push(katexLabel(xOffset - (tens * (tenW + 3)) / 2, tenH + 14, `${tens}0`, { fontSize: 10 }));
   }
 
   // 일의 자리: 작은 정사각형
@@ -59,7 +59,7 @@ export function renderPlaceValue(params: PlaceValueParams): string {
   }
   if (ones > 0) {
     const onesW = Math.min(ones, 5) * (oneSize + 2);
-    parts.push(text(onesStartX + onesW / 2, tenH + 14, `${ones}`, { fontSize: 10 }));
+    parts.push(katexLabel(onesStartX + onesW / 2, tenH + 14, `${ones}`, { fontSize: 10 }));
     xOffset = onesStartX + onesW;
   }
 

@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireTeacher, isResponse, notFound } from '@/lib/api';
 
 /** GET: 시험 결과 조회 (교사용) */
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const currentUser = await requireTeacher();
+  if (isResponse(currentUser)) return currentUser;
 
   const { id: rawId } = await params;
 
@@ -23,10 +18,7 @@ export async function GET(
   if (!isNaN(seqNum) && String(seqNum) === rawId) {
     const test = await prisma.test.findUnique({ where: { seq: seqNum }, select: { id: true } });
     if (!test) {
-      return NextResponse.json(
-        { error: { code: 'NOT_FOUND', message: '시험을 찾을 수 없습니다' } },
-        { status: 404 }
-      );
+      return notFound('시험을 찾을 수 없습니다');
     }
     testId = test.id;
   }

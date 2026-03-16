@@ -1,5 +1,23 @@
-import { CircleParams, TriangleParams, QuadrilateralParams, RegularPolygonParams, Point2D } from '../types';
-import { svgWrap, line, text, circle as svgCircle, polygon, COLORS } from '../shared/svg-utils';
+import { CircleParams, TriangleParams, QuadrilateralParams, RegularPolygonParams, ShapeStyle, Point2D } from '../types';
+import { svgWrap, line, circle as svgCircle, katexLabel, COLORS } from '../shared/svg-utils';
+
+/** 빗금 패턴 defs (도형 공통) */
+function shapeHatchDef(id: string, color: string): string {
+  return `<defs><pattern id="${id}" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="${color}" stroke-width="1.5" stroke-opacity="0.55"/></pattern></defs>`;
+}
+
+/** ShapeStyle에서 fill 속성 문자열 생성 */
+function shapeFillAttrs(style: ShapeStyle, patternId: string): { fillAttr: string; extraFill: string } {
+  const fillColor = style.fill || '#EFF6FF';
+  const fillOpacity = style.fillOpacity ?? 0.15;
+  if (style.hatching) {
+    return {
+      fillAttr: `fill="${fillColor}" fill-opacity="${fillOpacity}"`,
+      extraFill: `fill="url(#${patternId})"`,
+    };
+  }
+  return { fillAttr: `fill="${fillColor}" fill-opacity="${fillOpacity > 0.5 ? fillOpacity : 0.35}"`, extraFill: '' };
+}
 
 // --- 원 ---
 export function renderCircle(params: CircleParams): string {
@@ -9,23 +27,37 @@ export function renderCircle(params: CircleParams): string {
   const totalW = cx + r + 30;
   const totalH = cy + r + 30;
   const parts: string[] = [];
+  const strokeColor = params.strokeColor || COLORS.primary;
+  const patternId = 'hatch-circle';
 
-  parts.push(svgCircle(cx, cy, r, { stroke: COLORS.primary, strokeWidth: 2 }));
+  if (params.hatching) parts.push(shapeHatchDef(patternId, strokeColor));
+
+  const { fillAttr, extraFill } = shapeFillAttrs(params, patternId);
+  parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" ${fillAttr} stroke="${strokeColor}" stroke-width="2"/>`);
+  if (extraFill) parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" ${extraFill} stroke="none"/>`);
   parts.push(svgCircle(cx, cy, 2, { fill: '#333' })); // 중심점
 
   // 라벨
   if (params.labels) {
     for (const lbl of params.labels) {
-      const rad = (lbl.angle * Math.PI) / 180;
-      const lx = cx + (r + 16) * Math.cos(rad);
-      const ly = cy - (r + 16) * Math.sin(rad);
-      parts.push(text(lx, ly, lbl.text, { fontSize: 12, fontWeight: 'bold' }));
+      if (lbl.position === 'center') {
+        // 원 중앙에 라벨
+        parts.push(katexLabel(cx, cy, lbl.text, { fontSize: 12 }));
+      } else {
+        // 원 바깥에 라벨 (기본)
+        const rad = (lbl.angle * Math.PI) / 180;
+        const lx = cx + (r + 16) * Math.cos(rad);
+        const ly = cy - (r + 16) * Math.sin(rad);
+        parts.push(katexLabel(lx, ly, lbl.text, { fontSize: 12 }));
+      }
     }
   }
 
   // 호
   if (params.arcs) {
     for (const arc of params.arcs) {
+      const arcColor = arc.color || COLORS.red;
+      const arcStrokeW = arc.strokeWidth || 4;
       const startRad = (-arc.startAngle * Math.PI) / 180;
       const endRad = (-arc.endAngle * Math.PI) / 180;
       const x1 = cx + r * Math.cos(startRad);
@@ -34,12 +66,12 @@ export function renderCircle(params: CircleParams): string {
       const y2 = cy + r * Math.sin(endRad);
       const sweep = arc.endAngle - arc.startAngle > 180 ? 1 : 0;
       const d = `M ${x1} ${y1} A ${r} ${r} 0 ${sweep} 0 ${x2} ${y2}`;
-      parts.push(`<path d="${d}" fill="none" stroke="${COLORS.red}" stroke-width="2.5"/>`);
+      parts.push(`<path d="${d}" fill="none" stroke="${arcColor}" stroke-width="${arcStrokeW}"/>`);
       if (arc.label) {
         const midAngle = (-(arc.startAngle + arc.endAngle) / 2 * Math.PI) / 180;
         const mx = cx + (r + 20) * Math.cos(midAngle);
         const my = cy + (r + 20) * Math.sin(midAngle);
-        parts.push(text(mx, my, arc.label, { fontSize: 11, fill: COLORS.red }));
+        parts.push(katexLabel(mx, my, arc.label, { fontSize: 11 }));
       }
     }
   }
@@ -51,8 +83,9 @@ export function renderCircle(params: CircleParams): string {
 export function renderTriangle(params: TriangleParams): string {
   const verts = params.vertices;
   const pad = 40;
+  const strokeColor = params.strokeColor || COLORS.primary;
+  const patternId = 'hatch-tri';
 
-  // 좌표 정규화 (자동 스케일)
   const xs = verts.map(v => v.x);
   const ys = verts.map(v => v.y);
   const minX = Math.min(...xs), maxX = Math.max(...xs);
@@ -71,24 +104,29 @@ export function renderTriangle(params: TriangleParams): string {
   const totalH = rangeY * scale + pad * 2;
   const parts: string[] = [];
 
-  // 삼각형
-  parts.push(polygon(pts as [number, number][], {
-    fill: '#EFF6FF', stroke: COLORS.primary, strokeWidth: 2,
-  }));
+  if (params.hatching) parts.push(shapeHatchDef(patternId, strokeColor));
+
+  // 삼각형 면
+  const fillColor = params.fill || '#EFF6FF';
+  const fillOpacity = params.fillOpacity ?? 0.15;
+  const ptsStr = pts.map(([x, y]) => `${x},${y}`).join(' ');
+  parts.push(`<polygon points="${ptsStr}" fill="${fillColor}" fill-opacity="${fillOpacity > 0.5 ? fillOpacity : 0.35}" stroke="${strokeColor}" stroke-width="2"/>`);
+  if (params.hatching) {
+    parts.push(`<polygon points="${ptsStr}" fill="url(#${patternId})" stroke="none"/>`);
+  }
 
   // 꼭짓점 라벨
   for (let i = 0; i < 3; i++) {
     const [px, py] = pts[i];
     const label = verts[i].label || '';
     if (label) {
-      // 라벨 위치: 꼭짓점에서 중심의 반대 방향
       const cx = (pts[0][0] + pts[1][0] + pts[2][0]) / 3;
       const cy = (pts[0][1] + pts[1][1] + pts[2][1]) / 3;
       const dx = px - cx, dy = py - cy;
       const d = Math.sqrt(dx * dx + dy * dy) || 1;
       const lx = px + (dx / d) * 16;
       const ly = py + (dy / d) * 16;
-      parts.push(text(lx, ly, label, { fontSize: 13, fontWeight: 'bold' }));
+      parts.push(katexLabel(lx, ly, label, { fontSize: 13 }));
     }
   }
 
@@ -99,12 +137,11 @@ export function renderTriangle(params: TriangleParams): string {
       const [x2, y2] = pts[s.to];
       const mx = (x1 + x2) / 2;
       const my = (y1 + y2) / 2;
-      // 중심 반대로 오프셋
       const cx = (pts[0][0] + pts[1][0] + pts[2][0]) / 3;
       const cy = (pts[0][1] + pts[1][1] + pts[2][1]) / 3;
       const dx = mx - cx, dy = my - cy;
       const dd = Math.sqrt(dx * dx + dy * dy) || 1;
-      parts.push(text(mx + (dx / dd) * 14, my + (dy / dd) * 14, s.label, { fontSize: 11, fill: COLORS.red }));
+      parts.push(katexLabel(mx + (dx / dd) * 14, my + (dy / dd) * 14, s.label, { fontSize: 11 }));
     }
   }
 
@@ -116,7 +153,7 @@ export function renderTriangle(params: TriangleParams): string {
       const cy = (pts[0][1] + pts[1][1] + pts[2][1]) / 3;
       const dx = cx - px, dy = cy - py;
       const dd = Math.sqrt(dx * dx + dy * dy) || 1;
-      parts.push(text(px + (dx / dd) * 20, py + (dy / dd) * 20, a.value, { fontSize: 10, fill: COLORS.purple }));
+      parts.push(katexLabel(px + (dx / dd) * 20, py + (dy / dd) * 20, a.value, { fontSize: 10 }));
     }
   }
 
@@ -127,6 +164,8 @@ export function renderTriangle(params: TriangleParams): string {
 export function renderQuadrilateral(params: QuadrilateralParams): string {
   const verts = params.vertices;
   const pad = 40;
+  const strokeColor = params.strokeColor || COLORS.primary;
+  const patternId = 'hatch-quad';
 
   const xs = verts.map(v => v.x);
   const ys = verts.map(v => v.y);
@@ -146,9 +185,15 @@ export function renderQuadrilateral(params: QuadrilateralParams): string {
   const totalH = rangeY * scale + pad * 2;
   const parts: string[] = [];
 
-  parts.push(polygon(pts as [number, number][], {
-    fill: '#EFF6FF', stroke: COLORS.primary, strokeWidth: 2,
-  }));
+  if (params.hatching) parts.push(shapeHatchDef(patternId, strokeColor));
+
+  const fillColor = params.fill || '#EFF6FF';
+  const fillOpacity = params.fillOpacity ?? 0.15;
+  const ptsStr = pts.map(([x, y]) => `${x},${y}`).join(' ');
+  parts.push(`<polygon points="${ptsStr}" fill="${fillColor}" fill-opacity="${fillOpacity > 0.5 ? fillOpacity : 0.35}" stroke="${strokeColor}" stroke-width="2"/>`);
+  if (params.hatching) {
+    parts.push(`<polygon points="${ptsStr}" fill="url(#${patternId})" stroke="none"/>`);
+  }
 
   // 꼭짓점 라벨
   for (let i = 0; i < 4; i++) {
@@ -159,7 +204,7 @@ export function renderQuadrilateral(params: QuadrilateralParams): string {
       const cy = pts.reduce((s, p) => s + p[1], 0) / 4;
       const dx = px - cx, dy = py - cy;
       const d = Math.sqrt(dx * dx + dy * dy) || 1;
-      parts.push(text(px + (dx / d) * 16, py + (dy / d) * 16, label, { fontSize: 13, fontWeight: 'bold' }));
+      parts.push(katexLabel(px + (dx / d) * 16, py + (dy / d) * 16, label, { fontSize: 13 }));
     }
   }
 
@@ -174,7 +219,7 @@ export function renderQuadrilateral(params: QuadrilateralParams): string {
       const cy = pts.reduce((sum, p) => sum + p[1], 0) / 4;
       const dx = mx - cx, dy = my - cy;
       const dd = Math.sqrt(dx * dx + dy * dy) || 1;
-      parts.push(text(mx + (dx / dd) * 14, my + (dy / dd) * 14, s.label, { fontSize: 11, fill: COLORS.red }));
+      parts.push(katexLabel(mx + (dx / dd) * 14, my + (dy / dd) * 14, s.label, { fontSize: 11 }));
     }
   }
 
@@ -207,6 +252,10 @@ export function renderRegularPolygon(params: RegularPolygonParams): string {
   const totalW = cx + r + 30;
   const totalH = cy + r + 30;
   const parts: string[] = [];
+  const strokeColor = params.strokeColor || COLORS.primary;
+  const patternId = 'hatch-rpoly';
+
+  if (params.hatching) parts.push(shapeHatchDef(patternId, strokeColor));
 
   // 꼭짓점 계산
   const verts: [number, number][] = [];
@@ -216,16 +265,35 @@ export function renderRegularPolygon(params: RegularPolygonParams): string {
   }
 
   // 다각형
-  parts.push(polygon(verts, { fill: '#EFF6FF', stroke: COLORS.primary, strokeWidth: 2 }));
+  const fillColor = params.fill || '#EFF6FF';
+  const fillOpacity = params.fillOpacity ?? 0.15;
+  const ptsStr = verts.map(([x, y]) => `${x},${y}`).join(' ');
+  parts.push(`<polygon points="${ptsStr}" fill="${fillColor}" fill-opacity="${fillOpacity > 0.5 ? fillOpacity : 0.35}" stroke="${strokeColor}" stroke-width="2"/>`);
+  if (params.hatching) {
+    parts.push(`<polygon points="${ptsStr}" fill="url(#${patternId})" stroke="none"/>`);
+  }
 
   // 대각선
   if (params.diagonals) {
-    for (let i = 0; i < n; i++) {
-      for (let j = i + 2; j < n; j++) {
-        if (i === 0 && j === n - 1) continue; // 변은 제외
-        parts.push(line(verts[i][0], verts[i][1], verts[j][0], verts[j][1], {
-          stroke: COLORS.gray, strokeWidth: 1, dashArray: '4,3',
+    if (Array.isArray(params.diagonals)) {
+      // 개별 대각선 지정
+      for (const d of params.diagonals) {
+        const fi = Math.min(d.from, n - 1);
+        const ti = Math.min(d.to, n - 1);
+        const dash = d.style === 'dashed' ? '4,3' : undefined;
+        parts.push(line(verts[fi][0], verts[fi][1], verts[ti][0], verts[ti][1], {
+          stroke: COLORS.gray, strokeWidth: 1, dashArray: dash,
         }));
+      }
+    } else {
+      // true → 모든 대각선 (기존 동작)
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 2; j < n; j++) {
+          if (i === 0 && j === n - 1) continue;
+          parts.push(line(verts[i][0], verts[i][1], verts[j][0], verts[j][1], {
+            stroke: COLORS.gray, strokeWidth: 1, dashArray: '4,3',
+          }));
+        }
       }
     }
   }
@@ -237,7 +305,7 @@ export function renderRegularPolygon(params: RegularPolygonParams): string {
         const [vx, vy] = verts[lbl.vertex];
         const dx = vx - cx, dy = vy - cy;
         const d = Math.sqrt(dx * dx + dy * dy) || 1;
-        parts.push(text(vx + (dx / d) * 16, vy + (dy / d) * 16, lbl.text, { fontSize: 13, fontWeight: 'bold' }));
+        parts.push(katexLabel(vx + (dx / d) * 16, vy + (dy / d) * 16, lbl.text, { fontSize: 13 }));
       }
     }
   }
@@ -250,7 +318,7 @@ export function renderRegularPolygon(params: RegularPolygonParams): string {
     const my = (y1 + y2) / 2;
     const dx = mx - cx, dy = my - cy;
     const dd = Math.sqrt(dx * dx + dy * dy) || 1;
-    parts.push(text(mx + (dx / dd) * 14, my + (dy / dd) * 14, params.sideLength, { fontSize: 11, fill: COLORS.red }));
+    parts.push(katexLabel(mx + (dx / dd) * 14, my + (dy / dd) * 14, params.sideLength, { fontSize: 11 }));
   }
 
   return svgWrap(parts.join('\n    '), totalW, totalH);

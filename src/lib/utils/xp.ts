@@ -49,3 +49,47 @@ export const XP_REWARDS = {
   BLANK_PAGE: 30,
   BONUS: 5,
 } as const;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type PrismaTx = { studentProfile: any; pointTransaction: any };
+
+/**
+ * 트랜잭션 내에서 XP 부여 + 레벨 갱신 + PointTransaction 기록
+ * grading.ts, manual-grading.ts 등에서 반복되던 패턴 통합
+ */
+export async function awardXp(
+  tx: PrismaTx,
+  userId: string,
+  amount: number,
+  reason: string,
+  referenceId?: string
+) {
+  if (amount <= 0) return;
+
+  const profile = await tx.studentProfile.findUnique({
+    where: { userId },
+    select: { totalXp: true },
+  });
+
+  if (profile) {
+    const newTotalXp = profile.totalXp + amount;
+    await tx.studentProfile.update({
+      where: { userId },
+      data: {
+        totalXp: newTotalXp,
+        level: calculateLevel(newTotalXp),
+        lastActiveAt: new Date(),
+      },
+    });
+  }
+
+  await tx.pointTransaction.create({
+    data: {
+      userId,
+      amount,
+      type: 'EARN',
+      reason,
+      referenceId,
+    },
+  });
+}

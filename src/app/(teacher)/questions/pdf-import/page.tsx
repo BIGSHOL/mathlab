@@ -18,11 +18,13 @@ import {
   BookOpen,
   FunctionSquare,
   Lightbulb,
+  Shapes,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { EditableMathRenderer } from '@/components/math/EditableMathRenderer';
+import { DiagramEditorPopup } from '@/components/math/DiagramEditorPopup';
 import { MathLivePopup } from '@/components/math/MathLivePopup';
 import { BOOK_LABELS, DIFFICULTY_LABELS, TYPE_LABELS } from '@/types';
 import type { QuestionDifficulty, QuestionType } from '@/types';
@@ -382,6 +384,7 @@ export default function PdfImportPage() {
             type: mapType(p.problemType || '주관식'),
             imageBboxes: images.length > 0 ? images : undefined,
             diagramSvgs: svgResults.length > 0 ? svgResults : undefined,
+            diagramParams: Array.isArray(p.diagramParams) ? p.diagramParams : undefined,
           });
         }
       } catch (err) {
@@ -577,7 +580,7 @@ export default function PdfImportPage() {
 
   // --- UI 렌더링 ---
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-[1600px] mx-auto">
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -1206,7 +1209,7 @@ function ProblemCard({ problem, isEditing, isExpanded, onToggleExpand, onEdit, o
         </span>
         {problem.sourceTag && (
           <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">
-            {problem.sourceTag}
+            <MathRenderer content={problem.sourceTag} className="inline" />
           </span>
         )}
         {problem.sectionHeader && (
@@ -1293,6 +1296,12 @@ function EditForm({ problem, onUpdate, onClose }: EditFormProps) {
   const [choices, setChoices] = useState(problem.choices);
   const [sourceTag, setSourceTag] = useState(problem.sourceTag);
 
+  // 도형 편집기
+  const [diagramParams, setDiagramParams] = useState(problem.diagramParams ?? []);
+  const [diagramSvgs, setDiagramSvgs] = useState(problem.diagramSvgs ?? []);
+  const [diagramEditorOpen, setDiagramEditorOpen] = useState(false);
+  const [editingDiagramIdx, setEditingDiagramIdx] = useState<number | null>(null);
+
   // MathLive 수식 편집기
   const [mathPopupOpen, setMathPopupOpen] = useState(false);
   const [mathPopupLatex, setMathPopupLatex] = useState('');
@@ -1346,8 +1355,36 @@ function EditForm({ problem, onUpdate, onClose }: EditFormProps) {
     setMathEditRange(null);
   };
 
+  // 도형 CRUD 핸들러
+  const handleDiagramSave = (param: { type: string; label: string; params: Record<string, unknown>; align?: 'left' | 'center' | 'right' }, svg: string) => {
+    if (editingDiagramIdx === null) {
+      // 새 도형 추가
+      const newIdx = diagramParams.length + 1;
+      setContent((prev) => prev + `\n\n[그림${newIdx}]`);
+      setDiagramParams((prev) => [...prev, param]);
+      setDiagramSvgs((prev) => [...prev, { svg, label: param.label, align: param.align }]);
+    } else {
+      // 기존 도형 수정
+      setDiagramParams((prev) => prev.map((p, i) => i === editingDiagramIdx ? param : p));
+      setDiagramSvgs((prev) => prev.map((s, i) => i === editingDiagramIdx ? { svg, label: param.label, align: param.align } : s));
+    }
+    setDiagramEditorOpen(false);
+  };
+
+  const handleDeleteDiagram = (idx: number) => {
+    let newContent = content.replace(new RegExp(`\\n?\\[그림${idx + 1}\\]\\n?`, 'g'), '\n');
+    // 번호 재정렬: idx+2 이상의 [그림N]을 하나씩 줄임
+    const total = diagramParams.length;
+    for (let i = idx + 2; i <= total; i++) {
+      newContent = newContent.replace(new RegExp(`\\[그림${i}\\]`, 'g'), `[그림${i - 1}]`);
+    }
+    setContent(newContent);
+    setDiagramParams((prev) => prev.filter((_, i) => i !== idx));
+    setDiagramSvgs((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   const handleSave = () => {
-    onUpdate({ content, answer, explanation, difficulty, type, choices, sourceTag });
+    onUpdate({ content, answer, explanation, difficulty, type, choices, sourceTag, diagramParams, diagramSvgs });
     onClose();
   };
 
@@ -1395,7 +1432,7 @@ function EditForm({ problem, onUpdate, onClose }: EditFormProps) {
 
           {/* 문제 내용 */}
           <div>
-            <label className="text-xs text-slate-500 flex items-center gap-1">
+            <label className="text-xs text-slate-500 flex items-center gap-2">
               문제 내용
               <button
                 type="button"
@@ -1405,6 +1442,14 @@ function EditForm({ problem, onUpdate, onClose }: EditFormProps) {
               >
                 <FunctionSquare className="w-3.5 h-3.5" />
               </button>
+              <button
+                type="button"
+                onClick={() => { setEditingDiagramIdx(null); setDiagramEditorOpen(true); }}
+                className="text-primary hover:text-primary/70 transition-colors"
+                title="도형 추가"
+              >
+                <Shapes className="w-3.5 h-3.5" />
+              </button>
             </label>
             <textarea
               ref={contentRef}
@@ -1413,6 +1458,21 @@ function EditForm({ problem, onUpdate, onClose }: EditFormProps) {
               rows={5}
               className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg font-mono"
             />
+            {/* 도형 목록 */}
+            {diagramParams.length > 0 && (
+              <div className="mt-2 space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">도형 목록</label>
+                {diagramParams.map((dp, i) => (
+                  <div key={i} className="flex items-center gap-2 text-xs text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-200">
+                    <span className="font-medium text-primary">[그림{i + 1}]</span>
+                    <span className="text-slate-500">{dp.type}</span>
+                    <span className="text-slate-400 text-[10px] truncate flex-1">{dp.label}</span>
+                    <button type="button" onClick={() => { setEditingDiagramIdx(i); setDiagramEditorOpen(true); }} className="text-slate-400 hover:text-primary"><Edit className="w-3 h-3" /></button>
+                    <button type="button" onClick={() => handleDeleteDiagram(i)} className="text-slate-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* 보기 (객관식) */}
@@ -1511,10 +1571,12 @@ function EditForm({ problem, onUpdate, onClose }: EditFormProps) {
             미리보기 (수식 클릭 → 편집)
           </h4>
 
-          {/* 문제 내용 미리보기 */}
-          <div className="prose prose-sm max-w-none">
-            <EditableMathRenderer content={content} onMathClick={handleMathClick('content')} diagramSvgs={problem.diagramSvgs} />
-          </div>
+          {/* 문제 내용 미리보기 — 카드 뷰와 동일한 MathRenderer 사용 */}
+          <MathRenderer
+            content={content}
+            diagramSvgs={diagramSvgs}
+            onDiagramClick={(idx) => { setEditingDiagramIdx(idx); setDiagramEditorOpen(true); }}
+          />
 
           {/* 보기 미리보기 */}
           {choices.length > 0 && (
@@ -1553,6 +1615,15 @@ function EditForm({ problem, onUpdate, onClose }: EditFormProps) {
         onClose={() => { setMathPopupOpen(false); setMathEditRange(null); }}
         onInsert={handleMathInsert}
         initialLatex={mathPopupLatex}
+      />
+
+      {/* 도형 편집 팝업 */}
+      <DiagramEditorPopup
+        isOpen={diagramEditorOpen}
+        initialParam={editingDiagramIdx !== null && editingDiagramIdx < diagramParams.length ? diagramParams[editingDiagramIdx] : null}
+        diagramIndex={editingDiagramIdx}
+        onClose={() => setDiagramEditorOpen(false)}
+        onSave={handleDiagramSave}
       />
     </>
   );

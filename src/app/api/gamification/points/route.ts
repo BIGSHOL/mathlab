@@ -1,25 +1,20 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAuth, isResponse, notFound } from '@/lib/api';
 import { xpToNextLevel } from '@/lib/utils/xp';
 
 // GET /api/gamification/points
 export async function GET() {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } }, { status: 401 });
-  }
+  const user = await requireAuth();
+  if (isResponse(user)) return user;
 
   const profile = await prisma.studentProfile.findUnique({
-    where: { userId: currentUser.id },
+    where: { userId: user.id },
     select: { totalXp: true, level: true, currentStreak: true, longestStreak: true },
   });
 
   if (!profile) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '프로필을 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+    return notFound('프로필을 찾을 수 없습니다');
   }
 
   const nextLevel = xpToNextLevel(profile.totalXp);

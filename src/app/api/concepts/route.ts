@@ -1,33 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireTeacher, validateQuery, validateBody, isResponse } from '@/lib/api';
 import { conceptQuerySchema, createConceptSchema } from '@/lib/schemas/concept';
 
 // GET /api/concepts?subjectId=xxx&grade=middle_1&category=concept&part=calc&search=xxx
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const parsed = conceptQuerySchema.safeParse({
-    subjectId: searchParams.get('subjectId') ?? undefined,
-    gradeLevel: searchParams.get('gradeLevel') ?? undefined,
-    grade: searchParams.get('grade') ?? undefined,
-    category: searchParams.get('category') ?? undefined,
-    part: searchParams.get('part') ?? undefined,
-    semester: searchParams.get('semester') ?? undefined,
-    chapter: searchParams.get('chapter') ?? undefined,
-    section: searchParams.get('section') ?? undefined,
-    search: searchParams.get('search') ?? undefined,
-    page: searchParams.get('page') ?? undefined,
-    limit: searchParams.get('limit') ?? undefined,
-  });
+  const params = validateQuery(request, conceptQuerySchema);
+  if (isResponse(params)) return params;
 
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: '잘못된 쿼리 파라미터' } },
-      { status: 400 }
-    );
-  }
-
-  const { subjectId, gradeLevel, grade, category, part, semester, chapter, section, search, page, limit } = parsed.data;
+  const { subjectId, gradeLevel, grade, category, part, semester, chapter, section, search, page = 1, limit = 20 } = params;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const where: Record<string, any> = {};
@@ -102,30 +83,13 @@ export async function GET(request: NextRequest) {
 
 // POST /api/concepts
 export async function POST(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
-  const body = await request.json();
-  const parsed = createConceptSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      {
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: '입력값이 올바르지 않습니다',
-          details: parsed.error.errors.map((e) => ({ field: e.path.join('.'), message: e.message })),
-        },
-      },
-      { status: 400 }
-    );
-  }
+  const parsed = await validateBody(request, createConceptSchema);
+  if (isResponse(parsed)) return parsed;
 
-  const { prerequisites, ...data } = parsed.data;
+  const { prerequisites, ...data } = parsed;
 
   const concept = await prisma.concept.create({
     data: {
@@ -133,7 +97,7 @@ export async function POST(request: NextRequest) {
       ...(prerequisites && prerequisites.length > 0
         ? {
             prerequisites: {
-              create: prerequisites.map((prereqId) => ({
+              create: prerequisites.map((prereqId: string) => ({
                 prerequisite: { connect: { id: prereqId } },
               })),
             },

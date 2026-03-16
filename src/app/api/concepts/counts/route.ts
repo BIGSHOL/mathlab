@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { z } from 'zod';
+import { validateQuery, isResponse } from '@/lib/api';
 
 const countsQuerySchema = z.object({
   grade: z.string(),
@@ -9,20 +10,10 @@ const countsQuerySchema = z.object({
 
 // GET /api/concepts/counts?grade=elementary_5&category=concept
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const parsed = countsQuerySchema.safeParse({
-    grade: searchParams.get('grade') ?? undefined,
-    category: searchParams.get('category') ?? undefined,
-  });
+  const parsed = validateQuery(request, countsQuerySchema);
+  if (isResponse(parsed)) return parsed;
 
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: '잘못된 쿼리 파라미터' } },
-      { status: 400 },
-    );
-  }
-
-  const { grade, category } = parsed.data;
+  const { grade, category } = parsed;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const where: Record<string, any> = { grade };
   if (category) where.category = category;

@@ -1,25 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAuth, requireTeacher, isResponse, badRequest } from '@/lib/api';
 
 /** POST: 진단평가 생성 (기존 Test 시스템 활용, testType='diagnostic') */
 export async function POST(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const currentUser = await requireTeacher();
+  if (isResponse(currentUser)) return currentUser;
 
   const body = await request.json();
   const { title, grade, diagnosticType, questionIds } = body;
 
   if (!title || !grade || !diagnosticType || !questionIds?.length) {
-    return NextResponse.json(
-      { error: { code: 'BAD_REQUEST', message: '필수 필드가 누락되었습니다' } },
-      { status: 400 }
-    );
+    return badRequest('필수 필드가 누락되었습니다');
   }
 
   const test = await prisma.test.create({
@@ -39,13 +31,8 @@ export async function POST(request: NextRequest) {
 
 /** GET: 진단평가 목록 조회 */
 export async function GET() {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } },
-      { status: 401 }
-    );
-  }
+  const currentUser = await requireAuth();
+  if (isResponse(currentUser)) return currentUser;
 
   const where = {
     testType: { startsWith: 'diagnostic_' },

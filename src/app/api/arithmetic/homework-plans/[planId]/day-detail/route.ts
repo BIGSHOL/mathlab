@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { requireTeacher, isResponse, requireResource, badRequest } from '@/lib/api';
 import { prisma } from '@/lib/db';
 import type { ArithmeticCategory, ArithmeticLevel } from '@/lib/services/arithmetic-generator';
 
@@ -21,13 +21,8 @@ interface GeneratedProblem {
  * - attempt: student's attempt if exists, with all answer records
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const { planId } = await params;
   const seq = Number(planId);
@@ -35,36 +30,27 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   const studentId = request.nextUrl.searchParams.get('studentId');
 
   if (isNaN(dayIndex) || dayIndex < 0 || !studentId) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: 'dayIndex와 studentId가 필요합니다' } },
-      { status: 400 }
-    );
+    return badRequest('dayIndex와 studentId가 필요합니다');
   }
 
   // Fetch plan's dailyProblems for this day
-  const plan = await prisma.arithmeticHomeworkPlan.findUnique({
-    where: { seq },
-    select: {
-      id: true,
-      dailyProblems: true,
-      totalDays: true,
-      dailyCount: true,
-      categories: true,
-    },
-  });
-
-  if (!plan) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '플랜을 찾을 수 없습니다' } },
-      { status: 404 }
-    );
-  }
+  const plan = await requireResource(
+    () => prisma.arithmeticHomeworkPlan.findUnique({
+      where: { seq },
+      select: {
+        id: true,
+        dailyProblems: true,
+        totalDays: true,
+        dailyCount: true,
+        categories: true,
+      },
+    }),
+    '플랜을 찾을 수 없습니다'
+  );
+  if (isResponse(plan)) return plan;
 
   if (dayIndex >= plan.totalDays) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: '유효하지 않은 일차입니다' } },
-      { status: 400 }
-    );
+    return badRequest('유효하지 않은 일차입니다');
   }
 
   const allProblems = plan.dailyProblems as unknown as GeneratedProblem[][];

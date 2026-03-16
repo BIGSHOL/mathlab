@@ -1,42 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAuth, isResponse, validateBody, requireResource } from '@/lib/api';
 import { blankPageSubmitSchema } from '@/lib/schemas/learning';
 import { XP_REWARDS } from '@/lib/utils/xp';
 
 // POST /api/learning/blank-page-submit
 export async function POST(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } }, { status: 401 });
-  }
+  const user = await requireAuth();
+  if (isResponse(user)) return user;
 
-  const body = await request.json();
-  const parsed = blankPageSubmitSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: '입력값이 올바르지 않습니다' } },
-      { status: 400 }
-    );
-  }
+  const parsed = await validateBody(request, blankPageSubmitSchema);
+  if (isResponse(parsed)) return parsed;
 
-  const concept = await prisma.concept.findUnique({
-    where: { id: parsed.data.conceptId },
-  });
-
-  if (!concept) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '개념을 찾을 수 없습니다' } },
-      { status: 404 }
-    );
-  }
+  const concept = await requireResource(
+    () => prisma.concept.findUnique({ where: { id: parsed.conceptId } }),
+    '개념을 찾을 수 없습니다'
+  );
+  if (isResponse(concept)) return concept;
 
   // Simple scoring: check content length and keyword overlap
   const keywords = concept.fullContent
     .replace(/[#*\n\r]/g, '')
     .split(/\s+/)
     .filter((w) => w.length > 1);
-  const contentWords = parsed.data.content.split(/\s+/);
+  const contentWords = parsed.content.split(/\s+/);
   const matchCount = contentWords.filter((w) =>
     keywords.some((k) => k.includes(w) || w.includes(k))
   ).length;
@@ -46,24 +33,24 @@ export async function POST(request: NextRequest) {
   // Record progress
   await prisma.learningProgress.upsert({
     where: {
-      userId_conceptId_stage: { userId: currentUser.id, conceptId: parsed.data.conceptId, stage: 'BLANK_PAGE' },
+      userId_conceptId_stage: { userId: user.id, conceptId: parsed.conceptId, stage: 'BLANK_PAGE' },
     },
     update: {
       score,
       completed: passed,
       completedAt: passed ? new Date() : null,
       attempts: { increment: 1 },
-      submittedText: parsed.data.content,
+      submittedText: parsed.content,
     },
     create: {
-      userId: currentUser.id,
-      conceptId: parsed.data.conceptId,
+      userId: user.id,
+      conceptId: parsed.conceptId,
       stage: 'BLANK_PAGE',
       score,
       completed: passed,
       completedAt: passed ? new Date() : null,
       attempts: 1,
-      submittedText: parsed.data.content,
+      submittedText: parsed.content,
     },
   });
 

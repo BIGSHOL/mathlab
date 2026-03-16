@@ -1,30 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { requireAdmin, isResponse, validateBody, serverError } from '@/lib/api';
 import { bulkCreateQuestionsSchema } from '@/lib/schemas/question';
 import { autoTag } from '@/lib/services/question-tagger';
 
 // POST /api/questions/bulk — 문제 일괄 생성
 export async function POST(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role !== 'ADMIN') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '관리자만 사용 가능합니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireAdmin();
+  if (isResponse(user)) return user;
 
-  const body = await request.json();
-  const parsed = bulkCreateQuestionsSchema.safeParse(body);
+  const parsed = await validateBody(request, bulkCreateQuestionsSchema);
+  if (isResponse(parsed)) return parsed;
 
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: parsed.error.issues.map((i) => i.message).join(', ') } },
-      { status: 400 }
-    );
-  }
-
-  const { questions } = parsed.data;
+  const { questions } = parsed;
 
   try {
     // domain/conceptId 미지정 시 자동 태깅
@@ -70,9 +58,6 @@ export async function POST(request: NextRequest) {
     );
   } catch (err) {
     console.error('문제 일괄 생성 실패:', err);
-    return NextResponse.json(
-      { error: { code: 'INTERNAL_ERROR', message: '문제 생성 중 오류가 발생했습니다' } },
-      { status: 500 }
-    );
+    return serverError('문제 생성 중 오류가 발생했습니다');
   }
 }

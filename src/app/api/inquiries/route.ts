@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireTeacher, isResponse, badRequest } from '@/lib/api';
 
 // GET /api/inquiries - Admin: 전체 목록, Teacher: 본인 문의만
 export async function GET(req: NextRequest) {
-  const user = await getCurrentUser();
-  if (!user || user.role === 'STUDENT') {
-    return NextResponse.json({ error: '권한이 없습니다' }, { status: 403 });
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const { searchParams } = req.nextUrl;
   const status = searchParams.get('status');
@@ -34,16 +32,14 @@ export async function GET(req: NextRequest) {
 
 // POST /api/inquiries - 문의 등록
 export async function POST(req: NextRequest) {
-  const user = await getCurrentUser();
-  if (!user || user.role === 'STUDENT') {
-    return NextResponse.json({ error: '권한이 없습니다' }, { status: 403 });
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const body = await req.json();
   const { title, category, content } = body;
 
   if (!title || !category || !content) {
-    return NextResponse.json({ error: '필수 항목을 입력해주세요' }, { status: 400 });
+    return badRequest('필수 항목을 입력해주세요');
   }
 
   const inquiry = await prisma.inquiry.create({

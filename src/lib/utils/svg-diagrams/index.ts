@@ -3,9 +3,13 @@ import type { DiagramType } from './types';
 import type {
   NumberLineParams, FractionCircleParams, FractionRectParams,
   PlaceValueParams, DotArrayParams, FlowChartParams,
+  BarChartParams, LineGraphParams, PictureGraphParams,
+  PieChartParams, BandChartParams, AngleFigureParams, ClockFaceParams,
   CoordinatePlaneParams, CircleParams, TriangleParams,
   QuadrilateralParams, FunctionGraphParams, VennDiagramParams,
   RegularPolygonParams,
+  HistogramParams, StemLeafParams, SolidFigureParams,
+  NetDiagramParams, TreeDiagramParams, ScatterPlotParams,
 } from './types';
 
 // 초등
@@ -15,12 +19,25 @@ import { renderFractionRect } from './elementary/fraction-rect';
 import { renderPlaceValue } from './elementary/place-value';
 import { renderDotArray } from './elementary/dot-array';
 import { renderFlowChart } from './elementary/flow-chart';
+import { renderBarChart } from './elementary/bar-chart';
+import { renderLineGraph } from './elementary/line-graph';
+import { renderPictureGraph } from './elementary/picture-graph';
+import { renderPieChart } from './elementary/pie-chart';
+import { renderBandChart } from './elementary/band-chart';
+import { renderAngleFigure } from './elementary/angle-figure';
+import { renderClockFace } from './elementary/clock-face';
 
 // 중등
 import { renderCoordinatePlane } from './middle/coordinate-plane';
 import { renderCircle, renderTriangle, renderQuadrilateral, renderRegularPolygon } from './middle/shapes';
 import { renderFunctionGraph } from './middle/function-graph';
 import { renderVennDiagram } from './middle/venn-diagram';
+import { renderHistogram } from './middle/histogram';
+import { renderStemLeaf } from './middle/stem-leaf';
+import { renderSolidFigure } from './middle/solid-figure';
+import { renderNetDiagram } from './middle/net-diagram';
+import { renderTreeDiagram } from './middle/tree-diagram';
+import { renderScatterPlot } from './middle/scatter-plot';
 
 export interface DiagramData {
   type: DiagramType;
@@ -49,8 +66,12 @@ function normalizeFractionCircle(p: P): FractionCircleParams {
   return {
     totalParts: num(p.totalParts ?? p.parts ?? p.denominator ?? p.divisions ?? p.segments, 1),
     coloredParts: num(p.coloredParts ?? p.colored ?? p.numerator ?? p.filled ?? p.shaded, 0),
+    coloredSlices: arr(p.coloredSlices),
+    hatchedSlices: arr(p.hatchedSlices),
+    hatchedParts: num(p.hatchedParts ?? 0, 0),
     count: num(p.count ?? p.circles ?? p.copies ?? p.num, 1),
     color: p.color,
+    hatching: !!p.hatching,
     label: p.label,
   };
 }
@@ -61,6 +82,7 @@ function normalizeFractionRect(p: P): FractionRectParams {
     cols: num(p.cols ?? p.col ?? p.columns ?? p.denominator ?? p.parts, 1),
     coloredCells: arr(p.coloredCells ?? p.colored_cells),
     coloredCount: num(p.coloredCount ?? p.colored ?? p.numerator ?? p.filled ?? p.shaded, 0),
+    hatchedCells: arr(p.hatchedCells ?? p.hatched_cells),
     count: num(p.count ?? p.rectangles ?? p.copies ?? p.num, 1),
     color: p.color,
     hatching: !!p.hatching,
@@ -113,6 +135,171 @@ function normalizeFlowChart(p: P): FlowChartParams {
   };
 }
 
+function normalizeBarChart(p: P): BarChartParams {
+  return {
+    categories: arr(p.categories ?? p.labels ?? p.items),
+    values: arr<number>(p.values ?? p.data ?? p.counts).map(Number),
+    title: p.title,
+    yLabel: p.yLabel ?? p.y_label,
+    xLabel: p.xLabel ?? p.x_label,
+    barColor: p.barColor ?? p.color,
+    horizontal: !!p.horizontal,
+    yMax: p.yMax != null ? num(p.yMax, 0) : undefined,
+    yStep: p.yStep != null ? num(p.yStep, 0) : undefined,
+  };
+}
+
+function normalizeLineGraph(p: P): LineGraphParams {
+  // datasets 또는 단일 values
+  let datasets = arr<P>(p.datasets);
+  if (datasets.length === 0 && Array.isArray(p.values)) {
+    datasets = [{ values: p.values, label: p.dataLabel, color: p.lineColor }];
+  }
+  return {
+    categories: arr(p.categories ?? p.labels ?? p.items),
+    datasets: datasets.map(ds => ({
+      values: arr<number>(ds.values ?? ds.data).map(Number),
+      label: ds.label,
+      color: ds.color,
+    })),
+    title: p.title,
+    yLabel: p.yLabel ?? p.y_label,
+    xLabel: p.xLabel ?? p.x_label,
+    yMax: p.yMax != null ? num(p.yMax, 0) : undefined,
+    yStep: p.yStep != null ? num(p.yStep, 0) : undefined,
+    showDots: p.showDots !== false,
+  };
+}
+
+function normalizePictureGraph(p: P): PictureGraphParams {
+  return {
+    categories: arr(p.categories ?? p.labels ?? p.items),
+    values: arr<number>(p.values ?? p.data ?? p.counts).map(Number),
+    symbol: p.symbol ?? p.icon,
+    symbolValue: num(p.symbolValue ?? p.symbol_value ?? p.unit, 1),
+    title: p.title,
+    color: p.color,
+  };
+}
+
+function normalizePieChart(p: P): PieChartParams {
+  return {
+    segments: arr<P>(p.segments ?? p.slices ?? p.data).map(s => ({
+      label: String(s.label ?? s.name ?? ''),
+      value: num(s.value ?? s.count ?? s.amount, 0),
+      color: s.color,
+    })),
+    title: p.title,
+    showPercent: p.showPercent !== false,
+    showValue: !!p.showValue,
+  };
+}
+
+function normalizeBandChart(p: P): BandChartParams {
+  return {
+    segments: arr<P>(p.segments ?? p.parts ?? p.data).map(s => ({
+      label: String(s.label ?? s.name ?? ''),
+      value: num(s.value ?? s.count ?? s.amount, 0),
+      color: s.color,
+    })),
+    title: p.title,
+    showPercent: p.showPercent !== false,
+    height: p.height != null ? num(p.height, 40) : undefined,
+  };
+}
+
+function normalizeAngleFigure(p: P): AngleFigureParams {
+  return {
+    angle: num(p.angle ?? p.degrees ?? p.deg, 90),
+    showProtractor: !!p.showProtractor,
+    label: p.label,
+    ray1Angle: num(p.ray1Angle ?? p.startAngle ?? 0, 0),
+    color: p.color,
+  };
+}
+
+function normalizeClockFace(p: P): ClockFaceParams {
+  return {
+    hour: num(p.hour ?? p.hours ?? p.h, 12),
+    minute: num(p.minute ?? p.minutes ?? p.min ?? p.m, 0),
+    showNumbers: p.showNumbers !== false,
+    label: p.label,
+  };
+}
+
+function normalizeHistogram(p: P): HistogramParams {
+  return {
+    bins: arr<P>(p.bins ?? p.classes ?? p.data).map(b => ({
+      range: Array.isArray(b.range) ? [num(b.range[0], 0), num(b.range[1], 0)] as [number, number] : [0, 0],
+      frequency: num(b.frequency ?? b.freq ?? b.count, 0),
+    })),
+    title: p.title,
+    xLabel: p.xLabel ?? p.x_label,
+    yLabel: p.yLabel ?? p.y_label,
+    showFrequencyPolygon: !!p.showFrequencyPolygon,
+    color: p.color,
+  };
+}
+
+function normalizeStemLeaf(p: P): StemLeafParams {
+  return {
+    stems: arr<P>(p.stems ?? p.data).map(s => ({
+      stem: num(s.stem, 0),
+      leaves: arr<number>(s.leaves ?? s.leaf).map(Number).filter(n => !isNaN(n)),
+    })),
+    title: p.title,
+    stemLabel: p.stemLabel ?? p.stem_label,
+    leafLabel: p.leafLabel ?? p.leaf_label,
+  };
+}
+
+function normalizeSolidFigure(p: P): SolidFigureParams {
+  return {
+    shape: p.shape ?? p.type ?? 'cube',
+    labels: arr(p.labels),
+    dimensions: p.dimensions ?? {},
+    showHiddenEdges: p.showHiddenEdges !== false,
+    color: p.color,
+  };
+}
+
+function normalizeNetDiagram(p: P): NetDiagramParams {
+  return {
+    shape: p.shape ?? p.type ?? 'cube',
+    labels: arr(p.labels),
+    foldLines: p.foldLines !== false,
+    color: p.color,
+  };
+}
+
+function normalizeTreeDiagram(p: P): TreeDiagramParams {
+  return {
+    root: p.root ?? { label: p.label ?? '시작', children: arr(p.children) },
+    title: p.title,
+    orientation: p.orientation ?? 'horizontal',
+  };
+}
+
+function normalizeScatterPlot(p: P): ScatterPlotParams {
+  const xRange = Array.isArray(p.xRange) ? p.xRange : [0, 10];
+  const yRange = Array.isArray(p.yRange) ? p.yRange : [0, 10];
+  return {
+    points: arr<P>(p.points ?? p.data).map(pt => ({
+      x: num(pt.x, 0),
+      y: num(pt.y, 0),
+      label: pt.label,
+    })),
+    xRange: [num(xRange[0], 0), num(xRange[1], 10)],
+    yRange: [num(yRange[0], 0), num(yRange[1], 10)],
+    xLabel: p.xLabel ?? p.x_label,
+    yLabel: p.yLabel ?? p.y_label,
+    title: p.title,
+    gridStep: num(p.gridStep ?? p.step, 1),
+    showTrendLine: !!p.showTrendLine,
+    trendLineColor: p.trendLineColor,
+  };
+}
+
 function normalizeCoordinatePlane(p: P): CoordinatePlaneParams {
   const xRange = Array.isArray(p.xRange) ? p.xRange : [-5, 5];
   const yRange = Array.isArray(p.yRange) ? p.yRange : [-5, 5];
@@ -147,6 +334,20 @@ export function renderDiagram(data: DiagramData): string | null {
         return renderDotArray(normalizeDotArray(p));
       case 'flow_chart':
         return renderFlowChart(normalizeFlowChart(p));
+      case 'bar_chart':
+        return renderBarChart(normalizeBarChart(p));
+      case 'line_graph':
+        return renderLineGraph(normalizeLineGraph(p));
+      case 'picture_graph':
+        return renderPictureGraph(normalizePictureGraph(p));
+      case 'pie_chart':
+        return renderPieChart(normalizePieChart(p));
+      case 'band_chart':
+        return renderBandChart(normalizeBandChart(p));
+      case 'angle_figure':
+        return renderAngleFigure(normalizeAngleFigure(p));
+      case 'clock_face':
+        return renderClockFace(normalizeClockFace(p));
 
       // 중등
       case 'coordinate_plane':
@@ -163,6 +364,18 @@ export function renderDiagram(data: DiagramData): string | null {
         return renderVennDiagram(p as unknown as VennDiagramParams);
       case 'regular_polygon':
         return renderRegularPolygon(p as unknown as RegularPolygonParams);
+      case 'histogram':
+        return renderHistogram(normalizeHistogram(p));
+      case 'stem_leaf':
+        return renderStemLeaf(normalizeStemLeaf(p));
+      case 'solid_figure':
+        return renderSolidFigure(normalizeSolidFigure(p));
+      case 'net_diagram':
+        return renderNetDiagram(normalizeNetDiagram(p));
+      case 'tree_diagram':
+        return renderTreeDiagram(normalizeTreeDiagram(p));
+      case 'scatter_plot':
+        return renderScatterPlot(normalizeScatterPlot(p));
 
       default:
         return null;

@@ -1,5 +1,7 @@
 # MathLab — 한국 수학 학습 플랫폼
 
+> **⚠️ 현재 개발 버전입니다. DB의 모든 데이터는 더미 데이터이며, 초기화/삭제가 자유롭습니다.**
+
 ## 프로젝트 개요
 
 초등~고등 수학 학원용 학습 관리 플랫폼 (LMS).
@@ -73,7 +75,7 @@
 { error: { code: string, message: string } }
 ```
 
-### 4. 인증/인가 패턴
+### 5. 인증/인가 패턴
 
 ```typescript
 const currentUser = await getCurrentUser();
@@ -82,7 +84,7 @@ if (currentUser.role === 'STUDENT') → 403  // 선생님/관리자 전용
 if (currentUser.role !== 'ADMIN') → 403     // 관리자 전용
 ```
 
-### 5. AI (Gemini) 사용 규칙
+### 6. AI (Gemini) 사용 규칙
 
 - 호출 전 **내용 사전 검증**: 최소 20자, 한글 5자 이상, 의미 있는 단어 3개 이상
 - 모델: `gemini-2.5-flash` (이미지/도형 분석 및 성능에 최적)
@@ -94,27 +96,36 @@ if (currentUser.role !== 'ADMIN') → 403     // 관리자 전용
 ```
 src/
 ├── app/
-│   ├── (student)/     # 학생 페이지 (dashboard, subjects, concepts, practice, my-tests, ranking)
-│   ├── (teacher)/     # 선생님 페이지 (overview, students, concepts, questions, tests, homework, analytics)
-│   ├── api/           # API 라우트 (70+ endpoints)
+│   ├── (student)/     # 학생 페이지 (dashboard, subjects, concepts, practice, my-tests, ranking, quiz)
+│   ├── (teacher)/     # 선생님 페이지 (overview, students, concepts, questions, tests, homework, analytics, quiz, worksheet)
+│   ├── api/           # API 라우트 (97 endpoints)
 │   └── globals.css    # Tailwind 테마 + 디자인 토큰
 ├── components/
 │   ├── layout/        # Sidebar, DashboardShell
 │   ├── ui/            # Button, Pagination 등 공통 UI
-│   ├── math/          # KaTeX, MathLive 렌더링
+│   ├── math/          # MathRenderer, EditableMathRenderer, DiagramRenderer, DiagramEditorPopup
 │   ├── learning/      # 개념학습, 빈칸연습
+│   ├── test/          # 시험 응시, 제출
+│   ├── homework/      # 숙제 계획, 응시
+│   ├── teacher/       # 선생님 전용 (학생관리, 개념관리, 시험관리)
 │   ├── bulk-import/   # 일괄 가져오기
-│   └── curriculum/    # 교육과정 트리
+│   ├── curriculum/    # 교육과정 트리
+│   ├── gamification/  # 랭킹, XP 표시
+│   ├── charts/        # 학습분석 차트
+│   └── print-preview/ # 인쇄 모드
 ├── lib/
 │   ├── auth.ts        # NextAuth 설정
 │   ├── db.ts          # Prisma 싱글톤 클라이언트
 │   ├── schemas/       # Zod 검증 스키마
-│   ├── services/      # 핵심 비즈니스 로직 (arithmetic-generator, grading, diagnostic 등)
+│   ├── services/      # 핵심 비즈니스 로직 (arithmetic-generator, grading, diagnostic, mathgen 등)
 │   ├── utils/         # 유틸 (blank-generator, curriculumMapping, xp, format)
+│   │   └── svg-diagrams/  # SVG 다이어그램 렌더링 시스템 (26개 타입)
+│   ├── diagram/       # 프리셋 기반 구조화 다이어그램 시스템 (DiagramSpec)
 │   ├── constants/     # 교육과정 데이터, 연산 카테고리
 │   └── data/          # 정적 데이터 (업데이트 로그 등)
 ├── hooks/             # useAuth, useLearning, useGamification 등
-└── types/             # 공통 타입 정의
+├── types/             # 공통 타입 정의 (diagram.ts, mathgen.ts 등)
+└── scripts/           # DB 초기화, 시드 스크립트
 ```
 
 ## 주요 도메인
@@ -155,6 +166,85 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 - **시스템**: 업데이트 내역, 설정, 고객지원
 - **어드민** (관리자만): 선생님 관리, 사용자 관리, AI 문제 생성, 화면 미리보기
 
+### SVG 다이어그램 시스템
+
+두 가지 병렬 시스템이 존재:
+
+**1. SVG-Diagrams (26개 타입)** — `src/lib/utils/svg-diagrams/`
+- 진입점: `renderDiagram(data)` in `index.ts`
+- 공유 유틸: `svg-utils.ts` (svgWrap, line, text, katexLabel, circle, rect, arrowHead, COLORS)
+- 각 타입별 normalize 함수가 Gemini의 불규칙한 파라미터명 처리
+- **초등 (13):** number_line, fraction_circle, fraction_rect, place_value, dot_array, flow_chart, bar_chart, line_graph, picture_graph, pie_chart, band_chart, angle_figure, clock_face
+- **중등 (13):** coordinate_plane, circle, triangle, quadrilateral, function_graph, venn_diagram, regular_polygon, histogram, stem_leaf, solid_figure, net_diagram, tree_diagram, scatter_plot
+
+**2. DiagramSpec (프리셋 기반)** — `src/lib/diagram/`
+- 프리셋 기반 좌표 계산 (`preset: 'right' | 'equilateral' | 'isosceles'` 등)
+- AI가 좌표 대신 프리셋을 선택 → 정확한 도형 생성
+- 타입: triangle, circle, quadrilateral, coordinatePlane, solid, composite
+
+**편집기:** `DiagramEditorPopup.tsx` — 26개 타입 모두 GUI 편집 가능
+
+### 수학 렌더링 컴포넌트 (`src/components/math/`)
+
+| 컴포넌트 | 용도 |
+|----------|------|
+| `MathRenderer` | 읽기전용 마크다운+LaTeX+SVG 렌더링 (remark-math + rehype-katex) |
+| `EditableMathRenderer` | 수식 클릭 편집 모드 (onMathClick 콜백) |
+| `DiagramRenderer` | DiagramSpec → SVG 렌더링 |
+| `DiagramEditorPopup` | 26개 다이어그램 타입 GUI 편집기 |
+| `ProblemDisplay` | 문제 전체 표시 (보기, 풀이, 인쇄) |
+| `MathLivePopup` | MathLive 수식 입력 팝업 |
+| `InlineMathText` | 인라인 수학 표시 |
+
+### 문제(Question) 시스템
+
+**DB 모델:** Question — content(마크다운), choices(JSON), answer, explanation, diagramSpec(구조화 JSON), diagramSVG(레거시)
+
+**AI 생성 흐름:**
+1. 선생님이 학교급/단원/난이도 선택 → `POST /api/mathgen/generate`
+2. Gemini 2.5 Flash가 구조화 출력 (responseMimeType: 'application/json')
+3. 문제/보기/정답/풀이/다이어그램 JSON 반환
+4. 선생님이 검토/수정 후 DB 저장
+
+**문제 난이도:** BASIC | MEDIUM | HIGH | HIGHEST
+**문제 유형:** MULTIPLE_CHOICE | SHORT_ANSWER | ESSAY
+**영역 분류:** CALCULATION | UNDERSTANDING | PROBLEM_SOLVING | REASONING
+
+### 빈칸 생성 시스템 (`src/lib/utils/blank-generator.ts`)
+
+- `fullContent` (마크다운) + 정답 목록 → `MergedBlankExercise` 생성
+- 난이도별 태깅: `easy` (핵심 용어), `hard` (확장), `full` (통문장)
+- LaTeX 범위 보호, 불용어 스킵, 한글 조사 보존
+- 초성 힌트: `getInitials()` → ㅎㄱ, ㅅㅊ 등
+
+### 서비스 레이어 (`src/lib/services/`)
+
+| 서비스 | 용도 |
+|--------|------|
+| `arithmetic-generator/` | 62+ 카테고리 연산 문제 생성 |
+| `mathgen.ts` | Gemini AI 문제 생성 |
+| `grading.ts` | 자동 채점, XP 계산 |
+| `diagnostic.ts` | 레벨테스트 결과 분석 |
+| `assignment.ts` | 시험 배정/마감 관리 |
+| `homework.ts` | 숙제 계획 로직 |
+| `cheat-detection.ts` | 부정행위 탐지 |
+
+### 게이미피케이션
+
+**XP 보상:**
+- 개념학습(READING): 5 XP, 빈칸 쉬움(BLANK_EASY): 10 XP
+- 빈칸 어려움(BLANK_HARD): 15 XP, 통문장(BLANK_FULL): 20 XP
+
+**레벨 임계값:** Lv1=0, Lv2=100, Lv3=250, Lv4=500, Lv5=800, Lv6+=이전+400
+
+### DB 모델 요약
+
+**핵심:** User(STUDENT|TEACHER|ADMIN), Subject, Concept, BlankExercise, Question
+**시험:** Test, TestAttempt, TestAssignment, AnswerLog, LevelTestConfig
+**숙제:** ArithmeticHomeworkPlan, ConceptHomeworkPlan, QuestionHomeworkPlan (각각 Enrollment/Attempt)
+**퀴즈:** QuizSession, QuizParticipant, QuizAnswerLog
+**기타:** StudentProfile(XP/레벨), PointTransaction, DiagnosticResult, ConceptMemo
+
 ## 디자인 토큰
 
 ```css
@@ -167,14 +257,26 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 --color-stage-blank-page: #7C3AED  /* 통문장 */
 ```
 
+## 환경변수
+
+```
+DATABASE_URL=postgresql://user:password@localhost:5432/mathlab
+DIRECT_URL=postgresql://user:password@localhost:5432/mathlab
+NEXTAUTH_SECRET=your-secret-key
+NEXTAUTH_URL=http://localhost:3000
+GEMINI_API_KEY=your-gemini-api-key
+```
+
 ## 스크립트
 
 ```bash
-npm run dev          # 개발 서버 (Turbopack)
-npm run build        # 프로덕션 빌드
-npx prisma generate  # Prisma 클라이언트 재생성
-npx prisma studio    # DB 브라우저
-npm run db:seed      # 시드 데이터
+npm run dev              # 개발 서버 (Turbopack, 자동 포트 탐색)
+npm run build            # npx prisma generate && next build
+npx prisma generate      # Prisma 클라이언트 재생성
+npx prisma studio        # DB 브라우저
+npx prisma migrate dev   # DB 마이그레이션
+npm run db:seed          # 시드 데이터
+npx tsx scripts/reset-questions.ts  # 문제은행 + 관련 데이터 전체 초기화
 ```
 
 ## 코딩 컨벤션

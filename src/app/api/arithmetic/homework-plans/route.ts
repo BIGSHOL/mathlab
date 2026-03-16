@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { requireTeacher, isResponse, badRequest } from '@/lib/api';
 import { prisma } from '@/lib/db';
 import { createHomeworkPlan } from '@/lib/services/homework';
 import type { ProgressionMode, CountMode } from '@/lib/services/homework';
 
 /** POST: 숙제 플랜 생성 */
 export async function POST(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const body = await request.json();
   const { title, startDate, studentIds } = body;
@@ -23,16 +18,13 @@ export async function POST(request: NextRequest) {
   const countMode = (body.countMode === 'per_category' ? 'per_category' : 'total') as CountMode;
 
   if (!title?.trim()) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: '제목을 입력하세요' } },
-      { status: 400 }
-    );
+    return badRequest('제목을 입력하세요');
   }
 
   try {
     const plan = await createHomeworkPlan({
       title: title.trim(),
-      createdBy: currentUser.id,
+      createdBy: user.id,
       progressionMode: mode,
       countMode,
       dailyCount: Math.min(Math.max(1, body.dailyCount || 20), 100),
@@ -52,27 +44,19 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data: plan }, { status: 201 });
   } catch (err) {
-    return NextResponse.json(
-      { error: { code: 'CREATE_FAILED', message: (err as Error).message } },
-      { status: 400 }
-    );
+    return badRequest((err as Error).message);
   }
 }
 
 /** GET: 숙제 플랜 목록 */
 export async function GET() {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const where: Record<string, unknown> = {};
   // ADMIN sees all, TEACHER sees own
-  if (currentUser.role === 'TEACHER') {
-    where.createdBy = currentUser.id;
+  if (user.role === 'TEACHER') {
+    where.createdBy = user.id;
   }
 
   const plans = await prisma.arithmeticHomeworkPlan.findMany({

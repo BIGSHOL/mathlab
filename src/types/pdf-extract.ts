@@ -55,6 +55,7 @@ export interface DiagramParam {
   type: string;   // DiagramType (fraction_circle, number_line 등)
   label: string;  // 도형 설명
   params: Record<string, unknown>;  // 타입별 파라미터
+  align?: 'left' | 'center' | 'right';  // 도형 정렬 (기본: inline/left)
 }
 
 /** PDF 페이지 정보 */

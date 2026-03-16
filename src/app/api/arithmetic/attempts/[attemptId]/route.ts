@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAuth, isResponse, requireResource, forbidden } from '@/lib/api';
 import { prisma } from '@/lib/db';
 import { CATEGORY_LABELS } from '@/lib/services/arithmetic-generator';
 
@@ -8,41 +8,30 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ attemptId: string }> }
 ) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } },
-      { status: 401 }
-    );
-  }
+  const user = await requireAuth();
+  if (isResponse(user)) return user;
 
   // 학생은 본인 것만, 선생님/관리자는 모두 조회 가능
   const { attemptId } = await params;
 
-  const attempt = await prisma.arithmeticAttempt.findUnique({
-    where: { id: attemptId },
-    include: {
-      answers: {
-        orderBy: { problemIndex: 'asc' },
+  const attempt = await requireResource(
+    () => prisma.arithmeticAttempt.findUnique({
+      where: { id: attemptId },
+      include: {
+        answers: {
+          orderBy: { problemIndex: 'asc' },
+        },
+        student: {
+          select: { id: true, name: true },
+        },
       },
-      student: {
-        select: { id: true, name: true },
-      },
-    },
-  });
+    }),
+    '연습 기록을 찾을 수 없습니다'
+  );
+  if (isResponse(attempt)) return attempt;
 
-  if (!attempt) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '연습 기록을 찾을 수 없습니다' } },
-      { status: 404 }
-    );
-  }
-
-  if (currentUser.role === 'STUDENT' && attempt.studentId !== currentUser.id) {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
+  if (user.role === 'STUDENT' && attempt.studentId !== user.id) {
+    return forbidden();
   }
 
   return NextResponse.json({

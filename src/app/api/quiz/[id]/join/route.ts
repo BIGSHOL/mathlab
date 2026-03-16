@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAuth, isResponse, notFound, badRequest } from '@/lib/api';
 
 /** POST: 퀴즈 참가 */
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } },
-      { status: 401 }
-    );
-  }
+  const currentUser = await requireAuth();
+  if (isResponse(currentUser)) return currentUser;
 
   const { id } = await params;
 
@@ -23,17 +18,11 @@ export async function POST(
     session = await prisma.quizSession.findUnique({ where: { joinCode: id.toUpperCase() } });
   }
   if (!session) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '퀴즈를 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+    return notFound('퀴즈를 찾을 수 없습니다');
   }
 
   if (session.status === 'COMPLETED') {
-    return NextResponse.json(
-      { error: { code: 'QUIZ_ENDED', message: '이미 종료된 퀴즈입니다' } },
-      { status: 400 }
-    );
+    return badRequest('이미 종료된 퀴즈입니다');
   }
 
   // Check if already joined

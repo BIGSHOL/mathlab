@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { requireAuth, isResponse, badRequest } from '@/lib/api';
 
 /** Resolve concept by conceptCode or cuid id */
 async function resolveConceptId(rawId: string): Promise<string | null> {
@@ -15,19 +15,14 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } },
-      { status: 401 }
-    );
-  }
+  const user = await requireAuth();
+  if (isResponse(user)) return user;
 
   const { id: rawId } = await params;
   const conceptId = await resolveConceptId(rawId) ?? rawId;
 
   const memo = await prisma.conceptMemo.findUnique({
-    where: { userId_conceptId: { userId: currentUser.id, conceptId } },
+    where: { userId_conceptId: { userId: user.id, conceptId } },
   });
 
   return NextResponse.json({ data: memo?.content ?? '' });
@@ -38,13 +33,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } },
-      { status: 401 }
-    );
-  }
+  const user = await requireAuth();
+  if (isResponse(user)) return user;
 
   const { id: rawId } = await params;
   const conceptId = await resolveConceptId(rawId) ?? rawId;
@@ -52,16 +42,13 @@ export async function PUT(
   const { content } = body;
 
   if (typeof content !== 'string') {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: '메모 내용이 필요합니다' } },
-      { status: 400 }
-    );
+    return badRequest('메모 내용이 필요합니다');
   }
 
   const memo = await prisma.conceptMemo.upsert({
-    where: { userId_conceptId: { userId: currentUser.id, conceptId } },
+    where: { userId_conceptId: { userId: user.id, conceptId } },
     update: { content },
-    create: { userId: currentUser.id, conceptId, content },
+    create: { userId: user.id, conceptId, content },
   });
 
   return NextResponse.json({ data: { id: memo.id } });

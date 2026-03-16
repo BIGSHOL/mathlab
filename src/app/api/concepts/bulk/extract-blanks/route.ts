@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAdmin, isResponse, badRequest } from '@/lib/api';
 import { GoogleGenAI, Type } from '@google/genai';
 import { buildMergedExercise, addFullSentenceBlanks, type BlankDifficulty } from '@/lib/utils/blank-generator';
 
@@ -38,20 +38,12 @@ interface AiBlankResult {
 
 // POST /api/concepts/bulk/extract-blanks — AI 빈칸 추출
 export async function POST(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role !== 'ADMIN') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '관리자만 사용 가능합니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireAdmin();
+  if (isResponse(user)) return user;
 
   const body = (await request.json()) as ExtractRequest;
   if (!body.items || !Array.isArray(body.items) || body.items.length === 0) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: 'items 배열이 필요합니다' } },
-      { status: 400 }
-    );
+    return badRequest('items 배열이 필요합니다');
   }
 
   const ai = getClient();

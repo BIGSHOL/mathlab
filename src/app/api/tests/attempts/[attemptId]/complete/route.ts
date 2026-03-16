@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { completeAttempt } from '@/lib/services/grading';
 import { prisma } from '@/lib/db';
+import { forbidden, badRequest } from '@/lib/api';
 
 /** POST: 시험 완료 */
 export async function POST(
@@ -10,10 +11,7 @@ export async function POST(
 ) {
   const currentUser = await getCurrentUser();
   if (!currentUser || currentUser.role !== 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '학생만 시험을 완료할 수 있습니다' } },
-      { status: 403 }
-    );
+    return forbidden('학생만 시험을 완료할 수 있습니다');
   }
 
   const { attemptId } = await params;
@@ -38,9 +36,6 @@ export async function POST(
     return NextResponse.json({ data: result });
   } catch (error) {
     const message = error instanceof Error ? error.message : '시험 완료 중 오류가 발생했습니다';
-    return NextResponse.json(
-      { error: { code: 'COMPLETE_ERROR', message } },
-      { status: 400 }
-    );
+    return badRequest(message);
   }
 }

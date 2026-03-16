@@ -1,25 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireTeacher, isResponse, badRequest } from '@/lib/api';
 
 /** GET: 학생별 유형(단원/섹션)별 성취도 분석 */
 export async function GET(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
 
   const { searchParams } = new URL(request.url);
   const studentId = searchParams.get('studentId');
 
   if (!studentId) {
-    return NextResponse.json(
-      { error: { code: 'BAD_REQUEST', message: 'studentId가 필요합니다' } },
-      { status: 400 }
-    );
+    return badRequest('studentId가 필요합니다');
   }
 
   // 해당 학생의 모든 AnswerLog 조회

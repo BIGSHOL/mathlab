@@ -24,6 +24,7 @@ interface DiagramSvgItem {
 interface EditableMathRendererProps {
   content: string;
   onMathClick?: (latex: string, start: number, end: number) => void;
+  onDiagramClick?: (idx: number) => void;
   className?: string;
   diagramSvgs?: DiagramSvgItem[];
 }
@@ -72,6 +73,7 @@ function computeBlockquoteRanges(content: string): [number, number][] {
 export function EditableMathRenderer({
   content,
   onMathClick,
+  onDiagramClick,
   className = '',
   diagramSvgs,
 }: EditableMathRendererProps) {
@@ -194,7 +196,9 @@ export function EditableMathRenderer({
           return (
             <span
               key={`${keyPrefix}-svg${i}`}
-              className="diagram-svg-inline flex justify-center my-2"
+              className={`diagram-svg-inline inline-block align-middle rounded transition-all${onDiagramClick ? ' cursor-pointer hover:ring-2 hover:ring-blue-400 hover:ring-offset-1' : ''}`}
+              onClick={onDiagramClick ? (e) => { e.stopPropagation(); onDiagramClick(idx); } : undefined}
+              title={onDiagramClick ? '클릭하여 도형 편집' : undefined}
               dangerouslySetInnerHTML={{ __html: diagramSvgs![idx].svg }}
             />
           );

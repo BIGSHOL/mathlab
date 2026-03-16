@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAuth, isResponse } from '@/lib/api';
 import { getTodayQuestionHomework } from '@/lib/services/question-homework';
 
 export async function GET() {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } }, { status: 401 });
-  }
+  const user = await requireAuth();
+  if (isResponse(user)) return user;
 
-  const homework = await getTodayQuestionHomework(currentUser.id);
+  const homework = await getTodayQuestionHomework(user.id);
   return NextResponse.json({ data: homework });
 }

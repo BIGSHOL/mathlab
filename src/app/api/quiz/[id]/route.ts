@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAuth, requireTeacher, isResponse, notFound } from '@/lib/api';
 
 /** GET: 퀴즈 세션 상세 (상태 + 참가자 + 현재 문제) */
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } },
-      { status: 401 }
-    );
-  }
+  const currentUser = await requireAuth();
+  if (isResponse(currentUser)) return currentUser;
 
   const { id } = await params;
 
@@ -35,10 +30,7 @@ export async function GET(
   }
 
   if (!session) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '퀴즈를 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+    return notFound('퀴즈를 찾을 수 없습니다');
   }
 
   // Fetch current question content if active
@@ -68,13 +60,8 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 }
-    );
-  }
+  const currentUser = await requireTeacher();
+  if (isResponse(currentUser)) return currentUser;
 
   const { id: rawId } = await params;
   const body = await request.json();
@@ -86,10 +73,7 @@ export async function PATCH(
     session = await prisma.quizSession.findUnique({ where: { joinCode: rawId.toUpperCase() } });
   }
   if (!session || session.hostId !== currentUser.id) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '퀴즈를 찾을 수 없습니다' } },
-      { status: 404 }
-    );
+    return notFound('퀴즈를 찾을 수 없습니다');
   }
 
   const sessionId = session.id;

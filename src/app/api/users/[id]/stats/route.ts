@@ -1,34 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { requireTeacher, isResponse, requireResource } from '@/lib/api';
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role === 'STUDENT') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '권한이 없습니다' } },
-      { status: 403 },
-    );
-  }
+  const currentUser = await requireTeacher();
+  if (isResponse(currentUser)) return currentUser;
 
   const { id } = await params;
 
-  const user = await prisma.user.findUnique({
-    where: { id, deletedAt: null },
-    select: { id: true, role: true },
-  });
+  const targetUser = await requireResource(
+    () => prisma.user.findUnique({
+      where: { id, deletedAt: null },
+      select: { id: true, role: true },
+    }),
+    '사용자를 찾을 수 없습니다'
+  );
+  if (isResponse(targetUser)) return targetUser;
 
-  if (!user) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '사용자를 찾을 수 없습니다' } },
-      { status: 404 },
-    );
-  }
-
-  if (user.role === 'STUDENT') {
+  if (targetUser.role === 'STUDENT') {
     return NextResponse.json({ data: await getStudentStats(id) });
   }
   return NextResponse.json({ data: await getTeacherStats(id) });

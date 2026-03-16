@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAdmin, isResponse, badRequest, serverError } from '@/lib/api';
 import { GoogleGenAI } from '@google/genai';
 
 function getClient() {
@@ -19,13 +19,8 @@ viewBox: 200~400 범위. 선: #555 stroke-width="1.5". 텍스트: font-size="13"
 
 // POST /api/questions/generate-svg — 도형 이미지를 SVG로 변환
 export async function POST(request: NextRequest) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role !== 'ADMIN') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: '관리자만 사용 가능합니다' } },
-      { status: 403 }
-    );
-  }
+  const user = await requireAdmin();
+  if (isResponse(user)) return user;
 
   const body = await request.json();
   const { imageBase64, description } = body as {
@@ -34,10 +29,7 @@ export async function POST(request: NextRequest) {
   };
 
   if (!imageBase64) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: 'imageBase64가 필요합니다' } },
-      { status: 400 }
-    );
+    return badRequest('imageBase64가 필요합니다');
   }
 
   const ai = getClient();
@@ -101,9 +93,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ data: { svg: svgMatch[0] } });
   } catch (err) {
     console.error('[generate-svg] 에러:', err);
-    return NextResponse.json(
-      { error: { code: 'INTERNAL_ERROR', message: 'SVG 생성 중 오류' } },
-      { status: 500 }
-    );
+    return serverError('SVG 생성 중 오류');
   }
 }

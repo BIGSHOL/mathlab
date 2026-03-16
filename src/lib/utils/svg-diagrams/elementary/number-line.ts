@@ -1,5 +1,5 @@
 import { NumberLineParams } from '../types';
-import { svgWrap, line, text, arrowHead, circle as svgCircle, COLORS } from '../shared/svg-utils';
+import { svgWrap, line, text, arrowHead, circle as svgCircle, katexFO, fractionFO, COLORS } from '../shared/svg-utils';
 
 /** 소수를 분수 문자열로 변환 시도 (1/8 → "1/8") */
 function formatTickLabel(val: number): string {
@@ -27,16 +27,17 @@ export function renderNumberLine(params: NumberLineParams): string {
   const highlights = Array.isArray(params.highlights) ? params.highlights : [];
   const label = params.label;
 
-  const lineY = 35;
-  const tickH = 7;
-  const leftPad = 25;
-  const rightPad = 25;
+  const lineY = 40;
+  const tickH = 5;
+  const leftPad = 30;
+  const rightPad = 30;
   const tickCount = Math.min(50, Math.round(range / step));
-  const lineW = Math.min(450, Math.max(200, tickCount * 35));
-  const totalW = lineW + leftPad + rightPad;
-  // 분수 레이블이 있으면 높이 추가
+  // 분수 레이블이 있으면 간격을 더 넓혀 뭉개짐 방지
   const hasFractionLabels = !Number.isInteger(step) && step < 1;
-  const totalH = label ? (hasFractionLabels ? 90 : 80) : (hasFractionLabels ? 75 : 65);
+  const tickSpacing = hasFractionLabels ? 55 : 35;
+  const lineW = Math.max(200, tickCount * tickSpacing);
+  const totalW = lineW + leftPad + rightPad;
+  const totalH = label ? (hasFractionLabels ? 100 : 80) : (hasFractionLabels ? 85 : 65);
 
   const toX = (val: number) => leftPad + ((val - min) / range) * lineW;
   const parts: string[] = [];
@@ -47,39 +48,46 @@ export function renderNumberLine(params: NumberLineParams): string {
     const toVal = Number(hl.to) || max;
     const x1 = toX(fromVal);
     const x2 = toX(toVal);
-    const color = hl.color || COLORS.primary;
+    const color = hl.color || '#333';
     // 호(arc) 형태로 하이라이트 표시 (초등 수직선 스타일)
     const midX = (x1 + x2) / 2;
     const arcR = (x2 - x1) / 2;
     const arcH = Math.min(arcR * 0.6, 18);
-    parts.push(`<path d="M ${x1.toFixed(1)} ${lineY} Q ${midX.toFixed(1)} ${(lineY - arcH).toFixed(1)} ${x2.toFixed(1)} ${lineY}" fill="none" stroke="${color}" stroke-width="1.5" stroke-opacity="0.6"/>`);
+    const dashAttr = hl.dashed ? ' stroke-dasharray="4 3"' : '';
+    parts.push(`<path d="M ${x1.toFixed(1)} ${lineY} Q ${midX.toFixed(1)} ${(lineY - arcH).toFixed(1)} ${x2.toFixed(1)} ${lineY}" fill="none" stroke="${color}" stroke-width="1.5" stroke-opacity="0.6"${dashAttr}/>`);
     // 호 위에 레이블
     if (hl.label) {
-      parts.push(text(midX, lineY - arcH - 6, hl.label, { fontSize: 10, fill: color }));
+      parts.push(text(midX, lineY - arcH - 6, hl.label, { fontSize: 10, fill: color, fontStyle: 'italic' }));
     }
   }
 
-  // 메인 라인
-  parts.push(line(leftPad - 8, lineY, leftPad + lineW + 8, lineY, { strokeWidth: 1.8 }));
+  // 메인 라인 (교재 스타일: 굵은 선)
+  parts.push(line(leftPad - 8, lineY, leftPad + lineW + 8, lineY, { strokeWidth: 2.5 }));
   // 오른쪽 화살표
-  parts.push(arrowHead(leftPad + lineW + 8, lineY, 0, 6));
+  parts.push(arrowHead(leftPad + lineW + 8, lineY, 0, 7));
 
-  // 눈금
+  // 눈금 (교재 스타일: 얇은 선)
+  // showAllTickLabels가 false(기본)면 min/max/marks만 라벨 표시
+  const showAll = params.showAllTickLabels === true;
+  const markValues = new Set(marks.map((m) => Math.round(m.value * 10000) / 10000));
   for (let i = 0; i <= tickCount; i++) {
     const val = min + i * step;
+    const roundedVal = Math.round(val * 10000) / 10000;
     const x = toX(val);
-    // 메인 눈금
-    parts.push(line(x, lineY - tickH, x, lineY + tickH, { strokeWidth: 1.2 }));
-    // 레이블 (정수면 정수, 분수면 분수 표현 시도)
-    const labelStr = formatTickLabel(val);
-    if (labelStr.includes('/')) {
-      // 분수: 위/아래로 나누어 표시
-      const [numer, denom] = labelStr.split('/');
-      parts.push(text(x, lineY + tickH + 11, numer, { fontSize: 9 }));
-      parts.push(line(x - 5, lineY + tickH + 13, x + 5, lineY + tickH + 13, { strokeWidth: 0.8 }));
-      parts.push(text(x, lineY + tickH + 22, denom, { fontSize: 9 }));
-    } else {
-      parts.push(text(x, lineY + tickH + 13, labelStr, { fontSize: 11 }));
+    parts.push(line(x, lineY - tickH, x, lineY + tickH, { strokeWidth: 0.8 }));
+    // 라벨: 전체 표시 모드이거나, min/max이거나, marks에 포함된 값만
+    const isEndpoint = i === 0 || i === tickCount;
+    const isMarked = markValues.has(roundedVal);
+    if (showAll || isEndpoint || isMarked) {
+      const labelStr = formatTickLabel(val);
+      const foTopY = lineY + tickH + 4;
+      if (labelStr.includes('/')) {
+        const [numer, denom] = labelStr.split('/');
+        parts.push(fractionFO(x, foTopY, numer, denom, { fontSize: 14 }));
+      } else {
+        const numW = Math.max(24, labelStr.length * 10 + 8);
+        parts.push(katexFO(x, foTopY, labelStr, { w: numW, h: 24, fontSize: 14 }));
+      }
     }
   }
 
@@ -89,7 +97,10 @@ export function renderNumberLine(params: NumberLineParams): string {
     if (isNaN(val)) continue;
     const x = toX(val);
     const color = mark.color || COLORS.red;
-    parts.push(svgCircle(x, lineY, 3.5, { fill: color, stroke: 'white', strokeWidth: 1 }));
+    // showDot 기본값 true (점 표시)
+    if (mark.showDot !== false) {
+      parts.push(svgCircle(x, lineY, 3.5, { fill: color, stroke: 'white', strokeWidth: 1 }));
+    }
     if (mark.label) {
       parts.push(text(x, lineY - 14, mark.label, { fontSize: 10, fill: color, fontWeight: 'bold' }));
     }

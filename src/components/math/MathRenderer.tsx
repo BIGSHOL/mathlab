@@ -10,12 +10,14 @@ import rehypeRaw from 'rehype-raw';
 interface DiagramSvgItem {
   svg: string;
   label: string;
+  align?: 'left' | 'center' | 'right';
 }
 
 interface MathRendererProps {
   content: string;
   className?: string;
   diagramSvgs?: DiagramSvgItem[];
+  onDiagramClick?: (idx: number) => void;
 }
 
 function parseImageTitle(title: string | undefined): { width?: string; align?: string } {
@@ -35,23 +37,27 @@ function parseImageTitle(title: string | undefined): { width?: string; align?: s
   return { width, align };
 }
 
-export function MathRenderer({ content, className = '', diagramSvgs }: MathRendererProps) {
+export function MathRenderer({ content, className = '', diagramSvgs, onDiagramClick }: MathRendererProps) {
   // [그림] / [그림1] / [그림2] 플레이스홀더를 diagramSvgs의 인라인 SVG로 교체
   let svgReplacedContent = content;
   if (diagramSvgs && diagramSvgs.length > 0) {
     // SVG 교체 헬퍼: blockquote(>) 안이면 인라인, 밖이면 블록
-    const replaceSvg = (fullMatch: string, svg: string, input: string, offset: number) => {
+    let svgIdx = 0;
+    const replaceSvg = (fullMatch: string, svg: string, input: string, offset: number, idx?: number) => {
+      const dIdx = idx ?? svgIdx++;
+      const clickAttr = onDiagramClick ? ` data-diagram-idx="${dIdx}" style="cursor:pointer"` : '';
+      const align = diagramSvgs![dIdx]?.align;
+      const alignClass = align === 'center' ? ' diagram-align-center' : align === 'right' ? ' diagram-align-right' : '';
       // offset 이전의 마지막 줄이 '>'로 시작하면 blockquote 안
       const before = input.substring(0, offset);
       const lastNewline = before.lastIndexOf('\n');
       const currentLine = before.substring(lastNewline + 1);
       const inBlockquote = currentLine.trimStart().startsWith('>');
       if (inBlockquote) {
-        // blockquote 안: 인라인 span으로 (줄 끊지 않음)
-        return `<span class="diagram-svg-inline-bq">${svg}</span>`;
+        const singleLineSvg = svg.replace(/\n\s*/g, '');
+        return `<span class="diagram-svg-inline-bq${alignClass}"${clickAttr}>${singleLineSvg}</span>`;
       }
-      // 일반: 블록 div로
-      return `\n\n<div class="diagram-svg-inline">${svg}</div>\n\n`;
+      return `\n\n<div class="diagram-svg-inline${alignClass}"${clickAttr}>${svg}</div>\n\n`;
     };
 
     // [그림N] → N번째(0-indexed) SVG로 교체
@@ -60,7 +66,7 @@ export function MathRenderer({ content, className = '', diagramSvgs }: MathRende
       (match, numStr, offset, input) => {
         const idx = parseInt(numStr) - 1;
         if (idx >= 0 && idx < diagramSvgs!.length) {
-          return replaceSvg(match, diagramSvgs![idx].svg, input, offset);
+          return replaceSvg(match, diagramSvgs![idx].svg, input, offset, idx);
         }
         return match;
       }
@@ -92,7 +98,16 @@ export function MathRenderer({ content, className = '', diagramSvgs }: MathRende
   );
 
   return (
-    <div className={`prose prose-slate max-w-none prose-p:my-2 prose-headings:my-3 ${className}`}>
+    <div
+      className={`prose prose-slate max-w-none prose-p:my-2 prose-headings:my-3 ${className}`}
+      onClick={onDiagramClick ? (e) => {
+        const el = (e.target as HTMLElement).closest('[data-diagram-idx]');
+        if (el) {
+          e.stopPropagation();
+          onDiagramClick(parseInt(el.getAttribute('data-diagram-idx')!));
+        }
+      } : undefined}
+    >
       <style jsx global>{`
         /* 인라인 수식을 원자적 단위로 — 등호/답 부분이 줄 끝에서 분리되지 않도록 */
         .katex {
@@ -101,13 +116,21 @@ export function MathRenderer({ content, className = '', diagramSvgs }: MathRende
         }
         /* SVG 다이어그램 인라인 렌더링 */
         .diagram-svg-inline {
-          display: flex;
-          justify-content: center;
-          margin: 8px 0;
+          display: inline-block;
+          vertical-align: middle;
         }
         .diagram-svg-inline svg {
           max-width: 100%;
           height: auto;
+        }
+        /* 도형 정렬 */
+        .diagram-align-center {
+          display: block;
+          text-align: center;
+        }
+        .diagram-align-right {
+          display: block;
+          text-align: right;
         }
         /* blockquote 안 인라인 SVG */
         .diagram-svg-inline-bq {
