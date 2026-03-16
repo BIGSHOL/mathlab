@@ -93,3 +93,40 @@ export async function awardXp(
     },
   });
 }
+
+/** 스트릭 업데이트 (일일 미션 완료 시 호출) */
+export async function updateStreak(tx: PrismaTx, userId: string) {
+  const profile = await tx.studentProfile.findUnique({
+    where: { userId },
+    select: { currentStreak: true, longestStreak: true, lastActiveAt: true },
+  });
+  if (!profile) return;
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const lastActive = profile.lastActiveAt
+    ? new Date(profile.lastActiveAt.getFullYear(), profile.lastActiveAt.getMonth(), profile.lastActiveAt.getDate())
+    : null;
+
+  const dayDiff = lastActive ? Math.floor((today.getTime() - lastActive.getTime()) / 86400000) : 999;
+
+  if (dayDiff === 0) return; // 오늘 이미 갱신됨
+  if (dayDiff === 1) {
+    // 어제 활동 → 연속
+    const newStreak = profile.currentStreak + 1;
+    await tx.studentProfile.update({
+      where: { userId },
+      data: {
+        currentStreak: newStreak,
+        longestStreak: Math.max(profile.longestStreak, newStreak),
+        lastActiveAt: now,
+      },
+    });
+  } else {
+    // 하루 이상 빠짐 → 리셋
+    await tx.studentProfile.update({
+      where: { userId },
+      data: { currentStreak: 1, lastActiveAt: now },
+    });
+  }
+}

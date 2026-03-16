@@ -1,4 +1,4 @@
-import { Award, Star, CheckCircle, Flame, Play, BookOpen, ArrowRight, CalendarCheck } from 'lucide-react';
+import { Award, Star, CheckCircle, Flame, Play, BookOpen, ArrowRight, CalendarCheck, Zap } from 'lucide-react';
 import { StatCard } from '@/components/ui/StatCard';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Button } from '@/components/ui/Button';
@@ -10,6 +10,7 @@ import { redirect } from 'next/navigation';
 import { xpToNextLevel } from '@/lib/utils/xp';
 import { getTodayHomework } from '@/lib/services/homework';
 import { getTodayConceptHomework } from '@/lib/services/concept-homework';
+import { DashboardGamification } from '@/components/student/DashboardGamification';
 
 export default async function StudentDashboard() {
   const user = await getCurrentUser();
@@ -202,6 +203,9 @@ export default async function StudentDashboard() {
         </div>
 
         <div className="flex flex-col gap-6">
+          {/* 게이미피케이션 카드들 (일일 미션, 오늘의 한 문제, 복수전 배너) */}
+          <DashboardGamification />
+
           <Card className="p-8">
             <h2 className="text-lg font-bold text-text-primary mb-6">빠른 실행</h2>
             <div className="flex flex-col gap-3">
@@ -209,6 +213,12 @@ export default async function StudentDashboard() {
                 <Button size="md" className="w-full justify-center">
                   <Play className="w-5 h-5 mr-2" />
                   학습 시작하기
+                </Button>
+              </Link>
+              <Link href="/practice/arithmetic/time-attack">
+                <Button variant="secondary" size="md" className="w-full justify-center">
+                  <Zap className="w-5 h-5 mr-2 text-orange-500" />
+                  타임어택 도전
                 </Button>
               </Link>
               <Link href="/ranking">

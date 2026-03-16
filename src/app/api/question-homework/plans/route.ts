@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireTeacher, isResponse, badRequest } from '@/lib/api';
+import { requireTeacher, isResponse, badRequest, clamp, homeworkCreatedByFilter } from '@/lib/api';
 import { createQuestionHomeworkPlan, listQuestionHomeworkPlans } from '@/lib/services/question-homework';
 
 export async function POST(request: NextRequest) {
@@ -22,8 +22,8 @@ export async function POST(request: NextRequest) {
       createdBy: user.id,
       startDate,
       questionIds,
-      questionsPerDay: Math.min(Math.max(1, questionsPerDay || 5), 30),
-      passingScore: Math.min(Math.max(0, passingScore ?? 80), 100),
+      questionsPerDay: clamp(questionsPerDay || 5, 1, 30),
+      passingScore: clamp(passingScore ?? 80, 0, 100),
       studentIds: studentIds || [],
     });
     return NextResponse.json({ data: plan }, { status: 201 });
@@ -36,7 +36,7 @@ export async function GET() {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
 
-  const createdBy = user.role === 'TEACHER' ? user.id : undefined;
+  const createdBy = homeworkCreatedByFilter(user);
   const plans = await listQuestionHomeworkPlans(createdBy);
   return NextResponse.json({ data: plans });
 }

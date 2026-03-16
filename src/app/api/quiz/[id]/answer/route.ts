@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth, isResponse, notFound, badRequest } from '@/lib/api';
+import { requireAuth, isResponse, notFound, badRequest, clamp } from '@/lib/api';
 
 /** POST: 퀴즈 답안 제출 */
 export async function POST(
@@ -44,8 +44,10 @@ export async function POST(
     return badRequest('퀴즈에 참가하지 않았습니다');
   }
 
-  const pointsEarned = isCorrect ? 10 : 0;
-  const safeTime = Math.max(0, Math.min(Math.round(Number(body.timeSpentSeconds) || 0), 3600));
+  const safeTime = clamp(Math.round(Number(body.timeSpentSeconds) || 0), 0, 3600);
+  // 속도 기반 점수: 정답 시 100 + 시간 보너스 (최대 200), 오답 0
+  const timeBonus = Math.max(0, Math.floor((20 - safeTime) / 20 * 100));
+  const pointsEarned = isCorrect ? 100 + timeBonus : 0;
 
   // 퀴즈 답변 상세 + 점수 업데이트 (트랜잭션)
   await prisma.$transaction(async (tx) => {
@@ -74,7 +76,7 @@ export async function POST(
       await tx.quizParticipant.update({
         where: { id: participant.id },
         data: {
-          score: { increment: 10 },
+          score: { increment: pointsEarned },
           correctCount: { increment: 1 },
         },
       });
@@ -85,7 +87,9 @@ export async function POST(
     data: {
       isCorrect,
       correctAnswer: question.answer,
-      newScore: isCorrect ? participant.score + 10 : participant.score,
+      pointsEarned,
+      timeBonus: isCorrect ? timeBonus : 0,
+      newScore: participant.score + pointsEarned,
     },
   });
 }

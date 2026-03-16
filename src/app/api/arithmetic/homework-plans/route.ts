@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireTeacher, isResponse, badRequest } from '@/lib/api';
+import { requireTeacher, isResponse, badRequest, clamp, homeworkCreatedByFilter } from '@/lib/api';
 import { prisma } from '@/lib/db';
 import { createHomeworkPlan } from '@/lib/services/homework';
 import type { ProgressionMode, CountMode } from '@/lib/services/homework';
@@ -27,19 +27,19 @@ export async function POST(request: NextRequest) {
       createdBy: user.id,
       progressionMode: mode,
       countMode,
-      dailyCount: Math.min(Math.max(1, body.dailyCount || 20), 100),
+      dailyCount: clamp(body.dailyCount || 20, 1, 100),
       perCatCounts: countMode === 'per_category' && body.perCatCounts ? body.perCatCounts : undefined,
       startDate,
       studentIds: studentIds || [],
-      passingScore: Math.min(Math.max(0, body.passingScore ?? 80), 100),
+      passingScore: clamp(body.passingScore ?? 80, 0, 100),
       retryOnFail: !!body.retryOnFail,
       retryMode: ['wrong_same', 'wrong_new', 'all_same', 'all_new'].includes(body.retryMode) ? body.retryMode : 'wrong_same',
-      maxRetries: Math.min(Math.max(0, body.maxRetries ?? 3), 10),
+      maxRetries: clamp(body.maxRetries ?? 3, 0, 10),
       slots: mode === 'sequential' ? body.slots : undefined,
       categories: mode === 'round_robin' ? body.categories : undefined,
-      daysPerCategory: mode === 'round_robin' ? Math.min(Math.max(1, body.daysPerCategory || 5), 30) : undefined,
+      daysPerCategory: mode === 'round_robin' ? clamp(body.daysPerCategory || 5, 1, 30) : undefined,
       weekdayMap: mode === 'weekday' ? body.weekdayMap : undefined,
-      weeks: mode === 'weekday' ? Math.min(Math.max(1, body.weeks || 4), 52) : undefined,
+      weeks: mode === 'weekday' ? clamp(body.weeks || 4, 1, 52) : undefined,
     });
 
     return NextResponse.json({ data: plan }, { status: 201 });
@@ -53,11 +53,9 @@ export async function GET() {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
 
+  const createdBy = homeworkCreatedByFilter(user);
   const where: Record<string, unknown> = {};
-  // ADMIN sees all, TEACHER sees own
-  if (user.role === 'TEACHER') {
-    where.createdBy = user.id;
-  }
+  if (createdBy) where.createdBy = createdBy;
 
   const plans = await prisma.arithmeticHomeworkPlan.findMany({
     where,

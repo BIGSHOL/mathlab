@@ -230,6 +230,39 @@ body {
 }
 
 /* ============================================
+   Gem Stone Animations
+   ============================================ */
+
+@keyframes gem-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes gem-pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 8px var(--gem-glow), 0 0 16px var(--gem-glow);
+  }
+  50% {
+    box-shadow: 0 0 16px var(--gem-glow), 0 0 32px var(--gem-glow);
+  }
+}
+
+@keyframes gem-sparkle {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1) rotate(180deg);
+  }
+}
+
+/* ============================================
    Math Rendering
    ============================================ */
 

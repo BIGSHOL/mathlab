@@ -26,6 +26,7 @@ model User {
   name          String    @db.VarChar(50)
   role          Role      @default(STUDENT)
   grade         Int?
+  classroomId   String?
   profileImage  String?   @db.VarChar(500)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -52,8 +53,14 @@ model User {
   createdQuestionHomeworkPlans QuestionHomeworkPlan[]     @relation("QuestionHomeworkPlanCreator")
   questionHomeworkEnrollments  QuestionHomeworkEnrollment[] @relation("QuestionHomeworkEnrollments")
   questionHomeworkAttempts     QuestionHomeworkAttempt[]
+  classroom                    Classroom?                       @relation(fields: [classroomId], references: [id])
+  timeAttackRecords            TimeAttackRecord[]
+  dailyQuestionAttempts        DailyQuestionAttempt[]
+  dailyMissions                DailyMission[]
+  badges                       UserBadge[]
 
   @@index([role])
+  @@index([classroomId])
 }
 
 model Session {
@@ -230,7 +237,8 @@ model Question {
   domain      String?            @db.VarChar(30)   // CALCULATION | UNDERSTANDING | PROBLEM_SOLVING | REASONING
   conceptId   String?                              // 연결된 개념 (계통도 분석용)
 
-  concept     Concept?           @relation(fields: [conceptId], references: [id], onDelete: SetNull)
+  concept        Concept?           @relation(fields: [conceptId], references: [id], onDelete: SetNull)
+  dailyQuestions DailyQuestion[]
 
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
@@ -759,4 +767,115 @@ model QuestionGenerationLog {
 
   @@index([teacherId])
   @@index([teacherId, createdAt(sort: Desc)])
+}
+
+// FEAT: Feature Flags (Admin 토글)
+model FeatureFlag {
+  id        String   @id @default(cuid())
+  key       String   @unique @db.VarChar(50)
+  enabled   Boolean  @default(true)
+  label     String   @db.VarChar(100)
+  updatedAt DateTime @updatedAt
+}
+
+// FEAT: 연산 타임어택 최고기록
+model TimeAttackRecord {
+  id           String   @id @default(cuid())
+  studentId    String
+  category     String   @db.VarChar(30)
+  level        String   @db.VarChar(10)
+  correctCount Int
+  totalTime    Int      // 제한시간(초), 항상 30
+  createdAt    DateTime @default(now())
+
+  student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, category, level])
+  @@index([correctCount(sort: Desc)])
+}
+
+// FEAT: 오늘의 한 문제
+model DailyQuestion {
+  id         String   @id @default(cuid())
+  questionId String
+  date       DateTime @unique @db.Date
+  createdBy  String?
+  createdAt  DateTime @default(now())
+
+  question Question            @relation(fields: [questionId], references: [id])
+  attempts DailyQuestionAttempt[]
+
+  @@index([date])
+}
+
+model DailyQuestionAttempt {
+  id              String   @id @default(cuid())
+  dailyQuestionId String
+  studentId       String
+  selectedAnswer  String   @db.Text
+  isCorrect       Boolean
+  createdAt       DateTime @default(now())
+
+  dailyQuestion DailyQuestion @relation(fields: [dailyQuestionId], references: [id], onDelete: Cascade)
+  student       User          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([dailyQuestionId, studentId])
+  @@index([studentId])
+}
+
+// FEAT: 일일 미션
+model DailyMission {
+  id          String   @id @default(cuid())
+  studentId   String
+  date        DateTime @db.Date
+  missions    Json     // [{type, target, current, label, completed}]
+  allComplete Boolean  @default(false)
+  xpAwarded   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, date])
+  @@index([studentId, date])
+}
+
+// FEAT: 배지/칭호
+model Badge {
+  id          String @id @default(cuid())
+  key         String @unique @db.VarChar(50)
+  label       String @db.VarChar(50)
+  description String @db.VarChar(200)
+  icon        String @db.VarChar(30)
+  color       String @db.VarChar(20)
+  condition   Json
+  sortOrder   Int    @default(0)
+
+  users UserBadge[]
+}
+
+model UserBadge {
+  id       String   @id @default(cuid())
+  userId   String
+  badgeId  String
+  earnedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+}
+
+// FEAT: 반(교실) 관리
+model Classroom {
+  id        String   @id @default(cuid())
+  name      String   @db.VarChar(50)
+  grade     Int?
+  teacherId String?
+  createdAt DateTime @default(now())
+
+  students User[]
+
+  @@index([teacherId])
 }

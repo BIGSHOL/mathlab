@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, isResponse, notFound, badRequest } from '@/lib/api';
+import { requireAuth, isResponse, notFound, badRequest, clamp } from '@/lib/api';
 import { prisma } from '@/lib/db';
 import { getComboMultiplier } from '@/lib/services/grading';
 
@@ -59,13 +59,13 @@ export async function POST(
         selectedAnswer: String(selectedAnswer),
         correctAnswer: String(correctAnswer),
         isCorrect,
-        timeSpentSeconds: Math.max(0, Math.min(Math.round(Number(timeSpentSeconds) || 0), 3600)),
+        timeSpentSeconds: clamp(Math.round(Number(timeSpentSeconds) || 0), 0, 3600),
         comboCount: newCombo,
         pointsEarned,
       },
     });
 
-    const safeTime = Math.max(0, Math.min(Math.round(Number(timeSpentSeconds) || 0), 3600));
+    const safeTime = clamp(Math.round(Number(timeSpentSeconds) || 0), 0, 3600);
     await tx.arithmeticAttempt.update({
       where: { id: attemptId },
       data: {

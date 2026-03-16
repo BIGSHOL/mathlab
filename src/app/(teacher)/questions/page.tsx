@@ -20,6 +20,7 @@ import {
   ImageIcon,
   PanelLeftClose,
   PanelLeftOpen,
+  Shapes,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -28,8 +29,12 @@ import { MathRenderer } from '@/components/math/MathRenderer';
 import { MathLivePopup } from '@/components/math/MathLivePopup';
 import { ImageUploadPopup } from '@/components/math/ImageUploadButton';
 import { EditableMathRenderer } from '@/components/math/EditableMathRenderer';
+import { DiagramEditorPopup } from '@/components/math/DiagramEditorPopup';
+import { renderDiagram } from '@/lib/utils/svg-diagrams';
+import type { DiagramType } from '@/lib/utils/svg-diagrams/types';
 import { DIFFICULTY_LABELS, TYPE_LABELS, BOOK_LABELS, DOMAIN_LABELS, DOMAIN_COLORS } from '@/types';
 import type { QuestionDifficulty, QuestionType, LevelTestDomain } from '@/types';
+import type { DiagramParam } from '@/types/pdf-extract';
 
 // --- Constants ---
 const MIDDLE_BOOK_CODES = ['1-1', '1-2', '2-1', '2-2', '3-1', '3-2'] as const;
@@ -77,6 +82,7 @@ interface QuestionItem {
   sourceTag: string | null;
   domain: string | null;
   conceptId: string | null;
+  diagramSpec?: DiagramParam[] | null;
 }
 
 interface Meta {
@@ -152,6 +158,7 @@ export default function QuestionsPage() {
     sourceTag: '',
     domain: '' as string,
     conceptId: '' as string,
+    diagramParams: [] as DiagramParam[],
   });
   const [concepts, setConcepts] = useState<{ id: string; conceptCode: string; title: string }[]>([]);
   const [saving, setSaving] = useState(false);
@@ -178,6 +185,11 @@ export default function QuestionsPage() {
     field: 'content' | 'explanation';
   }>({ open: false, field: 'content' });
 
+  // 도형 편집기 상태
+  const [diagramEditorOpen, setDiagramEditorOpen] = useState(false);
+  const [editingDiagramIdx, setEditingDiagramIdx] = useState<number | null>(null);
+  const [diagramMode, setDiagramMode] = useState<'edit' | 'create'>('edit');
+
   // 새 문제 추가
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [createForm, setCreateForm] = useState({
@@ -192,6 +204,7 @@ export default function QuestionsPage() {
     answer: '',
     explanation: '',
     sourceTag: '',
+    diagramParams: [] as DiagramParam[],
   });
 
   // "수식" 버튼 → 커서가 $...$ 안이면 기존 수식 편집, 아니면 새 삽입
@@ -301,6 +314,59 @@ export default function QuestionsPage() {
     }
   }, [imagePopup, isCreateMode]);
 
+  // 도형 편집기 열기 (새 도형 추가)
+  const openDiagramEditor = (mode: 'edit' | 'create') => {
+    setDiagramMode(mode);
+    setEditingDiagramIdx(null);
+    setDiagramEditorOpen(true);
+  };
+
+  // 기존 도형 편집
+  const editDiagram = (idx: number, mode: 'edit' | 'create') => {
+    setDiagramMode(mode);
+    setEditingDiagramIdx(idx);
+    setDiagramEditorOpen(true);
+  };
+
+  // 도형 저장 콜백
+  const handleDiagramSave = (param: DiagramParam, _svg: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const setter = diagramMode === 'create' ? setCreateForm : setEditForm;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setter((prev: any) => {
+      const params = [...(prev.diagramParams || [])];
+      if (editingDiagramIdx !== null) {
+        params[editingDiagramIdx] = param;
+      } else {
+        params.push(param);
+      }
+      let content = prev.content as string;
+      if (editingDiagramIdx === null) {
+        const tag = `[그림${params.length}]`;
+        if (!content.includes(tag)) {
+          content = content + (content.endsWith('\n') ? '' : '\n\n') + tag;
+        }
+      }
+      return { ...prev, diagramParams: params, content };
+    });
+    setDiagramEditorOpen(false);
+  };
+
+  // 도형 삭제
+  const removeDiagram = (idx: number, mode: 'edit' | 'create') => {
+    const setter = mode === 'create' ? setCreateForm : setEditForm;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setter((prev: any) => {
+      const params = (prev.diagramParams as DiagramParam[]).filter((_: DiagramParam, i: number) => i !== idx);
+      let content = prev.content as string;
+      content = content.replace(new RegExp(`\\[그림${idx + 1}\\]\\n*`, 'g'), '');
+      for (let i = idx + 1; i <= (prev.diagramParams as DiagramParam[]).length; i++) {
+        content = content.replace(new RegExp(`\\[그림${i + 1}\\]`, 'g'), `[그림${i}]`);
+      }
+      return { ...prev, diagramParams: params, content };
+    });
+  };
+
   // 새 문제 추가
   const openCreateModal = () => {
     setIsCreateMode(true);
@@ -318,6 +384,7 @@ export default function QuestionsPage() {
       answer: '',
       explanation: '',
       sourceTag: '',
+      diagramParams: [],
     });
     setSaveSuccess(false);
   };
@@ -345,6 +412,16 @@ export default function QuestionsPage() {
       if (createForm.type === 'MULTIPLE_CHOICE') {
         const filtered = createForm.choices.filter((c) => c.trim());
         if (filtered.length >= 2) body.choices = filtered;
+      }
+      if (createForm.diagramParams?.length > 0) {
+        body.diagramSpec = createForm.diagramParams.map((dp) => ({
+          type: dp.type, label: dp.label, align: dp.align, params: dp.params,
+        }));
+        try {
+          body.diagramSVG = createForm.diagramParams
+            .map((dp) => renderDiagram({ type: dp.type as DiagramType, params: dp.params as Record<string, unknown> }) ?? '')
+            .join('\n');
+        } catch { /* ignore */ }
       }
 
       const res = await fetch('/api/questions', {
@@ -478,6 +555,7 @@ export default function QuestionsPage() {
       sourceTag: q.sourceTag || '',
       domain: q.domain || '',
       conceptId: q.conceptId || '',
+      diagramParams: (q.diagramSpec as DiagramParam[] | null) ?? [],
     });
   };
 
@@ -517,6 +595,19 @@ export default function QuestionsPage() {
       } else {
         body.choices = null;
       }
+      if (editForm.diagramParams?.length > 0) {
+        body.diagramSpec = editForm.diagramParams.map((dp) => ({
+          type: dp.type, label: dp.label, align: dp.align, params: dp.params,
+        }));
+        try {
+          body.diagramSVG = editForm.diagramParams
+            .map((dp) => renderDiagram({ type: dp.type as DiagramType, params: dp.params as Record<string, unknown> }) ?? '')
+            .join('\n');
+        } catch { /* ignore */ }
+      } else {
+        body.diagramSpec = null;
+        body.diagramSVG = null;
+      }
 
       const res = await fetch(`/api/questions/${selectedQuestion.id}`, {
         method: 'PATCH',
@@ -539,6 +630,7 @@ export default function QuestionsPage() {
           sourceTag: editForm.sourceTag || null,
           domain: editForm.domain || null,
           conceptId: editForm.conceptId || null,
+          diagramSpec: editForm.diagramParams.length > 0 ? editForm.diagramParams : null,
         };
         setTimeout(() => {
           setSelectedQuestion(updatedQ);
@@ -1269,6 +1361,15 @@ export default function QuestionsPage() {
                           <ImageIcon className="w-3.5 h-3.5" />
                           이미지
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => openDiagramEditor('edit')}
+                          className="flex items-center gap-1 px-2 py-0.5 text-xs text-violet-600 hover:bg-violet-50 rounded-sm transition-colors"
+                          title="도형 삽입"
+                        >
+                          <Shapes className="w-3.5 h-3.5" />
+                          도형
+                        </button>
                       </div>
                     </div>
                     <textarea
@@ -1437,6 +1538,45 @@ export default function QuestionsPage() {
                       </div>
                     </div>
                   )}
+
+                  {/* 도형 미리보기 */}
+                  {editForm.diagramParams && editForm.diagramParams.length > 0 && (
+                    <div className="border-t border-slate-200 pt-2 mt-2">
+                      <h4 className="text-xs font-bold text-text-secondary mb-1.5 flex items-center gap-1">
+                        <Shapes className="w-3.5 h-3.5" />
+                        도형 ({editForm.diagramParams.length}개)
+                      </h4>
+                      <div className="space-y-2">
+                        {editForm.diagramParams.map((dp, idx) => {
+                          let svg = '';
+                          try { svg = renderDiagram({ type: dp.type as DiagramType, params: dp.params as Record<string, unknown> }) ?? ''; } catch { /* ignore */ }
+                          return (
+                            <div key={idx} className="relative group border border-slate-100 rounded-sm p-2 bg-white">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-[10px] text-slate-400">[그림{idx + 1}] {dp.label}</span>
+                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <button
+                                    onClick={() => editDiagram(idx, 'edit')}
+                                    className="text-[10px] px-1.5 py-0.5 text-primary hover:bg-primary/10 rounded"
+                                  >수정</button>
+                                  <button
+                                    onClick={() => removeDiagram(idx, 'edit')}
+                                    className="text-[10px] px-1.5 py-0.5 text-red-500 hover:bg-red-50 rounded"
+                                  >삭제</button>
+                                </div>
+                              </div>
+                              {svg && (
+                                <div
+                                  className="[&_svg]:max-w-full [&_svg]:h-auto"
+                                  dangerouslySetInnerHTML={{ __html: svg }}
+                                />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1598,6 +1738,15 @@ export default function QuestionsPage() {
                         <ImageIcon className="w-3.5 h-3.5" />
                         이미지
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => openDiagramEditor('create')}
+                        className="flex items-center gap-1 px-2 py-0.5 text-xs text-violet-600 hover:bg-violet-50 rounded-sm transition-colors"
+                        title="도형 삽입"
+                      >
+                        <Shapes className="w-3.5 h-3.5" />
+                        도형
+                      </button>
                     </div>
                   </div>
                   <textarea
@@ -1735,6 +1884,45 @@ export default function QuestionsPage() {
                     </div>
                   </div>
                 )}
+
+                {/* 도형 미리보기 */}
+                {createForm.diagramParams && createForm.diagramParams.length > 0 && (
+                  <div className="border-t border-slate-200 pt-2 mt-2">
+                    <h4 className="text-xs font-bold text-text-secondary mb-1.5 flex items-center gap-1">
+                      <Shapes className="w-3.5 h-3.5" />
+                      도형 ({createForm.diagramParams.length}개)
+                    </h4>
+                    <div className="space-y-2">
+                      {createForm.diagramParams.map((dp, idx) => {
+                        let svg = '';
+                        try { svg = renderDiagram({ type: dp.type as DiagramType, params: dp.params as Record<string, unknown> }) ?? ''; } catch { /* ignore */ }
+                        return (
+                          <div key={idx} className="relative group border border-slate-100 rounded-sm p-2 bg-white">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-[10px] text-slate-400">[그림{idx + 1}] {dp.label}</span>
+                              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  onClick={() => editDiagram(idx, 'create')}
+                                  className="text-[10px] px-1.5 py-0.5 text-primary hover:bg-primary/10 rounded"
+                                >수정</button>
+                                <button
+                                  onClick={() => removeDiagram(idx, 'create')}
+                                  className="text-[10px] px-1.5 py-0.5 text-red-500 hover:bg-red-50 rounded"
+                                >삭제</button>
+                              </div>
+                            </div>
+                            {svg && (
+                              <div
+                                className="[&_svg]:max-w-full [&_svg]:h-auto"
+                                dangerouslySetInnerHTML={{ __html: svg }}
+                              />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1775,6 +1963,18 @@ export default function QuestionsPage() {
         isOpen={imagePopup.open}
         onClose={() => setImagePopup((p) => ({ ...p, open: false }))}
         onInsert={handleImageInsert}
+      />
+
+      {/* 도형 편집기 팝업 */}
+      <DiagramEditorPopup
+        isOpen={diagramEditorOpen}
+        initialParam={editingDiagramIdx !== null
+          ? (diagramMode === 'create' ? createForm : editForm).diagramParams?.[editingDiagramIdx] ?? null
+          : null
+        }
+        diagramIndex={editingDiagramIdx}
+        onClose={() => setDiagramEditorOpen(false)}
+        onSave={handleDiagramSave}
       />
     </div>
   );

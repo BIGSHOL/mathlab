@@ -14,6 +14,7 @@ export const questionQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 
+// 기본 필드 정의 — create/update/bulk 모두 이 정의를 공유
 export const createQuestionSchema = z.object({
   bookCode: z.string().min(1).max(10),
   chapter: z.string().min(1).max(200),
@@ -29,21 +30,21 @@ export const createQuestionSchema = z.object({
   sourceTag: z.string().max(100).optional(),
   domain: z.string().max(30).optional().nullable(),
   conceptId: z.string().optional().nullable(),
+  diagramSpec: z.any().optional().nullable(),
+  diagramSVG: z.string().optional().nullable(),
 });
 
-export const updateQuestionSchema = z.object({
-  chapter: z.string().min(1).max(200).optional(),
-  section: z.string().max(200).optional().nullable(),
-  difficulty: questionDifficultyEnum.optional(),
-  type: questionTypeEnum.optional(),
-  content: z.string().min(1).optional(),
-  choices: z.array(z.string()).min(2).max(5).optional().nullable(),
-  answer: z.string().min(1).optional(),
-  explanation: z.string().optional().nullable(),
-  sourceTag: z.string().max(100).optional().nullable(),
-  domain: z.string().max(30).optional().nullable(),
-  conceptId: z.string().optional().nullable(),
-});
+// update = create의 모든 필드를 optional + nullable로 파생
+export const updateQuestionSchema = createQuestionSchema
+  .omit({ bookCode: true, questionNum: true, pageNum: true })
+  .partial()
+  .extend({
+    // nullable 허용이 필요한 필드만 명시적 override
+    section: z.string().max(200).optional().nullable(),
+    choices: z.array(z.string()).min(2).max(5).optional().nullable(),
+    explanation: z.string().optional().nullable(),
+    sourceTag: z.string().max(100).optional().nullable(),
+  });
 
 export const bulkCreateQuestionsSchema = z.object({
   questions: z.array(createQuestionSchema).min(1).max(200),

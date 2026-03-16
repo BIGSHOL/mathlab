@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireTeacher, isResponse, badRequest } from '@/lib/api';
+import { requireTeacher, isResponse, badRequest, clamp, homeworkCreatedByFilter } from '@/lib/api';
 import { createConceptHomeworkPlan, listConceptHomeworkPlans } from '@/lib/services/concept-homework';
 import { Stage } from '@prisma/client';
 
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       createdBy: user.id,
       startDate,
       conceptIds,
-      conceptsPerDay: Math.min(Math.max(1, conceptsPerDay || 1), 10),
+      conceptsPerDay: clamp(conceptsPerDay || 1, 1, 10),
       requiredStage: validStages.includes(requiredStage) ? requiredStage : Stage.BLANK_FULL,
       studentIds: studentIds || [],
     });
@@ -43,7 +43,7 @@ export async function GET() {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
 
-  const createdBy = user.role === 'TEACHER' ? user.id : undefined;
+  const createdBy = homeworkCreatedByFilter(user);
   const plans = await listConceptHomeworkPlans(createdBy);
 
   return NextResponse.json({ data: plans });

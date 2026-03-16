@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { submitAnswer } from '@/lib/services/grading';
-import { forbidden, badRequest } from '@/lib/api';
+import { forbidden, badRequest, clamp } from '@/lib/api';
 
 /** POST: 답안 제출 */
 export async function POST(
@@ -26,7 +26,7 @@ export async function POST(
       attemptId,
       questionId,
       selectedAnswer: String(selectedAnswer),
-      timeSpentSeconds: Math.max(0, Math.min(Math.round(timeSpentSeconds), 3600)),
+      timeSpentSeconds: clamp(Math.round(timeSpentSeconds), 0, 3600),
       tabSwitchCount: tabSwitchCount ? Math.max(0, Number(tabSwitchCount)) : undefined,
     });
 

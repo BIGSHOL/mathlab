@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Calculator,
   Play,
@@ -216,6 +217,13 @@ export default function ArithmeticPracticePage() {
             <Play className="w-4 h-4 mr-1" />
             연습 시작
           </Button>
+
+          <Link href="/practice/arithmetic/time-attack">
+            <Button variant="secondary" className="w-full mt-3">
+              <Zap className="w-4 h-4 mr-1 text-orange-500" />
+              타임어택 (30초 도전)
+            </Button>
+          </Link>
         </Card>
       </div>
     );

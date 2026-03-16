@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { BookOpen, ChevronRight } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import GemStone from '@/components/gamification/GemStone';
+import { partToGemVariant } from '@/lib/utils/gem';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { redirect } from 'next/navigation';
@@ -83,6 +85,7 @@ export default async function SubjectsPage() {
                   return (
                     <Link key={concept.id} href={`/concepts/${concept.conceptCode ?? concept.id}`}>
                       <div className="flex items-center gap-4 p-4 rounded-sm hover:bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all group cursor-pointer">
+                        <GemStone variant={partToGemVariant(concept.part)} stage={stageIdx} size="xs" />
                         <div className="flex-1">
                           <h3 className="font-semibold text-text-primary group-hover:text-primary transition-colors">
                             {concept.title}

@@ -8,6 +8,9 @@ import { Button } from '@/components/ui/Button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { MathLivePopup } from '@/components/math/MathLivePopup';
+import GemStone from '@/components/gamification/GemStone';
+import { GemEvolutionModal } from '@/components/gamification/GemEvolutionModal';
+import { partToGemVariant } from '@/lib/utils/gem';
 import type { LearningStage } from '@/types';
 
 /** 정답이 LaTeX 수식($...$)인지 판별 */
@@ -34,6 +37,7 @@ interface ConceptData {
   id: string;
   title: string;
   fullContent: string;
+  part: string | null;
   subject: { title: string; gradeLevel: number };
 }
 
@@ -66,6 +70,7 @@ export default function ConceptPage() {
   const [memoContent, setMemoContent] = useState('');
   const memoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [adjacent, setAdjacent] = useState<{ prev: { id: string; conceptCode: string | null; title: string } | null; next: { id: string; conceptCode: string | null; title: string } | null }>({ prev: null, next: null });
+  const [gemModal, setGemModal] = useState<{ fromStage: number; toStage: number; xp: number } | null>(null);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -163,9 +168,13 @@ export default function ConceptPage() {
     setSubmitting(false);
     if (json.data) {
       showToast(`+${json.data.xpAwarded} XP 획득!`);
+      // 보석 진화 모달 표시
+      const fromStage = currentStageIdx; // 완료 전 단계 수
+      const toStage = currentStageIdx + 1; // 완료 후 단계 수
+      setGemModal({ fromStage, toStage, xp: json.data.xpAwarded ?? 0 });
       setProgress((prev) => [...prev, { stage, completed: true }]);
       if (currentStageIdx < 3) {
-        setTimeout(() => setCurrentStageIdx(currentStageIdx + 1), 1000);
+        setTimeout(() => setCurrentStageIdx(currentStageIdx + 1), 1500);
       }
     }
   };
@@ -231,6 +240,19 @@ export default function ConceptPage() {
         </div>
       )}
 
+      {/* Gem Evolution Modal */}
+      {concept && (
+        <GemEvolutionModal
+          isOpen={!!gemModal}
+          variant={partToGemVariant(concept.part)}
+          fromStage={gemModal?.fromStage ?? 0}
+          toStage={gemModal?.toStage ?? 1}
+          conceptTitle={concept.title}
+          xpEarned={gemModal?.xp ?? 0}
+          onClose={() => setGemModal(null)}
+        />
+      )}
+
       {/* Sub-header */}
       <div className="border-b border-slate-200 bg-white px-6 py-4">
         <div className="max-w-[1200px] mx-auto flex items-center justify-between">
@@ -240,6 +262,11 @@ export default function ConceptPage() {
                 <ArrowLeft className="w-5 h-5" />
               </button>
             </Link>
+            <GemStone
+              variant={partToGemVariant(concept.part)}
+              stage={progress.filter(p => p.completed).length}
+              size="sm"
+            />
             <div>
               <h1 className="text-lg font-bold text-text-primary">{concept.title}</h1>
               <p className="text-sm text-text-secondary">{concept.subject.title} &gt; {concept.title}</p>

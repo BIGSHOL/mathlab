@@ -27,6 +27,8 @@ import {
   FileSpreadsheet,
   PenLine,
   FileText,
+  ToggleRight,
+  School,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -65,6 +67,8 @@ const adminItems: MenuItem[] = [
   { label: 'PDF 문제 추출', href: '/questions/pdf-import', icon: FileText },
   { label: 'AI 문제 생성', href: '/questions/generate', icon: Sparkles, disabled: true },
   { label: '화면 미리보기', href: '/mockups', icon: Eye },
+  { label: '기능 관리', href: '/admin/features', icon: ToggleRight },
+  { label: '반 관리', href: '/admin/classrooms', icon: School },
 ];
 
 // All items for active-route collision detection

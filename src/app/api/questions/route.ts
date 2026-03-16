@@ -48,22 +48,6 @@ export async function GET(request: NextRequest) {
   const [questions, total] = await Promise.all([
     prisma.question.findMany({
       where,
-      select: {
-        id: true,
-        bookCode: true,
-        chapter: true,
-        section: true,
-        questionNum: true,
-        difficulty: true,
-        type: true,
-        content: true,
-        choices: true,
-        answer: true,
-        explanation: true,
-        sourceTag: true,
-        domain: true,
-        conceptId: true,
-      },
       orderBy: [{ bookCode: 'asc' }, { chapter: 'asc' }, { questionNum: 'asc' }],
       skip: (page - 1) * limit,
       take: limit,
