@@ -13,6 +13,7 @@ import {
   Sparkles,
   BookOpen,
   Eye,
+  ScanEye,
   ClipboardCheck,
   Shield,
   UserCog,
@@ -31,6 +32,7 @@ import {
   School,
   Search,
   GraduationCap,
+  LifeBuoy,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -59,7 +61,7 @@ const mainItems: MenuItem[] = [
 // 시스템 — 설정/지원
 const systemItems: MenuItem[] = [
   { label: '업데이트 내역', href: '/updates', icon: Newspaper },
-  { label: '도움말', href: '/help', icon: BookOpen },
+  { label: '도움말', href: '/help', icon: LifeBuoy },
   { label: '설정', href: '/settings', icon: Settings },
   { label: '고객지원', href: '/support', icon: HelpCircle },
 ];
@@ -70,7 +72,7 @@ const adminItems: MenuItem[] = [
   { label: '사용자 관리', href: '/admin/users', icon: Activity },
   { label: 'PDF 문제 추출', href: '/questions/pdf-import', icon: FileText },
   { label: 'AI 문제 생성', href: '/questions/generate', icon: Sparkles, disabled: true },
-  { label: '학생 화면 보기', href: '/student-preview', icon: Eye },
+  { label: '학생 화면 보기', href: '/student-preview', icon: ScanEye },
   { label: '화면 미리보기', href: '/mockups', icon: Eye },
   { label: '기능 관리', href: '/admin/features', icon: ToggleRight },
   { label: '반 관리', href: '/admin/classrooms', icon: School },

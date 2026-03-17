@@ -24,6 +24,7 @@ import {
   School,
   UserCog,
   Activity,
+  LifeBuoy,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -51,7 +52,7 @@ const mainCommands: CommandItem[] = [
 
 const systemCommands: CommandItem[] = [
   { id: 'updates', label: '업데이트 내역', href: '/updates', icon: Newspaper, keywords: ['update', '업데이트', '변경'], group: '시스템' },
-  { id: 'help', label: '도움말', href: '/help', icon: BookOpen, keywords: ['help', '도움말', '가이드', '사용법'], group: '시스템' },
+  { id: 'help', label: '도움말', href: '/help', icon: LifeBuoy, keywords: ['help', '도움말', '가이드', '사용법'], group: '시스템' },
   { id: 'settings', label: '설정', href: '/settings', icon: Settings, keywords: ['setting', '설정', '환경'], group: '시스템' },
   { id: 'support', label: '고객지원', href: '/support', icon: HelpCircle, keywords: ['support', '지원', '문의', '도움'], group: '시스템' },
 ];
