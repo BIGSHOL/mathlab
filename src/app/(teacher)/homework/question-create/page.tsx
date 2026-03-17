@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, FileQuestion, Search, Check, Loader2, X } from 'lucide-react';
+import { toast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
 
 interface QuestionItem {
@@ -104,8 +105,8 @@ export default function QuestionHomeworkCreatePage() {
   const bookCodes = [...new Set(allQuestions.map((q) => q.bookCode))].sort();
 
   const handleSubmit = async () => {
-    if (!title.trim()) { alert('제목을 입력하세요'); return; }
-    if (selectedQuestions.length === 0) { alert('문제를 1개 이상 선택하세요'); return; }
+    if (!title.trim()) { toast.warning('제목을 입력하세요'); return; }
+    if (selectedQuestions.length === 0) { toast.warning('문제를 1개 이상 선택하세요'); return; }
 
     setSubmitting(true);
     try {
@@ -122,8 +123,8 @@ export default function QuestionHomeworkCreatePage() {
         }),
       });
       if (res.ok) router.push('/homework');
-      else { const json = await res.json(); alert(json.error?.message ?? '생성 실패'); }
-    } catch { alert('생성 실패'); }
+      else { const json = await res.json(); toast.error(json.error?.message ?? '생성 실패'); }
+    } catch { toast.error('생성 실패'); }
     setSubmitting(false);
   };
 

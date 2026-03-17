@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from '@/components/ui/Toast';
 import {
   UserPlus,
   RotateCcw,
@@ -957,10 +958,10 @@ export default function StudentsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: '1234' }),
       });
-      if (res.ok) alert('비밀번호가 초기화되었습니다.');
-      else alert('비밀번호 초기화에 실패했습니다.');
+      if (res.ok) toast.success('비밀번호가 초기화되었습니다.');
+      else toast.error('비밀번호 초기화에 실패했습니다.');
     } catch {
-      alert('비밀번호 초기화에 실패했습니다.');
+      toast.error('비밀번호 초기화에 실패했습니다.');
     }
   };
 
@@ -970,7 +971,7 @@ export default function StudentsPage() {
     if (res.ok) {
       if (selectedUser?.id === userId) { setSelectedUser(null); setStats(null); }
       fetchUsers();
-    } else alert('삭제 실패');
+    } else toast.error('삭제 실패');
   };
 
   const handleExportCSV = () => {

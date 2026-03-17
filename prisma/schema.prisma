@@ -58,6 +58,8 @@ model User {
   dailyQuestionAttempts        DailyQuestionAttempt[]
   dailyMissions                DailyMission[]
   badges                       UserBadge[]
+  learningCourseEnrollments    LearningCourseEnrollment[] @relation("LearningCourseEnrollments")
+  createdLearningCourses       LearningCourse[]           @relation("LearningCourseCreator")
 
   @@index([role])
   @@index([classroomId])
@@ -113,7 +115,8 @@ model Concept {
   progress         LearningProgress[]
   prerequisiteFor  ConceptPrerequisite[] @relation("PrerequisiteFor")
   prerequisites    ConceptPrerequisite[] @relation("HasPrerequisite")
-  questions        Question[]
+  questions              Question[]
+  learningCourseConcepts LearningCourseConcept[]
 
   @@index([subjectId])
   @@index([subjectId, sortOrder])
@@ -878,4 +881,61 @@ model Classroom {
   students User[]
 
   @@index([teacherId])
+}
+
+// FEAT: Learning Course Assignment (학습 과정 배정)
+enum CourseStatus {
+  LOCKED
+  ACTIVE
+  COMPLETED
+}
+
+model LearningCourse {
+  id          String   @id @default(cuid())
+  seq         Int      @unique @default(autoincrement())
+  title       String   @db.VarChar(200)
+  description String?  @db.Text
+  createdBy   String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  creator     User                      @relation("LearningCourseCreator", fields: [createdBy], references: [id])
+  concepts    LearningCourseConcept[]
+  enrollments LearningCourseEnrollment[]
+
+  @@index([createdBy])
+  @@index([isActive])
+}
+
+model LearningCourseConcept {
+  id        String @id @default(cuid())
+  courseId   String
+  conceptId String
+  sortOrder Int    @default(0)
+
+  course  LearningCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  concept Concept        @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, conceptId])
+  @@index([courseId, sortOrder])
+}
+
+model LearningCourseEnrollment {
+  id          String       @id @default(cuid())
+  courseId     String
+  studentId   String
+  sortOrder   Int          @default(0)
+  status      CourseStatus @default(LOCKED)
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  course  LearningCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student User           @relation("LearningCourseEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, studentId])
+  @@index([studentId, status])
+  @@index([studentId, sortOrder])
 }

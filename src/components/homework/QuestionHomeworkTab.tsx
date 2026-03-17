@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { toast } from '@/components/ui/Toast';
 import {
   FileQuestion,
   Plus,
@@ -117,14 +118,14 @@ export default function QuestionHomeworkTab() {
     try {
       await fetch(`/api/question-homework/plans/${seq}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ isActive }) });
       fetchPlans();
-    } catch { alert('상태 변경에 실패했습니다.'); }
+    } catch { toast.error('상태 변경에 실패했습니다.'); }
   };
 
   const handleDelete = async (seq: number) => {
     if (!confirm('이 문제 숙제 플랜을 삭제하시겠습니까?')) return;
     setDeleting(String(seq));
     try { await fetch(`/api/question-homework/plans/${seq}`, { method: 'DELETE' }); if (selectedSeq === seq) setSelectedSeq(null); fetchPlans(); }
-    catch { alert('삭제 실패'); }
+    catch { toast.error('삭제 실패'); }
     setDeleting(null);
   };
 
@@ -157,7 +158,7 @@ export default function QuestionHomeworkTab() {
         body: JSON.stringify({ addStudentIds: [...pendingAdd], removeStudentIds: [...pendingRemove] }),
       });
       if (res.ok) { await fetchPlanDetail(selectedSeq); await fetchPlans(); setPendingAdd(new Set()); setPendingRemove(new Set()); setShowStudentManager(false); }
-    } catch { alert('저장 실패'); }
+    } catch { toast.error('저장 실패'); }
     setSaving(false);
   };
 

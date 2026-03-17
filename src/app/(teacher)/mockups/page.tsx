@@ -4,6 +4,7 @@ import { useState } from 'react';
 import {
   LayoutDashboard,
   Users,
+  UserPlus,
   BookOpen,
   Database,
   Sparkles,
@@ -18,6 +19,25 @@ import {
   Smartphone,
   ExternalLink,
   Eye,
+  FileText,
+  Calculator,
+  CalendarCheck,
+  Zap,
+  Swords,
+  FileQuestion,
+  Gamepad2,
+  Stethoscope,
+  Printer,
+  CheckSquare,
+  Shield,
+  ToggleLeft,
+  School,
+  ClipboardCheck,
+  Radio,
+  FileUp,
+  AlertTriangle,
+  ScrollText,
+  Layers,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 
@@ -33,20 +53,46 @@ interface PageInfo {
 }
 
 const ALL_PAGES: PageInfo[] = [
-  // Teacher pages
-  { label: '대시보드', href: '/overview', icon: LayoutDashboard, group: 'teacher', description: '선생님 대시보드 - 통계, 차트, 집중관리 학생' },
+  // ─── Teacher pages ───
+  { label: '대시보드', href: '/overview', icon: LayoutDashboard, group: 'teacher', description: '선생님 대시보드 — 통계, 차트, 집중관리 학생' },
   { label: '학생 관리', href: '/students', icon: Users, group: 'teacher', description: '학생 목록 조회, 검색, 상세 정보' },
+  { label: '학생 등록', href: '/students/enroll', icon: UserPlus, group: 'teacher', description: '신규 학생 등록, 일괄 등록' },
   { label: '개념 관리', href: '/concepts', icon: BookOpen, group: 'teacher', description: '수학 개념 CRUD, 필터, 선수 개념 관리' },
   { label: '문제 은행', href: '/questions', icon: Database, group: 'teacher', description: '문제 목록, 검색, 필터, 상세 보기' },
-  { label: 'AI 문제 생성', href: '/questions/generate', icon: Sparkles, group: 'teacher', description: 'AI 기반 문제 자동 생성' },
-  { label: '학습 분석', href: '/analytics', icon: BarChart3, group: 'teacher', description: '학부모용 리포트, 성취도 분석' },
+  { label: 'AI 문제 생성', href: '/questions/generate', icon: Sparkles, group: 'teacher', description: 'AI 기반 문제 자동 생성 (Gemini)' },
+  { label: '연산 문제', href: '/questions/arithmetic', icon: Calculator, group: 'teacher', description: '62개+ 카테고리 연산 문제 생성' },
+  { label: 'PDF 가져오기', href: '/questions/pdf-import', icon: FileUp, group: 'teacher', description: 'PDF에서 문제 일괄 가져오기' },
+  { label: '시험 관리', href: '/tests', icon: ClipboardCheck, group: 'teacher', description: '시험 목록, 배정, 결과 관리' },
+  { label: '시험 출제', href: '/tests/create', icon: FileText, group: 'teacher', description: '문제 선택 → 시험 생성' },
+  { label: '숙제 관리', href: '/homework', icon: CalendarCheck, group: 'teacher', description: '연산/개념/문제 숙제 플랜 관리' },
+  { label: '연산 숙제 생성', href: '/homework/create', icon: Calculator, group: 'teacher', description: '연산 숙제 플랜 생성' },
+  { label: '개념 숙제 생성', href: '/homework/concept-create', icon: BookOpen, group: 'teacher', description: '개념 학습 숙제 플랜 생성' },
+  { label: '문제 숙제 생성', href: '/homework/question-create', icon: FileQuestion, group: 'teacher', description: '문제 풀이 숙제 플랜 생성' },
+  { label: '레벨테스트', href: '/level-test', icon: Stethoscope, group: 'teacher', description: '진단 테스트 목록, 생성, 결과' },
+  { label: '레벨테스트 생성', href: '/level-test/create', icon: Stethoscope, group: 'teacher', description: '새 레벨테스트 생성' },
+  { label: '진단 결과', href: '/diagnostics', icon: AlertTriangle, group: 'teacher', description: '학생별 진단 결과 조회' },
+  { label: '학습 분석', href: '/analytics', icon: BarChart3, group: 'teacher', description: '학부모용 리포트, 성취도 분석, 캘린더' },
+  { label: '수동 채점', href: '/manual-grading', icon: CheckSquare, group: 'teacher', description: '서술형 답안 수동 채점' },
+  { label: '실시간 퀴즈', href: '/quiz', icon: Radio, group: 'teacher', description: '실시간 퀴즈 세션 관리' },
+  { label: '학습지 생성', href: '/worksheet/create', icon: Printer, group: 'teacher', description: '인쇄용 학습지 생성' },
+  { label: '리포트', href: '/reports', icon: ScrollText, group: 'teacher', description: '업데이트 내역, 시스템 공지' },
   { label: '설정', href: '/settings', icon: Settings, group: 'teacher', description: '프로필, 알림, 보안 설정' },
   { label: '고객지원', href: '/support', icon: HelpCircle, group: 'teacher', description: 'FAQ, 문의하기' },
-  // Student pages
-  { label: '학생 대시보드', href: '/dashboard', previewHref: '/mockup/student-dashboard.html', icon: GraduationCap, group: 'student', description: '레벨, XP, 진행 중인 학습' },
+  // ─── Admin pages ───
+  { label: '사용자 관리', href: '/admin/users', icon: Shield, group: 'teacher', description: '[관리자] 전체 사용자 관리' },
+  { label: '기능 토글', href: '/admin/features', icon: ToggleLeft, group: 'teacher', description: '[관리자] 기능 플래그 관리' },
+  { label: '반 관리', href: '/admin/classrooms', icon: School, group: 'teacher', description: '[관리자] 반/학급 관리' },
+  { label: '다이어그램 미리보기', href: '/mockups/diagrams', icon: Layers, group: 'teacher', description: '[관리자] 26개 SVG 다이어그램 타입 미리보기' },
+  // ─── Student pages ───
+  { label: '학생 대시보드', href: '/dashboard', previewHref: '/mockup/student-dashboard.html', icon: GraduationCap, group: 'student', description: '레벨, XP, 숙제 배너, 진행 중인 학습' },
   { label: '단원 목록', href: '/subjects', icon: BookOpen, group: 'student', description: '학년별 과목/개념 목록, 진행도' },
   { label: '개념 학습', href: '/concepts/[id]', previewHref: '/mockup/concept-learning.html', icon: PenTool, group: 'student', description: '4단계 학습 (읽기→빈칸→백지쓰기)' },
-  { label: '문제 풀이', href: '/solve', previewHref: '/mockup/solve.html', icon: PenTool, group: 'student', description: '시험형 문제 풀이, 수학 키보드' },
+  { label: '내 시험', href: '/my-tests', icon: ClipboardCheck, group: 'student', description: '배정된 시험 목록, 응시, 결과' },
+  { label: '연산 연습', href: '/practice/arithmetic', icon: Calculator, group: 'student', description: '카테고리별 연산 문제 풀기' },
+  { label: '연산 숙제', href: '/practice/arithmetic/homework', icon: CalendarCheck, group: 'student', description: '오늘의 연산 숙제 풀기' },
+  { label: '타임어택', href: '/practice/arithmetic/time-attack', icon: Zap, group: 'student', description: '시간 제한 연산 도전' },
+  { label: '복수전', href: '/practice/revenge', icon: Swords, group: 'student', description: '틀린 문제 다시 풀기' },
+  { label: '퀴즈 참여', href: '/quiz-join', icon: Gamepad2, group: 'student', description: '실시간 퀴즈 참여 (PIN 입력)' },
   { label: '랭킹', href: '/ranking', icon: Trophy, group: 'student', description: 'XP 기반 학생 랭킹' },
   { label: '프로필', href: '/profile', icon: User, group: 'student', description: '개인 정보, 학습 이력' },
 ];
@@ -62,9 +108,9 @@ export default function MockupsPage() {
   const [previewPage, setPreviewPage] = useState<PageInfo | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('desktop');
 
-  const filteredPages = activeGroup === 'all' ? ALL_PAGES : ALL_PAGES.filter((p) => p.group === activeGroup);
   const teacherPages = ALL_PAGES.filter((p) => p.group === 'teacher');
   const studentPages = ALL_PAGES.filter((p) => p.group === 'student');
+  const filteredPages = activeGroup === 'all' ? ALL_PAGES : activeGroup === 'teacher' ? teacherPages : studentPages;
 
   return (
     <div className="flex-1 p-6 md:p-10 max-w-[1600px] mx-auto w-full">

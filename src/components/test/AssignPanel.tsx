@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Search, Check, Users, X, Loader2 } from 'lucide-react';
+import { toast } from '@/components/ui/Toast';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 
@@ -88,10 +89,10 @@ export function AssignPanel({ testId, testGrade, onClose, onAssigned }: AssignPa
         onClose();
       } else {
         const err = await res.json();
-        alert(err.error?.message || '배정 실패');
+        toast.error(err.error?.message || '배정 실패');
       }
     } catch {
-      alert('배정 중 오류 발생');
+      toast.error('배정 중 오류 발생');
     }
     setSaving(false);
   };

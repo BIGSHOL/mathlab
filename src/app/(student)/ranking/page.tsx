@@ -2,6 +2,7 @@ import { Crown, Medal, Star } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { getCurrentUser } from '@/lib/auth';
+import { getViewAsUser } from '@/lib/view-as';
 import { prisma } from '@/lib/db';
 import { redirect } from 'next/navigation';
 
@@ -19,9 +20,14 @@ const rankIcon = (rank: number) => {
   return <span className="text-text-secondary font-bold">{rank}</span>;
 };
 
-export default async function RankingPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+export default async function RankingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ _as?: string }>;
+}) {
+  const realUser = await getCurrentUser();
+  if (!realUser) redirect('/login');
+  const user = await getViewAsUser(await searchParams) ?? realUser;
 
   const profiles = await prisma.studentProfile.findMany({
     orderBy: { totalXp: 'desc' },

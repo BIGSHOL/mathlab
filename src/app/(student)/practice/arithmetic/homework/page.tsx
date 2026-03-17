@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { toast } from '@/components/ui/Toast';
 import {
   CalendarCheck,
   Play,
@@ -119,10 +120,10 @@ export default function HomeworkPracticePage() {
         setElapsed(0);
       } else {
         const json = await res.json();
-        alert(json.error?.message || '시작 실패');
+        toast.error(json.error?.message || '시작 실패');
       }
     } catch {
-      alert('시작 실패');
+      toast.error('시작 실패');
     }
     setLoading(false);
   };

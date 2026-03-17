@@ -1,13 +1,7 @@
 import type { Metadata } from 'next';
-import { Lexend, Noto_Serif_KR } from 'next/font/google';
+import { Noto_Serif_KR } from 'next/font/google';
 import { SessionProvider } from '@/components/providers/SessionProvider';
 import './globals.css';
-
-const lexend = Lexend({
-  subsets: ['latin'],
-  variable: '--font-lexend',
-  display: 'swap',
-});
 
 const notoSerifKR = Noto_Serif_KR({
   subsets: ['latin'],
@@ -27,15 +21,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
+    <html lang="ko" suppressHydrationWarning>
       <head>
         <link
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
           crossOrigin="anonymous"
         />
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
+          crossOrigin="anonymous"
+        />
       </head>
-      <body className={`${lexend.variable} ${notoSerifKR.variable} font-[family-name:var(--font-lexend)] antialiased overflow-hidden`}>
+      <body className={`${notoSerifKR.variable} antialiased overflow-hidden`}>
         <SessionProvider>{children}</SessionProvider>
       </body>
     </html>

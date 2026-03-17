@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from '@/components/ui/Toast';
 import {
   ArrowLeft,
   Search,
@@ -87,8 +88,8 @@ export default function CreateTestPage() {
   };
 
   const handleSubmit = async () => {
-    if (!title.trim()) return alert('시험 제목을 입력하세요');
-    if (selectedIds.length === 0) return alert('문제를 1개 이상 선택하세요');
+    if (!title.trim()) { toast.warning('시험 제목을 입력하세요'); return; }
+    if (selectedIds.length === 0) { toast.warning('문제를 1개 이상 선택하세요'); return; }
 
     setSaving(true);
     try {
@@ -103,14 +104,14 @@ export default function CreateTestPage() {
       });
       router.push('/tests');
     } catch {
-      alert('시험 생성 실패');
+      toast.error('시험 생성 실패');
     }
     setSaving(false);
   };
 
   const handleGenerateVariants = async () => {
-    if (!title.trim()) return alert('시험 제목을 입력하세요');
-    if (selectedIds.length === 0) return alert('문제를 1개 이상 선택하세요');
+    if (!title.trim()) { toast.warning('시험 제목을 입력하세요'); return; }
+    if (selectedIds.length === 0) { toast.warning('문제를 1개 이상 선택하세요'); return; }
 
     setGeneratingVariants(true);
     try {
@@ -130,14 +131,14 @@ export default function CreateTestPage() {
       });
       if (res.ok) {
         const json = await res.json();
-        alert(`변형 시험지 ${json.data.length}개가 생성되었습니다!`);
+        toast.success(`변형 시험지 ${json.data.length}개가 생성되었습니다!`);
         router.push('/tests');
       } else {
         const json = await res.json();
-        alert(json.error?.message || '변형 시험지 생성 실패');
+        toast.error(json.error?.message || '변형 시험지 생성 실패');
       }
     } catch {
-      alert('변형 시험지 생성 실패');
+      toast.error('변형 시험지 생성 실패');
     }
     setGeneratingVariants(false);
   };

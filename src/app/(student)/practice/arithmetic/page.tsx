@@ -11,6 +11,7 @@ import {
   RotateCcw,
   Zap,
   Star,
+  ChevronDown,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -26,8 +27,59 @@ import type {
   GeneratedProblem,
 } from '@/lib/services/arithmetic-generator';
 
-const CATEGORIES = Array.from(IMPLEMENTED_CATEGORIES);
 const LEVELS: ArithmeticLevel[] = ['easy', 'medium', 'hard'];
+
+/* ── 학년별 카테고리 그룹 ── */
+interface GradeGroup {
+  grade: string;
+  label: string;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  categories: ArithmeticCategory[];
+}
+
+const GRADE_GROUPS: GradeGroup[] = [
+  {
+    grade: 'e1', label: '초1', color: 'text-emerald-700', bgColor: 'bg-emerald-50', borderColor: 'border-emerald-200',
+    categories: ['add_1digit', 'sub_1digit'],
+  },
+  {
+    grade: 'e2', label: '초2', color: 'text-emerald-700', bgColor: 'bg-emerald-50', borderColor: 'border-emerald-200',
+    categories: ['add_2digit', 'sub_2digit', 'mul_table', 'unit_convert'],
+  },
+  {
+    grade: 'e3', label: '초3', color: 'text-emerald-700', bgColor: 'bg-emerald-50', borderColor: 'border-emerald-200',
+    categories: ['add_3digit', 'sub_3digit', 'mul_2x1', 'div_basic', 'div_remainder', 'time_calc'],
+  },
+  {
+    grade: 'e4', label: '초4', color: 'text-teal-700', bgColor: 'bg-teal-50', borderColor: 'border-teal-200',
+    categories: ['mul_large', 'div_large', 'frac_add_same', 'frac_sub_same', 'dec_add', 'dec_sub', 'angle_calc', 'sequence_pattern'],
+  },
+  {
+    grade: 'e5', label: '초5', color: 'text-teal-700', bgColor: 'bg-teal-50', borderColor: 'border-teal-200',
+    categories: ['mixed_calc', 'frac_add_diff', 'frac_sub_diff', 'frac_mul', 'dec_mul', 'gcd_lcm', 'avg_calc', 'area_calc'],
+  },
+  {
+    grade: 'e6', label: '초6', color: 'text-teal-700', bgColor: 'bg-teal-50', borderColor: 'border-teal-200',
+    categories: ['frac_div', 'dec_div', 'ratio_calc', 'percent_calc', 'circle_area', 'frac_all', 'dec_all'],
+  },
+  {
+    grade: 'm1', label: '중1', color: 'text-blue-700', bgColor: 'bg-blue-50', borderColor: 'border-blue-200',
+    categories: ['int_add', 'int_sub', 'int_mul', 'int_div', 'int_all', 'abs_basic', 'abs_add', 'abs_sub', 'abs_mul', 'abs_mixed', 'abs_all', 'pf_exponent', 'pf_find', 'pf_value', 'pf_all', 'proportion', 'quadrant'],
+  },
+  {
+    grade: 'm2', label: '중2', color: 'text-indigo-700', bgColor: 'bg-indigo-50', borderColor: 'border-indigo-200',
+    categories: ['exp_calc', 'exp_law', 'mono_mul', 'mono_div', 'poly_add', 'poly_sub', 'linear_eq', 'pythagoras', 'similarity', 'poly_all'],
+  },
+  {
+    grade: 'm3', label: '중3', color: 'text-violet-700', bgColor: 'bg-violet-50', borderColor: 'border-violet-200',
+    categories: ['poly_mul', 'mul_formula', 'factoring', 'sqrt_simplify', 'sqrt_add', 'sqrt_mul', 'sqrt_rationalize', 'sqrt_all', 'discriminant', 'trig_value', 'trig_calc', 'inscribed_angle', 'median_calc', 'mode_calc', 'deviation_sum', 'variance_calc'],
+  },
+].map((g) => ({
+  ...g,
+  categories: g.categories.filter((c) => IMPLEMENTED_CATEGORIES.has(c as ArithmeticCategory)) as ArithmeticCategory[],
+}));
 
 export default function ArithmeticPracticePage() {
   const [category, setCategory] = useState<ArithmeticCategory>('add_1digit');
@@ -47,6 +99,7 @@ export default function ArithmeticPracticePage() {
   const [leveledUp, setLeveledUp] = useState(false);
   const startRef = useRef(Date.now());
   const questionStartRef = useRef(Date.now());
+  const [expandedGrade, setExpandedGrade] = useState<string | null>('e1');
 
   // Timer
   useEffect(() => {
@@ -146,85 +199,155 @@ export default function ArithmeticPracticePage() {
   const current = problems[currentIndex];
   const accuracy = problems.length > 0 ? Math.round((score / problems.length) * 100) : 0;
 
+  // 현재 선택된 카테고리가 속한 그룹 찾기
+  const selectedGroup = GRADE_GROUPS.find((g) => g.categories.includes(category));
+
   // Setup screen
   if (problems.length === 0) {
     return (
-      <div className="p-6 max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold text-text-primary flex items-center gap-2 mb-6">
+      <div className="px-4 md:px-10 py-8 max-w-[900px] mx-auto w-full">
+        <h1 className="text-2xl font-bold text-text-primary flex items-center gap-2 mb-2">
           <Calculator className="w-6 h-6 text-primary" />
           연산 연습
         </h1>
+        <p className="text-text-secondary text-sm mb-6">학년별 연산 유형을 선택하고 연습을 시작하세요.</p>
 
-        <Card className="p-6 space-y-5">
-          <div>
-            <label className="text-sm font-semibold text-text-secondary block mb-2">연산 유형</label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {CATEGORIES.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setCategory(c)}
-                  className={`px-3 py-2 rounded-sm text-sm font-medium transition-colors ${
-                    category === c
-                      ? 'bg-primary text-white'
-                      : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
-                  }`}
-                >
-                  {CATEGORY_LABELS[c]}
-                </button>
-              ))}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* 좌측: 연산 유형 선택 */}
+          <div className="flex-1 min-w-0">
+            <label className="text-sm font-bold text-text-primary block mb-3">연산 유형</label>
+            <div className="space-y-2">
+              {GRADE_GROUPS.map((group) => {
+                const isExpanded = expandedGrade === group.grade;
+                const hasSelected = group.categories.includes(category);
+                return (
+                  <div key={group.grade} className={`border rounded-lg overflow-hidden transition-colors ${
+                    hasSelected && !isExpanded ? group.borderColor : 'border-slate-200'
+                  }`}>
+                    {/* 학년 헤더 */}
+                    <button
+                      onClick={() => setExpandedGrade(isExpanded ? null : group.grade)}
+                      className={`w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors ${
+                        isExpanded ? `${group.bgColor}` : hasSelected ? `${group.bgColor}` : 'bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className={`text-xs font-black px-2 py-0.5 rounded ${group.bgColor} ${group.color}`}>
+                          {group.label}
+                        </span>
+                        <span className="text-sm text-text-secondary">
+                          {group.categories.length}개 유형
+                        </span>
+                        {hasSelected && !isExpanded && (
+                          <span className={`text-xs font-medium ${group.color}`}>
+                            · {CATEGORY_LABELS[category]}
+                          </span>
+                        )}
+                      </div>
+                      <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                    </button>
+                    {/* 카테고리 목록 */}
+                    {isExpanded && (
+                      <div className="px-3 py-3 bg-white border-t border-slate-100">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                          {group.categories.map((c) => {
+                            const isActive = category === c;
+                            const label = CATEGORY_LABELS[c];
+                            const isStar = label.startsWith('★');
+                            return (
+                              <button
+                                key={c}
+                                onClick={() => setCategory(c)}
+                                className={`px-3 py-2 rounded-md text-[13px] font-medium transition-all text-left ${
+                                  isActive
+                                    ? 'bg-primary text-white shadow-sm'
+                                    : isStar
+                                      ? `${group.bgColor} ${group.color} hover:opacity-80 font-bold`
+                                      : 'bg-slate-50 text-text-secondary hover:bg-slate-100'
+                                }`}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          <div>
-            <label className="text-sm font-semibold text-text-secondary block mb-2">난이도</label>
-            <div className="flex gap-2">
-              {LEVELS.map((l) => (
-                <button
-                  key={l}
-                  onClick={() => setLevel(l)}
-                  className={`flex-1 px-3 py-2 rounded-sm text-sm font-medium transition-colors ${
-                    level === l
-                      ? 'bg-primary text-white'
-                      : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
-                  }`}
-                >
-                  {LEVEL_LABELS[l]}
-                </button>
-              ))}
+          {/* 우측: 설정 + 시작 */}
+          <div className="lg:w-64 shrink-0">
+            <div className="lg:sticky lg:top-20 space-y-5">
+              {/* 선택된 유형 표시 */}
+              <Card className="p-4">
+                <p className="text-xs font-bold text-text-secondary mb-2">선택된 유형</p>
+                <div className={`flex items-center gap-2 px-3 py-2 rounded-md ${selectedGroup?.bgColor ?? 'bg-slate-50'}`}>
+                  <span className={`text-xs font-black ${selectedGroup?.color ?? 'text-slate-600'}`}>
+                    {selectedGroup?.label}
+                  </span>
+                  <span className="text-sm font-bold text-text-primary">{CATEGORY_LABELS[category]}</span>
+                </div>
+              </Card>
+
+              {/* 난이도 */}
+              <div>
+                <label className="text-sm font-bold text-text-primary block mb-2">난이도</label>
+                <div className="flex gap-1.5">
+                  {LEVELS.map((l) => (
+                    <button
+                      key={l}
+                      onClick={() => setLevel(l)}
+                      className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        level === l
+                          ? 'bg-primary text-white'
+                          : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
+                      }`}
+                    >
+                      {LEVEL_LABELS[l]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 문제 수 */}
+              <div>
+                <label className="text-sm font-bold text-text-primary block mb-2">문제 수</label>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[10, 20, 30, 50].map((n) => (
+                    <button
+                      key={n}
+                      onClick={() => setCount(n)}
+                      className={`px-2 py-2 rounded-md text-sm font-medium transition-colors ${
+                        count === n
+                          ? 'bg-primary text-white'
+                          : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 시작 버튼 */}
+              <Button className="w-full" onClick={handleStart} loading={loading}>
+                <Play className="w-4 h-4 mr-1" />
+                연습 시작
+              </Button>
+
+              <Link href="/practice/arithmetic/time-attack">
+                <Button variant="secondary" className="w-full mt-2">
+                  <Zap className="w-4 h-4 mr-1 text-orange-500" />
+                  타임어택 모드
+                </Button>
+              </Link>
             </div>
           </div>
-
-          <div>
-            <label className="text-sm font-semibold text-text-secondary block mb-2">문제 수</label>
-            <div className="flex gap-2">
-              {[10, 20, 30, 50].map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setCount(n)}
-                  className={`flex-1 px-3 py-2 rounded-sm text-sm font-medium transition-colors ${
-                    count === n
-                      ? 'bg-primary text-white'
-                      : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
-                  }`}
-                >
-                  {n}문제
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <Button className="w-full" onClick={handleStart} loading={loading}>
-            <Play className="w-4 h-4 mr-1" />
-            연습 시작
-          </Button>
-
-          <Link href="/practice/arithmetic/time-attack">
-            <Button variant="secondary" className="w-full mt-3">
-              <Zap className="w-4 h-4 mr-1 text-orange-500" />
-              타임어택 (30초 도전)
-            </Button>
-          </Link>
-        </Card>
+        </div>
       </div>
     );
   }

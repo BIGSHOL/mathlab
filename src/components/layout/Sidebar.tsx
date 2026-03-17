@@ -29,6 +29,8 @@ import {
   FileText,
   ToggleRight,
   School,
+  Search,
+  GraduationCap,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -44,6 +46,7 @@ const mainItems: MenuItem[] = [
   { label: '대시보드', href: '/overview', icon: LayoutDashboard },
   { label: '학생 관리', href: '/students', icon: Users },
   { label: '개념 관리', href: '/concepts', icon: BookOpen },
+  { label: '학습 과정', href: '/courses', icon: GraduationCap },
   { label: '문제 은행', href: '/questions', icon: Database },
   { label: '연산 생성기', href: '/questions/arithmetic', icon: Calculator },
   { label: '숙제 관리', href: '/homework', icon: CalendarCheck },
@@ -56,6 +59,7 @@ const mainItems: MenuItem[] = [
 // 시스템 — 설정/지원
 const systemItems: MenuItem[] = [
   { label: '업데이트 내역', href: '/updates', icon: Newspaper },
+  { label: '도움말', href: '/help', icon: BookOpen },
   { label: '설정', href: '/settings', icon: Settings },
   { label: '고객지원', href: '/support', icon: HelpCircle },
 ];
@@ -66,6 +70,7 @@ const adminItems: MenuItem[] = [
   { label: '사용자 관리', href: '/admin/users', icon: Activity },
   { label: 'PDF 문제 추출', href: '/questions/pdf-import', icon: FileText },
   { label: 'AI 문제 생성', href: '/questions/generate', icon: Sparkles, disabled: true },
+  { label: '학생 화면 보기', href: '/student-preview', icon: Eye },
   { label: '화면 미리보기', href: '/mockups', icon: Eye },
   { label: '기능 관리', href: '/admin/features', icon: ToggleRight },
   { label: '반 관리', href: '/admin/classrooms', icon: School },
@@ -166,6 +171,23 @@ export function Sidebar() {
         </div>
       )}
 
+      {/* 검색 버튼 — Ctrl+K */}
+      <div className="px-2 pt-3 shrink-0">
+        <button
+          onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }))}
+          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors text-xs ${collapsed ? 'justify-center' : ''}`}
+          title="검색 (Ctrl+K)"
+        >
+          <Search className="w-3.5 h-3.5 shrink-0" />
+          {!collapsed && (
+            <>
+              <span className="flex-1 text-left">검색...</span>
+              <kbd className="px-1 py-0.5 rounded bg-white border border-slate-200 text-[10px] font-mono text-slate-400">⌘K</kbd>
+            </>
+          )}
+        </button>
+      </div>
+
       {/* Menu */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar px-2 pt-3">
         {/* 메인 메뉴 */}
@@ -210,7 +232,7 @@ export function Sidebar() {
               {user?.name?.[0] ?? '?'}
             </div>
             <div className="flex items-center gap-0.5">
-              <button className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors" title="알림">
+              <button className="p-1 rounded text-slate-300 cursor-not-allowed opacity-50" title="알림 — 준비 중">
                 <Bell className="w-3.5 h-3.5" />
               </button>
               <button onClick={() => logout?.()} className="p-1 rounded text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors" title="로그아웃">
@@ -228,7 +250,7 @@ export function Sidebar() {
               <p className="text-[10px] text-text-secondary truncate">{isAdmin ? '관리자' : '선생님'}</p>
             </div>
             <div className="flex items-center gap-0.5 shrink-0">
-              <button className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors" title="알림">
+              <button className="p-1 rounded text-slate-300 cursor-not-allowed opacity-50" title="알림 — 준비 중">
                 <Bell className="w-3.5 h-3.5" />
               </button>
               <button onClick={() => logout?.()} className="p-1 rounded text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors" title="로그아웃">

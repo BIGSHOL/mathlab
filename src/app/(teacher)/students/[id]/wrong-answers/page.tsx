@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from '@/components/ui/Toast';
 import {
   ArrowLeft,
   Loader2,
@@ -146,11 +147,11 @@ export default function WrongAnswersPage() {
       });
       if (res.ok) {
         const json = await res.json();
-        alert(`오답 기반 시험이 생성되었습니다! (${questionIds.length}문제)`);
+        toast.success(`오답 기반 시험이 생성되었습니다! (${questionIds.length}문제)`);
         window.location.href = `/tests/${json.data.seq}/results`;
       }
     } catch {
-      alert('시험 생성에 실패했습니다');
+      toast.error('시험 생성에 실패했습니다');
     }
   };
 

@@ -1,18 +1,31 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from '@/components/ui/Toast';
 import {
   FileText,
   Send,
   Loader2,
   CheckCircle2,
-  Clock,
   Search,
   Users,
   PanelLeftClose,
   PanelLeftOpen,
+  Printer,
+  Target,
+  BookOpen,
+  Calculator,
+  Sparkles,
+  Calendar,
+  TrendingUp,
+  GraduationCap,
+  CheckCircle,
+  Clock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+
+// ── Types ──
 
 interface Student {
   id: string;
@@ -21,23 +34,64 @@ interface Student {
   profile: { totalXp: number; level: number } | null;
 }
 
+interface ReportSummary {
+  testsCompleted: number;
+  totalAnswers: number;
+  correctAnswers: number;
+  accuracy: number;
+  arithmeticSolved: number;
+  arithmeticAccuracy: number;
+  conceptsStudied: number;
+  conceptsCompleted: number;
+  xpEarned: number;
+  activeDays: number;
+}
+
+interface CourseProgress {
+  activeCourse: {
+    title: string;
+    completedConcepts: number;
+    totalConcepts: number;
+    progressPercent: number;
+  } | null;
+  completedCourses: number;
+  upcomingCourses: number;
+}
+
 interface ReportContent {
   studentName: string;
   grade: number | null;
   level: number;
   totalXp: number;
   period: string;
-  testsCompleted: number;
-  accuracy: number;
-  totalAnswers: number;
-  recentTests: { title: string; score: number; maxScore: number; completedAt: string | null }[];
+  reportType: string;
+  summary: ReportSummary;
+  courseProgress: CourseProgress | null;
+  recentTests: { title: string; score: number; maxScore: number; accuracy: number; completedAt: string | null }[];
+  chapterAchievement: { chapter: string; accuracy: number; total: number }[];
+  strengths: string[];
+  weaknesses: string[];
+  arithmeticSummary: { category: string; accuracy: number; count: number }[];
+  learningProgress: { conceptTitle: string; stage: string; completed: boolean }[];
+  activityDays?: { date: string; total: number }[];
 }
 
+// ── Constants ──
+
 const REPORT_TYPES = [
+  { value: 'DAILY', label: '일간' },
   { value: 'WEEKLY', label: '주간' },
   { value: 'MONTHLY', label: '월간' },
-  { value: 'TEST_RESULT', label: '시험결과' },
 ];
+
+const ARITHMETIC_LABELS: Record<string, string> = {
+  add_1digit: '한자리 덧셈', add_2digit: '두자리 덧셈', sub_1digit: '한자리 뺄셈',
+  sub_2digit: '두자리 뺄셈', mul_1digit: '한자리 곱셈', mul_2x1digit: '두×한자리 곱셈',
+  div_1digit: '한자리 나눗셈', frac_add_same: '동분모 덧셈', frac_sub_same: '동분모 뺄셈',
+  dec_add: '소수 덧셈', dec_sub: '소수 뺄셈',
+};
+
+// ── Helpers ──
 
 function formatGrade(grade: number | null): string {
   if (!grade) return '';
@@ -54,6 +108,44 @@ function formatGradeShort(grade: number | null): string {
 function getInitial(name: string): string {
   return name.charAt(0);
 }
+
+function accuracyColor(acc: number): string {
+  if (acc >= 80) return 'text-emerald-600';
+  if (acc >= 60) return 'text-amber-600';
+  return 'text-red-600';
+}
+
+function accuracyBg(acc: number): string {
+  if (acc >= 80) return 'bg-emerald-100 text-emerald-700';
+  if (acc >= 60) return 'bg-amber-100 text-amber-700';
+  return 'bg-red-100 text-red-700';
+}
+
+function accuracyBarColor(acc: number): string {
+  if (acc >= 80) return 'bg-emerald-400';
+  if (acc >= 60) return 'bg-amber-400';
+  return 'bg-red-400';
+}
+
+// ── Activity Heatmap Helpers ──
+
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+function activityLevel(total: number): 0 | 1 | 2 | 3 | 4 {
+  if (total === 0) return 0;
+  if (total === 1) return 1;
+  if (total <= 3) return 2;
+  if (total <= 6) return 3;
+  return 4;
+}
+
+const ACTIVITY_COLORS = [
+  'bg-slate-100', 'bg-primary/20', 'bg-primary/40', 'bg-primary/70', 'bg-primary',
+] as const;
+
+// ═══════════════════════════════════════════
+// ── Main Component ──
+// ═══════════════════════════════════════════
 
 export default function ReportsPage() {
   const [students, setStudents] = useState<Student[]>([]);
@@ -94,8 +186,12 @@ export default function ReportsPage() {
       if (res.ok) {
         const json = await res.json();
         setReport(json.data.content);
+      } else {
+        toast.error('리포트 생성에 실패했습니다.');
       }
-    } catch { /* ignore */ }
+    } catch {
+      toast.error('리포트 생성 중 오류가 발생했습니다.');
+    }
     setGenerating(false);
   };
 
@@ -109,13 +205,14 @@ export default function ReportsPage() {
         body: JSON.stringify({ studentId: selectedStudentId, type: reportType, send: true }),
       });
       if (!res.ok) {
-        alert('리포트 발송에 실패했습니다.');
+        toast.error('리포트 발송에 실패했습니다.');
         setSent(false);
       } else {
+        toast.success('리포트가 저장되었습니다.');
         setTimeout(() => setSent(false), 3000);
       }
     } catch {
-      alert('리포트 발송에 실패했습니다.');
+      toast.error('리포트 발송에 실패했습니다.');
       setSent(false);
     }
   };
@@ -135,14 +232,13 @@ export default function ReportsPage() {
   return (
     <div className="flex-1 flex min-h-0 w-full overflow-hidden">
       {/* ===== Left Panel: Student List ===== */}
-      <aside className={`shrink-0 border-r border-slate-200 bg-slate-50/30 flex flex-col transition-all duration-200 ${leftPanelCollapsed ? 'w-12' : 'w-72'}`}>
-        {/* Panel Header */}
+      <aside className={`shrink-0 border-r border-slate-200 bg-slate-50/30 flex flex-col transition-all duration-200 print:hidden ${leftPanelCollapsed ? 'w-12' : 'w-72'}`}>
         <div className="shrink-0 px-3 py-2.5 border-b border-slate-200 bg-white">
           <div className="flex items-center justify-between">
             {!leftPanelCollapsed && (
               <div className="flex items-center gap-2 min-w-0">
                 <FileText className="w-4 h-4 text-primary shrink-0" />
-                <h1 className="text-sm font-bold text-text-primary truncate">학습 분석</h1>
+                <h1 className="text-sm font-bold text-text-primary truncate">학습 리포트</h1>
                 <span className="text-[10px] text-text-secondary bg-slate-100 px-1.5 py-0.5 rounded-full font-medium shrink-0">
                   {students.length}
                 </span>
@@ -160,7 +256,6 @@ export default function ReportsPage() {
 
         {!leftPanelCollapsed && (
           <>
-            {/* Search */}
             <div className="px-3 pt-2 pb-2">
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -173,7 +268,6 @@ export default function ReportsPage() {
               </div>
             </div>
 
-            {/* Student List */}
             <div className="flex-1 overflow-y-auto min-h-0">
               {loading ? (
                 <div className="flex items-center justify-center py-8">
@@ -198,14 +292,11 @@ export default function ReportsPage() {
                           isSelected ? 'bg-primary/5 border-l-2 border-l-primary' : 'border-l-2 border-l-transparent'
                         }`}
                       >
-                        {/* Avatar */}
                         <div className={`w-8 h-8 rounded-sm flex items-center justify-center text-xs font-bold shrink-0 ${
                           isSelected ? 'bg-primary text-white' : 'bg-slate-200 text-slate-600'
                         }`}>
                           {getInitial(student.name)}
                         </div>
-
-                        {/* Info */}
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
                             <span className={`text-sm font-semibold truncate ${isSelected ? 'text-primary' : 'text-text-primary'}`}>
@@ -240,10 +331,9 @@ export default function ReportsPage() {
         )}
       </aside>
 
-      {/* ===== Right Panel: Report Detail ===== */}
+      {/* ===== Right Panel: Report ===== */}
       <main className="flex-1 flex flex-col min-w-0 bg-white">
         {!selectedStudent ? (
-          /* No student selected placeholder */
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
               <FileText className="w-12 h-12 text-slate-200 mx-auto mb-3" />
@@ -255,8 +345,8 @@ export default function ReportsPage() {
           </div>
         ) : (
           <>
-            {/* Student Info Bar */}
-            <div className="shrink-0 px-3 py-3 border-b border-slate-200 bg-slate-50/50">
+            {/* Header Bar */}
+            <div className="shrink-0 px-4 py-3 border-b border-slate-200 bg-slate-50/50 print:bg-white print:border-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-sm bg-primary text-white flex items-center justify-center text-sm font-bold">
@@ -273,24 +363,19 @@ export default function ReportsPage() {
                     </div>
                     {selectedStudent.profile && (
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs text-violet-600 font-semibold">
-                          Lv.{selectedStudent.profile.level}
-                        </span>
-                        <span className="text-xs text-text-secondary">
-                          {selectedStudent.profile.totalXp.toLocaleString()} XP
-                        </span>
+                        <span className="text-xs text-violet-600 font-semibold">Lv.{selectedStudent.profile.level}</span>
+                        <span className="text-xs text-text-secondary">{selectedStudent.profile.totalXp.toLocaleString()} XP</span>
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {/* Report Type Selector */}
+                <div className="flex items-center gap-2 print:hidden">
                   <div className="flex items-center gap-1 bg-slate-100 rounded-sm p-0.5">
                     {REPORT_TYPES.map((rt) => (
                       <button
                         key={rt.value}
-                        onClick={() => setReportType(rt.value)}
+                        onClick={() => { setReportType(rt.value); setReport(null); }}
                         className={`px-3 py-1.5 text-xs font-semibold rounded-sm transition-colors ${
                           reportType === rt.value
                             ? 'bg-white text-primary shadow-sm'
@@ -301,8 +386,6 @@ export default function ReportsPage() {
                       </button>
                     ))}
                   </div>
-
-                  {/* Generate Button */}
                   <Button size="sm" onClick={handleGenerate} disabled={generating}>
                     {generating ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <FileText className="w-4 h-4 mr-1" />}
                     리포트 생성
@@ -311,8 +394,8 @@ export default function ReportsPage() {
               </div>
             </div>
 
-            {/* Report Content Area */}
-            <div className="flex-1 overflow-y-auto min-h-0 p-3">
+            {/* Report Content */}
+            <div className="flex-1 overflow-y-auto min-h-0 p-4">
               {!report && !generating && (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
@@ -334,70 +417,206 @@ export default function ReportsPage() {
               )}
 
               {report && !generating && (
-                <div className="max-w-[800px] mx-auto">
-                  {/* Report Preview Card */}
-                  <div className="bg-slate-50 rounded-sm p-3 border border-slate-200 space-y-2">
-                    <div className="text-center border-b border-slate-200 pb-2">
-                      <h3 className="text-sm font-black text-text-primary">
-                        {report.studentName} 학생 학습 리포트
-                      </h3>
-                      <p className="text-xs text-text-secondary mt-1">
-                        <Clock className="w-3 h-3 inline mr-1" />
-                        {report.period}
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      <div className="bg-white rounded-sm p-3 text-center border border-slate-100">
-                        <p className="text-sm font-black text-primary">{report.accuracy}%</p>
-                        <p className="text-[10px] text-text-secondary">정답률</p>
-                      </div>
-                      <div className="bg-white rounded-sm p-3 text-center border border-slate-100">
-                        <p className="text-sm font-black text-text-primary">{report.testsCompleted}</p>
-                        <p className="text-[10px] text-text-secondary">완료 시험</p>
-                      </div>
-                      <div className="bg-white rounded-sm p-3 text-center border border-slate-100">
-                        <p className="text-sm font-black text-text-primary">{report.totalAnswers}</p>
-                        <p className="text-[10px] text-text-secondary">풀이 문제</p>
-                      </div>
-                      <div className="bg-white rounded-sm p-3 text-center border border-slate-100">
-                        <p className="text-sm font-black text-violet-600">Lv.{report.level}</p>
-                        <p className="text-[10px] text-text-secondary">현재 레벨</p>
-                      </div>
-                    </div>
-
-                    {report.recentTests.length > 0 && (
-                      <div>
-                        <h4 className="text-sm font-bold text-text-primary mb-2">최근 시험 결과</h4>
-                        <div className="space-y-1.5">
-                          {report.recentTests.slice(0, 5).map((t, i) => (
-                            <div key={i} className="flex items-center justify-between bg-white rounded-sm px-3 py-2 border border-slate-100">
-                              <span className="text-xs text-text-primary truncate max-w-[200px]">{t.title}</span>
-                              <span className="text-xs font-bold text-primary">{t.score}/{t.maxScore}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="text-center pt-2 border-t border-slate-200">
-                      <p className="text-[10px] text-text-secondary">
-                        {selectedStudent?.name} 학생의 지속적인 학습 관리를 위해 MathLab을 이용해 주셔서 감사합니다.
-                      </p>
-                    </div>
+                <div className="max-w-[900px] mx-auto space-y-4">
+                  {/* Report Title */}
+                  <div className="text-center pb-3 border-b border-slate-200">
+                    <h2 className="text-lg font-black text-text-primary">
+                      {report.studentName} 학생 {REPORT_TYPES.find((r) => r.value === report.reportType)?.label ?? ''} 학습 리포트
+                    </h2>
+                    <p className="text-xs text-text-secondary mt-1 flex items-center justify-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {report.period}
+                    </p>
                   </div>
 
-                  {/* Send Button */}
-                  <div className="flex items-center justify-end gap-2 mt-2">
-                    {sent && (
-                      <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> 발송 완료
-                      </span>
+                  {/* A. 핵심 요약 — 일간: 간단 4칸 / 주간·월간: 상세 6칸 */}
+                  <ReportSection title="핵심 요약" icon={<TrendingUp className="w-4 h-4 text-primary" />}>
+                    {report.reportType === 'DAILY' ? (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <StatCard label="학습 개념" value={String(report.summary.conceptsStudied)} unit="개" />
+                        <StatCard label="풀이 문제" value={String(report.summary.totalAnswers)} unit="문제" />
+                        <StatCard label="연산 풀이" value={String(report.summary.arithmeticSolved)} unit="문제" />
+                        <StatCard label="획득 XP" value={report.summary.xpEarned.toLocaleString()} unit="XP" accent="text-violet-600" />
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+                        <StatCard label="정답률" value={`${report.summary.accuracy}%`} accent={accuracyColor(report.summary.accuracy)} />
+                        <StatCard label="풀이 문제" value={String(report.summary.totalAnswers)} unit="문제" />
+                        <StatCard label="완료 시험" value={String(report.summary.testsCompleted)} unit="건" />
+                        <StatCard label="연산 풀이" value={String(report.summary.arithmeticSolved)} unit="문제" />
+                        <StatCard label="획득 XP" value={report.summary.xpEarned.toLocaleString()} unit="XP" accent="text-violet-600" />
+                        <StatCard label="활동일" value={String(report.summary.activeDays)} unit="일" />
+                      </div>
                     )}
-                    <Button size="sm" onClick={handleSend} disabled={sent}>
-                      <Send className="w-4 h-4 mr-1" />
-                      발송하기
-                    </Button>
+                  </ReportSection>
+
+                  {/* B. 학습 과정 현황 */}
+                  {report.courseProgress && (
+                    <ReportSection title="학습 과정 현황" icon={<GraduationCap className="w-4 h-4 text-primary" />}>
+                      {report.courseProgress.activeCourse ? (
+                        <div className="bg-slate-50 rounded-sm p-3 border border-slate-100">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-bold text-text-primary">
+                              {report.courseProgress.activeCourse.title}
+                            </span>
+                            <span className="text-xs font-bold text-primary">
+                              {report.courseProgress.activeCourse.progressPercent}%
+                            </span>
+                          </div>
+                          <ProgressBar value={report.courseProgress.activeCourse.progressPercent} size="sm" />
+                          <div className="flex items-center gap-4 mt-2 text-xs text-text-secondary">
+                            <span>
+                              {report.courseProgress.activeCourse.completedConcepts}/{report.courseProgress.activeCourse.totalConcepts} 개념 완료
+                            </span>
+                            <span>완료 과정: {report.courseProgress.completedCourses}개</span>
+                            <span>대기 과정: {report.courseProgress.upcomingCourses}개</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-text-secondary">현재 진행 중인 과정이 없습니다.</p>
+                      )}
+                    </ReportSection>
+                  )}
+
+                  {/* C. 시험 성적 — 주간/월간만 */}
+                  {report.reportType !== 'DAILY' && report.recentTests.length > 0 && (
+                    <ReportSection title="시험 성적" icon={<Target className="w-4 h-4 text-primary" />}>
+                      <div className="space-y-1.5">
+                        {report.recentTests.map((t, i) => (
+                          <div key={i} className="flex items-center gap-3 bg-slate-50 rounded-sm px-3 py-2 border border-slate-100">
+                            <span className="text-xs text-text-primary truncate flex-1 min-w-0">{t.title}</span>
+                            <div className="w-24 shrink-0">
+                              <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                <div className={`h-full rounded-full ${accuracyBarColor(t.accuracy)}`} style={{ width: `${t.accuracy}%` }} />
+                              </div>
+                            </div>
+                            <span className={`text-xs font-bold shrink-0 ${accuracyColor(t.accuracy)}`}>
+                              {t.score}/{t.maxScore}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </ReportSection>
+                  )}
+
+                  {/* D. 단원별 성취 — 월간만 */}
+                  {report.reportType === 'MONTHLY' && report.chapterAchievement.length > 0 && (
+                    <ReportSection title="단원별 성취" icon={<BookOpen className="w-4 h-4 text-primary" />}>
+                      <div className="space-y-2">
+                        {report.chapterAchievement.map((ch) => (
+                          <div key={ch.chapter} className="flex items-center gap-3">
+                            <span className="text-xs text-text-primary w-32 truncate shrink-0" title={ch.chapter}>
+                              {ch.chapter}
+                            </span>
+                            <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                              <div className={`h-full rounded-full ${accuracyBarColor(ch.accuracy)}`} style={{ width: `${ch.accuracy}%` }} />
+                            </div>
+                            <span className={`text-xs font-bold w-10 text-right shrink-0 ${accuracyColor(ch.accuracy)}`}>
+                              {ch.accuracy}%
+                            </span>
+                            <span className="text-[10px] text-text-secondary w-12 text-right shrink-0">{ch.total}문제</span>
+                          </div>
+                        ))}
+                      </div>
+                      {(report.strengths.length > 0 || report.weaknesses.length > 0) && (
+                        <div className="grid grid-cols-2 gap-2 mt-3">
+                          {report.strengths.length > 0 && (
+                            <div className="bg-emerald-50 border border-emerald-200 rounded-sm p-2.5">
+                              <p className="text-[10px] font-bold text-emerald-700 mb-1">우수 단원 (80%+)</p>
+                              <div className="flex flex-wrap gap-1">
+                                {report.strengths.map((s) => (
+                                  <span key={s} className="text-[10px] bg-white border border-emerald-200 text-emerald-700 px-1.5 py-0.5 rounded">
+                                    {s}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {report.weaknesses.length > 0 && (
+                            <div className="bg-amber-50 border border-amber-200 rounded-sm p-2.5">
+                              <p className="text-[10px] font-bold text-amber-700 mb-1">보완 필요 (&lt;60%)</p>
+                              <div className="flex flex-wrap gap-1">
+                                {report.weaknesses.map((w) => (
+                                  <span key={w} className="text-[10px] bg-white border border-amber-200 text-amber-700 px-1.5 py-0.5 rounded">
+                                    {w}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </ReportSection>
+                  )}
+
+                  {/* E. 연산 연습 요약 — 주간/월간만 */}
+                  {report.reportType !== 'DAILY' && report.arithmeticSummary.length > 0 && (
+                    <ReportSection title="연산 연습" icon={<Calculator className="w-4 h-4 text-primary" />}>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                        {report.arithmeticSummary.map((a) => (
+                          <div key={a.category} className="flex items-center gap-2 bg-slate-50 rounded-sm px-3 py-2 border border-slate-100">
+                            <span className="text-xs text-text-primary flex-1 truncate">
+                              {ARITHMETIC_LABELS[a.category] ?? a.category}
+                            </span>
+                            <span className={`text-xs font-bold ${accuracyColor(a.accuracy)}`}>{a.accuracy}%</span>
+                            <span className="text-[10px] text-text-secondary">{a.count}문제</span>
+                          </div>
+                        ))}
+                      </div>
+                    </ReportSection>
+                  )}
+
+                  {/* F. 개념 학습 진행 */}
+                  {report.learningProgress.length > 0 && (
+                    <ReportSection title="개념 학습 진행" icon={<Sparkles className="w-4 h-4 text-primary" />}>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                        {report.learningProgress.map((lp, i) => (
+                          <div key={i} className="flex items-center gap-2 bg-slate-50 rounded-sm px-3 py-2 border border-slate-100">
+                            {lp.completed ? (
+                              <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                            ) : (
+                              <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-300 shrink-0" />
+                            )}
+                            <span className="text-xs text-text-primary flex-1 truncate">{lp.conceptTitle}</span>
+                            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${accuracyBg(lp.completed ? 80 : 50)}`}>
+                              {lp.stage}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </ReportSection>
+                  )}
+
+                  {/* G. 활동 캘린더 */}
+                  {report.activityDays && report.activityDays.length > 0 && (
+                    <ReportSection title={`학습 활동 (${report.summary.activeDays}일)`} icon={<Calendar className="w-4 h-4 text-primary" />}>
+                      {report.reportType === 'WEEKLY' ? (
+                        <WeeklyBar days={report.activityDays} />
+                      ) : (
+                        <MonthlyHeatmap days={report.activityDays} />
+                      )}
+                    </ReportSection>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-200 print:hidden">
+                    <button
+                      onClick={() => window.print()}
+                      className="flex items-center gap-1 text-text-secondary hover:text-primary text-sm font-medium transition-colors"
+                    >
+                      <Printer className="w-4 h-4" /> 인쇄하기
+                    </button>
+                    <div className="flex items-center gap-2">
+                      {sent && (
+                        <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> 저장 완료
+                        </span>
+                      )}
+                      <Button size="sm" onClick={handleSend} disabled={sent}>
+                        <Send className="w-4 h-4 mr-1" />
+                        저장/발송
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -405,6 +624,112 @@ export default function ReportsPage() {
           </>
         )}
       </main>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════
+// ── Sub Components ──
+// ═══════════════════════════════════════════
+
+function ReportSection({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section className="bg-white rounded-sm border border-slate-200 p-4">
+      <h3 className="text-sm font-bold text-text-primary mb-3 flex items-center gap-2">
+        {icon}
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+function StatCard({ label, value, unit, accent }: { label: string; value: string; unit?: string; accent?: string }) {
+  return (
+    <div className="bg-slate-50 rounded-sm p-3 text-center border border-slate-100">
+      <p className={`text-lg font-black leading-none ${accent ?? 'text-text-primary'}`}>
+        {value}
+        {unit && <span className="text-xs font-medium text-slate-500 ml-0.5">{unit}</span>}
+      </p>
+      <p className="text-[10px] text-text-secondary mt-1">{label}</p>
+    </div>
+  );
+}
+
+function WeeklyBar({ days }: { days: { date: string; total: number }[] }) {
+  const max = Math.max(...days.map((d) => d.total), 1);
+  return (
+    <div className="flex items-end gap-2 h-24">
+      {days.map((d) => {
+        const height = Math.max((d.total / max) * 100, 4);
+        const dayLabel = new Date(d.date + 'T00:00:00').toLocaleDateString('ko-KR', { weekday: 'short' });
+        return (
+          <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
+            <span className="text-[10px] font-bold text-text-primary">{d.total}</span>
+            <div className="w-full bg-slate-100 rounded-t-sm relative" style={{ height: '80px' }}>
+              <div
+                className="absolute bottom-0 left-0 right-0 bg-primary/70 rounded-t-sm transition-all"
+                style={{ height: `${height}%` }}
+              />
+            </div>
+            <span className="text-[10px] text-text-secondary">{dayLabel}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function MonthlyHeatmap({ days }: { days: { date: string; total: number }[] }) {
+  const dayMap = new Map(days.map((d) => [d.date, d.total]));
+
+  // 이번 달 전체 날짜
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDayOfWeek = new Date(year, month, 1).getDay();
+
+  const cells: ({ day: number; total: number } | null)[] = [
+    ...Array(firstDayOfWeek).fill(null),
+  ];
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    cells.push({ day: d, total: dayMap.get(key) ?? 0 });
+  }
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  return (
+    <div>
+      <div className="flex justify-end items-center gap-2 mb-2 text-[10px] text-text-secondary">
+        <span>적음</span>
+        <div className="flex gap-0.5">
+          {ACTIVITY_COLORS.map((color, i) => (
+            <div key={i} className={`w-3 h-3 rounded-sm ${color}`} />
+          ))}
+        </div>
+        <span>많음</span>
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {WEEKDAYS.map((day) => (
+          <div key={day} className="text-center text-[10px] font-medium text-slate-400 py-0.5">{day}</div>
+        ))}
+        {cells.map((cell, i) => (
+          <div
+            key={i}
+            className={`aspect-square rounded-sm flex items-center justify-center text-[10px] ${
+              cell
+                ? `${ACTIVITY_COLORS[activityLevel(cell.total)]} ${
+                    activityLevel(cell.total) >= 3 ? 'font-medium text-white' :
+                    activityLevel(cell.total) >= 1 ? 'font-medium text-slate-700' : 'text-slate-400'
+                  }`
+                : 'bg-transparent'
+            }`}
+          >
+            {cell?.day ?? ''}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

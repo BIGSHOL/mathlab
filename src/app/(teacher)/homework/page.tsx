@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { toast } from '@/components/ui/Toast';
 import {
   CalendarCheck,
   Plus,
@@ -171,10 +172,10 @@ export default function HomeworkPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive }),
       });
-      if (!res.ok) alert('상태 변경에 실패했습니다.');
+      if (!res.ok) toast.error('상태 변경에 실패했습니다.');
       fetchPlans();
     } catch {
-      alert('상태 변경에 실패했습니다.');
+      toast.error('상태 변경에 실패했습니다.');
     }
   };
 
@@ -186,7 +187,7 @@ export default function HomeworkPage() {
       if (selectedPlanId === planId) setSelectedPlanId(null);
       fetchPlans();
     } catch {
-      alert('삭제 실패');
+      toast.error('삭제 실패');
     }
     setDeleting(null);
   };
@@ -257,10 +258,10 @@ export default function HomeworkPage() {
         setPendingRemove(new Set());
         setShowStudentManager(false);
       } else {
-        alert('저장에 실패했습니다.');
+        toast.error('저장에 실패했습니다.');
       }
     } catch {
-      alert('저장에 실패했습니다.');
+      toast.error('저장에 실패했습니다.');
     }
     setSaving(false);
   };

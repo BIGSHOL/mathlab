@@ -7,7 +7,7 @@ export const STYLE = {
   AUX_STROKE_WIDTH: 1,
   DASHED: '6,4',
   FONT_SIZE: 14,
-  FONT_FAMILY: 'system-ui, -apple-system, sans-serif',
+  FONT_FAMILY: "'Pretendard', system-ui, -apple-system, sans-serif",
   ANGLE_ARC_COLOR: '#333333',
   GRID_COLOR: '#e0e0e0',
   AXIS_COLOR: '#000000',

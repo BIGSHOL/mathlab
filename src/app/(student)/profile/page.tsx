@@ -3,13 +3,19 @@ import { StatCard } from '@/components/ui/StatCard';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Card } from '@/components/ui/Card';
 import { getCurrentUser } from '@/lib/auth';
+import { getViewAsUser } from '@/lib/view-as';
 import { prisma } from '@/lib/db';
 import { redirect } from 'next/navigation';
 import { xpToNextLevel } from '@/lib/utils/xp';
 
-export default async function ProfilePage() {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+export default async function ProfilePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ _as?: string }>;
+}) {
+  const realUser = await getCurrentUser();
+  if (!realUser) redirect('/login');
+  const user = await getViewAsUser(await searchParams) ?? realUser;
 
   const profile = await prisma.studentProfile.findUnique({ where: { userId: user.id } });
   const totalXp = profile?.totalXp ?? 0;

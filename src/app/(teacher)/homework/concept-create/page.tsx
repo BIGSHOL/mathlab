@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from '@/components/ui/Toast';
 import {
   ArrowLeft,
   BookOpen,
@@ -204,8 +205,8 @@ export default function ConceptHomeworkCreatePage() {
 
   // Submit
   const handleSubmit = async () => {
-    if (!title.trim()) { alert('제목을 입력하세요'); return; }
-    if (selectedConcepts.length === 0) { alert('개념을 1개 이상 선택하세요'); return; }
+    if (!title.trim()) { toast.warning('제목을 입력하세요'); return; }
+    if (selectedConcepts.length === 0) { toast.warning('개념을 1개 이상 선택하세요'); return; }
 
     setSubmitting(true);
     try {
@@ -226,10 +227,10 @@ export default function ConceptHomeworkCreatePage() {
         router.push('/homework');
       } else {
         const json = await res.json();
-        alert(json.error?.message ?? '생성에 실패했습니다');
+        toast.error(json.error?.message ?? '생성에 실패했습니다');
       }
     } catch {
-      alert('생성에 실패했습니다');
+      toast.error('생성에 실패했습니다');
     }
     setSubmitting(false);
   };

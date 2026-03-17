@@ -5,8 +5,6 @@ import {
   MessageCircleQuestion,
   TrendingUp,
   TrendingDown,
-  Calendar,
-  Download,
   MessageSquare,
   BookOpen,
   Trophy,
@@ -20,6 +18,7 @@ import { formatNumber } from '@/lib/utils/format';
 import Link from 'next/link';
 import MonthlyChart from '@/components/charts/MonthlyChart';
 import DashboardAnalytics from '@/components/charts/DashboardAnalytics';
+import { OverviewActions } from '@/components/teacher/OverviewActions';
 
 function getAchievementColor(percent: number) {
   if (percent < 55) return { bg: 'bg-red-100', text: 'text-red-600', badge: 'text-red-500' };
@@ -190,16 +189,7 @@ export default async function TeacherDashboard() {
               {isAdmin ? '시스템 관리 대시보드' : '통합 대시보드'}
             </h2>
           </div>
-          <div className="flex gap-2">
-            <button className="flex items-center rounded-sm bg-white border border-slate-200 px-3 py-2 text-sm font-semibold text-text-secondary hover:bg-slate-50 transition-all shadow-sm">
-              <Calendar className="w-4 h-4 mr-1.5" />
-              기간 설정
-            </button>
-            <button className="flex items-center rounded-sm bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-primary-hover transition-all shadow-md">
-              <Download className="w-4 h-4 mr-1.5" />
-              리포트 다운로드
-            </button>
-          </div>
+          <OverviewActions />
         </div>
 
         {/* Stat Cards - 2x2 on mobile, 4 on desktop */}
@@ -286,9 +276,13 @@ export default async function TeacherDashboard() {
                             <span className={`font-bold ${colors.badge}`}>{student.achievementPercent}%</span>
                           </p>
                         </div>
-                        <button className="bg-primary/10 hover:bg-primary/20 text-primary p-1.5 rounded-sm transition-colors shrink-0">
+                        <Link
+                          href={`/students?search=${encodeURIComponent(student.name)}`}
+                          className="bg-primary/10 hover:bg-primary/20 text-primary p-1.5 rounded-sm transition-colors shrink-0"
+                          title="학생 상세 보기"
+                        >
                           <MessageSquare className="w-3.5 h-3.5" />
-                        </button>
+                        </Link>
                       </div>
                     );
                   })

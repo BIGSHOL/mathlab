@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { toast } from '@/components/ui/Toast';
 import {
   Plus,
   ClipboardCheck,
@@ -57,7 +58,7 @@ export default function TestsPage() {
       await deleteTest(test.seq);
       if (selectedTestId === test.id) setSelectedTestId(null);
     } catch {
-      alert('삭제 실패');
+      toast.error('삭제 실패');
     }
     setDeleting(null);
   };

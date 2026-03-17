@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { Loader2, Sparkles } from 'lucide-react';
+import { toast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
 import { useWizardStore } from '@/stores/wizardStore';
 import { DIFFICULTY_LABELS, TYPE_LABELS } from '@/types';
@@ -44,7 +45,7 @@ export function QuestionSettingsPanel() {
   // 자동 선택
   const handleAutoSelect = useCallback(async () => {
     if (selectedBookCodes.length === 0) {
-      alert('학년·학기를 선택하세요.');
+      toast.warning('학년·학기를 선택하세요.');
       return;
     }
     setIsAutoSelecting(true);
@@ -143,13 +144,13 @@ export function QuestionSettingsPanel() {
       setQuestions(selected);
 
       if (selected.length === 0) {
-        alert('조건에 맞는 문제가 없습니다. 범위를 넓혀보세요.');
+        toast.warning('조건에 맞는 문제가 없습니다. 범위를 넓혀보세요.');
       } else {
         // 다음 스텝으로
         setStep(2);
       }
     } catch {
-      alert('문제 가져오기에 실패했습니다.');
+      toast.error('문제 가져오기에 실패했습니다.');
     }
     setIsAutoSelecting(false);
   }, [selectedBookCodes, checkedChapters, difficultyFilter, typeFilter, questionCount, setQuestions, setStep]);

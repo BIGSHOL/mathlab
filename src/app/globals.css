@@ -62,7 +62,7 @@
   --radius-input: 8px;
 
   /* Font Families */
-  --font-display: 'Lexend', 'Pretendard', system-ui, sans-serif;
+  --font-display: 'Pretendard', system-ui, sans-serif;
   --font-mono: 'Roboto Mono', monospace;
 }
 

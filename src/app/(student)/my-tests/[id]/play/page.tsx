@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { toast } from '@/components/ui/Toast';
 import {
   Clock,
   Zap,
@@ -135,7 +136,7 @@ export default function TestPlayPage() {
         setTimeout(() => setComboAnimation(false), 1000);
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : '답안 제출 실패');
+      toast.error(err instanceof Error ? err.message : '답안 제출 실패');
     }
 
     setSubmitting(false);
@@ -150,7 +151,7 @@ export default function TestPlayPage() {
         await completeAttempt(attempt.id);
         router.push(`/my-tests/${testSeq}/result`);
       } catch {
-        alert('시험 완료 실패');
+        toast.error('시험 완료 실패');
       }
       setCompleting(false);
     } else {

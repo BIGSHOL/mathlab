@@ -5,7 +5,7 @@
 ## 프로젝트 개요
 
 초등~고등 수학 학원용 학습 관리 플랫폼 (LMS).
-학생 개념학습, 빈칸암기(4단계), 연산연습, 시험, 레벨테스트, 실시간 퀴즈, 게이미피케이션을 지원.
+학생 개념학습, 빈칸암기(4단계), 연산연습, 시험, 레벨테스트, 실시간 퀴즈, 학습지, PDF 문제 추출, 게이미피케이션을 지원.
 
 ## 기술 스택
 
@@ -15,7 +15,8 @@
 | Language | TypeScript 5.8 |
 | Database | PostgreSQL + Prisma 6 |
 | Auth | NextAuth 4 (Credentials, JWT) |
-| AI | Google Gemini 2.5 Flash (`@google/genai`) |
+| AI | Google Gemini 2.5 Flash (`@google/genai`), Anthropic Claude (`@anthropic-ai/sdk`) |
+| PDF | pdfjs-dist (클라이언트 사이드 PDF 렌더링) |
 | Styling | Tailwind CSS v4, Framer Motion |
 | Math | KaTeX, MathLive, remark-math |
 | State | Zustand 5 |
@@ -46,7 +47,7 @@
 
 **비용 인식 — 작은 기능도 3단계를 거친다:**
 - 필드 하나(boolean, string 등) 추가에도 스키마 → generate → API → 프론트 전 과정 필요
-- API 라우트가 이미 95개+ → 무분별하게 늘리지 말 것
+- API 라우트가 이미 116개+ → 무분별하게 늘리지 말 것
 - 새 필드 추가 전 판단 기준:
   - **정규 필드**: 검색/필터/정렬에 쓰이거나, 여러 곳에서 참조되는 경우
   - **기존 Json 필드 활용**: 한 곳에서만 쓰이는 부가 정보는 `metadata Json?` 등 기존 유연한 필드에 포함 검토
@@ -60,6 +61,8 @@
 - **문제 은행** → 시험 출제 → 학생 응시 → 결과 분석 → 학습 분석에 반영
 - **연산 생성기** → 연산 숙제 → 학생 연습 → 대시보드에 성과 표시
 - **레벨테스트** → 진단 결과 → 취약영역 파악 → 맞춤 학습 추천
+- **PDF 문제 추출** → 문제은행에 일괄 저장 → 시험/숙제에 활용
+- **학습지** → 3단계 위자드로 교육과정 기반 문제지 생성
 - 새 기능 추가 시 관련 탭에서의 접근 경로도 함께 구현할 것
 - 데이터 생성/수정 시 관련 페이지의 캐시/목록도 갱신되는지 확인
 
@@ -92,47 +95,72 @@ if (currentUser.role === 'STUDENT') → 403  // 선생님/관리자 전용
 if (currentUser.role !== 'ADMIN') → 403     // 관리자 전용
 ```
 
-### 6. AI (Gemini) 사용 규칙
+### 6. AI 사용 규칙
 
+**Gemini (문제 생성, PDF 추출, 빈칸 생성):**
 - 호출 전 **내용 사전 검증**: 최소 20자, 한글 5자 이상, 의미 있는 단어 3개 이상
 - 모델: `gemini-2.5-flash` (이미지/도형 분석 및 성능에 최적)
 - 구조화 출력: `responseMimeType: 'application/json'` + `responseSchema`
 - 환경변수: `GEMINI_API_KEY`
+
+**Claude (레벨테스트 보고서 생성):**
+- 모델: Claude Haiku (`@anthropic-ai/sdk`)
+- 레벨테스트 결과 → 학습 보고서 AI 생성
+- 환경변수: `ANTHROPIC_API_KEY`
+
+### 7. 토스트 알림 — alert() 사용 금지
+
+**모든 사용자 알림은 글로벌 토스트 시스템을 사용:**
+```typescript
+import { toast } from '@/components/ui/Toast';
+
+toast.success('저장되었습니다');
+toast.error('저장에 실패했습니다');
+toast.warning('제목을 입력하세요');
+toast.info('AI가 분석 중입니다');
+```
+- `alert()`, `window.alert()` 사용 금지 — 모든 곳에서 `toast.*()` 사용
+- Zustand 기반 글로벌 상태, ToastContainer가 양쪽 레이아웃에 포함됨
 
 ## 프로젝트 구조
 
 ```
 src/
 ├── app/
-│   ├── (student)/     # 학생 페이지 (dashboard, subjects, concepts, practice, my-tests, ranking, quiz)
-│   ├── (teacher)/     # 선생님 페이지 (overview, students, concepts, questions, tests, homework, analytics, quiz, worksheet)
-│   ├── api/           # API 라우트 (97 endpoints)
+│   ├── (student)/     # 학생 페이지 (dashboard, subjects, concepts, practice, my-tests, ranking, quiz, profile, diagnostics, solve)
+│   ├── (teacher)/     # 선생님 페이지 (overview, students, concepts, questions, tests, homework, analytics, quiz, worksheet, manual-grading, reports, level-test, settings, updates, admin)
+│   ├── api/           # API 라우트 (116+ endpoints)
 │   └── globals.css    # Tailwind 테마 + 디자인 토큰
 ├── components/
-│   ├── layout/        # Sidebar, DashboardShell
-│   ├── ui/            # Button, Pagination 등 공통 UI
-│   ├── math/          # MathRenderer, EditableMathRenderer, DiagramRenderer, DiagramEditorPopup
+│   ├── layout/        # Sidebar, DashboardShell, CommandPalette
+│   ├── ui/            # Button, Pagination, Toast 등 공통 UI
+│   ├── math/          # MathRenderer, EditableMathRenderer, DiagramRenderer, DiagramEditorPopup, ProblemDisplay
 │   ├── learning/      # 개념학습, 빈칸연습
-│   ├── test/          # 시험 응시, 제출
-│   ├── homework/      # 숙제 계획, 응시
+│   ├── test/          # 시험 응시, 제출, AssignPanel
+│   ├── homework/      # 숙제 계획, 응시 (ConceptHomeworkTab, QuestionHomeworkTab)
 │   ├── teacher/       # 선생님 전용 (학생관리, 개념관리, 시험관리)
 │   ├── bulk-import/   # 일괄 가져오기
 │   ├── curriculum/    # 교육과정 트리
 │   ├── gamification/  # 랭킹, XP 표시
+│   ├── student/       # 학생 전용 (DailyMissionCard, DailyQuestionCard, DashboardGamification, RevengeBanner)
+│   ├── report/        # 레벨테스트 보고서 렌더링
+│   ├── worksheet-wizard/  # 학습지 3단계 위자드 (Step1~3)
+│   ├── level-test-editor/ # 레벨테스트 편집기
+│   ├── manual-grading/    # 수기 채점 인터페이스
 │   ├── charts/        # 학습분석 차트
 │   └── print-preview/ # 인쇄 모드
 ├── lib/
 │   ├── auth.ts        # NextAuth 설정
 │   ├── db.ts          # Prisma 싱글톤 클라이언트
 │   ├── schemas/       # Zod 검증 스키마
-│   ├── services/      # 핵심 비즈니스 로직 (arithmetic-generator, grading, diagnostic, mathgen 등)
-│   ├── utils/         # 유틸 (blank-generator, curriculumMapping, xp, format)
+│   ├── services/      # 핵심 비즈니스 로직 (18개 서비스)
+│   ├── utils/         # 유틸 (blank-generator, pdf-processor, features, curriculumMapping, xp, format)
 │   │   └── svg-diagrams/  # SVG 다이어그램 렌더링 시스템 (26개 타입)
 │   ├── diagram/       # 프리셋 기반 구조화 다이어그램 시스템 (DiagramSpec)
 │   ├── constants/     # 교육과정 데이터, 연산 카테고리
 │   └── data/          # 정적 데이터 (업데이트 로그 등)
-├── hooks/             # useAuth, useLearning, useGamification 등
-├── types/             # 공통 타입 정의 (diagram.ts, mathgen.ts 등)
+├── hooks/             # useAuth, useLearning, useGamification, useFeatureFlags, useBadgeCheck, useSpeed 등
+├── types/             # 공통 타입 정의 (diagram.ts, mathgen.ts, pdf-extract.ts, report.ts 등)
 └── scripts/           # DB 초기화, 시드 스크립트
 ```
 
@@ -170,9 +198,26 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 ### 사이드바 네비게이션
 
 3개 그룹으로 구성 (`src/components/layout/Sidebar.tsx`):
-- **메인 메뉴**: 대시보드, 학생관리, 개념관리, 문제은행, 연산생성기, 연산숙제, 시험관리, 레벨테스트, 학습분석
-- **시스템**: 업데이트 내역, 설정, 고객지원
-- **어드민** (관리자만): 선생님 관리, 사용자 관리, AI 문제 생성, 화면 미리보기
+- **메인 메뉴** (10개): 대시보드, 학생관리, 개념관리, 문제은행, 연산생성기, 숙제관리, 시험관리, 학습지, 수기채점, 학습분석
+- **시스템** (3개): 업데이트 내역, 설정, 고객지원
+- **어드민** (관리자만, 7개): 선생님관리, 사용자관리, PDF 문제 추출, AI 문제 생성, 화면 미리보기, 기능 관리, 반 관리
+
+**커맨드 팔레트**: `Ctrl+K`로 전체 메뉴 빠른 검색/이동 (`CommandPalette.tsx`)
+
+### PDF 문제 추출 시스템
+
+수학 문제집 PDF → Gemini Vision으로 구조화 추출 → 문제은행 일괄 저장.
+- 클라이언트 사이드 PDF 처리 (`pdfjs-dist`)
+- 4단계 위자드: 업로드 → 페이지 선택 → AI 추출 미리보기 → 저장
+- 해설 PDF 별도 업로드로 정답/풀이 매칭 지원
+- 관련 파일: `src/types/pdf-extract.ts`, `src/lib/utils/pdf-processor.ts`, `src/app/api/questions/pdf-extract/`
+
+### 학습지 위자드
+
+3단계 위자드로 교육과정 기반 문제지 생성 (`src/components/worksheet-wizard/`):
+1. **교육과정 선택**: 학년/학기/단원 체크트리 + 문제 설정 (유형/난이도/수량)
+2. **문제 편집**: AI 생성 문제 검토/수정/삭제/추가
+3. **최종 설정**: 제목, 시간, 배점 설정 후 저장
 
 ### SVG 다이어그램 시스템
 
@@ -214,6 +259,12 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 3. 문제/보기/정답/풀이/다이어그램 JSON 반환
 4. 선생님이 검토/수정 후 DB 저장
 
+**PDF 추출 흐름:**
+1. 선생님이 PDF 업로드 → 페이지 선택
+2. 선택 페이지를 canvas → PNG base64 → `POST /api/questions/pdf-extract`
+3. Gemini Vision이 문제 구조화 추출
+4. 미리보기/편집 후 `/api/questions/bulk`로 일괄 저장
+
 **문제 난이도:** BASIC | MEDIUM | HIGH | HIGHEST
 **문제 유형:** MULTIPLE_CHOICE | SHORT_ANSWER | ESSAY
 **영역 분류:** CALCULATION | UNDERSTANDING | PROBLEM_SOLVING | REASONING
@@ -236,6 +287,12 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 | `assignment.ts` | 시험 배정/마감 관리 |
 | `homework.ts` | 숙제 계획 로직 |
 | `cheat-detection.ts` | 부정행위 탐지 |
+| `badge-checker.ts` | 뱃지 조건 확인 및 자동 수여 (10종) |
+| `daily-mission.ts` | 일일 미션 생성 및 진행 추적 |
+| `report-ai.ts` | Claude AI 레벨테스트 보고서 생성 |
+| `variant-generator.ts` | 시험 변형 문제 생성 |
+| `manual-grading.ts` | 수기 채점 로직 |
+| `question-tagger.ts` | 문제 자동 분류/태깅 |
 
 ### 게이미피케이션
 
@@ -245,15 +302,48 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 
 **레벨 임계값:** Lv1=0, Lv2=100, Lv3=250, Lv4=500, Lv5=800, Lv6+=이전+400
 
+**8개 기능 토글** (Admin Feature Flag 시스템):
+| 기능 | 설명 |
+|------|------|
+| `time_attack` | 연산 속도 챌린지 |
+| `daily_mission` | 일일 미션 시스템 |
+| `badge_system` | 뱃지 시스템 (10종) |
+| `quiz_speed_scoring` | 퀴즈 속도 점수 |
+| `revenge_challenge` | 복수전 챌린지 |
+| `class_competition` | 반 대항전 |
+| `daily_question` | 오늘의 문제 |
+| `enhanced_levelup` | 강화된 레벨업 애니메이션 |
+
+**10종 뱃지**: streak_7, streak_30, arithmetic_100, arithmetic_1000, concept_master_10, time_attack_20, first_quiz, xp_1000, perfect_score, revenge_win
+
 ### DB 모델 요약
 
 **핵심:** User(STUDENT|TEACHER|ADMIN), Subject, Concept, BlankExercise, Question
 **시험:** Test, TestAttempt, TestAssignment, AnswerLog, LevelTestConfig
 **숙제:** ArithmeticHomeworkPlan, ConceptHomeworkPlan, QuestionHomeworkPlan (각각 Enrollment/Attempt)
 **퀴즈:** QuizSession, QuizParticipant, QuizAnswerLog
+**게이미피케이션:** Badge, UserBadge, DailyMission, DailyQuestion, DailyQuestionAttempt, TimeAttackRecord
+**보고서:** ReportHistory, TeacherComment
+**관리:** FeatureFlag, Classroom
 **기타:** StudentProfile(XP/레벨), PointTransaction, DiagnosticResult, ConceptMemo
 
 ## 디자인 토큰
+
+### 글씨체 (Font)
+
+| 용도 | 폰트 | 로드 방식 | CSS 변수 |
+|------|------|----------|----------|
+| **전체 UI** | Pretendard | CDN (`jsdelivr`) | `--font-display` |
+| **개념 본문** | Noto Serif KR | `next/font/google` | `--font-serif-kr` |
+| **수식** | KaTeX 기본 폰트 | CDN | — |
+| **SVG 다이어그램** | Pretendard | CSS 상속 | — |
+
+- Pretendard: 한글+영문 통합 산세리프. 모든 UI 텍스트에 사용
+- Noto Serif KR: 개념 학습 콘텐츠 전용 명조체 (`.font-serif-kr` 클래스)
+- 새 페이지/컴포넌트 추가 시 별도 폰트를 도입하지 말 것 → Pretendard 통일
+- `font-family` 직접 지정 금지 → `var(--font-display)` 또는 `.font-serif-kr` 사용
+
+### 색상
 
 ```css
 --color-primary: #135bec        /* 메인 파란색 */
@@ -273,6 +363,7 @@ DIRECT_URL=postgresql://user:password@localhost:5432/mathlab
 NEXTAUTH_SECRET=your-secret-key
 NEXTAUTH_URL=http://localhost:3000
 GEMINI_API_KEY=your-gemini-api-key
+ANTHROPIC_API_KEY=your-anthropic-api-key
 ```
 
 ## 스크립트
@@ -295,6 +386,7 @@ npx tsx scripts/reset-questions.ts  # 문제은행 + 관련 데이터 전체 초
 - 경로 alias: `@/` = `src/`
 - 수학 수식: `$...$` (인라인), `$$...$$` (블록)
 - **수학 문제/개념의 모든 숫자와 영문 변수는 반드시 KaTeX로 감싸기**: `$25$`, `$a$`, `$a+b$` 등. 보기 번호(①②③④⑤)와 ㄱㄴㄷ은 제외
+- **alert() 사용 금지** → `toast.*()` 사용 (위 7번 규칙 참고)
 - 빌드 확인: 기능 구현 후 `npm run build`로 타입 에러 없는지 확인
 
 ## Skills

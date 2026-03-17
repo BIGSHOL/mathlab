@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { toast } from '@/components/ui/Toast';
 import {
   BookOpen,
   Plus,
@@ -151,7 +152,7 @@ export default function ConceptHomeworkTab() {
       });
       fetchPlans();
     } catch {
-      alert('상태 변경에 실패했습니다.');
+      toast.error('상태 변경에 실패했습니다.');
     }
   };
 
@@ -163,7 +164,7 @@ export default function ConceptHomeworkTab() {
       if (selectedSeq === seq) setSelectedSeq(null);
       fetchPlans();
     } catch {
-      alert('삭제 실패');
+      toast.error('삭제 실패');
     }
     setDeleting(null);
   };
@@ -223,7 +224,7 @@ export default function ConceptHomeworkTab() {
         setPendingRemove(new Set());
         setShowStudentManager(false);
       }
-    } catch { alert('저장 실패'); }
+    } catch { toast.error('저장 실패'); }
     setSaving(false);
   };
 

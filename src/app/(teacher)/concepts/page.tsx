@@ -32,6 +32,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Pagination } from '@/components/ui/Pagination';
 import { useAuth } from '@/hooks/useAuth';
+import { toast } from '@/components/ui/Toast';
 import BulkImportModal from '@/components/bulk-import/BulkImportModal';
 import { InlineMathText } from '@/components/math/InlineMathText';
 import { CurriculumTree } from '@/components/curriculum/CurriculumTree';
@@ -581,11 +582,11 @@ export default function ConceptsPage() {
           setIsContentEditing(false);
           fetchConcepts();
         } else {
-          alert('개념 저장에 실패했습니다.');
+          toast.error('개념 저장에 실패했습니다.');
         }
       }
     } catch {
-      alert('저장 중 오류가 발생했습니다.');
+      toast.error('저장 중 오류가 발생했습니다.');
     } finally {
       setSaving(false);
     }
@@ -942,7 +943,7 @@ export default function ConceptsPage() {
           body: JSON.stringify({ exerciseId: editingBlank.id, ...blankForm }),
         });
         if (!putRes.ok) {
-          alert('빈칸 문제 저장에 실패했습니다.');
+          toast.error('빈칸 문제 저장에 실패했습니다.');
           return;
         }
       }
@@ -950,7 +951,7 @@ export default function ConceptsPage() {
       setSavedBlankForm(JSON.stringify(blankForm));
       // Don't close — stay in editing mode
     } catch {
-      alert('저장 중 오류가 발생했습니다.');
+      toast.error('저장 중 오류가 발생했습니다.');
     } finally {
       setBlankSaving(false);
     }
@@ -963,10 +964,10 @@ export default function ConceptsPage() {
       const res = await fetch(`/api/concepts/${editingConcept.id}/blanks?exerciseId=${exerciseId}`, {
         method: 'DELETE',
       });
-      if (!res.ok) alert('삭제에 실패했습니다.');
+      if (!res.ok) toast.error('삭제에 실패했습니다.');
       await fetchBlanks(editingConcept.id);
     } catch {
-      alert('삭제 중 오류가 발생했습니다.');
+      toast.error('삭제 중 오류가 발생했습니다.');
     }
   };
 
@@ -987,7 +988,7 @@ export default function ConceptsPage() {
   const handleAiMetadataExtract = async () => {
     const validationError = validateContentForAi(editForm.fullContent);
     if (validationError) {
-      alert(validationError);
+      toast.warning(validationError);
       return;
     }
 
@@ -1118,10 +1119,10 @@ export default function ConceptsPage() {
       } else if (Object.keys(autoApply).length > 0) {
         // All fields were empty and auto-filled, no review needed
       } else {
-        alert('AI 분석 결과가 현재 값과 동일합니다.');
+        toast.info('AI 분석 결과가 현재 값과 동일합니다.');
       }
     } catch {
-      alert('AI 메타데이터 추출에 실패했습니다.');
+      toast.error('AI 메타데이터 추출에 실패했습니다.');
     } finally {
       setAiMetadataLoading(false);
     }
@@ -1148,7 +1149,7 @@ export default function ConceptsPage() {
     setShowBlankGenOptions(false);
     const validationError = validateContentForAi(editForm.fullContent);
     if (validationError) {
-      alert(validationError);
+      toast.warning(validationError);
       return;
     }
     setAiGenerating(true);
@@ -1167,7 +1168,7 @@ export default function ConceptsPage() {
       const result = json.data?.[0] as { templateText: string; blanks: { position: number; answer: string; hint: string; difficulty: string }[] } | undefined;
 
       if (!result || !result.templateText || result.blanks.length === 0) {
-        alert('AI가 빈칸을 추출하지 못했습니다. 내용이 충분한지 확인하세요.');
+        toast.warning('AI가 빈칸을 추출하지 못했습니다. 내용이 충분한지 확인하세요.');
         return;
       }
 
@@ -1197,7 +1198,7 @@ export default function ConceptsPage() {
       templateHistory.current = [{ templateText: result.templateText, blanks: blanks.map((b) => ({ ...b })) }];
       templateHistoryIdx.current = 0;
     } catch {
-      alert('AI 빈칸 추출에 실패했습니다.');
+      toast.error('AI 빈칸 추출에 실패했습니다.');
     } finally {
       setAiGenerating(false);
     }

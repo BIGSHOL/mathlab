@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { requireAuth, isResponse, validateBody } from '@/lib/api';
 import { completeStageSchema } from '@/lib/schemas/learning';
 import { XP_REWARDS, calculateLevel } from '@/lib/utils/xp';
+import { checkAndAdvanceCourse } from '@/lib/services/course-advance';
 
 // GET /api/learning/progress?conceptId=xxx
 export async function GET(request: NextRequest) {
@@ -96,6 +97,11 @@ export async function POST(request: NextRequest) {
           data: { level: newLevel },
         });
       }
+    }
+
+    // 과정 자동 진급 체크 (BLANK_FULL 완료 시)
+    if (stage === 'BLANK_FULL') {
+      await checkAndAdvanceCourse(tx, user.id, conceptId);
     }
 
     return prog;

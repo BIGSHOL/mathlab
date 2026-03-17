@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { toast } from '@/components/ui/Toast';
 import {
   Search,
   Plus,
@@ -437,10 +438,10 @@ export default function QuestionsPage() {
           fetchQuestions();
         }, 800);
       } else {
-        alert('문제 생성에 실패했습니다.');
+        toast.error('문제 생성에 실패했습니다.');
       }
     } catch {
-      alert('문제 생성 중 오류가 발생했습니다.');
+      toast.error('문제 생성 중 오류가 발생했습니다.');
     } finally {
       setSaving(false);
     }
@@ -639,10 +640,10 @@ export default function QuestionsPage() {
           fetchQuestions();
         }, 800);
       } else {
-        alert('문제 저장에 실패했습니다.');
+        toast.error('문제 저장에 실패했습니다.');
       }
     } catch {
-      alert('문제 저장 중 오류가 발생했습니다.');
+      toast.error('문제 저장 중 오류가 발생했습니다.');
     } finally {
       setSaving(false);
     }
@@ -656,10 +657,10 @@ export default function QuestionsPage() {
         if (selectedQuestion?.id === id) closeModal();
         fetchQuestions();
       } else {
-        alert('문제 삭제에 실패했습니다.');
+        toast.error('문제 삭제에 실패했습니다.');
       }
     } catch {
-      alert('문제 삭제 중 오류가 발생했습니다.');
+      toast.error('문제 삭제 중 오류가 발생했습니다.');
     }
   };
 

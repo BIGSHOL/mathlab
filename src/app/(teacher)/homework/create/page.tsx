@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from '@/components/ui/Toast';
 import {
   ArrowLeft,
   CalendarCheck,
@@ -334,10 +335,10 @@ export default function CreateHomeworkPage() {
         router.push('/homework');
       } else {
         const json = await res.json();
-        alert(json.error?.message || '생성 실패');
+        toast.error(json.error?.message || '생성 실패');
       }
     } catch {
-      alert('생성 실패');
+      toast.error('생성 실패');
     }
     setSaving(false);
   };

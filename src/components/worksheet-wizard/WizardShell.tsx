@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from '@/components/ui/Toast';
 import { X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useWizardStore } from '@/stores/wizardStore';
@@ -48,7 +49,7 @@ export function WizardShell() {
 
   const handleNext = useCallback(() => {
     if (currentStep === 1 && questions.length === 0) {
-      alert('문제를 선택해주세요. "자동 선택" 버튼을 누르거나 다음 단계에서 직접 추가할 수 있습니다.');
+      toast.warning('문제를 선택해주세요. "자동 선택" 버튼을 누르거나 다음 단계에서 직접 추가할 수 있습니다.');
     }
     if (currentStep < 3) setStep((currentStep + 1) as 1 | 2 | 3);
   }, [currentStep, setStep, questions.length]);
@@ -137,11 +138,11 @@ function SaveButton() {
 
   const handleSave = useCallback(async () => {
     if (questions.length === 0) {
-      alert('문제를 1개 이상 선택해주세요.');
+      toast.warning('문제를 1개 이상 선택해주세요.');
       return;
     }
     if (!title.trim()) {
-      alert('제목을 입력해주세요.');
+      toast.warning('제목을 입력해주세요.');
       return;
     }
 
@@ -149,7 +150,7 @@ function SaveButton() {
     if (mode === 'level_test') {
       const untagged = questions.filter((q) => !questionDomains[q.id]).length;
       if (untagged > 0) {
-        alert(`미태깅 문제가 ${untagged}개 있습니다. STEP 2에서 모든 문제에 영역을 지정해주세요.`);
+        toast.warning(`미태깅 문제가 ${untagged}개 있습니다. STEP 2에서 모든 문제에 영역을 지정해주세요.`);
         return;
       }
     }
@@ -193,10 +194,10 @@ function SaveButton() {
         router.push(mode === 'level_test' ? '/level-test' : '/tests');
       } else {
         const json = await res.json().catch(() => null);
-        alert(json?.error?.message ?? '저장에 실패했습니다.');
+        toast.error(json?.error?.message ?? '저장에 실패했습니다.');
       }
     } catch {
-      alert('저장에 실패했습니다.');
+      toast.error('저장에 실패했습니다.');
     }
   }, [mode, questions, questionDomains, title, grade, testType, timeLimitMin, shuffleOptions, maxAttempts, spacing, reset, setIsDirty, router]);
 

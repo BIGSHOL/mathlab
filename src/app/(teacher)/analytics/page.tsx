@@ -38,21 +38,12 @@ const DIFFICULTY_KR: Record<string, string> = {
   BASIC: '하', MEDIUM: '중', HIGH: '상', HIGHEST: '최상',
 };
 
-function generateMockCalendar(): DayActivity[] {
-  const days: DayActivity[] = [];
-  for (let d = 1; d <= 31; d++) {
-    const dayOfWeek = new Date(2026, 2, d).getDay();
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-    const rand = Math.random();
-    let level: 0 | 1 | 2 | 3 | 4;
-    if (isWeekend) {
-      level = rand < 0.5 ? 0 : rand < 0.8 ? 1 : 2;
-    } else {
-      level = rand < 0.1 ? 0 : rand < 0.3 ? 1 : rand < 0.5 ? 2 : rand < 0.8 ? 3 : 4;
-    }
-    days.push({ day: d, level });
-  }
-  return days;
+function totalToLevel(total: number): 0 | 1 | 2 | 3 | 4 {
+  if (total === 0) return 0;
+  if (total === 1) return 1;
+  if (total <= 3) return 2;
+  if (total <= 6) return 3;
+  return 4;
 }
 
 const ACTIVITY_COLORS = [
@@ -67,12 +58,17 @@ export default function AnalyticsPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
-  const [calendarData] = useState<DayActivity[]>(() => generateMockCalendar());
+  const [calendarData, setCalendarData] = useState<DayActivity[]>([]);
+
+  // Dynamic current month
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonthNum = now.getMonth() + 1;
+  const currentMonth = `${currentYear}-${String(currentMonthNum).padStart(2, '0')}`;
 
   // Teacher comment
   const [commentText, setCommentText] = useState('');
   const commentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const currentMonth = '2026-03';
 
   // Speed analytics for selected student
   const { data: speedData, loading: speedLoading } = useSpeedAnalytics(selectedStudent?.id);
@@ -98,7 +94,30 @@ export default function AnalyticsPage() {
       .then((r) => r.ok ? r.json() : null)
       .then((json) => { setCommentText(json?.data ?? ''); })
       .catch(() => setCommentText(''));
-  }, [selectedStudent]);
+
+    // Fetch calendar data
+    const daysInMonth = new Date(currentYear, currentMonthNum, 0).getDate();
+    fetch(`/api/analytics/calendar?studentId=${selectedStudent.id}&year=${currentYear}&month=${currentMonthNum}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((json) => {
+        if (json?.data?.calendar) {
+          const cal: Record<string, { total: number }> = json.data.calendar;
+          const days: DayActivity[] = [];
+          for (let d = 1; d <= daysInMonth; d++) {
+            const key = `${currentYear}-${String(currentMonthNum).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const total = cal[key]?.total ?? 0;
+            days.push({ day: d, level: totalToLevel(total) });
+          }
+          setCalendarData(days);
+        } else {
+          setCalendarData(Array.from({ length: daysInMonth }, (_, i) => ({ day: i + 1, level: 0 as const })));
+        }
+      })
+      .catch(() => {
+        const daysInM = new Date(currentYear, currentMonthNum, 0).getDate();
+        setCalendarData(Array.from({ length: daysInM }, (_, i) => ({ day: i + 1, level: 0 as const })));
+      });
+  }, [selectedStudent, currentYear, currentMonthNum]);
 
   const saveComment = useCallback((text: string) => {
     if (!selectedStudent) return;
@@ -142,7 +161,7 @@ export default function AnalyticsPage() {
   const activeDays = calendarData.filter((d) => d.level > 0).length;
 
   // Calendar grid
-  const firstDayOfMonth = new Date(2026, 2, 1).getDay();
+  const firstDayOfMonth = new Date(currentYear, currentMonthNum - 1, 1).getDay();
   const paddedCalendar: (DayActivity | null)[] = [
     ...Array(firstDayOfMonth).fill(null),
     ...calendarData,
@@ -206,7 +225,7 @@ export default function AnalyticsPage() {
           <div className="flex flex-col gap-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium w-fit">
               <BarChart3 className="w-4 h-4" />
-              2026년 3월
+              {currentYear}년 {currentMonthNum}월
             </div>
             <h1 className="text-3xl md:text-4xl font-black leading-tight tracking-tight text-text-primary">
               월간 분석 리포트
@@ -243,11 +262,17 @@ export default function AnalyticsPage() {
               </div>
             </div>
           </div>
-          <div className="flex gap-3">
-            <button className="flex items-center gap-1 text-text-secondary hover:text-primary text-sm font-medium transition-colors">
+          <div className="flex gap-3 print:hidden">
+            <button
+              onClick={() => window.print()}
+              className="flex items-center gap-1 text-text-secondary hover:text-primary text-sm font-medium transition-colors"
+            >
               <Printer className="w-4 h-4" /> 인쇄하기
             </button>
-            <button className="flex items-center gap-1 text-text-secondary hover:text-primary text-sm font-medium transition-colors">
+            <button
+              onClick={() => window.print()}
+              className="flex items-center gap-1 text-text-secondary hover:text-primary text-sm font-medium transition-colors"
+            >
               <Download className="w-4 h-4" /> PDF 다운로드
             </button>
           </div>
@@ -535,7 +560,7 @@ export default function AnalyticsPage() {
           {/* Calendar Heatmap */}
           <section>
             <h2 className="text-xl font-bold leading-tight tracking-tight mb-4 text-text-primary flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-primary" /> 일별 학습 성실도 (3월)
+              <Calendar className="w-5 h-5 text-primary" /> 일별 학습 성실도 ({currentMonthNum}월)
             </h2>
             <div className="rounded-xl border border-slate-200 p-6 bg-white overflow-x-auto">
               <div className="min-w-[500px]">

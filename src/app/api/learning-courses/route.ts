@@ -1,0 +1,73 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
+import { requireTeacher, isResponse } from '@/lib/api';
+import { z } from 'zod';
+
+// GET /api/learning-courses — 과정 목록 (선생님용)
+export async function GET() {
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
+
+  const courses = await prisma.learningCourse.findMany({
+    where: { isActive: true },
+    include: {
+      _count: { select: { concepts: true, enrollments: true } },
+      creator: { select: { name: true } },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  return NextResponse.json({
+    data: courses.map((c) => ({
+      id: c.id,
+      seq: c.seq,
+      title: c.title,
+      description: c.description,
+      createdBy: c.createdBy,
+      creatorName: c.creator.name,
+      conceptCount: c._count.concepts,
+      enrollmentCount: c._count.enrollments,
+      createdAt: c.createdAt,
+    })),
+  });
+}
+
+const createSchema = z.object({
+  title: z.string().min(1).max(200),
+  description: z.string().optional(),
+  conceptIds: z.array(z.string()).min(1, '최소 1개 개념을 선택하세요'),
+});
+
+// POST /api/learning-courses — 과정 생성
+export async function POST(request: NextRequest) {
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
+
+  const body = await request.json();
+  const parsed = createSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: { code: 'VALIDATION', message: parsed.error.errors[0]?.message || '입력값 오류' } },
+      { status: 400 }
+    );
+  }
+
+  const { title, description, conceptIds } = parsed.data;
+
+  const course = await prisma.learningCourse.create({
+    data: {
+      title,
+      description,
+      createdBy: user.id,
+      concepts: {
+        create: conceptIds.map((conceptId, i) => ({
+          conceptId,
+          sortOrder: i,
+        })),
+      },
+    },
+    include: { _count: { select: { concepts: true } } },
+  });
+
+  return NextResponse.json({ data: { id: course.id, seq: course.seq, title: course.title } }, { status: 201 });
+}

@@ -1,25 +1,35 @@
-import { Award, Star, CheckCircle, Flame, Play, BookOpen, ArrowRight, CalendarCheck, Zap } from 'lucide-react';
-import { StatCard } from '@/components/ui/StatCard';
+import { Award, Star, CheckCircle, Flame, Play, BookOpen, ArrowRight, CalendarCheck, Zap, FileQuestion, Trophy, Activity, Sparkles, GraduationCap } from 'lucide-react';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth';
+import { getViewAsUser } from '@/lib/view-as';
 import { prisma } from '@/lib/db';
 import { redirect } from 'next/navigation';
 import { xpToNextLevel } from '@/lib/utils/xp';
 import { getTodayHomework } from '@/lib/services/homework';
 import { getTodayConceptHomework } from '@/lib/services/concept-homework';
+import { getTodayQuestionHomework } from '@/lib/services/question-homework';
 import { DashboardGamification } from '@/components/student/DashboardGamification';
 
-export default async function StudentDashboard() {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+export default async function StudentDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ preview?: string; _as?: string }>;
+}) {
+  const realUser = await getCurrentUser();
+  if (!realUser) redirect('/login');
 
-  // Redirect teacher to teacher dashboard
-  if (user.role === 'TEACHER' || user.role === 'ADMIN') {
+  const params = await searchParams;
+
+  // Redirect teacher to teacher dashboard (unless preview mode or impersonation)
+  if ((realUser.role === 'TEACHER' || realUser.role === 'ADMIN') && !params.preview && !params._as) {
     redirect('/overview');
   }
+
+  // 특정 학생 시점으로 보기 (선생님/관리자 전용)
+  const user = await getViewAsUser(params) ?? realUser;
 
   const profile = await prisma.studentProfile.findUnique({ where: { userId: user.id } });
   const totalXp = profile?.totalXp ?? 0;
@@ -27,13 +37,35 @@ export default async function StudentDashboard() {
   const streak = profile?.currentStreak ?? 0;
   const nextLevel = xpToNextLevel(totalXp);
 
-  const completedConcepts = await prisma.learningProgress.groupBy({
-    by: ['conceptId'],
-    where: { userId: user.id, stage: 'BLANK_FULL', completed: true },
+  // 배정된 과정 조회
+  const activeEnrollment = await prisma.learningCourseEnrollment.findFirst({
+    where: { studentId: user.id, status: 'ACTIVE' },
+    include: {
+      course: {
+        include: {
+          concepts: { orderBy: { sortOrder: 'asc' }, include: { concept: { select: { id: true, title: true, conceptCode: true } } } },
+        },
+      },
+    },
+  });
+  const enrollmentCount = await prisma.learningCourseEnrollment.count({ where: { studentId: user.id } });
+  const completedCourseCount = await prisma.learningCourseEnrollment.count({ where: { studentId: user.id, status: 'COMPLETED' } });
+  const hasEnrollments = enrollmentCount > 0;
+
+  // enrollment 기반 개념 수
+  const courseConceptIds = activeEnrollment?.course.concepts.map((c) => c.conceptId) ?? [];
+  const totalConcepts = hasEnrollments ? courseConceptIds.length : await prisma.concept.count({
+    where: user.grade ? { subject: { gradeLevel: user.grade } } : {},
   });
 
-  const totalConcepts = await prisma.concept.count({
-    where: user.grade ? { subject: { gradeLevel: user.grade } } : {},
+  const completedConcepts = await prisma.learningProgress.groupBy({
+    by: ['conceptId'],
+    where: {
+      userId: user.id,
+      stage: 'BLANK_FULL',
+      completed: true,
+      ...(hasEnrollments && courseConceptIds.length > 0 ? { conceptId: { in: courseConceptIds } } : {}),
+    },
   });
 
   // Recent in-progress concepts
@@ -62,12 +94,65 @@ export default async function StudentDashboard() {
     hw.concepts.some((c) => !c.allCompleted)
   );
 
+  // Today's question homework
+  const todayQuestionHw = await getTodayQuestionHomework(user.id);
+  const pendingQuestionHw = todayQuestionHw.filter((hw) => hw.status !== 'COMPLETED');
+
+  // 주간 활동 카운트
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
+  const weeklyActivity = await prisma.learningProgress.count({
+    where: { userId: user.id, updatedAt: { gte: weekAgo } },
+  });
+
+  // 랭킹 미리보기 (상위 5명)
+  const topStudents = await prisma.studentProfile.findMany({
+    where: { totalXp: { gt: 0 } },
+    include: { user: { select: { name: true, id: true } } },
+    orderBy: { totalXp: 'desc' },
+    take: 5,
+  });
+  const myRank = profile
+    ? (await prisma.studentProfile.count({ where: { totalXp: { gt: profile.totalXp } } })) + 1
+    : null;
+
+  // 추천 학습 (배정 과정 기반: 아직 완료하지 않은 개념)
+  const recommendedConcepts = hasEnrollments && courseConceptIds.length > 0
+    ? await prisma.concept.findMany({
+        where: {
+          id: { in: courseConceptIds },
+          NOT: {
+            progress: {
+              some: { userId: user.id, stage: 'BLANK_FULL', completed: true },
+            },
+          },
+        },
+        include: { subject: true },
+        take: 3,
+        orderBy: { sortOrder: 'asc' },
+      })
+    : !hasEnrollments
+      ? await prisma.concept.findMany({
+          where: {
+            ...(user.grade ? { subject: { gradeLevel: user.grade } } : {}),
+            NOT: {
+              progress: {
+                some: { userId: user.id, stage: 'BLANK_FULL', completed: true },
+              },
+            },
+          },
+          include: { subject: true },
+          take: 3,
+          orderBy: { sortOrder: 'asc' },
+        })
+      : [];
+
   const completedCount = completedConcepts.length;
   const progressPercent = totalConcepts > 0 ? Math.round((completedCount / totalConcepts) * 100) : 0;
 
   return (
     <div className="px-4 md:px-10 py-8 max-w-[1200px] mx-auto w-full">
-      {/* Homework banners */}
+      {/* ──── 섹션 1: 숙제 배너 + 환영 ──── */}
       {pendingHomework.length > 0 && (
         <Link href="/practice/arithmetic/homework" className="block mb-4">
           <div className="bg-gradient-to-r from-indigo-500 to-violet-500 rounded-sm p-4 text-white hover:from-indigo-600 hover:to-violet-600 transition-colors">
@@ -92,7 +177,7 @@ export default async function StudentDashboard() {
       )}
 
       {pendingConceptHw.length > 0 && (
-        <div className="mb-6">
+        <div className="mb-4">
           {pendingConceptHw.map((hw) => {
             const pending = hw.concepts.filter((c) => !c.allCompleted);
             const firstConcept = pending[0];
@@ -131,7 +216,34 @@ export default async function StudentDashboard() {
         </div>
       )}
 
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
+      {pendingQuestionHw.length > 0 && (
+        <div className="mb-4">
+          {pendingQuestionHw.map((hw) => (
+            <Link key={hw.planId} href="/practice/question-homework" className="block mb-2 last:mb-0">
+              <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-sm p-4 text-white hover:from-amber-600 hover:to-orange-600 transition-colors">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <FileQuestion className="w-8 h-8 opacity-90" />
+                    <div>
+                      <p className="text-xs font-medium opacity-80">오늘의 문제 숙제</p>
+                      <p className="font-bold">
+                        {hw.planTitle} · {hw.dayLabel} · {hw.questionCount}문제
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/20 rounded-sm px-4 py-2">
+                    <Play className="w-4 h-4" />
+                    <span className="font-bold text-sm">풀기</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold tracking-tight text-text-primary">대시보드</h1>
           {streak > 0 && (
@@ -143,54 +255,120 @@ export default async function StudentDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <StatCard
-          icon={<Award className="w-6 h-6 text-primary" />}
-          iconBg="bg-blue-50"
-          label="현재 레벨"
-          value={`Level ${level}`}
-          subtext={`다음 레벨까지 ${nextLevel.remaining} XP`}
-        />
-        <StatCard
-          icon={<Star className="w-6 h-6 text-secondary" />}
-          iconBg="bg-orange-50"
-          label="나의 포인트"
-          value={totalXp.toLocaleString()}
-        />
-        <StatCard
-          icon={<CheckCircle className="w-6 h-6 text-indigo-500" />}
-          iconBg="bg-indigo-50"
-          label="완료한 개념"
-          value={String(completedCount)}
-          suffix={`/ ${totalConcepts}`}
-        >
+      {/* ──── 현재 학습 과정 배너 ──── */}
+      {hasEnrollments && activeEnrollment && (
+        <Link href="/subjects" className="block mb-6">
+          <div className="bg-gradient-to-r from-primary to-blue-600 rounded-sm p-4 text-white hover:from-blue-700 hover:to-blue-800 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <GraduationCap className="w-8 h-8 opacity-90" />
+                <div>
+                  <p className="text-xs font-medium opacity-80">현재 학습 과정</p>
+                  <p className="font-bold">{activeEnrollment.course.title}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <p className="text-lg font-bold">
+                    {completedCount}/{totalConcepts}
+                  </p>
+                  <p className="text-xs opacity-80">개념 완료</p>
+                </div>
+                <ArrowRight className="w-5 h-5 opacity-80" />
+              </div>
+            </div>
+          </div>
+        </Link>
+      )}
+
+      {hasEnrollments && !activeEnrollment && (
+        <div className="mb-6 bg-slate-50 rounded-sm p-4 border border-slate-200 text-center">
+          <GraduationCap className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+          <p className="text-text-secondary text-sm">
+            {completedCourseCount > 0 ? '모든 배정 과정을 완료했습니다!' : '배정된 학습 과정이 없습니다'}
+          </p>
+        </div>
+      )}
+
+      {/* ──── 섹션 2: 통계 카드 4열 (glass-card) ──── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+        <div className="glass-card flex flex-col gap-2 rounded-sm p-3 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-2.5">
+            <Award className="w-5 h-5 text-primary opacity-30" />
+          </div>
+          <p className="text-text-secondary text-[10px] md:text-xs font-semibold tracking-wide">현재 레벨</p>
+          <p className="text-text-primary text-lg md:text-xl font-bold leading-none">Level {level}</p>
+          <p className="text-[10px] md:text-xs text-text-secondary">{nextLevel.remaining} XP 남음</p>
+        </div>
+
+        <div className="glass-card flex flex-col gap-2 rounded-sm p-3 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-2.5">
+            <Star className="w-5 h-5 text-secondary opacity-30" />
+          </div>
+          <p className="text-text-secondary text-[10px] md:text-xs font-semibold tracking-wide">나의 포인트</p>
+          <p className="text-text-primary text-lg md:text-xl font-bold leading-none">{totalXp.toLocaleString()}</p>
+          <p className="text-[10px] md:text-xs text-text-secondary">XP</p>
+        </div>
+
+        <div className="glass-card flex flex-col gap-2 rounded-sm p-3 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-2.5">
+            <CheckCircle className="w-5 h-5 text-indigo-500 opacity-30" />
+          </div>
+          <p className="text-text-secondary text-[10px] md:text-xs font-semibold tracking-wide">완료 개념</p>
+          <p className="text-text-primary text-lg md:text-xl font-bold leading-none">
+            {completedCount}
+            <span className="text-sm text-slate-400 font-bold ml-0.5">/ {totalConcepts}</span>
+          </p>
           <ProgressBar value={progressPercent} color="bg-indigo-500" size="sm" />
-        </StatCard>
+        </div>
+
+        <div className="glass-card flex flex-col gap-2 rounded-sm p-3 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-2.5">
+            <Activity className="w-5 h-5 text-emerald-500 opacity-30" />
+          </div>
+          <p className="text-text-secondary text-[10px] md:text-xs font-semibold tracking-wide">주간 활동</p>
+          <p className="text-text-primary text-lg md:text-xl font-bold leading-none">
+            {weeklyActivity}
+            <span className="text-sm text-slate-400 font-bold ml-0.5">건</span>
+          </p>
+          <p className="text-[10px] md:text-xs text-text-secondary">최근 7일</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* ──── 섹션 3: 2열 컨텐츠 ──── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        {/* 좌측: 진행 중인 학습 */}
         <div className="lg:col-span-2">
-          <Card className="p-8">
-            <div className="flex justify-between items-center mb-6">
+          <Card className="p-6">
+            <div className="flex justify-between items-center mb-5">
               <h2 className="text-lg font-bold text-text-primary">진행 중인 학습</h2>
               <Link href="/subjects" className="text-primary text-sm font-medium hover:underline flex items-center gap-1">
                 모두 보기 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3">
               {recentProgress.length === 0 ? (
-                <p className="text-text-secondary text-center py-8">아직 시작한 학습이 없습니다. 단원 목록에서 학습을 시작해보세요!</p>
+                <div className="text-center py-10">
+                  <BookOpen className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                  <p className="text-text-secondary mb-4">아직 시작한 학습이 없습니다.</p>
+                  <Link href="/subjects">
+                    <Button size="md">
+                      <Play className="w-4 h-4 mr-2" />
+                      학습 시작하기
+                    </Button>
+                  </Link>
+                </div>
               ) : (
                 recentProgress.map((p) => (
-                  <div key={p.id} className="flex flex-col sm:flex-row sm:items-center gap-4 p-5 rounded-sm bg-slate-50 border border-slate-100 hover:border-blue-200 transition-all group">
-                    <div className="flex-shrink-0 h-12 w-12 rounded-sm bg-blue-100 text-blue-600 flex items-center justify-center">
-                      <BookOpen className="w-6 h-6" />
+                  <div key={p.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-sm bg-slate-50 border border-slate-100 hover:border-blue-200 transition-all group">
+                    <div className="flex-shrink-0 h-10 w-10 rounded-sm bg-blue-100 text-blue-600 flex items-center justify-center">
+                      <BookOpen className="w-5 h-5" />
                     </div>
-                    <div className="flex-1">
-                      <h3 className="text-text-primary font-semibold mb-1 group-hover:text-primary transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-text-primary font-semibold text-sm mb-0.5 group-hover:text-primary transition-colors truncate">
                         {p.concept.subject.title}: {p.concept.title}
                       </h3>
-                      <p className="text-text-secondary text-sm">{stageLabels[p.stage] ?? p.stage}</p>
+                      <p className="text-text-secondary text-xs">{stageLabels[p.stage] ?? p.stage}</p>
                     </div>
                     <Link href={`/concepts/${p.concept.conceptCode ?? p.conceptId}`}>
                       <Button size="sm">이어서 하기</Button>
@@ -202,33 +380,115 @@ export default async function StudentDashboard() {
           </Card>
         </div>
 
-        <div className="flex flex-col gap-6">
-          {/* 게이미피케이션 카드들 (일일 미션, 오늘의 한 문제, 복수전 배너) */}
+        {/* 우측: 추천 학습 + 게이미피케이션 + 미니 랭킹 */}
+        <div className="flex flex-col gap-5">
+          {/* 추천 학습 */}
+          <Card className="p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <h2 className="text-sm font-bold text-text-primary">추천 학습</h2>
+            </div>
+            {recommendedConcepts.length === 0 ? (
+              <div className="text-center py-4">
+                <CheckCircle className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
+                <p className="text-text-secondary text-sm">모든 개념을 완료했습니다!</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {recommendedConcepts.map((c) => (
+                  <Link
+                    key={c.id}
+                    href={`/concepts/${c.conceptCode ?? c.id}`}
+                    className="flex items-center gap-3 p-2.5 rounded-sm bg-slate-50 border border-slate-100 hover:border-primary/30 hover:bg-primary/5 transition-all group"
+                  >
+                    <div className="flex-shrink-0 w-8 h-8 rounded-sm bg-blue-100 text-blue-600 flex items-center justify-center">
+                      <BookOpen className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-text-primary text-xs font-semibold truncate group-hover:text-primary transition-colors">
+                        {c.title}
+                      </p>
+                      <p className="text-text-secondary text-[10px]">{c.subject.title}</p>
+                    </div>
+                    <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-primary transition-colors" />
+                  </Link>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          {/* 게이미피케이션 카드들 */}
           <DashboardGamification />
 
-          <Card className="p-8">
-            <h2 className="text-lg font-bold text-text-primary mb-6">빠른 실행</h2>
-            <div className="flex flex-col gap-3">
-              <Link href="/subjects">
-                <Button size="md" className="w-full justify-center">
-                  <Play className="w-5 h-5 mr-2" />
-                  학습 시작하기
-                </Button>
-              </Link>
-              <Link href="/practice/arithmetic/time-attack">
-                <Button variant="secondary" size="md" className="w-full justify-center">
-                  <Zap className="w-5 h-5 mr-2 text-orange-500" />
-                  타임어택 도전
-                </Button>
-              </Link>
-              <Link href="/ranking">
-                <Button variant="ghost" size="md" className="w-full justify-center border border-slate-200">
-                  랭킹 확인하기
-                </Button>
+          {/* 미니 랭킹 */}
+          <Card className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-4 h-4 text-amber-500" />
+                <h2 className="text-sm font-bold text-text-primary">랭킹</h2>
+              </div>
+              <Link href="/ranking" className="text-primary text-xs font-medium hover:underline">
+                전체 보기
               </Link>
             </div>
+            {topStudents.length === 0 ? (
+              <p className="text-text-secondary text-xs text-center py-4">학습을 시작하면 랭킹에 표시됩니다.</p>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                {topStudents.map((s, i) => {
+                  const isMe = s.user.id === user.id;
+                  return (
+                    <div
+                      key={s.id}
+                      className={`flex items-center gap-2.5 px-2.5 py-2 rounded-sm text-xs transition-colors ${
+                        isMe ? 'bg-primary/5 border border-primary/20' : 'hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className={`w-5 text-center font-bold ${i < 3 ? 'text-amber-500' : 'text-slate-400'}`}>
+                        {i + 1}
+                      </span>
+                      <span className={`flex-1 truncate ${isMe ? 'font-bold text-primary' : 'text-text-primary'}`}>
+                        {s.user.name}{isMe && ' (나)'}
+                      </span>
+                      <span className="text-text-secondary font-medium">{s.totalXp.toLocaleString()} XP</span>
+                    </div>
+                  );
+                })}
+                {myRank && myRank > 5 && (
+                  <>
+                    <div className="text-center text-slate-300 text-[10px]">···</div>
+                    <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-sm text-xs bg-primary/5 border border-primary/20">
+                      <span className="w-5 text-center font-bold text-slate-400">{myRank}</span>
+                      <span className="flex-1 truncate font-bold text-primary">{user.name} (나)</span>
+                      <span className="text-text-secondary font-medium">{totalXp.toLocaleString()} XP</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </Card>
         </div>
+      </div>
+
+      {/* ──── 섹션 4: 빠른 실행 ──── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Link href="/subjects">
+          <Button size="md" className="w-full justify-center">
+            <Play className="w-5 h-5 mr-2" />
+            학습 시작하기
+          </Button>
+        </Link>
+        <Link href="/practice/arithmetic/time-attack">
+          <Button variant="secondary" size="md" className="w-full justify-center">
+            <Zap className="w-5 h-5 mr-2 text-orange-500" />
+            타임어택 도전
+          </Button>
+        </Link>
+        <Link href="/ranking">
+          <Button variant="ghost" size="md" className="w-full justify-center border border-slate-200">
+            랭킹 확인하기
+          </Button>
+        </Link>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from '@/components/ui/Toast';
 import {
   ArrowLeft,
   Search,
@@ -146,10 +147,10 @@ export default function CreateLevelTestPage() {
       if (res.ok) {
         router.push('/level-test');
       } else {
-        alert('레벨테스트 저장에 실패했습니다.');
+        toast.error('레벨테스트 저장에 실패했습니다.');
       }
     } catch {
-      alert('레벨테스트 저장에 실패했습니다.');
+      toast.error('레벨테스트 저장에 실패했습니다.');
     }
     setSaving(false);
   };

@@ -30,20 +30,97 @@ export const TYPE_CONFIG: Record<UpdateType, { label: string; color: string }> =
 };
 
 export const ALL_UPDATES: UpdateLog[] = [
-  // ── 선생님용 ──
+  // ── 2026-03-17 ──
   {
-    date: '2026-03-16',
-    title: 'PDF 도형 편집기 대폭 개선 & 다이어그램 26종 지원',
+    date: '2026-03-17',
+    title: 'UX 대폭 개선 — 글로벌 토스트 & 커맨드 팔레트',
     audience: ['teacher', 'admin'],
     entries: [
+      { type: 'feature', text: 'Ctrl+K 커맨드 팔레트 — 모든 메뉴를 키보드로 빠르게 검색/이동' },
+      { type: 'feature', text: '글로벌 토스트 알림 시스템 — 성공/오류/경고/정보 알림 자동 표시' },
+      { type: 'improve', text: '전체 페이지 alert() 팝업 → 토스트 알림으로 교체 (25개 파일, 67개 항목)' },
+      { type: 'improve', text: '전체 UI 폰트 Pretendard로 통일 (일관된 시각 경험)' },
+      { type: 'improve', text: 'API 코드 DRY 리팩터링 — Zod 스키마 재사용, 라우트 핸들러 팩토리 적용' },
+    ],
+  },
+  // ── 2026-03-16 ──
+  {
+    date: '2026-03-16',
+    title: '게이미피케이션 8종 기능 + 다이어그램 26종 완성',
+    audience: ['teacher', 'admin'],
+    entries: [
+      { type: 'feature', text: '게이미피케이션 8종 기능 토글 시스템 (타임어택, 일일미션, 뱃지, 복수전, 반대항전, 오늘의 문제 등)' },
+      { type: 'feature', text: '관리자 기능 관리 페이지 — 각 기능 ON/OFF 실시간 토글' },
+      { type: 'feature', text: '뱃지 시스템 10종 (연속출석, 연산마스터, 개념달인, 만점왕 등)' },
       { type: 'feature', text: '다이어그램 26종 지원 (막대그래프, 꺾은선, 그림그래프, 원그래프, 띠그래프, 각도, 시계, 히스토그램, 줄기와잎, 입체도형, 전개도, 수형도, 산점도 추가)' },
-      { type: 'feature', text: '분수 사각형 셀 클릭 편집 — 여러 개 사각형 각각 개별 셀 색칠/빗금 지원' },
-      { type: 'feature', text: '분수 원 조각 클릭 편집 — 파이 조각별 색칠/빗금 직접 클릭' },
+      { type: 'feature', text: '분수 사각형/원 조각 클릭 편집 — 개별 셀 색칠/빗금 지원' },
       { type: 'add', text: '도형 정렬 옵션 (왼쪽/가운데/오른쪽)' },
       { type: 'add', text: '수직선 마크 점 표시/숨기기 옵션 및 점 색상 커스텀' },
-      { type: 'add', text: '도형 편집기 팝업에 [그림N] 라벨 표시' },
       { type: 'fix', text: '분수 사각형 빗금(hatching)이 미리보기에 표시되지 않던 버그 수정' },
       { type: 'fix', text: 'Backspace 키로 텍스트 삭제 시 브라우저 뒤로가기 발생하던 문제 수정' },
+    ],
+  },
+  {
+    date: '2026-03-16',
+    title: '일일 미션 & 뱃지 시스템 도입',
+    audience: ['student'],
+    entries: [
+      { type: 'feature', text: '일일 미션 — 매일 새로운 학습 미션 3개 도전' },
+      { type: 'feature', text: '뱃지 시스템 — 연속출석, 연산마스터, 만점왕 등 10종 뱃지 수집' },
+      { type: 'feature', text: '오늘의 문제 — 매일 선정되는 도전 문제' },
+      { type: 'add', text: '복수전 — 틀린 문제 다시 도전하여 설욕' },
+      { type: 'add', text: '타임어택 — 연산 속도 챌린지' },
+    ],
+  },
+  // ── 2026-03-14~15 ──
+  {
+    date: '2026-03-14',
+    title: 'SVG 다이어그램 렌더링 시스템 & 프리셋 도형',
+    audience: ['teacher', 'admin'],
+    entries: [
+      { type: 'feature', text: 'SVG 다이어그램 렌더링 시스템 — AI가 생성한 도형을 정확한 SVG로 변환' },
+      { type: 'feature', text: '프리셋 기반 도형 시스템 — AI가 좌표 대신 프리셋(직각삼각형, 정삼각형 등)을 선택하여 정확도 향상' },
+      { type: 'add', text: '초등 다이어그램 13종: 수직선, 분수원, 분수사각형, 자릿값, 점배열, 순서도 등' },
+      { type: 'add', text: '중등 다이어그램 13종: 좌표평면, 원, 삼각형, 사각형, 함수그래프, 벤다이어그램 등' },
+      { type: 'improve', text: 'PDF 추출 시 도형/이미지 자동 감지 및 크롭' },
+    ],
+  },
+  // ── 2026-03-13 ──
+  {
+    date: '2026-03-13',
+    title: 'PDF 문제 추출 기능 & 성능 최적화',
+    audience: ['teacher', 'admin'],
+    entries: [
+      { type: 'feature', text: 'PDF 문제 추출 — 수학 문제집 PDF 업로드 → AI가 문제 자동 구조화 → 문제은행 일괄 저장' },
+      { type: 'feature', text: '4단계 위자드: 업로드 → 페이지 선택 → AI 추출 미리보기 → 저장' },
+      { type: 'add', text: '해설 PDF 별도 업로드 → 문제번호로 정답/풀이 자동 매칭' },
+      { type: 'add', text: '페이지 썸네일 그리드 + 전체선택/범위선택' },
+      { type: 'improve', text: 'API 병목 30곳 최적화 — DB 쿼리 개선, 불필요한 include 제거' },
+      { type: 'improve', text: 'KaTeX 수식 렌더링 전면 적용' },
+    ],
+  },
+  // ── 2026-03-12 ──
+  {
+    date: '2026-03-12',
+    title: '학습지 마법사 & 레벨테스트 보고서 개선',
+    audience: ['teacher', 'admin'],
+    entries: [
+      { type: 'feature', text: '3단계 학습지 마법사 — 교육과정 선택 → 문제 편집 → 설정/저장' },
+      { type: 'feature', text: '레벨테스트 보고서 AI 생성 (Claude Haiku)' },
+      { type: 'add', text: '보고서 9등급 스케일 평가 기준 추가' },
+      { type: 'improve', text: '보고서 폰트/정렬 통일, 레이아웃 개선' },
+      { type: 'improve', text: '레벨테스트 계통도 분석 강화 및 멘트 시스템' },
+    ],
+  },
+  {
+    date: '2026-03-12',
+    title: '숙제 관리 시스템 개편',
+    audience: ['teacher', 'admin'],
+    entries: [
+      { type: 'feature', text: '개념 숙제 + 문제 숙제 시스템 통합' },
+      { type: 'feature', text: '연산 숙제 시스템 추가' },
+      { type: 'improve', text: '숙제부 그리드 대폭 개선' },
+      { type: 'improve', text: '시험 + 레벨테스트 탭 통합, 네비게이션 정리' },
     ],
   },
   // ── 어드민 전용 ──

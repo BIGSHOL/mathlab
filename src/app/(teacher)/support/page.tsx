@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
 import {
   HelpCircle,
@@ -492,9 +493,9 @@ export default function SupportPage() {
                   <h3 className="font-bold text-text-primary">사용 가이드</h3>
                   <p className="text-sm text-text-secondary">자세한 사용법 안내</p>
                 </div>
-                <button className="text-sm text-primary font-bold flex items-center gap-1 hover:underline">
+                <Link href="/help" className="text-sm text-primary font-bold flex items-center gap-1 hover:underline">
                   가이드 보기 <ExternalLink className="w-3.5 h-3.5" />
-                </button>
+                </Link>
               </Card>
 
               {/* FAQ */}

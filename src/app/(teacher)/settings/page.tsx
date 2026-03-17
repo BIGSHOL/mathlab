@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { toast } from '@/components/ui/Toast';
 import { useAuth } from '@/hooks/useAuth';
 
 const TABS = [
@@ -52,12 +53,12 @@ export default function SettingsPage() {
         body: JSON.stringify({ name: profileName.trim() }),
       });
       if (res.ok) {
-        alert('프로필이 저장되었습니다.');
+        toast.success('프로필이 저장되었습니다.');
       } else {
-        alert('저장에 실패했습니다.');
+        toast.error('저장에 실패했습니다.');
       }
     } catch {
-      alert('저장에 실패했습니다.');
+      toast.error('저장에 실패했습니다.');
     } finally {
       setProfileSaving(false);
     }
@@ -66,15 +67,15 @@ export default function SettingsPage() {
   const handleChangePassword = async () => {
     if (!user) return;
     if (!currentPassword || !newPassword) {
-      alert('비밀번호를 입력하세요.');
+      toast.warning('비밀번호를 입력하세요.');
       return;
     }
     if (newPassword !== confirmPassword) {
-      alert('새 비밀번호가 일치하지 않습니다.');
+      toast.warning('새 비밀번호가 일치하지 않습니다.');
       return;
     }
     if (newPassword.length < 4) {
-      alert('비밀번호는 4자 이상이어야 합니다.');
+      toast.warning('비밀번호는 4자 이상이어야 합니다.');
       return;
     }
     setPasswordSaving(true);
@@ -85,16 +86,16 @@ export default function SettingsPage() {
         body: JSON.stringify({ currentPassword, password: newPassword }),
       });
       if (res.ok) {
-        alert('비밀번호가 변경되었습니다.');
+        toast.success('비밀번호가 변경되었습니다.');
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
       } else {
         const json = await res.json().catch(() => null);
-        alert(json?.error?.message ?? '비밀번호 변경에 실패했습니다.');
+        toast.error(json?.error?.message ?? '비밀번호 변경에 실패했습니다.');
       }
     } catch {
-      alert('비밀번호 변경에 실패했습니다.');
+      toast.error('비밀번호 변경에 실패했습니다.');
     } finally {
       setPasswordSaving(false);
     }

@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from '@/components/ui/Toast';
 import { EditorTopBar } from './EditorTopBar';
 import { EditorBottomBar } from './EditorBottomBar';
 import { LeftPanel } from './left-panel/LeftPanel';
@@ -142,10 +143,10 @@ export function LevelTestEditorShell({
         router.push('/level-test');
       } else {
         const json = await res.json().catch(() => null);
-        alert(json?.error?.message ?? '저장에 실패했습니다');
+        toast.error(json?.error?.message ?? '저장에 실패했습니다');
       }
     } catch {
-      alert('저장에 실패했습니다');
+      toast.error('저장에 실패했습니다');
     }
     setIsSaving(false);
   }, [questions, questionDomains, testSeq, router, setIsDirty]);
