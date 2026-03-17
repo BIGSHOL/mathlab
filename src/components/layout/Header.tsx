@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { Sparkles, Search, Bell, ChevronDown, LogOut, Settings, User } from 'lucide-react';
 import { signOut } from 'next-auth/react';
@@ -29,7 +29,12 @@ const teacherNav = [
 export function Header({ role, userName = '사용자' }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const viewAsId = searchParams.get('_as');
   const nav = role === 'student' ? studentNav : teacherNav;
+
+  // _as 파라미터가 있으면 모든 링크에 유지
+  const withAs = (href: string) => viewAsId ? `${href}?_as=${viewAsId}` : href;
   const [searchQuery, setSearchQuery] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -60,7 +65,7 @@ export function Header({ role, userName = '사용자' }: HeaderProps) {
   return (
     <header className="flex items-center justify-between border-b border-slate-200 px-6 py-3 bg-white sticky top-0 z-50">
       <div className="flex items-center gap-6">
-        <Link href={role === 'teacher' ? '/overview' : '/dashboard'} className="flex items-center gap-2">
+        <Link href={withAs(role === 'teacher' ? '/overview' : '/dashboard')} className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-primary" />
           <h2 className="text-lg font-bold tracking-tight text-text-primary">MathLab</h2>
         </Link>
@@ -83,7 +88,7 @@ export function Header({ role, userName = '사용자' }: HeaderProps) {
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={withAs(item.href)}
                 className={`px-3 py-1.5 text-sm font-medium rounded-sm transition-colors ${
                   isActive
                     ? 'text-primary bg-primary/5 font-bold'

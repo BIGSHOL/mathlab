@@ -68,13 +68,20 @@ export default async function StudentDashboard({
     },
   });
 
-  // Recent in-progress concepts
+  // 최근 학습한 개념 (완료 여부 무관, 개념별 가장 최근 단계)
   const recentProgress = await prisma.learningProgress.findMany({
-    where: { userId: user.id, completed: false },
+    where: { userId: user.id },
     include: { concept: { include: { subject: true } } },
     orderBy: { updatedAt: 'desc' },
-    take: 3,
+    take: 12, // 개념별 중복 제거 전 넉넉히 가져옴
   });
+  // 개념별 최신 1건만 유지
+  const seenConcepts = new Set<string>();
+  const uniqueRecentProgress = recentProgress.filter((p) => {
+    if (seenConcepts.has(p.conceptId)) return false;
+    seenConcepts.add(p.conceptId);
+    return true;
+  }).slice(0, 3);
 
   const stageLabels: Record<string, string> = {
     READING: 'Stage 1 - 개념 읽기',
@@ -347,7 +354,7 @@ export default async function StudentDashboard({
               </Link>
             </div>
             <div className="flex flex-col gap-3">
-              {recentProgress.length === 0 ? (
+              {uniqueRecentProgress.length === 0 ? (
                 <div className="text-center py-10">
                   <BookOpen className="w-10 h-10 text-slate-300 mx-auto mb-3" />
                   <p className="text-text-secondary mb-4">아직 시작한 학습이 없습니다.</p>
@@ -359,22 +366,27 @@ export default async function StudentDashboard({
                   </Link>
                 </div>
               ) : (
-                recentProgress.map((p) => (
-                  <div key={p.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-sm bg-slate-50 border border-slate-100 hover:border-blue-200 transition-all group">
-                    <div className="flex-shrink-0 h-10 w-10 rounded-sm bg-blue-100 text-blue-600 flex items-center justify-center">
-                      <BookOpen className="w-5 h-5" />
+                uniqueRecentProgress.map((p) => {
+                  const isCompleted = p.stage === 'BLANK_FULL' && p.completed;
+                  return (
+                    <div key={p.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-sm bg-slate-50 border border-slate-100 hover:border-blue-200 transition-all group">
+                      <div className={`flex-shrink-0 h-10 w-10 rounded-sm flex items-center justify-center ${isCompleted ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'}`}>
+                        {isCompleted ? <CheckCircle className="w-5 h-5" /> : <BookOpen className="w-5 h-5" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-text-primary font-semibold text-sm mb-0.5 group-hover:text-primary transition-colors truncate">
+                          {p.concept.subject.title}: {p.concept.title}
+                        </h3>
+                        <p className="text-text-secondary text-xs">
+                          {isCompleted ? '학습 완료!' : stageLabels[p.stage] ?? p.stage}
+                        </p>
+                      </div>
+                      <Link href={`/concepts/${p.concept.conceptCode ?? p.conceptId}`}>
+                        <Button size="sm">{isCompleted ? '복습하기' : '이어서 하기'}</Button>
+                      </Link>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-text-primary font-semibold text-sm mb-0.5 group-hover:text-primary transition-colors truncate">
-                        {p.concept.subject.title}: {p.concept.title}
-                      </h3>
-                      <p className="text-text-secondary text-xs">{stageLabels[p.stage] ?? p.stage}</p>
-                    </div>
-                    <Link href={`/concepts/${p.concept.conceptCode ?? p.conceptId}`}>
-                      <Button size="sm">이어서 하기</Button>
-                    </Link>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </Card>
