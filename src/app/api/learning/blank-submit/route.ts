@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth, isResponse, validateBody, requireResource } from '@/lib/api';
+import { requireAuthViewAs, isResponse, validateBody, requireResource } from '@/lib/api';
 import { blankSubmitSchema } from '@/lib/schemas/learning';
 
 interface BlankItem {
@@ -89,7 +89,7 @@ function matchBlankAnswer(expected: string, submitted: string): boolean {
 
 // POST /api/learning/blank-submit
 export async function POST(request: NextRequest) {
-  const user = await requireAuth();
+  const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
 
   const parsed = await validateBody(request, blankSubmitSchema);

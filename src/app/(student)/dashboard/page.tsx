@@ -1,4 +1,4 @@
-import { Award, Star, CheckCircle, Flame, Play, BookOpen, ArrowRight, CalendarCheck, Zap, FileQuestion, Trophy, Activity, Sparkles, GraduationCap } from 'lucide-react';
+import { Award, Star, CheckCircle, Flame, Play, BookOpen, ArrowRight, CalendarCheck, Zap, FileQuestion, Trophy, Activity, Sparkles, GraduationCap, XCircle, BarChart3 } from 'lucide-react';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -67,6 +67,7 @@ export default async function StudentDashboard({
       ...(hasEnrollments && courseConceptIds.length > 0 ? { conceptId: { in: courseConceptIds } } : {}),
     },
   });
+  const completedConceptIds = new Set(completedConcepts.map((c) => c.conceptId));
 
   // 최근 학습한 개념 (완료 여부 무관, 개념별 가장 최근 단계)
   const recentProgress = await prisma.learningProgress.findMany({
@@ -112,6 +113,54 @@ export default async function StudentDashboard({
     where: { userId: user.id, updatedAt: { gte: weekAgo } },
   });
 
+  // 최근 오답 (최근 5개)
+  const recentWrongAnswers = await prisma.answerLog.findMany({
+    where: {
+      attempt: { studentId: user.id },
+      isCorrect: false,
+    },
+    include: {
+      attempt: { select: { test: { select: { title: true } } } },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 10,
+  });
+  // questionId 중복 제거
+  const seenQIds = new Set<string>();
+  const uniqueWrongAnswers = recentWrongAnswers.filter((a) => {
+    if (seenQIds.has(a.questionId)) return false;
+    seenQIds.add(a.questionId);
+    return true;
+  }).slice(0, 5);
+  // 문제 내용 조회
+  const wrongQuestionIds = uniqueWrongAnswers.map((a) => a.questionId);
+  const wrongQuestions = wrongQuestionIds.length > 0
+    ? await prisma.question.findMany({
+        where: { id: { in: wrongQuestionIds } },
+        select: { id: true, content: true, chapter: true, difficulty: true },
+      })
+    : [];
+  const wrongQMap = new Map(wrongQuestions.map((q) => [q.id, q]));
+
+  // 주간 일별 학습량 (7일)
+  const dailyActivity: { date: string; count: number }[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const dayEnd = new Date(dayStart);
+    dayEnd.setDate(dayEnd.getDate() + 1);
+    const count = await prisma.answerLog.count({
+      where: {
+        attempt: { studentId: user.id },
+        createdAt: { gte: dayStart, lt: dayEnd },
+      },
+    });
+    const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+    dailyActivity.push({ date: dayNames[d.getDay()], count });
+  }
+  const maxDailyCount = Math.max(...dailyActivity.map((d) => d.count), 1);
+
   // 랭킹 미리보기 (상위 5명)
   const topStudents = await prisma.studentProfile.findMany({
     where: { totalXp: { gt: 0 } },
@@ -119,7 +168,7 @@ export default async function StudentDashboard({
     orderBy: { totalXp: 'desc' },
     take: 5,
   });
-  const myRank = profile
+  const _myRank = profile
     ? (await prisma.studentProfile.count({ where: { totalXp: { gt: profile.totalXp } } })) + 1
     : null;
 
@@ -342,12 +391,11 @@ export default async function StudentDashboard({
         </div>
       </div>
 
-      {/* ──── 섹션 3: 2열 컨텐츠 ──── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* 좌측: 진행 중인 학습 */}
+      {/* ──── Row 1: 진행 중인 학습 (2/3) + 추천 학습 + 오늘의 미션 (1/3) ──── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
         <div className="lg:col-span-2">
-          <Card className="p-6">
-            <div className="flex justify-between items-center mb-5">
+          <Card className="p-5 h-full">
+            <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold text-text-primary">진행 중인 학습</h2>
               <Link href="/subjects" className="text-primary text-sm font-medium hover:underline flex items-center gap-1">
                 모두 보기 <ArrowRight className="w-4 h-4" />
@@ -355,7 +403,7 @@ export default async function StudentDashboard({
             </div>
             <div className="flex flex-col gap-3">
               {uniqueRecentProgress.length === 0 ? (
-                <div className="text-center py-10">
+                <div className="text-center py-8">
                   <BookOpen className="w-10 h-10 text-slate-300 mx-auto mb-3" />
                   <p className="text-text-secondary mb-4">아직 시작한 학습이 없습니다.</p>
                   <Link href="/subjects">
@@ -367,9 +415,9 @@ export default async function StudentDashboard({
                 </div>
               ) : (
                 uniqueRecentProgress.map((p) => {
-                  const isCompleted = p.stage === 'BLANK_FULL' && p.completed;
+                  const isCompleted = completedConceptIds.has(p.conceptId);
                   return (
-                    <div key={p.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-sm bg-slate-50 border border-slate-100 hover:border-blue-200 transition-all group">
+                    <div key={p.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3.5 rounded-sm bg-slate-50 border border-slate-100 hover:border-blue-200 transition-all group">
                       <div className={`flex-shrink-0 h-10 w-10 rounded-sm flex items-center justify-center ${isCompleted ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'}`}>
                         {isCompleted ? <CheckCircle className="w-5 h-5" /> : <BookOpen className="w-5 h-5" />}
                       </div>
@@ -381,8 +429,8 @@ export default async function StudentDashboard({
                           {isCompleted ? '학습 완료!' : stageLabels[p.stage] ?? p.stage}
                         </p>
                       </div>
-                      <Link href={`/concepts/${p.concept.conceptCode ?? p.conceptId}`}>
-                        <Button size="sm">{isCompleted ? '복습하기' : '이어서 하기'}</Button>
+                      <Link href={`/concepts/${p.concept.conceptCode ?? p.conceptId}`} className="shrink-0">
+                        <Button size="sm" className="w-[100px] justify-center whitespace-nowrap">{isCompleted ? '복습하기' : '이어서 하기'}</Button>
                       </Link>
                     </div>
                   );
@@ -391,117 +439,171 @@ export default async function StudentDashboard({
             </div>
           </Card>
         </div>
-
-        {/* 우측: 추천 학습 + 게이미피케이션 + 미니 랭킹 */}
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-4">
           {/* 추천 학습 */}
-          <Card className="p-5">
-            <div className="flex items-center gap-2 mb-4">
+          <Card className="p-4">
+            <div className="flex items-center gap-2 mb-3">
               <Sparkles className="w-4 h-4 text-primary" />
               <h2 className="text-sm font-bold text-text-primary">추천 학습</h2>
             </div>
             {recommendedConcepts.length === 0 ? (
-              <div className="text-center py-4">
-                <CheckCircle className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
-                <p className="text-text-secondary text-sm">모든 개념을 완료했습니다!</p>
+              <div className="text-center py-3">
+                <CheckCircle className="w-7 h-7 text-emerald-400 mx-auto mb-1.5" />
+                <p className="text-text-secondary text-xs">모든 개념을 완료했습니다!</p>
               </div>
             ) : (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1.5">
                 {recommendedConcepts.map((c) => (
                   <Link
                     key={c.id}
                     href={`/concepts/${c.conceptCode ?? c.id}`}
-                    className="flex items-center gap-3 p-2.5 rounded-sm bg-slate-50 border border-slate-100 hover:border-primary/30 hover:bg-primary/5 transition-all group"
+                    className="flex items-center gap-2.5 p-2 rounded-sm bg-slate-50 border border-slate-100 hover:border-primary/30 hover:bg-primary/5 transition-all group"
                   >
-                    <div className="flex-shrink-0 w-8 h-8 rounded-sm bg-blue-100 text-blue-600 flex items-center justify-center">
-                      <BookOpen className="w-4 h-4" />
+                    <div className="flex-shrink-0 w-7 h-7 rounded-sm bg-blue-100 text-blue-600 flex items-center justify-center">
+                      <BookOpen className="w-3.5 h-3.5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-text-primary text-sm font-semibold truncate group-hover:text-primary transition-colors">
+                      <p className="text-text-primary text-xs font-semibold truncate group-hover:text-primary transition-colors">
                         {c.title}
                       </p>
-                      <p className="text-text-secondary text-sm">{c.subject.title}</p>
+                      <p className="text-text-secondary text-xs">{c.subject.title}</p>
                     </div>
-                    <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-primary transition-colors" />
+                    <ArrowRight className="w-3 h-3 text-slate-300 group-hover:text-primary transition-colors" />
                   </Link>
                 ))}
               </div>
             )}
           </Card>
-
-          {/* 게이미피케이션 카드들 */}
+          {/* 게이미피케이션 (오늘의 미션 + 오늘의 한 문제) */}
           <DashboardGamification />
-
-          {/* 미니 랭킹 */}
-          <Card className="p-5">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Trophy className="w-4 h-4 text-amber-500" />
-                <h2 className="text-sm font-bold text-text-primary">랭킹</h2>
-              </div>
-              <Link href="/ranking" className="text-primary text-xs font-medium hover:underline">
-                전체 보기
-              </Link>
-            </div>
-            {topStudents.length === 0 ? (
-              <p className="text-text-secondary text-xs text-center py-4">학습을 시작하면 랭킹에 표시됩니다.</p>
-            ) : (
-              <div className="flex flex-col gap-1.5">
-                {topStudents.map((s, i) => {
-                  const isMe = s.user.id === user.id;
-                  return (
-                    <div
-                      key={s.id}
-                      className={`flex items-center gap-2.5 px-2.5 py-2 rounded-sm text-xs transition-colors ${
-                        isMe ? 'bg-primary/5 border border-primary/20' : 'hover:bg-slate-50'
-                      }`}
-                    >
-                      <span className={`w-5 text-center font-bold ${i < 3 ? 'text-amber-500' : 'text-slate-400'}`}>
-                        {i + 1}
-                      </span>
-                      <span className={`flex-1 truncate ${isMe ? 'font-bold text-primary' : 'text-text-primary'}`}>
-                        {s.user.name}{isMe && ' (나)'}
-                      </span>
-                      <span className="text-text-secondary font-medium">{s.totalXp.toLocaleString()} XP</span>
-                    </div>
-                  );
-                })}
-                {myRank && myRank > 5 && (
-                  <>
-                    <div className="text-center text-slate-300 text-xs">···</div>
-                    <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-sm text-xs bg-primary/5 border border-primary/20">
-                      <span className="w-5 text-center font-bold text-slate-400">{myRank}</span>
-                      <span className="flex-1 truncate font-bold text-primary">{user.name} (나)</span>
-                      <span className="text-text-secondary font-medium">{totalXp.toLocaleString()} XP</span>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-          </Card>
         </div>
       </div>
 
-      {/* ──── 섹션 4: 빠른 실행 ──── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <Link href="/subjects">
-          <Button size="md" className="w-full justify-center">
-            <Play className="w-5 h-5 mr-2" />
-            학습 시작하기
-          </Button>
-        </Link>
-        <Link href="/practice/arithmetic/time-attack">
-          <Button variant="secondary" size="md" className="w-full justify-center">
-            <Zap className="w-5 h-5 mr-2 text-orange-500" />
-            타임어택 도전
-          </Button>
-        </Link>
-        <Link href="/ranking">
-          <Button variant="ghost" size="md" className="w-full justify-center border border-slate-200">
-            랭킹 확인하기
-          </Button>
-        </Link>
+      {/* ──── Row 2: 최근 오답 + 주간 학습 + 빠른 실행 (3열) ──── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+        {/* 최근 오답 */}
+        <Card className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <XCircle className="w-4 h-4 text-red-400" />
+              <h2 className="text-sm font-bold text-text-primary">최근 오답</h2>
+            </div>
+            {uniqueWrongAnswers.length > 0 && (
+              <Link href="/practice/revenge" className="text-primary text-xs font-medium hover:underline">
+                복습하기
+              </Link>
+            )}
+          </div>
+          {uniqueWrongAnswers.length === 0 ? (
+            <div className="text-center py-4">
+              <CheckCircle className="w-7 h-7 text-emerald-300 mx-auto mb-1.5" />
+              <p className="text-text-secondary text-xs">오답이 없습니다!</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              {uniqueWrongAnswers.map((ans) => {
+                const q = wrongQMap.get(ans.questionId);
+                if (!q) return null;
+                const preview = q.content.replace(/\$[^$]*\$/g, '□').replace(/[#*]/g, '').slice(0, 40);
+                return (
+                  <div key={ans.id} className="flex items-start gap-2 p-2 rounded-sm bg-red-50/50 border border-red-100">
+                    <XCircle className="w-3.5 h-3.5 text-red-400 mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-text-primary truncate">{preview}</p>
+                      <p className="text-xs text-text-secondary">{q.chapter}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+
+        {/* 주간 학습 차트 */}
+        <Card className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <BarChart3 className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-bold text-text-primary">주간 학습량</h2>
+          </div>
+          <div className="flex items-end justify-between gap-2 h-[120px]">
+            {dailyActivity.map((day, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                <div className="w-full flex flex-col items-center justify-end h-[88px]">
+                  <span className="text-xs text-text-secondary mb-1">{day.count > 0 ? day.count : ''}</span>
+                  <div
+                    className={`w-full max-w-[24px] rounded-sm transition-all ${
+                      day.count > 0 ? 'bg-primary' : 'bg-slate-100'
+                    }`}
+                    style={{ height: `${Math.max((day.count / maxDailyCount) * 100, day.count > 0 ? 12 : 4)}%` }}
+                  />
+                </div>
+                <span className={`text-xs ${i === 6 ? 'font-bold text-primary' : 'text-text-secondary'}`}>
+                  {day.date}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* 빠른 실행 */}
+        <Card className="p-4 flex flex-col gap-2.5 justify-center">
+          <Link href="/subjects">
+            <Button size="md" className="w-full justify-center">
+              <Play className="w-4 h-4 mr-2" />
+              학습 시작하기
+            </Button>
+          </Link>
+          <Link href="/practice/arithmetic/time-attack">
+            <Button variant="secondary" size="md" className="w-full justify-center">
+              <Zap className="w-4 h-4 mr-2 text-orange-500" />
+              타임어택 도전
+            </Button>
+          </Link>
+          <Link href="/ranking">
+            <Button variant="ghost" size="md" className="w-full justify-center border border-slate-200">
+              랭킹 확인하기
+            </Button>
+          </Link>
+        </Card>
       </div>
+
+      {/* ──── Row 3: 랭킹 (전체 너비) ──── */}
+      <Card className="p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Trophy className="w-4 h-4 text-amber-500" />
+            <h2 className="text-sm font-bold text-text-primary">랭킹</h2>
+          </div>
+          <Link href="/ranking" className="text-primary text-xs font-medium hover:underline">
+            전체 보기
+          </Link>
+        </div>
+        {topStudents.length === 0 ? (
+          <p className="text-text-secondary text-xs text-center py-4">학습을 시작하면 랭킹에 표시됩니다.</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            {topStudents.map((s, i) => {
+              const isMe = s.user.id === user.id;
+              return (
+                <div
+                  key={s.id}
+                  className={`flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-xs transition-colors ${
+                    isMe ? 'bg-primary/5 border border-primary/20' : 'bg-slate-50 border border-slate-100'
+                  }`}
+                >
+                  <span className={`w-5 text-center font-bold ${i < 3 ? 'text-amber-500' : 'text-slate-400'}`}>
+                    {i + 1}
+                  </span>
+                  <span className={`flex-1 truncate ${isMe ? 'font-bold text-primary' : 'text-text-primary'}`}>
+                    {s.user.name}{isMe && ' (나)'}
+                  </span>
+                  <span className="text-text-secondary font-medium">{s.totalXp.toLocaleString()}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

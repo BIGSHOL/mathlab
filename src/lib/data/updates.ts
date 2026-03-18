@@ -30,6 +30,29 @@ export const TYPE_CONFIG: Record<UpdateType, { label: string; color: string }> =
 };
 
 export const ALL_UPDATES: UpdateLog[] = [
+  // ── 2026-03-18 ──
+  {
+    date: '2026-03-18',
+    title: '빈칸 학습 정답 공개 시스템 + 대시보드 기간 필터',
+    audience: ['teacher', 'admin'],
+    entries: [
+      { type: 'feature', text: '빈칸 학습 오답 시 정답 공개 → 학생이 직접 재입력하여 다음 단계 진행 가능 (XP 절반 지급)' },
+      { type: 'feature', text: '대시보드 기간 설정 — 최근 7일/30일/3개월/전체 기간 필터링' },
+      { type: 'add', text: '학습 힌트/정답공개 사용 이력 DB 추적 (hintCount, revealCount, usedReveal)' },
+      { type: 'fix', text: '대시보드 "기간 설정" 버튼이 인쇄(window.print)로 연결되던 버그 수정' },
+      { type: 'improve', text: '활동률·학습기록·최근활동이 선택 기간에 맞게 필터링되도록 개선' },
+    ],
+  },
+  {
+    date: '2026-03-18',
+    title: '빈칸 학습 개선 — 막히면 정답 확인 후 재도전',
+    audience: ['student'],
+    entries: [
+      { type: 'feature', text: '빈칸 오답 시 정답이 플레이스홀더로 표시 — 확인 후 직접 입력하면 다음 단계로 진행' },
+      { type: 'add', text: '정답 공개 사용 시 XP가 절반으로 지급 (스스로 풀면 전액 지급)' },
+      { type: 'improve', text: '오답 빈칸이 amber 색상으로 강조되어 어떤 빈칸이 틀렸는지 한눈에 확인' },
+    ],
+  },
   // ── 2026-03-17 ──
   {
     date: '2026-03-17',

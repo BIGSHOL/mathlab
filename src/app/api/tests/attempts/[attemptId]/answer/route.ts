@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
 import { submitAnswer } from '@/lib/services/grading';
-import { forbidden, badRequest, clamp } from '@/lib/api';
+import { requireAuthViewAs, isResponse, badRequest, clamp } from '@/lib/api';
 
 /** POST: 답안 제출 */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ attemptId: string }> }
 ) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role !== 'STUDENT') {
-    return forbidden('학생만 답안을 제출할 수 있습니다');
-  }
+  const user = await requireAuthViewAs(request);
+  if (isResponse(user)) return user;
 
   const { attemptId } = await params;
   const body = await request.json();

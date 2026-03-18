@@ -10,7 +10,6 @@ import {
   BarChart3,
   Settings,
   HelpCircle,
-  Sparkles,
   BookOpen,
   Eye,
   ScanEye,
@@ -33,8 +32,10 @@ import {
   Search,
   GraduationCap,
   LifeBuoy,
+  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { LogoIcon } from '@/components/ui/LogoIcon';
 
 interface MenuItem {
   label: string;
@@ -146,18 +147,30 @@ export function Sidebar() {
   return (
     <aside className={`flex flex-col bg-white border-r border-slate-200 shrink-0 overflow-hidden transition-all duration-200 print:hidden ${collapsed ? 'w-14' : 'w-48'}`}>
       {/* Logo */}
-      <div className="shrink-0 px-3 py-3 border-b border-slate-100 flex items-center justify-between">
-        <Link href="/overview" className="flex items-center gap-2 min-w-0">
-          <Sparkles className="w-5 h-5 text-primary shrink-0" />
-          {!collapsed && <h1 className="text-base font-bold tracking-tight text-text-primary">MathLab</h1>}
-        </Link>
-        <button
-          onClick={() => setCollapsed((p) => !p)}
-          className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors shrink-0"
-          title={collapsed ? '사이드바 펼치기' : '사이드바 접기'}
-        >
-          {collapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
-        </button>
+      <div className={`shrink-0 border-b border-slate-100 flex items-center ${collapsed ? 'justify-center px-1 py-3' : 'justify-between px-3 py-3'}`}>
+        {collapsed ? (
+          <button
+            onClick={() => setCollapsed(false)}
+            className="p-1.5 rounded hover:bg-slate-100 transition-colors"
+            title="사이드바 펼치기"
+          >
+            <LogoIcon className="w-5 h-5" />
+          </button>
+        ) : (
+          <>
+            <Link href="/overview" className="flex items-center gap-2 min-w-0">
+              <LogoIcon className="w-5 h-5 shrink-0" />
+              <h1 className="text-base font-bold tracking-tight text-text-primary">MathLab</h1>
+            </Link>
+            <button
+              onClick={() => setCollapsed(true)}
+              className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors shrink-0"
+              title="사이드바 접기"
+            >
+              <PanelLeftClose className="w-4 h-4" />
+            </button>
+          </>
+        )}
       </div>
 
       {/* Admin badge */}

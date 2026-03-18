@@ -16,6 +16,8 @@ interface DiagramSvgItem {
 interface MathRendererProps {
   content: string;
   className?: string;
+  /** true이면 블록(<div>) 대신 인라인(<span>) 렌더링 — 빈칸 템플릿 등에서 사용 */
+  inline?: boolean;
   diagramSvgs?: DiagramSvgItem[];
   onDiagramClick?: (idx: number) => void;
 }
@@ -37,7 +39,7 @@ function parseImageTitle(title: string | undefined): { width?: string; align?: s
   return { width, align };
 }
 
-export function MathRenderer({ content, className = '', diagramSvgs, onDiagramClick }: MathRendererProps) {
+export function MathRenderer({ content, className = '', inline, diagramSvgs, onDiagramClick }: MathRendererProps) {
   // [그림] / [그림1] / [그림2] 플레이스홀더를 diagramSvgs의 인라인 SVG로 교체
   let svgReplacedContent = content;
   if (diagramSvgs && diagramSvgs.length > 0) {
@@ -97,9 +99,11 @@ export function MathRenderer({ content, className = '', diagramSvgs, onDiagramCl
     }
   );
 
+  const Tag = inline ? 'span' : 'div';
+
   return (
-    <div
-      className={`prose prose-slate max-w-none prose-p:my-2 prose-headings:my-3 ${className}`}
+    <Tag
+      className={inline ? className : `prose prose-slate max-w-none prose-p:my-2 prose-headings:my-3 ${className}`}
       onClick={onDiagramClick ? (e) => {
         const el = (e.target as HTMLElement).closest('[data-diagram-idx]');
         if (el) {
@@ -192,21 +196,23 @@ export function MathRenderer({ content, className = '', diagramSvgs, onDiagramCl
         remarkPlugins={[remarkMath, remarkBreaks]}
         rehypePlugins={[rehypeRaw, [rehypeKatex, { strict: false }]]}
         components={{
-          p: ({ children, ...props }) => {
-            // 자식이 img만인 경우 div로 감싸기 (블록 레이아웃)
-            const childArray = React.Children.toArray(children);
-            const hasOnlyImage = childArray.length === 1
-              && React.isValidElement(childArray[0])
-              && (childArray[0] as React.ReactElement<{ src?: string }>).props?.src;
-            if (hasOnlyImage) {
-              return <div className="my-2">{children}</div>;
-            }
-            return (
-              <p className="text-slate-800 mb-2 last:mb-0" style={{ lineHeight: '2.2' }} {...props}>
-                {children}
-              </p>
-            );
-          },
+          p: inline
+            ? ({ children }) => <span>{children}</span>
+            : ({ children, ...props }) => {
+              // 자식이 img만인 경우 div로 감싸기 (블록 레이아웃)
+              const childArray = React.Children.toArray(children);
+              const hasOnlyImage = childArray.length === 1
+                && React.isValidElement(childArray[0])
+                && (childArray[0] as React.ReactElement<{ src?: string }>).props?.src;
+              if (hasOnlyImage) {
+                return <div className="my-2">{children}</div>;
+              }
+              return (
+                <p className="text-slate-800 mb-2 last:mb-0" style={{ lineHeight: '2.2' }} {...props}>
+                  {children}
+                </p>
+              );
+            },
           blockquote: ({ children }) => (
             <div className="border border-slate-300 px-6 py-3 my-3 rounded-md bg-slate-50 text-slate-900 not-italic w-fit max-w-full">
               {children}
@@ -258,6 +264,6 @@ export function MathRenderer({ content, className = '', diagramSvgs, onDiagramCl
       >
         {processedContent}
       </ReactMarkdown>
-    </div>
+    </Tag>
   );
 }

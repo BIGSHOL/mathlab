@@ -1,7 +1,8 @@
 'use client';
 
+import React from 'react';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ArrowRight, BookOpen, CheckCircle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
@@ -70,6 +71,11 @@ interface BlankResult {
 export default function ConceptPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // 학생 시점 보기 지원: _as 파라미터를 모든 API 호출에 전달
+  const viewAs = searchParams.get('_as') ?? '';
+  const asSuffix = viewAs ? `&_as=${viewAs}` : '';
+  const asQuery = viewAs ? `?_as=${viewAs}` : '';
   const [concept, setConcept] = useState<ConceptData | null>(null);
   const [currentStageIdx, setCurrentStageIdx] = useState(0);
   const [progress, setProgress] = useState<Progress[]>([]);
@@ -100,13 +106,13 @@ export default function ConceptPage() {
   useEffect(() => {
     if (!id) return;
     Promise.all([
-      fetch(`/api/concepts/${id}`)
+      fetch(`/api/concepts/${id}${asQuery}`)
         .then((r) => r.json())
         .catch(() => null),
-      fetch(`/api/concepts/${id}/adjacent`)
+      fetch(`/api/concepts/${id}/adjacent${asQuery}`)
         .then((r) => r.json())
         .catch(() => null),
-      fetch(`/api/concepts/${id}/memo`)
+      fetch(`/api/concepts/${id}/memo${asQuery}`)
         .then((r) => r.ok ? r.json() : null)
         .catch(() => null),
     ]).then(([conceptJson, adjacentJson, memoJson]) => {
@@ -119,7 +125,7 @@ export default function ConceptPage() {
   // Fetch progress (uses real concept ID, depends on concept)
   useEffect(() => {
     if (!concept) return;
-    fetch(`/api/learning/progress?conceptId=${concept.id}`)
+    fetch(`/api/learning/progress?conceptId=${concept.id}${asSuffix}`)
       .then((r) => r.json())
       .then((json) => {
         const p = json.data ?? [];
@@ -137,7 +143,7 @@ export default function ConceptPage() {
   const saveMemo = useCallback((text: string) => {
     if (memoTimerRef.current) clearTimeout(memoTimerRef.current);
     memoTimerRef.current = setTimeout(() => {
-      fetch(`/api/concepts/${id}/memo`, {
+      fetch(`/api/concepts/${id}/memo${asQuery}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: text }),
@@ -156,7 +162,7 @@ export default function ConceptPage() {
     const stage = stageConfig[currentStageIdx]?.key;
     if (stage === 'BLANK_EASY' || stage === 'BLANK_HARD' || stage === 'BLANK_FULL') {
       const level = stage === 'BLANK_EASY' ? 1 : stage === 'BLANK_HARD' ? 2 : 3;
-      fetch(`/api/concepts/${id}/blanks?level=${level}`)
+      fetch(`/api/concepts/${id}/blanks?level=${level}${asSuffix}`)
         .then((r) => r.json())
         .then((json) => {
           if (json.data) {
@@ -176,7 +182,7 @@ export default function ConceptPage() {
   const handleCompleteStage = async () => {
     const stage = stageConfig[currentStageIdx].key;
     setSubmitting(true);
-    const res = await fetch('/api/learning/progress', {
+    const res = await fetch(`/api/learning/progress${asQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -220,7 +226,7 @@ export default function ConceptPage() {
     }));
 
     try {
-      const res = await fetch('/api/learning/blank-submit', {
+      const res = await fetch(`/api/learning/blank-submit${asQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -394,7 +400,7 @@ export default function ConceptPage() {
           </div>
           <div className="p-5 flex-1 overflow-y-auto">
             {currentStage.key === 'READING' && (
-              <div className="prose prose-slate max-w-none font-serif-kr">
+              <div className="prose prose-slate max-w-none font-serif-kr text-[15px] leading-8">
                 <MathRenderer content={concept.fullContent.replace(/\n/g, '<br/>')} />
               </div>
             )}
@@ -446,8 +452,8 @@ export default function ConceptPage() {
                     {currentStage.key === 'BLANK_FULL' ? '통문장 암기' : '빈칸 채우기'}
                   </h3>
                 </div>
-                <div className="p-6 flex-1 overflow-y-auto">
-                  <div className="text-[15px] leading-8">
+                <div className="p-4 flex-1 overflow-y-auto">
+                  <div className="text-[15px] leading-7">
                     {renderBlanksTemplate(
                       blanks, blankAnswers, setBlankAnswers, blankResults,
                       showHints, setShowHints, mathPopup, setMathPopup,
@@ -480,12 +486,12 @@ export default function ConceptPage() {
               color={currentStage.color}
             />
             <div className="flex items-center justify-end mt-6 gap-3">
-              {currentStage.key === 'READING' && (
+              {currentStage.key === 'READING' && !progress.some((p) => p.stage === currentStage.key && p.completed) && (
                 <Button size="lg" onClick={handleCompleteStage} disabled={submitting}>
                   {submitting ? '처리 중...' : '읽기 완료 (+5 XP)'}
                 </Button>
               )}
-              {(currentStage.key === 'BLANK_EASY' || currentStage.key === 'BLANK_HARD' || currentStage.key === 'BLANK_FULL') && (
+              {(currentStage.key === 'BLANK_EASY' || currentStage.key === 'BLANK_HARD' || currentStage.key === 'BLANK_FULL') && !progress.some((p) => p.stage === currentStage.key && p.completed) && (
                 <>
                   {hasUsedReveal && (
                     <span className="text-xs text-amber-600">정답 공개 사용 · XP 절반</span>
@@ -532,7 +538,20 @@ function renderBlanksTemplate(
 
   return parts.map((part, idx) => {
     const match = part.match(/\{\{(\d+)\}\}/);
-    if (!match) return <span key={idx} className="[&_p]:inline [&_p]:m-0"><MathRenderer content={part} /></span>;
+    if (!match) {
+      // \n 줄바꿈을 <br>로 변환, 각 줄은 인라인 MathRenderer로 렌더링
+      const lines = part.split('\n');
+      return (
+        <React.Fragment key={idx}>
+          {lines.map((line, li) => (
+            <React.Fragment key={li}>
+              {li > 0 && <br />}
+              {line && <MathRenderer content={line} inline />}
+            </React.Fragment>
+          ))}
+        </React.Fragment>
+      );
+    }
 
     const position = parseInt(match[1], 10);
     const blank = blanks.blanks.find((b) => b.position === position);
@@ -543,23 +562,23 @@ function renderBlanksTemplate(
     const revealed = revealedAnswers[position];
 
     return (
-      <span key={idx} className="inline-flex items-center gap-0.5 mx-0.5 align-middle">
+      <span key={idx} className="inline-flex items-center gap-px mx-0.5 align-baseline">
         {needsMathInput ? (
           /* 복잡한 수식 빈칸 → 클릭하면 MathLive 팝업 */
           <span className="inline-flex flex-col items-center">
             <button
               type="button"
               onClick={() => (!result || isWrong) && setMathPopup({ position })}
-              className={`inline-flex items-center justify-center min-w-[96px] px-2 py-1 border-2 border-dashed rounded-sm text-center font-semibold text-sm transition-all ${
+              className={`inline-flex items-center justify-center min-w-[72px] px-1.5 py-0.5 border-b-2 border-dashed text-center font-semibold text-sm transition-all ${
                 isCorrect
                   ? 'border-emerald-400 bg-emerald-50 text-emerald-700 animate-bounce-in'
                   : isWrong
                     ? 'border-red-400 bg-red-50 text-red-700 animate-shake'
                     : answers[position]
-                      ? 'border-primary/50 bg-primary/5 text-slate-800'
+                      ? 'border-primary/50 text-slate-800'
                       : revealed
                         ? 'border-amber-300 bg-amber-50/50'
-                        : 'border-slate-300 bg-white hover:border-primary/40 hover:bg-primary/5'
+                        : 'border-slate-300 hover:border-primary/40'
               }`}
             >
               {answers[position] ? (
@@ -570,7 +589,7 @@ function renderBlanksTemplate(
             </button>
             {/* 정답 공개: 수식은 아래에 표시 */}
             {revealed && !isCorrect && !answers[position] && (
-              <span className="text-amber-600 text-xs mt-0.5 opacity-70">
+              <span className="text-amber-600 text-xs opacity-70">
                 <MathRenderer content={revealed} />
               </span>
             )}
@@ -581,31 +600,30 @@ function renderBlanksTemplate(
             type="text"
             value={answers[position] ?? ''}
             onChange={(e) => setAnswers((prev) => ({ ...prev, [position]: e.target.value }))}
-            className={`inline-block w-24 px-2 py-1 border-2 border-dashed rounded-sm text-center font-semibold text-sm transition-all outline-none ${
+            className={`inline-block w-20 px-1.5 py-0.5 border-b-2 border-dashed text-center font-semibold text-sm transition-all outline-none bg-transparent ${
               isCorrect
                 ? 'border-emerald-400 bg-emerald-50 text-emerald-700 animate-bounce-in'
                 : isWrong
                   ? 'border-red-400 bg-red-50 text-red-700 animate-shake'
                   : revealed && !answers[position]
                     ? 'border-amber-300 bg-amber-50/50'
-                    : 'border-slate-300 bg-white focus:border-primary'
+                    : 'border-slate-300 focus:border-primary'
             }`}
             placeholder={revealed ? stripLatexWrap(revealed) : `(${position})`}
           />
         )}
-        {isCorrect && <span className="text-emerald-500 text-sm">&#10003;</span>}
-        {isWrong && <span className="text-red-500 text-sm">&#10007;</span>}
+        {isCorrect && <span className="text-emerald-500 text-xs">&#10003;</span>}
+        {isWrong && <span className="text-red-500 text-xs">&#10007;</span>}
         <span className="relative inline-block">
           <button
             type="button"
             onClick={() => {
               setShowHints((prev) => ({ ...prev, [position]: !prev[position] }));
-              // 힌트 열기 시 사용 추적
               if (!showHints[position]) {
                 onHintUsed(position);
               }
             }}
-            className={`w-5 h-5 rounded-full text-xs font-bold leading-none transition-all ${
+            className={`w-4 h-4 rounded-full text-[10px] font-bold leading-none transition-all ${
               showHints[position]
                 ? 'bg-amber-400 text-white shadow-sm'
                 : 'bg-amber-100 text-amber-500 hover:bg-amber-200'
@@ -614,7 +632,7 @@ function renderBlanksTemplate(
             ?
           </button>
           {showHints[position] && blank && (
-            <span className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-3 py-1.5 bg-slate-800 text-white text-xs font-medium rounded-sm shadow-lg whitespace-nowrap z-50 animate-fade-in before:content-[''] before:absolute before:bottom-full before:left-1/2 before:-translate-x-1/2 before:border-4 before:border-transparent before:border-b-slate-800">
+            <span className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2.5 py-1 bg-slate-800 text-white text-xs font-medium rounded-sm shadow-lg whitespace-nowrap z-50 animate-fade-in before:content-[''] before:absolute before:bottom-full before:left-1/2 before:-translate-x-1/2 before:border-4 before:border-transparent before:border-b-slate-800">
               {blank.hint}
             </span>
           )}

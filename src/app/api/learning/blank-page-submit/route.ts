@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth, isResponse, validateBody, requireResource } from '@/lib/api';
+import { requireAuthViewAs, isResponse, validateBody, requireResource } from '@/lib/api';
 import { blankPageSubmitSchema } from '@/lib/schemas/learning';
 import { XP_REWARDS } from '@/lib/utils/xp';
 
 // POST /api/learning/blank-page-submit
 export async function POST(request: NextRequest) {
-  const user = await requireAuth();
+  const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
 
   const parsed = await validateBody(request, blankPageSubmitSchema);

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth, isResponse, badRequest } from '@/lib/api';
+import { requireAuthViewAs, isResponse, badRequest } from '@/lib/api';
 import { isFeatureEnabled } from '@/lib/utils/features';
 import { awardXp } from '@/lib/utils/xp';
 
 /** POST /api/daily-question/submit — 답안 제출 */
 export async function POST(request: NextRequest) {
-  const user = await requireAuth();
+  const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
 
   if (!(await isFeatureEnabled('daily_question'))) {

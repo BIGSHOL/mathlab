@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
 import { completeAttempt } from '@/lib/services/grading';
 import { prisma } from '@/lib/db';
-import { forbidden, badRequest } from '@/lib/api';
+import { requireAuthViewAs, isResponse, badRequest } from '@/lib/api';
 
 /** POST: 시험 완료 */
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ attemptId: string }> }
 ) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role !== 'STUDENT') {
-    return forbidden('학생만 시험을 완료할 수 있습니다');
-  }
+  const user = await requireAuthViewAs(request);
+  if (isResponse(user)) return user;
 
   const { attemptId } = await params;
 
@@ -27,7 +24,7 @@ export async function POST(
     if (attempt?.test.testType === 'level_test') {
       try {
         const { analyzeLevelTest } = await import('@/lib/services/level-test');
-        await analyzeLevelTest(attemptId, currentUser.id);
+        await analyzeLevelTest(attemptId, user.id);
       } catch {
         // Non-fatal: 분석은 수동으로 재실행 가능
       }

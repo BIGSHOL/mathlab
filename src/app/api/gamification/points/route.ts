@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth, isResponse, notFound } from '@/lib/api';
+import { requireAuthViewAs, isResponse, notFound } from '@/lib/api';
 import { xpToNextLevel } from '@/lib/utils/xp';
 
 // GET /api/gamification/points
-export async function GET() {
-  const user = await requireAuth();
+export async function GET(request: NextRequest) {
+  const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
 
   const profile = await prisma.studentProfile.findUnique({

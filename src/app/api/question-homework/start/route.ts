@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth, isResponse } from '@/lib/api';
+import { requireAuthViewAs, isResponse } from '@/lib/api';
 
 export async function POST(request: NextRequest) {
-  const user = await requireAuth();
+  const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
 
   const { planId, dayIndex } = await request.json();

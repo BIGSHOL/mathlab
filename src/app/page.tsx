@@ -3,7 +3,6 @@ import {
   BookOpen,
   BarChart3,
   Trophy,
-  Sparkles,
   ArrowRight,
   Newspaper,
   Calculator,
@@ -19,9 +18,11 @@ import {
   Target,
   GraduationCap,
   CheckCircle2,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { LogoIcon } from '@/components/ui/LogoIcon';
 
 const features = [
   {
@@ -135,7 +136,7 @@ export default function LandingPage() {
       {/* Header */}
       <header className="flex items-center justify-between border-b border-slate-200 px-6 md:px-10 py-3 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="flex items-center gap-3">
-          <Sparkles className="w-6 h-6 text-primary" />
+          <LogoIcon className="w-6 h-6" />
           <h2 className="text-lg font-bold tracking-tight text-text-primary">MathLab</h2>
         </div>
         <div className="flex items-center gap-3">
@@ -407,7 +408,7 @@ export default function LandingPage() {
       <footer className="border-t border-slate-200 py-8 px-6 md:px-10 bg-white">
         <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2 text-text-secondary text-sm">
-            <Sparkles className="w-4 h-4 text-primary" />
+            <LogoIcon className="w-4 h-4" />
             <span>&copy; 2025 MathLab. All rights reserved.</span>
           </div>
           <div className="flex gap-6 text-sm text-text-secondary">

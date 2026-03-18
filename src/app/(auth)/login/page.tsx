@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
-import { Sparkles, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
+import { LogoIcon } from '@/components/ui/LogoIcon';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
@@ -43,7 +44,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <Sparkles className="w-8 h-8 text-primary" />
+            <LogoIcon className="w-8 h-8" />
             <span className="text-2xl font-black tracking-tight">MathLab</span>
           </Link>
           <h1 className="text-2xl font-bold text-text-primary">로그인</h1>

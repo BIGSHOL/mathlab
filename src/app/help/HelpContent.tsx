@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Sparkles,
   ArrowLeft,
   HelpCircle,
   Search,
@@ -24,6 +23,7 @@ import {
   Trophy,
   Award,
 } from 'lucide-react';
+import { LogoIcon } from '@/components/ui/LogoIcon';
 import type { HelpCategory, HelpItem } from '@/lib/data/help';
 
 /* ── lucide 아이콘 매핑 ── */
@@ -95,7 +95,7 @@ export function HelpContent({ backHref, backLabel, isLoggedIn }: Props) {
       {/* 헤더 */}
       <header className="flex items-center justify-between border-b border-slate-200 px-6 md:px-10 py-3 bg-white sticky top-0 z-50">
         <div className="flex items-center gap-3">
-          <Sparkles className="w-6 h-6 text-primary" />
+          <LogoIcon className="w-6 h-6" />
           <Link href={backHref} className="text-lg font-bold tracking-tight text-text-primary">
             MathLab
           </Link>

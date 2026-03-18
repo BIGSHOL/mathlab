@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Newspaper, Sparkles, ArrowLeft } from 'lucide-react';
+import { Newspaper, ArrowLeft } from 'lucide-react';
+import { LogoIcon } from '@/components/ui/LogoIcon';
 import { UpdateTimeline } from '@/components/updates/UpdateTimeline';
 import type { UpdateLog } from '@/lib/data/updates';
 
@@ -27,7 +28,7 @@ export function UpdatesContent({ backHref, backLabel, isLoggedIn }: Props) {
     <div className="min-h-screen flex flex-col bg-white">
       <header className="flex items-center justify-between border-b border-slate-200 px-6 md:px-10 py-3 bg-white sticky top-0 z-50">
         <div className="flex items-center gap-3">
-          <Sparkles className="w-6 h-6 text-primary" />
+          <LogoIcon className="w-6 h-6" />
           <Link href={backHref} className="text-lg font-bold tracking-tight text-text-primary">MathLab</Link>
         </div>
         <Link href={backHref} className="text-sm text-text-secondary hover:text-primary transition-colors flex items-center gap-1">

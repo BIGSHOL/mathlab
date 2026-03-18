@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
-import { Sparkles, Search, Bell, ChevronDown, LogOut, Settings, User } from 'lucide-react';
+import { Search, Bell, ChevronDown, LogOut, Settings, User } from 'lucide-react';
+import { LogoIcon } from '@/components/ui/LogoIcon';
 import { signOut } from 'next-auth/react';
 
 interface HeaderProps {
@@ -66,7 +67,7 @@ export function Header({ role, userName = '사용자' }: HeaderProps) {
     <header className="flex items-center justify-between border-b border-slate-200 px-6 py-3 bg-white sticky top-0 z-50">
       <div className="flex items-center gap-6">
         <Link href={withAs(role === 'teacher' ? '/overview' : '/dashboard')} className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-primary" />
+          <LogoIcon className="w-5 h-5" />
           <h2 className="text-lg font-bold tracking-tight text-text-primary">MathLab</h2>
         </Link>
         <div className="relative">
@@ -82,7 +83,7 @@ export function Header({ role, userName = '사용자' }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-4">
-        <nav className="flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-1">
           {nav.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             return (

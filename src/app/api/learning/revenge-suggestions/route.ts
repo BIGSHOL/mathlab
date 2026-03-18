@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server';
-import { requireAuth, isResponse } from '@/lib/api';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAuthViewAs, isResponse } from '@/lib/api';
 import { prisma } from '@/lib/db';
 
 /** GET /api/learning/revenge-suggestions — 복수전 추천 (오답 3회 이상 유형) */
-export async function GET() {
-  const user = await requireAuth();
+export async function GET(request: NextRequest) {
+  const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
 
   // 오답을 chapter + difficulty 별로 집계

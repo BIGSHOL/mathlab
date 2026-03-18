@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, isResponse, badRequest } from '@/lib/api';
+import { requireAuthViewAs, isResponse, badRequest } from '@/lib/api';
 import { prisma } from '@/lib/db';
 import { awardXp } from '@/lib/utils/xp';
 
 /** POST /api/learning/revenge-complete — 복수전 완료 처리 */
 export async function POST(request: NextRequest) {
-  const user = await requireAuth();
+  const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
 
   const body = await request.json();

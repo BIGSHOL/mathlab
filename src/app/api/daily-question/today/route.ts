@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth, isResponse } from '@/lib/api';
+import { requireAuthViewAs, isResponse } from '@/lib/api';
 import { isFeatureEnabled } from '@/lib/utils/features';
 
 /** GET /api/daily-question/today — 오늘의 한 문제 + 통계 */
-export async function GET() {
-  const user = await requireAuth();
+export async function GET(request: NextRequest) {
+  const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
 
   if (!(await isFeatureEnabled('daily_question'))) {
@@ -37,10 +37,22 @@ export async function GET() {
     });
     const excludeIds = recentIds.map((r) => r.questionId);
 
+    // 학생 학년에 맞는 bookCode 필터
+    // 초등: E3-1, E4-2 등 / 중등: 1-1, 2-2 등
+    const gradeFilter: Record<string, unknown> = {};
+    if (user.grade) {
+      if (user.grade <= 6) {
+        gradeFilter.bookCode = { startsWith: `E${user.grade}-` };
+      } else if (user.grade <= 9) {
+        gradeFilter.bookCode = { startsWith: `${user.grade - 6}-` };
+      }
+    }
+
     const candidates = await prisma.question.findMany({
       where: {
         type: 'MULTIPLE_CHOICE',
         ...(excludeIds.length > 0 ? { id: { notIn: excludeIds } } : {}),
+        ...gradeFilter,
       },
       select: { id: true },
       take: 50,

@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server';
-import { requireAuth, isResponse } from '@/lib/api';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAuthViewAs, isResponse } from '@/lib/api';
 import { prisma } from '@/lib/db';
 import { seedBadges } from '@/lib/services/badge-checker';
 
 /** GET /api/badges — 전체 배지 + 사용자 획득 여부 */
-export async function GET() {
-  const user = await requireAuth();
+export async function GET(request: NextRequest) {
+  const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
 
   await seedBadges();

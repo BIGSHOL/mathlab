@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server';
-import { requireAuth, isResponse, serverError } from '@/lib/api';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAuthViewAs, isResponse, serverError } from '@/lib/api';
 import { getTodayHomework } from '@/lib/services/homework';
 
 /** GET: 학생의 오늘 숙제 */
-export async function GET() {
-  const user = await requireAuth();
+export async function GET(request: NextRequest) {
+  const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
 
   try {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth, isResponse, badRequest } from '@/lib/api';
+import { requireAuthViewAs, isResponse, badRequest } from '@/lib/api';
 
 /** Resolve concept by conceptCode or cuid id */
 async function resolveConceptId(rawId: string): Promise<string | null> {
@@ -15,7 +15,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await requireAuth();
+  const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
 
   const { id: rawId } = await params;
@@ -33,7 +33,7 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await requireAuth();
+  const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
 
   const { id: rawId } = await params;

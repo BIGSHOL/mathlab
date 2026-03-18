@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth, isResponse, validateBody } from '@/lib/api';
+import { requireAuth, requireAuthViewAs, isResponse, validateBody } from '@/lib/api';
 import { completeStageSchema } from '@/lib/schemas/learning';
 import { XP_REWARDS, calculateLevel } from '@/lib/utils/xp';
 import { checkAndAdvanceCourse } from '@/lib/services/course-advance';
 
 // GET /api/learning/progress?conceptId=xxx
 export async function GET(request: NextRequest) {
-  const user = await requireAuth();
+  const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
 
   const conceptId = new URL(request.url).searchParams.get('conceptId');
@@ -36,7 +36,7 @@ const STAGE_XP: Record<string, number> = {
 
 // POST /api/learning/progress - Complete a stage
 export async function POST(request: NextRequest) {
-  const user = await requireAuth();
+  const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
 
   const parsed = await validateBody(request, completeStageSchema);
