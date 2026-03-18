@@ -1,0 +1,412 @@
+/**
+ * MathLab 수학 교재 프리셋 — PdfExtractPlugin 구현
+ *
+ * 한국 수학 교재(초등~중등) PDF에서 문제를 추출하는 플러그인.
+ * 시스템 프롬프트, Gemini 스키마, 후처리 로직을 포함합니다.
+ *
+ * @example
+ * ```ts
+ * import { mathTextbookPlugin } from '@/lib/pdf-extract-engine/presets/math-textbook';
+ * import { usePdfExtract } from '@/lib/pdf-extract-engine/hooks';
+ *
+ * const wizard = usePdfExtract({
+ *   plugin: mathTextbookPlugin,
+ *   extractEndpoint: '/api/questions/pdf-extract',
+ *   onSave: async (items) => { ... },
+ * });
+ * ```
+ */
+
+import type { PdfExtractPlugin } from '../types';
+import { fixLatexEscaping } from '../ai/post-processor';
+import { createPageFilter } from '../core/page-filter';
+
+// ============================================================
+// 추출 결과 타입 (MathLab 도메인)
+// ============================================================
+
+export type MathDifficulty = 'BASIC' | 'MEDIUM' | 'HIGH' | 'HIGHEST';
+export type MathQuestionType = 'MULTIPLE_CHOICE' | 'SHORT_ANSWER' | 'ESSAY';
+
+export interface MathDiagramSvg {
+  svg: string;
+  label: string;
+}
+
+export interface MathDiagramParam {
+  type: string;
+  label: string;
+  params: Record<string, unknown>;
+  align?: 'left' | 'center' | 'right';
+}
+
+export interface MathImageBbox {
+  box: [number, number, number, number];
+  label: string;
+}
+
+export interface ExtractedMathProblem {
+  questionNum: number;
+  pageNum: number;
+  sectionHeader: string;
+  difficultyTag: string;
+  problemType: string;
+  content: string;
+  choices: string[];
+  boxItems: string[];
+  answer: string;
+  explanation: string;
+  sourceTag: string;
+  difficulty: MathDifficulty;
+  type: MathQuestionType;
+  imageBboxes?: MathImageBbox[];
+  diagramSvgs?: MathDiagramSvg[];
+  diagramParams?: MathDiagramParam[];
+}
+
+export interface MathExtractMeta {
+  bookCode: string;
+  chapter?: string;
+}
+
+// ============================================================
+// 매핑 유틸
+// ============================================================
+
+const DIFFICULTY_MAP: Record<string, MathDifficulty> = {
+  '하': 'BASIC',
+  '중하': 'BASIC',
+  '중': 'MEDIUM',
+  '중상': 'HIGH',
+  '상': 'HIGHEST',
+};
+
+const TYPE_MAP: Record<string, MathQuestionType> = {
+  '객관식': 'MULTIPLE_CHOICE',
+  '주관식': 'SHORT_ANSWER',
+  '단답형': 'SHORT_ANSWER',
+  '서술형': 'ESSAY',
+};
+
+export function mapDifficulty(tag: string): MathDifficulty {
+  return DIFFICULTY_MAP[tag.trim()] || 'MEDIUM';
+}
+
+export function mapType(tag: string): MathQuestionType {
+  return TYPE_MAP[tag.trim()] || 'SHORT_ANSWER';
+}
+
+/** ㄱㄴㄷ 보기를 content에 마크다운 인용블록으로 포함 */
+export function embedBoxItems(content: string, boxItems: string[]): string {
+  if (boxItems.length === 0) return content;
+  const boxBlock = [
+    '',
+    '> **\\<보기\\>**',
+    '>',
+    ...boxItems.map((item) => `> ${item}`),
+  ].join('\n');
+  return content + boxBlock;
+}
+
+/** 수학 텍스트에서 $...$로 감싸지지 않은 숫자/변수를 자동 래핑 */
+export function autoWrapMath(text: string): string {
+  if (!text) return text;
+  const parts = text.split(/(\$[^$]*\$|!\[[^\]]*\]\([^)]*\)|```[\s\S]*?```)/g);
+  return parts
+    .map((part, i) => {
+      if (i % 2 === 1) return part;
+      return part
+        .replace(/(?<![①②③④⑤a-zA-Z_])(\d{2,}(?:,\d{3})*(?:\.\d+)?)/g, '$$$1$$')
+        .replace(/(?<=[\uAC00-\uD7A3\s,])([a-zA-Z])(?=[\uAC00-\uD7A3\s,+\-=])/g, '$$$1$$');
+    })
+    .join('');
+}
+
+// ============================================================
+// 페이지 필터
+// ============================================================
+
+export const mathPageFilter = createPageFilter({
+  skipPatterns: [
+    /^목\s*차$/m,
+    /구성과\s*특징/,
+    /이\s*책의\s*(구성|특징)/,
+    /차\s*례/,
+    /학습\s*계획표/,
+    /정답과\s*풀이/,
+  ],
+  targetPatterns: [
+    /(?:^|\s)0[1-9](?:\s|$)/m,
+    /(?:^|\s)[1-9]\d?\s*[.)]?\s/m,
+    /\([1-9]\d?\)/,
+    /①|②|③|④|⑤/,
+    /문제\s*\d/,
+    /계산해?\s*보세요/,
+    /구하시오|구하여라|구해\s*보세요/,
+    /써\s*넣으세요|써\s*봅시다/,
+    /풀어?\s*보세요|풀어라/,
+  ],
+  targetOverridesSkip: true,
+});
+
+// ============================================================
+// Gemini 응답 스키마
+// ============================================================
+
+// Google GenAI Type enum 값 (동적 import 없이 사용)
+const STRING = 'STRING' as const;
+const NUMBER = 'NUMBER' as const;
+const BOOLEAN = 'BOOLEAN' as const;
+const OBJECT = 'OBJECT' as const;
+const ARRAY = 'ARRAY' as const;
+
+export const MATH_EXTRACT_SCHEMA = {
+  type: OBJECT,
+  properties: {
+    problems: {
+      type: ARRAY,
+      items: {
+        type: OBJECT,
+        properties: {
+          questionNum: { type: NUMBER, description: '문제 번호 (예: 131, 132)' },
+          sectionHeader: { type: STRING, description: '유형/단원 제목 (예: "유형 01 서로소")' },
+          difficultyTag: { type: STRING, description: '난이도: 하, 중하, 중, 중상, 상' },
+          problemType: { type: STRING, description: '문제 유형: 객관식, 주관식, 서술형' },
+          content: { type: STRING, description: '문제 본문 (마크다운+LaTeX)' },
+          choices: {
+            type: ARRAY,
+            items: { type: STRING },
+            description: '객관식 보기 배열. 주관식이면 빈 배열',
+          },
+          boxItems: {
+            type: ARRAY,
+            items: { type: STRING },
+            description: '<보기> 항목 (ㄱ,ㄴ,ㄷ). 없으면 빈 배열',
+          },
+          answer: { type: STRING, description: '정답' },
+          sourceTag: { type: STRING, description: '태그: 대표문제 등' },
+          images: {
+            type: ARRAY,
+            items: {
+              type: OBJECT,
+              properties: {
+                box: { type: ARRAY, items: { type: NUMBER }, description: '[y_min, x_min, y_max, x_max] (0~1000)' },
+                label: { type: STRING, description: '도형/이미지 설명' },
+              },
+              required: ['box', 'label'],
+            },
+            description: '도형/이미지 바운딩 박스',
+          },
+          diagramSvgs: {
+            type: ARRAY,
+            items: {
+              type: OBJECT,
+              properties: {
+                svg: { type: STRING, description: '완전한 SVG 코드' },
+                label: { type: STRING, description: '도형 설명' },
+              },
+              required: ['svg', 'label'],
+            },
+            description: 'diagramParams로 불가한 도형만 직접 SVG',
+          },
+          diagramParams: {
+            type: ARRAY,
+            items: {
+              type: OBJECT,
+              properties: {
+                diagramType: { type: STRING, description: 'fraction_circle | fraction_rect | number_line | place_value | dot_array | coordinate_plane | triangle | quadrilateral | circle | function_graph | venn_diagram | regular_polygon | flow_chart' },
+                label: { type: STRING, description: '도형 설명' },
+                totalParts: { type: NUMBER, description: '원 등분 수. fraction_circle 전용' },
+                coloredParts: { type: NUMBER, description: '색칠 조각 수. fraction_circle 전용' },
+                count: { type: NUMBER, description: '도형 개수' },
+                rows: { type: NUMBER, description: '행 수' },
+                cols: { type: NUMBER, description: '열 수' },
+                coloredCount: { type: NUMBER, description: '색칠 칸 수. fraction_rect 전용' },
+                hatching: { type: BOOLEAN, description: '빗금 패턴. fraction_rect 전용' },
+                min: { type: NUMBER, description: '수직선 최솟값' },
+                max: { type: NUMBER, description: '수직선 최댓값' },
+                step: { type: NUMBER, description: '눈금 간격' },
+                hundreds: { type: NUMBER, description: '백 자리. place_value 전용' },
+                tens: { type: NUMBER, description: '십 자리. place_value 전용' },
+                ones: { type: NUMBER, description: '일 자리. place_value 전용' },
+              },
+              required: ['diagramType', 'label'],
+            },
+            description: '구조화된 다이어그램. [그림N] 플레이스홀더와 대응',
+          },
+        },
+        required: ['questionNum', 'content', 'problemType'],
+      },
+    },
+    concepts: {
+      type: ARRAY,
+      items: {
+        type: OBJECT,
+        properties: {
+          sectionHeader: { type: STRING, description: '유형/단원 제목' },
+          title: { type: STRING, description: '개념 제목' },
+          content: { type: STRING, description: '개념 설명 전문 (마크다운+LaTeX)' },
+        },
+        required: ['sectionHeader', 'title', 'content'],
+      },
+      description: '유형 설명 박스/개념 요약',
+    },
+  },
+  required: ['problems'],
+};
+
+// ============================================================
+// 시스템 프롬프트
+// ============================================================
+
+export const MATH_SYSTEM_PROMPT = `당신은 한국 수학 교재 분석 전문가입니다.
+주어진 수학 교재 페이지 이미지를 분석하여 모든 문제를 추출하세요.
+
+⚠️ 최우선 규칙 — 빈칸에 정답 채우기 절대 금지!
+원본 교재에서 □, ( ), 빈칸으로 되어 있는 답란은 반드시 \\\\boxed{\\\\phantom{0}}로 비워두세요.
+정답 숫자를 content에 넣으면 학생이 문제를 풀 수 없게 됩니다. 정답은 answer 필드에만!
+
+[규칙]
+1. 각 문제의 번호, 유형(객관식/주관식/서술형), 난이도 태그를 식별
+2. 문제 본문은 마크다운으로 작성. 모든 수식은 $...$로 감싸기
+3. 객관식 보기는 choices 배열에 포함 (번호 ①②③④⑤ 포함)
+4. <보기> 항목(ㄱ,ㄴ,ㄷ)은 boxItems에 별도 저장
+5. 난이도 태그가 있으면 difficultyTag에 저장
+6. 유형/단원 헤더를 sectionHeader에 저장
+7. "대표문제" 같은 특수 태그는 sourceTag에 저장
+8. 도형/다이어그램은 diagramParams 배열로 출력. content에 [그림1],[그림2]... 플레이스홀더
+9. 정답이 보이면 answer에 포함, 아니면 빈 문자열
+10. 개념 요약 박스가 있으면 concepts 배열에 추출
+11. 테두리/박스 영역은 마크다운 인용블록(>)으로 감싸기
+12. 수식: \\\\times, ^{}, \\\\dfrac 사용. 모든 숫자/변수는 $...$로 감싸기
+13. 세로셈은 코드블록으로 보존 (가로 변환 금지)
+14. 빈칸/답란은 \\\\boxed{\\\\phantom{0}} 사용 (정답 채우기 금지!)
+15. 시각적 구조는 텍스트 우선 + [그림] 병행
+16. $$...$$ 안에서 $...$ 중첩 금지
+17. 원본 충실성: 임의 추가/해석 금지
+18. 2열 레이아웃은 마크다운 테이블 사용
+19. 온라인 변환: "○표 하세요" → "구하세요", "색칠하세요" → "찾으세요"
+20. AI 난이도 판단: 하(단순)/중하(2단계)/중(2~3단계)/중상(심화)/상(고난이도)
+21. diagramParams 필드별 규칙: fraction_circle(totalParts,coloredParts,count), fraction_rect(rows,cols,coloredCount), number_line(min,max,step), place_value(hundreds,tens,ones). 미사용 숫자 필드는 0`;
+
+// ============================================================
+// 플러그인 정의
+// ============================================================
+
+export const mathTextbookPlugin: PdfExtractPlugin<ExtractedMathProblem, MathExtractMeta> = {
+  name: 'korean-math-textbook',
+
+  responseSchema: MATH_EXTRACT_SCHEMA,
+  systemPrompt: MATH_SYSTEM_PROMPT,
+
+  isTargetPage: mathPageFilter,
+
+  fixText: fixLatexEscaping,
+
+  postProcess: (raw: unknown, pageNum: number): ExtractedMathProblem[] => {
+    const data = raw as { problems?: Record<string, unknown>[]; concepts?: unknown[] };
+    const pageResults = data?.problems || [];
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return pageResults.map((p: any) => {
+      const contentText = p.boxItems?.length > 0
+        ? embedBoxItems(p.content || '', p.boxItems)
+        : p.content || '';
+
+      // diagramParams 정규화
+      const normalizedParams: MathDiagramParam[] = [];
+      if (Array.isArray(p.diagramParams)) {
+        for (const dp of p.diagramParams) {
+          const dtype = dp.diagramType || dp.type;
+          if (!dtype) continue;
+          const paramObj: Record<string, unknown> = dp.params || {};
+          for (const key of ['totalParts', 'coloredParts', 'count', 'rows', 'cols', 'coloredCount',
+                             'hatching', 'min', 'max', 'step', 'hundreds', 'tens', 'ones']) {
+            if (dp[key] !== undefined && dp[key] !== 0) {
+              paramObj[key] = dp[key];
+            }
+          }
+          normalizedParams.push({ type: dtype, label: dp.label || dtype, params: paramObj });
+        }
+      }
+
+      const diagramSvgs: MathDiagramSvg[] = Array.isArray(p.diagramSvgs) ? p.diagramSvgs : [];
+
+      return {
+        questionNum: p.questionNum,
+        pageNum,
+        sectionHeader: fixLatexEscaping(p.sectionHeader || ''),
+        difficultyTag: p.difficultyTag || '',
+        problemType: p.problemType || '주관식',
+        content: autoWrapMath(fixLatexEscaping(contentText)),
+        choices: (p.choices || []).map((c: string) => autoWrapMath(fixLatexEscaping(c))),
+        boxItems: p.boxItems || [],
+        answer: fixLatexEscaping(p.answer || ''),
+        explanation: '',
+        sourceTag: ['서술형', '객관식', '주관식'].includes(p.sourceTag || '') ? '' : (p.sourceTag || ''),
+        difficulty: mapDifficulty(p.difficultyTag || ''),
+        type: mapType(p.problemType || '주관식'),
+        imageBboxes: Array.isArray(p.images) && p.images.length > 0 ? p.images : undefined,
+        diagramSvgs: diagramSvgs.length > 0 ? diagramSvgs : undefined,
+        diagramParams: normalizedParams.length > 0 ? normalizedParams : undefined,
+      };
+    });
+  },
+};
+
+// ============================================================
+// 해설 추출 플러그인
+// ============================================================
+
+export interface ExtractedSolution {
+  questionNum: number;
+  answer: string;
+  explanation: string;
+}
+
+export const SOLUTION_EXTRACT_SCHEMA = {
+  type: OBJECT,
+  properties: {
+    solutions: {
+      type: ARRAY,
+      items: {
+        type: OBJECT,
+        properties: {
+          questionNum: { type: NUMBER, description: '문제 번호' },
+          answer: { type: STRING, description: '정답' },
+          explanation: { type: STRING, description: '풀이 과정 (마크다운+LaTeX)' },
+        },
+        required: ['questionNum', 'answer'],
+      },
+    },
+  },
+  required: ['solutions'],
+};
+
+export const mathSolutionPlugin: PdfExtractPlugin<ExtractedSolution> = {
+  name: 'korean-math-solution',
+
+  responseSchema: SOLUTION_EXTRACT_SCHEMA,
+
+  systemPrompt: `당신은 한국 수학 교재 해설 분석 전문가입니다.
+주어진 해설 페이지 이미지에서 각 문제의 정답과 풀이를 추출하세요.
+
+[규칙]
+1. 문제번호(questionNum)를 정확히 식별
+2. 정답(answer)은 원문 그대로 (예: "⑤", "2개", "1")
+3. 풀이(explanation)는 마크다운으로 작성, 수식은 $...$로 감싸기
+4. 풀이가 여러 단계이면 줄바꿈으로 구분
+5. 채점 기준이 있으면 풀이 끝에 포함`,
+
+  fixText: fixLatexEscaping,
+
+  postProcess: (raw: unknown): ExtractedSolution[] => {
+    const data = raw as { solutions?: Record<string, unknown>[] };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (data?.solutions || []).map((s: any) => ({
+      questionNum: s.questionNum,
+      answer: fixLatexEscaping(s.answer || ''),
+      explanation: fixLatexEscaping(s.explanation || ''),
+    }));
+  },
+};

@@ -153,6 +153,9 @@ model LearningProgress {
   completed   Boolean   @default(false)
   attempts    Int       @default(0)
   score         Int?
+  hintCount     Int       @default(0)
+  revealCount   Int       @default(0)
+  usedReveal    Boolean   @default(false)
   submittedText String?   @db.Text
   startedAt     DateTime  @default(now())
   completedAt   DateTime?
@@ -369,6 +372,7 @@ model AnswerLog {
   statusClassification String?  @db.VarChar(20)
   flagged          Boolean  @default(false)
   flagReason       String?  @db.VarChar(100)
+  hintUsed         Boolean  @default(false)
   createdAt        DateTime @default(now())
 
   attempt  TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)

@@ -25,6 +25,7 @@ export async function GET(
           comboCount: true,
           pointsEarned: true,
           selectedAnswer: true,
+          hintUsed: true,
         },
       },
     },

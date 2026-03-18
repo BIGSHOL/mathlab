@@ -5,6 +5,7 @@ const stageEnum = z.enum(['READING', 'BLANK_EASY', 'BLANK_HARD', 'BLANK_FULL', '
 export const completeStageSchema = z.object({
   conceptId: z.string().min(1, '개념 ID가 필요합니다'),
   stage: stageEnum,
+  usedReveal: z.boolean().optional(),
 });
 
 export const blankSubmitSchema = z.object({
@@ -15,6 +16,8 @@ export const blankSubmitSchema = z.object({
       value: z.string().min(1, '빈칸을 모두 채워주세요'),
     })
   ).min(1, '답안을 입력해주세요'),
+  hintCount: z.number().int().min(0).optional(),
+  revealCount: z.number().int().min(0).optional(),
 });
 
 export const blankPageSubmitSchema = z.object({

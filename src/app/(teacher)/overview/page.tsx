@@ -31,11 +31,27 @@ function getGradeLabel(grade: number | null) {
   return grade <= 6 ? `초등 ${grade}학년` : `중등 ${grade - 6}학년`;
 }
 
-export default async function TeacherDashboard() {
+function getPeriodDate(period: string): Date | null {
+  const now = new Date();
+  switch (period) {
+    case '7d': now.setDate(now.getDate() - 7); return now;
+    case '30d': now.setDate(now.getDate() - 30); return now;
+    case '90d': now.setDate(now.getDate() - 90); return now;
+    default: return null; // 'all'
+  }
+}
+
+export default async function TeacherDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ period?: string }>;
+}) {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
   const isAdmin = user.role === 'ADMIN';
+  const { period = '7d' } = await searchParams;
+  const periodStart = getPeriodDate(period);
 
   // --- Data queries ---
   const totalStudents = await prisma.user.count({ where: { role: 'STUDENT', deletedAt: null } });
@@ -54,16 +70,15 @@ export default async function TeacherDashboard() {
     ? Math.round(profiles.reduce((sum, p) => sum + p.level, 0) / profiles.length * 10) / 10
     : 0;
 
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
   const activeStudents = profiles.filter(
-    (p) => p.lastActiveAt && p.lastActiveAt >= sevenDaysAgo
+    (p) => p.lastActiveAt && periodStart && p.lastActiveAt >= periodStart
   ).length;
   const attendanceRate = totalStudents > 0
     ? Math.round((activeStudents / totalStudents) * 100)
     : 0;
 
-  const totalProgress = await prisma.learningProgress.count();
+  const progressWhere = periodStart ? { updatedAt: { gte: periodStart } } : {};
+  const totalProgress = await prisma.learningProgress.count({ where: progressWhere });
 
   // Focus students (lowest XP)
   const lowPerformers = await prisma.user.findMany({
@@ -117,6 +132,7 @@ export default async function TeacherDashboard() {
 
   // Recent activity
   const recentActivity = await prisma.learningProgress.findMany({
+    where: progressWhere,
     orderBy: { updatedAt: 'desc' },
     take: 6,
     include: {
@@ -148,7 +164,7 @@ export default async function TeacherDashboard() {
       trend: { value: '+5%', positive: true },
     },
     {
-      label: '주간 활동률',
+      label: period === 'all' ? '전체 활동률' : period === '90d' ? '3개월 활동률' : period === '30d' ? '월간 활동률' : '주간 활동률',
       value: `${attendanceRate}`,
       suffix: '%',
       icon: <CalendarCheck className="w-8 h-8 text-primary opacity-20" />,
@@ -180,7 +196,7 @@ export default async function TeacherDashboard() {
   ];
 
   return (
-      <div className="flex flex-col grow min-w-0 max-w-[1400px] w-full mx-auto p-2.5 sm:p-3 md:p-4 gap-3">
+      <div className="flex flex-col grow min-w-0 max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-3 md:py-4 gap-3">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2">
           <div>
@@ -200,7 +216,7 @@ export default async function TeacherDashboard() {
               className="glass-card flex flex-col gap-2 rounded-sm p-3 md:p-3 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 p-3 md:p-3">{stat.icon}</div>
-              <p className="text-text-secondary text-xs font-semibold tracking-wide">
+              <p className="text-text-secondary text-sm font-semibold tracking-wide">
                 {stat.label}
               </p>
               <div className="flex items-end justify-between mt-auto">

@@ -126,7 +126,7 @@ export function DailyQuestionCard() {
           </div>
 
           {data.question.explanation && (
-            <div className="text-xs text-text-secondary bg-slate-50 rounded-sm p-3">
+            <div className="text-sm text-text-secondary bg-slate-50 rounded-sm p-3">
               <MathRenderer content={data.question.explanation} />
             </div>
           )}

@@ -16,6 +16,7 @@ import {
   Shuffle,
   ChevronDown,
   ChevronUp,
+  Lightbulb,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -32,6 +33,7 @@ interface AnswerDetail {
   comboCount: number;
   pointsEarned: number;
   selectedAnswer: string;
+  hintUsed?: boolean;
 }
 
 interface QuestionInfo {
@@ -288,7 +290,7 @@ export default function TestResultPage() {
         return (
           <Card className="p-4 mb-6">
             <h3 className="text-sm font-bold text-text-primary mb-3">학습 상태 분석</h3>
-            <div className="grid grid-cols-4 gap-2 text-center">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
               <div>
                 <span className="text-lg font-bold text-emerald-600">○</span>
                 <p className="text-xs text-text-secondary">정답</p>
@@ -349,6 +351,12 @@ export default function TestResultPage() {
                     </span>
                     {ans.pointsEarned > 0 && (
                       <span className="text-xs text-primary font-semibold">+{ans.pointsEarned}점</span>
+                    )}
+                    {ans.hintUsed && (
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">
+                        <Lightbulb className="w-3 h-3" />
+                        힌트
+                      </span>
                     )}
                   </div>
                   <div className="text-sm text-text-primary line-clamp-2 mb-1">

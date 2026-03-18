@@ -226,7 +226,7 @@ export default function QuestionHomeworkPage() {
 
           {/* Choices or text input */}
           {currentQ.type === 'MULTIPLE_CHOICE' && choices.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
+            <div className="grid grid-cols-2 gap-3 mt-4">
               {choices.map((choice, i) => {
                 const selected = answers[currentQ.id] === choice;
                 return (

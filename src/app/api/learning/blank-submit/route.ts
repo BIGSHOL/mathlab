@@ -121,6 +121,10 @@ export async function POST(request: NextRequest) {
   const correctCount = results.filter((r) => r.correct).length;
   const score = Math.round((correctCount / results.length) * 100);
 
+  const hintCount = parsed.hintCount ?? 0;
+  const revealCount = parsed.revealCount ?? 0;
+  const usedReveal = revealCount > 0;
+
   await prisma.learningProgress.upsert({
     where: {
       userId_conceptId_stage: { userId: user.id, conceptId: exercise.conceptId, stage },
@@ -130,6 +134,9 @@ export async function POST(request: NextRequest) {
       completed: allCorrect,
       completedAt: allCorrect ? new Date() : null,
       attempts: { increment: 1 },
+      hintCount: { increment: hintCount },
+      revealCount: { increment: revealCount },
+      ...(usedReveal && { usedReveal: true }),
     },
     create: {
       userId: user.id,
@@ -139,6 +146,9 @@ export async function POST(request: NextRequest) {
       completed: allCorrect,
       completedAt: allCorrect ? new Date() : null,
       attempts: 1,
+      hintCount,
+      revealCount,
+      usedReveal,
     },
   });
 

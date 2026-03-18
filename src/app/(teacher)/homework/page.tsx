@@ -406,7 +406,7 @@ export default function HomeworkPage() {
                   {/* Category filter */}
                   {allCategories.length > 1 && (
                     <div>
-                      <div className="text-xs text-text-secondary mb-1">연산 유형</div>
+                      <div className="text-sm text-text-secondary mb-1">연산 유형</div>
                       <div className="flex flex-wrap gap-1">
                         {allCategories.map((cat) => (
                           <button
@@ -427,7 +427,7 @@ export default function HomeworkPage() {
                   {/* Mode filter */}
                   {allModes.length > 1 && (
                     <div>
-                      <div className="text-xs text-text-secondary mb-1">배정 방식</div>
+                      <div className="text-sm text-text-secondary mb-1">배정 방식</div>
                       <div className="flex flex-wrap gap-1">
                         {allModes.map((mode) => (
                           <button
@@ -466,7 +466,7 @@ export default function HomeworkPage() {
               ) : filteredPlans.length === 0 ? (
                 <div className="p-4 text-center">
                   <CalendarCheck className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                  <p className="text-xs text-text-secondary">숙제 플랜이 없습니다</p>
+                  <p className="text-sm text-text-secondary">숙제 플랜이 없습니다</p>
                 </div>
               ) : (
                 <div className="py-1">
@@ -590,22 +590,22 @@ export default function HomeworkPage() {
                 <div className="grid grid-cols-2 gap-px bg-slate-200">
                   {/* 기간 */}
                   <div className="bg-white px-3 py-2">
-                    <div className="text-xs text-text-secondary mb-0.5">기간</div>
+                    <div className="text-sm text-text-secondary mb-0.5">기간</div>
                     <div className="text-xs font-semibold text-text-primary">{formatPeriod(selectedPlan)}</div>
                   </div>
                   {/* 배정 방식 */}
                   <div className="bg-white px-3 py-2">
-                    <div className="text-xs text-text-secondary mb-0.5">배정 방식</div>
+                    <div className="text-sm text-text-secondary mb-0.5">배정 방식</div>
                     <div className="text-xs font-semibold text-text-primary">{MODE_LABELS[selectedPlan.progressionMode] ?? selectedPlan.progressionMode}</div>
                   </div>
                   {/* 문제 수 */}
                   <div className="bg-white px-3 py-2">
-                    <div className="text-xs text-text-secondary mb-0.5">문제 수</div>
+                    <div className="text-sm text-text-secondary mb-0.5">문제 수</div>
                     <div className="text-xs font-semibold text-text-primary">하루 {selectedPlan.dailyCount}문제</div>
                   </div>
                   {/* 연산 유형 */}
                   <div className="bg-white px-3 py-2">
-                    <div className="text-xs text-text-secondary mb-0.5">연산 유형</div>
+                    <div className="text-sm text-text-secondary mb-0.5">연산 유형</div>
                     <div className="flex flex-wrap gap-1">
                       {selectedPlan.categories.map((c) => (
                         <span key={c} className="px-1.5 py-0.5 rounded text-xs font-medium bg-slate-100 text-text-primary">
@@ -616,12 +616,12 @@ export default function HomeworkPage() {
                   </div>
                   {/* 통과 기준 */}
                   <div className="bg-white px-3 py-2">
-                    <div className="text-xs text-text-secondary mb-0.5">통과 기준</div>
+                    <div className="text-sm text-text-secondary mb-0.5">통과 기준</div>
                     <div className="text-xs font-semibold text-text-primary">정답률 {selectedPlan.passingScore}% 이상</div>
                   </div>
                   {/* 재시도 */}
                   <div className="bg-white px-3 py-2">
-                    <div className="text-xs text-text-secondary mb-0.5">미통과 시</div>
+                    <div className="text-sm text-text-secondary mb-0.5">미통과 시</div>
                     <div className="text-xs font-semibold text-text-primary">
                       {selectedPlan.retryOnFail ? (
                         <span className="text-amber-600">
@@ -638,7 +638,7 @@ export default function HomeworkPage() {
                 {/* 요일별 배정 상세 */}
                 {selectedPlan.progressionMode === 'weekday' && selectedPlan.weekdayMap && (
                   <div className="border-t border-slate-200 bg-white px-3 py-2">
-                    <div className="text-xs text-text-secondary mb-1">요일별 배정</div>
+                    <div className="text-sm text-text-secondary mb-1">요일별 배정</div>
                     <div className="flex gap-1.5">
                       {DAY_NAMES.map((name, dow) => {
                         const cats = selectedPlan.weekdayMap?.[String(dow)];
@@ -688,7 +688,7 @@ export default function HomeworkPage() {
                 {/* Enrolled students list */}
                 <div className="px-4 py-2.5">
                   {enrolledStudents.length === 0 ? (
-                    <p className="text-xs text-text-secondary text-center py-3">
+                    <p className="text-sm text-text-secondary text-center py-3">
                       배정된 학생이 없습니다. &quot;관리&quot; 버튼으로 학생을 추가하세요.
                     </p>
                   ) : (

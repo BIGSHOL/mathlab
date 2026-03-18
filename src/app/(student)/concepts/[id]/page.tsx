@@ -26,6 +26,14 @@ function isComplexLatex(answer: string): boolean {
   return !/^[0-9a-zA-Z\s,.\-+=]+$/.test(inner);
 }
 
+/** 정답에서 $...$ 를 벗겨서 표시용 텍스트로 반환 */
+function stripLatexWrap(answer: string): string {
+  if (answer.startsWith('$') && answer.endsWith('$') && answer.length > 2) {
+    return answer.slice(1, -1);
+  }
+  return answer;
+}
+
 const stageConfig = [
   { key: 'READING' as LearningStage, label: '개념학습', color: 'bg-stage-reading', icon: '1' },
   { key: 'BLANK_EASY' as LearningStage, label: '빈칸 1단계', color: 'bg-stage-blank-easy', icon: '2' },
@@ -53,6 +61,12 @@ interface Progress {
   completed: boolean;
 }
 
+interface BlankResult {
+  position: number;
+  correct: boolean;
+  expected?: string;
+}
+
 export default function ConceptPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -61,7 +75,7 @@ export default function ConceptPage() {
   const [progress, setProgress] = useState<Progress[]>([]);
   const [blanks, setBlanks] = useState<BlankData | null>(null);
   const [blankAnswers, setBlankAnswers] = useState<Record<number, string>>({});
-  const [blankResults, setBlankResults] = useState<Array<{ position: number; correct: boolean }> | null>(null);
+  const [blankResults, setBlankResults] = useState<BlankResult[] | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [showHints, setShowHints] = useState<Record<number, boolean>>({});
@@ -71,6 +85,11 @@ export default function ConceptPage() {
   const memoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [adjacent, setAdjacent] = useState<{ prev: { id: string; conceptCode: string | null; title: string } | null; next: { id: string; conceptCode: string | null; title: string } | null }>({ prev: null, next: null });
   const [gemModal, setGemModal] = useState<{ fromStage: number; toStage: number; xp: number } | null>(null);
+
+  // 정답 공개 관련 상태
+  const [revealedAnswers, setRevealedAnswers] = useState<Record<number, string>>({});
+  const [hintUsedPositions, setHintUsedPositions] = useState<Set<number>>(new Set());
+  const [hasUsedReveal, setHasUsedReveal] = useState(false);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -145,6 +164,10 @@ export default function ConceptPage() {
             setBlankAnswers({});
             setBlankResults(null);
             setShowHints({});
+            // 단계 전환 시 정답 공개 상태 초기화
+            setRevealedAnswers({});
+            setHintUsedPositions(new Set());
+            setHasUsedReveal(false);
           }
         });
     }
@@ -156,15 +179,22 @@ export default function ConceptPage() {
     const res = await fetch('/api/learning/progress', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ conceptId: concept!.id, stage }),
+      body: JSON.stringify({
+        conceptId: concept!.id,
+        stage,
+        ...(hasUsedReveal && { usedReveal: true }),
+      }),
     });
     const json = await res.json();
     setSubmitting(false);
     if (json.data) {
-      showToast(`+${json.data.xpAwarded} XP 획득!`);
+      const xpMsg = hasUsedReveal
+        ? `+${json.data.xpAwarded} XP 획득! (정답 공개 사용)`
+        : `+${json.data.xpAwarded} XP 획득!`;
+      showToast(xpMsg);
       // 보석 진화 모달 표시
-      const fromStage = currentStageIdx; // 완료 전 단계 수
-      const toStage = currentStageIdx + 1; // 완료 후 단계 수
+      const fromStage = currentStageIdx;
+      const toStage = currentStageIdx + 1;
       setGemModal({ fromStage, toStage, xp: json.data.xpAwarded ?? 0 });
       setProgress((prev) => [...prev, { stage, completed: true }]);
       if (currentStageIdx < 3) {
@@ -188,11 +218,17 @@ export default function ConceptPage() {
       position: b.position,
       value: blankAnswers[b.position] ?? '',
     }));
+
     try {
       const res = await fetch('/api/learning/blank-submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ exerciseId: blanks.id, answers }),
+        body: JSON.stringify({
+          exerciseId: blanks.id,
+          answers,
+          hintCount: hintUsedPositions.size,
+          revealCount: Object.keys(revealedAnswers).length,
+        }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -204,7 +240,33 @@ export default function ConceptPage() {
         if (json.data.allCorrect) {
           await handleCompleteStage();
         } else {
-          showToast('오답이 있습니다. 다시 확인해보세요!');
+          // 오답 빈칸에 정답을 플레이스홀더로 공개
+          const newRevealed = { ...revealedAnswers };
+          const wrongPositions: number[] = [];
+          for (const r of json.data.results as BlankResult[]) {
+            if (!r.correct && r.expected) {
+              newRevealed[r.position] = r.expected;
+              wrongPositions.push(r.position);
+            }
+          }
+          setRevealedAnswers(newRevealed);
+          if (wrongPositions.length > 0) {
+            setHasUsedReveal(true);
+          }
+
+          showToast('오답이 있습니다. 정답을 확인하고 다시 입력해보세요!');
+
+          // 1.5초 후 오답 빈칸 초기화 → 정답 플레이스홀더가 보이게
+          setTimeout(() => {
+            setBlankAnswers((prev) => {
+              const next = { ...prev };
+              for (const pos of wrongPositions) {
+                delete next[pos];
+              }
+              return next;
+            });
+            setBlankResults(null);
+          }, 1500);
         }
       }
     } catch {
@@ -214,6 +276,9 @@ export default function ConceptPage() {
     }
   };
 
+  const handleHintUsed = useCallback((position: number) => {
+    setHintUsedPositions((prev) => new Set(prev).add(position));
+  }, []);
 
   if (loading || !concept) {
     return (
@@ -272,7 +337,7 @@ export default function ConceptPage() {
               return (
                 <div
                   key={stage.key}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold transition-all ${
                     i === currentStageIdx
                       ? `${stage.color} text-white`
                       : isCompleted
@@ -329,7 +394,7 @@ export default function ConceptPage() {
           </div>
           <div className="p-5 flex-1 overflow-y-auto">
             {currentStage.key === 'READING' && (
-              <div className="prose prose-slate max-w-none">
+              <div className="prose prose-slate max-w-none font-serif-kr">
                 <MathRenderer content={concept.fullContent.replace(/\n/g, '<br/>')} />
               </div>
             )}
@@ -345,6 +410,11 @@ export default function ConceptPage() {
                 <div className="bg-blue-50 p-4 rounded-sm text-sm text-blue-700">
                   힌트가 필요하면 빈칸 옆의 ? 버튼을 눌러보세요.
                 </div>
+                {hasUsedReveal && (
+                  <div className="bg-amber-50 border border-amber-200 p-4 rounded-sm text-sm text-amber-700 mt-3">
+                    정답이 공개되었습니다. 정답을 보고 직접 입력하면 XP가 절반으로 지급됩니다.
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -378,7 +448,11 @@ export default function ConceptPage() {
                 </div>
                 <div className="p-6 flex-1 overflow-y-auto">
                   <div className="text-[15px] leading-8">
-                    {renderBlanksTemplate(blanks, blankAnswers, setBlankAnswers, blankResults, showHints, setShowHints, mathPopup, setMathPopup)}
+                    {renderBlanksTemplate(
+                      blanks, blankAnswers, setBlankAnswers, blankResults,
+                      showHints, setShowHints, mathPopup, setMathPopup,
+                      revealedAnswers, handleHintUsed,
+                    )}
                   </div>
                   {/* 수식 입력 팝업 (복잡한 수식 빈칸용) */}
                   <MathLivePopup
@@ -405,16 +479,21 @@ export default function ConceptPage() {
               showPercentage
               color={currentStage.color}
             />
-            <div className="flex justify-end mt-6 gap-3">
+            <div className="flex items-center justify-end mt-6 gap-3">
               {currentStage.key === 'READING' && (
                 <Button size="lg" onClick={handleCompleteStage} disabled={submitting}>
                   {submitting ? '처리 중...' : '읽기 완료 (+5 XP)'}
                 </Button>
               )}
               {(currentStage.key === 'BLANK_EASY' || currentStage.key === 'BLANK_HARD' || currentStage.key === 'BLANK_FULL') && (
-                <Button size="lg" onClick={handleBlankSubmit} disabled={submitting}>
-                  {submitting ? '채점 중...' : '제출하기'}
-                </Button>
+                <>
+                  {hasUsedReveal && (
+                    <span className="text-xs text-amber-600">정답 공개 사용 · XP 절반</span>
+                  )}
+                  <Button size="lg" onClick={handleBlankSubmit} disabled={submitting}>
+                    {submitting ? '채점 중...' : '제출하기'}
+                  </Button>
+                </>
               )}
               {currentStageIdx === stageConfig.length - 1 && progress.some((p) => p.stage === currentStage.key && p.completed) && (
                 <>
@@ -441,11 +520,13 @@ function renderBlanksTemplate(
   blanks: BlankData,
   answers: Record<number, string>,
   setAnswers: (fn: (prev: Record<number, string>) => Record<number, string>) => void,
-  results: Array<{ position: number; correct: boolean }> | null,
+  results: BlankResult[] | null,
   showHints: Record<number, boolean>,
   setShowHints: (fn: (prev: Record<number, boolean>) => Record<number, boolean>) => void,
   mathPopup: { position: number } | null,
   setMathPopup: (v: { position: number } | null) => void,
+  revealedAnswers: Record<number, string>,
+  onHintUsed: (position: number) => void,
 ) {
   const parts = blanks.templateText.split(/(\{\{\d+\}\})/g);
 
@@ -459,30 +540,41 @@ function renderBlanksTemplate(
     const isCorrect = result?.correct;
     const isWrong = result && !result.correct;
     const needsMathInput = blank && isComplexLatex(blank.answer);
+    const revealed = revealedAnswers[position];
 
     return (
       <span key={idx} className="inline-flex items-center gap-0.5 mx-0.5 align-middle">
         {needsMathInput ? (
           /* 복잡한 수식 빈칸 → 클릭하면 MathLive 팝업 */
-          <button
-            type="button"
-            onClick={() => !result && setMathPopup({ position })}
-            className={`inline-flex items-center justify-center min-w-[96px] px-2 py-1 border-2 border-dashed rounded-sm text-center font-semibold text-sm transition-all ${
-              isCorrect
-                ? 'border-emerald-400 bg-emerald-50 text-emerald-700 animate-bounce-in'
-                : isWrong
-                  ? 'border-red-400 bg-red-50 text-red-700 animate-shake'
-                  : answers[position]
-                    ? 'border-primary/50 bg-primary/5 text-slate-800'
-                    : 'border-slate-300 bg-white hover:border-primary/40 hover:bg-primary/5'
-            }`}
-          >
-            {answers[position] ? (
-              <MathRenderer content={`$${answers[position]}$`} />
-            ) : (
-              <span className="text-slate-400 text-xs">수식 입력</span>
+          <span className="inline-flex flex-col items-center">
+            <button
+              type="button"
+              onClick={() => (!result || isWrong) && setMathPopup({ position })}
+              className={`inline-flex items-center justify-center min-w-[96px] px-2 py-1 border-2 border-dashed rounded-sm text-center font-semibold text-sm transition-all ${
+                isCorrect
+                  ? 'border-emerald-400 bg-emerald-50 text-emerald-700 animate-bounce-in'
+                  : isWrong
+                    ? 'border-red-400 bg-red-50 text-red-700 animate-shake'
+                    : answers[position]
+                      ? 'border-primary/50 bg-primary/5 text-slate-800'
+                      : revealed
+                        ? 'border-amber-300 bg-amber-50/50'
+                        : 'border-slate-300 bg-white hover:border-primary/40 hover:bg-primary/5'
+              }`}
+            >
+              {answers[position] ? (
+                <MathRenderer content={`$${answers[position]}$`} />
+              ) : (
+                <span className="text-slate-400 text-xs">수식 입력</span>
+              )}
+            </button>
+            {/* 정답 공개: 수식은 아래에 표시 */}
+            {revealed && !isCorrect && !answers[position] && (
+              <span className="text-amber-600 text-xs mt-0.5 opacity-70">
+                <MathRenderer content={revealed} />
+              </span>
             )}
-          </button>
+          </span>
         ) : (
           /* 일반 텍스트 / 단순 수식 빈칸 → 텍스트 입력 */
           <input
@@ -494,9 +586,11 @@ function renderBlanksTemplate(
                 ? 'border-emerald-400 bg-emerald-50 text-emerald-700 animate-bounce-in'
                 : isWrong
                   ? 'border-red-400 bg-red-50 text-red-700 animate-shake'
-                  : 'border-slate-300 bg-white focus:border-primary'
+                  : revealed && !answers[position]
+                    ? 'border-amber-300 bg-amber-50/50'
+                    : 'border-slate-300 bg-white focus:border-primary'
             }`}
-            placeholder={`(${position})`}
+            placeholder={revealed ? stripLatexWrap(revealed) : `(${position})`}
           />
         )}
         {isCorrect && <span className="text-emerald-500 text-sm">&#10003;</span>}
@@ -504,7 +598,13 @@ function renderBlanksTemplate(
         <span className="relative inline-block">
           <button
             type="button"
-            onClick={() => setShowHints((prev) => ({ ...prev, [position]: !prev[position] }))}
+            onClick={() => {
+              setShowHints((prev) => ({ ...prev, [position]: !prev[position] }));
+              // 힌트 열기 시 사용 추적
+              if (!showHints[position]) {
+                onHintUsed(position);
+              }
+            }}
             className={`w-5 h-5 rounded-full text-xs font-bold leading-none transition-all ${
               showHints[position]
                 ? 'bg-amber-400 text-white shadow-sm'

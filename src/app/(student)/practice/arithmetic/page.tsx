@@ -316,7 +316,7 @@ export default function ArithmeticPracticePage() {
               {/* 문제 수 */}
               <div>
                 <label className="text-sm font-bold text-text-primary block mb-2">문제 수</label>
-                <div className="grid grid-cols-4 gap-1.5">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                   {[10, 20, 30, 50].map((n) => (
                     <button
                       key={n}
@@ -370,21 +370,21 @@ export default function ArithmeticPracticePage() {
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-slate-50 rounded-sm p-3">
               <p className="text-2xl font-black text-primary">{score}/{problems.length}</p>
-              <p className="text-xs text-text-secondary">정답</p>
+              <p className="text-sm text-text-secondary">정답</p>
             </div>
             <div className="bg-slate-50 rounded-sm p-3">
               <p className="text-2xl font-black text-text-primary">{accuracy}%</p>
-              <p className="text-xs text-text-secondary">정답률</p>
+              <p className="text-sm text-text-secondary">정답률</p>
             </div>
             <div className="bg-slate-50 rounded-sm p-3">
               <p className="text-2xl font-black text-text-primary">{totalTime}초</p>
-              <p className="text-xs text-text-secondary">총 소요시간</p>
+              <p className="text-sm text-text-secondary">총 소요시간</p>
             </div>
             <div className="bg-slate-50 rounded-sm p-3">
               <p className="text-2xl font-black text-text-primary">
                 {problems.length > 0 ? (totalTime / problems.length).toFixed(1) : 0}초
               </p>
-              <p className="text-xs text-text-secondary">문제당 평균</p>
+              <p className="text-sm text-text-secondary">문제당 평균</p>
             </div>
           </div>
           <div className="flex gap-2 pt-2">
@@ -433,7 +433,7 @@ export default function ArithmeticPracticePage() {
         <Card className="p-5 md:p-6">
           {/* Problem */}
           <div className="text-center mb-8">
-            <p className="text-xs text-text-secondary mb-2">
+            <p className="text-sm text-text-secondary mb-2">
               {CATEGORY_LABELS[current.category]} · {LEVEL_LABELS[current.level]}
             </p>
             <div className="text-2xl font-bold text-text-primary">

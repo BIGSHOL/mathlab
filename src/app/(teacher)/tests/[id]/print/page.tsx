@@ -136,7 +136,7 @@ export default function PrintWorksheetPage() {
                     <MathRenderer content={q.content} />
                   </div>
                   {q.choices && q.choices.length > 0 && (
-                    <div className="mt-2 grid grid-cols-2 gap-1 text-sm print:text-xs">
+                    <div className="mt-2 grid grid-cols-2 gap-2 text-sm print:text-xs">
                       {(q.choices as string[]).map((choice, ci) => (
                         <div key={ci} className="flex items-start gap-1">
                           <span className="text-text-secondary shrink-0">{ci + 1})</span>

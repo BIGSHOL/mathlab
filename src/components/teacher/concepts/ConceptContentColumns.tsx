@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { InlineMathText } from '@/components/math/InlineMathText';
 import { EditableMathRenderer } from '@/components/math/EditableMathRenderer';
+import { MathRenderer } from '@/components/math/MathRenderer';
 import { MathLivePopup } from '@/components/math/MathLivePopup';
 import { DIFFICULTY_LABELS, DIFFICULTY_COLORS } from './types';
 import type { BlankItem } from './types';
@@ -144,7 +145,7 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
                 showBlanks={showBlanks}
               />
             ) : (
-              <InlineMathText text={editForm.fullContent} />
+              <MathRenderer content={editForm.fullContent} className="font-serif-kr" />
             )}
           </div>
         )}

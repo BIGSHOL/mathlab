@@ -40,7 +40,7 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
       {/* -- Col 1: Template -- */}
       <div className="px-3 py-2.5 flex flex-col gap-2 overflow-y-auto">
         <div className="flex items-center justify-between">
-          <label className="block text-xs font-bold text-text-secondary">
+          <label className="block text-sm font-bold text-text-secondary">
             개념 내용 / 템플릿
             {isAdmin && (
               <span className="font-normal ml-1 text-slate-400">
@@ -176,7 +176,7 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
 
       {/* -- Col 2: Preview -- */}
       <div className="px-3 py-2.5 flex flex-col gap-2 overflow-y-auto bg-slate-50/30">
-        <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider flex items-center gap-1.5">
+        <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider flex items-center gap-1.5">
           <Eye className="w-3.5 h-3.5" />
           미리보기
         </h3>
@@ -274,7 +274,7 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
             })}
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-text-secondary text-xs">
+          <div className="flex-1 flex items-center justify-center text-text-secondary text-sm">
             <div className="text-center">
               <Eye className="w-6 h-6 mx-auto mb-2 opacity-20" />
               <p>빈칸을 추가하면<br />미리보기가 표시됩니다</p>
@@ -286,7 +286,7 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
       {/* -- Col 3: Blanks -- */}
       <div className="px-3 py-2.5 flex flex-col gap-2 overflow-y-auto">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">
+          <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">
             빈칸 ({blankForm.blanks.length}개)
           </h3>
           <div className="flex items-center gap-1">
@@ -294,7 +294,7 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
               <button
                 type="button"
                 onClick={autoRenumber}
-                className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 rounded-sm transition-colors"
+                className="flex items-center gap-1 px-2 py-1 text-sm font-medium text-primary hover:bg-primary/10 rounded-sm transition-colors"
                 title="등장 순서대로 1, 2, 3... 재번호"
               >
                 <RefreshCw className="w-3 h-3" />
@@ -304,7 +304,7 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
             <button
               type="button"
               onClick={cancelBlankEdit}
-              className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 rounded-sm transition-colors"
+              className="flex items-center gap-1 px-2 py-1 text-sm font-medium text-slate-500 hover:bg-slate-100 rounded-sm transition-colors"
             >
               <X className="w-3 h-3" />
               목록
@@ -440,7 +440,7 @@ export function PrerequisiteSection({
 }) {
   return (
     <div>
-      <label className="block text-xs font-bold mb-1.5 text-text-secondary flex items-center gap-1.5">
+      <label className="block text-sm font-bold mb-1.5 text-text-secondary flex items-center gap-1.5">
         <Link2 className="w-3.5 h-3.5" />
         선수 개념 ({editPrereqs.length}개)
       </label>

@@ -230,11 +230,11 @@ export default function LevelTestResultsPage() {
   };
 
   return (
-    <div className="flex-1 flex min-h-0 overflow-hidden">
+    <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
       {/* ===== LEFT: 전체 결과 목록 ===== */}
       <div
         className={`flex flex-col min-w-0 overflow-y-auto transition-all duration-200 ${
-          selectedResult ? 'w-[420px] shrink-0 border-r border-slate-200' : 'flex-1'
+          selectedResult ? 'w-full lg:w-[420px] shrink-0 border-r border-slate-200' : 'flex-1'
         }`}
       >
         <div className={`p-6 ${selectedResult ? '' : 'max-w-[1024px] mx-auto w-full'}`}>

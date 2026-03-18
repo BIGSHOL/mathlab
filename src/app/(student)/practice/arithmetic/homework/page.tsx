@@ -331,21 +331,21 @@ export default function HomeworkPracticePage() {
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-slate-50 rounded-sm p-3">
               <p className="text-2xl font-black text-primary">{score}/{problems.length}</p>
-              <p className="text-xs text-text-secondary">정답</p>
+              <p className="text-sm text-text-secondary">정답</p>
             </div>
             <div className="bg-slate-50 rounded-sm p-3">
               <p className="text-2xl font-black text-text-primary">{accuracy}%</p>
-              <p className="text-xs text-text-secondary">정답률</p>
+              <p className="text-sm text-text-secondary">정답률</p>
             </div>
             <div className="bg-slate-50 rounded-sm p-3">
               <p className="text-2xl font-black text-text-primary">{totalTime}초</p>
-              <p className="text-xs text-text-secondary">총 소요시간</p>
+              <p className="text-sm text-text-secondary">총 소요시간</p>
             </div>
             <div className="bg-slate-50 rounded-sm p-3">
               <p className="text-2xl font-black text-text-primary">
                 {problems.length > 0 ? (totalTime / problems.length).toFixed(1) : 0}초
               </p>
-              <p className="text-xs text-text-secondary">문제당 평균</p>
+              <p className="text-sm text-text-secondary">문제당 평균</p>
             </div>
           </div>
           <Button className="w-full" onClick={handleBackToList}>
@@ -396,7 +396,7 @@ export default function HomeworkPracticePage() {
         <Card className="p-5 md:p-6">
           {/* Problem */}
           <div className="text-center mb-8">
-            <p className="text-xs text-text-secondary mb-2">
+            <p className="text-sm text-text-secondary mb-2">
               {CATEGORY_LABELS[current.category]}
             </p>
             <div className="text-2xl font-bold text-text-primary">

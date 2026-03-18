@@ -42,8 +42,9 @@ export async function POST(request: NextRequest) {
   const parsed = await validateBody(request, completeStageSchema);
   if (isResponse(parsed)) return parsed;
 
-  const { conceptId, stage } = parsed;
-  const xpAmount = STAGE_XP[stage] ?? 0;
+  const { conceptId, stage, usedReveal } = parsed;
+  const fullXp = STAGE_XP[stage] ?? 0;
+  const xpAmount = usedReveal ? Math.floor(fullXp / 2) : fullXp;
 
   // Upsert learning progress + award XP (atomic)
   const progress = await prisma.$transaction(async (tx) => {

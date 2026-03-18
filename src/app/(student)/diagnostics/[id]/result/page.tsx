@@ -98,15 +98,15 @@ export default function DiagnosticResultPage() {
             <AlertTriangle className="w-4 h-4 text-amber-500" /> 보완 필요 영역
           </h3>
           {result.weakAreas.length === 0 ? (
-            <p className="text-xs text-text-secondary">취약 영역이 없습니다</p>
+            <p className="text-sm text-text-secondary">취약 영역이 없습니다</p>
           ) : (
             <div className="space-y-2">
               {result.weakAreas.map((area) => (
                 <div key={area.chapter} className="flex items-center justify-between">
-                  <span className="text-xs text-text-primary truncate max-w-[140px]" title={area.chapter}>
+                  <span className="text-sm text-text-primary truncate max-w-[140px]" title={area.chapter}>
                     {area.chapter}
                   </span>
-                  <span className="text-xs font-bold text-red-600">{area.accuracy}%</span>
+                  <span className="text-sm font-bold text-red-600">{area.accuracy}%</span>
                 </div>
               ))}
             </div>
@@ -119,15 +119,15 @@ export default function DiagnosticResultPage() {
             <Star className="w-4 h-4 text-emerald-500" /> 우수 영역
           </h3>
           {result.strongAreas.length === 0 ? (
-            <p className="text-xs text-text-secondary">데이터 부족</p>
+            <p className="text-sm text-text-secondary">데이터 부족</p>
           ) : (
             <div className="space-y-2">
               {result.strongAreas.map((area) => (
                 <div key={area.chapter} className="flex items-center justify-between">
-                  <span className="text-xs text-text-primary truncate max-w-[140px]" title={area.chapter}>
+                  <span className="text-sm text-text-primary truncate max-w-[140px]" title={area.chapter}>
                     {area.chapter}
                   </span>
-                  <span className="text-xs font-bold text-emerald-600">{area.accuracy}%</span>
+                  <span className="text-sm font-bold text-emerald-600">{area.accuracy}%</span>
                 </div>
               ))}
             </div>
@@ -141,7 +141,7 @@ export default function DiagnosticResultPage() {
           <TrendingUp className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
           <div>
             <h3 className="text-sm font-bold text-text-primary mb-1">학습 추천</h3>
-            <p className="text-xs text-text-secondary leading-relaxed">
+            <p className="text-sm text-text-secondary leading-relaxed">
               {result.weakAreas.length > 0
                 ? `${result.weakAreas.map((a) => a.chapter).join(', ')} 영역의 기초 문제부터 다시 풀어보는 것을 추천합니다.`
                 : '전체적으로 양호한 성취도를 보이고 있습니다. 심화 문제에 도전해보세요!'}

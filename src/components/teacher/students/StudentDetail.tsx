@@ -148,22 +148,22 @@ export function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin
           {/* 학습 요약 카드 */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-1">
             <div className="bg-blue-50 rounded-sm p-3">
-              <div className="text-xs text-blue-600 font-medium">시험 응시</div>
+              <div className="text-sm text-blue-600 font-medium">시험 응시</div>
               <div className="text-sm font-bold text-blue-700">{s.testCount}회</div>
               <div className="text-xs text-blue-500">평균 {s.testAvgScore}점</div>
             </div>
             <div className="bg-amber-50 rounded-sm p-3">
-              <div className="text-xs text-amber-600 font-medium">연산 연습</div>
+              <div className="text-sm text-amber-600 font-medium">연산 연습</div>
               <div className="text-sm font-bold text-amber-700">{s.arithmeticCount}회</div>
               <div className="text-xs text-amber-500">정답률 {accuracyPct}%</div>
             </div>
             <div className="bg-emerald-50 rounded-sm p-3">
-              <div className="text-xs text-emerald-600 font-medium">개념 학습</div>
+              <div className="text-sm text-emerald-600 font-medium">개념 학습</div>
               <div className="text-sm font-bold text-emerald-700">{s.learningCompleted}/{s.learningTotal}</div>
               <div className="text-xs text-emerald-500">완료/전체</div>
             </div>
             <div className="bg-violet-50 rounded-sm p-3">
-              <div className="text-xs text-violet-600 font-medium">연산 숙제</div>
+              <div className="text-sm text-violet-600 font-medium">연산 숙제</div>
               <div className="text-sm font-bold text-violet-700">{s.homeworkEnrollments}개</div>
               <div className="text-xs text-violet-500">참여 플랜</div>
             </div>
@@ -201,7 +201,7 @@ export function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin
               </select>
               {navSaving && <Loader2 className="w-3 h-3 animate-spin text-primary" />}
             </div>
-            <p className="text-xs text-text-secondary mt-1.5">
+            <p className="text-sm text-text-secondary mt-1.5">
               {navMode === 'curriculum'
                 ? '같은 학년 내 교육과정 순서로 이전/다음 개념 이동'
                 : `${navMode.substring(6)} 순서로 학년을 넘나들며 이전/다음 개념 이동`}

@@ -278,7 +278,7 @@ export default function SettingsPage() {
                     />
                     <div>
                       <p className="text-sm font-semibold text-text-primary">{item.label}</p>
-                      <p className="text-xs text-text-secondary mt-0.5">{item.desc}</p>
+                      <p className="text-sm text-text-secondary mt-0.5">{item.desc}</p>
                     </div>
                   </label>
                 ))}
@@ -308,7 +308,7 @@ export default function SettingsPage() {
                       </button>
                     ))}
                   </div>
-                  <p className="text-xs text-text-secondary mt-1">
+                  <p className="text-sm text-text-secondary mt-1">
                     현재 라이트 모드만 지원됩니다. 다크 모드는 추후 업데이트 예정입니다.
                   </p>
                 </div>

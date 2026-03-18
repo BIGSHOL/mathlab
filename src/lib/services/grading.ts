@@ -1,12 +1,13 @@
 /**
  * 채점 서비스 - math_test grading_service.py 포팅
- * 답안 채점, 콤보 보너스, XP 계산
+ * 답안 채점, 콤보 보너스, XP 계산, 힌트 재도전
  */
 
 import { prisma } from '@/lib/db';
 import { awardXp } from '@/lib/utils/xp';
 import { checkAnswer } from '@/lib/services/cheat-detection';
 import { classifyAnswer } from '@/lib/utils/answer-status';
+import { generateHint } from '@/lib/services/hint-generator';
 
 /** 콤보 보너스 배율 계산 */
 export function getComboMultiplier(comboCount: number): number {
@@ -40,8 +41,9 @@ export async function submitAnswer(params: {
   selectedAnswer: string;
   timeSpentSeconds: number;
   tabSwitchCount?: number;
+  isRetry?: boolean;
 }) {
-  const { attemptId, questionId, selectedAnswer, timeSpentSeconds, tabSwitchCount } = params;
+  const { attemptId, questionId, selectedAnswer, timeSpentSeconds, tabSwitchCount, isRetry } = params;
 
   // 문제 조회 (변하지 않는 데이터이므로 트랜잭션 밖에서 조회)
   const question = await prisma.question.findUniqueOrThrow({ where: { id: questionId } });
@@ -57,7 +59,40 @@ export async function submitAnswer(params: {
     tabSwitchCount,
   });
 
-  // 중복 체크 + 콤보 계산 + AnswerLog 생성 + TestAttempt 업데이트 (단일 트랜잭션)
+  // ── 1차 오답: DB 저장 없이 힌트만 반환 ──
+  if (!isCorrect && !isRetry) {
+    // 시험이 완료되지 않았는지, 이미 답한 문제가 아닌지만 확인
+    const attempt = await prisma.testAttempt.findUniqueOrThrow({ where: { id: attemptId } });
+    if (attempt.completedAt) throw new Error('이미 완료된 시험입니다');
+    const existing = await prisma.answerLog.findFirst({ where: { attemptId, questionId } });
+    if (existing) throw new Error('이미 답한 문제입니다');
+
+    // AI 힌트 생성
+    const hintResult = await generateHint({
+      content: question.content,
+      explanation: question.explanation,
+      answer: question.answer,
+      choices: question.choices as string[] | null,
+      difficulty: question.difficulty,
+    });
+
+    return {
+      isCorrect: false,
+      canRetry: true,
+      hint: hintResult.hint,
+      eliminatedChoices: hintResult.eliminatedChoices,
+      // 정답/해설은 아직 공개하지 않음
+      correctAnswer: null,
+      explanation: null,
+      pointsEarned: 0,
+      comboCount: 0,
+      questionsRemaining: -1, // 클라이언트에서 사용하지 않음
+    };
+  }
+
+  // ── 1차 정답 또는 2차 시도: AnswerLog 생성 ──
+  const hintUsed = isRetry === true;
+
   const { questionsRemaining, newCombo, pointsEarned } = await prisma.$transaction(async (tx) => {
     const attempt = await tx.testAttempt.findUniqueOrThrow({
       where: { id: attemptId },
@@ -85,13 +120,19 @@ export async function submitAnswer(params: {
       if (a.isCorrect) streak++;
       else break;
     }
-    const combo = isCorrect ? streak + 1 : 0;
 
-    // 점수 계산 (콤보 보너스 적용)
+    // 힌트 사용 시: 콤보 리셋, 50% 감점
+    let combo: number;
+    let earned: number;
     const basePoints = DIFFICULTY_POINTS[question.difficulty] ?? 20;
-    const earned = isCorrect
-      ? Math.round(basePoints * getComboMultiplier(combo))
-      : 0;
+
+    if (hintUsed) {
+      combo = 0; // 힌트 사용 → 콤보 리셋
+      earned = isCorrect ? Math.round(basePoints * 0.5) : 0;
+    } else {
+      combo = isCorrect ? streak + 1 : 0;
+      earned = isCorrect ? Math.round(basePoints * getComboMultiplier(combo)) : 0;
+    }
 
     // 학습 상태 분류
     const statusInfo = classifyAnswer({
@@ -112,6 +153,7 @@ export async function submitAnswer(params: {
         statusClassification: statusInfo.status,
         flagged: flag.flagged,
         flagReason: flag.reason,
+        hintUsed,
       },
     });
 
@@ -135,6 +177,9 @@ export async function submitAnswer(params: {
 
   return {
     isCorrect,
+    canRetry: false,
+    hint: null,
+    eliminatedChoices: [] as number[],
     correctAnswer: question.answer,
     explanation: question.explanation,
     pointsEarned,

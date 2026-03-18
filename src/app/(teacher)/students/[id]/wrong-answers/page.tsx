@@ -328,7 +328,7 @@ export default function WrongAnswersPage() {
                     {q.choices && Array.isArray(q.choices) && (q.choices as string[]).length > 0 && (
                       <div>
                         <p className="text-xs font-bold text-text-secondary mb-1.5">보기</p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                        <div className="grid grid-cols-2 gap-3">
                           {(q.choices as string[]).map((choice, idx) => {
                             const isStudentAnswer = item.lastWrongAnswer === String(idx + 1) || item.lastWrongAnswer === choice;
                             const isCorrectAnswer = q.answer === String(idx + 1) || q.answer === choice;

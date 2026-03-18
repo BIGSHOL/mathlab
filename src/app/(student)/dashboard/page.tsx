@@ -167,7 +167,7 @@ export default async function StudentDashboard({
               <div className="flex items-center gap-3">
                 <CalendarCheck className="w-8 h-8 opacity-90" />
                 <div>
-                  <p className="text-xs font-medium opacity-80">오늘의 연산 숙제</p>
+                  <p className="text-sm font-medium opacity-80">오늘의 연산 숙제</p>
                   <p className="font-bold">
                     {pendingHomework[0].planTitle} · {pendingHomework[0].dayLabel} · {pendingHomework[0].dailyCount}문제
                   </p>
@@ -195,7 +195,7 @@ export default async function StudentDashboard({
                     <div className="flex items-center gap-3">
                       <BookOpen className="w-8 h-8 opacity-90" />
                       <div>
-                        <p className="text-xs font-medium opacity-80">오늘의 개념 숙제 · {hw.dayLabel}</p>
+                        <p className="text-sm font-medium opacity-80">오늘의 개념 숙제 · {hw.dayLabel}</p>
                         <p className="font-bold">
                           {hw.planTitle} · {pending.length}개 남음
                         </p>
@@ -232,7 +232,7 @@ export default async function StudentDashboard({
                   <div className="flex items-center gap-3">
                     <FileQuestion className="w-8 h-8 opacity-90" />
                     <div>
-                      <p className="text-xs font-medium opacity-80">오늘의 문제 숙제</p>
+                      <p className="text-sm font-medium opacity-80">오늘의 문제 숙제</p>
                       <p className="font-bold">
                         {hw.planTitle} · {hw.dayLabel} · {hw.questionCount}문제
                       </p>
@@ -270,7 +270,7 @@ export default async function StudentDashboard({
               <div className="flex items-center gap-3">
                 <GraduationCap className="w-8 h-8 opacity-90" />
                 <div>
-                  <p className="text-xs font-medium opacity-80">현재 학습 과정</p>
+                  <p className="text-sm font-medium opacity-80">현재 학습 과정</p>
                   <p className="font-bold">{activeEnrollment.course.title}</p>
                 </div>
               </div>
@@ -303,7 +303,7 @@ export default async function StudentDashboard({
           <div className="absolute top-0 right-0 p-2.5">
             <Award className="w-5 h-5 text-primary opacity-30" />
           </div>
-          <p className="text-text-secondary text-xs font-semibold tracking-wide">현재 레벨</p>
+          <p className="text-text-secondary text-sm font-semibold tracking-wide">현재 레벨</p>
           <p className="text-text-primary text-lg md:text-xl font-bold leading-none">Level {level}</p>
           <p className="text-xs text-text-secondary">{nextLevel.remaining} XP 남음</p>
         </div>
@@ -312,7 +312,7 @@ export default async function StudentDashboard({
           <div className="absolute top-0 right-0 p-2.5">
             <Star className="w-5 h-5 text-secondary opacity-30" />
           </div>
-          <p className="text-text-secondary text-xs font-semibold tracking-wide">나의 포인트</p>
+          <p className="text-text-secondary text-sm font-semibold tracking-wide">나의 포인트</p>
           <p className="text-text-primary text-lg md:text-xl font-bold leading-none">{totalXp.toLocaleString()}</p>
           <p className="text-xs text-text-secondary">XP</p>
         </div>
@@ -321,7 +321,7 @@ export default async function StudentDashboard({
           <div className="absolute top-0 right-0 p-2.5">
             <CheckCircle className="w-5 h-5 text-indigo-500 opacity-30" />
           </div>
-          <p className="text-text-secondary text-xs font-semibold tracking-wide">완료 개념</p>
+          <p className="text-text-secondary text-sm font-semibold tracking-wide">완료 개념</p>
           <p className="text-text-primary text-lg md:text-xl font-bold leading-none">
             {completedCount}
             <span className="text-sm text-slate-400 font-bold ml-0.5">/ {totalConcepts}</span>
@@ -333,7 +333,7 @@ export default async function StudentDashboard({
           <div className="absolute top-0 right-0 p-2.5">
             <Activity className="w-5 h-5 text-emerald-500 opacity-30" />
           </div>
-          <p className="text-text-secondary text-xs font-semibold tracking-wide">주간 활동</p>
+          <p className="text-text-secondary text-sm font-semibold tracking-wide">주간 활동</p>
           <p className="text-text-primary text-lg md:text-xl font-bold leading-none">
             {weeklyActivity}
             <span className="text-sm text-slate-400 font-bold ml-0.5">건</span>
@@ -377,7 +377,7 @@ export default async function StudentDashboard({
                         <h3 className="text-text-primary font-semibold text-sm mb-0.5 group-hover:text-primary transition-colors truncate">
                           {p.concept.subject.title}: {p.concept.title}
                         </h3>
-                        <p className="text-text-secondary text-xs">
+                        <p className="text-text-secondary text-sm">
                           {isCompleted ? '학습 완료!' : stageLabels[p.stage] ?? p.stage}
                         </p>
                       </div>
@@ -417,10 +417,10 @@ export default async function StudentDashboard({
                       <BookOpen className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-text-primary text-xs font-semibold truncate group-hover:text-primary transition-colors">
+                      <p className="text-text-primary text-sm font-semibold truncate group-hover:text-primary transition-colors">
                         {c.title}
                       </p>
-                      <p className="text-text-secondary text-xs">{c.subject.title}</p>
+                      <p className="text-text-secondary text-sm">{c.subject.title}</p>
                     </div>
                     <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-primary transition-colors" />
                   </Link>

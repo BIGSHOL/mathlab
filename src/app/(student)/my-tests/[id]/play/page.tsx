@@ -11,6 +11,8 @@ import {
   XCircle,
   Loader2,
   Trophy,
+  Lightbulb,
+  RotateCcw,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -43,7 +45,7 @@ export default function TestPlayPage() {
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{
     isCorrect: boolean;
-    correctAnswer: string;
+    correctAnswer: string | null;
     explanation: string | null;
     pointsEarned: number;
     comboCount: number;
@@ -52,6 +54,13 @@ export default function TestPlayPage() {
   const [comboAnimation, setComboAnimation] = useState(false);
   const [totalScore, setTotalScore] = useState(0);
   const [completing, setCompleting] = useState(false);
+
+  // 힌트 관련 상태
+  const [hintData, setHintData] = useState<{
+    hint: string;
+    eliminatedChoices: number[];
+  } | null>(null);
+  const [hintUsed, setHintUsed] = useState(false);
 
   // Timer
   const [elapsed, setElapsed] = useState(0);
@@ -124,23 +133,35 @@ export default function TestPlayPage() {
         currentQuestion.id,
         selectedAnswer,
         timeSpent,
-        tabSwitchRef.current
+        tabSwitchRef.current,
+        hintUsed, // isRetry
       );
 
-      setFeedback(result);
-      setCombo(result.comboCount);
-      setTotalScore((prev) => prev + result.pointsEarned);
+      if (result.canRetry) {
+        // 1차 오답: 힌트 표시 + 다시 풀기
+        setHintData({
+          hint: result.hint ?? '',
+          eliminatedChoices: result.eliminatedChoices ?? [],
+        });
+        setHintUsed(true);
+        setSelectedAnswer('');
+      } else {
+        // 최종 결과 (1차 정답 또는 2차 시도)
+        setFeedback(result);
+        setCombo(result.comboCount);
+        setTotalScore((prev) => prev + result.pointsEarned);
 
-      if (result.comboCount >= 3) {
-        setComboAnimation(true);
-        setTimeout(() => setComboAnimation(false), 1000);
+        if (result.comboCount >= 3) {
+          setComboAnimation(true);
+          setTimeout(() => setComboAnimation(false), 1000);
+        }
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '답안 제출 실패');
     }
 
     setSubmitting(false);
-  }, [attempt, currentQuestion, selectedAnswer, submitting, submitAnswer]);
+  }, [attempt, currentQuestion, selectedAnswer, submitting, submitAnswer, hintUsed]);
 
   const handleNext = useCallback(async () => {
     if (isLastQuestion) {
@@ -158,6 +179,8 @@ export default function TestPlayPage() {
       setCurrentIndex((i) => i + 1);
       setSelectedAnswer('');
       setFeedback(null);
+      setHintData(null);
+      setHintUsed(false);
     }
   }, [isLastQuestion, attempt, completeAttempt, testSeq, router]);
 
@@ -224,7 +247,7 @@ export default function TestPlayPage() {
           <Card className="p-5 md:p-6">
             {/* Question header */}
             <div className="flex items-center gap-2 mb-4">
-              <span className="text-xs font-medium text-slate-500">{currentQuestion.chapter}</span>
+              <span className="text-sm font-medium text-slate-500">{currentQuestion.chapter}</span>
               <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${
                 currentQuestion.difficulty === 'BASIC' ? 'bg-green-100 text-green-700' :
                 currentQuestion.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
@@ -233,6 +256,11 @@ export default function TestPlayPage() {
               }`}>
                 {DIFFICULTY_LABELS[currentQuestion.difficulty as keyof typeof DIFFICULTY_LABELS]}
               </span>
+              {hintUsed && !feedback && (
+                <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-700">
+                  재도전
+                </span>
+              )}
             </div>
 
             {/* Question content */}
@@ -261,28 +289,31 @@ export default function TestPlayPage() {
             {/* Answer area */}
             {currentQuestion.choices && currentQuestion.choices.length > 0 ? (
               // Multiple choice
-              <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
                 {(currentQuestion.choices as string[]).map((choice, idx) => {
                   const choiceNum = String(idx + 1);
                   const isSelected = selectedAnswer === choiceNum;
                   const showResult = feedback !== null;
                   const isCorrectAnswer = feedback?.correctAnswer === choiceNum;
+                  const isEliminated = hintData?.eliminatedChoices.includes(idx) ?? false;
 
                   return (
                     <button
                       key={idx}
-                      disabled={!!feedback}
+                      disabled={!!feedback || isEliminated}
                       onClick={() => setSelectedAnswer(choiceNum)}
                       className={`w-full text-left px-4 py-3 rounded-sm border-2 transition-all text-sm ${
-                        showResult
-                          ? isCorrectAnswer
-                            ? 'border-emerald-400 bg-emerald-50'
+                        isEliminated
+                          ? 'border-slate-100 bg-slate-50 opacity-30 line-through cursor-not-allowed'
+                          : showResult
+                            ? isCorrectAnswer
+                              ? 'border-emerald-400 bg-emerald-50'
+                              : isSelected
+                                ? 'border-red-400 bg-red-50'
+                                : 'border-slate-200 opacity-50'
                             : isSelected
-                              ? 'border-red-400 bg-red-50'
-                              : 'border-slate-200 opacity-50'
-                          : isSelected
-                            ? 'border-primary bg-primary/5'
-                            : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                              ? 'border-primary bg-primary/5'
+                              : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                       }`}
                     >
                       <div className="flex items-start gap-2">
@@ -315,6 +346,20 @@ export default function TestPlayPage() {
               </div>
             )}
 
+            {/* 힌트 카드 (1차 오답 후) */}
+            {hintData && !feedback && (
+              <div className="mt-6 p-4 rounded-sm bg-amber-50 border border-amber-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <Lightbulb className="w-5 h-5 text-amber-600" />
+                  <span className="font-bold text-amber-700">힌트</span>
+                  <span className="text-xs text-amber-500 ml-auto">재도전 시 점수 50% 감소</span>
+                </div>
+                <p className="text-sm text-amber-900 leading-relaxed">
+                  <MathRenderer content={hintData.hint} />
+                </p>
+              </div>
+            )}
+
             {/* Feedback */}
             {feedback && (
               <div className={`mt-6 p-4 rounded-sm ${
@@ -326,6 +371,11 @@ export default function TestPlayPage() {
                       <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                       <span className="font-bold text-emerald-700">정답!</span>
                       <span className="text-sm text-emerald-600">+{feedback.pointsEarned}점</span>
+                      {hintUsed && (
+                        <span className="ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-xs font-medium">
+                          힌트 사용
+                        </span>
+                      )}
                       {feedback.comboCount >= 3 && (
                         <span className="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs font-bold">
                           {feedback.comboCount}연속 콤보!
@@ -337,7 +387,7 @@ export default function TestPlayPage() {
                       <XCircle className="w-5 h-5 text-red-600" />
                       <span className="font-bold text-red-700">오답</span>
                       <span className="text-sm text-red-600 [&_p]:inline [&_p]:m-0">
-                        정답: <MathRenderer content={feedback.correctAnswer} />
+                        정답: <MathRenderer content={feedback.correctAnswer ?? ''} />
                       </span>
                     </>
                   )}
@@ -351,14 +401,21 @@ export default function TestPlayPage() {
             )}
 
             {/* Action buttons */}
-            <div className="mt-6 flex justify-end">
+            <div className="mt-6 flex justify-end gap-2">
               {!feedback ? (
                 <Button
                   onClick={handleSubmit}
                   disabled={!selectedAnswer.trim()}
                   loading={submitting}
                 >
-                  답안 제출
+                  {hintUsed ? (
+                    <>
+                      <RotateCcw className="w-4 h-4 mr-1" />
+                      다시 제출
+                    </>
+                  ) : (
+                    '답안 제출'
+                  )}
                 </Button>
               ) : (
                 <Button onClick={handleNext} loading={completing}>

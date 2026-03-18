@@ -194,13 +194,13 @@ export default function AnalyticsPage() {
         <div className="max-w-[1024px] w-full grid grid-cols-2 md:grid-cols-4 gap-3">
           <Card className="p-5 text-center">
             <p className="text-2xl font-black text-text-primary">{students.length}</p>
-            <p className="text-xs text-text-secondary font-medium mt-1">전체 학생 수</p>
+            <p className="text-sm text-text-secondary font-medium mt-1">전체 학생 수</p>
           </Card>
           <Card className="p-5 text-center">
             <p className="text-2xl font-black text-text-primary">
               {students.filter((s) => s.profile && s.profile.totalXp > 0).length}
             </p>
-            <p className="text-xs text-text-secondary font-medium mt-1">학습 참여 학생</p>
+            <p className="text-sm text-text-secondary font-medium mt-1">학습 참여 학생</p>
           </Card>
           <Card className="p-5 text-center">
             <p className="text-2xl font-black text-text-primary">
@@ -208,13 +208,13 @@ export default function AnalyticsPage() {
                 ? (students.reduce((s, st) => s + (st.profile?.level ?? 1), 0) / students.length).toFixed(1)
                 : 0}
             </p>
-            <p className="text-xs text-text-secondary font-medium mt-1">평균 레벨</p>
+            <p className="text-sm text-text-secondary font-medium mt-1">평균 레벨</p>
           </Card>
           <Card className="p-5 text-center">
             <p className="text-2xl font-black text-text-primary">
               {students.reduce((s, st) => s + (st.profile?.totalXp ?? 0), 0).toLocaleString()}
             </p>
-            <p className="text-xs text-text-secondary font-medium mt-1">총 XP 합계</p>
+            <p className="text-sm text-text-secondary font-medium mt-1">총 XP 합계</p>
           </Card>
         </div>
       )}

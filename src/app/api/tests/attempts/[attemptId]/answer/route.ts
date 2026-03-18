@@ -15,7 +15,7 @@ export async function POST(
 
   const { attemptId } = await params;
   const body = await request.json();
-  const { questionId, selectedAnswer, timeSpentSeconds, tabSwitchCount } = body;
+  const { questionId, selectedAnswer, timeSpentSeconds, tabSwitchCount, isRetry } = body;
 
   if (!questionId || selectedAnswer === undefined || timeSpentSeconds === undefined) {
     return badRequest('필수 항목이 누락되었습니다');
@@ -28,6 +28,7 @@ export async function POST(
       selectedAnswer: String(selectedAnswer),
       timeSpentSeconds: clamp(Math.round(timeSpentSeconds), 0, 3600),
       tabSwitchCount: tabSwitchCount ? Math.max(0, Number(tabSwitchCount)) : undefined,
+      isRetry: isRetry === true,
     });
 
     return NextResponse.json({ data: result });

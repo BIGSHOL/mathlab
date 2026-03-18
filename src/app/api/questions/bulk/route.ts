@@ -46,6 +46,8 @@ export async function POST(request: NextRequest) {
           sourceTag: q.sourceTag || null,
           domain: q.domain || null,
           conceptId: q.conceptId || null,
+          diagramSpec: q.diagramSpec || undefined,
+          diagramSVG: q.diagramSVG || null,
         })),
         skipDuplicates: true,
       });

@@ -395,6 +395,10 @@ export function usePdfImport(): PdfImportState {
         answer: p.answer || '미입력',
         explanation: p.explanation || undefined,
         sourceTag: p.sourceTag || undefined,
+        diagramSpec: p.diagramParams && p.diagramParams.length > 0 ? p.diagramParams : undefined,
+        diagramSVG: p.diagramSvgs && p.diagramSvgs.length > 0
+          ? p.diagramSvgs.map((d) => d.svg).join('\n')
+          : undefined,
       }));
 
       const res = await fetch('/api/questions/bulk', {

@@ -156,9 +156,9 @@ export default function CreateLevelTestPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-64px)]">
+    <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)]">
       {/* Left panel: settings */}
-      <div className="w-[340px] flex-shrink-0 border-r border-slate-200 overflow-y-auto p-5 space-y-4">
+      <div className="w-full lg:w-[340px] flex-shrink-0 border-r border-slate-200 overflow-y-auto p-5 space-y-4">
         {/* Header */}
         <div className="flex items-center gap-3">
           <Link href="/level-test" className="text-text-secondary hover:text-text-primary">

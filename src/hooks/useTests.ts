@@ -81,7 +81,10 @@ interface AnswerResult {
 
 interface SubmitResult {
   isCorrect: boolean;
-  correctAnswer: string;
+  canRetry?: boolean;
+  hint?: string | null;
+  eliminatedChoices?: number[];
+  correctAnswer: string | null;
   explanation: string | null;
   pointsEarned: number;
   comboCount: number;
@@ -207,11 +210,12 @@ export function useTestAttempt() {
     selectedAnswer: string,
     timeSpentSeconds: number,
     tabSwitchCount?: number,
+    isRetry?: boolean,
   ): Promise<SubmitResult> => {
     const res = await fetch(`/api/tests/attempts/${attemptId}/answer`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ questionId, selectedAnswer, timeSpentSeconds, tabSwitchCount }),
+      body: JSON.stringify({ questionId, selectedAnswer, timeSpentSeconds, tabSwitchCount, isRetry }),
     });
     if (!res.ok) {
       const err = await res.json();
@@ -219,10 +223,12 @@ export function useTestAttempt() {
     }
     const json = await res.json();
 
-    // 시도 상태 새로고침
-    const detailRes = await fetch(`/api/tests/attempts/${attemptId}`);
-    const detailJson = await detailRes.json();
-    setAttempt(detailJson.data);
+    // 힌트 반환 시에는 DB에 미저장이므로 attempt 새로고침 불필요
+    if (!json.data.canRetry) {
+      const detailRes = await fetch(`/api/tests/attempts/${attemptId}`);
+      const detailJson = await detailRes.json();
+      setAttempt(detailJson.data);
+    }
 
     return json.data;
   };

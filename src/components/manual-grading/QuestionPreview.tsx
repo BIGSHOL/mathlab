@@ -111,7 +111,7 @@ export function QuestionPreview() {
       {question.explanation && (
         <div className="pt-3 border-t border-slate-200">
           <span className="text-xs font-bold text-slate-500 block mb-1.5">해설</span>
-          <div className="text-xs text-text-secondary leading-relaxed bg-slate-50 p-2.5 rounded-sm">
+          <div className="text-sm text-text-secondary leading-relaxed bg-slate-50 p-2.5 rounded-sm">
             <MathRenderer content={question.explanation} />
           </div>
         </div>
