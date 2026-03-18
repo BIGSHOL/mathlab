@@ -63,7 +63,7 @@ export default function ConceptHomeworkGridPage({ params }: { params: Promise<{ 
         const json = await res.json();
         setGrid(json.data);
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('개념 숙제 그리드 조회 실패:', err); }
     setLoading(false);
   }, [seq]);
 
@@ -102,7 +102,7 @@ export default function ConceptHomeworkGridPage({ params }: { params: Promise<{ 
               <BookOpen className="w-4 h-4 text-primary shrink-0" />
               {grid.plan.title}
             </h1>
-            <p className="text-[11px] text-text-secondary">
+            <p className="text-xs text-text-secondary">
               {grid.students.length}명 · {grid.days.reduce((s, d) => s + d.concepts.length, 0)}개 개념 · {grid.plan.totalDays}일
             </p>
           </div>
@@ -112,12 +112,12 @@ export default function ConceptHomeworkGridPage({ params }: { params: Promise<{ 
           {STAGE_LABELS.map((label, i) => (
             <div key={i} className="flex items-center gap-1">
               <div className={`w-2.5 h-2.5 rounded-sm ${STAGE_COLORS[i]}`} />
-              <span className="text-[10px] text-text-secondary">{label}</span>
+              <span className="text-xs text-text-secondary">{label}</span>
             </div>
           ))}
           <div className="flex items-center gap-1">
             <div className="w-2.5 h-2.5 rounded-sm bg-slate-200" />
-            <span className="text-[10px] text-text-secondary">미완료</span>
+            <span className="text-xs text-text-secondary">미완료</span>
           </div>
         </div>
       </div>
@@ -140,10 +140,10 @@ export default function ConceptHomeworkGridPage({ params }: { params: Promise<{ 
                     day.dayIndex === todayDayIdx ? 'bg-primary/5' : ''
                   }`}
                 >
-                  <div className="text-[10px] font-semibold text-text-primary">{day.dayIndex + 1}일차</div>
-                  <div className="text-[9px] text-text-secondary">{day.date.slice(5)}</div>
+                  <div className="text-xs font-semibold text-text-primary">{day.dayIndex + 1}일차</div>
+                  <div className="text-xs text-text-secondary">{day.date.slice(5)}</div>
                   {day.concepts.map((c) => (
-                    <div key={c.id} className="text-[9px] text-primary truncate max-w-[80px] mx-auto" title={c.title}>
+                    <div key={c.id} className="text-xs text-primary truncate max-w-[80px] mx-auto" title={c.title}>
                       {c.title.length > 6 ? c.title.slice(0, 6) + '…' : c.title}
                     </div>
                   ))}
@@ -152,7 +152,7 @@ export default function ConceptHomeworkGridPage({ params }: { params: Promise<{ 
             </tr>
             {/* Completion rate row */}
             <tr className="bg-slate-50/50">
-              <td className="sticky left-0 z-20 bg-slate-50 border-b border-r border-slate-200 px-3 py-1 text-[10px] text-text-secondary font-medium">
+              <td className="sticky left-0 z-20 bg-slate-50 border-b border-r border-slate-200 px-3 py-1 text-xs text-text-secondary font-medium">
                 전체 완료율
               </td>
               <td className="sticky left-28 z-20 bg-slate-50 border-b border-r border-slate-200" />
@@ -161,13 +161,13 @@ export default function ConceptHomeworkGridPage({ params }: { params: Promise<{ 
                   grid.days[d]?.dayIndex === todayDayIdx ? 'bg-primary/5' : ''
                 }`}>
                   {rate >= 0 ? (
-                    <span className={`text-[10px] font-semibold ${
+                    <span className={`text-xs font-semibold ${
                       rate >= 80 ? 'text-emerald-600' : rate >= 50 ? 'text-amber-600' : 'text-red-500'
                     }`}>
                       {rate}%
                     </span>
                   ) : (
-                    <span className="text-[10px] text-slate-300">-</span>
+                    <span className="text-xs text-slate-300">-</span>
                   )}
                 </td>
               ))}
@@ -179,7 +179,7 @@ export default function ConceptHomeworkGridPage({ params }: { params: Promise<{ 
                 <td className="sticky left-0 z-10 bg-white border-b border-r border-slate-200 px-3 py-2">
                   <div className="font-medium text-text-primary truncate">{student.name}</div>
                   {student.grade && (
-                    <div className="text-[10px] text-text-secondary">
+                    <div className="text-xs text-text-secondary">
                       {student.grade > 6 ? `중${student.grade - 6}` : `초${student.grade}`}
                     </div>
                   )}

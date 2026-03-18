@@ -88,7 +88,7 @@ export default function HomeworkPracticePage() {
         const json = await res.json();
         setHomeworkList(json.data ?? []);
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('연산 숙제 목록 조회 실패:', err); }
     setLoadingList(false);
   }, []);
 
@@ -155,7 +155,7 @@ export default function HomeworkPracticePage() {
           isCorrect,
           timeSpentSeconds: timeSpent,
         }),
-      }).catch(() => {});
+      }).catch((err) => console.error('연산 숙제 답안 저장 실패:', err));
 
       // 마지막 문제 답 제출 시 자동 complete (답 저장 후)
       if (currentIndex >= problems.length - 1) {
@@ -171,7 +171,7 @@ export default function HomeworkPracticePage() {
                 setLeveledUp(json.data.leveledUp);
               }
             })
-            .catch(() => {});
+            .catch((err) => console.error('연산 숙제 완료 처리 실패:', err));
         });
       }
     }
@@ -212,7 +212,7 @@ export default function HomeworkPracticePage() {
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
           </div>
         ) : homeworkList.length === 0 ? (
-          <Card className="p-8 text-center">
+          <Card className="p-5 text-center">
             <CalendarCheck className="w-12 h-12 text-slate-300 mx-auto mb-3" />
             <p className="text-text-secondary font-medium">오늘 배정된 숙제가 없습니다</p>
             <p className="text-sm text-slate-400 mt-1">선생님이 숙제를 배정하면 여기에 표시됩니다</p>
@@ -236,18 +236,18 @@ export default function HomeworkPracticePage() {
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-semibold text-primary">{hw.dayLabel}</span>
                         {hw.isAdvance && (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700">
+                          <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-700">
                             <Zap className="w-2.5 h-2.5 inline mr-0.5" />추가연습
                           </span>
                         )}
                         {isRetryNeeded && (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700">
+                          <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-700">
                             <RotateCcw className="w-2.5 h-2.5 inline mr-0.5" />
                             재시도 {hw.retryCount}회{hw.maxRetries ? `/${hw.maxRetries}` : ''}
                           </span>
                         )}
                         {isRetryExhausted && (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-600">
+                          <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-red-100 text-red-600">
                             통과 실패
                           </span>
                         )}
@@ -315,7 +315,7 @@ export default function HomeworkPracticePage() {
     const totalTime = Math.floor((Date.now() - startRef.current) / 1000);
     return (
       <div className="p-6 max-w-md mx-auto">
-        <Card className="p-8 text-center space-y-4">
+        <Card className="p-5 text-center space-y-4">
           <Trophy className="w-12 h-12 text-yellow-500 mx-auto" />
           <h2 className="text-2xl font-black text-text-primary">숙제 완료!</h2>
           {activeHomework && (
@@ -393,13 +393,13 @@ export default function HomeworkPracticePage() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <Card className="p-6 md:p-8">
+        <Card className="p-5 md:p-6">
           {/* Problem */}
           <div className="text-center mb-8">
             <p className="text-xs text-text-secondary mb-2">
               {CATEGORY_LABELS[current.category]}
             </p>
-            <div className="text-2xl md:text-3xl font-bold text-text-primary">
+            <div className="text-2xl font-bold text-text-primary">
               <MathRenderer content={current.content} />
             </div>
           </div>

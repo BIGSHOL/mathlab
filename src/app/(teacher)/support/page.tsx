@@ -179,7 +179,7 @@ export default function SupportPage() {
               <HelpCircle className="w-5 h-5 text-primary shrink-0" />
               <h1 className="text-base font-bold text-text-primary truncate">고객지원</h1>
               {isAdmin && pendingCount > 0 && (
-                <span className="shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">
+                <span className="shrink-0 px-1.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
                   {pendingCount}
                 </span>
               )}
@@ -204,12 +204,12 @@ export default function SupportPage() {
             {isAdmin ? (
               <>
                 {/* Admin: Status Filter Pills */}
-                <div className="shrink-0 px-3 py-2 border-b border-slate-100 flex gap-1">
+                <div className="shrink-0 px-3 py-2 border-b border-slate-200 flex gap-1">
                   {(['ALL', 'PENDING', 'ANSWERED'] as const).map((s) => (
                     <button
                       key={s}
                       onClick={() => setStatusFilter(s)}
-                      className={`px-2 py-1 rounded-sm text-[11px] font-semibold transition-colors ${
+                      className={`px-2 py-1 rounded-sm text-xs font-semibold transition-colors ${
                         statusFilter === s
                           ? 'bg-primary text-white'
                           : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
@@ -223,8 +223,8 @@ export default function SupportPage() {
                 {/* Admin: Inquiry List */}
                 <div className="flex-1 overflow-y-auto">
                   {loading ? (
-                    <div className="flex justify-center py-8">
-                      <Loader2 className="w-5 h-5 animate-spin text-text-secondary" />
+                    <div className="flex justify-center py-12">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
                     </div>
                   ) : filteredInquiries.length === 0 ? (
                     <div className="text-center py-8 text-text-secondary text-xs">
@@ -247,7 +247,7 @@ export default function SupportPage() {
                         >
                           <div className="flex items-center gap-1.5 mb-1">
                             <span
-                              className={`px-1.5 py-0.5 rounded-sm text-[10px] font-bold ${
+                              className={`px-1.5 py-0.5 rounded-sm text-xs font-bold ${
                                 inq.status === 'PENDING'
                                   ? 'bg-amber-100 text-amber-700'
                                   : 'bg-emerald-100 text-emerald-700'
@@ -255,14 +255,14 @@ export default function SupportPage() {
                             >
                               {inq.status === 'PENDING' ? '대기' : '완료'}
                             </span>
-                            <span className="text-[10px] text-text-secondary truncate">
+                            <span className="text-xs text-text-secondary truncate">
                               {inq.category}
                             </span>
                           </div>
                           <p className="text-xs font-semibold text-text-primary truncate">
                             {inq.title}
                           </p>
-                          <p className="text-[10px] text-text-secondary mt-0.5">
+                          <p className="text-xs text-text-secondary mt-0.5">
                             {inq.user.name} · {formatDateShort(inq.createdAt)}
                           </p>
                         </button>
@@ -274,7 +274,7 @@ export default function SupportPage() {
             ) : (
               <>
                 {/* Teacher: New Inquiry Button */}
-                <div className="shrink-0 px-3 py-2 border-b border-slate-100">
+                <div className="shrink-0 px-3 py-2 border-b border-slate-200">
                   <button
                     onClick={() => {
                       setShowInquiryForm(true);
@@ -290,8 +290,8 @@ export default function SupportPage() {
                 {/* Teacher: My Inquiry List */}
                 <div className="flex-1 overflow-y-auto">
                   {loading ? (
-                    <div className="flex justify-center py-8">
-                      <Loader2 className="w-5 h-5 animate-spin text-text-secondary" />
+                    <div className="flex justify-center py-12">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
                     </div>
                   ) : inquiries.length === 0 ? (
                     <div className="text-center py-8 text-text-secondary text-xs">
@@ -314,7 +314,7 @@ export default function SupportPage() {
                         >
                           <div className="flex items-center gap-1.5 mb-1">
                             <span
-                              className={`px-1.5 py-0.5 rounded-sm text-[10px] font-bold ${
+                              className={`px-1.5 py-0.5 rounded-sm text-xs font-bold ${
                                 inq.status === 'PENDING'
                                   ? 'bg-amber-100 text-amber-700'
                                   : 'bg-emerald-100 text-emerald-700'
@@ -322,14 +322,14 @@ export default function SupportPage() {
                             >
                               {inq.status === 'PENDING' ? '대기' : '완료'}
                             </span>
-                            <span className="text-[10px] text-text-secondary truncate">
+                            <span className="text-xs text-text-secondary truncate">
                               {inq.category}
                             </span>
                           </div>
                           <p className="text-xs font-semibold text-text-primary truncate">
                             {inq.title}
                           </p>
-                          <p className="text-[10px] text-text-secondary mt-0.5">
+                          <p className="text-xs text-text-secondary mt-0.5">
                             {formatDateShort(inq.createdAt)}
                           </p>
                         </button>
@@ -457,7 +457,7 @@ export default function SupportPage() {
 
               {/* Admin: Reply Form */}
               {isAdmin && selectedInquiry.status === 'PENDING' && (
-                <div className="flex flex-col gap-3 border-t border-slate-100 pt-2">
+                <div className="flex flex-col gap-3 border-t border-slate-200 pt-2">
                   <label className="text-sm font-semibold text-text-primary">답변 작성</label>
                   <textarea
                     value={replyText}
@@ -520,7 +520,7 @@ export default function SupportPage() {
                         )}
                       </button>
                       {expandedFaq === i && (
-                        <div className="px-3 pb-2 text-sm text-text-secondary leading-relaxed border-t border-slate-100 pt-3">
+                        <div className="px-3 pb-2 text-sm text-text-secondary leading-relaxed border-t border-slate-200 pt-3">
                           {item.a}
                         </div>
                       )}

@@ -85,7 +85,7 @@ export default function EnrollWizardPage() {
           const isDone = step > s.num;
           return (
             <div key={s.num} className="flex items-center gap-2 flex-1">
-              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold flex-1 transition-all ${
+              <div className={`flex items-center gap-2 px-3 py-2 rounded-sm text-xs font-semibold flex-1 transition-all ${
                 isActive ? 'bg-primary text-white' :
                 isDone ? 'bg-emerald-100 text-emerald-700' :
                 'bg-slate-100 text-text-secondary'
@@ -99,7 +99,7 @@ export default function EnrollWizardPage() {
         })}
       </div>
 
-      <Card className="p-6">
+      <Card className="p-5">
         {/* Step 1: Basic Info */}
         {step === 1 && (
           <div className="space-y-4">
@@ -107,7 +107,7 @@ export default function EnrollWizardPage() {
             <div>
               <label className="text-xs font-semibold text-text-secondary mb-1 block">이름</label>
               <input
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
                 placeholder="학생 이름"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -116,7 +116,7 @@ export default function EnrollWizardPage() {
             <div>
               <label className="text-xs font-semibold text-text-secondary mb-1 block">아이디</label>
               <input
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
                 placeholder="로그인 아이디"
                 value={form.username}
                 onChange={(e) => setForm({ ...form, username: e.target.value })}
@@ -125,12 +125,12 @@ export default function EnrollWizardPage() {
             <div>
               <label className="text-xs font-semibold text-text-secondary mb-1 block">초기 비밀번호</label>
               <input
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
                 type="password"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
               />
-              <p className="text-[10px] text-text-secondary mt-1">기본값: 1234. 학생이 첫 로그인 후 변경을 권장합니다.</p>
+              <p className="text-xs text-text-secondary mt-1">기본값: 1234. 학생이 첫 로그인 후 변경을 권장합니다.</p>
             </div>
           </div>
         )}
@@ -146,7 +146,7 @@ export default function EnrollWizardPage() {
                   <button
                     key={g}
                     onClick={() => setForm({ ...form, grade: g })}
-                    className={`py-3 rounded-lg text-sm font-semibold transition-all border ${
+                    className={`py-3 rounded-sm text-sm font-semibold transition-all border ${
                       form.grade === g
                         ? 'bg-primary text-white border-primary shadow-md'
                         : 'bg-white text-text-secondary border-slate-200 hover:border-primary/50'
@@ -157,12 +157,12 @@ export default function EnrollWizardPage() {
                 ))}
               </div>
             </div>
-            <div className="bg-blue-50 rounded-lg p-4 text-xs text-blue-700">
+            <div className="bg-blue-50 rounded-sm p-4 text-xs text-blue-700">
               <strong>{form.name}</strong> 학생을{' '}
               <strong>{form.grade <= 6 ? `초등 ${form.grade}학년` : `중등 ${form.grade - 6}학년`}</strong>으로 등록합니다.
             </div>
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-600">
+              <div className="bg-red-50 border border-red-200 rounded-sm p-3 text-sm text-red-600">
                 {error}
               </div>
             )}
@@ -179,7 +179,7 @@ export default function EnrollWizardPage() {
             <p className="text-sm text-text-secondary">
               <strong>{form.name}</strong> 학생이 성공적으로 등록되었습니다.
             </p>
-            <div className="bg-slate-50 rounded-lg p-4 text-left text-sm space-y-1">
+            <div className="bg-slate-50 rounded-sm p-4 text-left text-sm space-y-1">
               <p><span className="text-text-secondary">이름:</span> <strong>{form.name}</strong></p>
               <p><span className="text-text-secondary">아이디:</span> <strong>{form.username}</strong></p>
               <p><span className="text-text-secondary">학년:</span> <strong>{form.grade <= 6 ? `초등 ${form.grade}학년` : `중등 ${form.grade - 6}학년`}</strong></p>

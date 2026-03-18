@@ -138,7 +138,7 @@ export default function TimeAttackPage() {
         setCountdownNum(3);
         setPhase('countdown');
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('타임어택 문제 생성 실패:', err); }
     setLoading(false);
   }, [category, level]);
 
@@ -259,7 +259,7 @@ export default function TimeAttackPage() {
     const isNewRecord = result?.isNewRecord ?? false;
     return (
       <div className="p-6 max-w-md mx-auto">
-        <Card className="p-8 text-center space-y-4 relative overflow-hidden">
+        <Card className="p-5 text-center space-y-4 relative overflow-hidden">
           {isNewRecord && (
             <div className="absolute inset-0 pointer-events-none">
               {Array.from({ length: 12 }).map((_, i) => (
@@ -352,12 +352,12 @@ export default function TimeAttackPage() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <Card className="p-6 md:p-8">
+        <Card className="p-5 md:p-6">
           <div className="text-center mb-6">
             <p className="text-xs text-text-secondary mb-2">
               #{currentIndex + 1} · {CATEGORY_LABELS[current.category]}
             </p>
-            <div className="text-2xl md:text-3xl font-bold text-text-primary">
+            <div className="text-2xl font-bold text-text-primary">
               <MathRenderer content={current.content} />
             </div>
           </div>

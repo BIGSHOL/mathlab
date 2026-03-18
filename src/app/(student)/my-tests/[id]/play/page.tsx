@@ -163,8 +163,8 @@ export default function TestPlayPage() {
 
   if (loading || questions.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex flex-col items-center justify-center py-12 gap-3">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
         <p className="text-text-secondary">시험을 준비하고 있습니다...</p>
       </div>
     );
@@ -221,11 +221,11 @@ export default function TestPlayPage() {
       {/* Question area */}
       <div className="max-w-3xl mx-auto px-4 py-8">
         {currentQuestion && (
-          <Card className="p-6 md:p-8">
+          <Card className="p-5 md:p-6">
             {/* Question header */}
             <div className="flex items-center gap-2 mb-4">
               <span className="text-xs font-medium text-slate-500">{currentQuestion.chapter}</span>
-              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+              <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${
                 currentQuestion.difficulty === 'BASIC' ? 'bg-green-100 text-green-700' :
                 currentQuestion.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
                 currentQuestion.difficulty === 'HIGH' ? 'bg-red-100 text-red-700' :
@@ -245,11 +245,11 @@ export default function TestPlayPage() {
                     {currentQuestion.diagramSpec ? (
                       <DiagramRenderer
                         spec={currentQuestion.diagramSpec as unknown as DiagramSpec}
-                        className="rounded-lg border border-slate-100 bg-white p-4"
+                        className="rounded-sm border border-slate-200 bg-white p-4"
                       />
                     ) : (
                       <div
-                        className="w-full overflow-hidden rounded-lg border border-slate-100 bg-white p-4 [&_svg]:w-full [&_svg]:h-auto"
+                        className="w-full overflow-hidden rounded-sm border border-slate-200 bg-white p-4 [&_svg]:w-full [&_svg]:h-auto"
                         dangerouslySetInnerHTML={{ __html: currentQuestion.diagramSVG! }}
                       />
                     )}

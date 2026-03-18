@@ -197,10 +197,10 @@ export default async function TeacherDashboard() {
           {stats.map((stat) => (
             <div
               key={stat.label}
-              className="glass-card flex flex-col gap-2 rounded-sm p-2.5 md:p-2.5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden"
+              className="glass-card flex flex-col gap-2 rounded-sm p-3 md:p-3 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden"
             >
-              <div className="absolute top-0 right-0 p-2.5 md:p-2.5">{stat.icon}</div>
-              <p className="text-text-secondary text-[10px] md:text-xs font-semibold tracking-wide">
+              <div className="absolute top-0 right-0 p-3 md:p-3">{stat.icon}</div>
+              <p className="text-text-secondary text-xs font-semibold tracking-wide">
                 {stat.label}
               </p>
               <div className="flex items-end justify-between mt-auto">
@@ -271,7 +271,7 @@ export default async function TeacherDashboard() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-bold text-sm text-text-primary truncate">{student.name}</p>
-                          <p className="text-[11px] text-text-secondary">
+                          <p className="text-xs text-text-secondary">
                             {student.subjectTitle} &bull;{' '}
                             <span className={`font-bold ${colors.badge}`}>{student.achievementPercent}%</span>
                           </p>
@@ -309,7 +309,7 @@ export default async function TeacherDashboard() {
             </div>
             <div className="flex flex-col gap-2">
               {topStudents.map((s, i) => (
-                <div key={s.id} className="flex items-center gap-2 py-2 border-b border-slate-50 last:border-0">
+                <div key={s.id} className="flex items-center gap-2 py-2 border-b border-slate-200 last:border-0">
                   <span
                     className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
                       i === 0
@@ -325,11 +325,11 @@ export default async function TeacherDashboard() {
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-text-primary truncate">{s.name}</p>
-                    <p className="text-[11px] text-text-secondary">{getGradeLabel(s.grade)}</p>
+                    <p className="text-xs text-text-secondary">{getGradeLabel(s.grade)}</p>
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-sm font-bold text-primary">{formatNumber(s.profile?.totalXp ?? 0)}</p>
-                    <p className="text-[11px] text-text-secondary">Lv.{s.profile?.level ?? 1}</p>
+                    <p className="text-xs text-text-secondary">Lv.{s.profile?.level ?? 1}</p>
                   </div>
                 </div>
               ))}
@@ -355,7 +355,7 @@ export default async function TeacherDashboard() {
                         className="bg-primary/70 h-full rounded-sm transition-all flex items-center justify-end pr-2"
                         style={{ width: `${Math.max((count / maxGradeCount) * 100, 20)}%` }}
                       >
-                        <span className="text-[10px] font-bold text-white">{count}명</span>
+                        <span className="text-xs font-bold text-white">{count}명</span>
                       </div>
                     </div>
                   </div>
@@ -363,27 +363,27 @@ export default async function TeacherDashboard() {
               )}
             </div>
             {/* Streak summary */}
-            <div className="mt-3 pt-2.5 border-t border-slate-100">
+            <div className="mt-3 pt-2.5 border-t border-slate-200">
               <div className="flex items-center gap-2 mb-2">
                 <Flame className="w-4 h-4 text-orange-500" />
                 <span className="text-sm font-bold text-text-primary">학습 스트릭</span>
               </div>
               <div className="flex gap-2 text-center">
-                <div className="flex-1 bg-orange-50 rounded-sm p-2.5">
+                <div className="flex-1 bg-orange-50 rounded-sm p-3">
                   <p className="text-sm font-bold text-orange-600">
                     {profiles.length > 0
                       ? Math.max(...profiles.map((p) => p.currentStreak))
                       : 0}
                   </p>
-                  <p className="text-[11px] text-text-secondary font-medium mt-0.5">최고 연속일</p>
+                  <p className="text-xs text-text-secondary font-medium mt-0.5">최고 연속일</p>
                 </div>
-                <div className="flex-1 bg-blue-50 rounded-sm p-2.5">
+                <div className="flex-1 bg-blue-50 rounded-sm p-3">
                   <p className="text-sm font-bold text-primary">
                     {profiles.length > 0
                       ? Math.round(profiles.reduce((s, p) => s + p.currentStreak, 0) / profiles.length * 10) / 10
                       : 0}
                   </p>
-                  <p className="text-[11px] text-text-secondary font-medium mt-0.5">평균 연속일</p>
+                  <p className="text-xs text-text-secondary font-medium mt-0.5">평균 연속일</p>
                 </div>
               </div>
             </div>
@@ -399,7 +399,7 @@ export default async function TeacherDashboard() {
                 <p className="text-text-secondary text-sm text-center py-2.5">아직 학습 기록이 없습니다.</p>
               ) : (
                 recentActivity.map((a) => (
-                  <div key={a.id} className="flex items-start gap-2 py-2 border-b border-slate-50 last:border-0">
+                  <div key={a.id} className="flex items-start gap-2 py-2 border-b border-slate-200 last:border-0">
                     <div className={`w-8 h-8 rounded-sm flex items-center justify-center text-xs font-bold shrink-0 ${
                       a.completed ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'
                     }`}>
@@ -411,7 +411,7 @@ export default async function TeacherDashboard() {
                         <span className="text-text-secondary">이(가) </span>
                         <span className="font-medium">{a.concept.title}</span>
                       </p>
-                      <p className="text-[11px] text-text-secondary mt-0.5">
+                      <p className="text-xs text-text-secondary mt-0.5">
                         {stageLabels[a.stage] ?? a.stage} &bull;{' '}
                         {a.completed ? (
                           <span className="text-emerald-600 font-semibold">완료</span>

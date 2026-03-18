@@ -127,8 +127,8 @@ export default function LevelTestReportPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>
     );
   }
@@ -271,7 +271,7 @@ export default function LevelTestReportPage() {
             </Link>
             <div className="w-px h-4 bg-slate-200" />
             <span className="text-xs font-bold text-text-primary">{data.student.name}</span>
-            <span className="text-[10px] text-slate-400">진단 보고서 · {totalPages}페이지</span>
+            <span className="text-xs text-slate-400">진단 보고서 · {totalPages}페이지</span>
           </div>
         }
       />

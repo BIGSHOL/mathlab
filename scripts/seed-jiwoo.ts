@@ -7,13 +7,13 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 const STUDENT_ID = 'cmmdeyguc000lvdb8yqihqg8y'; // 강지우
 
-// 초등4 개념 IDs
+// 초등4 개념 IDs (seed-run.js 실행 후 갱신 필요)
 const CONCEPT_IDS = [
-  'cmmu8nw2x0021vdykwylqyip4', // 큰 수
-  'cmmu8nw3c0023vdykcvxj7lz4', // 각도
-  'cmmu8nw3s0025vdyk9xpj3t7y', // 곱셈과 나눗셈
-  'cmmu8nw460027vdykq5kksgkc', // 평면도형의 이동
-  'cmmu8nw4k0029vdykvbfj9l8m', // 막대그래프
+  'cmmvjwafa0021vdsgk2dgpgby', // 큰 수
+  'cmmvjwafq0023vdsglqot03lt', // 각도
+  'cmmvjwag50025vdsgi6d3mpht', // 곱셈과 나눗셈
+  'cmmvjwagk0027vdsg70sat9r4', // 평면도형의 이동
+  'cmmvjwah00029vdsgnnebk3u8', // 막대그래프
 ];
 
 const STAGES = ['READING', 'BLANK_EASY', 'BLANK_HARD', 'BLANK_FULL'] as const;

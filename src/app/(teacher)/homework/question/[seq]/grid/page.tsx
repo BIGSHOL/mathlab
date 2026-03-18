@@ -45,7 +45,7 @@ export default function QuestionHomeworkGridPage({ params }: { params: Promise<{
     try {
       const res = await fetch(`/api/question-homework/plans/${seq}/grid`);
       if (res.ok) { const json = await res.json(); setGrid(json.data); }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('문제 숙제 그리드 조회 실패:', err); }
     setLoading(false);
   }, [seq]);
 
@@ -66,7 +66,7 @@ export default function QuestionHomeworkGridPage({ params }: { params: Promise<{
             <h1 className="text-base font-bold text-text-primary flex items-center gap-2 truncate">
               <FileQuestion className="w-4 h-4 text-primary shrink-0" />{grid.plan.title}
             </h1>
-            <p className="text-[11px] text-text-secondary">{grid.students.length}명 · {grid.days.reduce((s, d) => s + d.questions.length, 0)}문제 · {grid.plan.totalDays}일 · 통과 {grid.plan.passingScore}%</p>
+            <p className="text-xs text-text-secondary">{grid.students.length}명 · {grid.days.reduce((s, d) => s + d.questions.length, 0)}문제 · {grid.plan.totalDays}일 · 통과 {grid.plan.passingScore}%</p>
           </div>
         </div>
       </div>
@@ -80,19 +80,19 @@ export default function QuestionHomeworkGridPage({ params }: { params: Promise<{
               <th className="sticky left-[168px] z-20 bg-slate-50 border-b border-r border-slate-200 px-2 py-2 text-center font-semibold w-14">평균</th>
               {grid.days.map((day) => (
                 <th key={day.dayIndex} className={`border-b border-r border-slate-200 px-2 py-1.5 text-center min-w-[50px] ${day.dayIndex === todayIdx ? 'bg-primary/5' : ''}`}>
-                  <div className="text-[10px] font-semibold text-text-primary">{day.dayIndex + 1}일차</div>
-                  <div className="text-[9px] text-text-secondary">{day.date.slice(5)}</div>
-                  <div className="text-[9px] text-text-secondary">{day.questions.length}문제</div>
+                  <div className="text-xs font-semibold text-text-primary">{day.dayIndex + 1}일차</div>
+                  <div className="text-xs text-text-secondary">{day.date.slice(5)}</div>
+                  <div className="text-xs text-text-secondary">{day.questions.length}문제</div>
                 </th>
               ))}
             </tr>
             <tr className="bg-slate-50/50">
-              <td className="sticky left-0 z-20 bg-slate-50 border-b border-r border-slate-200 px-3 py-1 text-[10px] text-text-secondary font-medium">전체 완료율</td>
+              <td className="sticky left-0 z-20 bg-slate-50 border-b border-r border-slate-200 px-3 py-1 text-xs text-text-secondary font-medium">전체 완료율</td>
               <td className="sticky left-28 z-20 bg-slate-50 border-b border-r border-slate-200" />
               <td className="sticky left-[168px] z-20 bg-slate-50 border-b border-r border-slate-200" />
               {grid.dailyCompletionRates.map((rate, d) => (
                 <td key={d} className={`border-b border-r border-slate-200 text-center py-1 ${grid.days[d]?.dayIndex === todayIdx ? 'bg-primary/5' : ''}`}>
-                  {rate >= 0 ? <span className={`text-[10px] font-semibold ${rate >= 80 ? 'text-emerald-600' : rate >= 50 ? 'text-amber-600' : 'text-red-500'}`}>{rate}%</span> : <span className="text-[10px] text-slate-300">-</span>}
+                  {rate >= 0 ? <span className={`text-xs font-semibold ${rate >= 80 ? 'text-emerald-600' : rate >= 50 ? 'text-amber-600' : 'text-red-500'}`}>{rate}%</span> : <span className="text-xs text-slate-300">-</span>}
                 </td>
               ))}
             </tr>
@@ -102,7 +102,7 @@ export default function QuestionHomeworkGridPage({ params }: { params: Promise<{
               <tr key={student.id} className="hover:bg-slate-50/50">
                 <td className="sticky left-0 z-10 bg-white border-b border-r border-slate-200 px-3 py-2">
                   <div className="font-medium text-text-primary truncate">{student.name}</div>
-                  {student.grade && <div className="text-[10px] text-text-secondary">{student.grade > 6 ? `중${student.grade - 6}` : `초${student.grade}`}</div>}
+                  {student.grade && <div className="text-xs text-text-secondary">{student.grade > 6 ? `중${student.grade - 6}` : `초${student.grade}`}</div>}
                 </td>
                 <td className="sticky left-28 z-10 bg-white border-b border-r border-slate-200 px-2 py-2 text-center">
                   <span className={`text-xs font-bold ${student.completionRate >= 80 ? 'text-emerald-600' : student.completionRate >= 50 ? 'text-amber-600' : 'text-red-500'}`}>{student.completionRate}%</span>
@@ -118,10 +118,10 @@ export default function QuestionHomeworkGridPage({ params }: { params: Promise<{
                       {result ? (
                         <div>
                           <span className={`text-xs font-bold ${passed ? 'text-emerald-600' : 'text-red-500'}`}>{result.score}%</span>
-                          <div className="text-[9px] text-text-secondary">{result.correctCount}/{result.totalCount}</div>
+                          <div className="text-xs text-text-secondary">{result.correctCount}/{result.totalCount}</div>
                         </div>
                       ) : (
-                        <span className="text-[10px] text-slate-300">-</span>
+                        <span className="text-xs text-slate-300">-</span>
                       )}
                     </td>
                   );

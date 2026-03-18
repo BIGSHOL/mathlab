@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowLeft, X } from 'lucide-react';
+import { GRADE_LEVEL_LABELS } from '@/lib/constants/labels';
 
 interface EditorTopBarProps {
   title: string;
@@ -13,7 +14,7 @@ interface EditorTopBarProps {
   pageLabel?: string;
 }
 
-const GRADE_LABELS: Record<number, string> = { 7: '중1', 8: '중2', 9: '중3' };
+const GRADE_LABELS = GRADE_LEVEL_LABELS;
 
 export function EditorTopBar({
   title,

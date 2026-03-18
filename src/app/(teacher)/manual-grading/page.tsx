@@ -67,7 +67,7 @@ export default function ManualGradingPage() {
           setActiveQuestionId(json.data.questions[0].id);
         }
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('수기 채점 시작 실패:', err); }
     setStarting(false);
   }, [selectedTest, selectedStudent, setAttemptId, setQuestions, setAnswer, setActiveQuestionId]);
 
@@ -85,7 +85,7 @@ export default function ManualGradingPage() {
         setCompleted(true, json.data);
         setShowCompletion(true);
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('수기 채점 완료 처리 실패:', err); }
   }, [attemptId, totalTimeMinutes, setCompleted]);
 
   // 새 채점 시작
@@ -103,7 +103,7 @@ export default function ManualGradingPage() {
         <div className="shrink-0 px-3 py-2.5 border-b border-slate-200 bg-white">
           <div className="flex items-center gap-2">
             <PenLine className="w-4 h-4 text-primary shrink-0" />
-            <h1 className="text-sm font-bold text-text-primary">수기 채점</h1>
+            <h1 className="text-base font-bold text-text-primary">수기 채점</h1>
           </div>
         </div>
 
@@ -144,15 +144,15 @@ export default function ManualGradingPage() {
           {/* 채점 중 정보 */}
           {isGrading && (
             <div className="bg-primary/5 rounded-sm p-2.5 space-y-1">
-              <p className="text-[10px] font-bold text-primary">채점 진행 중</p>
-              <p className="text-[10px] text-slate-500">
+              <p className="text-xs font-bold text-primary">채점 진행 중</p>
+              <p className="text-xs text-slate-500">
                 {selectedStudent?.name} · {selectedTest?.title}
               </p>
-              <p className="text-[10px] text-slate-500">
+              <p className="text-xs text-slate-500">
                 {questions.length}문제
               </p>
               {completed && (
-                <p className="text-[10px] font-bold text-emerald-600">✓ 채점 완료</p>
+                <p className="text-xs font-bold text-emerald-600">✓ 채점 완료</p>
               )}
             </div>
           )}

@@ -35,7 +35,7 @@ export async function POST(
 
     return NextResponse.json({ data: result });
   } catch (error) {
-    const message = error instanceof Error ? error.message : '시험 완료 중 오류가 발생했습니다';
-    return badRequest(message);
+    console.error('시험 완료 오류:', error);
+    return badRequest('시험 완료 중 오류가 발생했습니다');
   }
 }

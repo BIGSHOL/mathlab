@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { badRequest } from '@/lib/api';
+import { badRequest, requireAuth, isResponse } from '@/lib/api';
 import { getCurriculumForGrade } from '@/lib/utils/curriculumMapping';
 
 // GET /api/concepts/curriculum-tree?grade=middle_1
 export async function GET(request: NextRequest) {
+  const user = await requireAuth();
+  if (isResponse(user)) return user;
   const { searchParams } = new URL(request.url);
   const grade = searchParams.get('grade');
 

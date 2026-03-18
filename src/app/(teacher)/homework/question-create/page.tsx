@@ -61,7 +61,7 @@ export default function QuestionHomeworkCreatePage() {
       if (questionSearch) params.set('search', questionSearch);
       const res = await fetch(`/api/questions?${params}`);
       if (res.ok) { const json = await res.json(); setAllQuestions(json.data ?? []); }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('문제 목록 조회 실패:', err); }
     setQuestionsLoading(false);
   }, [bookFilter, questionSearch]);
 
@@ -73,7 +73,7 @@ export default function QuestionHomeworkCreatePage() {
       try {
         const res = await fetch('/api/users');
         if (res.ok) { const json = await res.json(); setAllStudents((json.data ?? []).filter((u: { role: string }) => u.role === 'STUDENT')); }
-      } catch { /* ignore */ }
+      } catch (err) { console.error('학생 목록 조회 실패:', err); }
       setStudentsLoading(false);
     })();
   }, []);
@@ -132,7 +132,7 @@ export default function QuestionHomeworkCreatePage() {
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-4xl mx-auto p-4 space-y-5">
         <div className="flex items-center gap-3">
-          <Link href="/homework" className="p-1.5 rounded-lg hover:bg-slate-100 text-text-secondary">
+          <Link href="/homework" className="p-1.5 rounded-sm hover:bg-slate-100 text-text-secondary">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
@@ -144,7 +144,7 @@ export default function QuestionHomeworkCreatePage() {
         </div>
 
         {/* Basic Settings */}
-        <div className="border border-slate-200 rounded-lg p-4 space-y-3">
+        <div className="border border-slate-200 rounded-sm p-4 space-y-3">
           <h3 className="text-sm font-semibold text-text-primary">기본 설정</h3>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
@@ -174,8 +174,8 @@ export default function QuestionHomeworkCreatePage() {
         </div>
 
         {/* Question Selection */}
-        <div className="border border-slate-200 rounded-lg overflow-hidden">
-          <div className="p-4 border-b border-slate-100 bg-slate-50/50">
+        <div className="border border-slate-200 rounded-sm overflow-hidden">
+          <div className="p-4 border-b border-slate-200 bg-slate-50/50">
             <h3 className="text-sm font-semibold text-text-primary mb-2">문제 선택 ({selectedQuestions.length}개)</h3>
             <div className="flex gap-2">
               <select value={bookFilter} onChange={(e) => setBookFilter(e.target.value)} className="px-2 py-1.5 border border-slate-200 rounded text-xs">
@@ -184,14 +184,14 @@ export default function QuestionHomeworkCreatePage() {
               </select>
               <div className="flex-1 relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                <input type="text" value={questionSearch} onChange={(e) => setQuestionSearch(e.target.value)} placeholder="문제 검색..." className="w-full pl-8 pr-8 py-1.5 border border-slate-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary" />
+                <input type="text" value={questionSearch} onChange={(e) => setQuestionSearch(e.target.value)} placeholder="문제 검색..." className="w-full h-8 pl-8 pr-8 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary" />
                 {questionSearch && <button onClick={() => setQuestionSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2"><X className="w-3 h-3 text-slate-400" /></button>}
               </div>
             </div>
           </div>
           <div className="max-h-72 overflow-y-auto divide-y divide-slate-50">
             {questionsLoading ? (
-              <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
+              <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
             ) : allQuestions.length === 0 ? (
               <div className="p-4 text-center text-xs text-text-secondary">문제가 없습니다</div>
             ) : (
@@ -200,12 +200,12 @@ export default function QuestionHomeworkCreatePage() {
                   <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${selectedIds.has(q.id) ? 'bg-primary border-primary' : 'border-slate-300'}`}>
                     {selectedIds.has(q.id) && <Check className="w-3 h-3 text-white" />}
                   </div>
-                  <span className={`px-1 py-0.5 rounded text-[9px] font-semibold ${DIFF_COLORS[q.difficulty] ?? 'bg-slate-100 text-slate-600'}`}>
+                  <span className={`px-1 py-0.5 rounded text-xs font-semibold ${DIFF_COLORS[q.difficulty] ?? 'bg-slate-100 text-slate-600'}`}>
                     {DIFF_LABELS[q.difficulty] ?? q.difficulty}
                   </span>
-                  <span className="text-[10px] text-text-secondary shrink-0">{q.bookCode}-{q.questionNum}</span>
+                  <span className="text-xs text-text-secondary shrink-0">{q.bookCode}-{q.questionNum}</span>
                   <span className="truncate text-text-primary">{q.content.slice(0, 60)}</span>
-                  <span className="text-[10px] text-text-secondary shrink-0 ml-auto">{q.chapter}</span>
+                  <span className="text-xs text-text-secondary shrink-0 ml-auto">{q.chapter}</span>
                 </button>
               ))
             )}
@@ -213,8 +213,8 @@ export default function QuestionHomeworkCreatePage() {
         </div>
 
         {/* Student Selection */}
-        <div className="border border-slate-200 rounded-lg overflow-hidden">
-          <div className="p-4 border-b border-slate-100 bg-slate-50/50">
+        <div className="border border-slate-200 rounded-sm overflow-hidden">
+          <div className="p-4 border-b border-slate-200 bg-slate-50/50">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-text-primary">학생 배정</h3>
               <button onClick={selectAllStudents} className="text-xs text-primary hover:text-primary/80">
@@ -223,12 +223,12 @@ export default function QuestionHomeworkCreatePage() {
             </div>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-              <input type="text" value={studentSearch} onChange={(e) => setStudentSearch(e.target.value)} placeholder="학생 이름 검색..." className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary" />
+              <input type="text" value={studentSearch} onChange={(e) => setStudentSearch(e.target.value)} placeholder="학생 이름 검색..." className="w-full h-8 pl-8 pr-3 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary" />
             </div>
           </div>
           <div className="max-h-48 overflow-y-auto divide-y divide-slate-50">
             {studentsLoading ? (
-              <div className="flex justify-center py-6"><Loader2 className="w-4 h-4 animate-spin text-primary" /></div>
+              <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
             ) : (
               filteredStudents.map((s) => (
                 <button key={s.id} onClick={() => toggleStudent(s.id)} className={`w-full flex items-center gap-2 px-4 py-2 text-xs hover:bg-slate-50 ${selectedStudentIds.has(s.id) ? 'bg-primary/5' : ''}`}>
@@ -236,12 +236,12 @@ export default function QuestionHomeworkCreatePage() {
                     {selectedStudentIds.has(s.id) && <Check className="w-3 h-3 text-white" />}
                   </div>
                   <span className="font-medium text-text-primary">{s.name}</span>
-                  {s.grade && <span className="text-[10px] text-text-secondary">{s.grade > 6 ? `중${s.grade - 6}` : `초${s.grade}`}</span>}
+                  {s.grade && <span className="text-xs text-text-secondary">{s.grade > 6 ? `중${s.grade - 6}` : `초${s.grade}`}</span>}
                 </button>
               ))
             )}
           </div>
-          {selectedStudentIds.size > 0 && <div className="px-4 py-2 border-t border-slate-100 bg-slate-50/50 text-xs text-text-secondary">{selectedStudentIds.size}명 선택됨</div>}
+          {selectedStudentIds.size > 0 && <div className="px-4 py-2 border-t border-slate-200 bg-slate-50/50 text-xs text-text-secondary">{selectedStudentIds.size}명 선택됨</div>}
         </div>
 
         <div className="flex items-center justify-between py-2">

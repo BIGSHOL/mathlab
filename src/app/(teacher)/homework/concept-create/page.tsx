@@ -91,7 +91,7 @@ export default function ConceptHomeworkCreatePage() {
         const json = await res.json();
         setAllConcepts(json.data ?? []);
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('개념 목록 조회 실패:', err); }
     setConceptsLoading(false);
   }, [gradeFilter]);
 
@@ -107,7 +107,7 @@ export default function ConceptHomeworkCreatePage() {
           const json = await res.json();
           setAllStudents((json.data ?? []).filter((u: { role: string }) => u.role === 'STUDENT'));
         }
-      } catch { /* ignore */ }
+      } catch (err) { console.error('학생 목록 조회 실패:', err); }
       setStudentsLoading(false);
     })();
   }, []);
@@ -240,7 +240,7 @@ export default function ConceptHomeworkCreatePage() {
       <div className="max-w-4xl mx-auto p-4 space-y-5">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <Link href="/homework" className="p-1.5 rounded-lg hover:bg-slate-100 text-text-secondary">
+          <Link href="/homework" className="p-1.5 rounded-sm hover:bg-slate-100 text-text-secondary">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
@@ -253,7 +253,7 @@ export default function ConceptHomeworkCreatePage() {
         </div>
 
         {/* Basic Settings */}
-        <div className="border border-slate-200 rounded-lg p-4 space-y-3">
+        <div className="border border-slate-200 rounded-sm p-4 space-y-3">
           <h3 className="text-sm font-semibold text-text-primary">기본 설정</h3>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
@@ -314,8 +314,8 @@ export default function ConceptHomeworkCreatePage() {
         </div>
 
         {/* Concept Selection */}
-        <div className="border border-slate-200 rounded-lg overflow-hidden">
-          <div className="p-4 border-b border-slate-100 bg-slate-50/50">
+        <div className="border border-slate-200 rounded-sm overflow-hidden">
+          <div className="p-4 border-b border-slate-200 bg-slate-50/50">
             <h3 className="text-sm font-semibold text-text-primary mb-2">개념 선택</h3>
             <div className="flex gap-2">
               <select
@@ -334,7 +334,7 @@ export default function ConceptHomeworkCreatePage() {
                   value={conceptSearch}
                   onChange={(e) => setConceptSearch(e.target.value)}
                   placeholder="개념명 또는 코드 검색..."
-                  className="w-full pl-8 pr-8 py-1.5 border border-slate-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full h-8 pl-8 pr-8 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
                 />
                 {conceptSearch && (
                   <button onClick={() => setConceptSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -349,7 +349,7 @@ export default function ConceptHomeworkCreatePage() {
             {/* Available concepts */}
             <div className="max-h-72 overflow-y-auto">
               {conceptsLoading ? (
-                <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
+                <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
               ) : Object.keys(chapterGroups).length === 0 ? (
                 <div className="p-4 text-center text-xs text-text-secondary">개념이 없습니다</div>
               ) : (
@@ -358,16 +358,16 @@ export default function ConceptHomeworkCreatePage() {
                   const allSelected = concepts.every((c) => selectedIds.has(c.id));
                   const someSelected = concepts.some((c) => selectedIds.has(c.id));
                   return (
-                    <div key={chapter} className="border-b border-slate-100 last:border-0">
+                    <div key={chapter} className="border-b border-slate-200 last:border-0">
                       <div className="flex items-center gap-1 px-3 py-2 hover:bg-slate-50 cursor-pointer">
                         <button onClick={() => toggleChapter(chapter)} className="flex items-center gap-1 flex-1 min-w-0 text-left">
                           {isExpanded ? <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" /> : <ChevronRight className="w-3 h-3 text-slate-400 shrink-0" />}
                           <span className="text-xs font-medium text-text-primary truncate">{chapter}</span>
-                          <span className="text-[10px] text-text-secondary shrink-0">({concepts.length})</span>
+                          <span className="text-xs text-text-secondary shrink-0">({concepts.length})</span>
                         </button>
                         <button
                           onClick={() => selectAllInChapter(chapter)}
-                          className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 ${
+                          className={`text-xs px-1.5 py-0.5 rounded shrink-0 ${
                             allSelected ? 'bg-primary text-white' : someSelected ? 'bg-primary/10 text-primary' : 'text-slate-400 hover:text-primary'
                           }`}
                         >
@@ -388,7 +388,7 @@ export default function ConceptHomeworkCreatePage() {
                             {selectedIds.has(c.id) && <Check className="w-3 h-3 text-white" />}
                           </div>
                           <span className="truncate">{c.title}</span>
-                          {c.conceptCode && <span className="text-[10px] text-text-secondary shrink-0">{c.conceptCode}</span>}
+                          {c.conceptCode && <span className="text-xs text-text-secondary shrink-0">{c.conceptCode}</span>}
                         </button>
                       ))}
                     </div>
@@ -399,17 +399,17 @@ export default function ConceptHomeworkCreatePage() {
 
             {/* Selected concepts (ordered) */}
             <div className="max-h-72 overflow-y-auto">
-              <div className="px-3 py-2 border-b border-slate-100 bg-slate-50/50 sticky top-0">
+              <div className="px-3 py-2 border-b border-slate-200 bg-slate-50/50 sticky top-0">
                 <span className="text-xs font-medium text-text-primary">선택됨 ({selectedConcepts.length})</span>
-                <span className="text-[10px] text-text-secondary ml-1">드래그 또는 화살표로 순서 변경</span>
+                <span className="text-xs text-text-secondary ml-1">드래그 또는 화살표로 순서 변경</span>
               </div>
               {selectedConcepts.length === 0 ? (
                 <div className="p-4 text-center text-xs text-text-secondary">왼쪽에서 개념을 선택하세요</div>
               ) : (
                 selectedConcepts.map((c, i) => (
-                  <div key={c.id} className="flex items-center gap-1 px-2 py-1.5 border-b border-slate-50 hover:bg-slate-50 group">
+                  <div key={c.id} className="flex items-center gap-1 px-2 py-1.5 border-b border-slate-200 hover:bg-slate-50 group">
                     <GripVertical className="w-3 h-3 text-slate-300 shrink-0" />
-                    <span className="text-[10px] text-text-secondary w-5 shrink-0">{i + 1}</span>
+                    <span className="text-xs text-text-secondary w-5 shrink-0">{i + 1}</span>
                     <span className="text-xs text-text-primary truncate flex-1">{c.title}</span>
                     <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button onClick={() => moveUp(i)} className="p-0.5 hover:bg-slate-200 rounded" disabled={i === 0}>
@@ -430,8 +430,8 @@ export default function ConceptHomeworkCreatePage() {
         </div>
 
         {/* Student Selection */}
-        <div className="border border-slate-200 rounded-lg overflow-hidden">
-          <div className="p-4 border-b border-slate-100 bg-slate-50/50">
+        <div className="border border-slate-200 rounded-sm overflow-hidden">
+          <div className="p-4 border-b border-slate-200 bg-slate-50/50">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-text-primary">학생 배정</h3>
               <button
@@ -448,13 +448,13 @@ export default function ConceptHomeworkCreatePage() {
                 value={studentSearch}
                 onChange={(e) => setStudentSearch(e.target.value)}
                 placeholder="학생 이름 검색..."
-                className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full h-8 pl-8 pr-3 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
               />
             </div>
           </div>
           <div className="max-h-48 overflow-y-auto divide-y divide-slate-50">
             {studentsLoading ? (
-              <div className="flex justify-center py-6"><Loader2 className="w-4 h-4 animate-spin text-primary" /></div>
+              <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
             ) : filteredStudents.length === 0 ? (
               <div className="p-4 text-center text-xs text-text-secondary">학생이 없습니다</div>
             ) : (
@@ -473,7 +473,7 @@ export default function ConceptHomeworkCreatePage() {
                   </div>
                   <span className="font-medium text-text-primary">{s.name}</span>
                   {s.grade && (
-                    <span className="text-[10px] text-text-secondary">
+                    <span className="text-xs text-text-secondary">
                       {s.grade > 6 ? `중${s.grade - 6}` : `초${s.grade}`}
                     </span>
                   )}
@@ -482,7 +482,7 @@ export default function ConceptHomeworkCreatePage() {
             )}
           </div>
           {selectedStudentIds.size > 0 && (
-            <div className="px-4 py-2 border-t border-slate-100 bg-slate-50/50 text-xs text-text-secondary">
+            <div className="px-4 py-2 border-t border-slate-200 bg-slate-50/50 text-xs text-text-secondary">
               {selectedStudentIds.size}명 선택됨
             </div>
           )}

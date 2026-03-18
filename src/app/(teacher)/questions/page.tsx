@@ -422,7 +422,7 @@ export default function QuestionsPage() {
           body.diagramSVG = createForm.diagramParams
             .map((dp) => renderDiagram({ type: dp.type as DiagramType, params: dp.params as Record<string, unknown> }) ?? '')
             .join('\n');
-        } catch { /* ignore */ }
+        } catch (err) { console.error('다이어그램 SVG 렌더링 실패:', err); }
       }
 
       const res = await fetch('/api/questions', {
@@ -447,23 +447,28 @@ export default function QuestionsPage() {
     }
   };
 
-  // Fetch book counts (once on mount)
+  // Fetch book counts + concepts in parallel (once on mount)
   useEffect(() => {
-    fetch('/api/questions/stats')
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.data) {
-          const counts: Record<string, number> = {};
-          json.data.byBook.forEach((b: { bookCode: string; count: number }) => {
-            counts[b.bookCode] = b.count;
-          });
-          setBookCounts(counts);
-          setTotalCount(json.data.total);
-          if (json.data.chaptersByBook) setChaptersByBook(json.data.chaptersByBook);
-          if (json.data.sectionsByBook) setSectionsByBook(json.data.sectionsByBook);
-        }
-      })
-      .catch(() => {});
+    Promise.all([
+      fetch('/api/questions/stats')
+        .then((res) => res.json())
+        .catch(() => null),
+      fetch('/api/concepts?limit=200')
+        .then((r) => r.ok ? r.json() : null)
+        .catch(() => null),
+    ]).then(([statsJson, conceptsJson]) => {
+      if (statsJson?.data) {
+        const counts: Record<string, number> = {};
+        statsJson.data.byBook.forEach((b: { bookCode: string; count: number }) => {
+          counts[b.bookCode] = b.count;
+        });
+        setBookCounts(counts);
+        setTotalCount(statsJson.data.total);
+        if (statsJson.data.chaptersByBook) setChaptersByBook(statsJson.data.chaptersByBook);
+        if (statsJson.data.sectionsByBook) setSectionsByBook(statsJson.data.sectionsByBook);
+      }
+      if (conceptsJson?.data) setConcepts(conceptsJson.data.map((c: { id: string; conceptCode: string; title: string }) => ({ id: c.id, conceptCode: c.conceptCode || '', title: c.title })));
+    });
   }, []);
 
   const schoolTotal = (schoolLevel === 'middle' ? MIDDLE_BOOK_CODES : ELEMENTARY_BOOK_CODES)
@@ -525,15 +530,7 @@ export default function QuestionsPage() {
     fetchQuestions();
   }, [fetchQuestions]);
 
-  // 개념 목록 로드 (편집 모드 시 conceptId 선택용)
-  useEffect(() => {
-    fetch('/api/concepts?limit=200')
-      .then((r) => r.ok ? r.json() : null)
-      .then((json) => {
-        if (json?.data) setConcepts(json.data.map((c: { id: string; conceptCode: string; title: string }) => ({ id: c.id, conceptCode: c.conceptCode || '', title: c.title })));
-      })
-      .catch(() => {});
-  }, []);
+  // 개념 목록은 위 useEffect에서 stats와 함께 병렬 로드됨
 
   // View / Edit handlers
   const openQuestion = (q: QuestionItem) => {
@@ -604,7 +601,7 @@ export default function QuestionsPage() {
           body.diagramSVG = editForm.diagramParams
             .map((dp) => renderDiagram({ type: dp.type as DiagramType, params: dp.params as Record<string, unknown> }) ?? '')
             .join('\n');
-        } catch { /* ignore */ }
+        } catch (err) { console.error('다이어그램 SVG 렌더링 실패:', err); }
       } else {
         body.diagramSpec = null;
         body.diagramSVG = null;
@@ -695,8 +692,8 @@ export default function QuestionsPage() {
             {!leftPanelCollapsed && (
               <div className="flex items-center gap-2 min-w-0">
                 <BookOpen className="w-4 h-4 text-primary shrink-0" />
-                <h1 className="text-sm font-bold text-text-primary truncate">문제 은행</h1>
-                <span className="text-[10px] text-text-secondary bg-slate-100 px-1.5 py-0.5 rounded-full font-medium shrink-0">
+                <h1 className="text-base font-bold text-text-primary truncate">문제 은행</h1>
+                <span className="text-xs text-text-secondary bg-slate-100 px-1.5 py-0.5 rounded-full font-medium shrink-0">
                   {meta.total.toLocaleString()}
                 </span>
               </div>
@@ -712,7 +709,7 @@ export default function QuestionsPage() {
         </div>
 
         {!leftPanelCollapsed && (
-          <div className="flex-1 flex flex-col gap-2 p-2.5 overflow-y-auto">
+          <div className="flex-1 flex flex-col gap-2 p-3 md:p-4 overflow-y-auto">
         {/* School Level Tabs */}
         <Card className="p-3 flex flex-col gap-2">
           <div className="flex gap-2 items-center">
@@ -828,7 +825,7 @@ export default function QuestionsPage() {
                   }`}
                 >
                   <span>{ch.chapter}</span>
-                  <span className={`text-[10px] ${chapterFilter === ch.chapter ? 'text-white/70' : 'text-text-tertiary'}`}>{ch.count}</span>
+                  <span className={`text-xs ${chapterFilter === ch.chapter ? 'text-white/70' : 'text-text-tertiary'}`}>{ch.count}</span>
                 </button>
               ))}
             </div>
@@ -863,7 +860,7 @@ export default function QuestionsPage() {
                   }`}
                 >
                   <span>{s.section}</span>
-                  <span className={`text-[10px] ${sectionFilter === s.section ? 'text-white/70' : 'text-text-tertiary'}`}>{s.count}</span>
+                  <span className={`text-xs ${sectionFilter === s.section ? 'text-white/70' : 'text-text-tertiary'}`}>{s.count}</span>
                 </button>
               ))}
             </div>
@@ -955,11 +952,9 @@ export default function QuestionsPage() {
 
         {/* Search */}
         <div className="relative w-full">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-secondary">
-            <Search className="w-5 h-5" />
-          </div>
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
           <input
-            className="w-full pl-12 pr-3 py-2.5 bg-white border border-slate-200 rounded-sm shadow-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary placeholder:text-slate-400 transition-all"
+            className="w-full h-8 pl-8 pr-3 bg-white border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary placeholder:text-slate-400"
             placeholder="문제 내용, 단원명 또는 키워드로 검색 (예: 소인수분해, 이차방정식)..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -978,8 +973,8 @@ export default function QuestionsPage() {
 
         {/* Loading State */}
         {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
             <span className="ml-3 text-text-secondary">문제를 불러오는 중...</span>
           </div>
         ) : (
@@ -1078,7 +1073,7 @@ export default function QuestionsPage() {
                       )}
                     </div>
 
-                    <div className="mt-auto pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                    <div className="mt-auto pt-2.5 border-t border-slate-200 flex items-center justify-between">
                       <div className="text-xs text-text-secondary flex items-center gap-1">
                         <KeyRound className="w-3.5 h-3.5" />
                         정답: <MathRenderer content={q.answer} className="inline" />
@@ -1236,7 +1231,7 @@ export default function QuestionsPage() {
 
                 {/* Source Tag */}
                 {selectedQuestion.sourceTag && (
-                  <div className="text-xs text-text-secondary pt-2 border-t border-slate-100">
+                  <div className="text-xs text-text-secondary pt-2 border-t border-slate-200">
                     출처: {selectedQuestion.sourceTag}
                   </div>
                 )}
@@ -1488,7 +1483,7 @@ export default function QuestionsPage() {
                 <div className="flex-1 overflow-y-auto px-3 py-3 bg-slate-50/50">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">미리보기</h3>
-                    <span className="text-[10px] text-slate-400">수식을 클릭하면 편집할 수 있습니다</span>
+                    <span className="text-xs text-slate-400">수식을 클릭하면 편집할 수 있습니다</span>
                   </div>
 
                   <div className="text-sm">
@@ -1550,19 +1545,19 @@ export default function QuestionsPage() {
                       <div className="space-y-2">
                         {editForm.diagramParams.map((dp, idx) => {
                           let svg = '';
-                          try { svg = renderDiagram({ type: dp.type as DiagramType, params: dp.params as Record<string, unknown> }) ?? ''; } catch { /* ignore */ }
+                          try { svg = renderDiagram({ type: dp.type as DiagramType, params: dp.params as Record<string, unknown> }) ?? ''; } catch (err) { console.error('다이어그램 미리보기 렌더링 실패:', err); }
                           return (
                             <div key={idx} className="relative group border border-slate-100 rounded-sm p-2 bg-white">
                               <div className="flex items-center justify-between mb-1">
-                                <span className="text-[10px] text-slate-400">[그림{idx + 1}] {dp.label}</span>
+                                <span className="text-xs text-slate-400">[그림{idx + 1}] {dp.label}</span>
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                   <button
                                     onClick={() => editDiagram(idx, 'edit')}
-                                    className="text-[10px] px-1.5 py-0.5 text-primary hover:bg-primary/10 rounded"
+                                    className="text-xs px-1.5 py-0.5 text-primary hover:bg-primary/10 rounded"
                                   >수정</button>
                                   <button
                                     onClick={() => removeDiagram(idx, 'edit')}
-                                    className="text-[10px] px-1.5 py-0.5 text-red-500 hover:bg-red-50 rounded"
+                                    className="text-xs px-1.5 py-0.5 text-red-500 hover:bg-red-50 rounded"
                                   >삭제</button>
                                 </div>
                               </div>
@@ -1896,19 +1891,19 @@ export default function QuestionsPage() {
                     <div className="space-y-2">
                       {createForm.diagramParams.map((dp, idx) => {
                         let svg = '';
-                        try { svg = renderDiagram({ type: dp.type as DiagramType, params: dp.params as Record<string, unknown> }) ?? ''; } catch { /* ignore */ }
+                        try { svg = renderDiagram({ type: dp.type as DiagramType, params: dp.params as Record<string, unknown> }) ?? ''; } catch (err) { console.error('다이어그램 미리보기 렌더링 실패:', err); }
                         return (
                           <div key={idx} className="relative group border border-slate-100 rounded-sm p-2 bg-white">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-[10px] text-slate-400">[그림{idx + 1}] {dp.label}</span>
+                              <span className="text-xs text-slate-400">[그림{idx + 1}] {dp.label}</span>
                               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button
                                   onClick={() => editDiagram(idx, 'create')}
-                                  className="text-[10px] px-1.5 py-0.5 text-primary hover:bg-primary/10 rounded"
+                                  className="text-xs px-1.5 py-0.5 text-primary hover:bg-primary/10 rounded"
                                 >수정</button>
                                 <button
                                   onClick={() => removeDiagram(idx, 'create')}
-                                  className="text-[10px] px-1.5 py-0.5 text-red-500 hover:bg-red-50 rounded"
+                                  className="text-xs px-1.5 py-0.5 text-red-500 hover:bg-red-50 rounded"
                                 >삭제</button>
                               </div>
                             </div>

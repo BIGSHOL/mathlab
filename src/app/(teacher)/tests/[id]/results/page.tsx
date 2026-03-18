@@ -102,7 +102,7 @@ export default function TestResultsPage() {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>
     );
   }
@@ -369,7 +369,7 @@ export default function TestResultsPage() {
                           <div className="flex items-center justify-center gap-2">
                             <DeadlineBadge dueDate={a.dueDate} status={a.status} />
                             {a.allowLateSubmission && (
-                              <span className="text-[10px] text-slate-400">지각허용</span>
+                              <span className="text-xs text-slate-400">지각허용</span>
                             )}
                           </div>
                         ) : (

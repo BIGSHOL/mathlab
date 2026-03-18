@@ -38,14 +38,14 @@ export default function PrintWorksheetPage() {
       .then((json) => {
         if (json?.data) setTest(json.data);
       })
-      .catch(() => {})
+      .catch((err) => console.error('시험 데이터 조회 실패:', err))
       .finally(() => setLoading(false));
   }, [id]);
 
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>
     );
   }
@@ -120,10 +120,10 @@ export default function PrintWorksheetPage() {
                 </span>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] text-text-secondary print:text-[8px]">
+                    <span className="text-xs text-text-secondary print:text-[8px]">
                       [{q.chapter}]
                     </span>
-                    <span className={`text-[9px] font-bold px-1 py-0.5 rounded print:text-[7px] ${
+                    <span className={`text-xs font-bold px-1 py-0.5 rounded print:text-[7px] ${
                       q.difficulty === 'BASIC' ? 'bg-green-100 text-green-700' :
                       q.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
                       q.difficulty === 'HIGH' ? 'bg-red-100 text-red-700' :
@@ -146,7 +146,7 @@ export default function PrintWorksheetPage() {
                     </div>
                   )}
                   {showAnswers && (
-                    <div className="mt-1 text-xs text-emerald-600 font-semibold print:text-[10px] [&_p]:inline [&_p]:m-0">
+                    <div className="mt-1 text-xs text-emerald-600 font-semibold print:text-xs [&_p]:inline [&_p]:m-0">
                       정답: <MathRenderer content={q.answer} />
                     </div>
                   )}
@@ -160,7 +160,7 @@ export default function PrintWorksheetPage() {
         {showAnswers && (
           <div className="mt-8 pt-4 border-t border-slate-300 break-inside-avoid print:mt-4">
             <h3 className="text-sm font-bold text-text-primary mb-2 print:text-xs">정답표</h3>
-            <div className="flex flex-wrap gap-3 text-xs print:text-[10px]">
+            <div className="flex flex-wrap gap-3 text-xs print:text-xs">
               {test.questions.map((q, idx) => (
                 <span key={q.id} className="text-text-secondary">
                   {idx + 1}. <span className="font-bold text-text-primary [&_p]:inline [&_p]:m-0"><MathRenderer content={q.answer} /></span>

@@ -68,7 +68,7 @@ export default function StudentPreviewPage() {
           .map((u: StudentItem) => ({ id: u.id, name: u.name, grade: u.grade, role: u.role }));
         setStudents(list);
       })
-      .catch(() => {});
+      .catch((err) => console.error('학생 목록 조회 실패:', err));
   }, []);
 
   // 검색 필터
@@ -121,9 +121,9 @@ export default function StudentPreviewPage() {
 
           {/* 학생 검색 */}
           <div className="relative mb-2">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
             <input
-              className="w-full h-7 pl-7 pr-2 rounded border border-slate-200 bg-white text-xs placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+              className="w-full h-8 pl-8 pr-3 rounded-sm border border-slate-200 bg-white text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-primary/40 focus:border-primary"
               placeholder="이름 검색"
               value={studentSearch}
               onChange={(e) => setStudentSearch(e.target.value)}
@@ -154,14 +154,14 @@ export default function StudentPreviewPage() {
               >
                 <span className="truncate">{s.name}</span>
                 {s.grade && (
-                  <span className="text-[10px] text-text-secondary shrink-0 ml-1">
+                  <span className="text-xs text-text-secondary shrink-0 ml-1">
                     {getGradeLabel(s.grade)}
                   </span>
                 )}
               </button>
             ))}
             {students.length === 0 && (
-              <p className="text-[10px] text-text-secondary text-center py-2">학생 없음</p>
+              <p className="text-xs text-text-secondary text-center py-2">학생 없음</p>
             )}
           </div>
         </div>
@@ -242,7 +242,7 @@ export default function StudentPreviewPage() {
         {/* iframe area */}
         <div className="flex-1 flex items-start justify-center p-4 overflow-auto">
           <div
-            className="bg-white rounded-lg shadow-lg overflow-hidden border border-slate-200 transition-all duration-300"
+            className="bg-white rounded-sm shadow-lg overflow-hidden border border-slate-200 transition-all duration-300"
             style={{
               width: activeDevice.width,
               maxWidth: '100%',

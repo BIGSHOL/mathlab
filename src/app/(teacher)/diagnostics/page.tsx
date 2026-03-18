@@ -5,12 +5,12 @@ import Link from 'next/link';
 import {
   ClipboardCheck,
   Plus,
-  Loader2,
   Users,
   Calendar,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { LoadingEmptyState } from '@/components/ui/LoadingEmptyState';
 
 interface DiagnosticTest {
   id: string;
@@ -39,7 +39,7 @@ export default function DiagnosticsPage() {
       .then((json) => {
         if (json?.data) setTests(json.data);
       })
-      .catch(() => {})
+      .catch((err) => console.error('레벨테스트 목록 조회 실패:', err))
       .finally(() => setLoading(false));
   }, []);
 
@@ -63,26 +63,24 @@ export default function DiagnosticsPage() {
         </Link>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
-        </div>
-      ) : tests.length === 0 ? (
-        <Card className="p-12 text-center">
-          <ClipboardCheck className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-text-secondary mb-4">아직 진단평가가 없습니다.</p>
+      <LoadingEmptyState
+        loading={loading}
+        empty={tests.length === 0}
+        icon={<ClipboardCheck className="w-12 h-12 text-slate-300" />}
+        message="아직 진단평가가 없습니다."
+        action={
           <Link href="/tests/create?type=diagnostic">
             <Button variant="secondary">첫 진단평가 만들기</Button>
           </Link>
-        </Card>
-      ) : (
+        }
+      >
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {tests.map((t) => (
             <Link key={t.id} href={`/tests/${t.seq}/results`}>
               <Card className="p-5 hover:shadow-md transition-shadow cursor-pointer">
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">
                       {TYPE_LABELS[t.testType] ?? '진단'}
                     </span>
                   </div>
@@ -107,7 +105,7 @@ export default function DiagnosticsPage() {
             </Link>
           ))}
         </div>
-      )}
+      </LoadingEmptyState>
     </div>
   );
 }

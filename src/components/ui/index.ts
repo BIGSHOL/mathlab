@@ -5,3 +5,5 @@ export { StatCard } from './StatCard';
 export { Badge } from './Badge';
 export { ProgressBar } from './ProgressBar';
 export { Pagination } from './Pagination';
+export { PageHeader } from './PageHeader';
+export { LoadingEmptyState } from './LoadingEmptyState';

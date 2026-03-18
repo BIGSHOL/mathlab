@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ToggleRight, Loader2 } from 'lucide-react';
+import { ToggleRight } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
+import { LoadingEmptyState } from '@/components/ui/LoadingEmptyState';
 
 interface FeatureFlag {
   id: string;
@@ -36,14 +37,6 @@ export default function AdminFeaturesPage() {
     setToggling(null);
   };
 
-  if (loading) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
     <div className="px-4 md:px-10 py-8 max-w-[800px] mx-auto w-full">
       <div className="flex items-center gap-3 mb-8">
@@ -56,29 +49,36 @@ export default function AdminFeaturesPage() {
         </div>
       </div>
 
-      <Card className="divide-y divide-slate-100">
-        {flags.map((flag) => (
-          <div key={flag.key} className="flex items-center justify-between px-6 py-4">
-            <div>
-              <h3 className="font-semibold text-text-primary">{flag.label}</h3>
-              <p className="text-xs text-text-secondary">{flag.key}</p>
-            </div>
-            <button
-              onClick={() => handleToggle(flag.key, !flag.enabled)}
-              disabled={toggling === flag.key}
-              className={`relative w-12 h-7 rounded-full transition-colors ${
-                flag.enabled ? 'bg-primary' : 'bg-slate-300'
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${
-                  flag.enabled ? 'translate-x-5' : 'translate-x-0'
+      <LoadingEmptyState
+        loading={loading}
+        empty={flags.length === 0}
+        icon={<ToggleRight className="w-10 h-10 text-slate-300" />}
+        message="등록된 기능 플래그가 없습니다."
+      >
+        <Card className="divide-y divide-slate-100">
+          {flags.map((flag) => (
+            <div key={flag.key} className="flex items-center justify-between px-5 py-4">
+              <div>
+                <h3 className="font-semibold text-text-primary">{flag.label}</h3>
+                <p className="text-xs text-text-secondary">{flag.key}</p>
+              </div>
+              <button
+                onClick={() => handleToggle(flag.key, !flag.enabled)}
+                disabled={toggling === flag.key}
+                className={`relative w-12 h-7 rounded-full transition-colors ${
+                  flag.enabled ? 'bg-primary' : 'bg-slate-300'
                 }`}
-              />
-            </button>
-          </div>
-        ))}
-      </Card>
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${
+                    flag.enabled ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+          ))}
+        </Card>
+      </LoadingEmptyState>
     </div>
   );
 }

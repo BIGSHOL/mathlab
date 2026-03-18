@@ -15,21 +15,15 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { DeadlineBadge } from '@/components/test/DeadlineBadge';
 import { useTests } from '@/hooks/useTests';
-
-const TEST_TYPE_LABELS: Record<string, string> = {
-  concept: '단원별',
-  cumulative: '종합',
-  chapter_final: '단원 마무리',
-  level_test: '레벨테스트',
-};
+import { TEST_TYPE_LABELS } from '@/lib/constants/labels';
 
 export default function StudentTestsPage() {
   const { tests, loading } = useTests();
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>
     );
   }

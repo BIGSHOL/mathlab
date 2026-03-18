@@ -94,7 +94,7 @@ export default function TestResultPage() {
         const json = await res.json();
         setSimilarQuestions((prev) => ({ ...prev, [questionId]: json.data.similar ?? [] }));
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('유사 문제 조회 실패:', err); }
     setSimilarLoading(null);
   };
 
@@ -150,8 +150,8 @@ export default function TestResultPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>
     );
   }
@@ -186,7 +186,7 @@ export default function TestResultPage() {
       </div>
 
       {/* Score card */}
-      <Card className="p-8 mb-6 text-center bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+      <Card className="p-5 mb-6 text-center bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
         <Trophy className="w-12 h-12 text-primary mx-auto mb-3" />
         <p className="text-5xl font-black text-primary">
           {attempt.score}
@@ -336,7 +336,7 @@ export default function TestResultPage() {
                     <span className="text-xs font-medium text-slate-500">
                       #{idx + 1} · {q.chapter}
                     </span>
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                    <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${
                       q.difficulty === 'BASIC' ? 'bg-green-100 text-green-700' :
                       q.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
                       q.difficulty === 'HIGH' ? 'bg-red-100 text-red-700' :
@@ -384,12 +384,12 @@ export default function TestResultPage() {
                     <p className="text-xs text-text-secondary py-2">유사 문제를 찾을 수 없습니다</p>
                   ) : (
                     <div className="space-y-2">
-                      <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">유사 문제 {(similarQuestions[ans.questionId] ?? []).length}개</p>
+                      <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">유사 문제 {(similarQuestions[ans.questionId] ?? []).length}개</p>
                       {(similarQuestions[ans.questionId] ?? []).map((sq) => (
                         <div key={sq.id} className="bg-slate-50 rounded-sm p-3">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[10px] text-text-secondary">{sq.chapter}</span>
-                            <span className={`px-1 py-0.5 rounded text-[9px] font-bold ${
+                            <span className="text-xs text-text-secondary">{sq.chapter}</span>
+                            <span className={`px-1 py-0.5 rounded text-xs font-bold ${
                               sq.difficulty === 'BASIC' ? 'bg-green-100 text-green-700' :
                               sq.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
                               sq.difficulty === 'HIGH' ? 'bg-red-100 text-red-700' :

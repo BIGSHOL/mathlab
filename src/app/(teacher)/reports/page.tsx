@@ -166,7 +166,7 @@ export default function ReportsPage() {
         const list = (json.data ?? []).filter((u: Student & { role: string }) => u.role === 'STUDENT');
         setStudents(list);
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('학생 목록 조회 실패:', err); }
     setLoading(false);
   }, []);
 
@@ -238,8 +238,8 @@ export default function ReportsPage() {
             {!leftPanelCollapsed && (
               <div className="flex items-center gap-2 min-w-0">
                 <FileText className="w-4 h-4 text-primary shrink-0" />
-                <h1 className="text-sm font-bold text-text-primary truncate">학습 리포트</h1>
-                <span className="text-[10px] text-text-secondary bg-slate-100 px-1.5 py-0.5 rounded-full font-medium shrink-0">
+                <h1 className="text-base font-bold text-text-primary truncate">학습 리포트</h1>
+                <span className="text-xs text-text-secondary bg-slate-100 px-1.5 py-0.5 rounded-full font-medium shrink-0">
                   {students.length}
                 </span>
               </div>
@@ -258,9 +258,9 @@ export default function ReportsPage() {
           <>
             <div className="px-3 pt-2 pb-2">
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                 <input
-                  className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary placeholder:text-slate-400"
+                  className="w-full h-8 pl-8 pr-3 bg-white border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary placeholder:text-slate-400"
                   placeholder="학생 이름 검색..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -270,8 +270,8 @@ export default function ReportsPage() {
 
             <div className="flex-1 overflow-y-auto min-h-0">
               {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+                <div className="flex justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 </div>
               ) : filteredStudents.length === 0 ? (
                 <div className="text-center py-8 px-3">
@@ -303,7 +303,7 @@ export default function ReportsPage() {
                               {student.name}
                             </span>
                             {student.grade && (
-                              <span className="text-[10px] text-text-secondary bg-slate-100 px-1.5 py-0.5 rounded-full shrink-0">
+                              <span className="text-xs text-text-secondary bg-slate-100 px-1.5 py-0.5 rounded-full shrink-0">
                                 {formatGradeShort(student.grade)}
                               </span>
                             )}
@@ -311,10 +311,10 @@ export default function ReportsPage() {
                           <div className="flex items-center gap-2 mt-0.5">
                             {student.profile && (
                               <>
-                                <span className="text-[10px] text-violet-600 font-medium">
+                                <span className="text-xs text-violet-600 font-medium">
                                   Lv.{student.profile.level}
                                 </span>
-                                <span className="text-[10px] text-text-secondary">
+                                <span className="text-xs text-text-secondary">
                                   {student.profile.totalXp.toLocaleString()} XP
                                 </span>
                               </>
@@ -410,7 +410,7 @@ export default function ReportsPage() {
               {generating && (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
+                    <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mb-2" />
                     <p className="text-sm text-text-secondary">리포트를 생성하고 있습니다...</p>
                   </div>
                 </div>
@@ -514,7 +514,7 @@ export default function ReportsPage() {
                             <span className={`text-xs font-bold w-10 text-right shrink-0 ${accuracyColor(ch.accuracy)}`}>
                               {ch.accuracy}%
                             </span>
-                            <span className="text-[10px] text-text-secondary w-12 text-right shrink-0">{ch.total}문제</span>
+                            <span className="text-xs text-text-secondary w-12 text-right shrink-0">{ch.total}문제</span>
                           </div>
                         ))}
                       </div>
@@ -522,10 +522,10 @@ export default function ReportsPage() {
                         <div className="grid grid-cols-2 gap-2 mt-3">
                           {report.strengths.length > 0 && (
                             <div className="bg-emerald-50 border border-emerald-200 rounded-sm p-2.5">
-                              <p className="text-[10px] font-bold text-emerald-700 mb-1">우수 단원 (80%+)</p>
+                              <p className="text-xs font-bold text-emerald-700 mb-1">우수 단원 (80%+)</p>
                               <div className="flex flex-wrap gap-1">
                                 {report.strengths.map((s) => (
-                                  <span key={s} className="text-[10px] bg-white border border-emerald-200 text-emerald-700 px-1.5 py-0.5 rounded">
+                                  <span key={s} className="text-xs bg-white border border-emerald-200 text-emerald-700 px-1.5 py-0.5 rounded">
                                     {s}
                                   </span>
                                 ))}
@@ -534,10 +534,10 @@ export default function ReportsPage() {
                           )}
                           {report.weaknesses.length > 0 && (
                             <div className="bg-amber-50 border border-amber-200 rounded-sm p-2.5">
-                              <p className="text-[10px] font-bold text-amber-700 mb-1">보완 필요 (&lt;60%)</p>
+                              <p className="text-xs font-bold text-amber-700 mb-1">보완 필요 (&lt;60%)</p>
                               <div className="flex flex-wrap gap-1">
                                 {report.weaknesses.map((w) => (
-                                  <span key={w} className="text-[10px] bg-white border border-amber-200 text-amber-700 px-1.5 py-0.5 rounded">
+                                  <span key={w} className="text-xs bg-white border border-amber-200 text-amber-700 px-1.5 py-0.5 rounded">
                                     {w}
                                   </span>
                                 ))}
@@ -559,7 +559,7 @@ export default function ReportsPage() {
                               {ARITHMETIC_LABELS[a.category] ?? a.category}
                             </span>
                             <span className={`text-xs font-bold ${accuracyColor(a.accuracy)}`}>{a.accuracy}%</span>
-                            <span className="text-[10px] text-text-secondary">{a.count}문제</span>
+                            <span className="text-xs text-text-secondary">{a.count}문제</span>
                           </div>
                         ))}
                       </div>
@@ -578,7 +578,7 @@ export default function ReportsPage() {
                               <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-300 shrink-0" />
                             )}
                             <span className="text-xs text-text-primary flex-1 truncate">{lp.conceptTitle}</span>
-                            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${accuracyBg(lp.completed ? 80 : 50)}`}>
+                            <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${accuracyBg(lp.completed ? 80 : 50)}`}>
                               {lp.stage}
                             </span>
                           </div>
@@ -651,7 +651,7 @@ function StatCard({ label, value, unit, accent }: { label: string; value: string
         {value}
         {unit && <span className="text-xs font-medium text-slate-500 ml-0.5">{unit}</span>}
       </p>
-      <p className="text-[10px] text-text-secondary mt-1">{label}</p>
+      <p className="text-xs text-text-secondary mt-1">{label}</p>
     </div>
   );
 }
@@ -665,14 +665,14 @@ function WeeklyBar({ days }: { days: { date: string; total: number }[] }) {
         const dayLabel = new Date(d.date + 'T00:00:00').toLocaleDateString('ko-KR', { weekday: 'short' });
         return (
           <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
-            <span className="text-[10px] font-bold text-text-primary">{d.total}</span>
+            <span className="text-xs font-bold text-text-primary">{d.total}</span>
             <div className="w-full bg-slate-100 rounded-t-sm relative" style={{ height: '80px' }}>
               <div
                 className="absolute bottom-0 left-0 right-0 bg-primary/70 rounded-t-sm transition-all"
                 style={{ height: `${height}%` }}
               />
             </div>
-            <span className="text-[10px] text-text-secondary">{dayLabel}</span>
+            <span className="text-xs text-text-secondary">{dayLabel}</span>
           </div>
         );
       })}
@@ -701,7 +701,7 @@ function MonthlyHeatmap({ days }: { days: { date: string; total: number }[] }) {
 
   return (
     <div>
-      <div className="flex justify-end items-center gap-2 mb-2 text-[10px] text-text-secondary">
+      <div className="flex justify-end items-center gap-2 mb-2 text-xs text-text-secondary">
         <span>적음</span>
         <div className="flex gap-0.5">
           {ACTIVITY_COLORS.map((color, i) => (
@@ -712,12 +712,12 @@ function MonthlyHeatmap({ days }: { days: { date: string; total: number }[] }) {
       </div>
       <div className="grid grid-cols-7 gap-1">
         {WEEKDAYS.map((day) => (
-          <div key={day} className="text-center text-[10px] font-medium text-slate-400 py-0.5">{day}</div>
+          <div key={day} className="text-center text-xs font-medium text-slate-400 py-0.5">{day}</div>
         ))}
         {cells.map((cell, i) => (
           <div
             key={i}
-            className={`aspect-square rounded-sm flex items-center justify-center text-[10px] ${
+            className={`aspect-square rounded-sm flex items-center justify-center text-xs ${
               cell
                 ? `${ACTIVITY_COLORS[activityLevel(cell.total)]} ${
                     activityLevel(cell.total) >= 3 ? 'font-medium text-white' :

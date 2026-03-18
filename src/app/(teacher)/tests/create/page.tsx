@@ -289,7 +289,7 @@ export default function CreateTestPage() {
                     변형 생성
                   </Button>
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1">
+                <p className="text-xs text-slate-400 mt-1">
                   같은 유형/난이도의 다른 문제로 구성된 시험지를 자동 생성합니다
                 </p>
               </div>
@@ -325,20 +325,20 @@ export default function CreateTestPage() {
                 ))}
               </select>
               <div className="relative flex-1 min-w-[200px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                 <input
                   type="text"
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
                   placeholder="문제 검색..."
-                  className="w-full pl-9 pr-3 py-1.5 border border-slate-200 rounded-sm text-sm"
+                  className="w-full h-8 pl-8 pr-3 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
                 />
               </div>
             </div>
 
             {/* Question list */}
             {searchLoading ? (
-              <div className="flex justify-center py-8">
+              <div className="flex justify-center py-12">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div>
             ) : questions.length === 0 ? (
@@ -368,7 +368,7 @@ export default function CreateTestPage() {
                             <span className="text-xs font-medium text-slate-500">
                               {q.chapter} #{q.questionNum}
                             </span>
-                            <span className={`px-1.5 py-0.5 rounded-sm text-[10px] font-bold ${
+                            <span className={`px-1.5 py-0.5 rounded-sm text-xs font-bold ${
                               q.difficulty === 'BASIC' ? 'bg-green-100 text-green-700' :
                               q.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
                               q.difficulty === 'HIGH' ? 'bg-red-100 text-red-700' :
@@ -376,7 +376,7 @@ export default function CreateTestPage() {
                             }`}>
                               {DIFFICULTY_LABELS[q.difficulty]}
                             </span>
-                            <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-medium bg-slate-100 text-slate-600">
+                            <span className="px-1.5 py-0.5 rounded-sm text-xs font-medium bg-slate-100 text-slate-600">
                               {TYPE_LABELS[q.type]}
                             </span>
                           </div>

@@ -18,6 +18,7 @@ import {
   Target,
 } from 'lucide-react';
 import { useSpeedAnalytics } from '@/hooks/useSpeed';
+import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/hooks/useAuth';
 import AchievementRadar from '@/components/charts/AchievementRadar';
 
@@ -82,41 +83,40 @@ export default function AnalyticsPage() {
   useEffect(() => {
     if (!selectedStudent) return;
     setAchievementData(null);
-    fetch(`/api/analytics/achievement?studentId=${selectedStudent.id}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((json) => {
-        if (json?.data) setAchievementData(json.data);
-      })
-      .catch(() => {});
-
-    // Fetch saved comment
-    fetch(`/api/analytics/comments?studentId=${selectedStudent.id}&month=${currentMonth}`)
-      .then((r) => r.ok ? r.json() : null)
-      .then((json) => { setCommentText(json?.data ?? ''); })
-      .catch(() => setCommentText(''));
-
-    // Fetch calendar data
     const daysInMonth = new Date(currentYear, currentMonthNum, 0).getDate();
-    fetch(`/api/analytics/calendar?studentId=${selectedStudent.id}&year=${currentYear}&month=${currentMonthNum}`)
-      .then((r) => r.ok ? r.json() : null)
-      .then((json) => {
-        if (json?.data?.calendar) {
-          const cal: Record<string, { total: number }> = json.data.calendar;
-          const days: DayActivity[] = [];
-          for (let d = 1; d <= daysInMonth; d++) {
-            const key = `${currentYear}-${String(currentMonthNum).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-            const total = cal[key]?.total ?? 0;
-            days.push({ day: d, level: totalToLevel(total) });
-          }
-          setCalendarData(days);
-        } else {
-          setCalendarData(Array.from({ length: daysInMonth }, (_, i) => ({ day: i + 1, level: 0 as const })));
+    const emptyCalendar = Array.from({ length: daysInMonth }, (_, i) => ({ day: i + 1, level: 0 as const }));
+
+    Promise.all([
+      fetch(`/api/analytics/achievement?studentId=${selectedStudent.id}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null),
+      fetch(`/api/analytics/comments?studentId=${selectedStudent.id}&month=${currentMonth}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null),
+      fetch(`/api/analytics/calendar?studentId=${selectedStudent.id}&year=${currentYear}&month=${currentMonthNum}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null),
+    ]).then(([achievementJson, commentsJson, calendarJson]) => {
+      // Achievement
+      if (achievementJson?.data) setAchievementData(achievementJson.data);
+
+      // Comment
+      setCommentText(commentsJson?.data ?? '');
+
+      // Calendar
+      if (calendarJson?.data?.calendar) {
+        const cal: Record<string, { total: number }> = calendarJson.data.calendar;
+        const days: DayActivity[] = [];
+        for (let d = 1; d <= daysInMonth; d++) {
+          const key = `${currentYear}-${String(currentMonthNum).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          const total = cal[key]?.total ?? 0;
+          days.push({ day: d, level: totalToLevel(total) });
         }
-      })
-      .catch(() => {
-        const daysInM = new Date(currentYear, currentMonthNum, 0).getDate();
-        setCalendarData(Array.from({ length: daysInM }, (_, i) => ({ day: i + 1, level: 0 as const })));
-      });
+        setCalendarData(days);
+      } else {
+        setCalendarData(emptyCalendar);
+      }
+    });
   }, [selectedStudent, currentYear, currentMonthNum]);
 
   const saveComment = useCallback((text: string) => {
@@ -127,7 +127,7 @@ export default function AnalyticsPage() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ studentId: selectedStudent.id, month: currentMonth, content: text }),
-      }).catch(() => {});
+      }).catch((err) => console.error('코멘트 저장 실패:', err));
     }, 1000);
   }, [selectedStudent]);
 
@@ -188,46 +188,46 @@ export default function AnalyticsPage() {
   const totalTimeRemainMin = totalTimeMin % 60;
 
   return (
-    <div className="flex-1 flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8 gap-4">
+    <div className="flex-1 flex flex-col items-center py-5 px-4 sm:px-6 lg:px-5 gap-4">
       {/* Admin: System summary */}
       {isAdmin && students.length > 0 && (
         <div className="max-w-[1024px] w-full grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="bg-violet-50 border border-violet-200 rounded-xl p-4 text-center">
-            <p className="text-2xl font-black text-violet-700">{students.length}</p>
-            <p className="text-xs text-violet-600 font-medium mt-1">전체 학생 수</p>
-          </div>
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
-            <p className="text-2xl font-black text-blue-700">
+          <Card className="p-5 text-center">
+            <p className="text-2xl font-black text-text-primary">{students.length}</p>
+            <p className="text-xs text-text-secondary font-medium mt-1">전체 학생 수</p>
+          </Card>
+          <Card className="p-5 text-center">
+            <p className="text-2xl font-black text-text-primary">
               {students.filter((s) => s.profile && s.profile.totalXp > 0).length}
             </p>
-            <p className="text-xs text-blue-600 font-medium mt-1">학습 참여 학생</p>
-          </div>
-          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
-            <p className="text-2xl font-black text-emerald-700">
+            <p className="text-xs text-text-secondary font-medium mt-1">학습 참여 학생</p>
+          </Card>
+          <Card className="p-5 text-center">
+            <p className="text-2xl font-black text-text-primary">
               {students.length > 0
                 ? (students.reduce((s, st) => s + (st.profile?.level ?? 1), 0) / students.length).toFixed(1)
                 : 0}
             </p>
-            <p className="text-xs text-emerald-600 font-medium mt-1">평균 레벨</p>
-          </div>
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
-            <p className="text-2xl font-black text-amber-700">
+            <p className="text-xs text-text-secondary font-medium mt-1">평균 레벨</p>
+          </Card>
+          <Card className="p-5 text-center">
+            <p className="text-2xl font-black text-text-primary">
               {students.reduce((s, st) => s + (st.profile?.totalXp ?? 0), 0).toLocaleString()}
             </p>
-            <p className="text-xs text-amber-600 font-medium mt-1">총 XP 합계</p>
-          </div>
+            <p className="text-xs text-text-secondary font-medium mt-1">총 XP 합계</p>
+          </Card>
         </div>
       )}
 
-      <div className="flex flex-col max-w-[1024px] flex-1 w-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="flex flex-col max-w-[1024px] flex-1 w-full bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden">
         {/* Report Header */}
-        <div className="p-8 border-b border-slate-100 flex flex-col md:flex-row md:items-end justify-between gap-6 bg-slate-50">
+        <div className="p-5 border-b border-slate-200 flex flex-col md:flex-row md:items-end justify-between gap-6 bg-slate-50">
           <div className="flex flex-col gap-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium w-fit">
               <BarChart3 className="w-4 h-4" />
               {currentYear}년 {currentMonthNum}월
             </div>
-            <h1 className="text-3xl md:text-4xl font-black leading-tight tracking-tight text-text-primary">
+            <h1 className="text-2xl font-bold leading-tight tracking-tight text-text-primary">
               월간 분석 리포트
             </h1>
             <div className="flex items-center gap-2 mt-1">
@@ -278,7 +278,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="p-8 flex flex-col gap-10">
+        <div className="p-5 flex flex-col gap-10">
           {/* Summary Cards */}
           <section>
             <h2 className="text-xl font-bold leading-tight tracking-tight mb-4 text-text-primary flex items-center gap-2">
@@ -319,13 +319,13 @@ export default function AnalyticsPage() {
             {speedLoading ? (
               <div className="text-center py-8 text-text-secondary">분석 데이터를 불러오는 중...</div>
             ) : !speedData || speedData.overall.totalQuestions === 0 ? (
-              <div className="rounded-xl border border-slate-200 p-8 text-center text-text-secondary">
+              <div className="rounded-sm border border-slate-200 p-5 text-center text-text-secondary">
                 아직 시험 응시 데이터가 없습니다. 학생이 시험을 완료하면 여기에 풀이 속도가 표시됩니다.
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* By difficulty */}
-                <div className="rounded-xl border border-slate-200 p-6">
+                <div className="rounded-sm border border-slate-200 p-6">
                   <h3 className="text-base font-bold text-text-primary mb-4 flex items-center gap-2">
                     <Target className="w-4 h-4 text-primary" /> 난이도별 평균 풀이 시간
                   </h3>
@@ -334,7 +334,7 @@ export default function AnalyticsPage() {
                       const maxTime = Math.max(...speedData.byDifficulty.map((x) => x.avgSeconds), 1);
                       return (
                         <div key={d.difficulty} className="flex items-center gap-3">
-                          <span className={`w-8 text-center px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                          <span className={`w-8 text-center px-1.5 py-0.5 rounded text-xs font-bold ${
                             d.difficulty === 'BASIC' ? 'bg-green-100 text-green-700' :
                             d.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
                             d.difficulty === 'HIGH' ? 'bg-red-100 text-red-700' :
@@ -347,7 +347,7 @@ export default function AnalyticsPage() {
                               className="h-full bg-blue-400 rounded-full transition-all flex items-center justify-end pr-2"
                               style={{ width: `${Math.max((d.avgSeconds / maxTime) * 100, 10)}%` }}
                             >
-                              <span className="text-[10px] font-bold text-white">{d.avgSeconds}초</span>
+                              <span className="text-xs font-bold text-white">{d.avgSeconds}초</span>
                             </div>
                           </div>
                           <span className="text-xs text-slate-400 w-12 text-right">{d.count}문제</span>
@@ -358,7 +358,7 @@ export default function AnalyticsPage() {
                 </div>
 
                 {/* Speed trend */}
-                <div className="rounded-xl border border-slate-200 p-6">
+                <div className="rounded-sm border border-slate-200 p-6">
                   <h3 className="text-base font-bold text-text-primary mb-4 flex items-center gap-2">
                     <Zap className="w-4 h-4 text-primary" /> 시험별 풀이 속도 추세
                   </h3>
@@ -381,7 +381,7 @@ export default function AnalyticsPage() {
                                 }`}
                                 style={{ width: `${Math.max((t.avgSeconds / maxAvg) * 100, 10)}%` }}
                               >
-                                <span className="text-[10px] font-bold text-white">{t.avgSeconds}초</span>
+                                <span className="text-xs font-bold text-white">{t.avgSeconds}초</span>
                               </div>
                             </div>
                           </div>
@@ -400,7 +400,7 @@ export default function AnalyticsPage() {
                 </div>
 
                 {/* By chapter (top 6) */}
-                <div className="rounded-xl border border-slate-200 p-6 lg:col-span-2">
+                <div className="rounded-sm border border-slate-200 p-6 lg:col-span-2">
                   <h3 className="text-base font-bold text-text-primary mb-4 flex items-center gap-2">
                     <BarChart3 className="w-4 h-4 text-primary" /> 단원별 풀이 시간 & 정답률
                   </h3>
@@ -439,7 +439,7 @@ export default function AnalyticsPage() {
                 <Target className="w-5 h-5 text-primary" /> 유형별 성취도 분석
               </h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="rounded-xl border border-slate-200 p-6 flex flex-col items-center">
+                <div className="rounded-sm border border-slate-200 p-6 flex flex-col items-center">
                   <h3 className="text-sm font-bold text-text-primary mb-2 self-start">단원별 정답률 레이더</h3>
                   <AchievementRadar
                     data={achievementData.chapters.slice(0, 8).map((ch) => ({
@@ -453,17 +453,17 @@ export default function AnalyticsPage() {
                     {' '}({achievementData.overall.correct}/{achievementData.overall.total})
                   </p>
                 </div>
-                <div className="rounded-xl border border-slate-200 p-6">
+                <div className="rounded-sm border border-slate-200 p-6">
                   <h3 className="text-sm font-bold text-text-primary mb-3">단원별 상세</h3>
                   <div className="space-y-3 max-h-[320px] overflow-y-auto">
                     {achievementData.chapters.map((ch) => (
-                      <div key={ch.chapter} className="border-b border-slate-50 pb-2 last:border-0">
+                      <div key={ch.chapter} className="border-b border-slate-200 pb-2 last:border-0">
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-xs font-semibold text-text-primary truncate max-w-[180px]" title={ch.chapter}>
                             {ch.chapter}
                           </span>
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-text-secondary">{ch.total}문제 · {ch.avgTime}초</span>
+                            <span className="text-xs text-text-secondary">{ch.total}문제 · {ch.avgTime}초</span>
                             <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
                               ch.accuracy >= 80 ? 'bg-emerald-100 text-emerald-700' :
                               ch.accuracy >= 60 ? 'bg-yellow-100 text-yellow-700' :
@@ -488,7 +488,7 @@ export default function AnalyticsPage() {
                             {ch.sections.slice(0, 4).map((sec) => (
                               <span
                                 key={sec.section}
-                                className={`text-[9px] px-1.5 py-0.5 rounded-full ${
+                                className={`text-xs px-1.5 py-0.5 rounded-full ${
                                   sec.accuracy >= 80 ? 'bg-emerald-50 text-emerald-600' :
                                   sec.accuracy >= 60 ? 'bg-amber-50 text-amber-600' :
                                   'bg-red-50 text-red-600'
@@ -514,7 +514,7 @@ export default function AnalyticsPage() {
               <FileText className="w-5 h-5 text-primary" /> 학습 상태 분석
             </h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-5 flex flex-col justify-center">
+              <div className="rounded-sm border border-emerald-200 bg-emerald-50/50 p-5 flex flex-col justify-center">
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
                     <Star className="w-5 h-5" />
@@ -534,7 +534,7 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
               </div>
-              <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 flex flex-col justify-center">
+              <div className="rounded-sm border border-amber-200 bg-amber-50/50 p-5 flex flex-col justify-center">
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
                     <MoveRight className="w-5 h-5" />
@@ -562,7 +562,7 @@ export default function AnalyticsPage() {
             <h2 className="text-xl font-bold leading-tight tracking-tight mb-4 text-text-primary flex items-center gap-2">
               <Calendar className="w-5 h-5 text-primary" /> 일별 학습 성실도 ({currentMonthNum}월)
             </h2>
-            <div className="rounded-xl border border-slate-200 p-6 bg-white overflow-x-auto">
+            <div className="rounded-sm border border-slate-200 p-6 bg-white overflow-x-auto">
               <div className="min-w-[500px]">
                 <div className="flex justify-end items-center gap-3 mb-4 text-xs text-text-secondary">
                   <span>학습량 적음</span>
@@ -614,7 +614,7 @@ export default function AnalyticsPage() {
 
           {/* Teacher Comment */}
           <section>
-            <div className="rounded-xl border border-slate-200 p-6 bg-slate-50">
+            <div className="rounded-sm border border-slate-200 p-6 bg-slate-50">
               <h3 className="text-lg font-bold text-text-primary mb-3 flex items-center gap-2">
                 <MessageSquare className="w-5 h-5 text-primary" /> 담당 교사 종합 의견
               </h3>
@@ -648,19 +648,21 @@ function SummaryCard({
   subUnit?: string;
 }) {
   return (
-    <div className="flex flex-col gap-2 rounded-xl p-6 bg-slate-50 border border-slate-100">
-      <p className="text-text-secondary text-sm font-medium">{label}</p>
-      <p className="text-text-primary text-3xl font-bold leading-tight">
-        {value}
-        <span className="text-lg font-medium text-slate-500 ml-1">{unit}</span>
-        {subValue && (
-          <>
-            {' '}
-            {subValue}
-            <span className="text-lg font-medium text-slate-500 ml-1">{subUnit}</span>
-          </>
-        )}
-      </p>
-    </div>
+    <Card className="p-5">
+      <div className="flex flex-col gap-2">
+        <p className="text-text-secondary text-sm font-medium">{label}</p>
+        <p className="text-text-primary text-2xl font-bold leading-tight">
+          {value}
+          <span className="text-base font-medium text-slate-500 ml-1">{unit}</span>
+          {subValue && (
+            <>
+              {' '}
+              {subValue}
+              <span className="text-base font-medium text-slate-500 ml-1">{subUnit}</span>
+            </>
+          )}
+        </p>
+      </div>
+    </Card>
   );
 }

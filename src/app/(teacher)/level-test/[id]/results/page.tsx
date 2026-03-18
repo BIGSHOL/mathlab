@@ -218,8 +218,8 @@ export default function LevelTestResultsPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>
     );
   }
@@ -273,7 +273,7 @@ export default function LevelTestResultsPage() {
               {/* Summary cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <Card className="p-5 flex items-center gap-4">
-                  <div className="p-3 bg-primary/10 rounded-xl">
+                  <div className="p-3 bg-primary/10 rounded-sm">
                     <Users className="w-5 h-5 text-primary" />
                   </div>
                   <div>
@@ -282,7 +282,7 @@ export default function LevelTestResultsPage() {
                   </div>
                 </Card>
                 <Card className="p-5 flex items-center gap-4">
-                  <div className="p-3 bg-emerald-100 rounded-xl">
+                  <div className="p-3 bg-emerald-100 rounded-sm">
                     <Target className="w-5 h-5 text-emerald-600" />
                   </div>
                   <div>
@@ -291,7 +291,7 @@ export default function LevelTestResultsPage() {
                   </div>
                 </Card>
                 <Card className="p-5 flex items-center gap-4">
-                  <div className="p-3 bg-violet-100 rounded-xl">
+                  <div className="p-3 bg-violet-100 rounded-sm">
                     <GraduationCap className="w-5 h-5 text-violet-600" />
                   </div>
                   <div>
@@ -333,7 +333,7 @@ export default function LevelTestResultsPage() {
                               className="h-full rounded-full transition-all duration-500"
                               style={{ width: `${pct}%`, backgroundColor: barColor }}
                             />
-                            <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-slate-600">
+                            <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-600">
                               {count > 0 ? `${count}명 (${pct}%)` : ''}
                             </span>
                           </div>
@@ -413,7 +413,7 @@ export default function LevelTestResultsPage() {
                           <td className="px-5 py-3">
                             <span className="font-medium text-text-primary text-sm">{result.student.name}</span>
                             {result.entryMethod === 'manual' && (
-                              <span className="ml-1 px-1 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-600">수기</span>
+                              <span className="ml-1 px-1 py-0.5 rounded text-xs font-bold bg-amber-50 text-amber-600">수기</span>
                             )}
                           </td>
                           <td className="text-center px-4 py-3">
@@ -507,7 +507,7 @@ export default function LevelTestResultsPage() {
               </Button>
               <button
                 onClick={() => setSelectedAttemptId(null)}
-                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+                className="p-1.5 rounded-sm hover:bg-slate-100 text-slate-400 hover:text-slate-600"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -528,7 +528,7 @@ export default function LevelTestResultsPage() {
                   questions={questions}
                 />
               ) : (
-                <Card className="p-12 text-center">
+                <Card className="p-5 text-center">
                   <GraduationCap className="w-10 h-10 text-slate-300 mx-auto mb-3" />
                   <p className="text-text-secondary font-medium mb-3">분석 결과가 없습니다</p>
                   <Button size="sm" onClick={handleAnalyze} loading={analyzing}>

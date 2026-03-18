@@ -34,7 +34,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data: plan }, { status: 201 });
   } catch (err) {
-    return badRequest((err as Error).message);
+    console.error('개념 숙제 플랜 생성 오류:', err);
+    return badRequest('개념 숙제 플랜 생성에 실패했습니다');
   }
 }
 

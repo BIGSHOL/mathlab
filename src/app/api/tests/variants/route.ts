@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data: variants });
   } catch (error) {
-    const message = error instanceof Error ? error.message : '변형 시험지 생성 실패';
-    return serverError(message);
+    console.error('변형 시험지 생성 오류:', error);
+    return serverError('변형 시험지 생성에 실패했습니다');
   }
 }

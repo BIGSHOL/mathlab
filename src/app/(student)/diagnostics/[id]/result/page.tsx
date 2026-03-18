@@ -43,14 +43,14 @@ export default function DiagnosticResultPage() {
       .then((json) => {
         if (json?.data) setResult(json.data);
       })
-      .catch(() => {})
+      .catch((err) => console.error('진단 결과 조회 실패:', err))
       .finally(() => setLoading(false));
   }, [attemptId]);
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>
     );
   }
@@ -78,13 +78,13 @@ export default function DiagnosticResultPage() {
       </div>
 
       {/* Level recommendation */}
-      <Card className="p-8 mb-6 text-center bg-gradient-to-br from-violet-50 to-violet-100/50 border-violet-200">
+      <Card className="p-5 mb-6 text-center bg-gradient-to-br from-violet-50 to-violet-100/50 border-violet-200">
         <Target className="w-10 h-10 text-violet-600 mx-auto mb-3" />
         <p className="text-sm text-text-secondary mb-2">추천 학습 레벨</p>
         <span className={`inline-block px-6 py-2 rounded-full text-2xl font-black border-2 ${levelColor}`}>
           {result.recommendLevel}
         </span>
-        <p className="text-4xl font-black text-text-primary mt-4">
+        <p className="text-3xl font-black text-text-primary mt-4">
           {result.overallAccuracy}
           <span className="text-lg text-text-secondary font-medium">% 정답률</span>
         </p>

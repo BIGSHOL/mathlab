@@ -22,15 +22,9 @@ import { useTests } from '@/hooks/useTests';
 import { useAuth } from '@/hooks/useAuth';
 import { AssignPanel } from '@/components/test/AssignPanel';
 import { LevelTestTab } from '@/components/test/LevelTestTab';
+import { TEST_TYPE_LABELS } from '@/lib/constants/labels';
 
 type TestTab = 'test' | 'level_test';
-
-const TEST_TYPE_LABELS: Record<string, string> = {
-  concept: '단원별',
-  cumulative: '종합',
-  chapter_final: '단원 마무리',
-  level_test: '레벨테스트',
-};
 
 export default function TestsPage() {
   const [activeTab, setActiveTab] = useState<TestTab>('test');
@@ -76,7 +70,7 @@ export default function TestsPage() {
           <button
             key={key}
             onClick={() => setActiveTab(key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-sm font-medium transition-colors ${
               activeTab === key
                 ? 'bg-primary text-white shadow-sm'
                 : 'text-text-secondary hover:bg-slate-100'
@@ -104,7 +98,7 @@ export default function TestsPage() {
                 <div className="flex items-center gap-2 min-w-0">
                   <ClipboardCheck className="w-4 h-4 text-primary shrink-0" />
                   <span className="font-semibold text-sm text-text-primary truncate">시험 관리</span>
-                  <span className="ml-auto px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary shrink-0">
+                  <span className="ml-auto px-1.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary shrink-0">
                     {tests.length}
                   </span>
                 </div>
@@ -125,7 +119,7 @@ export default function TestsPage() {
             {!leftPanelCollapsed && (
               <>
                 {/* Action button */}
-                <div className="p-3 border-b border-slate-100">
+                <div className="p-3 border-b border-slate-200">
                   <Link href="/worksheet/create?mode=test" className="block">
                     <Button className="w-full text-sm" size="sm">
                       <Plus className="w-3.5 h-3.5 mr-1" />
@@ -135,7 +129,7 @@ export default function TestsPage() {
                 </div>
 
                 {/* Grade filter */}
-                <div className="p-3 border-b border-slate-100">
+                <div className="p-3 border-b border-slate-200">
                   <div className="flex gap-1.5 flex-wrap">
                     <button
                       onClick={() => setGradeFilter(undefined)}
@@ -166,11 +160,11 @@ export default function TestsPage() {
                 {/* Test list */}
                 <div className="flex-1 overflow-y-auto">
                   {loading ? (
-                    <div className="flex justify-center py-8">
-                      <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                    <div className="flex justify-center py-12">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
                     </div>
                   ) : tests.length === 0 ? (
-                    <div className="p-2.5 text-center">
+                    <div className="p-3 text-center">
                       <ClipboardCheck className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                       <p className="text-xs text-text-secondary">시험이 없습니다</p>
                     </div>
@@ -189,17 +183,17 @@ export default function TestsPage() {
                             }`}
                           >
                             <div className="flex items-center gap-1.5 mb-1">
-                              <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-semibold bg-primary/10 text-primary">
+                              <span className="px-1.5 py-0.5 rounded-sm text-xs font-semibold bg-primary/10 text-primary">
                                 중{test.grade - 6}
                               </span>
-                              <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-semibold bg-slate-100 text-slate-600">
+                              <span className="px-1.5 py-0.5 rounded-sm text-xs font-semibold bg-slate-100 text-slate-600">
                                 {TEST_TYPE_LABELS[test.testType] || test.testType}
                               </span>
                             </div>
                             <p className="text-sm font-medium text-text-primary truncate">
                               {test.title}
                             </p>
-                            <div className="flex items-center gap-2 mt-1 text-[11px] text-text-secondary">
+                            <div className="flex items-center gap-2 mt-1 text-xs text-text-secondary">
                               <span>{test.questionCount}문제</span>
                               <span>{test._count.attempts}명 응시</span>
                             </div>
@@ -246,7 +240,7 @@ export default function TestsPage() {
                         </span>
                       )}
                     </div>
-                    <h2 className="text-sm font-bold text-text-primary">{selectedTest.title}</h2>
+                    <h2 className="text-base font-bold text-text-primary">{selectedTest.title}</h2>
                     {selectedTest.description && (
                       <p className="text-sm text-text-secondary mt-1">{selectedTest.description}</p>
                     )}

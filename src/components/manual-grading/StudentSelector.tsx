@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Search, UserPlus } from 'lucide-react';
 import Link from 'next/link';
+import { GRADE_LEVEL_LABELS } from '@/lib/constants/labels';
 
 interface StudentItem {
   id: string;
@@ -11,11 +12,7 @@ interface StudentItem {
   grade: number | null;
 }
 
-const GRADE_LABELS: Record<number, string> = {
-  1: '초1', 2: '초2', 3: '초3', 4: '초4', 5: '초5', 6: '초6',
-  7: '중1', 8: '중2', 9: '중3',
-  10: '고1', 11: '고2', 12: '고3',
-};
+const GRADE_LABELS = GRADE_LEVEL_LABELS;
 
 interface StudentSelectorProps {
   selectedStudent: StudentItem | null;

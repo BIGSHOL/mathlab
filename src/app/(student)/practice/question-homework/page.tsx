@@ -73,7 +73,7 @@ export default function QuestionHomeworkPage() {
       .then((json) => {
         setHomeworkList(json.data ?? []);
       })
-      .catch(() => {})
+      .catch((err) => console.error('문제 숙제 목록 조회 실패:', err))
       .finally(() => setLoadingList(false));
   }, []);
 
@@ -148,11 +148,11 @@ export default function QuestionHomeworkPage() {
         </div>
 
         {loadingList ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
           </div>
         ) : homeworkList.length === 0 ? (
-          <Card className="p-10 text-center">
+          <Card className="p-5 text-center">
             <p className="text-text-secondary">오늘 할 문제 숙제가 없습니다.</p>
           </Card>
         ) : (
@@ -314,12 +314,12 @@ export default function QuestionHomeworkPage() {
   // ─── Phase: Result ───
   return (
     <div className="px-4 md:px-10 py-8 max-w-[800px] mx-auto w-full">
-      <Card className="p-8 text-center mb-6">
+      <Card className="p-5 text-center mb-6">
         <Trophy className={`w-16 h-16 mx-auto mb-4 ${score >= 80 ? 'text-amber-400' : 'text-slate-300'}`} />
         <h2 className="text-2xl font-bold text-text-primary mb-2">
           {score >= 80 ? '잘했어요!' : '다음에 더 잘할 수 있어요!'}
         </h2>
-        <p className="text-4xl font-black text-primary mb-1">{score}점</p>
+        <p className="text-3xl font-black text-primary mb-1">{score}점</p>
         <p className="text-text-secondary">
           {questions.length > 0 ? questions.length : activeHomework?.questionCount}문제 중 {correctCount}문제 정답
         </p>
@@ -375,7 +375,7 @@ export default function QuestionHomeworkPage() {
             fetch('/api/question-homework/today')
               .then((r) => r.json())
               .then((json) => setHomeworkList(json.data ?? []))
-              .catch(() => {});
+              .catch((err) => console.error('문제 숙제 목록 재조회 실패:', err));
           }}
         >
           목록으로

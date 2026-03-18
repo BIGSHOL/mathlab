@@ -134,7 +134,7 @@ export default function ArithmeticPracticePage() {
         questionStartRef.current = Date.now();
         setElapsed(0);
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('연산 문제 생성 실패:', err); }
     setLoading(false);
   }, [category, level, count]);
 
@@ -166,7 +166,7 @@ export default function ArithmeticPracticePage() {
           isCorrect,
           timeSpentSeconds: timeSpent,
         }),
-      }).catch(() => {});
+      }).catch((err) => console.error('연산 답안 저장 실패:', err));
     }
   };
 
@@ -187,7 +187,7 @@ export default function ArithmeticPracticePage() {
               setLeveledUp(json.data.leveledUp);
             }
           })
-          .catch(() => {});
+          .catch((err) => console.error('연산 연습 완료 처리 실패:', err));
       }
     } else {
       setCurrentIndex((i) => i + 1);
@@ -221,7 +221,7 @@ export default function ArithmeticPracticePage() {
                 const isExpanded = expandedGrade === group.grade;
                 const hasSelected = group.categories.includes(category);
                 return (
-                  <div key={group.grade} className={`border rounded-lg overflow-hidden transition-colors ${
+                  <div key={group.grade} className={`border rounded-sm overflow-hidden transition-colors ${
                     hasSelected && !isExpanded ? group.borderColor : 'border-slate-200'
                   }`}>
                     {/* 학년 헤더 */}
@@ -248,7 +248,7 @@ export default function ArithmeticPracticePage() {
                     </button>
                     {/* 카테고리 목록 */}
                     {isExpanded && (
-                      <div className="px-3 py-3 bg-white border-t border-slate-100">
+                      <div className="px-3 py-3 bg-white border-t border-slate-200">
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                           {group.categories.map((c) => {
                             const isActive = category === c;
@@ -357,7 +357,7 @@ export default function ArithmeticPracticePage() {
     const totalTime = Math.floor((Date.now() - startRef.current) / 1000);
     return (
       <div className="p-6 max-w-md mx-auto">
-        <Card className="p-8 text-center space-y-4">
+        <Card className="p-5 text-center space-y-4">
           <Trophy className="w-12 h-12 text-yellow-500 mx-auto" />
           <h2 className="text-2xl font-black text-text-primary">연습 완료!</h2>
           {xpEarned > 0 && (
@@ -430,13 +430,13 @@ export default function ArithmeticPracticePage() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <Card className="p-6 md:p-8">
+        <Card className="p-5 md:p-6">
           {/* Problem */}
           <div className="text-center mb-8">
             <p className="text-xs text-text-secondary mb-2">
               {CATEGORY_LABELS[current.category]} · {LEVEL_LABELS[current.level]}
             </p>
-            <div className="text-2xl md:text-3xl font-bold text-text-primary">
+            <div className="text-2xl font-bold text-text-primary">
               <MathRenderer content={current.content} />
             </div>
           </div>

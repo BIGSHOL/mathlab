@@ -177,7 +177,7 @@ export default function CreateHomeworkPage() {
         const json = await res.json();
         setStudents(json.data ?? []);
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('학생 목록 조회 실패:', err); }
     setLoadingStudents(false);
   }, [studentSearch]);
   useEffect(() => { fetchStudents(); }, [fetchStudents]);
@@ -349,20 +349,20 @@ export default function CreateHomeworkPage() {
 
   // ─── Render ───
   return (
-    <div className="p-3 max-w-6xl mx-auto">
-      <div className="flex items-center gap-2 mb-3">
+    <div className="p-4 max-w-6xl mx-auto">
+      <div className="flex items-center gap-2 mb-4">
         <Link href="/homework" className="text-text-secondary hover:text-text-primary">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <h1 className="text-sm font-bold text-text-primary">숙제 플랜 만들기</h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <div className="lg:col-span-2 space-y-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 space-y-3">
 
           {/* ── Card 1: Title + Start date (one row) ── */}
-          <Card className="p-2.5">
-            <div className="flex gap-2">
+          <Card className="p-4">
+            <div className="flex gap-3">
               <label className="flex-1">
                 <span className="text-xs font-medium text-text-secondary">제목 *</span>
                 <input
@@ -386,15 +386,15 @@ export default function CreateHomeworkPage() {
           </Card>
 
           {/* ── Card 2: Category Picker ── */}
-          <Card className="p-2.5">
-            <div className="flex items-center justify-between mb-2">
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-bold text-text-primary">연산 유형 선택 *</h2>
-              <span className="text-[11px] text-text-secondary">{selectedCats.length}개 선택</span>
+              <span className="text-xs text-text-secondary">{selectedCats.length}개 선택</span>
             </div>
 
             {/* School level + Grade in one row */}
-            <div className="flex items-center gap-2 mb-2">
-              <div className="flex gap-0.5">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex gap-1">
                 {(['elementary', 'middle'] as const).map((lv) => (
                   <button
                     key={lv}
@@ -408,7 +408,7 @@ export default function CreateHomeworkPage() {
                 ))}
               </div>
               <div className="w-px h-4 bg-slate-200" />
-              <div className="flex gap-0.5">
+              <div className="flex gap-1">
                 {(schoolLevel === 'elementary' ? [1, 2, 3, 4, 5, 6] : [1, 2, 3]).map((g) => {
                   const key = `${schoolLevel}-${g}`;
                   const count = (CATEGORIES_BY_GRADE[key] ?? []).filter((c) => selectedCats.includes(c)).length;
@@ -433,7 +433,7 @@ export default function CreateHomeworkPage() {
             </div>
 
             {/* Category grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 mb-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
               {gradeCats.map((cat) => {
                 const isSelected = selectedCats.includes(cat);
                 return (
@@ -459,12 +459,12 @@ export default function CreateHomeworkPage() {
 
             {/* Selected chips */}
             {selectedCats.length > 0 && (
-              <div className="flex flex-wrap gap-1 pt-2 border-t border-slate-100">
+              <div className="flex flex-wrap gap-1.5 pt-3 border-t border-slate-200">
                 {selectedCats.map((cat) => (
-                  <span key={cat} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-sm text-[10px] font-medium bg-primary/10 text-primary">
+                  <span key={cat} className="inline-flex items-center gap-0.5 px-2 py-1 rounded-sm text-xs font-medium bg-primary/10 text-primary">
                     {CATEGORY_LABELS[cat]}
                     <span className="text-primary/50">{CATEGORY_GRADE[cat]}</span>
-                    <button onClick={() => toggleCat(cat)} className="ml-0.5 hover:text-red-500"><X className="w-2.5 h-2.5" /></button>
+                    <button onClick={() => toggleCat(cat)} className="ml-0.5 hover:text-red-500"><X className="w-3 h-3" /></button>
                   </span>
                 ))}
               </div>
@@ -472,11 +472,10 @@ export default function CreateHomeworkPage() {
           </Card>
 
           {/* ── Card 3: Assignment Mode + Problem Count (merged) ── */}
-          <Card className="p-2.5">
-            <h2 className="text-sm font-bold text-text-primary mb-2">배정 방식 *</h2>
+          <Card className="p-4">
+            <h2 className="text-sm font-bold text-text-primary mb-3">배정 방식 *</h2>
 
-            {/* Mode selector — compact tabs */}
-            <div className="flex gap-1 mb-2">
+            <div className="flex gap-2 mb-3">
               {(Object.keys(MODE_LABELS) as ProgressionMode[]).map((m) => (
                 <button
                   key={m}
@@ -488,29 +487,29 @@ export default function CreateHomeworkPage() {
                   <div className={`text-xs font-semibold ${mode === m ? 'text-primary' : 'text-text-primary'}`}>
                     {MODE_LABELS[m].label}
                   </div>
-                  <div className="text-[10px] text-text-secondary">{MODE_LABELS[m].desc}</div>
+                  <div className="text-xs text-text-secondary">{MODE_LABELS[m].desc}</div>
                 </button>
               ))}
             </div>
 
             {/* ── Sequential: Compact slot rows ── */}
             {mode === 'sequential' && (
-              <div className="space-y-1 mb-2">
+              <div className="space-y-1.5 mb-3">
                 {slots.map((slot, idx) => (
-                  <div key={slot.id} className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 rounded-sm border border-slate-200">
-                    <span className="text-[10px] font-bold text-slate-400 w-3 text-center">{idx + 1}</span>
-                    <div className="flex-1 flex items-center gap-1 min-w-0 flex-wrap">
+                  <div key={slot.id} className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-sm border border-slate-200">
+                    <span className="text-xs font-bold text-slate-400 w-4 text-center">{idx + 1}</span>
+                    <div className="flex-1 flex items-center gap-1.5 min-w-0 flex-wrap">
                       {slot.categories.map((cat) => (
-                        <span key={cat} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-sm text-[10px] font-medium bg-primary/10 text-primary">
+                        <span key={cat} className="inline-flex items-center gap-0.5 px-2 py-1 rounded-sm text-xs font-medium bg-primary/10 text-primary">
                           {CATEGORY_LABELS[cat]}
-                          <button onClick={() => removeCatFromSlot(slot.id, cat)} className="hover:text-red-500"><X className="w-2 h-2" /></button>
+                          <button onClick={() => removeCatFromSlot(slot.id, cat)} className="hover:text-red-500"><X className="w-3 h-3" /></button>
                         </span>
                       ))}
                       {selectedCats.filter((c) => !catsInSlots.has(c)).length > 0 && (
                         <select
                           value=""
                           onChange={(e) => { if (e.target.value) addCatToSlot(slot.id, e.target.value as ArithmeticCategory); }}
-                          className="px-1 py-0.5 rounded-sm text-[10px] border border-dashed border-slate-300 bg-white text-text-secondary"
+                          className="px-1.5 py-0.5 rounded-sm text-xs border border-dashed border-slate-300 bg-white text-text-secondary"
                         >
                           <option value="">+</option>
                           {selectedCats.filter((c) => !catsInSlots.has(c)).map((cat) => (
@@ -523,39 +522,39 @@ export default function CreateHomeworkPage() {
                       type="number"
                       value={slot.days}
                       onChange={(e) => setSlotDays(slot.id, parseInt(e.target.value) || 1)}
-                      className="w-10 px-1 py-0.5 text-[11px] text-center border border-slate-200 rounded-sm"
+                      className="w-12 px-1.5 py-1 text-xs text-center border border-slate-200 rounded-sm"
                     />
-                    <span className="text-[10px] text-text-secondary">일</span>
+                    <span className="text-xs text-text-secondary">일</span>
                     <button onClick={() => moveSlot(idx, -1)} disabled={idx === 0} className="p-0.5 disabled:opacity-20"><ArrowUp className="w-2.5 h-2.5 text-slate-400" /></button>
                     <button onClick={() => moveSlot(idx, 1)} disabled={idx === slots.length - 1} className="p-0.5 disabled:opacity-20"><ArrowDown className="w-2.5 h-2.5 text-slate-400" /></button>
                   </div>
                 ))}
-                <button onClick={addNewSlot} className="w-full py-1 border border-dashed border-slate-300 rounded-sm text-[10px] text-text-secondary hover:bg-slate-50 flex items-center justify-center gap-1">
-                  <Plus className="w-2.5 h-2.5" /> 구간 추가
+                <button onClick={addNewSlot} className="w-full py-1.5 border border-dashed border-slate-300 rounded-sm text-xs text-text-secondary hover:bg-slate-50 flex items-center justify-center gap-1">
+                  <Plus className="w-3 h-3" /> 구간 추가
                 </button>
               </div>
             )}
 
             {/* ── Round-robin ── */}
             {mode === 'round_robin' && (
-              <div className="mb-2">
-                <div className="space-y-1 mb-2">
+              <div className="mb-3">
+                <div className="space-y-1.5 mb-3">
                   {rrOrder.map((cat, idx) => (
-                    <div key={cat} className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 rounded-sm border border-slate-200">
-                      <span className="text-[10px] font-bold text-slate-400 w-3 text-center">{idx + 1}</span>
+                    <div key={cat} className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-sm border border-slate-200">
+                      <span className="text-xs font-bold text-slate-400 w-4 text-center">{idx + 1}</span>
                       <span className="flex-1 text-xs font-medium text-text-primary">{CATEGORY_LABELS[cat]}</span>
-                      <span className="text-[10px] text-text-secondary">{CATEGORY_GRADE[cat]}</span>
+                      <span className="text-xs text-text-secondary">{CATEGORY_GRADE[cat]}</span>
                       <button onClick={() => moveRR(idx, -1)} disabled={idx === 0} className="p-0.5 disabled:opacity-20"><ArrowUp className="w-2.5 h-2.5 text-slate-400" /></button>
                       <button onClick={() => moveRR(idx, 1)} disabled={idx === rrOrder.length - 1} className="p-0.5 disabled:opacity-20"><ArrowDown className="w-2.5 h-2.5 text-slate-400" /></button>
                     </div>
                   ))}
                   {rrOrder.length === 0 && (
-                    <p className="text-[11px] text-text-secondary text-center py-2.5">위에서 연산 유형을 선택하세요</p>
+                    <p className="text-xs text-text-secondary text-center py-3">위에서 연산 유형을 선택하세요</p>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-text-secondary shrink-0">카테고리당</span>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1.5">
                     {[3, 5, 7, 10].map((n) => (
                       <button
                         key={n}
@@ -574,12 +573,12 @@ export default function CreateHomeworkPage() {
 
             {/* ── Weekday: Compact grid table ── */}
             {mode === 'weekday' && (
-              <div className="mb-2">
+              <div className="mb-3">
                 {selectedCats.length === 0 ? (
-                  <p className="text-[11px] text-text-secondary text-center py-2.5">위에서 연산 유형을 선택하세요</p>
+                  <p className="text-xs text-text-secondary text-center py-3">위에서 연산 유형을 선택하세요</p>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-[11px] border-collapse">
+                    <table className="w-full text-xs border-collapse">
                       <thead>
                         <tr>
                           <th className="text-left py-1 pr-2 text-text-secondary font-medium">유형</th>
@@ -621,7 +620,7 @@ export default function CreateHomeworkPage() {
                 )}
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-xs text-text-secondary shrink-0">반복</span>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1.5">
                     {[2, 4, 8, 12].map((n) => (
                       <button
                         key={n}
@@ -639,11 +638,10 @@ export default function CreateHomeworkPage() {
             )}
 
             {/* ── Divider ── */}
-            <div className="border-t border-slate-100 pt-2.5">
-              <h3 className="text-sm font-bold text-text-primary mb-2">문제 수</h3>
+            <div className="border-t border-slate-200 pt-3">
+              <h3 className="text-sm font-bold text-text-primary mb-3">문제 수</h3>
 
-              {/* Count mode toggle */}
-              <div className="flex gap-1 mb-2">
+              <div className="flex gap-2 mb-3">
                 {([
                   { value: 'total' as CountMode, label: '하루 총 문제수' },
                   { value: 'per_category' as CountMode, label: '유형별 개별 설정' },
@@ -662,7 +660,7 @@ export default function CreateHomeworkPage() {
 
               {/* Total mode: quick buttons */}
               {countMode === 'total' && (
-                <div className="flex gap-1">
+                <div className="flex gap-2">
                   {[10, 20, 30, 50].map((n) => (
                     <button
                       key={n}
@@ -679,10 +677,9 @@ export default function CreateHomeworkPage() {
 
               {/* Per-category mode: individual inputs */}
               {countMode === 'per_category' && (
-                <div className="space-y-1">
-                  {/* Bulk set */}
+                <div className="space-y-2">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[11px] text-text-secondary">일괄 설정:</span>
+                    <span className="text-xs text-text-secondary">일괄 설정:</span>
                     {[10, 20, 30].map((n) => (
                       <button
                         key={n}
@@ -694,7 +691,7 @@ export default function CreateHomeworkPage() {
                             return next;
                           });
                         }}
-                        className="px-2 py-0.5 rounded-sm text-[10px] font-medium bg-slate-100 text-text-secondary hover:bg-slate-200"
+                        className="px-2 py-0.5 rounded-sm text-xs font-medium bg-slate-100 text-text-secondary hover:bg-slate-200"
                       >
                         {n}
                       </button>
@@ -702,19 +699,19 @@ export default function CreateHomeworkPage() {
                   </div>
                   {/* Per-cat rows */}
                   {selectedCats.length === 0 ? (
-                    <p className="text-[11px] text-text-secondary text-center py-2">유형을 먼저 선택하세요</p>
+                    <p className="text-xs text-text-secondary text-center py-3">유형을 먼저 선택하세요</p>
                   ) : (
-                    <div className="grid grid-cols-2 gap-1">
+                    <div className="grid grid-cols-2 gap-2">
                       {selectedCats.map((cat) => (
-                        <div key={cat} className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 rounded-sm border border-slate-100">
-                          <span className="flex-1 text-[11px] font-medium text-text-primary truncate">{CATEGORY_LABELS[cat]}</span>
+                        <div key={cat} className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-sm border border-slate-100">
+                          <span className="flex-1 text-xs font-medium text-text-primary truncate">{CATEGORY_LABELS[cat]}</span>
                           <input
                             type="number"
                             value={perCatCounts[cat] ?? dailyCount}
                             onChange={(e) => setPerCatCounts((prev) => ({ ...prev, [cat]: Math.max(1, Math.min(100, parseInt(e.target.value) || 1)) }))}
-                            className="w-12 px-1 py-0.5 text-[11px] text-center border border-slate-200 rounded-sm"
+                            className="w-12 px-1.5 py-1 text-xs text-center border border-slate-200 rounded-sm"
                           />
-                          <span className="text-[10px] text-text-secondary">문제</span>
+                          <span className="text-xs text-text-secondary">문제</span>
                         </div>
                       ))}
                     </div>
@@ -724,11 +721,11 @@ export default function CreateHomeworkPage() {
             </div>
 
             {/* ── Passing score ── */}
-            <div className="border border-slate-200 rounded-sm p-2.5 space-y-2">
+            <div className="border border-slate-200 rounded-sm p-4 space-y-3 mt-3">
               <h3 className="text-sm font-bold text-text-primary">통과 기준</h3>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-text-secondary shrink-0">통과 점수</span>
-                <div className="flex gap-1">
+                <div className="flex gap-1.5">
                   {[60, 70, 80, 90, 100].map((s) => (
                     <button
                       key={s}
@@ -753,13 +750,13 @@ export default function CreateHomeworkPage() {
                   className="rounded border-slate-300"
                 />
                 <span className="text-xs text-text-primary">미통과 시 재시도 필수</span>
-                <span className="text-[10px] text-text-secondary">(학생이 통과할 때까지 재풀이)</span>
+                <span className="text-xs text-text-secondary">(학생이 통과할 때까지 재풀이)</span>
               </label>
               {retryOnFail && (
-                <div className="space-y-2 pl-5 border-l-2 border-primary/20">
+                <div className="space-y-3 pl-5 border-l-2 border-primary/20">
                   <div>
-                    <div className="text-[11px] text-text-secondary mb-1">재시도 방식</div>
-                    <div className="grid grid-cols-2 gap-1">
+                    <div className="text-xs text-text-secondary mb-1.5">재시도 방식</div>
+                    <div className="grid grid-cols-2 gap-2">
                       {([
                         { value: 'wrong_same' as const, label: '틀린 문제만', desc: '숫자 그대로' },
                         { value: 'wrong_new' as const, label: '틀린 문제만', desc: '숫자 변경' },
@@ -776,23 +773,23 @@ export default function CreateHomeworkPage() {
                               : 'border-slate-200 hover:border-slate-300'
                           }`}
                         >
-                          <div className={`text-[11px] font-semibold ${retryMode === opt.value ? 'text-primary' : 'text-text-primary'}`}>
+                          <div className={`text-xs font-semibold ${retryMode === opt.value ? 'text-primary' : 'text-text-primary'}`}>
                             {opt.label}
                           </div>
-                          <div className="text-[10px] text-text-secondary">{opt.desc}</div>
+                          <div className="text-xs text-text-secondary">{opt.desc}</div>
                         </button>
                       ))}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] text-text-secondary shrink-0">최대 재시도</span>
-                    <div className="flex gap-1">
+                    <span className="text-xs text-text-secondary shrink-0">최대 재시도</span>
+                    <div className="flex gap-1.5">
                       {[1, 2, 3, 5, 0].map((n) => (
                         <button
                           key={n}
                           type="button"
                           onClick={() => setMaxRetries(n)}
-                          className={`px-2 py-0.5 rounded-sm text-[11px] font-medium transition-colors ${
+                          className={`px-2.5 py-1 rounded-sm text-xs font-medium transition-colors ${
                             maxRetries === n
                               ? 'bg-primary text-white'
                               : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
@@ -809,7 +806,7 @@ export default function CreateHomeworkPage() {
 
             {/* ── Inline summary ── */}
             {canSubmit && (
-              <div className="mt-2 px-2.5 py-1.5 bg-indigo-50 rounded-sm border border-indigo-100 text-[11px] text-indigo-600">
+              <div className="mt-3 px-3 py-2 bg-indigo-50 rounded-sm border border-indigo-100 text-xs text-indigo-600">
                 {summary.activeDays !== summary.totalDays
                   ? `총 ${summary.totalDays}일 중 ${summary.activeDays}일 배정`
                   : `총 ${summary.totalDays}일`}
@@ -826,34 +823,34 @@ export default function CreateHomeworkPage() {
 
         {/* ── Right: Student selection ── */}
         <div className="lg:col-span-1">
-          <Card className="p-2.5">
-            <div className="flex items-center justify-between mb-2">
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-bold text-text-primary">학생 선택</h2>
-              <span className="text-[11px] text-text-secondary">{selectedStudentIds.length}명</span>
+              <span className="text-xs text-text-secondary">{selectedStudentIds.length}명</span>
             </div>
 
-            <div className="relative mb-2">
+            <div className="relative mb-3">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
               <input
                 type="text"
                 value={studentSearch}
                 onChange={(e) => setStudentSearch(e.target.value)}
                 placeholder="학생 검색..."
-                className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-sm text-xs"
+                className="w-full h-8 pl-8 pr-3 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
               />
             </div>
 
-            <button onClick={selectAllStudents} className="text-[11px] text-primary hover:underline mb-1.5">
+            <button onClick={selectAllStudents} className="text-xs text-primary hover:underline mb-2">
               {students.every((s) => selectedStudentIds.includes(s.id)) ? '전체 해제' : '전체 선택'}
             </button>
 
-            <div className="max-h-[360px] overflow-y-auto space-y-0.5">
+            <div className="max-h-[360px] overflow-y-auto space-y-1">
               {loadingStudents ? (
-                <div className="flex justify-center py-3">
-                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                <div className="flex justify-center py-4">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 </div>
               ) : students.length === 0 ? (
-                <p className="text-[11px] text-text-secondary text-center py-2.5">학생이 없습니다</p>
+                <p className="text-xs text-text-secondary text-center py-3">학생이 없습니다</p>
               ) : (
                 students.map((student) => {
                   const isSelected = selectedStudentIds.includes(student.id);
@@ -861,7 +858,7 @@ export default function CreateHomeworkPage() {
                     <button
                       key={student.id}
                       onClick={() => toggleStudent(student.id)}
-                      className={`w-full flex items-center gap-1.5 px-2 py-1.5 rounded-sm text-xs transition-colors ${
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-sm text-xs transition-colors ${
                         isSelected ? 'bg-primary/5' : 'hover:bg-slate-50'
                       }`}
                     >
@@ -872,7 +869,7 @@ export default function CreateHomeworkPage() {
                       </div>
                       <span className="text-text-primary truncate">{student.name}</span>
                       {student.grade && (
-                        <span className="ml-auto text-[9px] px-1 py-0.5 bg-slate-100 text-slate-500 rounded-sm shrink-0">
+                        <span className="ml-auto text-xs px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded-sm shrink-0">
                           {student.grade > 6 ? `중${student.grade - 6}` : `초${student.grade}`}
                         </span>
                       )}
@@ -883,7 +880,7 @@ export default function CreateHomeworkPage() {
             </div>
 
             <Button
-              className="w-full mt-2"
+              className="w-full mt-3"
               onClick={handleSubmit}
               loading={saving}
               disabled={!canSubmit}
@@ -891,7 +888,7 @@ export default function CreateHomeworkPage() {
               <CalendarCheck className="w-4 h-4 mr-1" />
               숙제 플랜 생성
             </Button>
-            <p className="text-[9px] text-slate-400 mt-1.5 text-center">
+            <p className="text-xs text-slate-400 mt-2 text-center">
               학생 없이 생성 후 나중에 배정 가능
             </p>
           </Card>

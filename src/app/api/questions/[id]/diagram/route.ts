@@ -43,7 +43,8 @@ export async function PATCH(
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return serverError('GEMINI_API_KEY가 설정되지 않았습니다');
+      console.error('GEMINI_API_KEY가 설정되지 않았습니다');
+      return serverError('서버 설정 오류가 발생했습니다');
     }
 
     const ai = new GoogleGenAI({ apiKey });

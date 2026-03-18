@@ -206,7 +206,7 @@ export default function PdfImportPage() {
         const list = json.data || [];
         setSubjects(list);
       })
-      .catch(() => {});
+      .catch((err) => console.error('과목 목록 조회 실패:', err));
   }, []);
 
   // bookCode 변경 시 해당 학년 과목 자동 선택
@@ -622,7 +622,7 @@ export default function PdfImportPage() {
 
       {/* 에러 표시 */}
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700 text-sm">
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-sm flex items-center gap-2 text-red-700 text-sm">
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
           {error}
           <button onClick={() => setError('')} className="ml-auto">
@@ -635,7 +635,7 @@ export default function PdfImportPage() {
       {step === 1 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* 왼쪽: 설정 */}
-          <Card className="p-6">
+          <Card className="p-5">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <BookOpen className="w-5 h-5" />
               교재 설정
@@ -646,7 +646,7 @@ export default function PdfImportPage() {
                 <select
                   value={bookCode}
                   onChange={(e) => { setBookCode(e.target.value); setChapters([]); }}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-sm focus:ring-2 focus:ring-primary/30 focus:border-primary"
                 >
                   <optgroup label="초등">
                     {ELEMENTARY_BOOK_CODES.map((code) => (
@@ -672,12 +672,12 @@ export default function PdfImportPage() {
                       value={chapters.join(', ')}
                       onChange={(e) => setChapters(e.target.value ? [e.target.value] : [])}
                       placeholder="대단원명 직접 입력"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-sm focus:ring-2 focus:ring-primary/30 focus:border-primary"
                     />
                   );
                   const allSelected = chapters.length === chapterList.length;
                   return (
-                    <div className="border border-slate-300 rounded-lg p-2 max-h-40 overflow-y-auto space-y-1">
+                    <div className="border border-slate-300 rounded-sm p-2 max-h-40 overflow-y-auto space-y-1">
                       <label className="flex items-center gap-2 px-2 py-1 rounded hover:bg-slate-50 cursor-pointer border-b border-slate-100 pb-2 mb-1">
                         <input
                           type="checkbox"
@@ -711,7 +711,7 @@ export default function PdfImportPage() {
           </Card>
 
           {/* 오른쪽: PDF 업로드 */}
-          <Card className="p-6">
+          <Card className="p-5">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Upload className="w-5 h-5" />
               PDF 업로드
@@ -721,7 +721,7 @@ export default function PdfImportPage() {
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-slate-300 rounded-xl p-12 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
+                className="border-2 border-dashed border-slate-300 rounded-sm p-5 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
               >
                 <Upload className="w-12 h-12 text-slate-400 mx-auto mb-3" />
                 <p className="text-sm text-slate-600 font-medium">PDF 파일을 드래그하거나 클릭하여 업로드</p>
@@ -736,7 +736,7 @@ export default function PdfImportPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-sm">
                   <FileText className="w-8 h-8 text-primary" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-900 truncate">{pdfFile.name}</p>
@@ -746,7 +746,7 @@ export default function PdfImportPage() {
                     </p>
                   </div>
                   {loadingPdf ? (
-                    <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                    <Loader2 className="w-6 h-6 text-primary animate-spin" />
                   ) : (
                     <button
                       onClick={() => {
@@ -840,7 +840,7 @@ export default function PdfImportPage() {
                       <div
                         key={page.pageNum}
                         onClick={() => togglePage(page.pageNum)}
-                        className={`cursor-pointer rounded-lg border-2 transition-all overflow-hidden ${
+                        className={`cursor-pointer rounded-sm border-2 transition-all overflow-hidden ${
                           isSelected
                             ? 'border-primary ring-2 ring-primary/30 shadow-md'
                             : 'border-slate-200 hover:border-slate-400'
@@ -855,7 +855,7 @@ export default function PdfImportPage() {
                           />
                         ) : (
                           <div className="w-full aspect-[3/4] bg-slate-100 flex items-center justify-center">
-                            <Loader2 className="w-4 h-4 text-slate-300 animate-spin" />
+                            <Loader2 className="w-6 h-6 text-slate-300 animate-spin" />
                           </div>
                         )}
                         <div
@@ -930,9 +930,9 @@ export default function PdfImportPage() {
         <div>
           {/* 추출 진행 표시 */}
           {extracting && (
-            <Card className="p-6 mb-6">
+            <Card className="p-5 mb-6">
               <div className="flex items-center gap-3 mb-3">
-                <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                <Loader2 className="w-6 h-6 text-primary animate-spin" />
                 <span className="text-sm font-medium">
                   AI 추출 중... ({progress.done}/{progress.total} 페이지)
                   {progress.currentPage && ` — 현재 p.${progress.currentPage}`}
@@ -1055,7 +1055,7 @@ export default function PdfImportPage() {
                     {concepts.map((c, ci) => (
                       <div
                         key={ci}
-                        className="border border-amber-200 bg-amber-50/50 rounded-lg p-3"
+                        className="border border-amber-200 bg-amber-50/50 rounded-sm p-3"
                       >
                         <div className="flex items-center gap-2 mb-2">
                           <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full font-medium">
@@ -1098,7 +1098,7 @@ export default function PdfImportPage() {
                     <div key={`${group.header}-${gi}`}>
                       {/* 유형 헤더 */}
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg">
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-sm">
                           <BookOpen className="w-4 h-4 text-primary" />
                           <span className="text-sm font-semibold text-primary">{group.header}</span>
                           <span className="text-xs text-primary/60">{group.items.length}문제</span>
@@ -1144,7 +1144,7 @@ export default function PdfImportPage() {
 
       {/* ===== Step 4: 완료 ===== */}
       {step === 4 && result && (
-        <Card className="p-12 text-center">
+        <Card className="p-5 text-center">
           <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-slate-900 mb-2">등록 완료!</h2>
           <p className="text-slate-600 mb-2">
@@ -1199,7 +1199,7 @@ function ProblemCard({ problem, isEditing, isExpanded, onToggleExpand, onEdit, o
   return (
     <Card className="overflow-hidden">
       {/* 헤더 */}
-      <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 border-b border-slate-100">
+      <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 border-b border-slate-200">
         <span className="text-sm font-bold text-primary">#{problem.questionNum}</span>
         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${difficultyColors[problem.difficulty]}`}>
           {DIFFICULTY_LABELS[problem.difficulty]}
@@ -1254,7 +1254,7 @@ function ProblemCard({ problem, isEditing, isExpanded, onToggleExpand, onEdit, o
 
             {/* 정답/풀이 (접기) */}
             {isExpanded && (problem.answer || problem.explanation) && (
-              <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">
+              <div className="mt-3 pt-3 border-t border-slate-200 space-y-2">
                 {problem.answer && (
                   <div className="flex items-start gap-2">
                     <span className="text-xs font-medium text-green-600 mt-0.5 shrink-0">정답</span>
@@ -1456,17 +1456,17 @@ function EditForm({ problem, onUpdate, onClose }: EditFormProps) {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={5}
-              className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg font-mono"
+              className="w-full text-sm px-3 py-2 border border-slate-300 rounded-sm font-mono"
             />
             {/* 도형 목록 */}
             {diagramParams.length > 0 && (
               <div className="mt-2 space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">도형 목록</label>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">도형 목록</label>
                 {diagramParams.map((dp, i) => (
                   <div key={i} className="flex items-center gap-2 text-xs text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-200">
                     <span className="font-medium text-primary">[그림{i + 1}]</span>
                     <span className="text-slate-500">{dp.type}</span>
-                    <span className="text-slate-400 text-[10px] truncate flex-1">{dp.label}</span>
+                    <span className="text-slate-400 text-xs truncate flex-1">{dp.label}</span>
                     <button type="button" onClick={() => { setEditingDiagramIdx(i); setDiagramEditorOpen(true); }} className="text-slate-400 hover:text-primary"><Edit className="w-3 h-3" /></button>
                     <button type="button" onClick={() => handleDeleteDiagram(i)} className="text-slate-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
                   </div>
@@ -1527,7 +1527,7 @@ function EditForm({ problem, onUpdate, onClose }: EditFormProps) {
               ref={answerRef}
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
-              className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg font-mono"
+              className="w-full text-sm px-3 py-2 border border-slate-300 rounded-sm font-mono"
             />
           </div>
 
@@ -1549,7 +1549,7 @@ function EditForm({ problem, onUpdate, onClose }: EditFormProps) {
               value={explanation}
               onChange={(e) => setExplanation(e.target.value)}
               rows={3}
-              className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg font-mono"
+              className="w-full text-sm px-3 py-2 border border-slate-300 rounded-sm font-mono"
             />
           </div>
 
@@ -1591,7 +1591,7 @@ function EditForm({ problem, onUpdate, onClose }: EditFormProps) {
 
           {/* 정답 미리보기 */}
           {answer && (
-            <div className="mt-3 pt-3 border-t border-slate-100 flex items-start gap-2">
+            <div className="mt-3 pt-3 border-t border-slate-200 flex items-start gap-2">
               <span className="text-xs font-medium text-green-600 shrink-0 mt-0.5">정답</span>
               <div className="text-sm"><MathRenderer content={answer} /></div>
             </div>

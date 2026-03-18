@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { GraduationCap, Plus, BookOpen, Users, Loader2, Trash2 } from 'lucide-react';
+import { GraduationCap, Plus, BookOpen, Users, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { toast } from '@/components/ui/Toast';
+import { LoadingEmptyState } from '@/components/ui/LoadingEmptyState';
 
 interface CourseItem {
   id: string;
@@ -65,22 +66,20 @@ export default function CoursesPage() {
         </Link>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
-        </div>
-      ) : courses.length === 0 ? (
-        <Card className="p-12 text-center">
-          <GraduationCap className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-          <p className="text-text-secondary mb-4">아직 생성된 학습 과정이 없습니다.</p>
+      <LoadingEmptyState
+        loading={loading}
+        empty={courses.length === 0}
+        icon={<GraduationCap className="w-12 h-12 text-slate-300" />}
+        message="아직 생성된 학습 과정이 없습니다."
+        action={
           <Link href="/courses/create">
             <Button>
               <Plus className="w-4 h-4 mr-2" />
               첫 과정 만들기
             </Button>
           </Link>
-        </Card>
-      ) : (
+        }
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {courses.map((course) => (
             <Card key={course.id} className="p-5 hover:shadow-md transition-shadow group">
@@ -105,7 +104,7 @@ export default function CoursesPage() {
                   {new Date(course.createdAt).toLocaleDateString('ko-KR')} · {course.creatorName}
                 </p>
               </Link>
-              <div className="mt-3 pt-3 border-t border-slate-100 flex justify-end">
+              <div className="mt-3 pt-3 border-t border-slate-200 flex justify-end">
                 <button
                   onClick={(e) => {
                     e.preventDefault();
@@ -120,7 +119,7 @@ export default function CoursesPage() {
             </Card>
           ))}
         </div>
-      )}
+      </LoadingEmptyState>
     </div>
   );
 }

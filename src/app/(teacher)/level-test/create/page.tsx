@@ -178,7 +178,7 @@ export default function CreateLevelTestPage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="예: 중1 레벨테스트"
-              className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+              className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
             />
           </label>
 
@@ -187,7 +187,7 @@ export default function CreateLevelTestPage() {
             <select
               value={grade}
               onChange={(e) => setGrade(Number(e.target.value))}
-              className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40"
+              className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40"
             >
               <option value={7}>중1</option>
               <option value={8}>중2</option>
@@ -203,7 +203,7 @@ export default function CreateLevelTestPage() {
               onChange={(e) => setTimeLimitMin(e.target.value ? Number(e.target.value) : '')}
               placeholder="제한 없음"
               min={1}
-              className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40"
+              className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40"
             />
           </label>
         </Card>
@@ -221,9 +221,9 @@ export default function CreateLevelTestPage() {
               placeholder="자동 (문제 길이 기반)"
               min={1}
               max={30}
-              className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/40"
+              className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40"
             />
-            <span className="text-[11px] text-slate-400 mt-1 block">
+            <span className="text-xs text-slate-400 mt-1 block">
               비워두면 문제 길이에 따라 자동 배분
             </span>
           </label>
@@ -236,7 +236,7 @@ export default function CreateLevelTestPage() {
                   key={s}
                   type="button"
                   onClick={() => setSpacing(s)}
-                  className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
+                  className={`flex-1 px-3 py-2 rounded-sm text-xs font-medium border transition-colors ${
                     spacing === s
                       ? 'bg-primary text-white border-primary'
                       : 'bg-white text-text-secondary border-slate-200 hover:border-slate-300'
@@ -246,7 +246,7 @@ export default function CreateLevelTestPage() {
                 </button>
               ))}
             </div>
-            <span className="text-[11px] text-slate-400 mt-1 block">
+            <span className="text-xs text-slate-400 mt-1 block">
               풀이 공간 여백 크기를 조절합니다
             </span>
           </label>
@@ -269,7 +269,7 @@ export default function CreateLevelTestPage() {
                       <span className="text-text-secondary flex-shrink-0">{idx + 1}.</span>
                       <span className="text-text-secondary truncate">{id.slice(-6)}</span>
                       {domain && (
-                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold flex-shrink-0 ${DOMAIN_COLORS[domain].bg} ${DOMAIN_COLORS[domain].text}`}>
+                        <span className={`px-1.5 py-0.5 rounded text-xs font-bold flex-shrink-0 ${DOMAIN_COLORS[domain].bg} ${DOMAIN_COLORS[domain].text}`}>
                           {DOMAIN_LABELS[domain]}
                         </span>
                       )}
@@ -331,7 +331,7 @@ export default function CreateLevelTestPage() {
             <select
               value={bookCode}
               onChange={(e) => setBookCode(e.target.value)}
-              className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm"
+              className="px-3 py-1.5 border border-slate-200 rounded-sm text-sm"
             >
               {BOOK_CODES.map((c) => (
                 <option key={c} value={c}>{BOOK_LABELS[c]}</option>
@@ -340,7 +340,7 @@ export default function CreateLevelTestPage() {
             <select
               value={difficulty}
               onChange={(e) => setDifficulty(e.target.value)}
-              className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm"
+              className="px-3 py-1.5 border border-slate-200 rounded-sm text-sm"
             >
               {DIFFICULTY_OPTIONS.map((d) => (
                 <option key={d} value={d}>
@@ -349,13 +349,13 @@ export default function CreateLevelTestPage() {
               ))}
             </select>
             <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
               <input
                 type="text"
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 placeholder="문제 검색..."
-                className="w-full pl-9 pr-3 py-1.5 border border-slate-200 rounded-lg text-sm"
+                className="w-full h-8 pl-8 pr-3 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
               />
             </div>
           </div>
@@ -375,7 +375,7 @@ export default function CreateLevelTestPage() {
                 return (
                   <div
                     key={q.id}
-                    className={`p-4 rounded-lg border transition-all ${
+                    className={`p-4 rounded-sm border transition-all ${
                       isSelected
                         ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
                         : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
@@ -392,7 +392,7 @@ export default function CreateLevelTestPage() {
                           <span className="text-xs font-medium text-slate-500">
                             {q.chapter} #{q.questionNum}
                           </span>
-                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                          <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${
                             q.difficulty === 'BASIC' ? 'bg-green-100 text-green-700' :
                             q.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
                             q.difficulty === 'HIGH' ? 'bg-red-100 text-red-700' :
@@ -400,7 +400,7 @@ export default function CreateLevelTestPage() {
                           }`}>
                             {DIFFICULTY_LABELS[q.difficulty]}
                           </span>
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">
+                          <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600">
                             {TYPE_LABELS[q.type]}
                           </span>
                         </div>
@@ -420,7 +420,7 @@ export default function CreateLevelTestPage() {
                                   e.stopPropagation();
                                   handleDomainClick(q.id, domain);
                                 }}
-                                className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border transition-all ${
+                                className={`px-2 py-0.5 rounded-full text-xs font-semibold border transition-all ${
                                   isActive
                                     ? `${colors.bg} ${colors.text} border-current`
                                     : isDbDomain

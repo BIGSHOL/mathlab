@@ -5,6 +5,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import { DIFFICULTY_LABELS, DOMAIN_LABELS } from '@/types';
 
 interface ReportAIInput {
   studentName: string;
@@ -25,11 +26,7 @@ interface ReportAIOutput {
   analysisGuide: string;
 }
 
-const DIFF_LABELS: Record<string, string> = { BASIC: '하', MEDIUM: '중', HIGH: '상', HIGHEST: '최상' };
-const DOMAIN_LABELS: Record<string, string> = {
-  CALCULATION: '계산력', UNDERSTANDING: '이해력',
-  PROBLEM_SOLVING: '문제해결력', REASONING: '추론력',
-};
+const DIFF_LABELS = DIFFICULTY_LABELS as Record<string, string>;
 
 function getGradeLabel(grade: number | null): string {
   if (!grade) return '미정';
@@ -50,7 +47,7 @@ export async function generateReportAI(input: ReportAIInput): Promise<ReportAIOu
 
     const domainText = Object.entries(input.domainScores)
       .filter(([k]) => !k.startsWith('_'))
-      .map(([domain, s]) => `- ${DOMAIN_LABELS[domain] ?? domain}: ${s.accuracy}% (${s.correct}/${s.total})`)
+      .map(([domain, s]) => `- ${(DOMAIN_LABELS as Record<string, string>)[domain] ?? domain}: ${s.accuracy}% (${s.correct}/${s.total})`)
       .join('\n');
 
     const diffText = input.difficultyStats

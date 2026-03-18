@@ -68,8 +68,8 @@ export default function RevengePage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>
     );
   }
@@ -91,7 +91,7 @@ export default function RevengePage() {
         </div>
 
         {suggestions.length === 0 ? (
-          <Card className="p-8 text-center">
+          <Card className="p-5 text-center">
             <p className="text-text-secondary">아직 복수전 대상이 없습니다. 시험을 풀어보세요!</p>
           </Card>
         ) : (
@@ -124,7 +124,7 @@ export default function RevengePage() {
   if (finished) {
     return (
       <div className="p-6 max-w-md mx-auto">
-        <Card className="p-8 text-center space-y-4">
+        <Card className="p-5 text-center space-y-4">
           <Trophy className="w-12 h-12 text-red-500 mx-auto" />
           <h2 className="text-2xl font-black text-text-primary">복수전 완료!</h2>
           {result && result.xpEarned > 0 && (

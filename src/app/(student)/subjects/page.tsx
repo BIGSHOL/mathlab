@@ -80,7 +80,7 @@ export default async function SubjectsPage({
   if (!hasEnrollments) {
     return (
       <div className="px-4 md:px-10 py-8 max-w-[1200px] mx-auto w-full">
-        <h1 className="text-3xl font-bold tracking-tight text-text-primary mb-2">학습 과정</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-text-primary mb-2">학습 과정</h1>
         <p className="text-text-secondary mb-8">선생님이 배정한 학습 과정을 진행합니다.</p>
         <Card className="p-12 text-center">
           <GraduationCap className="w-12 h-12 text-slate-300 mx-auto mb-4" />
@@ -93,7 +93,7 @@ export default async function SubjectsPage({
 
   return (
     <div className="px-4 md:px-10 py-8 max-w-[1200px] mx-auto w-full">
-      <h1 className="text-3xl font-bold tracking-tight text-text-primary mb-2">학습 과정</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-text-primary mb-2">학습 과정</h1>
       <p className="text-text-secondary mb-8">선생님이 배정한 학습 과정을 진행합니다.</p>
 
       <div className="flex flex-col gap-8">

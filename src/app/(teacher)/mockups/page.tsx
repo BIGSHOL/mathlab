@@ -44,6 +44,7 @@ import {
   Route,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 
 type ViewMode = 'desktop' | 'tablet' | 'mobile';
 
@@ -126,7 +127,7 @@ export default function MockupsPage() {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold leading-tight text-text-primary flex items-center gap-3">
+          <h1 className="text-2xl font-bold leading-tight text-text-primary flex items-center gap-3">
             <Eye className="w-8 h-8 text-primary" />
             목업 미리보기
           </h1>
@@ -145,7 +146,7 @@ export default function MockupsPage() {
             <button
               key={g.key}
               onClick={() => setActiveGroup(g.key)}
-              className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${
+              className={`px-4 py-2 rounded-sm text-sm font-bold transition-colors ${
                 activeGroup === g.key
                   ? 'bg-primary text-white'
                   : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
@@ -171,7 +172,7 @@ export default function MockupsPage() {
             </div>
             <div className="flex items-center gap-4">
               {/* Viewport Toggle */}
-              <div className="flex gap-1 bg-slate-100 rounded-lg p-1">
+              <div className="flex gap-1 bg-slate-100 rounded-sm p-1">
                 {([
                   { key: 'desktop' as ViewMode, icon: Monitor },
                   { key: 'tablet' as ViewMode, icon: Monitor },
@@ -199,18 +200,20 @@ export default function MockupsPage() {
               >
                 새 탭 <ExternalLink className="w-3.5 h-3.5" />
               </a>
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setPreviewPage(null)}
-                className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-bold transition-colors"
+                className="bg-slate-100 hover:bg-slate-200"
               >
                 닫기
-              </button>
+              </Button>
             </div>
           </div>
           {/* iframe */}
           <div className="flex-1 flex justify-center items-start p-4 overflow-auto">
             <div
-              className="bg-white rounded-xl shadow-2xl overflow-hidden border border-slate-300 transition-all duration-300"
+              className="bg-white rounded-sm shadow-2xl overflow-hidden border border-slate-300 transition-all duration-300"
               style={{
                 width: IFRAME_SIZES[viewMode].width,
                 maxWidth: '100%',
@@ -243,7 +246,7 @@ export default function MockupsPage() {
                 onClick={() => setPreviewPage(page)}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+                  <div className="w-10 h-10 rounded-sm bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
                     <page.icon className="w-5 h-5" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -290,14 +293,14 @@ export default function MockupsPage() {
                 onClick={() => setPreviewPage(page)}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center group-hover:bg-secondary group-hover:text-white transition-colors">
+                  <div className="w-10 h-10 rounded-sm bg-secondary/10 text-secondary flex items-center justify-center group-hover:bg-secondary group-hover:text-white transition-colors">
                     <page.icon className="w-5 h-5" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <h3 className="font-bold text-sm text-text-primary truncate">{page.label}</h3>
                       {page.previewHref && (
-                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded shrink-0">HTML</span>
+                        <span className="text-xs font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded shrink-0">HTML</span>
                       )}
                     </div>
                     <span className="text-xs text-text-secondary font-mono">{page.href}</span>
@@ -342,7 +345,7 @@ export default function MockupsPage() {
           ].map((mockup) => (
             <Card key={mockup.href} className="p-5 flex flex-col gap-3 hover:shadow-hover transition-all">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-sm bg-slate-100 text-slate-500 flex items-center justify-center">
                   <PenTool className="w-5 h-5" />
                 </div>
                 <div>

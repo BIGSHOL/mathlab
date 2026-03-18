@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/Button';
 
 // ── Types ──
 
@@ -133,23 +134,19 @@ export default function AdminUsersPage() {
     }
   }, [currentUser, router]);
 
-  // 사용자 목록 로드
+  // 사용자 목록 + 요약 통계 병렬 로드
   useEffect(() => {
-    fetch('/api/admin/users')
-      .then((r) => r.json())
-      .then((res) => {
-        if (res.data) setUsers(res.data);
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
-  // 요약 통계 로드
-  useEffect(() => {
-    fetch('/api/admin/activity?limit=1')
-      .then((r) => r.json())
-      .then((res) => {
-        if (res.data?.summary) setSummary(res.data.summary);
-      });
+    Promise.all([
+      fetch('/api/admin/users')
+        .then((r) => r.json())
+        .catch(() => null),
+      fetch('/api/admin/activity?limit=1')
+        .then((r) => r.json())
+        .catch(() => null),
+    ]).then(([usersRes, activityRes]) => {
+      if (usersRes?.data) setUsers(usersRes.data);
+      if (activityRes?.data?.summary) setSummary(activityRes.data.summary);
+    }).finally(() => setLoading(false));
   }, []);
 
   // 선택된 사용자의 활동 로드
@@ -250,7 +247,7 @@ export default function AdminUsersPage() {
   if (!currentUser || currentUser.role !== 'ADMIN') {
     return (
       <div className="flex-1 flex items-center justify-center text-text-secondary text-sm">
-        <Loader2 className="w-5 h-5 animate-spin mr-2" /> 로딩 중...
+        <Loader2 className="w-6 h-6 animate-spin text-primary mr-2" /> 로딩 중...
       </div>
     );
   }
@@ -262,12 +259,12 @@ export default function AdminUsersPage() {
         className={`flex flex-col border-r border-slate-200 bg-white transition-all duration-200 ${leftCollapsed ? 'w-0 overflow-hidden' : 'w-80'}`}
       >
         {/* 요약 통계 */}
-        <div className="px-4 pt-4 pb-2 border-b border-slate-100">
+        <div className="px-4 pt-4 pb-2 border-b border-slate-200">
           <div className="flex items-center gap-2 mb-3">
             <Users className="w-4 h-4 text-primary" />
-            <h2 className="text-sm font-bold text-text-primary">사용자 관리</h2>
+            <h2 className="text-base font-bold text-text-primary">사용자 관리</h2>
           </div>
-          <div className="flex gap-2 text-[11px]">
+          <div className="flex gap-2 text-xs">
             <span className="px-2 py-1 rounded-md bg-slate-100 text-text-secondary">전체 {summary.totalUsers}명</span>
             <span className="px-2 py-1 rounded-md bg-green-50 text-green-700">오늘 {summary.activeToday}명</span>
             <span className="px-2 py-1 rounded-md bg-blue-50 text-blue-700">이번주 {summary.activeThisWeek}명</span>
@@ -275,14 +272,14 @@ export default function AdminUsersPage() {
         </div>
 
         {/* 검색 + 필터 */}
-        <div className="px-4 py-3 space-y-2 border-b border-slate-100">
+        <div className="px-4 py-3 space-y-2 border-b border-slate-200">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="이름 또는 아이디 검색"
-              className="w-full h-8 pl-8 pr-3 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full h-8 pl-8 pr-3 rounded-sm border border-slate-200 text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
             />
           </div>
           <div className="flex gap-1.5">
@@ -290,7 +287,7 @@ export default function AdminUsersPage() {
               <button
                 key={r}
                 onClick={() => setRoleFilter(r)}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                   roleFilter === r ? 'bg-primary text-white' : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
                 }`}
               >
@@ -299,11 +296,11 @@ export default function AdminUsersPage() {
             ))}
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-text-secondary">정렬:</span>
+            <span className="text-xs text-text-secondary">정렬:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="text-[11px] border border-slate-200 rounded px-1.5 py-0.5 text-text-secondary focus:outline-none"
+              className="text-xs border border-slate-200 rounded px-1.5 py-0.5 text-text-secondary focus:outline-none"
             >
               <option value="lastActive">최근 활동</option>
               <option value="name">이름</option>
@@ -316,7 +313,7 @@ export default function AdminUsersPage() {
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center py-8 text-text-secondary text-xs">
-              <Loader2 className="w-4 h-4 animate-spin mr-2" /> 불러오는 중...
+              <Loader2 className="w-6 h-6 animate-spin mr-2" /> 불러오는 중...
             </div>
           ) : filteredUsers.length === 0 ? (
             <div className="text-center py-8 text-text-secondary text-xs">사용자 없음</div>
@@ -327,7 +324,7 @@ export default function AdminUsersPage() {
                 <button
                   key={u.id}
                   onClick={() => handleSelectUser(u)}
-                  className={`w-full text-left px-4 py-3 border-b border-slate-50 transition-colors ${
+                  className={`w-full text-left px-4 py-3 border-b border-slate-200 transition-colors ${
                     isSelected ? 'bg-primary/5 border-l-2 border-l-primary' : 'hover:bg-slate-50'
                   }`}
                 >
@@ -339,7 +336,7 @@ export default function AdminUsersPage() {
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs font-semibold text-text-primary truncate">{u.name}</span>
                         <span
-                          className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                          className={`text-xs px-1.5 py-0.5 rounded font-medium ${
                             u.role === 'TEACHER'
                               ? 'bg-violet-100 text-violet-700'
                               : u.role === 'ADMIN'
@@ -349,9 +346,9 @@ export default function AdminUsersPage() {
                         >
                           {u.role === 'TEACHER' ? '선생님' : u.role === 'ADMIN' ? '관리자' : '학생'}
                         </span>
-                        {u.grade && <span className="text-[10px] text-text-secondary">{gradeLabel(u.grade)}</span>}
+                        {u.grade && <span className="text-xs text-text-secondary">{gradeLabel(u.grade)}</span>}
                       </div>
-                      <div className="flex items-center gap-2 mt-0.5 text-[10px] text-text-secondary">
+                      <div className="flex items-center gap-2 mt-0.5 text-xs text-text-secondary">
                         <span>@{u.username}</span>
                         {u.profile?.lastActiveAt && (
                           <>
@@ -388,7 +385,7 @@ export default function AdminUsersPage() {
         ) : (
           <div className="max-w-2xl mx-auto px-6 py-6">
             {/* 사용자 정보 카드 */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 mb-6">
+            <div className="bg-white rounded-sm border border-slate-200 shadow-sm p-5 mb-6">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-primary to-accent text-white flex items-center justify-center text-lg font-bold">
                   {selectedUser.name[0]}
@@ -397,7 +394,7 @@ export default function AdminUsersPage() {
                   <div className="flex items-center gap-2">
                     <h2 className="text-lg font-bold text-text-primary">{selectedUser.name}</h2>
                     <span
-                      className={`text-[11px] px-2 py-0.5 rounded font-semibold ${
+                      className={`text-xs px-2 py-0.5 rounded font-semibold ${
                         selectedUser.role === 'TEACHER'
                           ? 'bg-violet-100 text-violet-700'
                           : selectedUser.role === 'ADMIN'
@@ -417,7 +414,7 @@ export default function AdminUsersPage() {
                 <InfoBox label="XP" value={`${selectedUser.profile?.totalXp ?? 0}`} />
                 <InfoBox label="연속 학습" value={`${selectedUser.profile?.currentStreak ?? 0}일`} />
               </div>
-              <div className="flex items-center gap-4 mt-3 text-[11px] text-text-secondary">
+              <div className="flex items-center gap-4 mt-3 text-xs text-text-secondary">
                 <span>가입일: {new Date(selectedUser.createdAt).toLocaleDateString('ko-KR')}</span>
                 {selectedUser.profile?.lastActiveAt && (
                   <span>최근 활동: {relativeTime(selectedUser.profile.lastActiveAt)}</span>
@@ -426,7 +423,7 @@ export default function AdminUsersPage() {
             </div>
 
             {/* 활동 달력 히트맵 */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 mb-6">
+            <div className="bg-white rounded-sm border border-slate-200 shadow-sm p-5 mb-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <CalendarDays className="w-4 h-4 text-primary" />
@@ -453,14 +450,14 @@ export default function AdminUsersPage() {
 
               {calendarLoading ? (
                 <div className="flex items-center justify-center py-6 text-text-secondary text-xs">
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" /> 불러오는 중...
+                  <Loader2 className="w-6 h-6 animate-spin mr-2" /> 불러오는 중...
                 </div>
               ) : (
                 <>
                   {/* 요일 헤더 */}
                   <div className="grid grid-cols-7 gap-1 mb-1">
                     {DAY_NAMES.map((d) => (
-                      <div key={d} className={`text-center text-[10px] font-medium py-1 ${d === '일' ? 'text-red-400' : d === '토' ? 'text-blue-400' : 'text-text-secondary'}`}>
+                      <div key={d} className={`text-center text-xs font-medium py-1 ${d === '일' ? 'text-red-400' : d === '토' ? 'text-blue-400' : 'text-text-secondary'}`}>
                         {d}
                       </div>
                     ))}
@@ -499,7 +496,7 @@ export default function AdminUsersPage() {
                             key={dateKey}
                             onClick={() => handleDateClick(dateKey)}
                             title={total > 0 ? `${dateKey}: ${total}건 (시험 ${summary?.test ?? 0}, 연산 ${summary?.arithmetic ?? 0}, 개념 ${summary?.learning ?? 0}, 생성 ${summary?.generation ?? 0})` : dateKey}
-                            className={`aspect-square rounded-md text-[11px] font-medium flex items-center justify-center transition-all cursor-pointer hover:scale-110 ${bgClass} ${isToday ? 'ring-2 ring-primary ring-offset-1' : ''} ${isSelected ? 'ring-2 ring-secondary ring-offset-1' : ''}`}
+                            className={`aspect-square rounded-md text-xs font-medium flex items-center justify-center transition-all cursor-pointer hover:scale-110 ${bgClass} ${isToday ? 'ring-2 ring-primary ring-offset-1' : ''} ${isSelected ? 'ring-2 ring-secondary ring-offset-1' : ''}`}
                           >
                             {day}
                           </button>
@@ -511,7 +508,7 @@ export default function AdminUsersPage() {
                   </div>
 
                   {/* 범례 */}
-                  <div className="flex items-center gap-3 mt-3 text-[10px] text-text-secondary justify-end">
+                  <div className="flex items-center gap-3 mt-3 text-xs text-text-secondary justify-end">
                     <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-slate-50 border border-slate-200" />없음</span>
                     <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-primary/15" />1-2</span>
                     <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-primary/30" />3-5</span>
@@ -533,7 +530,7 @@ export default function AdminUsersPage() {
                             fetchActivities(selectedUser.id, 1);
                           }
                         }}
-                        className="text-[10px] text-text-secondary hover:text-primary underline"
+                        className="text-xs text-text-secondary hover:text-primary underline"
                       >
                         전체 보기
                       </button>
@@ -549,15 +546,15 @@ export default function AdminUsersPage() {
               <h3 className="text-sm font-bold text-text-primary">
                 {selectedDate ? `${selectedDate} 활동` : '최근 활동'}
               </h3>
-              <span className="text-[11px] text-text-secondary">({activityTotal}건)</span>
+              <span className="text-xs text-text-secondary">({activityTotal}건)</span>
             </div>
 
             {activityLoading && activities.length === 0 ? (
               <div className="flex items-center justify-center py-8 text-text-secondary text-xs">
-                <Loader2 className="w-4 h-4 animate-spin mr-2" /> 불러오는 중...
+                <Loader2 className="w-6 h-6 animate-spin mr-2" /> 불러오는 중...
               </div>
             ) : activities.length === 0 ? (
-              <div className="text-center py-8 text-text-secondary text-xs bg-white rounded-xl border border-slate-200">
+              <div className="text-center py-8 text-text-secondary text-xs bg-white rounded-sm border border-slate-200">
                 최근 30일 내 활동이 없습니다.
               </div>
             ) : (
@@ -572,17 +569,17 @@ export default function AdminUsersPage() {
                         <div className={`absolute left-[8px] top-3 w-4 h-4 rounded-full flex items-center justify-center ${cfg.color}`}>
                           <Icon className="w-2.5 h-2.5" />
                         </div>
-                        <div className="bg-white rounded-lg border border-slate-200 shadow-sm px-4 py-3">
+                        <div className="bg-white rounded-sm border border-slate-200 shadow-sm px-4 py-3">
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-medium text-text-primary">{a.description}</span>
-                            <span className="text-[10px] text-text-secondary shrink-0 ml-2">
+                            <span className="text-xs text-text-secondary shrink-0 ml-2">
                               {relativeTime(a.timestamp)}
                             </span>
                           </div>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[11px] text-text-secondary">{a.detail}</span>
+                            <span className="text-xs text-text-secondary">{a.detail}</span>
                             {a.xpEarned > 0 && (
-                              <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-amber-600">
+                              <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-amber-600">
                                 <Zap className="w-3 h-3" />+{a.xpEarned} XP
                               </span>
                             )}
@@ -595,20 +592,16 @@ export default function AdminUsersPage() {
 
                 {/* 더보기 */}
                 {activityPage < activityTotalPages && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={handleLoadMore}
-                    disabled={activityLoading}
-                    className="mt-4 w-full py-2.5 text-xs font-medium text-primary bg-white border border-slate-200 rounded-lg hover:bg-primary/5 transition-colors flex items-center justify-center gap-1"
+                    loading={activityLoading}
+                    className="mt-4 w-full text-xs text-primary bg-white border border-slate-200 hover:bg-primary/5"
                   >
-                    {activityLoading ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <>
-                        <ChevronDown className="w-3.5 h-3.5" />
-                        더보기
-                      </>
-                    )}
-                  </button>
+                    <ChevronDown className="w-3.5 h-3.5 mr-1" />
+                    더보기
+                  </Button>
                 )}
               </div>
             )}
@@ -621,8 +614,8 @@ export default function AdminUsersPage() {
 
 function InfoBox({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-slate-50 rounded-lg px-3 py-2">
-      <p className="text-[10px] text-text-secondary">{label}</p>
+    <div className="bg-slate-50 rounded-sm px-3 py-2">
+      <p className="text-xs text-text-secondary">{label}</p>
       <p className="text-sm font-semibold text-text-primary">{value}</p>
     </div>
   );

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { mergeGeneratedExercises, generateBlanks, type MergedBlankExercise, type BlankDifficulty } from '@/lib/utils/blank-generator';
+import { GRADE_LABELS, PART_LABELS, CATEGORY_LABELS } from '@/lib/constants/labels';
 
 interface AiExtractResult {
   templateText: string;
@@ -47,31 +48,6 @@ interface ParsedRow {
 interface RowWithStatus extends ParsedRow {
   errors: string[];
 }
-
-const GRADE_LABELS: Record<string, string> = {
-  elementary_3: '초등 3학년',
-  elementary_4: '초등 4학년',
-  elementary_5: '초등 5학년',
-  elementary_6: '초등 6학년',
-  middle_1: '중학 1학년',
-  middle_2: '중학 2학년',
-  middle_3: '중학 3학년',
-  high_1: '공통수학1',
-  high_2: '공통수학2',
-  high_algebra: '대수',
-  high_calculus1: '미적분I',
-  high_prob: '확률과 통계',
-  high_calculus2: '미적분II',
-  high_geo: '기하',
-};
-const CATEGORY_LABELS: Record<string, string> = { concept: '개념' };
-const PART_LABELS: Record<string, string> = {
-  calc: '수와 연산',
-  algebra: '대수',
-  func: '함수',
-  geo: '도형',
-  data: '자료와 확률',
-};
 
 const HEADER_MAP: Record<string, string> = {
   '제목': 'title',

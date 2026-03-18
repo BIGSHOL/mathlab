@@ -82,7 +82,7 @@ export default function CourseCreatePage() {
         const json = await res.json();
         setAllConcepts(json.data ?? []);
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('개념 목록 조회 실패:', err); }
     setConceptsLoading(false);
   }, [gradeFilter]);
 
@@ -98,7 +98,7 @@ export default function CourseCreatePage() {
           const json = await res.json();
           setAllStudents((json.data ?? []).filter((u: { role: string }) => u.role === 'STUDENT'));
         }
-      } catch { /* ignore */ }
+      } catch (err) { console.error('학생 목록 조회 실패:', err); }
       setStudentsLoading(false);
     })();
   }, []);
@@ -319,9 +319,9 @@ export default function CourseCreatePage() {
                 ))}
               </select>
               <div className="relative flex-1">
-                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                 <input
-                  className="w-full h-8 pl-8 pr-2 rounded border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full h-8 pl-8 pr-3 rounded-sm border border-slate-200 text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
                   placeholder="개념 검색"
                   value={conceptSearch}
                   onChange={(e) => setConceptSearch(e.target.value)}
@@ -332,8 +332,8 @@ export default function CourseCreatePage() {
             {/* 개념 목록 (대단원별) */}
             <div className="border border-slate-200 rounded overflow-y-auto max-h-[400px]">
               {conceptsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                <div className="flex justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 </div>
               ) : Object.keys(chapterGroups).length === 0 ? (
                 <p className="text-xs text-text-secondary text-center py-8">개념이 없습니다</p>
@@ -343,16 +343,16 @@ export default function CourseCreatePage() {
                   const allSelected = concepts.every((c) => selectedIds.has(c.id));
                   const someSelected = concepts.some((c) => selectedIds.has(c.id));
                   return (
-                    <div key={chapter} className="border-b border-slate-100 last:border-0">
+                    <div key={chapter} className="border-b border-slate-200 last:border-0">
                       <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 hover:bg-slate-100 cursor-pointer">
                         <button onClick={() => toggleChapter(chapter)} className="flex items-center gap-1 flex-1 text-left">
                           {isExpanded ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />}
                           <span className="text-xs font-bold text-text-primary">{chapter}</span>
-                          <span className="text-[10px] text-text-secondary">({concepts.length})</span>
+                          <span className="text-xs text-text-secondary">({concepts.length})</span>
                         </button>
                         <button
                           onClick={() => selectAllInChapter(chapter)}
-                          className={`text-[10px] px-2 py-0.5 rounded transition-colors ${
+                          className={`text-xs px-2 py-0.5 rounded transition-colors ${
                             allSelected ? 'bg-primary text-white' : someSelected ? 'bg-primary/20 text-primary' : 'bg-slate-200 text-text-secondary hover:bg-slate-300'
                           }`}
                         >
@@ -376,7 +376,7 @@ export default function CourseCreatePage() {
                             </div>
                             <span className="flex-1 truncate">{concept.title}</span>
                             {concept.section && (
-                              <span className="text-[10px] text-text-secondary shrink-0">{concept.section}</span>
+                              <span className="text-xs text-text-secondary shrink-0">{concept.section}</span>
                             )}
                           </button>
                         );
@@ -443,9 +443,9 @@ export default function CourseCreatePage() {
             </div>
 
             <div className="relative mb-3">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
               <input
-                className="w-full h-8 pl-8 pr-2 rounded border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full h-8 pl-8 pr-3 rounded-sm border border-slate-200 text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
                 placeholder="이름 또는 아이디 검색"
                 value={studentSearch}
                 onChange={(e) => setStudentSearch(e.target.value)}
@@ -454,8 +454,8 @@ export default function CourseCreatePage() {
 
             <div className="border border-slate-200 rounded overflow-y-auto max-h-[500px]">
               {studentsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                <div className="flex justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 </div>
               ) : filteredStudents.length === 0 ? (
                 <p className="text-xs text-text-secondary text-center py-8">학생이 없습니다</p>
@@ -466,7 +466,7 @@ export default function CourseCreatePage() {
                     <button
                       key={student.id}
                       onClick={() => toggleStudent(student.id)}
-                      className={`w-full text-left flex items-center gap-2.5 px-3 py-2.5 text-xs border-b border-slate-50 last:border-0 transition-colors ${
+                      className={`w-full text-left flex items-center gap-2.5 px-3 py-2.5 text-xs border-b border-slate-200 last:border-0 transition-colors ${
                         isSelected ? 'bg-primary/5' : 'hover:bg-slate-50'
                       }`}
                     >
@@ -480,7 +480,7 @@ export default function CourseCreatePage() {
                       </span>
                       <span className="text-text-secondary">{student.username}</span>
                       {student.grade && (
-                        <span className="text-[10px] text-text-secondary bg-slate-100 px-1.5 py-0.5 rounded">
+                        <span className="text-xs text-text-secondary bg-slate-100 px-1.5 py-0.5 rounded">
                           {student.grade <= 6 ? `초${student.grade}` : `중${student.grade - 6}`}
                         </span>
                       )}
@@ -490,7 +490,7 @@ export default function CourseCreatePage() {
               )}
             </div>
 
-            <p className="text-[10px] text-text-secondary mt-2">
+            <p className="text-xs text-text-secondary mt-2">
               * 학생을 선택하지 않고도 과정을 먼저 생성할 수 있습니다.
             </p>
           </div>

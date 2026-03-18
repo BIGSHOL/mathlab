@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import katex from 'katex';
 
 interface Segment {
-  type: 'text' | 'math' | 'image';
+  type: 'text' | 'math' | 'image' | 'blank';
   text: string;
   latex?: string;
   html?: string;
@@ -14,6 +14,7 @@ interface Segment {
   alt?: string;
   width?: string;
   align?: string;
+  blankPosition?: number;
 }
 
 interface DiagramSvgItem {
@@ -25,6 +26,7 @@ interface EditableMathRendererProps {
   content: string;
   onMathClick?: (latex: string, start: number, end: number) => void;
   onDiagramClick?: (idx: number) => void;
+  onBlankClick?: (position: number) => void;
   className?: string;
   diagramSvgs?: DiagramSvgItem[];
 }
@@ -74,12 +76,14 @@ export function EditableMathRenderer({
   content,
   onMathClick,
   onDiagramClick,
+  onBlankClick,
   className = '',
   diagramSvgs,
 }: EditableMathRendererProps) {
   const segments = useMemo(() => {
     const result: Segment[] = [];
-    const combinedRegex = /!\[([^\]]*)\]\(([^)]+?)(?:\s+"([^"]*)")?\)|\$([^$]+)\$/g;
+    // 이미지, 수식, 빈칸 마커를 모두 파싱
+    const combinedRegex = /!\[([^\]]*)\]\(([^)]+?)(?:\s+"([^"]*)")?\)|\$([^$]+)\$|\{\{(\d+)\}\}/g;
     let lastEnd = 0;
     let match;
 
@@ -93,7 +97,16 @@ export function EditableMathRenderer({
         });
       }
 
-      if (match[4] !== undefined) {
+      if (match[5] !== undefined) {
+        // {{N}} 빈칸 마커
+        result.push({
+          type: 'blank',
+          text: match[0],
+          blankPosition: parseInt(match[5], 10),
+          start: match.index,
+          end: match.index + match[0].length,
+        });
+      } else if (match[4] !== undefined) {
         let html: string;
         try {
           html = katex.renderToString(match[4], {
@@ -209,6 +222,19 @@ export function EditableMathRenderer({
   };
 
   const renderSegment = (seg: Segment, key: string) => {
+    if (seg.type === 'blank') {
+      return (
+        <span
+          key={key}
+          className={`inline-flex items-center mx-0.5 px-1.5 py-0.5 bg-amber-200/80 text-amber-900 rounded-sm text-xs font-bold${onBlankClick ? ' cursor-pointer hover:bg-amber-300/80 transition-colors' : ''}`}
+          onClick={onBlankClick ? () => onBlankClick(seg.blankPosition!) : undefined}
+          title={onBlankClick ? `빈칸 ${seg.blankPosition} 편집` : undefined}
+        >
+          {`{{${seg.blankPosition}}}`}
+        </span>
+      );
+    }
+
     if (seg.type === 'text') {
       const lines = seg.text.split('\n');
       return lines.map((line, j) => {

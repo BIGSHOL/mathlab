@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { z } from 'zod';
-import { validateQuery, isResponse } from '@/lib/api';
+import { validateQuery, isResponse, requireAuth } from '@/lib/api';
 
 const countsQuerySchema = z.object({
   grade: z.string(),
@@ -10,6 +10,8 @@ const countsQuerySchema = z.object({
 
 // GET /api/concepts/counts?grade=elementary_5&category=concept
 export async function GET(request: NextRequest) {
+  const user = await requireAuth();
+  if (isResponse(user)) return user;
   const parsed = validateQuery(request, countsQuerySchema);
   if (isResponse(parsed)) return parsed;
 

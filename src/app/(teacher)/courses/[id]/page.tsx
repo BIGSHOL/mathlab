@@ -108,7 +108,7 @@ export default function CourseDetailPage() {
     fetch('/api/users')
       .then((r) => r.json())
       .then((json) => setAllStudents((json.data ?? []).filter((u: StudentItem) => u.role === 'STUDENT')))
-      .catch(() => {});
+      .catch((err) => console.error('학생 목록 조회 실패:', err));
   }, [showAddStudents]);
 
   const enrolledStudentIds = useMemo(
@@ -222,7 +222,7 @@ export default function CourseDetailPage() {
                   <span className="w-5 text-center font-bold text-slate-400">{idx + 1}</span>
                   <span className="flex-1 text-text-primary truncate">{concept.title}</span>
                   {concept.chapter && (
-                    <span className="text-[10px] text-text-secondary shrink-0">{concept.chapter}</span>
+                    <span className="text-xs text-text-secondary shrink-0">{concept.chapter}</span>
                   )}
                 </div>
               ))}
@@ -248,9 +248,9 @@ export default function CourseDetailPage() {
             {showAddStudents && (
               <div className="mb-4 p-4 bg-slate-50 rounded-sm border border-slate-200">
                 <div className="relative mb-2">
-                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                   <input
-                    className="w-full h-8 pl-8 pr-2 rounded border border-slate-200 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-primary"
+                    className="w-full h-8 pl-8 pr-3 rounded-sm border border-slate-200 text-sm bg-white focus:ring-2 focus:ring-primary/40 focus:border-primary"
                     placeholder="이름 또는 아이디 검색"
                     value={addStudentSearch}
                     onChange={(e) => setAddStudentSearch(e.target.value)}
@@ -273,7 +273,7 @@ export default function CourseDetailPage() {
                               return next;
                             });
                           }}
-                          className={`w-full text-left flex items-center gap-2 px-3 py-2 text-xs border-b border-slate-50 last:border-0 transition-colors ${
+                          className={`w-full text-left flex items-center gap-2 px-3 py-2 text-xs border-b border-slate-200 last:border-0 transition-colors ${
                             isSelected ? 'bg-primary/5' : 'hover:bg-slate-50'
                           }`}
                         >
@@ -323,7 +323,7 @@ export default function CourseDetailPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-text-primary text-sm">{enrollment.student.name}</span>
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5 ${STATUS_COLOR[enrollment.status]}`}>
+                        <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5 ${STATUS_COLOR[enrollment.status]}`}>
                           {STATUS_ICON[enrollment.status]}
                           {STATUS_LABEL[enrollment.status]}
                         </span>
@@ -337,7 +337,7 @@ export default function CourseDetailPage() {
 
                     {/* 진행률 */}
                     <div className="w-32 shrink-0">
-                      <div className="flex justify-between text-[10px] text-text-secondary mb-1">
+                      <div className="flex justify-between text-xs text-text-secondary mb-1">
                         <span>{enrollment.completedConcepts}/{enrollment.totalConcepts}</span>
                         <span>{enrollment.progressPercent}%</span>
                       </div>

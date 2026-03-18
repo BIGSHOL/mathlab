@@ -57,10 +57,130 @@ interface UserItem {
   } | null;
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+interface StudentStatsProfile {
+  totalXp: number;
+  level: number;
+  currentStreak: number;
+  longestStreak: number;
+  lastActiveAt: string | null;
+}
+
+interface StudentTestAttempt {
+  id: string;
+  score: number | null;
+  maxScore: number | null;
+  correctCount: number | null;
+  totalCount: number | null;
+  xpEarned: number | null;
+  completedAt: string | null;
+  startedAt: string;
+  test: { title: string; grade: number | null };
+}
+
+interface StudentArithmeticAttempt {
+  id: string;
+  category: string;
+  level: number;
+  correctCount: number;
+  problemCount: number;
+  score: number | null;
+  xpEarned: number | null;
+  totalTimeSeconds: number | null;
+  completedAt: string | null;
+  createdAt: string;
+  homeworkPlanId: string | null;
+  homeworkDayIndex: number | null;
+}
+
+interface StudentLearningProgress {
+  id: string;
+  stage: string;
+  completed: boolean;
+  score: number | null;
+  completedAt: string | null;
+  startedAt: string;
+  concept: { title: string; chapter: string | null };
+}
+
+interface StudentTestAssignment {
+  status: string;
+  bestScore: number | null;
+  dueDate: string | null;
+  test: { title: string };
+}
+
+interface StudentPointTransaction {
+  amount: number;
+  type: string;
+  reason: string | null;
+  createdAt: string;
+}
+
+interface TeacherRecentTest {
+  id: string;
+  title: string;
+  grade: number | null;
+  questionCount: number;
+  createdAt: string;
+  _count: { attempts: number; assignments: number };
+}
+
+interface TeacherRecentHomework {
+  id: string;
+  title: string;
+  totalDays: number;
+  dailyCount: number;
+  isActive: boolean;
+  createdAt: string;
+  _count: { enrollments: number };
+}
+
+interface TeacherRecentComment {
+  month: string;
+  content: string;
+  createdAt: string;
+  student: { name: string };
+}
+
+interface HwWrongAnswer {
+  problemIndex: number;
+  content: string;
+  selectedAnswer: string;
+  correctAnswer: string;
+  timeSpentSeconds: number;
+}
+
+interface HwWrongAttempt {
+  id: string;
+  category: string;
+  categoryLabel: string;
+  level: number;
+  correctCount: number;
+  problemCount: number;
+  totalTimeSeconds: number | null;
+  completedAt: string | null;
+  homeworkDayIndex: number | null;
+  planTitle: string;
+  wrongAnswers: HwWrongAnswer[];
+}
+
+interface HwCategorySummary {
+  category: string;
+  categoryLabel: string;
+  totalProblems: number;
+  wrongCount: number;
+  accuracy: number;
+}
+
+interface HwWrongData {
+  totalWrong: number;
+  categorySummary: HwCategorySummary[];
+  attempts: HwWrongAttempt[];
+}
+
 type StudentStats = {
   type: 'student';
-  profile: any;
+  profile: StudentStatsProfile | null;
   summary: {
     testCount: number;
     testAvgScore: number;
@@ -72,11 +192,11 @@ type StudentStats = {
     learningCompleted: number;
     homeworkEnrollments: number;
   };
-  recentTests: any[];
-  recentArithmetic: any[];
-  recentLearning: any[];
-  recentAssignments: any[];
-  recentPoints: any[];
+  recentTests: StudentTestAttempt[];
+  recentArithmetic: StudentArithmeticAttempt[];
+  recentLearning: StudentLearningProgress[];
+  recentAssignments: StudentTestAssignment[];
+  recentPoints: StudentPointTransaction[];
 };
 
 type TeacherStats = {
@@ -87,11 +207,10 @@ type TeacherStats = {
     commentsWritten: number;
     questionsGenerated: number;
   };
-  recentTests: any[];
-  recentHomework: any[];
-  recentComments: any[];
+  recentTests: TeacherRecentTest[];
+  recentHomework: TeacherRecentHomework[];
+  recentComments: TeacherRecentComment[];
 };
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 // ── Helpers ──
 
@@ -144,13 +263,13 @@ interface ArithmeticAnswerItem {
 
 function InfoBox({ label, value, sub, icon: Icon }: { label: string; value: string; sub?: string; icon?: typeof Star }) {
   return (
-    <div className="bg-slate-50 rounded-sm p-2.5">
-      <div className="flex items-center gap-1 text-[10px] text-text-secondary mb-0.5">
+    <div className="bg-slate-50 rounded-sm p-3">
+      <div className="flex items-center gap-1 text-xs text-text-secondary mb-0.5">
         {Icon && <Icon className="w-3 h-3" />}
         {label}
       </div>
       <div className="text-sm font-semibold text-text-primary">{value}</div>
-      {sub && <div className="text-[10px] text-text-secondary mt-0.5">{sub}</div>}
+      {sub && <div className="text-xs text-text-secondary mt-0.5">{sub}</div>}
     </div>
   );
 }
@@ -183,9 +302,7 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
   const [attemptDetailLoading, setAttemptDetailLoading] = useState(false);
 
   // 연산 숙제 오답
-  /* eslint-disable @typescript-eslint/no-explicit-any */
-  const [hwWrongData, setHwWrongData] = useState<any>(null);
-  /* eslint-enable @typescript-eslint/no-explicit-any */
+  const [hwWrongData, setHwWrongData] = useState<HwWrongData | null>(null);
   const [hwWrongLoading, setHwWrongLoading] = useState(false);
   const [hwWrongExpanded, setHwWrongExpanded] = useState<string | null>(null);
   const [hwWrongPeriod, setHwWrongPeriod] = useState<string>('all');
@@ -204,7 +321,7 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
           setNavChains(json.data.availableChains ?? []);
         }
       })
-      .catch(() => {});
+      .catch((err) => console.error('개념 네비 설정 조회 실패:', err));
   }, [user.id]);
 
   const saveNavMode = async (mode: string) => {
@@ -216,7 +333,7 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mode }),
       });
-    } catch { /* ignore */ }
+    } catch (err) { console.error('개념 네비 모드 저장 실패:', err); }
     setNavSaving(false);
   };
 
@@ -228,7 +345,7 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
     fetch(`/api/arithmetic/homework-wrong-answers?studentId=${user.id}&period=${hwWrongPeriod}`)
       .then((r) => r.json())
       .then((json) => setHwWrongData(json.data ?? null))
-      .catch(() => {})
+      .catch((err) => console.error('연산 숙제 오답 조회 실패:', err))
       .finally(() => setHwWrongLoading(false));
   }, [stats, user.id, hwWrongPeriod]);
 
@@ -246,7 +363,7 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
         const json = await res.json();
         setAttemptAnswers(json.data?.answers ?? []);
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('시도 상세 조회 실패:', err); }
     setAttemptDetailLoading(false);
   };
 
@@ -275,41 +392,41 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
 
       {statsLoading ? (
         <div className="flex items-center justify-center py-8 text-text-secondary text-xs">
-          <Loader2 className="w-4 h-4 animate-spin mr-2" /> 상세 정보 불러오는 중...
+          <Loader2 className="w-6 h-6 animate-spin mr-2" /> 상세 정보 불러오는 중...
         </div>
       ) : s && (
         <>
           {/* 학습 요약 카드 */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-1">
-            <div className="bg-blue-50 rounded-sm p-2.5">
-              <div className="text-[10px] text-blue-600 font-medium">시험 응시</div>
+            <div className="bg-blue-50 rounded-sm p-3">
+              <div className="text-xs text-blue-600 font-medium">시험 응시</div>
               <div className="text-sm font-bold text-blue-700">{s.testCount}회</div>
-              <div className="text-[10px] text-blue-500">평균 {s.testAvgScore}점</div>
+              <div className="text-xs text-blue-500">평균 {s.testAvgScore}점</div>
             </div>
-            <div className="bg-amber-50 rounded-sm p-2.5">
-              <div className="text-[10px] text-amber-600 font-medium">연산 연습</div>
+            <div className="bg-amber-50 rounded-sm p-3">
+              <div className="text-xs text-amber-600 font-medium">연산 연습</div>
               <div className="text-sm font-bold text-amber-700">{s.arithmeticCount}회</div>
-              <div className="text-[10px] text-amber-500">정답률 {accuracyPct}%</div>
+              <div className="text-xs text-amber-500">정답률 {accuracyPct}%</div>
             </div>
-            <div className="bg-emerald-50 rounded-sm p-2.5">
-              <div className="text-[10px] text-emerald-600 font-medium">개념 학습</div>
+            <div className="bg-emerald-50 rounded-sm p-3">
+              <div className="text-xs text-emerald-600 font-medium">개념 학습</div>
               <div className="text-sm font-bold text-emerald-700">{s.learningCompleted}/{s.learningTotal}</div>
-              <div className="text-[10px] text-emerald-500">완료/전체</div>
+              <div className="text-xs text-emerald-500">완료/전체</div>
             </div>
-            <div className="bg-violet-50 rounded-sm p-2.5">
-              <div className="text-[10px] text-violet-600 font-medium">연산 숙제</div>
+            <div className="bg-violet-50 rounded-sm p-3">
+              <div className="text-xs text-violet-600 font-medium">연산 숙제</div>
               <div className="text-sm font-bold text-violet-700">{s.homeworkEnrollments}개</div>
-              <div className="text-[10px] text-violet-500">참여 플랜</div>
+              <div className="text-xs text-violet-500">참여 플랜</div>
             </div>
           </div>
 
           {/* 개념 학습 순서 설정 */}
           <SectionTitle icon={GitBranch} title="개념 학습 순서" />
-          <div className="bg-white border border-slate-100 rounded-sm p-3 mb-1">
+          <div className="bg-white border border-slate-200 rounded-sm p-3 mb-1">
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => saveNavMode('curriculum')}
-                className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
                   navMode === 'curriculum'
                     ? 'bg-primary text-white'
                     : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
@@ -321,7 +438,7 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
               <select
                 value={navMode.startsWith('chain:') ? navMode : ''}
                 onChange={(e) => { if (e.target.value) saveNavMode(e.target.value); }}
-                className={`px-2 py-1 rounded text-[11px] border transition-colors ${
+                className={`px-2 py-1 rounded text-xs border transition-colors ${
                   navMode.startsWith('chain:')
                     ? 'border-primary bg-primary/5 text-primary font-medium'
                     : 'border-slate-200 bg-white text-text-secondary'
@@ -335,7 +452,7 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
               </select>
               {navSaving && <Loader2 className="w-3 h-3 animate-spin text-primary" />}
             </div>
-            <p className="text-[10px] text-text-secondary mt-1.5">
+            <p className="text-xs text-text-secondary mt-1.5">
               {navMode === 'curriculum'
                 ? '같은 학년 내 교육과정 순서로 이전/다음 개념 이동'
                 : `${navMode.substring(6)} 순서로 학년을 넘나들며 이전/다음 개념 이동`}
@@ -347,20 +464,20 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
             <>
               <SectionTitle icon={ClipboardCheck} title="최근 시험" />
               <div className="space-y-1.5">
-                {stats!.recentTests.map((t: any) => (
-                  <div key={t.id} className="flex items-center justify-between bg-white border border-slate-100 rounded-sm px-3 py-2">
+                {stats!.recentTests.map((t) => (
+                  <div key={t.id} className="flex items-center justify-between bg-white border border-slate-200 rounded-sm px-3 py-2">
                     <div className="min-w-0">
                       <div className="text-xs font-medium text-text-primary truncate">{t.test.title}</div>
-                      <div className="text-[10px] text-text-secondary">{relativeTime(t.completedAt ?? t.startedAt)}</div>
+                      <div className="text-xs text-text-secondary">{relativeTime(t.completedAt ?? t.startedAt)}</div>
                     </div>
                     <div className="text-right shrink-0 ml-2">
                       {t.completedAt ? (
                         <>
                           <div className="text-xs font-bold text-text-primary">{t.score}/{t.maxScore}점</div>
-                          <div className="text-[10px] text-text-secondary">{t.correctCount}/{t.totalCount}문제</div>
+                          <div className="text-xs text-text-secondary">{t.correctCount}/{t.totalCount}문제</div>
                         </>
                       ) : (
-                        <span className="text-[10px] text-amber-600 font-medium">진행 중</span>
+                        <span className="text-xs text-amber-600 font-medium">진행 중</span>
                       )}
                     </div>
                   </div>
@@ -374,30 +491,30 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
             <>
               <SectionTitle icon={Calculator} title="최근 연산 연습" />
               <div className="space-y-1.5">
-                {stats!.recentArithmetic.map((a: any) => {
+                {stats!.recentArithmetic.map((a) => {
                   const isExpanded = expandedAttemptId === a.id;
                   const wrongAnswers = attemptAnswers.filter((ans) => !ans.isCorrect);
                   return (
-                    <div key={a.id} className="bg-white border border-slate-100 rounded-sm overflow-hidden">
+                    <div key={a.id} className="bg-white border border-slate-200 rounded-sm overflow-hidden">
                       <button
                         onClick={() => toggleAttemptDetail(a.id)}
                         className="w-full flex items-center justify-between px-3 py-2 hover:bg-slate-50 transition-colors"
                       >
                         <div className="min-w-0 text-left">
                           <div className="text-xs font-medium text-text-primary">{CATEGORY_LABELS[a.category as keyof typeof CATEGORY_LABELS] ?? a.category}</div>
-                          <div className="text-[10px] text-text-secondary">{relativeTime(a.completedAt ?? a.createdAt)}</div>
+                          <div className="text-xs text-text-secondary">{relativeTime(a.completedAt ?? a.createdAt)}</div>
                         </div>
                         <div className="flex items-center gap-2 shrink-0 ml-2">
                           <div className="text-right">
                             <div className="text-xs font-bold text-text-primary">{a.correctCount}/{a.problemCount}</div>
-                            <div className="text-[10px] text-text-secondary">{formatSeconds(a.totalTimeSeconds)}</div>
+                            <div className="text-xs text-text-secondary">{formatSeconds(a.totalTimeSeconds ?? 0)}</div>
                           </div>
                           {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-text-secondary" /> : <ChevronDown className="w-3.5 h-3.5 text-text-secondary" />}
                         </div>
                       </button>
 
                       {isExpanded && (
-                        <div className="border-t border-slate-100 bg-slate-50/50">
+                        <div className="border-t border-slate-200 bg-slate-50/50">
                           {attemptDetailLoading ? (
                             <div className="flex items-center justify-center py-4 text-text-secondary text-xs">
                               <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> 불러오는 중...
@@ -407,7 +524,7 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
                           ) : (
                             <div className="px-3 py-2.5">
                               {/* 요약 바 */}
-                              <div className="flex items-center gap-3 mb-2 text-[10px]">
+                              <div className="flex items-center gap-3 mb-2 text-xs">
                                 <span className="text-emerald-600 font-medium">정답 {attemptAnswers.filter((ans) => ans.isCorrect).length}개</span>
                                 <span className="text-red-500 font-medium">오답 {wrongAnswers.length}개</span>
                                 <span className="text-text-secondary">
@@ -418,7 +535,7 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
                               {/* 틀린 문제 표시 */}
                               {wrongAnswers.length > 0 && (
                                 <div className="space-y-1.5 mb-2">
-                                  <div className="text-[10px] font-bold text-red-500 flex items-center gap-1">
+                                  <div className="text-xs font-bold text-red-500 flex items-center gap-1">
                                     <X className="w-3 h-3" /> 틀린 문제
                                   </div>
                                   {wrongAnswers.map((ans) => (
@@ -428,7 +545,7 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
                                           <div className="text-xs text-text-primary font-medium mb-1 [&_p]:inline [&_p]:m-0">
                                             #{ans.problemIndex + 1}. <MathRenderer content={ans.content} />
                                           </div>
-                                          <div className="flex items-center gap-3 text-[10px]">
+                                          <div className="flex items-center gap-3 text-xs">
                                             <span className="text-red-500 [&_p]:inline [&_p]:m-0">
                                               학생: <span className="font-semibold"><MathRenderer content={ans.selectedAnswer} /></span>
                                             </span>
@@ -437,7 +554,7 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
                                             </span>
                                           </div>
                                         </div>
-                                        <span className="text-[10px] text-text-secondary shrink-0">{ans.timeSpentSeconds}초</span>
+                                        <span className="text-xs text-text-secondary shrink-0">{ans.timeSpentSeconds}초</span>
                                       </div>
                                     </div>
                                   ))}
@@ -445,14 +562,14 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
                               )}
 
                               {/* 전체 문제 그리드 */}
-                              <div className="text-[10px] font-bold text-text-secondary mb-1.5 flex items-center gap-1">
+                              <div className="text-xs font-bold text-text-secondary mb-1.5 flex items-center gap-1">
                                 <Check className="w-3 h-3" /> 전체 정오표
                               </div>
                               <div className="flex flex-wrap gap-1">
                                 {attemptAnswers.map((ans) => (
                                   <div
                                     key={ans.problemIndex}
-                                    className={`w-6 h-6 rounded-sm flex items-center justify-center text-[10px] font-bold ${
+                                    className={`w-6 h-6 rounded-sm flex items-center justify-center text-xs font-bold ${
                                       ans.isCorrect
                                         ? 'bg-emerald-100 text-emerald-700'
                                         : 'bg-red-100 text-red-600'
@@ -479,15 +596,15 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
             <>
               <SectionTitle icon={BookOpen} title="최근 개념 학습" />
               <div className="space-y-1.5">
-                {stats!.recentLearning.map((lp: any) => (
-                  <div key={lp.id} className="flex items-center justify-between bg-white border border-slate-100 rounded-sm px-3 py-2">
+                {stats!.recentLearning.map((lp) => (
+                  <div key={lp.id} className="flex items-center justify-between bg-white border border-slate-200 rounded-sm px-3 py-2">
                     <div className="min-w-0">
                       <div className="text-xs font-medium text-text-primary truncate">{lp.concept.title}</div>
-                      <div className="text-[10px] text-text-secondary">
+                      <div className="text-xs text-text-secondary">
                         {STAGE_LABELS[lp.stage] ?? lp.stage} · {relativeTime(lp.completedAt ?? lp.startedAt)}
                       </div>
                     </div>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${
+                    <span className={`text-xs px-1.5 py-0.5 rounded font-medium shrink-0 ${
                       lp.completed ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-text-secondary'
                     }`}>
                       {lp.completed ? '완료' : '진행 중'}
@@ -503,7 +620,7 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
             <>
               <SectionTitle icon={FileText} title="시험 배정 현황" />
               <div className="space-y-1.5">
-                {stats!.recentAssignments.map((a: any, i: number) => {
+                {stats!.recentAssignments.map((a, i) => {
                   const statusColor: Record<string, string> = {
                     ASSIGNED: 'bg-blue-100 text-blue-700',
                     IN_PROGRESS: 'bg-amber-100 text-amber-700',
@@ -514,14 +631,14 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
                     ASSIGNED: '배정됨', IN_PROGRESS: '진행 중', COMPLETED: '완료', OVERDUE: '기한 초과',
                   };
                   return (
-                    <div key={i} className="flex items-center justify-between bg-white border border-slate-100 rounded-sm px-3 py-2">
+                    <div key={i} className="flex items-center justify-between bg-white border border-slate-200 rounded-sm px-3 py-2">
                       <div className="min-w-0">
                         <div className="text-xs font-medium text-text-primary truncate">{a.test.title}</div>
-                        {a.dueDate && <div className="text-[10px] text-text-secondary">마감: {new Date(a.dueDate).toLocaleDateString('ko-KR')}</div>}
+                        {a.dueDate && <div className="text-xs text-text-secondary">마감: {new Date(a.dueDate).toLocaleDateString('ko-KR')}</div>}
                       </div>
                       <div className="flex items-center gap-2 shrink-0 ml-2">
                         {a.bestScore != null && <span className="text-xs font-bold text-text-primary">{a.bestScore}점</span>}
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${statusColor[a.status] ?? 'bg-slate-100 text-text-secondary'}`}>
+                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${statusColor[a.status] ?? 'bg-slate-100 text-text-secondary'}`}>
                           {statusLabel[a.status] ?? a.status}
                         </span>
                       </div>
@@ -537,14 +654,14 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
             <>
               <SectionTitle icon={Zap} title="최근 XP 내역" />
               <div className="space-y-1">
-                {stats!.recentPoints.map((p: any, i: number) => (
+                {stats!.recentPoints.map((p, i) => (
                   <div key={i} className="flex items-center justify-between px-3 py-1.5">
                     <div className="text-xs text-text-secondary">{p.reason}</div>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className={`text-xs font-bold ${p.type === 'EARN' ? 'text-emerald-600' : 'text-red-500'}`}>
                         {p.type === 'EARN' ? '+' : '-'}{p.amount}
                       </span>
-                      <span className="text-[10px] text-text-secondary">{relativeTime(p.createdAt)}</span>
+                      <span className="text-xs text-text-secondary">{relativeTime(p.createdAt)}</span>
                     </div>
                   </div>
                 ))}
@@ -562,7 +679,7 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
             <select
               value={hwWrongPeriod}
               onChange={(e) => setHwWrongPeriod(e.target.value)}
-              className="text-[10px] border border-slate-200 rounded-sm px-1.5 py-0.5 bg-white text-text-secondary"
+              className="text-xs border border-slate-200 rounded-sm px-1.5 py-0.5 bg-white text-text-secondary"
             >
               <option value="7d">최근 7일</option>
               <option value="30d">최근 30일</option>
@@ -588,10 +705,10 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
             <>
               {hwWrongData.categorySummary.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-2">
-                  {hwWrongData.categorySummary.map((cat: any) => (
+                  {hwWrongData.categorySummary.map((cat) => (
                     <div
                       key={cat.category}
-                      className={`px-2 py-1 rounded-sm text-[10px] font-medium ${
+                      className={`px-2 py-1 rounded-sm text-xs font-medium ${
                         cat.accuracy < 70 ? 'bg-red-50 text-red-600 border border-red-200' :
                         cat.accuracy < 85 ? 'bg-amber-50 text-amber-600 border border-amber-200' :
                         'bg-slate-50 text-text-secondary border border-slate-200'
@@ -605,10 +722,10 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
 
               {/* 시도별 오답 목록 */}
               <div className="space-y-1.5">
-                {hwWrongData.attempts.map((att: any) => {
+                {hwWrongData.attempts.map((att) => {
                   const isExp = hwWrongExpanded === att.id;
                   return (
-                    <div key={att.id} className="bg-white border border-slate-100 rounded-sm overflow-hidden">
+                    <div key={att.id} className="bg-white border border-slate-200 rounded-sm overflow-hidden">
                       <button
                         onClick={() => setHwWrongExpanded(isExp ? null : att.id)}
                         className="w-full flex items-center justify-between px-3 py-2 hover:bg-slate-50 transition-colors"
@@ -616,29 +733,29 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
                         <div className="min-w-0 text-left">
                           <div className="text-xs font-medium text-text-primary">
                             {att.categoryLabel}
-                            {att.planTitle && <span className="text-[10px] text-text-secondary ml-1.5">· {att.planTitle}</span>}
+                            {att.planTitle && <span className="text-xs text-text-secondary ml-1.5">· {att.planTitle}</span>}
                           </div>
-                          <div className="text-[10px] text-text-secondary">
+                          <div className="text-xs text-text-secondary">
                             {att.homeworkDayIndex != null ? `${att.homeworkDayIndex + 1}일차 · ` : ''}
                             {att.correctCount}/{att.problemCount}문제 · 오답 {att.wrongAnswers.length}개
                           </div>
                         </div>
                         <div className="flex items-center gap-2 shrink-0 ml-2">
-                          <span className="text-[10px] text-text-secondary">{relativeTime(att.completedAt)}</span>
+                          <span className="text-xs text-text-secondary">{relativeTime(att.completedAt)}</span>
                           {isExp ? <ChevronUp className="w-3.5 h-3.5 text-text-secondary" /> : <ChevronDown className="w-3.5 h-3.5 text-text-secondary" />}
                         </div>
                       </button>
 
                       {isExp && (
-                        <div className="border-t border-slate-100 bg-slate-50/50 px-3 py-2.5 space-y-1.5">
-                          {att.wrongAnswers.map((wa: any, i: number) => (
+                        <div className="border-t border-slate-200 bg-slate-50/50 px-3 py-2.5 space-y-1.5">
+                          {att.wrongAnswers.map((wa, i) => (
                             <div key={i} className="bg-white rounded-sm border border-red-100 px-2.5 py-2">
                               <div className="flex items-start justify-between gap-2">
                                 <div className="flex-1 min-w-0">
                                   <div className="text-xs text-text-primary font-medium mb-1 [&_p]:inline [&_p]:m-0">
                                     #{wa.problemIndex + 1}. <MathRenderer content={wa.content} />
                                   </div>
-                                  <div className="flex items-center gap-3 text-[10px]">
+                                  <div className="flex items-center gap-3 text-xs">
                                     <span className="text-red-500 [&_p]:inline [&_p]:m-0">
                                       학생: <span className="font-semibold"><MathRenderer content={wa.selectedAnswer} /></span>
                                     </span>
@@ -647,7 +764,7 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
                                     </span>
                                   </div>
                                 </div>
-                                <span className="text-[10px] text-text-secondary shrink-0">{wa.timeSpentSeconds}초</span>
+                                <span className="text-xs text-text-secondary shrink-0">{wa.timeSpentSeconds}초</span>
                               </div>
                             </div>
                           ))}
@@ -664,7 +781,7 @@ function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onRes
 
       {/* 액션 */}
       <div className="border-t border-slate-200 pt-3 mt-4">
-        <h3 className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider mb-2">액션</h3>
+        <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">액션</h3>
         <div className="flex flex-wrap gap-2">
           {!showTeachers && (
             <Link
@@ -717,7 +834,7 @@ function TeacherDetail({ user, stats, statsLoading, isAdmin, onResetPassword, on
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h2 className="text-base font-bold text-text-primary">{user.name}</h2>
-            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded-sm">
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded-sm">
               <Shield className="w-3 h-3" />
               선생님
             </span>
@@ -734,26 +851,26 @@ function TeacherDetail({ user, stats, statsLoading, isAdmin, onResetPassword, on
 
       {statsLoading ? (
         <div className="flex items-center justify-center py-8 text-text-secondary text-xs">
-          <Loader2 className="w-4 h-4 animate-spin mr-2" /> 상세 정보 불러오는 중...
+          <Loader2 className="w-6 h-6 animate-spin mr-2" /> 상세 정보 불러오는 중...
         </div>
       ) : s && (
         <>
           {/* 활동 요약 */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-1">
-            <div className="bg-blue-50 rounded-sm p-2.5">
-              <div className="text-[10px] text-blue-600 font-medium">출제 시험</div>
+            <div className="bg-blue-50 rounded-sm p-3">
+              <div className="text-xs text-blue-600 font-medium">출제 시험</div>
               <div className="text-sm font-bold text-blue-700">{s.testsCreated}개</div>
             </div>
-            <div className="bg-amber-50 rounded-sm p-2.5">
-              <div className="text-[10px] text-amber-600 font-medium">숙제 플랜</div>
+            <div className="bg-amber-50 rounded-sm p-3">
+              <div className="text-xs text-amber-600 font-medium">숙제 플랜</div>
               <div className="text-sm font-bold text-amber-700">{s.homeworkPlans}개</div>
             </div>
-            <div className="bg-emerald-50 rounded-sm p-2.5">
-              <div className="text-[10px] text-emerald-600 font-medium">학생 코멘트</div>
+            <div className="bg-emerald-50 rounded-sm p-3">
+              <div className="text-xs text-emerald-600 font-medium">학생 코멘트</div>
               <div className="text-sm font-bold text-emerald-700">{s.commentsWritten}건</div>
             </div>
-            <div className="bg-violet-50 rounded-sm p-2.5">
-              <div className="text-[10px] text-violet-600 font-medium">AI 문제 생성</div>
+            <div className="bg-violet-50 rounded-sm p-3">
+              <div className="text-xs text-violet-600 font-medium">AI 문제 생성</div>
               <div className="text-sm font-bold text-violet-700">{s.questionsGenerated}건</div>
             </div>
           </div>
@@ -763,15 +880,15 @@ function TeacherDetail({ user, stats, statsLoading, isAdmin, onResetPassword, on
             <>
               <SectionTitle icon={ClipboardCheck} title="최근 출제 시험" />
               <div className="space-y-1.5">
-                {stats!.recentTests.map((t: any) => (
-                  <div key={t.id} className="flex items-center justify-between bg-white border border-slate-100 rounded-sm px-3 py-2">
+                {stats!.recentTests.map((t) => (
+                  <div key={t.id} className="flex items-center justify-between bg-white border border-slate-200 rounded-sm px-3 py-2">
                     <div className="min-w-0">
                       <div className="text-xs font-medium text-text-primary truncate">{t.title}</div>
-                      <div className="text-[10px] text-text-secondary">
+                      <div className="text-xs text-text-secondary">
                         {gradeLabel(t.grade)} · {t.questionCount}문제 · {relativeTime(t.createdAt)}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0 ml-2 text-[10px] text-text-secondary">
+                    <div className="flex items-center gap-2 shrink-0 ml-2 text-xs text-text-secondary">
                       <span>응시 {t._count.attempts}회</span>
                       <span>배정 {t._count.assignments}명</span>
                     </div>
@@ -786,17 +903,17 @@ function TeacherDetail({ user, stats, statsLoading, isAdmin, onResetPassword, on
             <>
               <SectionTitle icon={Calculator} title="최근 연산 숙제" />
               <div className="space-y-1.5">
-                {stats!.recentHomework.map((h: any) => (
-                  <div key={h.id} className="flex items-center justify-between bg-white border border-slate-100 rounded-sm px-3 py-2">
+                {stats!.recentHomework.map((h) => (
+                  <div key={h.id} className="flex items-center justify-between bg-white border border-slate-200 rounded-sm px-3 py-2">
                     <div className="min-w-0">
                       <div className="text-xs font-medium text-text-primary truncate">{h.title}</div>
-                      <div className="text-[10px] text-text-secondary">
+                      <div className="text-xs text-text-secondary">
                         {h.totalDays}일 × {h.dailyCount}문제 · {relativeTime(h.createdAt)}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0 ml-2">
-                      <span className="text-[10px] text-text-secondary">{h._count.enrollments}명 참여</span>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                      <span className="text-xs text-text-secondary">{h._count.enrollments}명 참여</span>
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
                         h.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-text-secondary'
                       }`}>
                         {h.isActive ? '진행 중' : '종료'}
@@ -813,13 +930,13 @@ function TeacherDetail({ user, stats, statsLoading, isAdmin, onResetPassword, on
             <>
               <SectionTitle icon={MessageSquare} title="최근 학생 코멘트" />
               <div className="space-y-1.5">
-                {stats!.recentComments.map((c: any, i: number) => (
-                  <div key={i} className="bg-white border border-slate-100 rounded-sm px-3 py-2">
+                {stats!.recentComments.map((c, i) => (
+                  <div key={i} className="bg-white border border-slate-200 rounded-sm px-3 py-2">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-medium text-text-primary">{c.student.name}</span>
-                      <span className="text-[10px] text-text-secondary">{c.month}</span>
+                      <span className="text-xs text-text-secondary">{c.month}</span>
                     </div>
-                    <p className="text-[11px] text-text-secondary line-clamp-2">{c.content}</p>
+                    <p className="text-xs text-text-secondary line-clamp-2">{c.content}</p>
                   </div>
                 ))}
               </div>
@@ -830,7 +947,7 @@ function TeacherDetail({ user, stats, statsLoading, isAdmin, onResetPassword, on
 
       {/* 액션 */}
       <div className="border-t border-slate-200 pt-3 mt-4">
-        <h3 className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider mb-2">액션</h3>
+        <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">액션</h3>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => onResetPassword(user.id)}
@@ -1025,8 +1142,8 @@ export default function StudentsPage() {
             {!leftPanelCollapsed && (
               <div className="flex items-center gap-2 min-w-0">
                 <Users className="w-4 h-4 text-primary shrink-0" />
-                <h1 className="text-sm font-bold text-text-primary truncate">{panelTitle}</h1>
-                <span className="text-[10px] text-text-secondary bg-slate-100 px-1.5 py-0.5 rounded-full font-medium shrink-0">{panelCount}</span>
+                <h1 className="text-base font-bold text-text-primary truncate">{panelTitle}</h1>
+                <span className="text-xs text-text-secondary bg-slate-100 px-1.5 py-0.5 rounded-full font-medium shrink-0">{panelCount}</span>
               </div>
             )}
             <button
@@ -1060,9 +1177,9 @@ export default function StudentsPage() {
 
             <div className="px-3 pt-2 pb-2">
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                 <input
-                  className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary placeholder:text-slate-400"
+                  className="w-full h-8 pl-8 pr-3 bg-white border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary placeholder:text-slate-400"
                   placeholder={showTeachers ? '선생님 이름 검색...' : '학생 이름 검색...'}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -1073,18 +1190,18 @@ export default function StudentsPage() {
             {!showTeachers && (
               <div className="px-3 pb-2 flex flex-col gap-1.5">
                 <div className="flex gap-1.5">
-                  <select className="flex-1 min-w-0 px-1.5 py-1 text-[11px] border border-slate-200 rounded-sm bg-white focus:ring-1 focus:ring-primary/40" value={gradeFilter} onChange={(e) => setGradeFilter(e.target.value)}>
+                  <select className="flex-1 min-w-0 px-1.5 py-1 text-xs border border-slate-200 rounded-sm bg-white focus:ring-1 focus:ring-primary/40" value={gradeFilter} onChange={(e) => setGradeFilter(e.target.value)}>
                     <option value="all">전체 학년</option>
                     {[1,2,3,4,5,6,7,8,9].map((g) => (<option key={g} value={String(g)}>{gradeLabel(g)}</option>))}
                   </select>
-                  <select className="flex-1 min-w-0 px-1.5 py-1 text-[11px] border border-slate-200 rounded-sm bg-white focus:ring-1 focus:ring-primary/40" value={levelFilter} onChange={(e) => setLevelFilter(e.target.value)}>
+                  <select className="flex-1 min-w-0 px-1.5 py-1 text-xs border border-slate-200 rounded-sm bg-white focus:ring-1 focus:ring-primary/40" value={levelFilter} onChange={(e) => setLevelFilter(e.target.value)}>
                     <option value="all">전체 레벨</option>
                     <option value="low">초급 (1-2)</option>
                     <option value="mid">중급 (3-5)</option>
                     <option value="high">고급 (6+)</option>
                   </select>
                 </div>
-                <select className="w-full px-1.5 py-1 text-[11px] border border-slate-200 rounded-sm bg-white focus:ring-1 focus:ring-primary/40" value={activityFilter} onChange={(e) => setActivityFilter(e.target.value)}>
+                <select className="w-full px-1.5 py-1 text-xs border border-slate-200 rounded-sm bg-white focus:ring-1 focus:ring-primary/40" value={activityFilter} onChange={(e) => setActivityFilter(e.target.value)}>
                   <option value="all">전체 상태</option>
                   <option value="active">활동 중</option>
                   <option value="inactive">미참여</option>
@@ -1092,8 +1209,8 @@ export default function StudentsPage() {
                 </select>
                 {(gradeFilter !== 'all' || levelFilter !== 'all' || activityFilter !== 'all') && (
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-text-secondary">필터 결과: <span className="font-bold text-text-primary">{filteredUsers.length}명</span></span>
-                    <button onClick={() => { setGradeFilter('all'); setLevelFilter('all'); setActivityFilter('all'); }} className="text-[10px] text-primary font-semibold hover:underline">초기화</button>
+                    <span className="text-xs text-text-secondary">필터 결과: <span className="font-bold text-text-primary">{filteredUsers.length}명</span></span>
+                    <button onClick={() => { setGradeFilter('all'); setLevelFilter('all'); setActivityFilter('all'); }} className="text-xs text-primary font-semibold hover:underline">초기화</button>
                   </div>
                 )}
               </div>
@@ -1111,7 +1228,7 @@ export default function StudentsPage() {
 
             <div className="flex-1 overflow-y-auto">
               {loading ? (
-                <div className="flex items-center justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
+                <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
               ) : filteredUsers.length === 0 ? (
                 <div className="text-center py-8 text-text-secondary"><Users className="w-8 h-8 mx-auto mb-2 opacity-20" /><p className="text-sm">{showTeachers ? '선생님이 없습니다.' : '학생이 없습니다.'}</p></div>
               ) : (
@@ -1130,25 +1247,25 @@ export default function StudentsPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs font-medium text-text-primary truncate">{u.name}</span>
-                          <span className="text-[10px] text-text-secondary">@{u.username}</span>
+                          <span className="text-xs text-text-secondary">@{u.username}</span>
                         </div>
                         <div className="flex items-center gap-1 mt-0.5">
                           {!showTeachers ? (
                             <>
-                              <span className="text-[10px] text-text-secondary">{gradeLabel(u.grade)}</span>
-                              <span className="text-[10px] text-slate-300">&middot;</span>
-                              <span className="text-[10px] font-medium text-primary">Lv.{u.profile?.level ?? 1}</span>
-                              <span className="text-[10px] text-slate-300">&middot;</span>
-                              <span className="text-[10px] text-text-secondary">{u.profile?.totalXp ?? 0} XP</span>
+                              <span className="text-xs text-text-secondary">{gradeLabel(u.grade)}</span>
+                              <span className="text-xs text-slate-300">&middot;</span>
+                              <span className="text-xs font-medium text-primary">Lv.{u.profile?.level ?? 1}</span>
+                              <span className="text-xs text-slate-300">&middot;</span>
+                              <span className="text-xs text-text-secondary">{u.profile?.totalXp ?? 0} XP</span>
                               {u.profile?.lastActiveAt && (
                                 <>
-                                  <span className="text-[10px] text-slate-300">&middot;</span>
-                                  <span className="text-[10px] text-text-secondary">{relativeTime(u.profile.lastActiveAt)}</span>
+                                  <span className="text-xs text-slate-300">&middot;</span>
+                                  <span className="text-xs text-text-secondary">{relativeTime(u.profile.lastActiveAt)}</span>
                                 </>
                               )}
                             </>
                           ) : (
-                            <span className="text-[10px] text-text-secondary">{new Date(u.createdAt).toLocaleDateString('ko-KR')}</span>
+                            <span className="text-xs text-text-secondary">{new Date(u.createdAt).toLocaleDateString('ko-KR')}</span>
                           )}
                         </div>
                       </div>

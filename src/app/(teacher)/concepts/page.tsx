@@ -35,56 +35,16 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/components/ui/Toast';
 import BulkImportModal from '@/components/bulk-import/BulkImportModal';
 import { InlineMathText } from '@/components/math/InlineMathText';
+import { EditableMathRenderer } from '@/components/math/EditableMathRenderer';
 import { CurriculumTree } from '@/components/curriculum/CurriculumTree';
 import { CurriculumConceptTree } from '@/components/curriculum/CurriculumConceptTree';
 import { SystematicChainView } from '@/components/curriculum/SystematicChainView';
 import { MathLivePopup } from '@/components/math/MathLivePopup';
 import { getCurriculumForGrade } from '@/lib/utils/curriculumMapping';
+import { GRADE_LABELS, GRADE_SHORT_LABELS, GRADE_GROUPS, PART_LABELS, CATEGORY_LABELS } from '@/lib/constants/labels';
 
 // --- Constants ---
 const ITEMS_PER_PAGE = 12;
-
-const GRADE_LABELS: Record<string, string> = {
-  elementary_3: '초등 3학년',
-  elementary_4: '초등 4학년',
-  elementary_5: '초등 5학년',
-  elementary_6: '초등 6학년',
-  middle_1: '중학 1학년',
-  middle_2: '중학 2학년',
-  middle_3: '중학 3학년',
-  high_1: '공통수학1',
-  high_2: '공통수학2',
-  high_algebra: '대수',
-  high_calculus1: '미적분I',
-  high_prob: '확률과 통계',
-  high_calculus2: '미적분II',
-  high_geo: '기하',
-};
-
-const PART_LABELS: Record<string, string> = {
-  calc: '수와 연산',
-  algebra: '대수',
-  func: '함수',
-  geo: '도형',
-  data: '자료와 확률',
-};
-
-const CATEGORY_LABELS: Record<string, string> = {
-  concept: '개념',
-};
-
-const GRADE_GROUPS = [
-  { label: '초등', grades: ['elementary_3', 'elementary_4', 'elementary_5', 'elementary_6'] },
-  { label: '중학', grades: ['middle_1', 'middle_2', 'middle_3'] },
-  { label: '고등', grades: ['high_1', 'high_2', 'high_algebra', 'high_calculus1', 'high_prob', 'high_calculus2', 'high_geo'] },
-];
-const GRADE_SHORT_LABELS: Record<string, string> = {
-  elementary_3: '3학년', elementary_4: '4학년', elementary_5: '5학년', elementary_6: '6학년',
-  middle_1: '1학년', middle_2: '2학년', middle_3: '3학년',
-  high_1: '공통수학1', high_2: '공통수학2',
-  high_algebra: '대수', high_calculus1: '미적분I',
-  high_prob: '확률과 통계', high_calculus2: '미적분II', high_geo: '기하',
-};
 
 const GRADE_OPTIONS = Object.keys(GRADE_LABELS);
 const PART_OPTIONS = Object.keys(PART_LABELS);
@@ -306,6 +266,9 @@ export default function ConceptsPage() {
   const [showBlanks, setShowBlanks] = useState(false);
   const [mathPopupOpen, setMathPopupOpen] = useState(false);
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const [templateViewMode, setTemplateViewMode] = useState<'rendered' | 'raw'>('rendered');
+  const [templateMathPopup, setTemplateMathPopup] = useState<{ latex: string; start: number; end: number } | null>(null);
+  const [editingBlankPos, setEditingBlankPos] = useState<number | null>(null);
 
   // Template highlight overlay ref & textarea ref for selection
   const templateHighlightRef = useRef<HTMLDivElement>(null);
@@ -1228,8 +1191,8 @@ export default function ConceptsPage() {
             {!leftPanelCollapsed && (
               <div className="flex items-center gap-2 min-w-0">
                 <Brain className="w-4 h-4 text-primary shrink-0" />
-                <h1 className="text-sm font-bold text-text-primary truncate">개념 관리</h1>
-                <span className="text-[10px] text-text-secondary bg-slate-100 px-1.5 py-0.5 rounded-full font-medium shrink-0">
+                <h1 className="text-base font-bold text-text-primary truncate">개념 관리</h1>
+                <span className="text-xs text-text-secondary bg-slate-100 px-1.5 py-0.5 rounded-full font-medium shrink-0">
                   {meta.total.toLocaleString()}
                 </span>
               </div>
@@ -1253,7 +1216,7 @@ export default function ConceptsPage() {
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
-                  className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] transition-colors ${
+                  className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs transition-colors ${
                     viewMode === mode
                       ? 'bg-primary/10 text-primary font-bold'
                       : 'text-text-secondary hover:bg-slate-100'
@@ -1288,9 +1251,9 @@ export default function ConceptsPage() {
             {viewMode === 'list' && (
             <div className="px-3 pt-2 pb-2">
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                 <input
-                  className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary placeholder:text-slate-400"
+                  className="w-full h-8 pl-8 pr-3 bg-white border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary placeholder:text-slate-400"
                   placeholder="개념 검색..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -1303,7 +1266,7 @@ export default function ConceptsPage() {
             {viewMode !== 'systematic' && (
             <div className="px-3 pb-2 flex gap-1.5">
               <select
-                className="flex-1 min-w-0 px-1.5 py-1 text-[11px] border border-slate-200 rounded-sm bg-white focus:ring-1 focus:ring-primary/40"
+                className="flex-1 min-w-0 px-1.5 py-1 text-xs border border-slate-200 rounded-sm bg-white focus:ring-1 focus:ring-primary/40"
                 value={levelFilter ?? ''}
                 onChange={(e) => { setLevelFilter(e.target.value || null); setGradeFilter(null); setCurrentPage(1); }}
               >
@@ -1313,7 +1276,7 @@ export default function ConceptsPage() {
                 ))}
               </select>
               <select
-                className="flex-1 min-w-0 px-1.5 py-1 text-[11px] border border-slate-200 rounded-sm bg-white focus:ring-1 focus:ring-primary/40"
+                className="flex-1 min-w-0 px-1.5 py-1 text-xs border border-slate-200 rounded-sm bg-white focus:ring-1 focus:ring-primary/40"
                 value={gradeFilter ?? ''}
                 onChange={(e) => { setGradeFilter(e.target.value || null); setCurrentPage(1); }}
                 disabled={!levelFilter}
@@ -1354,7 +1317,7 @@ export default function ConceptsPage() {
             <div className="flex-1 overflow-y-auto">
               {loading ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 </div>
               ) : concepts.length === 0 ? (
                 <div className="text-center py-8 text-text-secondary">
@@ -1376,17 +1339,17 @@ export default function ConceptsPage() {
                       onClick={() => startEditing(concept)}
                     >
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] font-mono font-bold text-primary shrink-0">{concept.conceptCode}</span>
+                        <span className="text-xs font-mono font-bold text-primary shrink-0">{concept.conceptCode}</span>
                         <span className="text-xs font-medium text-text-primary truncate">{concept.title}</span>
                       </div>
                       <div className="flex items-center gap-1 mt-0.5">
-                        <span className="text-[10px] text-text-secondary">{GRADE_LABELS[concept.grade]}</span>
-                        <span className="text-[10px] text-slate-300">&middot;</span>
-                        <span className={`text-[10px] font-medium ${concept.category === 'concept' ? 'text-blue-600' : 'text-orange-600'}`}>
+                        <span className="text-xs text-text-secondary">{GRADE_LABELS[concept.grade]}</span>
+                        <span className="text-xs text-slate-300">&middot;</span>
+                        <span className={`text-xs font-medium ${concept.category === 'concept' ? 'text-blue-600' : 'text-orange-600'}`}>
                           {CATEGORY_LABELS[concept.category] ?? concept.category}
                         </span>
-                        <span className="text-[10px] text-slate-300">&middot;</span>
-                        <span className="text-[10px] text-text-secondary">{PART_LABELS[concept.part] ?? concept.part}</span>
+                        <span className="text-xs text-slate-300">&middot;</span>
+                        <span className="text-xs text-text-secondary">{PART_LABELS[concept.part] ?? concept.part}</span>
                       </div>
                     </button>
                     {isAdmin && (
@@ -1406,7 +1369,7 @@ export default function ConceptsPage() {
             {/* Pagination */}
             {meta.totalPages > 1 && (
               <div className="shrink-0 px-3 py-2 border-t border-slate-200 flex items-center justify-between">
-                <span className="text-[10px] text-text-secondary">
+                <span className="text-xs text-text-secondary">
                   {((currentPage - 1) * ITEMS_PER_PAGE + 1)}-{Math.min(currentPage * ITEMS_PER_PAGE, meta.total)} / {meta.total}
                 </span>
                 <Pagination currentPage={currentPage} totalPages={meta.totalPages} onPageChange={setCurrentPage} />
@@ -1425,7 +1388,7 @@ export default function ConceptsPage() {
                     onSelectConcept={selectConceptById}
                   />
                 ) : (
-                  <div className="text-center py-6 text-text-secondary text-[11px]">
+                  <div className="text-center py-6 text-text-secondary text-xs">
                     <GitBranch className="w-6 h-6 mx-auto mb-2 opacity-20" />
                     <p>학년을 선택하면 교육과정 순서로</p>
                     <p>개념이 표시됩니다.</p>
@@ -1477,7 +1440,7 @@ export default function ConceptsPage() {
                 {/* Row 1: 제목 / 개념코드 / 출처 */}
                 <div className="flex gap-3 items-end">
                   <div className="flex-1">
-                    <label className="block text-[10px] font-bold text-text-secondary mb-0.5">제목 <span className="text-red-500">*</span></label>
+                    <label className="block text-xs font-bold text-text-secondary mb-0.5">제목 <span className="text-red-500">*</span></label>
                     <input
                       className="w-full px-2 py-1.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary"
                       value={editForm.title}
@@ -1486,7 +1449,7 @@ export default function ConceptsPage() {
                     />
                   </div>
                   <div className="w-24 shrink-0">
-                    <label className="block text-[10px] font-bold text-text-secondary mb-0.5">개념 코드</label>
+                    <label className="block text-xs font-bold text-text-secondary mb-0.5">개념 코드</label>
                     <input
                       className="w-full px-2 py-1.5 border border-slate-200 rounded-sm text-sm font-mono focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary"
                       value={editForm.conceptCode}
@@ -1495,7 +1458,7 @@ export default function ConceptsPage() {
                     />
                   </div>
                   <div className="w-40 shrink-0">
-                    <label className="block text-[10px] font-bold text-text-secondary mb-0.5">출처</label>
+                    <label className="block text-xs font-bold text-text-secondary mb-0.5">출처</label>
                     <input
                       className="w-full px-2 py-1.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary"
                       value={editForm.source}
@@ -1508,7 +1471,7 @@ export default function ConceptsPage() {
                 {/* Row 2: 학년 / 학기 / 대단원 / 중단원 / 소단원 */}
                 <div className="flex gap-3 items-end">
                   <div className="w-32 shrink-0">
-                    <label className="block text-[10px] font-bold text-text-secondary mb-0.5">학년 <span className="text-red-500">*</span></label>
+                    <label className="block text-xs font-bold text-text-secondary mb-0.5">학년 <span className="text-red-500">*</span></label>
                     <select
                       className="w-full px-2 py-1.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary bg-white"
                       value={editForm.grade}
@@ -1526,7 +1489,7 @@ export default function ConceptsPage() {
                   </div>
                   {!isHighSchool && (
                     <div className="w-20 shrink-0">
-                      <label className="block text-[10px] font-bold text-text-secondary mb-0.5">학기 <span className="text-red-500">*</span></label>
+                      <label className="block text-xs font-bold text-text-secondary mb-0.5">학기 <span className="text-red-500">*</span></label>
                       <select
                         className="w-full px-2 py-1.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary bg-white"
                         value={editForm.semester}
@@ -1540,7 +1503,7 @@ export default function ConceptsPage() {
                     </div>
                   )}
                   <div className="flex-1">
-                    <label className="block text-[10px] font-bold text-text-secondary mb-0.5">대단원 <span className="text-red-500">*</span></label>
+                    <label className="block text-xs font-bold text-text-secondary mb-0.5">대단원 <span className="text-red-500">*</span></label>
                     <select
                       className="w-full px-2 py-1.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary bg-white"
                       value={editForm.chapter}
@@ -1554,7 +1517,7 @@ export default function ConceptsPage() {
                     </select>
                   </div>
                   <div className="flex-1">
-                    <label className="block text-[10px] font-bold text-text-secondary mb-0.5">중단원</label>
+                    <label className="block text-xs font-bold text-text-secondary mb-0.5">중단원</label>
                     <select
                       className="w-full px-2 py-1.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary bg-white"
                       value={editForm.section}
@@ -1568,7 +1531,7 @@ export default function ConceptsPage() {
                     </select>
                   </div>
                   <div className="flex-1">
-                    <label className="block text-[10px] font-bold text-text-secondary mb-0.5">소단원</label>
+                    <label className="block text-xs font-bold text-text-secondary mb-0.5">소단원</label>
                     <select
                       className="w-full px-2 py-1.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary bg-white"
                       value={editForm.sectionSub}
@@ -1585,7 +1548,7 @@ export default function ConceptsPage() {
                 {/* Row 3: 카테고리 / 영역 / 키워드 */}
                 <div className="flex gap-3 items-end">
                   <div className="w-24 shrink-0">
-                    <label className="block text-[10px] font-bold text-text-secondary mb-0.5">카테고리</label>
+                    <label className="block text-xs font-bold text-text-secondary mb-0.5">카테고리</label>
                     <select
                       className="w-full px-2 py-1.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary bg-white"
                       value={editForm.category}
@@ -1598,7 +1561,7 @@ export default function ConceptsPage() {
                     </select>
                   </div>
                   <div className="w-28 shrink-0">
-                    <label className="block text-[10px] font-bold text-text-secondary mb-0.5">영역 <span className="text-red-500">*</span></label>
+                    <label className="block text-xs font-bold text-text-secondary mb-0.5">영역 <span className="text-red-500">*</span></label>
                     <select
                       className="w-full px-2 py-1.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary bg-white"
                       value={editForm.part}
@@ -1611,7 +1574,7 @@ export default function ConceptsPage() {
                     </select>
                   </div>
                   <div className="flex-1">
-                    <label className="block text-[10px] font-bold text-text-secondary mb-0.5">키워드</label>
+                    <label className="block text-xs font-bold text-text-secondary mb-0.5">키워드</label>
                     <input
                       className="w-full px-2 py-1.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary"
                       value={editForm.keywords}
@@ -1643,68 +1606,114 @@ export default function ConceptsPage() {
                           <div className="flex items-center gap-1.5">
                             <button
                               type="button"
-                              onClick={() => setMathPopupOpen(true)}
-                              className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-text-secondary hover:text-primary hover:bg-primary/5 rounded-sm transition-colors border border-slate-200"
-                              title="수식 삽입"
+                              onClick={() => setTemplateViewMode((v) => v === 'rendered' ? 'raw' : 'rendered')}
+                              className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-sm transition-colors border ${
+                                templateViewMode === 'raw' ? 'text-amber-700 bg-amber-50 border-amber-300' : 'text-text-secondary hover:text-primary hover:bg-primary/5 border-slate-200'
+                              }`}
+                              title={templateViewMode === 'rendered' ? '원본 텍스트 보기' : '렌더링 보기'}
                             >
-                              <FunctionSquare className="w-3 h-3" />
-                              수식
+                              <Eye className="w-3 h-3" />
+                              {templateViewMode === 'raw' ? '미리보기' : '원본'}
                             </button>
-                            <button
-                              type="button"
-                              onClick={convertSelectionToBlank}
-                              className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-primary hover:bg-primary/10 rounded-sm transition-colors border border-primary/30"
-                              title="템플릿에서 텍스트를 선택한 후 클릭하면 빈칸으로 변환됩니다"
-                            >
-                              <Plus className="w-3 h-3" />
-                              빈칸 변환
-                            </button>
+                            {templateViewMode === 'raw' && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => setMathPopupOpen(true)}
+                                  className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-text-secondary hover:text-primary hover:bg-primary/5 rounded-sm transition-colors border border-slate-200"
+                                  title="수식 삽입"
+                                >
+                                  <FunctionSquare className="w-3 h-3" />
+                                  수식
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={convertSelectionToBlank}
+                                  className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 rounded-sm transition-colors border border-primary/30"
+                                  title="템플릿에서 텍스트를 선택한 후 클릭하면 빈칸으로 변환됩니다"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                  빈칸 변환
+                                </button>
+                              </>
+                            )}
                           </div>
                         )}
                       </div>
                       <div className="relative flex-1 min-h-[250px]">
-                        <textarea
-                          ref={templateTextareaRef}
-                          spellCheck={false}
-                          className="absolute inset-0 z-10 w-full h-full resize-none px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words overflow-y-auto bg-transparent border border-slate-200 rounded-sm focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50/50 disabled:text-text-secondary font-serif-kr template-textarea-overlay"
-                          style={{ color: 'transparent', caretColor: '#1e293b', WebkitTextFillColor: 'transparent', wordBreak: 'break-word', overflowWrap: 'break-word', fontFamily: "var(--font-serif-kr), 'Batang', '바탕', serif" }}
-                          value={blankForm.templateText}
-                          onChange={(e) => syncBlanksFromTemplate(e.target.value)}
-                          onKeyDown={(e) => {
-                            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
-                              e.preventDefault();
-                              templateUndo();
-                            } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
-                              e.preventDefault();
-                              templateRedo();
-                            }
-                          }}
-                          onScroll={(e) => {
-                            if (templateHighlightRef.current) {
-                              templateHighlightRef.current.scrollTop = e.currentTarget.scrollTop;
-                            }
-                          }}
-                          disabled={!isAdmin}
-                        />
-                        <div
-                          ref={templateHighlightRef}
-                          className="absolute inset-0 z-0 px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words overflow-y-auto pointer-events-none rounded-sm border border-transparent font-serif-kr template-highlight-overlay"
-                          style={{ wordBreak: 'break-word', overflowWrap: 'break-word', fontFamily: "var(--font-serif-kr), 'Batang', '바탕', serif" }}
-                          aria-hidden="true"
-                        >
-                          {blankForm.templateText ? (
-                            blankForm.templateText.split(/(\{\{\d+\}\})/).map((part, i) =>
-                              /^\{\{\d+\}\}$/.test(part) ? (
-                                <span key={i} className="bg-amber-200/80 text-amber-900 rounded-sm">{part}</span>
+                        {templateViewMode === 'raw' ? (
+                          <>
+                            <textarea
+                              ref={templateTextareaRef}
+                              spellCheck={false}
+                              className="absolute inset-0 z-10 w-full h-full resize-none px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words overflow-y-auto bg-transparent border border-slate-200 rounded-sm focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50/50 disabled:text-text-secondary font-serif-kr template-textarea-overlay"
+                              style={{ color: 'transparent', caretColor: '#1e293b', WebkitTextFillColor: 'transparent', wordBreak: 'break-word', overflowWrap: 'break-word', fontFamily: "var(--font-serif-kr), 'Batang', '바탕', serif" }}
+                              value={blankForm.templateText}
+                              onChange={(e) => syncBlanksFromTemplate(e.target.value)}
+                              onKeyDown={(e) => {
+                                if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+                                  e.preventDefault();
+                                  templateUndo();
+                                } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+                                  e.preventDefault();
+                                  templateRedo();
+                                }
+                              }}
+                              onScroll={(e) => {
+                                if (templateHighlightRef.current) {
+                                  templateHighlightRef.current.scrollTop = e.currentTarget.scrollTop;
+                                }
+                              }}
+                              disabled={!isAdmin}
+                            />
+                            <div
+                              ref={templateHighlightRef}
+                              className="absolute inset-0 z-0 px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words overflow-y-auto pointer-events-none rounded-sm border border-transparent font-serif-kr template-highlight-overlay"
+                              style={{ wordBreak: 'break-word', overflowWrap: 'break-word', fontFamily: "var(--font-serif-kr), 'Batang', '바탕', serif" }}
+                              aria-hidden="true"
+                            >
+                              {blankForm.templateText ? (
+                                blankForm.templateText.split(/(\{\{\d+\}\})/).map((part, i) =>
+                                  /^\{\{\d+\}\}$/.test(part) ? (
+                                    <span key={i} className="bg-amber-200/80 text-amber-900 rounded-sm">{part}</span>
+                                  ) : (
+                                    <span key={i}>{part}</span>
+                                  )
+                                )
                               ) : (
-                                <span key={i}>{part}</span>
-                              )
-                            )
-                          ) : (
-                            <span className="text-slate-400">{'개념 내용을 입력하고 {{1}}, {{2}} 형식으로 빈칸을 지정하세요.'}</span>
-                          )}
-                        </div>
+                                <span className="text-slate-400">{'개념 내용을 입력하고 {{1}}, {{2}} 형식으로 빈칸을 지정하세요.'}</span>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="h-full overflow-y-auto px-3 py-2 border border-slate-200 rounded-sm bg-white scrollbar-thin">
+                            {blankForm.templateText ? (
+                              <EditableMathRenderer
+                                content={blankForm.templateText}
+                                className="text-sm font-serif-kr"
+                                onMathClick={isAdmin ? (latex, start, end) => setTemplateMathPopup({ latex, start, end }) : undefined}
+                              />
+                            ) : (
+                              <p className="text-slate-400 text-sm">개념 내용이 없습니다.</p>
+                            )}
+                          </div>
+                        )}
                       </div>
+                      {/* 수식 편집 팝업 (rendered 모드에서 수식 클릭 시) */}
+                      <MathLivePopup
+                        isOpen={!!templateMathPopup}
+                        onClose={() => setTemplateMathPopup(null)}
+                        onInsert={(latex) => {
+                          if (templateMathPopup) {
+                            const { start, end } = templateMathPopup;
+                            const newText = blankForm.templateText.slice(0, start) + `$${latex}$` + blankForm.templateText.slice(end);
+                            pushTemplateHistory(newText, blankForm.blanks);
+                            syncBlanksFromTemplate(newText);
+                          }
+                          setTemplateMathPopup(null);
+                        }}
+                        initialLatex={templateMathPopup?.latex ?? ''}
+                      />
 
                       {/* Prerequisites (Col 1 bottom) */}
                       <div>
@@ -1785,16 +1794,16 @@ export default function ConceptsPage() {
                               onClick={() => setPreviewOriginalOpen((p) => !p)}
                               className="w-full flex items-center justify-between px-3 py-2 hover:bg-slate-50 transition-colors"
                             >
-                              <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">원본 (정답 포함)</span>
+                              <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">원본 (정답 포함)</span>
                               {previewOriginalOpen ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />}
                             </button>
                             {previewOriginalOpen && (
-                              <div className="px-3 pb-3">
-                                <p className="text-xs text-text-primary leading-relaxed whitespace-pre-wrap font-serif-kr">
+                              <div className="px-3 pb-3 max-h-[240px] overflow-y-auto scrollbar-thin">
+                                <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap font-serif-kr">
                                   {blankForm.templateText.split(/(\{\{\d+\}\})/).map((part, i) =>
                                     /^\{\{\d+\}\}$/.test(part) ? (
-                                      <span key={i} className="inline-flex items-center mx-0.5 px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded-sm text-[11px] font-bold">
-                                        {(() => { const n = part.match(/\d+/)?.[0]; const blank = blankForm.blanks.find((b) => b.position === parseInt(n ?? '0', 10)); return blank?.answer || '?'; })()}
+                                      <span key={i} className="inline-flex items-center mx-0.5 px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded-sm text-sm font-bold">
+                                        {(() => { const n = part.match(/\d+/)?.[0]; const blank = blankForm.blanks.find((b) => b.position === parseInt(n ?? '0', 10)); return <InlineMathText text={blank?.answer || '?'} />; })()}
                                       </span>
                                     ) : <InlineMathText key={i} text={part} />
                                   )}
@@ -1822,21 +1831,19 @@ export default function ConceptsPage() {
                                   onClick={() => setPreviewStudentOpen((p) => !p)}
                                   className="w-full flex items-center justify-between px-3 py-2 hover:bg-slate-50 transition-colors"
                                 >
-                                  <span className={`text-[10px] font-bold uppercase tracking-wider ${color}`}>학생 — {label} ({shownBlanks.length}개 빈칸)</span>
+                                  <span className={`text-xs font-bold uppercase tracking-wider ${color}`}>학생 — {label} ({shownBlanks.length}개 빈칸)</span>
                                   {previewStudentOpen ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />}
                                 </button>
                                 {previewStudentOpen && (
-                                  <div className="px-3 pb-3">
-                                    <p className="text-xs text-text-primary leading-relaxed whitespace-pre-wrap font-serif-kr">
+                                  <div className="px-3 pb-3 max-h-[240px] overflow-y-auto scrollbar-thin">
+                                    <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap font-serif-kr">
                                       {blankForm.templateText.split(/(\{\{\d+\}\})/).map((part, i) => {
                                         if (/^\{\{\d+\}\}$/.test(part)) {
                                           const num = parseInt(part.match(/\d+/)?.[0] ?? '0', 10);
                                           const blank = blankForm.blanks.find((b) => b.position === num);
                                           const isShown = shownBlanks.some((b) => b.position === num);
                                           if (isShown) {
-                                            // 쉬움 모드에서 hard 빈칸 + children → answer 보여주되 children만 빈칸
                                             if (key === 'easy' && blank?.difficulty === 'hard' && blank.children?.length) {
-                                              // answer 텍스트를 children 기준으로 분할
                                               const answer = blank.answer;
                                               const sorted = [...blank.children].sort((a, b) => a.offset - b.offset);
                                               const parts: React.ReactNode[] = [];
@@ -1846,7 +1853,7 @@ export default function ConceptsPage() {
                                                   parts.push(<InlineMathText key={`${i}-t${ci}`} text={answer.slice(lastEnd, child.offset)} />);
                                                 }
                                                 parts.push(
-                                                  <span key={`${i}-c${ci}`} className={`inline-block min-w-[2.5em] border-b-2 mx-0.5 text-center text-[10px] ${blankColor}`}>
+                                                  <span key={`${i}-c${ci}`} className={`inline-block min-w-[2.5em] border-b-2 mx-0.5 text-center text-sm ${blankColor}`}>
                                                     {child.position}
                                                   </span>
                                                 );
@@ -1858,11 +1865,10 @@ export default function ConceptsPage() {
                                               return <span key={i}>{parts}</span>;
                                             }
                                             return (
-                                              <span key={i} className={`inline-block min-w-[2.5em] border-b-2 mx-0.5 text-center text-[10px] ${blankColor}`}>{num}</span>
+                                              <span key={i} className={`inline-block min-w-[2.5em] border-b-2 mx-0.5 text-center text-sm ${blankColor}`}>{num}</span>
                                             );
                                           }
-                                          // 해당 안 되는 빈칸은 정답 표시
-                                          return <span key={i} className="font-serif-kr">{blank?.answer || '?'}</span>;
+                                          return <InlineMathText key={i} text={blank?.answer || '?'} />;
                                         }
                                         return <InlineMathText key={i} text={part} />;
                                       })}
@@ -1894,7 +1900,7 @@ export default function ConceptsPage() {
                             <button
                               type="button"
                               onClick={autoRenumber}
-                              className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-primary hover:bg-primary/10 rounded-sm transition-colors"
+                              className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 rounded-sm transition-colors"
                               title="등장 순서대로 1, 2, 3... 재번호"
                             >
                               <RefreshCw className="w-3 h-3" />
@@ -1904,7 +1910,7 @@ export default function ConceptsPage() {
                           <button
                             type="button"
                             onClick={cancelBlankEdit}
-                            className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-slate-500 hover:bg-slate-100 rounded-sm transition-colors"
+                            className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 rounded-sm transition-colors"
                           >
                             <X className="w-3 h-3" />
                             목록
@@ -1913,7 +1919,7 @@ export default function ConceptsPage() {
                       </div>
 
                       {/* Difficulty legend */}
-                      <div className="flex items-center gap-3 text-[10px] text-slate-500">
+                      <div className="flex items-center gap-3 text-xs text-slate-500">
                         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400" /> 쉬움({blankForm.blanks.filter((b) => (b.difficulty || 'easy') === 'easy').length})</span>
                         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400" /> +어려움({blankForm.blanks.filter((b) => b.difficulty === 'hard').length})</span>
                       </div>
@@ -1936,16 +1942,28 @@ export default function ConceptsPage() {
                               {/* Row 1: grip + badge + answer + difficulty */}
                               <div className="flex items-center gap-1.5">
                                 <GripVertical className="w-3 h-3 text-slate-300 shrink-0 cursor-grab" />
-                                <span className={`shrink-0 w-6 h-6 rounded-sm flex items-center justify-center text-[10px] font-bold ${DIFFICULTY_COLORS[b.difficulty || 'easy']}`}>
+                                <span className={`shrink-0 w-6 h-6 rounded-sm flex items-center justify-center text-xs font-bold ${DIFFICULTY_COLORS[b.difficulty || 'easy']}`}>
                                   {b.position}
                                 </span>
-                                <input
-                                  className="flex-1 min-w-0 px-2 py-1 border border-slate-200 rounded-sm text-xs focus:ring-1 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary font-serif-kr"
-                                  value={b.answer}
-                                  onChange={(e) => updateBlankItem(b.position, 'answer', e.target.value)}
-                                  placeholder="정답"
-                                  disabled={!isAdmin}
-                                />
+                                {editingBlankPos === b.position ? (
+                                  <input
+                                    className="flex-1 min-w-0 px-2 py-1 border border-primary rounded-sm text-xs focus:ring-1 focus:ring-primary/40 font-serif-kr"
+                                    value={b.answer}
+                                    onChange={(e) => updateBlankItem(b.position, 'answer', e.target.value)}
+                                    onBlur={() => setEditingBlankPos(null)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'Escape') setEditingBlankPos(null); }}
+                                    placeholder="정답"
+                                    autoFocus
+                                  />
+                                ) : (
+                                  <span
+                                    className={`flex-1 min-w-0 px-2 py-1 rounded-sm text-xs font-serif-kr ${isAdmin ? 'cursor-text hover:bg-slate-100 border border-transparent hover:border-slate-200' : 'bg-slate-50 text-text-secondary'} transition-colors`}
+                                    onClick={isAdmin ? () => setEditingBlankPos(b.position) : undefined}
+                                    title={isAdmin ? '클릭하여 편집' : undefined}
+                                  >
+                                    <InlineMathText text={b.answer || '(정답 없음)'} />
+                                  </span>
+                                )}
                                 {isAdmin ? (
                                   <button
                                     type="button"
@@ -1954,13 +1972,13 @@ export default function ConceptsPage() {
                                       const nextIdx = (DIFFICULTY_CYCLE.indexOf(cur) + 1) % DIFFICULTY_CYCLE.length;
                                       updateBlankItem(b.position, 'difficulty', DIFFICULTY_CYCLE[nextIdx]);
                                     }}
-                                    className={`shrink-0 px-1.5 py-0.5 text-[9px] font-bold rounded-full transition-colors ${DIFFICULTY_COLORS[b.difficulty || 'easy']}`}
+                                    className={`shrink-0 px-1.5 py-0.5 text-xs font-bold rounded-full transition-colors ${DIFFICULTY_COLORS[b.difficulty || 'easy']}`}
                                     title="클릭하여 난이도 변경"
                                   >
                                     {DIFFICULTY_LABELS[b.difficulty || 'easy']}
                                   </button>
                                 ) : (
-                                  <span className={`shrink-0 px-1.5 py-0.5 text-[9px] font-bold rounded-full ${DIFFICULTY_COLORS[b.difficulty || 'easy']}`}>
+                                  <span className={`shrink-0 px-1.5 py-0.5 text-xs font-bold rounded-full ${DIFFICULTY_COLORS[b.difficulty || 'easy']}`}>
                                     {DIFFICULTY_LABELS[b.difficulty || 'easy']}
                                   </span>
                                 )}
@@ -2021,7 +2039,7 @@ export default function ConceptsPage() {
 
                       {/* Difficulty summary */}
                       {blankForm.blanks.length > 0 && (
-                        <div className="flex items-center gap-3 text-[11px] text-slate-500 border-t border-slate-100 pt-2">
+                        <div className="flex items-center gap-3 text-xs text-slate-500 border-t border-slate-200 pt-2">
                           <span>쉬움: {blankForm.blanks.filter((b) => (b.difficulty || 'easy') === 'easy').length}개</span>
                           {blankForm.blanks.filter((b) => b.difficulty === 'hard').length > 0 && (
                             <span>+어려움: {blankForm.blanks.filter((b) => b.difficulty === 'hard').length}개</span>
@@ -2041,54 +2059,98 @@ export default function ConceptsPage() {
                           <button
                             type="button"
                             onClick={() => setShowBlanks((v) => !v)}
-                            className={`text-[11px] px-2 py-0.5 rounded-sm transition-colors ${showBlanks ? 'bg-primary/10 text-primary font-semibold' : 'text-text-secondary hover:bg-slate-100'}`}
+                            className={`text-xs px-2 py-0.5 rounded-sm transition-colors ${showBlanks ? 'bg-primary/10 text-primary font-semibold' : 'text-text-secondary hover:bg-slate-100'}`}
                           >
                             {showBlanks ? '빈칸 표시 ON' : '빈칸 표시 OFF'}
                           </button>
                         )}
                       </div>
                       {isNewConcept || isContentEditing ? (
-                        /* 새 개념 또는 내용 편집 중: 편집 가능한 textarea + 수식 버튼 */
+                        /* 새 개념 또는 내용 편집 중: rendered/raw 토글 */
                         <div className="flex flex-col gap-1.5 flex-1 min-h-0">
                           {isAdmin && (
                             <div className="flex items-center gap-1">
                               <button
                                 type="button"
-                                onClick={() => setMathPopupOpen(true)}
-                                className="inline-flex items-center gap-1 px-2 py-1 text-[11px] text-text-secondary hover:text-primary hover:bg-primary/5 rounded-sm transition-colors border border-slate-200"
-                                title="수식 삽입"
+                                onClick={() => setTemplateViewMode((v) => v === 'rendered' ? 'raw' : 'rendered')}
+                                className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-sm transition-colors border ${
+                                  templateViewMode === 'raw' ? 'text-amber-700 bg-amber-50 border-amber-300' : 'text-text-secondary hover:text-primary hover:bg-primary/5 border-slate-200'
+                                }`}
                               >
-                                <FunctionSquare className="w-3.5 h-3.5" />
-                                수식
+                                <Eye className="w-3.5 h-3.5" />
+                                {templateViewMode === 'raw' ? '미리보기' : '원본'}
                               </button>
-                              <button
-                                type="button"
-                                onClick={handleAiMetadataExtract}
-                                disabled={aiMetadataLoading || !editForm.fullContent.trim()}
-                                className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-violet-600 hover:bg-violet-50 rounded-sm transition-colors border border-violet-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                                title="AI가 개념 내용을 분석하여 학년, 단원, 영역 등을 자동으로 채웁니다"
-                              >
-                                {aiMetadataLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                                {aiMetadataLoading ? 'AI 분석 중...' : 'AI 자동분류'}
-                              </button>
+                              {templateViewMode === 'raw' && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => setMathPopupOpen(true)}
+                                    className="inline-flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-primary hover:bg-primary/5 rounded-sm transition-colors border border-slate-200"
+                                    title="수식 삽입"
+                                  >
+                                    <FunctionSquare className="w-3.5 h-3.5" />
+                                    수식
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={handleAiMetadataExtract}
+                                    disabled={aiMetadataLoading || !editForm.fullContent.trim()}
+                                    className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-violet-600 hover:bg-violet-50 rounded-sm transition-colors border border-violet-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    title="AI가 개념 내용을 분석하여 학년, 단원, 영역 등을 자동으로 채웁니다"
+                                  >
+                                    {aiMetadataLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                                    {aiMetadataLoading ? 'AI 분석 중...' : 'AI 자동분류'}
+                                  </button>
+                                </>
+                              )}
                             </div>
                           )}
-                          <textarea
-                            ref={contentTextareaRef}
-                            className="w-full h-[300px] min-h-[200px] max-h-[600px] resize-y px-3 py-2 border border-slate-200 rounded-sm text-sm bg-white leading-relaxed font-serif-kr focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                            value={editForm.fullContent}
-                            onChange={(e) => setEditForm((p) => ({ ...p, fullContent: e.target.value }))}
-                            placeholder="개념 내용을 입력하세요..."
-                            spellCheck={false}
-                            disabled={!isAdmin}
-                          />
+                          {templateViewMode === 'raw' ? (
+                            <textarea
+                              ref={contentTextareaRef}
+                              className="w-full h-[300px] min-h-[200px] max-h-[600px] resize-y px-3 py-2 border border-slate-200 rounded-sm text-sm bg-white leading-relaxed font-serif-kr focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                              value={editForm.fullContent}
+                              onChange={(e) => setEditForm((p) => ({ ...p, fullContent: e.target.value }))}
+                              placeholder="개념 내용을 입력하세요..."
+                              spellCheck={false}
+                              disabled={!isAdmin}
+                            />
+                          ) : (
+                            <div className="w-full min-h-[200px] flex-1 overflow-y-auto px-3 py-2 border border-slate-200 rounded-sm bg-white scrollbar-thin">
+                              {editForm.fullContent ? (
+                                <EditableMathRenderer
+                                  content={editForm.fullContent}
+                                  className="text-sm font-serif-kr leading-relaxed"
+                                  onMathClick={isAdmin ? (latex, start, end) => setTemplateMathPopup({ latex, start, end }) : undefined}
+                                />
+                              ) : (
+                                <p className="text-slate-400 text-sm">개념 내용이 없습니다.</p>
+                              )}
+                            </div>
+                          )}
+                          {/* fullContent 수식 편집 팝업 */}
+                          {templateViewMode === 'rendered' && (
+                            <MathLivePopup
+                              isOpen={!!templateMathPopup}
+                              onClose={() => setTemplateMathPopup(null)}
+                              onInsert={(latex) => {
+                                if (templateMathPopup) {
+                                  const { start, end } = templateMathPopup;
+                                  const newText = editForm.fullContent.slice(0, start) + `$${latex}$` + editForm.fullContent.slice(end);
+                                  setEditForm((p) => ({ ...p, fullContent: newText }));
+                                }
+                                setTemplateMathPopup(null);
+                              }}
+                              initialLatex={templateMathPopup?.latex ?? ''}
+                            />
+                          )}
                         </div>
                       ) : (
                         /* 기존 개념: 읽기 전용 렌더링 (빈칸 유무 관계없이 수식 렌더링) */
-                        <div className="w-full h-[300px] min-h-[200px] max-h-[600px] resize-y px-3 py-2 border border-slate-200 rounded-sm text-sm bg-white leading-relaxed whitespace-pre-wrap overflow-y-auto font-serif-kr">
+                        <div className="w-full min-h-[200px] flex-1 px-3 py-2 border border-slate-200 rounded-sm text-sm bg-white leading-relaxed whitespace-pre-wrap overflow-y-auto font-serif-kr scrollbar-thin">
                           {blanksLoading ? (
                             <div className="flex items-center justify-center h-full text-text-secondary text-sm">
-                              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                              <Loader2 className="w-6 h-6 animate-spin text-primary" />
                             </div>
                           ) : blankExercises.length > 0 ? (
                             <ContentWithBlanks
@@ -2204,7 +2266,7 @@ export default function ConceptsPage() {
                                           className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 transition-colors border-b border-slate-100"
                                         >
                                           <div className="font-medium text-text-primary">같은 단어 = 같은 빈칸</div>
-                                          <div className="text-[10px] text-text-secondary mt-0.5">&quot;소수&quot;가 3번 나오면 모두 #1</div>
+                                          <div className="text-xs text-text-secondary mt-0.5">&quot;소수&quot;가 3번 나오면 모두 #1</div>
                                         </button>
                                         <button
                                           type="button"
@@ -2212,7 +2274,7 @@ export default function ConceptsPage() {
                                           className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 transition-colors"
                                         >
                                           <div className="font-medium text-text-primary">같은 단어 = 별도 빈칸</div>
-                                          <div className="text-[10px] text-text-secondary mt-0.5">&quot;소수&quot;가 3번 나오면 #1, #3, #10</div>
+                                          <div className="text-xs text-text-secondary mt-0.5">&quot;소수&quot;가 3번 나오면 #1, #3, #10</div>
                                         </button>
                                       </div>
                                       </>
@@ -2237,7 +2299,7 @@ export default function ConceptsPage() {
                               </div>
                             ) : blanksLoading ? (
                               <div className="flex items-center justify-center py-6">
-                                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                                <Loader2 className="w-6 h-6 animate-spin text-primary" />
                               </div>
                             ) : !ex ? (
                               <div className="text-center py-6 text-text-secondary">
@@ -2247,7 +2309,7 @@ export default function ConceptsPage() {
                             ) : (
                               <>
                                 {/* Difficulty summary */}
-                                <div className="flex items-center gap-3 text-[10px] text-slate-500">
+                                <div className="flex items-center gap-3 text-xs text-slate-500">
                                   <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400" /> 쉬움 {easyOnlyCount}</span>
                                   {hardOnlyCount > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400" /> +어려움 {hardOnlyCount}</span>}
                                 </div>
@@ -2256,10 +2318,10 @@ export default function ConceptsPage() {
                                 <div className="flex flex-col gap-1.5 flex-1 overflow-y-auto">
                                   {blanks.map((b) => (
                                     <div key={b.position} className={`flex items-center gap-2 px-3 py-1.5 rounded-sm border ${DIFFICULTY_COLORS[b.difficulty || 'easy']} border-current/20`}>
-                                      <span className="shrink-0 w-5 h-5 rounded-sm bg-slate-200 text-slate-600 flex items-center justify-center text-[9px] font-bold">#{b.position}</span>
-                                      <span className="text-xs font-medium flex-1 truncate font-serif-kr">{b.answer}</span>
-                                      {b.hint && <span className="text-[10px] opacity-60 truncate max-w-[40%] font-serif-kr">{b.hint}</span>}
-                                      <span className="text-[9px] font-bold shrink-0">{DIFFICULTY_LABELS[b.difficulty || 'easy']}</span>
+                                      <span className="shrink-0 w-5 h-5 rounded-sm bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold">#{b.position}</span>
+                                      <span className="text-xs font-medium flex-1 truncate font-serif-kr"><InlineMathText text={b.answer} /></span>
+                                      {b.hint && <span className="text-xs opacity-60 truncate max-w-[40%] font-serif-kr">{b.hint}</span>}
+                                      <span className="text-xs font-bold shrink-0">{DIFFICULTY_LABELS[b.difficulty || 'easy']}</span>
                                     </div>
                                   ))}
                                 </div>
@@ -2369,7 +2431,7 @@ export default function ConceptsPage() {
                       className="mt-0.5 rounded-sm border-slate-300 text-violet-600 focus:ring-violet-500"
                     />
                     <div className="flex-1 min-w-0">
-                      <span className="text-[11px] font-medium text-slate-500">{s.label}</span>
+                      <span className="text-xs font-medium text-slate-500">{s.label}</span>
                       {s.field === 'fullContent' ? (
                         <p className="text-xs text-emerald-600 mt-0.5 leading-relaxed">{s.suggestedDisplay}</p>
                       ) : (

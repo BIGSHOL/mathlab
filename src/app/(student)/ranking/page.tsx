@@ -45,7 +45,7 @@ export default async function RankingPage({
 
   return (
     <div className="px-4 md:px-10 py-8 max-w-[800px] mx-auto w-full">
-      <h1 className="text-3xl font-bold tracking-tight text-text-primary mb-2">랭킹 보드</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-text-primary mb-2">랭킹 보드</h1>
       <p className="text-text-secondary mb-8">전체 학생 XP 랭킹입니다.</p>
 
       {rankings.length === 0 ? (

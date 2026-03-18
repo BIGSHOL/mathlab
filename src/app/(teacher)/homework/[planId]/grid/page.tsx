@@ -113,7 +113,7 @@ const STATUS_CONFIG: Record<HomeworkDayStatus, { icon: typeof CheckCircle2; colo
 
 function CellIcon({ cell, passingScore }: { cell: GridCell; passingScore: number }) {
   if (cell.status === 'REST') {
-    return <span className="text-slate-200 text-[10px]">-</span>;
+    return <span className="text-slate-200 text-xs">-</span>;
   }
 
   const config = STATUS_CONFIG[cell.status];
@@ -127,7 +127,7 @@ function CellIcon({ cell, passingScore }: { cell: GridCell; passingScore: number
         ? 'bg-emerald-100 text-emerald-700'
         : 'bg-red-100 text-red-700';
     return (
-      <span className={`relative inline-flex items-center justify-center w-7 h-6 rounded text-[10px] font-bold ${bgColor}`}>
+      <span className={`relative inline-flex items-center justify-center w-7 h-6 rounded text-xs font-bold ${bgColor}`}>
         {cell.accuracy}
         {cell.isEarly && (
           <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-amber-400 text-white rounded-full flex items-center justify-center text-[8px] font-bold z-10 shadow-sm" title="미리풀기">
@@ -192,7 +192,7 @@ export default function HomeworkGridPage() {
         const json = await res.json();
         setData(json.data);
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('숙제 그리드 조회 실패:', err); }
     setLoading(false);
   }, [planId, gradeFilter]);
 
@@ -212,7 +212,7 @@ export default function HomeworkGridPage() {
         // 가장 최근 시도(마지막 페이지)로 초기 이동
         setAttemptPage(Math.max(0, (json.data.attempts?.length ?? 1) - 1));
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('숙제 일별 상세 조회 실패:', err); }
     setDetailLoading(false);
   }, [planId]);
 
@@ -324,8 +324,8 @@ export default function HomeworkGridPage() {
               <ArrowLeft className="w-4 h-4" />
             </Link>
             <div className="min-w-0">
-              <h1 className="text-sm font-bold text-text-primary truncate">{plan.title}</h1>
-              <div className="flex items-center gap-2 text-[11px] text-text-secondary flex-wrap">
+              <h1 className="text-base font-bold text-text-primary truncate">{plan.title}</h1>
+              <div className="flex items-center gap-2 text-xs text-text-secondary flex-wrap">
                 <span>
                   {(() => {
                     const fmt = (d: Date) => {
@@ -369,12 +369,12 @@ export default function HomeworkGridPage() {
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               placeholder="학생 검색..."
-              className="px-2.5 py-1 border border-slate-200 rounded-sm text-xs w-28"
+              className="h-8 px-2.5 border border-slate-200 rounded-sm text-sm w-28 focus:ring-2 focus:ring-primary/40 focus:border-primary"
             />
             <div className="flex gap-0.5">
               <button
                 onClick={() => setGradeFilter(undefined)}
-                className={`px-2 py-0.5 rounded-sm text-[10px] font-medium transition-colors ${
+                className={`px-2 py-0.5 rounded-sm text-xs font-medium transition-colors ${
                   !gradeFilter ? 'bg-primary text-white' : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
                 }`}
               >
@@ -384,7 +384,7 @@ export default function HomeworkGridPage() {
                 <button
                   key={g}
                   onClick={() => setGradeFilter(g)}
-                  className={`px-1.5 py-0.5 rounded-sm text-[10px] font-medium transition-colors ${
+                  className={`px-1.5 py-0.5 rounded-sm text-xs font-medium transition-colors ${
                     gradeFilter === g ? 'bg-primary text-white' : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
                   }`}
                 >
@@ -395,7 +395,7 @@ export default function HomeworkGridPage() {
                 <button
                   key={g}
                   onClick={() => setGradeFilter(g)}
-                  className={`px-1.5 py-0.5 rounded-sm text-[10px] font-medium transition-colors ${
+                  className={`px-1.5 py-0.5 rounded-sm text-xs font-medium transition-colors ${
                     gradeFilter === g ? 'bg-primary text-white' : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
                   }`}
                 >
@@ -408,7 +408,7 @@ export default function HomeworkGridPage() {
       </div>
 
       {/* Month Navigation */}
-      <div className="shrink-0 px-5 py-2 border-b border-slate-100 bg-white flex items-center justify-center gap-4">
+      <div className="shrink-0 px-5 py-2 border-b border-slate-200 bg-white flex items-center justify-center gap-4">
         <button
           onClick={goToPrevMonth}
           disabled={monthIdx <= 0}
@@ -458,12 +458,12 @@ export default function HomeworkGridPage() {
                     className="border-b border-slate-200 py-1.5 text-center"
                     style={homeworkDays.has(calDay.dateStr) ? { backgroundColor: isToday ? '#bae6fd' : '#e0f2fe' } : undefined}
                   >
-                    <div className={`text-[10px] font-bold ${
+                    <div className={`text-xs font-bold ${
                       isToday ? 'text-primary' : !isPlanDay ? 'text-slate-300' : 'text-slate-500'
                     }`}>
                       {calDay.date}
                     </div>
-                    <div className={`text-[9px] ${
+                    <div className={`text-xs ${
                       !isPlanDay ? 'text-slate-200' :
                       isSun ? 'text-red-400' : isSat ? 'text-blue-400' : 'text-slate-400'
                     }`}>
@@ -472,10 +472,10 @@ export default function HomeworkGridPage() {
                   </th>
                 );
               })}
-              <th className="sticky right-0 z-20 bg-slate-50 border-b border-l border-slate-200 px-1 py-1.5 text-center text-[10px] font-semibold text-slate-500">
+              <th className="sticky right-0 z-20 bg-slate-50 border-b border-l border-slate-200 px-1 py-1.5 text-center text-xs font-semibold text-slate-500">
                 완료율
               </th>
-              <th className="border-b border-slate-200 px-1 py-1.5 text-center text-[10px] font-semibold text-slate-500">
+              <th className="border-b border-slate-200 px-1 py-1.5 text-center text-xs font-semibold text-slate-500">
                 정답률
               </th>
             </tr>
@@ -487,7 +487,7 @@ export default function HomeworkGridPage() {
                   <div className="flex items-center gap-1">
                     <span className="text-xs font-medium text-text-primary truncate">{student.name}</span>
                     {student.grade && (
-                      <span className="text-[9px] px-1 py-0.5 bg-slate-100 text-slate-500 rounded shrink-0">
+                      <span className="text-xs px-1 py-0.5 bg-slate-100 text-slate-500 rounded shrink-0">
                         {student.grade > 6 ? `중${student.grade - 6}` : `초${student.grade}`}
                       </span>
                     )}
@@ -525,7 +525,7 @@ export default function HomeworkGridPage() {
                         <CellIcon cell={cell} passingScore={plan.passingScore} />
                         {cell.status === 'COMPLETED' && cell.correctCount !== undefined && (
                           <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover:block z-30">
-                            <div className="bg-slate-800 text-white text-[10px] px-2 py-1 rounded-sm whitespace-nowrap">
+                            <div className="bg-slate-800 text-white text-xs px-2 py-1 rounded-sm whitespace-nowrap">
                               {cell.correctCount}/{cell.totalCount} 정답 ({cell.accuracy}%)
                             </div>
                           </div>
@@ -537,13 +537,13 @@ export default function HomeworkGridPage() {
                 <td className="sticky right-0 z-10 bg-white border-b border-l border-slate-100 px-1 py-1.5 text-center">
                   {student.completionRate > 100 ? (
                     <span
-                      className="inline-block text-[11px] font-bold text-transparent bg-clip-text whitespace-nowrap"
+                      className="inline-block text-xs font-bold text-transparent bg-clip-text whitespace-nowrap"
                       style={{ backgroundImage: 'linear-gradient(135deg, #f59e0b, #ef4444, #8b5cf6)' }}
                     >
                       {student.completionRate}%
                     </span>
                   ) : (
-                    <span className={`text-[10px] font-bold ${
+                    <span className={`text-xs font-bold ${
                       student.completionRate >= 80 ? 'text-emerald-600' :
                       student.completionRate >= 50 ? 'text-amber-600' :
                       'text-red-500'
@@ -553,7 +553,7 @@ export default function HomeworkGridPage() {
                   )}
                 </td>
                 <td className="border-b border-slate-100 px-1 py-1.5 text-center">
-                  <span className={`text-[10px] font-bold ${
+                  <span className={`text-xs font-bold ${
                     student.avgAccuracy >= 80 ? 'text-emerald-600' :
                     student.avgAccuracy >= 60 ? 'text-amber-600' :
                     'text-red-500'
@@ -566,7 +566,7 @@ export default function HomeworkGridPage() {
 
             {/* Summary row */}
             <tr className="bg-slate-50 font-semibold">
-              <td className="sticky left-0 z-10 bg-slate-50 border-t-2 border-r border-slate-200 px-2 py-1.5 text-[10px] text-slate-600">
+              <td className="sticky left-0 z-10 bg-slate-50 border-t-2 border-r border-slate-200 px-2 py-1.5 text-xs text-slate-600">
                 일별 완료율
               </td>
               {Array.from({ length: totalCols }, (_, i) => {
@@ -586,9 +586,9 @@ export default function HomeworkGridPage() {
                 return (
                   <td key={i} className="border-t-2 border-slate-200 py-1.5 text-center" style={homeworkDays.has(calDay.dateStr) ? { backgroundColor: isToday ? '#bae6fd' : '#e0f2fe' } : undefined}>
                     {rate === -2 ? (
-                      <span className="text-[10px] text-slate-200">-</span>
+                      <span className="text-xs text-slate-200">-</span>
                     ) : rate >= 0 ? (
-                      <span className={`text-[10px] font-bold ${
+                      <span className={`text-xs font-bold ${
                         rate >= 80 ? 'text-emerald-600' :
                         rate >= 50 ? 'text-amber-600' :
                         'text-red-500'
@@ -596,7 +596,7 @@ export default function HomeworkGridPage() {
                         {rate}%
                       </span>
                     ) : (
-                      <span className="text-[10px] text-slate-300">-</span>
+                      <span className="text-xs text-slate-300">-</span>
                     )}
                   </td>
                 );
@@ -615,7 +615,7 @@ export default function HomeworkGridPage() {
       </div>
 
       {/* Legend */}
-      <div className="shrink-0 px-5 py-1.5 border-t border-slate-200 bg-white flex items-center gap-3 text-[10px] text-slate-500">
+      <div className="shrink-0 px-5 py-1.5 border-t border-slate-200 bg-white flex items-center gap-3 text-xs text-slate-500">
         {Object.entries(STATUS_CONFIG).map(([status, config]) => {
           const Icon = config.icon;
           return (
@@ -639,10 +639,10 @@ export default function HomeworkGridPage() {
           <div className="shrink-0 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
             <div className="min-w-0">
               <div className="text-sm font-bold text-text-primary truncate">{detailPanel.studentName}</div>
-              <div className="text-[11px] text-text-secondary flex items-center gap-1">
+              <div className="text-xs text-text-secondary flex items-center gap-1">
                 <span>{detailPanel.dayIndex + 1}일차 · {detailPanel.dateStr}</span>
                 {detailPanel.isEarly && (
-                  <span className="px-1 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-700">미리풀기</span>
+                  <span className="px-1 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-700">미리풀기</span>
                 )}
               </div>
             </div>
@@ -653,7 +653,7 @@ export default function HomeworkGridPage() {
 
           {/* Attempt pagination (if multiple attempts) */}
           {detailData && detailData.attempts.length > 1 && (
-            <div className="shrink-0 px-4 py-2 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div className="shrink-0 px-4 py-2 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
               <button
                 onClick={() => setAttemptPage(Math.max(0, attemptPage - 1))}
                 disabled={attemptPage === 0}
@@ -669,7 +669,7 @@ export default function HomeworkGridPage() {
                     <button
                       key={att.id}
                       onClick={() => setAttemptPage(i)}
-                      className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                      className={`px-1.5 py-0.5 rounded text-xs font-medium transition-colors ${
                         attemptPage === i
                           ? passed ? 'bg-emerald-500 text-white' : 'bg-primary text-white'
                           : passed ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
@@ -694,7 +694,7 @@ export default function HomeworkGridPage() {
           <div className="flex-1 overflow-y-auto">
             {detailLoading ? (
               <div className="flex-1 flex items-center justify-center">
-                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div>
             ) : !detailData ? (
               <div className="text-center py-12 text-xs text-text-secondary">데이터를 불러올 수 없습니다</div>
@@ -710,13 +710,13 @@ export default function HomeworkGridPage() {
                 {currentAttempt ? (
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div className="bg-slate-50 rounded-sm p-2">
-                      <div className="text-[10px] text-text-secondary">정답</div>
+                      <div className="text-xs text-text-secondary">정답</div>
                       <div className="text-sm font-bold text-text-primary">
                         {currentAttempt.correctCount}/{currentAttempt.problemCount}
                       </div>
                     </div>
                     <div className="bg-slate-50 rounded-sm p-2">
-                      <div className="text-[10px] text-text-secondary">정답률</div>
+                      <div className="text-xs text-text-secondary">정답률</div>
                       <div className={`text-sm font-bold ${
                         currentAttempt.problemCount > 0
                           ? Math.round(currentAttempt.correctCount / currentAttempt.problemCount * 100) >= plan.passingScore
@@ -732,7 +732,7 @@ export default function HomeworkGridPage() {
                       </div>
                     </div>
                     <div className="bg-slate-50 rounded-sm p-2">
-                      <div className="text-[10px] text-text-secondary">소요시간</div>
+                      <div className="text-xs text-text-secondary">소요시간</div>
                       <div className="text-sm font-bold text-text-primary">
                         {Math.floor(currentAttempt.totalTimeSeconds / 60)}분 {currentAttempt.totalTimeSeconds % 60}초
                       </div>
@@ -762,7 +762,7 @@ export default function HomeworkGridPage() {
                       >
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] font-bold text-text-secondary">Q{idx + 1}</span>
+                            <span className="text-xs font-bold text-text-secondary">Q{idx + 1}</span>
                             {answer.isCorrect ? (
                               <svg className="w-7 h-7 -ml-8 -mr-1 -my-1.5 pointer-events-none" viewBox="0 0 100 100" fill="none">
                                 <path d="M60,8 C80,8 95,22 95,45 C95,72 75,92 48,92 C20,92 5,72 5,48 C5,22 22,8 48,8 C68,8 85,18 92,35 Q96,45 88,50 L98,68" stroke="#dc2626" strokeWidth="6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
@@ -772,7 +772,7 @@ export default function HomeworkGridPage() {
                                 <path d="M82,12 C72,28 55,58 18,88" stroke="#dc2626" strokeWidth="6" fill="none" strokeLinecap="round" />
                               </svg>
                             )}
-                            <span className="inline-flex items-center gap-0.5 text-[9px] text-text-secondary">
+                            <span className="inline-flex items-center gap-0.5 text-xs text-text-secondary">
                               <Clock className="w-2.5 h-2.5" />
                               {answer.timeSpentSeconds}초
                             </span>
@@ -785,15 +785,15 @@ export default function HomeworkGridPage() {
                             const isWrongSelected = isSelected && !answer.isCorrect;
                             const isCorrectChoice = choice === answer.correctAnswer;
                             return (
-                              <div key={ci} className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] ${
+                              <div key={ci} className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-xs ${
                                 isWrongSelected ? 'bg-red-100 text-red-600 font-semibold' :
                                 isCorrectChoice ? 'bg-blue-50 text-blue-600 font-semibold' :
                                 'text-text-secondary'
                               }`}>
-                                <span className="w-3 text-center text-[10px] shrink-0">{ci + 1}</span>
+                                <span className="w-3 text-center text-xs shrink-0">{ci + 1}</span>
                                 <MathRenderer content={choice} className="[&_p]:my-0 [&_.katex]:text-xs inline" />
-                                {isWrongSelected && <span className="ml-auto text-[9px] shrink-0">선택</span>}
-                                {isCorrectChoice && <span className="ml-auto text-[9px] shrink-0">정답</span>}
+                                {isWrongSelected && <span className="ml-auto text-xs shrink-0">선택</span>}
+                                {isCorrectChoice && <span className="ml-auto text-xs shrink-0">정답</span>}
                               </div>
                             );
                           })}
@@ -817,7 +817,7 @@ export default function HomeworkGridPage() {
                         >
                           <div className="flex items-start justify-between gap-2 mb-1">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-[10px] font-bold text-text-secondary">Q{idx + 1}</span>
+                              <span className="text-xs font-bold text-text-secondary">Q{idx + 1}</span>
                               {answer?.isCorrect && (
                                 <svg className="w-7 h-7 -ml-8 -mr-1 -my-1.5 pointer-events-none" viewBox="0 0 100 100" fill="none">
                                   <path d="M60,8 C80,8 95,22 95,45 C95,72 75,92 48,92 C20,92 5,72 5,48 C5,22 22,8 48,8 C68,8 85,18 92,35 Q96,45 88,50 L98,68" stroke="#dc2626" strokeWidth="6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
@@ -829,7 +829,7 @@ export default function HomeworkGridPage() {
                                 </svg>
                               )}
                               {answer && (
-                                <span className="inline-flex items-center gap-0.5 text-[9px] text-text-secondary">
+                                <span className="inline-flex items-center gap-0.5 text-xs text-text-secondary">
                                   <Clock className="w-2.5 h-2.5" />
                                   {answer.timeSpentSeconds}초
                                 </span>
@@ -843,15 +843,15 @@ export default function HomeworkGridPage() {
                               const isWrongSelected = isSelected && !answer?.isCorrect;
                               const isCorrectChoice = choice === problem.answer;
                               return (
-                                <div key={ci} className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] ${
+                                <div key={ci} className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-xs ${
                                   isWrongSelected ? 'bg-red-100 text-red-600 font-semibold' :
                                   isCorrectChoice && answer ? 'bg-blue-50 text-blue-600 font-semibold' :
                                   'text-text-secondary'
                                 }`}>
-                                  <span className="w-3 text-center text-[10px] shrink-0">{ci + 1}</span>
+                                  <span className="w-3 text-center text-xs shrink-0">{ci + 1}</span>
                                   <MathRenderer content={choice} className="[&_p]:my-0 [&_.katex]:text-xs inline" />
-                                  {isWrongSelected && <span className="ml-auto text-[9px] shrink-0">선택</span>}
-                                  {isCorrectChoice && answer && <span className="ml-auto text-[9px] shrink-0">정답</span>}
+                                  {isWrongSelected && <span className="ml-auto text-xs shrink-0">선택</span>}
+                                  {isCorrectChoice && answer && <span className="ml-auto text-xs shrink-0">정답</span>}
                                 </div>
                               );
                             })}

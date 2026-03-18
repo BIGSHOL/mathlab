@@ -84,7 +84,7 @@ export default function WrongAnswersPage() {
             setStudentName(student.name);
           }
         }
-      } catch { /* ignore */ }
+      } catch (err) { console.error('학생 정보 조회 실패:', err); }
     }
     resolveStudent();
   }, [studentSeq]);
@@ -162,7 +162,7 @@ export default function WrongAnswersPage() {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>
     );
   }
@@ -279,7 +279,7 @@ export default function WrongAnswersPage() {
                       <span className="text-xs font-medium text-slate-500">
                         {q.chapter} · #{q.questionNum}
                       </span>
-                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                      <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${
                         q.difficulty === 'BASIC' ? 'bg-green-100 text-green-700' :
                         q.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
                         q.difficulty === 'HIGH' ? 'bg-red-100 text-red-700' :
@@ -287,7 +287,7 @@ export default function WrongAnswersPage() {
                       }`}>
                         {DIFFICULTY_LABELS[q.difficulty as keyof typeof DIFFICULTY_LABELS]}
                       </span>
-                      <span className="text-[10px] text-slate-400">
+                      <span className="text-xs text-slate-400">
                         {item.testTitle}
                       </span>
                     </div>
@@ -315,7 +315,7 @@ export default function WrongAnswersPage() {
 
                 {/* Expanded detail */}
                 {isExpanded && (
-                  <div className="border-t border-slate-100 bg-slate-50/50 p-4 flex flex-col gap-4">
+                  <div className="border-t border-slate-200 bg-slate-50/50 p-4 flex flex-col gap-4">
                     {/* Full question */}
                     <div>
                       <p className="text-xs font-bold text-text-secondary mb-1.5">문제 전문</p>
@@ -354,13 +354,13 @@ export default function WrongAnswersPage() {
                     {/* Answer comparison */}
                     <div className="grid grid-cols-2 gap-3">
                       <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                        <p className="text-[10px] font-bold text-red-600 mb-1">학생 답안</p>
+                        <p className="text-xs font-bold text-red-600 mb-1">학생 답안</p>
                         <div className="text-sm text-red-800 font-medium">
                           <MathRenderer content={item.lastWrongAnswer} />
                         </div>
                       </div>
                       <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
-                        <p className="text-[10px] font-bold text-emerald-600 mb-1">정답</p>
+                        <p className="text-xs font-bold text-emerald-600 mb-1">정답</p>
                         <div className="text-sm text-emerald-800 font-medium">
                           <MathRenderer content={q.answer} />
                         </div>
@@ -394,7 +394,7 @@ export default function WrongAnswersPage() {
                               <span className="font-semibold text-text-primary">
                                 {sq.bookCode} #{sq.questionNum}
                               </span>
-                              <span className={`px-1 py-0.5 rounded text-[9px] font-bold ${
+                              <span className={`px-1 py-0.5 rounded text-xs font-bold ${
                                 sq.difficulty === 'BASIC' ? 'bg-green-100 text-green-700' :
                                 sq.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
                                 sq.difficulty === 'HIGH' ? 'bg-red-100 text-red-700' :
@@ -410,7 +410,7 @@ export default function WrongAnswersPage() {
                             </div>
                           ))}
                         </div>
-                        <p className="text-[10px] text-text-secondary mt-1.5">
+                        <p className="text-xs text-text-secondary mt-1.5">
                           같은 단원·난이도의 다른 문제입니다. 재출제용으로 활용하세요.
                         </p>
                       </div>

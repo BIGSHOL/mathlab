@@ -77,25 +77,27 @@ export default function ConceptPage() {
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  // Fetch concept
+  // Fetch concept, adjacent, memo in parallel
   useEffect(() => {
     if (!id) return;
-    fetch(`/api/concepts/${id}`)
-      .then((r) => r.json())
-      .then((json) => { if (json.data) setConcept(json.data); })
-      .finally(() => setLoading(false));
+    Promise.all([
+      fetch(`/api/concepts/${id}`)
+        .then((r) => r.json())
+        .catch(() => null),
+      fetch(`/api/concepts/${id}/adjacent`)
+        .then((r) => r.json())
+        .catch(() => null),
+      fetch(`/api/concepts/${id}/memo`)
+        .then((r) => r.ok ? r.json() : null)
+        .catch(() => null),
+    ]).then(([conceptJson, adjacentJson, memoJson]) => {
+      if (conceptJson?.data) setConcept(conceptJson.data);
+      if (adjacentJson?.data) setAdjacent(adjacentJson.data);
+      if (memoJson?.data) setMemoContent(memoJson.data);
+    }).finally(() => setLoading(false));
   }, [id]);
 
-  // Fetch adjacent concepts (이전/다음)
-  useEffect(() => {
-    if (!id) return;
-    fetch(`/api/concepts/${id}/adjacent`)
-      .then((r) => r.json())
-      .then((json) => { if (json.data) setAdjacent(json.data); })
-      .catch(() => {});
-  }, [id]);
-
-  // Fetch progress (uses real concept ID)
+  // Fetch progress (uses real concept ID, depends on concept)
   useEffect(() => {
     if (!concept) return;
     fetch(`/api/learning/progress?conceptId=${concept.id}`)
@@ -113,14 +115,6 @@ export default function ConceptPage() {
       });
   }, [concept]);
 
-  // Fetch memo
-  useEffect(() => {
-    fetch(`/api/concepts/${id}/memo`)
-      .then((r) => r.ok ? r.json() : null)
-      .then((json) => { if (json?.data) setMemoContent(json.data); })
-      .catch(() => {});
-  }, [id]);
-
   const saveMemo = useCallback((text: string) => {
     if (memoTimerRef.current) clearTimeout(memoTimerRef.current);
     memoTimerRef.current = setTimeout(() => {
@@ -128,7 +122,7 @@ export default function ConceptPage() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: text }),
-      }).catch(() => {});
+      }).catch((err) => console.error('메모 저장 실패:', err));
     }, 1000);
   }, [id]);
 
@@ -223,8 +217,8 @@ export default function ConceptPage() {
 
   if (loading || !concept) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>
     );
   }
@@ -327,13 +321,13 @@ export default function ConceptPage() {
       <div className="flex-1 max-w-[1440px] w-full mx-auto p-6 flex flex-col lg:flex-row gap-6">
         {/* Left Panel: Content / Instructions */}
         <section className="flex-1 lg:max-w-[45%] flex flex-col bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-slate-50">
+          <div className="p-6 border-b border-slate-200 flex items-center gap-3 bg-slate-50">
             <div className={`w-8 h-8 rounded-full ${currentStage.color} text-white flex items-center justify-center font-bold text-sm`}>
               <BookOpen className="w-4 h-4" />
             </div>
             <h2 className="text-lg font-bold">{currentStage.label}</h2>
           </div>
-          <div className="p-8 flex-1 overflow-y-auto">
+          <div className="p-5 flex-1 overflow-y-auto">
             {currentStage.key === 'READING' && (
               <div className="prose prose-slate max-w-none">
                 <MathRenderer content={concept.fullContent.replace(/\n/g, '<br/>')} />
@@ -361,7 +355,7 @@ export default function ConceptPage() {
           <div className="flex-1 bg-white rounded-sm shadow-sm border border-slate-200 flex flex-col overflow-hidden">
             {currentStage.key === 'READING' && (
               <>
-                <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
+                <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
                   <h3 className="font-bold text-text-primary text-sm">스마트 메모</h3>
                 </div>
                 <div className="flex-1 p-4">
@@ -377,7 +371,7 @@ export default function ConceptPage() {
 
             {(currentStage.key === 'BLANK_EASY' || currentStage.key === 'BLANK_HARD' || currentStage.key === 'BLANK_FULL') && blanks && (
               <>
-                <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
+                <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
                   <h3 className="font-bold text-text-primary text-sm">
                     {currentStage.key === 'BLANK_FULL' ? '통문장 암기' : '빈칸 채우기'}
                   </h3>
@@ -511,7 +505,7 @@ function renderBlanksTemplate(
           <button
             type="button"
             onClick={() => setShowHints((prev) => ({ ...prev, [position]: !prev[position] }))}
-            className={`w-5 h-5 rounded-full text-[11px] font-bold leading-none transition-all ${
+            className={`w-5 h-5 rounded-full text-xs font-bold leading-none transition-all ${
               showHints[position]
                 ? 'bg-amber-400 text-white shadow-sm'
                 : 'bg-amber-100 text-amber-500 hover:bg-amber-200'

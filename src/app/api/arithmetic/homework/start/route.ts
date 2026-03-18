@@ -18,8 +18,9 @@ export async function POST(request: NextRequest) {
     const result = await startHomeworkAttempt(user.id, planId, dayIndex, !!isRetry);
     return NextResponse.json({ data: result });
   } catch (err) {
+    console.error('숙제 시작 오류:', err);
     return NextResponse.json(
-      { error: { code: 'START_FAILED', message: (err as Error).message } },
+      { error: { code: 'START_FAILED', message: '숙제 시작에 실패했습니다' } },
       { status: 400 }
     );
   }

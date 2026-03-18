@@ -55,7 +55,7 @@ export default function QuizHostPage() {
         const json = await res.json();
         setQuiz(json.data);
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('퀴즈 세션 조회 실패:', err); }
     setLoading(false);
   }, [id]);
 
@@ -86,7 +86,7 @@ export default function QuizHostPage() {
   if (loading || !quiz) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>
     );
   }

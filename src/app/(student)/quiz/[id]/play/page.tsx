@@ -70,7 +70,7 @@ export default function QuizPlayPage() {
           setFeedback(null);
         }
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('퀴즈 상태 조회 실패:', err); }
     setLoading(false);
   }, [id]);
 
@@ -101,7 +101,7 @@ export default function QuizPlayPage() {
         setFeedback(json.data);
         setMyScore(json.data.newScore);
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('퀴즈 답안 제출 실패:', err); }
   };
 
   if (loading || !quiz) {

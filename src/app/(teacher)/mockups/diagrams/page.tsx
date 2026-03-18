@@ -165,8 +165,8 @@ export default function DiagramMockupPage() {
 
               {/* 파라미터 미리보기 */}
               <details className="mt-2">
-                <summary className="text-[10px] text-slate-400 cursor-pointer hover:text-slate-600">파라미터 보기</summary>
-                <pre className="mt-1 text-[10px] text-slate-500 bg-slate-50 p-2 rounded overflow-auto max-h-32 font-mono">
+                <summary className="text-xs text-slate-400 cursor-pointer hover:text-slate-600">파라미터 보기</summary>
+                <pre className="mt-1 text-xs text-slate-500 bg-slate-50 p-2 rounded overflow-auto max-h-32 font-mono">
                   {JSON.stringify(entry.params, null, 2)}
                 </pre>
               </details>

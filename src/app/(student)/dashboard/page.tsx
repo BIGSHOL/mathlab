@@ -252,7 +252,7 @@ export default async function StudentDashboard({
 
       <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight text-text-primary">대시보드</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-text-primary">대시보드</h1>
           {streak > 0 && (
             <div className="flex items-center gap-2">
               <Flame className="w-4 h-4 text-secondary" />
@@ -303,25 +303,25 @@ export default async function StudentDashboard({
           <div className="absolute top-0 right-0 p-2.5">
             <Award className="w-5 h-5 text-primary opacity-30" />
           </div>
-          <p className="text-text-secondary text-[10px] md:text-xs font-semibold tracking-wide">현재 레벨</p>
+          <p className="text-text-secondary text-xs font-semibold tracking-wide">현재 레벨</p>
           <p className="text-text-primary text-lg md:text-xl font-bold leading-none">Level {level}</p>
-          <p className="text-[10px] md:text-xs text-text-secondary">{nextLevel.remaining} XP 남음</p>
+          <p className="text-xs text-text-secondary">{nextLevel.remaining} XP 남음</p>
         </div>
 
         <div className="glass-card flex flex-col gap-2 rounded-sm p-3 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
           <div className="absolute top-0 right-0 p-2.5">
             <Star className="w-5 h-5 text-secondary opacity-30" />
           </div>
-          <p className="text-text-secondary text-[10px] md:text-xs font-semibold tracking-wide">나의 포인트</p>
+          <p className="text-text-secondary text-xs font-semibold tracking-wide">나의 포인트</p>
           <p className="text-text-primary text-lg md:text-xl font-bold leading-none">{totalXp.toLocaleString()}</p>
-          <p className="text-[10px] md:text-xs text-text-secondary">XP</p>
+          <p className="text-xs text-text-secondary">XP</p>
         </div>
 
         <div className="glass-card flex flex-col gap-2 rounded-sm p-3 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
           <div className="absolute top-0 right-0 p-2.5">
             <CheckCircle className="w-5 h-5 text-indigo-500 opacity-30" />
           </div>
-          <p className="text-text-secondary text-[10px] md:text-xs font-semibold tracking-wide">완료 개념</p>
+          <p className="text-text-secondary text-xs font-semibold tracking-wide">완료 개념</p>
           <p className="text-text-primary text-lg md:text-xl font-bold leading-none">
             {completedCount}
             <span className="text-sm text-slate-400 font-bold ml-0.5">/ {totalConcepts}</span>
@@ -333,12 +333,12 @@ export default async function StudentDashboard({
           <div className="absolute top-0 right-0 p-2.5">
             <Activity className="w-5 h-5 text-emerald-500 opacity-30" />
           </div>
-          <p className="text-text-secondary text-[10px] md:text-xs font-semibold tracking-wide">주간 활동</p>
+          <p className="text-text-secondary text-xs font-semibold tracking-wide">주간 활동</p>
           <p className="text-text-primary text-lg md:text-xl font-bold leading-none">
             {weeklyActivity}
             <span className="text-sm text-slate-400 font-bold ml-0.5">건</span>
           </p>
-          <p className="text-[10px] md:text-xs text-text-secondary">최근 7일</p>
+          <p className="text-xs text-text-secondary">최근 7일</p>
         </div>
       </div>
 
@@ -420,7 +420,7 @@ export default async function StudentDashboard({
                       <p className="text-text-primary text-xs font-semibold truncate group-hover:text-primary transition-colors">
                         {c.title}
                       </p>
-                      <p className="text-text-secondary text-[10px]">{c.subject.title}</p>
+                      <p className="text-text-secondary text-xs">{c.subject.title}</p>
                     </div>
                     <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-primary transition-colors" />
                   </Link>
@@ -468,7 +468,7 @@ export default async function StudentDashboard({
                 })}
                 {myRank && myRank > 5 && (
                   <>
-                    <div className="text-center text-slate-300 text-[10px]">···</div>
+                    <div className="text-center text-slate-300 text-xs">···</div>
                     <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-sm text-xs bg-primary/5 border border-primary/20">
                       <span className="w-5 text-center font-bold text-slate-400">{myRank}</span>
                       <span className="flex-1 truncate font-bold text-primary">{user.name} (나)</span>

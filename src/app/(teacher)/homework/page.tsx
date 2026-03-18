@@ -106,7 +106,7 @@ export default function HomeworkPage() {
         const json = await res.json();
         setPlans(json.data ?? []);
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('연산 숙제 플랜 목록 조회 실패:', err); }
     setLoading(false);
   }, []);
 
@@ -124,7 +124,7 @@ export default function HomeworkPage() {
         );
         setEnrolledIds(ids);
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('연산 숙제 플랜 상세 조회 실패:', err); }
   }, []);
 
   useEffect(() => {
@@ -147,7 +147,7 @@ export default function HomeworkPage() {
         const json = await res.json();
         setAllStudents((json.data ?? []).filter((u: Student) => u.role === 'STUDENT'));
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('학생 목록 조회 실패:', err); }
     setStudentsLoading(false);
   }, [allStudents.length]);
 
@@ -337,7 +337,7 @@ export default function HomeworkPage() {
             <div className="flex items-center gap-2 min-w-0">
               <CalendarCheck className="w-4 h-4 text-primary shrink-0" />
               <span className="font-semibold text-sm text-text-primary truncate">연산 숙제</span>
-              <span className="ml-auto px-1.5 py-0.5 rounded-sm text-[10px] font-bold bg-primary/10 text-primary shrink-0">
+              <span className="ml-auto px-1.5 py-0.5 rounded-sm text-xs font-bold bg-primary/10 text-primary shrink-0">
                 {filteredPlans.length}
               </span>
             </div>
@@ -352,7 +352,7 @@ export default function HomeworkPage() {
 
         {!leftCollapsed && (
           <>
-            <div className="p-3 border-b border-slate-100 space-y-2">
+            <div className="p-3 border-b border-slate-200 space-y-2">
               <Link href="/homework/create" className="block">
                 <Button className="w-full text-sm" size="sm">
                   <Plus className="w-3.5 h-3.5 mr-1" />
@@ -389,13 +389,13 @@ export default function HomeworkPage() {
                 <div className="space-y-2 pt-1">
                   {/* Title search */}
                   <div className="relative">
-                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                     <input
                       type="text"
                       value={titleSearch}
                       onChange={(e) => setTitleSearch(e.target.value)}
                       placeholder="플랜 이름 검색..."
-                      className="w-full pl-7 pr-7 py-1 border border-slate-200 rounded-sm text-[11px] focus:outline-none focus:ring-1 focus:ring-primary"
+                      className="w-full h-8 pl-8 pr-7 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
                     />
                     {titleSearch && (
                       <button onClick={() => setTitleSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -406,13 +406,13 @@ export default function HomeworkPage() {
                   {/* Category filter */}
                   {allCategories.length > 1 && (
                     <div>
-                      <div className="text-[10px] text-text-secondary mb-1">연산 유형</div>
+                      <div className="text-xs text-text-secondary mb-1">연산 유형</div>
                       <div className="flex flex-wrap gap-1">
                         {allCategories.map((cat) => (
                           <button
                             key={cat}
                             onClick={() => setCatFilter(catFilter === cat ? null : cat)}
-                            className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                            className={`px-1.5 py-0.5 rounded text-xs font-medium transition-colors ${
                               catFilter === cat
                                 ? 'bg-primary text-white'
                                 : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
@@ -427,13 +427,13 @@ export default function HomeworkPage() {
                   {/* Mode filter */}
                   {allModes.length > 1 && (
                     <div>
-                      <div className="text-[10px] text-text-secondary mb-1">배정 방식</div>
+                      <div className="text-xs text-text-secondary mb-1">배정 방식</div>
                       <div className="flex flex-wrap gap-1">
                         {allModes.map((mode) => (
                           <button
                             key={mode}
                             onClick={() => setModeFilter(modeFilter === mode ? null : mode)}
-                            className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                            className={`px-1.5 py-0.5 rounded text-xs font-medium transition-colors ${
                               modeFilter === mode
                                 ? 'bg-primary text-white'
                                 : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
@@ -449,7 +449,7 @@ export default function HomeworkPage() {
                   {hasActiveFilters && (
                     <button
                       onClick={() => { setCatFilter(null); setModeFilter(null); setTitleSearch(''); }}
-                      className="text-[10px] text-red-500 hover:text-red-600"
+                      className="text-xs text-red-500 hover:text-red-600"
                     >
                       필터 초기화
                     </button>
@@ -461,7 +461,7 @@ export default function HomeworkPage() {
             <div className="flex-1 overflow-y-auto">
               {loading ? (
                 <div className="flex justify-center py-12">
-                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 </div>
               ) : filteredPlans.length === 0 ? (
                 <div className="p-4 text-center">
@@ -482,26 +482,26 @@ export default function HomeworkPage() {
                     >
                       <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                         {plan.isActive ? (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-700">활성</span>
+                          <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-700">활성</span>
                         ) : (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-500">종료</span>
+                          <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-500">종료</span>
                         )}
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary/10 text-primary">
+                        <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-primary/10 text-primary">
                           {plan.dailyCount}문제/일
                         </span>
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600">
+                        <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-600">
                           통과 {plan.passingScore}%
                         </span>
                       </div>
                       <p className="text-sm font-medium text-text-primary truncate">{plan.title}</p>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {plan.categories.map((c) => (
-                          <span key={c} className="px-1 py-0.5 rounded text-[9px] font-medium bg-slate-50 text-text-secondary border border-slate-100">
+                          <span key={c} className="px-1 py-0.5 rounded text-xs font-medium bg-slate-50 text-text-secondary border border-slate-100">
                             {CATEGORY_LABELS[c] ?? c}
                           </span>
                         ))}
                       </div>
-                      <div className="flex items-center gap-1 mt-1 text-[10px] text-text-secondary">
+                      <div className="flex items-center gap-1 mt-1 text-xs text-text-secondary">
                         <Users className="w-3 h-3 shrink-0" />
                         <span>{plan._count.enrollments}명</span>
                         <span className="text-slate-300">·</span>
@@ -539,15 +539,15 @@ export default function HomeworkPage() {
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto">
-            <div className="p-5 max-w-3xl mx-auto space-y-4">
+            <div className="p-3 md:p-4 max-w-3xl mx-auto space-y-4">
               {/* Header + actions */}
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 mb-1">
                     {selectedPlan.isActive ? (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-700">활성</span>
+                      <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-700">활성</span>
                     ) : (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-500">종료</span>
+                      <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-500">종료</span>
                     )}
                   </div>
                   <h2 className="text-lg font-bold text-text-primary">{selectedPlan.title}</h2>
@@ -590,25 +590,25 @@ export default function HomeworkPage() {
                 <div className="grid grid-cols-2 gap-px bg-slate-200">
                   {/* 기간 */}
                   <div className="bg-white px-3 py-2">
-                    <div className="text-[10px] text-text-secondary mb-0.5">기간</div>
+                    <div className="text-xs text-text-secondary mb-0.5">기간</div>
                     <div className="text-xs font-semibold text-text-primary">{formatPeriod(selectedPlan)}</div>
                   </div>
                   {/* 배정 방식 */}
                   <div className="bg-white px-3 py-2">
-                    <div className="text-[10px] text-text-secondary mb-0.5">배정 방식</div>
+                    <div className="text-xs text-text-secondary mb-0.5">배정 방식</div>
                     <div className="text-xs font-semibold text-text-primary">{MODE_LABELS[selectedPlan.progressionMode] ?? selectedPlan.progressionMode}</div>
                   </div>
                   {/* 문제 수 */}
                   <div className="bg-white px-3 py-2">
-                    <div className="text-[10px] text-text-secondary mb-0.5">문제 수</div>
+                    <div className="text-xs text-text-secondary mb-0.5">문제 수</div>
                     <div className="text-xs font-semibold text-text-primary">하루 {selectedPlan.dailyCount}문제</div>
                   </div>
                   {/* 연산 유형 */}
                   <div className="bg-white px-3 py-2">
-                    <div className="text-[10px] text-text-secondary mb-0.5">연산 유형</div>
+                    <div className="text-xs text-text-secondary mb-0.5">연산 유형</div>
                     <div className="flex flex-wrap gap-1">
                       {selectedPlan.categories.map((c) => (
-                        <span key={c} className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-text-primary">
+                        <span key={c} className="px-1.5 py-0.5 rounded text-xs font-medium bg-slate-100 text-text-primary">
                           {CATEGORY_LABELS[c] ?? c}
                         </span>
                       ))}
@@ -616,12 +616,12 @@ export default function HomeworkPage() {
                   </div>
                   {/* 통과 기준 */}
                   <div className="bg-white px-3 py-2">
-                    <div className="text-[10px] text-text-secondary mb-0.5">통과 기준</div>
+                    <div className="text-xs text-text-secondary mb-0.5">통과 기준</div>
                     <div className="text-xs font-semibold text-text-primary">정답률 {selectedPlan.passingScore}% 이상</div>
                   </div>
                   {/* 재시도 */}
                   <div className="bg-white px-3 py-2">
-                    <div className="text-[10px] text-text-secondary mb-0.5">미통과 시</div>
+                    <div className="text-xs text-text-secondary mb-0.5">미통과 시</div>
                     <div className="text-xs font-semibold text-text-primary">
                       {selectedPlan.retryOnFail ? (
                         <span className="text-amber-600">
@@ -638,21 +638,21 @@ export default function HomeworkPage() {
                 {/* 요일별 배정 상세 */}
                 {selectedPlan.progressionMode === 'weekday' && selectedPlan.weekdayMap && (
                   <div className="border-t border-slate-200 bg-white px-3 py-2">
-                    <div className="text-[10px] text-text-secondary mb-1">요일별 배정</div>
+                    <div className="text-xs text-text-secondary mb-1">요일별 배정</div>
                     <div className="flex gap-1.5">
                       {DAY_NAMES.map((name, dow) => {
                         const cats = selectedPlan.weekdayMap?.[String(dow)];
                         if (!cats || cats.length === 0) return (
                           <div key={dow} className="flex-1 text-center">
-                            <div className={`text-[10px] font-medium mb-0.5 ${dow === 0 ? 'text-red-400' : dow === 6 ? 'text-blue-400' : 'text-slate-400'}`}>{name}</div>
-                            <div className="text-[9px] text-slate-300">-</div>
+                            <div className={`text-xs font-medium mb-0.5 ${dow === 0 ? 'text-red-400' : dow === 6 ? 'text-blue-400' : 'text-slate-400'}`}>{name}</div>
+                            <div className="text-xs text-slate-300">-</div>
                           </div>
                         );
                         return (
                           <div key={dow} className="flex-1 text-center">
-                            <div className={`text-[10px] font-medium mb-0.5 ${dow === 0 ? 'text-red-400' : dow === 6 ? 'text-blue-400' : 'text-text-secondary'}`}>{name}</div>
+                            <div className={`text-xs font-medium mb-0.5 ${dow === 0 ? 'text-red-400' : dow === 6 ? 'text-blue-400' : 'text-text-secondary'}`}>{name}</div>
                             {cats.map((cat) => (
-                              <div key={cat} className="text-[9px] font-medium text-primary truncate">
+                              <div key={cat} className="text-xs font-medium text-primary truncate">
                                 {CATEGORY_LABELS[cat as ArithmeticCategory] ?? cat}
                               </div>
                             ))}
@@ -666,13 +666,13 @@ export default function HomeworkPage() {
 
               {/* Students section */}
               <div className="border border-slate-200 rounded-sm">
-                <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 bg-slate-50/50">
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200 bg-slate-50/50">
                   <div className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-primary" />
                     <span className="text-sm font-semibold text-text-primary">
                       배정 학생
                     </span>
-                    <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-bold bg-primary/10 text-primary">
+                    <span className="px-1.5 py-0.5 rounded-sm text-xs font-bold bg-primary/10 text-primary">
                       {selectedPlan._count.enrollments}명
                     </span>
                   </div>
@@ -700,7 +700,7 @@ export default function HomeworkPage() {
                         >
                           {s.name}
                           {s.grade && (
-                            <span className="text-[10px] text-text-secondary">
+                            <span className="text-xs text-text-secondary">
                               {s.grade > 6 ? `중${s.grade - 6}` : `초${s.grade}`}
                             </span>
                           )}
@@ -722,7 +722,7 @@ export default function HomeworkPage() {
                           value={studentSearch}
                           onChange={(e) => setStudentSearch(e.target.value)}
                           placeholder="학생 이름 검색..."
-                          className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-sm text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                          className="w-full h-8 pl-8 pr-3 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
                         />
                         {studentSearch && (
                           <button
@@ -737,10 +737,10 @@ export default function HomeworkPage() {
                       {/* Student list */}
                       {studentsLoading ? (
                         <div className="flex justify-center py-4">
-                          <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                          <Loader2 className="w-6 h-6 animate-spin text-primary" />
                         </div>
                       ) : (
-                        <div className="max-h-48 overflow-y-auto border border-slate-100 rounded-sm divide-y divide-slate-50">
+                        <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-sm divide-y divide-slate-50">
                           {filteredStudents.map((s) => {
                             const state = getStudentState(s.id);
                             return (
@@ -756,12 +756,12 @@ export default function HomeworkPage() {
                                 <div className="flex items-center gap-2">
                                   <span className="font-medium text-text-primary">{s.name}</span>
                                   {s.grade && (
-                                    <span className="text-[10px] text-text-secondary">
+                                    <span className="text-xs text-text-secondary">
                                       {s.grade > 6 ? `중${s.grade - 6}` : `초${s.grade}`}
                                     </span>
                                   )}
                                 </div>
-                                <span className={`text-[10px] font-medium ${
+                                <span className={`text-xs font-medium ${
                                   state === 'enrolled' ? 'text-primary' :
                                   state === 'adding' ? 'text-emerald-600' :
                                   state === 'removing' ? 'text-red-500' : 'text-slate-400'
@@ -784,7 +784,7 @@ export default function HomeworkPage() {
 
                       {/* Actions */}
                       <div className="flex items-center justify-between">
-                        <div className="text-[10px] text-text-secondary">
+                        <div className="text-xs text-text-secondary">
                           {hasChanges && (
                             <>
                               {pendingAdd.size > 0 && <span className="text-emerald-600">+{pendingAdd.size}명 추가</span>}

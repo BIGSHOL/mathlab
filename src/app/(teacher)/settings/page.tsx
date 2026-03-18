@@ -111,7 +111,7 @@ export default function SettingsPage() {
             {!leftPanelCollapsed && (
               <div className="flex items-center gap-2 min-w-0">
                 <Settings className="w-4 h-4 text-primary shrink-0" />
-                <h1 className="text-sm font-bold text-text-primary truncate">설정</h1>
+                <h1 className="text-base font-bold text-text-primary truncate">설정</h1>
               </div>
             )}
             <button
@@ -196,7 +196,7 @@ export default function SettingsPage() {
                   />
                 </div>
               </div>
-              <div className="pt-2 border-t border-slate-100">
+              <div className="pt-2 border-t border-slate-200">
                 <Button onClick={handleSaveProfile} disabled={profileSaving}>
                   {profileSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                   변경사항 저장
@@ -242,7 +242,7 @@ export default function SettingsPage() {
                   />
                 </div>
               </div>
-              <div className="pt-2 border-t border-slate-100">
+              <div className="pt-2 border-t border-slate-200">
                 <Button onClick={handleChangePassword} disabled={passwordSaving}>
                   {passwordSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Lock className="w-4 h-4 mr-2" />}
                   비밀번호 변경

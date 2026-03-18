@@ -109,7 +109,7 @@ export default function GeneratePage() {
           )}
 
           {error && (
-            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-200 text-red-700 px-4 py-2 rounded-lg shadow-lg z-50 flex items-center gap-2 print:hidden">
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-200 text-red-700 px-4 py-2 rounded-sm shadow-lg z-50 flex items-center gap-2 print:hidden">
               <span className="font-bold">오류!</span> {error}
             </div>
           )}

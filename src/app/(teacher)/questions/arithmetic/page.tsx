@@ -192,7 +192,7 @@ export default function ArithmeticGeneratorPage() {
         setGenSettings({ schoolLevel, grade, category });
         setShowAnswers(false);
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('연산 문제 생성 실패:', err); }
     setLoading(false);
   };
 
@@ -203,7 +203,7 @@ export default function ArithmeticGeneratorPage() {
         <div className="shrink-0 px-3 py-2.5 border-b border-slate-200 bg-white">
           <div className="flex items-center gap-2">
             <Calculator className="w-4 h-4 text-primary shrink-0" />
-            <h1 className="text-sm font-bold text-text-primary">연산 문제 생성기</h1>
+            <h1 className="text-base font-bold text-text-primary">연산 문제 생성기</h1>
           </div>
         </div>
 

@@ -11,6 +11,7 @@ export async function GET() {
     const homework = await getTodayHomework(user.id);
     return NextResponse.json({ data: homework });
   } catch (err) {
-    return serverError((err as Error).message);
+    console.error('오늘의 숙제 조회 오류:', err);
+    return serverError('서버 오류가 발생했습니다');
   }
 }
