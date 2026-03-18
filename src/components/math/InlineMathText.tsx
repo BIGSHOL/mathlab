@@ -1,7 +1,38 @@
 'use client';
 
+import React, { useMemo } from 'react';
 import katex from 'katex';
-import { useMemo } from 'react';
+
+/** 기본 마크다운(bold, heading) 처리 — MathRenderer와 시각 일관성 유지 */
+function renderMarkdown(text: string): React.ReactNode {
+  // 줄 단위로 분리하여 헤딩 감지
+  const lines = text.split('\n');
+  return lines.map((line, li) => {
+    const trimmed = line.trimStart();
+    // ### 헤딩
+    if (trimmed.startsWith('### ')) {
+      const content = trimmed.slice(4);
+      return <React.Fragment key={li}>{li > 0 && '\n'}<span className="block text-sm font-bold text-slate-600 mt-2 mb-0.5">{renderBold(content)}</span></React.Fragment>;
+    }
+    // ## 헤딩
+    if (trimmed.startsWith('## ')) {
+      const content = trimmed.slice(3);
+      return <React.Fragment key={li}>{li > 0 && '\n'}<span className="block text-base font-bold text-slate-800 mt-3 mb-1">{renderBold(content)}</span></React.Fragment>;
+    }
+    return <React.Fragment key={li}>{li > 0 && '\n'}{renderBold(line)}</React.Fragment>;
+  });
+}
+
+function renderBold(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  if (parts.length === 1) return text;
+  return parts.map((p, i) => {
+    if (p.startsWith('**') && p.endsWith('**')) {
+      return <strong key={i}>{p.slice(2, -2)}</strong>;
+    }
+    return <React.Fragment key={i}>{p}</React.Fragment>;
+  });
+}
 
 interface InlineMathTextProps {
   text: string;
@@ -99,7 +130,7 @@ export function InlineMathText({ text, className = '' }: InlineMathTextProps) {
             return <span key={i}>{part.content}</span>;
           }
         }
-        return <span key={i}>{part.content}</span>;
+        return <span key={i}>{renderMarkdown(part.content)}</span>;
       })}
     </span>
   );

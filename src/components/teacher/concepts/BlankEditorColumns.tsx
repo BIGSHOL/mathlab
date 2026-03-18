@@ -194,7 +194,7 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
               </button>
               {previewOriginalOpen && (
                 <div className="px-3 pb-3 max-h-[240px] overflow-y-auto scrollbar-thin">
-                  <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap font-serif-kr">
+                  <p className="text-[15px] text-text-primary leading-8 whitespace-pre-wrap font-serif-kr">
                     {blankForm.templateText.split(/(\{\{\d+\}\})/).map((part, i) =>
                       /^\{\{\d+\}\}$/.test(part) ? (
                         <span key={i} className="inline-flex items-center mx-0.5 px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded-sm text-sm font-bold">
@@ -230,7 +230,7 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
                   </button>
                   {previewStudentOpen && (
                     <div className="px-3 pb-3 max-h-[240px] overflow-y-auto scrollbar-thin">
-                      <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap font-serif-kr">
+                      <p className="text-[15px] text-text-primary leading-8 whitespace-pre-wrap font-serif-kr">
                         {blankForm.templateText.split(/(\{\{\d+\}\})/).map((part, i) => {
                           if (/^\{\{\d+\}\}$/.test(part)) {
                             const num = parseInt(part.match(/\d+/)?.[0] ?? '0', 10);

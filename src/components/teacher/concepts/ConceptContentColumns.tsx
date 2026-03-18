@@ -133,7 +133,7 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
             )}
           </div>
         ) : (
-          <div className="w-full min-h-[200px] flex-1 px-3 py-2 border border-slate-200 rounded-sm text-sm bg-white leading-relaxed whitespace-pre-wrap overflow-y-auto font-serif-kr scrollbar-thin">
+          <div className="w-full min-h-[200px] flex-1 px-3 py-2 border border-slate-200 rounded-sm text-[15px] bg-white leading-8 whitespace-pre-wrap overflow-y-auto font-serif-kr scrollbar-thin">
             {blanksLoading ? (
               <div className="flex items-center justify-center h-full text-text-secondary text-sm">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
