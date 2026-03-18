@@ -12,6 +12,8 @@ interface ReportSummaryProps {
   totalTimeSeconds?: number;
   domainScores: Record<LevelTestDomain, { total: number; correct: number; accuracy: number }>;
   studentName?: string;
+  aiOverallFeedback?: string | null;
+  aiDomainFeedbacks?: Record<string, string> | null;
 }
 
 const LEVEL_HEX: Record<string, string> = {
@@ -55,9 +57,11 @@ export function ReportSummary({
   totalCount,
   domainScores,
   studentName,
+  aiOverallFeedback,
+  aiDomainFeedbacks,
 }: ReportSummaryProps) {
   const levelColor = LEVEL_HEX[recommendLevel] ?? '#64748b';
-  const feedback = getOverallFeedback(overallAccuracy, recommendLevel);
+  const feedback = aiOverallFeedback || getOverallFeedback(overallAccuracy, recommendLevel);
 
   const radarData = DOMAIN_ORDER.map((d) => ({
     domain: d,
@@ -206,7 +210,7 @@ export function ReportSummary({
           const score = domainScores[domain];
           if (!score) return null;
           const badge = getGradeBadge(score.accuracy);
-          const domainFeedback = getDomainFeedback(domain, score.accuracy);
+          const domainFeedback = aiDomainFeedbacks?.[domain] || getDomainFeedback(domain, score.accuracy);
 
           return (
             <div key={domain} className="bg-white p-2.5 rounded-xl border border-slate-200">

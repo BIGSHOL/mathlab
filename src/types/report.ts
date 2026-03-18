@@ -66,6 +66,9 @@ export interface LevelTestReportData {
   aiContent: {
     totalReview: string | null;
     analysisGuide: string | null;
+    overallFeedback: string | null;
+    domainFeedbacks: Record<string, string> | null;
+    prerequisiteFeedback: string | null;
   };
 }
 

@@ -174,6 +174,8 @@ export default function LevelTestReportPage() {
         totalTimeSeconds={derived.totalTimeSeconds}
         domainScores={data.diagnostic.domainScores as Record<LevelTestDomain, { total: number; correct: number; accuracy: number }>}
         studentName={data.student.name}
+        aiOverallFeedback={data.aiContent?.overallFeedback}
+        aiDomainFeedbacks={data.aiContent?.domainFeedbacks}
       />
     </ReportPageWrapper>
   );
@@ -198,6 +200,7 @@ export default function LevelTestReportPage() {
         strongAreas={data.diagnostic.strongAreas}
         prerequisiteChains={data.diagnostic.prerequisiteChains}
         prerequisiteWeaknesses={data.diagnostic.prerequisiteWeaknesses}
+        aiPrerequisiteFeedback={data.aiContent?.prerequisiteFeedback}
       />
     </ReportPageWrapper>
   );

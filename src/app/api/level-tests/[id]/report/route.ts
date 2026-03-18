@@ -140,12 +140,8 @@ export async function GET(
     total: s.total,
   }));
 
-  // 멘트 생성
+  // AI 멘트 생성 (실패 시 정적 멘트로 fallback)
   const studentName = attempt.student.name;
-  const difficultyComment = getDifficultyComment(studentName, difficultyStats);
-  const chapterComment = getChapterComment(studentName, chapterStats);
-
-  // AI 총평 + 분석도움말 (비동기, 실패해도 에러 아님)
   const weakAreas = diagnostic.weakAreas as Array<{ chapter: string; accuracy: number; total: number; correct: number }>;
   const strongAreas = diagnostic.strongAreas as Array<{ chapter: string; accuracy: number; total: number; correct: number }>;
 
@@ -207,12 +203,15 @@ export async function GET(
       })),
       academy: { name: 'MathLab' },
       comments: {
-        difficultyComment,
-        chapterComment,
+        difficultyComment: aiContent?.difficultyComment ?? getDifficultyComment(studentName, difficultyStats),
+        chapterComment: aiContent?.chapterComment ?? getChapterComment(studentName, chapterStats),
       },
       aiContent: {
         totalReview: aiContent?.totalReview ?? null,
         analysisGuide: aiContent?.analysisGuide ?? null,
+        overallFeedback: aiContent?.overallFeedback ?? null,
+        domainFeedbacks: aiContent?.domainFeedbacks ?? null,
+        prerequisiteFeedback: aiContent?.prerequisiteFeedback ?? null,
       },
     },
   });

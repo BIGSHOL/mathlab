@@ -8,6 +8,7 @@ interface ReportWeakAreasProps {
   strongAreas: ReportAreaInfo[];
   prerequisiteChains: ReportPrereqChain[];
   prerequisiteWeaknesses: ReportPrerequisiteWeakness[];
+  aiPrerequisiteFeedback?: string | null;
 }
 
 export function ReportWeakAreas({
@@ -15,8 +16,9 @@ export function ReportWeakAreas({
   strongAreas,
   prerequisiteChains,
   prerequisiteWeaknesses: _prerequisiteWeaknesses,
+  aiPrerequisiteFeedback,
 }: ReportWeakAreasProps) {
-  const prereqFeedback = getPrerequisiteFeedback(prerequisiteChains.length);
+  const prereqFeedback = aiPrerequisiteFeedback || getPrerequisiteFeedback(prerequisiteChains.length);
 
   return (
     <div className="h-full px-10 py-6 flex flex-col">
