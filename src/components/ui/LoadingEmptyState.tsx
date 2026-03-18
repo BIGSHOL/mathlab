@@ -10,6 +10,7 @@ interface LoadingEmptyStateProps {
   message?: string;
   description?: string;
   action?: React.ReactNode;
+  skeleton?: React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -24,9 +25,11 @@ export function LoadingEmptyState({
   message,
   description,
   action,
+  skeleton,
   children,
 }: LoadingEmptyStateProps) {
   if (loading) {
+    if (skeleton) return <>{skeleton}</>;
     return (
       <div className="flex justify-center py-12">
         <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -37,9 +40,13 @@ export function LoadingEmptyState({
   if (empty) {
     return (
       <Card className="p-12 text-center">
-        {icon && <div className="mx-auto mb-3">{icon}</div>}
-        {message && <p className="text-text-secondary mb-4">{message}</p>}
-        {description && <p className="text-sm text-slate-400 mt-1">{description}</p>}
+        {icon && (
+          <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+            {icon}
+          </div>
+        )}
+        {message && <p className="text-text-primary font-semibold mb-1">{message}</p>}
+        {description && <p className="text-sm text-text-secondary mb-4">{description}</p>}
         {action}
       </Card>
     );

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useXpNotification } from '@/stores/xp-notification';
 import { toast } from '@/components/ui/Toast';
 import {
   CalendarCheck,
@@ -169,6 +170,7 @@ export default function HomeworkPracticePage() {
               if (json.data) {
                 setXpEarned(json.data.xpEarned);
                 setLeveledUp(json.data.leveledUp);
+                if (json.data.xpEarned > 0) useXpNotification.getState().show(json.data.xpEarned);
               }
             })
             .catch((err) => console.error('연산 숙제 완료 처리 실패:', err));

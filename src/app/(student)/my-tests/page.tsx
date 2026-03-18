@@ -22,8 +22,18 @@ export default function StudentTestsPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      <div className="p-6 max-w-3xl mx-auto space-y-4">
+        <div className="h-8 w-40 bg-slate-200 animate-pulse rounded" />
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="bg-white border border-slate-200 rounded-sm p-5 shadow-soft space-y-3">
+            <div className="flex gap-2">
+              <div className="h-5 w-16 bg-slate-200 animate-pulse rounded" />
+              <div className="h-5 w-20 bg-slate-200 animate-pulse rounded" />
+            </div>
+            <div className="h-5 w-3/4 bg-slate-200 animate-pulse rounded" />
+            <div className="h-4 w-1/2 bg-slate-200 animate-pulse rounded" />
+          </div>
+        ))}
       </div>
     );
   }

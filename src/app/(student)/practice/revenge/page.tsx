@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useXpNotification } from '@/stores/xp-notification';
 import { Swords, CheckCircle2, XCircle, Trophy, ArrowLeft, Loader2, Star } from 'lucide-react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
@@ -59,7 +60,10 @@ export default function RevengePage() {
         body: JSON.stringify({ answers: [...answers], chapter: selected.chapter }),
       });
       const json = await res.json();
-      if (json.data) setResult(json.data);
+      if (json.data) {
+        setResult(json.data);
+        if (json.data.xpEarned > 0) useXpNotification.getState().show(json.data.xpEarned);
+      }
     } else {
       setCurrentIdx((i) => i + 1);
       setFeedback(null);

@@ -12,6 +12,7 @@ import { getTodayHomework } from '@/lib/services/homework';
 import { getTodayConceptHomework } from '@/lib/services/concept-homework';
 import { getTodayQuestionHomework } from '@/lib/services/question-homework';
 import { DashboardGamification } from '@/components/student/DashboardGamification';
+import { DashboardStatCards } from '@/components/student/DashboardStatCards';
 
 export default async function StudentDashboard({
   searchParams,
@@ -347,7 +348,7 @@ export default async function StudentDashboard({
       )}
 
       {/* ──── 섹션 2: 통계 카드 4열 (glass-card) ──── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+      <DashboardStatCards className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
         <div className="glass-card flex flex-col gap-2 rounded-sm p-3 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
           <div className="absolute top-0 right-0 p-2.5">
             <Award className="w-5 h-5 text-primary opacity-30" />
@@ -389,7 +390,7 @@ export default async function StudentDashboard({
           </p>
           <p className="text-xs text-text-secondary">최근 7일</p>
         </div>
-      </div>
+      </DashboardStatCards>
 
       {/* ──── Row 1: 진행 중인 학습 (2/3) + 추천 학습 + 오늘의 미션 (1/3) ──── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">

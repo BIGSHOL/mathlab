@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useXpNotification } from '@/stores/xp-notification';
 import { toast } from '@/components/ui/Toast';
 import {
   FileQuestion,
@@ -126,6 +127,7 @@ export default function QuestionHomeworkPage() {
         setScore(json.data.score);
         setCorrectCount(json.data.correctCount);
         setXpEarned(json.data.xpEarned ?? 0);
+        if ((json.data.xpEarned ?? 0) > 0) useXpNotification.getState().show(json.data.xpEarned);
         setPhase('result');
       }
     } catch {

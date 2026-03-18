@@ -1,6 +1,7 @@
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { ToastContainer } from '@/components/ui/Toast';
+import { XpToastContainer } from '@/components/ui/XpToast';
 import { getCurrentUser } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
@@ -18,6 +19,7 @@ export default async function StudentLayout({
       <main className="flex-1 min-h-0 overflow-y-auto pb-16 md:pb-0">{children}</main>
       <BottomNav />
       <ToastContainer />
+      <XpToastContainer />
     </div>
   );
 }

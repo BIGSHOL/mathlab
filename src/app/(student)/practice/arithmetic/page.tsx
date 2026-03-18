@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useXpNotification } from '@/stores/xp-notification';
 import Link from 'next/link';
 import {
   Calculator,
@@ -185,6 +186,7 @@ export default function ArithmeticPracticePage() {
             if (json.data) {
               setXpEarned(json.data.xpEarned);
               setLeveledUp(json.data.leveledUp);
+              if (json.data.xpEarned > 0) useXpNotification.getState().show(json.data.xpEarned);
             }
           })
           .catch((err) => console.error('연산 연습 완료 처리 실패:', err));
@@ -453,16 +455,16 @@ export default function ArithmeticPracticePage() {
                   key={idx}
                   disabled={feedback !== null}
                   onClick={() => handleAnswer(choice)}
-                  className={`px-4 py-4 rounded-sm border-2 text-lg font-bold transition-all ${
+                  className={`px-4 py-4 rounded-sm border-2 text-lg font-bold transition-all active:scale-95 ${
                     showResult
                       ? isCorrectChoice
-                        ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
+                        ? 'border-emerald-400 bg-emerald-50 text-emerald-700 animate-bounce-in'
                         : isSelected
-                          ? 'border-red-400 bg-red-50 text-red-700'
+                          ? 'border-red-400 bg-red-50 text-red-700 animate-shake'
                           : 'border-slate-200 opacity-50 text-text-secondary'
                       : isSelected
                         ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-slate-200 hover:border-slate-300 text-text-primary'
+                        : 'border-slate-200 hover:border-slate-300 hover:shadow-sm text-text-primary'
                   }`}
                 >
                   <MathRenderer content={choice} />

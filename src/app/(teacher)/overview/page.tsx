@@ -19,6 +19,7 @@ import Link from 'next/link';
 import MonthlyChart from '@/components/charts/MonthlyChart';
 import DashboardAnalytics from '@/components/charts/DashboardAnalytics';
 import { OverviewActions } from '@/components/teacher/OverviewActions';
+import { DashboardStatCards } from '@/components/student/DashboardStatCards';
 
 function getAchievementColor(percent: number) {
   if (percent < 55) return { bg: 'bg-red-100', text: 'text-red-600', badge: 'text-red-500' };
@@ -209,7 +210,7 @@ export default async function TeacherDashboard({
         </div>
 
         {/* Stat Cards - 2x2 on mobile, 4 on desktop */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+        <DashboardStatCards className="grid grid-cols-2 lg:grid-cols-4 gap-2">
           {stats.map((stat) => (
             <div
               key={stat.label}
@@ -243,7 +244,7 @@ export default async function TeacherDashboard({
               </span>
             </div>
           ))}
-        </div>
+        </DashboardStatCards>
 
         {/* Row 2: Chart + Focus Students */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
