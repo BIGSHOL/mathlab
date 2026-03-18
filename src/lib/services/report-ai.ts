@@ -1,6 +1,6 @@
 /**
  * 레벨테스트 보고서 AI 멘트 생성
- * - 총평: Claude Haiku (비용 최적화, 고품질 한국어 서술)
+ * - 총평: Claude 4.5 Haiku (비용 최적화, 고품질 한국어 서술)
  * - Fallback: static 멘트 (API 실패 시)
  */
 
@@ -92,8 +92,8 @@ ${chapterText}
 }`;
 
     const response = await client.messages.create({
-      model: 'claude-3-5-haiku-20241022',
-      max_tokens: 1024,
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 2048,
       messages: [{ role: 'user', content: prompt }],
     });
 
