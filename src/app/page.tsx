@@ -37,7 +37,7 @@ const features = [
     icon: Calculator,
     title: '무한 연산 생성기',
     description:
-      '62개 이상의 연산 카테고리에서 난이도별 문제를 무한 생성. 사칙연산부터 분수·소수까지.',
+      '78개 이상의 연산 카테고리에서 난이도별 문제를 무한 생성. 사칙연산부터 분수·소수까지.',
     color: 'text-primary',
     bg: 'bg-indigo-50',
   },
@@ -125,7 +125,7 @@ const teacherTools = [
 
 const stats = [
   { value: '초3 ~ 고3', label: '지원 학년' },
-  { value: '62+', label: '연산 카테고리' },
+  { value: '78+', label: '연산 카테고리' },
   { value: '4단계', label: '개념 학습법' },
   { value: 'AI', label: '자동 문제 생성' },
 ];
@@ -409,7 +409,7 @@ export default function LandingPage() {
         <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2 text-text-secondary text-sm">
             <LogoIcon className="w-4 h-4" />
-            <span>&copy; 2025 MathLab. All rights reserved.</span>
+            <span>&copy; 2026 MathLab. All rights reserved.</span>
           </div>
           <div className="flex gap-6 text-sm text-text-secondary">
             <Link href="/updates" className="hover:text-primary transition-colors">

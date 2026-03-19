@@ -6,7 +6,7 @@ import {
   Clock,
   Play,
   CheckCircle2,
-  Loader2,
+  // Loader2,
   Trophy,
   RotateCcw,
   CalendarClock,

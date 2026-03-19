@@ -197,7 +197,7 @@ export default async function TeacherDashboard({
   ];
 
   return (
-      <div className="flex flex-col grow min-w-0 max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-3 md:py-4 gap-3">
+      <div className="flex flex-col grow min-w-0 max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-6 md:py-8 gap-3">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2">
           <div>

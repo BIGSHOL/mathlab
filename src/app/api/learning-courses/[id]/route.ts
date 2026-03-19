@@ -11,9 +11,10 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
   if (isResponse(user)) return user;
 
   const { id } = await params;
+  const seq = Number(id);
 
   const course = await prisma.learningCourse.findUnique({
-    where: { id },
+    where: seq > 0 ? { seq } : { id },
     include: {
       concepts: {
         orderBy: { sortOrder: 'asc' },
@@ -97,6 +98,9 @@ export async function PATCH(request: NextRequest, { params }: Ctx) {
   if (isResponse(user)) return user;
 
   const { id } = await params;
+  const seq = Number(id);
+  const where = seq > 0 ? { seq } : { id };
+
   const body = await request.json();
   const parsed = updateSchema.safeParse(body);
   if (!parsed.success) {
@@ -114,9 +118,16 @@ export async function PATCH(request: NextRequest, { params }: Ctx) {
     return NextResponse.json({ data: { removed: true } });
   }
 
+  // seq로 조회 시 실제 id를 먼저 가져옴
+  const existing = await prisma.learningCourse.findUnique({ where, select: { id: true } });
+  if (!existing) {
+    return NextResponse.json({ error: { code: 'NOT_FOUND', message: '과정을 찾을 수 없습니다' } }, { status: 404 });
+  }
+  const courseId = existing.id;
+
   const updated = await prisma.$transaction(async (tx) => {
     const course = await tx.learningCourse.update({
-      where: { id },
+      where: { id: courseId },
       data: {
         ...(title !== undefined && { title }),
         ...(description !== undefined && { description }),
@@ -125,10 +136,10 @@ export async function PATCH(request: NextRequest, { params }: Ctx) {
     });
 
     if (conceptIds) {
-      await tx.learningCourseConcept.deleteMany({ where: { courseId: id } });
+      await tx.learningCourseConcept.deleteMany({ where: { courseId } });
       await tx.learningCourseConcept.createMany({
         data: conceptIds.map((conceptId, i) => ({
-          courseId: id,
+          courseId,
           conceptId,
           sortOrder: i,
         })),
@@ -147,8 +158,9 @@ export async function DELETE(_req: NextRequest, { params }: Ctx) {
   if (isResponse(user)) return user;
 
   const { id } = await params;
+  const seq = Number(id);
 
-  await prisma.learningCourse.delete({ where: { id } });
+  await prisma.learningCourse.delete({ where: seq > 0 ? { seq } : { id } });
 
   return NextResponse.json({ data: { deleted: true } });
 }

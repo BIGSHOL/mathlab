@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/lib/auth';
-import { HelpContent } from './HelpContent';
+import { HelpContent } from '@/app/help/HelpContent';
 
 export default async function HelpPage() {
   const user = await getCurrentUser();

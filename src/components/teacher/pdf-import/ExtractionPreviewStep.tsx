@@ -15,6 +15,7 @@ import {
   FunctionSquare,
   Lightbulb,
   Shapes,
+  Sparkles,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -52,6 +53,11 @@ interface ExtractionPreviewStepProps {
   displaySubjects: { id: string; title: string; gradeLevel: number }[];
   subjectId: string;
   setSubjectId: (id: string) => void;
+
+  // AI 풀이 생성
+  generatingSolutions: boolean;
+  generateProgress: { done: number; total: number };
+  startGenerateSolutions: () => Promise<void>;
 
   // 해설 PDF
   matchingSolutions: boolean;
@@ -92,6 +98,9 @@ export function ExtractionPreviewStep({
   displaySubjects,
   subjectId,
   setSubjectId,
+  generatingSolutions,
+  generateProgress,
+  startGenerateSolutions,
   matchingSolutions,
   solutionInputRef,
   solutionProgress,
@@ -139,8 +148,25 @@ export function ExtractionPreviewStep({
                 추출된 문제: <span className="text-primary">{problems.length}개</span>
               </span>
 
-              {/* 해설 PDF 업로드 */}
+              {/* AI 풀이 생성 + 해설 PDF 업로드 */}
               <div className="ml-auto flex items-center gap-2">
+                {generatingSolutions ? (
+                  <span className="text-sm text-violet-600 flex items-center gap-1">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    풀이 생성 중... ({generateProgress.done}/{generateProgress.total})
+                  </span>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={startGenerateSolutions}
+                    disabled={matchingSolutions || problems.every((p) => !!p.explanation)}
+                    className="flex items-center gap-1"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    AI 풀이 생성
+                  </Button>
+                )}
                 {matchingSolutions ? (
                   <span className="text-sm text-blue-600 flex items-center gap-1">
                     <Loader2 className="w-4 h-4 animate-spin" />

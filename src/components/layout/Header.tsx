@@ -18,7 +18,7 @@ const studentNav = [
   { label: '연산 연습', href: '/practice/arithmetic' },
   { label: '랭킹', href: '/ranking' },
   { label: '업데이트', href: '/updates' },
-  { label: '도움말', href: '/help' },
+  { label: '도움말', href: '/help-public' },
   { label: '프로필', href: '/profile' },
 ];
 

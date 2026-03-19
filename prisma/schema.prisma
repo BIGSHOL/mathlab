@@ -26,6 +26,15 @@ model User {
   name          String    @db.VarChar(50)
   role          Role      @default(STUDENT)
   grade         Int?
+  phone         String?   @db.VarChar(20)
+  email         String?   @db.VarChar(100)
+  school        String?   @db.VarChar(100)
+  birthDate     DateTime?
+  address       String?   @db.VarChar(200)
+  startDate     DateTime?
+  notes         String?   @db.Text
+  parentName    String?   @db.VarChar(50)
+  parentPhone   String?   @db.VarChar(20)
   classroomId   String?
   profileImage  String?   @db.VarChar(500)
   createdAt     DateTime  @default(now())

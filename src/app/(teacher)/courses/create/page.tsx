@@ -240,7 +240,7 @@ export default function CourseCreatePage() {
         toast.success('과정이 생성되었습니다');
       }
 
-      router.push(`/courses/${courseData.id}`);
+      router.push(`/courses/${courseData.seq}`);
     } catch {
       toast.error('과정 생성 중 오류가 발생했습니다');
     } finally {

@@ -163,7 +163,7 @@ export default function SettingsPage() {
       </aside>
 
       {/* ===== Right Panel: Settings Content ===== */}
-      <main className="flex-1 flex flex-col min-w-0 bg-white overflow-y-auto">
+      <main className="flex-1 flex items-center justify-center min-w-0 bg-white overflow-y-auto">
         <div className="p-3 md:p-4 max-w-[800px] w-full">
           {activeTab === 'profile' && (
             <Card className="p-3 flex flex-col gap-3">

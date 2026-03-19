@@ -281,7 +281,7 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 
 | 서비스 | 용도 |
 |--------|------|
-| `arithmetic-generator/` | 62+ 카테고리 연산 문제 생성 (초등/중등/고등 분리) |
+| `arithmetic-generator/` | 78+ 카테고리 연산 문제 생성 (초등/중등/고등 분리) |
 | `mathgen.ts` | Gemini AI 문제 생성 |
 | `grading.ts` | 자동 채점, XP 계산 |
 | `diagnostic.ts` | 레벨테스트 결과 분석 |

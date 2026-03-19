@@ -222,8 +222,8 @@ export default function TestsPage() {
               </div>
             ) : (
               /* Test detail */
-              <div className="flex-1 overflow-y-auto">
-                <div className="p-3 max-w-3xl mx-auto">
+              <div className="flex-1 flex items-center justify-center overflow-y-auto">
+                <div className="p-3 max-w-3xl w-full mx-auto">
                   {/* Title section */}
                   <div className="mb-3">
                     <div className="flex items-center gap-2 mb-2">

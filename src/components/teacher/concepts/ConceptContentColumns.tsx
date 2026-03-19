@@ -1,8 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import {
   Eye, Edit, Trash2, Plus, Loader2, FileText, Sparkles,
-  FunctionSquare, ChevronDown,
+  FunctionSquare, ChevronDown, ChevronRight,
 } from 'lucide-react';
 import { InlineMathText } from '@/components/math/InlineMathText';
 import { EditableMathRenderer } from '@/components/math/EditableMathRenderer';
@@ -259,6 +260,12 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
                     ))}
                   </div>
 
+                  {/* 난이도별 미리보기 (선생님 조회 모드) */}
+                  <BlankPreviewSection
+                    templateText={editForm.fullContent}
+                    blanks={blanks}
+                  />
+
                   {isAdmin && (
                     <div className="flex items-center gap-2 pt-1">
                       <button
@@ -285,6 +292,69 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
           );
         })()}
       </div>
+    </div>
+  );
+}
+
+/** 난이도별 빈칸 미리보기 (조회 모드용) */
+function BlankPreviewSection({ templateText, blanks }: { templateText: string; blanks: BlankItem[] }) {
+  const [openLevel, setOpenLevel] = useState<string | null>(null);
+
+  if (blanks.length === 0) return null;
+
+  const levels = [
+    { key: 'easy', label: '1단계 — 쉬움', color: 'text-emerald-600', blankColor: 'border-emerald-400 text-emerald-400' },
+    { key: 'hard', label: '2단계 — 어려움', color: 'text-amber-600', blankColor: 'border-amber-400 text-amber-400' },
+    { key: 'full', label: '3단계 — 통문장', color: 'text-rose-600', blankColor: 'border-rose-400 text-rose-400' },
+  ] as const;
+
+  return (
+    <div className="border-t border-slate-200 pt-2 mt-1 space-y-1.5">
+      <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+        <Eye className="w-3 h-3" />
+        학생 미리보기
+      </h4>
+      {levels.map(({ key, label, color, blankColor }) => {
+        const shownBlanks = key === 'easy'
+          ? blanks.filter((b) => (b.difficulty || 'easy') === 'easy')
+          : key === 'hard'
+            ? blanks.filter((b) => (b.difficulty || 'easy') !== 'full')
+            : blanks;
+        if (shownBlanks.length === 0) return null;
+        const isOpen = openLevel === key;
+        return (
+          <div key={key} className="bg-white border border-slate-200 rounded-sm overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setOpenLevel(isOpen ? null : key)}
+              className="w-full flex items-center justify-between px-2.5 py-1.5 hover:bg-slate-50 transition-colors"
+            >
+              <span className={`text-[11px] font-bold ${color}`}>{label} ({shownBlanks.length}개)</span>
+              {isOpen ? <ChevronDown className="w-3 h-3 text-slate-400" /> : <ChevronRight className="w-3 h-3 text-slate-400" />}
+            </button>
+            {isOpen && (
+              <div className="px-2.5 pb-2.5 max-h-[200px] overflow-y-auto scrollbar-thin">
+                <p className="text-[14px] text-text-primary leading-7 whitespace-pre-wrap font-serif-kr">
+                  {templateText.split(/(\{\{\d+\}\})/).map((part, i) => {
+                    if (/^\{\{\d+\}\}$/.test(part)) {
+                      const num = parseInt(part.match(/\d+/)?.[0] ?? '0', 10);
+                      const blank = blanks.find((b) => b.position === num);
+                      const isShown = shownBlanks.some((b) => b.position === num);
+                      if (isShown) {
+                        return (
+                          <span key={i} className={`inline-block min-w-[2.5em] border-b-2 mx-0.5 text-center text-sm ${blankColor}`}>{num}</span>
+                        );
+                      }
+                      return <InlineMathText key={i} text={blank?.answer || '?'} />;
+                    }
+                    return <InlineMathText key={i} text={part} />;
+                  })}
+                </p>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

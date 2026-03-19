@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth, requireAuthViewAs, isResponse, validateBody } from '@/lib/api';
+import { requireAuthViewAs, isResponse, validateBody } from '@/lib/api';
 import { completeStageSchema } from '@/lib/schemas/learning';
 import { XP_REWARDS, calculateLevel } from '@/lib/utils/xp';
 import { checkAndAdvanceCourse } from '@/lib/services/course-advance';

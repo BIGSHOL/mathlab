@@ -17,6 +17,8 @@ import {
   matchChapter,
   autoWrapMath,
   formatConceptContent,
+  parsePdfFilename,
+  buildFilenameContext,
 } from './utils';
 
 export function usePdfImport(): PdfImportState {
@@ -53,6 +55,10 @@ export function usePdfImport(): PdfImportState {
   const [saveConcepts, setSaveConcepts] = useState(true);
   const [subjects, setSubjects] = useState<{ id: string; title: string; gradeLevel: number }[]>([]);
   const [subjectId, setSubjectId] = useState('');
+
+  // AI 풀이 생성
+  const [generatingSolutions, setGeneratingSolutions] = useState(false);
+  const [generateProgress, setGenerateProgress] = useState({ done: 0, total: 0 });
 
   // 해설 PDF
   const [matchingSolutions, setMatchingSolutions] = useState(false);
@@ -92,13 +98,21 @@ export function usePdfImport(): PdfImportState {
 
   // --- PDF 로드 ---
   const handleFileSelect = useCallback(async (file: File) => {
-    if (!file.name.endsWith('.pdf')) {
+    if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {
       setError('PDF 파일만 업로드 가능합니다');
       return;
     }
     setPdfFile(file);
     setLoadingPdf(true);
     setError('');
+
+    // 파일명에서 메타데이터 파싱 → 교재 설정 자동 반영
+    const filenameMeta = parsePdfFilename(file.name);
+    if (filenameMeta.bookCode) {
+      setBookCode(filenameMeta.bookCode);
+      setChapters([]);
+    }
+
     try {
       const { loadPdf, renderThumbnailsBatched } = await import('@/lib/utils/pdf-processor');
       const doc = await loadPdf(file);
@@ -205,6 +219,9 @@ export function usePdfImport(): PdfImportState {
         // 이미지 + 텍스트 레이어 동시 추출 (하이브리드)
         const { imageBase64, textLayer } = await renderPageForAI(pdfDoc, pageNum);
 
+        // 파일명 메타데이터 → 프롬프트 컨텍스트
+        const fileContext = pdfFile ? buildFilenameContext(parsePdfFilename(pdfFile.name)) : '';
+
         const res = await fetch('/api/questions/pdf-extract', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -212,6 +229,7 @@ export function usePdfImport(): PdfImportState {
             pages: [{ pageNum, imageBase64, textLayer }],
             bookCode,
             chapter: chapters.length > 0 ? chapters[0] : undefined,
+            filenameContext: fileContext || undefined,
           }),
         });
 
@@ -366,6 +384,68 @@ export function usePdfImport(): PdfImportState {
     setSolutionTotalPages(0);
   }, []);
 
+  // --- AI 풀이 생성 ---
+  const startGenerateSolutions = async () => {
+    if (problems.length === 0) return;
+    setGeneratingSolutions(true);
+    setError('');
+
+    // 풀이가 비어있는 문제만 대상
+    const targets = problems
+      .map((p, i) => ({ ...p, _idx: i }))
+      .filter((p) => !p.explanation);
+
+    if (targets.length === 0) {
+      setGeneratingSolutions(false);
+      return;
+    }
+
+    setGenerateProgress({ done: 0, total: targets.length });
+
+    // 10문제씩 배치 처리
+    const BATCH = 10;
+    for (let i = 0; i < targets.length; i += BATCH) {
+      const batch = targets.slice(i, i + BATCH);
+      try {
+        const res = await fetch('/api/questions/generate-solutions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            problems: batch.map((p) => ({
+              index: p._idx,
+              content: p.content,
+              choices: p.choices.length > 0 ? p.choices : undefined,
+              type: p.type === 'MULTIPLE_CHOICE' ? '객관식' : p.type === 'ESSAY' ? '서술형' : '주관식',
+            })),
+          }),
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          const solutions = json.data?.solutions || [];
+          setProblems((prev) => {
+            const next = [...prev];
+            for (const sol of solutions) {
+              if (sol.index >= 0 && sol.index < next.length) {
+                next[sol.index] = {
+                  ...next[sol.index],
+                  answer: sol.answer || next[sol.index].answer,
+                  explanation: sol.explanation || next[sol.index].explanation,
+                };
+              }
+            }
+            return next;
+          });
+        }
+      } catch (err) {
+        console.error('풀이 생성 배치 실패:', err);
+      }
+      setGenerateProgress({ done: Math.min(i + BATCH, targets.length), total: targets.length });
+    }
+
+    setGeneratingSolutions(false);
+  };
+
   // --- 문제 편집 ---
   const updateProblem = (idx: number, updates: Partial<ExtractedProblem>) => {
     setProblems((prev) => prev.map((p, i) => (i === idx ? { ...p, ...updates } : p)));
@@ -501,6 +581,9 @@ export function usePdfImport(): PdfImportState {
     startExtraction,
     updateProblem,
     deleteProblem,
+    generatingSolutions,
+    generateProgress,
+    startGenerateSolutions,
     matchingSolutions,
     solutionInputRef,
     solutionProgress,

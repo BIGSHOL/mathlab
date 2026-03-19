@@ -43,6 +43,7 @@ interface QuestionListMainProps {
   startEditing: (q?: QuestionItem) => void;
   deleteQuestion: (id: string) => void;
   openCreateModal: () => void;
+  isAdmin?: boolean;
 }
 
 export function QuestionListMain({
@@ -63,6 +64,7 @@ export function QuestionListMain({
   startEditing,
   deleteQuestion,
   openCreateModal,
+  isAdmin,
 }: QuestionListMainProps) {
   return (
     <main className="flex-1 flex flex-col min-w-0 bg-white p-3 md:p-4 gap-3 overflow-y-auto">
@@ -74,16 +76,18 @@ export function QuestionListMain({
             초등·중등 수학 문제 검색 및 관리. 전체 {meta.total.toLocaleString()}개의 문제
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            PDF 내보내기
-          </Button>
-          <Button size="sm" onClick={openCreateModal}>
-            <Plus className="w-4 h-4 mr-2" />
-            새 문제 추가
-          </Button>
-        </div>
+        {isAdmin && (
+          <div className="flex gap-2">
+            <Button variant="secondary" size="sm">
+              <Download className="w-4 h-4 mr-2" />
+              PDF 내보내기
+            </Button>
+            <Button size="sm" onClick={openCreateModal}>
+              <Plus className="w-4 h-4 mr-2" />
+              새 문제 추가
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Search */}
@@ -162,36 +166,40 @@ export function QuestionListMain({
                       )}
                     </div>
                     <div className="flex gap-1 text-text-secondary">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); startEditing(q); }}
-                        className="p-1 hover:text-primary transition-colors rounded-sm hover:bg-slate-100"
-                        title="수정"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      {deleteConfirm === q.id ? (
-                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                      {isAdmin && (
+                        <>
                           <button
-                            onClick={() => deleteQuestion(q.id)}
-                            className="p-1 text-red-500 hover:bg-red-50 rounded-sm text-xs font-bold"
+                            onClick={(e) => { e.stopPropagation(); startEditing(q); }}
+                            className="p-1 hover:text-primary transition-colors rounded-sm hover:bg-slate-100"
+                            title="수정"
                           >
-                            삭제
+                            <Edit className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => setDeleteConfirm(null)}
-                            className="p-1 hover:bg-slate-100 rounded-sm text-xs"
-                          >
-                            취소
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setDeleteConfirm(q.id); }}
-                          className="p-1 hover:text-red-500 transition-colors rounded-sm hover:bg-red-50"
-                          title="삭제"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                          {deleteConfirm === q.id ? (
+                            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                onClick={() => deleteQuestion(q.id)}
+                                className="p-1 text-red-500 hover:bg-red-50 rounded-sm text-xs font-bold"
+                              >
+                                삭제
+                              </button>
+                              <button
+                                onClick={() => setDeleteConfirm(null)}
+                                className="p-1 hover:bg-slate-100 rounded-sm text-xs"
+                              >
+                                취소
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setDeleteConfirm(q.id); }}
+                              className="p-1 hover:text-red-500 transition-colors rounded-sm hover:bg-red-50"
+                              title="삭제"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>

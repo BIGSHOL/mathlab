@@ -79,6 +79,11 @@ export interface PdfImportState {
   updateProblem: (idx: number, updates: Partial<ExtractedProblem>) => void;
   deleteProblem: (idx: number) => void;
 
+  // AI 풀이 생성
+  generatingSolutions: boolean;
+  generateProgress: { done: number; total: number };
+  startGenerateSolutions: () => Promise<void>;
+
   // 해설 PDF
   matchingSolutions: boolean;
   solutionInputRef: React.RefObject<HTMLInputElement | null>;

@@ -19,7 +19,7 @@ export default function PdfImportPage() {
   const state = usePdfImport();
 
   return (
-    <div className="max-w-[1600px] mx-auto">
+    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 md:py-8">
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -131,6 +131,9 @@ export default function PdfImportPage() {
           displaySubjects={state.displaySubjects}
           subjectId={state.subjectId}
           setSubjectId={state.setSubjectId}
+          generatingSolutions={state.generatingSolutions}
+          generateProgress={state.generateProgress}
+          startGenerateSolutions={state.startGenerateSolutions}
           matchingSolutions={state.matchingSolutions}
           solutionInputRef={state.solutionInputRef}
           solutionProgress={state.solutionProgress}

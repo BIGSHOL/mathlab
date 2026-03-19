@@ -52,9 +52,11 @@ interface Props {
   backHref: string;
   backLabel: string;
   isLoggedIn: boolean;
+  /** teacher 레이아웃 안에 임베드될 때 true — 자체 헤더/푸터 숨김 */
+  embedded?: boolean;
 }
 
-export function HelpContent({ backHref, backLabel, isLoggedIn }: Props) {
+export function HelpContent({ backHref, backLabel, isLoggedIn, embedded }: Props) {
   const [categories, setCategories] = useState<HelpCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -97,23 +99,25 @@ export function HelpContent({ backHref, backLabel, isLoggedIn }: Props) {
 
   /* ── 렌더 ── */
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      {/* 헤더 */}
-      <header className="flex items-center justify-between border-b border-slate-200 px-6 md:px-10 py-3 bg-white sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          <LogoIcon className="w-6 h-6" />
-          <Link href={backHref} className="text-lg font-bold tracking-tight text-text-primary">
-            MathLab
+    <div className={embedded ? 'flex-1 flex flex-col bg-white' : 'min-h-screen flex flex-col bg-white'}>
+      {/* 헤더 (임베드 모드에서는 숨김) */}
+      {!embedded && (
+        <header className="flex items-center justify-between border-b border-slate-200 px-6 md:px-10 py-3 bg-white sticky top-0 z-50">
+          <div className="flex items-center gap-3">
+            <LogoIcon className="w-6 h-6" />
+            <Link href={backHref} className="text-lg font-bold tracking-tight text-text-primary">
+              MathLab
+            </Link>
+          </div>
+          <Link
+            href={backHref}
+            className="text-sm text-text-secondary hover:text-primary transition-colors flex items-center gap-1"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            {backLabel}
           </Link>
-        </div>
-        <Link
-          href={backHref}
-          className="text-sm text-text-secondary hover:text-primary transition-colors flex items-center gap-1"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {backLabel}
-        </Link>
-      </header>
+        </header>
+      )}
 
       {/* 본문 */}
       {loading ? (
@@ -273,8 +277,8 @@ export function HelpContent({ backHref, backLabel, isLoggedIn }: Props) {
         </div>
       )}
 
-      {/* 비로그인 푸터 */}
-      {!isLoggedIn && (
+      {/* 비로그인 푸터 (임베드 모드에서는 숨김) */}
+      {!embedded && !isLoggedIn && (
         <footer className="border-t border-slate-200 py-6 px-6 text-center text-sm text-text-secondary bg-white">
           &copy; 2024 MathLab. All rights reserved.
         </footer>

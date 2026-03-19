@@ -17,6 +17,8 @@ import {
   Check,
   UserPlus,
   Trash2,
+  Pencil,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -86,6 +88,43 @@ export default function CourseDetailPage() {
   const [addStudentSearch, setAddStudentSearch] = useState('');
   const [addStudentIds, setAddStudentIds] = useState<Set<string>>(new Set());
   const [enrolling, setEnrolling] = useState(false);
+
+  // 제목/설명 편집
+  const [editing, setEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const startEdit = () => {
+    if (!course) return;
+    setEditTitle(course.title);
+    setEditDesc(course.description || '');
+    setEditing(true);
+  };
+
+  const cancelEdit = () => setEditing(false);
+
+  const saveEdit = async () => {
+    if (!editTitle.trim()) { toast.warning('과정명을 입력하세요'); return; }
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/learning-courses/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: editTitle.trim(), description: editDesc.trim() || null }),
+      });
+      if (res.ok) {
+        toast.success('과정 정보가 수정되었습니다');
+        setEditing(false);
+        fetchCourse();
+      } else {
+        toast.error('수정 실패');
+      }
+    } catch {
+      toast.error('수정 중 오류 발생');
+    }
+    setSaving(false);
+  };
 
   const fetchCourse = async () => {
     try {
@@ -194,15 +233,77 @@ export default function CourseDetailPage() {
           <ArrowLeft className="w-5 h-5 text-text-secondary" />
         </Link>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-text-primary flex items-center gap-2">
-            <GraduationCap className="w-6 h-6 text-primary" />
-            {course.title}
-          </h1>
-          {course.description && <p className="text-text-secondary text-sm mt-0.5">{course.description}</p>}
+          {editing ? (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <GraduationCap className="w-6 h-6 text-primary shrink-0" />
+                <input
+                  className="text-2xl font-bold text-text-primary bg-white border border-slate-200 rounded-sm px-2 py-1 w-full focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder="과정명"
+                  autoFocus
+                />
+              </div>
+              <input
+                className="text-sm text-text-secondary bg-white border border-slate-200 rounded-sm px-2 py-1 w-full focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                value={editDesc}
+                onChange={(e) => setEditDesc(e.target.value)}
+                placeholder="설명 (선택)"
+              />
+              <div className="flex gap-2">
+                <Button size="sm" onClick={saveEdit} disabled={saving}>
+                  {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
+                  저장
+                </Button>
+                <Button size="sm" variant="ghost" onClick={cancelEdit}>
+                  <X className="w-3.5 h-3.5 mr-1" />
+                  취소
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold text-text-primary flex items-center gap-2">
+                <GraduationCap className="w-6 h-6 text-primary" />
+                {course.title}
+                <button onClick={startEdit} className="p-1 text-slate-400 hover:text-primary transition-colors">
+                  <Pencil className="w-4 h-4" />
+                </button>
+              </h1>
+              {course.description && <p className="text-text-secondary text-sm mt-0.5">{course.description}</p>}
+            </>
+          )}
         </div>
-        <span className="text-xs text-text-secondary">
+        <span className="text-xs text-text-secondary shrink-0">
           #{course.seq} · {new Date(course.createdAt).toLocaleDateString('ko-KR')}
         </span>
+      </div>
+
+      {/* 요약 통계 */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <Card className="p-4 text-center">
+          <div className="text-2xl font-black text-primary">{course.concepts.length}</div>
+          <div className="text-xs text-text-secondary mt-1">포함 개념</div>
+        </Card>
+        <Card className="p-4 text-center">
+          <div className="text-2xl font-black text-emerald-600">{course.enrollments.length}</div>
+          <div className="text-xs text-text-secondary mt-1">배정 학생</div>
+        </Card>
+        <Card className="p-4 text-center">
+          <div className="text-2xl font-black text-secondary">
+            {course.enrollments.length > 0
+              ? Math.round(course.enrollments.reduce((sum, e) => sum + e.progressPercent, 0) / course.enrollments.length)
+              : 0}%
+          </div>
+          <div className="text-xs text-text-secondary mt-1">평균 진행률</div>
+        </Card>
+        <Card className="p-4 text-center">
+          <div className="text-2xl font-black text-violet-600">
+            {course.enrollments.filter((e) => e.status === 'COMPLETED').length}
+          </div>
+          <div className="text-xs text-text-secondary mt-1">완료 학생</div>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -211,19 +312,21 @@ export default function CourseDetailPage() {
           <Card className="p-5">
             <h2 className="font-bold text-text-primary flex items-center gap-2 mb-4">
               <BookOpen className="w-4 h-4 text-primary" />
-              포함 개념 ({course.concepts.length}개)
+              학습 개념 ({course.concepts.length}개)
             </h2>
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1.5">
               {course.concepts.map((concept, idx) => (
                 <div
                   key={concept.id}
-                  className="flex items-center gap-2 px-2.5 py-2 rounded-sm bg-slate-50 border border-slate-100 text-xs"
+                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-sm bg-slate-50 border border-slate-100 text-xs hover:border-primary/20 transition-colors"
                 >
-                  <span className="w-5 text-center font-bold text-slate-400">{idx + 1}</span>
-                  <span className="flex-1 text-text-primary truncate">{concept.title}</span>
-                  {concept.chapter && (
-                    <span className="text-xs text-text-secondary shrink-0">{concept.chapter}</span>
-                  )}
+                  <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">{idx + 1}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-text-primary font-medium truncate block">{concept.title}</span>
+                    {concept.chapter && concept.chapter !== concept.title && (
+                      <span className="text-[10px] text-text-secondary">{concept.chapter}</span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -310,12 +413,13 @@ export default function CourseDetailPage() {
             ) : (
               <div className="flex flex-col gap-2">
                 {course.enrollments.map((enrollment) => (
-                  <div
+                  <Link
                     key={enrollment.id}
-                    className="flex items-center gap-3 p-3 rounded-sm border border-slate-100 hover:border-slate-200 transition-colors"
+                    href={`/courses/${id}/progress/${enrollment.student.username}`}
+                    className="flex items-center gap-3 p-3.5 rounded-lg border border-slate-100 hover:border-primary/30 hover:shadow-md transition-all cursor-pointer group bg-white"
                   >
                     {/* 아바타 */}
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-accent text-white flex items-center justify-center text-xs font-bold shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-primary/60 text-white flex items-center justify-center text-sm font-bold shrink-0 group-hover:scale-105 transition-transform">
                       {enrollment.student.name[0]}
                     </div>
 
@@ -346,12 +450,12 @@ export default function CourseDetailPage() {
 
                     {/* 삭제 */}
                     <button
-                      onClick={() => handleRemoveEnrollment(enrollment.id, enrollment.student.name)}
+                      onClick={(e) => { e.preventDefault(); handleRemoveEnrollment(enrollment.id, enrollment.student.name); }}
                       className="p-1 text-slate-400 hover:text-red-500 transition-colors shrink-0"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

@@ -12,7 +12,7 @@ const notoSerifKR = Noto_Serif_KR({
 
 export const metadata: Metadata = {
   title: 'MathLab - 수학 학습 플랫폼',
-  description: '초중등 학생들을 위한 게이미피케이션 수학 학습 플랫폼',
+  description: '초등~고등 학생들을 위한 게이미피케이션 수학 학습 플랫폼',
 };
 
 export default function RootLayout({

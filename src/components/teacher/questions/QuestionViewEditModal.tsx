@@ -50,6 +50,7 @@ interface QuestionViewEditModalProps {
   openDiagramEditor: (mode: 'edit' | 'create') => void;
   editDiagram: (idx: number, mode: 'edit' | 'create') => void;
   removeDiagram: (idx: number, mode: 'edit' | 'create') => void;
+  isAdmin?: boolean;
 }
 
 export function QuestionViewEditModal({
@@ -75,6 +76,7 @@ export function QuestionViewEditModal({
   openDiagramEditor,
   editDiagram,
   removeDiagram,
+  isAdmin,
 }: QuestionViewEditModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-2.5" onClick={closeModal}>
@@ -95,7 +97,7 @@ export function QuestionViewEditModal({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {modalMode === 'view' && (
+            {isAdmin && modalMode === 'view' && (
               <Button variant="secondary" size="sm" onClick={() => startEditing()}>
                 <Edit className="w-4 h-4 mr-1.5" />
                 수정

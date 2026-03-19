@@ -59,6 +59,7 @@ export default function QuestionsPage() {
         startEditing={mgr.startEditing}
         deleteQuestion={mgr.deleteQuestion}
         openCreateModal={mgr.openCreateModal}
+        isAdmin={mgr.isAdmin}
       />
 
       {/* ===== View / Edit Modal ===== */}
@@ -86,11 +87,12 @@ export default function QuestionsPage() {
           openDiagramEditor={mgr.openDiagramEditor}
           editDiagram={mgr.editDiagram}
           removeDiagram={mgr.removeDiagram}
+          isAdmin={mgr.isAdmin}
         />
       )}
 
-      {/* ===== Create Modal ===== */}
-      {mgr.isCreateMode && (
+      {/* ===== Create Modal (어드민 전용) ===== */}
+      {mgr.isAdmin && mgr.isCreateMode && (
         <QuestionCreateModal
           createForm={mgr.createForm}
           setCreateForm={mgr.setCreateForm}

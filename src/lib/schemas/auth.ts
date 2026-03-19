@@ -30,6 +30,15 @@ export const createUserSchema = z.object({
     .int()
     .min(1, '학년은 1 이상이어야 합니다')
     .max(9, '학년은 9 이하여야 합니다'),
+  phone: z.string().max(20).optional(),
+  parentName: z.string().max(50).optional(),
+  parentPhone: z.string().max(20).optional(),
+  school: z.string().max(100).optional(),
+  birthDate: z.string().optional(),
+  email: z.string().max(100).optional(),
+  address: z.string().max(200).optional(),
+  startDate: z.string().optional(),
+  notes: z.string().optional(),
 });
 
 export const updateUserSchema = z.object({

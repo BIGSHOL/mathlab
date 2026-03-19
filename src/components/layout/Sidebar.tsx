@@ -19,7 +19,6 @@ import {
   Bell,
   LogOut,
   PanelLeftClose,
-  PanelLeftOpen,
   Calculator,
   CalendarCheck,
   Newspaper,
@@ -44,18 +43,30 @@ interface MenuItem {
   disabled?: boolean;
 }
 
-// 메인 메뉴 — 모든 선생님/관리자 공통
-const mainItems: MenuItem[] = [
+// 홈
+const homeItems: MenuItem[] = [
   { label: '대시보드', href: '/overview', icon: LayoutDashboard },
+];
+
+// 학습 관리
+const learningItems: MenuItem[] = [
   { label: '학생 관리', href: '/students', icon: Users },
-  { label: '개념 관리', href: '/concepts', icon: BookOpen },
+  { label: '개념 조회', href: '/concepts', icon: BookOpen },
+  { label: '문제 조회', href: '/questions', icon: Database },
   { label: '학습 과정', href: '/courses', icon: GraduationCap },
-  { label: '문제 은행', href: '/questions', icon: Database },
+];
+
+// 출제 · 평가
+const assessmentItems: MenuItem[] = [
   { label: '연산 생성기', href: '/questions/arithmetic', icon: Calculator },
+  { label: '학습지', href: '/worksheet/create', icon: FileSpreadsheet },
   { label: '숙제 관리', href: '/homework', icon: CalendarCheck },
   { label: '시험 관리', href: '/tests', icon: ClipboardCheck },
-  { label: '학습지', href: '/worksheet/create', icon: FileSpreadsheet },
   { label: '수기 채점', href: '/manual-grading', icon: PenLine },
+];
+
+// 분석
+const analysisItems: MenuItem[] = [
   { label: '학습 분석', href: '/analytics', icon: BarChart3 },
 ];
 
@@ -67,8 +78,13 @@ const systemItems: MenuItem[] = [
   { label: '고객지원', href: '/support', icon: HelpCircle },
 ];
 
+// 이전 호환용 — 메인 아이템 전체
+const mainItems: MenuItem[] = [...homeItems, ...learningItems, ...assessmentItems, ...analysisItems];
+
 // 어드민 전용
 const adminItems: MenuItem[] = [
+  { label: '개념 관리', href: '/concepts', icon: BookOpen },
+  { label: '문제 관리', href: '/questions', icon: Database },
   { label: '선생님 관리', href: '/students?tab=teachers', icon: UserCog },
   { label: '사용자 관리', href: '/admin/users', icon: Activity },
   { label: 'PDF 문제 추출', href: '/questions/pdf-import', icon: FileText },
@@ -205,14 +221,27 @@ export function Sidebar() {
 
       {/* Menu */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar px-2 pt-3">
-        {/* 메인 메뉴 */}
-        {!collapsed && (
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 px-2">
-            메인 메뉴
-          </p>
-        )}
+        {/* 홈 */}
         <div className="flex flex-col gap-0.5">
-          {mainItems.map(renderItem)}
+          {homeItems.map(renderItem)}
+        </div>
+
+        {/* 학습 관리 */}
+        {renderSectionLabel('학습 관리')}
+        <div className="flex flex-col gap-0.5">
+          {learningItems.map(renderItem)}
+        </div>
+
+        {/* 출제 · 평가 */}
+        {renderSectionLabel('출제 · 평가')}
+        <div className="flex flex-col gap-0.5">
+          {assessmentItems.map(renderItem)}
+        </div>
+
+        {/* 분석 */}
+        {renderSectionLabel('분석')}
+        <div className="flex flex-col gap-0.5">
+          {analysisItems.map(renderItem)}
         </div>
 
         {/* 시스템 */}

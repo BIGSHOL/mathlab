@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/components/ui/Toast';
 import { renderDiagram } from '@/lib/utils/svg-diagrams';
 import type { DiagramType } from '@/lib/utils/svg-diagrams/types';
@@ -23,6 +24,9 @@ import {
 } from './question-types';
 
 export function useQuestionManager() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
+
   const [search, setSearch] = useState('');
   const [searchDebounced, setSearchDebounced] = useState('');
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
@@ -622,5 +626,8 @@ export function useQuestionManager() {
 
     // Actions
     fetchQuestions,
+
+    // Role
+    isAdmin,
   };
 }

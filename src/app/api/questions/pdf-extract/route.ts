@@ -163,7 +163,7 @@ const SYSTEM_PROMPT = `당신은 한국 수학 교재 분석 전문가입니다.
     - 풀이 과정 박스 (단계별 유도): 각 줄을 > 로 감싸기
       예시: "> $1 \\\\div 3 = \\\\dfrac{\\\\boxed{\\\\phantom{0}}}{3}$ 이고\\n> $4 \\\\div 3$는 $\\\\dfrac{1}{3}$이 $\\\\boxed{\\\\phantom{0}}$개입니다.\\n> $\\\\Rightarrow 4 \\\\div 3 = \\\\dfrac{\\\\boxed{\\\\phantom{0}}}{3} = \\\\boxed{\\\\phantom{0}}\\\\dfrac{\\\\boxed{\\\\phantom{0}}}{3}$"
     - 원본에서 박스/테두리 안에 있는 내용은 반드시 > 인용블록으로 감싸세요. 누락하면 안 됩니다.
-12. 수식에서 곱셈은 반드시 \\\\times 사용 (예: $2^{3} \\\\times 3^{2}$). 거듭제곱은 ^{} 사용 (예: $a^{2}$). 분수는 반드시 \\\\dfrac 사용 (예: $\\\\dfrac{1}{4}$). \\\\frac 대신 \\\\dfrac을 써야 분자/분모가 작아지지 않습니다.
+12. 수식에서 곱셈은 반드시 \\\\times 사용 (예: $2^{3} \\\\times 3^{2}$). 거듭제곱은 ^{} 사용 (예: $a^{2}$). 분수는 반드시 \\\\frac 사용 (예: $\\\\frac{1}{4}$). \\\\dfrac 사용 금지.
 13. **중요** 문제 본문과 보기의 모든 숫자와 수학 변수(a, b, x, y, n 등)는 반드시 $...$로 감싸세요.
     - 예: "25 미만의 자연수" → "$25$ 미만의 자연수"
     - 예: "a와 b의 합" → "$a$와 $b$의 합"
@@ -267,7 +267,9 @@ export async function POST(request: NextRequest) {
   if (isResponse(user)) return user;
 
   const body = await request.json();
-  const { pages, bookCode } = body as { pages: PageInput[]; bookCode: string; chapter?: string };
+  const { pages, bookCode, filenameContext } = body as {
+    pages: PageInput[]; bookCode: string; chapter?: string; filenameContext?: string;
+  };
 
   if (!pages || !Array.isArray(pages) || pages.length === 0) {
     return badRequest('pages 배열이 필요합니다');
@@ -301,9 +303,13 @@ export async function POST(request: NextRequest) {
             role: 'user',
             parts: [
               { inlineData: { mimeType: 'image/png', data: base64Data } },
-              { text: page.textLayer
-                  ? `${SYSTEM_PROMPT}\n\n[OCR Text Content for Reference]\n${page.textLayer}\n\n위의 텍스트 레이어 정보를 참고하여 이미지 속의 문제를 오타 없이 완벽하게 추출하세요.`
-                  : SYSTEM_PROMPT
+              { text: [
+                  SYSTEM_PROMPT,
+                  filenameContext || '',
+                  page.textLayer
+                    ? `\n[OCR Text Content for Reference]\n${page.textLayer}\n\n위의 텍스트 레이어 정보를 참고하여 이미지 속의 문제를 오타 없이 완벽하게 추출하세요.`
+                    : '',
+                ].filter(Boolean).join('\n')
               },
             ],
           },

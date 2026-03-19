@@ -83,7 +83,7 @@ export default function CoursesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {courses.map((course) => (
             <Card key={course.id} className="p-5 hover:shadow-md transition-shadow group">
-              <Link href={`/courses/${course.id}`} className="block">
+              <Link href={`/courses/${course.seq}`} className="block">
                 <h2 className="font-bold text-text-primary text-lg mb-1 group-hover:text-primary transition-colors">
                   {course.title}
                 </h2>

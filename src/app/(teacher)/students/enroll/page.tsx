@@ -34,6 +34,15 @@ export default function EnrollWizardPage() {
     username: '',
     password: '1234',
     grade: 7,
+    phone: '',
+    parentName: '',
+    parentPhone: '',
+    school: '',
+    birthDate: '',
+    email: '',
+    address: '',
+    startDate: '',
+    notes: '',
   });
 
   const canNext = () => {
@@ -102,36 +111,121 @@ export default function EnrollWizardPage() {
       <Card className="p-5">
         {/* Step 1: Basic Info */}
         {step === 1 && (
-          <div className="space-y-4">
-            <h2 className="text-lg font-bold text-text-primary mb-2">학생 기본 정보</h2>
-            <div>
-              <label className="text-xs font-semibold text-text-secondary mb-1 block">이름</label>
-              <input
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                placeholder="학생 이름"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-text-secondary mb-1 block">아이디</label>
-              <input
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                placeholder="로그인 아이디"
-                value={form.username}
-                onChange={(e) => setForm({ ...form, username: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-text-secondary mb-1 block">초기 비밀번호</label>
-              <input
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                type="password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-              />
-              <p className="text-xs text-text-secondary mt-1">기본값: 1234. 학생이 첫 로그인 후 변경을 권장합니다.</p>
-            </div>
+          <div className="space-y-5">
+            {/* 필수 입력 */}
+            <fieldset className="space-y-3">
+              <legend className="text-xs font-semibold text-text-secondary uppercase tracking-wider border-b border-slate-200 pb-1 mb-2">필수 입력 사항</legend>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-text-secondary mb-1 block">학생 이름 <span className="text-red-500">*</span></label>
+                  <input
+                    className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                    placeholder="이름을 입력하세요."
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-text-secondary mb-1 block">아이디 <span className="text-red-500">*</span></label>
+                  <input
+                    className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                    placeholder="로그인 아이디"
+                    value={form.username}
+                    onChange={(e) => setForm({ ...form, username: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-text-secondary mb-1 block">초기 비밀번호 <span className="text-red-500">*</span></label>
+                <input
+                  className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                  type="password"
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                />
+                <p className="text-xs text-text-secondary mt-1">기본값: 1234. 학생이 첫 로그인 후 변경을 권장합니다.</p>
+              </div>
+            </fieldset>
+
+            {/* 선택 입력 */}
+            <fieldset className="space-y-3">
+              <legend className="text-xs font-semibold text-text-secondary uppercase tracking-wider border-b border-slate-200 pb-1 mb-2">선택 입력 사항</legend>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-text-secondary mb-1 block">학생 연락처</label>
+                  <input
+                    className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                    placeholder="숫자만 입력하세요."
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^0-9-]/g, '') })}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-text-secondary mb-1 block">학부모 연락처</label>
+                  <input
+                    className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                    placeholder="숫자만 입력하세요."
+                    value={form.parentPhone}
+                    onChange={(e) => setForm({ ...form, parentPhone: e.target.value.replace(/[^0-9-]/g, '') })}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-text-secondary mb-1 block">학교</label>
+                  <input
+                    className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                    placeholder="학교명을 입력하세요."
+                    value={form.school}
+                    onChange={(e) => setForm({ ...form, school: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-text-secondary mb-1 block">수업 시작일</label>
+                  <input
+                    type="date"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                    value={form.startDate}
+                    onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-text-secondary mb-1 block">학생 생년월일</label>
+                  <input
+                    type="date"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                    value={form.birthDate}
+                    onChange={(e) => setForm({ ...form, birthDate: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-text-secondary mb-1 block">학생 이메일</label>
+                  <input
+                    type="email"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                    placeholder="예시 : student@math.com"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-text-secondary mb-1 block">주소</label>
+                <input
+                  className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                  placeholder="주소를 입력하세요."
+                  value={form.address}
+                  onChange={(e) => setForm({ ...form, address: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-text-secondary mb-1 block">비고 및 학생 특이사항</label>
+                <textarea
+                  className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary min-h-[80px] resize-y"
+                  placeholder="예시) 문제를 빨리 풀어서 실수가 잦음, 분수 계산이 약함, 중간고사-70점 / 기말고사-94점 등"
+                  value={form.notes}
+                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                />
+              </div>
+            </fieldset>
           </div>
         )}
 

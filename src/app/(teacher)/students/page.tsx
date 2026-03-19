@@ -27,7 +27,7 @@ export default function StudentsPage() {
   const [users, setUsers] = useState<UserItem[]>([]);
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ username: '', password: '', name: '', grade: 5 });
+  const [formData, setFormData] = useState({ username: '', password: '', name: '', grade: 5, phone: '', parentName: '', parentPhone: '', school: '', birthDate: '', email: '', address: '', startDate: '', notes: '' });
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(true);
   const [gradeFilter, setGradeFilter] = useState<string>('all');
@@ -107,7 +107,7 @@ export default function StudentsPage() {
       return;
     }
     setShowForm(false);
-    setFormData({ username: '', password: '', name: '', grade: 5 });
+    setFormData({ username: '', password: '', name: '', grade: 5, phone: '', parentName: '', parentPhone: '', school: '', birthDate: '', email: '', address: '', startDate: '', notes: '' });
     fetchUsers();
   };
 
@@ -163,7 +163,7 @@ export default function StudentsPage() {
     setStats(null);
     setShowForm(true);
     setFormError('');
-    setFormData({ username: '', password: '', name: '', grade: 5 });
+    setFormData({ username: '', password: '', name: '', grade: 5, phone: '', parentName: '', parentPhone: '', school: '', birthDate: '', email: '', address: '', startDate: '', notes: '' });
   };
 
   const handleSelectUser = (u: UserItem) => {
