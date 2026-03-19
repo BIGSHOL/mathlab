@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useSpeedAnalytics } from '@/hooks/useSpeed';
 import { Card } from '@/components/ui/Card';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import AchievementRadar from '@/components/charts/AchievementRadar';
 
 // --- Types ---
@@ -55,7 +55,7 @@ const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
 export default function AnalyticsPage() {
   const { user: currentUser } = useAuth();
-  const isAdmin = currentUser?.role === 'ADMIN';
+  const isOwner = hasRoleClient(currentUser?.role, 'OWNER');
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
@@ -190,7 +190,7 @@ export default function AnalyticsPage() {
   return (
     <div className="flex-1 flex flex-col items-center py-5 px-4 sm:px-6 lg:px-5 gap-4">
       {/* Admin: System summary */}
-      {isAdmin && students.length > 0 && (
+      {isOwner && students.length > 0 && (
         <div className="max-w-[1024px] w-full grid grid-cols-2 md:grid-cols-4 gap-3">
           <Card className="p-5 text-center">
             <p className="text-2xl font-black text-text-primary">{students.length}</p>

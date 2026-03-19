@@ -26,12 +26,13 @@ export function ConceptListPanel({ mgr }: ConceptListPanelProps) {
     semesterFilter, setSemesterFilter,
     chapterFilter, setChapterFilter,
     sectionFilter, setSectionFilter,
+    partFilter, setPartFilter,
     currentPage, setCurrentPage,
     concepts, meta, loading,
     editingConcept,
     leftPanelCollapsed, setLeftPanelCollapsed,
     viewMode, setViewMode,
-    isAdmin,
+    isOwner,
     startEditing, selectConceptById, startNewConcept, deleteConcept,
     setBulkImportOpen,
   } = mgr;
@@ -87,7 +88,7 @@ export function ConceptListPanel({ mgr }: ConceptListPanelProps) {
       {!leftPanelCollapsed && (
         <>
           {/* Action buttons */}
-          {isAdmin && viewMode === 'list' && (
+          {isOwner && viewMode === 'list' && (
             <div className="px-3 pt-2 pb-1 flex gap-1.5">
               <Button size="sm" variant="secondary" className="flex-1 text-xs" onClick={() => setBulkImportOpen(true)}>
                 <Upload className="w-3.5 h-3.5 mr-1" />
@@ -117,26 +118,38 @@ export function ConceptListPanel({ mgr }: ConceptListPanelProps) {
 
           {/* Filters */}
           {viewMode !== 'systematic' && (
-          <div className="px-3 pb-2 flex gap-1.5">
+          <div className="px-3 pb-2 flex flex-col gap-1.5">
+            <div className="flex gap-1.5">
+              <select
+                className="flex-1 min-w-0 px-1.5 py-1 text-xs border border-slate-200 rounded-sm bg-white focus:ring-1 focus:ring-primary/40"
+                value={levelFilter ?? ''}
+                onChange={(e) => { setLevelFilter(e.target.value || null); setGradeFilter(null); setCurrentPage(1); }}
+              >
+                <option value="">학제</option>
+                {GRADE_GROUPS.map((group) => (
+                  <option key={group.label} value={group.label}>{group.label}</option>
+                ))}
+              </select>
+              <select
+                className="flex-1 min-w-0 px-1.5 py-1 text-xs border border-slate-200 rounded-sm bg-white focus:ring-1 focus:ring-primary/40"
+                value={gradeFilter ?? ''}
+                onChange={(e) => { setGradeFilter(e.target.value || null); setCurrentPage(1); }}
+                disabled={!levelFilter}
+              >
+                <option value="">학년</option>
+                {(GRADE_GROUPS.find((g) => g.label === levelFilter)?.grades ?? []).map((g) => (
+                  <option key={g} value={g}>{GRADE_SHORT_LABELS[g]}</option>
+                ))}
+              </select>
+            </div>
             <select
-              className="flex-1 min-w-0 px-1.5 py-1 text-xs border border-slate-200 rounded-sm bg-white focus:ring-1 focus:ring-primary/40"
-              value={levelFilter ?? ''}
-              onChange={(e) => { setLevelFilter(e.target.value || null); setGradeFilter(null); setCurrentPage(1); }}
+              className="w-full px-1.5 py-1 text-xs border border-slate-200 rounded-sm bg-white focus:ring-1 focus:ring-primary/40"
+              value={partFilter ?? ''}
+              onChange={(e) => { setPartFilter(e.target.value || null); setCurrentPage(1); }}
             >
-              <option value="">학제</option>
-              {GRADE_GROUPS.map((group) => (
-                <option key={group.label} value={group.label}>{group.label}</option>
-              ))}
-            </select>
-            <select
-              className="flex-1 min-w-0 px-1.5 py-1 text-xs border border-slate-200 rounded-sm bg-white focus:ring-1 focus:ring-primary/40"
-              value={gradeFilter ?? ''}
-              onChange={(e) => { setGradeFilter(e.target.value || null); setCurrentPage(1); }}
-              disabled={!levelFilter}
-            >
-              <option value="">학년</option>
-              {(GRADE_GROUPS.find((g) => g.label === levelFilter)?.grades ?? []).map((g) => (
-                <option key={g} value={g}>{GRADE_SHORT_LABELS[g]}</option>
+              <option value="">영역 전체</option>
+              {Object.entries(PART_LABELS).map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
               ))}
             </select>
           </div>
@@ -204,7 +217,7 @@ export function ConceptListPanel({ mgr }: ConceptListPanelProps) {
                         <span className="text-xs text-text-secondary">{PART_LABELS[concept.part] ?? concept.part}</span>
                       </div>
                     </button>
-                    {isAdmin && (
+                    {isOwner && (
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteConcept(concept.id); }}
                         className="p-1 opacity-0 group-hover:opacity-100 text-text-secondary hover:text-red-500 transition-all rounded-sm hover:bg-red-50 shrink-0"

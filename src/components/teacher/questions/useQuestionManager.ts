@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import { toast } from '@/components/ui/Toast';
 import { renderDiagram } from '@/lib/utils/svg-diagrams';
 import type { DiagramType } from '@/lib/utils/svg-diagrams/types';
@@ -25,7 +25,7 @@ import {
 
 export function useQuestionManager() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'ADMIN';
+  const isOwner = hasRoleClient(user?.role, 'OWNER');
 
   const [search, setSearch] = useState('');
   const [searchDebounced, setSearchDebounced] = useState('');
@@ -36,6 +36,7 @@ export function useQuestionManager() {
   const [sectionFilter, setSectionFilter] = useState<string | null>(null);
   const [difficultyFilter, setDifficultyFilter] = useState<string>('전체');
   const [typeFilters, setTypeFilters] = useState<Set<string>>(new Set(TYPE_OPTIONS));
+  const [domainFilter, setDomainFilter] = useState<string>('전체');
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedExplanation, setExpandedExplanation] = useState<string | null>(null);
 
@@ -284,6 +285,7 @@ export function useQuestionManager() {
       params.set('type', TYPE_TO_ENUM[selectedTypes[0]]);
     }
 
+    if (domainFilter !== '전체') params.set('domain', domainFilter);
     if (searchDebounced) params.set('search', searchDebounced);
     params.set('page', String(currentPage));
     params.set('limit', String(ITEMS_PER_PAGE));
@@ -305,7 +307,7 @@ export function useQuestionManager() {
     } finally {
       setLoading(false);
     }
-  }, [bookFilter, chapterFilter, sectionFilter, difficultyFilter, typeFilters, searchDebounced, currentPage, schoolLevel]);
+  }, [bookFilter, chapterFilter, sectionFilter, difficultyFilter, typeFilters, domainFilter, searchDebounced, currentPage, schoolLevel]);
 
   // 새 문제 추가
   const openCreateModal = () => {
@@ -585,6 +587,7 @@ export function useQuestionManager() {
     chapterFilter, setChapterFilter,
     sectionFilter, setSectionFilter,
     difficultyFilter, setDifficultyFilter,
+    domainFilter, setDomainFilter,
     typeFilters, toggleTypeFilter,
     currentPage, setCurrentPage,
     expandedExplanation, setExpandedExplanation,
@@ -628,6 +631,6 @@ export function useQuestionManager() {
     fetchQuestions,
 
     // Role
-    isAdmin,
+    isOwner,
   };
 }

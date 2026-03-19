@@ -14,6 +14,7 @@ import {
   ELEMENTARY_BOOK_CODES,
   DIFFICULTY_OPTIONS,
   TYPE_OPTIONS,
+  DOMAIN_OPTIONS,
   type Meta,
 } from './question-types';
 
@@ -30,6 +31,8 @@ interface QuestionListSidebarProps {
   setSectionFilter: (section: string | null) => void;
   difficultyFilter: string;
   setDifficultyFilter: (difficulty: string) => void;
+  domainFilter: string;
+  setDomainFilter: (domain: string) => void;
   typeFilters: Set<string>;
   toggleTypeFilter: (type: string) => void;
   setCurrentPage: (page: number) => void;
@@ -53,6 +56,8 @@ export function QuestionListSidebar({
   setSectionFilter,
   difficultyFilter,
   setDifficultyFilter,
+  domainFilter,
+  setDomainFilter,
   typeFilters,
   toggleTypeFilter,
   setCurrentPage,
@@ -285,6 +290,31 @@ export function QuestionListSidebar({
                   }`}
                 >
                   {d}
+                </button>
+              ))}
+            </div>
+          </Card>
+
+          {/* Domain Filter */}
+          <Card className="p-3 flex flex-col gap-2">
+            <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">
+              영역
+            </h3>
+            <div className="flex flex-wrap gap-1.5">
+              {DOMAIN_OPTIONS.map((d) => (
+                <button
+                  key={d.key}
+                  onClick={() => {
+                    setDomainFilter(d.key);
+                    setCurrentPage(1);
+                  }}
+                  className={`px-2.5 py-1.5 rounded-sm text-xs font-medium transition-colors ${
+                    domainFilter === d.key
+                      ? 'bg-primary text-white'
+                      : 'bg-slate-100 hover:bg-slate-200 text-text-secondary'
+                  }`}
+                >
+                  {d.label}
                 </button>
               ))}
             </div>

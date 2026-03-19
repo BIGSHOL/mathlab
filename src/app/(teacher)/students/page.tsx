@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from '@/components/ui/Toast';
 import { Users } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import { useSearchParams } from 'next/navigation';
 import {
   StudentListPanel,
@@ -20,7 +20,7 @@ import type { UserItem, StudentStats, TeacherStats } from '@/components/teacher/
 export default function StudentsPage() {
   const { user: currentUser } = useAuth();
   const searchParams = useSearchParams();
-  const isAdmin = currentUser?.role === 'ADMIN';
+  const isOwner = hasRoleClient(currentUser?.role, 'OWNER');
   const initialTab = searchParams.get('tab') === 'teachers' ? 'teachers' : 'students';
 
   const [tab, setTab] = useState<'students' | 'teachers'>(initialTab);
@@ -68,7 +68,7 @@ export default function StudentsPage() {
     }
   }, []);
 
-  const showTeachers = isAdmin && tab === 'teachers';
+  const showTeachers = isOwner && tab === 'teachers';
 
   const filteredUsers = users
     .filter((u) => showTeachers ? u.role === 'TEACHER' : u.role === 'STUDENT')
@@ -191,7 +191,7 @@ export default function StudentsPage() {
       <StudentListPanel
         leftPanelCollapsed={leftPanelCollapsed}
         onToggleCollapse={() => setLeftPanelCollapsed((p) => !p)}
-        isAdmin={isAdmin}
+        isOwner={isOwner}
         tab={tab}
         showTeachers={showTeachers}
         studentCount={studentCount}
@@ -233,7 +233,7 @@ export default function StudentsPage() {
                 user={selectedUser}
                 stats={stats?.type === 'teacher' ? stats : null}
                 statsLoading={statsLoading}
-                isAdmin={isAdmin}
+                isOwner={isOwner}
                 onResetPassword={handleResetPassword}
                 onDelete={handleDeleteUser}
               />
@@ -243,7 +243,7 @@ export default function StudentsPage() {
                 stats={stats?.type === 'student' ? stats : null}
                 statsLoading={statsLoading}
                 showTeachers={showTeachers}
-                isAdmin={isAdmin}
+                isOwner={isOwner}
                 onResetPassword={handleResetPassword}
                 onDelete={handleDeleteUser}
               />

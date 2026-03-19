@@ -43,7 +43,7 @@ interface QuestionListMainProps {
   startEditing: (q?: QuestionItem) => void;
   deleteQuestion: (id: string) => void;
   openCreateModal: () => void;
-  isAdmin?: boolean;
+  isOwner?: boolean;
 }
 
 export function QuestionListMain({
@@ -64,7 +64,7 @@ export function QuestionListMain({
   startEditing,
   deleteQuestion,
   openCreateModal,
-  isAdmin,
+  isOwner,
 }: QuestionListMainProps) {
   return (
     <main className="flex-1 flex flex-col min-w-0 bg-white p-3 md:p-4 gap-3 overflow-y-auto">
@@ -76,7 +76,7 @@ export function QuestionListMain({
             초등·중등 수학 문제 검색 및 관리. 전체 {meta.total.toLocaleString()}개의 문제
           </p>
         </div>
-        {isAdmin && (
+        {isOwner && (
           <div className="flex gap-2">
             <Button variant="secondary" size="sm">
               <Download className="w-4 h-4 mr-2" />
@@ -166,7 +166,7 @@ export function QuestionListMain({
                       )}
                     </div>
                     <div className="flex gap-1 text-text-secondary">
-                      {isAdmin && (
+                      {isOwner && (
                         <>
                           <button
                             onClick={(e) => { e.stopPropagation(); startEditing(q); }}

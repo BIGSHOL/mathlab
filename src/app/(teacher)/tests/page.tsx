@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useTests } from '@/hooks/useTests';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import { AssignPanel } from '@/components/test/AssignPanel';
 import { LevelTestTab } from '@/components/test/LevelTestTab';
 import { TEST_TYPE_LABELS } from '@/lib/constants/labels';
@@ -29,7 +29,7 @@ type TestTab = 'test' | 'level_test';
 export default function TestsPage() {
   const [activeTab, setActiveTab] = useState<TestTab>('test');
   const { user } = useAuth();
-  const isAdmin = user?.role === 'ADMIN';
+  const isOwner = hasRoleClient(user?.role, 'OWNER');
   const [gradeFilter, setGradeFilter] = useState<number | undefined>();
   const { tests, loading, deleteTest, refresh } = useTests({ grade: gradeFilter });
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -283,7 +283,7 @@ export default function TestsPage() {
                   </div>
 
                   {/* Creator info (admin only) */}
-                  {isAdmin && selectedTest.creator && (
+                  {isOwner && selectedTest.creator && (
                     <div className="mb-3 px-3 py-2 bg-violet-50 rounded-sm">
                       <span className="text-xs text-violet-600 font-medium">
                         출제: {selectedTest.creator.name}

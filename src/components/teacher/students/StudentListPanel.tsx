@@ -19,7 +19,7 @@ interface StudentListPanelProps {
   onToggleCollapse: () => void;
 
   // 탭 (학생/선생님)
-  isAdmin: boolean;
+  isOwner: boolean;
   tab: 'students' | 'teachers';
   showTeachers: boolean;
   studentCount: number;
@@ -55,7 +55,7 @@ interface StudentListPanelProps {
 export function StudentListPanel({
   leftPanelCollapsed,
   onToggleCollapse,
-  isAdmin,
+  isOwner,
   tab,
   showTeachers,
   studentCount,
@@ -102,7 +102,7 @@ export function StudentListPanel({
 
       {!leftPanelCollapsed && (
         <>
-          {isAdmin && (
+          {isOwner && (
             <div className="px-3 pt-2 pb-1 flex gap-1.5">
               <button
                 onClick={() => onTabChange('students')}

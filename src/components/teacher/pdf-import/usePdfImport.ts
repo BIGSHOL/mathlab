@@ -8,7 +8,7 @@ import type {
   PdfExtractProgress,
 } from '@/types/pdf-extract';
 import { mapDifficulty, mapType, embedBoxItems } from '@/types/pdf-extract';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import type { PdfImportState, StepNumber } from './types';
 import {
   bookCodeToGradeCode,
@@ -23,7 +23,7 @@ import {
 
 export function usePdfImport(): PdfImportState {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'ADMIN';
+  const isOwner = hasRoleClient(user?.role, 'OWNER');
 
   // 단계 관리
   const [step, setStep] = useState<StepNumber>(1);
@@ -496,7 +496,7 @@ export function usePdfImport(): PdfImportState {
       let conceptsCreated = 0;
 
       // 2. 개념 일괄 저장 (옵션)
-      if (isAdmin && saveConcepts && concepts.length > 0 && subjectId) {
+      if (isOwner && saveConcepts && concepts.length > 0 && subjectId) {
         const gradeCode = bookCodeToGradeCode(bookCode);
         const semester = bookCodeToSemester(bookCode);
         try {
@@ -600,6 +600,6 @@ export function usePdfImport(): PdfImportState {
     error,
     setError,
     handleSave,
-    isAdmin,
+    isOwner,
   };
 }

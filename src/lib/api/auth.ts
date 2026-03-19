@@ -2,21 +2,56 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { forbidden } from './errors';
+import type { UserRole } from '@/types';
 
 export type AuthUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>;
 
-/** 선생님/관리자 전용 — 미인증 또는 학생이면 403 */
+// ── 역할 계층 ──
+const ROLE_LEVEL: Record<string, number> = {
+  STUDENT: 0,
+  TEACHER: 1,
+  MANAGER: 2,
+  OWNER: 3,
+  SUPER_ADMIN: 4,
+  ADMIN: 3, // 레거시 호환 (OWNER와 동일 권한)
+};
+
+/** 유저의 역할이 최소 역할 이상인지 확인 */
+export function hasRole(user: { role: string }, minRole: UserRole): boolean {
+  return (ROLE_LEVEL[user.role] ?? 0) >= (ROLE_LEVEL[minRole] ?? 99);
+}
+
+/** 선생님 이상 (TEACHER/MANAGER/OWNER/SUPER_ADMIN) */
 export async function requireTeacher(): Promise<AuthUser | NextResponse> {
   const user = await getCurrentUser();
-  if (!user || user.role === 'STUDENT') return forbidden();
+  if (!user || !hasRole(user, 'TEACHER')) return forbidden();
   return user;
 }
 
-/** 관리자 전용 — 비관리자면 403 */
-export async function requireAdmin(): Promise<AuthUser | NextResponse> {
+/** 팀장 이상 (MANAGER/OWNER/SUPER_ADMIN) */
+export async function requireManager(): Promise<AuthUser | NextResponse> {
   const user = await getCurrentUser();
-  if (!user || user.role !== 'ADMIN') return forbidden();
+  if (!user || !hasRole(user, 'MANAGER')) return forbidden();
   return user;
+}
+
+/** 원장 이상 (OWNER/SUPER_ADMIN) — 기존 requireAdmin 대체 */
+export async function requireOwner(): Promise<AuthUser | NextResponse> {
+  const user = await getCurrentUser();
+  if (!user || !hasRole(user, 'OWNER')) return forbidden();
+  return user;
+}
+
+/** 슈퍼관리자 전용 */
+export async function requireSuperAdmin(): Promise<AuthUser | NextResponse> {
+  const user = await getCurrentUser();
+  if (!user || !hasRole(user, 'SUPER_ADMIN')) return forbidden();
+  return user;
+}
+
+/** @deprecated requireOwner() 사용 권장 — 레거시 호환 */
+export async function requireAdmin(): Promise<AuthUser | NextResponse> {
+  return requireOwner();
 }
 
 /** 로그인 필수 — 미인증 시 403. role 무관 */
@@ -28,14 +63,14 @@ export async function requireAuth(): Promise<AuthUser | NextResponse> {
 
 /**
  * 로그인 필수 + 학생 시점 보기 지원.
- * 선생님/관리자가 `?_as=studentId`로 호출하면 해당 학생 사용자를 반환.
+ * 선생님 이상이 `?_as=studentId`로 호출하면 해당 학생 사용자를 반환.
  */
 export async function requireAuthViewAs(request: NextRequest): Promise<AuthUser | NextResponse> {
   const user = await getCurrentUser();
   if (!user) return forbidden();
 
   const studentId = new URL(request.url).searchParams.get('_as');
-  if (studentId && (user.role === 'TEACHER' || user.role === 'ADMIN')) {
+  if (studentId && hasRole(user, 'TEACHER')) {
     const student = await prisma.user.findUnique({
       where: { id: studentId, role: 'STUDENT', deletedAt: null },
       select: { id: true, name: true, username: true, role: true, grade: true },
@@ -45,7 +80,7 @@ export async function requireAuthViewAs(request: NextRequest): Promise<AuthUser 
         id: student.id,
         name: student.name,
         username: student.username,
-        role: student.role as 'STUDENT' | 'TEACHER' | 'ADMIN',
+        role: student.role as AuthUser['role'],
         grade: student.grade,
       };
     }

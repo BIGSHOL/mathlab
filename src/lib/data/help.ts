@@ -628,19 +628,17 @@ export const ALL_HELP: HelpCategory[] = [
 ];
 
 /** 역할에 따라 볼 수 있는 도움말 필터링 */
-export function getHelpByRole(role?: 'STUDENT' | 'TEACHER' | 'ADMIN' | null): HelpCategory[] {
+export function getHelpByRole(role?: string | null): HelpCategory[] {
   if (!role) {
-    // 비로그인 → 선생님용(공개 가이드)
     return ALL_HELP.filter((c) => c.audience.includes('teacher'));
   }
-  switch (role) {
-    case 'STUDENT':
-      return ALL_HELP.filter((c) => c.audience.includes('student'));
-    case 'TEACHER':
-      return ALL_HELP.filter((c) => c.audience.includes('teacher'));
-    case 'ADMIN':
-      return ALL_HELP.filter((c) => c.audience.includes('teacher') || c.audience.includes('admin'));
-    default:
-      return ALL_HELP.filter((c) => c.audience.includes('teacher'));
+  if (role === 'STUDENT') {
+    return ALL_HELP.filter((c) => c.audience.includes('student'));
   }
+  // OWNER/SUPER_ADMIN/ADMIN → teacher + admin 도움말
+  if (role === 'OWNER' || role === 'SUPER_ADMIN' || role === 'ADMIN') {
+    return ALL_HELP.filter((c) => c.audience.includes('teacher') || c.audience.includes('admin'));
+  }
+  // TEACHER/MANAGER → teacher 도움말
+  return ALL_HELP.filter((c) => c.audience.includes('teacher'));
 }

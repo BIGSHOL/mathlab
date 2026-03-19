@@ -271,20 +271,17 @@ export const ALL_UPDATES: UpdateLog[] = [
 ];
 
 /** 역할에 따라 볼 수 있는 업데이트 필터링 */
-export function getUpdatesByRole(role?: 'STUDENT' | 'TEACHER' | 'ADMIN' | null): UpdateLog[] {
+export function getUpdatesByRole(role?: string | null): UpdateLog[] {
   if (!role) {
-    // 비로그인 → public만
     return ALL_UPDATES.filter((u) => u.audience.includes('public'));
   }
-  switch (role) {
-    case 'STUDENT':
-      return ALL_UPDATES.filter((u) => u.audience.includes('student') || u.audience.includes('public'));
-    case 'TEACHER':
-      return ALL_UPDATES.filter((u) => u.audience.includes('teacher') || u.audience.includes('public'));
-    case 'ADMIN':
-      // 관리자는 모두 볼 수 있음
-      return ALL_UPDATES;
-    default:
-      return ALL_UPDATES.filter((u) => u.audience.includes('public'));
+  if (role === 'STUDENT') {
+    return ALL_UPDATES.filter((u) => u.audience.includes('student') || u.audience.includes('public'));
   }
+  // OWNER/SUPER_ADMIN/ADMIN → 모두 볼 수 있음
+  if (role === 'OWNER' || role === 'SUPER_ADMIN' || role === 'ADMIN') {
+    return ALL_UPDATES;
+  }
+  // TEACHER/MANAGER
+  return ALL_UPDATES.filter((u) => u.audience.includes('teacher') || u.audience.includes('public'));
 }

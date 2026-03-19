@@ -17,6 +17,7 @@ import {
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { redirect } from 'next/navigation';
+import { hasRole } from '@/lib/api/auth';
 import { formatNumber } from '@/lib/utils/format';
 import Link from 'next/link';
 import MonthlyChartV2 from '@/components/charts/MonthlyChartV2';
@@ -52,8 +53,23 @@ export default async function TeacherDashboardV2({
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  const isAdmin = user.role === 'ADMIN';
+  const isOwner = user.role === 'OWNER' || user.role === 'SUPER_ADMIN' || user.role === 'ADMIN';
   const { period: _period = '7d' } = await searchParams;
+
+  // --- Classroom-based student scoping ---
+  const isOwnerOrAbove = hasRole(user, 'OWNER');
+  let studentScope: Record<string, unknown> = { role: 'STUDENT', deletedAt: null };
+  if (!isOwnerOrAbove) {
+    const teacherClassrooms = await prisma.classroom.findMany({
+      where: { teacherId: user.id },
+      select: { id: true },
+    });
+    if (teacherClassrooms.length > 0) {
+      studentScope = { role: 'STUDENT', deletedAt: null, classroomId: { in: teacherClassrooms.map(c => c.id) } };
+    } else {
+      studentScope = { role: 'STUDENT', deletedAt: null, id: '__NONE__' };
+    }
+  }
 
   const now = new Date();
   const todayStart = new Date(now);
@@ -87,9 +103,10 @@ export default async function TeacherDashboardV2({
     recentAnswers,
   ] = await Promise.all([
     // 기본 통계
-    prisma.user.count({ where: { role: 'STUDENT', deletedAt: null } }),
-    isAdmin ? prisma.user.count({ where: { role: 'TEACHER', deletedAt: null } }) : Promise.resolve(0),
+    prisma.user.count({ where: studentScope }),
+    isOwner ? prisma.user.count({ where: { role: 'TEACHER', deletedAt: null } }) : Promise.resolve(0),
     prisma.studentProfile.findMany({
+      where: isOwnerOrAbove ? {} : { user: studentScope },
       select: { totalXp: true, level: true, lastActiveAt: true, currentStreak: true },
     }),
 
@@ -114,7 +131,7 @@ export default async function TeacherDashboardV2({
 
     // 집중 관리 학생
     prisma.user.findMany({
-      where: { role: 'STUDENT', deletedAt: null },
+      where: studentScope,
       include: {
         profile: true,
         progress: {
@@ -129,7 +146,7 @@ export default async function TeacherDashboardV2({
 
     // 랭킹
     prisma.user.findMany({
-      where: { role: 'STUDENT', deletedAt: null },
+      where: studentScope,
       include: { profile: true },
       orderBy: { profile: { totalXp: 'desc' } },
       take: 5,
@@ -137,7 +154,7 @@ export default async function TeacherDashboardV2({
 
     // 학년 분포
     prisma.user.findMany({
-      where: { role: 'STUDENT', deletedAt: null },
+      where: studentScope,
       select: { grade: true },
     }),
 
@@ -245,7 +262,7 @@ export default async function TeacherDashboardV2({
         <div>
           <p className="text-primary font-semibold text-xs tracking-widest uppercase mb-1">Overview</p>
           <h2 className="text-2xl md:text-3xl font-black text-text-primary tracking-tight">
-            {isAdmin ? '시스템 관리 대시보드' : '통합 대시보드'}
+            {isOwner ? '시스템 관리 대시보드' : '통합 대시보드'}
           </h2>
         </div>
         <OverviewActions />
@@ -366,7 +383,7 @@ export default async function TeacherDashboardV2({
         <div className="bg-white p-4 rounded-xl border border-slate-200/60 flex items-start justify-between shadow-soft hover:shadow-hover hover:-translate-y-0.5 transition-all duration-300">
           <div>
             <p className="text-slate-500 text-xs font-medium">
-              {isAdmin ? `선생님 ${totalTeachers}명 · 학생` : '전체 학생'}
+              {isOwner ? `선생님 ${totalTeachers}명 · 학생` : '전체 학생'}
             </p>
             <h3 className="text-2xl font-black text-text-primary leading-none mt-1.5">
               {totalStudents}<span className="text-sm text-slate-400 font-bold ml-1">명</span>

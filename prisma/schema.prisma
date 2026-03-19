@@ -15,7 +15,10 @@ datasource db {
 enum Role {
   STUDENT
   TEACHER
-  ADMIN
+  MANAGER
+  OWNER
+  SUPER_ADMIN
+  ADMIN         // 레거시 (OWNER로 대체됨, 코드에서 미사용)
 }
 
 model User {
@@ -69,6 +72,7 @@ model User {
   badges                       UserBadge[]
   learningCourseEnrollments    LearningCourseEnrollment[] @relation("LearningCourseEnrollments")
   createdLearningCourses       LearningCourse[]           @relation("LearningCourseCreator")
+  blankAttempts                BlankAttempt[]
 
   @@index([role])
   @@index([classroomId])
@@ -126,6 +130,7 @@ model Concept {
   prerequisites    ConceptPrerequisite[] @relation("HasPrerequisite")
   questions              Question[]
   learningCourseConcepts LearningCourseConcept[]
+  blankAttempts          BlankAttempt[]
 
   @@index([subjectId])
   @@index([subjectId, sortOrder])
@@ -177,6 +182,39 @@ model LearningProgress {
   @@index([userId, conceptId])
   @@index([userId, stage])
   @@index([userId, completed])
+}
+
+// FEAT: 빈칸 학습 시도 이력 (개별 답변 저장)
+model BlankAttempt {
+  id          String    @id @default(cuid())
+  studentId   String
+  conceptId   String
+  stage       Stage     // BLANK_EASY, BLANK_HARD, BLANK_FULL
+  score       Int       @default(0) // 정답률 %
+  allCorrect  Boolean   @default(false)
+  hintCount   Int       @default(0)
+  revealCount Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  student User           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  concept Concept         @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  answers BlankAnswerLog[]
+
+  @@index([studentId, conceptId, stage])
+  @@index([studentId, createdAt(sort: Desc)])
+}
+
+model BlankAnswerLog {
+  id              String  @id @default(cuid())
+  attemptId       String
+  blankPosition   Int     // 빈칸 번호 (1, 2, 3...)
+  submittedAnswer String  @db.Text
+  correctAnswer   String  @db.Text
+  isCorrect       Boolean
+
+  attempt BlankAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@index([attemptId])
 }
 
 // FEAT-1: Gamification

@@ -6,6 +6,13 @@ export const MIDDLE_BOOK_CODES = ['1-1', '1-2', '2-1', '2-2', '3-1', '3-2'] as c
 export const ELEMENTARY_BOOK_CODES = ['E3-1', 'E3-2', 'E4-1', 'E4-2', 'E5-1', 'E5-2', 'E6-1', 'E6-2'] as const;
 export const DIFFICULTY_OPTIONS = ['전체', '하', '중', '상', '최상'] as const;
 export const TYPE_OPTIONS = ['객관식', '단답형', '서술형'] as const;
+export const DOMAIN_OPTIONS = [
+  { key: '전체', label: '전체' },
+  { key: 'CALCULATION', label: '계산력' },
+  { key: 'UNDERSTANDING', label: '이해력' },
+  { key: 'PROBLEM_SOLVING', label: '문제해결력' },
+  { key: 'REASONING', label: '추론력' },
+] as const;
 export const ITEMS_PER_PAGE = 10;
 
 // 새 문제 추가 모달에서 사용하는 기본 단원 목록 (fallback)

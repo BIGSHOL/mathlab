@@ -16,7 +16,7 @@ import {
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 
 const TABS = [
   { id: 'profile', label: '프로필 설정', icon: User },
@@ -29,7 +29,7 @@ type TabId = (typeof TABS)[number]['id'];
 
 export default function SettingsPage() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'ADMIN';
+  const isOwner = hasRoleClient(user?.role, 'OWNER');
   const [activeTab, setActiveTab] = useState<TabId>('profile');
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
 
@@ -191,7 +191,7 @@ export default function SettingsPage() {
                   <label className="text-sm font-semibold text-text-primary">역할</label>
                   <input
                     className="h-11 px-3 rounded-sm border border-slate-200 bg-slate-50 text-text-secondary text-[15px] cursor-not-allowed"
-                    value={isAdmin ? '관리자' : '선생님'}
+                    value={isOwner ? '관리자' : '선생님'}
                     disabled
                   />
                 </div>
@@ -262,7 +262,7 @@ export default function SettingsPage() {
                   { label: '학습 완료 알림', desc: '학생이 스테이지를 완료하면 알림을 받습니다.', defaultChecked: false },
                   { label: '주간 리포트', desc: '매주 월요일 학습 요약 리포트를 받습니다.', defaultChecked: true },
                   { label: '시스템 공지', desc: '시스템 업데이트 및 공지사항을 받습니다.', defaultChecked: true },
-                  ...(isAdmin ? [
+                  ...(isOwner ? [
                     { label: '문의 접수 알림', desc: '선생님이 새 문의를 등록하면 알림을 받습니다.', defaultChecked: true },
                     { label: '선생님 가입 알림', desc: '새 선생님이 가입하면 알림을 받습니다.', defaultChecked: true },
                   ] : []),

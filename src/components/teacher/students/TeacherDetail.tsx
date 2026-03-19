@@ -20,12 +20,12 @@ interface TeacherDetailProps {
   user: UserItem;
   stats: TeacherStats | null;
   statsLoading: boolean;
-  isAdmin: boolean;
+  isOwner: boolean;
   onResetPassword: (id: string) => void;
   onDelete: (id: string, name: string) => void;
 }
 
-export function TeacherDetail({ user, stats, statsLoading, isAdmin, onResetPassword, onDelete }: TeacherDetailProps) {
+export function TeacherDetail({ user, stats, statsLoading, isOwner, onResetPassword, onDelete }: TeacherDetailProps) {
   const s = stats?.summary;
 
   return (
@@ -160,7 +160,7 @@ export function TeacherDetail({ user, stats, statsLoading, isAdmin, onResetPassw
             <RotateCcw className="w-3.5 h-3.5" />
             비밀번호 초기화
           </button>
-          {isAdmin && (
+          {isOwner && (
             <button
               onClick={() => onDelete(user.id, user.name)}
               className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-sm transition-colors"

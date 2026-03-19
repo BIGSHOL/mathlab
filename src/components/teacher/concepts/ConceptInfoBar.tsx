@@ -13,7 +13,7 @@ interface ConceptInfoBarProps {
 export function ConceptInfoBar({ mgr }: ConceptInfoBarProps) {
   const {
     editForm, setEditForm,
-    isAdmin, isHighSchool,
+    isOwner, isHighSchool,
     chapterOptions, sectionOptions, sectionSubOptions,
   } = mgr;
 
@@ -27,7 +27,7 @@ export function ConceptInfoBar({ mgr }: ConceptInfoBarProps) {
             className="w-full px-2 py-1.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary"
             value={editForm.title}
             onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
-            disabled={!isAdmin}
+            disabled={!isOwner}
           />
         </div>
         <div className="w-24 shrink-0">
@@ -36,7 +36,7 @@ export function ConceptInfoBar({ mgr }: ConceptInfoBarProps) {
             className="w-full px-2 py-1.5 border border-slate-200 rounded-sm text-sm font-mono focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary"
             value={editForm.conceptCode}
             onChange={(e) => setEditForm((p) => ({ ...p, conceptCode: e.target.value }))}
-            disabled={!isAdmin}
+            disabled={!isOwner}
           />
         </div>
         <div className="w-40 shrink-0">
@@ -46,7 +46,7 @@ export function ConceptInfoBar({ mgr }: ConceptInfoBarProps) {
             value={editForm.source}
             onChange={(e) => setEditForm((p) => ({ ...p, source: e.target.value }))}
             placeholder="교재명 등"
-            disabled={!isAdmin}
+            disabled={!isOwner}
           />
         </div>
       </div>
@@ -58,7 +58,7 @@ export function ConceptInfoBar({ mgr }: ConceptInfoBarProps) {
             className="w-full px-2 py-1.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary bg-white"
             value={editForm.grade}
             onChange={(e) => setEditForm((p) => ({ ...p, grade: e.target.value, semester: '', chapter: '', section: '', sectionSub: '' }))}
-            disabled={!isAdmin}
+            disabled={!isOwner}
           >
             {GRADE_GROUPS.map((group) => (
               <optgroup key={group.label} label={group.label}>
@@ -76,7 +76,7 @@ export function ConceptInfoBar({ mgr }: ConceptInfoBarProps) {
               className="w-full px-2 py-1.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary bg-white"
               value={editForm.semester}
               onChange={(e) => setEditForm((p) => ({ ...p, semester: e.target.value ? Number(e.target.value) : '', chapter: '', section: '', sectionSub: '' }))}
-              disabled={!isAdmin}
+              disabled={!isOwner}
             >
               <option value="">-</option>
               <option value="1">1학기</option>
@@ -90,7 +90,7 @@ export function ConceptInfoBar({ mgr }: ConceptInfoBarProps) {
             className="w-full px-2 py-1.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary bg-white"
             value={editForm.chapter}
             onChange={(e) => setEditForm((p) => ({ ...p, chapter: e.target.value, section: '', sectionSub: '' }))}
-            disabled={!isAdmin || chapterOptions.length === 0}
+            disabled={!isOwner || chapterOptions.length === 0}
           >
             <option value="">선택</option>
             {chapterOptions.map((name) => (
@@ -104,7 +104,7 @@ export function ConceptInfoBar({ mgr }: ConceptInfoBarProps) {
             className="w-full px-2 py-1.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary bg-white"
             value={editForm.section}
             onChange={(e) => setEditForm((p) => ({ ...p, section: e.target.value, sectionSub: '' }))}
-            disabled={!isAdmin || sectionOptions.length === 0}
+            disabled={!isOwner || sectionOptions.length === 0}
           >
             <option value="">선택</option>
             {sectionOptions.map((name) => (
@@ -118,7 +118,7 @@ export function ConceptInfoBar({ mgr }: ConceptInfoBarProps) {
             className="w-full px-2 py-1.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary bg-white"
             value={editForm.sectionSub}
             onChange={(e) => setEditForm((p) => ({ ...p, sectionSub: e.target.value }))}
-            disabled={!isAdmin || sectionSubOptions.length === 0}
+            disabled={!isOwner || sectionSubOptions.length === 0}
           >
             <option value="">선택</option>
             {sectionSubOptions.map((name) => (
@@ -135,7 +135,7 @@ export function ConceptInfoBar({ mgr }: ConceptInfoBarProps) {
             className="w-full px-2 py-1.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary bg-white"
             value={editForm.category}
             onChange={(e) => setEditForm((p) => ({ ...p, category: e.target.value }))}
-            disabled={!isAdmin}
+            disabled={!isOwner}
           >
             {CATEGORY_OPTIONS.map((c) => (
               <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
@@ -148,7 +148,7 @@ export function ConceptInfoBar({ mgr }: ConceptInfoBarProps) {
             className="w-full px-2 py-1.5 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary bg-white"
             value={editForm.part}
             onChange={(e) => setEditForm((p) => ({ ...p, part: e.target.value }))}
-            disabled={!isAdmin}
+            disabled={!isOwner}
           >
             {PART_OPTIONS.map((pt) => (
               <option key={pt} value={pt}>{PART_LABELS[pt]}</option>
@@ -162,7 +162,7 @@ export function ConceptInfoBar({ mgr }: ConceptInfoBarProps) {
             value={editForm.keywords}
             onChange={(e) => setEditForm((p) => ({ ...p, keywords: e.target.value }))}
             placeholder="쉼표로 구분"
-            disabled={!isAdmin}
+            disabled={!isOwner}
           />
         </div>
       </div>

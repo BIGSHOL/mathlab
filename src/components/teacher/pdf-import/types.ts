@@ -105,5 +105,5 @@ export interface PdfImportState {
   handleSave: () => Promise<void>;
 
   // Auth
-  isAdmin: boolean;
+  isOwner: boolean;
 }

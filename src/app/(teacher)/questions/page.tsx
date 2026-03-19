@@ -30,6 +30,8 @@ export default function QuestionsPage() {
         setSectionFilter={mgr.setSectionFilter}
         difficultyFilter={mgr.difficultyFilter}
         setDifficultyFilter={mgr.setDifficultyFilter}
+        domainFilter={mgr.domainFilter}
+        setDomainFilter={mgr.setDomainFilter}
         typeFilters={mgr.typeFilters}
         toggleTypeFilter={mgr.toggleTypeFilter}
         setCurrentPage={mgr.setCurrentPage}
@@ -59,7 +61,7 @@ export default function QuestionsPage() {
         startEditing={mgr.startEditing}
         deleteQuestion={mgr.deleteQuestion}
         openCreateModal={mgr.openCreateModal}
-        isAdmin={mgr.isAdmin}
+        isOwner={mgr.isOwner}
       />
 
       {/* ===== View / Edit Modal ===== */}
@@ -87,12 +89,12 @@ export default function QuestionsPage() {
           openDiagramEditor={mgr.openDiagramEditor}
           editDiagram={mgr.editDiagram}
           removeDiagram={mgr.removeDiagram}
-          isAdmin={mgr.isAdmin}
+          isOwner={mgr.isOwner}
         />
       )}
 
       {/* ===== Create Modal (어드민 전용) ===== */}
-      {mgr.isAdmin && mgr.isCreateMode && (
+      {mgr.isOwner && mgr.isCreateMode && (
         <QuestionCreateModal
           createForm={mgr.createForm}
           setCreateForm={mgr.setCreateForm}

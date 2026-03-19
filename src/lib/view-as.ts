@@ -11,7 +11,7 @@ export async function getViewAsUser(searchParams?: { _as?: string; [key: string]
   if (!realUser) return null;
 
   const studentId = searchParams?._as;
-  if (typeof studentId === 'string' && studentId && (realUser.role === 'TEACHER' || realUser.role === 'ADMIN')) {
+  if (typeof studentId === 'string' && studentId && realUser.role !== 'STUDENT') {
     const student = await prisma.user.findUnique({
       where: { id: studentId, role: 'STUDENT', deletedAt: null },
       select: { id: true, name: true, username: true, role: true, grade: true },

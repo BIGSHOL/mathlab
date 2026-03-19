@@ -18,7 +18,7 @@ import {
   FileEdit,
   CalendarDays,
 } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 
@@ -127,9 +127,11 @@ export default function AdminUsersPage() {
   // 패널
   const [leftCollapsed, setLeftCollapsed] = useState(false);
 
+  const isOwner = hasRoleClient(currentUser?.role, 'OWNER');
+
   // ADMIN 체크
   useEffect(() => {
-    if (currentUser && currentUser.role !== 'ADMIN') {
+    if (currentUser && !hasRoleClient(currentUser.role, 'OWNER')) {
       router.replace('/overview');
     }
   }, [currentUser, router]);
@@ -244,7 +246,7 @@ export default function AdminUsersPage() {
       return bTime - aTime;
     });
 
-  if (!currentUser || currentUser.role !== 'ADMIN') {
+  if (!currentUser || !isOwner) {
     return (
       <div className="flex-1 flex items-center justify-center text-text-secondary text-sm">
         <Loader2 className="w-6 h-6 animate-spin text-primary mr-2" /> 로딩 중...

@@ -123,7 +123,7 @@ export default function PdfImportPage() {
           setExpandedIdx={state.setExpandedIdx}
           updateProblem={state.updateProblem}
           deleteProblem={state.deleteProblem}
-          isAdmin={state.isAdmin}
+          isOwner={state.isOwner}
           concepts={state.concepts}
           setConcepts={state.setConcepts}
           saveConcepts={state.saveConcepts}

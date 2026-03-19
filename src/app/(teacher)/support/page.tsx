@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 
 interface Inquiry {
   id: string;
@@ -60,7 +60,7 @@ const CATEGORIES = ['계정 관련', '학습 기능', '시스템 오류', '기�
 
 export default function SupportPage() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'ADMIN';
+  const isOwner = hasRoleClient(user?.role, 'OWNER');
 
   const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
@@ -178,7 +178,7 @@ export default function SupportPage() {
             <div className="flex items-center gap-2 min-w-0">
               <HelpCircle className="w-5 h-5 text-primary shrink-0" />
               <h1 className="text-base font-bold text-text-primary truncate">고객지원</h1>
-              {isAdmin && pendingCount > 0 && (
+              {isOwner && pendingCount > 0 && (
                 <span className="shrink-0 px-1.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
                   {pendingCount}
                 </span>
@@ -201,7 +201,7 @@ export default function SupportPage() {
         {/* Panel Body (hidden when collapsed) */}
         {!leftPanelCollapsed && (
           <div className="flex-1 flex flex-col min-h-0">
-            {isAdmin ? (
+            {isOwner ? (
               <>
                 {/* Admin: Status Filter Pills */}
                 <div className="shrink-0 px-3 py-2 border-b border-slate-200 flex gap-1">
@@ -347,7 +347,7 @@ export default function SupportPage() {
       <main className="flex-1 flex flex-col min-w-0 bg-white">
         <div className="flex-1 flex items-center justify-center overflow-y-auto p-3 md:p-4">
           {/* ---- Teacher: Inquiry Form ---- */}
-          {!isAdmin && showInquiryForm && !selectedInquiry ? (
+          {!isOwner && showInquiryForm && !selectedInquiry ? (
             <div className="max-w-[700px] mx-auto flex flex-col gap-3">
               <div>
                 <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
@@ -434,7 +434,7 @@ export default function SupportPage() {
                 <h3 className="text-base font-bold text-text-primary">{selectedInquiry.title}</h3>
                 <p className="text-xs text-text-secondary mt-1">
                   {selectedInquiry.user.name}
-                  {isAdmin && ` (${selectedInquiry.user.username})`} ·{' '}
+                  {isOwner && ` (${selectedInquiry.user.username})`} ·{' '}
                   {formatDate(selectedInquiry.createdAt)}
                 </p>
               </div>
@@ -456,7 +456,7 @@ export default function SupportPage() {
               )}
 
               {/* Admin: Reply Form */}
-              {isAdmin && selectedInquiry.status === 'PENDING' && (
+              {isOwner && selectedInquiry.status === 'PENDING' && (
                 <div className="flex flex-col gap-3 border-t border-slate-200 pt-2">
                   <label className="text-sm font-semibold text-text-primary">답변 작성</label>
                   <textarea

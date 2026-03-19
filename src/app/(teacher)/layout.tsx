@@ -11,7 +11,8 @@ export default async function TeacherLayout({
 }) {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
-  if (user.role !== 'TEACHER' && user.role !== 'ADMIN') redirect('/dashboard');
+  // TEACHER 이상만 접근 (STUDENT는 학생 대시보드로)
+  if (user.role === 'STUDENT') redirect('/dashboard');
 
   return (
     <div className="h-screen flex bg-background overflow-hidden print:h-auto print:overflow-visible print:bg-white">

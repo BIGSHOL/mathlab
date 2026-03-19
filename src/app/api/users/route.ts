@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
-import { requireTeacher, validateBody, isResponse, conflict } from '@/lib/api';
+import { requireTeacher, validateBody, isResponse, conflict, hasRole, getStudentScope } from '@/lib/api';
 import { createUserSchema } from '@/lib/schemas/auth';
 
-// GET /api/users - List students
+// GET /api/users - List students (역할 기반 스코핑)
 export async function GET() {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
 
+  // OWNER 이상: 전체 사용자 (선생님 포함), TEACHER/MANAGER: 담당 반 학생만
+  const isOwnerOrAbove = hasRole(user, 'OWNER');
+  const where = isOwnerOrAbove
+    ? { deletedAt: null }
+    : await getStudentScope(user);
+
   const users = await prisma.user.findMany({
-    where: { deletedAt: null },
+    where,
     select: {
       id: true,
       seq: true,

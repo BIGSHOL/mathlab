@@ -45,7 +45,7 @@ interface ExtractionPreviewStepProps {
   deleteProblem: (idx: number) => void;
 
   // 개념
-  isAdmin: boolean;
+  isOwner: boolean;
   concepts: ExtractedConcept[];
   setConcepts: React.Dispatch<React.SetStateAction<ExtractedConcept[]>>;
   saveConcepts: boolean;
@@ -90,7 +90,7 @@ export function ExtractionPreviewStep({
   setExpandedIdx,
   updateProblem,
   deleteProblem,
-  isAdmin,
+  isOwner,
   concepts,
   setConcepts,
   saveConcepts,
@@ -228,7 +228,7 @@ export function ExtractionPreviewStep({
           </Card>
 
           {/* 추출된 개념 미리보기 (ADMIN만) */}
-          {isAdmin && concepts.length > 0 && (
+          {isOwner && concepts.length > 0 && (
             <Card className="p-4 mb-4">
               <div className="flex items-center gap-3 mb-3">
                 <div className="flex items-center gap-2">
@@ -341,7 +341,7 @@ export function ExtractionPreviewStep({
             </Button>
             <Button onClick={handleSave} disabled={submitting || problems.length === 0} className="flex items-center gap-2">
               {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              {problems.length}개 문제{isAdmin && saveConcepts && concepts.length > 0 ? ` + ${concepts.length}개 개념` : ''} 저장
+              {problems.length}개 문제{isOwner && saveConcepts && concepts.length > 0 ? ` + ${concepts.length}개 개념` : ''} 저장
             </Button>
           </div>
         </>

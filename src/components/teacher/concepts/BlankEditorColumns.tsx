@@ -17,7 +17,7 @@ interface BlankEditorColumnsProps {
 
 export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
   const {
-    isAdmin,
+    isOwner,
     blankForm,
     editPrereqs, prereqSearch, prereqResults, prereqSearching,
     searchPrereqs, addPrereq, removePrereq,
@@ -42,13 +42,13 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
         <div className="flex items-center justify-between">
           <label className="block text-sm font-bold text-text-secondary">
             개념 내용 / 템플릿
-            {isAdmin && (
+            {isOwner && (
               <span className="font-normal ml-1 text-slate-400">
                 텍스트 선택 후 빈칸 변환
               </span>
             )}
           </label>
-          {isAdmin && (
+          {isOwner && (
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
@@ -110,7 +110,7 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
                     templateHighlightRef.current.scrollTop = e.currentTarget.scrollTop;
                   }
                 }}
-                disabled={!isAdmin}
+                disabled={!isOwner}
               />
               <div
                 ref={templateHighlightRef}
@@ -137,7 +137,7 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
                 <EditableMathRenderer
                   content={blankForm.templateText}
                   className="text-sm font-serif-kr"
-                  onMathClick={isAdmin ? (latex, start, end) => setTemplateMathPopup({ latex, start, end }) : undefined}
+                  onMathClick={isOwner ? (latex, start, end) => setTemplateMathPopup({ latex, start, end }) : undefined}
                 />
               ) : (
                 <p className="text-slate-400 text-sm">개념 내용이 없습니다.</p>
@@ -163,7 +163,7 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
 
         {/* Prerequisites */}
         <PrerequisiteSection
-          isAdmin={isAdmin}
+          isOwner={isOwner}
           editPrereqs={editPrereqs}
           prereqSearch={prereqSearch}
           prereqResults={prereqResults}
@@ -290,7 +290,7 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
             빈칸 ({blankForm.blanks.length}개)
           </h3>
           <div className="flex items-center gap-1">
-            {isAdmin && (
+            {isOwner && (
               <button
                 type="button"
                 onClick={autoRenumber}
@@ -327,10 +327,10 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
                 className={`bg-white rounded-sm p-2 border transition-colors ${
                   dragIdx === idx ? 'border-primary bg-primary/5' : 'border-slate-200'
                 }`}
-                draggable={isAdmin}
-                onDragStart={() => isAdmin && setDragIdx(idx)}
+                draggable={isOwner}
+                onDragStart={() => isOwner && setDragIdx(idx)}
                 onDragOver={(e) => { e.preventDefault(); }}
-                onDrop={() => isAdmin && handleBlankDrop(idx)}
+                onDrop={() => isOwner && handleBlankDrop(idx)}
                 onDragEnd={() => setDragIdx(null)}
               >
                 {/* Row 1 */}
@@ -351,14 +351,14 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
                     />
                   ) : (
                     <span
-                      className={`flex-1 min-w-0 px-2 py-1 rounded-sm text-xs font-serif-kr ${isAdmin ? 'cursor-text hover:bg-slate-100 border border-transparent hover:border-slate-200' : 'bg-slate-50 text-text-secondary'} transition-colors`}
-                      onClick={isAdmin ? () => setEditingBlankPos(b.position) : undefined}
-                      title={isAdmin ? '클릭하여 편집' : undefined}
+                      className={`flex-1 min-w-0 px-2 py-1 rounded-sm text-xs font-serif-kr ${isOwner ? 'cursor-text hover:bg-slate-100 border border-transparent hover:border-slate-200' : 'bg-slate-50 text-text-secondary'} transition-colors`}
+                      onClick={isOwner ? () => setEditingBlankPos(b.position) : undefined}
+                      title={isOwner ? '클릭하여 편집' : undefined}
                     >
                       <InlineMathText text={b.answer || '(정답 없음)'} />
                     </span>
                   )}
-                  {isAdmin ? (
+                  {isOwner ? (
                     <button
                       type="button"
                       onClick={() => {
@@ -376,7 +376,7 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
                       {DIFFICULTY_LABELS[b.difficulty || 'easy']}
                     </span>
                   )}
-                  {isAdmin && (
+                  {isOwner && (
                     <button
                       type="button"
                       onClick={() => removeBlankFromForm(b)}
@@ -394,7 +394,7 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
                     value={b.hint}
                     onChange={(e) => updateBlankItem(b.position, 'hint', e.target.value)}
                     placeholder="힌트 (학생에게 보여줄 설명)"
-                    disabled={!isAdmin}
+                    disabled={!isOwner}
                   />
                 </div>
               </div>
@@ -426,10 +426,10 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
 
 // Prerequisite section extracted as a helper (used in multiple places)
 export function PrerequisiteSection({
-  isAdmin, editPrereqs, prereqSearch, prereqResults, prereqSearching,
+  isOwner, editPrereqs, prereqSearch, prereqResults, prereqSearching,
   searchPrereqs, addPrereq, removePrereq,
 }: {
-  isAdmin: boolean;
+  isOwner: boolean;
   editPrereqs: ConceptManagerReturn['editPrereqs'];
   prereqSearch: string;
   prereqResults: ConceptManagerReturn['prereqResults'];
@@ -453,7 +453,7 @@ export function PrerequisiteSection({
             >
               <span className="font-mono font-bold">{p.conceptCode}</span>
               <span className="text-text-secondary">{p.title}</span>
-              {isAdmin && (
+              {isOwner && (
                 <button
                   type="button"
                   onClick={() => removePrereq(p.id)}
@@ -466,7 +466,7 @@ export function PrerequisiteSection({
           ))}
         </div>
       )}
-      {isAdmin && (
+      {isOwner && (
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-secondary">
             <Plus className="w-4 h-4" />

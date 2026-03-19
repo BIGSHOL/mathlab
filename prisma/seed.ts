@@ -20,7 +20,7 @@ async function main() {
 
   // === USERS ===
   const admin = await prisma.user.create({
-    data: { username: 'admin', passwordHash: hash('admin1234'), name: '관리자', role: 'ADMIN' },
+    data: { username: 'admin', passwordHash: hash('admin1234'), name: '관리자', role: 'OWNER' },
   });
 
   const teacher1 = await prisma.user.create({

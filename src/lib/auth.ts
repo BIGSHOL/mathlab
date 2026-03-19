@@ -72,7 +72,7 @@ export async function getCurrentUser() {
     id: string;
     name: string;
     username: string;
-    role: 'STUDENT' | 'TEACHER' | 'ADMIN';
+    role: 'STUDENT' | 'TEACHER' | 'MANAGER' | 'OWNER' | 'SUPER_ADMIN' | 'ADMIN';
     grade: number | null;
   };
 }

@@ -33,7 +33,7 @@ import {
   LifeBuoy,
   Sparkles,
 } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import { LogoIcon } from '@/components/ui/LogoIcon';
 
 interface MenuItem {
@@ -101,7 +101,7 @@ const allItems = [...mainItems, ...systemItems, ...adminItems];
 export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
-  const isAdmin = user?.role === 'ADMIN';
+  const isOwner = user ? hasRoleClient(user.role, 'OWNER') : false;
   const [collapsed, setCollapsed] = useState(false);
 
   const isActive = (item: MenuItem) => {
@@ -190,13 +190,13 @@ export function Sidebar() {
       </div>
 
       {/* Admin badge */}
-      {isAdmin && !collapsed && (
+      {isOwner && !collapsed && (
         <div className="mx-3 mt-3 flex items-center gap-2 px-2.5 py-1.5 rounded-sm bg-violet-50 border border-violet-200">
           <Shield className="w-3.5 h-3.5 text-violet-600 shrink-0" />
           <span className="text-[11px] font-bold text-violet-700">관리자 모드</span>
         </div>
       )}
-      {isAdmin && collapsed && (
+      {isOwner && collapsed && (
         <div className="mx-auto mt-3" title="관리자 모드">
           <Shield className="w-4 h-4 text-violet-600" />
         </div>
@@ -251,7 +251,7 @@ export function Sidebar() {
         </div>
 
         {/* 어드민 전용 */}
-        {isAdmin && (
+        {isOwner && (
           <>
             {collapsed ? (
               <div className="my-3 border-t-2 border-violet-200" />
@@ -291,7 +291,7 @@ export function Sidebar() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-text-primary truncate">{user?.name ?? '사용자'}</p>
-              <p className="text-[10px] text-text-secondary truncate">{isAdmin ? '관리자' : '선생님'}</p>
+              <p className="text-[10px] text-text-secondary truncate">{isOwner ? '관리자' : '선생님'}</p>
             </div>
             <div className="flex items-center gap-0.5 shrink-0">
               <button className="p-1 rounded text-slate-300 cursor-not-allowed opacity-50" title="알림 — 준비 중">

@@ -26,7 +26,7 @@ import {
   Activity,
   LifeBuoy,
 } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 
 interface CommandItem {
   id: string;
@@ -75,13 +75,13 @@ export function CommandPalette() {
   const listRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { user } = useAuth();
-  const isAdmin = user?.role === 'ADMIN';
+  const isOwner = hasRoleClient(user?.role, 'OWNER');
 
   const allCommands = useMemo(() => {
-    return isAdmin
+    return isOwner
       ? [...mainCommands, ...systemCommands, ...adminCommands]
       : [...mainCommands, ...systemCommands];
-  }, [isAdmin]);
+  }, [isOwner]);
 
   const filtered = useMemo(() => {
     if (!query.trim()) return allCommands;

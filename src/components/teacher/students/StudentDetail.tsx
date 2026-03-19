@@ -35,12 +35,12 @@ interface StudentDetailProps {
   stats: StudentStats | null;
   statsLoading: boolean;
   showTeachers: boolean;
-  isAdmin: boolean;
+  isOwner: boolean;
   onResetPassword: (id: string) => void;
   onDelete: (id: string, name: string) => void;
 }
 
-export function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin, onResetPassword, onDelete }: StudentDetailProps) {
+export function StudentDetail({ user, stats, statsLoading, showTeachers, isOwner, onResetPassword, onDelete }: StudentDetailProps) {
   const s = stats?.summary;
   const accuracyPct = s && s.arithmeticTotal > 0
     ? Math.round((s.arithmeticCorrect / s.arithmeticTotal) * 100) : 0;
@@ -548,7 +548,7 @@ export function StudentDetail({ user, stats, statsLoading, showTeachers, isAdmin
             <RotateCcw className="w-3.5 h-3.5" />
             비밀번호 초기화
           </button>
-          {isAdmin && showTeachers && (
+          {isOwner && showTeachers && (
             <button
               onClick={() => onDelete(user.id, user.name)}
               className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-sm transition-colors"

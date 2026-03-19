@@ -21,7 +21,7 @@ interface ConceptContentColumnsProps {
 
 export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
   const {
-    isAdmin,
+    isOwner,
     editForm, setEditForm,
     isNewConcept, isContentEditing,
     blankExercises, blanksLoading,
@@ -56,7 +56,7 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
         </div>
         {isNewConcept || isContentEditing ? (
           <div className="flex flex-col gap-1.5 flex-1 min-h-0">
-            {isAdmin && (
+            {isOwner && (
               <div className="flex items-center gap-1">
                 <button
                   type="button"
@@ -101,7 +101,7 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
                 onChange={(e) => setEditForm((p) => ({ ...p, fullContent: e.target.value }))}
                 placeholder="개념 내용을 입력하세요..."
                 spellCheck={false}
-                disabled={!isAdmin}
+                disabled={!isOwner}
               />
             ) : (
               <div className="w-full min-h-[200px] flex-1 overflow-y-auto px-3 py-2 border border-slate-200 rounded-sm bg-white scrollbar-thin">
@@ -109,7 +109,7 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
                   <EditableMathRenderer
                     content={editForm.fullContent}
                     className="text-sm font-serif-kr leading-relaxed"
-                    onMathClick={isAdmin ? (latex, start, end) => setTemplateMathPopup({ latex, start, end }) : undefined}
+                    onMathClick={isOwner ? (latex, start, end) => setTemplateMathPopup({ latex, start, end }) : undefined}
                   />
                 ) : (
                   <p className="text-slate-400 text-sm">개념 내용이 없습니다.</p>
@@ -153,7 +153,7 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
 
         {/* Prerequisites */}
         <PrerequisiteSection
-          isAdmin={isAdmin}
+          isOwner={isOwner}
           editPrereqs={editPrereqs}
           prereqSearch={prereqSearch}
           prereqResults={prereqResults}
@@ -179,7 +179,7 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
                   <FileText className="w-4 h-4" />
                   빈칸 문제 {blanks.length > 0 ? `(${blanks.length}개)` : ''}
                 </h3>
-                {isAdmin && !isNewConcept && !blanksLoading && !ex && (
+                {isOwner && !isNewConcept && !blanksLoading && !ex && (
                   <div className="flex items-center gap-1.5">
                     <div className="relative">
                       <button
@@ -244,29 +244,16 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
                 </div>
               ) : (
                 <>
-                  <div className="flex items-center gap-3 text-xs text-slate-500">
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400" /> 쉬움 {easyOnlyCount}</span>
-                    {hardOnlyCount > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400" /> +어려움 {hardOnlyCount}</span>}
-                  </div>
+                  {/* 빈칸 목록 (접이식) */}
+                  <BlankListCollapsible blanks={blanks} easyCount={easyOnlyCount} hardCount={hardOnlyCount} />
 
-                  <div className="flex flex-col gap-1.5 flex-1 overflow-y-auto">
-                    {blanks.map((b) => (
-                      <div key={b.position} className={`flex items-center gap-2 px-3 py-1.5 rounded-sm border ${DIFFICULTY_COLORS[b.difficulty || 'easy']} border-current/20`}>
-                        <span className="shrink-0 w-5 h-5 rounded-sm bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold">#{b.position}</span>
-                        <span className="text-xs font-medium flex-1 truncate font-serif-kr"><InlineMathText text={b.answer} /></span>
-                        {b.hint && <span className="text-xs opacity-60 truncate max-w-[40%] font-serif-kr">{b.hint}</span>}
-                        <span className="text-xs font-bold shrink-0">{DIFFICULTY_LABELS[b.difficulty || 'easy']}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* 난이도별 미리보기 (선생님 조회 모드) */}
+                  {/* 난이도별 미리보기 */}
                   <BlankPreviewSection
-                    templateText={editForm.fullContent}
+                    templateText={ex.templateText}
                     blanks={blanks}
                   />
 
-                  {isAdmin && (
+                  {isOwner && (
                     <div className="flex items-center gap-2 pt-1">
                       <button
                         type="button"
@@ -292,6 +279,37 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
           );
         })()}
       </div>
+    </div>
+  );
+}
+
+/** 빈칸 목록 (접이식) */
+function BlankListCollapsible({ blanks, easyCount, hardCount }: { blanks: BlankItem[]; easyCount: number; hardCount: number }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="bg-white border border-slate-200 rounded-sm overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-2.5 py-1.5 hover:bg-slate-50 transition-colors"
+      >
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400" /> 쉬움 {easyCount}</span>
+          {hardCount > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400" /> +어려움 {hardCount}</span>}
+        </div>
+        {open ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />}
+      </button>
+      {open && (
+        <div className="px-2 pb-2 flex flex-col gap-1 max-h-[200px] overflow-y-auto scrollbar-thin">
+          {blanks.map((b) => (
+            <div key={b.position} className={`flex items-center gap-2 px-2.5 py-1 rounded-sm border ${DIFFICULTY_COLORS[b.difficulty || 'easy']} border-current/20`}>
+              <span className="shrink-0 w-5 h-5 rounded-sm bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold">#{b.position}</span>
+              <span className="text-xs font-medium flex-1 truncate font-serif-kr"><InlineMathText text={b.answer} /></span>
+              <span className="text-xs font-bold shrink-0">{DIFFICULTY_LABELS[b.difficulty || 'easy']}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

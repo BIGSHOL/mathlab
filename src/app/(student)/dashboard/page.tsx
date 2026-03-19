@@ -25,7 +25,7 @@ export default async function StudentDashboard({
   const params = await searchParams;
 
   // Redirect teacher to teacher dashboard (unless preview mode or impersonation)
-  if ((realUser.role === 'TEACHER' || realUser.role === 'ADMIN') && !params.preview && !params._as) {
+  if (realUser.role !== 'STUDENT' && !params.preview && !params._as) {
     redirect('/overview');
   }
 

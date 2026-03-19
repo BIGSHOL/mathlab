@@ -9,7 +9,7 @@ interface ConceptEditorFooterProps {
 
 export function ConceptEditorFooter({ mgr }: ConceptEditorFooterProps) {
   const {
-    isAdmin,
+    isOwner,
     editingBlank, isNewBlank, isNewConcept, isContentEditing, setIsContentEditing,
     editForm, blankForm,
     saving, blankSaving,
@@ -32,7 +32,7 @@ export function ConceptEditorFooter({ mgr }: ConceptEditorFooterProps) {
       >
         {(editingBlank || isNewBlank) ? '목록' : '닫기'}
       </button>
-      {isAdmin && !isNewConcept && !(editingBlank || isNewBlank) && !isContentEditing && (
+      {isOwner && !isNewConcept && !(editingBlank || isNewBlank) && !isContentEditing && (
         <button
           type="button"
           onClick={() => setIsContentEditing(true)}
@@ -42,7 +42,7 @@ export function ConceptEditorFooter({ mgr }: ConceptEditorFooterProps) {
           편집
         </button>
       )}
-      {isAdmin && (
+      {isOwner && (
         <button
           type="button"
           onClick={async () => {

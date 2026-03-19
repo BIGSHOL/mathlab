@@ -8,7 +8,7 @@ export default withAuth(
 
     // Teacher-only routes
     if (path.startsWith('/students') || path.startsWith('/analytics') || path.startsWith('/questions')) {
-      if (token?.role !== 'TEACHER' && token?.role !== 'ADMIN') {
+      if (token?.role === 'STUDENT') {
         return NextResponse.redirect(new URL('/dashboard', req.url));
       }
     }
