@@ -555,10 +555,16 @@ function renderBlanksTemplate(
 
     const position = parseInt(match[1], 10);
     const blank = blanks.blanks.find((b) => b.position === position);
+
+    // 방어 코드: 대응 blank가 없는 {{N}}은 빈칸이 아닌 텍스트로 표시
+    if (!blank) {
+      return <span key={idx} className="text-slate-400 text-sm">({position})</span>;
+    }
+
     const result = results?.find((r) => r.position === position);
     const isCorrect = result?.correct;
     const isWrong = result && !result.correct;
-    const needsMathInput = blank && isComplexLatex(blank.answer);
+    const needsMathInput = isComplexLatex(blank.answer);
     const revealed = revealedAnswers[position];
 
     return (

@@ -63,12 +63,13 @@ export async function GET(
   });
 
   // Rebuild template: only keep {{N}} markers for filtered blanks
+  // 대응 blank가 없는 {{N}}은 빈 문자열로 치환 (방어 코드)
   const filteredPositions = new Set(filteredBlanks.map((b) => b.position));
   const filteredTemplate = exercise.templateText.replace(/\{\{(\d+)\}\}/g, (match, n) => {
-    return filteredPositions.has(parseInt(n, 10)) ? match : (() => {
-      const blank = allBlanks.find((b) => b.position === parseInt(n, 10));
-      return blank?.answer ?? match;
-    })();
+    const pos = parseInt(n, 10);
+    if (filteredPositions.has(pos)) return match;
+    const blank = allBlanks.find((b) => b.position === pos);
+    return blank?.answer ?? '';
   });
 
   return NextResponse.json({

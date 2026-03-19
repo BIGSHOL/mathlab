@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAdmin, isResponse, notFound, badRequest } from '@/lib/api';
+import { requireAdmin, isResponse, notFound, badRequest, getTenantFilter } from '@/lib/api';
 
 /** PATCH /api/admin/features/:key — Feature Flag 토글 */
 export async function PATCH(
@@ -16,11 +16,13 @@ export async function PATCH(
     return badRequest('enabled (boolean) 필드가 필요합니다');
   }
 
-  const flag = await prisma.featureFlag.findUnique({ where: { key } });
+  const tenantWhere = getTenantFilter(user);
+
+  const flag = await prisma.featureFlag.findFirst({ where: { key, ...tenantWhere } });
   if (!flag) return notFound('기능 플래그를 찾을 수 없습니다');
 
   const updated = await prisma.featureFlag.update({
-    where: { key },
+    where: { id: flag.id },
     data: { enabled: body.enabled },
   });
 

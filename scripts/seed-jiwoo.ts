@@ -19,10 +19,10 @@ const CONCEPT_IDS = [
 const STAGES = ['READING', 'BLANK_EASY', 'BLANK_HARD', 'BLANK_FULL'] as const;
 const XP_MAP = { READING: 5, BLANK_EASY: 10, BLANK_HARD: 15, BLANK_FULL: 20 };
 
-function daysAgo(n: number): Date {
+function daysAgo(n: number, hour?: number): Date {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  d.setHours(9 + Math.floor(Math.random() * 8), Math.floor(Math.random() * 60), 0, 0);
+  d.setHours(hour ?? (9 + Math.floor(Math.random() * 8)), Math.floor(Math.random() * 60), 0, 0);
   return d;
 }
 
@@ -36,6 +36,8 @@ async function main() {
 
   // ── 0. 기존 데이터 정리 ──
   console.log('\n0. 기존 시드 데이터 정리...');
+  // BlankAttempt 삭제 시 BlankAnswerLog도 cascade 삭제됨
+  await prisma.blankAttempt.deleteMany({ where: { studentId: STUDENT_ID } });
   await prisma.pointTransaction.deleteMany({ where: { userId: STUDENT_ID } });
   await prisma.learningProgress.deleteMany({ where: { userId: STUDENT_ID } });
   await prisma.arithmeticAttempt.deleteMany({ where: { studentId: STUDENT_ID } });
@@ -174,6 +176,152 @@ async function main() {
     data: { userId: STUDENT_ID, amount: 5, type: 'EARN', reason: 'READING', referenceId: CONCEPT_IDS[2], createdAt: todayStart },
   });
   console.log('  곱셈과 나눗셈: READING 완료');
+
+  // ── 3b. 빈칸 학습 답변 이력 (BlankAttempt + BlankAnswerLog) ──
+  console.log('\n3b. 빈칸 학습 답변 이력 생성...');
+
+  // 각 개념의 BlankExercise에서 blanks 정보 가져오기
+  const exerciseMap = new Map<string, Array<{ position: number; answer: string; hint?: string }>>();
+  for (const cid of CONCEPT_IDS) {
+    const ex = await prisma.blankExercise.findFirst({
+      where: { conceptId: cid },
+      select: { blanks: true },
+    });
+    if (ex) {
+      exerciseMap.set(cid, ex.blanks as Array<{ position: number; answer: string; hint?: string }>);
+    }
+  }
+
+  // 빈칸 답변 생성 헬퍼
+  type BlankInfo = { position: number; answer: string; hint?: string };
+  function makeAnswers(blanks: BlankInfo[], allCorrect: boolean, wrongCount = 1) {
+    return blanks.map((b, i) => ({
+      blankPosition: b.position,
+      submittedAnswer: (!allCorrect && i < wrongCount) ? (b.hint || '모르겠어요') : b.answer,
+      correctAnswer: b.answer,
+      isCorrect: allCorrect || i >= wrongCount,
+    }));
+  }
+
+  // 개념1(큰 수): BLANK_EASY 2회, BLANK_HARD 2회, BLANK_FULL 2회
+  // 시간순: 오전 → 오후 (1차 오답 → 2차 정답)
+  const blanks0 = exerciseMap.get(CONCEPT_IDS[0]);
+  if (blanks0) {
+    // BLANK_EASY: 1차(오전 10시) 틀림 → 2차(오후 2시) 정답
+    await prisma.blankAttempt.create({
+      data: {
+        studentId: STUDENT_ID, conceptId: CONCEPT_IDS[0], stage: 'BLANK_EASY',
+        score: Math.round(((blanks0.length - 2) / blanks0.length) * 100),
+        allCorrect: false, hintCount: 1, revealCount: 0, createdAt: daysAgo(13, 10),
+        answers: { create: makeAnswers(blanks0, false, 2) },
+      },
+    });
+    await prisma.blankAttempt.create({
+      data: {
+        studentId: STUDENT_ID, conceptId: CONCEPT_IDS[0], stage: 'BLANK_EASY',
+        score: 100, allCorrect: true, hintCount: 0, revealCount: 0, createdAt: daysAgo(13, 14),
+        answers: { create: makeAnswers(blanks0, true) },
+      },
+    });
+    // BLANK_HARD: 1차(오전 10시) 틀림 → 2차(오후 3시) 정답
+    await prisma.blankAttempt.create({
+      data: {
+        studentId: STUDENT_ID, conceptId: CONCEPT_IDS[0], stage: 'BLANK_HARD',
+        score: Math.round(((blanks0.length - 1) / blanks0.length) * 100),
+        allCorrect: false, hintCount: 2, revealCount: 0, createdAt: daysAgo(12, 10),
+        answers: { create: makeAnswers(blanks0, false, 1) },
+      },
+    });
+    await prisma.blankAttempt.create({
+      data: {
+        studentId: STUDENT_ID, conceptId: CONCEPT_IDS[0], stage: 'BLANK_HARD',
+        score: 100, allCorrect: true, hintCount: 0, revealCount: 0, createdAt: daysAgo(12, 15),
+        answers: { create: makeAnswers(blanks0, true) },
+      },
+    });
+    // BLANK_FULL: 1차(오전 11시) 틀림 → 2차(오후 4시) 정답
+    await prisma.blankAttempt.create({
+      data: {
+        studentId: STUDENT_ID, conceptId: CONCEPT_IDS[0], stage: 'BLANK_FULL',
+        score: Math.round(((blanks0.length - 1) / blanks0.length) * 100),
+        allCorrect: false, hintCount: 1, revealCount: 0, createdAt: daysAgo(11, 11),
+        answers: { create: makeAnswers(blanks0, false, 1) },
+      },
+    });
+    await prisma.blankAttempt.create({
+      data: {
+        studentId: STUDENT_ID, conceptId: CONCEPT_IDS[0], stage: 'BLANK_FULL',
+        score: 100, allCorrect: true, hintCount: 0, revealCount: 0, createdAt: daysAgo(11, 16),
+        answers: { create: makeAnswers(blanks0, true) },
+      },
+    });
+    console.log('  큰 수: BLANK_EASY/HARD/FULL 각 2회 ✓');
+  }
+
+  // 개념2(각도): BLANK_EASY 3회, BLANK_HARD 3회
+  // 시간순: 오전 → 오후 (점차 개선)
+  const blanks1 = exerciseMap.get(CONCEPT_IDS[1]);
+  if (blanks1) {
+    // BLANK_EASY: 1차(10시) 많이틀림 → 2차(13시) 조금틀림 → 3차(16시) 전부정답
+    await prisma.blankAttempt.create({
+      data: {
+        studentId: STUDENT_ID, conceptId: CONCEPT_IDS[1], stage: 'BLANK_EASY',
+        score: Math.round(((blanks1.length - 3) / blanks1.length) * 100),
+        allCorrect: false, hintCount: 2, revealCount: 0, createdAt: daysAgo(6, 10),
+        answers: { create: makeAnswers(blanks1, false, 3) },
+      },
+    });
+    await prisma.blankAttempt.create({
+      data: {
+        studentId: STUDENT_ID, conceptId: CONCEPT_IDS[1], stage: 'BLANK_EASY',
+        score: Math.round(((blanks1.length - 1) / blanks1.length) * 100),
+        allCorrect: false, hintCount: 1, revealCount: 0, createdAt: daysAgo(6, 13),
+        answers: { create: makeAnswers(blanks1, false, 1) },
+      },
+    });
+    await prisma.blankAttempt.create({
+      data: {
+        studentId: STUDENT_ID, conceptId: CONCEPT_IDS[1], stage: 'BLANK_EASY',
+        score: 100, allCorrect: true, hintCount: 0, revealCount: 0, createdAt: daysAgo(6, 16),
+        answers: { create: makeAnswers(blanks1, true) },
+      },
+    });
+    // BLANK_HARD: 1차(10시) 많이틀림 → 2차(13시) 조금틀림 → 3차(16시) 거의정답
+    await prisma.blankAttempt.create({
+      data: {
+        studentId: STUDENT_ID, conceptId: CONCEPT_IDS[1], stage: 'BLANK_HARD',
+        score: Math.round(((blanks1.length - 3) / blanks1.length) * 100),
+        allCorrect: false, hintCount: 3, revealCount: 0, createdAt: daysAgo(5, 10),
+        answers: { create: makeAnswers(blanks1, false, 3) },
+      },
+    });
+    await prisma.blankAttempt.create({
+      data: {
+        studentId: STUDENT_ID, conceptId: CONCEPT_IDS[1], stage: 'BLANK_HARD',
+        score: Math.round(((blanks1.length - 2) / blanks1.length) * 100),
+        allCorrect: false, hintCount: 1, revealCount: 0, createdAt: daysAgo(5, 13),
+        answers: { create: makeAnswers(blanks1, false, 2) },
+      },
+    });
+    // 3차: 1개 틀림 (85점)
+    const hardAnswers3 = blanks1.map((b, i) => ({
+      blankPosition: b.position,
+      submittedAnswer: i === blanks1.length - 1 ? '잘 모르겠어요' : b.answer,
+      correctAnswer: b.answer,
+      isCorrect: i !== blanks1.length - 1,
+    }));
+    await prisma.blankAttempt.create({
+      data: {
+        studentId: STUDENT_ID, conceptId: CONCEPT_IDS[1], stage: 'BLANK_HARD',
+        score: 85, allCorrect: false, hintCount: 0, revealCount: 0, createdAt: daysAgo(5, 16),
+        answers: { create: hardAnswers3 },
+      },
+    });
+    console.log('  각도: BLANK_EASY 3회, BLANK_HARD 3회 ✓');
+  }
+
+  const blankAttemptCount = await prisma.blankAttempt.count({ where: { studentId: STUDENT_ID } });
+  console.log(`  총 BlankAttempt: ${blankAttemptCount}개`);
 
   // ── 4. 연산 연습 추가 (최근 7일) ──
   console.log('\n4. 연산 연습 더미 추가...');

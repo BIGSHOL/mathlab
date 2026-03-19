@@ -45,7 +45,7 @@ export function OverviewActions() {
   const currentLabel = PERIOD_OPTIONS.find((o) => o.key === current)?.label ?? '최근 7일';
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 print:hidden">
       <div className="relative" ref={popoverRef}>
         <button
           onClick={() => setOpen((v) => !v)}

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuthViewAs, isResponse } from '@/lib/api';
+import { requireAuthViewAs, isResponse, getTenantFilter } from '@/lib/api';
 import { isFeatureEnabled } from '@/lib/utils/features';
 
 /** GET /api/daily-question/today — 오늘의 한 문제 + 통계 */
@@ -18,9 +18,10 @@ export async function GET(request: NextRequest) {
   const todayStr = kst.toISOString().slice(0, 10);
   const todayDate = new Date(todayStr + 'T00:00:00.000Z');
 
-  // 오늘의 문제 찾기 (없으면 자동 선정)
-  let daily = await prisma.dailyQuestion.findUnique({
-    where: { date: todayDate },
+  // 테넌트별 오늘의 문제 찾기 (없으면 자동 선정)
+  const tenantWhere = getTenantFilter(user);
+  let daily = await prisma.dailyQuestion.findFirst({
+    where: { date: todayDate, ...tenantWhere },
     include: {
       question: {
         select: { id: true, content: true, choices: true, answer: true, explanation: true, difficulty: true },
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
 
     const picked = candidates[Math.floor(Math.random() * candidates.length)];
     daily = await prisma.dailyQuestion.create({
-      data: { questionId: picked.id, date: todayDate },
+      data: { questionId: picked.id, date: todayDate, tenantId: user.tenantId },
       include: {
         question: {
           select: { id: true, content: true, choices: true, answer: true, explanation: true, difficulty: true },

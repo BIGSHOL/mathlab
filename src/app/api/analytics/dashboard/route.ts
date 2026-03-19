@@ -1,15 +1,20 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse } from '@/lib/api';
+import { requireTeacher, isResponse, getScopedStudentIds } from '@/lib/api';
 
-/** GET: 대시보드 주간 집계 데이터 */
+/** GET: 대시보드 주간 집계 데이터 (스코프 적용) */
 export async function GET() {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
 
+  // 스코프 내 학생 ID 목록 (null이면 전체)
+  const studentIds = await getScopedStudentIds(user);
+  const studentFilter = studentIds ? { attempt: { studentId: { in: studentIds } } } : {};
+  const assignmentStudentFilter = studentIds ? { studentId: { in: studentIds } } : {};
+
   const now = new Date();
 
-  // --- 1. 주간 오답률 추이 (최근 4주) — 8개 쿼리를 한번에 병렬 실행 ---
+  // --- 1. 주간 오답률 추이 (최근 4주) ---
   const weekRanges = Array.from({ length: 4 }, (_, idx) => {
     const i = 3 - idx;
     const weekStart = new Date(now);
@@ -21,8 +26,8 @@ export async function GET() {
 
   const weekCounts = await Promise.all(
     weekRanges.flatMap(({ weekStart, weekEnd }) => [
-      prisma.answerLog.count({ where: { createdAt: { gte: weekStart, lt: weekEnd } } }),
-      prisma.answerLog.count({ where: { createdAt: { gte: weekStart, lt: weekEnd }, isCorrect: false } }),
+      prisma.answerLog.count({ where: { createdAt: { gte: weekStart, lt: weekEnd }, ...studentFilter } }),
+      prisma.answerLog.count({ where: { createdAt: { gte: weekStart, lt: weekEnd }, isCorrect: false, ...studentFilter } }),
     ])
   );
 
@@ -42,16 +47,17 @@ export async function GET() {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
   const recentAnswers = await prisma.answerLog.findMany({
-    where: { createdAt: { gte: thirtyDaysAgo } },
+    where: { createdAt: { gte: thirtyDaysAgo }, ...studentFilter },
     select: { questionId: true, isCorrect: true },
   });
 
-  // questionId → chapter 매핑
   const questionIds = [...new Set(recentAnswers.map((a) => a.questionId))];
-  const questions = await prisma.question.findMany({
-    where: { id: { in: questionIds } },
-    select: { id: true, chapter: true },
-  });
+  const questions = questionIds.length > 0
+    ? await prisma.question.findMany({
+        where: { id: { in: questionIds } },
+        select: { id: true, chapter: true },
+      })
+    : [];
   const questionChapterMap = new Map(questions.map((q) => [q.id, q.chapter]));
 
   const chapterStats: Record<string, { total: number; correct: number }> = {};
@@ -75,10 +81,10 @@ export async function GET() {
 
   // --- 3. 배정 현황 집계 ---
   const [assignedCount, completedCount, overdueCount, inProgressCount] = await Promise.all([
-    prisma.testAssignment.count({ where: { status: 'ASSIGNED' } }),
-    prisma.testAssignment.count({ where: { status: 'COMPLETED' } }),
-    prisma.testAssignment.count({ where: { status: 'OVERDUE' } }),
-    prisma.testAssignment.count({ where: { status: 'IN_PROGRESS' } }),
+    prisma.testAssignment.count({ where: { status: 'ASSIGNED', ...assignmentStudentFilter } }),
+    prisma.testAssignment.count({ where: { status: 'COMPLETED', ...assignmentStudentFilter } }),
+    prisma.testAssignment.count({ where: { status: 'OVERDUE', ...assignmentStudentFilter } }),
+    prisma.testAssignment.count({ where: { status: 'IN_PROGRESS', ...assignmentStudentFilter } }),
   ]);
 
   const totalAssignments = assignedCount + completedCount + overdueCount + inProgressCount;
@@ -90,10 +96,12 @@ export async function GET() {
   const weekStart = new Date(now);
   weekStart.setDate(weekStart.getDate() - 7);
 
+  const attemptStudentFilter = studentIds ? { studentId: { in: studentIds } } : {};
+
   const [weekAnswerTotal, weekAnswerWrong, weekAttemptsCompleted] = await Promise.all([
-    prisma.answerLog.count({ where: { createdAt: { gte: weekStart } } }),
-    prisma.answerLog.count({ where: { createdAt: { gte: weekStart }, isCorrect: false } }),
-    prisma.testAttempt.count({ where: { completedAt: { gte: weekStart } } }),
+    prisma.answerLog.count({ where: { createdAt: { gte: weekStart }, ...studentFilter } }),
+    prisma.answerLog.count({ where: { createdAt: { gte: weekStart }, isCorrect: false, ...studentFilter } }),
+    prisma.testAttempt.count({ where: { completedAt: { gte: weekStart }, ...attemptStudentFilter } }),
   ]);
 
   return NextResponse.json({

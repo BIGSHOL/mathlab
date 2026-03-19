@@ -19,6 +19,7 @@ export interface User {
   role: UserRole;
   grade: number | null;
   profileImage: string | null;
+  tenantId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

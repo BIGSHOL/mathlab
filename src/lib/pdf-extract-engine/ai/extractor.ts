@@ -19,6 +19,33 @@ import { extractPageText } from '../core/text-extractor';
 import { renderForAI } from '../core/pdf-renderer';
 import { stripCodeFence, stripDataUrlPrefix, estimateBase64Size } from './post-processor';
 
+// 재시도 설정
+const MAX_RETRIES = 2;
+const RETRY_BASE_DELAY = 1000; // 1초 → 2초 → 4초 (exponential)
+
+/** 지수 백오프 재시도 래퍼 */
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  label: string,
+): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+      const isRetryable =
+        err instanceof Error &&
+        (/429|503|rate|limit|quota|overloaded/i.test(err.message));
+      if (!isRetryable || attempt === MAX_RETRIES) break;
+      const delay = RETRY_BASE_DELAY * 2 ** attempt;
+      console.warn(`[pdf-extract-engine] ${label} 재시도 ${attempt + 1}/${MAX_RETRIES} (${delay}ms 대기)`);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+  throw lastError;
+}
+
 // ============================================================
 // 클라이언트 사이드: PDF → 페이지 렌더링 → API 프록시 호출
 // ============================================================
@@ -60,33 +87,33 @@ export async function extractViaProxy<TItem, TMeta = unknown>(
     onProgress?.({ done: i, total: pageNums.length, currentPage: pageNum, skipped });
 
     try {
+      // 텍스트 레이어 1회만 추출 (필터링 + AI 렌더링에 재사용)
+      const textLayer = await extractPageText(pdf, pageNum);
+
       // 페이지 필터링
       if (!skipFilter && plugin.isTargetPage) {
-        const textLayer = await extractPageText(pdf, pageNum);
         if (!textLayer || !plugin.isTargetPage(textLayer)) {
           skipped++;
           continue;
         }
       }
 
-      // 이미지 + 텍스트 렌더링
-      const [imageBase64, textLayer] = await Promise.all([
-        renderForAI(pdf, pageNum, scale),
-        extractPageText(pdf, pageNum),
-      ]);
+      // 이미지 렌더링 (텍스트는 위에서 이미 추출됨)
+      const imageBase64 = await renderForAI(pdf, pageNum, scale);
 
-      // API 프록시 호출
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pages: [{ pageNum, imageBase64, textLayer }],
-          meta,
-        }),
-      });
-
-      if (!res.ok) throw new Error(`API ${res.status}`);
-      const json = await res.json();
+      // API 프록시 호출 (재시도 포함)
+      const json = await withRetry(async () => {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pages: [{ pageNum, imageBase64, textLayer }],
+            meta,
+          }),
+        });
+        if (!res.ok) throw new Error(`API ${res.status}`);
+        return res.json();
+      }, `페이지 ${pageNum} API 호출`);
 
       // 플러그인 후처리
       const pageItems = plugin.postProcess(json.data?.[0] || json.data, pageNum, meta);
@@ -169,32 +196,29 @@ export async function extractDirect<TItem, TMeta = unknown>(
 
       const base64Data = stripDataUrlPrefix(page.imageBase64);
 
-      // Gemini API 호출
-      const response = await ai.models.generateContent({
-        model,
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              { inlineData: { mimeType: 'image/png', data: base64Data } },
-              { text: userText },
-            ],
+      // Gemini API 호출 (재시도 포함)
+      const raw = await withRetry(async () => {
+        const response = await ai.models.generateContent({
+          model,
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                { inlineData: { mimeType: 'image/png', data: base64Data } },
+                { text: userText },
+              ],
+            },
+          ],
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: plugin.responseSchema,
           },
-        ],
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: plugin.responseSchema,
-        },
-      });
+        });
 
-      if (!response.text) {
-        errors.push({ pageNum: page.pageNum, error: 'AI 응답 없음' });
-        continue;
-      }
-
-      // JSON 파싱
-      const jsonStr = stripCodeFence(response.text);
-      const raw = JSON.parse(jsonStr);
+        if (!response.text) throw new Error('AI 응답 없음');
+        const jsonStr = stripCodeFence(response.text);
+        return JSON.parse(jsonStr);
+      }, `페이지 ${page.pageNum} Gemini 호출`);
 
       // 플러그인 후처리
       const pageItems = plugin.postProcess(raw, page.pageNum, meta);

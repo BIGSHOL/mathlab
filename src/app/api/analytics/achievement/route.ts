@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, badRequest } from '@/lib/api';
+import { requireTeacher, isResponse, badRequest, forbidden, canAccessStudent } from '@/lib/api';
 
 /** GET: 학생별 유형(단원/섹션)별 성취도 분석 */
 export async function GET(request: NextRequest) {
@@ -12,6 +12,11 @@ export async function GET(request: NextRequest) {
 
   if (!studentId) {
     return badRequest('studentId가 필요합니다');
+  }
+
+  // 접근 권한 검증
+  if (!(await canAccessStudent(user, studentId))) {
+    return forbidden();
   }
 
   // 해당 학생의 모든 AnswerLog 조회

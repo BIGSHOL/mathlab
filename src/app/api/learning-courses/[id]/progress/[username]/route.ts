@@ -41,24 +41,74 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
   const student = enrollment.student;
   const conceptIds = course.concepts.map((c) => c.conceptId);
 
-  // 학생의 모든 진행 데이터 조회
-  const allProgress = await prisma.learningProgress.findMany({
-    where: {
-      userId: student.id,
-      conceptId: { in: conceptIds },
-    },
-    select: {
-      conceptId: true,
-      stage: true,
-      completed: true,
-      attempts: true,
-      score: true,
-      hintCount: true,
-      revealCount: true,
-      startedAt: true,
-      completedAt: true,
-    },
-  });
+  // 학생의 모든 진행 데이터 조회 + 개념별 fullContent + 빈칸 문제 + 답변 이력
+  const [allProgress, conceptDetails, blankExercises, blankAttempts] = await Promise.all([
+    prisma.learningProgress.findMany({
+      where: {
+        userId: student.id,
+        conceptId: { in: conceptIds },
+      },
+      select: {
+        conceptId: true,
+        stage: true,
+        completed: true,
+        attempts: true,
+        score: true,
+        hintCount: true,
+        revealCount: true,
+        startedAt: true,
+        completedAt: true,
+      },
+    }),
+    prisma.concept.findMany({
+      where: { id: { in: conceptIds } },
+      select: { id: true, fullContent: true },
+    }),
+    prisma.blankExercise.findMany({
+      where: { conceptId: { in: conceptIds } },
+      select: { conceptId: true, templateText: true, blanks: true },
+    }),
+    prisma.blankAttempt.findMany({
+      where: {
+        studentId: student.id,
+        conceptId: { in: conceptIds },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        conceptId: true,
+        stage: true,
+        score: true,
+        allCorrect: true,
+        createdAt: true,
+        answers: {
+          select: {
+            blankPosition: true,
+            submittedAnswer: true,
+            correctAnswer: true,
+            isCorrect: true,
+          },
+          orderBy: { blankPosition: 'asc' },
+        },
+      },
+    }),
+  ]);
+
+  // 개념별 fullContent, blanks, 답변이력 맵
+  const contentMap = new Map(conceptDetails.map((c: { id: string; fullContent: string }) => [c.id, c.fullContent]));
+  const blanksMap = new Map<string, { templateText: string; blanks: unknown }>();
+  for (const ex of blankExercises) {
+    if (!blanksMap.has(ex.conceptId)) {
+      blanksMap.set(ex.conceptId, { templateText: ex.templateText, blanks: ex.blanks });
+    }
+  }
+  // 답변 이력: conceptId → attempts[]
+  type AttemptItem = (typeof blankAttempts)[number];
+  const attemptsMap = new Map<string, AttemptItem[]>();
+  for (const a of blankAttempts) {
+    if (!attemptsMap.has(a.conceptId)) attemptsMap.set(a.conceptId, []);
+    attemptsMap.get(a.conceptId)!.push(a);
+  }
 
   // conceptId별로 그룹화
   const progressMap = new Map<string, typeof allProgress>();
@@ -101,6 +151,7 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
       if (stage === 'BLANK_FULL' && stages[stage]!.completed) currentStage = 'COMPLETED';
     }
 
+    const blankData = blanksMap.get(concept.id);
     return {
       id: concept.id,
       title: concept.title,
@@ -110,6 +161,16 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
       stages,
       isCompleted,
       currentStage,
+      fullContent: contentMap.get(concept.id) || null,
+      blankExercise: blankData ? { templateText: blankData.templateText, blanks: blankData.blanks } : null,
+      blankAttempts: (attemptsMap.get(concept.id) || []).map((a) => ({
+        id: a.id,
+        stage: a.stage,
+        score: a.score,
+        allCorrect: a.allCorrect,
+        createdAt: a.createdAt.toISOString(),
+        answers: a.answers,
+      })),
     };
   });
 

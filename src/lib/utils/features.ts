@@ -30,19 +30,22 @@ export async function getFeatureFlags(): Promise<Record<string, boolean>> {
   return map;
 }
 
-/** 특정 Feature가 활성화되어 있는지 확인 (서버용) */
+/** 특정 Feature가 활성화되어 있는지 확인 (서버용, 글로벌 tenantId=null 기준) */
 export async function isFeatureEnabled(key: FeatureKey): Promise<boolean> {
-  const flag = await prisma.featureFlag.findUnique({ where: { key } });
+  const flag = await prisma.featureFlag.findFirst({ where: { key, tenantId: null } });
   return flag?.enabled ?? true; // 미등록 = 기본 활성
 }
 
-/** Feature Flag 시드: 없는 키만 생성 */
+/** Feature Flag 시드: 없는 키만 생성 (글로벌 tenantId=null) */
 export async function seedFeatureFlags() {
   for (const seed of FEATURE_FLAG_SEEDS) {
-    await prisma.featureFlag.upsert({
-      where: { key: seed.key },
-      update: {},
-      create: { key: seed.key, label: seed.label, enabled: true },
+    const existing = await prisma.featureFlag.findFirst({
+      where: { key: seed.key, tenantId: null },
     });
+    if (!existing) {
+      await prisma.featureFlag.create({
+        data: { key: seed.key, label: seed.label, enabled: true, tenantId: null },
+      });
+    }
   }
 }

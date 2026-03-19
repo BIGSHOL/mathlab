@@ -9,6 +9,33 @@ function getClient() {
   return new GoogleGenAI({ apiKey });
 }
 
+// 재시도 설정
+const MAX_RETRIES = 2;
+const RETRY_BASE_DELAY = 1000;
+
+/** 지수 백오프 재시도 래퍼 */
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  label: string,
+): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+      const isRetryable =
+        err instanceof Error &&
+        (/429|503|rate|limit|quota|overloaded/i.test(err.message));
+      if (!isRetryable || attempt === MAX_RETRIES) break;
+      const delay = RETRY_BASE_DELAY * 2 ** attempt;
+      console.warn(`[pdf-extract] ${label} 재시도 ${attempt + 1}/${MAX_RETRIES} (${delay}ms 대기)`);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+  throw lastError;
+}
+
 const PDF_EXTRACT_SCHEMA = {
   type: Type.OBJECT,
   properties: {
@@ -296,43 +323,43 @@ export async function POST(request: NextRequest) {
       // base64에서 data URL prefix 제거
       const base64Data = page.imageBase64.replace(/^data:image\/\w+;base64,/, '');
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              { inlineData: { mimeType: 'image/png', data: base64Data } },
-              { text: [
-                  SYSTEM_PROMPT,
-                  filenameContext || '',
-                  page.textLayer
-                    ? `\n[OCR Text Content for Reference]\n${page.textLayer}\n\n위의 텍스트 레이어 정보를 참고하여 이미지 속의 문제를 오타 없이 완벽하게 추출하세요.`
-                    : '',
-                ].filter(Boolean).join('\n')
-              },
-            ],
+      // Gemini API 호출 (재시도 포함)
+      const data = await withRetry(async () => {
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                { inlineData: { mimeType: 'image/png', data: base64Data } },
+                { text: [
+                    SYSTEM_PROMPT,
+                    filenameContext || '',
+                    page.textLayer
+                      ? `\n[OCR Text Content for Reference]\n${page.textLayer}\n\n위의 텍스트 레이어 정보를 참고하여 이미지 속의 문제를 오타 없이 완벽하게 추출하세요.`
+                      : '',
+                  ].filter(Boolean).join('\n')
+                },
+              ],
+            },
+          ],
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: PDF_EXTRACT_SCHEMA,
           },
-        ],
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: PDF_EXTRACT_SCHEMA,
-        },
-      });
+        });
 
-      if (!response.text) {
-        results.push({ pageNum: page.pageNum, problems: [] });
-        continue;
-      }
+        if (!response.text) throw new Error('AI 응답 없음');
 
-      let jsonStr = response.text.trim();
-      if (jsonStr.startsWith('```json')) {
-        jsonStr = jsonStr.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-      } else if (jsonStr.startsWith('```')) {
-        jsonStr = jsonStr.replace(/^```\s*/, '').replace(/\s*```$/, '');
-      }
+        let jsonStr = response.text.trim();
+        if (jsonStr.startsWith('```json')) {
+          jsonStr = jsonStr.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+        } else if (jsonStr.startsWith('```')) {
+          jsonStr = jsonStr.replace(/^```\s*/, '').replace(/\s*```$/, '');
+        }
 
-      const data = JSON.parse(jsonStr);
+        return JSON.parse(jsonStr);
+      }, `페이지 ${page.pageNum}`);
       // LaTeX 이스케이프 복원 (\times → tab 등 JSON 파싱 부작용 수정)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const fixedProblems = (data.problems || []).map((p: any) => {

@@ -198,7 +198,7 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
                     {blankForm.templateText.split(/(\{\{\d+\}\})/).map((part, i) =>
                       /^\{\{\d+\}\}$/.test(part) ? (
                         <span key={i} className="inline-flex items-center mx-0.5 px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded-sm text-sm font-bold">
-                          {(() => { const n = part.match(/\d+/)?.[0]; const blank = blankForm.blanks.find((b) => b.position === parseInt(n ?? '0', 10)); return <InlineMathText text={blank?.answer || '?'} />; })()}
+                          {(() => { const n = parseInt(part.match(/\d+/)?.[0] ?? '0', 10); const blank = blankForm.blanks.find((b) => b.position === n); return blank ? <InlineMathText text={blank.answer} /> : <span className="text-slate-400">?</span>; })()}
                         </span>
                       ) : <InlineMathText key={i} text={part} />
                     )}

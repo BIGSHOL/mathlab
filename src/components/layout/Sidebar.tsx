@@ -35,6 +35,8 @@ import {
 } from 'lucide-react';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import { LogoIcon } from '@/components/ui/LogoIcon';
+import { useTenant } from '@/components/providers/TenantProvider';
+import { Building2 } from 'lucide-react';
 
 interface MenuItem {
   label: string;
@@ -48,11 +50,11 @@ const homeItems: MenuItem[] = [
   { label: '대시보드', href: '/overview', icon: LayoutDashboard },
 ];
 
-// 학습 관리
-const learningItems: MenuItem[] = [
+// 학습 관리 — 역할별 라벨 분기
+const getLearningItems = (isAdmin: boolean): MenuItem[] => [
   { label: '학생 관리', href: '/students', icon: Users },
-  { label: '개념 조회', href: '/concepts', icon: BookOpen },
-  { label: '문제 조회', href: '/questions', icon: Database },
+  { label: isAdmin ? '개념 관리' : '개념 조회', href: '/concepts', icon: BookOpen },
+  { label: isAdmin ? '문제 관리' : '문제 조회', href: '/questions', icon: Database },
   { label: '학습 과정', href: '/courses', icon: GraduationCap },
 ];
 
@@ -78,13 +80,11 @@ const systemItems: MenuItem[] = [
   { label: '고객지원', href: '/support', icon: HelpCircle },
 ];
 
-// 이전 호환용 — 메인 아이템 전체
-const mainItems: MenuItem[] = [...homeItems, ...learningItems, ...assessmentItems, ...analysisItems];
+// 이전 호환용 — 메인 아이템 전체 (allItems 충돌 감지용, 두 라벨 모두 포함)
+const mainItemsBase: MenuItem[] = [...homeItems, ...getLearningItems(false), ...getLearningItems(true), ...assessmentItems, ...analysisItems];
 
-// 어드민 전용
+// 어드민 전용 (개념 관리/문제 관리는 학습 관리 섹션에서 라벨 전환으로 처리)
 const adminItems: MenuItem[] = [
-  { label: '개념 관리', href: '/concepts', icon: BookOpen },
-  { label: '문제 관리', href: '/questions', icon: Database },
   { label: '선생님 관리', href: '/students?tab=teachers', icon: UserCog },
   { label: '사용자 관리', href: '/admin/users', icon: Activity },
   { label: 'PDF 문제 추출', href: '/questions/pdf-import', icon: FileText },
@@ -93,16 +93,20 @@ const adminItems: MenuItem[] = [
   { label: '화면 미리보기', href: '/mockups', icon: Eye },
   { label: '기능 관리', href: '/admin/features', icon: ToggleRight },
   { label: '반 관리', href: '/admin/classrooms', icon: School },
+  { label: '지점 관리', href: '/admin/tenants', icon: Building2 },
 ];
 
 // All items for active-route collision detection
-const allItems = [...mainItems, ...systemItems, ...adminItems];
+const allItems = [...mainItemsBase, ...systemItems, ...adminItems];
 
 export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const tenant = useTenant();
   const isOwner = user ? hasRoleClient(user.role, 'OWNER') : false;
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
   const [collapsed, setCollapsed] = useState(false);
+  const displayName = tenant?.name || 'MathLab';
 
   const isActive = (item: MenuItem) => {
     if (item.href === '/students?tab=teachers') {
@@ -175,8 +179,12 @@ export function Sidebar() {
         ) : (
           <>
             <Link href="/overview" className="flex items-center gap-2 min-w-0">
-              <LogoIcon className="w-5 h-5 shrink-0" />
-              <h1 className="text-base font-bold tracking-tight text-text-primary">MathLab</h1>
+              {tenant?.logo ? (
+                <img src={tenant.logo} alt={displayName} className="w-5 h-5 shrink-0 object-contain" />
+              ) : (
+                <LogoIcon className="w-5 h-5 shrink-0" />
+              )}
+              <h1 className="text-base font-bold tracking-tight text-text-primary truncate">{displayName}</h1>
             </Link>
             <button
               onClick={() => setCollapsed(true)}
@@ -229,7 +237,7 @@ export function Sidebar() {
         {/* 학습 관리 */}
         {renderSectionLabel('학습 관리')}
         <div className="flex flex-col gap-0.5">
-          {learningItems.map(renderItem)}
+          {getLearningItems(isOwner).map(renderItem)}
         </div>
 
         {/* 출제 · 평가 */}
@@ -262,7 +270,11 @@ export function Sidebar() {
               </p>
             )}
             <div className="flex flex-col gap-0.5">
-              {adminItems.map(renderItem)}
+              {adminItems.filter(item => {
+                // 지점 관리는 SUPER_ADMIN 전용
+                if (item.href === '/admin/tenants') return isSuperAdmin;
+                return true;
+              }).map(renderItem)}
             </div>
           </>
         )}

@@ -10,9 +10,10 @@ import {
   Star,
   MoveRight,
   MessageSquare,
-  Download,
   Printer,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Timer,
   Zap,
   Target,
@@ -61,11 +62,32 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [calendarData, setCalendarData] = useState<DayActivity[]>([]);
 
-  // Dynamic current month
+  // 월 선택 상태
   const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonthNum = now.getMonth() + 1;
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [selectedMonthNum, setSelectedMonthNum] = useState(now.getMonth() + 1);
+  const currentYear = selectedYear;
+  const currentMonthNum = selectedMonthNum;
   const currentMonth = `${currentYear}-${String(currentMonthNum).padStart(2, '0')}`;
+
+  const goToPrevMonth = useCallback(() => {
+    setSelectedMonthNum((m) => {
+      if (m === 1) { setSelectedYear((y) => y - 1); return 12; }
+      return m - 1;
+    });
+  }, []);
+
+  const goToNextMonth = useCallback(() => {
+    const nowY = now.getFullYear();
+    const nowM = now.getMonth() + 1;
+    setSelectedMonthNum((m) => {
+      if (selectedYear === nowY && m >= nowM) return m; // 미래 월 방지
+      if (m === 12) { setSelectedYear((y) => y + 1); return 1; }
+      return m + 1;
+    });
+  }, [selectedYear]);
+
+  const isCurrentMonth = selectedYear === now.getFullYear() && selectedMonthNum === now.getMonth() + 1;
 
   // Teacher comment
   const [commentText, setCommentText] = useState('');
@@ -117,7 +139,7 @@ export default function AnalyticsPage() {
         setCalendarData(emptyCalendar);
       }
     });
-  }, [selectedStudent, currentYear, currentMonthNum]);
+  }, [selectedStudent, currentYear, currentMonthNum, currentMonth]);
 
   const saveComment = useCallback((text: string) => {
     if (!selectedStudent) return;
@@ -129,7 +151,7 @@ export default function AnalyticsPage() {
         body: JSON.stringify({ studentId: selectedStudent.id, month: currentMonth, content: text }),
       }).catch((err) => console.error('코멘트 저장 실패:', err));
     }, 1000);
-  }, [selectedStudent]);
+  }, [selectedStudent, currentMonth]);
 
   const handleCommentChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value;
@@ -219,20 +241,39 @@ export default function AnalyticsPage() {
         </div>
       )}
 
-      <div className="flex flex-col max-w-[1024px] flex-1 w-full bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden">
+      <div className="flex flex-col max-w-[1024px] flex-1 w-full bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden print:shadow-none print:border-none print:max-w-none">
         {/* Report Header */}
-        <div className="p-5 border-b border-slate-200 flex flex-col md:flex-row md:items-end justify-between gap-6 bg-slate-50">
+        <div className="p-5 border-b border-slate-200 flex flex-col md:flex-row md:items-end justify-between gap-6 bg-slate-50 print:bg-white print:border-b-2 print:border-slate-300 print:p-4">
           <div className="flex flex-col gap-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium w-fit">
-              <BarChart3 className="w-4 h-4" />
-              {currentYear}년 {currentMonthNum}월
+            <div className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary text-sm font-medium w-fit print:hidden">
+              <button
+                onClick={goToPrevMonth}
+                className="p-1.5 rounded-full hover:bg-primary/20 transition-colors"
+                title="이전 달"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="flex items-center gap-1.5 px-1">
+                <BarChart3 className="w-4 h-4" />
+                {currentYear}년 {currentMonthNum}월
+              </span>
+              <button
+                onClick={goToNextMonth}
+                disabled={isCurrentMonth}
+                className={`p-1.5 rounded-full transition-colors ${isCurrentMonth ? 'opacity-30 cursor-not-allowed' : 'hover:bg-primary/20'}`}
+                title="다음 달"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
+            <p className="hidden print:block text-sm text-text-secondary">{currentYear}년 {currentMonthNum}월</p>
             <h1 className="text-2xl font-bold leading-tight tracking-tight text-text-primary">
               월간 분석 리포트
             </h1>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-text-secondary text-lg font-medium">학생 이름:</span>
-              <div className="relative">
+              <span className="hidden print:inline text-text-primary font-bold text-lg">{student?.name ?? ''}</span>
+              <div className="relative print:hidden">
                 <select
                   className="appearance-none bg-white border border-slate-200 rounded-lg px-4 py-2 pr-8 text-text-primary font-bold text-lg focus:ring-2 focus:ring-primary/40 focus:border-primary cursor-pointer"
                   value={student?.id ?? ''}
@@ -267,20 +308,14 @@ export default function AnalyticsPage() {
               onClick={() => window.print()}
               className="flex items-center gap-1 text-text-secondary hover:text-primary text-sm font-medium transition-colors"
             >
-              <Printer className="w-4 h-4" /> 인쇄하기
-            </button>
-            <button
-              onClick={() => window.print()}
-              className="flex items-center gap-1 text-text-secondary hover:text-primary text-sm font-medium transition-colors"
-            >
-              <Download className="w-4 h-4" /> PDF 다운로드
+              <Printer className="w-4 h-4" /> 인쇄 / PDF 저장
             </button>
           </div>
         </div>
 
-        <div className="p-5 flex flex-col gap-10">
+        <div className="p-5 flex flex-col gap-10 print:gap-6 print:p-4">
           {/* Summary Cards */}
-          <section>
+          <section className="print:break-inside-avoid">
             <h2 className="text-xl font-bold leading-tight tracking-tight mb-4 text-text-primary flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-primary" /> 핵심 요약
             </h2>
@@ -593,10 +628,10 @@ export default function AnalyticsPage() {
                       title={
                         cell
                           ? `${cell.day}일: ${
-                              cell.level === 0 ? '학습 안함' :
-                              cell.level === 1 ? '30분 미만' :
-                              cell.level === 2 ? '30분~1시간' :
-                              cell.level === 3 ? '1~2시간' : '2시간 이상'
+                              cell.level === 0 ? '활동 없음' :
+                              cell.level === 1 ? '활동 1건' :
+                              cell.level === 2 ? '활동 2~3건' :
+                              cell.level === 3 ? '활동 4~6건' : '활동 7건 이상'
                             }`
                           : ''
                       }

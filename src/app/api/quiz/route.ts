@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, badRequest } from '@/lib/api';
+import { requireTeacher, isResponse, badRequest, getTenantFilter } from '@/lib/api';
 
 function generateJoinCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -14,8 +14,10 @@ export async function GET() {
   const currentUser = await requireTeacher();
   if (isResponse(currentUser)) return currentUser;
 
+  const tenantWhere = getTenantFilter(currentUser);
+
   const sessions = await prisma.quizSession.findMany({
-    where: { hostId: currentUser.id },
+    where: { hostId: currentUser.id, ...tenantWhere },
     include: { _count: { select: { participants: true } } },
     orderBy: { createdAt: 'desc' },
     take: 50,
@@ -52,6 +54,7 @@ export async function POST(request: NextRequest) {
       hostId: currentUser.id,
       questionIds,
       joinCode,
+      tenantId: currentUser.tenantId,
     },
   });
 

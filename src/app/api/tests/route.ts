@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth, requireTeacher, isResponse, badRequest } from '@/lib/api';
+import { requireAuth, requireTeacher, isResponse, badRequest, getTenantFilter } from '@/lib/api';
 
 export async function GET(request: NextRequest) {
   const currentUser = await requireAuth();
@@ -10,8 +10,10 @@ export async function GET(request: NextRequest) {
   const grade = searchParams.get('grade');
   const testType = searchParams.get('testType');
 
+  const tenantWhere = getTenantFilter(currentUser);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const where: Record<string, any> = { isActive: true };
+  const where: Record<string, any> = { isActive: true, ...tenantWhere };
   if (grade) where.grade = parseInt(grade);
   if (testType) where.testType = testType;
 
@@ -111,6 +113,7 @@ export async function POST(request: NextRequest) {
       defaultDueDate: defaultDueDate ? new Date(defaultDueDate) : null,
       allowLateSubmission: allowLateSubmission || false,
       createdBy: currentUser.id,
+      tenantId: currentUser.tenantId,
     },
   });
 

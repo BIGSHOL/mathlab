@@ -125,32 +125,55 @@ export async function POST(request: NextRequest) {
   const revealCount = parsed.revealCount ?? 0;
   const usedReveal = revealCount > 0;
 
-  await prisma.learningProgress.upsert({
-    where: {
-      userId_conceptId_stage: { userId: user.id, conceptId: exercise.conceptId, stage },
-    },
-    update: {
-      score,
-      completed: allCorrect,
-      completedAt: allCorrect ? new Date() : null,
-      attempts: { increment: 1 },
-      hintCount: { increment: hintCount },
-      revealCount: { increment: revealCount },
-      ...(usedReveal && { usedReveal: true }),
-    },
-    create: {
-      userId: user.id,
-      conceptId: exercise.conceptId,
-      stage,
-      score,
-      completed: allCorrect,
-      completedAt: allCorrect ? new Date() : null,
-      attempts: 1,
-      hintCount,
-      revealCount,
-      usedReveal,
-    },
-  });
+  // LearningProgress 업데이트 + BlankAttempt/AnswerLog 저장을 트랜잭션으로
+  await prisma.$transaction([
+    prisma.learningProgress.upsert({
+      where: {
+        userId_conceptId_stage: { userId: user.id, conceptId: exercise.conceptId, stage },
+      },
+      update: {
+        score,
+        completed: allCorrect,
+        completedAt: allCorrect ? new Date() : null,
+        attempts: { increment: 1 },
+        hintCount: { increment: hintCount },
+        revealCount: { increment: revealCount },
+        ...(usedReveal && { usedReveal: true }),
+      },
+      create: {
+        userId: user.id,
+        conceptId: exercise.conceptId,
+        stage,
+        score,
+        completed: allCorrect,
+        completedAt: allCorrect ? new Date() : null,
+        attempts: 1,
+        hintCount,
+        revealCount,
+        usedReveal,
+      },
+    }),
+    // 개별 답변 이력 저장
+    prisma.blankAttempt.create({
+      data: {
+        studentId: user.id,
+        conceptId: exercise.conceptId,
+        stage,
+        score,
+        allCorrect,
+        hintCount,
+        revealCount,
+        answers: {
+          create: results.map((r) => ({
+            blankPosition: r.position,
+            submittedAnswer: r.submitted,
+            correctAnswer: r.expected,
+            isCorrect: r.correct,
+          })),
+        },
+      },
+    }),
+  ]);
 
   return NextResponse.json({
     data: { correct: allCorrect, results, allCorrect, xpAwarded: 0 },

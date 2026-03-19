@@ -332,7 +332,7 @@ export default function ReportsPage() {
       </aside>
 
       {/* ===== Right Panel: Report ===== */}
-      <main className="flex-1 flex flex-col min-w-0 bg-white">
+      <main className="flex-1 flex flex-col min-w-0 bg-white print:overflow-visible">
         {!selectedStudent ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
@@ -346,7 +346,7 @@ export default function ReportsPage() {
         ) : (
           <>
             {/* Header Bar */}
-            <div className="shrink-0 px-4 py-3 border-b border-slate-200 bg-slate-50/50 print:bg-white print:border-0">
+            <div className="shrink-0 px-4 py-3 border-b border-slate-200 bg-slate-50/50 print:bg-white print:border-b print:border-slate-300 print:px-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-sm bg-primary text-white flex items-center justify-center text-sm font-bold">
@@ -395,7 +395,7 @@ export default function ReportsPage() {
             </div>
 
             {/* Report Content */}
-            <div className="flex-1 overflow-y-auto min-h-0 p-4">
+            <div className="flex-1 overflow-y-auto min-h-0 p-4 print:overflow-visible print:h-auto">
               {!report && !generating && (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">

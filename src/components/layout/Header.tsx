@@ -5,6 +5,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { Search, Bell, ChevronDown, LogOut, Settings, User } from 'lucide-react';
 import { LogoIcon } from '@/components/ui/LogoIcon';
+import { useTenant } from '@/components/providers/TenantProvider';
 import { signOut } from 'next-auth/react';
 
 interface HeaderProps {
@@ -32,6 +33,8 @@ export function Header({ role, userName = '사용자' }: HeaderProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const viewAsId = searchParams.get('_as');
+  const tenant = useTenant();
+  const displayName = tenant?.name || 'MathLab';
   const nav = role === 'student' ? studentNav : teacherNav;
 
   // _as 파라미터가 있으면 모든 링크에 유지
@@ -67,8 +70,12 @@ export function Header({ role, userName = '사용자' }: HeaderProps) {
     <header className="flex items-center justify-between border-b border-slate-200 px-6 py-3 bg-white sticky top-0 z-50">
       <div className="flex items-center gap-6">
         <Link href={withAs(role === 'teacher' ? '/overview' : '/dashboard')} className="flex items-center gap-2">
-          <LogoIcon className="w-5 h-5" />
-          <h2 className="text-lg font-bold tracking-tight text-text-primary">MathLab</h2>
+          {tenant?.logo ? (
+            <img src={tenant.logo} alt={displayName} className="w-5 h-5 object-contain" />
+          ) : (
+            <LogoIcon className="w-5 h-5" />
+          )}
+          <h2 className="text-lg font-bold tracking-tight text-text-primary">{displayName}</h2>
         </Link>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />

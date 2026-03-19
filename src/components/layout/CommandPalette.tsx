@@ -25,6 +25,7 @@ import {
   UserCog,
   Activity,
   LifeBuoy,
+  Building2,
 } from 'lucide-react';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 
@@ -65,6 +66,7 @@ const adminCommands: CommandItem[] = [
   { id: 'mockups', label: '화면 미리보기', href: '/mockups', icon: Eye, keywords: ['mockup', '미리보기', '프리뷰'], group: '어드민' },
   { id: 'features', label: '기능 관리', href: '/admin/features', icon: ToggleRight, keywords: ['feature', '기능', '토글'], group: '어드민' },
   { id: 'classrooms', label: '반 관리', href: '/admin/classrooms', icon: School, keywords: ['class', '반', '교실'], group: '어드민' },
+  { id: 'tenants', label: '지점 관리', href: '/admin/tenants', icon: Building2, keywords: ['tenant', '지점', '지사', '서브도메인', 'subdomain'], group: '어드민' },
 ];
 
 export function CommandPalette() {

@@ -64,6 +64,7 @@ export async function requireAuth(): Promise<AuthUser | NextResponse> {
 /**
  * 로그인 필수 + 학생 시점 보기 지원.
  * 선생님 이상이 `?_as=studentId`로 호출하면 해당 학생 사용자를 반환.
+ * 테넌트 검증: 같은 테넌트의 학생만 View-As 허용.
  */
 export async function requireAuthViewAs(request: NextRequest): Promise<AuthUser | NextResponse> {
   const user = await getCurrentUser();
@@ -71,9 +72,14 @@ export async function requireAuthViewAs(request: NextRequest): Promise<AuthUser 
 
   const studentId = new URL(request.url).searchParams.get('_as');
   if (studentId && hasRole(user, 'TEACHER')) {
+    // 테넌트 필터: SUPER_ADMIN은 모든 학생 View-As 가능, 나머지는 같은 테넌트만
+    const tenantWhere = hasRole(user, 'SUPER_ADMIN') || !user.tenantId
+      ? {}
+      : { tenantId: user.tenantId };
+
     const student = await prisma.user.findUnique({
-      where: { id: studentId, role: 'STUDENT', deletedAt: null },
-      select: { id: true, name: true, username: true, role: true, grade: true },
+      where: { id: studentId, role: 'STUDENT', deletedAt: null, ...tenantWhere },
+      select: { id: true, name: true, username: true, role: true, grade: true, tenantId: true, tenant: { select: { slug: true } } },
     });
     if (student) {
       return {
@@ -82,6 +88,8 @@ export async function requireAuthViewAs(request: NextRequest): Promise<AuthUser 
         username: student.username,
         role: student.role as AuthUser['role'],
         grade: student.grade,
+        tenantId: student.tenantId,
+        tenantSlug: student.tenant?.slug ?? null,
       };
     }
   }

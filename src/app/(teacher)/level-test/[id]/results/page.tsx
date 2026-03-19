@@ -501,10 +501,12 @@ export default function LevelTestResultsPage() {
                   </Button>
                 </Link>
               )}
-              <Button size="sm" variant="secondary" onClick={() => window.print()}>
-                <Printer className="w-3.5 h-3.5 mr-1" />
-                인쇄
-              </Button>
+              <Link href={`/level-test/${id}/report?attemptId=${selectedResult.attemptId}&print=1`}>
+                <Button size="sm" variant="secondary">
+                  <Printer className="w-3.5 h-3.5 mr-1" />
+                  인쇄
+                </Button>
+              </Link>
               <button
                 onClick={() => setSelectedAttemptId(null)}
                 className="p-1.5 rounded-sm hover:bg-slate-100 text-slate-400 hover:text-slate-600"

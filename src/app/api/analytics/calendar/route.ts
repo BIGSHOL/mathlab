@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse } from '@/lib/api';
+import { requireTeacher, isResponse, badRequest, forbidden, canAccessStudent } from '@/lib/api';
 
 interface DaySummary {
   total: number;
@@ -19,7 +19,12 @@ export async function GET(request: NextRequest) {
   const month = parseInt(searchParams.get('month') ?? String(new Date().getMonth() + 1));
 
   if (!studentId) {
-    return NextResponse.json({ error: { code: 'BAD_REQUEST', message: '학생 ID가 필요합니다' } }, { status: 400 });
+    return badRequest('학생 ID가 필요합니다');
+  }
+
+  // 접근 권한 검증
+  if (!(await canAccessStudent(user, studentId))) {
+    return forbidden();
   }
 
   const startDate = new Date(year, month - 1, 1);

@@ -350,6 +350,32 @@ export function useConceptManager(isOwner: boolean) {
 
   const cancelEditing = () => {
     if (isDirty && !confirm('저장하지 않은 변경사항이 있습니다. 닫으시겠습니까?')) return;
+    // 편집 모드에서 닫기 → 개념 선택 유지 (읽기 모드로 전환)
+    if (isContentEditing && !isNewConcept) {
+      setIsContentEditing(false);
+      // 편집 전 상태로 되돌리기
+      if (editingConcept) {
+        const form: EditFormState = {
+          subjectId: editingConcept.subjectId,
+          title: editingConcept.title,
+          fullContent: editingConcept.fullContent,
+          conceptCode: editingConcept.conceptCode ?? '',
+          grade: editingConcept.grade,
+          semester: editingConcept.semester ?? '' as string | number,
+          chapter: editingConcept.chapter ?? '',
+          section: editingConcept.section ?? '',
+          sectionSub: editingConcept.sectionSub ?? '',
+          category: editingConcept.category ?? '',
+          part: editingConcept.part ?? '',
+          source: editingConcept.source ?? '',
+          keywords: editingConcept.keywords ?? '',
+        };
+        setEditForm(form);
+        setSavedEditForm(JSON.stringify(form));
+      }
+      return;
+    }
+    // 읽기 모드에서 닫기 → 개념 선택 해제
     setEditingConcept(null);
     setIsNewConcept(false);
     setIsContentEditing(false);

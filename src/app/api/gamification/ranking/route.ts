@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth, isResponse } from '@/lib/api';
+import { requireAuth, isResponse, getTenantFilter } from '@/lib/api';
 import { rankingQuerySchema } from '@/lib/schemas/gamification';
 
 // GET /api/gamification/ranking?limit=10
@@ -15,7 +15,14 @@ export async function GET(request: NextRequest) {
 
   const limit = parsed.success ? parsed.data.limit : 10;
 
+  // 테넌트별 랭킹: user의 tenantId로 필터
+  const tenantWhere = getTenantFilter(user);
+  const userFilter = Object.keys(tenantWhere).length > 0
+    ? { user: { tenantId: tenantWhere.tenantId as string } }
+    : {};
+
   const profiles = await prisma.studentProfile.findMany({
+    where: userFilter,
     take: limit,
     orderBy: { totalXp: 'desc' },
     include: {

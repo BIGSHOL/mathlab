@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAdmin, isResponse } from '@/lib/api';
+import { requireAdmin, isResponse, getTenantFilter } from '@/lib/api';
 
 export async function GET() {
   const user = await requireAdmin();
   if (isResponse(user)) return user;
 
+  const tenantWhere = getTenantFilter(user);
+
   const users = await prisma.user.findMany({
-    where: { deletedAt: null },
+    where: { deletedAt: null, ...tenantWhere },
     select: {
       id: true,
       username: true,

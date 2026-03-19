@@ -21,6 +21,32 @@ enum Role {
   ADMIN         // 레거시 (OWNER로 대체됨, 코드에서 미사용)
 }
 
+// FEAT: 멀티테넌시 — 지점(학원) 관리
+model Tenant {
+  id        String   @id @default(cuid())
+  slug      String   @unique @db.VarChar(50)   // 서브도메인: "gangnam" → gangnam.mathlab.com
+  name      String   @db.VarChar(100)           // 표시명: "강남점"
+  logo      String?  @db.VarChar(500)           // 커스텀 로고 URL
+  settings  Json?                                // 지점별 설정 (색상, 기능 토글 등)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users                  User[]
+  classrooms             Classroom[]
+  tests                  Test[]
+  learningCourses        LearningCourse[]
+  arithmeticHomeworkPlans ArithmeticHomeworkPlan[]
+  conceptHomeworkPlans   ConceptHomeworkPlan[]
+  questionHomeworkPlans  QuestionHomeworkPlan[]
+  quizSessions           QuizSession[]
+  dailyQuestions         DailyQuestion[]
+  featureFlags           FeatureFlag[]
+
+  @@index([slug])
+  @@index([isActive])
+}
+
 model User {
   id            String    @id @default(cuid())
   seq           Int       @unique @default(autoincrement())
@@ -39,11 +65,13 @@ model User {
   parentName    String?   @db.VarChar(50)
   parentPhone   String?   @db.VarChar(20)
   classroomId   String?
+  tenantId      String?
   profileImage  String?   @db.VarChar(500)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   deletedAt     DateTime?
 
+  tenant         Tenant?   @relation(fields: [tenantId], references: [id])
   sessions       Session[]
   profile        StudentProfile?
   progress       LearningProgress[]
@@ -76,6 +104,8 @@ model User {
 
   @@index([role])
   @@index([classroomId])
+  @@index([tenantId])
+  @@index([tenantId, role])
 }
 
 model Session {
@@ -335,9 +365,11 @@ model Test {
   defaultDueDate      DateTime?                  // 배정 시 기본 마감일
   allowLateSubmission Boolean  @default(false)   // 기한 후 지각 제출 허용
   createdBy           String
+  tenantId            String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
+  tenant          Tenant?           @relation(fields: [tenantId], references: [id])
   creator         User              @relation("TestCreator", fields: [createdBy], references: [id])
   attempts        TestAttempt[]
   assignments     TestAssignment[]
@@ -346,6 +378,7 @@ model Test {
   @@index([grade])
   @@index([createdBy])
   @@index([isActive])
+  @@index([tenantId])
 }
 
 model TestAttempt {
@@ -526,13 +559,16 @@ model QuizSession {
   startedAt         DateTime?
   endedAt           DateTime?
   questionChangedAt DateTime?              // 문제 전환 시각 (클라이언트 시간 보정용)
+  tenantId          String?
   createdAt         DateTime   @default(now())
 
+  tenant       Tenant?          @relation(fields: [tenantId], references: [id])
   participants QuizParticipant[]
 
   @@index([hostId])
   @@index([joinCode])
   @@index([status])
+  @@index([tenantId])
 }
 
 model QuizParticipant {
@@ -630,9 +666,11 @@ model ArithmeticHomeworkPlan {
   retryMode       String   @default("wrong_same") @db.VarChar(20) // wrong_same | wrong_new | all_same | all_new
   maxRetries      Int      @default(3)     // 최대 재시도 횟수
   isActive        Boolean  @default(true)
+  tenantId        String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  tenant      Tenant?                       @relation(fields: [tenantId], references: [id])
   creator     User                          @relation("HomeworkPlanCreator", fields: [createdBy], references: [id])
   enrollments ArithmeticHomeworkEnrollment[]
   attempts    ArithmeticAttempt[]           @relation("HomeworkAttempts")
@@ -640,6 +678,7 @@ model ArithmeticHomeworkPlan {
   @@index([createdBy])
   @@index([isActive])
   @@index([startDate])
+  @@index([tenantId])
 }
 
 model ArithmeticHomeworkEnrollment {
@@ -667,15 +706,18 @@ model ConceptHomeworkPlan {
   dailyConcepts Json     // string[][] - 날짜별 개념 ID 배열
   requiredStage Stage    @default(BLANK_FULL) // 완료로 인정할 최소 단계
   isActive      Boolean  @default(true)
+  tenantId      String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  tenant      Tenant?                     @relation(fields: [tenantId], references: [id])
   creator     User                        @relation("ConceptHomeworkPlanCreator", fields: [createdBy], references: [id])
   enrollments ConceptHomeworkEnrollment[]
 
   @@index([createdBy])
   @@index([isActive])
   @@index([startDate])
+  @@index([tenantId])
 }
 
 model ConceptHomeworkEnrollment {
@@ -703,9 +745,11 @@ model QuestionHomeworkPlan {
   dailyQuestions  Json     // string[][] - 날짜별 문제 ID 배열
   passingScore    Int      @default(80)
   isActive        Boolean  @default(true)
+  tenantId        String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  tenant      Tenant?                       @relation(fields: [tenantId], references: [id])
   creator     User                          @relation("QuestionHomeworkPlanCreator", fields: [createdBy], references: [id])
   enrollments QuestionHomeworkEnrollment[]
   attempts    QuestionHomeworkAttempt[]
@@ -713,6 +757,7 @@ model QuestionHomeworkPlan {
   @@index([createdBy])
   @@index([isActive])
   @@index([startDate])
+  @@index([tenantId])
 }
 
 model QuestionHomeworkEnrollment {
@@ -823,13 +868,19 @@ model QuestionGenerationLog {
   @@index([teacherId, createdAt(sort: Desc)])
 }
 
-// FEAT: Feature Flags (Admin 토글)
+// FEAT: Feature Flags (Admin 토글, 테넌트별 오버라이드 지원)
 model FeatureFlag {
   id        String   @id @default(cuid())
-  key       String   @unique @db.VarChar(50)
+  key       String   @db.VarChar(50)
   enabled   Boolean  @default(true)
   label     String   @db.VarChar(100)
+  tenantId  String?                          // null = 글로벌 기본값, 값 있으면 테넌트 전용
   updatedAt DateTime @updatedAt
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@unique([key, tenantId])  // 테넌트별 키 고유
+  @@index([tenantId])
 }
 
 // FEAT: 연산 타임어택 최고기록
@@ -852,14 +903,18 @@ model TimeAttackRecord {
 model DailyQuestion {
   id         String   @id @default(cuid())
   questionId String
-  date       DateTime @unique @db.Date
+  date       DateTime @db.Date
   createdBy  String?
+  tenantId   String?
   createdAt  DateTime @default(now())
 
+  tenant   Tenant?              @relation(fields: [tenantId], references: [id])
   question Question            @relation(fields: [questionId], references: [id])
   attempts DailyQuestionAttempt[]
 
+  @@unique([date, tenantId])  // 테넌트별 일일 문제
   @@index([date])
+  @@index([tenantId])
 }
 
 model DailyQuestionAttempt {
@@ -927,11 +982,14 @@ model Classroom {
   name      String   @db.VarChar(50)
   grade     Int?
   teacherId String?
+  tenantId  String?
   createdAt DateTime @default(now())
 
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
   students User[]
 
   @@index([teacherId])
+  @@index([tenantId])
 }
 
 // FEAT: Learning Course Assignment (학습 과정 배정)
@@ -948,15 +1006,18 @@ model LearningCourse {
   description String?  @db.Text
   createdBy   String
   isActive    Boolean  @default(true)
+  tenantId    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  tenant      Tenant?                   @relation(fields: [tenantId], references: [id])
   creator     User                      @relation("LearningCourseCreator", fields: [createdBy], references: [id])
   concepts    LearningCourseConcept[]
   enrollments LearningCourseEnrollment[]
 
   @@index([createdBy])
   @@index([isActive])
+  @@index([tenantId])
 }
 
 model LearningCourseConcept {

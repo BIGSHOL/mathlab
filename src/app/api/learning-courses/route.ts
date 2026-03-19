@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse } from '@/lib/api';
+import { requireTeacher, isResponse, getTenantFilter } from '@/lib/api';
 import { z } from 'zod';
 
 // GET /api/learning-courses — 과정 목록 (선생님용)
@@ -8,8 +8,10 @@ export async function GET() {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
 
+  const tenantWhere = getTenantFilter(user);
+
   const courses = await prisma.learningCourse.findMany({
-    where: { isActive: true },
+    where: { isActive: true, ...tenantWhere },
     include: {
       _count: { select: { concepts: true, enrollments: true } },
       creator: { select: { name: true } },
@@ -59,6 +61,7 @@ export async function POST(request: NextRequest) {
       title,
       description,
       createdBy: user.id,
+      tenantId: user.tenantId,
       concepts: {
         create: conceptIds.map((conceptId, i) => ({
           conceptId,

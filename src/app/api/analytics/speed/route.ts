@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth, isResponse, forbidden } from '@/lib/api';
+import { requireAuth, isResponse, forbidden, hasRole, canAccessStudent } from '@/lib/api';
 
 /** GET: 풀이 속도 분석 */
 export async function GET(request: NextRequest) {
@@ -13,6 +13,13 @@ export async function GET(request: NextRequest) {
   // 학생은 자기 데이터만
   if (user.role === 'STUDENT' && studentId !== user.id) {
     return forbidden();
+  }
+
+  // 선생님이 다른 학생 조회 시 접근 권한 검증
+  if (hasRole(user, 'TEACHER') && studentId !== user.id) {
+    if (!(await canAccessStudent(user, studentId))) {
+      return forbidden();
+    }
   }
 
   // 해당 학생의 모든 완료된 시험 답안 조회

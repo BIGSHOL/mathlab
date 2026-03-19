@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireTeacher, isResponse, badRequest, clamp, homeworkCreatedByFilter } from '@/lib/api';
+import { requireTeacher, isResponse, badRequest, clamp, homeworkCreatedByFilter, getTenantFilter } from '@/lib/api';
 import { prisma } from '@/lib/db';
 import { createHomeworkPlan } from '@/lib/services/homework';
 import type { ProgressionMode, CountMode } from '@/lib/services/homework';
@@ -55,7 +55,8 @@ export async function GET() {
   if (isResponse(user)) return user;
 
   const createdBy = homeworkCreatedByFilter(user);
-  const where: Record<string, unknown> = {};
+  const tenantWhere = getTenantFilter(user);
+  const where: Record<string, unknown> = { ...tenantWhere };
   if (createdBy) where.createdBy = createdBy;
 
   const plans = await prisma.arithmeticHomeworkPlan.findMany({

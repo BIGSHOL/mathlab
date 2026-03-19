@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, badRequest } from '@/lib/api';
+import { requireTeacher, isResponse, badRequest, forbidden, canAccessStudent } from '@/lib/api';
 
 /** GET: 선생님 코멘트 조회 */
 export async function GET(request: NextRequest) {
@@ -13,6 +13,11 @@ export async function GET(request: NextRequest) {
 
   if (!studentId || !month) {
     return badRequest('studentId와 month가 필요합니다');
+  }
+
+  // 접근 권한 검증
+  if (!(await canAccessStudent(user, studentId))) {
+    return forbidden();
   }
 
   const comment = await prisma.teacherComment.findUnique({
@@ -38,6 +43,11 @@ export async function PUT(request: NextRequest) {
 
   if (!studentId || !month || typeof content !== 'string') {
     return badRequest('studentId, month, content가 필요합니다');
+  }
+
+  // 접근 권한 검증
+  if (!(await canAccessStudent(user, studentId))) {
+    return forbidden();
   }
 
   await prisma.teacherComment.upsert({
