@@ -47,7 +47,7 @@
 
 **비용 인식 — 작은 기능도 3단계를 거친다:**
 - 필드 하나(boolean, string 등) 추가에도 스키마 → generate → API → 프론트 전 과정 필요
-- API 라우트가 이미 116개+ → 무분별하게 늘리지 말 것
+- API 라우트가 이미 121개+ → 무분별하게 늘리지 말 것
 - 새 필드 추가 전 판단 기준:
   - **정규 필드**: 검색/필터/정렬에 쓰이거나, 여러 곳에서 참조되는 경우
   - **기존 Json 필드 활용**: 한 곳에서만 쓰이는 부가 정보는 `metadata Json?` 등 기존 유연한 필드에 포함 검토
@@ -104,7 +104,7 @@ if (currentUser.role !== 'ADMIN') → 403     // 관리자 전용
 - 환경변수: `GEMINI_API_KEY`
 
 **Claude (레벨테스트 보고서 생성):**
-- 모델: Claude Haiku (`@anthropic-ai/sdk`)
+- 모델: Claude Sonnet 4.6 (`@anthropic-ai/sdk`)
 - 레벨테스트 결과 → 학습 보고서 AI 생성
 - 환경변수: `ANTHROPIC_API_KEY`
 
@@ -129,11 +129,11 @@ src/
 ├── app/
 │   ├── (student)/     # 학생 페이지 (dashboard, subjects, concepts, practice, my-tests, ranking, quiz, profile, diagnostics, solve)
 │   ├── (teacher)/     # 선생님 페이지 (overview, students, concepts, questions, tests, homework, analytics, quiz, worksheet, manual-grading, reports, level-test, settings, updates, admin)
-│   ├── api/           # API 라우트 (116+ endpoints)
+│   ├── api/           # API 라우트 (121+ endpoints)
 │   └── globals.css    # Tailwind 테마 + 디자인 토큰
 ├── components/
 │   ├── layout/        # Sidebar, DashboardShell, CommandPalette
-│   ├── ui/            # Button, Pagination, Toast 등 공통 UI
+│   ├── ui/            # Button, Pagination, Toast, Skeleton, MotionStagger, XpToast 등 공통 UI
 │   ├── math/          # MathRenderer, EditableMathRenderer, DiagramRenderer, DiagramEditorPopup, ProblemDisplay
 │   ├── learning/      # 개념학습, 빈칸연습
 │   ├── test/          # 시험 응시, 제출, AssignPanel
@@ -159,9 +159,10 @@ src/
 │   ├── diagram/       # 프리셋 기반 구조화 다이어그램 시스템 (DiagramSpec)
 │   ├── constants/     # 교육과정 데이터, 연산 카테고리
 │   └── data/          # 정적 데이터 (업데이트 로그 등)
-├── hooks/             # useAuth, useLearning, useGamification, useFeatureFlags, useBadgeCheck, useSpeed 등
+├── hooks/             # useAuth, useLearning, useGamification, useFeatureFlags, useBadgeCheck, useSpeed, useFetch, useTests, usePreviewScale 등
+├── stores/            # Zustand 글로벌 스토어 (gamification, wizard, manualGrading, xpNotification)
 ├── types/             # 공통 타입 정의 (diagram.ts, mathgen.ts, pdf-extract.ts, report.ts 등)
-└── scripts/           # DB 초기화, 시드 스크립트
+└── scripts/           # DB 초기화, 시드 스크립트 (35+ 파일)
 ```
 
 ## 주요 도메인
@@ -280,19 +281,23 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 
 | 서비스 | 용도 |
 |--------|------|
-| `arithmetic-generator/` | 62+ 카테고리 연산 문제 생성 |
+| `arithmetic-generator/` | 62+ 카테고리 연산 문제 생성 (초등/중등/고등 분리) |
 | `mathgen.ts` | Gemini AI 문제 생성 |
 | `grading.ts` | 자동 채점, XP 계산 |
 | `diagnostic.ts` | 레벨테스트 결과 분석 |
 | `assignment.ts` | 시험 배정/마감 관리 |
-| `homework.ts` | 숙제 계획 로직 |
+| `homework.ts` | 숙제 계획 로직 (strategies 패턴) |
+| `concept-homework.ts` | 개념 기반 숙제 |
+| `question-homework.ts` | 문제 기반 숙제 |
 | `cheat-detection.ts` | 부정행위 탐지 |
 | `badge-checker.ts` | 뱃지 조건 확인 및 자동 수여 (10종) |
 | `daily-mission.ts` | 일일 미션 생성 및 진행 추적 |
-| `report-ai.ts` | Claude AI 레벨테스트 보고서 생성 |
+| `report-ai.ts` | Claude Sonnet 4.6 레벨테스트 보고서 생성 |
 | `variant-generator.ts` | 시험 변형 문제 생성 |
 | `manual-grading.ts` | 수기 채점 로직 |
 | `question-tagger.ts` | 문제 자동 분류/태깅 |
+| `hint-generator.ts` | 문제 힌트 생성 |
+| `level-test.ts` | 레벨테스트 관리 |
 
 ### 게이미피케이션
 
@@ -389,9 +394,9 @@ npx tsx scripts/reset-questions.ts  # 문제은행 + 관련 데이터 전체 초
 - **alert() 사용 금지** → `toast.*()` 사용 (위 7번 규칙 참고)
 - 빌드 확인: 기능 구현 후 `npm run build`로 타입 에러 없는지 확인
 
-## Skills
+## Skills & Agents
 
-커스텀 검증 스킬은 `.claude/skills/`에 정의되어 있습니다.
+### Skills (검증용, `.claude/skills/`)
 
 | Skill | Purpose |
 |-------|---------|
@@ -400,3 +405,32 @@ npx tsx scripts/reset-questions.ts  # 문제은행 + 관련 데이터 전체 초
 | `verify-api-auth` | API 라우트 인증/인가 패턴 검증 |
 | `verify-schema-sync` | Prisma 스키마와 코드 간 동기화 검증 |
 | `verify-page-patterns` | Teacher/Student 페이지 UI 패턴 일관성 검증 |
+
+### Agents (개발 보조, `.claude/agents/`)
+
+| Agent | Model | Purpose |
+|-------|-------|---------|
+| `code-reviewer` | Sonnet | git diff 기반 코드 리뷰 (인증, 응답 형식, toast, KaTeX 규칙 검증) |
+| `build-checker` | Haiku | Prisma generate + Next.js 빌드 검증/에러 수정 |
+| `test-writer` | Sonnet | Vitest 단위 테스트 생성 (서비스, API, 유틸) |
+| `refactor-advisor` | Haiku | 대형 파일 탐지, 중복 코드 분석, 분리 전략 제안 (읽기 전용) |
+| `schema-generator` | Sonnet | Prisma 모델 → API 라우트 + Zod 스키마 + 타입 자동 생성 |
+| `api-documenter` | Haiku | 121+ API 라우트 스캔 → 구조화된 API 문서 생성 |
+
+## 프로젝트 규모
+
+| 항목 | 수치 |
+|------|------|
+| 소스 파일 | 455개 (TS/TSX) |
+| 총 코드량 | ~75,000 LoC |
+| 학생 페이지 | 16개 |
+| 선생님 페이지 | 44개 |
+| API 라우트 | 121개, ~9,400 LoC |
+| 컴포넌트 | 118개 |
+| 서비스 모듈 | 18개 |
+| DB 모델 | 46개, Enum 9개 |
+| SVG 다이어그램 | 26개 타입 (2개 시스템) |
+| 커스텀 훅 | 9개 |
+| Zustand 스토어 | 4개 |
+| Zod 스키마 | 5개 |
+| E2E 테스트 | 3개 (Playwright) |

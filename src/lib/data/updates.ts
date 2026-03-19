@@ -30,6 +30,32 @@ export const TYPE_CONFIG: Record<UpdateType, { label: string; color: string }> =
 };
 
 export const ALL_UPDATES: UpdateLog[] = [
+  // ── 2026-03-19 ──
+  {
+    date: '2026-03-19',
+    title: 'UI/UX 전체 개선 — 스켈레톤 로딩, 애니메이션, AI 보고서 강화',
+    audience: ['teacher', 'admin'],
+    entries: [
+      { type: 'feature', text: '스켈레톤 로딩 UI — 대시보드, 랭킹, 오버뷰 페이지에 로딩 스켈레톤 적용' },
+      { type: 'feature', text: 'XP 획득 토스트 알림 — 학습 완료 시 XP 획득량을 실시간 표시' },
+      { type: 'feature', text: 'MotionStagger 애니메이션 — 카드/리스트 순차 등장 효과' },
+      { type: 'feature', text: '레벨테스트 보고서 AI 전면 전환 — Claude Sonnet 4.6으로 모든 멘트 AI 생성' },
+      { type: 'improve', text: 'Claude Haiku 3.5 → 4.5 업그레이드 (보고서 품질 향상)' },
+      { type: 'improve', text: 'ProgressBar 애니메이션 강화 (부드러운 진행률 표시)' },
+      { type: 'improve', text: 'StatCard 마이크로 인터랙션 추가' },
+    ],
+  },
+  {
+    date: '2026-03-19',
+    title: '학습 화면 개선 — 스켈레톤 로딩 & XP 알림',
+    audience: ['student'],
+    entries: [
+      { type: 'feature', text: '페이지 로딩 시 스켈레톤 UI 표시 — 빈 화면 대신 로딩 애니메이션' },
+      { type: 'feature', text: 'XP 획득 알림 — 학습 완료 시 획득 XP가 토스트로 표시' },
+      { type: 'improve', text: '대시보드 카드 순차 등장 애니메이션으로 부드러운 화면 전환' },
+      { type: 'improve', text: '진행률 바 애니메이션 개선' },
+    ],
+  },
   // ── 2026-03-18 ──
   {
     date: '2026-03-18',
@@ -129,7 +155,7 @@ export const ALL_UPDATES: UpdateLog[] = [
     audience: ['teacher', 'admin'],
     entries: [
       { type: 'feature', text: '3단계 학습지 마법사 — 교육과정 선택 → 문제 편집 → 설정/저장' },
-      { type: 'feature', text: '레벨테스트 보고서 AI 생성 (Claude Haiku)' },
+      { type: 'feature', text: '레벨테스트 보고서 AI 생성' },
       { type: 'add', text: '보고서 9등급 스케일 평가 기준 추가' },
       { type: 'improve', text: '보고서 폰트/정렬 통일, 레이아웃 개선' },
       { type: 'improve', text: '레벨테스트 계통도 분석 강화 및 멘트 시스템' },

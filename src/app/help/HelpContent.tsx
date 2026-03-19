@@ -22,6 +22,9 @@ import {
   Shield,
   Trophy,
   Award,
+  FileText,
+  Zap,
+  PenTool,
 } from 'lucide-react';
 import { LogoIcon } from '@/components/ui/LogoIcon';
 import type { HelpCategory, HelpItem } from '@/lib/data/help';
@@ -40,6 +43,9 @@ const ICON_MAP: Record<string, typeof HelpCircle> = {
   Shield,
   Trophy,
   Award,
+  FileText,
+  Zap,
+  PenTool,
 };
 
 interface Props {
