@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { A4Page, A4PrintPage } from '@/components/print-preview/A4Page';
 import { ZoomToolbar } from '@/components/print-preview/ZoomToolbar';
 import { usePreviewScale } from '@/hooks/usePreviewScale';
@@ -127,8 +128,28 @@ export default function LevelTestReportPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 py-6 md:py-8">
+        <div className="flex items-center gap-3 mb-6">
+          <Skeleton className="w-8 h-8 rounded-lg" />
+          <Skeleton className="h-7 w-40" />
+        </div>
+        <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4 mb-4">
+          <Skeleton className="h-5 w-32" />
+          <div className="grid grid-cols-2 gap-3">
+            {Array.from({ length: 4 }, (_, i) => (
+              <div key={i} className="space-y-2">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-5 w-24" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-3">
+          <Skeleton className="h-5 w-28" />
+          <Skeleton className="h-40 w-full rounded-lg" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
       </div>
     );
   }

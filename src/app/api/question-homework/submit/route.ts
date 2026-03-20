@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuth, isResponse } from '@/lib/api';
 import { awardXp } from '@/lib/utils/xp';
+import { getHomeworkDayQuestionIds } from '@/lib/utils/question-order';
 
 export async function POST(request: NextRequest) {
   const user = await requireAuth();
@@ -50,8 +51,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const dailyQuestions = plan.dailyQuestions as unknown as string[][];
-  const todayQuestionIds = dailyQuestions[dayIndex] ?? [];
+  const todayQuestionIds = await getHomeworkDayQuestionIds(planId, dayIndex);
 
   // 정답 조회
   const questions = await prisma.question.findMany({

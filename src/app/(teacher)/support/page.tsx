@@ -11,13 +11,13 @@ import {
   ExternalLink,
   Send,
   CheckCircle2,
-  Loader2,
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { LoadingEmptyState } from '@/components/ui/LoadingEmptyState';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 
 interface Inquiry {
@@ -222,15 +222,7 @@ export default function SupportPage() {
 
                 {/* Admin: Inquiry List */}
                 <div className="flex-1 overflow-y-auto">
-                  {loading ? (
-                    <div className="flex justify-center py-12">
-                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                    </div>
-                  ) : filteredInquiries.length === 0 ? (
-                    <div className="text-center py-8 text-text-secondary text-xs">
-                      접수된 문의가 없습니다.
-                    </div>
-                  ) : (
+                  <LoadingEmptyState loading={loading} empty={filteredInquiries.length === 0} message="접수된 문의가 없습니다.">
                     <div className="flex flex-col">
                       {filteredInquiries.map((inq) => (
                         <button
@@ -268,36 +260,29 @@ export default function SupportPage() {
                         </button>
                       ))}
                     </div>
-                  )}
+                  </LoadingEmptyState>
                 </div>
               </>
             ) : (
               <>
                 {/* Teacher: New Inquiry Button */}
                 <div className="shrink-0 px-3 py-2 border-b border-slate-200">
-                  <button
+                  <Button
+                    size="sm"
+                    className="w-full"
                     onClick={() => {
                       setShowInquiryForm(true);
                       setSelectedInquiry(null);
                     }}
-                    className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-sm bg-primary text-white text-xs font-bold hover:bg-primary-hover transition-colors"
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <Plus className="w-3.5 h-3.5 mr-1" />
                     문의하기
-                  </button>
+                  </Button>
                 </div>
 
                 {/* Teacher: My Inquiry List */}
                 <div className="flex-1 overflow-y-auto">
-                  {loading ? (
-                    <div className="flex justify-center py-12">
-                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                    </div>
-                  ) : inquiries.length === 0 ? (
-                    <div className="text-center py-8 text-text-secondary text-xs">
-                      등록된 문의가 없습니다.
-                    </div>
-                  ) : (
+                  <LoadingEmptyState loading={loading} empty={inquiries.length === 0} message="등록된 문의가 없습니다.">
                     <div className="flex flex-col">
                       {inquiries.map((inq) => (
                         <button
@@ -335,7 +320,7 @@ export default function SupportPage() {
                         </button>
                       ))}
                     </div>
-                  )}
+                  </LoadingEmptyState>
                 </div>
               </>
             )}

@@ -69,6 +69,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Dual-Write: TestQuestion 중간테이블
+    await tx.testQuestion.createMany({
+      data: (questionIds as string[]).map((qId: string, idx: number) => ({
+        testId: created.id,
+        questionId: qId,
+        sortOrder: idx,
+      })),
+    });
+
     return created;
   });
 

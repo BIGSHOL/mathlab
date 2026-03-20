@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { toast } from '@/components/ui/Toast';
 import {
   FileText,
   Send,
-  Loader2,
   CheckCircle2,
   Search,
   Users,
@@ -22,7 +22,9 @@ import {
   CheckCircle,
   Clock,
 } from 'lucide-react';
+import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Button } from '@/components/ui/Button';
+import { LoadingEmptyState } from '@/components/ui/LoadingEmptyState';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 
 // ── Types ──
@@ -269,18 +271,12 @@ export default function ReportsPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto min-h-0">
-              {loading ? (
-                <div className="flex justify-center py-12">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                </div>
-              ) : filteredStudents.length === 0 ? (
-                <div className="text-center py-8 px-3">
-                  <Users className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                  <p className="text-xs text-text-secondary">
-                    {search ? '검색 결과가 없습니다' : '등록된 학생이 없습니다'}
-                  </p>
-                </div>
-              ) : (
+              <LoadingEmptyState
+                loading={loading}
+                empty={filteredStudents.length === 0}
+                icon={<Users className="w-8 h-8 text-slate-300" />}
+                message={search ? '검색 결과가 없습니다' : '등록된 학생이 없습니다'}
+              >
                 <div className="py-1">
                   {filteredStudents.map((student) => {
                     const isSelected = student.id === selectedStudentId;
@@ -288,7 +284,7 @@ export default function ReportsPage() {
                       <button
                         key={student.id}
                         onClick={() => handleSelectStudent(student.id)}
-                        className={`w-full text-left px-3 py-2.5 flex items-center gap-3 transition-colors hover:bg-slate-100/80 ${
+                        className={`w-full text-left px-3 py-2.5 flex items-center gap-3 transition-colors hover:bg-slate-100 ${
                           isSelected ? 'bg-primary/5 border-l-2 border-l-primary' : 'border-l-2 border-l-transparent'
                         }`}
                       >
@@ -325,7 +321,7 @@ export default function ReportsPage() {
                     );
                   })}
                 </div>
-              )}
+              </LoadingEmptyState>
             </div>
           </>
         )}
@@ -387,7 +383,7 @@ export default function ReportsPage() {
                     ))}
                   </div>
                   <Button size="sm" onClick={handleGenerate} disabled={generating}>
-                    {generating ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <FileText className="w-4 h-4 mr-1" />}
+                    {generating ? <MathSpinner size="sm" className="mr-1" /> : <FileText className="w-4 h-4 mr-1" />}
                     리포트 생성
                   </Button>
                 </div>
@@ -409,9 +405,14 @@ export default function ReportsPage() {
 
               {generating && (
                 <div className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mb-2" />
-                    <p className="text-sm text-text-secondary">리포트를 생성하고 있습니다...</p>
+                  <div className="text-center space-y-3 max-w-sm">
+                    <Skeleton className="h-6 w-48 mx-auto" />
+                    <Skeleton className="h-4 w-64 mx-auto" />
+                    <div className="space-y-2 mt-4">
+                      <Skeleton className="h-32 w-full rounded-lg" />
+                      <Skeleton className="h-4 w-3/4 mx-auto" />
+                    </div>
+                    <p className="text-sm text-text-secondary animate-pulse">리포트를 생성하고 있습니다...</p>
                   </div>
                 </div>
               )}

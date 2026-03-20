@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useXpNotification } from '@/stores/xp-notification';
 import { toast } from '@/components/ui/Toast';
+import { Skeleton } from '@/components/ui/Skeleton';
 import {
   CalendarCheck,
   Play,
@@ -12,7 +13,6 @@ import {
   RotateCcw,
   Zap,
   Star,
-  Loader2,
   Clock,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
@@ -210,8 +210,17 @@ export default function HomeworkPracticePage() {
         </h1>
 
         {loadingList ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          <div className="space-y-3">
+            {Array.from({ length: 3 }, (_, i) => (
+              <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-3">
+                <Skeleton className="w-10 h-10 rounded-lg shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+                <Skeleton className="h-8 w-20 rounded-lg" />
+              </div>
+            ))}
           </div>
         ) : homeworkList.length === 0 ? (
           <Card className="p-5 text-center">

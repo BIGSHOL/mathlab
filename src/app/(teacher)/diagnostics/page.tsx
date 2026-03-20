@@ -11,6 +11,7 @@ import {
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { LoadingEmptyState } from '@/components/ui/LoadingEmptyState';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 interface DiagnosticTest {
   id: string;
@@ -45,23 +46,19 @@ export default function DiagnosticsPage() {
 
   return (
     <div className="p-6 md:p-10 max-w-[1200px] mx-auto w-full flex flex-col gap-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary flex items-center gap-2">
-            <ClipboardCheck className="w-6 h-6 text-primary" />
-            진단평가 관리
-          </h1>
-          <p className="text-text-secondary text-sm mt-1">
-            입학/단원/레벨 진단평가를 생성하고 학생 수준을 파악합니다.
-          </p>
-        </div>
-        <Link href="/tests/create?type=diagnostic">
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            진단평가 만들기
-          </Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="진단평가 관리"
+        subtitle="입학/단원/레벨 진단평가를 생성하고 학생 수준을 파악합니다."
+        icon={<ClipboardCheck className="w-6 h-6" />}
+        actions={
+          <Link href="/tests/create?type=diagnostic">
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              진단평가 만들기
+            </Button>
+          </Link>
+        }
+      />
 
       <LoadingEmptyState
         loading={loading}
@@ -77,7 +74,7 @@ export default function DiagnosticsPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {tests.map((t) => (
             <Link key={t.id} href={`/tests/${t.seq}/results`}>
-              <Card className="p-5 hover:shadow-md transition-shadow cursor-pointer">
+              <Card padding="md" className="hover:shadow-md transition-shadow cursor-pointer">
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">

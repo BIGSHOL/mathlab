@@ -48,14 +48,27 @@ export async function POST(request: NextRequest) {
     attempts++;
   }
 
-  const session = await prisma.quizSession.create({
-    data: {
-      title,
-      hostId: currentUser.id,
-      questionIds,
-      joinCode,
-      tenantId: currentUser.tenantId,
-    },
+  const session = await prisma.$transaction(async (tx) => {
+    const created = await tx.quizSession.create({
+      data: {
+        title,
+        hostId: currentUser.id,
+        questionIds,
+        joinCode,
+        tenantId: currentUser.tenantId,
+      },
+    });
+
+    // Dual-Write: 중간테이블에도 기록
+    await tx.quizSessionQuestion.createMany({
+      data: (questionIds as string[]).map((qId: string, idx: number) => ({
+        sessionId: created.id,
+        questionId: qId,
+        sortOrder: idx,
+      })),
+    });
+
+    return created;
   });
 
   return NextResponse.json({ data: session });

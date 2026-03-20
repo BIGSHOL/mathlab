@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useXpNotification } from '@/stores/xp-notification';
 import { toast } from '@/components/ui/Toast';
+import { Skeleton } from '@/components/ui/Skeleton';
 import {
   FileQuestion,
   Play,
@@ -10,10 +11,10 @@ import {
   XCircle,
   Trophy,
   Star,
-  Loader2,
   ArrowRight,
   ArrowLeft,
 } from 'lucide-react';
+import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { MathRenderer } from '@/components/math/MathRenderer';
@@ -150,8 +151,17 @@ export default function QuestionHomeworkPage() {
         </div>
 
         {loadingList ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          <div className="space-y-3">
+            {Array.from({ length: 3 }, (_, i) => (
+              <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-3">
+                <Skeleton className="w-10 h-10 rounded-lg shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+                <Skeleton className="h-8 w-20 rounded-lg" />
+              </div>
+            ))}
           </div>
         ) : homeworkList.length === 0 ? (
           <Card className="p-5 text-center">
@@ -284,7 +294,7 @@ export default function QuestionHomeworkPage() {
               onClick={handleSubmit}
             >
               {submitting ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                <MathSpinner size="sm" className="mr-1" />
               ) : (
                 <CheckCircle2 className="w-4 h-4 mr-1" />
               )}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuth, requireTeacher, isResponse, notFound, badRequest } from '@/lib/api';
+import { getTestQuestionIds } from '@/lib/utils/question-order';
 
 /** GET: 레벨테스트 상세 (문제 포함) */
 export async function GET(
@@ -30,8 +31,8 @@ export async function GET(
     return notFound('레벨테스트를 찾을 수 없습니다');
   }
 
-  // 문제 상세 조회
-  const questionIds = test.questionIds as string[];
+  // 문제 상세 조회 (중간테이블 우선)
+  const questionIds = await getTestQuestionIds(test.id);
   const questions = await prisma.question.findMany({
     where: { id: { in: questionIds } },
     select: {
@@ -106,6 +107,16 @@ export async function PATCH(
         data: { questionDomains },
       });
     }
+
+    // Dual-Write: TestQuestion 중간테이블 갱신
+    await tx.testQuestion.deleteMany({ where: { testId: test.id } });
+    await tx.testQuestion.createMany({
+      data: (questionIds as string[]).map((qId: string, idx: number) => ({
+        testId: test.id,
+        questionId: qId,
+        sortOrder: idx,
+      })),
+    });
   });
 
   return NextResponse.json({ data: { success: true } });

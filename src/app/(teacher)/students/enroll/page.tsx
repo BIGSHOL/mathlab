@@ -9,8 +9,8 @@ import {
   Check,
   GraduationCap,
   ClipboardCheck,
-  Loader2,
 } from 'lucide-react';
+import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 
@@ -108,7 +108,7 @@ export default function EnrollWizardPage() {
         })}
       </div>
 
-      <Card className="p-5">
+      <Card padding="md">
         {/* Step 1: Basic Info */}
         {step === 1 && (
           <div className="space-y-5">
@@ -308,7 +308,7 @@ export default function EnrollWizardPage() {
           </Button>
           <Button onClick={handleNext} disabled={!canNext() || submitting}>
             {submitting ? (
-              <Loader2 className="w-4 h-4 animate-spin mr-1" />
+              <MathSpinner size="sm" className="mr-1" />
             ) : null}
             {step === 2 ? '등록하기' : '다음'}
             {step < 2 && <ChevronRight className="w-4 h-4 ml-1" />}

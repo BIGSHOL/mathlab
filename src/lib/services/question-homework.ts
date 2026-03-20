@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db';
 import { computeDayIndex } from '@/lib/utils/date-engine';
+import { getHomeworkAllDailyQuestionIds, getHomeworkDayQuestionIds, getHomeworkTotalQuestionCount } from '@/lib/utils/question-order';
 export { computeDayIndex } from '@/lib/utils/date-engine';
 
 // ─── Types ───
@@ -81,23 +82,43 @@ export async function createQuestionHomeworkPlan(params: CreateQuestionHomeworkP
   }
   const totalDays = dailyQuestions.length;
 
-  const plan = await prisma.questionHomeworkPlan.create({
-    data: {
-      title,
-      createdBy,
-      startDate: new Date(startDate),
-      totalDays,
-      dailyQuestions: JSON.parse(JSON.stringify(dailyQuestions)),
-      passingScore: passingScore ?? 80,
-    },
-  });
-
-  if (studentIds.length > 0) {
-    await prisma.questionHomeworkEnrollment.createMany({
-      data: studentIds.map((studentId) => ({ planId: plan.id, studentId })),
-      skipDuplicates: true,
+  const plan = await prisma.$transaction(async (tx) => {
+    const created = await tx.questionHomeworkPlan.create({
+      data: {
+        title,
+        createdBy,
+        startDate: new Date(startDate),
+        totalDays,
+        dailyQuestions: JSON.parse(JSON.stringify(dailyQuestions)),
+        passingScore: passingScore ?? 80,
+      },
     });
-  }
+
+    // Dual-Write: HomeworkQuestion 중간테이블
+    const hwData: { planId: string; questionId: string; dayIndex: number; sortOrder: number }[] = [];
+    for (let dayIdx = 0; dayIdx < dailyQuestions.length; dayIdx++) {
+      for (let sortIdx = 0; sortIdx < dailyQuestions[dayIdx].length; sortIdx++) {
+        hwData.push({
+          planId: created.id,
+          questionId: dailyQuestions[dayIdx][sortIdx],
+          dayIndex: dayIdx,
+          sortOrder: sortIdx,
+        });
+      }
+    }
+    if (hwData.length > 0) {
+      await tx.homeworkQuestion.createMany({ data: hwData });
+    }
+
+    if (studentIds.length > 0) {
+      await tx.questionHomeworkEnrollment.createMany({
+        data: studentIds.map((studentId) => ({ planId: created.id, studentId })),
+        skipDuplicates: true,
+      });
+    }
+
+    return created;
+  });
 
   return plan;
 }
@@ -109,7 +130,7 @@ export async function getQuestionHomeworkGrid(
   filters?: { grade?: number }
 ): Promise<QuestionHomeworkGridData> {
   const plan = await prisma.questionHomeworkPlan.findUniqueOrThrow({ where: { seq: planSeq } });
-  const dailyQuestions = plan.dailyQuestions as unknown as string[][];
+  const dailyQuestions = await getHomeworkAllDailyQuestionIds(plan.id, plan.totalDays);
   const allQuestionIds = dailyQuestions.flat();
 
   const questions = await prisma.question.findMany({
@@ -241,9 +262,8 @@ export async function getTodayQuestionHomework(studentId: string): Promise<Today
     attemptSet.set(`${a.planId}__${a.dayIndex}`, a.score);
   }
 
-  return activePlans.map(({ plan, dayIndex }) => {
-    const daily = plan.dailyQuestions as unknown as string[][];
-    const todayQuestions = daily[dayIndex] ?? [];
+  return Promise.all(activePlans.map(async ({ plan, dayIndex }) => {
+    const todayQuestions = await getHomeworkDayQuestionIds(plan.id, dayIndex);
     const key = `${plan.id}__${dayIndex}`;
     const score = attemptSet.get(key);
 
@@ -256,7 +276,7 @@ export async function getTodayQuestionHomework(studentId: string): Promise<Today
       status: score !== undefined ? 'COMPLETED' as const : dayIndex > 0 ? 'NOT_STARTED' as const : 'NOT_STARTED' as const,
       score,
     };
-  });
+  }));
 }
 
 // ─── Plan List ───
@@ -266,15 +286,17 @@ export async function listQuestionHomeworkPlans(createdBy?: string) {
   const plans = await prisma.questionHomeworkPlan.findMany({
     where,
     include: {
-      _count: { select: { enrollments: true } },
+      _count: { select: { enrollments: true, homeworkQuestions: true } },
       creator: { select: { name: true } },
     },
     orderBy: { createdAt: 'desc' },
   });
 
   return plans.map((p) => {
-    const daily = p.dailyQuestions as unknown as string[][];
-    const totalQuestions = daily.flat().length;
+    // 중간테이블 count 우선, 0이면 Json 폴백
+    const totalQuestions = p._count.homeworkQuestions > 0
+      ? p._count.homeworkQuestions
+      : ((p.dailyQuestions as unknown as string[][])?.flat().length ?? 0);
     const currentDay = computeDayIndex(p.startDate);
     const progress = Math.min(Math.max(currentDay + 1, 0), p.totalDays);
 

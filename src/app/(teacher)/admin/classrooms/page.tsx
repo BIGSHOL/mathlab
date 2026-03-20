@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Users, Plus, Pencil, Trash2, School } from 'lucide-react';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { LoadingEmptyState } from '@/components/ui/LoadingEmptyState';
@@ -112,22 +113,18 @@ export default function AdminClassroomsPage() {
 
   return (
     <div className="px-4 md:px-10 py-8 max-w-[900px] mx-auto w-full">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="p-3 bg-indigo-50 rounded-sm">
-          <School className="w-6 h-6 text-indigo-600" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary">반 관리</h1>
-          <p className="text-text-secondary text-sm">반을 만들고 학생을 배정합니다.</p>
-        </div>
-      </div>
+      <PageHeader
+        title="반 관리"
+        subtitle="반을 만들고 학생을 배정합니다."
+        icon={<School className="w-6 h-6" />}
+      />
 
       <LoadingEmptyState
         loading={loading}
         empty={false}
       >
         {/* 새 반 만들기 */}
-        <Card className="p-5 mb-6">
+        <Card padding="md" className="mb-6">
           <h2 className="font-semibold text-text-primary mb-4 flex items-center gap-2">
             <Plus className="w-4 h-4" /> 새 반 만들기
           </h2>
@@ -194,15 +191,12 @@ export default function AdminClassroomsPage() {
                       <Button size="sm" variant="secondary" onClick={() => startAssigning(cr)}>
                         <Users className="w-3.5 h-3.5 mr-1" /> 학생 배정
                       </Button>
-                      <button
-                        onClick={() => { setEditingId(cr.id); setFormName(cr.name); setFormGrade(cr.grade?.toString() ?? ''); }}
-                        className="p-2 rounded-sm hover:bg-slate-100 text-slate-500"
-                      >
+                      <Button size="sm" variant="ghost" onClick={() => { setEditingId(cr.id); setFormName(cr.name); setFormGrade(cr.grade?.toString() ?? ''); }}>
                         <Pencil className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => handleDelete(cr.id)} className="p-2 rounded-sm hover:bg-red-50 text-red-500">
+                      </Button>
+                      <Button size="sm" variant="danger" onClick={() => handleDelete(cr.id)}>
                         <Trash2 className="w-4 h-4" />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}

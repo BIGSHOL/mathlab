@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { ToggleRight } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { LoadingEmptyState } from '@/components/ui/LoadingEmptyState';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 interface FeatureFlag {
   id: string;
@@ -39,15 +40,11 @@ export default function AdminFeaturesPage() {
 
   return (
     <div className="px-4 md:px-10 py-8 max-w-[800px] mx-auto w-full">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="p-3 bg-purple-50 rounded-sm">
-          <ToggleRight className="w-6 h-6 text-purple-600" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary">기능 관리</h1>
-          <p className="text-text-secondary text-sm">게이미피케이션 기능을 활성화/비활성화합니다.</p>
-        </div>
-      </div>
+      <PageHeader
+        title="기능 관리"
+        subtitle="게이미피케이션 기능을 활성화/비활성화합니다."
+        icon={<ToggleRight className="w-6 h-6" />}
+      />
 
       <LoadingEmptyState
         loading={loading}

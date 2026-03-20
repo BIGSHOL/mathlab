@@ -32,6 +32,8 @@ import {
   GraduationCap,
   LifeBuoy,
   Sparkles,
+  Stethoscope,
+  ScrollText,
 } from 'lucide-react';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import { LogoIcon } from '@/components/ui/LogoIcon';
@@ -70,6 +72,8 @@ const assessmentItems: MenuItem[] = [
 // 분석
 const analysisItems: MenuItem[] = [
   { label: '학습 분석', href: '/analytics', icon: BarChart3 },
+  { label: '진단 결과', href: '/diagnostics', icon: Stethoscope },
+  { label: '리포트', href: '/reports', icon: ScrollText },
 ];
 
 // 시스템 — 설정/지원

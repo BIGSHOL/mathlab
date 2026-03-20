@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuthViewAs, isResponse } from '@/lib/api';
+import { getHomeworkDayQuestionIds } from '@/lib/utils/question-order';
 
 export async function POST(request: NextRequest) {
   const user = await requireAuthViewAs(request);
@@ -34,8 +35,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const dailyQuestions = plan.dailyQuestions as unknown as string[][];
-  const todayQuestionIds = dailyQuestions[dayIndex];
+  const todayQuestionIds = await getHomeworkDayQuestionIds(planId, dayIndex);
   if (!todayQuestionIds || todayQuestionIds.length === 0) {
     return NextResponse.json(
       { error: { code: 'BAD_REQUEST', message: '해당 일차의 문제가 없습니다' } },

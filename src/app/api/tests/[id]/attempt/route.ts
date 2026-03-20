@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { forbidden, notFound } from '@/lib/api';
+import { getTestQuestionIds } from '@/lib/utils/question-order';
 
 /** POST: 시험 시작 → TestAttempt 생성 (재시험/마감일/배정 지원) */
 export async function POST(
@@ -54,8 +55,8 @@ export async function POST(
     return NextResponse.json({ data: existingAttempt });
   }
 
-  // 문제 순서 (셔플 옵션)
-  let orderedIds = test.questionIds as string[];
+  // 문제 순서 (중간테이블 우선, 셔플 옵션)
+  let orderedIds = await getTestQuestionIds(testId);
   if (test.shuffleOptions) {
     orderedIds = [...orderedIds].sort(() => Math.random() - 0.5);
   }

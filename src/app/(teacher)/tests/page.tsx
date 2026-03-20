@@ -10,7 +10,6 @@ import {
   Users,
   Trash2,
   BarChart3,
-  Loader2,
   UserPlus,
   RotateCcw,
   PanelLeftClose,
@@ -18,6 +17,8 @@ import {
   GraduationCap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { LoadingEmptyState } from '@/components/ui/LoadingEmptyState';
+import { Tabs } from '@/components/ui/Tabs';
 import { useTests } from '@/hooks/useTests';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import { AssignPanel } from '@/components/test/AssignPanel';
@@ -65,21 +66,8 @@ export default function TestsPage() {
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
       {/* Tab bar */}
-      <div className="shrink-0 flex items-center gap-1 px-4 py-2 border-b border-slate-200 bg-white">
-        {tabs.map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => setActiveTab(key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-sm font-medium transition-colors ${
-              activeTab === key
-                ? 'bg-primary text-white shadow-sm'
-                : 'text-text-secondary hover:bg-slate-100'
-            }`}
-          >
-            <Icon className="w-4 h-4" />
-            {label}
-          </button>
-        ))}
+      <div className="shrink-0 px-4 py-2 border-b border-slate-200 bg-white">
+        <Tabs items={tabs} activeKey={activeTab} onChange={setActiveTab} />
       </div>
 
       {activeTab === 'level_test' ? (
@@ -159,16 +147,12 @@ export default function TestsPage() {
 
                 {/* Test list */}
                 <div className="flex-1 overflow-y-auto">
-                  {loading ? (
-                    <div className="flex justify-center py-12">
-                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                    </div>
-                  ) : tests.length === 0 ? (
-                    <div className="p-3 text-center">
-                      <ClipboardCheck className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                      <p className="text-xs text-text-secondary">시험이 없습니다</p>
-                    </div>
-                  ) : (
+                  <LoadingEmptyState
+                    loading={loading}
+                    empty={tests.length === 0}
+                    icon={<ClipboardCheck className="w-8 h-8 text-slate-300" />}
+                    message="시험이 없습니다"
+                  >
                     <div className="py-1">
                       {tests.map((test) => {
                         const isSelected = selectedTestId === test.id;
@@ -201,7 +185,7 @@ export default function TestsPage() {
                         );
                       })}
                     </div>
-                  )}
+                  </LoadingEmptyState>
                 </div>
               </>
             )}

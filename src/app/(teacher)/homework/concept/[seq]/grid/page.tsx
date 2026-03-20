@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Loader2, BookOpen } from 'lucide-react';
+import { ArrowLeft, BookOpen } from 'lucide-react';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 interface ConceptProgress {
   reading: boolean;
@@ -71,8 +72,21 @@ export default function ConceptHomeworkGridPage({ params }: { params: Promise<{ 
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 py-6 md:py-8">
+        <div className="flex items-center justify-between mb-4">
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-8 w-24 rounded-lg" />
+        </div>
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <div className="flex items-center gap-2 p-3 border-b border-slate-200">
+            {Array.from({ length: 5 }, (_, i) => <Skeleton key={i} className="h-4 flex-1" />)}
+          </div>
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="flex items-center gap-2 p-3 border-b border-slate-100 last:border-0">
+              {Array.from({ length: 5 }, (_, j) => <Skeleton key={j} className="h-4 flex-1" />)}
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

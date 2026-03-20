@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Shapes, Plus, Trash2, Copy, Check } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { DiagramEditorPopup } from '@/components/math/DiagramEditorPopup';
 import { renderDiagram } from '@/lib/utils/svg-diagrams';
 import type { DiagramType } from '@/lib/utils/svg-diagrams/types';
@@ -83,23 +84,21 @@ export default function DiagramMockupPage() {
   return (
     <div className="max-w-7xl mx-auto p-6">
       {/* 헤더 */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Shapes className="w-7 h-7 text-primary" />
-            도형 생성 테스트
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">13개 타입의 도형을 생성하고 편집해보세요</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" onClick={loadAllPresets}>
-            전체 프리셋 로드 ({PRESETS.length}개)
-          </Button>
-          <Button onClick={() => { setEditingIdx(null); setEditorOpen(true); }}>
-            <Plus className="w-4 h-4 mr-1" /> 새 도형
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="도형 생성 테스트"
+        subtitle="13개 타입의 도형을 생성하고 편집해보세요"
+        icon={<Shapes className="w-6 h-6" />}
+        actions={
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={loadAllPresets}>
+              전체 프리셋 로드 ({PRESETS.length}개)
+            </Button>
+            <Button onClick={() => { setEditingIdx(null); setEditorOpen(true); }}>
+              <Plus className="w-4 h-4 mr-1" /> 새 도형
+            </Button>
+          </div>
+        }
+      />
 
       {/* 프리셋 빠른 추가 */}
       <Card className="mb-6 p-4">

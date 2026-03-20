@@ -3,13 +3,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { toast } from '@/components/ui/Toast';
+import { Skeleton } from '@/components/ui/Skeleton';
 import {
   Clock,
   Zap,
   ChevronRight,
   CheckCircle2,
   XCircle,
-  Loader2,
   Trophy,
   Lightbulb,
   RotateCcw,
@@ -186,9 +186,29 @@ export default function TestPlayPage() {
 
   if (loading || questions.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 gap-3">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
-        <p className="text-text-secondary">시험을 준비하고 있습니다...</p>
+      <div className="px-4 md:px-8 py-6 md:py-8 w-full max-w-4xl mx-auto">
+        {/* 시험 헤더 */}
+        <div className="flex items-center justify-between mb-6">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-8 w-20 rounded-lg" />
+        </div>
+        <Skeleton className="h-2 w-full rounded-full mb-6" />
+        {/* 문제 카드 */}
+        <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Skeleton className="h-6 w-16 rounded" />
+            <Skeleton className="h-5 w-24" />
+          </div>
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-[85%]" />
+          <Skeleton className="h-24 w-full rounded-lg mt-2" />
+          <div className="grid grid-cols-2 gap-3 mt-4">
+            {Array.from({ length: 4 }, (_, i) => (
+              <Skeleton key={i} className="h-12 rounded-lg" />
+            ))}
+          </div>
+        </div>
+        <p className="text-text-secondary text-center mt-4 text-sm animate-pulse">시험을 준비하고 있습니다...</p>
       </div>
     );
   }

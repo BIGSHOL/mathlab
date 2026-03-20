@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuth, requireTeacher, isResponse, notFound } from '@/lib/api';
+import { getTestQuestionIds } from '@/lib/utils/question-order';
 
 /** Resolve test by seq (numeric) or id (cuid) */
 async function resolveTestId(id: string): Promise<string | null> {
@@ -37,8 +38,8 @@ export async function GET(
     return notFound('시험을 찾을 수 없습니다');
   }
 
-  // 문제 상세 조회
-  const questionIds = test.questionIds as string[];
+  // 문제 상세 조회 (중간테이블 우선, Json 폴백)
+  const questionIds = await getTestQuestionIds(testId);
   const questions = await prisma.question.findMany({
     where: { id: { in: questionIds } },
     select: {
@@ -81,21 +82,37 @@ export async function PUT(
   const body = await request.json();
   const { title, description, grade, testType, questionIds, timeLimitMin, shuffleOptions, isActive, maxAttempts, defaultDueDate, allowLateSubmission } = body;
 
-  const test = await prisma.test.update({
-    where: { id: testId },
-    data: {
-      ...(title !== undefined && { title }),
-      ...(description !== undefined && { description }),
-      ...(grade !== undefined && { grade }),
-      ...(testType !== undefined && { testType }),
-      ...(questionIds !== undefined && { questionIds, questionCount: questionIds.length }),
-      ...(timeLimitMin !== undefined && { timeLimitMin }),
-      ...(shuffleOptions !== undefined && { shuffleOptions }),
-      ...(isActive !== undefined && { isActive }),
-      ...(maxAttempts !== undefined && { maxAttempts }),
-      ...(defaultDueDate !== undefined && { defaultDueDate: defaultDueDate ? new Date(defaultDueDate) : null }),
-      ...(allowLateSubmission !== undefined && { allowLateSubmission }),
-    },
+  const test = await prisma.$transaction(async (tx) => {
+    const updated = await tx.test.update({
+      where: { id: testId },
+      data: {
+        ...(title !== undefined && { title }),
+        ...(description !== undefined && { description }),
+        ...(grade !== undefined && { grade }),
+        ...(testType !== undefined && { testType }),
+        ...(questionIds !== undefined && { questionIds, questionCount: questionIds.length }),
+        ...(timeLimitMin !== undefined && { timeLimitMin }),
+        ...(shuffleOptions !== undefined && { shuffleOptions }),
+        ...(isActive !== undefined && { isActive }),
+        ...(maxAttempts !== undefined && { maxAttempts }),
+        ...(defaultDueDate !== undefined && { defaultDueDate: defaultDueDate ? new Date(defaultDueDate) : null }),
+        ...(allowLateSubmission !== undefined && { allowLateSubmission }),
+      },
+    });
+
+    // Dual-Write: questionIds 변경 시 중간테이블도 갱신
+    if (questionIds !== undefined) {
+      await tx.testQuestion.deleteMany({ where: { testId } });
+      await tx.testQuestion.createMany({
+        data: (questionIds as string[]).map((qId: string, idx: number) => ({
+          testId,
+          questionId: qId,
+          sortOrder: idx,
+        })),
+      });
+    }
+
+    return updated;
   });
 
   return NextResponse.json({ data: test });

@@ -45,6 +45,7 @@ import {
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 type ViewMode = 'desktop' | 'tablet' | 'mobile';
 
@@ -125,27 +126,20 @@ export default function MockupsPage() {
   return (
     <div className="flex-1 p-6 md:p-10 max-w-[1600px] mx-auto w-full">
       {/* Header */}
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold leading-tight text-text-primary flex items-center gap-3">
-            <Eye className="w-8 h-8 text-primary" />
-            목업 미리보기
-          </h1>
-          <p className="text-text-secondary text-sm">
-            모든 페이지를 한 곳에서 확인하세요. 총 {ALL_PAGES.length}개 페이지
-          </p>
-        </div>
-
-        {/* Group Filter */}
-        <div className="flex gap-2">
-          {[
-            { key: 'all' as const, label: '전체' },
-            { key: 'teacher' as const, label: '선생님' },
-            { key: 'student' as const, label: '학생' },
-          ].map((g) => (
-            <button
-              key={g.key}
-              onClick={() => setActiveGroup(g.key)}
+      <PageHeader
+        title="목업 미리보기"
+        subtitle={`모든 페이지를 한 곳에서 확인하세요. 총 ${ALL_PAGES.length}개 페이지`}
+        icon={<Eye className="w-6 h-6" />}
+        actions={
+          <div className="flex gap-2">
+            {[
+              { key: 'all' as const, label: '전체' },
+              { key: 'teacher' as const, label: '선생님' },
+              { key: 'student' as const, label: '학생' },
+            ].map((g) => (
+              <button
+                key={g.key}
+                onClick={() => setActiveGroup(g.key)}
               className={`px-4 py-2 rounded-sm text-sm font-bold transition-colors ${
                 activeGroup === g.key
                   ? 'bg-primary text-white'
@@ -155,8 +149,9 @@ export default function MockupsPage() {
               {g.label}
             </button>
           ))}
-        </div>
-      </div>
+          </div>
+        }
+      />
 
       {/* Preview Modal */}
       {previewPage && (

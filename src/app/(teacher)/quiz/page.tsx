@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingEmptyState } from '@/components/ui/LoadingEmptyState';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 interface QuizSessionItem {
   id: string;
@@ -90,20 +91,20 @@ export default function QuizPage() {
       empty={false}
     >
       <div className="p-5 max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-text-primary flex items-center gap-2">
-            <Zap className="w-6 h-6 text-yellow-500" />
-            퀴즈 배틀
-          </h1>
-          <Button onClick={() => setShowCreate(!showCreate)}>
-            <Plus className="w-4 h-4 mr-1" />
-            새 퀴즈
-          </Button>
-        </div>
+        <PageHeader
+          title="퀴즈 배틀"
+          icon={<Zap className="w-6 h-6 text-yellow-500" />}
+          actions={
+            <Button onClick={() => setShowCreate(!showCreate)}>
+              <Plus className="w-4 h-4 mr-1" />
+              새 퀴즈
+            </Button>
+          }
+        />
 
         {/* Create form */}
         {showCreate && (
-          <Card className="p-5 mb-6">
+          <Card padding="md" className="mb-6">
             <h3 className="font-bold text-text-primary mb-4">새 퀴즈 만들기</h3>
             <div className="space-y-3">
               <input

@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { DIFFICULTY_LABELS } from '@/types';
 import { usePreviewScale } from '@/hooks/usePreviewScale';
@@ -81,8 +82,19 @@ export default function PrintWorksheetPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 py-6 md:py-8">
+        <div className="flex items-center gap-3 mb-6">
+          <Skeleton className="w-8 h-8 rounded-lg" />
+          <Skeleton className="h-7 w-36" />
+        </div>
+        <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-8 w-24 rounded-lg" />
+          </div>
+          <Skeleton className="h-[400px] w-full rounded-lg" />
+          <Skeleton className="h-[400px] w-full rounded-lg" />
+        </div>
       </div>
     );
   }

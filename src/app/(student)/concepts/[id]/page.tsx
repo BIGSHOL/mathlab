@@ -3,7 +3,8 @@
 import React from 'react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, ArrowRight, BookOpen, CheckCircle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Skeleton } from '@/components/ui/Skeleton';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
@@ -288,8 +289,32 @@ export default function ConceptPage() {
 
   if (loading || !concept) {
     return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      <div className="min-h-screen flex flex-col">
+        <div className="px-4 md:px-8 py-6 md:py-8 w-full">
+          {/* 상단 네비 + 스테이지 바 */}
+          <div className="flex items-center gap-3 mb-4">
+            <Skeleton className="w-8 h-8 rounded-lg" />
+            <div className="space-y-1">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-3 w-20" />
+            </div>
+          </div>
+          <div className="flex gap-1 mb-6">
+            {Array.from({ length: 4 }, (_, i) => (
+              <Skeleton key={i} className="h-9 flex-1 rounded-lg" />
+            ))}
+          </div>
+          {/* 본문 */}
+          <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+            <Skeleton className="h-5 w-2/5" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-[90%]" />
+            <Skeleton className="h-4 w-[75%]" />
+            <Skeleton className="h-32 w-full rounded-lg mt-2" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-[85%]" />
+          </div>
+        </div>
       </div>
     );
   }

@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
         let domain = q.domain || null;
         let conceptId = q.conceptId || null;
         if (!domain) {
-          const tag = await autoTag({ chapter: q.chapter, section: q.section, difficulty: q.difficulty });
+          const tag = await autoTag({ chapter: q.chapter, section: q.section, difficulty: q.difficulty, bookCode: q.bookCode });
           domain = tag.domain;
           conceptId = conceptId || tag.conceptId;
         }

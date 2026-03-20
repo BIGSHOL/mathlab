@@ -99,22 +99,35 @@ export async function POST(request: NextRequest) {
     return badRequest('필수 항목이 누락되었습니다');
   }
 
-  const test = await prisma.test.create({
-    data: {
-      title,
-      description: description || null,
-      grade,
-      testType: testType || 'concept',
-      questionIds,
-      questionCount: questionIds.length,
-      timeLimitMin: timeLimitMin || null,
-      shuffleOptions: shuffleOptions || false,
-      maxAttempts: maxAttempts ?? null,
-      defaultDueDate: defaultDueDate ? new Date(defaultDueDate) : null,
-      allowLateSubmission: allowLateSubmission || false,
-      createdBy: currentUser.id,
-      tenantId: currentUser.tenantId,
-    },
+  const test = await prisma.$transaction(async (tx) => {
+    const created = await tx.test.create({
+      data: {
+        title,
+        description: description || null,
+        grade,
+        testType: testType || 'concept',
+        questionIds,
+        questionCount: questionIds.length,
+        timeLimitMin: timeLimitMin || null,
+        shuffleOptions: shuffleOptions || false,
+        maxAttempts: maxAttempts ?? null,
+        defaultDueDate: defaultDueDate ? new Date(defaultDueDate) : null,
+        allowLateSubmission: allowLateSubmission || false,
+        createdBy: currentUser.id,
+        tenantId: currentUser.tenantId,
+      },
+    });
+
+    // Dual-Write: 중간테이블에도 기록
+    await tx.testQuestion.createMany({
+      data: (questionIds as string[]).map((qId: string, idx: number) => ({
+        testId: created.id,
+        questionId: qId,
+        sortOrder: idx,
+      })),
+    });
+
+    return created;
   });
 
   return NextResponse.json({ data: test }, { status: 201 });

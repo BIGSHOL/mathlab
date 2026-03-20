@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
-  Loader2,
   CheckCircle2,
   XCircle,
   Clock,
@@ -19,6 +18,7 @@ import { CATEGORY_LABELS } from '@/lib/services/arithmetic-generator';
 import type { ArithmeticCategory } from '@/lib/services/arithmetic-generator';
 import type { HomeworkDayStatus } from '@/lib/services/homework';
 import { MathRenderer } from '@/components/math/MathRenderer';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 interface GridCell {
   dayIndex: number;
@@ -271,8 +271,21 @@ export default function HomeworkGridPage() {
 
   if (loading || !data) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 py-6 md:py-8">
+        <div className="flex items-center justify-between mb-4">
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-8 w-24 rounded-lg" />
+        </div>
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <div className="flex items-center gap-2 p-3 border-b border-slate-200">
+            {Array.from({ length: 5 }, (_, i) => <Skeleton key={i} className="h-4 flex-1" />)}
+          </div>
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="flex items-center gap-2 p-3 border-b border-slate-100 last:border-0">
+              {Array.from({ length: 5 }, (_, j) => <Skeleton key={j} className="h-4 flex-1" />)}
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -693,8 +706,17 @@ export default function HomeworkGridPage() {
           {/* Panel content */}
           <div className="flex-1 overflow-y-auto">
             {detailLoading ? (
-              <div className="flex-1 flex items-center justify-center">
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              <div className="p-4 space-y-3">
+                <Skeleton className="h-5 w-32" />
+                {Array.from({ length: 4 }, (_, i) => (
+                  <div key={i} className="flex items-start gap-3 p-3 rounded-lg border border-slate-100">
+                    <Skeleton className="w-6 h-6 rounded-full shrink-0" />
+                    <div className="flex-1 space-y-1.5">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-3 w-3/4" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : !detailData ? (
               <div className="text-center py-12 text-xs text-text-secondary">데이터를 불러올 수 없습니다</div>

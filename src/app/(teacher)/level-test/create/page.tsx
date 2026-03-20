@@ -2,13 +2,13 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { toast } from '@/components/ui/Toast';
 import {
   ArrowLeft,
   Search,
   X,
   ClipboardCheck,
-  Loader2,
   Check,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -168,7 +168,7 @@ export default function CreateLevelTestPage() {
         </div>
 
         {/* Test info */}
-        <Card className="p-5">
+        <Card padding="md">
           <h2 className="text-base font-bold text-text-primary mb-4">테스트 정보</h2>
 
           <label className="block mb-3">
@@ -209,7 +209,7 @@ export default function CreateLevelTestPage() {
         </Card>
 
         {/* Print layout settings */}
-        <Card className="p-5">
+        <Card padding="md">
           <h2 className="text-base font-bold text-text-primary mb-4">인쇄 설정</h2>
 
           <label className="block mb-3">
@@ -253,7 +253,7 @@ export default function CreateLevelTestPage() {
         </Card>
 
         {/* Selected questions */}
-        <Card className="p-5">
+        <Card padding="md">
           <h2 className="text-base font-bold text-text-primary mb-3">
             선택된 문제 ({selectedIds.length})
           </h2>
@@ -323,7 +323,7 @@ export default function CreateLevelTestPage() {
 
       {/* Right panel: question browser */}
       <div className="flex-1 overflow-y-auto p-5">
-        <Card className="p-5">
+        <Card padding="md">
           <h2 className="text-base font-bold text-text-primary mb-4">문제 선택</h2>
 
           {/* Filters */}
@@ -362,8 +362,10 @@ export default function CreateLevelTestPage() {
 
           {/* Question list */}
           {searchLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            <div className="space-y-1.5 p-2">
+              {Array.from({ length: 4 }, (_, i) => (
+                <Skeleton key={i} className="h-8 w-full rounded" />
+              ))}
             </div>
           ) : questions.length === 0 ? (
             <p className="text-center text-text-secondary py-12">검색 결과가 없습니다</p>

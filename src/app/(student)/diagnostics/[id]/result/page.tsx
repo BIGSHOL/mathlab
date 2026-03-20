@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { Skeleton } from '@/components/ui/Skeleton';
 import {
   ArrowLeft,
-  Loader2,
   Target,
   AlertTriangle,
   Star,
@@ -49,8 +49,27 @@ export default function DiagnosticResultPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      <div className="px-4 md:px-8 py-6 md:py-8 w-full">
+        <div className="flex items-center gap-3 mb-6">
+          <Skeleton className="w-8 h-8 rounded-lg" />
+          <Skeleton className="h-7 w-36" />
+        </div>
+        <div className="bg-white border border-slate-200 rounded-xl p-6 mb-6">
+          <div className="flex items-center justify-center gap-8">
+            <div className="text-center space-y-2">
+              <Skeleton className="h-12 w-20 mx-auto" />
+              <Skeleton className="h-4 w-16 mx-auto" />
+            </div>
+          </div>
+        </div>
+        <div className="space-y-3">
+          {Array.from({ length: 3 }, (_, i) => (
+            <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

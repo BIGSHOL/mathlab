@@ -2,7 +2,8 @@
 
 import { useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { PenLine, Play, Loader2 } from 'lucide-react';
+import { PenLine, Play } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 import { TestSelector } from '@/components/manual-grading/TestSelector';
 import { StudentSelector } from '@/components/manual-grading/StudentSelector';
 import { AnswerGrid } from '@/components/manual-grading/AnswerGrid';
@@ -127,18 +128,10 @@ export default function ManualGradingPage() {
 
           {/* 시작 버튼 */}
           {selectedTest && selectedStudent && !isGrading && (
-            <button
-              onClick={handleStart}
-              disabled={starting}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-sm text-sm font-bold bg-primary text-white hover:bg-primary-hover disabled:opacity-50 transition-colors"
-            >
-              {starting ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Play className="w-4 h-4" />
-              )}
+            <Button className="w-full" onClick={handleStart} loading={starting}>
+              <Play className="w-4 h-4 mr-1" />
               채점 시작
-            </button>
+            </Button>
           )}
 
           {/* 채점 중 정보 */}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuth, isResponse, notFound, forbidden } from '@/lib/api';
+import { getTestQuestionIds } from '@/lib/utils/question-order';
 
 /** GET: 진행 중인 시도 상태 조회 */
 export async function GET(
@@ -41,7 +42,7 @@ export async function GET(
   }
 
   const answeredIds = attempt.answers.map((a) => a.questionId);
-  const questionOrder = attempt.test.questionIds as string[];
+  const questionOrder = await getTestQuestionIds(attempt.test.id);
   const currentIndex = answeredIds.length;
 
   // 레벨테스트인 경우 진단 결과 포함

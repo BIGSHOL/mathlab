@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuth, requireTeacher, isResponse, notFound } from '@/lib/api';
+import { getQuizQuestionIds } from '@/lib/utils/question-order';
 
 /** GET: 퀴즈 세션 상세 (상태 + 참가자 + 현재 문제) */
 export async function GET(
@@ -34,9 +35,9 @@ export async function GET(
   }
 
   // Fetch current question content if active
+  const questionIds = await getQuizQuestionIds(session.id);
   let currentQuestion = null;
   if (session.status === 'ACTIVE') {
-    const questionIds = session.questionIds as string[];
     if (session.currentQ < questionIds.length) {
       const q = await prisma.question.findUnique({
         where: { id: questionIds[session.currentQ] },
@@ -50,7 +51,7 @@ export async function GET(
     data: {
       ...session,
       currentQuestion,
-      totalQuestions: (session.questionIds as string[]).length,
+      totalQuestions: questionIds.length,
     },
   });
 }
@@ -77,7 +78,7 @@ export async function PATCH(
   }
 
   const sessionId = session.id;
-  const questionIds = session.questionIds as string[];
+  const questionIds = await getQuizQuestionIds(sessionId);
 
   if (action === 'start') {
     await prisma.quizSession.update({

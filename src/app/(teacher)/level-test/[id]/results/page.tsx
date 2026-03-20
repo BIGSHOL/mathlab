@@ -7,7 +7,6 @@ import {
   ArrowLeft,
   Users,
   Target,
-  Loader2,
   RefreshCw,
   GraduationCap,
   BarChart3,
@@ -19,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { LevelBadge } from '@/components/level-test/LevelBadge';
 import { LevelTestResultCard } from '@/components/level-test/LevelTestResultCard';
 import { RadarChart } from '@/components/level-test/RadarChart';
@@ -218,8 +218,31 @@ export default function LevelTestResultsPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 py-6 md:py-8">
+        <div className="flex items-center gap-3 mb-6">
+          <Skeleton className="w-8 h-8 rounded-lg" />
+          <Skeleton className="h-7 w-36" />
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-6 w-20" />
+            </div>
+          ))}
+        </div>
+        <div className="space-y-2">
+          {Array.from({ length: 5 }, (_, i) => (
+            <div key={i} className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl">
+              <Skeleton variant="circle" className="w-8 h-8 shrink-0" />
+              <div className="flex-1 space-y-1">
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="h-3 w-1/4" />
+              </div>
+              <Skeleton className="h-5 w-16" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -272,7 +295,7 @@ export default function LevelTestResultsPage() {
             <>
               {/* Summary cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <Card className="p-5 flex items-center gap-4">
+                <Card padding="md" className="flex items-center gap-4">
                   <div className="p-3 bg-primary/10 rounded-sm">
                     <Users className="w-5 h-5 text-primary" />
                   </div>
@@ -281,7 +304,7 @@ export default function LevelTestResultsPage() {
                     <p className="text-2xl font-bold text-text-primary">{classStats.count}명</p>
                   </div>
                 </Card>
-                <Card className="p-5 flex items-center gap-4">
+                <Card padding="md" className="flex items-center gap-4">
                   <div className="p-3 bg-emerald-100 rounded-sm">
                     <Target className="w-5 h-5 text-emerald-600" />
                   </div>
@@ -290,7 +313,7 @@ export default function LevelTestResultsPage() {
                     <p className="text-2xl font-bold text-text-primary">{classStats.avgAccuracy}%</p>
                   </div>
                 </Card>
-                <Card className="p-5 flex items-center gap-4">
+                <Card padding="md" className="flex items-center gap-4">
                   <div className="p-3 bg-violet-100 rounded-sm">
                     <GraduationCap className="w-5 h-5 text-violet-600" />
                   </div>
@@ -305,14 +328,14 @@ export default function LevelTestResultsPage() {
 
               {/* Analytics: Radar + Level Distribution */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <Card className="p-5">
+                <Card padding="md">
                   <h3 className="text-sm font-bold text-text-primary flex items-center gap-2 mb-3">
                     <BarChart3 className="w-4 h-4 text-primary" />
                     학급 평균 영역 분석
                   </h3>
                   <RadarChart data={classStats.radarData} size={220} />
                 </Card>
-                <Card className="p-5">
+                <Card padding="md">
                   <h3 className="text-sm font-bold text-text-primary flex items-center gap-2 mb-4">
                     <GraduationCap className="w-4 h-4 text-violet-600" />
                     레벨 분포
@@ -530,7 +553,7 @@ export default function LevelTestResultsPage() {
                   questions={questions}
                 />
               ) : (
-                <Card className="p-5 text-center">
+                <Card padding="md" className="text-center">
                   <GraduationCap className="w-10 h-10 text-slate-300 mx-auto mb-3" />
                   <p className="text-text-secondary font-medium mb-3">분석 결과가 없습니다</p>
                   <Button size="sm" onClick={handleAnalyze} loading={analyzing}>

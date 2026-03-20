@@ -26,6 +26,8 @@ import {
   Activity,
   LifeBuoy,
   Building2,
+  Stethoscope,
+  ScrollText,
 } from 'lucide-react';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 
@@ -48,7 +50,9 @@ const mainCommands: CommandItem[] = [
   { id: 'tests', label: '시험 관리', href: '/tests', icon: ClipboardCheck, keywords: ['test', '시험', '평가'], group: '메인' },
   { id: 'worksheet', label: '학습지', href: '/worksheet/create', icon: FileSpreadsheet, keywords: ['worksheet', '학습지', '프린트'], group: '메인' },
   { id: 'grading', label: '수기 채점', href: '/manual-grading', icon: PenLine, keywords: ['grading', '채점', '수기'], group: '메인' },
-  { id: 'analytics', label: '학습 분석', href: '/analytics', icon: BarChart3, keywords: ['analytics', '분석', '통계', '리포트'], group: '메인' },
+  { id: 'analytics', label: '학습 분석', href: '/analytics', icon: BarChart3, keywords: ['analytics', '분석', '통계'], group: '메인' },
+  { id: 'diagnostics', label: '진단 결과', href: '/diagnostics', icon: Stethoscope, keywords: ['diagnostic', '진단', '레벨테스트', '결과'], group: '메인' },
+  { id: 'reports', label: '리포트', href: '/reports', icon: ScrollText, keywords: ['report', '리포트', '보고서', '레벨테스트'], group: '메인' },
 ];
 
 const systemCommands: CommandItem[] = [

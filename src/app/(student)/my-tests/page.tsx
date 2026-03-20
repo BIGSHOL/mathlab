@@ -6,13 +6,15 @@ import {
   Clock,
   Play,
   CheckCircle2,
-  // Loader2,
   Trophy,
   RotateCcw,
   CalendarClock,
+  Calculator,
+  ChevronRight,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { DeadlineBadge } from '@/components/test/DeadlineBadge';
 import { useTests } from '@/hooks/useTests';
 import { TEST_TYPE_LABELS } from '@/lib/constants/labels';
@@ -44,10 +46,10 @@ export default function StudentTestsPage() {
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold text-text-primary flex items-center gap-2 mb-6">
-        <ClipboardCheck className="w-6 h-6 text-primary" />
-        나의 시험
-      </h1>
+      <PageHeader
+        title="나의 시험"
+        icon={<ClipboardCheck className="w-6 h-6" />}
+      />
 
       {/* 배정된 시험 */}
       {assignedTests.length > 0 && (
@@ -76,10 +78,35 @@ export default function StudentTestsPage() {
         )}
 
         {availableTests.length === 0 && assignedTests.length === 0 ? (
-          <Card className="p-12 text-center">
-            <ClipboardCheck className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <p className="text-text-secondary font-medium">배정된 시험이 없습니다</p>
-          </Card>
+          <div className="flex flex-col items-center justify-center py-16 px-6">
+            <div className="relative mb-6">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/10 to-blue-50 flex items-center justify-center">
+                <ClipboardCheck className="w-10 h-10 text-primary/40" />
+              </div>
+              <div className="absolute -top-1 -right-1 w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center border-2 border-white">
+                <Clock className="w-4 h-4 text-amber-400" />
+              </div>
+            </div>
+            <h3 className="text-lg font-bold text-text-primary mb-2">아직 배정된 시험이 없어요</h3>
+            <p className="text-sm text-text-secondary text-center max-w-xs leading-relaxed">
+              선생님이 시험을 배정하면 여기에 표시됩니다.<br />
+              그 동안 연산 연습이나 개념 학습을 해보세요!
+            </p>
+            <div className="flex gap-3 mt-6">
+              <Link href="/practice/arithmetic">
+                <Button variant="secondary" size="sm">
+                  <Calculator className="w-4 h-4 mr-1.5" />
+                  연산 연습
+                </Button>
+              </Link>
+              <Link href="/subjects">
+                <Button variant="ghost" size="sm">
+                  개념 학습
+                  <ChevronRight className="w-4 h-4 ml-0.5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
         ) : (
           <div className="space-y-4">
             {availableTests.map((test) => (

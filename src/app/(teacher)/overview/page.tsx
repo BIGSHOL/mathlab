@@ -229,9 +229,11 @@ export default async function TeacherDashboard({
         {/* Stat Cards - 2x2 on mobile, 4 on desktop */}
         <DashboardStatCards className="grid grid-cols-2 lg:grid-cols-4 gap-2">
           {stats.map((stat) => (
-            <div
+            <Card
               key={stat.label}
-              className="glass-card flex flex-col gap-2 rounded-sm p-3 md:p-3 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden"
+              variant="glass"
+              padding="sm"
+              className="flex flex-col gap-2 hover:shadow-md transition-shadow relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 p-3 md:p-3">{stat.icon}</div>
               <p className="text-text-secondary text-sm font-semibold tracking-wide">
@@ -259,7 +261,7 @@ export default async function TeacherDashboard({
                 )}
                 {stat.trend.value}
               </span>
-            </div>
+            </Card>
           ))}
         </DashboardStatCards>
 
@@ -332,7 +334,7 @@ export default async function TeacherDashboard({
         {/* Row 3: Ranking + Grade Distribution + Recent Activity */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {/* Top Students Ranking */}
-          <Card className="p-3">
+          <Card padding="sm">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-text-primary text-base font-bold flex items-center gap-2">
                 <Trophy className="w-4 h-4 text-xp-gold" /> XP 랭킹 TOP 5
@@ -371,7 +373,7 @@ export default async function TeacherDashboard({
           </Card>
 
           {/* Grade Distribution */}
-          <Card className="p-3">
+          <Card padding="sm">
             <h3 className="text-text-primary text-base font-bold flex items-center gap-2 mb-2">
               <Users className="w-4 h-4 text-primary" /> 학년별 학생 분포
             </h3>
@@ -424,7 +426,7 @@ export default async function TeacherDashboard({
           </Card>
 
           {/* Recent Activity */}
-          <Card className="p-3">
+          <Card padding="sm">
             <h3 className="text-text-primary text-base font-bold flex items-center gap-2 mb-2">
               <BookOpen className="w-4 h-4 text-primary" /> 최근 학습 활동
             </h3>

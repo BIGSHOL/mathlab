@@ -3,13 +3,13 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { toast } from '@/components/ui/Toast';
 import {
   ArrowLeft,
   CalendarCheck,
   Search,
   Check,
-  Loader2,
   X,
   ArrowUp,
   ArrowDown,
@@ -846,8 +846,10 @@ export default function CreateHomeworkPage() {
 
             <div className="max-h-[360px] overflow-y-auto space-y-1">
               {loadingStudents ? (
-                <div className="flex justify-center py-4">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                <div className="space-y-1.5 p-1">
+                  {Array.from({ length: 4 }, (_, i) => (
+                    <Skeleton key={i} className="h-8 w-full rounded" />
+                  ))}
                 </div>
               ) : students.length === 0 ? (
                 <p className="text-xs text-text-secondary text-center py-3">학생이 없습니다</p>

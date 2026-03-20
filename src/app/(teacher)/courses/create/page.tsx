@@ -3,13 +3,13 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { toast } from '@/components/ui/Toast';
 import {
   ArrowLeft,
   BookOpen,
   Search,
   Check,
-  Loader2,
   X,
   ChevronDown,
   ChevronRight,
@@ -19,6 +19,7 @@ import {
   ArrowUp,
   ArrowDown,
 } from 'lucide-react';
+import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Button } from '@/components/ui/Button';
 
 interface ConceptItem {
@@ -332,8 +333,10 @@ export default function CourseCreatePage() {
             {/* 개념 목록 (대단원별) */}
             <div className="border border-slate-200 rounded overflow-y-auto max-h-[400px]">
               {conceptsLoading ? (
-                <div className="flex justify-center py-12">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                <div className="space-y-1.5 p-2">
+                  {Array.from({ length: 4 }, (_, i) => (
+                    <Skeleton key={i} className="h-8 w-full rounded" />
+                  ))}
                 </div>
               ) : Object.keys(chapterGroups).length === 0 ? (
                 <p className="text-xs text-text-secondary text-center py-8">개념이 없습니다</p>
@@ -454,8 +457,10 @@ export default function CourseCreatePage() {
 
             <div className="border border-slate-200 rounded overflow-y-auto max-h-[500px]">
               {studentsLoading ? (
-                <div className="flex justify-center py-12">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                <div className="space-y-1.5 p-2">
+                  {Array.from({ length: 4 }, (_, i) => (
+                    <Skeleton key={i} className="h-8 w-full rounded" />
+                  ))}
                 </div>
               ) : filteredStudents.length === 0 ? (
                 <p className="text-xs text-text-secondary text-center py-8">학생이 없습니다</p>
@@ -517,7 +522,7 @@ export default function CourseCreatePage() {
               className="w-full"
             >
               {submitting ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> 생성 중...</>
+                <><MathSpinner size="sm" className="mr-2" /> 생성 중...</>
               ) : (
                 <><GraduationCap className="w-4 h-4 mr-2" /> 과정 생성{selectedStudentIds.size > 0 ? ` + ${selectedStudentIds.size}명 배정` : ''}</>
               )}

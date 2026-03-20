@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse, notFound } from '@/lib/api';
+import { getTestQuestionIds } from '@/lib/utils/question-order';
 
 /** GET — 수기 채점 진행상황 조회 (이어하기) */
 export async function GET(
@@ -25,8 +26,8 @@ export async function GET(
     return notFound('수기 채점을 찾을 수 없습니다');
   }
 
-  // 시험 문제 목록
-  const questionIds = attempt.test.questionIds as string[];
+  // 시험 문제 목록 (중간테이블 우선)
+  const questionIds = await getTestQuestionIds(attempt.test.id);
   const questions = await prisma.question.findMany({
     where: { id: { in: questionIds } },
     select: {
@@ -34,8 +35,9 @@ export async function GET(
       difficulty: true, chapter: true, section: true, questionNum: true, domain: true,
     },
   });
+  const questionMap = new Map(questions.map((q) => [q.id, q]));
   const orderedQuestions = questionIds
-    .map((qid) => questions.find((q) => q.id === qid))
+    .map((qid) => questionMap.get(qid))
     .filter(Boolean);
 
   return NextResponse.json({

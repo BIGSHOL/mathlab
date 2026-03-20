@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { getDifficultyComment, getChapterComment } from '@/lib/utils/level-test-feedback';
 import { generateReportAI } from '@/lib/services/report-ai';
 import { requireTeacher, isResponse, notFound, badRequest } from '@/lib/api';
+import { getTestQuestionIds } from '@/lib/utils/question-order';
 
 /** GET: 레벨테스트 진단 보고서 데이터 (단일 학생) */
 export async function GET(
@@ -30,7 +31,6 @@ export async function GET(
     select: {
       id: true, seq: true, title: true, grade: true,
       questionCount: true, timeLimitMin: true, createdAt: true,
-      questionIds: true,
     },
   });
   if (!test) {
@@ -54,8 +54,8 @@ export async function GET(
     return notFound('진단 결과가 없습니다. 먼저 분석을 실행해주세요.');
   }
 
-  // 문제 조회 (questionIds 순서 유지)
-  const questionIds = (test.questionIds as string[]) ?? [];
+  // 문제 조회 (중간테이블 우선, 순서 유지)
+  const questionIds = await getTestQuestionIds(test.id);
   const questionsRaw = await prisma.question.findMany({
     where: { id: { in: questionIds } },
     select: { id: true, chapter: true, section: true, difficulty: true, domain: true, answer: true, questionNum: true },

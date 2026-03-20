@@ -1,7 +1,8 @@
-import { Header } from '@/components/layout/Header';
+import { StudentSidebar } from '@/components/layout/StudentSidebar';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { ToastContainer } from '@/components/ui/Toast';
 import { XpToastContainer } from '@/components/ui/XpToast';
+import { UpdateBanner } from '@/components/ui/UpdateBanner';
 import { getCurrentUser } from '@/lib/auth';
 import { resolveCurrentTenant } from '@/lib/tenant';
 import { TenantProvider } from '@/components/providers/TenantProvider';
@@ -19,12 +20,15 @@ export default async function StudentLayout({
 
   return (
     <TenantProvider tenant={tenant}>
-      <div className="h-screen flex flex-col bg-background">
-        <Header role="student" userName={user.name} />
-        <main className="flex-1 min-h-0 overflow-y-auto pb-16 md:pb-0">{children}</main>
+      <div className="h-screen flex bg-background overflow-hidden print:h-auto print:overflow-visible print:bg-white">
+        <StudentSidebar />
+        <main className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden pb-16 md:pb-0 print:overflow-visible">
+          {children}
+        </main>
         <BottomNav />
         <ToastContainer />
         <XpToastContainer />
+        <UpdateBanner />
       </div>
     </TenantProvider>
   );

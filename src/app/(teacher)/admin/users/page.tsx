@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { Skeleton } from '@/components/ui/Skeleton';
 import {
   Search,
   Users,
   PanelLeftClose,
   PanelLeftOpen,
-  Loader2,
   ClipboardCheck,
   Calculator,
   BookOpen,
@@ -248,8 +248,28 @@ export default function AdminUsersPage() {
 
   if (!currentUser || !isOwner) {
     return (
-      <div className="flex-1 flex items-center justify-center text-text-secondary text-sm">
-        <Loader2 className="w-6 h-6 animate-spin text-primary mr-2" /> 로딩 중...
+      <div className="flex flex-1 overflow-hidden">
+        <aside className="flex flex-col border-r border-slate-200 bg-white w-80">
+          <div className="px-4 pt-4 pb-2 border-b border-slate-200 space-y-2">
+            <Skeleton className="h-5 w-24" />
+            <Skeleton className="h-8 w-full rounded-lg" />
+          </div>
+          <div className="flex-1 p-2 space-y-1.5">
+            {Array.from({ length: 8 }, (_, i) => (
+              <div key={i} className="flex items-center gap-2 p-2.5 rounded-lg">
+                <Skeleton variant="circle" className="w-8 h-8 shrink-0" />
+                <div className="flex-1 space-y-1">
+                  <Skeleton className="h-3.5 w-20" />
+                  <Skeleton className="h-3 w-14" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </aside>
+        <div className="flex-1 p-6 space-y-4">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-48 w-full rounded-xl" />
+        </div>
       </div>
     );
   }
@@ -314,8 +334,16 @@ export default function AdminUsersPage() {
         {/* 사용자 목록 */}
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="flex items-center justify-center py-8 text-text-secondary text-xs">
-              <Loader2 className="w-6 h-6 animate-spin mr-2" /> 불러오는 중...
+            <div className="p-2 space-y-1.5">
+              {Array.from({ length: 6 }, (_, i) => (
+                <div key={i} className="flex items-center gap-2 p-2.5 rounded-lg">
+                  <Skeleton variant="circle" className="w-8 h-8 shrink-0" />
+                  <div className="flex-1 space-y-1">
+                    <Skeleton className="h-3.5 w-20" />
+                    <Skeleton className="h-3 w-14" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : filteredUsers.length === 0 ? (
             <div className="text-center py-8 text-text-secondary text-xs">사용자 없음</div>
@@ -326,8 +354,8 @@ export default function AdminUsersPage() {
                 <button
                   key={u.id}
                   onClick={() => handleSelectUser(u)}
-                  className={`w-full text-left px-4 py-3 border-b border-slate-200 transition-colors ${
-                    isSelected ? 'bg-primary/5 border-l-2 border-l-primary' : 'hover:bg-slate-50'
+                  className={`w-full text-left px-3 py-2.5 border-b border-slate-200 transition-colors hover:bg-slate-100 ${
+                    isSelected ? 'bg-primary/5 border-l-2 border-l-primary' : 'border-l-2 border-l-transparent'
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -451,8 +479,12 @@ export default function AdminUsersPage() {
               </div>
 
               {calendarLoading ? (
-                <div className="flex items-center justify-center py-6 text-text-secondary text-xs">
-                  <Loader2 className="w-6 h-6 animate-spin mr-2" /> 불러오는 중...
+                <div className="space-y-1 p-2">
+                  <div className="grid grid-cols-7 gap-1">
+                    {Array.from({ length: 35 }, (_, i) => (
+                      <Skeleton key={i} className="h-7 rounded" />
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <>
@@ -552,8 +584,14 @@ export default function AdminUsersPage() {
             </div>
 
             {activityLoading && activities.length === 0 ? (
-              <div className="flex items-center justify-center py-8 text-text-secondary text-xs">
-                <Loader2 className="w-6 h-6 animate-spin mr-2" /> 불러오는 중...
+              <div className="space-y-1.5">
+                {Array.from({ length: 4 }, (_, i) => (
+                  <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200">
+                    <Skeleton className="w-3 h-3 rounded shrink-0" />
+                    <Skeleton className="h-3.5 flex-1" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                ))}
               </div>
             ) : activities.length === 0 ? (
               <div className="text-center py-8 text-text-secondary text-xs bg-white rounded-sm border border-slate-200">

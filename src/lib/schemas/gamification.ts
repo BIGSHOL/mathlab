@@ -8,7 +8,8 @@ export const awardPointsSchema = z.object({
 });
 
 export const rankingQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(100).default(10),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  period: z.enum(['week', 'month', 'all']).default('week'),
 });
 
 export type AwardPointsInput = z.infer<typeof awardPointsSchema>;

@@ -2,14 +2,15 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { Skeleton } from '@/components/ui/Skeleton';
 import {
   Zap,
-  Loader2,
   CheckCircle2,
   XCircle,
   Trophy,
   Clock,
 } from 'lucide-react';
+import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { MathRenderer } from '@/components/math/MathRenderer';
@@ -106,8 +107,14 @@ export default function QuizPlayPage() {
 
   if (loading || !quiz) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-yellow-400" />
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
+        <div className="max-w-sm w-full space-y-4">
+          <div className="bg-slate-800 rounded-xl p-6 space-y-3">
+            <Skeleton className="h-6 w-32 mx-auto !bg-slate-700" />
+            <Skeleton className="h-4 w-48 mx-auto !bg-slate-700" />
+            <Skeleton className="h-20 w-full rounded-lg !bg-slate-700" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -280,7 +287,7 @@ export default function QuizPlayPage() {
           </Card>
         ) : (
           <Card className="bg-slate-800 border-slate-700 p-8 text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-yellow-400 mx-auto" />
+            <MathSpinner size="lg" className="mx-auto" />
             <p className="text-slate-400 mt-3">다음 문제를 기다리는 중...</p>
           </Card>
         )}

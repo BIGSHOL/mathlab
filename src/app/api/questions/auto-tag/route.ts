@@ -21,16 +21,17 @@ export async function POST(request: NextRequest) {
   if (isResponse(user)) return user;
 
   const body = await request.json();
-  const { chapter, section, difficulty } = body as {
+  const { chapter, section, difficulty, bookCode } = body as {
     chapter?: string;
     section?: string;
     difficulty?: string;
+    bookCode?: string;
   };
 
   if (!chapter) {
     return badRequest('chapter가 필요합니다');
   }
 
-  const result = await autoTag({ chapter, section, difficulty });
+  const result = await autoTag({ chapter, section, difficulty, bookCode });
   return NextResponse.json({ data: result });
 }

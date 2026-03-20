@@ -7,6 +7,7 @@ import { renderDiagram } from '@/lib/utils/svg-diagrams';
 import type { DiagramType } from '@/lib/utils/svg-diagrams/types';
 import type { QuestionDifficulty, QuestionType } from '@/types';
 import type { DiagramParam } from '@/types/pdf-extract';
+import { resolveDiagramSpec } from '@/lib/utils/diagram-resolver';
 import {
   MIDDLE_BOOK_CODES,
   ELEMENTARY_BOOK_CODES,
@@ -449,7 +450,10 @@ export function useQuestionManager() {
       sourceTag: q.sourceTag || '',
       domain: q.domain || '',
       conceptId: q.conceptId || '',
-      diagramParams: (q.diagramSpec as DiagramParam[] | null) ?? [],
+      diagramParams: (() => {
+        const resolved = resolveDiagramSpec(q.diagramSpec);
+        return resolved.kind === 'params' ? resolved.data : [];
+      })(),
     });
   };
 

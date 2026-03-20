@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { analyzeLevelTest } from '@/lib/services/level-test';
 import { requireTeacher, isResponse, notFound, badRequest } from '@/lib/api';
+import { getTestQuestionIds } from '@/lib/utils/question-order';
 
 /** GET: 레벨테스트 전체 결과 조회 (선생님용) */
 export async function GET(
@@ -25,12 +26,8 @@ export async function GET(
 
   const testId = testRecord.id;
 
-  // 시험 정보 (questionIds 포함)
-  const test = await prisma.test.findUnique({
-    where: { id: testId },
-    select: { id: true, questionIds: true },
-  });
-  const questionIds = (test?.questionIds as string[]) ?? [];
+  // 문제 ID 조회 (중간테이블 우선)
+  const questionIds = await getTestQuestionIds(testId);
 
   // 문제 정보 조회
   const questions = await prisma.question.findMany({

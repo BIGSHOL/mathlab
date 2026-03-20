@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse, badRequest, notFound } from '@/lib/api';
 import { createManualAttempt } from '@/lib/services/manual-grading';
+import { getTestQuestionIds } from '@/lib/utils/question-order';
 
 /** POST — 수기 채점용 TestAttempt 생성 */
 export async function POST(req: NextRequest) {
@@ -40,12 +41,8 @@ export async function POST(req: NextRequest) {
     teacherId: user.id,
   });
 
-  // 시험 문제 목록도 함께 반환 (이미 조회한 resolvedTestId 재사용)
-  const testForQuestions = await prisma.test.findUniqueOrThrow({
-    where: { id: resolvedTestId },
-    select: { questionIds: true },
-  });
-  const questionIds = testForQuestions.questionIds as string[];
+  // 시험 문제 목록도 함께 반환 (중간테이블 우선)
+  const questionIds = await getTestQuestionIds(resolvedTestId);
   const questions = await prisma.question.findMany({
     where: { id: { in: questionIds } },
     select: {
@@ -53,9 +50,9 @@ export async function POST(req: NextRequest) {
       difficulty: true, chapter: true, section: true, questionNum: true, domain: true,
     },
   });
-  // questionIds 순서 유지
+  const questionMap = new Map(questions.map((q) => [q.id, q]));
   const orderedQuestions = questionIds
-    .map((qid) => questions.find((q) => q.id === qid))
+    .map((qid) => questionMap.get(qid))
     .filter(Boolean);
 
   return NextResponse.json({

@@ -8,6 +8,7 @@ import { gradeAnswer, DIFFICULTY_POINTS } from '@/lib/services/grading';
 import { classifyAnswer } from '@/lib/utils/answer-status';
 import { awardXp } from '@/lib/utils/xp';
 import { analyzeLevelTest } from '@/lib/services/level-test';
+import { getTestQuestionIds } from '@/lib/utils/question-order';
 
 /** 수기 채점용 TestAttempt 생성 */
 export async function createManualAttempt(params: {
@@ -34,8 +35,8 @@ export async function createManualAttempt(params: {
     where: { id: testId },
   });
 
-  // maxScore 계산
-  const questionIds = test.questionIds as string[];
+  // maxScore 계산 (중간테이블 우선)
+  const questionIds = await getTestQuestionIds(testId);
   const questions = await prisma.question.findMany({
     where: { id: { in: questionIds } },
     select: { id: true, difficulty: true },

@@ -276,6 +276,7 @@ model StudentProfile {
   currentStreak   Int       @default(0)
   longestStreak   Int       @default(0)
   lastActiveAt    DateTime?
+  notifCheckedAt  DateTime? // 과제 알림 마지막 확인 시점
   conceptNavMode  String    @default("curriculum") // curriculum | chain:<체인명>
   updatedAt       DateTime  @updatedAt
 
@@ -322,6 +323,11 @@ model Question {
 
   concept        Concept?           @relation(fields: [conceptId], references: [id], onDelete: SetNull)
   dailyQuestions DailyQuestion[]
+
+  // 중간테이블 역방향 관계
+  testQuestions         TestQuestion[]
+  quizSessionQuestions  QuizSessionQuestion[]
+  homeworkQuestions     HomeworkQuestion[]
 
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
@@ -374,6 +380,7 @@ model Test {
   attempts        TestAttempt[]
   assignments     TestAssignment[]
   levelTestConfig LevelTestConfig?
+  testQuestions   TestQuestion[]
 
   @@index([grade])
   @@index([createdBy])
@@ -453,6 +460,9 @@ model AnswerLog {
   flagged          Boolean  @default(false)
   flagReason       String?  @db.VarChar(100)
   hintUsed         Boolean  @default(false)
+  // 1차 오답 기록 (null이면 1차 정답이었음)
+  firstSelectedAnswer   String?  @db.Text
+  firstTimeSpentSeconds Int?
   createdAt        DateTime @default(now())
 
   attempt  TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
@@ -562,8 +572,9 @@ model QuizSession {
   tenantId          String?
   createdAt         DateTime   @default(now())
 
-  tenant       Tenant?          @relation(fields: [tenantId], references: [id])
-  participants QuizParticipant[]
+  tenant           Tenant?               @relation(fields: [tenantId], references: [id])
+  participants     QuizParticipant[]
+  sessionQuestions QuizSessionQuestion[]
 
   @@index([hostId])
   @@index([joinCode])
@@ -749,10 +760,11 @@ model QuestionHomeworkPlan {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  tenant      Tenant?                       @relation(fields: [tenantId], references: [id])
-  creator     User                          @relation("QuestionHomeworkPlanCreator", fields: [createdBy], references: [id])
-  enrollments QuestionHomeworkEnrollment[]
-  attempts    QuestionHomeworkAttempt[]
+  tenant           Tenant?                       @relation(fields: [tenantId], references: [id])
+  creator          User                          @relation("QuestionHomeworkPlanCreator", fields: [createdBy], references: [id])
+  enrollments      QuestionHomeworkEnrollment[]
+  attempts         QuestionHomeworkAttempt[]
+  homeworkQuestions HomeworkQuestion[]
 
   @@index([createdBy])
   @@index([isActive])
@@ -1050,4 +1062,48 @@ model LearningCourseEnrollment {
   @@unique([courseId, studentId])
   @@index([studentId, status])
   @@index([studentId, sortOrder])
+}
+
+// ── 문제 중간테이블 (questionIds Json → 관계형 전환) ──
+
+model TestQuestion {
+  id         String @id @default(cuid())
+  testId     String
+  questionId String
+  sortOrder  Int
+
+  test     Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Restrict)
+
+  @@unique([testId, questionId])
+  @@index([testId, sortOrder])
+  @@index([questionId])
+}
+
+model QuizSessionQuestion {
+  id         String @id @default(cuid())
+  sessionId  String
+  questionId String
+  sortOrder  Int
+
+  session  QuizSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question Question    @relation(fields: [questionId], references: [id], onDelete: Restrict)
+
+  @@unique([sessionId, questionId])
+  @@index([sessionId, sortOrder])
+  @@index([questionId])
+}
+
+model HomeworkQuestion {
+  id         String @id @default(cuid())
+  planId     String
+  questionId String
+  dayIndex   Int
+  sortOrder  Int
+
+  plan     QuestionHomeworkPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  question Question             @relation(fields: [questionId], references: [id], onDelete: Restrict)
+
+  @@index([planId, dayIndex, sortOrder])
+  @@index([questionId])
 }

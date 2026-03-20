@@ -1,6 +1,117 @@
 import { prisma } from '@/lib/db';
 
-// ─── chapter → domain 매핑 ───
+/** bookCode로 학교급 판별 */
+function detectSchoolLevel(bookCode: string): 'elementary' | 'middle' | 'high' {
+  if (bookCode.startsWith('E')) return 'elementary';
+  if (bookCode.startsWith('H')) return 'high';
+  return 'middle';
+}
+
+// ─── 초등 chapter → domain 매핑 ───
+const ELEMENTARY_CHAPTER_DOMAIN: Record<string, string> = {
+  // 1학년
+  '9까지의 수': 'CALCULATION',
+  '여러 가지 모양': 'UNDERSTANDING',
+  '덧셈과 뺄셈': 'CALCULATION',
+  '비교하기': 'UNDERSTANDING',
+  '50까지의 수': 'CALCULATION',
+  '100까지의 수': 'CALCULATION',
+  '덧셈과 뺄셈(1)': 'CALCULATION',
+  '덧셈과 뺄셈(2)': 'CALCULATION',
+  '덧셈과 뺄셈(3)': 'CALCULATION',
+  '시계 보기와 규칙 찾기': 'REASONING',
+  // 2학년
+  '세 자리 수': 'CALCULATION',
+  '여러 가지 도형': 'UNDERSTANDING',
+  '길이 재기': 'UNDERSTANDING',
+  '분류하기': 'PROBLEM_SOLVING',
+  '곱셈': 'CALCULATION',
+  '네 자리 수': 'CALCULATION',
+  '곱셈구구': 'CALCULATION',
+  '시각과 시간': 'UNDERSTANDING',
+  '표와 그래프': 'PROBLEM_SOLVING',
+  '규칙 찾기': 'REASONING',
+  // 3학년
+  '평면도형': 'UNDERSTANDING',
+  '나눗셈': 'CALCULATION',
+  '길이와 시간': 'UNDERSTANDING',
+  '분수와 소수': 'CALCULATION',
+  '원': 'UNDERSTANDING',
+  '분수': 'CALCULATION',
+  '들이와 무게': 'UNDERSTANDING',
+  '자료의 정리': 'PROBLEM_SOLVING',
+  // 4학년
+  '큰 수': 'CALCULATION',
+  '각도': 'UNDERSTANDING',
+  '곱셈과 나눗셈': 'CALCULATION',
+  '평면도형의 이동': 'UNDERSTANDING',
+  '막대그래프': 'PROBLEM_SOLVING',
+  '분수의 덧셈과 뺄셈': 'CALCULATION',
+  '삼각형': 'UNDERSTANDING',
+  '소수의 덧셈과 뺄셈': 'CALCULATION',
+  '사각형': 'UNDERSTANDING',
+  '꺾은선그래프': 'PROBLEM_SOLVING',
+  '다각형': 'UNDERSTANDING',
+  // 5학년
+  '자연수의 혼합 계산': 'CALCULATION',
+  '약수와 배수': 'CALCULATION',
+  '규칙과 대응': 'REASONING',
+  '약분과 통분': 'CALCULATION',
+  '다각형의 둘레와 넓이': 'UNDERSTANDING',
+  '수의 범위와 어림하기': 'CALCULATION',
+  '분수의 곱셈': 'CALCULATION',
+  '합동과 대칭': 'UNDERSTANDING',
+  '소수의 곱셈': 'CALCULATION',
+  '직육면체': 'UNDERSTANDING',
+  '평균과 가능성': 'PROBLEM_SOLVING',
+  // 6학년
+  '분수의 나눗셈': 'CALCULATION',
+  '각기둥과 각뿔': 'UNDERSTANDING',
+  '소수의 나눗셈': 'CALCULATION',
+  '비와 비율': 'REASONING',
+  '여러 가지 그래프': 'PROBLEM_SOLVING',
+  '직육면체의 부피와 겉넓이': 'UNDERSTANDING',
+  '비례식과 비례배분': 'REASONING',
+  '원의 넓이': 'UNDERSTANDING',
+  '원기둥, 원뿔, 구': 'UNDERSTANDING',
+  '정비례와 반비례': 'REASONING',
+};
+
+// ─── 고등 chapter → domain 매핑 ───
+const HIGH_CHAPTER_DOMAIN: Record<string, string> = {
+  // 공통수학1
+  '다항식': 'CALCULATION',
+  '방정식과 부등식': 'CALCULATION',
+  '경우의 수': 'PROBLEM_SOLVING',
+  '행렬': 'CALCULATION',
+  // 공통수학2
+  '도형의 방정식': 'REASONING',
+  '집합과 명제': 'REASONING',
+  '함수와 그래프': 'UNDERSTANDING',
+  // 대수
+  '지수함수와 로그함수': 'UNDERSTANDING',
+  '삼각함수': 'UNDERSTANDING',
+  '수열': 'CALCULATION',
+  '수학적 모델링': 'PROBLEM_SOLVING',
+  // 미적분I
+  '함수의 극한과 연속': 'UNDERSTANDING',
+  '미분': 'CALCULATION',
+  '적분': 'CALCULATION',
+  // 확률과 통계
+  '이항정리': 'CALCULATION',
+  '확률': 'PROBLEM_SOLVING',
+  '통계': 'PROBLEM_SOLVING',
+  // 미적분II
+  '수열의 극한': 'UNDERSTANDING',
+  '미분법': 'CALCULATION',
+  '적분법': 'CALCULATION',
+  // 기하
+  '이차곡선': 'REASONING',
+  '평면벡터': 'REASONING',
+  '공간도형과 공간좌표': 'REASONING',
+};
+
+// ─── 중등 chapter → domain 매핑 ───
 const CHAPTER_DOMAIN: Record<string, string> = {
   // 중1 (1-1)
   '소인수분해': 'CALCULATION',
@@ -149,18 +260,31 @@ async function getConceptCache(): Promise<Map<string, string>> {
   return conceptCache;
 }
 
-/** 문제의 chapter/section/difficulty 기반으로 domain과 conceptId를 자동 결정 */
+/** 문제의 chapter/section/difficulty/bookCode 기반으로 domain과 conceptId를 자동 결정 */
 export async function autoTag(question: {
   chapter: string;
   section?: string | null;
   difficulty?: string | null;
+  bookCode?: string;
 }): Promise<{ domain: string | null; conceptId: string | null }> {
-  const baseDomain = CHAPTER_DOMAIN[question.chapter];
+  const level = detectSchoolLevel(question.bookCode ?? '');
+
+  let baseDomain: string | undefined;
+  if (level === 'elementary') {
+    baseDomain = ELEMENTARY_CHAPTER_DOMAIN[question.chapter];
+  } else if (level === 'high') {
+    baseDomain = HIGH_CHAPTER_DOMAIN[question.chapter];
+  } else {
+    baseDomain = CHAPTER_DOMAIN[question.chapter];
+  }
+
   if (!baseDomain) {
     return { domain: null, conceptId: null };
   }
 
   const domain = refineDomain(baseDomain, question.section, question.difficulty);
+
+  // conceptCode 매핑 (현재 중등만, 초등/고등은 null)
   const conceptCode = CHAPTER_CONCEPT[question.chapter];
   let conceptId: string | null = null;
 
@@ -174,7 +298,7 @@ export async function autoTag(question: {
 
 /** 매핑 가능한 chapter 목록 반환 (UI에서 활용) */
 export function getChapterDomainMap(): Record<string, string> {
-  return { ...CHAPTER_DOMAIN };
+  return { ...ELEMENTARY_CHAPTER_DOMAIN, ...CHAPTER_DOMAIN, ...HIGH_CHAPTER_DOMAIN };
 }
 
 /** 매핑 가능한 chapter→conceptCode 목록 반환 */

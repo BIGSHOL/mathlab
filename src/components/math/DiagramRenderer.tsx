@@ -1,20 +1,39 @@
 'use client';
 
 import { useMemo } from 'react';
-import { DiagramSpec } from '@/types/diagram';
-import { renderDiagram } from '@/lib/diagram/renderer';
+import { renderDiagram as renderSpecDiagram } from '@/lib/diagram/renderer';
+import { renderDiagram as renderSvgDiagram } from '@/lib/utils/svg-diagrams';
+import { resolveDiagramSpec } from '@/lib/utils/diagram-resolver';
 
 interface DiagramRendererProps {
-  spec: DiagramSpec;
+  /** DiagramSpec 객체 (AI 생성) 또는 DiagramParam[] 배열 (PDF 추출) */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  spec: any;
   className?: string;
 }
 
 /**
- * 구조화된 도형 명세(DiagramSpec)를 정확한 SVG로 렌더링하는 컴포넌트
- * AI가 생성한 raw SVG 대신 프로그래밍 방식으로 정확한 도형을 생성
+ * 통합 도형 렌더러 — DiagramSpec(프리셋 기반)과 DiagramParam[](SVG 26타입) 모두 지원
  */
 export function DiagramRenderer({ spec, className }: DiagramRendererProps) {
-  const svgHtml = useMemo(() => renderDiagram(spec), [spec]);
+  const svgHtml = useMemo(() => {
+    const resolved = resolveDiagramSpec(spec);
+
+    if (resolved.kind === 'spec') {
+      return renderSpecDiagram(resolved.data);
+    }
+
+    if (resolved.kind === 'params') {
+      return resolved.data
+        .map((p) => renderSvgDiagram({ type: p.type as Parameters<typeof renderSvgDiagram>[0]['type'], params: p.params }) ?? '')
+        .filter(Boolean)
+        .join('\n');
+    }
+
+    return null;
+  }, [spec]);
+
+  if (!svgHtml) return null;
 
   return (
     <div

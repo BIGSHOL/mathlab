@@ -4,17 +4,16 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/components/ui/Toast';
 import {
-  ArrowLeft,
   Search,
   X,
   ClipboardCheck,
-  Loader2,
   Check,
   Copy,
 } from 'lucide-react';
-import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { useTests } from '@/hooks/useTests';
 import { DIFFICULTY_LABELS, TYPE_LABELS, BOOK_LABELS } from '@/types';
@@ -146,12 +145,7 @@ export default function CreateTestPage() {
   return (
     <div className="p-3 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-2 mb-3">
-        <Link href="/tests" className="text-text-secondary hover:text-text-primary">
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <h1 className="text-base font-bold text-text-primary">시험 만들기</h1>
-      </div>
+      <PageHeader title="시험 만들기" backHref="/tests" />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* Left: Test settings */}
@@ -338,8 +332,10 @@ export default function CreateTestPage() {
 
             {/* Question list */}
             {searchLoading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              <div className="space-y-1.5 p-2">
+                {Array.from({ length: 4 }, (_, i) => (
+                  <Skeleton key={i} className="h-8 w-full rounded" />
+                ))}
               </div>
             ) : questions.length === 0 ? (
               <p className="text-center text-text-secondary py-8">검색 결과가 없습니다</p>

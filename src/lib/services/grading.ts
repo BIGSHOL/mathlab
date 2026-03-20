@@ -59,13 +59,30 @@ export async function submitAnswer(params: {
     tabSwitchCount,
   });
 
-  // ── 1차 오답: DB 저장 없이 힌트만 반환 ──
+  // ── 1차 오답: AnswerLog 생성 (1차 오답 기록) + 힌트 반환 ──
   if (!isCorrect && !isRetry) {
-    // 시험이 완료되지 않았는지, 이미 답한 문제가 아닌지만 확인
     const attempt = await prisma.testAttempt.findUniqueOrThrow({ where: { id: attemptId } });
     if (attempt.completedAt) throw new Error('이미 완료된 시험입니다');
     const existing = await prisma.answerLog.findFirst({ where: { attemptId, questionId } });
     if (existing) throw new Error('이미 답한 문제입니다');
+
+    // 1차 오답을 DB에 기록 (최종 채점은 2차 시도에서 업데이트)
+    await prisma.answerLog.create({
+      data: {
+        attemptId,
+        questionId,
+        selectedAnswer,
+        isCorrect: false,
+        timeSpentSeconds,
+        comboCount: 0,
+        pointsEarned: 0,
+        flagged: flag.flagged,
+        flagReason: flag.reason,
+        hintUsed: false,
+        firstSelectedAnswer: selectedAnswer,
+        firstTimeSpentSeconds: timeSpentSeconds,
+      },
+    });
 
     // AI 힌트 생성
     const hintResult = await generateHint({
@@ -81,16 +98,15 @@ export async function submitAnswer(params: {
       canRetry: true,
       hint: hintResult.hint,
       eliminatedChoices: hintResult.eliminatedChoices,
-      // 정답/해설은 아직 공개하지 않음
       correctAnswer: null,
       explanation: null,
       pointsEarned: 0,
       comboCount: 0,
-      questionsRemaining: -1, // 클라이언트에서 사용하지 않음
+      questionsRemaining: -1,
     };
   }
 
-  // ── 1차 정답 또는 2차 시도: AnswerLog 생성 ──
+  // ── 1차 정답 또는 2차 시도: AnswerLog 생성/업데이트 ──
   const hintUsed = isRetry === true;
 
   const { questionsRemaining, newCombo, pointsEarned } = await prisma.$transaction(async (tx) => {
@@ -102,17 +118,14 @@ export async function submitAnswer(params: {
       throw new Error('이미 완료된 시험입니다');
     }
 
-    // 이미 답한 문제인지 확인 (트랜잭션 내에서 체크하여 race condition 방지)
+    // 기존 AnswerLog 확인 (1차 오답에서 생성된 레코드)
     const existing = await tx.answerLog.findFirst({
       where: { attemptId, questionId },
     });
-    if (existing) {
-      throw new Error('이미 답한 문제입니다');
-    }
 
-    // 연속 정답 수 계산
+    // 연속 정답 수 계산 (기존 확정된 답안만 — 1차 오답 레코드 제외)
     const allAnswers = await tx.answerLog.findMany({
-      where: { attemptId },
+      where: { attemptId, NOT: { id: existing?.id } },
       orderBy: { createdAt: 'desc' },
     });
     let streak = 0;
@@ -127,35 +140,51 @@ export async function submitAnswer(params: {
     const basePoints = DIFFICULTY_POINTS[question.difficulty] ?? 20;
 
     if (hintUsed) {
-      combo = 0; // 힌트 사용 → 콤보 리셋
+      combo = 0;
       earned = isCorrect ? Math.round(basePoints * 0.5) : 0;
     } else {
       combo = isCorrect ? streak + 1 : 0;
       earned = isCorrect ? Math.round(basePoints * getComboMultiplier(combo)) : 0;
     }
 
-    // 학습 상태 분류
     const statusInfo = classifyAnswer({
       isCorrect,
       timeSpentSeconds,
       difficulty: question.difficulty,
     });
 
-    await tx.answerLog.create({
-      data: {
-        attemptId,
-        questionId,
-        selectedAnswer,
-        isCorrect,
-        timeSpentSeconds,
-        comboCount: combo,
-        pointsEarned: earned,
-        statusClassification: statusInfo.status,
-        flagged: flag.flagged,
-        flagReason: flag.reason,
-        hintUsed,
-      },
-    });
+    if (existing) {
+      // 2차 시도: 1차 오답 레코드를 최종 결과로 업데이트
+      await tx.answerLog.update({
+        where: { id: existing.id },
+        data: {
+          selectedAnswer,
+          isCorrect,
+          timeSpentSeconds,
+          comboCount: combo,
+          pointsEarned: earned,
+          statusClassification: statusInfo.status,
+          hintUsed: true,
+        },
+      });
+    } else {
+      // 1차 정답: 새 레코드 생성
+      await tx.answerLog.create({
+        data: {
+          attemptId,
+          questionId,
+          selectedAnswer,
+          isCorrect,
+          timeSpentSeconds,
+          comboCount: combo,
+          pointsEarned: earned,
+          statusClassification: statusInfo.status,
+          flagged: flag.flagged,
+          flagReason: flag.reason,
+          hintUsed: false,
+        },
+      });
+    }
 
     await tx.testAttempt.update({
       where: { id: attemptId },

@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import { ChevronRight, GraduationCap, Lock, CheckCircle } from 'lucide-react';
+import { ChevronRight, GraduationCap, Lock, CheckCircle, BookOpen, Sparkles } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import GemStone from '@/components/gamification/GemStone';
 import { partToGemVariant } from '@/lib/utils/gem';
@@ -9,13 +10,13 @@ import { getViewAsUser } from '@/lib/view-as';
 import { prisma } from '@/lib/db';
 import { redirect } from 'next/navigation';
 
-const stageLabels = ['미시작', '읽기', '빈칸(쉬움)', '빈칸(어려움)', '백지쓰기'];
+const stageLabels = ['미시작', '읽기', '빈칸(쉬움)', '빈칸(어려움)', '완료'];
 const stageColors = [
   'text-slate-400',
   'text-stage-reading',
   'text-stage-blank-easy',
   'text-stage-blank-hard',
-  'text-stage-blank-page',
+  'text-emerald-600',
 ];
 
 function getStageIndex(progress: Array<{ stage: string; completed: boolean }>): number {
@@ -32,8 +33,16 @@ function getStageIndex(progress: Array<{ stage: string; completed: boolean }>): 
 }
 
 function getProgressPercent(progress: Array<{ stage: string; completed: boolean }>): number {
-  const completedStages = progress.filter((p) => p.completed).length;
-  return Math.round((completedStages / 4) * 100);
+  const stages = ['READING', 'BLANK_EASY', 'BLANK_HARD', 'BLANK_FULL'];
+  // 가장 높은 완료 단계 기준 (상위 단계 완료 = 하위 단계도 완료된 것으로 간주)
+  for (let i = stages.length - 1; i >= 0; i--) {
+    if (progress.some((p) => p.stage === stages[i] && p.completed)) {
+      return Math.round(((i + 1) / 4) * 100);
+    }
+  }
+  // 시작만 한 경우 (completed가 아닌 레코드만 있음)
+  if (progress.length > 0) return 5;
+  return 0;
 }
 
 export default async function SubjectsPage({
@@ -79,20 +88,37 @@ export default async function SubjectsPage({
   // 배정 과정이 없으면 빈 상태
   if (!hasEnrollments) {
     return (
-      <div className="px-4 md:px-10 py-8 max-w-[1200px] mx-auto w-full">
-        <h1 className="text-2xl font-bold tracking-tight text-text-primary mb-2">학습 과정</h1>
-        <p className="text-text-secondary mb-8">선생님이 배정한 학습 과정을 진행합니다.</p>
-        <Card className="p-12 text-center">
-          <GraduationCap className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-          <p className="text-text-secondary text-lg mb-2">배정된 학습 과정이 없습니다</p>
-          <p className="text-text-secondary text-sm">선생님이 학습 과정을 배정하면 여기에 표시됩니다.</p>
-        </Card>
+      <div className="px-4 md:px-8 py-8 w-full">
+        <PageHeader title="학습 과정" subtitle="선생님이 배정한 학습 과정을 진행합니다." />
+        <div className="flex flex-col items-center justify-center py-16 px-6">
+          <div className="relative mb-6">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-50 to-blue-50 flex items-center justify-center">
+              <BookOpen className="w-10 h-10 text-emerald-400/60" />
+            </div>
+            <div className="absolute -top-1 -right-1 w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center border-2 border-white">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+            </div>
+          </div>
+          <h3 className="text-lg font-bold text-text-primary mb-2">아직 배정된 학습 과정이 없어요</h3>
+          <p className="text-sm text-text-secondary text-center max-w-xs leading-relaxed">
+            선생님이 학습 과정을 배정하면 여기에 표시됩니다.<br />
+            개념을 읽고, 빈칸을 채우며 단계별로 마스터해보세요!
+          </p>
+          <div className="flex gap-3 mt-6">
+            <Link href="/practice/arithmetic">
+              <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-sm bg-primary/10 text-primary text-sm font-semibold hover:bg-primary/15 transition-colors">
+                연산 연습하기
+                <ChevronRight className="w-4 h-4" />
+              </span>
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="px-4 md:px-10 py-8 max-w-[1200px] mx-auto w-full">
+    <div className="px-4 md:px-8 py-8 w-full">
       <h1 className="text-2xl font-bold tracking-tight text-text-primary mb-2">학습 과정</h1>
       <p className="text-text-secondary mb-8">선생님이 배정한 학습 과정을 진행합니다.</p>
 

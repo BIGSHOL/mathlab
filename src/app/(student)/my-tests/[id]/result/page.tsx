@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { Skeleton } from '@/components/ui/Skeleton';
 import {
   Trophy,
   Clock,
   Zap,
   Star,
   ArrowLeft,
-  Loader2,
   Target,
   RotateCcw,
   History,
@@ -18,6 +18,7 @@ import {
   ChevronUp,
   Lightbulb,
 } from 'lucide-react';
+import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { MathRenderer } from '@/components/math/MathRenderer';
@@ -152,8 +153,41 @@ export default function TestResultPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      <div className="px-4 md:px-8 py-6 md:py-8 w-full">
+        <div className="flex items-center gap-3 mb-6">
+          <Skeleton className="w-8 h-8 rounded-lg" />
+          <Skeleton className="h-7 w-36" />
+        </div>
+        <div className="bg-white border border-slate-200 rounded-xl p-6 mb-6">
+          <div className="flex items-center justify-center gap-8">
+            <div className="text-center space-y-2">
+              <Skeleton className="h-12 w-20 mx-auto" />
+              <Skeleton className="h-4 w-16 mx-auto" />
+            </div>
+            <Skeleton className="h-16 w-px" />
+            <div className="flex gap-6">
+              {Array.from({ length: 3 }, (_, i) => (
+                <div key={i} className="text-center space-y-1.5">
+                  <Skeleton className="h-6 w-10 mx-auto" />
+                  <Skeleton className="h-3 w-12 mx-auto" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="space-y-3">
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className="bg-white border border-slate-200 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <Skeleton className="w-8 h-8 rounded-full shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -386,7 +420,7 @@ export default function TestResultPage() {
                 <div className="mt-3 pt-3 border-t border-slate-100">
                   {similarLoading === ans.questionId ? (
                     <div className="flex items-center gap-2 text-xs text-text-secondary py-2">
-                      <Loader2 className="w-3 h-3 animate-spin" /> 유사 문제 찾는 중...
+                      <MathSpinner size="sm" /> 유사 문제 찾는 중...
                     </div>
                   ) : (similarQuestions[ans.questionId] ?? []).length === 0 ? (
                     <p className="text-xs text-text-secondary py-2">유사 문제를 찾을 수 없습니다</p>

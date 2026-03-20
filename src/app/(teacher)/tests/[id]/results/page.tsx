@@ -4,8 +4,6 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
-  ArrowLeft,
-  Loader2,
   Trophy,
   Clock,
   Target,
@@ -17,6 +15,9 @@ import {
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Tabs } from '@/components/ui/Tabs';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { AssignPanel } from '@/components/test/AssignPanel';
 import { DeadlineBadge } from '@/components/test/DeadlineBadge';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -101,8 +102,31 @@ export default function TestResultsPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 py-6 md:py-8">
+        <div className="flex items-center gap-3 mb-6">
+          <Skeleton className="w-8 h-8 rounded-lg" />
+          <Skeleton className="h-7 w-36" />
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-6 w-20" />
+            </div>
+          ))}
+        </div>
+        <div className="space-y-2">
+          {Array.from({ length: 5 }, (_, i) => (
+            <div key={i} className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl">
+              <Skeleton variant="circle" className="w-8 h-8 shrink-0" />
+              <div className="flex-1 space-y-1">
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="h-3 w-1/4" />
+              </div>
+              <Skeleton className="h-5 w-16" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -128,33 +152,29 @@ export default function TestResultsPage() {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Link href="/tests" className="text-text-secondary hover:text-text-primary">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-text-primary">{test?.title ?? '시험 결과'}</h1>
-            <p className="text-sm text-text-secondary">{completedAttempts.length}명 응시 완료</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href={`/tests/${id}/print`}>
-            <Button size="sm" variant="secondary">
-              <Printer className="w-4 h-4 mr-1" />
-              인쇄용
+      <PageHeader
+        title={test?.title ?? '시험 결과'}
+        subtitle={`${completedAttempts.length}명 응시 완료`}
+        backHref="/tests"
+        actions={
+          <div className="flex items-center gap-2">
+            <Link href={`/tests/${id}/print`}>
+              <Button size="sm" variant="secondary">
+                <Printer className="w-4 h-4 mr-1" />
+                인쇄용
+              </Button>
+            </Link>
+            <Button size="sm" onClick={() => setShowAssignPanel(true)}>
+              <UserPlus className="w-4 h-4 mr-1" />
+              학생 배정
             </Button>
-          </Link>
-          <Button size="sm" onClick={() => setShowAssignPanel(true)}>
-            <UserPlus className="w-4 h-4 mr-1" />
-            학생 배정
-          </Button>
-        </div>
-      </div>
+          </div>
+        }
+      />
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card className="p-5 flex items-center gap-4">
+        <Card padding="md" className="flex items-center gap-4">
           <div className="p-3 bg-primary/10 rounded-xl">
             <Users className="w-5 h-5 text-primary" />
           </div>
@@ -163,7 +183,7 @@ export default function TestResultsPage() {
             <p className="text-2xl font-bold text-text-primary">{completedAttempts.length}명</p>
           </div>
         </Card>
-        <Card className="p-5 flex items-center gap-4">
+        <Card padding="md" className="flex items-center gap-4">
           <div className="p-3 bg-emerald-100 rounded-xl">
             <Target className="w-5 h-5 text-emerald-600" />
           </div>
@@ -172,7 +192,7 @@ export default function TestResultsPage() {
             <p className="text-2xl font-bold text-text-primary">{avgScore}점</p>
           </div>
         </Card>
-        <Card className="p-5 flex items-center gap-4">
+        <Card padding="md" className="flex items-center gap-4">
           <div className="p-3 bg-blue-100 rounded-xl">
             <Clock className="w-5 h-5 text-blue-600" />
           </div>
@@ -181,7 +201,7 @@ export default function TestResultsPage() {
             <p className="text-2xl font-bold text-text-primary">{avgTime}초/문제</p>
           </div>
         </Card>
-        <Card className="p-5 flex items-center gap-4">
+        <Card padding="md" className="flex items-center gap-4">
           <div className="p-3 bg-violet-100 rounded-xl">
             <UserPlus className="w-5 h-5 text-violet-600" />
           </div>
@@ -193,23 +213,15 @@ export default function TestResultsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-4">
-        <button
-          onClick={() => setTab('results')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            tab === 'results' ? 'bg-primary text-white' : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
-          }`}
-        >
-          응시 결과
-        </button>
-        <button
-          onClick={() => setTab('assignments')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            tab === 'assignments' ? 'bg-primary text-white' : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
-          }`}
-        >
-          배정 현황 ({assignments.length})
-        </button>
+      <div className="mb-4">
+        <Tabs
+          items={[
+            { key: 'results' as const, label: '응시 결과' },
+            { key: 'assignments' as const, label: '배정 현황', count: assignments.length },
+          ]}
+          activeKey={tab}
+          onChange={setTab}
+        />
       </div>
 
       {/* Results table */}

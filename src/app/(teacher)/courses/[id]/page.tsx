@@ -9,7 +9,6 @@ import {
   BookOpen,
   Users,
   GraduationCap,
-  Loader2,
   CheckCircle,
   Lock,
   Play,
@@ -20,9 +19,11 @@ import {
   Pencil,
   X,
 } from 'lucide-react';
+import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 interface ConceptDetail {
   id: string;
@@ -206,8 +207,27 @@ export default function CourseDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 py-6 md:py-8">
+        <div className="flex items-center gap-3 mb-6">
+          <Skeleton className="w-8 h-8 rounded-lg" />
+          <Skeleton className="h-7 w-40" />
+        </div>
+        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4 mb-6">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-3 w-64" />
+        </div>
+        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
+          <Skeleton className="h-5 w-24 mb-2" />
+          {Array.from({ length: 5 }, (_, i) => (
+            <div key={i} className="flex items-center gap-3 p-3 border border-slate-100 rounded-lg">
+              <Skeleton className="w-6 h-6 rounded" />
+              <div className="flex-1 space-y-1">
+                <Skeleton className="h-4 w-2/5" />
+                <Skeleton className="h-3 w-1/4" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -253,7 +273,7 @@ export default function CourseDetailPage() {
               />
               <div className="flex gap-2">
                 <Button size="sm" onClick={saveEdit} disabled={saving}>
-                  {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
+                  {saving ? <MathSpinner size="sm" className="mr-1" /> : null}
                   저장
                 </Button>
                 <Button size="sm" variant="ghost" onClick={cancelEdit}>
@@ -309,7 +329,7 @@ export default function CourseDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: 포함 개념 */}
         <div>
-          <Card className="p-5">
+          <Card padding="md">
             <h2 className="font-bold text-text-primary flex items-center gap-2 mb-4">
               <BookOpen className="w-4 h-4 text-primary" />
               학습 개념 ({course.concepts.length}개)
@@ -335,7 +355,7 @@ export default function CourseDetailPage() {
 
         {/* Right: 배정 학생 */}
         <div className="lg:col-span-2">
-          <Card className="p-5">
+          <Card padding="md">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-bold text-text-primary flex items-center gap-2">
                 <Users className="w-4 h-4 text-primary" />
@@ -394,7 +414,7 @@ export default function CourseDetailPage() {
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" onClick={handleEnroll} disabled={addStudentIds.size === 0 || enrolling}>
-                    {enrolling ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
+                    {enrolling ? <MathSpinner size="sm" className="mr-1" /> : null}
                     {addStudentIds.size}명 배정
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => { setShowAddStudents(false); setAddStudentIds(new Set()); }}>

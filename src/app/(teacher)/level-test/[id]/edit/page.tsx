@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { LevelTestEditorShell } from '@/components/level-test-editor/LevelTestEditorShell';
 import type { LevelTestDomain } from '@/types';
 
@@ -60,11 +60,30 @@ export default function LevelTestEditPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 text-primary animate-spin" />
-          <p className="text-sm text-text-secondary">레벨테스트 데이터를 불러오는 중...</p>
+      <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 py-6 md:py-8">
+        <div className="flex items-center gap-3 mb-6">
+          <Skeleton className="w-8 h-8 rounded-lg" />
+          <Skeleton className="h-7 w-48" />
         </div>
+        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4 mb-4">
+          <Skeleton className="h-5 w-28" />
+          <div className="space-y-3">
+            <Skeleton className="h-10 w-full rounded-lg" />
+            <Skeleton className="h-10 w-full rounded-lg" />
+            <Skeleton className="h-10 w-2/3 rounded-lg" />
+          </div>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
+          <Skeleton className="h-5 w-24" />
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className="flex items-center gap-3 p-3 border border-slate-100 rounded-lg">
+              <Skeleton className="w-6 h-6 rounded" />
+              <Skeleton className="h-4 flex-1" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+          ))}
+        </div>
+        <p className="text-sm text-text-secondary text-center mt-4">레벨테스트 데이터를 불러오는 중...</p>
       </div>
     );
   }

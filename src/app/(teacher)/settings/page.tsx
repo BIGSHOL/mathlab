@@ -11,8 +11,8 @@ import {
   Settings,
   PanelLeftClose,
   PanelLeftOpen,
-  Loader2,
 } from 'lucide-react';
+import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
@@ -166,7 +166,7 @@ export default function SettingsPage() {
       <main className="flex-1 flex items-center justify-center min-w-0 bg-white overflow-y-auto">
         <div className="p-3 md:p-4 max-w-[800px] w-full">
           {activeTab === 'profile' && (
-            <Card className="p-3 flex flex-col gap-3">
+            <Card padding="sm" className="flex flex-col gap-3">
               <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
                 <User className="w-5 h-5 text-primary" /> 프로필 설정
               </h2>
@@ -198,7 +198,7 @@ export default function SettingsPage() {
               </div>
               <div className="pt-2 border-t border-slate-200">
                 <Button onClick={handleSaveProfile} disabled={profileSaving}>
-                  {profileSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                  {profileSaving ? <MathSpinner size="sm" className="mr-2" /> : <Save className="w-4 h-4 mr-2" />}
                   변경사항 저장
                 </Button>
               </div>
@@ -206,7 +206,7 @@ export default function SettingsPage() {
           )}
 
           {activeTab === 'security' && (
-            <Card className="p-3 flex flex-col gap-3">
+            <Card padding="sm" className="flex flex-col gap-3">
               <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
                 <Shield className="w-5 h-5 text-primary" /> 보안 설정
               </h2>
@@ -244,7 +244,7 @@ export default function SettingsPage() {
               </div>
               <div className="pt-2 border-t border-slate-200">
                 <Button onClick={handleChangePassword} disabled={passwordSaving}>
-                  {passwordSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Lock className="w-4 h-4 mr-2" />}
+                  {passwordSaving ? <MathSpinner size="sm" className="mr-2" /> : <Lock className="w-4 h-4 mr-2" />}
                   비밀번호 변경
                 </Button>
               </div>
@@ -252,7 +252,7 @@ export default function SettingsPage() {
           )}
 
           {activeTab === 'notifications' && (
-            <Card className="p-3 flex flex-col gap-3">
+            <Card padding="sm" className="flex flex-col gap-3">
               <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
                 <Bell className="w-5 h-5 text-primary" /> 알림 설정
               </h2>
@@ -287,7 +287,7 @@ export default function SettingsPage() {
           )}
 
           {activeTab === 'appearance' && (
-            <Card className="p-3 flex flex-col gap-3">
+            <Card padding="sm" className="flex flex-col gap-3">
               <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
                 <Palette className="w-5 h-5 text-primary" /> 화면 설정
               </h2>

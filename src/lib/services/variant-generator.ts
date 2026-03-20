@@ -90,6 +90,16 @@ export async function generateVariants(config: VariantConfig) {
           createdBy,
         },
       });
+
+      // Dual-Write: TestQuestion 중간테이블
+      await tx.testQuestion.createMany({
+        data: variantQuestionIds.map((qId: string, idx: number) => ({
+          testId: test.id,
+          questionId: qId,
+          sortOrder: idx,
+        })),
+      });
+
       results.push({ id: test.id, title: test.title, questionIds: variantQuestionIds });
     }
     return results;

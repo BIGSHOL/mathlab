@@ -2,7 +2,7 @@ import { Skeleton, SkeletonStatCard, SkeletonCard, SkeletonListItem } from '@/co
 
 export default function OverviewLoading() {
   return (
-    <div className="flex flex-col grow min-w-0 max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-3 md:py-4 gap-3">
+    <div className="flex flex-col grow min-w-0 max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-6 md:py-8 gap-3">
       {/* 헤더 */}
       <div className="flex justify-between items-end">
         <div className="space-y-2">

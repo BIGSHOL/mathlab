@@ -182,6 +182,14 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
         .katex-display > .katex {
           text-align: left;
         }
+        /* prose-invert 모드: 다크 배경에서 KaTeX 수식/텍스트를 밝게 */
+        .prose-invert .katex {
+          color: inherit;
+        }
+        .prose-invert p,
+        .prose-invert span {
+          color: inherit;
+        }
         /* 인쇄 시 수식이 너무 길면 크기 축소 */
         @media print {
           .katex {
@@ -208,7 +216,7 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
                 return <div className="my-2">{children}</div>;
               }
               return (
-                <p className="text-slate-800 mb-2 last:mb-0" style={{ lineHeight: '2.2' }} {...props}>
+                <p className="text-inherit mb-2 last:mb-0" style={{ lineHeight: '2.2' }} {...props}>
                   {children}
                 </p>
               );

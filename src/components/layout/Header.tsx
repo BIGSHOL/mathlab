@@ -6,6 +6,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Search, Bell, ChevronDown, LogOut, Settings, User } from 'lucide-react';
 import { LogoIcon } from '@/components/ui/LogoIcon';
 import { useTenant } from '@/components/providers/TenantProvider';
+import { useUpdateNotification } from '@/stores/update-notification';
 import { signOut } from 'next-auth/react';
 
 interface HeaderProps {
@@ -27,6 +28,38 @@ const teacherNav = [
   { label: '대시보드', href: '/overview' },
   { label: '학생 관리', href: '/students' },
 ];
+
+/** 벨 아이콘 — 학생: 숨긴 알림 있으면 빨간 점 + 클릭으로 배너 복원. 선생님: 비활성 */
+function BellButton({ role }: { role: 'student' | 'teacher' }) {
+  const update = useUpdateNotification((s) => s.update);
+  const dismissed = useUpdateNotification((s) => s.dismissed);
+  const reopen = useUpdateNotification((s) => s.reopen);
+
+  const hasHidden = role === 'student' && update && update.totalNew > 0 && dismissed;
+
+  if (role !== 'student') {
+    return (
+      <button className="p-1.5 rounded-sm text-slate-300 cursor-not-allowed opacity-50" title="알림 — 준비 중">
+        <Bell className="w-5 h-5" />
+      </button>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => { if (hasHidden) reopen(); }}
+      className={`relative p-1.5 rounded-sm transition-colors ${
+        hasHidden ? 'text-slate-600 hover:text-primary hover:bg-primary/5 cursor-pointer' : 'text-slate-300 cursor-default'
+      }`}
+      title={hasHidden ? '숨긴 알림 보기' : '새 알림 없음'}
+    >
+      <Bell className="w-5 h-5" />
+      {hasHidden && (
+        <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white" />
+      )}
+    </button>
+  );
+}
 
 export function Header({ role, userName = '사용자' }: HeaderProps) {
   const router = useRouter();
@@ -109,12 +142,7 @@ export function Header({ role, userName = '사용자' }: HeaderProps) {
           })}
         </nav>
         <div className="flex items-center gap-2">
-          <button
-            className="p-1.5 rounded-sm text-slate-300 cursor-not-allowed opacity-50"
-            title="알림 — 준비 중"
-          >
-            <Bell className="w-5 h-5" />
-          </button>
+          <BellButton role={role} />
           <div className="h-5 w-px bg-slate-200" />
           {/* User dropdown */}
           <div ref={dropdownRef} className="relative">

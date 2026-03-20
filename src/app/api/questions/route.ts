@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
       chapter: data.chapter,
       section: data.section,
       difficulty: data.difficulty,
+      bookCode: data.bookCode,
     });
     if (!data.domain && tags.domain) data.domain = tags.domain;
     if (!data.conceptId && tags.conceptId) data.conceptId = tags.conceptId;
