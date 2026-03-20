@@ -243,12 +243,11 @@ export default function TestPlayPage() {
           </div>
 
           {/* Combo */}
-          <div className={`flex items-center gap-1 text-sm font-bold transition-all ${
-            combo >= 10 ? 'text-red-500' :
-            combo >= 5 ? 'text-orange-500' :
-            combo >= 3 ? 'text-yellow-500' :
-            'text-slate-400'
-          } ${comboAnimation ? 'scale-125' : ''}`}>
+          <div className={`flex items-center gap-1 text-sm font-bold transition-all ${combo >= 10 ? 'text-red-500' :
+              combo >= 5 ? 'text-orange-500' :
+                combo >= 3 ? 'text-yellow-500' :
+                  'text-slate-400'
+            } ${comboAnimation ? 'scale-125' : ''}`}>
             <Zap className="w-4 h-4" />
             {combo > 0 ? `${combo}연속` : '-'}
           </div>
@@ -268,12 +267,11 @@ export default function TestPlayPage() {
             {/* Question header */}
             <div className="flex items-center gap-2 mb-4">
               <span className="text-sm font-medium text-slate-500">{currentQuestion.chapter}</span>
-              <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${
-                currentQuestion.difficulty === 'BASIC' ? 'bg-green-100 text-green-700' :
-                currentQuestion.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
-                currentQuestion.difficulty === 'HIGH' ? 'bg-red-100 text-red-700' :
-                'bg-purple-100 text-purple-700'
-              }`}>
+              <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${currentQuestion.difficulty === 'BASIC' ? 'bg-green-100 text-green-700' :
+                  currentQuestion.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
+                    currentQuestion.difficulty === 'HIGH' ? 'bg-red-100 text-red-700' :
+                      'bg-purple-100 text-purple-700'
+                }`}>
                 {DIFFICULTY_LABELS[currentQuestion.difficulty as keyof typeof DIFFICULTY_LABELS]}
               </span>
               {hintUsed && !feedback && (
@@ -285,7 +283,7 @@ export default function TestPlayPage() {
 
             {/* Question content */}
             <div className="text-base text-text-primary leading-relaxed mb-6">
-              <MathRenderer content={currentQuestion.content} />
+              <MathRenderer content={currentQuestion.content.replace(/^\d+\.\s*/, '')} />
               {/* 도형 표시 */}
               {(currentQuestion.diagramSpec || currentQuestion.diagramSVG) && (
                 <div className="my-4 flex justify-center">
@@ -322,8 +320,7 @@ export default function TestPlayPage() {
                       key={idx}
                       disabled={!!feedback || isEliminated}
                       onClick={() => setSelectedAnswer(choiceNum)}
-                      className={`w-full text-left px-4 py-3 rounded-sm border-2 transition-all text-sm ${
-                        isEliminated
+                      className={`w-full text-left px-4 py-3 rounded-sm border-2 transition-all text-sm ${isEliminated
                           ? 'border-slate-100 bg-slate-50 opacity-30 line-through cursor-not-allowed'
                           : showResult
                             ? isCorrectAnswer
@@ -334,7 +331,7 @@ export default function TestPlayPage() {
                             : isSelected
                               ? 'border-primary bg-primary/5'
                               : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-start gap-2">
                         {showResult && isCorrectAnswer && (
@@ -382,9 +379,8 @@ export default function TestPlayPage() {
 
             {/* Feedback */}
             {feedback && (
-              <div className={`mt-6 p-4 rounded-sm ${
-                feedback.isCorrect ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'
-              }`}>
+              <div className={`mt-6 p-4 rounded-sm ${feedback.isCorrect ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'
+                }`}>
                 <div className="flex items-center gap-2 mb-2">
                   {feedback.isCorrect ? (
                     <>

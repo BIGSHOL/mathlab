@@ -1,6 +1,3 @@
-// MathLab Database Schema
-// Based on docs/planning/04-database-design.md
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,526 +8,472 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// FEAT-0: User Management
-enum Role {
-  STUDENT
-  TEACHER
-  MANAGER
-  OWNER
-  SUPER_ADMIN
-  ADMIN         // 레거시 (OWNER로 대체됨, 코드에서 미사용)
-}
-
-// FEAT: 멀티테넌시 — 지점(학원) 관리
-model Tenant {
-  id        String   @id @default(cuid())
-  slug      String   @unique @db.VarChar(50)   // 서브도메인: "gangnam" → gangnam.mathlab.com
-  name      String   @db.VarChar(100)           // 표시명: "강남점"
-  logo      String?  @db.VarChar(500)           // 커스텀 로고 URL
-  settings  Json?                                // 지점별 설정 (색상, 기능 토글 등)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  users                  User[]
-  classrooms             Classroom[]
-  tests                  Test[]
-  learningCourses        LearningCourse[]
-  arithmeticHomeworkPlans ArithmeticHomeworkPlan[]
-  conceptHomeworkPlans   ConceptHomeworkPlan[]
-  questionHomeworkPlans  QuestionHomeworkPlan[]
-  quizSessions           QuizSession[]
-  dailyQuestions         DailyQuestion[]
-  featureFlags           FeatureFlag[]
-
-  @@index([slug])
-  @@index([isActive])
-}
-
-model User {
-  id            String    @id @default(cuid())
-  seq           Int       @unique @default(autoincrement())
-  username      String    @unique @db.VarChar(50)
-  passwordHash  String    @db.VarChar(255)
-  name          String    @db.VarChar(50)
-  role          Role      @default(STUDENT)
-  grade         Int?
-  phone         String?   @db.VarChar(20)
-  email         String?   @db.VarChar(100)
-  school        String?   @db.VarChar(100)
-  birthDate     DateTime?
-  address       String?   @db.VarChar(200)
-  startDate     DateTime?
-  notes         String?   @db.Text
-  parentName    String?   @db.VarChar(50)
-  parentPhone   String?   @db.VarChar(20)
-  classroomId   String?
-  tenantId      String?
-  profileImage  String?   @db.VarChar(500)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime?
-
-  tenant         Tenant?   @relation(fields: [tenantId], references: [id])
-  sessions       Session[]
-  profile        StudentProfile?
-  progress       LearningProgress[]
-  transactions   PointTransaction[]
-  createdTests   Test[]          @relation("TestCreator")
-  testAttempts   TestAttempt[]   @relation("StudentAttempts")
-  assignments    TestAssignment[] @relation("StudentAssignments")
-  inquiries      Inquiry[]       @relation("InquiryAuthor")
-  repliedInquiries Inquiry[]     @relation("InquiryReplier")
-  arithmeticAttempts ArithmeticAttempt[]
-  conceptMemos       ConceptMemo[]
-  teacherComments    TeacherComment[] @relation("TeacherComments")
-  studentComments    TeacherComment[] @relation("StudentComments")
-  generationLogs     QuestionGenerationLog[]
-  createdHomeworkPlans   ArithmeticHomeworkPlan[]        @relation("HomeworkPlanCreator")
-  homeworkEnrollments    ArithmeticHomeworkEnrollment[]   @relation("HomeworkEnrollments")
-  createdConceptHomeworkPlans ConceptHomeworkPlan[]       @relation("ConceptHomeworkPlanCreator")
-  conceptHomeworkEnrollments  ConceptHomeworkEnrollment[] @relation("ConceptHomeworkEnrollments")
-  createdQuestionHomeworkPlans QuestionHomeworkPlan[]     @relation("QuestionHomeworkPlanCreator")
-  questionHomeworkEnrollments  QuestionHomeworkEnrollment[] @relation("QuestionHomeworkEnrollments")
-  questionHomeworkAttempts     QuestionHomeworkAttempt[]
-  classroom                    Classroom?                       @relation(fields: [classroomId], references: [id])
-  timeAttackRecords            TimeAttackRecord[]
-  dailyQuestionAttempts        DailyQuestionAttempt[]
-  dailyMissions                DailyMission[]
-  badges                       UserBadge[]
-  learningCourseEnrollments    LearningCourseEnrollment[] @relation("LearningCourseEnrollments")
-  createdLearningCourses       LearningCourse[]           @relation("LearningCourseCreator")
-  blankAttempts                BlankAttempt[]
-
-  @@index([role])
-  @@index([classroomId])
-  @@index([tenantId])
-  @@index([tenantId, role])
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  userId       String
-  sessionToken String   @unique
-  expires      DateTime
-  createdAt    DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-// FEAT-1: Subject & Concept
-model Subject {
-  id          String   @id @default(cuid())
-  title       String   @db.VarChar(200)
-  description String?  @db.Text
-  gradeLevel  Int
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-
-  concepts Concept[]
-
-  @@index([gradeLevel])
-  @@index([sortOrder])
-}
-
-model Concept {
-  id           String   @id @default(cuid())
-  subjectId    String
-  title        String   @db.VarChar(200)
-  fullContent  String   @db.Text
-  visualAssets Json?
-  sortOrder    Int      @default(0)
-  conceptCode  String?  @unique @db.VarChar(20)
-  grade        String?  @db.VarChar(20)
-  semester     Int?                        // 학기: 1 또는 2
-  chapter      String?  @db.VarChar(100)   // 대단원: "자연수의 혼합 계산"
-  section      String?  @db.VarChar(100)   // 중단원: "덧셈과 뺄셈이 섞여 있는 식"
-  sectionSub   String?  @db.VarChar(100)   // 소단원
-  category     String?  @db.VarChar(20)
-  part         String?  @db.VarChar(20)
-  source       String?  @db.VarChar(200)   // 출처
-  keywords     String?  @db.Text
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  subject          Subject              @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  blanks           BlankExercise[]
-  progress         LearningProgress[]
-  prerequisiteFor  ConceptPrerequisite[] @relation("PrerequisiteFor")
-  prerequisites    ConceptPrerequisite[] @relation("HasPrerequisite")
-  questions              Question[]
-  learningCourseConcepts LearningCourseConcept[]
-  blankAttempts          BlankAttempt[]
-
-  @@index([subjectId])
-  @@index([subjectId, sortOrder])
-  @@index([conceptCode])
-}
-
-model BlankExercise {
-  id           String   @id @default(cuid())
-  conceptId    String
-  level        Int      // 1=easy, 2=hard
-  blanks       Json     // [{position, answer, hint}]
-  templateText String   @db.Text
-  createdAt    DateTime @default(now())
-
-  concept Concept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
-
-  @@index([conceptId, level])
-}
-
-// FEAT-1: Learning Progress
-enum Stage {
-  READING
-  BLANK_EASY
-  BLANK_HARD
-  BLANK_FULL
-  BLANK_PAGE
-}
-
-model LearningProgress {
-  id          String    @id @default(cuid())
-  userId      String
-  conceptId   String
-  stage       Stage
-  completed   Boolean   @default(false)
-  attempts    Int       @default(0)
-  score         Int?
-  hintCount     Int       @default(0)
-  revealCount   Int       @default(0)
-  usedReveal    Boolean   @default(false)
-  submittedText String?   @db.Text
-  startedAt     DateTime  @default(now())
-  completedAt   DateTime?
-  updatedAt     DateTime  @updatedAt
-
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  concept Concept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, conceptId, stage])
-  @@index([userId, conceptId])
-  @@index([userId, stage])
-  @@index([userId, completed])
-}
-
-// FEAT: 빈칸 학습 시도 이력 (개별 답변 저장)
-model BlankAttempt {
-  id          String    @id @default(cuid())
-  studentId   String
-  conceptId   String
-  stage       Stage     // BLANK_EASY, BLANK_HARD, BLANK_FULL
-  score       Int       @default(0) // 정답률 %
-  allCorrect  Boolean   @default(false)
-  hintCount   Int       @default(0)
-  revealCount Int       @default(0)
-  createdAt   DateTime  @default(now())
-
-  student User           @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  concept Concept         @relation(fields: [conceptId], references: [id], onDelete: Cascade)
-  answers BlankAnswerLog[]
-
-  @@index([studentId, conceptId, stage])
-  @@index([studentId, createdAt(sort: Desc)])
-}
-
-model BlankAnswerLog {
-  id              String  @id @default(cuid())
-  attemptId       String
-  blankPosition   Int     // 빈칸 번호 (1, 2, 3...)
-  submittedAnswer String  @db.Text
-  correctAnswer   String  @db.Text
-  isCorrect       Boolean
-
-  attempt BlankAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
-
-  @@index([attemptId])
-}
-
-// FEAT-1: Gamification
-enum PointTransactionType {
-  EARN
-  SPEND
-}
-
-model PointTransaction {
-  id          String               @id @default(cuid())
-  userId      String
-  amount      Int
-  type        PointTransactionType
-  reason      String               @db.VarChar(50)
-  referenceId String?
-  createdAt   DateTime             @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([userId, createdAt(sort: Desc)])
-}
-
-model StudentProfile {
-  id              String    @id @default(cuid())
-  userId          String    @unique
-  totalXp         Int       @default(0)
-  level           Int       @default(1)
-  currentStreak   Int       @default(0)
-  longestStreak   Int       @default(0)
-  lastActiveAt    DateTime?
-  notifCheckedAt  DateTime? // 과제 알림 마지막 확인 시점
-  conceptNavMode  String    @default("curriculum") // curriculum | chain:<체인명>
-  updatedAt       DateTime  @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([totalXp(sort: Desc), level(sort: Desc)])
-}
-
-// FEAT-2: Question Bank
-enum QuestionDifficulty {
-  BASIC   // 하
-  MEDIUM  // 중
-  HIGH    // 상
-  HIGHEST // 최상
-}
-
-enum QuestionType {
-  MULTIPLE_CHOICE // 객관식
-  SHORT_ANSWER    // 단답형
-  ESSAY           // 서술형
-}
-
-model Question {
-  id          String             @id @default(cuid())
-  bookCode    String             @db.VarChar(10)   // "1-1" ~ "3-2"
-  chapter     String             @db.VarChar(200)  // 대단원
-  section     String?            @db.VarChar(200)  // 중단원/코너
-  questionNum Int                                  // 문제 번호
-  pageNum     Int?                                 // PDF 페이지
-
-  difficulty  QuestionDifficulty
-  type        QuestionType
-  content     String             @db.Text
-  choices     Json?                                // ["①...", "②...", ...]
-  answer      String             @db.Text
-  explanation String?            @db.Text
-  sourceTag   String?            @db.VarChar(100)  // "핵심문제 익히기" 등
-  diagramSpec Json?                                // 구조화된 도형 명세 (다형성 JSON)
-  diagramSVG  String?            @db.Text          // 레거시 raw SVG (하위 호환)
-
-  // 4대 영역 & 계통도 연결
-  domain      String?            @db.VarChar(30)   // CALCULATION | UNDERSTANDING | PROBLEM_SOLVING | REASONING
-  conceptId   String?                              // 연결된 개념 (계통도 분석용)
-
-  concept        Concept?           @relation(fields: [conceptId], references: [id], onDelete: SetNull)
-  dailyQuestions DailyQuestion[]
-
-  // 중간테이블 역방향 관계
-  testQuestions         TestQuestion[]
-  quizSessionQuestions  QuizSessionQuestion[]
-  homeworkQuestions     HomeworkQuestion[]
-
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-
-  @@index([bookCode])
-  @@index([bookCode, chapter])
-  @@index([difficulty])
-  @@index([type])
-  @@index([domain])
-  @@index([conceptId])
-}
-
-// Concept Prerequisites (self-referencing many-to-many)
-model ConceptPrerequisite {
-  id              String  @id @default(cuid())
-  conceptId       String
-  prerequisiteId  String
-
-  concept       Concept @relation("HasPrerequisite", fields: [conceptId], references: [id], onDelete: Cascade)
-  prerequisite  Concept @relation("PrerequisiteFor", fields: [prerequisiteId], references: [id], onDelete: Cascade)
-
-  @@unique([conceptId, prerequisiteId])
-  @@index([conceptId])
-  @@index([prerequisiteId])
-}
-
-// FEAT-3: Test System
-model Test {
-  id                  String   @id @default(cuid())
-  seq                 Int      @unique @default(autoincrement())
-  title               String   @db.VarChar(200)
-  description         String?  @db.Text
-  grade               Int
-  testType            String   @db.VarChar(30)  // concept, cumulative, chapter_final
-  questionIds         Json                       // String[] - Question ID 배열
-  questionCount       Int
-  timeLimitMin        Int?                       // 제한 시간 (분)
-  shuffleOptions      Boolean  @default(false)
-  isActive            Boolean  @default(true)
-  maxAttempts         Int?                       // null=무제한, 1=재시험불가
-  defaultDueDate      DateTime?                  // 배정 시 기본 마감일
-  allowLateSubmission Boolean  @default(false)   // 기한 후 지각 제출 허용
-  createdBy           String
-  tenantId            String?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-
-  tenant          Tenant?           @relation(fields: [tenantId], references: [id])
-  creator         User              @relation("TestCreator", fields: [createdBy], references: [id])
-  attempts        TestAttempt[]
-  assignments     TestAssignment[]
-  levelTestConfig LevelTestConfig?
-  testQuestions   TestQuestion[]
-
-  @@index([grade])
-  @@index([createdBy])
-  @@index([isActive])
-  @@index([tenantId])
-}
-
-model TestAttempt {
-  id             String    @id @default(cuid())
-  testId         String
-  studentId      String
-  attemptNumber  Int       @default(1)
-  assignmentId   String?
-  startedAt      DateTime  @default(now())
-  completedAt    DateTime?
-  score          Int       @default(0)
-  maxScore       Int       @default(0)
-  correctCount   Int       @default(0)
-  totalCount     Int       @default(0)
-  xpEarned       Int       @default(0)
-  comboMax       Int       @default(0)
-  entryMethod    String    @default("online") @db.VarChar(20)
-  enteredBy      String?
-  createdAt      DateTime  @default(now())
-
-  test       Test              @relation(fields: [testId], references: [id], onDelete: Cascade)
-  student    User              @relation("StudentAttempts", fields: [studentId], references: [id], onDelete: Cascade)
-  assignment TestAssignment?   @relation(fields: [assignmentId], references: [id])
-  answers    AnswerLog[]
-
-  @@index([studentId])
-  @@index([testId])
-  @@index([studentId, completedAt])
-  @@index([assignmentId])
-}
-
-enum AssignmentStatus {
-  ASSIGNED
-  IN_PROGRESS
-  COMPLETED
-  OVERDUE
-}
-
-model TestAssignment {
-  id                  String           @id @default(cuid())
-  seq                 Int              @unique @default(autoincrement())
-  testId              String
-  studentId           String
-  assignedAt          DateTime         @default(now())
-  dueDate             DateTime?
-  allowLateSubmission Boolean          @default(false)
-  status              AssignmentStatus @default(ASSIGNED)
-  bestScore           Int?
-  bestAttemptId       String?
-  updatedAt           DateTime         @updatedAt
-
-  test     Test          @relation(fields: [testId], references: [id], onDelete: Cascade)
-  student  User          @relation("StudentAssignments", fields: [studentId], references: [id], onDelete: Cascade)
-  attempts TestAttempt[]
-
-  @@unique([testId, studentId])
-  @@index([studentId])
-  @@index([testId])
-  @@index([studentId, status])
-}
-
 model AnswerLog {
-  id               String   @id @default(cuid())
-  attemptId        String
-  questionId       String
-  selectedAnswer   String   @db.Text
-  isCorrect        Boolean
-  timeSpentSeconds Int
-  comboCount       Int      @default(0)
-  pointsEarned     Int      @default(0)
-  statusClassification String?  @db.VarChar(20)
-  flagged          Boolean  @default(false)
-  flagReason       String?  @db.VarChar(100)
-  hintUsed         Boolean  @default(false)
-  // 1차 오답 기록 (null이면 1차 정답이었음)
-  firstSelectedAnswer   String?  @db.Text
+  id                    String      @id
+  attemptId             String
+  questionId            String
+  selectedAnswer        String
+  isCorrect             Boolean
+  timeSpentSeconds      Int
+  comboCount            Int         @default(0)
+  pointsEarned          Int         @default(0)
+  createdAt             DateTime    @default(now())
+  flagReason            String?     @db.VarChar(100)
+  flagged               Boolean     @default(false)
+  statusClassification  String?     @db.VarChar(20)
+  hintUsed              Boolean     @default(false)
+  firstSelectedAnswer   String?
   firstTimeSpentSeconds Int?
-  createdAt        DateTime @default(now())
-
-  attempt  TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  TestAttempt           TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
 
   @@unique([attemptId, questionId])
   @@index([attemptId])
   @@index([questionId])
 }
 
-// FEAT: Support Inquiry System
-enum InquiryStatus {
-  PENDING
-  ANSWERED
+model ArithmeticAnswer {
+  id                String            @id
+  attemptId         String
+  problemIndex      Int
+  content           String
+  choices           Json
+  selectedAnswer    String
+  correctAnswer     String
+  isCorrect         Boolean
+  timeSpentSeconds  Int               @default(0)
+  comboCount        Int               @default(0)
+  pointsEarned      Int               @default(0)
+  createdAt         DateTime          @default(now())
+  ArithmeticAttempt ArithmeticAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@index([attemptId])
+}
+
+model ArithmeticAttempt {
+  id                     String                  @id
+  studentId              String
+  category               String                  @db.VarChar(30)
+  level                  String                  @db.VarChar(10)
+  problemCount           Int
+  correctCount           Int                     @default(0)
+  score                  Int                     @default(0)
+  xpEarned               Int                     @default(0)
+  comboMax               Int                     @default(0)
+  totalTimeSeconds       Int                     @default(0)
+  completedAt            DateTime?
+  createdAt              DateTime                @default(now())
+  homeworkDayIndex       Int?
+  homeworkPlanId         String?
+  ArithmeticAnswer       ArithmeticAnswer[]
+  ArithmeticHomeworkPlan ArithmeticHomeworkPlan? @relation(fields: [homeworkPlanId], references: [id])
+  User                   User                    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([homeworkPlanId, homeworkDayIndex])
+  @@index([studentId, createdAt(sort: Desc)])
+  @@index([studentId, homeworkPlanId])
+  @@index([studentId])
+}
+
+model ArithmeticHomeworkEnrollment {
+  id                     String                 @id
+  planId                 String
+  studentId              String
+  enrolledAt             DateTime               @default(now())
+  ArithmeticHomeworkPlan ArithmeticHomeworkPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  User                   User                   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, studentId])
+  @@index([planId])
+  @@index([studentId])
+}
+
+model ArithmeticHomeworkPlan {
+  id                           String                         @id
+  title                        String                         @db.VarChar(200)
+  createdBy                    String
+  categories                   Json
+  level                        String                         @db.VarChar(10)
+  dailyCount                   Int
+  totalDays                    Int
+  startDate                    DateTime                       @db.Date
+  dailyProblems                Json
+  isActive                     Boolean                        @default(true)
+  createdAt                    DateTime                       @default(now())
+  updatedAt                    DateTime
+  progressionMode              String                         @default("sequential") @db.VarChar(20)
+  weekdayMap                   Json?
+  passingScore                 Int                            @default(80)
+  retryOnFail                  Boolean                        @default(false)
+  maxRetries                   Int                            @default(3)
+  retryMode                    String                         @default("wrong_same") @db.VarChar(20)
+  seq                          Int                            @unique @default(autoincrement())
+  tenantId                     String?
+  ArithmeticAttempt            ArithmeticAttempt[]
+  ArithmeticHomeworkEnrollment ArithmeticHomeworkEnrollment[]
+  User                         User                           @relation(fields: [createdBy], references: [id])
+  Tenant                       Tenant?                        @relation(fields: [tenantId], references: [id])
+
+  @@index([createdBy])
+  @@index([isActive])
+  @@index([startDate])
+  @@index([tenantId])
+}
+
+model Badge {
+  id          String      @id
+  key         String      @unique @db.VarChar(50)
+  label       String      @db.VarChar(50)
+  description String      @db.VarChar(200)
+  icon        String      @db.VarChar(30)
+  color       String      @db.VarChar(20)
+  condition   Json
+  sortOrder   Int         @default(0)
+  UserBadge   UserBadge[]
+}
+
+model BlankAnswerLog {
+  id              String       @id
+  attemptId       String
+  blankPosition   Int
+  submittedAnswer String
+  correctAnswer   String
+  isCorrect       Boolean
+  BlankAttempt    BlankAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@index([attemptId])
+}
+
+model BlankAttempt {
+  id             String           @id
+  studentId      String
+  conceptId      String
+  stage          Stage
+  score          Int              @default(0)
+  allCorrect     Boolean          @default(false)
+  hintCount      Int              @default(0)
+  revealCount    Int              @default(0)
+  createdAt      DateTime         @default(now())
+  BlankAnswerLog BlankAnswerLog[]
+  Concept        Concept          @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  User           User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, conceptId, stage])
+  @@index([studentId, createdAt(sort: Desc)])
+}
+
+model BlankExercise {
+  id           String   @id
+  conceptId    String
+  level        Int
+  blanks       Json
+  templateText String
+  createdAt    DateTime @default(now())
+  Concept      Concept  @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+
+  @@index([conceptId, level])
+}
+
+model Classroom {
+  id        String   @id
+  name      String   @db.VarChar(50)
+  grade     Int?
+  teacherId String?
+  createdAt DateTime @default(now())
+  tenantId  String?
+  Tenant    Tenant?  @relation(fields: [tenantId], references: [id])
+  User      User[]
+
+  @@index([teacherId])
+  @@index([tenantId])
+}
+
+model Concept {
+  id                                                              String                  @id
+  subjectId                                                       String
+  title                                                           String                  @db.VarChar(200)
+  fullContent                                                     String
+  visualAssets                                                    Json?
+  sortOrder                                                       Int                     @default(0)
+  createdAt                                                       DateTime                @default(now())
+  updatedAt                                                       DateTime
+  category                                                        String?                 @db.VarChar(20)
+  conceptCode                                                     String?                 @unique @db.VarChar(20)
+  grade                                                           String?                 @db.VarChar(20)
+  keywords                                                        String?
+  part                                                            String?                 @db.VarChar(20)
+  chapter                                                         String?                 @db.VarChar(100)
+  section                                                         String?                 @db.VarChar(100)
+  sectionSub                                                      String?                 @db.VarChar(100)
+  semester                                                        Int?
+  source                                                          String?                 @db.VarChar(200)
+  BlankAttempt                                                    BlankAttempt[]
+  BlankExercise                                                   BlankExercise[]
+  Subject                                                         Subject                 @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  ConceptPrerequisite_ConceptPrerequisite_conceptIdToConcept      ConceptPrerequisite[]   @relation("ConceptPrerequisite_conceptIdToConcept")
+  ConceptPrerequisite_ConceptPrerequisite_prerequisiteIdToConcept ConceptPrerequisite[]   @relation("ConceptPrerequisite_prerequisiteIdToConcept")
+  LearningCourseConcept                                           LearningCourseConcept[]
+  LearningProgress                                                LearningProgress[]
+  Question                                                        Question[]
+
+  @@index([conceptCode])
+  @@index([subjectId])
+  @@index([subjectId, sortOrder])
+}
+
+model ConceptHomeworkEnrollment {
+  id                  String              @id
+  planId              String
+  studentId           String
+  enrolledAt          DateTime            @default(now())
+  ConceptHomeworkPlan ConceptHomeworkPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  User                User                @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, studentId])
+  @@index([planId])
+  @@index([studentId])
+}
+
+model ConceptHomeworkPlan {
+  id                        String                      @id
+  seq                       Int                         @unique @default(autoincrement())
+  title                     String                      @db.VarChar(200)
+  createdBy                 String
+  startDate                 DateTime                    @db.Date
+  totalDays                 Int
+  dailyConcepts             Json
+  requiredStage             Stage                       @default(BLANK_FULL)
+  isActive                  Boolean                     @default(true)
+  createdAt                 DateTime                    @default(now())
+  updatedAt                 DateTime
+  tenantId                  String?
+  ConceptHomeworkEnrollment ConceptHomeworkEnrollment[]
+  User                      User                        @relation(fields: [createdBy], references: [id])
+  Tenant                    Tenant?                     @relation(fields: [tenantId], references: [id])
+
+  @@index([createdBy])
+  @@index([isActive])
+  @@index([startDate])
+  @@index([tenantId])
+}
+
+model ConceptMemo {
+  id        String   @id
+  userId    String
+  conceptId String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, conceptId])
+  @@index([userId])
+}
+
+model ConceptPrerequisite {
+  id                                                  String  @id
+  conceptId                                           String
+  prerequisiteId                                      String
+  Concept_ConceptPrerequisite_conceptIdToConcept      Concept @relation("ConceptPrerequisite_conceptIdToConcept", fields: [conceptId], references: [id], onDelete: Cascade)
+  Concept_ConceptPrerequisite_prerequisiteIdToConcept Concept @relation("ConceptPrerequisite_prerequisiteIdToConcept", fields: [prerequisiteId], references: [id], onDelete: Cascade)
+
+  @@unique([conceptId, prerequisiteId])
+  @@index([conceptId])
+  @@index([prerequisiteId])
+}
+
+model DailyMission {
+  id          String   @id
+  studentId   String
+  date        DateTime @db.Date
+  missions    Json
+  allComplete Boolean  @default(false)
+  xpAwarded   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+  User        User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, date])
+  @@index([studentId, date])
+}
+
+model DailyQuestion {
+  id                   String                 @id
+  questionId           String
+  date                 DateTime               @db.Date
+  createdBy            String?
+  createdAt            DateTime               @default(now())
+  tenantId             String?
+  Question             Question               @relation(fields: [questionId], references: [id])
+  Tenant               Tenant?                @relation(fields: [tenantId], references: [id])
+  DailyQuestionAttempt DailyQuestionAttempt[]
+
+  @@unique([date, tenantId])
+  @@index([date])
+  @@index([tenantId])
+}
+
+model DailyQuestionAttempt {
+  id              String        @id
+  dailyQuestionId String
+  studentId       String
+  selectedAnswer  String
+  isCorrect       Boolean
+  createdAt       DateTime      @default(now())
+  DailyQuestion   DailyQuestion @relation(fields: [dailyQuestionId], references: [id], onDelete: Cascade)
+  User            User          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([dailyQuestionId, studentId])
+  @@index([studentId])
+}
+
+model DiagnosticResult {
+  id              String   @id
+  attemptId       String   @unique
+  studentId       String
+  diagnosticType  String   @db.VarChar(20)
+  recommendLevel  String   @db.VarChar(20)
+  weakAreas       Json
+  strongAreas     Json
+  overallAccuracy Int
+  createdAt       DateTime @default(now())
+  domainScores    Json?
+
+  @@index([studentId, diagnosticType])
+  @@index([studentId])
+}
+
+model FeatureFlag {
+  id        String   @id
+  key       String   @db.VarChar(50)
+  enabled   Boolean  @default(true)
+  label     String   @db.VarChar(100)
+  updatedAt DateTime
+  tenantId  String?
+  Tenant    Tenant?  @relation(fields: [tenantId], references: [id])
+
+  @@unique([key, tenantId])
+  @@index([tenantId])
+}
+
+model HomeworkQuestion {
+  id                   String               @id
+  planId               String
+  questionId           String
+  dayIndex             Int
+  sortOrder            Int
+  QuestionHomeworkPlan QuestionHomeworkPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  Question             Question             @relation(fields: [questionId], references: [id])
+
+  @@index([planId, dayIndex, sortOrder])
+  @@index([questionId])
 }
 
 model Inquiry {
-  id         String        @id @default(cuid())
-  userId     String
-  title      String        @db.VarChar(200)
-  category   String        @db.VarChar(50)
-  content    String        @db.Text
-  status     InquiryStatus @default(PENDING)
-  reply      String?       @db.Text
-  repliedAt  DateTime?
-  repliedBy  String?
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+  id                           String        @id
+  userId                       String
+  title                        String        @db.VarChar(200)
+  category                     String        @db.VarChar(50)
+  content                      String
+  status                       InquiryStatus @default(PENDING)
+  reply                        String?
+  repliedAt                    DateTime?
+  repliedBy                    String?
+  createdAt                    DateTime      @default(now())
+  updatedAt                    DateTime
+  User_Inquiry_repliedByToUser User?         @relation("Inquiry_repliedByToUser", fields: [repliedBy], references: [id])
+  User_Inquiry_userIdToUser    User          @relation("Inquiry_userIdToUser", fields: [userId], references: [id])
 
-  user       User          @relation("InquiryAuthor", fields: [userId], references: [id])
-  replier    User?         @relation("InquiryReplier", fields: [repliedBy], references: [id])
-
-  @@index([userId])
   @@index([status])
+  @@index([userId])
 }
 
-// FEAT: Diagnostic Test Results
-model DiagnosticResult {
-  id              String   @id @default(cuid())
-  attemptId       String   @unique
-  studentId       String
-  diagnosticType  String   @db.VarChar(20)  // ENTRANCE, UNIT, LEVEL
-  recommendLevel  String   @db.VarChar(20)  // 추천 레벨
-  weakAreas       Json                       // 취약 영역 배열 [{chapter, accuracy}]
-  strongAreas     Json                       // 우수 영역 배열
-  overallAccuracy Int                        // 전체 정답률 (%)
-  domainScores    Json?                      // 4대 영역 점수 { CALCULATION: {total,correct,accuracy}, ... }
-  createdAt       DateTime @default(now())
+model LearningCourse {
+  id                       String                     @id
+  seq                      Int                        @unique @default(autoincrement())
+  title                    String                     @db.VarChar(200)
+  description              String?
+  createdBy                String
+  isActive                 Boolean                    @default(true)
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime
+  tenantId                 String?
+  User                     User                       @relation(fields: [createdBy], references: [id])
+  Tenant                   Tenant?                    @relation(fields: [tenantId], references: [id])
+  LearningCourseConcept    LearningCourseConcept[]
+  LearningCourseEnrollment LearningCourseEnrollment[]
 
-  @@index([studentId])
-  @@index([studentId, diagnosticType])
+  @@index([createdBy])
+  @@index([isActive])
+  @@index([tenantId])
 }
 
-// FEAT: Level Test Configuration
+model LearningCourseConcept {
+  id             String         @id
+  courseId       String
+  conceptId      String
+  sortOrder      Int            @default(0)
+  Concept        Concept        @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  LearningCourse LearningCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, conceptId])
+  @@index([courseId, sortOrder])
+}
+
+model LearningCourseEnrollment {
+  id             String         @id
+  courseId       String
+  studentId      String
+  sortOrder      Int            @default(0)
+  status         CourseStatus   @default(LOCKED)
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime
+  LearningCourse LearningCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  User           User           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, studentId])
+  @@index([studentId, sortOrder])
+  @@index([studentId, status])
+}
+
+model LearningProgress {
+  id            String    @id
+  userId        String
+  conceptId     String
+  stage         Stage
+  completed     Boolean   @default(false)
+  attempts      Int       @default(0)
+  score         Int?
+  startedAt     DateTime  @default(now())
+  completedAt   DateTime?
+  updatedAt     DateTime
+  submittedText String?
+  hintCount     Int       @default(0)
+  revealCount   Int       @default(0)
+  usedReveal    Boolean   @default(false)
+  Concept       Concept   @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  User          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, conceptId, stage])
+  @@index([userId, completed])
+  @@index([userId, conceptId])
+  @@index([userId, stage])
+}
+
 model LevelTestConfig {
-  id              String @id @default(cuid())
-  testId          String @unique
-  questionDomains  Json   // { [questionId]: "CALCULATION"|"UNDERSTANDING"|"PROBLEM_SOLVING"|"REASONING" }
-  questionsPerPage Int?   // null = 자동, 숫자 = 페이지당 고정 문제 수
-  spacing          String? @db.VarChar(10) // 문제 간 여백: compact, normal, wide (기본 normal)
-
-  test Test @relation(fields: [testId], references: [id], onDelete: Cascade)
+  id               String  @id
+  testId           String  @unique
+  questionDomains  Json
+  questionsPerPage Int?
+  spacing          String? @db.VarChar(10)
+  Test             Test    @relation(fields: [testId], references: [id], onDelete: Cascade)
 
   @@index([testId])
 }
 
-// FEAT: Parent & Report System
 model Parent {
-  id        String   @id @default(cuid())
+  id        String   @id
   studentId String
   name      String   @db.VarChar(50)
   phone     String   @db.VarChar(20)
@@ -539,327 +482,56 @@ model Parent {
   @@index([studentId])
 }
 
-model ReportHistory {
-  id        String   @id @default(cuid())
-  studentId String
-  type      String   @db.VarChar(30)  // WEEKLY, TEST_RESULT, DIAGNOSTIC
-  content   Json                       // 리포트 내용 JSON
-  sentAt    DateTime @default(now())
-  channel   String   @db.VarChar(20)  // KAKAO, SMS, EMAIL
+model PointTransaction {
+  id          String               @id
+  userId      String
+  amount      Int
+  type        PointTransactionType
+  reason      String               @db.VarChar(50)
+  referenceId String?
+  createdAt   DateTime             @default(now())
+  User        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([studentId])
-  @@index([studentId, type])
-}
-
-// FEAT: Real-time Quiz Battle
-enum QuizStatus {
-  WAITING
-  ACTIVE
-  COMPLETED
-}
-
-model QuizSession {
-  id          String     @id @default(cuid())
-  title       String     @db.VarChar(200)
-  hostId      String
-  questionIds Json                          // String[]
-  status      QuizStatus @default(WAITING)
-  currentQ          Int        @default(0)
-  joinCode          String     @unique @db.VarChar(6)
-  startedAt         DateTime?
-  endedAt           DateTime?
-  questionChangedAt DateTime?              // 문제 전환 시각 (클라이언트 시간 보정용)
-  tenantId          String?
-  createdAt         DateTime   @default(now())
-
-  tenant           Tenant?               @relation(fields: [tenantId], references: [id])
-  participants     QuizParticipant[]
-  sessionQuestions QuizSessionQuestion[]
-
-  @@index([hostId])
-  @@index([joinCode])
-  @@index([status])
-  @@index([tenantId])
-}
-
-model QuizParticipant {
-  id           String @id @default(cuid())
-  sessionId    String
-  studentId    String
-  studentName  String @db.VarChar(50)
-  score        Int    @default(0)
-  correctCount Int    @default(0)
-  rank         Int?
-
-  session QuizSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  answers QuizAnswerLog[]
-
-  @@unique([sessionId, studentId])
-  @@index([sessionId])
-}
-
-// School Information
-model School {
-  id          String   @id @default(cuid())
-  name        String   @unique @db.VarChar(100)
-  city        String   @db.VarChar(50)
-  district    String   @db.VarChar(50)
-  schoolType  String   @db.VarChar(20)
-  createdAt   DateTime @default(now())
-
-  @@index([city, district])
-  @@index([schoolType])
-}
-
-// FEAT: Arithmetic Practice Results
-model ArithmeticAttempt {
-  id               String    @id @default(cuid())
-  studentId        String
-  category         String    @db.VarChar(30)
-  level            String    @db.VarChar(10)
-  problemCount     Int
-  correctCount     Int       @default(0)
-  score            Int       @default(0)
-  xpEarned         Int       @default(0)
-  comboMax         Int       @default(0)
-  totalTimeSeconds Int       @default(0)
-  completedAt      DateTime?
-  createdAt        DateTime  @default(now())
-
-  homeworkPlanId   String?
-  homeworkDayIndex Int?
-
-  student      User                    @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  answers      ArithmeticAnswer[]
-  homeworkPlan ArithmeticHomeworkPlan?  @relation("HomeworkAttempts", fields: [homeworkPlanId], references: [id])
-
-  @@index([studentId])
-  @@index([studentId, createdAt(sort: Desc)])
-  @@index([homeworkPlanId, homeworkDayIndex])
-  @@index([studentId, homeworkPlanId])
-}
-
-model ArithmeticAnswer {
-  id               String   @id @default(cuid())
-  attemptId        String
-  problemIndex     Int
-  content          String   @db.Text
-  choices          Json
-  selectedAnswer   String   @db.Text
-  correctAnswer    String   @db.Text
-  isCorrect        Boolean
-  timeSpentSeconds Int      @default(0)
-  comboCount       Int      @default(0)
-  pointsEarned     Int      @default(0)
-  createdAt        DateTime @default(now())
-
-  attempt ArithmeticAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
-
-  @@index([attemptId])
-}
-
-// FEAT: Arithmetic Homework Plans
-model ArithmeticHomeworkPlan {
-  id              String   @id @default(cuid())
-  seq             Int      @unique @default(autoincrement())
-  title           String   @db.VarChar(200)
-  createdBy       String
-  categories      Json     // ArithmeticCategory[]
-  level           String   @db.VarChar(10)
-  dailyCount      Int
-  totalDays       Int
-  startDate       DateTime @db.Date
-  dailyProblems   Json     // GeneratedProblem[][]
-  progressionMode String   @default("sequential") @db.VarChar(20) // sequential | round_robin | weekday
-  weekdayMap      Json?    // weekday mode: { "1": "add_1digit", ... } (0=Sun...6=Sat)
-  passingScore    Int      @default(80)    // 통과 점수 (정답률 %)
-  retryOnFail     Boolean  @default(false) // 미통과 시 재시도 필수
-  retryMode       String   @default("wrong_same") @db.VarChar(20) // wrong_same | wrong_new | all_same | all_new
-  maxRetries      Int      @default(3)     // 최대 재시도 횟수
-  isActive        Boolean  @default(true)
-  tenantId        String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  tenant      Tenant?                       @relation(fields: [tenantId], references: [id])
-  creator     User                          @relation("HomeworkPlanCreator", fields: [createdBy], references: [id])
-  enrollments ArithmeticHomeworkEnrollment[]
-  attempts    ArithmeticAttempt[]           @relation("HomeworkAttempts")
-
-  @@index([createdBy])
-  @@index([isActive])
-  @@index([startDate])
-  @@index([tenantId])
-}
-
-model ArithmeticHomeworkEnrollment {
-  id         String   @id @default(cuid())
-  planId     String
-  studentId  String
-  enrolledAt DateTime @default(now())
-
-  plan    ArithmeticHomeworkPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-  student User                  @relation("HomeworkEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
-
-  @@unique([planId, studentId])
-  @@index([studentId])
-  @@index([planId])
-}
-
-// FEAT: Concept Homework Plans
-model ConceptHomeworkPlan {
-  id            String   @id @default(cuid())
-  seq           Int      @unique @default(autoincrement())
-  title         String   @db.VarChar(200)
-  createdBy     String
-  startDate     DateTime @db.Date
-  totalDays     Int
-  dailyConcepts Json     // string[][] - 날짜별 개념 ID 배열
-  requiredStage Stage    @default(BLANK_FULL) // 완료로 인정할 최소 단계
-  isActive      Boolean  @default(true)
-  tenantId      String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  tenant      Tenant?                     @relation(fields: [tenantId], references: [id])
-  creator     User                        @relation("ConceptHomeworkPlanCreator", fields: [createdBy], references: [id])
-  enrollments ConceptHomeworkEnrollment[]
-
-  @@index([createdBy])
-  @@index([isActive])
-  @@index([startDate])
-  @@index([tenantId])
-}
-
-model ConceptHomeworkEnrollment {
-  id         String   @id @default(cuid())
-  planId     String
-  studentId  String
-  enrolledAt DateTime @default(now())
-
-  plan    ConceptHomeworkPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-  student User               @relation("ConceptHomeworkEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
-
-  @@unique([planId, studentId])
-  @@index([studentId])
-  @@index([planId])
-}
-
-// FEAT: Question Homework Plans (문제은행 숙제)
-model QuestionHomeworkPlan {
-  id              String   @id @default(cuid())
-  seq             Int      @unique @default(autoincrement())
-  title           String   @db.VarChar(200)
-  createdBy       String
-  startDate       DateTime @db.Date
-  totalDays       Int
-  dailyQuestions  Json     // string[][] - 날짜별 문제 ID 배열
-  passingScore    Int      @default(80)
-  isActive        Boolean  @default(true)
-  tenantId        String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  tenant           Tenant?                       @relation(fields: [tenantId], references: [id])
-  creator          User                          @relation("QuestionHomeworkPlanCreator", fields: [createdBy], references: [id])
-  enrollments      QuestionHomeworkEnrollment[]
-  attempts         QuestionHomeworkAttempt[]
-  homeworkQuestions HomeworkQuestion[]
-
-  @@index([createdBy])
-  @@index([isActive])
-  @@index([startDate])
-  @@index([tenantId])
-}
-
-model QuestionHomeworkEnrollment {
-  id         String   @id @default(cuid())
-  planId     String
-  studentId  String
-  enrolledAt DateTime @default(now())
-
-  plan    QuestionHomeworkPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-  student User                @relation("QuestionHomeworkEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
-
-  @@unique([planId, studentId])
-  @@index([studentId])
-  @@index([planId])
-}
-
-model QuestionHomeworkAttempt {
-  id           String    @id @default(cuid())
-  planId       String
-  studentId    String
-  dayIndex     Int
-  answers      Json      // { questionId: string, selectedAnswer: string, isCorrect: boolean }[]
-  correctCount Int       @default(0)
-  totalCount   Int       @default(0)
-  score        Int       @default(0) // 정답률 %
-  completedAt  DateTime?
-  createdAt    DateTime  @default(now())
-
-  plan    QuestionHomeworkPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-  student User               @relation(fields: [studentId], references: [id], onDelete: Cascade)
-
-  @@index([planId, studentId, dayIndex])
-  @@index([studentId])
-}
-
-// FEAT: Quiz Answer Detail Log
-model QuizAnswerLog {
-  id               String   @id @default(cuid())
-  participantId    String
-  questionId       String
-  questionIndex    Int
-  selectedAnswer   String   @db.Text
-  correctAnswer    String   @db.Text
-  isCorrect        Boolean
-  timeSpentSeconds Int      @default(0)
-  pointsEarned     Int      @default(0)
-  createdAt        DateTime @default(now())
-
-  participant QuizParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
-
-  @@unique([participantId, questionId])
-  @@index([participantId])
-}
-
-// FEAT: Student Concept Memo
-model ConceptMemo {
-  id        String   @id @default(cuid())
-  userId    String
-  conceptId String
-  content   String   @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, conceptId])
+  @@index([userId, createdAt(sort: Desc)])
   @@index([userId])
 }
 
-// FEAT: Teacher Comment on Student Analytics
-model TeacherComment {
-  id        String   @id @default(cuid())
-  teacherId String
-  studentId String
-  month     String   @db.VarChar(7)
-  content   String   @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Question {
+  id                  String                @id
+  bookCode            String                @db.VarChar(10)
+  chapter             String                @db.VarChar(200)
+  section             String?               @db.VarChar(200)
+  questionNum         Int
+  pageNum             Int?
+  difficulty          QuestionDifficulty
+  type                QuestionType
+  content             String
+  choices             Json?
+  answer              String
+  explanation         String?
+  sourceTag           String?               @db.VarChar(100)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime
+  conceptId           String?
+  domain              String?               @db.VarChar(30)
+  diagramSVG          String?
+  diagramSpec         Json?
+  DailyQuestion       DailyQuestion[]
+  HomeworkQuestion    HomeworkQuestion[]
+  Concept             Concept?              @relation(fields: [conceptId], references: [id])
+  QuizSessionQuestion QuizSessionQuestion[]
+  TestQuestion        TestQuestion[]
 
-  teacher User @relation("TeacherComments", fields: [teacherId], references: [id], onDelete: Cascade)
-  student User @relation("StudentComments", fields: [studentId], references: [id], onDelete: Cascade)
-
-  @@unique([teacherId, studentId, month])
-  @@index([teacherId])
-  @@index([studentId])
+  @@index([bookCode, chapter])
+  @@index([bookCode])
+  @@index([conceptId])
+  @@index([difficulty])
+  @@index([domain])
+  @@index([type])
 }
 
-// FEAT: AI Question Generation Log
 model QuestionGenerationLog {
-  id           String   @id @default(cuid())
+  id           String   @id
   teacherId    String
   mode         String   @db.VarChar(20)
   schoolLevel  String?  @db.VarChar(20)
@@ -871,239 +543,476 @@ model QuestionGenerationLog {
   problemType  String?  @db.VarChar(20)
   questionId   String?
   success      Boolean
-  errorMessage String?  @db.Text
+  errorMessage String?
   createdAt    DateTime @default(now())
+  User         User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 
-  teacher User @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-
-  @@index([teacherId])
   @@index([teacherId, createdAt(sort: Desc)])
+  @@index([teacherId])
 }
 
-// FEAT: Feature Flags (Admin 토글, 테넌트별 오버라이드 지원)
-model FeatureFlag {
-  id        String   @id @default(cuid())
-  key       String   @db.VarChar(50)
-  enabled   Boolean  @default(true)
-  label     String   @db.VarChar(100)
-  tenantId  String?                          // null = 글로벌 기본값, 값 있으면 테넌트 전용
-  updatedAt DateTime @updatedAt
+model QuestionHomeworkAttempt {
+  id                   String               @id
+  planId               String
+  studentId            String
+  dayIndex             Int
+  answers              Json
+  correctCount         Int                  @default(0)
+  totalCount           Int                  @default(0)
+  score                Int                  @default(0)
+  completedAt          DateTime?
+  createdAt            DateTime             @default(now())
+  QuestionHomeworkPlan QuestionHomeworkPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  User                 User                 @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
-  tenant Tenant? @relation(fields: [tenantId], references: [id])
+  @@index([planId, studentId, dayIndex])
+  @@index([studentId])
+}
 
-  @@unique([key, tenantId])  // 테넌트별 키 고유
+model QuestionHomeworkEnrollment {
+  id                   String               @id
+  planId               String
+  studentId            String
+  enrolledAt           DateTime             @default(now())
+  QuestionHomeworkPlan QuestionHomeworkPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  User                 User                 @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, studentId])
+  @@index([planId])
+  @@index([studentId])
+}
+
+model QuestionHomeworkPlan {
+  id                         String                       @id
+  seq                        Int                          @unique @default(autoincrement())
+  title                      String                       @db.VarChar(200)
+  createdBy                  String
+  startDate                  DateTime                     @db.Date
+  totalDays                  Int
+  dailyQuestions             Json
+  passingScore               Int                          @default(80)
+  isActive                   Boolean                      @default(true)
+  createdAt                  DateTime                     @default(now())
+  updatedAt                  DateTime
+  tenantId                   String?
+  HomeworkQuestion           HomeworkQuestion[]
+  QuestionHomeworkAttempt    QuestionHomeworkAttempt[]
+  QuestionHomeworkEnrollment QuestionHomeworkEnrollment[]
+  User                       User                         @relation(fields: [createdBy], references: [id])
+  Tenant                     Tenant?                      @relation(fields: [tenantId], references: [id])
+
+  @@index([createdBy])
+  @@index([isActive])
+  @@index([startDate])
   @@index([tenantId])
 }
 
-// FEAT: 연산 타임어택 최고기록
+model QuizAnswerLog {
+  id               String          @id
+  participantId    String
+  questionId       String
+  questionIndex    Int
+  selectedAnswer   String
+  correctAnswer    String
+  isCorrect        Boolean
+  timeSpentSeconds Int             @default(0)
+  pointsEarned     Int             @default(0)
+  createdAt        DateTime        @default(now())
+  QuizParticipant  QuizParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@unique([participantId, questionId])
+  @@index([participantId])
+}
+
+model QuizParticipant {
+  id            String          @id
+  sessionId     String
+  studentId     String
+  studentName   String          @db.VarChar(50)
+  score         Int             @default(0)
+  correctCount  Int             @default(0)
+  rank          Int?
+  QuizAnswerLog QuizAnswerLog[]
+  QuizSession   QuizSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, studentId])
+  @@index([sessionId])
+}
+
+model QuizSession {
+  id                  String                @id
+  title               String                @db.VarChar(200)
+  hostId              String
+  questionIds         Json
+  status              QuizStatus            @default(WAITING)
+  currentQ            Int                   @default(0)
+  joinCode            String                @unique @db.VarChar(6)
+  startedAt           DateTime?
+  endedAt             DateTime?
+  createdAt           DateTime              @default(now())
+  questionChangedAt   DateTime?
+  tenantId            String?
+  QuizParticipant     QuizParticipant[]
+  Tenant              Tenant?               @relation(fields: [tenantId], references: [id])
+  QuizSessionQuestion QuizSessionQuestion[]
+
+  @@index([hostId])
+  @@index([joinCode])
+  @@index([status])
+  @@index([tenantId])
+}
+
+model QuizSessionQuestion {
+  id          String      @id
+  sessionId   String
+  questionId  String
+  sortOrder   Int
+  Question    Question    @relation(fields: [questionId], references: [id])
+  QuizSession QuizSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, questionId])
+  @@index([questionId])
+  @@index([sessionId, sortOrder])
+}
+
+model ReportHistory {
+  id        String   @id
+  studentId String
+  type      String   @db.VarChar(30)
+  content   Json
+  sentAt    DateTime @default(now())
+  channel   String   @db.VarChar(20)
+
+  @@index([studentId])
+  @@index([studentId, type])
+}
+
+model School {
+  id         String   @id
+  name       String   @unique @db.VarChar(100)
+  city       String   @db.VarChar(50)
+  district   String   @db.VarChar(50)
+  schoolType String   @db.VarChar(20)
+  createdAt  DateTime @default(now())
+
+  @@index([city, district])
+  @@index([schoolType])
+}
+
+model Session {
+  id           String   @id
+  userId       String
+  sessionToken String   @unique
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model StudentProfile {
+  id             String    @id
+  userId         String    @unique
+  totalXp        Int       @default(0)
+  level          Int       @default(1)
+  currentStreak  Int       @default(0)
+  longestStreak  Int       @default(0)
+  lastActiveAt   DateTime?
+  updatedAt      DateTime
+  conceptNavMode String    @default("curriculum")
+  notifCheckedAt DateTime?
+  User           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([totalXp(sort: Desc), level(sort: Desc)])
+}
+
+model Subject {
+  id          String    @id
+  title       String    @db.VarChar(200)
+  description String?
+  gradeLevel  Int
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  Concept     Concept[]
+
+  @@index([gradeLevel])
+  @@index([sortOrder])
+}
+
+model TeacherComment {
+  id                                  String   @id
+  teacherId                           String
+  studentId                           String
+  month                               String   @db.VarChar(7)
+  content                             String
+  createdAt                           DateTime @default(now())
+  updatedAt                           DateTime
+  User_TeacherComment_studentIdToUser User     @relation("TeacherComment_studentIdToUser", fields: [studentId], references: [id], onDelete: Cascade)
+  User_TeacherComment_teacherIdToUser User     @relation("TeacherComment_teacherIdToUser", fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, studentId, month])
+  @@index([studentId])
+  @@index([teacherId])
+}
+
+model Tenant {
+  id                     String                   @id
+  slug                   String                   @unique @db.VarChar(50)
+  name                   String                   @db.VarChar(100)
+  logo                   String?                  @db.VarChar(500)
+  settings               Json?
+  isActive               Boolean                  @default(true)
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime
+  ArithmeticHomeworkPlan ArithmeticHomeworkPlan[]
+  Classroom              Classroom[]
+  ConceptHomeworkPlan    ConceptHomeworkPlan[]
+  DailyQuestion          DailyQuestion[]
+  FeatureFlag            FeatureFlag[]
+  LearningCourse         LearningCourse[]
+  QuestionHomeworkPlan   QuestionHomeworkPlan[]
+  QuizSession            QuizSession[]
+  Test                   Test[]
+  User                   User[]
+
+  @@index([isActive])
+  @@index([slug])
+}
+
+model Test {
+  id                  String           @id
+  title               String           @db.VarChar(200)
+  description         String?
+  grade               Int
+  testType            String           @db.VarChar(30)
+  questionIds         Json
+  questionCount       Int
+  timeLimitMin        Int?
+  shuffleOptions      Boolean          @default(false)
+  isActive            Boolean          @default(true)
+  createdBy           String
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime
+  allowLateSubmission Boolean          @default(false)
+  defaultDueDate      DateTime?
+  maxAttempts         Int?
+  seq                 Int              @unique @default(autoincrement())
+  tenantId            String?
+  LevelTestConfig     LevelTestConfig?
+  User                User             @relation(fields: [createdBy], references: [id])
+  Tenant              Tenant?          @relation(fields: [tenantId], references: [id])
+  TestAssignment      TestAssignment[]
+  TestAttempt         TestAttempt[]
+  TestQuestion        TestQuestion[]
+
+  @@index([createdBy])
+  @@index([grade])
+  @@index([isActive])
+  @@index([tenantId])
+}
+
+model TestAssignment {
+  id                  String           @id
+  testId              String
+  studentId           String
+  assignedAt          DateTime         @default(now())
+  dueDate             DateTime?
+  allowLateSubmission Boolean          @default(false)
+  status              AssignmentStatus @default(ASSIGNED)
+  bestScore           Int?
+  bestAttemptId       String?
+  updatedAt           DateTime
+  seq                 Int              @unique @default(autoincrement())
+  User                User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  Test                Test             @relation(fields: [testId], references: [id], onDelete: Cascade)
+  TestAttempt         TestAttempt[]
+
+  @@unique([testId, studentId])
+  @@index([studentId])
+  @@index([studentId, status])
+  @@index([testId])
+}
+
+model TestAttempt {
+  id             String          @id
+  testId         String
+  studentId      String
+  startedAt      DateTime        @default(now())
+  completedAt    DateTime?
+  score          Int             @default(0)
+  maxScore       Int             @default(0)
+  correctCount   Int             @default(0)
+  totalCount     Int             @default(0)
+  xpEarned       Int             @default(0)
+  comboMax       Int             @default(0)
+  createdAt      DateTime        @default(now())
+  assignmentId   String?
+  attemptNumber  Int             @default(1)
+  enteredBy      String?
+  entryMethod    String          @default("online") @db.VarChar(20)
+  AnswerLog      AnswerLog[]
+  TestAssignment TestAssignment? @relation(fields: [assignmentId], references: [id])
+  User           User            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  Test           Test            @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  @@index([assignmentId])
+  @@index([studentId, completedAt])
+  @@index([studentId])
+  @@index([testId])
+}
+
+model TestQuestion {
+  id         String   @id
+  testId     String
+  questionId String
+  sortOrder  Int
+  Question   Question @relation(fields: [questionId], references: [id])
+  Test       Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  @@unique([testId, questionId])
+  @@index([questionId])
+  @@index([testId, sortOrder])
+}
+
 model TimeAttackRecord {
-  id           String   @id @default(cuid())
+  id           String   @id
   studentId    String
   category     String   @db.VarChar(30)
   level        String   @db.VarChar(10)
   correctCount Int
-  totalTime    Int      // 제한시간(초), 항상 30
+  totalTime    Int
   createdAt    DateTime @default(now())
+  User         User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
-  student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
-
-  @@index([studentId, category, level])
   @@index([correctCount(sort: Desc)])
+  @@index([studentId, category, level])
 }
 
-// FEAT: 오늘의 한 문제
-model DailyQuestion {
-  id         String   @id @default(cuid())
-  questionId String
-  date       DateTime @db.Date
-  createdBy  String?
-  tenantId   String?
-  createdAt  DateTime @default(now())
+model User {
+  id                                            String                         @id
+  username                                      String                         @unique @db.VarChar(50)
+  passwordHash                                  String                         @db.VarChar(255)
+  name                                          String                         @db.VarChar(50)
+  role                                          Role                           @default(STUDENT)
+  grade                                         Int?
+  profileImage                                  String?                        @db.VarChar(500)
+  createdAt                                     DateTime                       @default(now())
+  updatedAt                                     DateTime
+  deletedAt                                     DateTime?
+  seq                                           Int                            @unique @default(autoincrement())
+  classroomId                                   String?
+  address                                       String?                        @db.VarChar(200)
+  birthDate                                     DateTime?
+  email                                         String?                        @db.VarChar(100)
+  notes                                         String?
+  parentName                                    String?                        @db.VarChar(50)
+  parentPhone                                   String?                        @db.VarChar(20)
+  phone                                         String?                        @db.VarChar(20)
+  school                                        String?                        @db.VarChar(100)
+  startDate                                     DateTime?
+  tenantId                                      String?
+  ArithmeticAttempt                             ArithmeticAttempt[]
+  ArithmeticHomeworkEnrollment                  ArithmeticHomeworkEnrollment[]
+  ArithmeticHomeworkPlan                        ArithmeticHomeworkPlan[]
+  BlankAttempt                                  BlankAttempt[]
+  ConceptHomeworkEnrollment                     ConceptHomeworkEnrollment[]
+  ConceptHomeworkPlan                           ConceptHomeworkPlan[]
+  ConceptMemo                                   ConceptMemo[]
+  DailyMission                                  DailyMission[]
+  DailyQuestionAttempt                          DailyQuestionAttempt[]
+  Inquiry_Inquiry_repliedByToUser               Inquiry[]                      @relation("Inquiry_repliedByToUser")
+  Inquiry_Inquiry_userIdToUser                  Inquiry[]                      @relation("Inquiry_userIdToUser")
+  LearningCourse                                LearningCourse[]
+  LearningCourseEnrollment                      LearningCourseEnrollment[]
+  LearningProgress                              LearningProgress[]
+  PointTransaction                              PointTransaction[]
+  QuestionGenerationLog                         QuestionGenerationLog[]
+  QuestionHomeworkAttempt                       QuestionHomeworkAttempt[]
+  QuestionHomeworkEnrollment                    QuestionHomeworkEnrollment[]
+  QuestionHomeworkPlan                          QuestionHomeworkPlan[]
+  Session                                       Session[]
+  StudentProfile                                StudentProfile?
+  TeacherComment_TeacherComment_studentIdToUser TeacherComment[]               @relation("TeacherComment_studentIdToUser")
+  TeacherComment_TeacherComment_teacherIdToUser TeacherComment[]               @relation("TeacherComment_teacherIdToUser")
+  Test                                          Test[]
+  TestAssignment                                TestAssignment[]
+  TestAttempt                                   TestAttempt[]
+  TimeAttackRecord                              TimeAttackRecord[]
+  Classroom                                     Classroom?                     @relation(fields: [classroomId], references: [id])
+  Tenant                                        Tenant?                        @relation(fields: [tenantId], references: [id])
+  UserBadge                                     UserBadge[]
 
-  tenant   Tenant?              @relation(fields: [tenantId], references: [id])
-  question Question            @relation(fields: [questionId], references: [id])
-  attempts DailyQuestionAttempt[]
-
-  @@unique([date, tenantId])  // 테넌트별 일일 문제
-  @@index([date])
+  @@index([classroomId])
+  @@index([role])
   @@index([tenantId])
-}
-
-model DailyQuestionAttempt {
-  id              String   @id @default(cuid())
-  dailyQuestionId String
-  studentId       String
-  selectedAnswer  String   @db.Text
-  isCorrect       Boolean
-  createdAt       DateTime @default(now())
-
-  dailyQuestion DailyQuestion @relation(fields: [dailyQuestionId], references: [id], onDelete: Cascade)
-  student       User          @relation(fields: [studentId], references: [id], onDelete: Cascade)
-
-  @@unique([dailyQuestionId, studentId])
-  @@index([studentId])
-}
-
-// FEAT: 일일 미션
-model DailyMission {
-  id          String   @id @default(cuid())
-  studentId   String
-  date        DateTime @db.Date
-  missions    Json     // [{type, target, current, label, completed}]
-  allComplete Boolean  @default(false)
-  xpAwarded   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
-
-  @@unique([studentId, date])
-  @@index([studentId, date])
-}
-
-// FEAT: 배지/칭호
-model Badge {
-  id          String @id @default(cuid())
-  key         String @unique @db.VarChar(50)
-  label       String @db.VarChar(50)
-  description String @db.VarChar(200)
-  icon        String @db.VarChar(30)
-  color       String @db.VarChar(20)
-  condition   Json
-  sortOrder   Int    @default(0)
-
-  users UserBadge[]
+  @@index([tenantId, role])
 }
 
 model UserBadge {
-  id       String   @id @default(cuid())
+  id       String   @id
   userId   String
   badgeId  String
   earnedAt DateTime @default(now())
-
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  Badge    Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  User     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, badgeId])
   @@index([userId])
 }
 
-// FEAT: 반(교실) 관리
-model Classroom {
-  id        String   @id @default(cuid())
-  name      String   @db.VarChar(50)
-  grade     Int?
-  teacherId String?
-  tenantId  String?
-  createdAt DateTime @default(now())
-
-  tenant   Tenant? @relation(fields: [tenantId], references: [id])
-  students User[]
-
-  @@index([teacherId])
-  @@index([tenantId])
+enum AssignmentStatus {
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  OVERDUE
 }
 
-// FEAT: Learning Course Assignment (학습 과정 배정)
 enum CourseStatus {
   LOCKED
   ACTIVE
   COMPLETED
 }
 
-model LearningCourse {
-  id          String   @id @default(cuid())
-  seq         Int      @unique @default(autoincrement())
-  title       String   @db.VarChar(200)
-  description String?  @db.Text
-  createdBy   String
-  isActive    Boolean  @default(true)
-  tenantId    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  tenant      Tenant?                   @relation(fields: [tenantId], references: [id])
-  creator     User                      @relation("LearningCourseCreator", fields: [createdBy], references: [id])
-  concepts    LearningCourseConcept[]
-  enrollments LearningCourseEnrollment[]
-
-  @@index([createdBy])
-  @@index([isActive])
-  @@index([tenantId])
+enum InquiryStatus {
+  PENDING
+  ANSWERED
 }
 
-model LearningCourseConcept {
-  id        String @id @default(cuid())
-  courseId   String
-  conceptId String
-  sortOrder Int    @default(0)
-
-  course  LearningCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  concept Concept        @relation(fields: [conceptId], references: [id], onDelete: Cascade)
-
-  @@unique([courseId, conceptId])
-  @@index([courseId, sortOrder])
+enum PointTransactionType {
+  EARN
+  SPEND
 }
 
-model LearningCourseEnrollment {
-  id          String       @id @default(cuid())
-  courseId     String
-  studentId   String
-  sortOrder   Int          @default(0)
-  status      CourseStatus @default(LOCKED)
-  startedAt   DateTime?
-  completedAt DateTime?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-
-  course  LearningCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  student User           @relation("LearningCourseEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
-
-  @@unique([courseId, studentId])
-  @@index([studentId, status])
-  @@index([studentId, sortOrder])
+enum QuestionDifficulty {
+  BASIC
+  MEDIUM
+  HIGH
+  HIGHEST
 }
 
-// ── 문제 중간테이블 (questionIds Json → 관계형 전환) ──
-
-model TestQuestion {
-  id         String @id @default(cuid())
-  testId     String
-  questionId String
-  sortOrder  Int
-
-  test     Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
-  question Question @relation(fields: [questionId], references: [id], onDelete: Restrict)
-
-  @@unique([testId, questionId])
-  @@index([testId, sortOrder])
-  @@index([questionId])
+enum QuestionType {
+  MULTIPLE_CHOICE
+  SHORT_ANSWER
+  ESSAY
 }
 
-model QuizSessionQuestion {
-  id         String @id @default(cuid())
-  sessionId  String
-  questionId String
-  sortOrder  Int
-
-  session  QuizSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  question Question    @relation(fields: [questionId], references: [id], onDelete: Restrict)
-
-  @@unique([sessionId, questionId])
-  @@index([sessionId, sortOrder])
-  @@index([questionId])
+enum QuizStatus {
+  WAITING
+  ACTIVE
+  COMPLETED
 }
 
-model HomeworkQuestion {
-  id         String @id @default(cuid())
-  planId     String
-  questionId String
-  dayIndex   Int
-  sortOrder  Int
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+  MANAGER
+  OWNER
+  SUPER_ADMIN
+}
 
-  plan     QuestionHomeworkPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-  question Question             @relation(fields: [questionId], references: [id], onDelete: Restrict)
-
-  @@index([planId, dayIndex, sortOrder])
-  @@index([questionId])
+enum Stage {
+  READING
+  BLANK_EASY
+  BLANK_HARD
+  BLANK_PAGE
+  BLANK_FULL
 }

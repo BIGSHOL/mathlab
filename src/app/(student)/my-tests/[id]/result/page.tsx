@@ -111,23 +111,12 @@ export default function TestResultPage() {
           setQuestions(testJson.data.questions ?? []);
         }
 
-        // Get my attempt
+        // Get test info array to check retake limit
         const testsRes = await fetch('/api/tests');
         if (testsRes.ok) {
           const testsJson = await testsRes.json();
           const test = testsJson.data?.find((t: { seq: number }) => String(t.seq) === testSeq);
           if (test) {
-            // Fetch attempt details
-            const attRes = await fetch(`/api/tests/${testSeq}/attempt`, { method: 'POST' });
-            if (attRes.ok) {
-              const attJson = await attRes.json();
-              const detailRes = await fetch(`/api/tests/attempts/${attJson.data.id}`);
-              if (detailRes.ok) {
-                const detailJson = await detailRes.json();
-                setAttempt(detailJson.data);
-              }
-            }
-
             // Check retake
             const attemptCount = test.attemptCount ?? 0;
             const maxAttempts = test.maxAttempts;
@@ -135,13 +124,21 @@ export default function TestResultPage() {
           }
         }
 
-        // 시도 이력 조회
+        // 시도 이력 및 최근 완료 결과 조회
         const histRes = await fetch(`/api/tests/${testSeq}/attempts`);
         if (histRes.ok) {
           const histJson = await histRes.json();
-          setAttemptHistory(
-            (histJson.data ?? []).filter((a: AttemptHistory) => a.completedAt)
-          );
+          const completedAttempts = (histJson.data ?? []).filter((a: AttemptHistory) => a.completedAt);
+          setAttemptHistory(completedAttempts);
+
+          if (completedAttempts.length > 0) {
+            const latestAttemptId = completedAttempts[0].id;
+            const detailRes = await fetch(`/api/tests/attempts/${latestAttemptId}`);
+            if (detailRes.ok) {
+              const detailJson = await detailRes.json();
+              setAttempt(detailJson.data);
+            }
+          }
         }
       } catch {
         // ignore
@@ -293,11 +290,10 @@ export default function TestResultPage() {
                   <span className="text-sm font-semibold text-text-primary">
                     {h.score}/{h.maxScore}점
                   </span>
-                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
-                    (h.correctCount / h.totalCount) >= 0.8 ? 'bg-emerald-100 text-emerald-700' :
-                    (h.correctCount / h.totalCount) >= 0.6 ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-red-100 text-red-700'
-                  }`}>
+                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${(h.correctCount / h.totalCount) >= 0.8 ? 'bg-emerald-100 text-emerald-700' :
+                      (h.correctCount / h.totalCount) >= 0.6 ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-red-100 text-red-700'
+                    }`}>
                     {Math.round((h.correctCount / h.totalCount) * 100)}%
                   </span>
                 </div>
@@ -372,12 +368,11 @@ export default function TestResultPage() {
                     <span className="text-xs font-medium text-slate-500">
                       #{idx + 1} · {q.chapter}
                     </span>
-                    <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${
-                      q.difficulty === 'BASIC' ? 'bg-green-100 text-green-700' :
-                      q.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
-                      q.difficulty === 'HIGH' ? 'bg-red-100 text-red-700' :
-                      'bg-purple-100 text-purple-700'
-                    }`}>
+                    <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${q.difficulty === 'BASIC' ? 'bg-green-100 text-green-700' :
+                        q.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
+                          q.difficulty === 'HIGH' ? 'bg-red-100 text-red-700' :
+                            'bg-purple-100 text-purple-700'
+                      }`}>
                       {DIFFICULTY_LABELS[q.difficulty as keyof typeof DIFFICULTY_LABELS]}
                     </span>
                     <span className="text-xs text-slate-400">
@@ -431,12 +426,11 @@ export default function TestResultPage() {
                         <div key={sq.id} className="bg-slate-50 rounded-sm p-3">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-xs text-text-secondary">{sq.chapter}</span>
-                            <span className={`px-1 py-0.5 rounded text-xs font-bold ${
-                              sq.difficulty === 'BASIC' ? 'bg-green-100 text-green-700' :
-                              sq.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
-                              sq.difficulty === 'HIGH' ? 'bg-red-100 text-red-700' :
-                              'bg-purple-100 text-purple-700'
-                            }`}>
+                            <span className={`px-1 py-0.5 rounded text-xs font-bold ${sq.difficulty === 'BASIC' ? 'bg-green-100 text-green-700' :
+                                sq.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
+                                  sq.difficulty === 'HIGH' ? 'bg-red-100 text-red-700' :
+                                    'bg-purple-100 text-purple-700'
+                              }`}>
                               {DIFFICULTY_LABELS[sq.difficulty as keyof typeof DIFFICULTY_LABELS]}
                             </span>
                           </div>

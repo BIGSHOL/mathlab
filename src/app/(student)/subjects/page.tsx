@@ -142,12 +142,18 @@ export default async function SubjectsPage({
                   )}
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-bold text-primary">
-                    {activeEnrollment.course.concepts.filter((cc) =>
-                      cc.concept.progress.some((p) => p.stage === 'BLANK_FULL' && p.completed)
-                    ).length}/{activeEnrollment.course.concepts.length}
-                  </p>
-                  <p className="text-xs text-text-secondary">완료</p>
+                  {activeEnrollment.course.concepts.length > 0 ? (
+                    <>
+                      <p className="text-sm font-bold text-primary">
+                        {activeEnrollment.course.concepts.filter((cc) =>
+                          cc.concept.progress.some((p) => p.stage === 'BLANK_FULL' && p.completed)
+                        ).length}/{activeEnrollment.course.concepts.length}
+                      </p>
+                      <p className="text-xs text-text-secondary">완료</p>
+                    </>
+                  ) : (
+                    <p className="text-xs text-text-secondary">개념 준비 중</p>
+                  )}
                 </div>
               </div>
               <div className="flex flex-col gap-3">

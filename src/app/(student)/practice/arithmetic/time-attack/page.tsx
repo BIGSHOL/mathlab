@@ -94,7 +94,7 @@ export default function TimeAttackPage() {
       setTimeLeft((t) => {
         if (t <= 1) {
           clearInterval(timerRef.current!);
-          handleTimeUp();
+          handleTimeUpRef();
           return 0;
         }
         return t - 1;
@@ -103,19 +103,6 @@ export default function TimeAttackPage() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
-
-  const handleTimeUp = useCallback(async () => {
-    setPhase('result');
-    // 서버에 결과 저장
-    const res = await fetch('/api/arithmetic/time-attack', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ category, level, action: 'complete', correctCount: score }),
-    });
-    const json = await res.json();
-    if (json.data) setResult(json.data);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, level, score]);
 
   // score가 바뀔 때 handleTimeUp의 최신 score를 반영
   const scoreRef = useRef(score);
@@ -132,11 +119,6 @@ export default function TimeAttackPage() {
     const json = await res.json();
     if (json.data) setResult(json.data);
   }, [category, level]);
-
-  // Replace handleTimeUp with ref version
-  useEffect(() => {
-    handleTimeUp; // keep reference alive
-  }, [handleTimeUp]);
 
   const handleStart = useCallback(async () => {
     setLoading(true);
@@ -223,9 +205,8 @@ export default function TimeAttackPage() {
                 <button
                   key={tab.key}
                   onClick={() => setSchoolTab(tab.key)}
-                  className={`px-4 py-1.5 rounded-sm text-sm font-bold border transition-colors ${
-                    schoolTab === tab.key ? tab.color : 'text-text-secondary bg-white border-slate-200 hover:bg-slate-50'
-                  }`}
+                  className={`px-4 py-1.5 rounded-sm text-sm font-bold border transition-colors ${schoolTab === tab.key ? tab.color : 'text-text-secondary bg-white border-slate-200 hover:bg-slate-50'
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -241,11 +222,10 @@ export default function TimeAttackPage() {
                       <button
                         key={c}
                         onClick={() => setCategory(c)}
-                        className={`px-2.5 py-1.5 rounded-sm text-xs font-medium transition-colors ${
-                          category === c
+                        className={`px-2.5 py-1.5 rounded-sm text-xs font-medium transition-colors ${category === c
                             ? 'bg-primary text-white'
                             : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
-                        }`}
+                          }`}
                       >
                         {CATEGORY_LABELS[c]}
                       </button>
@@ -263,11 +243,10 @@ export default function TimeAttackPage() {
                 <button
                   key={l}
                   onClick={() => setLevel(l)}
-                  className={`flex-1 px-3 py-2 rounded-sm text-sm font-medium transition-colors ${
-                    level === l
+                  className={`flex-1 px-3 py-2 rounded-sm text-sm font-medium transition-colors ${level === l
                       ? 'bg-primary text-white'
                       : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
-                  }`}
+                    }`}
                 >
                   {LEVEL_LABELS[l]}
                 </button>
@@ -416,13 +395,12 @@ export default function TimeAttackPage() {
                   key={idx}
                   disabled={feedback !== null}
                   onClick={() => handleAnswer(choice)}
-                  className={`px-4 py-4 rounded-sm border-2 text-lg font-bold transition-all ${
-                    showResult
+                  className={`px-4 py-4 rounded-sm border-2 text-lg font-bold transition-all ${showResult
                       ? isCorrectChoice
                         ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
                         : 'border-slate-200 opacity-50 text-text-secondary'
                       : 'border-slate-200 hover:border-primary text-text-primary active:scale-95'
-                  }`}
+                    }`}
                 >
                   <MathRenderer content={choice} />
                 </button>
@@ -431,9 +409,8 @@ export default function TimeAttackPage() {
           </div>
 
           {feedback !== null && (
-            <div className={`mt-4 p-3 rounded-sm flex items-center gap-2 text-sm ${
-              feedback ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'
-            }`}>
+            <div className={`mt-4 p-3 rounded-sm flex items-center gap-2 text-sm ${feedback ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'
+              }`}>
               {feedback ? (
                 <><CheckCircle2 className="w-4 h-4 text-emerald-600" /><span className="font-bold text-emerald-700">정답!</span></>
               ) : (

@@ -71,7 +71,7 @@ export async function generateHint(input: HintInput): Promise<HintResult> {
 - 구체적인 계산 결과를 알려주지 마세요
 - "~를 생각해보세요", "~를 활용해보세요" 형태로 풀이 접근법만 안내
 - 한국어로 작성
-- LaTeX 수식은 $...$ 형태 유지
+- 수식과 숫자는 반드시 양 옆에 $ 기호를 붙여주세요. (예: $\frac{1}{2}$ 또는 $3$)
 
 ## 문제
 ${input.content}

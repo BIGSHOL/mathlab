@@ -88,6 +88,11 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
     );
   }
 
+  // LLM 출력에서 많이 쓰이는 \(\), \[\] 형태를 $와 $$로 교체
+  svgReplacedContent = svgReplacedContent
+    .replace(/\\\([\s\S]*?\\\)/g, (match, p1) => `$${p1}$`)
+    .replace(/\\\[[\s\S]*?\\\]/g, (match, p1) => `$$$${p1}$$$$`);
+
   // [한글 설명] 패턴을 스타일링된 HTML 플레이스홀더로 변환
   // 단, 마크다운 이미지 ![alt](url) 안의 [alt] 부분은 건드리지 않음
   const processedContent = svgReplacedContent.replace(

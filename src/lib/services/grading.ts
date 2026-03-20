@@ -79,8 +79,6 @@ export async function submitAnswer(params: {
         flagged: flag.flagged,
         flagReason: flag.reason,
         hintUsed: false,
-        firstSelectedAnswer: selectedAnswer,
-        firstTimeSpentSeconds: timeSpentSeconds,
       },
     });
 
@@ -144,7 +142,7 @@ export async function submitAnswer(params: {
       earned = isCorrect ? Math.round(basePoints * 0.5) : 0;
     } else {
       combo = isCorrect ? streak + 1 : 0;
-      earned = isCorrect ? Math.round(basePoints * getComboMultiplier(combo)) : 0;
+      earned = isCorrect ? basePoints : 0;
     }
 
     const statusInfo = classifyAnswer({
