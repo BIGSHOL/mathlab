@@ -73,7 +73,7 @@ ANTHROPIC_API_KEY=your-anthropic-api-key
 | 개념 관리 | 개념 생성 → 빈칸 자동생성 → 4단계 학습 |
 | 문제 은행 | AI 문제 생성, PDF 추출, 수동 입력 |
 | 시험 관리 | 시험 출제 → 배정 → 자동/수기 채점 → 결과 분석 |
-| 연산 생성기 | 62+ 카테고리 무한 문제 생성 |
+| 연산 생성기 | 78+ 카테고리 무한 문제 생성 |
 | 숙제 관리 | 개념/문제/연산 3종 숙제 계획 및 추적 |
 | 학습지 | 3단계 위자드로 교육과정 기반 문제지 생성 |
 | 실시간 퀴즈 | 학생 참여형 실시간 퀴즈 세션 |
@@ -87,7 +87,7 @@ ANTHROPIC_API_KEY=your-anthropic-api-key
 |------|------|
 | 개념 학습 | 4단계 빈칸 학습 (읽기 → 쉬움 → 어려움 → 통문장) |
 | 연산 연습 | 카테고리별 연산 + 타임어택 |
-| 시험 응시 | 배정된 시험 응시 및 결과 확인 |
+| 시험 응시 | 배정된 시험 응시 (1차 오답 힌트, 콤보), 결과 확인 |
 | 숙제 | 배정된 숙제 수행 |
 | 게이미피케이션 | XP, 레벨, 뱃지, 일일미션, 랭킹, 복수전 |
 
@@ -98,9 +98,9 @@ src/
 ├── app/
 │   ├── (student)/     # 학생 페이지 (16개)
 │   ├── (teacher)/     # 선생님 페이지 (44개)
-│   ├── api/           # API 라우트 (121+ endpoints)
+│   ├── api/           # API 라우트 (127 endpoints)
 │   └── globals.css    # Tailwind 테마 + 디자인 토큰
-├── components/        # React 컴포넌트 (118개)
+├── components/        # React 컴포넌트 (130개)
 ├── lib/
 │   ├── services/      # 비즈니스 로직 (18개 서비스)
 │   ├── utils/         # 유틸리티 + SVG 다이어그램 (26개 타입)
@@ -108,7 +108,7 @@ src/
 │   ├── constants/     # 교육과정 데이터
 │   └── diagram/       # 프리셋 기반 다이어그램
 ├── hooks/             # 커스텀 훅 (9개)
-├── stores/            # Zustand 스토어 (4개)
+├── stores/            # Zustand 스토어 (5개)
 ├── types/             # TypeScript 타입 정의
 └── scripts/           # DB 초기화, 시드 스크립트
 ```
@@ -123,6 +123,7 @@ npm run test:e2e         # Playwright E2E 테스트
 npm run db:seed          # 시드 데이터
 npm run db:migrate       # DB 마이그레이션
 npm run db:studio        # Prisma Studio (DB 브라우저)
+npx tsx scripts/migrate-question-relations.ts  # 중간테이블 마이그레이션
 ```
 
 ## 교육과정 체계
@@ -145,9 +146,9 @@ npm run db:studio        # Prisma Studio (DB 브라우저)
 
 | 항목 | 수치 |
 |------|------|
-| 소스 파일 | 455개 |
-| 총 코드량 | ~75,000 LoC |
-| API 라우트 | 121개 |
-| DB 모델 | 46개 |
-| 컴포넌트 | 118개 |
+| 소스 파일 | 485개 |
+| 총 코드량 | ~83,000 LoC |
+| API 라우트 | 127개 |
+| DB 모델 | 52개 |
+| 컴포넌트 | 130개 |
 | 서비스 | 18개 |

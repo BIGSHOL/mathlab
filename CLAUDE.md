@@ -143,7 +143,7 @@ src/
 │   └── globals.css    # Tailwind 테마 + 디자인 토큰
 ├── components/
 │   ├── layout/        # Sidebar, DashboardShell, CommandPalette
-│   ├── ui/            # Button, Pagination, Toast, Skeleton, MotionStagger, XpToast 등 공통 UI
+│   ├── ui/            # Button, Pagination, Toast, Skeleton, MotionStagger, XpToast, PageContainer, Tabs, MathSpinner 등 공통 UI
 │   ├── math/          # MathRenderer, EditableMathRenderer, DiagramRenderer, DiagramEditorPopup, ProblemDisplay
 │   ├── learning/      # 개념학습, 빈칸연습
 │   ├── test/          # 시험 응시, 제출, AssignPanel
@@ -152,6 +152,7 @@ src/
 │   ├── bulk-import/   # 일괄 가져오기
 │   ├── curriculum/    # 교육과정 트리
 │   ├── gamification/  # 랭킹, XP 표시
+│   ├── ranking/       # 랭킹 UI 컴포넌트 (TopThreePodium, RankingList, RankingInsights, RankChangeIndicator)
 │   ├── student/       # 학생 전용 (DailyMissionCard, DailyQuestionCard, DashboardGamification, RevengeBanner)
 │   ├── report/        # 레벨테스트 보고서 렌더링
 │   ├── worksheet-wizard/  # 학습지 3단계 위자드 (Step1~3)
@@ -164,13 +165,13 @@ src/
 │   ├── db.ts          # Prisma 싱글톤 클라이언트
 │   ├── schemas/       # Zod 검증 스키마
 │   ├── services/      # 핵심 비즈니스 로직 (18개 서비스)
-│   ├── utils/         # 유틸 (blank-generator, pdf-processor, features, curriculumMapping, xp, format)
+│   ├── utils/         # 유틸 (blank-generator, pdf-processor, features, curriculumMapping, xp, format, question-order, diagram-resolver)
 │   │   └── svg-diagrams/  # SVG 다이어그램 렌더링 시스템 (26개 타입)
 │   ├── diagram/       # 프리셋 기반 구조화 다이어그램 시스템 (DiagramSpec)
 │   ├── constants/     # 교육과정 데이터, 연산 카테고리
 │   └── data/          # 정적 데이터 (업데이트 로그 등)
 ├── hooks/             # useAuth, useLearning, useGamification, useFeatureFlags, useBadgeCheck, useSpeed, useFetch, useTests, usePreviewScale 등
-├── stores/            # Zustand 글로벌 스토어 (gamification, wizard, manualGrading, xpNotification)
+├── stores/            # Zustand 글로벌 스토어 (gamification, wizard, manualGrading, xpNotification, updateNotification)
 ├── types/             # 공통 타입 정의 (diagram.ts, mathgen.ts, pdf-extract.ts, report.ts 등)
 └── scripts/           # DB 초기화, 시드 스크립트 (35+ 파일)
 ```
@@ -246,6 +247,11 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 - AI가 좌표 대신 프리셋을 선택 → 정확한 도형 생성
 - 타입: triangle, circle, quadrilateral, coordinatePlane, solid, composite
 
+**통합 렌더러:** `DiagramRenderer.tsx` — `resolveDiagramSpec()` (`src/lib/utils/diagram-resolver.ts`)로 런타임 판별 후 적절한 렌더러 호출
+- `DiagramSpec` (단일 객체, AI 생성) → `renderDiagram` from `@/lib/diagram/renderer`
+- `DiagramParam[]` (배열, PDF 추출) → `renderDiagram` from `@/lib/utils/svg-diagrams`
+- DB `diagramSpec Json?` 필드에 두 포맷이 혼재 → 런타임 다형성으로 처리
+
 **편집기:** `DiagramEditorPopup.tsx` — 26개 타입 모두 GUI 편집 가능
 
 ### 수학 렌더링 컴포넌트 (`src/components/math/`)
@@ -254,7 +260,7 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 |----------|------|
 | `MathRenderer` | 읽기전용 마크다운+LaTeX+SVG 렌더링 (remark-math + rehype-katex) |
 | `EditableMathRenderer` | 수식 클릭 편집 모드 (onMathClick 콜백) |
-| `DiagramRenderer` | DiagramSpec → SVG 렌더링 |
+| `DiagramRenderer` | DiagramSpec / DiagramParam[] 통합 → SVG 렌더링 (런타임 판별) |
 | `DiagramEditorPopup` | 26개 다이어그램 타입 GUI 편집기 |
 | `ProblemDisplay` | 문제 전체 표시 (보기, 풀이, 인쇄) |
 | `MathLivePopup` | MathLive 수식 입력 팝업 |
@@ -280,6 +286,19 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 **문제 유형:** MULTIPLE_CHOICE | SHORT_ANSWER | ESSAY
 **영역 분류:** CALCULATION | UNDERSTANDING | PROBLEM_SOLVING | REASONING
 
+**문제-시험 관계 (중간테이블):**
+- `TestQuestion` — Test ↔ Question (sortOrder로 순서 유지)
+- `QuizSessionQuestion` — QuizSession ↔ Question
+- `HomeworkQuestion` — QuestionHomeworkPlan ↔ Question (dayIndex + sortOrder)
+- 기존 `questionIds Json` 필드와 Dual-Write 상태 (전환기)
+- 읽기: `src/lib/utils/question-order.ts` 헬퍼 사용 (중간테이블 우선, Json 폴백)
+- 마이그레이션: `npx tsx scripts/migrate-question-relations.ts`
+
+**autoTag 시스템:** `src/lib/services/question-tagger.ts`
+- bookCode 접두사로 학교급 판별: `E*`=초등, `H*`=고등, 그 외=중등
+- 초등 60+ / 중등 46 / 고등 23개 단원→영역 매핑
+- 자동 분류 대상: difficulty, domain, grade, tags
+
 ### 빈칸 생성 시스템 (`src/lib/utils/blank-generator.ts`)
 
 - `fullContent` (마크다운) + 정답 목록 → `MergedBlankExercise` 생성
@@ -293,7 +312,7 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 |--------|------|
 | `arithmetic-generator/` | 78+ 카테고리 연산 문제 생성 (초등/중등/고등 분리) |
 | `mathgen.ts` | Gemini AI 문제 생성 |
-| `grading.ts` | 자동 채점, XP 계산 |
+| `grading.ts` | 자동 채점, XP 계산, 1차 오답 저장 (2단계 흐름: create→update) |
 | `diagnostic.ts` | 레벨테스트 결과 분석 |
 | `assignment.ts` | 시험 배정/마감 관리 |
 | `homework.ts` | 숙제 계획 로직 (strategies 패턴) |
@@ -334,7 +353,8 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 ### DB 모델 요약
 
 **핵심:** User(STUDENT|TEACHER|ADMIN), Subject, Concept, BlankExercise, Question
-**시험:** Test, TestAttempt, TestAssignment, AnswerLog, LevelTestConfig
+**시험:** Test, TestAttempt, TestAssignment, AnswerLog(firstSelectedAnswer 포함), LevelTestConfig
+**중간테이블:** TestQuestion, QuizSessionQuestion, HomeworkQuestion (문제 순서/FK 관리)
 **숙제:** ArithmeticHomeworkPlan, ConceptHomeworkPlan, QuestionHomeworkPlan (각각 Enrollment/Attempt)
 **퀴즈:** QuizSession, QuizParticipant, QuizAnswerLog
 **게이미피케이션:** Badge, UserBadge, DailyMission, DailyQuestion, DailyQuestionAttempt, TimeAttackRecord
@@ -391,6 +411,7 @@ npx prisma studio        # DB 브라우저
 npx prisma migrate dev   # DB 마이그레이션
 npm run db:seed          # 시드 데이터
 npx tsx scripts/reset-questions.ts  # 문제은행 + 관련 데이터 전체 초기화
+npx tsx scripts/migrate-question-relations.ts  # questionIds Json → 중간테이블 마이그레이션
 ```
 
 ## 코딩 컨벤션
@@ -403,6 +424,9 @@ npx tsx scripts/reset-questions.ts  # 문제은행 + 관련 데이터 전체 초
 - **수학 문제/개념의 모든 숫자와 영문 변수는 반드시 KaTeX로 감싸기**: `$25$`, `$a$`, `$a+b$` 등. 보기 번호(①②③④⑤)와 ㄱㄴㄷ은 제외
 - **alert() 사용 금지** → `toast.*()` 사용 (위 7번 규칙 참고)
 - 빌드 확인: 기능 구현 후 `npm run build`로 타입 에러 없는지 확인
+- **문제 순서 조회 시 반드시 헬퍼 함수 사용**: `getTestQuestionIds()`, `getQuizQuestionIds()`, `getHomeworkDayQuestionIds()` (`@/lib/utils/question-order`)
+  - `test.questionIds as string[]` 직접 캐스팅 금지 → 중간테이블 우선 조회 헬퍼 사용
+  - 새 시험/퀴즈/숙제 생성 시 Json + 중간테이블 Dual-Write 유지
 
 ## Skills & Agents
 
@@ -431,16 +455,16 @@ npx tsx scripts/reset-questions.ts  # 문제은행 + 관련 데이터 전체 초
 
 | 항목 | 수치 |
 |------|------|
-| 소스 파일 | 455개 (TS/TSX) |
-| 총 코드량 | ~75,000 LoC |
+| 소스 파일 | 485개 (TS/TSX) |
+| 총 코드량 | ~83,000 LoC |
 | 학생 페이지 | 16개 |
 | 선생님 페이지 | 44개 |
-| API 라우트 | 121개, ~9,400 LoC |
-| 컴포넌트 | 118개 |
+| API 라우트 | 127개 |
+| 컴포넌트 | 130개 |
 | 서비스 모듈 | 18개 |
-| DB 모델 | 46개, Enum 9개 |
-| SVG 다이어그램 | 26개 타입 (2개 시스템) |
+| DB 모델 | 52개, Enum 9개 |
+| SVG 다이어그램 | 26개 타입 (2개 시스템, 통합 렌더러) |
 | 커스텀 훅 | 9개 |
-| Zustand 스토어 | 4개 |
+| Zustand 스토어 | 5개 |
 | Zod 스키마 | 5개 |
 | E2E 테스트 | 3개 (Playwright) |
