@@ -6,6 +6,7 @@ import { GraduationCap, Plus, BookOpen, Users, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { toast } from '@/components/ui/Toast';
+import { confirm } from '@/components/ui/ConfirmDialog';
 import { LoadingEmptyState } from '@/components/ui/LoadingEmptyState';
 
 interface CourseItem {
@@ -32,7 +33,7 @@ export default function CoursesPage() {
   }, []);
 
   const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`"${title}" 과정을 삭제하시겠습니까? 학생 배정도 함께 삭제됩니다.`)) return;
+    if (!(await confirm({ message: `"${title}" 과정을 삭제하시겠습니까? 학생 배정도 함께 삭제됩니다.`, variant: 'danger', confirmLabel: '삭제' }))) return;
     try {
       const res = await fetch(`/api/learning-courses/${id}`, { method: 'DELETE' });
       if (res.ok) {

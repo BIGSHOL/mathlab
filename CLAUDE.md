@@ -108,6 +108,11 @@ if (currentUser.role !== 'ADMIN') → 403     // 관리자 전용
 - 레벨테스트 결과 → 학습 보고서 AI 생성
 - 환경변수: `ANTHROPIC_API_KEY`
 
+**3D 업적 뱃지 디자인 생성 (이미지 AI 공통 규칙):**
+- **마스터 프롬프트**: `A high quality 3D mobile game achievement badge icon representing [주제]. Exclude all English letters. The icon must feature the bold Korean text '[한글 업적명]' built into the 3D design beautifully. Vibrant colors, premium, glossy, isolated on simple background, cartoonish, high quality render.`
+- **필수 지침**: 영문 텍스트 오염을 막기 위해 `Exclude all English letters.` 옵션을 무조건 포함해야 함.
+- **UI 연동 지침**: 하얗게 빛이 날아가는 것을 방지하기 위해 CSS `mix-blend` 모드를 절대 사용하지 말 것! 대신 부모 레이어에서 `overflow-hidden` 및 `rounded-full`(또는 `rounded-2xl`)로 감싸 물리적으로 둥글게 원형 크롭(Crop)하여 렌더링할 것 (`object-cover` + `scale-[1.15]` 활용).
+
 ### 7. 토스트 알림 — alert() 사용 금지
 
 **모든 사용자 알림은 글로벌 토스트 시스템을 사용:**

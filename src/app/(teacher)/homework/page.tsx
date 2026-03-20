@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { toast } from '@/components/ui/Toast';
+import { confirm } from '@/components/ui/ConfirmDialog';
 import {
   CalendarCheck,
   Plus,
@@ -182,7 +183,7 @@ export default function HomeworkPage() {
   };
 
   const handleDelete = async (planId: number) => {
-    if (!confirm('이 숙제 플랜을 삭제하시겠습니까? 관련 데이터도 삭제됩니다.')) return;
+    if (!(await confirm({ message: '이 숙제 플랜을 삭제하시겠습니까? 관련 데이터도 삭제됩니다.', variant: 'danger', confirmLabel: '삭제' }))) return;
     setDeleting(String(planId));
     try {
       await fetch(`/api/arithmetic/homework-plans/${planId}`, { method: 'DELETE' });

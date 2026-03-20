@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Users, Plus, Pencil, Trash2, School } from 'lucide-react';
+import { confirm } from '@/components/ui/ConfirmDialog';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -74,7 +75,7 @@ export default function AdminClassroomsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('이 반을 삭제하시겠습니까?')) return;
+    if (!(await confirm({ message: '이 반을 삭제하시겠습니까?', variant: 'danger', confirmLabel: '삭제' }))) return;
     await fetch(`/api/admin/classrooms/${id}`, { method: 'DELETE' });
     await fetchData();
   };

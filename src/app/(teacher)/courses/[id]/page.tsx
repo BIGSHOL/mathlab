@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from '@/components/ui/Toast';
+import { confirm } from '@/components/ui/ConfirmDialog';
 import {
   ArrowLeft,
   BookOpen,
@@ -187,7 +188,7 @@ export default function CourseDetailPage() {
   };
 
   const handleRemoveEnrollment = async (enrollmentId: string, studentName: string) => {
-    if (!confirm(`${studentName} 학생의 배정을 삭제하시겠습니까?`)) return;
+    if (!(await confirm({ message: `${studentName} 학생의 배정을 삭제하시겠습니까?`, variant: 'danger', confirmLabel: '삭제' }))) return;
     try {
       // enrollment 삭제는 course PATCH로 처리하거나, 별도 API 필요
       // 간단히 직접 삭제 — enrollment ID로

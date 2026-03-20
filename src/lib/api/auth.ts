@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { forbidden } from './errors';
+import { unauthorized, forbidden } from './errors';
 import type { UserRole } from '@/types';
 
 export type AuthUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>;
@@ -24,28 +24,32 @@ export function hasRole(user: { role: string }, minRole: UserRole): boolean {
 /** 선생님 이상 (TEACHER/MANAGER/OWNER/SUPER_ADMIN) */
 export async function requireTeacher(): Promise<AuthUser | NextResponse> {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user, 'TEACHER')) return forbidden();
+  if (!user) return unauthorized();
+  if (!hasRole(user, 'TEACHER')) return forbidden();
   return user;
 }
 
 /** 팀장 이상 (MANAGER/OWNER/SUPER_ADMIN) */
 export async function requireManager(): Promise<AuthUser | NextResponse> {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user, 'MANAGER')) return forbidden();
+  if (!user) return unauthorized();
+  if (!hasRole(user, 'MANAGER')) return forbidden();
   return user;
 }
 
 /** 원장 이상 (OWNER/SUPER_ADMIN) — 기존 requireAdmin 대체 */
 export async function requireOwner(): Promise<AuthUser | NextResponse> {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user, 'OWNER')) return forbidden();
+  if (!user) return unauthorized();
+  if (!hasRole(user, 'OWNER')) return forbidden();
   return user;
 }
 
 /** 슈퍼관리자 전용 */
 export async function requireSuperAdmin(): Promise<AuthUser | NextResponse> {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user, 'SUPER_ADMIN')) return forbidden();
+  if (!user) return unauthorized();
+  if (!hasRole(user, 'SUPER_ADMIN')) return forbidden();
   return user;
 }
 
@@ -54,10 +58,10 @@ export async function requireAdmin(): Promise<AuthUser | NextResponse> {
   return requireOwner();
 }
 
-/** 로그인 필수 — 미인증 시 403. role 무관 */
+/** 로그인 필수 — 미인증 시 401. role 무관 */
 export async function requireAuth(): Promise<AuthUser | NextResponse> {
   const user = await getCurrentUser();
-  if (!user) return forbidden();
+  if (!user) return unauthorized();
   return user;
 }
 
@@ -68,7 +72,7 @@ export async function requireAuth(): Promise<AuthUser | NextResponse> {
  */
 export async function requireAuthViewAs(request: NextRequest): Promise<AuthUser | NextResponse> {
   const user = await getCurrentUser();
-  if (!user) return forbidden();
+  if (!user) return unauthorized();
 
   const studentId = new URL(request.url).searchParams.get('_as');
   if (studentId && hasRole(user, 'TEACHER')) {

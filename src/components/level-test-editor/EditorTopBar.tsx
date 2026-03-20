@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowLeft, X } from 'lucide-react';
+import { confirm } from '@/components/ui/ConfirmDialog';
 import { GRADE_LEVEL_LABELS } from '@/lib/constants/labels';
 
 interface EditorTopBarProps {
@@ -25,8 +26,8 @@ export function EditorTopBar({
   backLabel = '레벨테스트 목록',
   pageLabel = '레벨테스트 편집:',
 }: EditorTopBarProps) {
-  const handleClose = () => {
-    if (isDirty && !window.confirm('저장하지 않은 변경사항이 있습니다. 정말 나가시겠습니까?')) return;
+  const handleClose = async () => {
+    if (isDirty && !(await confirm({ message: '저장하지 않은 변경사항이 있습니다. 정말 나가시겠습니까?', variant: 'warning', confirmLabel: '나가기' }))) return;
     onClose();
   };
 
@@ -34,8 +35,8 @@ export function EditorTopBar({
     <div className="shrink-0 flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-white">
       <Link
         href={backUrl}
-        onClick={(e) => {
-          if (isDirty && !window.confirm('저장하지 않은 변경사항이 있습니다. 정말 나가시겠습니까?')) {
+        onClick={async (e) => {
+          if (isDirty && !(await confirm({ message: '저장하지 않은 변경사항이 있습니다. 정말 나가시겠습니까?', variant: 'warning', confirmLabel: '나가기' }))) {
             e.preventDefault();
           }
         }}

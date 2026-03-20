@@ -1,6 +1,7 @@
 import { Sidebar } from '@/components/layout/Sidebar';
 import { CommandPalette } from '@/components/layout/CommandPalette';
 import { ToastContainer } from '@/components/ui/Toast';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { getCurrentUser } from '@/lib/auth';
 import { resolveCurrentTenant } from '@/lib/tenant';
 import { TenantProvider } from '@/components/providers/TenantProvider';
@@ -25,6 +26,7 @@ export default async function TeacherLayout({
         <main className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden print:overflow-visible">{children}</main>
         <CommandPalette />
         <ToastContainer />
+        <ConfirmDialog />
       </div>
     </TenantProvider>
   );

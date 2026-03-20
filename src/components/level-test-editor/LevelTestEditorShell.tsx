@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/components/ui/Toast';
+import { confirm } from '@/components/ui/ConfirmDialog';
 import { EditorTopBar } from './EditorTopBar';
 import { EditorBottomBar } from './EditorBottomBar';
 import { LeftPanel } from './left-panel/LeftPanel';
@@ -151,13 +152,13 @@ export function LevelTestEditorShell({
     setIsSaving(false);
   }, [questions, questionDomains, testSeq, router, setIsDirty]);
 
-  const handleClose = useCallback(() => {
-    if (isDirty && !window.confirm('저장하지 않은 변경사항이 있습니다. 정말 나가시겠습니까?')) return;
+  const handleClose = useCallback(async () => {
+    if (isDirty && !(await confirm({ message: '저장하지 않은 변경사항이 있습니다. 정말 나가시겠습니까?', variant: 'warning', confirmLabel: '나가기' }))) return;
     router.push('/level-test');
   }, [isDirty, router]);
 
-  const handleCancel = useCallback(() => {
-    if (isDirty && !window.confirm('저장하지 않은 변경사항이 있습니다. 정말 나가시겠습니까?')) return;
+  const handleCancel = useCallback(async () => {
+    if (isDirty && !(await confirm({ message: '저장하지 않은 변경사항이 있습니다. 정말 나가시겠습니까?', variant: 'warning', confirmLabel: '나가기' }))) return;
     router.push('/level-test');
   }, [isDirty, router]);
 

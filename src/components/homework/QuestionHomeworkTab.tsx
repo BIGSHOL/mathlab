@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { toast } from '@/components/ui/Toast';
+import { confirm } from '@/components/ui/ConfirmDialog';
 import {
   FileQuestion,
   Plus,
@@ -122,7 +123,7 @@ export default function QuestionHomeworkTab() {
   };
 
   const handleDelete = async (seq: number) => {
-    if (!confirm('이 문제 숙제 플랜을 삭제하시겠습니까?')) return;
+    if (!(await confirm({ message: '이 문제 숙제 플랜을 삭제하시겠습니까?', variant: 'danger', confirmLabel: '삭제' }))) return;
     setDeleting(String(seq));
     try { await fetch(`/api/question-homework/plans/${seq}`, { method: 'DELETE' }); if (selectedSeq === seq) setSelectedSeq(null); fetchPlans(); }
     catch { toast.error('삭제 실패'); }

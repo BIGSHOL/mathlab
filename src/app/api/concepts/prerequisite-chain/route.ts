@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { notFound } from '@/lib/api';
+import { requireAuth, isResponse, notFound } from '@/lib/api';
 import { CROSS_GRADE_CHAINS } from '@/lib/constants/concepts';
 
 // GET /api/concepts/prerequisite-chain?chain=분수 계통
 // GET /api/concepts/prerequisite-chain?conceptId=xxx
 export async function GET(request: NextRequest) {
+  const user = await requireAuth();
+  if (isResponse(user)) return user;
+
   const { searchParams } = new URL(request.url);
   const chainName = searchParams.get('chain');
   const conceptId = searchParams.get('conceptId');

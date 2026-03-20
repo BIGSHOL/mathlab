@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from '@/components/ui/Toast';
+import { confirm } from '@/components/ui/ConfirmDialog';
 import { Users } from 'lucide-react';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import { useSearchParams } from 'next/navigation';
@@ -112,7 +113,7 @@ export default function StudentsPage() {
   };
 
   const handleResetPassword = async (userId: string) => {
-    if (!confirm('비밀번호를 1234로 초기화하시겠습니까?')) return;
+    if (!(await confirm({ message: '비밀번호를 1234로 초기화하시겠습니까?', variant: 'warning', confirmLabel: '초기화' }))) return;
     try {
       const res = await fetch(`/api/users/${userId}`, {
         method: 'PATCH',
@@ -127,7 +128,7 @@ export default function StudentsPage() {
   };
 
   const handleDeleteUser = async (userId: string, name: string) => {
-    if (!confirm(`${name} 계정을 삭제하시겠습니까?`)) return;
+    if (!(await confirm({ message: `${name} 계정을 삭제하시겠습니까?`, variant: 'danger', confirmLabel: '삭제' }))) return;
     const res = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
     if (res.ok) {
       if (selectedUser?.id === userId) { setSelectedUser(null); setStats(null); }

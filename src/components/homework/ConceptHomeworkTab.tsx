@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { toast } from '@/components/ui/Toast';
+import { confirm } from '@/components/ui/ConfirmDialog';
 import {
   BookOpen,
   Plus,
@@ -157,7 +158,7 @@ export default function ConceptHomeworkTab() {
   };
 
   const handleDelete = async (seq: number) => {
-    if (!confirm('이 개념 숙제 플랜을 삭제하시겠습니까?')) return;
+    if (!(await confirm({ message: '이 개념 숙제 플랜을 삭제하시겠습니까?', variant: 'danger', confirmLabel: '삭제' }))) return;
     setDeleting(String(seq));
     try {
       await fetch(`/api/concept-homework/plans/${seq}`, { method: 'DELETE' });

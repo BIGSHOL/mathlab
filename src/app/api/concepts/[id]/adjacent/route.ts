@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
-import { notFound } from '@/lib/api';
+import { requireAuth, isResponse, notFound } from '@/lib/api';
 import { CROSS_GRADE_CHAINS } from '@/lib/constants/concepts';
 
 /** Resolve concept by conceptCode or cuid id */
@@ -18,6 +17,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const authUser = await requireAuth();
+  if (isResponse(authUser)) return authUser;
+
   const { id: rawId } = await params;
   const id = await resolveConceptId(rawId) ?? rawId;
   const { searchParams } = new URL(request.url);
@@ -25,14 +27,11 @@ export async function GET(
 
   // mode가 없으면 학생 프로필에서 읽기
   if (!mode) {
-    const currentUser = await getCurrentUser();
-    if (currentUser) {
-      const profile = await prisma.studentProfile.findUnique({
-        where: { userId: currentUser.id },
-        select: { conceptNavMode: true },
-      });
-      mode = profile?.conceptNavMode ?? 'curriculum';
-    }
+    const profile = await prisma.studentProfile.findUnique({
+      where: { userId: authUser.id },
+      select: { conceptNavMode: true },
+    });
+    mode = profile?.conceptNavMode ?? 'curriculum';
   }
 
   // chain 모드인 경우

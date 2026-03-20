@@ -3,6 +3,7 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { ToastContainer } from '@/components/ui/Toast';
 import { XpToastContainer } from '@/components/ui/XpToast';
 import { UpdateBanner } from '@/components/ui/UpdateBanner';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { getCurrentUser } from '@/lib/auth';
 import { resolveCurrentTenant } from '@/lib/tenant';
 import { TenantProvider } from '@/components/providers/TenantProvider';
@@ -29,6 +30,7 @@ export default async function StudentLayout({
         <ToastContainer />
         <XpToastContainer />
         <UpdateBanner />
+        <ConfirmDialog />
       </div>
     </TenantProvider>
   );

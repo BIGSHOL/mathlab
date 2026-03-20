@@ -30,8 +30,8 @@ export async function createManualAttempt(params: {
   });
   if (existing) return { attempt: existing, resumed: true };
 
-  // 시험 정보 로드
-  const test = await prisma.test.findUniqueOrThrow({
+  // 시험 존재 여부 확인
+  await prisma.test.findUniqueOrThrow({
     where: { id: testId },
   });
 

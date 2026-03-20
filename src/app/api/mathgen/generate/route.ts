@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateMathProblem } from '@/lib/services/mathgen';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
-import { serverError } from '@/lib/api';
+import { requireTeacher, isResponse, serverError } from '@/lib/api';
 import { SelectionState, SchoolLevel, Difficulty, ProblemType, AnswerType } from '@/types/mathgen';
 import type { QuestionDifficulty, QuestionType } from '@/types';
 
@@ -37,7 +36,8 @@ function mapQuestionType(answerType: AnswerType): QuestionType {
 }
 
 export async function POST(request: NextRequest) {
-  const currentUser = await getCurrentUser();
+  const currentUser = await requireTeacher();
+  if (isResponse(currentUser)) return currentUser;
 
   try {
     const body = await request.json();
@@ -88,23 +88,21 @@ export async function POST(request: NextRequest) {
     });
 
     // AI 문제 생성 로그 기록
-    if (currentUser) {
-      await prisma.questionGenerationLog.create({
-        data: {
-          teacherId: currentUser.id,
-          mode: selection.mode,
-          schoolLevel: selection.schoolLevel,
-          grade: selection.grade,
-          mainUnit: selection.mainUnit || null,
-          subUnit: selection.subUnit || null,
-          detailUnit: selection.detailUnit || null,
-          difficulty: selection.difficulty,
-          problemType: selection.problemType,
-          questionId: saved.id,
-          success: true,
-        },
-      }).catch(() => {}); // 로그 실패는 무시
-    }
+    await prisma.questionGenerationLog.create({
+      data: {
+        teacherId: currentUser.id,
+        mode: selection.mode,
+        schoolLevel: selection.schoolLevel,
+        grade: selection.grade,
+        mainUnit: selection.mainUnit || null,
+        subUnit: selection.subUnit || null,
+        detailUnit: selection.detailUnit || null,
+        difficulty: selection.difficulty,
+        problemType: selection.problemType,
+        questionId: saved.id,
+        success: true,
+      },
+    }).catch(() => {}); // 로그 실패는 무시
 
     return NextResponse.json({
       data: problem,

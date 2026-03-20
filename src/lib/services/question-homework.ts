@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/db';
 import { computeDayIndex } from '@/lib/utils/date-engine';
-import { getHomeworkAllDailyQuestionIds, getHomeworkDayQuestionIds, getHomeworkTotalQuestionCount } from '@/lib/utils/question-order';
+import { getHomeworkAllDailyQuestionIds, getHomeworkDayQuestionIds } from '@/lib/utils/question-order';
 export { computeDayIndex } from '@/lib/utils/date-engine';
 
 // ─── Types ───

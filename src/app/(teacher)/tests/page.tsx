@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { toast } from '@/components/ui/Toast';
+import { confirm } from '@/components/ui/ConfirmDialog';
 import {
   Plus,
   ClipboardCheck,
@@ -47,7 +48,7 @@ export default function TestsPage() {
   const selectedTest = tests.find((t) => t.id === selectedTestId);
 
   const handleDelete = async (test: { id: string; seq: number }) => {
-    if (!confirm('이 시험을 삭제하시겠습니까?')) return;
+    if (!(await confirm({ message: '이 시험을 삭제하시겠습니까?', variant: 'danger', confirmLabel: '삭제' }))) return;
     setDeleting(test.id);
     try {
       await deleteTest(test.seq);

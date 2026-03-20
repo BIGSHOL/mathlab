@@ -66,7 +66,7 @@ export function useLearning(conceptId: string) {
   }, [conceptId]);
 
   const getCurrentStage = (): LearningStage => {
-    const stages: LearningStage[] = ['READING', 'BLANK_EASY', 'BLANK_HARD', 'BLANK_PAGE'];
+    const stages: LearningStage[] = ['READING', 'BLANK_EASY', 'BLANK_HARD', 'BLANK_FULL', 'BLANK_PAGE'];
     for (const stage of stages) {
       const p = progress.find((pr) => pr.stage === stage);
       if (!p || !p.completed) return stage;

@@ -3,6 +3,7 @@
 import { useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/components/ui/Toast';
+import { confirm } from '@/components/ui/ConfirmDialog';
 import { X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useWizardStore } from '@/stores/wizardStore';
@@ -36,8 +37,8 @@ export function WizardShell() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [isDirty]);
 
-  const handleClose = useCallback(() => {
-    if (isDirty && !window.confirm('작성 중인 내용이 있습니다. 정말 나가시겠습니까?')) return;
+  const handleClose = useCallback(async () => {
+    if (isDirty && !(await confirm({ message: '작성 중인 내용이 있습니다. 정말 나가시겠습니까?', variant: 'warning', confirmLabel: '나가기' }))) return;
     reset();
     const backUrl = mode === 'level_test' ? '/level-test' : '/tests';
     router.push(backUrl);

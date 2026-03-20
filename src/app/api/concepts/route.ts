@@ -5,6 +5,9 @@ import { conceptQuerySchema, createConceptSchema } from '@/lib/schemas/concept';
 
 // GET /api/concepts?subjectId=xxx&grade=middle_1&category=concept&part=calc&search=xxx
 export async function GET(request: NextRequest) {
+  const user = await requireTeacher();
+  if (isResponse(user)) return user;
+
   const params = validateQuery(request, conceptQuerySchema);
   if (isResponse(params)) return params;
 

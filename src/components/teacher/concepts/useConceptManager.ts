@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { toast } from '@/components/ui/Toast';
+import { confirm } from '@/components/ui/ConfirmDialog';
 import { getCurriculumForGrade } from '@/lib/utils/curriculumMapping';
 import { GRADE_LABELS, GRADE_GROUPS, PART_LABELS, CATEGORY_LABELS } from '@/lib/constants/labels';
 
@@ -271,8 +272,8 @@ export function useConceptManager(isOwner: boolean) {
   }, []);
 
   // Edit handlers
-  const startEditing = (concept: ConceptItem) => {
-    if (editingConcept && isDirty && !confirm('저장하지 않은 변경사항이 있습니다. 다른 개념으로 이동하시겠습니까?')) return;
+  const startEditing = async (concept: ConceptItem) => {
+    if (editingConcept && isDirty && !(await confirm({ message: '저장하지 않은 변경사항이 있습니다. 다른 개념으로 이동하시겠습니까?', variant: 'warning', confirmLabel: '나가기' }))) return;
     setEditingConcept(concept);
     setIsNewConcept(false);
     setIsContentEditing(false);
@@ -319,8 +320,8 @@ export function useConceptManager(isOwner: boolean) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [concepts, editingConcept, isDirty]);
 
-  const startNewConcept = () => {
-    if (editingConcept && isDirty && !confirm('저장하지 않은 변경사항이 있습니다. 새 개념을 추가하시겠습니까?')) return;
+  const startNewConcept = async () => {
+    if (editingConcept && isDirty && !(await confirm({ message: '저장하지 않은 변경사항이 있습니다. 새 개념을 추가하시겠습니까?', variant: 'warning', confirmLabel: '나가기' }))) return;
     setEditingConcept({ id: '__new__', subjectId: '', conceptCode: '', title: '', fullContent: '', grade: GRADE_OPTIONS[0], semester: null, chapter: null, section: null, sectionSub: null, category: CATEGORY_OPTIONS[0], part: PART_OPTIONS[0], source: null, keywords: null, prerequisites: [], subConcepts: [] });
     setIsNewConcept(true);
     const form: EditFormState = {
@@ -348,8 +349,8 @@ export function useConceptManager(isOwner: boolean) {
     setIsNewBlank(false);
   };
 
-  const cancelEditing = () => {
-    if (isDirty && !confirm('저장하지 않은 변경사항이 있습니다. 닫으시겠습니까?')) return;
+  const cancelEditing = async () => {
+    if (isDirty && !(await confirm({ message: '저장하지 않은 변경사항이 있습니다. 닫으시겠습니까?', variant: 'warning', confirmLabel: '나가기' }))) return;
     // 편집 모드에서 닫기 → 개념 선택 유지 (읽기 모드로 전환)
     if (isContentEditing && !isNewConcept) {
       setIsContentEditing(false);
@@ -452,7 +453,7 @@ export function useConceptManager(isOwner: boolean) {
   };
 
   const deleteConcept = async (id: string) => {
-    if (!confirm('이 개념을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+    if (!(await confirm({ message: '이 개념을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.', variant: 'danger', confirmLabel: '삭제' }))) return;
     try {
       const res = await fetch(`/api/concepts/${id}`, { method: 'DELETE' });
       if (res.ok) {
@@ -777,7 +778,7 @@ export function useConceptManager(isOwner: boolean) {
 
   const deleteBlankExercise = async (exerciseId: string) => {
     if (!editingConcept) return;
-    if (!confirm('이 빈칸 문제를 삭제하시겠습니까?')) return;
+    if (!(await confirm({ message: '이 빈칸 문제를 삭제하시겠습니까?', variant: 'danger', confirmLabel: '삭제' }))) return;
     try {
       const res = await fetch(`/api/concepts/${editingConcept.id}/blanks?exerciseId=${exerciseId}`, {
         method: 'DELETE',
@@ -810,7 +811,7 @@ export function useConceptManager(isOwner: boolean) {
 
     const filledFields = [editForm.grade, editForm.semester, editForm.chapter, editForm.part, editForm.keywords].filter(Boolean);
     if (filledFields.length >= 5) {
-      if (!confirm('모든 메타데이터가 이미 채워져 있습니다. AI 분류를 다시 실행하시겠습니까?')) return;
+      if (!(await confirm({ message: '모든 메타데이터가 이미 채워져 있습니다. AI 분류를 다시 실행하시겠습니까?', variant: 'info', confirmLabel: '실행' }))) return;
     }
 
     setAiMetadataLoading(true);

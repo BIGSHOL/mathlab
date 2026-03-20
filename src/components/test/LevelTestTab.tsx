@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
+import { confirm } from '@/components/ui/ConfirmDialog';
 import {
   GraduationCap,
   PanelLeftClose,
@@ -327,7 +328,7 @@ export function LevelTestTab() {
   }, [sortedQuestions, selectedTest]);
 
   const handleDelete = async (test: { id: string; seq: number }) => {
-    if (!confirm('이 레벨테스트를 삭제하시겠습니까?')) return;
+    if (!(await confirm({ message: '이 레벨테스트를 삭제하시겠습니까?', variant: 'danger', confirmLabel: '삭제' }))) return;
     setDeleting(test.id);
     try {
       const res = await fetch(`/api/level-tests/${test.seq}`, { method: 'DELETE' });
