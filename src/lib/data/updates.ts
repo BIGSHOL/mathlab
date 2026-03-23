@@ -30,6 +30,20 @@ export const TYPE_CONFIG: Record<UpdateType, { label: string; color: string }> =
 };
 
 export const ALL_UPDATES: UpdateLog[] = [
+  // ── 2026-03-23 ──
+  {
+    date: '2026-03-23',
+    title: '멀티테넌트 권한 체계 정비 — 역할 4단계 정리 + 지점별 데이터 격리',
+    audience: ['admin'],
+    entries: [
+      { type: 'feature', text: '역할 체계 4단계 정리 — STUDENT / TEACHER / OWNER(원장) / SUPER_ADMIN(본사)' },
+      { type: 'feature', text: '지점(테넌트) 데이터 격리 — 원장은 자기 지점의 학생/교사/반만 관리 가능' },
+      { type: 'fix', text: '학생 등록 시 지점 자동 소속 — 교사가 등록한 학생이 해당 지점에 자동 연결' },
+      { type: 'fix', text: '반 관리 테넌트 스코핑 — 반 목록/생성/수정/삭제에 지점 필터 적용' },
+      { type: 'fix', text: '학생 배정 보안 — 다른 지점의 반에 학생 배정 시도 시 차단' },
+      { type: 'improve', text: '레거시 ADMIN/MANAGER 역할 제거 — 코드 전반에서 사용되지 않던 역할 정리' },
+    ],
+  },
   // ── 2026-03-19 ──
   {
     date: '2026-03-19',
