@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuthViewAs, isResponse, validateBody } from '@/lib/api';
+import { requireAuthViewAs, isResponse, validateBody, requireLicense } from '@/lib/api';
 import { completeStageSchema } from '@/lib/schemas/learning';
 import { XP_REWARDS, calculateLevel } from '@/lib/utils/xp';
 import { checkAndAdvanceCourse } from '@/lib/services/course-advance';
@@ -9,6 +9,8 @@ import { checkAndAdvanceCourse } from '@/lib/services/course-advance';
 export async function GET(request: NextRequest) {
   const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
+  const licenseCheck = await requireLicense(user, 'concept');
+  if (licenseCheck) return licenseCheck;
 
   const conceptId = new URL(request.url).searchParams.get('conceptId');
   const where: Record<string, unknown> = { userId: user.id };

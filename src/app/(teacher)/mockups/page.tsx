@@ -93,6 +93,7 @@ const ALL_PAGES: PageInfo[] = [
   { label: '반 관리', href: '/admin/classrooms', icon: School, group: 'teacher', description: '[관리자] 반/학급 관리' },
   { label: '학생 화면 보기', href: '/student-preview', icon: ScanEye, group: 'teacher', description: '[관리자] 학생 시점으로 페이지 확인' },
   { label: '다이어그램 미리보기', href: '/mockups/diagrams', icon: Layers, group: 'teacher', description: '[관리자] 26개 SVG 다이어그램 타입 미리보기' },
+  { label: '역할별 네비게이션', href: '/mockups/nav-roles', icon: Shield, group: 'teacher', description: '[관리자] 4개 역할별 메뉴 구조 비교' },
   // ─── Student pages ───
   { label: '학생 대시보드', href: '/dashboard', previewHref: '/mockup/student-dashboard.html', icon: GraduationCap, group: 'student', description: '레벨, XP, 숙제 배너, 진행 중인 학습' },
   { label: '단원 목록', href: '/subjects', icon: BookOpen, group: 'student', description: '학년별 과목/개념 목록, 진행도' },

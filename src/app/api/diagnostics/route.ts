@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth, requireTeacher, isResponse, badRequest } from '@/lib/api';
+import { requireAuth, requireTeacher, isResponse, badRequest, requireLicense } from '@/lib/api';
+import { parseStringIds } from '@/lib/utils/question-order';
 
 /** POST: 진단평가 생성 (기존 Test 시스템 활용, testType='diagnostic') */
 export async function POST(request: NextRequest) {
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
     });
 
     await tx.testQuestion.createMany({
-      data: (questionIds as string[]).map((qId: string, idx: number) => ({
+      data: parseStringIds(questionIds).map((qId, idx) => ({
         testId: created.id,
         questionId: qId,
         sortOrder: idx,
@@ -45,6 +46,8 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   const currentUser = await requireAuth();
   if (isResponse(currentUser)) return currentUser;
+  const licenseCheck = await requireLicense(currentUser, 'diagnostic');
+  if (licenseCheck) return licenseCheck;
 
   const where = {
     testType: { startsWith: 'diagnostic_' },

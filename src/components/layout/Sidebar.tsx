@@ -34,6 +34,7 @@ import {
   Sparkles,
   Stethoscope,
   ScrollText,
+  KeyRound,
 } from 'lucide-react';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import { LogoIcon } from '@/components/ui/LogoIcon';
@@ -100,8 +101,13 @@ const adminItems: MenuItem[] = [
   { label: '지점 관리', href: '/admin/tenants', icon: Building2 },
 ];
 
+// 운영 — OWNER 전용
+const operationItems: MenuItem[] = [
+  { label: '이용권 관리', href: '/licenses', icon: KeyRound },
+];
+
 // All items for active-route collision detection
-const allItems = [...mainItemsBase, ...systemItems, ...adminItems];
+const allItems = [...mainItemsBase, ...systemItems, ...operationItems, ...adminItems];
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -261,6 +267,16 @@ export function Sidebar() {
         <div className="flex flex-col gap-0.5">
           {systemItems.map(renderItem)}
         </div>
+
+        {/* 운영 — OWNER 전용 */}
+        {isOwner && (
+          <>
+            {renderSectionLabel('운영')}
+            <div className="flex flex-col gap-0.5">
+              {operationItems.map(renderItem)}
+            </div>
+          </>
+        )}
 
         {/* 어드민 전용 */}
         {isOwner && (

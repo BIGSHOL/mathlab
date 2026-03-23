@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuth, requireTeacher, isResponse, notFound } from '@/lib/api';
-import { getTestQuestionIds } from '@/lib/utils/question-order';
+import { getTestQuestionIds, parseStringIds } from '@/lib/utils/question-order';
 
 /** Resolve test by seq (numeric) or id (cuid) */
 async function resolveTestId(id: string): Promise<string | null> {
@@ -114,7 +114,7 @@ export async function PUT(
     if (questionIds !== undefined) {
       await tx.testQuestion.deleteMany({ where: { testId } });
       await tx.testQuestion.createMany({
-        data: (questionIds as string[]).map((qId: string, idx: number) => ({
+        data: parseStringIds(questionIds).map((qId, idx) => ({
           testId,
           questionId: qId,
           sortOrder: idx,

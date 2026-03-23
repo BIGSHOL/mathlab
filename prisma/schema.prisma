@@ -19,6 +19,17 @@ enum Role {
   SUPER_ADMIN
 }
 
+// FEAT: 이용권(라이선스) 시스템 — 기능별 좌석 관리
+enum LicenseFeature {
+  CONCEPT
+  ARITHMETIC
+  TIME_ATTACK
+  TEST
+  REVENGE
+  DIAGNOSTIC
+  QUIZ
+}
+
 // FEAT: 멀티테넌시 — 지점(학원) 관리
 model Tenant {
   id        String   @id @default(cuid())
@@ -40,6 +51,7 @@ model Tenant {
   quizSessions           QuizSession[]
   dailyQuestions         DailyQuestion[]
   featureFlags           FeatureFlag[]
+  tenantLicenses         TenantLicense[]
 
   @@index([slug])
   @@index([isActive])
@@ -100,6 +112,8 @@ model User {
   createdLearningCourses       LearningCourse[]           @relation("LearningCourseCreator")
   blankAttempts                BlankAttempt[]
   revengeAttempts              RevengeAttempt[]
+  studentLicenses              StudentLicense[]  @relation("StudentLicenses")
+  assignedLicenses             StudentLicense[]  @relation("LicenseAssignedBy")
 
   @@index([role])
   @@index([classroomId])
@@ -218,7 +232,7 @@ model BlankAttempt {
   id          String    @id @default(cuid())
   studentId   String
   conceptId   String
-  stage       Stage     // BLANK_EASY, BLANK_HARD, BLANK_FULL
+  stage       Stage     // READING, BLANK_EASY, BLANK_HARD, BLANK_FULL, BLANK_PAGE
   score       Int       @default(0) // 정답률 %
   allCorrect  Boolean   @default(false)
   hintCount   Int       @default(0)
@@ -1163,4 +1177,43 @@ model HomeworkQuestion {
 
   @@index([planId, dayIndex, sortOrder])
   @@index([questionId])
+}
+
+// FEAT: 이용권 시스템 — 지점 이용권 풀
+model TenantLicense {
+  id        String         @id @default(cuid())
+  tenantId  String
+  feature   LicenseFeature
+  maxSeats  Int
+  usedSeats Int            @default(0)  // 현재 배정 수 (비정규화, 빠른 조회)
+  expiresAt DateTime?                   // null = 무기한
+  memo      String?        @db.Text
+  isActive  Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  tenant          Tenant           @relation(fields: [tenantId], references: [id])
+  studentLicenses StudentLicense[]
+
+  @@unique([tenantId, feature])  // 지점당 기능별 하나
+  @@index([tenantId])
+}
+
+// FEAT: 이용권 시스템 — 학생 개별 배정
+model StudentLicense {
+  id              String         @id @default(cuid())
+  studentId       String
+  tenantLicenseId String
+  feature         LicenseFeature // 비정규화 (빠른 조회)
+  expiresAt       DateTime?      // null = TenantLicense 만료일 따름
+  assignedBy      String         // 배정한 OWNER의 userId
+  assignedAt      DateTime       @default(now())
+  revokedAt       DateTime?      // null = 활성 중
+
+  student        User          @relation("StudentLicenses", fields: [studentId], references: [id])
+  tenantLicense  TenantLicense @relation(fields: [tenantLicenseId], references: [id])
+  assignedByUser User          @relation("LicenseAssignedBy", fields: [assignedBy], references: [id])
+
+  @@index([studentId, feature])
+  @@index([tenantLicenseId])
 }

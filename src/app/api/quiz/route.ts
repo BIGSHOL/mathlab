@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse, badRequest, getTenantFilter } from '@/lib/api';
+import { parseStringIds } from '@/lib/utils/question-order';
 
 function generateJoinCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest) {
 
     // Dual-Write: 중간테이블에도 기록
     await tx.quizSessionQuestion.createMany({
-      data: (questionIds as string[]).map((qId: string, idx: number) => ({
+      data: parseStringIds(questionIds).map((qId, idx) => ({
         sessionId: created.id,
         questionId: qId,
         sortOrder: idx,

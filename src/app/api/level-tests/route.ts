@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuth, requireTeacher, isResponse, badRequest } from '@/lib/api';
+import { parseStringIds } from '@/lib/utils/question-order';
 
 /** GET: 레벨테스트 목록 */
 export async function GET(request: NextRequest) {
@@ -40,7 +41,8 @@ export async function POST(request: NextRequest) {
   }
 
   // 모든 문제에 영역이 지정되었는지 확인
-  const untagged = (questionIds as string[]).filter((id: string) => !questionDomains[id]);
+  const parsedIds = parseStringIds(questionIds);
+  const untagged = parsedIds.filter((id) => !questionDomains[id]);
   if (untagged.length > 0) {
     return badRequest(`영역이 지정되지 않은 문제가 ${untagged.length}개 있습니다`);
   }
@@ -71,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     // Dual-Write: TestQuestion 중간테이블
     await tx.testQuestion.createMany({
-      data: (questionIds as string[]).map((qId: string, idx: number) => ({
+      data: parsedIds.map((qId, idx) => ({
         testId: created.id,
         questionId: qId,
         sortOrder: idx,

@@ -1,6 +1,15 @@
 import { prisma } from '@/lib/db';
 
 /**
+ * unknown 타입의 questionIds를 string[]로 안전하게 변환
+ * API request body에서 받은 값을 `as string[]` 캐스팅 대신 사용
+ */
+export function parseStringIds(ids: unknown): string[] {
+  if (!Array.isArray(ids)) return [];
+  return ids.filter((id): id is string => typeof id === 'string');
+}
+
+/**
  * testId로 정렬된 questionId 배열 반환
  * 중간테이블(TestQuestion) 우선, 없으면 Json 필드 폴백 (전환기 안전장치)
  */

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuth, requireTeacher, isResponse, badRequest, getTenantFilter } from '@/lib/api';
+import { parseStringIds } from '@/lib/utils/question-order';
 
 export async function GET(request: NextRequest) {
   const currentUser = await requireAuth();
@@ -127,7 +128,7 @@ export async function POST(request: NextRequest) {
 
     // Dual-Write: 중간테이블에도 기록
     await tx.testQuestion.createMany({
-      data: (questionIds as string[]).map((qId: string, idx: number) => ({
+      data: parseStringIds(questionIds).map((qId, idx) => ({
         testId: created.id,
         questionId: qId,
         sortOrder: idx,

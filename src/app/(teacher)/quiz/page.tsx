@@ -183,7 +183,7 @@ export default function QuizPage() {
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        {(s.questionIds as string[]).length}문제
+                        {Array.isArray(s.questionIds) ? s.questionIds.length : 0}문제
                       </span>
                     </div>
                   </div>

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
-import { forbidden, notFound } from '@/lib/api';
+import { forbidden, notFound, requireLicense } from '@/lib/api';
 import { getTestQuestionIds } from '@/lib/utils/question-order';
 
 /** POST: 시험 시작 → TestAttempt 생성 (재시험/마감일/배정 지원) */
@@ -13,6 +13,8 @@ export async function POST(
   if (!currentUser || currentUser.role !== 'STUDENT') {
     return forbidden('학생만 시험에 응시할 수 있습니다');
   }
+  const licenseCheck = await requireLicense(currentUser, 'test');
+  if (licenseCheck) return licenseCheck;
 
   const { id: rawId } = await params;
 

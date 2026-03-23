@@ -2,11 +2,31 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Building2, ArrowLeft, Users, School, Save, UserCog, GraduationCap, Shield } from 'lucide-react';
+import { Building2, ArrowLeft, Users, School, Save, UserCog, GraduationCap, Shield, KeyRound, Plus, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { toast } from '@/components/ui/Toast';
 import { Skeleton } from '@/components/ui/Skeleton';
+
+const LICENSE_FEATURES = [
+  { key: 'concept', label: '개념 학습' },
+  { key: 'arithmetic', label: '연산 연습' },
+  { key: 'time_attack', label: '타임어택' },
+  { key: 'test', label: '시험' },
+  { key: 'revenge', label: '복수전' },
+  { key: 'diagnostic', label: '레벨테스트' },
+  { key: 'quiz', label: '실시간 퀴즈' },
+] as const;
+
+interface TenantLicenseRow {
+  id: string;
+  featureKey: string;
+  feature: string;
+  maxSeats: number;
+  usedSeats: number;
+  expiresAt: string | null;
+  isActive: boolean;
+}
 
 interface TenantDetail {
   id: string;
@@ -29,6 +49,15 @@ export default function TenantDetailPage() {
   const [name, setName] = useState('');
   const [logo, setLogo] = useState('');
 
+  // 이용권 관리 상태
+  const [licenses, setLicenses] = useState<TenantLicenseRow[]>([]);
+  const [licensesLoading, setLicensesLoading] = useState(true);
+  const [addingFeature, setAddingFeature] = useState<string | null>(null);
+  const [newSeats, setNewSeats] = useState(100);
+  const [editingFeature, setEditingFeature] = useState<string | null>(null);
+  const [editSeats, setEditSeats] = useState(0);
+  const [licenseSaving, setLicenseSaving] = useState(false);
+
   const fetchTenant = useCallback(async () => {
     const res = await fetch(`/api/admin/tenants/${id}`);
     const json = await res.json();
@@ -43,7 +72,16 @@ export default function TenantDetailPage() {
     setLoading(false);
   }, [id, router]);
 
-  useEffect(() => { fetchTenant(); }, [fetchTenant]);
+  const fetchLicenses = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/admin/tenants/${id}/licenses`);
+      const json = await res.json();
+      if (json.data) setLicenses(json.data);
+    } catch { /* ignore */ }
+    setLicensesLoading(false);
+  }, [id]);
+
+  useEffect(() => { fetchTenant(); fetchLicenses(); }, [fetchTenant, fetchLicenses]);
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -66,6 +104,50 @@ export default function TenantDetailPage() {
     toast.success('지점 정보가 수정되었습니다');
     fetchTenant();
   };
+
+  const handleAddLicense = async (featureKey: string) => {
+    setLicenseSaving(true);
+    try {
+      const res = await fetch(`/api/admin/tenants/${id}/licenses`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ feature: featureKey, maxSeats: newSeats }),
+      });
+      const json = await res.json();
+      if (json.error) { toast.error(json.error.message); return; }
+      toast.success('이용권이 추가되었습니다');
+      setAddingFeature(null);
+      setNewSeats(100);
+      await fetchLicenses();
+    } catch {
+      toast.error('추가에 실패했습니다');
+    } finally {
+      setLicenseSaving(false);
+    }
+  };
+
+  const handleUpdateLicense = async (featureKey: string, data: { maxSeats?: number; isActive?: boolean }) => {
+    setLicenseSaving(true);
+    try {
+      const res = await fetch(`/api/admin/tenants/${id}/licenses`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ feature: featureKey, ...data }),
+      });
+      const json = await res.json();
+      if (json.error) { toast.error(json.error.message); return; }
+      toast.success('이용권이 수정되었습니다');
+      setEditingFeature(null);
+      await fetchLicenses();
+    } catch {
+      toast.error('수정에 실패했습니다');
+    } finally {
+      setLicenseSaving(false);
+    }
+  };
+
+  const registeredFeatures = new Set(licenses.map((l) => l.featureKey));
+  const unregisteredFeatures = LICENSE_FEATURES.filter((f) => !registeredFeatures.has(f.key));
 
   const roleLabels: Record<string, { label: string; icon: typeof Users; color: string }> = {
     STUDENT: { label: '학생', icon: GraduationCap, color: 'bg-blue-100 text-blue-600' },
@@ -224,6 +306,151 @@ export default function TenantDetailPage() {
             </Button>
           </div>
         </div>
+      </div>
+
+      {/* 이용권 관리 */}
+      <div className="bg-white rounded-xl border border-slate-200 p-5 mt-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <KeyRound className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-semibold text-text-primary">이용권 관리</h3>
+          </div>
+        </div>
+
+        {licensesLoading ? (
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full rounded" />)}
+          </div>
+        ) : (
+          <>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="text-left py-2 px-2 font-medium text-text-secondary">기능</th>
+                  <th className="text-center py-2 px-2 font-medium text-text-secondary">좌석</th>
+                  <th className="text-center py-2 px-2 font-medium text-text-secondary">사용</th>
+                  <th className="text-center py-2 px-2 font-medium text-text-secondary">활성</th>
+                  <th className="text-right py-2 px-2 font-medium text-text-secondary">작업</th>
+                </tr>
+              </thead>
+              <tbody>
+                {licenses.map((lic) => {
+                  const label = LICENSE_FEATURES.find((f) => f.key === lic.featureKey)?.label ?? lic.featureKey;
+                  const isEditing = editingFeature === lic.featureKey;
+                  return (
+                    <tr key={lic.id} className="border-b border-slate-100">
+                      <td className="py-2 px-2 font-medium">{label}</td>
+                      <td className="py-2 px-2 text-center">
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            value={editSeats}
+                            onChange={(e) => setEditSeats(Number(e.target.value))}
+                            className="w-20 px-2 py-1 text-center text-sm border border-slate-200 rounded"
+                            min={1}
+                          />
+                        ) : (
+                          lic.maxSeats
+                        )}
+                      </td>
+                      <td className="py-2 px-2 text-center">
+                        <span className={lic.usedSeats >= lic.maxSeats ? 'text-red-500 font-semibold' : ''}>
+                          {lic.usedSeats}
+                        </span>
+                      </td>
+                      <td className="py-2 px-2 text-center">
+                        <button
+                          onClick={() => handleUpdateLicense(lic.featureKey, { isActive: !lic.isActive })}
+                          disabled={licenseSaving}
+                          className={`text-xs px-2 py-0.5 rounded ${lic.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}`}
+                        >
+                          {lic.isActive ? 'ON' : 'OFF'}
+                        </button>
+                      </td>
+                      <td className="py-2 px-2 text-right">
+                        {isEditing ? (
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => handleUpdateLicense(lic.featureKey, { maxSeats: editSeats })}
+                              disabled={licenseSaving}
+                              className="p-1 text-emerald-600 hover:bg-emerald-50 rounded"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setEditingFeature(null)}
+                              className="p-1 text-slate-400 hover:bg-slate-50 rounded"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => { setEditingFeature(lic.featureKey); setEditSeats(lic.maxSeats); }}
+                            className="text-xs text-primary hover:underline"
+                          >
+                            수정
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {/* 미등록 기능 추가 */}
+            {unregisteredFeatures.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-slate-100">
+                <p className="text-xs text-text-secondary mb-2">미등록 기능</p>
+                <div className="flex flex-wrap gap-2">
+                  {unregisteredFeatures.map((f) => (
+                    <div key={f.key} className="flex items-center gap-1">
+                      {addingFeature === f.key ? (
+                        <div className="flex items-center gap-1 px-2 py-1 bg-slate-50 rounded-lg border border-slate-200">
+                          <span className="text-xs font-medium">{f.label}</span>
+                          <input
+                            type="number"
+                            value={newSeats}
+                            onChange={(e) => setNewSeats(Number(e.target.value))}
+                            className="w-16 px-1.5 py-0.5 text-xs text-center border border-slate-200 rounded"
+                            min={1}
+                            placeholder="좌석"
+                          />
+                          <button
+                            onClick={() => handleAddLicense(f.key)}
+                            disabled={licenseSaving}
+                            className="p-0.5 text-emerald-600 hover:bg-emerald-50 rounded"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setAddingFeature(null)}
+                            className="p-0.5 text-slate-400 hover:bg-slate-50 rounded"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => { setAddingFeature(f.key); setNewSeats(100); }}
+                          className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors"
+                        >
+                          <Plus className="w-3 h-3" />
+                          {f.label}
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {licenses.length === 0 && unregisteredFeatures.length === 0 && (
+              <p className="text-sm text-text-secondary text-center py-4">이용권이 없습니다</p>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

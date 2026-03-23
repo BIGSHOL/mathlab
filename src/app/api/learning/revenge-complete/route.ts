@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuthViewAs, isResponse, badRequest } from '@/lib/api';
+import { requireAuthViewAs, isResponse, badRequest, requireLicense } from '@/lib/api';
 import { prisma } from '@/lib/db';
 import { awardXp } from '@/lib/utils/xp';
 
@@ -15,6 +15,8 @@ interface AnswerItem {
 export async function POST(request: NextRequest) {
   const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
+  const licenseCheck = await requireLicense(user, 'revenge');
+  if (licenseCheck) return licenseCheck;
 
   const body = await request.json();
   const { answers, chapter, difficulty, totalTimeSeconds } = body;

@@ -5,7 +5,7 @@
 ## 프로젝트 개요
 
 초등~고등 수학 학원용 학습 관리 플랫폼 (LMS).
-학생 개념학습, 빈칸암기(4단계), 연산연습, 시험, 레벨테스트, 실시간 퀴즈, 학습지, PDF 문제 추출, 게이미피케이션을 지원.
+학생 개념학습, 빈칸암기(5단계), 연산연습, 시험, 레벨테스트, 실시간 퀴즈, 학습지, PDF 문제 추출, 게이미피케이션을 지원.
 
 ## 기술 스택
 
@@ -47,7 +47,7 @@
 
 **비용 인식 — 작은 기능도 3단계를 거친다:**
 - 필드 하나(boolean, string 등) 추가에도 스키마 → generate → API → 프론트 전 과정 필요
-- API 라우트가 이미 121개+ → 무분별하게 늘리지 말 것
+- API 라우트가 이미 128개+ → 무분별하게 늘리지 말 것
 - 새 필드 추가 전 판단 기준:
   - **정규 필드**: 검색/필터/정렬에 쓰이거나, 여러 곳에서 참조되는 경우
   - **기존 Json 필드 활용**: 한 곳에서만 쓰이는 부가 정보는 `metadata Json?` 등 기존 유연한 필드에 포함 검토
@@ -88,12 +88,26 @@
 
 ### 5. 인증/인가 패턴
 
+**역할 계층 (4단계):** `STUDENT (0) < TEACHER (1) < OWNER (3) < SUPER_ADMIN (4)`
+
 ```typescript
-const currentUser = await getCurrentUser();
-if (!currentUser) → 401
-if (currentUser.role === 'STUDENT') → 403  // 선생님/관리자 전용
-if (currentUser.role !== 'ADMIN') → 403     // 관리자 전용
+// 권한 확인 함수 (src/lib/api/auth.ts)
+const user = await requireAuth();         // 로그인 필수 (401)
+const user = await requireTeacher();      // TEACHER 이상 (403)
+const user = await requireOwner();        // OWNER 이상 (403)
+const user = await requireSuperAdmin();   // SUPER_ADMIN 전용 (403)
+const user = await requireAuthViewAs();   // 로그인 + ?_as=studentId View-As 지원
+if (isResponse(user)) return user;        // 에러 응답이면 즉시 반환
+
+// 역할 비교
+hasRole(user, 'TEACHER');  // ROLE_LEVEL[user.role] >= ROLE_LEVEL['TEACHER']
 ```
+
+**역할별 권한:**
+- **STUDENT**: 자기 학습 데이터만 조회/수정
+- **TEACHER**: 자기 반(Classroom) 학생 관리, 컨텐츠 CRUD
+- **OWNER**: 지점(Tenant) 전체 관리, 이용권 배정, 선생님 관리
+- **SUPER_ADMIN**: 플랫폼 전체 (모든 테넌트, 사용자, 지점 관리)
 
 ### 6. AI 사용 규칙
 
@@ -142,13 +156,14 @@ toast.info('AI가 분석 중입니다');
 ```
 src/
 ├── app/
-│   ├── (student)/     # 학생 페이지 (dashboard, subjects, concepts, practice, my-tests, ranking, quiz, profile, diagnostics, solve)
-│   ├── (teacher)/     # 선생님 페이지 (overview, students, concepts, questions, tests, homework, analytics, quiz, worksheet, manual-grading, reports, level-test, settings, updates, admin)
-│   ├── api/           # API 라우트 (121+ endpoints)
+│   ├── (student)/     # 학생 페이지 (dashboard, subjects, concepts, practice, my-tests, ranking, quiz, quiz-join, profile, diagnostics, solve, help-public, updates)
+│   ├── (teacher)/     # 선생님 페이지 (overview, students, concepts, questions, tests, homework, analytics, quiz, worksheet, manual-grading, reports, level-test, courses, licenses, settings, updates, help, support, student-preview, admin)
+│   ├── api/           # API 라우트 (128+ endpoints)
 │   └── globals.css    # Tailwind 테마 + 디자인 토큰
 ├── components/
 │   ├── layout/        # Sidebar, DashboardShell, CommandPalette
 │   ├── ui/            # Button, Pagination, Toast, Skeleton, MotionStagger, XpToast, PageContainer, Tabs, MathSpinner 등 공통 UI
+│   ├── providers/     # SessionProvider, TenantProvider (NextAuth + 멀티테넌트)
 │   ├── math/          # MathRenderer, EditableMathRenderer, DiagramRenderer, DiagramEditorPopup, ProblemDisplay
 │   ├── learning/      # 개념학습, 빈칸연습
 │   ├── test/          # 시험 응시, 제출, AssignPanel
@@ -162,28 +177,34 @@ src/
 │   ├── report/        # 레벨테스트 보고서 렌더링
 │   ├── worksheet-wizard/  # 학습지 3단계 위자드 (Step1~3)
 │   ├── level-test-editor/ # 레벨테스트 편집기
+│   ├── level-test/    # 레벨테스트 결과 표시 (ChapterMasteryGrid, DifficultyBreakdown 등)
 │   ├── manual-grading/    # 수기 채점 인터페이스
 │   ├── charts/        # 학습분석 차트
+│   ├── updates/       # 업데이트 공지
 │   └── print-preview/ # 인쇄 모드
 ├── lib/
 │   ├── auth.ts        # NextAuth 설정
 │   ├── db.ts          # Prisma 싱글톤 클라이언트
-│   ├── schemas/       # Zod 검증 스키마
-│   ├── services/      # 핵심 비즈니스 로직 (18개 서비스)
-│   ├── utils/         # 유틸 (blank-generator, pdf-processor, features, curriculumMapping, xp, format, question-order, diagram-resolver)
+│   ├── tenant.ts      # 멀티테넌트 유틸
+│   ├── view-as.ts     # 선생님→학생 뷰 전환
+│   ├── api/           # API 헬퍼 레이어 (auth, errors, helpers, tenant-scope, license-guard, validation, homework-grid)
+│   ├── schemas/       # Zod 검증 스키마 (auth, concept, gamification, learning, question)
+│   ├── services/      # 핵심 비즈니스 로직 (21개 서비스)
+│   ├── utils/         # 유틸 (blank-generator, pdf-processor, features, curriculumMapping, xp, format, question-order, diagram-resolver, answer-status, date-engine, level-test-feedback)
 │   │   └── svg-diagrams/  # SVG 다이어그램 렌더링 시스템 (26개 타입)
+│   ├── pdf-extract-engine/  # PDF 추출 엔진 (core, ai, hooks, presets — 14파일)
 │   ├── diagram/       # 프리셋 기반 구조화 다이어그램 시스템 (DiagramSpec)
-│   ├── constants/     # 교육과정 데이터, 연산 카테고리
-│   └── data/          # 정적 데이터 (업데이트 로그 등)
-├── hooks/             # useAuth, useLearning, useGamification, useFeatureFlags, useBadgeCheck, useSpeed, useFetch, useTests, usePreviewScale 등
-├── stores/            # Zustand 글로벌 스토어 (gamification, wizard, manualGrading, xpNotification, updateNotification)
+│   ├── constants/     # 교육과정 데이터, 연산 카테고리, 라벨, 시험전략, 학교, 교재
+│   └── data/          # 정적 데이터 (업데이트 로그, 도움말)
+├── hooks/             # useAuth, useLearning, useGamification, useFeatureFlags, useBadgeCheck, useSpeed, useFetch, useTests, usePreviewScale, useLicenses, useQuestions 등
+├── stores/            # Zustand 글로벌 스토어 (gamification, wizard, manualGrading, xpNotification, updateNotification, license)
 ├── types/             # 공통 타입 정의 (diagram.ts, mathgen.ts, pdf-extract.ts, report.ts 등)
-└── scripts/           # DB 초기화, 시드 스크립트 (35+ 파일)
+└── scripts/           # DB 초기화, 시드 스크립트 (43+ 파일: TS/JS/Python)
 ```
 
 ## 주요 도메인
 
-### 4단계 빈칸 학습
+### 5단계 빈칸 학습
 
 | 단계 | Stage Enum | 설명 | XP |
 |------|------------|------|----|
@@ -191,6 +212,7 @@ src/
 | 빈칸 1단계 | `BLANK_EASY` | 핵심 용어 (easy) | 10 |
 | 빈칸 2단계 | `BLANK_HARD` | easy + hard | 15 |
 | 통문장 암기 | `BLANK_FULL` | 전체 빈칸 (full) | 20 |
+| 백지 복원 | `BLANK_PAGE` | 전체 내용 백지에서 복원 | 30 |
 
 - 빈칸 난이도: `BlankDifficulty = 'easy' | 'hard' | 'full'`
 - 단일 exercise에 per-blank difficulty 태깅
@@ -209,15 +231,18 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 
 ### 연산 생성기
 
-62개+ 카테고리, 무한 문제 생성. `src/lib/services/arithmetic-generator.ts`
+79개 카테고리, 무한 문제 생성. `src/lib/services/arithmetic-generator/`
 카테고리 예: `add_1digit`, `mul_2x1digit`, `frac_add_same`, `dec_div` 등
 
 ### 사이드바 네비게이션
 
-3개 그룹으로 구성 (`src/components/layout/Sidebar.tsx`):
-- **메인 메뉴** (10개): 대시보드, 학생관리, 개념관리, 문제은행, 연산생성기, 숙제관리, 시험관리, 학습지, 수기채점, 학습분석
-- **시스템** (3개): 업데이트 내역, 설정, 고객지원
-- **어드민** (관리자만, 7개): 선생님관리, 사용자관리, PDF 문제 추출, AI 문제 생성, 화면 미리보기, 기능 관리, 반 관리
+5개 그룹으로 구성 (`src/components/layout/Sidebar.tsx`):
+- **홈** (1개): 대시보드
+- **학습 관리** (4개): 학생관리, 개념관리, 문제은행, 학습 과정
+- **출제·평가** (5개): 연산생성기, 학습지, 숙제관리, 시험관리, 수기채점
+- **분석** (3개): 학습분석, 진단결과, 리포트
+- **시스템** (4개): 업데이트 내역, 도움말, 설정, 고객지원
+- **어드민** (관리자만, 9개): 선생님관리, 사용자관리, PDF 문제 추출, AI 문제 생성, 학생 화면 보기, 화면 미리보기, 기능 관리, 반 관리, 지점 관리(SUPER_ADMIN)
 
 **커맨드 팔레트**: `Ctrl+K`로 전체 메뉴 빠른 검색/이동 (`CommandPalette.tsx`)
 
@@ -315,8 +340,9 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 
 | 서비스 | 용도 |
 |--------|------|
-| `arithmetic-generator/` | 78+ 카테고리 연산 문제 생성 (초등/중등/고등 분리) |
+| `arithmetic-generator/` | 79개 카테고리 연산 문제 생성 (초등/중등/고등 분리) |
 | `mathgen.ts` | Gemini AI 문제 생성 |
+| `gemini.ts` | Gemini API 통합 유틸 (싱글톤 클라이언트, 코드펜스 제거, JSON 파싱) |
 | `grading.ts` | 자동 채점, XP 계산, 1차 오답 저장 (2단계 흐름: create→update) |
 | `diagnostic.ts` | 레벨테스트 결과 분석 |
 | `assignment.ts` | 시험 배정/마감 관리 |
@@ -324,7 +350,7 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 | `concept-homework.ts` | 개념 기반 숙제 |
 | `question-homework.ts` | 문제 기반 숙제 |
 | `cheat-detection.ts` | 부정행위 탐지 |
-| `badge-checker.ts` | 뱃지 조건 확인 및 자동 수여 (10종) |
+| `badge-checker.ts` | 뱃지 조건 확인 및 자동 수여 (DB 동적 관리) |
 | `daily-mission.ts` | 일일 미션 생성 및 진행 추적 |
 | `report-ai.ts` | Claude Sonnet 4.6 레벨테스트 보고서 생성 |
 | `variant-generator.ts` | 시험 변형 문제 생성 |
@@ -332,12 +358,82 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 | `question-tagger.ts` | 문제 자동 분류/태깅 |
 | `hint-generator.ts` | 문제 힌트 생성 |
 | `level-test.ts` | 레벨테스트 관리 |
+| `license.ts` | 이용권/라이선스 관리 |
+| `course-advance.ts` | 학습 과정 진도 관리 |
+
+### 멀티테넌트 스코핑 (`src/lib/api/tenant-scope.ts`)
+
+학원 지점(Tenant)별 데이터 격리 패턴:
+
+| 함수 | 역할 |
+|------|------|
+| `getTenantFilter(user)` | SUPER_ADMIN: `{}` (제한 없음), 나머지: `{ tenantId: user.tenantId }` |
+| `getTenantStudentScope(user)` | OWNER: 테넌트 전체 학생, TEACHER: 자기 반 학생만, SUPER_ADMIN: 전체 |
+| `canAccessStudent(user, studentId)` | 특정 학생 접근 권한 검증 |
+| `getStudentScope(user)` | Prisma where 조건 생성 (학생 목록 조회용) |
+
+**View-As 패턴** (`requireAuthViewAs`):
+- 선생님이 `?_as=studentId`로 학생 시점 조회 가능
+- 같은 테넌트 학생만 허용, SUPER_ADMIN은 모든 학생 가능
+
+### 이용권(라이선스) 시스템
+
+**2계층 구조:**
+- `TenantLicense`: 지점당 기능별 좌석 풀 (maxSeats, usedSeats, expiresAt, isActive)
+- `StudentLicense`: 학생 개별 배정 (revokedAt=null이면 활성)
+- 만료일: 학생/지점 이용권 중 빠른 것 적용
+
+**7개 기능 (LicenseFeature enum):** CONCEPT, ARITHMETIC, TIME_ATTACK, TEST, REVENGE, DIAGNOSTIC, QUIZ
+
+**API 가드 패턴:**
+```typescript
+const licenseCheck = await requireLicense(user, 'arithmetic');
+if (licenseCheck) return licenseCheck;  // 이용권 없으면 403
+```
+
+**관리:** OWNER → `/licenses` (학생 배정), SUPER_ADMIN → `/admin/tenants/[id]` (지점 좌석 관리)
+**클라이언트:** `useLicenseStore` (Zustand, Fail-Open — 네트워크 실패 시 허용, 서버 가드가 최종 차단)
+
+### 학습 과정 시스템
+
+**모델:** `LearningCourse` → `LearningCourseConcept` (sortOrder) → `LearningCourseEnrollment` (LOCKED|ACTIVE|COMPLETED)
+
+**자동 진급 플로우** (`course-advance.ts`):
+1. 학생이 개념의 BLANK_FULL 완료
+2. `checkAndAdvanceCourse()` 호출 → ACTIVE 과정의 모든 개념 완료 확인
+3. 과정 COMPLETED 처리 → 다음 LOCKED 과정 자동 ACTIVE 전환
+
+**선생님 관리:** `/courses` (과정 생성, 개념 추가, 학생 배정)
+
+### 수기채점 시스템
+
+**프로세스 (`src/lib/services/manual-grading.ts`):**
+1. `createManualAttempt()` — TestAttempt 생성 (entryMethod='manual')
+2. `submitManualAnswer()` — 단건 답안 입력 (자동채점 또는 isCorrectOverride로 선생님 판정)
+3. `completeManualAttempt()` — 시간 균등 분배 → 점수집계 → XP 지급
+
+**시간 처리:** 선생님이 총 소요시간 입력 → `perQuestionSeconds = totalTimeMinutes * 60 / questionCount`
+**레벨테스트 연동:** 완료 시 레벨테스트면 `analyzeLevelTest()` 자동 호출
+**상태 관리:** `manualGradingStore` (Zustand — 선택된 시험/학생, 진행 중 답안, 완료 결과)
+
+### 복수전 시스템
+
+**오답 분석 → 재도전:**
+- `GET /api/learning/revenge-suggestions` — 오답 3회 이상 유형별 복수전 추천
+- `POST /api/learning/revenge-complete` — 정답 1개당 3XP, 60% 이상 정답 시 승리
+
+### 고객 지원 시스템
+
+- `GET /api/help` — 역할별(학생/선생님/관리자) 도움말·FAQ 필터링
+- `POST /api/inquiries` — 문의 등록, 관리자 회신
+- 페이지: `/help` (도움말), `/support` (문의 등록/조회)
 
 ### 게이미피케이션
 
 **XP 보상:**
 - 개념학습(READING): 5 XP, 빈칸 쉬움(BLANK_EASY): 10 XP
 - 빈칸 어려움(BLANK_HARD): 15 XP, 통문장(BLANK_FULL): 20 XP
+- 백지 복원(BLANK_PAGE): 30 XP, 보너스(BONUS): 5 XP
 
 **레벨 임계값:** Lv1=0, Lv2=100, Lv3=250, Lv4=500, Lv5=800, Lv6+=이전+400
 
@@ -353,18 +449,21 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 | `daily_question` | 오늘의 문제 |
 | `enhanced_levelup` | 강화된 레벨업 애니메이션 |
 
-**10종 뱃지**: streak_7, streak_30, arithmetic_100, arithmetic_1000, concept_master_10, time_attack_20, first_quiz, xp_1000, perfect_score, revenge_win
+**뱃지**: DB 기반 동적 관리. 조건 타입: streak, arithmetic, blank, blank_perfect, timeattack, quiz_participate, xp_total, test_perfect, revenge, level, recovery, earlybird, weekend, hidden_* 등
 
 ### DB 모델 요약
 
-**핵심:** User(STUDENT|TEACHER|ADMIN), Subject, Concept, BlankExercise, Question
+**핵심:** User(STUDENT|TEACHER|OWNER|SUPER_ADMIN), Subject, Concept, BlankExercise, Question
 **시험:** Test, TestAttempt, TestAssignment, AnswerLog(firstSelectedAnswer 포함), LevelTestConfig
 **중간테이블:** TestQuestion, QuizSessionQuestion, HomeworkQuestion (문제 순서/FK 관리)
 **숙제:** ArithmeticHomeworkPlan, ConceptHomeworkPlan, QuestionHomeworkPlan (각각 Enrollment/Attempt)
 **퀴즈:** QuizSession, QuizParticipant, QuizAnswerLog
 **게이미피케이션:** Badge, UserBadge, DailyMission, DailyQuestion, DailyQuestionAttempt, TimeAttackRecord
 **보고서:** ReportHistory, TeacherComment
-**관리:** FeatureFlag, Classroom
+**관리:** FeatureFlag, Classroom, Tenant
+**이용권:** TenantLicense, StudentLicense, LicenseUsageLog
+**학습과정:** LearningCourse, LearningCourseConcept, LearningCourseEnrollment
+**지원:** Inquiry (문의/회신)
 **기타:** StudentProfile(XP/레벨), PointTransaction, DiagnosticResult, ConceptMemo
 
 ## 디자인 토큰
@@ -392,7 +491,7 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 --color-stage-reading: #3B82F6  /* 개념학습 */
 --color-stage-blank-easy: #10B981  /* 빈칸 쉬움 */
 --color-stage-blank-hard: #F97316  /* 빈칸 어려움 */
---color-stage-blank-page: #7C3AED  /* 통문장 */
+--color-stage-blank-page: #7C3AED  /* 백지 복원 */
 ```
 
 ## 환경변수
@@ -454,22 +553,22 @@ npx tsx scripts/migrate-question-relations.ts  # questionIds Json → 중간테�
 | `test-writer` | Sonnet | Vitest 단위 테스트 생성 (서비스, API, 유틸) |
 | `refactor-advisor` | Haiku | 대형 파일 탐지, 중복 코드 분석, 분리 전략 제안 (읽기 전용) |
 | `schema-generator` | Sonnet | Prisma 모델 → API 라우트 + Zod 스키마 + 타입 자동 생성 |
-| `api-documenter` | Haiku | 121+ API 라우트 스캔 → 구조화된 API 문서 생성 |
+| `api-documenter` | Haiku | 128+ API 라우트 스캔 → 구조화된 API 문서 생성 |
 
 ## 프로젝트 규모
 
 | 항목 | 수치 |
 |------|------|
-| 소스 파일 | 485개 (TS/TSX) |
-| 총 코드량 | ~83,000 LoC |
-| 학생 페이지 | 16개 |
-| 선생님 페이지 | 44개 |
-| API 라우트 | 127개 |
-| 컴포넌트 | 130개 |
-| 서비스 모듈 | 18개 |
-| DB 모델 | 52개, Enum 9개 |
+| 소스 파일 | 493개 (TS/TSX) |
+| 총 코드량 | ~85,000 LoC |
+| 학생 페이지 | 17개 |
+| 선생님 페이지 | 48개 |
+| API 라우트 | 128개 |
+| 컴포넌트 | 131개 |
+| 서비스 모듈 | 21개 |
+| DB 모델 | 57개, Enum 10개 |
 | SVG 다이어그램 | 26개 타입 (2개 시스템, 통합 렌더러) |
-| 커스텀 훅 | 9개 |
-| Zustand 스토어 | 5개 |
+| 커스텀 훅 | 11개 |
+| Zustand 스토어 | 6개 |
 | Zod 스키마 | 5개 |
 | E2E 테스트 | 3개 (Playwright) |

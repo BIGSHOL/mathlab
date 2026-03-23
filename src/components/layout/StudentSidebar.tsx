@@ -16,28 +16,32 @@ import {
   LogOut,
   PanelLeftClose,
   Zap,
+  Lock,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useLicenses } from '@/hooks/useLicenses';
 import { LogoIcon } from '@/components/ui/LogoIcon';
 import { useTenant } from '@/components/providers/TenantProvider';
 import { useUpdateNotification } from '@/stores/update-notification';
+import type { LicenseFeatureKey } from '@/lib/services/license';
 
 interface MenuItem {
   label: string;
   href: string;
   icon: typeof Home;
+  licenseFeature?: LicenseFeatureKey;
 }
 
 const mainItems: MenuItem[] = [
   { label: '대시보드', href: '/dashboard', icon: Home },
-  { label: '단원 목록', href: '/subjects', icon: BookOpen },
-  { label: '연산 연습', href: '/practice/arithmetic', icon: Calculator },
-  { label: '나의 시험', href: '/my-tests', icon: ClipboardCheck },
+  { label: '단원 목록', href: '/subjects', icon: BookOpen, licenseFeature: 'concept' },
+  { label: '연산 연습', href: '/practice/arithmetic', icon: Calculator, licenseFeature: 'arithmetic' },
+  { label: '나의 시험', href: '/my-tests', icon: ClipboardCheck, licenseFeature: 'test' },
 ];
 
 const activityItems: MenuItem[] = [
   { label: '랭킹', href: '/ranking', icon: Trophy },
-  { label: '타임어택', href: '/practice/arithmetic/time-attack', icon: Zap },
+  { label: '타임어택', href: '/practice/arithmetic/time-attack', icon: Zap, licenseFeature: 'time_attack' },
 ];
 
 const systemItems: MenuItem[] = [
@@ -52,6 +56,7 @@ export function StudentSidebar() {
   const viewAsId = searchParams.get('_as');
   const { user, logout } = useAuth();
   const tenant = useTenant();
+  const { isLicensed } = useLicenses();
   const [collapsed, setCollapsed] = useState(false);
   const displayName = tenant?.name || 'MathLab';
 
@@ -72,6 +77,34 @@ export function StudentSidebar() {
 
   const renderItem = (item: MenuItem) => {
     const active = isActive(item);
+    const locked = item.licenseFeature ? !isLicensed(item.licenseFeature) : false;
+
+    // 잠긴 메뉴: 클릭 불가 + 회색 + 자물쇠
+    if (locked) {
+      return (
+        <span
+          key={item.label}
+          className={`relative group flex items-center gap-2.5 px-2 py-2 rounded-sm text-xs cursor-not-allowed select-none ${collapsed ? 'justify-center' : ''} ${
+            isRevengePage ? 'text-slate-600' : 'text-slate-300'
+          }`}
+          title={collapsed ? `${item.label} — 이용권 필요` : undefined}
+        >
+          <item.icon className="w-4 h-4 shrink-0" />
+          {!collapsed && (
+            <>
+              <span className="flex-1">{item.label}</span>
+              <Lock className="w-3 h-3 shrink-0" />
+            </>
+          )}
+          {collapsed && (
+            <span className="absolute left-full ml-1 px-2.5 py-1 rounded-sm bg-slate-800 text-white text-xs whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
+              {item.label} — 이용권 필요
+            </span>
+          )}
+        </span>
+      );
+    }
+
     return (
       <Link
         key={item.label}

@@ -3,3 +3,4 @@ export { requireAuth, requireAuthViewAs, requireTeacher, requireOwner, requireAd
 export { validateQuery, validateBody } from './validation';
 export { requireResource, isResponse, clamp, homeworkCreatedByFilter, getStudentScope, canAccessStudent, getScopedStudentIds } from './helpers';
 export { getTenantFilter, getTenantStudentScope } from './tenant-scope';
+export { requireLicense } from './license-guard';

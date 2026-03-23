@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, isResponse, badRequest } from '@/lib/api';
+import { requireAuth, isResponse, badRequest, requireLicense } from '@/lib/api';
 import { prisma } from '@/lib/db';
 import { generateProblems, IMPLEMENTED_CATEGORIES } from '@/lib/services/arithmetic-generator';
 import type { ArithmeticCategory, ArithmeticLevel } from '@/lib/services/arithmetic-generator';
@@ -10,6 +10,8 @@ const VALID_LEVELS: ArithmeticLevel[] = ['easy', 'medium', 'hard'];
 export async function POST(request: NextRequest) {
   const user = await requireAuth();
   if (isResponse(user)) return user;
+  const licenseCheck = await requireLicense(user, 'arithmetic');
+  if (licenseCheck) return licenseCheck;
 
   const body = await request.json();
   const { category, level, count } = body;
