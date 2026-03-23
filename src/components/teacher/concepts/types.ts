@@ -46,7 +46,8 @@ export interface Meta {
   totalPages: number;
 }
 
-export type BlankDifficulty = 'easy' | 'hard' | 'full';
+import type { BlankDifficulty } from '@/lib/utils/blank-generator';
+export type { BlankDifficulty };
 
 export interface BlankChild {
   position: number;
