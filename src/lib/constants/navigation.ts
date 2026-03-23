@@ -20,9 +20,10 @@ import {
   UserCog,
   KeyRound,
   School,
-  Activity,
+  UsersRound,
   Building2,
   ToggleRight,
+  Radio,
   type LucideIcon,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
@@ -87,6 +88,7 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'tests', label: '시험 관리', href: '/tests', icon: ClipboardCheck, minRole: 'TEACHER', keywords: ['test', '시험', '평가'] },
       { id: 'grading', label: '수기 채점', href: '/manual-grading', icon: PenLine, minRole: 'TEACHER', keywords: ['grading', '채점', '수기'] },
       { id: 'pdf-import', label: 'PDF 추출', href: '/questions/pdf-import', icon: FileText, minRole: 'TEACHER', keywords: ['pdf', '추출', 'ocr'] },
+      { id: 'quiz', label: '실시간 퀴즈', href: '/quiz', icon: Radio, minRole: 'TEACHER', keywords: ['quiz', '퀴즈', '실시간', '대결'] },
     ],
   },
 
@@ -121,7 +123,7 @@ const NAV_GROUPS: NavGroup[] = [
     id: 'branch', label: '지점 운영', minRole: 'OWNER', style: 'admin', items: [
       { id: 'licenses', label: '이용권 관리', href: '/licenses', icon: KeyRound, minRole: 'OWNER', keywords: ['license', '이용권', '구독'] },
       { id: 'classrooms', label: '반 관리', href: '/admin/classrooms', icon: School, minRole: 'OWNER', keywords: ['class', '반', '교실'] },
-      { id: 'users', label: '사용자 관리', href: '/admin/users', icon: Activity, minRole: 'OWNER', keywords: ['user', '사용자', '계정'] },
+      { id: 'users', label: '사용자 관리', href: '/admin/users', icon: UsersRound, minRole: 'OWNER', keywords: ['user', '사용자', '계정'] },
     ],
   },
 
@@ -134,10 +136,49 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
+// ── SUPER_ADMIN 전용 네비 ──
+
+const SUPER_ADMIN_NAV_GROUPS: NavGroup[] = [
+  {
+    id: 'home', label: '홈', minRole: 'SUPER_ADMIN', items: [
+      { id: 'overview', label: '대시보드', href: '/overview', icon: LayoutDashboard, minRole: 'SUPER_ADMIN', keywords: ['dashboard', '홈', '메인'] },
+    ],
+  },
+  {
+    id: 'platform', label: '플랫폼 관리', minRole: 'SUPER_ADMIN', style: 'admin', items: [
+      { id: 'tenants', label: '지점 관리', href: '/admin/tenants', icon: Building2, minRole: 'SUPER_ADMIN', keywords: ['tenant', '지점', '지사'] },
+      { id: 'users', label: '사용자 관리', href: '/admin/users', icon: UsersRound, minRole: 'SUPER_ADMIN', keywords: ['user', '사용자', '계정'] },
+      { id: 'licenses', label: '이용권 관리', href: '/licenses', icon: KeyRound, minRole: 'SUPER_ADMIN', keywords: ['license', '이용권', '구독'] },
+      { id: 'features', label: '기능 관리', href: '/admin/features', icon: ToggleRight, minRole: 'SUPER_ADMIN', keywords: ['feature', '기능', '토글'] },
+    ],
+  },
+  {
+    id: 'monitoring', label: '모니터링', minRole: 'SUPER_ADMIN', items: [
+      { id: 'analytics', label: '학습 분석', href: '/analytics', icon: BarChart3, minRole: 'SUPER_ADMIN', keywords: ['analytics', '분석', '통계'] },
+      { id: 'reports', label: '리포트', href: '/reports', icon: ScrollText, minRole: 'SUPER_ADMIN', keywords: ['report', '리포트', '보고서'] },
+      { id: 'support', label: '고객지원', href: '/support', icon: HelpCircle, minRole: 'SUPER_ADMIN', keywords: ['support', '지원', '문의'] },
+    ],
+  },
+  {
+    id: 'content', label: '컨텐츠', minRole: 'SUPER_ADMIN', items: [
+      { id: 'concepts', label: '개념 관리', href: '/concepts', icon: BookOpen, minRole: 'SUPER_ADMIN', keywords: ['concept', '개념', '빈칸'] },
+      { id: 'questions', label: '문제 관리', href: '/questions', icon: Database, minRole: 'SUPER_ADMIN', keywords: ['question', '문제', '은행'] },
+    ],
+  },
+  {
+    id: 'system', label: '시스템', minRole: 'SUPER_ADMIN', items: [
+      { id: 'updates', label: '업데이트 내역', href: '/updates', icon: Newspaper, minRole: 'SUPER_ADMIN', keywords: ['update', '업데이트', '변경'] },
+      { id: 'settings', label: '설정', href: '/settings', icon: Settings, minRole: 'SUPER_ADMIN', keywords: ['setting', '설정', '환경'] },
+    ],
+  },
+];
+
 // ── 역할별 네비 필터링 ──
 
 /** 역할에 맞는 그룹/항목만 반환 (라벨 동적 교체 포함) */
 export function getNavForRole(role: UserRole): NavGroup[] {
+  if (role === 'SUPER_ADMIN') return SUPER_ADMIN_NAV_GROUPS;
+
   const isManager = hasMinRole(role, 'MANAGER');
 
   return NAV_GROUPS
@@ -190,5 +231,5 @@ export function getCommandsForRole(role: UserRole): CommandItem[] {
 
 /** 모든 가능한 항목 (active-route 충돌 감지용) */
 export function getAllNavItems(): NavItem[] {
-  return NAV_GROUPS.flatMap((g) => g.items);
+  return [...NAV_GROUPS, ...SUPER_ADMIN_NAV_GROUPS].flatMap((g) => g.items);
 }

@@ -21,6 +21,8 @@ import MonthlyChart from '@/components/charts/MonthlyChart';
 import DashboardAnalytics from '@/components/charts/DashboardAnalytics';
 import { OverviewActions } from '@/components/teacher/OverviewActions';
 import { DashboardStatCards } from '@/components/student/DashboardStatCards';
+import SuperAdminDashboard from '@/components/teacher/SuperAdminDashboard';
+import OwnerDashboard from '@/components/teacher/OwnerDashboard';
 
 function getAchievementColor(percent: number) {
   if (percent < 55) return { bg: 'bg-red-100', text: 'text-red-600', badge: 'text-red-500' };
@@ -51,14 +53,26 @@ export default async function TeacherDashboard({
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  const isOwner = user.role === 'OWNER' || user.role === 'SUPER_ADMIN';
   const { period = '7d' } = await searchParams;
+
+  // SUPER_ADMIN은 플랫폼 관리 전용 대시보드
+  if (user.role === 'SUPER_ADMIN') {
+    return <SuperAdminDashboard period={period} />;
+  }
+
+  // OWNER는 지점 운영 전용 대시보드
+  if (user.role === 'OWNER') {
+    return <OwnerDashboard user={user} period={period} />;
+  }
+
   const periodStart = getPeriodDate(period);
 
-  // --- Classroom-based student scoping ---
-  const isOwnerOrAbove = hasRole(user, 'OWNER');
-  let studentScope: Record<string, unknown> = { role: 'STUDENT', deletedAt: null };
-  if (!isOwnerOrAbove) {
+  // --- Classroom-based student scoping (TEACHER/MANAGER) ---
+  const isManager = hasRole(user, 'MANAGER');
+  const tenantScope = user.tenantId ? { tenantId: user.tenantId } : {};
+  let studentScope: Record<string, unknown> = { role: 'STUDENT', deletedAt: null, ...tenantScope };
+  if (!isManager) {
+    // TEACHER: 자기 반 학생만
     const teacherClassrooms = await prisma.classroom.findMany({
       where: { teacherId: user.id },
       select: { id: true },
@@ -72,15 +86,9 @@ export default async function TeacherDashboard({
 
   // --- Data queries ---
   const totalStudents = await prisma.user.count({ where: studentScope });
-  const totalTeachers = isOwner
-    ? await prisma.user.count({ where: { role: 'TEACHER', deletedAt: null } })
-    : 0;
-  const pendingInquiries = isOwner
-    ? await prisma.inquiry.count({ where: { status: 'PENDING' } })
-    : 0;
 
   const profiles = await prisma.studentProfile.findMany({
-    where: isOwnerOrAbove ? {} : { user: studentScope },
+    where: { user: studentScope },
     select: { totalXp: true, level: true, lastActiveAt: true, currentStreak: true },
   });
 
@@ -167,13 +175,6 @@ export default async function TeacherDashboard({
   };
 
   const stats = [
-    ...(isOwner ? [{
-      label: '등록 선생님',
-      value: formatNumber(totalTeachers),
-      suffix: '명',
-      icon: <GraduationCap className="w-8 h-8 text-primary opacity-20" />,
-      trend: { value: '활동 중', positive: true },
-    }] : []),
     {
       label: '전체 학생 수',
       value: formatNumber(totalStudents),
@@ -190,20 +191,12 @@ export default async function TeacherDashboard({
         ? { value: '양호', positive: true }
         : { value: '관리 필요', positive: false },
     },
-    ...(isOwner ? [{
-      label: '대기 문의',
-      value: formatNumber(pendingInquiries),
-      suffix: '건',
-      icon: <MessageCircleQuestion className="w-8 h-8 text-primary opacity-20" />,
-      trend: pendingInquiries > 0
-        ? { value: '답변 필요', positive: false }
-        : { value: '없음', positive: true },
-    }] : [{
+    {
       label: '평균 레벨',
       value: avgLevel.toFixed(1),
       icon: <GraduationCap className="w-8 h-8 text-primary opacity-20" />,
       trend: { value: '+2%', positive: true },
-    }]),
+    },
     {
       label: '총 학습 기록',
       value: formatNumber(totalProgress),
@@ -220,7 +213,7 @@ export default async function TeacherDashboard({
           <div>
             <p className="text-sm font-medium text-primary mb-1">환영합니다, {user.name}님</p>
             <h2 className="text-text-primary text-base md:text-lg font-bold leading-tight tracking-tight">
-              {isOwner ? '시스템 관리 대시보드' : '통합 대시보드'}
+              통합 대시보드
             </h2>
           </div>
           <OverviewActions />

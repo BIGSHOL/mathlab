@@ -2,7 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Building2, Plus, Users, School, Check, X, ExternalLink } from 'lucide-react';
+import {
+  Building2, Plus, Users, Check, X, ExternalLink,
+  Search, KeyRound, AlertTriangle, GraduationCap,
+} from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { toast } from '@/components/ui/Toast';
@@ -15,6 +18,14 @@ interface Tenant {
   logo: string | null;
   isActive: boolean;
   createdAt: string;
+  studentCount: number;
+  teacherCount: number;
+  classroomCount: number;
+  activityRate: number;
+  licenseCount: number;
+  totalSeats: number;
+  usedSeats: number;
+  expiringLicenses: number;
   _count: { users: number; classrooms: number };
 }
 
@@ -24,6 +35,8 @@ export default function TenantsPage() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
   const [newSlug, setNewSlug] = useState('');
   const [newName, setNewName] = useState('');
   const [ownerUsername, setOwnerUsername] = useState('');
@@ -95,8 +108,21 @@ export default function TenantsPage() {
     }
   };
 
+  // 필터링
+  const filtered = tenants
+    .filter((t) => statusFilter === 'ALL' || (statusFilter === 'ACTIVE' ? t.isActive : !t.isActive))
+    .filter((t) => !search || t.name.includes(search) || t.slug.includes(search));
+
+  // 요약 통계
+  const activeTenants = tenants.filter((t) => t.isActive).length;
+  const totalStudents = tenants.reduce((s, t) => s + t.studentCount, 0);
+  const totalTeachers = tenants.reduce((s, t) => s + t.teacherCount, 0);
+  const totalLicenses = tenants.reduce((s, t) => s + t.licenseCount, 0);
+  const expiringTotal = tenants.reduce((s, t) => s + t.expiringLicenses, 0);
+
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-6 max-w-6xl mx-auto">
+      {/* 헤더 */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-violet-100 rounded-lg">
@@ -111,6 +137,64 @@ export default function TenantsPage() {
           <Plus className="w-4 h-4 mr-1" />
           새 지점
         </Button>
+      </div>
+
+      {/* 요약 통계 카드 */}
+      {!loading && (
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+          <StatCard
+            icon={<Building2 className="w-4 h-4 text-primary" />}
+            label="활성 지점"
+            value={`${activeTenants} / ${tenants.length}`}
+          />
+          <StatCard
+            icon={<GraduationCap className="w-4 h-4 text-blue-500" />}
+            label="전체 학생"
+            value={`${totalStudents.toLocaleString()}명`}
+          />
+          <StatCard
+            icon={<Users className="w-4 h-4 text-violet-500" />}
+            label="전체 선생님"
+            value={`${totalTeachers}명`}
+          />
+          <StatCard
+            icon={<KeyRound className="w-4 h-4 text-green-500" />}
+            label="활성 이용권"
+            value={`${totalLicenses}개`}
+          />
+          <StatCard
+            icon={<AlertTriangle className="w-4 h-4 text-amber-500" />}
+            label="만료 임박"
+            value={`${expiringTotal}건`}
+            warn={expiringTotal > 0}
+          />
+        </div>
+      )}
+
+      {/* 검색 + 필터 */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="지점명 또는 슬러그 검색..."
+            className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+          />
+        </div>
+        <div className="flex gap-1.5">
+          {(['ALL', 'ACTIVE', 'INACTIVE'] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                statusFilter === s ? 'bg-primary text-white' : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
+              }`}
+            >
+              {s === 'ALL' ? '전체' : s === 'ACTIVE' ? '활성' : '비활성'}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* 지점 생성 폼 */}
@@ -180,74 +264,147 @@ export default function TenantsPage() {
       {loading ? (
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-20 rounded-xl" />
+            <Skeleton key={i} className="h-24 rounded-xl" />
           ))}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-12 text-text-secondary text-sm bg-white rounded-xl border border-slate-200">
+          {search ? `"${search}" 검색 결과 없음` : '등록된 지점이 없습니다'}
         </div>
       ) : (
         <div className="space-y-3">
-          {tenants.map((tenant) => (
+          {filtered.map((tenant) => (
             <div
               key={tenant.id}
-              className={`bg-white rounded-xl border p-4 flex items-center justify-between transition-colors ${
+              className={`bg-white rounded-xl border p-4 transition-colors ${
                 tenant.isActive ? 'border-slate-200' : 'border-red-200 bg-red-50/50'
               }`}
             >
-              <div className="flex items-center gap-4">
-                <div className={`p-2 rounded-lg ${tenant.isActive ? 'bg-blue-100' : 'bg-red-100'}`}>
-                  <Building2 className={`w-5 h-5 ${tenant.isActive ? 'text-blue-600' : 'text-red-500'}`} />
+              <div className="flex items-center justify-between">
+                {/* 좌측: 기본 정보 */}
+                <div className="flex items-center gap-4">
+                  <div className={`p-2 rounded-lg ${tenant.isActive ? 'bg-blue-100' : 'bg-red-100'}`}>
+                    <Building2 className={`w-5 h-5 ${tenant.isActive ? 'text-blue-600' : 'text-red-500'}`} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-text-primary">{tenant.name}</h3>
+                      {tenant.slug === 'default' && (
+                        <span className="text-[10px] bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded font-medium">본사</span>
+                      )}
+                      {!tenant.isActive && (
+                        <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-medium">비활성</span>
+                      )}
+                      {tenant.expiringLicenses > 0 && (
+                        <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5">
+                          <AlertTriangle className="w-2.5 h-2.5" />
+                          이용권 {tenant.expiringLicenses}건 만료 임박
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-text-secondary">{tenant.slug}.mathlab.com</p>
+                  </div>
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-text-primary">{tenant.name}</h3>
-                    {tenant.slug === 'default' && (
-                      <span className="text-[10px] bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded font-medium">본사</span>
-                    )}
-                    {!tenant.isActive && (
-                      <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-medium">비활성</span>
+
+                {/* 우측: 통계 + 액션 */}
+                <div className="flex items-center gap-6">
+                  {/* 핵심 메트릭 */}
+                  <div className="hidden md:flex items-center gap-5 text-sm">
+                    <div className="text-center">
+                      <p className="text-xs text-text-secondary">학생</p>
+                      <p className="font-semibold text-text-primary">{tenant.studentCount}명</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-text-secondary">선생님</p>
+                      <p className="font-semibold text-text-primary">{tenant.teacherCount}명</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-text-secondary">반</p>
+                      <p className="font-semibold text-text-primary">{tenant.classroomCount}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-text-secondary">주간 활동률</p>
+                      <p className={`font-semibold ${
+                        tenant.activityRate >= 70 ? 'text-green-600' :
+                        tenant.activityRate >= 40 ? 'text-amber-600' : 'text-red-500'
+                      }`}>
+                        {tenant.activityRate}%
+                      </p>
+                    </div>
+                    {tenant.licenseCount > 0 && (
+                      <div className="text-center">
+                        <p className="text-xs text-text-secondary">이용권</p>
+                        <div className="flex items-center gap-1">
+                          <div className="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full ${
+                                tenant.totalSeats > 0 && tenant.usedSeats / tenant.totalSeats > 0.9
+                                  ? 'bg-amber-500' : 'bg-primary'
+                              }`}
+                              style={{
+                                width: tenant.totalSeats > 0
+                                  ? `${Math.min(100, (tenant.usedSeats / tenant.totalSeats) * 100)}%`
+                                  : '0%',
+                              }}
+                            />
+                          </div>
+                          <span className="text-xs text-text-secondary">
+                            {tenant.totalSeats > 0
+                              ? `${Math.round((tenant.usedSeats / tenant.totalSeats) * 100)}%`
+                              : '-'}
+                          </span>
+                        </div>
+                      </div>
                     )}
                   </div>
-                  <p className="text-sm text-text-secondary">
-                    {tenant.slug}.mathlab.com
-                  </p>
-                </div>
-              </div>
 
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-4 text-sm text-text-secondary">
-                  <span className="flex items-center gap-1">
-                    <Users className="w-4 h-4" />
-                    {tenant._count.users}명
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <School className="w-4 h-4" />
-                    {tenant._count.classrooms}반
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => router.push(`/admin/tenants/${tenant.id}`)}
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                  </Button>
-                  {tenant.slug !== 'default' && (
+                  <div className="flex items-center gap-2">
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => toggleActive(tenant)}
-                      title={tenant.isActive ? '비활성화' : '활성화'}
+                      onClick={() => router.push(`/admin/tenants/${tenant.id}`)}
                     >
-                      {tenant.isActive ? <X className="w-4 h-4 text-red-500" /> : <Check className="w-4 h-4 text-green-500" />}
+                      <ExternalLink className="w-4 h-4" />
                     </Button>
-                  )}
+                    {tenant.slug !== 'default' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleActive(tenant)}
+                        title={tenant.isActive ? '비활성화' : '활성화'}
+                      >
+                        {tenant.isActive ? <X className="w-4 h-4 text-red-500" /> : <Check className="w-4 h-4 text-green-500" />}
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function StatCard({
+  icon,
+  label,
+  value,
+  warn,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  warn?: boolean;
+}) {
+  return (
+    <div className={`bg-white rounded-xl border p-4 ${warn ? 'border-amber-200' : 'border-slate-200'}`}>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-medium text-text-secondary">{label}</span>
+        {icon}
+      </div>
+      <p className={`text-lg font-bold ${warn ? 'text-amber-600' : 'text-text-primary'}`}>{value}</p>
     </div>
   );
 }

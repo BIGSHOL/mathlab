@@ -25,7 +25,7 @@ export function useConceptManager(isOwner: boolean) {
     resetBlanks: () => {},
     fetchBlanks: () => {},
   });
-  const isDirtyRef = useRef(() => false);
+  const isDirtyRef = useRef<() => boolean>(() => false);
 
   // 3. Prerequisites
   const prereqs = usePrerequisites(null as never); // editingConcept은 crud 생성 후 업데이트
@@ -78,7 +78,9 @@ export function useConceptManager(isOwner: boolean) {
 
   // Dirty state
   const isDirty = crud.conceptDirty || blanks.blankDirty;
-  isDirtyRef.current = () => isDirty;
+  useEffect(() => {
+    isDirtyRef.current = () => isDirty;
+  }, [isDirty]);
 
   // 6. AI
   const ai = useConceptAi({

@@ -10,25 +10,72 @@ export async function GET() {
   const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
   const tenants = await prisma.tenant.findMany({
     orderBy: { createdAt: 'asc' },
-    select: {
-      id: true,
-      slug: true,
-      name: true,
-      logo: true,
-      isActive: true,
-      createdAt: true,
-      _count: {
+    include: {
+      users: {
+        where: { deletedAt: null },
         select: {
-          users: { where: { deletedAt: null } },
-          classrooms: true,
+          id: true,
+          role: true,
+          profile: { select: { lastActiveAt: true } },
+        },
+      },
+      classrooms: { select: { id: true } },
+      tenantLicenses: {
+        where: { isActive: true },
+        select: {
+          id: true,
+          feature: true,
+          maxSeats: true,
+          usedSeats: true,
+          expiresAt: true,
         },
       },
     },
   });
 
-  return NextResponse.json({ data: tenants });
+  const data = tenants.map((t) => {
+    const students = t.users.filter((u) => u.role === 'STUDENT');
+    const teachers = t.users.filter((u) => u.role !== 'STUDENT');
+    const activeStudents = students.filter(
+      (u) => u.profile?.lastActiveAt && new Date(u.profile.lastActiveAt) > sevenDaysAgo
+    );
+    const activityRate = students.length > 0
+      ? Math.round((activeStudents.length / students.length) * 100)
+      : 0;
+
+    const totalSeats = t.tenantLicenses.reduce((s, l) => s + l.maxSeats, 0);
+    const usedSeats = t.tenantLicenses.reduce((s, l) => s + l.usedSeats, 0);
+    const expiringLicenses = t.tenantLicenses.filter(
+      (l) => l.expiresAt && new Date(l.expiresAt) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    ).length;
+
+    return {
+      id: t.id,
+      slug: t.slug,
+      name: t.name,
+      logo: t.logo,
+      isActive: t.isActive,
+      createdAt: t.createdAt,
+      studentCount: students.length,
+      teacherCount: teachers.length,
+      classroomCount: t.classrooms.length,
+      activityRate,
+      licenseCount: t.tenantLicenses.length,
+      totalSeats,
+      usedSeats,
+      expiringLicenses,
+      _count: {
+        users: t.users.length,
+        classrooms: t.classrooms.length,
+      },
+    };
+  });
+
+  return NextResponse.json({ data });
 }
 
 /**
