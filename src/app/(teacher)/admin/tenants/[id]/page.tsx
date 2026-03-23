@@ -70,7 +70,6 @@ export default function TenantDetailPage() {
   const roleLabels: Record<string, { label: string; icon: typeof Users; color: string }> = {
     STUDENT: { label: '학생', icon: GraduationCap, color: 'bg-blue-100 text-blue-600' },
     TEACHER: { label: '선생님', icon: UserCog, color: 'bg-green-100 text-green-600' },
-    MANAGER: { label: '매니저', icon: Users, color: 'bg-amber-100 text-amber-600' },
     OWNER: { label: '원장', icon: Shield, color: 'bg-violet-100 text-violet-600' },
     SUPER_ADMIN: { label: '슈퍼관리자', icon: Shield, color: 'bg-red-100 text-red-600' },
   };
@@ -78,8 +77,46 @@ export default function TenantDetailPage() {
   if (loading) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <Skeleton className="h-8 w-48 mb-6" />
-        <Skeleton className="h-64 rounded-xl" />
+        {/* 헤더 (뒤로가기 + 아이콘 + 이름 + 부제) */}
+        <div className="flex items-center gap-3 mb-6">
+          <Skeleton className="h-8 w-8 rounded" />
+          <Skeleton className="w-9 h-9 rounded-lg" />
+          <div className="space-y-1">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-3 w-40" />
+          </div>
+        </div>
+        {/* 4개 통계 카드 */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className="bg-white rounded-xl border border-slate-200 p-4 text-center space-y-1.5">
+              <Skeleton className="w-5 h-5 mx-auto rounded" />
+              <Skeleton className="h-7 w-10 mx-auto" />
+              <Skeleton className="h-3 w-16 mx-auto" />
+            </div>
+          ))}
+        </div>
+        {/* 역할별 사용자 */}
+        <div className="bg-white rounded-xl border border-slate-200 p-5 mb-6">
+          <Skeleton className="h-4 w-24 mb-3" />
+          <div className="flex flex-wrap gap-2">
+            {Array.from({ length: 4 }, (_, i) => (
+              <Skeleton key={i} className="h-8 w-24 rounded-lg" />
+            ))}
+          </div>
+        </div>
+        {/* 수정 폼 */}
+        <div className="bg-white rounded-xl border border-slate-200 p-5">
+          <Skeleton className="h-4 w-28 mb-4" />
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-full rounded" />
+            <Skeleton className="h-10 w-full rounded" />
+            <Skeleton className="h-10 w-full rounded" />
+            <div className="flex justify-end">
+              <Skeleton className="h-10 w-20 rounded" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -125,7 +162,7 @@ export default function TenantDetailPage() {
         <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
           <UserCog className="w-5 h-5 text-slate-400 mx-auto mb-1" />
           <p className="text-2xl font-bold text-text-primary">
-            {(tenant.roleCounts.TEACHER || 0) + (tenant.roleCounts.MANAGER || 0) + (tenant.roleCounts.OWNER || 0)}
+            {(tenant.roleCounts.TEACHER || 0) + (tenant.roleCounts.OWNER || 0)}
           </p>
           <p className="text-xs text-text-secondary">교직원</p>
         </div>

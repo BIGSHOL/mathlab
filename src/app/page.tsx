@@ -375,7 +375,7 @@ export default function LandingPage() {
                     desc: '수학 도형과 그래프를 자동으로 크롭하고 문제에 매칭',
                   },
                 ].map((item) => (
-                  <Card key={item.title} className="p-6 text-left">
+                  <Card key={item.title} padding="lg" className="text-left">
                     <h4 className="font-bold text-text-primary mb-2">{item.title}</h4>
                     <p className="text-sm text-text-secondary leading-relaxed">{item.desc}</p>
                   </Card>

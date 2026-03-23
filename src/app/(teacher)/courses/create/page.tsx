@@ -2,11 +2,9 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { toast } from '@/components/ui/Toast';
 import {
-  ArrowLeft,
   BookOpen,
   Search,
   Check,
@@ -21,6 +19,7 @@ import {
 } from 'lucide-react';
 import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Button } from '@/components/ui/Button';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 interface ConceptItem {
   id: string;
@@ -252,18 +251,12 @@ export default function CourseCreatePage() {
   return (
     <div className="px-6 py-8 max-w-[1200px] mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-8">
-        <Link href="/courses" className="p-2 rounded-sm hover:bg-slate-100 transition-colors">
-          <ArrowLeft className="w-5 h-5 text-text-secondary" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary flex items-center gap-2">
-            <GraduationCap className="w-6 h-6 text-primary" />
-            새 학습 과정 만들기
-          </h1>
-          <p className="text-text-secondary text-sm mt-0.5">개념을 선택하고 학생에게 배정합니다</p>
-        </div>
-      </div>
+      <PageHeader
+        title="새 학습 과정 만들기"
+        subtitle="개념을 선택하고 학생에게 배정합니다"
+        icon={<GraduationCap className="w-6 h-6" />}
+        backHref="/courses"
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left: 기본 정보 + 개념 선택 */}

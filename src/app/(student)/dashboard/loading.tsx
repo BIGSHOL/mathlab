@@ -3,8 +3,11 @@ import { Skeleton } from '@/components/ui/Skeleton';
 export default function DashboardLoading() {
   return (
     <div className="px-4 md:px-8 py-8 w-full">
-      {/* 숙제 배너 */}
-      <Skeleton className="h-[60px] rounded-xl mb-4" />
+      {/* 숙제 배너 (최대 3개) */}
+      <div className="space-y-2 mb-4">
+        <Skeleton className="h-[60px] rounded-xl" />
+        <Skeleton className="h-[60px] rounded-xl" />
+      </div>
 
       {/* 환영 헤더 + XP 뱃지 */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">

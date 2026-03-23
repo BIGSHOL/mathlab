@@ -17,9 +17,16 @@ export async function GET(request: NextRequest) {
   if (grade) where.grade = parseInt(grade);
   if (testType) where.testType = testType;
 
-  // 학생은 자기 학년 시험만
+  // 학생: 자기 학년 시험 + 배정된 시험 (학년 무관)
   if (currentUser.role === 'STUDENT' && currentUser.grade) {
-    where.grade = currentUser.grade;
+    const assignedTestIds = await prisma.testAssignment.findMany({
+      where: { studentId: currentUser.id },
+      select: { testId: true },
+    });
+    where.OR = [
+      { grade: currentUser.grade },
+      { id: { in: assignedTestIds.map((a) => a.testId) } },
+    ];
   }
 
   const tests = await prisma.test.findMany({

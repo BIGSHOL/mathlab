@@ -34,7 +34,7 @@ export default function QuizJoinPage() {
 
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-      <Card className="bg-slate-800 border-slate-700 p-8 max-w-sm w-full text-center">
+      <Card padding="xl" className="bg-slate-800 border-slate-700 max-w-sm w-full text-center">
         <Zap className="w-12 h-12 text-yellow-400 mx-auto mb-4" />
         <h1 className="text-2xl font-black text-white mb-2">퀴즈 배틀</h1>
         <p className="text-slate-400 text-sm mb-6">선생님이 알려준 참가 코드를 입력하세요</p>

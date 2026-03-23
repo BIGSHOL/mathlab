@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
-import { requireTeacher, validateBody, isResponse, conflict, hasRole, getStudentScope } from '@/lib/api';
+import { requireTeacher, validateBody, isResponse, conflict, hasRole, getStudentScope, getTenantFilter } from '@/lib/api';
 import { createUserSchema } from '@/lib/schemas/auth';
 
 // GET /api/users - List students (역할 기반 스코핑)
@@ -9,10 +9,11 @@ export async function GET() {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
 
-  // OWNER 이상: 전체 사용자 (선생님 포함), TEACHER/MANAGER: 담당 반 학생만
+  // OWNER 이상: 자기 테넌트 전체 사용자 (선생님 포함), TEACHER: 담당 반 학생만
   const isOwnerOrAbove = hasRole(user, 'OWNER');
+  const tenantFilter = getTenantFilter(user);
   const where = isOwnerOrAbove
-    ? { deletedAt: null }
+    ? { deletedAt: null, ...tenantFilter }
     : await getStudentScope(user);
 
   const users = await prisma.user.findMany({
@@ -67,6 +68,7 @@ export async function POST(request: NextRequest) {
       parentPhone: parsed.parentPhone || undefined,
       birthDate: parsed.birthDate ? new Date(parsed.birthDate) : undefined,
       startDate: parsed.startDate ? new Date(parsed.startDate) : undefined,
+      tenantId: user.tenantId || undefined,
       profile: { create: {} },
     },
     select: { id: true, seq: true, username: true, name: true, role: true, grade: true },

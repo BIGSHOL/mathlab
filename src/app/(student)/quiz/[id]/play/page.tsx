@@ -123,7 +123,7 @@ export default function QuizPlayPage() {
   if (quiz.status === 'WAITING') {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-        <Card className="bg-slate-800 border-slate-700 p-8 text-center max-w-sm w-full">
+        <Card padding="xl" className="bg-slate-800 border-slate-700 text-center max-w-sm w-full">
           <div className="w-12 h-12 bg-yellow-400/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <Clock className="w-6 h-6 text-yellow-400 animate-pulse" />
           </div>
@@ -147,7 +147,7 @@ export default function QuizPlayPage() {
     return (
       <div className="min-h-screen bg-slate-900 p-6">
         <div className="max-w-md mx-auto">
-          <Card className="bg-slate-800 border-slate-700 p-8 text-center">
+          <Card padding="xl" className="bg-slate-800 border-slate-700 text-center">
             <Trophy className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
             <h2 className="text-3xl font-black text-white mb-2">퀴즈 종료!</h2>
             <p className="text-slate-400 mb-6">내 점수: <span className="text-yellow-400 font-bold">{myScore}점</span></p>
@@ -209,7 +209,7 @@ export default function QuizPlayPage() {
         </div>
 
         {question ? (
-          <Card className="bg-slate-800 border-slate-700 p-6">
+          <Card padding="lg" className="bg-slate-800 border-slate-700">
             <div className="text-lg text-white leading-relaxed mb-6">
               <MathRenderer content={question.content} />
             </div>
@@ -286,7 +286,7 @@ export default function QuizPlayPage() {
             )}
           </Card>
         ) : (
-          <Card className="bg-slate-800 border-slate-700 p-8 text-center">
+          <Card padding="xl" className="bg-slate-800 border-slate-700 text-center">
             <MathSpinner size="lg" className="mx-auto" />
             <p className="text-slate-400 mt-3">다음 문제를 기다리는 중...</p>
           </Card>

@@ -49,7 +49,7 @@ export function PdfUploadStep({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* 왼쪽: 설정 */}
-      <Card className="p-5">
+      <Card padding="md">
         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <BookOpen className="w-5 h-5" />
           교재 설정
@@ -125,7 +125,7 @@ export function PdfUploadStep({
       </Card>
 
       {/* 오른쪽: PDF 업로드 */}
-      <Card className="p-5">
+      <Card padding="md">
         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Upload className="w-5 h-5" />
           PDF 업로드

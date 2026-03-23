@@ -218,30 +218,79 @@ export default function LevelTestResultsPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 py-6 md:py-8">
-        <div className="flex items-center gap-3 mb-6">
-          <Skeleton className="w-8 h-8 rounded-lg" />
-          <Skeleton className="h-7 w-36" />
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-          {Array.from({ length: 4 }, (_, i) => (
-            <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
-              <Skeleton className="h-3 w-16" />
-              <Skeleton className="h-6 w-20" />
-            </div>
-          ))}
-        </div>
-        <div className="space-y-2">
-          {Array.from({ length: 5 }, (_, i) => (
-            <div key={i} className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl">
-              <Skeleton variant="circle" className="w-8 h-8 shrink-0" />
-              <div className="flex-1 space-y-1">
-                <Skeleton className="h-4 w-1/3" />
-                <Skeleton className="h-3 w-1/4" />
+      <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+        <div className="p-6 max-w-[1024px] mx-auto w-full">
+          {/* 헤더 (뒤로가기 + 제목/부제 + 액션 버튼) */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <Skeleton className="w-5 h-5 rounded" />
+              <div className="space-y-1">
+                <Skeleton className="h-6 w-40" />
+                <Skeleton className="h-4 w-24" />
               </div>
-              <Skeleton className="h-5 w-16" />
             </div>
-          ))}
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-8 w-24 rounded" />
+              <Skeleton className="h-8 w-24 rounded" />
+            </div>
+          </div>
+          {/* 3개 통계 카드 */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {Array.from({ length: 3 }, (_, i) => (
+              <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-4">
+                <Skeleton className="w-11 h-11 rounded-sm shrink-0" />
+                <div className="space-y-1.5">
+                  <Skeleton className="h-3 w-16" />
+                  <Skeleton className="h-7 w-14" />
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* 레이더 + 레벨 분포 (2열) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="bg-white border border-slate-200 rounded-xl p-5">
+              <Skeleton className="h-4 w-28 mb-3" />
+              <Skeleton className="h-[220px] w-[220px] rounded-full mx-auto" />
+            </div>
+            <div className="bg-white border border-slate-200 rounded-xl p-5">
+              <Skeleton className="h-4 w-20 mb-4" />
+              <div className="space-y-2.5">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <Skeleton className="h-3 w-14" />
+                    <Skeleton className="h-6 flex-1 rounded-full" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          {/* 학생 목록 테이블 */}
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+            <div className="px-5 py-3 border-b border-slate-200 bg-slate-50/50 flex justify-between">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-3 w-40" />
+            </div>
+            <div className="bg-slate-50 border-b border-slate-200 px-5 py-3 flex gap-6">
+              <Skeleton className="h-3 w-12" />
+              <Skeleton className="h-3 w-10" />
+              <Skeleton className="h-3 w-8" />
+              <Skeleton className="h-3 w-12" />
+              <Skeleton className="h-3 w-12" />
+              <Skeleton className="h-3 w-14" />
+              <Skeleton className="h-3 w-10" />
+            </div>
+            {Array.from({ length: 5 }, (_, i) => (
+              <div key={i} className="flex items-center gap-6 px-5 py-3 border-b border-slate-100">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-5 w-12 rounded" />
+                <Skeleton className="h-5 w-14 rounded" />
+                <Skeleton className="h-4 w-10" />
+                <Skeleton className="h-4 w-10" />
+                <Skeleton className="h-4 w-10" />
+                <Skeleton className="h-4 w-10" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );

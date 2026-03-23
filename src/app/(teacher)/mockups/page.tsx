@@ -338,7 +338,7 @@ export default function MockupsPage() {
             { label: '학생 대시보드', href: '/mockup/student-dashboard.html', description: '레벨, XP, 진행 중인 학습, 주간 활동' },
             { label: '개념 학습', href: '/mockup/concept-learning.html', description: '4단계 학습 빈칸 채우기, 수식 표시' },
           ].map((mockup) => (
-            <Card key={mockup.href} className="p-5 flex flex-col gap-3 hover:shadow-hover transition-all">
+            <Card key={mockup.href} padding="md" className="flex flex-col gap-3 hover:shadow-hover transition-all">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-sm bg-slate-100 text-slate-500 flex items-center justify-center">
                   <PenTool className="w-5 h-5" />

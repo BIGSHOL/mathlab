@@ -17,6 +17,7 @@ import {
 import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { DiagramRenderer } from '@/components/math/DiagramRenderer';
 import type { DiagramSpec } from '@/types/diagram';
@@ -145,10 +146,10 @@ export default function QuestionHomeworkPage() {
   if (phase === 'list') {
     return (
       <div className="px-4 md:px-10 py-8 max-w-[800px] mx-auto w-full">
-        <div className="flex items-center gap-3 mb-6">
-          <FileQuestion className="w-7 h-7 text-amber-500" />
-          <h1 className="text-2xl font-bold text-text-primary">문제 숙제</h1>
-        </div>
+        <PageHeader
+          title="문제 숙제"
+          icon={<FileQuestion className="w-7 h-7 text-amber-500" />}
+        />
 
         {loadingList ? (
           <div className="space-y-3">
@@ -164,7 +165,7 @@ export default function QuestionHomeworkPage() {
             ))}
           </div>
         ) : homeworkList.length === 0 ? (
-          <Card className="p-5 text-center">
+          <Card padding="md" className="text-center">
             <p className="text-text-secondary">오늘 할 문제 숙제가 없습니다.</p>
           </Card>
         ) : (
@@ -172,7 +173,8 @@ export default function QuestionHomeworkPage() {
             {homeworkList.map((hw) => (
               <Card
                 key={`${hw.planId}-${hw.dayIndex}`}
-                className="p-5 flex items-center justify-between hover:shadow-hover transition-all"
+                padding="md"
+                className="flex items-center justify-between hover:shadow-hover transition-all"
               >
                 <div>
                   <h3 className="font-bold text-text-primary">{hw.planTitle}</h3>
@@ -221,7 +223,7 @@ export default function QuestionHomeworkPage() {
         </div>
 
         {/* Question card */}
-        <Card className="p-6 mb-6">
+        <Card padding="lg" className="mb-6">
           {currentQ.chapter && (
             <span className="text-xs text-text-secondary bg-slate-100 px-2 py-1 rounded mb-3 inline-block">
               {currentQ.chapter}
@@ -326,7 +328,7 @@ export default function QuestionHomeworkPage() {
   // ─── Phase: Result ───
   return (
     <div className="px-4 md:px-10 py-8 max-w-[800px] mx-auto w-full">
-      <Card className="p-5 text-center mb-6">
+      <Card padding="md" className="text-center mb-6">
         <Trophy className={`w-16 h-16 mx-auto mb-4 ${score >= 80 ? 'text-amber-400' : 'text-slate-300'}`} />
         <h2 className="text-2xl font-bold text-text-primary mb-2">
           {score >= 80 ? '잘했어요!' : '다음에 더 잘할 수 있어요!'}
@@ -348,7 +350,7 @@ export default function QuestionHomeworkPage() {
           {results.map((r, i) => {
             const q = questions[i];
             return (
-              <Card key={r.questionId} className="p-4">
+              <Card key={r.questionId} padding="base">
                 <div className="flex items-start gap-3">
                   {r.isCorrect ? (
                     <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />

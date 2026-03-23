@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
 
-  if (!(await isFeatureEnabled('daily_question'))) {
+  if (!(await isFeatureEnabled('daily_question', user.tenantId))) {
     return badRequest('비활성화된 기능입니다');
   }
 

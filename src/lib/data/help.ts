@@ -635,10 +635,10 @@ export function getHelpByRole(role?: string | null): HelpCategory[] {
   if (role === 'STUDENT') {
     return ALL_HELP.filter((c) => c.audience.includes('student'));
   }
-  // OWNER/SUPER_ADMIN/ADMIN → teacher + admin 도움말
-  if (role === 'OWNER' || role === 'SUPER_ADMIN' || role === 'ADMIN') {
+  // OWNER/SUPER_ADMIN → teacher + admin 도움말
+  if (role === 'OWNER' || role === 'SUPER_ADMIN') {
     return ALL_HELP.filter((c) => c.audience.includes('teacher') || c.audience.includes('admin'));
   }
-  // TEACHER/MANAGER → teacher 도움말
+  // TEACHER → teacher 도움말
   return ALL_HELP.filter((c) => c.audience.includes('teacher'));
 }

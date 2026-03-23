@@ -8,6 +8,7 @@ import { awardXp } from '@/lib/utils/xp';
 import { checkAnswer } from '@/lib/services/cheat-detection';
 import { classifyAnswer } from '@/lib/utils/answer-status';
 import { generateHint } from '@/lib/services/hint-generator';
+import { checkAndAwardBadges } from '@/lib/services/badge-checker';
 
 /** 콤보 보너스 배율 계산 */
 export function getComboMultiplier(comboCount: number): number {
@@ -152,10 +153,12 @@ export async function submitAnswer(params: {
     });
 
     if (existing) {
-      // 2차 시도: 1차 오답 레코드를 최종 결과로 업데이트
+      // 2차 시도: 1차 오답 기록 보존 + 최종 결과로 업데이트
       await tx.answerLog.update({
         where: { id: existing.id },
         data: {
+          firstSelectedAnswer: existing.selectedAnswer,
+          firstTimeSpentSeconds: existing.timeSpentSeconds,
           selectedAnswer,
           isCorrect,
           timeSpentSeconds,
@@ -228,8 +231,9 @@ export async function completeAttempt(attemptId: string) {
       throw new Error('이미 완료된 시험입니다');
     }
 
-    // 총 점수/XP 집계
-    const totalPoints = attempt.answers.reduce((sum, a) => sum + a.pointsEarned, 0);
+    // 총 점수/XP 집계 (maxScore 상한 적용)
+    const rawPoints = attempt.answers.reduce((sum, a) => sum + a.pointsEarned, 0);
+    const totalPoints = Math.min(rawPoints, attempt.maxScore);
     const xpEarned = Math.floor(totalPoints / 2);
     const totalTime = attempt.answers.reduce((sum, a) => sum + a.timeSpentSeconds, 0);
 
@@ -268,6 +272,7 @@ export async function completeAttempt(attemptId: string) {
     }
 
     return {
+      studentId: attempt.studentId,
       score: totalPoints,
       maxScore: attempt.maxScore,
       correctCount: attempt.correctCount,
@@ -281,5 +286,8 @@ export async function completeAttempt(attemptId: string) {
     };
   });
 
-  return result;
+  // 뱃지 체크 (트랜잭션 밖에서 비동기 실행)
+  const newBadges = await checkAndAwardBadges(result.studentId).catch(() => [] as string[]);
+
+  return { ...result, newBadges };
 }

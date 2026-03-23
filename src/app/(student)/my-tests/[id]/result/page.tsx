@@ -72,6 +72,7 @@ export default function TestResultPage() {
     comboMax: number;
     attemptNumber: number;
     answers: AnswerDetail[];
+    questionOrder?: string[];
     test: { title: string; maxAttempts: number | null; testType: string };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     diagnosticResult: any | null;
@@ -104,28 +105,28 @@ export default function TestResultPage() {
   useEffect(() => {
     async function load() {
       try {
-        // Get test details with questions
-        const testRes = await fetch(`/api/tests/${testSeq}`);
+        // 3개 API 병렬 호출
+        const [testRes, testsRes, histRes] = await Promise.all([
+          fetch(`/api/tests/${testSeq}`),
+          fetch('/api/tests'),
+          fetch(`/api/tests/${testSeq}/attempts`),
+        ]);
+
         if (testRes.ok) {
           const testJson = await testRes.json();
           setQuestions(testJson.data.questions ?? []);
         }
 
-        // Get test info array to check retake limit
-        const testsRes = await fetch('/api/tests');
         if (testsRes.ok) {
           const testsJson = await testsRes.json();
           const test = testsJson.data?.find((t: { seq: number }) => String(t.seq) === testSeq);
           if (test) {
-            // Check retake
             const attemptCount = test.attemptCount ?? 0;
             const maxAttempts = test.maxAttempts;
             setCanRetake(maxAttempts === null || attemptCount < maxAttempts);
           }
         }
 
-        // 시도 이력 및 최근 완료 결과 조회
-        const histRes = await fetch(`/api/tests/${testSeq}/attempts`);
         if (histRes.ok) {
           const histJson = await histRes.json();
           const completedAttempts = (histJson.data ?? []).filter((a: AttemptHistory) => a.completedAt);
@@ -150,36 +151,57 @@ export default function TestResultPage() {
 
   if (loading) {
     return (
-      <div className="px-4 md:px-8 py-6 md:py-8 w-full">
+      <div className="p-6 max-w-3xl mx-auto">
+        {/* 헤더 (뒤로가기 + 제목) */}
         <div className="flex items-center gap-3 mb-6">
-          <Skeleton className="w-8 h-8 rounded-lg" />
+          <Skeleton className="w-5 h-5 rounded" />
           <Skeleton className="h-7 w-36" />
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-6 mb-6">
-          <div className="flex items-center justify-center gap-8">
-            <div className="text-center space-y-2">
-              <Skeleton className="h-12 w-20 mx-auto" />
-              <Skeleton className="h-4 w-16 mx-auto" />
+        {/* 점수 카드 */}
+        <div className="bg-white border border-slate-200 rounded-xl p-5 mb-6 text-center">
+          <Skeleton className="w-12 h-12 rounded mx-auto mb-3" />
+          <Skeleton className="h-12 w-32 mx-auto mb-1" />
+          <Skeleton className="h-4 w-10 mx-auto mb-3" />
+          <Skeleton className="h-8 w-24 rounded mx-auto" />
+        </div>
+        {/* 4개 통계 카드 */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 text-center space-y-1.5">
+              <Skeleton className="w-5 h-5 rounded mx-auto" />
+              <Skeleton className="h-6 w-10 mx-auto" />
+              <Skeleton className="h-3 w-16 mx-auto" />
             </div>
-            <Skeleton className="h-16 w-px" />
-            <div className="flex gap-6">
-              {Array.from({ length: 3 }, (_, i) => (
-                <div key={i} className="text-center space-y-1.5">
-                  <Skeleton className="h-6 w-10 mx-auto" />
-                  <Skeleton className="h-3 w-12 mx-auto" />
-                </div>
-              ))}
-            </div>
+          ))}
+        </div>
+        {/* 학습 상태 분석 */}
+        <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6">
+          <Skeleton className="h-4 w-24 mb-3" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+            {Array.from({ length: 4 }, (_, i) => (
+              <div key={i} className="space-y-1">
+                <Skeleton className="h-6 w-6 rounded mx-auto" />
+                <Skeleton className="h-3 w-14 mx-auto" />
+                <Skeleton className="h-4 w-6 mx-auto" />
+              </div>
+            ))}
           </div>
         </div>
+        {/* 문제별 결과 */}
+        <Skeleton className="h-6 w-24 mb-4" />
         <div className="space-y-3">
           {Array.from({ length: 4 }, (_, i) => (
             <div key={i} className="bg-white border border-slate-200 rounded-xl p-4">
               <div className="flex items-start gap-3">
-                <Skeleton className="w-8 h-8 rounded-full shrink-0" />
+                <Skeleton className="w-8 h-8 rounded shrink-0" />
                 <div className="flex-1 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-3 w-20" />
+                    <Skeleton className="h-4 w-10 rounded" />
+                    <Skeleton className="h-3 w-10" />
+                  </div>
                   <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-2/3" />
                 </div>
               </div>
             </div>
@@ -208,6 +230,13 @@ export default function TestResultPage() {
 
   const questionMap = new Map(questions.map((q) => [q.id, q]));
 
+  // questionOrder 기준으로 answers 정렬 (원래 시험 순서 유지)
+  const orderedAnswers = attempt.questionOrder?.length
+    ? attempt.questionOrder
+        .map((qId) => attempt.answers.find((a) => a.questionId === qId))
+        .filter((a): a is AnswerDetail => !!a)
+    : attempt.answers;
+
   return (
     <div className="p-6 max-w-3xl mx-auto">
       {/* Header */}
@@ -219,7 +248,7 @@ export default function TestResultPage() {
       </div>
 
       {/* Score card */}
-      <Card className="p-5 mb-6 text-center bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+      <Card padding="md" className="mb-6 text-center bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
         <Trophy className="w-12 h-12 text-primary mx-auto mb-3" />
         <p className="text-5xl font-black text-primary">
           {attempt.score}
@@ -238,22 +267,22 @@ export default function TestResultPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <Card className="p-4 text-center">
+        <Card padding="base" className="text-center">
           <Target className="w-5 h-5 text-emerald-500 mx-auto mb-1" />
           <p className="text-xl font-bold text-text-primary">{accuracy}%</p>
           <p className="text-xs text-text-secondary">정답률</p>
         </Card>
-        <Card className="p-4 text-center">
+        <Card padding="base" className="text-center">
           <Zap className="w-5 h-5 text-yellow-500 mx-auto mb-1" />
           <p className="text-xl font-bold text-text-primary">{attempt.comboMax}</p>
           <p className="text-xs text-text-secondary">최대 콤보</p>
         </Card>
-        <Card className="p-4 text-center">
+        <Card padding="base" className="text-center">
           <Clock className="w-5 h-5 text-blue-500 mx-auto mb-1" />
           <p className="text-xl font-bold text-text-primary">{avgTime}초</p>
           <p className="text-xs text-text-secondary">평균 풀이 시간</p>
         </Card>
-        <Card className="p-4 text-center">
+        <Card padding="base" className="text-center">
           <Star className="w-5 h-5 text-primary mx-auto mb-1" />
           <p className="text-xl font-bold text-text-primary">+{attempt.xpEarned}</p>
           <p className="text-xs text-text-secondary">획득 XP</p>
@@ -284,7 +313,7 @@ export default function TestResultPage() {
           </h2>
           <div className="grid gap-2">
             {attemptHistory.map((h) => (
-              <Card key={h.id} className="p-3 flex items-center justify-between">
+              <Card key={h.id} padding="sm" className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-bold text-text-secondary">{h.attemptNumber}회차</span>
                   <span className="text-sm font-semibold text-text-primary">
@@ -308,7 +337,7 @@ export default function TestResultPage() {
 
       {/* 학습 상태 요약 */}
       {(() => {
-        const statuses = attempt.answers.map((ans) => {
+        const statuses = orderedAnswers.map((ans) => {
           const q = questionMap.get(ans.questionId);
           return classifyAnswer({
             isCorrect: ans.isCorrect,
@@ -318,7 +347,7 @@ export default function TestResultPage() {
         });
         const summary = getStatusSummary(statuses);
         return (
-          <Card className="p-4 mb-6">
+          <Card padding="base" className="mb-6">
             <h3 className="text-sm font-bold text-text-primary mb-3">학습 상태 분석</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
               <div>
@@ -349,12 +378,12 @@ export default function TestResultPage() {
       {/* Answer review */}
       <h2 className="text-lg font-bold text-text-primary mb-4">문제별 결과</h2>
       <div className="space-y-3">
-        {attempt.answers.map((ans, idx) => {
+        {orderedAnswers.map((ans, idx) => {
           const q = questionMap.get(ans.questionId);
           if (!q) return null;
 
           return (
-            <Card key={ans.questionId} className="p-4">
+            <Card key={ans.questionId} padding="base">
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0 pt-0.5">
                   <MathStatusBadge
@@ -392,11 +421,11 @@ export default function TestResultPage() {
                     <MathRenderer content={q.content.slice(0, 200)} />
                   </div>
                   <div className="text-xs text-text-secondary">
-                    내 답: <span className={`${ans.isCorrect ? 'text-emerald-600 font-medium' : 'text-red-600 font-medium'} [&_p]:inline [&_p]:m-0`}>
-                      <MathRenderer content={ans.selectedAnswer} />
+                    내 답: <span className={ans.isCorrect ? 'text-emerald-600 font-medium' : 'text-red-600 font-medium'}>
+                      <MathRenderer content={ans.selectedAnswer} inline />
                     </span>
                     {!ans.isCorrect && (
-                      <> · 정답: <span className="text-emerald-600 font-medium [&_p]:inline [&_p]:m-0"><MathRenderer content={q.answer} /></span></>
+                      <> · 정답: <span className="text-emerald-600 font-medium"><MathRenderer content={q.answer} inline /></span></>
                     )}
                   </div>
                   {!ans.isCorrect && (

@@ -14,6 +14,7 @@ import {
   usePdfImport,
   STEPS,
 } from '@/components/teacher/pdf-import';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 export default function PdfImportPage() {
   const state = usePdfImport();
@@ -21,17 +22,11 @@ export default function PdfImportPage() {
   return (
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 md:py-8">
       {/* 헤더 */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <FileText className="w-7 h-7 text-primary" />
-            PDF 문제 추출
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            수학 문제집 PDF에서 문제를 자동으로 추출하여 문제은행에 등록합니다
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="PDF 문제 추출"
+        subtitle="수학 문제집 PDF에서 문제를 자동으로 추출하여 문제은행에 등록합니다"
+        icon={<FileText className="w-7 h-7" />}
+      />
 
       {/* 스텝 인디케이터 */}
       <div className="flex items-center gap-2 mb-8">

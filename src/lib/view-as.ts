@@ -21,7 +21,7 @@ export async function getViewAsUser(searchParams?: { _as?: string; [key: string]
         id: student.id,
         name: student.name,
         username: student.username,
-        role: student.role as 'STUDENT' | 'TEACHER' | 'ADMIN',
+        role: student.role as 'STUDENT' | 'TEACHER' | 'OWNER' | 'SUPER_ADMIN',
         grade: student.grade,
       };
     }

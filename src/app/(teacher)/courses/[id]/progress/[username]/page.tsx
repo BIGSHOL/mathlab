@@ -137,30 +137,69 @@ export default function StudentProgressPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 py-6 md:py-8">
-        <div className="flex items-center gap-3 mb-6">
-          <Skeleton className="w-8 h-8 rounded-lg" />
-          <Skeleton className="h-7 w-48" />
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-          {Array.from({ length: 4 }, (_, i) => (
-            <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
-              <Skeleton className="h-3 w-16" />
-              <Skeleton className="h-6 w-20" />
+      <div className="px-5 py-6">
+        {/* 헤더 (뒤로가기 + 학생명 + 뱃지들) */}
+        <div className="flex items-center gap-3 mb-5">
+          <Skeleton className="w-8 h-8 rounded-sm" />
+          <div className="flex-1 min-w-0 space-y-1">
+            <div className="flex items-center gap-2">
+              <Skeleton className="w-5 h-5 rounded" />
+              <Skeleton className="h-5 w-40" />
             </div>
-          ))}
+            <Skeleton className="h-3 w-28" />
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Skeleton className="h-7 w-14 rounded-full" />
+            <Skeleton className="h-7 w-16 rounded-full" />
+            <Skeleton className="h-7 w-24 rounded-full" />
+          </div>
         </div>
-        <div className="space-y-2">
-          {Array.from({ length: 4 }, (_, i) => (
-            <div key={i} className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl">
-              <Skeleton className="w-6 h-6 rounded" />
-              <div className="flex-1 space-y-1">
-                <Skeleton className="h-4 w-1/3" />
-                <Skeleton className="h-3 w-1/5" />
+        {/* ProgressBar */}
+        <Skeleton className="h-2 w-full rounded-full mb-5" />
+        {/* 2패널 레이아웃 */}
+        <div className="flex gap-4" style={{ height: 'calc(100vh - 190px)' }}>
+          {/* 왼쪽: 개념 리스트 */}
+          <div className="w-[260px] shrink-0 flex flex-col">
+            <Skeleton className="h-3 w-20 mb-2" />
+            <div className="space-y-1">
+              {Array.from({ length: 6 }, (_, i) => (
+                <div key={i} className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-slate-200 bg-white">
+                  <Skeleton variant="circle" className="w-6 h-6 shrink-0" />
+                  <div className="flex-1 space-y-1">
+                    <Skeleton className="h-3 w-3/4" />
+                    <div className="flex gap-0.5">
+                      {Array.from({ length: 4 }, (_, j) => (
+                        <Skeleton key={j} className="w-1.5 h-1.5 rounded-full" />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* 오른쪽: 상세 패널 */}
+          <div className="flex-1 min-w-0">
+            <div className="bg-white border border-slate-200 rounded-xl p-5 h-full space-y-4">
+              <div className="flex items-start gap-4">
+                <div className="space-y-1">
+                  <Skeleton className="h-5 w-36" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+                <div className="flex-1 grid grid-cols-4 gap-2">
+                  {Array.from({ length: 4 }, (_, i) => (
+                    <div key={i} className="px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 space-y-1.5">
+                      <Skeleton className="h-3 w-10" />
+                      <Skeleton className="h-3 w-14" />
+                    </div>
+                  ))}
+                </div>
               </div>
-              <Skeleton className="h-5 w-16" />
+              <div className="grid grid-cols-2 gap-4 flex-1">
+                <Skeleton className="h-60 rounded-xl" />
+                <Skeleton className="h-60 rounded-xl" />
+              </div>
             </div>
-          ))}
+          </div>
         </div>
       </div>
     );

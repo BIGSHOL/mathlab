@@ -205,7 +205,7 @@ export default function QuizHostPage() {
               </div>
             </div>
 
-            <Card className="bg-slate-800 border-slate-700 p-8">
+            <Card padding="xl" className="bg-slate-800 border-slate-700">
               <div className="text-xs text-slate-500 mb-2">{quiz.currentQuestion.chapter}</div>
               <div className="text-xl text-white leading-relaxed">
                 <MathRenderer content={quiz.currentQuestion.content} />
@@ -226,7 +226,7 @@ export default function QuizHostPage() {
             </Card>
 
             {/* Live ranking */}
-            <Card className="bg-slate-800 border-slate-700 p-5">
+            <Card padding="md" className="bg-slate-800 border-slate-700">
               <h3 className="text-sm font-bold text-slate-400 mb-3 flex items-center gap-1">
                 <Trophy className="w-4 h-4 text-yellow-400" />
                 실시간 순위
@@ -257,7 +257,7 @@ export default function QuizHostPage() {
 
         {/* Completed — final ranking */}
         {quiz.status === 'COMPLETED' && (
-          <Card className="bg-slate-800 border-slate-700 p-8 text-center">
+          <Card padding="xl" className="bg-slate-800 border-slate-700 text-center">
             <Trophy className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
             <h2 className="text-3xl font-black mb-6">최종 결과</h2>
             <div className="max-w-md mx-auto space-y-3">

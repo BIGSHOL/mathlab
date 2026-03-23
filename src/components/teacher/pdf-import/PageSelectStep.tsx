@@ -43,7 +43,7 @@ export function PageSelectStep({
   return (
     <div>
       {/* 툴바 */}
-      <Card className="p-4 mb-4">
+      <Card padding="base" className="mb-4">
         <div className="flex flex-wrap items-center gap-3">
           <Button variant="secondary" size="sm" onClick={selectAll}>
             전체 선택

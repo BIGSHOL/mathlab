@@ -234,14 +234,15 @@ export async function completeManualAttempt(attemptId: string, totalTimeMinutes:
       });
     }
 
-    const xpEarned = Math.floor(totalPoints / 2);
+    const cappedPoints = Math.min(totalPoints, attempt.maxScore);
+    const xpEarned = Math.floor(cappedPoints / 2);
 
     // TestAttempt 완료
     await tx.testAttempt.update({
       where: { id: attemptId },
       data: {
         completedAt: new Date(),
-        score: totalPoints,
+        score: cappedPoints,
         correctCount,
         maxScore: attempt.maxScore,
         xpEarned,
@@ -299,9 +300,10 @@ async function recalculateAttemptStats(attemptId: string) {
     where: { attemptId },
   });
   const correctCount = answers.filter((a) => a.isCorrect).length;
+  const score = answers.reduce((sum, a) => sum + a.pointsEarned, 0);
 
   await prisma.testAttempt.update({
     where: { id: attemptId },
-    data: { correctCount },
+    data: { correctCount, score },
   });
 }

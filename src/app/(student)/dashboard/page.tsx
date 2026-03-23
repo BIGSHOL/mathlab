@@ -54,7 +54,7 @@ export default async function StudentDashboard({
 
   // enrollment 기반 개념 수
   const courseConceptIds = activeEnrollment?.course.concepts.map((c) => c.conceptId) ?? [];
-  const totalConcepts = activeEnrollment ? courseConceptIds.length : await prisma.concept.count({
+  const totalConcepts = hasEnrollments ? courseConceptIds.length : await prisma.concept.count({
     where: user.grade ? { subject: { gradeLevel: user.grade } } : {},
   });
 
@@ -64,7 +64,7 @@ export default async function StudentDashboard({
       userId: user.id,
       stage: 'BLANK_FULL',
       completed: true,
-      ...(activeEnrollment && courseConceptIds.length > 0 ? { conceptId: { in: courseConceptIds } } : {}),
+      ...(hasEnrollments && courseConceptIds.length > 0 ? { conceptId: { in: courseConceptIds } } : {}),
     },
   });
   const completedConceptIds = new Set(completedConcepts.map((c) => c.conceptId));
@@ -72,40 +72,40 @@ export default async function StudentDashboard({
   // 과정 내 개념 진행 상태 (배정된 과정이 있을 때)
   const courseConceptProgress = activeEnrollment
     ? await prisma.learningProgress.findMany({
-      where: { userId: user.id, conceptId: { in: courseConceptIds } },
-      include: { concept: { include: { subject: true } } },
-      orderBy: { updatedAt: 'desc' },
-    })
+        where: { userId: user.id, conceptId: { in: courseConceptIds } },
+        include: { concept: { include: { subject: true } } },
+        orderBy: { updatedAt: 'desc' },
+      })
     : [];
 
   // 과정 내 미완료 개념 우선 표시 (최대 3개)
   const courseProgressItems = activeEnrollment
     ? (() => {
-      // 개념별 최신 progress만 유지
-      const progressMap = new Map<string, typeof courseConceptProgress[number]>();
-      for (const p of courseConceptProgress) {
-        if (!progressMap.has(p.conceptId)) progressMap.set(p.conceptId, p);
-      }
-      // 과정 개념 순서대로, 미완료 우선
-      return activeEnrollment.course.concepts
-        .filter((cc) => !completedConceptIds.has(cc.conceptId))
-        .slice(0, 3)
-        .map((cc) => ({
-          conceptId: cc.conceptId,
-          concept: cc.concept,
-          progress: progressMap.get(cc.conceptId),
-        }));
-    })()
+        // 개념별 최신 progress만 유지
+        const progressMap = new Map<string, typeof courseConceptProgress[number]>();
+        for (const p of courseConceptProgress) {
+          if (!progressMap.has(p.conceptId)) progressMap.set(p.conceptId, p);
+        }
+        // 과정 개념 순서대로, 미완료 우선
+        return activeEnrollment.course.concepts
+          .filter((cc) => !completedConceptIds.has(cc.conceptId))
+          .slice(0, 3)
+          .map((cc) => ({
+            conceptId: cc.conceptId,
+            concept: cc.concept,
+            progress: progressMap.get(cc.conceptId),
+          }));
+      })()
     : [];
 
   // 과정이 없을 때 fallback: 최근 학습한 개념
   const recentProgress = !activeEnrollment
     ? await prisma.learningProgress.findMany({
-      where: { userId: user.id },
-      include: { concept: { include: { subject: true } } },
-      orderBy: { updatedAt: 'desc' },
-      take: 12,
-    })
+        where: { userId: user.id },
+        include: { concept: { include: { subject: true } } },
+        orderBy: { updatedAt: 'desc' },
+        take: 12,
+      })
     : [];
   const seenConcepts = new Set<string>();
   const uniqueRecentProgress = recentProgress.filter((p) => {
@@ -166,9 +166,9 @@ export default async function StudentDashboard({
   const wrongQuestionIds = uniqueWrongAnswers.map((a) => a.questionId);
   const wrongQuestions = wrongQuestionIds.length > 0
     ? await prisma.question.findMany({
-      where: { id: { in: wrongQuestionIds } },
-      select: { id: true, content: true, chapter: true, difficulty: true, answer: true },
-    })
+        where: { id: { in: wrongQuestionIds } },
+        select: { id: true, content: true, chapter: true, difficulty: true, answer: true },
+      })
     : [];
   const wrongQMap = new Map(wrongQuestions.map((q) => [q.id, q]));
 
@@ -206,22 +206,8 @@ export default async function StudentDashboard({
   // 추천 학습 (배정 과정 기반: 아직 완료하지 않은 개념)
   const recommendedConcepts = hasEnrollments && courseConceptIds.length > 0
     ? await prisma.concept.findMany({
-      where: {
-        id: { in: courseConceptIds },
-        NOT: {
-          progress: {
-            some: { userId: user.id, stage: 'BLANK_FULL', completed: true },
-          },
-        },
-      },
-      include: { subject: true },
-      take: 3,
-      orderBy: { sortOrder: 'asc' },
-    })
-    : !hasEnrollments
-      ? await prisma.concept.findMany({
         where: {
-          ...(user.grade ? { subject: { gradeLevel: user.grade } } : {}),
+          id: { in: courseConceptIds },
           NOT: {
             progress: {
               some: { userId: user.id, stage: 'BLANK_FULL', completed: true },
@@ -232,6 +218,20 @@ export default async function StudentDashboard({
         take: 3,
         orderBy: { sortOrder: 'asc' },
       })
+    : !hasEnrollments
+      ? await prisma.concept.findMany({
+          where: {
+            ...(user.grade ? { subject: { gradeLevel: user.grade } } : {}),
+            NOT: {
+              progress: {
+                some: { userId: user.id, stage: 'BLANK_FULL', completed: true },
+              },
+            },
+          },
+          include: { subject: true },
+          take: 3,
+          orderBy: { sortOrder: 'asc' },
+        })
       : [];
 
   const completedCount = completedConcepts.length;
@@ -287,8 +287,9 @@ export default async function StudentDashboard({
                           {c.stages.map((s, i) => (
                             <div
                               key={i}
-                              className={`w-2 h-2 rounded-sm ${s.completed ? 'bg-white' : 'bg-white/30'
-                                }`}
+                              className={`w-2 h-2 rounded-sm ${
+                                s.completed ? 'bg-white' : 'bg-white/30'
+                              }`}
                             />
                           ))}
                         </div>
@@ -368,16 +369,10 @@ export default async function StudentDashboard({
               </div>
               <div className="flex items-center gap-3">
                 <div className="text-right">
-                  {totalConcepts > 0 ? (
-                    <>
-                      <p className="text-lg font-bold">
-                        {completedCount}/{totalConcepts}
-                      </p>
-                      <p className="text-xs opacity-80">개념 완료</p>
-                    </>
-                  ) : (
-                    <p className="text-xs opacity-80">개념 준비 중</p>
-                  )}
+                  <p className="text-lg font-bold">
+                    {completedCount}/{totalConcepts}
+                  </p>
+                  <p className="text-xs opacity-80">개념 완료</p>
                 </div>
                 <ArrowRight className="w-5 h-5 opacity-80" />
               </div>
@@ -443,7 +438,7 @@ export default async function StudentDashboard({
       {/* ──── Row 1: 진행 중인 학습 (2/3) + 추천 학습 + 오늘의 미션 (1/3) ──── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
         <div className="lg:col-span-2">
-          <Card className="p-5 h-full rounded-xl">
+          <Card padding="md" className="h-full rounded-xl">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold text-text-primary">진행 중인 학습</h2>
               <Link href="/subjects" className="text-primary text-sm font-medium hover:underline flex items-center gap-1">
@@ -519,7 +514,7 @@ export default async function StudentDashboard({
         </div>
         <div className="flex flex-col gap-4">
           {/* 추천 학습 */}
-          <Card className="p-4 rounded-xl">
+          <Card padding="base" className="rounded-xl">
             <div className="flex items-center gap-2 mb-3">
               <Sparkles className="w-4 h-4 text-primary" />
               <h2 className="text-sm font-bold text-text-primary">추천 학습</h2>
@@ -560,7 +555,7 @@ export default async function StudentDashboard({
       {/* ──── Row 2: 최근 오답 + 주간 학습 (2열) ──── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         {/* 최근 오답 */}
-        <Card className="p-4 rounded-xl">
+        <Card padding="base" className="rounded-xl">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <XCircle className="w-4 h-4 text-red-400" />
@@ -604,7 +599,7 @@ export default async function StudentDashboard({
         </Card>
 
         {/* 주간 학습 차트 */}
-        <Card className="p-4 rounded-xl flex flex-col">
+        <Card padding="base" className="rounded-xl flex flex-col">
           <div className="flex items-center gap-2 mb-3">
             <BarChart3 className="w-4 h-4 text-primary" />
             <h2 className="text-sm font-bold text-text-primary">주간 학습량</h2>
@@ -641,8 +636,9 @@ export default async function StudentDashboard({
                         <span className="text-xs text-text-secondary font-medium mb-1 relative z-20 bg-white px-1 rounded">{day.count}</span>
                       )}
                       <div
-                        className={`w-full max-w-[28px] rounded-t-lg transition-all ${isToday ? 'bg-primary/20' : day.count > 0 ? 'bg-primary/10' : 'bg-slate-50'
-                          }`}
+                        className={`w-full max-w-[28px] rounded-t-lg transition-all ${
+                          isToday ? 'bg-primary/20' : day.count > 0 ? 'bg-primary/10' : 'bg-slate-50'
+                        }`}
                         style={{ height: `${Math.max((day.count / maxDailyCount) * 100, day.count > 0 ? 12 : 4)}%` }}
                       />
                     </div>
@@ -659,7 +655,7 @@ export default async function StudentDashboard({
       </div>
 
       {/* ──── Row 3: 랭킹 (전체 너비) ──── */}
-      <Card className="p-5 rounded-xl">
+      <Card padding="md" className="rounded-xl">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Trophy className="w-4 h-4 text-amber-500" />
@@ -679,16 +675,18 @@ export default async function StudentDashboard({
               return (
                 <div
                   key={s.id}
-                  className={`flex-1 min-w-[140px] flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${isMe
+                  className={`flex-1 min-w-[140px] flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
+                    isMe
                       ? 'bg-primary text-white shadow-lg shadow-primary/20'
                       : 'bg-slate-50 border border-slate-200'
-                    }`}
+                  }`}
                 >
                   <span className={`text-lg font-extrabold ${isMe ? 'text-white' : (medalColors[i] ?? 'text-slate-400')}`}>
                     {i + 1}
                   </span>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${isMe ? 'bg-white/20 text-white' : 'bg-gradient-to-tr from-primary to-blue-400 text-white'
-                    }`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                    isMe ? 'bg-white/20 text-white' : 'bg-gradient-to-tr from-primary to-blue-400 text-white'
+                  }`}>
                     {s.user.name?.[0] ?? '?'}
                   </div>
                   <div>

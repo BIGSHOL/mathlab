@@ -6,14 +6,12 @@ import type { UserRole } from '@/types';
 
 export type AuthUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>;
 
-// ── 역할 계층 ──
+// ── 역할 계층 (STUDENT < TEACHER < OWNER < SUPER_ADMIN) ──
 const ROLE_LEVEL: Record<string, number> = {
   STUDENT: 0,
   TEACHER: 1,
-  MANAGER: 2,
   OWNER: 3,
   SUPER_ADMIN: 4,
-  ADMIN: 3, // 레거시 호환 (OWNER와 동일 권한)
 };
 
 /** 유저의 역할이 최소 역할 이상인지 확인 */
@@ -21,7 +19,7 @@ export function hasRole(user: { role: string }, minRole: UserRole): boolean {
   return (ROLE_LEVEL[user.role] ?? 0) >= (ROLE_LEVEL[minRole] ?? 99);
 }
 
-/** 선생님 이상 (TEACHER/MANAGER/OWNER/SUPER_ADMIN) */
+/** 선생님 이상 (TEACHER/OWNER/SUPER_ADMIN) */
 export async function requireTeacher(): Promise<AuthUser | NextResponse> {
   const user = await getCurrentUser();
   if (!user) return unauthorized();
@@ -29,15 +27,7 @@ export async function requireTeacher(): Promise<AuthUser | NextResponse> {
   return user;
 }
 
-/** 팀장 이상 (MANAGER/OWNER/SUPER_ADMIN) */
-export async function requireManager(): Promise<AuthUser | NextResponse> {
-  const user = await getCurrentUser();
-  if (!user) return unauthorized();
-  if (!hasRole(user, 'MANAGER')) return forbidden();
-  return user;
-}
-
-/** 원장 이상 (OWNER/SUPER_ADMIN) — 기존 requireAdmin 대체 */
+/** 원장 이상 (OWNER/SUPER_ADMIN) */
 export async function requireOwner(): Promise<AuthUser | NextResponse> {
   const user = await getCurrentUser();
   if (!user) return unauthorized();
@@ -53,7 +43,7 @@ export async function requireSuperAdmin(): Promise<AuthUser | NextResponse> {
   return user;
 }
 
-/** @deprecated requireOwner() 사용 권장 — 레거시 호환 */
+/** @deprecated requireOwner() 사용 권장 */
 export async function requireAdmin(): Promise<AuthUser | NextResponse> {
   return requireOwner();
 }

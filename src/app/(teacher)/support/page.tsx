@@ -344,7 +344,7 @@ export default function SupportPage() {
                 </p>
               </div>
 
-              <Card className="p-3 flex flex-col gap-2">
+              <Card padding="sm" className="flex flex-col gap-2">
                 {submitSuccess && (
                   <div className="flex items-center gap-2 px-3 py-3 bg-emerald-50 text-emerald-700 rounded-sm text-sm font-medium">
                     <CheckCircle2 className="w-4 h-4" /> 문의가 등록되었습니다.
@@ -470,7 +470,7 @@ export default function SupportPage() {
               )}
 
               {/* 사용 가이드 */}
-              <Card className="p-3 flex items-center gap-2 hover:shadow-hover transition-shadow">
+              <Card padding="sm" className="flex items-center gap-2 hover:shadow-hover transition-shadow">
                 <div className="p-3 bg-amber-50 rounded-sm">
                   <BookOpen className="w-6 h-6 text-amber-600" />
                 </div>

@@ -62,9 +62,12 @@ export default function TestPlayPage() {
   } | null>(null);
   const [hintUsed, setHintUsed] = useState(false);
 
-  // Timer
+  // Timer (문제별 경과시간 + 시험 전체 제한시간)
   const [elapsed, setElapsed] = useState(0);
   const questionStartRef = useRef(Date.now());
+  const [timeLimitMin, setTimeLimitMin] = useState<number | null>(null);
+  const [totalElapsed, setTotalElapsed] = useState(0);
+  const testStartRef = useRef(Date.now());
 
   // Tab switch detection
   const tabSwitchRef = useRef(0);
@@ -86,6 +89,12 @@ export default function TestPlayPage() {
           );
           setQuestions(qOrder.map((id: string) => qMap.get(id)!).filter(Boolean));
           setCurrentIndex(att.currentQuestionIndex ?? 0);
+
+          // 제한 시간 설정
+          if (json.data.timeLimitMin && json.data.timeLimitMin > 0) {
+            setTimeLimitMin(json.data.timeLimitMin);
+            testStartRef.current = new Date(att.startedAt).getTime();
+          }
         }
       } catch {
         // ignore
@@ -105,6 +114,26 @@ export default function TestPlayPage() {
     }, 1000);
     return () => clearInterval(timer);
   }, [currentIndex]);
+
+  // 시험 전체 제한 시간 카운트다운
+  const autoSubmitRef = useRef(false);
+  useEffect(() => {
+    if (!timeLimitMin || timeLimitMin <= 0) return;
+    const interval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - testStartRef.current) / 1000);
+      setTotalElapsed(elapsed);
+      const remaining = timeLimitMin * 60 - elapsed;
+      if (remaining <= 0 && !autoSubmitRef.current && attempt) {
+        autoSubmitRef.current = true;
+        clearInterval(interval);
+        toast.warning('시간이 종료되어 시험이 자동 제출됩니다.');
+        completeAttempt(attempt.id).then(() => {
+          router.push(`/my-tests/${testSeq}/result`);
+        });
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timeLimitMin, attempt, completeAttempt, testSeq, router]);
 
   // Tab visibility change detection
   useEffect(() => {
@@ -237,9 +266,22 @@ export default function TestPlayPage() {
           </div>
 
           {/* Timer */}
-          <div className="flex items-center gap-1 text-sm text-text-secondary">
-            <Clock className="w-4 h-4" />
-            {formatTime(elapsed)}
+          <div className="flex items-center gap-2">
+            {timeLimitMin && timeLimitMin > 0 ? (() => {
+              const remaining = Math.max(0, timeLimitMin * 60 - totalElapsed);
+              const isUrgent = remaining <= 60;
+              return (
+                <div className={`flex items-center gap-1 text-sm font-bold ${isUrgent ? 'text-red-500 animate-pulse' : 'text-text-secondary'}`}>
+                  <Clock className="w-4 h-4" />
+                  {formatTime(remaining)}
+                </div>
+              );
+            })() : (
+              <div className="flex items-center gap-1 text-sm text-text-secondary">
+                <Clock className="w-4 h-4" />
+                {formatTime(elapsed)}
+              </div>
+            )}
           </div>
 
           {/* Combo */}
@@ -263,7 +305,7 @@ export default function TestPlayPage() {
       {/* Question area */}
       <div className="max-w-3xl mx-auto px-4 py-8">
         {currentQuestion && (
-          <Card className="p-5 md:p-6">
+          <Card padding="md" className="md:p-6">
             {/* Question header */}
             <div className="flex items-center gap-2 mb-4">
               <span className="text-sm font-medium text-slate-500">{currentQuestion.chapter}</span>

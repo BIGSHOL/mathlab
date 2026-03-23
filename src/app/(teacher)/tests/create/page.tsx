@@ -143,14 +143,14 @@ export default function CreateTestPage() {
   };
 
   return (
-    <div className="p-3 max-w-6xl mx-auto">
+    <div className="p-3 max-w-[1200px] mx-auto">
       {/* Header */}
       <PageHeader title="시험 만들기" backHref="/tests" />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* Left: Test settings */}
         <div className="lg:col-span-1 space-y-2">
-          <Card className="p-3">
+          <Card padding="sm">
             <h2 className="text-base font-bold text-text-primary mb-2">시험 정보</h2>
 
             <label className="block mb-3">
@@ -227,7 +227,7 @@ export default function CreateTestPage() {
           </Card>
 
           {/* Selected questions */}
-          <Card className="p-3">
+          <Card padding="sm">
             <h2 className="text-base font-bold text-text-primary mb-3">
               선택된 문제 ({selectedIds.length})
             </h2>
@@ -293,7 +293,7 @@ export default function CreateTestPage() {
 
         {/* Right: Question browser */}
         <div className="lg:col-span-2">
-          <Card className="p-3">
+          <Card padding="sm">
             <h2 className="text-base font-bold text-text-primary mb-2">문제 선택</h2>
 
             {/* Filters */}

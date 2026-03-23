@@ -40,6 +40,14 @@ export async function GET(
 
   // 문제 상세 조회 (중간테이블 우선, Json 폴백)
   const questionIds = await getTestQuestionIds(testId);
+  // 학생: 완료한 시도가 있으면 정답/해설 공개 (결과 확인용)
+  let showAnswers = currentUser.role !== 'STUDENT';
+  if (!showAnswers) {
+    const completed = await prisma.testAttempt.count({
+      where: { testId, studentId: currentUser.id, completedAt: { not: null } },
+    });
+    showAnswers = completed > 0;
+  }
   const questions = await prisma.question.findMany({
     where: { id: { in: questionIds } },
     select: {
@@ -51,9 +59,11 @@ export async function GET(
       type: true,
       content: true,
       choices: true,
-      answer: true,
-      explanation: true,
+      answer: showAnswers,
+      explanation: showAnswers,
       domain: true,
+      diagramSpec: true,
+      diagramSVG: true,
     },
   });
 

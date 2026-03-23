@@ -5,15 +5,14 @@ import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { toast } from '@/components/ui/Toast';
 import {
-  ArrowLeft,
   Search,
   X,
   ClipboardCheck,
   Check,
 } from 'lucide-react';
-import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import {
   DIFFICULTY_LABELS,
@@ -160,12 +159,7 @@ export default function CreateLevelTestPage() {
       {/* Left panel: settings */}
       <div className="w-full lg:w-[340px] flex-shrink-0 border-r border-slate-200 overflow-y-auto p-5 space-y-4">
         {/* Header */}
-        <div className="flex items-center gap-3">
-          <Link href="/level-test" className="text-text-secondary hover:text-text-primary">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <h1 className="text-xl font-bold text-text-primary">레벨테스트 만들기</h1>
-        </div>
+        <PageHeader title="레벨테스트 만들기" backHref="/level-test" />
 
         {/* Test info */}
         <Card padding="md">

@@ -208,26 +208,71 @@ export default function CourseDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 py-6 md:py-8">
-        <div className="flex items-center gap-3 mb-6">
-          <Skeleton className="w-8 h-8 rounded-lg" />
-          <Skeleton className="h-7 w-40" />
-        </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4 mb-6">
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-3 w-64" />
-        </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
-          <Skeleton className="h-5 w-24 mb-2" />
-          {Array.from({ length: 5 }, (_, i) => (
-            <div key={i} className="flex items-center gap-3 p-3 border border-slate-100 rounded-lg">
+      <div className="px-6 py-8 max-w-[1200px] mx-auto">
+        {/* 헤더 (뒤로가기 + 아이콘 + 제목 + 날짜) */}
+        <div className="flex items-center gap-3 mb-8">
+          <Skeleton className="w-9 h-9 rounded-sm" />
+          <div className="flex-1 space-y-1">
+            <div className="flex items-center gap-2">
               <Skeleton className="w-6 h-6 rounded" />
-              <div className="flex-1 space-y-1">
-                <Skeleton className="h-4 w-2/5" />
-                <Skeleton className="h-3 w-1/4" />
-              </div>
+              <Skeleton className="h-7 w-48" />
+            </div>
+            <Skeleton className="h-3 w-32" />
+          </div>
+          <Skeleton className="h-3 w-28" />
+        </div>
+        {/* 4개 통계 카드 */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 text-center space-y-1.5">
+              <Skeleton className="h-8 w-12 mx-auto" />
+              <Skeleton className="h-3 w-16 mx-auto" />
             </div>
           ))}
+        </div>
+        {/* 2열 그리드: 개념 (1/3) + 학생 (2/3) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="bg-white border border-slate-200 rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Skeleton className="w-4 h-4 rounded" />
+              <Skeleton className="h-5 w-28" />
+            </div>
+            <div className="space-y-1.5">
+              {Array.from({ length: 5 }, (_, i) => (
+                <div key={i} className="flex items-center gap-2.5 px-3 py-2.5 rounded-sm bg-slate-50 border border-slate-100">
+                  <Skeleton variant="circle" className="w-6 h-6 shrink-0" />
+                  <div className="flex-1 space-y-1">
+                    <Skeleton className="h-3 w-3/4" />
+                    <Skeleton className="h-2.5 w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Skeleton className="w-4 h-4 rounded" />
+                <Skeleton className="h-5 w-24" />
+              </div>
+              <Skeleton className="h-8 w-24 rounded" />
+            </div>
+            <div className="space-y-2">
+              {Array.from({ length: 4 }, (_, i) => (
+                <div key={i} className="flex items-center gap-3 p-3.5 rounded-lg border border-slate-100">
+                  <Skeleton variant="circle" className="w-10 h-10 shrink-0" />
+                  <div className="flex-1 space-y-1">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 w-36" />
+                  </div>
+                  <div className="w-32 space-y-1">
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-2 w-full rounded-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -303,15 +348,15 @@ export default function CourseDetailPage() {
 
       {/* 요약 통계 */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <Card className="p-4 text-center">
+        <Card padding="base" className="text-center">
           <div className="text-2xl font-black text-primary">{course.concepts.length}</div>
           <div className="text-xs text-text-secondary mt-1">포함 개념</div>
         </Card>
-        <Card className="p-4 text-center">
+        <Card padding="base" className="text-center">
           <div className="text-2xl font-black text-emerald-600">{course.enrollments.length}</div>
           <div className="text-xs text-text-secondary mt-1">배정 학생</div>
         </Card>
-        <Card className="p-4 text-center">
+        <Card padding="base" className="text-center">
           <div className="text-2xl font-black text-secondary">
             {course.enrollments.length > 0
               ? Math.round(course.enrollments.reduce((sum, e) => sum + e.progressPercent, 0) / course.enrollments.length)
@@ -319,7 +364,7 @@ export default function CourseDetailPage() {
           </div>
           <div className="text-xs text-text-secondary mt-1">평균 진행률</div>
         </Card>
-        <Card className="p-4 text-center">
+        <Card padding="base" className="text-center">
           <div className="text-2xl font-black text-violet-600">
             {course.enrollments.filter((e) => e.status === 'COMPLETED').length}
           </div>

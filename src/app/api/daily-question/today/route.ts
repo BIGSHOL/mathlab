@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
 
-  if (!(await isFeatureEnabled('daily_question'))) {
+  if (!(await isFeatureEnabled('daily_question', user.tenantId))) {
     return NextResponse.json({ data: null });
   }
 

@@ -193,12 +193,8 @@ export function useTestAttempt() {
         throw new Error(err.error?.message || '시험 시작 실패');
       }
       const json = await res.json();
-
-      // 시도 상세 조회
-      const detailRes = await fetch(`/api/tests/attempts/${json.data.id}`);
-      const detailJson = await detailRes.json();
-      setAttempt(detailJson.data);
-      return detailJson.data;
+      setAttempt(json.data);
+      return json.data;
     } finally {
       setLoading(false);
     }

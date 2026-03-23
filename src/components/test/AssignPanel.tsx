@@ -85,6 +85,7 @@ export function AssignPanel({ testId, testGrade, onClose, onAssigned }: AssignPa
         }),
       });
       if (res.ok) {
+        toast.success('배정이 완료되었습니다');
         onAssigned();
         onClose();
       } else {

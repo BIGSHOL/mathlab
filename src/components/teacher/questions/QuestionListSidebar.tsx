@@ -94,7 +94,7 @@ export function QuestionListSidebar({
       {!leftPanelCollapsed && (
         <div className="flex-1 flex flex-col gap-2 p-3 md:p-4 overflow-y-auto">
           {/* School Level Tabs */}
-          <Card className="p-3 flex flex-col gap-2">
+          <Card padding="sm" className="flex flex-col gap-2">
             <div className="flex gap-2 items-center">
               <div className="bg-primary/10 rounded-sm p-2 text-primary flex items-center justify-center">
                 <BookOpen className="w-5 h-5" />
@@ -182,7 +182,7 @@ export function QuestionListSidebar({
 
           {/* Chapter Filter - 특정 학기 선택 시에만 표시 */}
           {bookFilter && chaptersByBook[bookFilter]?.length > 0 && (
-            <Card className="p-3 flex flex-col gap-2">
+            <Card padding="sm" className="flex flex-col gap-2">
               <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">
                 단원 필터
               </h3>
@@ -217,7 +217,7 @@ export function QuestionListSidebar({
 
           {/* Section Filter - 특정 학기 선택 시에만 표시 */}
           {bookFilter && sectionsByBook[bookFilter]?.length > 0 && (
-            <Card className="p-3 flex flex-col gap-2">
+            <Card padding="sm" className="flex flex-col gap-2">
               <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">
                 유형/코너 필터
               </h3>
@@ -251,7 +251,7 @@ export function QuestionListSidebar({
           )}
 
           {/* Type Filter */}
-          <Card className="p-3 flex flex-col gap-2">
+          <Card padding="sm" className="flex flex-col gap-2">
             <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">
               유형 필터
             </h3>
@@ -271,7 +271,7 @@ export function QuestionListSidebar({
           </Card>
 
           {/* Difficulty Filter */}
-          <Card className="p-3 flex flex-col gap-2">
+          <Card padding="sm" className="flex flex-col gap-2">
             <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">
               난이도
             </h3>
@@ -296,7 +296,7 @@ export function QuestionListSidebar({
           </Card>
 
           {/* Domain Filter */}
-          <Card className="p-3 flex flex-col gap-2">
+          <Card padding="sm" className="flex flex-col gap-2">
             <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">
               영역
             </h3>

@@ -47,7 +47,7 @@ export function DailyMissionCard() {
   const completedCount = data.missions.filter((m) => m.completed).length;
 
   return (
-    <Card className="p-5">
+    <Card padding="md">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Target className="w-5 h-5 text-primary" />

@@ -11,7 +11,7 @@ interface SaveStepProps {
 
 export function SaveStep({ result, bookCode }: SaveStepProps) {
   return (
-    <Card className="p-5 text-center">
+    <Card padding="md" className="text-center">
       <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
       <h2 className="text-2xl font-bold text-slate-900 mb-2">등록 완료!</h2>
       <p className="text-slate-600 mb-2">

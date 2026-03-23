@@ -8,6 +8,6 @@ export async function GET() {
   if (isResponse(user)) return user;
   // 시드 보장 (최초 1회)
   await seedFeatureFlags();
-  const flags = await getFeatureFlags();
+  const flags = await getFeatureFlags(user.tenantId);
   return NextResponse.json({ data: flags });
 }

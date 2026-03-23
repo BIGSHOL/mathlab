@@ -1,4 +1,4 @@
-export type UserRole = 'STUDENT' | 'TEACHER' | 'MANAGER' | 'OWNER' | 'SUPER_ADMIN' | 'ADMIN';
+export type UserRole = 'STUDENT' | 'TEACHER' | 'OWNER' | 'SUPER_ADMIN';
 
 export type LearningStage = 'READING' | 'BLANK_EASY' | 'BLANK_HARD' | 'BLANK_FULL' | 'BLANK_PAGE';
 

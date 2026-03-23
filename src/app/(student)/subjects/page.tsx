@@ -130,7 +130,7 @@ export default async function SubjectsPage({
               <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
               <h2 className="text-lg font-bold text-text-primary">현재 진행 중</h2>
             </div>
-            <Card className="p-6 border-2 border-primary/20">
+            <Card padding="lg" className="border-2 border-primary/20">
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-3 bg-primary/10 rounded-sm">
                   <GraduationCap className="w-6 h-6 text-primary" />
@@ -195,7 +195,7 @@ export default async function SubjectsPage({
             </div>
             <div className="flex flex-col gap-3">
               {upcomingEnrollments.map((enrollment) => (
-                <Card key={enrollment.id} className="p-5 opacity-60">
+                <Card key={enrollment.id} padding="md" className="opacity-60">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-slate-100 rounded-sm">
                       <Lock className="w-5 h-5 text-slate-400" />
@@ -222,7 +222,7 @@ export default async function SubjectsPage({
             </div>
             <div className="flex flex-col gap-3">
               {completedEnrollments.map((enrollment) => (
-                <Card key={enrollment.id} className="p-5">
+                <Card key={enrollment.id} padding="md">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-50 rounded-sm">
                       <CheckCircle className="w-5 h-5 text-emerald-500" />

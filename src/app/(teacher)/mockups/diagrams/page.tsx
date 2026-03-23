@@ -101,7 +101,7 @@ export default function DiagramMockupPage() {
       />
 
       {/* 프리셋 빠른 추가 */}
-      <Card className="mb-6 p-4">
+      <Card padding="base" className="mb-6">
         <h2 className="text-sm font-semibold text-slate-700 mb-3">프리셋 빠른 추가</h2>
         <div className="flex flex-wrap gap-1.5">
           {PRESETS.map((preset, i) => (
@@ -125,7 +125,7 @@ export default function DiagramMockupPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {diagrams.map((entry, idx) => (
-            <Card key={entry.id} className="p-3 group">
+            <Card key={entry.id} padding="sm" className="group">
               {/* SVG 미리보기 */}
               <div
                 className="bg-slate-50 rounded border border-slate-100 p-3 flex items-center justify-center min-h-[140px] cursor-pointer hover:ring-2 hover:ring-blue-400 hover:ring-offset-1 transition-all"

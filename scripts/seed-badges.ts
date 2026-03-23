@@ -7,18 +7,18 @@ const badges = [
     { key: 'streak_3', label: '작은 불씨', description: '연속 학습 3일 달성', icon: '/badges/streak_3.png', color: '#f59e0b', condition: { type: 'streak', value: 3 }, sortOrder: 10 },
     { key: 'streak_7', label: '타오르는 열정', description: '연속 학습 7일 달성', icon: '/badges/streak_7.png', color: '#ef4444', condition: { type: 'streak', value: 7 }, sortOrder: 11 },
     { key: 'streak_14', label: '꺾이지 않는 마음', description: '연속 학습 14일 달성', icon: '/badges/streak_14.png', color: '#b91c1c', condition: { type: 'streak', value: 14 }, sortOrder: 12 },
-    { key: 'streak_30', label: '습관의 완성', description: '연속 학습 30일 달성', icon: '🌟', color: '#8b5cf6', condition: { type: 'streak', value: 30 }, sortOrder: 13 },
+    { key: 'streak_30', label: '습관의 완성', description: '연속 학습 30일 달성', icon: '/badges/streak_30.png', color: '#8b5cf6', condition: { type: 'streak', value: 30 }, sortOrder: 13 },
 
     // 2. 백지쓰기/개념 업적
-    { key: 'blank_1', label: '첫 발걸음', description: '개념 백지쓰기 1회 통과', icon: '📝', color: '#3b82f6', condition: { type: 'blank', value: 1 }, sortOrder: 20 },
-    { key: 'blank_10', label: '지식의 탐구자', description: '개념 백지쓰기 10회 통과', icon: '🧠', color: '#2563eb', condition: { type: 'blank', value: 10 }, sortOrder: 21 },
-    { key: 'blank_50', label: '완벽주의자', description: '개념 백지쓰기 50회 통과', icon: '👑', color: '#1d4ed8', condition: { type: 'blank', value: 50 }, sortOrder: 22 },
-    { key: 'blank_perfect', label: '결백주의', description: '오답 없이 한 번에 백지쓰기 통과', icon: '✨', color: '#d946ef', condition: { type: 'blank_perfect', value: 1 }, sortOrder: 23 },
+    { key: 'blank_1', label: '첫 발걸음', description: '개념 백지쓰기 1회 통과', icon: '/badges/blank_1.png', color: '#3b82f6', condition: { type: 'blank', value: 1 }, sortOrder: 20 },
+    { key: 'blank_10', label: '지식의 탐구자', description: '개념 백지쓰기 10회 통과', icon: '/badges/blank_10.png', color: '#2563eb', condition: { type: 'blank', value: 10 }, sortOrder: 21 },
+    { key: 'blank_50', label: '완벽주의자', description: '개념 백지쓰기 50회 통과', icon: '/badges/blank_50.png', color: '#1d4ed8', condition: { type: 'blank', value: 50 }, sortOrder: 22 },
+    { key: 'blank_perfect', label: '결백주의', description: '오답 없이 한 번에 백지쓰기 통과', icon: '/badges/blank_perfect.png', color: '#d946ef', condition: { type: 'blank_perfect', value: 1 }, sortOrder: 23 },
 
     // 3. 연산 연습 업적
     { key: 'arithmetic_100', label: '계산의 시작', description: '연산 문제 100개 정답', icon: '/badges/arithmetic_100.png', color: '#10b981', condition: { type: 'arithmetic', value: 100 }, sortOrder: 30 },
-    { key: 'arithmetic_1000', label: '인간 계산기', description: '연산 문제 1,000개 정답', icon: '⚡', color: '#059669', condition: { type: 'arithmetic', value: 1000 }, sortOrder: 31 },
-    { key: 'timeattack_1', label: '빛보다 빠른', description: '연산 타임어택 최초 참여', icon: '⏱️', color: '#0ea5e9', condition: { type: 'timeattack', value: 1 }, sortOrder: 32 },
+    { key: 'arithmetic_1000', label: '인간 계산기', description: '연산 문제 1,000개 정답', icon: '/badges/arithmetic_1000.png', color: '#059669', condition: { type: 'arithmetic', value: 1000 }, sortOrder: 31 },
+    { key: 'timeattack_1', label: '빛보다 빠른', description: '연산 타임어택 최초 참여', icon: '/badges/timeattack_1.png', color: '#0ea5e9', condition: { type: 'timeattack', value: 1 }, sortOrder: 32 },
 
     // 4. 시험 및 결과 업적
     { key: 'test_100_1', label: '백점 만점', description: '시험에서 첫 100점 달성', icon: '/badges/test_100_1.png', color: '#ec4899', condition: { type: 'test_100', value: 1 }, sortOrder: 40 },
@@ -33,26 +33,26 @@ const badges = [
     // ──────── 2차 업적 업데이트 ────────
 
     // 추가된 스트릭
-    { key: 'streak_100', label: '백일의 기적', description: '연속 학습 100일 달성', icon: '🔥', color: '#c026d3', condition: { type: 'streak', value: 100 }, sortOrder: 14 },
-    { key: 'streak_365', label: '1년의 마스터', description: '연속 학습 365일 달성', icon: '👑', color: '#db2777', condition: { type: 'streak', value: 365 }, sortOrder: 15 },
-    { key: 'earlybird_1', label: '얼리버드', description: '오전 6시~8시 사이 학습 완료', icon: '🌅', color: '#fb923c', condition: { type: 'earlybird', value: 1 }, sortOrder: 16 },
+    { key: 'streak_100', label: '백일의 기적', description: '연속 학습 100일 달성', icon: '/badges/streak_100.png', color: '#c026d3', condition: { type: 'streak', value: 100 }, sortOrder: 14 },
+    { key: 'streak_365', label: '1년의 마스터', description: '연속 학습 365일 달성', icon: '/badges/streak_365.png', color: '#db2777', condition: { type: 'streak', value: 365 }, sortOrder: 15 },
+    { key: 'earlybird_1', label: '얼리버드', description: '오전 6시~8시 사이 학습 완료', icon: '/badges/earlybird_1.png', color: '#fb923c', condition: { type: 'earlybird', value: 1 }, sortOrder: 16 },
 
     // 주말의 전사
-    { key: 'weekend_1', label: '주말의 시작', description: '주말에 1시간 이상 학습 1회', icon: '🛌', color: '#2dd4bf', condition: { type: 'weekend', value: 1 }, sortOrder: 17 },
-    { key: 'weekend_5', label: '주말 지킴이', description: '주말에 1시간 이상 학습 5회', icon: '🛡️', color: '#0d9488', condition: { type: 'weekend', value: 5 }, sortOrder: 18 },
-    { key: 'weekend_20', label: '주말의 전사', description: '주말에 1시간 이상 학습 20회', icon: '⚔️', color: '#115e59', condition: { type: 'weekend', value: 20 }, sortOrder: 19 },
+    { key: 'weekend_1', label: '주말의 시작', description: '주말에 1시간 이상 학습 1회', icon: '/badges/weekend_1.png', color: '#2dd4bf', condition: { type: 'weekend', value: 1 }, sortOrder: 17 },
+    { key: 'weekend_5', label: '주말 지킴이', description: '주말에 1시간 이상 학습 5회', icon: '/badges/weekend_5.png', color: '#0d9488', condition: { type: 'weekend', value: 5 }, sortOrder: 18 },
+    { key: 'weekend_20', label: '주말의 전사', description: '주말에 1시간 이상 학습 20회', icon: '/badges/weekend_20.png', color: '#115e59', condition: { type: 'weekend', value: 20 }, sortOrder: 19 },
 
     // 추가된 백지쓰기
     { key: 'blank_100', label: '암기왕', description: '개념 백지쓰기 100회 통과', icon: '/badges/blank_100.png', color: '#1e3a8a', condition: { type: 'blank', value: 100 }, sortOrder: 24 },
-    { key: 'blank_500', label: '인간 백과사전', description: '개념 백지쓰기 500회 통과', icon: '📖', color: '#312e81', condition: { type: 'blank', value: 500 }, sortOrder: 25 },
+    { key: 'blank_500', label: '인간 백과사전', description: '개념 백지쓰기 500회 통과', icon: '/badges/blank_500.png', color: '#312e81', condition: { type: 'blank', value: 500 }, sortOrder: 25 },
 
     // 추가된 연산 연습
-    { key: 'arithmetic_5000', label: '연산의 신', description: '연산 문제 5,000개 정답', icon: '☄️', color: '#047857', condition: { type: 'arithmetic', value: 5000 }, sortOrder: 33 },
-    { key: 'arithmetic_10000', label: '걸어다니는 슈퍼컴', description: '연산 문제 10,000개 정답', icon: '🖥️', color: '#064e3b', condition: { type: 'arithmetic', value: 10000 }, sortOrder: 34 },
+    { key: 'arithmetic_5000', label: '연산의 신', description: '연산 문제 5,000개 정답', icon: '/badges/arithmetic_5000.png', color: '#047857', condition: { type: 'arithmetic', value: 5000 }, sortOrder: 33 },
+    { key: 'arithmetic_10000', label: '걸어다니는 슈퍼컴', description: '연산 문제 10,000개 정답', icon: '/badges/arithmetic_10000.png', color: '#064e3b', condition: { type: 'arithmetic', value: 10000 }, sortOrder: 34 },
 
     // 추가된 타임어택
     { key: 'timeattack_10', label: '스피드 러너', description: '연산 타임어택 10개 돌파', icon: '/badges/timeattack_10.png', color: '#0284c7', condition: { type: 'timeattack', value: 10 }, sortOrder: 35 },
-    { key: 'timeattack_30', label: '시간의 지배자', description: '연산 타임어택 30개 돌파', icon: '⌛', color: '#0369a1', condition: { type: 'timeattack', value: 30 }, sortOrder: 36 },
+    { key: 'timeattack_30', label: '시간의 지배자', description: '연산 타임어택 30개 돌파', icon: '/badges/timeattack_30.png', color: '#0369a1', condition: { type: 'timeattack', value: 30 }, sortOrder: 36 },
 
     // 추가된 시험/레벨
     { key: 'test_100_10', label: '만점 폭격기', description: '시험 100점 10회 달성', icon: '💯', color: '#9d174d', condition: { type: 'test_100', value: 10 }, sortOrder: 44 },

@@ -120,7 +120,7 @@ export function ExtractionPreviewStep({
     <div>
       {/* 추출 진행 표시 */}
       {extracting && (
-        <Card className="p-5 mb-6">
+        <Card padding="md" className="mb-6">
           <div className="flex items-center gap-3 mb-3">
             <Loader2 className="w-6 h-6 text-primary animate-spin" />
             <span className="text-sm font-medium">
@@ -142,7 +142,7 @@ export function ExtractionPreviewStep({
       {!extracting && problems.length > 0 && (
         <>
           {/* 상단 도구 */}
-          <Card className="p-4 mb-4">
+          <Card padding="base" className="mb-4">
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-sm font-medium text-slate-900">
                 추출된 문제: <span className="text-primary">{problems.length}개</span>
@@ -229,7 +229,7 @@ export function ExtractionPreviewStep({
 
           {/* 추출된 개념 미리보기 (ADMIN만) */}
           {isOwner && concepts.length > 0 && (
-            <Card className="p-4 mb-4">
+            <Card padding="base" className="mb-4">
               <div className="flex items-center gap-3 mb-3">
                 <div className="flex items-center gap-2">
                   <Lightbulb className="w-5 h-5 text-amber-500" />

@@ -161,7 +161,7 @@ export default function AdminClassroomsPage() {
         >
           <div className="space-y-4">
             {classrooms.map((cr) => (
-              <Card key={cr.id} className="p-5">
+              <Card key={cr.id} padding="md">
                 {editingId === cr.id ? (
                   <div className="flex gap-3 items-center">
                     <input

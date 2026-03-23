@@ -278,10 +278,10 @@ export function getUpdatesByRole(role?: string | null): UpdateLog[] {
   if (role === 'STUDENT') {
     return ALL_UPDATES.filter((u) => u.audience.includes('student') || u.audience.includes('public'));
   }
-  // OWNER/SUPER_ADMIN/ADMIN → 모두 볼 수 있음
-  if (role === 'OWNER' || role === 'SUPER_ADMIN' || role === 'ADMIN') {
+  // OWNER/SUPER_ADMIN → 모두 볼 수 있음
+  if (role === 'OWNER' || role === 'SUPER_ADMIN') {
     return ALL_UPDATES;
   }
-  // TEACHER/MANAGER
+  // TEACHER
   return ALL_UPDATES.filter((u) => u.audience.includes('teacher') || u.audience.includes('public'));
 }

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import {
   CATEGORY_LABELS,
@@ -204,10 +205,10 @@ export default function HomeworkPracticePage() {
   if (problems.length === 0) {
     return (
       <div className="p-6 max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold text-text-primary flex items-center gap-2 mb-6">
-          <CalendarCheck className="w-6 h-6 text-primary" />
-          오늘의 연산 숙제
-        </h1>
+        <PageHeader
+          title="오늘의 연산 숙제"
+          icon={<CalendarCheck className="w-6 h-6" />}
+        />
 
         {loadingList ? (
           <div className="space-y-3">
@@ -223,7 +224,7 @@ export default function HomeworkPracticePage() {
             ))}
           </div>
         ) : homeworkList.length === 0 ? (
-          <Card className="p-5 text-center">
+          <Card padding="md" className="text-center">
             <CalendarCheck className="w-12 h-12 text-slate-300 mx-auto mb-3" />
             <p className="text-text-secondary font-medium">오늘 배정된 숙제가 없습니다</p>
             <p className="text-sm text-slate-400 mt-1">선생님이 숙제를 배정하면 여기에 표시됩니다</p>
@@ -236,7 +237,7 @@ export default function HomeworkPracticePage() {
               const isRetryExhausted = hw.retryExhausted;
 
               return (
-                <Card key={`${hw.planId}-${hw.dayIndex}-${hw.isAdvance ? 'adv' : ''}`} className={`p-5 ${
+                <Card key={`${hw.planId}-${hw.dayIndex}-${hw.isAdvance ? 'adv' : ''}`} padding="md" className={`${
                   isRetryExhausted ? 'bg-red-50/50 border-red-200'
                   : isRetryNeeded ? 'bg-amber-50/50 border-amber-200'
                   : isCompleted ? 'bg-emerald-50/50'
@@ -326,7 +327,7 @@ export default function HomeworkPracticePage() {
     const totalTime = Math.floor((Date.now() - startRef.current) / 1000);
     return (
       <div className="p-6 max-w-md mx-auto">
-        <Card className="p-5 text-center space-y-4">
+        <Card padding="md" className="text-center space-y-4">
           <Trophy className="w-12 h-12 text-yellow-500 mx-auto" />
           <h2 className="text-2xl font-black text-text-primary">숙제 완료!</h2>
           {activeHomework && (
@@ -404,7 +405,7 @@ export default function HomeworkPracticePage() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <Card className="p-5 md:p-6">
+        <Card padding="md" className="md:p-6">
           {/* Problem */}
           <div className="text-center mb-8">
             <p className="text-sm text-text-secondary mb-2">

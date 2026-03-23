@@ -13,6 +13,7 @@ import {
 import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 type Step = 1 | 2 | 3;
 
@@ -81,10 +82,10 @@ export default function EnrollWizardPage() {
 
   return (
     <div className="p-6 md:p-10 max-w-[640px] mx-auto w-full flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold text-text-primary">신규 원생 등록</h1>
-        <p className="text-text-secondary text-sm mt-1">간편하게 학생을 등록하고 학습을 시작합니다.</p>
-      </div>
+      <PageHeader
+        title="신규 원생 등록"
+        subtitle="간편하게 학생을 등록하고 학습을 시작합니다."
+      />
 
       {/* Step indicator */}
       <div className="flex items-center gap-2">

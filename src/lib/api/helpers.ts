@@ -6,7 +6,7 @@ import { getTenantFilter } from './tenant-scope';
 
 // 순환 참조 방지를 위해 역할 레벨 인라인 정의
 const ROLE_LEVEL: Record<string, number> = {
-  STUDENT: 0, TEACHER: 1, MANAGER: 2, OWNER: 3, SUPER_ADMIN: 4, ADMIN: 3,
+  STUDENT: 0, TEACHER: 1, OWNER: 3, SUPER_ADMIN: 4,
 };
 function hasRoleLocal(user: { role: string }, minRole: string): boolean {
   return (ROLE_LEVEL[user.role] ?? 0) >= (ROLE_LEVEL[minRole] ?? 99);
@@ -36,7 +36,7 @@ export function clamp(value: number, min: number, max: number): number {
  * Classroom 기반 학생 데이터 스코핑 (테넌트 인식).
  * - SUPER_ADMIN: 전체 학생
  * - OWNER: 자기 테넌트 전체 학생
- * - MANAGER: 담당 반들의 학생 (테넌트 내)
+ * - TEACHER: 담당 반들의 학생 (테넌트 내)
  * - TEACHER: 자기 반 학생만 (테넌트 내)
  * 반환값은 Prisma where 조건에 스프레드해서 사용.
  */
@@ -49,7 +49,7 @@ export async function getStudentScope(user: AuthUser): Promise<Record<string, un
   // OWNER: 자기 테넌트 전체
   if (hasRoleLocal(user, 'OWNER')) return { role: 'STUDENT', deletedAt: null, ...tenantWhere };
 
-  // MANAGER/TEACHER: 자기가 담당하는 반의 학생 (테넌트 내)
+  // TEACHER: 자기가 담당하는 반의 학생 (테넌트 내)
   const classrooms = await prisma.classroom.findMany({
     where: { teacherId: user.id, ...tenantWhere },
     select: { id: true },
@@ -84,7 +84,7 @@ export async function canAccessStudent(user: AuthUser, studentId: string): Promi
   // OWNER: 테넌트 내 전체
   if (hasRoleLocal(user, 'OWNER')) return true;
 
-  // TEACHER/MANAGER: 자기 반 학생만
+  // TEACHER: 자기 반 학생만
   if (!student.classroomId) return false;
   const classroom = await prisma.classroom.findFirst({
     where: { id: student.classroomId, teacherId: user.id },
@@ -110,6 +110,6 @@ export async function getScopedStudentIds(user: AuthUser): Promise<string[] | nu
 
 /** 숙제 플랜 GET 공통 — TEACHER는 자기 것만, OWNER 이상은 자기 테넌트 전체 */
 export function homeworkCreatedByFilter(user: AuthUser): string | undefined {
-  // OWNER 이상은 전체 조회, TEACHER/MANAGER는 자기 것만
+  // OWNER 이상은 전체 조회, TEACHER는 자기 것만
   return hasRoleLocal(user, 'OWNER') ? undefined : user.id;
 }

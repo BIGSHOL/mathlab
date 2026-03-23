@@ -71,6 +71,15 @@ export default function RankingLoading() {
             ))}
           </div>
           <div className="bg-white border border-slate-200 rounded-xl p-4">
+            <Skeleton className="h-5 w-20 mb-3" />
+            {Array.from({ length: 3 }, (_, i) => (
+              <div key={i} className="flex items-center gap-2 mb-2">
+                <Skeleton variant="circle" className="w-7 h-7" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+            ))}
+          </div>
+          <div className="bg-white border border-slate-200 rounded-xl p-4">
             <Skeleton className="h-5 w-24 mb-3" />
             <div className="grid grid-cols-2 gap-3">
               <Skeleton className="h-16 rounded-lg" />

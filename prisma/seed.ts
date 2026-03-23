@@ -1,7 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 const prisma = new PrismaClient();
+const uid = () => crypto.randomUUID();
 
 async function main() {
   console.log('Seeding database...');
@@ -20,15 +22,15 @@ async function main() {
 
   // === USERS ===
   const admin = await prisma.user.create({
-    data: { username: 'admin', passwordHash: hash('admin1234'), name: '관리자', role: 'OWNER' },
+    data: { id: uid(), username: 'admin', passwordHash: hash('admin1234'), name: '관리자', role: 'OWNER', updatedAt: new Date() },
   });
 
   const teacher1 = await prisma.user.create({
-    data: { username: 'teacher01', passwordHash: hash('pass1234'), name: '김선생', role: 'TEACHER' },
+    data: { id: uid(), username: 'teacher01', passwordHash: hash('pass1234'), name: '김선생', role: 'TEACHER', updatedAt: new Date() },
   });
 
   const teacher2 = await prisma.user.create({
-    data: { username: 'teacher02', passwordHash: hash('pass1234'), name: '박선생', role: 'TEACHER' },
+    data: { id: uid(), username: 'teacher02', passwordHash: hash('pass1234'), name: '박선생', role: 'TEACHER', updatedAt: new Date() },
   });
 
   const studentData = [
@@ -48,28 +50,32 @@ async function main() {
   for (const s of studentData) {
     const user = await prisma.user.create({
       data: {
+        id: uid(),
         username: s.username,
         passwordHash: hash('1234'),
         name: s.name,
         role: 'STUDENT',
         grade: s.grade,
-        profile: { create: {} },
+        updatedAt: new Date(),
       },
+    });
+    await prisma.studentProfile.create({
+      data: { id: uid(), userId: user.id, updatedAt: new Date() },
     });
     students.push(user);
   }
 
   // === SUBJECTS ===
   const fractionSubject = await prisma.subject.create({
-    data: { title: '분수', description: '분수의 기본 개념과 연산', gradeLevel: 5, sortOrder: 1 },
+    data: { id: uid(), title: '분수', description: '분수의 기본 개념과 연산', gradeLevel: 5, sortOrder: 1 },
   });
 
   const shapeSubject = await prisma.subject.create({
-    data: { title: '도형', description: '기본 도형의 성질과 넓이', gradeLevel: 5, sortOrder: 2 },
+    data: { id: uid(), title: '도형', description: '기본 도형의 성질과 넓이', gradeLevel: 5, sortOrder: 2 },
   });
 
   const ratioSubject = await prisma.subject.create({
-    data: { title: '비율', description: '비율과 비례의 이해', gradeLevel: 6, sortOrder: 1 },
+    data: { id: uid(), title: '비율', description: '비율과 비례의 이해', gradeLevel: 6, sortOrder: 1 },
   });
 
   // === CONCEPTS ===
@@ -349,16 +355,19 @@ async function main() {
   for (const c of concepts) {
     const concept = await prisma.concept.create({
       data: {
+        id: uid(),
         subjectId: c.subjectId,
         title: c.title,
         fullContent: c.fullContent,
         sortOrder: c.sortOrder,
+        updatedAt: new Date(),
       },
     });
 
     for (const b of c.blanks) {
       await prisma.blankExercise.create({
         data: {
+          id: uid(),
           conceptId: concept.id,
           level: b.level,
           templateText: b.templateText,

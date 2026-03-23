@@ -15,6 +15,7 @@ import {
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { DeadlineBadge } from '@/components/test/DeadlineBadge';
 import { useTests } from '@/hooks/useTests';
 import { TEST_TYPE_LABELS } from '@/lib/constants/labels';
@@ -24,18 +25,75 @@ export default function StudentTestsPage() {
 
   if (loading) {
     return (
-      <div className="p-6 max-w-3xl mx-auto space-y-4">
-        <div className="h-8 w-40 bg-slate-200 animate-pulse rounded" />
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-white border border-slate-200 rounded-sm p-5 shadow-soft space-y-3">
-            <div className="flex gap-2">
-              <div className="h-5 w-16 bg-slate-200 animate-pulse rounded" />
-              <div className="h-5 w-20 bg-slate-200 animate-pulse rounded" />
-            </div>
-            <div className="h-5 w-3/4 bg-slate-200 animate-pulse rounded" />
-            <div className="h-4 w-1/2 bg-slate-200 animate-pulse rounded" />
+      <div className="p-6 max-w-3xl mx-auto">
+        {/* PageHeader 스켈레톤 */}
+        <div className="flex items-center gap-2 mb-6">
+          <Skeleton className="w-6 h-6 rounded" />
+          <Skeleton className="h-7 w-28" />
+        </div>
+
+        {/* 내 과제 섹션 */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Skeleton className="w-5 h-5 rounded" />
+            <Skeleton className="h-5 w-16" />
+            <Skeleton className="h-4 w-10" />
           </div>
-        ))}
+          <div className="space-y-4">
+            {[1, 2].map((i) => (
+              <div key={i} className="bg-white border border-slate-200 border-l-4 border-l-primary/20 rounded-sm p-5 shadow-soft">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 space-y-3">
+                    <div className="flex gap-2">
+                      <Skeleton className="h-5 w-12" />
+                      <Skeleton className="h-5 w-14" />
+                      <Skeleton className="h-5 w-10" />
+                    </div>
+                    <Skeleton className="h-6 w-48" />
+                    <div className="flex gap-4">
+                      <Skeleton className="h-4 w-16" />
+                      <Skeleton className="h-4 w-12" />
+                      <Skeleton className="h-4 w-16" />
+                    </div>
+                    <Skeleton className="h-4 w-36" />
+                  </div>
+                  <div className="ml-4 flex flex-col gap-2">
+                    <Skeleton className="h-8 w-20" />
+                    <Skeleton className="h-8 w-20" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 전체 시험 섹션 */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <Skeleton className="w-5 h-5 rounded" />
+            <Skeleton className="h-5 w-20" />
+            <Skeleton className="h-4 w-10" />
+          </div>
+          <div className="space-y-4">
+            <div className="bg-white border border-slate-200 rounded-sm p-5 shadow-soft">
+              <div className="flex items-start justify-between">
+                <div className="flex-1 space-y-3">
+                  <div className="flex gap-2">
+                    <Skeleton className="h-5 w-12" />
+                  </div>
+                  <Skeleton className="h-6 w-40" />
+                  <div className="flex gap-4">
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-4 w-12" />
+                  </div>
+                </div>
+                <div className="ml-4">
+                  <Skeleton className="h-8 w-20" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -146,7 +204,7 @@ function TestCard({ test, isAssigned }: {
   const bestScore = test.assignment?.bestScore ?? (isCompleted ? attempt?.score : null);
 
   return (
-    <Card className={`p-5 ${isAssigned ? 'border-l-4 border-l-primary' : ''}`}>
+    <Card padding="md" className={`${isAssigned ? 'border-l-4 border-l-primary' : ''}`}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1 flex-wrap">

@@ -18,6 +18,7 @@ import {
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { LoadingEmptyState } from '@/components/ui/LoadingEmptyState';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { MathStatusBadge } from '@/components/ui/MathStatusBadge';
 import { DIFFICULTY_LABELS } from '@/types';
@@ -161,20 +162,51 @@ export default function WrongAnswersPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 py-6 md:py-8">
-        <div className="flex items-center gap-3 mb-6">
-          <Skeleton className="w-8 h-8 rounded-lg" />
-          <Skeleton className="h-7 w-36" />
+      <div className="p-6 max-w-[1200px] mx-auto">
+        {/* 헤더 (뒤로가기 + 학생명 + 부제 + 액션 버튼) */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Skeleton className="w-5 h-5 rounded" />
+            <div className="space-y-1">
+              <Skeleton className="h-7 w-40" />
+              <Skeleton className="h-4 w-28" />
+            </div>
+          </div>
+          <Skeleton className="h-8 w-28 rounded" />
         </div>
-        <div className="space-y-2">
+        {/* 단원별 분포 카드 */}
+        <div className="bg-white border border-slate-200 rounded-xl p-5 mb-6">
+          <Skeleton className="h-4 w-24 mb-3" />
+          <div className="flex flex-wrap gap-2">
+            {Array.from({ length: 5 }, (_, i) => (
+              <Skeleton key={i} className="h-7 w-24 rounded-full" />
+            ))}
+          </div>
+        </div>
+        {/* 필터 행 */}
+        <div className="flex items-center gap-3 mb-4">
+          <Skeleton className="h-8 w-32 rounded" />
+          <Skeleton className="h-8 w-28 rounded" />
+          <Skeleton className="h-8 w-20 rounded ml-auto" />
+        </div>
+        {/* 오답 리스트 */}
+        <div className="space-y-3">
           {Array.from({ length: 5 }, (_, i) => (
-            <div key={i} className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl">
-              <Skeleton variant="circle" className="w-8 h-8 shrink-0" />
-              <div className="flex-1 space-y-1">
-                <Skeleton className="h-4 w-1/3" />
-                <Skeleton className="h-3 w-1/4" />
+            <div key={i} className="bg-white border border-slate-200 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <Skeleton className="w-4 h-4 rounded shrink-0 mt-1" />
+                <Skeleton className="w-8 h-8 rounded shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-3 w-20" />
+                    <Skeleton className="h-4 w-10 rounded" />
+                    <Skeleton className="h-3 w-10" />
+                  </div>
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-3 w-2/3" />
+                </div>
+                <Skeleton className="w-5 h-5 rounded shrink-0" />
               </div>
-              <Skeleton className="h-5 w-16" />
             </div>
           ))}
         </div>
@@ -183,7 +215,7 @@ export default function WrongAnswersPage() {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-6 max-w-[1200px] mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -209,7 +241,7 @@ export default function WrongAnswersPage() {
 
       {/* 단원별 오답 분포 */}
       {chapters.length > 0 && (
-        <Card className="p-4 mb-6">
+        <Card padding="base" className="mb-6">
           <h3 className="text-sm font-bold text-text-primary mb-3 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-500" />
             취약 단원 분포
@@ -255,12 +287,13 @@ export default function WrongAnswersPage() {
       </div>
 
       {/* 오답 문제 목록 */}
-      {items.length === 0 ? (
-        <Card className="p-12 text-center">
-          <p className="text-text-secondary">오답 문제가 없습니다</p>
-        </Card>
-      ) : (
-        <div className="space-y-3">
+      <LoadingEmptyState
+        loading={false}
+        empty={items.length === 0}
+        icon={<AlertTriangle className="w-6 h-6 text-slate-400" />}
+        message="오답 문제가 없습니다"
+      >
+      <div className="space-y-3">
           {items.map((item) => {
             const q = item.question;
             const isSelected = selectedIds.has(q.id);
@@ -436,7 +469,7 @@ export default function WrongAnswersPage() {
             );
           })}
         </div>
-      )}
+      </LoadingEmptyState>
     </div>
   );
 }

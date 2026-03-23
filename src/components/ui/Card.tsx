@@ -1,11 +1,11 @@
 import { HTMLAttributes, forwardRef } from 'react';
 
 type CardVariant = 'default' | 'glass';
-type CardPadding = 'none' | 'sm' | 'base' | 'md' | 'lg';
+type CardPadding = 'none' | 'sm' | 'base' | 'md' | 'lg' | 'xl';
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   variant?: CardVariant;
-  /** 표준 패딩: none=0, sm=p-3, base=p-4, md=p-5, lg=p-6 */
+  /** 표준 패딩: none=0, sm=p-3, base=p-4, md=p-5, lg=p-6, xl=p-8 */
   padding?: CardPadding;
 }
 
@@ -20,6 +20,7 @@ const paddingStyles: Record<CardPadding, string> = {
   base: 'p-4',
   md: 'p-5',
   lg: 'p-6',
+  xl: 'p-8',
 };
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(

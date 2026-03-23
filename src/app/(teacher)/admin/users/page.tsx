@@ -129,7 +129,7 @@ export default function AdminUsersPage() {
 
   const isOwner = hasRoleClient(currentUser?.role, 'OWNER');
 
-  // ADMIN 체크
+  // 원장 이상 권한 체크
   useEffect(() => {
     if (currentUser && !hasRoleClient(currentUser.role, 'OWNER')) {
       router.replace('/overview');
@@ -369,12 +369,12 @@ export default function AdminUsersPage() {
                           className={`text-xs px-1.5 py-0.5 rounded font-medium ${
                             u.role === 'TEACHER'
                               ? 'bg-violet-100 text-violet-700'
-                              : u.role === 'ADMIN'
+                              : u.role === 'OWNER'
                                 ? 'bg-red-100 text-red-700'
                                 : 'bg-blue-100 text-blue-700'
                           }`}
                         >
-                          {u.role === 'TEACHER' ? '선생님' : u.role === 'ADMIN' ? '관리자' : '학생'}
+                          {u.role === 'TEACHER' ? '선생님' : u.role === 'OWNER' ? '원장' : '학생'}
                         </span>
                         {u.grade && <span className="text-xs text-text-secondary">{gradeLabel(u.grade)}</span>}
                       </div>
@@ -427,12 +427,12 @@ export default function AdminUsersPage() {
                       className={`text-xs px-2 py-0.5 rounded font-semibold ${
                         selectedUser.role === 'TEACHER'
                           ? 'bg-violet-100 text-violet-700'
-                          : selectedUser.role === 'ADMIN'
+                          : selectedUser.role === 'OWNER'
                             ? 'bg-red-100 text-red-700'
                             : 'bg-blue-100 text-blue-700'
                       }`}
                     >
-                      {selectedUser.role === 'TEACHER' ? '선생님' : selectedUser.role === 'ADMIN' ? '관리자' : '학생'}
+                      {selectedUser.role === 'TEACHER' ? '선생님' : selectedUser.role === 'OWNER' ? '원장' : '학생'}
                     </span>
                   </div>
                   <p className="text-xs text-text-secondary mt-0.5">@{selectedUser.username}</p>

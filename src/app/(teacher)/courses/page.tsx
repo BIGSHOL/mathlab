@@ -6,6 +6,7 @@ import { GraduationCap, Plus, BookOpen, Users, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { toast } from '@/components/ui/Toast';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { confirm } from '@/components/ui/ConfirmDialog';
 import { LoadingEmptyState } from '@/components/ui/LoadingEmptyState';
 
@@ -49,23 +50,19 @@ export default function CoursesPage() {
 
   return (
     <div className="px-6 py-8 max-w-[1200px] mx-auto">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary flex items-center gap-3">
-            <GraduationCap className="w-7 h-7 text-primary" />
-            학습 과정 관리
-          </h1>
-          <p className="text-text-secondary text-sm mt-1">
-            개념을 묶어 학습 과정을 만들고 학생에게 배정합니다
-          </p>
-        </div>
-        <Link href="/courses/create">
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            새 과정 만들기
-          </Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="학습 과정 관리"
+        subtitle="개념을 묶어 학습 과정을 만들고 학생에게 배정합니다"
+        icon={<GraduationCap className="w-7 h-7" />}
+        actions={
+          <Link href="/courses/create">
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              새 과정 만들기
+            </Button>
+          </Link>
+        }
+      />
 
       <LoadingEmptyState
         loading={loading}
@@ -83,7 +80,7 @@ export default function CoursesPage() {
       >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {courses.map((course) => (
-            <Card key={course.id} className="p-5 hover:shadow-md transition-shadow group">
+            <Card key={course.id} padding="md" className="hover:shadow-md transition-shadow group">
               <Link href={`/courses/${course.seq}`} className="block">
                 <h2 className="font-bold text-text-primary text-lg mb-1 group-hover:text-primary transition-colors">
                   {course.title}

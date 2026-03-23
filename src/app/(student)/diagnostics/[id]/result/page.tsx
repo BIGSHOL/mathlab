@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/Skeleton';
 import {
-  ArrowLeft,
   Target,
   AlertTriangle,
   Star,
@@ -13,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 interface DiagnosticResultData {
   id: string;
@@ -49,26 +49,52 @@ export default function DiagnosticResultPage() {
 
   if (loading) {
     return (
-      <div className="px-4 md:px-8 py-6 md:py-8 w-full">
+      <div className="p-6 max-w-2xl mx-auto">
+        {/* 헤더 (뒤로가기 + 제목) */}
         <div className="flex items-center gap-3 mb-6">
-          <Skeleton className="w-8 h-8 rounded-lg" />
-          <Skeleton className="h-7 w-36" />
+          <Skeleton className="w-5 h-5 rounded" />
+          <Skeleton className="h-7 w-32" />
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-6 mb-6">
-          <div className="flex items-center justify-center gap-8">
-            <div className="text-center space-y-2">
-              <Skeleton className="h-12 w-20 mx-auto" />
-              <Skeleton className="h-4 w-16 mx-auto" />
+        {/* 레벨 추천 카드 (바이올렛 그라데이션) */}
+        <div className="bg-white border border-slate-200 rounded-xl p-5 mb-6 text-center">
+          <Skeleton className="w-10 h-10 rounded mx-auto mb-3" />
+          <Skeleton className="h-3 w-24 mx-auto mb-2" />
+          <Skeleton className="h-10 w-20 rounded-full mx-auto mb-4" />
+          <Skeleton className="h-8 w-28 mx-auto" />
+        </div>
+        {/* 2열 영역 카드 (보완/우수) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          {Array.from({ length: 2 }, (_, i) => (
+            <div key={i} className="bg-white border border-slate-200 rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Skeleton className="w-4 h-4 rounded" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+              <div className="space-y-2">
+                {Array.from({ length: 3 }, (_, j) => (
+                  <div key={j} className="flex items-center justify-between">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-3 w-10" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* 학습 추천 카드 */}
+        <div className="bg-white border border-slate-200 rounded-xl p-5 mb-6">
+          <div className="flex items-start gap-3">
+            <Skeleton className="w-5 h-5 rounded shrink-0" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-3/4" />
             </div>
           </div>
         </div>
-        <div className="space-y-3">
-          {Array.from({ length: 3 }, (_, i) => (
-            <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-3 w-1/2" />
-            </div>
-          ))}
+        {/* 하단 버튼 */}
+        <div className="text-center">
+          <Skeleton className="h-10 w-40 rounded mx-auto" />
         </div>
       </div>
     );
@@ -89,15 +115,10 @@ export default function DiagnosticResultPage() {
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
-      <div className="flex items-center gap-3 mb-6">
-        <Link href="/my-tests" className="text-text-secondary hover:text-text-primary">
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <h1 className="text-2xl font-bold text-text-primary">진단평가 결과</h1>
-      </div>
+      <PageHeader title="진단평가 결과" backHref="/my-tests" />
 
       {/* Level recommendation */}
-      <Card className="p-5 mb-6 text-center bg-gradient-to-br from-violet-50 to-violet-100/50 border-violet-200">
+      <Card padding="md" className="mb-6 text-center bg-gradient-to-br from-violet-50 to-violet-100/50 border-violet-200">
         <Target className="w-10 h-10 text-violet-600 mx-auto mb-3" />
         <p className="text-sm text-text-secondary mb-2">추천 학습 레벨</p>
         <span className={`inline-block px-6 py-2 rounded-full text-2xl font-black border-2 ${levelColor}`}>
@@ -112,7 +133,7 @@ export default function DiagnosticResultPage() {
       {/* Areas */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {/* Weak areas */}
-        <Card className="p-5">
+        <Card padding="md">
           <h3 className="text-sm font-bold text-text-primary mb-3 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-500" /> 보완 필요 영역
           </h3>
@@ -133,7 +154,7 @@ export default function DiagnosticResultPage() {
         </Card>
 
         {/* Strong areas */}
-        <Card className="p-5">
+        <Card padding="md">
           <h3 className="text-sm font-bold text-text-primary mb-3 flex items-center gap-2">
             <Star className="w-4 h-4 text-emerald-500" /> 우수 영역
           </h3>
@@ -155,7 +176,7 @@ export default function DiagnosticResultPage() {
       </div>
 
       {/* Recommendation */}
-      <Card className="p-5 bg-blue-50/50 border-blue-200 mb-6">
+      <Card padding="md" className="bg-blue-50/50 border-blue-200 mb-6">
         <div className="flex items-start gap-3">
           <TrendingUp className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
           <div>

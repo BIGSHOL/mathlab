@@ -63,7 +63,7 @@ export function DailyQuestionCard() {
   const stats = result?.stats ?? data.stats;
 
   return (
-    <Card className="p-5">
+    <Card padding="md">
       <div className="flex items-center gap-2 mb-3">
         <HelpCircle className="w-5 h-5 text-violet-500" />
         <h3 className="font-bold text-text-primary">오늘의 한 문제</h3>

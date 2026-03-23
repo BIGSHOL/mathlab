@@ -38,7 +38,7 @@ interface AttemptSummary {
   attemptNumber: number;
   startedAt: string;
   completedAt: string | null;
-  answers: { timeSpentSeconds: number; isCorrect: boolean; flagged?: boolean; flagReason?: string | null }[];
+  answers: { timeSpentSeconds: number; isCorrect: boolean; questionId: string; flagged?: boolean; flagReason?: string | null }[];
 }
 
 interface AssignmentInfo {
@@ -58,6 +58,7 @@ interface TestInfo {
   grade: number;
   questionCount: number;
   maxAttempts: number | null;
+  questions?: { id: string; difficulty: string }[];
 }
 
 export default function TestResultsPage() {
@@ -102,28 +103,56 @@ export default function TestResultsPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 py-6 md:py-8">
-        <div className="flex items-center gap-3 mb-6">
-          <Skeleton className="w-8 h-8 rounded-lg" />
-          <Skeleton className="h-7 w-36" />
+      <div className="p-6 max-w-[1200px] mx-auto">
+        {/* PageHeader 스켈레톤 (뒤로가기 + 제목 + 액션 버튼) */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Skeleton className="w-5 h-5 rounded" />
+            <div className="space-y-1">
+              <Skeleton className="h-7 w-36" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-8 w-20 rounded" />
+            <Skeleton className="h-8 w-24 rounded" />
+          </div>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        {/* 4개 통계 카드 (아이콘 + 라벨 + 큰 숫자) */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           {Array.from({ length: 4 }, (_, i) => (
-            <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
-              <Skeleton className="h-3 w-16" />
-              <Skeleton className="h-6 w-20" />
+            <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-4">
+              <Skeleton className="w-11 h-11 rounded-xl shrink-0" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-7 w-14" />
+              </div>
             </div>
           ))}
         </div>
-        <div className="space-y-2">
+        {/* Tabs 스켈레톤 */}
+        <div className="flex gap-1 mb-4">
+          <Skeleton className="h-9 w-24 rounded" />
+          <Skeleton className="h-9 w-28 rounded" />
+        </div>
+        {/* 테이블 스켈레톤 */}
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <div className="bg-slate-50 border-b border-slate-200 px-5 py-3 flex gap-6">
+            {['w-12', 'w-8', 'w-12', 'w-10', 'w-16', 'w-14', 'w-16', 'w-8', 'w-8'].map((w, i) => (
+              <Skeleton key={i} className={`h-4 ${w}`} />
+            ))}
+          </div>
           {Array.from({ length: 5 }, (_, i) => (
-            <div key={i} className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl">
-              <Skeleton variant="circle" className="w-8 h-8 shrink-0" />
-              <div className="flex-1 space-y-1">
-                <Skeleton className="h-4 w-1/3" />
-                <Skeleton className="h-3 w-1/4" />
-              </div>
-              <Skeleton className="h-5 w-16" />
+            <div key={i} className="flex items-center gap-6 px-5 py-3 border-b border-slate-100">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-4 w-8" />
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-5 w-12 rounded" />
+              <Skeleton className="h-4 w-12" />
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-4 w-10" />
+              <Skeleton className="h-4 w-8" />
             </div>
           ))}
         </div>
@@ -150,7 +179,7 @@ export default function TestResultsPage() {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-6 max-w-[1200px] mx-auto">
       {/* Header */}
       <PageHeader
         title={test?.title ?? '시험 결과'}
@@ -286,11 +315,12 @@ export default function TestResultsPage() {
                         </td>
                         <td className="text-center px-5 py-3">
                           {(() => {
+                            const qDiffMap = new Map((test?.questions ?? []).map((q) => [q.id, q.difficulty]));
                             const statuses = att.answers.map((a) =>
                               classifyAnswer({
                                 isCorrect: a.isCorrect,
                                 timeSpentSeconds: a.timeSpentSeconds,
-                                difficulty: 'MEDIUM',
+                                difficulty: qDiffMap.get(a.questionId) ?? 'MEDIUM',
                               }).status
                             );
                             const s = getStatusSummary(statuses);

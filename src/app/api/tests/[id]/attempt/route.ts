@@ -49,10 +49,31 @@ export async function POST(
   // 진행 중인 시도가 있는지 확인
   const existingAttempt = await prisma.testAttempt.findFirst({
     where: { testId, studentId: currentUser.id, completedAt: null },
+    include: {
+      test: true,
+      answers: {
+        orderBy: { createdAt: 'asc' },
+        select: {
+          questionId: true, isCorrect: true, timeSpentSeconds: true,
+          comboCount: true, pointsEarned: true, selectedAnswer: true, hintUsed: true,
+        },
+      },
+    },
   });
 
   if (existingAttempt) {
-    return NextResponse.json({ data: existingAttempt });
+    const eqOrder = (Array.isArray(existingAttempt.questionOrder) && (existingAttempt.questionOrder as string[]).length > 0)
+      ? existingAttempt.questionOrder as string[]
+      : await getTestQuestionIds(existingAttempt.test.id);
+    const answeredCount = existingAttempt.answers.length;
+    return NextResponse.json({
+      data: {
+        ...existingAttempt,
+        questionOrder: eqOrder,
+        currentQuestionIndex: answeredCount,
+        nextQuestionId: eqOrder[answeredCount] ?? null,
+      },
+    });
   }
 
   // 문제 순서 (중간테이블 우선, 셔플 옵션)
@@ -82,6 +103,7 @@ export async function POST(
       maxScore,
       attemptNumber: completedAttempts + 1,
       assignmentId: assignment?.id ?? null,
+      questionOrder: orderedIds,
     },
   });
 
@@ -97,6 +119,10 @@ export async function POST(
     data: {
       ...attempt,
       questionOrder: orderedIds,
+      currentQuestionIndex: 0,
+      nextQuestionId: orderedIds[0] ?? null,
+      answers: [],
+      test,
     },
   }, { status: 201 });
 }

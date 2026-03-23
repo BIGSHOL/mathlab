@@ -378,7 +378,7 @@ export default async function ProfilePage({
       {/* ──── 상단: 프로필 헤더 & 학습 스트릭 ──── */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4 mb-6">
         {/* 1. 프로필 정보 (좌측) */}
-        <Card className="p-5 rounded-xl flex flex-col justify-between">
+        <Card padding="md" className="rounded-xl flex flex-col justify-between">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-primary to-accent text-white flex items-center justify-center text-xl font-bold shrink-0">
               {user.name[0]}

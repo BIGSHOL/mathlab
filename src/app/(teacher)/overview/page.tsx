@@ -51,7 +51,7 @@ export default async function TeacherDashboard({
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  const isOwner = user.role === 'OWNER' || user.role === 'SUPER_ADMIN' || user.role === 'ADMIN';
+  const isOwner = user.role === 'OWNER' || user.role === 'SUPER_ADMIN';
   const { period = '7d' } = await searchParams;
   const periodStart = getPeriodDate(period);
 
@@ -268,7 +268,7 @@ export default async function TeacherDashboard({
         {/* Row 2: Chart + Focus Students */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
           {/* Chart */}
-          <Card variant="glass" className="flex flex-col gap-2 p-3 md:p-3 lg:col-span-3">
+          <Card variant="glass" padding="sm" className="flex flex-col gap-2 lg:col-span-3">
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-text-primary text-sm font-semibold">월간 학습 추이</h3>

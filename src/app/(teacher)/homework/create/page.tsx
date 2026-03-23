@@ -349,7 +349,7 @@ export default function CreateHomeworkPage() {
 
   // ─── Render ───
   return (
-    <div className="p-4 max-w-6xl mx-auto">
+    <div className="p-4 max-w-[1200px] mx-auto">
       <div className="flex items-center gap-2 mb-4">
         <Link href="/homework" className="text-text-secondary hover:text-text-primary">
           <ArrowLeft className="w-5 h-5" />
@@ -361,7 +361,7 @@ export default function CreateHomeworkPage() {
         <div className="lg:col-span-2 space-y-3">
 
           {/* ── Card 1: Title + Start date (one row) ── */}
-          <Card className="p-4">
+          <Card padding="base">
             <div className="flex gap-3">
               <label className="flex-1">
                 <span className="text-xs font-medium text-text-secondary">제목 *</span>
@@ -386,7 +386,7 @@ export default function CreateHomeworkPage() {
           </Card>
 
           {/* ── Card 2: Category Picker ── */}
-          <Card className="p-4">
+          <Card padding="base">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-bold text-text-primary">연산 유형 선택 *</h2>
               <span className="text-xs text-text-secondary">{selectedCats.length}개 선택</span>
@@ -472,7 +472,7 @@ export default function CreateHomeworkPage() {
           </Card>
 
           {/* ── Card 3: Assignment Mode + Problem Count (merged) ── */}
-          <Card className="p-4">
+          <Card padding="base">
             <h2 className="text-sm font-bold text-text-primary mb-3">배정 방식 *</h2>
 
             <div className="flex gap-2 mb-3">
@@ -823,7 +823,7 @@ export default function CreateHomeworkPage() {
 
         {/* ── Right: Student selection ── */}
         <div className="lg:col-span-1">
-          <Card className="p-4">
+          <Card padding="base">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-bold text-text-primary">학생 선택</h2>
               <span className="text-xs text-text-secondary">{selectedStudentIds.length}명</span>

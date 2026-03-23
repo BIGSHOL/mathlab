@@ -49,7 +49,7 @@ export default function RevengePage() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Suggestion | null>(null);
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [answers, setAnswers] = useState<Array<{ questionId: string; selectedAnswer: string; isCorrect: boolean }>>([]);
+  const [answers, setAnswers] = useState<Array<{ questionId: string; selectedAnswer: string; correctAnswer: string; isCorrect: boolean }>>([]);
   const [feedback, setFeedback] = useState<boolean | null>(null);
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [finished, setFinished] = useState(false);
@@ -69,7 +69,7 @@ export default function RevengePage() {
     const isCorrect = answer.trim().toUpperCase() === q.answer.trim().toUpperCase();
     setSelectedChoice(answer);
     setFeedback(isCorrect);
-    setAnswers((prev) => [...prev, { questionId: q.id, selectedAnswer: answer, isCorrect }]);
+    setAnswers((prev) => [...prev, { questionId: q.id, selectedAnswer: answer, correctAnswer: q.answer, isCorrect }]);
   };
 
   const handleNext = async () => {
@@ -80,7 +80,7 @@ export default function RevengePage() {
       const res = await fetch('/api/learning/revenge-complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers: finalAnswers, chapter: selected.chapter }),
+        body: JSON.stringify({ answers: finalAnswers, chapter: selected.chapter, difficulty: selected.difficulty }),
       });
       const json = await res.json();
       if (json.data) {

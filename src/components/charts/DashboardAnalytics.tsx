@@ -85,7 +85,7 @@ export default function DashboardAnalytics() {
         </div>
 
         {/* Weekly wrong rate chart */}
-        <Card variant="glass" className="p-5">
+        <Card variant="glass" padding="md">
           <h3 className="text-text-primary text-base font-bold mb-1">주간 오답률 추이</h3>
           <p className="text-xs text-text-secondary mb-3">최근 4주간 오답 비율 변화</p>
           <WeeklyTrendChart
@@ -100,7 +100,7 @@ export default function DashboardAnalytics() {
       {/* Right: Chapter achievement + Assignment stats */}
       <div className="lg:col-span-2 flex flex-col gap-4">
         {/* Assignment stats */}
-        <Card className="p-4">
+        <Card padding="base">
           <h3 className="text-text-primary text-sm font-bold flex items-center gap-2 mb-3">
             <Clock className="w-4 h-4 text-primary" /> 배정 현황
           </h3>
@@ -135,7 +135,7 @@ export default function DashboardAnalytics() {
         </Card>
 
         {/* Chapter achievement */}
-        <Card className="p-4 flex-1">
+        <Card padding="base" className="flex-1">
           <h3 className="text-text-primary text-sm font-bold flex items-center gap-2 mb-3">
             <BarChart3 className="w-4 h-4 text-primary" /> 단원별 정답률 (30일)
           </h3>

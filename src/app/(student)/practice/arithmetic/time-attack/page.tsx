@@ -10,11 +10,10 @@ import {
   Zap,
   Timer,
   Star,
-  ArrowLeft,
 } from 'lucide-react';
-import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import {
   CATEGORY_LABELS,
@@ -61,6 +60,16 @@ export default function TimeAttackPage() {
   const [score, setScore] = useState(0);
   const [combo, setCombo] = useState(0);
   const [maxCombo, setMaxCombo] = useState(0);
+  const [answeredList, setAnsweredList] = useState<Array<{
+    problemIndex: number;
+    content: string;
+    choices: string[];
+    selectedAnswer: string;
+    correctAnswer: string;
+    isCorrect: boolean;
+    timeSpentMs: number;
+    comboCount: number;
+  }>>([]);
   const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
   const [phase, setPhase] = useState<'setup' | 'countdown' | 'playing' | 'result'>('setup');
   const [feedback, setFeedback] = useState<boolean | null>(null);
@@ -75,12 +84,14 @@ export default function TimeAttackPage() {
   } | null>(null);
   const [countdownNum, setCountdownNum] = useState(3);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const answerStartRef = useRef<number>(Date.now());
 
   // 카운트다운
   useEffect(() => {
     if (phase !== 'countdown') return;
     if (countdownNum <= 0) {
       setPhase('playing');
+      answerStartRef.current = Date.now();
       return;
     }
     const t = setTimeout(() => setCountdownNum((n) => n - 1), 1000);
@@ -104,9 +115,11 @@ export default function TimeAttackPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
-  // score가 바뀔 때 handleTimeUp의 최신 score를 반영
+  // score/answeredList가 바뀔 때 handleTimeUp의 최신 값을 반영
   const scoreRef = useRef(score);
   scoreRef.current = score;
+  const answeredListRef = useRef(answeredList);
+  answeredListRef.current = answeredList;
 
   // 실제 타임업 시 scoreRef 사용
   const handleTimeUpRef = useCallback(async () => {
@@ -114,7 +127,13 @@ export default function TimeAttackPage() {
     const res = await fetch('/api/arithmetic/time-attack', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ category, level, action: 'complete', correctCount: scoreRef.current }),
+      body: JSON.stringify({
+        category,
+        level,
+        action: 'complete',
+        correctCount: scoreRef.current,
+        answers: answeredListRef.current,
+      }),
     });
     const json = await res.json();
     if (json.data) setResult(json.data);
@@ -136,6 +155,7 @@ export default function TimeAttackPage() {
         setScore(0);
         setCombo(0);
         setMaxCombo(0);
+        setAnsweredList([]);
         setTimeLeft(TIME_LIMIT);
         setFeedback(null);
         setResult(null);
@@ -150,11 +170,26 @@ export default function TimeAttackPage() {
     if (feedback !== null || phase !== 'playing') return;
     const current = problems[currentIndex];
     const isCorrect = answer === current.answer;
+    const now = Date.now();
+    const timeSpentMs = now - answerStartRef.current;
     setFeedback(isCorrect);
+
+    const newCombo = isCorrect ? combo + 1 : 0;
+
+    // 답안 기록
+    setAnsweredList((prev) => [...prev, {
+      problemIndex: currentIndex,
+      content: current.content,
+      choices: current.choices,
+      selectedAnswer: answer,
+      correctAnswer: current.answer,
+      isCorrect,
+      timeSpentMs,
+      comboCount: isCorrect ? newCombo : 0,
+    }]);
 
     if (isCorrect) {
       const newScore = score + 1;
-      const newCombo = combo + 1;
       setScore(newScore);
       setCombo(newCombo);
       setMaxCombo((m) => Math.max(m, newCombo));
@@ -165,6 +200,7 @@ export default function TimeAttackPage() {
 
     // 빠르게 다음 문제
     setTimeout(() => {
+      answerStartRef.current = Date.now();
       if (currentIndex < problems.length - 1) {
         setCurrentIndex((i) => i + 1);
         setFeedback(null);
@@ -180,19 +216,13 @@ export default function TimeAttackPage() {
   if (phase === 'setup') {
     return (
       <div className="p-6 max-w-2xl mx-auto">
-        <div className="flex items-center gap-3 mb-6">
-          <Link href="/practice/arithmetic">
-            <button className="p-2 rounded-sm hover:bg-slate-100 text-slate-500">
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-          </Link>
-          <h1 className="text-2xl font-bold text-text-primary flex items-center gap-2">
-            <Timer className="w-6 h-6 text-orange-500" />
-            타임어택
-          </h1>
-        </div>
+        <PageHeader
+          title="타임어택"
+          backHref="/practice/arithmetic"
+          icon={<Timer className="w-6 h-6 text-orange-500" />}
+        />
 
-        <Card className="p-6 space-y-5">
+        <Card padding="lg" className="space-y-5">
           <div className="bg-orange-50 border border-orange-200 rounded-sm p-4 text-sm text-orange-700">
             <strong>{TIME_LIMIT}초</strong> 안에 최대한 많은 문제를 풀어보세요! 정답 1개당 <strong>2 XP</strong>를 획득합니다.
           </div>
@@ -282,7 +312,7 @@ export default function TimeAttackPage() {
     const isNewRecord = result?.isNewRecord ?? false;
     return (
       <div className="p-6 max-w-md mx-auto">
-        <Card className="p-5 text-center space-y-4 relative overflow-hidden">
+        <Card padding="md" className="text-center space-y-4 relative overflow-hidden">
           {isNewRecord && (
             <div className="absolute inset-0 pointer-events-none">
               {Array.from({ length: 12 }).map((_, i) => (
@@ -375,7 +405,7 @@ export default function TimeAttackPage() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <Card className="p-5 md:p-6">
+        <Card padding="md" className="md:p-6">
           <div className="text-center mb-6">
             <p className="text-xs text-text-secondary mb-2">
               #{currentIndex + 1} · {CATEGORY_LABELS[current.category]}

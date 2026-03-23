@@ -8,6 +8,17 @@ import { awardXp } from '@/lib/utils/xp';
 const VALID_LEVELS: ArithmeticLevel[] = ['easy', 'medium', 'hard'];
 const TIME_LIMIT = 30; // 초
 
+interface AnswerItem {
+  problemIndex: number;
+  content: string;
+  choices: string[];
+  selectedAnswer: string;
+  correctAnswer: string;
+  isCorrect: boolean;
+  timeSpentMs: number;
+  comboCount: number;
+}
+
 /** POST /api/arithmetic/time-attack — 타임어택 시작 (30문제 생성) */
 export async function POST(request: NextRequest) {
   const user = await requireAuth();
@@ -25,7 +36,7 @@ export async function POST(request: NextRequest) {
 
   // action: 'start' = 문제 생성, 'complete' = 결과 저장
   if (action === 'complete') {
-    const { correctCount } = body;
+    const { correctCount, answers } = body;
     if (typeof correctCount !== 'number' || correctCount < 0) {
       return badRequest('correctCount가 필요합니다');
     }
@@ -37,15 +48,36 @@ export async function POST(request: NextRequest) {
       select: { correctCount: true },
     });
 
-    // 기록 저장
-    await prisma.timeAttackRecord.create({
-      data: {
-        studentId: user.id,
-        category,
-        level,
-        correctCount,
-        totalTime: TIME_LIMIT,
-      },
+    // 기록 + 개별 답안 저장 (트랜잭션)
+    const answerItems = Array.isArray(answers) ? answers as AnswerItem[] : [];
+
+    await prisma.$transaction(async (tx) => {
+      const record = await tx.timeAttackRecord.create({
+        data: {
+          studentId: user.id,
+          category,
+          level,
+          correctCount,
+          totalTime: TIME_LIMIT,
+        },
+      });
+
+      // 개별 답안 저장
+      if (answerItems.length > 0) {
+        await tx.timeAttackAnswer.createMany({
+          data: answerItems.map((a) => ({
+            recordId: record.id,
+            problemIndex: a.problemIndex,
+            content: a.content,
+            choices: a.choices,
+            selectedAnswer: a.selectedAnswer,
+            correctAnswer: a.correctAnswer,
+            isCorrect: a.isCorrect,
+            timeSpentMs: a.timeSpentMs ?? 0,
+            comboCount: a.comboCount ?? 0,
+          })),
+        });
+      }
     });
 
     // XP: 정답 1개당 2XP

@@ -22,16 +22,30 @@ export const FEATURE_FLAG_SEEDS: Array<{ key: FeatureKey; label: string }> = [
   { key: 'enhanced_levelup', label: '레벨업 연출 강화' },
 ];
 
-/** 전체 Feature Flag 맵 반환 (서버용) */
-export async function getFeatureFlags(): Promise<Record<string, boolean>> {
-  const flags = await prisma.featureFlag.findMany();
+/** 전체 Feature Flag 맵 반환 (서버용, 지점별 오버라이드 지원) */
+export async function getFeatureFlags(tenantId?: string | null): Promise<Record<string, boolean>> {
+  // 1. 글로벌 기본값 (tenantId=null)
+  const globalFlags = await prisma.featureFlag.findMany({ where: { tenantId: null } });
   const map: Record<string, boolean> = {};
-  for (const f of flags) map[f.key] = f.enabled;
+  for (const f of globalFlags) map[f.key] = f.enabled;
+
+  // 2. 지점 전용 오버라이드 적용
+  if (tenantId) {
+    const tenantFlags = await prisma.featureFlag.findMany({ where: { tenantId } });
+    for (const f of tenantFlags) map[f.key] = f.enabled;
+  }
+
   return map;
 }
 
-/** 특정 Feature가 활성화되어 있는지 확인 (서버용, 글로벌 tenantId=null 기준) */
-export async function isFeatureEnabled(key: FeatureKey): Promise<boolean> {
+/** 특정 Feature가 활성화되어 있는지 확인 (서버용, 지점 오버라이드 우선) */
+export async function isFeatureEnabled(key: FeatureKey, tenantId?: string | null): Promise<boolean> {
+  // 지점 전용 플래그 우선 조회
+  if (tenantId) {
+    const tenantFlag = await prisma.featureFlag.findFirst({ where: { key, tenantId } });
+    if (tenantFlag) return tenantFlag.enabled;
+  }
+  // 글로벌 폴백
   const flag = await prisma.featureFlag.findFirst({ where: { key, tenantId: null } });
   return flag?.enabled ?? true; // 미등록 = 기본 활성
 }

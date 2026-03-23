@@ -33,7 +33,7 @@ export async function getTenantStudentScope(user: AuthUser): Promise<Record<stri
     return { role: 'STUDENT', deletedAt: null };
   }
 
-  // TEACHER/MANAGER: 자기 반 학생 + 테넌트 필터
+  // TEACHER: 자기 반 학생 + 테넌트 필터
   const classrooms = await prisma.classroom.findMany({
     where: { teacherId: user.id, ...tenantFilter },
     select: { id: true },

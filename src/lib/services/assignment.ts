@@ -16,17 +16,29 @@ export async function assignTest(params: {
 }) {
   const { testId, studentIds, dueDate, allowLateSubmission } = params;
 
-  const assignments = await prisma.testAssignment.createMany({
-    data: studentIds.map((studentId) => ({
-      testId,
-      studentId,
-      dueDate: dueDate ? new Date(dueDate) : null,
-      allowLateSubmission: allowLateSubmission ?? false,
-    })),
-    skipDuplicates: true,
-  });
+  const dueDateValue = dueDate ? new Date(dueDate) : null;
+  const lateSubmission = allowLateSubmission ?? false;
 
-  return assignments;
+  // upsert: 신규 배정은 생성, 기존 배정은 마감일/설정 갱신
+  const results = await prisma.$transaction(
+    studentIds.map((studentId) =>
+      prisma.testAssignment.upsert({
+        where: { testId_studentId: { testId, studentId } },
+        create: {
+          testId,
+          studentId,
+          dueDate: dueDateValue,
+          allowLateSubmission: lateSubmission,
+        },
+        update: {
+          dueDate: dueDateValue,
+          allowLateSubmission: lateSubmission,
+        },
+      })
+    )
+  );
+
+  return { count: results.length };
 }
 
 /** 시험별 배정 현황 조회 (교사용) */

@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { PageContainer } from '@/components/ui/PageContainer';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import {
   CATEGORY_LABELS,
@@ -207,16 +209,16 @@ export default function ArithmeticPracticePage() {
   // Setup screen
   if (problems.length === 0) {
     return (
-      <div className="px-4 md:px-10 py-8 max-w-[900px] mx-auto w-full">
-        <h1 className="text-2xl font-bold text-text-primary flex items-center gap-2 mb-2">
-          <Calculator className="w-6 h-6 text-primary" />
-          연산 연습
-        </h1>
-        <p className="text-text-secondary text-sm mb-6">학년별 연산 유형을 선택하고 연습을 시작하세요.</p>
+      <PageContainer maxWidth="lg">
+        <PageHeader
+          title="연산 연습"
+          icon={<Calculator className="w-6 h-6" />}
+          subtitle="학년별 연산 유형을 선택하고 연습을 시작하세요."
+        />
 
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row items-start gap-6">
           {/* 좌측: 연산 유형 선택 */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 w-full">
             <label className="text-sm font-bold text-text-primary block mb-3">연산 유형</label>
             <div className="space-y-2">
               {GRADE_GROUPS.map((group) => {
@@ -282,10 +284,10 @@ export default function ArithmeticPracticePage() {
           </div>
 
           {/* 우측: 설정 + 시작 */}
-          <div className="lg:w-64 shrink-0">
+          <div className="w-full lg:w-72 shrink-0">
             <div className="lg:sticky lg:top-20 space-y-5">
               {/* 선택된 유형 표시 */}
-              <Card className="p-4">
+              <Card padding="base">
                 <p className="text-xs font-bold text-text-secondary mb-2">선택된 유형</p>
                 <div className={`flex items-center gap-2 px-3 py-2 rounded-md ${selectedGroup?.bgColor ?? 'bg-slate-50'}`}>
                   <span className={`text-xs font-black ${selectedGroup?.color ?? 'text-slate-600'}`}>
@@ -318,7 +320,7 @@ export default function ArithmeticPracticePage() {
               {/* 문제 수 */}
               <div>
                 <label className="text-sm font-bold text-text-primary block mb-2">문제 수</label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                <div className="grid grid-cols-4 gap-1.5">
                   {[10, 20, 30, 50].map((n) => (
                     <button
                       key={n}
@@ -350,7 +352,7 @@ export default function ArithmeticPracticePage() {
             </div>
           </div>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
@@ -359,7 +361,7 @@ export default function ArithmeticPracticePage() {
     const totalTime = Math.floor((Date.now() - startRef.current) / 1000);
     return (
       <div className="p-6 max-w-md mx-auto">
-        <Card className="p-5 text-center space-y-4">
+        <Card padding="md" className="text-center space-y-4">
           <Trophy className="w-12 h-12 text-yellow-500 mx-auto" />
           <h2 className="text-2xl font-black text-text-primary">연습 완료!</h2>
           {xpEarned > 0 && (
@@ -432,7 +434,7 @@ export default function ArithmeticPracticePage() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <Card className="p-5 md:p-6">
+        <Card padding="md" className="md:p-6">
           {/* Problem */}
           <div className="text-center mb-8">
             <p className="text-sm text-text-secondary mb-2">

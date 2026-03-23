@@ -53,7 +53,7 @@ export default async function TeacherDashboardV2({
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  const isOwner = user.role === 'OWNER' || user.role === 'SUPER_ADMIN' || user.role === 'ADMIN';
+  const isOwner = user.role === 'OWNER' || user.role === 'SUPER_ADMIN';
   const { period: _period = '7d' } = await searchParams;
 
   // --- Classroom-based student scoping ---
