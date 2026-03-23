@@ -6,10 +6,11 @@ import type { UserRole } from '@/types';
 
 export type AuthUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>;
 
-// ── 역할 계층 (STUDENT < TEACHER < OWNER < SUPER_ADMIN) ──
+// ── 역할 계층 (STUDENT < TEACHER < MANAGER < OWNER < SUPER_ADMIN) ──
 const ROLE_LEVEL: Record<string, number> = {
   STUDENT: 0,
   TEACHER: 1,
+  MANAGER: 2,
   OWNER: 3,
   SUPER_ADMIN: 4,
 };
@@ -19,11 +20,19 @@ export function hasRole(user: { role: string }, minRole: UserRole): boolean {
   return (ROLE_LEVEL[user.role] ?? 0) >= (ROLE_LEVEL[minRole] ?? 99);
 }
 
-/** 선생님 이상 (TEACHER/OWNER/SUPER_ADMIN) */
+/** 선생님 이상 (TEACHER/MANAGER/OWNER/SUPER_ADMIN) */
 export async function requireTeacher(): Promise<AuthUser | NextResponse> {
   const user = await getCurrentUser();
   if (!user) return unauthorized();
   if (!hasRole(user, 'TEACHER')) return forbidden();
+  return user;
+}
+
+/** 팀장 이상 (MANAGER/OWNER/SUPER_ADMIN) */
+export async function requireManager(): Promise<AuthUser | NextResponse> {
+  const user = await getCurrentUser();
+  if (!user) return unauthorized();
+  if (!hasRole(user, 'MANAGER')) return forbidden();
   return user;
 }
 

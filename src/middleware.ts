@@ -40,7 +40,7 @@ export default withAuth(
       response.headers.set('x-tenant-slug', subdomain);
     }
 
-    // Teacher-only routes
+    // Teacher+ routes (TEACHER/MANAGER/OWNER/SUPER_ADMIN)
     if (path.startsWith('/students') || path.startsWith('/analytics') || path.startsWith('/questions')) {
       if (token?.role === 'STUDENT') {
         return NextResponse.redirect(new URL('/dashboard', req.url));

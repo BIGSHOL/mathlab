@@ -1,131 +1,47 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import {
-  LayoutDashboard,
-  Users,
-  Database,
-  BarChart3,
-  Settings,
-  HelpCircle,
-  BookOpen,
-  Eye,
-  ScanEye,
-  ClipboardCheck,
   Shield,
-  UserCog,
   Bell,
   LogOut,
   PanelLeftClose,
-  Calculator,
-  CalendarCheck,
-  Newspaper,
-  Activity,
-  FileSpreadsheet,
-  PenLine,
-  FileText,
-  ToggleRight,
-  School,
   Search,
-  GraduationCap,
-  LifeBuoy,
-  Sparkles,
-  Stethoscope,
-  ScrollText,
-  KeyRound,
 } from 'lucide-react';
-import { useAuth, hasRoleClient } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { LogoIcon } from '@/components/ui/LogoIcon';
 import { useTenant } from '@/components/providers/TenantProvider';
-import { Building2 } from 'lucide-react';
+import { getNavForRole, getAllNavItems, hasMinRole, type NavItem } from '@/lib/constants/navigation';
+import type { UserRole } from '@/types';
 
-interface MenuItem {
-  label: string;
-  href: string;
-  icon: typeof LayoutDashboard;
-  disabled?: boolean;
-}
-
-// 홈
-const homeItems: MenuItem[] = [
-  { label: '대시보드', href: '/overview', icon: LayoutDashboard },
-];
-
-// 학습 관리 — 역할별 라벨 분기
-const getLearningItems = (isAdmin: boolean): MenuItem[] => [
-  { label: '학생 관리', href: '/students', icon: Users },
-  { label: isAdmin ? '개념 관리' : '개념 조회', href: '/concepts', icon: BookOpen },
-  { label: isAdmin ? '문제 관리' : '문제 조회', href: '/questions', icon: Database },
-  { label: '학습 과정', href: '/courses', icon: GraduationCap },
-];
-
-// 출제 · 평가
-const assessmentItems: MenuItem[] = [
-  { label: '연산 생성기', href: '/questions/arithmetic', icon: Calculator },
-  { label: '학습지', href: '/worksheet/create', icon: FileSpreadsheet },
-  { label: '숙제 관리', href: '/homework', icon: CalendarCheck },
-  { label: '시험 관리', href: '/tests', icon: ClipboardCheck },
-  { label: '수기 채점', href: '/manual-grading', icon: PenLine },
-];
-
-// 분석
-const analysisItems: MenuItem[] = [
-  { label: '학습 분석', href: '/analytics', icon: BarChart3 },
-  { label: '진단 결과', href: '/diagnostics', icon: Stethoscope },
-  { label: '리포트', href: '/reports', icon: ScrollText },
-];
-
-// 시스템 — 설정/지원
-const systemItems: MenuItem[] = [
-  { label: '업데이트 내역', href: '/updates', icon: Newspaper },
-  { label: '도움말', href: '/help', icon: LifeBuoy },
-  { label: '설정', href: '/settings', icon: Settings },
-  { label: '고객지원', href: '/support', icon: HelpCircle },
-];
-
-// 이전 호환용 — 메인 아이템 전체 (allItems 충돌 감지용, 두 라벨 모두 포함)
-const mainItemsBase: MenuItem[] = [...homeItems, ...getLearningItems(false), ...getLearningItems(true), ...assessmentItems, ...analysisItems];
-
-// 어드민 전용 (개념 관리/문제 관리는 학습 관리 섹션에서 라벨 전환으로 처리)
-const adminItems: MenuItem[] = [
-  { label: '선생님 관리', href: '/students?tab=teachers', icon: UserCog },
-  { label: '사용자 관리', href: '/admin/users', icon: Activity },
-  { label: 'PDF 문제 추출', href: '/questions/pdf-import', icon: FileText },
-  { label: 'AI 문제 생성', href: '/questions/generate', icon: Sparkles, disabled: true },
-  { label: '학생 화면 보기', href: '/student-preview', icon: ScanEye },
-  { label: '화면 미리보기', href: '/mockups', icon: Eye },
-  { label: '기능 관리', href: '/admin/features', icon: ToggleRight },
-  { label: '반 관리', href: '/admin/classrooms', icon: School },
-  { label: '지점 관리', href: '/admin/tenants', icon: Building2 },
-];
-
-// 운영 — OWNER 전용
-const operationItems: MenuItem[] = [
-  { label: '이용권 관리', href: '/licenses', icon: KeyRound },
-];
-
-// All items for active-route collision detection
-const allItems = [...mainItemsBase, ...systemItems, ...operationItems, ...adminItems];
+const ROLE_LABELS: Record<string, string> = {
+  SUPER_ADMIN: '슈퍼관리자',
+  OWNER: '원장',
+  MANAGER: '팀장',
+  TEACHER: '선생님',
+};
 
 export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const tenant = useTenant();
-  const isOwner = user ? hasRoleClient(user.role, 'OWNER') : false;
-  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const role = (user?.role ?? 'TEACHER') as UserRole;
+  const navGroups = getNavForRole(role);
+  const allItems = getAllNavItems();
   const [collapsed, setCollapsed] = useState(false);
   const displayName = tenant?.name || 'MathLab';
 
-  const isActive = (item: MenuItem) => {
+  const isActive = (item: NavItem) => {
     if (item.href === '/students?tab=teachers') {
       return pathname === '/students' && typeof window !== 'undefined' && window.location.search.includes('tab=teachers');
     }
     return pathname === item.href || (item.href !== '/overview' && pathname.startsWith(item.href + '/') && !allItems.some((other) => other !== item && other.href !== item.href && other.href.startsWith(item.href + '/') && pathname.startsWith(other.href)));
   };
 
-  const renderItem = (item: MenuItem) => {
+  const renderItem = (item: NavItem) => {
     const active = isActive(item);
 
     if (item.disabled) {
@@ -146,7 +62,7 @@ export function Sidebar() {
 
     return (
       <Link
-        key={item.label}
+        key={item.id}
         href={item.href}
         className={`relative group flex items-center gap-2.5 px-2 py-2 rounded-sm transition-all font-medium text-xs ${collapsed ? 'justify-center' : ''} ${active
             ? 'bg-primary/10 text-primary font-semibold'
@@ -208,13 +124,13 @@ export function Sidebar() {
       </div>
 
       {/* Admin badge */}
-      {isOwner && !collapsed && (
+      {hasMinRole(role, 'MANAGER') && !collapsed && (
         <div className="mx-3 mt-3 flex items-center gap-2 px-2.5 py-1.5 rounded-sm bg-violet-50 border border-violet-200">
           <Shield className="w-3.5 h-3.5 text-violet-600 shrink-0" />
           <span className="text-[11px] font-bold text-violet-700">관리자 모드</span>
         </div>
       )}
-      {isOwner && collapsed && (
+      {hasMinRole(role, 'MANAGER') && collapsed && (
         <div className="mx-auto mt-3" title="관리자 모드">
           <Shield className="w-4 h-4 text-violet-600" />
         </div>
@@ -239,65 +155,27 @@ export function Sidebar() {
 
       {/* Menu */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar px-2 pt-3">
-        {/* 홈 */}
-        <div className="flex flex-col gap-0.5">
-          {homeItems.map(renderItem)}
-        </div>
-
-        {/* 학습 관리 */}
-        {renderSectionLabel('학습 관리')}
-        <div className="flex flex-col gap-0.5">
-          {getLearningItems(isOwner).map(renderItem)}
-        </div>
-
-        {/* 출제 · 평가 */}
-        {renderSectionLabel('출제 · 평가')}
-        <div className="flex flex-col gap-0.5">
-          {assessmentItems.map(renderItem)}
-        </div>
-
-        {/* 분석 */}
-        {renderSectionLabel('분석')}
-        <div className="flex flex-col gap-0.5">
-          {analysisItems.map(renderItem)}
-        </div>
-
-        {/* 시스템 */}
-        {renderSectionLabel('시스템')}
-        <div className="flex flex-col gap-0.5">
-          {systemItems.map(renderItem)}
-        </div>
-
-        {/* 운영 — OWNER 전용 */}
-        {isOwner && (
-          <>
-            {renderSectionLabel('운영')}
-            <div className="flex flex-col gap-0.5">
-              {operationItems.map(renderItem)}
-            </div>
-          </>
-        )}
-
-        {/* 어드민 전용 */}
-        {isOwner && (
-          <>
-            {collapsed ? (
-              <div className="my-3 border-t-2 border-violet-200" />
-            ) : (
-              <p className="text-[10px] font-bold text-violet-500 uppercase tracking-widest mb-1.5 px-2 mt-5 flex items-center gap-1">
-                <Shield className="w-3 h-3" />
-                어드민
-              </p>
+        {navGroups.map((group) => (
+          <React.Fragment key={group.id}>
+            {group.id !== 'home' && (
+              group.style === 'admin' ? (
+                collapsed ? (
+                  <div className="my-3 border-t-2 border-violet-200" />
+                ) : (
+                  <p className="text-[10px] font-bold text-violet-500 uppercase tracking-widest mb-1.5 px-2 mt-5 flex items-center gap-1">
+                    <Shield className="w-3 h-3" />
+                    {group.label}
+                  </p>
+                )
+              ) : (
+                renderSectionLabel(group.label)
+              )
             )}
             <div className="flex flex-col gap-0.5">
-              {adminItems.filter(item => {
-                // 지점 관리는 SUPER_ADMIN 전용
-                if (item.href === '/admin/tenants') return isSuperAdmin;
-                return true;
-              }).map(renderItem)}
+              {group.items.map(renderItem)}
             </div>
-          </>
-        )}
+          </React.Fragment>
+        ))}
       </div>
 
       {/* User section at bottom */}
@@ -323,7 +201,7 @@ export function Sidebar() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-text-primary truncate">{user?.name ?? '사용자'}</p>
-              <p className="text-[10px] text-text-secondary truncate">{isOwner ? '관리자' : '선생님'}</p>
+              <p className="text-[10px] text-text-secondary truncate">{ROLE_LABELS[role] ?? '선생님'}</p>
             </div>
             <div className="flex items-center gap-0.5 shrink-0">
               <button className="p-1 rounded text-slate-300 cursor-not-allowed opacity-50" title="알림 — 준비 중">

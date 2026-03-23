@@ -88,12 +88,13 @@
 
 ### 5. 인증/인가 패턴
 
-**역할 계층 (4단계):** `STUDENT (0) < TEACHER (1) < OWNER (3) < SUPER_ADMIN (4)`
+**역할 계층 (5단계):** `STUDENT (0) < TEACHER (1) < MANAGER (2) < OWNER (3) < SUPER_ADMIN (4)`
 
 ```typescript
 // 권한 확인 함수 (src/lib/api/auth.ts)
 const user = await requireAuth();         // 로그인 필수 (401)
 const user = await requireTeacher();      // TEACHER 이상 (403)
+const user = await requireManager();      // MANAGER 이상 (403)
 const user = await requireOwner();        // OWNER 이상 (403)
 const user = await requireSuperAdmin();   // SUPER_ADMIN 전용 (403)
 const user = await requireAuthViewAs();   // 로그인 + ?_as=studentId View-As 지원
@@ -106,7 +107,8 @@ hasRole(user, 'TEACHER');  // ROLE_LEVEL[user.role] >= ROLE_LEVEL['TEACHER']
 **역할별 권한:**
 - **STUDENT**: 자기 학습 데이터만 조회/수정
 - **TEACHER**: 자기 반(Classroom) 학생 관리, 컨텐츠 CRUD
-- **OWNER**: 지점(Tenant) 전체 관리, 이용권 배정, 선생님 관리
+- **MANAGER**: 테넌트 내 전체 교사/학생 관리, 진단결과 조회 (팀장)
+- **OWNER**: 지점(Tenant) 전체 관리, 이용권 배정, 리포트
 - **SUPER_ADMIN**: 플랫폼 전체 (모든 테넌트, 사용자, 지점 관리)
 
 ### 6. AI 사용 규칙
@@ -236,15 +238,23 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 
 ### 사이드바 네비게이션
 
-5개 그룹으로 구성 (`src/components/layout/Sidebar.tsx`):
-- **홈** (1개): 대시보드
-- **학습 관리** (4개): 학생관리, 개념관리, 문제은행, 학습 과정
-- **출제·평가** (5개): 연산생성기, 학습지, 숙제관리, 시험관리, 수기채점
-- **분석** (3개): 학습분석, 진단결과, 리포트
-- **시스템** (4개): 업데이트 내역, 도움말, 설정, 고객지원
-- **어드민** (관리자만, 9개): 선생님관리, 사용자관리, PDF 문제 추출, AI 문제 생성, 학생 화면 보기, 화면 미리보기, 기능 관리, 반 관리, 지점 관리(SUPER_ADMIN)
+역할 기반 필터링으로 구성 (`src/lib/constants/navigation.ts` → `Sidebar.tsx` / `CommandPalette.tsx` 공유):
 
-**커맨드 팔레트**: `Ctrl+K`로 전체 메뉴 빠른 검색/이동 (`CommandPalette.tsx`)
+**공통 (TEACHER+):**
+- **홈** (1개): 대시보드
+- **수업** (4개): 학생관리, 개념 조회/관리*, 문제 조회/관리*, 학습 과정
+- **출제·평가** (6개): 연산생성기, 학습지, 숙제관리, 시험관리, 수기채점, PDF 추출
+- **분석**: 학습분석 (TEACHER+), 진단결과 (MANAGER+), 리포트 (OWNER+)
+- **시스템** (4개): 업데이트 내역, 도움말, 설정, 고객지원
+
+**관리자 전용 (보라색 구분선):**
+- **팀 관리** (MANAGER+): 선생님 관리
+- **지점 운영** (OWNER+): 이용권 관리, 반 관리, 사용자 관리
+- **플랫폼** (SUPER_ADMIN): 지점 관리, 기능 관리
+
+*MANAGER+ 는 "관리", TEACHER는 "조회" 라벨 표시
+
+**커맨드 팔레트**: `Ctrl+K`로 전체 메뉴 빠른 검색/이동 (`CommandPalette.tsx`, 네비와 동일 데이터 사용)
 
 ### PDF 문제 추출 시스템
 

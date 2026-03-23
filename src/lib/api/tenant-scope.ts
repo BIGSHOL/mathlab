@@ -23,14 +23,14 @@ export function getTenantFilter(user: AuthUser): Record<string, unknown> {
 export async function getTenantStudentScope(user: AuthUser): Promise<Record<string, unknown>> {
   const tenantFilter = getTenantFilter(user);
 
-  // OWNER: 자기 테넌트 전체 학생
-  if (hasRole(user, 'OWNER')) {
-    return { role: 'STUDENT', deletedAt: null, ...tenantFilter };
-  }
-
   // SUPER_ADMIN: 전체 학생
   if (hasRole(user, 'SUPER_ADMIN')) {
     return { role: 'STUDENT', deletedAt: null };
+  }
+
+  // MANAGER 이상 (MANAGER/OWNER): 자기 테넌트 전체 학생
+  if (hasRole(user, 'MANAGER')) {
+    return { role: 'STUDENT', deletedAt: null, ...tenantFilter };
   }
 
   // TEACHER: 자기 반 학생 + 테넌트 필터

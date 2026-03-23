@@ -6,7 +6,7 @@ import type { UserRole } from '@/types';
 
 // 역할 계층 (서버의 ROLE_LEVEL과 동일)
 const ROLE_LEVEL: Record<string, number> = {
-  STUDENT: 0, TEACHER: 1, OWNER: 3, SUPER_ADMIN: 4,
+  STUDENT: 0, TEACHER: 1, MANAGER: 2, OWNER: 3, SUPER_ADMIN: 4,
 };
 
 /** 클라이언트 사이드 역할 체크 */

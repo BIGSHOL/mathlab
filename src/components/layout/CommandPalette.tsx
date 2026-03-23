@@ -2,76 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Search,
-  LayoutDashboard,
-  Users,
-  BookOpen,
-  Database,
-  Calculator,
-  CalendarCheck,
-  ClipboardCheck,
-  FileSpreadsheet,
-  PenLine,
-  BarChart3,
-  Newspaper,
-  Settings,
-  HelpCircle,
-  FileText,
-  Sparkles,
-  Eye,
-  ToggleRight,
-  School,
-  UserCog,
-  Activity,
-  LifeBuoy,
-  Building2,
-  Stethoscope,
-  ScrollText,
-} from 'lucide-react';
-import { useAuth, hasRoleClient } from '@/hooks/useAuth';
-
-interface CommandItem {
-  id: string;
-  label: string;
-  href: string;
-  icon: typeof LayoutDashboard;
-  keywords: string[];
-  group: '메인' | '시스템' | '어드민';
-}
-
-const mainCommands: CommandItem[] = [
-  { id: 'overview', label: '대시보드', href: '/overview', icon: LayoutDashboard, keywords: ['dashboard', '홈', '메인'], group: '메인' },
-  { id: 'students', label: '학생 관리', href: '/students', icon: Users, keywords: ['student', '학생', '관리'], group: '메인' },
-  { id: 'concepts', label: '개념 관리', href: '/concepts', icon: BookOpen, keywords: ['concept', '개념', '빈칸'], group: '메인' },
-  { id: 'questions', label: '문제 은행', href: '/questions', icon: Database, keywords: ['question', '문제', '은행'], group: '메인' },
-  { id: 'arithmetic', label: '연산 생성기', href: '/questions/arithmetic', icon: Calculator, keywords: ['arithmetic', '연산', '계산'], group: '메인' },
-  { id: 'homework', label: '숙제 관리', href: '/homework', icon: CalendarCheck, keywords: ['homework', '숙제', '과제'], group: '메인' },
-  { id: 'tests', label: '시험 관리', href: '/tests', icon: ClipboardCheck, keywords: ['test', '시험', '평가'], group: '메인' },
-  { id: 'worksheet', label: '학습지', href: '/worksheet/create', icon: FileSpreadsheet, keywords: ['worksheet', '학습지', '프린트'], group: '메인' },
-  { id: 'grading', label: '수기 채점', href: '/manual-grading', icon: PenLine, keywords: ['grading', '채점', '수기'], group: '메인' },
-  { id: 'analytics', label: '학습 분석', href: '/analytics', icon: BarChart3, keywords: ['analytics', '분석', '통계'], group: '메인' },
-  { id: 'diagnostics', label: '진단 결과', href: '/diagnostics', icon: Stethoscope, keywords: ['diagnostic', '진단', '레벨테스트', '결과'], group: '메인' },
-  { id: 'reports', label: '리포트', href: '/reports', icon: ScrollText, keywords: ['report', '리포트', '보고서', '레벨테스트'], group: '메인' },
-];
-
-const systemCommands: CommandItem[] = [
-  { id: 'updates', label: '업데이트 내역', href: '/updates', icon: Newspaper, keywords: ['update', '업데이트', '변경'], group: '시스템' },
-  { id: 'help', label: '도움말', href: '/help', icon: LifeBuoy, keywords: ['help', '도움말', '가이드', '사용법'], group: '시스템' },
-  { id: 'settings', label: '설정', href: '/settings', icon: Settings, keywords: ['setting', '설정', '환경'], group: '시스템' },
-  { id: 'support', label: '고객지원', href: '/support', icon: HelpCircle, keywords: ['support', '지원', '문의', '도움'], group: '시스템' },
-];
-
-const adminCommands: CommandItem[] = [
-  { id: 'teachers', label: '선생님 관리', href: '/students?tab=teachers', icon: UserCog, keywords: ['teacher', '선생님'], group: '어드민' },
-  { id: 'admin-users', label: '사용자 관리', href: '/admin/users', icon: Activity, keywords: ['user', '사용자', '계정'], group: '어드민' },
-  { id: 'pdf-import', label: 'PDF 문제 추출', href: '/questions/pdf-import', icon: FileText, keywords: ['pdf', '추출', 'ocr'], group: '어드민' },
-  { id: 'ai-gen', label: 'AI 문제 생성', href: '/questions/generate', icon: Sparkles, keywords: ['ai', '생성', 'gemini'], group: '어드민' },
-  { id: 'mockups', label: '화면 미리보기', href: '/mockups', icon: Eye, keywords: ['mockup', '미리보기', '프리뷰'], group: '어드민' },
-  { id: 'features', label: '기능 관리', href: '/admin/features', icon: ToggleRight, keywords: ['feature', '기능', '토글'], group: '어드민' },
-  { id: 'classrooms', label: '반 관리', href: '/admin/classrooms', icon: School, keywords: ['class', '반', '교실'], group: '어드민' },
-  { id: 'tenants', label: '지점 관리', href: '/admin/tenants', icon: Building2, keywords: ['tenant', '지점', '지사', '서브도메인', 'subdomain'], group: '어드민' },
-];
+import { Search } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { getCommandsForRole } from '@/lib/constants/navigation';
+import type { UserRole } from '@/types';
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
@@ -81,13 +15,20 @@ export function CommandPalette() {
   const listRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { user } = useAuth();
-  const isOwner = hasRoleClient(user?.role, 'OWNER');
+
+  const role = (user?.role ?? 'TEACHER') as UserRole;
 
   const allCommands = useMemo(() => {
-    return isOwner
-      ? [...mainCommands, ...systemCommands, ...adminCommands]
-      : [...mainCommands, ...systemCommands];
-  }, [isOwner]);
+    return getCommandsForRole(role);
+  }, [role]);
+
+  const groups = useMemo(() => {
+    const seen = new Set<string>();
+    return allCommands.reduce<string[]>((acc, cmd) => {
+      if (!seen.has(cmd.group)) { seen.add(cmd.group); acc.push(cmd.group); }
+      return acc;
+    }, []);
+  }, [allCommands]);
 
   const filtered = useMemo(() => {
     if (!query.trim()) return allCommands;
@@ -160,7 +101,6 @@ export function CommandPalette() {
   if (!open) return null;
 
   // 그룹별 렌더링
-  const groups = ['메인', '시스템', '어드민'] as const;
   let globalIdx = 0;
 
   return (
