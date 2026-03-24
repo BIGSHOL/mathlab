@@ -87,6 +87,26 @@ export default async function SubjectsPage({
   const upcomingEnrollments = enrollments.filter((e) => e.status === 'LOCKED');
   const hasEnrollments = enrollments.length > 0;
 
+  // 활성 과정이 없을 때 최근 학습한 개념 조회 (대시보드와 동일 데이터)
+  const recentProgress = !activeEnrollment ? await prisma.learningProgress.findMany({
+    where: { userId: user.id },
+    include: {
+      concept: {
+        include: {
+          subject: true,
+          progress: { where: { userId: user.id }, select: { stage: true, completed: true } },
+        },
+      },
+    },
+    orderBy: { updatedAt: 'desc' },
+    take: 20,
+  }) : [];
+
+  // conceptId 기준 중복 제거
+  const uniqueRecentConcepts = recentProgress.filter(
+    (p, i, arr) => arr.findIndex((x) => x.conceptId === p.conceptId) === i
+  );
+
   // 배정 과정이 없으면 빈 상태
   if (!hasEnrollments) {
     return (
@@ -211,6 +231,43 @@ export default async function SubjectsPage({
                 </Card>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* 최근 학습한 개념 (활성 과정 없을 때) */}
+        {!activeEnrollment && uniqueRecentConcepts.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <h2 className="text-lg font-bold text-text-primary">최근 학습한 개념</h2>
+            </div>
+            <Card padding="lg">
+              <div className="flex flex-col gap-3">
+                {uniqueRecentConcepts.map((p) => {
+                  const stageIdx = getStageIndex(p.concept.progress);
+                  const progressPct = getProgressPercent(p.concept.progress);
+                  return (
+                    <Link key={p.id} href={`/concepts/${p.concept.conceptCode ?? p.conceptId}`}>
+                      <div className="flex items-center gap-4 p-4 rounded-sm hover:bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all group cursor-pointer">
+                        <GemStone variant={partToGemVariant(p.concept.part)} stage={stageIdx} size="xs" />
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-text-primary group-hover:text-primary transition-colors">
+                            {p.concept.subject.title}: {p.concept.title}
+                          </h3>
+                          <span className={`text-xs font-medium ${stageColors[stageIdx]}`}>
+                            {stageLabels[stageIdx]}
+                          </span>
+                        </div>
+                        <div className="w-32">
+                          <ProgressBar value={progressPct} size="sm" />
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-primary transition-colors" />
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </Card>
           </div>
         )}
 
