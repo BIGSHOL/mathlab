@@ -9,7 +9,7 @@
  * ─ 테넌트 3개 (멀티테넌트)
  * ─ 사용자 45+명 (역할별 충분한 수)
  * ─ 과목 8개, 개념 24개, 빈칸연습 48개
- * ─ 문제 120개
+ * ─ 문제 135개
  * ─ 시험 8개 (일반+레벨테스트)
  * ─ 숙제 3종 각 2개
  * ─ 퀴즈 4개
@@ -721,6 +721,23 @@ async function main() {
     { bookCode: 'E6-1', chapter: '5. 비와 비율', difficulty: 'BASIC', type: 'MULTIPLE_CHOICE', content: '비율 $0.25$를 백분율로 나타내면?', choices: ['$2.5$%', '$25$%', '$250$%', '$0.25$%', '$50$%'], answer: '2', explanation: '$0.25 \\times 100=25$', domain: 'CALCULATION' },
     { bookCode: 'E6-1', chapter: '6. 비례식', difficulty: 'MEDIUM', type: 'MULTIPLE_CHOICE', content: '비례식에서 내항의 곱이 $36$이면 외항은?', choices: ['곱이 36', '곱이 72', '합이 36', '곱이 18', '합이 12'], answer: '1', explanation: '외항의 곱=내항의 곱=36', domain: 'UNDERSTANDING' },
 
+    // E6-2 소수의 나눗셈 (15개)
+    { bookCode: 'E6-2', chapter: '7. 소수의 뜻과 성질', difficulty: 'BASIC', type: 'MULTIPLE_CHOICE', content: '$0.1$은 $\\frac{1}{10}$과 같다. $0.01$은?', choices: ['$\\frac{1}{10}$', '$\\frac{1}{100}$', '$\\frac{1}{1000}$', '$\\frac{10}{100}$', '$\\frac{1}{50}$'], answer: '2', explanation: '$0.01=\\frac{1}{100}$', domain: 'UNDERSTANDING' },
+    { bookCode: 'E6-2', chapter: '7. 소수의 뜻과 성질', difficulty: 'BASIC', type: 'MULTIPLE_CHOICE', content: '$0.7$을 분수로 나타내면?', choices: ['$\\frac{7}{100}$', '$\\frac{7}{10}$', '$\\frac{70}{10}$', '$\\frac{7}{1000}$', '$\\frac{1}{7}$'], answer: '2', explanation: '$0.7=\\frac{7}{10}$', domain: 'UNDERSTANDING' },
+    { bookCode: 'E6-2', chapter: '7. 소수의 뜻과 성질', difficulty: 'MEDIUM', type: 'SHORT_ANSWER', content: '$\\frac{3}{8}$을 소수로 나타내시오.', choices: null, answer: '0.375', explanation: '$3÷8=0.375$', domain: 'CALCULATION' },
+    { bookCode: 'E6-2', chapter: '8. 소수의 덧셈과 뺄셈', difficulty: 'BASIC', type: 'MULTIPLE_CHOICE', content: '$0.3 + 0.5$의 값은?', choices: ['$0.2$', '$0.8$', '$0.35$', '$0.53$', '$1.0$'], answer: '2', explanation: '$0.3+0.5=0.8$', domain: 'CALCULATION' },
+    { bookCode: 'E6-2', chapter: '8. 소수의 덧셈과 뺄셈', difficulty: 'MEDIUM', type: 'MULTIPLE_CHOICE', content: '$3.5 - 1.8$의 값은?', choices: ['$1.3$', '$1.7$', '$2.3$', '$2.7$', '$5.3$'], answer: '2', explanation: '$3.5-1.8=1.7$', domain: 'CALCULATION' },
+    { bookCode: 'E6-2', chapter: '8. 소수의 덧셈과 뺄셈', difficulty: 'MEDIUM', type: 'SHORT_ANSWER', content: '$4.25 + 3.78$을 계산하시오.', choices: null, answer: '8.03', explanation: '$4.25+3.78=8.03$', domain: 'CALCULATION' },
+    { bookCode: 'E6-2', chapter: '8. 소수의 덧셈과 뺄셈', difficulty: 'HIGH', type: 'MULTIPLE_CHOICE', content: '$5.04 - 2.97$의 값은?', choices: ['$2.03$', '$2.07$', '$2.13$', '$2.97$', '$3.07$'], answer: '2', explanation: '$5.04-2.97=2.07$', domain: 'CALCULATION' },
+    { bookCode: 'E6-2', chapter: '9. 소수의 곱셈', difficulty: 'BASIC', type: 'MULTIPLE_CHOICE', content: '$0.4 \\times 3$의 값은?', choices: ['$0.7$', '$1.2$', '$0.12$', '$4.3$', '$12$'], answer: '2', explanation: '$0.4 \\times 3=1.2$', domain: 'CALCULATION' },
+    { bookCode: 'E6-2', chapter: '9. 소수의 곱셈', difficulty: 'MEDIUM', type: 'SHORT_ANSWER', content: '$0.6 \\times 0.7$을 계산하시오.', choices: null, answer: '0.42', explanation: '$0.6 \\times 0.7=0.42$', domain: 'CALCULATION' },
+    { bookCode: 'E6-2', chapter: '9. 소수의 곱셈', difficulty: 'MEDIUM', type: 'MULTIPLE_CHOICE', content: '$1.5 \\times 0.4$의 값은?', choices: ['$0.6$', '$0.9$', '$1.1$', '$1.9$', '$6.0$'], answer: '1', explanation: '$1.5 \\times 0.4=0.6$', domain: 'CALCULATION' },
+    { bookCode: 'E6-2', chapter: '9. 소수의 곱셈', difficulty: 'HIGH', type: 'MULTIPLE_CHOICE', content: '$2.5 \\times 0.04$의 값은?', choices: ['$0.01$', '$0.1$', '$1.0$', '$0.001$', '$10$'], answer: '2', explanation: '$2.5 \\times 0.04=0.1$', domain: 'CALCULATION' },
+    { bookCode: 'E6-2', chapter: '7. 소수의 뜻과 성질', difficulty: 'HIGH', type: 'MULTIPLE_CHOICE', content: '유한소수로 나타낼 수 있는 분수는?', choices: ['$\\frac{1}{3}$', '$\\frac{1}{6}$', '$\\frac{1}{8}$', '$\\frac{1}{7}$', '$\\frac{1}{9}$'], answer: '3', explanation: '분모의 소인수가 2, 5뿐이면 유한소수', domain: 'REASONING' },
+    { bookCode: 'E6-2', chapter: '9. 소수의 곱셈', difficulty: 'HIGHEST', type: 'SHORT_ANSWER', content: '$0.125 \\times 8$을 계산하시오.', choices: null, answer: '1', explanation: '$0.125=\\frac{1}{8}$이므로 $\\frac{1}{8} \\times 8=1$', domain: 'REASONING' },
+    { bookCode: 'E6-2', chapter: '8. 소수의 덧셈과 뺄셈', difficulty: 'HIGHEST', type: 'MULTIPLE_CHOICE', content: '$0.\\overline{3}$을 분수로 나타내면?', choices: ['$\\frac{1}{3}$', '$\\frac{3}{10}$', '$\\frac{1}{30}$', '$\\frac{3}{100}$', '$\\frac{33}{100}$'], answer: '1', explanation: '$0.333...=\\frac{1}{3}$', domain: 'REASONING' },
+    { bookCode: 'E6-2', chapter: '7. 소수의 뜻과 성질', difficulty: 'BASIC', type: 'MULTIPLE_CHOICE', content: '소수 $2.35$에서 $3$은 어떤 자릿값?', choices: ['일의 자리', '소수 첫째자리', '소수 둘째자리', '십의 자리', '백의 자리'], answer: '2', explanation: '소수점 바로 뒤 = 소수 첫째자리', domain: 'UNDERSTANDING' },
+
     // M1-1 정수와 유리수 (15개)
     { bookCode: 'M1-1', chapter: '1. 정수와 유리수', difficulty: 'BASIC', type: 'MULTIPLE_CHOICE', content: '$-3$의 절댓값은?', choices: ['$-3$', '$3$', '$0$', '$-1$', '$1$'], answer: '2', explanation: '절댓값=원점까지 거리', domain: 'UNDERSTANDING' },
     { bookCode: 'M1-1', chapter: '1. 정수와 유리수', difficulty: 'BASIC', type: 'MULTIPLE_CHOICE', content: '정수가 아닌 것은?', choices: ['$-5$', '$0$', '$\\frac{1}{2}$', '$+3$', '$-1$'], answer: '3', explanation: '$\\frac{1}{2}$은 정수가 아닌 유리수', domain: 'UNDERSTANDING' },
@@ -790,16 +807,30 @@ async function main() {
     { bookCode: 'H1-1', chapter: '2. 인수분해', difficulty: 'BASIC', type: 'MULTIPLE_CHOICE', content: '$2x^2+4x$의 공통인수는?', choices: ['$x$', '$2$', '$2x$', '$4x$', '$x^2$'], answer: '3', explanation: '$2x(x+2)$', domain: 'CALCULATION' },
   ];
 
+  // bookCode → conceptIds 매핑 (과목당 개념 3개, 문제 15개 → 5문제씩 분배)
+  const bookCodeToConceptBase: Record<string, number> = {
+    'E5-1': 0,  'E5-2': 3,  'E6-1': 6,  'E6-2': 9,
+    'M1-1': 12, 'M1-2': 15, 'M2-1': 18, 'H1-1': 21,
+  };
+
   const questionIds: string[] = [];
+  const bookCodeCounter: Record<string, number> = {};
   for (let i = 0; i < questionSeeds.length; i++) {
     const q = questionSeeds[i];
     const qId = uuid();
     questionIds.push(qId);
+
+    // 같은 bookCode 내에서 몇 번째 문제인지 카운트 → 개념 3개에 라운드로빈 분배
+    const withinIdx = bookCodeCounter[q.bookCode] ?? 0;
+    bookCodeCounter[q.bookCode] = withinIdx + 1;
+    const base = bookCodeToConceptBase[q.bookCode];
+    const conceptId = base !== undefined ? conceptIds[base + (withinIdx % 3)] : null;
+
     await prisma.question.create({
       data: {
         id: qId, bookCode: q.bookCode, chapter: q.chapter, questionNum: i + 1,
         difficulty: q.difficulty, type: q.type, content: q.content, choices: q.choices,
-        answer: q.answer, explanation: q.explanation, domain: q.domain, updatedAt: now,
+        answer: q.answer, explanation: q.explanation, domain: q.domain, conceptId, updatedAt: now,
       },
     });
   }
