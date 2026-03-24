@@ -58,8 +58,8 @@ export default function LoginPage() {
       return;
     }
 
-    router.push('/dashboard');
-    router.refresh();
+    // 직접 네비게이션으로 세션 갱신 + 리다이렉트를 한 번에 처리
+    window.location.href = '/dashboard';
   };
 
   const displayName = tenant?.name || 'MathLab';
