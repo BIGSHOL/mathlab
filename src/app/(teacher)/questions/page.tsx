@@ -1,15 +1,40 @@
 'use client';
 
-import { MathLivePopup } from '@/components/math/MathLivePopup';
-import { ImageUploadPopup } from '@/components/math/ImageUploadButton';
-import { DiagramEditorPopup } from '@/components/math/DiagramEditorPopup';
+import dynamic from 'next/dynamic';
+import { Skeleton } from '@/components/ui/Skeleton';
 import {
   QuestionListSidebar,
   QuestionListMain,
   QuestionViewEditModal,
-  QuestionCreateModal,
   useQuestionManager,
 } from '@/components/teacher/questions';
+
+const ModalLoading = () => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+    <div className="bg-white rounded-sm p-8 space-y-4 w-96">
+      <Skeleton className="h-6 w-48" />
+      <Skeleton className="h-32 w-full" />
+      <Skeleton className="h-10 w-full" />
+    </div>
+  </div>
+);
+
+const QuestionCreateModal = dynamic(
+  () => import('@/components/teacher/questions/QuestionCreateModal').then(m => m.QuestionCreateModal),
+  { loading: ModalLoading },
+);
+const MathLivePopup = dynamic(
+  () => import('@/components/math/MathLivePopup').then(m => m.MathLivePopup),
+  { ssr: false, loading: () => null },
+);
+const ImageUploadPopup = dynamic(
+  () => import('@/components/math/ImageUploadButton').then(m => m.ImageUploadPopup),
+  { ssr: false, loading: () => null },
+);
+const DiagramEditorPopup = dynamic(
+  () => import('@/components/math/DiagramEditorPopup').then(m => m.DiagramEditorPopup),
+  { ssr: false, loading: () => null },
+);
 
 export default function QuestionsPage() {
   const mgr = useQuestionManager();

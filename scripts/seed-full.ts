@@ -48,9 +48,7 @@ function count(key: string, n = 1) {
 }
 
 // ─── 비밀번호 캐시 (bcrypt 느려서) ──────────────────────
-const PW_ADMIN = hash('admin1234');
-const PW_PASS = hash('pass1234');
-const PW_STUDENT = hash('1234');
+const PW = hash('1234');
 
 // ─── 메인 ───────────────────────────────────────────────
 async function main() {
@@ -184,7 +182,7 @@ async function main() {
   const superAdminId = uuid();
   await prisma.user.create({
     data: {
-      id: superAdminId, username: 'superadmin', passwordHash: PW_ADMIN,
+      id: superAdminId, username: 'superadmin01', passwordHash: PW,
       name: '슈퍼관리자', role: 'SUPER_ADMIN', tenantId: T1, updatedAt: now,
     },
   });
@@ -192,16 +190,16 @@ async function main() {
   // --- OWNER (테넌트별 1명) ---
   const ownerIds: Record<string, string> = {};
   const ownerData = [
-    { tid: T1, username: 'admin', name: '김원장' },
-    { tid: T2, username: 'admin_gn', name: '이원장' },
-    { tid: T3, username: 'admin_sc', name: '박원장' },
+    { tid: T1, username: 'owner01', name: '김원장' },
+    { tid: T2, username: 'owner02', name: '이원장' },
+    { tid: T3, username: 'owner03', name: '박원장' },
   ];
   for (const o of ownerData) {
     const id = uuid();
     ownerIds[o.tid] = id;
     await prisma.user.create({
       data: {
-        id, username: o.username, passwordHash: PW_ADMIN,
+        id, username: o.username, passwordHash: PW,
         name: o.name, role: 'OWNER', tenantId: o.tid, updatedAt: now,
       },
     });
@@ -212,14 +210,14 @@ async function main() {
   const managerData = [
     { tid: T1, username: 'manager01', name: '이팀장' },
     { tid: T1, username: 'manager02', name: '한팀장' },
-    { tid: T2, username: 'manager_gn', name: '정팀장' },
+    { tid: T2, username: 'manager03', name: '정팀장' },
   ];
   for (const m of managerData) {
     const id = uuid();
     managerIds.push(id);
     await prisma.user.create({
       data: {
-        id, username: m.username, passwordHash: PW_PASS,
+        id, username: m.username, passwordHash: PW,
         name: m.name, role: 'MANAGER', tenantId: m.tid, updatedAt: now,
       },
     });
@@ -231,16 +229,16 @@ async function main() {
     { tid: T1, username: 'teacher01', name: '김선생' },
     { tid: T1, username: 'teacher02', name: '박선생' },
     { tid: T1, username: 'teacher03', name: '최선생' },
-    { tid: T2, username: 'teacher_gn1', name: '강교사' },
-    { tid: T2, username: 'teacher_gn2', name: '윤교사' },
-    { tid: T3, username: 'teacher_sc1', name: '서교사' },
+    { tid: T2, username: 'teacher04', name: '강교사' },
+    { tid: T2, username: 'teacher05', name: '윤교사' },
+    { tid: T3, username: 'teacher06', name: '서교사' },
   ];
   for (const t of teacherData) {
     const id = uuid();
     teacherIds.push(id);
     await prisma.user.create({
       data: {
-        id, username: t.username, passwordHash: PW_PASS,
+        id, username: t.username, passwordHash: PW,
         name: t.name, role: 'TEACHER', tenantId: t.tid, updatedAt: now,
       },
     });
@@ -308,7 +306,7 @@ async function main() {
       data: {
         id,
         username: `student${String(i + 1).padStart(2, '0')}`,
-        passwordHash: PW_STUDENT,
+        passwordHash: PW,
         name: m.name,
         role: 'STUDENT',
         grade: m.grade,
@@ -1652,14 +1650,12 @@ async function main() {
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   console.log(`\n  총: ${total}개 레코드`);
 
-  console.log('\n── 로그인 정보 ──');
-  console.log('  SUPER_ADMIN: superadmin / admin1234');
-  console.log('  OWNER (본원): admin / admin1234');
-  console.log('  OWNER (강남): admin_gn / admin1234');
-  console.log('  OWNER (서초): admin_sc / admin1234');
-  console.log('  MANAGER: manager01, manager02, manager_gn / pass1234');
-  console.log('  TEACHER: teacher01~03, teacher_gn1~2, teacher_sc1 / pass1234');
-  console.log('  STUDENT: student01~28 / 1234\n');
+  console.log('\n── 로그인 정보 (비밀번호 전부 1234) ──');
+  console.log('  SUPER_ADMIN: superadmin01');
+  console.log('  OWNER: owner01 (본원), owner02 (강남), owner03 (서초)');
+  console.log('  MANAGER: manager01, manager02, manager03');
+  console.log('  TEACHER: teacher01~06');
+  console.log('  STUDENT: student01~28\n');
 }
 
 main()

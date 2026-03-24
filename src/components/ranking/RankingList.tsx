@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Star, Flame, ChevronDown } from 'lucide-react';
+import { Star, Flame, ChevronDown, Gem } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -9,7 +9,7 @@ import { MotionStagger, MotionItem } from '@/components/ui/MotionStagger';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { RankChangeIndicator } from './RankChangeIndicator';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import type { RankingEntry } from './types';
+import type { RankingEntry, RankingCategory } from './types';
 
 const PAGE_SIZE = 10;
 
@@ -17,9 +17,10 @@ interface RankingListProps {
   rankings: RankingEntry[];
   startRank: number;
   loading?: boolean;
+  category?: RankingCategory;
 }
 
-export function RankingList({ rankings, startRank, loading }: RankingListProps) {
+export function RankingList({ rankings, startRank, loading, category = 'xp' }: RankingListProps) {
   const [showCount, setShowCount] = useState(PAGE_SIZE);
 
   if (loading) {
@@ -102,12 +103,19 @@ export function RankingList({ rankings, startRank, loading }: RankingListProps) 
                   </div>
                 </div>
 
-                {/* XP */}
+                {/* 점수 (XP 또는 보석) */}
                 <div className="text-right shrink-0">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-3.5 h-3.5 text-amber-400" />
-                    <span className="font-bold text-text-primary text-sm">{student.totalXp.toLocaleString()}</span>
-                  </div>
+                  {category === 'gem' ? (
+                    <div className="flex items-center gap-1">
+                      <Gem className="w-3.5 h-3.5 text-purple-500" />
+                      <span className="font-bold text-text-primary text-sm">{student.completedGems ?? 0}개</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <Star className="w-3.5 h-3.5 text-amber-400" />
+                      <span className="font-bold text-text-primary text-sm">{student.totalXp.toLocaleString()}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </MotionItem>

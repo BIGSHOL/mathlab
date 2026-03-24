@@ -10,6 +10,10 @@ export interface RankingEntry {
   isMe: boolean;
   isNew: boolean;
   badgeIcon: string | null;
+  /** 보석 랭킹용: 완성 보석 수 */
+  completedGems?: number;
 }
 
 export type RankingPeriod = 'week' | 'month' | 'all';
+export type RankingCategory = 'xp' | 'gem';
+export type RankingScope = 'tenant' | 'all';

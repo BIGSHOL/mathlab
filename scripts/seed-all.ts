@@ -149,7 +149,7 @@ async function main() {
   // SUPER_ADMIN
   await prisma.user.create({
     data: {
-      id: superAdminId, username: 'superadmin', passwordHash: hash('admin1234'),
+      id: superAdminId, username: 'superadmin01', passwordHash: hash('1234'),
       name: '슈퍼관리자', role: 'SUPER_ADMIN', tenantId, updatedAt: now,
     },
   });
@@ -157,7 +157,7 @@ async function main() {
   // OWNER
   await prisma.user.create({
     data: {
-      id: ownerId, username: 'admin', passwordHash: hash('admin1234'),
+      id: ownerId, username: 'owner01', passwordHash: hash('1234'),
       name: '원장님', role: 'OWNER', tenantId, updatedAt: now,
     },
   });
@@ -165,7 +165,7 @@ async function main() {
   // MANAGER
   await prisma.user.create({
     data: {
-      id: managerId, username: 'manager01', passwordHash: hash('pass1234'),
+      id: managerId, username: 'manager01', passwordHash: hash('1234'),
       name: '이팀장', role: 'MANAGER', tenantId, updatedAt: now,
     },
   });
@@ -177,7 +177,7 @@ async function main() {
       data: {
         id: teacherIds[i],
         username: `teacher0${i + 1}`,
-        passwordHash: hash('pass1234'),
+        passwordHash: hash('1234'),
         name: teacherNames[i],
         role: 'TEACHER',
         tenantId,

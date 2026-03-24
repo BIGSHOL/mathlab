@@ -15,6 +15,9 @@ import Link from 'next/link';
 import { BadgeModalSection } from './BadgeModalSection';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { PageContainer } from '@/components/ui/PageContainer';
+import { GemCollectionSection } from './GemCollectionSection';
+import { partToGemVariant, calculateGemStage } from '@/lib/utils/gem';
+import type { GemVariant } from '@/lib/utils/gem';
 
 function timeAgo(date: Date) {
   const diff = Date.now() - date.getTime();
@@ -65,6 +68,45 @@ export default async function ProfilePage({
   const totalCompleted = await prisma.learningProgress.count({
     where: { userId: user.id, completed: true },
   });
+
+  // ── 보석 컬렉션 데이터 ──
+  const gemProgress = await prisma.learningProgress.findMany({
+    where: { userId: user.id },
+    include: { concept: { select: { id: true, part: true } } },
+  });
+
+  // conceptId별 그룹핑 → 보석 단계 계산
+  const conceptMap = new Map<string, { part: string | null; progress: typeof gemProgress }>();
+  for (const p of gemProgress) {
+    if (!conceptMap.has(p.conceptId)) {
+      conceptMap.set(p.conceptId, { part: p.concept.part, progress: [] });
+    }
+    conceptMap.get(p.conceptId)!.progress.push(p);
+  }
+
+  // variant별 통계
+  const gemStatsMap = new Map<GemVariant, { total: number; completed: number; maxStage: number }>();
+  for (const [, { part, progress }] of conceptMap) {
+    const variant = partToGemVariant(part);
+    if (!gemStatsMap.has(variant)) {
+      gemStatsMap.set(variant, { total: 0, completed: 0, maxStage: 0 });
+    }
+    const stat = gemStatsMap.get(variant)!;
+    const stage = calculateGemStage(progress.map((p) => ({ stage: p.stage, completedAt: p.completedAt })));
+    stat.total++;
+    if (stage >= 4) stat.completed++;
+    stat.maxStage = Math.max(stat.maxStage, stage);
+  }
+
+  const gemStats = (['ruby', 'sapphire', 'emerald', 'amethyst', 'topaz', 'quartz'] as GemVariant[]).map((v) => ({
+    variant: v,
+    total: gemStatsMap.get(v)?.total ?? 0,
+    completed: gemStatsMap.get(v)?.completed ?? 0,
+    maxStage: gemStatsMap.get(v)?.maxStage ?? 0,
+  }));
+
+  const gemTotalCompleted = gemStats.reduce((s, g) => s + g.completed, 0);
+  const gemTotalInProgress = gemStats.reduce((s, g) => s + (g.total - g.completed), 0);
 
   const dbUser = await prisma.user.findUnique({ where: { id: user.id }, select: { grade: true, tenantId: true } });
   const tenantId = dbUser?.tenantId || null;
@@ -464,6 +506,9 @@ export default async function ProfilePage({
           </div>
         </Card>
       </div>
+
+      {/* ──── 보석 컬렉션 ──── */}
+      <GemCollectionSection gems={gemStats} totalCompleted={gemTotalCompleted} totalInProgress={gemTotalInProgress} />
 
       {/* ──── 2×2 그리드 (행 단위 정렬) ──── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

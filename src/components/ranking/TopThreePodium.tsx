@@ -1,13 +1,14 @@
 'use client';
 
 import Image from 'next/image';
-import { Crown, Medal, Star, Flame } from 'lucide-react';
+import { Crown, Medal, Star, Flame, Gem } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { RankChangeIndicator } from './RankChangeIndicator';
-import type { RankingEntry } from './types';
+import type { RankingEntry, RankingCategory } from './types';
 
 interface TopThreePodiumProps {
   top3: RankingEntry[];
+  category?: RankingCategory;
 }
 
 // 화면 배치 순서: 2위 — 1위 — 3위
@@ -77,7 +78,7 @@ const entranceVariants = {
   }),
 };
 
-export function TopThreePodium({ top3 }: TopThreePodiumProps) {
+export function TopThreePodium({ top3, category = 'xp' }: TopThreePodiumProps) {
   if (top3.length < 3) return null;
 
   return (
@@ -119,8 +120,17 @@ export function TopThreePodium({ top3 }: TopThreePodiumProps) {
               </p>
               <div className="flex items-center justify-center gap-1.5 mt-0.5">
                 <div className="flex items-center gap-0.5">
-                  <Star className="w-3 h-3 text-amber-400" />
-                  <span className="text-[11px] font-bold text-text-primary">{student.totalXp.toLocaleString()}</span>
+                  {category === 'gem' ? (
+                    <>
+                      <Gem className="w-3 h-3 text-purple-500" />
+                      <span className="text-[11px] font-bold text-text-primary">{student.completedGems ?? 0}개</span>
+                    </>
+                  ) : (
+                    <>
+                      <Star className="w-3 h-3 text-amber-400" />
+                      <span className="text-[11px] font-bold text-text-primary">{student.totalXp.toLocaleString()}</span>
+                    </>
+                  )}
                 </div>
                 {student.currentStreak >= 3 && (
                   <div className="flex items-center gap-0.5">

@@ -5,13 +5,15 @@ import { Card } from '@/components/ui/Card';
 import { MotionStagger, MotionItem } from '@/components/ui/MotionStagger';
 import { RankChangeIndicator } from './RankChangeIndicator';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import type { RankingEntry, RankingPeriod } from './types';
+import type { RankingEntry, RankingPeriod, RankingCategory } from './types';
 
 interface RankingInsightsProps {
   hotRisers: RankingEntry[];
   bigFallers: RankingEntry[];
   totalStudents: number;
   period: RankingPeriod;
+  category?: RankingCategory;
+  rankings?: RankingEntry[];
 }
 
 const periodLabels: Record<RankingPeriod, string> = {
@@ -20,9 +22,12 @@ const periodLabels: Record<RankingPeriod, string> = {
   all: '전체',
 };
 
-export function RankingInsights({ hotRisers, bigFallers, totalStudents, period }: RankingInsightsProps) {
+export function RankingInsights({ hotRisers, bigFallers, totalStudents, period, category = 'xp', rankings = [] }: RankingInsightsProps) {
   const avgWeeklyXp = totalStudents > 0
     ? Math.round(hotRisers.reduce((sum, r) => sum + r.weeklyXp, 0) / Math.max(hotRisers.length, 1))
+    : 0;
+  const avgGems = totalStudents > 0
+    ? Math.round(rankings.reduce((sum, r) => sum + (r.completedGems ?? 0), 0) / totalStudents)
     : 0;
 
   return (
@@ -83,7 +88,9 @@ export function RankingInsights({ hotRisers, bigFallers, totalStudents, period }
       <Card padding="md" className="rounded-xl">
         <div className="flex items-center gap-2 mb-3">
           <Users className="w-4 h-4 text-primary" />
-          <h3 className="font-bold text-text-primary text-sm">{periodLabels[period]} 통계</h3>
+          <h3 className="font-bold text-text-primary text-sm">
+            {category === 'gem' ? '보석 통계' : `${periodLabels[period]} 통계`}
+          </h3>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-slate-50 rounded-lg p-3 text-center">
@@ -91,11 +98,15 @@ export function RankingInsights({ hotRisers, bigFallers, totalStudents, period }
             <p className="text-[10px] text-text-secondary font-medium">참여 학생</p>
           </div>
           <div className="bg-slate-50 rounded-lg p-3 text-center">
-            <p className="text-lg font-extrabold text-text-primary">{avgWeeklyXp}</p>
-            <p className="text-[10px] text-text-secondary font-medium">평균 XP</p>
+            <p className="text-lg font-extrabold text-text-primary">
+              {category === 'gem' ? avgGems : avgWeeklyXp}
+            </p>
+            <p className="text-[10px] text-text-secondary font-medium">
+              {category === 'gem' ? '평균 보석' : '평균 XP'}
+            </p>
           </div>
         </div>
-        {hotRisers.length > 0 && (
+        {category === 'xp' && hotRisers.length > 0 && (
           <div className="mt-3 flex items-center gap-2 bg-amber-50 rounded-lg p-2.5">
             <Flame className="w-4 h-4 text-orange-500 shrink-0" />
             <div className="min-w-0">

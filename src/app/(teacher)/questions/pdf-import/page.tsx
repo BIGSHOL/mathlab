@@ -6,15 +6,38 @@ import {
   AlertCircle,
   X,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { Skeleton } from '@/components/ui/Skeleton';
 import {
-  PdfUploadStep,
-  PageSelectStep,
-  ExtractionPreviewStep,
-  SaveStep,
   usePdfImport,
   STEPS,
 } from '@/components/teacher/pdf-import';
 import { PageHeader } from '@/components/ui/PageHeader';
+
+const PdfStepLoading = () => (
+  <div className="space-y-4">
+    <Skeleton className="h-10 w-full" />
+    <Skeleton className="h-64 w-full" />
+    <Skeleton className="h-10 w-48" />
+  </div>
+);
+
+const PdfUploadStep = dynamic(
+  () => import('@/components/teacher/pdf-import/PdfUploadStep').then(m => m.PdfUploadStep),
+  { ssr: false, loading: PdfStepLoading },
+);
+const PageSelectStep = dynamic(
+  () => import('@/components/teacher/pdf-import/PageSelectStep').then(m => m.PageSelectStep),
+  { ssr: false, loading: PdfStepLoading },
+);
+const ExtractionPreviewStep = dynamic(
+  () => import('@/components/teacher/pdf-import/ExtractionPreviewStep').then(m => m.ExtractionPreviewStep),
+  { ssr: false, loading: PdfStepLoading },
+);
+const SaveStep = dynamic(
+  () => import('@/components/teacher/pdf-import/SaveStep').then(m => m.SaveStep),
+  { ssr: false, loading: PdfStepLoading },
+);
 
 export default function PdfImportPage() {
   const state = usePdfImport();
