@@ -19,6 +19,7 @@ import {
   Lightbulb,
 } from 'lucide-react';
 import { MathSpinner } from '@/components/ui/MathSpinner';
+import { PageContainer } from '@/components/ui/PageContainer';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { MathRenderer } from '@/components/math/MathRenderer';
@@ -151,7 +152,7 @@ export default function TestResultPage() {
 
   if (loading) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <PageContainer maxWidth="lg">
         {/* 헤더 (뒤로가기 + 제목) */}
         <div className="flex items-center gap-3 mb-6">
           <Skeleton className="w-5 h-5 rounded" />
@@ -207,7 +208,7 @@ export default function TestResultPage() {
             </div>
           ))}
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
@@ -238,7 +239,7 @@ export default function TestResultPage() {
     : attempt.answers;
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
+    <PageContainer maxWidth="lg">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Link href="/my-tests" className="text-text-secondary hover:text-text-primary">
@@ -490,6 +491,6 @@ export default function TestResultPage() {
           </Link>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 }

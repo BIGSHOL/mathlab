@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingEmptyState } from '@/components/ui/LoadingEmptyState';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { PageContainer } from '@/components/ui/PageContainer';
 
 interface QuizSessionItem {
   id: string;
@@ -90,7 +91,7 @@ export default function QuizPage() {
       loading={loading}
       empty={false}
     >
-      <div className="p-5 max-w-4xl mx-auto">
+      <PageContainer maxWidth="lg">
         <PageHeader
           title="퀴즈 배틀"
           icon={<Zap className="w-6 h-6 text-yellow-500" />}
@@ -196,7 +197,7 @@ export default function QuizPage() {
             ))}
           </div>
         </LoadingEmptyState>
-      </div>
+      </PageContainer>
     </LoadingEmptyState>
   );
 }

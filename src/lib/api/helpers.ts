@@ -6,7 +6,7 @@ import { getTenantFilter } from './tenant-scope';
 
 // 순환 참조 방지를 위해 역할 레벨 인라인 정의
 const ROLE_LEVEL: Record<string, number> = {
-  STUDENT: 0, TEACHER: 1, OWNER: 3, SUPER_ADMIN: 4,
+  STUDENT: 0, TEACHER: 1, MANAGER: 2, OWNER: 3, SUPER_ADMIN: 4,
 };
 function hasRoleLocal(user: { role: string }, minRole: string): boolean {
   return (ROLE_LEVEL[user.role] ?? 0) >= (ROLE_LEVEL[minRole] ?? 99);
@@ -43,8 +43,11 @@ export function clamp(value: number, min: number, max: number): number {
 export async function getStudentScope(user: AuthUser): Promise<Record<string, unknown>> {
   const tenantWhere = getTenantFilter(user);
 
-  // SUPER_ADMIN: 전체 조회
-  if (hasRoleLocal(user, 'SUPER_ADMIN')) return { role: 'STUDENT', deletedAt: null };
+  // SUPER_ADMIN: 지점장 뷰면 해당 지점, 아니면 전체
+  if (hasRoleLocal(user, 'SUPER_ADMIN')) {
+    if (user.viewingTenantId) return { role: 'STUDENT', deletedAt: null, ...tenantWhere };
+    return { role: 'STUDENT', deletedAt: null };
+  }
 
   // OWNER: 자기 테넌트 전체
   if (hasRoleLocal(user, 'OWNER')) return { role: 'STUDENT', deletedAt: null, ...tenantWhere };
@@ -69,8 +72,8 @@ export async function getStudentScope(user: AuthUser): Promise<Record<string, un
  * getStudentScope 결과와 동일한 로직 — 해당 학생이 스코프 내인지 검증.
  */
 export async function canAccessStudent(user: AuthUser, studentId: string): Promise<boolean> {
-  // SUPER_ADMIN: 전체 접근
-  if (hasRoleLocal(user, 'SUPER_ADMIN')) return true;
+  // SUPER_ADMIN (지점장 뷰 아님): 전체 접근
+  if (hasRoleLocal(user, 'SUPER_ADMIN') && !user.viewingTenantId) return true;
 
   const tenantWhere = getTenantFilter(user);
 
@@ -97,8 +100,8 @@ export async function canAccessStudent(user: AuthUser, studentId: string): Promi
  * 스코프 내 학생 ID 목록 반환. dashboard 등 전체 집계 API에서 사용.
  */
 export async function getScopedStudentIds(user: AuthUser): Promise<string[] | null> {
-  // SUPER_ADMIN: null = 전체 (필터 없음)
-  if (hasRoleLocal(user, 'SUPER_ADMIN')) return null;
+  // SUPER_ADMIN (지점장 뷰 아님): null = 전체 (필터 없음)
+  if (hasRoleLocal(user, 'SUPER_ADMIN') && !user.viewingTenantId) return null;
 
   const scope = await getStudentScope(user);
   const students = await prisma.user.findMany({

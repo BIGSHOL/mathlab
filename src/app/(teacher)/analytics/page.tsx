@@ -20,8 +20,10 @@ import {
 } from 'lucide-react';
 import { useSpeedAnalytics } from '@/hooks/useSpeed';
 import { Card } from '@/components/ui/Card';
+import { PageContainer } from '@/components/ui/PageContainer';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import AchievementRadar from '@/components/charts/AchievementRadar';
+import { WEEKDAYS, ACTIVITY_COLORS, activityLevel } from '@/lib/utils/activity';
 
 // --- Types ---
 interface Student {
@@ -39,20 +41,6 @@ interface DayActivity {
 const DIFFICULTY_KR: Record<string, string> = {
   BASIC: '하', MEDIUM: '중', HIGH: '상', HIGHEST: '최상',
 };
-
-function totalToLevel(total: number): 0 | 1 | 2 | 3 | 4 {
-  if (total === 0) return 0;
-  if (total === 1) return 1;
-  if (total <= 3) return 2;
-  if (total <= 6) return 3;
-  return 4;
-}
-
-const ACTIVITY_COLORS = [
-  'bg-slate-100', 'bg-primary/20', 'bg-primary/40', 'bg-primary/70', 'bg-primary',
-] as const;
-
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
 export default function AnalyticsPage() {
   const { user: currentUser } = useAuth();
@@ -132,7 +120,7 @@ export default function AnalyticsPage() {
         for (let d = 1; d <= daysInMonth; d++) {
           const key = `${currentYear}-${String(currentMonthNum).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
           const total = cal[key]?.total ?? 0;
-          days.push({ day: d, level: totalToLevel(total) });
+          days.push({ day: d, level: activityLevel(total) });
         }
         setCalendarData(days);
       } else {
@@ -210,10 +198,10 @@ export default function AnalyticsPage() {
   const totalTimeRemainMin = totalTimeMin % 60;
 
   return (
-    <div className="flex-1 flex flex-col items-center py-5 px-4 sm:px-6 lg:px-5 gap-4">
+    <PageContainer maxWidth="lg" className="flex flex-col gap-4">
       {/* Admin: System summary */}
       {isOwner && students.length > 0 && (
-        <div className="max-w-[1024px] w-full grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Card padding="md" className="text-center">
             <p className="text-2xl font-black text-text-primary">{students.length}</p>
             <p className="text-sm text-text-secondary font-medium mt-1">전체 학생 수</p>
@@ -241,7 +229,7 @@ export default function AnalyticsPage() {
         </div>
       )}
 
-      <div className="flex flex-col max-w-[1024px] flex-1 w-full bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden print:shadow-none print:border-none print:max-w-none">
+      <div className="flex flex-col flex-1 w-full bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden print:shadow-none print:border-none print:max-w-none">
         {/* Report Header */}
         <div className="p-5 border-b border-slate-200 flex flex-col md:flex-row md:items-end justify-between gap-6 bg-slate-50 print:bg-white print:border-b-2 print:border-slate-300 print:p-4">
           <div className="flex flex-col gap-2">
@@ -275,7 +263,7 @@ export default function AnalyticsPage() {
               <span className="hidden print:inline text-text-primary font-bold text-lg">{student?.name ?? ''}</span>
               <div className="relative print:hidden">
                 <select
-                  className="appearance-none bg-white border border-slate-200 rounded-lg px-4 py-2 pr-8 text-text-primary font-bold text-lg focus:ring-2 focus:ring-primary/40 focus:border-primary cursor-pointer"
+                  className="appearance-none bg-white border border-slate-200 rounded-sm px-4 py-2 pr-8 text-text-primary font-bold text-lg focus:ring-2 focus:ring-primary/40 focus:border-primary cursor-pointer"
                   value={student?.id ?? ''}
                   onChange={(e) => {
                     const s = students.find((s) => s.id === e.target.value);
@@ -551,7 +539,7 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="rounded-sm border border-emerald-200 bg-emerald-50/50 p-5 flex flex-col justify-center">
                 <div className="flex items-start gap-3">
-                  <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
+                  <div className="p-2 bg-emerald-100 rounded-sm text-emerald-600">
                     <Star className="w-5 h-5" />
                   </div>
                   <div>
@@ -571,7 +559,7 @@ export default function AnalyticsPage() {
               </div>
               <div className="rounded-sm border border-amber-200 bg-amber-50/50 p-5 flex flex-col justify-center">
                 <div className="flex items-start gap-3">
-                  <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
+                  <div className="p-2 bg-amber-100 rounded-sm text-amber-600">
                     <MoveRight className="w-5 h-5" />
                   </div>
                   <div>
@@ -654,7 +642,7 @@ export default function AnalyticsPage() {
                 <MessageSquare className="w-5 h-5 text-primary" /> 담당 교사 종합 의견
               </h3>
               <textarea
-                className="w-full text-sm text-text-secondary leading-relaxed bg-white border border-slate-200 rounded-lg p-4 min-h-[120px] focus:ring-2 focus:ring-primary/40 focus:border-primary resize-y"
+                className="w-full text-sm text-text-secondary leading-relaxed bg-white border border-slate-200 rounded-sm p-4 min-h-[120px] focus:ring-2 focus:ring-primary/40 focus:border-primary resize-y"
                 placeholder="학생에 대한 종합 의견을 작성해주세요. 이 의견은 학부모 리포트에 포함됩니다."
                 value={commentText}
                 onChange={handleCommentChange}
@@ -663,7 +651,7 @@ export default function AnalyticsPage() {
           </section>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }
 

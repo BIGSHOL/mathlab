@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth, requireTeacher, isResponse, badRequest, getTenantFilter } from '@/lib/api';
+import { requireAuth, requireTeacher, isResponse, badRequest, getTenantFilter, requireLicense } from '@/lib/api';
 import { parseStringIds } from '@/lib/utils/question-order';
 
 export async function GET(request: NextRequest) {
   const currentUser = await requireAuth();
   if (isResponse(currentUser)) return currentUser;
+  const licenseCheck = await requireLicense(currentUser, 'test');
+  if (licenseCheck) return licenseCheck;
 
   const { searchParams } = new URL(request.url);
   const grade = searchParams.get('grade');

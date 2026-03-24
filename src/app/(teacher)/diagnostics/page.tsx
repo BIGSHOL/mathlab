@@ -12,6 +12,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { LoadingEmptyState } from '@/components/ui/LoadingEmptyState';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { PageContainer } from '@/components/ui/PageContainer';
 
 interface DiagnosticTest {
   id: string;
@@ -45,7 +46,7 @@ export default function DiagnosticsPage() {
   }, []);
 
   return (
-    <div className="p-6 md:p-10 max-w-[1200px] mx-auto w-full flex flex-col gap-6">
+    <PageContainer maxWidth="xl" className="flex flex-col gap-6">
       <PageHeader
         title="진단평가 관리"
         subtitle="입학/단원/레벨 진단평가를 생성하고 학생 수준을 파악합니다."
@@ -103,6 +104,6 @@ export default function DiagnosticsPage() {
           ))}
         </div>
       </LoadingEmptyState>
-    </div>
+    </PageContainer>
   );
 }

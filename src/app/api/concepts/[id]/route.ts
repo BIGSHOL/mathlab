@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, notFound, validateBody } from '@/lib/api';
+import { requireSuperAdmin, isResponse, notFound, validateBody } from '@/lib/api';
 import { updateConceptSchema } from '@/lib/schemas/concept';
 
 /** Resolve concept by conceptCode or cuid id (single query) */
@@ -54,13 +54,13 @@ export async function GET(
   });
 }
 
-// PATCH /api/concepts/:id
+// PATCH /api/concepts/:id — SUPER_ADMIN 전용
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const user = await requireTeacher();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
   const conceptId = await resolveConceptId(id);
@@ -108,13 +108,13 @@ export async function PATCH(
   });
 }
 
-// DELETE /api/concepts/:id
+// DELETE /api/concepts/:id — SUPER_ADMIN 전용
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const user = await requireTeacher();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
   const conceptId = await resolveConceptId(id);

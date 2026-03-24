@@ -62,6 +62,7 @@ export default function QuestionsPage() {
         deleteQuestion={mgr.deleteQuestion}
         openCreateModal={mgr.openCreateModal}
         isOwner={mgr.isOwner}
+        canEdit={mgr.canEdit}
       />
 
       {/* ===== View / Edit Modal ===== */}
@@ -89,12 +90,13 @@ export default function QuestionsPage() {
           openDiagramEditor={mgr.openDiagramEditor}
           editDiagram={mgr.editDiagram}
           removeDiagram={mgr.removeDiagram}
-          isOwner={mgr.isOwner}
+          _isOwner={mgr.isOwner}
+          canEdit={mgr.canEdit}
         />
       )}
 
-      {/* ===== Create Modal (어드민 전용) ===== */}
-      {mgr.isOwner && mgr.isCreateMode && (
+      {/* ===== Create Modal (TEACHER 이상) ===== */}
+      {mgr.canEdit && mgr.isCreateMode && (
         <QuestionCreateModal
           createForm={mgr.createForm}
           setCreateForm={mgr.setCreateForm}

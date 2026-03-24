@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAdmin, isResponse, getTenantFilter } from '@/lib/api';
+import { requireOwner, isResponse, getTenantFilter } from '@/lib/api';
 
 export async function GET() {
-  const user = await requireAdmin();
+  const user = await requireOwner();
   if (isResponse(user)) return user;
 
   const tenantWhere = getTenantFilter(user);

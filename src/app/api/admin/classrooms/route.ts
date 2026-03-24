@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAdmin, isResponse, badRequest, getTenantFilter } from '@/lib/api';
+import { requireOwner, isResponse, badRequest, getTenantFilter } from '@/lib/api';
 
 /** GET /api/admin/classrooms — 반 목록 (테넌트 스코핑) */
 export async function GET() {
-  const user = await requireAdmin();
+  const user = await requireOwner();
   if (isResponse(user)) return user;
 
   const tenantFilter = getTenantFilter(user);
@@ -20,7 +20,7 @@ export async function GET() {
 
 /** POST /api/admin/classrooms — 반 생성 (테넌트 자동 연결) */
 export async function POST(request: NextRequest) {
-  const user = await requireAdmin();
+  const user = await requireOwner();
   if (isResponse(user)) return user;
 
   const body = await request.json();

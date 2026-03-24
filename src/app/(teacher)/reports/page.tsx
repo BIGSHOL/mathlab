@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { toast } from '@/components/ui/Toast';
 import {
@@ -26,6 +27,11 @@ import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Button } from '@/components/ui/Button';
 import { LoadingEmptyState } from '@/components/ui/LoadingEmptyState';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import {
+  WEEKDAYS, ACTIVITY_COLORS, activityLevel,
+  accuracyTextColor, accuracyBadgeColor, accuracyBarColor,
+  formatGrade, formatGradeShort, getInitial,
+} from '@/lib/utils/activity';
 
 // ── Types ──
 
@@ -93,63 +99,17 @@ const ARITHMETIC_LABELS: Record<string, string> = {
   dec_add: '소수 덧셈', dec_sub: '소수 뺄셈',
 };
 
-// ── Helpers ──
-
-function formatGrade(grade: number | null): string {
-  if (!grade) return '';
-  if (grade <= 6) return `초등 ${grade}학년`;
-  return `중등 ${grade - 6}학년`;
-}
-
-function formatGradeShort(grade: number | null): string {
-  if (!grade) return '';
-  if (grade <= 6) return `초${grade}`;
-  return `중${grade - 6}`;
-}
-
-function getInitial(name: string): string {
-  return name.charAt(0);
-}
-
-function accuracyColor(acc: number): string {
-  if (acc >= 80) return 'text-emerald-600';
-  if (acc >= 60) return 'text-amber-600';
-  return 'text-red-600';
-}
-
-function accuracyBg(acc: number): string {
-  if (acc >= 80) return 'bg-emerald-100 text-emerald-700';
-  if (acc >= 60) return 'bg-amber-100 text-amber-700';
-  return 'bg-red-100 text-red-700';
-}
-
-function accuracyBarColor(acc: number): string {
-  if (acc >= 80) return 'bg-emerald-400';
-  if (acc >= 60) return 'bg-amber-400';
-  return 'bg-red-400';
-}
-
-// ── Activity Heatmap Helpers ──
-
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
-
-function activityLevel(total: number): 0 | 1 | 2 | 3 | 4 {
-  if (total === 0) return 0;
-  if (total === 1) return 1;
-  if (total <= 3) return 2;
-  if (total <= 6) return 3;
-  return 4;
-}
-
-const ACTIVITY_COLORS = [
-  'bg-slate-100', 'bg-primary/20', 'bg-primary/40', 'bg-primary/70', 'bg-primary',
-] as const;
+// ── Helpers (accuracyColor, accuracyBg aliased from shared utils) ──
+const accuracyColor = accuracyTextColor;
+const accuracyBg = accuracyBadgeColor;
 
 // ═══════════════════════════════════════════
 // ── Main Component ──
 // ═══════════════════════════════════════════
 
 export default function ReportsPage() {
+  const { user: currentUser } = useAuth();
+  const isOwner = hasRoleClient(currentUser?.role, 'OWNER');
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudentId, setSelectedStudentId] = useState('');
   const [reportType, setReportType] = useState('WEEKLY');
@@ -230,6 +190,18 @@ export default function ReportsPage() {
   const filteredStudents = students.filter((s) =>
     s.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  if (!isOwner) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <FileText className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+          <p className="text-sm font-semibold text-text-secondary">접근 권한이 없습니다</p>
+          <p className="text-sm text-text-secondary mt-1">리포트는 원장(OWNER) 이상만 이용할 수 있습니다</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex min-h-0 w-full overflow-hidden">
@@ -409,7 +381,7 @@ export default function ReportsPage() {
                     <Skeleton className="h-6 w-48 mx-auto" />
                     <Skeleton className="h-4 w-64 mx-auto" />
                     <div className="space-y-2 mt-4">
-                      <Skeleton className="h-32 w-full rounded-lg" />
+                      <Skeleton className="h-32 w-full rounded-sm" />
                       <Skeleton className="h-4 w-3/4 mx-auto" />
                     </div>
                     <p className="text-sm text-text-secondary animate-pulse">리포트를 생성하고 있습니다...</p>

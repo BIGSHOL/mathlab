@@ -1,17 +1,19 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAdmin, isResponse, hasRole } from '@/lib/api';
+import { requireOwner, isResponse } from '@/lib/api';
 import { seedFeatureFlags } from '@/lib/utils/features';
 
 /** GET /api/admin/features — Feature Flag 목록 (지점별 오버라이드 병합) */
 export async function GET() {
-  const user = await requireAdmin();
+  const user = await requireOwner();
   if (isResponse(user)) return user;
 
   await seedFeatureFlags();
 
-  // SUPER_ADMIN: 글로벌 플래그만 표시
-  if (hasRole(user, 'SUPER_ADMIN') || !user.tenantId) {
+  const effectiveTenantId = user.tenantId || user.viewingTenantId;
+
+  // SUPER_ADMIN (지점장 뷰 아닐 때): 글로벌 플래그만 표시
+  if (!effectiveTenantId) {
     const flags = await prisma.featureFlag.findMany({
       where: { tenantId: null },
       orderBy: { key: 'asc' },
@@ -21,10 +23,10 @@ export async function GET() {
     });
   }
 
-  // 지점 관리자: 글로벌 기본값 + 지점 오버라이드 병합
+  // 지점 관리자 (또는 SA 지점장 뷰): 글로벌 기본값 + 지점 오버라이드 병합
   const [globalFlags, tenantFlags] = await Promise.all([
     prisma.featureFlag.findMany({ where: { tenantId: null }, orderBy: { key: 'asc' } }),
-    prisma.featureFlag.findMany({ where: { tenantId: user.tenantId } }),
+    prisma.featureFlag.findMany({ where: { tenantId: effectiveTenantId } }),
   ]);
 
   const tenantMap = new Map(tenantFlags.map((f) => [f.key, f]));

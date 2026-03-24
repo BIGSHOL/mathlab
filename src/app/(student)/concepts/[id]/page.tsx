@@ -3,7 +3,7 @@
 import React from 'react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, ArrowRight, BookOpen, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, CheckCircle, ChevronLeft, ChevronRight, Sparkles, Trophy, BookOpenCheck } from 'lucide-react';
 import { Skeleton } from '@/components/ui/Skeleton';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
@@ -90,7 +90,17 @@ export default function ConceptPage() {
   const [loading, setLoading] = useState(true);
   const [memoContent, setMemoContent] = useState('');
   const memoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [adjacent, setAdjacent] = useState<{ prev: { id: string; conceptCode: string | null; title: string } | null; next: { id: string; conceptCode: string | null; title: string } | null }>({ prev: null, next: null });
+  const [adjacent, setAdjacent] = useState<{
+    prev: { id: string; conceptCode: string | null; title: string } | null;
+    next: { id: string; conceptCode: string | null; title: string } | null;
+    course?: {
+      courseName: string;
+      courseId: string;
+      currentPosition: number;
+      totalConcepts: number;
+      nextConcept: { id: string; title: string; conceptCode: string | null } | null;
+    } | null;
+  }>({ prev: null, next: null });
   const [gemModal, setGemModal] = useState<{ fromStage: number; toStage: number; xp: number } | null>(null);
 
   // 정답 공개 관련 상태
@@ -503,44 +513,129 @@ export default function ConceptPage() {
           </div>
 
           {/* Action Area */}
-          <div className="bg-white rounded-sm shadow-sm border border-slate-200 p-6">
-            <ProgressBar
-              value={Math.round(((currentStageIdx + (progress.some((p) => p.stage === currentStage.key && p.completed) ? 1 : 0)) / 4) * 100)}
-              label="학습 진행도"
-              showPercentage
-              color={currentStage.color}
-            />
-            <div className="flex items-center justify-end mt-6 gap-3">
-              {currentStage.key === 'READING' && !progress.some((p) => p.stage === currentStage.key && p.completed) && (
-                <Button size="lg" onClick={handleCompleteStage} disabled={submitting}>
-                  {submitting ? '처리 중...' : '읽기 완료 (+5 XP)'}
-                </Button>
-              )}
-              {(currentStage.key === 'BLANK_EASY' || currentStage.key === 'BLANK_HARD' || currentStage.key === 'BLANK_FULL') && !progress.some((p) => p.stage === currentStage.key && p.completed) && (
-                <>
-                  {hasUsedReveal && (
-                    <span className="text-xs text-amber-600">정답 공개 사용 · XP 절반</span>
-                  )}
-                  <Button size="lg" onClick={handleBlankSubmit} disabled={submitting}>
-                    {submitting ? '채점 중...' : '제출하기'}
-                  </Button>
-                </>
-              )}
-              {currentStageIdx === stageConfig.length - 1 && progress.some((p) => p.stage === currentStage.key && p.completed) && (
-                <>
-                  {adjacent.next ? (
-                    <Button size="lg" onClick={() => router.push(`/concepts/${adjacent.next!.conceptCode ?? adjacent.next!.id}`)}>
-                      다음 개념으로 <ArrowRight className="w-4 h-4 ml-1" />
+          {(() => {
+            const allCompleted = currentStageIdx === stageConfig.length - 1 && progress.some((p) => p.stage === currentStage.key && p.completed);
+            // 과정 기반 다음 개념 (우선) 또는 교육과정 기반 다음 개념
+            const courseNext = adjacent.course?.nextConcept;
+            const nextConcept = courseNext ?? adjacent.next;
+
+            if (allCompleted) {
+              return (
+                <div className="bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden">
+                  {/* 완료 축하 헤더 */}
+                  <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-5 text-white">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                        <Trophy className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg">학습 완료!</h3>
+                        <p className="text-emerald-100 text-sm">
+                          &quot;{concept.title}&quot; 개념의 모든 단계를 완료했습니다
+                        </p>
+                      </div>
+                    </div>
+                    {/* 과정 진행률 표시 */}
+                    {adjacent.course && (
+                      <div className="mt-4 bg-white/15 rounded-sm px-4 py-2.5">
+                        <div className="flex items-center justify-between text-sm mb-1.5">
+                          <span className="flex items-center gap-1.5">
+                            <BookOpenCheck className="w-3.5 h-3.5" />
+                            {adjacent.course.courseName}
+                          </span>
+                          <span className="font-medium">
+                            {adjacent.course.currentPosition} / {adjacent.course.totalConcepts}
+                          </span>
+                        </div>
+                        <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-white rounded-full transition-all duration-500"
+                            style={{ width: `${Math.round((adjacent.course.currentPosition / adjacent.course.totalConcepts) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 다음 개념 카드 */}
+                  <div className="p-6">
+                    {nextConcept ? (
+                      <div className="space-y-4">
+                        <button
+                          onClick={() => router.push(`/concepts/${nextConcept.conceptCode ?? nextConcept.id}`)}
+                          className="w-full flex items-center gap-4 p-4 rounded-sm border border-slate-200 hover:border-primary/40 hover:bg-primary/[0.02] transition-all group text-left"
+                        >
+                          <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
+                            <Sparkles className="w-5 h-5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-text-secondary mb-0.5">다음 개념</p>
+                            <p className="font-bold text-text-primary truncate">{nextConcept.title}</p>
+                          </div>
+                          <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+                        </button>
+                        <div className="flex items-center gap-3">
+                          <Button
+                            size="lg"
+                            className="flex-1"
+                            onClick={() => router.push(`/concepts/${nextConcept.conceptCode ?? nextConcept.id}`)}
+                          >
+                            다음 개념 학습하기 <ArrowRight className="w-4 h-4 ml-1" />
+                          </Button>
+                          <Button
+                            size="lg"
+                            variant="secondary"
+                            onClick={() => router.push('/subjects')}
+                          >
+                            목록
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center space-y-4">
+                        <p className="text-text-secondary text-sm">
+                          {adjacent.course
+                            ? `"${adjacent.course.courseName}" 과정의 모든 개념을 완료했습니다!`
+                            : '이 단원의 마지막 개념입니다.'}
+                        </p>
+                        <Button size="lg" onClick={() => router.push('/subjects')}>
+                          학습 목록으로 돌아가기
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <div className="bg-white rounded-sm shadow-sm border border-slate-200 p-6">
+                <ProgressBar
+                  value={Math.round(((currentStageIdx + (progress.some((p) => p.stage === currentStage.key && p.completed) ? 1 : 0)) / 4) * 100)}
+                  label="학습 진행도"
+                  showPercentage
+                  color={currentStage.color}
+                />
+                <div className="flex items-center justify-end mt-6 gap-3">
+                  {currentStage.key === 'READING' && !progress.some((p) => p.stage === currentStage.key && p.completed) && (
+                    <Button size="lg" onClick={handleCompleteStage} disabled={submitting}>
+                      {submitting ? '처리 중...' : '읽기 완료 (+5 XP)'}
                     </Button>
-                  ) : (
-                    <Button size="lg" onClick={() => router.push('/subjects')}>
-                      학습 완료! 목록으로 돌아가기
-                    </Button>
                   )}
-                </>
-              )}
-            </div>
-          </div>
+                  {(currentStage.key === 'BLANK_EASY' || currentStage.key === 'BLANK_HARD' || currentStage.key === 'BLANK_FULL') && !progress.some((p) => p.stage === currentStage.key && p.completed) && (
+                    <>
+                      {hasUsedReveal && (
+                        <span className="text-xs text-amber-600">정답 공개 사용 · XP 절반</span>
+                      )}
+                      <Button size="lg" onClick={handleBlankSubmit} disabled={submitting}>
+                        {submitting ? '채점 중...' : '제출하기'}
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
         </section>
       </div>
     </div>

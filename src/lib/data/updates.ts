@@ -30,6 +30,20 @@ export const TYPE_CONFIG: Record<UpdateType, { label: string; color: string }> =
 };
 
 export const ALL_UPDATES: UpdateLog[] = [
+  // ── 2026-03-24 ──
+  {
+    date: '2026-03-24',
+    title: 'UI 일관성 대규모 개선 — PageContainer 통일, 스켈레톤 표준화, 중복 제거',
+    audience: ['admin'],
+    entries: [
+      { type: 'improve', text: '중앙정렬 페이지 PageContainer 래퍼 통일 — courses, diagnostics, analytics, quiz, licenses, my-tests, subjects 등 15개+ 페이지' },
+      { type: 'improve', text: '이용권 관리 페이지 — PageHeader/Button 컴포넌트 적용, rounded-lg→rounded-sm 표준화' },
+      { type: 'improve', text: 'analytics/reports 중복 코드 제거 — WEEKDAYS, activityLevel, 정답률 색상 함수 공유 유틸(activity.ts) 추출' },
+      { type: 'improve', text: '스켈레톤 로딩 표준화 — licenses, my-tests, 서브 페이지들의 로딩 상태를 Skeleton 컴포넌트로 통일' },
+      { type: 'fix', text: 'rounded-lg 혼용 수정 — analytics, reports, licenses 페이지의 rounded-lg를 프로젝트 표준 rounded-sm으로 통일' },
+      { type: 'improve', text: '학생 학습 과정 페이지 — PageContainer 래핑 + PageHeader 적용으로 패딩/폭 일관성 확보' },
+    ],
+  },
   // ── 2026-03-23 ──
   {
     date: '2026-03-23',

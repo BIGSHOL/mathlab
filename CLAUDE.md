@@ -153,6 +153,38 @@ toast.info('AI가 분석 중입니다');
 - 페이지 넘김(`page-break-before`, `break-before` 등)이 미리보기와 인쇄에서 동일하게 동작하는지 확인
 - 새 인쇄 기능 구현 시 반드시 브라우저 인쇄 미리보기(`Ctrl+P`)로 검증 후 커밋
 
+### 9. 페이지 레이아웃 — 3가지 패턴 + 래퍼 규칙
+
+**모든 페이지는 3가지 레이아웃 패턴 중 하나를 따라야 한다:**
+
+| 패턴 | 용도 | 래퍼 | 예시 |
+|------|------|------|------|
+| **패널형** | 목록+상세 관리 | `flex-1 flex min-h-0` + 좌측 `w-72` 사이드바 | 학생, 개념, 문제, 시험, 숙제, 설정 |
+| **중앙정렬형** | 대시보드, 단순 목록, 양식 | `<PageContainer maxWidth="xl">` | 과정, 진단, 이용권, 퀴즈, 프로필 |
+| **대시보드형** | 메인 대시보드 | `max-w-[1400px] mx-auto px-4 sm:px-6 py-6 md:py-8` | overview, OwnerDashboard, SuperAdmin |
+
+**중앙정렬형 페이지 래퍼 규칙:**
+- 반드시 `<PageContainer>` 컴포넌트 사용 — 직접 `px-6 py-8 max-w-[1200px] mx-auto` 등 작성 금지
+- `maxWidth` 옵션: `sm`(640), `md`(800), `lg`(1024, 기본), `xl`(1200), `full`
+- 제목은 `<PageHeader>` 컴포넌트 사용 (패널형은 좌측 사이드바 헤더)
+
+**UI 표준:**
+- 모서리 둥글기: `rounded-sm` 표준 — `rounded-lg` 사용 금지 (Card, Badge 등 컴포넌트 내부 제외)
+- 버튼: 반드시 `<Button>` 컴포넌트 사용 — 커스텀 button 스타일 직접 작성 금지
+- 빈 상태: `<LoadingEmptyState>` 컴포넌트 사용 권장
+- 로딩: `<Skeleton>` 컴포넌트 사용 — `animate-pulse` 직접 사용 지양
+
+### 10. 공유 유틸 — 중복 코드 방지
+
+**학습 활동 관련 공통 함수 (`@/lib/utils/activity`):**
+```typescript
+import { WEEKDAYS, ACTIVITY_COLORS, activityLevel } from '@/lib/utils/activity';
+import { accuracyTextColor, accuracyBadgeColor, accuracyBarColor } from '@/lib/utils/activity';
+import { formatGrade, formatGradeShort, getInitial } from '@/lib/utils/activity';
+```
+- 새 페이지에서 요일, 활동레벨, 정답률 색상, 학년 포맷 등이 필요할 때 이 유틸을 사용할 것
+- 페이지 로컬에 동일 로직을 별도 정의하지 말 것
+
 ## 프로젝트 구조
 
 ```
@@ -192,7 +224,7 @@ src/
 │   ├── api/           # API 헬퍼 레이어 (auth, errors, helpers, tenant-scope, license-guard, validation, homework-grid)
 │   ├── schemas/       # Zod 검증 스키마 (auth, concept, gamification, learning, question)
 │   ├── services/      # 핵심 비즈니스 로직 (21개 서비스)
-│   ├── utils/         # 유틸 (blank-generator, pdf-processor, features, curriculumMapping, xp, format, question-order, diagram-resolver, answer-status, date-engine, level-test-feedback)
+│   ├── utils/         # 유틸 (blank-generator, pdf-processor, features, curriculumMapping, xp, format, question-order, diagram-resolver, answer-status, date-engine, level-test-feedback, activity)
 │   │   └── svg-diagrams/  # SVG 다이어그램 렌더링 시스템 (26개 타입)
 │   ├── pdf-extract-engine/  # PDF 추출 엔진 (core, ai, hooks, presets — 14파일)
 │   ├── diagram/       # 프리셋 기반 구조화 다이어그램 시스템 (DiagramSpec)
@@ -553,6 +585,7 @@ npx tsx scripts/migrate-question-relations.ts  # questionIds Json → 중간테�
 | `verify-api-auth` | API 라우트 인증/인가 패턴 검증 |
 | `verify-schema-sync` | Prisma 스키마와 코드 간 동기화 검증 |
 | `verify-page-patterns` | Teacher/Student 페이지 UI 패턴 일관성 검증 |
+| `verify-nav-sync` | 네비게이션 설정과 실제 페이지/사이드바 간 동기화 검증 |
 
 ### Agents (개발 보조, `.claude/agents/`)
 

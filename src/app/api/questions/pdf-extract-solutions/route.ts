@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin, isResponse, badRequest } from '@/lib/api';
+import { requireTeacher, isResponse, badRequest } from '@/lib/api';
 import { GoogleGenAI, Type } from '@google/genai';
 
 function getClient() {
@@ -55,7 +55,7 @@ interface PageInput {
 
 // POST /api/questions/pdf-extract-solutions — 해설 PDF에서 정답/풀이 추출
 export async function POST(request: NextRequest) {
-  const user = await requireAdmin();
+  const user = await requireTeacher();
   if (isResponse(user)) return user;
 
   const body = await request.json();

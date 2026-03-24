@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { SelectionPanel } from '@/components/math/SelectionPanel';
 import { ProblemDisplay } from '@/components/math/ProblemDisplay';
+import { toast } from '@/components/ui/Toast';
 import {
   SelectionState,
   GeneratedProblem,
@@ -58,9 +59,11 @@ export default function GeneratePage() {
       setProblem(json.data);
       if (json.saved) {
         setSavedInfo(json.saved);
+        toast.success(`문제가 생성되어 문제은행에 저장되었습니다 (#${json.saved.questionNum})`);
       }
     } catch {
       setError('문제를 생성하는 도중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      toast.error('문제 생성에 실패했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setIsLoading(false);
     }

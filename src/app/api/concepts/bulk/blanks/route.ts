@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAdmin, isResponse, validateBody } from '@/lib/api';
+import { requireSuperAdmin, isResponse, validateBody } from '@/lib/api';
 import { bulkCreateBlanksSchema } from '@/lib/schemas/concept';
 
 // POST /api/concepts/bulk/blanks — 빈칸 문제 일괄 생성
 export async function POST(request: NextRequest) {
-  const user = await requireAdmin();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
   const parsed = await validateBody(request, bulkCreateBlanksSchema);

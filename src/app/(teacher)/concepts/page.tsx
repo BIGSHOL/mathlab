@@ -1,7 +1,7 @@
 'use client';
 
 import { Brain } from 'lucide-react';
-import { useAuth, hasRoleClient } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import BulkImportModal from '@/components/bulk-import/BulkImportModal';
 import { MathLivePopup } from '@/components/math/MathLivePopup';
 import {
@@ -16,8 +16,8 @@ import {
 
 export default function ConceptsPage() {
   const { user } = useAuth();
-  const isOwner = hasRoleClient(user?.role, 'OWNER');
-  const mgr = useConceptManager(isOwner);
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const mgr = useConceptManager(isSuperAdmin);
 
   const {
     editingConcept, isNewConcept,

@@ -328,6 +328,188 @@ export async function syncUsedSeats(tenantLicenseId: string) {
   return count;
 }
 
+// === 사용 통계 ===
+
+export interface FeatureUsageStat {
+  feature: LicenseFeature;
+  maxSeats: number;
+  usedSeats: number;
+  expiresAt: Date | null;
+  isActive: boolean;
+  assignedStudentCount: number;
+  activeStudentCount: number;
+  dailyActivity: Array<{ date: string; count: number }>;
+  inactiveStudents: Array<{ id: string; name: string; classroom: string | null }>;
+}
+
+/** 이용권별 사용 통계 조회 (OWNER 허브 대시보드용) */
+export async function getLicenseUsageStats(
+  tenantId: string,
+  days: number = 7
+): Promise<{ featureStats: FeatureUsageStat[] }> {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+
+  // 1. 지점 이용권 + 테넌트 학생 ID
+  const [tenantLicenses, tenantStudents] = await Promise.all([
+    getTenantLicenses(tenantId),
+    prisma.user.findMany({
+      where: { tenantId, role: 'STUDENT', deletedAt: null },
+      select: { id: true },
+    }),
+  ]);
+  const tenantStudentIds = tenantStudents.map((s) => s.id);
+
+  // 2. 기능별 배정 학생 조회
+  const assignedLicenses = await prisma.studentLicense.findMany({
+    where: {
+      studentId: { in: tenantStudentIds },
+      revokedAt: null,
+    },
+    select: { studentId: true, feature: true },
+  });
+  const assignedByFeature: Record<string, Set<string>> = {};
+  for (const sl of assignedLicenses) {
+    if (!assignedByFeature[sl.feature]) assignedByFeature[sl.feature] = new Set();
+    assignedByFeature[sl.feature].add(sl.studentId);
+  }
+
+  // 3. 7개 기능 활동 데이터 병렬 조회
+  const [conceptAct, arithmeticAct, timeAttackAct, testAct, revengeAct, diagnosticAct, quizAct] =
+    await Promise.all([
+      // CONCEPT
+      prisma.blankAttempt.findMany({
+        where: { createdAt: { gte: cutoff }, student: { tenantId } },
+        select: { studentId: true, createdAt: true },
+      }),
+      // ARITHMETIC
+      prisma.arithmeticAttempt.findMany({
+        where: { createdAt: { gte: cutoff }, student: { tenantId } },
+        select: { studentId: true, createdAt: true },
+      }),
+      // TIME_ATTACK
+      prisma.timeAttackRecord.findMany({
+        where: { createdAt: { gte: cutoff }, student: { tenantId } },
+        select: { studentId: true, createdAt: true },
+      }),
+      // TEST
+      prisma.testAttempt.findMany({
+        where: { startedAt: { gte: cutoff }, student: { tenantId } },
+        select: { studentId: true, startedAt: true },
+      }),
+      // REVENGE
+      prisma.revengeAttempt.findMany({
+        where: { createdAt: { gte: cutoff }, student: { tenantId } },
+        select: { studentId: true, createdAt: true },
+      }),
+      // DIAGNOSTIC (tenantId 직접 없음 → studentId in)
+      prisma.diagnosticResult.findMany({
+        where: { createdAt: { gte: cutoff }, studentId: { in: tenantStudentIds } },
+        select: { studentId: true, createdAt: true },
+      }),
+      // QUIZ (QuizParticipant에 createdAt 없음 → QuizSession.createdAt 사용)
+      prisma.quizParticipant.findMany({
+        where: { session: { createdAt: { gte: cutoff }, tenantId } },
+        select: { studentId: true, session: { select: { createdAt: true } } },
+      }),
+    ]);
+
+  // 활동 데이터 정규화: { studentId, date }[]
+  type ActivityRow = { studentId: string; date: string };
+  const toDateStr = (d: Date) => d.toISOString().slice(0, 10);
+
+  const activityMap: Record<LicenseFeature, ActivityRow[]> = {
+    CONCEPT: conceptAct.map((r) => ({ studentId: r.studentId, date: toDateStr(r.createdAt) })),
+    ARITHMETIC: arithmeticAct.map((r) => ({ studentId: r.studentId, date: toDateStr(r.createdAt) })),
+    TIME_ATTACK: timeAttackAct.map((r) => ({ studentId: r.studentId, date: toDateStr(r.createdAt) })),
+    TEST: testAct.map((r) => ({ studentId: r.studentId, date: toDateStr(r.startedAt) })),
+    REVENGE: revengeAct.map((r) => ({ studentId: r.studentId, date: toDateStr(r.createdAt) })),
+    DIAGNOSTIC: diagnosticAct.map((r) => ({ studentId: r.studentId, date: toDateStr(r.createdAt) })),
+    QUIZ: quizAct.map((r) => ({ studentId: r.studentId, date: toDateStr(r.session.createdAt) })),
+  };
+
+  // 4. 기능별 통계 계산
+  const allFeatures: LicenseFeature[] = [
+    'CONCEPT', 'ARITHMETIC', 'TIME_ATTACK', 'TEST', 'REVENGE', 'DIAGNOSTIC', 'QUIZ',
+  ];
+
+  // 미사용 학생 이름/반 조회를 위해 한 번에 ID 수집
+  const allInactiveIds = new Set<string>();
+
+  const featureStatsRaw = allFeatures.map((feature) => {
+    const tl = tenantLicenses.find((l) => l.feature === feature);
+    const assigned = assignedByFeature[feature] ?? new Set<string>();
+    const activity = activityMap[feature];
+
+    // 기간 내 활동한 고유 학생
+    const activeStudentIds = new Set(activity.map((r) => r.studentId));
+
+    // 일별 활동 (날짜별 고유 학생 수)
+    const dailyMap = new Map<string, Set<string>>();
+    for (const row of activity) {
+      if (!dailyMap.has(row.date)) dailyMap.set(row.date, new Set());
+      dailyMap.get(row.date)!.add(row.studentId);
+    }
+
+    // cutoff ~ today 사이 모든 날짜 채우기
+    const dailyActivity: Array<{ date: string; count: number }> = [];
+    const d = new Date(cutoff);
+    const today = new Date();
+    while (d <= today) {
+      const key = toDateStr(d);
+      dailyActivity.push({ date: key, count: dailyMap.get(key)?.size ?? 0 });
+      d.setDate(d.getDate() + 1);
+    }
+
+    // 미사용 학생: 배정 O + 활동 X
+    const inactive: string[] = [];
+    for (const sid of assigned) {
+      if (!activeStudentIds.has(sid)) {
+        inactive.push(sid);
+        allInactiveIds.add(sid);
+      }
+    }
+
+    return {
+      feature,
+      maxSeats: tl?.maxSeats ?? 0,
+      usedSeats: tl?.usedSeats ?? 0,
+      expiresAt: tl?.expiresAt ?? null,
+      isActive: tl?.isActive ?? false,
+      assignedStudentCount: assigned.size,
+      activeStudentCount: activeStudentIds.size,
+      dailyActivity,
+      _inactiveIds: inactive,
+    };
+  });
+
+  // 5. 미사용 학생 정보 일괄 조회
+  const inactiveUsers = allInactiveIds.size > 0
+    ? await prisma.user.findMany({
+        where: { id: { in: Array.from(allInactiveIds) } },
+        select: { id: true, name: true, classroom: { select: { name: true } } },
+      })
+    : [];
+  const userMap = new Map(inactiveUsers.map((u) => [u.id, u]));
+
+  const featureStats: FeatureUsageStat[] = featureStatsRaw.map((raw) => ({
+    feature: raw.feature,
+    maxSeats: raw.maxSeats,
+    usedSeats: raw.usedSeats,
+    expiresAt: raw.expiresAt,
+    isActive: raw.isActive,
+    assignedStudentCount: raw.assignedStudentCount,
+    activeStudentCount: raw.activeStudentCount,
+    dailyActivity: raw.dailyActivity,
+    inactiveStudents: raw._inactiveIds.map((id) => {
+      const u = userMap.get(id);
+      return { id, name: u?.name ?? '(알 수 없음)', classroom: u?.classroom?.name ?? null };
+    }),
+  }));
+
+  return { featureStats };
+}
+
 /** 지점 이용권 + 배정 학생 목록 조회 (OWNER 관리 페이지용) */
 export async function getTenantLicenseOverview(tenantId: string) {
   const licenses = await prisma.tenantLicense.findMany({
@@ -342,6 +524,7 @@ export async function getTenantLicenseOverview(tenantId: string) {
       id: true,
       name: true,
       username: true,
+      grade: true,
       classroom: { select: { id: true, name: true } },
       studentLicenses: {
         where: { revokedAt: null },

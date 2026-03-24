@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin, isResponse, badRequest } from '@/lib/api';
+import { requireSuperAdmin, isResponse, badRequest } from '@/lib/api';
 import { GoogleGenAI, Type } from '@google/genai';
 import { buildMergedExercise, addFullSentenceBlanks, type BlankDifficulty } from '@/lib/utils/blank-generator';
 
@@ -38,7 +38,7 @@ interface AiBlankResult {
 
 // POST /api/concepts/bulk/extract-blanks — AI 빈칸 추출
 export async function POST(request: NextRequest) {
-  const user = await requireAdmin();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
   const body = (await request.json()) as ExtractRequest;

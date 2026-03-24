@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, badRequest, notFound } from '@/lib/api';
+import { requireOwner, isResponse, badRequest, notFound } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +40,7 @@ const STAGE_LABEL: Record<string, string> = {
 
 /** POST: 학생 종합 리포트 생성 */
 export async function POST(request: NextRequest) {
-  const user = await requireTeacher();
+  const user = await requireOwner();
   if (isResponse(user)) return user;
 
   const body = await request.json();

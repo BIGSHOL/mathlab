@@ -12,6 +12,7 @@ import { xpToNextLevel } from '@/lib/utils/xp';
 import { CATEGORY_LABELS, LEVEL_LABELS } from '@/lib/services/arithmetic-generator/types';
 import Link from 'next/link';
 import { BadgeModalSection } from './BadgeModalSection';
+import { PageContainer } from '@/components/ui/PageContainer';
 
 function timeAgo(date: Date) {
   const diff = Date.now() - date.getTime();
@@ -374,7 +375,7 @@ export default async function ProfilePage({
   );
 
   return (
-    <div className="px-4 md:px-8 py-6 max-w-[1000px] mx-auto w-full">
+    <PageContainer maxWidth="lg">
       {/* ──── 상단: 프로필 헤더 & 학습 스트릭 ──── */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4 mb-6">
         {/* 1. 프로필 정보 (좌측) */}
@@ -647,6 +648,6 @@ export default async function ProfilePage({
         fullNodes={renderBadgeGrid(displayBadges)}
       />
 
-    </div>
+    </PageContainer>
   );
 }

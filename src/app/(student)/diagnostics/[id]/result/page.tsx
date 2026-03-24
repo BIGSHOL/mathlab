@@ -13,6 +13,7 @@ import {
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { PageContainer } from '@/components/ui/PageContainer';
 
 interface DiagnosticResultData {
   id: string;
@@ -49,7 +50,7 @@ export default function DiagnosticResultPage() {
 
   if (loading) {
     return (
-      <div className="p-6 max-w-2xl mx-auto">
+      <PageContainer maxWidth="md">
         {/* 헤더 (뒤로가기 + 제목) */}
         <div className="flex items-center gap-3 mb-6">
           <Skeleton className="w-5 h-5 rounded" />
@@ -96,7 +97,7 @@ export default function DiagnosticResultPage() {
         <div className="text-center">
           <Skeleton className="h-10 w-40 rounded mx-auto" />
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
@@ -114,7 +115,7 @@ export default function DiagnosticResultPage() {
   const levelColor = LEVEL_COLORS[result.recommendLevel] ?? 'bg-slate-100 text-slate-700 border-slate-200';
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
+    <PageContainer maxWidth="md">
       <PageHeader title="진단평가 결과" backHref="/my-tests" />
 
       {/* Level recommendation */}
@@ -195,6 +196,6 @@ export default function DiagnosticResultPage() {
           <Button variant="secondary">시험 목록으로 돌아가기</Button>
         </Link>
       </div>
-    </div>
+    </PageContainer>
   );
 }

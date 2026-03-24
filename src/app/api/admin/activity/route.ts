@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAdmin, isResponse } from '@/lib/api';
+import { requireOwner, isResponse } from '@/lib/api';
 import { CATEGORY_LABELS } from '@/lib/services/arithmetic-generator';
 
 const STAGE_LABELS: Record<string, string> = {
@@ -32,7 +32,7 @@ interface DaySummary {
 }
 
 export async function GET(request: NextRequest) {
-  const user = await requireAdmin();
+  const user = await requireOwner();
   if (isResponse(user)) return user;
 
   const { searchParams } = new URL(request.url);

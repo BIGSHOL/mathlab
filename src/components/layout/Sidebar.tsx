@@ -10,11 +10,13 @@ import {
   LogOut,
   PanelLeftClose,
   Search,
+  Building2,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { LogoIcon } from '@/components/ui/LogoIcon';
 import { useTenant } from '@/components/providers/TenantProvider';
 import { getNavForRole, getAllNavItems, hasMinRole, type NavItem } from '@/lib/constants/navigation';
+import { useViewingTenantStore } from '@/stores/viewingTenantStore';
 import type { UserRole } from '@/types';
 
 const ROLE_LABELS: Record<string, string> = {
@@ -28,11 +30,16 @@ export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const tenant = useTenant();
-  const role = (user?.role ?? 'TEACHER') as UserRole;
+  const { tenantId: viewingTenantId, tenantName: viewingTenantName, exitTenantView } = useViewingTenantStore();
+
+  // SA가 지점장 뷰 중이면 OWNER 네비로 전환
+  const isViewingAsTenant = user?.role === 'SUPER_ADMIN' && !!viewingTenantId;
+  const effectiveRole = isViewingAsTenant ? 'OWNER' : (user?.role ?? 'TEACHER');
+  const role = effectiveRole as UserRole;
   const navGroups = getNavForRole(role);
   const allItems = getAllNavItems();
   const [collapsed, setCollapsed] = useState(false);
-  const displayName = tenant?.name || 'MathLab';
+  const displayName = isViewingAsTenant ? (viewingTenantName ?? 'MathLab') : (tenant?.name || 'MathLab');
 
   const isActive = (item: NavItem) => {
     if (item.href === '/students?tab=teachers') {
@@ -123,14 +130,39 @@ export function Sidebar() {
         )}
       </div>
 
+      {/* 지점장 뷰 배너 */}
+      {isViewingAsTenant && !collapsed && (
+        <div className="mx-3 mt-3 px-2.5 py-2 rounded-sm bg-amber-50 border border-amber-300">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Building2 className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+            <span className="text-[11px] font-bold text-amber-700 truncate">{viewingTenantName}</span>
+          </div>
+          <button
+            onClick={() => { exitTenantView(); window.location.href = '/admin/tenants'; }}
+            className="w-full text-[10px] font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded px-2 py-1 transition-colors"
+          >
+            SA 뷰로 돌아가기
+          </button>
+        </div>
+      )}
+      {isViewingAsTenant && collapsed && (
+        <button
+          onClick={() => { exitTenantView(); window.location.href = '/admin/tenants'; }}
+          className="mx-auto mt-3 p-1.5 rounded bg-amber-50 border border-amber-300 hover:bg-amber-100 transition-colors"
+          title={`${viewingTenantName} · 돌아가기`}
+        >
+          <Building2 className="w-4 h-4 text-amber-600" />
+        </button>
+      )}
+
       {/* Admin badge */}
-      {hasMinRole(role, 'MANAGER') && !collapsed && (
+      {!isViewingAsTenant && hasMinRole(role, 'MANAGER') && !collapsed && (
         <div className="mx-3 mt-3 flex items-center gap-2 px-2.5 py-1.5 rounded-sm bg-violet-50 border border-violet-200">
           <Shield className="w-3.5 h-3.5 text-violet-600 shrink-0" />
           <span className="text-[11px] font-bold text-violet-700">관리자 모드</span>
         </div>
       )}
-      {hasMinRole(role, 'MANAGER') && collapsed && (
+      {!isViewingAsTenant && hasMinRole(role, 'MANAGER') && collapsed && (
         <div className="mx-auto mt-3" title="관리자 모드">
           <Shield className="w-4 h-4 text-violet-600" />
         </div>

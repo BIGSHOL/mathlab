@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { analyzeDiagnostic } from '@/lib/services/diagnostic';
-import { requireAuth, isResponse, notFound, badRequest, serverError } from '@/lib/api';
+import { requireAuth, isResponse, notFound, badRequest, serverError, requireLicense } from '@/lib/api';
 
 /** POST: 진단평가 결과 분석 실행 */
 export async function POST(
@@ -11,6 +11,8 @@ export async function POST(
   const { attemptId } = await params;
   const currentUser = await requireAuth();
   if (isResponse(currentUser)) return currentUser;
+  const licenseCheck = await requireLicense(currentUser, 'diagnostic');
+  if (licenseCheck) return licenseCheck;
 
   // 시도 정보 확인
   const attempt = await prisma.testAttempt.findUnique({
@@ -56,6 +58,8 @@ export async function GET(
   const { attemptId } = await params;
   const currentUser = await requireAuth();
   if (isResponse(currentUser)) return currentUser;
+  const licenseCheck2 = await requireLicense(currentUser, 'diagnostic');
+  if (licenseCheck2) return licenseCheck2;
 
   const result = await prisma.diagnosticResult.findUnique({
     where: { attemptId },

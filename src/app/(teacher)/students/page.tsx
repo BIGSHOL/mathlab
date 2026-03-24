@@ -22,6 +22,7 @@ export default function StudentsPage() {
   const { user: currentUser } = useAuth();
   const searchParams = useSearchParams();
   const isOwner = hasRoleClient(currentUser?.role, 'OWNER');
+  const isManager = hasRoleClient(currentUser?.role, 'MANAGER');
   const initialTab = searchParams.get('tab') === 'teachers' ? 'teachers' : 'students';
 
   const [tab, setTab] = useState<'students' | 'teachers'>(initialTab);
@@ -69,7 +70,7 @@ export default function StudentsPage() {
     }
   }, []);
 
-  const showTeachers = isOwner && tab === 'teachers';
+  const showTeachers = isManager && tab === 'teachers';
 
   const filteredUsers = users
     .filter((u) => showTeachers ? u.role === 'TEACHER' : u.role === 'STUDENT')
@@ -192,7 +193,7 @@ export default function StudentsPage() {
       <StudentListPanel
         leftPanelCollapsed={leftPanelCollapsed}
         onToggleCollapse={() => setLeftPanelCollapsed((p) => !p)}
-        isOwner={isOwner}
+        isOwner={isManager}
         tab={tab}
         showTeachers={showTeachers}
         studentCount={studentCount}

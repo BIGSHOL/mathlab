@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireTeacher, isResponse, badRequest } from '@/lib/api';
+import { requireSuperAdmin, isResponse, badRequest } from '@/lib/api';
 import { autoTag, getChapterDomainMap, getChapterConceptMap } from '@/lib/services/question-tagger';
 
 /** GET: 매핑 테이블 반환 (UI에서 참조용) */
 export async function GET() {
-  const user = await requireTeacher();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
   return NextResponse.json({
@@ -17,7 +17,7 @@ export async function GET() {
 
 /** POST: chapter/section/difficulty로 자동 태깅 결과 미리보기 */
 export async function POST(request: NextRequest) {
-  const user = await requireTeacher();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
   const body = await request.json();

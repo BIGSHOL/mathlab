@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Tabs } from '@/components/ui/Tabs';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { PageContainer } from '@/components/ui/PageContainer';
 import { AssignPanel } from '@/components/test/AssignPanel';
 import { DeadlineBadge } from '@/components/test/DeadlineBadge';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -103,7 +104,7 @@ export default function TestResultsPage() {
 
   if (loading) {
     return (
-      <div className="p-6 max-w-[1200px] mx-auto">
+      <PageContainer maxWidth="xl">
         {/* PageHeader 스켈레톤 (뒤로가기 + 제목 + 액션 버튼) */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -156,7 +157,7 @@ export default function TestResultsPage() {
             </div>
           ))}
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
@@ -179,7 +180,7 @@ export default function TestResultsPage() {
   };
 
   return (
-    <div className="p-6 max-w-[1200px] mx-auto">
+    <PageContainer maxWidth="xl">
       {/* Header */}
       <PageHeader
         title={test?.title ?? '시험 결과'}
@@ -442,6 +443,6 @@ export default function TestResultsPage() {
           onAssigned={() => loadData()}
         />
       )}
-    </div>
+    </PageContainer>
   );
 }

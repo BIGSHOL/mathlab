@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import {
   Search,
   Plus,
@@ -10,6 +11,7 @@ import {
   Trash2,
   KeyRound,
   Loader2,
+  Sparkles,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -44,6 +46,7 @@ interface QuestionListMainProps {
   deleteQuestion: (id: string) => void;
   openCreateModal: () => void;
   isOwner?: boolean;
+  canEdit?: boolean;
 }
 
 export function QuestionListMain({
@@ -65,6 +68,7 @@ export function QuestionListMain({
   deleteQuestion,
   openCreateModal,
   isOwner,
+  canEdit,
 }: QuestionListMainProps) {
   return (
     <main className="flex-1 flex flex-col min-w-0 bg-white p-3 md:p-4 gap-3 overflow-y-auto">
@@ -76,12 +80,20 @@ export function QuestionListMain({
             초등·중등 수학 문제 검색 및 관리. 전체 {meta.total.toLocaleString()}개의 문제
           </p>
         </div>
-        {isOwner && (
+        {canEdit && (
           <div className="flex gap-2">
-            <Button variant="secondary" size="sm">
-              <Download className="w-4 h-4 mr-2" />
-              PDF 내보내기
-            </Button>
+            <Link href="/questions/generate">
+              <Button variant="secondary" size="sm">
+                <Sparkles className="w-4 h-4 mr-2" />
+                AI 문제 생성
+              </Button>
+            </Link>
+            {isOwner && (
+              <Button variant="secondary" size="sm">
+                <Download className="w-4 h-4 mr-2" />
+                PDF 내보내기
+              </Button>
+            )}
             <Button size="sm" onClick={openCreateModal}>
               <Plus className="w-4 h-4 mr-2" />
               새 문제 추가
@@ -166,7 +178,7 @@ export function QuestionListMain({
                       )}
                     </div>
                     <div className="flex gap-1 text-text-secondary">
-                      {isOwner && (
+                      {canEdit && (
                         <>
                           <button
                             onClick={(e) => { e.stopPropagation(); startEditing(q); }}

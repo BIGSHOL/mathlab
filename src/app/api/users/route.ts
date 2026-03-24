@@ -9,10 +9,10 @@ export async function GET() {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
 
-  // OWNER 이상: 자기 테넌트 전체 사용자 (선생님 포함), TEACHER: 담당 반 학생만
-  const isOwnerOrAbove = hasRole(user, 'OWNER');
+  // MANAGER 이상: 자기 테넌트 전체 사용자 (선생님 포함), TEACHER: 담당 반 학생만
+  const isManagerOrAbove = hasRole(user, 'MANAGER');
   const tenantFilter = getTenantFilter(user);
-  const where = isOwnerOrAbove
+  const where = isManagerOrAbove
     ? { deletedAt: null, ...tenantFilter }
     : await getStudentScope(user);
 

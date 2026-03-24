@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin, isResponse, badRequest } from '@/lib/api';
+import { requireTeacher, isResponse, badRequest } from '@/lib/api';
 import { GoogleGenAI, Type } from '@google/genai';
 import { renderDiagram } from '@/lib/utils/svg-diagrams';
 
@@ -290,7 +290,7 @@ interface PageInput {
 
 // POST /api/questions/pdf-extract — PDF 페이지에서 문제 추출
 export async function POST(request: NextRequest) {
-  const user = await requireAdmin();
+  const user = await requireTeacher();
   if (isResponse(user)) return user;
 
   const body = await request.json();

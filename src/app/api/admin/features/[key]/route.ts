@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAdmin, isResponse, notFound, badRequest, hasRole } from '@/lib/api';
+import { requireOwner, isResponse, notFound, badRequest } from '@/lib/api';
 
 /** PATCH /api/admin/features/:key — Feature Flag 토글 (지점별 오버라이드 지원) */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ key: string }> }
 ) {
-  const user = await requireAdmin();
+  const user = await requireOwner();
   if (isResponse(user)) return user;
 
   const { key } = await params;
@@ -16,8 +16,10 @@ export async function PATCH(
     return badRequest('enabled (boolean) 필드가 필요합니다');
   }
 
-  // SUPER_ADMIN 또는 tenantId 없는 사용자: 글로벌 플래그 토글
-  if (hasRole(user, 'SUPER_ADMIN') || !user.tenantId) {
+  const effectiveTenantId = user.tenantId || user.viewingTenantId;
+
+  // 글로벌 플래그 토글 (SA, 지점장 뷰 아닐 때)
+  if (!effectiveTenantId) {
     const flag = await prisma.featureFlag.findFirst({ where: { key, tenantId: null } });
     if (!flag) return notFound('기능 플래그를 찾을 수 없습니다');
 
@@ -28,9 +30,9 @@ export async function PATCH(
     return NextResponse.json({ data: updated });
   }
 
-  // 지점 관리자: 지점 전용 오버라이드 생성/업데이트
+  // 지점 관리자 (또는 SA 지점장 뷰): 지점 전용 오버라이드 생성/업데이트
   const tenantFlag = await prisma.featureFlag.findFirst({
-    where: { key, tenantId: user.tenantId },
+    where: { key, tenantId: effectiveTenantId },
   });
 
   if (tenantFlag) {
@@ -50,7 +52,7 @@ export async function PATCH(
       key,
       label: globalFlag.label,
       enabled: body.enabled,
-      tenantId: user.tenantId,
+      tenantId: effectiveTenantId,
     },
   });
   return NextResponse.json({ data: created });

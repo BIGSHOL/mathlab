@@ -19,6 +19,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { LoadingEmptyState } from '@/components/ui/LoadingEmptyState';
+import { PageContainer } from '@/components/ui/PageContainer';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { MathStatusBadge } from '@/components/ui/MathStatusBadge';
 import { DIFFICULTY_LABELS } from '@/types';
@@ -162,7 +163,7 @@ export default function WrongAnswersPage() {
 
   if (loading) {
     return (
-      <div className="p-6 max-w-[1200px] mx-auto">
+      <PageContainer maxWidth="xl">
         {/* 헤더 (뒤로가기 + 학생명 + 부제 + 액션 버튼) */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -210,12 +211,12 @@ export default function WrongAnswersPage() {
             </div>
           ))}
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="p-6 max-w-[1200px] mx-auto">
+    <PageContainer maxWidth="xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -470,6 +471,6 @@ export default function WrongAnswersPage() {
           })}
         </div>
       </LoadingEmptyState>
-    </div>
+    </PageContainer>
   );
 }

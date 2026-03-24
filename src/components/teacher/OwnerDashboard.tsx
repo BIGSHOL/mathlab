@@ -204,6 +204,7 @@ export default async function OwnerDashboard({ user, period }: Props) {
       suffix: '명',
       icon: <GraduationCap className="w-8 h-8 text-primary opacity-20" />,
       trend: { value: '활동 중', positive: true },
+      href: '/students?tab=teachers',
     },
     {
       label: '전체 학생',
@@ -211,6 +212,7 @@ export default async function OwnerDashboard({ user, period }: Props) {
       suffix: '명',
       icon: <Users className="w-8 h-8 text-primary opacity-20" />,
       trend: { value: `${classroomsRaw.length}개 반`, positive: true },
+      href: '/students',
     },
     {
       label: `${periodLabel} 활동률`,
@@ -220,6 +222,7 @@ export default async function OwnerDashboard({ user, period }: Props) {
       trend: attendanceRate >= 70
         ? { value: '양호', positive: true }
         : { value: '관리 필요', positive: false },
+      href: '/analytics',
     },
     {
       label: '이용권',
@@ -228,6 +231,7 @@ export default async function OwnerDashboard({ user, period }: Props) {
       trend: expiringLicenses.length > 0
         ? { value: `${expiringLicenses.length}건 만료 임박`, positive: false }
         : { value: `${seatUsageRate}% 사용`, positive: true },
+      href: '/licenses',
     },
     {
       label: '대기 문의',
@@ -237,6 +241,7 @@ export default async function OwnerDashboard({ user, period }: Props) {
       trend: pendingInquiries > 0
         ? { value: '답변 필요', positive: false }
         : { value: '없음', positive: true },
+      href: '/support',
     },
   ];
 
@@ -256,31 +261,32 @@ export default async function OwnerDashboard({ user, period }: Props) {
       {/* Stat Cards */}
       <DashboardStatCards className="grid grid-cols-2 lg:grid-cols-5 gap-2">
         {stats.map((stat) => (
-          <Card
-            key={stat.label}
-            variant="glass"
-            padding="sm"
-            className="flex flex-col gap-2 hover:shadow-md transition-shadow relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 p-3">{stat.icon}</div>
-            <p className="text-text-secondary text-sm font-semibold tracking-wide">{stat.label}</p>
-            <div className="flex items-end justify-between mt-auto">
-              <p className="text-text-primary text-base md:text-lg font-bold leading-none">
-                {stat.value}
-                {stat.suffix && (
-                  <span className="text-base md:text-sm text-slate-400 font-bold ml-0.5">{stat.suffix}</span>
-                )}
-              </p>
-            </div>
-            <span
-              className={`text-xs font-bold px-1.5 py-0.5 rounded-sm flex items-center w-fit ${
-                stat.trend.positive ? 'text-emerald-600 bg-emerald-50' : 'text-rose-500 bg-rose-50'
-              }`}
+          <Link key={stat.label} href={stat.href} className="contents">
+            <Card
+              variant="glass"
+              padding="sm"
+              className="flex flex-col gap-2 hover:shadow-md transition-shadow relative overflow-hidden cursor-pointer"
             >
-              {stat.trend.positive ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
-              {stat.trend.value}
-            </span>
-          </Card>
+              <div className="absolute top-0 right-0 p-3">{stat.icon}</div>
+              <p className="text-text-secondary text-sm font-semibold tracking-wide">{stat.label}</p>
+              <div className="flex items-end justify-between mt-auto">
+                <p className="text-text-primary text-base md:text-lg font-bold leading-none">
+                  {stat.value}
+                  {stat.suffix && (
+                    <span className="text-base md:text-sm text-slate-400 font-bold ml-0.5">{stat.suffix}</span>
+                  )}
+                </p>
+              </div>
+              <span
+                className={`text-xs font-bold px-1.5 py-0.5 rounded-sm flex items-center w-fit ${
+                  stat.trend.positive ? 'text-emerald-600 bg-emerald-50' : 'text-rose-500 bg-rose-50'
+                }`}
+              >
+                {stat.trend.positive ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
+                {stat.trend.value}
+              </span>
+            </Card>
+          </Link>
         ))}
       </DashboardStatCards>
 

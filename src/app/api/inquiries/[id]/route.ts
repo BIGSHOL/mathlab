@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAdmin, isResponse, badRequest, notFound } from '@/lib/api';
+import { requireOwner, isResponse, badRequest, notFound } from '@/lib/api';
 
 // PATCH /api/inquiries/[id] - Admin 답변 등록
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await requireAdmin();
+  const user = await requireOwner();
   if (isResponse(user)) return user;
 
   const { id } = await params;

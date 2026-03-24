@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, validateQuery, validateBody, isResponse } from '@/lib/api';
+import { requireTeacher, requireSuperAdmin, validateQuery, validateBody, isResponse } from '@/lib/api';
 import { questionQuerySchema, createQuestionSchema } from '@/lib/schemas/question';
 import { autoTag } from '@/lib/services/question-tagger';
 
@@ -85,9 +85,9 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ data: question }, { status: 201 });
 }
 
-/** PATCH: 문제 대량 업데이트 (domain, conceptId 태깅) */
+/** PATCH: 문제 대량 업데이트 (domain, conceptId 태깅) — SUPER_ADMIN 전용 */
 export async function PATCH(request: NextRequest) {
-  const user = await requireTeacher();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
   const body = await request.json();

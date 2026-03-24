@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { unauthorized, forbidden } from './errors';
 import type { UserRole } from '@/types';
 
-export type AuthUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>;
+export type AuthUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>> & {
+  /** SA가 지점장 뷰로 보고 있는 tenantId (null이면 일반 모드) */
+  viewingTenantId?: string;
+};
 
 // ── 역할 계층 (STUDENT < TEACHER < MANAGER < OWNER < SUPER_ADMIN) ──
 const ROLE_LEVEL: Record<string, number> = {
@@ -20,12 +24,30 @@ export function hasRole(user: { role: string }, minRole: UserRole): boolean {
   return (ROLE_LEVEL[user.role] ?? 0) >= (ROLE_LEVEL[minRole] ?? 99);
 }
 
+/**
+ * SA 지점장 뷰 쿠키에서 viewingTenantId 읽어 AuthUser에 주입.
+ * SA가 아닌 사용자는 무시.
+ */
+async function attachViewingTenant(user: AuthUser): Promise<AuthUser> {
+  if (user.role !== 'SUPER_ADMIN') return user;
+  try {
+    const cookieStore = await cookies();
+    const raw = cookieStore.get('viewing_tenant')?.value;
+    if (!raw) return user;
+    const parsed = JSON.parse(decodeURIComponent(raw));
+    if (parsed?.tenantId) {
+      return { ...user, viewingTenantId: parsed.tenantId };
+    }
+  } catch { /* ignore malformed cookie */ }
+  return user;
+}
+
 /** 선생님 이상 (TEACHER/MANAGER/OWNER/SUPER_ADMIN) */
 export async function requireTeacher(): Promise<AuthUser | NextResponse> {
   const user = await getCurrentUser();
   if (!user) return unauthorized();
   if (!hasRole(user, 'TEACHER')) return forbidden();
-  return user;
+  return attachViewingTenant(user);
 }
 
 /** 팀장 이상 (MANAGER/OWNER/SUPER_ADMIN) */
@@ -33,7 +55,7 @@ export async function requireManager(): Promise<AuthUser | NextResponse> {
   const user = await getCurrentUser();
   if (!user) return unauthorized();
   if (!hasRole(user, 'MANAGER')) return forbidden();
-  return user;
+  return attachViewingTenant(user);
 }
 
 /** 원장 이상 (OWNER/SUPER_ADMIN) */
@@ -41,7 +63,7 @@ export async function requireOwner(): Promise<AuthUser | NextResponse> {
   const user = await getCurrentUser();
   if (!user) return unauthorized();
   if (!hasRole(user, 'OWNER')) return forbidden();
-  return user;
+  return attachViewingTenant(user);
 }
 
 /** 슈퍼관리자 전용 */
@@ -49,7 +71,7 @@ export async function requireSuperAdmin(): Promise<AuthUser | NextResponse> {
   const user = await getCurrentUser();
   if (!user) return unauthorized();
   if (!hasRole(user, 'SUPER_ADMIN')) return forbidden();
-  return user;
+  return attachViewingTenant(user);
 }
 
 /** @deprecated requireOwner() 사용 권장 */
@@ -61,7 +83,7 @@ export async function requireAdmin(): Promise<AuthUser | NextResponse> {
 export async function requireAuth(): Promise<AuthUser | NextResponse> {
   const user = await getCurrentUser();
   if (!user) return unauthorized();
-  return user;
+  return attachViewingTenant(user);
 }
 
 /**
@@ -70,8 +92,11 @@ export async function requireAuth(): Promise<AuthUser | NextResponse> {
  * 테넌트 검증: 같은 테넌트의 학생만 View-As 허용.
  */
 export async function requireAuthViewAs(request: NextRequest): Promise<AuthUser | NextResponse> {
-  const user = await getCurrentUser();
+  let user = await getCurrentUser();
   if (!user) return unauthorized();
+
+  // SA 지점장 뷰 쿠키 반영
+  user = await attachViewingTenant(user as AuthUser) as typeof user;
 
   const studentId = new URL(request.url).searchParams.get('_as');
   if (studentId && hasRole(user, 'TEACHER')) {

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAdmin, isResponse, validateBody, notFound, badRequest, conflict } from '@/lib/api';
+import { requireSuperAdmin, isResponse, validateBody, notFound, badRequest, conflict } from '@/lib/api';
 import { bulkCreateConceptSchema } from '@/lib/schemas/concept';
 
 // POST /api/concepts/bulk — 개념 일괄 생성 (Admin 전용)
 export async function POST(request: NextRequest) {
-  const user = await requireAdmin();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
   const parsed = await validateBody(request, bulkCreateConceptSchema);

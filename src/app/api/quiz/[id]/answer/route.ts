@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth, isResponse, notFound, badRequest, clamp } from '@/lib/api';
+import { requireAuth, isResponse, notFound, badRequest, clamp, requireLicense } from '@/lib/api';
 
 /** POST: 퀴즈 답안 제출 */
 export async function POST(
@@ -9,6 +9,8 @@ export async function POST(
 ) {
   const currentUser = await requireAuth();
   if (isResponse(currentUser)) return currentUser;
+  const licenseCheck = await requireLicense(currentUser, 'quiz');
+  if (licenseCheck) return licenseCheck;
 
   const { id: rawId } = await params;
   const body = await request.json();

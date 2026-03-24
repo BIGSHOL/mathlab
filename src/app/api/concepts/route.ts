@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, validateQuery, validateBody, isResponse } from '@/lib/api';
+import { requireTeacher, requireSuperAdmin, validateQuery, validateBody, isResponse } from '@/lib/api';
 import { conceptQuerySchema, createConceptSchema } from '@/lib/schemas/concept';
 
 // GET /api/concepts?subjectId=xxx&grade=middle_1&category=concept&part=calc&search=xxx
@@ -84,9 +84,9 @@ export async function GET(request: NextRequest) {
   });
 }
 
-// POST /api/concepts
+// POST /api/concepts — SUPER_ADMIN 전용 (공용 컨텐츠 생성)
 export async function POST(request: NextRequest) {
-  const user = await requireTeacher();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
   const parsed = await validateBody(request, createConceptSchema);

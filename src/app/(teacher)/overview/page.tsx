@@ -14,6 +14,7 @@ import { Card } from '@/components/ui/Card';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { hasRole } from '@/lib/api/auth';
 import { formatNumber } from '@/lib/utils/format';
 import Link from 'next/link';
@@ -55,7 +56,26 @@ export default async function TeacherDashboard({
 
   const { period = '7d' } = await searchParams;
 
-  // SUPER_ADMIN은 플랫폼 관리 전용 대시보드
+  // SA 지점장 뷰 감지
+  let viewingTenantId: string | null = null;
+  if (user.role === 'SUPER_ADMIN') {
+    try {
+      const cookieStore = await cookies();
+      const raw = cookieStore.get('viewing_tenant')?.value;
+      if (raw) {
+        const parsed = JSON.parse(decodeURIComponent(raw));
+        viewingTenantId = parsed?.tenantId ?? null;
+      }
+    } catch { /* ignore */ }
+  }
+
+  // SUPER_ADMIN 지점장 뷰 → OWNER 대시보드 (해당 지점 스코프)
+  if (user.role === 'SUPER_ADMIN' && viewingTenantId) {
+    const fakeOwner = { ...user, tenantId: viewingTenantId, role: 'OWNER' as const };
+    return <OwnerDashboard user={fakeOwner} period={period} />;
+  }
+
+  // SUPER_ADMIN 일반 → 플랫폼 관리 전용 대시보드
   if (user.role === 'SUPER_ADMIN') {
     return <SuperAdminDashboard period={period} />;
   }

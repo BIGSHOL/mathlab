@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAdmin, isResponse, notFound, forbidden, hasRole } from '@/lib/api';
+import { requireOwner, isResponse, notFound, forbidden, hasRole } from '@/lib/api';
 
 /** 테넌트 소유권 검증 후 반 조회 */
 async function findClassroomWithTenantCheck(id: string, user: { tenantId: string | null; role: string }) {
@@ -19,7 +19,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await requireAdmin();
+  const user = await requireOwner();
   if (isResponse(user)) return user;
   const { id } = await params;
 
@@ -44,7 +44,7 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await requireAdmin();
+  const user = await requireOwner();
   if (isResponse(user)) return user;
   const { id } = await params;
 

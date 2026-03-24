@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAdmin, isResponse, validateBody, serverError } from '@/lib/api';
+import { requireTeacher, isResponse, validateBody, serverError } from '@/lib/api';
 import { bulkCreateQuestionsSchema } from '@/lib/schemas/question';
 import { autoTag } from '@/lib/services/question-tagger';
 
 // POST /api/questions/bulk — 문제 일괄 생성
 export async function POST(request: NextRequest) {
-  const user = await requireAdmin();
+  const user = await requireTeacher();
   if (isResponse(user)) return user;
 
   const parsed = await validateBody(request, bulkCreateQuestionsSchema);

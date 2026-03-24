@@ -15,6 +15,7 @@ import {
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { PageContainer } from '@/components/ui/PageContainer';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { DeadlineBadge } from '@/components/test/DeadlineBadge';
 import { useTests } from '@/hooks/useTests';
@@ -25,76 +26,27 @@ export default function StudentTestsPage() {
 
   if (loading) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
-        {/* PageHeader 스켈레톤 */}
-        <div className="flex items-center gap-2 mb-6">
-          <Skeleton className="w-6 h-6 rounded" />
+      <PageContainer maxWidth="md">
+        <div className="flex items-center gap-3 mb-6">
+          <Skeleton className="w-6 h-6 rounded-sm" />
           <Skeleton className="h-7 w-28" />
         </div>
-
-        {/* 내 과제 섹션 */}
-        <div className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Skeleton className="w-5 h-5 rounded" />
-            <Skeleton className="h-5 w-16" />
-            <Skeleton className="h-4 w-10" />
-          </div>
-          <div className="space-y-4">
-            {[1, 2].map((i) => (
-              <div key={i} className="bg-white border border-slate-200 border-l-4 border-l-primary/20 rounded-sm p-5 shadow-soft">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 space-y-3">
-                    <div className="flex gap-2">
-                      <Skeleton className="h-5 w-12" />
-                      <Skeleton className="h-5 w-14" />
-                      <Skeleton className="h-5 w-10" />
-                    </div>
-                    <Skeleton className="h-6 w-48" />
-                    <div className="flex gap-4">
-                      <Skeleton className="h-4 w-16" />
-                      <Skeleton className="h-4 w-12" />
-                      <Skeleton className="h-4 w-16" />
-                    </div>
-                    <Skeleton className="h-4 w-36" />
-                  </div>
-                  <div className="ml-4 flex flex-col gap-2">
-                    <Skeleton className="h-8 w-20" />
-                    <Skeleton className="h-8 w-20" />
-                  </div>
-                </div>
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="border border-slate-200 rounded-sm p-5 space-y-3">
+              <div className="flex gap-2">
+                <Skeleton className="h-5 w-14" />
+                <Skeleton className="h-5 w-12" />
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 전체 시험 섹션 */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Skeleton className="w-5 h-5 rounded" />
-            <Skeleton className="h-5 w-20" />
-            <Skeleton className="h-4 w-10" />
-          </div>
-          <div className="space-y-4">
-            <div className="bg-white border border-slate-200 rounded-sm p-5 shadow-soft">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 space-y-3">
-                  <div className="flex gap-2">
-                    <Skeleton className="h-5 w-12" />
-                  </div>
-                  <Skeleton className="h-6 w-40" />
-                  <div className="flex gap-4">
-                    <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-4 w-12" />
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <Skeleton className="h-8 w-20" />
-                </div>
+              <Skeleton className="h-6 w-48" />
+              <div className="flex gap-4">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-16" />
               </div>
             </div>
-          </div>
+          ))}
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
@@ -103,7 +55,7 @@ export default function StudentTestsPage() {
   const availableTests = tests.filter((t) => !t.assignment);
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
+    <PageContainer maxWidth="md">
       <PageHeader
         title="나의 시험"
         icon={<ClipboardCheck className="w-6 h-6" />}
@@ -173,7 +125,7 @@ export default function StudentTestsPage() {
           </div>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 }
 

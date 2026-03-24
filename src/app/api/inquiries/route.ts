@@ -11,9 +11,14 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get('status');
 
   const where: Record<string, unknown> = {};
+  const effectiveTenantId = user.tenantId || user.viewingTenantId;
   if (user.role === 'TEACHER') {
     where.userId = user.id;
+  } else if (effectiveTenantId) {
+    // MANAGER/OWNER 또는 SA 지점장 뷰: 해당 지점 문의만
+    where.user = { tenantId: effectiveTenantId };
   }
+  // SUPER_ADMIN (뷰 없이): 전체 문의 조회
   if (status && (status === 'PENDING' || status === 'ANSWERED')) {
     where.status = status;
   }

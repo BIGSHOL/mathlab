@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireTeacher, isResponse, badRequest } from '@/lib/api';
+import { requireSuperAdmin, isResponse, badRequest } from '@/lib/api';
 import { GoogleGenAI, Type } from '@google/genai';
 
 function getClient() {
@@ -58,7 +58,7 @@ interface ProblemInput {
 
 // POST /api/questions/generate-solutions — AI 풀이 생성
 export async function POST(request: NextRequest) {
-  const user = await requireTeacher();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
   const body = await request.json();

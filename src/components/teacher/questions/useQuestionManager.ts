@@ -26,7 +26,8 @@ import {
 
 export function useQuestionManager() {
   const { user } = useAuth();
-  const isOwner = hasRoleClient(user?.role, 'OWNER');
+  const isOwner = user?.role === 'SUPER_ADMIN';
+  const canEdit = hasRoleClient(user?.role, 'TEACHER');
 
   const [search, setSearch] = useState('');
   const [searchDebounced, setSearchDebounced] = useState('');
@@ -636,5 +637,6 @@ export function useQuestionManager() {
 
     // Role
     isOwner,
+    canEdit,
   };
 }

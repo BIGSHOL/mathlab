@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin, isResponse, badRequest, serverError } from '@/lib/api';
+import { requireSuperAdmin, isResponse, badRequest, serverError } from '@/lib/api';
 import { GoogleGenAI } from '@google/genai';
 
 function getClient() {
@@ -19,7 +19,7 @@ viewBox: 200~400 범위. 선: #555 stroke-width="1.5". 텍스트: font-size="13"
 
 // POST /api/questions/generate-svg — 도형 이미지를 SVG로 변환
 export async function POST(request: NextRequest) {
-  const user = await requireAdmin();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
   const body = await request.json();

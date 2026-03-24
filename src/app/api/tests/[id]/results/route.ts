@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, notFound } from '@/lib/api';
+import { requireTeacher, isResponse, notFound, getStudentScope } from '@/lib/api';
 
 /** GET: 시험 결과 조회 (교사용) */
 export async function GET(
@@ -23,8 +23,12 @@ export async function GET(
     testId = test.id;
   }
 
+  // 역할별 학생 스코핑: TEACHER=교실, MANAGER=테넌트, OWNER+=전체
+  const studentScope = await getStudentScope(currentUser);
+  const studentFilter = studentScope ? { student: studentScope } : {};
+
   const attempts = await prisma.testAttempt.findMany({
-    where: { testId },
+    where: { testId, ...studentFilter },
     include: {
       student: { select: { name: true, grade: true } },
       answers: {

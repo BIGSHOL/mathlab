@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
-import { requireTeacher, isResponse } from '@/lib/api';
+import { requireSuperAdmin, isResponse } from '@/lib/api';
 
 // GET /api/concepts/bulk/template — 샘플 엑셀 템플릿 다운로드
 export async function GET() {
-  const user = await requireTeacher();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
   const headers = ['제목', '내용', '개념코드', '학년', '학기', '대단원', '중단원', '소단원', '카테고리', '영역', '출처', '키워드'];

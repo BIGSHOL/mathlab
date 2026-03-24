@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { PageContainer } from '@/components/ui/PageContainer';
 import { LevelBadge } from '@/components/level-test/LevelBadge';
 import { LevelTestResultCard } from '@/components/level-test/LevelTestResultCard';
 import { RadarChart } from '@/components/level-test/RadarChart';
@@ -219,7 +220,7 @@ export default function LevelTestResultsPage() {
   if (loading) {
     return (
       <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
-        <div className="p-6 max-w-[1024px] mx-auto w-full">
+        <PageContainer maxWidth="lg">
           {/* 헤더 (뒤로가기 + 제목/부제 + 액션 버튼) */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -291,7 +292,7 @@ export default function LevelTestResultsPage() {
               </div>
             ))}
           </div>
-        </div>
+        </PageContainer>
       </div>
     );
   }

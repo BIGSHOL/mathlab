@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, notFound, conflict, badRequest } from '@/lib/api';
+import { requireSuperAdmin, isResponse, notFound, conflict, badRequest } from '@/lib/api';
 import { blankQuerySchema } from '@/lib/schemas/concept';
 
 /** Resolve concept by conceptCode or cuid id */
@@ -84,7 +84,7 @@ export async function POST(
 ) {
   const { id: rawId } = await params;
   const id = await resolveConceptId(rawId) ?? rawId;
-  const user = await requireTeacher();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
   const concept = await prisma.concept.findUnique({ where: { id } });
@@ -121,7 +121,7 @@ export async function PUT(
 ) {
   const { id: rawId } = await params;
   const id = await resolveConceptId(rawId) ?? rawId;
-  const user = await requireTeacher();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
   const body = await request.json();
@@ -157,7 +157,7 @@ export async function DELETE(
 ) {
   const { id: rawId } = await params;
   const id = await resolveConceptId(rawId) ?? rawId;
-  const user = await requireTeacher();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
   const { searchParams } = new URL(request.url);

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { toast } from '@/components/ui/Toast';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { PageContainer } from '@/components/ui/PageContainer';
 import { confirm } from '@/components/ui/ConfirmDialog';
 import { LoadingEmptyState } from '@/components/ui/LoadingEmptyState';
 
@@ -49,7 +50,7 @@ export default function CoursesPage() {
   };
 
   return (
-    <div className="px-6 py-8 max-w-[1200px] mx-auto">
+    <PageContainer maxWidth="xl">
       <PageHeader
         title="학습 과정 관리"
         subtitle="개념을 묶어 학습 과정을 만들고 학생에게 배정합니다"
@@ -118,6 +119,6 @@ export default function CoursesPage() {
           ))}
         </div>
       </LoadingEmptyState>
-    </div>
+    </PageContainer>
   );
 }

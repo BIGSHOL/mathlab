@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { ChevronRight, GraduationCap, Lock, CheckCircle, BookOpen, Sparkles } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { PageContainer } from '@/components/ui/PageContainer';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import GemStone from '@/components/gamification/GemStone';
 import { partToGemVariant } from '@/lib/utils/gem';
@@ -88,7 +90,7 @@ export default async function SubjectsPage({
   // 배정 과정이 없으면 빈 상태
   if (!hasEnrollments) {
     return (
-      <div className="px-4 md:px-8 py-8 w-full">
+      <PageContainer maxWidth="lg">
         <PageHeader title="학습 과정" subtitle="선생님이 배정한 학습 과정을 진행합니다." />
         <div className="flex flex-col items-center justify-center py-16 px-6">
           <div className="relative mb-6">
@@ -106,21 +108,20 @@ export default async function SubjectsPage({
           </p>
           <div className="flex gap-3 mt-6">
             <Link href="/practice/arithmetic">
-              <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-sm bg-primary/10 text-primary text-sm font-semibold hover:bg-primary/15 transition-colors">
+              <Button variant="secondary" size="sm">
                 연산 연습하기
-                <ChevronRight className="w-4 h-4" />
-              </span>
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
             </Link>
           </div>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="px-4 md:px-8 py-8 w-full">
-      <h1 className="text-2xl font-bold tracking-tight text-text-primary mb-2">학습 과정</h1>
-      <p className="text-text-secondary mb-8">선생님이 배정한 학습 과정을 진행합니다.</p>
+    <PageContainer maxWidth="lg">
+      <PageHeader title="학습 과정" subtitle="선생님이 배정한 학습 과정을 진행합니다." />
 
       <div className="flex flex-col gap-8">
         {/* 현재 진행 중 과정 */}
@@ -242,6 +243,6 @@ export default async function SubjectsPage({
           </div>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireTeacher, isResponse, badRequest, serverError } from '@/lib/api';
+import { requireSuperAdmin, isResponse, badRequest, serverError } from '@/lib/api';
 import { GoogleGenAI, Type } from '@google/genai';
 
 const METADATA_SCHEMA = {
@@ -39,7 +39,7 @@ function getClient() {
 
 // POST /api/concepts/extract-metadata — AI 메타데이터 + 맞춤법 추출
 export async function POST(request: NextRequest) {
-  const user = await requireTeacher();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
   const body = await request.json();

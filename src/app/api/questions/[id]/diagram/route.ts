@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, notFound, serverError } from '@/lib/api';
+import { requireSuperAdmin, isResponse, notFound, serverError } from '@/lib/api';
 import { GoogleGenAI, Type } from '@google/genai';
 
 const DIAGRAM_SCHEMA = {
@@ -27,7 +27,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const user = await requireTeacher();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
   const { id } = await params;

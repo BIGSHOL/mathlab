@@ -40,6 +40,8 @@ const STAGE_XP: Record<string, number> = {
 export async function POST(request: NextRequest) {
   const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
+  const licenseCheck = await requireLicense(user, 'concept');
+  if (licenseCheck) return licenseCheck;
 
   const parsed = await validateBody(request, completeStageSchema);
   if (isResponse(parsed)) return parsed;

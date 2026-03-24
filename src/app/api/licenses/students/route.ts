@@ -13,14 +13,15 @@ export async function GET(_request: NextRequest) {
   const user = await requireOwner();
   if (isResponse(user)) return user;
 
-  if (!user.tenantId) {
+  const tenantId = user.tenantId || user.viewingTenantId;
+  if (!tenantId) {
     return NextResponse.json(
       { error: { code: 'NO_TENANT', message: '지점이 설정되지 않았습니다' } },
       { status: 400 }
     );
   }
 
-  const overview = await getTenantLicenseOverview(user.tenantId);
+  const overview = await getTenantLicenseOverview(tenantId);
 
   return NextResponse.json({ data: overview });
 }
@@ -30,7 +31,8 @@ export async function POST(request: NextRequest) {
   const user = await requireOwner();
   if (isResponse(user)) return user;
 
-  if (!user.tenantId) {
+  const tenantId = user.tenantId || user.viewingTenantId;
+  if (!tenantId) {
     return NextResponse.json(
       { error: { code: 'NO_TENANT', message: '지점이 설정되지 않았습니다' } },
       { status: 400 }
@@ -63,7 +65,7 @@ export async function POST(request: NextRequest) {
   const result = await assignBulkLicenses({
     studentIds,
     features: validFeatures,
-    tenantId: user.tenantId,
+    tenantId,
     assignedBy: user.id,
     expiresAt: expiresAt ? new Date(expiresAt) : undefined,
   });

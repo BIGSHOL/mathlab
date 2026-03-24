@@ -3,13 +3,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Building2, Plus, Users, Check, X, ExternalLink,
+  Building2, Plus, Users, Settings,
   Search, KeyRound, AlertTriangle, GraduationCap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { toast } from '@/components/ui/Toast';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { PageContainer } from '@/components/ui/PageContainer';
+import { useViewingTenantStore } from '@/stores/viewingTenantStore';
 
 interface Tenant {
   id: string;
@@ -31,6 +33,7 @@ interface Tenant {
 
 export default function TenantsPage() {
   const router = useRouter();
+  const { enterTenantView } = useViewingTenantStore();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -121,7 +124,7 @@ export default function TenantsPage() {
   const expiringTotal = tenants.reduce((s, t) => s + t.expiringLicenses, 0);
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <PageContainer maxWidth="xl">
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -276,9 +279,15 @@ export default function TenantsPage() {
           {filtered.map((tenant) => (
             <div
               key={tenant.id}
-              className={`bg-white rounded-xl border p-4 transition-colors ${
-                tenant.isActive ? 'border-slate-200' : 'border-red-200 bg-red-50/50'
+              className={`bg-white rounded-xl border p-4 transition-colors cursor-pointer ${
+                tenant.isActive ? 'border-slate-200 hover:border-primary/40 hover:shadow-sm' : 'border-red-200 bg-red-50/50'
               }`}
+              onClick={() => {
+                if (tenant.isActive) {
+                  enterTenantView(tenant.id, tenant.name);
+                  router.push('/overview');
+                }
+              }}
             >
               <div className="flex items-center justify-between">
                 {/* 좌측: 기본 정보 */}
@@ -358,23 +367,27 @@ export default function TenantsPage() {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                     <Button
                       variant="ghost"
                       size="sm"
+                      title="지점 설정"
                       onClick={() => router.push(`/admin/tenants/${tenant.id}`)}
                     >
-                      <ExternalLink className="w-4 h-4" />
+                      <Settings className="w-4 h-4" />
                     </Button>
                     {tenant.slug !== 'default' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                      <button
                         onClick={() => toggleActive(tenant)}
                         title={tenant.isActive ? '비활성화' : '활성화'}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                          tenant.isActive ? 'bg-green-500' : 'bg-slate-300'
+                        }`}
                       >
-                        {tenant.isActive ? <X className="w-4 h-4 text-red-500" /> : <Check className="w-4 h-4 text-green-500" />}
-                      </Button>
+                        <span className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
+                          tenant.isActive ? 'translate-x-6' : 'translate-x-1'
+                        }`} />
+                      </button>
                     )}
                   </div>
                 </div>
@@ -383,7 +396,7 @@ export default function TenantsPage() {
           ))}
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 }
 

@@ -2,20 +2,21 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Building2, ArrowLeft, Users, School, Save, UserCog, GraduationCap, Shield, KeyRound, Plus, Check, X } from 'lucide-react';
+import { Building2, ArrowLeft, Users, School, Save, UserCog, GraduationCap, Shield, KeyRound, Plus, Check, X, BookOpen, Calculator, Zap, ClipboardCheck, Swords, Stethoscope, Radio } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { toast } from '@/components/ui/Toast';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { PageContainer } from '@/components/ui/PageContainer';
 
 const LICENSE_FEATURES = [
-  { key: 'concept', label: '개념 학습' },
-  { key: 'arithmetic', label: '연산 연습' },
-  { key: 'time_attack', label: '타임어택' },
-  { key: 'test', label: '시험' },
-  { key: 'revenge', label: '복수전' },
-  { key: 'diagnostic', label: '레벨테스트' },
-  { key: 'quiz', label: '실시간 퀴즈' },
+  { key: 'concept', label: '개념 학습', icon: BookOpen, color: 'text-blue-500' },
+  { key: 'arithmetic', label: '연산 연습', icon: Calculator, color: 'text-amber-500' },
+  { key: 'time_attack', label: '타임어택', icon: Zap, color: 'text-orange-500' },
+  { key: 'test', label: '시험', icon: ClipboardCheck, color: 'text-emerald-500' },
+  { key: 'revenge', label: '복수전', icon: Swords, color: 'text-red-500' },
+  { key: 'diagnostic', label: '레벨테스트', icon: Stethoscope, color: 'text-violet-500' },
+  { key: 'quiz', label: '실시간 퀴즈', icon: Radio, color: 'text-pink-500' },
 ] as const;
 
 interface TenantLicenseRow {
@@ -158,7 +159,7 @@ export default function TenantDetailPage() {
 
   if (loading) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <PageContainer maxWidth="lg">
         {/* 헤더 (뒤로가기 + 아이콘 + 이름 + 부제) */}
         <div className="flex items-center gap-3 mb-6">
           <Skeleton className="h-8 w-8 rounded" />
@@ -199,14 +200,14 @@ export default function TenantDetailPage() {
             </div>
           </div>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   if (!tenant) return null;
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
+    <PageContainer maxWidth="lg">
       {/* 헤더 */}
       <div className="flex items-center gap-3 mb-6">
         <Button variant="ghost" size="sm" onClick={() => router.push('/admin/tenants')}>
@@ -335,11 +336,19 @@ export default function TenantDetailPage() {
               </thead>
               <tbody>
                 {licenses.map((lic) => {
-                  const label = LICENSE_FEATURES.find((f) => f.key === lic.featureKey)?.label ?? lic.featureKey;
+                  const feat = LICENSE_FEATURES.find((f) => f.key === lic.featureKey);
+                  const label = feat?.label ?? lic.featureKey;
+                  const FeatIcon = feat?.icon;
+                  const iconColor = feat?.color ?? 'text-slate-400';
                   const isEditing = editingFeature === lic.featureKey;
                   return (
                     <tr key={lic.id} className="border-b border-slate-100">
-                      <td className="py-2 px-2 font-medium">{label}</td>
+                      <td className="py-2 px-2 font-medium">
+                        <span className="flex items-center gap-2">
+                          {FeatIcon && <FeatIcon className={`w-4 h-4 ${iconColor} shrink-0`} />}
+                          {label}
+                        </span>
+                      </td>
                       <td className="py-2 px-2 text-center">
                         {isEditing ? (
                           <input
@@ -362,9 +371,13 @@ export default function TenantDetailPage() {
                         <button
                           onClick={() => handleUpdateLicense(lic.featureKey, { isActive: !lic.isActive })}
                           disabled={licenseSaving}
-                          className={`text-xs px-2 py-0.5 rounded ${lic.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}`}
+                          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer ${
+                            lic.isActive ? 'bg-green-500' : 'bg-slate-300'
+                          } ${licenseSaving ? 'opacity-50' : ''}`}
                         >
-                          {lic.isActive ? 'ON' : 'OFF'}
+                          <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform ${
+                            lic.isActive ? 'translate-x-[18px]' : 'translate-x-[3px]'
+                          }`} />
                         </button>
                       </td>
                       <td className="py-2 px-2 text-right">
@@ -404,10 +417,13 @@ export default function TenantDetailPage() {
               <div className="mt-4 pt-4 border-t border-slate-100">
                 <p className="text-xs text-text-secondary mb-2">미등록 기능</p>
                 <div className="flex flex-wrap gap-2">
-                  {unregisteredFeatures.map((f) => (
+                  {unregisteredFeatures.map((f) => {
+                    const FeatIcon = f.icon;
+                    return (
                     <div key={f.key} className="flex items-center gap-1">
                       {addingFeature === f.key ? (
                         <div className="flex items-center gap-1 px-2 py-1 bg-slate-50 rounded-lg border border-slate-200">
+                          <FeatIcon className={`w-3.5 h-3.5 ${f.color} shrink-0`} />
                           <span className="text-xs font-medium">{f.label}</span>
                           <input
                             type="number"
@@ -434,14 +450,16 @@ export default function TenantDetailPage() {
                       ) : (
                         <button
                           onClick={() => { setAddingFeature(f.key); setNewSeats(100); }}
-                          className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors"
+                          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors"
                         >
                           <Plus className="w-3 h-3" />
+                          <FeatIcon className={`w-3.5 h-3.5 ${f.color}`} />
                           {f.label}
                         </button>
                       )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -452,6 +470,6 @@ export default function TenantDetailPage() {
           </>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 }

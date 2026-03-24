@@ -6,6 +6,7 @@ import { prisma } from '@/lib/db';
 import { redirect } from 'next/navigation';
 import { RankingContent } from '@/components/ranking/RankingContent';
 import type { RankingEntry } from '@/components/ranking/types';
+import { getTenantFilter } from '@/lib/api/tenant-scope';
 
 /** KST 기준 이번 주 월요일 00:00 UTC */
 function getWeekStart(): Date {
@@ -29,8 +30,14 @@ export default async function RankingPage({
   if (!realUser) redirect('/login');
   const user = await getViewAsUser(await searchParams) ?? realUser;
 
-  // 1. 현재 순위 (top 50)
+  // 1. 현재 순위 (top 50) — 같은 테넌트 학생만
+  const tenantWhere = getTenantFilter(user);
+  const tenantUserFilter = Object.keys(tenantWhere).length > 0
+    ? { user: { tenantId: tenantWhere.tenantId as string } }
+    : {};
+
   const profiles = await prisma.studentProfile.findMany({
+    where: tenantUserFilter,
     orderBy: { totalXp: 'desc' },
     take: 50,
     include: { user: { select: { id: true, name: true } } },
@@ -101,7 +108,7 @@ export default async function RankingPage({
     const profile = await prisma.studentProfile.findUnique({ where: { userId: user.id } });
     if (profile) {
       myRank = (await prisma.studentProfile.count({
-        where: { totalXp: { gt: profile.totalXp } },
+        where: { ...tenantUserFilter, totalXp: { gt: profile.totalXp } },
       })) + 1;
     }
   }
