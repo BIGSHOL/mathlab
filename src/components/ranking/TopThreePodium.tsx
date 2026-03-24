@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Crown, Medal, Star, Flame } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { RankChangeIndicator } from './RankChangeIndicator';
@@ -101,9 +102,8 @@ export function TopThreePodium({ top3 }: TopThreePodiumProps) {
 
             {/* 아바타 */}
             {student.badgeIcon ? (
-              <div className={`${config.avatarSize} ${config.avatarRing} rounded-full overflow-hidden flex items-center justify-center mb-1.5`}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={student.badgeIcon} alt={`${student.name} 대표 배지`} className="w-full h-full object-cover scale-[1.15]" />
+              <div className={`${config.avatarSize} ${config.avatarRing} rounded-full overflow-hidden relative mb-1.5`}>
+                <Image src={student.badgeIcon} alt={`${student.name} 대표 배지`} fill sizes="80px" className="object-cover scale-[1.15]" />
               </div>
             ) : (
               <div className={`${config.avatarSize} ${config.avatarBg} ${config.avatarRing} rounded-full flex items-center justify-center text-white font-bold ${config.avatarText} mb-1.5`}>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireSuperAdmin, isResponse, notFound, conflict, badRequest } from '@/lib/api';
+import { requireAuth, requireSuperAdmin, isResponse, notFound, conflict, badRequest } from '@/lib/api';
 import { blankQuerySchema } from '@/lib/schemas/concept';
 
 /** Resolve concept by conceptCode or cuid id */
@@ -17,6 +17,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const user = await requireAuth();
+  if (isResponse(user)) return user;
+
   const { id: rawId } = await params;
   const id = await resolveConceptId(rawId) ?? rawId;
   const { searchParams } = new URL(request.url);

@@ -60,7 +60,6 @@ export async function POST(request: NextRequest) {
     });
 
     let svgText = (response.text || '').trim();
-    console.log('[generate-svg] Gemini 응답 길이:', svgText.length, '처음 200자:', svgText.substring(0, 200));
 
     // 마크다운 코드블록 제거 (```svg, ```xml, ```html, ``` 등)
     svgText = svgText.replace(/^```(?:svg|xml|html)?\s*\n?/gm, '').replace(/\n?\s*```$/gm, '');

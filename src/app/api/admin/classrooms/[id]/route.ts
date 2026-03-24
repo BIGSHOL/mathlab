@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { prisma } from '@/lib/db';
-import { requireOwner, isResponse, notFound, forbidden, hasRole } from '@/lib/api';
+import { requireOwner, isResponse, notFound, forbidden, hasRole, validateBody } from '@/lib/api';
+
+const updateClassroomSchema = z.object({
+  name: z.string().min(1).max(50).optional(),
+  grade: z.number().int().min(1).max(12).nullable().optional(),
+  teacherId: z.string().min(1).nullable().optional(),
+}).strict();
 
 /** 테넌트 소유권 검증 후 반 조회 */
 async function findClassroomWithTenantCheck(id: string, user: { tenantId: string | null; role: string }) {
@@ -27,13 +34,15 @@ export async function PATCH(
   if (!result) return notFound('반을 찾을 수 없습니다');
   if (result === 'FORBIDDEN') return forbidden('다른 지점의 반은 수정할 수 없습니다');
 
-  const body = await request.json();
+  const parsed = await validateBody(request, updateClassroomSchema);
+  if (isResponse(parsed)) return parsed;
+
   const updated = await prisma.classroom.update({
     where: { id },
     data: {
-      ...(body.name && { name: body.name }),
-      ...(body.grade !== undefined && { grade: body.grade }),
-      ...(body.teacherId !== undefined && { teacherId: body.teacherId }),
+      ...(parsed.name && { name: parsed.name }),
+      ...(parsed.grade !== undefined && { grade: parsed.grade }),
+      ...(parsed.teacherId !== undefined && { teacherId: parsed.teacherId }),
     },
   });
 

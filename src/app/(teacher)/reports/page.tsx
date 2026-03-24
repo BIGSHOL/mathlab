@@ -381,7 +381,7 @@ export default function ReportsPage() {
                     <Skeleton className="h-6 w-48 mx-auto" />
                     <Skeleton className="h-4 w-64 mx-auto" />
                     <div className="space-y-2 mt-4">
-                      <Skeleton className="h-32 w-full rounded-sm" />
+                      <Skeleton className="h-48 w-full rounded-sm" />
                       <Skeleton className="h-4 w-3/4 mx-auto" />
                     </div>
                     <p className="text-sm text-text-secondary animate-pulse">리포트를 생성하고 있습니다...</p>

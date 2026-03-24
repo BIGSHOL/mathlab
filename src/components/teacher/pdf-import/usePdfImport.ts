@@ -211,7 +211,6 @@ export function usePdfImport(): PdfImportState {
         // 텍스트 레이어로 문제 페이지 여부 사전 판별 (API 비용 절감)
         const preText = await extractPageText(pdfDoc, pageNum);
         if (!isProblemPage(preText)) {
-          console.log(`[pdf-import] p.${pageNum} 비문제 페이지 스킵`);
           skippedCount++;
           continue;
         }

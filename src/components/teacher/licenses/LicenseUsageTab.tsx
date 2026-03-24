@@ -45,9 +45,13 @@ export default function LicenseUsageTab() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-10 w-40 rounded-sm" />
-        <Skeleton className="h-48 rounded-sm" />
-        <Skeleton className="h-64 rounded-sm" />
+        {/* 기간 선택 버튼 */}
+        <Skeleton className="h-9 w-40 rounded-sm" />
+        {/* 사용률 비교 차트 (p-4 + 제목 + 7행 × h-5 + 범례) */}
+        <Skeleton className="h-56 rounded-sm" />
+        {/* 일별 활동 추이 (p-4 + 필터 + SVG h-36) */}
+        <Skeleton className="h-56 rounded-sm" />
+        {/* 미사용 학생 테이블 */}
         <Skeleton className="h-48 rounded-sm" />
       </div>
     );

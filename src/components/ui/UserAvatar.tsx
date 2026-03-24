@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 const SIZE_MAP = {
   xs: 'w-7 h-7 text-[11px]',
   sm: 'w-8 h-8 text-sm',
@@ -20,12 +22,13 @@ export function UserAvatar({ name, badgeIcon, size = 'md', className = '' }: Use
 
   if (badgeIcon && badgeIcon.startsWith('/')) {
     return (
-      <div className={`${sizeClass} rounded-full overflow-hidden shrink-0 ring-1 ring-amber-200/60 ${className}`}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+      <div className={`${sizeClass} rounded-full overflow-hidden shrink-0 ring-1 ring-amber-200/60 relative ${className}`}>
+        <Image
           src={badgeIcon}
           alt={`${name} 대표 배지`}
-          className="w-full h-full object-cover scale-[1.15]"
+          fill
+          sizes="56px"
+          className="object-cover scale-[1.15]"
         />
       </div>
     );

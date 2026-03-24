@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, requireResource, validateBody, isResponse } from '@/lib/api';
+import { requireAuth, requireTeacher, requireResource, validateBody, isResponse } from '@/lib/api';
 import { updateQuestionSchema } from '@/lib/schemas/question';
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const user = await requireAuth();
+  if (isResponse(user)) return user;
+
   const { id } = await params;
   const question = await requireResource(
     () => prisma.question.findUnique({ where: { id } }),

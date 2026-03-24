@@ -10,6 +10,7 @@ import { prisma } from '@/lib/db';
 import { redirect } from 'next/navigation';
 import { xpToNextLevel } from '@/lib/utils/xp';
 import { CATEGORY_LABELS, LEVEL_LABELS } from '@/lib/services/arithmetic-generator/types';
+import Image from 'next/image';
 import Link from 'next/link';
 import { BadgeModalSection } from './BadgeModalSection';
 import { UserAvatar } from '@/components/ui/UserAvatar';
@@ -272,11 +273,10 @@ export default async function ProfilePage({
 
               {/* 좌측 패널: 이미지 및 기본 정보 */}
               <div className="w-48 flex flex-col items-center justify-between">
-                <div className={`w-28 h-28 flex shrink-0 items-center justify-center text-5xl mb-3 rounded-2xl shadow-xl ring-1 ring-white/10 overflow-hidden ${isEarned ? 'bg-slate-700' : 'bg-slate-700/50 opacity-60 grayscale'}`}>
+                <div className={`w-28 h-28 flex shrink-0 items-center justify-center text-5xl mb-3 rounded-2xl shadow-xl ring-1 ring-white/10 overflow-hidden relative ${isEarned ? 'bg-slate-700' : 'bg-slate-700/50 opacity-60 grayscale'}`}>
                   {(!isEarned && isHidden) ? '🔒' : (
                     badge.icon.startsWith('/') ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={badge.icon} alt={badge.label} className="w-full h-full object-cover" />
+                      <Image src={badge.icon} alt={badge.label} fill sizes="112px" className="object-cover" />
                     ) : (
                       badge.icon
                     )
@@ -338,14 +338,13 @@ export default async function ProfilePage({
             </div>
 
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center text-2xl shrink-0 mb-1.5 shadow-inner overflow-hidden ${isEarned ? '' : 'opacity-40'
+              className={`w-10 h-10 rounded-full flex items-center justify-center text-2xl shrink-0 mb-1.5 shadow-inner overflow-hidden relative ${isEarned ? '' : 'opacity-40'
                 } ${(!isEarned && isHidden) ? '' : badge.icon.startsWith('/') ? 'ring-1 ring-black/5' : ''}`}
               style={{ backgroundColor: isEarned ? `${badge.color}15` : '#f1f5f9' }}
             >
               {(!isEarned && isHidden) ? '🔒' : (
                 badge.icon.startsWith('/') ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={badge.icon} alt={badge.label} className="w-full h-full object-cover scale-[1.15]" />
+                  <Image src={badge.icon} alt={badge.label} fill sizes="40px" className="object-cover scale-[1.15]" />
                 ) : (
                   badge.icon
                 )

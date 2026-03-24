@@ -90,8 +90,7 @@ export default function SupportPage() {
 
   const fetchInquiries = useCallback(async () => {
     try {
-      const params = statusFilter !== 'ALL' ? `?status=${statusFilter}` : '';
-      const res = await fetch(`/api/inquiries${params}`);
+      const res = await fetch('/api/inquiries');
       if (res.ok) {
         const json = await res.json();
         setInquiries(json.data ?? []);
@@ -99,7 +98,7 @@ export default function SupportPage() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter]);
+  }, []);
 
   useEffect(() => {
     if (user) fetchInquiries();

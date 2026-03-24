@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
-import { requireOwner, requireTeacher, isResponse, validateBody, requireResource, hasRole } from '@/lib/api';
+import { requireOwner, requireTeacher, isResponse, validateBody, requireResource, hasRole, forbidden } from '@/lib/api';
+import { getTenantFilter } from '@/lib/api/tenant-scope';
 import { updateUserSchema } from '@/lib/schemas/auth';
 
 // PATCH /api/users/:id
@@ -47,8 +48,15 @@ export async function DELETE(
   const user = await requireOwner();
   if (isResponse(user)) return user;
 
+  // 자기 자신 삭제 방지
+  if (user.id === id) {
+    return forbidden('자기 자신은 삭제할 수 없습니다');
+  }
+
+  // 테넌트 격리: 같은 테넌트 사용자만 삭제 가능 (SUPER_ADMIN 예외)
+  const tenantFilter = getTenantFilter(user);
   const targetUser = await requireResource(
-    () => prisma.user.findUnique({ where: { id, deletedAt: null }, select: { id: true, role: true } }),
+    () => prisma.user.findUnique({ where: { id, deletedAt: null, ...tenantFilter }, select: { id: true, role: true } }),
     '사용자를 찾을 수 없습니다'
   );
   if (isResponse(targetUser)) return targetUser;

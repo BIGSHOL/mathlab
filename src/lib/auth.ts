@@ -88,7 +88,7 @@ export async function getCurrentUser() {
     id: string;
     name: string;
     username: string;
-    role: 'STUDENT' | 'TEACHER' | 'OWNER' | 'SUPER_ADMIN';
+    role: 'STUDENT' | 'TEACHER' | 'MANAGER' | 'OWNER' | 'SUPER_ADMIN';
     grade: number | null;
     tenantId: string | null;
     tenantSlug: string | null;

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAuth, isResponse } from '@/lib/api';
 import { prisma } from '@/lib/db';
 
 /**
@@ -8,13 +8,11 @@ import { prisma } from '@/lib/db';
  * notifCheckedAt 이후의 배정만 "신규"로 판단
  */
 export async function GET() {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } }, { status: 401 });
-  }
+  const user = await requireAuth();
+  if (isResponse(user)) return user;
 
   const profile = await prisma.studentProfile.findUnique({
-    where: { userId: currentUser.id },
+    where: { userId: user.id },
     select: { notifCheckedAt: true },
   });
 
@@ -23,22 +21,22 @@ export async function GET() {
 
   const [newTestAssignments, newArithmetic, newConcept, newQuestion] = await Promise.all([
     prisma.testAssignment.findMany({
-      where: { studentId: currentUser.id, assignedAt: { gt: sinceDate }, status: 'ASSIGNED' },
+      where: { studentId: user.id, assignedAt: { gt: sinceDate }, status: 'ASSIGNED' },
       select: { test: { select: { title: true } } },
       take: 5,
     }),
     prisma.arithmeticHomeworkEnrollment.findMany({
-      where: { studentId: currentUser.id, enrolledAt: { gt: sinceDate } },
+      where: { studentId: user.id, enrolledAt: { gt: sinceDate } },
       select: { plan: { select: { title: true } } },
       take: 5,
     }),
     prisma.conceptHomeworkEnrollment.findMany({
-      where: { studentId: currentUser.id, enrolledAt: { gt: sinceDate } },
+      where: { studentId: user.id, enrolledAt: { gt: sinceDate } },
       select: { plan: { select: { title: true } } },
       take: 5,
     }),
     prisma.questionHomeworkEnrollment.findMany({
-      where: { studentId: currentUser.id, enrolledAt: { gt: sinceDate } },
+      where: { studentId: user.id, enrolledAt: { gt: sinceDate } },
       select: { plan: { select: { title: true } } },
       take: 5,
     }),
@@ -67,15 +65,13 @@ export async function GET() {
  * 알림 확인 완료 — notifCheckedAt 갱신
  */
 export async function POST() {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } }, { status: 401 });
-  }
+  const user = await requireAuth();
+  if (isResponse(user)) return user;
 
   await prisma.studentProfile.upsert({
-    where: { userId: currentUser.id },
+    where: { userId: user.id },
     update: { notifCheckedAt: new Date() },
-    create: { userId: currentUser.id, notifCheckedAt: new Date() },
+    create: { userId: user.id, notifCheckedAt: new Date() },
   });
 
   return NextResponse.json({ data: { ok: true } });
