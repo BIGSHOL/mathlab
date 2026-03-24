@@ -421,8 +421,9 @@ export default async function ProfilePage({
 
   return (
     <PageContainer maxWidth="lg">
+      <div className="flex flex-col gap-6">
       {/* ──── 상단: 프로필 헤더 & 학습 스트릭 ──── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4">
         {/* 1. 프로필 정보 (좌측) */}
         <Card padding="md" className="rounded-xl flex flex-col justify-between">
           <div className="flex items-center gap-4 mb-4">
@@ -705,7 +706,7 @@ export default async function ProfilePage({
         totalStudents={totalStudents}
         isViewAs={user.id !== realUser.id}
       />
-
+      </div>
     </PageContainer>
   );
 }

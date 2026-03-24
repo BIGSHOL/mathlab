@@ -26,7 +26,7 @@ export function GemCollectionSection({ gems, totalCompleted, totalInProgress }: 
   const gemMap = new Map(gems.map((g) => [g.variant, g]));
 
   return (
-    <Card className="rounded-xl overflow-hidden mb-4">
+    <Card className="rounded-xl overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
         <div className="flex items-center gap-1.5">
           <Gem className="w-3.5 h-3.5 text-purple-500" />
@@ -65,7 +65,6 @@ export function GemCollectionSection({ gems, totalCompleted, totalInProgress }: 
                   variant={variant}
                   stage={total > 0 ? Math.min(maxStage, 4) : 0}
                   size="md"
-                  disableAnimation
                 />
                 <p className="text-[11px] font-bold text-text-primary mt-1.5">
                   {GEM_VARIANT_LABELS[variant]}
