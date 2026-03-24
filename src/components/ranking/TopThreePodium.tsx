@@ -100,9 +100,16 @@ export function TopThreePodium({ top3 }: TopThreePodiumProps) {
             </div>
 
             {/* 아바타 */}
-            <div className={`${config.avatarSize} ${config.avatarBg} ${config.avatarRing} rounded-full flex items-center justify-center text-white font-bold ${config.avatarText} mb-1.5`}>
-              {student.name[0]}
-            </div>
+            {student.badgeIcon ? (
+              <div className={`${config.avatarSize} ${config.avatarRing} rounded-full overflow-hidden flex items-center justify-center mb-1.5`}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={student.badgeIcon} alt={`${student.name} 대표 배지`} className="w-full h-full object-cover scale-[1.15]" />
+              </div>
+            ) : (
+              <div className={`${config.avatarSize} ${config.avatarBg} ${config.avatarRing} rounded-full flex items-center justify-center text-white font-bold ${config.avatarText} mb-1.5`}>
+                {student.name[0]}
+              </div>
+            )}
 
             {/* 이름 + 정보 */}
             <div className="text-center mb-2 w-full">

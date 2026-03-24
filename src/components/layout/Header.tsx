@@ -5,8 +5,10 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { Search, Bell, ChevronDown, LogOut, Settings, User } from 'lucide-react';
 import { LogoIcon } from '@/components/ui/LogoIcon';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { useTenant } from '@/components/providers/TenantProvider';
 import { useUpdateNotification } from '@/stores/update-notification';
+import { useRepresentativeBadge } from '@/hooks/useRepresentativeBadge';
 import { signOut } from 'next-auth/react';
 
 interface HeaderProps {
@@ -69,6 +71,7 @@ export function Header({ role, userName = '사용자' }: HeaderProps) {
   const tenant = useTenant();
   const displayName = tenant?.name || 'MathLab';
   const nav = role === 'student' ? studentNav : teacherNav;
+  const { badgeIcon } = useRepresentativeBadge(role === 'student');
 
   // _as 파라미터가 있으면 모든 링크에 유지
   const withAs = (href: string) => viewAsId ? `${href}?_as=${viewAsId}` : href;
@@ -150,9 +153,7 @@ export function Header({ role, userName = '사용자' }: HeaderProps) {
               onClick={() => setDropdownOpen((p) => !p)}
               className="flex items-center gap-2 cursor-pointer group"
             >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-accent text-white flex items-center justify-center text-sm font-bold">
-                {userName[0]}
-              </div>
+              <UserAvatar name={userName} badgeIcon={badgeIcon} size="sm" />
               <span className="text-sm font-semibold text-text-primary group-hover:text-primary transition-colors">
                 {userName}
               </span>

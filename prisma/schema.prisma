@@ -292,9 +292,11 @@ model StudentProfile {
   lastActiveAt    DateTime?
   notifCheckedAt  DateTime? // 과제 알림 마지막 확인 시점
   conceptNavMode  String    @default("curriculum") // curriculum | chain:<체인명>
+  representativeBadgeId String?
   updatedAt       DateTime  @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  representativeBadge Badge? @relation(fields: [representativeBadgeId], references: [id], onDelete: SetNull)
 
   @@index([totalXp(sort: Desc), level(sort: Desc)])
 }
@@ -1044,7 +1046,8 @@ model Badge {
   condition   Json
   sortOrder   Int    @default(0)
 
-  users UserBadge[]
+  users                  UserBadge[]
+  representativeProfiles StudentProfile[]
 }
 
 model UserBadge {

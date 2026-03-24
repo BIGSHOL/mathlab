@@ -9,6 +9,7 @@ export interface RankingEntry {
   currentStreak: number;
   isMe: boolean;
   isNew: boolean;
+  badgeIcon: string | null;
 }
 
 export type RankingPeriod = 'week' | 'month' | 'all';

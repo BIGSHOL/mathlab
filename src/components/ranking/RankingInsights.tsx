@@ -4,6 +4,7 @@ import { Rocket, TrendingDown, Users, Flame, Star } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { MotionStagger, MotionItem } from '@/components/ui/MotionStagger';
 import { RankChangeIndicator } from './RankChangeIndicator';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import type { RankingEntry, RankingPeriod } from './types';
 
 interface RankingInsightsProps {
@@ -41,9 +42,7 @@ export function RankingInsights({ hotRisers, bigFallers, totalStudents, period }
                   student.isMe ? 'bg-primary/10 border border-primary/20' : 'bg-white/60 border border-orange-100/50'
                 }`}>
                   <span className="w-5 text-center text-xs font-extrabold text-orange-400">{i + 1}</span>
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 text-white flex items-center justify-center text-[10px] font-bold shrink-0">
-                    {student.name[0]}
-                  </div>
+                  <UserAvatar name={student.name} badgeIcon={student.badgeIcon} size="xs" />
                   <div className="flex-1 min-w-0">
                     <p className={`text-xs font-bold truncate ${student.isMe ? 'text-primary' : 'text-text-primary'}`}>
                       {student.name}
@@ -71,9 +70,7 @@ export function RankingInsights({ hotRisers, bigFallers, totalStudents, period }
           <div className="flex flex-col gap-1.5">
             {bigFallers.map((student) => (
               <div key={student.userId} className="flex items-center gap-2.5 p-2 rounded-lg bg-blue-50/30">
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-slate-300 to-slate-400 text-white flex items-center justify-center text-[10px] font-bold shrink-0">
-                  {student.name[0]}
-                </div>
+                <UserAvatar name={student.name} badgeIcon={student.badgeIcon} size="xs" />
                 <span className="flex-1 text-xs text-text-primary truncate">{student.name}</span>
                 <RankChangeIndicator change={student.rankChange} size="sm" />
               </div>

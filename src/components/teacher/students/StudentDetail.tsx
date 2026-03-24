@@ -34,13 +34,12 @@ interface StudentDetailProps {
   user: UserItem;
   stats: StudentStats | null;
   statsLoading: boolean;
-  showTeachers: boolean;
   isOwner: boolean;
   onResetPassword: (id: string) => void;
   onDelete: (id: string, name: string) => void;
 }
 
-export function StudentDetail({ user, stats, statsLoading, showTeachers, isOwner, onResetPassword, onDelete }: StudentDetailProps) {
+export function StudentDetail({ user, stats, statsLoading, isOwner, onResetPassword, onDelete }: StudentDetailProps) {
   const s = stats?.summary;
   const accuracyPct = s && s.arithmeticTotal > 0
     ? Math.round((s.arithmeticCorrect / s.arithmeticTotal) * 100) : 0;
@@ -421,7 +420,7 @@ export function StudentDetail({ user, stats, statsLoading, showTeachers, isOwner
       )}
 
       {/* 연산 숙제 오답 */}
-      {!showTeachers && (hwWrongData || hwWrongLoading) && (
+      {(hwWrongData || hwWrongLoading) && (
         <>
           <div className="flex items-center justify-between mt-3 mb-2">
             <SectionTitle icon={CalendarCheck} title={`연산 숙제 오답${hwWrongData ? ` (${hwWrongData.totalWrong}문제)` : ''}`} />
@@ -532,15 +531,13 @@ export function StudentDetail({ user, stats, statsLoading, showTeachers, isOwner
       <div className="border-t border-slate-200 pt-3 mt-4">
         <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">액션</h3>
         <div className="flex flex-wrap gap-2">
-          {!showTeachers && (
-            <Link
-              href={`/students/${user.seq}/wrong-answers`}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-sm transition-colors"
-            >
-              <AlertTriangle className="w-3.5 h-3.5" />
-              오답 관리
-            </Link>
-          )}
+          <Link
+            href={`/students/${user.seq}/wrong-answers`}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-sm transition-colors"
+          >
+            <AlertTriangle className="w-3.5 h-3.5" />
+            오답 관리
+          </Link>
           <button
             onClick={() => onResetPassword(user.id)}
             className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-primary bg-primary/5 hover:bg-primary/10 rounded-sm transition-colors"
@@ -548,7 +545,7 @@ export function StudentDetail({ user, stats, statsLoading, showTeachers, isOwner
             <RotateCcw className="w-3.5 h-3.5" />
             비밀번호 초기화
           </button>
-          {isOwner && showTeachers && (
+          {isOwner && (
             <button
               onClick={() => onDelete(user.id, user.name)}
               className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-sm transition-colors"

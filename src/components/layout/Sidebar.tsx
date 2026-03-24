@@ -13,6 +13,7 @@ import {
   Building2,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { LogoIcon } from '@/components/ui/LogoIcon';
 import { useTenant } from '@/components/providers/TenantProvider';
 import { getNavForRole, getAllNavItems, hasMinRole, type NavItem } from '@/lib/constants/navigation';
@@ -42,9 +43,6 @@ export function Sidebar() {
   const displayName = isViewingAsTenant ? (viewingTenantName ?? 'MathLab') : (tenant?.name || 'MathLab');
 
   const isActive = (item: NavItem) => {
-    if (item.href === '/students?tab=teachers') {
-      return pathname === '/students' && typeof window !== 'undefined' && window.location.search.includes('tab=teachers');
-    }
     return pathname === item.href || (item.href !== '/overview' && pathname.startsWith(item.href + '/') && !allItems.some((other) => other !== item && other.href !== item.href && other.href.startsWith(item.href + '/') && pathname.startsWith(other.href)));
   };
 
@@ -214,9 +212,7 @@ export function Sidebar() {
       <div className="shrink-0 border-t border-slate-100 px-2 py-2.5">
         {collapsed ? (
           <div className="flex flex-col items-center gap-1.5">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-primary to-accent text-white flex items-center justify-center text-[11px] font-bold" title={user?.name ?? '사용자'}>
-              {user?.name?.[0] ?? '?'}
-            </div>
+            <UserAvatar name={user?.name ?? '사용자'} size="xs" />
             <div className="flex items-center gap-0.5">
               <button className="p-1 rounded text-slate-300 cursor-not-allowed opacity-50" title="알림 — 준비 중">
                 <Bell className="w-3.5 h-3.5" />
@@ -228,9 +224,7 @@ export function Sidebar() {
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-primary to-accent text-white flex items-center justify-center text-[11px] font-bold shrink-0">
-              {user?.name?.[0] ?? '?'}
-            </div>
+            <UserAvatar name={user?.name ?? '사용자'} size="xs" />
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-text-primary truncate">{user?.name ?? '사용자'}</p>
               <p className="text-[10px] text-text-secondary truncate">{ROLE_LABELS[role] ?? '선생님'}</p>

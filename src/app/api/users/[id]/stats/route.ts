@@ -167,11 +167,24 @@ async function getTeacherStats(userId: string) {
     homeworkPlans,
     commentsWritten,
     questionsGenerated,
+    classrooms,
   ] = await Promise.all([
     prisma.test.count({ where: { createdBy: userId } }),
     prisma.arithmeticHomeworkPlan.count({ where: { createdBy: userId } }),
     prisma.teacherComment.count({ where: { teacherId: userId } }),
     prisma.questionGenerationLog.count({ where: { teacherId: userId } }),
+    prisma.classroom.findMany({
+      where: { teacherId: userId },
+      select: {
+        id: true, name: true, grade: true, createdAt: true,
+        students: {
+          where: { deletedAt: null },
+          select: { id: true, name: true, grade: true },
+          orderBy: { name: 'asc' },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    }),
   ]);
 
   const [recentTests, recentHomework, recentComments] = await Promise.all([
@@ -222,7 +235,9 @@ async function getTeacherStats(userId: string) {
       homeworkPlans,
       commentsWritten,
       questionsGenerated,
+      classroomCount: classrooms.length,
     },
+    classrooms,
     recentTests,
     recentHomework,
     recentComments,

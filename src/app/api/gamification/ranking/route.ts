@@ -52,6 +52,7 @@ export async function GET(request: NextRequest) {
     orderBy: { totalXp: 'desc' },
     include: {
       user: { select: { id: true, name: true } },
+      representativeBadge: { select: { icon: true } },
     },
   });
 
@@ -108,6 +109,7 @@ export async function GET(request: NextRequest) {
       currentStreak: p.currentStreak,
       isMe: p.userId === user.id,
       isNew: false,
+      badgeIcon: p.representativeBadge?.icon ?? null,
       previousTotalXp: p.totalXp - weeklyXp,
     };
   });

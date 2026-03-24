@@ -40,7 +40,10 @@ export default async function RankingPage({
     where: tenantUserFilter,
     orderBy: { totalXp: 'desc' },
     take: 50,
-    include: { user: { select: { id: true, name: true } } },
+    include: {
+      user: { select: { id: true, name: true } },
+      representativeBadge: { select: { icon: true } },
+    },
   });
 
   const userIds = profiles.map((p) => p.userId);
@@ -84,6 +87,7 @@ export default async function RankingPage({
       currentStreak: p.currentStreak,
       isMe: p.userId === user.id,
       isNew: !usersWithPrior.has(p.userId) && weeklyXp > 0,
+      badgeIcon: p.representativeBadge?.icon ?? null,
     };
   });
 

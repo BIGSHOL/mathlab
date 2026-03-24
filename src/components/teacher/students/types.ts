@@ -159,6 +159,14 @@ export type StudentStats = {
   recentPoints: StudentPointTransaction[];
 };
 
+export interface TeacherClassroom {
+  id: string;
+  name: string;
+  grade: number | null;
+  createdAt: string;
+  students: { id: string; name: string; grade: number | null }[];
+}
+
 export type TeacherStats = {
   type: 'teacher';
   summary: {
@@ -166,7 +174,9 @@ export type TeacherStats = {
     homeworkPlans: number;
     commentsWritten: number;
     questionsGenerated: number;
+    classroomCount: number;
   };
+  classrooms: TeacherClassroom[];
   recentTests: TeacherRecentTest[];
   recentHomework: TeacherRecentHomework[];
   recentComments: TeacherRecentComment[];

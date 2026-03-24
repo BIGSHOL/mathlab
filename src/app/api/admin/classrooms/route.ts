@@ -11,7 +11,16 @@ export async function GET() {
 
   const classrooms = await prisma.classroom.findMany({
     where: { ...tenantFilter },
-    include: { students: { select: { id: true, name: true, grade: true } } },
+    include: {
+      students: {
+        select: {
+          id: true,
+          name: true,
+          grade: true,
+          profile: { select: { totalXp: true, level: true, lastActiveAt: true } },
+        },
+      },
+    },
     orderBy: { createdAt: 'asc' },
   });
 

@@ -22,9 +22,9 @@ const badges = [
 
     // 4. 시험 및 결과 업적
     { key: 'test_100_1', label: '백점 만점', description: '시험에서 첫 100점 달성', icon: '/badges/test_100_1.png', color: '#ec4899', condition: { type: 'test_100', value: 1 }, sortOrder: 40 },
-    { key: 'test_100_5', label: '퍼펙트 스코어', description: '시험 100점 5회 달성', icon: '🎯', color: '#be185d', condition: { type: 'test_100', value: 5 }, sortOrder: 41 },
-    { key: 'level_5', label: '폭풍 성장', description: '캐릭터 레벨 5 달성', icon: '📈', color: '#14b8a6', condition: { type: 'level', value: 5 }, sortOrder: 42 },
-    { key: 'level_10', label: '마스터의 길', description: '캐릭터 레벨 10 달성', icon: '🎓', color: '#0f766e', condition: { type: 'level', value: 10 }, sortOrder: 43 },
+    { key: 'test_100_5', label: '퍼펙트 스코어', description: '시험 100점 5회 달성', icon: '/badges/test_100_5.png', color: '#be185d', condition: { type: 'test_100', value: 5 }, sortOrder: 41 },
+    { key: 'level_5', label: '폭풍 성장', description: '캐릭터 레벨 5 달성', icon: '/badges/level_5.png', color: '#14b8a6', condition: { type: 'level', value: 5 }, sortOrder: 42 },
+    { key: 'level_10', label: '마스터의 길', description: '캐릭터 레벨 10 달성', icon: '/badges/level_10.png', color: '#0f766e', condition: { type: 'level', value: 10 }, sortOrder: 43 },
 
     // 5. 히든 업적 (조건 안보여줌)
     { key: 'hidden_owl', label: '올빼미족', description: '새벽 시간(00시~04시)에 학습 진행', icon: '/badges/hidden_owl.png', color: '#4f46e5', condition: { type: 'hidden_owl', value: 1 }, sortOrder: 90 },
@@ -55,16 +55,16 @@ const badges = [
     { key: 'timeattack_30', label: '시간의 지배자', description: '연산 타임어택 30개 돌파', icon: '/badges/timeattack_30.png', color: '#0369a1', condition: { type: 'timeattack', value: 30 }, sortOrder: 36 },
 
     // 추가된 시험/레벨
-    { key: 'test_100_10', label: '만점 폭격기', description: '시험 100점 10회 달성', icon: '💯', color: '#9d174d', condition: { type: 'test_100', value: 10 }, sortOrder: 44 },
-    { key: 'level_20', label: '베테랑', description: '캐릭터 레벨 20 달성', icon: '🎖️', color: '#065f46', condition: { type: 'level', value: 20 }, sortOrder: 45 },
+    { key: 'test_100_10', label: '만점 폭격기', description: '시험 100점 10회 달성', icon: '/badges/test_100_10.png', color: '#9d174d', condition: { type: 'test_100', value: 10 }, sortOrder: 44 },
+    { key: 'level_20', label: '베테랑', description: '캐릭터 레벨 20 달성', icon: '/badges/level_20.png', color: '#065f46', condition: { type: 'level', value: 20 }, sortOrder: 45 },
     { key: 'level_50', label: '그랜드 마스터', description: '캐릭터 레벨 50 달성', icon: '/badges/level_50.png', color: '#022c22', condition: { type: 'level', value: 50 }, sortOrder: 46 },
-    { key: 'recovery_30', label: '불굴의 의지', description: '이전 시험 대비 30점 이상 향상', icon: '📈', color: '#ca8a04', condition: { type: 'recovery', value: 30 }, sortOrder: 47 },
+    { key: 'recovery_30', label: '불굴의 의지', description: '이전 시험 대비 30점 이상 향상', icon: '/badges/recovery_30.png', color: '#ca8a04', condition: { type: 'recovery', value: 30 }, sortOrder: 47 },
     { key: 'revenge_100', label: '극복의 아이콘', description: '오답노트 누적 복습 100문제', icon: '/badges/revenge_100.png', color: '#eab308', condition: { type: 'revenge', value: 100 }, sortOrder: 48 },
 
     // 추가된 히든 업적
-    { key: 'hidden_marathon', label: '마라토너', description: '하루에 5시간 이상 로그인 유지', icon: '🏃', color: '#4338ca', condition: { type: 'hidden_marathon', value: 1 }, sortOrder: 92 },
-    { key: 'hidden_answer', label: '저기요, 답지 보셨어요?', description: '하루에 답보기 기능 50번 이상 사용', icon: '🕵️', color: '#374151', condition: { type: 'hidden_answer', value: 1 }, sortOrder: 93 },
-    { key: 'hidden_quiz', label: '고독한 싸움꾼', description: '실시간 퀴즈에서 혼자만 정답 맞추기', icon: '🤺', color: '#111827', condition: { type: 'hidden_quiz', value: 1 }, sortOrder: 94 },
+    { key: 'hidden_marathon', label: '마라토너', description: '하루에 5시간 이상 로그인 유지', icon: '/badges/hidden_marathon.png', color: '#4338ca', condition: { type: 'hidden_marathon', value: 1 }, sortOrder: 92 },
+    { key: 'hidden_answer', label: '저기요, 답지 보셨어요?', description: '하루에 답보기 기능 50번 이상 사용', icon: '/badges/hidden_answer.png', color: '#374151', condition: { type: 'hidden_answer', value: 1 }, sortOrder: 93 },
+    { key: 'hidden_quiz', label: '고독한 싸움꾼', description: '실시간 퀴즈에서 혼자만 정답 맞추기', icon: '/badges/hidden_quiz.png', color: '#111827', condition: { type: 'hidden_quiz', value: 1 }, sortOrder: 94 },
 ];
 
 async function main() {

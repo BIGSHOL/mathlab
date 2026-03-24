@@ -5,27 +5,21 @@ import { toast } from '@/components/ui/Toast';
 import { confirm } from '@/components/ui/ConfirmDialog';
 import { Users } from 'lucide-react';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
-import { useSearchParams } from 'next/navigation';
 import {
   StudentListPanel,
   StudentDetail,
-  TeacherDetail,
   StudentCreateForm,
   gradeLabel,
   relativeTime,
 } from '@/components/teacher/students';
-import type { UserItem, StudentStats, TeacherStats } from '@/components/teacher/students';
+import type { UserItem, StudentStats } from '@/components/teacher/students';
 
 // ── Main Page ──
 
 export default function StudentsPage() {
   const { user: currentUser } = useAuth();
-  const searchParams = useSearchParams();
   const isOwner = hasRoleClient(currentUser?.role, 'OWNER');
-  const isManager = hasRoleClient(currentUser?.role, 'MANAGER');
-  const initialTab = searchParams.get('tab') === 'teachers' ? 'teachers' : 'students';
 
-  const [tab, setTab] = useState<'students' | 'teachers'>(initialTab);
   const [users, setUsers] = useState<UserItem[]>([]);
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -40,7 +34,7 @@ export default function StudentsPage() {
   const [selectedUser, setSelectedUser] = useState<UserItem | null>(null);
 
   // 상세 통계
-  const [stats, setStats] = useState<StudentStats | TeacherStats | null>(null);
+  const [stats, setStats] = useState<StudentStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
 
   const fetchUsers = useCallback(async () => {
@@ -48,7 +42,8 @@ export default function StudentsPage() {
     const res = await fetch('/api/users');
     if (res.ok) {
       const json = await res.json();
-      setUsers(json.data ?? []);
+      const all: UserItem[] = json.data ?? [];
+      setUsers(all.filter((u) => u.role === 'STUDENT'));
     }
     setLoading(false);
   }, []);
@@ -63,20 +58,16 @@ export default function StudentsPage() {
       const res = await fetch(`/api/users/${userId}/stats`);
       if (res.ok) {
         const json = await res.json();
-        setStats(json.data);
+        if (json.data?.type === 'student') setStats(json.data);
       }
     } finally {
       setStatsLoading(false);
     }
   }, []);
 
-  const showTeachers = isManager && tab === 'teachers';
-
   const filteredUsers = users
-    .filter((u) => showTeachers ? u.role === 'TEACHER' : u.role === 'STUDENT')
     .filter((u) => u.name.includes(search) || u.username.includes(search))
     .filter((u) => {
-      if (showTeachers) return true;
       if (gradeFilter !== 'all' && String(u.grade) !== gradeFilter) return false;
       if (levelFilter !== 'all') {
         const level = u.profile?.level ?? 1;
@@ -174,18 +165,7 @@ export default function StudentsPage() {
     fetchStats(u.id);
   };
 
-  const handleTabChange = (newTab: 'students' | 'teachers') => {
-    setTab(newTab);
-    setSearch('');
-    setSelectedUser(null);
-    setStats(null);
-    setShowForm(false);
-  };
-
-  const studentCount = users.filter((u) => u.role === 'STUDENT').length;
-  const teacherCount = users.filter((u) => u.role === 'TEACHER').length;
-  const panelTitle = showTeachers ? '선생님 관리' : '학생 관리';
-  const panelCount = showTeachers ? teacherCount : studentCount;
+  const studentCount = users.length;
 
   return (
     <div className="flex-1 flex min-h-0 w-full overflow-hidden">
@@ -193,12 +173,6 @@ export default function StudentsPage() {
       <StudentListPanel
         leftPanelCollapsed={leftPanelCollapsed}
         onToggleCollapse={() => setLeftPanelCollapsed((p) => !p)}
-        isOwner={isManager}
-        tab={tab}
-        showTeachers={showTeachers}
-        studentCount={studentCount}
-        teacherCount={teacherCount}
-        onTabChange={handleTabChange}
         search={search}
         onSearchChange={setSearch}
         gradeFilter={gradeFilter}
@@ -214,8 +188,8 @@ export default function StudentsPage() {
         onSelectUser={handleSelectUser}
         onAddClick={handleAddClick}
         onExportCSV={handleExportCSV}
-        panelTitle={panelTitle}
-        panelCount={panelCount}
+        panelTitle="학생 관리"
+        panelCount={studentCount}
       />
 
       {/* ===== Right Panel ===== */}
@@ -230,32 +204,20 @@ export default function StudentsPage() {
           />
         ) : selectedUser ? (
           <div className="flex-1 overflow-y-auto">
-            {showTeachers ? (
-              <TeacherDetail
-                user={selectedUser}
-                stats={stats?.type === 'teacher' ? stats : null}
-                statsLoading={statsLoading}
-                isOwner={isOwner}
-                onResetPassword={handleResetPassword}
-                onDelete={handleDeleteUser}
-              />
-            ) : (
-              <StudentDetail
-                user={selectedUser}
-                stats={stats?.type === 'student' ? stats : null}
-                statsLoading={statsLoading}
-                showTeachers={showTeachers}
-                isOwner={isOwner}
-                onResetPassword={handleResetPassword}
-                onDelete={handleDeleteUser}
-              />
-            )}
+            <StudentDetail
+              user={selectedUser}
+              stats={stats}
+              statsLoading={statsLoading}
+              isOwner={isOwner}
+              onResetPassword={handleResetPassword}
+              onDelete={handleDeleteUser}
+            />
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center text-text-secondary">
             <div className="text-center">
               <Users className="w-12 h-12 mx-auto mb-3 opacity-15" />
-              <p className="font-medium text-text-primary">{showTeachers ? '선생님을 선택하세요' : '학생을 선택하세요'}</p>
+              <p className="font-medium text-text-primary">학생을 선택하세요</p>
               <p className="text-sm mt-1">왼쪽 목록에서 선택하거나 새로 추가하세요</p>
             </div>
           </div>

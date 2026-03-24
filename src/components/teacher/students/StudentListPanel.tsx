@@ -18,14 +18,6 @@ interface StudentListPanelProps {
   leftPanelCollapsed: boolean;
   onToggleCollapse: () => void;
 
-  // 탭 (학생/선생님)
-  isOwner: boolean;
-  tab: 'students' | 'teachers';
-  showTeachers: boolean;
-  studentCount: number;
-  teacherCount: number;
-  onTabChange: (tab: 'students' | 'teachers') => void;
-
   // 검색/필터
   search: string;
   onSearchChange: (value: string) => void;
@@ -55,12 +47,6 @@ interface StudentListPanelProps {
 export function StudentListPanel({
   leftPanelCollapsed,
   onToggleCollapse,
-  isOwner,
-  tab,
-  showTeachers,
-  studentCount,
-  teacherCount,
-  onTabChange,
   search,
   onSearchChange,
   gradeFilter,
@@ -102,71 +88,48 @@ export function StudentListPanel({
 
       {!leftPanelCollapsed && (
         <>
-          {isOwner && (
-            <div className="px-3 pt-2 pb-1 flex gap-1.5">
-              <button
-                onClick={() => onTabChange('students')}
-                className={`flex-1 px-2 py-1 rounded-sm text-xs font-medium transition-colors ${
-                  tab === 'students' ? 'bg-primary text-white' : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
-                }`}
-              >학생 ({studentCount})</button>
-              <button
-                onClick={() => onTabChange('teachers')}
-                className={`flex-1 px-2 py-1 rounded-sm text-xs font-medium transition-colors ${
-                  tab === 'teachers' ? 'bg-primary text-white' : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
-                }`}
-              >선생님 ({teacherCount})</button>
-            </div>
-          )}
-
           <div className="px-3 pt-2 pb-2">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
               <input
                 className="w-full h-8 pl-8 pr-3 bg-white border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary placeholder:text-slate-400"
-                placeholder={showTeachers ? '선생님 이름 검색...' : '학생 이름 검색...'}
+                placeholder="학생 이름 검색..."
                 value={search}
                 onChange={(e) => onSearchChange(e.target.value)}
               />
             </div>
           </div>
 
-          {!showTeachers && (
-            <div className="px-3 pb-2 flex flex-col gap-1.5">
-              <div className="flex gap-1.5">
-                <select className="flex-1 min-w-0 px-1.5 py-1 text-xs border border-slate-200 rounded-sm bg-white focus:ring-1 focus:ring-primary/40" value={gradeFilter} onChange={(e) => onGradeFilterChange(e.target.value)}>
-                  <option value="all">전체 학년</option>
-                  {[1,2,3,4,5,6,7,8,9].map((g) => (<option key={g} value={String(g)}>{gradeLabel(g)}</option>))}
-                </select>
-                <select className="flex-1 min-w-0 px-1.5 py-1 text-xs border border-slate-200 rounded-sm bg-white focus:ring-1 focus:ring-primary/40" value={levelFilter} onChange={(e) => onLevelFilterChange(e.target.value)}>
-                  <option value="all">전체 레벨</option>
-                  <option value="low">초급 (1-2)</option>
-                  <option value="mid">중급 (3-5)</option>
-                  <option value="high">고급 (6+)</option>
-                </select>
-              </div>
-              <select className="w-full px-1.5 py-1 text-xs border border-slate-200 rounded-sm bg-white focus:ring-1 focus:ring-primary/40" value={activityFilter} onChange={(e) => onActivityFilterChange(e.target.value)}>
-                <option value="all">전체 상태</option>
-                <option value="active">활동 중</option>
-                <option value="inactive">미참여</option>
-                <option value="new">최근 가입</option>
+          <div className="px-3 pb-2 flex flex-col gap-1.5">
+            <div className="flex gap-1.5">
+              <select className="flex-1 min-w-0 px-1.5 py-1 text-xs border border-slate-200 rounded-sm bg-white focus:ring-1 focus:ring-primary/40" value={gradeFilter} onChange={(e) => onGradeFilterChange(e.target.value)}>
+                <option value="all">전체 학년</option>
+                {[1,2,3,4,5,6,7,8,9].map((g) => (<option key={g} value={String(g)}>{gradeLabel(g)}</option>))}
               </select>
-              {(gradeFilter !== 'all' || levelFilter !== 'all' || activityFilter !== 'all') && (
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-text-secondary">필터 결과: <span className="font-bold text-text-primary">{filteredUsers.length}명</span></span>
-                  <button onClick={onResetFilters} className="text-xs text-primary font-semibold hover:underline">초기화</button>
-                </div>
-              )}
+              <select className="flex-1 min-w-0 px-1.5 py-1 text-xs border border-slate-200 rounded-sm bg-white focus:ring-1 focus:ring-primary/40" value={levelFilter} onChange={(e) => onLevelFilterChange(e.target.value)}>
+                <option value="all">전체 레벨</option>
+                <option value="low">초급 (1-2)</option>
+                <option value="mid">중급 (3-5)</option>
+                <option value="high">고급 (6+)</option>
+              </select>
             </div>
-          )}
+            <select className="w-full px-1.5 py-1 text-xs border border-slate-200 rounded-sm bg-white focus:ring-1 focus:ring-primary/40" value={activityFilter} onChange={(e) => onActivityFilterChange(e.target.value)}>
+              <option value="all">전체 상태</option>
+              <option value="active">활동 중</option>
+              <option value="inactive">미참여</option>
+              <option value="new">최근 가입</option>
+            </select>
+            {(gradeFilter !== 'all' || levelFilter !== 'all' || activityFilter !== 'all') && (
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-text-secondary">필터 결과: <span className="font-bold text-text-primary">{filteredUsers.length}명</span></span>
+                <button onClick={onResetFilters} className="text-xs text-primary font-semibold hover:underline">초기화</button>
+              </div>
+            )}
+          </div>
 
           <div className="px-3 pb-2 flex gap-1.5">
-            {!showTeachers && (
-              <>
-                <Button size="sm" className="flex-1 text-xs" onClick={onAddClick}><UserPlus className="w-3.5 h-3.5 mr-1" />학생 추가</Button>
-                <Button size="sm" variant="secondary" className="flex-1 text-xs" onClick={onExportCSV}><Download className="w-3.5 h-3.5 mr-1" />CSV 내보내기</Button>
-              </>
-            )}
+            <Button size="sm" className="flex-1 text-xs" onClick={onAddClick}><UserPlus className="w-3.5 h-3.5 mr-1" />학생 추가</Button>
+            <Button size="sm" variant="secondary" className="flex-1 text-xs" onClick={onExportCSV}><Download className="w-3.5 h-3.5 mr-1" />CSV 내보내기</Button>
           </div>
           <div className="border-b border-slate-200" />
 
@@ -174,7 +137,7 @@ export function StudentListPanel({
             {loading ? (
               <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
             ) : filteredUsers.length === 0 ? (
-              <div className="text-center py-8 text-text-secondary"><Users className="w-8 h-8 mx-auto mb-2 opacity-20" /><p className="text-sm">{showTeachers ? '선생님이 없습니다.' : '학생이 없습니다.'}</p></div>
+              <div className="text-center py-8 text-text-secondary"><Users className="w-8 h-8 mx-auto mb-2 opacity-20" /><p className="text-sm">학생이 없습니다.</p></div>
             ) : (
               filteredUsers.map((u) => (
                 <button
@@ -185,8 +148,8 @@ export function StudentListPanel({
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${showTeachers ? 'bg-violet-100' : 'bg-primary/10'}`}>
-                      <span className={`text-xs font-bold ${showTeachers ? 'text-violet-600' : 'text-primary'}`}>{u.name.charAt(0)}</span>
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-primary/10">
+                      <span className="text-xs font-bold text-primary">{u.name.charAt(0)}</span>
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
@@ -194,22 +157,16 @@ export function StudentListPanel({
                         <span className="text-xs text-text-secondary">@{u.username}</span>
                       </div>
                       <div className="flex items-center gap-1 mt-0.5">
-                        {!showTeachers ? (
+                        <span className="text-xs text-text-secondary">{gradeLabel(u.grade)}</span>
+                        <span className="text-xs text-slate-300">&middot;</span>
+                        <span className="text-xs font-medium text-primary">Lv.{u.profile?.level ?? 1}</span>
+                        <span className="text-xs text-slate-300">&middot;</span>
+                        <span className="text-xs text-text-secondary">{u.profile?.totalXp ?? 0} XP</span>
+                        {u.profile?.lastActiveAt && (
                           <>
-                            <span className="text-xs text-text-secondary">{gradeLabel(u.grade)}</span>
                             <span className="text-xs text-slate-300">&middot;</span>
-                            <span className="text-xs font-medium text-primary">Lv.{u.profile?.level ?? 1}</span>
-                            <span className="text-xs text-slate-300">&middot;</span>
-                            <span className="text-xs text-text-secondary">{u.profile?.totalXp ?? 0} XP</span>
-                            {u.profile?.lastActiveAt && (
-                              <>
-                                <span className="text-xs text-slate-300">&middot;</span>
-                                <span className="text-xs text-text-secondary">{relativeTime(u.profile.lastActiveAt)}</span>
-                              </>
-                            )}
+                            <span className="text-xs text-text-secondary">{relativeTime(u.profile.lastActiveAt)}</span>
                           </>
-                        ) : (
-                          <span className="text-xs text-text-secondary">{new Date(u.createdAt).toLocaleDateString('ko-KR')}</span>
                         )}
                       </div>
                     </div>

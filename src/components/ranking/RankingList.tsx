@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { MotionStagger, MotionItem } from '@/components/ui/MotionStagger';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { RankChangeIndicator } from './RankChangeIndicator';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import type { RankingEntry } from './types';
 
 const PAGE_SIZE = 10;
@@ -77,9 +78,7 @@ export function RankingList({ rankings, startRank, loading }: RankingListProps) 
                 </div>
 
                 {/* 아바타 */}
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-blue-400 text-white flex items-center justify-center text-sm font-bold shrink-0">
-                  {student.name[0]}
-                </div>
+                <UserAvatar name={student.name} badgeIcon={student.badgeIcon} size="md" />
 
                 {/* 이름 + 레벨 */}
                 <div className="flex-1 min-w-0">

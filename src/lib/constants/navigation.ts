@@ -122,7 +122,7 @@ const NAV_GROUPS: NavGroup[] = [
   // ─ 팀 관리 (MANAGER+) ─
   {
     id: 'team', label: '팀 관리', minRole: 'MANAGER', style: 'admin', items: [
-      { id: 'teachers', label: '선생님 관리', href: '/students?tab=teachers', icon: UserCog, minRole: 'MANAGER', keywords: ['teacher', '선생님'] },
+      { id: 'teachers', label: '선생님 관리', href: '/admin/teachers', icon: UserCog, minRole: 'MANAGER', keywords: ['teacher', '선생님'] },
     ],
   },
 
@@ -158,7 +158,7 @@ const OWNER_NAV_GROUPS: NavGroup[] = [
   {
     id: 'branch', label: '지점 운영', minRole: 'OWNER', style: 'admin', items: [
       { id: 'students', label: '학생 관리', href: '/students', icon: Users, minRole: 'OWNER', keywords: ['student', '학생', '관리'] },
-      { id: 'teachers', label: '선생님 관리', href: '/students?tab=teachers', icon: UserCog, minRole: 'OWNER', keywords: ['teacher', '선생님'] },
+      { id: 'teachers', label: '선생님 관리', href: '/admin/teachers', icon: UserCog, minRole: 'OWNER', keywords: ['teacher', '선생님'] },
       { id: 'classrooms', label: '반 관리', href: '/admin/classrooms', icon: School, minRole: 'OWNER', keywords: ['class', '반', '교실'] },
       { id: 'users', label: '사용자 관리', href: '/admin/users', icon: UsersRound, minRole: 'OWNER', keywords: ['user', '사용자', '계정'] },
       { id: 'licenses', label: '이용권 관리', href: '/licenses', icon: KeyRound, minRole: 'OWNER', keywords: ['license', '이용권', '구독'] },

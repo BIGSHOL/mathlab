@@ -278,14 +278,31 @@ export default function AdminUsersPage() {
     <div className="flex flex-1 overflow-hidden">
       {/* ── 좌측 패널: 사용자 목록 ── */}
       <aside
-        className={`flex flex-col border-r border-slate-200 bg-white transition-all duration-200 ${leftCollapsed ? 'w-0 overflow-hidden' : 'w-80'}`}
+        className={`shrink-0 flex flex-col border-r border-slate-200 bg-white transition-all duration-200 ${leftCollapsed ? 'w-12' : 'w-80'}`}
       >
-        {/* 요약 통계 */}
-        <div className="px-4 pt-4 pb-2 border-b border-slate-200">
-          <div className="flex items-center gap-2 mb-3">
-            <Users className="w-4 h-4 text-primary" />
-            <h2 className="text-base font-bold text-text-primary">사용자 관리</h2>
+        {/* 헤더 + 접기 버튼 */}
+        <div className="shrink-0 px-3 py-2.5 border-b border-slate-200">
+          <div className="flex items-center justify-between">
+            {!leftCollapsed && (
+              <div className="flex items-center gap-2 min-w-0">
+                <Users className="w-4 h-4 text-primary shrink-0" />
+                <h2 className="text-base font-bold text-text-primary truncate">사용자 관리</h2>
+              </div>
+            )}
+            <button
+              onClick={() => setLeftCollapsed((p) => !p)}
+              className="p-1 hover:bg-slate-100 rounded-sm text-text-secondary transition-colors shrink-0"
+              title={leftCollapsed ? '패널 열기' : '패널 접기'}
+            >
+              {leftCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+            </button>
           </div>
+        </div>
+
+        {!leftCollapsed && (
+          <>
+        {/* 요약 통계 */}
+        <div className="px-4 pt-3 pb-2 border-b border-slate-200">
           <div className="flex gap-2 text-xs">
             <span className="px-2 py-1 rounded-md bg-slate-100 text-text-secondary">전체 {summary.totalUsers}명</span>
             <span className="px-2 py-1 rounded-md bg-green-50 text-green-700">오늘 {summary.activeToday}명</span>
@@ -394,16 +411,17 @@ export default function AdminUsersPage() {
             })
           )}
         </div>
-      </aside>
+          </>
+        )}
 
-      {/* 패널 토글 */}
-      <button
-        onClick={() => setLeftCollapsed((p) => !p)}
-        className="shrink-0 px-1 border-r border-slate-200 bg-white hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-colors"
-        title={leftCollapsed ? '패널 열기' : '패널 닫기'}
-      >
-        {leftCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
-      </button>
+        {leftCollapsed && (
+          <div className="flex-1 flex flex-col items-center pt-3 gap-2">
+            <button onClick={() => setLeftCollapsed(false)} className="p-2 hover:bg-slate-100 rounded-sm text-primary transition-colors" title="사용자 관리 열기">
+              <Users className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+      </aside>
 
       {/* ── 우측 패널: 사용자 상세 + 활동 타임라인 ── */}
       <main className="flex-1 overflow-y-auto bg-slate-50/50">

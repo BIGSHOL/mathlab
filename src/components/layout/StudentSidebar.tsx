@@ -20,7 +20,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLicenses } from '@/hooks/useLicenses';
+import { useRepresentativeBadge } from '@/hooks/useRepresentativeBadge';
 import { LogoIcon } from '@/components/ui/LogoIcon';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { useTenant } from '@/components/providers/TenantProvider';
 import { useUpdateNotification } from '@/stores/update-notification';
 import type { LicenseFeatureKey } from '@/lib/services/license';
@@ -57,6 +59,7 @@ export function StudentSidebar() {
   const { user, logout } = useAuth();
   const tenant = useTenant();
   const { isLicensed } = useLicenses();
+  const { badgeIcon } = useRepresentativeBadge();
   const [collapsed, setCollapsed] = useState(false);
   const displayName = tenant?.name || 'MathLab';
 
@@ -198,9 +201,7 @@ export function StudentSidebar() {
       <div className={`shrink-0 px-2 py-2.5 ${isRevengePage ? 'border-t border-slate-700' : 'border-t border-slate-100'}`}>
         {collapsed ? (
           <div className="flex flex-col items-center gap-1.5">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-primary to-accent text-white flex items-center justify-center text-[11px] font-bold" title={user?.name ?? '학생'}>
-              {user?.name?.[0] ?? '?'}
-            </div>
+            <UserAvatar name={user?.name ?? '학생'} badgeIcon={badgeIcon} size="xs" />
             <div className="flex items-center gap-0.5">
               <button
                 onClick={() => { if (hasHiddenNotif) reopen(); }}
@@ -217,9 +218,7 @@ export function StudentSidebar() {
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-primary to-accent text-white flex items-center justify-center text-[11px] font-bold shrink-0">
-              {user?.name?.[0] ?? '?'}
-            </div>
+            <UserAvatar name={user?.name ?? '학생'} badgeIcon={badgeIcon} size="xs" />
             <div className="flex-1 min-w-0">
               <p className={`text-xs font-semibold truncate ${isRevengePage ? 'text-white' : 'text-text-primary'}`}>{user?.name ?? '학생'}</p>
               <p className={`text-[10px] truncate ${isRevengePage ? 'text-slate-500' : 'text-text-secondary'}`}>학생</p>

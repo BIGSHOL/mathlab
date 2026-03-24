@@ -33,6 +33,7 @@ export async function PATCH(
     data: {
       ...(body.name && { name: body.name }),
       ...(body.grade !== undefined && { grade: body.grade }),
+      ...(body.teacherId !== undefined && { teacherId: body.teacherId }),
     },
   });
 

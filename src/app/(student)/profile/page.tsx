@@ -12,6 +12,7 @@ import { xpToNextLevel } from '@/lib/utils/xp';
 import { CATEGORY_LABELS, LEVEL_LABELS } from '@/lib/services/arithmetic-generator/types';
 import Link from 'next/link';
 import { BadgeModalSection } from './BadgeModalSection';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { PageContainer } from '@/components/ui/PageContainer';
 
 function timeAgo(date: Date) {
@@ -44,7 +45,10 @@ export default async function ProfilePage({
   if (!realUser) redirect('/login');
   const user = await getViewAsUser(await searchParams) ?? realUser;
 
-  const profile = await prisma.studentProfile.findUnique({ where: { userId: user.id } });
+  const profile = await prisma.studentProfile.findUnique({
+    where: { userId: user.id },
+    include: { representativeBadge: { select: { id: true, icon: true, label: true } } },
+  });
   const totalXp = profile?.totalXp ?? 0;
   const level = profile?.level ?? 1;
   const streak = profile?.currentStreak ?? 0;
@@ -381,9 +385,7 @@ export default async function ProfilePage({
         {/* 1. 프로필 정보 (좌측) */}
         <Card padding="md" className="rounded-xl flex flex-col justify-between">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-primary to-accent text-white flex items-center justify-center text-xl font-bold shrink-0">
-              {user.name[0]}
-            </div>
+            <UserAvatar name={user.name} badgeIcon={profile?.representativeBadge?.icon} size="xl" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2.5">
                 <h1 className="text-lg font-bold text-text-primary truncate">{user.name}</h1>
@@ -646,6 +648,18 @@ export default async function ProfilePage({
         achievementRateText={`달성률: ${Math.round((earnedBadges.length / Math.max(1, allBadgesRaw.length)) * 100)}% (${earnedBadges.length}/${allBadgesRaw.length})`}
         previewNodes={renderBadgeGrid(displayBadges.slice(0, 24))}
         fullNodes={renderBadgeGrid(displayBadges)}
+        displayBadges={displayBadges.map(({ badge, group, isEarned, earnedDate }) => ({
+          badge: { id: badge.id, key: badge.key, label: badge.label, description: badge.description, icon: badge.icon, color: badge.color, condition: badge.condition as Record<string, unknown>, sortOrder: badge.sortOrder },
+          group: group.map(b => ({ id: b.id, label: b.label, description: b.description, condition: b.condition as Record<string, unknown> })),
+          isEarned,
+          earnedDate: earnedDate?.toISOString() ?? null,
+        }))}
+        earnedBadgeIds={earnedBadges.map(ub => ub.badgeId)}
+        currentRepresentativeBadgeId={profile?.representativeBadgeId ?? null}
+        earnersCountMap={Object.fromEntries(earnersCountMap)}
+        earnedRankMap={Object.fromEntries(earnedRankMap)}
+        totalStudents={totalStudents}
+        isViewAs={user.id !== realUser.id}
       />
 
     </PageContainer>
