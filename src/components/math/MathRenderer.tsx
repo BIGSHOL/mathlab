@@ -3,6 +3,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
+import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
@@ -195,6 +196,25 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
         .prose-invert span {
           color: inherit;
         }
+        /* 마크다운 테이블 스타일 */
+        .prose table {
+          border-collapse: collapse;
+          margin: 0.75rem 0;
+          font-size: 0.9em;
+        }
+        .prose table th,
+        .prose table td {
+          border: 1px solid #CBD5E1;
+          padding: 0.35rem 0.75rem;
+          text-align: center;
+        }
+        .prose table th {
+          background: #F1F5F9;
+          font-weight: 600;
+        }
+        .prose table tr:nth-child(even) {
+          background: #F8FAFC;
+        }
         /* 인쇄 시 수식이 너무 길면 크기 축소 */
         @media print {
           .katex {
@@ -206,7 +226,7 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
         }
       `}</style>
       <ReactMarkdown
-        remarkPlugins={[remarkMath, remarkBreaks]}
+        remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]}
         rehypePlugins={[rehypeRaw, [rehypeKatex, { strict: false }]]}
         components={{
           p: inline
