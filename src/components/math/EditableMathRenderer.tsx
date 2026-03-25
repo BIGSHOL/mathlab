@@ -321,8 +321,40 @@ export function EditableMathRenderer({
     );
   };
 
+  // non-blockquote 블록을 \n 기준으로 단락 분리 — MathRenderer의 <p> 간격과 일치시킴
+  const renderNormalBlock = (segs: Segment[], blockKey: number) => {
+    const paragraphs: Segment[][] = [[]];
+    for (const seg of segs) {
+      if (seg.type !== 'text') {
+        paragraphs[paragraphs.length - 1].push(seg);
+        continue;
+      }
+      // 텍스트 세그먼트 안에서 \n 으로 단락 분리
+      const parts = seg.text.split('\n');
+      parts.forEach((part, pi) => {
+        if (pi > 0) paragraphs.push([]); // 새 단락
+        if (part) {
+          paragraphs[paragraphs.length - 1].push({
+            ...seg,
+            text: part,
+          });
+        }
+      });
+    }
+    // 빈 단락 제거
+    const filtered = paragraphs.filter((p) => p.length > 0);
+    if (filtered.length <= 1) {
+      return <React.Fragment key={blockKey}>{segs.map((seg, si) => renderSegment(seg, `${blockKey}-${si}`))}</React.Fragment>;
+    }
+    return filtered.map((pSegs, pi) => (
+      <p key={`${blockKey}-p${pi}`} className="mb-2 last:mb-0" style={{ lineHeight: '1.8' }}>
+        {pSegs.map((seg, si) => renderSegment(seg, `${blockKey}-p${pi}-${si}`))}
+      </p>
+    ));
+  };
+
   return (
-    <div className={`leading-relaxed text-slate-800 ${className}`} style={{ whiteSpace: 'pre-line' }}>
+    <div className={`text-slate-800 ${className}`}>
       {blocks.map((block, bi) => {
         const inner = block.segs.map((seg, si) => renderSegment(seg, `${bi}-${si}`));
         if (block.inBq) {
@@ -335,7 +367,7 @@ export function EditableMathRenderer({
             </div>
           );
         }
-        return <React.Fragment key={bi}>{inner}</React.Fragment>;
+        return renderNormalBlock(block.segs, bi);
       })}
     </div>
   );

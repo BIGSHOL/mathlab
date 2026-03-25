@@ -241,7 +241,7 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
                 return <div className="my-2">{children}</div>;
               }
               return (
-                <p className="text-inherit mb-2 last:mb-0" style={{ lineHeight: '2.2' }} {...props}>
+                <p className="text-inherit mb-2 last:mb-0" style={{ lineHeight: '1.8' }} {...props}>
                   {children}
                 </p>
               );

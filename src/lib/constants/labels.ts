@@ -10,9 +10,9 @@ export const GRADE_LABELS: Record<string, string> = {
   elementary_4: '초등 4학년',
   elementary_5: '초등 5학년',
   elementary_6: '초등 6학년',
-  middle_1: '중학 1학년',
-  middle_2: '중학 2학년',
-  middle_3: '중학 3학년',
+  middle_1: '중등 1학년',
+  middle_2: '중등 2학년',
+  middle_3: '중등 3학년',
   high_1: '공통수학1',
   high_2: '공통수학2',
   high_algebra: '대수',
@@ -39,7 +39,7 @@ export const GRADE_LEVEL_LABELS: Record<number, string> = {
 
 export const GRADE_GROUPS = [
   { label: '초등', grades: ['elementary_3', 'elementary_4', 'elementary_5', 'elementary_6'] },
-  { label: '중학', grades: ['middle_1', 'middle_2', 'middle_3'] },
+  { label: '중등', grades: ['middle_1', 'middle_2', 'middle_3'] },
   { label: '고등', grades: ['high_1', 'high_2', 'high_algebra', 'high_calculus1', 'high_prob', 'high_calculus2', 'high_geo'] },
 ];
 

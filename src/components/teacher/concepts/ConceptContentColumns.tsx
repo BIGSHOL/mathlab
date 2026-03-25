@@ -99,7 +99,8 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
             {templateViewMode === 'raw' ? (
               <textarea
                 ref={contentTextareaRef}
-                className="w-full h-[300px] min-h-[200px] max-h-[600px] resize-y px-3 py-2 border border-slate-200 rounded-sm text-sm bg-white leading-relaxed font-serif-kr focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                className="w-full h-[300px] min-h-[200px] max-h-[600px] resize-y px-3 py-2 border border-slate-200 rounded-sm text-[15px] bg-white font-serif-kr focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                style={{ lineHeight: '1.8' }}
                 value={editForm.fullContent}
                 onChange={(e) => setEditForm((p) => ({ ...p, fullContent: e.target.value }))}
                 onClick={(e) => {
@@ -138,7 +139,7 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
                 {editForm.fullContent ? (
                   <EditableMathRenderer
                     content={editForm.fullContent}
-                    className="text-sm font-serif-kr leading-relaxed"
+                    className="text-[15px] font-serif-kr"
                     onMathClick={isOwner ? (latex, start, end) => setTemplateMathPopup({ latex, start, end }) : undefined}
                   />
                 ) : (
@@ -162,7 +163,7 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
             />
           </div>
         ) : (
-          <div className="w-full min-h-[200px] flex-1 px-3 py-2 border border-slate-200 rounded-sm text-[15px] bg-white overflow-y-auto font-serif-kr scrollbar-thin" style={{ whiteSpace: 'pre-line' }}>
+          <div className="w-full min-h-[200px] flex-1 px-3 py-2 border border-slate-200 rounded-sm text-[15px] bg-white overflow-y-auto font-serif-kr scrollbar-thin">
             {blanksLoading ? (
               <div className="flex items-center justify-center h-full text-text-secondary text-sm">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />

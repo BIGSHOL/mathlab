@@ -7,7 +7,7 @@ export function useConceptFilters() {
   const [searchDebounced, setSearchDebounced] = useState('');
   const [levelFilter, setLevelFilter] = useState<string | null>(null);
   const [gradeFilter, setGradeFilter] = useState<string | null>(null);
-  const categoryFilter = 'concept';
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [semesterFilter, setSemesterFilter] = useState<number | null>(null);
   const [chapterFilter, setChapterFilter] = useState<string | null>(null);
   const [sectionFilter, setSectionFilter] = useState<string | null>(null);
@@ -36,7 +36,7 @@ export function useConceptFilters() {
     searchDebounced,
     levelFilter, setLevelFilter,
     gradeFilter, setGradeFilter,
-    categoryFilter,
+    categoryFilter, setCategoryFilter,
     semesterFilter, setSemesterFilter,
     chapterFilter, setChapterFilter,
     sectionFilter, setSectionFilter,

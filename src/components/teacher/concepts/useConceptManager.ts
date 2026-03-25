@@ -115,7 +115,7 @@ export function useConceptManager(isOwner: boolean) {
     search: filters.search, setSearch: filters.setSearch,
     levelFilter: filters.levelFilter, setLevelFilter: filters.setLevelFilter,
     gradeFilter: filters.gradeFilter, setGradeFilter: filters.setGradeFilter,
-    categoryFilter: filters.categoryFilter,
+    categoryFilter: filters.categoryFilter, setCategoryFilter: filters.setCategoryFilter,
     semesterFilter: filters.semesterFilter, setSemesterFilter: filters.setSemesterFilter,
     chapterFilter: filters.chapterFilter, setChapterFilter: filters.setChapterFilter,
     sectionFilter: filters.sectionFilter, setSectionFilter: filters.setSectionFilter,
