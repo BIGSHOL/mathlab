@@ -188,7 +188,7 @@ export function ClassroomDetail({
             )}
           </div>
           {/* 모바일용 수치 */}
-          <div className="grid grid-cols-4 gap-2 mt-3 sm:hidden">
+          <div className="grid grid-cols-2 gap-2 mt-3 sm:hidden">
             <div className="text-center bg-white/60 rounded-sm py-1.5">
               <div className="text-xs font-bold text-primary">{studentCount}명</div>
               <div className="text-xs text-text-secondary">학생</div>
@@ -250,7 +250,7 @@ export function ClassroomDetail({
                   (s.profile?.lastActiveAt && new Date(s.profile.lastActiveAt).getTime() > sevenDaysAgo) ? 'bg-emerald-400' : 'bg-slate-200'
                 }`} />
                 <Link
-                  href={`/students?search=${encodeURIComponent(s.name)}`}
+                  href={`/students/${s.id}`}
                   className="flex items-center justify-between flex-1 min-w-0 px-3 py-2"
                 >
                   <div className="flex items-center gap-2 min-w-0">

@@ -121,7 +121,7 @@ export function TeacherBottomNav() {
                 </button>
               </div>
               {groups.map((group) => (
-                <div key={group.id} className="mb-2 last:mb-0">
+                <div key={group.id} className="mb-3 last:mb-0">
                   {groups.length > 1 && (
                     <div className="flex items-center gap-1 mb-1.5">
                       {group.style === 'admin' && <Shield className="w-3 h-3 text-violet-500" />}
@@ -173,7 +173,7 @@ export function TeacherBottomNav() {
                   key={tab.id}
                   href={tab.href}
                   onClick={() => setOpenTab(null)}
-                  className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-sm min-w-[48px] min-h-[44px] justify-center transition-colors ${
+                  className={`flex flex-col items-center gap-1 py-1.5 px-3 rounded-sm min-w-[48px] min-h-[44px] justify-center transition-colors ${
                     isActive ? 'text-primary' : 'text-slate-400'
                   }`}
                 >
@@ -187,7 +187,7 @@ export function TeacherBottomNav() {
               <button
                 key={tab.id}
                 onClick={() => handleTabClick(tab)}
-                className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-sm min-w-[48px] min-h-[44px] justify-center transition-colors ${
+                className={`flex flex-col items-center gap-1 py-1.5 px-3 rounded-sm min-w-[48px] min-h-[44px] justify-center transition-colors ${
                   isOpen ? 'text-primary' : isActive ? 'text-primary' : 'text-slate-400'
                 }`}
               >

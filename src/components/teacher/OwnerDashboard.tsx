@@ -285,7 +285,7 @@ export default async function OwnerDashboard({ user, period }: Props) {
             {classroomStats.length === 0 ? (
               <p className="text-text-secondary text-center py-8 text-sm">등록된 반이 없습니다.</p>
             ) : (
-              <div className="space-y-1.5 p-2.5">
+              <div className="space-y-2 p-2.5">
                 {classroomStats.slice(0, 6).map((c) => (
                   <div key={c.id} className="flex items-center bg-white border border-slate-200 rounded-sm overflow-hidden hover:border-primary/40 transition-colors">
                     <div className={`w-1 self-stretch shrink-0 ${
@@ -373,7 +373,7 @@ export default async function OwnerDashboard({ user, period }: Props) {
               <h3 className="text-xs font-bold text-text-primary">XP 랭킹 TOP 5</h3>
             </div>
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {topStudents.map((s, i) => (
               <div key={s.id} className="flex items-center bg-white border border-slate-200 rounded-sm overflow-hidden hover:border-amber-300 transition-colors">
                 <div className={`w-1 self-stretch shrink-0 ${
@@ -462,7 +462,7 @@ export default async function OwnerDashboard({ user, period }: Props) {
             </div>
             <h3 className="text-xs font-bold text-text-primary">최근 학습 활동</h3>
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {recentActivity.length === 0 ? (
               <p className="text-text-secondary text-sm text-center py-2.5">아직 학습 기록이 없습니다.</p>
             ) : (

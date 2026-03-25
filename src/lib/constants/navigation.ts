@@ -235,12 +235,21 @@ export function getNavForRole(role: UserRole): NavGroup[] {
   if (role === 'OWNER') return OWNER_NAV_GROUPS;
 
   // TEACHER/MANAGER 모두 개념/문제는 "조회" (CRUD는 SUPER_ADMIN 전용)
+  const LABEL_OVERRIDES: Record<string, string> = {
+    concepts: '개념 조회',
+    questions: '문제 조회',
+  };
+
   return NAV_GROUPS
     .filter((g) => hasMinRole(role, g.minRole))
     .map((g) => ({
       ...g,
       items: g.items
-        .filter((item) => hasMinRole(role, item.minRole)),
+        .filter((item) => hasMinRole(role, item.minRole))
+        .map((item) => ({
+          ...item,
+          label: LABEL_OVERRIDES[item.id] ?? item.label,
+        })),
     }))
     .filter((g) => g.items.length > 0);
 }

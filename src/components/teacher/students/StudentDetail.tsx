@@ -175,7 +175,7 @@ export function StudentDetail({ user, stats, statsLoading, isManager, isOwner, o
           </div>
         </div>
         {/* 모바일용 수치 */}
-        <div className="grid grid-cols-4 gap-2 mt-3 sm:hidden">
+        <div className="grid grid-cols-2 gap-2 mt-3 sm:hidden">
           <div className="text-center bg-white/60 rounded-sm py-1.5">
             <div className="text-xs font-bold text-primary">Lv.{level}</div>
             <div className="text-xs text-text-secondary">레벨</div>

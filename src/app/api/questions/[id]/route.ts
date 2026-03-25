@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth, requireTeacher, requireResource, validateBody, isResponse } from '@/lib/api';
+import { requireAuth, requireSuperAdmin, requireResource, validateBody, isResponse } from '@/lib/api';
 import { updateQuestionSchema } from '@/lib/schemas/question';
 
 export async function GET(
@@ -25,7 +25,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const user = await requireTeacher();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
   const parsed = await validateBody(request, updateQuestionSchema);
@@ -53,7 +53,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const user = await requireTeacher();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
   const existing = await requireResource(

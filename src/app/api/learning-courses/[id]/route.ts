@@ -35,36 +35,89 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
     return NextResponse.json({ error: { code: 'NOT_FOUND', message: '과정을 찾을 수 없습니다' } }, { status: 404 });
   }
 
-  // 학생별 진행률 계산
+  // 학생별 진행률 계산 (배치 쿼리)
   const conceptIds = course.concepts.map((c) => c.conceptId);
   const totalConcepts = conceptIds.length;
+  const studentIds = course.enrollments.map((e) => e.studentId);
 
-  const enrollmentsWithProgress = await Promise.all(
-    course.enrollments.map(async (enrollment) => {
-      const completedCount = totalConcepts > 0
-        ? await prisma.learningProgress.count({
-            where: {
-              userId: enrollment.studentId,
-              conceptId: { in: conceptIds },
-              stage: 'BLANK_FULL',
-              completed: true,
-            },
-          })
-        : 0;
+  const allProgress = totalConcepts > 0 && studentIds.length > 0
+    ? await prisma.learningProgress.findMany({
+        where: {
+          userId: { in: studentIds },
+          conceptId: { in: conceptIds },
+        },
+        select: { userId: true, conceptId: true, stage: true, completed: true },
+      })
+    : [];
 
-      return {
-        id: enrollment.id,
-        student: enrollment.student,
-        sortOrder: enrollment.sortOrder,
-        status: enrollment.status,
-        startedAt: enrollment.startedAt,
-        completedAt: enrollment.completedAt,
-        completedConcepts: completedCount,
-        totalConcepts,
-        progressPercent: totalConcepts > 0 ? Math.round((completedCount / totalConcepts) * 100) : 0,
-      };
-    })
-  );
+  // userId → conceptId → stage → completed
+  const progressMap = new Map<string, Map<string, Map<string, boolean>>>();
+  for (const p of allProgress) {
+    if (!progressMap.has(p.userId)) progressMap.set(p.userId, new Map());
+    const userMap = progressMap.get(p.userId)!;
+    if (!userMap.has(p.conceptId)) userMap.set(p.conceptId, new Map());
+    userMap.get(p.conceptId)!.set(p.stage, p.completed);
+  }
+
+  const STAGES = ['READING', 'BLANK_EASY', 'BLANK_HARD', 'BLANK_FULL'] as const;
+
+  const enrollmentsWithProgress = course.enrollments.map((enrollment) => {
+    const userProgress = progressMap.get(enrollment.studentId);
+
+    let completedCount = 0;
+    let currentConceptTitle: string | null = null;
+    let currentConceptIndex: number | null = null;
+    let currentStage = 'NOT_STARTED';
+    let foundCurrent = false;
+    const perConceptStatus: string[] = [];
+
+    for (let i = 0; i < course.concepts.length; i++) {
+      const cc = course.concepts[i];
+      const conceptProgress = userProgress?.get(cc.conceptId);
+      const isBlankFullCompleted = conceptProgress?.get('BLANK_FULL') === true;
+
+      if (isBlankFullCompleted) {
+        completedCount++;
+        perConceptStatus.push('completed');
+      } else if (!foundCurrent) {
+        foundCurrent = true;
+        currentConceptIndex = i + 1; // 1-based
+        currentConceptTitle = cc.concept.title;
+        perConceptStatus.push('current');
+
+        // 현재 단계 판별
+        if (!conceptProgress || conceptProgress.size === 0) {
+          currentStage = 'NOT_STARTED';
+        } else {
+          for (const stage of STAGES) {
+            const stageCompleted = conceptProgress.get(stage);
+            if (stageCompleted === undefined || stageCompleted === false) {
+              currentStage = stage;
+              break;
+            }
+          }
+        }
+      } else {
+        perConceptStatus.push('locked');
+      }
+    }
+
+    return {
+      id: enrollment.id,
+      student: enrollment.student,
+      sortOrder: enrollment.sortOrder,
+      status: enrollment.status,
+      startedAt: enrollment.startedAt,
+      completedAt: enrollment.completedAt,
+      completedConcepts: completedCount,
+      totalConcepts,
+      progressPercent: totalConcepts > 0 ? Math.round((completedCount / totalConcepts) * 100) : 0,
+      currentConceptTitle,
+      currentConceptIndex,
+      currentStage: completedCount === totalConcepts && totalConcepts > 0 ? 'ALL_COMPLETED' : currentStage,
+      perConceptStatus,
+    };
+  });
 
   return NextResponse.json({
     data: {

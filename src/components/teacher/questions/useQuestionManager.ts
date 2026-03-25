@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useAuth, hasRoleClient } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/components/ui/Toast';
 import { renderDiagram } from '@/lib/utils/svg-diagrams';
 import type { DiagramType } from '@/lib/utils/svg-diagrams/types';
@@ -27,7 +27,7 @@ import {
 export function useQuestionManager() {
   const { user } = useAuth();
   const isOwner = user?.role === 'SUPER_ADMIN';
-  const canEdit = hasRoleClient(user?.role, 'TEACHER');
+  const canEdit = user?.role === 'SUPER_ADMIN';
 
   const [search, setSearch] = useState('');
   const [searchDebounced, setSearchDebounced] = useState('');

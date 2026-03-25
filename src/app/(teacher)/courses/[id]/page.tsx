@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from '@/components/ui/Toast';
 import { confirm } from '@/components/ui/ConfirmDialog';
@@ -46,6 +46,10 @@ interface EnrollmentDetail {
   completedConcepts: number;
   totalConcepts: number;
   progressPercent: number;
+  currentConceptTitle: string | null;
+  currentConceptIndex: number | null;
+  currentStage: string;
+  perConceptStatus: ('completed' | 'current' | 'locked')[];
 }
 
 interface CourseDetail {
@@ -74,8 +78,27 @@ const STATUS_COLOR = {
   COMPLETED: 'text-emerald-600 bg-emerald-50',
 };
 
+const STAGE_LABEL: Record<string, string> = {
+  NOT_STARTED: '시작 전',
+  READING: '개념학습',
+  BLANK_EASY: '빈칸 1단계',
+  BLANK_HARD: '빈칸 2단계',
+  BLANK_FULL: '통문장 암기',
+  ALL_COMPLETED: '전체 완료',
+};
+
+const STAGE_BADGE: Record<string, string> = {
+  NOT_STARTED: 'bg-slate-100 text-slate-500',
+  READING: 'bg-blue-50 text-blue-600',
+  BLANK_EASY: 'bg-emerald-50 text-emerald-600',
+  BLANK_HARD: 'bg-orange-50 text-orange-600',
+  BLANK_FULL: 'bg-violet-50 text-violet-600',
+  ALL_COMPLETED: 'bg-emerald-50 text-emerald-600',
+};
+
 export default function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const { user } = useAuth();
   const isManager = hasRoleClient(user?.role, 'MANAGER');
   const [course, setCourse] = useState<CourseDetail | null>(null);
@@ -209,7 +232,7 @@ export default function CourseDetailPage() {
 
   if (loading) {
     return (
-      <div className="px-6 py-8 max-w-[1200px] mx-auto">
+      <div className="px-4 sm:px-6 py-6 md:py-8 max-w-[1400px] mx-auto">
         {/* 헤더 (뒤로가기 + 아이콘 + 제목 + 날짜) */}
         <div className="flex items-center gap-3 mb-8">
           <Skeleton className="w-9 h-9 rounded-sm" />
@@ -281,12 +304,12 @@ export default function CourseDetailPage() {
 
   if (!course) {
     return (
-      <div className="px-4 sm:px-6 py-6 max-w-[1200px] mx-auto">
+      <div className="px-4 sm:px-6 py-6 md:py-8 max-w-[1400px] mx-auto">
         <div className="bg-white border border-slate-200 rounded-sm p-12 text-center">
           <p className="text-text-secondary">과정을 찾을 수 없습니다.</p>
-          <Link href="/courses" className="text-primary text-sm hover:underline mt-2 inline-block">
-            목록으로 돌아가기
-          </Link>
+          <button onClick={() => router.back()} className="text-primary text-sm hover:underline mt-2 inline-block">
+            뒤로가기
+          </button>
         </div>
       </div>
     );
@@ -298,11 +321,11 @@ export default function CourseDetailPage() {
   const completedCount = course.enrollments.filter((e) => e.status === 'COMPLETED').length;
 
   return (
-    <div className="px-4 sm:px-6 py-6 max-w-[1200px] mx-auto">
+    <div className="px-4 sm:px-6 py-6 md:py-8 max-w-[1400px] mx-auto">
       {/* 뒤로가기 */}
-      <Link href="/courses" className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-primary mb-3 transition-colors">
-        <ArrowLeft className="w-3.5 h-3.5" /> 학습 과정 목록
-      </Link>
+      <button onClick={() => router.back()} className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-primary mb-3 transition-colors">
+        <ArrowLeft className="w-3.5 h-3.5" /> 뒤로가기
+      </button>
 
       {/* ── 프로필 히어로 ── */}
       <div className="bg-gradient-to-r from-primary/5 via-blue-50/50 to-violet-50/30 border border-slate-200 rounded-sm p-4 sm:p-5 mb-4">
@@ -383,7 +406,7 @@ export default function CourseDetailPage() {
           </div>
         </div>
         {/* 모바일 수치 */}
-        <div className="grid grid-cols-4 gap-2 mt-3 sm:hidden">
+        <div className="grid grid-cols-2 gap-2 mt-3 sm:hidden">
           <div className="text-center bg-white/60 rounded-sm py-1.5">
             <div className="text-xs font-bold text-primary">{course.concepts.length}개</div>
             <div className="text-xs text-text-secondary">개념</div>
@@ -553,27 +576,64 @@ export default function CourseDetailPage() {
                   }`} />
                   <Link
                     href={`/courses/${id}/progress/${enrollment.student.username}`}
-                    className="flex items-center justify-between flex-1 min-w-0 px-3 py-2"
+                    className="flex items-center justify-between flex-1 min-w-0 px-3 py-2.5"
                   >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-primary to-primary/60 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-primary/60 text-white flex items-center justify-center text-xs font-bold shrink-0">
                         {enrollment.student.name[0]}
                       </div>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-medium text-text-primary truncate">{enrollment.student.name}</span>
+                          <span className="text-sm font-medium text-text-primary truncate">{enrollment.student.name}</span>
                           <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${STATUS_COLOR[enrollment.status]}`}>
                             {STATUS_LABEL[enrollment.status]}
                           </span>
                         </div>
-                        <div className="text-xs text-text-secondary">
+                        <div className="text-xs text-text-secondary mt-0.5">
                           {enrollment.student.username}
                           {enrollment.startedAt && ` · 시작 ${new Date(enrollment.startedAt).toLocaleDateString('ko-KR')}`}
                         </div>
+                        {/* 현재 학습 개념 + 단계 */}
+                        {enrollment.currentConceptTitle && (
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span className="text-xs text-text-primary">
+                              {enrollment.currentConceptTitle}
+                            </span>
+                            <span className="text-xs text-text-secondary">
+                              ({enrollment.currentConceptIndex}/{enrollment.totalConcepts})
+                            </span>
+                            <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${STAGE_BADGE[enrollment.currentStage] || STAGE_BADGE.NOT_STARTED}`}>
+                              {STAGE_LABEL[enrollment.currentStage] || enrollment.currentStage}
+                            </span>
+                          </div>
+                        )}
+                        {enrollment.currentStage === 'ALL_COMPLETED' && (
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${STAGE_BADGE.ALL_COMPLETED}`}>
+                              {STAGE_LABEL.ALL_COMPLETED}
+                            </span>
+                          </div>
+                        )}
+                        {/* 개념별 진행 도트 */}
+                        {enrollment.perConceptStatus?.length > 0 && (
+                          <div className="flex items-center gap-0.5 mt-1.5">
+                            {enrollment.perConceptStatus.map((status, i) => (
+                              <div
+                                key={i}
+                                className={`w-2 h-2 rounded-full ${
+                                  status === 'completed' ? 'bg-emerald-400' :
+                                  status === 'current' ? 'bg-primary ring-2 ring-primary/30' :
+                                  'bg-slate-200'
+                                }`}
+                                title={`${i + 1}번째 개념${status === 'completed' ? ' (완료)' : status === 'current' ? ' (진행 중)' : ''}`}
+                              />
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0 ml-2">
-                      <div className="w-24 hidden sm:block">
+                    <div className="flex items-center gap-2 shrink-0 ml-3">
+                      <div className="w-28 hidden sm:block">
                         <div className="flex justify-between text-xs text-text-secondary mb-0.5">
                           <span>{enrollment.completedConcepts}/{enrollment.totalConcepts}</span>
                           <span>{enrollment.progressPercent}%</span>
