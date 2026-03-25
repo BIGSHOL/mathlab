@@ -17,8 +17,6 @@ export function useConceptManager(isOwner: boolean) {
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'curriculum' | 'systematic'>('list');
   const [showBlanks, setShowBlanks] = useState(false);
-  const [mathPopupOpen, setMathPopupOpen] = useState(false);
-  const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Ref-based bridges: 서브 훅 간 순환 의존 회피
   const blanksRef = useRef<{ resetBlanks: () => void; fetchBlanks: (id: string) => void }>({
@@ -157,8 +155,6 @@ export function useConceptManager(isOwner: boolean) {
     leftPanelCollapsed, setLeftPanelCollapsed,
     viewMode, setViewMode,
     showBlanks, setShowBlanks,
-    mathPopupOpen, setMathPopupOpen,
-    contentTextareaRef,
     templateViewMode: blanks.templateViewMode, setTemplateViewMode: blanks.setTemplateViewMode,
     templateMathPopup: blanks.templateMathPopup, setTemplateMathPopup: blanks.setTemplateMathPopup,
     editingBlankPos: blanks.editingBlankPos, setEditingBlankPos: blanks.setEditingBlankPos,

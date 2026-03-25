@@ -28,7 +28,6 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
     dragIdx, setDragIdx,
     previewOriginalOpen, setPreviewOriginalOpen,
     previewStudentOpen, setPreviewStudentOpen,
-    setMathPopupOpen,
     syncBlanksFromTemplate, convertSelectionToBlank,
     updateBlankItem, autoRenumber, handleBlankDrop,
     cancelBlankEdit, removeBlankFromForm,
@@ -65,7 +64,11 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
                 <>
                   <button
                     type="button"
-                    onClick={() => setMathPopupOpen(true)}
+                    onClick={() => {
+                      const ta = templateTextareaRef.current;
+                      const pos = ta ? ta.selectionStart : blankForm.templateText.length;
+                      setTemplateMathPopup({ latex: '', start: pos, end: pos });
+                    }}
                     className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-text-secondary hover:text-primary hover:bg-primary/5 rounded-sm transition-colors border border-slate-200"
                     title="수식 삽입"
                   >

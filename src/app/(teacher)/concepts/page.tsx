@@ -3,7 +3,6 @@
 import { Brain } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import BulkImportModal from '@/components/bulk-import/BulkImportModal';
-import { MathLivePopup } from '@/components/math/MathLivePopup';
 import {
   ConceptListPanel,
   ConceptInfoBar,
@@ -22,13 +21,9 @@ export default function ConceptsPage() {
   const {
     editingConcept, isNewConcept,
     editingBlank, isNewBlank,
-    blankForm, editForm,
     bulkImportOpen, setBulkImportOpen,
-    mathPopupOpen, setMathPopupOpen,
     subjects,
     fetchConcepts,
-    syncBlanksFromTemplate,
-    templateTextareaRef, contentTextareaRef,
   } = mgr;
 
   return (
@@ -77,36 +72,6 @@ export default function ConceptsPage() {
           onSuccess={() => { setBulkImportOpen(false); fetchConcepts(); }}
         />
       )}
-
-      {/* Math Popup */}
-      <MathLivePopup
-        isOpen={mathPopupOpen}
-        onClose={() => setMathPopupOpen(false)}
-        onInsert={(latex) => {
-          const insertion = `$${latex}$`;
-          const ta = (editingBlank || isNewBlank) ? templateTextareaRef.current : contentTextareaRef.current;
-          if (ta) {
-            const start = ta.selectionStart;
-            const end = ta.selectionEnd;
-            if (editingBlank || isNewBlank) {
-              const before = blankForm.templateText.slice(0, start);
-              const after = blankForm.templateText.slice(end);
-              syncBlanksFromTemplate(before + insertion + after);
-            } else {
-              const before = editForm.fullContent.slice(0, start);
-              const after = editForm.fullContent.slice(end);
-              mgr.setEditForm((p) => ({ ...p, fullContent: before + insertion + after }));
-            }
-            setTimeout(() => { ta.focus(); ta.selectionStart = ta.selectionEnd = start + insertion.length; }, 0);
-          } else {
-            if (editingBlank || isNewBlank) {
-              syncBlanksFromTemplate(blankForm.templateText + insertion);
-            } else {
-              mgr.setEditForm((p) => ({ ...p, fullContent: p.fullContent + insertion }));
-            }
-          }
-        }}
-      />
     </div>
   );
 }

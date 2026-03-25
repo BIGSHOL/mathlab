@@ -1,14 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
-  Eye, Edit, Trash2, Plus, Loader2, FileText, Sparkles,
-  FunctionSquare, ChevronDown, ChevronRight, Play,
+  Edit, Trash2, Plus, Loader2, FileText, Sparkles,
+  FunctionSquare, ChevronDown, ChevronRight, Play, Eye,
 } from 'lucide-react';
 import { InlineMathText } from '@/components/math/InlineMathText';
-import { EditableMathRenderer } from '@/components/math/EditableMathRenderer';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { MathLivePopup } from '@/components/math/MathLivePopup';
+import { HybridContentEditor, type HybridEditorHandle } from '@/components/math/HybridContentEditor';
 import { DIFFICULTY_LABELS, DIFFICULTY_COLORS } from './types';
 import type { BlankItem } from './types';
 import type { ConceptManagerReturn } from './useConceptManager';
@@ -27,19 +27,17 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
     isNewConcept, isContentEditing,
     blankExercises, blanksLoading,
     showBlanks, setShowBlanks,
-    templateViewMode, setTemplateViewMode,
     templateMathPopup, setTemplateMathPopup,
-    contentTextareaRef,
     aiMetadataLoading, aiGenerating,
     showBlankGenOptions, setShowBlankGenOptions,
     editPrereqs, prereqSearch, prereqResults, prereqSearching,
     searchPrereqs, addPrereq, removePrereq,
-    setMathPopupOpen,
     handleAiMetadataExtract, handleAiBlankGenerate,
     startEditBlank, startNewBlank, deleteBlankExercise,
   } = mgr;
 
   const [solveMode, setSolveMode] = useState(false);
+  const hybridEditorRef = useRef<HybridEditorHandle>(null);
 
   return (
     <div className="grid grid-cols-2 divide-x divide-slate-200 h-full">
@@ -63,90 +61,33 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
               <div className="flex items-center gap-1">
                 <button
                   type="button"
-                  onClick={() => setTemplateViewMode((v) => v === 'rendered' ? 'raw' : 'rendered')}
-                  className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-sm transition-colors border ${
-                    templateViewMode === 'raw' ? 'text-amber-700 bg-amber-50 border-amber-300' : 'text-text-secondary hover:text-primary hover:bg-primary/5 border-slate-200'
-                  }`}
+                  onClick={() => setTemplateMathPopup({ latex: '', start: -1, end: -1 })}
+                  className="inline-flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-primary hover:bg-primary/5 rounded-sm transition-colors border border-slate-200"
+                  title="수식 삽입"
                 >
-                  <Eye className="w-3.5 h-3.5" />
-                  {templateViewMode === 'raw' ? '미리보기' : '마크업'}
+                  <FunctionSquare className="w-3.5 h-3.5" />
+                  수식
                 </button>
-                {templateViewMode === 'raw' && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setMathPopupOpen(true)}
-                      className="inline-flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-primary hover:bg-primary/5 rounded-sm transition-colors border border-slate-200"
-                      title="수식 삽입"
-                    >
-                      <FunctionSquare className="w-3.5 h-3.5" />
-                      수식
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleAiMetadataExtract}
-                      disabled={aiMetadataLoading || !editForm.fullContent.trim()}
-                      className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-violet-600 hover:bg-violet-50 rounded-sm transition-colors border border-violet-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="AI가 개념 내용을 분석하여 학년, 단원, 영역 등을 자동으로 채웁니다"
-                    >
-                      {aiMetadataLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                      {aiMetadataLoading ? 'AI 분석 중...' : 'AI 자동분류'}
-                    </button>
-                  </>
-                )}
+                <button
+                  type="button"
+                  onClick={handleAiMetadataExtract}
+                  disabled={aiMetadataLoading || !editForm.fullContent.trim()}
+                  className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-violet-600 hover:bg-violet-50 rounded-sm transition-colors border border-violet-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="AI가 개념 내용을 분석하여 학년, 단원, 영역 등을 자동으로 채웁니다"
+                >
+                  {aiMetadataLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                  {aiMetadataLoading ? 'AI 분석 중...' : 'AI 자동분류'}
+                </button>
               </div>
             )}
-            {templateViewMode === 'raw' ? (
-              <textarea
-                ref={contentTextareaRef}
-                className="w-full h-[300px] min-h-[200px] max-h-[600px] resize-y px-3 py-2 border border-slate-200 rounded-sm text-[15px] bg-white font-serif-kr focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                style={{ lineHeight: '1.8' }}
-                value={editForm.fullContent}
-                onChange={(e) => setEditForm((p) => ({ ...p, fullContent: e.target.value }))}
-                onClick={(e) => {
-                  // 커서가 $...$ 수식 안에 있으면 수식 편집 팝업 열기
-                  const pos = e.currentTarget.selectionStart;
-                  const text = editForm.fullContent;
-                  let i = 0;
-                  while (i < text.length) {
-                    const ds = text.indexOf('$$', i);
-                    const ss = text.indexOf('$', i);
-                    if (ds === i) {
-                      const de = text.indexOf('$$', ds + 2);
-                      if (de > ds && pos > ds + 1 && pos < de + 2) {
-                        setTemplateMathPopup({ latex: text.slice(ds + 2, de), start: ds, end: de + 2 });
-                        return;
-                      }
-                      i = de > ds ? de + 2 : i + 2;
-                    } else if (ss === i) {
-                      const se = text.indexOf('$', ss + 1);
-                      if (se > ss && !text.slice(ss + 1, se).includes('\n') && pos > ss && pos < se + 1) {
-                        setTemplateMathPopup({ latex: text.slice(ss + 1, se), start: ss, end: se + 1 });
-                        return;
-                      }
-                      i = se > ss ? se + 1 : i + 1;
-                    } else {
-                      i = ss >= 0 ? ss : text.length;
-                    }
-                  }
-                }}
-                placeholder="개념 내용을 입력하세요..."
-                spellCheck={false}
-                disabled={!isOwner}
-              />
-            ) : (
-              <div className="w-full min-h-[200px] flex-1 overflow-y-auto px-3 py-2 border border-slate-200 rounded-sm bg-white scrollbar-thin">
-                {editForm.fullContent ? (
-                  <EditableMathRenderer
-                    content={editForm.fullContent}
-                    className="text-[15px] font-serif-kr"
-                    onMathClick={isOwner ? (latex, start, end) => setTemplateMathPopup({ latex, start, end }) : undefined}
-                  />
-                ) : (
-                  <p className="text-slate-400 text-sm">개념 내용이 없습니다.</p>
-                )}
-              </div>
-            )}
+            <HybridContentEditor
+              ref={hybridEditorRef}
+              content={editForm.fullContent}
+              onChange={(v) => setEditForm((p) => ({ ...p, fullContent: v }))}
+              onMathClick={isOwner ? (latex, start, end) => setTemplateMathPopup({ latex, start, end }) : undefined}
+              disabled={!isOwner}
+              placeholder="개념 내용을 입력하세요..."
+            />
             {/* fullContent 수식 편집 팝업 */}
             <MathLivePopup
               isOpen={!!templateMathPopup}
@@ -154,8 +95,14 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
               onInsert={(latex) => {
                 if (templateMathPopup) {
                   const { start, end } = templateMathPopup;
-                  const newText = editForm.fullContent.slice(0, start) + `$${latex}$` + editForm.fullContent.slice(end);
-                  setEditForm((p) => ({ ...p, fullContent: newText }));
+                  if (start >= 0) {
+                    // 기존 수식 편집: source에서 해당 위치 교체
+                    const newText = editForm.fullContent.slice(0, start) + `$${latex}$` + editForm.fullContent.slice(end);
+                    setEditForm((p) => ({ ...p, fullContent: newText }));
+                  } else {
+                    // 새 수식 삽입: 커서 위치에 삽입
+                    hybridEditorRef.current?.insertAtCursor(`$${latex}$`);
+                  }
                 }
                 setTemplateMathPopup(null);
               }}

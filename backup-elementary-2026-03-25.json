@@ -1,0 +1,3912 @@
+{
+  "exportedAt": "2026-03-25T13:34:10.801Z",
+  "conceptCount": 84,
+  "subjectCount": 4,
+  "subjects": [
+    {
+      "id": "cmn5vrgh00000vdjgqr6vubb5",
+      "title": "초등 3학년 수학",
+      "description": "초등 3학년 수학 개념",
+      "gradeLevel": 3,
+      "sortOrder": 3,
+      "createdAt": "2026-03-25T10:08:03.876Z"
+    },
+    {
+      "id": "cmn5vrht4000rvdjgsb823rej",
+      "title": "초등 4학년 수학",
+      "description": "초등 4학년 수학 개념",
+      "gradeLevel": 4,
+      "sortOrder": 4,
+      "createdAt": "2026-03-25T10:08:05.608Z"
+    },
+    {
+      "id": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "초등 5학년 수학",
+      "description": "초등 5학년 수학 개념",
+      "gradeLevel": 5,
+      "sortOrder": 5,
+      "createdAt": "2026-03-25T10:08:08.762Z"
+    },
+    {
+      "id": "cmn5vrmlc003jvdjgawtxum5b",
+      "title": "초등 6학년 수학",
+      "description": "초등 6학년 수학 개념",
+      "gradeLevel": 6,
+      "sortOrder": 6,
+      "createdAt": "2026-03-25T10:08:11.808Z"
+    }
+  ],
+  "concepts": [
+    {
+      "id": "cmn5vrnpp0047vdjgnosd1pgv",
+      "subjectId": "cmn5vrmlc003jvdjgawtxum5b",
+      "title": "원주와 원주율",
+      "fullContent": "원은 둥근 모양의 도형입니다. 원의 테두리를 따라 한 바퀴 돈 길이를 원주라고 부릅니다. 원주는 원의 둘레와 같은 말입니다.\n\n모든 원에서는 원주를 지름으로 나누면 항상 일정한 값이 나옵니다. 이 일정한 값을 원주율이라고 하며, 기호로는 $\\pi$라고 씁니다. 원주율은 약 $3.14$로 계산할 수 있습니다. 예를 들어, 지름이 $10$ cm인 원의 원주가 약 $31.4$ cm라면, 원주율은 $31.4 \\div 10 = 3.14$가 됩니다. 지름이 $20$ cm인 원의 원주가 약 $62.8$ cm라면, 원주율은 $62.8 \\div 20 = 3.14$로 역시 같습니다.\n\n원주율을 알면 원의 지름만으로 원주를 구할 수 있습니다. 원주율의 정의에 따라 원주 $\\div$ 지름 $=$ 원주율이므로, 원주는 지름 $\\times$ 원주율로 계산할 수 있습니다. 또는 반지름을 알고 있다면, 지름은 반지름의 $2$배이므로 원주 $=$ $2 \\times$ 반지름 $\\times$ 원주율로도 구할 수 있습니다. 우리는 보통 원주율을 $3.14$로 계산하지만, 문제에 따라 $3.1$이나 $3$으로 어림하여 계산하기도 합니다.",
+      "visualAssets": null,
+      "sortOrder": 12,
+      "conceptCode": "E6-GEO-03",
+      "grade": "elementary_6",
+      "semester": 2,
+      "chapter": "원의 넓이",
+      "section": "원주와 원주율",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "원주,원주율,3.14,지름",
+      "createdAt": "2026-03-25T10:08:13.261Z",
+      "updatedAt": "2026-03-25T10:42:31.445Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs5nw00ervdjgwuj2evab",
+          "conceptId": "cmn5vrnpp0047vdjgnosd1pgv",
+          "prerequisiteId": "cmn5vrh8y000gvdjgf9pof8yj"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs5r800etvdjg06630l06",
+          "conceptId": "cmn5vrnt30049vdjgkhpb5rnh",
+          "prerequisiteId": "cmn5vrnpp0047vdjgnosd1pgv"
+        },
+        {
+          "id": "cmn5vs6og00fdvdjgg29j47tm",
+          "conceptId": "cmn5vroda004lvdjgtkk5v4y9",
+          "prerequisiteId": "cmn5vrnpp0047vdjgnosd1pgv"
+        }
+      ],
+      "blanks": [
+        {
+          "id": "cmn5vxt0c0011vdtkmvatqrdc",
+          "conceptId": "cmn5vrnpp0047vdjgnosd1pgv",
+          "level": 1,
+          "blanks": [
+            {
+              "hint": "ㅇㅈ",
+              "answer": "원주",
+              "position": 1,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅇㅈㅇ",
+              "answer": "원주율",
+              "position": 2,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅈㄹ",
+              "answer": "지름",
+              "position": 3,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅂㅈㄹ",
+              "answer": "반지름",
+              "position": 4,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅂㅈㄹ",
+              "answer": "반지름",
+              "position": 5,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "78.5",
+              "answer": "$78.5$",
+              "position": 6,
+              "difficulty": "hard"
+            }
+          ],
+          "templateText": "원의 둘레의 길이를 {{1}}라 합니다.\n원주 $\\div$ 지름 $=$ {{2}} $\\approx 3.14$\n\n원주 $=$ {{3}} $\\times 3.14$\n\n원의 넓이 $=$ {{4}} $\\times$ {{5}} $\\times 3.14$\n\n예) 반지름이 $5\\text{cm}$인 원의 넓이 $= 5 \\times 5 \\times 3.14 =$ {{6}}$\\text{cm}^2$",
+          "createdAt": "2026-03-25T10:13:00.060Z"
+        }
+      ]
+    },
+    {
+      "id": "cmn5vrgvg0008vdjghkaa61fm",
+      "subjectId": "cmn5vrgh00000vdjgqr6vubb5",
+      "title": "두 자리 곱셈",
+      "fullContent": "두 자리 곱셈은 두 자리 수와 한 자리 수를 곱하는 계산을 말합니다. 예를 들어, $23 \\times 4$와 같은 계산을 할 때 사용합니다. 두 자리 곱셈은 세로셈으로 계산하면 편리하며, 먼저 한 자리 수를 두 자리 수의 일의 자리 숫자와 곱하고, 다음으로 한 자리 수를 두 자리 수의 십의 자리 숫자와 곱하는 순서로 진행합니다.\n\n곱한 값이 $10$이 넘으면 올림을 해야 합니다. 예를 들어, $23 \\times 4$를 계산할 때, 일의 자리인 $3 \\times 4 = 12$이므로 $10$의 자리로 $1$을 올림하고 일의 자리에는 $2$를 씁니다. 다음으로 십의 자리인 $2 \\times 4 = 8$에 올림한 $1$을 더하여 $9$를 십의 자리에 씁니다. 따라서 $23 \\times 4 = 92$가 됩니다.\n\n때로는 일의 자리에서 올림이 있고, 십의 자리에서도 올림이 두 번 일어날 수 있습니다. 예를 들어, $27 \\times 4$를 계산할 때, 일의 자리 $7 \\times 4 = 28$이므로 $2$를 올림하고 $8$을 씁니다. 십의 자리 $2 \\times 4 = 8$에 올림한 $2$를 더하면 $10$이 되어, $1$을 백의 자리로 올림하고 $0$을 십의 자리에 씁니다. 이처럼 올림이 있는 곱셈에서는 올림한 수를 꼭 더해주는 것을 잊지 않고 정확하게 계산하는 것이 중요합니다.",
+      "visualAssets": null,
+      "sortOrder": 4,
+      "conceptCode": "E3-NUM-04",
+      "grade": "elementary_3",
+      "semester": 1,
+      "chapter": "곱셈",
+      "section": "(두 자리 수)×(한 자리 수)",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "곱셈,올림,세로셈",
+      "createdAt": "2026-03-25T10:08:04.396Z",
+      "updatedAt": "2026-03-25T13:30:06.524Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vrym200ajvdjgcu8itv3u",
+          "conceptId": "cmn5vrgvg0008vdjghkaa61fm",
+          "prerequisiteId": "cmn5vrgl70002vdjgw3qw758q"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vryzh00arvdjgzikx5eky",
+          "conceptId": "cmn5vrhps000qvdjgzw7hjsin",
+          "prerequisiteId": "cmn5vrgvg0008vdjghkaa61fm"
+        },
+        {
+          "id": "cmn5vrz2x00atvdjgxr6e68ti",
+          "conceptId": "cmn5vrhwi000tvdjggqm3gs2t",
+          "prerequisiteId": "cmn5vrgvg0008vdjghkaa61fm"
+        },
+        {
+          "id": "cmn5vrzgb00b1vdjgetzy5g6o",
+          "conceptId": "cmn5vri9z0011vdjgydpgh9pm",
+          "prerequisiteId": "cmn5vrgvg0008vdjghkaa61fm"
+        }
+      ],
+      "blanks": [
+        {
+          "id": "cmn5vxrsx0007vdtk3q24ovd9",
+          "conceptId": "cmn5vrgvg0008vdjghkaa61fm",
+          "level": 1,
+          "blanks": [
+            {
+              "hint": "80",
+              "answer": "$80$",
+              "position": 1,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "12",
+              "answer": "$12$",
+              "position": 2,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "92",
+              "answer": "$92$",
+              "position": 3,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "252",
+              "answer": "$252$",
+              "position": 4,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "4",
+              "answer": "$4$",
+              "position": 5,
+              "difficulty": "full"
+            }
+          ],
+          "templateText": "$(\\text{두 자리 수}) \\times (\\text{한 자리 수})$ 계산:\n$23 \\times 4$를 계산하는 방법:\n1. $20 \\times 4 =$ {{1}}\n2. $3 \\times 4 =$ {{2}}\n3. $80 + 12 =$ {{3}}\n\n올림이 있는 곱셈 $36 \\times 7 =$ {{4}}\n일의 자리: $6 \\times 7 = 42$ → $2$를 쓰고 {{5}}를 올림",
+          "createdAt": "2026-03-25T10:12:58.498Z"
+        }
+      ]
+    },
+    {
+      "id": "cmn5vrh5k000evdjgt32yvm0c",
+      "subjectId": "cmn5vrgh00000vdjgqr6vubb5",
+      "title": "평면도형 기초",
+      "fullContent": "평면도형을 이해하기 위해 먼저 선의 종류를 알아볼까요? 두 점을 곧게 이은 선을 선분이라고 합니다. 예를 들어, 점 ㄱ과 점 ㄴ을 곧게 이으면 선분 ㄱㄴ이 됩니다. 한 점에서 시작하여 한쪽으로 끝없이 뻗어 나가는 선을 반직선이라고 합니다. 그리고 양쪽으로 끝없이 뻗어 나가는 선을 직선이라고 부릅니다.\n\n이러한 선들을 이용하여 각을 만들 수 있습니다. 한 점에서 그은 두 반직선으로 이루어진 도형을 각이라고 합니다. 각의 크기는 두 반직선이 벌어진 정도를 나타냅니다. 특히, 종이를 반듯하게 두 번 접었을 때 생기는 각처럼 벌어진 정도가 특별한 각을 직각이라고 합니다. 직각은 꺾인 정도가 바른 각을 말하며, 그 크기는 $90$도입니다.\n\n직각을 포함하는 도형들도 있습니다. 한 각이 직각인 삼각형을 직각삼각형이라고 합니다. 또한, 네 각이 모두 직각인 사각형을 직사각형이라고 합니다. 직사각형 중에서 네 변의 길이가 모두 같은 사각형을 정사각형이라고 부릅니다. 이처럼 선분, 반직선, 직선, 그리고 각의 종류를 알면 다양한 평면도형의 특징을 이해할 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 7,
+      "conceptCode": "E3-GEO-01",
+      "grade": "elementary_3",
+      "semester": 1,
+      "chapter": "평면도형",
+      "section": "선분, 반직선, 직선",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "선분,반직선,직선,각,직각",
+      "createdAt": "2026-03-25T10:08:04.760Z",
+      "updatedAt": "2026-03-25T10:34:38.936Z",
+      "prerequisites": [],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs0ab00bjvdjgbz4s5060",
+          "conceptId": "cmn5vrj0u001hvdjgjy3rb4fm",
+          "prerequisiteId": "cmn5vrh5k000evdjgt32yvm0c"
+        },
+        {
+          "id": "cmn5vs0do00blvdjgoo5qkw02",
+          "conceptId": "cmn5vrj4a001jvdjggj6wfmii",
+          "prerequisiteId": "cmn5vrh5k000evdjgt32yvm0c"
+        },
+        {
+          "id": "cmn5vs14c00c1vdjg9fy5p43g",
+          "conceptId": "cmn5vrjhr001rvdjgpwsk7sph",
+          "prerequisiteId": "cmn5vrh5k000evdjgt32yvm0c"
+        },
+        {
+          "id": "cmn5vs17o00c3vdjgh7i6crrl",
+          "conceptId": "cmn5vrjl4001tvdjgch90vb4r",
+          "prerequisiteId": "cmn5vrh5k000evdjgt32yvm0c"
+        },
+        {
+          "id": "cmn5vs1ax00c5vdjg7b4pyl4h",
+          "conceptId": "cmn5vrjoh001vvdjgmzh909tf",
+          "prerequisiteId": "cmn5vrh5k000evdjgt32yvm0c"
+        },
+        {
+          "id": "cmn5vs1e900c7vdjgm38e1f12",
+          "conceptId": "cmn5vrjru001xvdjguyz6mtg7",
+          "prerequisiteId": "cmn5vrh5k000evdjgt32yvm0c"
+        }
+      ],
+      "blanks": [
+        {
+          "id": "cmn5vxrn30003vdtktmt5sryx",
+          "conceptId": "cmn5vrh5k000evdjgt32yvm0c",
+          "level": 1,
+          "blanks": [
+            {
+              "hint": "ㅅㅂ",
+              "answer": "선분",
+              "position": 1,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅂㅈㅅ",
+              "answer": "반직선",
+              "position": 2,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅈㅅ",
+              "answer": "직선",
+              "position": 3,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㄱ",
+              "answer": "각",
+              "position": 4,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "ㅈㄱ",
+              "answer": "직각",
+              "position": 5,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "90°",
+              "answer": "$90°$",
+              "position": 6,
+              "difficulty": "hard"
+            }
+          ],
+          "templateText": "두 점을 곧게 이은 선을 {{1}}이라 합니다.\n한 점에서 시작하여 한쪽으로 끝없이 뻗은 선을 {{2}}이라 합니다.\n양쪽으로 끝없이 뻗은 선을 {{3}}이라 합니다.\n\n두 반직선이 한 점에서 만날 때 생기는 도형을 {{4}}이라 합니다.\n종이를 두 번 접었을 때 생기는 각을 {{5}}이라 하고, 크기는 {{6}}입니다.",
+          "createdAt": "2026-03-25T10:12:58.287Z"
+        }
+      ]
+    },
+    {
+      "id": "cmn5vri6m000zvdjgxw6c5uzt",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "큰 수 비교",
+      "fullContent": "큰 수의 크기를 비교할 때에는 먼저 두 수의 자릿수를 비교합니다. 자릿수가 더 많은 수가 더 큰 수입니다. 예를 들어, $12345$와 $9876$을 비교할 때, $12345$는 다섯 자리 수이고 $9876$은 네 자리 수이므로, 자릿수가 더 많은 $12345$가 $9876$보다 더 큰 수입니다.\n\n만약 두 수의 자릿수가 같다면, 가장 높은 자리부터 차례로 숫자를 비교합니다. 비교하다가 처음으로 다른 숫자가 나오는 자리에서 숫자가 더 큰 쪽이 전체적으로 더 큰 수입니다. 예를 들어, $54321$과 $54678$을 비교해 봅시다. 만의 자리와 천의 자리는 각각 $5$와 $4$로 같습니다. 하지만 백의 자리에서 $3$과 $6$으로 숫자가 달라집니다. 이때 $6$이 $3$보다 크므로, $54678$이 $54321$보다 더 큰 수입니다.\n\n이렇게 두 수의 크기를 비교한 결과는 부등호를 사용하여 나타낼 수 있습니다. 더 큰 수를 향해 입을 벌린 모양인 '크다'는 기호 $(>)$와 '작다'는 기호 $(<)$를 사용합니다. 만약 두 수의 크기가 같다면 '같다'는 기호 $(=)$를 사용합니다. 따라서 $12345 > 9876$ 또는 $54321 < 54678$과 같이 표현할 수 있습니다. 큰 수를 비교할 때는 자릿수와 각 자리의 숫자를 꼼꼼히 살펴보는 것이 중요합니다.",
+      "visualAssets": null,
+      "sortOrder": 4,
+      "conceptCode": "E4-NUM-04",
+      "grade": "elementary_4",
+      "semester": 1,
+      "chapter": "큰 수",
+      "section": "큰 수의 크기 비교",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "크기비교,부등호",
+      "createdAt": "2026-03-25T10:08:06.094Z",
+      "updatedAt": "2026-03-25T10:35:53.477Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vrzcz00azvdjg5hrm1204",
+          "conceptId": "cmn5vri6m000zvdjgxw6c5uzt",
+          "prerequisiteId": "cmn5vrhwi000tvdjggqm3gs2t"
+        }
+      ],
+      "prerequisiteFor": [],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrj4a001jvdjggj6wfmii",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "직각",
+      "fullContent": "직각은 정확히 $90^\\circ$인 각을 말합니다. 각의 크기를 잴 때, $0^\\circ$부터 시작하여 한 바퀴를 $360^\\circ$라고 한다면, 그중에서 정확히 $90^\\circ$만큼 벌어진 각을 직각이라고 부릅니다.\n\n두 직선이 서로 만나서 생기는 네 개의 각이 모두 직각일 때, 우리는 이 두 직선을 서로 수직이라고 합니다. 예를 들어, 교실의 벽과 바닥이 만나는 부분이나 책상의 모서리 등 우리 주변에서 직각을 이루는 수직인 선들을 많이 찾아볼 수 있습니다.\n\n직각은 삼각자의 한 부분을 보면 쉽게 확인할 수 있습니다. 삼각자에는 직각을 나타내는 부분이 있어서, 이 부분을 이용하여 어떤 각이 직각인지 확인하거나, 또는 우리가 직접 직각을 그릴 때 편리하게 사용할 수 있습니다.\n\n또한, 직각은 다른 각들을 분류하는 중요한 기준이 됩니다. 직각보다 작은 각은 예각이라고 하고, 직각보다 큰 각은 둔각이라고 부릅니다. 이처럼 직각은 각의 세계에서 아주 특별하고 중요한 역할을 하는 각입니다.",
+      "visualAssets": null,
+      "sortOrder": 14,
+      "conceptCode": "E4-GEO-02",
+      "grade": "elementary_4",
+      "semester": 1,
+      "chapter": "각도",
+      "section": "각의 크기 재기",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "직각,수직,90도",
+      "createdAt": "2026-03-25T10:08:07.306Z",
+      "updatedAt": "2026-03-25T10:37:06.796Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs0do00blvdjgoo5qkw02",
+          "conceptId": "cmn5vrj4a001jvdjggj6wfmii",
+          "prerequisiteId": "cmn5vrh5k000evdjgt32yvm0c"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs0gx00bnvdjgrf1nhjqi",
+          "conceptId": "cmn5vrj7n001lvdjgsrzt912j",
+          "prerequisiteId": "cmn5vrj4a001jvdjggj6wfmii"
+        },
+        {
+          "id": "cmn5vs0nn00brvdjgu46n0fpa",
+          "conceptId": "cmn5vrjaz001nvdjg6bfkmjhx",
+          "prerequisiteId": "cmn5vrj4a001jvdjggj6wfmii"
+        },
+        {
+          "id": "cmn5vs0xn00bxvdjggfuvxrki",
+          "conceptId": "cmn5vrjec001pvdjg056c6kcf",
+          "prerequisiteId": "cmn5vrj4a001jvdjggj6wfmii"
+        },
+        {
+          "id": "cmn5vs89500gbvdjg8amz5s9a",
+          "conceptId": "cmn5vrphq0058vdjg7nq5ji0q",
+          "prerequisiteId": "cmn5vrj4a001jvdjggj6wfmii"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrjec001pvdjg056c6kcf",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "삼각형 분류 (각)",
+      "fullContent": "삼각형은 각의 크기에 따라 세 가지로 분류할 수 있습니다. 먼저, 삼각형의 세 각이 모두 예각일 때, 이 삼각형을 예각삼각형이라고 부릅니다. 예각은 크기가 $0°$보다 크고 $90°$보다 작은 각을 말합니다. 예를 들어, 세 각의 크기가 각각 $60°$, $70°$, $50°$인 삼각형은 모든 각이 예각이므로 예각삼각형입니다.\n\n다음으로, 삼각형의 한 각이 직각일 때, 이 삼각형을 직각삼각형이라고 합니다. 직각은 크기가 정확히 $90°$인 각을 말합니다. 삼각형의 세 각의 크기를 모두 더하면 항상 $180°$가 되기 때문에, 직각삼각형에서는 한 각이 $90°$이므로 나머지 두 각은 반드시 예각이 됩니다.\n\n마지막으로, 삼각형의 한 각이 둔각일 때, 이 삼각형을 둔각삼각형이라고 합니다. 둔각은 크기가 $90°$보다 크고 $180°$보다 작은 각을 말합니다. 직각삼각형과 마찬가지로 둔각삼각형도 한 각만 둔각이 될 수 있습니다. 만약 삼각형에 둔각이 두 개 있다면, 두 각의 크기만으로도 $180°$를 넘게 되어 삼각형을 만들 수 없기 때문입니다. 이처럼 삼각형은 각의 크기에 따라 예각삼각형, 직각삼각형, 둔각삼각형으로 나눌 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 17,
+      "conceptCode": "E4-GEO-05",
+      "grade": "elementary_4",
+      "semester": 2,
+      "chapter": "삼각형",
+      "section": "예각, 직각, 둔각삼각형",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "예각삼각형,직각삼각형,둔각삼각형",
+      "createdAt": "2026-03-25T10:08:07.668Z",
+      "updatedAt": "2026-03-25T10:37:26.074Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs0uc00bvvdjg8f30fmxn",
+          "conceptId": "cmn5vrjec001pvdjg056c6kcf",
+          "prerequisiteId": "cmn5vrj0u001hvdjgjy3rb4fm"
+        },
+        {
+          "id": "cmn5vs0xn00bxvdjggfuvxrki",
+          "conceptId": "cmn5vrjec001pvdjg056c6kcf",
+          "prerequisiteId": "cmn5vrj4a001jvdjggj6wfmii"
+        },
+        {
+          "id": "cmn5vs10z00bzvdjg6haq1xyq",
+          "conceptId": "cmn5vrjec001pvdjg056c6kcf",
+          "prerequisiteId": "cmn5vrj7n001lvdjgsrzt912j"
+        }
+      ],
+      "prerequisiteFor": [],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrjru001xvdjguyz6mtg7",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "각도 재기와 그리기",
+      "fullContent": "각의 크기를 정확하게 재거나 그릴 때에는 각도기를 사용합니다. 각의 크기는 '도'라고 읽고 $°$로 나타내며, 직각은 $90°$입니다. 각도기를 사용하여 각의 크기를 잴 때에는 각도기의 중심을 각의 꼭짓점에 맞추고, 각의 한 변을 각도기의 밑금에 맞춥니다. 다른 한 변이 닿는 눈금을 읽으면 각의 크기를 알 수 있습니다. 이때, 각의 벌어진 정도에 따라 안쪽 눈금과 바깥쪽 눈금 중 알맞은 것을 선택하여 읽어야 합니다.\n\n주어진 크기의 각을 그릴 때에도 각도기를 사용합니다. 먼저 각의 꼭짓점이 될 점을 찍고, 그 점에서 한 변을 곧게 그립니다. 각도기의 중심을 꼭짓점에 맞추고 밑금을 그린 변에 맞춘 다음, 그리고 싶은 각도에 해당하는 눈금에 점을 찍습니다. 마지막으로 꼭짓점과 찍어둔 점을 이어 다른 한 변을 그리면 원하는 크기의 각이 완성됩니다.\n\n각의 크기에 따라 각의 종류를 나눌 수 있습니다. 직각인 $90°$보다 작은 각을 예각이라고 부르며, 직각인 $90°$보다 큰 각을 둔각이라고 부릅니다. 예를 들어, $45°$는 예각이고, $120°$는 둔각입니다. 이처럼 각도기를 사용하기 전에 각의 크기를 어림하여 약 몇 도쯤 될지 짐작해보는 연습을 하면, 각의 크기를 더 잘 이해하고 정확하게 재거나 그리는 데 도움이 됩니다.",
+      "visualAssets": null,
+      "sortOrder": 21,
+      "conceptCode": "E4-GEO-09",
+      "grade": "elementary_4",
+      "semester": 1,
+      "chapter": "각도",
+      "section": "각의 합과 차",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "각도,각도기,예각,둔각",
+      "createdAt": "2026-03-25T10:08:08.155Z",
+      "updatedAt": "2026-03-25T10:37:52.960Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs1e900c7vdjgm38e1f12",
+          "conceptId": "cmn5vrjru001xvdjguyz6mtg7",
+          "prerequisiteId": "cmn5vrh5k000evdjgt32yvm0c"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs1hj00c9vdjgo9a38hcl",
+          "conceptId": "cmn5vrjv8001zvdjgn6r8e9br",
+          "prerequisiteId": "cmn5vrjru001xvdjguyz6mtg7"
+        }
+      ],
+      "blanks": [
+        {
+          "id": "cmn5vxs1p000dvdtkg70hu89n",
+          "conceptId": "cmn5vrjru001xvdjguyz6mtg7",
+          "level": 1,
+          "blanks": [
+            {
+              "hint": "ㄱㄷ",
+              "answer": "각도",
+              "position": 1,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㄷ(°)",
+              "answer": "도(°)",
+              "position": 2,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "180°",
+              "answer": "$180°$",
+              "position": 3,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "360°",
+              "answer": "$360°$",
+              "position": 4,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "40°",
+              "answer": "$40°$",
+              "position": 5,
+              "difficulty": "hard"
+            }
+          ],
+          "templateText": "각의 크기를 {{1}}라 하고, 단위는 {{2}}입니다.\n\n삼각형의 세 각의 크기의 합은 항상 {{3}}입니다.\n사각형의 네 각의 크기의 합은 항상 {{4}}입니다.\n\n삼각형에서 두 각이 $60°$, $80°$이면\n나머지 한 각 $= 180° - 60° - 80° =$ {{5}}",
+          "createdAt": "2026-03-25T10:12:58.813Z"
+        }
+      ]
+    },
+    {
+      "id": "cmn5vrk5d0025vdjgfyyrxg6x",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "규칙 찾기",
+      "fullContent": "규칙 찾기는 수나 도형이 놓여 있는 순서에서 일정한 관계를 발견하는 활동입니다. 이러한 일정한 관계를 '규칙' 또는 '패턴'이라고 부르며, 규칙을 찾으면 다음에 어떤 수나 도형이 올지 예상할 수 있습니다.\n\n수의 배열에서는 일정한 수만큼 커지거나 작아지는 규칙을 찾을 수 있습니다. 예를 들어, $2$, $4$, $6$, $8$, ... 과 같은 배열에서는 수가 $2$씩 커지는 규칙을 찾을 수 있으므로 다음 수는 $10$이 됩니다. 반대로 $10$, $8$, $6$, $4$, ... 와 같은 배열에서는 수가 $2$씩 작아지는 규칙을 찾을 수 있어 다음 수는 $2$가 됩니다. 도형의 배열에서는 같은 모양이 반복되는 단위를 찾아 규칙을 알아낼 수 있습니다. 예를 들어, '동그라미, 세모, 네모, 동그라미, 세모, 네모, ...' 와 같은 배열에서는 '동그라미, 세모, 네모'가 반복되는 규칙을 찾을 수 있습니다.\n\n규칙을 찾을 때는 처음부터 끝까지 모든 수나 도형이 그 규칙을 따르는지 꼼꼼히 확인해야 합니다. 때로는 여러 가지 규칙이 숨어 있을 수도 있으므로, 다양한 방법으로 생각해 보는 것이 중요합니다. 이렇게 찾은 규칙을 식으로 나타내면 수나 도형 사이의 관계를 더 명확하게 이해하고, 앞으로 배울 대응 관계의 기초를 다질 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 25,
+      "conceptCode": "E4-ALG-01",
+      "grade": "elementary_4",
+      "semester": 1,
+      "chapter": "규칙 찾기",
+      "section": "수의 배열 규칙",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "algebra",
+      "source": null,
+      "keywords": "규칙,배열,패턴",
+      "createdAt": "2026-03-25T10:08:08.641Z",
+      "updatedAt": "2026-03-25T10:38:21.303Z",
+      "prerequisites": [],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs49v00dxvdjgse6gb00f",
+          "conceptId": "cmn5vrmhz003ivdjg74xg6m9b",
+          "prerequisiteId": "cmn5vrk5d0025vdjgfyyrxg6x"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrgl70002vdjgw3qw758q",
+      "subjectId": "cmn5vrgh00000vdjgqr6vubb5",
+      "title": "세 자리 수 덧셈",
+      "fullContent": "세 자리 수 덧셈은 백의 자리, 십의 자리, 일의 자리로 이루어진 두 수를 합하여 하나의 수로 만드는 계산입니다. 이 계산을 할 때에는 자릿값을 정확히 맞추어 세로셈으로 계산하는 것이 중요합니다. 먼저 일의 자리 숫자끼리 더하고, 그 다음 십의 자리 숫자끼리 더하며, 마지막으로 백의 자리 숫자끼리 더하여 답을 구합니다. 예를 들어, $123+456$을 계산할 때, 일의 자리인 $3$과 $6$을 더해 $9$를 쓰고, 십의 자리인 $2$와 $5$를 더해 $7$을 쓰고, 백의 자리인 $1$과 $4$를 더해 $5$를 써서 답은 $579$가 됩니다.\n\n만약 각 자릿수의 합이 $10$이거나 $10$보다 크면, 받아올림을 해야 합니다. 받아올림은 더한 값이 $10$이 되면 윗자리로 $1$을 올려주는 것을 말합니다. 예를 들어, $235+148$을 계산할 때, 일의 자리인 $5$와 $8$을 더하면 $13$이 됩니다. 이때 $13$의 $3$은 일의 자리에 쓰고, $1$은 십의 자리로 받아올림합니다. 다음으로 십의 자리인 $3$과 $4$를 더하고 받아올림한 $1$을 더해 $8$을 십의 자리에 씁니다. 마지막으로 백의 자리인 $2$와 $1$을 더해 $3$을 백의 자리에 써서 답은 $383$이 됩니다.\n\n받아올림은 한 번만 있을 수도 있고, 십의 자리와 백의 자리 등 여러 번 있을 수도 있습니다. 예를 들어, $375+268$을 계산할 때처럼 일의 자리에서 십의 자리로, 십의 자리에서 백의 자리로 받아올림이 두 번 일어날 수도 있습니다. 세로셈으로 자릿값을 정확히 맞추고, 받아올림한 수를 빠뜨리지 않고 더하는 것이 세 자리 수 덧셈을 정확하게 하는 가장 중요한 방법입니다.",
+      "visualAssets": null,
+      "sortOrder": 1,
+      "conceptCode": "E3-NUM-01",
+      "grade": "elementary_3",
+      "semester": 1,
+      "chapter": "덧셈과 뺄셈",
+      "section": "세 자리 수의 덧셈과 뺄셈",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "받아올림,세로셈,자릿값",
+      "createdAt": "2026-03-25T10:08:04.026Z",
+      "updatedAt": "2026-03-25T13:30:06.524Z",
+      "prerequisites": [],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vrym200ajvdjgcu8itv3u",
+          "conceptId": "cmn5vrgvg0008vdjghkaa61fm",
+          "prerequisiteId": "cmn5vrgl70002vdjgw3qw758q"
+        }
+      ],
+      "blanks": [
+        {
+          "id": "cmn5vxrjg0001vdtkhd183fin",
+          "conceptId": "cmn5vrgl70002vdjgw3qw758q",
+          "level": 1,
+          "blanks": [
+            {
+              "hint": "ㅇㅇ ㅈㄹ",
+              "answer": "일의 자리",
+              "position": 1,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "14",
+              "answer": "$14$",
+              "position": 2,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅇㄹ",
+              "answer": "올림",
+              "position": 3,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "13",
+              "answer": "$13$",
+              "position": 4,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "4",
+              "answer": "$4$",
+              "position": 5,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "ㅅㅇ ㅈㄹ",
+              "answer": "십의 자리",
+              "position": 6,
+              "difficulty": "full"
+            }
+          ],
+          "templateText": "세 자리 수의 덧셈은 {{1}}부터 차례로 계산합니다.\n\n받아올림이 있는 덧셈 $256 + 178 = 434$\n\n일의 자리: $6 + 8 =$ {{2}} → $4$를 쓰고 $1$을 {{3}}\n십의 자리: $5 + 7 + 1 =$ {{4}} → $3$을 쓰고 $1$을 올림\n백의 자리: $2 + 1 + 1 =$ {{5}}\n\n받아내림이 있는 뺄셈에서 일의 자리에서 뺄 수 없으면 {{6}}에서 $10$을 빌려옵니다.",
+          "createdAt": "2026-03-25T10:12:58.156Z"
+        }
+      ]
+    },
+    {
+      "id": "cmn5vrlqv0032vdjge1q9q86f",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "가능성 (확률 기초)",
+      "fullContent": "어떤 일이 일어날 수 있는 정도를 '가능성'이라고 합니다. 우리는 이 가능성을 숫자로 나타낼 수 있습니다. 가능성은 가장 작은 수인 $0$부터 가장 큰 수인 $1$까지의 수로 표현합니다.\n\n만약 어떤 일이 절대로 일어날 수 없다면, 그 가능성은 $0$이라고 합니다. 예를 들어, 주사위를 한 번 던졌을 때 $7$의 눈이 나오는 것은 불가능하므로 가능성은 $0$입니다. 반대로 어떤 일이 반드시 일어난다면, 그 가능성은 $1$이라고 합니다. 예를 들어, 주사위를 한 번 던졌을 때 $6$ 이하의 눈이 나오는 것은 확실하므로 가능성은 $1$입니다.\n\n어떤 일이 일어날 수도 있고 일어나지 않을 수도 있는, 즉 '반반'의 경우에는 가능성을 $\\frac{1}{2}$이라고 합니다. 동전을 던졌을 때 앞면이 나올 가능성은 $\\frac{1}{2}$입니다. 이처럼 가능성은 $0$과 $1$ 사이의 다양한 분수나 소수로 나타낼 수 있으며, $0$에 가까울수록 일어날 가능성이 낮고 $1$에 가까울수록 일어날 가능성이 높다는 것을 의미합니다.\n\n이처럼 가능성을 숫자로 표현하면 어떤 일이 얼마나 자주 일어날지 예측하는 데 도움을 받을 수 있습니다. 일상생활에서 일어날 수 있는 여러 가지 일들을 가능성으로 나타내면서, 우리는 미래를 더 합리적으로 생각하고 판단하는 기초를 다질 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 16,
+      "conceptCode": "E5-NUM-16",
+      "grade": "elementary_5",
+      "semester": 2,
+      "chapter": "평균과 가능성",
+      "section": "일이 일어날 가능성",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "data",
+      "source": null,
+      "keywords": "가능성,확률기초",
+      "createdAt": "2026-03-25T10:08:10.711Z",
+      "updatedAt": "2026-03-25T10:40:11.173Z",
+      "prerequisites": [],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vsbbc00i5vdjgwj25gikw",
+          "conceptId": "cmn5vrrqq006jvdjg5xvfgbf9",
+          "prerequisiteId": "cmn5vrlqv0032vdjge1q9q86f"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrm130038vdjghcvfa585",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "삼각형 넓이",
+      "fullContent": "삼각형의 넓이는 삼각형이 차지하는 평면의 크기를 말합니다. 삼각형의 넓이를 구하려면 밑변과 높이를 알아야 합니다. 삼각형의 밑변은 삼각형의 한 변을 말하며, 높이는 밑변과 마주 보는 꼭짓점에서 밑변에 수직으로 그은 선분의 길이입니다. 이때 높이는 밑변에 수직이어야 한다는 점이 중요합니다.\n\n삼각형의 넓이를 구하는 방법은 평행사변형의 넓이를 이용하면 쉽게 이해할 수 있습니다. 똑같은 삼각형 $2$개를 뒤집어 붙이면 하나의 평행사변형이 됩니다. 평행사변형의 넓이는 '밑변 $\\times$ 높이'로 구하므로, 삼각형 $2$개의 넓이가 평행사변형의 넓이와 같다는 것을 알 수 있습니다. 따라서 삼각형 하나의 넓이는 평행사변형 넓이의 절반이 됩니다.\n\n이러한 원리를 바탕으로 삼각형의 넓이는 '밑변 $\\times$ 높이 $\\div 2$'라는 공식으로 구할 수 있습니다. 예를 들어, 밑변의 길이가 $10 \\text{ cm}$이고 높이가 $6 \\text{ cm}$인 삼각형의 넓이는 $10 \\times 6 \\div 2 = 30 \\text{ cm}^2$가 됩니다. 삼각형의 넓이를 구할 때, 어떤 변을 밑변으로 정하느냐에 따라 높이도 달라지지만, 어떤 변을 밑변으로 선택하더라도 넓이는 항상 같게 나옵니다.",
+      "visualAssets": null,
+      "sortOrder": 19,
+      "conceptCode": "E5-GEO-03",
+      "grade": "elementary_5",
+      "semester": 1,
+      "chapter": "다각형의 둘레와 넓이",
+      "section": "직사각형, 평행사변형, 삼각형, 마름모, 사다리꼴의 넓이",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "삼각형,넓이,밑변,높이",
+      "createdAt": "2026-03-25T10:08:11.080Z",
+      "updatedAt": "2026-03-25T10:40:30.478Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs3pz00dlvdjgj1r17yun",
+          "conceptId": "cmn5vrm130038vdjghcvfa585",
+          "prerequisiteId": "cmn5vrlxn0036vdjgmrbi765r"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs3tb00dnvdjgi3er3cm4",
+          "conceptId": "cmn5vrm4i003avdjghy00e44p",
+          "prerequisiteId": "cmn5vrm130038vdjghcvfa585"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrmem003gvdjgs5iebtf6",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "직육면체와 정육면체",
+      "fullContent": "우리가 주변에서 흔히 볼 수 있는 상자 모양의 물건들은 대부분 직육면체입니다. 직육면체는 직사각형 모양의 면 $6$개로 둘러싸인 입체도형을 말합니다. 직육면체에는 면이 $6$개, 모서리가 $12$개, 꼭짓점이 $8$개 있습니다. 이때, 꼭짓점의 개수에서 모서리의 개수를 빼고 면의 개수를 더하면 항상 $2$가 되는데, 즉 $8-12+6=2$와 같은 관계가 성립합니다.\n\n정육면체는 직육면체 중에서 특별한 경우로, 정사각형 모양의 면 $6$개로 둘러싸인 입체도형을 말합니다. 모든 면이 정사각형이므로, 정육면체의 모든 모서리의 길이는 같습니다. 정육면체 역시 면이 $6$개, 모서리가 $12$개, 꼭짓점이 $8$개 있습니다.\n\n이러한 직육면체와 정육면체를 그림으로 나타낼 때, 입체적인 모양을 한눈에 알아볼 수 있도록 그린 그림을 겨냥도라고 합니다. 겨냥도에서는 보이지 않는 모서리는 점선으로 나타내어 입체감을 살립니다. 또한, 직육면체나 정육면체의 모서리를 잘라 펼쳐 놓은 그림을 전개도라고 합니다. 전개도를 통해 입체도형의 모든 면의 모양과 크기를 정확히 알 수 있습니다. 우리는 겨냥도와 전개도를 통해 직육면체와 정육면체의 특징을 더 잘 이해하고 그릴 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 23,
+      "conceptCode": "E5-GEO-07",
+      "grade": "elementary_5",
+      "semester": 2,
+      "chapter": "직육면체",
+      "section": "직육면체와 정육면체",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "직육면체,정육면체,겨냥도,전개도",
+      "createdAt": "2026-03-25T10:08:11.567Z",
+      "updatedAt": "2026-03-25T10:40:59.059Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs46m00dvvdjg0and1g73",
+          "conceptId": "cmn5vrmem003gvdjgs5iebtf6",
+          "prerequisiteId": "cmn5vrjhr001rvdjgpwsk7sph"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs5dv00elvdjgvq11la7c",
+          "conceptId": "cmn5vrniv0043vdjgbsglpe3s",
+          "prerequisiteId": "cmn5vrmem003gvdjgs5iebtf6"
+        },
+        {
+          "id": "cmn5vs5h800envdjg181sko5h",
+          "conceptId": "cmn5vrnma0045vdjg1abylrv3",
+          "prerequisiteId": "cmn5vrmem003gvdjgs5iebtf6"
+        },
+        {
+          "id": "cmn5vs6b500f5vdjgyqrj3pww",
+          "conceptId": "cmn5vro37004fvdjg7yzekq2b",
+          "prerequisiteId": "cmn5vrmem003gvdjgs5iebtf6"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vro37004fvdjg7yzekq2b",
+      "subjectId": "cmn5vrmlc003jvdjgawtxum5b",
+      "title": "쌓기나무와 투영도",
+      "fullContent": "쌓기나무로 만든 입체도형을 위, 앞, 옆에서 본 모양으로 나타낸 것을 투영도라고 합니다. 이것은 $3$차원 입체도형을 $2$차원 평면에 표현하는 방법입니다.\n\n위에서 본 모양은 쌓기나무가 놓인 바닥의 전체적인 형태를 보여줍니다. 여기에 각 자리에 쌓인 쌓기나무의 개수를 숫자로 써넣으면, 입체도형의 높이 정보를 한눈에 알 수 있습니다. 예를 들어, 위에서 본 모양에 숫자 $1$, $2$, $3$이 쓰여 있다면, 그 위치에 쌓인 쌓기나무의 개수가 각각 $1$개, $2$개, $3$개임을 의미합니다. 앞에서 본 모양은 입체도형을 정면에서 바라봤을 때 가장 높이 쌓인 부분들을 보여주며, 옆에서 본 모양은 입체도형을 옆에서 바라봤을 때 가장 높이 쌓인 부분들을 보여줍니다.\n\n주어진 투영도를 통해 원래 쌓기나무의 모양을 상상할 수 있으며, 위에서 본 모양에 숫자가 쓰여 있다면 쌓기나무의 총 개수를 정확하게 알 수 있습니다.\n\n하지만 위, 앞, 옆에서 본 모양만 주어졌을 때는 여러 가지 입체도형이 같은 투영도를 가질 수 있습니다. 이 경우, 주어진 투영도를 만족하는 쌓기나무의 최소 개수와 최대 개수를 추론하여 구할 수 있습니다. 최소 개수는 각 위치에서 투영도를 만족하는 가장 적은 수의 쌓기나무를 쌓는 것이고, 최대 개수는 투영도를 만족하는 범위 내에서 가장 많은 쌓기나무를 쌓는 것입니다.",
+      "visualAssets": null,
+      "sortOrder": 16,
+      "conceptCode": "E6-GEO-06",
+      "grade": "elementary_6",
+      "semester": 2,
+      "chapter": "공간과 입체",
+      "section": "쌓기나무",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "쌓기나무,투영도",
+      "createdAt": "2026-03-25T10:08:13.747Z",
+      "updatedAt": "2026-03-25T10:42:59.438Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs6b500f5vdjgyqrj3pww",
+          "conceptId": "cmn5vro37004fvdjg7yzekq2b",
+          "prerequisiteId": "cmn5vrmem003gvdjgs5iebtf6"
+        }
+      ],
+      "prerequisiteFor": [],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrnc4003zvdjgbsfe3rji",
+      "subjectId": "cmn5vrmlc003jvdjgawtxum5b",
+      "title": "비례식",
+      "fullContent": "비율이 같은 두 비를 등호로 나타낸 식을 비례식이라고 합니다. 예를 들어, $2:3$과 $4:6$은 비율이 $\\frac{2}{3}$으로 같으므로, 이를 등호로 연결한 $2:3=4:6$이 비례식입니다.\n\n비례식 $a:b=c:d$에서 바깥쪽에 있는 항인 $a$와 $d$를 외항이라고 하고, 안쪽에 있는 항인 $b$와 $c$를 내항이라고 합니다. 비례식의 중요한 성질은 외항의 곱과 내항의 곱이 항상 같다는 것입니다. 즉, $a \\times d = b \\times c$ 입니다.\n\n이 성질을 이용하면 비례식에서 모르는 값을 쉽게 구할 수 있습니다. 예를 들어, $2:3=x:12$라는 비례식에서 외항의 곱은 $2 \\times 12 = 24$이고, 내항의 곱은 $3 \\times x$입니다. 외항의 곱과 내항의 곱이 같으므로 $3 \\times x = 24$가 되고, $x$는 $8$이 됩니다.\n\n비례식은 지도에서 실제 거리를 구하거나, 요리 레시피에서 재료의 양을 조절할 때처럼 우리 생활 속 다양한 문제들을 해결하는 데 유용하게 활용됩니다.",
+      "visualAssets": null,
+      "sortOrder": 8,
+      "conceptCode": "E6-ALG-03",
+      "grade": "elementary_6",
+      "semester": 2,
+      "chapter": "비례식과 비례배분",
+      "section": "비례식",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "algebra",
+      "source": null,
+      "keywords": "비례식,외항,내항",
+      "createdAt": "2026-03-25T10:08:12.772Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs57800ehvdjgsgrfq9yl",
+          "conceptId": "cmn5vrnc4003zvdjgbsfe3rji",
+          "prerequisiteId": "cmn5vrn5f003vvdjg8zbrs1qd"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs5al00ejvdjg4mce9ba5",
+          "conceptId": "cmn5vrnfg0041vdjg57lgi8z2",
+          "prerequisiteId": "cmn5vrnc4003zvdjgbsfe3rji"
+        }
+      ],
+      "blanks": [
+        {
+          "id": "cmn5vxt350013vdtk7p788n1f",
+          "conceptId": "cmn5vrnc4003zvdjgbsfe3rji",
+          "level": 1,
+          "blanks": [
+            {
+              "hint": "ㅂㄹㅅ",
+              "answer": "비례식",
+              "position": 1,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅇㅎ",
+              "answer": "외항",
+              "position": 2,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㄴㅎ",
+              "answer": "내항",
+              "position": 3,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅂㄹㅂㅂ",
+              "answer": "비례배분",
+              "position": 4,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "48",
+              "answer": "$48$",
+              "position": 5,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "72",
+              "answer": "$72$",
+              "position": 6,
+              "difficulty": "full"
+            }
+          ],
+          "templateText": "비율이 같은 두 비를 등호로 연결한 식을 {{1}}이라 합니다.\n\n비례식의 성질: {{2}}의 곱 $=$ {{3}}의 곱\n$a : b = c : d$이면 $a \\times d = b \\times c$\n\n전체를 주어진 비로 나누는 것을 {{4}}이라 합니다.\n$120$을 $2 : 3$으로 비례배분:\n$120 \\times \\frac{2}{5} =$ {{5}}, $120 \\times \\frac{3}{5} =$ {{6}}",
+          "createdAt": "2026-03-25T10:13:00.161Z"
+        }
+      ]
+    },
+    {
+      "id": "cmn5vriqs001bvdjgjkrknzwm",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "대분수 연산 (동분모)",
+      "fullContent": "대분수의 덧셈과 뺄셈은 자연수 부분과 분수 부분을 나누어 계산합니다. 먼저, 대분수의 덧셈에서는 자연수 부분은 자연수 부분끼리 더하고, 분수 부분은 분수 부분끼리 더합니다. 예를 들어, $1\\frac{1}{4} + 2\\frac{2}{4}$를 계산할 때, 자연수 $1$과 $2$를 더하여 $3$을 얻고, 분수 $\\frac{1}{4}$과 $\\frac{2}{4}$를 더하여 $\\frac{3}{4}$을 얻어 최종적으로 $3\\frac{3}{4}$이 됩니다. 만약 분수 부분의 합이 $1$이거나 $1$보다 큰 가분수가 되면, 그 가분수를 대분수로 바꾸어 자연수 부분에 더해 주어야 합니다. 예를 들어, $1\\frac{3}{4} + 2\\frac{2}{4}$를 계산하면 자연수 부분의 합은 $3$이고 분수 부분의 합은 $\\frac{5}{4}$입니다. $\\frac{5}{4}$는 $1\\frac{1}{4}$과 같으므로, 자연수 $3$에 $1$을 더하고 남은 분수 $\\frac{1}{4}$을 붙여 $4\\frac{1}{4}$이 됩니다.\n\n대분수의 뺄셈도 마찬가지로 자연수 부분은 자연수 부분끼리 빼고, 분수 부분은 분수 부분끼리 뺍니다. 예를 들어, $3\\frac{3}{5} - 1\\frac{1}{5}$를 계산할 때, 자연수 $3$에서 $1$을 빼서 $2$를 얻고, 분수 $\\frac{3}{5}$에서 $\\frac{1}{5}$을 빼서 $\\frac{2}{5}$를 얻어 최종적으로 $2\\frac{2}{5}$가 됩니다. 이때, 빼는 수의 분수 부분이 빼어지는 수의 분수 부분보다 더 클 때가 있습니다. 예를 들어, $3\\frac{1}{5} - 1\\frac{3}{5}$와 같은 경우입니다. 이럴 때는 빼어지는 수의 자연수 부분에서 $1$을 빌려와 분수 부분에 더해 주어야 합니다. 자연수 $1$은 분모가 $5$인 분수 $\\frac{5}{5}$와 같으므로, $3\\frac{1}{5}$은 $2\\frac{1+5}{5}$, 즉 $2\\frac{6}{5}$으로 바꿀 수 있습니다. 이제 $2\\frac{6}{5} - 1\\frac{3}{5}$를 계산하면 자연수 부분은 $2-1=1$이고 분수 부분은 $\\frac{6}{5}-\\frac{3}{5}=\\frac{3}{5}$이 되어 $1\\frac{3}{5}$이 됩니다. 계산이 끝난 후에는 분수 부분이 기약분수인지 확인하는 것이 중요합니다.",
+      "visualAssets": null,
+      "sortOrder": 10,
+      "conceptCode": "E4-NUM-10",
+      "grade": "elementary_4",
+      "semester": 2,
+      "chapter": "분수의 덧셈과 뺄셈",
+      "section": "분모가 같은 분수의 덧셈과 뺄셈",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "대분수,동분모,덧셈,뺄셈",
+      "createdAt": "2026-03-25T10:08:06.820Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vrzx300bbvdjgtg2gys73",
+          "conceptId": "cmn5vriqs001bvdjgjkrknzwm",
+          "prerequisiteId": "cmn5vrigo0015vdjgohkd629b"
+        },
+        {
+          "id": "cmn5vs00d00bdvdjg7dn0tjs4",
+          "conceptId": "cmn5vriqs001bvdjgjkrknzwm",
+          "prerequisiteId": "cmn5vrik10017vdjgog7qwe9w"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs35m00d9vdjgunbgzrfv",
+          "conceptId": "cmn5vrl6l002qvdjgfdjhdcaw",
+          "prerequisiteId": "cmn5vriqs001bvdjgjkrknzwm"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrj0u001hvdjgjy3rb4fm",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "예각",
+      "fullContent": "예각은 각의 크기가 $0°$보다 크고 $90°$보다 작은 각을 말합니다. 우리가 흔히 보는 시계의 바늘이나 가위의 벌어진 정도처럼 다양한 곳에서 각을 찾아볼 수 있습니다. 각의 크기를 나타내는 단위를 '도'라고 하며, 기호로는 $°$를 사용합니다. 예를 들어, $30°$, $45°$, $60°$와 같은 각들은 모두 예각에 해당합니다.\n\n직각은 크기가 정확히 $90°$인 각을 말하는데, 예각은 이 직각보다 작은 각들을 의미합니다. 각도기를 사용하여 각의 크기를 잴 때, 각도기의 중심을 각의 꼭짓점에 맞추고 한 변을 각도기의 밑금에 맞춘 다음, 다른 변이 가리키는 눈금을 읽어 각도를 알 수 있습니다. 만약 측정한 각도가 $90°$보다 작게 나온다면, 그 각은 예각입니다.\n\n예각과 반대로 $90°$보다 크고 $180°$보다 작은 각은 둔각이라고 부릅니다. 따라서 어떤 각이 예각인지 확인하려면, 그 각의 크기가 $90°$를 넘지 않는지 잘 살펴보는 것이 중요합니다. 주변에서 예각을 찾아보고 각도기로 직접 재어보면서 예각의 특징을 익혀보세요.",
+      "visualAssets": null,
+      "sortOrder": 13,
+      "conceptCode": "E4-GEO-01",
+      "grade": "elementary_4",
+      "semester": 1,
+      "chapter": "각도",
+      "section": "각의 크기 재기",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "예각,각도,각도기",
+      "createdAt": "2026-03-25T10:08:07.183Z",
+      "updatedAt": "2026-03-25T10:37:00.146Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs0ab00bjvdjgbz4s5060",
+          "conceptId": "cmn5vrj0u001hvdjgjy3rb4fm",
+          "prerequisiteId": "cmn5vrh5k000evdjgt32yvm0c"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs0kc00bpvdjgy8fj6ksz",
+          "conceptId": "cmn5vrjaz001nvdjg6bfkmjhx",
+          "prerequisiteId": "cmn5vrj0u001hvdjgjy3rb4fm"
+        },
+        {
+          "id": "cmn5vs0uc00bvvdjg8f30fmxn",
+          "conceptId": "cmn5vrjec001pvdjg056c6kcf",
+          "prerequisiteId": "cmn5vrj0u001hvdjgjy3rb4fm"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrgyu000avdjg2bnorj3u",
+      "subjectId": "cmn5vrgh00000vdjgqr6vubb5",
+      "title": "분수 기초",
+      "fullContent": "전체를 똑같이 나눈 것 중의 일부를 나타낼 때 분수를 사용합니다. 분수는 가로선 아래에 전체를 똑같이 나눈 조각의 수를 나타내는 분모를 쓰고, 가로선 위에 그중에서 우리가 생각하는 조각의 수를 나타내는 분자를 씁니다. 예를 들어, 피자 한 판을 똑같이 $4$조각으로 나눈 것 중 $1$조각은 $\\frac{1}{4}$로 나타내며, 여기서 $4$는 분모, $1$은 분자입니다.\n\n분자(위쪽 숫자)가 $1$인 분수를 단위분수라고 합니다. 예를 들어, $\\frac{1}{2}$, $\\frac{1}{3}$, $\\frac{1}{4}$ 등이 있습니다. 분모보다 분자가 작은 분수를 진분수라고 하며, $\\frac{1}{2}$, $\\frac{3}{4}$ 등이 있습니다. 분모와 분자가 같거나 분모보다 분자가 큰 분수를 가분수라고 하며, $\\frac{3}{3}$, $\\frac{5}{4}$ 등이 있습니다. 자연수와 진분수가 함께 있는 분수를 대분수라고 하며, $1\\frac{1}{2}$, $2\\frac{3}{4}$ 등이 있습니다.\n\n분모가 같은 분수끼리 크기를 비교할 때는 분자가 클수록 더 큰 분수입니다. 예를 들어, $\\frac{1}{4}$과 $\\frac{3}{4}$을 비교하면, 분자 $3$이 $1$보다 크므로 $\\frac{3}{4}$이 $\\frac{1}{4}$보다 더 큽니다. 분수를 바르게 이해하면 여러 가지 상황에서 양을 정확하게 표현하고 비교할 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 5,
+      "conceptCode": "E3-NUM-05",
+      "grade": "elementary_3",
+      "semester": 1,
+      "chapter": "분수와 소수",
+      "section": "분수",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "분수,분모,분자,단위분수,진분수,가분수,대분수",
+      "createdAt": "2026-03-25T10:08:04.519Z",
+      "updatedAt": "2026-03-25T10:34:25.107Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vryph00alvdjgi7s3t5d5",
+          "conceptId": "cmn5vrgyu000avdjg2bnorj3u",
+          "prerequisiteId": "cmn5vrgs30006vdjg01oior51"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vrysu00anvdjgfsvzcydy",
+          "conceptId": "cmn5vrh28000cvdjgqnl5mn6w",
+          "prerequisiteId": "cmn5vrgyu000avdjg2bnorj3u"
+        },
+        {
+          "id": "cmn5vrzn000b5vdjg03xmpi1o",
+          "conceptId": "cmn5vrigo0015vdjgohkd629b",
+          "prerequisiteId": "cmn5vrgyu000avdjg2bnorj3u"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrh28000cvdjgqnl5mn6w",
+      "subjectId": "cmn5vrgh00000vdjgqr6vubb5",
+      "title": "소수 기초",
+      "fullContent": "$1$을 똑같이 $10$으로 나눈 것 중 하나를 $0.1$이라고 합니다. 이 $0.1$은 소수의 가장 기본적인 단위입니다. 소수는 이렇게 $0.1$이 몇 개인지로 나타내는 수이며, 점을 사용하여 자연수 부분과 소수 부분을 구분하는데, 이 점을 소수점이라고 부릅니다.\n\n$0.1$이 $3$개 모이면 $0.3$이 되고, $0.1$이 $7$개 모이면 $0.7$이 됩니다. 이처럼 $1$보다 작은 소수도 있습니다. 또한, $1$과 $0.1$이 $5$개 모이면 $1.5$가 되고, $2$와 $0.1$이 $3$개 모이면 $2.3$이 되는 것처럼 $1$보다 큰 소수도 있습니다.\n\n소수의 크기를 비교할 때는 먼저 소수점 왼쪽에 있는 자연수 부분을 비교합니다. 예를 들어, $2.3$은 $1.5$보다 자연수 부분이 더 크므로 $2.3$이 더 큰 수입니다. 만약 자연수 부분이 같다면, 소수점 오른쪽에 있는 소수 부분의 수를 비교합니다. 예를 들어, $1.5$와 $1.3$을 비교할 때, 자연수 부분은 $1$로 같으므로 소수점 아래 첫째 자리 수인 $5$와 $3$을 비교하여 $1.5$가 $1.3$보다 더 크다는 것을 알 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 6,
+      "conceptCode": "E3-NUM-06",
+      "grade": "elementary_3",
+      "semester": 1,
+      "chapter": "분수와 소수",
+      "section": "소수",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "소수,소수점,0.1",
+      "createdAt": "2026-03-25T10:08:04.640Z",
+      "updatedAt": "2026-03-25T10:34:32.749Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vrysu00anvdjgfsvzcydy",
+          "conceptId": "cmn5vrh28000cvdjgqnl5mn6w",
+          "prerequisiteId": "cmn5vrgyu000avdjg2bnorj3u"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs03o00bfvdjg2bordveq",
+          "conceptId": "cmn5vriu5001dvdjgzagcr1gr",
+          "prerequisiteId": "cmn5vrh28000cvdjgqnl5mn6w"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrh8y000gvdjgf9pof8yj",
+      "subjectId": "cmn5vrgh00000vdjgqr6vubb5",
+      "title": "원",
+      "fullContent": "원은 둥근 모양을 가진 도형입니다. 컴퍼스를 사용하여 원을 그릴 때, 컴퍼스 침을 꽂는 한가운데 점을 원의 중심이라고 부릅니다. 원의 중심은 원의 모든 점에서 같은 거리에 있습니다.\n\n원의 중심에서 원 위의 한 점까지 이은 선분을 반지름이라고 합니다. 한 원에서는 반지름의 길이가 모두 같습니다. 예를 들어, 컴퍼스를 벌린 길이가 $5$ cm라면, 이 원의 반지름은 $5$ cm가 됩니다. 원 위의 두 점을 이으면서 원의 중심을 지나는 선분을 지름이라고 합니다. 지름은 반지름의 $2$ 배입니다. 즉, $지름 = 반지름 \\times 2$ 입니다. 만약 반지름이 $3$ cm인 원이 있다면, 이 원의 지름은 $3 \\times 2 = 6$ cm가 됩니다.\n\n한 원에서 반지름과 지름은 셀 수 없이 많이 그을 수 있습니다. 하지만 어떤 반지름을 긋더라도 그 길이는 항상 같고, 어떤 지름을 긋더라도 그 길이 또한 항상 같습니다. 원의 중심, 반지름, 지름은 원을 이해하는 데 아주 중요한 개념입니다.",
+      "visualAssets": null,
+      "sortOrder": 8,
+      "conceptCode": "E3-GEO-02",
+      "grade": "elementary_3",
+      "semester": 2,
+      "chapter": "원",
+      "section": "원의 중심, 반지름, 지름",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "원,중심,반지름,지름,컴퍼스",
+      "createdAt": "2026-03-25T10:08:04.882Z",
+      "updatedAt": "2026-03-25T10:34:46.077Z",
+      "prerequisites": [],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs5nw00ervdjgwuj2evab",
+          "conceptId": "cmn5vrnpp0047vdjgnosd1pgv",
+          "prerequisiteId": "cmn5vrh8y000gvdjgf9pof8yj"
+        },
+        {
+          "id": "cmn5vs9gi00h1vdjgs8oqrzwo",
+          "conceptId": "cmn5vrqcb005qvdjg5tym603e",
+          "prerequisiteId": "cmn5vrh8y000gvdjgf9pof8yj"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrhcb000ivdjgulw36w46",
+      "subjectId": "cmn5vrgh00000vdjgqr6vubb5",
+      "title": "길이와 시간",
+      "fullContent": "우리는 물건의 길이를 잴 때 센티미터($\\text{cm}$)와 미터($\\text{m}$)를 사용했습니다. 이제 더 작거나 더 먼 길이를 나타내는 단위를 알아볼까요? 아주 짧은 길이를 잴 때는 밀리미터($\\text{mm}$)를 사용합니다. 자의 눈금을 보면 $1 \\text{ cm}$ 안에 작은 눈금 $10$개가 있는데, 이 작은 눈금 한 칸의 길이가 바로 $1 \\text{ mm}$입니다. 즉, $1 \\text{ cm}$는 $10 \\text{ mm}$와 같습니다. 반대로 아주 먼 거리를 잴 때는 킬로미터($\\text{km}$)를 사용합니다. $1 \\text{ km}$는 $1000 \\text{ m}$와 같으며, 학교에서 집까지의 거리처럼 긴 거리를 나타낼 때 편리합니다.\n\n시간을 나타내는 단위로는 시와 분을 알고 있습니다. 분보다 더 짧은 시간을 나타낼 때는 초를 사용합니다. 시계의 초침이 한 바퀴를 돌면 $1$ 분이 되는데, 이때 초침이 움직인 눈금 하나하나가 바로 $1$ 초입니다. 그래서 $1$ 분은 $60$ 초와 같습니다.\n\n시간을 더하거나 뺄 때는 초가 $60$을 넘으면 $1$ 분으로 올림하고, 분이 $60$을 넘으면 $1$ 시간으로 올림하여 계산합니다. 예를 들어, $40$ 초와 $30$ 초를 더하면 $70$ 초가 되는데, 이때 $60$ 초를 $1$ 분으로 바꾸어 $1$ 분 $10$ 초라고 말합니다. 마찬가지로 $30$ 분과 $40$ 분을 더하면 $70$ 분이 되므로 $1$ 시간 $10$ 분으로 나타냅니다. 이처럼 길이나 시간을 나타내는 다양한 단위를 사용하면 더 정확하고 편리하게 측정하고 표현할 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 9,
+      "conceptCode": "E3-MEA-01",
+      "grade": "elementary_3",
+      "semester": 1,
+      "chapter": "길이와 시간",
+      "section": "mm, km 단위",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "mm,km,시간,분,초",
+      "createdAt": "2026-03-25T10:08:05.003Z",
+      "updatedAt": "2026-03-25T10:34:54.742Z",
+      "prerequisites": [],
+      "prerequisiteFor": [],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrhfo000kvdjgmqjfb4l4",
+      "subjectId": "cmn5vrgh00000vdjgqr6vubb5",
+      "title": "들이와 무게",
+      "fullContent": "들이는 그릇에 담을 수 있는 액체의 양을 말합니다. 물통에 물을 가득 채웠을 때 그 물의 양이 바로 물통의 들이가 됩니다. 들이를 나타내는 단위로는 리터($\\text{L}$)와 밀리리터($\\text{mL}$)가 있으며, $1\\text{L}$는 $1000\\text{mL}$와 같습니다. 많은 양의 들이를 잴 때는 $\\text{L}$를, 적은 양을 잴 때는 $\\text{mL}$를 사용합니다.\n\n무게는 물체가 얼마나 무거운지를 나타내는 정도를 말합니다. 무게를 나타내는 단위로는 킬로그램($\\text{kg}$)과 그램($\\text{g}$)이 있으며, $1\\text{kg}$은 $1000\\text{g}$과 같습니다. 무거운 물체의 무게를 잴 때는 $\\text{kg}$을, 가벼운 물체의 무게를 잴 때는 $\\text{g}$을 사용합니다.\n\n들이나 무게를 더하거나 뺄 때는 같은 단위끼리 계산해야 합니다. 예를 들어, $500\\text{mL}$와 $700\\text{mL}$를 더하면 $1200\\text{mL}$가 됩니다. 이때 $1000\\text{mL}$는 $1\\text{L}$와 같으므로, $1200\\text{mL}$는 $1\\text{L}$ $200\\text{mL}$로 나타낼 수 있습니다. 마찬가지로 무게를 계산할 때도 $1000\\text{g}$이 넘으면 $1\\text{kg}$으로 바꾸어 표현합니다. 계산 결과가 $1000$이 넘으면 더 큰 단위인 $\\text{L}$나 $\\text{kg}$으로 올림하여 나타내는 것이 중요합니다.",
+      "visualAssets": null,
+      "sortOrder": 10,
+      "conceptCode": "E3-MEA-02",
+      "grade": "elementary_3",
+      "semester": 2,
+      "chapter": "들이와 무게",
+      "section": "L, mL 단위",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "들이,무게,L,mL,kg,g",
+      "createdAt": "2026-03-25T10:08:05.124Z",
+      "updatedAt": "2026-03-25T10:35:02.193Z",
+      "prerequisites": [],
+      "prerequisiteFor": [],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrhj2000mvdjgdsrtsyfv",
+      "subjectId": "cmn5vrgh00000vdjgqr6vubb5",
+      "title": "자료의 정리",
+      "fullContent": "우리가 주변에서 얻는 여러 가지 정보들을 '자료'라고 부릅니다. 이 자료들을 다른 사람들이 쉽게 알아보고 이해할 수 있도록 일정한 기준에 따라 가지런히 정리하는 것을 '자료의 정리'라고 합니다. 자료를 정리하면 복잡한 내용도 한눈에 파악하고 비교하기 편리해집니다.\n\n자료를 정리하는 대표적인 방법으로는 '표'와 '그림그래프'가 있습니다. '표'는 자료를 항목별로 나누어 숫자나 글자로 나타낸 것으로, 각 항목의 정확한 수량을 파악하기에 좋습니다. 예를 들어, 우리 반 학생들이 좋아하는 과일을 조사하여 사과는 $10$명, 딸기는 $8$명, 바나나는 $7$명이라고 표로 정리할 수 있습니다.\n\n'그림그래프'는 그림을 이용하여 수량을 나타내는 그래프입니다. 그림그래프를 그릴 때는 먼저 그림 $1$개가 나타내는 수를 정해야 합니다. 예를 들어, 큰 그림 $1$개는 $10$명, 작은 그림 $1$개는 $1$명으로 정할 수 있습니다. 그리고 각 항목의 수량만큼 그림을 그려 나타냅니다. 그림그래프는 자료의 많고 적음을 그림의 크기나 개수로 직관적으로 비교하기에 매우 효과적입니다.\n\n자료를 정리할 때는 먼저 필요한 자료를 모으고, 그 자료들을 일정한 기준에 따라 분류한 다음, 표나 그림그래프와 같은 적절한 방법으로 나타내는 과정을 거칩니다. 이렇게 정리된 자료는 우리가 어떤 사실을 파악하거나 결정을 내릴 때 큰 도움을 줍니다.",
+      "visualAssets": null,
+      "sortOrder": 11,
+      "conceptCode": "E3-STA-01",
+      "grade": "elementary_3",
+      "semester": 2,
+      "chapter": "자료의 정리",
+      "section": "표와 그림그래프",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "data",
+      "source": null,
+      "keywords": "표,그림그래프,자료정리",
+      "createdAt": "2026-03-25T10:08:05.246Z",
+      "updatedAt": "2026-03-25T10:35:08.404Z",
+      "prerequisites": [],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs1ku00cbvdjg8azwm89r",
+          "conceptId": "cmn5vrjyl0021vdjgfcijoee8",
+          "prerequisiteId": "cmn5vrhj2000mvdjgdsrtsyfv"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrhwi000tvdjggqm3gs2t",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "만 단위 이해",
+      "fullContent": "우리가 배우는 '만'은 $1000$이 $10$개 모인 수입니다. 즉, $1000$의 $10$배가 바로 $10000$입니다.\n\n이처럼 큰 수를 읽을 때는 네 자리씩 끊어서 읽으면 편리합니다. 예를 들어, $123456789$와 같은 수는 오른쪽부터 네 자리씩 끊어 $1$억 $2345$만 $6789$로 읽을 수 있습니다. 각 자리의 값은 오른쪽부터 일, 십, 백, 천이 반복되며, 이 네 자리가 모여 만, 억, 조와 같은 더 큰 단위를 만듭니다. $10000$은 만, $100000000$은 억, $1000000000000$은 조라고 부릅니다.\n\n$1$만, $2$만, $3$만처럼 만 단위로 뛰어 세기를 하면 큰 수의 규칙을 쉽게 파악할 수 있습니다. 수의 크기를 비교할 때는 먼저 자릿수가 많은 수가 더 큰 수입니다. 예를 들어, $12345$는 $9876$보다 자릿수가 많으므로 더 큰 수입니다. 만약 자릿수가 같다면, 가장 높은 자릿값부터 차례대로 비교하여 더 큰 수를 찾습니다. 예를 들어, $54321$과 $54320$을 비교할 때, 가장 높은 자리인 만의 자리부터 천, 백, 십의 자리까지는 같지만, 일의 자리에서 $1$이 $0$보다 크므로 $54321$이 더 큰 수입니다.",
+      "visualAssets": null,
+      "sortOrder": 1,
+      "conceptCode": "E4-NUM-01",
+      "grade": "elementary_4",
+      "semester": 1,
+      "chapter": "큰 수",
+      "section": "만, 억, 조",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "만,억,조,자릿값",
+      "createdAt": "2026-03-25T10:08:05.730Z",
+      "updatedAt": "2026-03-25T10:35:31.444Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vrz2x00atvdjgxr6e68ti",
+          "conceptId": "cmn5vrhwi000tvdjggqm3gs2t",
+          "prerequisiteId": "cmn5vrgvg0008vdjghkaa61fm"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vrz6700avvdjguxa4huod",
+          "conceptId": "cmn5vrhzv000vvdjg2picmbny",
+          "prerequisiteId": "cmn5vrhwi000tvdjggqm3gs2t"
+        },
+        {
+          "id": "cmn5vrzcz00azvdjg5hrm1204",
+          "conceptId": "cmn5vri6m000zvdjgxw6c5uzt",
+          "prerequisiteId": "cmn5vrhwi000tvdjggqm3gs2t"
+        }
+      ],
+      "blanks": [
+        {
+          "id": "cmn5vxrys000bvdtka9zq8jvh",
+          "conceptId": "cmn5vrhwi000tvdjggqm3gs2t",
+          "level": 1,
+          "blanks": [
+            {
+              "hint": "ㅁ",
+              "answer": "만",
+              "position": 1,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅇ",
+              "answer": "억",
+              "position": 2,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅈ",
+              "answer": "조",
+              "position": 3,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅈㄹㅅ",
+              "answer": "자릿수",
+              "position": 4,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "ㄴㅇ ㅈㄹ",
+              "answer": "높은 자리",
+              "position": 5,
+              "difficulty": "full"
+            }
+          ],
+          "templateText": "$10000$을 {{1}}이라 읽습니다.\n$10000$이 $10000$개이면 {{2}}\n$10000$이 $100000000$개이면 {{3}}\n\n큰 수의 크기 비교: {{4}}가 많은 수가 더 큽니다.\n자릿수가 같으면 {{5}}부터 비교합니다.",
+          "createdAt": "2026-03-25T10:12:58.708Z"
+        }
+      ]
+    },
+    {
+      "id": "cmn5vrhzv000vvdjg2picmbny",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "억 단위 이해",
+      "fullContent": "우리가 지금까지 배운 수보다 훨씬 더 큰 수를 나타낼 때 '억'이라는 단위를 사용합니다. '억'은 $100,000,000$을 말하며, 이는 '만'이 $10,000$개 모인 수, 즉 만의 만 배가 되는 아주 큰 수입니다. '억'은 $0$이 $8$개 붙어 있는 수로, 일, 십, 백, 천, 만, 십만, 백만, 천만 다음 자리에 옵니다.\n\n'억' 단위의 수를 읽고 쓸 때에는 네 자리씩 끊어 읽는 것이 중요합니다. 예를 들어, $123,456,789$와 같은 수를 읽을 때에는 오른쪽부터 네 자리씩 끊어 $1$억 $2345$만 $6789$로 읽습니다. '억' 다음에는 '십억', '백억', '천억'과 같이 자릿값이 계속 확장됩니다. $10$억은 $1$억이 $10$개 모인 수이고, $100$억은 $1$억이 $100$개 모인 수, $1000$억은 $1$억이 $1000$개 모인 수입니다.\n\n이처럼 큰 '억' 단위의 수는 우리 주변에서 많이 찾아볼 수 있습니다. 예를 들어, 우리나라의 인구가 약 $5000$만 명이라고 할 때, 전 세계 인구는 약 $80$억 명에 가깝습니다. 또한, 나라의 한 해 예산이나 큰 공사를 할 때 드는 비용 등도 '억' 단위로 나타내는 경우가 많습니다. '억' 단위를 정확하게 이해하고 읽고 쓸 수 있으면, 실생활에서 접하는 많은 정보를 바르게 파악할 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 2,
+      "conceptCode": "E4-NUM-02",
+      "grade": "elementary_4",
+      "semester": 1,
+      "chapter": "큰 수",
+      "section": "만, 억, 조",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "억,십억,백억,천억",
+      "createdAt": "2026-03-25T10:08:05.851Z",
+      "updatedAt": "2026-03-25T10:35:39.272Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vrz6700avvdjguxa4huod",
+          "conceptId": "cmn5vrhzv000vvdjg2picmbny",
+          "prerequisiteId": "cmn5vrhwi000tvdjggqm3gs2t"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vrz9l00axvdjgku2yzd3m",
+          "conceptId": "cmn5vri38000xvdjgzd82moh7",
+          "prerequisiteId": "cmn5vrhzv000vvdjg2picmbny"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vri38000xvdjgzd82moh7",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "조 단위 이해",
+      "fullContent": "우리가 지금까지 배운 수 중에서 '억'보다 훨씬 더 큰 수를 나타낼 때 '조' 단위를 사용합니다. $1$조는 $1$억이 $10000$개 모인 수로, $1,000,000,000,000$과 같이 나타냅니다. 즉, $1$조는 $0$이 $12$개 붙은 아주 큰 수입니다.\n\n이렇게 큰 수를 읽고 쓸 때에는 네 자리씩 끊어서 읽으면 편리합니다. 예를 들어, $1234567890123$과 같은 수는 오른쪽부터 네 자리씩 끊어 $1$조 $2345$억 $6789$만 $0123$으로 읽을 수 있습니다. 각 자리의 숫자가 어떤 단위를 나타내는지 정확히 아는 것이 중요합니다.\n\n'조' 단위는 우리나라의 한 해 예산이나 지구와 태양 사이의 거리처럼 아주 큰 규모를 나타낼 때 많이 사용됩니다. 예를 들어, 어떤 나라의 한 해 예산이 $600$조 원이라고 하면, 이는 $600,000,000,000,000$원이라는 뜻입니다.\n\n'조' 단위의 수를 정확하게 이해하고 읽고 쓰는 연습을 통해 큰 수를 다루는 능력을 기를 수 있습니다. 자릿값에 주의하며 수를 바르게 읽고 쓰는 것이 중요합니다.",
+      "visualAssets": null,
+      "sortOrder": 3,
+      "conceptCode": "E4-NUM-03",
+      "grade": "elementary_4",
+      "semester": 1,
+      "chapter": "큰 수",
+      "section": "만, 억, 조",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "조,큰수",
+      "createdAt": "2026-03-25T10:08:05.973Z",
+      "updatedAt": "2026-03-25T10:35:46.584Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vrz9l00axvdjgku2yzd3m",
+          "conceptId": "cmn5vri38000xvdjgzd82moh7",
+          "prerequisiteId": "cmn5vrhzv000vvdjg2picmbny"
+        }
+      ],
+      "prerequisiteFor": [],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrj7n001lvdjgsrzt912j",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "둔각",
+      "fullContent": "둔각은 직각인 $90^\\circ$보다 크고, 평각인 $180^\\circ$보다 작은 각을 말합니다. 예를 들어, $100^\\circ$나 $150^\\circ$와 같은 각들이 모두 둔각에 해당합니다. 둔각의 크기를 잴 때에는 각도기를 사용합니다. 각도기의 중심을 각의 꼭짓점에 맞추고, 한 변을 각도기의 밑금에 맞춘 다음, 다른 변이 가리키는 눈금을 읽으면 둔각의 크기를 정확하게 알 수 있습니다.\n\n우리 주변에서도 둔각을 쉽게 찾아볼 수 있습니다. 시계의 긴바늘과 짧은바늘이 오후 $4$시나 $5$시를 가리킬 때 이루는 각은 둔각입니다. 또한, 활짝 펼친 부채의 각도나 문이 크게 열렸을 때 문과 벽 사이의 각도도 둔각의 예가 될 수 있습니다. 삼각형 중에서 한 각이 둔각인 삼각형을 둔각삼각형이라고 부르기도 합니다. 둔각은 직각보다 훨씬 넓게 벌어진 각이므로, 각의 크기를 비교할 때 이 점을 기억하면 좋습니다.",
+      "visualAssets": null,
+      "sortOrder": 15,
+      "conceptCode": "E4-GEO-03",
+      "grade": "elementary_4",
+      "semester": 1,
+      "chapter": "각도",
+      "section": "각의 크기 재기",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "둔각,각도",
+      "createdAt": "2026-03-25T10:08:07.427Z",
+      "updatedAt": "2026-03-25T10:37:12.930Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs0gx00bnvdjgrf1nhjqi",
+          "conceptId": "cmn5vrj7n001lvdjgsrzt912j",
+          "prerequisiteId": "cmn5vrj4a001jvdjggj6wfmii"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs0qz00btvdjg7spxty9n",
+          "conceptId": "cmn5vrjaz001nvdjg6bfkmjhx",
+          "prerequisiteId": "cmn5vrj7n001lvdjgsrzt912j"
+        },
+        {
+          "id": "cmn5vs10z00bzvdjg6haq1xyq",
+          "conceptId": "cmn5vrjec001pvdjg056c6kcf",
+          "prerequisiteId": "cmn5vrj7n001lvdjgsrzt912j"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrjaz001nvdjg6bfkmjhx",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "삼각형 분류 (변)",
+      "fullContent": "삼각형은 변의 길이에 따라 여러 가지로 분류할 수 있습니다. 먼저, 두 변의 길이가 같은 삼각형을 이등변삼각형이라고 합니다. 이등변삼각형은 이름처럼 '두 개의 같은 변'을 가지고 있다는 뜻입니다. 예를 들어, 세 변의 길이가 각각 $5$ cm, $5$ cm, $7$ cm인 삼각형은 두 변의 길이가 같으므로 이등변삼각형입니다. 이등변삼각형은 두 변의 길이가 같을 뿐만 아니라, 길이가 같은 두 변이 아닌 나머지 한 변의 양 끝에 있는 두 각의 크기도 서로 같습니다.\n\n다음으로, 세 변의 길이가 모두 같은 삼각형을 정삼각형이라고 합니다. 정삼각형은 모든 변의 길이가 같아서 아주 반듯한 모양을 하고 있습니다. 예를 들어, 세 변의 길이가 모두 $6$ cm인 삼각형은 정삼각형입니다. 정삼각형은 세 변의 길이가 모두 같기 때문에 세 각의 크기도 모두 같으며, 각각 $60^\\circ$입니다.\n\n여기서 중요한 점은 정삼각형도 이등변삼각형의 한 종류라는 것입니다. 이등변삼각형은 '두 변의 길이가 같은 삼각형'인데, 정삼각형은 세 변의 길이가 모두 같으므로 당연히 두 변의 길이도 같다고 할 수 있기 때문입니다. 따라서 모든 정삼각형은 이등변삼각형이라고 할 수 있지만, 모든 이등변삼각형이 정삼각형인 것은 아닙니다.",
+      "visualAssets": null,
+      "sortOrder": 16,
+      "conceptCode": "E4-GEO-04",
+      "grade": "elementary_4",
+      "semester": 2,
+      "chapter": "삼각형",
+      "section": "이등변삼각형, 정삼각형",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "이등변삼각형,정삼각형,변의길이",
+      "createdAt": "2026-03-25T10:08:07.547Z",
+      "updatedAt": "2026-03-25T10:37:19.621Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs0kc00bpvdjgy8fj6ksz",
+          "conceptId": "cmn5vrjaz001nvdjg6bfkmjhx",
+          "prerequisiteId": "cmn5vrj0u001hvdjgjy3rb4fm"
+        },
+        {
+          "id": "cmn5vs0nn00brvdjgu46n0fpa",
+          "conceptId": "cmn5vrjaz001nvdjg6bfkmjhx",
+          "prerequisiteId": "cmn5vrj4a001jvdjggj6wfmii"
+        },
+        {
+          "id": "cmn5vs0qz00btvdjg7spxty9n",
+          "conceptId": "cmn5vrjaz001nvdjg6bfkmjhx",
+          "prerequisiteId": "cmn5vrj7n001lvdjgsrzt912j"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs3wn00dpvdjg6uqv0v3u",
+          "conceptId": "cmn5vrm7w003cvdjgl3y3ky6o",
+          "prerequisiteId": "cmn5vrjaz001nvdjg6bfkmjhx"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrjhr001rvdjgpwsk7sph",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "사각형 분류와 포함관계",
+      "fullContent": "우리 주변에는 여러 가지 모양의 사각형이 있습니다. 사각형은 네 개의 변과 네 개의 각으로 이루어진 도형을 말합니다. 이 사각형들을 그 특징에 따라 분류할 수 있습니다. 먼저, 한 쌍의 마주 보는 변이 서로 평행한 사각형을 사다리꼴이라고 부릅니다. 즉, 모든 사다리꼴은 사각형의 한 종류입니다.\n\n여기서 더 나아가, 두 쌍의 마주 보는 변이 모두 평행한 사각형을 평행사변형이라고 합니다. 평행사변형은 한 쌍의 변이 평행하다는 사다리꼴의 조건을 만족하므로, 모든 평행사변형은 사다리꼴이기도 합니다. 이제 평행사변형 중에서 네 변의 길이가 모두 같은 사각형을 마름모라고 하며, 네 각의 크기가 모두 직각인 사각형을 직사각형이라고 합니다. 따라서 마름모와 직사각형은 모두 평행사변형의 한 종류입니다.\n\n마지막으로, 네 변의 길이가 모두 같고 네 각의 크기도 모두 직각인 사각형을 정사각형이라고 합니다. 정사각형은 네 변의 길이가 같으므로 마름모의 성질을 가지고 있고, 네 각의 크기가 직각이므로 직사각형의 성질도 가지고 있습니다. 그러므로 정사각형은 마름모이면서 동시에 직사각형이며, 평행사변형, 사다리꼴, 그리고 사각형이라고도 말할 수 있습니다. 이처럼 도형들이 서로 어떤 관계를 가지고 있는지 이해하는 것이 중요합니다.",
+      "visualAssets": null,
+      "sortOrder": 18,
+      "conceptCode": "E4-GEO-06",
+      "grade": "elementary_4",
+      "semester": 2,
+      "chapter": "사각형",
+      "section": "사다리꼴, 평행사변형, 마름모",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "사다리꼴,평행사변형,마름모,포함관계",
+      "createdAt": "2026-03-25T10:08:07.791Z",
+      "updatedAt": "2026-03-25T10:37:32.619Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs14c00c1vdjg9fy5p43g",
+          "conceptId": "cmn5vrjhr001rvdjgpwsk7sph",
+          "prerequisiteId": "cmn5vrh5k000evdjgt32yvm0c"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs46m00dvvdjg0and1g73",
+          "conceptId": "cmn5vrmem003gvdjgs5iebtf6",
+          "prerequisiteId": "cmn5vrjhr001rvdjgpwsk7sph"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrjl4001tvdjgch90vb4r",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "다각형과 대각선",
+      "fullContent": "다각형은 여러 개의 선분으로 둘러싸여 있는 평면 도형을 말합니다. 삼각형, 사각형, 오각형 등이 모두 다각형에 해당합니다. 이 중에서 모든 변의 길이가 같고 모든 각의 크기도 같은 다각형을 특별히 정다각형이라고 부릅니다. 예를 들어 정삼각형이나 정사각형은 정다각형의 좋은 예입니다.\n\n다각형의 중요한 요소 중 하나인 대각선은 다각형에서 서로 이웃하지 않는 두 꼭짓점을 곧게 이은 선분을 말합니다. 예를 들어 사각형을 생각해 보면, 한 꼭짓점에서 자기 자신과 양옆의 이웃한 꼭짓점 $3$개를 제외한 나머지 꼭짓점과 연결할 수 있습니다. 따라서 $n$각형의 한 꼭짓점에서 그을 수 있는 대각선의 개수는 $(n-3)$개입니다.\n\n다각형이 가질 수 있는 모든 대각선의 총 개수는 어떻게 구할까요? $n$각형의 모든 꼭짓점에서 그을 수 있는 대각선의 개수를 모두 더한 다음, 각 대각선이 두 번씩 세어졌으므로 $2$로 나누어 주면 됩니다. 따라서 $n$각형의 대각선 총 개수는 $\\frac{n(n-3)}{2}$개입니다. 예를 들어 오각형의 경우, 한 꼭짓점에서 그을 수 있는 대각선은 $5-3=2$개이고, 총 대각선의 개수는 $\\frac{5 \\times (5-3)}{2} = \\frac{5 \\times 2}{2} = 5$개입니다. 대각선을 그릴 때에는 이웃하는 꼭짓점과 연결하지 않도록 주의해야 합니다.",
+      "visualAssets": null,
+      "sortOrder": 19,
+      "conceptCode": "E4-GEO-07",
+      "grade": "elementary_4",
+      "semester": 2,
+      "chapter": "다각형",
+      "section": "다각형과 정다각형",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "다각형,정다각형,대각선",
+      "createdAt": "2026-03-25T10:08:07.912Z",
+      "updatedAt": "2026-03-25T10:37:39.882Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs17o00c3vdjgh7i6crrl",
+          "conceptId": "cmn5vrjl4001tvdjgch90vb4r",
+          "prerequisiteId": "cmn5vrh5k000evdjgt32yvm0c"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs8mc00gjvdjgoppic5n6",
+          "conceptId": "cmn5vrpog005cvdjg1lgn7eig",
+          "prerequisiteId": "cmn5vrjl4001tvdjgch90vb4r"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrjoh001vvdjgmzh909tf",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "평면도형의 이동",
+      "fullContent": "평면도형의 이동은 도형의 모양이나 크기는 변하지 않으면서 위치나 방향만 바뀌는 것을 말합니다. 도형을 이동시키는 방법에는 밀기, 뒤집기, 돌리기가 있습니다.\n\n먼저, 밀기는 도형을 위, 아래, 왼쪽, 오른쪽으로 움직이는 것을 말합니다. 이때 도형의 모양과 크기는 전혀 변하지 않고, 위치만 바뀝니다. 예를 들어, 네모 모양의 도형을 오른쪽으로 $5$칸 밀면, 네모 모양은 그대로 유지된 채 오른쪽으로 이동합니다.\n\n다음으로, 뒤집기는 도형을 거울에 비춘 것처럼 좌우나 상하로 바꾸는 것을 말합니다. 도형을 뒤집으면 원래 도형과 좌우 또는 상하가 반대로 보이게 됩니다. 예를 들어, 하트 모양의 도형을 위쪽으로 뒤집으면, 하트의 뾰족한 부분이 아래로 향하게 됩니다.\n\n마지막으로, 돌리기는 도형을 한 점을 중심으로 일정한 각도만큼 회전시키는 것을 말합니다. 도형을 돌릴 때도 모양과 크기는 변하지 않으며, 방향만 바뀝니다. 예를 들어, 세모 모양의 도형을 시계 방향으로 $90$도 돌리면, 세모의 꼭짓점 위치가 달라집니다.\n\n이처럼 밀기, 뒤집기, 돌리기는 도형의 모양과 크기를 바꾸지 않고 다양한 위치와 방향으로 옮기는 방법입니다. 이 세 가지 이동 방법을 함께 사용하면 아름다운 무늬를 만들 수도 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 20,
+      "conceptCode": "E4-GEO-08",
+      "grade": "elementary_4",
+      "semester": 1,
+      "chapter": "평면도형의 이동",
+      "section": "밀기, 뒤집기, 돌리기",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "밀기,뒤집기,돌리기,이동",
+      "createdAt": "2026-03-25T10:08:08.033Z",
+      "updatedAt": "2026-03-25T10:37:45.958Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs1ax00c5vdjg7b4pyl4h",
+          "conceptId": "cmn5vrjoh001vvdjgmzh909tf",
+          "prerequisiteId": "cmn5vrh5k000evdjgt32yvm0c"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs43b00dtvdjgz9qfbp46",
+          "conceptId": "cmn5vrmb8003evdjgxdb4g1la",
+          "prerequisiteId": "cmn5vrjoh001vvdjgmzh909tf"
+        }
+      ],
+      "blanks": [
+        {
+          "id": "cmn5vxs7k000hvdtkafuxydni",
+          "conceptId": "cmn5vrjoh001vvdjgmzh909tf",
+          "level": 1,
+          "blanks": [
+            {
+              "hint": "ㅁㄱ",
+              "answer": "밀기",
+              "position": 1,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㄷㅈㄱ",
+              "answer": "뒤집기",
+              "position": 2,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㄷㄹㄱ",
+              "answer": "돌리기",
+              "position": 3,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅁㅇㄱ ㅋㄱ",
+              "answer": "모양과 크기",
+              "position": 4,
+              "difficulty": "hard"
+            }
+          ],
+          "templateText": "도형을 일정한 방향으로 일정한 거리만큼 옮기는 것을 {{1}}이라 합니다.\n도형을 한 직선을 기준으로 뒤집는 것을 {{2}}이라 합니다.\n도형을 한 점을 중심으로 일정한 각도만큼 돌리는 것을 {{3}}이라 합니다.\n\n이동 후에도 도형의 {{4}}은 변하지 않습니다.",
+          "createdAt": "2026-03-25T10:12:59.024Z"
+        }
+      ]
+    },
+    {
+      "id": "cmn5vrjyl0021vdjgfcijoee8",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "막대그래프",
+      "fullContent": "막대그래프는 우리가 조사한 자료의 수량을 막대의 길이로 나타낸 그래프입니다. 예를 들어, 우리 반 친구들이 좋아하는 과일의 수를 조사했을 때, 각 과일을 좋아하는 친구들의 수를 막대 모양으로 그릴 수 있습니다. 이렇게 자료를 막대그래프로 나타내면 어떤 항목의 수량이 가장 많고 적은지 한눈에 쉽게 비교할 수 있어 편리합니다.\n\n막대그래프를 그릴 때에는 보통 가로축에 조사한 항목들을 쓰고, 세로축에는 수량을 나타냅니다. 반대로 가로축에 수량을, 세로축에 항목을 나타낼 수도 있습니다. 막대의 길이는 각 항목의 수량을 정확하게 나타내며, 막대의 길이가 길수록 수량이 많다는 것을 의미합니다.\n\n막대그래프를 정확하게 그리려면 눈금 한 칸이 얼마를 나타낼지 미리 정하는 것이 중요합니다. 예를 들어, 눈금 한 칸이 $1$명 또는 $5$명을 나타내도록 정할 수 있습니다. 눈금 한 칸의 크기를 정할 때에는 조사한 자료의 가장 큰 수량을 고려하여 모든 자료를 나타낼 수 있도록 해야 합니다.",
+      "visualAssets": null,
+      "sortOrder": 23,
+      "conceptCode": "E4-STA-01",
+      "grade": "elementary_4",
+      "semester": 1,
+      "chapter": "막대그래프",
+      "section": "막대그래프 그리기와 해석",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "data",
+      "source": null,
+      "keywords": "막대그래프,자료,통계",
+      "createdAt": "2026-03-25T10:08:08.397Z",
+      "updatedAt": "2026-03-25T10:38:06.871Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs1ku00cbvdjg8azwm89r",
+          "conceptId": "cmn5vrjyl0021vdjgfcijoee8",
+          "prerequisiteId": "cmn5vrhj2000mvdjgdsrtsyfv"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs1o700cdvdjgby4q71bi",
+          "conceptId": "cmn5vrk1z0023vdjgkef7v2bl",
+          "prerequisiteId": "cmn5vrjyl0021vdjgfcijoee8"
+        }
+      ],
+      "blanks": [
+        {
+          "id": "cmn5vxsaf000jvdtka6ud1awi",
+          "conceptId": "cmn5vrjyl0021vdjgfcijoee8",
+          "level": 1,
+          "blanks": [
+            {
+              "hint": "ㅁㄷㅇ ㄱㅇ",
+              "answer": "막대의 길이",
+              "position": 1,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㄱㄹㅊㄱ ㅅㄹㅊ",
+              "answer": "가로축과 세로축",
+              "position": 2,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "ㄴㄱ",
+              "answer": "눈금",
+              "position": 3,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅈㅁ",
+              "answer": "제목",
+              "position": 4,
+              "difficulty": "full"
+            },
+            {
+              "hint": "ㄱㅈ ㅁㄱ",
+              "answer": "가장 많고",
+              "position": 5,
+              "difficulty": "full"
+            }
+          ],
+          "templateText": "자료의 크기를 {{1}}로 나타낸 그래프를 막대그래프라 합니다.\n\n막대그래프 그리는 순서:\n1. {{2}}에 무엇을 나타낼지 정합니다.\n2. {{3}} 한 칸의 크기를 정합니다.\n3. 자료의 크기에 맞게 막대를 그립니다.\n4. {{4}}을 붙입니다.\n\n막대가 가장 긴 항목이 {{5}}.",
+          "createdAt": "2026-03-25T10:12:59.127Z"
+        }
+      ]
+    },
+    {
+      "id": "cmn5vrn5f003vvdjg8zbrs1qd",
+      "subjectId": "cmn5vrmlc003jvdjgawtxum5b",
+      "title": "비와 비율",
+      "fullContent": "비는 두 양의 크기를 서로 비교할 때 사용하는 방법입니다. 예를 들어, 사과가 $3$개 있고 배가 $5$개 있을 때, 사과의 수와 배의 수의 비는 $3:5$와 같이 나타냅니다. 이때 기호 $:$ 앞에 있는 수인 $3$을 전항이라고 하고, 기호 $:$ 뒤에 있는 수인 $5$를 후항이라고 합니다. 특히, 후항은 기준이 되는 양인 기준량이고, 전항은 기준량과 비교하는 양인 비교하는 양입니다.\n\n비율은 비교하는 양을 기준량으로 나눈 값입니다. 즉, (비율) $=$ (비교하는 양) $\\div$ (기준량)으로 계산합니다. 위 예시에서 사과 수와 배 수의 비 $3:5$의 비율은 비교하는 양인 $3$을 기준량인 $5$로 나누어 $\\frac{3}{5}$ 또는 $0.6$으로 나타낼 수 있습니다. 비율은 이처럼 분수나 소수로 나타낼 수 있으며, 백분율로도 표현할 수 있습니다. 비와 비율을 이해할 때는 어떤 양이 기준량이 되고 어떤 양이 비교하는 양이 되는지 정확히 구분하는 것이 중요합니다.",
+      "visualAssets": null,
+      "sortOrder": 6,
+      "conceptCode": "E6-ALG-01",
+      "grade": "elementary_6",
+      "semester": 1,
+      "chapter": "비와 비율",
+      "section": "비와 비율",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "algebra",
+      "source": null,
+      "keywords": "비,비율,전항,후항",
+      "createdAt": "2026-03-25T10:08:12.531Z",
+      "updatedAt": "2026-03-25T10:41:49.121Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs50m00edvdjg0v9oiw6g",
+          "conceptId": "cmn5vrn5f003vvdjg8zbrs1qd",
+          "prerequisiteId": "cmn5vrkpp002gvdjgfmy3nw1p"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs53x00efvdjgf0amzr55",
+          "conceptId": "cmn5vrn8r003xvdjgqssqaeuk",
+          "prerequisiteId": "cmn5vrn5f003vvdjg8zbrs1qd"
+        },
+        {
+          "id": "cmn5vs57800ehvdjgsgrfq9yl",
+          "conceptId": "cmn5vrnc4003zvdjgbsfe3rji",
+          "prerequisiteId": "cmn5vrn5f003vvdjg8zbrs1qd"
+        },
+        {
+          "id": "cmn5vs6eh00f7vdjgl6nkk8i3",
+          "conceptId": "cmn5vro6i004hvdjg5et4ya8d",
+          "prerequisiteId": "cmn5vrn5f003vvdjg8zbrs1qd"
+        }
+      ],
+      "blanks": [
+        {
+          "id": "cmn5vxsxh000zvdtkz0qz0un5",
+          "conceptId": "cmn5vrn5f003vvdjg8zbrs1qd",
+          "level": 1,
+          "blanks": [
+            {
+              "hint": "ㅂ",
+              "answer": "비",
+              "position": 1,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "3 : 5",
+              "answer": "$3 : 5$",
+              "position": 2,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅈㅎ",
+              "answer": "전항",
+              "position": 3,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅎㅎ",
+              "answer": "후항",
+              "position": 4,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅂㅇ",
+              "answer": "비율",
+              "position": 5,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "ㅂㅂㅇ",
+              "answer": "백분율",
+              "position": 6,
+              "difficulty": "hard"
+            }
+          ],
+          "templateText": "두 수를 나눗셈으로 비교하는 것을 {{1}}라 합니다.\n사과 $3$개, 배 $5$개 → 사과와 배의 비: {{2}}\n\n비에서 기호 : 앞의 수를 {{3}}, 뒤의 수를 {{4}}라 합니다.\n\n비교하는 양을 기준량으로 나눈 값을 {{5}}이라 합니다.\n비율에 $100$을 곱한 것을 {{6}}이라 합니다.",
+          "createdAt": "2026-03-25T10:12:59.958Z"
+        }
+      ]
+    },
+    {
+      "id": "cmn5vrk1z0023vdjgkef7v2bl",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "꺾은선그래프",
+      "fullContent": "꺾은선그래프는 시간의 흐름에 따라 수량이 어떻게 변하는지를 점과 선으로 나타낸 그래프입니다. 주로 가로축에는 날짜나 시간과 같은 시간을 나타내고, 세로축에는 기온이나 몸무게와 같은 수량을 나타냅니다. 각 시간에 해당하는 수량을 점으로 표시한 다음, 이 점들을 차례대로 선분으로 이어주면 꺾은선그래프가 완성됩니다.\n\n꺾은선그래프를 보면 수량의 변화하는 모습을 한눈에 쉽게 파악할 수 있습니다. 선이 위로 가파르게 올라가거나 아래로 가파르게 내려가면 수량의 변화가 크다는 것을 의미하고, 선이 완만하게 변하면 수량의 변화가 작다는 것을 알 수 있습니다. 예를 들어, 하루 동안의 기온 변화를 꺾은선그래프로 나타내면 아침부터 저녁까지 기온이 어떻게 변했는지 쉽게 파악하고 미래의 변화를 예측하는 데 도움을 받을 수 있습니다.\n\n때로는 꺾은선그래프의 세로축에서 $0$부터 시작하는 수량이 너무 커서 그래프 용지를 많이 차지할 때가 있습니다. 이럴 때에는 물결선($\\sim$)을 사용하여 필요 없는 부분을 생략하고 그래프를 그릴 수 있습니다. 이 물결선은 그래프의 중간 부분이 생략되었음을 나타내므로, 그래프를 해석할 때 주의해야 합니다.",
+      "visualAssets": null,
+      "sortOrder": 24,
+      "conceptCode": "E4-STA-02",
+      "grade": "elementary_4",
+      "semester": 2,
+      "chapter": "꺾은선그래프",
+      "section": "꺾은선그래프 그리기와 해석",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "data",
+      "source": null,
+      "keywords": "꺾은선그래프,변화,추세",
+      "createdAt": "2026-03-25T10:08:08.519Z",
+      "updatedAt": "2026-03-25T10:38:13.960Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs1o700cdvdjgby4q71bi",
+          "conceptId": "cmn5vrk1z0023vdjgkef7v2bl",
+          "prerequisiteId": "cmn5vrjyl0021vdjgfcijoee8"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs64i00f1vdjgl0ewugu5",
+          "conceptId": "cmn5vrnzv004dvdjgi1nhpbqk",
+          "prerequisiteId": "cmn5vrk1z0023vdjgkef7v2bl"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrkc00028vdjgpbf4q3qs",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "약수",
+      "fullContent": "어떤 수를 나누었을 때 나머지가 없이 딱 나누어떨어지게 하는 수를 그 수의 약수라고 합니다. 예를 들어, $12$를 $1$로 나누면 $12$이고 나머지가 $0$입니다. $12$를 $2$로 나누면 $6$이고 나머지가 $0$입니다. 이처럼 $12$를 나누어떨어지게 하는 수인 $1$, $2$, $3$, $4$, $6$, $12$가 바로 $12$의 약수입니다.\n\n약수를 구할 때에는 $1$부터 차례대로 나누어 보면서 나머지가 $0$이 되는 수를 찾거나, 곱셈식을 이용하는 방법이 있습니다. 예를 들어, $12$의 약수를 찾을 때 $1 \\times 12 = 12$, $2 \\times 6 = 12$, $3 \\times 4 = 12$와 같이 곱셈식을 만들면 곱하는 수들이 모두 $12$의 약수가 됩니다.\n\n약수에는 중요한 성질이 있습니다. 모든 수는 $1$을 약수로 가집니다. 또한, 어떤 수 자신도 항상 그 수의 약수가 됩니다. 예를 들어, $5$의 약수는 $1$과 $5$이고, $10$의 약수는 $1$, $2$, $5$, $10$입니다. 약수를 구할 때에는 $1$과 자기 자신을 잊지 않고 꼭 포함해야 합니다.",
+      "visualAssets": null,
+      "sortOrder": 1,
+      "conceptCode": "E5-NUM-01",
+      "grade": "elementary_5",
+      "semester": 1,
+      "chapter": "약수와 배수",
+      "section": "약수와 배수",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "약수,배수",
+      "createdAt": "2026-03-25T10:08:08.881Z",
+      "updatedAt": "2026-03-25T10:38:28.247Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs1rj00cfvdjgbzg7385n",
+          "conceptId": "cmn5vrkc00028vdjgpbf4q3qs",
+          "prerequisiteId": "cmn5vridb0013vdjgf3fzbpnk"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs1y800cjvdjgh8orerwb",
+          "conceptId": "cmn5vrkiy002cvdjgvvhuvq7j",
+          "prerequisiteId": "cmn5vrkc00028vdjgpbf4q3qs"
+        },
+        {
+          "id": "cmn5vs75600fnvdjgtuqbgjei",
+          "conceptId": "cmn5vrou6004uvdjgd0vzf0op",
+          "prerequisiteId": "cmn5vrkc00028vdjgpbf4q3qs"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrkfg002avdjgn4grq76m",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "배수",
+      "fullContent": "어떤 수를 $1$배, $2$배, $3$배, ... 한 수를 그 수의 배수라고 합니다. 예를 들어, $3$의 배수는 $3 \\times 1 = 3$, $3 \\times 2 = 6$, $3 \\times 3 = 9$, $3 \\times 4 = 12$와 같이 $3$, $6$, $9$, $12$, ... 입니다. 이처럼 배수는 계속해서 커지므로 무한히 많다는 것을 알 수 있습니다. 또한, $0$은 어떤 수를 곱해도 항상 $0$이 되므로, $0$은 모든 수의 배수가 됩니다.\n\n어떤 수가 특정 수의 배수인지 쉽게 알아보는 방법이 있습니다. 먼저, $2$의 배수는 일의 자리 숫자가 $0$, $2$, $4$, $6$, $8$인 짝수입니다. 예를 들어, $24$는 $2$의 배수입니다. $5$의 배수는 일의 자리 숫자가 $0$ 또는 $5$인 수입니다. 예를 들어, $35$나 $120$은 $5$의 배수입니다. 마지막으로, $3$의 배수는 각 자리 숫자의 합이 $3$의 배수인 수입니다. 예를 들어, $21$은 $2+1=3$이므로 $3$의 배수이고, $123$은 $1+2+3=6$이므로 $3$의 배수입니다. 이처럼 배수 판별법을 알면 큰 수도 쉽게 배수인지 아닌지 확인할 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 2,
+      "conceptCode": "E5-NUM-02",
+      "grade": "elementary_5",
+      "semester": 1,
+      "chapter": "약수와 배수",
+      "section": "약수와 배수",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "배수,배수판별법",
+      "createdAt": "2026-03-25T10:08:09.004Z",
+      "updatedAt": "2026-03-25T10:38:36.755Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs1ux00chvdjgbz496erl",
+          "conceptId": "cmn5vrkfg002avdjgn4grq76m",
+          "prerequisiteId": "cmn5vri9z0011vdjgydpgh9pm"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs21j00clvdjgbk9jsh0z",
+          "conceptId": "cmn5vrkmc002evdjg7itso6tx",
+          "prerequisiteId": "cmn5vrkfg002avdjgn4grq76m"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrl9y002svdjgu4vh6icc",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "수의 범위 (이상/이하/초과/미만)",
+      "fullContent": "우리는 어떤 수의 크기를 비교할 때, '더 크다', '더 작다'와 같이 이야기합니다. 하지만 때로는 '어떤 수부터 어떤 수까지'와 같이 수의 범위를 정하여 말해야 할 때가 있습니다. 이때 '이상', '이하', '초과', '미만'이라는 표현을 사용합니다.\n\n'이상'은 기준이 되는 수를 포함하여 그 수보다 크거나 같은 수를 말합니다. 예를 들어, $5$ 이상인 수는 $5, 6, 7, ...$과 같이 $5$를 포함하여 $5$보다 큰 모든 수를 의미합니다. 반대로 '이하'는 기준이 되는 수를 포함하여 그 수보다 작거나 같은 수를 말합니다. $5$ 이하인 수는 $5, 4, 3, ...$과 같이 $5$를 포함하여 $5$보다 작은 모든 수를 나타냅니다.\n\n'초과'는 기준이 되는 수를 포함하지 않고 그 수보다 큰 수를 말합니다. $5$ 초과인 수는 $6, 7, 8, ...$과 같이 $5$는 포함하지 않고 $5$보다 큰 수만을 의미합니다. '미만'은 기준이 되는 수를 포함하지 않고 그 수보다 작은 수를 말합니다. $5$ 미만인 수는 $4, 3, 2, ...$과 같이 $5$는 포함하지 않고 $5$보다 작은 수만을 나타냅니다. 이처럼 이상과 이하는 기준값을 포함하고, 초과와 미만은 기준값을 포함하지 않는다는 점을 꼭 기억해야 합니다. 수직선에 이 범위를 나타내면 어떤 수가 포함되는지 아닌지 더욱 쉽게 확인할 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 11,
+      "conceptCode": "E5-NUM-11",
+      "grade": "elementary_5",
+      "semester": 2,
+      "chapter": "수의 범위와 어림하기",
+      "section": "이상, 이하, 초과, 미만",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "이상,이하,초과,미만",
+      "createdAt": "2026-03-25T10:08:10.102Z",
+      "updatedAt": "2026-03-25T10:39:37.051Z",
+      "prerequisites": [],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs39100dbvdjgpu3hs61w",
+          "conceptId": "cmn5vrldc002uvdjg00hhonx4",
+          "prerequisiteId": "cmn5vrl9y002svdjgu4vh6icc"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrn8r003xvdjgqssqaeuk",
+      "subjectId": "cmn5vrmlc003jvdjgawtxum5b",
+      "title": "백분율",
+      "fullContent": "비율은 두 수를 비교할 때 사용하는데, 기준량을 $100$으로 보았을 때의 비율을 특별히 백분율이라고 합니다. 백분율은 '퍼센트'라고도 부르며, 기호로는 '$\\%$'를 사용합니다. 예를 들어, 전체 중 절반을 나타내는 비율은 기준량을 $100$으로 생각하면 $50$이 되므로 $50\\%$라고 표현합니다.\n\n비율을 백분율로 나타내려면, 비율에 $100$을 곱하고 뒤에 백분율 기호 '$\\%$'를 붙여줍니다. 즉, 백분율 $=$ 비율 $\\times 100(\\%)$입니다. 예를 들어, 어떤 비율이 $0.25$라면, $0.25 \\times 100 = 25$이므로 백분율로는 $25\\%$가 됩니다. 또한, 분수 $\\frac{1}{4}$은 소수로 $0.25$이고, 이를 백분율로 나타내면 $25\\%$가 되는 것처럼, 분수, 소수, 백분율은 서로 바꿔서 표현할 수 있습니다.\n\n백분율은 우리 생활 속에서 아주 많이 사용됩니다. 가게에서 물건을 할인할 때의 할인율, 선거에서 후보자가 얻은 표의 비율을 나타내는 득표율, 야구 선수의 타율 등 다양한 상황에서 백분율을 통해 전체에 대한 부분을 쉽게 비교하고 이해할 수 있습니다. 백분율을 알면 정보를 더 정확하고 편리하게 파악할 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 7,
+      "conceptCode": "E6-ALG-02",
+      "grade": "elementary_6",
+      "semester": 1,
+      "chapter": "비와 비율",
+      "section": "백분율",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "algebra",
+      "source": null,
+      "keywords": "백분율,퍼센트",
+      "createdAt": "2026-03-25T10:08:12.652Z",
+      "updatedAt": "2026-03-25T10:41:56.680Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs53x00efvdjgf0amzr55",
+          "conceptId": "cmn5vrn8r003xvdjgqssqaeuk",
+          "prerequisiteId": "cmn5vrn5f003vvdjg8zbrs1qd"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs67s00f3vdjgpvexpk5z",
+          "conceptId": "cmn5vrnzv004dvdjgi1nhpbqk",
+          "prerequisiteId": "cmn5vrn8r003xvdjgqssqaeuk"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrlng0030vdjgirgpvdgx",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "평균",
+      "fullContent": "평균은 여러 자료의 값들을 한데 모아 대표하는 하나의 값입니다. 예를 들어, 친구들이 받은 용돈 액수가 각각 다르더라도, 이 용돈들을 모두 합쳐서 친구 수만큼 똑같이 나누어 가졌을 때 한 친구가 갖게 되는 값이 바로 평균입니다. 이렇게 평균을 구하려면, 먼저 모든 자료의 값들을 빠짐없이 더한 후, 그 자료의 개수로 나누어 계산합니다. 식으로 나타내면 '평균 = (모든 값의 합) $\\div$ (자료의 개수)'가 됩니다.\n\n예를 들어, 철수네 반 친구 $3$명이 지난 한 달 동안 읽은 책의 수가 각각 $2$권, $3$권, $4$권이라고 해봅시다. 이 친구들이 읽은 책의 총합은 $2+3+4=9$권입니다. 자료의 개수는 친구 $3$명이므로, 평균은 $9 \\div 3 = 3$권이 됩니다. 즉, 철수네 반 친구들은 한 달에 평균 $3$권의 책을 읽었다고 말할 수 있습니다.\n\n평균은 자료 전체의 특징이나 경향을 한눈에 파악할 수 있게 해주는 중요한 값입니다. 또한, 평균과 자료의 개수를 알고 있다면, '모든 값의 합 = 평균 $\\times$ 자료의 개수'라는 식으로 자료의 전체 합을 쉽게 구할 수도 있습니다. 이처럼 평균은 우리 주변의 다양한 자료를 이해하고 비교하는 데 아주 유용하게 사용됩니다.",
+      "visualAssets": null,
+      "sortOrder": 15,
+      "conceptCode": "E5-NUM-15",
+      "grade": "elementary_5",
+      "semester": 2,
+      "chapter": "평균과 가능성",
+      "section": "평균",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "data",
+      "source": null,
+      "keywords": "평균,자료",
+      "createdAt": "2026-03-25T10:08:10.588Z",
+      "updatedAt": "2026-03-25T10:40:04.848Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs3j200dhvdjgamuo1dkc",
+          "conceptId": "cmn5vrlng0030vdjgirgpvdgx",
+          "prerequisiteId": "cmn5vrkwe002kvdjgkm9ua9dp"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs8sz00gnvdjgj2v0f0ap",
+          "conceptId": "cmn5vrpru005evdjgsup42kj5",
+          "prerequisiteId": "cmn5vrlng0030vdjgirgpvdgx"
+        },
+        {
+          "id": "cmn5vse3u00jtvdjg1b5qt7yo",
+          "conceptId": "cmn5vrtws007svdjguvx60eb7",
+          "prerequisiteId": "cmn5vrlng0030vdjgirgpvdgx"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrlu80034vdjgvxdv17b5",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "다각형의 둘레",
+      "fullContent": "다각형의 둘레는 다각형을 이루는 모든 변의 길이를 합한 것을 말합니다. 다각형의 둘레를 알면 도형의 테두리 길이를 구할 수 있습니다. 예를 들어, 변이 $3$개인 삼각형이나 변이 $5$개인 오각형의 둘레를 구할 때는 모든 변의 길이를 하나씩 더하면 됩니다.\n\n특히, 모든 변의 길이가 같은 정다각형의 둘레는 한 변의 길이에 변의 수를 곱하여 쉽게 구할 수 있습니다. 예를 들어, 한 변의 길이가 $5 \\text{ cm}$인 정오각형의 둘레는 $5 \\text{ cm} \\times 5 = 25 \\text{ cm}$입니다. 직사각형과 정사각형도 둘레를 구하는 특별한 방법이 있습니다. 가로가 $10 \\text{ cm}$이고 세로가 $5 \\text{ cm}$인 직사각형의 둘레는 $(10 \\text{ cm} + 5 \\text{ cm}) \\times 2 = 30 \\text{ cm}$로 계산합니다. 정사각형은 모든 변의 길이가 같으므로, 한 변의 길이에 $4$를 곱하여 둘레를 구합니다. 한 변의 길이가 $7 \\text{ cm}$인 정사각형의 둘레는 $7 \\text{ cm} \\times 4 = 28 \\text{ cm}$입니다.\n\n다각형의 둘레를 구할 때는 모든 변의 길이를 빠짐없이 더해야 정확한 값을 얻을 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 17,
+      "conceptCode": "E5-GEO-01",
+      "grade": "elementary_5",
+      "semester": 1,
+      "chapter": "다각형의 둘레와 넓이",
+      "section": "둘레 구하기",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "둘레,다각형",
+      "createdAt": "2026-03-25T10:08:10.832Z",
+      "updatedAt": "2026-03-25T10:40:17.405Z",
+      "prerequisites": [],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs3mp00djvdjg0qa64nzo",
+          "conceptId": "cmn5vrlxn0036vdjgmrbi765r",
+          "prerequisiteId": "cmn5vrlu80034vdjgvxdv17b5"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrlxn0036vdjgmrbi765r",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "직사각형/평행사변형 넓이",
+      "fullContent": "어떤 도형이 차지하는 면의 크기를 넓이라고 합니다. 직사각형의 넓이는 가로와 세로의 길이를 곱하여 구할 수 있습니다. 예를 들어, 가로가 $5\\text{cm}$이고 세로가 $3\\text{cm}$인 직사각형의 넓이는 $5 \\times 3 = 15\\text{cm}^2$입니다. 넓이의 단위로는 $1\\text{cm}^2$, $1\\text{m}^2$, $1\\text{km}^2$ 등이 있으며, 넓은 땅의 크기를 나타낼 때는 $1\\text{a}$ ($100\\text{m}^2$)나 $1\\text{ha}$ ($10000\\text{m}^2$)와 같은 단위를 사용하기도 합니다.\n\n평행사변형의 넓이는 밑변의 길이와 높이를 곱하여 구합니다. 평행사변형의 한쪽 끝에 있는 삼각형 부분을 잘라 다른 쪽으로 옮기면 직사각형 모양이 되는데, 이때 평행사변형의 밑변은 직사각형의 가로가 되고 평행사변형의 높이는 직사각형의 세로가 됩니다. 따라서 평행사변형의 넓이 공식은 직사각형의 넓이 공식과 같은 원리입니다. 예를 들어, 밑변이 $6\\text{cm}$이고 높이가 $4\\text{cm}$인 평행사변형의 넓이는 $6 \\times 4 = 24\\text{cm}^2$입니다. 이때 높이는 밑변과 수직으로 만나는 선분의 길이를 의미한다는 점을 기억해야 합니다.",
+      "visualAssets": null,
+      "sortOrder": 18,
+      "conceptCode": "E5-GEO-02",
+      "grade": "elementary_5",
+      "semester": 1,
+      "chapter": "다각형의 둘레와 넓이",
+      "section": "직사각형, 평행사변형, 삼각형, 마름모, 사다리꼴의 넓이",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "직사각형,평행사변형,넓이",
+      "createdAt": "2026-03-25T10:08:10.955Z",
+      "updatedAt": "2026-03-25T10:40:23.840Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs3mp00djvdjg0qa64nzo",
+          "conceptId": "cmn5vrlxn0036vdjgmrbi765r",
+          "prerequisiteId": "cmn5vrlu80034vdjgvxdv17b5"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs3pz00dlvdjgj1r17yun",
+          "conceptId": "cmn5vrm130038vdjghcvfa585",
+          "prerequisiteId": "cmn5vrlxn0036vdjgmrbi765r"
+        },
+        {
+          "id": "cmn5vs5kk00epvdjgpnivee3b",
+          "conceptId": "cmn5vrnma0045vdjg1abylrv3",
+          "prerequisiteId": "cmn5vrlxn0036vdjgmrbi765r"
+        },
+        {
+          "id": "cmn5vs5uk00evvdjgxf8z3arf",
+          "conceptId": "cmn5vrnt30049vdjgkhpb5rnh",
+          "prerequisiteId": "cmn5vrlxn0036vdjgmrbi765r"
+        }
+      ],
+      "blanks": [
+        {
+          "id": "cmn5vxslz000rvdtk2iowgboa",
+          "conceptId": "cmn5vrlxn0036vdjgmrbi765r",
+          "level": 1,
+          "blanks": [
+            {
+              "hint": "ㄱㄹ",
+              "answer": "가로",
+              "position": 1,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅅㄹ",
+              "answer": "세로",
+              "position": 2,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅁㅂ",
+              "answer": "밑변",
+              "position": 3,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㄴㅇ",
+              "answer": "높이",
+              "position": 4,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "2",
+              "answer": "$2$",
+              "position": 5,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "ㅇㄹㅂ",
+              "answer": "아랫변",
+              "position": 6,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "ㅎ ㄷㄱㅅ",
+              "answer": "한 대각선",
+              "position": 7,
+              "difficulty": "full"
+            }
+          ],
+          "templateText": "직사각형의 넓이 = {{1}} $\\times$ {{2}}\n\n평행사변형의 넓이 = {{3}} $\\times$ {{4}}\n\n삼각형의 넓이 = 밑변 $\\times$ 높이 $\\div$ {{5}}\n\n사다리꼴의 넓이 = (윗변 $+$ {{6}}) $\\times$ 높이 $\\div$ $2$\n\n마름모의 넓이 = {{7}} $\\times$ 다른 대각선 $\\div$ $2$",
+          "createdAt": "2026-03-25T10:12:59.543Z"
+        }
+      ]
+    },
+    {
+      "id": "cmn5vrm4i003avdjghy00e44p",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "마름모/사다리꼴 넓이",
+      "fullContent": "마름모의 넓이는 두 대각선의 길이를 이용하여 구할 수 있습니다. 마름모를 둘러싸는 직사각형을 그려보면, 마름모의 넓이는 이 직사각형 넓이의 절반이 됩니다. 이때 직사각형의 가로는 마름모의 한 대각선 길이가 되고, 세로는 다른 대각선 길이가 됩니다. 따라서 마름모의 넓이는 (한 대각선) $\\times$ (다른 대각선) $\\div$ $2$ 로 계산합니다. 예를 들어, 한 대각선이 $6$ cm이고 다른 대각선이 $8$ cm인 마름모의 넓이는 $(6 \\times 8) \\div 2 = 24$ 제곱센티미터($\\text{cm}^2$)입니다.\n\n사다리꼴의 넓이는 윗변과 아랫변, 그리고 높이를 이용하여 구할 수 있습니다. 같은 사다리꼴 $2$개를 뒤집어 서로 붙이면 하나의 평행사변형이 만들어집니다. 이때 만들어진 평행사변형의 밑변은 원래 사다리꼴의 윗변과 아랫변을 더한 길이가 되고, 높이는 원래 사다리꼴의 높이와 같습니다. 따라서 사다리꼴의 넓이는 이 평행사변형 넓이의 절반이므로, (윗변 + 아랫변) $\\times$ 높이 $\\div$ $2$ 로 계산합니다. 예를 들어, 윗변이 $3$ cm, 아랫변이 $7$ cm, 높이가 $4$ cm인 사다리꼴의 넓이는 $((3+7) \\times 4) \\div 2 = 20$ 제곱센티미터($\\text{cm}^2$)입니다. 사다리꼴의 넓이를 구할 때는 윗변과 아랫변을 먼저 더한 후 높이를 곱하고 $2$로 나누어야 합니다.",
+      "visualAssets": null,
+      "sortOrder": 20,
+      "conceptCode": "E5-GEO-04",
+      "grade": "elementary_5",
+      "semester": 1,
+      "chapter": "다각형의 둘레와 넓이",
+      "section": "직사각형, 평행사변형, 삼각형, 마름모, 사다리꼴의 넓이",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "마름모,사다리꼴,넓이",
+      "createdAt": "2026-03-25T10:08:11.202Z",
+      "updatedAt": "2026-03-25T10:40:38.202Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs3tb00dnvdjgi3er3cm4",
+          "conceptId": "cmn5vrm4i003avdjghy00e44p",
+          "prerequisiteId": "cmn5vrm130038vdjghcvfa585"
+        }
+      ],
+      "prerequisiteFor": [],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrm7w003cvdjgl3y3ky6o",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "합동",
+      "fullContent": "두 도형의 모양과 크기가 같아서 완전히 포개어질 때, 이 두 도형을 서로 합동이라고 합니다. 예를 들어, 똑같이 생긴 두 개의 색종이로 만든 삼각형이나 사각형은 서로 합동이라고 할 수 있습니다.\n\n서로 합동인 두 도형을 완전히 포개었을 때, 겹쳐지는 변을 대응변이라고 하고, 겹쳐지는 각을 대응각이라고 합니다. 합동인 두 도형에서는 대응변의 길이가 서로 같고, 대응각의 크기도 서로 같습니다. 예를 들어, 두 삼각형이 합동이라면, 한 삼각형의 한 변인 $3\\text{cm}$와 다른 삼각형의 대응변의 길이는 항상 $3\\text{cm}$로 같습니다. 마찬가지로, 한 각이 $60^\\circ$라면 그에 대응하는 다른 각의 크기도 항상 $60^\\circ$로 같습니다.\n\n초등학교에서는 두 도형이 합동인지 확인하기 위해 한 도형을 다른 도형 위에 직접 겹쳐보는 방법으로 판단합니다. 한 도형을 뒤집거나 돌려서 다른 도형과 완전히 겹쳐지는지 확인하는 것이지요. 만약 완전히 겹쳐진다면 두 도형은 합동입니다. 하지만 중학교에 가면 삼각형의 세 변의 길이가 각각 같을 때, 또는 두 변의 길이와 그 끼인각의 크기가 각각 같을 때 등, 합동을 판단하는 여러 가지 조건을 배우게 됩니다.",
+      "visualAssets": null,
+      "sortOrder": 21,
+      "conceptCode": "E5-GEO-05",
+      "grade": "elementary_5",
+      "semester": 2,
+      "chapter": "합동과 대칭",
+      "section": "도형의 합동",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "합동,대응변,대응각",
+      "createdAt": "2026-03-25T10:08:11.324Z",
+      "updatedAt": "2026-03-25T10:40:45.105Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs3wn00dpvdjg6uqv0v3u",
+          "conceptId": "cmn5vrm7w003cvdjgl3y3ky6o",
+          "prerequisiteId": "cmn5vrjaz001nvdjg6bfkmjhx"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs3zz00drvdjg3tatrn1g",
+          "conceptId": "cmn5vrmb8003evdjgxdb4g1la",
+          "prerequisiteId": "cmn5vrm7w003cvdjgl3y3ky6o"
+        },
+        {
+          "id": "cmn5vs8fp00gfvdjg4uid22ld",
+          "conceptId": "cmn5vrpl2005avdjg065kto2v",
+          "prerequisiteId": "cmn5vrm7w003cvdjgl3y3ky6o"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrmb8003evdjgxdb4g1la",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "선대칭과 점대칭",
+      "fullContent": "선대칭은 어떤 도형을 한 직선을 기준으로 접었을 때, 완전히 겹쳐지는 성질을 말합니다. 이렇게 도형을 접는 기준이 되는 직선을 '대칭축'이라고 부릅니다. 선대칭도형에서 서로 겹쳐지는 점들을 '대응점'이라고 하는데, 대응점들을 이은 선분은 대칭축과 수직으로 만나며, 대칭축에 의해 정확히 반으로 나누어집니다. 예를 들어, 이등변삼각형이나 직사각형은 선대칭의 성질을 가지고 있습니다.\n\n점대칭은 어떤 도형을 한 점을 중심으로 $180^\\circ$ 돌렸을 때, 처음 도형과 완전히 겹쳐지는 성질을 말합니다. 이때 도형을 돌리는 기준이 되는 점을 '대칭의 중심'이라고 합니다. 점대칭도형에서 서로 겹쳐지는 대응점들을 이은 선분은 대칭의 중심을 반드시 지나며, 대칭의 중심은 그 선분을 정확히 반으로 나누는 중점이 됩니다. 정사각형이나 평행사변형은 점대칭의 성질을 가지고 있습니다.\n\n선대칭과 점대칭은 도형이 가지고 있는 특별한 균형의 성질을 나타냅니다. 어떤 도형은 선대칭도형이면서 동시에 점대칭도형일 수도 있고, 어떤 도형은 둘 중 하나의 성질만 가질 수도 있습니다. 도형의 대칭성을 이해하면 도형의 특징을 더 잘 파악할 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 22,
+      "conceptCode": "E5-GEO-06",
+      "grade": "elementary_5",
+      "semester": 2,
+      "chapter": "합동과 대칭",
+      "section": "선대칭도형과 점대칭도형",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "선대칭,점대칭,대칭축",
+      "createdAt": "2026-03-25T10:08:11.445Z",
+      "updatedAt": "2026-03-25T10:40:52.197Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs3zz00drvdjg3tatrn1g",
+          "conceptId": "cmn5vrmb8003evdjgxdb4g1la",
+          "prerequisiteId": "cmn5vrm7w003cvdjgl3y3ky6o"
+        },
+        {
+          "id": "cmn5vs43b00dtvdjgz9qfbp46",
+          "conceptId": "cmn5vrmb8003evdjgxdb4g1la",
+          "prerequisiteId": "cmn5vrjoh001vvdjgmzh909tf"
+        }
+      ],
+      "prerequisiteFor": [],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrmhz003ivdjg74xg6m9b",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "규칙과 대응",
+      "fullContent": "우리 주변에는 서로 관계를 맺고 변하는 두 양이 많이 있습니다. 한 양이 변할 때 다른 양도 그에 따라 규칙적으로 변하는 관계를 '대응 관계'라고 하며, 이러한 대응 관계를 찾아내는 것을 '규칙과 대응'이라고 합니다.\n\n두 양 사이의 대응 관계는 항상 일정한 규칙을 가지고 있습니다. 이 규칙을 알면 한 양의 변화에 따라 다른 양이 어떻게 변할지 예측할 수 있으며, 우리는 이 규칙을 식으로 나타낼 수 있습니다.\n\n예를 들어, 정삼각형을 만들 때 필요한 성냥개비의 수를 생각해 봅시다. 정삼각형이 $1$개일 때는 성냥개비가 $3$개 필요하고, 정삼각형이 $2$개일 때는 성냥개비가 $5$개 필요하며, 정삼각형이 $3$개일 때는 성냥개비가 $7$개 필요합니다. 여기서 정삼각형의 수를 ○, 성냥개비의 수를 △라고 한다면, △는 ○에 $2$를 곱한 다음 $1$을 더한 것과 같다는 규칙을 찾을 수 있습니다. 즉, △ = ○ × $2$ + $1$과 같이 식으로 나타낼 수 있습니다.\n\n이처럼 두 양 사이의 규칙을 찾을 때에는 여러 경우를 살펴보면서 어떤 규칙이 숨어 있는지 꼼꼼하게 확인해야 합니다. 규칙을 식으로 나타내면 복잡한 문제도 쉽게 해결할 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 24,
+      "conceptCode": "E5-ALG-01",
+      "grade": "elementary_5",
+      "semester": 1,
+      "chapter": "규칙과 대응",
+      "section": "두 양 사이의 관계",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "algebra",
+      "source": null,
+      "keywords": "규칙,대응,관계",
+      "createdAt": "2026-03-25T10:08:11.688Z",
+      "updatedAt": "2026-03-25T10:41:05.592Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs49v00dxvdjgse6gb00f",
+          "conceptId": "cmn5vrmhz003ivdjg74xg6m9b",
+          "prerequisiteId": "cmn5vrk5d0025vdjgfyyrxg6x"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs7w000g3vdjgj0nanm5l",
+          "conceptId": "cmn5vrp7m0052vdjgqbaie2n8",
+          "prerequisiteId": "cmn5vrmhz003ivdjg74xg6m9b"
+        },
+        {
+          "id": "cmn5vs85u00g9vdjgm1l1l2o3",
+          "conceptId": "cmn5vrpee0056vdjggi7zubbf",
+          "prerequisiteId": "cmn5vrmhz003ivdjg74xg6m9b"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrniv0043vdjgbsglpe3s",
+      "subjectId": "cmn5vrmlc003jvdjgawtxum5b",
+      "title": "각기둥과 각뿔",
+      "fullContent": "각기둥과 각뿔은 여러 개의 평평한 면으로 둘러싸인 입체도형입니다. 각기둥은 서로 평행하고 합동인 두 개의 밑면을 가지며, 옆면은 모두 직사각형으로 이루어져 있습니다. 밑면의 모양에 따라 삼각기둥, 사각기둥 등으로 부르며, $n$각기둥의 경우 면의 수는 $n+2$개, 꼭짓점의 수는 $2n$개, 모서리의 수는 $3n$개입니다.\n\n각뿔은 밑면이 한 개이고, 옆면은 모두 삼각형으로 이루어져 있으며, 옆면들이 한 꼭짓점에서 만나는 특징을 가지고 있습니다. 밑면의 모양에 따라 삼각뿔, 사각뿔 등으로 부르며, $n$각뿔의 경우 면의 수는 $n+1$개, 꼭짓점의 수는 $n+1$개, 모서리의 수는 $2n$개입니다.\n\n이러한 각기둥과 각뿔의 구조를 더 잘 이해하기 위해서는 입체도형을 펼쳐 놓은 그림인 전개도를 그려보는 것이 좋습니다. 전개도를 통해 각 면의 모양과 크기, 그리고 서로 연결되는 방식을 파악할 수 있습니다. 또한, 입체도형의 모습을 평면에 나타내는 겨냥도를 통해 보이지 않는 모서리는 점선으로, 보이는 모서리는 실선으로 표현하여 입체적인 모양을 파악하고 그릴 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 10,
+      "conceptCode": "E6-GEO-01",
+      "grade": "elementary_6",
+      "semester": 1,
+      "chapter": "각기둥과 각뿔",
+      "section": "각기둥",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "각기둥,각뿔,면,모서리,꼭짓점",
+      "createdAt": "2026-03-25T10:08:13.015Z",
+      "updatedAt": "2026-03-25T10:42:17.527Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs5dv00elvdjgvq11la7c",
+          "conceptId": "cmn5vrniv0043vdjgbsglpe3s",
+          "prerequisiteId": "cmn5vrmem003gvdjgs5iebtf6"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs61700ezvdjg9ybxwnps",
+          "conceptId": "cmn5vrnwh004bvdjgzwqy8acg",
+          "prerequisiteId": "cmn5vrniv0043vdjgbsglpe3s"
+        },
+        {
+          "id": "cmn5vs6ht00f9vdjgifjejjqs",
+          "conceptId": "cmn5vro9x004jvdjgvgpnlso5",
+          "prerequisiteId": "cmn5vrniv0043vdjgbsglpe3s"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrkiy002cvdjgvvhuvq7j",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "공약수와 최대공약수 (GCD)",
+      "fullContent": "두 수의 공통된 약수를 공약수라고 합니다. 예를 들어, $12$의 약수는 $1$, $2$, $3$, $4$, $6$, $12$이고, $18$의 약수는 $1$, $2$, $3$, $6$, $9$, $18$입니다. 여기서 $12$와 $18$의 공통된 약수는 $1$, $2$, $3$, $6$입니다. 이 공약수 중에서 가장 큰 수를 최대공약수라고 하며, 영어로는 GCD라고도 합니다. $12$와 $18$의 최대공약수는 $6$입니다.\n\n최대공약수를 구하는 방법 중 하나는 거꾸로 나눗셈을 이용하는 것입니다. 두 수를 공통으로 나눌 수 있는 수로 더 이상 나눌 수 없을 때까지 계속 나눈 다음, 나눈 수들을 모두 곱하면 최대공약수를 구할 수 있습니다. 예를 들어, $12$와 $18$을 $2$로 나누면 $6$과 $9$가 되고, $6$과 $9$를 $3$으로 나누면 $2$와 $3$이 됩니다. 더 이상 공통으로 나눌 수 없으므로, 나눈 수 $2$와 $3$을 곱한 $2 \\times 3 = 6$이 최대공약수가 됩니다.\n\n공약수는 항상 최대공약수의 약수라는 중요한 성질이 있습니다. $12$와 $18$의 공약수 $1$, $2$, $3$, $6$은 최대공약수 $6$의 약수와 같습니다. 만약 두 수의 최대공약수가 $1$이라면, 이 두 수는 서로소라고 부릅니다. 서로소인 두 수는 $1$ 이외의 공통된 약수를 가지지 않습니다.",
+      "visualAssets": null,
+      "sortOrder": 3,
+      "conceptCode": "E5-NUM-03",
+      "grade": "elementary_5",
+      "semester": 1,
+      "chapter": "약수와 배수",
+      "section": "공약수와 최대공약수",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "공약수,최대공약수,GCD",
+      "createdAt": "2026-03-25T10:08:09.131Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs1y800cjvdjgh8orerwb",
+          "conceptId": "cmn5vrkiy002cvdjgvvhuvq7j",
+          "prerequisiteId": "cmn5vrkc00028vdjgpbf4q3qs"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs24w00cnvdjggqq1i5kw",
+          "conceptId": "cmn5vrkmc002evdjg7itso6tx",
+          "prerequisiteId": "cmn5vrkiy002cvdjgvvhuvq7j"
+        },
+        {
+          "id": "cmn5vs28600cpvdjgcjyj9ynu",
+          "conceptId": "cmn5vrkpp002gvdjgfmy3nw1p",
+          "prerequisiteId": "cmn5vrkiy002cvdjgvvhuvq7j"
+        },
+        {
+          "id": "cmn5vs78p00fpvdjgoz0r45bs",
+          "conceptId": "cmn5vrou6004uvdjgd0vzf0op",
+          "prerequisiteId": "cmn5vrkiy002cvdjgvvhuvq7j"
+        },
+        {
+          "id": "cmn5vs7fe00ftvdjgizls53g1",
+          "conceptId": "cmn5vroxk004wvdjggyc7m5fx",
+          "prerequisiteId": "cmn5vrkiy002cvdjgvvhuvq7j"
+        }
+      ],
+      "blanks": [
+        {
+          "id": "cmn5vxsdc000lvdtk5ber5dk3",
+          "conceptId": "cmn5vrkiy002cvdjgvvhuvq7j",
+          "level": 1,
+          "blanks": [
+            {
+              "hint": "ㅇㅅ",
+              "answer": "약수",
+              "position": 1,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅂㅅ",
+              "answer": "배수",
+              "position": 2,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "1, 2, 3, 4, 6, 12",
+              "answer": "$1, 2, 3, 4, 6, 12$",
+              "position": 3,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "ㅊㄷㄱㅇㅅ",
+              "answer": "최대공약수",
+              "position": 4,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅊㅅㄱㅂㅅ",
+              "answer": "최소공배수",
+              "position": 5,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "6",
+              "answer": "$6$",
+              "position": 6,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "36",
+              "answer": "$36$",
+              "position": 7,
+              "difficulty": "hard"
+            }
+          ],
+          "templateText": "어떤 수를 나누어떨어지게 하는 수를 {{1}}라 합니다.\n어떤 수에 $1, 2, 3, \\ldots$을 곱한 수를 {{2}}라 합니다.\n\n$12$의 약수: {{3}}\n\n공통인 약수 중 가장 큰 수를 {{4}}라 합니다.\n공통인 배수 중 가장 작은 수를 {{5}}라 합니다.\n\n$12$와 $18$의 최대공약수: {{6}}\n$12$와 $18$의 최소공배수: {{7}}",
+          "createdAt": "2026-03-25T10:12:59.233Z"
+        }
+      ]
+    },
+    {
+      "id": "cmn5vrmop003lvdjgak4au4ez",
+      "subjectId": "cmn5vrmlc003jvdjgawtxum5b",
+      "title": "자연수÷자연수→분수",
+      "fullContent": "자연수를 자연수로 나누었을 때, 그 몫을 분수로 나타낼 수 있습니다. 예를 들어, $a$를 $b$로 나눈다는 것은 $a \\div b$로 표현하며, 이를 분수로는 $\\frac{a}{b}$와 같이 나타낼 수 있습니다. 이때, 나누어지는 수인 $a$는 분수의 분자가 되고, 나누는 수인 $b$는 분수의 분모가 됩니다.\n\n구체적인 예시를 살펴보겠습니다. $3$을 $7$로 나누는 $3 \\div 7$은 분수로 $\\frac{3}{7}$이 됩니다. 또 다른 예로, $5$를 $2$로 나누는 $5 \\div 2$는 분수로 $\\frac{5}{2}$가 되며, 이는 대분수로 $2\\frac{1}{2}$과 같이 나타낼 수 있습니다. 이처럼 자연수의 나눗셈에서 나누어떨어지지 않는 경우에도 분수를 사용하면 그 몫을 정확하게 표현할 수 있습니다.\n\n이러한 방법은 나눗셈과 분수가 서로 깊은 관계를 가지고 있음을 보여줍니다. 자연수의 나눗셈 결과를 분수로 나타내는 연습은 앞으로 분수의 나눗셈을 배우는 데 중요한 기초가 됩니다. 분수로 나타낸 몫은 더 이상 나눌 수 없을 때까지 약분하거나, 가분수인 경우 대분수로 바꾸어 표현하는 것이 좋습니다.",
+      "visualAssets": null,
+      "sortOrder": 1,
+      "conceptCode": "E6-NUM-01",
+      "grade": "elementary_6",
+      "semester": 1,
+      "chapter": "분수의 나눗셈",
+      "section": "(자연수)÷(자연수)",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "자연수나눗셈,분수변환",
+      "createdAt": "2026-03-25T10:08:11.930Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs4d800dzvdjg9vy665ou",
+          "conceptId": "cmn5vrmop003lvdjgak4au4ez",
+          "prerequisiteId": "cmn5vrkpp002gvdjgfmy3nw1p"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs4gk00e1vdjgyjqmauz2",
+          "conceptId": "cmn5vrms0003nvdjgtxaufthw",
+          "prerequisiteId": "cmn5vrmop003lvdjgak4au4ez"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrnzv004dvdjgi1nhpbqk",
+      "subjectId": "cmn5vrmlc003jvdjgawtxum5b",
+      "title": "띠그래프와 원그래프",
+      "fullContent": "띠그래프와 원그래프는 전체에 대한 각 부분이 차지하는 비율을 한눈에 알아보기 쉽게 나타낸 그래프입니다. 전체를 $100\\%$로 보고, 각 항목이 전체에서 얼마만큼의 비율을 차지하는지 보여줄 때 사용합니다.\n\n띠그래프는 전체를 하나의 긴 띠로 나타내고, 각 항목의 비율을 띠의 길이로 표현합니다. 예를 들어, 우리 반 학생들이 좋아하는 운동을 조사했을 때, 축구를 좋아하는 학생이 $50\\%$라면 띠의 절반을 축구로 나타내는 식입니다. 이렇게 하면 어떤 항목이 다른 항목보다 얼마나 더 많은 비율을 차지하는지 띠의 길이를 비교하여 쉽게 알 수 있습니다.\n\n원그래프는 전체를 하나의 원으로 나타내고, 각 항목의 비율을 원의 면적, 즉 중심각의 크기로 표현합니다. 예를 들어, 한 달 용돈 사용처를 조사했을 때, 간식비가 $25\\%$라면 원의 $\\frac{1}{4}$만큼을 간식비로 나타낼 수 있습니다. 원그래프는 띠그래프와 마찬가지로 각 항목의 비율을 시각적으로 비교하기에 매우 편리합니다.\n\n이 두 그래프를 그릴 때는 먼저 각 항목이 전체에서 차지하는 백분율을 정확하게 구해야 합니다. 그리고 모든 항목의 백분율을 더했을 때 합이 정확히 $100\\%$가 되는지 반드시 확인해야 합니다. 띠그래프와 원그래프는 자료의 비율 관계를 명확하게 보여주어, 어떤 부분이 가장 크거나 작은지, 또는 비슷한지 등을 쉽게 파악할 수 있도록 돕습니다.",
+      "visualAssets": null,
+      "sortOrder": 15,
+      "conceptCode": "E6-STA-01",
+      "grade": "elementary_6",
+      "semester": 1,
+      "chapter": "여러 가지 그래프",
+      "section": "띠그래프와 원그래프",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "data",
+      "source": null,
+      "keywords": "띠그래프,원그래프",
+      "createdAt": "2026-03-25T10:08:13.627Z",
+      "updatedAt": "2026-03-25T11:05:44.481Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs64i00f1vdjgl0ewugu5",
+          "conceptId": "cmn5vrnzv004dvdjgi1nhpbqk",
+          "prerequisiteId": "cmn5vrk1z0023vdjgkef7v2bl"
+        },
+        {
+          "id": "cmn5vs67s00f3vdjgpvexpk5z",
+          "conceptId": "cmn5vrnzv004dvdjgi1nhpbqk",
+          "prerequisiteId": "cmn5vrn8r003xvdjgqssqaeuk"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs6va00fhvdjgybyl0qzm",
+          "conceptId": "cmn5vrok2004pvdjg3mcpfc24",
+          "prerequisiteId": "cmn5vrnzv004dvdjgi1nhpbqk"
+        },
+        {
+          "id": "cmn5vs8pn00glvdjgzb0r8hoc",
+          "conceptId": "cmn5vrpru005evdjgsup42kj5",
+          "prerequisiteId": "cmn5vrnzv004dvdjgi1nhpbqk"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vro6i004hvdjg5et4ya8d",
+      "subjectId": "cmn5vrmlc003jvdjgawtxum5b",
+      "title": "비의 성질",
+      "fullContent": "비의 성질은 비의 전항과 후항에 $0$이 아닌 같은 수를 곱하거나 나누어도 그 비율은 변하지 않는다는 중요한 성질입니다. 예를 들어, 비 $2:3$에서 전항과 후항에 각각 $2$를 곱하면 $4:6$이 됩니다. 이때 $2:3$의 비율은 $\\frac{2}{3}$이고, $4:6$의 비율도 $\\frac{4}{6}$을 약분하면 $\\frac{2}{3}$이 되어 서로 같음을 알 수 있습니다. 이처럼 비의 성질을 이용하면 복잡한 비를 간단하게 나타낼 수 있습니다.\n\n이 성질을 활용하여 소수의 비를 간단한 자연수의 비로 나타낼 수 있습니다. 예를 들어, 비 $1.2:0.8$을 생각해 봅시다. 전항과 후항에 각각 $10$을 곱하면 $12:8$이 됩니다. 이제 $12$와 $8$의 최대공약수인 $4$로 전항과 후항을 각각 나누면 $3:2$가 됩니다. 따라서 $1.2:0.8$은 가장 간단한 자연수의 비인 $3:2$와 같습니다.\n\n분수의 비도 같은 방법으로 간단한 자연수의 비로 바꿀 수 있습니다. 예를 들어, 비 $\\frac{1}{2}:\\frac{1}{3}$을 간단하게 나타내려면, 분모인 $2$와 $3$의 최소공배수인 $6$을 전항과 후항에 각각 곱합니다. 그러면 $(\\frac{1}{2} \\times 6) : (\\frac{1}{3} \\times 6)$이 되어 $3:2$가 됩니다. 이처럼 비의 성질을 이용하면 소수나 분수로 이루어진 비도 쉽게 자연수의 비로 바꿀 수 있습니다. 다만, 비의 성질을 사용할 때에는 반드시 전항과 후항에 $0$이 아닌 같은 수를 곱하거나 나누어야 합니다.",
+      "visualAssets": null,
+      "sortOrder": 17,
+      "conceptCode": "E6-ALG-05",
+      "grade": "elementary_6",
+      "semester": 2,
+      "chapter": "비례식과 비례배분",
+      "section": "비례식",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "algebra",
+      "source": null,
+      "keywords": "비의성질,간단한비",
+      "createdAt": "2026-03-25T10:08:13.867Z",
+      "updatedAt": "2026-03-25T11:05:44.184Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs6eh00f7vdjgl6nkk8i3",
+          "conceptId": "cmn5vro6i004hvdjg5et4ya8d",
+          "prerequisiteId": "cmn5vrn5f003vvdjg8zbrs1qd"
+        }
+      ],
+      "prerequisiteFor": [],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrl6l002qvdjgfdjhdcaw",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "대분수 연산 (이분모)",
+      "fullContent": "분모가 다른 대분수를 더하거나 뺄 때에는 먼저 분모를 같게 만들어야 합니다. 이것을 통분이라고 합니다. 통분한 다음에는 자연수 부분은 자연수 부분끼리, 분수 부분은 분수 부분끼리 계산합니다.\n\n덧셈의 경우, 분수 부분을 더한 결과가 $1$보다 크거나 같으면, 그 값을 대분수로 바꾸어 자연수 부분에 더해줍니다. 예를 들어, $2\\frac{3}{4} + 1\\frac{2}{3}$를 계산할 때, 먼저 분모 $4$와 $3$을 통분하여 $12$로 만듭니다. 그러면 $2\\frac{9}{12} + 1\\frac{8}{12}$가 됩니다. 자연수 부분 $2$와 $1$을 더하면 $3$이고, 분수 부분 $\\frac{9}{12}$와 $\\frac{8}{12}$를 더하면 $\\frac{17}{12}$이 됩니다. $\\frac{17}{12}$은 $1\\frac{5}{12}$이므로, 자연수 부분 $3$에 $1$을 더하여 $4$가 되고, 남은 분수 부분은 $\\frac{5}{12}$가 되어 $4\\frac{5}{12}$가 됩니다.\n\n뺄셈의 경우, 분수 부분끼리 뺄 수 없을 때가 있습니다. 이때는 빼는 수의 자연수 부분에서 $1$을 빌려와 분수 부분에 더해 가분수로 만든 다음 계산합니다. 예를 들어, $3\\frac{1}{2} - 1\\frac{2}{3}$를 계산할 때, 먼저 통분하여 $3\\frac{3}{6} - 1\\frac{4}{6}$로 만듭니다. $\\frac{3}{6}$에서 $\\frac{4}{6}$를 뺄 수 없으므로, $3\\frac{3}{6}$의 자연수 $3$에서 $1$을 빌려와 $2$로 만들고, 빌려온 $1$을 $\\frac{6}{6}$으로 바꾸어 분수 부분에 더합니다. 그러면 $2\\frac{3+6}{6} - 1\\frac{4}{6}$ 즉, $2\\frac{9}{6} - 1\\frac{4}{6}$가 됩니다. 이제 자연수 부분 $2$에서 $1$을 빼면 $1$이고, 분수 부분 $\\frac{9}{6}$에서 $\\frac{4}{6}$를 빼면 $\\frac{5}{6}$가 되어 $1\\frac{5}{6}$가 됩니다. 계산이 끝난 후에는 분수 부분이 기약분수인지 확인하는 것이 중요합니다.",
+      "visualAssets": null,
+      "sortOrder": 10,
+      "conceptCode": "E5-NUM-10",
+      "grade": "elementary_5",
+      "semester": 1,
+      "chapter": "분수의 덧셈과 뺄셈",
+      "section": "분모가 다른 분수의 덧셈과 뺄셈",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "대분수,이분모,연산",
+      "createdAt": "2026-03-25T10:08:09.982Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs2yv00d5vdjgitcaovpe",
+          "conceptId": "cmn5vrl6l002qvdjgfdjhdcaw",
+          "prerequisiteId": "cmn5vrkzt002mvdjgu8dhfb24"
+        },
+        {
+          "id": "cmn5vs32800d7vdjg2keq4e58",
+          "conceptId": "cmn5vrl6l002qvdjgfdjhdcaw",
+          "prerequisiteId": "cmn5vrl38002ovdjg8l44wo8g"
+        },
+        {
+          "id": "cmn5vs35m00d9vdjgunbgzrfv",
+          "conceptId": "cmn5vrl6l002qvdjgfdjhdcaw",
+          "prerequisiteId": "cmn5vriqs001bvdjgjkrknzwm"
+        }
+      ],
+      "prerequisiteFor": [],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vro9x004jvdjgvgpnlso5",
+      "subjectId": "cmn5vrmlc003jvdjgawtxum5b",
+      "title": "각기둥의 전개도",
+      "fullContent": "각기둥의 전개도는 각기둥의 모서리를 따라 잘라 펼쳐 놓은 그림을 말합니다. 이 전개도를 다시 접으면 원래의 각기둥 모양이 됩니다.\n\n각기둥의 전개도는 항상 밑면 $2$개와 옆면들로 이루어져 있습니다. 이때 옆면은 모두 직사각형 모양입니다. 삼각기둥의 전개도에서는 밑면이 삼각형이고 옆면이 $3$개이며, 사각기둥의 전개도에서는 밑면이 사각형이고 옆면이 $4$개인 것처럼, 밑면의 변의 개수와 옆면의 수는 항상 같습니다.\n\n특히, 전개도에서 옆면의 가로 길이의 합은 밑면의 둘레와 같다는 중요한 특징이 있습니다. 예를 들어, 밑면의 한 변의 길이가 $3\\text{cm}$인 정삼각형인 삼각기둥의 옆면 가로 길이의 합은 밑면의 둘레인 $3\\text{cm} + 3\\text{cm} + 3\\text{cm} = 9\\text{cm}$와 같습니다.\n\n우리가 그린 전개도가 올바른지 확인하려면, 전개도를 다시 접었을 때 서로 맞닿는 모서리들의 길이가 같은지 꼼꼼히 살펴보아야 합니다. 만약 길이가 다르다면 올바른 각기둥을 만들 수 없습니다.",
+      "visualAssets": null,
+      "sortOrder": 18,
+      "conceptCode": "E6-GEO-07",
+      "grade": "elementary_6",
+      "semester": 1,
+      "chapter": "각기둥과 각뿔",
+      "section": "각기둥",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "각기둥,전개도",
+      "createdAt": "2026-03-25T10:08:13.990Z",
+      "updatedAt": "2026-03-25T11:05:44.366Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs6ht00f9vdjgifjejjqs",
+          "conceptId": "cmn5vro9x004jvdjgvgpnlso5",
+          "prerequisiteId": "cmn5vrniv0043vdjgbsglpe3s"
+        }
+      ],
+      "prerequisiteFor": [],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vroda004lvdjgtkk5v4y9",
+      "subjectId": "cmn5vrmlc003jvdjgawtxum5b",
+      "title": "원기둥의 전개도",
+      "fullContent": "원기둥의 전개도는 원기둥을 펼쳤을 때 나오는 평면 도형을 말합니다. 원기둥의 전개도는 두 개의 원과 한 개의 직사각형으로 이루어져 있습니다. 이때 두 개의 원은 원기둥의 위와 아래에 있는 밑면이 되고, 한 개의 직사각형은 원기둥의 옆면이 됩니다.\n\n옆면인 직사각형의 가로는 밑면인 원의 둘레와 길이가 같습니다. 원의 반지름을 $r$이라고 할 때, 원의 둘레는 $2\\pi r$이므로 직사각형의 가로도 $2\\pi r$이 됩니다. 또한, 직사각형의 세로는 원기둥의 높이와 같습니다. 원기둥의 높이를 $h$라고 하면 직사각형의 세로도 $h$가 됩니다. 이 전개도를 다시 접으면 직사각형이 두 원을 감싸면서 원래의 원기둥 모양이 만들어집니다.\n\n원기둥의 전개도를 이용하면 원기둥의 겉넓이를 쉽게 구할 수 있습니다. 원기둥의 겉넓이는 두 밑면의 넓이와 옆면의 넓이를 더한 값입니다. 따라서 원기둥의 겉넓이는 $2 \\times (\\pi r^2) + (2\\pi r \\times h)$로 계산할 수 있습니다. 즉, $2\\pi r^2 + 2\\pi rh$입니다. 전개도를 정확하게 이해하면 원기둥의 구조와 넓이를 파악하는 데 큰 도움이 됩니다.",
+      "visualAssets": null,
+      "sortOrder": 19,
+      "conceptCode": "E6-GEO-08",
+      "grade": "elementary_6",
+      "semester": 2,
+      "chapter": "원기둥, 원뿔, 구",
+      "section": "원기둥",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "원기둥,전개도",
+      "createdAt": "2026-03-25T10:08:14.111Z",
+      "updatedAt": "2026-03-25T11:05:44.424Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs6l500fbvdjgyhvhpnsg",
+          "conceptId": "cmn5vroda004lvdjgtkk5v4y9",
+          "prerequisiteId": "cmn5vrnwh004bvdjgzwqy8acg"
+        },
+        {
+          "id": "cmn5vs6og00fdvdjgg29j47tm",
+          "conceptId": "cmn5vroda004lvdjgtkk5v4y9",
+          "prerequisiteId": "cmn5vrnpp0047vdjgnosd1pgv"
+        }
+      ],
+      "prerequisiteFor": [],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrok2004pvdjg3mcpfc24",
+      "subjectId": "cmn5vrmlc003jvdjgawtxum5b",
+      "title": "그래프 해석과 비교",
+      "fullContent": "그래프는 우리가 조사한 자료를 한눈에 알아보기 쉽게 그림으로 나타낸 것입니다. 우리는 막대그래프, 꺾은선그래프, 띠그래프, 원그래프 등 다양한 종류의 그래프를 사용하여 같은 자료를 여러 가지 방법으로 표현할 수 있습니다. 예를 들어, 우리 반 학생들이 좋아하는 운동 종목별 학생 수를 비교할 때에는 막대그래프가 적절하며, 한 달 동안 기온이 어떻게 변했는지 알아볼 때에는 꺾은선그래프가 유용합니다. 또한, 전체에 대한 각 부분이 차지하는 비율을 알고 싶을 때에는 띠그래프나 원그래프를 사용하면 편리합니다.\n\n이렇게 자료의 목적에 맞는 그래프를 선택하여 자료를 정확하게 해석하는 것이 중요합니다. 그리고 두 가지 이상의 그래프를 함께 살펴보면 자료의 특징을 더욱 자세히 파악하고, 앞으로의 변화를 예측하는 데 도움을 받을 수 있습니다. 예를 들어, 지난 $5$년간 우리 학교 학생 수 변화를 나타낸 꺾은선그래프와 각 학년별 학생 비율을 나타낸 원그래프를 함께 비교하면, 전체 학생 수의 변화 추세와 함께 각 학년의 비중이 어떻게 달라지는지 종합적으로 이해할 수 있습니다. 그래프를 해석하고 비교할 때에는 그래프의 제목, 단위, 그리고 각 항목이 무엇을 나타내는지 꼼꼼히 확인해야 자료를 바르게 이해할 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 21,
+      "conceptCode": "E6-STA-02",
+      "grade": "elementary_6",
+      "semester": 1,
+      "chapter": "여러 가지 그래프",
+      "section": null,
+      "sectionSub": null,
+      "category": "concept",
+      "part": "data",
+      "source": null,
+      "keywords": "그래프,해석,비교",
+      "createdAt": "2026-03-25T10:08:14.354Z",
+      "updatedAt": "2026-03-25T11:05:44.539Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs6va00fhvdjgybyl0qzm",
+          "conceptId": "cmn5vrok2004pvdjg3mcpfc24",
+          "prerequisiteId": "cmn5vrnzv004dvdjgi1nhpbqk"
+        }
+      ],
+      "prerequisiteFor": [],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrnwh004bvdjgzwqy8acg",
+      "subjectId": "cmn5vrmlc003jvdjgawtxum5b",
+      "title": "원기둥·원뿔·구 (회전체)",
+      "fullContent": "원기둥, 원뿔, 구는 평면도형을 한 직선을 축으로 하여 돌렸을 때 만들어지는 입체도형입니다. 이렇게 회전하여 만들어지는 입체도형을 회전체라고 부릅니다. 예를 들어, 직사각형을 한 변을 축으로 하여 한 바퀴 돌리면 원기둥이 되고, 직각삼각형을 직각을 낀 한 변을 축으로 돌리면 원뿔이 됩니다. 또한, 반원을 지름을 축으로 하여 돌리면 구가 만들어집니다.\n\n원기둥은 위와 아래에 있는 두 밑면이 서로 평행하고 합동인 원으로 이루어져 있으며, 옆면은 직사각형 모양입니다. 원기둥의 전개도를 펼쳐보면 두 개의 원과 하나의 직사각형으로 이루어져 있음을 알 수 있습니다. 원기둥의 겉넓이는 두 밑면의 넓이와 옆면의 넓이를 더한 값으로, 밑면의 반지름을 $r$, 높이를 $h$라고 할 때 $2\\pi r^2 + 2\\pi rh$로 구할 수 있습니다.\n\n원뿔은 밑면이 원이고 옆면이 굽은 면으로 이루어진 뿔 모양의 입체도형이며, 구는 둥근 모양의 입체도형입니다. 원뿔에는 밑면의 반지름, 높이, 그리고 원뿔의 꼭짓점에서 밑면의 원둘레 위의 한 점을 이은 선분인 모선과 같은 구성 요소들이 있습니다. 이처럼 회전체는 우리 주변에서 다양한 형태로 찾아볼 수 있으며, 각 도형의 특징을 이해하는 것이 중요합니다.",
+      "visualAssets": null,
+      "sortOrder": 14,
+      "conceptCode": "E6-GEO-05",
+      "grade": "elementary_6",
+      "semester": 2,
+      "chapter": "원기둥, 원뿔, 구",
+      "section": "원기둥",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "원기둥,원뿔,구,회전체",
+      "createdAt": "2026-03-25T10:08:13.505Z",
+      "updatedAt": "2026-03-25T11:05:44.299Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs5xv00exvdjgwcfb5opv",
+          "conceptId": "cmn5vrnwh004bvdjgzwqy8acg",
+          "prerequisiteId": "cmn5vrnt30049vdjgkhpb5rnh"
+        },
+        {
+          "id": "cmn5vs61700ezvdjg9ybxwnps",
+          "conceptId": "cmn5vrnwh004bvdjgzwqy8acg",
+          "prerequisiteId": "cmn5vrniv0043vdjgbsglpe3s"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs6l500fbvdjgyhvhpnsg",
+          "conceptId": "cmn5vroda004lvdjgtkk5v4y9",
+          "prerequisiteId": "cmn5vrnwh004bvdjgzwqy8acg"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrgon0004vdjgnoh2q0xn",
+      "subjectId": "cmn5vrgh00000vdjgqr6vubb5",
+      "title": "세 자리 수 뺄셈",
+      "fullContent": "세 자리 수 뺄셈은 세 자리 수에서 세 자리 수를 빼는 계산입니다. 이 계산은 세로셈으로 하는 것이 편리하며, 일의 자리부터 차례로 빼는 것이 중요합니다. 만약 빼는 수의 자릿값이 빼지는 수의 자릿값보다 크다면, 바로 윗자리에서 $1$을 받아내림하여 계산합니다. 이때 윗자리에서 빌려온 $1$은 아랫자리에서 $10$으로 생각하여 더해준 후 계산해야 합니다.\n\n예를 들어, $345-123$과 같이 받아내림이 없는 경우에는 일의 자리 $5-3=2$, 십의 자리 $4-2=2$, 백의 자리 $3-1=2$로 쉽게 계산할 수 있습니다. 하지만 $452-138$처럼 일의 자리에서 받아내림이 필요할 때에는 십의 자리에서 $1$을 받아내려 일의 자리를 $12$로 만들어 $12-8=4$로 계산합니다. 이때 십의 자리는 $1$을 빌려주었으므로 $4$가 되어 $4-3=1$로 계산하고, 백의 자리는 $4-1=3$으로 계산합니다. $521-178$과 같이 두 번 받아내림이 필요한 경우에도 같은 방법으로 일의 자리부터 차례로 받아내림하여 계산합니다.\n\n특히 $504-278$처럼 빼지는 수의 십의 자리가 $0$인 경우에는 백의 자리에서 먼저 $1$을 받아내려 십의 자리를 $10$으로 만든 다음, 다시 십의 자리에서 일의 자리로 $1$을 받아내림하여 계산해야 합니다. 이때 백의 자리는 $1$이 줄어들고, 십의 자리는 $9$가 됩니다. 이처럼 세 자리 수 뺄셈은 일의 자리부터 차근차근 계산하고, 받아내림이 필요할 때에는 윗자리에서 $1$을 빌려와 $10$으로 만들어 계산하는 방법을 정확히 익히는 것이 중요합니다.",
+      "visualAssets": null,
+      "sortOrder": 2,
+      "conceptCode": "E3-NUM-02",
+      "grade": "elementary_3",
+      "semester": 1,
+      "chapter": "덧셈과 뺄셈",
+      "section": "세 자리 수의 덧셈과 뺄셈",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "받아내림,세로셈",
+      "createdAt": "2026-03-25T10:08:04.151Z",
+      "updatedAt": "2026-03-25T13:30:06.524Z",
+      "prerequisites": [],
+      "prerequisiteFor": [],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrgs30006vdjg01oior51",
+      "subjectId": "cmn5vrgh00000vdjgqr6vubb5",
+      "title": "나눗셈 기초",
+      "fullContent": "사탕 $12$개를 $3$명에게 똑같이 나누어 준다면 한 명당 몇 개씩 받을 수 있을까요? 이렇게 어떤 양을 똑같이 나누는 것을 나눗셈이라고 합니다. 나눗셈은 기호 $\\div$를 사용하여 $12 \\div 3$과 같이 나타내며, 이때 한 명당 받는 사탕의 개수인 $4$를 나눗셈의 몫이라고 합니다.\n\n나눗셈은 곱셈과 아주 깊은 관계가 있습니다. $3$명에게 $4$개씩 주면 모두 $3 \\times 4 = 12$개가 되므로, $12 \\div 3 = 4$라는 것을 알 수 있습니다. 이처럼 곱셈구구를 잘 알고 있다면 나눗셈의 몫을 쉽게 구할 수 있습니다. 예를 들어 $15 \\div 5$의 몫을 구하려면 $5$에 어떤 수를 곱해야 $15$가 되는지 생각하여 $5 \\times 3 = 15$이므로 몫은 $3$이라고 답할 수 있습니다.\n\n만약 사탕 $13$개를 $3$명에게 똑같이 나누어 준다면 어떻게 될까요? 한 명당 $4$개씩 주면 $3 \\times 4 = 12$개를 나누어 주고, 사탕 $1$개가 남게 됩니다. 이때 남는 수인 $1$을 나머지라고 합니다. 나눗셈을 할 때 나머지는 항상 나누는 수보다 작아야 합니다. $13 \\div 3$에서 나누는 수는 $3$이고 나머지는 $1$이므로, $1$은 $3$보다 작습니다. 만약 나머지가 나누는 수보다 크거나 같다면 더 나눌 수 있다는 뜻이므로, 나눗셈을 다시 해야 합니다.",
+      "visualAssets": null,
+      "sortOrder": 3,
+      "conceptCode": "E3-NUM-03",
+      "grade": "elementary_3",
+      "semester": 1,
+      "chapter": "나눗셈",
+      "section": "나눗셈의 의미",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "나눗셈,몫,나머지,곱셈구구",
+      "createdAt": "2026-03-25T10:08:04.275Z",
+      "updatedAt": "2026-03-25T13:30:06.524Z",
+      "prerequisites": [],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vryph00alvdjgi7s3t5d5",
+          "conceptId": "cmn5vrgyu000avdjg2bnorj3u",
+          "prerequisiteId": "cmn5vrgs30006vdjg01oior51"
+        },
+        {
+          "id": "cmn5vryw600apvdjg36398ko1",
+          "conceptId": "cmn5vrhmf000ovdjgguh79221",
+          "prerequisiteId": "cmn5vrgs30006vdjg01oior51"
+        }
+      ],
+      "blanks": [
+        {
+          "id": "cmn5vxrpz0005vdtkbkno1ylg",
+          "conceptId": "cmn5vrgs30006vdjg01oior51",
+          "level": 1,
+          "blanks": [
+            {
+              "hint": "ㄸㄱㅇ ㄴㄴㄱ",
+              "answer": "똑같이 나누기",
+              "position": 1,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "4",
+              "answer": "$4$",
+              "position": 2,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "4",
+              "answer": "$4$",
+              "position": 3,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "3",
+              "answer": "$3$",
+              "position": 4,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "ㄱㅅㄱㄱ",
+              "answer": "곱셈구구",
+              "position": 5,
+              "difficulty": "full"
+            }
+          ],
+          "templateText": "나눗셈은 {{1}}입니다.\n\n$12 \\div 3 = 4$는 \"$12$를 $3$묶음으로 나누면 한 묶음에 {{2}}개\"라는 뜻입니다.\n\n곱셈과 나눗셈의 관계:\n$3 \\times 4 = 12$이면\n$12 \\div 3 =$ {{3}}\n$12 \\div 4 =$ {{4}}\n\n{{5}}를 이용하면 나눗셈을 쉽게 할 수 있습니다.",
+          "createdAt": "2026-03-25T10:12:58.392Z"
+        }
+      ]
+    },
+    {
+      "id": "cmn5vrhmf000ovdjgguh79221",
+      "subjectId": "cmn5vrgh00000vdjgqr6vubb5",
+      "title": "나머지가 있는 나눗셈",
+      "fullContent": "나눗셈을 할 때, 똑같이 나누고 남는 수가 있을 수 있습니다. 이렇게 똑같이 나누고 남은 수를 '나머지'라고 합니다. 예를 들어, 사탕 $10$개를 $3$명에게 똑같이 나누어 주면 한 명당 $3$개씩 받을 수 있고, $1$개가 남습니다. 이때 남은 $1$이 바로 나머지입니다.\n\n나머지는 항상 나누는 수보다 작아야 합니다. 만약 나머지가 나누는 수보다 크거나 같다면, 나눗셈을 더 할 수 있다는 뜻이므로 계산이 잘못된 것입니다. 예를 들어, $25 \\div 4$를 계산하면 $4 \\times 6 = 24$이므로 몫은 $6$이고, $25 - 24 = 1$이 남습니다. 따라서 $25 \\div 4 = 6 \\dots 1$과 같이 나타냅니다. 이처럼 몇십, 몇십몇, 또는 세 자리 수를 한 자리 수로 나눌 때도 나머지가 생길 수 있습니다.\n\n나눗셈 계산이 맞았는지 확인하는 방법도 있습니다. 나누는 수에 몫을 곱하고, 그 값에 나머지를 더하면 원래 나누어지는 수가 나와야 합니다. 즉, (나누는 수 $\\times$ 몫) $+$ 나머지 $=$ 나누어지는 수입니다. 위의 예시에서 $4 \\times 6 + 1 = 24 + 1 = 25$이므로 계산이 맞았다는 것을 알 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 12,
+      "conceptCode": "E3-NUM-07",
+      "grade": "elementary_3",
+      "semester": 2,
+      "chapter": "나눗셈",
+      "section": "(두/세 자리 수)÷(한 자리 수)",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "나머지,나눗셈,검산",
+      "createdAt": "2026-03-25T10:08:05.367Z",
+      "updatedAt": "2026-03-25T13:30:06.524Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vryw600apvdjg36398ko1",
+          "conceptId": "cmn5vrhmf000ovdjgguh79221",
+          "prerequisiteId": "cmn5vrgs30006vdjg01oior51"
+        }
+      ],
+      "prerequisiteFor": [],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrhps000qvdjgzw7hjsin",
+      "subjectId": "cmn5vrgh00000vdjgqr6vubb5",
+      "title": "세 자리 수 곱셈",
+      "fullContent": "세 자리 수에 한 자리 수를 곱하는 것은 우리가 이미 배운 두 자리 수 곱셈과 크게 다르지 않습니다. 세 자리 수 곱셈도 세로셈을 이용하여 자리를 맞추어 계산하면 편리합니다. 먼저, 곱하는 한 자리 수를 세 자리 수의 일의 자리 숫자와 곱합니다. 이때 곱한 값이 $10$이 넘으면 $10$의 자리로 올림합니다.\n\n다음으로, 곱하는 한 자리 수를 세 자리 수의 십의 자리 숫자와 곱합니다. 이때 일의 자리에서 올림한 수가 있다면 그 수와 더해 줍니다. 이 값 역시 $10$이 넘으면 백의 자리로 올림합니다. 마지막으로, 곱하는 한 자리 수를 세 자리 수의 백의 자리 숫자와 곱하고, 십의 자리에서 올림한 수가 있다면 그 수와 더해 줍니다. 이렇게 각 자리에서 곱하고 올림하는 과정을 차례대로 계산하면 됩니다.\n\n예를 들어, $234 \\times 3$을 계산할 때, 먼저 일의 자리인 $4 \\times 3 = 12$이므로 일의 자리에 $2$를 쓰고 $1$을 십의 자리로 올림합니다. 다음으로 십의 자리인 $3 \\times 3 = 9$에 올림한 $1$을 더해 $10$이 되므로 십의 자리에 $0$을 쓰고 $1$을 백의 자리로 올림합니다. 마지막으로 백의 자리인 $2 \\times 3 = 6$에 올림한 $1$을 더해 $7$을 백의 자리에 써서 답은 $702$가 됩니다. 계산할 때는 올림하는 수를 잊지 않고 정확하게 더하는 것이 매우 중요합니다.",
+      "visualAssets": null,
+      "sortOrder": 13,
+      "conceptCode": "E3-NUM-08",
+      "grade": "elementary_3",
+      "semester": 2,
+      "chapter": "곱셈",
+      "section": "(세 자리 수)×(한 자리 수)",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "곱셈,올림,세로셈",
+      "createdAt": "2026-03-25T10:08:05.488Z",
+      "updatedAt": "2026-03-25T13:30:06.524Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vryzh00arvdjgzikx5eky",
+          "conceptId": "cmn5vrhps000qvdjgzw7hjsin",
+          "prerequisiteId": "cmn5vrgvg0008vdjghkaa61fm"
+        }
+      ],
+      "prerequisiteFor": [],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrkwe002kvdjgkm9ua9dp",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "혼합 계산 (연산 순서)",
+      "fullContent": "여러 가지 덧셈, 뺄셈, 곱셈, 나눗셈이 한 식에 섞여 있는 계산을 혼합 계산이라고 합니다. 혼합 계산을 할 때에는 정해진 순서에 따라 계산해야 바른 답을 얻을 수 있습니다. 가장 먼저 계산해야 할 것은 괄호 $( )$ 안의 식입니다. 괄호가 없는 경우에는 곱셈과 나눗셈을 먼저 계산하고, 그 다음에 덧셈과 뺄셈을 계산합니다.\n\n만약 곱셈과 나눗셈이 함께 있거나 덧셈과 뺄셈이 함께 있는 경우에는 식의 왼쪽부터 차례대로 계산해야 합니다. 예를 들어, $10 \\div 2 \\times 3$과 같은 식에서는 나눗셈 $10 \\div 2$를 먼저 하고 곱셈을 나중에 계산합니다. 괄호는 소괄호 $( )$, 중괄호 $\\{ \\}$, 대괄호 $[ ]$와 같이 여러 종류가 있을 수 있으며, 이때는 가장 안쪽에 있는 괄호부터 순서대로 계산합니다.\n\n예를 들어, $10 + (5 \\times 2 - 3) \\div 7$과 같은 식에서는 소괄호 안의 곱셈 $5 \\times 2$를 먼저 계산하고, 그 다음 뺄셈 $10 - 3$을 계산합니다. 괄호 안의 계산이 모두 끝나면, 괄호 밖의 나눗셈을 하고 마지막으로 덧셈을 계산합니다. 이처럼 혼합 계산의 순서를 정확히 지키는 것이 매우 중요하며, 순서가 바뀌면 전혀 다른 답이 나올 수 있으므로 항상 주의해야 합니다.",
+      "visualAssets": null,
+      "sortOrder": 7,
+      "conceptCode": "E5-NUM-07",
+      "grade": "elementary_5",
+      "semester": 1,
+      "chapter": "자연수의 혼합 계산",
+      "section": "덧셈, 뺄셈, 곱셈, 나눗셈의 혼합",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "혼합계산,괄호,연산순서",
+      "createdAt": "2026-03-25T10:08:09.614Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs2ew00ctvdjg0rbftfab",
+          "conceptId": "cmn5vrkwe002kvdjgkm9ua9dp",
+          "prerequisiteId": "cmn5vri9z0011vdjgydpgh9pm"
+        },
+        {
+          "id": "cmn5vs2i700cvvdjgf6h4zyzl",
+          "conceptId": "cmn5vrkwe002kvdjgkm9ua9dp",
+          "prerequisiteId": "cmn5vridb0013vdjgf3fzbpnk"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs3j200dhvdjgamuo1dkc",
+          "conceptId": "cmn5vrlng0030vdjgirgpvdgx",
+          "prerequisiteId": "cmn5vrkwe002kvdjgkm9ua9dp"
+        },
+        {
+          "id": "cmn5vs7sp00g1vdjgn20wv800",
+          "conceptId": "cmn5vrp490050vdjgqn4b2n2p",
+          "prerequisiteId": "cmn5vrkwe002kvdjgkm9ua9dp"
+        }
+      ],
+      "blanks": [
+        {
+          "id": "cmn5vxsox000tvdtktc0wn8zn",
+          "conceptId": "cmn5vrkwe002kvdjgkm9ua9dp",
+          "level": 1,
+          "blanks": [
+            {
+              "hint": "ㄱㅎ",
+              "answer": "괄호",
+              "position": 1,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㄱㅅㄱ ㄴㄴㅅ",
+              "answer": "곱셈과 나눗셈",
+              "position": 2,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㄷㅅㄱ ㅃㅅ",
+              "answer": "덧셈과 뺄셈",
+              "position": 3,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅇㅉ",
+              "answer": "왼쪽",
+              "position": 4,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "27",
+              "answer": "$27$",
+              "position": 5,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "72",
+              "answer": "$72$",
+              "position": 6,
+              "difficulty": "full"
+            }
+          ],
+          "templateText": "혼합 계산 순서:\n1. {{1}} 안을 먼저 계산\n2. {{2}}을 먼저 계산\n3. {{3}}을 나중에 계산\n4. 같은 순위는 {{4}}부터 계산\n\n예: $15 + 3 \\times 4 = 15 + 12 =$ {{5}} (곱셈 먼저)\n$(15 + 3) \\times 4 = 18 \\times 4 =$ {{6}} (괄호 먼저)",
+          "createdAt": "2026-03-25T10:12:59.649Z"
+        }
+      ]
+    },
+    {
+      "id": "cmn5vrmvc003pvdjgwtr3xm76",
+      "subjectId": "cmn5vrmlc003jvdjgawtxum5b",
+      "title": "분수÷분수 (역수 곱셈)",
+      "fullContent": "분수 나누기 분수를 계산할 때에는 나누는 분수의 역수를 곱하여 계산합니다. 여기서 역수란 어떤 분수의 분모와 분자의 위치를 서로 바꾼 수를 말합니다. 예를 들어, 분수 $\\frac{c}{d}$의 역수는 $\\frac{d}{c}$가 됩니다. 따라서 분수 $\\frac{a}{b}$를 분수 $\\frac{c}{d}$로 나누는 계산은 $\\frac{a}{b} \\div \\frac{c}{d} = \\frac{a}{b} \\times \\frac{d}{c}$와 같이 곱셈으로 바꾸어 계산할 수 있습니다.\n\n예를 들어, $\\frac{2}{3} \\div \\frac{4}{5}$를 계산해 봅시다. 나누는 수인 $\\frac{4}{5}$의 역수는 분모와 분자를 바꾸어 $\\frac{5}{4}$가 됩니다. 이제 나눗셈을 곱셈으로 바꾸어 계산하면 $\\frac{2}{3} \\times \\frac{5}{4}$가 됩니다. 분수의 곱셈은 분자는 분자끼리, 분모는 분모끼리 곱하므로 $\\frac{2 \\times 5}{3 \\times 4} = \\frac{10}{12}$가 됩니다. 마지막으로 약분하여 가장 간단한 분수로 나타내면 $\\frac{5}{6}$가 됩니다.\n\n이처럼 분수의 나눗셈을 역수를 이용한 곱셈으로 바꾸어 계산하는 방법을 잘 익히는 것이 중요합니다. 단순히 계산 방법만 외우기보다는 왜 역수를 곱해야 하는지 그 원리를 함께 이해하면 더욱 좋습니다.",
+      "visualAssets": null,
+      "sortOrder": 3,
+      "conceptCode": "E6-NUM-03",
+      "grade": "elementary_6",
+      "semester": 2,
+      "chapter": "분수의 나눗셈",
+      "section": "(분수)÷(분수)",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "분수나눗셈,역수",
+      "createdAt": "2026-03-25T10:08:12.168Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs4n800e5vdjgh8uc5ce7",
+          "conceptId": "cmn5vrmvc003pvdjgwtr3xm76",
+          "prerequisiteId": "cmn5vrms0003nvdjgtxaufthw"
+        },
+        {
+          "id": "cmn5vs4qk00e7vdjg82xkbr7p",
+          "conceptId": "cmn5vrmvc003pvdjgwtr3xm76",
+          "prerequisiteId": "cmn5vrlgp002wvdjgg64ske1j"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs6yl00fjvdjgj7sqo4pj",
+          "conceptId": "cmn5vrong004rvdjgkqe2gdis",
+          "prerequisiteId": "cmn5vrmvc003pvdjgwtr3xm76"
+        },
+        {
+          "id": "cmn5vs7m100fxvdjgs0sdotbk",
+          "conceptId": "cmn5vrp0w004yvdjgledj090c",
+          "prerequisiteId": "cmn5vrmvc003pvdjgwtr3xm76"
+        }
+      ],
+      "blanks": [
+        {
+          "id": "cmn5vxsrs000vvdtk5teb6bjn",
+          "conceptId": "cmn5vrmvc003pvdjgwtr3xm76",
+          "level": 1,
+          "blanks": [
+            {
+              "hint": "ㅇㅅ",
+              "answer": "역수",
+              "position": 1,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "\\frac{3}{8}",
+              "answer": "$\\frac{3}{8}$",
+              "position": 2,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㄷㅈㅇㅅ",
+              "answer": "뒤집어서",
+              "position": 3,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "\\frac{5}{4}",
+              "answer": "$\\frac{5}{4}$",
+              "position": 4,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "\\frac{5}{6}",
+              "answer": "$\\frac{5}{6}$",
+              "position": 5,
+              "difficulty": "hard"
+            }
+          ],
+          "templateText": "분수를 자연수로 나눌 때는 자연수의 {{1}}를 곱합니다.\n$\\frac{3}{4} \\div 2 = \\frac{3}{4} \\times \\frac{1}{2} =$ {{2}}\n\n분수끼리 나눌 때는 나누는 분수를 {{3}} 곱합니다.\n$\\frac{2}{3} \\div \\frac{4}{5} = \\frac{2}{3} \\times$ {{4}} $=$ {{5}}",
+          "createdAt": "2026-03-25T10:12:59.752Z"
+        }
+      ]
+    },
+    {
+      "id": "cmn5vrigo0015vdjgohkd629b",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "동분모 분수 덧셈",
+      "fullContent": "분모가 같은 분수의 덧셈은 크기가 같은 조각들을 더하는 것과 같습니다. 예를 들어, 피자 한 판을 $7$조조각으로 나눈 것 중 $\\frac{3}{7}$조각과 $\\frac{5}{7}$조각을 더하는 상황을 생각해 볼 수 있습니다. 이때, 분모가 같다는 것은 조각의 크기가 같다는 것을 의미합니다.\n\n분모가 같은 분수를 더할 때에는 분모는 그대로 두고 분자끼리 더합니다. 예를 들어, $\\frac{3}{7} + \\frac{5}{7}$을 계산할 때, 분모인 $7$은 그대로 두고 분자인 $3$과 $5$를 더하여 $\\frac{3+5}{7} = \\frac{8}{7}$이 됩니다. 계산 결과가 가분수이면 대분수로 바꾸어 나타낼 수 있습니다. $\\frac{8}{7}$은 $1$과 $\\frac{1}{7}$로 바꿀 수 있습니다.\n\n대분수의 덧셈은 자연수 부분과 분수 부분을 각각 더하여 계산합니다. 예를 들어, $1\\frac{1}{4} + 2\\frac{2}{4}$를 계산할 때, 자연수 부분인 $1$과 $2$를 더하고, 분수 부분인 $\\frac{1}{4}$과 $\\frac{2}{4}$를 더합니다. 즉, $(1+2) + (\\frac{1}{4}+\\frac{2}{4}) = 3 + \\frac{3}{4} = 3\\frac{3}{4}$이 됩니다. 분모가 같다고 해서 분모까지 더하는 실수를 하지 않도록 주의해야 합니다.",
+      "visualAssets": null,
+      "sortOrder": 7,
+      "conceptCode": "E4-NUM-07",
+      "grade": "elementary_4",
+      "semester": 2,
+      "chapter": "분수의 덧셈과 뺄셈",
+      "section": "분모가 같은 분수의 덧셈과 뺄셈",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "동분모,분수덧셈",
+      "createdAt": "2026-03-25T10:08:06.456Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vrzn000b5vdjg03xmpi1o",
+          "conceptId": "cmn5vrigo0015vdjgohkd629b",
+          "prerequisiteId": "cmn5vrgyu000avdjg2bnorj3u"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vrzqd00b7vdjghd9h7hy8",
+          "conceptId": "cmn5vrik10017vdjgog7qwe9w",
+          "prerequisiteId": "cmn5vrigo0015vdjgohkd629b"
+        },
+        {
+          "id": "cmn5vrzx300bbvdjgtg2gys73",
+          "conceptId": "cmn5vriqs001bvdjgjkrknzwm",
+          "prerequisiteId": "cmn5vrigo0015vdjgohkd629b"
+        },
+        {
+          "id": "cmn5vs2ov00czvdjg8rfkatgv",
+          "conceptId": "cmn5vrkzt002mvdjgu8dhfb24",
+          "prerequisiteId": "cmn5vrigo0015vdjgohkd629b"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrnma0045vdjg1abylrv3",
+      "subjectId": "cmn5vrmlc003jvdjgawtxum5b",
+      "title": "직육면체의 부피와 겉넓이",
+      "fullContent": "직육면체의 부피는 어떤 물체가 차지하는 공간의 크기를 나타냅니다. 직육면체의 부피는 가로, 세로, 높이를 곱하여 구할 수 있으며, 식으로 나타내면 $V = \\text{가로} \\times \\text{세로} \\times \\text{높이}$입니다. 만약 모든 모서리의 길이가 같은 정육면체라면, 한 모서리의 길이를 세 번 곱하여 $V = \\text{한 모서리} \\times \\text{한 모서리} \\times \\text{한 모서리}$로 부피를 계산합니다. 부피의 단위로는 한 모서리의 길이가 $1\\text{cm}$인 정육면체의 부피인 $1\\text{cm}^3$를 사용하며, 더 큰 단위로는 $1\\text{m}^3$가 있습니다. 이때 $1\\text{m}^3$는 $1,000,000\\text{cm}^3$와 같고, $1\\text{L}$는 $1000\\text{cm}^3$와 같아 부피와 들이의 관계를 이해하는 데 도움을 줍니다.\n\n직육면체의 겉넓이는 직육면체를 둘러싸고 있는 모든 면의 넓이를 합한 것입니다. 직육면체는 서로 마주 보는 면의 넓이가 같으므로, 세 쌍의 직사각형 넓이를 각각 구하여 더하면 됩니다. 식으로 나타내면 $S = 2 \\times (\\text{가로} \\times \\text{세로} + \\text{세로} \\times \\text{높이} + \\text{높이} \\times \\text{가로})$입니다. 부피와 겉넓이 개념을 활용하면 상자를 만들 때 필요한 종이의 양이나 물건을 담을 수 있는 공간의 크기 등 우리 주변의 다양한 실생활 문제를 해결할 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 11,
+      "conceptCode": "E6-GEO-02",
+      "grade": "elementary_6",
+      "semester": 1,
+      "chapter": "직육면체의 부피와 겉넓이",
+      "section": "직육면체의 부피",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "부피,겉넓이,직육면체",
+      "createdAt": "2026-03-25T10:08:13.138Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs5h800envdjg181sko5h",
+          "conceptId": "cmn5vrnma0045vdjg1abylrv3",
+          "prerequisiteId": "cmn5vrmem003gvdjgs5iebtf6"
+        },
+        {
+          "id": "cmn5vs5kk00epvdjgpnivee3b",
+          "conceptId": "cmn5vrnma0045vdjg1abylrv3",
+          "prerequisiteId": "cmn5vrlxn0036vdjgmrbi765r"
+        }
+      ],
+      "prerequisiteFor": [],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrong004rvdjgkqe2gdis",
+      "subjectId": "cmn5vrmlc003jvdjgawtxum5b",
+      "title": "대분수의 나눗셈",
+      "fullContent": "대분수의 나눗셈은 대분수가 포함된 나눗셈을 말합니다. 대분수를 나누는 계산을 할 때에는 먼저 대분수를 가분수로 바꾸는 것이 가장 중요합니다. 대분수는 자연수와 진분수가 합쳐진 형태이므로, 나눗셈을 바로 계산하기 어렵기 때문입니다. 예를 들어, $2\\frac{1}{3}$과 같은 대분수는 $\\frac{7}{3}$과 같은 가분수로 바꾸어 계산을 시작합니다.\n\n대분수를 가분수로 바꾼 뒤에는, 분수의 나눗셈 방법과 동일하게 계산합니다. 나누는 수의 역수를 곱하는 방법으로 계산할 수 있습니다. 즉, 어떤 분수를 다른 분수로 나눌 때에는 나누는 분수의 분모와 분자를 바꾸어 곱셈으로 바꾸어 계산하는 것입니다.\n\n구체적인 예시를 통해 알아봅시다. 대분수를 자연수로 나누는 경우, $2\\frac{1}{3} \\div 4$는 먼저 $2\\frac{1}{3}$을 가분수 $\\frac{7}{3}$으로 바꾼 뒤, $\\frac{7}{3} \\div 4 = \\frac{7}{3} \\times \\frac{1}{4} = \\frac{7}{12}$과 같이 계산합니다. 대분수를 분수로 나누는 경우, $1\\frac{1}{2} \\div \\frac{3}{4}$는 $1\\frac{1}{2}$을 가분수 $\\frac{3}{2}$으로 바꾼 뒤, $\\frac{3}{2} \\div \\frac{3}{4} = \\frac{3}{2} \\times \\frac{4}{3} = 2$와 같이 계산합니다.\n\n이처럼 대분수의 나눗셈에서는 대분수를 가분수로 바꾸는 첫 단계가 매우 중요합니다. 계산을 시작하기 전에 반드시 대분수를 가분수로 바꾸었는지 확인해야 합니다. 계산 결과가 가분수일 경우, 대분수로 바꾸어 나타내는 연습도 함께 해보세요.",
+      "visualAssets": null,
+      "sortOrder": 22,
+      "conceptCode": "E6-NUM-07",
+      "grade": "elementary_6",
+      "semester": 2,
+      "chapter": "분수의 나눗셈",
+      "section": "(분수)÷(분수)",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "대분수,나눗셈",
+      "createdAt": "2026-03-25T10:08:14.476Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs6yl00fjvdjgj7sqo4pj",
+          "conceptId": "cmn5vrong004rvdjgkqe2gdis",
+          "prerequisiteId": "cmn5vrmvc003pvdjgwtr3xm76"
+        },
+        {
+          "id": "cmn5vs71v00flvdjg90l9wrpa",
+          "conceptId": "cmn5vrong004rvdjgkqe2gdis",
+          "prerequisiteId": "cmn5vrms0003nvdjgtxaufthw"
+        }
+      ],
+      "prerequisiteFor": [],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrlgp002wvdjgg64ske1j",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "분수의 곱셈",
+      "fullContent": "분수의 곱셈은 분수와 자연수를 곱하는 경우와 분수와 분수를 곱하는 경우로 나눌 수 있습니다. 먼저 분수와 자연수를 곱할 때에는 자연수를 분수의 분자에 곱합니다. 예를 들어, $\\frac{1}{3} \\times 2$는 분자 $1$에 $2$를 곱하여 $\\frac{1 \\times 2}{3} = \\frac{2}{3}$와 같이 계산합니다. 자연수와 분수를 곱하는 경우도 마찬가지로 자연수를 분수의 분자에 곱하여 계산합니다.\n\n분수와 분수를 곱할 때에는 분자끼리 곱한 것을 새로운 분자의 값으로 하고, 분모끼리 곱한 것을 새로운 분모의 값으로 합니다. 이것을 식으로 나타내면 $\\frac{ㄱ}{ㄴ} \\times \\frac{ㄷ}{ㄹ} = \\frac{ㄱ \\times ㄷ}{ㄴ \\times ㄹ}$이 됩니다. 예를 들어, $\\frac{2}{3} \\times \\frac{1}{4}$은 분자 $2$와 $1$을 곱하고 분모 $3$과 $4$를 곱하여 $\\frac{2 \\times 1}{3 \\times 4} = \\frac{2}{12}$가 됩니다.\n\n분수의 곱셈을 할 때에는 계산하기 전에 약분하면 더 간편하게 계산할 수 있습니다. 곱셈식에서 분자와 분모를 서로 약분할 수 있으며, 이렇게 약분하면 더 작은 수로 계산하여 실수를 줄일 수 있습니다. 또한, 대분수가 있다면 가분수로 바꾸어 계산한 후, 계산 결과가 가분수이면 다시 대분수로 나타내는 것이 편리합니다. 예를 들어, $1\\frac{1}{2} \\times \\frac{1}{3}$은 $\\frac{3}{2} \\times \\frac{1}{3}$로 바꾸어 계산한 뒤, 약분하여 $\\frac{1}{2}$로 나타낼 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 13,
+      "conceptCode": "E5-NUM-13",
+      "grade": "elementary_5",
+      "semester": 2,
+      "chapter": "분수의 곱셈",
+      "section": "(분수)×(분수)",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "분수곱셈",
+      "createdAt": "2026-03-25T10:08:10.345Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs3cf00ddvdjgsf3l39ab",
+          "conceptId": "cmn5vrlgp002wvdjgg64ske1j",
+          "prerequisiteId": "cmn5vrkpp002gvdjgfmy3nw1p"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs4jw00e3vdjgg0of4kqb",
+          "conceptId": "cmn5vrms0003nvdjgtxaufthw",
+          "prerequisiteId": "cmn5vrlgp002wvdjgg64ske1j"
+        },
+        {
+          "id": "cmn5vs4qk00e7vdjg82xkbr7p",
+          "conceptId": "cmn5vrmvc003pvdjgwtr3xm76",
+          "prerequisiteId": "cmn5vrlgp002wvdjgg64ske1j"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrmyp003rvdjgttxwedvz",
+      "subjectId": "cmn5vrmlc003jvdjgawtxum5b",
+      "title": "소수÷자연수",
+      "fullContent": "소수를 자연수로 나누는 나눗셈은 자연수의 나눗셈과 같은 방법으로 계산할 수 있습니다. 먼저, 나누어지는 수의 소수점을 생각하지 않고 자연수의 나눗셈처럼 계산합니다. 이 과정에서 가장 중요한 것은 몫의 소수점 위치를 정확하게 정하는 것입니다.\n\n몫의 소수점은 나누어지는 수의 소수점 위치에 맞추어 그대로 위로 올려 찍습니다. 예를 들어, $2.46 \\div 3$을 계산할 때, 먼저 $246 \\div 3$을 계산하면 $82$가 됩니다. 나누어지는 수 $2.46$의 소수점이 $2$와 $4$ 사이에 있으므로, 몫 $82$의 소수점도 같은 위치에 찍어 $0.82$가 됩니다. 이때, 자연수 부분이 $0$이면 $0$을 써줍니다.\n\n나눗셈을 하다가 나누어떨어지지 않는 경우에는 나누어지는 수의 소수점 아래에 $0$을 계속 내려서 나누어떨어질 때까지 계산합니다. 예를 들어, $1.5 \\div 2$를 계산할 때, $15 \\div 2 = 7$ 나머지가 $1$이 됩니다. 이때 $1.5$ 뒤에 숨어있는 $0$을 내려 $10$으로 만들어 $10 \\div 2 = 5$를 계산하여 몫은 $0.75$가 됩니다. 이처럼 소수점 아래에 $0$을 붙여 계산을 계속할 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 4,
+      "conceptCode": "E6-NUM-04",
+      "grade": "elementary_6",
+      "semester": 1,
+      "chapter": "소수의 나눗셈",
+      "section": "(소수)÷(자연수)",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "소수나눗셈,소수점",
+      "createdAt": "2026-03-25T10:08:12.289Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs4tw00e9vdjgb4iv8xt4",
+          "conceptId": "cmn5vrmyp003rvdjgttxwedvz",
+          "prerequisiteId": "cmn5vrlk2002yvdjgurepcatl"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs4x900ebvdjgj6l0hnme",
+          "conceptId": "cmn5vrn22003tvdjg8xqvs63o",
+          "prerequisiteId": "cmn5vrmyp003rvdjgttxwedvz"
+        }
+      ],
+      "blanks": [
+        {
+          "id": "cmn5vxsul000xvdtk67jz01cn",
+          "conceptId": "cmn5vrmyp003rvdjgttxwedvz",
+          "level": 1,
+          "blanks": [
+            {
+              "hint": "ㅅㅅㅈ",
+              "answer": "소수점",
+              "position": 1,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "2.8",
+              "answer": "$2.8$",
+              "position": 2,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅈㅇㅅ",
+              "answer": "자연수",
+              "position": 3,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "7",
+              "answer": "$7$",
+              "position": 4,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "3.33",
+              "answer": "$3.33$",
+              "position": 5,
+              "difficulty": "hard"
+            }
+          ],
+          "templateText": "(소수)÷(자연수): 자연수의 나눗셈처럼 계산한 뒤, {{1}}을 올려 찍습니다.\n$8.4 \\div 3 =$ {{2}}\n\n(소수)÷(소수): 나누는 수를 {{3}}로 만들기 위해 양쪽에 $10$을 곱합니다.\n$6.3 \\div 0.9 = 63 \\div 9 =$ {{4}}\n\n$10 \\div 3 = 3.333\\ldots \\approx$ {{5}} (소수 둘째 자리까지)",
+          "createdAt": "2026-03-25T10:12:59.853Z"
+        }
+      ]
+    },
+    {
+      "id": "cmn5vri9z0011vdjgydpgh9pm",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "세 자리 × 두 자리 곱셈",
+      "fullContent": "세 자리 수와 두 자리 수를 곱하는 것은 먼저 일의 자리부터 차례로 곱한 후, 십의 자리를 곱한 값을 더하여 계산합니다. 예를 들어, $123 \\times 20$과 같이 세 자리 수에 몇십을 곱할 때에는, $123 \\times 2$를 계산한 값인 $246$에 $0$을 하나 붙여 $2460$으로 나타낼 수 있습니다. 세로셈으로 계산할 때에는 $20$의 $0$을 미리 일의 자리에 써 두고 $123 \\times 2$를 계산하여 $2460$을 완성할 수도 있습니다.\n\n세 자리 수에 몇십몇을 곱하는 경우에는 두 단계로 나누어 계산합니다. 먼저, 세 자리 수에 두 자리 수의 일의 자리를 곱합니다. 예를 들어, $123 \\times 34$를 계산할 때에는 $123 \\times 4$를 먼저 계산하여 $492$를 얻습니다. 다음으로, 세 자리 수에 두 자리 수의 십의 자리를 곱하는데, 이때 십의 자리 수는 실제로는 $30$을 의미하므로, 계산 결과는 한 칸 왼쪽으로 옮겨 써야 합니다. 즉, $123 \\times 30$을 계산하여 $3690$을 얻는 것과 같습니다. 세로셈에서는 $123 \\times 3$의 결과를 십의 자리부터 쓰기 시작하여 $369$로 나타내고, 그 아래에 $0$이 있다고 생각하면 됩니다.\n\n마지막으로, 일의 자리를 곱한 값과 십의 자리를 곱한 값을 자릿값에 맞추어 더합니다. 위의 예시에서는 $492$와 $3690$을 더하여 최종 결과인 $4182$를 얻게 됩니다. 계산 과정에서 올림이 있는 경우, 윗자리에 정확하게 더해주는 것이 중요하며, 자릿값을 잘 맞추어 쓰는 연습을 꾸준히 해야 정확한 답을 구할 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 5,
+      "conceptCode": "E4-NUM-05",
+      "grade": "elementary_4",
+      "semester": 1,
+      "chapter": "곱셈과 나눗셈",
+      "section": "세 자리 수의 곱셈",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "곱셈,세자리수",
+      "createdAt": "2026-03-25T10:08:06.215Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vrzgb00b1vdjgetzy5g6o",
+          "conceptId": "cmn5vri9z0011vdjgydpgh9pm",
+          "prerequisiteId": "cmn5vrgvg0008vdjghkaa61fm"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vrzjo00b3vdjgxm0qhg9g",
+          "conceptId": "cmn5vridb0013vdjgf3fzbpnk",
+          "prerequisiteId": "cmn5vri9z0011vdjgydpgh9pm"
+        },
+        {
+          "id": "cmn5vs1ux00chvdjgbz496erl",
+          "conceptId": "cmn5vrkfg002avdjgn4grq76m",
+          "prerequisiteId": "cmn5vri9z0011vdjgydpgh9pm"
+        },
+        {
+          "id": "cmn5vs2ew00ctvdjg0rbftfab",
+          "conceptId": "cmn5vrkwe002kvdjgkm9ua9dp",
+          "prerequisiteId": "cmn5vri9z0011vdjgydpgh9pm"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vridb0013vdjgf3fzbpnk",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "세 자리 ÷ 두 자리 나눗셈",
+      "fullContent": "세 자리 수를 두 자리 수로 나누는 나눗셈은 생활 속에서 물건을 똑같이 나누거나 묶을 때 유용하게 사용됩니다. 예를 들어, 사탕 $250$개를 한 봉지에 $25$개씩 담는다면 몇 봉지가 되는지 계산하는 것과 같습니다. 몫을 구할 때는 나누는 수를 어림하여 나누어지는 수에 몇 번 들어가는지 생각해 봅니다. 이때 몫은 한 자리 수가 될 수도 있고, 두 자리 수가 될 수도 있습니다. 예를 들어 $120 \\div 30$의 몫은 $4$로 한 자리 수이지만, $250 \\div 25$의 몫은 $10$으로 두 자리 수입니다.\n\n나눗셈을 했을 때 나누어떨어지지 않으면 나머지가 생깁니다. 이때 나머지는 항상 나누는 수보다 작아야 합니다. 만약 나머지가 나누는 수보다 크거나 같다면 몫을 더 크게 할 수 있다는 뜻이므로 다시 계산해야 합니다.\n\n계산이 바르게 되었는지 확인하는 방법은 검산입니다. 검산은 (나누는 수) $\\times$ (몫) $+$ (나머지) $=$ (나누어지는 수) 공식을 이용합니다. 예를 들어 $125 \\div 20$의 몫이 $6$이고 나머지가 $5$라면, $20 \\times 6 + 5 = 120 + 5 = 125$가 되어 바르게 계산되었음을 알 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 6,
+      "conceptCode": "E4-NUM-06",
+      "grade": "elementary_4",
+      "semester": 1,
+      "chapter": "곱셈과 나눗셈",
+      "section": "두 자리 수로 나누기",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "나눗셈,어림,몫,검산",
+      "createdAt": "2026-03-25T10:08:06.335Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vrzjo00b3vdjgxm0qhg9g",
+          "conceptId": "cmn5vridb0013vdjgf3fzbpnk",
+          "prerequisiteId": "cmn5vri9z0011vdjgydpgh9pm"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs1rj00cfvdjgbzg7385n",
+          "conceptId": "cmn5vrkc00028vdjgpbf4q3qs",
+          "prerequisiteId": "cmn5vridb0013vdjgf3fzbpnk"
+        },
+        {
+          "id": "cmn5vs2i700cvvdjgf6h4zyzl",
+          "conceptId": "cmn5vrkwe002kvdjgkm9ua9dp",
+          "prerequisiteId": "cmn5vridb0013vdjgf3fzbpnk"
+        }
+      ],
+      "blanks": [
+        {
+          "id": "cmn5vxs4l000fvdtk4gxzcjmk",
+          "conceptId": "cmn5vridb0013vdjgf3fzbpnk",
+          "level": 1,
+          "blanks": [
+            {
+              "hint": "ㅇㄹ",
+              "answer": "어림",
+              "position": 1,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "13",
+              "answer": "$13$",
+              "position": 2,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "735",
+              "answer": "$735$",
+              "position": 3,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "4",
+              "answer": "$4$",
+              "position": 4,
+              "difficulty": "hard"
+            }
+          ],
+          "templateText": "나누는 수가 두 자리일 때는 {{1}}하여 몫을 세웁니다.\n\n$156 \\div 12 =$ {{2}}\n$245 \\times 3 =$ {{3}}\n$84 \\div 21 =$ {{4}}",
+          "createdAt": "2026-03-25T10:12:58.917Z"
+        }
+      ]
+    },
+    {
+      "id": "cmn5vrik10017vdjgog7qwe9w",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "동분모 분수 뺄셈",
+      "fullContent": "분모가 같은 분수의 뺄셈은 분모는 그대로 두고 분자끼리 빼서 계산합니다. 예를 들어, $\\frac{5}{7}$에서 $\\frac{2}{7}$를 빼는 경우, 분모 $7$은 그대로 두고 분자 $5$에서 $2$를 빼서 $\\frac{3}{7}$이 됩니다. 즉, $\\frac{5}{7} - \\frac{2}{7} = \\frac{5-2}{7} = \\frac{3}{7}$과 같이 계산할 수 있습니다.\n\n대분수의 뺄셈에서도 같은 방법으로 자연수는 자연수끼리, 분수는 분수끼리 뺄 수 있습니다. 하지만 분수 부분끼리 뺄 수 없을 때가 있습니다. 예를 들어, $3\\frac{2}{5} - 1\\frac{4}{5}$와 같이 앞에 있는 분수 $\\frac{2}{5}$가 뒤에 있는 분수 $\\frac{4}{5}$보다 작아서 바로 뺄 수 없을 때에는 자연수 부분에서 $1$을 빌려와야 합니다. 이때 빌려온 자연수 $1$은 분모가 $5$인 분수로 생각하면 $\\frac{5}{5}$와 같으므로, $3\\frac{2}{5}$는 $2\\frac{2+5}{5}$, 즉 $2\\frac{7}{5}$로 바꾸어 계산합니다.\n\n이렇게 $3\\frac{2}{5}$를 $2\\frac{7}{5}$로 바꾼 다음, $2\\frac{7}{5} - 1\\frac{4}{5}$와 같이 자연수는 자연수끼리 ($2-1=1$), 분수는 분수끼리 ($\\frac{7}{5} - \\frac{4}{5} = \\frac{3}{5}$) 빼서 $1\\frac{3}{5}$이라는 답을 얻을 수 있습니다. 분모가 같은 분수의 뺄셈에서는 분모는 항상 그대로 유지하고, 분자끼리만 계산한다는 점을 꼭 기억해야 합니다.",
+      "visualAssets": null,
+      "sortOrder": 8,
+      "conceptCode": "E4-NUM-08",
+      "grade": "elementary_4",
+      "semester": 2,
+      "chapter": "분수의 덧셈과 뺄셈",
+      "section": "분모가 같은 분수의 덧셈과 뺄셈",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "동분모,분수뺄셈",
+      "createdAt": "2026-03-25T10:08:06.577Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vrzqd00b7vdjghd9h7hy8",
+          "conceptId": "cmn5vrik10017vdjgog7qwe9w",
+          "prerequisiteId": "cmn5vrigo0015vdjgohkd629b"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vrztr00b9vdjgxozb778y",
+          "conceptId": "cmn5vrine0019vdjgxxp2lspp",
+          "prerequisiteId": "cmn5vrik10017vdjgog7qwe9w"
+        },
+        {
+          "id": "cmn5vs00d00bdvdjg7dn0tjs4",
+          "conceptId": "cmn5vriqs001bvdjgjkrknzwm",
+          "prerequisiteId": "cmn5vrik10017vdjgog7qwe9w"
+        },
+        {
+          "id": "cmn5vs2vk00d3vdjgkhjlo1o6",
+          "conceptId": "cmn5vrl38002ovdjg8l44wo8g",
+          "prerequisiteId": "cmn5vrik10017vdjgog7qwe9w"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrine0019vdjgxxp2lspp",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "1에서 분수 빼기",
+      "fullContent": "자연수 $1$에서 분수를 빼는 방법을 알아봅시다. 분수의 뺄셈을 하려면 분모가 같아야 합니다. 따라서 자연수 $1$에서 분수를 빼려면, 자연수 $1$을 빼려는 분수와 분모가 같은 분수로 바꾸어 주어야 합니다. 예를 들어, $\\frac{3}{8}$을 빼려고 한다면, 자연수 $1$을 분모가 $8$인 분수로 바꾸어 주어야 합니다.\n\n자연수 $1$은 분모와 분자가 같은 분수로 나타낼 수 있습니다. 예를 들어, $1$은 $\\frac{2}{2}$, $\\frac{3}{3}$, $\\frac{4}{4}$ 등과 같이 여러 가지 분수로 나타낼 수 있습니다. 빼려는 분수의 분모가 $8$이라면, $1$을 $\\frac{8}{8}$로 바꾸어 계산할 수 있습니다. 이렇게 $1$을 가분수로 바꾸면 분모가 같은 분수의 뺄셈을 할 수 있게 됩니다.\n\n예를 들어, $1 - \\frac{3}{8}$을 계산해 봅시다. 먼저 자연수 $1$을 분모가 $8$인 분수 $\\frac{8}{8}$로 바꿉니다. 그러면 $1 - \\frac{3}{8} = \\frac{8}{8} - \\frac{3}{8}$이 됩니다. 분모가 같은 분수의 뺄셈은 분자끼리 빼고 분모는 그대로 두므로, $\\frac{8}{8} - \\frac{3}{8} = \\frac{8-3}{8} = \\frac{5}{8}$이 됩니다. 이처럼 자연수 $1$에서 분수를 뺄 때에는 $1$을 빼려는 분수의 분모와 같은 분모를 가진 가분수로 바꾸어 계산하면 됩니다.",
+      "visualAssets": null,
+      "sortOrder": 9,
+      "conceptCode": "E4-NUM-09",
+      "grade": "elementary_4",
+      "semester": 2,
+      "chapter": "분수의 덧셈과 뺄셈",
+      "section": "분모가 같은 분수의 덧셈과 뺄셈",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "1에서분수빼기",
+      "createdAt": "2026-03-25T10:08:06.698Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vrztr00b9vdjgxozb778y",
+          "conceptId": "cmn5vrine0019vdjgxxp2lspp",
+          "prerequisiteId": "cmn5vrik10017vdjgog7qwe9w"
+        }
+      ],
+      "prerequisiteFor": [],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vriu5001dvdjgzagcr1gr",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "소수 덧셈",
+      "fullContent": "소수의 덧셈은 소수와 소수를 더하여 합을 구하는 계산입니다. 자연수의 덧셈과 마찬가지로, 두 수를 합쳐 전체 양이 얼마나 되는지 알아보는 방법입니다.\n\n소수를 더할 때 가장 중요한 것은 각 자릿값에 맞추어 더하는 것입니다. 이를 위해 세로셈으로 계산할 때에는 소수점의 위치를 정확히 맞추어 써야 합니다. 소수점을 맞추어 쓰면 일의 자리는 일의 자리끼리, 소수 첫째 자리는 소수 첫째 자리끼리 더할 수 있습니다.\n\n예를 들어, $1.2$와 $0.5$를 더할 때를 생각해 봅시다. $1.2$는 $0.1$이 $12$개이고, $0.5$는 $0.1$이 $5$개입니다. 따라서 $0.1$이 모두 $12+5=17$개이므로, 합은 $1.7$이 됩니다. 세로셈으로 계산할 때에도 소수점을 맞추어 $1.2$ 위에 $0.5$를 쓰고, 자연수의 덧셈처럼 오른쪽부터 더합니다. 소수 첫째 자리인 $2$와 $5$를 더하면 $7$이 되고, 일의 자리인 $1$과 $0$을 더하면 $1$이 됩니다. 마지막으로, 더한 결과에 소수점을 원래 소수점 위치에 맞추어 찍으면 $1.7$이 됩니다. 만약 $2.3$과 $1.8$을 더하는 경우처럼 자릿값이 올라가는 상황이 생기면, 자연수의 덧셈과 똑같이 받아올림을 하여 계산합니다. $3$과 $8$을 더하면 $11$이므로, 소수 첫째 자리에 $1$을 쓰고 일의 자리로 $1$을 받아올림합니다. 그리고 일의 자리 $2$와 $1$에 받아올림한 $1$을 더하면 $4$가 되어, 합은 $4.1$이 됩니다.\n\n소수의 덧셈에서 가장 주의해야 할 점은 소수점의 위치를 정확하게 맞추는 것입니다. 소수점의 위치가 틀리면 계산 결과도 틀리게 되므로, 세로셈을 할 때에는 소수점을 기준으로 자릿값을 잘 맞추어 써야 합니다.",
+      "visualAssets": null,
+      "sortOrder": 11,
+      "conceptCode": "E4-NUM-11",
+      "grade": "elementary_4",
+      "semester": 2,
+      "chapter": "소수의 덧셈과 뺄셈",
+      "section": "소수의 덧셈과 뺄셈",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "소수,덧셈,소수점",
+      "createdAt": "2026-03-25T10:08:06.941Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs03o00bfvdjg2bordveq",
+          "conceptId": "cmn5vriu5001dvdjgzagcr1gr",
+          "prerequisiteId": "cmn5vrh28000cvdjgqnl5mn6w"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs06z00bhvdjgst7migfj",
+          "conceptId": "cmn5vrixh001fvdjg30im8h1i",
+          "prerequisiteId": "cmn5vriu5001dvdjgzagcr1gr"
+        },
+        {
+          "id": "cmn5vs3fr00dfvdjgv5ztkn1a",
+          "conceptId": "cmn5vrlk2002yvdjgurepcatl",
+          "prerequisiteId": "cmn5vriu5001dvdjgzagcr1gr"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrixh001fvdjg30im8h1i",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "소수 뺄셈",
+      "fullContent": "소수의 뺄셈은 소수에서 다른 소수를 빼어 그 차이를 알아보는 계산입니다. 소수의 뺄셈을 할 때에는 소수점의 위치를 정확하게 맞추어 세로로 계산하는 것이 가장 중요합니다. 자연수의 뺄셈과 마찬가지로, 같은 자릿값에 있는 숫자끼리 빼야 합니다. 예를 들어, $2.5 - 1.3$을 계산할 때에는 소수 첫째 자리인 $5$에서 $3$을 빼고, 일의 자리인 $2$에서 $1$을 빼서 $1.2$와 같이 계산합니다.\n\n만약 뺄셈을 할 때 아랫자리의 수가 윗자리의 수보다 커서 뺄 수 없는 경우에는, 자연수의 뺄셈에서처럼 윗자리에서 $10$을 받아내림하여 계산합니다. 예를 들어, $3.2 - 1.7$을 계산할 때, 소수 첫째 자리에서 $2$에서 $7$을 뺄 수 없으므로 일의 자리 $3$에서 $1$을 빌려와 $12$에서 $7$을 빼면 $5$가 됩니다. 그리고 일의 자리에서는 $3$에서 $1$을 빌려줬으므로 $2$가 남아 $2$에서 $1$을 빼서 $1$이 됩니다. 따라서 답은 $1.5$가 됩니다.\n\n자연수에서 소수를 빼는 경우도 있습니다. 예를 들어, $3 - 1.7$을 계산할 때에는 자연수 $3$을 소수 $3.0$으로 바꾸어 소수점 자리를 맞춘 후 계산합니다. 이렇게 하면 $3.0 - 1.7$이 되어 $1.3$을 얻을 수 있습니다. 소수 뺄셈을 할 때에는 소수점의 위치를 정확히 맞추고, 받아내림에 주의하여 계산하면 바르게 답을 구할 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 12,
+      "conceptCode": "E4-NUM-12",
+      "grade": "elementary_4",
+      "semester": 2,
+      "chapter": "소수의 덧셈과 뺄셈",
+      "section": "소수의 덧셈과 뺄셈",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "소수,뺄셈,받아내림",
+      "createdAt": "2026-03-25T10:08:07.062Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs06z00bhvdjgst7migfj",
+          "conceptId": "cmn5vrixh001fvdjg30im8h1i",
+          "prerequisiteId": "cmn5vriu5001dvdjgzagcr1gr"
+        }
+      ],
+      "prerequisiteFor": [],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrn22003tvdjg8xqvs63o",
+      "subjectId": "cmn5vrmlc003jvdjgawtxum5b",
+      "title": "소수÷소수",
+      "fullContent": "소수를 소수로 나누는 방법은 자연수의 나눗셈을 이용하여 편리하게 계산할 수 있습니다. 나누는 수가 소수일 때, 나누는 수를 자연수로 만들기 위해 소수점을 오른쪽으로 옮깁니다. 이때 나누어지는 수도 나누는 수의 소수점을 옮긴 칸 수만큼 똑같이 오른쪽으로 옮겨야 합니다. 이렇게 하면 나눗셈의 몫은 변하지 않고 계산을 더 쉽게 할 수 있습니다.\n\n예를 들어, $3.25 \\div 0.5$를 계산할 때, 나누는 수 $0.5$의 소수점을 오른쪽으로 한 칸 옮겨 $5$로 만듭니다. 그러면 나누어지는 수 $3.25$의 소수점도 오른쪽으로 한 칸 옮겨 $32.5$가 됩니다. 따라서 $3.25 \\div 0.5$는 $32.5 \\div 5$와 같은 몫을 가지며, 계산 결과는 $6.5$입니다.\n\n나눗셈을 계산한 후 나머지가 생길 경우에는 특히 주의해야 합니다. 나머지의 소수점은 나누어지는 수의 소수점을 옮기기 전의 원래 위치에 맞추어 찍어야 합니다. 예를 들어, $7.3 \\div 0.3$을 계산하기 위해 나누는 수와 나누어지는 수의 소수점을 한 칸씩 옮겨 $73 \\div 3$으로 계산하면 몫은 $24$이고 나머지는 $1$입니다. 이때 원래 나누어지는 수 $7.3$의 소수점 위치를 고려하여 나머지는 $0.1$이 됩니다.",
+      "visualAssets": null,
+      "sortOrder": 5,
+      "conceptCode": "E6-NUM-05",
+      "grade": "elementary_6",
+      "semester": 2,
+      "chapter": "소수의 나눗셈",
+      "section": "(소수)÷(소수)",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "소수나눗셈",
+      "createdAt": "2026-03-25T10:08:12.410Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs4x900ebvdjgj6l0hnme",
+          "conceptId": "cmn5vrn22003tvdjg8xqvs63o",
+          "prerequisiteId": "cmn5vrmyp003rvdjgttxwedvz"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs6ry00ffvdjgu0xcxffu",
+          "conceptId": "cmn5vrogo004nvdjg29u4parr",
+          "prerequisiteId": "cmn5vrn22003tvdjg8xqvs63o"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrjv8001zvdjgn6r8e9br",
+      "subjectId": "cmn5vrht4000rvdjgsb823rej",
+      "title": "각도의 덧셈과 뺄셈",
+      "fullContent": "각도의 덧셈과 뺄셈은 두 각의 크기를 합하거나 차이를 구하는 계산입니다. 각도를 더하거나 뺄 때에는 자연수의 덧셈과 뺄셈처럼 같은 자리의 숫자끼리 계산합니다.\n\n각도의 덧셈은 두 각을 합쳐서 더 큰 각을 만들고, 각도의 뺄셈은 한 각에서 다른 각을 빼서 남은 각의 크기를 구합니다. 특히, 삼각형의 세 각의 크기를 모두 더하면 항상 $180^\\circ$가 되고, 사각형의 네 각의 크기를 모두 더하면 항상 $360^\\circ$가 됩니다. 이 성질을 이용하면 모르는 각의 크기를 구할 수 있습니다.\n\n예를 들어, 각도가 $75^\\circ$인 각과 $48^\\circ$인 각을 더하면 $75^\\circ + 48^\\circ = 123^\\circ$가 됩니다. 이처럼 받아올림이 있는 덧셈도 자연수의 덧셈과 같은 방법으로 계산합니다. 반대로 $130^\\circ$인 각에서 $85^\\circ$인 각을 빼면 $130^\\circ - 85^\\circ = 45^\\circ$가 됩니다. 이 경우에도 받아내림을 하여 계산할 수 있습니다. 만약 삼각형의 두 각이 각각 $60^\\circ$와 $70^\\circ$라면, 나머지 한 각은 $180^\\circ - (60^\\circ + 70^\\circ) = 180^\\circ - 130^\\circ = 50^\\circ$로 구할 수 있습니다.\n\n각도를 더하거나 뺄 때에는 항상 각도의 단위인 '도'($^\\circ$)를 붙여서 나타내야 합니다. 또한, 받아올림이나 받아내림이 필요한 경우에도 자릿수에 맞춰 정확하게 계산하는 것이 중요합니다.",
+      "visualAssets": null,
+      "sortOrder": 22,
+      "conceptCode": "E4-GEO-10",
+      "grade": "elementary_4",
+      "semester": 1,
+      "chapter": "각도",
+      "section": "삼각형/사각형의 내각의 합",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "각도의덧셈,각도의뺄셈",
+      "createdAt": "2026-03-25T10:08:08.276Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs1hj00c9vdjgo9a38hcl",
+          "conceptId": "cmn5vrjv8001zvdjgn6r8e9br",
+          "prerequisiteId": "cmn5vrjru001xvdjguyz6mtg7"
+        }
+      ],
+      "prerequisiteFor": [],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrkmc002evdjg7itso6tx",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "공배수와 최소공배수 (LCM)",
+      "fullContent": "두 수의 공통된 배수를 공배수라고 합니다. 예를 들어, $2$의 배수는 $2, 4, 6, 8, 10, 12, ...$이고, $3$의 배수는 $3, 6, 9, 12, 15, ...$입니다. 여기서 $2$와 $3$의 공통된 배수는 $6, 12, 18, ...$이 됩니다. 이 공배수들 중에서 가장 작은 수를 최소공배수라고 부르며, 영어로는 LCM이라고도 합니다. 따라서 $2$와 $3$의 최소공배수는 $6$입니다.\n\n최소공배수를 구할 때는 거꾸로 나눗셈을 이용하면 편리합니다. 예를 들어, $4$와 $6$의 최소공배수를 구할 때, 두 수를 동시에 나눌 수 있는 가장 작은 수인 $2$로 나누면 몫이 각각 $2$와 $3$이 됩니다. 더 이상 나눌 수 없을 때, 나눈 수와 마지막 몫들을 모두 곱하면 최소공배수가 됩니다. 즉, $2 \\times 2 \\times 3 = 12$이므로 $4$와 $6$의 최소공배수는 $12$입니다.\n\n공배수는 항상 최소공배수의 배수라는 중요한 성질이 있습니다. $2$와 $3$의 최소공배수가 $6$이므로, 공배수는 $6, 12, 18, ...$과 같이 $6$의 배수가 됩니다. 또한, 두 수의 곱은 최대공약수와 최소공배수의 곱과 같다는 관계도 성립합니다. 이 성질들을 잘 기억하면 약수와 배수 문제를 해결하는 데 큰 도움이 될 것입니다.",
+      "visualAssets": null,
+      "sortOrder": 4,
+      "conceptCode": "E5-NUM-04",
+      "grade": "elementary_5",
+      "semester": 1,
+      "chapter": "약수와 배수",
+      "section": "공배수와 최소공배수",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "공배수,최소공배수,LCM",
+      "createdAt": "2026-03-25T10:08:09.252Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs21j00clvdjgbk9jsh0z",
+          "conceptId": "cmn5vrkmc002evdjg7itso6tx",
+          "prerequisiteId": "cmn5vrkfg002avdjgn4grq76m"
+        },
+        {
+          "id": "cmn5vs24w00cnvdjggqq1i5kw",
+          "conceptId": "cmn5vrkmc002evdjg7itso6tx",
+          "prerequisiteId": "cmn5vrkiy002cvdjgvvhuvq7j"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs2bh00crvdjgce27vxxt",
+          "conceptId": "cmn5vrkt0002ivdjgupz8gbqt",
+          "prerequisiteId": "cmn5vrkmc002evdjg7itso6tx"
+        },
+        {
+          "id": "cmn5vs7ir00fvvdjg63bh6bsn",
+          "conceptId": "cmn5vroxk004wvdjggyc7m5fx",
+          "prerequisiteId": "cmn5vrkmc002evdjg7itso6tx"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrkpp002gvdjgfmy3nw1p",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "약분과 기약분수",
+      "fullContent": "분모와 분자를 공약수로 나누어 더 간단한 분수로 만드는 것을 약분이라고 합니다. 예를 들어, 분수 $\\frac{4}{8}$의 분모 $8$과 분자 $4$의 공약수는 $2$와 $4$입니다. 만약 $2$로 나누면 $\\frac{2}{4}$가 되고, 다시 $2$로 나누면 $\\frac{1}{2}$이 됩니다. 이렇게 약분하여 더 이상 약분할 수 없는 분수를 기약분수라고 합니다. 기약분수는 분모와 분자의 공약수가 $1$뿐인 분수, 즉 분모와 분자가 서로소인 분수를 말합니다.\n\n분수를 기약분수로 만들 때에는 분모와 분자를 그들의 최대공약수로 나누면 한 번에 기약분수를 얻을 수 있습니다. 예를 들어, 분수 $\\frac{4}{8}$의 분모 $8$과 분자 $4$의 최대공약수는 $4$입니다. 따라서 분모와 분자를 각각 $4$로 나누면 $\\frac{4 \\div 4}{8 \\div 4} = \\frac{1}{2}$이 되어 바로 기약분수가 됩니다. 약분은 분수의 크기는 변하지 않으면서 분수를 더 간단하게 나타낼 수 있어 편리합니다. 항상 분수를 가장 간단한 형태인 기약분수로 나타내는 연습을 하는 것이 중요합니다.",
+      "visualAssets": null,
+      "sortOrder": 5,
+      "conceptCode": "E5-NUM-05",
+      "grade": "elementary_5",
+      "semester": 1,
+      "chapter": "약분과 통분",
+      "section": "크기가 같은 분수",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "약분,기약분수",
+      "createdAt": "2026-03-25T10:08:09.373Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs28600cpvdjgcjyj9ynu",
+          "conceptId": "cmn5vrkpp002gvdjgfmy3nw1p",
+          "prerequisiteId": "cmn5vrkiy002cvdjgvvhuvq7j"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs3cf00ddvdjgsf3l39ab",
+          "conceptId": "cmn5vrlgp002wvdjgg64ske1j",
+          "prerequisiteId": "cmn5vrkpp002gvdjgfmy3nw1p"
+        },
+        {
+          "id": "cmn5vs4d800dzvdjg9vy665ou",
+          "conceptId": "cmn5vrmop003lvdjgak4au4ez",
+          "prerequisiteId": "cmn5vrkpp002gvdjgfmy3nw1p"
+        },
+        {
+          "id": "cmn5vs50m00edvdjg0v9oiw6g",
+          "conceptId": "cmn5vrn5f003vvdjg8zbrs1qd",
+          "prerequisiteId": "cmn5vrkpp002gvdjgfmy3nw1p"
+        }
+      ],
+      "blanks": [
+        {
+          "id": "cmn5vxsg9000nvdtk05wgscin",
+          "conceptId": "cmn5vrkpp002gvdjgfmy3nw1p",
+          "level": 1,
+          "blanks": [
+            {
+              "hint": "ㅋㄱㄱ ㄱㅇ",
+              "answer": "크기가 같은",
+              "position": 1,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "ㅇㅂ",
+              "answer": "약분",
+              "position": 2,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "\\frac{3}{4}",
+              "answer": "$\\frac{3}{4}$",
+              "position": 3,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "ㅌㅂ",
+              "answer": "통분",
+              "position": 4,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "\\frac{3}{12}",
+              "answer": "$\\frac{3}{12}$",
+              "position": 5,
+              "difficulty": "hard"
+            }
+          ],
+          "templateText": "분모와 분자에 같은 수를 곱하거나 나누면 {{1}} 분수가 됩니다.\n\n분모와 분자를 공약수로 나누는 것을 {{2}}이라 합니다.\n$\\frac{6}{8} =$ {{3}} ($2$로 나눔)\n\n분모를 같게 만드는 것을 {{4}}이라 합니다.\n$\\frac{1}{3}$과 $\\frac{1}{4}$ → $\\frac{4}{12}$과 {{5}}",
+          "createdAt": "2026-03-25T10:12:59.338Z"
+        }
+      ]
+    },
+    {
+      "id": "cmn5vrkt0002ivdjgupz8gbqt",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "통분",
+      "fullContent": "분모가 다른 두 분수의 분모를 같게 만드는 것을 통분이라고 합니다. 통분은 분수의 크기를 비교하거나 덧셈, 뺄셈을 할 때 아주 중요하게 사용되는 과정입니다. 두 분수를 통분하려면 먼저 두 분모의 최소공배수를 구하여 공통 분모로 정합니다. 예를 들어, $\\frac{1}{2}$과 $\\frac{1}{3}$을 통분해 봅시다. 분모 $2$와 $3$의 최소공배수는 $6$입니다. 따라서 공통 분모를 $6$으로 정합니다.\n\n이제 각 분수의 분모와 분자에 같은 수를 곱하여 분모를 $6$으로 만들어야 합니다. $\\frac{1}{2}$은 분모 $2$에 $3$을 곱하면 $6$이 되므로, 분자 $1$에도 $3$을 곱하여 $\\frac{3}{6}$이 됩니다. $\\frac{1}{3}$은 분모 $3$에 $2$를 곱하면 $6$이 되므로, 분자 $1$에도 $2$를 곱하여 $\\frac{2}{6}$이 됩니다. 이렇게 $\\frac{1}{2}$과 $\\frac{1}{3}$은 각각 $\\frac{3}{6}$과 $\\frac{2}{6}$으로 통분할 수 있습니다.\n\n통분을 하면 분모가 같아지기 때문에 분자만 비교하여 분수의 크기를 쉽게 알 수 있습니다. $\\frac{3}{6}$이 $\\frac{2}{6}$보다 크므로, $\\frac{1}{2}$이 $\\frac{1}{3}$보다 크다는 것을 알 수 있습니다. 통분할 때 공통 분모는 두 분모의 곱으로 정할 수도 있지만, 최소공배수를 공통 분모로 정하면 분수의 분자와 분모가 더 작은 수가 되어 계산하기 편리합니다.",
+      "visualAssets": null,
+      "sortOrder": 6,
+      "conceptCode": "E5-NUM-06",
+      "grade": "elementary_5",
+      "semester": 1,
+      "chapter": "약분과 통분",
+      "section": "약분과 통분",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "통분,분모통일",
+      "createdAt": "2026-03-25T10:08:09.492Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs2bh00crvdjgce27vxxt",
+          "conceptId": "cmn5vrkt0002ivdjgupz8gbqt",
+          "prerequisiteId": "cmn5vrkmc002evdjg7itso6tx"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs2lj00cxvdjg1za84ej4",
+          "conceptId": "cmn5vrkzt002mvdjgu8dhfb24",
+          "prerequisiteId": "cmn5vrkt0002ivdjgupz8gbqt"
+        },
+        {
+          "id": "cmn5vs2s800d1vdjg2pj1sgpn",
+          "conceptId": "cmn5vrl38002ovdjg8l44wo8g",
+          "prerequisiteId": "cmn5vrkt0002ivdjgupz8gbqt"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrkzt002mvdjgu8dhfb24",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "이분모 분수 덧셈",
+      "fullContent": "분모가 다른 분수의 덧셈은 분모가 서로 다른 분수들을 더하는 계산을 말합니다. 예를 들어, $\\frac{1}{2}$과 $\\frac{1}{3}$처럼 분모가 다른 분수들은 바로 더할 수 없습니다. 분모가 다른 분수들을 더하려면, 먼저 분모를 같게 만들어 주어야 합니다. 이렇게 분모를 같게 만드는 과정을 '통분'이라고 합니다. 통분할 때는 두 분모의 공통분모를 찾아 분모와 분자에 각각 같은 수를 곱하여 크기가 같은 분수로 바꾸어 줍니다. 주로 두 분모의 최소공배수를 공통분모로 사용하면 계산이 편리합니다.\n\n분모를 같게 통분한 후에는 분모는 그대로 두고 분자끼리 더합니다. 예를 들어, $\\frac{1}{2} + \\frac{1}{3}$을 계산할 때, 먼저 $\\frac{1}{2}$과 $\\frac{1}{3}$을 통분하면 $\\frac{3}{6}$과 $\\frac{2}{6}$이 됩니다. 이제 분모가 같아졌으므로 분자끼리 더하여 $\\frac{3}{6} + \\frac{2}{6} = \\frac{5}{6}$이 됩니다. 계산 결과가 가분수이면 대분수로 바꾸어 나타내고, 약분할 수 있으면 기약분수로 만들어야 합니다. 세 개 이상의 분수를 더할 때도 마찬가지로 모든 분수를 통분한 후에 분자끼리 더하여 계산합니다.",
+      "visualAssets": null,
+      "sortOrder": 8,
+      "conceptCode": "E5-NUM-08",
+      "grade": "elementary_5",
+      "semester": 1,
+      "chapter": "분수의 덧셈과 뺄셈",
+      "section": "분모가 다른 분수의 덧셈과 뺄셈",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "이분모,분수덧셈,통분",
+      "createdAt": "2026-03-25T10:08:09.737Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs2lj00cxvdjg1za84ej4",
+          "conceptId": "cmn5vrkzt002mvdjgu8dhfb24",
+          "prerequisiteId": "cmn5vrkt0002ivdjgupz8gbqt"
+        },
+        {
+          "id": "cmn5vs2ov00czvdjg8rfkatgv",
+          "conceptId": "cmn5vrkzt002mvdjgu8dhfb24",
+          "prerequisiteId": "cmn5vrigo0015vdjgohkd629b"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs2yv00d5vdjgitcaovpe",
+          "conceptId": "cmn5vrl6l002qvdjgfdjhdcaw",
+          "prerequisiteId": "cmn5vrkzt002mvdjgu8dhfb24"
+        }
+      ],
+      "blanks": [
+        {
+          "id": "cmn5vxsj4000pvdtk8tpygcz7",
+          "conceptId": "cmn5vrkzt002mvdjgu8dhfb24",
+          "level": 1,
+          "blanks": [
+            {
+              "hint": "ㅌㅂ",
+              "answer": "통분",
+              "position": 1,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "\\frac{7}{12}",
+              "answer": "$\\frac{7}{12}$",
+              "position": 2,
+              "difficulty": "easy"
+            },
+            {
+              "hint": "\\frac{7}{12}",
+              "answer": "$\\frac{7}{12}$",
+              "position": 3,
+              "difficulty": "hard"
+            },
+            {
+              "hint": "3\\frac{11}{12}",
+              "answer": "$3\\frac{11}{12}$",
+              "position": 4,
+              "difficulty": "hard"
+            }
+          ],
+          "templateText": "분모가 다른 분수의 덧셈과 뺄셈은 {{1}}한 후 계산합니다.\n\n$\\frac{1}{3} + \\frac{1}{4} = \\frac{4}{12} + \\frac{3}{12} =$ {{2}}\n\n$\\frac{3}{4} - \\frac{1}{6} = \\frac{9}{12} - \\frac{2}{12} =$ {{3}}\n\n대분수의 계산: $1\\frac{2}{3} + 2\\frac{1}{4} =$ {{4}}",
+          "createdAt": "2026-03-25T10:12:59.441Z"
+        }
+      ]
+    },
+    {
+      "id": "cmn5vrl38002ovdjg8l44wo8g",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "이분모 분수 뺄셈",
+      "fullContent": "분모가 다른 분수의 뺄셈은 분모가 같지 않은 분수끼리 빼는 것을 말합니다. 분모가 다른 분수를 빼려면 먼저 두 분수의 분모를 같게 만들어야 합니다. 이렇게 분모를 같게 만드는 과정을 '통분'이라고 합니다. 통분을 한 후에는 분모는 그대로 두고 분자끼리 빼서 계산합니다. 예를 들어, $\\frac{3}{4} - \\frac{1}{3}$을 계산할 때, 두 분모 $4$와 $3$의 최소공배수인 $12$로 통분하면 $\\frac{9}{12} - \\frac{4}{12}$가 됩니다. 이제 분자끼리 빼면 $\\frac{9-4}{12} = \\frac{5}{12}$가 됩니다.\n\n대분수의 뺄셈에서는 자연수는 자연수끼리, 분수는 분수끼리 빼는 것이 일반적입니다. 하지만 분수 부분끼리 뺄 수 없을 때가 있습니다. 예를 들어, 빼는 분수의 분자가 더 크거나, 빼지는 분수의 분자가 너무 작아서 뺄 수 없을 때입니다. 이럴 때는 빼지는 대분수의 자연수 부분에서 $1$을 빌려와 분수 부분을 가분수로 바꾸어 계산합니다. 계산을 마친 후에는 반드시 결과가 더 이상 약분되지 않는 기약분수인지 확인해야 합니다. 만약 기약분수가 아니라면, 분자와 분모를 공약수로 나누어 기약분수로 만들어 주어야 합니다.",
+      "visualAssets": null,
+      "sortOrder": 9,
+      "conceptCode": "E5-NUM-09",
+      "grade": "elementary_5",
+      "semester": 1,
+      "chapter": "분수의 덧셈과 뺄셈",
+      "section": "분모가 다른 분수의 덧셈과 뺄셈",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "이분모,분수뺄셈",
+      "createdAt": "2026-03-25T10:08:09.860Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs2s800d1vdjg2pj1sgpn",
+          "conceptId": "cmn5vrl38002ovdjg8l44wo8g",
+          "prerequisiteId": "cmn5vrkt0002ivdjgupz8gbqt"
+        },
+        {
+          "id": "cmn5vs2vk00d3vdjgkhjlo1o6",
+          "conceptId": "cmn5vrl38002ovdjg8l44wo8g",
+          "prerequisiteId": "cmn5vrik10017vdjgog7qwe9w"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs32800d7vdjg2keq4e58",
+          "conceptId": "cmn5vrl6l002qvdjgfdjhdcaw",
+          "prerequisiteId": "cmn5vrl38002ovdjg8l44wo8g"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrldc002uvdjg00hhonx4",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "어림하기 (올림/버림/반올림)",
+      "fullContent": "어림하기는 어떤 수의 정확한 값 대신 대략적인 값을 나타내는 방법입니다. 우리는 실생활에서 정확한 값이 필요하지 않거나, 정확한 값을 알기 어려울 때 어림하기를 사용합니다. 어림하기에는 올림, 버림, 반올림의 세 가지 방법이 있습니다.\n\n먼저, 올림은 구하려는 자리 아래의 수가 $0$이 아니면 윗자리에 $1$을 더하고 그 아래 자리의 수를 모두 $0$으로 만드는 방법입니다. 예를 들어, $123$을 십의 자리까지 올림하면 $130$이 됩니다. 버림은 구하려는 자리 아래의 수를 모두 $0$으로 만드는 방법입니다. $123$을 십의 자리까지 버림하면 $120$이 됩니다. 마지막으로, 반올림은 구하려는 자리 바로 아래 숫자가 $0$, $1$, $2$, $3$, $4$이면 버리고, $5$, $6$, $7$, $8$, $9$이면 올리는 방법입니다. $123$을 십의 자리까지 반올림하면 $120$이 되고, $125$를 십의 자리까지 반올림하면 $130$이 됩니다.\n\n우리는 운동회에 참가할 학생 수를 미리 파악하거나, 물건을 살 때 필요한 돈을 대략적으로 계산하는 등 다양한 상황에서 어림하기를 활용합니다. 이처럼 어림하기는 편리하지만, 어떤 방법으로 어림했는지에 따라 결과가 달라지므로, 상황에 맞게 올림, 버림, 반올림 중 가장 적절한 방법을 선택하여 사용해야 합니다.",
+      "visualAssets": null,
+      "sortOrder": 12,
+      "conceptCode": "E5-NUM-12",
+      "grade": "elementary_5",
+      "semester": 2,
+      "chapter": "수의 범위와 어림하기",
+      "section": "올림, 버림, 반올림",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "올림,버림,반올림,어림",
+      "createdAt": "2026-03-25T10:08:10.224Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs39100dbvdjgpu3hs61w",
+          "conceptId": "cmn5vrldc002uvdjg00hhonx4",
+          "prerequisiteId": "cmn5vrl9y002svdjgu4vh6icc"
+        }
+      ],
+      "prerequisiteFor": [],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrlk2002yvdjgurepcatl",
+      "subjectId": "cmn5vrk8p0026vdjgf9ysrq0h",
+      "title": "소수의 곱셈",
+      "fullContent": "소수의 곱셈은 자연수의 곱셈과 원리는 같지만, 소수점의 위치를 정확하게 정하는 것이 중요합니다. 소수와 소수를 곱하거나, 소수와 자연수를 곱할 때에는 다음과 같은 방법으로 계산합니다.\n\n먼저, 곱하는 두 수의 소수점을 무시하고 자연수의 곱셈처럼 계산합니다. 예를 들어, $0.2 \\times 0.3$을 계산할 때에는 $2 \\times 3$을 계산하여 $6$이라는 값을 얻습니다. 그 다음, 곱하는 두 수의 소수점 아래 자릿수를 각각 세어 더합니다. $0.2$는 소수점 아래 첫째 자리 수이고, $0.3$도 소수점 아래 첫째 자리 수이므로, 두 수의 소수점 아래 자릿수를 더하면 $1+1=2$로 둘째 자리가 됩니다.\n\n이제 자연수의 곱셈으로 얻은 결과에 소수점을 찍을 차례입니다. 계산 결과인 $6$의 가장 오른쪽 끝에서부터 왼쪽으로, 앞에서 더한 소수점 아래 자릿수만큼 이동하여 소수점을 찍습니다. $6$은 소수점 아래 둘째 자리가 되어야 하므로, 왼쪽으로 두 칸 이동하면 $0.06$이 됩니다. 만약 이동할 자리가 부족하다면 필요한 만큼 $0$을 채워 넣어 자릿수를 맞춰줍니다. 예를 들어, $0.01 \\times 0.02$는 $1 \\times 2 = 2$이고, 소수점 아래 자릿수는 $2+2=4$이므로, 결과는 $0.0002$가 됩니다. 이처럼 소수의 곱셈에서는 소수점의 위치를 정확하게 찾는 것이 가장 중요합니다.",
+      "visualAssets": null,
+      "sortOrder": 14,
+      "conceptCode": "E5-NUM-14",
+      "grade": "elementary_5",
+      "semester": 2,
+      "chapter": "소수의 곱셈",
+      "section": "(소수)×(소수)",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "소수곱셈",
+      "createdAt": "2026-03-25T10:08:10.466Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs3fr00dfvdjgv5ztkn1a",
+          "conceptId": "cmn5vrlk2002yvdjgurepcatl",
+          "prerequisiteId": "cmn5vriu5001dvdjgzagcr1gr"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs4tw00e9vdjgb4iv8xt4",
+          "conceptId": "cmn5vrmyp003rvdjgttxwedvz",
+          "prerequisiteId": "cmn5vrlk2002yvdjgurepcatl"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrms0003nvdjgtxaufthw",
+      "subjectId": "cmn5vrmlc003jvdjgawtxum5b",
+      "title": "분수÷자연수",
+      "fullContent": "분수를 자연수로 나누는 것은 전체를 똑같이 나누는 것 중에서 분수가 차지하는 부분을 다시 자연수만큼 똑같이 나누는 것을 의미합니다. 예를 들어, 피자 $\\frac{1}{2}$판을 $2$명이 똑같이 나누어 먹는 상황을 $\\frac{1}{2} \\div 2$로 표현할 수 있습니다.\n\n분수를 자연수로 나누는 방법은 크게 두 가지가 있습니다. 첫째, 분수의 분모에 자연수를 곱하는 방법입니다. 분자 $a$, 분모 $b$인 분수 $\\frac{a}{b}$를 자연수 $c$로 나눌 때, $\\frac{a}{b} \\div c = \\frac{a}{b \\times c}$와 같이 계산합니다. 둘째, 분자의 수를 자연수로 나눌 수 있을 때에는 분자를 자연수로 나누는 방법입니다. 즉, $\\frac{a}{b} \\div c = \\frac{a \\div c}{b}$와 같이 계산할 수 있습니다. 이 두 가지 방법은 모두 같은 결과를 나타냅니다.\n\n예를 들어, $\\frac{6}{7} \\div 2$를 계산해 봅시다. 첫 번째 방법으로 분모에 자연수를 곱하면 $\\frac{6}{7 \\times 2} = \\frac{6}{14}$이 되고, 약분하면 $\\frac{3}{7}$이 됩니다. 두 번째 방법으로 분자를 자연수로 나누면 $\\frac{6 \\div 2}{7} = \\frac{3}{7}$이 됩니다. 이처럼 분자를 자연수로 나눌 수 있을 때는 두 번째 방법이 더 편리합니다. 만약 대분수가 있다면, 먼저 가분수로 바꾸어 계산해야 합니다. 예를 들어, $1\\frac{1}{2} \\div 3$은 $\\frac{3}{2} \\div 3 = \\frac{3 \\div 3}{2} = \\frac{1}{2}$와 같이 계산합니다.\n\n분수의 나눗셈은 분수의 곱셈과 연결하여 생각할 수도 있습니다. 어떤 수를 자연수 $c$로 나누는 것은 그 수에 자연수 $c$의 역수인 $\\frac{1}{c}$을 곱하는 것과 같습니다. 따라서 $\\frac{a}{b} \\div c = \\frac{a}{b} \\times \\frac{1}{c}$로 계산할 수도 있습니다. 이 방법 역시 $\\frac{a \\times 1}{b \\times c} = \\frac{a}{b \\times c}$가 되어 앞서 배운 방법과 같은 결과를 얻게 됩니다.",
+      "visualAssets": null,
+      "sortOrder": 2,
+      "conceptCode": "E6-NUM-02",
+      "grade": "elementary_6",
+      "semester": 1,
+      "chapter": "분수의 나눗셈",
+      "section": "(분수)÷(자연수)",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "분수나눗셈",
+      "createdAt": "2026-03-25T10:08:12.049Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs4gk00e1vdjgyjqmauz2",
+          "conceptId": "cmn5vrms0003nvdjgtxaufthw",
+          "prerequisiteId": "cmn5vrmop003lvdjgak4au4ez"
+        },
+        {
+          "id": "cmn5vs4jw00e3vdjgg0of4kqb",
+          "conceptId": "cmn5vrms0003nvdjgtxaufthw",
+          "prerequisiteId": "cmn5vrlgp002wvdjgg64ske1j"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs4n800e5vdjgh8uc5ce7",
+          "conceptId": "cmn5vrmvc003pvdjgwtr3xm76",
+          "prerequisiteId": "cmn5vrms0003nvdjgtxaufthw"
+        },
+        {
+          "id": "cmn5vs71v00flvdjg90l9wrpa",
+          "conceptId": "cmn5vrong004rvdjgkqe2gdis",
+          "prerequisiteId": "cmn5vrms0003nvdjgtxaufthw"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrnfg0041vdjg57lgi8z2",
+      "subjectId": "cmn5vrmlc003jvdjgawtxum5b",
+      "title": "비례배분",
+      "fullContent": "비례배분은 전체를 주어진 비에 따라 나누는 것을 말합니다. 예를 들어, 어떤 물건이나 돈을 여러 사람이 정해진 비로 나누어 가질 때 비례배분을 사용합니다. 전체를 $a:b$의 비로 나누어 가질 때, 첫 번째 몫은 전체에 $\\frac{a}{a+b}$를 곱하여 구할 수 있으며, 두 번째 몫은 전체에 $\\frac{b}{a+b}$를 곱하여 구할 수 있습니다. 여기서 $a+b$는 비의 합을 의미하며, 전체를 몇 등분했는지 알려주는 역할을 합니다.\n\n예를 들어, $1000$원을 동생과 형이 $2:3$의 비로 나누어 가진다고 생각해 봅시다. 동생의 몫은 $1000 \\times \\frac{2}{2+3} = 1000 \\times \\frac{2}{5} = 400$원이 됩니다. 형의 몫은 $1000 \\times \\frac{3}{2+3} = 1000 \\times \\frac{3}{5} = 600$원이 됩니다. 이렇게 구한 각각의 몫을 더했을 때, 그 합이 전체와 같은지 확인하는 것이 중요합니다. $400$원과 $600$원을 더하면 $1000$원이 되어 전체와 같으므로 바르게 비례배분한 것을 알 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 9,
+      "conceptCode": "E6-ALG-04",
+      "grade": "elementary_6",
+      "semester": 2,
+      "chapter": "비례식과 비례배분",
+      "section": "비례배분",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "algebra",
+      "source": null,
+      "keywords": "비례배분",
+      "createdAt": "2026-03-25T10:08:12.893Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs5al00ejvdjg4mce9ba5",
+          "conceptId": "cmn5vrnfg0041vdjg57lgi8z2",
+          "prerequisiteId": "cmn5vrnc4003zvdjgbsfe3rji"
+        }
+      ],
+      "prerequisiteFor": [],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrnt30049vdjgkhpb5rnh",
+      "subjectId": "cmn5vrmlc003jvdjgawtxum5b",
+      "title": "원의 넓이",
+      "fullContent": "원은 둥근 모양을 가지고 있어서 사각형이나 삼각형처럼 넓이를 쉽게 구할 수 없습니다. 하지만 원의 넓이를 구하는 특별한 방법이 있습니다. 원의 넓이는 원 안쪽의 공간이 얼마나 넓은지를 나타내는 값입니다. 원의 넓이는 원주율($\\pi$)에 반지름을 두 번 곱하여 구할 수 있습니다. 즉, 원의 넓이 = 원주율 $\\times$ 반지름 $\\times$ 반지름 입니다. 이것을 기호로 나타내면 원의 넓이 = $\\pi \\times r \\times r$ 또는 $\\pi r^2$ 라고 쓸 수 있습니다. 여기서 $r$은 원의 반지름을 나타냅니다.\n\n원의 넓이 공식은 원을 아주 작은 부채꼴 모양으로 잘라내어 직사각형과 비슷한 모양으로 만들어서 이해할 수 있습니다. 원을 잘게 자른 부채꼴들을 서로 엇갈리게 붙이면, 가로의 길이가 원주의 절반과 비슷해지고 세로의 길이는 원의 반지름과 같아집니다. 원주는 지름 $\\times$ 원주율 이므로, 원주의 절반은 반지름 $\\times$ 원주율 이 됩니다. 따라서 이 직사각형 모양의 넓이는 (반지름 $\\times$ 원주율) $\\times$ 반지름이 되어, 결국 원의 넓이 공식인 $\\pi \\times$ 반지름 $\\times$ 반지름이 됩니다.\n\n예를 들어, 반지름이 $5 \\text{ cm}$인 원의 넓이를 구해 봅시다. 원주율을 $3.14$라고 한다면, 원의 넓이는 $3.14 \\times 5 \\times 5 = 3.14 \\times 25 = 78.5 \\text{ cm}^2$가 됩니다. 만약 지름이 주어졌다면, 지름의 절반이 반지름이므로, 지름을 $2$로 나누어 반지름을 먼저 구한 다음 넓이를 계산해야 합니다. 원의 넓이를 구할 때에는 문제에서 주어진 원주율 값을 정확히 사용하는 것이 중요합니다.",
+      "visualAssets": null,
+      "sortOrder": 13,
+      "conceptCode": "E6-GEO-04",
+      "grade": "elementary_6",
+      "semester": 2,
+      "chapter": "원의 넓이",
+      "section": "원의 넓이",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "geo",
+      "source": null,
+      "keywords": "원,넓이,반지름",
+      "createdAt": "2026-03-25T10:08:13.384Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs5r800etvdjg06630l06",
+          "conceptId": "cmn5vrnt30049vdjgkhpb5rnh",
+          "prerequisiteId": "cmn5vrnpp0047vdjgnosd1pgv"
+        },
+        {
+          "id": "cmn5vs5uk00evvdjgxf8z3arf",
+          "conceptId": "cmn5vrnt30049vdjgkhpb5rnh",
+          "prerequisiteId": "cmn5vrlxn0036vdjgmrbi765r"
+        }
+      ],
+      "prerequisiteFor": [
+        {
+          "id": "cmn5vs5xv00exvdjgwcfb5opv",
+          "conceptId": "cmn5vrnwh004bvdjgzwqy8acg",
+          "prerequisiteId": "cmn5vrnt30049vdjgkhpb5rnh"
+        },
+        {
+          "id": "cmn5vsdts00jnvdjgpaqnyu88",
+          "conceptId": "cmn5vrttd007qvdjgt0vzdtye",
+          "prerequisiteId": "cmn5vrnt30049vdjgkhpb5rnh"
+        }
+      ],
+      "blanks": []
+    },
+    {
+      "id": "cmn5vrogo004nvdjg29u4parr",
+      "subjectId": "cmn5vrmlc003jvdjgawtxum5b",
+      "title": "소수 나눗셈의 활용",
+      "fullContent": "소수 나눗셈은 우리 주변의 다양한 문제를 해결하는 데 유용하게 사용됩니다. 예를 들어, 물건을 똑같이 나누거나 어떤 양이 다른 양의 몇 배인지 알아볼 때 소수 나눗셈을 활용합니다. (소수) $\\div$ (소수) 형태의 나눗셈을 할 때, 나누는 수의 소수점을 오른쪽으로 옮겨 자연수로 만든 다음, 나누어지는 수의 소수점도 같은 수만큼 오른쪽으로 옮겨 계산합니다. 이렇게 하면 자연수의 나눗셈처럼 편리하게 계산할 수 있습니다. 예를 들어, $1.2 \\div 0.3$은 $12 \\div 3$과 같이 계산하여 몫이 $4$가 됩니다.\n\n때로는 몫을 반올림하여 나타내야 할 때도 있습니다. 이때는 구하려는 자리보다 한 자리 아래까지 계산한 다음, 그 자리에서 반올림하여 나타냅니다. 예를 들어, 몫을 소수 둘째 자리까지 나타내려면 소수 셋째 자리까지 계산한 후 반올림합니다. 또한, 나누어 주고 남는 양, 즉 나머지를 구해야 할 때도 있습니다. 이때 나머지의 소수점은 원래 나누어지는 수의 소수점 위치에 맞추어 찍어야 합니다. 예를 들어, $12.3 \\div 0.5$를 계산할 때, $123 \\div 5 = 24$이고 나머지가 $3$이라면, 원래 소수점 위치를 고려하여 나머지는 $0.3$이 됩니다.\n\n실제 문제를 해결할 때는 먼저 어림셈을 통해 대략적인 답을 예상해 보는 것이 좋습니다. 그리고 정확한 계산을 마친 후에는 어림한 값과 실제 계산 결과를 비교하여 답이 타당한지 확인하는 과정이 중요합니다. 이 과정을 통해 계산 실수를 줄이고 문제 해결 능력을 키울 수 있습니다.",
+      "visualAssets": null,
+      "sortOrder": 20,
+      "conceptCode": "E6-NUM-06",
+      "grade": "elementary_6",
+      "semester": 2,
+      "chapter": "소수의 나눗셈",
+      "section": "(소수)÷(소수)",
+      "sectionSub": null,
+      "category": "concept",
+      "part": "calc",
+      "source": null,
+      "keywords": "소수나눗셈활용",
+      "createdAt": "2026-03-25T10:08:14.233Z",
+      "updatedAt": "2026-03-25T13:30:26.515Z",
+      "prerequisites": [
+        {
+          "id": "cmn5vs6ry00ffvdjgu0xcxffu",
+          "conceptId": "cmn5vrogo004nvdjg29u4parr",
+          "prerequisiteId": "cmn5vrn22003tvdjg8xqvs63o"
+        }
+      ],
+      "prerequisiteFor": [],
+      "blanks": []
+    }
+  ]
+}
