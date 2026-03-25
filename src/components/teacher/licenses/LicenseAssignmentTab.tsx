@@ -230,8 +230,8 @@ export default function LicenseAssignmentTab() {
                       style={{ width: `${Math.min(pct, 100)}%` }}
                     />
                   </div>
-                  <p className="text-[10px] text-text-secondary mt-1">총 {max}석</p>
-                  {isExpired && <p className="text-[10px] text-red-500">만료됨</p>}
+                  <p className="text-xs text-text-secondary mt-1">총 {max}석</p>
+                  {isExpired && <p className="text-xs text-red-500">만료됨</p>}
                 </>
               ) : (
                 <p className="text-xs text-slate-400 mt-1">미등록</p>
@@ -262,7 +262,7 @@ export default function LicenseAssignmentTab() {
                 <button
                   onClick={() => bulkAssign([key])}
                   disabled={saving}
-                  className="px-2 py-0.5 text-[11px] font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-l transition-colors disabled:opacity-50"
+                  className="px-2 py-0.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-l transition-colors disabled:opacity-50"
                   title={`${label} 배정`}
                 >
                   {label}
@@ -270,7 +270,7 @@ export default function LicenseAssignmentTab() {
                 <button
                   onClick={() => bulkRevoke([key])}
                   disabled={saving}
-                  className="px-1.5 py-0.5 text-[11px] text-red-500 bg-red-50 hover:bg-red-100 rounded-r transition-colors disabled:opacity-50"
+                  className="px-1.5 py-0.5 text-xs text-red-500 bg-red-50 hover:bg-red-100 rounded-r transition-colors disabled:opacity-50"
                   title={`${label} 회수`}
                 >
                   ✕

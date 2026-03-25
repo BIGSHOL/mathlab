@@ -128,7 +128,7 @@ export default function MonthlyChartV2() {
             transform: 'translate(-50%, -120%)',
           }}
         >
-          <div className="bg-slate-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg whitespace-nowrap">
+          <div className="bg-slate-800 text-white text-xs rounded-sm px-3 py-2 shadow-lg whitespace-nowrap">
             <p className="font-bold">{tooltip.point.month}</p>
             <p className="text-slate-300">
               학습 완료율: <span className="text-white font-semibold">{tooltip.point.value}%</span>
@@ -143,7 +143,7 @@ export default function MonthlyChartV2() {
       {/* X-axis labels */}
       <div className="flex justify-between mt-3 px-1">
         {MONTHS.map((m) => (
-          <span key={m} className="text-slate-400 text-[10px] font-bold tracking-widest uppercase">
+          <span key={m} className="text-slate-400 text-xs font-bold tracking-widest uppercase">
             {m}
           </span>
         ))}

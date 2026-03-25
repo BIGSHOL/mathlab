@@ -1,4 +1,5 @@
 import { Sidebar } from '@/components/layout/Sidebar';
+import { TeacherBottomNav } from '@/components/layout/TeacherBottomNav';
 import { CommandPalette } from '@/components/layout/CommandPalette';
 import { ToastContainer } from '@/components/ui/Toast';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -23,7 +24,8 @@ export default async function TeacherLayout({
     <TenantProvider tenant={tenant}>
       <div className="h-screen flex bg-background overflow-hidden print:h-auto print:overflow-visible print:bg-white">
         <Sidebar />
-        <main className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden print:overflow-visible">{children}</main>
+        <main className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden pb-14 md:pb-0 print:overflow-visible">{children}</main>
+        <TeacherBottomNav />
         <CommandPalette />
         <ToastContainer />
         <ConfirmDialog />

@@ -190,7 +190,7 @@ export function HelpContent({ backHref, backLabel, isLoggedIn, embedded }: Props
                     <Icon className="w-4 h-4 shrink-0" />
                     {!leftCollapsed && <span className="truncate">{cat.label}</span>}
                     {!leftCollapsed && (
-                      <span className="ml-auto text-[10px] text-slate-400">{cat.items.length}</span>
+                      <span className="ml-auto text-xs text-slate-400">{cat.items.length}</span>
                     )}
                   </button>
                 );
@@ -203,7 +203,7 @@ export function HelpContent({ backHref, backLabel, isLoggedIn, embedded }: Props
             <div className="max-w-3xl mx-auto px-6 py-8">
               {/* 페이지 타이틀 */}
               <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-sm bg-primary/10 flex items-center justify-center">
                   <HelpCircle className="w-5 h-5 text-primary" />
                 </div>
                 <div>
@@ -300,14 +300,14 @@ function AccordionItem({
   onToggle: () => void;
 }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+    <div className="bg-white border border-slate-200 rounded-sm overflow-hidden shadow-sm">
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 transition-colors"
       >
         <div className="flex items-center gap-2 pr-4">
           {badge && (
-            <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded bg-slate-100 text-slate-500 shrink-0">
+            <span className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium rounded bg-slate-100 text-slate-500 shrink-0">
               {badge}
             </span>
           )}

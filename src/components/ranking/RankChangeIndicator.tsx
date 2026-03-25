@@ -12,7 +12,7 @@ interface RankChangeIndicatorProps {
 /** 음악방송 스타일 순위 변동 표시 (한국: 상승=빨강, 하락=파랑) */
 export function RankChangeIndicator({ change, isNew, size = 'md' }: RankChangeIndicatorProps) {
   const iconSize = size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5';
-  const textSize = size === 'sm' ? 'text-[10px]' : 'text-xs';
+  const textSize = size === 'sm' ? 'text-xs' : 'text-xs';
 
   if (isNew) {
     return (

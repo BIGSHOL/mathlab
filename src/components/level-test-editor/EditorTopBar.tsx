@@ -50,7 +50,7 @@ export function EditorTopBar({
         <span className="text-sm font-bold text-text-primary">{pageLabel}</span>
         <span className="text-sm text-text-primary">{title}</span>
         {grade != null && (
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary">
+          <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary">
             {GRADE_LABELS[grade] ?? `${grade}학년`}
           </span>
         )}
@@ -58,7 +58,7 @@ export function EditorTopBar({
 
       <button
         onClick={handleClose}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary hover:bg-slate-100 rounded-lg transition-colors"
+        className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary hover:bg-slate-100 rounded-sm transition-colors"
       >
         <X className="w-4 h-4" />
         닫기

@@ -11,20 +11,20 @@ import {
   Users,
   GraduationCap,
   CheckCircle,
-  Lock,
-  Play,
   Search,
   Check,
   UserPlus,
   Trash2,
   Pencil,
   X,
+  School,
+  ChevronRight,
 } from 'lucide-react';
 import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 
 interface ConceptDetail {
   id: string;
@@ -67,11 +67,6 @@ interface StudentItem {
   role: string;
 }
 
-const STATUS_ICON = {
-  LOCKED: <Lock className="w-3.5 h-3.5 text-slate-400" />,
-  ACTIVE: <Play className="w-3.5 h-3.5 text-primary" />,
-  COMPLETED: <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />,
-};
 const STATUS_LABEL = { LOCKED: '대기', ACTIVE: '진행 중', COMPLETED: '완료' };
 const STATUS_COLOR = {
   LOCKED: 'text-slate-400 bg-slate-50',
@@ -81,6 +76,8 @@ const STATUS_COLOR = {
 
 export default function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const isManager = hasRoleClient(user?.role, 'MANAGER');
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -90,6 +87,7 @@ export default function CourseDetailPage() {
   const [addStudentSearch, setAddStudentSearch] = useState('');
   const [addStudentIds, setAddStudentIds] = useState<Set<string>>(new Set());
   const [enrolling, setEnrolling] = useState(false);
+  const [classrooms, setClassrooms] = useState<{ id: string; name: string; students: { id: string }[] }[]>([]);
 
   // 제목/설명 편집
   const [editing, setEditing] = useState(false);
@@ -143,13 +141,16 @@ export default function CourseDetailPage() {
 
   useEffect(() => { fetchCourse(); }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 학생 목록 (배정 추가용)
+  // 학생 목록 + 반 목록 (배정 추가용)
   useEffect(() => {
     if (!showAddStudents) return;
-    fetch('/api/users')
-      .then((r) => r.json())
-      .then((json) => setAllStudents((json.data ?? []).filter((u: StudentItem) => u.role === 'STUDENT')))
-      .catch((err) => console.error('학생 목록 조회 실패:', err));
+    Promise.all([
+      fetch('/api/users').then((r) => r.json()),
+      fetch('/api/classrooms').then((r) => r.json()),
+    ]).then(([userJson, crJson]) => {
+      setAllStudents((userJson.data ?? []).filter((u: StudentItem) => u.role === 'STUDENT'));
+      setClassrooms(crJson.data ?? []);
+    }).catch((err) => console.error('데이터 조회 실패:', err));
   }, [showAddStudents]);
 
   const enrolledStudentIds = useMemo(
@@ -224,7 +225,7 @@ export default function CourseDetailPage() {
         {/* 4개 통계 카드 */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {Array.from({ length: 4 }, (_, i) => (
-            <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 text-center space-y-1.5">
+            <div key={i} className="bg-white border border-slate-200 rounded-sm p-4 text-center space-y-1.5">
               <Skeleton className="h-8 w-12 mx-auto" />
               <Skeleton className="h-3 w-16 mx-auto" />
             </div>
@@ -232,7 +233,7 @@ export default function CourseDetailPage() {
         </div>
         {/* 2열 그리드: 개념 (1/3) + 학생 (2/3) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="bg-white border border-slate-200 rounded-xl p-5">
+          <div className="bg-white border border-slate-200 rounded-sm p-5">
             <div className="flex items-center gap-2 mb-4">
               <Skeleton className="w-4 h-4 rounded" />
               <Skeleton className="h-5 w-28" />
@@ -249,7 +250,7 @@ export default function CourseDetailPage() {
               ))}
             </div>
           </div>
-          <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-5">
+          <div className="lg:col-span-2 bg-white border border-slate-200 rounded-sm p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Skeleton className="w-4 h-4 rounded" />
@@ -259,7 +260,7 @@ export default function CourseDetailPage() {
             </div>
             <div className="space-y-2">
               {Array.from({ length: 4 }, (_, i) => (
-                <div key={i} className="flex items-center gap-3 p-3.5 rounded-lg border border-slate-100">
+                <div key={i} className="flex items-center gap-3 p-3.5 rounded-sm border border-slate-100">
                   <Skeleton variant="circle" className="w-10 h-10 shrink-0" />
                   <div className="flex-1 space-y-1">
                     <Skeleton className="h-4 w-24" />
@@ -280,252 +281,320 @@ export default function CourseDetailPage() {
 
   if (!course) {
     return (
-      <div className="px-6 py-8 max-w-[1200px] mx-auto">
-        <Card className="p-12 text-center">
+      <div className="px-4 sm:px-6 py-6 max-w-[1200px] mx-auto">
+        <div className="bg-white border border-slate-200 rounded-sm p-12 text-center">
           <p className="text-text-secondary">과정을 찾을 수 없습니다.</p>
           <Link href="/courses" className="text-primary text-sm hover:underline mt-2 inline-block">
             목록으로 돌아가기
           </Link>
-        </Card>
+        </div>
       </div>
     );
   }
 
+  const avgProgress = course.enrollments.length > 0
+    ? Math.round(course.enrollments.reduce((sum, e) => sum + e.progressPercent, 0) / course.enrollments.length)
+    : 0;
+  const completedCount = course.enrollments.filter((e) => e.status === 'COMPLETED').length;
+
   return (
-    <div className="px-6 py-8 max-w-[1200px] mx-auto">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-8">
-        <Link href="/courses" className="p-2 rounded-sm hover:bg-slate-100 transition-colors">
-          <ArrowLeft className="w-5 h-5 text-text-secondary" />
-        </Link>
-        <div className="flex-1">
-          {editing ? (
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <GraduationCap className="w-6 h-6 text-primary shrink-0" />
+    <div className="px-4 sm:px-6 py-6 max-w-[1200px] mx-auto">
+      {/* 뒤로가기 */}
+      <Link href="/courses" className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-primary mb-3 transition-colors">
+        <ArrowLeft className="w-3.5 h-3.5" /> 학습 과정 목록
+      </Link>
+
+      {/* ── 프로필 히어로 ── */}
+      <div className="bg-gradient-to-r from-primary/5 via-blue-50/50 to-violet-50/30 border border-slate-200 rounded-sm p-4 sm:p-5 mb-4">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shrink-0 shadow-sm">
+            <GraduationCap className="w-7 h-7 text-white" />
+          </div>
+          <div className="min-w-0 flex-1">
+            {editing ? (
+              <div className="flex flex-col gap-2">
                 <input
-                  className="text-2xl font-bold text-text-primary bg-white border border-slate-200 rounded-sm px-2 py-1 w-full focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                  className="text-sm font-bold text-text-primary bg-white border border-slate-200 rounded-sm px-2 py-1.5 w-full focus:ring-2 focus:ring-primary/40 focus:border-primary"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
                   placeholder="과정명"
                   autoFocus
                 />
+                <input
+                  className="text-xs text-text-secondary bg-white border border-slate-200 rounded-sm px-2 py-1.5 w-full focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  placeholder="설명 (선택)"
+                />
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={saveEdit} disabled={saving}>
+                    {saving ? <MathSpinner size="sm" className="mr-1" /> : null}저장
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={cancelEdit}><X className="w-3.5 h-3.5 mr-1" />취소</Button>
+                </div>
               </div>
-              <input
-                className="text-sm text-text-secondary bg-white border border-slate-200 rounded-sm px-2 py-1 w-full focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                value={editDesc}
-                onChange={(e) => setEditDesc(e.target.value)}
-                placeholder="설명 (선택)"
-              />
-              <div className="flex gap-2">
-                <Button size="sm" onClick={saveEdit} disabled={saving}>
-                  {saving ? <MathSpinner size="sm" className="mr-1" /> : null}
-                  저장
-                </Button>
-                <Button size="sm" variant="ghost" onClick={cancelEdit}>
-                  <X className="w-3.5 h-3.5 mr-1" />
-                  취소
-                </Button>
+            ) : (
+              <>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-text-primary">{course.title}</h2>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">#{course.seq}</span>
+                  {isManager && (
+                    <button onClick={startEdit} className="p-1 text-slate-400 hover:text-primary transition-colors">
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs text-text-secondary mt-0.5">
+                  {course.description || '설명 없음'} · {new Date(course.createdAt).toLocaleDateString('ko-KR')}
+                </p>
+              </>
+            )}
+          </div>
+          {/* 핵심 수치 */}
+          <div className="hidden sm:flex items-center gap-5 shrink-0">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 text-primary">
+                <BookOpen className="w-4 h-4" />
+                <span className="text-lg font-bold">{course.concepts.length}</span>
               </div>
+              <div className="text-xs text-text-secondary">개념</div>
             </div>
-          ) : (
-            <>
-              <h1 className="text-2xl font-bold text-text-primary flex items-center gap-2">
-                <GraduationCap className="w-6 h-6 text-primary" />
-                {course.title}
-                <button onClick={startEdit} className="p-1 text-slate-400 hover:text-primary transition-colors">
-                  <Pencil className="w-4 h-4" />
-                </button>
-              </h1>
-              {course.description && <p className="text-text-secondary text-sm mt-0.5">{course.description}</p>}
-            </>
-          )}
+            <div className="w-px h-8 bg-slate-200" />
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 text-emerald-500">
+                <Users className="w-4 h-4" />
+                <span className="text-lg font-bold">{course.enrollments.length}</span>
+              </div>
+              <div className="text-xs text-text-secondary">학생</div>
+            </div>
+            <div className="w-px h-8 bg-slate-200" />
+            <div className="text-center">
+              <span className="text-lg font-bold text-amber-500">{avgProgress}%</span>
+              <div className="text-xs text-text-secondary">평균 진행</div>
+            </div>
+            <div className="w-px h-8 bg-slate-200" />
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 text-violet-500">
+                <CheckCircle className="w-4 h-4" />
+                <span className="text-lg font-bold">{completedCount}</span>
+              </div>
+              <div className="text-xs text-text-secondary">완료</div>
+            </div>
+          </div>
         </div>
-        <span className="text-xs text-text-secondary shrink-0">
-          #{course.seq} · {new Date(course.createdAt).toLocaleDateString('ko-KR')}
-        </span>
+        {/* 모바일 수치 */}
+        <div className="grid grid-cols-4 gap-2 mt-3 sm:hidden">
+          <div className="text-center bg-white/60 rounded-sm py-1.5">
+            <div className="text-xs font-bold text-primary">{course.concepts.length}개</div>
+            <div className="text-xs text-text-secondary">개념</div>
+          </div>
+          <div className="text-center bg-white/60 rounded-sm py-1.5">
+            <div className="text-xs font-bold text-emerald-600">{course.enrollments.length}명</div>
+            <div className="text-xs text-text-secondary">학생</div>
+          </div>
+          <div className="text-center bg-white/60 rounded-sm py-1.5">
+            <div className="text-xs font-bold text-amber-600">{avgProgress}%</div>
+            <div className="text-xs text-text-secondary">진행</div>
+          </div>
+          <div className="text-center bg-white/60 rounded-sm py-1.5">
+            <div className="text-xs font-bold text-violet-600">{completedCount}명</div>
+            <div className="text-xs text-text-secondary">완료</div>
+          </div>
+        </div>
       </div>
 
-      {/* 요약 통계 */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <Card padding="base" className="text-center">
-          <div className="text-2xl font-black text-primary">{course.concepts.length}</div>
-          <div className="text-xs text-text-secondary mt-1">포함 개념</div>
-        </Card>
-        <Card padding="base" className="text-center">
-          <div className="text-2xl font-black text-emerald-600">{course.enrollments.length}</div>
-          <div className="text-xs text-text-secondary mt-1">배정 학생</div>
-        </Card>
-        <Card padding="base" className="text-center">
-          <div className="text-2xl font-black text-secondary">
-            {course.enrollments.length > 0
-              ? Math.round(course.enrollments.reduce((sum, e) => sum + e.progressPercent, 0) / course.enrollments.length)
-              : 0}%
-          </div>
-          <div className="text-xs text-text-secondary mt-1">평균 진행률</div>
-        </Card>
-        <Card padding="base" className="text-center">
-          <div className="text-2xl font-black text-violet-600">
-            {course.enrollments.filter((e) => e.status === 'COMPLETED').length}
-          </div>
-          <div className="text-xs text-text-secondary mt-1">완료 학생</div>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: 포함 개념 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Left: 포함 개념 — 좌측 컬러바 패턴 */}
         <div>
-          <Card padding="md">
-            <h2 className="font-bold text-text-primary flex items-center gap-2 mb-4">
-              <BookOpen className="w-4 h-4 text-primary" />
-              학습 개념 ({course.concepts.length}개)
-            </h2>
-            <div className="flex flex-col gap-1.5">
-              {course.concepts.map((concept, idx) => (
-                <div
-                  key={concept.id}
-                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-sm bg-slate-50 border border-slate-100 text-xs hover:border-primary/20 transition-colors"
-                >
-                  <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">{idx + 1}</span>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-text-primary font-medium truncate block">{concept.title}</span>
+          <div className="flex items-center gap-1.5 mb-2">
+            <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center shrink-0">
+              <BookOpen className="w-3 h-3 text-primary" />
+            </div>
+            <h3 className="text-xs font-bold text-text-primary">학습 개념 ({course.concepts.length}개)</h3>
+          </div>
+          <div className="space-y-1.5">
+            {course.concepts.map((concept, idx) => (
+              <div
+                key={concept.id}
+                className="flex items-center bg-white border border-slate-200 rounded-sm overflow-hidden hover:border-primary/40 transition-colors"
+              >
+                <div className="w-1 self-stretch bg-primary/40 shrink-0" />
+                <div className="flex items-center gap-2 flex-1 min-w-0 px-3 py-2">
+                  <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">{idx + 1}</span>
+                  <div className="min-w-0">
+                    <div className="text-xs font-medium text-text-primary truncate">{concept.title}</div>
                     {concept.chapter && concept.chapter !== concept.title && (
-                      <span className="text-[10px] text-text-secondary">{concept.chapter}</span>
+                      <div className="text-xs text-text-secondary truncate">{concept.chapter}</div>
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
-          </Card>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Right: 배정 학생 */}
+        {/* Right: 배정 학생 — 좌측 컬러바 + ChevronRight */}
         <div className="lg:col-span-2">
-          <Card padding="md">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold text-text-primary flex items-center gap-2">
-                <Users className="w-4 h-4 text-primary" />
-                배정 학생 ({course.enrollments.length}명)
-              </h2>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <div className="w-5 h-5 rounded bg-emerald-100 flex items-center justify-center shrink-0">
+                <Users className="w-3 h-3 text-emerald-600" />
+              </div>
+              <h3 className="text-xs font-bold text-text-primary">배정 학생 ({course.enrollments.length}명)</h3>
+            </div>
+            {isManager && (
               <Button size="sm" onClick={() => setShowAddStudents(!showAddStudents)}>
                 <UserPlus className="w-3.5 h-3.5 mr-1" />
                 학생 추가
               </Button>
-            </div>
-
-            {/* 학생 추가 패널 */}
-            {showAddStudents && (
-              <div className="mb-4 p-4 bg-slate-50 rounded-sm border border-slate-200">
-                <div className="relative mb-2">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                  <input
-                    className="w-full h-8 pl-8 pr-3 rounded-sm border border-slate-200 text-sm bg-white focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                    placeholder="이름 또는 아이디 검색"
-                    value={addStudentSearch}
-                    onChange={(e) => setAddStudentSearch(e.target.value)}
-                  />
-                </div>
-                <div className="max-h-[200px] overflow-y-auto rounded border border-slate-200 bg-white mb-2">
-                  {unenrolledStudents.length === 0 ? (
-                    <p className="text-xs text-text-secondary text-center py-4">배정 가능한 학생이 없습니다</p>
-                  ) : (
-                    unenrolledStudents.map((s) => {
-                      const isSelected = addStudentIds.has(s.id);
-                      return (
-                        <button
-                          key={s.id}
-                          onClick={() => {
-                            setAddStudentIds((prev) => {
-                              const next = new Set(prev);
-                              if (next.has(s.id)) next.delete(s.id);
-                              else next.add(s.id);
-                              return next;
-                            });
-                          }}
-                          className={`w-full text-left flex items-center gap-2 px-3 py-2 text-xs border-b border-slate-200 last:border-0 transition-colors ${
-                            isSelected ? 'bg-primary/5' : 'hover:bg-slate-50'
-                          }`}
-                        >
-                          <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${
-                            isSelected ? 'bg-primary border-primary' : 'border-slate-300'
-                          }`}>
-                            {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
-                          </div>
-                          <span className="flex-1">{s.name}</span>
-                          <span className="text-text-secondary">{s.username}</span>
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={handleEnroll} disabled={addStudentIds.size === 0 || enrolling}>
-                    {enrolling ? <MathSpinner size="sm" className="mr-1" /> : null}
-                    {addStudentIds.size}명 배정
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => { setShowAddStudents(false); setAddStudentIds(new Set()); }}>
-                    취소
-                  </Button>
-                </div>
-              </div>
             )}
+          </div>
 
-            {/* 학생 목록 */}
-            {course.enrollments.length === 0 ? (
-              <div className="text-center py-8">
-                <Users className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                <p className="text-text-secondary text-sm">배정된 학생이 없습니다.</p>
+          {/* 학생 추가 패널 (OWNER+) */}
+          {isManager && showAddStudents && (
+            <div className="mb-4 p-3 bg-slate-50 rounded-sm border border-slate-200">
+              {classrooms.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-1.5">
+                  <span className="flex items-center gap-1 text-xs text-text-secondary mr-1">
+                    <School className="w-3.5 h-3.5" /> 반별 추가:
+                  </span>
+                  {classrooms.map((cr) => {
+                    const crUnenrolled = cr.students.map((s) => s.id).filter((sid) => !enrolledStudentIds.has(sid));
+                    if (crUnenrolled.length === 0) return null;
+                    const allSelected = crUnenrolled.every((sid) => addStudentIds.has(sid));
+                    return (
+                      <button
+                        key={cr.id}
+                        onClick={() => {
+                          setAddStudentIds((prev) => {
+                            const next = new Set(prev);
+                            if (allSelected) crUnenrolled.forEach((sid) => next.delete(sid));
+                            else crUnenrolled.forEach((sid) => next.add(sid));
+                            return next;
+                          });
+                        }}
+                        className={`text-xs px-2.5 py-1 rounded-sm border transition-colors ${
+                          allSelected ? 'bg-primary text-white border-primary' : 'bg-white text-text-secondary border-slate-200 hover:border-primary hover:text-primary'
+                        }`}
+                      >
+                        {cr.name} ({crUnenrolled.length})
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              <div className="relative mb-2">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                <input
+                  className="w-full h-8 pl-8 pr-3 rounded-sm border border-slate-200 text-sm bg-white focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                  placeholder="이름 또는 아이디 검색"
+                  value={addStudentSearch}
+                  onChange={(e) => setAddStudentSearch(e.target.value)}
+                />
               </div>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {course.enrollments.map((enrollment) => (
+              <div className="max-h-[200px] overflow-y-auto rounded-sm border border-slate-200 bg-white mb-2">
+                {unenrolledStudents.length === 0 ? (
+                  <p className="text-xs text-text-secondary text-center py-4">배정 가능한 학생이 없습니다</p>
+                ) : (
+                  unenrolledStudents.map((s) => {
+                    const isSelected = addStudentIds.has(s.id);
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => {
+                          setAddStudentIds((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(s.id)) next.delete(s.id);
+                            else next.add(s.id);
+                            return next;
+                          });
+                        }}
+                        className={`w-full text-left flex items-center gap-2 px-3 py-2 text-xs border-b border-slate-200 last:border-0 transition-colors ${
+                          isSelected ? 'bg-primary/5' : 'hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${
+                          isSelected ? 'bg-primary border-primary' : 'border-slate-300'
+                        }`}>
+                          {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
+                        </div>
+                        <span className="flex-1">{s.name}</span>
+                        <span className="text-text-secondary">{s.username}</span>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={handleEnroll} disabled={addStudentIds.size === 0 || enrolling}>
+                  {enrolling ? <MathSpinner size="sm" className="mr-1" /> : null}
+                  {addStudentIds.size}명 배정
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => { setShowAddStudents(false); setAddStudentIds(new Set()); }}>
+                  취소
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* 학생 목록 — 좌측 컬러바 패턴 */}
+          {course.enrollments.length === 0 ? (
+            <div className="bg-white border border-slate-200 rounded-sm text-center py-8">
+              <Users className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+              <p className="text-text-secondary text-sm">배정된 학생이 없습니다.</p>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              {course.enrollments.map((enrollment) => (
+                <div key={enrollment.id} className="flex items-center bg-white border border-slate-200 rounded-sm overflow-hidden hover:border-primary/40 transition-colors">
+                  <div className={`w-1 self-stretch shrink-0 ${
+                    enrollment.status === 'COMPLETED' ? 'bg-emerald-400' :
+                    enrollment.status === 'ACTIVE' ? 'bg-primary' : 'bg-slate-200'
+                  }`} />
                   <Link
-                    key={enrollment.id}
                     href={`/courses/${id}/progress/${enrollment.student.username}`}
-                    className="flex items-center gap-3 p-3.5 rounded-lg border border-slate-100 hover:border-primary/30 hover:shadow-md transition-all cursor-pointer group bg-white"
+                    className="flex items-center justify-between flex-1 min-w-0 px-3 py-2"
                   >
-                    {/* 아바타 */}
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-primary/60 text-white flex items-center justify-center text-sm font-bold shrink-0 group-hover:scale-105 transition-transform">
-                      {enrollment.student.name[0]}
-                    </div>
-
-                    {/* 이름 + 상태 */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-text-primary text-sm">{enrollment.student.name}</span>
-                        <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5 ${STATUS_COLOR[enrollment.status]}`}>
-                          {STATUS_ICON[enrollment.status]}
-                          {STATUS_LABEL[enrollment.status]}
-                        </span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-primary to-primary/60 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                        {enrollment.student.name[0]}
                       </div>
-                      <p className="text-xs text-text-secondary">
-                        {enrollment.student.username}
-                        {enrollment.startedAt && ` · 시작 ${new Date(enrollment.startedAt).toLocaleDateString('ko-KR')}`}
-                        {enrollment.completedAt && ` · 완료 ${new Date(enrollment.completedAt).toLocaleDateString('ko-KR')}`}
-                      </p>
-                    </div>
-
-                    {/* 진행률 */}
-                    <div className="w-32 shrink-0">
-                      <div className="flex justify-between text-xs text-text-secondary mb-1">
-                        <span>{enrollment.completedConcepts}/{enrollment.totalConcepts}</span>
-                        <span>{enrollment.progressPercent}%</span>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-medium text-text-primary truncate">{enrollment.student.name}</span>
+                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${STATUS_COLOR[enrollment.status]}`}>
+                            {STATUS_LABEL[enrollment.status]}
+                          </span>
+                        </div>
+                        <div className="text-xs text-text-secondary">
+                          {enrollment.student.username}
+                          {enrollment.startedAt && ` · 시작 ${new Date(enrollment.startedAt).toLocaleDateString('ko-KR')}`}
+                        </div>
                       </div>
-                      <ProgressBar value={enrollment.progressPercent} size="sm" />
                     </div>
-
-                    {/* 삭제 */}
+                    <div className="flex items-center gap-2 shrink-0 ml-2">
+                      <div className="w-24 hidden sm:block">
+                        <div className="flex justify-between text-xs text-text-secondary mb-0.5">
+                          <span>{enrollment.completedConcepts}/{enrollment.totalConcepts}</span>
+                          <span>{enrollment.progressPercent}%</span>
+                        </div>
+                        <ProgressBar value={enrollment.progressPercent} size="sm" />
+                      </div>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                    </div>
+                  </Link>
+                  {isManager && (
                     <button
-                      onClick={(e) => { e.preventDefault(); handleRemoveEnrollment(enrollment.id, enrollment.student.name); }}
-                      className="p-1 text-slate-400 hover:text-red-500 transition-colors shrink-0"
+                      onClick={() => handleRemoveEnrollment(enrollment.id, enrollment.student.name)}
+                      className="p-1.5 mr-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-sm transition-colors shrink-0"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </Card>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

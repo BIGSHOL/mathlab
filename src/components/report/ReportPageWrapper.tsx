@@ -38,16 +38,16 @@ export function ReportPageWrapper({
             {testTitle && (
               <>
                 <span className="text-slate-300">|</span>
-                <span className="text-[10px] text-slate-500 font-medium">{testTitle}</span>
+                <span className="text-xs text-slate-500 font-medium">{testTitle}</span>
               </>
             )}
           </div>
           <div className="flex items-center gap-3">
-            {studentName && <span className="text-[10px] font-bold text-slate-700">{studentName}</span>}
+            {studentName && <span className="text-xs font-bold text-slate-700">{studentName}</span>}
             {testDate && (
               <>
                 <span className="text-slate-300">·</span>
-                <span className="text-[10px] text-slate-400">{testDate}</span>
+                <span className="text-xs text-slate-400">{testDate}</span>
               </>
             )}
           </div>

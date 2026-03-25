@@ -101,7 +101,7 @@ function renderTemplate(templateText: string) {
   const parts = templateText.split(/(\{\{\d+\}\})/g);
   return parts.map((part, i) =>
     /^\{\{\d+\}\}$/.test(part) ? (
-      <span key={i} className="bg-amber-100 text-amber-800 px-1 rounded font-mono text-[11px]">{part}</span>
+      <span key={i} className="bg-amber-100 text-amber-800 px-1 rounded font-mono text-xs">{part}</span>
     ) : (
       <span key={i}>{part}</span>
     )
@@ -493,7 +493,7 @@ export default function BulkImportModal({ subjects, onClose, onSuccess }: BulkIm
             <div className="flex items-center gap-1 text-xs text-text-secondary">
               {[1, 2, 3, 4].map((s) => (
                 <div key={s} className="flex items-center gap-1">
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
                     s === step ? 'bg-primary text-white' : s < step ? 'bg-emerald-500 text-white' : 'bg-slate-200'
                   }`}>{s < step ? '\u2713' : s}</div>
                   {s < 4 && <div className={`w-4 h-px ${s < step ? 'bg-emerald-400' : 'bg-slate-200'}`} />}
@@ -532,7 +532,7 @@ export default function BulkImportModal({ subjects, onClose, onSuccess }: BulkIm
                   <p className="text-xs font-bold text-text-secondary mb-2">일괄 적용 (엑셀에 없는 경우 적용)</p>
                   <div className="flex flex-col gap-3">
                     <div>
-                      <label className="block text-[11px] text-text-secondary mb-1">학년</label>
+                      <label className="block text-xs text-text-secondary mb-1">학년</label>
                       <select
                         className="w-full px-2 py-1.5 border border-slate-200 rounded-sm text-sm bg-white"
                         value={globalGrade}
@@ -545,7 +545,7 @@ export default function BulkImportModal({ subjects, onClose, onSuccess }: BulkIm
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[11px] text-text-secondary mb-1">카테고리</label>
+                      <label className="block text-xs text-text-secondary mb-1">카테고리</label>
                       <select
                         className="w-full px-2 py-1.5 border border-slate-200 rounded-sm text-sm bg-white"
                         value={globalCategory}
@@ -558,7 +558,7 @@ export default function BulkImportModal({ subjects, onClose, onSuccess }: BulkIm
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[11px] text-text-secondary mb-1">영역</label>
+                      <label className="block text-xs text-text-secondary mb-1">영역</label>
                       <select
                         className="w-full px-2 py-1.5 border border-slate-200 rounded-sm text-sm bg-white"
                         value={globalPart}
@@ -869,7 +869,7 @@ export default function BulkImportModal({ subjects, onClose, onSuccess }: BulkIm
                               {exercise.blanks.filter((b) => b.difficulty !== 'full').map((b) => (
                                 <span
                                   key={b.position}
-                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] border ${
+                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs border ${
                                     b.difficulty === 'easy'
                                       ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
                                       : 'bg-amber-50 border-amber-200 text-amber-800'

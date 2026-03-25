@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { toast } from '@/components/ui/Toast';
 import {
@@ -16,6 +16,7 @@ import {
   GraduationCap,
   ArrowUp,
   ArrowDown,
+  School,
 } from 'lucide-react';
 import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Button } from '@/components/ui/Button';
@@ -48,8 +49,10 @@ const GRADE_OPTIONS = [
   { value: 'middle_3', label: '중3' },
 ];
 
-export default function CourseCreatePage() {
+function CourseCreateInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const preClassroomId = searchParams.get('classroomId');
 
   // Form state
   const [title, setTitle] = useState('');
@@ -68,6 +71,9 @@ export default function CourseCreatePage() {
   const [studentsLoading, setStudentsLoading] = useState(false);
   const [studentSearch, setStudentSearch] = useState('');
   const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
+
+  // Classroom-based enrollment
+  const [classrooms, setClassrooms] = useState<{ id: string; name: string; students: { id: string }[] }[]>([]);
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -88,20 +94,36 @@ export default function CourseCreatePage() {
 
   useEffect(() => { fetchConcepts(); }, [fetchConcepts]);
 
-  // Fetch students
+  // Fetch students + classrooms
   useEffect(() => {
     (async () => {
       setStudentsLoading(true);
       try {
-        const res = await fetch('/api/users');
-        if (res.ok) {
-          const json = await res.json();
+        const [userRes, crRes] = await Promise.all([
+          fetch('/api/users'),
+          fetch('/api/classrooms'),
+        ]);
+        if (userRes.ok) {
+          const json = await userRes.json();
           setAllStudents((json.data ?? []).filter((u: { role: string }) => u.role === 'STUDENT'));
         }
-      } catch (err) { console.error('학생 목록 조회 실패:', err); }
+        if (crRes.ok) {
+          const json = await crRes.json();
+          setClassrooms(json.data ?? []);
+        }
+      } catch (err) { console.error('데이터 조회 실패:', err); }
       setStudentsLoading(false);
     })();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // classroomId 쿼리 파라미터로 반 학생 자동 선택
+  useEffect(() => {
+    if (!preClassroomId || classrooms.length === 0) return;
+    const cr = classrooms.find((c) => c.id === preClassroomId);
+    if (cr) {
+      setSelectedStudentIds(new Set(cr.students.map((s) => s.id)));
+    }
+  }, [preClassroomId, classrooms]);
 
   // Group concepts by chapter
   const filteredConcepts = useMemo(() => {
@@ -438,6 +460,42 @@ export default function CourseCreatePage() {
               </button>
             </div>
 
+            {/* 반별 일괄 배정 */}
+            {classrooms.length > 0 && (
+              <div className="mb-3 flex flex-wrap gap-1.5">
+                <span className="flex items-center gap-1 text-xs text-text-secondary mr-1">
+                  <School className="w-3.5 h-3.5" /> 반별 배정:
+                </span>
+                {classrooms.map((cr) => {
+                  const crStudentIds = cr.students.map((s) => s.id);
+                  const allInClass = crStudentIds.length > 0 && crStudentIds.every((id) => selectedStudentIds.has(id));
+                  return (
+                    <button
+                      key={cr.id}
+                      onClick={() => {
+                        setSelectedStudentIds((prev) => {
+                          const next = new Set(prev);
+                          if (allInClass) {
+                            crStudentIds.forEach((id) => next.delete(id));
+                          } else {
+                            crStudentIds.forEach((id) => next.add(id));
+                          }
+                          return next;
+                        });
+                      }}
+                      className={`text-xs px-2.5 py-1 rounded-sm border transition-colors ${
+                        allInClass
+                          ? 'bg-primary text-white border-primary'
+                          : 'bg-white text-text-secondary border-slate-200 hover:border-primary hover:text-primary'
+                      }`}
+                    >
+                      {cr.name} ({crStudentIds.length})
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             <div className="relative mb-3">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
               <input
@@ -524,5 +582,13 @@ export default function CourseCreatePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CourseCreatePage() {
+  return (
+    <Suspense>
+      <CourseCreateInner />
+    </Suspense>
   );
 }

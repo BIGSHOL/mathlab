@@ -109,8 +109,8 @@ export function CurriculumConceptTree({
   ) + data.unclassified.length;
 
   return (
-    <div className="flex flex-col text-[11px]">
-      <div className="px-2 py-1 text-[10px] text-text-secondary">
+    <div className="flex flex-col text-xs">
+      <div className="px-2 py-1 text-xs text-text-secondary">
         총 {totalConcepts}개 개념
       </div>
 
@@ -182,7 +182,7 @@ export function CurriculumConceptTree({
                           <div key={sec.name}>
                             {sec.concepts.length > 0 && (
                               <div
-                                className="flex items-center gap-1 py-0.5 text-[10px] text-text-secondary"
+                                className="flex items-center gap-1 py-0.5 text-xs text-text-secondary"
                                 style={{ paddingLeft: '36px', paddingRight: '6px' }}
                               >
                                 <span className="w-1 h-1 rounded-full bg-current opacity-40 shrink-0" />
@@ -268,7 +268,7 @@ function ConceptNode({
 }) {
   return (
     <div
-      className={`flex items-center gap-1.5 py-0.5 rounded cursor-pointer transition-colors text-[10px] ${
+      className={`flex items-center gap-1.5 py-0.5 rounded cursor-pointer transition-colors text-xs ${
         isSelected
           ? 'bg-primary/10 text-primary font-medium'
           : 'hover:bg-slate-50 text-text-secondary'

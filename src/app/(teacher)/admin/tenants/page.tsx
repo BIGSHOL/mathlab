@@ -128,7 +128,7 @@ export default function TenantsPage() {
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-violet-100 rounded-lg">
+          <div className="p-2 bg-violet-100 rounded-sm">
             <Building2 className="w-5 h-5 text-violet-600" />
           </div>
           <div>
@@ -182,7 +182,7 @@ export default function TenantsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="지점명 또는 슬러그 검색..."
-            className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+            className="w-full h-9 pl-9 pr-3 rounded-sm border border-slate-200 text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
           />
         </div>
         <div className="flex gap-1.5">
@@ -190,7 +190,7 @@ export default function TenantsPage() {
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-sm text-xs font-medium transition-colors ${
                 statusFilter === s ? 'bg-primary text-white' : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
               }`}
             >
@@ -202,7 +202,7 @@ export default function TenantsPage() {
 
       {/* 지점 생성 폼 */}
       {showCreate && (
-        <div className="bg-white rounded-xl border border-slate-200 p-5 mb-6">
+        <div className="bg-white rounded-sm border border-slate-200 p-5 mb-6">
           <form onSubmit={handleCreate} className="space-y-4">
             <h3 className="text-sm font-semibold text-text-primary">지점 정보</h3>
             <div className="grid grid-cols-2 gap-3">
@@ -267,11 +267,11 @@ export default function TenantsPage() {
       {loading ? (
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-24 rounded-xl" />
+            <Skeleton key={i} className="h-24 rounded-sm" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-12 text-text-secondary text-sm bg-white rounded-xl border border-slate-200">
+        <div className="text-center py-12 text-text-secondary text-sm bg-white rounded-sm border border-slate-200">
           {search ? `"${search}" 검색 결과 없음` : '등록된 지점이 없습니다'}
         </div>
       ) : (
@@ -279,7 +279,7 @@ export default function TenantsPage() {
           {filtered.map((tenant) => (
             <div
               key={tenant.id}
-              className={`bg-white rounded-xl border p-4 transition-colors cursor-pointer ${
+              className={`bg-white rounded-sm border p-4 transition-colors cursor-pointer ${
                 tenant.isActive ? 'border-slate-200 hover:border-primary/40 hover:shadow-sm' : 'border-red-200 bg-red-50/50'
               }`}
               onClick={() => {
@@ -292,20 +292,20 @@ export default function TenantsPage() {
               <div className="flex items-center justify-between">
                 {/* 좌측: 기본 정보 */}
                 <div className="flex items-center gap-4">
-                  <div className={`p-2 rounded-lg ${tenant.isActive ? 'bg-blue-100' : 'bg-red-100'}`}>
+                  <div className={`p-2 rounded-sm ${tenant.isActive ? 'bg-blue-100' : 'bg-red-100'}`}>
                     <Building2 className={`w-5 h-5 ${tenant.isActive ? 'text-blue-600' : 'text-red-500'}`} />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-text-primary">{tenant.name}</h3>
                       {tenant.slug === 'default' && (
-                        <span className="text-[10px] bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded font-medium">본사</span>
+                        <span className="text-xs bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded font-medium">본사</span>
                       )}
                       {!tenant.isActive && (
-                        <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-medium">비활성</span>
+                        <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-medium">비활성</span>
                       )}
                       {tenant.expiringLicenses > 0 && (
-                        <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5">
+                        <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5">
                           <AlertTriangle className="w-2.5 h-2.5" />
                           이용권 {tenant.expiringLicenses}건 만료 임박
                         </span>
@@ -412,7 +412,7 @@ function StatCard({
   warn?: boolean;
 }) {
   return (
-    <div className={`bg-white rounded-xl border p-4 ${warn ? 'border-amber-200' : 'border-slate-200'}`}>
+    <div className={`bg-white rounded-sm border p-4 ${warn ? 'border-amber-200' : 'border-slate-200'}`}>
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-medium text-text-secondary">{label}</span>
         {icon}

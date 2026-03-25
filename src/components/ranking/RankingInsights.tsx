@@ -34,16 +34,16 @@ export function RankingInsights({ hotRisers, bigFallers, totalStudents, period, 
     <div className="flex flex-col gap-4">
       {/* 급상승 */}
       {hotRisers.length > 0 && (
-        <Card padding="md" className="border-2 border-orange-200/50 bg-gradient-to-br from-orange-50/50 to-amber-50/30 rounded-xl">
+        <Card padding="md" className="border-2 border-orange-200/50 bg-gradient-to-br from-orange-50/50 to-amber-50/30 rounded-sm">
           <div className="flex items-center gap-2 mb-3">
             <Rocket className="w-4 h-4 text-orange-500" />
             <h3 className="font-bold text-text-primary text-sm">급상승</h3>
-            <span className="text-[10px] font-extrabold text-orange-500 bg-orange-100 px-1.5 py-0.5 rounded">HOT</span>
+            <span className="text-xs font-extrabold text-orange-500 bg-orange-100 px-1.5 py-0.5 rounded">HOT</span>
           </div>
           <MotionStagger className="flex flex-col gap-2">
             {hotRisers.map((student, i) => (
               <MotionItem key={student.userId}>
-                <div className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-colors ${
+                <div className={`flex items-center gap-2.5 p-2.5 rounded-sm transition-colors ${
                   student.isMe ? 'bg-primary/10 border border-primary/20' : 'bg-white/60 border border-orange-100/50'
                 }`}>
                   <span className="w-5 text-center text-xs font-extrabold text-orange-400">{i + 1}</span>
@@ -67,14 +67,14 @@ export function RankingInsights({ hotRisers, bigFallers, totalStudents, period, 
 
       {/* 순위 하락 */}
       {bigFallers.length > 0 && period !== 'all' && (
-        <Card padding="md" className="border border-slate-200 rounded-xl">
+        <Card padding="md" className="border border-slate-200 rounded-sm">
           <div className="flex items-center gap-2 mb-3">
             <TrendingDown className="w-4 h-4 text-blue-400" />
             <h3 className="font-bold text-text-primary text-sm">순위 하락</h3>
           </div>
           <div className="flex flex-col gap-1.5">
             {bigFallers.map((student) => (
-              <div key={student.userId} className="flex items-center gap-2.5 p-2 rounded-lg bg-blue-50/30">
+              <div key={student.userId} className="flex items-center gap-2.5 p-2 rounded-sm bg-blue-50/30">
                 <UserAvatar name={student.name} badgeIcon={student.badgeIcon} size="xs" />
                 <span className="flex-1 text-xs text-text-primary truncate">{student.name}</span>
                 <RankChangeIndicator change={student.rankChange} size="sm" />
@@ -85,7 +85,7 @@ export function RankingInsights({ hotRisers, bigFallers, totalStudents, period, 
       )}
 
       {/* 기간 통계 */}
-      <Card padding="md" className="rounded-xl">
+      <Card padding="md" className="rounded-sm">
         <div className="flex items-center gap-2 mb-3">
           <Users className="w-4 h-4 text-primary" />
           <h3 className="font-bold text-text-primary text-sm">
@@ -93,24 +93,24 @@ export function RankingInsights({ hotRisers, bigFallers, totalStudents, period, 
           </h3>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-slate-50 rounded-lg p-3 text-center">
+          <div className="bg-slate-50 rounded-sm p-3 text-center">
             <p className="text-lg font-extrabold text-text-primary">{totalStudents}</p>
-            <p className="text-[10px] text-text-secondary font-medium">참여 학생</p>
+            <p className="text-xs text-text-secondary font-medium">참여 학생</p>
           </div>
-          <div className="bg-slate-50 rounded-lg p-3 text-center">
+          <div className="bg-slate-50 rounded-sm p-3 text-center">
             <p className="text-lg font-extrabold text-text-primary">
               {category === 'gem' ? avgGems : avgWeeklyXp}
             </p>
-            <p className="text-[10px] text-text-secondary font-medium">
+            <p className="text-xs text-text-secondary font-medium">
               {category === 'gem' ? '평균 보석' : '평균 XP'}
             </p>
           </div>
         </div>
         {category === 'xp' && hotRisers.length > 0 && (
-          <div className="mt-3 flex items-center gap-2 bg-amber-50 rounded-lg p-2.5">
+          <div className="mt-3 flex items-center gap-2 bg-amber-50 rounded-sm p-2.5">
             <Flame className="w-4 h-4 text-orange-500 shrink-0" />
             <div className="min-w-0">
-              <p className="text-[10px] text-text-secondary">최고 상승</p>
+              <p className="text-xs text-text-secondary">최고 상승</p>
               <p className="text-xs font-bold text-text-primary truncate">
                 {hotRisers[0].name} · +{hotRisers[0].weeklyXp} XP
               </p>

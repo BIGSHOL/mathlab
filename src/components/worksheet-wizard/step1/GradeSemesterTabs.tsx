@@ -29,7 +29,7 @@ export function GradeSemesterTabs({ questionCounts }: GradeSemesterTabsProps) {
           <button
             key={level.key}
             onClick={() => setSchoolLevel(level.key)}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-4 py-1.5 rounded-sm text-sm font-medium transition-colors ${
               schoolLevel === level.key
                 ? 'bg-primary text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -50,7 +50,7 @@ export function GradeSemesterTabs({ questionCounts }: GradeSemesterTabsProps) {
               <button
                 key={code}
                 onClick={() => toggleBookCode(code)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
+                className={`px-3 py-1.5 rounded-sm text-sm font-medium transition-colors border ${
                   isSelected
                     ? 'border-primary bg-blue-50 text-primary'
                     : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
@@ -58,7 +58,7 @@ export function GradeSemesterTabs({ questionCounts }: GradeSemesterTabsProps) {
               >
                 {BOOK_CODE_LABELS[code] ?? code}
                 {count != null && count > 0 && (
-                  <span className={`ml-1 text-[10px] ${isSelected ? 'text-primary/70' : 'text-slate-400'}`}>
+                  <span className={`ml-1 text-xs ${isSelected ? 'text-primary/70' : 'text-slate-400'}`}>
                     ({count})
                   </span>
                 )}

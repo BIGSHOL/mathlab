@@ -22,7 +22,7 @@ export function DomainSelector({ selectedDomain, onSelect, size = 'sm' }: Domain
             key={domain}
             onClick={() => onSelect(domain)}
             className={`rounded font-medium transition-all ${
-              size === 'sm' ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-xs'
+              size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-xs'
             } ${
               isActive
                 ? `${colors.bg} ${colors.text} ring-1 ring-current`

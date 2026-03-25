@@ -3,7 +3,6 @@ import {
   Users,
   BookOpen,
   Database,
-  GraduationCap,
   Calculator,
   FileSpreadsheet,
   CalendarCheck,
@@ -73,7 +72,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     id: 'students', label: '우리 반', minRole: 'TEACHER', items: [
       { id: 'students', label: '학생 목록', href: '/students', icon: Users, minRole: 'TEACHER', keywords: ['student', '학생', '관리', '목록'] },
-      { id: 'courses', label: '학습 코스', href: '/courses', icon: GraduationCap, minRole: 'TEACHER', keywords: ['course', '과정', '커리큘럼', '코스'] },
+      { id: 'courses', label: '반 목록', href: '/courses', icon: School, minRole: 'TEACHER', keywords: ['class', '반', '교실', 'course', '과정', '코스'] },
     ],
   },
 
@@ -129,7 +128,6 @@ const NAV_GROUPS: NavGroup[] = [
   {
     id: 'branch', label: '지점 운영', minRole: 'OWNER', style: 'admin', items: [
       { id: 'licenses', label: '이용권 관리', href: '/licenses', icon: KeyRound, minRole: 'OWNER', keywords: ['license', '이용권', '구독'] },
-      { id: 'classrooms', label: '반 관리', href: '/admin/classrooms', icon: School, minRole: 'OWNER', keywords: ['class', '반', '교실'] },
       { id: 'users', label: '사용자 관리', href: '/admin/users', icon: UsersRound, minRole: 'OWNER', keywords: ['user', '사용자', '계정'] },
     ],
   },
@@ -158,7 +156,6 @@ const OWNER_NAV_GROUPS: NavGroup[] = [
     id: 'branch', label: '지점 운영', minRole: 'OWNER', style: 'admin', items: [
       { id: 'students', label: '학생 관리', href: '/students', icon: Users, minRole: 'OWNER', keywords: ['student', '학생', '관리'] },
       { id: 'teachers', label: '선생님 관리', href: '/admin/teachers', icon: UserCog, minRole: 'OWNER', keywords: ['teacher', '선생님'] },
-      { id: 'classrooms', label: '반 관리', href: '/admin/classrooms', icon: School, minRole: 'OWNER', keywords: ['class', '반', '교실'] },
       { id: 'users', label: '사용자 관리', href: '/admin/users', icon: UsersRound, minRole: 'OWNER', keywords: ['user', '사용자', '계정'] },
       { id: 'licenses', label: '이용권 관리', href: '/licenses', icon: KeyRound, minRole: 'OWNER', keywords: ['license', '이용권', '구독'] },
     ],
@@ -178,7 +175,7 @@ const OWNER_NAV_GROUPS: NavGroup[] = [
     id: 'content', label: '출제·준비', minRole: 'OWNER', items: [
       { id: 'concepts', label: '개념 등록', href: '/concepts', icon: BookOpen, minRole: 'OWNER', keywords: ['concept', '개념', '빈칸', '등록'] },
       { id: 'questions', label: '문제 출제', href: '/questions', icon: Database, minRole: 'OWNER', keywords: ['question', '문제', '은행', '출제'] },
-      { id: 'courses', label: '학습 코스', href: '/courses', icon: GraduationCap, minRole: 'OWNER', keywords: ['course', '과정', '커리큘럼', '코스'] },
+      { id: 'courses', label: '반 관리', href: '/courses', icon: School, minRole: 'OWNER', keywords: ['class', '반', '교실', 'course', '과정', '코스'] },
     ],
   },
 

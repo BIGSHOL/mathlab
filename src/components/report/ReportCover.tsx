@@ -66,7 +66,7 @@ export function ReportCover({
           <h2 className="text-2xl font-black tracking-tight text-slate-900 italic">MathLab</h2>
         </div>
         <div className="text-right">
-          <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">AI Diagnostic Report</p>
+          <p className="text-xs font-bold text-slate-400 tracking-widest uppercase">AI Diagnostic Report</p>
           <p className="text-xs font-semibold text-slate-500">{testDate}</p>
         </div>
       </header>
@@ -127,12 +127,12 @@ export function ReportCover({
               </div>
             </div>
             <div className="pt-5 border-t border-slate-100 flex items-center justify-between mt-6">
-              <p className="text-[10px] text-slate-400 leading-tight font-medium">
+              <p className="text-xs text-slate-400 leading-tight font-medium">
                 AI 기반 진단 분석 보고서
               </p>
               <div className="text-right">
                 <p className="text-xs font-bold text-slate-800">MathLab AI 분석 엔진</p>
-                <p className="text-[10px] text-slate-400">Applied</p>
+                <p className="text-xs text-slate-400">Applied</p>
               </div>
             </div>
           </div>
@@ -157,7 +157,7 @@ export function ReportCover({
                 <span className="text-3xl font-black" style={{ color: '#135bec' }}>{questionCount}</span>
               </div>
             </div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Questions</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Questions</p>
           </div>
 
           <div
@@ -184,11 +184,11 @@ export function ReportCover({
       {/* Bottom Note */}
       <div className="relative z-10 mx-12 mt-6 mb-8">
         <div
-          className="rounded-xl p-5 border border-slate-100"
+          className="rounded-sm p-5 border border-slate-100"
           style={{ backgroundColor: '#f8fafc', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } as React.CSSProperties}
         >
           <p className="text-xs font-bold text-slate-800 mb-1">평가 안내</p>
-          <p className="text-[11px] text-slate-500 leading-relaxed">
+          <p className="text-xs text-slate-500 leading-relaxed">
             본 리포트는 MathLab AI 엔진이 분석한 &apos;{studentName}&apos; 학생의 수학 학습 수준을 바탕으로 작성되었습니다.
             영역별 역량 분석, 난이도별 성취도, 단원별 이해도를 종합적으로 진단하여 맞춤 학습 방향을 제시합니다.
           </p>
@@ -203,9 +203,9 @@ export function ReportCover({
               <path d="M42.4379 44C42.4379 44 36.0744 33.9038 41.1692 24C46.8624 12.9336 42.2078 4 42.2078 4L7.01134 4C7.01134 4 11.6577 12.932 5.96912 23.9969C0.876273 33.9029 7.27094 44 7.27094 44L42.4379 44Z" />
             </svg>
           </div>
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{academyName}</span>
+          <span className="text-xs font-black uppercase tracking-widest text-slate-400">{academyName}</span>
         </div>
-        <p className="text-[10px] font-bold text-slate-300">© 2026 {academyName}. All rights reserved.</p>
+        <p className="text-xs font-bold text-slate-300">© 2026 {academyName}. All rights reserved.</p>
       </footer>
     </div>
   );

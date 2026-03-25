@@ -54,7 +54,7 @@ export function EditorBottomBar({
               return (
                 <span
                   key={domain}
-                  className={`px-2 py-0.5 rounded text-[11px] font-bold ${colors.bg} ${colors.text}`}
+                  className={`px-2 py-0.5 rounded text-xs font-bold ${colors.bg} ${colors.text}`}
                 >
                   {DOMAIN_LABELS[domain]} {count}
                 </span>

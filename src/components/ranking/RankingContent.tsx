@@ -81,7 +81,7 @@ export function RankingContent({
     <div>
       {/* 카테고리 탭 (XP | 보석) */}
       <div className="flex items-center gap-3 mb-4">
-        <div className="flex items-center bg-slate-100 rounded-lg p-0.5">
+        <div className="flex items-center bg-slate-100 rounded-sm p-0.5">
           {categoryTabs.map((tab) => (
             <button
               key={tab.key}
@@ -104,7 +104,7 @@ export function RankingContent({
         </div>
 
         {/* 스코프 토글 (우리 지점 | 전체) */}
-        <div className="flex items-center bg-slate-100 rounded-lg p-0.5 ml-auto">
+        <div className="flex items-center bg-slate-100 rounded-sm p-0.5 ml-auto">
           {(['tenant', 'all'] as const).map((s) => (
             <button
               key={s}
@@ -138,7 +138,7 @@ export function RankingContent({
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-primary/5 border-2 border-primary/20 rounded-xl p-4 flex items-center justify-between mb-4"
+          className="bg-primary/5 border-2 border-primary/20 rounded-sm p-4 flex items-center justify-between mb-4"
         >
           <div className="flex items-center gap-2">
             <Trophy className="w-5 h-5 text-primary" />

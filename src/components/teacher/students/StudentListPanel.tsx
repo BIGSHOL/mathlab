@@ -41,6 +41,9 @@ interface StudentListPanelProps {
   // 파생 데이터
   panelTitle: string;
   panelCount: number;
+
+  // 모바일 상세 열림 시 목록 숨김
+  mobileHidden?: boolean;
 }
 
 export function StudentListPanel({
@@ -63,9 +66,10 @@ export function StudentListPanel({
   isManager,
   panelTitle,
   panelCount,
+  mobileHidden,
 }: StudentListPanelProps) {
   return (
-    <aside className={`shrink-0 border-r border-slate-200 bg-slate-50/30 flex flex-col transition-all duration-200 ${leftPanelCollapsed ? 'w-12' : 'w-72'}`}>
+    <aside className={`shrink-0 border-r border-slate-200 bg-slate-50/30 flex flex-col transition-all duration-200 ${leftPanelCollapsed ? 'w-12 hidden md:flex' : 'w-full md:w-72'} ${mobileHidden ? 'hidden md:flex' : ''}`}>
       <div className="shrink-0 px-3 py-2.5 border-b border-slate-200 bg-white">
         <div className="flex items-center justify-between">
           {!leftPanelCollapsed && (

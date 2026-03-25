@@ -316,7 +316,7 @@ export default function TimeAttackPage() {
 
     return (
       <div className="p-6 max-w-md mx-auto">
-        <Card className={`rounded-xl overflow-hidden relative ${isNewRecord ? 'border-2 border-amber-300' : ''}`}>
+        <Card className={`rounded-sm overflow-hidden relative ${isNewRecord ? 'border-2 border-amber-300' : ''}`}>
           {/* 축하 이펙트 */}
           {isNewRecord && (
             <div className="absolute inset-0 pointer-events-none z-0">
@@ -360,7 +360,7 @@ export default function TimeAttackPage() {
             </div>
 
             {/* 정답 수 — 히어로 */}
-            <div className={`rounded-xl p-5 ${isNewRecord ? 'bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200' : 'bg-slate-50 border border-slate-200'}`}>
+            <div className={`rounded-sm p-5 ${isNewRecord ? 'bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200' : 'bg-slate-50 border border-slate-200'}`}>
               <p className={`text-5xl font-black ${isNewRecord ? 'text-amber-600' : 'text-primary'}`}>
                 {correctCount}
               </p>
@@ -375,39 +375,39 @@ export default function TimeAttackPage() {
 
             {/* XP 획득 */}
             {result && result.xpEarned > 0 && (
-              <div className="flex items-center justify-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5">
+              <div className="flex items-center justify-center gap-2 bg-amber-50 border border-amber-200 rounded-sm px-4 py-2.5">
                 <Star className="w-5 h-5 text-amber-500" />
                 <span className="font-bold text-amber-700">+{result.xpEarned} XP</span>
                 {result.leveledUp && (
-                  <span className="text-[10px] font-extrabold bg-amber-500 text-white rounded-full px-2 py-0.5">LEVEL UP!</span>
+                  <span className="text-xs font-extrabold bg-amber-500 text-white rounded-full px-2 py-0.5">LEVEL UP!</span>
                 )}
               </div>
             )}
 
             {/* 보조 통계 */}
             <div className="grid grid-cols-3 gap-2">
-              <div className="bg-slate-50 rounded-lg p-3">
+              <div className="bg-slate-50 rounded-sm p-3">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <Zap className="w-3.5 h-3.5 text-orange-500" />
                 </div>
                 <p className="text-lg font-black text-text-primary">{maxCombo}</p>
-                <p className="text-[10px] text-text-secondary font-medium">최대 콤보</p>
+                <p className="text-xs text-text-secondary font-medium">최대 콤보</p>
               </div>
-              <div className="bg-slate-50 rounded-lg p-3">
+              <div className="bg-slate-50 rounded-sm p-3">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <Timer className="w-3.5 h-3.5 text-blue-500" />
                 </div>
                 <p className="text-lg font-black text-text-primary">{TIME_LIMIT}초</p>
-                <p className="text-[10px] text-text-secondary font-medium">제한 시간</p>
+                <p className="text-xs text-text-secondary font-medium">제한 시간</p>
               </div>
-              <div className="bg-slate-50 rounded-lg p-3">
+              <div className="bg-slate-50 rounded-sm p-3">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                 </div>
                 <p className="text-lg font-black text-text-primary">
                   {answeredList.length > 0 ? Math.round((correctCount / answeredList.length) * 100) : 0}%
                 </p>
-                <p className="text-[10px] text-text-secondary font-medium">정답률</p>
+                <p className="text-xs text-text-secondary font-medium">정답률</p>
               </div>
             </div>
 

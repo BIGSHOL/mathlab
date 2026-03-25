@@ -68,7 +68,7 @@ function ToastItem({ item }: { item: ToastItem }) {
 
   return (
     <div
-      className={`flex items-center gap-2.5 px-4 py-3 rounded-lg border shadow-lg backdrop-blur-sm max-w-sm animate-in slide-in-from-right-full fade-in duration-200 ${styles[item.type]}`}
+      className={`flex items-center gap-2.5 px-4 py-3 rounded-sm border shadow-lg backdrop-blur-sm max-w-sm animate-in slide-in-from-right-full fade-in duration-200 ${styles[item.type]}`}
     >
       <Icon className={`w-4.5 h-4.5 shrink-0 ${iconColors[item.type]}`} />
       <p className="text-sm font-medium flex-1">{item.message}</p>

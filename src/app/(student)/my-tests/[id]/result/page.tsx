@@ -160,7 +160,7 @@ export default function TestResultPage() {
           <Skeleton className="h-7 w-36" />
         </div>
         {/* 점수 카드 */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 mb-6 text-center">
+        <div className="bg-white border border-slate-200 rounded-sm p-5 mb-6 text-center">
           <Skeleton className="w-12 h-12 rounded mx-auto mb-3" />
           <Skeleton className="h-12 w-32 mx-auto mb-1" />
           <Skeleton className="h-4 w-10 mx-auto mb-3" />
@@ -169,7 +169,7 @@ export default function TestResultPage() {
         {/* 4개 통계 카드 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           {Array.from({ length: 4 }, (_, i) => (
-            <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 text-center space-y-1.5">
+            <div key={i} className="bg-white border border-slate-200 rounded-sm p-4 text-center space-y-1.5">
               <Skeleton className="w-5 h-5 rounded mx-auto" />
               <Skeleton className="h-6 w-10 mx-auto" />
               <Skeleton className="h-3 w-16 mx-auto" />
@@ -177,7 +177,7 @@ export default function TestResultPage() {
           ))}
         </div>
         {/* 학습 상태 분석 */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6">
+        <div className="bg-white border border-slate-200 rounded-sm p-4 mb-6">
           <Skeleton className="h-4 w-24 mb-3" />
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
             {Array.from({ length: 4 }, (_, i) => (
@@ -193,7 +193,7 @@ export default function TestResultPage() {
         <Skeleton className="h-6 w-24 mb-4" />
         <div className="space-y-3">
           {Array.from({ length: 4 }, (_, i) => (
-            <div key={i} className="bg-white border border-slate-200 rounded-xl p-4">
+            <div key={i} className="bg-white border border-slate-200 rounded-sm p-4">
               <div className="flex items-start gap-3">
                 <Skeleton className="w-8 h-8 rounded shrink-0" />
                 <div className="flex-1 space-y-2">

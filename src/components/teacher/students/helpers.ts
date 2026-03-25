@@ -18,6 +18,15 @@ export function relativeTime(iso: string | null): string {
   return new Date(iso).toLocaleDateString('ko-KR');
 }
 
+export function shortDate(iso: string | null): string {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  const yy = String(d.getFullYear()).slice(2);
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yy}.${mm}.${dd}`;
+}
+
 export function formatSeconds(s: number): string {
   if (s < 60) return `${s}초`;
   const min = Math.floor(s / 60);

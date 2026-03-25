@@ -236,21 +236,21 @@ export default function TestPlayPage() {
         {/* 시험 헤더 */}
         <div className="flex items-center justify-between mb-6">
           <Skeleton className="h-6 w-40" />
-          <Skeleton className="h-8 w-20 rounded-lg" />
+          <Skeleton className="h-8 w-20 rounded-sm" />
         </div>
         <Skeleton className="h-2 w-full rounded-full mb-6" />
         {/* 문제 카드 */}
-        <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+        <div className="bg-white border border-slate-200 rounded-sm p-6 space-y-4">
           <div className="flex items-center gap-2 mb-2">
             <Skeleton className="h-6 w-16 rounded" />
             <Skeleton className="h-5 w-24" />
           </div>
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-[85%]" />
-          <Skeleton className="h-24 w-full rounded-lg mt-2" />
+          <Skeleton className="h-24 w-full rounded-sm mt-2" />
           <div className="grid grid-cols-2 gap-3 mt-4">
             {Array.from({ length: 4 }, (_, i) => (
-              <Skeleton key={i} className="h-12 rounded-lg" />
+              <Skeleton key={i} className="h-12 rounded-sm" />
             ))}
           </div>
         </div>

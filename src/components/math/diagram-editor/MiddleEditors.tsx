@@ -129,7 +129,7 @@ export function CircleForm({ params, onChange }: SubFormProps) {
         {labels.map((l, i) => (
           <div key={i} className="flex gap-1 mt-1 items-center">
             <input type="text" value={l.text} onChange={(e) => { const arr = [...labels]; arr[i] = { ...l, text: e.target.value }; onChange({ labels: arr }); }} className="flex-1 text-xs px-1.5 py-0.5 border border-slate-300 rounded" placeholder="텍스트" />
-            <select value={l.position || 'outside'} onChange={(e) => { const arr = [...labels]; arr[i] = { ...l, position: e.target.value as 'outside' | 'center' }; onChange({ labels: arr }); }} className="text-[10px] px-1 py-0.5 border border-slate-300 rounded">
+            <select value={l.position || 'outside'} onChange={(e) => { const arr = [...labels]; arr[i] = { ...l, position: e.target.value as 'outside' | 'center' }; onChange({ labels: arr }); }} className="text-xs px-1 py-0.5 border border-slate-300 rounded">
               <option value="outside">바깥</option>
               <option value="center">중앙</option>
             </select>
@@ -172,9 +172,9 @@ export function CircleForm({ params, onChange }: SubFormProps) {
                 ))}
               </div>
               {/* 호 두께 */}
-              <label className="flex items-center gap-0.5 text-[10px] text-slate-500 ml-1 shrink-0">
+              <label className="flex items-center gap-0.5 text-xs text-slate-500 ml-1 shrink-0">
                 두께
-                <input type="number" value={a.strokeWidth || 4} min={1} max={10} step={0.5} onChange={(e) => { const arr = [...arcs]; arr[i] = { ...a, strokeWidth: parseFloat(e.target.value) || 4 }; onChange({ arcs: arr }); }} className="w-10 text-[10px] px-1 py-0.5 border border-slate-300 rounded bg-white" />
+                <input type="number" value={a.strokeWidth || 4} min={1} max={10} step={0.5} onChange={(e) => { const arr = [...arcs]; arr[i] = { ...a, strokeWidth: parseFloat(e.target.value) || 4 }; onChange({ arcs: arr }); }} className="w-10 text-xs px-1 py-0.5 border border-slate-300 rounded bg-white" />
               </label>
             </div>
           </div>
@@ -232,7 +232,7 @@ export function FunctionGraphForm({ params, onChange }: SubFormProps) {
                 ))}
               </div>
               {/* 점선 토글 */}
-              <label className="flex items-center gap-0.5 text-[10px] text-slate-500 cursor-pointer ml-1 shrink-0">
+              <label className="flex items-center gap-0.5 text-xs text-slate-500 cursor-pointer ml-1 shrink-0">
                 <input type="checkbox" checked={!!f.dashed} onChange={(e) => { const arr = [...functions]; arr[i] = { ...f, dashed: e.target.checked }; onChange({ functions: arr }); }} className="rounded w-3 h-3" />
                 점선
               </label>
@@ -265,7 +265,7 @@ export function VennDiagramForm({ params, onChange }: SubFormProps) {
               <Plus className="w-3 h-3 inline" /> 추가
             </button>
           ) : (
-            <span className="text-[10px] text-slate-400">최대 3개</span>
+            <span className="text-xs text-slate-400">최대 3개</span>
           )}
         </div>
         {sets.map((s, i) => (
@@ -347,7 +347,7 @@ export function RegularPolygonForm({ params, onChange }: SubFormProps) {
                 else if (opt.value === 'all') onChange({ diagonals: true });
                 else onChange({ diagonals: [] });
               }}
-              className={`px-2 py-0.5 text-[10px] border rounded transition-colors ${mode === opt.value ? 'bg-primary text-white border-primary' : 'border-slate-200 hover:bg-slate-50'}`}
+              className={`px-2 py-0.5 text-xs border rounded transition-colors ${mode === opt.value ? 'bg-primary text-white border-primary' : 'border-slate-200 hover:bg-slate-50'}`}
             >
               {opt.label}
             </button>
@@ -374,7 +374,7 @@ export function RegularPolygonForm({ params, onChange }: SubFormProps) {
               <button type="button" onClick={() => onChange({ diagonals: diagArray.filter((_, j) => j !== i) })} className="text-slate-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
             </div>
           ))}
-          <p className="text-[10px] text-slate-400 mt-1">꼭짓점 번호: 0 (상단) ~ {nSides - 1} (시계방향)</p>
+          <p className="text-xs text-slate-400 mt-1">꼭짓점 번호: 0 (상단) ~ {nSides - 1} (시계방향)</p>
         </div>
       )}
       <TextField label="변의 길이" value={String(params.sideLength || '')} onChange={(v) => onChange({ sideLength: v })} placeholder="예: 5cm" />
@@ -406,7 +406,7 @@ export function HistogramForm({ params, onChange }: SubFormProps) {
             <input type="number" value={b.range[0]} onChange={(e) => { const arr = [...bins]; arr[i] = { ...b, range: [parseFloat(e.target.value) || 0, b.range[1]] }; onChange({ bins: arr }); }} className="w-14 text-xs px-1 py-0.5 border border-slate-300 rounded" title="시작" />
             <span className="text-xs text-slate-400">~</span>
             <input type="number" value={b.range[1]} onChange={(e) => { const arr = [...bins]; arr[i] = { ...b, range: [b.range[0], parseFloat(e.target.value) || 0] }; onChange({ bins: arr }); }} className="w-14 text-xs px-1 py-0.5 border border-slate-300 rounded" title="끝" />
-            <span className="text-[10px] text-slate-400">도수:</span>
+            <span className="text-xs text-slate-400">도수:</span>
             <input type="number" value={b.frequency} onChange={(e) => { const arr = [...bins]; arr[i] = { ...b, frequency: parseInt(e.target.value) || 0 }; onChange({ bins: arr }); }} className="w-12 text-xs px-1 py-0.5 border border-slate-300 rounded" />
             <button type="button" onClick={() => onChange({ bins: bins.filter((_, j) => j !== i) })} className="text-slate-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
           </div>
@@ -548,7 +548,7 @@ export function TreeDiagramForm({ params, onChange }: SubFormProps) {
         <label className="text-xs text-slate-500">방향</label>
         <div className="flex gap-1.5 mt-1">
           {[{ value: 'horizontal', label: '가로 (→)' }, { value: 'vertical', label: '세로 (↓)' }].map(opt => (
-            <button key={opt.value} type="button" onClick={() => onChange({ orientation: opt.value })} className={`px-2 py-0.5 text-[10px] border rounded transition-colors ${params.orientation === opt.value ? 'bg-primary text-white border-primary' : 'border-slate-200 hover:bg-slate-50'}`}>{opt.label}</button>
+            <button key={opt.value} type="button" onClick={() => onChange({ orientation: opt.value })} className={`px-2 py-0.5 text-xs border rounded transition-colors ${params.orientation === opt.value ? 'bg-primary text-white border-primary' : 'border-slate-200 hover:bg-slate-50'}`}>{opt.label}</button>
           ))}
         </div>
       </div>
@@ -585,7 +585,7 @@ export function ScatterPlotForm({ params, onChange }: SubFormProps) {
         <div className="max-h-32 overflow-y-auto">
           {points.map((p, i) => (
             <div key={i} className="flex gap-1 mt-1 items-center">
-              <span className="text-[10px] text-slate-400 w-3">{i + 1}</span>
+              <span className="text-xs text-slate-400 w-3">{i + 1}</span>
               <input type="number" value={p.x} onChange={(e) => { const arr = [...points]; arr[i] = { ...p, x: parseFloat(e.target.value) || 0 }; onChange({ points: arr }); }} className="w-14 text-xs px-1 py-0.5 border border-slate-300 rounded" step="0.1" title="x" />
               <input type="number" value={p.y} onChange={(e) => { const arr = [...points]; arr[i] = { ...p, y: parseFloat(e.target.value) || 0 }; onChange({ points: arr }); }} className="w-14 text-xs px-1 py-0.5 border border-slate-300 rounded" step="0.1" title="y" />
               <button type="button" onClick={() => onChange({ points: points.filter((_, j) => j !== i) })} className="text-slate-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>

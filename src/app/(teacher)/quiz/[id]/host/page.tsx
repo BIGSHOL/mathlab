@@ -87,21 +87,21 @@ export default function QuizHostPage() {
     return (
       <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 py-6 md:py-8">
         <div className="flex items-center gap-3 mb-6">
-          <Skeleton className="w-8 h-8 rounded-lg" />
+          <Skeleton className="w-8 h-8 rounded-sm" />
           <Skeleton className="h-7 w-40" />
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
           {Array.from({ length: 3 }, (_, i) => (
-            <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
+            <div key={i} className="bg-white border border-slate-200 rounded-sm p-4 space-y-2">
               <Skeleton className="h-3 w-16" />
               <Skeleton className="h-6 w-20" />
             </div>
           ))}
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
+        <div className="bg-white border border-slate-200 rounded-sm p-5 space-y-3">
           <Skeleton className="h-5 w-28" />
           {Array.from({ length: 4 }, (_, i) => (
-            <div key={i} className="flex items-center gap-3 p-3 border border-slate-100 rounded-lg">
+            <div key={i} className="flex items-center gap-3 p-3 border border-slate-100 rounded-sm">
               <Skeleton variant="circle" className="w-8 h-8 shrink-0" />
               <Skeleton className="h-4 flex-1" />
               <Skeleton className="h-4 w-12" />
@@ -179,7 +179,7 @@ export default function QuizHostPage() {
             <p className="text-slate-400 text-lg">학생들에게 참가 코드를 알려주세요</p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               {quiz.participants.map((p) => (
-                <span key={p.id} className="px-3 py-1.5 bg-slate-700 rounded-lg text-sm font-medium">
+                <span key={p.id} className="px-3 py-1.5 bg-slate-700 rounded-sm text-sm font-medium">
                   {p.studentName}
                 </span>
               ))}
@@ -215,7 +215,7 @@ export default function QuizHostPage() {
                   {(quiz.currentQuestion.choices as string[]).map((c, i) => (
                     <div
                       key={i}
-                      className="px-4 py-3 bg-slate-700 rounded-xl text-white text-sm"
+                      className="px-4 py-3 bg-slate-700 rounded-sm text-white text-sm"
                     >
                       <span className="font-bold text-yellow-400 mr-2">{i + 1}</span>
                       <MathRenderer content={c} />
@@ -235,7 +235,7 @@ export default function QuizHostPage() {
                 {sortedParticipants.map((p, idx) => (
                   <div
                     key={p.id}
-                    className={`flex items-center justify-between px-3 py-2 rounded-lg ${
+                    className={`flex items-center justify-between px-3 py-2 rounded-sm ${
                       idx === 0 ? 'bg-yellow-500/20' : idx === 1 ? 'bg-slate-600/50' : idx === 2 ? 'bg-amber-700/20' : 'bg-slate-700/50'
                     }`}
                   >
@@ -264,7 +264,7 @@ export default function QuizHostPage() {
               {sortedParticipants.map((p, idx) => (
                 <div
                   key={p.id}
-                  className={`flex items-center justify-between px-4 py-3 rounded-xl ${
+                  className={`flex items-center justify-between px-4 py-3 rounded-sm ${
                     idx === 0 ? 'bg-yellow-500/20 ring-2 ring-yellow-400' :
                     idx === 1 ? 'bg-slate-600/50' :
                     idx === 2 ? 'bg-amber-700/20' : 'bg-slate-700/50'

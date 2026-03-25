@@ -137,7 +137,7 @@ export function StudentSidebar() {
   const renderSectionLabel = (label: string) => {
     if (collapsed) return <div key={label} className={`my-3 border-t ${isRevengePage ? 'border-slate-700' : 'border-slate-100'}`} />;
     return (
-      <p key={label} className={`text-[10px] font-bold uppercase tracking-widest mb-1.5 px-2 mt-5 ${isRevengePage ? 'text-slate-500' : 'text-slate-400'}`}>
+      <p key={label} className={`text-xs font-bold uppercase tracking-widest mb-1.5 px-2 mt-5 ${isRevengePage ? 'text-slate-500' : 'text-slate-400'}`}>
         {label}
       </p>
     );
@@ -221,7 +221,7 @@ export function StudentSidebar() {
             <UserAvatar name={user?.name ?? '학생'} badgeIcon={badgeIcon} size="xs" />
             <div className="flex-1 min-w-0">
               <p className={`text-xs font-semibold truncate ${isRevengePage ? 'text-white' : 'text-text-primary'}`}>{user?.name ?? '학생'}</p>
-              <p className={`text-[10px] truncate ${isRevengePage ? 'text-slate-500' : 'text-text-secondary'}`}>학생</p>
+              <p className={`text-xs truncate ${isRevengePage ? 'text-slate-500' : 'text-text-secondary'}`}>학생</p>
             </div>
             <div className="flex items-center gap-0.5 shrink-0">
               <button

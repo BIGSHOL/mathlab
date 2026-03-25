@@ -163,7 +163,7 @@ export default function TenantDetailPage() {
         {/* 헤더 (뒤로가기 + 아이콘 + 이름 + 부제) */}
         <div className="flex items-center gap-3 mb-6">
           <Skeleton className="h-8 w-8 rounded" />
-          <Skeleton className="w-9 h-9 rounded-lg" />
+          <Skeleton className="w-9 h-9 rounded-sm" />
           <div className="space-y-1">
             <Skeleton className="h-6 w-32" />
             <Skeleton className="h-3 w-40" />
@@ -172,7 +172,7 @@ export default function TenantDetailPage() {
         {/* 4개 통계 카드 */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {Array.from({ length: 4 }, (_, i) => (
-            <div key={i} className="bg-white rounded-xl border border-slate-200 p-4 text-center space-y-1.5">
+            <div key={i} className="bg-white rounded-sm border border-slate-200 p-4 text-center space-y-1.5">
               <Skeleton className="w-5 h-5 mx-auto rounded" />
               <Skeleton className="h-7 w-10 mx-auto" />
               <Skeleton className="h-3 w-16 mx-auto" />
@@ -180,16 +180,16 @@ export default function TenantDetailPage() {
           ))}
         </div>
         {/* 역할별 사용자 */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5 mb-6">
+        <div className="bg-white rounded-sm border border-slate-200 p-5 mb-6">
           <Skeleton className="h-4 w-24 mb-3" />
           <div className="flex flex-wrap gap-2">
             {Array.from({ length: 4 }, (_, i) => (
-              <Skeleton key={i} className="h-8 w-24 rounded-lg" />
+              <Skeleton key={i} className="h-8 w-24 rounded-sm" />
             ))}
           </div>
         </div>
         {/* 수정 폼 */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
+        <div className="bg-white rounded-sm border border-slate-200 p-5">
           <Skeleton className="h-4 w-28 mb-4" />
           <div className="space-y-4">
             <Skeleton className="h-10 w-full rounded" />
@@ -213,7 +213,7 @@ export default function TenantDetailPage() {
         <Button variant="ghost" size="sm" onClick={() => router.push('/admin/tenants')}>
           <ArrowLeft className="w-4 h-4" />
         </Button>
-        <div className="p-2 bg-violet-100 rounded-lg">
+        <div className="p-2 bg-violet-100 rounded-sm">
           <Building2 className="w-5 h-5 text-violet-600" />
         </div>
         <div>
@@ -227,22 +227,22 @@ export default function TenantDetailPage() {
 
       {/* 통계 카드 */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
+        <div className="bg-white rounded-sm border border-slate-200 p-4 text-center">
           <Users className="w-5 h-5 text-slate-400 mx-auto mb-1" />
           <p className="text-2xl font-bold text-text-primary">{tenant._count.users}</p>
           <p className="text-xs text-text-secondary">전체 사용자</p>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
+        <div className="bg-white rounded-sm border border-slate-200 p-4 text-center">
           <School className="w-5 h-5 text-slate-400 mx-auto mb-1" />
           <p className="text-2xl font-bold text-text-primary">{tenant._count.classrooms}</p>
           <p className="text-xs text-text-secondary">반</p>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
+        <div className="bg-white rounded-sm border border-slate-200 p-4 text-center">
           <GraduationCap className="w-5 h-5 text-slate-400 mx-auto mb-1" />
           <p className="text-2xl font-bold text-text-primary">{tenant.roleCounts.STUDENT || 0}</p>
           <p className="text-xs text-text-secondary">학생</p>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
+        <div className="bg-white rounded-sm border border-slate-200 p-4 text-center">
           <UserCog className="w-5 h-5 text-slate-400 mx-auto mb-1" />
           <p className="text-2xl font-bold text-text-primary">
             {(tenant.roleCounts.TEACHER || 0) + (tenant.roleCounts.OWNER || 0)}
@@ -252,7 +252,7 @@ export default function TenantDetailPage() {
       </div>
 
       {/* 역할별 사용자 수 */}
-      <div className="bg-white rounded-xl border border-slate-200 p-5 mb-6">
+      <div className="bg-white rounded-sm border border-slate-200 p-5 mb-6">
         <h3 className="text-sm font-semibold text-text-primary mb-3">역할별 사용자</h3>
         <div className="flex flex-wrap gap-2">
           {Object.entries(roleLabels).map(([role, info]) => {
@@ -260,7 +260,7 @@ export default function TenantDetailPage() {
             if (count === 0 && role === 'SUPER_ADMIN') return null;
             const Icon = info.icon;
             return (
-              <div key={role} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${info.color}`}>
+              <div key={role} className={`flex items-center gap-2 px-3 py-1.5 rounded-sm ${info.color}`}>
                 <Icon className="w-4 h-4" />
                 <span className="text-sm font-medium">{info.label}</span>
                 <span className="text-sm font-bold">{count}</span>
@@ -271,7 +271,7 @@ export default function TenantDetailPage() {
       </div>
 
       {/* 수정 폼 */}
-      <div className="bg-white rounded-xl border border-slate-200 p-5">
+      <div className="bg-white rounded-sm border border-slate-200 p-5">
         <h3 className="text-sm font-semibold text-text-primary mb-4">지점 정보 수정</h3>
         <div className="space-y-4">
           <div>
@@ -310,7 +310,7 @@ export default function TenantDetailPage() {
       </div>
 
       {/* 이용권 관리 */}
-      <div className="bg-white rounded-xl border border-slate-200 p-5 mt-6">
+      <div className="bg-white rounded-sm border border-slate-200 p-5 mt-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <KeyRound className="w-4 h-4 text-primary" />
@@ -422,7 +422,7 @@ export default function TenantDetailPage() {
                     return (
                     <div key={f.key} className="flex items-center gap-1">
                       {addingFeature === f.key ? (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-slate-50 rounded-lg border border-slate-200">
+                        <div className="flex items-center gap-1 px-2 py-1 bg-slate-50 rounded-sm border border-slate-200">
                           <FeatIcon className={`w-3.5 h-3.5 ${f.color} shrink-0`} />
                           <span className="text-xs font-medium">{f.label}</span>
                           <input
@@ -450,7 +450,7 @@ export default function TenantDetailPage() {
                       ) : (
                         <button
                           onClick={() => { setAddingFeature(f.key); setNewSeats(100); }}
-                          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors"
+                          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-sm border border-slate-200 transition-colors"
                         >
                           <Plus className="w-3 h-3" />
                           <FeatIcon className={`w-3.5 h-3.5 ${f.color}`} />

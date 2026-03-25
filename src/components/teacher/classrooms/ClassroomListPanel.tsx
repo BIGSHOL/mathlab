@@ -21,7 +21,7 @@ interface ClassroomListPanelProps {
   classrooms: ClassroomItem[];
   selectedId: string | null;
   onSelect: (classroom: ClassroomItem) => void;
-  onAddClick: () => void;
+  onAddClick?: () => void;
 }
 
 export function ClassroomListPanel({
@@ -74,13 +74,18 @@ export function ClassroomListPanel({
             </div>
           </div>
 
-          {/* 새 반 만들기 버튼 */}
-          <div className="px-3 pb-2">
-            <Button size="sm" className="w-full text-xs" onClick={onAddClick}>
-              <Plus className="w-3.5 h-3.5 mr-1" /> 새 반 만들기
-            </Button>
-          </div>
-          <div className="border-b border-slate-200" />
+          {/* 새 반 만들기 버튼 (OWNER+만) */}
+          {onAddClick && (
+            <>
+              <div className="px-3 pb-2">
+                <Button size="sm" className="w-full text-xs" onClick={onAddClick}>
+                  <Plus className="w-3.5 h-3.5 mr-1" /> 새 반 만들기
+                </Button>
+              </div>
+              <div className="border-b border-slate-200" />
+            </>
+          )}
+          {!onAddClick && <div className="border-b border-slate-200" />}
 
           {/* 반 목록 */}
           <div className="flex-1 overflow-y-auto">

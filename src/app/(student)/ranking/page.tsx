@@ -164,7 +164,7 @@ export default async function RankingPage({
   return (
     <PageContainer maxWidth="xl">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center shadow-lg shadow-amber-200/50">
+        <div className="w-10 h-10 rounded-sm bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center shadow-lg shadow-amber-200/50">
           <Trophy className="w-5 h-5 text-white" />
         </div>
         <div>

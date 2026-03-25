@@ -83,7 +83,7 @@ export default function LoginPage() {
         <div className="bg-white rounded-2xl border border-slate-200 shadow-soft p-8">
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             {error && (
-              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
+              <div className="p-3 rounded-sm bg-red-50 border border-red-200 text-red-600 text-sm">
                 {error}
               </div>
             )}

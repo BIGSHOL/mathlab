@@ -86,10 +86,10 @@ export function TabSimilarQuestions({
     <div className="flex flex-col h-full">
       {/* 원본 문제 정보 */}
       <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-        <h4 className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mb-2">원본 문제</h4>
+        <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">원본 문제</h4>
         <div className="flex items-center gap-1.5 mb-1.5">
-          <span className="text-[11px] text-slate-500">[{sourceQuestion.chapter}]</span>
-          <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+          <span className="text-xs text-slate-500">[{sourceQuestion.chapter}]</span>
+          <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${
             sourceQuestion.difficulty === 'BASIC' ? 'bg-emerald-100 text-emerald-700' :
             sourceQuestion.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
             sourceQuestion.difficulty === 'HIGH' ? 'bg-red-100 text-red-700' :
@@ -98,7 +98,7 @@ export function TabSimilarQuestions({
             {DIFFICULTY_LABELS[sourceQuestion.difficulty as QuestionDifficulty] ?? sourceQuestion.difficulty}
           </span>
           {showDomain && sourceDomain && domainColors && (
-            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${domainColors.bg} ${domainColors.text}`}>
+            <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${domainColors.bg} ${domainColors.text}`}>
               {DOMAIN_LABELS[sourceDomain]}
             </span>
           )}
@@ -125,11 +125,11 @@ export function TabSimilarQuestions({
         {!loading && similar.filter((q) => !selectedIds.has(q.id)).map((q) => (
           <div
             key={q.id}
-            className="p-3 rounded-lg border border-slate-200 bg-white hover:border-slate-300 transition-colors"
+            className="p-3 rounded-sm border border-slate-200 bg-white hover:border-slate-300 transition-colors"
           >
             <div className="flex items-center gap-1.5 mb-1.5">
-              <span className="text-[11px] text-slate-500">[{q.chapter}]</span>
-              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+              <span className="text-xs text-slate-500">[{q.chapter}]</span>
+              <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${
                 q.difficulty === 'BASIC' ? 'bg-emerald-100 text-emerald-700' :
                 q.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
                 q.difficulty === 'HIGH' ? 'bg-red-100 text-red-700' :
@@ -137,7 +137,7 @@ export function TabSimilarQuestions({
               }`}>
                 {DIFFICULTY_LABELS[q.difficulty]}
               </span>
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">
+              <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600">
                 {TYPE_LABELS[q.type]}
               </span>
             </div>

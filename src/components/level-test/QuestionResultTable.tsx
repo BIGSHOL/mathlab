@@ -78,14 +78,14 @@ export function QuestionResultTable({ answers, questions }: QuestionResultTableP
                 <td className="text-center py-2 px-2">
                   <span className="inline-flex items-center gap-1">
                     <span className={`w-2 h-2 rounded-full ${diffDot}`} />
-                    <span className="text-[11px] text-slate-600">{diffLabel}</span>
+                    <span className="text-xs text-slate-600">{diffLabel}</span>
                   </span>
                 </td>
                 <td className="text-center py-2 px-2">
                   {domainLabel ? (
-                    <span className="text-[10px] font-semibold text-slate-500">{domainLabel}</span>
+                    <span className="text-xs font-semibold text-slate-500">{domainLabel}</span>
                   ) : (
-                    <span className="text-[10px] text-slate-300">-</span>
+                    <span className="text-xs text-slate-300">-</span>
                   )}
                 </td>
                 <td className="text-center py-2 px-2">

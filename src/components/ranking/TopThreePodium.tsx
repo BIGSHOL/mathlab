@@ -116,33 +116,33 @@ export function TopThreePodium({ top3, category = 'xp' }: TopThreePodiumProps) {
             <div className="text-center mb-2 w-full">
               <p className={`font-extrabold text-text-primary ${config.nameSize} truncate`}>
                 {student.name}
-                {student.isMe && <span className="text-primary ml-0.5 text-[10px]">(나)</span>}
+                {student.isMe && <span className="text-primary ml-0.5 text-xs">(나)</span>}
               </p>
               <div className="flex items-center justify-center gap-1.5 mt-0.5">
                 <div className="flex items-center gap-0.5">
                   {category === 'gem' ? (
                     <>
                       <Gem className="w-3 h-3 text-purple-500" />
-                      <span className="text-[11px] font-bold text-text-primary">{student.completedGems ?? 0}개</span>
+                      <span className="text-xs font-bold text-text-primary">{student.completedGems ?? 0}개</span>
                     </>
                   ) : (
                     <>
                       <Star className="w-3 h-3 text-amber-400" />
-                      <span className="text-[11px] font-bold text-text-primary">{student.totalXp.toLocaleString()}</span>
+                      <span className="text-xs font-bold text-text-primary">{student.totalXp.toLocaleString()}</span>
                     </>
                   )}
                 </div>
                 {student.currentStreak >= 3 && (
                   <div className="flex items-center gap-0.5">
                     <Flame className="w-3 h-3 text-orange-500" />
-                    <span className="text-[10px] font-bold text-orange-500">{student.currentStreak}</span>
+                    <span className="text-xs font-bold text-orange-500">{student.currentStreak}</span>
                   </div>
                 )}
               </div>
               <div className="flex items-center justify-center gap-1 mt-0.5">
                 <RankChangeIndicator change={student.rankChange} isNew={student.isNew} size="sm" />
                 {student.weeklyXp > 0 && (
-                  <span className="text-[10px] text-emerald-600 font-semibold">+{student.weeklyXp}</span>
+                  <span className="text-xs text-emerald-600 font-semibold">+{student.weeklyXp}</span>
                 )}
               </div>
             </div>

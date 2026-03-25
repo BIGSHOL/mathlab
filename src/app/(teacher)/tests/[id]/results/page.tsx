@@ -122,8 +122,8 @@ export default function TestResultsPage() {
         {/* 4개 통계 카드 (아이콘 + 라벨 + 큰 숫자) */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           {Array.from({ length: 4 }, (_, i) => (
-            <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-4">
-              <Skeleton className="w-11 h-11 rounded-xl shrink-0" />
+            <div key={i} className="bg-white border border-slate-200 rounded-sm p-4 flex items-center gap-4">
+              <Skeleton className="w-11 h-11 rounded-sm shrink-0" />
               <div className="space-y-1.5">
                 <Skeleton className="h-3 w-16" />
                 <Skeleton className="h-7 w-14" />
@@ -137,7 +137,7 @@ export default function TestResultsPage() {
           <Skeleton className="h-9 w-28 rounded" />
         </div>
         {/* 테이블 스켈레톤 */}
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+        <div className="bg-white border border-slate-200 rounded-sm overflow-hidden">
           <div className="bg-slate-50 border-b border-slate-200 px-5 py-3 flex gap-6">
             {['w-12', 'w-8', 'w-12', 'w-10', 'w-16', 'w-14', 'w-16', 'w-8', 'w-8'].map((w, i) => (
               <Skeleton key={i} className={`h-4 ${w}`} />
@@ -205,7 +205,7 @@ export default function TestResultsPage() {
       {/* Summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card padding="md" className="flex items-center gap-4">
-          <div className="p-3 bg-primary/10 rounded-xl">
+          <div className="p-3 bg-primary/10 rounded-sm">
             <Users className="w-5 h-5 text-primary" />
           </div>
           <div>
@@ -214,7 +214,7 @@ export default function TestResultsPage() {
           </div>
         </Card>
         <Card padding="md" className="flex items-center gap-4">
-          <div className="p-3 bg-emerald-100 rounded-xl">
+          <div className="p-3 bg-emerald-100 rounded-sm">
             <Target className="w-5 h-5 text-emerald-600" />
           </div>
           <div>
@@ -223,7 +223,7 @@ export default function TestResultsPage() {
           </div>
         </Card>
         <Card padding="md" className="flex items-center gap-4">
-          <div className="p-3 bg-blue-100 rounded-xl">
+          <div className="p-3 bg-blue-100 rounded-sm">
             <Clock className="w-5 h-5 text-blue-600" />
           </div>
           <div>
@@ -232,7 +232,7 @@ export default function TestResultsPage() {
           </div>
         </Card>
         <Card padding="md" className="flex items-center gap-4">
-          <div className="p-3 bg-violet-100 rounded-xl">
+          <div className="p-3 bg-violet-100 rounded-sm">
             <UserPlus className="w-5 h-5 text-violet-600" />
           </div>
           <div>

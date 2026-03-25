@@ -56,9 +56,9 @@ export default function QuestionHomeworkGridPage({ params }: { params: Promise<{
     <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 py-6 md:py-8">
       <div className="flex items-center justify-between mb-4">
         <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-8 w-24 rounded-lg" />
+        <Skeleton className="h-8 w-24 rounded-sm" />
       </div>
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-sm overflow-hidden">
         <div className="flex items-center gap-2 p-3 border-b border-slate-200">
           {Array.from({ length: 5 }, (_, i) => <Skeleton key={i} className="h-4 flex-1" />)}
         </div>
@@ -79,7 +79,7 @@ export default function QuestionHomeworkGridPage({ params }: { params: Promise<{
     <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
       <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
         <div className="flex items-center gap-3 min-w-0">
-          <Link href="/homework" className="p-1.5 rounded-lg hover:bg-slate-100 text-text-secondary"><ArrowLeft className="w-5 h-5" /></Link>
+          <Link href="/homework" className="p-1.5 rounded-sm hover:bg-slate-100 text-text-secondary"><ArrowLeft className="w-5 h-5" /></Link>
           <div className="min-w-0">
             <h1 className="text-base font-bold text-text-primary flex items-center gap-2 truncate">
               <FileQuestion className="w-4 h-4 text-primary shrink-0" />{grid.plan.title}

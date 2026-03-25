@@ -42,7 +42,7 @@ export function DomainScoreBar({ domain, accuracy, correct, total }: DomainScore
       <span className="text-xs font-bold tabular-nums shrink-0 w-16 text-right" style={{ color: DOMAIN_TEXT_COLORS[domain] }}>
         {accuracy}%
         {total !== undefined && correct !== undefined && (
-          <span className="text-slate-400 text-[10px] ml-0.5">({correct}/{total})</span>
+          <span className="text-slate-400 text-xs ml-0.5">({correct}/{total})</span>
         )}
       </span>
     </div>

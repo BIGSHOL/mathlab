@@ -238,7 +238,7 @@ export default function LevelTestResultsPage() {
           {/* 3개 통계 카드 */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             {Array.from({ length: 3 }, (_, i) => (
-              <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-4">
+              <div key={i} className="bg-white border border-slate-200 rounded-sm p-4 flex items-center gap-4">
                 <Skeleton className="w-11 h-11 rounded-sm shrink-0" />
                 <div className="space-y-1.5">
                   <Skeleton className="h-3 w-16" />
@@ -249,11 +249,11 @@ export default function LevelTestResultsPage() {
           </div>
           {/* 레이더 + 레벨 분포 (2열) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div className="bg-white border border-slate-200 rounded-xl p-5">
+            <div className="bg-white border border-slate-200 rounded-sm p-5">
               <Skeleton className="h-4 w-28 mb-3" />
               <Skeleton className="h-[220px] w-[220px] rounded-full mx-auto" />
             </div>
-            <div className="bg-white border border-slate-200 rounded-xl p-5">
+            <div className="bg-white border border-slate-200 rounded-sm p-5">
               <Skeleton className="h-4 w-20 mb-4" />
               <div className="space-y-2.5">
                 {Array.from({ length: 5 }, (_, i) => (
@@ -266,7 +266,7 @@ export default function LevelTestResultsPage() {
             </div>
           </div>
           {/* 학생 목록 테이블 */}
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <div className="bg-white border border-slate-200 rounded-sm overflow-hidden">
             <div className="px-5 py-3 border-b border-slate-200 bg-slate-50/50 flex justify-between">
               <Skeleton className="h-4 w-20" />
               <Skeleton className="h-3 w-40" />

@@ -83,7 +83,7 @@ export function RightPanel({
         <div className="flex items-center gap-2">
           <ListChecks className="w-4 h-4" />
           <span className="text-sm font-bold">선택한 문제 목록</span>
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/20">
+          <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-white/20">
             {questions.length}
           </span>
         </div>
@@ -104,15 +104,15 @@ export function RightPanel({
             {showSortMenu && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowSortMenu(false)} />
-                <div className="absolute right-0 top-full mt-1 z-20 w-64 bg-white rounded-lg shadow-lg border border-slate-200 overflow-hidden">
+                <div className="absolute right-0 top-full mt-1 z-20 w-64 bg-white rounded-sm shadow-lg border border-slate-200 overflow-hidden">
                   {/* 헤더 */}
                   <div className="px-3 py-2 border-b border-slate-100 bg-slate-50">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-text-secondary">다중 정렬 (위에서 아래 순서로 적용)</span>
+                      <span className="text-xs font-bold text-text-secondary">다중 정렬 (위에서 아래 순서로 적용)</span>
                       {sortCriteria.length > 0 && (
                         <button
                           onClick={clearSort}
-                          className="text-[10px] text-slate-400 hover:text-red-500 transition-colors"
+                          className="text-xs text-slate-400 hover:text-red-500 transition-colors"
                         >
                           초기화
                         </button>
@@ -161,7 +161,7 @@ export function RightPanel({
                           {isActive && (
                             <button
                               onClick={() => toggleDirection(key)}
-                              className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-text-secondary hover:bg-slate-200 transition-colors"
+                              className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-slate-100 text-text-secondary hover:bg-slate-200 transition-colors"
                             >
                               {criterion!.direction === 'asc' ? (
                                 <>

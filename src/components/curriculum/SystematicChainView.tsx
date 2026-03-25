@@ -82,13 +82,13 @@ export function SystematicChainView({
   };
 
   return (
-    <div className="flex flex-col text-[11px]">
+    <div className="flex flex-col text-xs">
       {/* 체인 선택 */}
       <div className="px-2 py-1.5">
         <select
           value={selectedChain}
           onChange={(e) => setSelectedChain(e.target.value)}
-          className="w-full text-[11px] border border-slate-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-primary"
+          className="w-full text-xs border border-slate-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-primary"
         >
           {chains.map((name) => (
             <option key={name} value={name}>
@@ -142,7 +142,7 @@ export function SystematicChainView({
       )}
 
       {!loading && data && data.nodes.length === 0 && (
-        <div className="px-2 py-4 text-center text-text-secondary text-[10px]">
+        <div className="px-2 py-4 text-center text-text-secondary text-xs">
           이 체인에 등록된 개념이 없습니다.
         </div>
       )}

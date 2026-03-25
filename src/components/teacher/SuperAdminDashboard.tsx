@@ -217,7 +217,7 @@ export default async function SuperAdminDashboard({ period }: Omit<Props, 'user'
         {stats.map((stat) => (
           <Card
             key={stat.label}
-            variant="glass"
+            variant="default"
             padding="sm"
             className="flex flex-col gap-2 hover:shadow-md transition-shadow relative overflow-hidden"
           >
@@ -276,7 +276,7 @@ export default async function SuperAdminDashboard({ period }: Omit<Props, 'user'
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
+                      <div className={`w-8 h-8 rounded-sm flex items-center justify-center text-xs font-bold shrink-0 ${
                         t.isActive ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-400'
                       }`}>
                         {t.name[0]}

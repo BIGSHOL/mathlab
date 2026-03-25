@@ -53,7 +53,7 @@ export function ReportTeacherComment({
               WebkitPrintColorAdjust: 'exact',
             } as React.CSSProperties}
           >
-            <p className="text-[11px] text-slate-700 leading-relaxed">{totalReview}</p>
+            <p className="text-xs text-slate-700 leading-relaxed">{totalReview}</p>
           </div>
         </section>
       )}
@@ -78,7 +78,7 @@ export function ReportTeacherComment({
               WebkitPrintColorAdjust: 'exact',
             } as React.CSSProperties}
           >
-            <p className="text-[11px] text-slate-700 leading-relaxed">{analysisGuide}</p>
+            <p className="text-xs text-slate-700 leading-relaxed">{analysisGuide}</p>
           </div>
         </section>
       )}
@@ -96,11 +96,11 @@ export function ReportTeacherComment({
           className="rounded-2xl border border-slate-100 p-5 mb-4"
           style={{ backgroundColor: 'rgba(248,250,252,0.5)', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } as React.CSSProperties}
         >
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Personalized Guide</p>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Personalized Guide</p>
           <p className="text-xs font-bold text-slate-800 mb-1">
             {studentName} 학생을 위한 맞춤 학습 가이드
           </p>
-          <p className="text-[11px] text-slate-600 leading-relaxed">
+          <p className="text-xs text-slate-600 leading-relaxed">
             {getDirectionText(recommendLevel, overallAccuracy)}
           </p>
         </div>
@@ -116,17 +116,17 @@ export function ReportTeacherComment({
             ];
             const style = icons[i % 4];
             return (
-              <div key={i} className="bg-white rounded-xl border border-slate-200 p-3.5">
+              <div key={i} className="bg-white rounded-sm border border-slate-200 p-3.5">
                 <div className="flex items-start gap-3">
                   <div
-                    className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center"
+                    className="shrink-0 w-8 h-8 rounded-sm flex items-center justify-center"
                     style={{ backgroundColor: style.bg, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } as React.CSSProperties}
                   >
                     <span className="text-sm font-black" style={{ color: style.stroke }}>{i + 1}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-bold text-slate-900 mb-0.5">{step.title}</p>
-                    <p className="text-[10px] text-slate-500 leading-relaxed">{step.description}</p>
+                    <p className="text-xs text-slate-500 leading-relaxed">{step.description}</p>
                   </div>
                 </div>
               </div>
@@ -153,7 +153,7 @@ export function ReportTeacherComment({
 
       {/* 하단 */}
       <div className="mt-4 pt-3 border-t border-slate-100 text-center">
-        <p className="text-[10px] font-bold text-slate-400">{academyName} · 레벨테스트 진단 보고서</p>
+        <p className="text-xs font-bold text-slate-400">{academyName} · 레벨테스트 진단 보고서</p>
         <p className="text-[9px] text-slate-300 mt-0.5">
           본 보고서는 MathLab AI 엔진이 분석한 학습 수준을 바탕으로 맞춤 학습 방향을 제시합니다.
         </p>

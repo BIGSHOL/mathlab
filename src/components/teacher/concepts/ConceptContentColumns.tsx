@@ -328,7 +328,7 @@ function BlankPreviewSection({ templateText, blanks }: { templateText: string; b
 
   return (
     <div className="border-t border-slate-200 pt-2 mt-1 space-y-1.5">
-      <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
         <Eye className="w-3 h-3" />
         학생 미리보기
       </h4>
@@ -347,7 +347,7 @@ function BlankPreviewSection({ templateText, blanks }: { templateText: string; b
               onClick={() => setOpenLevel(isOpen ? null : key)}
               className="w-full flex items-center justify-between px-2.5 py-1.5 hover:bg-slate-50 transition-colors"
             >
-              <span className={`text-[11px] font-bold ${color}`}>{label} ({shownBlanks.length}개)</span>
+              <span className={`text-xs font-bold ${color}`}>{label} ({shownBlanks.length}개)</span>
               {isOpen ? <ChevronDown className="w-3 h-3 text-slate-400" /> : <ChevronRight className="w-3 h-3 text-slate-400" />}
             </button>
             {isOpen && (

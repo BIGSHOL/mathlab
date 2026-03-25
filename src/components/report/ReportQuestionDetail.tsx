@@ -99,8 +99,8 @@ export function ReportQuestionDetail({
               return (
                 <div key={status} className="flex items-center gap-1.5">
                   <span className="text-sm font-bold" style={{ color: disp.color }}>{disp.symbol}</span>
-                  <span className="text-[10px] text-slate-500">{disp.label}</span>
-                  <span className="text-[10px] font-black text-slate-700">{count}</span>
+                  <span className="text-xs text-slate-500">{disp.label}</span>
+                  <span className="text-xs font-black text-slate-700">{count}</span>
                 </div>
               );
             })}
@@ -110,27 +110,27 @@ export function ReportQuestionDetail({
               <circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" />
             </svg>
-            <span className="text-[10px] text-slate-500">평균</span>
-            <span className="text-[10px] font-black text-slate-700">{formatSeconds(avgTime)}</span>
+            <span className="text-xs text-slate-500">평균</span>
+            <span className="text-xs font-black text-slate-700">{formatSeconds(avgTime)}</span>
           </div>
         </div>
       )}
 
       {/* 테이블 */}
       <div className="flex-1 overflow-hidden bg-white rounded-2xl border border-slate-100">
-        <table className="w-full text-[10px] border-collapse">
+        <table className="w-full text-xs border-collapse">
           <thead>
             <tr
               className="border-b border-slate-100"
               style={{ backgroundColor: '#f8fafc', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } as React.CSSProperties}
             >
-              <th className="py-2 px-2 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest w-[6%]">#</th>
-              <th className="py-2 px-2 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest w-[40%]">단원</th>
-              <th className="py-2 px-2 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest w-[11%]">난이도</th>
-              <th className="py-2 px-2 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest w-[11%]">영역</th>
-              <th className="py-2 px-2 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest w-[10%]">결과</th>
-              <th className="py-2 px-2 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest w-[12%]">시간</th>
-              <th className="py-2 px-2 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest w-[10%]">상태</th>
+              <th className="py-2 px-2 text-center text-xs font-bold text-slate-400 uppercase tracking-widest w-[6%]">#</th>
+              <th className="py-2 px-2 text-left text-xs font-bold text-slate-400 uppercase tracking-widest w-[40%]">단원</th>
+              <th className="py-2 px-2 text-center text-xs font-bold text-slate-400 uppercase tracking-widest w-[11%]">난이도</th>
+              <th className="py-2 px-2 text-center text-xs font-bold text-slate-400 uppercase tracking-widest w-[11%]">영역</th>
+              <th className="py-2 px-2 text-center text-xs font-bold text-slate-400 uppercase tracking-widest w-[10%]">결과</th>
+              <th className="py-2 px-2 text-center text-xs font-bold text-slate-400 uppercase tracking-widest w-[12%]">시간</th>
+              <th className="py-2 px-2 text-center text-xs font-bold text-slate-400 uppercase tracking-widest w-[10%]">상태</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">

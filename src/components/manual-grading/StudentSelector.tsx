@@ -76,7 +76,7 @@ export function StudentSelector({ selectedStudent, onSelect, preselectedId }: St
         <label className="text-xs font-bold text-text-secondary">학생 선택</label>
         <Link
           href="/students"
-          className="flex items-center gap-0.5 text-[10px] text-primary hover:underline"
+          className="flex items-center gap-0.5 text-xs text-primary hover:underline"
         >
           <UserPlus className="w-3 h-3" />
           빠른 등록
@@ -99,7 +99,7 @@ export function StudentSelector({ selectedStudent, onSelect, preselectedId }: St
       <div className="flex gap-1 flex-wrap">
         <button
           onClick={() => setGradeFilter('all')}
-          className={`px-2 py-0.5 rounded-sm text-[10px] font-semibold transition-colors ${
+          className={`px-2 py-0.5 rounded-sm text-xs font-semibold transition-colors ${
             gradeFilter === 'all' ? 'bg-primary text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
           }`}
         >
@@ -109,7 +109,7 @@ export function StudentSelector({ selectedStudent, onSelect, preselectedId }: St
           <button
             key={g}
             onClick={() => setGradeFilter(String(g))}
-            className={`px-2 py-0.5 rounded-sm text-[10px] font-semibold transition-colors ${
+            className={`px-2 py-0.5 rounded-sm text-xs font-semibold transition-colors ${
               gradeFilter === String(g) ? 'bg-primary text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
             }`}
           >
@@ -121,9 +121,9 @@ export function StudentSelector({ selectedStudent, onSelect, preselectedId }: St
       {/* 목록 */}
       <div className="max-h-48 overflow-y-auto space-y-0.5">
         {loading ? (
-          <p className="text-[10px] text-slate-400 text-center py-3">로딩 중...</p>
+          <p className="text-xs text-slate-400 text-center py-3">로딩 중...</p>
         ) : filtered.length === 0 ? (
-          <p className="text-[10px] text-slate-400 text-center py-3">학생이 없습니다</p>
+          <p className="text-xs text-slate-400 text-center py-3">학생이 없습니다</p>
         ) : (
           filtered.map((s) => (
             <button
@@ -138,12 +138,12 @@ export function StudentSelector({ selectedStudent, onSelect, preselectedId }: St
               <div className="flex items-center justify-between">
                 <span className="font-medium text-text-primary">{s.name}</span>
                 {s.grade && (
-                  <span className="text-[10px] text-slate-400 bg-slate-100 px-1 py-0.5 rounded">
+                  <span className="text-xs text-slate-400 bg-slate-100 px-1 py-0.5 rounded">
                     {GRADE_LABELS[s.grade] ?? `${s.grade}`}
                   </span>
                 )}
               </div>
-              <span className="text-[10px] text-slate-400">{s.username}</span>
+              <span className="text-xs text-slate-400">{s.username}</span>
             </button>
           ))
         )}

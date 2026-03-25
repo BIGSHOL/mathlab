@@ -108,7 +108,7 @@ export function CurriculumTree({
           <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
         </div>
       )}
-      <div className="flex flex-col text-[11px]">
+      <div className="flex flex-col text-xs">
         {semesters.map((sem) => {
           const semKey = `sem-${sem.semesterNumber}`;
           const isExpanded = expanded.has(semKey);
@@ -219,7 +219,7 @@ function ChapterNode({
         return (
           <div
             key={sub.name}
-            className={`flex items-center gap-1 py-0.5 rounded cursor-pointer transition-colors text-[10px] ${
+            className={`flex items-center gap-1 py-0.5 rounded cursor-pointer transition-colors text-xs ${
               isSectionActive ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-slate-50 text-text-secondary'
             }`}
             style={{ paddingLeft: `${(depth + 1) * 12 + 6}px`, paddingRight: '6px' }}

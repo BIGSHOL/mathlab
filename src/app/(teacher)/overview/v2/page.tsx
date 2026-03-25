@@ -249,8 +249,8 @@ export default async function TeacherDashboardV2({
   return (
     <div className="flex flex-col grow min-w-0 max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 gap-5">
       {/* V2 비교 배너 */}
-      <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/60 rounded-xl text-sm">
-        <span className="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-md">V2</span>
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/60 rounded-sm text-sm">
+        <span className="bg-primary text-white text-xs font-bold px-2 py-0.5 rounded-md">V2</span>
         <span className="text-blue-800">액션 + 실시간 + 인사이트 통합 대시보드</span>
         <Link href="/overview" className="ml-auto text-primary font-bold text-xs hover:underline flex items-center gap-1">
           기존 대시보드 <ArrowRight className="w-3 h-3" />
@@ -270,7 +270,7 @@ export default async function TeacherDashboardV2({
 
       {/* ===== 섹션 1: 액션 아이템 (선생님이 해야 할 일) ===== */}
       {totalActions > 0 ? (
-        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 rounded-xl p-4">
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 rounded-sm p-4">
           <div className="flex items-center gap-2 mb-3">
             <AlertTriangle className="w-4 h-4 text-amber-600" />
             <h3 className="text-sm font-bold text-amber-800">처리 필요 항목 {totalActions}건</h3>
@@ -278,9 +278,9 @@ export default async function TeacherDashboardV2({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Link
               href="/manual-grading"
-              className="flex items-center gap-3 bg-white rounded-lg p-3 border border-amber-200/40 hover:shadow-md transition-all group"
+              className="flex items-center gap-3 bg-white rounded-sm p-3 border border-amber-200/40 hover:shadow-md transition-all group"
             >
-              <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 rounded-sm bg-orange-100 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                 <ClipboardCheck className="w-5 h-5 text-orange-600" />
               </div>
               <div className="flex-1 min-w-0">
@@ -291,9 +291,9 @@ export default async function TeacherDashboardV2({
             </Link>
             <Link
               href="/tests"
-              className="flex items-center gap-3 bg-white rounded-lg p-3 border border-red-200/40 hover:shadow-md transition-all group"
+              className="flex items-center gap-3 bg-white rounded-sm p-3 border border-red-200/40 hover:shadow-md transition-all group"
             >
-              <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 rounded-sm bg-red-100 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                 <FileWarning className="w-5 h-5 text-red-600" />
               </div>
               <div className="flex-1 min-w-0">
@@ -304,9 +304,9 @@ export default async function TeacherDashboardV2({
             </Link>
             <Link
               href="/tests"
-              className="flex items-center gap-3 bg-white rounded-lg p-3 border border-blue-200/40 hover:shadow-md transition-all group"
+              className="flex items-center gap-3 bg-white rounded-sm p-3 border border-blue-200/40 hover:shadow-md transition-all group"
             >
-              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 rounded-sm bg-blue-100 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                 <Clock className="w-5 h-5 text-blue-600" />
               </div>
               <div className="flex-1 min-w-0">
@@ -318,7 +318,7 @@ export default async function TeacherDashboardV2({
           </div>
         </div>
       ) : (
-        <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200/60 rounded-xl px-4 py-3">
+        <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200/60 rounded-sm px-4 py-3">
           <CheckCircle2 className="w-5 h-5 text-emerald-600" />
           <p className="text-sm font-semibold text-emerald-700">모든 항목이 처리되었습니다. 대기 중인 작업이 없습니다.</p>
         </div>
@@ -326,7 +326,7 @@ export default async function TeacherDashboardV2({
 
       {/* ===== 섹션 2: 실시간 현황 카드 ===== */}
       <DashboardStatCards className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white p-4 rounded-xl border border-slate-200/60 flex items-start justify-between shadow-soft hover:shadow-hover hover:-translate-y-0.5 transition-all duration-300">
+        <div className="bg-white p-4 rounded-sm border border-slate-200/60 flex items-start justify-between shadow-soft hover:shadow-hover hover:-translate-y-0.5 transition-all duration-300">
           <div>
             <p className="text-slate-500 text-xs font-medium">오늘 활동 학생</p>
             <h3 className="text-2xl font-black text-text-primary leading-none mt-1.5">
@@ -334,15 +334,15 @@ export default async function TeacherDashboardV2({
             </h3>
             <div className="flex items-center gap-1 mt-2">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-bold text-emerald-600">실시간</span>
+              <span className="text-xs font-bold text-emerald-600">실시간</span>
             </div>
           </div>
-          <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-sm bg-emerald-50 flex items-center justify-center shrink-0">
             <Users className="w-5 h-5 text-emerald-600" />
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200/60 flex items-start justify-between shadow-soft hover:shadow-hover hover:-translate-y-0.5 transition-all duration-300">
+        <div className="bg-white p-4 rounded-sm border border-slate-200/60 flex items-start justify-between shadow-soft hover:shadow-hover hover:-translate-y-0.5 transition-all duration-300">
           <div>
             <p className="text-slate-500 text-xs font-medium">진행 중 시험</p>
             <h3 className="text-2xl font-black text-text-primary leading-none mt-1.5">
@@ -352,19 +352,19 @@ export default async function TeacherDashboardV2({
               {inProgressTests > 0 ? (
                 <>
                   <Zap className="w-3 h-3 text-amber-500" />
-                  <span className="text-[10px] font-bold text-amber-600">응시 중</span>
+                  <span className="text-xs font-bold text-amber-600">응시 중</span>
                 </>
               ) : (
-                <span className="text-[10px] font-bold text-slate-400">대기</span>
+                <span className="text-xs font-bold text-slate-400">대기</span>
               )}
             </div>
           </div>
-          <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-sm bg-amber-50 flex items-center justify-center shrink-0">
             <Target className="w-5 h-5 text-amber-600" />
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200/60 flex items-start justify-between shadow-soft hover:shadow-hover hover:-translate-y-0.5 transition-all duration-300">
+        <div className="bg-white p-4 rounded-sm border border-slate-200/60 flex items-start justify-between shadow-soft hover:shadow-hover hover:-translate-y-0.5 transition-all duration-300">
           <div>
             <p className="text-slate-500 text-xs font-medium">이번 주 학습 완료</p>
             <h3 className="text-2xl font-black text-text-primary leading-none mt-1.5">
@@ -372,15 +372,15 @@ export default async function TeacherDashboardV2({
             </h3>
             <div className="flex items-center gap-1 mt-2">
               <TrendingUp className="w-3 h-3 text-emerald-500" />
-              <span className="text-[10px] font-bold text-emerald-600">최근 7일</span>
+              <span className="text-xs font-bold text-emerald-600">최근 7일</span>
             </div>
           </div>
-          <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-sm bg-blue-50 flex items-center justify-center shrink-0">
             <BookOpen className="w-5 h-5 text-primary" />
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200/60 flex items-start justify-between shadow-soft hover:shadow-hover hover:-translate-y-0.5 transition-all duration-300">
+        <div className="bg-white p-4 rounded-sm border border-slate-200/60 flex items-start justify-between shadow-soft hover:shadow-hover hover:-translate-y-0.5 transition-all duration-300">
           <div>
             <p className="text-slate-500 text-xs font-medium">
               {isOwner ? `선생님 ${totalTeachers}명 · 학생` : '전체 학생'}
@@ -390,10 +390,10 @@ export default async function TeacherDashboardV2({
             </h3>
             <div className="flex items-center gap-1 mt-2">
               <GraduationCap className="w-3 h-3 text-primary" />
-              <span className="text-[10px] font-bold text-primary">평균 Lv.{avgLevel.toFixed(1)}</span>
+              <span className="text-xs font-bold text-primary">평균 Lv.{avgLevel.toFixed(1)}</span>
             </div>
           </div>
-          <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-sm bg-blue-50 flex items-center justify-center shrink-0">
             <GraduationCap className="w-5 h-5 text-primary" />
           </div>
         </div>
@@ -401,7 +401,7 @@ export default async function TeacherDashboardV2({
 
       {/* ===== 섹션 3: 차트 (8col) + 집중 관리 학생 (4col) ===== */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        <div className="lg:col-span-8 bg-white p-5 md:p-6 rounded-xl border border-slate-200/60 shadow-soft">
+        <div className="lg:col-span-8 bg-white p-5 md:p-6 rounded-sm border border-slate-200/60 shadow-soft">
           <div className="flex items-center justify-between mb-5">
             <div>
               <h3 className="text-base font-bold text-text-primary">월간 학습 추이</h3>
@@ -414,7 +414,7 @@ export default async function TeacherDashboardV2({
           <MonthlyChartV2 />
         </div>
 
-        <div className="lg:col-span-4 bg-white rounded-xl border border-slate-200/60 shadow-soft flex flex-col">
+        <div className="lg:col-span-4 bg-white rounded-sm border border-slate-200/60 shadow-soft flex flex-col">
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
             <h3 className="text-base font-bold text-text-primary">집중 관리 학생</h3>
             <Link href="/students" className="text-primary text-xs font-bold hover:underline">
@@ -436,7 +436,7 @@ export default async function TeacherDashboardV2({
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-end mb-1">
                         <p className="text-sm font-bold text-text-primary leading-none truncate">{student.name}</p>
-                        <span className={`text-[10px] font-bold ${student.achievementPercent < 50 ? 'text-red-500' : 'text-primary'}`}>
+                        <span className={`text-xs font-bold ${student.achievementPercent < 50 ? 'text-red-500' : 'text-primary'}`}>
                           {student.achievementPercent}%
                         </span>
                       </div>
@@ -452,7 +452,7 @@ export default async function TeacherDashboardV2({
           <div className="px-4 py-3 border-t border-slate-100">
             <Link
               href="/students"
-              className="flex items-center justify-center gap-1.5 w-full py-2.5 bg-slate-100 rounded-xl text-text-primary text-xs font-bold hover:bg-slate-200 transition-colors"
+              className="flex items-center justify-center gap-1.5 w-full py-2.5 bg-slate-100 rounded-sm text-text-primary text-xs font-bold hover:bg-slate-200 transition-colors"
             >
               <UserPlus className="w-3.5 h-3.5" />
               집중 관리 목록 추가
@@ -467,7 +467,7 @@ export default async function TeacherDashboardV2({
       {/* ===== 섹션 5: 인사이트 하단 3열 ===== */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5">
         {/* 취약 단원 TOP 5 (V1에 없는 차별점) */}
-        <div className="lg:col-span-4 bg-white p-5 rounded-xl border border-slate-200/60 shadow-soft">
+        <div className="lg:col-span-4 bg-white p-5 rounded-sm border border-slate-200/60 shadow-soft">
           <h3 className="text-sm font-black text-text-primary uppercase tracking-wider flex items-center gap-2 mb-4">
             <AlertTriangle className="w-4 h-4 text-red-500" />
             취약 단원 TOP 5
@@ -488,7 +488,7 @@ export default async function TeacherDashboardV2({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-semibold text-text-primary truncate">{ch.chapter}</span>
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${rateColor}`}>
+                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded-sm ${rateColor}`}>
                           {ch.rate}%
                         </span>
                       </div>
@@ -499,13 +499,13 @@ export default async function TeacherDashboardV2({
                   </div>
                 );
               })}
-              <p className="text-[10px] text-slate-400 mt-1">최근 30일 · 3문제 이상 풀이 기준</p>
+              <p className="text-xs text-slate-400 mt-1">최근 30일 · 3문제 이상 풀이 기준</p>
             </div>
           )}
         </div>
 
         {/* XP 랭킹 TOP 5 */}
-        <div className="lg:col-span-4 bg-white p-5 rounded-xl border border-slate-200/60 shadow-soft">
+        <div className="lg:col-span-4 bg-white p-5 rounded-sm border border-slate-200/60 shadow-soft">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-black text-text-primary uppercase tracking-wider flex items-center gap-2">
               <Trophy className="w-4 h-4 text-amber-500" />
@@ -540,7 +540,7 @@ export default async function TeacherDashboardV2({
         </div>
 
         {/* 최근 활동 타임라인 */}
-        <div className="lg:col-span-4 bg-white p-5 rounded-xl border border-slate-200/60 shadow-soft">
+        <div className="lg:col-span-4 bg-white p-5 rounded-sm border border-slate-200/60 shadow-soft">
           <h3 className="text-sm font-black text-text-primary uppercase tracking-wider flex items-center gap-2 mb-4">
             <BookOpen className="w-4 h-4 text-primary" />
             최근 활동
@@ -559,7 +559,7 @@ export default async function TeacherDashboardV2({
                         {a.user.name} — {stageLabels[a.stage] ?? a.stage}
                         {a.completed && ' 완료'}
                       </p>
-                      <p className="text-[10px] text-slate-400">{getTimeAgo(a.updatedAt)}</p>
+                      <p className="text-xs text-slate-400">{getTimeAgo(a.updatedAt)}</p>
                     </div>
                   </div>
                 );

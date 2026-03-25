@@ -92,7 +92,7 @@ export function WizardShell() {
             ))}
           </nav>
 
-          <button onClick={handleClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600">
+          <button onClick={handleClose} className="p-1.5 rounded-sm hover:bg-slate-100 text-slate-400 hover:text-slate-600">
             <X className="w-5 h-5" />
           </button>
         </div>

@@ -60,7 +60,7 @@ export function Step3Settings() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={`${MODE_LABELS[mode]} 제목을 입력하세요`}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
 
@@ -72,7 +72,7 @@ export function Step3Settings() {
             <select
               value={grade}
               onChange={(e) => setGrade(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+              className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm bg-white"
             >
               {[3, 4, 5, 6].map((g) => (
                 <option key={g} value={g}>초등 {g}학년</option>
@@ -99,7 +99,7 @@ export function Step3Settings() {
                   <button
                     key={opt.value}
                     onClick={() => setTestType(opt.value)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    className={`px-3 py-1.5 rounded-sm text-xs font-medium transition-colors ${
                       testType === opt.value
                         ? 'bg-primary text-white'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -126,7 +126,7 @@ export function Step3Settings() {
                   value={timeLimitMin ?? ''}
                   onChange={(e) => setTimeLimitMin(e.target.value ? Number(e.target.value) : null)}
                   placeholder="없음"
-                  className="w-24 px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                  className="w-24 px-3 py-2 border border-slate-200 rounded-sm text-sm"
                 />
                 <span className="text-xs text-slate-400">비워두면 시간 제한 없음</span>
               </div>
@@ -164,7 +164,7 @@ export function Step3Settings() {
                   <button
                     key={opt.value}
                     onClick={() => setSpacing(opt.value)}
-                    className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                    className={`flex-1 px-3 py-2 rounded-sm text-xs font-medium transition-colors ${
                       spacing === opt.value
                         ? 'bg-primary text-white'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -185,7 +185,7 @@ export function Step3Settings() {
                   <button
                     key={col}
                     onClick={() => setColumns(col)}
-                    className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                    className={`flex-1 px-3 py-2 rounded-sm text-xs font-medium transition-colors ${
                       columns === col
                         ? 'bg-primary text-white'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -227,7 +227,7 @@ export function Step3Settings() {
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
                 placeholder="태그 입력 후 Enter"
-                className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-sm"
+                className="flex-1 px-3 py-1.5 border border-slate-200 rounded-sm text-sm"
               />
               <Button variant="secondary" size="sm" onClick={handleAddTag}>추가</Button>
             </div>
@@ -277,7 +277,7 @@ function PrintPreview({ title, grade, questions, spacing, columns, showAnswerKey
   const gradeLabel = grade <= 6 ? `초등 ${grade}학년` : `중등 ${grade - 6}학년`;
 
   return (
-    <div className="max-w-[210mm] mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+    <div className="max-w-[210mm] mx-auto bg-white shadow-lg rounded-sm overflow-hidden">
       {/* 헤더 */}
       <div className="text-center p-6 pb-4 border-b border-slate-200">
         <h1 className="text-xl font-black text-text-primary">{title}</h1>
@@ -325,7 +325,7 @@ function PrintPreview({ title, grade, questions, spacing, columns, showAnswerKey
                     <MathRenderer content={q.content.length > 200 ? q.content.slice(0, 200) + '…' : q.content} />
                   </div>
                   {q.choices && q.choices.length > 0 && (
-                    <div className="mt-1 grid grid-cols-2 gap-0.5 text-[11px]">
+                    <div className="mt-1 grid grid-cols-2 gap-0.5 text-xs">
                       {q.choices.map((c, ci) => (
                         <div key={ci} className="flex items-start gap-1">
                           <span className="text-slate-400 shrink-0">{ci + 1})</span>
@@ -345,7 +345,7 @@ function PrintPreview({ title, grade, questions, spacing, columns, showAnswerKey
       {showAnswerKey && questions.length > 0 && (
         <div className="mx-6 mb-6 pt-3 border-t border-slate-300">
           <h3 className="text-xs font-bold text-text-primary mb-1.5">정답표</h3>
-          <div className="flex flex-wrap gap-2 text-[10px]">
+          <div className="flex flex-wrap gap-2 text-xs">
             {questions.map((q, idx) => (
               <span key={q.id} className="text-text-secondary">
                 {idx + 1}. <span className="font-bold text-text-primary [&_p]:inline [&_p]:m-0"><MathRenderer content={q.answer} /></span>

@@ -40,7 +40,7 @@ export function BottomNav() {
               >
                 <item.icon className="w-5 h-5" />
                 <Lock className="absolute top-1 right-2 w-2.5 h-2.5" />
-                <span className="text-[10px] font-medium">{item.label}</span>
+                <span className="text-xs font-medium">{item.label}</span>
               </span>
             );
           }
@@ -54,7 +54,7 @@ export function BottomNav() {
               }`}
             >
               <item.icon className="w-5 h-5" />
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <span className="text-xs font-medium">{item.label}</span>
             </Link>
           );
         })}

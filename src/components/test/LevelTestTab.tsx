@@ -131,7 +131,7 @@ function PrintablePage({
           return (
             <div key={q.id} className="break-inside-avoid mb-0.5 pb-0.5 border-b border-slate-200">
               <div className="flex items-baseline gap-1 mb-0.5">
-                <span className="text-[11px] font-bold shrink-0 w-[18px] text-right leading-none">
+                <span className="text-xs font-bold shrink-0 w-[18px] text-right leading-none">
                   {globalIdx + 1}.
                 </span>
                 <span className="text-[7.5px] text-slate-400 leading-none truncate">
@@ -143,12 +143,12 @@ function PrintablePage({
                   </span>
                 )}
               </div>
-              <div className="ml-[22px] text-[11px] text-text-primary leading-[1.65] mb-1">
+              <div className="ml-[22px] text-xs text-text-primary leading-[1.65] mb-1">
                 <MathRenderer content={q.content} />
               </div>
               {q.choices && q.choices.length > 0 && (
                 <div
-                  className="ml-[22px] grid gap-x-4 gap-y-0.5 text-[10px] leading-snug"
+                  className="ml-[22px] grid gap-x-4 gap-y-0.5 text-xs leading-snug"
                   style={{ gridTemplateColumns: `repeat(${choiceCols}, minmax(0, 1fr))` }}
                 >
                   {q.choices.map((choice, ci) => {
@@ -176,7 +176,7 @@ function PrintablePage({
       })()}
 
       {totalPages > 1 && (
-        <div className="mt-auto pt-1 text-center text-[10px] text-slate-400">
+        <div className="mt-auto pt-1 text-center text-xs text-slate-400">
           — {pageIdx + 1} / {totalPages} —
         </div>
       )}
@@ -207,12 +207,12 @@ function AnswerPage({
 
       <div className="mb-4">
         <h3 className="text-[12px] font-bold text-text-primary mb-2 pb-1 border-b-2 border-slate-800">정답표</h3>
-        <div className="grid gap-x-4 gap-y-1 text-[10px]" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+        <div className="grid gap-x-4 gap-y-1 text-xs" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
           {allQuestions.map((q, idx) => (
             <div key={q.id} className="flex items-center gap-1">
               <span className="text-text-secondary w-5 text-right shrink-0">{idx + 1}.</span>
               <span className="font-bold text-text-primary">
-                <MathRenderer content={q.answer} className="inline [&_p]:inline [&_.katex]:text-[10px]" />
+                <MathRenderer content={q.answer} className="inline [&_p]:inline [&_.katex]:text-xs" />
               </span>
             </div>
           ))}
@@ -228,7 +228,7 @@ function AnswerPage({
               return (
                 <div key={q.id} className="break-inside-avoid mb-2 pb-1.5 border-b border-slate-100">
                   <div className="flex items-baseline gap-1 mb-0.5">
-                    <span className="text-[10px] font-bold text-text-primary shrink-0">{idx + 1}.</span>
+                    <span className="text-xs font-bold text-text-primary shrink-0">{idx + 1}.</span>
                     <span className="text-[9px] text-blue-600 font-semibold">
                       정답: <MathRenderer content={q.answer} className="inline [&_p]:inline [&_.katex]:text-[9px]" />
                     </span>
@@ -243,7 +243,7 @@ function AnswerPage({
         </div>
       )}
 
-      <div className="mt-auto pt-1 text-center text-[10px] text-slate-400">
+      <div className="mt-auto pt-1 text-center text-xs text-slate-400">
         — {pageIdx + 1} / {totalPages} —
       </div>
     </div>
@@ -375,7 +375,7 @@ export function LevelTestTab() {
             <div className="flex items-center gap-2 min-w-0">
               <GraduationCap className="w-4 h-4 text-primary shrink-0" />
               <span className="font-semibold text-sm text-text-primary truncate">레벨테스트</span>
-              <span className="ml-auto px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary">
+              <span className="ml-auto px-1.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary">
                 {tests.length}
               </span>
             </div>
@@ -413,9 +413,9 @@ export function LevelTestTab() {
                   {tests.map((test) => (
                     <button key={test.id} onClick={() => { setSelectedTestId(test.id); setShowAssign(false); setShowPreview(false); }}
                       className={`w-full text-left px-3 py-2.5 transition-colors hover:bg-slate-100 ${selectedTestId === test.id ? 'bg-primary/5 border-l-2 border-l-primary' : 'border-l-2 border-l-transparent'}`}>
-                      <div className="flex items-center gap-1.5 mb-1"><span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary/10 text-primary">중{test.grade - 6}</span></div>
+                      <div className="flex items-center gap-1.5 mb-1"><span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-primary/10 text-primary">중{test.grade - 6}</span></div>
                       <p className="text-sm font-medium text-text-primary truncate">{test.title}</p>
-                      <div className="flex items-center gap-3 mt-1 text-[11px] text-text-secondary"><span>{test.questionCount}문제</span><span>{test._count.attempts}명 응시</span></div>
+                      <div className="flex items-center gap-3 mt-1 text-xs text-text-secondary"><span>{test.questionCount}문제</span><span>{test._count.attempts}명 응시</span></div>
                     </button>
                   ))}
                 </div>
@@ -510,21 +510,21 @@ export function LevelTestTab() {
                 <h2 className="text-xl font-bold text-text-primary">{selectedTest.title}</h2>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-                <div className="bg-slate-50 rounded-lg p-3">
+                <div className="bg-slate-50 rounded-sm p-3">
                   <div className="flex items-center gap-1.5 text-text-secondary text-xs mb-1"><GraduationCap className="w-3.5 h-3.5" />문제 수</div>
                   <p className="text-lg font-bold text-text-primary">{selectedTest.questionCount}</p>
                 </div>
                 {selectedTest.timeLimitMin && (
-                  <div className="bg-slate-50 rounded-lg p-3">
+                  <div className="bg-slate-50 rounded-sm p-3">
                     <div className="flex items-center gap-1.5 text-text-secondary text-xs mb-1"><Clock className="w-3.5 h-3.5" />시간 제한</div>
                     <p className="text-lg font-bold text-text-primary">{selectedTest.timeLimitMin}분</p>
                   </div>
                 )}
-                <div className="bg-slate-50 rounded-lg p-3">
+                <div className="bg-slate-50 rounded-sm p-3">
                   <div className="flex items-center gap-1.5 text-text-secondary text-xs mb-1"><Users className="w-3.5 h-3.5" />응시</div>
                   <p className="text-lg font-bold text-text-primary">{selectedTest._count.attempts}명</p>
                 </div>
-                <div className="bg-slate-50 rounded-lg p-3">
+                <div className="bg-slate-50 rounded-sm p-3">
                   <div className="flex items-center gap-1.5 text-text-secondary text-xs mb-1"><Clock className="w-3.5 h-3.5" />생성일</div>
                   <p className="text-sm font-bold text-text-primary">{new Date(selectedTest.createdAt).toLocaleDateString('ko-KR')}</p>
                 </div>
@@ -535,7 +535,7 @@ export function LevelTestTab() {
                   <div className="flex flex-wrap gap-2">
                     {(Object.entries(getDomainCounts(selectedTest.levelTestConfig)) as [LevelTestDomain, number][]).map(([domain, count]) => {
                       const colors = DOMAIN_COLORS[domain];
-                      return <span key={domain} className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${colors.bg} ${colors.text}`}>{DOMAIN_LABELS[domain]} {count}문제</span>;
+                      return <span key={domain} className={`px-3 py-1.5 rounded-sm text-xs font-semibold ${colors.bg} ${colors.text}`}>{DOMAIN_LABELS[domain]} {count}문제</span>;
                     })}
                   </div>
                 </div>

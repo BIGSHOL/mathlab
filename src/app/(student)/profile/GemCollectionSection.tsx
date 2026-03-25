@@ -26,7 +26,7 @@ export function GemCollectionSection({ gems, totalCompleted, totalInProgress }: 
   const gemMap = new Map(gems.map((g) => [g.variant, g]));
 
   return (
-    <Card className="rounded-xl overflow-hidden">
+    <Card className="rounded-sm overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
         <div className="flex items-center gap-1.5">
           <Gem className="w-3.5 h-3.5 text-purple-500" />
@@ -55,7 +55,7 @@ export function GemCollectionSection({ gems, totalCompleted, totalInProgress }: 
             return (
               <div
                 key={variant}
-                className={`flex flex-col items-center p-3 rounded-xl border transition-all ${
+                className={`flex flex-col items-center p-3 rounded-sm border transition-all ${
                   total > 0
                     ? 'bg-white border-slate-200 shadow-sm'
                     : 'bg-slate-50 border-slate-100 opacity-50'
@@ -66,7 +66,7 @@ export function GemCollectionSection({ gems, totalCompleted, totalInProgress }: 
                   stage={total > 0 ? Math.min(maxStage, 4) : 0}
                   size="md"
                 />
-                <p className="text-[11px] font-bold text-text-primary mt-1.5">
+                <p className="text-xs font-bold text-text-primary mt-1.5">
                   {GEM_VARIANT_LABELS[variant]}
                 </p>
                 <p className={`text-xs font-extrabold mt-0.5 ${

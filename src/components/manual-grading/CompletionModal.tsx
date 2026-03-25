@@ -52,12 +52,12 @@ export function CompletionModal({ onClose, onNewGrading }: CompletionModalProps)
             <div className="bg-emerald-50 rounded-sm p-3 text-center">
               <Trophy className="w-4 h-4 text-emerald-500 mx-auto" />
               <div className="mt-1 text-lg font-bold text-emerald-700">{accuracy}%</div>
-              <div className="text-[10px] text-emerald-600">정답률</div>
+              <div className="text-xs text-emerald-600">정답률</div>
             </div>
             <div className="bg-amber-50 rounded-sm p-3 text-center">
               <Star className="w-4 h-4 text-amber-500 mx-auto" />
               <div className="mt-1 text-lg font-bold text-amber-700">{xpEarned}</div>
-              <div className="text-[10px] text-amber-600">XP 획득</div>
+              <div className="text-xs text-amber-600">XP 획득</div>
             </div>
           </div>
 
@@ -67,7 +67,7 @@ export function CompletionModal({ onClose, onNewGrading }: CompletionModalProps)
               <GraduationCap className="w-4 h-4 text-violet-500 shrink-0" />
               <div>
                 <p className="text-xs font-bold text-violet-700">레벨테스트 분석 완료</p>
-                <p className="text-[10px] text-violet-600">결과 페이지에서 진단 결과를 확인하세요</p>
+                <p className="text-xs text-violet-600">결과 페이지에서 진단 결과를 확인하세요</p>
               </div>
             </div>
           )}

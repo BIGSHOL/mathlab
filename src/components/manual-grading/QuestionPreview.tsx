@@ -42,17 +42,17 @@ export function QuestionPreview() {
       <div className="flex items-center gap-2">
         <span className="text-sm font-bold text-primary">{questionIndex + 1}번 문제</span>
         {diff && (
-          <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${diff.color}`}>
+          <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${diff.color}`}>
             {diff.label}
           </span>
         )}
         {domain && (
-          <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${domain.color}`}>
+          <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${domain.color}`}>
             {domain.label}
           </span>
         )}
         {question.chapter && (
-          <span className="text-[10px] text-slate-400">{question.chapter}</span>
+          <span className="text-xs text-slate-400">{question.chapter}</span>
         )}
       </div>
 
@@ -98,7 +98,7 @@ export function QuestionPreview() {
             <span className={`text-sm font-bold [&_p]:inline [&_p]:m-0 ${answer.isCorrect ? 'text-emerald-600' : 'text-red-500'}`}>
               <MathRenderer content={answer.selectedAnswer} />
             </span>
-            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+            <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${
               answer.isCorrect ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
             }`}>
               {answer.isCorrect ? '정답' : '오답'}

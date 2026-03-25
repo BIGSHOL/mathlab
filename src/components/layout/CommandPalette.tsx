@@ -112,7 +112,7 @@ export function CommandPalette() {
       />
 
       {/* 팔레트 */}
-      <div className="relative w-full max-w-lg mx-4 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div className="relative w-full max-w-lg mx-4 bg-white rounded-sm shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* 검색 입력 */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100">
           <Search className="w-5 h-5 text-slate-400 shrink-0" />
@@ -125,7 +125,7 @@ export function CommandPalette() {
             onKeyDown={handleKeyDown}
             className="flex-1 text-sm bg-transparent outline-none placeholder:text-slate-400"
           />
-          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-100 text-[10px] font-mono text-slate-500 border border-slate-200">
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-100 text-xs font-mono text-slate-500 border border-slate-200">
             ESC
           </kbd>
         </div>
@@ -142,7 +142,7 @@ export function CommandPalette() {
               if (items.length === 0) return null;
               return (
                 <div key={group}>
-                  <p className="px-4 pt-2 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  <p className="px-4 pt-2 pb-1 text-xs font-bold text-slate-400 uppercase tracking-widest">
                     {group}
                   </p>
                   {items.map((cmd) => {
@@ -171,17 +171,17 @@ export function CommandPalette() {
         </div>
 
         {/* 하단 힌트 */}
-        <div className="flex items-center gap-4 px-4 py-2 border-t border-slate-100 bg-slate-50 text-[11px] text-slate-400">
+        <div className="flex items-center gap-4 px-4 py-2 border-t border-slate-100 bg-slate-50 text-xs text-slate-400">
           <span className="flex items-center gap-1">
-            <kbd className="px-1 py-0.5 rounded bg-white border border-slate-200 text-[10px] font-mono">↑↓</kbd>
+            <kbd className="px-1 py-0.5 rounded bg-white border border-slate-200 text-xs font-mono">↑↓</kbd>
             이동
           </span>
           <span className="flex items-center gap-1">
-            <kbd className="px-1 py-0.5 rounded bg-white border border-slate-200 text-[10px] font-mono">Enter</kbd>
+            <kbd className="px-1 py-0.5 rounded bg-white border border-slate-200 text-xs font-mono">Enter</kbd>
             열기
           </span>
           <span className="flex items-center gap-1">
-            <kbd className="px-1 py-0.5 rounded bg-white border border-slate-200 text-[10px] font-mono">Esc</kbd>
+            <kbd className="px-1 py-0.5 rounded bg-white border border-slate-200 text-xs font-mono">Esc</kbd>
             닫기
           </span>
         </div>

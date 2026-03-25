@@ -90,13 +90,13 @@ export default function AdminFeaturesPage() {
       {/* 요약 */}
       {!loading && flags.length > 0 && (
         <div className="flex items-center gap-4 mb-6">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 text-xs text-text-secondary">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-slate-100 text-xs text-text-secondary">
             전체 <span className="font-semibold text-text-primary">{flags.length}</span>개
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-50 text-xs text-green-700">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-green-50 text-xs text-green-700">
             활성 <span className="font-semibold">{enabledCount}</span>개
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 text-xs text-text-secondary">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-slate-50 text-xs text-text-secondary">
             비활성 <span className="font-semibold">{flags.length - enabledCount}</span>개
           </div>
           <div className="flex items-center gap-1.5 ml-auto text-xs text-text-secondary">
@@ -128,7 +128,7 @@ export default function AdminFeaturesPage() {
                       <h3 className={`font-semibold ${flag.enabled ? 'text-text-primary' : 'text-text-secondary'}`}>
                         {flag.label}
                       </h3>
-                      <code className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-text-secondary font-mono">
+                      <code className="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-text-secondary font-mono">
                         {flag.key}
                       </code>
                     </div>

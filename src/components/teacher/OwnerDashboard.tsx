@@ -12,13 +12,12 @@ import {
   Trophy,
   Flame,
   ExternalLink,
+  ChevronRight,
 } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
 import { prisma } from '@/lib/db';
 import { formatNumber } from '@/lib/utils/format';
 import Link from 'next/link';
 import MonthlyChart from '@/components/charts/MonthlyChart';
-import { DashboardStatCards } from '@/components/student/DashboardStatCards';
 import { OverviewActions } from '@/components/teacher/OverviewActions';
 
 interface Props {
@@ -198,55 +197,23 @@ export default async function OwnerDashboard({ user, period }: Props) {
   const periodLabel = period === 'all' ? '전체' : period === '90d' ? '3개월' : period === '30d' ? '월간' : '주간';
 
   const stats = [
-    {
-      label: '등록 선생님',
-      value: formatNumber(totalTeachers),
-      suffix: '명',
-      icon: <GraduationCap className="w-8 h-8 text-primary opacity-20" />,
-      trend: { value: '활동 중', positive: true },
-      href: '/students?tab=teachers',
-    },
-    {
-      label: '전체 학생',
-      value: formatNumber(totalStudents),
-      suffix: '명',
-      icon: <Users className="w-8 h-8 text-primary opacity-20" />,
-      trend: { value: `${classroomsRaw.length}개 반`, positive: true },
-      href: '/students',
-    },
-    {
-      label: `${periodLabel} 활동률`,
-      value: `${attendanceRate}`,
-      suffix: '%',
-      icon: <CalendarCheck className="w-8 h-8 text-primary opacity-20" />,
-      trend: attendanceRate >= 70
-        ? { value: '양호', positive: true }
-        : { value: '관리 필요', positive: false },
-      href: '/analytics',
-    },
-    {
-      label: '이용권',
-      value: `${usedSeats}/${totalSeats}`,
-      icon: <KeyRound className="w-8 h-8 text-primary opacity-20" />,
-      trend: expiringLicenses.length > 0
-        ? { value: `${expiringLicenses.length}건 만료 임박`, positive: false }
-        : { value: `${seatUsageRate}% 사용`, positive: true },
-      href: '/licenses',
-    },
-    {
-      label: '대기 문의',
-      value: formatNumber(pendingInquiries),
-      suffix: '건',
-      icon: <MessageCircleQuestion className="w-8 h-8 text-primary opacity-20" />,
-      trend: pendingInquiries > 0
-        ? { value: '답변 필요', positive: false }
-        : { value: '없음', positive: true },
-      href: '/support',
-    },
+    { label: '등록 선생님', value: formatNumber(totalTeachers), suffix: '명', icon: GraduationCap, color: 'violet' as const, trend: { value: '활동 중', positive: true }, href: '/students?tab=teachers' },
+    { label: '전체 학생', value: formatNumber(totalStudents), suffix: '명', icon: Users, color: 'blue' as const, trend: { value: `${classroomsRaw.length}개 반`, positive: true }, href: '/students' },
+    { label: `${periodLabel} 활동률`, value: `${attendanceRate}`, suffix: '%', icon: CalendarCheck, color: 'emerald' as const, trend: attendanceRate >= 70 ? { value: '양호', positive: true } : { value: '관리 필요', positive: false }, href: '/analytics' },
+    { label: '이용권', value: `${usedSeats}/${totalSeats}`, icon: KeyRound, color: 'amber' as const, trend: expiringLicenses.length > 0 ? { value: `${expiringLicenses.length}건 만료 임박`, positive: false } : { value: `${seatUsageRate}% 사용`, positive: true }, href: '/licenses' },
+    { label: '대기 문의', value: formatNumber(pendingInquiries), suffix: '건', icon: MessageCircleQuestion, color: 'rose' as const, trend: pendingInquiries > 0 ? { value: '답변 필요', positive: false } : { value: '없음', positive: true }, href: '/support' },
   ];
 
+  const colorMap = {
+    blue: { border: 'border-blue-200', icon: 'text-blue-500', value: 'text-blue-700', sub: 'text-blue-500', deco: 'bg-blue-500/5' },
+    emerald: { border: 'border-emerald-200', icon: 'text-emerald-500', value: 'text-emerald-700', sub: 'text-emerald-500', deco: 'bg-emerald-500/5' },
+    violet: { border: 'border-violet-200', icon: 'text-violet-500', value: 'text-violet-700', sub: 'text-violet-500', deco: 'bg-violet-500/5' },
+    amber: { border: 'border-amber-200', icon: 'text-amber-500', value: 'text-amber-700', sub: 'text-amber-500', deco: 'bg-amber-500/5' },
+    rose: { border: 'border-rose-200', icon: 'text-rose-500', value: 'text-rose-700', sub: 'text-rose-500', deco: 'bg-rose-500/5' },
+  };
+
   return (
-    <div className="flex flex-col grow min-w-0 max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-6 md:py-8 gap-3">
+    <div className="flex flex-col grow min-w-0 max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-6 md:py-8 gap-4">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2">
         <div>
@@ -258,41 +225,38 @@ export default async function OwnerDashboard({ user, period }: Props) {
         <OverviewActions />
       </div>
 
-      {/* Stat Cards */}
-      <DashboardStatCards className="grid grid-cols-2 lg:grid-cols-5 gap-2">
-        {stats.map((stat) => (
-          <Link key={stat.label} href={stat.href} className="contents">
-            <Card
-              variant="glass"
-              padding="sm"
-              className="flex flex-col gap-2 hover:shadow-md transition-shadow relative overflow-hidden cursor-pointer"
-            >
-              <div className="absolute top-0 right-0 p-3">{stat.icon}</div>
-              <p className="text-text-secondary text-sm font-semibold tracking-wide">{stat.label}</p>
-              <div className="flex items-end justify-between mt-auto">
-                <p className="text-text-primary text-base md:text-lg font-bold leading-none">
-                  {stat.value}
-                  {stat.suffix && (
-                    <span className="text-base md:text-sm text-slate-400 font-bold ml-0.5">{stat.suffix}</span>
-                  )}
-                </p>
-              </div>
-              <span
-                className={`text-xs font-bold px-1.5 py-0.5 rounded-sm flex items-center w-fit ${
+      {/* Stat Cards — 컬러 border 카드 */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-2">
+        {stats.map((stat) => {
+          const c = colorMap[stat.color];
+          const Icon = stat.icon;
+          return (
+            <Link key={stat.label} href={stat.href}>
+              <div className={`bg-white border ${c.border} rounded-sm p-3 relative overflow-hidden hover:shadow-md transition-shadow cursor-pointer h-full`}>
+                <div className={`absolute top-0 right-0 w-10 h-10 ${c.deco} rounded-bl-full`} />
+                <div className="flex items-center gap-2">
+                  <Icon className={`w-4 h-4 ${c.icon} shrink-0`} />
+                  <div className={`text-lg font-bold ${c.value}`}>
+                    {stat.value}
+                    {stat.suffix && <span className="text-xs font-medium ml-0.5">{stat.suffix}</span>}
+                  </div>
+                </div>
+                <div className={`text-xs ${c.sub} mt-0.5`}>{stat.label}</div>
+                <span className={`text-xs font-bold px-1.5 py-0.5 rounded-sm flex items-center w-fit mt-1.5 ${
                   stat.trend.positive ? 'text-emerald-600 bg-emerald-50' : 'text-rose-500 bg-rose-50'
-                }`}
-              >
-                {stat.trend.positive ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
-                {stat.trend.value}
-              </span>
-            </Card>
-          </Link>
-        ))}
-      </DashboardStatCards>
+                }`}>
+                  {stat.trend.positive ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
+                  {stat.trend.value}
+                </span>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
 
       {/* Row 2: 월간 차트 + 반별 성과 */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
-        <Card variant="glass" padding="sm" className="flex flex-col gap-2 lg:col-span-3">
+        <div className="bg-white border border-slate-200 rounded-sm p-3 flex flex-col gap-2 lg:col-span-3">
           <div className="flex justify-between items-start">
             <div>
               <h3 className="text-text-primary text-sm font-semibold">월간 학습 추이</h3>
@@ -302,56 +266,61 @@ export default async function OwnerDashboard({ user, period }: Props) {
             </div>
           </div>
           <MonthlyChart />
-        </Card>
+        </div>
 
-        {/* 반별 성과 비교 */}
-        <Card variant="glass" className="flex flex-col overflow-hidden lg:col-span-2">
-          <div className="px-3 py-2.5 border-b border-slate-200/50 flex justify-between items-center">
-            <h3 className="text-text-primary text-base font-bold flex items-center gap-2">
-              <School className="w-4 h-4 text-primary" /> 반별 성과
-            </h3>
-            <Link href="/admin/classrooms" className="text-primary text-xs font-bold hover:underline">
+        {/* 반별 성과 비교 — 좌측 컬러바 + ChevronRight */}
+        <div className="bg-white border border-slate-200 rounded-sm flex flex-col overflow-hidden lg:col-span-2">
+          <div className="px-3 py-2.5 border-b border-slate-200 flex justify-between items-center">
+            <div className="flex items-center gap-1.5">
+              <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center shrink-0">
+                <School className="w-3 h-3 text-primary" />
+              </div>
+              <h3 className="text-xs font-bold text-text-primary">반별 성과</h3>
+            </div>
+            <Link href="/courses?tab=classrooms" className="text-primary text-xs font-bold hover:underline">
               반 관리
             </Link>
           </div>
-          <div className="flex-1 p-2.5 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto">
             {classroomStats.length === 0 ? (
               <p className="text-text-secondary text-center py-8 text-sm">등록된 반이 없습니다.</p>
             ) : (
-              <div className="flex flex-col gap-2">
+              <div className="space-y-1.5 p-2.5">
                 {classroomStats.slice(0, 6).map((c) => (
-                  <div key={c.id} className="flex items-center gap-3 p-2.5 rounded-sm bg-white/40 hover:bg-white transition-colors shadow-sm">
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
-                      c.activityRate >= 70 ? 'bg-emerald-100 text-emerald-600'
-                      : c.activityRate >= 40 ? 'bg-amber-100 text-amber-600'
-                      : 'bg-red-100 text-red-500'
-                    }`}>
-                      {c.activityRate}%
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-sm text-text-primary truncate">{c.name}</p>
-                      <p className="text-xs text-text-secondary">
-                        {c.teacherName} · {c.studentCount}명 · Lv.{c.avgLevel}
-                      </p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-xs font-semibold text-primary">{formatNumber(c.totalXp)} XP</p>
+                  <div key={c.id} className="flex items-center bg-white border border-slate-200 rounded-sm overflow-hidden hover:border-primary/40 transition-colors">
+                    <div className={`w-1 self-stretch shrink-0 ${
+                      c.activityRate >= 70 ? 'bg-emerald-400' : c.activityRate >= 40 ? 'bg-amber-400' : 'bg-red-400'
+                    }`} />
+                    <div className="flex items-center justify-between flex-1 min-w-0 px-3 py-2">
+                      <div className="min-w-0">
+                        <div className="text-xs font-medium text-text-primary truncate">{c.name}</div>
+                        <div className="text-xs text-text-secondary">{c.teacherName} · {c.studentCount}명 · Lv.{c.avgLevel}</div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                          c.activityRate >= 70 ? 'bg-emerald-100 text-emerald-700' : c.activityRate >= 40 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
+                        }`}>{c.activityRate}%</span>
+                        <div className="text-xs font-bold text-primary">{formatNumber(c.totalXp)} XP</div>
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
-        </Card>
+        </div>
       </div>
 
-      {/* Row 3: 이용권 현황 + 만료 임박 알림 */}
+      {/* Row 3: 이용권 현황 */}
       {licenses.length > 0 && (
-        <Card padding="sm">
+        <div className="bg-white border border-slate-200 rounded-sm p-3">
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <KeyRound className="w-4 h-4 text-primary" />
-              <h3 className="text-text-primary text-base font-bold">이용권 현황</h3>
+            <div className="flex items-center gap-1.5">
+              <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center shrink-0">
+                <KeyRound className="w-3 h-3 text-primary" />
+              </div>
+              <h3 className="text-xs font-bold text-text-primary">이용권 현황</h3>
             </div>
             <Link href="/licenses" className="text-primary text-xs font-bold hover:underline flex items-center gap-1">
               관리 <ExternalLink className="w-3 h-3" />
@@ -364,7 +333,7 @@ export default async function OwnerDashboard({ user, period }: Props) {
               return (
                 <div
                   key={l.feature}
-                  className={`rounded-lg border p-3 text-center ${
+                  className={`rounded-sm border p-3 text-center ${
                     isExpiring ? 'border-amber-300 bg-amber-50' : 'border-slate-200'
                   }`}
                 >
@@ -381,7 +350,7 @@ export default async function OwnerDashboard({ user, period }: Props) {
                     />
                   </div>
                   {isExpiring && (
-                    <p className="text-[10px] text-amber-600 font-semibold mt-1 flex items-center justify-center gap-0.5">
+                    <p className="text-xs text-amber-600 font-semibold mt-1 flex items-center justify-center gap-0.5">
                       <AlertTriangle className="w-2.5 h-2.5" /> 만료 임박
                     </p>
                   )}
@@ -389,47 +358,55 @@ export default async function OwnerDashboard({ user, period }: Props) {
               );
             })}
           </div>
-        </Card>
+        </div>
       )}
 
       {/* Row 4: 랭킹 + 학년분포 + 최근활동 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {/* XP 랭킹 TOP 5 */}
-        <Card padding="sm">
+        {/* XP 랭킹 TOP 5 — 좌측 컬러바 패턴 */}
+        <div className="bg-white border border-slate-200 rounded-sm p-3">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-text-primary text-base font-bold flex items-center gap-2">
-              <Trophy className="w-4 h-4 text-xp-gold" /> XP 랭킹 TOP 5
-            </h3>
+            <div className="flex items-center gap-1.5">
+              <div className="w-5 h-5 rounded bg-amber-100 flex items-center justify-center shrink-0">
+                <Trophy className="w-3 h-3 text-amber-600" />
+              </div>
+              <h3 className="text-xs font-bold text-text-primary">XP 랭킹 TOP 5</h3>
+            </div>
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="space-y-1.5">
             {topStudents.map((s, i) => (
-              <div key={s.id} className="flex items-center gap-2 py-2 border-b border-slate-200 last:border-0">
-                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                  i === 0 ? 'bg-amber-100 text-amber-700'
-                  : i === 1 ? 'bg-slate-200 text-slate-600'
-                  : i === 2 ? 'bg-orange-100 text-orange-700'
-                  : 'bg-slate-50 text-slate-500'
-                }`}>
-                  {i + 1}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-text-primary truncate">{s.name}</p>
-                  <p className="text-xs text-text-secondary">{getGradeLabel(s.grade)}</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="text-sm font-bold text-primary">{formatNumber(s.profile?.totalXp ?? 0)}</p>
-                  <p className="text-xs text-text-secondary">Lv.{s.profile?.level ?? 1}</p>
+              <div key={s.id} className="flex items-center bg-white border border-slate-200 rounded-sm overflow-hidden hover:border-amber-300 transition-colors">
+                <div className={`w-1 self-stretch shrink-0 ${
+                  i === 0 ? 'bg-amber-400' : i === 1 ? 'bg-slate-400' : i === 2 ? 'bg-orange-400' : 'bg-slate-200'
+                }`} />
+                <div className="flex items-center justify-between flex-1 min-w-0 px-3 py-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                      i === 0 ? 'bg-amber-100 text-amber-700' : i === 1 ? 'bg-slate-200 text-slate-600' : i === 2 ? 'bg-orange-100 text-orange-700' : 'bg-slate-50 text-slate-500'
+                    }`}>{i + 1}</span>
+                    <div className="min-w-0">
+                      <div className="text-xs font-medium text-text-primary truncate">{s.name}</div>
+                      <div className="text-xs text-text-secondary">{getGradeLabel(s.grade)}</div>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0 ml-2">
+                    <div className="text-xs font-bold text-primary">{formatNumber(s.profile?.totalXp ?? 0)} XP</div>
+                    <div className="text-xs text-text-secondary">Lv.{s.profile?.level ?? 1}</div>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
-        </Card>
+        </div>
 
         {/* 학년별 분포 + 스트릭 */}
-        <Card padding="sm">
-          <h3 className="text-text-primary text-base font-bold flex items-center gap-2 mb-2">
-            <Users className="w-4 h-4 text-primary" /> 학년별 학생 분포
-          </h3>
+        <div className="bg-white border border-slate-200 rounded-sm p-3">
+          <div className="flex items-center gap-1.5 mb-2">
+            <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center shrink-0">
+              <Users className="w-3 h-3 text-primary" />
+            </div>
+            <h3 className="text-xs font-bold text-text-primary">학년별 학생 분포</h3>
+          </div>
           <div className="flex flex-col gap-2">
             {gradeEntries.length === 0 ? (
               <p className="text-text-secondary text-sm text-center py-2.5">데이터 없음</p>
@@ -452,9 +429,11 @@ export default async function OwnerDashboard({ user, period }: Props) {
             )}
           </div>
           <div className="mt-3 pt-2.5 border-t border-slate-200">
-            <div className="flex items-center gap-2 mb-2">
-              <Flame className="w-4 h-4 text-orange-500" />
-              <span className="text-sm font-bold text-text-primary">학습 스트릭</span>
+            <div className="flex items-center gap-1.5 mb-2">
+              <div className="w-5 h-5 rounded bg-orange-100 flex items-center justify-center shrink-0">
+                <Flame className="w-3 h-3 text-orange-500" />
+              </div>
+              <span className="text-xs font-bold text-text-primary">학습 스트릭</span>
             </div>
             <div className="flex gap-2 text-center">
               <div className="flex-1 bg-orange-50 rounded-sm p-3">
@@ -473,44 +452,50 @@ export default async function OwnerDashboard({ user, period }: Props) {
               </div>
             </div>
           </div>
-        </Card>
+        </div>
 
-        {/* 최근 학습 활동 */}
-        <Card padding="sm">
-          <h3 className="text-text-primary text-base font-bold flex items-center gap-2 mb-2">
-            <BookOpen className="w-4 h-4 text-primary" /> 최근 학습 활동
-          </h3>
-          <div className="flex flex-col gap-2.5">
+        {/* 최근 학습 활동 — 좌측 컬러바 패턴 */}
+        <div className="bg-white border border-slate-200 rounded-sm p-3">
+          <div className="flex items-center gap-1.5 mb-2">
+            <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center shrink-0">
+              <BookOpen className="w-3 h-3 text-primary" />
+            </div>
+            <h3 className="text-xs font-bold text-text-primary">최근 학습 활동</h3>
+          </div>
+          <div className="space-y-1.5">
             {recentActivity.length === 0 ? (
               <p className="text-text-secondary text-sm text-center py-2.5">아직 학습 기록이 없습니다.</p>
             ) : (
               recentActivity.map((a) => (
-                <div key={a.id} className="flex items-start gap-2 py-2 border-b border-slate-200 last:border-0">
-                  <div className={`w-8 h-8 rounded-sm flex items-center justify-center text-xs font-bold shrink-0 ${
-                    a.completed ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'
-                  }`}>
-                    {a.user.name[0]}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-text-primary">
-                      <span className="font-semibold">{a.user.name}</span>
-                      <span className="text-text-secondary">이(가) </span>
-                      <span className="font-medium">{a.concept.title}</span>
-                    </p>
-                    <p className="text-xs text-text-secondary mt-0.5">
-                      {stageLabels[a.stage] ?? a.stage} ·{' '}
-                      {a.completed ? (
-                        <span className="text-emerald-600 font-semibold">완료</span>
-                      ) : (
-                        <span className="text-blue-600 font-semibold">진행 중</span>
-                      )}
-                    </p>
+                <div key={a.id} className="flex items-center bg-white border border-slate-200 rounded-sm overflow-hidden">
+                  <div className={`w-1 self-stretch shrink-0 ${a.completed ? 'bg-emerald-400' : 'bg-blue-400'}`} />
+                  <div className="flex items-center justify-between flex-1 min-w-0 px-3 py-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                        a.completed ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'
+                      }`}>
+                        {a.user.name[0]}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-medium text-text-primary truncate">
+                          <span className="font-semibold">{a.user.name}</span>
+                          <span className="text-text-secondary"> · </span>
+                          {a.concept.title}
+                        </div>
+                        <div className="text-xs text-text-secondary">{stageLabels[a.stage] ?? a.stage}</div>
+                      </div>
+                    </div>
+                    <span className={`text-xs px-1.5 py-0.5 rounded font-medium shrink-0 ${
+                      a.completed ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
+                    }`}>
+                      {a.completed ? '완료' : '진행 중'}
+                    </span>
                   </div>
                 </div>
               ))
             )}
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );

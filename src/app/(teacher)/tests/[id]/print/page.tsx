@@ -169,7 +169,7 @@ export default function PrintWorksheetPage() {
               <ArrowLeft className="w-4 h-4" />
             </Link>
             <span className="text-xs font-bold text-text-primary">{test.title}</span>
-            <span className="text-[10px] text-text-secondary">{totalPages}페이지</span>
+            <span className="text-xs text-text-secondary">{totalPages}페이지</span>
           </div>
         }
         extraControls={
@@ -208,7 +208,7 @@ export default function PrintWorksheetPage() {
                     return (
                       <div key={q.id} className="break-inside-avoid">
                         <div className="flex items-start gap-2">
-                          <span className="text-[11px] font-bold text-text-primary shrink-0 w-6 text-right">
+                          <span className="text-xs font-bold text-text-primary shrink-0 w-6 text-right">
                             {num}.
                           </span>
                           <div className="flex-1 min-w-0">
@@ -223,11 +223,11 @@ export default function PrintWorksheetPage() {
                                 {DIFFICULTY_LABELS[q.difficulty as keyof typeof DIFFICULTY_LABELS]}
                               </span>
                             </div>
-                            <div className="text-[11px] text-text-primary leading-relaxed">
+                            <div className="text-xs text-text-primary leading-relaxed">
                               <MathRenderer content={q.content} />
                             </div>
                             {q.choices && q.choices.length > 0 && (
-                              <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+                              <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                                 {(q.choices as string[]).map((choice, ci) => (
                                   <div key={ci} className="flex items-start gap-1">
                                     <span className="text-text-secondary shrink-0">{ci + 1})</span>
@@ -263,7 +263,7 @@ export default function PrintWorksheetPage() {
               />
               <div className="mt-4">
                 <h3 className="text-xs font-bold text-text-primary mb-3">정답표</h3>
-                <div className="grid grid-cols-5 gap-2 text-[11px]">
+                <div className="grid grid-cols-5 gap-2 text-xs">
                   {test.questions.map((q, idx) => (
                     <div key={q.id} className="flex items-center gap-1 px-2 py-1 bg-slate-50 rounded border border-slate-100">
                       <span className="font-bold text-text-secondary w-5">{idx + 1}.</span>
@@ -301,7 +301,7 @@ export default function PrintWorksheetPage() {
                   return (
                     <div key={q.id} className="break-inside-avoid">
                       <div className="flex items-start gap-2">
-                        <span className="text-[11px] font-bold text-text-primary shrink-0 w-6 text-right">
+                        <span className="text-xs font-bold text-text-primary shrink-0 w-6 text-right">
                           {num}.
                         </span>
                         <div className="flex-1 min-w-0">
@@ -316,11 +316,11 @@ export default function PrintWorksheetPage() {
                               {DIFFICULTY_LABELS[q.difficulty as keyof typeof DIFFICULTY_LABELS]}
                             </span>
                           </div>
-                          <div className="text-[11px] text-text-primary leading-relaxed">
+                          <div className="text-xs text-text-primary leading-relaxed">
                             <MathRenderer content={q.content} />
                           </div>
                           {q.choices && q.choices.length > 0 && (
-                            <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+                            <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                               {(q.choices as string[]).map((choice, ci) => (
                                 <div key={ci} className="flex items-start gap-1">
                                   <span className="text-text-secondary shrink-0">{ci + 1})</span>
@@ -354,7 +354,7 @@ export default function PrintWorksheetPage() {
             />
             <div className="mt-4">
               <h3 className="text-xs font-bold text-text-primary mb-3">정답표</h3>
-              <div className="grid grid-cols-5 gap-2 text-[11px]">
+              <div className="grid grid-cols-5 gap-2 text-xs">
                 {test.questions.map((q, idx) => (
                   <div key={q.id} className="flex items-center gap-1 px-2 py-1 bg-slate-50 rounded border border-slate-100">
                     <span className="font-bold text-text-secondary w-5">{idx + 1}.</span>

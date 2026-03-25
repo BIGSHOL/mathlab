@@ -47,10 +47,10 @@ export function ReportWeakAreas({
           </div>
           <div className="p-3 space-y-1">
             {strongAreas.length === 0 ? (
-              <p className="text-[10px] text-slate-400 py-3 text-center">강점 영역이 없습니다</p>
+              <p className="text-xs text-slate-400 py-3 text-center">강점 영역이 없습니다</p>
             ) : (
               strongAreas.slice(0, 5).map((area) => (
-                <div key={area.chapter} className="flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-slate-50">
+                <div key={area.chapter} className="flex items-center justify-between px-3 py-1.5 rounded-sm hover:bg-slate-50">
                   <span className="text-xs text-slate-700 font-medium truncate flex-1">{area.chapter}</span>
                   <span className="text-xs font-black text-emerald-600 ml-2">{area.accuracy}%</span>
                 </div>
@@ -73,10 +73,10 @@ export function ReportWeakAreas({
           </div>
           <div className="p-3 space-y-1">
             {weakAreas.length === 0 ? (
-              <p className="text-[10px] text-slate-400 py-3 text-center">취약 영역이 없습니다</p>
+              <p className="text-xs text-slate-400 py-3 text-center">취약 영역이 없습니다</p>
             ) : (
               weakAreas.slice(0, 5).map((area) => (
-                <div key={area.chapter} className="flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-slate-50">
+                <div key={area.chapter} className="flex items-center justify-between px-3 py-1.5 rounded-sm hover:bg-slate-50">
                   <span className="text-xs text-slate-700 font-medium truncate flex-1">{area.chapter}</span>
                   <span className="text-xs font-black text-red-500 ml-2">{area.accuracy}%</span>
                 </div>
@@ -106,22 +106,22 @@ export function ReportWeakAreas({
             </span>
           </div>
 
-          <p className="text-[11px] text-slate-500 mb-3 leading-relaxed">{prereqFeedback}</p>
+          <p className="text-xs text-slate-500 mb-3 leading-relaxed">{prereqFeedback}</p>
 
           <div className="flex-1 overflow-hidden space-y-2.5">
             {prerequisiteChains.slice(0, 4).map((chain, idx) => (
               <div
                 key={idx}
-                className="rounded-xl border border-slate-200 p-3.5"
+                className="rounded-sm border border-slate-200 p-3.5"
                 style={{ backgroundColor: '#fafafa', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } as React.CSSProperties}
               >
                 <div className="flex items-start gap-3">
                   <div
-                    className="shrink-0 rounded-lg px-2.5 py-1.5"
+                    className="shrink-0 rounded-sm px-2.5 py-1.5"
                     style={{ backgroundColor: '#fef2f2', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } as React.CSSProperties}
                   >
                     <p className="text-[9px] font-bold text-red-600">틀린 문제</p>
-                    <p className="text-[10px] text-slate-700 font-medium">{chain.wrongConcept.title || chain.wrongConcept.chapter}</p>
+                    <p className="text-xs text-slate-700 font-medium">{chain.wrongConcept.title || chain.wrongConcept.chapter}</p>
                     {chain.wrongConcept.chapter && chain.wrongConcept.title && (
                       <p className="text-[8px] text-slate-400">{chain.wrongConcept.chapter}</p>
                     )}
@@ -137,7 +137,7 @@ export function ReportWeakAreas({
                     {chain.prerequisites.map((prereq, pi) => (
                       <div
                         key={pi}
-                        className="rounded-lg px-2.5 py-1.5"
+                        className="rounded-sm px-2.5 py-1.5"
                         style={{
                           backgroundColor: prereq.depth === 1 ? '#eff6ff' : '#faf5ff',
                           printColorAdjust: 'exact',
@@ -147,7 +147,7 @@ export function ReportWeakAreas({
                         <p className="text-[8px] font-bold" style={{ color: prereq.depth === 1 ? '#2563eb' : '#7c3aed' }}>
                           {prereq.depth === 1 ? '직접 선수개념' : '기초 선수개념'}
                         </p>
-                        <p className="text-[10px] text-slate-700">{prereq.title || prereq.code}</p>
+                        <p className="text-xs text-slate-700">{prereq.title || prereq.code}</p>
                       </div>
                     ))}
                   </div>
@@ -176,7 +176,7 @@ export function ReportWeakAreas({
               </svg>
             </div>
             <p className="text-sm font-bold text-emerald-600 mb-1">선수학습 결손이 발견되지 않았습니다</p>
-            <p className="text-[10px] text-slate-400">현재 학년의 기초가 잘 잡혀 있습니다</p>
+            <p className="text-xs text-slate-400">현재 학년의 기초가 잘 잡혀 있습니다</p>
           </div>
         </div>
       )}

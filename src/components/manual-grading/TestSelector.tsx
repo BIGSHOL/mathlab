@@ -76,7 +76,7 @@ export function TestSelector({ selectedTest, onSelect, preselectedSeq }: TestSel
           <button
             key={type}
             onClick={() => setTypeFilter(type)}
-            className={`px-2 py-0.5 rounded-sm text-[10px] font-semibold transition-colors ${
+            className={`px-2 py-0.5 rounded-sm text-xs font-semibold transition-colors ${
               typeFilter === type ? 'bg-primary text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
             }`}
           >
@@ -100,9 +100,9 @@ export function TestSelector({ selectedTest, onSelect, preselectedSeq }: TestSel
       {/* 목록 */}
       <div className="max-h-40 overflow-y-auto space-y-0.5">
         {loading ? (
-          <p className="text-[10px] text-slate-400 text-center py-3">로딩 중...</p>
+          <p className="text-xs text-slate-400 text-center py-3">로딩 중...</p>
         ) : filtered.length === 0 ? (
-          <p className="text-[10px] text-slate-400 text-center py-3">시험이 없습니다</p>
+          <p className="text-xs text-slate-400 text-center py-3">시험이 없습니다</p>
         ) : (
           filtered.map((t) => (
             <button
@@ -126,7 +126,7 @@ export function TestSelector({ selectedTest, onSelect, preselectedSeq }: TestSel
                 <span className={`px-1 py-0.5 rounded text-[9px] font-bold ${TYPE_COLORS[t.testType] ?? 'bg-slate-100 text-slate-500'}`}>
                   {TYPE_LABELS[t.testType] ?? t.testType}
                 </span>
-                <span className="text-[10px] text-slate-400">{t.questionCount}문제</span>
+                <span className="text-xs text-slate-400">{t.questionCount}문제</span>
               </div>
             </button>
           ))

@@ -140,7 +140,7 @@ function FeatureCard({ info, stat }: {
       {/* 학생 기능 태그 */}
       <div className="flex flex-wrap gap-1 mt-3">
         {info.studentCapabilities.map((cap) => (
-          <span key={cap} className="px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 text-text-secondary rounded">
+          <span key={cap} className="px-1.5 py-0.5 text-xs font-medium bg-slate-100 text-text-secondary rounded">
             {cap}
           </span>
         ))}
@@ -167,9 +167,9 @@ function FeatureCard({ info, stat }: {
               style={{ width: `${Math.min(pct, 100)}%` }}
             />
           </div>
-          {isExpired && <p className="text-[10px] text-red-500 mt-1">만료됨</p>}
+          {isExpired && <p className="text-xs text-red-500 mt-1">만료됨</p>}
           {stat.expiresAt && !isExpired && (
-            <p className="text-[10px] text-text-secondary mt-1">
+            <p className="text-xs text-text-secondary mt-1">
               만료: {new Date(stat.expiresAt).toLocaleDateString('ko-KR')}
             </p>
           )}

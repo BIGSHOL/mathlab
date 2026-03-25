@@ -16,7 +16,7 @@ export default function GemMockupPage() {
       {/* 전체 매트릭스: 종류 × 단계 */}
       <section className="mb-12">
         <h2 className="text-xl font-bold mb-4 text-slate-300">종류 × 단계 (md 사이즈)</h2>
-        <div className="bg-slate-900/50 rounded-lg p-6 overflow-x-auto">
+        <div className="bg-slate-900/50 rounded-sm p-6 overflow-x-auto">
           <table className="border-collapse">
             <thead>
               <tr>
@@ -53,7 +53,7 @@ export default function GemMockupPage() {
       {/* 사이즈 비교 */}
       <section className="mb-12">
         <h2 className="text-xl font-bold mb-4 text-slate-300">사이즈 비교 (stage 4 완성)</h2>
-        <div className="bg-slate-900/50 rounded-lg p-6">
+        <div className="bg-slate-900/50 rounded-sm p-6">
           <div className="flex flex-wrap gap-8 items-end">
             {SIZES.map(sz => (
               <div key={sz} className="flex flex-col items-center gap-2">
@@ -68,7 +68,7 @@ export default function GemMockupPage() {
       {/* 대형 쇼케이스 */}
       <section className="mb-12">
         <h2 className="text-xl font-bold mb-4 text-slate-300">완성 보석 쇼케이스 (lg)</h2>
-        <div className="bg-slate-900/50 rounded-lg p-8">
+        <div className="bg-slate-900/50 rounded-sm p-8">
           <div className="flex flex-wrap gap-10 justify-center">
             {VARIANTS.map(v => (
               <div key={v} className="flex flex-col items-center gap-3">
@@ -83,7 +83,7 @@ export default function GemMockupPage() {
       {/* 진화 과정 시뮬레이션 */}
       <section className="mb-12">
         <h2 className="text-xl font-bold mb-4 text-slate-300">보석 진화 과정</h2>
-        <div className="bg-slate-900/50 rounded-lg p-6">
+        <div className="bg-slate-900/50 rounded-sm p-6">
           {VARIANTS.map(v => (
             <div key={v} className="flex items-center gap-6 mb-6 last:mb-0">
               <span className="text-sm text-slate-400 w-20">{GEM_VARIANT_LABELS[v]}</span>
@@ -105,7 +105,7 @@ export default function GemMockupPage() {
       {/* 애니메이션 비활성화 비교 */}
       <section className="mb-12">
         <h2 className="text-xl font-bold mb-4 text-slate-300">애니메이션 ON vs OFF (stage 4)</h2>
-        <div className="bg-slate-900/50 rounded-lg p-6">
+        <div className="bg-slate-900/50 rounded-sm p-6">
           <div className="flex gap-16 items-center">
             <div className="flex flex-col items-center gap-2">
               <span className="text-xs text-slate-500">애니메이션 ON</span>
@@ -122,14 +122,14 @@ export default function GemMockupPage() {
       {/* 밝은 배경 테스트 */}
       <section className="mb-12">
         <h2 className="text-xl font-bold mb-4 text-slate-300">밝은 배경 테스트</h2>
-        <div className="bg-white rounded-lg p-8">
+        <div className="bg-white rounded-sm p-8">
           <div className="flex flex-wrap gap-6 justify-center">
             {VARIANTS.map(v => (
               <GemStone key={v} variant={v} stage={4} size="lg" showLabel />
             ))}
           </div>
         </div>
-        <div className="bg-slate-50 rounded-lg p-8 mt-4">
+        <div className="bg-slate-50 rounded-sm p-8 mt-4">
           <div className="flex flex-wrap gap-6 justify-center">
             {VARIANTS.map(v => (
               <GemStone key={v} variant={v} stage={2} size="md" showLabel />

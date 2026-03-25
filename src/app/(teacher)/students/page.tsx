@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from '@/components/ui/Toast';
 import { confirm } from '@/components/ui/ConfirmDialog';
-import { Users } from 'lucide-react';
+import { Users, ArrowLeft } from 'lucide-react';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import {
   StudentListPanel,
@@ -143,9 +143,11 @@ export default function StudentsPage() {
 
   const studentCount = users.length;
 
+  const mobileShowDetail = !!(selectedUser || showForm);
+
   return (
     <div className="flex-1 flex min-h-0 w-full overflow-hidden">
-      {/* ===== Left Panel ===== */}
+      {/* ===== Left Panel (모바일: 상세 열리면 숨김) ===== */}
       <StudentListPanel
         leftPanelCollapsed={leftPanelCollapsed}
         onToggleCollapse={() => setLeftPanelCollapsed((p) => !p)}
@@ -166,29 +168,47 @@ export default function StudentsPage() {
         isManager={isManager}
         panelTitle="학생 관리"
         panelCount={studentCount}
+        mobileHidden={mobileShowDetail}
       />
 
       {/* ===== Right Panel ===== */}
-      <main className="flex-1 flex flex-col min-w-0 bg-white">
+      <main className={`flex-1 flex flex-col min-w-0 bg-white ${mobileShowDetail ? '' : 'hidden md:flex'}`}>
         {showForm ? (
-          <StudentCreateForm
-            formData={formData}
-            formError={formError}
-            onFormDataChange={setFormData}
-            onSubmit={handleCreate}
-            onCancel={() => setShowForm(false)}
-          />
-        ) : selectedUser ? (
-          <div className="flex-1 overflow-y-auto">
-            <StudentDetail
-              user={selectedUser}
-              stats={stats}
-              statsLoading={statsLoading}
-              isOwner={isOwner}
-              onResetPassword={handleResetPassword}
-              onDelete={handleDeleteUser}
+          <>
+            <div className="md:hidden flex items-center gap-2 px-3 py-2 border-b border-slate-200 bg-white shrink-0">
+              <button onClick={() => setShowForm(false)} className="p-1 hover:bg-slate-100 rounded-sm">
+                <ArrowLeft className="w-5 h-5 text-text-secondary" />
+              </button>
+              <span className="text-sm font-bold text-text-primary">학생 추가</span>
+            </div>
+            <StudentCreateForm
+              formData={formData}
+              formError={formError}
+              onFormDataChange={setFormData}
+              onSubmit={handleCreate}
+              onCancel={() => setShowForm(false)}
             />
-          </div>
+          </>
+        ) : selectedUser ? (
+          <>
+            <div className="md:hidden flex items-center gap-2 px-3 py-2 border-b border-slate-200 bg-white shrink-0">
+              <button onClick={() => { setSelectedUser(null); setStats(null); }} className="p-1 hover:bg-slate-100 rounded-sm">
+                <ArrowLeft className="w-5 h-5 text-text-secondary" />
+              </button>
+              <span className="text-sm font-bold text-text-primary truncate">{selectedUser.name}</span>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <StudentDetail
+                user={selectedUser}
+                stats={stats}
+                statsLoading={statsLoading}
+                isManager={isManager}
+                isOwner={isOwner}
+                onResetPassword={handleResetPassword}
+                onDelete={handleDeleteUser}
+              />
+            </div>
+          </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-text-secondary">
             <div className="text-center">

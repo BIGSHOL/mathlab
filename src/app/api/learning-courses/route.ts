@@ -15,6 +15,7 @@ export async function GET() {
     include: {
       _count: { select: { concepts: true, enrollments: true } },
       creator: { select: { name: true } },
+      enrollments: { select: { student: { select: { id: true } } } },
     },
     orderBy: { createdAt: 'desc' },
   });
@@ -29,6 +30,7 @@ export async function GET() {
       creatorName: c.creator.name,
       conceptCount: c._count.concepts,
       enrollmentCount: c._count.enrollments,
+      enrollments: c.enrollments.map((e) => ({ student: { id: e.student.id } })),
       createdAt: c.createdAt,
     })),
   });

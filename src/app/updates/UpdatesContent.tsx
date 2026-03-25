@@ -44,7 +44,7 @@ export function UpdatesContent({ backHref, backLabel, isLoggedIn, embedded }: Pr
       <main className="flex-1 bg-slate-50/50">
         <div className="max-w-3xl mx-auto px-6 py-8">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-sm bg-primary/10 flex items-center justify-center">
               <Newspaper className="w-5 h-5 text-primary" />
             </div>
             <div>

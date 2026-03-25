@@ -167,7 +167,7 @@ export function QuestionSettingsPanel() {
             <button
               key={n}
               onClick={() => { setQuestionCount(n); setCustomCount(''); }}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+              className={`px-3 py-1.5 rounded-sm text-sm font-medium border transition-colors ${
                 questionCount === n && !customCount
                   ? 'border-primary bg-blue-50 text-primary'
                   : 'border-slate-200 text-slate-600 hover:border-slate-300'
@@ -187,7 +187,7 @@ export function QuestionSettingsPanel() {
               const v = Number(e.target.value);
               if (v > 0 && v <= 150) setQuestionCount(v);
             }}
-            className="w-16 px-2 py-1.5 rounded-lg border border-slate-200 text-sm text-center focus:border-primary focus:outline-none"
+            className="w-16 px-2 py-1.5 rounded-sm border border-slate-200 text-sm text-center focus:border-primary focus:outline-none"
           />
           <span className="flex items-center text-sm text-slate-500">문제</span>
         </div>
@@ -199,7 +199,7 @@ export function QuestionSettingsPanel() {
           onChange={(e) => { setQuestionCount(Number(e.target.value)); setCustomCount(''); }}
           className="w-full accent-primary"
         />
-        <div className="flex justify-between text-[10px] text-slate-400 mt-0.5">
+        <div className="flex justify-between text-xs text-slate-400 mt-0.5">
           <span>0</span>
           <span>150</span>
         </div>
@@ -215,7 +215,7 @@ export function QuestionSettingsPanel() {
               <button
                 key={key}
                 onClick={() => toggleDifficulty(key)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                className={`px-3 py-1.5 rounded-sm text-sm font-medium border transition-colors ${
                   isActive
                     ? 'border-primary bg-blue-50 text-primary'
                     : difficultyFilter.length === 0
@@ -229,7 +229,7 @@ export function QuestionSettingsPanel() {
           })}
         </div>
         {difficultyFilter.length === 0 && (
-          <p className="text-[11px] text-slate-400 mt-1">전체 난이도 선택됨</p>
+          <p className="text-xs text-slate-400 mt-1">전체 난이도 선택됨</p>
         )}
       </div>
 
@@ -243,7 +243,7 @@ export function QuestionSettingsPanel() {
               <button
                 key={key}
                 onClick={() => toggleType(key)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                className={`px-3 py-1.5 rounded-sm text-sm font-medium border transition-colors ${
                   isActive
                     ? 'border-primary bg-blue-50 text-primary'
                     : typeFilter.length === 0
@@ -257,7 +257,7 @@ export function QuestionSettingsPanel() {
           })}
         </div>
         {typeFilter.length === 0 && (
-          <p className="text-[11px] text-slate-400 mt-1">전체 타입 선택됨</p>
+          <p className="text-xs text-slate-400 mt-1">전체 타입 선택됨</p>
         )}
       </div>
 

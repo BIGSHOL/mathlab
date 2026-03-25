@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Pencil, Trash2, Users, UserPlus, X } from 'lucide-react';
+import Link from 'next/link';
+import { Pencil, Trash2, Users, UserPlus, X, Zap, Star, Flame, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import { confirm } from '@/components/ui/ConfirmDialog';
 import { toast } from '@/components/ui/Toast';
 import { gradeLabel, relativeTime } from '@/components/teacher/students/helpers';
@@ -15,6 +15,7 @@ interface ClassroomDetailProps {
   onDelete: (id: string) => void;
   onAssignStudents: () => void;
   onRemoveStudent: (studentId: string) => void;
+  readOnly?: boolean;
 }
 
 export function ClassroomDetail({
@@ -23,6 +24,7 @@ export function ClassroomDetail({
   onDelete,
   onAssignStudents,
   onRemoveStudent,
+  readOnly = false,
 }: ClassroomDetailProps) {
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(classroom.name);
@@ -98,146 +100,191 @@ export function ClassroomDetail({
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="p-6 max-w-[900px] mx-auto">
-        {/* 헤더 */}
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            {editing ? (
-              <div className="flex items-center gap-3">
-                <input
-                  type="text"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  className="px-3 py-2 border border-slate-200 rounded-sm text-lg font-bold focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  autoFocus
-                />
-                <input
-                  type="number"
-                  placeholder="학년"
-                  value={editGrade}
-                  onChange={(e) => setEditGrade(e.target.value)}
-                  className="w-20 px-3 py-2 border border-slate-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
-                <Button size="sm" onClick={handleSave} loading={saving}>저장</Button>
-                <Button size="sm" variant="secondary" onClick={() => setEditing(false)}>취소</Button>
+      <div className="p-4 sm:p-6">
+        {/* ── 프로필 히어로 ── */}
+        <div className="bg-gradient-to-r from-primary/5 via-blue-50/50 to-violet-50/30 border border-slate-200 rounded-sm p-4 sm:p-5 mb-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shrink-0 shadow-sm">
+              <span className="text-xl font-bold text-white">{classroom.name.charAt(0)}</span>
+            </div>
+            <div className="min-w-0 flex-1">
+              {editing ? (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="px-3 py-1.5 border border-slate-200 rounded-sm text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    autoFocus
+                  />
+                  <input
+                    type="number"
+                    placeholder="학년"
+                    value={editGrade}
+                    onChange={(e) => setEditGrade(e.target.value)}
+                    className="w-20 px-3 py-1.5 border border-slate-200 rounded-sm text-xs focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                  <Button size="sm" onClick={handleSave} loading={saving}>저장</Button>
+                  <Button size="sm" variant="secondary" onClick={() => setEditing(false)}>취소</Button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-text-primary">{classroom.name}</h2>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">
+                      {classroom.grade ? gradeLabel(classroom.grade) : '학년 미지정'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-text-secondary mt-0.5">
+                    생성일 {new Date(classroom.createdAt).toLocaleDateString('ko-KR')}
+                  </p>
+                </>
+              )}
+            </div>
+            {/* 핵심 수치 */}
+            <div className="hidden sm:flex items-center gap-5 shrink-0">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 text-primary">
+                  <Users className="w-4 h-4" />
+                  <span className="text-lg font-bold">{studentCount}</span>
+                </div>
+                <div className="text-xs text-text-secondary">학생 수</div>
               </div>
-            ) : (
-              <>
-                <h2 className="text-xl font-bold text-text-primary">{classroom.name}</h2>
-                <p className="text-sm text-text-secondary mt-1">
-                  {classroom.grade ? `${gradeLabel(classroom.grade)}` : '학년 미지정'}
-                  <span className="text-slate-300 mx-1.5">&middot;</span>
-                  생성일 {new Date(classroom.createdAt).toLocaleDateString('ko-KR')}
-                </p>
-              </>
+              <div className="w-px h-8 bg-slate-200" />
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 text-amber-500">
+                  <Zap className="w-4 h-4" />
+                  <span className="text-lg font-bold">{avgXp.toLocaleString()}</span>
+                </div>
+                <div className="text-xs text-text-secondary">평균 XP</div>
+              </div>
+              <div className="w-px h-8 bg-slate-200" />
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 text-violet-500">
+                  <Star className="w-4 h-4" />
+                  <span className="text-lg font-bold">Lv.{avgLevel}</span>
+                </div>
+                <div className="text-xs text-text-secondary">평균 레벨</div>
+              </div>
+              <div className="w-px h-8 bg-slate-200" />
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 text-emerald-500">
+                  <Flame className="w-4 h-4" />
+                  <span className="text-lg font-bold">{activeRate}%</span>
+                </div>
+                <div className="text-xs text-text-secondary">7일 활동률</div>
+              </div>
+            </div>
+            {/* 편집/삭제 */}
+            {!editing && !readOnly && (
+              <div className="hidden sm:flex gap-2 shrink-0">
+                <Button size="sm" variant="ghost" onClick={handleStartEdit}>
+                  <Pencil className="w-3.5 h-3.5 mr-1" /> 편집
+                </Button>
+                <Button size="sm" variant="danger" onClick={handleDelete}>
+                  <Trash2 className="w-3.5 h-3.5 mr-1" /> 삭제
+                </Button>
+              </div>
             )}
           </div>
-          {!editing && (
-            <div className="flex gap-2">
+          {/* 모바일용 수치 */}
+          <div className="grid grid-cols-4 gap-2 mt-3 sm:hidden">
+            <div className="text-center bg-white/60 rounded-sm py-1.5">
+              <div className="text-xs font-bold text-primary">{studentCount}명</div>
+              <div className="text-xs text-text-secondary">학생</div>
+            </div>
+            <div className="text-center bg-white/60 rounded-sm py-1.5">
+              <div className="text-xs font-bold text-amber-600">{avgXp.toLocaleString()}</div>
+              <div className="text-xs text-text-secondary">평균 XP</div>
+            </div>
+            <div className="text-center bg-white/60 rounded-sm py-1.5">
+              <div className="text-xs font-bold text-violet-600">Lv.{avgLevel}</div>
+              <div className="text-xs text-text-secondary">레벨</div>
+            </div>
+            <div className="text-center bg-white/60 rounded-sm py-1.5">
+              <div className="text-xs font-bold text-emerald-600">{activeRate}%</div>
+              <div className="text-xs text-text-secondary">활동률</div>
+            </div>
+          </div>
+          {/* 모바일 편집/삭제 */}
+          {!editing && !readOnly && (
+            <div className="flex gap-2 mt-3 sm:hidden">
               <Button size="sm" variant="ghost" onClick={handleStartEdit}>
-                <Pencil className="w-4 h-4 mr-1" /> 편집
+                <Pencil className="w-3.5 h-3.5 mr-1" /> 편집
               </Button>
               <Button size="sm" variant="danger" onClick={handleDelete}>
-                <Trash2 className="w-4 h-4 mr-1" /> 삭제
+                <Trash2 className="w-3.5 h-3.5 mr-1" /> 삭제
               </Button>
             </div>
           )}
         </div>
 
-        {/* 통계 카드 */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          <StatCard label="학생 수" value={`${studentCount}명`} color="blue" />
-          <StatCard label="평균 XP" value={avgXp.toLocaleString()} color="amber" />
-          <StatCard label="평균 레벨" value={avgLevel !== '-' ? `Lv.${avgLevel}` : '-'} color="violet" />
-          <StatCard label="7일 활동률" value={`${activeRate}%`} color="emerald" />
-        </div>
-
-        {/* 학생 목록 */}
+        {/* ── 학생 목록 섹션 ── */}
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm font-bold text-text-primary flex items-center gap-2">
-            <Users className="w-4 h-4 text-primary" />
-            배정된 학생 ({studentCount}명)
-          </h3>
-          <Button size="sm" variant="secondary" onClick={onAssignStudents}>
-            <UserPlus className="w-3.5 h-3.5 mr-1" /> 학생 배정
-          </Button>
+          <div className="flex items-center gap-1.5">
+            <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center shrink-0">
+              <Users className="w-3 h-3 text-primary" />
+            </div>
+            <h3 className="text-xs font-bold text-text-primary">배정된 학생 ({studentCount}명)</h3>
+          </div>
+          {!readOnly && (
+            <Button size="sm" variant="secondary" onClick={onAssignStudents}>
+              <UserPlus className="w-3.5 h-3.5 mr-1" /> 학생 배정
+            </Button>
+          )}
         </div>
 
         {studentCount === 0 ? (
-          <Card padding="md">
+          <div className="bg-white border border-slate-200 rounded-sm">
             <div className="text-center py-8 text-text-secondary">
               <Users className="w-10 h-10 mx-auto mb-3 opacity-15" />
               <p className="text-sm font-medium">배정된 학생이 없습니다.</p>
               <p className="text-xs mt-1">학생 배정 버튼으로 학생을 추가하세요.</p>
             </div>
-          </Card>
+          </div>
         ) : (
-          <Card padding="none">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-slate-100 text-xs text-text-secondary">
-                  <th className="text-left px-4 py-2.5 font-medium">학생</th>
-                  <th className="text-left px-4 py-2.5 font-medium">학년</th>
-                  <th className="text-left px-4 py-2.5 font-medium">레벨</th>
-                  <th className="text-right px-4 py-2.5 font-medium">XP</th>
-                  <th className="text-right px-4 py-2.5 font-medium">최근 활동</th>
-                  <th className="w-10"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedStudents.map((s) => (
-                  <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                    <td className="px-4 py-2.5">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="text-xs font-bold text-primary">{s.name.charAt(0)}</span>
-                        </div>
-                        <span className="text-sm font-medium text-text-primary">{s.name}</span>
+          <div className="space-y-1.5">
+            {sortedStudents.map((s) => (
+              <div key={s.id} className="flex items-center bg-white border border-slate-200 rounded-sm overflow-hidden hover:border-primary/40 transition-colors">
+                <div className={`w-1 self-stretch shrink-0 ${
+                  (s.profile?.lastActiveAt && new Date(s.profile.lastActiveAt).getTime() > sevenDaysAgo) ? 'bg-emerald-400' : 'bg-slate-200'
+                }`} />
+                <Link
+                  href={`/students?search=${encodeURIComponent(s.name)}`}
+                  className="flex items-center justify-between flex-1 min-w-0 px-3 py-2"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <span className="text-xs font-bold text-primary">{s.name.charAt(0)}</span>
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-medium text-text-primary truncate">{s.name}</div>
+                      <div className="text-xs text-text-secondary">
+                        {s.grade ? gradeLabel(s.grade) : '-'} · Lv.{s.profile?.level ?? 1} · {(s.profile?.totalXp ?? 0).toLocaleString()} XP
                       </div>
-                    </td>
-                    <td className="px-4 py-2.5 text-sm text-text-secondary">
-                      {s.grade ? gradeLabel(s.grade) : '-'}
-                    </td>
-                    <td className="px-4 py-2.5">
-                      <span className="text-sm font-medium text-primary">Lv.{s.profile?.level ?? 1}</span>
-                    </td>
-                    <td className="px-4 py-2.5 text-right text-sm text-text-secondary">
-                      {(s.profile?.totalXp ?? 0).toLocaleString()}
-                    </td>
-                    <td className="px-4 py-2.5 text-right text-xs text-text-secondary">
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                    <span className="text-xs text-text-secondary hidden sm:inline">
                       {relativeTime(s.profile?.lastActiveAt ?? null)}
-                    </td>
-                    <td className="px-2 py-2.5">
-                      <button
-                        onClick={() => handleRemoveStudent(s)}
-                        className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-sm transition-colors"
-                        title="배정 해제"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Card>
+                    </span>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                  </div>
+                </Link>
+                {!readOnly && (
+                  <button
+                    onClick={() => handleRemoveStudent(s)}
+                    className="p-1.5 mr-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-sm transition-colors shrink-0"
+                    title="배정 해제"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
         )}
       </div>
-    </div>
-  );
-}
-
-function StatCard({ label, value, color }: { label: string; value: string; color: string }) {
-  const colorMap: Record<string, string> = {
-    blue: 'bg-blue-50 text-blue-600',
-    amber: 'bg-amber-50 text-amber-600',
-    violet: 'bg-violet-50 text-violet-600',
-    emerald: 'bg-emerald-50 text-emerald-600',
-  };
-  return (
-    <div className={`rounded-sm px-4 py-3 ${colorMap[color] ?? 'bg-slate-50 text-slate-600'}`}>
-      <p className="text-xs font-medium opacity-70">{label}</p>
-      <p className="text-lg font-bold mt-0.5">{value}</p>
     </div>
   );
 }

@@ -99,7 +99,7 @@ export function DiagramEditorPopup({ isOpen, initialParam, diagramIndex, onClose
           <div className="mb-4">
             {TYPE_GROUPS.map((group) => (
               <div key={group.label} className="mb-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{group.label}</span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{group.label}</span>
                 <div className="flex flex-wrap gap-1.5 mt-1">
                   {group.types.map((t) => (
                     <button

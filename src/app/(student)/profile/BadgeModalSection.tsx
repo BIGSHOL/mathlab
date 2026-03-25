@@ -125,7 +125,7 @@ export function BadgeModalSection({
         return (
           <div
             key={badge.id}
-            className={`group flex flex-col items-center p-2 rounded-xl border h-[114px] justify-center relative hover:z-[60] transition-[transform,box-shadow,opacity,filter] duration-150 ${isRepresentative
+            className={`group flex flex-col items-center p-2 rounded-sm border h-[114px] justify-center relative hover:z-[60] transition-[transform,box-shadow,opacity,filter] duration-150 ${isRepresentative
               ? 'bg-amber-50 border-amber-300 shadow-md ring-2 ring-amber-300/50 hover:-translate-y-1'
               : isEarned
                 ? `bg-white border-amber-100/50 shadow-sm hover:shadow-md hover:-translate-y-1 ${!isViewAs ? 'cursor-pointer' : ''}`
@@ -158,15 +158,15 @@ export function BadgeModalSection({
                 <div className="w-full text-center mb-3">
                   <p className="font-extrabold text-amber-300 text-base leading-tight mb-1.5">{displayLabel}</p>
                   {isEarned && isHidden ? (
-                    <div className="bg-slate-900/60 p-2 rounded-lg border border-amber-500/20 mx-1">
-                      <p className="text-amber-300 text-[10px] font-bold flex justify-center items-center gap-1 mb-1">✨ 히든 업적 오픈 조건</p>
+                    <div className="bg-slate-900/60 p-2 rounded-sm border border-amber-500/20 mx-1">
+                      <p className="text-amber-300 text-xs font-bold flex justify-center items-center gap-1 mb-1">✨ 히든 업적 오픈 조건</p>
                       <p className="text-slate-100 text-xs leading-snug">{displayDesc}</p>
                     </div>
                   ) : (
                     <p className="text-slate-300 text-xs leading-tight px-1 break-keep-all">{displayDesc}</p>
                   )}
                 </div>
-                <div className="flex justify-between items-center bg-slate-900/50 rounded-lg p-2 border border-slate-700/50 w-full mt-auto">
+                <div className="flex justify-between items-center bg-slate-900/50 rounded-sm p-2 border border-slate-700/50 w-full mt-auto">
                   <div className="text-center w-1/2 border-r border-slate-700/50">
                     <p className="text-[9px] text-slate-400 mb-0.5">전체 달성률</p>
                     <p className="text-sm font-bold text-white">{earnRate}%</p>
@@ -180,7 +180,7 @@ export function BadgeModalSection({
               {/* 우측 패널 */}
               <div className="w-52 border-l border-slate-700/50 ml-4 pl-4 flex flex-col relative">
                 <div className="sticky top-0 bg-slate-800 pb-2 mb-2 border-b border-slate-700/80 shrink-0 z-10">
-                  <p className="text-[11px] text-slate-300 font-bold">{group.length > 1 ? '단계별 진행 상황' : '업적 달성 조건'}</p>
+                  <p className="text-xs text-slate-300 font-bold">{group.length > 1 ? '단계별 진행 상황' : '업적 달성 조건'}</p>
                 </div>
                 <div className="space-y-3 break-words overflow-y-auto max-h-[16rem] pr-1 scrollbar-hide">
                   {group.map((b, idx) => {
@@ -193,7 +193,7 @@ export function BadgeModalSection({
                         <span className="shrink-0 w-4 text-center mt-0.5">{hasB ? '✅' : isActiveNext ? '▶' : '🔒'}</span>
                         <div>
                           <span className="block mb-0.5">{b_title}</span>
-                          <span className={`font-normal text-[10px] block shrink-0 ${hasB ? 'text-amber-400/80' : isActiveNext ? 'text-slate-400' : 'text-slate-500'}`}>
+                          <span className={`font-normal text-xs block shrink-0 ${hasB ? 'text-amber-400/80' : isActiveNext ? 'text-slate-400' : 'text-slate-500'}`}>
                             {(!hasB && b_hidden) ? '비밀 업적입니다' : b.description}
                           </span>
                         </div>
@@ -216,7 +216,7 @@ export function BadgeModalSection({
                 ) : badge.icon
               )}
             </div>
-            <p className="text-[11px] font-extrabold text-text-primary leading-tight text-center w-full truncate">
+            <p className="text-xs font-extrabold text-text-primary leading-tight text-center w-full truncate">
               {displayLabel}
             </p>
 
@@ -249,7 +249,7 @@ export function BadgeModalSection({
 
   return (
     <>
-      <div className="rounded-xl mt-4 border border-slate-200 bg-white shadow-soft relative z-40">
+      <div className="rounded-sm mt-4 border border-slate-200 bg-white shadow-soft relative z-40">
         <div className="flex items-center px-4 py-3 border-b border-slate-100 gap-1.5 bg-slate-50/50 rounded-t-xl relative z-10">
           <Award className="w-4 h-4 text-amber-500" />
           <h2 className="text-sm font-bold text-text-primary">도전 과제 (업적)</h2>
@@ -300,7 +300,7 @@ export function BadgeModalSection({
                     </span>
                   </div>
                   {!isViewAs && (
-                    <p className="text-[10px] text-text-secondary mr-3">획득한 배지를 클릭하여 대표 배지로 설정하세요</p>
+                    <p className="text-xs text-text-secondary mr-3">획득한 배지를 클릭하여 대표 배지로 설정하세요</p>
                   )}
                   <button
                     onClick={() => setIsOpen(false)}

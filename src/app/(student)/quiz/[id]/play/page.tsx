@@ -111,10 +111,10 @@ export default function QuizPlayPage() {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
         <div className="max-w-sm w-full space-y-4">
-          <div className="bg-slate-800 rounded-xl p-6 space-y-3">
+          <div className="bg-slate-800 rounded-sm p-6 space-y-3">
             <Skeleton className="h-6 w-32 mx-auto !bg-slate-700" />
             <Skeleton className="h-4 w-48 mx-auto !bg-slate-700" />
-            <Skeleton className="h-20 w-full rounded-lg !bg-slate-700" />
+            <Skeleton className="h-20 w-full rounded-sm !bg-slate-700" />
           </div>
         </div>
       </div>

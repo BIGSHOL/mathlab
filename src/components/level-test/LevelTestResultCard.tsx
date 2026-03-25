@@ -184,7 +184,7 @@ export function LevelTestResultCard({
         <Icon className={`w-4 h-4 ${accentColor}`} />
         <span className="text-sm font-bold text-slate-800">{title}</span>
         {badge && (
-          <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded font-medium">
+          <span className="text-xs px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded font-medium">
             {badge}
           </span>
         )}
@@ -200,15 +200,15 @@ export function LevelTestResultCard({
   return (
     <div className="space-y-3">
       {/* === Hero: 레벨 판정 + 종합 멘트 === */}
-      <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 rounded-lg border border-indigo-100 p-5">
+      <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 rounded-sm border border-indigo-100 p-5">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">학력 수준 판정</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">학력 수준 판정</p>
             <LevelBadge level={recommendLevel} size="lg" />
           </div>
           <div className="text-right">
             <p className="text-4xl font-black text-indigo-600 tabular-nums">{overallAccuracy}%</p>
-            <p className="text-[11px] text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               전체 정답률
               {hasDetail && (
                 <span className="ml-1 text-slate-400">
@@ -228,7 +228,7 @@ export function LevelTestResultCard({
       </div>
 
       {/* === 섹션 1: 4대 영역 분석 === */}
-      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-sm border border-slate-200 overflow-hidden">
         <div className="px-4 border-b border-slate-100">
           <SectionHeader section="domain" icon={Radar} title="4대 영역 분석" />
         </div>
@@ -250,7 +250,7 @@ export function LevelTestResultCard({
                         correct={score.correct}
                         total={score.total}
                       />
-                      <p className="text-[10px] text-slate-400 mt-0.5 ml-[84px] leading-snug">
+                      <p className="text-xs text-slate-400 mt-0.5 ml-[84px] leading-snug">
                         {getDomainFeedback(domain, score.accuracy)}
                       </p>
                     </div>
@@ -264,7 +264,7 @@ export function LevelTestResultCard({
 
       {/* === 섹션 2: 난이도별 분석 === */}
       {difficultyStats.length > 0 && (
-        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-sm border border-slate-200 overflow-hidden">
           <div className="px-4 border-b border-slate-100">
             <SectionHeader section="difficulty" icon={BarChart3} title="난이도별 분석" />
           </div>
@@ -278,7 +278,7 @@ export function LevelTestResultCard({
 
       {/* === 섹션 3: 단원별 성취도 === */}
       {chapterStats.length > 0 && (
-        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-sm border border-slate-200 overflow-hidden">
           <div className="px-4 border-b border-slate-100">
             <SectionHeader
               section="chapter"
@@ -290,7 +290,7 @@ export function LevelTestResultCard({
           {expanded.chapter && (
             <div className="p-4">
               {/* 멘트 */}
-              <p className="text-[11px] text-slate-500 mb-3 flex items-center gap-1.5">
+              <p className="text-xs text-slate-500 mb-3 flex items-center gap-1.5">
                 <MessageSquareText className="w-3 h-3 text-slate-400" />
                 {getWeakAreaFeedback(
                   chapterStats.filter((c) => c.accuracy < 60).length,
@@ -305,7 +305,7 @@ export function LevelTestResultCard({
 
       {/* === 섹션 4: 계통도 분석 === */}
       {prereqChains && prereqChains.length > 0 && (
-        <div className="bg-white rounded-lg border border-violet-200 overflow-hidden">
+        <div className="bg-white rounded-sm border border-violet-200 overflow-hidden">
           <div className="px-4 border-b border-violet-100 bg-violet-50/30">
             <SectionHeader
               section="prerequisite"
@@ -328,18 +328,18 @@ export function LevelTestResultCard({
                 {prereqChains.map((chain, ci) => (
                   <div
                     key={ci}
-                    className="rounded-lg border border-slate-200 overflow-hidden"
+                    className="rounded-sm border border-slate-200 overflow-hidden"
                   >
                     {/* 틀린 개념 (헤더) */}
                     <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border-b border-red-100">
                       <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                        <span className="text-[10px] font-bold text-red-600">!</span>
+                        <span className="text-xs font-bold text-red-600">!</span>
                       </div>
                       <div className="min-w-0">
                         <p className="text-xs font-bold text-red-700 truncate">
                           {chain.wrongConcept.title}
                         </p>
-                        <p className="text-[10px] text-red-400">틀린 문제의 개념</p>
+                        <p className="text-xs text-red-400">틀린 문제의 개념</p>
                       </div>
                     </div>
 
@@ -361,7 +361,7 @@ export function LevelTestResultCard({
                               <GitBranch className={`w-3 h-3 shrink-0 ${
                                 pr.depth === 1 ? 'text-violet-500' : 'text-slate-400'
                               }`} />
-                              <span className={`text-[11px] font-semibold ${
+                              <span className={`text-xs font-semibold ${
                                 pr.depth === 1 ? 'text-violet-700' : 'text-slate-600'
                               }`}>
                                 {pr.title}
@@ -380,12 +380,12 @@ export function LevelTestResultCard({
               {/* 플랫 리스트 (보조) */}
               {prereqWeaknesses && prereqWeaknesses.length > 0 && (
                 <div className="mt-4 pt-3 border-t border-violet-100">
-                  <p className="text-[10px] text-slate-400 mb-2">복습 추천 개념 요약</p>
+                  <p className="text-xs text-slate-400 mb-2">복습 추천 개념 요약</p>
                   <div className="flex flex-wrap gap-1.5">
                     {prereqWeaknesses.map((pw) => (
                       <span
                         key={pw.conceptCode}
-                        className="text-[10px] px-2 py-1 bg-violet-50 text-violet-600 rounded border border-violet-100 font-medium"
+                        className="text-xs px-2 py-1 bg-violet-50 text-violet-600 rounded border border-violet-100 font-medium"
                       >
                         {pw.conceptTitle}
                       </span>
@@ -400,7 +400,7 @@ export function LevelTestResultCard({
 
       {/* 계통도 없는 경우 기존 칩 표시 (하위호환) */}
       {(!prereqChains || prereqChains.length === 0) && prereqWeaknesses && prereqWeaknesses.length > 0 && (
-        <div className="bg-white rounded-lg border border-violet-200 overflow-hidden">
+        <div className="bg-white rounded-sm border border-violet-200 overflow-hidden">
           <div className="px-4 border-b border-violet-100 bg-violet-50/30">
             <SectionHeader
               section="prerequisite"
@@ -419,13 +419,13 @@ export function LevelTestResultCard({
                 {prereqWeaknesses.map((pw) => (
                   <div
                     key={pw.conceptCode}
-                    className="flex items-center gap-2 px-3 py-2 bg-violet-50 rounded-lg border border-violet-100"
+                    className="flex items-center gap-2 px-3 py-2 bg-violet-50 rounded-sm border border-violet-100"
                   >
                     <GitBranch className="w-3.5 h-3.5 text-violet-500 shrink-0" />
                     <div>
                       <p className="text-xs font-semibold text-violet-700">{pw.conceptTitle}</p>
                       {pw.relatedChapter && (
-                        <p className="text-[10px] text-violet-400">{pw.relatedChapter}</p>
+                        <p className="text-xs text-violet-400">{pw.relatedChapter}</p>
                       )}
                     </div>
                   </div>
@@ -438,7 +438,7 @@ export function LevelTestResultCard({
 
       {/* === 섹션 5: 문항별 결과 === */}
       {hasDetail && (
-        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-sm border border-slate-200 overflow-hidden">
           <div className="px-4 border-b border-slate-100">
             <SectionHeader
               section="questions"
@@ -457,7 +457,7 @@ export function LevelTestResultCard({
 
       {/* === 강점/취약 (폴백) === */}
       {!hasDetail && (weakAreas.length > 0 || (strongAreas && strongAreas.length > 0)) && (
-        <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-4">
+        <div className="bg-white rounded-sm border border-slate-200 p-4 space-y-4">
           {weakAreas.length > 0 && (
             <div>
               <h4 className="text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-2">
@@ -468,7 +468,7 @@ export function LevelTestResultCard({
                 {weakAreas.map((area) => (
                   <span
                     key={area.chapter}
-                    className="text-[11px] px-2 py-1 bg-red-50 text-red-700 rounded font-medium border border-red-100"
+                    className="text-xs px-2 py-1 bg-red-50 text-red-700 rounded font-medium border border-red-100"
                   >
                     {area.chapter} ({area.accuracy}%)
                   </span>
@@ -486,7 +486,7 @@ export function LevelTestResultCard({
                 {strongAreas.map((area) => (
                   <span
                     key={area.chapter}
-                    className="text-[11px] px-2 py-1 bg-emerald-50 text-emerald-700 rounded font-medium border border-emerald-100"
+                    className="text-xs px-2 py-1 bg-emerald-50 text-emerald-700 rounded font-medium border border-emerald-100"
                   >
                     {area.chapter} ({area.accuracy}%)
                   </span>

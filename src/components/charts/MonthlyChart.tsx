@@ -125,7 +125,7 @@ export default function MonthlyChart() {
 
       <div className="flex justify-between mt-3 px-1">
         {MONTHS.map((m) => (
-          <p key={m} className="text-slate-400 text-[10px] md:text-xs font-bold tracking-wider">
+          <p key={m} className="text-slate-400 text-xs md:text-xs font-bold tracking-wider">
             {m}
           </p>
         ))}

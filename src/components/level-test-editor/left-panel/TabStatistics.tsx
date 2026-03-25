@@ -79,21 +79,21 @@ export function TabStatistics({ questions, questionDomains, showDomain = true, o
 
         {/* 난이도 분포 바차트 */}
         <div className="mb-4">
-          <h4 className="text-[11px] font-medium text-text-secondary mb-2">난이도 분포</h4>
+          <h4 className="text-xs font-medium text-text-secondary mb-2">난이도 분포</h4>
           <div className="flex items-end gap-2 h-20">
             {DIFF_ORDER.map((diff) => {
               const count = stats.diffCounts[diff] || 0;
               const heightPct = count > 0 ? Math.max(10, (count / maxDiffCount) * 100) : 0;
               return (
                 <div key={diff} className="flex-1 flex flex-col items-center gap-1">
-                  <span className="text-[10px] font-bold text-text-secondary">{count > 0 ? `${count}문제` : ''}</span>
+                  <span className="text-xs font-bold text-text-secondary">{count > 0 ? `${count}문제` : ''}</span>
                   <div className="w-full relative" style={{ height: '48px' }}>
                     <div
                       className={`absolute bottom-0 left-0 right-0 rounded-t ${DIFF_BAR_COLORS[diff]} transition-all duration-300`}
                       style={{ height: `${heightPct}%` }}
                     />
                   </div>
-                  <span className="text-[10px] text-text-secondary">{DIFFICULTY_LABELS[diff]}</span>
+                  <span className="text-xs text-text-secondary">{DIFFICULTY_LABELS[diff]}</span>
                 </div>
               );
             })}
@@ -103,14 +103,14 @@ export function TabStatistics({ questions, questionDomains, showDomain = true, o
         {/* 영역 분포 (레벨테스트 전용) */}
         {showDomain && (
           <div>
-            <h4 className="text-[11px] font-medium text-text-secondary mb-2">영역 분포</h4>
+            <h4 className="text-xs font-medium text-text-secondary mb-2">영역 분포</h4>
             <div className="space-y-1.5">
               {DOMAIN_ORDER.map((domain) => {
                 const count = stats.domainCounts[domain] || 0;
                 const widthPct = count > 0 ? Math.max(5, (count / maxDomainCount) * 100) : 0;
                 return (
                   <div key={domain} className="flex items-center gap-2">
-                    <span className="text-[11px] text-text-secondary w-16 shrink-0 truncate">
+                    <span className="text-xs text-text-secondary w-16 shrink-0 truncate">
                       {DOMAIN_LABELS[domain]}
                     </span>
                     <div className="flex-1 h-4 bg-slate-100 rounded-full overflow-hidden">
@@ -119,7 +119,7 @@ export function TabStatistics({ questions, questionDomains, showDomain = true, o
                         style={{ width: `${widthPct}%` }}
                       />
                     </div>
-                    <span className="text-[11px] font-bold text-text-primary w-5 text-right">{count}</span>
+                    <span className="text-xs font-bold text-text-primary w-5 text-right">{count}</span>
                   </div>
                 );
               })}
@@ -131,7 +131,7 @@ export function TabStatistics({ questions, questionDomains, showDomain = true, o
       {/* 문제 목록 테이블 */}
       <div className="flex-1 min-h-0">
         <div className="px-4 py-2 border-b border-slate-100 bg-slate-50/50">
-          <div className="flex items-center text-[10px] font-bold text-text-secondary uppercase tracking-wider">
+          <div className="flex items-center text-xs font-bold text-text-secondary uppercase tracking-wider">
             <span className="w-8 text-center">#</span>
             <span className="w-10">난이도</span>
             <span className="w-12">유형</span>
@@ -161,7 +161,7 @@ export function TabStatistics({ questions, questionDomains, showDomain = true, o
                     {DIFFICULTY_LABELS[q.difficulty as QuestionDifficulty] ?? '?'}
                   </span>
                 </span>
-                <span className="w-12 text-[10px] text-text-secondary truncate">
+                <span className="w-12 text-xs text-text-secondary truncate">
                   {TYPE_LABELS[q.type as QuestionType] ?? q.type}
                 </span>
                 {showDomain && (

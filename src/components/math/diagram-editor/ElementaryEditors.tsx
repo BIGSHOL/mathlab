@@ -198,7 +198,7 @@ export function FractionRectForm({ params, onChange }: SubFormProps) {
       <BoolField label="빗금 처리" value={!!p.hatching} onChange={(v) => onChange({ hatching: v })} />
       {!useCountMode && (
         <>
-          <div className="text-[10px] text-slate-400 mt-1">또는 셀 클릭으로 개별 지정:</div>
+          <div className="text-xs text-slate-400 mt-1">또는 셀 클릭으로 개별 지정:</div>
           <CellGrid
             rows={rows}
             cols={cols}
@@ -208,7 +208,7 @@ export function FractionRectForm({ params, onChange }: SubFormProps) {
             color={String(p.color || '#3B82F6')}
             onChange={(colored, hatched) => onChange({ coloredCells: colored, hatchedCells: hatched, coloredCount: undefined, hatching: false })}
           />
-          <div className="flex items-center gap-3 text-[10px] text-slate-400">
+          <div className="flex items-center gap-3 text-xs text-slate-400">
             <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 border border-slate-300 bg-white" /> 빈칸</span>
             <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 border border-slate-300" style={{ backgroundColor: String(p.color || '#3B82F6') + '55' }} /> 색칠</span>
             <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 border border-slate-300 bg-white relative overflow-hidden"><svg className="absolute inset-0" viewBox="0 0 12 12"><line x1="0" y1="4" x2="4" y2="0" stroke={String(p.color || '#3B82F6')} strokeWidth="1" /><line x1="0" y1="8" x2="8" y2="0" stroke={String(p.color || '#3B82F6')} strokeWidth="1" /><line x1="0" y1="12" x2="12" y2="0" stroke={String(p.color || '#3B82F6')} strokeWidth="1" /><line x1="4" y1="12" x2="12" y2="4" stroke={String(p.color || '#3B82F6')} strokeWidth="1" /><line x1="8" y1="12" x2="12" y2="8" stroke={String(p.color || '#3B82F6')} strokeWidth="1" /></svg></span> 빗금</span>
@@ -238,7 +238,7 @@ export function FractionCircleForm({ params, onChange }: SubFormProps) {
       <BoolField label="빗금 처리" value={!!p.hatching} onChange={(v) => onChange({ hatching: v })} />
       {!useCountMode && (
         <>
-          <div className="text-[10px] text-slate-400 mt-1">또는 조각 클릭으로 개별 지정:</div>
+          <div className="text-xs text-slate-400 mt-1">또는 조각 클릭으로 개별 지정:</div>
           <SliceGrid
             totalParts={totalParts}
             count={count}
@@ -247,7 +247,7 @@ export function FractionCircleForm({ params, onChange }: SubFormProps) {
             color={String(p.color || '#3B82F6')}
             onChange={(colored, hatched) => onChange({ coloredSlices: colored, hatchedSlices: hatched, coloredParts: 0, hatching: false })}
           />
-          <div className="flex items-center gap-3 text-[10px] text-slate-400">
+          <div className="flex items-center gap-3 text-xs text-slate-400">
             <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-full border border-slate-300 bg-white" /> 빈칸</span>
             <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-full border border-slate-300" style={{ backgroundColor: String(p.color || '#3B82F6') + '55' }} /> 색칠</span>
             <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-full border border-slate-300 bg-white relative overflow-hidden"><svg className="absolute inset-0" viewBox="0 0 12 12"><line x1="0" y1="4" x2="4" y2="0" stroke={String(p.color || '#3B82F6')} strokeWidth="1" /><line x1="0" y1="8" x2="8" y2="0" stroke={String(p.color || '#3B82F6')} strokeWidth="1" /><line x1="0" y1="12" x2="12" y2="0" stroke={String(p.color || '#3B82F6')} strokeWidth="1" /><line x1="4" y1="12" x2="12" y2="4" stroke={String(p.color || '#3B82F6')} strokeWidth="1" /><line x1="8" y1="12" x2="12" y2="8" stroke={String(p.color || '#3B82F6')} strokeWidth="1" /></svg></span> 빗금</span>
@@ -292,7 +292,7 @@ export function NumberLineForm({ params, onChange }: SubFormProps) {
               <option value="#7C3AED">보라</option>
               <option value="#333">검정</option>
             </select>
-            <label className="flex items-center gap-0.5 text-[10px] text-slate-500 cursor-pointer shrink-0" title="점 표시">
+            <label className="flex items-center gap-0.5 text-xs text-slate-500 cursor-pointer shrink-0" title="점 표시">
               <input type="checkbox" checked={m.showDot !== false} onChange={(e) => { const arr = [...marks]; arr[i] = { ...m, showDot: e.target.checked }; onChange({ marks: arr }); }} className="rounded w-3 h-3" />
               점
             </label>
@@ -322,7 +322,7 @@ export function NumberLineForm({ params, onChange }: SubFormProps) {
               <option value="#F97316">주황</option>
               <option value="#7C3AED">보라</option>
             </select>
-            <label className="flex items-center gap-0.5 text-[10px] text-slate-500 cursor-pointer shrink-0" title="점선">
+            <label className="flex items-center gap-0.5 text-xs text-slate-500 cursor-pointer shrink-0" title="점선">
               <input type="checkbox" checked={!!h.dashed} onChange={(e) => { const arr = [...highlights]; arr[i] = { ...h, dashed: e.target.checked }; onChange({ highlights: arr }); }} className="rounded w-3 h-3" />
               점선
             </label>
@@ -379,9 +379,9 @@ export function FlowChartForm({ params, onChange }: SubFormProps) {
       <div>
         <label className="text-xs text-slate-500">배치</label>
         <div className="flex gap-1.5 mt-1">
-          <button type="button" onClick={() => applyLayout('down')} className="px-2 py-0.5 text-[10px] border border-slate-200 rounded hover:bg-slate-50">↓ 세로</button>
-          <button type="button" onClick={() => applyLayout('right')} className="px-2 py-0.5 text-[10px] border border-slate-200 rounded hover:bg-slate-50">→ 가로</button>
-          <button type="button" onClick={() => applyLayout('grid')} className="px-2 py-0.5 text-[10px] border border-slate-200 rounded hover:bg-slate-50">▦ 격자</button>
+          <button type="button" onClick={() => applyLayout('down')} className="px-2 py-0.5 text-xs border border-slate-200 rounded hover:bg-slate-50">↓ 세로</button>
+          <button type="button" onClick={() => applyLayout('right')} className="px-2 py-0.5 text-xs border border-slate-200 rounded hover:bg-slate-50">→ 가로</button>
+          <button type="button" onClick={() => applyLayout('grid')} className="px-2 py-0.5 text-xs border border-slate-200 rounded hover:bg-slate-50">▦ 격자</button>
         </div>
       </div>
       <div>
@@ -398,10 +398,10 @@ export function FlowChartForm({ params, onChange }: SubFormProps) {
         </div>
         {nodes.map((n, i) => (
           <div key={i} className="flex gap-1 mt-1 items-center">
-            <span className="text-[10px] text-slate-400 w-6 shrink-0">{n.id}</span>
+            <span className="text-xs text-slate-400 w-6 shrink-0">{n.id}</span>
             <input type="text" value={n.text} onChange={(e) => { const arr = [...nodes]; arr[i] = { ...n, text: e.target.value }; onChange({ nodes: arr }); }} className="flex-1 text-xs px-1.5 py-0.5 border border-slate-300 rounded" placeholder="텍스트" />
-            <input type="number" value={n.x ?? 0} step={10} onChange={(e) => { const arr = [...nodes]; arr[i] = { ...n, x: parseInt(e.target.value) || 0 }; onChange({ nodes: arr }); }} className="w-12 text-[10px] px-1 py-0.5 border border-slate-300 rounded" title="X" />
-            <input type="number" value={n.y ?? i * 60} step={10} onChange={(e) => { const arr = [...nodes]; arr[i] = { ...n, y: parseInt(e.target.value) || 0 }; onChange({ nodes: arr }); }} className="w-12 text-[10px] px-1 py-0.5 border border-slate-300 rounded" title="Y" />
+            <input type="number" value={n.x ?? 0} step={10} onChange={(e) => { const arr = [...nodes]; arr[i] = { ...n, x: parseInt(e.target.value) || 0 }; onChange({ nodes: arr }); }} className="w-12 text-xs px-1 py-0.5 border border-slate-300 rounded" title="X" />
+            <input type="number" value={n.y ?? i * 60} step={10} onChange={(e) => { const arr = [...nodes]; arr[i] = { ...n, y: parseInt(e.target.value) || 0 }; onChange({ nodes: arr }); }} className="w-12 text-xs px-1 py-0.5 border border-slate-300 rounded" title="Y" />
             <button type="button" onClick={() => { onChange({ nodes: nodes.filter((_, j) => j !== i), arrows: arrows.filter(a => a.from !== n.id && a.to !== n.id) }); }} className="text-slate-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
           </div>
         ))}

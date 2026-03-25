@@ -143,18 +143,18 @@ export default function LicenseUsageTab() {
                 <div className="w-20 text-right shrink-0">
                   <span className="text-xs font-bold text-text-primary">{stat.activeStudentCount}</span>
                   <span className="text-xs text-text-secondary">/{stat.assignedStudentCount}</span>
-                  <span className="text-[10px] text-text-secondary ml-1">({activePct}%)</span>
+                  <span className="text-xs text-text-secondary ml-1">({activePct}%)</span>
                 </div>
               </div>
             );
           })}
         </div>
         <div className="flex items-center gap-4 mt-3 pt-3 border-t border-slate-100">
-          <div className="flex items-center gap-1.5 text-[10px] text-text-secondary">
+          <div className="flex items-center gap-1.5 text-xs text-text-secondary">
             <div className="w-3 h-2 rounded-sm bg-slate-200" />
             배정 학생
           </div>
-          <div className="flex items-center gap-1.5 text-[10px] text-text-secondary">
+          <div className="flex items-center gap-1.5 text-xs text-text-secondary">
             <div className="w-3 h-2 rounded-sm bg-primary opacity-70" />
             실제 사용
           </div>
@@ -168,7 +168,7 @@ export default function LicenseUsageTab() {
           <div className="flex items-center gap-1 flex-wrap">
             <button
               onClick={() => setSelectedFeature('ALL')}
-              className={`px-2 py-0.5 text-[11px] font-medium rounded transition-colors ${
+              className={`px-2 py-0.5 text-xs font-medium rounded transition-colors ${
                 selectedFeature === 'ALL'
                   ? 'bg-primary text-white'
                   : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
@@ -184,7 +184,7 @@ export default function LicenseUsageTab() {
                 <button
                   key={f}
                   onClick={() => setSelectedFeature(f)}
-                  className={`px-2 py-0.5 text-[11px] font-medium rounded transition-colors ${
+                  className={`px-2 py-0.5 text-xs font-medium rounded transition-colors ${
                     selectedFeature === f
                       ? 'bg-primary text-white'
                       : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
@@ -221,7 +221,7 @@ export default function LicenseUsageTab() {
                         x={x + 14}
                         y={110 - barHeight - 4}
                         textAnchor="middle"
-                        className="text-[10px] fill-text-secondary"
+                        className="text-xs fill-text-secondary"
                       >
                         {day.count}
                       </text>
@@ -277,7 +277,7 @@ export default function LicenseUsageTab() {
                     <td className="px-3 py-2">
                       <div className="flex flex-wrap gap-1">
                         {student.features.map((f) => (
-                          <span key={f} className="px-1.5 py-0.5 text-[10px] font-medium bg-red-50 text-red-600 rounded">
+                          <span key={f} className="px-1.5 py-0.5 text-xs font-medium bg-red-50 text-red-600 rounded">
                             {f}
                           </span>
                         ))}

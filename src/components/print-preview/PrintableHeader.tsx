@@ -51,7 +51,7 @@ export function PrintableHeader({
           <div className="flex items-center gap-2">
             {gradeBadge && (
               <span
-                className="text-[10px] font-bold text-white px-1.5 py-0.5 rounded leading-none"
+                className="text-xs font-bold text-white px-1.5 py-0.5 rounded leading-none"
                 style={{ backgroundColor: accentColor, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } as React.CSSProperties}
               >
                 {gradeBadge}
@@ -62,7 +62,7 @@ export function PrintableHeader({
             </h2>
           </div>
           {subtitle && (
-            <p className="text-[10px] text-slate-400 leading-none mt-1 ml-0.5">
+            <p className="text-xs text-slate-400 leading-none mt-1 ml-0.5">
               {subtitle}
             </p>
           )}
@@ -81,7 +81,7 @@ export function PrintableHeader({
               MathLab
             </span>
           </div>
-          <span className="text-[10px] font-medium text-slate-500 leading-none">
+          <span className="text-xs font-medium text-slate-500 leading-none">
             {academyName}
           </span>
         </div>
@@ -95,7 +95,7 @@ export function PrintableHeader({
 
       {/* 학생 정보란 (첫 페이지만) */}
       {isFirstPage ? (
-        <div className="flex items-center justify-between text-[10px] text-slate-600 leading-none">
+        <div className="flex items-center justify-between text-xs text-slate-600 leading-none">
           <div className="flex items-center gap-4">
             <span>{dateStr}</span>
             {problemCount != null && (

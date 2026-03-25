@@ -252,11 +252,11 @@ export default function AdminUsersPage() {
         <aside className="flex flex-col border-r border-slate-200 bg-white w-80">
           <div className="px-4 pt-4 pb-2 border-b border-slate-200 space-y-2">
             <Skeleton className="h-5 w-24" />
-            <Skeleton className="h-8 w-full rounded-lg" />
+            <Skeleton className="h-8 w-full rounded-sm" />
           </div>
           <div className="flex-1 p-2 space-y-1.5">
             {Array.from({ length: 8 }, (_, i) => (
-              <div key={i} className="flex items-center gap-2 p-2.5 rounded-lg">
+              <div key={i} className="flex items-center gap-2 p-2.5 rounded-sm">
                 <Skeleton variant="circle" className="w-8 h-8 shrink-0" />
                 <div className="flex-1 space-y-1">
                   <Skeleton className="h-3.5 w-20" />
@@ -268,7 +268,7 @@ export default function AdminUsersPage() {
         </aside>
         <div className="flex-1 p-6 space-y-4">
           <Skeleton className="h-6 w-40" />
-          <Skeleton className="h-48 w-full rounded-xl" />
+          <Skeleton className="h-48 w-full rounded-sm" />
         </div>
       </div>
     );
@@ -353,7 +353,7 @@ export default function AdminUsersPage() {
           {loading ? (
             <div className="p-2 space-y-1.5">
               {Array.from({ length: 6 }, (_, i) => (
-                <div key={i} className="flex items-center gap-2 p-2.5 rounded-lg">
+                <div key={i} className="flex items-center gap-2 p-2.5 rounded-sm">
                   <Skeleton variant="circle" className="w-8 h-8 shrink-0" />
                   <div className="flex-1 space-y-1">
                     <Skeleton className="h-3.5 w-20" />
@@ -604,7 +604,7 @@ export default function AdminUsersPage() {
             {activityLoading && activities.length === 0 ? (
               <div className="space-y-1.5">
                 {Array.from({ length: 4 }, (_, i) => (
-                  <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200">
+                  <div key={i} className="flex items-center gap-2 p-2 rounded-sm bg-white border border-slate-200">
                     <Skeleton className="w-3 h-3 rounded shrink-0" />
                     <Skeleton className="h-3.5 flex-1" />
                     <Skeleton className="h-3 w-16" />

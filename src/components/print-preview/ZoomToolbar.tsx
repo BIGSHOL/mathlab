@@ -55,7 +55,7 @@ export function ZoomToolbar({
         <ZoomIn className="w-3.5 h-3.5 text-slate-400" />
         <button
           onClick={() => onSetScale(1.0)}
-          className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition-colors ${
+          className={`px-1.5 py-0.5 rounded text-xs font-bold transition-colors ${
             scalePercent === 100
               ? 'bg-primary text-white'
               : 'bg-slate-200 text-slate-500 hover:bg-slate-300'

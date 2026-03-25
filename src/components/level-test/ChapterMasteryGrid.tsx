@@ -36,7 +36,7 @@ export function ChapterMasteryGrid({ chapters }: ChapterMasteryGridProps) {
                 style={{ width: `${Math.min(ch.accuracy, 100)}%` }}
               />
             </div>
-            <span className="text-[10px] text-slate-400 shrink-0 w-8 text-right">{ch.correct}/{ch.total}</span>
+            <span className="text-xs text-slate-400 shrink-0 w-8 text-right">{ch.correct}/{ch.total}</span>
             <span className={`text-xs font-bold tabular-nums shrink-0 w-9 text-right ${m.text}`}>
               {ch.accuracy}%
             </span>

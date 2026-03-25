@@ -105,7 +105,7 @@ export function ConfirmDialog() {
       aria-label={title}
     >
       <div
-        className="bg-white rounded-xl shadow-2xl max-w-sm w-full mx-4 p-6 animate-in fade-in zoom-in-95 duration-200"
+        className="bg-white rounded-sm shadow-2xl max-w-sm w-full mx-4 p-6 animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start gap-4">
@@ -126,14 +126,14 @@ export function ConfirmDialog() {
         <div className="flex gap-3 mt-6 justify-end">
           <button
             onClick={() => close(false)}
-            className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-sm hover:bg-slate-200 transition-colors"
           >
             {cancelLabel}
           </button>
           <button
             ref={confirmRef}
             onClick={() => close(true)}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${style.btn}`}
+            className={`px-4 py-2 text-sm font-medium rounded-sm transition-colors ${style.btn}`}
           >
             {confirmLabel}
           </button>

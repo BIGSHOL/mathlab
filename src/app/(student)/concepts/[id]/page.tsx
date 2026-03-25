@@ -299,7 +299,7 @@ export default function ConceptPage() {
         <div className="px-4 md:px-8 py-6 md:py-8 w-full">
           {/* 상단 네비 + 스테이지 바 */}
           <div className="flex items-center gap-3 mb-4">
-            <Skeleton className="w-8 h-8 rounded-lg" />
+            <Skeleton className="w-8 h-8 rounded-sm" />
             <div className="space-y-1">
               <Skeleton className="h-5 w-32" />
               <Skeleton className="h-3 w-20" />
@@ -307,16 +307,16 @@ export default function ConceptPage() {
           </div>
           <div className="flex gap-1 mb-6">
             {Array.from({ length: 4 }, (_, i) => (
-              <Skeleton key={i} className="h-9 flex-1 rounded-lg" />
+              <Skeleton key={i} className="h-9 flex-1 rounded-sm" />
             ))}
           </div>
           {/* 본문 */}
-          <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+          <div className="bg-white border border-slate-200 rounded-sm p-6 space-y-4">
             <Skeleton className="h-5 w-2/5" />
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-[90%]" />
             <Skeleton className="h-4 w-[75%]" />
-            <Skeleton className="h-32 w-full rounded-lg mt-2" />
+            <Skeleton className="h-32 w-full rounded-sm mt-2" />
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-[85%]" />
           </div>
@@ -771,7 +771,7 @@ function renderBlanksTemplate(
                 onHintUsed(position);
               }
             }}
-            className={`w-4 h-4 rounded-full text-[10px] font-bold leading-none transition-all ${
+            className={`w-4 h-4 rounded-full text-xs font-bold leading-none transition-all ${
               showHints[position]
                 ? 'bg-amber-400 text-white shadow-sm'
                 : 'bg-amber-100 text-amber-500 hover:bg-amber-200'

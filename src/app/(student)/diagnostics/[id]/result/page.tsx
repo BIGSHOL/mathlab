@@ -57,7 +57,7 @@ export default function DiagnosticResultPage() {
           <Skeleton className="h-7 w-32" />
         </div>
         {/* 레벨 추천 카드 (바이올렛 그라데이션) */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 mb-6 text-center">
+        <div className="bg-white border border-slate-200 rounded-sm p-5 mb-6 text-center">
           <Skeleton className="w-10 h-10 rounded mx-auto mb-3" />
           <Skeleton className="h-3 w-24 mx-auto mb-2" />
           <Skeleton className="h-10 w-20 rounded-full mx-auto mb-4" />
@@ -66,7 +66,7 @@ export default function DiagnosticResultPage() {
         {/* 2열 영역 카드 (보완/우수) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           {Array.from({ length: 2 }, (_, i) => (
-            <div key={i} className="bg-white border border-slate-200 rounded-xl p-5">
+            <div key={i} className="bg-white border border-slate-200 rounded-sm p-5">
               <div className="flex items-center gap-2 mb-3">
                 <Skeleton className="w-4 h-4 rounded" />
                 <Skeleton className="h-4 w-24" />
@@ -83,7 +83,7 @@ export default function DiagnosticResultPage() {
           ))}
         </div>
         {/* 학습 추천 카드 */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 mb-6">
+        <div className="bg-white border border-slate-200 rounded-sm p-5 mb-6">
           <div className="flex items-start gap-3">
             <Skeleton className="w-5 h-5 rounded shrink-0" />
             <div className="flex-1 space-y-2">

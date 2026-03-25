@@ -62,21 +62,21 @@ export default function LevelTestEditPage() {
     return (
       <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 py-6 md:py-8">
         <div className="flex items-center gap-3 mb-6">
-          <Skeleton className="w-8 h-8 rounded-lg" />
+          <Skeleton className="w-8 h-8 rounded-sm" />
           <Skeleton className="h-7 w-48" />
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4 mb-4">
+        <div className="bg-white border border-slate-200 rounded-sm p-5 space-y-4 mb-4">
           <Skeleton className="h-5 w-28" />
           <div className="space-y-3">
-            <Skeleton className="h-10 w-full rounded-lg" />
-            <Skeleton className="h-10 w-full rounded-lg" />
-            <Skeleton className="h-10 w-2/3 rounded-lg" />
+            <Skeleton className="h-10 w-full rounded-sm" />
+            <Skeleton className="h-10 w-full rounded-sm" />
+            <Skeleton className="h-10 w-2/3 rounded-sm" />
           </div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
+        <div className="bg-white border border-slate-200 rounded-sm p-5 space-y-3">
           <Skeleton className="h-5 w-24" />
           {Array.from({ length: 4 }, (_, i) => (
-            <div key={i} className="flex items-center gap-3 p-3 border border-slate-100 rounded-lg">
+            <div key={i} className="flex items-center gap-3 p-3 border border-slate-100 rounded-sm">
               <Skeleton className="w-6 h-6 rounded" />
               <Skeleton className="h-4 flex-1" />
               <Skeleton className="h-4 w-16" />

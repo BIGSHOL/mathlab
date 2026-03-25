@@ -80,7 +80,7 @@ export function ReportSummary({
       {/* Title */}
       <div className="flex items-center gap-3 mb-4">
         <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+          className="w-9 h-9 rounded-sm flex items-center justify-center shrink-0"
           style={{ backgroundColor: 'rgba(19,91,236,0.1)', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } as React.CSSProperties}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#135bec" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -89,7 +89,7 @@ export function ReportSummary({
         </div>
         <div>
           <h2 className="text-lg font-bold leading-tight tracking-tight text-slate-900">종합 분석 보고서</h2>
-          <p className="text-[10px] text-slate-400 font-medium">학습 역량 및 성취도 진단</p>
+          <p className="text-xs text-slate-400 font-medium">학습 역량 및 성취도 진단</p>
         </div>
       </div>
 
@@ -97,11 +97,11 @@ export function ReportSummary({
       <div className="grid grid-cols-2 gap-3 mb-2">
         <div className="bg-white p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
           <div>
-            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">진단 등급</p>
+            <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">진단 등급</p>
             <h3 className="text-2xl font-black leading-none" style={{ color: levelColor }}>{recommendLevel}</h3>
           </div>
           <div
-            className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+            className="h-10 w-10 rounded-sm flex items-center justify-center shrink-0"
             style={{ backgroundColor: 'rgba(19,91,236,0.08)', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } as React.CSSProperties}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="#135bec">
@@ -111,16 +111,16 @@ export function ReportSummary({
         </div>
         <div className="bg-white p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
           <div>
-            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">정답률</p>
+            <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">정답률</p>
             <div className="flex items-baseline gap-1.5">
               <h3 className="text-2xl font-black leading-none" style={{ color: overallAccuracy >= 60 ? '#059669' : '#ef4444' }}>
                 {overallAccuracy}%
               </h3>
-              <span className="text-[10px] text-slate-400 font-medium">{correctCount}/{totalCount}</span>
+              <span className="text-xs text-slate-400 font-medium">{correctCount}/{totalCount}</span>
             </div>
           </div>
           <div
-            className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+            className="h-10 w-10 rounded-sm flex items-center justify-center shrink-0"
             style={{ backgroundColor: 'rgba(19,91,236,0.08)', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } as React.CSSProperties}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#135bec" strokeWidth="2">
@@ -183,7 +183,7 @@ export function ReportSummary({
           </div>
           <div className="flex-1">
             <div
-              className="rounded-xl p-3.5 border"
+              className="rounded-sm p-3.5 border"
               style={{
                 backgroundColor: 'rgba(19,91,236,0.03)',
                 borderColor: 'rgba(19,91,236,0.1)',
@@ -194,9 +194,9 @@ export function ReportSummary({
               <p className="text-[9px] font-bold uppercase tracking-wider mb-1" style={{ color: '#135bec' }}>종합 성취도</p>
               <div className="flex items-baseline gap-2 mb-1.5">
                 <span className="text-3xl font-black text-slate-900">{weightedAvg}%</span>
-                <span className="text-slate-400 font-medium text-[10px]">가중치 점수</span>
+                <span className="text-slate-400 font-medium text-xs">가중치 점수</span>
               </div>
-              <p className="text-[10px] text-slate-500 leading-relaxed">
+              <p className="text-xs text-slate-500 leading-relaxed">
                 {studentName ? `${studentName} 학생은 ` : ''}{feedback}
               </p>
             </div>
@@ -213,9 +213,9 @@ export function ReportSummary({
           const domainFeedback = aiDomainFeedbacks?.[domain] || getDomainFeedback(domain, score.accuracy);
 
           return (
-            <div key={domain} className="bg-white p-2.5 rounded-xl border border-slate-200">
+            <div key={domain} className="bg-white p-2.5 rounded-sm border border-slate-200">
               <div className="flex justify-between items-center mb-1">
-                <h5 className="font-bold text-slate-900 text-[11px]">{DOMAIN_LABELS[domain]}</h5>
+                <h5 className="font-bold text-slate-900 text-xs">{DOMAIN_LABELS[domain]}</h5>
                 <span
                   className="text-[8px] font-bold px-1.5 py-0.5 rounded"
                   style={{

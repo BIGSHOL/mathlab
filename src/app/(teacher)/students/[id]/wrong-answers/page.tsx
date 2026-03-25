@@ -176,7 +176,7 @@ export default function WrongAnswersPage() {
           <Skeleton className="h-8 w-28 rounded" />
         </div>
         {/* 단원별 분포 카드 */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 mb-6">
+        <div className="bg-white border border-slate-200 rounded-sm p-5 mb-6">
           <Skeleton className="h-4 w-24 mb-3" />
           <div className="flex flex-wrap gap-2">
             {Array.from({ length: 5 }, (_, i) => (
@@ -193,7 +193,7 @@ export default function WrongAnswersPage() {
         {/* 오답 리스트 */}
         <div className="space-y-3">
           {Array.from({ length: 5 }, (_, i) => (
-            <div key={i} className="bg-white border border-slate-200 rounded-xl p-4">
+            <div key={i} className="bg-white border border-slate-200 rounded-sm p-4">
               <div className="flex items-start gap-3">
                 <Skeleton className="w-4 h-4 rounded shrink-0 mt-1" />
                 <Skeleton className="w-8 h-8 rounded shrink-0" />
@@ -252,7 +252,7 @@ export default function WrongAnswersPage() {
               <button
                 key={chapter}
                 onClick={() => setFilterChapter(filterChapter === chapter ? '' : chapter)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-sm text-xs font-medium transition-colors ${
                   filterChapter === chapter
                     ? 'bg-primary text-white'
                     : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
@@ -271,7 +271,7 @@ export default function WrongAnswersPage() {
         <select
           value={filterDifficulty}
           onChange={(e) => setFilterDifficulty(e.target.value)}
-          className="text-sm border border-slate-200 rounded-lg px-3 py-1.5"
+          className="text-sm border border-slate-200 rounded-sm px-3 py-1.5"
         >
           <option value="">전체 난이도</option>
           <option value="BASIC">하</option>
@@ -368,7 +368,7 @@ export default function WrongAnswersPage() {
                     {/* Full question */}
                     <div>
                       <p className="text-xs font-bold text-text-secondary mb-1.5">문제 전문</p>
-                      <div className="bg-white rounded-lg border border-slate-200 p-4 text-sm">
+                      <div className="bg-white rounded-sm border border-slate-200 p-4 text-sm">
                         <MathRenderer content={q.content} />
                       </div>
                     </div>
@@ -384,7 +384,7 @@ export default function WrongAnswersPage() {
                             return (
                               <div
                                 key={idx}
-                                className={`px-3 py-2 rounded-lg text-xs border ${
+                                className={`px-3 py-2 rounded-sm text-xs border ${
                                   isCorrectAnswer
                                     ? 'border-emerald-300 bg-emerald-50 text-emerald-700 font-semibold'
                                     : isStudentAnswer
@@ -402,13 +402,13 @@ export default function WrongAnswersPage() {
 
                     {/* Answer comparison */}
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                      <div className="bg-red-50 border border-red-200 rounded-sm p-3">
                         <p className="text-xs font-bold text-red-600 mb-1">학생 답안</p>
                         <div className="text-sm text-red-800 font-medium">
                           <MathRenderer content={item.lastWrongAnswer} />
                         </div>
                       </div>
-                      <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                      <div className="bg-emerald-50 border border-emerald-200 rounded-sm p-3">
                         <p className="text-xs font-bold text-emerald-600 mb-1">정답</p>
                         <div className="text-sm text-emerald-800 font-medium">
                           <MathRenderer content={q.answer} />
@@ -422,7 +422,7 @@ export default function WrongAnswersPage() {
                         <p className="text-xs font-bold text-text-secondary mb-1.5 flex items-center gap-1">
                           <Lightbulb className="w-3 h-3 text-amber-500" /> 해설
                         </p>
-                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm">
+                        <div className="bg-amber-50 border border-amber-200 rounded-sm p-4 text-sm">
                           <MathRenderer content={q.explanation} />
                         </div>
                       </div>
@@ -438,7 +438,7 @@ export default function WrongAnswersPage() {
                           {similar.map((sq) => (
                             <div
                               key={sq.id}
-                              className="flex items-center gap-2 px-3 py-1.5 bg-white border border-primary/20 rounded-lg text-xs"
+                              className="flex items-center gap-2 px-3 py-1.5 bg-white border border-primary/20 rounded-sm text-xs"
                             >
                               <span className="font-semibold text-text-primary">
                                 {sq.bookCode} #{sq.questionNum}

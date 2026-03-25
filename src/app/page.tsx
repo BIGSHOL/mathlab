@@ -300,7 +300,7 @@ export default function LandingPage() {
                   {teacherTools.map((tool) => (
                     <div
                       key={tool.label}
-                      className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white border border-slate-200 hover:border-primary/30 hover:shadow-sm transition-all"
+                      className="flex flex-col items-center gap-2 p-3 rounded-sm bg-white border border-slate-200 hover:border-primary/30 hover:shadow-sm transition-all"
                     >
                       <tool.icon className="w-5 h-5 text-primary" />
                       <span className="text-xs font-medium text-text-secondary">{tool.label}</span>
@@ -333,7 +333,7 @@ export default function LandingPage() {
                     { icon: CheckCircle2, text: '숙제 제출 · 시험 응시 · 오답 복습' },
                   ].map((item) => (
                     <div key={item.text} className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-sm bg-orange-50 flex items-center justify-center">
                         <item.icon className="w-4.5 h-4.5 text-secondary" />
                       </div>
                       <span className="text-sm font-medium text-text-primary">{item.text}</span>

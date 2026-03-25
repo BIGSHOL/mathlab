@@ -5,7 +5,7 @@ export default function RankingLoading() {
     <div className="w-full mx-auto px-4 md:px-8 py-6 md:py-8 max-w-[1200px]">
       {/* 헤더 */}
       <div className="flex items-center gap-3 mb-6">
-        <Skeleton className="w-10 h-10 rounded-xl" />
+        <Skeleton className="w-10 h-10 rounded-sm" />
         <div className="space-y-1.5">
           <Skeleton className="h-7 w-32" />
           <Skeleton className="h-4 w-24" />
@@ -46,7 +46,7 @@ export default function RankingLoading() {
         {/* 리스트 */}
         <div className="lg:col-span-2 space-y-2">
           {Array.from({ length: 8 }, (_, i) => (
-            <div key={i} className="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-xl">
+            <div key={i} className="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-sm">
               <Skeleton className="w-8 h-6 rounded" />
               <Skeleton className="w-8 h-4 rounded" />
               <Skeleton variant="circle" className="w-10 h-10" />
@@ -61,7 +61,7 @@ export default function RankingLoading() {
 
         {/* 인사이트 */}
         <div className="space-y-4">
-          <div className="bg-white border border-slate-200 rounded-xl p-4">
+          <div className="bg-white border border-slate-200 rounded-sm p-4">
             <Skeleton className="h-5 w-20 mb-3" />
             {Array.from({ length: 3 }, (_, i) => (
               <div key={i} className="flex items-center gap-2 mb-2">
@@ -70,7 +70,7 @@ export default function RankingLoading() {
               </div>
             ))}
           </div>
-          <div className="bg-white border border-slate-200 rounded-xl p-4">
+          <div className="bg-white border border-slate-200 rounded-sm p-4">
             <Skeleton className="h-5 w-20 mb-3" />
             {Array.from({ length: 3 }, (_, i) => (
               <div key={i} className="flex items-center gap-2 mb-2">
@@ -79,11 +79,11 @@ export default function RankingLoading() {
               </div>
             ))}
           </div>
-          <div className="bg-white border border-slate-200 rounded-xl p-4">
+          <div className="bg-white border border-slate-200 rounded-sm p-4">
             <Skeleton className="h-5 w-24 mb-3" />
             <div className="grid grid-cols-2 gap-3">
-              <Skeleton className="h-16 rounded-lg" />
-              <Skeleton className="h-16 rounded-lg" />
+              <Skeleton className="h-16 rounded-sm" />
+              <Skeleton className="h-16 rounded-sm" />
             </div>
           </div>
         </div>

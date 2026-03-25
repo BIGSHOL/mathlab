@@ -305,7 +305,7 @@ export default async function ProfilePage({
         return (
           <div
             key={badge.id}
-            className={`group flex flex-col items-center p-2 rounded-xl border h-[114px] justify-center relative hover:z-[60] transition-[transform,box-shadow,opacity,filter] duration-150 ${isEarned
+            className={`group flex flex-col items-center p-2 rounded-sm border h-[114px] justify-center relative hover:z-[60] transition-[transform,box-shadow,opacity,filter] duration-150 ${isEarned
               ? 'bg-white border-amber-100/50 shadow-sm hover:shadow-md hover:-translate-y-1'
               : 'bg-slate-50 border-slate-100 opacity-60 grayscale hover:opacity-100 hover:grayscale-0 hover:-translate-y-1'
               }`}
@@ -328,8 +328,8 @@ export default async function ProfilePage({
                 <div className="w-full text-center mb-3">
                   <p className="font-extrabold text-amber-300 text-base leading-tight mb-1.5">{displayLabel}</p>
                   {isEarned && isHidden ? (
-                    <div className="bg-slate-900/60 p-2 rounded-lg border border-amber-500/20 mx-1">
-                      <p className="text-amber-300 text-[10px] font-bold flex justify-center items-center gap-1 mb-1">✨ 히든 업적 오픈 조건</p>
+                    <div className="bg-slate-900/60 p-2 rounded-sm border border-amber-500/20 mx-1">
+                      <p className="text-amber-300 text-xs font-bold flex justify-center items-center gap-1 mb-1">✨ 히든 업적 오픈 조건</p>
                       <p className="text-slate-100 text-xs leading-snug">{displayDesc}</p>
                     </div>
                   ) : (
@@ -337,7 +337,7 @@ export default async function ProfilePage({
                   )}
                 </div>
 
-                <div className="flex justify-between items-center bg-slate-900/50 rounded-lg p-2 border border-slate-700/50 w-full mt-auto">
+                <div className="flex justify-between items-center bg-slate-900/50 rounded-sm p-2 border border-slate-700/50 w-full mt-auto">
                   <div className="text-center w-1/2 border-r border-slate-700/50">
                     <p className="text-[9px] text-slate-400 mb-0.5">전체 달성률</p>
                     <p className="text-sm font-bold text-white">{earnRate}%</p>
@@ -352,7 +352,7 @@ export default async function ProfilePage({
               {/* 우측 패널: 진행 상황 (단일 업적 포함 항상 노출하여 디자인 일관성 유지) */}
               <div className="w-52 border-l border-slate-700/50 ml-4 pl-4 flex flex-col relative">
                 <div className="sticky top-0 bg-slate-800 pb-2 mb-2 border-b border-slate-700/80 shrink-0 z-10">
-                  <p className="text-[11px] text-slate-300 font-bold">{group.length > 1 ? '단계별 진행 상황' : '업적 달성 조건'}</p>
+                  <p className="text-xs text-slate-300 font-bold">{group.length > 1 ? '단계별 진행 상황' : '업적 달성 조건'}</p>
                 </div>
                 <div className="space-y-3 break-words overflow-y-auto max-h-[16rem] pr-1 scrollbar-hide">
                   {group.map((b, idx) => {
@@ -367,7 +367,7 @@ export default async function ProfilePage({
                         <span className="shrink-0 w-4 text-center mt-0.5">{hasB ? '✅' : isActiveNext ? '▶' : '🔒'}</span>
                         <div>
                           <span className="block mb-0.5">{b_title}</span>
-                          <span className={`font-normal text-[10px] block shrink-0 ${hasB ? 'text-amber-400/80' : isActiveNext ? 'text-slate-400' : 'text-slate-500'}`}>{(!hasB && b_hidden) ? '비밀 업적입니다' : b.description}</span>
+                          <span className={`font-normal text-xs block shrink-0 ${hasB ? 'text-amber-400/80' : isActiveNext ? 'text-slate-400' : 'text-slate-500'}`}>{(!hasB && b_hidden) ? '비밀 업적입니다' : b.description}</span>
                         </div>
                       </div>
                     );
@@ -392,7 +392,7 @@ export default async function ProfilePage({
                 )
               )}
             </div>
-            <p className="text-[11px] font-extrabold text-text-primary leading-tight text-center w-full truncate">
+            <p className="text-xs font-extrabold text-text-primary leading-tight text-center w-full truncate">
               {displayLabel}
             </p>
 
@@ -425,7 +425,7 @@ export default async function ProfilePage({
       {/* ──── 상단: 프로필 헤더 & 학습 스트릭 ──── */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4">
         {/* 1. 프로필 정보 (좌측) */}
-        <Card padding="md" className="rounded-xl flex flex-col justify-between">
+        <Card padding="md" className="rounded-sm flex flex-col justify-between">
           <div className="flex items-center gap-4 mb-4">
             <UserAvatar name={user.name} badgeIcon={profile?.representativeBadge?.icon} size="xl" />
             <div className="flex-1 min-w-0">
@@ -455,7 +455,7 @@ export default async function ProfilePage({
           {/* 미니 통계 */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-auto">
             {miniStats.map((s) => (
-              <div key={s.label} className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg ${s.color}`}>
+              <div key={s.label} className={`flex items-center gap-1.5 px-2.5 py-2 rounded-sm ${s.color}`}>
                 {s.icon}
                 <div className="min-w-0">
                   <p className="text-xs font-medium opacity-70">{s.label}</p>
@@ -467,7 +467,7 @@ export default async function ProfilePage({
         </Card>
 
         {/* 2. 학습 스트릭 (우측) */}
-        <Card className="rounded-xl overflow-hidden flex flex-col">
+        <Card className="rounded-sm overflow-hidden flex flex-col">
           <div className="flex items-center px-4 py-3 border-b border-slate-100 gap-1.5 bg-slate-50/50">
             <Flame className="w-3.5 h-3.5 text-orange-500" />
             <h2 className="text-sm font-bold text-text-primary">학습 스트릭</h2>
@@ -476,21 +476,21 @@ export default async function ProfilePage({
             {/* 숫자 지표 */}
             <div className="flex items-center gap-5 mb-4">
               <div>
-                <p className="text-[11px] text-text-secondary">현재 연속</p>
+                <p className="text-xs text-text-secondary">현재 연속</p>
                 <p className="text-base font-extrabold text-orange-600">{streak}일</p>
               </div>
               <div>
-                <p className="text-[11px] text-text-secondary">최장 기록</p>
+                <p className="text-xs text-text-secondary">최장 기록</p>
                 <p className="text-base font-extrabold text-text-primary">{longestStreak}일</p>
               </div>
               <div>
-                <p className="text-[11px] text-text-secondary">총 학습일</p>
+                <p className="text-xs text-text-secondary">총 학습일</p>
                 <p className="text-base font-extrabold text-blue-600">{totalLearningDays}일</p>
               </div>
             </div>
 
             {/* 주간 활동 */}
-            <p className="text-[10px] text-text-secondary mb-1.5">최근 7일</p>
+            <p className="text-xs text-text-secondary mb-1.5">최근 7일</p>
             <div className="flex items-center gap-1.5">
               {weekDays.map((d) => (
                 <div key={d.date} className="flex flex-col items-center gap-1 flex-1">
@@ -514,7 +514,7 @@ export default async function ProfilePage({
       {/* ──── 2×2 그리드 (행 단위 정렬) ──── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* 최근 학습 */}
-        <Card className="rounded-xl overflow-hidden">
+        <Card className="rounded-sm overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
             <div className="flex items-center gap-1.5">
               <History className="w-3.5 h-3.5 text-primary" />
@@ -559,7 +559,7 @@ export default async function ProfilePage({
         </Card>
 
         {/* 연산 연습 */}
-        <Card className="rounded-xl overflow-hidden">
+        <Card className="rounded-sm overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
             <div className="flex items-center gap-1.5">
               <Calculator className="w-3.5 h-3.5 text-emerald-500" />
@@ -603,7 +603,7 @@ export default async function ProfilePage({
         </Card>
 
         {/* 시험 결과 */}
-        <Card className="rounded-xl overflow-hidden">
+        <Card className="rounded-sm overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
             <div className="flex items-center gap-1.5">
               <ClipboardCheck className="w-3.5 h-3.5 text-blue-500" />
@@ -652,7 +652,7 @@ export default async function ProfilePage({
         </Card>
 
         {uniqueWrong.length > 0 && (
-          <Card className="rounded-xl overflow-hidden">
+          <Card className="rounded-sm overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
               <div className="flex items-center gap-1.5">
                 <XCircle className="w-3.5 h-3.5 text-red-400" />

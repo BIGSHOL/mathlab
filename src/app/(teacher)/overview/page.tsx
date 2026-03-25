@@ -5,12 +5,11 @@ import {
   MessageCircleQuestion,
   TrendingUp,
   TrendingDown,
-  MessageSquare,
   BookOpen,
   Trophy,
   Flame,
+  ChevronRight,
 } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { redirect } from 'next/navigation';
@@ -21,7 +20,6 @@ import Link from 'next/link';
 import MonthlyChart from '@/components/charts/MonthlyChart';
 import DashboardAnalytics from '@/components/charts/DashboardAnalytics';
 import { OverviewActions } from '@/components/teacher/OverviewActions';
-import { DashboardStatCards } from '@/components/student/DashboardStatCards';
 import SuperAdminDashboard from '@/components/teacher/SuperAdminDashboard';
 import OwnerDashboard from '@/components/teacher/OwnerDashboard';
 
@@ -199,14 +197,16 @@ export default async function TeacherDashboard({
       label: '전체 학생 수',
       value: formatNumber(totalStudents),
       suffix: '명',
-      icon: <Users className="w-8 h-8 text-primary opacity-20" />,
+      icon: Users,
+      color: 'blue' as const,
       trend: { value: '+5%', positive: true },
     },
     {
       label: period === 'all' ? '전체 활동률' : period === '90d' ? '3개월 활동률' : period === '30d' ? '월간 활동률' : '주간 활동률',
       value: `${attendanceRate}`,
       suffix: '%',
-      icon: <CalendarCheck className="w-8 h-8 text-primary opacity-20" />,
+      icon: CalendarCheck,
+      color: 'emerald' as const,
       trend: attendanceRate >= 80
         ? { value: '양호', positive: true }
         : { value: '관리 필요', positive: false },
@@ -214,20 +214,29 @@ export default async function TeacherDashboard({
     {
       label: '평균 레벨',
       value: avgLevel.toFixed(1),
-      icon: <GraduationCap className="w-8 h-8 text-primary opacity-20" />,
+      icon: GraduationCap,
+      color: 'violet' as const,
       trend: { value: '+2%', positive: true },
     },
     {
       label: '총 학습 기록',
       value: formatNumber(totalProgress),
       suffix: '건',
-      icon: <MessageCircleQuestion className="w-8 h-8 text-primary opacity-20" />,
+      icon: MessageCircleQuestion,
+      color: 'amber' as const,
       trend: { value: '누적', positive: true },
     },
   ];
 
+  const colorMap = {
+    blue: { border: 'border-blue-200', icon: 'text-blue-500', value: 'text-blue-700', sub: 'text-blue-500', deco: 'bg-blue-500/5' },
+    emerald: { border: 'border-emerald-200', icon: 'text-emerald-500', value: 'text-emerald-700', sub: 'text-emerald-500', deco: 'bg-emerald-500/5' },
+    violet: { border: 'border-violet-200', icon: 'text-violet-500', value: 'text-violet-700', sub: 'text-violet-500', deco: 'bg-violet-500/5' },
+    amber: { border: 'border-amber-200', icon: 'text-amber-500', value: 'text-amber-700', sub: 'text-amber-500', deco: 'bg-amber-500/5' },
+  };
+
   return (
-      <div className="flex flex-col grow min-w-0 max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-6 md:py-8 gap-3">
+      <div className="flex flex-col grow min-w-0 max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-6 md:py-8 gap-4">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2">
           <div>
@@ -239,49 +248,37 @@ export default async function TeacherDashboard({
           <OverviewActions />
         </div>
 
-        {/* Stat Cards - 2x2 on mobile, 4 on desktop */}
-        <DashboardStatCards className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-          {stats.map((stat) => (
-            <Card
-              key={stat.label}
-              variant="glass"
-              padding="sm"
-              className="flex flex-col gap-2 hover:shadow-md transition-shadow relative overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 p-3 md:p-3">{stat.icon}</div>
-              <p className="text-text-secondary text-sm font-semibold tracking-wide">
-                {stat.label}
-              </p>
-              <div className="flex items-end justify-between mt-auto">
-                <p className="text-text-primary text-base md:text-lg font-bold leading-none">
-                  {stat.value}
-                  {stat.suffix && (
-                    <span className="text-base md:text-sm text-slate-400 font-bold ml-0.5">{stat.suffix}</span>
-                  )}
-                </p>
+        {/* Stat Cards — StudentDetail 스타일 컬러 border 카드 */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+          {stats.map((stat) => {
+            const c = colorMap[stat.color];
+            const Icon = stat.icon;
+            return (
+              <div key={stat.label} className={`bg-white border ${c.border} rounded-sm p-3 relative overflow-hidden`}>
+                <div className={`absolute top-0 right-0 w-10 h-10 ${c.deco} rounded-bl-full`} />
+                <div className="flex items-center gap-2">
+                  <Icon className={`w-4 h-4 ${c.icon} shrink-0`} />
+                  <div className={`text-lg font-bold ${c.value}`}>
+                    {stat.value}
+                    {stat.suffix && <span className="text-xs font-medium ml-0.5">{stat.suffix}</span>}
+                  </div>
+                </div>
+                <div className={`text-xs ${c.sub} mt-0.5`}>{stat.label}</div>
+                <span className={`text-xs font-bold px-1.5 py-0.5 rounded-sm flex items-center w-fit mt-1.5 ${
+                  stat.trend.positive ? 'text-emerald-600 bg-emerald-50' : 'text-rose-500 bg-rose-50'
+                }`}>
+                  {stat.trend.positive ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
+                  {stat.trend.value}
+                </span>
               </div>
-              <span
-                className={`text-xs font-bold px-1.5 py-0.5 rounded-sm flex items-center w-fit ${
-                  stat.trend.positive
-                    ? 'text-emerald-600 bg-emerald-50'
-                    : 'text-rose-500 bg-rose-50'
-                }`}
-              >
-                {stat.trend.positive ? (
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                ) : (
-                  <TrendingDown className="w-3 h-3 mr-1" />
-                )}
-                {stat.trend.value}
-              </span>
-            </Card>
-          ))}
-        </DashboardStatCards>
+            );
+          })}
+        </div>
 
         {/* Row 2: Chart + Focus Students */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
           {/* Chart */}
-          <Card variant="glass" padding="sm" className="flex flex-col gap-2 lg:col-span-3">
+          <div className="bg-white border border-slate-200 rounded-sm p-3 flex flex-col gap-2 lg:col-span-3">
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-text-primary text-sm font-semibold">월간 학습 추이</h3>
@@ -291,54 +288,61 @@ export default async function TeacherDashboard({
               </div>
             </div>
             <MonthlyChart />
-          </Card>
+          </div>
 
-          {/* Focus Students */}
-          <Card variant="glass" className="flex flex-col overflow-hidden lg:col-span-2">
-            <div className="px-3 py-2.5 border-b border-slate-200/50 flex justify-between items-center">
-              <h3 className="text-text-primary text-base font-bold">집중 관리 학생</h3>
+          {/* Focus Students — 리스트 아이템에 좌측 컬러바 + ChevronRight */}
+          <div className="bg-white border border-slate-200 rounded-sm flex flex-col overflow-hidden lg:col-span-2">
+            <div className="px-3 py-2.5 border-b border-slate-200 flex justify-between items-center">
+              <div className="flex items-center gap-1.5">
+                <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center shrink-0">
+                  <Users className="w-3 h-3 text-primary" />
+                </div>
+                <h3 className="text-xs font-bold text-text-primary">집중 관리 학생</h3>
+              </div>
               <Link href="/students" className="text-primary text-xs font-bold hover:underline">
                 모두 보기
               </Link>
             </div>
-            <div className="flex-1 p-2.5 overflow-y-auto">
-              <div className="flex flex-col gap-2">
-                {focusStudents.length === 0 ? (
-                  <p className="text-text-secondary text-center py-8 text-sm">등록된 학생이 없습니다.</p>
-                ) : (
-                  focusStudents.map((student) => {
+            <div className="flex-1 overflow-y-auto">
+              {focusStudents.length === 0 ? (
+                <p className="text-text-secondary text-center py-8 text-sm">등록된 학생이 없습니다.</p>
+              ) : (
+                <div className="space-y-1.5 p-2.5">
+                  {focusStudents.map((student) => {
                     const colors = getAchievementColor(student.achievementPercent);
                     return (
-                      <div
+                      <Link
                         key={student.id}
-                        className="flex items-center gap-2 p-2.5 rounded-sm bg-white/40 hover:bg-white transition-colors shadow-sm"
+                        href={`/students?search=${encodeURIComponent(student.name)}`}
+                        className="flex items-center bg-white border border-slate-200 rounded-sm overflow-hidden hover:border-primary/40 transition-colors"
                       >
-                        <div
-                          className={`w-9 h-9 rounded-full ${colors.bg} flex items-center justify-center text-xs font-bold ${colors.text} shrink-0`}
-                        >
-                          {student.name[0]}
+                        <div className={`w-1 self-stretch shrink-0 ${
+                          student.achievementPercent < 55 ? 'bg-red-400' : student.achievementPercent < 65 ? 'bg-orange-400' : 'bg-amber-400'
+                        }`} />
+                        <div className="flex items-center justify-between flex-1 min-w-0 px-3 py-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className={`w-7 h-7 rounded-full ${colors.bg} flex items-center justify-center text-xs font-bold ${colors.text} shrink-0`}>
+                              {student.name[0]}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-xs font-medium text-text-primary truncate">{student.name}</div>
+                              <div className="text-xs text-text-secondary">{getGradeLabel(student.grade)} · {student.subjectTitle}</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                            <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${colors.bg} ${colors.text}`}>
+                              {student.achievementPercent}%
+                            </span>
+                            <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-sm text-text-primary truncate">{student.name}</p>
-                          <p className="text-xs text-text-secondary">
-                            {student.subjectTitle} &bull;{' '}
-                            <span className={`font-bold ${colors.badge}`}>{student.achievementPercent}%</span>
-                          </p>
-                        </div>
-                        <Link
-                          href={`/students?search=${encodeURIComponent(student.name)}`}
-                          className="bg-primary/10 hover:bg-primary/20 text-primary p-1.5 rounded-sm transition-colors shrink-0"
-                          title="학생 상세 보기"
-                        >
-                          <MessageSquare className="w-3.5 h-3.5" />
-                        </Link>
-                      </div>
+                      </Link>
                     );
-                  })
-                )}
-              </div>
+                  })}
+                </div>
+              )}
             </div>
-          </Card>
+          </div>
         </div>
 
         {/* Row 2.5: Weekly Analytics (client-side fetched) */}
@@ -347,49 +351,52 @@ export default async function TeacherDashboard({
         {/* Row 3: Ranking + Grade Distribution + Recent Activity */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {/* Top Students Ranking */}
-          <Card padding="sm">
+          <div className="bg-white border border-slate-200 rounded-sm p-3">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-text-primary text-base font-bold flex items-center gap-2">
-                <Trophy className="w-4 h-4 text-xp-gold" /> XP 랭킹 TOP 5
-              </h3>
+              <div className="flex items-center gap-1.5">
+                <div className="w-5 h-5 rounded bg-amber-100 flex items-center justify-center shrink-0">
+                  <Trophy className="w-3 h-3 text-amber-600" />
+                </div>
+                <h3 className="text-xs font-bold text-text-primary">XP 랭킹 TOP 5</h3>
+              </div>
               <Link href="/ranking" className="text-primary text-xs font-bold hover:underline">
                 전체 보기
               </Link>
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="space-y-1.5">
               {topStudents.map((s, i) => (
-                <div key={s.id} className="flex items-center gap-2 py-2 border-b border-slate-200 last:border-0">
-                  <span
-                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                      i === 0
-                        ? 'bg-amber-100 text-amber-700'
-                        : i === 1
-                          ? 'bg-slate-200 text-slate-600'
-                          : i === 2
-                            ? 'bg-orange-100 text-orange-700'
-                            : 'bg-slate-50 text-slate-500'
-                    }`}
-                  >
-                    {i + 1}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-text-primary truncate">{s.name}</p>
-                    <p className="text-xs text-text-secondary">{getGradeLabel(s.grade)}</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-sm font-bold text-primary">{formatNumber(s.profile?.totalXp ?? 0)}</p>
-                    <p className="text-xs text-text-secondary">Lv.{s.profile?.level ?? 1}</p>
+                <div key={s.id} className="flex items-center bg-white border border-slate-200 rounded-sm overflow-hidden hover:border-amber-300 transition-colors">
+                  <div className={`w-1 self-stretch shrink-0 ${
+                    i === 0 ? 'bg-amber-400' : i === 1 ? 'bg-slate-400' : i === 2 ? 'bg-orange-400' : 'bg-slate-200'
+                  }`} />
+                  <div className="flex items-center justify-between flex-1 min-w-0 px-3 py-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                        i === 0 ? 'bg-amber-100 text-amber-700' : i === 1 ? 'bg-slate-200 text-slate-600' : i === 2 ? 'bg-orange-100 text-orange-700' : 'bg-slate-50 text-slate-500'
+                      }`}>{i + 1}</span>
+                      <div className="min-w-0">
+                        <div className="text-xs font-medium text-text-primary truncate">{s.name}</div>
+                        <div className="text-xs text-text-secondary">{getGradeLabel(s.grade)}</div>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0 ml-2">
+                      <div className="text-xs font-bold text-primary">{formatNumber(s.profile?.totalXp ?? 0)} XP</div>
+                      <div className="text-xs text-text-secondary">Lv.{s.profile?.level ?? 1}</div>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
-          </Card>
+          </div>
 
           {/* Grade Distribution */}
-          <Card padding="sm">
-            <h3 className="text-text-primary text-base font-bold flex items-center gap-2 mb-2">
-              <Users className="w-4 h-4 text-primary" /> 학년별 학생 분포
-            </h3>
+          <div className="bg-white border border-slate-200 rounded-sm p-3">
+            <div className="flex items-center gap-1.5 mb-2">
+              <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center shrink-0">
+                <Users className="w-3 h-3 text-primary" />
+              </div>
+              <h3 className="text-xs font-bold text-text-primary">학년별 학생 분포</h3>
+            </div>
             <div className="flex flex-col gap-2">
               {gradeEntries.length === 0 ? (
                 <p className="text-text-secondary text-sm text-center py-2.5">데이터 없음</p>
@@ -413,9 +420,11 @@ export default async function TeacherDashboard({
             </div>
             {/* Streak summary */}
             <div className="mt-3 pt-2.5 border-t border-slate-200">
-              <div className="flex items-center gap-2 mb-2">
-                <Flame className="w-4 h-4 text-orange-500" />
-                <span className="text-sm font-bold text-text-primary">학습 스트릭</span>
+              <div className="flex items-center gap-1.5 mb-2">
+                <div className="w-5 h-5 rounded bg-orange-100 flex items-center justify-center shrink-0">
+                  <Flame className="w-3 h-3 text-orange-500" />
+                </div>
+                <span className="text-xs font-bold text-text-primary">학습 스트릭</span>
               </div>
               <div className="flex gap-2 text-center">
                 <div className="flex-1 bg-orange-50 rounded-sm p-3">
@@ -436,44 +445,50 @@ export default async function TeacherDashboard({
                 </div>
               </div>
             </div>
-          </Card>
+          </div>
 
-          {/* Recent Activity */}
-          <Card padding="sm">
-            <h3 className="text-text-primary text-base font-bold flex items-center gap-2 mb-2">
-              <BookOpen className="w-4 h-4 text-primary" /> 최근 학습 활동
-            </h3>
-            <div className="flex flex-col gap-2.5">
+          {/* Recent Activity — 좌측 컬러바 패턴 */}
+          <div className="bg-white border border-slate-200 rounded-sm p-3">
+            <div className="flex items-center gap-1.5 mb-2">
+              <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center shrink-0">
+                <BookOpen className="w-3 h-3 text-primary" />
+              </div>
+              <h3 className="text-xs font-bold text-text-primary">최근 학습 활동</h3>
+            </div>
+            <div className="space-y-1.5">
               {recentActivity.length === 0 ? (
                 <p className="text-text-secondary text-sm text-center py-2.5">아직 학습 기록이 없습니다.</p>
               ) : (
                 recentActivity.map((a) => (
-                  <div key={a.id} className="flex items-start gap-2 py-2 border-b border-slate-200 last:border-0">
-                    <div className={`w-8 h-8 rounded-sm flex items-center justify-center text-xs font-bold shrink-0 ${
-                      a.completed ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'
-                    }`}>
-                      {a.user.name[0]}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-text-primary">
-                        <span className="font-semibold">{a.user.name}</span>
-                        <span className="text-text-secondary">이(가) </span>
-                        <span className="font-medium">{a.concept.title}</span>
-                      </p>
-                      <p className="text-xs text-text-secondary mt-0.5">
-                        {stageLabels[a.stage] ?? a.stage} &bull;{' '}
-                        {a.completed ? (
-                          <span className="text-emerald-600 font-semibold">완료</span>
-                        ) : (
-                          <span className="text-blue-600 font-semibold">진행 중</span>
-                        )}
-                      </p>
+                  <div key={a.id} className="flex items-center bg-white border border-slate-200 rounded-sm overflow-hidden">
+                    <div className={`w-1 self-stretch shrink-0 ${a.completed ? 'bg-emerald-400' : 'bg-blue-400'}`} />
+                    <div className="flex items-center justify-between flex-1 min-w-0 px-3 py-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                          a.completed ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'
+                        }`}>
+                          {a.user.name[0]}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-medium text-text-primary truncate">
+                            <span className="font-semibold">{a.user.name}</span>
+                            <span className="text-text-secondary"> · </span>
+                            {a.concept.title}
+                          </div>
+                          <div className="text-xs text-text-secondary">{stageLabels[a.stage] ?? a.stage}</div>
+                        </div>
+                      </div>
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium shrink-0 ${
+                        a.completed ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
+                      }`}>
+                        {a.completed ? '완료' : '진행 중'}
+                      </span>
                     </div>
                   </div>
                 ))
               )}
             </div>
-          </Card>
+          </div>
         </div>
       </div>
   );

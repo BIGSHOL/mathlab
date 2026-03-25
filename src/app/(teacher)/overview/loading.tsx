@@ -35,7 +35,7 @@ export default function OverviewLoading() {
       </div>
 
       {/* Row 2.5: 주간 분석 (DashboardAnalytics) */}
-      <div className="bg-white border border-slate-200 rounded-xl p-5">
+      <div className="bg-white border border-slate-200 rounded-sm p-5">
         <div className="flex justify-between items-center mb-3">
           <Skeleton className="h-5 w-28" />
           <Skeleton className="h-4 w-16" />
@@ -46,7 +46,7 @@ export default function OverviewLoading() {
       {/* Row 3: 3열 하단 (랭킹 + 학년분포 + 최근활동) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {Array.from({ length: 3 }, (_, i) => (
-          <div key={i} className="bg-white border border-slate-200 rounded-xl p-4">
+          <div key={i} className="bg-white border border-slate-200 rounded-sm p-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Skeleton className="w-4 h-4 rounded" />

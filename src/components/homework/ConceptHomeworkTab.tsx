@@ -257,7 +257,7 @@ export default function ConceptHomeworkTab() {
             <div className="flex items-center gap-2 min-w-0">
               <BookOpen className="w-4 h-4 text-primary shrink-0" />
               <span className="font-semibold text-sm text-text-primary truncate">개념 숙제</span>
-              <span className="ml-auto px-1.5 py-0.5 rounded-sm text-[10px] font-bold bg-primary/10 text-primary shrink-0">
+              <span className="ml-auto px-1.5 py-0.5 rounded-sm text-xs font-bold bg-primary/10 text-primary shrink-0">
                 {filteredPlans.length}
               </span>
             </div>
@@ -318,19 +318,19 @@ export default function ConceptHomeworkTab() {
                     >
                       <div className="flex items-center gap-1.5 mb-1">
                         {plan.isActive ? (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-700">활성</span>
+                          <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-700">활성</span>
                         ) : (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-500">종료</span>
+                          <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-500">종료</span>
                         )}
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-100 text-violet-700">
+                        <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-violet-100 text-violet-700">
                           {plan.totalConcepts}개념
                         </span>
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600">
+                        <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-600">
                           {STAGE_LABELS[plan.requiredStage] ?? plan.requiredStage}
                         </span>
                       </div>
                       <p className="text-sm font-medium text-text-primary truncate">{plan.title}</p>
-                      <div className="flex items-center gap-1 mt-1 text-[10px] text-text-secondary">
+                      <div className="flex items-center gap-1 mt-1 text-xs text-text-secondary">
                         <Users className="w-3 h-3 shrink-0" />
                         <span>{plan.studentCount}명</span>
                         <span className="text-slate-300">·</span>
@@ -366,9 +366,9 @@ export default function ConceptHomeworkTab() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 mb-1">
                     {selectedPlan.isActive ? (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-700">활성</span>
+                      <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-700">활성</span>
                     ) : (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-500">종료</span>
+                      <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-500">종료</span>
                     )}
                   </div>
                   <h2 className="text-lg font-bold text-text-primary">{selectedPlan.title}</h2>
@@ -408,23 +408,23 @@ export default function ConceptHomeworkTab() {
               <div className="border border-slate-200 rounded-sm">
                 <div className="grid grid-cols-2 gap-px bg-slate-200">
                   <div className="bg-white px-3 py-2">
-                    <div className="text-[10px] text-text-secondary mb-0.5">기간</div>
+                    <div className="text-xs text-text-secondary mb-0.5">기간</div>
                     <div className="text-xs font-semibold text-text-primary">
                       {formatDate(selectedPlan.startDate)} ~ {formatDate(getEndDate(selectedPlan).toISOString())} ({selectedPlan.totalDays}일)
                     </div>
                   </div>
                   <div className="bg-white px-3 py-2">
-                    <div className="text-[10px] text-text-secondary mb-0.5">개념 수</div>
+                    <div className="text-xs text-text-secondary mb-0.5">개념 수</div>
                     <div className="text-xs font-semibold text-text-primary">{selectedPlan.totalConcepts}개</div>
                   </div>
                   <div className="bg-white px-3 py-2">
-                    <div className="text-[10px] text-text-secondary mb-0.5">완료 기준</div>
+                    <div className="text-xs text-text-secondary mb-0.5">완료 기준</div>
                     <div className="text-xs font-semibold text-text-primary">
                       {STAGE_LABELS[selectedPlan.requiredStage] ?? selectedPlan.requiredStage} 이상
                     </div>
                   </div>
                   <div className="bg-white px-3 py-2">
-                    <div className="text-[10px] text-text-secondary mb-0.5">진행도</div>
+                    <div className="text-xs text-text-secondary mb-0.5">진행도</div>
                     <div className="text-xs font-semibold text-text-primary">{selectedPlan.progress}</div>
                   </div>
                 </div>
@@ -436,7 +436,7 @@ export default function ConceptHomeworkTab() {
                   <div className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-primary" />
                     <span className="text-sm font-semibold text-text-primary">배정 학생</span>
-                    <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-bold bg-primary/10 text-primary">
+                    <span className="px-1.5 py-0.5 rounded-sm text-xs font-bold bg-primary/10 text-primary">
                       {selectedPlan.studentCount}명
                     </span>
                   </div>
@@ -463,7 +463,7 @@ export default function ConceptHomeworkTab() {
                         >
                           {s.name}
                           {s.grade && (
-                            <span className="text-[10px] text-text-secondary">
+                            <span className="text-xs text-text-secondary">
                               {s.grade > 6 ? `중${s.grade - 6}` : `초${s.grade}`}
                             </span>
                           )}
@@ -510,9 +510,9 @@ export default function ConceptHomeworkTab() {
                               >
                                 <div className="flex items-center gap-2">
                                   <span className="font-medium text-text-primary">{s.name}</span>
-                                  {s.grade && <span className="text-[10px] text-text-secondary">{s.grade > 6 ? `중${s.grade - 6}` : `초${s.grade}`}</span>}
+                                  {s.grade && <span className="text-xs text-text-secondary">{s.grade > 6 ? `중${s.grade - 6}` : `초${s.grade}`}</span>}
                                 </div>
-                                <span className={`text-[10px] font-medium ${
+                                <span className={`text-xs font-medium ${
                                   state === 'enrolled' ? 'text-primary' :
                                   state === 'adding' ? 'text-emerald-600' :
                                   state === 'removing' ? 'text-red-500' : 'text-slate-400'
@@ -528,7 +528,7 @@ export default function ConceptHomeworkTab() {
                         </div>
                       )}
                       <div className="flex items-center justify-between">
-                        <div className="text-[10px] text-text-secondary">
+                        <div className="text-xs text-text-secondary">
                           {hasChanges && (
                             <>
                               {pendingAdd.size > 0 && <span className="text-emerald-600">+{pendingAdd.size}명 추가</span>}

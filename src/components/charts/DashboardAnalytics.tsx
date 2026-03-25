@@ -59,14 +59,14 @@ export default function DashboardAnalytics() {
           <div className="bg-white rounded-sm p-3 border border-slate-100 shadow-sm">
             <div className="flex items-center gap-1.5 mb-1">
               <BarChart3 className="w-3.5 h-3.5 text-primary" />
-              <span className="text-[11px] font-semibold text-text-secondary">이번 주 풀이</span>
+              <span className="text-xs font-semibold text-text-secondary">이번 주 풀이</span>
             </div>
             <p className="text-xl font-black text-text-primary">{weekSummary.totalAnswers}<span className="text-sm text-slate-400 font-bold ml-0.5">문제</span></p>
           </div>
           <div className="bg-white rounded-sm p-3 border border-slate-100 shadow-sm">
             <div className="flex items-center gap-1.5 mb-1">
               <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
-              <span className="text-[11px] font-semibold text-text-secondary">이번 주 오답률</span>
+              <span className="text-xs font-semibold text-text-secondary">이번 주 오답률</span>
             </div>
             <p className={`text-xl font-black ${
               weekSummary.wrongRate <= 30 ? 'text-emerald-600' :
@@ -78,14 +78,14 @@ export default function DashboardAnalytics() {
           <div className="bg-white rounded-sm p-3 border border-slate-100 shadow-sm">
             <div className="flex items-center gap-1.5 mb-1">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-              <span className="text-[11px] font-semibold text-text-secondary">완료된 시험</span>
+              <span className="text-xs font-semibold text-text-secondary">완료된 시험</span>
             </div>
             <p className="text-xl font-black text-text-primary">{weekSummary.completedAttempts}<span className="text-sm text-slate-400 font-bold ml-0.5">건</span></p>
           </div>
         </div>
 
         {/* Weekly wrong rate chart */}
-        <Card variant="glass" padding="md">
+        <Card variant="default" padding="md">
           <h3 className="text-text-primary text-base font-bold mb-1">주간 오답률 추이</h3>
           <p className="text-xs text-text-secondary mb-3">최근 4주간 오답 비율 변화</p>
           <WeeklyTrendChart
@@ -107,19 +107,19 @@ export default function DashboardAnalytics() {
           <div className="grid grid-cols-2 gap-2 mb-3">
             <div className="bg-blue-50 rounded-sm p-2.5 text-center">
               <p className="text-lg font-black text-blue-600">{assignmentStats.assigned}</p>
-              <p className="text-[10px] text-text-secondary font-medium">배정됨</p>
+              <p className="text-xs text-text-secondary font-medium">배정됨</p>
             </div>
             <div className="bg-amber-50 rounded-sm p-2.5 text-center">
               <p className="text-lg font-black text-amber-600">{assignmentStats.inProgress}</p>
-              <p className="text-[10px] text-text-secondary font-medium">진행 중</p>
+              <p className="text-xs text-text-secondary font-medium">진행 중</p>
             </div>
             <div className="bg-emerald-50 rounded-sm p-2.5 text-center">
               <p className="text-lg font-black text-emerald-600">{assignmentStats.completed}</p>
-              <p className="text-[10px] text-text-secondary font-medium">완료</p>
+              <p className="text-xs text-text-secondary font-medium">완료</p>
             </div>
             <div className="bg-red-50 rounded-sm p-2.5 text-center">
               <p className="text-lg font-black text-red-600">{assignmentStats.overdue}</p>
-              <p className="text-[10px] text-text-secondary font-medium">기한 초과</p>
+              <p className="text-xs text-text-secondary font-medium">기한 초과</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -131,7 +131,7 @@ export default function DashboardAnalytics() {
             </div>
             <span className="text-xs font-bold text-text-primary">{assignmentStats.completionRate}%</span>
           </div>
-          <p className="text-[10px] text-text-secondary mt-1">전체 수행률</p>
+          <p className="text-xs text-text-secondary mt-1">전체 수행률</p>
         </Card>
 
         {/* Chapter achievement */}
@@ -145,7 +145,7 @@ export default function DashboardAnalytics() {
             ) : (
               chapterAchievement.map((ch) => (
                 <div key={ch.chapter} className="flex items-center gap-2">
-                  <span className="text-[11px] text-text-secondary w-20 truncate shrink-0" title={ch.chapter}>
+                  <span className="text-xs text-text-secondary w-20 truncate shrink-0" title={ch.chapter}>
                     {ch.chapter.length > 8 ? ch.chapter.slice(0, 8) + '…' : ch.chapter}
                   </span>
                   <div className="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
@@ -160,7 +160,7 @@ export default function DashboardAnalytics() {
                       <span className="text-[9px] font-bold text-white">{ch.rate}%</span>
                     </div>
                   </div>
-                  <span className="text-[10px] text-text-secondary w-10 text-right shrink-0">
+                  <span className="text-xs text-text-secondary w-10 text-right shrink-0">
                     {ch.total}문제
                   </span>
                 </div>

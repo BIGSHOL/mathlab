@@ -102,7 +102,7 @@ export function TabAddQuestions({
           <select
             value={bookCode}
             onChange={(e) => setBookCode(e.target.value)}
-            className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm bg-white"
+            className="px-3 py-1.5 border border-slate-200 rounded-sm text-sm bg-white"
           >
             {bookCodes.map((c) => (
               <option key={c} value={c}>{BOOK_LABELS[c]}</option>
@@ -111,7 +111,7 @@ export function TabAddQuestions({
           <select
             value={difficulty}
             onChange={(e) => setDifficulty(e.target.value)}
-            className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm bg-white"
+            className="px-3 py-1.5 border border-slate-200 rounded-sm text-sm bg-white"
           >
             <option value="">난이도 전체</option>
             {(['BASIC', 'MEDIUM', 'HIGH', 'HIGHEST'] as const).map((d) => (
@@ -128,7 +128,7 @@ export function TabAddQuestions({
               onChange={(e) => setSearchText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               placeholder="단원명 또는 내용 검색..."
-              className="w-full pl-9 pr-3 py-1.5 border border-slate-200 rounded-lg text-sm"
+              className="w-full pl-9 pr-3 py-1.5 border border-slate-200 rounded-sm text-sm"
             />
           </div>
           <Button size="sm" onClick={handleSearch} loading={loading}>
@@ -166,7 +166,7 @@ export function TabAddQuestions({
                 if (isSelected) onRemove(q.id);
                 else onAdd(q as EditorQuestion);
               } : undefined}
-              className={`p-3 rounded-lg border transition-all ${
+              className={`p-3 rounded-sm border transition-all ${
                 !showDomain ? 'cursor-pointer' : ''
               } ${
                 isSelected
@@ -182,8 +182,8 @@ export function TabAddQuestions({
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-1">
-                    <span className="text-[11px] text-slate-500 truncate">[{q.chapter}]</span>
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                    <span className="text-xs text-slate-500 truncate">[{q.chapter}]</span>
+                    <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${
                       q.difficulty === 'BASIC' ? 'bg-emerald-100 text-emerald-700' :
                       q.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
                       q.difficulty === 'HIGH' ? 'bg-red-100 text-red-700' :
@@ -191,7 +191,7 @@ export function TabAddQuestions({
                     }`}>
                       {DIFFICULTY_LABELS[q.difficulty]}
                     </span>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">
+                    <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600">
                       {TYPE_LABELS[q.type]}
                     </span>
                   </div>

@@ -72,13 +72,13 @@ export function UpdateBanner() {
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[9990] max-w-sm w-[calc(100%-2rem)]"
         >
-          <div className="bg-white border border-slate-200 rounded-xl shadow-lg shadow-slate-200/60 overflow-hidden">
+          <div className="bg-white border border-slate-200 rounded-sm shadow-lg shadow-slate-200/60 overflow-hidden">
             <div className="h-1 bg-gradient-to-r from-primary to-blue-400" />
 
             <div className="px-4 py-3">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-sm bg-primary/10 flex items-center justify-center">
                     <ClipboardList className="w-4 h-4 text-primary" />
                   </div>
                   <span className="text-sm font-bold text-slate-800">선생님이 새 과제를 배정했어요</span>
@@ -110,7 +110,7 @@ export function UpdateBanner() {
                 </button>
                 <button
                   onClick={handleRefresh}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-primary hover:bg-primary-hover rounded-sm transition-colors"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   새로고침

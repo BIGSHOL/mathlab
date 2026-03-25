@@ -97,14 +97,14 @@ export function AnswerRow({
       {/* 자동 채점 결과 배지 */}
       {hasAnswer ? (
         <span
-          className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold ${
+          className={`shrink-0 px-1.5 py-0.5 rounded text-xs font-bold ${
             isCorrect ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
           }`}
         >
           {isCorrect ? '✓정' : '✗오'}
         </span>
       ) : (
-        <span className="shrink-0 w-8 text-center text-[10px] text-slate-300">—</span>
+        <span className="shrink-0 w-8 text-center text-xs text-slate-300">—</span>
       )}
 
       {/* O/X 오버라이드 */}

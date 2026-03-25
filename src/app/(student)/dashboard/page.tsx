@@ -242,7 +242,7 @@ export default async function StudentDashboard({
       {/* ──── 섹션 1: 숙제 배너 + 환영 ──── */}
       {pendingHomework.length > 0 && (
         <Link href="/practice/arithmetic/homework" className="block mb-4">
-          <div className="bg-gradient-to-r from-indigo-500 to-violet-500 rounded-xl p-4 text-white hover:from-indigo-600 hover:to-violet-600 transition-colors">
+          <div className="bg-gradient-to-r from-indigo-500 to-violet-500 rounded-sm p-4 text-white hover:from-indigo-600 hover:to-violet-600 transition-colors">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <CalendarCheck className="w-8 h-8 opacity-90" />
@@ -253,7 +253,7 @@ export default async function StudentDashboard({
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 bg-white/20 rounded-lg px-4 py-2">
+              <div className="flex items-center gap-2 bg-white/20 rounded-sm px-4 py-2">
                 <Play className="w-4 h-4" />
                 <span className="font-bold text-sm">풀기</span>
                 <ArrowRight className="w-4 h-4" />
@@ -270,7 +270,7 @@ export default async function StudentDashboard({
             const firstConcept = pending[0];
             return (
               <Link key={hw.planId} href={firstConcept ? `/concepts/${firstConcept.id}` : '/subjects'} className="block mb-2 last:mb-0">
-                <div className="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl p-4 text-white hover:from-emerald-600 hover:to-teal-600 transition-colors">
+                <div className="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-sm p-4 text-white hover:from-emerald-600 hover:to-teal-600 transition-colors">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <BookOpen className="w-8 h-8 opacity-90" />
@@ -307,7 +307,7 @@ export default async function StudentDashboard({
         <div className="mb-4">
           {pendingQuestionHw.map((hw) => (
             <Link key={hw.planId} href="/practice/question-homework" className="block mb-2 last:mb-0">
-              <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl p-4 text-white hover:from-amber-600 hover:to-orange-600 transition-colors">
+              <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-sm p-4 text-white hover:from-amber-600 hover:to-orange-600 transition-colors">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <FileQuestion className="w-8 h-8 opacity-90" />
@@ -318,7 +318,7 @@ export default async function StudentDashboard({
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 bg-white/20 rounded-lg px-4 py-2">
+                  <div className="flex items-center gap-2 bg-white/20 rounded-sm px-4 py-2">
                     <Play className="w-4 h-4" />
                     <span className="font-bold text-sm">풀기</span>
                     <ArrowRight className="w-4 h-4" />
@@ -358,7 +358,7 @@ export default async function StudentDashboard({
       {/* ──── 현재 학습 과정 배너 ──── */}
       {hasEnrollments && activeEnrollment && (
         <Link href="/subjects" className="block mb-6">
-          <div className="bg-gradient-to-r from-primary to-blue-600 rounded-xl p-4 text-white hover:from-blue-700 hover:to-blue-800 transition-colors">
+          <div className="bg-gradient-to-r from-primary to-blue-600 rounded-sm p-4 text-white hover:from-blue-700 hover:to-blue-800 transition-colors">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <GraduationCap className="w-8 h-8 opacity-90" />
@@ -382,7 +382,7 @@ export default async function StudentDashboard({
       )}
 
       {hasEnrollments && !activeEnrollment && (
-        <div className="mb-6 bg-slate-50 rounded-xl p-4 border border-slate-200 text-center">
+        <div className="mb-6 bg-slate-50 rounded-sm p-4 border border-slate-200 text-center">
           <GraduationCap className="w-8 h-8 text-slate-400 mx-auto mb-2" />
           <p className="text-text-secondary text-sm">
             {completedCourseCount > 0 ? '모든 배정 과정을 완료했습니다!' : '배정된 학습 과정이 없습니다'}
@@ -438,7 +438,7 @@ export default async function StudentDashboard({
       {/* ──── Row 1: 진행 중인 학습 (2/3) + 추천 학습 + 오늘의 미션 (1/3) ──── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
         <div className="lg:col-span-2">
-          <Card padding="md" className="h-full rounded-xl">
+          <Card padding="md" className="h-full rounded-sm">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold text-text-primary">진행 중인 학습</h2>
               <Link href="/subjects" className="text-primary text-sm font-medium hover:underline flex items-center gap-1">
@@ -452,8 +452,8 @@ export default async function StudentDashboard({
                   const stage = item.progress?.stage;
                   const stageLabel = stage ? (stageLabels[stage] ?? stage) : '미시작';
                   return (
-                    <div key={item.conceptId} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-blue-200 transition-colors group">
-                      <div className="flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center bg-blue-100 text-blue-600">
+                    <div key={item.conceptId} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3.5 rounded-sm bg-slate-50 border border-slate-100 hover:border-blue-200 transition-colors group">
+                      <div className="flex-shrink-0 h-10 w-10 rounded-sm flex items-center justify-center bg-blue-100 text-blue-600">
                         <BookOpen className="w-5 h-5" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -490,8 +490,8 @@ export default async function StudentDashboard({
                 uniqueRecentProgress.map((p) => {
                   const isCompleted = completedConceptIds.has(p.conceptId);
                   return (
-                    <div key={p.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-blue-200 transition-colors group">
-                      <div className={`flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center ${isCompleted ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'}`}>
+                    <div key={p.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3.5 rounded-sm bg-slate-50 border border-slate-100 hover:border-blue-200 transition-colors group">
+                      <div className={`flex-shrink-0 h-10 w-10 rounded-sm flex items-center justify-center ${isCompleted ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'}`}>
                         {isCompleted ? <CheckCircle className="w-5 h-5" /> : <BookOpen className="w-5 h-5" />}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -514,7 +514,7 @@ export default async function StudentDashboard({
         </div>
         <div className="flex flex-col gap-4">
           {/* 추천 학습 */}
-          <Card padding="base" className="rounded-xl">
+          <Card padding="base" className="rounded-sm">
             <div className="flex items-center gap-2 mb-3">
               <Sparkles className="w-4 h-4 text-primary" />
               <h2 className="text-sm font-bold text-text-primary">추천 학습</h2>
@@ -530,9 +530,9 @@ export default async function StudentDashboard({
                   <Link
                     key={c.id}
                     href={`/concepts/${c.conceptCode ?? c.id}`}
-                    className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-primary/30 hover:bg-primary/5 transition-all group"
+                    className="flex items-center gap-2.5 p-2.5 rounded-sm bg-slate-50 border border-slate-100 hover:border-primary/30 hover:bg-primary/5 transition-all group"
                   >
-                    <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
+                    <div className="flex-shrink-0 w-7 h-7 rounded-sm bg-blue-100 text-blue-600 flex items-center justify-center">
                       <BookOpen className="w-3.5 h-3.5" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -555,7 +555,7 @@ export default async function StudentDashboard({
       {/* ──── Row 2: 최근 오답 + 주간 학습 (2열) ──── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         {/* 최근 오답 */}
-        <Card padding="base" className="rounded-xl">
+        <Card padding="base" className="rounded-sm">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <XCircle className="w-4 h-4 text-red-400" />
@@ -581,7 +581,7 @@ export default async function StudentDashboard({
                 const myAns = ans.selectedAnswer?.replace(/\$[^$]*\$/g, '').trim().slice(0, 8) || '?';
                 const correctAns = q.answer?.replace(/\$[^$]*\$/g, '').trim().slice(0, 8) || '-';
                 return (
-                  <div key={ans.id} className="flex items-center gap-2 p-2.5 rounded-xl bg-red-50/50 border border-red-100">
+                  <div key={ans.id} className="flex items-center gap-2 p-2.5 rounded-sm bg-red-50/50 border border-red-100">
                     <XCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-text-primary truncate">{preview}</p>
@@ -599,7 +599,7 @@ export default async function StudentDashboard({
         </Card>
 
         {/* 주간 학습 차트 */}
-        <Card padding="base" className="rounded-xl flex flex-col">
+        <Card padding="base" className="rounded-sm flex flex-col">
           <div className="flex items-center gap-2 mb-3">
             <BarChart3 className="w-4 h-4 text-primary" />
             <h2 className="text-sm font-bold text-text-primary">주간 학습량</h2>
@@ -655,7 +655,7 @@ export default async function StudentDashboard({
       </div>
 
       {/* ──── Row 3: 랭킹 (전체 너비) ──── */}
-      <Card padding="md" className="rounded-xl">
+      <Card padding="md" className="rounded-sm">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Trophy className="w-4 h-4 text-amber-500" />
@@ -675,7 +675,7 @@ export default async function StudentDashboard({
               return (
                 <div
                   key={s.id}
-                  className={`flex-1 min-w-[140px] flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
+                  className={`flex-1 min-w-[140px] flex items-center gap-3 px-4 py-2.5 rounded-sm transition-all ${
                     isMe
                       ? 'bg-primary text-white shadow-lg shadow-primary/20'
                       : 'bg-slate-50 border border-slate-200'

@@ -89,14 +89,14 @@ export function Sidebar() {
   const renderSectionLabel = (label: string) => {
     if (collapsed) return <div className="my-3 border-t border-slate-100" />;
     return (
-      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 px-2 mt-5">
+      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5 px-2 mt-5">
         {label}
       </p>
     );
   };
 
   return (
-    <aside className={`flex flex-col bg-white border-r border-slate-200 shrink-0 overflow-hidden transition-all duration-200 print:hidden ${collapsed ? 'w-14' : 'w-48'}`}>
+    <aside className={`hidden md:flex flex-col bg-white border-r border-slate-200 shrink-0 overflow-hidden transition-all duration-200 print:hidden ${collapsed ? 'w-14' : 'w-48'}`}>
       {/* Logo */}
       <div className={`shrink-0 border-b border-slate-100 flex items-center ${collapsed ? 'justify-center px-1 py-3' : 'justify-between px-3 py-3'}`}>
         {collapsed ? (
@@ -133,11 +133,11 @@ export function Sidebar() {
         <div className="mx-3 mt-3 px-2.5 py-2 rounded-sm bg-amber-50 border border-amber-300">
           <div className="flex items-center gap-1.5 mb-1.5">
             <Building2 className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-            <span className="text-[11px] font-bold text-amber-700 truncate">{viewingTenantName}</span>
+            <span className="text-xs font-bold text-amber-700 truncate">{viewingTenantName}</span>
           </div>
           <button
             onClick={() => { exitTenantView(); window.location.href = '/admin/tenants'; }}
-            className="w-full text-[10px] font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded px-2 py-1 transition-colors"
+            className="w-full text-xs font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded px-2 py-1 transition-colors"
           >
             SA 뷰로 돌아가기
           </button>
@@ -157,7 +157,7 @@ export function Sidebar() {
       {!isViewingAsTenant && hasMinRole(role, 'MANAGER') && !collapsed && (
         <div className="mx-3 mt-3 flex items-center gap-2 px-2.5 py-1.5 rounded-sm bg-violet-50 border border-violet-200">
           <Shield className="w-3.5 h-3.5 text-violet-600 shrink-0" />
-          <span className="text-[11px] font-bold text-violet-700">관리자 모드</span>
+          <span className="text-xs font-bold text-violet-700">관리자 모드</span>
         </div>
       )}
       {!isViewingAsTenant && hasMinRole(role, 'MANAGER') && collapsed && (
@@ -177,7 +177,7 @@ export function Sidebar() {
           {!collapsed && (
             <>
               <span className="flex-1 text-left">검색...</span>
-              <kbd className="px-1 py-0.5 rounded bg-white border border-slate-200 text-[10px] font-mono text-slate-400">⌘K</kbd>
+              <kbd className="px-1 py-0.5 rounded bg-white border border-slate-200 text-xs font-mono text-slate-400">⌘K</kbd>
             </>
           )}
         </button>
@@ -192,7 +192,7 @@ export function Sidebar() {
                 collapsed ? (
                   <div className="my-3 border-t-2 border-violet-200" />
                 ) : (
-                  <p className="text-[10px] font-bold text-violet-500 uppercase tracking-widest mb-1.5 px-2 mt-5 flex items-center gap-1">
+                  <p className="text-xs font-bold text-violet-500 uppercase tracking-widest mb-1.5 px-2 mt-5 flex items-center gap-1">
                     <Shield className="w-3 h-3" />
                     {group.label}
                   </p>
@@ -227,7 +227,7 @@ export function Sidebar() {
             <UserAvatar name={user?.name ?? '사용자'} size="xs" />
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-text-primary truncate">{user?.name ?? '사용자'}</p>
-              <p className="text-[10px] text-text-secondary truncate">{ROLE_LABELS[role] ?? '선생님'}</p>
+              <p className="text-xs text-text-secondary truncate">{ROLE_LABELS[role] ?? '선생님'}</p>
             </div>
             <div className="flex items-center gap-0.5 shrink-0">
               <button className="p-1 rounded text-slate-300 cursor-not-allowed opacity-50" title="알림 — 준비 중">

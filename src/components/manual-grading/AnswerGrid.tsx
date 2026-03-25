@@ -183,21 +183,21 @@ export function AnswerGrid({ onComplete }: AnswerGridProps) {
             <button
               onClick={() => handleBulkAction('all_correct')}
               disabled={completed}
-              className="flex items-center gap-1 px-2 py-1 rounded-sm text-[10px] font-semibold bg-emerald-50 text-emerald-600 hover:bg-emerald-100 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1 px-2 py-1 rounded-sm text-xs font-semibold bg-emerald-50 text-emerald-600 hover:bg-emerald-100 disabled:opacity-50 transition-colors"
             >
               <CheckCircle2 className="w-3 h-3" /> 전체 정답
             </button>
             <button
               onClick={() => handleBulkAction('all_wrong')}
               disabled={completed}
-              className="flex items-center gap-1 px-2 py-1 rounded-sm text-[10px] font-semibold bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1 px-2 py-1 rounded-sm text-xs font-semibold bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50 transition-colors"
             >
               <XCircle className="w-3 h-3" /> 전체 오답
             </button>
             <button
               onClick={() => handleBulkAction('all_clear')}
               disabled={completed}
-              className="flex items-center gap-1 px-2 py-1 rounded-sm text-[10px] font-semibold bg-slate-100 text-slate-500 hover:bg-slate-200 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1 px-2 py-1 rounded-sm text-xs font-semibold bg-slate-100 text-slate-500 hover:bg-slate-200 disabled:opacity-50 transition-colors"
             >
               <RotateCcw className="w-3 h-3" /> 전체 취소
             </button>
@@ -206,7 +206,7 @@ export function AnswerGrid({ onComplete }: AnswerGridProps) {
 
             {/* 풀이시간 */}
             <div className="flex items-center gap-1.5">
-              <label className="text-[10px] text-slate-500 font-medium">풀이시간</label>
+              <label className="text-xs text-slate-500 font-medium">풀이시간</label>
               <input
                 type="number"
                 min={0}
@@ -215,7 +215,7 @@ export function AnswerGrid({ onComplete }: AnswerGridProps) {
                 disabled={completed}
                 className="w-14 px-1.5 py-1 text-xs text-center border border-slate-200 rounded-sm bg-white disabled:opacity-50"
               />
-              <span className="text-[10px] text-slate-400">분</span>
+              <span className="text-xs text-slate-400">분</span>
             </div>
 
             <div className="w-px h-4 bg-slate-200" />

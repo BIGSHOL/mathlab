@@ -177,7 +177,7 @@ export default function QuestionHomeworkTab() {
             <div className="flex items-center gap-2 min-w-0">
               <FileQuestion className="w-4 h-4 text-primary shrink-0" />
               <span className="font-semibold text-sm text-text-primary truncate">문제 숙제</span>
-              <span className="ml-auto px-1.5 py-0.5 rounded-sm text-[10px] font-bold bg-primary/10 text-primary shrink-0">{filteredPlans.length}</span>
+              <span className="ml-auto px-1.5 py-0.5 rounded-sm text-xs font-bold bg-primary/10 text-primary shrink-0">{filteredPlans.length}</span>
             </div>
           )}
           <button onClick={() => setLeftCollapsed(!leftCollapsed)} className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-600 shrink-0">
@@ -208,12 +208,12 @@ export default function QuestionHomeworkTab() {
                   {filteredPlans.map((plan) => (
                     <button key={plan.id} onClick={() => setSelectedSeq(plan.seq)} className={`w-full text-left px-3 py-2.5 transition-colors hover:bg-slate-100 ${selectedSeq === plan.seq ? 'bg-primary/5 border-l-2 border-l-primary' : 'border-l-2 border-l-transparent'}`}>
                       <div className="flex items-center gap-1.5 mb-1">
-                        {plan.isActive ? <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-700">활성</span> : <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-500">종료</span>}
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-100 text-orange-700">{plan.totalQuestions}문제</span>
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600">통과 {plan.passingScore}%</span>
+                        {plan.isActive ? <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-700">활성</span> : <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-500">종료</span>}
+                        <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-orange-100 text-orange-700">{plan.totalQuestions}문제</span>
+                        <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-600">통과 {plan.passingScore}%</span>
                       </div>
                       <p className="text-sm font-medium text-text-primary truncate">{plan.title}</p>
-                      <div className="flex items-center gap-1 mt-1 text-[10px] text-text-secondary">
+                      <div className="flex items-center gap-1 mt-1 text-xs text-text-secondary">
                         <Users className="w-3 h-3 shrink-0" /><span>{plan.studentCount}명</span>
                         <span className="text-slate-300">·</span><span>{plan.progress}</span>
                         <span className="text-slate-300">·</span><Calendar className="w-3 h-3 shrink-0" />
@@ -242,7 +242,7 @@ export default function QuestionHomeworkTab() {
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 mb-1">
-                    {selectedPlan.isActive ? <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-700">활성</span> : <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-500">종료</span>}
+                    {selectedPlan.isActive ? <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-700">활성</span> : <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-500">종료</span>}
                   </div>
                   <h2 className="text-lg font-bold text-text-primary">{selectedPlan.title}</h2>
                 </div>
@@ -261,10 +261,10 @@ export default function QuestionHomeworkTab() {
 
               <div className="border border-slate-200 rounded-sm">
                 <div className="grid grid-cols-2 gap-px bg-slate-200">
-                  <div className="bg-white px-3 py-2"><div className="text-[10px] text-text-secondary mb-0.5">기간</div><div className="text-xs font-semibold text-text-primary">{formatDate(selectedPlan.startDate)} ~ {formatDate(getEndDate(selectedPlan).toISOString())} ({selectedPlan.totalDays}일)</div></div>
-                  <div className="bg-white px-3 py-2"><div className="text-[10px] text-text-secondary mb-0.5">문제 수</div><div className="text-xs font-semibold text-text-primary">{selectedPlan.totalQuestions}문제</div></div>
-                  <div className="bg-white px-3 py-2"><div className="text-[10px] text-text-secondary mb-0.5">통과 기준</div><div className="text-xs font-semibold text-text-primary">{selectedPlan.passingScore}%</div></div>
-                  <div className="bg-white px-3 py-2"><div className="text-[10px] text-text-secondary mb-0.5">진행도</div><div className="text-xs font-semibold text-text-primary">{selectedPlan.progress}</div></div>
+                  <div className="bg-white px-3 py-2"><div className="text-xs text-text-secondary mb-0.5">기간</div><div className="text-xs font-semibold text-text-primary">{formatDate(selectedPlan.startDate)} ~ {formatDate(getEndDate(selectedPlan).toISOString())} ({selectedPlan.totalDays}일)</div></div>
+                  <div className="bg-white px-3 py-2"><div className="text-xs text-text-secondary mb-0.5">문제 수</div><div className="text-xs font-semibold text-text-primary">{selectedPlan.totalQuestions}문제</div></div>
+                  <div className="bg-white px-3 py-2"><div className="text-xs text-text-secondary mb-0.5">통과 기준</div><div className="text-xs font-semibold text-text-primary">{selectedPlan.passingScore}%</div></div>
+                  <div className="bg-white px-3 py-2"><div className="text-xs text-text-secondary mb-0.5">진행도</div><div className="text-xs font-semibold text-text-primary">{selectedPlan.progress}</div></div>
                 </div>
               </div>
 
@@ -274,7 +274,7 @@ export default function QuestionHomeworkTab() {
                   <div className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-primary" />
                     <span className="text-sm font-semibold text-text-primary">배정 학생</span>
-                    <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-bold bg-primary/10 text-primary">{selectedPlan.studentCount}명</span>
+                    <span className="px-1.5 py-0.5 rounded-sm text-xs font-bold bg-primary/10 text-primary">{selectedPlan.studentCount}명</span>
                   </div>
                   <button onClick={handleOpenStudentManager} className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/5 rounded-sm">
                     <UserPlus className="w-3.5 h-3.5" />관리
@@ -287,7 +287,7 @@ export default function QuestionHomeworkTab() {
                     <div className="flex flex-wrap gap-1.5">
                       {enrolledStudents.map((s) => (
                         <span key={s.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs bg-slate-100 text-text-primary">
-                          {s.name}{s.grade && <span className="text-[10px] text-text-secondary">{s.grade > 6 ? `중${s.grade - 6}` : `초${s.grade}`}</span>}
+                          {s.name}{s.grade && <span className="text-xs text-text-secondary">{s.grade > 6 ? `중${s.grade - 6}` : `초${s.grade}`}</span>}
                         </span>
                       ))}
                     </div>
@@ -307,8 +307,8 @@ export default function QuestionHomeworkTab() {
                             const state = getStudentState(s.id);
                             return (
                               <button key={s.id} onClick={() => toggleStudent(s.id)} className={`w-full flex items-center justify-between px-3 py-1.5 text-xs hover:bg-slate-50 ${state === 'enrolled' ? 'bg-primary/5' : state === 'adding' ? 'bg-emerald-50' : state === 'removing' ? 'bg-red-50' : ''}`}>
-                                <div className="flex items-center gap-2"><span className="font-medium text-text-primary">{s.name}</span>{s.grade && <span className="text-[10px] text-text-secondary">{s.grade > 6 ? `중${s.grade - 6}` : `초${s.grade}`}</span>}</div>
-                                <span className={`text-[10px] font-medium ${state === 'enrolled' ? 'text-primary' : state === 'adding' ? 'text-emerald-600' : state === 'removing' ? 'text-red-500' : 'text-slate-400'}`}>
+                                <div className="flex items-center gap-2"><span className="font-medium text-text-primary">{s.name}</span>{s.grade && <span className="text-xs text-text-secondary">{s.grade > 6 ? `중${s.grade - 6}` : `초${s.grade}`}</span>}</div>
+                                <span className={`text-xs font-medium ${state === 'enrolled' ? 'text-primary' : state === 'adding' ? 'text-emerald-600' : state === 'removing' ? 'text-red-500' : 'text-slate-400'}`}>
                                   {state === 'enrolled' && '배정중'}{state === 'adding' && '+ 추가'}{state === 'removing' && '- 제거'}{state === 'none' && '미배정'}
                                 </span>
                               </button>
@@ -317,7 +317,7 @@ export default function QuestionHomeworkTab() {
                         </div>
                       )}
                       <div className="flex items-center justify-between">
-                        <div className="text-[10px] text-text-secondary">
+                        <div className="text-xs text-text-secondary">
                           {hasChanges && <>{pendingAdd.size > 0 && <span className="text-emerald-600">+{pendingAdd.size}명</span>}{pendingAdd.size > 0 && pendingRemove.size > 0 && <span className="mx-1">·</span>}{pendingRemove.size > 0 && <span className="text-red-500">-{pendingRemove.size}명</span>}</>}
                         </div>
                         <div className="flex gap-1.5">

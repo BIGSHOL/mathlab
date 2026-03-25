@@ -81,7 +81,7 @@ export function ShapeStyleFields({ params, onChange }: SubFormProps) {
 
   return (
     <div className="space-y-2 border-t border-slate-100 pt-2 mt-2">
-      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">스타일</span>
+      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">스타일</span>
       {/* 선 색상 */}
       <div>
         <label className="text-xs text-slate-500">선 색상</label>

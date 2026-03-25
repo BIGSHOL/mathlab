@@ -145,7 +145,7 @@ export function CurriculumCheckTree({ chapterCounts }: CurriculumCheckTreeProps)
               </button>
               <span className="text-sm font-semibold text-text-primary">{bookLabel}</span>
               {allKeys.length > 0 && (
-                <span className="text-[10px] text-slate-400">({checkedCount}/{allKeys.length})</span>
+                <span className="text-xs text-slate-400">({checkedCount}/{allKeys.length})</span>
               )}
             </button>
 
@@ -169,7 +169,7 @@ export function CurriculumCheckTree({ chapterCounts }: CurriculumCheckTreeProps)
                     )}
                     <span className="text-sm text-text-secondary flex-1 truncate">{ch.name}</span>
                     {count > 0 && (
-                      <span className="text-[10px] text-slate-400 shrink-0">{count}문제</span>
+                      <span className="text-xs text-slate-400 shrink-0">{count}문제</span>
                     )}
                   </div>
                 );

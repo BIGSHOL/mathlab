@@ -274,9 +274,9 @@ export default function HomeworkGridPage() {
       <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 py-6 md:py-8">
         <div className="flex items-center justify-between mb-4">
           <Skeleton className="h-6 w-48" />
-          <Skeleton className="h-8 w-24 rounded-lg" />
+          <Skeleton className="h-8 w-24 rounded-sm" />
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+        <div className="bg-white border border-slate-200 rounded-sm overflow-hidden">
           <div className="flex items-center gap-2 p-3 border-b border-slate-200">
             {Array.from({ length: 5 }, (_, i) => <Skeleton key={i} className="h-4 flex-1" />)}
           </div>
@@ -709,7 +709,7 @@ export default function HomeworkGridPage() {
               <div className="p-4 space-y-3">
                 <Skeleton className="h-5 w-32" />
                 {Array.from({ length: 4 }, (_, i) => (
-                  <div key={i} className="flex items-start gap-3 p-3 rounded-lg border border-slate-100">
+                  <div key={i} className="flex items-start gap-3 p-3 rounded-sm border border-slate-100">
                     <Skeleton className="w-6 h-6 rounded-full shrink-0" />
                     <div className="flex-1 space-y-1.5">
                       <Skeleton className="h-4 w-full" />

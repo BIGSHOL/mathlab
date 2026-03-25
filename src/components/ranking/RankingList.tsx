@@ -27,7 +27,7 @@ export function RankingList({ rankings, startRank, loading, category = 'xp' }: R
     return (
       <div className="flex flex-col gap-2">
         {Array.from({ length: 8 }, (_, i) => (
-          <div key={i} className="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-xl">
+          <div key={i} className="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-sm">
             <Skeleton className="w-8 h-6 rounded" />
             <Skeleton className="w-8 h-4 rounded" />
             <Skeleton variant="circle" className="w-10 h-10" />
@@ -44,7 +44,7 @@ export function RankingList({ rankings, startRank, loading, category = 'xp' }: R
 
   if (rankings.length === 0) {
     return (
-      <Card className="p-12 text-center rounded-xl">
+      <Card className="p-12 text-center rounded-sm">
         <p className="text-text-secondary">표시할 순위 데이터가 없습니다.</p>
       </Card>
     );
@@ -62,7 +62,7 @@ export function RankingList({ rankings, startRank, loading, category = 'xp' }: R
           return (
             <MotionItem key={student.userId}>
               <div
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-sm border-2 transition-all ${
                   student.isMe
                     ? 'bg-primary/5 border-primary/30 animate-pulse-border'
                     : 'bg-white border-slate-100 hover:border-slate-200 hover:shadow-sm'
@@ -91,14 +91,14 @@ export function RankingList({ rankings, startRank, loading, category = 'xp' }: R
                     {student.currentStreak >= 3 && (
                       <div className="flex items-center gap-0.5">
                         <Flame className="w-3 h-3 text-orange-500" />
-                        <span className="text-[10px] font-bold text-orange-500">{student.currentStreak}일</span>
+                        <span className="text-xs font-bold text-orange-500">{student.currentStreak}일</span>
                       </div>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-text-secondary">Lv.{student.level}</span>
                     {student.weeklyXp > 0 && (
-                      <span className="text-[10px] font-semibold text-emerald-600">+{student.weeklyXp} XP</span>
+                      <span className="text-xs font-semibold text-emerald-600">+{student.weeklyXp} XP</span>
                     )}
                   </div>
                 </div>

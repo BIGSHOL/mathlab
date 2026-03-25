@@ -191,11 +191,11 @@ export default function RevengePage() {
                   >
                     <button
                       onClick={() => { setSelected(s); setCurrentIdx(0); setAnswers([]); setFeedback(null); setSelectedChoice(null); setFinished(false); setResult(null); }}
-                      className="w-full text-left bg-slate-800/80 border border-slate-700 rounded-xl p-4 hover:border-red-500/50 hover:bg-slate-800 transition-all group"
+                      className="w-full text-left bg-slate-800/80 border border-slate-700 rounded-sm p-4 hover:border-red-500/50 hover:bg-slate-800 transition-all group"
                     >
                       <div className="flex items-center gap-4">
                         {/* 난이도 뱃지 */}
-                        <div className={`flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br ${diff.color} flex items-center justify-center shadow-lg`}>
+                        <div className={`flex-shrink-0 w-12 h-12 rounded-sm bg-gradient-to-br ${diff.color} flex items-center justify-center shadow-lg`}>
                           <Target className="w-6 h-6 text-white" />
                         </div>
 
@@ -304,17 +304,17 @@ export default function RevengePage() {
                 transition={{ delay: 0.7 }}
                 className="grid grid-cols-3 gap-3 mb-6 mt-4"
               >
-                <div className="bg-slate-800/80 border border-slate-700 rounded-xl p-4">
+                <div className="bg-slate-800/80 border border-slate-700 rounded-sm p-4">
                   <p className={`text-3xl font-black ${isVictory ? 'text-emerald-400' : 'text-red-400'}`}>
                     {result?.correctCount ?? 0}
                   </p>
                   <p className="text-xs text-slate-500 mt-1">정답</p>
                 </div>
-                <div className="bg-slate-800/80 border border-slate-700 rounded-xl p-4">
+                <div className="bg-slate-800/80 border border-slate-700 rounded-sm p-4">
                   <p className="text-3xl font-black text-slate-300">{result?.totalCount ?? 0}</p>
                   <p className="text-xs text-slate-500 mt-1">총 문제</p>
                 </div>
-                <div className="bg-slate-800/80 border border-slate-700 rounded-xl p-4">
+                <div className="bg-slate-800/80 border border-slate-700 rounded-sm p-4">
                   <p className={`text-3xl font-black ${accuracy >= 80 ? 'text-emerald-400' : accuracy >= 50 ? 'text-amber-400' : 'text-red-400'}`}>
                     {accuracy}%
                   </p>
@@ -332,7 +332,7 @@ export default function RevengePage() {
                 {answers.map((a, i) => (
                   <div
                     key={i}
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
+                    className={`w-8 h-8 rounded-sm flex items-center justify-center text-xs font-bold ${
                       a.isCorrect ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
                     }`}
                   >
@@ -368,7 +368,7 @@ export default function RevengePage() {
                             const q = selected.questions.find((q) => q.id === a.questionId);
                             if (!q) return null;
                             return (
-                              <div key={i} className="bg-slate-800/80 border border-red-500/20 rounded-xl p-4">
+                              <div key={i} className="bg-slate-800/80 border border-red-500/20 rounded-sm p-4">
                                 <div className="text-sm text-white mb-2">
                                   <MathRenderer content={q.content} className="prose-invert" />
                                 </div>
@@ -382,7 +382,7 @@ export default function RevengePage() {
                                     <span className="text-emerald-400">정답: <MathRenderer content={q.answer} className="prose-invert" /></span>
                                   </div>
                                   {q.explanation && (
-                                    <div className="mt-2 text-xs text-slate-400 bg-slate-900/50 rounded-lg p-3">
+                                    <div className="mt-2 text-xs text-slate-400 bg-slate-900/50 rounded-sm p-3">
                                       <MathRenderer content={q.explanation} className="prose-invert" />
                                     </div>
                                   )}
@@ -522,7 +522,7 @@ export default function RevengePage() {
                       whileTap={!showResult ? { scale: 0.98 } : undefined}
                       disabled={feedback !== null}
                       onClick={() => handleAnswer(choiceNum)}
-                      className={`w-full text-left px-5 py-4 rounded-xl border-2 text-sm font-medium transition-all flex items-center gap-3 ${
+                      className={`w-full text-left px-5 py-4 rounded-sm border-2 text-sm font-medium transition-all flex items-center gap-3 ${
                         showResult
                           ? isCorrectChoice
                             ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300'
@@ -558,7 +558,7 @@ export default function RevengePage() {
                   animate={{ opacity: 1, y: 0 }}
                   className="mt-6 space-y-4"
                 >
-                  <div className={`p-4 rounded-xl flex items-center gap-3 ${
+                  <div className={`p-4 rounded-sm flex items-center gap-3 ${
                     feedback ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-red-500/10 border border-red-500/30'
                   }`}>
                     {feedback ? (
@@ -584,7 +584,7 @@ export default function RevengePage() {
 
                   {/* 해설 */}
                   {q.explanation && !feedback && (
-                    <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-4">
+                    <div className="bg-slate-800/60 border border-slate-700 rounded-sm p-4">
                       <p className="text-xs font-bold text-slate-400 mb-2">해설</p>
                       <div className="text-sm text-slate-300">
                         <MathRenderer content={q.explanation} className="prose-invert" />

@@ -30,14 +30,14 @@ export default function TeacherError({
         <div className="flex gap-3 mt-2">
           <button
             onClick={reset}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-sm font-medium"
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-sm hover:bg-primary-hover transition-colors text-sm font-medium"
           >
             <RotateCcw className="w-4 h-4" />
             다시 시도
           </button>
           <Link
             href="/overview"
-            className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors text-sm font-medium"
+            className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-sm hover:bg-slate-200 transition-colors text-sm font-medium"
           >
             <Home className="w-4 h-4" />
             대시보드

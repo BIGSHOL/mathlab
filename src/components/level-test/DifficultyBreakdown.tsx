@@ -61,11 +61,11 @@ export function DifficultyBreakdown({ stats }: DifficultyBreakdownProps) {
                   className={`h-full rounded-full transition-all duration-700 ${style.bar}`}
                   style={{ width: `${s.accuracy}%` }}
                 />
-                <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-slate-700">
+                <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-700">
                   {s.accuracy}%
                 </span>
               </div>
-              <span className="text-[10px] text-slate-500 shrink-0 w-10 text-right">{s.correct}/{s.total}</span>
+              <span className="text-xs text-slate-500 shrink-0 w-10 text-right">{s.correct}/{s.total}</span>
             </div>
           );
         })}

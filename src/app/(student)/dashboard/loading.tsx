@@ -16,7 +16,7 @@ export default function DashboardLoading() {
       </div>
 
       {/* 학습 과정 배너 */}
-      <Skeleton className="h-[68px] rounded-xl mb-6" />
+      <Skeleton className="h-[68px] rounded-sm mb-6" />
 
       {/* 통계 카드 4열 */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
@@ -42,8 +42,8 @@ export default function DashboardLoading() {
             </div>
             <div className="flex flex-col gap-3">
               {Array.from({ length: 3 }, (_, i) => (
-                <div key={i} className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-100">
-                  <Skeleton className="w-10 h-10 rounded-lg shrink-0" />
+                <div key={i} className="flex items-center gap-3 p-3.5 rounded-sm bg-slate-50 border border-slate-100">
+                  <Skeleton className="w-10 h-10 rounded-sm shrink-0" />
                   <div className="flex-1 space-y-1.5">
                     <Skeleton className="h-4 w-3/4" />
                     <Skeleton className="h-3 w-1/3" />
@@ -62,8 +62,8 @@ export default function DashboardLoading() {
               <Skeleton className="h-4 w-16" />
             </div>
             {Array.from({ length: 3 }, (_, i) => (
-              <div key={i} className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-100 mb-1.5 last:mb-0">
-                <Skeleton className="w-7 h-7 rounded-lg shrink-0" />
+              <div key={i} className="flex items-center gap-2.5 p-2.5 rounded-sm bg-slate-50 border border-slate-100 mb-1.5 last:mb-0">
+                <Skeleton className="w-7 h-7 rounded-sm shrink-0" />
                 <div className="flex-1 space-y-1">
                   <Skeleton className="h-3 w-full" />
                   <Skeleton className="h-3 w-1/2" />
@@ -121,7 +121,7 @@ export default function DashboardLoading() {
             <Skeleton className="h-3 w-12" />
           </div>
           {Array.from({ length: 4 }, (_, i) => (
-            <div key={i} className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100 mb-1.5 last:mb-0">
+            <div key={i} className="flex items-center gap-2 p-2.5 rounded-sm bg-slate-50 border border-slate-100 mb-1.5 last:mb-0">
               <Skeleton className="w-3.5 h-3.5 rounded shrink-0" />
               <div className="flex-1 space-y-1">
                 <Skeleton className="h-3 w-full" />
@@ -163,7 +163,7 @@ export default function DashboardLoading() {
         </div>
         <div className="flex flex-wrap justify-center gap-3">
           {Array.from({ length: 5 }, (_, i) => (
-            <div key={i} className="flex-1 min-w-[140px] flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200">
+            <div key={i} className="flex-1 min-w-[140px] flex items-center gap-3 px-4 py-2.5 rounded-sm bg-slate-50 border border-slate-200">
               <Skeleton className="h-5 w-4" />
               <Skeleton variant="circle" className="w-8 h-8 shrink-0" />
               <div className="space-y-1">

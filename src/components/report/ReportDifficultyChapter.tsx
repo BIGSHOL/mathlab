@@ -84,7 +84,7 @@ export function ReportDifficultyChapter({ difficultyStats, chapterStats, difficu
             </div>
 
             {/* Stacked Bar */}
-            <div className="h-8 w-full flex rounded-xl overflow-hidden bg-slate-200">
+            <div className="h-8 w-full flex rounded-sm overflow-hidden bg-slate-200">
               {sortedDiff.map((d) => {
                 const pct = totalQuestions > 0 ? (d.total / totalQuestions) * 100 : 0;
                 if (pct === 0) return null;
@@ -92,7 +92,7 @@ export function ReportDifficultyChapter({ difficultyStats, chapterStats, difficu
                 return (
                   <div
                     key={d.difficulty}
-                    className="h-full flex items-center justify-center text-[10px] font-bold text-white border-l border-white/20 first:border-l-0"
+                    className="h-full flex items-center justify-center text-xs font-bold text-white border-l border-white/20 first:border-l-0"
                     style={{
                       width: `${pct}%`,
                       backgroundColor: DIFF_HEX[d.difficulty] ?? '#94a3b8',
@@ -131,8 +131,8 @@ export function ReportDifficultyChapter({ difficultyStats, chapterStats, difficu
           {/* Achievement Cards */}
           <div className={`grid ${gridCols} gap-3`}>
             {sortedDiff.map((d) => (
-              <div key={d.difficulty} className="p-3 rounded-xl border border-white bg-white">
-                <p className="text-[10px] font-bold text-slate-400 mb-0.5">
+              <div key={d.difficulty} className="p-3 rounded-sm border border-white bg-white">
+                <p className="text-xs font-bold text-slate-400 mb-0.5">
                   {DIFFICULTY_LABELS[d.difficulty as QuestionDifficulty] ?? d.difficulty}
                 </p>
                 <div className="flex items-baseline gap-1">
@@ -158,7 +158,7 @@ export function ReportDifficultyChapter({ difficultyStats, chapterStats, difficu
         {/* 멘트 */}
         {difficultyComment && (
           <div
-            className="mt-3 rounded-xl p-4 border"
+            className="mt-3 rounded-sm p-4 border"
             style={{
               backgroundColor: '#fff7ed',
               borderColor: 'rgba(249,115,22,0.15)',
@@ -166,7 +166,7 @@ export function ReportDifficultyChapter({ difficultyStats, chapterStats, difficu
               WebkitPrintColorAdjust: 'exact',
             } as React.CSSProperties}
           >
-            <p className="text-[11px] text-slate-600 leading-relaxed">{difficultyComment}</p>
+            <p className="text-xs text-slate-600 leading-relaxed">{difficultyComment}</p>
           </div>
         )}
       </section>
@@ -190,10 +190,10 @@ export function ReportDifficultyChapter({ difficultyStats, chapterStats, difficu
                 className="border-b border-slate-100"
                 style={{ backgroundColor: '#f8fafc', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } as React.CSSProperties}
               >
-                <th className="px-5 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">단원명</th>
-                <th className="px-5 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">문항수</th>
-                <th className="px-5 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest w-[35%]">정답률</th>
-                <th className="px-5 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">평가</th>
+                <th className="px-5 py-2.5 text-xs font-bold text-slate-400 uppercase tracking-widest">단원명</th>
+                <th className="px-5 py-2.5 text-xs font-bold text-slate-400 uppercase tracking-widest text-center">문항수</th>
+                <th className="px-5 py-2.5 text-xs font-bold text-slate-400 uppercase tracking-widest w-[35%]">정답률</th>
+                <th className="px-5 py-2.5 text-xs font-bold text-slate-400 uppercase tracking-widest text-right">평가</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -223,7 +223,7 @@ export function ReportDifficultyChapter({ difficultyStats, chapterStats, difficu
                     </td>
                     <td className="px-5 py-2.5 text-right">
                       <span
-                        className="px-2 py-0.5 rounded-lg text-[9px] font-bold"
+                        className="px-2 py-0.5 rounded-sm text-[9px] font-bold"
                         style={{
                           backgroundColor: badge.bg,
                           color: badge.text,
@@ -244,7 +244,7 @@ export function ReportDifficultyChapter({ difficultyStats, chapterStats, difficu
         {/* 멘트 */}
         {chapterComment && (
           <div
-            className="mt-3 rounded-xl p-4 border"
+            className="mt-3 rounded-sm p-4 border"
             style={{
               backgroundColor: '#eff6ff',
               borderColor: 'rgba(37,99,235,0.15)',
@@ -252,7 +252,7 @@ export function ReportDifficultyChapter({ difficultyStats, chapterStats, difficu
               WebkitPrintColorAdjust: 'exact',
             } as React.CSSProperties}
           >
-            <p className="text-[11px] text-slate-600 leading-relaxed">{chapterComment}</p>
+            <p className="text-xs text-slate-600 leading-relaxed">{chapterComment}</p>
           </div>
         )}
       </section>
