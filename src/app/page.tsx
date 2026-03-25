@@ -19,6 +19,11 @@ import {
   GraduationCap,
   CheckCircle2,
   Sparkles,
+  Radio,
+  School,
+  Timer,
+  Flame,
+  ScrollText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -27,9 +32,9 @@ import { LogoIcon } from '@/components/ui/LogoIcon';
 const features = [
   {
     icon: BookOpen,
-    title: '4단계 개념 학습',
+    title: '5단계 개념 학습',
     description:
-      '읽기 → 빈칸(쉬움) → 빈칸(어려움) → 통문장 암기까지, 단계별로 개념을 완벽하게 체화합니다.',
+      '읽기 → 빈칸(쉬움) → 빈칸(어려움) → 통문장 암기 → 백지 복원까지, 단계별로 개념을 완벽하게 체화합니다.',
     color: 'text-stage-reading',
     bg: 'bg-blue-50',
   },
@@ -37,7 +42,7 @@ const features = [
     icon: Calculator,
     title: '무한 연산 생성기',
     description:
-      '78개 이상의 연산 카테고리에서 난이도별 문제를 무한 생성. 사칙연산부터 분수·소수까지.',
+      '79개 이상의 연산 카테고리에서 난이도별 문제를 무한 생성. 사칙연산부터 분수·소수까지.',
     color: 'text-primary',
     bg: 'bg-indigo-50',
   },
@@ -83,6 +88,7 @@ const stages = [
     color: 'border-stage-reading',
     textColor: 'text-stage-reading',
     bgColor: 'bg-blue-50/50',
+    xp: '5 XP',
   },
   {
     number: '02',
@@ -91,6 +97,7 @@ const stages = [
     color: 'border-stage-blank-easy',
     textColor: 'text-stage-blank-easy',
     bgColor: 'bg-emerald-50/50',
+    xp: '10 XP',
   },
   {
     number: '03',
@@ -99,34 +106,49 @@ const stages = [
     color: 'border-stage-blank-hard',
     textColor: 'text-stage-blank-hard',
     bgColor: 'bg-orange-50/50',
+    xp: '15 XP',
   },
   {
     number: '04',
     title: '통문장 암기',
-    description: '아무 도움 없이 개념을 완벽히 작성합니다.',
+    description: '전체 빈칸을 채우며 개념을 완벽히 복원합니다.',
+    color: 'border-violet-400',
+    textColor: 'text-violet-500',
+    bgColor: 'bg-violet-50/50',
+    xp: '20 XP',
+  },
+  {
+    number: '05',
+    title: '백지 복원',
+    description: '아무 도움 없이 백지에서 개념 전체를 작성합니다.',
     color: 'border-stage-blank-page',
     textColor: 'text-stage-blank-page',
-    bgColor: 'bg-violet-50/50',
+    bgColor: 'bg-purple-50/50',
+    xp: '30 XP',
   },
 ];
 
 const teacherTools = [
   { icon: Users, label: '학생 관리' },
+  { icon: School, label: '반 관리' },
   { icon: BookOpen, label: '개념 관리' },
   { icon: Database, label: '문제 은행' },
   { icon: Calculator, label: '연산 생성기' },
   { icon: CalendarCheck, label: '숙제 관리' },
   { icon: ClipboardCheck, label: '시험 관리' },
+  { icon: Target, label: '레벨테스트' },
+  { icon: Radio, label: '실시간 퀴즈' },
   { icon: FileSpreadsheet, label: '학습지' },
   { icon: PenLine, label: '수기 채점' },
   { icon: FileText, label: 'PDF 추출' },
   { icon: BarChart3, label: '학습 분석' },
+  { icon: ScrollText, label: '리포트' },
 ];
 
 const stats = [
   { value: '초3 ~ 고3', label: '지원 학년' },
-  { value: '78+', label: '연산 카테고리' },
-  { value: '4단계', label: '개념 학습법' },
+  { value: '79+', label: '연산 카테고리' },
+  { value: '5단계', label: '개념 학습법' },
   { value: 'AI', label: '자동 문제 생성' },
 ];
 
@@ -174,7 +196,7 @@ export default function LandingPage() {
                 <span className="text-primary">올인원 수학 학습, MathLab</span>
               </h1>
               <p className="text-text-secondary text-lg md:text-xl max-w-2xl leading-relaxed">
-                4단계 개념 학습, 무한 연산 연습, AI 문제 생성, 시험·숙제 관리까지.
+                5단계 개념 학습, 무한 연산 연습, AI 문제 생성, 시험·숙제 관리까지.
                 <br className="hidden md:block" />
                 선생님과 학생 모두를 위한 스마트 수학 플랫폼입니다.
               </p>
@@ -228,7 +250,7 @@ export default function LandingPage() {
                   className="p-8 hover:border-primary/30 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group"
                 >
                   <div
-                    className={`${feature.bg} w-14 h-14 rounded-2xl flex items-center justify-center ${feature.color} mb-6 group-hover:scale-110 transition-transform`}
+                    className={`${feature.bg} w-14 h-14 rounded-sm flex items-center justify-center ${feature.color} mb-6 group-hover:scale-110 transition-transform`}
                   >
                     <feature.icon className="w-7 h-7" />
                   </div>
@@ -240,7 +262,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* 4-Stage Learning Section */}
+        {/* 5-Stage Learning Section */}
         <section className="py-20 md:py-28">
           <div className="max-w-[1200px] mx-auto px-4">
             <div className="text-center mb-16">
@@ -248,20 +270,25 @@ export default function LandingPage() {
                 Learning Method
               </span>
               <h2 className="text-3xl md:text-4xl font-black mt-4 text-text-primary">
-                4단계 학습법
+                5단계 학습법
               </h2>
               <p className="text-text-secondary text-lg mt-4 max-w-xl mx-auto">
                 단계별 반복 학습으로 수학 개념을 장기 기억으로 전환합니다.
               </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
               {stages.map((stage) => (
                 <div
                   key={stage.number}
-                  className={`flex flex-col gap-4 p-6 rounded-2xl border-2 ${stage.color} ${stage.bgColor} hover:shadow-lg transition-all group`}
+                  className={`flex flex-col gap-3 p-5 rounded-sm border-2 ${stage.color} ${stage.bgColor} hover:shadow-lg transition-all group`}
                 >
-                  <span className={`text-3xl font-black ${stage.textColor}`}>{stage.number}</span>
-                  <h3 className="text-lg font-bold text-text-primary">{stage.title}</h3>
+                  <div className="flex items-center justify-between">
+                    <span className={`text-2xl font-black ${stage.textColor}`}>{stage.number}</span>
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${stage.bgColor} ${stage.textColor}`}>
+                      {stage.xp}
+                    </span>
+                  </div>
+                  <h3 className="text-base font-bold text-text-primary">{stage.title}</h3>
                   <p className="text-text-secondary text-sm leading-relaxed">
                     {stage.description}
                   </p>
@@ -293,17 +320,17 @@ export default function LandingPage() {
                   모든 도구를 한 곳에
                 </h3>
                 <p className="text-text-secondary leading-relaxed mb-8">
-                  학생 관리, 개념·문제 관리, 숙제 출제, 시험·레벨테스트, 학습지 생성, 수기 채점, PDF
-                  문제 추출까지 — 수학 학원의 모든 업무를 디지털로 전환합니다.
+                  학생·반 관리, 개념·문제 관리, 숙제 출제, 시험·레벨테스트, 실시간 퀴즈, 학습지 생성,
+                  수기 채점, PDF 문제 추출, AI 리포트까지 — 수학 학원의 모든 업무를 디지털로 전환합니다.
                 </p>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
                   {teacherTools.map((tool) => (
                     <div
                       key={tool.label}
-                      className="flex flex-col items-center gap-2 p-3 rounded-sm bg-white border border-slate-200 hover:border-primary/30 hover:shadow-sm transition-all"
+                      className="flex flex-col items-center gap-1.5 p-2.5 rounded-sm bg-white border border-slate-200 hover:border-primary/30 hover:shadow-sm transition-all"
                     >
-                      <tool.icon className="w-5 h-5 text-primary" />
-                      <span className="text-xs font-medium text-text-secondary">{tool.label}</span>
+                      <tool.icon className="w-4.5 h-4.5 text-primary" />
+                      <span className="text-xs font-medium text-text-secondary text-center leading-tight">{tool.label}</span>
                     </div>
                   ))}
                 </div>
@@ -326,14 +353,16 @@ export default function LandingPage() {
                 </p>
                 <div className="space-y-3">
                   {[
-                    { icon: Brain, text: '4단계 개념 학습으로 체계적 암기' },
+                    { icon: Brain, text: '5단계 개념 학습으로 체계적 암기' },
                     { icon: Zap, text: '연산 연습으로 계산력 강화' },
+                    { icon: Timer, text: '타임어택으로 연산 속도 챌린지' },
+                    { icon: Flame, text: '일일 미션 · 오늘의 문제로 매일 학습' },
                     { icon: Target, text: '레벨테스트로 취약 영역 진단' },
-                    { icon: Trophy, text: 'XP · 레벨 · 랭킹으로 동기 부여' },
-                    { icon: CheckCircle2, text: '숙제 제출 · 시험 응시 · 오답 복습' },
+                    { icon: Trophy, text: 'XP · 레벨 · 랭킹 · 뱃지로 동기 부여' },
+                    { icon: CheckCircle2, text: '숙제 제출 · 시험 응시 · 오답 복수전' },
                   ].map((item) => (
                     <div key={item.text} className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-sm bg-orange-50 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-sm bg-orange-50 flex items-center justify-center shrink-0">
                         <item.icon className="w-4.5 h-4.5 text-secondary" />
                       </div>
                       <span className="text-sm font-medium text-text-primary">{item.text}</span>
@@ -349,18 +378,17 @@ export default function LandingPage() {
         <section className="py-20 md:py-28">
           <div className="max-w-[1200px] mx-auto px-4">
             <div className="flex flex-col items-center text-center gap-6">
-              <div className="w-16 h-16 rounded-2xl bg-violet-50 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-sm bg-violet-50 flex items-center justify-center">
                 <Sparkles className="w-8 h-8 text-violet-500" />
               </div>
               <h2 className="text-3xl md:text-4xl font-black text-text-primary">
                 AI가 함께하는 학습
               </h2>
               <p className="text-text-secondary text-lg max-w-2xl leading-relaxed">
-                AI를 활용하여 개념에서 자동으로 빈칸 문제를 생성하고, PDF에서 문제를 추출하며,
-                학습 데이터를 분석합니다. 선생님의 시간을 절약하고 학생에게 맞춤형 학습을
-                제공합니다.
+                Gemini와 Claude AI를 활용하여 개념에서 자동으로 빈칸 문제를 생성하고, PDF에서 문제를 추출하며,
+                레벨테스트 결과를 AI가 분석하여 맞춤형 보고서를 제공합니다.
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-6 w-full max-w-3xl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mt-6 w-full max-w-4xl">
                 {[
                   {
                     title: '빈칸 자동 생성',
@@ -371,8 +399,12 @@ export default function LandingPage() {
                     desc: 'PDF 파일에서 문제·보기·정답을 자동으로 인식하여 추출',
                   },
                   {
-                    title: '도형·이미지 분석',
-                    desc: '수학 도형과 그래프를 자동으로 크롭하고 문제에 매칭',
+                    title: '도형·그래프 분석',
+                    desc: '수학 도형과 그래프를 자동 인식하여 구조화된 SVG로 변환',
+                  },
+                  {
+                    title: 'AI 학습 보고서',
+                    desc: '레벨테스트 결과를 AI가 분석하여 취약 영역 맞춤 보고서 생성',
                   },
                 ].map((item) => (
                   <Card key={item.title} padding="lg" className="text-left">
