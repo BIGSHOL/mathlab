@@ -103,9 +103,10 @@ interface CompleteResult {
 }
 
 /** 시험 목록 관리 (교사/학생) */
-export function useTests(filters?: { grade?: number; testType?: string }) {
+export function useTests(filters?: { grade?: number; testType?: string; page?: number; limit?: number; search?: string }) {
   const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
+  const [meta, setMeta] = useState<{ page: number; total: number; totalPages: number }>({ page: 1, total: 0, totalPages: 1 });
 
   const fetchTests = useCallback(async () => {
     setLoading(true);
@@ -113,17 +114,21 @@ export function useTests(filters?: { grade?: number; testType?: string }) {
       const params = new URLSearchParams();
       if (filters?.grade) params.set('grade', String(filters.grade));
       if (filters?.testType) params.set('testType', filters.testType);
+      if (filters?.page) params.set('page', String(filters.page));
+      if (filters?.limit) params.set('limit', String(filters.limit));
+      if (filters?.search) params.set('search', filters.search);
 
       const res = await fetch(`/api/tests?${params}`);
       if (res.ok) {
         const json = await res.json();
         setTests(json.data ?? []);
+        if (json.meta) setMeta(json.meta);
       }
     } catch {
       // ignore
     }
     setLoading(false);
-  }, [filters?.grade, filters?.testType]);
+  }, [filters?.grade, filters?.testType, filters?.page, filters?.limit, filters?.search]);
 
   useEffect(() => {
     fetchTests();
@@ -158,7 +163,7 @@ export function useTests(filters?: { grade?: number; testType?: string }) {
     await fetchTests();
   };
 
-  return { tests, loading, createTest, deleteTest, refresh: fetchTests };
+  return { tests, loading, meta, createTest, deleteTest, refresh: fetchTests };
 }
 
 /** 시험 상세 조회 */

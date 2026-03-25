@@ -33,12 +33,21 @@ async function main() {
   await prisma.questionHomeworkPlan.deleteMany({});
   console.log(`✓ QuestionHomeworkPlan 삭제: ${hwCount}건 (+ Enrollment, Attempt 연쇄 삭제)`);
 
-  // 4. QuestionGenerationLog 삭제
+  // 4. DailyQuestion 삭제 (Question FK 의존)
+  const dqaCount = await prisma.dailyQuestionAttempt.count();
+  await prisma.dailyQuestionAttempt.deleteMany({});
+  console.log(`✓ DailyQuestionAttempt 삭제: ${dqaCount}건`);
+
+  const dqCount = await prisma.dailyQuestion.count();
+  await prisma.dailyQuestion.deleteMany({});
+  console.log(`✓ DailyQuestion 삭제: ${dqCount}건`);
+
+  // 5. QuestionGenerationLog 삭제
   const logCount = await prisma.questionGenerationLog.count();
   await prisma.questionGenerationLog.deleteMany({});
   console.log(`✓ QuestionGenerationLog 삭제: ${logCount}건`);
 
-  // 5. Question 삭제
+  // 6. Question 삭제
   const qCount = await prisma.question.count();
   await prisma.question.deleteMany({});
   console.log(`✓ Question 삭제: ${qCount}건`);

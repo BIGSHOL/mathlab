@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Edit,
+  Eye,
   KeyRound,
   Loader2,
   X,
@@ -286,6 +287,50 @@ function EditMode({
   editDiagram: (idx: number, mode: 'edit' | 'create') => void;
   removeDiagram: (idx: number, mode: 'edit' | 'create') => void;
 }) {
+  // 렌더링(미리보기) / 마크업 모드 토글
+  const [viewMode, setViewMode] = useState<'rendered' | 'raw'>('rendered');
+
+  // 도형 SVG 미리계산 (rendered 모드에서 [그림] 플레이스홀더 렌더링용)
+  const diagramSvgs = React.useMemo(() => {
+    if (!editForm.diagramParams?.length) return undefined;
+    return editForm.diagramParams.map((dp) => {
+      try {
+        const svg = renderDiagram({ type: dp.type as DiagramType, params: dp.params as Record<string, unknown> }) ?? '';
+        return { svg, label: dp.label || '' };
+      } catch {
+        return { svg: '', label: dp.label || '' };
+      }
+    });
+  }, [editForm.diagramParams]);
+
+  // 텍스트 영역에서 $...$ 수식 클릭 시 수식 편집 팝업 열기 (raw 모드용)
+  const handleTextareaClick = (field: 'content' | 'explanation') => (e: React.MouseEvent<HTMLTextAreaElement>) => {
+    const pos = e.currentTarget.selectionStart;
+    const text = e.currentTarget.value;
+    let i = 0;
+    while (i < text.length) {
+      const ds = text.indexOf('$$', i);
+      const ss = text.indexOf('$', i);
+      if (ds === i) {
+        const de = text.indexOf('$$', ds + 2);
+        if (de > ds && pos > ds + 1 && pos < de + 2) {
+          openMathEdit(field, text.slice(ds + 2, de), ds, de + 2);
+          return;
+        }
+        i = de > ds ? de + 2 : i + 2;
+      } else if (ss === i) {
+        const se = text.indexOf('$', ss + 1);
+        if (se > ss && !text.slice(ss + 1, se).includes('\n') && pos > ss && pos < se + 1) {
+          openMathEdit(field, text.slice(ss + 1, se), ss, se + 1);
+          return;
+        }
+        i = se > ss ? se + 1 : i + 1;
+      } else {
+        i = ss >= 0 ? ss : text.length;
+      }
+    }
+  };
+
   return (
     <div className="flex-1 flex divide-x divide-slate-200 min-h-0">
       {/* Left: Editors */}
@@ -384,45 +429,79 @@ function EditMode({
           </div>
         </div>
 
+        {/* 문제 내용 */}
         <div>
           <div className="flex items-center justify-between mb-1">
             <label className="text-xs font-bold text-text-secondary">문제 내용</label>
             <div className="flex gap-1">
               <button
                 type="button"
-                onClick={() => openMathPopup('content')}
-                className="flex items-center gap-1 px-2 py-0.5 text-xs text-primary hover:bg-primary/10 rounded-sm transition-colors"
-                title="수식 삽입"
+                onClick={() => setViewMode((v) => v === 'rendered' ? 'raw' : 'rendered')}
+                className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-sm transition-colors border ${
+                  viewMode === 'raw' ? 'text-amber-700 bg-amber-50 border-amber-300' : 'text-text-secondary hover:text-primary hover:bg-primary/5 border-slate-200'
+                }`}
               >
-                <FunctionSquare className="w-3.5 h-3.5" />
-                수식
+                <Eye className="w-3.5 h-3.5" />
+                {viewMode === 'raw' ? '미리보기' : '마크업'}
               </button>
-              <button
-                type="button"
-                onClick={() => openImagePopup('content')}
-                className="flex items-center gap-1 px-2 py-0.5 text-xs text-emerald-600 hover:bg-emerald-50 rounded-sm transition-colors"
-                title="이미지 삽입"
-              >
-                <ImageIcon className="w-3.5 h-3.5" />
-                이미지
-              </button>
-              <button
-                type="button"
-                onClick={() => openDiagramEditor('edit')}
-                className="flex items-center gap-1 px-2 py-0.5 text-xs text-violet-600 hover:bg-violet-50 rounded-sm transition-colors"
-                title="도형 삽입"
-              >
-                <Shapes className="w-3.5 h-3.5" />
-                도형
-              </button>
+              {viewMode === 'raw' && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => openMathPopup('content')}
+                    className="flex items-center gap-1 px-2 py-0.5 text-xs text-primary hover:bg-primary/10 rounded-sm transition-colors"
+                    title="수식 삽입"
+                  >
+                    <FunctionSquare className="w-3.5 h-3.5" />
+                    수식
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openImagePopup('content')}
+                    className="flex items-center gap-1 px-2 py-0.5 text-xs text-emerald-600 hover:bg-emerald-50 rounded-sm transition-colors"
+                    title="이미지 삽입"
+                  >
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    이미지
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openDiagramEditor('edit')}
+                    className="flex items-center gap-1 px-2 py-0.5 text-xs text-violet-600 hover:bg-violet-50 rounded-sm transition-colors"
+                    title="도형 삽입"
+                  >
+                    <Shapes className="w-3.5 h-3.5" />
+                    도형
+                  </button>
+                </>
+              )}
             </div>
           </div>
-          <textarea
-            ref={contentRef}
-            className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary min-h-[100px] resize-y"
-            value={editForm.content}
-            onChange={(e) => setEditForm((p) => ({ ...p, content: e.target.value }))}
-          />
+          {viewMode === 'rendered' ? (
+            <div
+              className="min-h-[100px] px-3 py-2 border border-slate-200 rounded-sm text-sm bg-white"
+              onClick={!editForm.content ? () => setViewMode('raw') : undefined}
+            >
+              {editForm.content ? (
+                <EditableMathRenderer
+                  content={editForm.content}
+                  onMathClick={(latex, start, end) => openMathEdit('content', latex, start, end)}
+                  diagramSvgs={diagramSvgs}
+                  onDiagramClick={(idx) => editDiagram(idx, 'edit')}
+                />
+              ) : (
+                <span className="text-slate-400 italic text-xs cursor-text">내용이 비어있습니다. 마크업 버튼을 눌러 입력하세요.</span>
+              )}
+            </div>
+          ) : (
+            <textarea
+              ref={contentRef}
+              className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary min-h-[100px] resize-y"
+              value={editForm.content}
+              onChange={(e) => setEditForm((p) => ({ ...p, content: e.target.value }))}
+              onClick={handleTextareaClick('content')}
+            />
+          )}
         </div>
 
         {editForm.type === 'MULTIPLE_CHOICE' && (
@@ -484,37 +563,59 @@ function EditMode({
           />
         </div>
 
+        {/* 해설 */}
         <div>
           <div className="flex items-center justify-between mb-1">
             <label className="text-xs font-bold text-text-secondary">해설</label>
             <div className="flex gap-1">
-              <button
-                type="button"
-                onClick={() => openMathPopup('explanation')}
-                className="flex items-center gap-1 px-2 py-0.5 text-xs text-primary hover:bg-primary/10 rounded-sm transition-colors"
-                title="수식 삽입"
-              >
-                <FunctionSquare className="w-3.5 h-3.5" />
-                수식
-              </button>
-              <button
-                type="button"
-                onClick={() => openImagePopup('explanation')}
-                className="flex items-center gap-1 px-2 py-0.5 text-xs text-emerald-600 hover:bg-emerald-50 rounded-sm transition-colors"
-                title="이미지 삽입"
-              >
-                <ImageIcon className="w-3.5 h-3.5" />
-                이미지
-              </button>
+              {viewMode === 'raw' && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => openMathPopup('explanation')}
+                    className="flex items-center gap-1 px-2 py-0.5 text-xs text-primary hover:bg-primary/10 rounded-sm transition-colors"
+                    title="수식 삽입"
+                  >
+                    <FunctionSquare className="w-3.5 h-3.5" />
+                    수식
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openImagePopup('explanation')}
+                    className="flex items-center gap-1 px-2 py-0.5 text-xs text-emerald-600 hover:bg-emerald-50 rounded-sm transition-colors"
+                    title="이미지 삽입"
+                  >
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    이미지
+                  </button>
+                </>
+              )}
             </div>
           </div>
-          <textarea
-            ref={explanationRef}
-            className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary min-h-[80px] resize-y"
-            value={editForm.explanation}
-            onChange={(e) => setEditForm((p) => ({ ...p, explanation: e.target.value }))}
-            placeholder="해설을 입력하세요"
-          />
+          {viewMode === 'rendered' ? (
+            <div
+              className="min-h-[80px] px-3 py-2 border border-slate-200 rounded-sm text-sm bg-white"
+              onClick={!editForm.explanation ? () => setViewMode('raw') : undefined}
+            >
+              {editForm.explanation ? (
+                <EditableMathRenderer
+                  content={editForm.explanation}
+                  onMathClick={(latex, start, end) => openMathEdit('explanation', latex, start, end)}
+                />
+              ) : (
+                <span className="text-slate-400 italic text-xs cursor-text">해설이 비어있습니다. 마크업 버튼을 눌러 입력하세요.</span>
+              )}
+            </div>
+          ) : (
+            <textarea
+              ref={explanationRef}
+              className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary min-h-[80px] resize-y"
+              value={editForm.explanation}
+              onChange={(e) => setEditForm((p) => ({ ...p, explanation: e.target.value }))}
+              onClick={handleTextareaClick('explanation')}
+              placeholder="해설을 입력하세요"
+            />
+          )}
         </div>
 
         <div>
@@ -539,6 +640,8 @@ function EditMode({
           <EditableMathRenderer
             content={editForm.content}
             onMathClick={(latex, start, end) => openMathEdit('content', latex, start, end)}
+            diagramSvgs={diagramSvgs}
+            onDiagramClick={(idx) => editDiagram(idx, 'edit')}
           />
         </div>
 

@@ -182,7 +182,7 @@ export function useConceptManager(isOwner: boolean) {
     saveConcept: crud.saveConcept, deleteConcept: crud.deleteConcept,
     fetchConcepts: crud.fetchConcepts,
     startEditBlank: blanks.startEditBlank, startNewBlank: blanks.startNewBlank, cancelBlankEdit: blanks.cancelBlankEdit,
-    syncBlanksFromTemplate: blanks.syncBlanksFromTemplate, convertSelectionToBlank: blanks.convertSelectionToBlank,
+    syncBlanksFromTemplate: blanks.syncBlanksFromTemplate, convertSelectionToBlank: blanks.convertSelectionToBlank, convertRangeToBlank: blanks.convertRangeToBlank,
     updateBlankItem: blanks.updateBlankItem, autoRenumber: blanks.autoRenumber, handleBlankDrop: blanks.handleBlankDrop,
     saveBlankExercise: blanks.saveBlankExercise, deleteBlankExercise: blanks.deleteBlankExercise,
     removeBlankFromForm: blanks.removeBlankFromForm,

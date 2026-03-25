@@ -4,6 +4,7 @@ import type {
   ExtractedConcept,
   PdfPageInfo,
   PdfExtractProgress,
+  ExtractionMode,
 } from '@/types/pdf-extract';
 
 // --- 상수 ---
@@ -50,6 +51,10 @@ export interface PdfImportState {
   displaySubjects: { id: string; title: string; gradeLevel: number }[];
   subjectId: string;
   setSubjectId: (id: string) => void;
+
+  // 추출 모드
+  extractionMode: ExtractionMode;
+  setExtractionMode: (mode: ExtractionMode) => void;
 
   // Step 2: 페이지 선택
   selectedPages: Set<number>;
@@ -106,4 +111,9 @@ export interface PdfImportState {
 
   // Auth
   isOwner: boolean;
+
+  // 크래시 복구
+  recoveryData: { problems: ExtractedProblem[]; concepts: ExtractedConcept[]; bookCode: string; savedAt: number } | null;
+  restoreBackup: () => void;
+  dismissBackup: () => void;
 }

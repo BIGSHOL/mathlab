@@ -9,6 +9,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { Pagination } from '@/components/ui/Pagination';
 import { gradeLabel, relativeTime } from './helpers';
 import type { UserItem } from './types';
 
@@ -42,6 +43,11 @@ interface StudentListPanelProps {
   panelTitle: string;
   panelCount: number;
 
+  // 페이지네이션
+  currentPage?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
+
   // 모바일 상세 열림 시 목록 숨김
   mobileHidden?: boolean;
 }
@@ -66,6 +72,9 @@ export function StudentListPanel({
   isManager,
   panelTitle,
   panelCount,
+  currentPage,
+  totalPages,
+  onPageChange,
   mobileHidden,
 }: StudentListPanelProps) {
   return (
@@ -137,13 +146,15 @@ export function StudentListPanel({
           )}
           <div className="border-b border-slate-200" />
 
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto flex flex-col">
             {loading ? (
               <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
             ) : filteredUsers.length === 0 ? (
               <div className="text-center py-8 text-text-secondary"><Users className="w-8 h-8 mx-auto mb-2 opacity-20" /><p className="text-sm">학생이 없습니다.</p></div>
             ) : (
-              filteredUsers.map((u) => (
+              <>
+              <div className="flex-1 overflow-y-auto">
+              {filteredUsers.map((u) => (
                 <button
                   key={u.id}
                   onClick={() => onSelectUser(u)}
@@ -176,7 +187,14 @@ export function StudentListPanel({
                     </div>
                   </div>
                 </button>
-              ))
+              ))}
+              </div>
+              {totalPages && totalPages > 1 && currentPage && onPageChange && (
+                <div className="shrink-0 flex justify-center py-2 border-t border-slate-200">
+                  <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
+                </div>
+              )}
+              </>
             )}
           </div>
         </>

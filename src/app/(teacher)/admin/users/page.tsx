@@ -21,6 +21,7 @@ import {
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
+import { Pagination } from '@/components/ui/Pagination';
 
 // ── Types ──
 
@@ -103,8 +104,11 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<'ALL' | 'STUDENT' | 'TEACHER'>('ALL');
   const [sortBy, setSortBy] = useState<'lastActive' | 'name' | 'createdAt'>('lastActive');
+  const [userPage, setUserPage] = useState(1);
+  const [userTotalPages, setUserTotalPages] = useState(1);
 
   // 선택된 사용자 + 활동
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
@@ -136,10 +140,26 @@ export default function AdminUsersPage() {
     }
   }, [currentUser, router]);
 
-  // 사용자 목록 + 요약 통계 병렬 로드
+  // 검색어 디바운스
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setUserPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // 사용자 목록 로드 (서버 페이지네이션)
+  useEffect(() => {
+    setLoading(true);
+    const params = new URLSearchParams();
+    params.set('page', String(userPage));
+    params.set('limit', '30');
+    if (debouncedSearch) params.set('search', debouncedSearch);
+    if (roleFilter !== 'ALL') params.set('role', roleFilter);
+
     Promise.all([
-      fetch('/api/admin/users')
+      fetch(`/api/admin/users?${params}`)
         .then((r) => r.json())
         .catch(() => null),
       fetch('/api/admin/activity?limit=1')
@@ -147,9 +167,10 @@ export default function AdminUsersPage() {
         .catch(() => null),
     ]).then(([usersRes, activityRes]) => {
       if (usersRes?.data) setUsers(usersRes.data);
+      if (usersRes?.meta) setUserTotalPages(usersRes.meta.totalPages);
       if (activityRes?.data?.summary) setSummary(activityRes.data.summary);
     }).finally(() => setLoading(false));
-  }, []);
+  }, [userPage, debouncedSearch, roleFilter]);
 
   // 선택된 사용자의 활동 로드
   const fetchActivities = useCallback(
@@ -234,17 +255,17 @@ export default function AdminUsersPage() {
     fetchActivities(selectedUser.id, next, selectedDate, true);
   };
 
-  // 필터링 + 정렬
-  const filteredUsers = users
-    .filter((u) => roleFilter === 'ALL' || u.role === roleFilter)
-    .filter((u) => u.name.includes(search) || u.username.includes(search))
-    .sort((a, b) => {
-      if (sortBy === 'name') return a.name.localeCompare(b.name, 'ko');
-      if (sortBy === 'createdAt') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      const aTime = a.profile?.lastActiveAt ? new Date(a.profile.lastActiveAt).getTime() : 0;
-      const bTime = b.profile?.lastActiveAt ? new Date(b.profile.lastActiveAt).getTime() : 0;
-      return bTime - aTime;
-    });
+  // 역할 필터 변경 시 페이지 리셋
+  const handleRoleFilterChange = (r: 'ALL' | 'STUDENT' | 'TEACHER') => { setRoleFilter(r); setUserPage(1); };
+
+  // 클라이언트 정렬 (검색/역할 필터는 서버)
+  const filteredUsers = [...users].sort((a, b) => {
+    if (sortBy === 'name') return a.name.localeCompare(b.name, 'ko');
+    if (sortBy === 'createdAt') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    const aTime = a.profile?.lastActiveAt ? new Date(a.profile.lastActiveAt).getTime() : 0;
+    const bTime = b.profile?.lastActiveAt ? new Date(b.profile.lastActiveAt).getTime() : 0;
+    return bTime - aTime;
+  });
 
   if (!currentUser || !isOwner) {
     return (
@@ -325,7 +346,7 @@ export default function AdminUsersPage() {
             {(['ALL', 'STUDENT', 'TEACHER'] as const).map((r) => (
               <button
                 key={r}
-                onClick={() => setRoleFilter(r)}
+                onClick={() => handleRoleFilterChange(r)}
                 className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                   roleFilter === r ? 'bg-primary text-white' : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
                 }`}
@@ -349,7 +370,7 @@ export default function AdminUsersPage() {
         </div>
 
         {/* 사용자 목록 */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto flex flex-col">
           {loading ? (
             <div className="p-2 space-y-1.5">
               {Array.from({ length: 6 }, (_, i) => (
@@ -365,7 +386,9 @@ export default function AdminUsersPage() {
           ) : filteredUsers.length === 0 ? (
             <div className="text-center py-8 text-text-secondary text-xs">사용자 없음</div>
           ) : (
-            filteredUsers.map((u) => {
+            <>
+            <div className="flex-1 overflow-y-auto">
+            {filteredUsers.map((u) => {
               const isSelected = selectedUser?.id === u.id;
               return (
                 <button
@@ -408,7 +431,14 @@ export default function AdminUsersPage() {
                   </div>
                 </button>
               );
-            })
+            })}
+            </div>
+            {userTotalPages > 1 && (
+              <div className="shrink-0 flex justify-center py-2 border-t border-slate-200">
+                <Pagination currentPage={userPage} totalPages={userTotalPages} onPageChange={setUserPage} />
+              </div>
+            )}
+            </>
           )}
         </div>
           </>

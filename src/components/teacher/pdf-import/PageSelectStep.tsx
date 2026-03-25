@@ -4,10 +4,12 @@ import {
   Loader2,
   ArrowLeft,
   ArrowRight,
+  BookOpen,
+  FileText,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import type { PdfPageInfo } from '@/types/pdf-extract';
+import type { PdfPageInfo, ExtractionMode } from '@/types/pdf-extract';
 
 interface PageSelectStepProps {
   pages: PdfPageInfo[];
@@ -21,6 +23,8 @@ interface PageSelectStepProps {
   selectAll: () => void;
   deselectAll: () => void;
   applyRange: () => void;
+  extractionMode: ExtractionMode;
+  setExtractionMode: (mode: ExtractionMode) => void;
   onBack: () => void;
   onNext: () => void;
 }
@@ -37,11 +41,49 @@ export function PageSelectStep({
   selectAll,
   deselectAll,
   applyRange,
+  extractionMode,
+  setExtractionMode,
   onBack,
   onNext,
 }: PageSelectStepProps) {
   return (
     <div>
+      {/* 추출 모드 선택 */}
+      <Card padding="base" className="mb-4">
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium text-slate-700">추출 모드</span>
+          <div className="flex rounded-sm border border-slate-300 overflow-hidden">
+            <button
+              onClick={() => setExtractionMode('problems')}
+              className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-colors ${
+                extractionMode === 'problems'
+                  ? 'bg-primary text-white'
+                  : 'bg-white text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              문제 추출
+            </button>
+            <button
+              onClick={() => setExtractionMode('concepts')}
+              className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-colors border-l border-slate-300 ${
+                extractionMode === 'concepts'
+                  ? 'bg-amber-500 text-white'
+                  : 'bg-white text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <BookOpen className="w-4 h-4" />
+              개념 추출
+            </button>
+          </div>
+          <span className="text-xs text-slate-500">
+            {extractionMode === 'concepts'
+              ? '교재 개념 페이지에서 섹션별 개념을 추출합니다'
+              : '문제 페이지에서 문제/보기/정답을 추출합니다'}
+          </span>
+        </div>
+      </Card>
+
       {/* 툴바 */}
       <Card padding="base" className="mb-4">
         <div className="flex flex-wrap items-center gap-3">
@@ -160,7 +202,7 @@ export function PageSelectStep({
           disabled={selectedPages.size === 0}
           className="flex items-center gap-2"
         >
-          AI 추출 시작 ({selectedPages.size}페이지) <ArrowRight className="w-4 h-4" />
+          {extractionMode === 'concepts' ? '개념' : '문제'} 추출 시작 ({selectedPages.size}페이지) <ArrowRight className="w-4 h-4" />
         </Button>
       </div>
     </div>

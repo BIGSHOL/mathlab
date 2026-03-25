@@ -217,6 +217,7 @@ const SUPER_ADMIN_NAV_GROUPS: NavGroup[] = [
     id: 'content', label: '컨텐츠', minRole: 'SUPER_ADMIN', items: [
       { id: 'concepts', label: '개념 관리', href: '/concepts', icon: BookOpen, minRole: 'SUPER_ADMIN', keywords: ['concept', '개념', '빈칸'] },
       { id: 'questions', label: '문제 관리', href: '/questions', icon: Database, minRole: 'SUPER_ADMIN', keywords: ['question', '문제', '은행'] },
+      { id: 'pdf-import', label: 'PDF 추출', href: '/questions/pdf-import', icon: FileText, minRole: 'SUPER_ADMIN', keywords: ['pdf', '추출', 'ocr', '가져오기'] },
     ],
   },
   {

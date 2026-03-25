@@ -158,10 +158,37 @@ export function EditableMathRenderer({
   const bqRanges = useMemo(() => computeBlockquoteRanges(content), [content]);
   const isInBq = (pos: number) => bqRanges.some(([s, e]) => pos >= s && pos < e);
 
+  // 텍스트 세그먼트가 blockquote 경계를 넘으면 분할
+  const splitSegments = useMemo(() => {
+    const result: Segment[] = [];
+    for (const seg of segments) {
+      if (seg.type !== 'text') { result.push(seg); continue; }
+      // 이 세그먼트 범위 안에 있는 BQ 경계 수집
+      const boundaries: number[] = [];
+      for (const [bqStart, bqEnd] of bqRanges) {
+        if (bqStart > seg.start && bqStart < seg.end) boundaries.push(bqStart);
+        if (bqEnd > seg.start && bqEnd < seg.end) boundaries.push(bqEnd);
+      }
+      if (boundaries.length === 0) { result.push(seg); continue; }
+      const sorted = [...new Set(boundaries)].sort((a, b) => a - b);
+      let pos = seg.start;
+      for (const boundary of sorted) {
+        if (boundary > pos) {
+          result.push({ type: 'text', text: content.slice(pos, boundary), start: pos, end: boundary });
+        }
+        pos = boundary;
+      }
+      if (pos < seg.end) {
+        result.push({ type: 'text', text: content.slice(pos, seg.end), start: pos, end: seg.end });
+      }
+    }
+    return result;
+  }, [segments, bqRanges, content]);
+
   // 세그먼트를 blockquote/normal 블록으로 그룹화
   const blocks = useMemo(() => {
     const result: { inBq: boolean; segs: Segment[] }[] = [];
-    for (const seg of segments) {
+    for (const seg of splitSegments) {
       const bq = isInBq(seg.start);
       const last = result[result.length - 1];
       if (last && last.inBq === bq) {
@@ -172,7 +199,7 @@ export function EditableMathRenderer({
     }
     return result;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [segments, bqRanges]);
+  }, [splitSegments, bqRanges]);
 
   /** 텍스트 내 **bold** 마크다운을 <strong>으로 변환 */
   const renderTextWithBold = (text: string, keyPrefix: string) => {
@@ -236,22 +263,19 @@ export function EditableMathRenderer({
     }
 
     if (seg.type === 'text') {
-      const lines = seg.text.split('\n');
-      return lines.map((line, j) => {
-        const trimmed = line.trimStart();
-        // blockquote 마커 제거: '> ...' 또는 빈 '>'
-        const display = trimmed.startsWith('> ') ? trimmed.slice(2) : trimmed === '>' ? '' : line;
-        // 빈 blockquote continuation 줄은 건너뛰기
-        if (trimmed === '>') {
-          return <React.Fragment key={`${key}-${j}`} />;
-        }
-        return (
-          <React.Fragment key={`${key}-${j}`}>
-            {j > 0 && <br />}
-            {renderTextWithDiagrams(display, `${key}-${j}`)}
-          </React.Fragment>
-        );
-      });
+      // blockquote 마커 제거하되 줄바꿈은 보존 (white-space: pre-line이 렌더링)
+      const display = seg.text
+        .split('\n')
+        .map((line) => {
+          const trimmed = line.trimStart();
+          if (trimmed === '>') return '';
+          if (trimmed.startsWith('> ')) return trimmed.slice(2);
+          return line;
+        })
+        .join('\n')
+        // 마크다운 백슬래시 이스케이프 해제 (\< → <, \> → > 등)
+        .replace(/\\([<>\\*_`~\[\](){}#.!|+\-])/g, '$1');
+      return <React.Fragment key={key}>{renderTextWithDiagrams(display, key)}</React.Fragment>;
     }
 
     if (seg.type === 'image') {
@@ -298,7 +322,7 @@ export function EditableMathRenderer({
   };
 
   return (
-    <div className={`leading-relaxed text-slate-800 ${className}`}>
+    <div className={`leading-relaxed text-slate-800 ${className}`} style={{ whiteSpace: 'pre-line' }}>
       {blocks.map((block, bi) => {
         const inner = block.segs.map((seg, si) => renderSegment(seg, `${bi}-${si}`));
         if (block.inBq) {

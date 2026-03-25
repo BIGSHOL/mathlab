@@ -9,6 +9,11 @@ import type { QuestionDifficulty, QuestionType } from '@/types';
 import type { DiagramParam } from '@/types/pdf-extract';
 import { resolveDiagramSpec } from '@/lib/utils/diagram-resolver';
 import {
+  getDomainByChapter,
+  refineDomain,
+  getConceptCodeByChapter,
+} from '@/lib/constants/question-maps';
+import {
   MIDDLE_BOOK_CODES,
   ELEMENTARY_BOOK_CODES,
   DIFFICULTY_TO_ENUM,
@@ -439,6 +444,33 @@ export function useQuestionManager() {
   const populateEditForm = (q: QuestionItem) => {
     const existingChoices = q.choices ? [...(q.choices as string[])] : [];
     while (existingChoices.length < 5) existingChoices.push('');
+
+    // 4대영역 자동 매핑: domain 비어있으면 chapter/section 기반 자동 결정
+    let domain = q.domain || '';
+    if (!domain && q.chapter && q.bookCode) {
+      const baseDomain = getDomainByChapter(q.chapter, q.bookCode, q.section);
+      if (baseDomain) {
+        domain = refineDomain(baseDomain, q.section, q.difficulty);
+      }
+    }
+
+    // 연결 개념 자동 매칭: conceptId 비어있으면 chapter/section → conceptCode → concept 매칭
+    let conceptId = q.conceptId || '';
+    if (!conceptId && q.chapter) {
+      const conceptCode = getConceptCodeByChapter(q.chapter, q.section);
+      if (conceptCode) {
+        const matched = concepts.find((c) => c.conceptCode === conceptCode);
+        if (matched) conceptId = matched.id;
+      }
+      // conceptCode 매핑이 없으면 title 기반 퍼지 매칭
+      if (!conceptId) {
+        const matched = concepts.find((c) =>
+          c.title === q.chapter || c.title === q.section
+        );
+        if (matched) conceptId = matched.id;
+      }
+    }
+
     setEditForm({
       content: q.content,
       answer: q.answer,
@@ -449,8 +481,8 @@ export function useQuestionManager() {
       chapter: q.chapter,
       section: q.section || '',
       sourceTag: q.sourceTag || '',
-      domain: q.domain || '',
-      conceptId: q.conceptId || '',
+      domain,
+      conceptId,
       diagramParams: (() => {
         const resolved = resolveDiagramSpec(q.diagramSpec);
         return resolved.kind === 'params' ? resolved.data : [];

@@ -1,14 +1,14 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Eye, Plus, X, Loader2, Link2, RefreshCw, GripVertical,
   FunctionSquare, AlertCircle, ChevronRight, ChevronDown,
 } from 'lucide-react';
 import { InlineMathText } from '@/components/math/InlineMathText';
-import { EditableMathRenderer } from '@/components/math/EditableMathRenderer';
 import { MathLivePopup } from '@/components/math/MathLivePopup';
 import { DIFFICULTY_CYCLE, DIFFICULTY_LABELS, DIFFICULTY_COLORS } from './types';
+import type { BlankItem } from './types';
 import type { ConceptManagerReturn } from './useConceptManager';
 
 interface BlankEditorColumnsProps {
@@ -42,7 +42,7 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
         <div className="flex items-center justify-between">
           <label className="block text-sm font-bold text-text-secondary">
             개념 내용 / 템플릿
-            {isOwner && (
+            {isOwner && templateViewMode === 'raw' && (
               <span className="font-normal ml-1 text-slate-400">
                 텍스트 선택 후 빈칸 변환
               </span>
@@ -56,10 +56,10 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
                 className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-sm transition-colors border ${
                   templateViewMode === 'raw' ? 'text-amber-700 bg-amber-50 border-amber-300' : 'text-text-secondary hover:text-primary hover:bg-primary/5 border-slate-200'
                 }`}
-                title={templateViewMode === 'rendered' ? '원본 텍스트 보기' : '렌더링 보기'}
+                title={templateViewMode === 'raw' ? '원본 (정답 포함) 보기' : '마크업 편집 모드'}
               >
                 <Eye className="w-3 h-3" />
-                {templateViewMode === 'raw' ? '미리보기' : '원본'}
+                {templateViewMode === 'raw' ? '원본' : '마크업'}
               </button>
               {templateViewMode === 'raw' && (
                 <>
@@ -134,10 +134,9 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
           ) : (
             <div className="h-full overflow-y-auto px-3 py-2 border border-slate-200 rounded-sm bg-white scrollbar-thin">
               {blankForm.templateText ? (
-                <EditableMathRenderer
-                  content={blankForm.templateText}
-                  className="text-sm font-serif-kr"
-                  onMathClick={isOwner ? (latex, start, end) => setTemplateMathPopup({ latex, start, end }) : undefined}
+                <ClickableTemplateView
+                  templateText={blankForm.templateText}
+                  blanks={blankForm.blanks}
                 />
               ) : (
                 <p className="text-slate-400 text-sm">개념 내용이 없습니다.</p>
@@ -421,6 +420,88 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
         )}
       </div>
     </div>
+  );
+}
+
+/** 렌더드 뷰에서 텍스트/수식 클릭으로 빈칸 지정 */
+function ClickableTemplateView({ templateText, blanks, onSegmentClick }: {
+  templateText: string;
+  blanks: BlankItem[];
+  onSegmentClick?: (start: number, end: number) => void;
+}) {
+  // 템플릿을 세그먼트로 파싱: text, math($...$), blank({{N}})
+  const segments = useMemo(() => {
+    const result: { type: 'text' | 'math' | 'blank'; text: string; start: number; end: number; blankPos?: number }[] = [];
+    const regex = /\$([^$]+)\$|\{\{(\d+)\}\}/g;
+    let lastEnd = 0;
+    let match;
+    while ((match = regex.exec(templateText)) !== null) {
+      if (match.index > lastEnd) {
+        result.push({ type: 'text', text: templateText.slice(lastEnd, match.index), start: lastEnd, end: match.index });
+      }
+      if (match[2] !== undefined) {
+        result.push({ type: 'blank', text: match[0], start: match.index, end: match.index + match[0].length, blankPos: parseInt(match[2], 10) });
+      } else {
+        result.push({ type: 'math', text: match[0], start: match.index, end: match.index + match[0].length });
+      }
+      lastEnd = match.index + match[0].length;
+    }
+    if (lastEnd < templateText.length) {
+      result.push({ type: 'text', text: templateText.slice(lastEnd), start: lastEnd, end: templateText.length });
+    }
+    return result;
+  }, [templateText]);
+
+  // 텍스트 세그먼트를 단어 단위로 분할하여 개별 클릭 가능하게 렌더링
+  const renderTextWords = (text: string, segStart: number, key: string) => {
+    const parts = text.split(/(\S+)/g);
+    let offset = 0;
+    return parts.map((part, j) => {
+      const partStart = segStart + offset;
+      const partEnd = partStart + part.length;
+      offset += part.length;
+      if (!part.trim()) {
+        return <React.Fragment key={`${key}-${j}`}>{part}</React.Fragment>;
+      }
+      return (
+        <span
+          key={`${key}-${j}`}
+          className={onSegmentClick ? 'cursor-pointer hover:bg-amber-100 hover:text-amber-900 rounded-sm transition-colors' : ''}
+          onClick={onSegmentClick ? () => onSegmentClick(partStart, partEnd) : undefined}
+          title={onSegmentClick ? '클릭하여 빈칸으로 변환' : undefined}
+        >
+          <InlineMathText text={part} />
+        </span>
+      );
+    });
+  };
+
+  return (
+    <p className="text-[15px] text-text-primary leading-8 whitespace-pre-wrap font-serif-kr">
+      {segments.map((seg, i) => {
+        if (seg.type === 'blank') {
+          const blank = blanks.find((b) => b.position === seg.blankPos);
+          return (
+            <span key={i} className="inline-flex items-center mx-0.5 px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded-sm text-sm font-bold">
+              {blank?.answer ? <InlineMathText text={blank.answer} /> : <span className="text-slate-400">?</span>}
+            </span>
+          );
+        }
+        if (seg.type === 'math') {
+          return (
+            <span
+              key={i}
+              className={onSegmentClick ? 'cursor-pointer hover:bg-amber-100 rounded-sm transition-colors' : ''}
+              onClick={onSegmentClick ? () => onSegmentClick(seg.start, seg.end) : undefined}
+              title={onSegmentClick ? '클릭하여 빈칸으로 변환' : undefined}
+            >
+              <InlineMathText text={seg.text} />
+            </span>
+          );
+        }
+        return <React.Fragment key={i}>{renderTextWords(seg.text, seg.start, `s${i}`)}</React.Fragment>;
+      })}
+    </p>
   );
 }
 

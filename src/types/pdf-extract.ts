@@ -79,12 +79,17 @@ export interface PdfExtractRequest {
   chapter?: string;
 }
 
-/** AI 추출 개념 (유형 설명 박스) */
+/** AI 추출 개념 (유형 설명 박스 또는 개념 페이지 섹션) */
 export interface ExtractedConcept {
+  sectionCode?: string; // 섹션 코드 (예: "01-1", "01-2")
   sectionHeader: string;
   title: string;
   content: string; // 마크다운 + LaTeX
+  sideNotes?: string; // 개념플러스/참고 박스 (개념 추출 모드)
 }
+
+/** PDF 추출 모드 */
+export type ExtractionMode = 'problems' | 'concepts';
 
 /** AI 해설 추출 결과 */
 export interface ExtractedSolution {

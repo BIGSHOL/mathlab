@@ -12,6 +12,9 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const grade = searchParams.get('grade');
   const testType = searchParams.get('testType');
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '30')));
+  const search = searchParams.get('search')?.trim() || '';
 
   const tenantWhere = getTenantFilter(currentUser);
 
@@ -19,6 +22,7 @@ export async function GET(request: NextRequest) {
   const where: Record<string, any> = { isActive: true, ...tenantWhere };
   if (grade) where.grade = parseInt(grade);
   if (testType) where.testType = testType;
+  if (search) where.title = { contains: search };
 
   // 학생: 자기 학년 시험 + 배정된 시험 (학년 무관)
   if (currentUser.role === 'STUDENT' && currentUser.grade) {
@@ -32,14 +36,19 @@ export async function GET(request: NextRequest) {
     ];
   }
 
-  const tests = await prisma.test.findMany({
-    where,
-    include: {
-      creator: { select: { name: true } },
-      _count: { select: { attempts: true, assignments: true } },
-    },
-    orderBy: { createdAt: 'desc' },
-  });
+  const [tests, total] = await Promise.all([
+    prisma.test.findMany({
+      where,
+      include: {
+        creator: { select: { name: true } },
+        _count: { select: { attempts: true, assignments: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    prisma.test.count({ where }),
+  ]);
 
   // 학생인 경우 본인 시도 정보 + 배정 정보 추가
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -95,7 +104,10 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  return NextResponse.json({ data: testsWithStatus });
+  return NextResponse.json({
+    data: testsWithStatus,
+    meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+  });
 }
 
 export async function POST(request: NextRequest) {

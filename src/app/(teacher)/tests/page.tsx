@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { LoadingEmptyState } from '@/components/ui/LoadingEmptyState';
+import { Pagination } from '@/components/ui/Pagination';
 import { Tabs } from '@/components/ui/Tabs';
 import { useTests } from '@/hooks/useTests';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
@@ -33,7 +34,8 @@ export default function TestsPage() {
   const { user } = useAuth();
   const isOwner = hasRoleClient(user?.role, 'OWNER');
   const [gradeFilter, setGradeFilter] = useState<number | undefined>();
-  const { tests, loading, deleteTest, refresh } = useTests({ grade: gradeFilter });
+  const [testPage, setTestPage] = useState(1);
+  const { tests, loading, meta: testMeta, deleteTest, refresh } = useTests({ grade: gradeFilter, page: testPage, limit: 30 });
   const [deleting, setDeleting] = useState<string | null>(null);
   const [assigningTestId, setAssigningTestId] = useState<string | null>(null);
   const assigningTestSeq = (() => {
@@ -121,7 +123,7 @@ export default function TestsPage() {
                 <div className="p-3 border-b border-slate-200">
                   <div className="flex gap-1.5 flex-wrap">
                     <button
-                      onClick={() => setGradeFilter(undefined)}
+                      onClick={() => { setGradeFilter(undefined); setTestPage(1); }}
                       className={`px-2.5 py-1 rounded-sm text-xs font-medium transition-colors ${
                         !gradeFilter
                           ? 'bg-primary text-white'
@@ -133,7 +135,7 @@ export default function TestsPage() {
                     {[7, 8, 9].map((g) => (
                       <button
                         key={g}
-                        onClick={() => setGradeFilter(g)}
+                        onClick={() => { setGradeFilter(g); setTestPage(1); }}
                         className={`px-2.5 py-1 rounded-sm text-xs font-medium transition-colors ${
                           gradeFilter === g
                             ? 'bg-primary text-white'
@@ -147,14 +149,14 @@ export default function TestsPage() {
                 </div>
 
                 {/* Test list */}
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto flex flex-col">
                   <LoadingEmptyState
                     loading={loading}
                     empty={tests.length === 0}
                     icon={<ClipboardCheck className="w-8 h-8 text-slate-300" />}
                     message="시험이 없습니다"
                   >
-                    <div className="py-1">
+                    <div className="py-1 flex-1 overflow-y-auto">
                       {tests.map((test) => {
                         const isSelected = selectedTestId === test.id;
                         return (
@@ -186,6 +188,11 @@ export default function TestsPage() {
                         );
                       })}
                     </div>
+                    {testMeta.totalPages > 1 && (
+                      <div className="shrink-0 flex justify-center py-2 border-t border-slate-200">
+                        <Pagination currentPage={testPage} totalPages={testMeta.totalPages} onPageChange={setTestPage} />
+                      </div>
+                    )}
                   </LoadingEmptyState>
                 </div>
               </>

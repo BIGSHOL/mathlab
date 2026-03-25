@@ -174,10 +174,8 @@ export function useBlankEditor(deps: BlankEditorDeps) {
     setEditForm((p) => ({ ...p, fullContent: template }));
   };
 
-  const convertSelectionToBlank = () => {
-    const textarea = templateTextareaRef.current;
-    if (!textarea) return;
-    const { selectionStart, selectionEnd } = textarea;
+  /** 주어진 원문 범위(start~end)를 빈칸으로 변환 */
+  const convertRangeToBlank = (selectionStart: number, selectionEnd: number) => {
     if (selectionStart === selectionEnd) return;
     const rawSelected = blankForm.templateText.slice(selectionStart, selectionEnd);
     if (!rawSelected.trim()) return;
@@ -253,6 +251,13 @@ export function useBlankEditor(deps: BlankEditorDeps) {
       });
       setEditForm((p) => ({ ...p, fullContent: newTemplate }));
     }
+  };
+
+  /** textarea 선택 영역을 빈칸으로 변환 (마크업 모드용) */
+  const convertSelectionToBlank = () => {
+    const textarea = templateTextareaRef.current;
+    if (!textarea) return;
+    convertRangeToBlank(textarea.selectionStart, textarea.selectionEnd);
   };
 
   const updateBlankItem = (position: number, field: 'answer' | 'hint' | 'difficulty', value: string) => {
@@ -343,10 +348,26 @@ export function useBlankEditor(deps: BlankEditorDeps) {
   const deleteBlankExercise = async (exerciseId: string) => {
     if (!editingConcept) return;
     if (!(await confirm({ message: '이 빈칸 문제를 삭제하시겠습니까?', variant: 'danger', confirmLabel: '삭제' }))) return;
+
+    // 삭제 전 빈칸 데이터 보관 (fullContent 복원용)
+    const exercise = blankExercises.find((e) => e.id === exerciseId);
+
     try {
       const res = await fetch(`/api/concepts/${editingConcept.id}/blanks?exerciseId=${exerciseId}`, { method: 'DELETE' });
-      if (!res.ok) toast.error('삭제에 실패했습니다.');
+      if (!res.ok) { toast.error('삭제에 실패했습니다.'); return; }
+
+      // fullContent에서 {{N}} 마커를 원래 답으로 복원
+      if (exercise && exercise.blanks.length > 0) {
+        let restored = editForm.fullContent;
+        for (const b of exercise.blanks) {
+          restored = restored.replaceAll(`{{${b.position}}}`, b.answer);
+        }
+        setEditForm((p) => ({ ...p, fullContent: restored }));
+      }
+
       await fetchBlanks(editingConcept.id);
+      setEditingBlank(null);
+      setIsNewBlank(false);
     } catch {
       toast.error('삭제 중 오류가 발생했습니다.');
     }
@@ -386,7 +407,7 @@ export function useBlankEditor(deps: BlankEditorDeps) {
     blankDirty,
     fetchBlanks, resetBlanks,
     startEditBlank, startNewBlank, cancelBlankEdit,
-    syncBlanksFromTemplate, convertSelectionToBlank,
+    syncBlanksFromTemplate, convertSelectionToBlank, convertRangeToBlank,
     updateBlankItem, autoRenumber, handleBlankDrop,
     saveBlankExercise, deleteBlankExercise, removeBlankFromForm,
     pushTemplateHistory, templateUndo, templateRedo,

@@ -17,6 +17,7 @@ export function ConceptEditorFooter({ mgr }: ConceptEditorFooterProps) {
     cancelEditing, cancelBlankEdit,
     saveConcept, saveBlankExercise,
     setEditingBlank, setIsNewBlank,
+    blankExercises, startEditBlank,
   } = mgr;
 
   // Use a local alias to avoid shadowing confusion
@@ -35,7 +36,14 @@ export function ConceptEditorFooter({ mgr }: ConceptEditorFooterProps) {
       {isOwner && !isNewConcept && !(editingBlank || isNewBlank) && !isContentEditing && (
         <button
           type="button"
-          onClick={() => setIsContentEditing(true)}
+          onClick={() => {
+            // 빈칸이 있으면 빈칸 편집 모드로 바로 진입
+            if (blankExercises.length > 0) {
+              startEditBlank(blankExercises[0]);
+            } else {
+              setIsContentEditing(true);
+            }
+          }}
           className="inline-flex items-center justify-center h-9 px-3 text-sm font-medium rounded-sm border border-slate-200 text-text-primary hover:bg-slate-50 transition-colors"
         >
           <Edit className="w-3.5 h-3.5 mr-1.5" />

@@ -11,7 +11,7 @@ export const conceptQuerySchema = z.object({
   section: z.string().optional(),
   search: z.string().optional(),
   page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(200).default(50),
+  limit: z.coerce.number().int().min(1).max(500).default(50),
 });
 
 // 기본 필드 정의 — create/update/bulk 모두 이 정의를 공유
@@ -46,8 +46,11 @@ export const updateConceptSchema = z.object({
   prerequisites: z.array(z.string()).optional(),
 });
 
-// bulk = base 필드만 (subjectId는 외부에서 전달)
-export const bulkConceptItemSchema = z.object(conceptBaseFields);
+// bulk = base 필드 + sortOrder (subjectId는 외부에서 전달)
+export const bulkConceptItemSchema = z.object({
+  ...conceptBaseFields,
+  sortOrder: z.number().int().optional(),
+});
 
 export const bulkCreateConceptSchema = z.object({
   subjectId: z.string().min(1),

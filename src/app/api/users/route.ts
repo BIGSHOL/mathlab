@@ -5,37 +5,57 @@ import { requireTeacher, validateBody, isResponse, conflict, hasRole, getStudent
 import { createUserSchema } from '@/lib/schemas/auth';
 
 // GET /api/users - List students (역할 기반 스코핑)
-export async function GET() {
+export async function GET(request: NextRequest) {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
+
+  const { searchParams } = new URL(request.url);
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '30')));
+  const search = searchParams.get('search')?.trim() || '';
+  const grade = searchParams.get('grade');
 
   // MANAGER 이상: 자기 테넌트 전체 사용자 (선생님 포함), TEACHER: 담당 반 학생만
   const isManagerOrAbove = hasRole(user, 'MANAGER');
   const tenantFilter = getTenantFilter(user);
-  const where = isManagerOrAbove
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const where: Record<string, any> = isManagerOrAbove
     ? { deletedAt: null, ...tenantFilter }
     : await getStudentScope(user);
 
-  const users = await prisma.user.findMany({
-    where,
-    select: {
-      id: true,
-      seq: true,
-      username: true,
-      name: true,
-      role: true,
-      grade: true,
-      createdAt: true,
-      profile: {
-        select: { totalXp: true, level: true, currentStreak: true, longestStreak: true, lastActiveAt: true },
+  if (search) {
+    where.OR = [
+      { name: { contains: search } },
+      { username: { contains: search } },
+    ];
+  }
+  if (grade) where.grade = parseInt(grade);
+
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        seq: true,
+        username: true,
+        name: true,
+        role: true,
+        grade: true,
+        createdAt: true,
+        profile: {
+          select: { totalXp: true, level: true, currentStreak: true, longestStreak: true, lastActiveAt: true },
+        },
       },
-    },
-    orderBy: { createdAt: 'desc' },
-  });
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    prisma.user.count({ where }),
+  ]);
 
   return NextResponse.json({
     data: users,
-    meta: { total: users.length },
+    meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
   });
 }
 

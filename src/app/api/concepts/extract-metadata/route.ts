@@ -11,6 +11,7 @@ const METADATA_SCHEMA = {
     semester: { type: Type.NUMBER, description: '학기 (1 또는 2). 고등은 0' },
     chapter: { type: Type.STRING, description: '대단원명 (교육과정 기준)' },
     section: { type: Type.STRING, description: '중단원명 (없으면 빈 문자열)' },
+    sectionSub: { type: Type.STRING, description: '소단원명 (없으면 빈 문자열)' },
     part: { type: Type.STRING, description: '영역: calc(수와연산), algebra(대수), func(함수), geo(도형), data(자료와확률)' },
     keywords: { type: Type.STRING, description: '핵심 키워드 3-5개, 쉼표 구분' },
     correctedContent: { type: Type.STRING, description: '맞춤법/띄어쓰기 교정된 전체 내용. 수정 없으면 빈 문자열' },
@@ -73,6 +74,7 @@ export async function POST(request: NextRequest) {
 
 대단원 (chapter): 한국 수학 교육과정의 대단원명을 정확히 작성. 예: "소인수분해", "정수와 유리수", "일차방정식"
 중단원 (section): 대단원 하위의 중단원명. 확실하지 않으면 빈 문자열.
+소단원 (sectionSub): 중단원 하위의 소단원명. 확실하지 않으면 빈 문자열.
 
 [맞춤법 교정 규칙]
 - 명백한 맞춤법 오류만 교정 (예: "소숫점"→"소수점", "갯수"→"개수")
@@ -130,6 +132,7 @@ ${title ? `제목: ${title}\n` : ''}${fullContent.substring(0, 2000)}
         semester: data.semester || 0,
         chapter: data.chapter || '',
         section: data.section || '',
+        sectionSub: data.sectionSub || '',
         part: data.part || 'calc',
         keywords: data.keywords || '',
         correctedContent: data.correctedContent || '',

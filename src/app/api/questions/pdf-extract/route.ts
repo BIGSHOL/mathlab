@@ -142,9 +142,9 @@ const PDF_EXTRACT_SCHEMA = {
       items: {
         type: Type.OBJECT,
         properties: {
-          sectionHeader: { type: Type.STRING, description: '유형/단원 제목 (예: "유형 01 소수와 합성수")' },
-          title: { type: Type.STRING, description: '개념 제목 (예: "소수와 합성수")' },
-          content: { type: Type.STRING, description: '개념 설명 전문 (마크다운+LaTeX). 모든 수식은 $...$로 감싼다' },
+          sectionHeader: { type: Type.STRING, description: '유형/단원 제목 원문 (예: "유형 01 소수와 합성수")' },
+          title: { type: Type.STRING, description: '순수 주제명. sectionHeader에서 "유형 XX" 번호를 제거 (예: "소수와 합성수"). boxed/phantom 금지, 본문 첫줄 금지' },
+          content: { type: Type.STRING, description: '개념 설명 전문 (마크다운+LaTeX). 모든 수식은 $...$로 감싼다. 본문 전체를 빠짐없이 포함' },
         },
         required: ['sectionHeader', 'title', 'content'],
       },
@@ -184,7 +184,11 @@ const SYSTEM_PROMPT = `당신은 한국 수학 교재 분석 전문가입니다.
    - images 배열은 사용하지 않아도 됩니다 (빈 배열). diagramParams만 정확히 채우세요.
    - **수식/숫자/분수는 도형이 아닙니다.** 텍스트/KaTeX로 표현하세요.
 9. 정답이 같은 페이지에 보이면 answer에 포함, 아니면 빈 문자열
-10. 유형 설명 박스(개념 요약)가 있으면 concepts 배열에 추출하세요. title은 개념 제목, content는 전체 설명 (번호 포함). 문제 번호가 없는 설명/정의 박스가 대상입니다.
+10. 유형 설명 박스(개념 요약)가 있으면 concepts 배열에 추출하세요. 문제 번호가 없는 설명/정의 박스가 대상입니다.
+   - **title**: 유형 헤더에서 "유형 XX" 번호를 제거한 순수 주제명 (예: "유형 05 소인수 구하기" → title: "소인수 구하기")
+   - title에 $\\\\boxed{}, \\\\phantom{} 등 KaTeX 수식을 넣지 마세요. □는 "빈칸" 또는 "네모" 한글로 표현.
+   - title에 본문 첫 줄("자연수 $A$가" 등)을 넣지 마세요. 반드시 유형 헤더에서 주제를 추출!
+   - **content**: 개념 설명 전문 (마크다운+LaTeX). 본문 전체를 빠짐없이 포함.
 11. **중요** 문제 안에 테두리/네모박스/사각형 박스/색 배경 영역이 있으면 그 안의 내용을 반드시 마크다운 인용블록(>)으로 감싸세요.
     - 숫자/수식 나열 박스: "다음 중 소수는 몇 개인지 구하시오.\\n\\n> 1, 7, 21, 33, 47, 91, 113, 169"
     - 풀이 과정 박스 (단계별 유도): 각 줄을 > 로 감싸기
@@ -196,6 +200,7 @@ const SYSTEM_PROMPT = `당신은 한국 수학 교재 분석 전문가입니다.
     - 예: "a와 b의 합" → "$a$와 $b$의 합"
     - 예: "> 1, 7, 21" → "> $1$, $7$, $21$"
     - 보기 번호(①②③④⑤)와 ㄱㄴㄷ은 감싸지 않음
+    - 문제 내부 소문항 번호 (1), (2), (3), (가), (나) 등 구조적 번호 표기는 수식이 아니므로 $...$로 감싸지 않음. 예: "(1) 소수" → "(1) 소수" ✅, "$(1)$ 소수" ❌
 14. **세로셈(세로 연산)** 교재에서 세로로 배치된 덧셈/뺄셈/곱셈/나눗셈은 반드시 세로 형식을 유지해야 합니다. 가로로 변환하면 안 됩니다.
     - 세로셈은 마크다운 코드블록 형태로 표현하세요 (KaTeX array 사용 금지):
     \`\`\`
@@ -228,6 +233,9 @@ const SYSTEM_PROMPT = `당신은 한국 수학 교재 분석 전문가입니다.
     - 분기 내용은 텍스트로도 함께 나열
 18. **$$...$$ 블록 수식 안에서 $...$를 중첩 사용하지 마세요.** 블록 수식 내부의 숫자/변수는 $ 없이 그대로 씁니다.
 19. **원본 충실성** 교재 이미지에 보이는 텍스트/수식/레이아웃을 그대로 추출하세요. 교재에 없는 텍스트를 임의로 추가하거나 해석을 덧붙이지 마세요. 줄바꿈 위치도 원본을 따르세요.
+    - **\\\\underbrace / \\\\overbrace 규칙**: 중괄호 아래/위 주석이 있으면 반드시 실제 수식을 감싸세요. 물결(~)이나 공백으로 길이를 맞추지 마세요.
+      ✅: $\\\\underbrace{a \\\\times a \\\\times \\\\dots \\\\times a}_{n\\\\text{개}}$
+      ❌: $\\\\underbrace{\\\\qquad\\\\sim\\\\sim\\\\sim\\\\sim\\\\qquad}_{n\\\\text{개}}$ (물결로 폭 채우기 금지)
 20. **2열 레이아웃** 원본에서 수식/빈칸이 2열로 나란히 배치되어 있으면 마크다운 테이블을 사용하여 2열 레이아웃을 유지하세요.
 21. **숫자 표(수 배열표)** 숫자들이 표 형태로 나열되어 있으면 반드시 마크다운 테이블로 추출하세요. [그림]으로만 처리하면 안 됩니다.
 22. **온라인 변환** 교재에서 "○표 하세요", "색칠하세요", "선으로 이으세요" 등 종이에서만 가능한 지시는 온라인에서 가능한 형태로 변환:
@@ -265,6 +273,96 @@ const SYSTEM_PROMPT = `당신은 한국 수학 교재 분석 전문가입니다.
     - **중요:** 사용하지 않는 숫자 필드는 0으로 넣으세요. 비워두면 안 됩니다.
     - 사진/실물 이미지는 images 바운딩 박스만 사용`;
 
+// ===== 개념 추출 전용 =====
+
+const CONCEPT_EXTRACT_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    concepts: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          sectionCode: { type: Type.STRING, description: '섹션 코드 원문 (예: "01-1", "01-2", "2-3"). 페이지에 없으면 빈 문자열' },
+          sectionHeader: { type: Type.STRING, description: '섹션 제목 원문 (예: "01-1 소수와 합성수", "01-2 소인수분해")' },
+          title: { type: Type.STRING, description: '순수 주제명. 코드를 제거한 제목 (예: "소수와 합성수", "소인수분해")' },
+          content: { type: Type.STRING, description: '개념 전체 본문 (마크다운+LaTeX). 정의, 예시, 방법, 참고, 개념플러스, 보충 설명 등 해당 섹션의 모든 내용을 하나로 통합. 수식은 $...$로 감싼다' },
+          images: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                box: {
+                  type: Type.ARRAY,
+                  items: { type: Type.NUMBER },
+                  description: '바운딩 박스 [y_min, x_min, y_max, x_max] (0~1000 정규화 좌표)',
+                },
+                label: { type: Type.STRING, description: '이미지 설명' },
+              },
+              required: ['box', 'label'],
+            },
+            description: '텍스트로 표현 불가한 도형/이미지의 바운딩 박스. 없으면 빈 배열',
+          },
+        },
+        required: ['sectionHeader', 'title', 'content'],
+      },
+    },
+  },
+  required: ['concepts'],
+};
+
+const CONCEPT_SYSTEM_PROMPT = `당신은 한국 수학 교재의 개념 페이지를 분석하여, **빈칸 학습 문제**로 변환하기 좋은 구조의 개념 텍스트를 생성하는 전문가입니다.
+주어진 교재 페이지 이미지에서 **개념 설명**을 섹션별로 추출하세요.
+이 페이지는 문제 페이지가 아니라 **개념/정의/공식 설명 페이지**입니다.
+
+[핵심 원칙]
+- 각 섹션 헤더(예: 01-1, 01-2, 2-3 등)를 개념의 경계로 인식
+- 각 섹션의 모든 내용을 빠짐없이 하나의 content로 통합 추출
+- (1), (2), (3) 등 하위 항목은 **문제가 아니라 개념 내 구조**로 유지
+- 밑줄/볼드 강조된 핵심 용어는 **볼드**로 보존 → 이 용어들이 빈칸 문제의 정답 후보가 됨
+
+[빈칸 학습 최적화]
+- 추출된 텍스트는 나중에 핵심 용어를 빈칸으로 만드는 "빈칸 학습" 문제로 변환됨
+- 따라서 **핵심 정의와 용어가 명확한 문장 구조**로 작성:
+  - "~를 ~라 한다", "~를 ~라고 한다" 형태 유지
+  - 정의에서 핵심 단어를 **볼드**로 표시 (예: **소수**, **합성수**, **거듭제곱**)
+  - 공식에서 각 요소의 의미를 명시 (예: **밑**: 거듭제곱에서 곱한 수나 문자, **지수**: 곱한 문자의 개수)
+- 개념 내용이 학습 효과가 높도록, 중요 정보가 자연스럽게 녹아든 완전한 문장으로 작성
+
+[콘텐츠 통합 규칙 — 모든 내용을 content 하나에 통합]
+- "개념플러스", "참고", "보충", 페이지 우측/하단 보조 설명 등을 **별도 분리하지 말고** 본문(content) 안에 자연스럽게 통합
+- 통합 방법: 관련된 개념 설명 바로 뒤에 자연스럽게 이어붙이기
+  - 예: 소수 정의 뒤에 "참고: $2$는 소수 중 유일한 짝수이자 가장 작은 소수이다" 추가
+  - 예: 소인수분해 설명 뒤에 "개념플러스: $1$의 거듭제곱은 항상 $1$이다" 추가
+- 구분이 필요할 때는 **참고** 또는 **개념플러스** 레이블을 볼드로 표시하되, 같은 content 안에 포함
+
+[수식 규칙]
+1. 모든 수식은 $...$로 감싸기 (예: $2^3 \\times 3^2$)
+2. 곱셈은 반드시 \\times 사용, 거듭제곱은 ^{}, 분수는 \\frac
+3. 모든 숫자와 수학 변수(a, b, x, n 등)는 $...$로 감싸기
+4. 단, 소문항 번호 (1), (2), (가), (나)와 원번호 ①②③은 감싸지 않음
+5. $$...$$ 블록 수식 안에서 $...$를 중첩 사용하지 않기
+
+[내용 추출 규칙]
+1. **정의**: "소수: 1보다 큰 자연수 중에서..." → 정의 텍스트 그대로 추출. 핵심 용어 **볼드**
+2. **공식**: 수식을 $...$로 감싸서 추출. 각 기호의 의미도 명시
+3. **예시**: 예 표기가 있는 내용은 마크다운 인용블록(>)으로 감싸기
+4. **방법/절차**: 순서 유지하여 ①②③ 또는 번호 목록으로
+5. **참고/개념플러스/보충**: 해당 개념 설명 뒤에 자연스럽게 본문에 통합
+6. **표(table)**: 마크다운 테이블로 추출
+7. **도형/다이어그램**: 텍스트로 완전히 설명 가능하면 텍스트로 설명. 불가능한 경우만 images 바운딩 박스 사용
+8. **읽는 방법**: [읽는 방법] 등 보조 설명도 본문에 포함
+
+[줄바꿈 규칙]
+- (1), (2), (3) 등 하위 항목 시작 전에 줄바꿈
+- ①, ②, ③ 등 세부 항목 시작 전에 줄바꿈
+- 예시, 참고 등 별도 블록 전에 줄바꿈
+
+[원본 충실성]
+- 교재에 있는 텍스트/수식을 그대로 추출. 임의로 추가하거나 해석하지 않기
+- 순서, 번호 체계, 강조 표현을 원본 그대로 유지
+- 단, 보조 설명(개념플러스/참고 등)을 본문에 통합할 때는 위치를 적절히 배치`;
+
 /**
  * JSON 파싱 후 LaTeX 이스케이프 복원
  * JSON의 \t, \f, \b가 LaTeX 명령어(\times, \frac, \begin)와 충돌하는 문제 수정
@@ -294,9 +392,11 @@ export async function POST(request: NextRequest) {
   if (isResponse(user)) return user;
 
   const body = await request.json();
-  const { pages, bookCode, filenameContext } = body as {
+  const { pages, bookCode, filenameContext, mode } = body as {
     pages: PageInput[]; bookCode: string; chapter?: string; filenameContext?: string;
+    mode?: 'problems' | 'concepts';
   };
+  const isConceptMode = mode === 'concepts';
 
   if (!pages || !Array.isArray(pages) || pages.length === 0) {
     return badRequest('pages 배열이 필요합니다');
@@ -324,6 +424,12 @@ export async function POST(request: NextRequest) {
       const base64Data = page.imageBase64.replace(/^data:image\/\w+;base64,/, '');
 
       // Gemini API 호출 (재시도 포함)
+      const activePrompt = isConceptMode ? CONCEPT_SYSTEM_PROMPT : SYSTEM_PROMPT;
+      const activeSchema = isConceptMode ? CONCEPT_EXTRACT_SCHEMA : PDF_EXTRACT_SCHEMA;
+      const ocrSuffix = page.textLayer
+        ? `\n[OCR Text Content for Reference]\n${page.textLayer}\n\n위의 텍스트 레이어 정보를 참고하여 이미지 속의 ${isConceptMode ? '개념을' : '문제를'} 오타 없이 완벽하게 추출하세요.`
+        : '';
+
       const data = await withRetry(async () => {
         const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash',
@@ -332,20 +438,13 @@ export async function POST(request: NextRequest) {
               role: 'user',
               parts: [
                 { inlineData: { mimeType: 'image/png', data: base64Data } },
-                { text: [
-                    SYSTEM_PROMPT,
-                    filenameContext || '',
-                    page.textLayer
-                      ? `\n[OCR Text Content for Reference]\n${page.textLayer}\n\n위의 텍스트 레이어 정보를 참고하여 이미지 속의 문제를 오타 없이 완벽하게 추출하세요.`
-                      : '',
-                  ].filter(Boolean).join('\n')
-                },
+                { text: [activePrompt, filenameContext || '', ocrSuffix].filter(Boolean).join('\n') },
               ],
             },
           ],
           config: {
             responseMimeType: 'application/json',
-            responseSchema: PDF_EXTRACT_SCHEMA,
+            responseSchema: activeSchema,
           },
         });
 
@@ -360,6 +459,31 @@ export async function POST(request: NextRequest) {
 
         return JSON.parse(jsonStr);
       }, `페이지 ${page.pageNum}`);
+      // 개념 모드: concepts만 후처리
+      if (isConceptMode) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const fixedConcepts = (data.concepts || []).map((c: any) => {
+          let title = fixLatexEscaping(c.title || '');
+          const sectionCode = (c.sectionCode || '').trim();
+          const sectionHeader = fixLatexEscaping(c.sectionHeader || '');
+
+          // 제목에서 boxed/phantom 제거
+          title = title.replace(/\$\\?\\?boxed\{\\?\\?phantom\{[^}]*\}\}\$/g, '□');
+          title = title.replace(/\\boxed\{\\phantom\{[^}]*\}\}/g, '□');
+
+          return {
+            sectionCode,
+            sectionHeader: fixLatexEscaping(sectionHeader),
+            title,
+            content: fixLatexEscaping(c.content || ''),
+            images: Array.isArray(c.images) ? c.images : [],
+          };
+        });
+        results.push({ pageNum: page.pageNum, problems: [], concepts: fixedConcepts });
+        continue;
+      }
+
+      // 문제 모드: problems + concepts 후처리
       // LaTeX 이스케이프 복원 (\times → tab 등 JSON 파싱 부작용 수정)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const fixedProblems = (data.problems || []).map((p: any) => {
@@ -418,12 +542,34 @@ export async function POST(request: NextRequest) {
         };
       });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const fixedConcepts = (data.concepts || []).map((c: any) => ({
-        ...c,
-        content: fixLatexEscaping(c.content),
-        title: fixLatexEscaping(c.title),
-        sectionHeader: fixLatexEscaping(c.sectionHeader),
-      }));
+      const fixedConcepts = (data.concepts || []).map((c: any) => {
+        let title = fixLatexEscaping(c.title || '');
+        const sectionHeader = fixLatexEscaping(c.sectionHeader || '');
+
+        // 제목에서 $\boxed{\phantom{...}}$ 등 KaTeX 빈칸 → □ 또는 제거
+        title = title.replace(/\$\\?\\?boxed\{\\?\\?phantom\{[^}]*\}\}\$/g, '□');
+        title = title.replace(/\\boxed\{\\phantom\{[^}]*\}\}/g, '□');
+
+        // 제목이 본문 첫줄처럼 보이면 (조사로 끝남) sectionHeader에서 주제 추출
+        if (/[가-힣]\s*$/.test(title) && /[이가을를에서와은는]\s*$/.test(title)) {
+          const headerTitle = sectionHeader
+            .replace(/^유형\s*(UP\s*)?\d+\s*/i, '')
+            .trim();
+          if (headerTitle) title = headerTitle;
+        }
+
+        // sectionHeader에서도 boxed 제거
+        const cleanHeader = sectionHeader
+          .replace(/\$\\?\\?boxed\{\\?\\?phantom\{[^}]*\}\}\$/g, '□')
+          .replace(/\\boxed\{\\phantom\{[^}]*\}\}/g, '□');
+
+        return {
+          ...c,
+          content: fixLatexEscaping(c.content),
+          title,
+          sectionHeader: cleanHeader,
+        };
+      });
       results.push({
         pageNum: page.pageNum,
         problems: fixedProblems,

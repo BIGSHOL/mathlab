@@ -77,6 +77,34 @@ export default function PdfImportPage() {
         })}
       </div>
 
+      {/* 크래시 복구 배너 */}
+      {state.recoveryData && (
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-300 rounded-sm">
+          <div className="flex items-center gap-2 text-amber-800 font-medium mb-1">
+            <AlertCircle className="w-4 h-4" />
+            이전에 추출하던 데이터가 있습니다
+          </div>
+          <p className="text-sm text-amber-700 mb-3">
+            {state.recoveryData.problems.length}개 문제가 저장되지 않은 상태입니다.
+            ({new Date(state.recoveryData.savedAt).toLocaleString('ko-KR')})
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={state.restoreBackup}
+              className="px-3 py-1.5 bg-amber-600 text-white text-sm rounded-sm hover:bg-amber-700"
+            >
+              복원하기
+            </button>
+            <button
+              onClick={state.dismissBackup}
+              className="px-3 py-1.5 bg-white text-amber-700 text-sm rounded-sm border border-amber-300 hover:bg-amber-50"
+            >
+              무시하고 새로 시작
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 에러 표시 */}
       {state.error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-sm flex items-center gap-2 text-red-700 text-sm">
@@ -121,6 +149,8 @@ export default function PdfImportPage() {
           selectAll={state.selectAll}
           deselectAll={state.deselectAll}
           applyRange={state.applyRange}
+          extractionMode={state.extractionMode}
+          setExtractionMode={state.setExtractionMode}
           onBack={() => state.setStep(1)}
           onNext={() => {
             state.setStep(3);
@@ -132,6 +162,7 @@ export default function PdfImportPage() {
       {/* ===== Step 3: AI 추출 & 미리보기 ===== */}
       {state.step === 3 && (
         <ExtractionPreviewStep
+          extractionMode={state.extractionMode}
           extracting={state.extracting}
           progress={state.progress}
           problems={state.problems}

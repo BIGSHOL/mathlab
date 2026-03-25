@@ -250,7 +250,7 @@ export function ClassroomDetail({
                   (s.profile?.lastActiveAt && new Date(s.profile.lastActiveAt).getTime() > sevenDaysAgo) ? 'bg-emerald-400' : 'bg-slate-200'
                 }`} />
                 <Link
-                  href={`/students/${s.id}`}
+                  href={`/students?id=${s.id}`}
                   className="flex items-center justify-between flex-1 min-w-0 px-3 py-2"
                 >
                   <div className="flex items-center gap-2 min-w-0">

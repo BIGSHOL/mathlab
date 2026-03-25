@@ -3,13 +3,14 @@
 import React from 'react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, ArrowRight, BookOpen, CheckCircle, ChevronLeft, ChevronRight, Sparkles, Trophy, BookOpenCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, CheckCircle, ChevronLeft, ChevronRight, Sparkles, Trophy, BookOpenCheck, Type } from 'lucide-react';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { toast } from '@/components/ui/Toast';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { MathRenderer } from '@/components/math/MathRenderer';
+import { InlineMathText } from '@/components/math/InlineMathText';
 import { MathLivePopup } from '@/components/math/MathLivePopup';
 import GemStone from '@/components/gamification/GemStone';
 import { GemEvolutionModal } from '@/components/gamification/GemEvolutionModal';
@@ -35,6 +36,20 @@ function stripLatexWrap(answer: string): string {
     return answer.slice(1, -1);
   }
   return answer;
+}
+
+const FONT_SIZES = [
+  { key: 0, label: '기본', size: '15px', readingLeading: '2rem', blankLeading: '1.75rem' },
+  { key: 1, label: '크게', size: '17px', readingLeading: '2.25rem', blankLeading: '2rem' },
+  { key: 2, label: '더크게', size: '19px', readingLeading: '2.5rem', blankLeading: '2.25rem' },
+  { key: 3, label: '매우크게', size: '21px', readingLeading: '2.75rem', blankLeading: '2.5rem' },
+] as const;
+
+function getStoredFontSize(): number {
+  if (typeof window === 'undefined') return 0;
+  const v = localStorage.getItem('concept-font-size');
+  const n = v ? parseInt(v, 10) : 0;
+  return n >= 0 && n <= 3 ? n : 0;
 }
 
 const stageConfig = [
@@ -102,6 +117,14 @@ export default function ConceptPage() {
     } | null;
   }>({ prev: null, next: null });
   const [gemModal, setGemModal] = useState<{ fromStage: number; toStage: number; xp: number } | null>(null);
+
+  // 글씨 크기 설정
+  const [fontSizeIdx, setFontSizeIdx] = useState(getStoredFontSize);
+  const fontCfg = FONT_SIZES[fontSizeIdx];
+  const handleFontSizeChange = useCallback((idx: number) => {
+    setFontSizeIdx(idx);
+    localStorage.setItem('concept-font-size', String(idx));
+  }, []);
 
   // 정답 공개 관련 상태
   const [revealedAnswers, setRevealedAnswers] = useState<Record<number, string>>({});
@@ -398,10 +421,10 @@ export default function ConceptPage() {
         </div>
       </div>
 
-      {/* 이전/다음 개념 네비게이션 */}
-      {(adjacent.prev || adjacent.next) && (
-        <div className="border-b border-slate-200 bg-slate-50/50 px-6 py-2">
-          <div className="max-w-[1200px] mx-auto flex items-center justify-between">
+      {/* 이전/다음 개념 네비게이션 + 글씨 크기 */}
+      <div className="border-b border-slate-200 bg-slate-50/50 px-6 py-2">
+        <div className="max-w-[1200px] mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2">
             {adjacent.prev ? (
               <button
                 onClick={() => router.push(`/concepts/${adjacent.prev!.conceptCode ?? adjacent.prev!.id}`)}
@@ -412,6 +435,27 @@ export default function ConceptPage() {
                 <span className="sm:hidden">이전</span>
               </button>
             ) : <span />}
+          </div>
+          <div className="flex items-center gap-3">
+            {/* 글씨 크기 조절 */}
+            <div className="flex items-center gap-1">
+              <Type className="w-3.5 h-3.5 text-slate-400" />
+              {FONT_SIZES.map((f, i) => (
+                <button
+                  key={f.key}
+                  onClick={() => handleFontSizeChange(i)}
+                  className={`px-1.5 py-0.5 text-xs rounded-sm transition-colors ${
+                    fontSizeIdx === i
+                      ? 'bg-primary text-white font-bold'
+                      : 'text-slate-500 hover:bg-slate-200'
+                  }`}
+                  title={`글씨 크기: ${f.label}`}
+                  style={{ fontSize: `${11 + i}px` }}
+                >
+                  가
+                </button>
+              ))}
+            </div>
             {adjacent.next ? (
               <button
                 onClick={() => router.push(`/concepts/${adjacent.next!.conceptCode ?? adjacent.next!.id}`)}
@@ -424,7 +468,7 @@ export default function ConceptPage() {
             ) : <span />}
           </div>
         </div>
-      )}
+      </div>
 
       {/* Main Content */}
       <div className="flex-1 max-w-[1440px] w-full mx-auto p-6 flex flex-col lg:flex-row gap-6">
@@ -438,7 +482,10 @@ export default function ConceptPage() {
           </div>
           <div className="p-5 flex-1 overflow-y-auto">
             {currentStage.key === 'READING' && (
-              <div className="prose prose-slate max-w-none font-serif-kr text-[15px] leading-8">
+              <div
+                className="prose prose-slate max-w-none font-serif-kr"
+                style={{ fontSize: fontCfg.size, lineHeight: fontCfg.readingLeading }}
+              >
                 <MathRenderer content={concept.fullContent.replace(/\n/g, '<br/>')} />
               </div>
             )}
@@ -491,7 +538,7 @@ export default function ConceptPage() {
                   </h3>
                 </div>
                 <div className="p-4 flex-1 overflow-y-auto">
-                  <div className="text-[15px] leading-7">
+                  <div className="whitespace-pre-wrap" style={{ fontSize: fontCfg.size, lineHeight: fontCfg.blankLeading }}>
                     {renderBlanksTemplate(
                       blanks, blankAnswers, setBlankAnswers, blankResults,
                       showHints, setShowHints, mathPopup, setMathPopup,
@@ -681,18 +728,9 @@ function renderBlanksTemplate(
   return parts.map((part, idx) => {
     const match = part.match(/\{\{(\d+)\}\}/);
     if (!match) {
-      // \n 줄바꿈을 <br>로 변환, 각 줄은 인라인 MathRenderer로 렌더링
-      const lines = part.split('\n');
-      return (
-        <React.Fragment key={idx}>
-          {lines.map((line, li) => (
-            <React.Fragment key={li}>
-              {li > 0 && <br />}
-              {line && <MathRenderer content={line} inline />}
-            </React.Fragment>
-          ))}
-        </React.Fragment>
-      );
+      // InlineMathText로 렌더링: 공백 보존 + $...$ 수식 지원
+      // (whitespace-pre-wrap 컨테이너에서 \n도 줄바꿈으로 렌더링됨)
+      return <InlineMathText key={idx} text={part} />;
     }
 
     const position = parseInt(match[1], 10);

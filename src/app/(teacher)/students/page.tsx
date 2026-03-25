@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { toast } from '@/components/ui/Toast';
 import { confirm } from '@/components/ui/ConfirmDialog';
 import { Users, ArrowLeft } from 'lucide-react';
@@ -16,11 +17,13 @@ import type { UserItem, StudentStats } from '@/components/teacher/students';
 
 export default function StudentsPage() {
   const { user: currentUser } = useAuth();
+  const searchParams = useSearchParams();
   const isManager = hasRoleClient(currentUser?.role, 'MANAGER');
   const isOwner = hasRoleClient(currentUser?.role, 'OWNER');
 
   const [users, setUsers] = useState<UserItem[]>([]);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ username: '', password: '', name: '', grade: 5, phone: '', parentName: '', parentPhone: '', school: '', birthDate: '', email: '', address: '', startDate: '', notes: '' });
   const [formError, setFormError] = useState('');
@@ -28,24 +31,44 @@ export default function StudentsPage() {
   const [gradeFilter, setGradeFilter] = useState<string>('all');
   const [levelFilter, setLevelFilter] = useState<string>('all');
   const [activityFilter, setActivityFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserItem | null>(null);
+  const [initialIdHandled, setInitialIdHandled] = useState(false);
 
   // 상세 통계
   const [stats, setStats] = useState<StudentStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
 
+  // 검색어 디바운스
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const fetchUsers = useCallback(async () => {
     setLoading(true);
-    const res = await fetch('/api/users');
+    const params = new URLSearchParams();
+    params.set('page', String(currentPage));
+    params.set('limit', '30');
+    if (debouncedSearch) params.set('search', debouncedSearch);
+    if (gradeFilter !== 'all') params.set('grade', gradeFilter);
+    const res = await fetch(`/api/users?${params}`);
     if (res.ok) {
       const json = await res.json();
       const all: UserItem[] = json.data ?? [];
       setUsers(all.filter((u) => u.role === 'STUDENT'));
+      setTotalPages(json.meta?.totalPages ?? 1);
+      setTotalCount(json.meta?.total ?? 0);
     }
     setLoading(false);
-  }, []);
+  }, [currentPage, debouncedSearch, gradeFilter]);
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
@@ -64,10 +87,26 @@ export default function StudentsPage() {
     }
   }, []);
 
+  // URL ?id= 파라미터로 학생 자동 선택
+  useEffect(() => {
+    if (initialIdHandled || users.length === 0) return;
+    const targetId = searchParams.get('id');
+    if (targetId) {
+      const found = users.find((u) => u.id === targetId);
+      if (found) {
+        setSelectedUser(found);
+        fetchStats(found.id);
+      }
+    }
+    setInitialIdHandled(true);
+  }, [users, searchParams, initialIdHandled, fetchStats]);
+
+  // 학년/레벨/활동 필터 변경 시 페이지 리셋
+  const handleGradeFilterChange = (v: string) => { setGradeFilter(v); setCurrentPage(1); };
+
+  // 레벨/활동 필터는 서버 페이지 내에서 클라이언트 필터링
   const filteredUsers = users
-    .filter((u) => u.name.includes(search) || u.username.includes(search))
     .filter((u) => {
-      if (gradeFilter !== 'all' && String(u.grade) !== gradeFilter) return false;
       if (levelFilter !== 'all') {
         const level = u.profile?.level ?? 1;
         if (levelFilter === 'low' && level > 2) return false;
@@ -141,7 +180,7 @@ export default function StudentsPage() {
     fetchStats(u.id);
   };
 
-  const studentCount = users.length;
+  const studentCount = totalCount;
 
   const mobileShowDetail = !!(selectedUser || showForm);
 
@@ -154,12 +193,15 @@ export default function StudentsPage() {
         search={search}
         onSearchChange={setSearch}
         gradeFilter={gradeFilter}
-        onGradeFilterChange={setGradeFilter}
+        onGradeFilterChange={handleGradeFilterChange}
         levelFilter={levelFilter}
         onLevelFilterChange={setLevelFilter}
         activityFilter={activityFilter}
         onActivityFilterChange={setActivityFilter}
-        onResetFilters={() => { setGradeFilter('all'); setLevelFilter('all'); setActivityFilter('all'); }}
+        onResetFilters={() => { setGradeFilter('all'); setLevelFilter('all'); setActivityFilter('all'); setCurrentPage(1); }}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
         loading={loading}
         filteredUsers={filteredUsers}
         selectedUserId={selectedUser?.id ?? null}

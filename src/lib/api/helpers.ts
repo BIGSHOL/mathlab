@@ -111,6 +111,32 @@ export async function getScopedStudentIds(user: AuthUser): Promise<string[] | nu
   return students.map((s) => s.id);
 }
 
+/**
+ * 개념 fullContent 정규화:
+ * 1. blockquote(>) 마커 제거 — 개념은 인용 박스 불필요
+ * 2. 줄 시작 "N." (마크다운 리스트 문법)을 ① ② 동그라미 숫자로 변환
+ *    - (1) (2) 형식은 유지 (대항목 번호)
+ *    - 1. 2. 형식만 변환 (소항목 단계 — 마크다운 파싱 방지)
+ */
+const CIRCLED_NUMBERS = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳';
+export function normalizeConceptContent(content: string): string {
+  return content
+    .split('\n')
+    .map((line) => {
+      let l = line.replace(/^>\s?/, ''); // blockquote 제거
+      // N. → ① (줄 시작만, 마크다운 리스트 파싱 방지)
+      l = l.replace(/^\s*(\d{1,2})\.\s/, (m, g1) => {
+        const n = parseInt(g1, 10);
+        const circled = CIRCLED_NUMBERS[n - 1];
+        if (!circled) return m;
+        const indent = m.match(/^\s*/)?.[0] ?? '';
+        return `${indent}${circled} `;
+      });
+      return l;
+    })
+    .join('\n');
+}
+
 /** 숙제 플랜 GET 공통 — TEACHER는 자기 것만, OWNER 이상은 자기 테넌트 전체 */
 export function homeworkCreatedByFilter(user: AuthUser): string | undefined {
   // OWNER 이상은 전체 조회, TEACHER는 자기 것만

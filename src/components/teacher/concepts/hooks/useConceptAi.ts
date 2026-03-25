@@ -49,17 +49,27 @@ export function useConceptAi(deps: AiDeps) {
       if (!(await confirm({ message: '모든 메타데이터가 이미 채워져 있습니다. AI 분류를 다시 실행하시겠습니까?', variant: 'info', confirmLabel: '실행' }))) return;
     }
 
+    // {{N}} 빈칸 마커를 원래 답으로 복원하여 AI에 원본 텍스트 전달
+    let contentForAi = deps.editForm.fullContent;
+    if (/\{\{\d+\}\}/.test(contentForAi) && deps.blankExercises.length > 0) {
+      for (const ex of deps.blankExercises) {
+        for (const b of ex.blanks) {
+          contentForAi = contentForAi.replaceAll(`{{${b.position}}}`, b.answer);
+        }
+      }
+    }
+
     setAiMetadataLoading(true);
     try {
       const res = await fetch('/api/concepts/extract-metadata', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: deps.editForm.title, fullContent: deps.editForm.fullContent, currentKeywords: deps.editForm.keywords || '' }),
+        body: JSON.stringify({ title: deps.editForm.title, fullContent: contentForAi, currentKeywords: deps.editForm.keywords || '' }),
       });
       if (!res.ok) throw new Error('AI extraction failed');
       const json = await res.json();
       const meta = json.data as {
         title: string; grade: string; semester: number;
-        chapter: string; section: string; part: string; keywords: string;
+        chapter: string; section: string; sectionSub: string; part: string; keywords: string;
         correctedContent: string; corrections: { original: string; corrected: string; reason: string }[];
       };
 
@@ -67,6 +77,7 @@ export function useConceptAi(deps: AiDeps) {
 
       let matchedChapter = '';
       let matchedSection = '';
+      let matchedSectionSub = '';
       if (gradeCode) {
         const entries = getCurriculumForGrade(gradeCode);
         const isHigh = gradeCode.startsWith('high_');
@@ -77,7 +88,13 @@ export function useConceptAi(deps: AiDeps) {
             matchedChapter = ch.name;
             if (meta.section && ch.subUnits) {
               const sec = ch.subUnits.find(s => s.name === meta.section) || ch.subUnits.find(s => meta.section.includes(s.name) || s.name.includes(meta.section));
-              if (sec) matchedSection = sec.name;
+              if (sec) {
+                matchedSection = sec.name;
+                if (meta.sectionSub && sec.subUnits) {
+                  const sub = sec.subUnits.find(s => s.name === meta.sectionSub) || sec.subUnits.find(s => meta.sectionSub.includes(s.name) || s.name.includes(meta.sectionSub));
+                  if (sub) matchedSectionSub = sub.name;
+                }
+              }
             }
           }
         }
@@ -91,12 +108,19 @@ export function useConceptAi(deps: AiDeps) {
       if (meta.semester) proposed.push({ field: 'semester', label: '학기', raw: meta.semester, display: `${meta.semester}학기` });
       if (matchedChapter) proposed.push({ field: 'chapter', label: '대단원', raw: matchedChapter, display: matchedChapter });
       if (matchedSection) proposed.push({ field: 'section', label: '중단원', raw: matchedSection, display: matchedSection });
+      if (matchedSectionSub) proposed.push({ field: 'sectionSub', label: '소단원', raw: matchedSectionSub, display: matchedSectionSub });
       if (validPart) proposed.push({ field: 'part', label: '영역', raw: validPart, display: PART_LABELS[validPart] || validPart });
       if (meta.keywords) proposed.push({ field: 'keywords', label: '키워드', raw: meta.keywords, display: meta.keywords });
 
       if (meta.correctedContent && meta.correctedContent.trim() && meta.corrections?.length > 0) {
+        // 교정 적용 시 {{N}} 마커가 있는 현재 fullContent에 반영해야 함
+        // → 각 correction을 개별 replaceAll로 적용 (마커 보존)
+        let correctedWithMarkers = deps.editForm.fullContent;
+        for (const c of meta.corrections) {
+          correctedWithMarkers = correctedWithMarkers.replaceAll(c.original, c.corrected);
+        }
         const correctionSummary = meta.corrections.map(c => `${c.original} → ${c.corrected}`).join(', ');
-        proposed.push({ field: 'fullContent', label: '맞춤법 교정', raw: meta.correctedContent, display: `${meta.corrections.length}건: ${correctionSummary}` });
+        proposed.push({ field: 'fullContent', label: '맞춤법 교정', raw: correctedWithMarkers, display: `${meta.corrections.length}건: ${correctionSummary}` });
       }
 
       const autoApply: Partial<EditFormState> = {};
@@ -163,11 +187,22 @@ export function useConceptAi(deps: AiDeps) {
     setShowBlankGenOptions(false);
     const validationError = validateContentForAi(deps.editForm.fullContent);
     if (validationError) { toast.warning(validationError); return; }
+
+    // {{N}} 빈칸 마커를 원래 답으로 복원하여 AI에 원본 텍스트 전달
+    let contentForAi = deps.editForm.fullContent;
+    if (/\{\{\d+\}\}/.test(contentForAi) && deps.blankExercises.length > 0) {
+      for (const ex of deps.blankExercises) {
+        for (const b of ex.blanks) {
+          contentForAi = contentForAi.replaceAll(`{{${b.position}}}`, b.answer);
+        }
+      }
+    }
+
     setAiGenerating(true);
     try {
       const res = await fetch('/api/concepts/bulk/extract-blanks', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: [{ title: deps.editForm.title, fullContent: deps.editForm.fullContent }], mergeSameTerms }),
+        body: JSON.stringify({ items: [{ title: deps.editForm.title, fullContent: contentForAi }], mergeSameTerms }),
       });
       if (!res.ok) throw new Error('AI extraction failed');
       const json = await res.json();

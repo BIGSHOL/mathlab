@@ -47,11 +47,19 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // 기존 최대 sortOrder 조회 (순서 이어 붙이기)
+  const maxSort = await prisma.concept.aggregate({
+    where: { subjectId },
+    _max: { sortOrder: true },
+  });
+  const baseSort = (maxSort._max.sortOrder ?? -1) + 1;
+
   // Create all concepts in a transaction (individual creates to get IDs)
-  const data = concepts.map((c) => ({
+  const data = concepts.map((c, i) => ({
     subjectId,
     title: c.title,
     fullContent: c.fullContent,
+    sortOrder: c.sortOrder ?? baseSort + i,
     conceptCode: c.conceptCode || null,
     grade: c.grade || null,
     semester: c.semester ?? null,

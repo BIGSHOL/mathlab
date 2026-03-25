@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import {
   Eye, Edit, Trash2, Plus, Loader2, FileText, Sparkles,
-  FunctionSquare, ChevronDown, ChevronRight,
+  FunctionSquare, ChevronDown, ChevronRight, Play,
 } from 'lucide-react';
 import { InlineMathText } from '@/components/math/InlineMathText';
 import { EditableMathRenderer } from '@/components/math/EditableMathRenderer';
@@ -14,6 +14,7 @@ import type { BlankItem } from './types';
 import type { ConceptManagerReturn } from './useConceptManager';
 import { ContentWithBlanks } from './ContentWithBlanks';
 import { PrerequisiteSection } from './BlankEditorColumns';
+import { BlankSolveMode } from './BlankSolveMode';
 
 interface ConceptContentColumnsProps {
   mgr: ConceptManagerReturn;
@@ -37,6 +38,8 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
     handleAiMetadataExtract, handleAiBlankGenerate,
     startEditBlank, startNewBlank, deleteBlankExercise,
   } = mgr;
+
+  const [solveMode, setSolveMode] = useState(false);
 
   return (
     <div className="grid grid-cols-2 divide-x divide-slate-200 h-full">
@@ -66,7 +69,7 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
                   }`}
                 >
                   <Eye className="w-3.5 h-3.5" />
-                  {templateViewMode === 'raw' ? '미리보기' : '원본'}
+                  {templateViewMode === 'raw' ? '미리보기' : '마크업'}
                 </button>
                 {templateViewMode === 'raw' && (
                   <>
@@ -99,6 +102,33 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
                 className="w-full h-[300px] min-h-[200px] max-h-[600px] resize-y px-3 py-2 border border-slate-200 rounded-sm text-sm bg-white leading-relaxed font-serif-kr focus:ring-2 focus:ring-primary/40 focus:border-primary"
                 value={editForm.fullContent}
                 onChange={(e) => setEditForm((p) => ({ ...p, fullContent: e.target.value }))}
+                onClick={(e) => {
+                  // 커서가 $...$ 수식 안에 있으면 수식 편집 팝업 열기
+                  const pos = e.currentTarget.selectionStart;
+                  const text = editForm.fullContent;
+                  let i = 0;
+                  while (i < text.length) {
+                    const ds = text.indexOf('$$', i);
+                    const ss = text.indexOf('$', i);
+                    if (ds === i) {
+                      const de = text.indexOf('$$', ds + 2);
+                      if (de > ds && pos > ds + 1 && pos < de + 2) {
+                        setTemplateMathPopup({ latex: text.slice(ds + 2, de), start: ds, end: de + 2 });
+                        return;
+                      }
+                      i = de > ds ? de + 2 : i + 2;
+                    } else if (ss === i) {
+                      const se = text.indexOf('$', ss + 1);
+                      if (se > ss && !text.slice(ss + 1, se).includes('\n') && pos > ss && pos < se + 1) {
+                        setTemplateMathPopup({ latex: text.slice(ss + 1, se), start: ss, end: se + 1 });
+                        return;
+                      }
+                      i = se > ss ? se + 1 : i + 1;
+                    } else {
+                      i = ss >= 0 ? ss : text.length;
+                    }
+                  }
+                }}
                 placeholder="개념 내용을 입력하세요..."
                 spellCheck={false}
                 disabled={!isOwner}
@@ -117,24 +147,22 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
               </div>
             )}
             {/* fullContent 수식 편집 팝업 */}
-            {templateViewMode === 'rendered' && (
-              <MathLivePopup
-                isOpen={!!templateMathPopup}
-                onClose={() => setTemplateMathPopup(null)}
-                onInsert={(latex) => {
-                  if (templateMathPopup) {
-                    const { start, end } = templateMathPopup;
-                    const newText = editForm.fullContent.slice(0, start) + `$${latex}$` + editForm.fullContent.slice(end);
-                    setEditForm((p) => ({ ...p, fullContent: newText }));
-                  }
-                  setTemplateMathPopup(null);
-                }}
-                initialLatex={templateMathPopup?.latex ?? ''}
-              />
-            )}
+            <MathLivePopup
+              isOpen={!!templateMathPopup}
+              onClose={() => setTemplateMathPopup(null)}
+              onInsert={(latex) => {
+                if (templateMathPopup) {
+                  const { start, end } = templateMathPopup;
+                  const newText = editForm.fullContent.slice(0, start) + `$${latex}$` + editForm.fullContent.slice(end);
+                  setEditForm((p) => ({ ...p, fullContent: newText }));
+                }
+                setTemplateMathPopup(null);
+              }}
+              initialLatex={templateMathPopup?.latex ?? ''}
+            />
           </div>
         ) : (
-          <div className="w-full min-h-[200px] flex-1 px-3 py-2 border border-slate-200 rounded-sm text-[15px] bg-white leading-8 whitespace-pre-wrap overflow-y-auto font-serif-kr scrollbar-thin">
+          <div className="w-full min-h-[200px] flex-1 px-3 py-2 border border-slate-200 rounded-sm text-[15px] bg-white overflow-y-auto font-serif-kr scrollbar-thin" style={{ whiteSpace: 'pre-line' }}>
             {blanksLoading ? (
               <div className="flex items-center justify-center h-full text-text-secondary text-sm">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -253,6 +281,16 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
                     blanks={blanks}
                   />
 
+                  {/* 풀이 테스트 버튼 (OWNER가 아니어도 가능) */}
+                  <button
+                    type="button"
+                    onClick={() => setSolveMode(true)}
+                    className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-violet-600 hover:bg-violet-50 rounded-sm transition-colors border border-violet-200"
+                  >
+                    <Play className="w-3.5 h-3.5" />
+                    풀이 테스트
+                  </button>
+
                   {isOwner && (
                     <div className="flex items-center gap-2 pt-1">
                       <button
@@ -279,6 +317,16 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
           );
         })()}
       </div>
+
+      {/* 풀이 테스트 모달 */}
+      {solveMode && blankExercises[0] && (
+        <BlankSolveMode
+          templateText={blankExercises[0].templateText}
+          blanks={blankExercises[0].blanks as BlankItem[]}
+          conceptTitle={editForm.title}
+          onClose={() => setSolveMode(false)}
+        />
+      )}
     </div>
   );
 }

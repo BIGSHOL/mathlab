@@ -234,7 +234,7 @@ export function useConceptCrud(deps: CrudDeps) {
       } else {
         const body: Record<string, unknown> = {
           title: editForm.title, fullContent: editForm.fullContent,
-          conceptCode: editForm.conceptCode,
+          conceptCode: editForm.conceptCode || null,
           grade: editForm.grade,
           semester: editForm.semester ? Number(editForm.semester) : null,
           chapter: editForm.chapter || null, section: editForm.section || null,

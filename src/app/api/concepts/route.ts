@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, requireSuperAdmin, validateQuery, validateBody, isResponse } from '@/lib/api';
+import { requireTeacher, requireSuperAdmin, validateQuery, validateBody, isResponse, normalizeConceptContent } from '@/lib/api';
 import { conceptQuerySchema, createConceptSchema } from '@/lib/schemas/concept';
 
 // GET /api/concepts?subjectId=xxx&grade=middle_1&category=concept&part=calc&search=xxx
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: [{ subject: { sortOrder: 'asc' } }, { sortOrder: 'asc' }],
+      orderBy: [{ subject: { sortOrder: 'asc' } }, { title: 'asc' }, { sortOrder: 'asc' }],
       skip: (page - 1) * limit,
       take: limit,
     }),
@@ -93,6 +93,11 @@ export async function POST(request: NextRequest) {
   if (isResponse(parsed)) return parsed;
 
   const { prerequisites, ...data } = parsed;
+
+  // 개념 내용 정규화 (blockquote 제거 + 번호 → 동그라미 숫자)
+  if (data.fullContent) {
+    data.fullContent = normalizeConceptContent(data.fullContent);
+  }
 
   const concept = await prisma.concept.create({
     data: {

@@ -3,6 +3,49 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { X, FunctionSquare } from 'lucide-react';
 
+// MathField 타입 (MathLive의 math-field 커스텀 엘리먼트)
+interface MathFieldElement extends HTMLElement {
+  value: string;
+  focus: () => void;
+  executeCommand: (cmd: string | [string, ...unknown[]]) => void;
+}
+
+// 퀵 입력 버튼 정의 — 모두 insert용 LaTeX
+const QUICK_BUTTONS: { label: string; latex: string; title: string }[][] = [
+  // Row 1: 구조
+  [
+    { label: 'x²', latex: '#@^{#0}', title: '윗첨자 (^)' },
+    { label: 'xₙ', latex: '#@_{#0}', title: '아래첨자 (_)' },
+    { label: '½', latex: '\\frac{#@}{#0}', title: '분수' },
+    { label: '√', latex: '\\sqrt{#0}', title: '제곱근' },
+    { label: '∛', latex: '\\sqrt[3]{#0}', title: '세제곱근' },
+    { label: '|x|', latex: '\\left|#0\\right|', title: '절댓값' },
+    { label: '( )', latex: '\\left(#0\\right)', title: '괄호' },
+  ],
+  // Row 2: 연산·비교
+  [
+    { label: '×', latex: '\\times', title: '곱하기' },
+    { label: '÷', latex: '\\div', title: '나누기' },
+    { label: '±', latex: '\\pm', title: '플러스마이너스' },
+    { label: '≠', latex: '\\neq', title: '같지 않다' },
+    { label: '≤', latex: '\\leq', title: '이하' },
+    { label: '≥', latex: '\\geq', title: '이상' },
+    { label: '∴', latex: '\\therefore', title: '그러므로' },
+    { label: '⇒', latex: '\\Rightarrow', title: '화살표' },
+  ],
+  // Row 3: 기호·그리스 문자
+  [
+    { label: 'π', latex: '\\pi', title: '파이' },
+    { label: '∞', latex: '\\infty', title: '무한대' },
+    { label: 'θ', latex: '\\theta', title: '세타' },
+    { label: 'α', latex: '\\alpha', title: '알파' },
+    { label: 'β', latex: '\\beta', title: '베타' },
+    { label: '°', latex: '\\degree', title: '도 (각도)' },
+    { label: '△', latex: '\\triangle', title: '삼각형' },
+    { label: '∠', latex: '\\angle', title: '각' },
+  ],
+];
+
 interface MathLivePopupProps {
   isOpen: boolean;
   onClose: () => void;
@@ -17,7 +60,7 @@ export function MathLivePopup({
   initialLatex = '',
 }: MathLivePopupProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const mathFieldRef = useRef<HTMLElement | null>(null);
+  const mathFieldRef = useRef<MathFieldElement | null>(null);
   const [rawLatex, setRawLatex] = useState(initialLatex);
   const [loaded, setLoaded] = useState(false);
 
@@ -31,29 +74,29 @@ export function MathLivePopup({
     if (!loaded || !isOpen || !containerRef.current) return;
     if (mathFieldRef.current) return; // 이미 생성됨
 
-    const mf = document.createElement('math-field');
-    mf.style.width = '100%';
-    mf.style.minHeight = '80px';
-    mf.style.fontSize = '1.5rem';
-    mf.style.padding = '16px';
-    mf.style.border = 'none';
-    mf.style.outline = 'none';
-    mf.style.display = 'block';
-    mf.style.boxSizing = 'border-box';
-    // 가상 키보드를 팝업 내부가 아닌 별도 레이어로 표시
-    mf.setAttribute('virtual-keyboard-mode', 'off');
+    const mf = document.createElement('math-field') as unknown as MathFieldElement;
+    const el = mf as unknown as HTMLElement;
+    el.style.width = '100%';
+    el.style.minHeight = '80px';
+    el.style.fontSize = '1.5rem';
+    el.style.padding = '16px';
+    el.style.border = 'none';
+    el.style.outline = 'none';
+    el.style.display = 'block';
+    el.style.boxSizing = 'border-box';
+    el.setAttribute('virtual-keyboard-mode', 'off');
 
-    containerRef.current.appendChild(mf);
+    containerRef.current.appendChild(el);
     mathFieldRef.current = mf;
 
     // input 이벤트 리스닝
-    mf.addEventListener('input', () => {
-      setRawLatex((mf as unknown as { value: string }).value || '');
+    el.addEventListener('input', () => {
+      setRawLatex(mf.value || '');
     });
 
     return () => {
-      if (containerRef.current?.contains(mf)) {
-        containerRef.current.removeChild(mf);
+      if (containerRef.current?.contains(el)) {
+        containerRef.current.removeChild(el);
       }
       mathFieldRef.current = null;
     };
@@ -65,10 +108,8 @@ export function MathLivePopup({
       setRawLatex(initialLatex);
       setTimeout(() => {
         if (mathFieldRef.current) {
-          (mathFieldRef.current as unknown as { value: string }).value =
-            initialLatex;
-          // 포커스
-          (mathFieldRef.current as unknown as { focus: () => void }).focus?.();
+          mathFieldRef.current.value = initialLatex;
+          mathFieldRef.current.focus();
         }
       }, 100);
     }
@@ -81,6 +122,17 @@ export function MathLivePopup({
     }
     onClose();
   }, [rawLatex, onInsert, onClose]);
+
+  // 퀵 버튼 클릭 → MathField에 삽입
+  const handleQuickInsert = useCallback((btn: typeof QUICK_BUTTONS[0][0]) => {
+    const mf = mathFieldRef.current;
+    if (!mf) return;
+
+    mf.executeCommand(['insert', btn.latex]);
+    mf.focus();
+    // 값 동기화
+    setTimeout(() => setRawLatex(mf.value || ''), 50);
+  }, []);
 
   // ESC로 닫기
   useEffect(() => {
@@ -135,6 +187,25 @@ export function MathLivePopup({
             </div>
           </div>
 
+          {/* 퀵 입력 툴바 */}
+          <div className="space-y-1">
+            {QUICK_BUTTONS.map((row, ri) => (
+              <div key={ri} className="flex gap-1 flex-wrap">
+                {row.map((btn) => (
+                  <button
+                    key={btn.label}
+                    type="button"
+                    title={btn.title}
+                    onClick={() => handleQuickInsert(btn)}
+                    className="min-w-[40px] h-9 px-2 text-sm font-medium bg-slate-100 hover:bg-primary/10 hover:text-primary border border-slate-200 rounded-sm transition-colors"
+                  >
+                    {btn.label}
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+
           {/* Raw LaTeX 입력 (양방향 동기화) */}
           <div>
             <label className="block text-xs font-bold text-text-secondary mb-1.5">
@@ -146,9 +217,7 @@ export function MathLivePopup({
               onChange={(e) => {
                 setRawLatex(e.target.value);
                 if (mathFieldRef.current) {
-                  (
-                    mathFieldRef.current as unknown as { value: string }
-                  ).value = e.target.value;
+                  mathFieldRef.current.value = e.target.value;
                 }
               }}
               placeholder="\frac{a}{b}"

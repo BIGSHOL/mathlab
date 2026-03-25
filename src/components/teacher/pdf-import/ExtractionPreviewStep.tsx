@@ -29,10 +29,14 @@ import type {
   ExtractedProblem,
   ExtractedConcept,
   PdfExtractProgress,
+  ExtractionMode,
 } from '@/types/pdf-extract';
 import { DIFFICULTY_OPTIONS, TYPE_OPTIONS } from './types';
 
 interface ExtractionPreviewStepProps {
+  // 추출 모드
+  extractionMode: ExtractionMode;
+
   // 추출 상태
   extracting: boolean;
   progress: PdfExtractProgress;
@@ -81,6 +85,7 @@ interface ExtractionPreviewStepProps {
 }
 
 export function ExtractionPreviewStep({
+  extractionMode,
   extracting,
   progress,
   problems,
@@ -124,7 +129,7 @@ export function ExtractionPreviewStep({
           <div className="flex items-center gap-3 mb-3">
             <Loader2 className="w-6 h-6 text-primary animate-spin" />
             <span className="text-sm font-medium">
-              AI 추출 중... ({progress.done}/{progress.total} 페이지)
+              {extractionMode === 'concepts' ? '개념' : '문제'} 추출 중... ({progress.done}/{progress.total} 페이지)
               {progress.currentPage && ` — 현재 p.${progress.currentPage}`}
               {(progress.skipped ?? 0) > 0 && ` (${progress.skipped}페이지 자동 스킵)`}
             </span>
@@ -139,96 +144,98 @@ export function ExtractionPreviewStep({
       )}
 
       {/* 추출 완료 후 */}
-      {!extracting && problems.length > 0 && (
+      {!extracting && (problems.length > 0 || concepts.length > 0) && (
         <>
-          {/* 상단 도구 */}
-          <Card padding="base" className="mb-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="text-sm font-medium text-slate-900">
-                추출된 문제: <span className="text-primary">{problems.length}개</span>
-              </span>
+          {/* 상단 도구 — 문제 모드에서만 표시 */}
+          {extractionMode === 'problems' && problems.length > 0 && (
+            <Card padding="base" className="mb-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-sm font-medium text-slate-900">
+                  추출된 문제: <span className="text-primary">{problems.length}개</span>
+                </span>
 
-              {/* AI 풀이 생성 + 해설 PDF 업로드 */}
-              <div className="ml-auto flex items-center gap-2">
-                {generatingSolutions ? (
-                  <span className="text-sm text-violet-600 flex items-center gap-1">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    풀이 생성 중... ({generateProgress.done}/{generateProgress.total})
-                  </span>
-                ) : (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={startGenerateSolutions}
-                    disabled={matchingSolutions || problems.every((p) => !!p.explanation)}
-                    className="flex items-center gap-1"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    AI 풀이 생성
-                  </Button>
-                )}
-                {matchingSolutions ? (
-                  <span className="text-sm text-blue-600 flex items-center gap-1">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    해설 추출 중... ({solutionProgress.done}/{solutionProgress.total} 페이지)
-                  </span>
-                ) : matchResult ? (
-                  <span className="text-sm text-green-600 flex items-center gap-1">
-                    <CheckCircle2 className="w-4 h-4" />
-                    {matchResult.matched}개 매칭 완료 (추출 {matchResult.total}개)
-                  </span>
-                ) : solutionPdfDoc ? (
-                  /* 해설 PDF 로드됨 → 페이지 범위 입력 */
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-500">{solutionTotalPages}p</span>
-                    <input
-                      type="text"
-                      value={solutionPageRange}
-                      onChange={(e) => setSolutionPageRange(e.target.value)}
-                      placeholder="1-5, 8, 10-12"
-                      className="w-32 px-2 py-1 text-sm border border-slate-300 rounded"
-                    />
-                    <Button
-                      size="sm"
-                      onClick={startSolutionExtract}
-                      className="flex items-center gap-1"
-                    >
-                      <BookOpen className="w-4 h-4" />
-                      추출 시작
-                    </Button>
-                    <button
-                      onClick={clearSolutionPdf}
-                      className="text-slate-400 hover:text-red-500"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <>
+                {/* AI 풀이 생성 + 해설 PDF 업로드 */}
+                <div className="ml-auto flex items-center gap-2">
+                  {generatingSolutions ? (
+                    <span className="text-sm text-violet-600 flex items-center gap-1">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      풀이 생성 중... ({generateProgress.done}/{generateProgress.total})
+                    </span>
+                  ) : (
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={() => solutionInputRef.current?.click()}
+                      onClick={startGenerateSolutions}
+                      disabled={matchingSolutions || problems.every((p) => !!p.explanation)}
                       className="flex items-center gap-1"
                     >
-                      <BookOpen className="w-4 h-4" />
-                      해설지 업로드
+                      <Sparkles className="w-4 h-4" />
+                      AI 풀이 생성
                     </Button>
-                    <input
-                      ref={solutionInputRef}
-                      type="file"
-                      accept=".pdf"
-                      className="hidden"
-                      onChange={(e) => e.target.files?.[0] && handleSolutionFileSelect(e.target.files[0])}
-                    />
-                  </>
-                )}
+                  )}
+                  {matchingSolutions ? (
+                    <span className="text-sm text-blue-600 flex items-center gap-1">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      해설 추출 중... ({solutionProgress.done}/{solutionProgress.total} 페이지)
+                    </span>
+                  ) : matchResult ? (
+                    <span className="text-sm text-green-600 flex items-center gap-1">
+                      <CheckCircle2 className="w-4 h-4" />
+                      {matchResult.matched}개 매칭 완료 (추출 {matchResult.total}개)
+                    </span>
+                  ) : solutionPdfDoc ? (
+                    /* 해설 PDF 로드됨 → 페이지 범위 입력 */
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-500">{solutionTotalPages}p</span>
+                      <input
+                        type="text"
+                        value={solutionPageRange}
+                        onChange={(e) => setSolutionPageRange(e.target.value)}
+                        placeholder="1-5, 8, 10-12"
+                        className="w-32 px-2 py-1 text-sm border border-slate-300 rounded"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={startSolutionExtract}
+                        className="flex items-center gap-1"
+                      >
+                        <BookOpen className="w-4 h-4" />
+                        추출 시작
+                      </Button>
+                      <button
+                        onClick={clearSolutionPdf}
+                        className="text-slate-400 hover:text-red-500"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => solutionInputRef.current?.click()}
+                        className="flex items-center gap-1"
+                      >
+                        <BookOpen className="w-4 h-4" />
+                        해설지 업로드
+                      </Button>
+                      <input
+                        ref={solutionInputRef}
+                        type="file"
+                        accept=".pdf"
+                        className="hidden"
+                        onChange={(e) => e.target.files?.[0] && handleSolutionFileSelect(e.target.files[0])}
+                      />
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          )}
 
-          {/* 추출된 개념 미리보기 (ADMIN만) */}
-          {isOwner && concepts.length > 0 && (
+          {/* 추출된 개념 미리보기 */}
+          {concepts.length > 0 && (
             <Card padding="base" className="mb-4">
               <div className="flex items-center gap-3 mb-3">
                 <div className="flex items-center gap-2">
@@ -237,57 +244,67 @@ export function ExtractionPreviewStep({
                     추출된 개념: <span className="text-amber-600">{concepts.length}개</span>
                   </span>
                 </div>
-                <label className="flex items-center gap-1.5 text-sm text-slate-600 ml-auto">
-                  <input
-                    type="checkbox"
-                    checked={saveConcepts}
-                    onChange={(e) => setSaveConcepts(e.target.checked)}
-                    className="rounded border-slate-300"
-                  />
-                  개념 관리에 함께 저장
-                </label>
-                {saveConcepts && displaySubjects.length > 0 && (
-                  <select
-                    value={subjectId}
-                    onChange={(e) => setSubjectId(e.target.value)}
-                    className="text-sm px-2 py-1 border border-slate-300 rounded"
-                  >
-                    {displaySubjects.map((s) => (
-                      <option key={s.id} value={s.id}>{s.title}</option>
-                    ))}
-                  </select>
+                {extractionMode === 'concepts' ? (
+                  /* 개념 모드: 저장 옵션 항상 표시 */
+                  displaySubjects.length > 0 && (
+                    <div className="ml-auto flex items-center gap-2">
+                      <span className="text-xs text-slate-500">저장 과목:</span>
+                      <select
+                        value={subjectId}
+                        onChange={(e) => setSubjectId(e.target.value)}
+                        className="text-sm px-2 py-1 border border-slate-300 rounded"
+                      >
+                        {displaySubjects.map((s) => (
+                          <option key={s.id} value={s.id}>{s.title}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )
+                ) : (
+                  /* 문제 모드: OWNER만 저장 체크박스 */
+                  isOwner && (
+                    <>
+                      <label className="flex items-center gap-1.5 text-sm text-slate-600 ml-auto">
+                        <input
+                          type="checkbox"
+                          checked={saveConcepts}
+                          onChange={(e) => setSaveConcepts(e.target.checked)}
+                          className="rounded border-slate-300"
+                        />
+                        개념 관리에 함께 저장
+                      </label>
+                      {saveConcepts && displaySubjects.length > 0 && (
+                        <select
+                          value={subjectId}
+                          onChange={(e) => setSubjectId(e.target.value)}
+                          className="text-sm px-2 py-1 border border-slate-300 rounded"
+                        >
+                          {displaySubjects.map((s) => (
+                            <option key={s.id} value={s.id}>{s.title}</option>
+                          ))}
+                        </select>
+                      )}
+                    </>
+                  )
                 )}
               </div>
               <div className="space-y-3">
                 {concepts.map((c, ci) => (
-                  <div
+                  <ConceptCard
                     key={ci}
-                    className="border border-amber-200 bg-amber-50/50 rounded-sm p-3"
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full font-medium">
-                        {c.sectionHeader || '개념'}
-                      </span>
-                      <span className="text-sm font-semibold text-slate-800">{c.title}</span>
-                      <button
-                        onClick={() => setConcepts((prev) => prev.filter((_, i) => i !== ci))}
-                        className="ml-auto text-slate-400 hover:text-red-500"
-                        title="삭제"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div className="prose prose-sm max-w-none">
-                      <MathRenderer content={c.content} />
-                    </div>
-                  </div>
+                    concept={c}
+                    index={ci}
+                    isConceptMode={extractionMode === 'concepts'}
+                    onUpdate={(updates) => setConcepts((prev) => prev.map((item, i) => i === ci ? { ...item, ...updates } : item))}
+                    onDelete={() => setConcepts((prev) => prev.filter((_, i) => i !== ci))}
+                  />
                 ))}
               </div>
             </Card>
           )}
 
-          {/* 문제 목록 — sectionHeader 기준 그룹화 */}
-          <div className="space-y-6 mb-6">
+          {/* 문제 목록 — sectionHeader 기준 그룹화 (문제 모드에서만) */}
+          {problems.length > 0 && <div className="space-y-6 mb-6">
             {(() => {
               // sectionHeader 기준으로 그룹화 (순서 유지)
               const groups: { header: string; items: { problem: ExtractedProblem; idx: number }[] }[] = [];
@@ -332,17 +349,24 @@ export function ExtractionPreviewStep({
                 </div>
               ));
             })()}
-          </div>
+          </div>}
 
           {/* 하단 버튼 */}
           <div className="flex justify-between">
             <Button variant="secondary" onClick={onBack} className="flex items-center gap-2">
               <ArrowLeft className="w-4 h-4" /> 페이지 재선택
             </Button>
-            <Button onClick={handleSave} disabled={submitting || problems.length === 0} className="flex items-center gap-2">
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              {problems.length}개 문제{isOwner && saveConcepts && concepts.length > 0 ? ` + ${concepts.length}개 개념` : ''} 저장
-            </Button>
+            {extractionMode === 'concepts' ? (
+              <Button onClick={handleSave} disabled={submitting || concepts.length === 0} className="flex items-center gap-2">
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {concepts.length}개 개념 저장
+              </Button>
+            ) : (
+              <Button onClick={handleSave} disabled={submitting || problems.length === 0} className="flex items-center gap-2">
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {problems.length}개 문제{isOwner && saveConcepts && concepts.length > 0 ? ` + ${concepts.length}개 개념` : ''} 저장
+              </Button>
+            )}
           </div>
         </>
       )}
@@ -806,5 +830,101 @@ function EditForm({ problem, onUpdate, onClose }: EditFormProps) {
         onSave={handleDiagramSave}
       />
     </>
+  );
+}
+
+// --- 개념 카드 컴포넌트 ---
+interface ConceptCardProps {
+  concept: ExtractedConcept;
+  index: number;
+  isConceptMode: boolean;
+  onUpdate: (updates: Partial<ExtractedConcept>) => void;
+  onDelete: () => void;
+}
+
+function ConceptCard({ concept, isConceptMode, onUpdate, onDelete }: ConceptCardProps) {
+  const [editing, setEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(concept.title);
+  const [editContent, setEditContent] = useState(concept.content);
+  const [expanded, setExpanded] = useState(isConceptMode); // 개념 모드에서는 기본 펼침
+
+  const handleSave = () => {
+    onUpdate({ title: editTitle, content: editContent });
+    setEditing(false);
+  };
+
+  return (
+    <div className="border border-amber-200 bg-amber-50/50 rounded-sm p-3">
+      <div className="flex items-center gap-2 mb-2">
+        {concept.sectionCode && (
+          <span className="text-xs px-2 py-0.5 bg-amber-200 text-amber-800 rounded font-mono font-bold">
+            {concept.sectionCode}
+          </span>
+        )}
+        <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full font-medium">
+          {concept.sectionHeader || '개념'}
+        </span>
+        {editing ? (
+          <input
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            className="flex-1 text-sm font-semibold px-2 py-1 border border-amber-300 rounded-sm"
+          />
+        ) : (
+          <span className="text-sm font-semibold text-slate-800">{concept.title}</span>
+        )}
+        <div className="ml-auto flex items-center gap-1">
+          {editing ? (
+            <>
+              <button onClick={handleSave} className="p-1 text-green-600 hover:text-green-700" title="저장">
+                <Save className="w-4 h-4" />
+              </button>
+              <button onClick={() => { setEditing(false); setEditTitle(concept.title); setEditContent(concept.content); }} className="p-1 text-slate-400 hover:text-slate-600" title="취소">
+                <X className="w-4 h-4" />
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => { setEditing(true); setEditTitle(concept.title); setEditContent(concept.content); }} className="p-1 text-slate-400 hover:text-primary" title="편집">
+                <Edit className="w-4 h-4" />
+              </button>
+              <button onClick={onDelete} className="p-1 text-slate-400 hover:text-red-500" title="삭제">
+                <X className="w-4 h-4" />
+              </button>
+              <button onClick={() => setExpanded(!expanded)} className="p-1 text-slate-400 hover:text-slate-700">
+                {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+      {expanded && (
+        editing ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            {/* 왼쪽: 마크업 편집 */}
+            <div>
+              <label className="text-xs text-slate-500 mb-1 block">마크업 편집</label>
+              <textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                rows={12}
+                className="w-full text-sm px-3 py-2 border border-amber-300 rounded-sm font-mono"
+              />
+            </div>
+            {/* 오른쪽: 렌더링 미리보기 */}
+            <div>
+              <label className="text-xs text-slate-500 mb-1 block">미리보기</label>
+              <div className="prose prose-sm max-w-none p-3 bg-white border border-slate-200 rounded-sm min-h-[200px]">
+                <MathRenderer content={editContent} />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="prose prose-sm max-w-none">
+            <MathRenderer content={concept.content} />
+          </div>
+        )
+      )}
+    </div>
   );
 }

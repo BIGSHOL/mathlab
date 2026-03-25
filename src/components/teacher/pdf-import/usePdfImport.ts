@@ -6,6 +6,7 @@ import type {
   ExtractedConcept,
   PdfPageInfo,
   PdfExtractProgress,
+  ExtractionMode,
 } from '@/types/pdf-extract';
 import { mapDifficulty, mapType, embedBoxItems } from '@/types/pdf-extract';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
@@ -21,12 +22,52 @@ import {
   buildFilenameContext,
 } from './utils';
 
+// --- localStorage 크래시 복구 ---
+const BACKUP_KEY = 'pdf-import-backup';
+
+interface BackupData {
+  problems: ExtractedProblem[];
+  concepts: ExtractedConcept[];
+  bookCode: string;
+  savedAt: number;
+}
+
+function saveBackup(data: BackupData) {
+  try {
+    localStorage.setItem(BACKUP_KEY, JSON.stringify(data));
+  } catch { /* quota 초과 무시 */ }
+}
+
+function loadBackup(): BackupData | null {
+  try {
+    const raw = localStorage.getItem(BACKUP_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw) as BackupData;
+    // 24시간 이내 백업만 유효
+    if (Date.now() - data.savedAt > 24 * 60 * 60 * 1000) {
+      localStorage.removeItem(BACKUP_KEY);
+      return null;
+    }
+    if (!data.problems?.length) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function clearBackup() {
+  localStorage.removeItem(BACKUP_KEY);
+}
+
 export function usePdfImport(): PdfImportState {
   const { user } = useAuth();
   const isOwner = hasRoleClient(user?.role, 'OWNER');
 
   // 단계 관리
   const [step, setStep] = useState<StepNumber>(1);
+
+  // 크래시 복구
+  const [recoveryData, setRecoveryData] = useState<BackupData | null>(() => loadBackup());
 
   // Step 1: 업로드 & 설정
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -36,6 +77,9 @@ export function usePdfImport(): PdfImportState {
   const [chapters, setChapters] = useState<string[]>([]);
   const [loadingPdf, setLoadingPdf] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 추출 모드
+  const [extractionMode, setExtractionMode] = useState<ExtractionMode>('problems');
 
   // Step 2: 페이지 선택
   const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set());
@@ -186,6 +230,21 @@ export function usePdfImport(): PdfImportState {
     setRangeInput('');
   };
 
+  // --- 크래시 복구 ---
+  const restoreBackup = useCallback(() => {
+    if (!recoveryData) return;
+    setProblems(recoveryData.problems);
+    setConcepts(recoveryData.concepts);
+    setBookCode(recoveryData.bookCode);
+    setStep(3);
+    setRecoveryData(null);
+  }, [recoveryData]);
+
+  const dismissBackup = useCallback(() => {
+    clearBackup();
+    setRecoveryData(null);
+  }, []);
+
   // --- AI 추출 ---
   const startExtraction = async () => {
     if (!pdfDoc || selectedPages.size === 0) return;
@@ -198,9 +257,10 @@ export function usePdfImport(): PdfImportState {
     setProgress({ done: 0, total: sortedPages.length });
 
     const { renderPageForAI, isProblemPage, extractPageText } = await import('@/lib/utils/pdf-processor');
-    const allProblems: ExtractedProblem[] = [];
-    const allConcepts: ExtractedConcept[] = [];
+    // 점진적 수집용 (localStorage 백업에 사용)
+    const accumulated = { problems: [] as ExtractedProblem[], concepts: [] as ExtractedConcept[] };
     let skippedCount = 0;
+    const isConceptMode = extractionMode === 'concepts';
 
     // 페이지별 순차 처리 (각 API 호출은 1페이지)
     for (let i = 0; i < sortedPages.length; i++) {
@@ -208,11 +268,13 @@ export function usePdfImport(): PdfImportState {
       setProgress({ done: i, total: sortedPages.length, currentPage: pageNum, skipped: skippedCount });
 
       try {
-        // 텍스트 레이어로 문제 페이지 여부 사전 판별 (API 비용 절감)
-        const preText = await extractPageText(pdfDoc, pageNum);
-        if (!isProblemPage(preText)) {
-          skippedCount++;
-          continue;
+        // 개념 모드가 아닐 때만 문제 페이지 사전 판별 (개념 페이지는 문제 번호 패턴이 달라 스킵됨)
+        if (!isConceptMode) {
+          const preText = await extractPageText(pdfDoc, pageNum);
+          if (!isProblemPage(preText)) {
+            skippedCount++;
+            continue;
+          }
         }
 
         // 이미지 + 텍스트 레이어 동시 추출 (하이브리드)
@@ -229,6 +291,7 @@ export function usePdfImport(): PdfImportState {
             bookCode,
             chapter: chapters.length > 0 ? chapters[0] : undefined,
             filenameContext: fileContext || undefined,
+            mode: isConceptMode ? 'concepts' : undefined,
           }),
         });
 
@@ -236,13 +299,14 @@ export function usePdfImport(): PdfImportState {
 
         const json = await res.json();
         const pageData = json.data?.[0] || {};
-        const pageResults = pageData.problems || [];
         const pageConcepts = pageData.concepts || [];
 
         // 개념 수집
+        const newConcepts: ExtractedConcept[] = [];
         for (const c of pageConcepts) {
           if (c.title && c.content) {
-            allConcepts.push({
+            newConcepts.push({
+              sectionCode: c.sectionCode || undefined,
               sectionHeader: c.sectionHeader || '',
               title: autoWrapMath(c.title),
               content: autoWrapMath(formatConceptContent(c.content)),
@@ -250,44 +314,63 @@ export function usePdfImport(): PdfImportState {
           }
         }
 
-        for (const p of pageResults) {
-          const images = Array.isArray(p.images) ? p.images : [];
-          const diagramSvgs: { svg: string; label: string }[] = Array.isArray(p.diagramSvgs) ? p.diagramSvgs : [];
-          const contentText = p.boxItems?.length > 0
-            ? embedBoxItems(p.content || '', p.boxItems)
-            : p.content || '';
+        // 개념 모드에서는 문제 처리 스킵
+        const newProblems: ExtractedProblem[] = [];
+        if (!isConceptMode) {
+          const pageResults = pageData.problems || [];
+          for (const p of pageResults) {
+            const images = Array.isArray(p.images) ? p.images : [];
+            const diagramSvgs: { svg: string; label: string }[] = Array.isArray(p.diagramSvgs) ? p.diagramSvgs : [];
+            const contentText = p.boxItems?.length > 0
+              ? embedBoxItems(p.content || '', p.boxItems)
+              : p.content || '';
 
-          const svgResults: { svg: string; label: string }[] = [...diagramSvgs];
+            const svgResults: { svg: string; label: string }[] = [...diagramSvgs];
 
-          allProblems.push({
-            questionNum: p.questionNum,
-            pageNum,
-            sectionHeader: p.sectionHeader || '',
-            difficultyTag: p.difficultyTag || '',
-            problemType: p.problemType || '주관식',
-            content: autoWrapMath(contentText),
-            choices: (p.choices || []).map((c: string) => autoWrapMath(c)),
-            boxItems: p.boxItems || [],
-            answer: p.answer || '',
-            explanation: '',
-            sourceTag: ['서술형', '객관식', '주관식'].includes(p.sourceTag || '') ? '' : (p.sourceTag || ''),
-            difficulty: mapDifficulty(p.difficultyTag || ''),
-            type: mapType(p.problemType || '주관식'),
-            imageBboxes: images.length > 0 ? images : undefined,
-            diagramSvgs: svgResults.length > 0 ? svgResults : undefined,
-            diagramParams: Array.isArray(p.diagramParams) ? p.diagramParams : undefined,
-          });
+            newProblems.push({
+              questionNum: p.questionNum,
+              pageNum,
+              sectionHeader: p.sectionHeader || '',
+              difficultyTag: p.difficultyTag || '',
+              problemType: p.problemType || '주관식',
+              content: autoWrapMath(contentText),
+              choices: (p.choices || []).map((c: string) => autoWrapMath(c)),
+              boxItems: p.boxItems || [],
+              answer: p.answer || '',
+              explanation: '',
+              sourceTag: ['서술형', '객관식', '주관식'].includes(p.sourceTag || '') ? '' : (p.sourceTag || ''),
+              difficulty: mapDifficulty(p.difficultyTag || ''),
+              type: mapType(p.problemType || '주관식'),
+              imageBboxes: images.length > 0 ? images : undefined,
+              diagramSvgs: svgResults.length > 0 ? svgResults : undefined,
+              diagramParams: Array.isArray(p.diagramParams) ? p.diagramParams : undefined,
+            });
+          }
         }
+
+        // 점진적 state 업데이트 — 페이지마다 즉시 반영
+        accumulated.problems.push(...newProblems);
+        accumulated.concepts.push(...newConcepts);
+        if (newProblems.length > 0) setProblems(prev => [...prev, ...newProblems]);
+        if (newConcepts.length > 0) setConcepts(prev => [...prev, ...newConcepts]);
+
+        // localStorage 백업 (페이지마다 저장)
+        saveBackup({
+          problems: accumulated.problems,
+          concepts: accumulated.concepts,
+          bookCode,
+          savedAt: Date.now(),
+        });
       } catch (err) {
         console.error(`페이지 ${pageNum} 추출 실패:`, err);
       }
     }
 
-    setProblems(allProblems);
-    setConcepts(allConcepts);
     setProgress({ done: sortedPages.length, total: sortedPages.length, skipped: skippedCount });
     setExtracting(false);
-    if (allProblems.length === 0) {
+    if (isConceptMode && accumulated.concepts.length === 0) {
+      setError('추출된 개념이 없습니다. 다른 페이지를 선택해보세요.');
+    } else if (!isConceptMode && accumulated.problems.length === 0) {
       setError('추출된 문제가 없습니다. 다른 페이지를 선택해보세요.');
     }
   };
@@ -459,43 +542,54 @@ export function usePdfImport(): PdfImportState {
     setSubmitting(true);
     setError('');
     try {
-      // 1. 문제 일괄 저장
-      const defaultChapter = chapters.length > 0 ? chapters[0] : '미분류';
-      const questions = problems.map((p) => ({
-        bookCode,
-        chapter: p.sectionHeader ? matchChapter(p.sectionHeader, chapters) || defaultChapter : defaultChapter,
-        section: p.sectionHeader || undefined,
-        questionNum: p.questionNum,
-        pageNum: p.pageNum,
-        difficulty: p.difficulty,
-        type: p.type,
-        content: p.content,
-        choices: p.type === 'MULTIPLE_CHOICE' && p.choices.length >= 2 ? p.choices : undefined,
-        answer: p.answer || '미입력',
-        explanation: p.explanation || undefined,
-        sourceTag: p.sourceTag || undefined,
-        diagramSpec: p.diagramParams && p.diagramParams.length > 0 ? p.diagramParams : undefined,
-        diagramSVG: p.diagramSvgs && p.diagramSvgs.length > 0
-          ? p.diagramSvgs.map((d) => d.svg).join('\n')
-          : undefined,
-      }));
-
-      const res = await fetch('/api/questions/bulk', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ questions }),
-      });
-
-      if (!res.ok) {
-        const json = await res.json();
-        throw new Error(json.error?.message || '저장 실패');
-      }
-
-      const json = await res.json();
+      const isConceptMode = extractionMode === 'concepts';
+      let questionsCreated = 0;
       let conceptsCreated = 0;
 
-      // 2. 개념 일괄 저장 (옵션)
-      if (isOwner && saveConcepts && concepts.length > 0 && subjectId) {
+      // 1. 문제 일괄 저장 (문제 모드에서만)
+      if (!isConceptMode && problems.length > 0) {
+        const defaultChapter = chapters.length > 0 ? chapters[0] : '미분류';
+        const questions = problems.map((p) => ({
+          bookCode,
+          chapter: p.sectionHeader ? matchChapter(p.sectionHeader, chapters) || defaultChapter : defaultChapter,
+          section: p.sectionHeader || undefined,
+          questionNum: p.questionNum,
+          pageNum: p.pageNum,
+          difficulty: p.difficulty,
+          type: p.type,
+          content: p.content,
+          choices: p.type === 'MULTIPLE_CHOICE' && p.choices.length >= 2 ? p.choices : undefined,
+          answer: p.answer || '미입력',
+          explanation: p.explanation || undefined,
+          source: pdfFile ? pdfFile.name.replace(/\.pdf$/i, '') : undefined,
+          sourceTag: p.sourceTag || undefined,
+          diagramSpec: p.diagramParams && p.diagramParams.length > 0 ? p.diagramParams : undefined,
+          diagramSVG: p.diagramSvgs && p.diagramSvgs.length > 0
+            ? p.diagramSvgs.map((d) => d.svg).join('\n')
+            : undefined,
+        }));
+
+        const res = await fetch('/api/questions/bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ questions }),
+        });
+
+        if (!res.ok) {
+          const json = await res.json();
+          throw new Error(json.error?.message || '저장 실패');
+        }
+
+        const json = await res.json();
+        questionsCreated = json.data.created;
+      }
+
+      // 2. 개념 일괄 저장
+      const shouldSaveConcepts = isConceptMode
+        ? concepts.length > 0 && subjectId  // 개념 모드: 항상 저장
+        : isOwner && saveConcepts && concepts.length > 0 && subjectId; // 문제 모드: OWNER 옵션
+
+      if (shouldSaveConcepts) {
         const gradeCode = bookCodeToGradeCode(bookCode);
         const semester = bookCodeToSemester(bookCode);
         try {
@@ -504,15 +598,22 @@ export function usePdfImport(): PdfImportState {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               subjectId,
-              concepts: concepts.map((c) => ({
+              concepts: [...concepts]
+                .sort((a, b) => {
+                  const numA = parseInt(a.title.match(/^(\d+)/)?.[1] || '999', 10);
+                  const numB = parseInt(b.title.match(/^(\d+)/)?.[1] || '999', 10);
+                  return numA - numB;
+                })
+                .map((c, i) => ({
                 title: c.title,
                 fullContent: c.content,
+                sortOrder: i,
                 grade: gradeCode,
                 semester,
                 chapter: matchChapter(c.sectionHeader, chapters) || (chapters.length > 0 ? chapters[0] : undefined),
-                section: c.sectionHeader || undefined,
+                section: c.sectionCode || c.sectionHeader || undefined,
                 category: 'concept',
-                source: `PDF 추출 (${bookCode})`,
+                source: pdfFile ? pdfFile.name.replace(/\.pdf$/i, '') : `PDF 추출 (${bookCode})`,
               })),
             }),
           });
@@ -528,7 +629,8 @@ export function usePdfImport(): PdfImportState {
         }
       }
 
-      setResult({ created: json.data.created, conceptsCreated });
+      setResult({ created: questionsCreated, conceptsCreated });
+      clearBackup(); // 저장 성공 → 백업 정리
       setStep(4);
     } catch (err) {
       setError(err instanceof Error ? err.message : '저장 중 오류가 발생했습니다');
@@ -556,6 +658,8 @@ export function usePdfImport(): PdfImportState {
     displaySubjects,
     subjectId,
     setSubjectId,
+    extractionMode,
+    setExtractionMode,
     selectedPages,
     rangeInput,
     setRangeInput,
@@ -600,5 +704,8 @@ export function usePdfImport(): PdfImportState {
     setError,
     handleSave,
     isOwner,
+    recoveryData,
+    restoreBackup,
+    dismissBackup,
   };
 }
