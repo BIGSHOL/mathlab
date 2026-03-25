@@ -3,12 +3,6 @@ import { Skeleton } from '@/components/ui/Skeleton';
 export default function DashboardLoading() {
   return (
     <div className="px-4 md:px-8 py-8 w-full">
-      {/* 숙제 배너 (최대 3개) */}
-      <div className="space-y-2 mb-4">
-        <Skeleton className="h-[60px] rounded-xl" />
-        <Skeleton className="h-[60px] rounded-xl" />
-      </div>
-
       {/* 환영 헤더 + XP 뱃지 */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div className="space-y-1.5">
@@ -27,7 +21,7 @@ export default function DashboardLoading() {
       {/* 통계 카드 4열 */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         {Array.from({ length: 4 }, (_, i) => (
-          <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-2">
+          <div key={i} className="bg-white border border-slate-200 rounded-sm p-4 flex flex-col gap-2">
             <div className="flex justify-between items-center">
               <Skeleton className="h-5 w-16 rounded" />
               <Skeleton className="w-4 h-4 rounded" />
@@ -41,7 +35,7 @@ export default function DashboardLoading() {
       {/* Row 1: 진행 중인 학습 (2/3) + 추천 학습/게이미피케이션 (1/3) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
         <div className="lg:col-span-2">
-          <div className="bg-white border border-slate-200 rounded-xl p-5">
+          <div className="bg-white border border-slate-200 rounded-sm p-5">
             <div className="flex justify-between items-center mb-4">
               <Skeleton className="h-5 w-28" />
               <Skeleton className="h-4 w-16" />
@@ -62,7 +56,7 @@ export default function DashboardLoading() {
         </div>
         <div className="flex flex-col gap-4">
           {/* 추천 학습 */}
-          <div className="bg-white border border-slate-200 rounded-xl p-4">
+          <div className="bg-white border border-slate-200 rounded-sm p-4">
             <div className="flex items-center gap-2 mb-3">
               <Skeleton className="w-4 h-4 rounded" />
               <Skeleton className="h-4 w-16" />
@@ -77,13 +71,40 @@ export default function DashboardLoading() {
               </div>
             ))}
           </div>
-          {/* 게이미피케이션 */}
-          <div className="bg-white border border-slate-200 rounded-xl p-4">
-            <Skeleton className="h-4 w-20 mb-3" />
-            <div className="space-y-2">
-              <Skeleton className="h-10 rounded-lg" />
-              <Skeleton className="h-10 rounded-lg" />
+          {/* 오늘의 미션 */}
+          <div className="bg-white border border-slate-200 rounded-sm p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Skeleton className="w-4 h-4 rounded" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+              <Skeleton className="h-3 w-14" />
             </div>
+            <div className="space-y-2">
+              {Array.from({ length: 3 }, (_, i) => (
+                <div key={i} className="flex items-center gap-2.5">
+                  <Skeleton className="w-5 h-5 rounded-full shrink-0" />
+                  <Skeleton className="h-3 flex-1" />
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* 오늘의 한 문제 */}
+          <div className="bg-white border border-slate-200 rounded-sm p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Skeleton className="w-4 h-4 rounded" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+              <Skeleton className="h-3 w-20" />
+            </div>
+            <Skeleton className="h-4 w-full mb-3" />
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              {Array.from({ length: 4 }, (_, i) => (
+                <Skeleton key={i} className="h-10 rounded-sm" />
+              ))}
+            </div>
+            <Skeleton className="h-4 w-1/3 mx-auto" />
           </div>
         </div>
       </div>
@@ -91,10 +112,13 @@ export default function DashboardLoading() {
       {/* Row 2: 최근 오답 + 주간 학습 (2열) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         {/* 최근 오답 */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Skeleton className="w-4 h-4 rounded" />
-            <Skeleton className="h-4 w-16" />
+        <div className="bg-white border border-slate-200 rounded-sm p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Skeleton className="w-4 h-4 rounded" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+            <Skeleton className="h-3 w-12" />
           </div>
           {Array.from({ length: 4 }, (_, i) => (
             <div key={i} className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100 mb-1.5 last:mb-0">
@@ -112,7 +136,7 @@ export default function DashboardLoading() {
         </div>
 
         {/* 주간 학습 차트 */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col">
+        <div className="bg-white border border-slate-200 rounded-sm p-4 flex flex-col">
           <div className="flex items-center gap-2 mb-3">
             <Skeleton className="w-4 h-4 rounded" />
             <Skeleton className="h-4 w-20" />
@@ -129,7 +153,7 @@ export default function DashboardLoading() {
       </div>
 
       {/* Row 3: 랭킹 (전체 너비) */}
-      <div className="bg-white border border-slate-200 rounded-xl p-5">
+      <div className="bg-white border border-slate-200 rounded-sm p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Skeleton className="w-4 h-4 rounded" />

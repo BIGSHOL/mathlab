@@ -69,53 +69,52 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
 
-  // ─ 수업 ─
+  // ─ 우리 반 ─
   {
-    id: 'teaching', label: '수업', minRole: 'TEACHER', items: [
-      { id: 'students', label: '학생 관리', href: '/students', icon: Users, minRole: 'TEACHER', keywords: ['student', '학생', '관리'] },
-      // 개념/문제 라벨은 getNavForRole에서 역할별 동적 교체
-      { id: 'concepts', label: '개념 조회', href: '/concepts', icon: BookOpen, minRole: 'TEACHER', keywords: ['concept', '개념', '빈칸'] },
-      { id: 'questions', label: '문제 조회', href: '/questions', icon: Database, minRole: 'TEACHER', keywords: ['question', '문제', '은행'] },
-      { id: 'courses', label: '학습 과정', href: '/courses', icon: GraduationCap, minRole: 'TEACHER', keywords: ['course', '과정', '커리큘럼'] },
+    id: 'students', label: '우리 반', minRole: 'TEACHER', items: [
+      { id: 'students', label: '학생 목록', href: '/students', icon: Users, minRole: 'TEACHER', keywords: ['student', '학생', '관리', '목록'] },
+      { id: 'courses', label: '학습 코스', href: '/courses', icon: GraduationCap, minRole: 'TEACHER', keywords: ['course', '과정', '커리큘럼', '코스'] },
+    ],
+  },
+
+  // ─ 출제·준비 ─
+  {
+    id: 'content', label: '출제·준비', minRole: 'TEACHER', items: [
+      { id: 'concepts', label: '개념 등록', href: '/concepts', icon: BookOpen, minRole: 'TEACHER', keywords: ['concept', '개념', '빈칸', '등록', '출제'] },
+      { id: 'questions', label: '문제 출제', href: '/questions', icon: Database, minRole: 'TEACHER', keywords: ['question', '문제', '은행', '출제', '조회'] },
+      { id: 'arithmetic', label: '연산 출제', href: '/questions/arithmetic', icon: Calculator, minRole: 'TEACHER', keywords: ['arithmetic', '연산', '계산', '출제', '생성'] },
+      { id: 'pdf-import', label: 'PDF 추출', href: '/questions/pdf-import', icon: FileText, minRole: 'SUPER_ADMIN', keywords: ['pdf', '추출', 'ocr', '가져오기'] },
+    ],
+  },
+
+  // ─ 배정·평가 ─
+  {
+    id: 'assessment', label: '배정·평가', minRole: 'TEACHER', items: [
+      { id: 'tests', label: '시험 배정', href: '/tests', icon: ClipboardCheck, minRole: 'TEACHER', keywords: ['test', '시험', '평가', '출제', '배정'] },
+      { id: 'homework', label: '숙제 배정', href: '/homework', icon: CalendarCheck, minRole: 'TEACHER', keywords: ['homework', '숙제', '과제', '배정'] },
+      { id: 'worksheet', label: '학습지 만들기', href: '/worksheet/create', icon: FileSpreadsheet, minRole: 'TEACHER', keywords: ['worksheet', '학습지', '프린트', '만들기'] },
       { id: 'quiz', label: '실시간 퀴즈', href: '/quiz', icon: Radio, minRole: 'TEACHER', keywords: ['quiz', '퀴즈', '실시간', '대결'] },
-    ],
-  },
-
-  // ─ 출제 ─
-  {
-    id: 'assessment', label: '출제', minRole: 'TEACHER', items: [
-      { id: 'tests', label: '시험 관리', href: '/tests', icon: ClipboardCheck, minRole: 'TEACHER', keywords: ['test', '시험', '평가'] },
-      { id: 'homework', label: '숙제 관리', href: '/homework', icon: CalendarCheck, minRole: 'TEACHER', keywords: ['homework', '숙제', '과제'] },
-      { id: 'worksheet', label: '학습지', href: '/worksheet/create', icon: FileSpreadsheet, minRole: 'TEACHER', keywords: ['worksheet', '학습지', '프린트'] },
-      { id: 'arithmetic', label: '연산 생성기', href: '/questions/arithmetic', icon: Calculator, minRole: 'TEACHER', keywords: ['arithmetic', '연산', '계산'] },
       { id: 'level-test', label: '레벨테스트', href: '/level-test', icon: Target, minRole: 'TEACHER', keywords: ['level', '레벨', '진단', '테스트'] },
-    ],
-  },
-
-  // ─ 도구 ─
-  {
-    id: 'tools', label: '도구', minRole: 'TEACHER', items: [
-      { id: 'pdf-import', label: 'PDF 추출', href: '/questions/pdf-import', icon: FileText, minRole: 'TEACHER', keywords: ['pdf', '추출', 'ocr'] },
       { id: 'grading', label: '수기 채점', href: '/manual-grading', icon: PenLine, minRole: 'TEACHER', keywords: ['grading', '채점', '수기'] },
     ],
   },
 
-  // ─ 분석 ─
+  // ─ 성적·분석 ─
   {
-    id: 'analysis', label: '분석', minRole: 'TEACHER', items: [
-      { id: 'analytics', label: '학습 분석', href: '/analytics', icon: BarChart3, minRole: 'TEACHER', keywords: ['analytics', '분석', '통계'] },
+    id: 'analysis', label: '성적·분석', minRole: 'TEACHER', items: [
+      { id: 'analytics', label: '학습 현황', href: '/analytics', icon: BarChart3, minRole: 'TEACHER', keywords: ['analytics', '분석', '통계', '현황'] },
       { id: 'diagnostics', label: '진단 결과', href: '/diagnostics', icon: Stethoscope, minRole: 'TEACHER', keywords: ['diagnostic', '진단', '레벨테스트', '결과'] },
       { id: 'reports', label: '리포트', href: '/reports', icon: ScrollText, minRole: 'OWNER', keywords: ['report', '리포트', '보고서', '레벨테스트'] },
     ],
   },
 
-  // ─ 시스템 ─
+  // ─ 기타 ─
   {
-    id: 'system', label: '시스템', minRole: 'TEACHER', items: [
-      { id: 'updates', label: '업데이트 내역', href: '/updates', icon: Newspaper, minRole: 'TEACHER', keywords: ['update', '업데이트', '변경'] },
+    id: 'system', label: '기타', minRole: 'TEACHER', items: [
+      { id: 'updates', label: '공지사항', href: '/updates', icon: Newspaper, minRole: 'TEACHER', keywords: ['update', '업데이트', '변경', '공지'] },
       { id: 'help', label: '도움말', href: '/help', icon: LifeBuoy, minRole: 'TEACHER', keywords: ['help', '도움말', '가이드', '사용법'] },
       { id: 'settings', label: '설정', href: '/settings', icon: Settings, minRole: 'TEACHER', keywords: ['setting', '설정', '환경'] },
-      { id: 'support', label: '고객지원', href: '/support', icon: HelpCircle, minRole: 'TEACHER', keywords: ['support', '지원', '문의', '도움'] },
+      { id: 'support', label: '문의하기', href: '/support', icon: HelpCircle, minRole: 'TEACHER', keywords: ['support', '지원', '문의', '도움'] },
     ],
   },
 
@@ -165,34 +164,40 @@ const OWNER_NAV_GROUPS: NavGroup[] = [
     ],
   },
 
-  // ─ 분석 ─
+  // ─ 성적·분석 ─
   {
-    id: 'analysis', label: '분석', minRole: 'OWNER', items: [
-      { id: 'analytics', label: '학습 분석', href: '/analytics', icon: BarChart3, minRole: 'OWNER', keywords: ['analytics', '분석', '통계'] },
+    id: 'analysis', label: '성적·분석', minRole: 'OWNER', items: [
+      { id: 'analytics', label: '학습 현황', href: '/analytics', icon: BarChart3, minRole: 'OWNER', keywords: ['analytics', '분석', '통계', '현황'] },
       { id: 'diagnostics', label: '진단 결과', href: '/diagnostics', icon: Stethoscope, minRole: 'OWNER', keywords: ['diagnostic', '진단', '레벨테스트', '결과'] },
       { id: 'reports', label: '리포트', href: '/reports', icon: ScrollText, minRole: 'OWNER', keywords: ['report', '리포트', '보고서', '레벨테스트'] },
     ],
   },
 
-  // ─ 수업 · 출제 (조회/보조) ─
+  // ─ 출제·준비 ─
   {
-    id: 'teaching', label: '수업 · 출제', minRole: 'OWNER', items: [
-      { id: 'concepts', label: '개념 조회', href: '/concepts', icon: BookOpen, minRole: 'OWNER', keywords: ['concept', '개념', '빈칸'] },
-      { id: 'questions', label: '문제 조회', href: '/questions', icon: Database, minRole: 'OWNER', keywords: ['question', '문제', '은행'] },
-      { id: 'courses', label: '학습 과정', href: '/courses', icon: GraduationCap, minRole: 'OWNER', keywords: ['course', '과정', '커리큘럼'] },
-      { id: 'tests', label: '시험 관리', href: '/tests', icon: ClipboardCheck, minRole: 'OWNER', keywords: ['test', '시험', '평가'] },
-      { id: 'homework', label: '숙제 관리', href: '/homework', icon: CalendarCheck, minRole: 'OWNER', keywords: ['homework', '숙제', '과제'] },
+    id: 'content', label: '출제·준비', minRole: 'OWNER', items: [
+      { id: 'concepts', label: '개념 등록', href: '/concepts', icon: BookOpen, minRole: 'OWNER', keywords: ['concept', '개념', '빈칸', '등록'] },
+      { id: 'questions', label: '문제 출제', href: '/questions', icon: Database, minRole: 'OWNER', keywords: ['question', '문제', '은행', '출제'] },
+      { id: 'courses', label: '학습 코스', href: '/courses', icon: GraduationCap, minRole: 'OWNER', keywords: ['course', '과정', '커리큘럼', '코스'] },
+    ],
+  },
+
+  // ─ 배정·평가 ─
+  {
+    id: 'assessment', label: '배정·평가', minRole: 'OWNER', items: [
+      { id: 'tests', label: '시험 배정', href: '/tests', icon: ClipboardCheck, minRole: 'OWNER', keywords: ['test', '시험', '평가', '출제', '배정'] },
+      { id: 'homework', label: '숙제 배정', href: '/homework', icon: CalendarCheck, minRole: 'OWNER', keywords: ['homework', '숙제', '과제', '배정'] },
       { id: 'level-test', label: '레벨테스트', href: '/level-test', icon: Target, minRole: 'OWNER', keywords: ['level', '레벨', '진단', '테스트'] },
     ],
   },
 
-  // ─ 시스템 ─
+  // ─ 기타 ─
   {
-    id: 'system', label: '시스템', minRole: 'OWNER', items: [
-      { id: 'updates', label: '업데이트 내역', href: '/updates', icon: Newspaper, minRole: 'OWNER', keywords: ['update', '업데이트', '변경'] },
+    id: 'system', label: '기타', minRole: 'OWNER', items: [
+      { id: 'updates', label: '공지사항', href: '/updates', icon: Newspaper, minRole: 'OWNER', keywords: ['update', '업데이트', '변경', '공지'] },
       { id: 'help', label: '도움말', href: '/help', icon: LifeBuoy, minRole: 'OWNER', keywords: ['help', '도움말', '가이드', '사용법'] },
       { id: 'settings', label: '설정', href: '/settings', icon: Settings, minRole: 'OWNER', keywords: ['setting', '설정', '환경'] },
-      { id: 'support', label: '고객지원', href: '/support', icon: HelpCircle, minRole: 'OWNER', keywords: ['support', '지원', '문의', '도움'] },
+      { id: 'support', label: '문의하기', href: '/support', icon: HelpCircle, minRole: 'OWNER', keywords: ['support', '지원', '문의', '도움'] },
     ],
   },
 ];

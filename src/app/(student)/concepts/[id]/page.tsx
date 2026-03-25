@@ -107,6 +107,7 @@ export default function ConceptPage() {
   const [revealedAnswers, setRevealedAnswers] = useState<Record<number, string>>({});
   const [hintUsedPositions, setHintUsedPositions] = useState<Set<number>>(new Set());
   const [hasUsedReveal, setHasUsedReveal] = useState(false);
+  const [reviewMode, setReviewMode] = useState(false);
 
   // Fetch concept, adjacent, memo in parallel
   useEffect(() => {
@@ -363,20 +364,34 @@ export default function ConceptPage() {
           <div className="flex items-center gap-2">
             {stageConfig.map((stage, i) => {
               const isCompleted = progress.some((p) => p.stage === stage.key && p.completed);
+              const canClick = isCompleted || i <= currentStageIdx;
               return (
-                <div
+                <button
                   key={stage.key}
+                  disabled={!canClick}
+                  onClick={() => {
+                    if (canClick) {
+                      setCurrentStageIdx(i);
+                      setReviewMode(isCompleted);
+                      setBlankAnswers({});
+                      setBlankResults(null);
+                      setRevealedAnswers({});
+                      setHasUsedReveal(false);
+                    }
+                  }}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold transition-all ${
+                    canClick ? 'cursor-pointer' : 'cursor-default'
+                  } ${
                     i === currentStageIdx
                       ? `${stage.color} text-white`
                       : isCompleted
-                        ? 'bg-emerald-100 text-emerald-700'
+                        ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
                         : 'bg-slate-100 text-slate-400'
                   }`}
                 >
                   {isCompleted ? <CheckCircle className="w-3.5 h-3.5" /> : <span>{stage.icon}</span>}
                   <span className="hidden sm:inline">{stage.label}</span>
-                </div>
+                </button>
               );
             })}
           </div>
@@ -502,7 +517,7 @@ export default function ConceptPage() {
 
           {/* Action Area */}
           {(() => {
-            const allCompleted = currentStageIdx === stageConfig.length - 1 && progress.some((p) => p.stage === currentStage.key && p.completed);
+            const allCompleted = !reviewMode && currentStageIdx === stageConfig.length - 1 && progress.some((p) => p.stage === currentStage.key && p.completed);
             // 과정 기반 다음 개념 (우선) 또는 교육과정 기반 다음 개념
             const courseNext = adjacent.course?.nextConcept;
             const nextConcept = courseNext ?? adjacent.next;
@@ -573,9 +588,9 @@ export default function ConceptPage() {
                           <Button
                             size="lg"
                             variant="secondary"
-                            onClick={() => router.push('/subjects')}
+                            onClick={() => { setCurrentStageIdx(0); setReviewMode(true); }}
                           >
-                            목록
+                            복습하기
                           </Button>
                         </div>
                       </div>
@@ -586,9 +601,14 @@ export default function ConceptPage() {
                             ? `"${adjacent.course.courseName}" 과정의 모든 개념을 완료했습니다!`
                             : '이 단원의 마지막 개념입니다.'}
                         </p>
-                        <Button size="lg" onClick={() => router.push('/subjects')}>
-                          학습 목록으로 돌아가기
-                        </Button>
+                        <div className="flex items-center justify-center gap-3">
+                          <Button size="lg" onClick={() => router.push('/subjects')}>
+                            학습 목록으로 돌아가기
+                          </Button>
+                          <Button size="lg" variant="secondary" onClick={() => { setCurrentStageIdx(0); setReviewMode(true); }}>
+                            복습하기
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -596,21 +616,30 @@ export default function ConceptPage() {
               );
             }
 
+            const stageCompleted = progress.some((p) => p.stage === currentStage.key && p.completed);
+            const isBlankStage = currentStage.key === 'BLANK_EASY' || currentStage.key === 'BLANK_HARD' || currentStage.key === 'BLANK_FULL';
+
             return (
               <div className="bg-white rounded-sm shadow-sm border border-slate-200 p-6">
+                {reviewMode && (
+                  <div className="flex items-center gap-2 mb-4 text-sm text-violet-600 bg-violet-50 border border-violet-200 rounded-sm px-3 py-2">
+                    <BookOpen className="w-4 h-4" />
+                    <span className="font-medium">복습 모드</span>
+                  </div>
+                )}
                 <ProgressBar
-                  value={Math.round(((currentStageIdx + (progress.some((p) => p.stage === currentStage.key && p.completed) ? 1 : 0)) / 4) * 100)}
+                  value={Math.round(((currentStageIdx + (stageCompleted ? 1 : 0)) / 4) * 100)}
                   label="학습 진행도"
                   showPercentage
                   color={currentStage.color}
                 />
                 <div className="flex items-center justify-end mt-6 gap-3">
-                  {currentStage.key === 'READING' && !progress.some((p) => p.stage === currentStage.key && p.completed) && (
+                  {currentStage.key === 'READING' && !stageCompleted && (
                     <Button size="lg" onClick={handleCompleteStage} disabled={submitting}>
                       {submitting ? '처리 중...' : '읽기 완료 (+5 XP)'}
                     </Button>
                   )}
-                  {(currentStage.key === 'BLANK_EASY' || currentStage.key === 'BLANK_HARD' || currentStage.key === 'BLANK_FULL') && !progress.some((p) => p.stage === currentStage.key && p.completed) && (
+                  {isBlankStage && !stageCompleted && (
                     <>
                       {hasUsedReveal && (
                         <span className="text-xs text-amber-600">정답 공개 사용 · XP 절반</span>
@@ -619,6 +648,11 @@ export default function ConceptPage() {
                         {submitting ? '채점 중...' : '제출하기'}
                       </Button>
                     </>
+                  )}
+                  {isBlankStage && stageCompleted && reviewMode && (
+                    <Button size="lg" onClick={handleBlankSubmit} disabled={submitting}>
+                      {submitting ? '채점 중...' : '다시 풀기'}
+                    </Button>
                   )}
                 </div>
               </div>

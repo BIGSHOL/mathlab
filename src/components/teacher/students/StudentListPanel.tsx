@@ -2,7 +2,6 @@
 
 import {
   UserPlus,
-  Download,
   Search,
   Users,
   PanelLeftClose,
@@ -37,7 +36,7 @@ interface StudentListPanelProps {
 
   // 액션
   onAddClick: () => void;
-  onExportCSV: () => void;
+  isManager?: boolean;
 
   // 파생 데이터
   panelTitle: string;
@@ -61,7 +60,7 @@ export function StudentListPanel({
   selectedUserId,
   onSelectUser,
   onAddClick,
-  onExportCSV,
+  isManager,
   panelTitle,
   panelCount,
 }: StudentListPanelProps) {
@@ -127,10 +126,11 @@ export function StudentListPanel({
             )}
           </div>
 
-          <div className="px-3 pb-2 flex gap-1.5">
-            <Button size="sm" className="flex-1 text-xs" onClick={onAddClick}><UserPlus className="w-3.5 h-3.5 mr-1" />학생 추가</Button>
-            <Button size="sm" variant="secondary" className="flex-1 text-xs" onClick={onExportCSV}><Download className="w-3.5 h-3.5 mr-1" />CSV 내보내기</Button>
-          </div>
+          {isManager && (
+            <div className="px-3 pb-2">
+              <Button size="sm" className="w-full text-xs" onClick={onAddClick}><UserPlus className="w-3.5 h-3.5 mr-1" />학생 추가</Button>
+            </div>
+          )}
           <div className="border-b border-slate-200" />
 
           <div className="flex-1 overflow-y-auto">

@@ -6,16 +6,17 @@ import { RefreshCw, X, ClipboardList } from 'lucide-react';
 import { useUpdateNotification } from '@/stores/update-notification';
 import { useAuth } from '@/hooks/useAuth';
 
-const POLL_INTERVAL = 45_000; // 45초
+const POLL_INTERVAL = 3_600_000; // 1시간
 
 /** 학생 레이아웃 하단에 배치 — 새 배정 알림 배너 */
 export function UpdateBanner() {
   const { user } = useAuth();
   const { update, dismissed, setUpdate, dismiss, clear } = useUpdateNotification();
 
+  const isStudent = user?.role === 'STUDENT';
+
   // 서버에서 notifCheckedAt 기준으로 신규 과제 체크 (since 파라미터 불필요)
   const checkUpdates = useCallback(async () => {
-    if (!user) return;
     try {
       const res = await fetch('/api/me/updates-check');
       if (!res.ok) return;
@@ -24,10 +25,10 @@ export function UpdateBanner() {
     } catch {
       // 네트워크 에러 무시
     }
-  }, [user, setUpdate]);
+  }, [setUpdate]);
 
   useEffect(() => {
-    if (!user || user.role !== 'STUDENT') return;
+    if (!isStudent) return;
 
     const timeout = setTimeout(checkUpdates, 3000);
     const interval = setInterval(checkUpdates, POLL_INTERVAL);
@@ -36,7 +37,7 @@ export function UpdateBanner() {
       clearTimeout(timeout);
       clearInterval(interval);
     };
-  }, [user, checkUpdates]);
+  }, [isStudent, checkUpdates]);
 
   /** 서버에 "확인 완료" 기록 → 이후 모든 기기에서 이 과제 알림 안 뜸 */
   const markChecked = async () => {

@@ -9,8 +9,6 @@ import {
   StudentListPanel,
   StudentDetail,
   StudentCreateForm,
-  gradeLabel,
-  relativeTime,
 } from '@/components/teacher/students';
 import type { UserItem, StudentStats } from '@/components/teacher/students';
 
@@ -18,6 +16,7 @@ import type { UserItem, StudentStats } from '@/components/teacher/students';
 
 export default function StudentsPage() {
   const { user: currentUser } = useAuth();
+  const isManager = hasRoleClient(currentUser?.role, 'MANAGER');
   const isOwner = hasRoleClient(currentUser?.role, 'OWNER');
 
   const [users, setUsers] = useState<UserItem[]>([]);
@@ -128,29 +127,6 @@ export default function StudentsPage() {
     } else toast.error('삭제 실패');
   };
 
-  const handleExportCSV = () => {
-    const headers = ['이름', '아이디', '학년', '레벨', 'XP', '연속학습', '최근활동', '가입일'];
-    const rows = filteredUsers.map((u) => [
-      u.name,
-      u.username,
-      gradeLabel(u.grade),
-      `Lv.${u.profile?.level ?? 1}`,
-      String(u.profile?.totalXp ?? 0),
-      `${u.profile?.currentStreak ?? 0}일`,
-      u.profile?.lastActiveAt ? relativeTime(u.profile.lastActiveAt) : '없음',
-      new Date(u.createdAt).toLocaleDateString('ko-KR'),
-    ]);
-    const bom = '\uFEFF';
-    const csv = bom + [headers, ...rows].map((r) => r.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `학생목록_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   const handleAddClick = () => {
     setSelectedUser(null);
     setStats(null);
@@ -187,7 +163,7 @@ export default function StudentsPage() {
         selectedUserId={selectedUser?.id ?? null}
         onSelectUser={handleSelectUser}
         onAddClick={handleAddClick}
-        onExportCSV={handleExportCSV}
+        isManager={isManager}
         panelTitle="학생 관리"
         panelCount={studentCount}
       />
