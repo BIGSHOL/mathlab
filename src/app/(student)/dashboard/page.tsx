@@ -119,7 +119,7 @@ export default async function StudentDashboard({
     BLANK_EASY: 'Stage 2 - 빈칸 채우기 (쉬움)',
     BLANK_HARD: 'Stage 3 - 빈칸 채우기 (어려움)',
     BLANK_FULL: 'Stage 4 - 통문장 암기',
-    BLANK_PAGE: 'Stage 4 - 통문장 암기',
+    BLANK_PAGE: 'Stage 5 - 백지 복원',
   };
 
   // Today's homework

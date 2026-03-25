@@ -30,7 +30,8 @@ export async function POST(request: NextRequest) {
   });
   if (!daily) return badRequest('오늘의 문제를 찾을 수 없습니다');
 
-  const isCorrect = selectedAnswer === daily.question.answer;
+  const normalize = (s: string) => s.trim().replace(/\s+/g, ' ').toUpperCase();
+  const isCorrect = normalize(selectedAnswer) === normalize(daily.question.answer);
 
   // 저장 + XP 부여 (참여만으로 5 XP)
   await prisma.$transaction(async (tx) => {

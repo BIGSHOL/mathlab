@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useXpNotification } from '@/stores/xp-notification';
 import { toast } from '@/components/ui/Toast';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -52,6 +53,7 @@ interface SubmitResult {
 type Phase = 'list' | 'solving' | 'result';
 
 export default function QuestionHomeworkPage() {
+  const router = useRouter();
   const [phase, setPhase] = useState<Phase>('list');
   const [homeworkList, setHomeworkList] = useState<TodayQuestion[]>([]);
   const [loadingList, setLoadingList] = useState(true);
@@ -165,8 +167,11 @@ export default function QuestionHomeworkPage() {
             ))}
           </div>
         ) : homeworkList.length === 0 ? (
-          <Card padding="md" className="text-center">
-            <p className="text-text-secondary">오늘 할 문제 숙제가 없습니다.</p>
+          <Card padding="lg" className="text-center">
+            <FileQuestion className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <p className="text-text-primary font-bold mb-1">오늘 할 문제 숙제가 없습니다</p>
+            <p className="text-text-secondary text-sm mb-4">선생님이 숙제를 배정하면 여기에 나타납니다.</p>
+            <Button variant="secondary" onClick={() => router.push('/dashboard')}>대시보드로</Button>
           </Card>
         ) : (
           <div className="flex flex-col gap-3">
@@ -394,7 +399,7 @@ export default function QuestionHomeworkPage() {
         >
           목록으로
         </Button>
-        <Button onClick={() => window.location.href = '/dashboard'}>
+        <Button onClick={() => router.push('/dashboard')}>
           대시보드로
         </Button>
       </div>

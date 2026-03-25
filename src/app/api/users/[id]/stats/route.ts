@@ -35,6 +35,8 @@ async function getStudentStats(userId: string) {
     assignments,
     recentPoints,
     homeworkEnrollments,
+    timeAttackRecords,
+    timeAttackCount,
   ] = await Promise.all([
     prisma.studentProfile.findUnique({
       where: { userId },
@@ -115,6 +117,22 @@ async function getStudentStats(userId: string) {
     prisma.arithmeticHomeworkEnrollment.count({
       where: { studentId: userId },
     }),
+    prisma.timeAttackRecord.findMany({
+      where: { studentId: userId },
+      select: {
+        id: true,
+        category: true,
+        level: true,
+        correctCount: true,
+        totalTime: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    }),
+    prisma.timeAttackRecord.count({
+      where: { studentId: userId },
+    }),
   ]);
 
   // 집계 (위 Promise.all과 별도로 병렬 실행)
@@ -139,6 +157,17 @@ async function getStudentStats(userId: string) {
   const completedCount = allLearning.find((g) => g.completed)?._count ?? 0;
   const totalLearning = allLearning.reduce((sum, g) => sum + g._count, 0);
 
+  // 타임어택 카테고리+레벨별 최고기록
+  const bestMap = new Map<string, { category: string; level: string; best: number }>();
+  for (const r of timeAttackRecords) {
+    const key = `${r.category}:${r.level}`;
+    const existing = bestMap.get(key);
+    if (!existing || r.correctCount > existing.best) {
+      bestMap.set(key, { category: r.category, level: r.level, best: r.correctCount });
+    }
+  }
+  const timeAttackBestByCategory = Array.from(bestMap.values());
+
   return {
     type: 'student' as const,
     profile,
@@ -152,12 +181,15 @@ async function getStudentStats(userId: string) {
       learningTotal: totalLearning,
       learningCompleted: completedCount,
       homeworkEnrollments,
+      timeAttackCount,
+      timeAttackBestByCategory,
     },
     recentTests: testAttempts,
     recentArithmetic: arithmeticAttempts,
     recentLearning: learningProgress,
     recentAssignments: assignments,
     recentPoints,
+    recentTimeAttacks: timeAttackRecords,
   };
 }
 

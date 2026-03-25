@@ -87,7 +87,7 @@ export default async function StudentDashboardV2({
     BLANK_EASY: '빈칸 (쉬움)',
     BLANK_HARD: '빈칸 (어려움)',
     BLANK_FULL: '통문장 암기',
-    BLANK_PAGE: '통문장 암기',
+    BLANK_PAGE: '백지 복원',
   };
 
   // 숙제
@@ -408,9 +408,9 @@ export default async function StudentDashboardV2({
                       : '첫 번째 개념 학습을 시작하고 배지를 획득하세요!'}
                 </p>
                 <Link href="/subjects">
-                  <button className="px-7 py-2.5 bg-white text-primary rounded-full font-extrabold text-sm shadow-lg hover:bg-slate-50 transition-all active:scale-95">
+                  <Button className="px-7 py-2.5 bg-white text-primary rounded-full font-extrabold text-sm shadow-lg hover:bg-slate-50 active:scale-95">
                     학습 시작하기
-                  </button>
+                  </Button>
                 </Link>
               </div>
             </div>

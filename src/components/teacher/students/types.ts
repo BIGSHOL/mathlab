@@ -138,6 +138,15 @@ export interface HwWrongData {
   attempts: HwWrongAttempt[];
 }
 
+export interface StudentTimeAttackRecord {
+  id: string;
+  category: string;
+  level: string;
+  correctCount: number;
+  totalTime: number;
+  createdAt: string;
+}
+
 export type StudentStats = {
   type: 'student';
   profile: StudentStatsProfile | null;
@@ -151,12 +160,15 @@ export type StudentStats = {
     learningTotal: number;
     learningCompleted: number;
     homeworkEnrollments: number;
+    timeAttackCount: number;
+    timeAttackBestByCategory: { category: string; level: string; best: number }[];
   };
   recentTests: StudentTestAttempt[];
   recentArithmetic: StudentArithmeticAttempt[];
   recentLearning: StudentLearningProgress[];
   recentAssignments: StudentTestAssignment[];
   recentPoints: StudentPointTransaction[];
+  recentTimeAttacks: StudentTimeAttackRecord[];
 };
 
 export interface TeacherClassroom {

@@ -71,6 +71,20 @@ export default function HomeworkPracticePage() {
   const [leveledUp, setLeveledUp] = useState(false);
   const startRef = useRef(Date.now());
   const questionStartRef = useRef(Date.now());
+  const autoAdvanceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 정답/오답 후 자동 넘기기
+  useEffect(() => {
+    if (feedback === null) return;
+    const delay = feedback ? 1000 : 1800;
+    autoAdvanceRef.current = setTimeout(() => {
+      handleNext();
+    }, delay);
+    return () => {
+      if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedback, currentIndex]);
 
   // Timer
   useEffect(() => {
@@ -181,6 +195,7 @@ export default function HomeworkPracticePage() {
   };
 
   const handleNext = () => {
+    if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
     questionStartRef.current = Date.now();
     if (currentIndex >= problems.length - 1) {
       setFinished(true);
@@ -466,10 +481,10 @@ export default function HomeworkPracticePage() {
             </div>
           )}
 
-          {/* Next button */}
+          {/* Next button (자동 넘기기 전 수동 클릭 가능) */}
           {feedback !== null && (
-            <Button className="w-full mt-4" onClick={handleNext}>
-              {currentIndex >= problems.length - 1 ? '결과 보기' : '다음 문제'}
+            <Button className="w-full mt-4" variant="secondary" onClick={handleNext}>
+              {currentIndex >= problems.length - 1 ? '결과 보기' : '다음 문제 →'}
             </Button>
           )}
         </Card>

@@ -54,6 +54,7 @@ export default function TestPlayPage() {
   const [comboAnimation, setComboAnimation] = useState(false);
   const [totalScore, setTotalScore] = useState(0);
   const [completing, setCompleting] = useState(false);
+  const [initError, setInitError] = useState(false);
 
   // 힌트 관련 상태
   const [hintData, setHintData] = useState<{
@@ -97,7 +98,8 @@ export default function TestPlayPage() {
           }
         }
       } catch {
-        // ignore
+        setInitError(true);
+        toast.error('시험을 불러오는데 실패했습니다.');
       }
     }
     init();
@@ -212,6 +214,21 @@ export default function TestPlayPage() {
       setHintUsed(false);
     }
   }, [isLastQuestion, attempt, completeAttempt, testSeq, router]);
+
+  if (initError) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Card padding="md" className="text-center max-w-sm mx-auto">
+          <XCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
+          <p className="text-text-primary font-bold mb-1">시험을 시작할 수 없습니다</p>
+          <p className="text-text-secondary text-sm mb-4">네트워크 오류이거나 이용권이 필요합니다.</p>
+          <Button variant="secondary" onClick={() => router.push('/my-tests')}>
+            시험 목록으로
+          </Button>
+        </Card>
+      </div>
+    );
+  }
 
   if (loading || questions.length === 0) {
     return (

@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ArrowRight, BookOpen, CheckCircle, ChevronLeft, ChevronRight, Sparkles, Trophy, BookOpenCheck } from 'lucide-react';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { toast } from '@/components/ui/Toast';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
@@ -83,7 +84,6 @@ export default function ConceptPage() {
   const [blanks, setBlanks] = useState<BlankData | null>(null);
   const [blankAnswers, setBlankAnswers] = useState<Record<number, string>>({});
   const [blankResults, setBlankResults] = useState<BlankResult[] | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [showHints, setShowHints] = useState<Record<number, boolean>>({});
   const [mathPopup, setMathPopup] = useState<{ position: number } | null>(null);
@@ -107,11 +107,6 @@ export default function ConceptPage() {
   const [revealedAnswers, setRevealedAnswers] = useState<Record<number, string>>({});
   const [hintUsedPositions, setHintUsedPositions] = useState<Set<number>>(new Set());
   const [hasUsedReveal, setHasUsedReveal] = useState(false);
-
-  const showToast = useCallback((msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 3000);
-  }, []);
 
   // Fetch concept, adjacent, memo in parallel
   useEffect(() => {
@@ -208,7 +203,7 @@ export default function ConceptPage() {
       const xpMsg = hasUsedReveal
         ? `+${json.data.xpAwarded} XP 획득! (정답 공개 사용)`
         : `+${json.data.xpAwarded} XP 획득!`;
-      showToast(xpMsg);
+      toast.success(xpMsg);
       // 보석 진화 모달 표시
       const fromStage = currentStageIdx;
       const toStage = currentStageIdx + 1;
@@ -226,7 +221,7 @@ export default function ConceptPage() {
     // 클라이언트 유효성 검사: 빈칸이 비어있으면 제출 차단
     const emptyBlanks = blanks.blanks.filter((b) => !blankAnswers[b.position]?.trim());
     if (emptyBlanks.length > 0) {
-      showToast(`빈칸을 모두 채워주세요! (${emptyBlanks.length}개 남음)`);
+      toast.warning(`빈칸을 모두 채워주세요! (${emptyBlanks.length}개 남음)`);
       return;
     }
 
@@ -249,7 +244,7 @@ export default function ConceptPage() {
       });
       const json = await res.json();
       if (!res.ok) {
-        showToast(json.error?.message ?? '제출에 실패했습니다. 다시 시도해주세요.');
+        toast.error(json.error?.message ?? '제출에 실패했습니다. 다시 시도해주세요.');
         return;
       }
       if (json.data) {
@@ -271,7 +266,7 @@ export default function ConceptPage() {
             setHasUsedReveal(true);
           }
 
-          showToast('오답이 있습니다. 정답을 확인하고 다시 입력해보세요!');
+          toast.info('오답이 있습니다. 정답을 확인하고 다시 입력해보세요!');
 
           // 1.5초 후 오답 빈칸 초기화 → 정답 플레이스홀더가 보이게
           setTimeout(() => {
@@ -287,7 +282,7 @@ export default function ConceptPage() {
         }
       }
     } catch {
-      showToast('네트워크 오류가 발생했습니다. 다시 시도해주세요.');
+      toast.error('네트워크 오류가 발생했습니다. 다시 시도해주세요.');
     } finally {
       setSubmitting(false);
     }
@@ -333,13 +328,6 @@ export default function ConceptPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Toast */}
-      {toast && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-primary text-white px-6 py-3 rounded-sm shadow-lg font-bold animate-slide-down">
-          {toast}
-        </div>
-      )}
-
       {/* Gem Evolution Modal */}
       {concept && (
         <GemEvolutionModal

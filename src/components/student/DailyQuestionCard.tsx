@@ -76,13 +76,14 @@ export function DailyQuestionCard() {
 
       <div className="grid grid-cols-2 gap-2 mb-4">
         {(data.question.choices as string[]).map((choice, idx) => {
-          const isAnswered = answered === choice;
-          const isCorrectChoice = choice === data.question.answer;
+          const choiceNum = String(idx + 1);
+          const isAnswered = answered === choiceNum;
+          const isCorrectChoice = choiceNum === data.question.answer;
           return (
             <button
               key={idx}
               disabled={showResult}
-              onClick={() => setSelected(choice)}
+              onClick={() => setSelected(choiceNum)}
               className={`px-3 py-2 rounded-sm border text-sm font-medium transition-all text-left ${
                 showResult
                   ? isCorrectChoice

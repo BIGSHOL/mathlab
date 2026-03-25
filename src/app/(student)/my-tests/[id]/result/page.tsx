@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { toast } from '@/components/ui/Toast';
 import {
   Trophy,
   Clock,
@@ -143,7 +144,7 @@ export default function TestResultPage() {
           }
         }
       } catch {
-        // ignore
+        toast.error('시험 결과를 불러오는데 실패했습니다.');
       }
       setLoading(false);
     }
@@ -214,12 +215,14 @@ export default function TestResultPage() {
 
   if (!attempt) {
     return (
-      <div className="p-6 text-center">
-        <p className="text-text-secondary">결과를 찾을 수 없습니다</p>
-        <Link href="/my-tests">
-          <Button variant="secondary" className="mt-4">시험 목록으로</Button>
-        </Link>
-      </div>
+      <PageContainer maxWidth="sm">
+        <div className="text-center py-12">
+          <p className="text-text-secondary mb-4">결과를 찾을 수 없습니다</p>
+          <Link href="/my-tests">
+            <Button variant="secondary">시험 목록으로</Button>
+          </Link>
+        </div>
+      </PageContainer>
     );
   }
 

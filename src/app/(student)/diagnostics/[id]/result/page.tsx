@@ -103,12 +103,14 @@ export default function DiagnosticResultPage() {
 
   if (!result) {
     return (
-      <div className="p-6 text-center">
-        <p className="text-text-secondary">진단 결과를 찾을 수 없습니다</p>
-        <Link href="/my-tests">
-          <Button variant="secondary" className="mt-4">돌아가기</Button>
-        </Link>
-      </div>
+      <PageContainer maxWidth="sm">
+        <div className="text-center py-12">
+          <p className="text-text-secondary mb-4">진단 결과를 찾을 수 없습니다</p>
+          <Link href="/my-tests">
+            <Button variant="secondary">돌아가기</Button>
+          </Link>
+        </div>
+      </PageContainer>
     );
   }
 
@@ -191,9 +193,14 @@ export default function DiagnosticResultPage() {
         </div>
       </Card>
 
-      <div className="text-center">
+      <div className="flex justify-center gap-3">
+        {result.weakAreas.length > 0 && (
+          <Link href="/subjects">
+            <Button>취약 영역 학습하기</Button>
+          </Link>
+        )}
         <Link href="/my-tests">
-          <Button variant="secondary">시험 목록으로 돌아가기</Button>
+          <Button variant="secondary">시험 목록으로</Button>
         </Link>
       </div>
     </PageContainer>

@@ -103,6 +103,20 @@ export default function ArithmeticPracticePage() {
   const startRef = useRef(Date.now());
   const questionStartRef = useRef(Date.now());
   const [expandedGrade, setExpandedGrade] = useState<string | null>('e1');
+  const autoAdvanceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 정답/오답 후 자동 넘기기 (정답 1초, 오답 1.8초)
+  useEffect(() => {
+    if (feedback === null) return;
+    const delay = feedback ? 1000 : 1800;
+    autoAdvanceRef.current = setTimeout(() => {
+      handleNext();
+    }, delay);
+    return () => {
+      if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedback, currentIndex]);
 
   // Timer
   useEffect(() => {
@@ -174,6 +188,7 @@ export default function ArithmeticPracticePage() {
   };
 
   const handleNext = () => {
+    if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
     questionStartRef.current = Date.now();
     if (currentIndex >= problems.length - 1) {
       setFinished(true);
@@ -400,6 +415,9 @@ export default function ArithmeticPracticePage() {
               설정 변경
             </Button>
           </div>
+          <Link href="/dashboard" className="block text-center text-sm text-text-secondary hover:text-primary transition-colors mt-1">
+            대시보드로 돌아가기
+          </Link>
         </Card>
       </div>
     );
@@ -495,10 +513,10 @@ export default function ArithmeticPracticePage() {
             </div>
           )}
 
-          {/* Next button */}
+          {/* Next button (자동 넘기기 전 수동 클릭 가능) */}
           {feedback !== null && (
-            <Button className="w-full mt-4" onClick={handleNext}>
-              {currentIndex >= problems.length - 1 ? '결과 보기' : '다음 문제'}
+            <Button className="w-full mt-4" variant="secondary" onClick={handleNext}>
+              {currentIndex >= problems.length - 1 ? '결과 보기' : '다음 문제 →'}
             </Button>
           )}
         </Card>

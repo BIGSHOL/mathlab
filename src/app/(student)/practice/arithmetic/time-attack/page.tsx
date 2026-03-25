@@ -310,62 +310,117 @@ export default function TimeAttackPage() {
   // ── Result Screen ──
   if (phase === 'result') {
     const isNewRecord = result?.isNewRecord ?? false;
+    const correctCount = result?.correctCount ?? score;
+    const prevRecord = result?.previousRecord ?? bestRecord;
+    const diff = correctCount - prevRecord;
+
     return (
       <div className="p-6 max-w-md mx-auto">
-        <Card padding="md" className="text-center space-y-4 relative overflow-hidden">
+        <Card className={`rounded-xl overflow-hidden relative ${isNewRecord ? 'border-2 border-amber-300' : ''}`}>
+          {/* 축하 이펙트 */}
           {isNewRecord && (
-            <div className="absolute inset-0 pointer-events-none">
-              {Array.from({ length: 12 }).map((_, i) => (
+            <div className="absolute inset-0 pointer-events-none z-0">
+              {Array.from({ length: 16 }).map((_, i) => (
                 <div
                   key={i}
-                  className="absolute w-3 h-3 rounded-full animate-bounce-in"
+                  className="absolute rounded-full animate-confetti-fade"
                   style={{
-                    background: ['#EAB308', '#3B82F6', '#EF4444', '#10B981', '#F97316'][i % 5],
-                    left: `${10 + (i * 7) % 80}%`,
-                    top: `${5 + (i * 13) % 60}%`,
-                    animationDelay: `${i * 0.1}s`,
+                    width: `${6 + (i % 3) * 4}px`,
+                    height: `${6 + (i % 3) * 4}px`,
+                    background: ['#EAB308', '#3B82F6', '#EF4444', '#10B981', '#F97316', '#8B5CF6'][i % 6],
+                    left: `${5 + (i * 6.2) % 85}%`,
+                    top: `${3 + (i * 11.3) % 55}%`,
+                    animationDelay: `${i * 0.08}s`,
                   }}
                 />
               ))}
             </div>
           )}
-          <Trophy className={`w-12 h-12 mx-auto ${isNewRecord ? 'text-yellow-500' : 'text-slate-400'}`} />
-          <h2 className="text-2xl font-black text-text-primary">
-            {isNewRecord ? '신기록!' : '타임어택 완료!'}
-          </h2>
-          {result && result.xpEarned > 0 && (
-            <div className="flex items-center justify-center gap-2 text-amber-600 bg-amber-50 rounded-sm py-2">
-              <Star className="w-5 h-5" />
-              <span className="font-bold">+{result.xpEarned} XP 획득!</span>
-              {result.leveledUp && <span className="text-xs bg-amber-200 rounded px-2 py-0.5">레벨 업!</span>}
-            </div>
-          )}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-slate-50 rounded-sm p-3">
-              <p className="text-3xl font-black text-primary">{result?.correctCount ?? score}</p>
-              <p className="text-xs text-text-secondary">정답 수</p>
-            </div>
-            <div className="bg-slate-50 rounded-sm p-3">
-              <p className="text-3xl font-black text-text-primary">{maxCombo}</p>
-              <p className="text-xs text-text-secondary">최대 콤보</p>
-            </div>
-            <div className="bg-slate-50 rounded-sm p-3">
-              <p className="text-2xl font-black text-text-primary">{TIME_LIMIT}초</p>
-              <p className="text-xs text-text-secondary">제한 시간</p>
-            </div>
-            <div className="bg-slate-50 rounded-sm p-3">
-              <p className="text-2xl font-black text-text-primary">{result?.previousRecord ?? bestRecord}</p>
-              <p className="text-xs text-text-secondary">이전 최고기록</p>
+
+          {/* 상단 헤더 — 카테고리 + 난이도 */}
+          <div className={`px-4 py-3 text-center relative z-10 ${isNewRecord ? 'bg-gradient-to-r from-amber-50 to-yellow-50' : 'bg-slate-50'}`}>
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-xs font-bold text-text-secondary bg-white px-2 py-0.5 rounded border border-slate-200">
+                {CATEGORY_LABELS[category]}
+              </span>
+              <span className="text-xs font-bold text-text-secondary bg-white px-2 py-0.5 rounded border border-slate-200">
+                {LEVEL_LABELS[level]}
+              </span>
             </div>
           </div>
-          <div className="flex gap-2 pt-2">
-            <Button className="flex-1" onClick={handleStart}>
-              <RotateCcw className="w-4 h-4 mr-1" />
-              다시 도전
-            </Button>
-            <Button className="flex-1" variant="secondary" onClick={() => setPhase('setup')}>
-              설정 변경
-            </Button>
+
+          {/* 메인 영역 */}
+          <div className="p-5 text-center space-y-5 relative z-10">
+            {/* 트로피 + 타이틀 */}
+            <div>
+              <Trophy className={`w-14 h-14 mx-auto mb-2 ${isNewRecord ? 'text-yellow-500' : 'text-slate-300'}`} />
+              <h2 className={`text-2xl font-black ${isNewRecord ? 'text-amber-600' : 'text-text-primary'}`}>
+                {isNewRecord ? '신기록!' : '타임어택 완료!'}
+              </h2>
+            </div>
+
+            {/* 정답 수 — 히어로 */}
+            <div className={`rounded-xl p-5 ${isNewRecord ? 'bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200' : 'bg-slate-50 border border-slate-200'}`}>
+              <p className={`text-5xl font-black ${isNewRecord ? 'text-amber-600' : 'text-primary'}`}>
+                {correctCount}
+              </p>
+              <p className="text-sm text-text-secondary font-medium mt-1">정답</p>
+              {prevRecord > 0 && (
+                <p className={`text-xs font-bold mt-2 ${diff > 0 ? 'text-emerald-600' : diff < 0 ? 'text-red-500' : 'text-text-secondary'}`}>
+                  이전 최고 {prevRecord}개
+                  {diff !== 0 && <span className="ml-1">({diff > 0 ? '+' : ''}{diff})</span>}
+                </p>
+              )}
+            </div>
+
+            {/* XP 획득 */}
+            {result && result.xpEarned > 0 && (
+              <div className="flex items-center justify-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5">
+                <Star className="w-5 h-5 text-amber-500" />
+                <span className="font-bold text-amber-700">+{result.xpEarned} XP</span>
+                {result.leveledUp && (
+                  <span className="text-[10px] font-extrabold bg-amber-500 text-white rounded-full px-2 py-0.5">LEVEL UP!</span>
+                )}
+              </div>
+            )}
+
+            {/* 보조 통계 */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="bg-slate-50 rounded-lg p-3">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Zap className="w-3.5 h-3.5 text-orange-500" />
+                </div>
+                <p className="text-lg font-black text-text-primary">{maxCombo}</p>
+                <p className="text-[10px] text-text-secondary font-medium">최대 콤보</p>
+              </div>
+              <div className="bg-slate-50 rounded-lg p-3">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Timer className="w-3.5 h-3.5 text-blue-500" />
+                </div>
+                <p className="text-lg font-black text-text-primary">{TIME_LIMIT}초</p>
+                <p className="text-[10px] text-text-secondary font-medium">제한 시간</p>
+              </div>
+              <div className="bg-slate-50 rounded-lg p-3">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                </div>
+                <p className="text-lg font-black text-text-primary">
+                  {answeredList.length > 0 ? Math.round((correctCount / answeredList.length) * 100) : 0}%
+                </p>
+                <p className="text-[10px] text-text-secondary font-medium">정답률</p>
+              </div>
+            </div>
+
+            {/* 버튼 */}
+            <div className="flex gap-3 pt-1">
+              <Button className="flex-1 whitespace-nowrap" onClick={handleStart}>
+                <RotateCcw className="w-4 h-4 mr-1" />
+                다시 도전
+              </Button>
+              <Button className="flex-1 whitespace-nowrap" variant="secondary" onClick={() => setPhase('setup')}>
+                설정 변경
+              </Button>
+            </div>
           </div>
         </Card>
       </div>

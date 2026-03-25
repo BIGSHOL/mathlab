@@ -66,7 +66,8 @@ export default function RevengePage() {
   const handleAnswer = (answer: string) => {
     if (feedback !== null || !selected) return;
     const q = selected.questions[currentIdx];
-    const isCorrect = answer.trim().toUpperCase() === q.answer.trim().toUpperCase();
+    const norm = (s: string) => s.trim().replace(/\s+/g, ' ').toUpperCase();
+    const isCorrect = norm(answer) === norm(q.answer);
     setSelectedChoice(answer);
     setFeedback(isCorrect);
     setAnswers((prev) => [...prev, { questionId: q.id, selectedAnswer: answer, correctAnswer: q.answer, isCorrect }]);
@@ -509,8 +510,9 @@ export default function RevengePage() {
             {q.choices && (
               <div className="grid grid-cols-1 gap-3">
                 {(q.choices as string[]).map((choice, idx) => {
-                  const isCorrectChoice = choice.trim().toUpperCase() === q.answer.trim().toUpperCase();
-                  const isSelected = selectedChoice === choice;
+                  const choiceNum = String(idx + 1);
+                  const isCorrectChoice = choiceNum === q.answer.trim();
+                  const isSelected = selectedChoice === choiceNum;
                   const showResult = feedback !== null;
                   const choiceLabels = ['①', '②', '③', '④', '⑤'];
 
@@ -519,7 +521,7 @@ export default function RevengePage() {
                       key={idx}
                       whileTap={!showResult ? { scale: 0.98 } : undefined}
                       disabled={feedback !== null}
-                      onClick={() => handleAnswer(choice)}
+                      onClick={() => handleAnswer(choiceNum)}
                       className={`w-full text-left px-5 py-4 rounded-xl border-2 text-sm font-medium transition-all flex items-center gap-3 ${
                         showResult
                           ? isCorrectChoice

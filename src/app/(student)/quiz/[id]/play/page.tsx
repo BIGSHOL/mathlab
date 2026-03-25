@@ -46,6 +46,7 @@ export default function QuizPlayPage() {
   const [submitted, setSubmitted] = useState(false);
   const [feedback, setFeedback] = useState<{ isCorrect: boolean; correctAnswer: string } | null>(null);
   const [myScore, setMyScore] = useState(0);
+  const [myXpEarned, setMyXpEarned] = useState(0);
   const lastQuestionRef = useRef(-1);
   const questionStartRef = useRef<number>(Date.now());
 
@@ -101,6 +102,7 @@ export default function QuizPlayPage() {
         const json = await res.json();
         setFeedback(json.data);
         setMyScore(json.data.newScore);
+        if (json.data.xpEarned) setMyXpEarned((prev) => prev + json.data.xpEarned);
       }
     } catch (err) { console.error('퀴즈 답안 제출 실패:', err); }
   };
@@ -150,7 +152,10 @@ export default function QuizPlayPage() {
           <Card padding="xl" className="bg-slate-800 border-slate-700 text-center">
             <Trophy className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
             <h2 className="text-3xl font-black text-white mb-2">퀴즈 종료!</h2>
-            <p className="text-slate-400 mb-6">내 점수: <span className="text-yellow-400 font-bold">{myScore}점</span></p>
+            <p className="text-slate-400 mb-2">내 점수: <span className="text-yellow-400 font-bold">{myScore}점</span></p>
+            {myXpEarned > 0 && (
+              <p className="text-emerald-400 font-bold mb-4">+{myXpEarned} XP 획득!</p>
+            )}
             <div className="space-y-2">
               {sorted.map((p, idx) => (
                 <div
@@ -171,13 +176,21 @@ export default function QuizPlayPage() {
                 </div>
               ))}
             </div>
-            <Button
-              className="mt-6 w-full"
-              variant="secondary"
-              onClick={() => router.push('/quiz-join')}
-            >
-              돌아가기
-            </Button>
+            <div className="mt-6 flex gap-3">
+              <Button
+                className="flex-1"
+                variant="secondary"
+                onClick={() => router.push('/dashboard')}
+              >
+                대시보드
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={() => router.push('/quiz-join')}
+              >
+                다른 퀴즈
+              </Button>
+            </div>
           </Card>
         </div>
       </div>

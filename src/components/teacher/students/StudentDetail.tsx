@@ -21,6 +21,7 @@ import {
   X,
   CalendarCheck,
   GitBranch,
+  Timer,
 } from 'lucide-react';
 import Link from 'next/link';
 import { MathRenderer } from '@/components/math/MathRenderer';
@@ -166,6 +167,13 @@ export function StudentDetail({ user, stats, statsLoading, isOwner, onResetPassw
               <div className="text-sm font-bold text-violet-700">{s.homeworkEnrollments}개</div>
               <div className="text-xs text-violet-500">참여 플랜</div>
             </div>
+            {(s.timeAttackCount ?? 0) > 0 && (
+              <div className="bg-rose-50 rounded-sm p-3">
+                <div className="text-sm text-rose-600 font-medium">타임어택</div>
+                <div className="text-sm font-bold text-rose-700">{s.timeAttackCount}회</div>
+                <div className="text-xs text-rose-500">도전 기록</div>
+              </div>
+            )}
           </div>
 
           {/* 개념 학습 순서 설정 */}
@@ -410,6 +418,48 @@ export function StudentDetail({ user, stats, statsLoading, isOwner, onResetPassw
                         {p.type === 'EARN' ? '+' : '-'}{p.amount}
                       </span>
                       <span className="text-xs text-text-secondary">{relativeTime(p.createdAt)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* 타임어택 기록 */}
+          {stats!.recentTimeAttacks && stats!.recentTimeAttacks.length > 0 && (
+            <>
+              <SectionTitle icon={Timer} title="타임어택 기록" />
+              {/* 카테고리별 최고기록 */}
+              {s.timeAttackBestByCategory && s.timeAttackBestByCategory.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {s.timeAttackBestByCategory.map((b) => (
+                    <div
+                      key={`${b.category}:${b.level}`}
+                      className="px-2 py-1 rounded-sm text-xs font-medium bg-rose-50 text-rose-600 border border-rose-200"
+                    >
+                      {CATEGORY_LABELS[b.category as keyof typeof CATEGORY_LABELS] ?? b.category}
+                      <span className="text-rose-400 mx-0.5">·</span>
+                      {b.level === 'easy' ? '쉬움' : b.level === 'medium' ? '보통' : '어려움'}
+                      <span className="font-bold ml-1">{b.best}개</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="space-y-1.5">
+                {stats!.recentTimeAttacks.map((ta) => (
+                  <div key={ta.id} className="flex items-center justify-between bg-white border border-slate-200 rounded-sm px-3 py-2">
+                    <div className="min-w-0">
+                      <div className="text-xs font-medium text-text-primary">
+                        {CATEGORY_LABELS[ta.category as keyof typeof CATEGORY_LABELS] ?? ta.category}
+                        <span className="text-text-secondary ml-1.5">
+                          {ta.level === 'easy' ? '쉬움' : ta.level === 'medium' ? '보통' : '어려움'}
+                        </span>
+                      </div>
+                      <div className="text-xs text-text-secondary">{relativeTime(ta.createdAt)}</div>
+                    </div>
+                    <div className="text-right shrink-0 ml-2">
+                      <div className="text-xs font-bold text-text-primary">{ta.correctCount}개 정답</div>
+                      <div className="text-xs text-text-secondary">{ta.totalTime}초</div>
                     </div>
                   </div>
                 ))}

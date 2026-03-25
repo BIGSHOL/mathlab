@@ -9,13 +9,19 @@
  * ─ 테넌트 3개 (멀티테넌트)
  * ─ 사용자 45+명 (역할별 충분한 수)
  * ─ 과목 8개, 개념 24개, 빈칸연습 48개
- * ─ 문제 135개
- * ─ 시험 8개 (일반+레벨테스트)
+ * ─ 문제 120개
+ * ─ 시험 8개 (일반+레벨테스트) + 수기채점 3건
  * ─ 숙제 3종 각 2개
  * ─ 퀴즈 4개
  * ─ 뱃지 35개 + 수여
  * ─ 이용권 통합 (TenantLicense + StudentLicense)
  * ─ 학습과정, 복수전, 타임어택, 진단, 리포트, 일일미션 등 전체 커버
+ * ─ 5단계 학습 (READING→BLANK_EASY→BLANK_HARD→BLANK_FULL→BLANK_PAGE) 완전 진행 데이터
+ * ─ QuestionGenerationLog (AI 문제 생성 이력 20건)
+ * ─ 수기채점 TestAttempt (entryMethod='manual')
+ * ─ Inquiry 12건 (PENDING/ANSWERED 다양한 상태와 카테고리)
+ * ─ ReportHistory 7건 (실질적 보고서 데이터 포함)
+ * ─ DiagnosticResult — 실제 TestAttempt 참조
  */
 
 import { PrismaClient, LicenseFeature } from '@prisma/client';
@@ -241,6 +247,25 @@ async function main() {
         id, username: t.username, passwordHash: PW,
         name: t.name, role: 'TEACHER', tenantId: t.tid, updatedAt: now,
       },
+    });
+  }
+
+  // 반에 담당 선생님 배정
+  const classroomTeachers: [string, string, string][] = [
+    // [반 이름, 테넌트, teacherId]
+    ['초등 A반', T1, teacherIds[0]],   // teacher01 김선생
+    ['초등 B반', T1, teacherIds[1]],   // teacher02 박선생
+    ['중등반', T1, teacherIds[2]],     // teacher03 최선생
+    ['고등 기초반', T1, teacherIds[2]], // teacher03 최선생 (겸임)
+    ['초등 영재반', T2, teacherIds[3]], // teacher04 강교사
+    ['중등 심화반', T2, teacherIds[4]], // teacher05 윤교사
+    ['초등반', T3, teacherIds[5]],     // teacher06 서교사
+    ['중등반', T3, teacherIds[5]],     // teacher06 서교사 (겸임)
+  ];
+  for (const [crName, tenantId, tId] of classroomTeachers) {
+    await prisma.classroom.update({
+      where: { id: cr(crName, tenantId) },
+      data: { teacherId: tId },
     });
   }
 
@@ -898,7 +923,10 @@ async function main() {
     { testIdx: 7, students: t2StudentIds.slice(4, 8) },   // 강남 중등
   ];
 
-  const statusCycle: ('COMPLETED' | 'COMPLETED' | 'COMPLETED' | 'ASSIGNED' | 'IN_PROGRESS')[] = ['COMPLETED', 'COMPLETED', 'COMPLETED', 'ASSIGNED', 'IN_PROGRESS'];
+  const statusCycle: ('COMPLETED' | 'ASSIGNED' | 'IN_PROGRESS')[] = ['COMPLETED', 'COMPLETED', 'COMPLETED', 'ASSIGNED', 'IN_PROGRESS'];
+
+  // 레벨테스트 완료 attemptId 수집 (DiagnosticResult에서 참조)
+  const levelTestAttemptMap: Record<string, string> = {}; // studentId → attemptId
 
   for (const ac of assignConfigs) {
     const td = testDefs[ac.testIdx];
@@ -936,6 +964,11 @@ async function main() {
           },
         });
         count('TestAttempt');
+
+        // 레벨테스트 완료 시 attemptId 수집
+        if (td.isLevel) {
+          levelTestAttemptMap[sId] = bestAttemptId;
+        }
 
         for (let qi = 0; qi < qIds.length; qi++) {
           const isCorrect = qi < correctCount;
@@ -1074,54 +1107,54 @@ async function main() {
   // ════════════════════════════════════════════════════════
   console.log('13. LearningProgress + BlankAttempt 생성...');
 
-  const stages: ('READING' | 'BLANK_EASY' | 'BLANK_HARD' | 'BLANK_FULL')[] = ['READING', 'BLANK_EASY', 'BLANK_HARD', 'BLANK_FULL'];
+  const stages: ('READING' | 'BLANK_EASY' | 'BLANK_HARD' | 'BLANK_FULL' | 'BLANK_PAGE')[] = ['READING', 'BLANK_EASY', 'BLANK_HARD', 'BLANK_FULL', 'BLANK_PAGE'];
 
-  // T1 학생들의 학습 진행 상황
+  // T1 학생들의 학습 진행 상황 (completedStages: 5 = 전 단계 완료 = BLANK_PAGE까지)
   const progressConfigs = [
-    // 초등 A반 (개념 0~5)
-    { studentIdx: 0, conceptIdx: 0, completedStages: 4 },
-    { studentIdx: 0, conceptIdx: 1, completedStages: 3 },
-    { studentIdx: 0, conceptIdx: 2, completedStages: 2 },
-    { studentIdx: 0, conceptIdx: 3, completedStages: 4 },
-    { studentIdx: 1, conceptIdx: 0, completedStages: 4 },
-    { studentIdx: 1, conceptIdx: 1, completedStages: 1 },
-    { studentIdx: 2, conceptIdx: 0, completedStages: 4 },
-    { studentIdx: 2, conceptIdx: 3, completedStages: 2 },
-    { studentIdx: 3, conceptIdx: 0, completedStages: 1 },
-    { studentIdx: 4, conceptIdx: 0, completedStages: 3 },
+    // 초등 A반 (개념 0~5) — student01~05
+    { studentIdx: 0, conceptIdx: 0, completedStages: 5 },  // 이수학: 분수의 뜻 전체 완료 (BLANK_PAGE까지)
+    { studentIdx: 0, conceptIdx: 1, completedStages: 4 },  // 분수의 덧셈 BLANK_FULL까지
+    { studentIdx: 0, conceptIdx: 2, completedStages: 3 },  // 분수의 뺄셈 BLANK_HARD까지
+    { studentIdx: 0, conceptIdx: 3, completedStages: 5 },  // 삼각형 넓이 전체 완료
+    { studentIdx: 1, conceptIdx: 0, completedStages: 5 },  // 박영희: 분수의 뜻 전체 완료
+    { studentIdx: 1, conceptIdx: 1, completedStages: 2 },  // 분수의 덧셈 BLANK_EASY까지
+    { studentIdx: 2, conceptIdx: 0, completedStages: 5 },  // 최민수: 분수의 뜻 전체 완료
+    { studentIdx: 2, conceptIdx: 3, completedStages: 3 },  // 삼각형 넓이 BLANK_HARD까지
+    { studentIdx: 3, conceptIdx: 0, completedStages: 1 },  // 정하늘: READING만
+    { studentIdx: 4, conceptIdx: 0, completedStages: 4 },  // 김서연: BLANK_FULL까지
     { studentIdx: 4, conceptIdx: 1, completedStages: 2 },
-    // 초등 B반 (개념 6~11)
-    { studentIdx: 5, conceptIdx: 6, completedStages: 4 },
-    { studentIdx: 5, conceptIdx: 7, completedStages: 3 },
-    { studentIdx: 6, conceptIdx: 6, completedStages: 2 },
+    // 초등 B반 (개념 6~11) — student06~10
+    { studentIdx: 5, conceptIdx: 6, completedStages: 5 },  // 이준호: 비의 개념 전체 완료
+    { studentIdx: 5, conceptIdx: 7, completedStages: 4 },
+    { studentIdx: 6, conceptIdx: 6, completedStages: 3 },
     { studentIdx: 7, conceptIdx: 6, completedStages: 1 },
-    { studentIdx: 8, conceptIdx: 9, completedStages: 4 },
+    { studentIdx: 8, conceptIdx: 9, completedStages: 5 },  // 윤도현: 소수의 뜻 전체 완료
     { studentIdx: 9, conceptIdx: 9, completedStages: 2 },
-    // 중등반 (개념 12~17)
-    { studentIdx: 10, conceptIdx: 12, completedStages: 4 },
-    { studentIdx: 10, conceptIdx: 13, completedStages: 3 },
+    // 중등반 (개념 12~17) — student11~14
+    { studentIdx: 10, conceptIdx: 12, completedStages: 5 }, // 송예린: 정수 개념 전체 완료
+    { studentIdx: 10, conceptIdx: 13, completedStages: 4 },
     { studentIdx: 10, conceptIdx: 15, completedStages: 2 },
-    { studentIdx: 11, conceptIdx: 12, completedStages: 2 },
+    { studentIdx: 11, conceptIdx: 12, completedStages: 3 },
     { studentIdx: 12, conceptIdx: 12, completedStages: 1 },
-    // 고등반 (개념 21~23)
-    { studentIdx: 14, conceptIdx: 21, completedStages: 4 },
-    { studentIdx: 14, conceptIdx: 22, completedStages: 3 },
+    // 고등반 (개념 21~23) — student15
+    { studentIdx: 14, conceptIdx: 21, completedStages: 5 }, // 노시우: 다항식 덧뺄 전체 완료
+    { studentIdx: 14, conceptIdx: 22, completedStages: 4 },
     // T2 학생들 (개념 0~5)
-    { studentIdx: 15, conceptIdx: 0, completedStages: 4 },
-    { studentIdx: 15, conceptIdx: 1, completedStages: 4 },
+    { studentIdx: 15, conceptIdx: 0, completedStages: 5 },  // 오지훈: 분수의 뜻 전체 완료
+    { studentIdx: 15, conceptIdx: 1, completedStages: 5 },
     { studentIdx: 16, conceptIdx: 0, completedStages: 3 },
     { studentIdx: 17, conceptIdx: 0, completedStages: 2 },
     // T2 중등 (개념 18~20)
-    { studentIdx: 19, conceptIdx: 18, completedStages: 4 },
+    { studentIdx: 19, conceptIdx: 18, completedStages: 5 }, // 심재현: 함수의 뜻 전체 완료
     { studentIdx: 20, conceptIdx: 18, completedStages: 2 },
     // T3 학생들
-    { studentIdx: 23, conceptIdx: 6, completedStages: 3 },
+    { studentIdx: 23, conceptIdx: 6, completedStages: 4 },
     { studentIdx: 24, conceptIdx: 6, completedStages: 1 },
   ];
 
   for (const pc of progressConfigs) {
     for (let s = 0; s < pc.completedStages; s++) {
-      const completed = s < pc.completedStages - 1 || pc.completedStages === 4;
+      const completed = s < pc.completedStages - 1 || pc.completedStages === 5;
       const score = completed ? rand(70, 100) : null;
       await prisma.learningProgress.create({
         data: {
@@ -1493,25 +1526,50 @@ async function main() {
   // 21. DiagnosticResult
   // ════════════════════════════════════════════════════════
   console.log('22. DiagnosticResult 생성...');
+
+  // 레벨테스트 완료된 학생들 (levelTestAttemptMap에 있는 학생만)
+  const diagWeakAreas = [
+    ['정수의 사칙연산', '유리수의 개념'],
+    ['분수의 덧셈과 뺄셈', '통분'],
+    ['일차방정식 활용', '등식의 성질'],
+    ['도형 넓이 응용', '사다리꼴'],
+    ['소수의 곱셈', '자릿수 처리'],
+  ];
+  const diagStrongAreas = [
+    ['정수의 개념', '절댓값'],
+    ['분수의 뜻', '진분수와 가분수'],
+    ['기본 연산', '덧셈과 뺄셈'],
+    ['직사각형 넓이', '삼각형 넓이'],
+    ['소수의 뜻', '소수점 이해'],
+  ];
+
+  let diagIdx = 0;
   for (let i = 10; i < 15; i++) {
+    const sId = allStudentIds[i];
+    const attemptId = levelTestAttemptMap[sId] || uuid(); // 실제 attemptId가 있으면 사용
     const accuracy = rand(35, 90);
+    const calcAcc = rand(30, 90);
+    const underAcc = rand(30, 90);
+    const psAcc = rand(20, 80);
+    const reasonAcc = rand(10, 70);
     await prisma.diagnosticResult.create({
       data: {
-        id: uuid(), attemptId: uuid(), studentId: allStudentIds[i],
+        id: uuid(), attemptId, studentId: sId,
         diagnosticType: 'level_test',
         recommendLevel: accuracy >= 70 ? 'middle_1' : 'elementary_6',
-        weakAreas: ['정수의 사칙연산', '유리수의 개념'],
-        strongAreas: ['정수의 개념'],
+        weakAreas: diagWeakAreas[diagIdx % diagWeakAreas.length],
+        strongAreas: diagStrongAreas[diagIdx % diagStrongAreas.length],
         overallAccuracy: accuracy,
         domainScores: {
-          CALCULATION: rand(30, 90),
-          UNDERSTANDING: rand(30, 90),
-          PROBLEM_SOLVING: rand(20, 80),
-          REASONING: rand(10, 70),
+          CALCULATION: { total: 6, correct: Math.round(calcAcc / 100 * 6), accuracy: calcAcc },
+          UNDERSTANDING: { total: 4, correct: Math.round(underAcc / 100 * 4), accuracy: underAcc },
+          PROBLEM_SOLVING: { total: 3, correct: Math.round(psAcc / 100 * 3), accuracy: psAcc },
+          REASONING: { total: 2, correct: Math.round(reasonAcc / 100 * 2), accuracy: reasonAcc },
         },
       },
     });
     count('DiagnosticResult');
+    diagIdx++;
   }
 
   // ════════════════════════════════════════════════════════
@@ -1519,20 +1577,41 @@ async function main() {
   // ════════════════════════════════════════════════════════
   console.log('23. Inquiry 생성...');
   const inquiries = [
-    { user: allStudentIds[0], title: '분수 문제 풀이가 어려워요', cat: '학습 질문', content: '분수의 통분이 잘 이해가 안 돼요.', status: 'PENDING' as const },
-    { user: allStudentIds[5], title: '비밀번호를 변경하고 싶어요', cat: '계정 문의', content: '비밀번호 변경은 어떻게 하나요?', status: 'PENDING' as const },
+    // PENDING — 미답변
+    { user: allStudentIds[0], title: '분수 문제 풀이가 어려워요', cat: '학습 질문', content: '분수의 통분이 잘 이해가 안 돼요. 통분하는 방법을 좀 더 쉽게 설명해 주실 수 있나요?', status: 'PENDING' as const },
+    { user: allStudentIds[5], title: '비밀번호를 변경하고 싶어요', cat: '계정 문의', content: '비밀번호 변경은 어떻게 하나요? 설정에서 찾을 수가 없습니다.', status: 'PENDING' as const },
+    { user: allStudentIds[15], title: '숙제 기한이 안 보여요', cat: '기능 문의', content: '숙제 페이지에서 기한이 표시되지 않습니다. 마감일이 언제인지 알 수 없어요.', status: 'PENDING' as const },
+    { user: allStudentIds[20], title: '타임어택 기록이 안 저장돼요', cat: '버그 신고', content: '타임어택 완료 후 기록이 랭킹에 반영되지 않습니다.', status: 'PENDING' as const },
+    // ANSWERED — 답변 완료
     { user: teacherIds[1], title: '시험 결과 다운로드 기능 문의', cat: '기능 문의', content: '학생 시험 결과를 엑셀로 다운로드할 수 있나요?', status: 'ANSWERED' as const },
-    { user: allStudentIds[15], title: '숙제 기한이 안 보여요', cat: '기능 문의', content: '숙제 기한이 표시되지 않습니다.', status: 'PENDING' as const },
-    { user: teacherIds[3], title: '강남점 퀴즈 오류', cat: '버그 신고', content: '퀴즈 시작 버튼이 안 눌려요.', status: 'ANSWERED' as const },
+    { user: teacherIds[3], title: '강남점 퀴즈 오류', cat: '버그 신고', content: '퀴즈 시작 버튼이 안 눌려요. 크롬 브라우저 사용 중입니다.', status: 'ANSWERED' as const },
+    { user: allStudentIds[2], title: '레벨테스트 결과가 안 나와요', cat: '학습 질문', content: '레벨테스트를 완료했는데 결과 페이지가 빈 화면입니다.', status: 'ANSWERED' as const },
+    { user: allStudentIds[10], title: '개념학습 진도가 초기화됐어요', cat: '버그 신고', content: '어제까지 3단계까지 했는데 오늘 보니 1단계부터 다시 시작해야 해요.', status: 'ANSWERED' as const },
+    // 추가 ANSWERED — 해결된 문의
+    { user: teacherIds[0], title: '학생 성적 통계 오류', cat: '버그 신고', content: '학생 성적 통계에서 평균 점수가 비정상적으로 높게 나옵니다.', status: 'ANSWERED' as const },
+    { user: allStudentIds[23], title: '프로필 사진 변경하고 싶어요', cat: '계정 문의', content: '프로필 사진을 바꾸고 싶은데 방법을 모르겠습니다.', status: 'ANSWERED' as const },
+    { user: teacherIds[4], title: '숙제 배정 시 반 선택 안됨', cat: '기능 문의', content: '숙제 배정할 때 반 목록이 비어있습니다.', status: 'ANSWERED' as const },
+    { user: allStudentIds[8], title: '뱃지가 안 나와요', cat: '기능 문의', content: '연속 7일 학습했는데 뱃지가 자동으로 지급되지 않습니다.', status: 'ANSWERED' as const },
   ];
+  const inquiryReplies: Record<string, string> = {
+    '시험 결과 다운로드 기능 문의': '현재 CSV 다운로드 기능을 준비 중입니다. 다음 업데이트에 반영 예정입니다.',
+    '강남점 퀴즈 오류': '브라우저 캐시를 삭제한 후 다시 시도해 주세요. 동일 증상 시 재문의 바랍니다.',
+    '레벨테스트 결과가 안 나와요': '서버 오류로 일시적 장애가 있었습니다. 현재 정상 작동 확인했습니다.',
+    '개념학습 진도가 초기화됐어요': '데이터 복구 완료했습니다. 확인 부탁드립니다.',
+    '학생 성적 통계 오류': '평균 계산 로직 수정 배포 완료했습니다. 감사합니다.',
+    '프로필 사진 변경하고 싶어요': '프로필 > 설정에서 변경 가능합니다. 안내 드린 대로 진행해 주세요.',
+    '숙제 배정 시 반 선택 안됨': '반 관리에서 학생을 먼저 배정한 후 숙제를 생성해 주세요.',
+    '뱃지가 안 나와요': '뱃지 조건 달성 판정이 1일 지연될 수 있습니다. 현재 정상 지급 확인했습니다.',
+  };
   for (const inq of inquiries) {
+    const hasReply = inq.status === 'ANSWERED';
     await prisma.inquiry.create({
       data: {
         id: uuid(), userId: inq.user, title: inq.title, category: inq.cat,
         content: inq.content, status: inq.status,
-        reply: inq.status === 'ANSWERED' ? '확인 후 조치하겠습니다.' : null,
-        repliedAt: inq.status === 'ANSWERED' ? day(-1) : null,
-        repliedBy: inq.status === 'ANSWERED' ? ownerIds[T1] : null,
+        reply: hasReply ? (inquiryReplies[inq.title] || '확인 후 조치하겠습니다.') : null,
+        repliedAt: hasReply ? day(-rand(1, 7)) : null,
+        repliedBy: hasReply ? ownerIds[T1] : null,
         updatedAt: now,
       },
     });
@@ -1565,12 +1644,41 @@ async function main() {
     count('TeacherComment');
   }
 
-  for (let i = 0; i < 5; i++) {
+  const reportStudents = [0, 2, 5, 10, 14, 15, 19];
+  for (let i = 0; i < reportStudents.length; i++) {
+    const sIdx = reportStudents[i];
+    const overallScore = rand(45, 95);
+    const calcScore = rand(30, 100);
+    const underScore = rand(30, 100);
+    const psScore = rand(20, 90);
+    const reasonScore = rand(10, 80);
     await prisma.reportHistory.create({
       data: {
-        id: uuid(), studentId: allStudentIds[i], type: 'level_test',
-        content: { summary: `${studentMeta[i].name} 레벨테스트 보고서`, overallScore: rand(50, 95) },
-        channel: 'web', sentAt: day(-10 + i * 2),
+        id: uuid(), studentId: allStudentIds[sIdx], type: 'level_test',
+        content: {
+          summary: `${studentMeta[sIdx].name} 레벨테스트 종합 보고서`,
+          overallScore,
+          recommendLevel: overallScore >= 70 ? 'middle_1' : 'elementary_6',
+          domainScores: {
+            CALCULATION: { total: 6, correct: Math.round(calcScore / 100 * 6), accuracy: calcScore },
+            UNDERSTANDING: { total: 4, correct: Math.round(underScore / 100 * 4), accuracy: underScore },
+            PROBLEM_SOLVING: { total: 3, correct: Math.round(psScore / 100 * 3), accuracy: psScore },
+            REASONING: { total: 2, correct: Math.round(reasonScore / 100 * 2), accuracy: reasonScore },
+          },
+          weakAreas: overallScore < 60
+            ? ['분수의 사칙연산', '도형의 넓이 응용']
+            : ['일차방정식 활용 문제'],
+          strongAreas: overallScore >= 70
+            ? ['정수의 사칙연산', '기본 도형 계산']
+            : ['기초 연산'],
+          recommendations: [
+            overallScore < 60 ? '기초 개념부터 차근차근 복습하세요.' : '심화 문제에 도전해 보세요.',
+            '매일 연산 연습 10문제를 권장합니다.',
+            '취약 영역의 개념학습을 빈칸 3단계까지 완료하세요.',
+          ],
+          generatedAt: day(-10 + i * 2).toISOString(),
+        },
+        channel: i < 4 ? 'web' : 'print', sentAt: day(-10 + i * 2),
       },
     });
     count('ReportHistory');
@@ -1590,6 +1698,92 @@ async function main() {
       data: { id: uuid(), userId: allStudentIds[m.sIdx], conceptId: conceptIds[m.cIdx], content: m.content, updatedAt: now },
     });
     count('ConceptMemo');
+  }
+
+  // ════════════════════════════════════════════════════════
+  // 24-A. QuestionGenerationLog (AI 문제 생성 이력)
+  // ════════════════════════════════════════════════════════
+  console.log('25-A. QuestionGenerationLog 생성...');
+
+  const genModes = ['generate', 'regenerate', 'variant'];
+  const schoolLevels = ['elementary', 'middle', 'high'];
+  const genGrades = ['elementary_5', 'elementary_6', 'middle_1', 'middle_2', 'high_common1'];
+  const genUnits = [
+    { main: '분수의 덧셈과 뺄셈', sub: '분수의 덧셈', detail: '동분모 분수의 덧셈' },
+    { main: '도형의 넓이', sub: '삼각형의 넓이', detail: '삼각형 넓이 구하기' },
+    { main: '비와 비율', sub: '비율과 백분율', detail: '백분율 계산' },
+    { main: '정수와 유리수', sub: '정수의 사칙연산', detail: '정수의 덧셈' },
+    { main: '일차방정식', sub: '일차방정식의 풀이', detail: '이항' },
+    { main: '함수', sub: '일차함수', detail: '기울기와 y절편' },
+    { main: '수와 식의 계산', sub: '인수분해', detail: '합차 공식' },
+  ];
+
+  for (let i = 0; i < 20; i++) {
+    const success = i < 16; // 80% 성공률
+    const unit = genUnits[i % genUnits.length];
+    const grade = genGrades[i % genGrades.length];
+    const schoolLevel = grade.startsWith('elementary') ? 'elementary' : grade.startsWith('middle') ? 'middle' : 'high';
+    await prisma.questionGenerationLog.create({
+      data: {
+        teacherId: teacherIds[i % 3],
+        mode: genModes[i % genModes.length],
+        schoolLevel,
+        grade,
+        mainUnit: unit.main,
+        subUnit: unit.sub,
+        detailUnit: unit.detail,
+        difficulty: pick(['BASIC', 'MEDIUM', 'HIGH', 'HIGHEST']),
+        problemType: pick(['MULTIPLE_CHOICE', 'SHORT_ANSWER']),
+        questionId: success ? questionIds[i % questionIds.length] : null,
+        success,
+        errorMessage: success ? null : '생성 시간 초과 — Gemini API timeout',
+        createdAt: day(-rand(0, 30)),
+      },
+    });
+    count('QuestionGenerationLog');
+  }
+
+  // ════════════════════════════════════════════════════════
+  // 24-B. 수기채점 TestAttempt (entryMethod='manual')
+  // ════════════════════════════════════════════════════════
+  console.log('25-B. 수기채점 TestAttempt 생성...');
+
+  // 중등반 학생들에 대해 수기채점 시험 시도 생성
+  const manualTestDef = testDefs[3]; // 중1 정수/유리수 시험
+  const manualQIds = questionIds.slice(manualTestDef.qSlice[0], manualTestDef.qSlice[1]);
+
+  for (let i = 0; i < 3; i++) {
+    const sId = t1StudentIds[10 + i]; // 중등반 학생 11~13
+    const correctCount = rand(5, 12);
+    const score = Math.round((correctCount / manualQIds.length) * 100);
+    const manualAttemptId = uuid();
+    const totalTimeMin = rand(20, 40);
+    const perQSec = Math.round((totalTimeMin * 60) / manualQIds.length);
+
+    await prisma.testAttempt.create({
+      data: {
+        id: manualAttemptId, testId: manualTestDef.id, studentId: sId,
+        score, maxScore: 100, correctCount, totalCount: manualQIds.length,
+        xpEarned: Math.floor(score / 10), comboMax: 0,
+        completedAt: day(-rand(1, 5)), startedAt: day(-6),
+        entryMethod: 'manual', enteredBy: teacherIds[2],
+      },
+    });
+    count('TestAttempt (manual)');
+
+    for (let qi = 0; qi < manualQIds.length; qi++) {
+      const isCorrect = qi < correctCount;
+      const correctAns = questionSeeds[manualTestDef.qSlice[0] + qi]?.answer || '1';
+      await prisma.answerLog.create({
+        data: {
+          id: uuid(), attemptId: manualAttemptId, questionId: manualQIds[qi],
+          selectedAnswer: isCorrect ? correctAns : String(rand(1, 5)),
+          isCorrect, timeSpentSeconds: perQSec,
+          comboCount: 0, pointsEarned: isCorrect ? 10 : 0,
+        },
+      });
+      count('AnswerLog (manual)');
+    }
   }
 
   // ════════════════════════════════════════════════════════
