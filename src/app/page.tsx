@@ -129,20 +129,20 @@ const stages = [
 ];
 
 const teacherTools = [
-  { icon: Users, label: '학생 관리' },
-  { icon: School, label: '반 관리' },
-  { icon: BookOpen, label: '개념 관리' },
-  { icon: Database, label: '문제 은행' },
-  { icon: Calculator, label: '연산 생성기' },
-  { icon: CalendarCheck, label: '숙제 관리' },
-  { icon: ClipboardCheck, label: '시험 관리' },
-  { icon: Target, label: '레벨테스트' },
-  { icon: Radio, label: '실시간 퀴즈' },
-  { icon: FileSpreadsheet, label: '학습지' },
-  { icon: PenLine, label: '수기 채점' },
-  { icon: FileText, label: 'PDF 추출' },
-  { icon: BarChart3, label: '학습 분석' },
-  { icon: ScrollText, label: '리포트' },
+  { icon: Users, label: '학생 관리', desc: '학생 정보 조회 · 검색 · 상세 관리' },
+  { icon: School, label: '반 관리', desc: '반/학급 편성 및 학생 배정' },
+  { icon: BookOpen, label: '개념 관리', desc: '수학 개념 CRUD · 빈칸 자동생성' },
+  { icon: Database, label: '문제 은행', desc: '교육과정 기반 문제 검색 · 필터' },
+  { icon: Calculator, label: '연산 생성기', desc: '79개 카테고리 무한 문제 생성' },
+  { icon: CalendarCheck, label: '숙제 관리', desc: '연산 · 개념 · 문제 숙제 출제' },
+  { icon: ClipboardCheck, label: '시험 관리', desc: '시험 출제 · 배정 · 결과 분석' },
+  { icon: Target, label: '레벨테스트', desc: '진단 테스트로 취약 영역 파악' },
+  { icon: Radio, label: '실시간 퀴즈', desc: 'PIN 입력 실시간 퀴즈 세션' },
+  { icon: FileSpreadsheet, label: '학습지', desc: '교육과정 기반 문제지 위자드' },
+  { icon: PenLine, label: '수기 채점', desc: '서술형 답안 수기 채점 인터페이스' },
+  { icon: FileText, label: 'PDF 추출', desc: 'PDF 문제집 → AI 구조화 추출' },
+  { icon: BarChart3, label: '학습 분석', desc: '진도율 · 정답률 · 취약 단원 분석' },
+  { icon: ScrollText, label: '리포트', desc: 'AI 레벨테스트 보고서 생성' },
 ];
 
 const stats = [
@@ -324,14 +324,18 @@ export default function LandingPage() {
                   수기 채점, PDF 문제 추출, AI 리포트까지 — 수학 학원의 모든 업무를 디지털로 전환합니다.
                 </p>
                 <div className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]">
-                  <div className="flex gap-2 w-max animate-[marquee_25s_linear_infinite] hover:[animation-play-state:paused]">
+                  <div className="flex gap-2 w-max animate-[marquee_30s_linear_infinite] hover:[animation-play-state:paused]">
                     {[...teacherTools, ...teacherTools].map((tool, i) => (
                       <div
                         key={`${tool.label}-${i}`}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-sm bg-white border border-slate-200 shrink-0"
+                        className="group/chip relative flex items-center gap-1.5 px-3 py-2 rounded-sm bg-white border border-slate-200 shrink-0 hover:border-primary hover:shadow-md hover:scale-105 transition-all cursor-default"
                       >
                         <tool.icon className="w-4 h-4 text-primary shrink-0" />
-                        <span className="text-xs font-medium text-text-secondary whitespace-nowrap">{tool.label}</span>
+                        <span className="text-xs font-medium text-text-secondary group-hover/chip:text-primary whitespace-nowrap transition-colors">{tool.label}</span>
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-slate-800 text-white text-[11px] rounded-sm whitespace-nowrap opacity-0 group-hover/chip:opacity-100 transition-opacity pointer-events-none shadow-lg">
+                          {tool.desc}
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -353,23 +357,32 @@ export default function LandingPage() {
                   개념 학습, 빈칸 암기, 연산 연습, 시험 응시까지 모든 학습을 온라인으로. XP 포인트와
                   랭킹 시스템으로 자기주도 학습 습관을 만들어갑니다.
                 </p>
-                <div className="space-y-3">
-                  {[
-                    { icon: Brain, text: '5단계 개념 학습으로 체계적 암기' },
-                    { icon: Zap, text: '연산 연습으로 계산력 강화' },
-                    { icon: Timer, text: '타임어택으로 연산 속도 챌린지' },
-                    { icon: Flame, text: '일일 미션 · 오늘의 문제로 매일 학습' },
-                    { icon: Target, text: '레벨테스트로 취약 영역 진단' },
-                    { icon: Trophy, text: 'XP · 레벨 · 랭킹 · 뱃지로 동기 부여' },
-                    { icon: CheckCircle2, text: '숙제 제출 · 시험 응시 · 오답 복수전' },
-                  ].map((item) => (
-                    <div key={item.text} className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-sm bg-orange-50 flex items-center justify-center shrink-0">
-                        <item.icon className="w-4.5 h-4.5 text-secondary" />
-                      </div>
-                      <span className="text-sm font-medium text-text-primary">{item.text}</span>
-                    </div>
-                  ))}
+                <div className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]">
+                  <div className="flex gap-2 w-max animate-[marquee_30s_linear_infinite] hover:[animation-play-state:paused]">
+                    {[...Array(2)].flatMap((_, setIdx) =>
+                      [
+                        { icon: Brain, text: '5단계 개념 학습', desc: '읽기 → 빈칸 → 통문장 → 백지 복원' },
+                        { icon: Zap, text: '연산 연습', desc: '79개 카테고리 무한 문제 풀기' },
+                        { icon: Timer, text: '타임어택', desc: '시간 제한 연산 속도 챌린지' },
+                        { icon: Flame, text: '일일 미션', desc: '매일 자동 생성되는 학습 미션' },
+                        { icon: Target, text: '레벨테스트', desc: '취약 영역 진단 · AI 보고서' },
+                        { icon: Trophy, text: 'XP · 랭킹', desc: '포인트 · 레벨업 · 뱃지 시스템' },
+                        { icon: CheckCircle2, text: '숙제 · 시험', desc: '숙제 제출 · 시험 응시 · 오답 복수전' },
+                      ].map((item, i) => (
+                        <div
+                          key={`${item.text}-${setIdx}-${i}`}
+                          className="group/chip relative flex items-center gap-1.5 px-3 py-2 rounded-sm bg-white border border-slate-200 shrink-0 hover:border-secondary hover:shadow-md hover:scale-105 transition-all cursor-default"
+                        >
+                          <item.icon className="w-4 h-4 text-secondary shrink-0" />
+                          <span className="text-xs font-medium text-text-secondary group-hover/chip:text-secondary whitespace-nowrap transition-colors">{item.text}</span>
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-slate-800 text-white text-[11px] rounded-sm whitespace-nowrap opacity-0 group-hover/chip:opacity-100 transition-opacity pointer-events-none shadow-lg">
+                            {item.desc}
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -387,7 +400,7 @@ export default function LandingPage() {
                 AI가 함께하는 학습
               </h2>
               <p className="text-text-secondary text-lg max-w-2xl leading-relaxed">
-                Gemini와 Claude AI를 활용하여 개념에서 자동으로 빈칸 문제를 생성하고, PDF에서 문제를 추출하며,
+                AI를 활용하여 개념에서 자동으로 빈칸 문제를 생성하고, PDF에서 문제를 추출하며,
                 레벨테스트 결과를 AI가 분석하여 맞춤형 보고서를 제공합니다.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mt-6 w-full max-w-4xl">

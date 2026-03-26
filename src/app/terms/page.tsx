@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function TermsPage() {
   return (
-    <main className="min-h-screen bg-white">
+    <main className="h-screen overflow-y-auto bg-white">
       <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
         <h1 className="mb-4 text-3xl font-bold text-slate-900">서비스 이용약관</h1>
         <p className="mb-8 text-slate-500">MathLab의 서비스 이용약관입니다.</p>
