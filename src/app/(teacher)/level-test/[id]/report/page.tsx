@@ -16,6 +16,9 @@ import {
   ReportWeakAreas,
   ReportQuestionDetail,
   ReportTeacherComment,
+  ReportParentSummary,
+  ReportParentActionPlan,
+  ReportParentEncouragement,
 } from '@/components/report';
 import type { LevelTestReportData } from '@/types/report';
 import type { LevelTestDomain } from '@/types';
@@ -32,6 +35,7 @@ export default function LevelTestReportPage() {
   const [data, setData] = useState<LevelTestReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<'teacher' | 'parent'>('teacher');
 
   const { scale, setScale, scalePercent, galleryRef, fitToContainer, setScaleFromSlider } = usePreviewScale();
 
@@ -119,8 +123,12 @@ export default function LevelTestReportPage() {
     return { difficultyStats, chapterStats, totalTimeSeconds, enrichedAnswers, detailPageCount };
   }, [data]);
 
-  // 총 페이지 수 (cover + summary + diffchapter + weak + detail(N) + teacher)
-  const totalPages = derived ? 4 + derived.detailPageCount + 1 : 6;
+  const hasParentReport = !!data?.parentAiContent;
+
+  // 총 페이지 수
+  const teacherTotalPages = derived ? 4 + derived.detailPageCount + 1 : 6;
+  const parentTotalPages = 4; // cover + summary + action + encouragement
+  const totalPages = mode === 'parent' && hasParentReport ? parentTotalPages : teacherTotalPages;
 
   const testDate = data?.attempt.completedAt
     ? new Date(data.attempt.completedAt).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })
@@ -195,11 +203,11 @@ export default function LevelTestReportPage() {
     );
   }
 
-  // 각 페이지의 내용을 정의
-  const pages: React.ReactNode[] = [];
+  // === 교사용 페이지 ===
+  const teacherPages: React.ReactNode[] = [];
 
   // Page 1: 표지
-  pages.push(
+  teacherPages.push(
     <ReportPageWrapper key="cover" pageNumber={1} totalPages={totalPages} showHeader={false}>
       <ReportCover
         testTitle={data.test.title}
@@ -213,7 +221,7 @@ export default function LevelTestReportPage() {
   );
 
   // Page 2: 종합 분석 + 영역별 분석 (통합)
-  pages.push(
+  teacherPages.push(
     <ReportPageWrapper key="summary" pageNumber={2} totalPages={totalPages} studentName={data.student.name} testTitle={data.test.title} testDate={testDate}>
       <ReportSummary
         recommendLevel={data.diagnostic.recommendLevel}
@@ -230,7 +238,7 @@ export default function LevelTestReportPage() {
   );
 
   // Page 3: 난이도 + 단원
-  pages.push(
+  teacherPages.push(
     <ReportPageWrapper key="diffchapter" pageNumber={3} totalPages={totalPages} studentName={data.student.name} testTitle={data.test.title} testDate={testDate}>
       <ReportDifficultyChapter
         difficultyStats={derived.difficultyStats}
@@ -242,7 +250,7 @@ export default function LevelTestReportPage() {
   );
 
   // Page 4: 취약 영역 + 선수학습
-  pages.push(
+  teacherPages.push(
     <ReportPageWrapper key="weak" pageNumber={4} totalPages={totalPages} studentName={data.student.name} testTitle={data.test.title} testDate={testDate}>
       <ReportWeakAreas
         weakAreas={data.diagnostic.weakAreas}
@@ -258,7 +266,7 @@ export default function LevelTestReportPage() {
   for (let i = 0; i < derived.detailPageCount; i++) {
     const startIdx = i * QUESTIONS_PER_DETAIL_PAGE;
     const endIdx = Math.min(startIdx + QUESTIONS_PER_DETAIL_PAGE, data.questions.length);
-    pages.push(
+    teacherPages.push(
       <ReportPageWrapper
         key={`detail-${i}`}
         pageNumber={5 + i}
@@ -279,7 +287,7 @@ export default function LevelTestReportPage() {
   }
 
   // 마지막 페이지: 학습 방향
-  pages.push(
+  teacherPages.push(
     <ReportPageWrapper
       key="teacher"
       pageNumber={totalPages}
@@ -302,6 +310,63 @@ export default function LevelTestReportPage() {
     </ReportPageWrapper>
   );
 
+  // === 학부모용 페이지 ===
+  const parentPages: React.ReactNode[] = [];
+
+  if (data.parentAiContent) {
+    // 학부모 Page 1: 표지 (공유)
+    parentPages.push(
+      <ReportPageWrapper key="p-cover" pageNumber={1} totalPages={parentTotalPages} showHeader={false}>
+        <ReportCover
+          testTitle={data.test.title}
+          studentName={data.student.name}
+          studentGrade={data.student.grade}
+          testDate={testDate}
+          questionCount={data.test.questionCount}
+          academyName={data.academy.name}
+        />
+      </ReportPageWrapper>
+    );
+
+    // 학부모 Page 2: 종합 + 오답 원인
+    parentPages.push(
+      <ReportPageWrapper key="p-summary" pageNumber={2} totalPages={parentTotalPages} studentName={data.student.name} testTitle={data.test.title} testDate={testDate}>
+        <ReportParentSummary
+          studentName={data.student.name}
+          overallAccuracy={data.diagnostic.overallAccuracy}
+          correctCount={data.attempt.correctCount}
+          totalCount={data.attempt.totalCount}
+          recommendLevel={data.diagnostic.recommendLevel}
+          parentAi={data.parentAiContent}
+        />
+      </ReportPageWrapper>
+    );
+
+    // 학부모 Page 3: 학습 실천 계획
+    parentPages.push(
+      <ReportPageWrapper key="p-action" pageNumber={3} totalPages={parentTotalPages} studentName={data.student.name} testTitle={data.test.title} testDate={testDate}>
+        <ReportParentActionPlan
+          studentName={data.student.name}
+          parentAi={data.parentAiContent}
+        />
+      </ReportPageWrapper>
+    );
+
+    // 학부모 Page 4: 향상 전망 + 응원
+    parentPages.push(
+      <ReportPageWrapper key="p-encourage" pageNumber={4} totalPages={parentTotalPages} studentName={data.student.name} testTitle={data.test.title} testDate={testDate}>
+        <ReportParentEncouragement
+          studentName={data.student.name}
+          overallAccuracy={data.diagnostic.overallAccuracy}
+          parentAi={data.parentAiContent}
+        />
+      </ReportPageWrapper>
+    );
+  }
+
+  // 현재 모드에 따른 페이지 선택
+  const activePages = mode === 'parent' && parentPages.length > 0 ? parentPages : teacherPages;
+
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full overflow-hidden bg-white">
       {/* 툴바 */}
@@ -322,8 +387,35 @@ export default function LevelTestReportPage() {
               결과 목록
             </Link>
             <div className="w-px h-4 bg-slate-200" />
+            {/* 교사용/학부모용 탭 */}
+            <div className="flex items-center bg-slate-100 rounded p-0.5">
+              <button
+                onClick={() => setMode('teacher')}
+                className={`px-2 py-0.5 text-xs rounded transition-colors ${
+                  mode === 'teacher'
+                    ? 'bg-white text-primary font-bold shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                교사용
+              </button>
+              <button
+                onClick={() => setMode('parent')}
+                disabled={!hasParentReport}
+                className={`px-2 py-0.5 text-xs rounded transition-colors ${
+                  mode === 'parent'
+                    ? 'bg-white text-primary font-bold shadow-sm'
+                    : hasParentReport
+                      ? 'text-slate-500 hover:text-slate-700'
+                      : 'text-slate-300 cursor-not-allowed'
+                }`}
+              >
+                학부모용
+              </button>
+            </div>
+            <div className="w-px h-4 bg-slate-200" />
             <span className="text-xs font-bold text-text-primary">{data.student.name}</span>
-            <span className="text-xs text-slate-400">진단 보고서 · {totalPages}페이지</span>
+            <span className="text-xs text-slate-400">{totalPages}페이지</span>
           </div>
         }
       />
@@ -331,7 +423,7 @@ export default function LevelTestReportPage() {
       {/* 미리보기 갤러리 (화면) */}
       <div ref={galleryRef} className="flex-1 overflow-auto bg-slate-100 print:hidden">
         <div className="flex gap-4 p-4 items-start min-w-max">
-          {pages.map((page, i) => (
+          {activePages.map((page, i) => (
             <A4Page key={i} scale={scale} paddingClass="">
               {page}
             </A4Page>
@@ -341,8 +433,8 @@ export default function LevelTestReportPage() {
 
       {/* 인쇄 전용 */}
       <div className="hidden print:block">
-        {pages.map((page, i) => (
-          <A4PrintPage key={i} pageBreak={i < pages.length - 1} paddingClass="">
+        {activePages.map((page, i) => (
+          <A4PrintPage key={i} pageBreak={i < activePages.length - 1} paddingClass="">
             {page}
           </A4PrintPage>
         ))}

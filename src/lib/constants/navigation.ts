@@ -222,6 +222,7 @@ const SUPER_ADMIN_NAV_GROUPS: NavGroup[] = [
   },
   {
     id: 'system', label: '시스템', minRole: 'SUPER_ADMIN', items: [
+      { id: 'mockups', label: '페이지 목업', href: '/mockups', icon: Target, minRole: 'SUPER_ADMIN', keywords: ['mockup', '목업', '미리보기', '페이지'] },
       { id: 'support', label: '고객지원', href: '/support', icon: HelpCircle, minRole: 'SUPER_ADMIN', keywords: ['support', '지원', '문의'] },
       { id: 'settings', label: '설정', href: '/settings', icon: Settings, minRole: 'SUPER_ADMIN', keywords: ['setting', '설정', '환경'] },
     ],

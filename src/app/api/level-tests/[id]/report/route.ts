@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getDifficultyComment, getChapterComment } from '@/lib/utils/level-test-feedback';
-import { generateReportAI } from '@/lib/services/report-ai';
+import { generateReportAI, generateParentReportAI } from '@/lib/services/report-ai';
 import { requireTeacher, isResponse, notFound, badRequest } from '@/lib/api';
 import { getTestQuestionIds } from '@/lib/utils/question-order';
 
@@ -145,7 +145,8 @@ export async function GET(
   const weakAreas = diagnostic.weakAreas as Array<{ chapter: string; accuracy: number; total: number; correct: number }>;
   const strongAreas = diagnostic.strongAreas as Array<{ chapter: string; accuracy: number; total: number; correct: number }>;
 
-  const aiContent = await generateReportAI({
+  // AI 멘트 생성: 교사용 + 학부모용 병렬 호출
+  const commonInput = {
     studentName,
     grade: attempt.student.grade,
     testTitle: test.title,
@@ -157,7 +158,17 @@ export async function GET(
     difficultyStats,
     chapterStats,
     prerequisiteCount: prerequisiteChains.length,
-  });
+  };
+
+  const [aiContent, parentAiContent] = await Promise.all([
+    generateReportAI(commonInput),
+    generateParentReportAI({
+      ...commonInput,
+      answerStatuses: answerLogs.map((a) => a.statusClassification),
+      correctCount: attempt.correctCount,
+      totalCount: attempt.totalCount,
+    }),
+  ]);
 
   return NextResponse.json({
     data: {
@@ -213,6 +224,7 @@ export async function GET(
         domainFeedbacks: aiContent?.domainFeedbacks ?? null,
         prerequisiteFeedback: aiContent?.prerequisiteFeedback ?? null,
       },
+      parentAiContent: parentAiContent ?? null,
     },
   });
 }

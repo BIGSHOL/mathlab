@@ -70,6 +70,7 @@ export interface LevelTestReportData {
     domainFeedbacks: Record<string, string> | null;
     prerequisiteFeedback: string | null;
   };
+  parentAiContent: ParentAIContent | null;
 }
 
 export interface ReportQuestion {
@@ -88,4 +89,69 @@ export interface ReportAnswer {
   isCorrect: boolean;
   timeSpentSeconds: number;
   statusClassification: string | null;
+}
+
+// === 학부모용 보고서 타입 ===
+
+export interface MistakePattern {
+  type: 'calculation_error' | 'concept_gap' | 'careless' | 'time_pressure';
+  count: number;
+  percentage: number;
+  description: string;
+}
+
+export interface TopicWeakness {
+  topic: string;
+  severityScore: number; // 0~1
+  details: string;
+}
+
+export interface LearningPhase {
+  name: string;
+  duration: string;
+  topics: string[];
+  checkpoint: string;
+}
+
+export interface ActionItem {
+  period: 'today' | 'this_week' | 'next_week';
+  items: string[];
+}
+
+export interface ParentAIContent {
+  // 취약점 분석
+  mistakePatterns: MistakePattern[];
+  topicWeaknesses: TopicWeakness[];
+  cognitiveAssessment: {
+    knowledge: number;
+    comprehension: number;
+    application: number;
+    analysis: number;
+  };
+
+  // 학습 계획
+  learningPhases: LearningPhase[];
+  expectedImprovement: string;
+
+  // 점수대별 특성
+  characteristics: {
+    levelName: string;
+    strengths: string[];
+    weaknesses: string[];
+  };
+  motivationalMessage: string;
+
+  // 학부모 전용
+  simpleExplanation: string;
+  mistakeSummary: {
+    carelessCount: number;
+    conceptGapCount: number;
+    carelessDescription: string;
+    conceptGapDescription: string;
+  };
+  actionItems: ActionItem[];
+  studyRecommendation: 'self' | 'short_course' | 'academy';
+  studyRecommendationReason: string;
+  improvementOutlook: string;
+  encouragement: string;
 }

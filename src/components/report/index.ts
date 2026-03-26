@@ -5,3 +5,6 @@ export { ReportDifficultyChapter } from './ReportDifficultyChapter';
 export { ReportWeakAreas } from './ReportWeakAreas';
 export { ReportQuestionDetail } from './ReportQuestionDetail';
 export { ReportTeacherComment } from './ReportTeacherComment';
+export { ReportParentSummary } from './ReportParentSummary';
+export { ReportParentActionPlan } from './ReportParentActionPlan';
+export { ReportParentEncouragement } from './ReportParentEncouragement';
