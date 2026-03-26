@@ -3,6 +3,9 @@
 import React, { useId } from 'react';
 import { GEM_STAGE_LABELS, GEM_VARIANT_LABELS, type GemVariant } from '@/lib/utils/gem';
 
+// 부동소수점 hydration mismatch 방지: 서버/클라이언트 간 미세한 정밀도 차이를 반올림
+const fp = (n: number) => Math.round(n * 10000) / 10000;
+
 // ═══════════════════════════════════════
 //  Props & Sizes
 // ═══════════════════════════════════════
@@ -151,7 +154,7 @@ const rubyS2: SFn = (c, id, ol) => (
       <polygon points="100,190 145,145 130,115 100,125 70,115 55,145" fill={c.d} opacity="0.35" />
       {[0,60,120,180,240,300].map((deg,i) => {
         const r = Math.PI * deg / 180;
-        return <line key={i} x1="100" y1="100" x2={100+Math.cos(r)*30} y2={100+Math.sin(r)*30} stroke={c.h} opacity="0.15" strokeWidth="2" />;
+        return <line key={i} x1="100" y1="100" x2={fp(100+Math.cos(r)*30)} y2={fp(100+Math.sin(r)*30)} stroke={c.h} opacity="0.15" strokeWidth="2" />;
       })}
     </g>
     <polygon points={ol} fill="none" stroke={`${c.b}35`} strokeWidth="0.6" />
@@ -177,7 +180,7 @@ const rubyS3: SFn = (c, id, ol, a) => (
       <polygon points="100,190 145,145 125,118 100,128 75,118 55,145" fill={c.d} opacity="0.38" />
       {[0,60,120,180,240,300].map((deg,i) => {
         const r = Math.PI * deg / 180;
-        return <line key={i} x1="100" y1="100" x2={100+Math.cos(r)*55} y2={100+Math.sin(r)*55} stroke={c.sh} opacity="0.2" strokeWidth="3" strokeLinecap="round" />;
+        return <line key={i} x1="100" y1="100" x2={fp(100+Math.cos(r)*55)} y2={fp(100+Math.sin(r)*55)} stroke={c.sh} opacity="0.2" strokeWidth="3" strokeLinecap="round" />;
       })}
       <ellipse cx="90" cy="85" rx="28" ry="18" fill={c.b} opacity="0.12" transform="rotate(-15,90,85)" />
       <ellipse cx="88" cy="52" rx="22" ry="8" fill="white" opacity="0.2" transform="rotate(-8,88,52)" />
@@ -219,8 +222,8 @@ const rubyS4: SFn = (c, id, ol, a) => (
         const r = Math.PI * deg / 180, len = 65;
         return (
           <g key={i}>
-            <line x1="100" y1="100" x2={100+Math.cos(r)*len} y2={100+Math.sin(r)*len} stroke={c.w} opacity="0.15" strokeWidth="6" strokeLinecap="round" />
-            <line x1="100" y1="100" x2={100+Math.cos(r)*len} y2={100+Math.sin(r)*len} stroke={c.sh} opacity="0.3" strokeWidth="2" strokeLinecap="round" />
+            <line x1="100" y1="100" x2={fp(100+Math.cos(r)*len)} y2={fp(100+Math.sin(r)*len)} stroke={c.w} opacity="0.15" strokeWidth="6" strokeLinecap="round" />
+            <line x1="100" y1="100" x2={fp(100+Math.cos(r)*len)} y2={fp(100+Math.sin(r)*len)} stroke={c.sh} opacity="0.3" strokeWidth="2" strokeLinecap="round" />
           </g>
         );
       })}
@@ -603,7 +606,7 @@ const topazS2: SFn = (c, id, ol) => (
         const a1 = (i*30)*Math.PI/180, a2 = ((i+1)*30)*Math.PI/180, R = 80;
         return (
           <polygon key={i}
-            points={`100,100 ${100+Math.cos(a1)*R},${100+Math.sin(a1)*R} ${100+Math.cos(a2)*R},${100+Math.sin(a2)*R}`}
+            points={`100,100 ${fp(100+Math.cos(a1)*R)},${fp(100+Math.sin(a1)*R)} ${fp(100+Math.cos(a2)*R)},${fp(100+Math.sin(a2)*R)}`}
             fill={i%2===0?c.b:c.m} opacity={0.12+((i%3)*0.05)} />
         );
       })}
@@ -627,13 +630,13 @@ const topazS3: SFn = (c, id, ol, a) => (
         const a1 = (i*30)*Math.PI/180, a2 = ((i+1)*30)*Math.PI/180, R = 82;
         return (
           <polygon key={i}
-            points={`100,100 ${100+Math.cos(a1)*R},${100+Math.sin(a1)*R} ${100+Math.cos(a2)*R},${100+Math.sin(a2)*R}`}
+            points={`100,100 ${fp(100+Math.cos(a1)*R)},${fp(100+Math.sin(a1)*R)} ${fp(100+Math.cos(a2)*R)},${fp(100+Math.sin(a2)*R)}`}
             fill={i%2===0?c.h:c.b} opacity={0.1+((i%3)*0.05)} />
         );
       })}
       {Array.from({length:12}).map((_,i) => {
         const ang = (i*30)*Math.PI/180;
-        return <line key={i} x1="100" y1="100" x2={100+Math.cos(ang)*80} y2={100+Math.sin(ang)*80} stroke={c.sh} opacity="0.1" strokeWidth="0.5" />;
+        return <line key={i} x1="100" y1="100" x2={fp(100+Math.cos(ang)*80)} y2={fp(100+Math.sin(ang)*80)} stroke={c.sh} opacity="0.1" strokeWidth="0.5" />;
       })}
       <circle cx="100" cy="100" r="18" fill={c.h} opacity="0.12" />
       <circle cx="100" cy="100" r="8" fill={c.w} opacity="0.08" />
@@ -669,13 +672,13 @@ const topazS4: SFn = (c, id, ol, a) => (
         const a1 = (i*30)*Math.PI/180, a2 = ((i+1)*30)*Math.PI/180, R = 85;
         return (
           <polygon key={i}
-            points={`100,100 ${100+Math.cos(a1)*R},${100+Math.sin(a1)*R} ${100+Math.cos(a2)*R},${100+Math.sin(a2)*R}`}
+            points={`100,100 ${fp(100+Math.cos(a1)*R)},${fp(100+Math.sin(a1)*R)} ${fp(100+Math.cos(a2)*R)},${fp(100+Math.sin(a2)*R)}`}
             fill={i%2===0?c.h:c.b} opacity={0.12+((i%3)*0.05)} />
         );
       })}
       {Array.from({length:12}).map((_,i) => {
         const ang = (i*30)*Math.PI/180;
-        return <line key={i} x1="100" y1="100" x2={100+Math.cos(ang)*88} y2={100+Math.sin(ang)*88} stroke={c.w} opacity="0.12" strokeWidth="0.6" />;
+        return <line key={i} x1="100" y1="100" x2={fp(100+Math.cos(ang)*88)} y2={fp(100+Math.sin(ang)*88)} stroke={c.w} opacity="0.12" strokeWidth="0.6" />;
       })}
       <circle cx="100" cy="100" r="22" fill={c.h} opacity="0.15" />
       <circle cx="100" cy="100" r="10" fill={c.w} opacity="0.12" />
