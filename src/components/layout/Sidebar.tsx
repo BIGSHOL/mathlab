@@ -40,7 +40,7 @@ export function Sidebar() {
   const navGroups = getNavForRole(role);
   const allItems = getAllNavItems();
   const [collapsed, setCollapsed] = useState(false);
-  const displayName = isViewingAsTenant ? (viewingTenantName ?? 'Injaewon MathLAB') : (tenant?.name || 'Injaewon MathLAB');
+  const displayName = isViewingAsTenant ? (viewingTenantName ?? 'MathLAB') : (tenant?.name || 'MathLAB');
 
   const isActive = (item: NavItem) => {
     return pathname === item.href || (item.href !== '/overview' && pathname.startsWith(item.href + '/') && !allItems.some((other) => other !== item && other.href !== item.href && other.href.startsWith(item.href + '/') && pathname.startsWith(other.href)));

@@ -69,7 +69,7 @@ export function Header({ role, userName = '사용자' }: HeaderProps) {
   const searchParams = useSearchParams();
   const viewAsId = searchParams.get('_as');
   const tenant = useTenant();
-  const displayName = tenant?.name || 'Injaewon MathLAB';
+  const displayName = tenant?.name || 'MathLAB';
   const nav = role === 'student' ? studentNav : teacherNav;
   const { badgeIcon } = useRepresentativeBadge(role === 'student');
 

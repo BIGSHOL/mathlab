@@ -206,7 +206,9 @@ export default function LandingPage() {
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight text-text-primary">
                 개념부터 시험까지
                 <br />
-                <span className="text-primary">올인원 수학 학습, Injaewon MathLAB</span>
+                올인원 수학 학습
+                <br />
+                <span className="text-primary">Injaewon MathLAB</span>
               </h1>
               <p className="text-text-secondary text-lg md:text-xl max-w-2xl leading-relaxed">
                 5단계 개념 학습, 무한 연산 연습, AI 문제 생성, 시험·숙제 관리까지.
