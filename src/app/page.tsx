@@ -258,11 +258,11 @@ export default function LandingPage() {
                 수학 학습의 모든 단계를 하나의 플랫폼에서 관리하세요.
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {features.map((feature) => (
+            <div className="flex flex-wrap justify-center gap-8">
+              {features.map((feature, idx) => (
                 <Card
                   key={feature.title}
-                  className="p-8 hover:border-primary/30 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group"
+                  className={`p-8 hover:border-primary/30 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group w-full md:w-[calc(50%-16px)] ${idx < 4 ? 'lg:w-[calc(25%-24px)]' : 'lg:w-[calc(33.333%-22px)]'}`}
                 >
                   <div
                     className={`${feature.bg} w-14 h-14 rounded-sm flex items-center justify-center ${feature.color} mb-6 group-hover:scale-110 transition-transform`}
