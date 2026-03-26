@@ -212,7 +212,7 @@ export async function GET(
         timeSpentSeconds: a.timeSpentSeconds,
         statusClassification: a.statusClassification,
       })),
-      academy: { name: 'MathLab' },
+      academy: { name: 'Injaewon MathLAB' },
       comments: {
         difficultyComment: aiContent?.difficultyComment ?? getDifficultyComment(studentName, difficultyStats),
         chapterComment: aiContent?.chapterComment ?? getChapterComment(studentName, chapterStats),

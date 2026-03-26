@@ -1,5 +1,5 @@
 /**
- * seed-full.ts — MathLab 종합 시드 스크립트 (전체 기능 테스트용)
+ * seed-full.ts — Injaewon MathLAB 종합 시드 스크립트 (전체 기능 테스트용)
  *
  * 실행: npx tsx scripts/seed-full.ts
  *
@@ -58,7 +58,7 @@ const PW = hash('1234');
 
 // ─── 메인 ───────────────────────────────────────────────
 async function main() {
-  console.log('=== MathLab 종합 시드 시작 ===\n');
+  console.log('=== Injaewon MathLAB 종합 시드 시작 ===\n');
 
   // ════════════════════════════════════════════════════════
   // 1. 기존 데이터 삭제 (자식 테이블부터)
@@ -145,7 +145,7 @@ async function main() {
   // ════════════════════════════════════════════════════════
   console.log('1. Tenant 생성...');
   const tenants = [
-    { id: uuid(), slug: 'mathlab', name: 'MathLab 본원' },
+    { id: uuid(), slug: 'mathlab', name: 'Injaewon MathLAB 본원' },
     { id: uuid(), slug: 'gangnam', name: '강남점' },
     { id: uuid(), slug: 'seocho', name: '서초점' },
   ];

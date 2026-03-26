@@ -61,7 +61,7 @@ export function StudentSidebar() {
   const { isLicensed } = useLicenses();
   const { badgeIcon } = useRepresentativeBadge();
   const [collapsed, setCollapsed] = useState(false);
-  const displayName = tenant?.name || 'MathLab';
+  const displayName = tenant?.name || 'Injaewon MathLAB';
 
   const update = useUpdateNotification((s) => s.update);
   const dismissed = useUpdateNotification((s) => s.dismissed);

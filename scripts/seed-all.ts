@@ -1,5 +1,5 @@
 /**
- * seed-all.ts — MathLab 전체 시드 스크립트
+ * seed-all.ts — Injaewon MathLAB 전체 시드 스크립트
  *
  * 실행: npx tsx scripts/seed-all.ts
  *
@@ -36,7 +36,7 @@ function count(key: string, n = 1) {
 
 // ─── 메인 ───────────────────────────────────────────────
 async function main() {
-  console.log('=== MathLab 전체 시드 시작 ===\n');
+  console.log('=== Injaewon MathLAB 전체 시드 시작 ===\n');
 
   // ──────────────────────────────────────────────────────
   // 1. 기존 데이터 삭제 (자식 테이블부터)
@@ -117,7 +117,7 @@ async function main() {
   console.log('1. Tenant 생성...');
   const tenantId = uuid();
   await prisma.tenant.create({
-    data: { id: tenantId, slug: 'mathlab', name: 'MathLab 학원', updatedAt: now },
+    data: { id: tenantId, slug: 'mathlab', name: 'Injaewon MathLAB 학원', updatedAt: now },
   });
   count('Tenant');
 

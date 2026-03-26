@@ -270,7 +270,7 @@ function PrintContent({ problem, mode }: { problem: GeneratedProblem; mode: 'pro
             </p>
           </div>
           <div className="flex flex-col items-end gap-1">
-            <span className="text-xs font-black tracking-tight text-primary leading-none">MathLab</span>
+            <span className="text-xs font-black tracking-tight text-primary leading-none">Injaewon MathLAB</span>
           </div>
         </div>
         <div className="h-0.5 bg-primary mb-2" style={{ printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } as React.CSSProperties} />

@@ -311,7 +311,7 @@ export function LevelTestResultCard({
               section="prerequisite"
               icon={GitBranch}
               title="계통도 분석"
-              badge="MathLab 독점"
+              badge="Injaewon MathLAB 독점"
               accentColor="text-violet-500"
             />
           </div>
@@ -406,7 +406,7 @@ export function LevelTestResultCard({
               section="prerequisite"
               icon={GitBranch}
               title="계통도 분석"
-              badge="MathLab 독점"
+              badge="Injaewon MathLAB 독점"
               accentColor="text-violet-500"
             />
           </div>

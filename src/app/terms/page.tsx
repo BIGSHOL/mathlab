@@ -1,8 +1,8 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: '서비스 이용약관 | MathLab',
-  description: 'MathLab 서비스 이용약관',
+  title: '서비스 이용약관 | Injaewon MathLAB',
+  description: 'Injaewon MathLAB 서비스 이용약관',
 };
 
 export default function TermsPage() {
@@ -10,11 +10,11 @@ export default function TermsPage() {
     <main className="h-screen overflow-y-auto bg-white">
       <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
         <h1 className="mb-4 text-3xl font-bold text-slate-900">서비스 이용약관</h1>
-        <p className="mb-8 text-slate-500">MathLab의 서비스 이용약관입니다.</p>
+        <p className="mb-8 text-slate-500">Injaewon MathLAB의 서비스 이용약관입니다.</p>
 
         <div className="mb-10 rounded-sm border border-slate-200 bg-slate-50 p-6 text-sm leading-relaxed text-slate-600">
           <p className="mb-3">
-            본 이용약관은 MathLab(이하 &quot;회사&quot;라 합니다)이 제공하는 수학 학습 관리 플랫폼 서비스와 관련하여,
+            본 이용약관은 Injaewon MathLAB(이하 &quot;회사&quot;라 합니다)이 제공하는 수학 학습 관리 플랫폼 서비스와 관련하여,
             회사와 회원의 권리·의무 및 책임사항 등을 규정합니다.
           </p>
           <p>
@@ -27,7 +27,7 @@ export default function TermsPage() {
           <section>
             <h2 className="mb-3 text-lg font-semibold text-slate-900">제1조 (목적)</h2>
             <p>
-              이 약관은 회사가 제공하는 MathLab 서비스(이하 &quot;서비스&quot;)와 관련된
+              이 약관은 회사가 제공하는 Injaewon MathLAB 서비스(이하 &quot;서비스&quot;)와 관련된
               회사와 회원의 권리, 의무 및 책임사항 등 필요한 사항을 규정하기 위함을 목적으로 합니다.
             </p>
           </section>
@@ -35,7 +35,7 @@ export default function TermsPage() {
           <section>
             <h2 className="mb-3 text-lg font-semibold text-slate-900">제2조 (정의)</h2>
             <ol className="list-decimal space-y-2 pl-6">
-              <li>&quot;서비스&quot;란 MathLab이 제공하는 수학 개념 학습, 빈칸 암기, 연산 연습, 시험 관리, 레벨테스트, AI 문제 생성, 학습 분석, 학습지 생성 등 모든 온라인 교육 서비스를 의미합니다.</li>
+              <li>&quot;서비스&quot;란 Injaewon MathLAB이 제공하는 수학 개념 학습, 빈칸 암기, 연산 연습, 시험 관리, 레벨테스트, AI 문제 생성, 학습 분석, 학습지 생성 등 모든 온라인 교육 서비스를 의미합니다.</li>
               <li>&quot;회원&quot;이란 본 약관에 동의하고 서비스에 가입하여 계정을 부여받은 자를 의미합니다.</li>
               <li>&quot;학생&quot;이란 학습 활동을 수행하는 회원을 의미합니다.</li>
               <li>&quot;교사&quot;란 학생을 관리하고 교육 콘텐츠를 운영하는 회원을 의미합니다.</li>
@@ -47,7 +47,7 @@ export default function TermsPage() {
           <section>
             <h2 className="mb-3 text-lg font-semibold text-slate-900">제3조 (약관의 명시 및 개정)</h2>
             <ol className="list-decimal space-y-2 pl-6">
-              <li>이 약관의 내용은 회사가 제공하는 MathLab 웹사이트에 게시하여 공지하며, 이용자가 회원으로 가입하면서 이 약관에 동의함으로써 효력을 발생합니다.</li>
+              <li>이 약관의 내용은 회사가 제공하는 Injaewon MathLAB 웹사이트에 게시하여 공지하며, 이용자가 회원으로 가입하면서 이 약관에 동의함으로써 효력을 발생합니다.</li>
               <li>회사는 필요한 경우 관련 법령에 위배되지 않는 범위 내에서 이 약관을 변경할 수 있습니다. 변경 시 시행일자 7일 전부터 공지합니다. 회원에게 불리한 변경의 경우 30일 이상의 유예기간을 둡니다.</li>
               <li>회원이 변경된 약관에 동의하지 않는 경우 이용계약을 해지할 수 있습니다.</li>
             </ol>

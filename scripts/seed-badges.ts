@@ -61,10 +61,23 @@ const badges = [
     { key: 'recovery_30', label: '불굴의 의지', description: '이전 시험 대비 30점 이상 향상', icon: '/badges/recovery_30.png', color: '#ca8a04', condition: { type: 'recovery', value: 30 }, sortOrder: 47 },
     { key: 'revenge_100', label: '극복의 아이콘', description: '오답노트 누적 복습 100문제', icon: '/badges/revenge_100.png', color: '#eab308', condition: { type: 'revenge', value: 100 }, sortOrder: 48 },
 
+    // ──────── 3차 업적 업데이트 (망각곡선) ────────
+    { key: 'forgetting_1', label: '망각과의 싸움', description: '망각곡선 복습 1회 완료', icon: '/badges/forgetting_1.png', color: '#6366f1', condition: { type: 'forgetting', value: 1 }, sortOrder: 50 },
+    { key: 'forgetting_10', label: '기억의 파수꾼', description: '망각곡선 복습 10회 완료', icon: '/badges/forgetting_10.png', color: '#3b82f6', condition: { type: 'forgetting', value: 10 }, sortOrder: 51 },
+    { key: 'forgetting_50', label: '에빙하우스의 후예', description: '망각곡선 복습 50회 완료', icon: '/badges/forgetting_50.png', color: '#8b5cf6', condition: { type: 'forgetting', value: 50 }, sortOrder: 52 },
+    { key: 'forgetting_100', label: '완전 기억 능력자', description: '망각곡선 복습 100회 완료', icon: '/badges/forgetting_100.png', color: '#f59e0b', condition: { type: 'forgetting', value: 100 }, sortOrder: 53 },
+
     // 추가된 히든 업적
     { key: 'hidden_marathon', label: '마라토너', description: '하루에 5시간 이상 로그인 유지', icon: '/badges/hidden_marathon.png', color: '#4338ca', condition: { type: 'hidden_marathon', value: 1 }, sortOrder: 92 },
     { key: 'hidden_answer', label: '저기요, 답지 보셨어요?', description: '하루에 답보기 기능 50번 이상 사용', icon: '/badges/hidden_answer.png', color: '#374151', condition: { type: 'hidden_answer', value: 1 }, sortOrder: 93 },
     { key: 'hidden_quiz', label: '고독한 싸움꾼', description: '실시간 퀴즈에서 혼자만 정답 맞추기', icon: '/badges/hidden_quiz.png', color: '#111827', condition: { type: 'hidden_quiz', value: 1 }, sortOrder: 94 },
+
+    // ──────── 4차 업적 업데이트 (종합 활동) ────────
+    { key: 'ranking_1', label: '지점의 자존심', description: '우리 지점 랭킹 1위 최초 달성', icon: '/badges/ranking_1.png', color: '#4f46e5', condition: { type: 'ranking', value: 1 }, sortOrder: 60 },
+    { key: 'homework_streak_7', label: '약속의 7일', description: '7일 연속으로 모든 숙제 완료', icon: '/badges/homework_streak_7.png', color: '#10b981', condition: { type: 'homework_streak', value: 7 }, sortOrder: 61 },
+    { key: 'quiz_master', label: '퀴즈의 제왕', description: '실시간 퀴즈 30회 우승 달성', icon: '/badges/quiz_master.png', color: '#f43f5e', condition: { type: 'quiz_win', value: 30 }, sortOrder: 62 },
+    { key: 'memo_50', label: '필기의 달인', description: '개념 학습 중 나만의 메모 50개 작성', icon: '/badges/memo_50.png', color: '#0ea5e9', condition: { type: 'memo', value: 50 }, sortOrder: 63 },
+    { key: 'diagnostic_master', label: '정밀 분석 완료', description: '레벨 테스트 및 정밀 진단 3회 완료', icon: '/badges/diagnostic_master.png', color: '#8b5cf6', condition: { type: 'diagnostic', value: 3 }, sortOrder: 64 },
 ];
 
 async function main() {

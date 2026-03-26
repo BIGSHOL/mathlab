@@ -102,7 +102,7 @@ export function ReportWeakAreas({
               className="text-[9px] font-bold px-2 py-0.5 rounded-full text-white"
               style={{ backgroundColor: '#7c3aed', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } as React.CSSProperties}
             >
-              MathLab AI
+              Injaewon MathLAB AI
             </span>
           </div>
 

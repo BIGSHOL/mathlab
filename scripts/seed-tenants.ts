@@ -18,7 +18,7 @@ async function main() {
     update: {},
     create: {
       slug: 'default',
-      name: 'MathLab 본사',
+      name: 'Injaewon MathLAB 본사',
       isActive: true,
     },
   });

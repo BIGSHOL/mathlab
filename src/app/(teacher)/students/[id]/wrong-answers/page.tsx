@@ -14,6 +14,9 @@ import {
   Lightbulb,
   RefreshCw,
   Clock,
+  Brain,
+  CalendarCheck,
+  CheckCircle2,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -23,6 +26,14 @@ import { PageContainer } from '@/components/ui/PageContainer';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { MathStatusBadge } from '@/components/ui/MathStatusBadge';
 import { DIFFICULTY_LABELS } from '@/types';
+
+interface ReviewInfo {
+  interval: number;
+  reviewAt: string;
+  completedAt: string | null;
+  streak: number;
+  totalReviewed: number;
+}
 
 interface WrongAnswerItem {
   question: {
@@ -41,6 +52,44 @@ interface WrongAnswerItem {
   lastWrongAt: string;
   timeSpent: number;
   testTitle: string;
+  review: ReviewInfo | null;
+}
+
+const INTERVAL_LABELS: Record<number, string> = {
+  1: '1일차',
+  3: '3일차',
+  7: '1주차',
+  14: '2주차',
+  30: '1개월차',
+  60: '2개월차',
+};
+
+function getReviewStatus(review: ReviewInfo | null): {
+  label: string;
+  color: string;
+  bgColor: string;
+  icon: 'waiting' | 'scheduled' | 'mastered';
+} {
+  if (!review) return { label: '미등록', color: 'text-slate-400', bgColor: 'bg-slate-50 border-slate-200', icon: 'waiting' };
+
+  // 완료된 스케줄이고 60일 간격 완료 → 완전습득
+  if (review.completedAt && review.interval === 60) {
+    return { label: '완전습득', color: 'text-emerald-700', bgColor: 'bg-emerald-50 border-emerald-200', icon: 'mastered' };
+  }
+
+  // 미완료 → 복습 대기 중
+  if (!review.completedAt) {
+    const isOverdue = new Date(review.reviewAt) <= new Date();
+    const stage = INTERVAL_LABELS[review.interval] || `${review.interval}일차`;
+    if (isOverdue) {
+      return { label: `${stage} (지남)`, color: 'text-amber-700', bgColor: 'bg-amber-50 border-amber-200', icon: 'waiting' };
+    }
+    return { label: `${stage} 예정`, color: 'text-blue-700', bgColor: 'bg-blue-50 border-blue-200', icon: 'scheduled' };
+  }
+
+  // 완료됨 (다음 스케줄이 생성되어 있을 것)
+  const stage = INTERVAL_LABELS[review.interval] || `${review.interval}일차`;
+  return { label: `${stage} 진행 중`, color: 'text-violet-700', bgColor: 'bg-violet-50 border-violet-200', icon: 'scheduled' };
 }
 
 interface SimilarQuestion {
@@ -229,6 +278,18 @@ export default function WrongAnswersPage() {
             </h1>
             <p className="text-sm text-text-secondary">
               총 {stats?.totalWrongQuestions ?? 0}개의 오답 문제
+              {items.length > 0 && (() => {
+                const reviewCount = items.filter(i => i.review).length;
+                const overdueCount = items.filter(i => i.review && !i.review.completedAt && new Date(i.review.reviewAt) <= new Date()).length;
+                const masteredCount = items.filter(i => i.review?.completedAt && i.review.interval === 60).length;
+                return (
+                  <span className="ml-2 text-xs">
+                    {reviewCount > 0 && <span className="text-violet-600">복습 {reviewCount}</span>}
+                    {overdueCount > 0 && <span className="text-amber-600 ml-1.5">지연 {overdueCount}</span>}
+                    {masteredCount > 0 && <span className="text-emerald-600 ml-1.5">습득 {masteredCount}</span>}
+                  </span>
+                );
+              })()}
             </p>
           </div>
         </div>
@@ -324,7 +385,7 @@ export default function WrongAnswersPage() {
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="text-xs font-medium text-slate-500">
                         {q.chapter} · #{q.questionNum}
                       </span>
@@ -336,6 +397,18 @@ export default function WrongAnswersPage() {
                       }`}>
                         {DIFFICULTY_LABELS[q.difficulty as keyof typeof DIFFICULTY_LABELS]}
                       </span>
+                      {/* 망각곡선 상태 뱃지 */}
+                      {(() => {
+                        const status = getReviewStatus(item.review);
+                        return (
+                          <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${status.bgColor} ${status.color}`}>
+                            {status.icon === 'mastered' ? <CheckCircle2 className="w-3 h-3" /> :
+                             status.icon === 'scheduled' ? <CalendarCheck className="w-3 h-3" /> :
+                             <Brain className="w-3 h-3" />}
+                            {status.label}
+                          </span>
+                        );
+                      })()}
                       <span className="text-xs text-slate-400">
                         {item.testTitle}
                       </span>
@@ -424,6 +497,61 @@ export default function WrongAnswersPage() {
                         </p>
                         <div className="bg-amber-50 border border-amber-200 rounded-sm p-4 text-sm">
                           <MathRenderer content={q.explanation} />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 망각곡선 복습 현황 */}
+                    {item.review && (
+                      <div>
+                        <p className="text-xs font-bold text-text-secondary mb-1.5 flex items-center gap-1">
+                          <Brain className="w-3 h-3 text-violet-500" /> 망각곡선 복습 현황
+                        </p>
+                        <div className="bg-white rounded-sm border border-slate-200 p-3">
+                          <div className="flex items-center gap-4 flex-wrap text-xs">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-text-secondary">현재 단계:</span>
+                              <span className="font-semibold text-text-primary">
+                                {INTERVAL_LABELS[item.review.interval] || `${item.review.interval}일`}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-text-secondary">다음 복습:</span>
+                              <span className={`font-semibold ${
+                                !item.review.completedAt && new Date(item.review.reviewAt) <= new Date()
+                                  ? 'text-amber-600' : 'text-text-primary'
+                              }`}>
+                                {item.review.completedAt
+                                  ? '완료'
+                                  : new Date(item.review.reviewAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-text-secondary">연속 정답:</span>
+                              <span className="font-semibold text-text-primary">{item.review.streak}회</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-text-secondary">누적 복습:</span>
+                              <span className="font-semibold text-text-primary">{item.review.totalReviewed}회</span>
+                            </div>
+                          </div>
+                          {/* 진행도 바 */}
+                          <div className="mt-2.5 flex items-center gap-1.5">
+                            {[1, 3, 7, 14, 30, 60].map((step) => {
+                              const isCurrent = item.review!.interval === step;
+                              const isPast = item.review!.interval > step || (item.review!.completedAt && item.review!.interval === step);
+                              return (
+                                <div key={step} className="flex-1 flex flex-col items-center gap-1">
+                                  <div className={`h-1.5 w-full rounded-full ${
+                                    isPast ? 'bg-emerald-400' : isCurrent ? 'bg-violet-400' : 'bg-slate-200'
+                                  }`} />
+                                  <span className={`text-[9px] ${isCurrent ? 'font-bold text-violet-600' : 'text-slate-400'}`}>
+                                    {step <= 7 ? `${step}일` : step <= 30 ? `${step / 7}주` : `${step / 30}달`}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
                     )}

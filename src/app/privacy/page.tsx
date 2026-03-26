@@ -1,8 +1,8 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: '개인정보처리방침 | MathLab',
-  description: 'MathLab 개인정보처리방침',
+  title: '개인정보처리방침 | Injaewon MathLAB',
+  description: 'Injaewon MathLAB 개인정보처리방침',
 };
 
 export default function PrivacyPage() {
@@ -11,12 +11,12 @@ export default function PrivacyPage() {
       <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
         <h1 className="mb-4 text-3xl font-bold text-slate-900">개인정보처리방침</h1>
         <p className="mb-8 text-slate-500">
-          MathLab의 개인정보 처리방침입니다.
+          Injaewon MathLAB의 개인정보 처리방침입니다.
         </p>
 
         <div className="mb-10 rounded-sm border border-slate-200 bg-slate-50 p-6 text-sm leading-relaxed text-slate-600">
           <p>
-            MathLab(이하 &quot;회사&quot;)은(는) 「개인정보보호법」 제30조에 따라
+            Injaewon MathLAB(이하 &quot;회사&quot;)은(는) 「개인정보보호법」 제30조에 따라
             정보주체의 개인정보를 보호하고 이와 관련한 고충을 신속하고 원활하게 처리할 수 있도록
             하기 위하여 다음과 같이 개인정보 처리방침을 수립·공개합니다.
           </p>
@@ -205,7 +205,7 @@ export default function PrivacyPage() {
             <div className="rounded-sm border border-slate-200 bg-slate-50 p-4">
               <p className="font-medium text-slate-900">개인정보 보호책임자</p>
               <ul className="mt-2 space-y-1">
-                <li>담당: MathLab 운영팀</li>
+                <li>담당: Injaewon MathLAB 운영팀</li>
                 <li>이메일: st2000423@gmail.com</li>
               </ul>
             </div>

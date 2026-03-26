@@ -327,7 +327,7 @@ export const ALL_UPDATES: UpdateLog[] = [
   // ── 외부(공개) ──
   {
     date: '2025-03-11',
-    title: 'MathLab v1.0 — 62개 연산 유형 지원',
+    title: 'Injaewon MathLAB v1.0 — 62개 연산 유형 지원',
     audience: ['public'],
     entries: [
       { type: 'feature', text: '초등 2학년부터 중학 3학년까지 62개 연산 유형' },

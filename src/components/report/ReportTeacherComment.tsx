@@ -41,7 +41,7 @@ export function ReportTeacherComment({
               className="text-[9px] font-bold px-2 py-0.5 rounded-full text-white"
               style={{ backgroundColor: '#7c3aed', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } as React.CSSProperties}
             >
-              MathLab AI
+              Injaewon MathLAB AI
             </span>
           </div>
           <div
@@ -155,7 +155,7 @@ export function ReportTeacherComment({
       <div className="mt-4 pt-3 border-t border-slate-100 text-center">
         <p className="text-xs font-bold text-slate-400">{academyName} · 레벨테스트 진단 보고서</p>
         <p className="text-[9px] text-slate-300 mt-0.5">
-          본 보고서는 MathLab AI 엔진이 분석한 학습 수준을 바탕으로 맞춤 학습 방향을 제시합니다.
+          본 보고서는 Injaewon MathLAB AI 엔진이 분석한 학습 수준을 바탕으로 맞춤 학습 방향을 제시합니다.
         </p>
       </div>
     </div>

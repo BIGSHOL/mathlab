@@ -34,7 +34,7 @@ export function ReportPageWrapper({
                 <path d="M42.4379 44C42.4379 44 36.0744 33.9038 41.1692 24C46.8624 12.9336 42.2078 4 42.2078 4L7.01134 4C7.01134 4 11.6577 12.932 5.96912 23.9969C0.876273 33.9029 7.27094 44 7.27094 44L42.4379 44Z" />
               </svg>
             </div>
-            <span className="text-xs font-black tracking-tight text-slate-900 italic">MathLab</span>
+            <span className="text-xs font-black tracking-tight text-slate-900 italic">Injaewon MathLAB</span>
             {testTitle && (
               <>
                 <span className="text-slate-300">|</span>
@@ -66,7 +66,7 @@ export function ReportPageWrapper({
           <span className="text-[9px] text-slate-400 tabular-nums font-bold">
             {pageNumber} / {totalPages}
           </span>
-          <span className="text-[9px] text-slate-300">© MathLab</span>
+          <span className="text-[9px] text-slate-300">© Injaewon MathLAB</span>
         </div>
       )}
     </div>

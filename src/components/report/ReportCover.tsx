@@ -63,7 +63,7 @@ export function ReportCover({
               <path d="M42.4379 44C42.4379 44 36.0744 33.9038 41.1692 24C46.8624 12.9336 42.2078 4 42.2078 4L7.01134 4C7.01134 4 11.6577 12.932 5.96912 23.9969C0.876273 33.9029 7.27094 44 7.27094 44L42.4379 44Z" />
             </svg>
           </div>
-          <h2 className="text-2xl font-black tracking-tight text-slate-900 italic">MathLab</h2>
+          <h2 className="text-2xl font-black tracking-tight text-slate-900 italic">Injaewon MathLAB</h2>
         </div>
         <div className="text-right">
           <p className="text-xs font-bold text-slate-400 tracking-widest uppercase">AI Diagnostic Report</p>
@@ -131,7 +131,7 @@ export function ReportCover({
                 AI 기반 진단 분석 보고서
               </p>
               <div className="text-right">
-                <p className="text-xs font-bold text-slate-800">MathLab AI 분석 엔진</p>
+                <p className="text-xs font-bold text-slate-800">Injaewon MathLAB AI 분석 엔진</p>
                 <p className="text-xs text-slate-400">Applied</p>
               </div>
             </div>
@@ -189,7 +189,7 @@ export function ReportCover({
         >
           <p className="text-xs font-bold text-slate-800 mb-1">평가 안내</p>
           <p className="text-xs text-slate-500 leading-relaxed">
-            본 리포트는 MathLab AI 엔진이 분석한 &apos;{studentName}&apos; 학생의 수학 학습 수준을 바탕으로 작성되었습니다.
+            본 리포트는 Injaewon MathLAB AI 엔진이 분석한 &apos;{studentName}&apos; 학생의 수학 학습 수준을 바탕으로 작성되었습니다.
             영역별 역량 분석, 난이도별 성취도, 단원별 이해도를 종합적으로 진단하여 맞춤 학습 방향을 제시합니다.
           </p>
         </div>

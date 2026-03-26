@@ -106,7 +106,7 @@ export function HelpContent({ backHref, backLabel, isLoggedIn, embedded }: Props
           <div className="flex items-center gap-3">
             <LogoIcon className="w-6 h-6" />
             <Link href={backHref} className="text-lg font-bold tracking-tight text-text-primary">
-              MathLab
+              Injaewon MathLAB
             </Link>
           </div>
           <Link
@@ -208,7 +208,7 @@ export function HelpContent({ backHref, backLabel, isLoggedIn, embedded }: Props
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-text-primary">도움말</h1>
-                  <p className="text-sm text-text-secondary">MathLab 사용 가이드</p>
+                  <p className="text-sm text-text-secondary">Injaewon MathLAB 사용 가이드</p>
                 </div>
               </div>
 
@@ -280,7 +280,7 @@ export function HelpContent({ backHref, backLabel, isLoggedIn, embedded }: Props
       {/* 비로그인 푸터 (임베드 모드에서는 숨김) */}
       {!embedded && !isLoggedIn && (
         <footer className="border-t border-slate-200 py-6 px-6 text-center text-sm text-text-secondary bg-white">
-          &copy; 2024 MathLab. All rights reserved.
+          &copy; 2024 Injaewon MathLAB. All rights reserved.
         </footer>
       )}
     </div>

@@ -78,7 +78,7 @@ export function PrintableHeader({
               />
             </svg>
             <span className="text-xs font-black tracking-tight leading-none" style={{ color: accentColor }}>
-              MathLab
+              Injaewon MathLAB
             </span>
           </div>
           <span className="text-xs font-medium text-slate-500 leading-none">

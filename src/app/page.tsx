@@ -172,7 +172,7 @@ export default function LandingPage() {
       <header className="flex items-center justify-between border-b border-slate-200 px-6 md:px-10 py-3 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <LogoIcon className="w-6 h-6" />
-          <h2 className="text-lg font-bold tracking-tight text-text-primary">MathLab</h2>
+          <h2 className="text-lg font-bold tracking-tight text-text-primary">Injaewon MathLAB</h2>
         </div>
         <div className="flex items-center gap-3">
           <Link
@@ -206,7 +206,7 @@ export default function LandingPage() {
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight text-text-primary">
                 개념부터 시험까지
                 <br />
-                <span className="text-primary">올인원 수학 학습, MathLab</span>
+                <span className="text-primary">올인원 수학 학습, Injaewon MathLAB</span>
               </h1>
               <p className="text-text-secondary text-lg md:text-xl max-w-2xl leading-relaxed">
                 5단계 개념 학습, 무한 연산 연습, AI 문제 생성, 시험·숙제 관리까지.
@@ -452,7 +452,7 @@ export default function LandingPage() {
               지금 바로 시작하세요
             </h2>
             <p className="text-text-secondary text-lg max-w-xl mx-auto mb-8">
-              MathLab과 함께 더 효율적인 수학 학습을 경험해보세요.
+              Injaewon MathLAB과 함께 더 효율적인 수학 학습을 경험해보세요.
             </p>
             <Link href="/login">
               <Button size="lg">
@@ -469,7 +469,7 @@ export default function LandingPage() {
         <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2 text-text-secondary text-sm">
             <LogoIcon className="w-4 h-4" />
-            <span>&copy; 2026 MathLab. All rights reserved.</span>
+            <span>&copy; 2026 Injaewon MathLAB. All rights reserved.</span>
           </div>
           <div className="flex gap-6 text-sm text-text-secondary">
             <Link href="/updates" className="hover:text-primary transition-colors">

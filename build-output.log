@@ -1,0 +1,511 @@
+
+> mathlab@0.1.0 build
+> prisma generate && next build
+
+warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+For more information, see: https://pris.ly/prisma-config
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+
+✔ Generated Prisma Client (v6.19.2) to .\node_modules\@prisma\client in 398ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+
+   ▲ Next.js 15.5.12
+   - Environments: .env.local, .env
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 12.0s
+   Linting and checking validity of types ...
+
+./src/app/(auth)/login/page.tsx
+71:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(student)/concepts/[id]/page.tsx
+292:6  Warning: React Hook useEffect has missing dependencies: 'asQuery' and 'router'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+310:6  Warning: React Hook useEffect has a missing dependency: 'asSuffix'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+319:25  Warning: Unexpected console statement.  no-console
+321:6  Warning: React Hook useCallback has a missing dependency: 'asQuery'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+429:6  Warning: React Hook useEffect has a missing dependency: 'asSuffix'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/(student)/diagnostics/[id]/result/page.tsx
+47:23  Warning: Unexpected console statement.  no-console
+
+./src/app/(student)/error.tsx
+15:5  Warning: Unexpected console statement.  no-console
+
+./src/app/(student)/my-tests/[id]/result/page.tsx
+103:21  Warning: Unexpected console statement.  no-console
+
+./src/app/(student)/practice/arithmetic/homework/page.tsx
+107:21  Warning: Unexpected console statement.  no-console
+174:25  Warning: Unexpected console statement.  no-console
+191:29  Warning: Unexpected console statement.  no-console
+
+./src/app/(student)/practice/arithmetic/page.tsx
+154:21  Warning: Unexpected console statement.  no-console
+186:25  Warning: Unexpected console statement.  no-console
+209:27  Warning: Unexpected console statement.  no-console
+
+./src/app/(student)/practice/arithmetic/time-attack/page.tsx
+165:21  Warning: Unexpected console statement.  no-console
+
+./src/app/(student)/practice/question-homework/page.tsx
+81:23  Warning: Unexpected console statement.  no-console
+397:31  Warning: Unexpected console statement.  no-console
+
+./src/app/(student)/quiz/[id]/play/page.tsx
+75:21  Warning: Unexpected console statement.  no-console
+107:21  Warning: Unexpected console statement.  no-console
+
+./src/app/(teacher)/admin/tenants/[id]/page.tsx
+299:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(teacher)/analytics/page.tsx
+76:6  Warning: React Hook useCallback has a missing dependency: 'now'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+140:25  Warning: Unexpected console statement.  no-console
+
+./src/app/(teacher)/courses/create/page.tsx
+70:23  Warning: Unexpected console statement.  no-console
+73:11  Warning: Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps').
+
+./src/app/(teacher)/courses/[id]/page.tsx
+176:23  Warning: Unexpected console statement.  no-console
+
+./src/app/(teacher)/diagnostics/page.tsx
+44:23  Warning: Unexpected console statement.  no-console
+
+./src/app/(teacher)/error.tsx
+15:5  Warning: Unexpected console statement.  no-console
+
+./src/app/(teacher)/homework/concept/[seq]/grid/page.tsx
+67:21  Warning: Unexpected console statement.  no-console
+
+./src/app/(teacher)/homework/concept-create/page.tsx
+66:23  Warning: Unexpected console statement.  no-console
+
+./src/app/(teacher)/homework/create/page.tsx
+180:21  Warning: Unexpected console statement.  no-console
+
+./src/app/(teacher)/homework/page.tsx
+112:21  Warning: Unexpected console statement.  no-console
+130:21  Warning: Unexpected console statement.  no-console
+153:21  Warning: Unexpected console statement.  no-console
+
+./src/app/(teacher)/homework/question/[seq]/grid/page.tsx
+49:21  Warning: Unexpected console statement.  no-console
+
+./src/app/(teacher)/homework/question-create/page.tsx
+66:21  Warning: Unexpected console statement.  no-console
+78:23  Warning: Unexpected console statement.  no-console
+94:64  Warning: Expected an assignment or function call and instead saw an expression.  @typescript-eslint/no-unused-expressions
+
+./src/app/(teacher)/homework/[planId]/grid/page.tsx
+195:21  Warning: Unexpected console statement.  no-console
+215:21  Warning: Unexpected console statement.  no-console
+
+./src/app/(teacher)/manual-grading/page.tsx
+71:21  Warning: Unexpected console statement.  no-console
+89:21  Warning: Unexpected console statement.  no-console
+
+./src/app/(teacher)/questions/arithmetic/page.tsx
+195:21  Warning: Unexpected console statement.  no-console
+
+./src/app/(teacher)/quiz/page.tsx
+54:21  Warning: Unexpected console statement.  no-console
+85:21  Warning: Unexpected console statement.  no-console
+
+./src/app/(teacher)/quiz/[id]/host/page.tsx
+58:21  Warning: Unexpected console statement.  no-console
+
+./src/app/(teacher)/reports/page.tsx
+131:21  Warning: Unexpected console statement.  no-console
+
+./src/app/(teacher)/student-preview/page.tsx
+71:23  Warning: Unexpected console statement.  no-console
+
+./src/app/(teacher)/students/[id]/wrong-answers/page.tsx
+89:23  Warning: Unexpected console statement.  no-console
+
+./src/app/(teacher)/tests/[id]/print/page.tsx
+79:23  Warning: Unexpected console statement.  no-console
+
+./src/app/(teacher)/tests/[id]/results/page.tsx
+24:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unused-vars').
+
+./src/app/api/arithmetic/homework/start/route.ts
+21:5  Warning: Unexpected console statement.  no-console
+
+./src/app/api/arithmetic/homework/today/route.ts
+14:5  Warning: Unexpected console statement.  no-console
+
+./src/app/api/arithmetic/homework-plans/route.ts
+47:5  Warning: Unexpected console statement.  no-console
+
+./src/app/api/concept-homework/plans/route.ts
+37:5  Warning: Unexpected console statement.  no-console
+
+./src/app/api/learning/blank-page-submit/route.ts
+89:5  Warning: Unexpected console statement.  no-console
+
+./src/app/api/learning/voice-check/route.ts
+168:5  Warning: Unexpected console statement.  no-console
+
+./src/app/api/question-homework/plans/route.ts
+31:5  Warning: Unexpected console statement.  no-console
+
+./src/app/api/questions/bulk/route.ts
+63:5  Warning: Unexpected console statement.  no-console
+
+./src/app/api/questions/generate-solutions/route.ts
+125:5  Warning: Unexpected console statement.  no-console
+
+./src/app/api/questions/generate-svg/route.ts
+72:7  Warning: Unexpected console statement.  no-console
+85:7  Warning: Unexpected console statement.  no-console
+94:5  Warning: Unexpected console statement.  no-console
+
+./src/app/api/questions/pdf-extract/route.ts
+32:7  Warning: Unexpected console statement.  no-console
+579:7  Warning: Unexpected console statement.  no-console
+
+./src/app/api/questions/pdf-extract-solutions/route.ts
+115:7  Warning: Unexpected console statement.  no-console
+
+./src/app/api/questions/[id]/diagram/route.ts
+46:7  Warning: Unexpected console statement.  no-console
+102:5  Warning: Unexpected console statement.  no-console
+
+./src/app/api/tests/attempts/[attemptId]/answer/route.ts
+33:5  Warning: Unexpected console statement.  no-console
+
+./src/app/api/tests/attempts/[attemptId]/complete/route.ts
+35:5  Warning: Unexpected console statement.  no-console
+
+./src/app/api/tests/variants/route.ts
+45:5  Warning: Unexpected console statement.  no-console
+
+./src/app/api/tests/[id]/assignments/route.ts
+35:45  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unused-vars').
+
+./src/components/homework/QuestionHomeworkTab.tsx
+138:55  Warning: Expected an assignment or function call and instead saw an expression.  @typescript-eslint/no-unused-expressions
+141:52  Warning: Expected an assignment or function call and instead saw an expression.  @typescript-eslint/no-unused-expressions
+
+./src/components/layout/Header.tsx
+110:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/layout/Sidebar.tsx
+114:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/layout/StudentSidebar.tsx
+166:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/math/diagram-editor/MiddleEditors.tsx
+518:9  Warning: The 'root' logical expression could make the dependencies of useCallback Hook (at line 542) change on every render. To fix this, wrap the initialization of 'root' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+
+./src/components/math/EditableMathRenderer.tsx
+286:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/math/ImageUploadButton.tsx
+184:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/math/MathLivePopup.tsx
+99:22  Warning: The ref value 'containerRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'containerRef.current' to a variable inside the effect, and use that variable in the cleanup function.  react-hooks/exhaustive-deps
+
+./src/components/math/MathRenderer.tsx
+264:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+275:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+287:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/teacher/concepts/BlankSolveMode.tsx
+101:9  Warning: The 'activeBlanks' conditional could make the dependencies of useEffect Hook (at line 134) change on every render. To fix this, wrap the initialization of 'activeBlanks' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+101:9  Warning: The 'activeBlanks' conditional could make the dependencies of useCallback Hook (at line 156) change on every render. To fix this, wrap the initialization of 'activeBlanks' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+101:9  Warning: The 'activeBlanks' conditional could make the dependencies of useCallback Hook (at line 211) change on every render. To fix this, wrap the initialization of 'activeBlanks' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+
+./src/components/teacher/pdf-import/PageSelectStep.tsx
+136:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/teacher/pdf-import/usePdfImport.ts
+129:23  Warning: Unexpected console statement.  no-console
+188:7  Warning: Unexpected console statement.  no-console
+365:9  Warning: Unexpected console statement.  no-console
+523:9  Warning: Unexpected console statement.  no-console
+625:13  Warning: Unexpected console statement.  no-console
+628:11  Warning: Unexpected console statement.  no-console
+
+./src/components/teacher/questions/QuestionCreateModal.tsx
+343:150  Warning: Unexpected console statement.  no-console
+
+./src/components/teacher/questions/QuestionViewEditModal.tsx
+700:146  Warning: Unexpected console statement.  no-console
+
+./src/components/teacher/questions/useQuestionManager.ts
+238:5  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any').
+373:25  Warning: Unexpected console statement.  no-console
+537:25  Warning: Unexpected console statement.  no-console
+
+./src/components/teacher/students/StudentDetail.tsx
+74:23  Warning: Unexpected console statement.  no-console
+86:21  Warning: Unexpected console statement.  no-console
+98:23  Warning: Unexpected console statement.  no-console
+116:21  Warning: Unexpected console statement.  no-console
+
+./src/lib/pdf-extract-engine/ai/extractor.ts
+42:7  Warning: Unexpected console statement.  no-console
+124:7  Warning: Unexpected console statement.  no-console
+229:7  Warning: Unexpected console statement.  no-console
+
+./src/lib/pdf-extract-engine/core/text-extractor.ts
+22:5  Warning: Unexpected console statement.  no-console
+
+./src/lib/pdf-extract-engine/hooks/usePdfExtract.ts
+102:7  Warning: Unexpected console statement.  no-console
+
+./src/lib/services/hint-generator.ts
+98:5  Warning: Unexpected console statement.  no-console
+
+./src/lib/services/report-ai.ts
+47:5  Warning: Unexpected console statement.  no-console
+127:5  Warning: Unexpected console statement.  no-console
+266:5  Warning: Unexpected console statement.  no-console
+
+./src/lib/utils/pdf-processor.ts
+66:5  Warning: Unexpected console statement.  no-console
+
+./src/lib/utils/svg-diagrams/index.ts
+384:5  Warning: Unexpected console statement.  no-console
+
+./src/lib/utils/svg-diagrams/middle/function-graph.ts
+166:3  Warning: Unused eslint-disable directive (no problems were reported from 'no-new-func').
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+   Collecting page data ...
+   Generating static pages (0/136) ...
+   Generating static pages (34/136) 
+   Generating static pages (68/136) 
+   Generating static pages (102/136) 
+ ✓ Generating static pages (136/136)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                                         Size  First Load JS
+┌ ○ /                                                              824 B         107 kB
+├ ○ /_not-found                                                     1 kB         103 kB
+├ ƒ /admin/classrooms                                              446 B         103 kB
+├ ƒ /admin/features                                              4.56 kB         111 kB
+├ ƒ /admin/teachers                                              5.06 kB         121 kB
+├ ƒ /admin/tenants                                               7.51 kB         110 kB
+├ ƒ /admin/tenants/[id]                                          8.98 kB         111 kB
+├ ƒ /admin/users                                                  8.4 kB         120 kB
+├ ƒ /analytics                                                   9.17 kB         120 kB
+├ ƒ /api/admin/activity                                            446 B         103 kB
+├ ƒ /api/admin/classrooms                                          446 B         103 kB
+├ ƒ /api/admin/classrooms/[id]                                     446 B         103 kB
+├ ƒ /api/admin/classrooms/[id]/students                            446 B         103 kB
+├ ƒ /api/admin/features                                            446 B         103 kB
+├ ƒ /api/admin/features/[key]                                      446 B         103 kB
+├ ƒ /api/admin/tenants                                             446 B         103 kB
+├ ƒ /api/admin/tenants/[id]                                        446 B         103 kB
+├ ƒ /api/admin/tenants/[id]/licenses                               446 B         103 kB
+├ ƒ /api/admin/users                                               446 B         103 kB
+├ ƒ /api/analytics/achievement                                     446 B         103 kB
+├ ƒ /api/analytics/calendar                                        446 B         103 kB
+├ ƒ /api/analytics/comments                                        446 B         103 kB
+├ ƒ /api/analytics/dashboard                                       446 B         103 kB
+├ ƒ /api/analytics/speed                                           446 B         103 kB
+├ ƒ /api/arithmetic/attempts                                       446 B         103 kB
+├ ƒ /api/arithmetic/attempts/[attemptId]                           446 B         103 kB
+├ ƒ /api/arithmetic/attempts/[attemptId]/answer                    446 B         103 kB
+├ ƒ /api/arithmetic/attempts/[attemptId]/complete                  446 B         103 kB
+├ ƒ /api/arithmetic/generate                                       446 B         103 kB
+├ ƒ /api/arithmetic/homework-plans                                 446 B         103 kB
+├ ƒ /api/arithmetic/homework-plans/[planId]                        446 B         103 kB
+├ ƒ /api/arithmetic/homework-plans/[planId]/day-detail             446 B         103 kB
+├ ƒ /api/arithmetic/homework-plans/[planId]/grid                   446 B         103 kB
+├ ƒ /api/arithmetic/homework-wrong-answers                         446 B         103 kB
+├ ƒ /api/arithmetic/homework/start                                 446 B         103 kB
+├ ƒ /api/arithmetic/homework/today                                 446 B         103 kB
+├ ƒ /api/arithmetic/time-attack                                    446 B         103 kB
+├ ƒ /api/assignments/my                                            446 B         103 kB
+├ ƒ /api/auth/[...nextauth]                                        446 B         103 kB
+├ ƒ /api/badges                                                    446 B         103 kB
+├ ƒ /api/badges/check                                              446 B         103 kB
+├ ƒ /api/classrooms                                                446 B         103 kB
+├ ƒ /api/classrooms/weekly-ranking                                 446 B         103 kB
+├ ƒ /api/concept-homework/plans                                    446 B         103 kB
+├ ƒ /api/concept-homework/plans/[seq]                              446 B         103 kB
+├ ƒ /api/concept-homework/plans/[seq]/grid                         446 B         103 kB
+├ ƒ /api/concept-homework/today                                    446 B         103 kB
+├ ƒ /api/concepts                                                  446 B         103 kB
+├ ƒ /api/concepts/[id]                                             446 B         103 kB
+├ ƒ /api/concepts/[id]/adjacent                                    446 B         103 kB
+├ ƒ /api/concepts/[id]/blanks                                      446 B         103 kB
+├ ƒ /api/concepts/[id]/memo                                        446 B         103 kB
+├ ƒ /api/concepts/bulk                                             446 B         103 kB
+├ ƒ /api/concepts/bulk/blanks                                      446 B         103 kB
+├ ƒ /api/concepts/bulk/extract-blanks                              446 B         103 kB
+├ ƒ /api/concepts/bulk/template                                    446 B         103 kB
+├ ƒ /api/concepts/counts                                           446 B         103 kB
+├ ƒ /api/concepts/curriculum-tree                                  446 B         103 kB
+├ ƒ /api/concepts/extract-metadata                                 446 B         103 kB
+├ ƒ /api/concepts/prerequisite-chain                               446 B         103 kB
+├ ƒ /api/daily-question/submit                                     446 B         103 kB
+├ ƒ /api/daily-question/today                                      446 B         103 kB
+├ ƒ /api/diagnostics                                               446 B         103 kB
+├ ƒ /api/diagnostics/[attemptId]/result                            446 B         103 kB
+├ ƒ /api/features                                                  446 B         103 kB
+├ ƒ /api/gamification/award                                        446 B         103 kB
+├ ƒ /api/gamification/points                                       446 B         103 kB
+├ ƒ /api/gamification/ranking                                      446 B         103 kB
+├ ƒ /api/help                                                      446 B         103 kB
+├ ƒ /api/inquiries                                                 446 B         103 kB
+├ ƒ /api/inquiries/[id]                                            446 B         103 kB
+├ ƒ /api/learning-courses                                          446 B         103 kB
+├ ƒ /api/learning-courses/[id]                                     446 B         103 kB
+├ ƒ /api/learning-courses/[id]/enroll                              446 B         103 kB
+├ ƒ /api/learning-courses/[id]/progress/[username]                 446 B         103 kB
+├ ƒ /api/learning-courses/my                                       446 B         103 kB
+├ ƒ /api/learning/blank-page-submit                                446 B         103 kB
+├ ƒ /api/learning/blank-submit                                     446 B         103 kB
+├ ƒ /api/learning/progress                                         446 B         103 kB
+├ ƒ /api/learning/revenge-complete                                 446 B         103 kB
+├ ƒ /api/learning/revenge-suggestions                              446 B         103 kB
+├ ƒ /api/learning/voice-check                                      446 B         103 kB
+├ ƒ /api/level-tests                                               446 B         103 kB
+├ ƒ /api/level-tests/[id]                                          446 B         103 kB
+├ ƒ /api/level-tests/[id]/assign                                   446 B         103 kB
+├ ƒ /api/level-tests/[id]/report                                   446 B         103 kB
+├ ƒ /api/level-tests/[id]/results                                  446 B         103 kB
+├ ƒ /api/licenses/my                                               446 B         103 kB
+├ ƒ /api/licenses/students                                         446 B         103 kB
+├ ƒ /api/licenses/usage                                            446 B         103 kB
+├ ƒ /api/manual-grading/attempt                                    446 B         103 kB
+├ ƒ /api/manual-grading/attempt/[attemptId]                        446 B         103 kB
+├ ƒ /api/manual-grading/attempt/[attemptId]/answer                 446 B         103 kB
+├ ƒ /api/manual-grading/attempt/[attemptId]/answer/[questionId]    446 B         103 kB
+├ ƒ /api/manual-grading/attempt/[attemptId]/bulk                   446 B         103 kB
+├ ƒ /api/manual-grading/attempt/[attemptId]/complete               446 B         103 kB
+├ ƒ /api/mathgen/generate                                          446 B         103 kB
+├ ƒ /api/me/representative-badge                                   446 B         103 kB
+├ ƒ /api/me/updates-check                                          446 B         103 kB
+├ ƒ /api/missions/check                                            446 B         103 kB
+├ ƒ /api/missions/today                                            446 B         103 kB
+├ ƒ /api/question-homework/plans                                   446 B         103 kB
+├ ƒ /api/question-homework/plans/[seq]                             446 B         103 kB
+├ ƒ /api/question-homework/plans/[seq]/grid                        446 B         103 kB
+├ ƒ /api/question-homework/start                                   446 B         103 kB
+├ ƒ /api/question-homework/submit                                  446 B         103 kB
+├ ƒ /api/question-homework/today                                   446 B         103 kB
+├ ƒ /api/questions                                                 446 B         103 kB
+├ ƒ /api/questions/[id]                                            446 B         103 kB
+├ ƒ /api/questions/[id]/diagram                                    446 B         103 kB
+├ ƒ /api/questions/auto-tag                                        446 B         103 kB
+├ ƒ /api/questions/bulk                                            446 B         103 kB
+├ ƒ /api/questions/generate-solutions                              446 B         103 kB
+├ ƒ /api/questions/generate-svg                                    446 B         103 kB
+├ ƒ /api/questions/pdf-extract                                     446 B         103 kB
+├ ƒ /api/questions/pdf-extract-solutions                           446 B         103 kB
+├ ƒ /api/questions/similar                                         446 B         103 kB
+├ ƒ /api/questions/stats                                           446 B         103 kB
+├ ƒ /api/questions/wrong-answers                                   446 B         103 kB
+├ ƒ /api/quiz                                                      446 B         103 kB
+├ ƒ /api/quiz/[id]                                                 446 B         103 kB
+├ ƒ /api/quiz/[id]/answer                                          446 B         103 kB
+├ ƒ /api/quiz/[id]/join                                            446 B         103 kB
+├ ƒ /api/reports/generate                                          446 B         103 kB
+├ ƒ /api/subjects                                                  446 B         103 kB
+├ ƒ /api/tenant/current                                            446 B         103 kB
+├ ƒ /api/tests                                                     446 B         103 kB
+├ ƒ /api/tests/[id]                                                446 B         103 kB
+├ ƒ /api/tests/[id]/assign                                         446 B         103 kB
+├ ƒ /api/tests/[id]/assignments                                    446 B         103 kB
+├ ƒ /api/tests/[id]/attempt                                        446 B         103 kB
+├ ƒ /api/tests/[id]/attempts                                       446 B         103 kB
+├ ƒ /api/tests/[id]/results                                        446 B         103 kB
+├ ƒ /api/tests/attempts/[attemptId]                                446 B         103 kB
+├ ƒ /api/tests/attempts/[attemptId]/answer                         446 B         103 kB
+├ ƒ /api/tests/attempts/[attemptId]/complete                       446 B         103 kB
+├ ƒ /api/tests/variants                                            446 B         103 kB
+├ ƒ /api/updates                                                   446 B         103 kB
+├ ƒ /api/upload                                                    446 B         103 kB
+├ ƒ /api/users                                                     446 B         103 kB
+├ ƒ /api/users/[id]                                                446 B         103 kB
+├ ƒ /api/users/[id]/concept-nav                                    446 B         103 kB
+├ ƒ /api/users/[id]/stats                                          446 B         103 kB
+├ ƒ /concepts                                                      44 kB         337 kB
+├ ƒ /concepts/[id]                                               20.7 kB         350 kB
+├ ƒ /courses                                                     10.4 kB         126 kB
+├ ƒ /courses/[id]                                                9.33 kB         124 kB
+├ ƒ /courses/[id]/progress/[username]                            9.79 kB         294 kB
+├ ƒ /courses/create                                              3.96 kB         122 kB
+├ ƒ /dashboard                                                   7.07 kB         339 kB
+├ ○ /dev/gems                                                    1.28 kB         110 kB
+├ ƒ /diagnostics                                                 2.87 kB         109 kB
+├ ƒ /diagnostics/[id]/result                                     3.89 kB         110 kB
+├ ƒ /help                                                          128 B         111 kB
+├ ƒ /help-public                                                   128 B         111 kB
+├ ƒ /homework                                                    12.1 kB         127 kB
+├ ƒ /homework/[planId]/grid                                      8.71 kB         302 kB
+├ ƒ /homework/concept-create                                     2.83 kB         121 kB
+├ ƒ /homework/concept/[seq]/grid                                 2.65 kB         109 kB
+├ ƒ /homework/create                                             8.83 kB         124 kB
+├ ƒ /homework/question-create                                    5.65 kB         112 kB
+├ ƒ /homework/question/[seq]/grid                                2.44 kB         109 kB
+├ ○ /icon.svg                                                        0 B            0 B
+├ ƒ /level-test                                                    446 B         103 kB
+├ ƒ /level-test/[id]/edit                                        5.32 kB         301 kB
+├ ƒ /level-test/[id]/report                                      16.9 kB         127 kB
+├ ƒ /level-test/[id]/results                                     6.03 kB         122 kB
+├ ƒ /level-test/create                                            8.6 kB         293 kB
+├ ƒ /licenses                                                    11.5 kB         118 kB
+├ ○ /login                                                       2.92 kB         118 kB
+├ ƒ /manual-grading                                              11.3 kB         296 kB
+├ ƒ /my-tests                                                       6 kB         112 kB
+├ ƒ /my-tests/[id]/play                                          7.96 kB         316 kB
+├ ƒ /my-tests/[id]/result                                        9.54 kB         304 kB
+├ ƒ /overview                                                    1.29 kB         150 kB
+├ ƒ /overview/v2                                                 1.42 kB         151 kB
+├ ƒ /practice/arithmetic                                         8.44 kB         302 kB
+├ ƒ /practice/arithmetic/homework                                8.76 kB         302 kB
+├ ƒ /practice/arithmetic/time-attack                             7.86 kB         301 kB
+├ ƒ /practice/question-homework                                  5.87 kB         317 kB
+├ ƒ /practice/revenge                                            10.7 kB         334 kB
+├ ƒ /profile                                                     7.64 kB         164 kB
+├ ƒ /questions                                                   20.5 kB         338 kB
+├ ƒ /questions/arithmetic                                        4.64 kB         298 kB
+├ ƒ /questions/generate                                          9.66 kB         321 kB
+├ ƒ /questions/pdf-import                                        31.3 kB         353 kB
+├ ƒ /quiz                                                        3.83 kB         110 kB
+├ ƒ /quiz-join                                                   2.62 kB         105 kB
+├ ƒ /quiz/[id]/host                                              6.57 kB         287 kB
+├ ƒ /quiz/[id]/play                                              6.71 kB         287 kB
+├ ƒ /ranking                                                     8.56 kB         155 kB
+├ ƒ /reports                                                     10.8 kB         122 kB
+├ ƒ /settings                                                    6.76 kB         118 kB
+├ ƒ /student-preview                                             4.49 kB         107 kB
+├ ƒ /students                                                    16.9 kB         323 kB
+├ ƒ /students/[id]/wrong-answers                                 9.89 kB         294 kB
+├ ƒ /students/enroll                                             4.45 kB         111 kB
+├ ƒ /subjects                                                    1.45 kB         114 kB
+├ ƒ /support                                                     5.88 kB         121 kB
+├ ƒ /tests                                                       11.2 kB         313 kB
+├ ƒ /tests/[id]/print                                            3.79 kB         292 kB
+├ ƒ /tests/[id]/results                                             6 kB         116 kB
+├ ƒ /tests/create                                                9.16 kB         294 kB
+├ ƒ /updates                                                     2.83 kB         109 kB
+└ ƒ /worksheet/create                                            11.5 kB         308 kB
++ First Load JS shared by all                                     102 kB
+  ├ chunks/1255-ad409e5887c155b0.js                              45.7 kB
+  ├ chunks/4bd1b696-100b9d70ed4e49c1.js                          54.2 kB
+  └ other shared chunks (total)                                  2.24 kB
+
+
+ƒ Middleware                                                     61.7 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

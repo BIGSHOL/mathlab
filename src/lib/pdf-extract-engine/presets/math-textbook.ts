@@ -1,5 +1,5 @@
 /**
- * MathLab 수학 교재 프리셋 — PdfExtractPlugin 구현
+ * Injaewon MathLAB 수학 교재 프리셋 — PdfExtractPlugin 구현
  *
  * 한국 수학 교재(초등~중등) PDF에서 문제를 추출하는 플러그인.
  * 시스템 프롬프트, Gemini 스키마, 후처리 로직을 포함합니다.
@@ -22,7 +22,7 @@ import { fixLatexEscaping } from '../ai/post-processor';
 import { createPageFilter } from '../core/page-filter';
 
 // ============================================================
-// 추출 결과 타입 (MathLab 도메인)
+// 추출 결과 타입 (Injaewon MathLAB 도메인)
 // ============================================================
 
 export type MathDifficulty = 'BASIC' | 'MEDIUM' | 'HIGH' | 'HIGHEST';

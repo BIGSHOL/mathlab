@@ -13,7 +13,7 @@ const sizes = {
 };
 
 /**
- * MathLab 전용 로딩 스피너
+ * Injaewon MathLAB 전용 로딩 스피너
  * 삼각형 → 사각형 → 원으로 부드럽게 모핑되는 기하학 애니메이션
  */
 export function MathSpinner({ size = 'md', className = '' }: MathSpinnerProps) {

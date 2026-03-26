@@ -62,18 +62,59 @@ export async function GET(request: NextRequest) {
 
   const questionMap = new Map(questions.map((q) => [q.id, q]));
 
+  // 망각곡선 복습 스케줄 조회 (해당 학생의 오답 문제들)
+  const reviewSchedules = await prisma.reviewSchedule.findMany({
+    where: {
+      studentId,
+      questionId: { in: uniqueQuestionIds },
+    },
+    select: {
+      questionId: true,
+      interval: true,
+      reviewAt: true,
+      completedAt: true,
+      streak: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  // questionId별 최신 스케줄 매핑
+  const reviewMap = new Map<string, typeof reviewSchedules[number]>();
+  for (const r of reviewSchedules) {
+    if (r.questionId && !reviewMap.has(r.questionId)) {
+      reviewMap.set(r.questionId, r);
+    }
+  }
+
+  // 완료된 복습 횟수 (questionId별)
+  const completedCounts = new Map<string, number>();
+  for (const r of reviewSchedules) {
+    if (r.questionId && r.completedAt) {
+      completedCounts.set(r.questionId, (completedCounts.get(r.questionId) || 0) + 1);
+    }
+  }
+
   // 오답 데이터와 문제 정보 결합
   const result = uniqueQuestionIds
     .map((qId) => {
       const q = questionMap.get(qId);
       if (!q) return null;
       const log = wrongAnswers.find((w) => w.questionId === qId)!;
+      const review = reviewMap.get(qId);
       return {
         question: q,
         lastWrongAnswer: log.selectedAnswer,
         lastWrongAt: log.createdAt,
         timeSpent: log.timeSpentSeconds,
         testTitle: log.attempt.test.title,
+        review: review ? {
+          interval: review.interval,
+          reviewAt: review.reviewAt,
+          completedAt: review.completedAt,
+          streak: review.streak,
+          totalReviewed: completedCounts.get(qId) || 0,
+        } : null,
       };
     })
     .filter(Boolean);

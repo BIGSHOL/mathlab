@@ -60,7 +60,7 @@ export default function LoginPage() {
     window.location.href = '/dashboard';
   };
 
-  const displayName = tenant?.name || 'MathLab';
+  const displayName = tenant?.name || 'Injaewon MathLAB';
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">

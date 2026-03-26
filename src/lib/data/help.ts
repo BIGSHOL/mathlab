@@ -32,8 +32,8 @@ export const ALL_HELP: HelpCategory[] = [
     items: [
       {
         id: 'ts-1',
-        question: 'MathLab은 어떤 서비스인가요?',
-        answer: 'MathLab은 초등~고등 수학 학원용 학습 관리 플랫폼(LMS)입니다. 개념학습, 빈칸암기, 연산연습, 시험, 숙제, 학습분석 등을 한 곳에서 관리할 수 있습니다.',
+        question: 'Injaewon MathLAB은 어떤 서비스인가요?',
+        answer: 'Injaewon MathLAB은 초등~고등 수학 학원용 학습 관리 플랫폼(LMS)입니다. 개념학습, 빈칸암기, 연산연습, 시험, 숙제, 학습분석 등을 한 곳에서 관리할 수 있습니다.',
         tags: ['소개', '개요'],
       },
       {
@@ -205,7 +205,7 @@ export const ALL_HELP: HelpCategory[] = [
       {
         id: 'th-1',
         question: '숙제의 종류는?',
-        answer: 'MathLab은 3가지 숙제를 지원합니다:\n\n1. **개념 숙제** — 특정 개념의 4단계 빈칸 학습을 배정\n2. **문제 숙제** — 문제 은행에서 문제를 선택하여 배정\n3. **연산 숙제** — 연산 유형/문제 수를 지정하여 배정',
+        answer: 'Injaewon MathLAB은 3가지 숙제를 지원합니다:\n\n1. **개념 숙제** — 특정 개념의 4단계 빈칸 학습을 배정\n2. **문제 숙제** — 문제 은행에서 문제를 선택하여 배정\n3. **연산 숙제** — 연산 유형/문제 수를 지정하여 배정',
         tags: ['숙제', '종류', '유형'],
       },
       {
@@ -415,7 +415,7 @@ export const ALL_HELP: HelpCategory[] = [
     items: [
       {
         id: 'ss-1',
-        question: 'MathLab에 어떻게 로그인하나요?',
+        question: 'Injaewon MathLAB에 어떻게 로그인하나요?',
         answer: '선생님이 알려주신 아이디와 비밀번호로 로그인 페이지에서 접속합니다. 비밀번호를 잊었다면 선생님께 초기화를 요청하세요.',
         tags: ['로그인', '접속'],
       },
