@@ -49,14 +49,28 @@ export async function GET() {
   }
 
   const mapEnrollment = (e: (typeof enrollments)[0]) => {
-    const concepts = e.course.concepts.map((cc) => {
+    const isSequential = e.course.mode === 'sequential';
+
+    const concepts = e.course.concepts.map((cc, idx) => {
       const conceptProgress = progressMap.get(cc.conceptId) ?? [];
       const blankFullDone = conceptProgress.some((p) => p.stage === 'BLANK_FULL' && p.completed);
+
+      // 순차 모드: 이전 개념 미완료 시 잠금
+      let locked = false;
+      if (isSequential && !blankFullDone && idx > 0) {
+        const prevId = e.course.concepts[idx - 1].conceptId;
+        const prevDone = (progressMap.get(prevId) ?? []).some(
+          (p) => p.stage === 'BLANK_FULL' && p.completed,
+        );
+        locked = !prevDone;
+      }
+
       return {
         ...cc.concept,
         sortOrder: cc.sortOrder,
         progress: conceptProgress,
         completed: blankFullDone,
+        locked,
       };
     });
 
@@ -67,6 +81,7 @@ export async function GET() {
       courseId: e.courseId,
       courseTitle: e.course.title,
       courseDescription: e.course.description,
+      courseMode: e.course.mode ?? 'free',
       sortOrder: e.sortOrder,
       status: e.status,
       startedAt: e.startedAt,

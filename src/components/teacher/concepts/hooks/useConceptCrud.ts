@@ -164,7 +164,14 @@ export function useConceptCrud(deps: CrudDeps) {
     try {
       const res = await fetch(`/api/concepts/${id}`);
       const json = await res.json();
-      if (json.data) startEditing(json.data as ConceptItem);
+      if (json.data) {
+        // API returns prerequisiteFor but ConceptItem expects subConcepts
+        const d = json.data;
+        startEditing({
+          ...d,
+          subConcepts: d.prerequisiteFor ?? d.subConcepts ?? [],
+        } as ConceptItem);
+      }
     } catch { /* ignore */ }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [concepts, editingConcept]);

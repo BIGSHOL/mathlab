@@ -5,6 +5,11 @@
   font-family: var(--font-serif-kr), 'Batang', '바탕', serif;
 }
 
+/* KaTeX 인라인 수식 크기: 15pt(=20px), 본문 15px 기준 1.333em */
+.katex {
+  font-size: 16pt !important;
+}
+
 /* 빈칸 편집: textarea ↔ highlight overlay 렌더링 일치 */
 .template-textarea-overlay,
 .template-highlight-overlay {

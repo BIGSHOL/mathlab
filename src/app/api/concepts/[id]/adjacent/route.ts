@@ -38,11 +38,24 @@ async function getCourseNextConcept(userId: string, conceptId: string) {
   const totalConcepts = courseConcepts.length;
   const currentPosition = currentIdx + 1; // 1-based
 
+  // 순차 모드 잠금 확인
+  let locked = false;
+  if (enrollment.course.mode === 'sequential' && currentIdx > 0) {
+    const prevConceptId = courseConcepts[currentIdx - 1].conceptId;
+    const prevCompleted = await prisma.learningProgress.findFirst({
+      where: { userId, conceptId: prevConceptId, stage: 'BLANK_FULL', completed: true },
+      select: { id: true },
+    });
+    if (!prevCompleted) locked = true;
+  }
+
   return {
     courseName: enrollment.course.title,
     courseId: enrollment.course.id,
+    courseMode: enrollment.course.mode ?? 'free',
     currentPosition,
     totalConcepts,
+    locked,
     nextConcept: nextCourseConcept
       ? {
           id: nextCourseConcept.concept.id,

@@ -1,16 +1,20 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireOwner, isResponse } from '@/lib/api';
 import { seedFeatureFlags } from '@/lib/utils/features';
 
 /** GET /api/admin/features — Feature Flag 목록 (지점별 오버라이드 병합) */
-export async function GET() {
+export async function GET(request: NextRequest) {
   const user = await requireOwner();
   if (isResponse(user)) return user;
 
   await seedFeatureFlags();
 
-  const effectiveTenantId = user.tenantId || user.viewingTenantId;
+  // SUPER_ADMIN은 쿼리 파라미터로 지점 지정 가능
+  const queryTenantId = request.nextUrl.searchParams.get('tenantId');
+  const effectiveTenantId = (user.role === 'SUPER_ADMIN' && queryTenantId)
+    ? queryTenantId
+    : (user.tenantId || user.viewingTenantId);
 
   // SUPER_ADMIN (지점장 뷰 아닐 때): 글로벌 플래그만 표시
   if (!effectiveTenantId) {

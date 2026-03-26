@@ -83,6 +83,7 @@ export default async function SubjectsPage({
   });
 
   const activeEnrollment = enrollments.find((e) => e.status === 'ACTIVE');
+  const isSequential = activeEnrollment?.course.mode === 'sequential';
   const completedEnrollments = enrollments.filter((e) => e.status === 'COMPLETED');
   const upcomingEnrollments = enrollments.filter((e) => e.status === 'LOCKED');
   const hasEnrollments = enrollments.length > 0;
@@ -161,6 +162,11 @@ export default async function SubjectsPage({
                   {activeEnrollment.course.description && (
                     <p className="text-text-secondary text-sm">{activeEnrollment.course.description}</p>
                   )}
+                  {isSequential && (
+                    <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                      <Lock className="w-3 h-3" /> 순차 학습 — 이전 개념을 완료해야 다음 개념이 열립니다
+                    </p>
+                  )}
                 </div>
                 <div className="text-right">
                   {activeEnrollment.course.concepts.length > 0 ? (
@@ -178,10 +184,43 @@ export default async function SubjectsPage({
                 </div>
               </div>
               <div className="flex flex-col gap-3">
-                {activeEnrollment.course.concepts.map((cc) => {
+                {activeEnrollment.course.concepts.map((cc, idx) => {
                   const concept = cc.concept;
                   const stageIdx = getStageIndex(concept.progress);
                   const progressPct = getProgressPercent(concept.progress);
+                  const isCompleted = concept.progress.some((p) => p.stage === 'BLANK_FULL' && p.completed);
+
+                  // 순차 모드 잠금 계산
+                  let isLocked = false;
+                  if (isSequential && !isCompleted && idx > 0) {
+                    const prevConcept = activeEnrollment.course.concepts[idx - 1].concept;
+                    const prevCompleted = prevConcept.progress.some(
+                      (p) => p.stage === 'BLANK_FULL' && p.completed,
+                    );
+                    isLocked = !prevCompleted;
+                  }
+
+                  if (isLocked) {
+                    return (
+                      <div
+                        key={concept.id}
+                        className="flex items-center gap-4 p-4 rounded-sm border border-slate-100 bg-slate-50/50 opacity-50 cursor-not-allowed"
+                      >
+                        <div className="w-8 h-8 rounded-sm bg-slate-200 flex items-center justify-center">
+                          <Lock className="w-4 h-4 text-slate-400" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-text-secondary">{concept.title}</h3>
+                          <span className="text-xs text-slate-400">이전 개념을 완료하세요</span>
+                        </div>
+                        <div className="w-32">
+                          <ProgressBar value={0} size="sm" />
+                        </div>
+                        <Lock className="w-5 h-5 text-slate-300" />
+                      </div>
+                    );
+                  }
+
                   return (
                     <Link key={concept.id} href={`/concepts/${concept.conceptCode ?? concept.id}`}>
                       <div className="flex items-center gap-4 p-4 rounded-sm hover:bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all group cursor-pointer">

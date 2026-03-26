@@ -18,6 +18,7 @@ export const blankSubmitSchema = z.object({
   ).min(1, '답안을 입력해주세요'),
   hintCount: z.number().int().min(0).optional(),
   revealCount: z.number().int().min(0).optional(),
+  autoFilledPositions: z.array(z.number().int().min(1)).optional(),
 });
 
 export const blankPageSubmitSchema = z.object({

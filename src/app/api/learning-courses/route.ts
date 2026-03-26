@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, getTenantFilter } from '@/lib/api';
+import { requireTeacher, isResponse, getTenantFilter, badRequest } from '@/lib/api';
 import { z } from 'zod';
 
 // GET /api/learning-courses — 과정 목록 (선생님용)
@@ -26,6 +26,7 @@ export async function GET() {
       seq: c.seq,
       title: c.title,
       description: c.description,
+      mode: c.mode,
       createdBy: c.createdBy,
       creatorName: c.creator.name,
       conceptCount: c._count.concepts,
@@ -40,6 +41,7 @@ const createSchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().optional(),
   conceptIds: z.array(z.string()).min(1, '최소 1개 개념을 선택하세요'),
+  mode: z.enum(['free', 'sequential']).default('free'),
 });
 
 // POST /api/learning-courses — 과정 생성
@@ -50,18 +52,16 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION', message: parsed.error.errors[0]?.message || '입력값 오류' } },
-      { status: 400 }
-    );
+    return badRequest(parsed.error.errors[0]?.message || '입력값 오류');
   }
 
-  const { title, description, conceptIds } = parsed.data;
+  const { title, description, conceptIds, mode } = parsed.data;
 
   const course = await prisma.learningCourse.create({
     data: {
       title,
       description,
+      mode,
       createdBy: user.id,
       tenantId: user.tenantId,
       concepts: {

@@ -116,7 +116,7 @@ export function ConceptListPanel({ mgr }: ConceptListPanelProps) {
           </div>
           )}
 
-          {/* Filters */}
+          {/* Filters — 학제/학년은 목록+교육과정 모두, 영역은 목록만 */}
           {viewMode !== 'systematic' && (
           <div className="px-3 pb-2 flex flex-col gap-1.5">
             <div className="flex gap-1.5">
@@ -142,6 +142,7 @@ export function ConceptListPanel({ mgr }: ConceptListPanelProps) {
                 ))}
               </select>
             </div>
+            {viewMode === 'list' && (
             <select
               className="w-full px-1.5 py-1 text-xs border border-slate-200 rounded-sm bg-white focus:ring-1 focus:ring-primary/40"
               value={partFilter ?? ''}
@@ -152,6 +153,7 @@ export function ConceptListPanel({ mgr }: ConceptListPanelProps) {
                 <option key={key} value={key}>{label}</option>
               ))}
             </select>
+            )}
           </div>
           )}
 

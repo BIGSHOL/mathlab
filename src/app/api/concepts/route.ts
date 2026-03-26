@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: [{ subject: { sortOrder: 'asc' } }, { title: 'asc' }, { sortOrder: 'asc' }],
+      orderBy: [{ subject: { sortOrder: 'asc' } }, { conceptCode: 'asc' }],
       skip: (page - 1) * limit,
       take: limit,
     }),
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     data,
-    meta: { page, total, totalPages: Math.ceil(total / limit) },
+    meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
   });
 }
 

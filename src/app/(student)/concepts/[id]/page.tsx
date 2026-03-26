@@ -3,7 +3,7 @@
 import React from 'react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, ArrowRight, BookOpen, CheckCircle, ChevronLeft, ChevronRight, Sparkles, Trophy, BookOpenCheck, Type } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, CheckCircle, ChevronLeft, ChevronRight, Sparkles, Trophy, BookOpenCheck, Type, Mic, Square, FileText, AlertCircle, ThumbsUp } from 'lucide-react';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { toast } from '@/components/ui/Toast';
 import Link from 'next/link';
@@ -15,6 +15,7 @@ import { MathLivePopup } from '@/components/math/MathLivePopup';
 import GemStone from '@/components/gamification/GemStone';
 import { GemEvolutionModal } from '@/components/gamification/GemEvolutionModal';
 import { partToGemVariant } from '@/lib/utils/gem';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import type { LearningStage } from '@/types';
 
 /** 정답이 LaTeX 수식($...$)인지 판별 */
@@ -39,10 +40,10 @@ function stripLatexWrap(answer: string): string {
 }
 
 const FONT_SIZES = [
-  { key: 0, label: '기본', size: '15px', readingLeading: '2rem', blankLeading: '1.75rem' },
-  { key: 1, label: '크게', size: '17px', readingLeading: '2.25rem', blankLeading: '2rem' },
-  { key: 2, label: '더크게', size: '19px', readingLeading: '2.5rem', blankLeading: '2.25rem' },
-  { key: 3, label: '매우크게', size: '21px', readingLeading: '2.75rem', blankLeading: '2.5rem' },
+  { key: 0, label: '기본', size: '20px', readingLeading: '2.25rem', blankLeading: '2rem' },
+  { key: 1, label: '크게', size: '22px', readingLeading: '2.5rem', blankLeading: '2.25rem' },
+  { key: 2, label: '더크게', size: '24px', readingLeading: '2.75rem', blankLeading: '2.5rem' },
+  { key: 3, label: '매우크게', size: '26px', readingLeading: '3rem', blankLeading: '2.75rem' },
 ] as const;
 
 function getStoredFontSize(): number {
@@ -73,12 +74,13 @@ function buildChipPool(blanks: Array<{ answer: string }>): { answer: string; tot
   );
 }
 
-const stageConfig = [
+const BASE_STAGES = [
   { key: 'READING' as LearningStage, label: '개념학습', color: 'bg-stage-reading', icon: '1' },
   { key: 'BLANK_EASY' as LearningStage, label: '빈칸 1단계', color: 'bg-stage-blank-easy', icon: '2' },
   { key: 'BLANK_HARD' as LearningStage, label: '빈칸 2단계', color: 'bg-stage-blank-hard', icon: '3' },
   { key: 'BLANK_FULL' as LearningStage, label: '통문장 암기', color: 'bg-stage-blank-page', icon: '4' },
 ];
+const BLANK_PAGE_STAGE = { key: 'BLANK_PAGE' as LearningStage, label: '백지복원', color: 'bg-violet-500', icon: '5' };
 
 interface ConceptData {
   id: string;
@@ -133,8 +135,10 @@ export default function ConceptPage() {
     course?: {
       courseName: string;
       courseId: string;
+      courseMode?: string;
       currentPosition: number;
       totalConcepts: number;
+      locked?: boolean;
       nextConcept: { id: string; title: string; conceptCode: string | null } | null;
     } | null;
   }>({ prev: null, next: null });
@@ -159,7 +163,109 @@ export default function ConceptPage() {
   const [activeBlankPos, setActiveBlankPos] = useState<number | null>(null);
   const [chipPool, setChipPool] = useState<{ answer: string; total: number; used: number }[]>([]);
   const [wrongCounts, setWrongCounts] = useState<Record<number, number>>({});
+  const [autoFilledPositions, setAutoFilledPositions] = useState<Set<number>>(new Set());
   const [shakePos, setShakePos] = useState<number | null>(null);
+
+  // 음성 읽기 인증 관련 상태
+  const { isEnabled: isFeatureEnabled } = useFeatureFlags();
+  const hasBlankPageStage = isFeatureEnabled('ai_blank_grading');
+  const stageConfig = hasBlankPageStage ? [...BASE_STAGES, BLANK_PAGE_STAGE] : BASE_STAGES;
+  const maxStageIdx = stageConfig.length - 1;
+
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [voiceResult, setVoiceResult] = useState<{
+    passed: boolean;
+    similarity: number;
+    feedback: string;
+  } | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const chunkIndexRef = useRef(0);
+
+  // 백지복원 (5단계) 관련 상태
+  const [blankPageContent, setBlankPageContent] = useState('');
+  const [blankPageResult, setBlankPageResult] = useState<{
+    score: number;
+    passed: boolean;
+    feedback: string;
+    xpAwarded: number;
+    missingConcepts?: string[];
+    strengths?: string[];
+  } | null>(null);
+
+  // --- IndexedDB 녹음 복구 헬퍼 ---
+  const IDB_NAME = 'voice-recovery';
+  const IDB_STORE = 'chunks';
+
+  const openIDB = (): Promise<IDBDatabase> =>
+    new Promise((resolve, reject) => {
+      const req = indexedDB.open(IDB_NAME, 1);
+      req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+
+  const saveChunkToIDB = async (index: number, data: Blob) => {
+    try {
+      const db = await openIDB();
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      tx.objectStore(IDB_STORE).put(data, index);
+      db.close();
+    } catch { /* 복구용이므로 실패해도 무시 */ }
+  };
+
+  const clearIDB = async () => {
+    try {
+      const db = await openIDB();
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      tx.objectStore(IDB_STORE).clear();
+      db.close();
+    } catch { /* 무시 */ }
+  };
+
+  const recoverFromIDB = async (): Promise<Blob | null> => {
+    try {
+      const db = await openIDB();
+      return new Promise((resolve) => {
+        const tx = db.transaction(IDB_STORE, 'readonly');
+        const store = tx.objectStore(IDB_STORE);
+        const req = store.getAllKeys();
+        req.onsuccess = () => {
+          const keys = (req.result as number[]).sort((a, b) => a - b);
+          if (keys.length === 0) { db.close(); resolve(null); return; }
+          const blobs: Blob[] = [];
+          let loaded = 0;
+          for (const key of keys) {
+            const getReq = store.get(key);
+            getReq.onsuccess = () => {
+              blobs[keys.indexOf(key)] = getReq.result;
+              loaded++;
+              if (loaded === keys.length) {
+                db.close();
+                resolve(new Blob(blobs, { type: 'audio/webm' }));
+              }
+            };
+          }
+        };
+        req.onerror = () => { db.close(); resolve(null); };
+      });
+    } catch { return null; }
+  };
+
+  // 페이지 로드 시 복구 데이터 확인
+  useEffect(() => {
+    if (!isFeatureEnabled('voice_reading_check')) return;
+    recoverFromIDB().then((blob) => {
+      if (blob && blob.size > 1000) {
+        setAudioBlob(blob);
+        toast.info('이전 녹음이 복구되었습니다. 제출하거나 다시 녹음할 수 있습니다.');
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Fetch concept, adjacent, memo in parallel
   useEffect(() => {
@@ -176,7 +282,15 @@ export default function ConceptPage() {
         .catch(() => null),
     ]).then(([conceptJson, adjacentJson, memoJson]) => {
       if (conceptJson?.data) setConcept(conceptJson.data);
-      if (adjacentJson?.data) setAdjacent(adjacentJson.data);
+      if (adjacentJson?.data) {
+        setAdjacent(adjacentJson.data);
+        // 순차 과정에서 잠긴 개념이면 리다이렉트
+        if (adjacentJson.data.course?.locked) {
+          toast.warning('이전 개념을 완료해야 이 개념을 학습할 수 있습니다');
+          router.push('/subjects');
+          return;
+        }
+      }
       if (memoJson?.data) setMemoContent(memoJson.data);
     }).finally(() => setLoading(false));
   }, [id]);
@@ -189,13 +303,13 @@ export default function ConceptPage() {
       .then((json) => {
         const p = json.data ?? [];
         setProgress(p);
-        const stages: LearningStage[] = ['READING', 'BLANK_EASY', 'BLANK_HARD', 'BLANK_FULL'];
+        const stages = stageConfig.map(s => s.key);
         let idx = 0;
         for (let i = 0; i < stages.length; i++) {
           const found = p.find((pr: Progress) => pr.stage === stages[i] && pr.completed);
           if (found) idx = i + 1;
         }
-        setCurrentStageIdx(Math.min(idx, 3));
+        setCurrentStageIdx(Math.min(idx, maxStageIdx));
       });
   }, [concept]);
 
@@ -251,9 +365,10 @@ export default function ConceptPage() {
       setTimeout(() => setShakePos(null), 600);
 
       if (newCount >= 3) {
-        // 3회 오답 → 정답 자동 배치
+        // 3회 오답 → 정답 자동 배치 + 오답으로 기록
         setBlankAnswers(prev => ({ ...prev, [activeBlankPos]: blank.answer }));
         setChipPool(prev => prev.map(c => c.answer === blank.answer ? { ...c, used: c.used + 1 } : c));
+        setAutoFilledPositions(prev => new Set(prev).add(activeBlankPos));
         setHasUsedReveal(true);
         toast.info('3회 오답으로 정답이 자동 배치되었습니다.');
       }
@@ -300,6 +415,7 @@ export default function ConceptPage() {
             const mode: 'chip' | 'typing' = json.data.inputMode ?? 'chip';
             setBlankInputMode(mode);
             setWrongCounts({});
+            setAutoFilledPositions(new Set());
             setShakePos(null);
             if (mode === 'chip' && json.data.blanks?.length > 0) {
               setChipPool(buildChipPool(json.data.blanks));
@@ -340,9 +456,119 @@ export default function ConceptPage() {
       const toStage = currentStageIdx + 1;
       setGemModal({ fromStage, toStage, xp: json.data.xpAwarded ?? 0 });
       setProgress((prev) => [...prev, { stage, completed: true }]);
-      if (currentStageIdx < 3) {
+      if (currentStageIdx < maxStageIdx) {
         setTimeout(() => setCurrentStageIdx(currentStageIdx + 1), 1500);
       }
+    }
+  };
+
+  // --- 음성 읽기 인증 ---
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : 'audio/mp4';
+      const mediaRecorder = new MediaRecorder(stream, { mimeType });
+      mediaRecorderRef.current = mediaRecorder;
+      chunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunksRef.current.push(e.data);
+          saveChunkToIDB(chunkIndexRef.current, e.data);
+          chunkIndexRef.current++;
+        }
+      };
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: mimeType });
+        setAudioBlob(blob);
+        stream.getTracks().forEach((t) => t.stop());
+        if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      };
+
+      await clearIDB();
+      chunkIndexRef.current = 0;
+      mediaRecorder.start(1000); // 1초 간격으로 청크 저장
+      setIsRecording(true);
+      setRecordingTime(0);
+      setVoiceResult(null);
+      recordingTimerRef.current = setInterval(() => setRecordingTime((t) => t + 1), 1000);
+    } catch {
+      toast.error('마이크 접근이 거부되었습니다. 브라우저 설정을 확인하세요.');
+    }
+  };
+
+  const stopRecording = () => {
+    mediaRecorderRef.current?.stop();
+    setIsRecording(false);
+  };
+
+  const submitVoice = async () => {
+    if (!audioBlob || !concept) return;
+    setSubmitting(true);
+    const formData = new FormData();
+    formData.append('conceptId', concept.id);
+    formData.append('audio', audioBlob, 'recording.webm');
+
+    try {
+      const res = await fetch(`/api/learning/voice-check${asQuery}`, {
+        method: 'POST',
+        body: formData,
+      });
+      const json = await res.json();
+
+      if (json.data) {
+        setVoiceResult(json.data);
+        await clearIDB(); // 제출 완료 → 복구 데이터 삭제
+        if (json.data.passed) {
+          toast.success(`+${json.data.xpAwarded} XP 획득!`);
+          setProgress((prev) => [...prev, { stage: 'READING' as LearningStage, completed: true }]);
+          setGemModal({ fromStage: 0, toStage: 1, xp: json.data.xpAwarded ?? 0 });
+          setTimeout(() => setCurrentStageIdx(1), 1500);
+        } else {
+          toast.warning(json.data.feedback);
+        }
+      }
+    } catch {
+      toast.error('음성 처리 중 오류가 발생했습니다');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // --- 백지복원 (5단계) 제출 ---
+  const handleBlankPageSubmit = async () => {
+    if (!concept || blankPageContent.trim().length < 10) {
+      toast.warning('최소 10자 이상 작성해주세요.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/learning/blank-page-submit${asQuery}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conceptId: concept.id, content: blankPageContent }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(json.error?.message ?? '제출에 실패했습니다.');
+        return;
+      }
+      if (json.data) {
+        setBlankPageResult(json.data);
+        if (json.data.passed) {
+          toast.success(`+${json.data.xpAwarded} XP 획득!`);
+          setProgress((prev) => [...prev, { stage: 'BLANK_PAGE' as LearningStage, completed: true }]);
+          setGemModal({ fromStage: 4, toStage: 5, xp: json.data.xpAwarded ?? 0 });
+        } else {
+          toast.warning(`점수: ${json.data.score}점 — 70점 이상 필요합니다.`);
+        }
+      }
+    } catch {
+      toast.error('네트워크 오류가 발생했습니다.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -371,6 +597,7 @@ export default function ConceptPage() {
           answers,
           hintCount: hintUsedPositions.size,
           revealCount: Object.keys(revealedAnswers).length,
+          autoFilledPositions: autoFilledPositions.size > 0 ? [...autoFilledPositions] : undefined,
         }),
       });
       const json = await res.json();
@@ -403,11 +630,27 @@ export default function ConceptPage() {
           setTimeout(() => {
             setBlankAnswers((prev) => {
               const next = { ...prev };
+              // 칩 모드: 오답 빈칸의 칩을 풀로 반환
+              if (blankInputMode === 'chip') {
+                const returnedAnswers: string[] = [];
+                for (const pos of wrongPositions) {
+                  if (next[pos]) returnedAnswers.push(next[pos]);
+                }
+                if (returnedAnswers.length > 0) {
+                  setChipPool(pool => pool.map(c => {
+                    const returnCount = returnedAnswers.filter(a => a === c.answer).length;
+                    return returnCount > 0 ? { ...c, used: c.used - returnCount } : c;
+                  }));
+                }
+              }
               for (const pos of wrongPositions) {
                 delete next[pos];
               }
               return next;
             });
+            // autoFilled 위치도 초기화 (재시도 시 다시 추적)
+            setAutoFilledPositions(new Set());
+            setWrongCounts({});
             setBlankResults(null);
           }, 1500);
         }
@@ -596,6 +839,55 @@ export default function ConceptPage() {
                 <MathRenderer content={concept.fullContent.replace(/\n/g, '<br/>')} />
               </div>
             )}
+            {currentStage.key === 'BLANK_PAGE' && (
+              <div>
+                <p className="text-text-secondary mb-4">
+                  지금까지 학습한 내용을 기억에만 의존해서 작성하세요. 완벽하지 않아도 괜찮습니다!
+                </p>
+                <div className="bg-violet-50 p-4 rounded-sm text-sm text-violet-700 space-y-2">
+                  <p>핵심 개념과 원리를 자신의 말로 작성해보세요.</p>
+                  <p>맞춤법이나 표현이 달라도 괜찮습니다.</p>
+                  <p>70점 이상이면 통과입니다.</p>
+                </div>
+                {blankPageResult && (
+                  <div className={`mt-4 p-4 rounded-sm border ${blankPageResult.passed ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`text-2xl font-bold ${blankPageResult.passed ? 'text-emerald-600' : 'text-amber-600'}`}>
+                        {blankPageResult.score}점
+                      </span>
+                      <span className={`text-sm px-2 py-0.5 rounded-full ${blankPageResult.passed ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                        {blankPageResult.passed ? '통과' : '재도전 필요'}
+                      </span>
+                    </div>
+                    <p className="text-sm text-text-secondary">{blankPageResult.feedback}</p>
+                    {blankPageResult.strengths && blankPageResult.strengths.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-xs font-semibold text-emerald-700 mb-1 flex items-center gap-1">
+                          <ThumbsUp className="w-3 h-3" /> 잘한 부분
+                        </p>
+                        <ul className="text-xs text-emerald-600 space-y-0.5">
+                          {blankPageResult.strengths.map((s, i) => (
+                            <li key={i}>· {s}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {blankPageResult.missingConcepts && blankPageResult.missingConcepts.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-xs font-semibold text-amber-700 mb-1 flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" /> 보완할 부분
+                        </p>
+                        <ul className="text-xs text-amber-600 space-y-0.5">
+                          {blankPageResult.missingConcepts.map((m, i) => (
+                            <li key={i}>· {m}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
             {(currentStage.key === 'BLANK_EASY' || currentStage.key === 'BLANK_HARD' || currentStage.key === 'BLANK_FULL') && (
               <div>
                 <p className="text-text-secondary mb-4">
@@ -637,6 +929,28 @@ export default function ConceptPage() {
                     value={memoContent}
                     onChange={handleMemoChange}
                   />
+                </div>
+              </>
+            )}
+
+            {currentStage.key === 'BLANK_PAGE' && (
+              <>
+                <div className="px-4 py-3 border-b border-slate-200 bg-violet-50">
+                  <h3 className="font-bold text-text-primary text-sm flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-violet-500" /> 백지복원
+                  </h3>
+                </div>
+                <div className="flex-1 p-4">
+                  <textarea
+                    className="w-full h-full resize-none bg-transparent border-none focus:ring-0 text-text-primary p-0 m-0 memo-lines outline-none text-[15px]"
+                    placeholder="기억나는 내용을 모두 작성해주세요. 핵심 개념, 공식, 원리 등을 자유롭게 써보세요..."
+                    value={blankPageContent}
+                    onChange={(e) => setBlankPageContent(e.target.value)}
+                    disabled={!!blankPageResult?.passed}
+                  />
+                </div>
+                <div className="px-4 py-2 border-t border-slate-100 text-xs text-slate-400 text-right">
+                  {blankPageContent.length}자
                 </div>
               </>
             )}
@@ -725,95 +1039,195 @@ export default function ConceptPage() {
             const nextConcept = courseNext ?? adjacent.next;
 
             if (allCompleted) {
+              // 다음 개념 네비게이션 (공통)
+              const nextNav = (
+                <div className={hasBlankPageStage ? 'px-6 pb-6' : 'p-6'}>
+                  {nextConcept ? (
+                    <div className="space-y-4">
+                      <button
+                        onClick={() => router.push(`/concepts/${nextConcept.conceptCode ?? nextConcept.id}`)}
+                        className="w-full flex items-center gap-4 p-4 rounded-sm border border-slate-200 hover:border-primary/40 hover:bg-primary/[0.02] transition-all group text-left"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
+                          <Sparkles className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-text-secondary mb-0.5">다음 개념</p>
+                          <p className="font-bold text-text-primary truncate">{nextConcept.title}</p>
+                        </div>
+                        <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+                      </button>
+                      <div className="flex items-center gap-3">
+                        <Button
+                          size="lg"
+                          className="flex-1"
+                          onClick={() => router.push(`/concepts/${nextConcept.conceptCode ?? nextConcept.id}`)}
+                        >
+                          다음 개념 학습하기 <ArrowRight className="w-4 h-4 ml-1" />
+                        </Button>
+                        <Button
+                          size="lg"
+                          variant="secondary"
+                          onClick={() => { setCurrentStageIdx(0); setReviewMode(true); }}
+                        >
+                          복습하기
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center space-y-4">
+                      <p className="text-text-secondary text-sm">
+                        {adjacent.course
+                          ? `"${adjacent.course.courseName}" 과정의 모든 개념을 완료했습니다!`
+                          : '이 단원의 마지막 개념입니다.'}
+                      </p>
+                      <div className="flex items-center justify-center gap-3">
+                        <Button size="lg" onClick={() => router.push('/subjects')}>
+                          학습 목록으로 돌아가기
+                        </Button>
+                        <Button size="lg" variant="secondary" onClick={() => { setCurrentStageIdx(0); setReviewMode(true); }}>
+                          복습하기
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+
+              // 과정 진행률 (공통)
+              const courseProgress = adjacent.course && (
+                <div className="mt-4 bg-white/15 rounded-sm px-4 py-2.5">
+                  <div className="flex items-center justify-between text-sm mb-1.5">
+                    <span className="flex items-center gap-1.5">
+                      <BookOpenCheck className="w-3.5 h-3.5" />
+                      {adjacent.course.courseName}
+                    </span>
+                    <span className="font-medium">
+                      {adjacent.course.currentPosition} / {adjacent.course.totalConcepts}
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-white rounded-full transition-all duration-500"
+                      style={{ width: `${Math.round((adjacent.course.currentPosition / adjacent.course.totalConcepts) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              );
+
+              if (!hasBlankPageStage) {
+                // 기본 4단계: 간단한 "학습 완료!" 카드
+                return (
+                  <div className="bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden">
+                    <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-5 text-white">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                          <Trophy className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-lg">학습 완료!</h3>
+                          <p className="text-emerald-100 text-sm">
+                            &quot;{concept.title}&quot; 개념의 모든 단계를 완료했습니다
+                          </p>
+                        </div>
+                      </div>
+                      {courseProgress}
+                    </div>
+                    {nextNav}
+                  </div>
+                );
+              }
+
+              // 5단계: 종합 보고서
+              const stageReport = [
+                { label: '1단계 · 개념학습', key: 'READING', color: 'bg-stage-reading', xp: 5 },
+                { label: '2단계 · 빈칸 기초', key: 'BLANK_EASY', color: 'bg-stage-blank-easy', xp: 10 },
+                { label: '3단계 · 빈칸 심화', key: 'BLANK_HARD', color: 'bg-stage-blank-hard', xp: 15 },
+                { label: '4단계 · 통문장 암기', key: 'BLANK_FULL', color: 'bg-stage-blank-page', xp: 20 },
+                { label: '5단계 · 백지복원', key: 'BLANK_PAGE', color: 'bg-violet-500', xp: 30 },
+              ];
+              const totalXp = stageReport.reduce((sum, s) => sum + s.xp, 0);
+
               return (
                 <div className="bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden">
-                  {/* 완료 축하 헤더 */}
+                  {/* 종합 보고서 헤더 */}
                   <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-5 text-white">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
                         <Trophy className="w-5 h-5" />
                       </div>
                       <div>
-                        <h3 className="font-bold text-lg">학습 완료!</h3>
+                        <h3 className="font-bold text-lg">학습 종합 보고서</h3>
                         <p className="text-emerald-100 text-sm">
-                          &quot;{concept.title}&quot; 개념의 모든 단계를 완료했습니다
+                          &quot;{concept.title}&quot; · 5단계 학습 완료
                         </p>
                       </div>
+                      <div className="ml-auto text-right">
+                        <p className="text-2xl font-bold">+{totalXp} XP</p>
+                        <p className="text-xs text-emerald-200">총 획득</p>
+                      </div>
                     </div>
-                    {/* 과정 진행률 표시 */}
-                    {adjacent.course && (
-                      <div className="mt-4 bg-white/15 rounded-sm px-4 py-2.5">
-                        <div className="flex items-center justify-between text-sm mb-1.5">
-                          <span className="flex items-center gap-1.5">
-                            <BookOpenCheck className="w-3.5 h-3.5" />
-                            {adjacent.course.courseName}
+                    {courseProgress}
+                  </div>
+
+                  {/* 단계별 결과 */}
+                  <div className="p-6 space-y-3">
+                    {stageReport.map((stage) => {
+                      const completed = progress.some((p) => p.stage === stage.key && p.completed);
+                      return (
+                        <div key={stage.key} className="flex items-center gap-3 py-2">
+                          <div className={`w-7 h-7 rounded-full ${stage.color} text-white flex items-center justify-center text-xs font-bold shrink-0`}>
+                            {completed ? <CheckCircle className="w-3.5 h-3.5" /> : '—'}
+                          </div>
+                          <span className={`flex-1 text-sm font-medium ${completed ? 'text-text-primary' : 'text-slate-400'}`}>
+                            {stage.label}
                           </span>
-                          <span className="font-medium">
-                            {adjacent.course.currentPosition} / {adjacent.course.totalConcepts}
+                          <span className={`text-xs font-semibold ${completed ? 'text-emerald-600' : 'text-slate-300'}`}>
+                            +{stage.xp} XP
                           </span>
                         </div>
-                        <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-white rounded-full transition-all duration-500"
-                            style={{ width: `${Math.round((adjacent.course.currentPosition / adjacent.course.totalConcepts) * 100)}%` }}
-                          />
+                      );
+                    })}
+
+                    {/* 백지복원 AI 피드백 */}
+                    {blankPageResult && (blankPageResult.strengths?.length || blankPageResult.missingConcepts?.length) && (
+                      <div className="mt-4 border-t border-slate-100 pt-4">
+                        <h4 className="text-sm font-bold text-text-primary mb-3 flex items-center gap-1.5">
+                          <FileText className="w-4 h-4 text-violet-500" />
+                          백지복원 상세 피드백
+                        </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {blankPageResult.strengths && blankPageResult.strengths.length > 0 && (
+                            <div className="bg-emerald-50 border border-emerald-100 rounded-sm p-3">
+                              <p className="text-xs font-semibold text-emerald-700 mb-1.5 flex items-center gap-1">
+                                <ThumbsUp className="w-3 h-3" /> 잘한 부분
+                              </p>
+                              <ul className="text-xs text-emerald-600 space-y-1">
+                                {blankPageResult.strengths.map((s, i) => (
+                                  <li key={i}>· {s}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {blankPageResult.missingConcepts && blankPageResult.missingConcepts.length > 0 && (
+                            <div className="bg-amber-50 border border-amber-100 rounded-sm p-3">
+                              <p className="text-xs font-semibold text-amber-700 mb-1.5 flex items-center gap-1">
+                                <AlertCircle className="w-3 h-3" /> 보완할 부분
+                              </p>
+                              <ul className="text-xs text-amber-600 space-y-1">
+                                {blankPageResult.missingConcepts.map((m, i) => (
+                                  <li key={i}>· {m}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
                         </div>
+                        <p className="text-sm text-text-secondary mt-3">{blankPageResult.feedback}</p>
                       </div>
                     )}
                   </div>
 
-                  {/* 다음 개념 카드 */}
-                  <div className="p-6">
-                    {nextConcept ? (
-                      <div className="space-y-4">
-                        <button
-                          onClick={() => router.push(`/concepts/${nextConcept.conceptCode ?? nextConcept.id}`)}
-                          className="w-full flex items-center gap-4 p-4 rounded-sm border border-slate-200 hover:border-primary/40 hover:bg-primary/[0.02] transition-all group text-left"
-                        >
-                          <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
-                            <Sparkles className="w-5 h-5" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs text-text-secondary mb-0.5">다음 개념</p>
-                            <p className="font-bold text-text-primary truncate">{nextConcept.title}</p>
-                          </div>
-                          <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
-                        </button>
-                        <div className="flex items-center gap-3">
-                          <Button
-                            size="lg"
-                            className="flex-1"
-                            onClick={() => router.push(`/concepts/${nextConcept.conceptCode ?? nextConcept.id}`)}
-                          >
-                            다음 개념 학습하기 <ArrowRight className="w-4 h-4 ml-1" />
-                          </Button>
-                          <Button
-                            size="lg"
-                            variant="secondary"
-                            onClick={() => { setCurrentStageIdx(0); setReviewMode(true); }}
-                          >
-                            복습하기
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center space-y-4">
-                        <p className="text-text-secondary text-sm">
-                          {adjacent.course
-                            ? `"${adjacent.course.courseName}" 과정의 모든 개념을 완료했습니다!`
-                            : '이 단원의 마지막 개념입니다.'}
-                        </p>
-                        <div className="flex items-center justify-center gap-3">
-                          <Button size="lg" onClick={() => router.push('/subjects')}>
-                            학습 목록으로 돌아가기
-                          </Button>
-                          <Button size="lg" variant="secondary" onClick={() => { setCurrentStageIdx(0); setReviewMode(true); }}>
-                            복습하기
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  {nextNav}
                 </div>
               );
             }
@@ -830,16 +1244,72 @@ export default function ConceptPage() {
                   </div>
                 )}
                 <ProgressBar
-                  value={Math.round(((currentStageIdx + (stageCompleted ? 1 : 0)) / 4) * 100)}
+                  value={Math.round(((currentStageIdx + (stageCompleted ? 1 : 0)) / stageConfig.length) * 100)}
                   label="학습 진행도"
                   showPercentage
                   color={currentStage.color}
                 />
                 <div className="flex items-center justify-end mt-6 gap-3">
+                  {currentStage.key === 'BLANK_PAGE' && !stageCompleted && (
+                    <>
+                      {blankPageResult && !blankPageResult.passed && (
+                        <Button
+                          size="lg"
+                          variant="secondary"
+                          onClick={() => { setBlankPageContent(''); setBlankPageResult(null); }}
+                        >
+                          다시 쓰기
+                        </Button>
+                      )}
+                      {!blankPageResult?.passed && (
+                        <Button size="lg" onClick={handleBlankPageSubmit} disabled={submitting || blankPageContent.trim().length < 10}>
+                          {submitting ? 'AI 채점 중...' : '제출하기 (+30 XP)'}
+                        </Button>
+                      )}
+                    </>
+                  )}
                   {currentStage.key === 'READING' && !stageCompleted && (
-                    <Button size="lg" onClick={handleCompleteStage} disabled={submitting}>
-                      {submitting ? '처리 중...' : '읽기 완료 (+5 XP)'}
-                    </Button>
+                    isFeatureEnabled('voice_reading_check') ? (
+                      <div className="flex flex-col items-end gap-2">
+                        {!audioBlob && !isRecording && !voiceResult && (
+                          <Button size="lg" onClick={startRecording} variant="secondary">
+                            <Mic className="w-4 h-4 mr-2" /> 음성으로 읽기 인증 (+8 XP)
+                          </Button>
+                        )}
+                        {isRecording && (
+                          <div className="flex items-center gap-3">
+                            <span className="flex items-center gap-1.5 text-sm text-red-500">
+                              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                              녹음 중 {recordingTime}초
+                            </span>
+                            <Button size="lg" onClick={stopRecording} variant="danger">
+                              <Square className="w-4 h-4 mr-2" /> 녹음 중지
+                            </Button>
+                          </div>
+                        )}
+                        {audioBlob && !voiceResult && (
+                          <Button size="lg" onClick={submitVoice} disabled={submitting}>
+                            {submitting ? '인증 중...' : '음성 제출'}
+                          </Button>
+                        )}
+                        {voiceResult && !voiceResult.passed && (
+                          <Button size="lg" onClick={() => { setAudioBlob(null); setVoiceResult(null); }}>
+                            다시 녹음하기
+                          </Button>
+                        )}
+                        <button
+                          onClick={handleCompleteStage}
+                          className="text-xs text-slate-400 hover:text-slate-600 underline"
+                          disabled={submitting}
+                        >
+                          음성 없이 읽기 완료
+                        </button>
+                      </div>
+                    ) : (
+                      <Button size="lg" onClick={handleCompleteStage} disabled={submitting}>
+                        {submitting ? '처리 중...' : '읽기 완료 (+5 XP)'}
+                      </Button>
+                    )
                   )}
                   {isBlankStage && !stageCompleted && (
                     <>

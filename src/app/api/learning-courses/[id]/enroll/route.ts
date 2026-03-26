@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse } from '@/lib/api';
+import { requireTeacher, isResponse, badRequest } from '@/lib/api';
 import { z } from 'zod';
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -19,10 +19,7 @@ export async function POST(request: NextRequest, { params }: Ctx) {
   const body = await request.json();
   const parsed = enrollSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION', message: parsed.error.errors[0]?.message || '입력값 오류' } },
-      { status: 400 }
-    );
+    return badRequest(parsed.error.errors[0]?.message || '입력값 오류');
   }
 
   const { studentIds } = parsed.data;

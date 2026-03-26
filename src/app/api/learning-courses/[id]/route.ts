@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse } from '@/lib/api';
+import { requireTeacher, isResponse, badRequest } from '@/lib/api';
 import { z } from 'zod';
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -125,6 +125,7 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
       seq: course.seq,
       title: course.title,
       description: course.description,
+      mode: course.mode,
       isActive: course.isActive,
       createdAt: course.createdAt,
       concepts: course.concepts.map((c) => ({
@@ -140,6 +141,7 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
 const updateSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   description: z.string().optional(),
+  mode: z.enum(['free', 'sequential']).optional(),
   conceptIds: z.array(z.string()).min(1).optional(),
   isActive: z.boolean().optional(),
   removeEnrollmentId: z.string().optional(),
@@ -157,13 +159,10 @@ export async function PATCH(request: NextRequest, { params }: Ctx) {
   const body = await request.json();
   const parsed = updateSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION', message: parsed.error.errors[0]?.message || '입력값 오류' } },
-      { status: 400 }
-    );
+    return badRequest(parsed.error.errors[0]?.message || '입력값 오류');
   }
 
-  const { title, description, conceptIds, isActive, removeEnrollmentId } = parsed.data;
+  const { title, description, mode, conceptIds, isActive, removeEnrollmentId } = parsed.data;
 
   // 학생 배정 삭제
   if (removeEnrollmentId) {
@@ -184,6 +183,7 @@ export async function PATCH(request: NextRequest, { params }: Ctx) {
       data: {
         ...(title !== undefined && { title }),
         ...(description !== undefined && { description }),
+        ...(mode !== undefined && { mode }),
         ...(isActive !== undefined && { isActive }),
       },
     });

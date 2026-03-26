@@ -79,6 +79,7 @@ export default async function StudentDashboard({
     : [];
 
   // 과정 내 미완료 개념 우선 표시 (최대 3개)
+  const isSequentialCourse = activeEnrollment?.course.mode === 'sequential';
   const courseProgressItems = activeEnrollment
     ? (() => {
         // 개념별 최신 progress만 유지
@@ -87,8 +88,20 @@ export default async function StudentDashboard({
           if (!progressMap.has(p.conceptId)) progressMap.set(p.conceptId, p);
         }
         // 과정 개념 순서대로, 미완료 우선
-        return activeEnrollment.course.concepts
-          .filter((cc) => !completedConceptIds.has(cc.conceptId))
+        const incompleteConcepts = activeEnrollment.course.concepts
+          .filter((cc) => !completedConceptIds.has(cc.conceptId));
+
+        // 순차 모드: 잠긴 개념 제외 (이전 개념 미완료)
+        const unlocked = isSequentialCourse
+          ? incompleteConcepts.filter((cc, _i) => {
+              const idx = activeEnrollment.course.concepts.indexOf(cc);
+              if (idx === 0) return true;
+              const prevId = activeEnrollment.course.concepts[idx - 1].conceptId;
+              return completedConceptIds.has(prevId);
+            })
+          : incompleteConcepts;
+
+        return unlocked
           .slice(0, 3)
           .map((cc) => ({
             conceptId: cc.conceptId,
@@ -204,10 +217,25 @@ export default async function StudentDashboard({
     : null;
 
   // 추천 학습 (배정 과정 기반: 아직 완료하지 않은 개념)
+  // 순차 모드: 잠긴 개념 제외 (잠금 해제된 개념만 추천)
+  const unlockedConceptIds = isSequentialCourse && activeEnrollment
+    ? (() => {
+        const ids: string[] = [];
+        for (const cc of activeEnrollment.course.concepts) {
+          const idx = activeEnrollment.course.concepts.indexOf(cc);
+          if (completedConceptIds.has(cc.conceptId)) continue; // 이미 완료
+          if (idx === 0 || completedConceptIds.has(activeEnrollment.course.concepts[idx - 1].conceptId)) {
+            ids.push(cc.conceptId);
+          }
+        }
+        return ids;
+      })()
+    : courseConceptIds;
+
   const recommendedConcepts = hasEnrollments && courseConceptIds.length > 0
     ? await prisma.concept.findMany({
         where: {
-          id: { in: courseConceptIds },
+          id: { in: unlockedConceptIds.length > 0 ? unlockedConceptIds : courseConceptIds },
           NOT: {
             progress: {
               some: { userId: user.id, stage: 'BLANK_FULL', completed: true },

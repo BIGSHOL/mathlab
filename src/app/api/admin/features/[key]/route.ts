@@ -16,7 +16,11 @@ export async function PATCH(
     return badRequest('enabled (boolean) 필드가 필요합니다');
   }
 
-  const effectiveTenantId = user.tenantId || user.viewingTenantId;
+  // SUPER_ADMIN은 쿼리 파라미터로 지점 지정 가능
+  const queryTenantId = request.nextUrl.searchParams.get('tenantId');
+  const effectiveTenantId = (user.role === 'SUPER_ADMIN' && queryTenantId)
+    ? queryTenantId
+    : (user.tenantId || user.viewingTenantId);
 
   // 글로벌 플래그 토글 (SA, 지점장 뷰 아닐 때)
   if (!effectiveTenantId) {
@@ -56,4 +60,35 @@ export async function PATCH(
     },
   });
   return NextResponse.json({ data: created });
+}
+
+/** DELETE /api/admin/features/:key — 지점 오버라이드 삭제 (글로벌 기본값으로 되돌리기) */
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ key: string }> }
+) {
+  const user = await requireOwner();
+  if (isResponse(user)) return user;
+
+  const { key } = await params;
+  const queryTenantId = request.nextUrl.searchParams.get('tenantId');
+  const effectiveTenantId = (user.role === 'SUPER_ADMIN' && queryTenantId)
+    ? queryTenantId
+    : (user.tenantId || user.viewingTenantId);
+
+  if (!effectiveTenantId) {
+    return badRequest('글로벌 플래그는 삭제할 수 없습니다');
+  }
+
+  const tenantFlag = await prisma.featureFlag.findFirst({
+    where: { key, tenantId: effectiveTenantId },
+  });
+
+  if (!tenantFlag) {
+    return notFound('지점 오버라이드가 없습니다');
+  }
+
+  await prisma.featureFlag.delete({ where: { id: tenantFlag.id } });
+
+  return NextResponse.json({ data: { key, reset: true } });
 }

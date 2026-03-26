@@ -22,8 +22,9 @@ export async function GET(request: NextRequest) {
       return notFound('해당 체인을 찾을 수 없습니다');
     }
 
+    // 접두사 매칭: E3-NUM-05 → E3-NUM-05-1, E3-NUM-05-2, ... 모두 포함
     const concepts = await prisma.concept.findMany({
-      where: { conceptCode: { in: conceptCodes } },
+      where: { OR: conceptCodes.map(code => ({ conceptCode: { startsWith: code } })) },
       select: {
         id: true,
         conceptCode: true,
@@ -33,9 +34,15 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // 체인 순서대로 정렬
+    // 체인 순서대로 정렬 (접두사 매칭 → 같은 그룹 내에서는 conceptCode 순)
     const codeOrder = new Map(conceptCodes.map((code, i) => [code, i]));
-    concepts.sort((a, b) => (codeOrder.get(a.conceptCode ?? '') ?? 999) - (codeOrder.get(b.conceptCode ?? '') ?? 999));
+    concepts.sort((a, b) => {
+      const aPrefix = conceptCodes.find(c => a.conceptCode?.startsWith(c)) ?? '';
+      const bPrefix = conceptCodes.find(c => b.conceptCode?.startsWith(c)) ?? '';
+      const orderDiff = (codeOrder.get(aPrefix) ?? 999) - (codeOrder.get(bPrefix) ?? 999);
+      if (orderDiff !== 0) return orderDiff;
+      return (a.conceptCode ?? '').localeCompare(b.conceptCode ?? '');
+    });
 
     // 노드 + 엣지 생성
     const nodes = concepts.map((c) => ({
@@ -46,9 +53,23 @@ export async function GET(request: NextRequest) {
       gradeLabel: gradeToLabel(c.grade),
     }));
 
-    const edges: { from: string; to: string }[] = [];
-    for (let i = 0; i < concepts.length - 1; i++) {
-      edges.push({ from: concepts[i].id, to: concepts[i + 1].id });
+    // DB 선수관계에서 실제 엣지 가져오기 (이 체인에 포함된 개념 간만)
+    const conceptIds = new Set(concepts.map(c => c.id));
+    const dbEdges = await prisma.conceptPrerequisite.findMany({
+      where: {
+        conceptId: { in: [...conceptIds] },
+        prerequisiteId: { in: [...conceptIds] },
+      },
+      select: { prerequisiteId: true, conceptId: true },
+    });
+
+    const edges = dbEdges.map(e => ({ from: e.prerequisiteId, to: e.conceptId }));
+
+    // DB 엣지가 없으면 체인 순서대로 폴백 연결
+    if (edges.length === 0) {
+      for (let i = 0; i < concepts.length - 1; i++) {
+        edges.push({ from: concepts[i].id, to: concepts[i + 1].id });
+      }
     }
 
     return NextResponse.json({

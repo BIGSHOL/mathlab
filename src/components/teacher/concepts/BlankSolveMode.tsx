@@ -401,7 +401,7 @@ export function BlankSolveMode({ templateText, blanks, conceptTitle, onClose }: 
 
         {/* 풀이 영역 */}
         <div className="flex-1 overflow-y-auto p-5">
-          <div className="text-[15px] leading-8 font-serif-kr whitespace-pre-wrap">
+          <div className="text-[20px] leading-8 font-serif-kr whitespace-pre-wrap">
             {renderSolveBlanks(
               templateText, blanks, activeBlanks, answers, setAnswers,
               results, showHints, setShowHints, mathPopup, setMathPopup,

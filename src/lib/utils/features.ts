@@ -8,10 +8,12 @@ export type FeatureKey =
   | 'revenge_challenge'
   | 'class_competition'
   | 'daily_question'
-  | 'enhanced_levelup';
+  | 'enhanced_levelup'
+  | 'ai_blank_grading'
+  | 'voice_reading_check';
 
 /** 초기 Feature Flag 시드 데이터 */
-export const FEATURE_FLAG_SEEDS: Array<{ key: FeatureKey; label: string }> = [
+export const FEATURE_FLAG_SEEDS: Array<{ key: FeatureKey; label: string; enabled?: boolean }> = [
   { key: 'time_attack', label: '연산 타임어택' },
   { key: 'daily_mission', label: '일일 미션' },
   { key: 'badge_system', label: '칭호/배지' },
@@ -20,6 +22,8 @@ export const FEATURE_FLAG_SEEDS: Array<{ key: FeatureKey; label: string }> = [
   { key: 'class_competition', label: '반 대항전' },
   { key: 'daily_question', label: '오늘의 한 문제' },
   { key: 'enhanced_levelup', label: '레벨업 연출 강화' },
+  { key: 'ai_blank_grading', label: 'AI 백지복원 채점', enabled: false },
+  { key: 'voice_reading_check', label: '음성 읽기 인증', enabled: false },
 ];
 
 /** 전체 Feature Flag 맵 반환 (서버용, 지점별 오버라이드 지원) */
@@ -58,7 +62,7 @@ export async function seedFeatureFlags() {
     });
     if (!existing) {
       await prisma.featureFlag.create({
-        data: { key: seed.key, label: seed.label, enabled: true, tenantId: null },
+        data: { key: seed.key, label: seed.label, enabled: seed.enabled ?? true, tenantId: null },
       });
     }
   }

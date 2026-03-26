@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -9,22 +9,10 @@ import {
   BookOpen,
   Search,
   Check,
-  X,
-  ChevronDown,
-  ChevronRight,
-  GripVertical,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
-
-interface ConceptItem {
-  id: string;
-  title: string;
-  conceptCode: string | null;
-  grade: string | null;
-  chapter: string | null;
-  section: string | null;
-}
+import { CurriculumConceptPicker, PickerConceptItem } from '@/components/curriculum/CurriculumConceptPicker';
 
 interface StudentItem {
   id: string;
@@ -40,22 +28,12 @@ const STAGE_OPTIONS = [
   { value: 'BLANK_FULL', label: '통문장암기 (전체)' },
 ];
 
-const GRADE_OPTIONS = [
-  { value: '', label: '전체' },
-  { value: 'elementary_3', label: '초3' },
-  { value: 'elementary_4', label: '초4' },
-  { value: 'elementary_5', label: '초5' },
-  { value: 'elementary_6', label: '초6' },
-  { value: 'middle_1', label: '중1' },
-  { value: 'middle_2', label: '중2' },
-  { value: 'middle_3', label: '중3' },
-];
-
 export default function ConceptHomeworkCreatePage() {
   const router = useRouter();
 
   // Form state
   const [title, setTitle] = useState('');
+  const [titleManuallyEdited, setTitleManuallyEdited] = useState(false);
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 1);
@@ -65,12 +43,7 @@ export default function ConceptHomeworkCreatePage() {
   const [requiredStage, setRequiredStage] = useState('BLANK_FULL');
 
   // Concept selection
-  const [allConcepts, setAllConcepts] = useState<ConceptItem[]>([]);
-  const [conceptsLoading, setConceptsLoading] = useState(false);
-  const [conceptSearch, setConceptSearch] = useState('');
-  const [gradeFilter, setGradeFilter] = useState('');
-  const [selectedConcepts, setSelectedConcepts] = useState<ConceptItem[]>([]);
-  const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
+  const [selectedConcepts, setSelectedConcepts] = useState<PickerConceptItem[]>([]);
 
   // Student selection
   const [allStudents, setAllStudents] = useState<StudentItem[]>([]);
@@ -79,23 +52,6 @@ export default function ConceptHomeworkCreatePage() {
   const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
 
   const [submitting, setSubmitting] = useState(false);
-
-  // Fetch concepts
-  const fetchConcepts = useCallback(async () => {
-    setConceptsLoading(true);
-    try {
-      const params = new URLSearchParams({ limit: '500' });
-      if (gradeFilter) params.set('grade', gradeFilter);
-      const res = await fetch(`/api/concepts?${params}`);
-      if (res.ok) {
-        const json = await res.json();
-        setAllConcepts(json.data ?? []);
-      }
-    } catch (err) { console.error('개념 목록 조회 실패:', err); }
-    setConceptsLoading(false);
-  }, [gradeFilter]);
-
-  useEffect(() => { fetchConcepts(); }, [fetchConcepts]);
 
   // Fetch students
   useEffect(() => {
@@ -112,76 +68,17 @@ export default function ConceptHomeworkCreatePage() {
     })();
   }, []);
 
-  // Group concepts by chapter
-  const filteredConcepts = allConcepts.filter((c) => {
-    if (conceptSearch) {
-      const q = conceptSearch.toLowerCase();
-      return c.title.toLowerCase().includes(q) || (c.conceptCode?.toLowerCase().includes(q) ?? false);
-    }
-    return true;
-  });
-
-  const chapterGroups = filteredConcepts.reduce<Record<string, ConceptItem[]>>((acc, c) => {
-    const key = c.chapter || '(미분류)';
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(c);
-    return acc;
-  }, {});
-
-  const selectedIds = new Set(selectedConcepts.map((c) => c.id));
-
-  const toggleConcept = (concept: ConceptItem) => {
-    if (selectedIds.has(concept.id)) {
-      setSelectedConcepts((prev) => prev.filter((c) => c.id !== concept.id));
-    } else {
-      setSelectedConcepts((prev) => [...prev, concept]);
-    }
-  };
-
-  const toggleChapter = (chapter: string) => {
-    setExpandedChapters((prev) => {
-      const next = new Set(prev);
-      if (next.has(chapter)) next.delete(chapter);
-      else next.add(chapter);
-      return next;
-    });
-  };
-
-  const selectAllInChapter = (chapter: string) => {
-    const concepts = chapterGroups[chapter] ?? [];
-    const allSelected = concepts.every((c) => selectedIds.has(c.id));
-    if (allSelected) {
-      const removeIds = new Set(concepts.map((c) => c.id));
-      setSelectedConcepts((prev) => prev.filter((c) => !removeIds.has(c.id)));
-    } else {
-      const newConcepts = concepts.filter((c) => !selectedIds.has(c.id));
-      setSelectedConcepts((prev) => [...prev, ...newConcepts]);
-    }
-  };
-
-  // Reorder selected concepts
-  const moveUp = (index: number) => {
-    if (index === 0) return;
-    setSelectedConcepts((prev) => {
-      const next = [...prev];
-      [next[index - 1], next[index]] = [next[index], next[index - 1]];
-      return next;
-    });
-  };
-
-  const moveDown = (index: number) => {
-    setSelectedConcepts((prev) => {
-      if (index >= prev.length - 1) return prev;
-      const next = [...prev];
-      [next[index], next[index + 1]] = [next[index + 1], next[index]];
-      return next;
-    });
+  // 자동 숙제명 제안
+  const handleTitleSuggestion = (suggested: string) => {
+    if (!titleManuallyEdited) setTitle(suggested + ' 숙제');
   };
 
   // Student filtering
-  const filteredStudents = allStudents.filter((s) =>
-    !studentSearch || s.name.includes(studentSearch) || s.username.includes(studentSearch)
-  );
+  const filteredStudents = useMemo(() => {
+    return allStudents.filter((s) =>
+      !studentSearch || s.name.includes(studentSearch) || s.username.includes(studentSearch)
+    );
+  }, [allStudents, studentSearch]);
 
   const toggleStudent = (id: string) => {
     setSelectedStudentIds((prev) => {
@@ -224,6 +121,7 @@ export default function ConceptHomeworkCreatePage() {
       });
 
       if (res.ok) {
+        toast.success('개념 숙제가 생성되었습니다');
         router.push('/homework');
       } else {
         const json = await res.json();
@@ -255,9 +153,12 @@ export default function ConceptHomeworkCreatePage() {
               <input
                 type="text"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="예: 3월 2주차 개념 숙제"
-                className="w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  setTitleManuallyEdited(true);
+                }}
+                placeholder="교육과정/계통 선택 시 자동 생성됩니다"
+                className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
             </div>
             <div>
@@ -266,7 +167,7 @@ export default function ConceptHomeworkCreatePage() {
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
             </div>
             <div>
@@ -274,7 +175,7 @@ export default function ConceptHomeworkCreatePage() {
               <select
                 value={conceptsPerDay}
                 onChange={(e) => setConceptsPerDay(Number(e.target.value))}
-                className="w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
               >
                 {[1, 2, 3, 4, 5].map((n) => (
                   <option key={n} value={n}>{n}개</option>
@@ -288,7 +189,7 @@ export default function ConceptHomeworkCreatePage() {
                   <button
                     key={opt.value}
                     onClick={() => setRequiredStage(opt.value)}
-                    className={`flex-1 px-3 py-2 rounded-md text-xs font-medium border transition-colors ${
+                    className={`flex-1 px-3 py-2 rounded-sm text-xs font-medium border transition-colors ${
                       requiredStage === opt.value
                         ? 'border-primary bg-primary/5 text-primary'
                         : 'border-slate-200 text-text-secondary hover:bg-slate-50'
@@ -308,123 +209,20 @@ export default function ConceptHomeworkCreatePage() {
         </div>
 
         {/* Concept Selection */}
-        <div className="border border-slate-200 rounded-sm overflow-hidden">
-          <div className="p-4 border-b border-slate-200 bg-slate-50/50">
-            <h3 className="text-sm font-semibold text-text-primary mb-2">개념 선택</h3>
-            <div className="flex gap-2">
-              <select
-                value={gradeFilter}
-                onChange={(e) => setGradeFilter(e.target.value)}
-                className="px-2 py-1.5 border border-slate-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-              >
-                {GRADE_OPTIONS.map((g) => (
-                  <option key={g.value} value={g.value}>{g.label}</option>
-                ))}
-              </select>
-              <div className="flex-1 relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                <input
-                  type="text"
-                  value={conceptSearch}
-                  onChange={(e) => setConceptSearch(e.target.value)}
-                  placeholder="개념명 또는 코드 검색..."
-                  className="w-full h-8 pl-8 pr-8 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                />
-                {conceptSearch && (
-                  <button onClick={() => setConceptSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2">
-                    <X className="w-3 h-3 text-slate-400" />
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 divide-x divide-slate-200">
-            {/* Available concepts */}
-            <div className="max-h-72 overflow-y-auto">
-              {conceptsLoading ? (
-                <div className="space-y-1.5 p-2">
-                  {Array.from({ length: 4 }, (_, i) => (
-                    <Skeleton key={i} className="h-8 w-full rounded" />
-                  ))}
-                </div>
-              ) : Object.keys(chapterGroups).length === 0 ? (
-                <div className="p-4 text-center text-xs text-text-secondary">개념이 없습니다</div>
-              ) : (
-                Object.entries(chapterGroups).map(([chapter, concepts]) => {
-                  const isExpanded = expandedChapters.has(chapter);
-                  const allSelected = concepts.every((c) => selectedIds.has(c.id));
-                  const someSelected = concepts.some((c) => selectedIds.has(c.id));
-                  return (
-                    <div key={chapter} className="border-b border-slate-200 last:border-0">
-                      <div className="flex items-center gap-1 px-3 py-2 hover:bg-slate-50 cursor-pointer">
-                        <button onClick={() => toggleChapter(chapter)} className="flex items-center gap-1 flex-1 min-w-0 text-left">
-                          {isExpanded ? <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" /> : <ChevronRight className="w-3 h-3 text-slate-400 shrink-0" />}
-                          <span className="text-xs font-medium text-text-primary truncate">{chapter}</span>
-                          <span className="text-xs text-text-secondary shrink-0">({concepts.length})</span>
-                        </button>
-                        <button
-                          onClick={() => selectAllInChapter(chapter)}
-                          className={`text-xs px-1.5 py-0.5 rounded shrink-0 ${
-                            allSelected ? 'bg-primary text-white' : someSelected ? 'bg-primary/10 text-primary' : 'text-slate-400 hover:text-primary'
-                          }`}
-                        >
-                          {allSelected ? '전체해제' : '전체선택'}
-                        </button>
-                      </div>
-                      {isExpanded && concepts.map((c) => (
-                        <button
-                          key={c.id}
-                          onClick={() => toggleConcept(c)}
-                          className={`w-full text-left px-3 pl-7 py-1.5 text-xs flex items-center gap-2 hover:bg-slate-50 ${
-                            selectedIds.has(c.id) ? 'bg-primary/5' : ''
-                          }`}
-                        >
-                          <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
-                            selectedIds.has(c.id) ? 'bg-primary border-primary' : 'border-slate-300'
-                          }`}>
-                            {selectedIds.has(c.id) && <Check className="w-3 h-3 text-white" />}
-                          </div>
-                          <span className="truncate">{c.title}</span>
-                          {c.conceptCode && <span className="text-xs text-text-secondary shrink-0">{c.conceptCode}</span>}
-                        </button>
-                      ))}
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            {/* Selected concepts (ordered) */}
-            <div className="max-h-72 overflow-y-auto">
-              <div className="px-3 py-2 border-b border-slate-200 bg-slate-50/50 sticky top-0">
-                <span className="text-xs font-medium text-text-primary">선택됨 ({selectedConcepts.length})</span>
-                <span className="text-xs text-text-secondary ml-1">드래그 또는 화살표로 순서 변경</span>
-              </div>
-              {selectedConcepts.length === 0 ? (
-                <div className="p-4 text-center text-xs text-text-secondary">왼쪽에서 개념을 선택하세요</div>
-              ) : (
-                selectedConcepts.map((c, i) => (
-                  <div key={c.id} className="flex items-center gap-1 px-2 py-1.5 border-b border-slate-200 hover:bg-slate-50 group">
-                    <GripVertical className="w-3 h-3 text-slate-300 shrink-0" />
-                    <span className="text-xs text-text-secondary w-5 shrink-0">{i + 1}</span>
-                    <span className="text-xs text-text-primary truncate flex-1">{c.title}</span>
-                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => moveUp(i)} className="p-0.5 hover:bg-slate-200 rounded" disabled={i === 0}>
-                        <ChevronDown className="w-3 h-3 text-slate-400 rotate-180" />
-                      </button>
-                      <button onClick={() => moveDown(i)} className="p-0.5 hover:bg-slate-200 rounded" disabled={i === selectedConcepts.length - 1}>
-                        <ChevronDown className="w-3 h-3 text-slate-400" />
-                      </button>
-                      <button onClick={() => toggleConcept(c)} className="p-0.5 hover:bg-red-100 rounded">
-                        <X className="w-3 h-3 text-red-400" />
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+        <div className="border border-slate-200 rounded-sm p-4">
+          <h3 className="text-sm font-semibold text-text-primary mb-3 flex items-center gap-2">
+            📋 개념 선택
+            {selectedConcepts.length > 0 && (
+              <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">
+                {selectedConcepts.length}개
+              </span>
+            )}
+          </h3>
+          <CurriculumConceptPicker
+            selectedConcepts={selectedConcepts}
+            onChangeSelected={setSelectedConcepts}
+            onTitleSuggestion={handleTitleSuggestion}
+          />
         </div>
 
         {/* Student Selection */}

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuthViewAs, isResponse, validateBody, requireResource } from '@/lib/api';
+import { requireAuthViewAs, isResponse, validateBody, requireResource, requireLicense } from '@/lib/api';
 import { blankSubmitSchema } from '@/lib/schemas/learning';
 
 interface BlankItem {
@@ -92,6 +92,9 @@ export async function POST(request: NextRequest) {
   const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
 
+  const licenseCheck = await requireLicense(user, 'concept');
+  if (licenseCheck) return licenseCheck;
+
   const parsed = await validateBody(request, blankSubmitSchema);
   if (isResponse(parsed)) return parsed;
 
@@ -102,15 +105,19 @@ export async function POST(request: NextRequest) {
   if (isResponse(exercise)) return exercise;
 
   const blanks = exercise.blanks as unknown as BlankItem[];
+  const autoFilledSet = new Set(parsed.autoFilledPositions ?? []);
 
   const results = parsed.answers.map((a) => {
     const blank = blanks.find((b) => b.position === a.position);
-    const isCorrect = blank ? matchBlankAnswer(blank.answer, a.value) : false;
+    // 3회 오답으로 자동 배치된 빈칸은 오답 처리
+    const isAutoFilled = autoFilledSet.has(a.position);
+    const isCorrect = isAutoFilled ? false : (blank ? matchBlankAnswer(blank.answer, a.value) : false);
     return {
       position: a.position,
       correct: isCorrect,
       expected: blank?.answer ?? '',
       submitted: a.value,
+      autoFilled: isAutoFilled,
     };
   });
 
