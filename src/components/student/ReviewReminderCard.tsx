@@ -34,6 +34,7 @@ export function ReviewReminderCard() {
   const [stats, setStats] = useState<ReviewStats | null>(null);
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     fetch('/api/learning/reviews/today')
@@ -41,7 +42,7 @@ export function ReviewReminderCard() {
       .then((json) => {
         if (json.data) {
           setStats(json.data.stats);
-          setReviews(json.data.reviews?.slice(0, 5) ?? []);
+          setReviews(json.data.reviews ?? []);
         }
       })
       .catch(() => {})
@@ -71,14 +72,14 @@ export function ReviewReminderCard() {
       </div>
 
       <div className="space-y-1.5">
-        {reviews.map((review) => {
+        {(showAll ? reviews : reviews.slice(0, 5)).map((review) => {
           const intervalInfo = INTERVAL_LABELS[review.interval] ?? INTERVAL_LABELS[3];
           const isQuestion = !!review.question;
           const label = isQuestion
             ? `${review.question!.chapter} (${review.question!.difficulty})`
             : review.concept?.title ?? '개념 복습';
           const href = isQuestion
-            ? `/my-tests` // 문제 복습은 시험 페이지로
+            ? `/practice/revenge` // 문제 복습은 복수전으로
             : `/concepts/${review.concept?.conceptCode ?? review.concept?.id}`;
 
           return (
@@ -109,10 +110,17 @@ export function ReviewReminderCard() {
         })}
       </div>
 
-      {stats.pendingCount > 5 && (
+      {stats.pendingCount > 5 && !showAll && (
         <div className="mt-2 text-center">
-          <Button variant="ghost" size="sm" className="text-xs text-amber-700">
+          <Button variant="ghost" size="sm" className="text-xs text-amber-700" onClick={() => setShowAll(true)}>
             전체 {stats.pendingCount}개 보기
+          </Button>
+        </div>
+      )}
+      {showAll && reviews.length > 5 && (
+        <div className="mt-2 text-center">
+          <Button variant="ghost" size="sm" className="text-xs text-slate-500" onClick={() => setShowAll(false)}>
+            접기
           </Button>
         </div>
       )}
