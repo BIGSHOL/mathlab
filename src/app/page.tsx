@@ -84,7 +84,7 @@ const stages = [
   {
     number: '01',
     title: '개념 읽기',
-    description: '수학 개념을 KaTeX 수식과 함께 체계적으로 학습합니다.',
+    description: '수학 개념을 수식과 함께 체계적으로 학습합니다.',
     color: 'border-stage-reading',
     textColor: 'text-stage-reading',
     bgColor: 'bg-blue-50/50',
@@ -184,7 +184,7 @@ export default function LandingPage() {
         {/* Hero Section */}
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-blue-50/60 to-white pointer-events-none" />
-          <div className="max-w-[1200px] mx-auto px-4 py-20 md:py-28 relative">
+          <div className="max-w-[1400px] mx-auto px-4 py-20 md:py-28 relative">
             <div className="flex flex-col items-center text-center gap-8">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-primary text-sm font-bold border border-blue-100">
                 <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
@@ -219,7 +219,7 @@ export default function LandingPage() {
 
         {/* Stats Section */}
         <section className="border-y border-slate-100 bg-white">
-          <div className="max-w-[1200px] mx-auto px-4 py-12">
+          <div className="max-w-[1400px] mx-auto px-4 py-12">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               {stats.map((stat) => (
                 <div key={stat.label} className="text-center">
@@ -233,7 +233,7 @@ export default function LandingPage() {
 
         {/* Features Section */}
         <section id="features" className="bg-slate-50/50 border-b border-slate-100 py-20 md:py-28">
-          <div className="max-w-[1200px] mx-auto px-4">
+          <div className="max-w-[1400px] mx-auto px-4">
             <div className="text-center mb-16">
               <span className="text-primary font-bold text-sm tracking-widest uppercase">
                 Features
@@ -255,7 +255,7 @@ export default function LandingPage() {
                     <feature.icon className="w-7 h-7" />
                   </div>
                   <h3 className="text-xl font-bold mb-3 text-text-primary">{feature.title}</h3>
-                  <p className="text-text-secondary leading-relaxed">{feature.description}</p>
+                  <p className="text-text-secondary leading-relaxed ">{feature.description}</p>
                 </Card>
               ))}
             </div>
@@ -264,7 +264,7 @@ export default function LandingPage() {
 
         {/* 5-Stage Learning Section */}
         <section className="py-20 md:py-28">
-          <div className="max-w-[1200px] mx-auto px-4">
+          <div className="max-w-[1400px] mx-auto px-4">
             <div className="text-center mb-16">
               <span className="text-primary font-bold text-sm tracking-widest uppercase">
                 Learning Method
@@ -289,7 +289,7 @@ export default function LandingPage() {
                     </span>
                   </div>
                   <h3 className="text-base font-bold text-text-primary">{stage.title}</h3>
-                  <p className="text-text-secondary text-sm leading-relaxed">
+                  <p className="text-text-secondary text-sm leading-relaxed ">
                     {stage.description}
                   </p>
                 </div>
@@ -306,7 +306,7 @@ export default function LandingPage() {
 
         {/* Teacher & Student Section */}
         <section className="bg-slate-50/50 border-y border-slate-100 py-20 md:py-28">
-          <div className="max-w-[1200px] mx-auto px-4">
+          <div className="max-w-[1400px] mx-auto px-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
               {/* 선생님 */}
               <div>
@@ -323,16 +323,18 @@ export default function LandingPage() {
                   학생·반 관리, 개념·문제 관리, 숙제 출제, 시험·레벨테스트, 실시간 퀴즈, 학습지 생성,
                   수기 채점, PDF 문제 추출, AI 리포트까지 — 수학 학원의 모든 업무를 디지털로 전환합니다.
                 </p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
-                  {teacherTools.map((tool) => (
-                    <div
-                      key={tool.label}
-                      className="flex flex-col items-center gap-1.5 p-2.5 rounded-sm bg-white border border-slate-200 hover:border-primary/30 hover:shadow-sm transition-all"
-                    >
-                      <tool.icon className="w-4.5 h-4.5 text-primary" />
-                      <span className="text-xs font-medium text-text-secondary text-center leading-tight">{tool.label}</span>
-                    </div>
-                  ))}
+                <div className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]">
+                  <div className="flex gap-2 w-max animate-[marquee_25s_linear_infinite] hover:[animation-play-state:paused]">
+                    {[...teacherTools, ...teacherTools].map((tool, i) => (
+                      <div
+                        key={`${tool.label}-${i}`}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-sm bg-white border border-slate-200 shrink-0"
+                      >
+                        <tool.icon className="w-4 h-4 text-primary shrink-0" />
+                        <span className="text-xs font-medium text-text-secondary whitespace-nowrap">{tool.label}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -376,7 +378,7 @@ export default function LandingPage() {
 
         {/* AI Section */}
         <section className="py-20 md:py-28">
-          <div className="max-w-[1200px] mx-auto px-4">
+          <div className="max-w-[1400px] mx-auto px-4">
             <div className="flex flex-col items-center text-center gap-6">
               <div className="w-16 h-16 rounded-sm bg-violet-50 flex items-center justify-center">
                 <Sparkles className="w-8 h-8 text-violet-500" />
@@ -419,7 +421,7 @@ export default function LandingPage() {
 
         {/* CTA Section */}
         <section className="border-t border-slate-100 bg-gradient-to-b from-blue-50/60 to-white py-20 md:py-28">
-          <div className="max-w-[1200px] mx-auto px-4 text-center">
+          <div className="max-w-[1400px] mx-auto px-4 text-center">
             <h2 className="text-3xl md:text-4xl font-black text-text-primary mb-4">
               지금 바로 시작하세요
             </h2>
@@ -438,7 +440,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="border-t border-slate-200 py-8 px-6 md:px-10 bg-white">
-        <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2 text-text-secondary text-sm">
             <LogoIcon className="w-4 h-4" />
             <span>&copy; 2026 MathLab. All rights reserved.</span>
@@ -447,12 +449,12 @@ export default function LandingPage() {
             <Link href="/updates" className="hover:text-primary transition-colors">
               업데이트
             </Link>
-            <a href="#" className="hover:text-primary transition-colors">
+            <Link href="/terms" className="hover:text-primary transition-colors">
               이용약관
-            </a>
-            <a href="#" className="hover:text-primary transition-colors">
+            </Link>
+            <Link href="/privacy" className="hover:text-primary transition-colors">
               개인정보처리방침
-            </a>
+            </Link>
           </div>
         </div>
       </footer>
