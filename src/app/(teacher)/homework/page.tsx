@@ -322,9 +322,9 @@ export default function HomeworkPage() {
       <div className="flex-1 flex min-h-0 w-full overflow-hidden">
       {/* Left Panel */}
       <aside
-        className={`shrink-0 border-r border-slate-200 bg-slate-50/30 flex flex-col transition-all duration-200 ${
-          leftCollapsed ? 'w-12' : 'w-72'
-        }`}
+        className={`shrink-0 border-r border-slate-200 bg-slate-50/30 flex-col transition-all duration-200 ${
+          leftCollapsed ? 'w-12 hidden md:flex' : 'w-full md:w-72'
+        } ${selectedPlanId ? 'hidden md:flex' : 'flex'}`}
       >
         <div className="flex items-center justify-between p-3 border-b border-slate-200">
           {!leftCollapsed && (
@@ -518,7 +518,7 @@ export default function HomeworkPage() {
       </aside>
 
       {/* Right Panel */}
-      <main className="flex-1 flex flex-col min-w-0 bg-white">
+      <main className={`flex-1 flex flex-col min-w-0 bg-white ${selectedPlanId ? 'flex' : 'hidden md:flex'}`}>
         {!selectedPlan ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">

@@ -32,7 +32,7 @@ export default function ConceptsPage() {
       <ConceptListPanel mgr={mgr} />
 
       {/* ===== Right Panel: Editor ===== */}
-      <main className="flex-1 flex flex-col min-w-0 bg-white">
+      <main className={`flex-1 flex flex-col min-w-0 bg-white ${editingConcept ? 'flex' : 'hidden md:flex'}`}>
         {!editingConcept ? (
           <div className="flex-1 flex items-center justify-center text-text-secondary">
             <div className="text-center">

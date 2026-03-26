@@ -419,7 +419,7 @@ export default async function StudentDashboard({
       )}
 
       {/* ──── 섹션 2: 통계 카드 4열 ──── */}
-      <DashboardStatCards className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+      <DashboardStatCards className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-4">
         <Card padding="base" className="flex flex-col gap-2 hover:border-primary/30 transition-all relative overflow-hidden">
           <div className="flex justify-between items-center">
             <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">현재 레벨</span>

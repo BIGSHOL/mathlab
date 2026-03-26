@@ -1,5 +1,6 @@
 'use client';
 
+import { ArrowLeft } from 'lucide-react';
 import { GRADE_SHORT_LABELS, GRADE_GROUPS, CATEGORY_LABELS, PART_LABELS } from '@/lib/constants/labels';
 
 const CATEGORY_OPTIONS = Object.keys(CATEGORY_LABELS);
@@ -19,6 +20,14 @@ export function ConceptInfoBar({ mgr }: ConceptInfoBarProps) {
 
   return (
     <div className="shrink-0 px-3 py-2.5 bg-slate-50/80 border-b border-slate-200 flex flex-col gap-2">
+      {/* 모바일 뒤로가기 */}
+      <button
+        onClick={() => mgr.cancelEditing()}
+        className="md:hidden flex items-center gap-1.5 text-xs text-slate-500 hover:text-primary -mb-1"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        목록으로
+      </button>
       {/* Row 1: 제목 / 개념코드 / 출처 */}
       <div className="flex gap-3 items-end">
         <div className="flex-1">

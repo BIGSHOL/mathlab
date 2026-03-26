@@ -79,9 +79,9 @@ export default function TestsPage() {
         <div className="flex-1 flex min-h-0 w-full overflow-hidden">
           {/* ===== LEFT PANEL ===== */}
           <aside
-            className={`shrink-0 border-r border-slate-200 bg-slate-50/30 flex flex-col transition-all duration-200 ${
-              leftPanelCollapsed ? 'w-12' : 'w-72'
-            }`}
+            className={`shrink-0 border-r border-slate-200 bg-slate-50/30 flex-col transition-all duration-200 ${
+              leftPanelCollapsed ? 'w-12 hidden md:flex' : 'w-full md:w-72'
+            } ${selectedTest ? 'hidden md:flex' : 'flex'}`}
           >
             {/* Header */}
             <div className="flex items-center justify-between p-3 border-b border-slate-200">
@@ -200,7 +200,7 @@ export default function TestsPage() {
           </aside>
 
           {/* ===== RIGHT PANEL ===== */}
-          <main className="flex-1 flex flex-col min-w-0 bg-white">
+          <main className={`flex-1 flex flex-col min-w-0 bg-white ${selectedTest ? 'flex' : 'hidden md:flex'}`}>
             {!selectedTest ? (
               /* Empty state */
               <div className="flex-1 flex items-center justify-center">
@@ -216,6 +216,14 @@ export default function TestsPage() {
               /* Test detail */
               <div className="flex-1 flex items-center justify-center overflow-y-auto">
                 <div className="p-3 max-w-3xl w-full mx-auto">
+                  {/* 모바일 뒤로가기 */}
+                  <button
+                    onClick={() => setSelectedTestId(null)}
+                    className="md:hidden flex items-center gap-1.5 text-xs text-slate-500 hover:text-primary mb-2"
+                  >
+                    <PanelLeftOpen className="w-3.5 h-3.5" />
+                    목록으로
+                  </button>
                   {/* Title section */}
                   <div className="mb-3">
                     <div className="flex items-center gap-2 mb-2">

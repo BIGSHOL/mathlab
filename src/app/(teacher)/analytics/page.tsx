@@ -586,7 +586,7 @@ export default function AnalyticsPage() {
               <Calendar className="w-5 h-5 text-primary" /> 일별 학습 성실도 ({currentMonthNum}월)
             </h2>
             <div className="rounded-sm border border-slate-200 p-6 bg-white overflow-x-auto">
-              <div className="min-w-[500px]">
+              <div className="min-w-[340px] sm:min-w-[500px]">
                 <div className="flex justify-end items-center gap-3 mb-4 text-xs text-text-secondary">
                   <span>학습량 적음</span>
                   <div className="flex gap-1">

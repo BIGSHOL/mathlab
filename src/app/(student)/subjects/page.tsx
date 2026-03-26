@@ -204,7 +204,7 @@ export default async function SubjectsPage({
                     return (
                       <div
                         key={concept.id}
-                        className="flex items-center gap-4 p-4 rounded-sm border border-slate-100 bg-slate-50/50 opacity-50 cursor-not-allowed"
+                        className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-sm border border-slate-100 bg-slate-50/50 opacity-50 cursor-not-allowed"
                       >
                         <div className="w-8 h-8 rounded-sm bg-slate-200 flex items-center justify-center">
                           <Lock className="w-4 h-4 text-slate-400" />
@@ -213,30 +213,30 @@ export default async function SubjectsPage({
                           <h3 className="font-semibold text-text-secondary">{concept.title}</h3>
                           <span className="text-xs text-slate-400">이전 개념을 완료하세요</span>
                         </div>
-                        <div className="w-32">
+                        <div className="w-20 sm:w-32">
                           <ProgressBar value={0} size="sm" />
                         </div>
-                        <Lock className="w-5 h-5 text-slate-300" />
+                        <Lock className="w-5 h-5 text-slate-300 hidden sm:block" />
                       </div>
                     );
                   }
 
                   return (
                     <Link key={concept.id} href={`/concepts/${concept.conceptCode ?? concept.id}`}>
-                      <div className="flex items-center gap-4 p-4 rounded-sm hover:bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all group cursor-pointer">
+                      <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-sm hover:bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all group cursor-pointer">
                         <GemStone variant={partToGemVariant(concept.part)} stage={stageIdx} size="xs" />
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-text-primary group-hover:text-primary transition-colors">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-text-primary group-hover:text-primary transition-colors truncate">
                             {concept.title}
                           </h3>
                           <span className={`text-xs font-medium ${stageColors[stageIdx]}`}>
                             {stageLabels[stageIdx]}
                           </span>
                         </div>
-                        <div className="w-32">
+                        <div className="w-20 sm:w-32">
                           <ProgressBar value={progressPct} size="sm" />
                         </div>
-                        <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-primary transition-colors" />
+                        <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-primary transition-colors hidden sm:block" />
                       </div>
                     </Link>
                   );
@@ -287,20 +287,20 @@ export default async function SubjectsPage({
                   const progressPct = getProgressPercent(p.concept.progress);
                   return (
                     <Link key={p.id} href={`/concepts/${p.concept.conceptCode ?? p.conceptId}`}>
-                      <div className="flex items-center gap-4 p-4 rounded-sm hover:bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all group cursor-pointer">
+                      <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-sm hover:bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all group cursor-pointer">
                         <GemStone variant={partToGemVariant(p.concept.part)} stage={stageIdx} size="xs" />
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-text-primary group-hover:text-primary transition-colors">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-text-primary group-hover:text-primary transition-colors truncate">
                             {p.concept.subject.title}: {p.concept.title}
                           </h3>
                           <span className={`text-xs font-medium ${stageColors[stageIdx]}`}>
                             {stageLabels[stageIdx]}
                           </span>
                         </div>
-                        <div className="w-32">
+                        <div className="w-20 sm:w-32">
                           <ProgressBar value={progressPct} size="sm" />
                         </div>
-                        <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-primary transition-colors" />
+                        <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-primary transition-colors hidden sm:block" />
                       </div>
                     </Link>
                   );

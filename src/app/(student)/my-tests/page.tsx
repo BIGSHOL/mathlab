@@ -210,7 +210,7 @@ function TestCard({ test, isAssigned }: {
             </div>
           )}
         </div>
-        <div className="ml-4 flex flex-col gap-2">
+        <div className="ml-2 sm:ml-4 flex flex-col gap-1.5 sm:gap-2 shrink-0">
           {isCompleted ? (
             <>
               <Link href={`/my-tests/${test.seq}/result`}>
