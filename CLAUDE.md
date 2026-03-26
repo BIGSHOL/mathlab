@@ -18,7 +18,7 @@
 | AI | Google Gemini 2.5 Flash (`@google/genai`), Anthropic Claude (`@anthropic-ai/sdk`) |
 | PDF | pdfjs-dist (클라이언트 사이드 PDF 렌더링) |
 | Styling | Tailwind CSS v4, Framer Motion |
-| Math | KaTeX, MathLive, remark-math |
+| Math | KaTeX, MathLive, remark-math, remark-gfm |
 | State | Zustand 5 |
 | Validation | Zod |
 | Testing | Vitest, Playwright |
@@ -47,7 +47,7 @@
 
 **비용 인식 — 작은 기능도 3단계를 거친다:**
 - 필드 하나(boolean, string 등) 추가에도 스키마 → generate → API → 프론트 전 과정 필요
-- API 라우트가 이미 128개+ → 무분별하게 늘리지 말 것
+- API 라우트가 이미 133개+ → 무분별하게 늘리지 말 것
 - 새 필드 추가 전 판단 기준:
   - **정규 필드**: 검색/필터/정렬에 쓰이거나, 여러 곳에서 참조되는 경우
   - **기존 Json 필드 활용**: 한 곳에서만 쓰이는 부가 정보는 `metadata Json?` 등 기존 유연한 필드에 포함 검토
@@ -173,6 +173,8 @@ toast.info('AI가 분석 중입니다');
 - 버튼: 반드시 `<Button>` 컴포넌트 사용 — 커스텀 button 스타일 직접 작성 금지
 - 빈 상태: `<LoadingEmptyState>` 컴포넌트 사용 권장
 - 로딩: `<Skeleton>` 컴포넌트 사용 — `animate-pulse` 직접 사용 지양
+- 스크롤바: 글로벌 thin 스크롤바 적용 (5px, 반투명) — 숨기려면 `.no-scrollbar` 클래스 사용
+- 페이지네이션: `<Pagination>` 컴포넌트 사용, 사이드바 등 좁은 영역은 `compact` prop 사용
 
 ### 10. 공유 유틸 — 중복 코드 방지
 
@@ -192,7 +194,7 @@ src/
 ├── app/
 │   ├── (student)/     # 학생 페이지 (dashboard, subjects, concepts, practice, my-tests, ranking, quiz, quiz-join, profile, diagnostics, solve, help-public, updates)
 │   ├── (teacher)/     # 선생님 페이지 (overview, students, concepts, questions, tests, homework, analytics, quiz, worksheet, manual-grading, reports, level-test, courses, licenses, settings, updates, help, support, student-preview, admin)
-│   ├── api/           # API 라우트 (128+ endpoints)
+│   ├── api/           # API 라우트 (133+ endpoints)
 │   └── globals.css    # Tailwind 테마 + 디자인 토큰
 ├── components/
 │   ├── layout/        # Sidebar, DashboardShell, CommandPalette
@@ -231,7 +233,7 @@ src/
 │   ├── constants/     # 교육과정 데이터, 연산 카테고리, 라벨, 시험전략, 학교, 교재
 │   └── data/          # 정적 데이터 (업데이트 로그, 도움말)
 ├── hooks/             # useAuth, useLearning, useGamification, useFeatureFlags, useBadgeCheck, useSpeed, useFetch, useTests, usePreviewScale, useLicenses, useQuestions 등
-├── stores/            # Zustand 글로벌 스토어 (gamification, wizard, manualGrading, xpNotification, updateNotification, license)
+├── stores/            # Zustand 글로벌 스토어 (gamification, wizard, manualGrading, xpNotification, updateNotification, license, conceptEditor)
 ├── types/             # 공통 타입 정의 (diagram.ts, mathgen.ts, pdf-extract.ts, report.ts 등)
 └── scripts/           # DB 초기화, 시드 스크립트 (43+ 파일: TS/JS/Python)
 ```
@@ -262,6 +264,13 @@ src/
 ```
 
 Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
+
+**교육과정 계층 구조 (curriculum.ts 기준):**
+- **초등**: 2단계 — chapter = 단원명 (예: "덧셈과 뺄셈"), section = 세부 주제, sectionSub = NULL
+- **중등**: 3단계 — chapter = 영역명 (예: "수와 연산", "기하"), section = 중단원 (예: "소인수분해"), sectionSub = 소단원
+- **고등**: 3단계 — chapter = 대단원 (예: "다항식", "방정식과 부등식"), section/sectionSub = 중/소단원
+- 고등 grade 매핑: `high_1`→공통수학1, `high_2`→공통수학2, `high_algebra`→대수, `high_calculus1`→미적분I, `high_prob`→확률과 통계, `high_calculus2`→미적분II, `high_geo`→기하
+- 개념 편집기 드롭다운은 `curriculum.ts`의 **정확한 문자열**과 매칭 → DB chapter/section 값은 반드시 curriculum.ts와 일치해야 함
 
 ### 연산 생성기
 
@@ -330,7 +339,7 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 
 | 컴포넌트 | 용도 |
 |----------|------|
-| `MathRenderer` | 읽기전용 마크다운+LaTeX+SVG 렌더링 (remark-math + rehype-katex) |
+| `MathRenderer` | 읽기전용 마크다운+LaTeX+SVG+GFM 테이블 렌더링 (remark-gfm + remark-math + rehype-katex) |
 | `EditableMathRenderer` | 수식 클릭 편집 모드 (onMathClick 콜백) |
 | `DiagramRenderer` | DiagramSpec / DiagramParam[] 통합 → SVG 렌더링 (런타임 판별) |
 | `DiagramEditorPopup` | 26개 다이어그램 타입 GUI 편집기 |
@@ -596,22 +605,22 @@ npx tsx scripts/migrate-question-relations.ts  # questionIds Json → 중간테�
 | `test-writer` | Sonnet | Vitest 단위 테스트 생성 (서비스, API, 유틸) |
 | `refactor-advisor` | Haiku | 대형 파일 탐지, 중복 코드 분석, 분리 전략 제안 (읽기 전용) |
 | `schema-generator` | Sonnet | Prisma 모델 → API 라우트 + Zod 스키마 + 타입 자동 생성 |
-| `api-documenter` | Haiku | 128+ API 라우트 스캔 → 구조화된 API 문서 생성 |
+| `api-documenter` | Haiku | 133+ API 라우트 스캔 → 구조화된 API 문서 생성 |
 
 ## 프로젝트 규모
 
 | 항목 | 수치 |
 |------|------|
-| 소스 파일 | 493개 (TS/TSX) |
-| 총 코드량 | ~85,000 LoC |
-| 학생 페이지 | 17개 |
-| 선생님 페이지 | 48개 |
-| API 라우트 | 128개 |
-| 컴포넌트 | 131개 |
+| 소스 파일 | 526개 (TS/TSX) |
+| 총 코드량 | ~95,000 LoC |
+| 학생 페이지 | 12개 |
+| 선생님 페이지 | 20개 |
+| API 라우트 | 133개 |
+| 컴포넌트 | 143개 |
 | 서비스 모듈 | 21개 |
 | DB 모델 | 57개, Enum 10개 |
 | SVG 다이어그램 | 26개 타입 (2개 시스템, 통합 렌더러) |
-| 커스텀 훅 | 11개 |
-| Zustand 스토어 | 6개 |
+| 커스텀 훅 | 12개 |
+| Zustand 스토어 | 7개 |
 | Zod 스키마 | 5개 |
 | E2E 테스트 | 3개 (Playwright) |

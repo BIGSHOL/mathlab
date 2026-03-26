@@ -96,7 +96,7 @@ export interface EditFormState {
 }
 
 // Constants
-export const ITEMS_PER_PAGE = 12;
+export const ITEMS_PER_PAGE = 25;
 
 export const DIFFICULTY_CYCLE: BlankDifficulty[] = ['easy', 'hard', 'full'];
 export const DIFFICULTY_LABELS: Record<string, string> = { easy: '1단계', hard: '2단계', full: '통문장', both: '전체' };
