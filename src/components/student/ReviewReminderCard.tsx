@@ -22,6 +22,7 @@ interface ReviewItem {
 }
 
 const INTERVAL_LABELS: Record<number, { label: string; color: string }> = {
+  1: { label: '즉시복습', color: 'text-rose-700 bg-rose-50' },
   3: { label: '3일차', color: 'text-red-600 bg-red-50' },
   7: { label: '1주차', color: 'text-orange-600 bg-orange-50' },
   14: { label: '2주차', color: 'text-amber-600 bg-amber-50' },

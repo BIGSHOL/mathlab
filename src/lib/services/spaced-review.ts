@@ -15,8 +15,8 @@
 
 import { prisma } from '@/lib/db';
 
-/** 간격 단계 (일) */
-export const REVIEW_INTERVALS = [3, 7, 14, 30, 60] as const;
+/** 간격 단계 (일) — 1일(바로 다음날) → 3일 → 7일 → 14일 → 30일 → 60일 */
+export const REVIEW_INTERVALS = [1, 3, 7, 14, 30, 60] as const;
 
 /** 다음 간격 계산 */
 function getNextInterval(currentInterval: number): number | null {
@@ -28,6 +28,7 @@ function getNextInterval(currentInterval: number): number | null {
 
 /** 간격 라벨 */
 export function getIntervalLabel(interval: number): string {
+  if (interval <= 1) return '다음날';
   if (interval <= 3) return '3일 후';
   if (interval <= 7) return '1주 후';
   if (interval <= 14) return '2주 후';
