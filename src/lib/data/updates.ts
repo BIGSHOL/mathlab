@@ -30,6 +30,57 @@ export const TYPE_CONFIG: Record<UpdateType, { label: string; color: string }> =
 };
 
 export const ALL_UPDATES: UpdateLog[] = [
+  // ── 2026-03-26 ──
+  {
+    date: '2026-03-26',
+    title: '빈칸 학습 칩 선택 모드 + 초등 빈칸 237개 일괄 생성 + 학습과정 구조화',
+    audience: ['teacher', 'admin'],
+    entries: [
+      { type: 'feature', text: '빈칸 학습 칩 선택 모드 — 초등학생을 위한 터치 친화적 빈칸 입력 UI (직접 타이핑 대신 보기 칩 선택)' },
+      { type: 'feature', text: '학습 과정 생성 구조화 — 교육과정 트리 / 계통 범위 / 자유 선택 3가지 모드로 개념 선택' },
+      { type: 'feature', text: '학습 과정 순차/자유 모드 — 순차 모드 시 이전 개념 완료 전까지 다음 개념 잠금' },
+      { type: 'feature', text: '학부모용 보고서 페이지 목업 추가' },
+      { type: 'add', text: '초등 빈칸 237개 일괄 생성 — 개선된 프롬프트로 고품질 빈칸 추출' },
+      { type: 'add', text: '기능 플래그 2종 추가 — AI 빈칸 채점, 음성 읽기 인증' },
+      { type: 'improve', text: '개념 콘텐츠 3뷰(미리보기/편집/원본) 렌더링 통일' },
+      { type: 'improve', text: '기능 관리 페이지 2단 그리드 레이아웃으로 개선' },
+      { type: 'fix', text: '개념 콘텐츠 편집기 개선 + 초등 개념 데이터 정리' },
+    ],
+  },
+  {
+    date: '2026-03-26',
+    title: '빈칸 학습 개선 — 초등학생 친화 모드',
+    audience: ['student'],
+    entries: [
+      { type: 'feature', text: '빈칸 칩 선택 모드 — 직접 타이핑 대신 보기 칩을 골라서 빈칸 채우기' },
+      { type: 'improve', text: '개념 본문 렌더링 품질 향상 — 표, 수식, 마크다운 통일' },
+    ],
+  },
+  // ── 2026-03-25 ──
+  {
+    date: '2026-03-25',
+    title: '반 관리 통합 + 전체 UI 리디자인 + API 페이지네이션',
+    audience: ['teacher', 'admin'],
+    entries: [
+      { type: 'feature', text: '반 관리 + 학습 코스 통합 페이지 — 반별 학생/과정을 한 화면에서 관리' },
+      { type: 'feature', text: 'MathRenderer GFM 테이블 지원 — 마크다운 표를 깔끔하게 렌더링' },
+      { type: 'feature', text: '목록 API 전체 페이지네이션 적용 — 대량 데이터 효율적 조회' },
+      { type: 'improve', text: '전체 디자인 일관성 통일 + 모바일 가독성 개선' },
+      { type: 'improve', text: 'PDF 추출 프롬프트 개선 — 더 정확한 문제 구조화' },
+      { type: 'fix', text: '학생 스켈레톤 페이지 전면 재검토 + 미사용 v2 삭제' },
+      { type: 'fix', text: '랜딩페이지 프로젝트 현황과 일치시킴' },
+    ],
+  },
+  {
+    date: '2026-03-25',
+    title: '학습 화면 품질 개선',
+    audience: ['student'],
+    entries: [
+      { type: 'improve', text: '학습 페이지 스켈레톤 로딩 전면 재검토 — 더 자연스러운 로딩 화면' },
+      { type: 'improve', text: '타임어택 UI 개선' },
+      { type: 'fix', text: '다수 UX 수정 및 품질 개선' },
+    ],
+  },
   // ── 2026-03-24 ──
   {
     date: '2026-03-24',

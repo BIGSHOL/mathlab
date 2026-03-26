@@ -155,6 +155,11 @@ const stats = [
 export default function LandingPage() {
   return (
     <div className="min-h-screen flex flex-col bg-white overflow-y-auto h-screen">
+      {/* 고정 워터마크 */}
+      <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-10">
+        <LogoIcon className="w-[400px] h-[400px] text-slate-300 opacity-[0.04]" />
+      </div>
+
       {/* Header */}
       <header className="flex items-center justify-between border-b border-slate-200 px-6 md:px-10 py-3 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="flex items-center gap-3">
@@ -323,8 +328,8 @@ export default function LandingPage() {
                   학생·반 관리, 개념·문제 관리, 숙제 출제, 시험·레벨테스트, 실시간 퀴즈, 학습지 생성,
                   수기 채점, PDF 문제 추출, AI 리포트까지 — 수학 학원의 모든 업무를 디지털로 전환합니다.
                 </p>
-                <div className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]">
-                  <div className="flex gap-2 w-max animate-[marquee_30s_linear_infinite] hover:[animation-play-state:paused]">
+                <div className="overflow-x-clip overflow-y-visible [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]">
+                  <div className="flex gap-2 w-max animate-[marquee_30s_linear_infinite] hover:[animation-play-state:paused] py-10 -my-10">
                     {[...teacherTools, ...teacherTools].map((tool, i) => (
                       <div
                         key={`${tool.label}-${i}`}
@@ -332,7 +337,7 @@ export default function LandingPage() {
                       >
                         <tool.icon className="w-4 h-4 text-primary shrink-0" />
                         <span className="text-xs font-medium text-text-secondary group-hover/chip:text-primary whitespace-nowrap transition-colors">{tool.label}</span>
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-slate-800 text-white text-[11px] rounded-sm whitespace-nowrap opacity-0 group-hover/chip:opacity-100 transition-opacity pointer-events-none shadow-lg">
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-slate-800 text-white text-[11px] rounded-sm whitespace-nowrap opacity-0 group-hover/chip:opacity-100 transition-opacity pointer-events-none shadow-lg z-10">
                           {tool.desc}
                           <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
                         </div>
@@ -357,8 +362,8 @@ export default function LandingPage() {
                   개념 학습, 빈칸 암기, 연산 연습, 시험 응시까지 모든 학습을 온라인으로. XP 포인트와
                   랭킹 시스템으로 자기주도 학습 습관을 만들어갑니다.
                 </p>
-                <div className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]">
-                  <div className="flex gap-2 w-max animate-[marquee_30s_linear_infinite] hover:[animation-play-state:paused]">
+                <div className="overflow-x-clip overflow-y-visible [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]">
+                  <div className="flex gap-2 w-max animate-[marquee_30s_linear_infinite] hover:[animation-play-state:paused] py-10 -my-10">
                     {[...Array(2)].flatMap((_, setIdx) =>
                       [
                         { icon: Brain, text: '5단계 개념 학습', desc: '읽기 → 빈칸 → 통문장 → 백지 복원' },
@@ -375,7 +380,7 @@ export default function LandingPage() {
                         >
                           <item.icon className="w-4 h-4 text-secondary shrink-0" />
                           <span className="text-xs font-medium text-text-secondary group-hover/chip:text-secondary whitespace-nowrap transition-colors">{item.text}</span>
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-slate-800 text-white text-[11px] rounded-sm whitespace-nowrap opacity-0 group-hover/chip:opacity-100 transition-opacity pointer-events-none shadow-lg">
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-slate-800 text-white text-[11px] rounded-sm whitespace-nowrap opacity-0 group-hover/chip:opacity-100 transition-opacity pointer-events-none shadow-lg z-10">
                             {item.desc}
                             <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
                           </div>
