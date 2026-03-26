@@ -113,6 +113,7 @@ model User {
   createdLearningCourses       LearningCourse[]           @relation("LearningCourseCreator")
   blankAttempts                BlankAttempt[]
   revengeAttempts              RevengeAttempt[]
+  reviewSchedules              ReviewSchedule[]  @relation("UserReviews")
   studentLicenses              StudentLicense[]  @relation("StudentLicenses")
   assignedLicenses             StudentLicense[]  @relation("LicenseAssignedBy")
 
@@ -175,6 +176,7 @@ model Concept {
   questions              Question[]
   learningCourseConcepts LearningCourseConcept[]
   blankAttempts          BlankAttempt[]
+  reviewSchedules        ReviewSchedule[]
 
   @@index([subjectId])
   @@index([subjectId, sortOrder])
@@ -341,6 +343,7 @@ model Question {
 
   concept        Concept?           @relation(fields: [conceptId], references: [id], onDelete: SetNull)
   dailyQuestions DailyQuestion[]
+  reviewSchedules ReviewSchedule[]
 
   // 중간테이블 역방향 관계
   testQuestions         TestQuestion[]
@@ -1035,6 +1038,29 @@ model DailyMission {
 
   @@unique([studentId, date])
   @@index([studentId, date])
+}
+
+// FEAT: 간격 반복 복습 스케줄
+model ReviewSchedule {
+  id          String    @id @default(cuid())
+  studentId   String
+  questionId  String?
+  conceptId   String?
+  sourceType  String    @db.VarChar(30)   // "test" | "blank" | "arithmetic"
+  sourceId    String?   @db.VarChar(100)
+  interval    Int                          // 현재 간격 (일): 3, 7, 14, 30, 60
+  reviewAt    DateTime                     // 복습 예정일
+  completedAt DateTime?                    // 복습 완료일
+  score       Int?                         // 복습 시 정답률
+  streak      Int       @default(0)        // 연속 정답 횟수
+  createdAt   DateTime  @default(now())
+
+  student  User      @relation("UserReviews", fields: [studentId], references: [id], onDelete: Cascade)
+  question Question? @relation(fields: [questionId], references: [id])
+  concept  Concept?  @relation(fields: [conceptId], references: [id])
+
+  @@index([studentId, reviewAt])
+  @@index([studentId, completedAt])
 }
 
 // FEAT: 배지/칭호

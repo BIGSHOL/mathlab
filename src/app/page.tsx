@@ -78,6 +78,14 @@ const features = [
     color: 'text-violet-500',
     bg: 'bg-violet-50',
   },
+  {
+    icon: Brain,
+    title: '간격 반복 복습',
+    description:
+      '에빙하우스 망각곡선 기반으로 오답을 3일→7일→14일→30일→60일 간격으로 자동 복습. 숙제와 학습에 슬쩍 끼워넣어 자연스럽게 기억을 강화합니다.',
+    color: 'text-amber-500',
+    bg: 'bg-amber-50',
+  },
 ];
 
 const stages = [

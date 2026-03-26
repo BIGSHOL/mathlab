@@ -9,6 +9,7 @@ import { checkAnswer } from '@/lib/services/cheat-detection';
 import { classifyAnswer } from '@/lib/utils/answer-status';
 import { generateHint } from '@/lib/services/hint-generator';
 import { checkAndAwardBadges } from '@/lib/services/badge-checker';
+import { createReviewSchedule } from '@/lib/services/spaced-review';
 
 /** 콤보 보너스 배율 계산 */
 export function getComboMultiplier(comboCount: number): number {
@@ -82,6 +83,14 @@ export async function submitAnswer(params: {
         hintUsed: false,
       },
     });
+
+    // 간격 반복 복습 스케줄 생성 (오답 → 3일 후 첫 복습)
+    createReviewSchedule({
+      studentId: attempt.studentId,
+      questionId,
+      sourceType: 'test',
+      sourceId: attemptId,
+    }).catch(() => {}); // 실패해도 메인 플로우에 영향 없음
 
     // AI 힌트 생성
     const hintResult = await generateHint({

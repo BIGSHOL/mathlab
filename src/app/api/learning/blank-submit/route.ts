@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuthViewAs, isResponse, validateBody, requireResource, requireLicense } from '@/lib/api';
 import { blankSubmitSchema } from '@/lib/schemas/learning';
+import { createReviewSchedule } from '@/lib/services/spaced-review';
 
 interface BlankItem {
   position: number;
@@ -181,6 +182,16 @@ export async function POST(request: NextRequest) {
       },
     }),
   ]);
+
+  // 오답 시 간격 반복 복습 스케줄 생성
+  if (!allCorrect) {
+    createReviewSchedule({
+      studentId: user.id,
+      conceptId: exercise.conceptId,
+      sourceType: 'blank',
+      sourceId: exercise.id,
+    }).catch(() => {});
+  }
 
   return NextResponse.json({
     data: { correct: allCorrect, results, allCorrect, xpAwarded: 0 },

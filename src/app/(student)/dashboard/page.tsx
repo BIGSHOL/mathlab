@@ -11,6 +11,7 @@ import { getTodayHomework } from '@/lib/services/homework';
 import { getTodayConceptHomework } from '@/lib/services/concept-homework';
 import { getTodayQuestionHomework } from '@/lib/services/question-homework';
 import { DashboardGamification } from '@/components/student/DashboardGamification';
+import { ReviewReminderCard } from '@/components/student/ReviewReminderCard';
 import { DashboardStatCards } from '@/components/student/DashboardStatCards';
 
 export default async function StudentDashboard({
@@ -578,6 +579,11 @@ export default async function StudentDashboard({
           {/* 게이미피케이션 (오늘의 미션 + 오늘의 한 문제) */}
           <DashboardGamification />
         </div>
+      </div>
+
+      {/* ──── 간격 반복 복습 ──── */}
+      <div className="mb-4">
+        <ReviewReminderCard />
       </div>
 
       {/* ──── Row 2: 최근 오답 + 주간 학습 (2열) ──── */}
