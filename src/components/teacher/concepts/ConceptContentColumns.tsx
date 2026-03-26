@@ -347,7 +347,7 @@ function BlankPreviewSection({ templateText, blanks }: { templateText: string; b
               {isOpen ? <ChevronDown className="w-3 h-3 text-slate-400" /> : <ChevronRight className="w-3 h-3 text-slate-400" />}
             </button>
             {isOpen && (
-              <div className="px-2.5 pb-2.5 max-h-[200px] overflow-y-auto scrollbar-thin">
+              <div className="px-2.5 pb-2.5 max-h-[400px] overflow-y-auto scrollbar-thin">
                 <p className="text-[14px] text-text-primary leading-7 whitespace-pre-wrap font-serif-kr">
                   {templateText.split(/(\{\{\d+\}\})/).map((part, i) => {
                     if (/^\{\{\d+\}\}$/.test(part)) {

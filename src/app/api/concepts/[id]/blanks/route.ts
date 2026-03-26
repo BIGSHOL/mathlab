@@ -3,6 +3,24 @@ import { prisma } from '@/lib/db';
 import { requireAuth, requireSuperAdmin, isResponse, notFound, conflict, badRequest } from '@/lib/api';
 import { blankQuerySchema } from '@/lib/schemas/concept';
 
+/** 학생의 빈칸 입력 모드 해석: 학생별 > ��별 > 기본값(chip) */
+async function resolveInputMode(userId: string): Promise<'chip' | 'typing'> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      profile: { select: { blankInputMode: true } },
+      classroom: { select: { settings: true } },
+    },
+  });
+  // 학생별 설정 우선
+  if (user?.profile?.blankInputMode) return user.profile.blankInputMode as 'chip' | 'typing';
+  // 반별 설정
+  const classSettings = user?.classroom?.settings as { blankInputMode?: string } | null;
+  if (classSettings?.blankInputMode) return classSettings.blankInputMode as 'chip' | 'typing';
+  // 기본값
+  return 'chip';
+}
+
 /** Resolve concept by conceptCode or cuid id */
 async function resolveConceptId(id: string): Promise<string | null> {
   const byCode = await prisma.concept.findUnique({ where: { conceptCode: id }, select: { id: true } });
@@ -75,8 +93,11 @@ export async function GET(
     return blank?.answer ?? '';
   });
 
+  // 학생의 빈칸 입력 모드 해석
+  const inputMode = await resolveInputMode(user.id);
+
   return NextResponse.json({
-    data: { ...exercise, templateText: filteredTemplate, blanks: filteredBlanks },
+    data: { ...exercise, templateText: filteredTemplate, blanks: filteredBlanks, inputMode },
   });
 }
 

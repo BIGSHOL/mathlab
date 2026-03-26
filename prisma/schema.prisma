@@ -292,6 +292,7 @@ model StudentProfile {
   lastActiveAt    DateTime?
   notifCheckedAt  DateTime? // 과제 알림 마지막 확인 시점
   conceptNavMode  String    @default("curriculum") // curriculum | chain:<체인명>
+  blankInputMode  String?  // null=반 설정 따름, 'chip' | 'typing'
   representativeBadgeId String?
   updatedAt       DateTime  @updatedAt
 
@@ -1071,6 +1072,7 @@ model Classroom {
   grade     Int?
   teacherId String?
   tenantId  String?
+  settings  Json?    // { blankInputMode?: 'chip' | 'typing' }
   createdAt DateTime @default(now())
 
   tenant   Tenant? @relation(fields: [tenantId], references: [id])

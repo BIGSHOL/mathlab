@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { requireOwner, isResponse, notFound, forbidden, hasRole, validateBody } from '@/lib/api';
+
+const classroomSettingsSchema = z.object({
+  blankInputMode: z.enum(['chip', 'typing']).optional(),
+}).passthrough();
 
 const updateClassroomSchema = z.object({
   name: z.string().min(1).max(50).optional(),
   grade: z.number().int().min(1).max(12).nullable().optional(),
   teacherId: z.string().min(1).nullable().optional(),
-}).strict();
+  settings: classroomSettingsSchema.optional(),
+});
 
 /** 테넌트 소유권 검증 후 반 조회 */
 async function findClassroomWithTenantCheck(id: string, user: { tenantId: string | null; role: string }) {
@@ -43,6 +49,7 @@ export async function PATCH(
       ...(parsed.name && { name: parsed.name }),
       ...(parsed.grade !== undefined && { grade: parsed.grade }),
       ...(parsed.teacherId !== undefined && { teacherId: parsed.teacherId }),
+      ...(parsed.settings !== undefined && { settings: parsed.settings as Prisma.InputJsonValue }),
     },
   });
 

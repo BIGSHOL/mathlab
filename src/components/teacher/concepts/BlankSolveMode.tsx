@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
-import { X, RotateCcw, CheckCircle, XCircle } from 'lucide-react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { X, RotateCcw, CheckCircle, XCircle, MousePointerClick, Keyboard } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { InlineMathText } from '@/components/math/InlineMathText';
@@ -17,6 +17,7 @@ interface BlankSolveModeProps {
 }
 
 type DifficultyLevel = 'easy' | 'hard' | 'full';
+type InputMode = 'chip' | 'typing';
 
 interface BlankResult {
   position: number;
@@ -53,23 +54,48 @@ function stripLatexWrap(answer: string): string {
 /** 정답 비교 (학생 페이지와 동일한 로직) */
 function matchAnswer(expected: string, submitted: string): boolean {
   const norm = (s: string) => s.replace(/\s+/g, '').toLowerCase();
-  // 완전 일치
   if (norm(expected) === norm(submitted)) return true;
-  // LaTeX 벗긴 후 비교
   const stripped = stripLatexWrap(expected);
   if (norm(stripped) === norm(submitted)) return true;
-  // $가 붙은 입력과 비교
   if (norm(expected) === norm(`$${submitted}$`)) return true;
   return false;
 }
 
+/** Fisher-Yates 셔플 */
+function shuffleArray<T>(arr: T[]): T[] {
+  const shuffled = [...arr];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+/** 빈칸 정답을 셔플된 칩 풀로 변환 */
+function buildChipPool(blanks: Array<{ answer: string }>): { answer: string; total: number; used: number }[] {
+  const counts = new Map<string, number>();
+  for (const b of blanks) {
+    counts.set(b.answer, (counts.get(b.answer) ?? 0) + 1);
+  }
+  return shuffleArray(
+    Array.from(counts.entries()).map(([answer, total]) => ({ answer, total, used: 0 }))
+  );
+}
+
 export function BlankSolveMode({ templateText, blanks, conceptTitle, onClose }: BlankSolveModeProps) {
   const [level, setLevel] = useState<DifficultyLevel | null>(null);
+  const [inputMode, setInputMode] = useState<InputMode>('chip');
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [results, setResults] = useState<BlankResult[] | null>(null);
   const [showHints, setShowHints] = useState<Record<number, boolean>>({});
   const [mathPopup, setMathPopup] = useState<{ position: number } | null>(null);
   const [revealedAnswers, setRevealedAnswers] = useState<Record<number, string>>({});
+
+  // 칩 모드 상태
+  const [activeBlankPos, setActiveBlankPos] = useState<number | null>(null);
+  const [chipPool, setChipPool] = useState<{ answer: string; total: number; used: number }[]>([]);
+  const [wrongCounts, setWrongCounts] = useState<Record<number, number>>({});
+  const [shakePos, setShakePos] = useState<number | null>(null);
 
   // 현재 난이도에 해당하는 빈칸만 필터
   const activeBlanks = level
@@ -77,9 +103,73 @@ export function BlankSolveMode({ templateText, blanks, conceptTitle, onClose }: 
         const d = b.difficulty || 'easy';
         if (level === 'easy') return d === 'easy';
         if (level === 'hard') return d === 'easy' || d === 'hard';
-        return true; // full
+        return true;
       })
     : [];
+
+  // 난이도 선택 시 칩 풀 초기화
+  useEffect(() => {
+    if (level && inputMode === 'chip' && activeBlanks.length > 0) {
+      setChipPool(buildChipPool(activeBlanks));
+      const sorted = [...activeBlanks].sort((a, b) => a.position - b.position);
+      setActiveBlankPos(sorted[0]?.position ?? null);
+    }
+  }, [level, inputMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 칩 모드: 답변 변경 시 다음 빈 빈칸으로 자동 이동
+  useEffect(() => {
+    if (inputMode !== 'chip' || activeBlanks.length === 0) return;
+    if (activeBlankPos !== null && answers[activeBlankPos]) {
+      const sorted = activeBlanks.map(b => b.position).sort((a, b) => a - b);
+      const currentIdx = sorted.indexOf(activeBlankPos);
+      for (let i = 1; i <= sorted.length; i++) {
+        const nextPos = sorted[(currentIdx + i) % sorted.length];
+        if (!answers[nextPos]) {
+          setActiveBlankPos(nextPos);
+          return;
+        }
+      }
+      setActiveBlankPos(null);
+    }
+  }, [answers, activeBlanks, inputMode, activeBlankPos]);
+
+  const handleChipClick = useCallback((chipAnswer: string) => {
+    if (activeBlankPos === null) return;
+    const blank = activeBlanks.find(b => b.position === activeBlankPos);
+    if (!blank || answers[activeBlankPos]) return;
+
+    if (chipAnswer === blank.answer) {
+      setAnswers(prev => ({ ...prev, [activeBlankPos]: chipAnswer }));
+      setChipPool(prev => prev.map(c => c.answer === chipAnswer ? { ...c, used: c.used + 1 } : c));
+    } else {
+      const newCount = (wrongCounts[activeBlankPos] ?? 0) + 1;
+      setWrongCounts(prev => ({ ...prev, [activeBlankPos]: newCount }));
+      setShakePos(activeBlankPos);
+      setTimeout(() => setShakePos(null), 600);
+
+      if (newCount >= 3) {
+        setAnswers(prev => ({ ...prev, [activeBlankPos]: blank.answer }));
+        setChipPool(prev => prev.map(c => c.answer === blank.answer ? { ...c, used: c.used + 1 } : c));
+        toast.info('3회 오답 → 정답 자동 배치');
+      }
+    }
+  }, [activeBlankPos, activeBlanks, answers, wrongCounts]);
+
+  const handleBlankSlotClick = useCallback((position: number) => {
+    if (inputMode !== 'chip') return;
+    if (answers[position]) {
+      const answer = answers[position];
+      setAnswers(prev => {
+        const next = { ...prev };
+        delete next[position];
+        return next;
+      });
+      setChipPool(prev => prev.map(c => c.answer === answer ? { ...c, used: c.used - 1 } : c));
+      setActiveBlankPos(position);
+    } else {
+      setActiveBlankPos(position);
+    }
+  }, [inputMode, answers]);
 
   const handleSubmit = useCallback(() => {
     const empty = activeBlanks.filter((b) => !answers[b.position]?.trim());
@@ -100,7 +190,6 @@ export function BlankSolveMode({ templateText, blanks, conceptTitle, onClose }: 
       toast.success('모두 정답! 학생에게 출제해도 좋습니다.');
     } else {
       toast.info(`${wrongCount}개 오답 — 정답을 확인하고 빈칸 설정을 점검해보세요.`);
-      // 오답 정답 공개
       const newRevealed = { ...revealedAnswers };
       const wrongPositions: number[] = [];
       for (const r of checkResults) {
@@ -110,7 +199,6 @@ export function BlankSolveMode({ templateText, blanks, conceptTitle, onClose }: 
         }
       }
       setRevealedAnswers(newRevealed);
-      // 1.5초 후 오답 빈칸 초기화
       setTimeout(() => {
         setAnswers((prev) => {
           const next = { ...prev };
@@ -127,11 +215,39 @@ export function BlankSolveMode({ templateText, blanks, conceptTitle, onClose }: 
     setResults(null);
     setShowHints({});
     setRevealedAnswers({});
+    setWrongCounts({});
+    setShakePos(null);
+    // 칩 풀 재생성
+    if (inputMode === 'chip' && activeBlanks.length > 0) {
+      setChipPool(buildChipPool(activeBlanks));
+      const sorted = [...activeBlanks].sort((a, b) => a.position - b.position);
+      setActiveBlankPos(sorted[0]?.position ?? null);
+    }
   };
 
   const handleBack = () => {
     setLevel(null);
     handleReset();
+  };
+
+  const handleModeToggle = () => {
+    const newMode = inputMode === 'chip' ? 'typing' : 'chip';
+    setInputMode(newMode);
+    // 모드 전환 시 초기화
+    setAnswers({});
+    setResults(null);
+    setShowHints({});
+    setRevealedAnswers({});
+    setWrongCounts({});
+    setShakePos(null);
+    if (newMode === 'chip' && activeBlanks.length > 0) {
+      setChipPool(buildChipPool(activeBlanks));
+      const sorted = [...activeBlanks].sort((a, b) => a.position - b.position);
+      setActiveBlankPos(sorted[0]?.position ?? null);
+    } else {
+      setChipPool([]);
+      setActiveBlankPos(null);
+    }
   };
 
   // 난이도 선택 화면
@@ -169,6 +285,34 @@ export function BlankSolveMode({ templateText, blanks, conceptTitle, onClose }: 
                 </button>
               );
             })}
+            {/* 입력 모드 선택 */}
+            <div className="pt-3 border-t border-slate-200">
+              <p className="text-xs text-text-secondary mb-2">입력 방식</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setInputMode('chip')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-sm border text-sm font-medium transition-colors ${
+                    inputMode === 'chip'
+                      ? 'bg-primary/10 border-primary/40 text-primary'
+                      : 'bg-white border-slate-200 text-text-secondary hover:bg-slate-50'
+                  }`}
+                >
+                  <MousePointerClick className="w-3.5 h-3.5" />
+                  칩 선택
+                </button>
+                <button
+                  onClick={() => setInputMode('typing')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-sm border text-sm font-medium transition-colors ${
+                    inputMode === 'typing'
+                      ? 'bg-primary/10 border-primary/40 text-primary'
+                      : 'bg-white border-slate-200 text-text-secondary hover:bg-slate-50'
+                  }`}
+                >
+                  <Keyboard className="w-3.5 h-3.5" />
+                  직접 타이핑
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -196,6 +340,15 @@ export function BlankSolveMode({ templateText, blanks, conceptTitle, onClose }: 
             <span className="text-xs text-text-secondary">· {activeBlanks.length}개 빈칸</span>
           </div>
           <div className="flex items-center gap-2">
+            {/* 모드 토글 */}
+            <button
+              onClick={handleModeToggle}
+              className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:bg-slate-100 rounded-sm transition-colors"
+              title={inputMode === 'chip' ? '타이핑 모드로 전환' : '칩 모드로 전환'}
+            >
+              {inputMode === 'chip' ? <Keyboard className="w-3.5 h-3.5" /> : <MousePointerClick className="w-3.5 h-3.5" />}
+              {inputMode === 'chip' ? '타이핑' : '칩 선택'}
+            </button>
             <button
               onClick={handleReset}
               className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:bg-slate-100 rounded-sm transition-colors"
@@ -209,6 +362,43 @@ export function BlankSolveMode({ templateText, blanks, conceptTitle, onClose }: 
           </div>
         </div>
 
+        {/* 칩 모드: 칩 선택 영역 */}
+        {inputMode === 'chip' && chipPool.length > 0 && (
+          <div className="px-5 py-3 border-b border-slate-100 bg-amber-50/30 shrink-0">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-slate-500">칩을 클릭하여 하이라이트된 빈칸에 배치하세요</p>
+              <span className="text-xs text-slate-400">
+                {Object.keys(answers).length}/{activeBlanks.length}
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {chipPool.map((chip, i) => {
+                const remaining = chip.total - chip.used;
+                if (remaining <= 0) return null;
+                return (
+                  <button
+                    key={i}
+                    disabled={activeBlankPos === null}
+                    onClick={() => handleChipClick(chip.answer)}
+                    className="relative inline-flex items-center gap-1 px-3 py-1.5 rounded-full border text-sm font-medium transition-all bg-white text-slate-700 border-slate-300 hover:border-primary hover:bg-primary/5 cursor-pointer active:scale-95 shadow-sm"
+                  >
+                    {isLatexAnswer(chip.answer) ? (
+                      <InlineMathText text={chip.answer} />
+                    ) : (
+                      <span>{chip.answer}</span>
+                    )}
+                    {remaining >= 2 && (
+                      <span className="text-xs font-bold text-primary">
+                        x{remaining}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* 풀이 영역 */}
         <div className="flex-1 overflow-y-auto p-5">
           <div className="text-[15px] leading-8 font-serif-kr whitespace-pre-wrap">
@@ -216,19 +406,27 @@ export function BlankSolveMode({ templateText, blanks, conceptTitle, onClose }: 
               templateText, blanks, activeBlanks, answers, setAnswers,
               results, showHints, setShowHints, mathPopup, setMathPopup,
               revealedAnswers,
+              inputMode === 'chip' ? {
+                enabled: true,
+                activePos: activeBlankPos,
+                shakePos,
+                onSlotClick: handleBlankSlotClick,
+              } : undefined,
             )}
           </div>
-          <MathLivePopup
-            isOpen={!!mathPopup}
-            onClose={() => setMathPopup(null)}
-            onInsert={(latex) => {
-              if (mathPopup) {
-                setAnswers((prev) => ({ ...prev, [mathPopup.position]: latex }));
-              }
-              setMathPopup(null);
-            }}
-            initialLatex={mathPopup ? (answers[mathPopup.position] ?? '') : ''}
-          />
+          {inputMode === 'typing' && (
+            <MathLivePopup
+              isOpen={!!mathPopup}
+              onClose={() => setMathPopup(null)}
+              onInsert={(latex) => {
+                if (mathPopup) {
+                  setAnswers((prev) => ({ ...prev, [mathPopup.position]: latex }));
+                }
+                setMathPopup(null);
+              }}
+              initialLatex={mathPopup ? (answers[mathPopup.position] ?? '') : ''}
+            />
+          )}
         </div>
 
         {/* 하단 액션 */}
@@ -270,6 +468,12 @@ function renderSolveBlanks(
   mathPopup: { position: number } | null,
   setMathPopup: (v: { position: number } | null) => void,
   revealedAnswers: Record<number, string>,
+  chipMode?: {
+    enabled: boolean;
+    activePos: number | null;
+    shakePos: number | null;
+    onSlotClick: (position: number) => void;
+  },
 ) {
   const activePositions = new Set(activeBlanks.map((b) => b.position));
   const parts = templateText.split(/(\{\{\d+\}\})/g);
@@ -277,8 +481,6 @@ function renderSolveBlanks(
   return parts.map((part, idx) => {
     const match = part.match(/\{\{(\d+)\}\}/);
     if (!match) {
-      // InlineMathText로 렌더링: MathRenderer inline과 달리 공백을 보존
-      // (whitespace-pre-wrap 컨테이너에서 \n도 줄바꿈으로 렌더링됨)
       return <InlineMathText key={idx} text={part} />;
     }
 
@@ -294,8 +496,72 @@ function renderSolveBlanks(
     const result = results?.find((r) => r.position === position);
     const isCorrect = result?.correct;
     const isWrong = result && !result.correct;
-    const needsMathInput = isComplexLatex(blank.answer);
     const revealed = revealedAnswers[position];
+
+    // 공통 힌트 버튼
+    const hintBtn = (
+      <span className="relative inline-block">
+        <button
+          type="button"
+          onClick={() => setShowHints((prev) => ({ ...prev, [position]: !prev[position] }))}
+          className={`w-4 h-4 rounded-full text-xs font-bold leading-none transition-all ${
+            showHints[position]
+              ? 'bg-amber-400 text-white shadow-sm'
+              : 'bg-amber-100 text-amber-500 hover:bg-amber-200'
+          }`}
+        >
+          ?
+        </button>
+        {showHints[position] && blank.hint && (
+          <span className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2.5 py-1 bg-slate-800 text-white text-xs font-medium rounded-sm shadow-lg whitespace-nowrap z-50 before:content-[''] before:absolute before:bottom-full before:left-1/2 before:-translate-x-1/2 before:border-4 before:border-transparent before:border-b-slate-800">
+            {blank.hint}
+          </span>
+        )}
+      </span>
+    );
+
+    // === 칩 모드 ===
+    if (chipMode?.enabled) {
+      const isActive = chipMode.activePos === position;
+      const isFilled = !!answers[position];
+      const isShaking = chipMode.shakePos === position;
+
+      return (
+        <span key={idx} className="inline-flex items-center gap-px mx-0.5 align-baseline">
+          <button
+            type="button"
+            onClick={() => chipMode.onSlotClick(position)}
+            className={`inline-flex items-center justify-center min-w-[3rem] px-2 py-0.5 border-2 border-dashed rounded-sm text-sm font-semibold transition-all ${
+              isCorrect
+                ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
+                : isWrong
+                  ? 'border-red-400 bg-red-50 text-red-700'
+                  : isFilled
+                    ? 'border-primary/40 bg-primary/5 text-slate-800 hover:bg-red-50/50 hover:border-red-300 cursor-pointer'
+                    : isActive
+                      ? 'border-primary bg-primary/10 ring-2 ring-primary/30 ring-offset-1 animate-pulse cursor-default'
+                      : 'border-slate-300 bg-slate-50/50 hover:border-slate-400 cursor-pointer'
+            } ${isShaking ? 'animate-shake' : ''}`}
+          >
+            {isFilled ? (
+              isLatexAnswer(answers[position]) ? (
+                <InlineMathText text={answers[position]} />
+              ) : (
+                <span>{answers[position]}</span>
+              )
+            ) : (
+              <span className="text-slate-400 text-xs">&nbsp;&nbsp;({position})&nbsp;&nbsp;</span>
+            )}
+          </button>
+          {isCorrect && <span className="text-emerald-500 text-xs">&#10003;</span>}
+          {isWrong && <span className="text-red-500 text-xs">&#10007;</span>}
+          {hintBtn}
+        </span>
+      );
+    }
+
+    // === 타이핑 모드 ===
+    const needsMathInput = isComplexLatex(blank.answer);
 
     return (
       <span key={idx} className="inline-flex items-center gap-px mx-0.5 align-baseline">
@@ -347,25 +613,7 @@ function renderSolveBlanks(
         )}
         {isCorrect && <span className="text-emerald-500 text-xs">&#10003;</span>}
         {isWrong && <span className="text-red-500 text-xs">&#10007;</span>}
-        {/* 힌트 버튼 */}
-        <span className="relative inline-block">
-          <button
-            type="button"
-            onClick={() => setShowHints((prev) => ({ ...prev, [position]: !prev[position] }))}
-            className={`w-4 h-4 rounded-full text-xs font-bold leading-none transition-all ${
-              showHints[position]
-                ? 'bg-amber-400 text-white shadow-sm'
-                : 'bg-amber-100 text-amber-500 hover:bg-amber-200'
-            }`}
-          >
-            ?
-          </button>
-          {showHints[position] && blank.hint && (
-            <span className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2.5 py-1 bg-slate-800 text-white text-xs font-medium rounded-sm shadow-lg whitespace-nowrap z-50 before:content-[''] before:absolute before:bottom-full before:left-1/2 before:-translate-x-1/2 before:border-4 before:border-transparent before:border-b-slate-800">
-              {blank.hint}
-            </span>
-          )}
-        </span>
+        {hintBtn}
       </span>
     );
   });

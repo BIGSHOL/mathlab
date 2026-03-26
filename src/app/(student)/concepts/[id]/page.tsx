@@ -52,6 +52,27 @@ function getStoredFontSize(): number {
   return n >= 0 && n <= 3 ? n : 0;
 }
 
+/** Fisher-Yates 셔플 */
+function shuffleArray<T>(arr: T[]): T[] {
+  const shuffled = [...arr];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+/** 빈칸 정답을 셔플된 칩 풀로 변환 (같은 정답 → 1칩 + xN 라벨) */
+function buildChipPool(blanks: Array<{ answer: string }>): { answer: string; total: number; used: number }[] {
+  const counts = new Map<string, number>();
+  for (const b of blanks) {
+    counts.set(b.answer, (counts.get(b.answer) ?? 0) + 1);
+  }
+  return shuffleArray(
+    Array.from(counts.entries()).map(([answer, total]) => ({ answer, total, used: 0 }))
+  );
+}
+
 const stageConfig = [
   { key: 'READING' as LearningStage, label: '개념학습', color: 'bg-stage-reading', icon: '1' },
   { key: 'BLANK_EASY' as LearningStage, label: '빈칸 1단계', color: 'bg-stage-blank-easy', icon: '2' },
@@ -72,6 +93,7 @@ interface BlankData {
   level: number;
   templateText: string;
   blanks: Array<{ position: number; answer: string; hint: string }>;
+  inputMode?: 'chip' | 'typing';
 }
 
 interface Progress {
@@ -132,6 +154,13 @@ export default function ConceptPage() {
   const [hasUsedReveal, setHasUsedReveal] = useState(false);
   const [reviewMode, setReviewMode] = useState(false);
 
+  // 칩 모드 관련 상태
+  const [blankInputMode, setBlankInputMode] = useState<'chip' | 'typing'>('chip');
+  const [activeBlankPos, setActiveBlankPos] = useState<number | null>(null);
+  const [chipPool, setChipPool] = useState<{ answer: string; total: number; used: number }[]>([]);
+  const [wrongCounts, setWrongCounts] = useState<Record<number, number>>({});
+  const [shakePos, setShakePos] = useState<number | null>(null);
+
   // Fetch concept, adjacent, memo in parallel
   useEffect(() => {
     if (!id) return;
@@ -187,6 +216,69 @@ export default function ConceptPage() {
     saveMemo(text);
   }, [saveMemo]);
 
+  // 칩 모드: 답변 변경 시 다음 빈 빈칸으로 자동 이동
+  useEffect(() => {
+    if (blankInputMode !== 'chip' || !blanks) return;
+    if (activeBlankPos !== null && blankAnswers[activeBlankPos]) {
+      const sorted = blanks.blanks.map(b => b.position).sort((a, b) => a - b);
+      const currentIdx = sorted.indexOf(activeBlankPos);
+      for (let i = 1; i <= sorted.length; i++) {
+        const nextPos = sorted[(currentIdx + i) % sorted.length];
+        if (!blankAnswers[nextPos]) {
+          setActiveBlankPos(nextPos);
+          return;
+        }
+      }
+      setActiveBlankPos(null); // 모두 채워짐
+    }
+  }, [blankAnswers, blanks, blankInputMode, activeBlankPos]);
+
+  // 칩 클릭 핸들러
+  const handleChipClick = useCallback((chipAnswer: string) => {
+    if (activeBlankPos === null || !blanks) return;
+    const blank = blanks.blanks.find(b => b.position === activeBlankPos);
+    if (!blank || blankAnswers[activeBlankPos]) return;
+
+    if (chipAnswer === blank.answer) {
+      // 정답 → 빈칸 채우기 + 칩 사용
+      setBlankAnswers(prev => ({ ...prev, [activeBlankPos]: chipAnswer }));
+      setChipPool(prev => prev.map(c => c.answer === chipAnswer ? { ...c, used: c.used + 1 } : c));
+    } else {
+      // 오답 → shake + 카운트
+      const newCount = (wrongCounts[activeBlankPos] ?? 0) + 1;
+      setWrongCounts(prev => ({ ...prev, [activeBlankPos]: newCount }));
+      setShakePos(activeBlankPos);
+      setTimeout(() => setShakePos(null), 600);
+
+      if (newCount >= 3) {
+        // 3회 오답 → 정답 자동 배치
+        setBlankAnswers(prev => ({ ...prev, [activeBlankPos]: blank.answer }));
+        setChipPool(prev => prev.map(c => c.answer === blank.answer ? { ...c, used: c.used + 1 } : c));
+        setHasUsedReveal(true);
+        toast.info('3회 오답으로 정답이 자동 배치되었습니다.');
+      }
+    }
+  }, [activeBlankPos, blanks, blankAnswers, wrongCounts]);
+
+  // 빈칸 슬롯 클릭 핸들러 (칩 모드)
+  const handleBlankSlotClick = useCallback((position: number) => {
+    if (blankInputMode !== 'chip') return;
+    if (blankAnswers[position]) {
+      // 채워진 빈칸 클릭 → 칩 반환 + 재선택
+      const answer = blankAnswers[position];
+      setBlankAnswers(prev => {
+        const next = { ...prev };
+        delete next[position];
+        return next;
+      });
+      setChipPool(prev => prev.map(c => c.answer === answer ? { ...c, used: c.used - 1 } : c));
+      setActiveBlankPos(position);
+    } else {
+      // 빈 빈칸 클릭 → 해당 위치로 이동
+      setActiveBlankPos(position);
+    }
+  }, [blankInputMode, blankAnswers]);
+
   // Fetch blanks when on blank stages
   useEffect(() => {
     const stage = stageConfig[currentStageIdx]?.key;
@@ -204,6 +296,21 @@ export default function ConceptPage() {
             setRevealedAnswers({});
             setHintUsedPositions(new Set());
             setHasUsedReveal(false);
+            // 칩 모드 초기화
+            const mode: 'chip' | 'typing' = json.data.inputMode ?? 'chip';
+            setBlankInputMode(mode);
+            setWrongCounts({});
+            setShakePos(null);
+            if (mode === 'chip' && json.data.blanks?.length > 0) {
+              setChipPool(buildChipPool(json.data.blanks));
+              const sorted = [...json.data.blanks].sort(
+                (a: { position: number }, b: { position: number }) => a.position - b.position
+              );
+              setActiveBlankPos(sorted[0]?.position ?? null);
+            } else {
+              setChipPool([]);
+              setActiveBlankPos(null);
+            }
           }
         });
     }
@@ -499,11 +606,15 @@ export default function ConceptPage() {
                       : '연결 글자를 제외한 거의 모든 단어가 빈칸입니다. 전체 문장을 암기해보세요!'}
                 </p>
                 <div className="bg-blue-50 p-4 rounded-sm text-sm text-blue-700">
-                  힌트가 필요하면 빈칸 옆의 ? 버튼을 눌러보세요.
+                  {blankInputMode === 'chip'
+                    ? '오른쪽 칩을 클릭하면 파란색 빈칸에 배치됩니다. 채워진 빈칸을 클릭하면 되돌릴 수 있어요.'
+                    : '힌트가 필요하면 빈칸 옆의 ? 버튼을 눌러보세요.'}
                 </div>
                 {hasUsedReveal && (
                   <div className="bg-amber-50 border border-amber-200 p-4 rounded-sm text-sm text-amber-700 mt-3">
-                    정답이 공개되었습니다. 정답을 보고 직접 입력하면 XP가 절반으로 지급됩니다.
+                    {blankInputMode === 'chip'
+                      ? '3회 오답으로 정답이 자동 배치되었습니다. XP가 절반으로 지급됩니다.'
+                      : '정답이 공개되었습니다. 정답을 보고 직접 입력하면 XP가 절반으로 지급됩니다.'}
                   </div>
                 )}
               </div>
@@ -532,31 +643,75 @@ export default function ConceptPage() {
 
             {(currentStage.key === 'BLANK_EASY' || currentStage.key === 'BLANK_HARD' || currentStage.key === 'BLANK_FULL') && blanks && (
               <>
-                <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
+                <div className="px-4 py-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
                   <h3 className="font-bold text-text-primary text-sm">
                     {currentStage.key === 'BLANK_FULL' ? '통문장 암기' : '빈칸 채우기'}
                   </h3>
+                  {blankInputMode === 'chip' && (
+                    <span className="text-xs text-slate-400">
+                      {Object.keys(blankAnswers).length}/{blanks.blanks.length} 완료
+                    </span>
+                  )}
                 </div>
+                {/* 칩 모드: 정답 칩 선택 영역 */}
+                {blankInputMode === 'chip' && chipPool.length > 0 && (
+                  <div className="px-4 py-3 border-b border-slate-100 bg-amber-50/30">
+                    <p className="text-xs text-slate-500 mb-2">칩을 클릭하여 하이라이트된 빈칸에 배치하세요</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {chipPool.map((chip, i) => {
+                        const remaining = chip.total - chip.used;
+                        if (remaining <= 0) return null;
+                        return (
+                          <button
+                            key={i}
+                            disabled={activeBlankPos === null}
+                            onClick={() => handleChipClick(chip.answer)}
+                            className="relative inline-flex items-center gap-1 px-3 py-1.5 rounded-full border text-sm font-medium transition-all bg-white text-slate-700 border-slate-300 hover:border-primary hover:bg-primary/5 cursor-pointer active:scale-95 shadow-sm"
+                          >
+                            {isLatexAnswer(chip.answer) ? (
+                              <InlineMathText text={chip.answer} />
+                            ) : (
+                              <span>{chip.answer}</span>
+                            )}
+                            {remaining >= 2 && (
+                              <span className="text-xs font-bold text-primary">
+                                x{remaining}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
                 <div className="p-4 flex-1 overflow-y-auto">
                   <div className="whitespace-pre-wrap" style={{ fontSize: fontCfg.size, lineHeight: fontCfg.blankLeading }}>
                     {renderBlanksTemplate(
                       blanks, blankAnswers, setBlankAnswers, blankResults,
                       showHints, setShowHints, mathPopup, setMathPopup,
                       revealedAnswers, handleHintUsed,
+                      blankInputMode === 'chip' ? {
+                        enabled: true,
+                        activePos: activeBlankPos,
+                        shakePos,
+                        onSlotClick: handleBlankSlotClick,
+                      } : undefined,
                     )}
                   </div>
-                  {/* 수식 입력 팝업 (복잡한 수식 빈칸용) */}
-                  <MathLivePopup
-                    isOpen={!!mathPopup}
-                    onClose={() => setMathPopup(null)}
-                    onInsert={(latex) => {
-                      if (mathPopup) {
-                        setBlankAnswers((prev) => ({ ...prev, [mathPopup.position]: latex }));
-                      }
-                      setMathPopup(null);
-                    }}
-                    initialLatex={mathPopup ? (blankAnswers[mathPopup.position] ?? '') : ''}
-                  />
+                  {/* 수식 입력 팝업 (타이핑 모드 전용) */}
+                  {blankInputMode === 'typing' && (
+                    <MathLivePopup
+                      isOpen={!!mathPopup}
+                      onClose={() => setMathPopup(null)}
+                      onInsert={(latex) => {
+                        if (mathPopup) {
+                          setBlankAnswers((prev) => ({ ...prev, [mathPopup.position]: latex }));
+                        }
+                        setMathPopup(null);
+                      }}
+                      initialLatex={mathPopup ? (blankAnswers[mathPopup.position] ?? '') : ''}
+                    />
+                  )}
                 </div>
               </>
             )}
@@ -722,21 +877,24 @@ function renderBlanksTemplate(
   setMathPopup: (v: { position: number } | null) => void,
   revealedAnswers: Record<number, string>,
   onHintUsed: (position: number) => void,
+  chipMode?: {
+    enabled: boolean;
+    activePos: number | null;
+    shakePos: number | null;
+    onSlotClick: (position: number) => void;
+  },
 ) {
   const parts = blanks.templateText.split(/(\{\{\d+\}\})/g);
 
   return parts.map((part, idx) => {
     const match = part.match(/\{\{(\d+)\}\}/);
     if (!match) {
-      // InlineMathText로 렌더링: 공백 보존 + $...$ 수식 지원
-      // (whitespace-pre-wrap 컨테이너에서 \n도 줄바꿈으로 렌더링됨)
       return <InlineMathText key={idx} text={part} />;
     }
 
     const position = parseInt(match[1], 10);
     const blank = blanks.blanks.find((b) => b.position === position);
 
-    // 방어 코드: 대응 blank가 없는 {{N}}은 빈칸이 아닌 텍스트로 표시
     if (!blank) {
       return <span key={idx} className="text-slate-400 text-sm">({position})</span>;
     }
@@ -744,13 +902,79 @@ function renderBlanksTemplate(
     const result = results?.find((r) => r.position === position);
     const isCorrect = result?.correct;
     const isWrong = result && !result.correct;
-    const needsMathInput = isComplexLatex(blank.answer);
     const revealed = revealedAnswers[position];
+
+    // 공통 힌트 버튼
+    const hintBtn = (
+      <span className="relative inline-block">
+        <button
+          type="button"
+          onClick={() => {
+            setShowHints((prev) => ({ ...prev, [position]: !prev[position] }));
+            if (!showHints[position]) onHintUsed(position);
+          }}
+          className={`w-4 h-4 rounded-full text-xs font-bold leading-none transition-all ${
+            showHints[position]
+              ? 'bg-amber-400 text-white shadow-sm'
+              : 'bg-amber-100 text-amber-500 hover:bg-amber-200'
+          }`}
+        >
+          ?
+        </button>
+        {showHints[position] && (
+          <span className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2.5 py-1 bg-slate-800 text-white text-xs font-medium rounded-sm shadow-lg whitespace-nowrap z-50 animate-fade-in before:content-[''] before:absolute before:bottom-full before:left-1/2 before:-translate-x-1/2 before:border-4 before:border-transparent before:border-b-slate-800">
+            {blank.hint}
+          </span>
+        )}
+      </span>
+    );
+
+    // === 칩 모드 ===
+    if (chipMode?.enabled) {
+      const isActive = chipMode.activePos === position;
+      const isFilled = !!answers[position];
+      const isShaking = chipMode.shakePos === position;
+
+      return (
+        <span key={idx} className="inline-flex items-center gap-px mx-0.5 align-baseline">
+          <button
+            type="button"
+            onClick={() => chipMode.onSlotClick(position)}
+            className={`inline-flex items-center justify-center min-w-[3rem] px-2 py-0.5 border-2 border-dashed rounded-sm text-sm font-semibold transition-all ${
+              isCorrect
+                ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
+                : isWrong
+                  ? 'border-red-400 bg-red-50 text-red-700'
+                  : isFilled
+                    ? 'border-primary/40 bg-primary/5 text-slate-800 hover:bg-red-50/50 hover:border-red-300 cursor-pointer'
+                    : isActive
+                      ? 'border-primary bg-primary/10 ring-2 ring-primary/30 ring-offset-1 animate-pulse cursor-default'
+                      : 'border-slate-300 bg-slate-50/50 hover:border-slate-400 cursor-pointer'
+            } ${isShaking ? 'animate-shake' : ''}`}
+          >
+            {isFilled ? (
+              isLatexAnswer(answers[position]) ? (
+                <InlineMathText text={answers[position]} />
+              ) : (
+                <span>{answers[position]}</span>
+              )
+            ) : (
+              <span className="text-slate-400 text-xs">&nbsp;&nbsp;({position})&nbsp;&nbsp;</span>
+            )}
+          </button>
+          {isCorrect && <span className="text-emerald-500 text-xs">&#10003;</span>}
+          {isWrong && <span className="text-red-500 text-xs">&#10007;</span>}
+          {hintBtn}
+        </span>
+      );
+    }
+
+    // === 타이핑 모드 (기존) ===
+    const needsMathInput = isComplexLatex(blank.answer);
 
     return (
       <span key={idx} className="inline-flex items-center gap-px mx-0.5 align-baseline">
         {needsMathInput ? (
-          /* 복잡한 수식 빈칸 → 클릭하면 MathLive 팝업 */
           <span className="inline-flex flex-col items-center">
             <button
               type="button"
@@ -773,7 +997,6 @@ function renderBlanksTemplate(
                 <span className="text-slate-400 text-xs">수식 입력</span>
               )}
             </button>
-            {/* 정답 공개: 수식은 아래에 표시 */}
             {revealed && !isCorrect && !answers[position] && (
               <span className="text-amber-600 text-xs opacity-70">
                 <MathRenderer content={revealed} />
@@ -781,7 +1004,6 @@ function renderBlanksTemplate(
             )}
           </span>
         ) : (
-          /* 일반 텍스트 / 단순 수식 빈칸 → 텍스트 입력 */
           <input
             type="text"
             value={answers[position] ?? ''}
@@ -800,29 +1022,7 @@ function renderBlanksTemplate(
         )}
         {isCorrect && <span className="text-emerald-500 text-xs">&#10003;</span>}
         {isWrong && <span className="text-red-500 text-xs">&#10007;</span>}
-        <span className="relative inline-block">
-          <button
-            type="button"
-            onClick={() => {
-              setShowHints((prev) => ({ ...prev, [position]: !prev[position] }));
-              if (!showHints[position]) {
-                onHintUsed(position);
-              }
-            }}
-            className={`w-4 h-4 rounded-full text-xs font-bold leading-none transition-all ${
-              showHints[position]
-                ? 'bg-amber-400 text-white shadow-sm'
-                : 'bg-amber-100 text-amber-500 hover:bg-amber-200'
-            }`}
-          >
-            ?
-          </button>
-          {showHints[position] && blank && (
-            <span className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2.5 py-1 bg-slate-800 text-white text-xs font-medium rounded-sm shadow-lg whitespace-nowrap z-50 animate-fade-in before:content-[''] before:absolute before:bottom-full before:left-1/2 before:-translate-x-1/2 before:border-4 before:border-transparent before:border-b-slate-800">
-              {blank.hint}
-            </span>
-          )}
-        </span>
+        {hintBtn}
       </span>
     );
   });

@@ -12,14 +12,14 @@ function renderMarkdown(text: string): React.ReactNode {
     // ### 헤딩
     if (trimmed.startsWith('### ')) {
       const content = trimmed.slice(4);
-      return <React.Fragment key={li}>{li > 0 && '\n'}<span className="block text-sm font-bold text-slate-600 mt-2 mb-0.5">{renderBold(content)}</span></React.Fragment>;
+      return <React.Fragment key={li}>{li > 0 && <br />}<span className="block text-sm font-bold text-slate-600 mt-2 mb-0.5">{renderBold(content)}</span></React.Fragment>;
     }
     // ## 헤딩
     if (trimmed.startsWith('## ')) {
       const content = trimmed.slice(3);
-      return <React.Fragment key={li}>{li > 0 && '\n'}<span className="block text-base font-bold text-slate-800 mt-3 mb-1">{renderBold(content)}</span></React.Fragment>;
+      return <React.Fragment key={li}>{li > 0 && <br />}<span className="block text-base font-bold text-slate-800 mt-3 mb-1">{renderBold(content)}</span></React.Fragment>;
     }
-    return <React.Fragment key={li}>{li > 0 && '\n'}{renderBold(line)}</React.Fragment>;
+    return <React.Fragment key={li}>{li > 0 && <br />}{renderBold(line)}</React.Fragment>;
   });
 }
 
