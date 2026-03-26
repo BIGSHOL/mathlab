@@ -49,14 +49,14 @@ interface CreateReviewParams {
 
 /**
  * 오답 발생 시 복습 스케줄 생성
- * - 이미 미완료 스케줄이 있으면 중복 생성하지 않음
- * - 3일 후 첫 복습으로 설정
+ * - 미완료 스케줄이 있으면 → 3일로 리셋 (다시 틀렸으므로 처음부터)
+ * - 없으면 → 3일 후 첫 복습으로 생성
  */
 export async function createReviewSchedule(params: CreateReviewParams) {
   const { studentId, questionId, conceptId, sourceType, sourceId } = params;
   if (!questionId && !conceptId) return null;
 
-  // 중복 확인: 같은 학생+문제/개념에 미완료 스케줄이 있으면 건너뜀
+  // 기존 미완료 스케줄 확인
   const existing = await prisma.reviewSchedule.findFirst({
     where: {
       studentId,
@@ -65,10 +65,23 @@ export async function createReviewSchedule(params: CreateReviewParams) {
       completedAt: null,
     },
   });
-  if (existing) return existing;
 
   const reviewAt = new Date();
   reviewAt.setDate(reviewAt.getDate() + REVIEW_INTERVALS[0]);
+
+  // 이미 진행 중인 스케줄이 있으면 → 3일로 리셋 (다시 틀렸으므로)
+  if (existing) {
+    return prisma.reviewSchedule.update({
+      where: { id: existing.id },
+      data: {
+        interval: REVIEW_INTERVALS[0],
+        reviewAt,
+        streak: 0,
+        sourceType,
+        sourceId: sourceId ?? existing.sourceId,
+      },
+    });
+  }
 
   return prisma.reviewSchedule.create({
     data: {
