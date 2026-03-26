@@ -52,10 +52,12 @@ export interface QuestionItem {
   choices: string[] | null;
   answer: string;
   explanation: string | null;
+  scoringCriteria: string | null;
   sourceTag: string | null;
   domain: string | null;
   conceptId: string | null;
   diagramSpec?: DiagramParam[] | null;
+  choiceColumns?: number | null;
 }
 
 export interface Meta {
@@ -68,6 +70,7 @@ export interface EditFormState {
   content: string;
   answer: string;
   explanation: string;
+  scoringCriteria: string;
   difficulty: QuestionDifficulty;
   type: QuestionType;
   choices: string[];
@@ -77,6 +80,7 @@ export interface EditFormState {
   domain: string;
   conceptId: string;
   diagramParams: DiagramParam[];
+  choiceColumns: number | null;
 }
 
 export interface CreateFormState {

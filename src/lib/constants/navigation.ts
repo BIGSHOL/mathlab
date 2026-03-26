@@ -24,6 +24,7 @@ import {
   ToggleRight,
   Radio,
   Target,
+  Volume2,
   type LucideIcon,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
@@ -81,7 +82,8 @@ const NAV_GROUPS: NavGroup[] = [
     id: 'content', label: '출제·준비', minRole: 'TEACHER', items: [
       { id: 'concepts', label: '개념 등록', href: '/concepts', icon: BookOpen, minRole: 'TEACHER', keywords: ['concept', '개념', '빈칸', '등록', '출제'] },
       { id: 'questions', label: '문제 출제', href: '/questions', icon: Database, minRole: 'TEACHER', keywords: ['question', '문제', '은행', '출제', '조회'] },
-      { id: 'arithmetic', label: '연산 출제', href: '/questions/arithmetic', icon: Calculator, minRole: 'TEACHER', keywords: ['arithmetic', '연산', '계산', '출제', '생성'] },
+      { id: 'arithmetic', label: '연산 프린트', href: '/questions/arithmetic', icon: Calculator, minRole: 'TEACHER', keywords: ['arithmetic', '연산', '계산', '출제', '생성'] },
+      { id: 'worksheet', label: '문제 프린트', href: '/worksheet/create', icon: FileSpreadsheet, minRole: 'TEACHER', keywords: ['worksheet', '학습지', '프린트', '만들기', '문제'] },
       { id: 'pdf-import', label: 'PDF 추출', href: '/questions/pdf-import', icon: FileText, minRole: 'SUPER_ADMIN', keywords: ['pdf', '추출', 'ocr', '가져오기'] },
     ],
   },
@@ -89,12 +91,9 @@ const NAV_GROUPS: NavGroup[] = [
   // ─ 배정·평가 ─
   {
     id: 'assessment', label: '배정·평가', minRole: 'TEACHER', items: [
-      { id: 'tests', label: '시험 배정', href: '/tests', icon: ClipboardCheck, minRole: 'TEACHER', keywords: ['test', '시험', '평가', '출제', '배정'] },
-      { id: 'homework', label: '숙제 배정', href: '/homework', icon: CalendarCheck, minRole: 'TEACHER', keywords: ['homework', '숙제', '과제', '배정'] },
-      { id: 'worksheet', label: '학습지 만들기', href: '/worksheet/create', icon: FileSpreadsheet, minRole: 'TEACHER', keywords: ['worksheet', '학습지', '프린트', '만들기'] },
-      { id: 'quiz', label: '실시간 퀴즈', href: '/quiz', icon: Radio, minRole: 'TEACHER', keywords: ['quiz', '퀴즈', '실시간', '대결'] },
-      { id: 'level-test', label: '레벨테스트', href: '/level-test', icon: Target, minRole: 'TEACHER', keywords: ['level', '레벨', '진단', '테스트'] },
-      { id: 'grading', label: '수기 채점', href: '/manual-grading', icon: PenLine, minRole: 'TEACHER', keywords: ['grading', '채점', '수기'] },
+      { id: 'tests', label: '시험 출제', href: '/tests', icon: ClipboardCheck, minRole: 'TEACHER', keywords: ['test', '시험', '평가', '출제', '배정'] },
+      { id: 'homework', label: '숙제 출제', href: '/homework', icon: CalendarCheck, minRole: 'TEACHER', keywords: ['homework', '숙제', '과제', '배정'] },
+      { id: 'quiz', label: '퀴즈 배틀', href: '/quiz', icon: Radio, minRole: 'TEACHER', keywords: ['quiz', '퀴즈', '실시간', '대결'] },
     ],
   },
 
@@ -182,9 +181,8 @@ const OWNER_NAV_GROUPS: NavGroup[] = [
   // ─ 배정·평가 ─
   {
     id: 'assessment', label: '배정·평가', minRole: 'OWNER', items: [
-      { id: 'tests', label: '시험 배정', href: '/tests', icon: ClipboardCheck, minRole: 'OWNER', keywords: ['test', '시험', '평가', '출제', '배정'] },
-      { id: 'homework', label: '숙제 배정', href: '/homework', icon: CalendarCheck, minRole: 'OWNER', keywords: ['homework', '숙제', '과제', '배정'] },
-      { id: 'level-test', label: '레벨테스트', href: '/level-test', icon: Target, minRole: 'OWNER', keywords: ['level', '레벨', '진단', '테스트'] },
+      { id: 'tests', label: '시험 출제', href: '/tests', icon: ClipboardCheck, minRole: 'OWNER', keywords: ['test', '시험', '평가', '출제', '배정'] },
+      { id: 'homework', label: '숙제 출제', href: '/homework', icon: CalendarCheck, minRole: 'OWNER', keywords: ['homework', '숙제', '과제', '배정'] },
     ],
   },
 
@@ -223,6 +221,7 @@ const SUPER_ADMIN_NAV_GROUPS: NavGroup[] = [
   {
     id: 'system', label: '시스템', minRole: 'SUPER_ADMIN', items: [
       { id: 'mockups', label: '페이지 목업', href: '/mockups', icon: Target, minRole: 'SUPER_ADMIN', keywords: ['mockup', '목업', '미리보기', '페이지'] },
+      { id: 'sounds', label: '사운드', href: '/admin/sounds', icon: Volume2, minRole: 'SUPER_ADMIN', keywords: ['sound', '사운드', '효과음', '소리'] },
       { id: 'support', label: '고객지원', href: '/support', icon: HelpCircle, minRole: 'SUPER_ADMIN', keywords: ['support', '지원', '문의'] },
       { id: 'settings', label: '설정', href: '/settings', icon: Settings, minRole: 'SUPER_ADMIN', keywords: ['setting', '설정', '환경'] },
     ],

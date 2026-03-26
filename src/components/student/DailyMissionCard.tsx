@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Target, CheckCircle2, Circle, Star } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
+import { playSound } from '@/lib/sounds';
 
 interface Mission {
   type: string;
@@ -37,7 +38,10 @@ export function DailyMissionCard() {
     fetch('/api/missions/check', { method: 'POST' })
       .then((r) => r.json())
       .then((json) => {
-        if (json.data?.xpAwarded > 0) setBonusEarned(true);
+        if (json.data?.xpAwarded > 0) {
+          setBonusEarned(true);
+          playSound('mission_complete');
+        }
       })
       .finally(() => setChecking(false));
   }, [data, checking, bonusEarned]);

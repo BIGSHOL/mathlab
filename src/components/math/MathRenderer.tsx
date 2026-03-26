@@ -94,6 +94,17 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
     .replace(/\\\([\s\S]*?\\\)/g, (match, p1) => `$${p1}$`)
     .replace(/\\\[[\s\S]*?\\\]/g, (match, p1) => `$$$${p1}$$$$`);
 
+  // 인라인 수식($...$) 내 \dfrac → \frac 변환
+  // \dfrac은 displaystyle을 강제하여 분수가 거대해짐. \frac은 인라인에서 자연스러운 크기
+  // 블록 수식($$...$$)은 변환하지 않음
+  svgReplacedContent = svgReplacedContent.replace(
+    /\$(?!\$)((?:[^$\\]|\\.)*)\$/g,
+    (match, inner) => {
+      const fixed = inner.replace(/\\dfrac(?![a-zA-Z])/g, '\\frac');
+      return `$${fixed}$`;
+    }
+  );
+
   // [한글 설명] 패턴을 스타일링된 HTML 플레이스홀더로 변환
   // 단, 마크다운 이미지 ![alt](url) 안의 [alt] 부분은 건드리지 않음
   const processedContent = svgReplacedContent.replace(
@@ -122,7 +133,6 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
         /* 인라인 수식을 원자적 단위로 — 등호/답 부분이 줄 끝에서 분리되지 않도록 */
         .katex {
           display: inline-block;
-          font-size: 1.3em;
         }
         /* SVG 다이어그램 인라인 렌더링 */
         .diagram-svg-inline {
@@ -163,15 +173,6 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
           color: #64748B;
           font-size: 0.85em;
           vertical-align: middle;
-        }
-        /* 분수의 분자/분모 크기를 일반 숫자와 동일하게 */
-        .katex .mfrac .mfrac-num .sizing,
-        .katex .mfrac .mfrac-den .sizing,
-        .katex .mfrac .frac-line ~ span .mord {
-          font-size: 1em;
-        }
-        .katex .mfrac .reset-textstyle.scriptstyle {
-          font-size: 1em;
         }
         .katex-display {
           overflow-x: auto;
@@ -246,11 +247,90 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
                 </p>
               );
             },
-          blockquote: ({ children }) => (
-            <div className="border border-slate-300 px-6 py-3 my-3 rounded-md bg-slate-50 text-slate-900 not-italic w-fit max-w-full">
-              {children}
-            </div>
-          ),
+          blockquote: ({ children }) => {
+            // React 엘리먼트에서 텍스트 재귀 추출
+            const extractText = (node: React.ReactNode): string => {
+              if (typeof node === 'string') return node;
+              if (typeof node === 'number') return String(node);
+              if (React.isValidElement(node)) {
+                const props = node.props as Record<string, unknown>;
+                if (props.children) return React.Children.toArray(props.children as React.ReactNode).map(extractText).join('');
+              }
+              return '';
+            };
+
+            // 모든 children을 flat하게 줄 단위로 분리
+            const lines: { nodes: React.ReactNode[]; text: string }[] = [];
+            const splitByBr = (inner: React.ReactNode): boolean => {
+              // children 중 <br>이 있으면 분리, 없으면 false 반환
+              let hasBr = false;
+              let current: React.ReactNode[] = [];
+              React.Children.forEach(inner, (c) => {
+                if (React.isValidElement(c) && c.type === 'br') {
+                  hasBr = true;
+                  if (current.length > 0) {
+                    const text = current.map(extractText).join('');
+                    lines.push({ nodes: [...current], text });
+                  }
+                  current = [];
+                } else {
+                  current.push(c);
+                }
+              });
+              if (hasBr && current.length > 0) {
+                const text = current.map(extractText).join('');
+                lines.push({ nodes: [...current], text });
+              }
+              return hasBr;
+            };
+            const flattenP = (child: React.ReactNode) => {
+              if (!React.isValidElement(child)) {
+                if (child != null) lines.push({ nodes: [child], text: String(child) });
+                return;
+              }
+              const props = child.props as Record<string, unknown>;
+              // 커스텀 컴포넌트든 기본 HTML이든 children에서 <br> 기준으로 분리 시도
+              if (props.children) {
+                if (!splitByBr(props.children as React.ReactNode)) {
+                  // <br>이 없으면 통째로 한 줄
+                  lines.push({ nodes: [child], text: extractText(child) });
+                }
+              } else {
+                lines.push({ nodes: [child], text: extractText(child) });
+              }
+            };
+            React.Children.forEach(children, flattenP);
+
+
+
+            // <보기> 등 제목 줄과 항목 분리
+            const header: React.ReactNode[][] = [];
+            const items: React.ReactNode[][] = [];
+            for (const line of lines) {
+              if (items.length === 0 && (line.text.includes('보기') || line.text.trim() === '')) {
+                header.push(line.nodes);
+              } else {
+                items.push(line.nodes);
+              }
+            }
+
+            return (
+              <div className="border border-slate-300 px-5 py-3 my-3 rounded-md bg-slate-50 text-slate-900 not-italic max-w-full">
+                {header.map((h, i) => <div key={`h-${i}`}>{h}</div>)}
+                {items.length > 0 && (() => {
+                  const maxLen = Math.max(...items.map((it) => it.map(extractText).join('').length));
+                  const useGrid = items.length >= 3 && maxLen <= 15;
+                  return (
+                    <div className={useGrid ? 'grid grid-cols-2 gap-x-6 gap-y-1' : ''}>
+                      {items.map((item, i) => (
+                        <div key={`i-${i}`}>{item}</div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+            );
+          },
           img: ({ src, alt, title }) => {
             // src가 비어있으면 렌더링하지 않음 (콘솔 에러 방지)
             if (!src) return <span className="text-slate-400 text-sm">[{alt || '이미지'}]</span>;

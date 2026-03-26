@@ -413,7 +413,7 @@ function ConceptDetailPanel({ concept }: { concept: ConceptProgress }) {
           </div>
           <div className="flex-1 overflow-y-auto scrollbar-thin p-4">
             {concept.fullContent ? (
-              <MathRenderer content={concept.fullContent} className="text-sm leading-8 font-serif-kr" />
+              <MathRenderer content={concept.fullContent} className="text-sm leading-8 " />
             ) : (
               <p className="text-sm text-text-secondary text-center py-8">개념 내용이 없습니다.</p>
             )}
@@ -588,11 +588,11 @@ function BlankAnswerViewer({ exercise, attempts }: {
                     <span className="w-5 h-5 rounded bg-slate-100 text-slate-500 flex items-center justify-center text-[9px] font-bold shrink-0">
                       {ans.blankPosition}
                     </span>
-                    <span className={`flex-1 font-serif-kr ${ans.isCorrect ? 'text-emerald-700' : 'text-red-600 line-through'}`}>
+                    <span className={`flex-1  ${ans.isCorrect ? 'text-emerald-700' : 'text-red-600 line-through'}`}>
                       <InlineMathText text={ans.submittedAnswer} />
                     </span>
                     {!ans.isCorrect && (
-                      <span className="text-emerald-600 font-serif-kr text-xs">
+                      <span className="text-emerald-600  text-xs">
                         → <InlineMathText text={ans.correctAnswer} />
                       </span>
                     )}
@@ -629,7 +629,7 @@ function BlankAnswerViewer({ exercise, attempts }: {
 
           {/* 빈칸 콘텐츠 — MathRenderer로 마크다운 서식 + 빈칸 렌더링 */}
           <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin p-3 bg-slate-50 rounded-sm border border-slate-200">
-            <MathRenderer content={processedContent} className="text-sm leading-8 font-serif-kr" />
+            <MathRenderer content={processedContent} className="text-sm leading-8 " />
           </div>
 
           {/* 하단 요약 — 학생 답변 모드일 때 정답/오답 개수, 정답 모드일 때 정답 목록 */}
@@ -649,7 +649,7 @@ function BlankAnswerViewer({ exercise, attempts }: {
                         </span>
                         {sub ? (
                           <>
-                            <span className={`text-xs flex-1 truncate font-serif-kr ${sub.isCorrect ? 'text-emerald-700' : 'text-red-600'}`}>
+                            <span className={`text-xs flex-1 truncate  ${sub.isCorrect ? 'text-emerald-700' : 'text-red-600'}`}>
                               <InlineMathText text={sub.submittedAnswer} />
                             </span>
                             {sub.isCorrect ? (
@@ -677,7 +677,7 @@ function BlankAnswerViewer({ exercise, attempts }: {
                         <span className="shrink-0 w-4 h-4 rounded bg-slate-100 text-slate-500 flex items-center justify-center text-[9px] font-bold">
                           {b.position}
                         </span>
-                        <span className="text-xs flex-1 truncate font-serif-kr">
+                        <span className="text-xs flex-1 truncate ">
                           <InlineMathText text={b.answer} />
                         </span>
                         <span className={`text-[9px] font-bold shrink-0 px-1 rounded ${DIFF_COLOR[diff]}`}>

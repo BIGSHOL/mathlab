@@ -211,13 +211,12 @@ export default function QuizHostPage() {
                 <MathRenderer content={quiz.currentQuestion.content} />
               </div>
               {quiz.currentQuestion.choices && (
-                <div className="mt-6 grid grid-cols-2 gap-3">
+                <div className="mt-6 grid grid-cols-2 gap-2">
                   {(quiz.currentQuestion.choices as string[]).map((c, i) => (
                     <div
                       key={i}
-                      className="px-4 py-3 bg-slate-700 rounded-sm text-white text-sm"
+                      className="px-3 py-2 bg-slate-700/80 rounded-sm border border-slate-600 text-sm [&_.katex]:text-white"
                     >
-                      <span className="font-bold text-yellow-400 mr-2">{i + 1}</span>
                       <MathRenderer content={c} />
                     </div>
                   ))}

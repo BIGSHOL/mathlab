@@ -33,6 +33,7 @@ export interface ExtractedProblem {
   boxItems: string[]; // ㄱ,ㄴ,ㄷ 항목
   answer: string;
   explanation: string;
+  scoringCriteria: string;
   sourceTag: string; // 대표문제, 서술형 등
 
   // 매핑된 값
@@ -96,6 +97,7 @@ export interface ExtractedSolution {
   questionNum: number;
   answer: string;
   explanation: string;
+  scoringCriteria: string;
 }
 
 // --- 매핑 유틸 ---

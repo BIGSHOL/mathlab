@@ -218,15 +218,21 @@ export function QuestionListMain({
 
                   <div className="text-sm leading-relaxed font-medium text-text-primary">
                     <MathRenderer content={q.content} />
-                    {q.choices && Array.isArray(q.choices) && (
-                      <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
-                        {(q.choices as string[]).map((c, i) => (
-                          <div key={i} className="px-3 py-2 bg-slate-50 rounded-sm border border-slate-100">
-                            <MathRenderer content={c} />
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    {q.choices && Array.isArray(q.choices) && (() => {
+                      const choices = q.choices as string[];
+                      const maxLen = Math.max(...choices.map(c => c.length));
+                      const autoCols = maxLen > 25 ? 1 : 2;
+                      const finalCols = (q as QuestionItem).choiceColumns ?? autoCols;
+                      return (
+                        <div className={`grid ${finalCols === 2 ? 'grid-cols-2' : 'grid-cols-1'} gap-2 mt-2 text-sm`}>
+                          {choices.map((c, i) => (
+                            <div key={i} className="px-3 py-2 bg-slate-50 rounded-sm border border-slate-100">
+                              <MathRenderer content={c} />
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <div className="mt-auto pt-2.5 border-t border-slate-200 flex items-center justify-between">
@@ -245,11 +251,19 @@ export function QuestionListMain({
                     </button>
                   </div>
                   {expandedExplanation === q.id && (
-                    <div className="text-xs text-text-secondary bg-slate-50 rounded-sm p-2.5 border border-slate-100">
-                      {q.explanation ? (
-                        <MathRenderer content={q.explanation} />
-                      ) : (
-                        '해설이 아직 등록되지 않았습니다.'
+                    <div className="space-y-2">
+                      <div className="text-xs text-text-secondary bg-slate-50 rounded-sm p-2.5 border border-slate-100">
+                        {q.explanation ? (
+                          <MathRenderer content={q.explanation} />
+                        ) : (
+                          '해설이 아직 등록되지 않았습니다.'
+                        )}
+                      </div>
+                      {q.scoringCriteria && (
+                        <div className="text-xs bg-amber-50 rounded-sm p-2.5 border border-amber-100">
+                          <span className="font-bold text-amber-700 block mb-1">채점 요소</span>
+                          <MathRenderer content={q.scoringCriteria} />
+                        </div>
                       )}
                     </div>
                   )}

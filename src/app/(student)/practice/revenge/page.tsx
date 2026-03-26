@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { LoadingEmptyState } from '@/components/ui/LoadingEmptyState';
 import { MathRenderer } from '@/components/math/MathRenderer';
+import { playSound } from '@/lib/sounds';
 import Link from 'next/link';
 
 interface QuestionItem {
@@ -70,6 +71,7 @@ export default function RevengePage() {
     const isCorrect = norm(answer) === norm(q.answer);
     setSelectedChoice(answer);
     setFeedback(isCorrect);
+    playSound(isCorrect ? 'correct' : 'wrong');
     setAnswers((prev) => [...prev, { questionId: q.id, selectedAnswer: answer, correctAnswer: q.answer, isCorrect }]);
   };
 
@@ -86,6 +88,7 @@ export default function RevengePage() {
       const json = await res.json();
       if (json.data) {
         setResult(json.data);
+        if (json.data.accuracy >= 60) playSound('revenge_win');
         if (json.data.xpEarned > 0) useXpNotification.getState().show(json.data.xpEarned);
       }
     } else {

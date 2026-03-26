@@ -16,6 +16,7 @@ import GemStone from '@/components/gamification/GemStone';
 import { GemEvolutionModal } from '@/components/gamification/GemEvolutionModal';
 import { partToGemVariant } from '@/lib/utils/gem';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { playSound } from '@/lib/sounds';
 import type { LearningStage } from '@/types';
 
 /** 정답이 LaTeX 수식($...$)인지 판별 */
@@ -355,10 +356,12 @@ export default function ConceptPage() {
 
     if (chipAnswer === blank.answer) {
       // 정답 → 빈칸 채우기 + 칩 사용
+      playSound('blank_fill');
       setBlankAnswers(prev => ({ ...prev, [activeBlankPos]: chipAnswer }));
       setChipPool(prev => prev.map(c => c.answer === chipAnswer ? { ...c, used: c.used + 1 } : c));
     } else {
       // 오답 → shake + 카운트
+      playSound('wrong');
       const newCount = (wrongCounts[activeBlankPos] ?? 0) + 1;
       setWrongCounts(prev => ({ ...prev, [activeBlankPos]: newCount }));
       setShakePos(activeBlankPos);
@@ -451,6 +454,7 @@ export default function ConceptPage() {
         ? `+${json.data.xpAwarded} XP 획득! (정답 공개 사용)`
         : `+${json.data.xpAwarded} XP 획득!`;
       toast.success(xpMsg);
+      playSound('stage_complete');
       // 보석 진화 모달 표시
       const fromStage = currentStageIdx;
       const toStage = currentStageIdx + 1;
@@ -833,7 +837,7 @@ export default function ConceptPage() {
           <div className="p-5 flex-1 overflow-y-auto">
             {currentStage.key === 'READING' && (
               <div
-                className="prose prose-slate max-w-none font-serif-kr"
+                className="prose prose-slate max-w-none "
                 style={{ fontSize: fontCfg.size, lineHeight: fontCfg.readingLeading }}
               >
                 <MathRenderer content={concept.fullContent.replace(/\n/g, '<br/>')} />

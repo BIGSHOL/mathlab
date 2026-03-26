@@ -5,10 +5,16 @@
   font-family: var(--font-serif-kr), 'Batang', '바탕', serif;
 }
 
-/* KaTeX 인라인 수식 크기: 15pt(=20px), 본문 15px 기준 1.333em */
+/* KaTeX 인라인 수식 크기: 본문 대비 약간 크게 */
 .katex {
-  font-size: 16pt !important;
+  font-size: 1.15em !important;
 }
+/* 분수만 크게: 분자/분모 텍스트 스케일업 */
+.katex .mfrac {
+  font-size: 1.4em;
+}
+
+
 
 /* 빈칸 편집: textarea ↔ highlight overlay 렌더링 일치 */
 .template-textarea-overlay,

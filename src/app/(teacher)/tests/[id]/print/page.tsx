@@ -207,9 +207,9 @@ export default function PrintWorksheetPage() {
                     const num = startIdx + qi + 1;
                     return (
                       <div key={q.id} className="break-inside-avoid">
-                        <div className="flex items-start gap-2">
-                          <span className="text-xs font-bold text-text-primary shrink-0 w-6 text-right">
-                            {num}.
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-sm font-extrabold text-slate-800 shrink-0 w-7 text-right leading-snug">
+                            {String(num).padStart(2, '0')}
                           </span>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5 mb-0.5">

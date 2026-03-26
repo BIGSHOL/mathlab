@@ -19,7 +19,9 @@ export function fixLatexEscaping(text: string): string {
     .replace(/\x08/g, '\\b')
     .replace(/\r(?!\n)/g, '\\r')
     // \\n 리터럴 → 실제 줄바꿈 (LaTeX 명령어 \nabla 등은 보호)
-    .replace(/\\n(?![a-zA-Z])/g, '\n');
+    .replace(/\\n(?![a-zA-Z])/g, '\n')
+    // \dfrac → \frac (인라인 수식에서 거대 분수 방지)
+    .replace(/\\dfrac(?![a-zA-Z])/g, '\\frac');
 }
 
 /**

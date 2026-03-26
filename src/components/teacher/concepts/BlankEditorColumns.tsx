@@ -95,8 +95,8 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
               <textarea
                 ref={templateTextareaRef}
                 spellCheck={false}
-                className="absolute inset-0 z-10 w-full h-full resize-none px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words overflow-y-auto bg-transparent border border-slate-200 rounded-sm focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50/50 disabled:text-text-secondary font-serif-kr template-textarea-overlay"
-                style={{ color: 'transparent', caretColor: '#1e293b', WebkitTextFillColor: 'transparent', wordBreak: 'break-word', overflowWrap: 'break-word', fontFamily: "var(--font-serif-kr), 'Batang', '바탕', serif" }}
+                className="absolute inset-0 z-10 w-full h-full resize-none px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words overflow-y-auto bg-transparent border border-slate-200 rounded-sm focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50/50 disabled:text-text-secondary template-textarea-overlay"
+                style={{ color: 'transparent', caretColor: '#1e293b', WebkitTextFillColor: 'transparent', wordBreak: 'break-word', overflowWrap: 'break-word' }}
                 value={blankForm.templateText}
                 onChange={(e) => syncBlanksFromTemplate(e.target.value)}
                 onKeyDown={(e) => {
@@ -117,8 +117,8 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
               />
               <div
                 ref={templateHighlightRef}
-                className="absolute inset-0 z-0 px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words overflow-y-auto pointer-events-none rounded-sm border border-transparent font-serif-kr template-highlight-overlay"
-                style={{ wordBreak: 'break-word', overflowWrap: 'break-word', fontFamily: "var(--font-serif-kr), 'Batang', '바탕', serif" }}
+                className="absolute inset-0 z-0 px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words overflow-y-auto pointer-events-none rounded-sm border border-transparent template-highlight-overlay"
+                style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
                 aria-hidden="true"
               >
                 {blankForm.templateText ? (
@@ -196,7 +196,7 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
               </button>
               {previewOriginalOpen && (
                 <div className="px-3 pb-3 max-h-[240px] overflow-y-auto scrollbar-thin">
-                  <p className="text-[20px] text-text-primary leading-8 whitespace-pre-wrap font-serif-kr">
+                  <p className="text-[20px] text-text-primary leading-8 whitespace-pre-wrap ">
                     {blankForm.templateText.split(/(\{\{\d+\}\})/).map((part, i) =>
                       /^\{\{\d+\}\}$/.test(part) ? (
                         <span key={i} className="inline-flex items-center mx-0.5 px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded-sm text-sm font-bold">
@@ -232,7 +232,7 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
                   </button>
                   {previewStudentOpen && (
                     <div className="px-3 pb-3 max-h-[240px] overflow-y-auto scrollbar-thin">
-                      <p className="text-[20px] text-text-primary leading-8 whitespace-pre-wrap font-serif-kr">
+                      <p className="text-[20px] text-text-primary leading-8 whitespace-pre-wrap ">
                         {blankForm.templateText.split(/(\{\{\d+\}\})/).map((part, i) => {
                           if (/^\{\{\d+\}\}$/.test(part)) {
                             const num = parseInt(part.match(/\d+/)?.[0] ?? '0', 10);
@@ -343,7 +343,7 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
                   </span>
                   {editingBlankPos === b.position ? (
                     <input
-                      className="flex-1 min-w-0 px-2 py-1 border border-primary rounded-sm text-xs focus:ring-1 focus:ring-primary/40 font-serif-kr"
+                      className="flex-1 min-w-0 px-2 py-1 border border-primary rounded-sm text-xs focus:ring-1 focus:ring-primary/40 "
                       value={b.answer}
                       onChange={(e) => updateBlankItem(b.position, 'answer', e.target.value)}
                       onBlur={() => setEditingBlankPos(null)}
@@ -353,7 +353,7 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
                     />
                   ) : (
                     <span
-                      className={`flex-1 min-w-0 px-2 py-1 rounded-sm text-xs font-serif-kr ${isOwner ? 'cursor-text hover:bg-slate-100 border border-transparent hover:border-slate-200' : 'bg-slate-50 text-text-secondary'} transition-colors`}
+                      className={`flex-1 min-w-0 px-2 py-1 rounded-sm text-xs  ${isOwner ? 'cursor-text hover:bg-slate-100 border border-transparent hover:border-slate-200' : 'bg-slate-50 text-text-secondary'} transition-colors`}
                       onClick={isOwner ? () => setEditingBlankPos(b.position) : undefined}
                       title={isOwner ? '클릭하여 편집' : undefined}
                     >
@@ -392,7 +392,7 @@ export function BlankEditorColumns({ mgr }: BlankEditorColumnsProps) {
                 {/* Row 2: hint */}
                 <div className="flex items-center gap-1.5 mt-1 pl-[calc(12px+6px+24px+6px)]">
                   <input
-                    className="flex-1 min-w-0 px-2 py-1 border border-slate-200 rounded-sm text-xs focus:ring-1 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary text-slate-500 font-serif-kr"
+                    className="flex-1 min-w-0 px-2 py-1 border border-slate-200 rounded-sm text-xs focus:ring-1 focus:ring-primary/40 focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary text-slate-500 "
                     value={b.hint}
                     onChange={(e) => updateBlankItem(b.position, 'hint', e.target.value)}
                     placeholder="힌트 (학생에게 보여줄 설명)"
@@ -480,7 +480,7 @@ function ClickableTemplateView({ templateText, blanks, onSegmentClick }: {
   };
 
   return (
-    <p className="text-[20px] text-text-primary leading-8 whitespace-pre-wrap font-serif-kr">
+    <p className="text-[20px] text-text-primary leading-8 whitespace-pre-wrap ">
       {segments.map((seg, i) => {
         if (seg.type === 'blank') {
           const blank = blanks.find((b) => b.position === seg.blankPos);

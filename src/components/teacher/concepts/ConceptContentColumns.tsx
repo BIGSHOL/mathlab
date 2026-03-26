@@ -110,7 +110,7 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
             />
           </div>
         ) : (
-          <div className="w-full min-h-[200px] flex-1 px-3 py-2 border border-slate-200 rounded-sm text-[20px] bg-white overflow-y-auto font-serif-kr scrollbar-thin">
+          <div className="w-full min-h-[200px] flex-1 px-3 py-2 border border-slate-200 rounded-sm text-[20px] bg-white overflow-y-auto  scrollbar-thin">
             {blanksLoading ? (
               <div className="flex items-center justify-center h-full text-text-secondary text-sm">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -122,7 +122,7 @@ export function ConceptContentColumns({ mgr }: ConceptContentColumnsProps) {
                 showBlanks={showBlanks}
               />
             ) : (
-              <MathRenderer content={editForm.fullContent} className="font-serif-kr" />
+              <MathRenderer content={editForm.fullContent} className="" />
             )}
           </div>
         )}
@@ -300,7 +300,7 @@ function BlankListCollapsible({ blanks, easyCount, hardCount }: { blanks: BlankI
           {blanks.map((b) => (
             <div key={b.position} className={`flex items-center gap-2 px-2.5 py-1 rounded-sm border ${DIFFICULTY_COLORS[b.difficulty || 'easy']} border-current/20`}>
               <span className="shrink-0 w-5 h-5 rounded-sm bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold">#{b.position}</span>
-              <span className="text-xs font-medium flex-1 truncate font-serif-kr"><InlineMathText text={b.answer} /></span>
+              <span className="text-xs font-medium flex-1 truncate "><InlineMathText text={b.answer} /></span>
               <span className="text-xs font-bold shrink-0">{DIFFICULTY_LABELS[b.difficulty || 'easy']}</span>
             </div>
           ))}
@@ -348,7 +348,7 @@ function BlankPreviewSection({ templateText, blanks }: { templateText: string; b
             </button>
             {isOpen && (
               <div className="px-2.5 pb-2.5 max-h-[400px] overflow-y-auto scrollbar-thin">
-                <p className="text-[20px] text-text-primary leading-8 whitespace-pre-wrap font-serif-kr">
+                <p className="text-[20px] text-text-primary leading-8 whitespace-pre-wrap ">
                   {templateText.split(/(\{\{\d+\}\})/).map((part, i) => {
                     if (/^\{\{\d+\}\}$/.test(part)) {
                       const num = parseInt(part.match(/\d+/)?.[0] ?? '0', 10);

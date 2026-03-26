@@ -69,11 +69,13 @@ const COMMON_INSTRUCTIONS = `
          - Incorrect: "x^2 + x"
          - Correct: "$x^2 + x$"
        - **NO IMAGES IN TEXT**: Do NOT include <img> tags, Markdown images (![...](...)), or placeholders like "[Diagram]" in the "question" or "solution" fields.
+       - **NO LINE BREAKS before conditions**: Trailing conditions like "(단, ...)", "(단, $a < b$)", "(정답 2개)" MUST stay on the same line as the preceding sentence. NEVER put them on a new line.
 
     3. [Question Format Rules - CRITICAL]
        - **If Question Format is '객관식 (5지선다)'**:
          - You MUST provide exactly 5 choices in the "choices" array.
          - The answer must be one of these choices.
+         - NEVER include the choices (①②③④⑤) in the "question" field. Choices go ONLY in the "choices" array.
        - **If Question Format is '주관식/서술형'**:
          - The "choices" array MUST be empty [].
 

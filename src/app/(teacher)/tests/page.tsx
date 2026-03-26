@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { toast } from '@/components/ui/Toast';
 import { confirm } from '@/components/ui/ConfirmDialog';
 import {
@@ -16,6 +17,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   GraduationCap,
+  Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { LoadingEmptyState } from '@/components/ui/LoadingEmptyState';
@@ -30,8 +32,10 @@ import { TEST_TYPE_LABELS } from '@/lib/constants/labels';
 type TestTab = 'test' | 'level_test';
 
 export default function TestsPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<TestTab>('test');
   const { user } = useAuth();
+  const [creatingQuiz, setCreatingQuiz] = useState(false);
   const isOwner = hasRoleClient(user?.role, 'OWNER');
   const [gradeFilter, setGradeFilter] = useState<number | undefined>();
   const [testPage, setTestPage] = useState(1);
@@ -60,6 +64,28 @@ export default function TestsPage() {
     }
     setDeleting(null);
   };
+
+  const handleStartQuiz = useCallback(async (test: { title: string; questionIds: string[] }) => {
+    if (test.questionIds.length === 0) { toast.error('문제가 없는 시험입니다'); return; }
+    setCreatingQuiz(true);
+    try {
+      const res = await fetch('/api/quiz', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: `${test.title} 퀴즈`, questionIds: test.questionIds }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        toast.success('퀴즈가 생성되었습니다');
+        router.push(`/quiz/${json.data.joinCode}/host`);
+      } else {
+        toast.error('퀴즈 생성 실패');
+      }
+    } catch {
+      toast.error('퀴즈 생성 실패');
+    }
+    setCreatingQuiz(false);
+  }, [router]);
 
   const tabs = [
     { key: 'test' as const, label: '시험', icon: ClipboardCheck },
@@ -301,6 +327,16 @@ export default function TestsPage() {
                     >
                       <UserPlus className="w-4 h-4 mr-1" />
                       배정
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      loading={creatingQuiz}
+                      onClick={() => handleStartQuiz(selectedTest)}
+                      className="text-yellow-600"
+                    >
+                      <Zap className="w-4 h-4 mr-1" />
+                      퀴즈로 시작
                     </Button>
                     <Link href={`/tests/${selectedTest.seq}/results`}>
                       <Button variant="secondary" size="sm">

@@ -14,6 +14,7 @@ import {
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { playSound } from '@/lib/sounds';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import {
   CATEGORY_LABELS,
@@ -91,9 +92,11 @@ export default function TimeAttackPage() {
     if (phase !== 'countdown') return;
     if (countdownNum <= 0) {
       setPhase('playing');
+      playSound('timer_start');
       answerStartRef.current = Date.now();
       return;
     }
+    playSound('countdown_tick');
     const t = setTimeout(() => setCountdownNum((n) => n - 1), 1000);
     return () => clearTimeout(t);
   }, [phase, countdownNum]);
@@ -105,9 +108,11 @@ export default function TimeAttackPage() {
       setTimeLeft((t) => {
         if (t <= 1) {
           clearInterval(timerRef.current!);
+          playSound('timer_end');
           handleTimeUpRef();
           return 0;
         }
+        if (t <= 4) playSound('countdown_final');
         return t - 1;
       });
     }, 1000);
@@ -173,6 +178,7 @@ export default function TimeAttackPage() {
     const now = Date.now();
     const timeSpentMs = now - answerStartRef.current;
     setFeedback(isCorrect);
+    playSound(isCorrect ? 'correct' : 'wrong');
 
     const newCombo = isCorrect ? combo + 1 : 0;
 

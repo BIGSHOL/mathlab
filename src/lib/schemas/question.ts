@@ -27,6 +27,7 @@ export const createQuestionSchema = z.object({
   choices: z.array(z.string()).min(2).max(5).optional(),
   answer: z.string().min(1, '정답을 입력해주세요'),
   explanation: z.string().optional(),
+  scoringCriteria: z.string().optional().nullable(),
   source: z.string().max(200).optional(),
   sourceTag: z.string().max(100).optional(),
   domain: z.string().max(30).optional().nullable(),
@@ -44,8 +45,10 @@ export const updateQuestionSchema = createQuestionSchema
     section: z.string().max(200).optional().nullable(),
     choices: z.array(z.string()).min(2).max(5).optional().nullable(),
     explanation: z.string().optional().nullable(),
+    scoringCriteria: z.string().optional().nullable(),
     source: z.string().max(200).optional().nullable(),
     sourceTag: z.string().max(100).optional().nullable(),
+    choiceColumns: z.number().int().min(1).max(2).optional().nullable(),
   });
 
 export const bulkCreateQuestionsSchema = z.object({

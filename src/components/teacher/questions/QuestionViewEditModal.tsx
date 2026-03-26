@@ -12,6 +12,7 @@ import {
   FunctionSquare,
   ImageIcon,
   Shapes,
+  ClipboardCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { MathRenderer } from '@/components/math/MathRenderer';
@@ -212,15 +213,21 @@ function ViewMode({ selectedQuestion, concepts }: { selectedQuestion: QuestionIt
       </div>
 
       {/* Choices */}
-      {selectedQuestion.choices && Array.isArray(selectedQuestion.choices) && (
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          {(selectedQuestion.choices as string[]).map((c, i) => (
-            <div key={i} className="px-3 py-2 bg-slate-50 rounded-sm border border-slate-100">
-              <MathRenderer content={c} />
-            </div>
-          ))}
-        </div>
-      )}
+      {selectedQuestion.choices && Array.isArray(selectedQuestion.choices) && (() => {
+        const choices = selectedQuestion.choices as string[];
+        const maxLen = Math.max(...choices.map(c => c.length));
+        const autoCols = maxLen > 25 ? 1 : 2;
+        const finalCols = selectedQuestion.choiceColumns ?? autoCols;
+        return (
+          <div className={`grid ${finalCols === 2 ? 'grid-cols-2' : 'grid-cols-1'} gap-2 text-sm`}>
+            {choices.map((c, i) => (
+              <div key={i} className="px-3 py-2 bg-slate-50 rounded-sm border border-slate-100">
+                <MathRenderer content={c} />
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Answer */}
       <div className="border-t border-slate-200 pt-2.5">
@@ -244,6 +251,19 @@ function ViewMode({ selectedQuestion, concepts }: { selectedQuestion: QuestionIt
           <p className="text-sm text-text-secondary italic">해설이 등록되지 않았습니다.</p>
         )}
       </div>
+
+      {/* Scoring Criteria */}
+      {selectedQuestion.scoringCriteria && (
+        <div className="border-t border-slate-200 pt-2.5">
+          <h3 className="text-sm font-bold mb-2 flex items-center gap-1.5">
+            <ClipboardCheck className="w-4 h-4 text-amber-500" />
+            채점 요소
+          </h3>
+          <div className="px-3 py-2 bg-amber-50 rounded-sm border border-amber-100 text-sm">
+            <MathRenderer content={selectedQuestion.scoringCriteria} />
+          </div>
+        </div>
+      )}
 
       {/* Source Tag */}
       {selectedQuestion.sourceTag && (
@@ -289,6 +309,10 @@ function EditMode({
 }) {
   // 렌더링(미리보기) / 마크업 모드 토글
   const [viewMode, setViewMode] = useState<'rendered' | 'raw'>('rendered');
+
+  // 보기 열 레이아웃: editForm.choiceColumns에서 파생 (null=auto, 1, 2)
+  const choiceCols: 'auto' | 1 | 2 = editForm.choiceColumns === 1 ? 1 : editForm.choiceColumns === 2 ? 2 : 'auto';
+  const setChoiceCols = (v: 'auto' | 1 | 2) => setEditForm((p) => ({ ...p, choiceColumns: v === 'auto' ? null : v }));
 
   // 도형 SVG 미리계산 (rendered 모드에서 [그림] 플레이스홀더 렌더링용)
   const diagramSvgs = React.useMemo(() => {
@@ -618,6 +642,22 @@ function EditMode({
           )}
         </div>
 
+        {/* 채점 요소 */}
+        <div>
+          <label className="block text-xs font-bold text-text-secondary mb-1">
+            <span className="flex items-center gap-1">
+              <ClipboardCheck className="w-3.5 h-3.5 text-amber-500" />
+              채점 요소
+            </span>
+          </label>
+          <textarea
+            className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary min-h-[60px] resize-y"
+            value={editForm.scoringCriteria}
+            onChange={(e) => setEditForm((p) => ({ ...p, scoringCriteria: e.target.value }))}
+            placeholder="채점 요소 (예: 1. 소인수분해 하기 30%)"
+          />
+        </div>
+
         <div>
           <label className="block text-xs font-bold text-text-secondary mb-1">출처 태그</label>
           <input
@@ -645,20 +685,44 @@ function EditMode({
           />
         </div>
 
-        {editForm.type === 'MULTIPLE_CHOICE' && editForm.choices.some((c) => c) && (
-          <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
-            {editForm.choices.map((c, i) =>
-              c ? (
-                <div key={i} className="px-3 py-2 bg-slate-50 rounded-sm border border-slate-100">
-                  <EditableMathRenderer
-                    content={c}
-                    onMathClick={(latex, start, end) => openMathEdit('choice', latex, start, end, i)}
-                  />
-                </div>
-              ) : null
-            )}
-          </div>
-        )}
+        {editForm.type === 'MULTIPLE_CHOICE' && editForm.choices.some((c) => c) && (() => {
+          const validChoices = editForm.choices.filter(c => c);
+          const maxLen = Math.max(...validChoices.map(c => c.length));
+          const autoCols = maxLen > 25 ? 1 : 2;
+          const cols = choiceCols === 'auto' ? autoCols : choiceCols;
+          return (
+            <div className="mt-2">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <span className="text-xs text-slate-400">보기 열</span>
+                {(['auto', 2, 1] as const).map((opt) => (
+                  <button
+                    key={String(opt)}
+                    onClick={() => setChoiceCols(opt)}
+                    className={`px-1.5 py-0.5 text-xs rounded transition-colors ${
+                      choiceCols === opt
+                        ? 'bg-primary text-white font-bold'
+                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                    }`}
+                  >
+                    {opt === 'auto' ? `자동(${autoCols}열)` : `${opt}열`}
+                  </button>
+                ))}
+              </div>
+              <div className={`grid ${cols === 2 ? 'grid-cols-2' : 'grid-cols-1'} gap-2 text-sm`}>
+                {editForm.choices.map((c, i) =>
+                  c ? (
+                    <div key={i} className="px-3 py-2 bg-slate-50 rounded-sm border border-slate-100">
+                      <EditableMathRenderer
+                        content={c}
+                        onMathClick={(latex, start, end) => openMathEdit('choice', latex, start, end, i)}
+                      />
+                    </div>
+                  ) : null
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
         {editForm.answer && (
           <div className="border-t border-slate-200 pt-2 mt-2">
@@ -683,6 +747,18 @@ function EditMode({
                 content={editForm.explanation}
                 onMathClick={(latex, start, end) => openMathEdit('explanation', latex, start, end)}
               />
+            </div>
+          </div>
+        )}
+
+        {editForm.scoringCriteria && (
+          <div className="border-t border-slate-200 pt-2 mt-2">
+            <h4 className="text-xs font-bold text-text-secondary mb-1.5 flex items-center gap-1">
+              <ClipboardCheck className="w-3.5 h-3.5 text-amber-500" />
+              채점 요소
+            </h4>
+            <div className="px-3 py-2 bg-amber-50 rounded-sm border border-amber-100 text-sm">
+              <MathRenderer content={editForm.scoringCriteria} />
             </div>
           </div>
         )}

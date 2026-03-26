@@ -20,6 +20,7 @@ import { MathRenderer } from '@/components/math/MathRenderer';
 import { DiagramRenderer } from '@/components/math/DiagramRenderer';
 import type { DiagramSpec } from '@/types/diagram';
 import { useTestAttempt } from '@/hooks/useTests';
+import { playSound } from '@/lib/sounds';
 import { DIFFICULTY_LABELS } from '@/types';
 
 interface QuestionData {
@@ -179,10 +180,12 @@ export default function TestPlayPage() {
       } else {
         // 최종 결과 (1차 정답 또는 2차 시도)
         setFeedback(result);
+        playSound(result.isCorrect ? 'correct' : 'wrong');
         setCombo(result.comboCount);
         setTotalScore((prev) => prev + result.pointsEarned);
 
         if (result.comboCount >= 3) {
+          playSound('streak');
           setComboAnimation(true);
           setTimeout(() => setComboAnimation(false), 1000);
         }
@@ -201,6 +204,7 @@ export default function TestPlayPage() {
       setCompleting(true);
       try {
         await completeAttempt(attempt.id);
+        playSound('submit');
         router.push(`/my-tests/${testSeq}/result`);
       } catch {
         toast.error('시험 완료 실패');

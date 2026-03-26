@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
           choices: q.choices || undefined,
           answer: q.answer,
           explanation: q.explanation || null,
+          scoringCriteria: q.scoringCriteria || null,
           source: q.source || null,
           sourceTag: q.sourceTag || null,
           domain: q.domain || null,

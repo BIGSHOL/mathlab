@@ -5,7 +5,7 @@ import { MathRenderer } from '@/components/math/MathRenderer';
 import { DIFFICULTY_LABELS } from '@/types';
 import type { QuestionDifficulty } from '@/types';
 import { FileText, Printer, Columns2, Rows3, Tag, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { Button } from '@/components/ui/Button';
 
 const MODE_LABELS = { test: '시험', level_test: '레벨테스트', worksheet: '학습지' } as const;
@@ -272,7 +272,7 @@ interface PrintPreviewProps {
   showAnswerKey: boolean;
 }
 
-function PrintPreview({ title, grade, questions, spacing, columns, showAnswerKey }: PrintPreviewProps) {
+const PrintPreview = memo(function PrintPreview({ title, grade, questions, spacing, columns, showAnswerKey }: PrintPreviewProps) {
   const spacingClass = spacing === 'compact' ? 'space-y-2' : spacing === 'wide' ? 'space-y-8' : 'space-y-5';
   const gradeLabel = grade <= 6 ? `초등 ${grade}학년` : `중등 ${grade - 6}학년`;
 
@@ -310,30 +310,22 @@ function PrintPreview({ title, grade, questions, spacing, columns, showAnswerKey
                   {idx + 1}.
                 </span>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className="text-[9px] text-slate-400 truncate">[{q.chapter}]</span>
-                    <span className={`text-[8px] font-bold px-1 py-0.5 rounded ${
-                      q.difficulty === 'BASIC' ? 'bg-emerald-100 text-emerald-700' :
-                      q.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
-                      q.difficulty === 'HIGH' ? 'bg-red-100 text-red-700' :
-                      'bg-purple-100 text-purple-700'
-                    }`}>
-                      {DIFFICULTY_LABELS[q.difficulty as QuestionDifficulty] ?? q.difficulty}
-                    </span>
-                  </div>
                   <div className="text-xs text-text-primary">
                     <MathRenderer content={q.content.length > 200 ? q.content.slice(0, 200) + '…' : q.content} />
                   </div>
-                  {q.choices && q.choices.length > 0 && (
-                    <div className="mt-1 grid grid-cols-2 gap-0.5 text-xs">
-                      {q.choices.map((c, ci) => (
-                        <div key={ci} className="flex items-start gap-1">
-                          <span className="text-slate-400 shrink-0">{ci + 1})</span>
-                          <MathRenderer content={c} />
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  {q.choices && q.choices.length > 0 && (() => {
+                    const maxLen = Math.max(...q.choices.map(c => c.length));
+                    const cols = maxLen > 25 ? 'grid-cols-1' : 'grid-cols-2';
+                    return (
+                      <div className={`mt-1 grid ${cols} gap-1 text-xs`}>
+                        {q.choices.map((c, ci) => (
+                          <div key={ci} className="px-2 py-0.5">
+                            <MathRenderer content={c} />
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
@@ -356,4 +348,4 @@ function PrintPreview({ title, grade, questions, spacing, columns, showAnswerKey
       )}
     </div>
   );
-}
+});

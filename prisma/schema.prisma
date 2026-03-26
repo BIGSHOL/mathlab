@@ -331,11 +331,13 @@ model Question {
   content     String             @db.Text
   choices     Json?                                // ["①...", "②...", ...]
   answer      String             @db.Text
-  explanation String?            @db.Text
+  explanation     String?            @db.Text
+  scoringCriteria String?            @db.Text          // 채점 요소 (해설에서 분리)
   source      String?            @db.VarChar(200)  // 교재 출처 (예: "RPM 중1-1")
   sourceTag   String?            @db.VarChar(100)  // "핵심문제 익히기" 등
-  diagramSpec Json?                                // 구조화된 도형 명세 (다형성 JSON)
-  diagramSVG  String?            @db.Text          // 레거시 raw SVG (하위 호환)
+  diagramSpec    Json?                                // 구조화된 도형 명세 (다형성 JSON)
+  diagramSVG     String?            @db.Text          // 레거시 raw SVG (하위 호환)
+  choiceColumns  Int?                                 // 보기 열 수: null=자동, 1=1열, 2=2열
 
   // 4대 영역 & 계통도 연결
   domain      String?            @db.VarChar(30)   // CALCULATION | UNDERSTANDING | PROBLEM_SOLVING | REASONING

@@ -137,12 +137,14 @@ export function CurriculumCheckTree({ chapterCounts }: CurriculumCheckTreeProps)
               onClick={() => toggleExpand(`book-${bookCode}`)}
             >
               {isBookExpanded ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
-              <button
+              <span
+                role="checkbox"
+                aria-checked={checkedCount > 0}
                 onClick={(e) => { e.stopPropagation(); toggleBookCodeCheck(bookCode); }}
-                className="shrink-0"
+                className="shrink-0 cursor-pointer"
               >
                 <CheckIcon className={`w-4 h-4 ${checkedCount > 0 ? 'text-primary' : 'text-slate-300'}`} />
-              </button>
+              </span>
               <span className="text-sm font-semibold text-text-primary">{bookLabel}</span>
               {allKeys.length > 0 && (
                 <span className="text-xs text-slate-400">({checkedCount}/{allKeys.length})</span>

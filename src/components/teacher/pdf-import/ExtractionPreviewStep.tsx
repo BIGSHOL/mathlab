@@ -446,15 +446,19 @@ function ProblemCard({ problem, isEditing, isExpanded, onToggleExpand, onEdit, o
             </div>
 
             {/* 객관식 보기 */}
-            {problem.choices.length > 0 && (
-              <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-                {problem.choices.map((choice, i) => (
-                  <div key={i} className="px-3 py-2 bg-slate-50 rounded-sm border border-slate-100">
-                    <MathRenderer content={choice} />
-                  </div>
-                ))}
-              </div>
-            )}
+            {problem.choices.length > 0 && (() => {
+              const maxLen = Math.max(...problem.choices.map(c => c.length));
+              const cols = maxLen > 25 ? 'grid-cols-1' : 'grid-cols-2';
+              return (
+                <div className={`mt-3 grid ${cols} gap-2 text-sm`}>
+                  {problem.choices.map((choice, i) => (
+                    <div key={i} className="px-3 py-2 bg-slate-50 rounded-sm border border-slate-100">
+                      <MathRenderer content={choice} />
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
 
             {/* 정답/풀이 (접기) */}
             {isExpanded && (problem.answer || problem.explanation) && (
@@ -783,15 +787,19 @@ function EditForm({ problem, onUpdate, onClose }: EditFormProps) {
           />
 
           {/* 보기 미리보기 */}
-          {choices.length > 0 && (
-            <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-              {choices.map((choice, i) => (
-                <div key={i} className="px-3 py-2 bg-slate-50 rounded-sm border border-slate-100">
-                  <MathRenderer content={choice} />
-                </div>
-              ))}
-            </div>
-          )}
+          {choices.length > 0 && (() => {
+            const maxLen = Math.max(...choices.map(c => c.length));
+            const cols = maxLen > 25 ? 'grid-cols-1' : 'grid-cols-2';
+            return (
+              <div className={`mt-3 grid ${cols} gap-2 text-sm`}>
+                {choices.map((choice, i) => (
+                  <div key={i} className="px-3 py-2 bg-slate-50 rounded-sm border border-slate-100">
+                    <MathRenderer content={choice} />
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
 
           {/* 정답 미리보기 */}
           {answer && (

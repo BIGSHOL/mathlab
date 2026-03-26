@@ -96,6 +96,13 @@ export function mapType(tag: string): MathQuestionType {
   return TYPE_MAP[tag.trim()] || 'SHORT_ANSWER';
 }
 
+/** AI가 content에 보기(①~⑤)를 포함시킨 경우 후처리로 제거 */
+function stripChoicesFromContent(content: string, choices: string[]): string {
+  if (!choices || choices.length === 0) return content;
+  // ①~⑤ 로 시작하는 줄들을 content 끝에서 제거
+  return content.replace(/(?:\n\s*)?[①②③④⑤]\s*.+/g, '').trimEnd();
+}
+
 /** ㄱㄴㄷ 보기를 content에 마크다운 인용블록으로 포함 */
 export function embedBoxItems(content: string, boxItems: string[]): string {
   if (boxItems.length === 0) return content;
@@ -269,8 +276,8 @@ export const MATH_SYSTEM_PROMPT = `당신은 한국 수학 교재 분석 전문�
 [규칙]
 1. 각 문제의 번호, 유형(객관식/주관식/서술형), 난이도 태그를 식별
 2. 문제 본문은 마크다운으로 작성. 모든 수식은 $...$로 감싸기
-3. 객관식 보기는 choices 배열에 포함 (번호 ①②③④⑤ 포함)
-4. <보기> 항목(ㄱ,ㄴ,ㄷ)은 boxItems에 별도 저장
+3. 객관식 보기(①②③④⑤)는 choices 배열에만 포함. content에는 보기를 절대 포함하지 말 것!
+4. <보기> 항목(ㄱ,ㄴ,ㄷ)은 boxItems에 별도 저장. content에는 포함하지 말 것!
 5. 난이도 태그가 있으면 difficultyTag에 저장
 6. 유형/단원 헤더를 sectionHeader에 저장
 7. "대표문제" 같은 특수 태그는 sourceTag에 저장
@@ -278,10 +285,11 @@ export const MATH_SYSTEM_PROMPT = `당신은 한국 수학 교재 분석 전문�
 9. 정답이 보이면 answer에 포함, 아니면 빈 문자열
 10. 개념 요약 박스가 있으면 concepts 배열에 추출
 11. 테두리/박스 영역은 마크다운 인용블록(>)으로 감싸기
-12. 수식: \\\\times, ^{}, \\\\dfrac 사용. 모든 숫자/변수는 $...$로 감싸기
+12. 수식: \\\\times, ^{}, \\\\frac 사용. \\\\dfrac은 사용 금지! 반드시 \\\\frac만 사용. 모든 숫자/변수는 $...$로 감싸기
 13. 세로셈은 코드블록으로 보존 (가로 변환 금지)
 14. 빈칸/답란은 \\\\boxed{\\\\phantom{0}} 사용 (정답 채우기 금지!)
 15. 시각적 구조는 텍스트 우선 + [그림] 병행
+16. 문장 끝의 조건절 "(단, ...)", "(단, $a < b$)", "(정답 2개)" 등은 반드시 앞 문장과 같은 줄에 이어 붙일 것. 절대 줄바꿈하지 말 것!
 16. $$...$$ 안에서 $...$ 중첩 금지
 17. 원본 충실성: 임의 추가/해석 금지
 18. 2열 레이아웃은 마크다운 테이블 사용
@@ -338,11 +346,12 @@ export const mathTextbookPlugin: PdfExtractPlugin<ExtractedMathProblem, MathExtr
         sectionHeader: fixLatexEscaping(p.sectionHeader || ''),
         difficultyTag: p.difficultyTag || '',
         problemType: p.problemType || '주관식',
-        content: autoWrapMath(fixLatexEscaping(contentText)),
+        content: stripChoicesFromContent(autoWrapMath(fixLatexEscaping(contentText)), p.choices || []),
         choices: (p.choices || []).map((c: string) => autoWrapMath(fixLatexEscaping(c))),
         boxItems: p.boxItems || [],
         answer: fixLatexEscaping(p.answer || ''),
         explanation: '',
+        scoringCriteria: '',
         sourceTag: ['서술형', '객관식', '주관식'].includes(p.sourceTag || '') ? '' : (p.sourceTag || ''),
         difficulty: mapDifficulty(p.difficultyTag || ''),
         type: mapType(p.problemType || '주관식'),
@@ -362,6 +371,7 @@ export interface ExtractedSolution {
   questionNum: number;
   answer: string;
   explanation: string;
+  scoringCriteria: string;
 }
 
 export const SOLUTION_EXTRACT_SCHEMA = {
@@ -374,7 +384,8 @@ export const SOLUTION_EXTRACT_SCHEMA = {
         properties: {
           questionNum: { type: NUMBER, description: '문제 번호' },
           answer: { type: STRING, description: '정답' },
-          explanation: { type: STRING, description: '풀이 과정 (마크다운+LaTeX)' },
+          explanation: { type: STRING, description: '풀이 과정 (마크다운+LaTeX). 채점 요소/기준은 여기에 포함하지 말 것' },
+          scoringCriteria: { type: STRING, description: '채점 요소/기준 (예: "1. 소인수분해 하기 30%"). 없으면 빈 문자열' },
         },
         required: ['questionNum', 'answer'],
       },
@@ -396,17 +407,33 @@ export const mathSolutionPlugin: PdfExtractPlugin<ExtractedSolution> = {
 2. 정답(answer)은 원문 그대로 (예: "⑤", "2개", "1")
 3. 풀이(explanation)는 마크다운으로 작성, 수식은 $...$로 감싸기
 4. 풀이가 여러 단계이면 줄바꿈으로 구분
-5. 채점 기준이 있으면 풀이 끝에 포함`,
+5. 채점 요소/기준이 있으면 반드시 scoringCriteria 필드에 별도 분리 (explanation에 포함하지 말 것)
+6. 채점 요소가 없으면 scoringCriteria는 빈 문자열`,
 
   fixText: fixLatexEscaping,
 
   postProcess: (raw: unknown): ExtractedSolution[] => {
     const data = raw as { solutions?: Record<string, unknown>[] };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (data?.solutions || []).map((s: any) => ({
-      questionNum: s.questionNum,
-      answer: fixLatexEscaping(s.answer || ''),
-      explanation: fixLatexEscaping(s.explanation || ''),
-    }));
+    return (data?.solutions || []).map((s: any) => {
+      let explanation = fixLatexEscaping(s.explanation || '');
+      let scoringCriteria = fixLatexEscaping(s.scoringCriteria || '');
+
+      // AI가 분리하지 못한 경우 explanation에서 채점 요소 자동 분리
+      if (!scoringCriteria) {
+        const match = explanation.match(/\n{1,2}채점\s*요소\s*:\s*\n?/);
+        if (match && match.index !== undefined) {
+          scoringCriteria = explanation.substring(match.index + match[0].length).trim();
+          explanation = explanation.substring(0, match.index).trimEnd();
+        }
+      }
+
+      return {
+        questionNum: s.questionNum,
+        answer: fixLatexEscaping(s.answer || ''),
+        explanation,
+        scoringCriteria,
+      };
+    });
   },
 };

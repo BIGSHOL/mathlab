@@ -93,20 +93,22 @@ export function QuestionCard({
         )}
 
         {/* 문제 내용 */}
-        <div className={`text-sm text-text-primary ${question.choices && question.choices.length > 0 ? 'mb-2' : 'mb-3'} ${questionsOnlyView ? '' : 'line-clamp-3'}`}>
-          <MathRenderer content={question.content.slice(0, questionsOnlyView ? 500 : 200)} />
-        </div>
-
-        {/* 객관식 보기 */}
-        {question.choices && question.choices.length > 0 && (
-          <div className="grid grid-cols-2 gap-x-3 gap-y-1 mb-3 pl-1">
-            {question.choices.map((choice, i) => (
-              <div key={i} className="text-xs text-text-secondary">
-                <MathRenderer content={choice} />
+        <div className="text-sm leading-relaxed font-medium text-text-primary mb-2">
+          <MathRenderer content={question.content} />
+          {question.choices && question.choices.length > 0 && (() => {
+            const maxLen = Math.max(...question.choices.map(c => c.length));
+            const cols = maxLen > 25 ? 'grid-cols-1' : 'grid-cols-2';
+            return (
+              <div className={`grid ${cols} gap-2 mt-2 text-sm`}>
+                {question.choices.map((choice, i) => (
+                  <div key={i} className="px-3 py-2 bg-slate-50 rounded-sm border border-slate-100">
+                    <MathRenderer content={choice} />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            );
+          })()}
+        </div>
 
         {/* 영역 선택 */}
         {showDomain && !questionsOnlyView && (

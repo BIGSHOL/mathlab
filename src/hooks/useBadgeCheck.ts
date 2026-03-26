@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { playSound } from '@/lib/sounds';
 
 interface Badge {
   id: string;
@@ -18,6 +19,7 @@ export function useBadgeCheck() {
         const json = await res.json();
         const badges = json.data?.newBadges ?? [];
         setNewBadges(badges);
+        if (badges.length > 0) playSound('badge');
         return badges as Badge[];
       }
     } catch {

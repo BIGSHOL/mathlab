@@ -338,6 +338,7 @@ export function usePdfImport(): PdfImportState {
               boxItems: p.boxItems || [],
               answer: p.answer || '',
               explanation: '',
+              scoringCriteria: '',
               sourceTag: ['서술형', '객관식', '주관식'].includes(p.sourceTag || '') ? '' : (p.sourceTag || ''),
               difficulty: mapDifficulty(p.difficultyTag || ''),
               type: mapType(p.problemType || '주관식'),
@@ -418,7 +419,7 @@ export function usePdfImport(): PdfImportState {
     setMatchResult(null);
     try {
       const { renderPageForAI } = await import('@/lib/utils/pdf-processor');
-      const allSolutions: { questionNum: number; answer?: string; explanation?: string }[] = [];
+      const allSolutions: { questionNum: number; answer?: string; explanation?: string; scoringCriteria?: string }[] = [];
       setSolutionProgress({ done: 0, total: targetPages.length });
 
       for (let i = 0; i < targetPages.length; i++) {
@@ -447,7 +448,7 @@ export function usePdfImport(): PdfImportState {
         prev.map((p) => {
           const sol = solMap.get(p.questionNum);
           if (sol) {
-            return { ...p, answer: sol.answer || p.answer, explanation: sol.explanation || p.explanation };
+            return { ...p, answer: sol.answer || p.answer, explanation: sol.explanation || p.explanation, scoringCriteria: sol.scoringCriteria || p.scoringCriteria };
           }
           return p;
         })
@@ -513,6 +514,7 @@ export function usePdfImport(): PdfImportState {
                   ...next[sol.index],
                   answer: sol.answer || next[sol.index].answer,
                   explanation: sol.explanation || next[sol.index].explanation,
+                  scoringCriteria: sol.scoringCriteria || next[sol.index].scoringCriteria,
                 };
               }
             }

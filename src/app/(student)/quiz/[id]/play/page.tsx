@@ -14,6 +14,7 @@ import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { MathRenderer } from '@/components/math/MathRenderer';
+import { playSound } from '@/lib/sounds';
 
 interface Participant {
   id: string;
@@ -101,6 +102,7 @@ export default function QuizPlayPage() {
       if (res.ok) {
         const json = await res.json();
         setFeedback(json.data);
+        playSound(json.data.isCorrect ? 'correct' : 'wrong');
         setMyScore(json.data.newScore);
         if (json.data.xpEarned) setMyXpEarned((prev) => prev + json.data.xpEarned);
       }
@@ -228,7 +230,7 @@ export default function QuizPlayPage() {
             </div>
 
             {question.choices && (
-              <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
                 {(question.choices as string[]).map((choice, idx) => {
                   const choiceNum = String(idx + 1);
                   const isSelected = selectedAnswer === choiceNum;
@@ -240,7 +242,7 @@ export default function QuizPlayPage() {
                       key={idx}
                       disabled={submitted}
                       onClick={() => { setSelectedAnswer(choiceNum); }}
-                      className={`w-full text-left px-4 py-3 rounded-sm border-2 transition-all text-sm ${
+                      className={`w-full text-left px-3 py-2 rounded-sm border transition-all text-sm [&_.katex]:text-inherit ${
                         showResult
                           ? isCorrectChoice
                             ? 'border-emerald-400 bg-emerald-500/20 text-white'
@@ -252,9 +254,9 @@ export default function QuizPlayPage() {
                             : 'border-slate-600 hover:border-slate-500 text-slate-300'
                       }`}
                     >
-                      <div className="flex items-center gap-2">
-                        {showResult && isCorrectChoice && <CheckCircle2 className="w-5 h-5 text-emerald-400" />}
-                        {showResult && isSelected && !isCorrectChoice && <XCircle className="w-5 h-5 text-red-400" />}
+                      <div className="flex items-start gap-2">
+                        {showResult && isCorrectChoice && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />}
+                        {showResult && isSelected && !isCorrectChoice && <XCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />}
                         <MathRenderer content={choice} />
                       </div>
                     </button>

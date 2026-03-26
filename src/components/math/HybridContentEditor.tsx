@@ -214,7 +214,7 @@ export const HybridContentEditor = React.forwardRef<HybridEditorHandle, Props>(
         <div
           ref={editorRef}
           contentEditable={!disabled}
-          className={`outline-none flex-1 overflow-y-auto px-3 py-2 border border-slate-200 rounded-sm bg-white font-serif-kr scrollbar-thin focus:ring-2 focus:ring-primary/40 focus:border-primary ${className}`}
+          className={`outline-none flex-1 overflow-y-auto px-3 py-2 border border-slate-200 rounded-sm bg-white  scrollbar-thin focus:ring-2 focus:ring-primary/40 focus:border-primary ${className}`}
           style={{ lineHeight: '1.8', fontSize: '15px', minHeight: '200px' }}
           onInput={handleInput}
           onCompositionStart={() => { composing.current = true; }}
@@ -227,7 +227,7 @@ export const HybridContentEditor = React.forwardRef<HybridEditorHandle, Props>(
         />
         {!content && (
           <div
-            className="absolute top-2 left-3 text-slate-400 pointer-events-none font-serif-kr"
+            className="absolute top-2 left-3 text-slate-400 pointer-events-none "
             style={{ fontSize: '15px' }}
           >
             {placeholder}

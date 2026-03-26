@@ -177,7 +177,7 @@ export function Sidebar() {
           {!collapsed && (
             <>
               <span className="flex-1 text-left">검색...</span>
-              <kbd className="px-1 py-0.5 rounded bg-white border border-slate-200 text-xs font-mono text-slate-400">⌘K</kbd>
+              <kbd className="px-1 py-0.5 rounded bg-white border border-slate-200 text-xs font-mono text-slate-400">Ctrl+K</kbd>
             </>
           )}
         </button>

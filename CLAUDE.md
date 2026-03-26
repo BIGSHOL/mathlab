@@ -533,6 +533,17 @@ if (licenseCheck) return licenseCheck;  // 이용권 없으면 403
 - 새 페이지/컴포넌트 추가 시 별도 폰트를 도입하지 말 것 → Pretendard 통일
 - `font-family` 직접 지정 금지 → `var(--font-display)` 또는 `.font-serif-kr` 사용
 
+### KaTeX 수식 크기
+
+| 대상 | CSS 선택자 | 크기 | 비고 |
+|------|-----------|------|------|
+| **수식 전체** | `.katex` | `1.15em` | 본문 대비 약간 크게 |
+| **분수만** | `.katex .mfrac` | `1.4em` | 분자/분모 가독성 확보 |
+
+- `\dfrac` 사용 금지 → 반드시 `\frac` 사용 (인라인 수식에서 거대 분수 방지)
+- MathRenderer에서 `\dfrac` → `\frac` 자동 변환 (방어)
+- PDF 추출 후처리(`fixLatexEscaping`)에서도 `\dfrac` → `\frac` 자동 치환
+
 ### 색상
 
 ```css
@@ -577,6 +588,7 @@ npx tsx scripts/migrate-question-relations.ts  # questionIds Json → 중간테�
 - 경로 alias: `@/` = `src/`
 - 수학 수식: `$...$` (인라인), `$$...$$` (블록)
 - **수학 문제/개념의 모든 숫자와 영문 변수는 반드시 KaTeX로 감싸기**: `$25$`, `$a$`, `$a+b$` 등. 보기 번호(①②③④⑤)와 ㄱㄴㄷ은 제외
+- **`\dfrac` 사용 금지** → 반드시 `\frac` 사용. `\dfrac`은 인라인 수식에서 거대 분수를 만듦
 - **alert() 사용 금지** → `toast.*()` 사용 (위 7번 규칙 참고)
 - 빌드 확인: 기능 구현 후 `npm run build`로 타입 에러 없는지 확인
 - **문제 순서 조회 시 반드시 헬퍼 함수 사용**: `getTestQuestionIds()`, `getQuizQuestionIds()`, `getHomeworkDayQuestionIds()` (`@/lib/utils/question-order`)

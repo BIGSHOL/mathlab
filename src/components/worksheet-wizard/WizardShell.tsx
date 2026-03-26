@@ -105,28 +105,30 @@ export function WizardShell() {
         {currentStep === 3 && <Step3Settings />}
       </main>
 
-      {/* Bottom Bar */}
-      <footer className="shrink-0 bg-white border-t border-slate-200 px-6 py-3">
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-slate-500">
-            선택 문제 수 <span className="font-bold text-text-primary">{questions.length}</span>개
+      {/* Bottom Bar — Step2는 자체 EditorBottomBar 사용 */}
+      {currentStep !== 2 && (
+        <footer className="shrink-0 bg-white border-t border-slate-200 px-6 py-3">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-slate-500">
+              선택 문제 수 <span className="font-bold text-text-primary">{questions.length}</span>개
+            </div>
+            <div className="flex items-center gap-2">
+              {currentStep > 1 && (
+                <Button variant="secondary" size="sm" onClick={handlePrev}>
+                  이전
+                </Button>
+              )}
+              {currentStep < 3 ? (
+                <Button size="sm" onClick={handleNext}>
+                  다음 단계
+                </Button>
+              ) : (
+                <SaveButton />
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            {currentStep > 1 && (
-              <Button variant="secondary" size="sm" onClick={handlePrev}>
-                이전
-              </Button>
-            )}
-            {currentStep < 3 ? (
-              <Button size="sm" onClick={handleNext}>
-                다음 단계
-              </Button>
-            ) : (
-              <SaveButton />
-            )}
-          </div>
-        </div>
-      </footer>
+        </footer>
+      )}
     </div>
   );
 }

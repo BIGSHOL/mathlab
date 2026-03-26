@@ -18,6 +18,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { playSound } from '@/lib/sounds';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import {
   CATEGORY_LABELS,
@@ -161,6 +162,7 @@ export default function ArithmeticPracticePage() {
     const current = problems[currentIndex];
     const isCorrect = answer === current.answer;
     setFeedback(isCorrect);
+    playSound(isCorrect ? 'correct' : 'wrong');
     if (isCorrect) {
       setScore((s) => s + 1);
       setCombo((c) => c + 1);

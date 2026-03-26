@@ -64,6 +64,7 @@ export function useQuestionManager() {
     content: '',
     answer: '',
     explanation: '',
+    scoringCriteria: '',
     difficulty: '' as QuestionDifficulty,
     type: '' as QuestionType,
     choices: [],
@@ -73,6 +74,7 @@ export function useQuestionManager() {
     domain: '',
     conceptId: '',
     diagramParams: [],
+    choiceColumns: null,
   });
   const [concepts, setConcepts] = useState<ConceptOption[]>([]);
   const [saving, setSaving] = useState(false);
@@ -475,6 +477,7 @@ export function useQuestionManager() {
       content: q.content,
       answer: q.answer,
       explanation: q.explanation || '',
+      scoringCriteria: q.scoringCriteria || '',
       difficulty: q.difficulty,
       type: q.type,
       choices: existingChoices,
@@ -487,6 +490,7 @@ export function useQuestionManager() {
         const resolved = resolveDiagramSpec(q.diagramSpec);
         return resolved.kind === 'params' ? resolved.data : [];
       })(),
+      choiceColumns: q.choiceColumns ?? null,
     });
   };
 
@@ -513,6 +517,7 @@ export function useQuestionManager() {
         content: editForm.content,
         answer: editForm.answer,
         explanation: editForm.explanation || null,
+        scoringCriteria: editForm.scoringCriteria || null,
         difficulty: editForm.difficulty,
         type: editForm.type,
         chapter: editForm.chapter,
@@ -520,6 +525,7 @@ export function useQuestionManager() {
         sourceTag: editForm.sourceTag || null,
         domain: editForm.domain || null,
         conceptId: editForm.conceptId || null,
+        choiceColumns: editForm.choiceColumns,
       };
       if (editForm.type === 'MULTIPLE_CHOICE' && editForm.choices.length >= 2) {
         body.choices = editForm.choices;
@@ -553,6 +559,7 @@ export function useQuestionManager() {
           content: editForm.content,
           answer: editForm.answer,
           explanation: editForm.explanation || null,
+          scoringCriteria: editForm.scoringCriteria || null,
           difficulty: editForm.difficulty,
           type: editForm.type,
           choices: editForm.type === 'MULTIPLE_CHOICE' ? editForm.choices : null,
