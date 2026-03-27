@@ -21,7 +21,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
         orderBy: { createdAt: 'desc' },
         include: {
           extensions: {
-            select: { id: true, agentType: true, createdAt: true, errorMessage: true },
+            select: { id: true, agentType: true, result: true, createdAt: true, errorMessage: true },
           },
         },
       },

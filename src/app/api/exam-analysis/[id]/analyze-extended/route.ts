@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse, getTenantFilter, notFound, badRequest } from '@/lib/api';
 import { analyzeExtendedRequestSchema } from '@/lib/exam-analysis/schemas';
+import { runExtendedAnalysis } from '@/lib/exam-analysis/agents/orchestrator';
 import type { AgentType } from '@/lib/exam-analysis/constants';
 
 type Params = { params: Promise<{ id: string }> };
@@ -31,47 +32,19 @@ export async function POST(request: NextRequest, { params }: Params) {
   });
   if (!latestAnalysis) return badRequest('기본 분석을 먼저 실행하세요');
 
-  const results: Array<{ agentType: string; status: string; id?: string; error?: string }> = [];
+  try {
+    const results = await runExtendedAnalysis({
+      analysisId: latestAnalysis.id,
+      agentTypes: agents as AgentType[],
+      forceRegenerate,
+    });
 
-  for (const agentType of agents as AgentType[]) {
-    // 이미 결과가 있고, 재생성이 아니면 스킵
-    if (!forceRegenerate) {
-      const existing = await prisma.examAnalysisExtension.findUnique({
-        where: { analysisId_agentType: { analysisId: latestAnalysis.id, agentType } },
-      });
-      if (existing && !existing.errorMessage) {
-        results.push({ agentType, status: 'existing', id: existing.id });
-        continue;
-      }
-    }
-
-    try {
-      // TODO: Phase 2에서 실제 에이전트 구현
-      // 현재는 placeholder — 실제 에이전트 호출 로직은 Phase 2에서 추가
-      const placeholderResult = {
-        message: `${agentType} 에이전트 분석 결과 (Phase 2에서 구현)`,
-        analysisId: latestAnalysis.id,
-      };
-
-      const extension = await prisma.examAnalysisExtension.upsert({
-        where: { analysisId_agentType: { analysisId: latestAnalysis.id, agentType } },
-        create: {
-          analysisId: latestAnalysis.id,
-          agentType,
-          result: placeholderResult,
-        },
-        update: {
-          result: placeholderResult,
-          errorMessage: null,
-        },
-      });
-
-      results.push({ agentType, status: 'completed', id: extension.id });
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : '에이전트 분석 실패';
-      results.push({ agentType, status: 'failed', error: errorMsg });
-    }
+    return NextResponse.json({ data: results });
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : '확장 분석에 실패했습니다';
+    return NextResponse.json(
+      { error: { code: 'EXTENDED_ANALYSIS_FAILED', message: errorMsg } },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json({ data: results });
 }

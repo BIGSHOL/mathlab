@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { ExamPaperList } from '@/components/exam-analysis/ExamPaperList';
 import { ExamUploadForm } from '@/components/exam-analysis/ExamUploadForm';
 import { AnalysisResultView } from '@/components/exam-analysis/AnalysisResultView';
+import { ExtendedReportView } from '@/components/exam-analysis/ExtendedReportView';
 import { StatusBadge } from '@/components/exam-analysis/StatusBadge';
 import { toast } from '@/components/ui/Toast';
 import { Plus, X } from 'lucide-react';
@@ -36,7 +36,6 @@ interface ExamPaperData {
 }
 
 export default function ExamAnalysisPage() {
-  const _router = useRouter();
   const [items, setItems] = useState<ExamPaperData[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -193,13 +192,24 @@ export default function ExamAnalysisPage() {
             )}
 
             {latestAnalysis && selectedDetail.status === 'COMPLETED' && (
-              <AnalysisResultView
-                questions={latestAnalysis.questions}
-                summary={latestAnalysis.summary as Parameters<typeof AnalysisResultView>[0]['summary']}
-                totalPoints={latestAnalysis.totalPoints}
-                earnedPoints={latestAnalysis.earnedPoints}
-                examType={selectedDetail.examType}
-              />
+              <>
+                <AnalysisResultView
+                  questions={latestAnalysis.questions}
+                  summary={latestAnalysis.summary as Parameters<typeof AnalysisResultView>[0]['summary']}
+                  totalPoints={latestAnalysis.totalPoints}
+                  earnedPoints={latestAnalysis.earnedPoints}
+                  examType={selectedDetail.examType}
+                />
+
+                {/* 확장 분석 리포트 */}
+                <div className="mt-8">
+                  <ExtendedReportView
+                    analysisId={latestAnalysis.id}
+                    extensions={latestAnalysis.extensions as unknown as Parameters<typeof ExtendedReportView>[0]['extensions']}
+                    onRefresh={() => fetchDetail(selectedDetail.id)}
+                  />
+                </div>
+              </>
             )}
           </div>
         ) : (
