@@ -8,7 +8,8 @@ import { AnalysisResultView } from '@/components/exam-analysis/AnalysisResultVie
 import { ExtendedReportView } from '@/components/exam-analysis/ExtendedReportView';
 import { StatusBadge } from '@/components/exam-analysis/StatusBadge';
 import { toast } from '@/components/ui/Toast';
-import { Plus, X } from 'lucide-react';
+import Link from 'next/link';
+import { Plus, X, Printer, Settings2 } from 'lucide-react';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 
 interface ExamPaperData {
@@ -118,10 +119,17 @@ export default function ExamAnalysisPage() {
       <aside className="w-72 border-r flex flex-col bg-white">
         <div className="p-3 border-b flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-800">기출 분석</h2>
-          <Button size="sm" onClick={() => setShowUpload(true)}>
-            <Plus className="w-4 h-4 mr-1" />
-            업로드
-          </Button>
+          <div className="flex gap-1">
+            <Link href="/exam-analysis/admin">
+              <Button size="sm" variant="ghost" title="패턴 관리">
+                <Settings2 className="w-4 h-4" />
+              </Button>
+            </Link>
+            <Button size="sm" onClick={() => setShowUpload(true)}>
+              <Plus className="w-4 h-4 mr-1" />
+              업로드
+            </Button>
+          </div>
         </div>
         {loading ? (
           <div className="p-4 text-center text-sm text-slate-400">불러오는 중...</div>
@@ -170,6 +178,13 @@ export default function ExamAnalysisPage() {
               </div>
               <div className="flex items-center gap-2">
                 <StatusBadge status={selectedDetail.status} />
+                {selectedDetail.status === 'COMPLETED' && (
+                  <Link href={`/exam-analysis/${selectedDetail.id}/print`}>
+                    <Button size="sm" variant="outline">
+                      <Printer className="w-4 h-4 mr-1" /> 인쇄
+                    </Button>
+                  </Link>
+                )}
                 {(selectedDetail.status === 'PENDING' || selectedDetail.status === 'FAILED') && (
                   <Button onClick={() => handleAnalyze(selectedDetail.id)} disabled={analyzing}>
                     {analyzing ? '분석 중...' : '분석 실행'}

@@ -56,7 +56,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       has_essay: true, // 기본적으로 서술형 가이드 포함
     };
 
-    const promptResult = ExamPromptBuilder.build(context);
+    const promptResult = await ExamPromptBuilder.buildWithDbContext(context);
 
     // Gemini Vision 분석 호출
     const mimeType = examPaper.fileType === 'pdf' ? 'application/pdf' : 'image/jpeg';

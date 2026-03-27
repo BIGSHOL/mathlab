@@ -165,6 +165,7 @@ function getEnglishWritingGuideIfNeeded(hasEssay: boolean): string {
 export class ExamPromptBuilder {
   /**
    * 전체 프롬프트를 조립하여 반환한다.
+   * DB 템플릿이 있으면 우선 사용, 없으면 파일 기반 기본값 사용.
    */
   static build(context: ExamContext): BuildPromptResponse {
     const base = this.getBasePrompt(context);
@@ -199,6 +200,65 @@ export class ExamPromptBuilder {
       used_templates: usedTemplates,
       matched_problem_types: matchedProblemTypes,
     };
+  }
+
+  /**
+   * DB 템플릿 + 에러 패턴을 포함한 확장 빌드 (async).
+   * DB 접근이 필요할 때 사용. 기본 build()의 상위 호환.
+   */
+  static async buildWithDbContext(context: ExamContext): Promise<BuildPromptResponse> {
+    // 기본 빌드
+    const result = this.build(context);
+
+    try {
+      const { prisma } = await import('@/lib/db');
+
+      // DB 템플릿 조회 (활성, 최신 버전)
+      const dbTemplate = await prisma.examPromptTemplate.findFirst({
+        where: {
+          subject: context.subject === '수학' ? 'MATH' : 'ENGLISH',
+          agentType: 'basic',
+          isActive: true,
+        },
+        orderBy: { version: 'desc' },
+      });
+
+      // DB 에러 패턴 조회
+      const errorPatterns = await prisma.examErrorPattern.findMany({
+        where: {
+          subject: context.subject === '수학' ? 'MATH' : 'ENGLISH',
+          isActive: true,
+        },
+        orderBy: { frequency: 'desc' },
+        take: 10,
+      });
+
+      // 에러 패턴 프롬프트 구성
+      let errorPatternsPrompt: string | null = null;
+      if (errorPatterns.length > 0) {
+        const patternLines = errorPatterns.map(p =>
+          `- **${p.name}** (${p.errorType}, 빈도: ${p.frequency}): ${p.feedbackMessage || p.description}`
+        ).join('\n');
+        errorPatternsPrompt = `⚠️ **알려진 오류 패턴 (분석 시 참고):**\n\n${patternLines}`;
+      }
+
+      // DB 템플릿이 있으면 base_prompt 교체
+      if (dbTemplate) {
+        const customBase = dbTemplate.template;
+        result.base_prompt = customBase;
+        result.used_templates.push(`DB:${dbTemplate.name}(v${dbTemplate.version})`);
+      }
+
+      if (errorPatternsPrompt) {
+        result.error_patterns_prompt = errorPatternsPrompt;
+        // combined_prompt에도 에러 패턴 추가
+        result.combined_prompt = result.combined_prompt + '\n\n' + errorPatternsPrompt;
+      }
+    } catch {
+      // DB 접근 실패 시 기본 빌드 결과 그대로 반환
+    }
+
+    return result;
   }
 
   /**

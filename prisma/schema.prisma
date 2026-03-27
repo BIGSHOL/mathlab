@@ -1336,3 +1336,110 @@ model ExamAnalysisExtension {
   @@unique([analysisId, agentType])
   @@index([analysisId])
 }
+
+// ── 패턴 시스템 (오답 패턴 DB) ──
+
+model ExamProblemCategory {
+  id          String   @id @default(cuid())
+  subject     ExamSubject
+  name        String   @db.VarChar(100)
+  nameEn      String?  @db.VarChar(100)
+  description String?  @db.Text
+  parentId    String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  parent       ExamProblemCategory?  @relation("ExamCategoryHierarchy", fields: [parentId], references: [id])
+  children     ExamProblemCategory[] @relation("ExamCategoryHierarchy")
+  problemTypes ExamProblemType[]
+
+  @@index([subject])
+  @@index([parentId])
+}
+
+model ExamProblemType {
+  id          String   @id @default(cuid())
+  categoryId  String
+  name        String   @db.VarChar(200)
+  description String?  @db.Text
+  gradelevels Json?
+  keywords    Json?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  category      ExamProblemCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  errorPatterns ExamErrorPattern[]
+
+  @@index([categoryId])
+}
+
+model ExamErrorPattern {
+  id              String      @id @default(cuid())
+  problemTypeId   String?
+  subject         ExamSubject
+  name            String      @db.VarChar(200)
+  description     String      @db.Text
+  errorType       String      @default("concept") @db.VarChar(30)
+  frequency       Int         @default(0)
+  severity        Int         @default(1)
+  wrongExamples   Json?
+  correctExamples Json?
+  feedbackMessage String?     @db.Text
+  detectionKeywords Json?
+  isActive        Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  problemType  ExamProblemType?          @relation(fields: [problemTypeId], references: [id], onDelete: SetNull)
+  matchHistory ExamPatternMatchHistory[]
+
+  @@index([subject])
+  @@index([problemTypeId])
+}
+
+model ExamPromptTemplate {
+  id          String      @id @default(cuid())
+  subject     ExamSubject
+  agentType   String      @db.VarChar(30)
+  name        String      @db.VarChar(200)
+  version     Int         @default(1)
+  template    String      @db.Text
+  variables   Json?
+  isActive    Boolean     @default(true)
+  isDefault   Boolean     @default(false)
+  createdBy   String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([subject, agentType, version])
+  @@index([subject, agentType, isActive])
+}
+
+model ExamPatternExample {
+  id          String      @id @default(cuid())
+  patternId   String
+  subject     ExamSubject
+  input       String      @db.Text
+  output      String      @db.Text
+  metadata    Json?
+  createdAt   DateTime    @default(now())
+
+  @@index([patternId])
+  @@index([subject])
+}
+
+model ExamPatternMatchHistory {
+  id          String   @id @default(cuid())
+  patternId   String
+  analysisId  String
+  questionNum Int
+  confidence  Float
+  matchedAt   DateTime @default(now())
+
+  pattern     ExamErrorPattern @relation(fields: [patternId], references: [id], onDelete: Cascade)
+
+  @@index([patternId])
+  @@index([analysisId])
+}
