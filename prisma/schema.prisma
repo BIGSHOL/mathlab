@@ -1443,3 +1443,37 @@ model ExamPatternMatchHistory {
   @@index([patternId])
   @@index([analysisId])
 }
+
+// ── 트렌드 + 참조 문제 ──
+
+model ExamSchoolTrend {
+  id          String      @id @default(cuid())
+  tenantId    String
+  subject     ExamSubject
+  grade       String      @db.VarChar(30)
+  period      String      @db.VarChar(30)
+  schoolName  String?     @db.VarChar(100)
+  trendData   Json
+  sampleSize  Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([tenantId, subject, grade])
+  @@index([period])
+}
+
+model ExamQuestionReference {
+  id           String      @id @default(cuid())
+  subject      ExamSubject
+  grade        String      @db.VarChar(30)
+  difficulty   String      @db.VarChar(20)
+  questionType String      @db.VarChar(30)
+  content      String      @db.Text
+  answer       String?     @db.Text
+  source       String?     @db.VarChar(200)
+  metadata     Json?
+  createdAt    DateTime    @default(now())
+
+  @@index([subject, grade])
+  @@index([difficulty])
+}

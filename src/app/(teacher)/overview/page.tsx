@@ -20,6 +20,7 @@ import Link from 'next/link';
 import MonthlyChart from '@/components/charts/MonthlyChart';
 import DashboardAnalytics from '@/components/charts/DashboardAnalytics';
 import { OverviewActions } from '@/components/teacher/OverviewActions';
+import { ExamAnalysisWidget } from '@/components/exam-analysis/ExamAnalysisWidget';
 import SuperAdminDashboard from '@/components/teacher/SuperAdminDashboard';
 import OwnerDashboard from '@/components/teacher/OwnerDashboard';
 
@@ -347,6 +348,9 @@ export default async function TeacherDashboard({
 
         {/* Row 2.5: Weekly Analytics (client-side fetched) */}
         <DashboardAnalytics />
+
+        {/* Row 2.6: 기출 분석 위젯 */}
+        <ExamAnalysisWidget />
 
         {/* Row 3: Ranking + Grade Distribution + Recent Activity */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
