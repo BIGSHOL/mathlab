@@ -10,7 +10,8 @@ export type LicenseFeatureKey =
   | 'test'
   | 'revenge'
   | 'diagnostic'
-  | 'quiz';
+  | 'quiz'
+  | 'exam_analysis';
 
 export const ALL_LICENSE_FEATURES: LicenseFeatureKey[] = [
   'concept',
@@ -20,6 +21,7 @@ export const ALL_LICENSE_FEATURES: LicenseFeatureKey[] = [
   'revenge',
   'diagnostic',
   'quiz',
+  'exam_analysis',
 ];
 
 /** 한글 라벨 */
@@ -31,6 +33,7 @@ export const LICENSE_FEATURE_LABELS: Record<LicenseFeatureKey, string> = {
   revenge: '복수전',
   diagnostic: '레벨테스트',
   quiz: '실시간 퀴즈',
+  exam_analysis: '기출 분석',
 };
 
 /** LicenseFeatureKey ↔ Prisma LicenseFeature enum 매핑 */
@@ -42,6 +45,7 @@ const TO_ENUM: Record<LicenseFeatureKey, LicenseFeature> = {
   revenge: 'REVENGE',
   diagnostic: 'DIAGNOSTIC',
   quiz: 'QUIZ',
+  exam_analysis: 'EXAM_ANALYSIS',
 };
 
 const FROM_ENUM: Record<LicenseFeature, LicenseFeatureKey> = {
@@ -52,6 +56,7 @@ const FROM_ENUM: Record<LicenseFeature, LicenseFeatureKey> = {
   REVENGE: 'revenge',
   DIAGNOSTIC: 'diagnostic',
   QUIZ: 'quiz',
+  EXAM_ANALYSIS: 'exam_analysis',
 };
 
 export function toEnum(key: LicenseFeatureKey): LicenseFeature {

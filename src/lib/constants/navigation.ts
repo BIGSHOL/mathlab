@@ -24,6 +24,7 @@ import {
   Radio,
   Target,
   Volume2,
+  FileSearch,
   type LucideIcon,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
@@ -100,6 +101,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     id: 'analysis', label: '성적·분석', minRole: 'TEACHER', items: [
       { id: 'analytics', label: '학습 현황', href: '/analytics', icon: BarChart3, minRole: 'TEACHER', keywords: ['analytics', '분석', '통계', '현황'] },
+      { id: 'exam-analysis', label: '기출 분석', href: '/exam-analysis', icon: FileSearch, minRole: 'TEACHER', keywords: ['exam', '기출', '분석', '시험지', '내신'] },
       { id: 'diagnostics', label: '진단 결과', href: '/diagnostics', icon: Stethoscope, minRole: 'TEACHER', keywords: ['diagnostic', '진단', '레벨테스트', '결과'] },
       { id: 'reports', label: '리포트', href: '/reports', icon: ScrollText, minRole: 'OWNER', keywords: ['report', '리포트', '보고서', '레벨테스트'] },
     ],
@@ -163,6 +165,7 @@ const OWNER_NAV_GROUPS: NavGroup[] = [
   {
     id: 'analysis', label: '성적·분석', minRole: 'OWNER', items: [
       { id: 'analytics', label: '학습 현황', href: '/analytics', icon: BarChart3, minRole: 'OWNER', keywords: ['analytics', '분석', '통계', '현황'] },
+      { id: 'exam-analysis', label: '기출 분석', href: '/exam-analysis', icon: FileSearch, minRole: 'OWNER', keywords: ['exam', '기출', '분석', '시험지', '내신'] },
       { id: 'diagnostics', label: '진단 결과', href: '/diagnostics', icon: Stethoscope, minRole: 'OWNER', keywords: ['diagnostic', '진단', '레벨테스트', '결과'] },
       { id: 'reports', label: '리포트', href: '/reports', icon: ScrollText, minRole: 'OWNER', keywords: ['report', '리포트', '보고서', '레벨테스트'] },
     ],

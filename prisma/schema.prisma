@@ -29,6 +29,20 @@ enum LicenseFeature {
   REVENGE
   DIAGNOSTIC
   QUIZ
+  EXAM_ANALYSIS
+}
+
+// FEAT: 기출 분석 시스템
+enum ExamPaperStatus {
+  PENDING
+  ANALYZING
+  COMPLETED
+  FAILED
+}
+
+enum ExamSubject {
+  MATH
+  ENGLISH
 }
 
 // FEAT: 멀티테넌시 — 지점(학원) 관리
@@ -116,6 +130,8 @@ model User {
   reviewSchedules              ReviewSchedule[]  @relation("UserReviews")
   studentLicenses              StudentLicense[]  @relation("StudentLicenses")
   assignedLicenses             StudentLicense[]  @relation("LicenseAssignedBy")
+  examPapersAsTeacher          ExamPaper[]       @relation("ExamPaperTeacher")
+  examPapersAsStudent          ExamPaper[]       @relation("ExamPaperStudent")
 
   @@index([role])
   @@index([classroomId])
@@ -1252,4 +1268,71 @@ model StudentLicense {
 
   @@index([studentId, feature])
   @@index([tenantLicenseId])
+}
+
+// ══════════════════════════════════════════════════════════════
+// FEAT: 기출 분석 (Exam Analysis) — Math Report 이식
+// ══════════════════════════════════════════════════════════════
+
+model ExamPaper {
+  id            String          @id @default(cuid())
+  tenantId      String
+  teacherId     String
+  studentId     String?
+  title         String          @db.VarChar(200)
+  subject       ExamSubject     @default(MATH)
+  grade         String          @db.VarChar(30)
+  category      String?         @db.VarChar(50)
+  unit          String?         @db.VarChar(200)
+  examScope     Json?
+  schoolName    String?         @db.VarChar(100)
+  examType      String          @default("blank") @db.VarChar(20)
+  fileUrls      String          @db.Text
+  fileType      String          @db.VarChar(20)
+  status        ExamPaperStatus @default(PENDING)
+  errorMessage  String?         @db.Text
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  teacher       User            @relation("ExamPaperTeacher", fields: [teacherId], references: [id])
+  student       User?           @relation("ExamPaperStudent", fields: [studentId], references: [id])
+  analyses      ExamAnalysis[]
+
+  @@index([tenantId])
+  @@index([teacherId])
+  @@index([tenantId, subject])
+}
+
+model ExamAnalysis {
+  id              String   @id @default(cuid())
+  examPaperId     String
+  questions       Json
+  summary         Json?
+  markDetection   Json?
+  crossValidation Json?
+  modelVersion    String?  @db.VarChar(50)
+  totalQuestions  Int?
+  totalPoints     Int?
+  earnedPoints    Int?
+  analyzedAt      DateTime?
+  createdAt       DateTime @default(now())
+
+  examPaper       ExamPaper              @relation(fields: [examPaperId], references: [id], onDelete: Cascade)
+  extensions      ExamAnalysisExtension[]
+
+  @@index([examPaperId])
+}
+
+model ExamAnalysisExtension {
+  id            String   @id @default(cuid())
+  analysisId    String
+  agentType     String   @db.VarChar(30)
+  result        Json
+  errorMessage  String?  @db.Text
+  createdAt     DateTime @default(now())
+
+  analysis      ExamAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@unique([analysisId, agentType])
+  @@index([analysisId])
 }
