@@ -73,13 +73,12 @@ export function WizardShell() {
                 {i > 0 && <div className="w-8 h-px bg-slate-300 mx-1" />}
                 <button
                   onClick={() => setStep(step.num)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                    currentStep === step.num
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${currentStep === step.num
                       ? 'bg-primary text-white'
                       : currentStep > step.num
                         ? 'bg-emerald-100 text-emerald-700'
                         : 'bg-slate-100 text-slate-500'
-                  }`}
+                    }`}
                 >
                   {currentStep > step.num ? (
                     <Check className="w-3.5 h-3.5" />
@@ -192,6 +191,19 @@ function SaveButton() {
       }
 
       if (res.ok) {
+        // 프리미엄 인쇄 템플릿 옵션을 글로벌 프리셋(Local Storage)으로 저장
+        const printPreset = {
+          template: store.template,
+          color: store.color,
+          columns: store.columns,
+          spacing: store.spacing,
+          showDate: store.showDate,
+          showChapter: store.showChapter,
+          showDifficulty: store.showDifficulty,
+          showAnswerKey: store.showAnswerKey
+        };
+        localStorage.setItem('mathlab_print_preset', JSON.stringify(printPreset));
+
         setIsDirty(false); // 저장 완료 시 dirty 해제
         reset();
         router.push(mode === 'level_test' ? '/level-test' : '/tests');

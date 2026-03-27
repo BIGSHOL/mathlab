@@ -315,7 +315,7 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
             }
 
             return (
-              <div className="border border-slate-300 px-5 py-3 my-3 rounded-md bg-slate-50 text-slate-900 not-italic max-w-full">
+              <div className="border border-slate-300 px-5 py-3 my-3 rounded-md bg-slate-50 text-slate-900 not-italic w-fit max-w-full">
                 {header.map((h, i) => <div key={`h-${i}`}>{h}</div>)}
                 {items.length > 0 && (() => {
                   const maxLen = Math.max(...items.map((it) => it.map(extractText).join('').length));

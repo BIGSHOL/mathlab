@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   Zap, Plus, Users, Clock, CheckCircle2,
   ChevronDown, ChevronRight, ChevronUp,
-  CheckSquare, Square, MinusSquare, Loader2, Sparkles,
+  CheckSquare, Square, MinusSquare, Sparkles,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -15,6 +15,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { toast } from '@/components/ui/Toast';
 import { getCurriculumForGrade, type SemesterEntry } from '@/lib/utils/curriculumMapping';
+import type { CurriculumUnit } from '@/types/mathgen';
 import { DIFFICULTY_LABELS, TYPE_LABELS } from '@/types';
 
 // ── 타입 ──
@@ -314,7 +315,7 @@ export default function QuizPage() {
                     sem.chapters.map((ch) => {
                       const key = `${selectedBookCode}|${ch.name}`;
                       const isChecked = checkedChapters.includes(key);
-                      const hasChildren = ch.children && ch.children.length > 0;
+                      const hasChildren = ch.subUnits && ch.subUnits.length > 0;
                       const isExpanded = expanded.has(key);
 
                       return (
@@ -353,7 +354,7 @@ export default function QuizPage() {
                             </span>
                           </div>
                           {/* 소단원 (중단원의 children) */}
-                          {hasChildren && isExpanded && ch.children!.map((sub) => (
+                          {hasChildren && isExpanded && ch.subUnits!.map((sub: CurriculumUnit) => (
                             <div key={sub.name} className="flex items-center gap-2 pl-12 pr-3 py-1.5 text-xs text-slate-400">
                               <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0" />
                               <span className="truncate">{sub.name}</span>

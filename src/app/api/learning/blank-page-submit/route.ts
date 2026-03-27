@@ -76,7 +76,7 @@ ${studentContent}
 5. 70점 이상이면 통과입니다`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',

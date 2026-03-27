@@ -106,7 +106,7 @@ easy에 포함되지 않은, 수학적으로 의미 있는 나머지 용어.
 9. **절대 금지**: □, ▢, ■, ☐ 같은 도형 기호 (학생이 입력 불가)`;
 
         const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-2.5-flash-lite',
           contents: prompt,
           config: {
             responseMimeType: 'application/json',

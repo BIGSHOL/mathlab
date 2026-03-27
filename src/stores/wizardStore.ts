@@ -47,10 +47,18 @@ interface WizardState {
   timeLimitMin: number | null;
   shuffleOptions: boolean;
   maxAttempts: number | null;
-  spacing: 'compact' | 'normal' | 'wide';
+  spacing: number; // 문항 간 여백 (px 단위)
   columns: 1 | 2;
   showTypeName: boolean;
+  // Print options
+  template: 'default' | 'exam' | 'large' | 'minimal' | 'csat' | 'classic' | 'notebook' | 'formal' | 'bubble';
+  color: string;
   showAnswerKey: boolean;
+  quickAnswerOnly: boolean;
+  showDate: boolean;
+  showChapter: boolean;
+  showDifficulty: boolean;
+  showDivider: boolean;
   tags: string[];
 
   // 상태 플래그
@@ -81,10 +89,17 @@ interface WizardState {
   setTimeLimitMin: (min: number | null) => void;
   setShuffleOptions: (shuffle: boolean) => void;
   setMaxAttempts: (max: number | null) => void;
-  setSpacing: (spacing: 'compact' | 'normal' | 'wide') => void;
+  setSpacing: (spacing: number) => void;
   setColumns: (columns: 1 | 2) => void;
   setShowTypeName: (show: boolean) => void;
   setShowAnswerKey: (show: boolean) => void;
+  setQuickAnswerOnly: (quick: boolean) => void;
+  setTemplate: (template: 'default' | 'exam' | 'large' | 'minimal' | 'csat' | 'classic' | 'notebook' | 'formal' | 'bubble') => void;
+  setColor: (color: string) => void;
+  setShowDate: (show: boolean) => void;
+  setShowChapter: (show: boolean) => void;
+  setShowDifficulty: (show: boolean) => void;
+  setShowDivider: (show: boolean) => void;
   setTags: (tags: string[]) => void;
   setIsDirty: (isDirty: boolean) => void;
   reset: () => void;
@@ -108,15 +123,23 @@ const initialState = {
   timeLimitMin: null as number | null,
   shuffleOptions: false,
   maxAttempts: null as number | null,
-  spacing: 'normal' as const,
+  spacing: 40, // 기본 여백 40px
   columns: 2 as const,
   showTypeName: true,
-  showAnswerKey: false,
+  // Print options defaults
+  template: 'exam' as const,
+  color: '#135bec',
+  showAnswerKey: true,
+  quickAnswerOnly: false,
+  showDate: true,
+  showChapter: true,
+  showDifficulty: true,
+  showDivider: true,
   tags: [] as string[],
   isDirty: false,
 };
 
-export const useWizardStore = create<WizardState>((set) => ({
+export const useWizardStore = create<WizardState>((set, _get) => ({
   ...initialState,
 
   setMode: (mode) => set({ mode }),
@@ -219,6 +242,13 @@ export const useWizardStore = create<WizardState>((set) => ({
   setColumns: (columns) => set({ columns, isDirty: true }),
   setShowTypeName: (show) => set({ showTypeName: show, isDirty: true }),
   setShowAnswerKey: (show) => set({ showAnswerKey: show, isDirty: true }),
+  setQuickAnswerOnly: (quick) => set({ quickAnswerOnly: quick, isDirty: true }),
+  setTemplate: (template) => set({ template, isDirty: true }),
+  setColor: (color) => set({ color, isDirty: true }),
+  setShowDate: (show) => set({ showDate: show, isDirty: true }),
+  setShowChapter: (show) => set({ showChapter: show, isDirty: true }),
+  setShowDifficulty: (show) => set({ showDifficulty: show, isDirty: true }),
+  setShowDivider: (show) => set({ showDivider: show, isDirty: true }),
   setTags: (tags) => set({ tags, isDirty: true }),
   setIsDirty: (isDirty) => set({ isDirty }),
   reset: () => set(initialState),

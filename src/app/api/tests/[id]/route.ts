@@ -62,6 +62,7 @@ export async function GET(
       answer: showAnswers,
       explanation: showAnswers,
       domain: true,
+      choiceColumns: true,
       diagramSpec: true,
       diagramSVG: true,
     },

@@ -82,7 +82,7 @@ ${input.explanation}
 ## 힌트 (1~2문장만 출력):`;
 
     const response = await client.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       contents: prompt,
       config: {
         maxOutputTokens: 150,

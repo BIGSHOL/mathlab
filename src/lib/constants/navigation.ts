@@ -7,7 +7,6 @@ import {
   FileSpreadsheet,
   CalendarCheck,
   ClipboardCheck,
-  PenLine,
   FileText,
   BarChart3,
   Stethoscope,
