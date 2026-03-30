@@ -77,7 +77,12 @@ export function findMatchingStrategies(topic: string, grade?: string, category?:
     filteredCurriculums = filteredCurriculums.filter(c => c.semester === effectiveSemester);
   }
 
-  // 매칭 결과 수집 (키워드 길이 기반 점수)
+  // shortTopic: "중3 수학 > 다항식의 곱셈 > 곱셈 공식" → "곱셈 공식"
+  // 마지막 > 이후 부분이 실제 매칭 대상 (가장 구체적인 단원명)
+  const parts = topic.split('>').map(p => p.trim());
+  const shortTopic = parts[parts.length - 1].toLowerCase();
+
+  // 매칭 결과 수집 (키워드 길이 기반 점수, shortTopic 매칭 보너스)
   let bestMatch: { strategy: TopicStrategy; score: number } | null = null;
 
   for (const curriculum of filteredCurriculums) {
@@ -86,6 +91,7 @@ export function findMatchingStrategies(topic: string, grade?: string, category?:
         // 키워드 매칭 점수 계산
         let score = 0;
         for (const keyword of topicStrategy.keywords) {
+          const keywordLower = keyword.toLowerCase();
           // 너무 짧은 키워드(2자 이하)는 완전 매칭 필요
           if (keyword.length <= 2) {
             // 단어 경계 확인 (한글은 공백/특수문자 기준)
@@ -94,8 +100,11 @@ export function findMatchingStrategies(topic: string, grade?: string, category?:
               score += keyword.length * 2; // 정확 매칭 보너스
             }
           } else {
-            // 긴 키워드는 부분 매칭 허용
-            if (topicLower.includes(keyword.toLowerCase()) || topic.includes(keyword)) {
+            // shortTopic(마지막 단원명)에 매칭되면 2배 가중치
+            if (shortTopic.includes(keywordLower) || shortTopic === keywordLower) {
+              score += keyword.length * 2;
+            } else if (topicLower.includes(keywordLower) || topic.includes(keyword)) {
+              // 전체 토픽 경로에서 매칭 (상위 경로 매칭은 1배)
               score += keyword.length;
             }
           }
