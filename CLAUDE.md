@@ -153,6 +153,14 @@ toast.info('AI가 분석 중입니다');
 - 페이지 넘김(`page-break-before`, `break-before` 등)이 미리보기와 인쇄에서 동일하게 동작하는지 확인
 - 새 인쇄 기능 구현 시 반드시 브라우저 인쇄 미리보기(`Ctrl+P`)로 검증 후 커밋
 
+**인쇄 템플릿 시스템 (`/tests/[id]/print`):**
+- 9개 템플릿: `default`, `exam`, `minimal`, `csat`, `classic`, `notebook`, `formal`, `bubble`, `large`
+- 8개 테마 색상: 파랑(`#135bec`), 노랑(`#F59E0B`), 주황(`#F97316`), 핑크(`#EC4899`), 남색(`#3B52C2`), 녹색(`#10B981`), 청록(`#14B8A6`), 회색(`#6B7280`)
+- 옵션: 1/2단 레이아웃, 간격 조절, 날짜/단원/난이도/구분선/정답 표시 토글
+- localStorage 프리셋 저장 (`mathlab_print_preset`)
+- 헤더 변형: `PrintableHeader`의 `variant` prop으로 8종 헤더 디스패치
+- 인쇄 전용 KaTeX 크기: `.printable-math-content .katex { font-size: 1.05em }`, `.printable-math-large .katex { font-size: 1.25em }`
+
 ### 9. 페이지 레이아웃 — 3가지 패턴 + 래퍼 규칙
 
 **모든 페이지는 3가지 레이아웃 패턴 중 하나를 따라야 한다:**
@@ -589,6 +597,8 @@ npx tsx scripts/migrate-question-relations.ts  # questionIds Json → 중간테�
 - 수학 수식: `$...$` (인라인), `$$...$$` (블록)
 - **수학 문제/개념의 모든 숫자와 영문 변수는 반드시 KaTeX로 감싸기**: `$25$`, `$a$`, `$a+b$` 등. 보기 번호(①②③④⑤)와 ㄱㄴㄷ은 제외
 - **`\dfrac` 사용 금지** → 반드시 `\frac` 사용. `\dfrac`은 인라인 수식에서 거대 분수를 만듦
+  - 3중 방어: ① `MathRenderer.tsx`에서 인라인 `$...$` 내 `\dfrac` → `\frac` 자동 변환 ② `post-processor.ts`의 `fixLatexEscaping()`에서 전역 치환 ③ AI 프롬프트(mathgen.ts, math-textbook.ts)에서 `\dfrac` 금지 명시
+  - DB 일괄 치환 스크립트: `npx tsx scripts/fix-dfrac.ts --apply`
 - **alert() 사용 금지** → `toast.*()` 사용 (위 7번 규칙 참고)
 - 빌드 확인: 기능 구현 후 `npm run build`로 타입 에러 없는지 확인
 - **문제 순서 조회 시 반드시 헬퍼 함수 사용**: `getTestQuestionIds()`, `getQuizQuestionIds()`, `getHomeworkDayQuestionIds()` (`@/lib/utils/question-order`)
