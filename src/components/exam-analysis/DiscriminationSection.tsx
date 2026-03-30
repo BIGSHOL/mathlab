@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { DIFFICULTY_COLORS } from '@/lib/exam-analysis/constants';
+// constants import removed (unused after refactor)
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { InfoTooltip } from './InfoTooltip';
 
@@ -44,7 +44,7 @@ const DISCRIMINATION_GRADES = {
 
 type DiscriminationGrade = keyof typeof DISCRIMINATION_GRADES;
 
-const DIFFICULTY_LABELS: Record<string, string> = {
+const _DIFFICULTY_LABELS: Record<string, string> = {
   concept: '개념', pattern: '유형', reasoning: '심화', creative: '최상위',
 };
 

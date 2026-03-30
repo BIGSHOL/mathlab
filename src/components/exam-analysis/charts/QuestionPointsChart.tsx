@@ -45,7 +45,7 @@ const DIFFICULTY_LEVEL: Record<string, number> = {
 const LINE_COLOR = '#8b5cf6';
 
 export function QuestionPointsChart({ questions }: QuestionPointsChartProps) {
-  const { chartData, maxPoints, formatStats, gapItems } = useMemo(() => {
+  const { chartData, maxPoints, formatStats: _formatStats, gapItems } = useMemo(() => {
     const sorted = [...questions].sort((a, b) => {
       const aNum =
         typeof a.question_number === 'string'

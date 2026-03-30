@@ -55,8 +55,8 @@ export default function ExamAnalysisPage() {
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
 
   // 필터
-  const [filterSubject, setFilterSubject] = useState<string>('');
-  const [filterGrade, setFilterGrade] = useState<string>('');
+  const [filterSubject, _setFilterSubject] = useState<string>('');
+  const [filterGrade, _setFilterGrade] = useState<string>('');
 
   const limit = 20;
 
@@ -466,10 +466,7 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
           {activeTab === 'strategy' && (
             <StudyStrategyTab
               questions={questions}
-              summary={summary}
-              analysisId={latestAnalysis.id}
-              extensions={latestAnalysis.extensions}
-              onRefresh={onRefresh}
+              grade={detail.grade}
             />
           )}
         </>
