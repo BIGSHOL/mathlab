@@ -1,6 +1,6 @@
 import {
   BookOpen, Calculator, Zap, ClipboardCheck, Swords,
-  Stethoscope, Radio,
+  Stethoscope, Radio, FileSearch,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { LicenseFeature } from '@prisma/client';
@@ -93,9 +93,20 @@ export const LICENSE_FEATURE_INFO: Record<LicenseFeature, LicenseFeatureInfo> = 
     color: 'bg-pink-500',
     textColor: 'text-pink-500',
   },
+  EXAM_ANALYSIS: {
+    label: '기출 분석',
+    description: '시험지를 AI로 분석하여 난이도, 유형, 단원별 출제 경향을 파악합니다',
+    studentCapabilities: ['시험 분석 결과 확인'],
+    teacherLinks: [
+      { label: '기출 분석', href: '/exam-analysis' },
+    ],
+    icon: FileSearch,
+    color: 'bg-indigo-500',
+    textColor: 'text-indigo-500',
+  },
 };
 
 /** LICENSE_FEATURE_INFO 키를 순서대로 배열 */
 export const LICENSE_FEATURES_ORDERED: LicenseFeature[] = [
-  'CONCEPT', 'ARITHMETIC', 'TIME_ATTACK', 'TEST', 'REVENGE', 'DIAGNOSTIC', 'QUIZ',
+  'CONCEPT', 'ARITHMETIC', 'TIME_ATTACK', 'TEST', 'REVENGE', 'DIAGNOSTIC', 'QUIZ', 'EXAM_ANALYSIS',
 ];

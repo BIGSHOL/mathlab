@@ -72,7 +72,7 @@ export default function TrendsPage() {
     <PageContainer maxWidth="xl">
       <PageHeader
         title="출제 경향 분석"
-        description="학교별 시험 출제 경향을 분석합니다"
+        subtitle="학교별 시험 출제 경향을 분석합니다"
       />
 
       <div className="flex items-center gap-3 mb-6">
@@ -89,7 +89,7 @@ export default function TrendsPage() {
             </button>
           ))}
         </div>
-        <Button size="sm" variant="outline" onClick={generateTrend} disabled={generating}>
+        <Button size="sm" variant="secondary" onClick={generateTrend} disabled={generating}>
           <RefreshCw className={`w-4 h-4 mr-1 ${generating ? 'animate-spin' : ''}`} />
           {generating ? '집계 중...' : '트렌드 집계'}
         </Button>

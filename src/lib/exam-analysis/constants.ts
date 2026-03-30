@@ -33,6 +33,16 @@ export const EXAM_QUESTION_TYPES = {
 
 export type ExamQuestionTypeKey = keyof typeof EXAM_QUESTION_TYPES;
 
+// ── 수학 능력 영역 (MathLab 기존 4대 영역과 동일) ──
+export const ABILITY_DOMAINS = {
+  CALCULATION: { label: '계산력', labelEn: 'Calculation', color: '#3B82F6' },
+  UNDERSTANDING: { label: '이해력', labelEn: 'Understanding', color: '#10B981' },
+  PROBLEM_SOLVING: { label: '문제해결력', labelEn: 'Problem Solving', color: '#F97316' },
+  REASONING: { label: '추론력', labelEn: 'Reasoning', color: '#8B5CF6' },
+} as const;
+
+export type AbilityDomainKey = keyof typeof ABILITY_DOMAINS;
+
 // ── 문항 형식 ──
 export const EXAM_QUESTION_FORMATS = ['objective', 'short_answer', 'essay'] as const;
 export type ExamQuestionFormat = (typeof EXAM_QUESTION_FORMATS)[number];
@@ -94,4 +104,24 @@ export const QUESTION_TYPE_COLORS: Record<string, string> = {
   proof: '#14B8A6',
   graph: '#F59E0B',
   statistics: '#06B6D4',
+  // Gemini 반환 변형
+  algebra: '#7C3AED',
+  problem_solving: '#E11D48',
+  number: '#0EA5E9',
+  function: '#D97706',
+  probability: '#059669',
+  equation: '#6366F1',
+  inequality: '#9333EA',
+  sequence: '#0891B2',
+  trigonometry: '#DB2777',
+  calculus: '#DC2626',
+  vector: '#4F46E5',
+  set: '#7C3AED',
+  // 영어
+  grammar: '#6366F1',
+  vocabulary: '#8B5CF6',
+  reading: '#EC4899',
+  listening: '#14B8A6',
+  writing: '#F59E0B',
+  communication: '#06B6D4',
 };

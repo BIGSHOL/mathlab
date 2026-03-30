@@ -11,6 +11,7 @@ const ALL_UNLOCKED: LicenseMap = {
   revenge: true,
   diagnostic: true,
   quiz: true,
+  exam_analysis: true,
 };
 
 interface LicenseStore {

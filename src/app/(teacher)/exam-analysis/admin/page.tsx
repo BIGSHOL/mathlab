@@ -329,7 +329,7 @@ export default function ExamAnalysisAdminPage() {
         <div className="flex flex-col items-center justify-center py-20 text-text-secondary">
           <ShieldAlert className="w-12 h-12 mb-4 text-red-400" />
           <p className="text-lg font-semibold text-text-primary">권한이 없습니다</p>
-          <p className="text-sm mt-1">OWNER 이상 권한이 필요합니다.</p>
+          <p className="text-sm mt-1">원장 이상 권한이 필요합니다.</p>
         </div>
       </PageContainer>
     );

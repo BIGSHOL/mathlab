@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 import { Upload, X, FileText, Image as ImageIcon, Sparkles } from 'lucide-react';
+import { ExamScopeSelector } from './ExamScopeSelector';
 
 interface ExamUploadFormProps {
   onSuccess: () => void;
@@ -173,6 +174,7 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
   const [category, setCategory] = useState('');
   const examType = 'blank'; // 시험지 유형 고정 (학생 답안지 분석은 SA 토글로 제어)
   const [schoolName, setSchoolName] = useState('');
+  const [examScope, setExamScope] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [autoFilled, setAutoFilled] = useState(false);
@@ -261,6 +263,7 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
         category: category || null,
         examType,
         schoolName: schoolName.trim() || null,
+        examScope: examScope.length > 0 ? examScope : null,
       }));
 
       const res = await fetch('/api/exam-analysis', { method: 'POST', body: formData });
@@ -361,7 +364,7 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
           <label className="block text-sm font-medium text-slate-700 mb-1">학년 *</label>
           <select
             value={grade}
-            onChange={e => { setGrade(e.target.value); setCategory(''); }}
+            onChange={e => { setGrade(e.target.value); setCategory(''); setExamScope([]); }}
             className="w-full px-3 py-2 border rounded-sm text-sm"
           >
             <option value="">선택</option>
@@ -398,6 +401,16 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
           />
         </div>
       </div>
+
+      {/* 출제범위 선택 */}
+      {grade && subject === 'MATH' && (
+        <ExamScopeSelector
+          grade={grade}
+          category={category}
+          selectedTopics={examScope}
+          onChange={setExamScope}
+        />
+      )}
 
       {/* 버튼 */}
       <div className="flex justify-end gap-2 pt-2">

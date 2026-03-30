@@ -91,7 +91,7 @@ export function ExtendedReportView({ analysisId, extensions, onRefresh }: Extend
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-700">확장 분석 리포트</h3>
-        <Button size="sm" variant="outline" onClick={runAll} disabled={running}>
+        <Button size="sm" variant="secondary" onClick={runAll} disabled={running}>
           <RefreshCw className={`w-3.5 h-3.5 mr-1 ${running ? 'animate-spin' : ''}`} />
           재분석
         </Button>

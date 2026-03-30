@@ -1290,6 +1290,7 @@ model ExamPaper {
   fileUrls      String          @db.Text
   fileType      String          @db.VarChar(20)
   status        ExamPaperStatus @default(PENDING)
+  analysisStep  Int             @default(0)   // 0=대기, 1=파일로드, 2=분류, 3=AI분석, 4=저장
   errorMessage  String?         @db.Text
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt

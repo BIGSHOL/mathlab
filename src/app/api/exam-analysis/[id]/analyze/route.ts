@@ -11,6 +11,14 @@ import { readFile } from 'fs/promises';
 
 type Params = { params: Promise<{ id: string }> };
 
+/** 분석 단계 업데이트 헬퍼 */
+async function setStep(id: string, step: number) {
+  await prisma.examPaper.update({
+    where: { id },
+    data: { analysisStep: step },
+  });
+}
+
 /** POST /api/exam-analysis/[id]/analyze — 기본 분석 실행 */
 export async function POST(request: NextRequest, { params }: Params) {
   const user = await requireTeacher();
@@ -23,19 +31,20 @@ export async function POST(request: NextRequest, { params }: Params) {
   });
   if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
 
-  // 이미 분석 중이면 거절
   if (examPaper.status === 'ANALYZING') {
     return badRequest('이미 분석이 진행 중입니다');
   }
 
-  // 상태 → ANALYZING
+  // 상태 → ANALYZING, step 0
   await prisma.examPaper.update({
     where: { id },
-    data: { status: 'ANALYZING', errorMessage: null },
+    data: { status: 'ANALYZING', analysisStep: 0, errorMessage: null },
   });
 
   try {
-    // 파일 로드 (base64)
+    // ── Step 1: 파일 로드 ──
+    await setStep(id, 1);
+
     const fileUrls = examPaper.fileUrls.split(',');
     const imageDataList: string[] = [];
 
@@ -45,7 +54,9 @@ export async function POST(request: NextRequest, { params }: Params) {
       imageDataList.push(buffer.toString('base64'));
     }
 
-    // 프롬프트 빌드
+    // ── Step 2: 분류 + 프롬프트 구성 ──
+    await setStep(id, 2);
+
     const context: ExamContext = {
       subject: examPaper.subject === 'MATH' ? '수학' : '영어',
       grade_level: examPaper.grade,
@@ -53,25 +64,26 @@ export async function POST(request: NextRequest, { params }: Params) {
       category: examPaper.category,
       exam_scope: examPaper.examScope as string[] | null,
       paper_type: examPaper.examType,
-      has_essay: true, // 기본적으로 서술형 가이드 포함
+      has_essay: true,
     };
 
     const promptResult = await ExamPromptBuilder.buildWithDbContext(context);
 
-    // Gemini Vision 분석 호출
+    // ── Step 3: AI 문항 분석 (가장 오래 걸림) ──
+    await setStep(id, 3);
+
     const mimeType = examPaper.fileType === 'pdf' ? 'application/pdf' : 'image/jpeg';
     const analysisResult = await analyzeExam(imageDataList, mimeType, promptResult.combined_prompt);
 
     let questions = analysisResult.questions as AnalyzedQuestion[];
 
-    // 학생 답안지: 채점 마크 감지 + 교차 검증
+    // 채점 마크 감지 + 교차 검증 (학생 답안지)
     let markDetection = null;
     let crossValidation = null;
 
     if (examPaper.examType === 'student' && imageDataList.length > 0) {
       try {
         markDetection = await detectGradingMarks(imageDataList[0], mimeType);
-
         if (markDetection && markDetection.marks.length > 0) {
           crossValidation = crossValidateGrading(questions, markDetection);
         }
@@ -80,22 +92,27 @@ export async function POST(request: NextRequest, { params }: Params) {
       }
     }
 
-    // 내신 원칙: 60% 이상 같은 과목이면 통합
+    // 내신 원칙 통합
     questions = consolidateDominantTopic(questions);
 
-    // 통계 계산
+    // ── Step 4: DB 저장 ──
+    await setStep(id, 4);
+
     const totalQuestions = questions.length;
     const totalPoints = questions.reduce((sum, q) => sum + (q.points || 0), 0);
     const earnedPoints = questions.reduce((sum, q) => sum + (q.earned_points || 0), 0);
 
-    // DB 저장
     const analysis = await prisma.examAnalysis.create({
       data: {
         examPaperId: id,
-        questions: questions as unknown as Record<string, unknown>[],
-        summary: analysisResult.summary || null,
-        markDetection: markDetection as unknown as Record<string, unknown> | null,
-        crossValidation: crossValidation as unknown as Record<string, unknown> | null,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        questions: JSON.parse(JSON.stringify(questions)) as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        summary: analysisResult.summary ? JSON.parse(JSON.stringify(analysisResult.summary)) as any : null,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        markDetection: markDetection ? JSON.parse(JSON.stringify(markDetection)) as any : null,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        crossValidation: crossValidation ? JSON.parse(JSON.stringify(crossValidation)) as any : null,
         modelVersion: 'gemini-2.5-flash',
         totalQuestions,
         totalPoints: totalPoints || null,
@@ -104,10 +121,10 @@ export async function POST(request: NextRequest, { params }: Params) {
       },
     });
 
-    // 상태 → COMPLETED
+    // ── 완료 ──
     await prisma.examPaper.update({
       where: { id },
-      data: { status: 'COMPLETED' },
+      data: { status: 'COMPLETED', analysisStep: 4 },
     });
 
     return NextResponse.json({
@@ -120,11 +137,10 @@ export async function POST(request: NextRequest, { params }: Params) {
       },
     });
   } catch (error) {
-    // 상태 → FAILED
     const errorMsg = error instanceof Error ? error.message : '분석 중 오류가 발생했습니다';
     await prisma.examPaper.update({
       where: { id },
-      data: { status: 'FAILED', errorMessage: errorMsg },
+      data: { status: 'FAILED', errorMessage: errorMsg, analysisStep: 0 },
     });
 
     return NextResponse.json(

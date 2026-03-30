@@ -431,11 +431,12 @@ export async function getLicenseUsageStats(
     REVENGE: revengeAct.map((r) => ({ studentId: r.studentId, date: toDateStr(r.createdAt) })),
     DIAGNOSTIC: diagnosticAct.map((r) => ({ studentId: r.studentId, date: toDateStr(r.createdAt) })),
     QUIZ: quizAct.map((r) => ({ studentId: r.studentId, date: toDateStr(r.session.createdAt) })),
+    EXAM_ANALYSIS: [],
   };
 
   // 4. 기능별 통계 계산
   const allFeatures: LicenseFeature[] = [
-    'CONCEPT', 'ARITHMETIC', 'TIME_ATTACK', 'TEST', 'REVENGE', 'DIAGNOSTIC', 'QUIZ',
+    'CONCEPT', 'ARITHMETIC', 'TIME_ATTACK', 'TEST', 'REVENGE', 'DIAGNOSTIC', 'QUIZ', 'EXAM_ANALYSIS',
   ];
 
   // 미사용 학생 이름/반 조회를 위해 한 번에 ID 수집

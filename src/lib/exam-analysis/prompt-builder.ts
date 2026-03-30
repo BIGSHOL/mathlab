@@ -178,6 +178,18 @@ export class ExamPromptBuilder {
       context.category
     );
 
+    // 출제범위가 있으면 가이드라인에 강제 추가
+    if (context.exam_scope && context.exam_scope.length > 0) {
+      guidelines.push(`🎯 **[필수] 출제범위 제한**
+
+이 시험의 출제범위는 다음 단원으로 한정되어 있습니다. **아래 단원 목록에 없는 단원으로 분류하지 마세요!**
+
+출제범위: ${context.exam_scope.join(', ')}
+
+- 위 단원 목록에 포함되지 않는 주제로 분류하면 **confidence를 0.3 이하**로 설정
+- 문제가 출제범위 밖의 개념을 사용하더라도, 핵심 학습 목표가 출제범위 내 단원이면 해당 단원으로 분류`);
+    }
+
     const combined = this.combinePrompts({
       base,
       guidelines,
@@ -280,7 +292,7 @@ export class ExamPromptBuilder {
 1. 모든 문항을 빠짐없이 분석 (소문제 포함)
 2. 난이도는 4단계 시스템을 엄격히 적용
 3. topic 형식: "과목명 > 대단원 > 소단원" (공백 포함 > 구분)
-4. ai_comment: 정확히 2문장, 최대 50자
+4. ai_comment: 정확히 2문장, 존댓말(~입니다/~합니다), 각 문장 20~40자
 5. confidence: 0.0~1.0 (불확실하면 낮게)`;
     }
 
@@ -293,7 +305,7 @@ export class ExamPromptBuilder {
 1. 모든 문항을 빠짐없이 분석 (소문제 포함)
 2. 난이도는 4단계 시스템을 엄격히 적용
 3. topic 형식: "과목명 > 대단원 > 소단원" (공백 포함 > 구분)
-4. ai_comment: 정확히 2문장, 최대 50자
+4. ai_comment: 정확히 2문장, 존댓말(~입니다/~합니다), 각 문장 20~40자
 5. confidence: 0.0~1.0 (불확실하면 낮게)`;
   }
 
@@ -509,6 +521,7 @@ export class ExamPromptBuilder {
       "difficulty": "concept",
       "difficulty_reason": "기본 개념 확인",
       "question_type": "calculation",
+      "ability_domain": "calculation",
       "points": 3,
       "topic": "${topicExample}",
       "ai_comment": "핵심 개념 확인 문제. 공식을 정확히 암기하면 쉽게 풀 수 있다.",
@@ -520,6 +533,7 @@ export class ExamPromptBuilder {
       "difficulty": "pattern",
       "difficulty_reason": "유형 적용 문제",
       "question_type": "calculation",
+      "ability_domain": "understanding",
       "points": 3,
       "topic": "${topicExample}",
       "ai_comment": "전형적인 유형 문제. 풀이 순서를 익히면 된다.",
@@ -538,9 +552,10 @@ export class ExamPromptBuilder {
 | difficulty | ${difficultyKeys} 중 하나 (소문자) |
 | difficulty_reason | 난이도 판정 이유, **최대 15자** |
 | question_type | ${typeKeys} 중 하나 (소문자) |
+| ability_domain | "calculation"(계산력), "understanding"(이해력), "problem_solving"(문제해결력), "reasoning"(추론력) 중 하나 |
 | points | 배점 (숫자), 불분명 시 null |
 | topic | "과목명 > 대단원 > 소단원" (공백 포함 > 구분) |
-| ai_comment | **정확히 2문장, 최대 50자** |
+| ai_comment | **정확히 2문장, 존댓말(~입니다/~합니다), 각 문장 20~40자** |
 | confidence | 0.0~1.0 (분석 신뢰도) |${isStudent ? `
 | is_correct | true/false/null (정오 판별, 판단 불가 시 null) |
 | student_answer | 학생 답안 문자열 (판독 불가 시 null) |

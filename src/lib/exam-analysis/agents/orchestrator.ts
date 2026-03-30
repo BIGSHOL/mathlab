@@ -104,10 +104,12 @@ export async function runExtendedAnalysis(params: {
       if (agentType === 'learning') learningPlan = agentResult as unknown as LearningPlan;
 
       // DB 저장
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const jsonResult = JSON.parse(JSON.stringify(agentResult)) as any;
       await prisma.examAnalysisExtension.upsert({
         where: { analysisId_agentType: { analysisId, agentType } },
-        create: { analysisId, agentType, result: agentResult as unknown as Record<string, unknown> },
-        update: { result: agentResult as unknown as Record<string, unknown>, errorMessage: null },
+        create: { analysisId, agentType, result: jsonResult },
+        update: { result: jsonResult, errorMessage: null },
       });
 
       results.push({ agentType, result: agentResult, status: 'completed' });
@@ -115,8 +117,10 @@ export async function runExtendedAnalysis(params: {
       const errorMsg = e instanceof Error ? e.message : '에이전트 실행 실패';
       await prisma.examAnalysisExtension.upsert({
         where: { analysisId_agentType: { analysisId, agentType } },
-        create: { analysisId, agentType, result: {}, errorMessage: errorMsg },
-        update: { result: {}, errorMessage: errorMsg },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        create: { analysisId, agentType, result: {} as any, errorMessage: errorMsg },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        update: { result: {} as any, errorMessage: errorMsg },
       });
       results.push({ agentType, result: null, status: 'failed', error: errorMsg });
     }
@@ -143,10 +147,12 @@ export async function runExtendedAnalysis(params: {
 
       const agentResult = await agent.run(input);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const jsonResult = JSON.parse(JSON.stringify(agentResult)) as any;
       await prisma.examAnalysisExtension.upsert({
         where: { analysisId_agentType: { analysisId, agentType } },
-        create: { analysisId, agentType, result: agentResult as unknown as Record<string, unknown> },
-        update: { result: agentResult as unknown as Record<string, unknown>, errorMessage: null },
+        create: { analysisId, agentType, result: jsonResult },
+        update: { result: jsonResult, errorMessage: null },
       });
 
       return { agentType, result: agentResult, status: 'completed' as const };
@@ -154,8 +160,10 @@ export async function runExtendedAnalysis(params: {
       const errorMsg = e instanceof Error ? e.message : '에이전트 실행 실패';
       await prisma.examAnalysisExtension.upsert({
         where: { analysisId_agentType: { analysisId, agentType } },
-        create: { analysisId, agentType, result: {}, errorMessage: errorMsg },
-        update: { result: {}, errorMessage: errorMsg },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        create: { analysisId, agentType, result: {} as any, errorMessage: errorMsg },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        update: { result: {} as any, errorMessage: errorMsg },
       });
       return { agentType, result: null, status: 'failed' as const, error: errorMsg };
     }

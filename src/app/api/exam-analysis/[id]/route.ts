@@ -11,26 +11,34 @@ export async function GET(_request: NextRequest, { params }: Params) {
   if (isResponse(user)) return user;
   const { id } = await params;
 
-  const tenantWhere = getTenantFilter(user);
-  const examPaper = await prisma.examPaper.findFirst({
-    where: { id, ...tenantWhere },
-    include: {
-      teacher: { select: { id: true, name: true } },
-      student: { select: { id: true, name: true } },
-      analyses: {
-        orderBy: { createdAt: 'desc' },
-        include: {
-          extensions: {
-            select: { id: true, agentType: true, result: true, createdAt: true, errorMessage: true },
+  try {
+    const tenantWhere = getTenantFilter(user);
+    const examPaper = await prisma.examPaper.findFirst({
+      where: { id, ...tenantWhere },
+      include: {
+        teacher: { select: { id: true, name: true } },
+        student: { select: { id: true, name: true } },
+        analyses: {
+          orderBy: { createdAt: 'desc' },
+          include: {
+            extensions: {
+              select: { id: true, agentType: true, result: true, createdAt: true, errorMessage: true },
+            },
           },
         },
       },
-    },
-  });
+    });
 
-  if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
+    if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
 
-  return NextResponse.json({ data: examPaper });
+    return NextResponse.json({ data: examPaper });
+  } catch (error) {
+    console.error('[exam-analysis GET] 상세 조회 에러:', error);
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_ERROR', message: '시험지 조회 중 오류가 발생했습니다' } },
+      { status: 500 }
+    );
+  }
 }
 
 /** PATCH /api/exam-analysis/[id] — 시험지 메타데이터 수정 */
@@ -51,7 +59,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   const updated = await prisma.examPaper.update({
     where: { id },
-    data: parsed.data,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: parsed.data as any,
   });
 
   return NextResponse.json({ data: updated });

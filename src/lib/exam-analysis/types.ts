@@ -3,7 +3,7 @@
  * Python Pydantic 모델에서 1:1 이식
  */
 
-import type { ExamDifficultyKey, ExamQuestionTypeKey, ExamQuestionFormat, GradingStatus, AgentType } from './constants';
+import type { ExamDifficultyKey, ExamQuestionTypeKey, ExamQuestionFormat, GradingStatus, AgentType, AbilityDomainKey } from './constants';
 
 // ── 문항 분석 결과 (기본 분석) ──
 export interface AnalyzedQuestion {
@@ -13,6 +13,7 @@ export interface AnalyzedQuestion {
   difficulty: Lowercase<ExamDifficultyKey>;
   difficulty_reason: string | null;
   question_type: Lowercase<ExamQuestionTypeKey>;
+  ability_domain?: Lowercase<AbilityDomainKey> | null; // 수학 능력 영역
   points: number | null;
   topic: string | null;             // "과목 > 대단원 > 소단원"
   ai_comment: string | null;       // 2문장, 최대 50자
@@ -251,7 +252,6 @@ export interface AgentContext {
 export interface AgentResult {
   agentType: AgentType;
   result: unknown;
-  creditsUsed: number;
 }
 
 // ── 프롬프트 빌더 ──
