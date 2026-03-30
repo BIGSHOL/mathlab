@@ -60,8 +60,7 @@ export function CurriculumCheckTree({ chapterCounts }: CurriculumCheckTreeProps)
   }, [chapterCounts]);
 
   // 특정 bookCode의 모든 chapter key 목록
-  // ※ 초등/중등 모두 curriculum의 최상위 항목이 DB chapter 필드와 일치
-  //    (중등: "수와 연산" = DB chapter, "소인수분해" = DB section)
+  // ※ 초등/중등/고등 모두 curriculum의 최상위 항목이 DB chapter 필드(대단원)와 일치
   const getAllChapterKeys = useCallback((bookCode: string): string[] => {
     const entries = curriculumData[bookCode] ?? [];
     const keys: string[] = [];
@@ -151,7 +150,7 @@ export function CurriculumCheckTree({ chapterCounts }: CurriculumCheckTreeProps)
               )}
             </button>
 
-            {/* Chapters (대단원 = DB chapter 필드) */}
+            {/* Chapters (대단원 = curriculum unit.name = DB chapter 필드) */}
             {isBookExpanded && entries.map((sem) =>
               sem.chapters.map((ch) => {
                 const chapterKey = `${bookCode}|${ch.name}`;

@@ -99,111 +99,51 @@ export const ELEMENTARY_SCHOOL_CURRICULUM: Record<string, CurriculumUnit[]> = {
 };
 
 export const MIDDLE_SCHOOL_CURRICULUM: Record<string, CurriculumUnit[]> = {
+  // ── 중1-1 ──
   '1학년 1학기': [
-    {
-      name: '수와 연산',
-      subUnits: [
-        { name: '소인수분해', subUnits: [{ name: '소인수분해' }, { name: '최대공약수와 최소공배수' }] },
-        { name: '정수와 유리수', subUnits: [{ name: '정수와 유리수' }, { name: '정수와 유리수의 덧셈과 뺄셈' }, { name: '정수와 유리수의 곱셈과 나눗셈' }] },
-      ],
-    },
-    {
-      name: '문자와 식',
-      subUnits: [
-        { name: '문자의 사용과 식', subUnits: [{ name: '문자의 사용과 식의 계산' }, { name: '일차식의 덧셈과 뺄셈' }] },
-        { name: '일차방정식', subUnits: [{ name: '일차방정식의 풀이' }, { name: '일차방정식의 활용' }] },
-      ],
-    },
-    {
-      name: '좌표평면과 그래프',
-      subUnits: [
-        { name: '좌표와 그래프', subUnits: [{ name: '순서쌍과 좌표' }, { name: '그래프' }] },
-        { name: '정비례와 반비례', subUnits: [{ name: '정비례' }, { name: '반비례' }] },
-      ],
-    },
+    { name: '소인수분해', subUnits: [{ name: '소인수분해' }, { name: '최대공약수와 최소공배수' }] },
+    { name: '정수와 유리수', subUnits: [{ name: '정수와 유리수' }, { name: '정수와 유리수의 덧셈과 뺄셈' }, { name: '정수와 유리수의 곱셈과 나눗셈' }] },
+    { name: '문자의 사용과 식', subUnits: [{ name: '문자의 사용과 식의 계산' }, { name: '일차식의 덧셈과 뺄셈' }] },
+    { name: '일차방정식', subUnits: [{ name: '일차방정식의 풀이' }, { name: '일차방정식의 활용' }] },
+    { name: '좌표와 그래프', subUnits: [{ name: '순서쌍과 좌표' }, { name: '그래프' }] },
+    { name: '정비례와 반비례', subUnits: [{ name: '정비례' }, { name: '반비례' }] },
   ],
+  // ── 중1-2 ──
   '1학년 2학기': [
-    {
-      name: '기하',
-      subUnits: [
-        { name: '기본 도형', subUnits: [{ name: '점·선·면·각' }, { name: '위치 관계' }, { name: '평행선의 성질' }] },
-        { name: '작도와 합동', subUnits: [{ name: '삼각형의 작도' }, { name: '삼각형의 합동' }] },
-        { name: '평면도형', subUnits: [{ name: '다각형' }, { name: '원과 부채꼴' }] },
-        { name: '입체도형', subUnits: [{ name: '다면체' }, { name: '회전체' }, { name: '입체도형의 겉넓이와 부피' }] },
-      ],
-    },
-    {
-      name: '통계',
-      subUnits: [
-        { name: '자료의 정리와 해석', subUnits: [{ name: '줄기와 잎 그림·도수분포표' }, { name: '히스토그램과 도수분포다각형' }, { name: '상대도수' }] },
-      ],
-    },
+    { name: '기본 도형', subUnits: [{ name: '점·선·면·각' }, { name: '위치 관계' }, { name: '평행선의 성질' }] },
+    { name: '작도와 합동', subUnits: [{ name: '삼각형의 작도' }, { name: '삼각형의 합동' }] },
+    { name: '평면도형', subUnits: [{ name: '다각형' }, { name: '원과 부채꼴' }] },
+    { name: '입체도형', subUnits: [{ name: '다면체' }, { name: '회전체' }, { name: '입체도형의 겉넓이와 부피' }] },
+    { name: '자료의 정리와 해석', subUnits: [{ name: '줄기와 잎 그림·도수분포표' }, { name: '히스토그램과 도수분포다각형' }, { name: '상대도수' }] },
   ],
+  // ── 중2-1 ──
   '2학년 1학기': [
-    {
-      name: '수와 연산',
-      subUnits: [{ name: '유리수와 순환소수', subUnits: [{ name: '유리수와 순환소수' }] }],
-    },
-    {
-      name: '문자와 식',
-      subUnits: [{ name: '식의 계산', subUnits: [{ name: '단항식의 계산' }, { name: '다항식의 계산' }] }],
-    },
-    {
-      name: '부등식과 방정식',
-      subUnits: [
-        { name: '일차부등식', subUnits: [{ name: '부등식의 성질' }, { name: '일차부등식의 풀이와 활용' }] },
-        { name: '연립일차방정식', subUnits: [{ name: '연립일차방정식의 풀이' }, { name: '연립일차방정식의 활용' }] },
-      ],
-    },
-    {
-      name: '함수',
-      subUnits: [{ name: '일차함수', subUnits: [{ name: '일차함수와 그 그래프' }, { name: '일차함수와 일차방정식의 관계' }] }],
-    },
+    { name: '유리수와 순환소수', subUnits: [{ name: '유리수와 순환소수' }] },
+    { name: '식의 계산', subUnits: [{ name: '단항식의 계산' }, { name: '다항식의 계산' }] },
+    { name: '일차부등식', subUnits: [{ name: '부등식의 성질' }, { name: '일차부등식의 풀이와 활용' }] },
+    { name: '연립일차방정식', subUnits: [{ name: '연립일차방정식의 풀이' }, { name: '연립일차방정식의 활용' }] },
+    { name: '일차함수', subUnits: [{ name: '일차함수와 그 그래프' }, { name: '일차함수와 일차방정식의 관계' }] },
   ],
+  // ── 중2-2 ──
   '2학년 2학기': [
-    {
-      name: '기하',
-      subUnits: [
-        { name: '삼각형의 성질', subUnits: [{ name: '이등변삼각형의 성질' }, { name: '직각삼각형의 합동' }, { name: '삼각형의 외심과 내심' }] },
-        { name: '사각형의 성질', subUnits: [{ name: '평행사변형' }, { name: '여러 가지 사각형' }] },
-        { name: '도형의 닮음', subUnits: [{ name: '도형의 닮음' }, { name: '평행선 사이의 선분의 길이의 비' }, { name: '삼각형의 무게중심' }] },
-        { name: '피타고라스 정리', subUnits: [{ name: '피타고라스 정리' }] },
-      ],
-    },
-    {
-      name: '확률',
-      subUnits: [{ name: '확률', subUnits: [{ name: '경우의 수' }, { name: '확률의 뜻과 성질' }, { name: '확률의 계산' }] }],
-    },
+    { name: '삼각형의 성질', subUnits: [{ name: '이등변삼각형의 성질' }, { name: '직각삼각형의 합동' }, { name: '삼각형의 외심과 내심' }] },
+    { name: '사각형의 성질', subUnits: [{ name: '평행사변형' }, { name: '여러 가지 사각형' }] },
+    { name: '도형의 닮음', subUnits: [{ name: '도형의 닮음' }, { name: '평행선 사이의 선분의 길이의 비' }, { name: '삼각형의 무게중심' }] },
+    { name: '피타고라스 정리', subUnits: [{ name: '피타고라스 정리' }] },
+    { name: '확률', subUnits: [{ name: '경우의 수' }, { name: '확률의 뜻과 성질' }, { name: '확률의 계산' }] },
   ],
+  // ── 중3-1 ──
   '3학년 1학기': [
-    {
-      name: '수와 연산',
-      subUnits: [{ name: '실수와 그 연산', subUnits: [{ name: '제곱근과 실수' }, { name: '근호를 포함한 식의 계산' }] }],
-    },
-    {
-      name: '문자와 식',
-      subUnits: [
-        { name: '다항식의 곱셈과 인수분해', subUnits: [{ name: '다항식의 곱셈' }, { name: '다항식의 인수분해' }] },
-        { name: '이차방정식', subUnits: [{ name: '이차방정식의 풀이' }, { name: '이차방정식의 활용' }] },
-      ],
-    },
-    {
-      name: '함수',
-      subUnits: [{ name: '이차함수', subUnits: [{ name: '이차함수와 그 그래프' }] }],
-    },
+    { name: '실수와 그 연산', subUnits: [{ name: '제곱근과 실수' }, { name: '근호를 포함한 식의 계산' }] },
+    { name: '다항식의 곱셈과 인수분해', subUnits: [{ name: '다항식의 곱셈' }, { name: '다항식의 인수분해' }] },
+    { name: '이차방정식', subUnits: [{ name: '이차방정식의 풀이' }, { name: '이차방정식의 활용' }] },
+    { name: '이차함수', subUnits: [{ name: '이차함수와 그 그래프' }] },
   ],
+  // ── 중3-2 ──
   '3학년 2학기': [
-    {
-      name: '기하',
-      subUnits: [
-        { name: '삼각비', subUnits: [{ name: '삼각비' }, { name: '삼각비의 활용' }] },
-        { name: '원의 성질', subUnits: [{ name: '원과 현' }, { name: '원과 접선' }, { name: '원주각' }] },
-      ],
-    },
-    {
-      name: '통계',
-      subUnits: [{ name: '통계', subUnits: [{ name: '대푯값과 산포도' }, { name: '상관관계' }] }],
-    },
+    { name: '삼각비', subUnits: [{ name: '삼각비' }, { name: '삼각비의 활용' }] },
+    { name: '원의 성질', subUnits: [{ name: '원과 현' }, { name: '원과 접선' }, { name: '원주각' }] },
+    { name: '통계', subUnits: [{ name: '대푯값과 산포도' }, { name: '상관관계' }] },
   ],
 };
 
