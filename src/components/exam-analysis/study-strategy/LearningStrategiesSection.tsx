@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Lightbulb, ChevronDown } from 'lucide-react';
 import type { TopicSummary } from './types';
 import { DIFFICULTY_ADVICE, TYPE_STRATEGIES, DIFFICULTY_LABELS } from './constants';
+import { findMatchingStrategies } from '@/lib/exam-analysis/data/curriculum-strategies';
 
 interface LearningStrategiesSectionProps {
   topicSummaries: TopicSummary[];
@@ -12,8 +13,8 @@ interface LearningStrategiesSectionProps {
   onToggleSection: () => void;
 }
 
-// 유형 한국어 라벨 매핑
-const TYPE_LABELS: Record<string, string> = {
+// 유형 한국어 라벨 매핑 (ExpandedStrategy에서도 사용)
+const _TYPE_LABELS: Record<string, string> = {
   calculation: '계산',
   geometry: '도형',
   application: '응용',
@@ -95,9 +96,6 @@ export function LearningStrategiesSection({
                 const color = getDifficultyColor(topic.avgDifficulty);
                 const diffKey = getDifficultyKey(topic.avgDifficulty);
 
-                // 유형 중복 제거
-                const uniqueTypes = Array.from(new Set(topic.types));
-
                 return (
                   <div
                     key={topic.shortTopic}
@@ -127,64 +125,7 @@ export function LearningStrategiesSection({
 
                     {/* 확장: 학습 전략 */}
                     {isOpen && (
-                      <div className="border-t border-slate-100 bg-white px-4 py-3 space-y-3">
-                        {/* 난이도별 조언 */}
-                        {DIFFICULTY_ADVICE[diffKey] && (
-                          <div className="bg-slate-50 rounded-sm p-3">
-                            <div className="flex items-center gap-1.5 mb-1.5">
-                              <span
-                                className="px-1.5 py-0.5 rounded-sm text-[10px] font-bold text-white"
-                                style={{ backgroundColor: color }}
-                              >
-                                {is4Level
-                                  ? (DIFFICULTY_LABELS[diffKey] || diffKey)
-                                  : `난이도 ${topic.avgDifficulty.toFixed(1)}`}
-                              </span>
-                              <span className="text-xs font-medium text-slate-700">난이도 조언</span>
-                            </div>
-                            <p className="text-xs text-slate-600 leading-relaxed">
-                              {DIFFICULTY_ADVICE[diffKey]}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* 유형별 학습 전략 (중복 제거 + 한국어 라벨) */}
-                        {uniqueTypes.length > 0 && (
-                          <div>
-                            <h5 className="text-xs font-semibold text-slate-700 mb-2">
-                              유형별 학습 전략
-                            </h5>
-                            <div className="space-y-2">
-                              {uniqueTypes.map(type => {
-                                const strategies = TYPE_STRATEGIES[type];
-                                if (!strategies) return null;
-                                const typeLabel = TYPE_LABELS[type] || type;
-                                return (
-                                  <div key={type} className="bg-purple-50/50 rounded-sm p-2.5">
-                                    <span className="text-[10px] font-medium text-purple-700">
-                                      {typeLabel}
-                                    </span>
-                                    <ul className="mt-1.5 space-y-1">
-                                      {strategies.map((s, i) => (
-                                        <li
-                                          key={i}
-                                          className="text-xs text-slate-600 flex items-start gap-1.5"
-                                        >
-                                          <span
-                                            className="w-1 h-1 rounded-full mt-1.5 shrink-0"
-                                            style={{ backgroundColor: color }}
-                                          />
-                                          {s}
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                      <ExpandedStrategy topic={topic} diffKey={diffKey} color={color} is4Level={is4Level} />
                     )}
                   </div>
                 );
@@ -192,6 +133,94 @@ export function LearningStrategiesSection({
             </div>
           )}
         </div>
+      )}
+    </div>
+  );
+}
+
+/** 확장 영역: 교육과정 기반 전략 우선, 없으면 유형별 폴백 */
+function ExpandedStrategy({ topic, diffKey, color, is4Level }: {
+  topic: TopicSummary; diffKey: string; color: string; is4Level: boolean;
+}) {
+  // 1. 교육과정 기반 전략 (단원별 맞춤)
+  const curriculumMatch = findMatchingStrategies(topic.topic);
+  const hasCurriculumStrategy = curriculumMatch && curriculumMatch.strategies.length > 0;
+
+  // 2. 유형별 폴백
+  const uniqueTypes = Array.from(new Set(topic.types));
+
+  return (
+    <div className="border-t border-slate-100 bg-white px-4 py-3 space-y-3">
+      {/* 교육과정 기반 맞춤 전략 */}
+      {hasCurriculumStrategy ? (
+        <div className="bg-blue-50/50 rounded-sm p-3">
+          <div className="flex items-center gap-1.5 mb-2">
+            <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-bold text-white bg-blue-500">
+              교육과정 맞춤
+            </span>
+            <span className="text-xs font-medium text-slate-700">{topic.shortTopic} 학습 전략</span>
+          </div>
+          <ul className="space-y-1.5">
+            {curriculumMatch!.strategies.slice(0, 5).map((s: string, i: number) => (
+              <li key={i} className="text-xs text-slate-700 flex items-start gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 bg-blue-400" />
+                {s}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <>
+          {/* 난이도별 조언 (폴백) */}
+          {DIFFICULTY_ADVICE[diffKey] && (
+            <div className="bg-slate-50 rounded-sm p-3">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-bold text-white" style={{ backgroundColor: color }}>
+                  {is4Level ? (DIFFICULTY_LABELS[diffKey] || diffKey) : `난이도 ${topic.avgDifficulty.toFixed(1)}`}
+                </span>
+                <span className="text-xs font-medium text-slate-700">난이도 조언</span>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">{DIFFICULTY_ADVICE[diffKey]}</p>
+            </div>
+          )}
+
+          {/* 유형별 학습 전략 (폴백) */}
+          {uniqueTypes.length > 0 && (
+            <div>
+              <h5 className="text-xs font-semibold text-slate-700 mb-2">유형별 학습 전략</h5>
+              <div className="space-y-2">
+                {uniqueTypes.map(type => {
+                  const strategies = TYPE_STRATEGIES[type];
+                  if (!strategies) return null;
+                  const TYPE_LABELS_MAP: Record<string, string> = {
+                    calculation: '계산', geometry: '도형', application: '응용',
+                    proof: '증명', graph: '그래프', statistics: '통계',
+                  };
+                  return (
+                    <div key={type} className="bg-purple-50/50 rounded-sm p-2.5">
+                      <span className="text-[10px] font-medium text-purple-700">{TYPE_LABELS_MAP[type] || type}</span>
+                      <ul className="mt-1.5 space-y-1">
+                        {strategies.map((s, i) => (
+                          <li key={i} className="text-xs text-slate-600 flex items-start gap-1.5">
+                            <span className="w-1 h-1 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: color }} />
+                            {s}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* 서술형 조언 */}
+      {topic.essayCount > 0 && (
+        <p className="text-xs text-amber-700 bg-amber-50 rounded-sm px-3 py-2">
+          서술형 {topic.essayCount}문항 포함 — 풀이 과정을 논리적으로 작성하는 연습이 필요합니다.
+        </p>
       )}
     </div>
   );
