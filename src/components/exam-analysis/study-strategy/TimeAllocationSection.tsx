@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { Clock, ChevronDown, Star, Zap, AlertCircle, Lightbulb } from 'lucide-react';
 import type { TopicSummary } from './types';
+import { collectTimeTips } from '@/lib/exam-analysis/data/curriculum-strategies';
 
 interface TimeAllocationSectionProps {
   topicSummaries: TopicSummary[];
@@ -53,6 +54,14 @@ export function TimeAllocationSection({
     () => allocations.filter(a => a.estimatedMinutes >= maxMinutes * 0.8),
     [allocations, maxMinutes],
   );
+
+  // 토픽별 시간 관리 팁 수집
+  const timeTips = useMemo(
+    () => collectTimeTips(topicSummaries.map(t => t.topic)),
+    [topicSummaries],
+  );
+
+  const hasSpecificTips = timeTips.quickTips.length > 0 || timeTips.cautionTips.length > 0 || timeTips.savingTips.length > 0;
 
   if (topicSummaries.length === 0) {
     return (
@@ -150,26 +159,38 @@ export function TimeAllocationSection({
             </div>
           </div>
 
-          {/* 3개 팁 카드 */}
+          {/* 팁 카드 — 토픽별 or 제네릭 */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
             <TipCard
               icon={<Zap className="w-3.5 h-3.5 text-emerald-600" />}
               title="빠르게 풀기"
-              description="개념/유형 문항은 1~2분 안에 빠르게 처리하고, 시간을 절약하세요"
+              items={
+                hasSpecificTips && timeTips.quickTips.length > 0
+                  ? timeTips.quickTips.slice(0, 3)
+                  : ['개념/유형 문항은 1~2분 안에 빠르게 처리하고, 시간을 절약하세요']
+              }
               bgColor="bg-emerald-50"
               borderColor="border-emerald-100"
             />
             <TipCard
               icon={<AlertCircle className="w-3.5 h-3.5 text-amber-600" />}
               title="시간 주의"
-              description="심화/서술형 문항에 시간을 과하게 쓰면 뒤 문제에 영향이 갑니다"
+              items={
+                hasSpecificTips && timeTips.cautionTips.length > 0
+                  ? timeTips.cautionTips.slice(0, 3)
+                  : ['심화/서술형 문항에 시간을 과하게 쓰면 뒤 문제에 영향이 갑니다']
+              }
               bgColor="bg-amber-50"
               borderColor="border-amber-100"
             />
             <TipCard
               icon={<Lightbulb className="w-3.5 h-3.5 text-blue-600" />}
               title="절약 팁"
-              description="모르는 문제는 3분 고민 후 표시하고 넘기세요. 마지막에 재도전!"
+              items={
+                hasSpecificTips && timeTips.savingTips.length > 0
+                  ? timeTips.savingTips.slice(0, 3)
+                  : ['모르는 문제는 3분 고민 후 표시하고 넘기세요. 마지막에 재도전!']
+              }
               bgColor="bg-blue-50"
               borderColor="border-blue-100"
             />
@@ -180,18 +201,18 @@ export function TimeAllocationSection({
   );
 }
 
-// ── 팁 카드 ──
+// ── 팁 카드 (다중 아이템 지원) ──
 
 function TipCard({
   icon,
   title,
-  description,
+  items,
   bgColor,
   borderColor,
 }: {
   icon: React.ReactNode;
   title: string;
-  description: string;
+  items: string[];
   bgColor: string;
   borderColor: string;
 }) {
@@ -201,7 +222,18 @@ function TipCard({
         {icon}
         <span className="text-xs font-semibold text-slate-800">{title}</span>
       </div>
-      <p className="text-[11px] text-slate-600 leading-relaxed">{description}</p>
+      {items.length === 1 ? (
+        <p className="text-[11px] text-slate-600 leading-relaxed">{items[0]}</p>
+      ) : (
+        <ul className="space-y-1">
+          {items.map((item, idx) => (
+            <li key={idx} className="flex items-start gap-1.5 text-[11px] text-slate-600 leading-relaxed">
+              <span className="w-1 h-1 rounded-full bg-slate-400 shrink-0 mt-1.5" />
+              {item}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

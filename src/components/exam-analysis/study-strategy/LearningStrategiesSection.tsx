@@ -12,6 +12,16 @@ interface LearningStrategiesSectionProps {
   onToggleSection: () => void;
 }
 
+// 유형 한국어 라벨 매핑
+const TYPE_LABELS: Record<string, string> = {
+  calculation: '계산',
+  geometry: '도형',
+  application: '응용',
+  proof: '증명',
+  graph: '그래프',
+  statistics: '통계',
+};
+
 /** avgDifficulty 기준 색상 반환 */
 function getDifficultyColor(avgDifficulty: number): string {
   if (avgDifficulty >= 3) return '#ef4444';   // red
@@ -85,6 +95,9 @@ export function LearningStrategiesSection({
                 const color = getDifficultyColor(topic.avgDifficulty);
                 const diffKey = getDifficultyKey(topic.avgDifficulty);
 
+                // 유형 중복 제거
+                const uniqueTypes = Array.from(new Set(topic.types));
+
                 return (
                   <div
                     key={topic.shortTopic}
@@ -135,20 +148,21 @@ export function LearningStrategiesSection({
                           </div>
                         )}
 
-                        {/* 유형별 학습 전략 */}
-                        {topic.types.length > 0 && (
+                        {/* 유형별 학습 전략 (중복 제거 + 한국어 라벨) */}
+                        {uniqueTypes.length > 0 && (
                           <div>
                             <h5 className="text-xs font-semibold text-slate-700 mb-2">
                               유형별 학습 전략
                             </h5>
                             <div className="space-y-2">
-                              {topic.types.map(type => {
+                              {uniqueTypes.map(type => {
                                 const strategies = TYPE_STRATEGIES[type];
                                 if (!strategies) return null;
+                                const typeLabel = TYPE_LABELS[type] || type;
                                 return (
                                   <div key={type} className="bg-purple-50/50 rounded-sm p-2.5">
-                                    <span className="text-[10px] font-medium text-purple-700 uppercase">
-                                      {type}
+                                    <span className="text-[10px] font-medium text-purple-700">
+                                      {typeLabel}
                                     </span>
                                     <ul className="mt-1.5 space-y-1">
                                       {strategies.map((s, i) => (

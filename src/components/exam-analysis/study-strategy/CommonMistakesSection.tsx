@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { AlertTriangle, ChevronDown, ShieldAlert, Lightbulb } from 'lucide-react';
+import { AlertTriangle, ChevronDown, X, Check } from 'lucide-react';
 import type { TopicSummary } from './types';
+import { findCommonMistakes } from '@/lib/exam-analysis/data/curriculum-strategies';
 import { ERROR_TYPE_LABELS } from './constants';
 
 interface CommonMistakesSectionProps {
@@ -11,17 +12,16 @@ interface CommonMistakesSectionProps {
   onToggleSection: () => void;
 }
 
-// 단원별 흔한 실수 유형 생성 (난이도, 유형 기반)
+// 단원별 흔한 실수 유형 생성 (제네릭 폴백)
 interface MistakeItem {
   type: string;
   description: string;
   prevention: string;
 }
 
-function generateMistakesForTopic(topic: TopicSummary): MistakeItem[] {
+function generateGenericMistakes(topic: TopicSummary): MistakeItem[] {
   const mistakes: MistakeItem[] = [];
 
-  // 계산 관련 단원
   if (topic.types.some(t => ['calculation', 'algebra', 'equation'].includes(t))) {
     mistakes.push({
       type: 'calculation_error',
@@ -30,7 +30,6 @@ function generateMistakesForTopic(topic: TopicSummary): MistakeItem[] {
     });
   }
 
-  // 도형/기하 관련 단원
   if (topic.types.some(t => ['geometry', 'trigonometry', 'vector'].includes(t))) {
     mistakes.push({
       type: 'concept_error',
@@ -39,7 +38,6 @@ function generateMistakesForTopic(topic: TopicSummary): MistakeItem[] {
     });
   }
 
-  // 응용/문제해결 관련
   if (topic.types.some(t => ['application', 'problem_solving'].includes(t))) {
     mistakes.push({
       type: 'misread',
@@ -48,7 +46,6 @@ function generateMistakesForTopic(topic: TopicSummary): MistakeItem[] {
     });
   }
 
-  // 고난도 문항이 있는 경우
   if (topic.difficulties.some(d => d === 'reasoning' || d === 'creative')) {
     mistakes.push({
       type: 'process_error',
@@ -57,7 +54,6 @@ function generateMistakesForTopic(topic: TopicSummary): MistakeItem[] {
     });
   }
 
-  // 기본 실수 항상 추가
   if (mistakes.length === 0) {
     mistakes.push({
       type: 'careless_mistake',
@@ -69,6 +65,16 @@ function generateMistakesForTopic(topic: TopicSummary): MistakeItem[] {
   return mistakes;
 }
 
+interface TopicMistakeData {
+  topic: string;
+  shortTopic: string;
+  // 교육과정 기반 매칭 데이터
+  specificMistakes: string[] | null;
+  specificPrevention: string[] | null;
+  // 제네릭 폴백
+  genericMistakes: MistakeItem[];
+}
+
 export function CommonMistakesSection({
   topicSummaries,
   isSectionExpanded,
@@ -76,18 +82,28 @@ export function CommonMistakesSection({
 }: CommonMistakesSectionProps) {
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
 
-  // 단원별 실수 목록
-  const topicMistakes = useMemo(
+  // 단원별 실수 목록 (교육과정 기반 + 폴백)
+  const topicMistakes = useMemo<TopicMistakeData[]>(
     () =>
-      topicSummaries.map(t => ({
-        ...t,
-        mistakes: generateMistakesForTopic(t),
-      })),
+      topicSummaries.map(t => {
+        const specific = findCommonMistakes(t.topic);
+        return {
+          topic: t.topic,
+          shortTopic: t.shortTopic || t.topic,
+          specificMistakes: specific?.mistakes ?? null,
+          specificPrevention: specific?.prevention ?? null,
+          genericMistakes: generateGenericMistakes(t),
+        };
+      }),
     [topicSummaries],
   );
 
   const totalMistakes = useMemo(
-    () => topicMistakes.reduce((s, t) => s + t.mistakes.length, 0),
+    () =>
+      topicMistakes.reduce(
+        (s, t) => s + (t.specificMistakes ? t.specificMistakes.length : t.genericMistakes.length),
+        0,
+      ),
     [topicMistakes],
   );
 
@@ -141,6 +157,10 @@ export function CommonMistakesSection({
           <div className="space-y-2">
             {topicMistakes.map((topic, idx) => {
               const isOpen = expandedTopics.has(topic.topic);
+              const hasSpecific = topic.specificMistakes !== null;
+              const mistakeCount = hasSpecific
+                ? topic.specificMistakes!.length
+                : topic.genericMistakes.length;
 
               return (
                 <div key={idx} className="rounded-sm border border-slate-100 overflow-hidden">
@@ -151,10 +171,15 @@ export function CommonMistakesSection({
                   >
                     <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
                     <span className="text-xs font-medium text-slate-800 flex-1 text-left truncate">
-                      {topic.shortTopic || topic.topic}
+                      {topic.shortTopic}
                     </span>
+                    {hasSpecific && (
+                      <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-medium bg-blue-50 text-blue-600 border border-blue-100 shrink-0">
+                        교육과정 기반
+                      </span>
+                    )}
                     <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-medium bg-red-50 text-red-600 border border-red-100 shrink-0">
-                      실수 {topic.mistakes.length}개
+                      실수 {mistakeCount}개
                     </span>
                     <ChevronDown
                       className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${
@@ -165,27 +190,62 @@ export function CommonMistakesSection({
 
                   {/* 실수 상세 (확장) */}
                   {isOpen && (
-                    <div className="border-t border-slate-100 bg-white px-3 py-2.5 space-y-2.5">
-                      {topic.mistakes.map((mistake, mIdx) => (
-                        <div key={mIdx} className="rounded-sm bg-slate-50/70 p-3">
-                          {/* 실수 유형 + 설명 */}
-                          <div className="flex items-start gap-2 mb-2">
-                            <ShieldAlert className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
-                            <div className="flex-1 min-w-0">
-                              <span className="text-[10px] font-medium text-red-600 bg-red-50 px-1.5 py-0.5 rounded-sm">
-                                {ERROR_TYPE_LABELS[mistake.type] || mistake.type}
-                              </span>
-                              <p className="text-xs text-slate-700 mt-1">{mistake.description}</p>
+                    <div className="border-t border-slate-100 bg-white px-3 py-2.5">
+                      {hasSpecific ? (
+                        /* 교육과정 기반 2컬럼 레이아웃 */
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {/* 왼쪽: 흔한 실수 */}
+                          <div className="rounded-sm overflow-hidden border-l-2 border-red-400 bg-red-50/30">
+                            <div className="px-3 py-2 bg-red-50">
+                              <span className="text-xs font-semibold text-red-700">흔한 실수</span>
+                            </div>
+                            <div className="px-3 py-2 space-y-2">
+                              {topic.specificMistakes!.map((mistake, mIdx) => (
+                                <div key={mIdx} className="flex items-start gap-2">
+                                  <X className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
+                                  <p className="text-xs text-slate-700 leading-relaxed">{mistake}</p>
+                                </div>
+                              ))}
                             </div>
                           </div>
 
-                          {/* 예방 팁 */}
-                          <div className="flex items-start gap-2 pl-5.5">
-                            <Lightbulb className="w-3 h-3 text-amber-500 shrink-0 mt-0.5" />
-                            <p className="text-[11px] text-slate-600">{mistake.prevention}</p>
+                          {/* 오른쪽: 예방법 */}
+                          <div className="rounded-sm overflow-hidden border-l-2 border-emerald-400 bg-emerald-50/30">
+                            <div className="px-3 py-2 bg-emerald-50">
+                              <span className="text-xs font-semibold text-emerald-700">예방법</span>
+                            </div>
+                            <div className="px-3 py-2 space-y-2">
+                              {topic.specificPrevention!.map((prev, pIdx) => (
+                                <div key={pIdx} className="flex items-start gap-2">
+                                  <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                                  <p className="text-xs text-slate-700 leading-relaxed">{prev}</p>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         </div>
-                      ))}
+                      ) : (
+                        /* 제네릭 폴백 (기존 스타일) */
+                        <div className="space-y-2.5">
+                          {topic.genericMistakes.map((mistake, mIdx) => (
+                            <div key={mIdx} className="rounded-sm bg-slate-50/70 p-3">
+                              <div className="flex items-start gap-2 mb-2">
+                                <X className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-[10px] font-medium text-red-600 bg-red-50 px-1.5 py-0.5 rounded-sm">
+                                    {ERROR_TYPE_LABELS[mistake.type] || mistake.type}
+                                  </span>
+                                  <p className="text-xs text-slate-700 mt-1">{mistake.description}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-start gap-2 pl-5.5">
+                                <Check className="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" />
+                                <p className="text-[11px] text-slate-600">{mistake.prevention}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
