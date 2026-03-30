@@ -143,7 +143,12 @@ function ExpandedStrategy({ topic, diffKey, color, is4Level }: {
   topic: TopicSummary; diffKey: string; color: string; is4Level: boolean;
 }) {
   // 1. 교육과정 기반 전략 (단원별 맞춤)
-  const curriculumMatch = findMatchingStrategies(topic.topic);
+  // 전체 토픽 경로 → 소단원 → 중단원 순으로 시도
+  const parts = topic.topic.split(' > ').map(s => s.trim());
+  let curriculumMatch = findMatchingStrategies(topic.topic);
+  if (!curriculumMatch && parts.length >= 3) curriculumMatch = findMatchingStrategies(parts[2]); // 소단원
+  if (!curriculumMatch && parts.length >= 2) curriculumMatch = findMatchingStrategies(parts[1]); // 중단원
+  if (!curriculumMatch) curriculumMatch = findMatchingStrategies(topic.shortTopic); // shortTopic
   const hasCurriculumStrategy = curriculumMatch && curriculumMatch.strategies.length > 0;
 
   // 2. 유형별 폴백
