@@ -88,7 +88,7 @@ export default function ExamAnalysisPage() {
     const interval = setInterval(() => {
       fetchList();
       if (selectedId) fetchDetail(selectedId);
-    }, 5000);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [items, selectedId, fetchList, fetchDetail]);
@@ -96,16 +96,28 @@ export default function ExamAnalysisPage() {
   const handleAnalyze = async (id: string) => {
     setAnalyzing(true);
     try {
-      const res = await fetch(`/api/exam-analysis/${id}/analyze`, { method: 'POST' });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error?.message || '분석 실패');
-      }
-      toast.success('분석이 시작되었습니다');
+      // fire-and-forget: 서버에 분석 요청만 보내고 즉시 UI 갱신
+      // 서버는 ANALYZING → (작업) → COMPLETED/FAILED 상태를 알아서 갱신
+      // 클라이언트는 폴링(5초)으로 상태 변경 감지
+      fetch(`/api/exam-analysis/${id}/analyze`, { method: 'POST' })
+        .then(async (res) => {
+          if (!res.ok) {
+            const err = await res.json();
+            toast.error(err.error?.message || '분석 실패');
+          }
+          // 서버 완료 시 즉시 갱신
+          fetchList();
+          if (selectedId === id) fetchDetail(id);
+        })
+        .catch(() => {
+          toast.error('분석 요청에 실패했습니다');
+        });
+
+      // UI 즉시 반영: 목록 새로고침하여 ANALYZING 상태 표시
+      await new Promise(r => setTimeout(r, 500));
       fetchList();
       if (selectedId === id) fetchDetail(id);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : '분석에 실패했습니다');
+      toast.info('AI 분석이 시작되었습니다');
     } finally {
       setAnalyzing(false);
     }
