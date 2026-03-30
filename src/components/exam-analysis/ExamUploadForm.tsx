@@ -35,17 +35,47 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
   const [examType, setExamType] = useState<'blank' | 'student'>('blank');
   const [schoolName, setSchoolName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = Array.from(e.target.files || []);
-    const valid = selected.filter(f => {
+  const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png', '.webp'];
+
+  const addFiles = (newFiles: File[]) => {
+    const valid = newFiles.filter(f => {
+      const ext = '.' + f.name.split('.').pop()?.toLowerCase();
+      if (!ALLOWED_EXTENSIONS.includes(ext)) {
+        toast.error(`${f.name}: 허용되지 않는 형식`);
+        return false;
+      }
       if (f.size > 10 * 1024 * 1024) {
         toast.error(`${f.name}: 10MB 초과`);
         return false;
       }
       return true;
     });
-    setFiles(prev => [...prev, ...valid]);
+    if (valid.length) setFiles(prev => [...prev, ...valid]);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    addFiles(Array.from(e.target.files || []));
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    addFiles(Array.from(e.dataTransfer.files));
   };
 
   const removeFile = (index: number) => {
@@ -93,7 +123,12 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
         <label className="block text-sm font-medium text-slate-700 mb-1">시험지 파일</label>
         <div
           onClick={() => fileInputRef.current?.click()}
-          className="border-2 border-dashed border-slate-300 rounded-sm p-6 text-center cursor-pointer hover:border-primary transition-colors"
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={`border-2 border-dashed rounded-sm p-6 text-center cursor-pointer transition-colors ${
+            isDragging ? 'border-primary bg-blue-50' : 'border-slate-300 hover:border-primary'
+          }`}
         >
           <Upload className="w-8 h-8 mx-auto text-slate-400 mb-2" />
           <p className="text-sm text-slate-500">클릭하거나 파일을 드래그하세요</p>
