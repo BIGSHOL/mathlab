@@ -212,7 +212,8 @@ function createEmptyResult(notes: string[]): MarkDetectionResult {
  * @returns 감지된 채점 마크 및 채점 상태 정보
  */
 export async function detectGradingMarks(
-  imageBase64: string
+  imageBase64: string,
+  _mimeTypeHint?: string
 ): Promise<MarkDetectionResult> {
   if (!imageBase64 || !imageBase64.trim()) {
     return createEmptyResult(['이미지 데이터가 비어있습니다']);

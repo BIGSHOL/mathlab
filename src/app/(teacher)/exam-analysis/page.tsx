@@ -200,10 +200,7 @@ export default function ExamAnalysisPage() {
             )}
 
             {selectedDetail.status === 'ANALYZING' && (
-              <div className="bg-blue-50 border border-blue-200 rounded-sm p-6 text-center text-sm text-blue-700">
-                <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-3" />
-                AI가 시험지를 분석하고 있습니다. 잠시만 기다려주세요...
-              </div>
+              <AnalyzingProgress />
             )}
 
             {latestAnalysis && selectedDetail.status === 'COMPLETED' && (
@@ -233,6 +230,88 @@ export default function ExamAnalysisPage() {
           </div>
         )}
       </main>
+    </div>
+  );
+}
+
+// ── 분석 진행 상태 컴포넌트 ──
+
+const ANALYSIS_STEPS = [
+  { label: '파일 로드', description: '시험지 이미지를 읽고 있습니다', duration: '2-3초' },
+  { label: '프롬프트 구성', description: '학년/과목에 맞는 분석 규칙을 준비합니다', duration: '1초' },
+  { label: 'AI 문항 분석', description: 'Gemini가 각 문항의 난이도, 유형, 단원을 판별합니다', duration: '15-30초' },
+  { label: '결과 검증', description: '배점 합계, 난이도 분포 등을 교차 검증합니다', duration: '1-2초' },
+  { label: 'DB 저장', description: '분석 결과를 저장합니다', duration: '1초' },
+];
+
+function AnalyzingProgress() {
+  const [step, setStep] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    // 단계별 타이밍 시뮬레이션
+    const timings = [2000, 3000, 20000, 25000, 28000];
+    const timers = timings.map((t, i) =>
+      setTimeout(() => setStep(i), t)
+    );
+
+    // 경과 시간
+    const interval = setInterval(() => setElapsed(prev => prev + 1), 1000);
+
+    return () => {
+      timers.forEach(clearTimeout);
+      clearInterval(interval);
+    };
+  }, []);
+
+  return (
+    <div className="bg-slate-50 border rounded-sm p-6">
+      <div className="flex items-center gap-3 mb-5">
+        <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full" />
+        <span className="text-sm font-medium text-slate-700">AI 분석 진행 중...</span>
+        <span className="text-xs text-slate-400 ml-auto">{elapsed}초 경과</span>
+      </div>
+
+      <div className="space-y-3">
+        {ANALYSIS_STEPS.map((s, i) => {
+          const isActive = i === step;
+          const isDone = i < step;
+
+          return (
+            <div key={i} className="flex items-start gap-3">
+              {/* 스텝 인디케이터 */}
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
+                isDone ? 'bg-green-500 text-white' :
+                isActive ? 'bg-primary text-white animate-pulse' :
+                'bg-slate-200 text-slate-400'
+              }`}>
+                {isDone ? '✓' : i + 1}
+              </div>
+
+              {/* 스텝 내용 */}
+              <div className="flex-1 min-w-0">
+                <div className={`text-sm font-medium ${
+                  isDone ? 'text-green-700' :
+                  isActive ? 'text-slate-800' :
+                  'text-slate-400'
+                }`}>
+                  {s.label}
+                  {isActive && <span className="ml-2 text-xs text-slate-400">({s.duration})</span>}
+                </div>
+                {(isActive || isDone) && (
+                  <p className={`text-xs mt-0.5 ${isDone ? 'text-green-600' : 'text-slate-500'}`}>
+                    {isDone ? '완료' : s.description}
+                  </p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-xs text-slate-400 mt-4 text-center">
+        PDF 페이지 수에 따라 30초~1분 소요될 수 있습니다
+      </p>
     </div>
   );
 }

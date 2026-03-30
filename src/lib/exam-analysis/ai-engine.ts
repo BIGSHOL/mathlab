@@ -108,6 +108,7 @@ interface GeminiVisionCallOptions {
   prompt: string;
   jsonMode?: boolean;        // responseMimeType: 'application/json' 사용 여부
   temperature?: number;
+  mimeTypeHint?: string;     // 파일 형식 힌트 (image/jpeg, application/pdf 등)
 }
 
 /**
@@ -118,12 +119,13 @@ async function callGeminiVision<T = unknown>({
   prompt,
   jsonMode = true,
   temperature = 0.1,
+  mimeTypeHint,
 }: GeminiVisionCallOptions): Promise<T> {
   const client = getClient();
 
   // 이미지 파트 구성
   const imageParts = images.map((img) => {
-    const mimeType = getMimeType(img);
+    const mimeType = mimeTypeHint || getMimeType(img);
     const data = stripDataUriPrefix(img);
     return {
       inlineData: {
@@ -231,6 +233,7 @@ function validateBasicResult(result: unknown): result is BasicAnalysisResult {
  */
 export async function analyzeExam(
   images: string[],
+  mimeTypeHint: string,
   combinedPrompt: string
 ): Promise<BasicAnalysisResult> {
   if (!images.length) {
@@ -247,6 +250,7 @@ export async function analyzeExam(
       prompt: combinedPrompt,
       jsonMode: true,
       temperature: 0.1,
+      mimeTypeHint: mimeTypeHint,
     });
 
     // 구조 검증
