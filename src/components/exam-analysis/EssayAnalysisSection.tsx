@@ -16,8 +16,8 @@ function normalizeDiff(key: string): string {
 }
 
 const DIFFICULTY_LABELS: Record<string, string> = {
-  '1': '1', '2': '2', '3': '3', '4': '4', '5': '5',
-  concept: '1', pattern: '2', reasoning: '4', creative: '5',
+  '1': '1(기본)', '2': '2(표준)', '3': '3(응용)', '4': '4(심화)', '5': '5(최고)',
+  concept: '1(기본)', pattern: '2(표준)', reasoning: '4(심화)', creative: '5(최고)',
 };
 
 const DIFFICULTY_ORDER = ['1', '2', '3', '4', '5'] as const;

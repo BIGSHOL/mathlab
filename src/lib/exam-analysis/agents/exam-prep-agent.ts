@@ -42,6 +42,7 @@ export class ExamPrepAgent extends BaseAgent<Record<string, unknown>> {
         topic: q.topic,
         difficulty: q.difficulty,
         type: q.question_type,
+        ability: q.ability_domain,
         is_correct: q.is_correct,
         error_type: q.error_type,
         points: q.points,

@@ -5,8 +5,8 @@
  */
 
 import { GoogleGenAI } from '@google/genai';
-import type { BasicAnalysisResult, ExamPaperClassification } from './types';
-import { CONFIDENCE_THRESHOLDS } from './constants';
+import type { AnalyzedQuestion, BasicAnalysisResult, ExamPaperClassification } from './types';
+import { CONFIDENCE_THRESHOLDS, TYPE_TO_DOMAIN, TYPE_TO_STANDARD } from './constants';
 
 // ── 싱글톤 클라이언트 ──
 
@@ -85,10 +85,23 @@ export function parseJsonResponse<T = unknown>(text: string): T {
 
   try {
     return JSON.parse(cleaned) as T;
-  } catch (e) {
-    throw new Error(
-      `AI 응답 JSON 파싱 실패: ${e instanceof Error ? e.message : String(e)}\n원본: ${text.slice(0, 500)}`
-    );
+  } catch {
+    // 잘린 JSON 복구 시도
+    let fixed = cleaned;
+    const openQuotes = (fixed.match(/"/g) || []).length;
+    if (openQuotes % 2 !== 0) fixed += '"';
+    const openBrackets = (fixed.match(/\[/g) || []).length - (fixed.match(/\]/g) || []).length;
+    const openBraces = (fixed.match(/\{/g) || []).length - (fixed.match(/\}/g) || []).length;
+    for (let i = 0; i < openBrackets; i++) fixed += ']';
+    for (let i = 0; i < openBraces; i++) fixed += '}';
+    fixed = fixed.replace(/,\s*([}\]])/g, '$1');
+    try {
+      return JSON.parse(fixed) as T;
+    } catch (e2) {
+      throw new Error(
+        `AI 응답 JSON 파싱 실패: ${e2 instanceof Error ? e2.message : String(e2)}\n원본: ${text.slice(0, 500)}`
+      );
+    }
   }
 }
 
@@ -170,6 +183,67 @@ async function callGeminiVision<T = unknown>({
 }
 
 // ── 배점 검증 및 신뢰도 페널티 ──
+
+/**
+ * 배점 신뢰도 판정 결과
+ * - reliable: 배점 합계가 기준 범위 내 (±15%)
+ * - unreliable: 배점 합계가 기준 범위 밖 (>±15%) 또는 null 배점이 과반
+ */
+export interface PointsReliability {
+  reliable: boolean;
+  pointsSum: number;
+  expectedTotal: number;
+  deviationPct: number;  // 편차 % (양수)
+  nullCount: number;     // 배점 null인 문항 수
+  reason: string;        // 사유 (한국어)
+}
+
+/**
+ * 배점 신뢰도 계산
+ * ±15% 이내이면 reliable, 아니면 unreliable
+ */
+export function calcPointsReliability(
+  questions: BasicAnalysisResult['questions'],
+  expectedTotal: number
+): PointsReliability {
+  const nullCount = questions.filter((q) => q.points === null || q.points === 0).length;
+  const pointsSum = questions.reduce((sum, q) => sum + (q.points ?? 0), 0);
+  const total = expectedTotal > 0 ? expectedTotal : 100;
+  const deviationPct = total > 0 ? Math.round(Math.abs(pointsSum - total) / total * 100) : 0;
+
+  // null 배점이 전체의 50% 이상
+  if (nullCount > questions.length * 0.5) {
+    return {
+      reliable: false,
+      pointsSum,
+      expectedTotal: total,
+      deviationPct,
+      nullCount,
+      reason: `${nullCount}개 문항의 배점을 인식하지 못했습니다`,
+    };
+  }
+
+  // 합계가 ±15% 이상 벗어남
+  if (deviationPct > 15) {
+    return {
+      reliable: false,
+      pointsSum,
+      expectedTotal: total,
+      deviationPct,
+      nullCount,
+      reason: `배점 합계 ${pointsSum}점 (기준 ${total}점, ${deviationPct}% 차이)`,
+    };
+  }
+
+  return {
+    reliable: true,
+    pointsSum,
+    expectedTotal: total,
+    deviationPct,
+    nullCount,
+    reason: '',
+  };
+}
 
 /**
  * 분석 결과의 배점 합계 검증 및 신뢰도 페널티 적용
@@ -260,35 +334,18 @@ export async function analyzeExam(
       );
     }
 
-    // 기본값 보정
-    const result: BasicAnalysisResult = {
-      exam_info: {
-        total_questions: rawResult.exam_info.total_questions,
-        total_points: rawResult.exam_info.total_points ?? 100,
-        format_distribution: rawResult.exam_info.format_distribution ?? {
-          objective: 0,
-          short_answer: 0,
-          essay: 0,
-        },
-      },
-      summary: {
-        difficulty_distribution: {
-          ...{ '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 },
-          ...(rawResult.summary.difficulty_distribution ?? {}),
-        },
-        type_distribution: {
-          ...{ calculation: 0, geometry: 0, application: 0, proof: 0, graph: 0, statistics: 0 },
-          ...(rawResult.summary.type_distribution ?? {}),
-        },
-        average_difficulty: rawResult.summary.average_difficulty ?? '3',
-        dominant_type: rawResult.summary.dominant_type ?? 'calculation',
-      },
-      questions: rawResult.questions.map((q, idx) => ({
+    // 기본값 보정 + question_type 표준화 + ability_domain 매핑
+    const questions = rawResult.questions.map((q, idx) => {
+      const rawType = q.question_type ?? 'calculation';
+      const standardType = (TYPE_TO_STANDARD[rawType] || 'algebra') as AnalyzedQuestion['question_type'];
+      const abilityDomain = (q.ability_domain || TYPE_TO_DOMAIN[rawType] || TYPE_TO_DOMAIN[standardType] || 'calculation') as NonNullable<AnalyzedQuestion['ability_domain']>;
+      return {
         question_number: q.question_number ?? idx + 1,
         question_format: q.question_format ?? null,
         difficulty: q.difficulty ?? '1',
         difficulty_reason: q.difficulty_reason ?? null,
-        question_type: q.question_type ?? 'calculation',
+        question_type: standardType,
+        ability_domain: abilityDomain,
         points: q.points ?? null,
         topic: q.topic ?? null,
         ai_comment: q.ai_comment ?? null,
@@ -298,7 +355,53 @@ export async function analyzeExam(
         student_answer: q.student_answer ?? null,
         earned_points: q.earned_points ?? null,
         error_type: q.error_type ?? null,
-      })),
+      };
+    });
+
+    // summary 분포를 questions 배열에서 직접 재계산 (AI summary 부정확 방지)
+    const recomputedDiffDist: Record<string, number> = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
+    const recomputedTypeDist: Record<string, number> = { number: 0, algebra: 0, function: 0, geometry: 0, statistics: 0 };
+    const recomputedFormatDist: Record<string, number> = { objective: 0, short_answer: 0, essay: 0 };
+
+    for (const q of questions) {
+      // 난이도 분포
+      const diff = String(q.difficulty);
+      if (recomputedDiffDist[diff] !== undefined) {
+        recomputedDiffDist[diff]++;
+      }
+      // 유형 분포
+      const qType = q.question_type || 'algebra';
+      if (recomputedTypeDist[qType] !== undefined) {
+        recomputedTypeDist[qType]++;
+      }
+      // 형식 분포
+      const qFormat = q.question_format || 'objective';
+      if (recomputedFormatDist[qFormat] !== undefined) {
+        recomputedFormatDist[qFormat]++;
+      }
+    }
+
+    // 가장 많은 난이도/유형 찾기
+    const dominantDiff = Object.entries(recomputedDiffDist).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '3';
+    const dominantType = Object.entries(recomputedTypeDist).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'algebra';
+
+    const result: BasicAnalysisResult = {
+      exam_info: {
+        total_questions: questions.length,
+        total_points: rawResult.exam_info.total_points ?? 100,
+        format_distribution: {
+          objective: recomputedFormatDist['objective'] || 0,
+          short_answer: recomputedFormatDist['short_answer'] || 0,
+          essay: recomputedFormatDist['essay'] || 0,
+        },
+      },
+      summary: {
+        difficulty_distribution: recomputedDiffDist as unknown as BasicAnalysisResult['summary']['difficulty_distribution'],
+        type_distribution: recomputedTypeDist as unknown as BasicAnalysisResult['summary']['type_distribution'],
+        average_difficulty: dominantDiff,
+        dominant_type: dominantType,
+      },
+      questions,
     };
 
     // 배점 검증 및 페널티 적용

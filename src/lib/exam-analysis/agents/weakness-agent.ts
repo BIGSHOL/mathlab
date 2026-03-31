@@ -29,6 +29,7 @@ export class WeaknessAgent extends BaseAgent<WeaknessProfile> {
         number: q.question_number,
         difficulty: q.difficulty,
         type: q.question_type,
+        ability: q.ability_domain,
         topic: q.topic,
         is_correct: q.is_correct,
         error_type: q.error_type,
@@ -59,11 +60,10 @@ ${summaryJson}
     "low": {"severity": "...", "main_issue": "..."}
   },
   "type_weakness": {
-    "calculation": {"severity": "...", "main_issue": "..."},
+    "number": {"severity": "...", "main_issue": "..."},
+    "algebra": {"severity": "...", "main_issue": "..."},
+    "function": {"severity": "...", "main_issue": "..."},
     "geometry": {"severity": "...", "main_issue": "..."},
-    "application": {"severity": "...", "main_issue": "..."},
-    "proof": {"severity": "...", "main_issue": "..."},
-    "graph": {"severity": "...", "main_issue": "..."},
     "statistics": {"severity": "...", "main_issue": "..."}
   },
   "topic_weaknesses": [
@@ -241,11 +241,10 @@ JSON만 반환하세요.`;
     const result: Record<string, SeverityInfo> = {};
 
     const entries: [string, number][] = [
-      ['calculation', dist.calculation],
+      ['number', dist.number],
+      ['algebra', dist.algebra],
+      ['function', dist.function],
       ['geometry', dist.geometry],
-      ['application', dist.application],
-      ['proof', dist.proof],
-      ['graph', dist.graph],
       ['statistics', dist.statistics],
     ];
 

@@ -281,6 +281,43 @@ export class ExamPromptBuilder {
         // combined_prompt에도 에러 패턴 추가
         result.combined_prompt = result.combined_prompt + '\n\n' + errorPatternsPrompt;
       }
+
+      // 승인된 레퍼런스 조회 (같은 grade, 최대 5건)
+      const approvedRefs = await prisma.examQuestionReference.findMany({
+        where: {
+          subject: context.subject === '수학' ? 'MATH' : 'ENGLISH',
+          reviewStatus: 'approved',
+          ...(context.grade_level ? { grade: context.grade_level } : {}),
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      });
+
+      if (approvedRefs.length > 0) {
+        const refLines = approvedRefs.map(r =>
+          `- 단원: ${r.topicHierarchy || r.grade}, 난이도: ${r.difficulty}, 유형: ${r.questionType}${r.confidence && r.confidence < 0.7 ? ' (주의: 분석 시 주의 필요)' : ''}`
+        ).join('\n');
+        result.combined_prompt += `\n\n📚 **[참고 레퍼런스 문제]:**\n\n${refLines}`;
+      }
+
+      // 학습된 패턴 조회 (confidence >= 0.7, 활성 + 자동적용)
+      const learnedPatterns = await prisma.learnedPattern.findMany({
+        where: {
+          subject: context.subject === '수학' ? 'MATH' : 'ENGLISH',
+          isActive: true,
+          isAutoApplied: true,
+          confidence: { gte: 0.7 },
+        },
+        orderBy: { confidence: 'desc' },
+        take: 5,
+      });
+
+      if (learnedPatterns.length > 0) {
+        const patternLines = learnedPatterns.map(p =>
+          `- **${p.patternType}** (신뢰도: ${Math.round(p.confidence * 100)}%): ${p.description}`
+        ).join('\n');
+        result.combined_prompt += `\n\n📝 **[학습된 분석 패턴]:**\n\n${patternLines}`;
+      }
     } catch {
       // DB 접근 실패 시 기본 빌드 결과 그대로 반환
     }
@@ -304,7 +341,7 @@ export class ExamPromptBuilder {
 분석 결과는 반드시 지정된 JSON 형식으로만 출력하세요.
 
 **핵심 원칙:**
-1. 모든 문항을 빠짐없이 분석 (소문제 포함)
+1. 모든 문항을 빠짐없이 분석 (단, 하나의 문항 안의 소문항 (1)(2)는 분리하지 말고 통합!)
 2. 난이도는 5단계 시스템("1"~"5")을 엄격히 적용
 3. topic 형식: "과목명 > 대단원 > 소단원" (공백 포함 > 구분)
 4. ai_comment: 정확히 2문장, 존댓말(~입니다/~합니다), 각 문장 20~40자
@@ -317,7 +354,7 @@ export class ExamPromptBuilder {
 분석 결과는 반드시 지정된 JSON 형식으로만 출력하세요.
 
 **핵심 원칙:**
-1. 모든 문항을 빠짐없이 분석 (소문제 포함)
+1. 모든 문항을 빠짐없이 분석 (단, 하나의 문항 안의 소문항 (1)(2)는 분리하지 말고 통합!)
 2. 난이도는 5단계 시스템("1"~"5")을 엄격히 적용
 3. topic 형식: "과목명 > 대단원 > 소단원" (공백 포함 > 구분)
 4. ai_comment: 정확히 2문장, 존댓말(~입니다/~합니다), 각 문장 20~40자
@@ -465,7 +502,7 @@ export class ExamPromptBuilder {
 
     // 문항 유형 분류 키
     const typeKeys = isMath
-      ? '"calculation", "geometry", "application", "proof", "graph", "statistics"'
+      ? '"number"(수와 연산), "algebra"(문자와 식), "function"(함수), "geometry"(기하), "statistics"(확률과 통계)'
       : '"grammar", "vocabulary", "reading", "listening", "writing", "communication"';
 
     // 난이도 키
@@ -498,7 +535,7 @@ export class ExamPromptBuilder {
 
     // 분포 키 (유형)
     const typeDistExample = isMath
-      ? `"calculation": 0, "geometry": 0, "application": 0, "proof": 0, "graph": 0, "statistics": 0`
+      ? `"number": 0, "algebra": 0, "function": 0, "geometry": 0, "statistics": 0`
       : `"grammar": 0, "vocabulary": 0, "reading": 0, "listening": 0, "writing": 0, "communication": 0`;
 
     return `🔧 **[필수] JSON 출력 형식**
@@ -536,24 +573,26 @@ export class ExamPromptBuilder {
       "question_format": "objective",
       "difficulty": "1",
       "difficulty_reason": "기본 개념 확인",
-      "question_type": "calculation",
+      "question_type": "algebra",
       "ability_domain": "calculation",
       "points": 3,
       "topic": "${topicExample}",
       "ai_comment": "핵심 개념 확인 문제. 공식을 정확히 암기하면 쉽게 풀 수 있다.",
-      "confidence": 0.95${studentFields ? ',' + studentFields : ''}
+      "confidence": 0.95,
+      "confidence_reason": "문항 내용 명확"${studentFields ? ',' + studentFields : ''}
     },
     {
       "question_number": 2,
       "question_format": "objective",
       "difficulty": "2",
       "difficulty_reason": "유형 적용 문제",
-      "question_type": "calculation",
+      "question_type": "number",
       "ability_domain": "understanding",
       "points": 3,
       "topic": "${topicExample}",
       "ai_comment": "전형적인 유형 문제. 풀이 순서를 익히면 된다.",
-      "confidence": 0.90${studentFieldsWrong ? ',' + studentFieldsWrong : ''}
+      "confidence": 0.90,
+      "confidence_reason": "배점 추정"${studentFieldsWrong ? ',' + studentFieldsWrong : ''}
     }
   ]
 }
@@ -567,16 +606,38 @@ export class ExamPromptBuilder {
 | question_format | ${formatKeys} 중 하나 |
 | difficulty | ${difficultyKeys} 중 하나 (소문자) |
 | difficulty_reason | 난이도 판정 이유, **최대 15자** |
-| question_type | ${typeKeys} 중 하나 (소문자) |
-| ability_domain | "calculation"(계산력), "understanding"(이해력), "problem_solving"(문제해결력), "reasoning"(추론력) 중 하나 |
+| question_type | ${typeKeys} 중 하나 — **문제의 수학적 형태/소재** 기준 |
+| ability_domain | "calculation"(계산력), "understanding"(이해력), "problem_solving"(문제해결력), "reasoning"(추론력) 중 하나 — **풀이에 요구되는 사고력** 기준 |
 | points | 배점 (숫자), 불분명 시 null |
 | topic | "과목명 > 대단원 > 소단원" (공백 포함 > 구분) |
 | ai_comment | **정확히 2문장, 존댓말(~입니다/~합니다), 각 문장 20~40자** |
-| confidence | 0.0~1.0 (분석 신뢰도) |${isStudent ? `
+| confidence | 0.0~1.0 (분석 신뢰도) |
+| confidence_reason | 신뢰도 판정 근거 (최대 20자, 예: "문항 내용 명확", "배점 추정", "스캔 품질 낮음") |${isStudent ? `
 | is_correct | true/false/null (정오 판별, 판단 불가 시 null) |
 | student_answer | 학생 답안 문자열 (판독 불가 시 null) |
 | earned_points | 획득 점수 (서술형 부분점수 가능, 판단 불가 시 null) |
 | error_type | "calculation_error"/"concept_gap"/"careless"/"time_pressure"/"misread"/null |` : ''}
+
+**⚠️ question_type vs ability_domain 구분 (매우 중요!):**
+
+| | question_type (유형) | ability_domain (능력) |
+|---|---|---|
+| **기준** | 문제의 **수학적 소재/형태** | 풀이에 **요구되는 사고력** |
+| **판단법** | "이 문제는 무엇에 대한 문제인가?" | "이 문제를 풀려면 어떤 능력이 필요한가?" |
+
+- **calculation**(계산력): 공식 대입, 사칙연산, 방정식 풀이 등 **절차적 계산**이 핵심
+- **understanding**(이해력): 개념 정의, 성질 파악, 그래프 해석 등 **개념 이해**가 핵심
+- **problem_solving**(문제해결력): 조건 해석, 식 세우기, 전략 수립 등 **응용/문장제**가 핵심
+- **reasoning**(추론력): 증명, 논리적 추론, 반례 찾기, 참/거짓 판별 등 **논리적 사고**가 핵심
+
+예: "제곱근 계산" → question_type: **number**, ability_domain: **calculation**
+예: "이차방정식 풀이" → question_type: **algebra**, ability_domain: **calculation**
+예: "이차함수 그래프 해석" → question_type: **function**, ability_domain: **understanding**
+예: "도형의 넓이 활용 문제" → question_type: **geometry**, ability_domain: **problem_solving**
+예: "확률 추론 문제" → question_type: **statistics**, ability_domain: **reasoning**
+
+❌ question_type과 ability_domain을 동일하게 넣지 마세요! 서로 다른 관점입니다.
+question_type은 **교육과정 5대 영역**(수학적 소재)이고, ability_domain은 **4대 사고력**(풀이 방식)입니다.
 
 **summary 규칙:**
 - difficulty_distribution: 각 난이도별 문항 수 (합계 = total_questions)
@@ -640,9 +701,16 @@ export class ExamPromptBuilder {
     sections.push(`**반드시 위 JSON 형식만 출력하세요.**
 - 추가 설명, 마크다운, 코드 블록 태그 없이 순수 JSON만 반환
 - 모든 문항을 빠짐없이 분석
-- 소문제(1-(1), 1-(2) 등)도 개별 문항으로 분석
 - 배점 합계가 100점에 근접하는지 확인
-- 불확실한 부분은 confidence를 낮추되, 최선의 판단은 유지`);
+- 불확실한 부분은 confidence를 낮추되, 최선의 판단은 유지
+
+🚨 **[최우선] 서술형 소문항 통합 규칙:**
+- 서술형 문제 하나가 (1), (2) 등 소문항을 포함하는 경우, **절대 분리하지 말고 하나의 문항으로 통합 분석**하세요!
+- 예: "서술형 2번: (1) ~을 구하시오. (2) ~을 구하시오." → question_number: "서술형2" (하나의 행)
+- 배점은 소문항 배점의 **합계**를 사용 (예: (1) 3점 + (2) 3점 = 6점)
+- **분리 기준**: 시험지에 독립적인 문항 번호가 부여된 경우만 별도 문항 (서술형1, 서술형2, 서술형3 등)
+- **통합 기준**: 하나의 문항 번호 안에 (1), (2), ①, ② 등 하위 번호가 있는 경우 → 하나의 문항
+- ai_comment에서 소문항 전체를 아우르는 분석을 작성하세요`);
 
     return sections.join('\n');
   }
@@ -792,17 +860,17 @@ ${lines.join('\n')}
     const isMath = context.subject.toUpperCase() === 'MATH';
 
     if (isMath) {
-      const types = ['calculation', 'geometry', 'application', 'proof', 'graph', 'statistics'];
+      const types = ['number', 'algebra', 'function', 'geometry', 'statistics'];
       // category가 있으면 관련 유형 우선
       if (context.category) {
         const categoryTypeMap: Record<string, string[]> = {
-          '공통수학1': ['calculation', 'application'],
-          '공통수학2': ['geometry', 'graph'],
-          '대수': ['calculation', 'graph'],
-          '미적분I': ['calculation', 'graph', 'application'],
-          '미적분II': ['calculation', 'graph'],
-          '확률과 통계': ['calculation', 'statistics'],
-          '기하': ['geometry', 'proof'],
+          '공통수학1': ['algebra', 'number'],
+          '공통수학2': ['geometry', 'function'],
+          '대수': ['function', 'algebra'],
+          '미적분I': ['function', 'algebra'],
+          '미적분II': ['function'],
+          '확률과 통계': ['statistics'],
+          '기하': ['geometry'],
         };
         return categoryTypeMap[context.category] ?? types;
       }

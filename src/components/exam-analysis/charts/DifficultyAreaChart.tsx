@@ -15,6 +15,7 @@ import { DIFFICULTY_COLORS as DIFF_COLORS, DIFFICULTY_LEGACY_MAP } from '@/lib/e
 
 interface DifficultyAreaChartProps {
   questions: AnalyzedQuestion[];
+  embedded?: boolean;
 }
 
 // 난이도별 색상 (5단계)
@@ -38,8 +39,8 @@ function normalizeDiff(key: string): string {
   return DIFFICULTY_LEGACY_MAP[key] || key;
 }
 
-export function DifficultyAreaChart({ questions }: DifficultyAreaChartProps) {
-  const { chartData, totalPoints, legend } = useMemo(() => {
+export function DifficultyAreaChart({ questions, embedded }: DifficultyAreaChartProps) {
+  const { chartData, totalPoints, legend, aiComment } = useMemo(() => {
     // 문항 번호 순으로 정렬
     const sorted = [...questions].sort((a, b) => {
       const aNum = typeof a.question_number === 'string' ? parseInt(a.question_number) : a.question_number;
@@ -82,13 +83,31 @@ export function DifficultyAreaChart({ questions }: DifficultyAreaChartProps) {
       points: cumulative[d],
     }));
 
-    return { chartData: data, totalPoints: total, legend: legendItems };
+    // AI 코멘트 생성
+    const sortedLegend = [...legendItems].sort((a, b) => b.points - a.points);
+    const topDiff = sortedLegend[0];
+    const topPct = total > 0 ? Math.round((topDiff?.points || 0) / total * 100) : 0;
+    const easyPts = (cumulative['1'] || 0) + (cumulative['2'] || 0);
+    const hardPts = (cumulative['4'] || 0) + (cumulative['5'] || 0);
+    const easyPct = total > 0 ? Math.round(easyPts / total * 100) : 0;
+    const hardPct = total > 0 ? Math.round(hardPts / total * 100) : 0;
+
+    let comment = '';
+    if (hardPct >= 40) {
+      comment = `심화·최고난도(4~5) 배점이 전체의 ${hardPct}%를 차지하여 상위권 변별력이 높은 시험입니다. 고난도 문항 대비가 점수 확보의 핵심입니다.`;
+    } else if (easyPct >= 60) {
+      comment = `기본·표준(1~2) 배점이 전체의 ${easyPct}%로 기본기만 확실하면 ${easyPts}점까지 확보 가능합니다. 실수 방지가 중요합니다.`;
+    } else {
+      comment = `난이도 ${topDiff?.label || ''}단계 배점이 ${topPct}%로 가장 높습니다. 난이도별 배점이 ${sortedLegend.length >= 3 ? '고르게 분포' : '특정 구간에 집중'}되어 있습니다.`;
+    }
+
+    return { chartData: data, totalPoints: total, legend: legendItems, aiComment: comment };
   }, [questions]);
 
   if (questions.length === 0) return null;
 
   return (
-    <div className="bg-white border rounded-sm p-4">
+    <div className={embedded ? '' : 'bg-white border rounded-sm p-4'}>
       {/* 헤더 */}
       <div className="flex items-center gap-2 mb-3">
         <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-500 to-blue-500 flex items-center justify-center shrink-0">
@@ -202,6 +221,14 @@ export function DifficultyAreaChart({ questions }: DifficultyAreaChartProps) {
           </AreaChart>
         </ResponsiveContainer>
       </div>
+
+      {/* AI 코멘트 */}
+      {aiComment && (
+        <p className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 leading-relaxed">
+          <span className="text-violet-500 font-semibold mr-1">AI</span>
+          {aiComment}
+        </p>
+      )}
     </div>
   );
 }

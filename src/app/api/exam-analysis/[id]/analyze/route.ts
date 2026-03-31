@@ -121,6 +121,14 @@ export async function POST(request: NextRequest, { params }: Params) {
       },
     });
 
+    // 저신뢰/고난도 문항 레퍼런스 자동 수집
+    try {
+      const { collectLowConfidenceReferences } = await import('@/lib/exam-analysis/reference-collector');
+      await collectLowConfidenceReferences(id, analysis.id, questions);
+    } catch (e) {
+      console.error('[기출분석] 레퍼런스 자동수집 실패:', e);
+    }
+
     // ── 완료 ──
     await prisma.examPaper.update({
       where: { id },

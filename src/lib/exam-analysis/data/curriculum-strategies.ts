@@ -7,7 +7,6 @@
 
 import type { AnalyzedQuestion } from '../types';
 import {
-  findCommonMistakes as _findCommonMistakes,
   generateTimeStrategies,
   getEssayGuideByCategory,
   getEncouragementMessages,
@@ -20,6 +19,7 @@ import {
   ENCOURAGEMENT_MESSAGES,
   GRADE_CONNECTIONS,
 } from './curriculumStrategies';
+import { findCommonMistakes as _findCommonMistakes } from './curriculum/commonMistakes';
 
 import {
   findMatchingStrategies,

@@ -3,13 +3,13 @@
 import { useState, useMemo } from 'react';
 import { DIFFICULTY_COLORS, DIFFICULTY_LABELS as DIFF_LABELS_MAP, DIFFICULTY_LEGACY_MAP, TYPE_TO_DOMAIN, ABILITY_DOMAIN_LABELS, ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, AlertTriangle } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 // 차트 컴포넌트 (recharts는 SSR 미지원이므로 lazy load)
 const TypeRadarChart = dynamic(() => import('./charts/TypeRadarChart').then(m => ({ default: m.TypeRadarChart })), { ssr: false });
-const DifficultyAreaChart = dynamic(() => import('./charts/DifficultyAreaChart').then(m => ({ default: m.DifficultyAreaChart })), { ssr: false });
 const QuestionPointsChart = dynamic(() => import('./charts/QuestionPointsChart').then(m => ({ default: m.QuestionPointsChart })), { ssr: false });
+const DifficultyDonutChart = dynamic(() => import('./charts/DifficultyDonutChart').then(m => ({ default: m.DifficultyDonutChart })), { ssr: false });
 
 // 추가 분석 섹션
 import { EssayAnalysisSection } from './EssayAnalysisSection';
@@ -38,12 +38,10 @@ function normalizeDifficulty(key: string): string {
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  calculation: '계산', geometry: '도형', application: '응용',
-  proof: '증명', graph: '그래프', statistics: '통계',
-  algebra: '대수', problem_solving: '문제해결', number: '수와 연산',
-  function: '함수', probability: '확률', equation: '방정식',
-  inequality: '부등식', sequence: '수열', trigonometry: '삼각함수',
-  calculus: '미적분', vector: '벡터', set: '집합',
+  // 5대 교육과정 영역
+  number: '수와 연산', algebra: '문자와 식', function: '함수',
+  geometry: '기하', statistics: '확률과 통계',
+  // 영어
   grammar: '문법', vocabulary: '어휘', reading: '독해',
   listening: '듣기', writing: '서술형', communication: '의사소통',
 };
@@ -52,10 +50,32 @@ const _FORMAT_LABELS: Record<string, string> = {
   objective: '객관식', short_answer: '단답형', essay: '서술형',
 };
 
+/** 배점 신뢰도 판정: 합계가 기준의 ±15% 이내인지 */
+function checkPointsReliable(qs: AnalyzedQuestion[], expectedTotal: number | null) {
+  const total = (expectedTotal && expectedTotal > 0) ? expectedTotal : 100;
+  const nullCount = qs.filter((q) => q.points === null || q.points === 0).length;
+  const pointsSum = qs.reduce((sum, q) => sum + (q.points ?? 0), 0);
+  const deviationPct = total > 0 ? Math.round(Math.abs(pointsSum - total) / total * 100) : 0;
+
+  if (nullCount > qs.length * 0.5) {
+    return { reliable: false, pointsSum, total, deviationPct, reason: `${nullCount}개 문항의 배점을 인식하지 못했습니다` };
+  }
+  if (deviationPct > 15) {
+    return { reliable: false, pointsSum, total, deviationPct, reason: `배점 합계 ${pointsSum}점 (기준 ${total}점, ${deviationPct}% 차이)` };
+  }
+  return { reliable: true, pointsSum, total, deviationPct, reason: '' };
+}
+
 // ── 메인 컴포넌트 ──
 
 export function AnalysisResultView({ questions, summary, totalPoints: _totalPoints, earnedPoints: _earnedPoints, examType }: AnalysisResultViewProps) {
   const isStudentExam = examType === 'student';
+
+  // 배점 신뢰도 판정
+  const pointsCheck = useMemo(
+    () => checkPointsReliable(questions, _totalPoints),
+    [questions, _totalPoints]
+  );
 
   // 난이도 분포 (5단계, 레거시 키 통합)
   const diffData = useMemo(() => {
@@ -177,73 +197,50 @@ export function AnalysisResultView({ questions, summary, totalPoints: _totalPoin
         </div>
       </div>
 
-      {/* ══ 기본 분석 요약 (하나의 큰 카드) ══ */}
-      <div className="bg-white border rounded-sm p-5 space-y-5">
-        {/* ── 난이도 + 유형 (2컬럼) ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* 난이도 분포 */}
-          <InnerSection title="난이도 분포" subtitle={`총 ${total}문항`}>
-            {diffData.length > 0 && (
-              <>
-                <div className="flex rounded-sm overflow-hidden h-8 bg-slate-100 mb-3">
-                  {diffData.filter(d => d.count > 0).map(d => (
-                    <div
-                      key={d.key}
-                      className="flex items-center justify-center text-white text-xs font-medium"
-                      style={{ width: `${d.pct}%`, backgroundColor: d.color, minWidth: d.count > 0 ? 40 : 0 }}
-                    >
-                      {d.count}
-                    </div>
-                  ))}
-                </div>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                  {diffData.filter(d => d.count > 0).map(d => (
-                    <span key={d.key} className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: d.color }} />
-                      <span className="text-slate-600">{d.label}</span>
-                      <span className="font-medium text-slate-800">{d.count}문항</span>
-                      <span className="text-slate-400">({d.pct}%)</span>
-                    </span>
-                  ))}
-                </div>
-              </>
-            )}
-          </InnerSection>
-        </div>
-
-        {/* ── 배점 분포 ── */}
-        <InnerSection title="배점 분포">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <PointsFormatBlock label="객관식" data={pointsAvg.objective} color="#3b82f6" />
-            <PointsFormatBlock label="단답형" data={pointsAvg.shortAnswer} color="#f59e0b" />
-            <PointsFormatBlock label="서술형" data={pointsAvg.essay} color="#8b5cf6" />
+      {/* ══ 배점 인식 경고 배너 ══ */}
+      {!pointsCheck.reliable && (
+        <div className="bg-amber-50 border border-amber-200 rounded-sm p-3 flex items-start gap-2.5">
+          <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-amber-800">배점 인식 불안정</p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              {pointsCheck.reason} — 배점 기반 분석(배점 분포, 서술형 분석, 문항별 배점, 변별력)이 숨겨집니다.
+              난이도·유형·단원 분석은 정상 표시됩니다.
+            </p>
           </div>
-        </InnerSection>
-
-        {/* ── 단원별 출제현황 ── */}
-        <TopicSection topicGroups={topicGroups} maxTopic={maxTopic} total={total} chartColors={CHART_COLORS} />
-      </div>
-
-      {/* ── Row 3.5: 서술형 집중 분석 ── */}
-      <EssayAnalysisSection
-        questions={questions}
-        totalQuestions={total}
-        totalPoints={questions.reduce((s, q) => s + (q.points || 0), 0)}
-      />
-
-      {/* ── Row 3.6: 차트 (유형 레이더 + 난이도별 누적 배점) ── */}
-      {summary?.type_distribution && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <TypeRadarChart data={summary.type_distribution as Record<string, number>} questions={questions} />
-          <DifficultyAreaChart questions={questions} />
         </div>
       )}
 
-      {/* ── Row 3.7: 문항별 배점 콤보 차트 ── */}
-      <QuestionPointsChart questions={questions} />
+      {/* ══ Row 1: 난이도/배점 도넛 + 유형 레이더 (2컬럼) ══ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* 난이도/배점 분포 (도넛차트, 토글) */}
+        <DifficultyDonutChart diffData={diffData} total={total} pointsData={pointsCheck.reliable ? pointsAvg : undefined} />
 
-      {/* ── Row 3.8: 변별력 분석 ── */}
-      <DiscriminationSection questions={questions} />
+        {/* 유형/능력 레이더 */}
+        {summary?.type_distribution && (
+          <TypeRadarChart data={summary.type_distribution as Record<string, number>} questions={questions} />
+        )}
+      </div>
+
+      {/* ══ Row 2: 단원별 출제현황 (풀 와이드) ══ */}
+      <div className="bg-white border rounded-sm p-4">
+        <TopicSection topicGroups={topicGroups} maxTopic={maxTopic} total={total} chartColors={CHART_COLORS} />
+      </div>
+
+      {/* ══ Row 3: 서술형 분석 (배점 신뢰 시만) ══ */}
+      {pointsCheck.reliable && (
+        <EssayAnalysisSection
+          questions={questions}
+          totalQuestions={total}
+          totalPoints={questions.reduce((s, q) => s + (q.points || 0), 0)}
+        />
+      )}
+
+      {/* ══ Row 4: 문항별 배점 (배점 신뢰 시만) ══ */}
+      {pointsCheck.reliable && <QuestionPointsChart questions={questions} />}
+
+      {/* ══ Row 5: 변별력 분석 (배점 신뢰 시만) ══ */}
+      {pointsCheck.reliable && <DiscriminationSection questions={questions} />}
 
       {/* ── Row 4: 문항 테이블 ── */}
       <Card title="문항별 분석">
@@ -256,7 +253,9 @@ export function AnalysisResultView({ questions, summary, totalPoints: _totalPoin
                 <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 w-16">유형</th>
                 <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 w-16">능력</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-slate-500">단원</th>
-                <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 w-14">배점</th>
+                <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 w-14">
+                  배점{!pointsCheck.reliable && <AlertTriangle className="inline w-3 h-3 text-amber-400 ml-0.5 -mt-0.5" />}
+                </th>
                 {isStudentExam && <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 w-14">정답</th>}
                 <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 w-16">신뢰도</th>
               </tr>
@@ -311,17 +310,6 @@ function Card({ title, subtitle, children }: { title: string; subtitle?: string;
   );
 }
 
-function InnerSection({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-slate-50/70 rounded-sm p-4 shadow-sm">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
-        {subtitle && <span className="text-xs text-slate-400">{subtitle}</span>}
-      </div>
-      {children}
-    </div>
-  );
-}
 
 function TopicSection({ topicGroups, maxTopic, total, chartColors }: {
   topicGroups: Array<{ name: string; fullName: string; count: number; totalPts: number; minorList: Array<{ name: string; count: number; pts: number }> }>;
@@ -342,7 +330,11 @@ function TopicSection({ topicGroups, maxTopic, total, chartColors }: {
   const collapseAll = () => setExpanded(new Set());
 
   return (
-    <InnerSection title="단원별 출제현황" subtitle={`${topicGroups.length}개 중단원 · ${total}문항`}>
+    <>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold text-slate-900">단원별 출제현황</h3>
+        <span className="text-xs text-slate-400">{topicGroups.length}개 중단원 · {total}문항</span>
+      </div>
       <div className="space-y-1">
         {topicGroups.map((t, idx) => {
           const isOpen = expanded.has(t.fullName);
@@ -404,31 +396,10 @@ function TopicSection({ topicGroups, maxTopic, total, chartColors }: {
           </button>
         </div>
       )}
-    </InnerSection>
+    </>
   );
 }
 
-function PointsFormatBlock({ label, data, color }: {
-  label: string;
-  data: { count: number; avg: number; total: number };
-  color: string;
-}) {
-  if (data.count === 0) return null;
-  return (
-    <div className="bg-slate-50/70 rounded-sm p-3 shadow-sm">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-slate-800">
-          {label} <span style={{ color }} className="font-semibold">{data.count}문항</span>
-        </span>
-        <span className="text-xs text-slate-400">총 {data.total}점</span>
-      </div>
-      <div className="flex items-end gap-1">
-        <span className="text-2xl font-bold" style={{ color }}>{data.avg}</span>
-        <span className="text-xs text-slate-400 pb-1">점 / 문항 평균</span>
-      </div>
-    </div>
-  );
-}
 
 function QRow({ q, isStudent }: { q: AnalyzedQuestion; isStudent: boolean }) {
   const confPct = Math.round((q.confidence || 0) * 100);
@@ -465,7 +436,12 @@ function QRow({ q, isStudent }: { q: AnalyzedQuestion; isStudent: boolean }) {
         </td>
       )}
       <td className="px-3 py-2 text-center">
-        <span className={`inline-block px-1.5 py-0.5 rounded text-[11px] font-medium ${confColor} ${confBg}`}>{confPct}%</span>
+        <span
+          className={`inline-block px-1.5 py-0.5 rounded text-[11px] font-medium ${confColor} ${confBg} ${q.confidence_reason ? 'cursor-help' : ''}`}
+          title={q.confidence_reason || undefined}
+        >
+          {confPct}%
+        </span>
       </td>
     </tr>
   );

@@ -13,14 +13,13 @@ interface LearningStrategiesSectionProps {
   onToggleSection: () => void;
 }
 
-// 유형 한국어 라벨 매핑 (ExpandedStrategy에서도 사용)
+// 5대 교육과정 영역 한국어 라벨 매핑 (ExpandedStrategy에서도 사용)
 const _TYPE_LABELS: Record<string, string> = {
-  calculation: '계산',
-  geometry: '도형',
-  application: '응용',
-  proof: '증명',
-  graph: '그래프',
-  statistics: '통계',
+  number: '수와 연산',
+  algebra: '문자와 식',
+  function: '함수',
+  geometry: '기하',
+  statistics: '확률과 통계',
 };
 
 /** avgDifficulty 기준 색상 반환 */
@@ -199,8 +198,8 @@ function ExpandedStrategy({ topic, diffKey, color, is4Level }: {
                   const strategies = TYPE_STRATEGIES[type];
                   if (!strategies) return null;
                   const TYPE_LABELS_MAP: Record<string, string> = {
-                    calculation: '계산', geometry: '도형', application: '응용',
-                    proof: '증명', graph: '그래프', statistics: '통계',
+                    number: '수와 연산', algebra: '문자와 식', function: '함수',
+                    geometry: '기하', statistics: '확률과 통계',
                   };
                   return (
                     <div key={type} className="bg-purple-50/50 rounded-sm p-2.5">

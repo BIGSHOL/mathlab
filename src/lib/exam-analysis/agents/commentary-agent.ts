@@ -32,7 +32,7 @@ function getDiffCounts(diff: Record<string, number>): { level1: number; level2: 
 // ── 코멘터리 출력 타입 ──
 
 export interface NotableQuestion {
-  question_number: number;
+  question_number: number | string;
   comment: string;
 }
 
@@ -46,6 +46,7 @@ export interface TeachingRecommendation {
 export interface CommentaryResult {
   overall_comment: string;
   exam_characteristics?: string[];
+  score_strategy?: string;
   strength_areas: string[];
   improvement_areas: string[];
   notable_questions: NotableQuestion[];
@@ -83,6 +84,20 @@ export class CommentaryAgent extends BaseAgent<Record<string, unknown>> {
       .map(([t, s]) => `${t}: ${s.count}문항(${s.pts}점)`)
       .join(', ');
 
+    // 종합 난이도 Level 계산 (가중 평균)
+    const diffCounts = [
+      diff['1'] || diff.concept || 0,
+      diff['2'] || diff.pattern || 0,
+      diff['3'] || 0,
+      diff['4'] || diff.reasoning || 0,
+      diff['5'] || diff.creative || 0,
+    ];
+    const diffTotal = diffCounts.reduce((s, c) => s + c, 0);
+    const overallLevel = diffTotal > 0
+      ? Math.round(diffCounts.reduce((s, c, i) => s + c * (i + 1), 0) / diffTotal)
+      : 3;
+    const LEVEL_LABELS = ['', '기본', '표준', '응용', '심화', '최고난도'];
+
     // 학년 추출 + 교육과정 단원 참조 데이터
     const curriculumBlock = this.buildCurriculumReference(basicAnalysis);
 
@@ -103,6 +118,7 @@ export class CommentaryAgent extends BaseAgent<Record<string, unknown>> {
       번호: q.question_number,
       난이도: q.difficulty,
       유형: q.question_type,
+      능력영역: q.ability_domain,
       단원: q.topic,
       배점: q.points,
       ...(hasStudentData ? {
@@ -123,8 +139,9 @@ export class CommentaryAgent extends BaseAgent<Record<string, unknown>> {
 ## 시험 개요
 - 총 문항수: ${totalQ}문항, 총 배점: ${totalPts}점
 - 형식: 객관식 ${basicAnalysis.exam_info.format_distribution.objective}문항, 단답형 ${basicAnalysis.exam_info.format_distribution.short_answer}문항, 서술형 ${basicAnalysis.exam_info.format_distribution.essay}문항
+- **종합 난이도: Level ${overallLevel} (${LEVEL_LABELS[overallLevel]})**
 - 난이도 분포: 1(기본) ${diff['1'] || diff.concept || 0}문항, 2(표준) ${diff['2'] || diff.pattern || 0}문항, 3(응용) ${diff['3'] || 0}문항, 4(심화) ${diff['4'] || diff.reasoning || 0}문항, 5(최고난도) ${diff['5'] || diff.creative || 0}문항
-- 유형 분포: 계산 ${types.calculation || 0}, 도형 ${types.geometry || 0}, 응용 ${types.application || 0}, 증명 ${types.proof || 0}, 그래프 ${types.graph || 0}, 통계 ${types.statistics || 0}
+- 유형 분포: 수와연산 ${types.number || 0}, 문자와식 ${types.algebra || 0}, 함수 ${types.function || 0}, 기하 ${types.geometry || 0}, 확률통계 ${types.statistics || 0}
 - 단원별 출제: ${topicSummary}
 ${studentStatsBlock}
 ${curriculumBlock}
@@ -135,11 +152,12 @@ ${JSON.stringify(questionsData, null, 1)}
 ## 출력 형식 (반드시 아래 JSON 구조로 응답)
 
 {
-  "overall_comment": "string (3-5문장의 시험 종합 분석)",
+  "overall_comment": "string (5-8문장의 시험 종합 분석)",
   "exam_characteristics": ["string (시험 특성 2-4개)"],
-  "strength_areas": ["string (잘 출제된 영역/학생 강점 1-3개)"],
-  "improvement_areas": ["string (보완 필요 영역 1-3개)"],
-  "notable_questions": [{"question_number": 1, "comment": "string (출제 의도/변별력 관점 분석)"}],
+  "score_strategy": "string (난이도별 점수 확보 전략 2-3문장)",
+  "strength_areas": ["string (잘 출제된 영역/학생 강점 2-3개)"],
+  "improvement_areas": ["string (보완 필요 영역 2-3개)"],
+  "notable_questions": [{"question_number": "서술형3", "comment": "string (출제 의도/변별력 관점 분석)"}],
   "teaching_recommendations": [{"topic": "단원명", "priority": 1, "reason": "지도 방향 설명"}]
 }
 
@@ -155,6 +173,11 @@ ${hasStudentData ? '- 학생 분석 추가 포함: ⑤ 전체 정답률과 수�
 - 시험의 핵심 특징을 2-4개 간결한 문장으로 작성하세요.
 - 예시: "개념 문항 비중이 높아 기본기 점검에 적합", "서술형 3문항이 총 배점의 30%를 차지하여 변별력이 높음"
 
+### score_strategy (점수 확보 전략)
+- 난이도별 배점 합계를 기반으로 단계별 점수 확보 전략을 2-3문장으로 작성하세요.
+- 반드시 구체적 점수를 포함하세요. 예시: "난이도 1~2 문항을 모두 맞히면 52점(52%)을 확보할 수 있으며, 3단계까지 포함하면 78점(78%)까지 도달 가능합니다. 90점 이상을 목표로 한다면 4단계 심화 문항 중 최소 2문항은 정답해야 합니다."
+- 학부모 상담 시 "우리 아이가 몇 점을 목표로 하려면 어디까지 공부해야 하는지" 설명하는 데 활용됩니다.
+
 ### strength_areas / improvement_areas
 ${hasStudentData
     ? '- 학생의 답안 데이터를 기반으로 잘한 영역과 보완 영역을 각각 2-3개씩 분석하세요.'
@@ -163,8 +186,10 @@ ${hasStudentData
 - 구체적 수치를 포함하세요 (예: "도형 영역 5문항 중 4문항 정답(정답률 80%)으로 해당 단원의 기본 개념이 안정적으로 형성되어 있습니다").
 
 ### notable_questions (주목할 문항)
-- 변별력이 높거나 출제 의도가 돋보이는 문항 1-3개를 선정하세요.
+- 변별력이 높거나 출제 의도가 돋보이는 문항 3-5개를 선정하세요.
 ${hasStudentData ? '- 쉬운 문제를 틀렸거나 어려운 문제를 맞힌 경우를 우선 선정하세요.' : ''}
+- **question_number는 반드시 위 "문항 상세"의 "번호" 필드 값을 그대로 사용하세요!** (예: "서술형3"이면 "서술형3", 18이면 18)
+- 숫자만 추출하지 마세요. "서술형3"을 3으로 바꾸면 안 됩니다.
 - 해당 문항이 왜 주목할 만한지 구체적으로 설명하세요.
 
 ### teaching_recommendations (지도 추천)
@@ -250,7 +275,28 @@ ${phases}
 
     // JSON 추출 (코드펜스 제거)
     const cleaned = text.replace(/```(?:json)?\s*/g, '').replace(/```\s*$/g, '').trim();
-    const result = JSON.parse(cleaned);
+    let result: Record<string, unknown>;
+    try {
+      result = JSON.parse(cleaned);
+    } catch {
+      // 잘린 JSON 복구 시도: 열린 괄호/따옴표 닫기
+      let fixed = cleaned;
+      // 잘린 문자열 닫기
+      const openQuotes = (fixed.match(/"/g) || []).length;
+      if (openQuotes % 2 !== 0) fixed += '"';
+      // 열린 배열/객체 닫기
+      const openBrackets = (fixed.match(/\[/g) || []).length - (fixed.match(/\]/g) || []).length;
+      const openBraces = (fixed.match(/\{/g) || []).length - (fixed.match(/\}/g) || []).length;
+      for (let i = 0; i < openBrackets; i++) fixed += ']';
+      for (let i = 0; i < openBraces; i++) fixed += '}';
+      // 마지막 콤마 제거
+      fixed = fixed.replace(/,\s*([}\]])/g, '$1');
+      try {
+        result = JSON.parse(fixed);
+      } catch {
+        throw new Error(`AI 총평 JSON 파싱 실패: ${cleaned.slice(0, 200)}...`);
+      }
+    }
     return this.parseResponse(result);
   }
 
@@ -260,6 +306,7 @@ ${phases}
     const result: CommentaryResult = {
       overall_comment: String(raw.overall_comment ?? ''),
       exam_characteristics: this.parseStringArray(raw.exam_characteristics),
+      score_strategy: raw.score_strategy ? String(raw.score_strategy) : undefined,
       strength_areas: this.parseStringArray(raw.strength_areas),
       improvement_areas: this.parseStringArray(raw.improvement_areas),
       notable_questions: this.parseNotableQuestions(raw.notable_questions),
@@ -279,6 +326,7 @@ ${phases}
     const result: CommentaryResult = {
       overall_comment: this.generateOverallComment(basicAnalysis),
       exam_characteristics: this.generateExamCharacteristics(basicAnalysis),
+      score_strategy: this.generateScoreStrategy(basicAnalysis),
       strength_areas: this.findStrengthAreas(basicAnalysis),
       improvement_areas: this.findImprovementAreas(basicAnalysis),
       notable_questions: this.findNotableQuestions(basicAnalysis),
@@ -325,6 +373,37 @@ ${phases}
     }
 
     return `총 ${totalQ}문항 ${totalPts}점 만점 시험으로, 기본·표준 ${easyCount}문항·응용 ${dc.level3}문항·심화·최고난도 ${hardCount}문항으로 구성되어 있습니다. ${diffNote}${essayNote}${studentNote}`;
+  }
+
+  // ── 규칙 기반: 점수 확보 전략 ──
+
+  private generateScoreStrategy(analysis: BasicAnalysisResult): string {
+    const totalPts = analysis.exam_info.total_points;
+    // 난이도별 배점 합계
+    const diffPts: Record<string, number> = {};
+    for (const q of analysis.questions) {
+      const nd = q.difficulty || '1';
+      diffPts[nd] = (diffPts[nd] || 0) + (q.points || 0);
+    }
+
+    // 누적 점수 계산 (쉬운 난이도부터)
+    const levels = ['1', '2', '3', '4', '5'];
+    let cumulative = 0;
+    const steps: string[] = [];
+    for (const lv of levels) {
+      const pts = diffPts[lv] || 0;
+      if (pts > 0) {
+        cumulative += pts;
+        const pct = totalPts > 0 ? Math.round((cumulative / totalPts) * 100) : 0;
+        steps.push(`${lv}단계까지 ${cumulative}점(${pct}%)`);
+      }
+    }
+
+    if (steps.length <= 1) {
+      return `전 문항 배점이 ${totalPts}점이며, 난이도 구분 없이 균일한 배점 구조입니다.`;
+    }
+
+    return `난이도별 누적 도달 점수: ${steps.join(', ')}. 기본~표준(1~2단계)까지 확실히 확보하는 것이 점수 안정화의 핵심입니다.`;
   }
 
   // ── 규칙 기반: 시험 특성 ──
@@ -689,12 +768,11 @@ ${unitList}`;
 
   private typeLabel(type: string): string {
     const map: Record<string, string> = {
-      calculation: '계산',
-      geometry: '도형',
-      application: '응용',
-      proof: '증명',
-      graph: '그래프',
-      statistics: '통계',
+      number: '수와 연산',
+      algebra: '문자와 식',
+      function: '함수',
+      geometry: '기하',
+      statistics: '확률과 통계',
     };
     return map[type] || type;
   }

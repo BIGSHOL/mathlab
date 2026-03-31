@@ -32,6 +32,7 @@ export class LearningAgent extends BaseAgent<LearningPlan> {
         number: q.question_number,
         difficulty: q.difficulty,
         type: q.question_type,
+        ability: q.ability_domain,
         topic: q.topic,
         is_correct: q.is_correct,
         points: q.points,

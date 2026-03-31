@@ -34,9 +34,14 @@ interface ExamPaperDetail {
 // ── 유틸 ──
 
 const DIFFICULTY_LABEL: Record<string, string> = {
+  '1': '난이도1 기본', '2': '난이도2 표준', '3': '난이도3 응용', '4': '난이도4 심화', '5': '난이도5 최고',
+  concept: '난이도1 기본', pattern: '난이도2 표준', reasoning: '난이도4 심화', creative: '난이도5 최고',
+  high: '상', medium: '중', low: '하',
+};
+
+const DIFFICULTY_LABEL_SHORT: Record<string, string> = {
   '1': '1', '2': '2', '3': '3', '4': '4', '5': '5',
   concept: '1', pattern: '2', reasoning: '4', creative: '5',
-  high: '상', medium: '중', low: '하',
 };
 
 const DIFFICULTY_COLOR_CLASS: Record<string, string> = {
@@ -52,12 +57,11 @@ const DIFFICULTY_COLOR_CLASS: Record<string, string> = {
 };
 
 const TYPE_LABEL: Record<string, string> = {
-  calculation: '계산',
-  geometry: '도형',
-  application: '응용',
-  proof: '증명',
-  graph: '그래프',
-  statistics: '통계',
+  number: '수와 연산',
+  algebra: '문자와 식',
+  function: '함수',
+  geometry: '기하',
+  statistics: '확률과 통계',
 };
 
 const FORMAT_LABEL: Record<string, string> = {
@@ -334,7 +338,7 @@ export default function ExamAnalysisPrintPage() {
                               DIFFICULTY_COLOR_CLASS[q.difficulty] || 'bg-slate-100 text-slate-700'
                             }`}
                           >
-                            {DIFFICULTY_LABEL[q.difficulty] ?? q.difficulty}
+                            {DIFFICULTY_LABEL_SHORT[q.difficulty] ?? q.difficulty}
                           </span>
                         </td>
                         <td className="px-2 py-1.5 text-text-secondary">

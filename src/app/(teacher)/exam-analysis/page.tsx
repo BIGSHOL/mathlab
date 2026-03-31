@@ -110,10 +110,13 @@ export default function ExamAnalysisPage() {
 
   const handleAnalyze = async (id: string) => {
     setAnalyzing(true);
+    // 즉시 로컬 상태를 ANALYZING으로 변경 (폴링 트리거 + UI 즉시 반영)
+    setItems(prev => prev.map(item =>
+      item.id === id ? { ...item, status: 'ANALYZING' as const } : item
+    ));
+    toast.info('AI 분석이 시작되었습니다');
     try {
-      // fire-and-forget: 서버에 분석 요청만 보내고 즉시 UI 갱신
-      // 서버는 ANALYZING → (작업) → COMPLETED/FAILED 상태를 알아서 갱신
-      // 클라이언트는 폴링(5초)으로 상태 변경 감지
+      // fire-and-forget: 서버에 분석 요청, 완료 시 갱신
       fetch(`/api/exam-analysis/${id}/analyze`, { method: 'POST' })
         .then(async (res) => {
           if (!res.ok) {
@@ -126,13 +129,12 @@ export default function ExamAnalysisPage() {
         })
         .catch(() => {
           toast.error('분석 요청에 실패했습니다');
+          // 실패 시 상태 복원
+          setItems(prev => prev.map(item =>
+            item.id === id ? { ...item, status: 'FAILED' as const } : item
+          ));
         });
-
-      // UI 즉시 반영: 목록 새로고침하여 ANALYZING 상태 표시
-      await new Promise(r => setTimeout(r, 500));
-      fetchList();
-      if (selectedId === id) fetchDetail(id);
-      toast.info('AI 분석이 시작되었습니다');
+      // 폴링이 3초마다 상태 확인하므로 여기서 fetchList 안 함
     } finally {
       setAnalyzing(false);
     }
@@ -283,6 +285,21 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
 }) {
   const [activeTab, setActiveTab] = useState<AnalysisTab>('basic');
   const [commentaryLoading, setCommentaryLoading] = useState(false);
+  const [commentaryStartTime, setCommentaryStartTime] = useState<number | null>(null);
+  const [commentaryElapsed, setCommentaryElapsed] = useState(0);
+
+  // 총평 생성 경과 시간 타이머
+  useEffect(() => {
+    if (!commentaryLoading || !commentaryStartTime) {
+      setCommentaryElapsed(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setCommentaryElapsed(Math.floor((Date.now() - commentaryStartTime) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [commentaryLoading, commentaryStartTime]);
+
   const latestAnalysis = detail.analyses?.[0];
   const questions = latestAnalysis?.questions || [];
   const summary = (latestAnalysis?.summary || null) as AnalysisSummary | null;
@@ -298,6 +315,7 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
   const handleGenerateCommentary = async () => {
     if (!latestAnalysis) return;
     setCommentaryLoading(true);
+    setCommentaryStartTime(Date.now());
     try {
       const res = await fetch(`/api/exam-analysis/${detail.id}/analyze-extended`, {
         method: 'POST',
@@ -315,6 +333,7 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
       toast.error('총평 생성 중 오류가 발생했습니다');
     } finally {
       setCommentaryLoading(false);
+      setCommentaryStartTime(null);
     }
   };
 
@@ -366,33 +385,41 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
               </Button>
             )}
 
-            {/* 종합 난이도 5단계 바 */}
-            {detail.status === 'COMPLETED' && diffLevel > 0 && (
-              <div className="flex items-center gap-2.5">
-                <div className="text-right text-[10px] text-slate-500 leading-tight">시험<br/>난이도</div>
-                <div className="flex gap-0.5">
-                  {[1, 2, 3, 4, 5].map(level => {
-                    const isActive = level === diffLevel;
-                    const color = DIFF_BAR_COLORS[level - 1];
-                    return (
-                      <div
-                        key={level}
-                        className={`w-7 h-9 rounded-sm flex items-center justify-center text-xs font-bold transition-all ${
-                          isActive ? 'ring-2 ring-offset-1 shadow-md scale-110' : 'opacity-30'
-                        }`}
-                        style={{
-                          backgroundColor: color,
-                          color: '#fff',
-                          ...(isActive ? { boxShadow: `0 0 0 2px #fff, 0 0 0 4px ${color}` } : {}),
-                        }}
-                      >
-                        {level}
-                      </div>
-                    );
-                  })}
+            {/* 종합 난이도 카드 */}
+            {detail.status === 'COMPLETED' && diffLevel > 0 && (() => {
+              const activeColor = DIFF_BAR_COLORS[diffLevel - 1];
+              return (
+                <div className="flex items-center gap-3 px-3 py-2.5 rounded-sm border" style={{ borderColor: `${activeColor}50`, backgroundColor: `${activeColor}0A` }}>
+                  <div className="flex flex-col items-center gap-1.5">
+                    <span className="text-[10px] font-semibold text-slate-500">시험 난이도</span>
+                    <div className="flex gap-0.5">
+                      {[1, 2, 3, 4, 5].map(level => {
+                        const isActive = level === diffLevel;
+                        const color = DIFF_BAR_COLORS[level - 1];
+                        return (
+                          <div
+                            key={level}
+                            className={`w-6 h-6 rounded-sm flex items-center justify-center text-[10px] font-bold transition-all ${
+                              isActive ? 'ring-2 ring-offset-1 shadow-sm scale-110' : 'opacity-25'
+                            }`}
+                            style={{
+                              backgroundColor: color,
+                              color: '#fff',
+                              ...(isActive ? { boxShadow: `0 0 0 1.5px #fff, 0 0 0 3px ${color}` } : {}),
+                            }}
+                          >
+                            {level}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="border-l pl-3" style={{ borderColor: `${activeColor}30` }}>
+                    <span className="text-base font-extrabold" style={{ color: activeColor }}>Level {diffLevel}</span>
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         </div>
       </div>
@@ -414,28 +441,49 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
         <>
           {/* AI 총평 섹션 */}
           {!commentary ? (
-            <div className="bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200 rounded-sm p-4 mb-5 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-violet-100 rounded-full flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-violet-600" />
+            <div className="bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200 rounded-sm p-4 mb-5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 bg-violet-100 rounded-full flex items-center justify-center ${commentaryLoading ? 'animate-pulse' : ''}`}>
+                    <Sparkles className="w-4 h-4 text-violet-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-800">AI 시험 총평</p>
+                    <p className="text-xs text-slate-500">
+                      {commentaryLoading
+                        ? `AI가 시험을 분석하고 있습니다... (${commentaryElapsed}초)`
+                        : '시험 전체에 대한 전문가 수준의 종합 평가를 받아보세요'}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-800">AI 시험 총평</p>
-                  <p className="text-xs text-slate-500">시험 전체에 대한 전문가 수준의 종합 평가를 받아보세요</p>
-                </div>
+                <Button
+                  size="sm"
+                  className="bg-violet-600 hover:bg-violet-700 text-white"
+                  onClick={handleGenerateCommentary}
+                  disabled={commentaryLoading}
+                >
+                  {commentaryLoading ? `${commentaryElapsed}초 경과` : '총평 생성'}
+                </Button>
               </div>
-              <Button
-                size="sm"
-                className="bg-violet-600 hover:bg-violet-700 text-white"
-                onClick={handleGenerateCommentary}
-                disabled={commentaryLoading}
-              >
-                {commentaryLoading ? '생성 중...' : '총평 생성'}
-              </Button>
+              {commentaryLoading && (
+                <div className="mt-3">
+                  <div className="flex items-center justify-between text-[10px] text-violet-600 mb-1">
+                    <span>문항 분석 → 종합 평가 → 전략 수립</span>
+                    <span>약 30~60초 소요</span>
+                  </div>
+                  <div className="h-1.5 bg-violet-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-violet-400 to-purple-500 rounded-full transition-all duration-1000 ease-linear"
+                      style={{ width: `${Math.min(commentaryElapsed / 50 * 100, 95)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <CommentarySection
               commentary={commentary}
+              questions={questions}
               onRegenerate={handleGenerateCommentary}
               isRegenerating={commentaryLoading}
             />
@@ -471,38 +519,98 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
   );
 }
 
+// ── AI 총평 텍스트 하이라이트 ──
+
+/** 숫자/키워드에 종류별 다른 색상 하이라이트 */
+function highlightText(text: string): React.ReactNode {
+  // 그룹별 패턴: 숫자+단위 | 난이도/위험 | 형식 | 영역/범위 | 기타 강조
+  const pattern = /(\d+(?:\.\d+)?(?:점대?|문항|%|번|개|단계))|(?:최고난도|고난도|킬러|변별력|취약)|(?:서술형\d*|객관식|단답형)|(?:상위권|최상위권|중상위권|하위권|핵심|필수적?|복합|다단계)|(?:'[^']+?'|'[^']+?')/g;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+    const word = match[0];
+    let cls: string;
+
+    if (/^\d/.test(word)) {
+      // 숫자: 진한 볼드
+      cls = 'font-bold text-slate-900 text-[13px]';
+    } else if (/최고난도|고난도|킬러|변별력|취약/.test(word)) {
+      // 난이도/위험: 빨간 계열
+      cls = 'font-bold text-red-600 bg-red-50 px-0.5 rounded-sm text-[13px]';
+    } else if (/서술형|객관식|단답형/.test(word)) {
+      // 형식: 파란 계열
+      cls = 'font-bold text-blue-600 bg-blue-50 px-0.5 rounded-sm text-[13px]';
+    } else if (/상위권|최상위권|중상위권|하위권/.test(word)) {
+      // 등급: 녹색 계열
+      cls = 'font-bold text-emerald-600 bg-emerald-50 px-0.5 rounded-sm text-[13px]';
+    } else if (/[''']/.test(word[0])) {
+      // 인용 (단원명 등): 보라 계열
+      cls = 'font-semibold text-violet-700 bg-violet-50 px-0.5 rounded-sm text-[13px]';
+    } else {
+      // 핵심/필수/복합 등: 보라 계열
+      cls = 'font-bold text-violet-700 bg-violet-100/60 px-0.5 rounded-sm text-[13px]';
+    }
+
+    parts.push(<span key={match.index} className={cls}>{word}</span>);
+    lastIndex = pattern.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : text;
+}
+
+const FORMAT_BADGE: Record<string, { label: string; cls: string }> = {
+  objective: { label: '객관식', cls: 'bg-sky-100 text-sky-700' },
+  short_answer: { label: '단답형', cls: 'bg-teal-100 text-teal-700' },
+  essay: { label: '서술형', cls: 'bg-amber-100 text-amber-700' },
+};
+
 // ── AI 총평 결과 표시 ──
 
-function CommentarySection({ commentary, onRegenerate, isRegenerating }: {
+function CommentarySection({ commentary, questions: allQuestions, onRegenerate, isRegenerating }: {
   commentary: CommentaryResult;
+  questions: AnalyzedQuestion[];
   onRegenerate: () => void;
   isRegenerating: boolean;
 }) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // 폴백 감지: 규칙 기반 결과는 overall_comment가 "총 N문항"으로 시작
+  const isFallback = commentary.overall_comment?.startsWith('총 ') && !commentary.overall_comment?.includes('이번 시험');
 
   return (
-    <div className="bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-200 rounded-sm p-5 mb-5">
+    <div className={`bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-200 rounded-sm mb-5 ${isExpanded ? 'p-5' : 'px-4 py-2.5'}`}>
       {/* 헤더 */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-violet-600 rounded-sm flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-white" />
+      <div className={`flex items-center justify-between ${isExpanded ? 'mb-4' : ''}`}>
+        <div className="flex items-center gap-2.5">
+          <div className={`${isExpanded ? 'w-9 h-9' : 'w-7 h-7'} bg-violet-600 rounded-sm flex items-center justify-center shrink-0`}>
+            <Sparkles className={`${isExpanded ? 'w-5 h-5' : 'w-3.5 h-3.5'} text-white`} />
           </div>
           <div>
             <h3 className="text-sm font-bold text-slate-900">AI 시험 총평</h3>
-            <p className="text-[11px] text-slate-500">전문가 수준의 종합 평가 및 인사이트</p>
+            {isExpanded && <p className="text-[11px] text-slate-500">전문가 수준의 종합 평가 및 인사이트</p>}
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={onRegenerate}
-            disabled={isRegenerating}
-            className="text-xs text-violet-600 hover:text-violet-700"
-          >
-            {isRegenerating ? '재생성 중...' : '재생성'}
-          </Button>
+          {isFallback && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={onRegenerate}
+              disabled={isRegenerating}
+              className="text-xs text-amber-600 hover:text-amber-700"
+            >
+              {isRegenerating ? '재분석 중...' : 'AI 재분석'}
+            </Button>
+          )}
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="p-1 text-slate-400 hover:text-slate-600 transition-colors"
@@ -513,6 +621,13 @@ function CommentarySection({ commentary, onRegenerate, isRegenerating }: {
           </button>
         </div>
       </div>
+
+      {isExpanded && isFallback && (
+        <div className="bg-amber-50 border border-amber-200 rounded-sm px-3 py-2 mb-3 flex items-center gap-2">
+          <span className="text-amber-500 text-xs">&#9888;</span>
+          <p className="text-xs text-amber-700">AI 총평 생성에 실패하여 규칙 기반 요약으로 대체되었습니다. &quot;AI 재분석&quot; 버튼으로 다시 시도할 수 있습니다.</p>
+        </div>
+      )}
 
       {isExpanded && (
         <div className="space-y-3">
@@ -534,7 +649,18 @@ function CommentarySection({ commentary, onRegenerate, isRegenerating }: {
                 <span className="w-1 h-3.5 bg-violet-500 rounded-full" />
                 종합 분석
               </h4>
-              <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{commentary.overall_comment}</p>
+              <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{highlightText(commentary.overall_comment)}</p>
+            </div>
+          )}
+
+          {/* 점수 확보 전략 */}
+          {commentary.score_strategy && (
+            <div className="bg-white/70 rounded-sm p-4 border border-indigo-200">
+              <h4 className="text-xs font-semibold text-indigo-800 mb-1.5 flex items-center gap-1.5">
+                <span className="w-1 h-3.5 bg-indigo-500 rounded-full" />
+                점수 확보 전략
+              </h4>
+              <p className="text-sm text-slate-700 leading-relaxed">{highlightText(commentary.score_strategy)}</p>
             </div>
           )}
 
@@ -546,11 +672,11 @@ function CommentarySection({ commentary, onRegenerate, isRegenerating }: {
                   <span className="w-1 h-3.5 bg-green-500 rounded-full" />
                   강점 영역
                 </h4>
-                <ul className="space-y-1">
+                <ul className="space-y-1.5">
                   {commentary.strength_areas.map((s, i) => (
                     <li key={i} className="flex items-start gap-1.5 text-xs text-slate-700">
                       <span className="text-green-500 mt-0.5 shrink-0">+</span>
-                      <span>{s}</span>
+                      <span>{highlightText(s)}</span>
                     </li>
                   ))}
                 </ul>
@@ -560,13 +686,13 @@ function CommentarySection({ commentary, onRegenerate, isRegenerating }: {
               <div className="bg-white/70 rounded-sm p-4 border border-amber-200">
                 <h4 className="text-xs font-semibold text-amber-800 mb-2 flex items-center gap-1.5">
                   <span className="w-1 h-3.5 bg-amber-500 rounded-full" />
-                  보완 영역
+                  주의 영역
                 </h4>
-                <ul className="space-y-1">
+                <ul className="space-y-1.5">
                   {commentary.improvement_areas.map((s, i) => (
                     <li key={i} className="flex items-start gap-1.5 text-xs text-slate-700">
                       <span className="text-amber-500 mt-0.5 shrink-0">!</span>
-                      <span>{s}</span>
+                      <span>{highlightText(s)}</span>
                     </li>
                   ))}
                 </ul>
@@ -577,17 +703,39 @@ function CommentarySection({ commentary, onRegenerate, isRegenerating }: {
           {/* 주목할 문항 */}
           {commentary.notable_questions?.length > 0 && (
             <div className="bg-white/70 rounded-sm p-4 border border-slate-200">
-              <h4 className="text-xs font-semibold text-slate-800 mb-2 flex items-center gap-1.5">
+              <h4 className="text-xs font-semibold text-slate-800 mb-3 flex items-center gap-1.5">
                 <span className="w-1 h-3.5 bg-slate-500 rounded-full" />
                 주목할 문항
               </h4>
-              <div className="space-y-1.5">
-                {commentary.notable_questions.map((q, i) => (
-                  <div key={i} className="flex items-start gap-2 text-xs">
-                    <span className="shrink-0 font-bold text-slate-700">{q.question_number}번</span>
-                    <span className="text-slate-600">{q.comment}</span>
-                  </div>
-                ))}
+              <div className="space-y-2.5">
+                {[...commentary.notable_questions].sort((a, b) => {
+                  const aNum = typeof a.question_number === 'number' ? a.question_number : parseInt(String(a.question_number)) || 999;
+                  const bNum = typeof b.question_number === 'number' ? b.question_number : parseInt(String(b.question_number)) || 999;
+                  return aNum - bNum;
+                }).map((q, i) => {
+                  const qNum = q.question_number || i + 1;
+                  // 정확 매칭 → "서술형N" 매칭 → 번호 포함 매칭
+                  const matched = allQuestions.find(aq => String(aq.question_number) === String(qNum))
+                    || allQuestions.find(aq => String(aq.question_number) === `서술형${qNum}`)
+                    || allQuestions.find(aq => String(aq.question_number).replace(/\D/g, '') === String(qNum));
+                  const format = matched?.question_format || null;
+                  const fmt = format ? FORMAT_BADGE[format] : null;
+                  return (
+                    <div key={i} className="flex items-start gap-3">
+                      <div className="shrink-0 flex flex-col items-center gap-1">
+                        <span className="w-8 h-8 rounded-sm bg-slate-800 text-white flex items-center justify-center text-xs font-bold">
+                          {qNum}
+                        </span>
+                        {fmt && (
+                          <span className={`text-[9px] font-medium px-1 py-0.5 rounded-sm ${fmt.cls}`}>
+                            {fmt.label}
+                          </span>
+                        )}
+                      </div>
+                      <p className="flex-1 text-xs text-slate-700 leading-relaxed pt-1">{highlightText(q.comment)}</p>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -612,7 +760,7 @@ function CommentarySection({ commentary, onRegenerate, isRegenerating }: {
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-slate-800">{sp.topic}</p>
-                        <p className="text-slate-500 mt-0.5">{sp.reason}</p>
+                        <p className="text-slate-500 mt-0.5">{highlightText(sp.reason)}</p>
                       </div>
                     </div>
                   ))}

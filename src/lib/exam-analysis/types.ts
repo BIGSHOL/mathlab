@@ -46,13 +46,12 @@ export interface DifficultyDistribution {
   [key: string]: number | undefined;
 }
 
-// ── 유형 분포 ──
+// ── 유형 분포 (5대 교육과정 영역) ──
 export interface TypeDistribution {
-  calculation: number;
+  number: number;
+  algebra: number;
+  function: number;
   geometry: number;
-  application: number;
-  proof: number;
-  graph: number;
   statistics: number;
 }
 

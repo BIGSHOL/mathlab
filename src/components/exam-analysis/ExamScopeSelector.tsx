@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { MIDDLE_SCHOOL_CURRICULUM, HIGH_SCHOOL_CURRICULUM } from '@/lib/constants/curriculum';
 import type { CurriculumUnit } from '@/types/mathgen';
 
@@ -111,16 +112,38 @@ export function ExamScopeSelector({ grade, category, selectedTopics, onChange }:
           return (
             <div key={chapter.name} className="border rounded-sm p-2.5">
               {/* 대단원 헤더 */}
-              <button
-                type="button"
-                onClick={() => toggleChapter(chapter.name)}
-                className="flex items-center justify-between w-full text-left"
-              >
-                <span className="text-sm font-semibold text-slate-800">{chapter.name}</span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => toggleChapter(chapter.name)}
+                  className="flex items-center gap-1 flex-1 text-left"
+                >
+                  <ChevronRight className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isExpanded || selected > 0 ? 'rotate-90' : ''}`} />
+                  <span className="text-sm font-semibold text-slate-800">{chapter.name}</span>
+                </button>
                 <span className={`text-xs ${selected > 0 ? 'text-primary font-medium' : 'text-slate-400'}`}>
                   {selected}/{total}
                 </span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const chapterTopics = flattenTopics(chapter.subUnits || []);
+                    if (selected === total) {
+                      onChange(selectedTopics.filter(t => !chapterTopics.includes(t)));
+                    } else {
+                      const newTopics = new Set([...selectedTopics, ...chapterTopics]);
+                      onChange(Array.from(newTopics));
+                    }
+                  }}
+                  className={`px-1.5 py-0.5 text-[10px] rounded-sm border transition-colors ${
+                    selected === total
+                      ? 'bg-primary/10 border-primary/30 text-primary'
+                      : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-slate-600'
+                  }`}
+                >
+                  {selected === total ? '해제' : '전체'}
+                </button>
+              </div>
 
               {/* 중단원 + 소단원 */}
               {(isExpanded || selected > 0) && chapter.subUnits && (

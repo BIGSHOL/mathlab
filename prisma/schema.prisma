@@ -1448,33 +1448,91 @@ model ExamPatternMatchHistory {
 // ── 트렌드 + 참조 문제 ──
 
 model ExamSchoolTrend {
-  id          String      @id @default(cuid())
-  tenantId    String
-  subject     ExamSubject
-  grade       String      @db.VarChar(30)
-  period      String      @db.VarChar(30)
-  schoolName  String?     @db.VarChar(100)
-  trendData   Json
-  sampleSize  Int         @default(0)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id             String      @id @default(cuid())
+  tenantId       String
+  subject        ExamSubject
+  grade          String      @db.VarChar(30)
+  period         String      @db.VarChar(30)
+  schoolName     String?     @db.VarChar(100)
+  trendData      Json
+  sampleSize     Int         @default(0)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  // 확장 필드
+  trendSummary   Json?       // { difficultyLevel, characteristics, focusAreas }
+  aiInsight      String?     @db.Text
+  topicFrequency Json?       // [{topic, count, pct, avgDifficulty, totalPoints}]
 
   @@index([tenantId, subject, grade])
   @@index([period])
+  @@index([schoolName])
 }
 
 model ExamQuestionReference {
-  id           String      @id @default(cuid())
-  subject      ExamSubject
-  grade        String      @db.VarChar(30)
-  difficulty   String      @db.VarChar(20)
-  questionType String      @db.VarChar(30)
-  content      String      @db.Text
-  answer       String?     @db.Text
-  source       String?     @db.VarChar(200)
-  metadata     Json?
-  createdAt    DateTime    @default(now())
+  id             String      @id @default(cuid())
+  subject        ExamSubject
+  grade          String      @db.VarChar(30)
+  difficulty     String      @db.VarChar(20)
+  questionType   String      @db.VarChar(30)
+  content        String      @db.Text
+  answer         String?     @db.Text
+  source         String?     @db.VarChar(200)
+  metadata       Json?
+  createdAt      DateTime    @default(now())
+
+  // 자동수집 + 검토 워크플로 필드
+  reviewStatus   String      @default("pending") @db.VarChar(20) // pending, approved, rejected
+  examPaperId    String?
+  analysisId     String?
+  questionNumber Int?
+  confidence     Float?
+  topicHierarchy String?     @db.VarChar(300)
+  reviewedAt     DateTime?
+  reviewedBy     String?
+  reviewNote     String?     @db.Text
 
   @@index([subject, grade])
   @@index([difficulty])
+  @@index([reviewStatus])
+  @@index([examPaperId])
+}
+
+// ── 피드백 시스템 (선생님 교정 → 학습 루프) ──
+
+model ExamFeedback {
+  id             String   @id @default(cuid())
+  tenantId       String
+  examPaperId    String
+  analysisId     String?
+  questionNumber Int?
+  feedbackType   String   @db.VarChar(30) // wrong_topic, wrong_difficulty, wrong_recognition, other
+  correction     Json?
+  comment        String?  @db.Text
+  teacherId      String
+  status         String   @default("pending") @db.VarChar(20) // pending, processed, applied
+  processedAt    DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([examPaperId])
+  @@index([status])
+  @@index([feedbackType])
+}
+
+model LearnedPattern {
+  id            String      @id @default(cuid())
+  subject       ExamSubject
+  patternType   String      @db.VarChar(30) // topic_review, difficulty_adjust, type_correction
+  description   String      @db.Text
+  confidence    Float       @default(0.5)
+  sourceCount   Int         @default(1)
+  rule          Json?
+  isAutoApplied Boolean     @default(false)
+  isActive      Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([subject, patternType])
+  @@index([isActive, isAutoApplied])
 }

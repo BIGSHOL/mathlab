@@ -8,58 +8,27 @@ import {
   Radar,
   ResponsiveContainer,
 } from 'recharts';
-import { TYPE_TO_DOMAIN, ABILITY_DOMAIN_LABELS, ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
+import {
+  TYPE_TO_DOMAIN,
+  ABILITY_DOMAIN_LABELS,
+  ABILITY_DOMAIN_COLORS,
+  QUESTION_TYPE_KEYS,
+  QUESTION_TYPE_LABELS,
+  QUESTION_TYPE_COLORS,
+  TYPE_TO_STANDARD,
+} from '@/lib/exam-analysis/constants';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 
 type ViewMode = 'type' | 'ability';
 
 interface TypeRadarChartProps {
-  data: Record<string, number>; // { calculation: 16, geometry: 2, ... }
+  data: Record<string, number>;
   questions?: AnalyzedQuestion[];
 }
 
-// Gemini raw question_type → 6대 표준 유형 매핑
-const TYPE_TO_STANDARD: Record<string, string> = {
-  calculation: 'calculation',
-  algebra: 'calculation',
-  equation: 'calculation',
-  inequality: 'calculation',
-  number: 'calculation',
-  geometry: 'geometry',
-  set: 'geometry',
-  application: 'application',
-  problem_solving: 'application',
-  function: 'application',
-  proof: 'proof',
-  sequence: 'proof',
-  trigonometry: 'proof',
-  calculus: 'proof',
-  vector: 'proof',
-  graph: 'graph',
-  statistics: 'statistics',
-  probability: 'statistics',
-};
-
-// 6대 표준 유형
-const STANDARD_TYPE_KEYS = ['calculation', 'geometry', 'application', 'proof', 'graph', 'statistics'] as const;
-
-const STANDARD_TYPE_LABELS: Record<string, string> = {
-  calculation: '계산',
-  geometry: '도형',
-  application: '응용',
-  proof: '증명',
-  graph: '그래프',
-  statistics: '통계',
-};
-
-const STANDARD_TYPE_COLORS: Record<string, string> = {
-  calculation: '#6366F1',
-  geometry: '#8B5CF6',
-  application: '#EC4899',
-  proof: '#14B8A6',
-  graph: '#F59E0B',
-  statistics: '#06B6D4',
-};
+const STANDARD_TYPE_KEYS = QUESTION_TYPE_KEYS;
+const STANDARD_TYPE_LABELS = QUESTION_TYPE_LABELS;
+const STANDARD_TYPE_COLORS = QUESTION_TYPE_COLORS;
 
 const DOMAIN_LABELS = ABILITY_DOMAIN_LABELS;
 const DOMAIN_COLORS = ABILITY_DOMAIN_COLORS;
@@ -108,57 +77,13 @@ export function TypeRadarChart({ data, questions }: TypeRadarChartProps) {
     }));
   }, [abilityData, standardTypeData, viewMode]);
 
-  // 차트용 항목 (0인 항목 제외 → 다각형 크기 결정)
-  const items = useMemo(() => {
-    return allItems.filter((item) => item.value > 0);
-  }, [allItems]);
-
   const total = allItems.reduce((s, i) => s + i.value, 0);
-  const typeCount = items.length;
-
-  // 2개 이하: 바 차트로 폴백
-  if (typeCount <= 2) {
-    return (
-      <div className="bg-white border rounded-sm p-4">
-        <Header viewMode={viewMode} setViewMode={setViewMode} />
-        <div className="flex gap-6 mt-3">
-          {/* 바 차트 */}
-          <div className="flex-1 space-y-3">
-            {allItems.map((item) => {
-              const pct = total > 0 ? (item.value / total) * 100 : 0;
-              return (
-                <div key={item.key}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium text-slate-700">
-                      {item.label}
-                    </span>
-                    <span className="text-xs text-slate-500">
-                      {item.value}문항 ({Math.round(pct)}%)
-                    </span>
-                  </div>
-                  <div className="w-full bg-slate-100 rounded-sm h-6 overflow-hidden">
-                    <div
-                      className="h-full rounded-sm transition-all duration-500"
-                      style={{
-                        width: `${Math.max(pct, 8)}%`,
-                        background: `linear-gradient(135deg, ${item.color}, ${item.color}cc)`,
-                      }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // 레이더 차트 데이터
-  const radarData = items.map((item) => ({
+  // 레이더 차트 데이터 (allItems 사용 → 항상 고정 다각형)
+  const maxValue = Math.max(...allItems.map((i) => i.value), 1);
+  const radarData = allItems.map((item) => ({
     name: item.label,
     value: item.value,
-    fullMark: Math.max(...items.map((i) => i.value)),
+    fullMark: maxValue,
   }));
 
   return (
@@ -172,7 +97,7 @@ export function TypeRadarChart({ data, questions }: TypeRadarChartProps) {
               data={radarData}
               cx="50%"
               cy="50%"
-              outerRadius="72%"
+              outerRadius="65%"
             >
               <defs>
                 <linearGradient
@@ -189,20 +114,31 @@ export function TypeRadarChart({ data, questions }: TypeRadarChartProps) {
               <PolarGrid
                 stroke="#E2E8F0"
                 strokeDasharray="3 3"
+                gridType="polygon"
+                fill="#F8FAFC"
               />
               <PolarAngleAxis
                 dataKey="name"
-                tick={({ x, y, payload }) => (
-                  <text
-                    x={x}
-                    y={y}
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    className="text-[11px] fill-slate-600 font-medium"
-                  >
-                    {payload.value}
-                  </text>
-                )}
+                tickLine={false}
+                tick={({ x, y, payload, cx, cy }) => {
+                  const dx = x - (cx as number);
+                  const dy = y - (cy as number);
+                  const dist = Math.sqrt(dx * dx + dy * dy);
+                  const push = dist > 0 ? 20 / dist : 0;
+                  const nx = x + dx * push;
+                  const ny = y + dy * push;
+                  return (
+                    <text
+                      x={nx}
+                      y={ny}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      className="text-[11px] fill-slate-600 font-medium"
+                    >
+                      {payload.value}
+                    </text>
+                  );
+                }}
               />
               <Radar
                 dataKey="value"

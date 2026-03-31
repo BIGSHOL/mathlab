@@ -8,9 +8,24 @@ export async function GET(request: NextRequest) {
   if (isResponse(user)) return user;
 
   const { searchParams } = new URL(request.url);
+  const mode = searchParams.get('mode');
+
+  // mode=stats: 통계 반환
+  if (mode === 'stats') {
+    const [total, pending, approved, rejected] = await Promise.all([
+      prisma.examQuestionReference.count(),
+      prisma.examQuestionReference.count({ where: { reviewStatus: 'pending' } }),
+      prisma.examQuestionReference.count({ where: { reviewStatus: 'approved' } }),
+      prisma.examQuestionReference.count({ where: { reviewStatus: 'rejected' } }),
+    ]);
+    return NextResponse.json({ data: { total, pending, approved, rejected } });
+  }
+
   const subject = searchParams.get('subject') as 'MATH' | 'ENGLISH' | null;
   const grade = searchParams.get('grade');
   const difficulty = searchParams.get('difficulty');
+  const reviewStatus = searchParams.get('reviewStatus');
+  const examPaperId = searchParams.get('examPaperId');
   const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
   const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '20')));
 
@@ -18,6 +33,8 @@ export async function GET(request: NextRequest) {
     ...(subject && { subject }),
     ...(grade && { grade }),
     ...(difficulty && { difficulty }),
+    ...(reviewStatus && { reviewStatus }),
+    ...(examPaperId && { examPaperId }),
   };
 
   const [items, total] = await Promise.all([

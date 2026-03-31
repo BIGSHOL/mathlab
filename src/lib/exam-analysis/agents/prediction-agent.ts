@@ -48,6 +48,7 @@ export class PredictionAgent extends BaseAgent<PerformancePrediction> {
         number: q.question_number,
         difficulty: q.difficulty,
         type: q.question_type,
+        ability: q.ability_domain,
         is_correct: q.is_correct,
         topic: q.topic,
       })),

@@ -21,10 +21,8 @@ function normalizeDiff(key: string): string {
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  calculation: '계산', geometry: '도형', application: '응용',
-  proof: '증명', graph: '그래프', statistics: '통계',
-  algebra: '대수', problem_solving: '문제해결', number: '수와 연산',
-  function: '함수', probability: '확률', equation: '방정식',
+  number: '수와 연산', algebra: '문자와 식', function: '함수',
+  geometry: '기하', statistics: '확률과 통계',
 };
 
 const FEEDBACK_TYPES = [
@@ -90,7 +88,7 @@ export function AnalysisCommentTab({ questions, examPaperId }: AnalysisCommentTa
   );
 }
 
-// ── 개별 행 (신고 state 분리) ──
+// ── 개별 행 ──
 
 function CommentRow({ q, showDiffReason, examPaperId }: {
   q: AnalyzedQuestion;
@@ -124,28 +122,25 @@ function CommentRow({ q, showDiffReason, examPaperId }: {
     if (!selectedType) return;
     setIsSubmitting(true);
     try {
-      const typeLabel = FEEDBACK_TYPES.find(f => f.value === selectedType)?.label || selectedType;
-      await fetch('/api/inquiries', {
+      const res = await fetch('/api/exam-analysis/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: `[기출분석 신고] ${q.question_number}번 문항 - ${typeLabel}`,
-          content: [
-            `시험지 ID: ${examPaperId || '-'}`,
-            `문항 번호: ${q.question_number}`,
-            `신고 유형: ${typeLabel}`,
-            comment.trim() ? `상세 내용: ${comment.trim()}` : '',
-            '',
-            '자동 접수된 AI 분석 오류 신고입니다.',
-          ].filter(Boolean).join('\n'),
-          category: 'BUG',
+          examPaperId: examPaperId || null,
+          questionNumber: q.question_number,
+          feedbackType: selectedType,
+          comment: comment.trim() || null,
         }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || '피드백 제출 실패');
+      }
       setFeedbackSent(true);
       setShowFeedback(false);
-      toast.success('신고가 접수되었습니다');
-    } catch {
-      toast.error('신고 접수에 실패했습니다');
+      toast.success('피드백이 접수되었습니다');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '피드백 접수에 실패했습니다');
     } finally {
       setIsSubmitting(false);
     }
@@ -161,26 +156,37 @@ function CommentRow({ q, showDiffReason, examPaperId }: {
 
       {/* AI 코멘트 */}
       <div>
-        <div className="flex items-center gap-1.5 mb-1">
+        <div className="flex items-center gap-1 mb-2 flex-wrap">
+          <span className="text-[10px] font-medium text-slate-500">난이도</span>
           <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-bold text-white"
             style={{ backgroundColor: DIFFICULTY_COLORS[normalizeDiff(q.difficulty)] || DIFFICULTY_COLORS[q.difficulty] || '#94A3B8' }}>
             {DIFFICULTY_LABELS[q.difficulty] || normalizeDiff(q.difficulty)}
           </span>
-          <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-medium"
-            style={{ backgroundColor: `${QUESTION_TYPE_COLORS[q.question_type] || '#94A3B8'}15`, color: QUESTION_TYPE_COLORS[q.question_type] || '#94A3B8' }}>
+          <span className="text-[10px] text-slate-300 mx-0.5">·</span>
+          <span className="text-[10px] font-medium text-slate-500">유형</span>
+          <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-semibold"
+            style={{ backgroundColor: `${QUESTION_TYPE_COLORS[q.question_type] || '#94A3B8'}20`, color: QUESTION_TYPE_COLORS[q.question_type] || '#94A3B8' }}>
             {TYPE_LABELS[q.question_type] || q.question_type}
           </span>
+          <span className="text-[10px] text-slate-300 mx-0.5">·</span>
+          <span className="text-[10px] font-medium text-slate-500">능력</span>
           {(() => {
             const domain = q.ability_domain || TYPE_TO_DOMAIN[q.question_type] || 'calculation';
             const domainColor = ABILITY_DOMAIN_COLORS[domain] || '#94A3B8';
             return (
-              <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-medium"
-                style={{ backgroundColor: `${domainColor}15`, color: domainColor }}>
+              <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-semibold"
+                style={{ backgroundColor: `${domainColor}20`, color: domainColor }}>
                 {ABILITY_DOMAIN_LABELS[domain] || domain}
               </span>
             );
           })()}
-          {q.points && <span className="text-[10px] text-slate-400">{q.points}점</span>}
+          {q.points != null && (
+            <>
+              <span className="text-[10px] text-slate-300 mx-0.5">·</span>
+              <span className="text-[10px] font-medium text-slate-500">배점</span>
+              <span className="text-[10px] font-bold text-slate-700">{q.points}점</span>
+            </>
+          )}
         </div>
         {q.ai_comment && <p className="text-xs text-slate-700 leading-relaxed font-medium">{q.ai_comment}</p>}
         {showDiffReason && q.difficulty_reason && (
@@ -188,7 +194,7 @@ function CommentRow({ q, showDiffReason, examPaperId }: {
         )}
       </div>
 
-      {/* 신고 */}
+      {/* 피드백 */}
       <div className="text-center relative pt-0.5" ref={dropdownRef}>
         {feedbackSent ? (
           <span className="inline-flex items-center gap-0.5 text-[10px] text-emerald-600 font-medium">
@@ -198,15 +204,15 @@ function CommentRow({ q, showDiffReason, examPaperId }: {
           <button
             onClick={() => { setShowFeedback(!showFeedback); setSelectedType(null); setComment(''); }}
             className={`text-xs flex items-center gap-0.5 mx-auto transition-colors ${
-              showFeedback ? 'text-red-500' : 'text-slate-400 hover:text-red-500'
+              showFeedback ? 'text-primary' : 'text-slate-400 hover:text-primary'
             }`}
           >
             <AlertTriangle className="w-3 h-3" />
-            신고
+            피드백
           </button>
         )}
 
-        {/* 드롭다운 (2단계: 유형 선택 → 코멘트 입력) */}
+        {/* 드롭다운 (2단계: 유형 선택 -> 코멘트 입력) */}
         {showFeedback && !feedbackSent && (
           <div className="absolute right-0 top-7 z-50 w-52 bg-white rounded-sm shadow-lg border py-1">
             {selectedType ? (
@@ -226,7 +232,7 @@ function CommentRow({ q, showDiffReason, examPaperId }: {
                 <textarea
                   value={comment}
                   onChange={e => setComment(e.target.value)}
-                  placeholder={`상세 내용 입력 (선택사항)\n예: AI 코멘트가 부정확함`}
+                  placeholder={`상세 내용 입력 (선택사항)\n예: 단원이 잘못 분류됨`}
                   className="w-full text-xs px-2 py-1.5 border rounded-sm focus:ring-1 focus:ring-primary resize-none"
                   rows={3}
                   disabled={isSubmitting}

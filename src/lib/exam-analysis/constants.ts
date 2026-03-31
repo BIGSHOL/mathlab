@@ -36,17 +36,57 @@ export const DIFFICULTY_3LEVEL_MAP: Record<string, string> = {
   creative: 'high',
 };
 
-// ── 6개 문항 유형 ──
+// ── 5대 교육과정 영역 (문항 유형) ──
 export const EXAM_QUESTION_TYPES = {
-  CALCULATION: { label: '계산', labelEn: 'Calculation' },
-  GEOMETRY: { label: '도형', labelEn: 'Geometry' },
-  APPLICATION: { label: '응용', labelEn: 'Application' },
-  PROOF: { label: '증명', labelEn: 'Proof' },
-  GRAPH: { label: '그래프', labelEn: 'Graph' },
-  STATISTICS: { label: '통계', labelEn: 'Statistics' },
+  NUMBER: { label: '수와 연산', labelEn: 'Number & Operations' },
+  ALGEBRA: { label: '문자와 식', labelEn: 'Algebra' },
+  FUNCTION: { label: '함수', labelEn: 'Functions' },
+  GEOMETRY: { label: '기하', labelEn: 'Geometry' },
+  STATISTICS: { label: '확률과 통계', labelEn: 'Statistics' },
 } as const;
 
 export type ExamQuestionTypeKey = keyof typeof EXAM_QUESTION_TYPES;
+
+// 5대 영역 키 배열
+export const QUESTION_TYPE_KEYS = ['number', 'algebra', 'function', 'geometry', 'statistics'] as const;
+
+// 5대 영역 라벨 (lowercase key)
+export const QUESTION_TYPE_LABELS: Record<string, string> = {
+  number: '수와 연산',
+  algebra: '문자와 식',
+  function: '함수',
+  geometry: '기하',
+  statistics: '확률과 통계',
+};
+
+// ── Gemini raw question_type → 5대 교육과정 영역 정규화 ──
+export const TYPE_TO_STANDARD: Record<string, string> = {
+  // 수와 연산
+  number: 'number',
+  // 문자와 식
+  algebra: 'algebra',
+  equation: 'algebra',
+  inequality: 'algebra',
+  // 함수
+  function: 'function',
+  graph: 'function',
+  calculus: 'function',
+  trigonometry: 'function',
+  sequence: 'function',
+  // 기하
+  geometry: 'geometry',
+  vector: 'geometry',
+  set: 'geometry',
+  understanding: 'geometry',
+  // 확률과 통계
+  statistics: 'statistics',
+  probability: 'statistics',
+  // 레거시/애매한 키 → topic 기반으로 ai-engine에서 후처리
+  calculation: 'algebra',     // 기본 fallback (대부분 문자와 식)
+  application: 'algebra',     // 응용 → 문자와 식 fallback
+  problem_solving: 'algebra',
+  proof: 'algebra',
+};
 
 // ── 수학 능력 영역 (MathLab 기존 4대 영역과 동일) ──
 export const ABILITY_DOMAINS = {
@@ -58,26 +98,14 @@ export const ABILITY_DOMAINS = {
 
 export type AbilityDomainKey = keyof typeof ABILITY_DOMAINS;
 
-// ── question_type → ability_domain 매핑 ──
+// ── question_type(5대 영역) → ability_domain(4대 능력) 기본 매핑 ──
+// AI가 ability_domain을 직접 반환하므로 이건 fallback용
 export const TYPE_TO_DOMAIN: Record<string, string> = {
-  calculation: 'calculation',
-  algebra: 'calculation',
-  equation: 'calculation',
-  inequality: 'calculation',
   number: 'calculation',
-  geometry: 'understanding',
-  graph: 'understanding',
-  set: 'understanding',
+  algebra: 'calculation',
   function: 'understanding',
-  application: 'problem_solving',
-  problem_solving: 'problem_solving',
+  geometry: 'understanding',
   statistics: 'problem_solving',
-  probability: 'problem_solving',
-  proof: 'reasoning',
-  sequence: 'reasoning',
-  trigonometry: 'reasoning',
-  calculus: 'reasoning',
-  vector: 'reasoning',
 };
 
 // ── 능력 영역 라벨/색상 (lowercase key) ──
@@ -167,28 +195,15 @@ export const DIFFICULTY_LABELS: Record<string, string> = {
   creative: '5',
 };
 
-// ── 문항유형 색상 (UI용) ──
+// ── 5대 영역 색상 (UI용) ──
 export const QUESTION_TYPE_COLORS: Record<string, string> = {
-  calculation: '#6366F1',
-  geometry: '#8B5CF6',
-  application: '#EC4899',
-  proof: '#14B8A6',
-  graph: '#F59E0B',
-  statistics: '#06B6D4',
-  // Gemini 반환 변형
-  algebra: '#7C3AED',
-  problem_solving: '#E11D48',
-  number: '#0EA5E9',
-  function: '#D97706',
-  probability: '#059669',
-  equation: '#6366F1',
-  inequality: '#9333EA',
-  sequence: '#0891B2',
-  trigonometry: '#DB2777',
-  calculus: '#DC2626',
-  vector: '#4F46E5',
-  set: '#7C3AED',
-  // 영어
+  // 5대 교육과정 영역
+  number: '#6366F1',      // indigo
+  algebra: '#8B5CF6',     // purple
+  function: '#EC4899',    // pink
+  geometry: '#14B8A6',    // teal
+  statistics: '#F59E0B',  // amber
+  // 영어 (별도 체계)
   grammar: '#6366F1',
   vocabulary: '#8B5CF6',
   reading: '#EC4899',

@@ -18,6 +18,7 @@ import { DIFFICULTY_COLORS as DIFF_COLORS, DIFFICULTY_LEGACY_MAP } from '@/lib/e
 
 interface QuestionPointsChartProps {
   questions: AnalyzedQuestion[];
+  embedded?: boolean;
 }
 
 /** 난이도 키를 5단계로 정규화 */
@@ -52,8 +53,8 @@ const DIFFICULTY_LEVEL: Record<string, number> = {
 
 const LINE_COLOR = '#8b5cf6';
 
-export function QuestionPointsChart({ questions }: QuestionPointsChartProps) {
-  const { chartData, maxPoints, formatStats: _formatStats, gapItems } = useMemo(() => {
+export function QuestionPointsChart({ questions, embedded }: QuestionPointsChartProps) {
+  const { chartData, maxPoints, formatStats: _formatStats, gapItems, aiComment } = useMemo(() => {
     const sorted = [...questions].sort((a, b) => {
       const aNum =
         typeof a.question_number === 'string'
@@ -130,7 +131,31 @@ export function QuestionPointsChart({ questions }: QuestionPointsChartProps) {
       .sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap))
       .slice(0, 5);
 
-    return { chartData: data, maxPoints: maxPts, formatStats: stats, gapItems };
+    // AI 코멘트 생성
+    const totalPts = data.reduce((s, d) => s + d.points, 0);
+    const avgPts = data.length > 0 ? totalPts / data.length : 0;
+    const maxItem = data.reduce((max, d) => d.points > max.points ? d : max, data[0]);
+    const minItem = data.reduce((min, d) => d.points < min.points ? d : min, data[0]);
+    const ptsRange = (maxItem?.points || 0) - (minItem?.points || 0);
+    const highDiffLow = gapItems.filter(i => i.gap <= 0);
+    const lowDiffHigh = gapItems.filter(i => i.gap > 0);
+
+    let comment = '';
+    if (ptsRange <= 2) {
+      comment = `문항당 평균 ${avgPts.toFixed(1)}점으로 배점이 균일하게 분포되어 있어 한 문항의 실수가 미치는 영향이 일정합니다.`;
+    } else if (maxItem && maxItem.points >= avgPts * 2) {
+      comment = `${maxItem.name}번 문항(${maxItem.points}점)이 평균(${avgPts.toFixed(1)}점)의 2배 이상으로 고배점 문항입니다. `;
+      if (highDiffLow.length > 0) {
+        comment += `난이도 대비 배점이 높은 문항이 ${lowDiffHigh.length}개 있어 전략적 접근이 가능합니다.`;
+      }
+    } else {
+      comment = `배점 범위 ${minItem?.points || 0}~${maxItem?.points || 0}점, 평균 ${avgPts.toFixed(1)}점입니다. `;
+      if (gapItems.length > 0) {
+        comment += `배점-난이도 격차가 큰 문항이 ${gapItems.length}개 발견되어 전략적 시간 배분이 중요합니다.`;
+      }
+    }
+
+    return { chartData: data, maxPoints: maxPts, formatStats: stats, gapItems, aiComment: comment };
   }, [questions]);
 
   if (questions.length === 0) return null;
@@ -144,7 +169,7 @@ export function QuestionPointsChart({ questions }: QuestionPointsChartProps) {
   };
 
   return (
-    <div className="bg-white border rounded-sm p-4">
+    <div className={embedded ? '' : 'bg-white border rounded-sm p-4'}>
       {/* 헤더 */}
       <div className="flex items-center gap-2 mb-3">
         <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shrink-0">
@@ -304,6 +329,14 @@ export function QuestionPointsChart({ questions }: QuestionPointsChartProps) {
           </ComposedChart>
         </ResponsiveContainer>
       </div>
+
+      {/* AI 코멘트 */}
+      {aiComment && (
+        <p className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 leading-relaxed">
+          <span className="text-violet-500 font-semibold mr-1">AI</span>
+          {aiComment}
+        </p>
+      )}
 
       {/* 배점-난이도 갭 분석 */}
       {gapItems.length > 0 && (() => {

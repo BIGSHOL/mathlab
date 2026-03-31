@@ -2398,17 +2398,54 @@ export const COMMON_MISTAKES: UnitMistakes[] = [
   },
 ];
 
+// unit명 → mistakes 직접 매핑 (싱글톤)
+let _unitMap: Map<string, CommonMistake> | null = null;
+
+function getUnitMap(): Map<string, CommonMistake> {
+  if (_unitMap) return _unitMap;
+  _unitMap = new Map();
+  for (const unitMistakes of COMMON_MISTAKES) {
+    // unit명으로 직접 매핑 (정확 매칭)
+    if (unitMistakes.mistakes.length > 0) {
+      _unitMap.set(unitMistakes.unit, unitMistakes.mistakes[0]);
+    }
+  }
+  return _unitMap;
+}
+
 /**
  * 토픽에 해당하는 자주 하는 실수 찾기
+ * 1순위: 소단원명(마지막 > 이후) unit 정확 매칭
+ * 2순위: 전체 토픽에서 unit 포함 매칭 (fallback)
  */
 export function findCommonMistakes(topic: string): CommonMistake | null {
   if (!topic) return null;
 
-  for (const unitMistakes of COMMON_MISTAKES) {
-    for (const mistake of unitMistakes.mistakes) {
-      for (const keyword of mistake.keywords) {
-        if (isTopicMatch(topic, keyword)) {
-          return mistake;
+  const map = getUnitMap();
+
+  // 1순위: 소단원명 정확 매칭 ("중3 수학 > 대단원 > 소단원" → "소단원")
+  const parts = topic.split(' > ');
+  const subUnit = parts[parts.length - 1]?.trim();
+  if (subUnit && map.has(subUnit)) {
+    return map.get(subUnit)!;
+  }
+
+  // 중단원으로도 시도 (2번째 파트)
+  if (parts.length >= 2) {
+    const midUnit = parts[parts.length - 2]?.trim();
+    if (midUnit && map.has(midUnit)) {
+      return map.get(midUnit)!;
+    }
+  }
+
+  // 2순위: 소단원명으로 키워드 매칭 (소단원명만 사용, 대단원 오매칭 방지)
+  if (subUnit) {
+    for (const unitMistakes of COMMON_MISTAKES) {
+      for (const mistake of unitMistakes.mistakes) {
+        for (const keyword of mistake.keywords) {
+          if (isTopicMatch(subUnit, keyword)) {
+            return mistake;
+          }
         }
       }
     }
