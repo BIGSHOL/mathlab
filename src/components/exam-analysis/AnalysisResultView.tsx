@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { DIFFICULTY_COLORS, QUESTION_TYPE_COLORS, TYPE_TO_DOMAIN, ABILITY_DOMAIN_LABELS, ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
+import { DIFFICULTY_COLORS, DIFFICULTY_LABELS as DIFF_LABELS_MAP, DIFFICULTY_LEGACY_MAP, TYPE_TO_DOMAIN, ABILITY_DOMAIN_LABELS, ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { ChevronRight } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -28,8 +28,14 @@ interface AnalysisResultViewProps {
 }
 
 const DIFFICULTY_LABELS: Record<string, string> = {
-  concept: '개념', pattern: '유형', reasoning: '심화', creative: '최상위',
+  '1': '1', '2': '2', '3': '3', '4': '4', '5': '5',
+  concept: '1', pattern: '2', reasoning: '4', creative: '5',
 };
+
+/** 난이도 키를 5단계로 정규화 */
+function normalizeDifficulty(key: string): string {
+  return DIFFICULTY_LEGACY_MAP[key] || key;
+}
 
 const TYPE_LABELS: Record<string, string> = {
   calculation: '계산', geometry: '도형', application: '응용',
@@ -51,33 +57,31 @@ const _FORMAT_LABELS: Record<string, string> = {
 export function AnalysisResultView({ questions, summary, totalPoints: _totalPoints, earnedPoints: _earnedPoints, examType }: AnalysisResultViewProps) {
   const isStudentExam = examType === 'student';
 
-  // 난이도 분포
+  // 난이도 분포 (5단계, 레거시 키 통합)
   const diffData = useMemo(() => {
     if (!summary?.difficulty_distribution) return [];
-    const d = summary.difficulty_distribution;
-    const items = [
-      { key: 'concept', count: d.concept || 0, color: DIFFICULTY_COLORS.concept },
-      { key: 'pattern', count: d.pattern || 0, color: DIFFICULTY_COLORS.pattern },
-      { key: 'reasoning', count: d.reasoning || 0, color: DIFFICULTY_COLORS.reasoning },
-      { key: 'creative', count: d.creative || 0, color: DIFFICULTY_COLORS.creative },
-    ];
+    const d = summary.difficulty_distribution as Record<string, number>;
+    // 레거시 키 통합
+    const counts: Record<string, number> = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
+    for (const [key, val] of Object.entries(d)) {
+      if (!val || typeof val !== 'number') continue;
+      const normalized = normalizeDifficulty(key);
+      if (counts[normalized] !== undefined) {
+        counts[normalized] += val;
+      }
+    }
+    const LEVELS = ['1', '2', '3', '4', '5'] as const;
+    const items = LEVELS.map(key => ({
+      key,
+      count: counts[key] || 0,
+      color: DIFFICULTY_COLORS[key] || '#94A3B8',
+      label: DIFF_LABELS_MAP[key] || key,
+    }));
     const total = items.reduce((s, i) => s + i.count, 0);
-    return items.map(i => ({ ...i, label: DIFFICULTY_LABELS[i.key], pct: total > 0 ? Math.round((i.count / total) * 100) : 0 }));
+    return items.map(i => ({ ...i, pct: total > 0 ? Math.round((i.count / total) * 100) : 0 }));
   }, [summary]);
 
-  // 유형 분포
-  const typeData = useMemo(() => {
-    if (!summary?.type_distribution) return [];
-    return Object.entries(summary.type_distribution)
-      .filter(([, v]) => (v as number) > 0)
-      .map(([k, v]) => ({
-        key: k,
-        label: TYPE_LABELS[k] || k,
-        count: v as number,
-        color: QUESTION_TYPE_COLORS[k] || '#94A3B8',
-      }))
-      .sort((a, b) => b.count - a.count);
-  }, [summary]);
+  // 유형 분포는 하단 TypeRadarChart에서 표시
 
   // 배점 평균 (객관식 / 단답형 / 서술형)
   const pointsAvg = useMemo(() => {
@@ -134,7 +138,6 @@ export function AnalysisResultView({ questions, summary, totalPoints: _totalPoin
 
   const total = questions.length;
   const colSpan = isStudentExam ? 8 : 7;
-  const maxType = Math.max(...typeData.map(t => t.count), 1);
   const maxTopic = Math.max(...topicGroups.map(t => t.count), 1);
 
   // 신뢰도 평균
@@ -205,29 +208,6 @@ export function AnalysisResultView({ questions, summary, totalPoints: _totalPoin
                 </div>
               </>
             )}
-          </InnerSection>
-
-          {/* 유형 분포 */}
-          <InnerSection title="유형 분포" subtitle={`총 ${total}문항`}>
-            <div className="space-y-2">
-              {typeData.map(t => (
-                <div key={t.key} className="flex items-center gap-2">
-                  <span className="flex items-center gap-1.5 w-14 shrink-0">
-                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
-                    <span className="text-xs text-slate-700">{t.label}</span>
-                  </span>
-                  <div className="flex-1 bg-slate-100 rounded-sm h-5 overflow-hidden">
-                    <div
-                      className="h-full rounded-sm flex items-center justify-end pr-2 text-white text-[10px] font-medium"
-                      style={{ width: `${Math.max((t.count / maxType) * 100, 12)}%`, backgroundColor: t.color }}
-                    >
-                      {t.count}
-                    </div>
-                  </div>
-                  <span className="w-8 text-right text-xs text-slate-400">{total > 0 ? Math.round((t.count / total) * 100) : 0}%</span>
-                </div>
-              ))}
-            </div>
           </InnerSection>
         </div>
 
@@ -463,8 +443,8 @@ function QRow({ q, isStudent }: { q: AnalyzedQuestion; isStudent: boolean }) {
     <tr className="hover:bg-slate-50">
       <td className={`px-3 py-2 font-semibold text-slate-700 whitespace-nowrap ${numSize}`}>{q.question_number}</td>
       <td className="px-3 py-2 text-center">
-        <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold text-white" style={{ backgroundColor: DIFFICULTY_COLORS[q.difficulty] || '#94A3B8' }}>
-          {DIFFICULTY_LABELS[q.difficulty] || q.difficulty}
+        <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold text-white" style={{ backgroundColor: DIFFICULTY_COLORS[normalizeDifficulty(q.difficulty)] || DIFFICULTY_COLORS[q.difficulty] || '#94A3B8' }}>
+          {DIFFICULTY_LABELS[q.difficulty] || normalizeDifficulty(q.difficulty)}
         </span>
       </td>
       <td className="px-3 py-2 text-center whitespace-nowrap">

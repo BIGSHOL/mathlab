@@ -3,14 +3,14 @@
  * Python Pydantic 모델에서 1:1 이식
  */
 
-import type { ExamDifficultyKey, ExamQuestionTypeKey, ExamQuestionFormat, GradingStatus, AgentType, AbilityDomainKey } from './constants';
+import type { ExamQuestionTypeKey, ExamQuestionFormat, GradingStatus, AgentType, AbilityDomainKey } from './constants';
 
 // ── 문항 분석 결과 (기본 분석) ──
 export interface AnalyzedQuestion {
   id?: string;
   question_number: number | string;
   question_format: ExamQuestionFormat | null;
-  difficulty: Lowercase<ExamDifficultyKey>;
+  difficulty: string;  // "1"-"5" (5단계), 구 데이터: "concept"/"pattern"/"reasoning"/"creative"
   difficulty_reason: string | null;
   question_type: Lowercase<ExamQuestionTypeKey>;
   ability_domain?: Lowercase<AbilityDomainKey> | null; // 수학 능력 영역
@@ -27,16 +27,23 @@ export interface AnalyzedQuestion {
   created_at?: string;
 }
 
-// ── 난이도 분포 ──
+// ── 난이도 분포 (5단계: "1"~"5") ──
 export interface DifficultyDistribution {
-  concept: number;
-  pattern: number;
-  reasoning: number;
-  creative: number;
+  '1': number;
+  '2': number;
+  '3': number;
+  '4': number;
+  '5': number;
+  // 구 4단계 하위 호환
+  concept?: number;
+  pattern?: number;
+  reasoning?: number;
+  creative?: number;
   // 3단계 하위 호환
-  high: number;
-  medium: number;
-  low: number;
+  high?: number;
+  medium?: number;
+  low?: number;
+  [key: string]: number | undefined;
 }
 
 // ── 유형 분포 ──

@@ -250,35 +250,26 @@ function getConfidenceInfo(questions: AnalyzedQuestion[]) {
   return { avg, label: '낮음', color: 'bg-red-100 text-red-700 border border-red-200' };
 }
 
-// ── 종합 등급 계산 ──
-function getOverallGrade(summary: AnalysisSummary | null): { grade: string; color: string; bg: string } {
-  if (!summary?.difficulty_distribution) return { grade: '-', color: '#6B7280', bg: '#F3F4F6' };
+// ── 종합 난이도 (1~5) 계산 ──
+const DIFF_BAR_COLORS = ['#22C55E', '#84CC16', '#F59E0B', '#F97316', '#EF4444'];
+
+function getOverallDifficultyLevel(summary: AnalysisSummary | null): number {
+  if (!summary?.difficulty_distribution) return 0;
   const d = summary.difficulty_distribution;
-  const total = (d.concept || 0) + (d.pattern || 0) + (d.reasoning || 0) + (d.creative || 0);
-  if (!total) return { grade: '-', color: '#6B7280', bg: '#F3F4F6' };
 
-  // 가중평균: concept=1, pattern=2, reasoning=3, creative=4
-  const weightedAvg = ((d.concept || 0) * 1 + (d.pattern || 0) * 2 + (d.reasoning || 0) * 3 + (d.creative || 0) * 4) / total;
+  // 5단계 키 우선, 구 키 폴백
+  const counts = [
+    (d['1'] || d.concept || 0),
+    (d['2'] || d.pattern || 0),
+    (d['3'] || 0),
+    (d['4'] || d.reasoning || 0),
+    (d['5'] || d.creative || 0),
+  ];
+  const total = counts.reduce((s, c) => s + c, 0);
+  if (!total) return 0;
 
-  if (weightedAvg >= 3.5) return { grade: 'A+', color: '#FFFFFF', bg: '#DC2626' };
-  if (weightedAvg >= 3.0) return { grade: 'A', color: '#FFFFFF', bg: '#EF4444' };
-  if (weightedAvg >= 2.5) return { grade: 'B+', color: '#FFFFFF', bg: '#F97316' };
-  if (weightedAvg >= 2.0) return { grade: 'B', color: '#FFFFFF', bg: '#F59E0B' };
-  if (weightedAvg >= 1.5) return { grade: 'C+', color: '#FFFFFF', bg: '#3B82F6' };
-  if (weightedAvg >= 1.2) return { grade: 'C', color: '#FFFFFF', bg: '#6366F1' };
-  return { grade: 'D', color: '#FFFFFF', bg: '#6B7280' };
-}
-
-// ── 난이도별 문항 수 ──
-function getDifficultyBreakdown(summary: AnalysisSummary | null) {
-  if (!summary?.difficulty_distribution) return [];
-  const d = summary.difficulty_distribution;
-  return [
-    { key: 'concept', label: '개념', count: d.concept || 0, color: '#10B981' },
-    { key: 'pattern', label: '유형', count: d.pattern || 0, color: '#3B82F6' },
-    { key: 'reasoning', label: '추론', count: d.reasoning || 0, color: '#F97316' },
-    { key: 'creative', label: '창의', count: d.creative || 0, color: '#EF4444' },
-  ].filter(x => x.count > 0);
+  const weightedAvg = counts.reduce((s, c, i) => s + c * (i + 1), 0) / total;
+  return Math.round(weightedAvg); // 1~5
 }
 
 // ── 분석 결과 상세 뷰 ──
@@ -298,8 +289,7 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
   const totalPoints = latestAnalysis?.totalPoints;
 
   const confidenceInfo = useMemo(() => getConfidenceInfo(questions), [questions]);
-  const gradeInfo = useMemo(() => getOverallGrade(summary), [summary]);
-  const diffBreakdown = useMemo(() => getDifficultyBreakdown(summary), [summary]);
+  const diffLevel = useMemo(() => getOverallDifficultyLevel(summary), [summary]);
 
   // 총평 데이터: extensions에서 commentary 에이전트 결과 추출
   const commentaryExt = latestAnalysis?.extensions?.find(e => e.agentType === 'commentary');
@@ -376,24 +366,30 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
               </Button>
             )}
 
-            {/* 종합 등급 원형 뱃지 + 난이도 분포 */}
-            {detail.status === 'COMPLETED' && diffBreakdown.length > 0 && (
-              <div className="flex items-center gap-3">
-                <div className="text-right text-[10px] text-slate-500 leading-tight">종합<br/>난이도</div>
-                <div
-                  className="w-11 h-11 rounded-full flex items-center justify-center text-lg font-bold shadow-sm"
-                  style={{ backgroundColor: gradeInfo.bg, color: gradeInfo.color }}
-                >
-                  {gradeInfo.grade}
-                </div>
-                <div className="text-[11px] leading-relaxed">
-                  {diffBreakdown.map(d => (
-                    <div key={d.key} className="flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: d.color }} />
-                      <span className="text-slate-600">{d.label}</span>
-                      <span className="text-slate-800 font-medium ml-0.5">{d.count}</span>
-                    </div>
-                  ))}
+            {/* 종합 난이도 5단계 바 */}
+            {detail.status === 'COMPLETED' && diffLevel > 0 && (
+              <div className="flex items-center gap-2.5">
+                <div className="text-right text-[10px] text-slate-500 leading-tight">시험<br/>난이도</div>
+                <div className="flex gap-0.5">
+                  {[1, 2, 3, 4, 5].map(level => {
+                    const isActive = level === diffLevel;
+                    const color = DIFF_BAR_COLORS[level - 1];
+                    return (
+                      <div
+                        key={level}
+                        className={`w-7 h-9 rounded-sm flex items-center justify-center text-xs font-bold transition-all ${
+                          isActive ? 'ring-2 ring-offset-1 shadow-md scale-110' : 'opacity-30'
+                        }`}
+                        style={{
+                          backgroundColor: color,
+                          color: '#fff',
+                          ...(isActive ? { boxShadow: `0 0 0 2px #fff, 0 0 0 4px ${color}` } : {}),
+                        }}
+                      >
+                        {level}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -520,18 +516,29 @@ function CommentarySection({ commentary, onRegenerate, isRegenerating }: {
 
       {isExpanded && (
         <div className="space-y-3">
-          {/* 전체 평가 */}
+          {/* 시험 특성 */}
+          {commentary.exam_characteristics && commentary.exam_characteristics.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {commentary.exam_characteristics.map((c, i) => (
+                <span key={i} className="text-xs bg-violet-100 text-violet-700 px-2.5 py-1 rounded-sm font-medium">
+                  {c}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* 종합 분석 */}
           {commentary.overall_comment && (
             <div className="bg-white/70 rounded-sm p-4 border border-violet-200">
               <h4 className="text-xs font-semibold text-violet-800 mb-1.5 flex items-center gap-1.5">
                 <span className="w-1 h-3.5 bg-violet-500 rounded-full" />
-                종합 평가
+                종합 분석
               </h4>
-              <p className="text-sm text-slate-700 leading-relaxed">{commentary.overall_comment}</p>
+              <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{commentary.overall_comment}</p>
             </div>
           )}
 
-          {/* 강점 & 개선점 (2열) */}
+          {/* 강점 & 보완점 (2열) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {commentary.strength_areas?.length > 0 && (
               <div className="bg-white/70 rounded-sm p-4 border border-green-200">
@@ -553,7 +560,7 @@ function CommentarySection({ commentary, onRegenerate, isRegenerating }: {
               <div className="bg-white/70 rounded-sm p-4 border border-amber-200">
                 <h4 className="text-xs font-semibold text-amber-800 mb-2 flex items-center gap-1.5">
                   <span className="w-1 h-3.5 bg-amber-500 rounded-full" />
-                  개선 영역
+                  보완 영역
                 </h4>
                 <ul className="space-y-1">
                   {commentary.improvement_areas.map((s, i) => (
@@ -585,35 +592,34 @@ function CommentarySection({ commentary, onRegenerate, isRegenerating }: {
             </div>
           )}
 
-          {/* 학습 우선순위 */}
-          {commentary.study_priority?.length > 0 && (
-            <div className="bg-white/70 rounded-sm p-4 border border-blue-200">
-              <h4 className="text-xs font-semibold text-blue-800 mb-2 flex items-center gap-1.5">
-                <span className="w-1 h-3.5 bg-blue-500 rounded-full" />
-                학습 우선순위
-              </h4>
-              <div className="space-y-1.5">
-                {commentary.study_priority.map((sp, i) => (
-                  <div key={i} className="flex items-center gap-2 text-xs">
-                    <span className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                      i === 0 ? 'bg-blue-600 text-white' : i === 1 ? 'bg-blue-400 text-white' : 'bg-blue-100 text-blue-700'
-                    }`}>
-                      {sp.priority}
-                    </span>
-                    <span className="font-medium text-slate-800">{sp.topic}</span>
-                    <span className="text-slate-500">{sp.reason}</span>
-                  </div>
-                ))}
+          {/* 지도 추천 (teaching_recommendations 우선, 레거시 study_priority 폴백) */}
+          {(() => {
+            const recs = commentary.teaching_recommendations ?? commentary.study_priority ?? [];
+            if (recs.length === 0) return null;
+            return (
+              <div className="bg-white/70 rounded-sm p-4 border border-blue-200">
+                <h4 className="text-xs font-semibold text-blue-800 mb-2 flex items-center gap-1.5">
+                  <span className="w-1 h-3.5 bg-blue-500 rounded-full" />
+                  지도 추천
+                </h4>
+                <div className="space-y-1.5">
+                  {recs.map((sp, i) => (
+                    <div key={i} className="flex items-start gap-2 text-xs">
+                      <span className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                        i === 0 ? 'bg-blue-600 text-white' : i === 1 ? 'bg-blue-400 text-white' : 'bg-blue-100 text-blue-700'
+                      }`}>
+                        {sp.priority}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-slate-800">{sp.topic}</p>
+                        <p className="text-slate-500 mt-0.5">{sp.reason}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-
-          {/* 격려 메시지 */}
-          {commentary.encouragement && (
-            <p className="text-xs text-violet-700 italic text-center pt-1">
-              &quot;{commentary.encouragement}&quot;
-            </p>
-          )}
+            );
+          })()}
         </div>
       )}
     </div>

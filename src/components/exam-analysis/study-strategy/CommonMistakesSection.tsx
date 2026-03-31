@@ -46,7 +46,7 @@ function generateGenericMistakes(topic: TopicSummary): MistakeItem[] {
     });
   }
 
-  if (topic.difficulties.some(d => d === 'reasoning' || d === 'creative')) {
+  if (topic.difficulties.some(d => ['reasoning', 'creative', '4', '5'].includes(d))) {
     mistakes.push({
       type: 'process_error',
       description: '풀이 방향 오선택, 논리적 비약',

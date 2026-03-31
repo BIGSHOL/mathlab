@@ -102,7 +102,7 @@ export interface KillerPattern {
     name: string;
     trapDescription: string;
     solutionKeys: string[];
-    difficultyLevel: 'reasoning' | 'creative';
+    difficultyLevel: 'reasoning' | 'creative' | '1' | '2' | '3' | '4' | '5';
   }[];
 }
 
@@ -157,7 +157,7 @@ export function findKillerPatterns(questions: AnalyzedQuestion[]): KillerPattern
   // 고난도 문항 토픽
   const hardTopics = new Set(
     questions
-      .filter(q => q.difficulty === 'reasoning' || q.difficulty === 'creative')
+      .filter(q => { const d = String(q.difficulty); return d === '4' || d === '5' || d === 'reasoning' || d === 'creative'; })
       .filter(q => q.topic)
       .flatMap(q => q.topic!.split(' > ').map(s => s.trim())),
   );

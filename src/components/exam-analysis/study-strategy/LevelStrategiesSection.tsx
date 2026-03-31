@@ -46,8 +46,8 @@ export function LevelStrategiesSection({
   // 시험 난이도 기반 추천 수준 판별
   const examProfile = useMemo(() => {
     const total = questions.length || 1;
-    const creativeCount = questions.filter(q => q.difficulty === 'creative').length;
-    const reasoningCount = questions.filter(q => q.difficulty === 'reasoning').length;
+    const creativeCount = questions.filter(q => { const d = String(q.difficulty); return d === '5' || d === 'creative'; }).length;
+    const reasoningCount = questions.filter(q => { const d = String(q.difficulty); return d === '4' || d === 'reasoning'; }).length;
     const hardRatio = (creativeCount + reasoningCount) / total;
 
     // 평균 난이도

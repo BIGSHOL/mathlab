@@ -1,9 +1,13 @@
 'use client';
 
 import { useMemo } from 'react';
-// constants import removed (unused after refactor)
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
+import { DIFFICULTY_LEGACY_MAP } from '@/lib/exam-analysis/constants';
 import { InfoTooltip } from './InfoTooltip';
+
+function normalizeDiff(key: string): string {
+  return DIFFICULTY_LEGACY_MAP[key] || key;
+}
 
 interface DiscriminationSectionProps {
   questions: AnalyzedQuestion[];
@@ -45,22 +49,25 @@ const DISCRIMINATION_GRADES = {
 type DiscriminationGrade = keyof typeof DISCRIMINATION_GRADES;
 
 const _DIFFICULTY_LABELS: Record<string, string> = {
-  concept: '개념', pattern: '유형', reasoning: '심화', creative: '최상위',
+  '1': '1', '2': '2', '3': '3', '4': '4', '5': '5',
+  concept: '1', pattern: '2', reasoning: '4', creative: '5',
 };
 
 // ── 변별력 점수 계산 ──
 
 function calculateDiscriminationScore(q: AnalyzedQuestion): number {
   const points = q.points || 3;
+  const nd = normalizeDiff(q.difficulty);
 
-  // 난이도별 가중치
+  // 난이도별 가중치 (5단계)
   const difficultyMultiplier: Record<string, number> = {
-    concept: 0.3,
-    pattern: 0.6,
-    reasoning: 0.8,
-    creative: 1.0,
+    '1': 0.3,
+    '2': 0.5,
+    '3': 0.65,
+    '4': 0.8,
+    '5': 1.0,
   };
-  const mult = difficultyMultiplier[q.difficulty] || 0.5;
+  const mult = difficultyMultiplier[nd] || 0.5;
 
   // 기본 점수: 배점 * 난이도 가중치 (정규화를 위해 10으로 나눔)
   let base = (points * mult) / 10 * 100;
@@ -71,12 +78,12 @@ function calculateDiscriminationScore(q: AnalyzedQuestion): number {
   }
 
   // 낮은 난이도 + 높은 배점 = 낮은 변별력 (패널티)
-  if ((q.difficulty === 'concept' || q.difficulty === 'pattern') && points >= 5) {
+  if ((nd === '1' || nd === '2') && points >= 5) {
     base *= 0.7;
   }
 
   // 높은 난이도 + 적절한 배점 = 좋은 변별력 (보너스)
-  if ((q.difficulty === 'reasoning' || q.difficulty === 'creative') && points >= 4) {
+  if ((nd === '4' || nd === '5') && points >= 4) {
     base *= 1.15;
   }
 

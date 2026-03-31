@@ -279,7 +279,7 @@ JSON만 반환하세요.`;
     // 상위권
     return [
       {
-        action: '고난도(reasoning, creative) 문제 풀이',
+        action: '고난도(4, 5단계) 문제 풀이',
         frequency: '매일',
         duration: '1시간',
         expected_effect: '고난도 문항 정답률 향상',

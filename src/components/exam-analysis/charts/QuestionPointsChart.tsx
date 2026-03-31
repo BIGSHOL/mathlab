@@ -14,32 +14,40 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
+import { DIFFICULTY_COLORS as DIFF_COLORS, DIFFICULTY_LEGACY_MAP } from '@/lib/exam-analysis/constants';
 
 interface QuestionPointsChartProps {
   questions: AnalyzedQuestion[];
 }
 
+/** 난이도 키를 5단계로 정규화 */
+function normalizeDiff(key: string): string {
+  return DIFFICULTY_LEGACY_MAP[key] || key;
+}
+
 // 난이도별 색상
 const COLORS: Record<string, string> = {
-  concept: '#22c55e',
-  pattern: '#3b82f6',
-  reasoning: '#f59e0b',
-  creative: '#ef4444',
+  '1': DIFF_COLORS['1'],
+  '2': DIFF_COLORS['2'],
+  '3': DIFF_COLORS['3'],
+  '4': DIFF_COLORS['4'],
+  '5': DIFF_COLORS['5'],
+  // legacy compat
+  concept: DIFF_COLORS['1'],
+  pattern: DIFF_COLORS['2'],
+  reasoning: DIFF_COLORS['4'],
+  creative: DIFF_COLORS['5'],
 };
 
 const DIFFICULTY_LABELS: Record<string, string> = {
-  concept: '개념',
-  pattern: '유형',
-  reasoning: '심화',
-  creative: '최상위',
+  '1': '1', '2': '2', '3': '3', '4': '4', '5': '5',
+  concept: '1', pattern: '2', reasoning: '4', creative: '5',
 };
 
 // 난이도 → 숫자 레벨 (Y축 우측)
 const DIFFICULTY_LEVEL: Record<string, number> = {
-  concept: 1,
-  pattern: 2,
-  reasoning: 3,
-  creative: 4,
+  '1': 1, '2': 2, '3': 3, '4': 4, '5': 5,
+  concept: 1, pattern: 2, reasoning: 4, creative: 5,
 };
 
 const LINE_COLOR = '#8b5cf6';
@@ -62,14 +70,15 @@ export function QuestionPointsChart({ questions }: QuestionPointsChartProps) {
       // 문자열 번호("서술형 2" 등)는 순서 인덱스 사용
       const rawNum = typeof q.question_number === 'string' ? parseInt(q.question_number) : q.question_number;
       const displayName = isNaN(rawNum) ? `${idx + 1}` : `${rawNum}`;
-      const diff = q.difficulty || 'concept';
+      const diff = q.difficulty || '1';
+      const normalizedDiff = normalizeDiff(diff);
 
       return {
         name: displayName,
         points: q.points || 0,
-        difficulty: diff,
-        diffLevel: DIFFICULTY_LEVEL[diff] || 1,
-        color: COLORS[diff] || '#94A3B8',
+        difficulty: normalizedDiff,
+        diffLevel: DIFFICULTY_LEVEL[normalizedDiff] || Number(normalizedDiff) || 1,
+        color: COLORS[normalizedDiff] || COLORS[diff] || '#94A3B8',
         format: q.question_format || 'objective',
       };
     });
@@ -106,7 +115,7 @@ export function QuestionPointsChart({ questions }: QuestionPointsChartProps) {
       avgPtsPerLevel[d.diffLevel] += d.points;
       countPerLevel[d.diffLevel]++;
     }
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= 5; i++) {
       avgPtsPerLevel[i] = countPerLevel[i] > 0 ? avgPtsPerLevel[i] / countPerLevel[i] : 0;
     }
 
@@ -129,10 +138,7 @@ export function QuestionPointsChart({ questions }: QuestionPointsChartProps) {
   // Y축 우측 난이도 라벨 포매터
   const diffTickFormatter = (value: number) => {
     const labels: Record<number, string> = {
-      1: '개념',
-      2: '유형',
-      3: '심화',
-      4: '최상위',
+      1: '1', 2: '2', 3: '3', 4: '4', 5: '5',
     };
     return labels[value] || '';
   };
@@ -163,7 +169,7 @@ export function QuestionPointsChart({ questions }: QuestionPointsChartProps) {
 
       {/* 범례 */}
       <div className="flex flex-wrap gap-x-4 gap-y-1 mb-3">
-        {(['concept', 'pattern', 'reasoning', 'creative'] as const).map((d) => (
+        {(['1', '2', '3', '4', '5'] as const).map((d) => (
           <span key={d} className="flex items-center gap-1.5 text-xs">
             <span
               className="w-2.5 h-2.5 rounded-sm"
@@ -214,20 +220,20 @@ export function QuestionPointsChart({ questions }: QuestionPointsChartProps) {
                 style: { fontSize: 10, fill: '#94A3B8' },
               }}
             />
-            {/* 우측: 난이도 (1~4) */}
+            {/* 우측: 난이도 (1~5) */}
             <YAxis
               yAxisId="difficulty"
               orientation="right"
               tick={{ fontSize: 10, fill: '#94A3B8' }}
               tickLine={false}
               axisLine={false}
-              domain={[0.5, 4.5]}
-              ticks={[1, 2, 3, 4]}
+              domain={[0.5, 5.5]}
+              ticks={[1, 2, 3, 4, 5]}
               tickFormatter={diffTickFormatter}
             />
 
             {/* 난이도 레벨 참조선 (점선) */}
-            {[1, 2, 3, 4].map((level) => (
+            {[1, 2, 3, 4, 5].map((level) => (
               <ReferenceLine
                 key={level}
                 yAxisId="difficulty"

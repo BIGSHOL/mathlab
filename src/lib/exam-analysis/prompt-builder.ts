@@ -73,23 +73,29 @@ const ENGLISH_COMMON_MISTAKES: Record<string, string> = {
 - 어법 문제에서 준동사(to-v/v-ing/p.p.) 구분 실패`,
 };
 
-const ENGLISH_DIFFICULTY_SYSTEM_4LEVEL = `🚨 **영어 난이도 4단계 시스템**:
+const ENGLISH_DIFFICULTY_SYSTEM_4LEVEL = `🚨 **영어 난이도 5단계 시스템**:
 
-### 1️⃣ concept (개념) - 기본 문법/어휘 확인
+**난이도 값은 반드시 문자열 "1", "2", "3", "4", "5" 중 하나를 사용하세요.**
+
+### 1️⃣ "1" (기본) - 기본 문법/어휘 확인
 - 단순 문법 규칙 적용, 기초 어휘 의미 파악
 - 정답률 85% 이상 예상
 
-### 2️⃣ pattern (유형) - 알려진 문제 유형 적용
+### 2️⃣ "2" (표준) - 알려진 문제 유형 적용
 - 수능 기출 유형 (빈칸, 순서, 삽입 등), 문법 복합 적용
 - 정답률 60-85% 예상
 
-### 3️⃣ reasoning (심화) - 추론/분석 필요
-- 함축 의미 파악, 장문 독해, 복합 문법 판단
-- 정답률 30-60% 예상
+### 3️⃣ "3" (응용) - 문맥 응용/변형
+- 문맥 기반 응용, 복합 문법 적용, 환언 추론
+- 정답률 45-65% 예상
 
-### 4️⃣ creative (최상위) - 고난도 추론
+### 4️⃣ "4" (심화) - 추론/분석 필요
+- 함축 의미 파악, 장문 독해, 복합 문법 판단
+- 정답률 25-45% 예상
+
+### 5️⃣ "5" (최고난도) - 고난도 추론
 - 빈칸추론 킬러, 복합 장문, 간접 쓰기
-- 정답률 30% 이하`;
+- 정답률 25% 이하`;
 
 const ENGLISH_QUESTION_STRATEGIES = `📝 **영어 문항 유형별 분석 전략:**
 
@@ -299,7 +305,7 @@ export class ExamPromptBuilder {
 
 **핵심 원칙:**
 1. 모든 문항을 빠짐없이 분석 (소문제 포함)
-2. 난이도는 4단계 시스템을 엄격히 적용
+2. 난이도는 5단계 시스템("1"~"5")을 엄격히 적용
 3. topic 형식: "과목명 > 대단원 > 소단원" (공백 포함 > 구분)
 4. ai_comment: 정확히 2문장, 존댓말(~입니다/~합니다), 각 문장 20~40자
 5. confidence: 0.0~1.0 (불확실하면 낮게)`;
@@ -312,7 +318,7 @@ export class ExamPromptBuilder {
 
 **핵심 원칙:**
 1. 모든 문항을 빠짐없이 분석 (소문제 포함)
-2. 난이도는 4단계 시스템을 엄격히 적용
+2. 난이도는 5단계 시스템("1"~"5")을 엄격히 적용
 3. topic 형식: "과목명 > 대단원 > 소단원" (공백 포함 > 구분)
 4. ai_comment: 정확히 2문장, 존댓말(~입니다/~합니다), 각 문장 20~40자
 5. confidence: 0.0~1.0 (불확실하면 낮게)`;
@@ -463,7 +469,7 @@ export class ExamPromptBuilder {
       : '"grammar", "vocabulary", "reading", "listening", "writing", "communication"';
 
     // 난이도 키
-    const difficultyKeys = '"concept", "pattern", "reasoning", "creative"';
+    const difficultyKeys = '"1", "2", "3", "4", "5"';
 
     // 문항 형식
     const formatKeys = '"objective", "short_answer", "essay"';
@@ -512,22 +518,23 @@ export class ExamPromptBuilder {
   },
   "summary": {
     "difficulty_distribution": {
-      "concept": 0,
-      "pattern": 0,
-      "reasoning": 0,
-      "creative": 0
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0
     },
     "type_distribution": {
       ${typeDistExample}
     },
-    "average_difficulty": "pattern",
+    "average_difficulty": "2",
     "dominant_type": "calculation"
   },
   "questions": [
     {
       "question_number": 1,
       "question_format": "objective",
-      "difficulty": "concept",
+      "difficulty": "1",
       "difficulty_reason": "기본 개념 확인",
       "question_type": "calculation",
       "ability_domain": "calculation",
@@ -539,7 +546,7 @@ export class ExamPromptBuilder {
     {
       "question_number": 2,
       "question_format": "objective",
-      "difficulty": "pattern",
+      "difficulty": "2",
       "difficulty_reason": "유형 적용 문제",
       "question_type": "calculation",
       "ability_domain": "understanding",
@@ -709,7 +716,7 @@ export class ExamPromptBuilder {
     ];
 
     if (isMath) {
-      templates.push('MATH_DIFFICULTY_SYSTEM_4LEVEL');
+      templates.push('MATH_DIFFICULTY_SYSTEM_5LEVEL');
       templates.push('SUBJECT_MATCHING_RULES');
       templates.push('MATH_TOPICS');
 
@@ -725,7 +732,7 @@ export class ExamPromptBuilder {
         templates.push('MATH_COMMON_MISTAKES');
       }
     } else {
-      templates.push('ENGLISH_DIFFICULTY_SYSTEM_4LEVEL');
+      templates.push('ENGLISH_DIFFICULTY_SYSTEM_5LEVEL');
       templates.push('ENGLISH_EVALUATION_SYSTEM');
       templates.push('ENGLISH_QUESTION_STRATEGIES');
       templates.push('ENGLISH_TOPICS');

@@ -219,6 +219,7 @@ src/
 │   ├── ranking/       # 랭킹 UI 컴포넌트 (TopThreePodium, RankingList, RankingInsights, RankChangeIndicator)
 │   ├── student/       # 학생 전용 (DailyMissionCard, DailyQuestionCard, DashboardGamification, RevengeBanner)
 │   ├── report/        # 레벨테스트 보고서 렌더링
+│   ├── exam-analysis/ # 기출 분석 (AnalysisResultView, TypeRadarChart, StudyStrategyTab)
 │   ├── worksheet-wizard/  # 학습지 3단계 위자드 (Step1~3)
 │   ├── level-test-editor/ # 레벨테스트 편집기
 │   ├── level-test/    # 레벨테스트 결과 표시 (ChapterMasteryGrid, DifficultyBreakdown 등)
@@ -237,6 +238,7 @@ src/
 │   ├── utils/         # 유틸 (blank-generator, pdf-processor, features, curriculumMapping, xp, format, question-order, diagram-resolver, answer-status, date-engine, level-test-feedback, activity)
 │   │   └── svg-diagrams/  # SVG 다이어그램 렌더링 시스템 (26개 타입)
 │   ├── pdf-extract-engine/  # PDF 추출 엔진 (core, ai, hooks, presets — 14파일)
+│   ├── exam-analysis/       # 기출 분석 (types, constants — 6대 유형/4대 능력/4단계 난이도)
 │   ├── diagram/       # 프리셋 기반 구조화 다이어그램 시스템 (DiagramSpec)
 │   ├── constants/     # 교육과정 데이터, 연산 카테고리, 라벨, 시험전략, 학교, 교재
 │   └── data/          # 정적 데이터 (업데이트 로그, 도움말)
@@ -463,6 +465,26 @@ if (licenseCheck) return licenseCheck;  // 이용권 없으면 403
 3. 과정 COMPLETED 처리 → 다음 LOCKED 과정 자동 ACTIVE 전환
 
 **선생님 관리:** `/courses` (과정 생성, 개념 추가, 학생 배정)
+
+### 기출 분석 시스템
+
+PDF 시험지 업로드 → Gemini AI 분석 → 문항별 난이도/유형/능력/단원 구조화
+
+**핵심 구조 (`src/components/exam-analysis/`, `src/lib/exam-analysis/`):**
+- `AnalysisResultView` — 난이도/유형/배점/단원/서술형/변별력/문항 테이블 통합 뷰
+- `AnalysisCommentTab` — 문항별 AI 코멘트 + 피드백 신고
+- `StudyStrategyTab` — 학습 전략 (토픽, 킬러패턴, 타임라인, 서술형 대비 등)
+- `TypeRadarChart` — 유형(6대)/능력(4대) 레이더 차트 (탭 전환)
+
+**6대 표준 유형 (question_type):** 계산, 도형, 응용, 증명, 그래프, 통계
+- Gemini raw 타입(18종+) → 6대 표준으로 매핑 (`TYPE_TO_STANDARD`)
+- 레이더 차트: 데이터 있는 항목만 다각형 구성, 범례는 전체 표시(0 포함)
+
+**4대 능력 영역 (ability_domain):** 계산력, 이해력, 문제해결력, 추론력
+- `TYPE_TO_DOMAIN` 매핑으로 question_type → ability_domain 자동 변환
+- 공유 상수: `ABILITY_DOMAIN_LABELS`, `ABILITY_DOMAIN_COLORS` (`constants.ts`)
+
+**4단계 난이도:** 개념(concept), 유형(pattern), 추론(reasoning), 창의(creative)
 
 ### 수기채점 시스템
 

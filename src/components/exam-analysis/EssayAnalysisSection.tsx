@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { DIFFICULTY_COLORS } from '@/lib/exam-analysis/constants';
+import { DIFFICULTY_COLORS, DIFFICULTY_LEGACY_MAP } from '@/lib/exam-analysis/constants';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { FileText } from 'lucide-react';
 
@@ -11,11 +11,16 @@ interface EssayAnalysisSectionProps {
   totalPoints: number;
 }
 
+function normalizeDiff(key: string): string {
+  return DIFFICULTY_LEGACY_MAP[key] || key;
+}
+
 const DIFFICULTY_LABELS: Record<string, string> = {
-  concept: '개념', pattern: '유형', reasoning: '심화', creative: '최상위',
+  '1': '1', '2': '2', '3': '3', '4': '4', '5': '5',
+  concept: '1', pattern: '2', reasoning: '4', creative: '5',
 };
 
-const DIFFICULTY_ORDER = ['concept', 'pattern', 'reasoning', 'creative'] as const;
+const DIFFICULTY_ORDER = ['1', '2', '3', '4', '5'] as const;
 
 export function EssayAnalysisSection({ questions, totalQuestions, totalPoints }: EssayAnalysisSectionProps) {
   // 서술형 문항만 필터
@@ -31,14 +36,15 @@ export function EssayAnalysisSection({ questions, totalQuestions, totalPoints }:
     const avgPtsPerQ = count > 0 ? (pts / count) : 0;
 
     // 평균 난이도 계산
-    const diffLevels: Record<string, number> = { concept: 1, pattern: 2, reasoning: 3, creative: 4 };
+    const diffLevels: Record<string, number> = { '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, concept: 1, pattern: 2, reasoning: 4, creative: 5 };
     const avgDiffLevel = count > 0
-      ? essayQuestions.reduce((s, q) => s + (diffLevels[q.difficulty] || 2), 0) / count
+      ? essayQuestions.reduce((s, q) => s + (diffLevels[normalizeDiff(q.difficulty)] || diffLevels[q.difficulty] || 3), 0) / count
       : 0;
-    const avgDiffKey = avgDiffLevel >= 3.5 ? 'creative'
-      : avgDiffLevel >= 2.5 ? 'reasoning'
-      : avgDiffLevel >= 1.5 ? 'pattern'
-      : 'concept';
+    const avgDiffKey = avgDiffLevel >= 4.5 ? '5'
+      : avgDiffLevel >= 3.5 ? '4'
+      : avgDiffLevel >= 2.5 ? '3'
+      : avgDiffLevel >= 1.5 ? '2'
+      : '1';
 
     return {
       count,
@@ -51,11 +57,12 @@ export function EssayAnalysisSection({ questions, totalQuestions, totalPoints }:
     };
   }, [essayQuestions, totalQuestions, totalPoints]);
 
-  // 난이도 분포
+  // 난이도 분포 (5단계, 레거시 통합)
   const diffDistribution = useMemo(() => {
-    const counts: Record<string, number> = {};
+    const counts: Record<string, number> = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
     for (const q of essayQuestions) {
-      counts[q.difficulty] = (counts[q.difficulty] || 0) + 1;
+      const nd = normalizeDiff(q.difficulty);
+      counts[nd] = (counts[nd] || 0) + 1;
     }
     const total = essayQuestions.length || 1;
     return DIFFICULTY_ORDER
@@ -121,7 +128,7 @@ export function EssayAnalysisSection({ questions, totalQuestions, totalPoints }:
         <StatCard
           label="평균 난이도"
           value={stats.avgDiffLabel}
-          sub="4단계 기준"
+          sub="5단계 기준"
           valueColor={DIFFICULTY_COLORS[stats.avgDiffKey]}
         />
         <StatCard

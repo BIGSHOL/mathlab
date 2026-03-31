@@ -11,28 +11,32 @@ import {
   Tooltip,
 } from 'recharts';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
+import { DIFFICULTY_COLORS as DIFF_COLORS, DIFFICULTY_LEGACY_MAP } from '@/lib/exam-analysis/constants';
 
 interface DifficultyAreaChartProps {
   questions: AnalyzedQuestion[];
 }
 
-// 난이도별 색상
-const COLORS = {
-  concept: '#22c55e',
-  pattern: '#3b82f6',
-  reasoning: '#f59e0b',
-  creative: '#ef4444',
-} as const;
+// 난이도별 색상 (5단계)
+const COLORS: Record<string, string> = {
+  '1': DIFF_COLORS['1'],
+  '2': DIFF_COLORS['2'],
+  '3': DIFF_COLORS['3'],
+  '4': DIFF_COLORS['4'],
+  '5': DIFF_COLORS['5'],
+};
 
 const DIFFICULTY_LABELS: Record<string, string> = {
-  concept: '개념',
-  pattern: '유형',
-  reasoning: '심화',
-  creative: '최상위',
+  '1': '1', '2': '2', '3': '3', '4': '4', '5': '5',
 };
 
 // 난이도 순서 (쌓기 순서: 아래부터)
-const DIFFICULTY_ORDER = ['concept', 'pattern', 'reasoning', 'creative'] as const;
+const DIFFICULTY_ORDER = ['1', '2', '3', '4', '5'] as const;
+
+/** 난이도 키를 5단계로 정규화 */
+function normalizeDiff(key: string): string {
+  return DIFFICULTY_LEGACY_MAP[key] || key;
+}
 
 export function DifficultyAreaChart({ questions }: DifficultyAreaChartProps) {
   const { chartData, totalPoints, legend } = useMemo(() => {
@@ -45,14 +49,11 @@ export function DifficultyAreaChart({ questions }: DifficultyAreaChartProps) {
 
     // 각 난이도별 누적 배점 계산
     const cumulative: Record<string, number> = {
-      concept: 0,
-      pattern: 0,
-      reasoning: 0,
-      creative: 0,
+      '1': 0, '2': 0, '3': 0, '4': 0, '5': 0,
     };
 
     const data = sorted.map((q, idx) => {
-      const diff = q.difficulty || 'concept';
+      const diff = normalizeDiff(q.difficulty || '1');
       const pts = q.points || 0;
       cumulative[diff] = (cumulative[diff] || 0) + pts;
 
@@ -61,10 +62,11 @@ export function DifficultyAreaChart({ questions }: DifficultyAreaChartProps) {
 
       return {
         name: displayLabel,
-        concept: cumulative.concept,
-        pattern: cumulative.pattern,
-        reasoning: cumulative.reasoning,
-        creative: cumulative.creative,
+        '1': cumulative['1'],
+        '2': cumulative['2'],
+        '3': cumulative['3'],
+        '4': cumulative['4'],
+        '5': cumulative['5'],
       };
     });
 

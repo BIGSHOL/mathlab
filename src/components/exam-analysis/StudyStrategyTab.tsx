@@ -48,7 +48,7 @@ export function StudyStrategyTab({ questions }: StudyStrategyTabProps) {
   const { topicSummaries, chapterGroups, totalPoints, essayQuestions, is4Level } = useMemo(() => {
     const topicMap = new Map<string, TopicSummary>();
     const totalPts = questions.reduce((sum, q) => sum + (q.points || 0), 0);
-    const is4L = questions.some(q => ['concept', 'pattern', 'reasoning', 'creative'].includes(q.difficulty));
+    const is4L = questions.some(q => ['concept', 'pattern', 'reasoning', 'creative', '1', '2', '3', '4', '5'].includes(q.difficulty));
 
     questions.forEach(q => {
       const rawTopic = q.topic || '기타';

@@ -273,20 +273,20 @@ export async function analyzeExam(
       },
       summary: {
         difficulty_distribution: {
-          ...{ concept: 0, pattern: 0, reasoning: 0, creative: 0, high: 0, medium: 0, low: 0 },
+          ...{ '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 },
           ...(rawResult.summary.difficulty_distribution ?? {}),
         },
         type_distribution: {
           ...{ calculation: 0, geometry: 0, application: 0, proof: 0, graph: 0, statistics: 0 },
           ...(rawResult.summary.type_distribution ?? {}),
         },
-        average_difficulty: rawResult.summary.average_difficulty ?? 'medium',
+        average_difficulty: rawResult.summary.average_difficulty ?? '3',
         dominant_type: rawResult.summary.dominant_type ?? 'calculation',
       },
       questions: rawResult.questions.map((q, idx) => ({
         question_number: q.question_number ?? idx + 1,
         question_format: q.question_format ?? null,
-        difficulty: q.difficulty ?? 'concept',
+        difficulty: q.difficulty ?? '1',
         difficulty_reason: q.difficulty_reason ?? null,
         question_type: q.question_type ?? 'calculation',
         points: q.points ?? null,

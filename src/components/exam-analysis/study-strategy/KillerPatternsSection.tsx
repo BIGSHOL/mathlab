@@ -23,7 +23,7 @@ export function KillerPatternsSection({
 
   // 최상위/심화 문항 수 계산
   const highDiffCount = useMemo(
-    () => questions.filter(q => q.difficulty === 'creative' || q.difficulty === 'reasoning').length,
+    () => questions.filter(q => { const d = String(q.difficulty); return d === '5' || d === '4' || d === 'creative' || d === 'reasoning'; }).length,
     [questions],
   );
 
@@ -75,7 +75,7 @@ export function KillerPatternsSection({
               const isOpen = expandedUnits.has(kp.unitName);
               const trapCount = kp.patterns.length;
               const creativeCount = kp.patterns.filter(
-                p => p.difficultyLevel === 'creative',
+                p => p.difficultyLevel === 'creative' || p.difficultyLevel === '5',
               ).length;
 
               return (
@@ -121,11 +121,11 @@ export function KillerPatternsSection({
                           className="rounded-sm border p-3"
                           style={{
                             borderColor:
-                              pattern.difficultyLevel === 'creative'
+                              (pattern.difficultyLevel === 'creative' || pattern.difficultyLevel === '5')
                                 ? '#FECACA'
                                 : '#FDE68A',
                             backgroundColor:
-                              pattern.difficultyLevel === 'creative'
+                              (pattern.difficultyLevel === 'creative' || pattern.difficultyLevel === '5')
                                 ? '#FEF2F2'
                                 : '#FFFBEB',
                           }}
@@ -139,12 +139,12 @@ export function KillerPatternsSection({
                               className="px-1.5 py-0.5 rounded-sm text-[10px] font-bold text-white"
                               style={{
                                 backgroundColor:
-                                  pattern.difficultyLevel === 'creative'
+                                  (pattern.difficultyLevel === 'creative' || pattern.difficultyLevel === '5')
                                     ? '#ef4444'
                                     : '#f59e0b',
                               }}
                             >
-                              {pattern.difficultyLevel === 'creative' ? '최상위' : '심화'}
+                              {(pattern.difficultyLevel === 'creative' || pattern.difficultyLevel === '5') ? '5' : '4'}
                             </span>
                           </div>
 

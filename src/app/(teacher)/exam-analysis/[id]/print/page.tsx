@@ -34,13 +34,21 @@ interface ExamPaperDetail {
 // ── 유틸 ──
 
 const DIFFICULTY_LABEL: Record<string, string> = {
-  concept: '개념',
-  pattern: '유형',
-  reasoning: '추론',
-  creative: '창의',
-  high: '상',
-  medium: '중',
-  low: '하',
+  '1': '1', '2': '2', '3': '3', '4': '4', '5': '5',
+  concept: '1', pattern: '2', reasoning: '4', creative: '5',
+  high: '상', medium: '중', low: '하',
+};
+
+const DIFFICULTY_COLOR_CLASS: Record<string, string> = {
+  '1': 'bg-green-100 text-green-700',
+  '2': 'bg-lime-100 text-lime-700',
+  '3': 'bg-amber-100 text-amber-700',
+  '4': 'bg-orange-100 text-orange-700',
+  '5': 'bg-red-100 text-red-700',
+  concept: 'bg-green-100 text-green-700',
+  pattern: 'bg-lime-100 text-lime-700',
+  reasoning: 'bg-orange-100 text-orange-700',
+  creative: 'bg-red-100 text-red-700',
 };
 
 const TYPE_LABEL: Record<string, string> = {
@@ -234,11 +242,11 @@ export default function ExamAnalysisPrintPage() {
                   <p className="text-xs font-semibold text-text-primary mb-1.5">난이도 분포</p>
                   <div className="flex gap-2 flex-wrap">
                     {Object.entries(diffDist)
-                      .filter(([, v]) => v > 0)
+                      .filter(([, v]) => (v as number) > 0)
                       .map(([key, val]) => (
                         <span
                           key={key}
-                          className="px-2 py-0.5 text-xs bg-slate-100 rounded-sm text-text-secondary"
+                          className={`px-2 py-0.5 text-xs rounded-sm ${DIFFICULTY_COLOR_CLASS[key] || 'bg-slate-100 text-text-secondary'}`}
                         >
                           {DIFFICULTY_LABEL[key] ?? key}: {val}문항
                         </span>
@@ -323,13 +331,7 @@ export default function ExamAnalysisPrintPage() {
                         <td className="px-2 py-1.5">
                           <span
                             className={`px-1 py-0.5 rounded-sm text-[10px] font-medium ${
-                              q.difficulty === 'creative'
-                                ? 'bg-red-100 text-red-700'
-                                : q.difficulty === 'reasoning'
-                                  ? 'bg-yellow-100 text-yellow-700'
-                                  : q.difficulty === 'pattern'
-                                    ? 'bg-orange-100 text-orange-700'
-                                    : 'bg-green-100 text-green-700'
+                              DIFFICULTY_COLOR_CLASS[q.difficulty] || 'bg-slate-100 text-slate-700'
                             }`}
                           >
                             {DIFFICULTY_LABEL[q.difficulty] ?? q.difficulty}

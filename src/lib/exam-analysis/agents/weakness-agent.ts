@@ -218,9 +218,9 @@ JSON만 반환하세요.`;
 
     // 3단계 기준 (하위 호환)
     const entries: [string, number][] = [
-      ['high', dist.high],
-      ['medium', dist.medium],
-      ['low', dist.low],
+      ['high', dist.high || 0],
+      ['medium', dist.medium || 0],
+      ['low', dist.low || 0],
     ];
 
     for (const [key, count] of entries) {

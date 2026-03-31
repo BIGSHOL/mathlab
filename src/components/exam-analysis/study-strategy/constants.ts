@@ -5,20 +5,26 @@
 
 // ── 난이도 가중치 (평균 난이도 계산용) ──
 export const DIFFICULTY_WEIGHT: Record<string, number> = {
-  concept: 1, pattern: 2, reasoning: 3, creative: 4,
-  low: 1, medium: 2, high: 3,
+  '1': 1, '2': 2, '3': 3, '4': 4, '5': 5,
+  // 구 키 호환
+  concept: 1, pattern: 2, reasoning: 4, creative: 5,
+  low: 1, medium: 3, high: 5,
 };
 
 // ── 난이도 라벨 ──
 export const DIFFICULTY_LABELS: Record<string, string> = {
-  concept: '개념', pattern: '유형', reasoning: '심화', creative: '최상위',
+  '1': '1', '2': '2', '3': '3', '4': '4', '5': '5',
+  // 구 키 호환
+  concept: '1', pattern: '2', reasoning: '4', creative: '5',
   low: '하', medium: '중', high: '상',
 };
 
 // ── 난이도 색상 ──
 export const DIFFICULTY_COLORS: Record<string, string> = {
-  concept: '#22c55e', pattern: '#3b82f6', reasoning: '#f59e0b', creative: '#ef4444',
-  low: '#22c55e', medium: '#3b82f6', high: '#f59e0b',
+  '1': '#22c55e', '2': '#84cc16', '3': '#f59e0b', '4': '#f97316', '5': '#ef4444',
+  // 구 키 호환
+  concept: '#22c55e', pattern: '#84cc16', reasoning: '#f97316', creative: '#ef4444',
+  low: '#22c55e', medium: '#f59e0b', high: '#ef4444',
 };
 
 // ── 유형별 학습 전략 ──
@@ -57,6 +63,12 @@ export const TYPE_STRATEGIES: Record<string, string[]> = {
 
 // ── 난이도별 조언 ──
 export const DIFFICULTY_ADVICE: Record<string, string> = {
+  '1': '기초 개념 이해에 집중하세요. 교과서의 정의와 공식을 정확히 암기하고, 기본 예제를 반복 풀이하면 빠르게 향상됩니다.',
+  '2': '유형별 풀이 패턴을 익히는 것이 핵심입니다. 교과서 유제와 기출문제를 분류별로 정리하여 반복 학습하세요.',
+  '3': '개념 응용력을 키우세요. 교과서 응용 문제와 변형 문제를 풀며, 2-3개 개념을 결합하는 연습을 하세요.',
+  '4': '복합적인 사고력이 필요합니다. 2개 이상의 개념을 결합하는 연습과, 문제 해결 전략을 스스로 수립하는 훈련이 필요합니다.',
+  '5': '최상위 문제는 정해진 패턴이 없습니다. 다양한 접근법을 시도하고, 문제의 구조를 분석하는 능력을 키우세요.',
+  // 구 키 호환
   concept: '기초 개념 이해에 집중하세요. 교과서의 정의와 공식을 정확히 암기하고, 기본 예제를 반복 풀이하면 빠르게 향상됩니다.',
   pattern: '유형별 풀이 패턴을 익히는 것이 핵심입니다. 교과서 유제와 기출문제를 분류별로 정리하여 반복 학습하세요.',
   reasoning: '복합적인 사고력이 필요합니다. 2개 이상의 개념을 결합하는 연습과, 문제 해결 전략을 스스로 수립하는 훈련이 필요합니다.',

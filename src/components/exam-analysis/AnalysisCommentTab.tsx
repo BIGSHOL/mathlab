@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { DIFFICULTY_COLORS, QUESTION_TYPE_COLORS, TYPE_TO_DOMAIN, ABILITY_DOMAIN_LABELS, ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
+import { DIFFICULTY_COLORS, DIFFICULTY_LEGACY_MAP, QUESTION_TYPE_COLORS, TYPE_TO_DOMAIN, ABILITY_DOMAIN_LABELS, ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { AlertTriangle, ChevronLeft, Check } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
@@ -12,8 +12,13 @@ interface AnalysisCommentTabProps {
 }
 
 const DIFFICULTY_LABELS: Record<string, string> = {
-  concept: '개념', pattern: '유형', reasoning: '심화', creative: '최상위',
+  '1': '1', '2': '2', '3': '3', '4': '4', '5': '5',
+  concept: '1', pattern: '2', reasoning: '4', creative: '5',
 };
+
+function normalizeDiff(key: string): string {
+  return DIFFICULTY_LEGACY_MAP[key] || key;
+}
 
 const TYPE_LABELS: Record<string, string> = {
   calculation: '계산', geometry: '도형', application: '응용',
@@ -158,8 +163,8 @@ function CommentRow({ q, showDiffReason, examPaperId }: {
       <div>
         <div className="flex items-center gap-1.5 mb-1">
           <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-bold text-white"
-            style={{ backgroundColor: DIFFICULTY_COLORS[q.difficulty] || '#94A3B8' }}>
-            {DIFFICULTY_LABELS[q.difficulty] || q.difficulty}
+            style={{ backgroundColor: DIFFICULTY_COLORS[normalizeDiff(q.difficulty)] || DIFFICULTY_COLORS[q.difficulty] || '#94A3B8' }}>
+            {DIFFICULTY_LABELS[q.difficulty] || normalizeDiff(q.difficulty)}
           </span>
           <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-medium"
             style={{ backgroundColor: `${QUESTION_TYPE_COLORS[q.question_type] || '#94A3B8'}15`, color: QUESTION_TYPE_COLORS[q.question_type] || '#94A3B8' }}>

@@ -31,12 +31,13 @@ function getDifficultyColor(avgDifficulty: number): string {
   return '#22c55e';                           // green
 }
 
-/** avgDifficulty → 난이도 키 */
+/** avgDifficulty → 난이도 키 (5단계) */
 function getDifficultyKey(avgDifficulty: number): string {
-  if (avgDifficulty >= 3.5) return 'creative';
-  if (avgDifficulty >= 2.5) return 'reasoning';
-  if (avgDifficulty >= 1.5) return 'pattern';
-  return 'concept';
+  if (avgDifficulty >= 4.5) return '5';
+  if (avgDifficulty >= 3.5) return '4';
+  if (avgDifficulty >= 2.5) return '3';
+  if (avgDifficulty >= 1.5) return '2';
+  return '1';
 }
 
 export function LearningStrategiesSection({

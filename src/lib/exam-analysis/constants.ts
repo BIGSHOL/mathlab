@@ -3,18 +3,33 @@
  * Math Report 프로젝트에서 이식 — MathLab AI 시스템과 완전 독립
  */
 
-// ── 4단계 난이도 ──
+// ── 5단계 난이도 (1=쉬움 ~ 5=어려움) ──
 export const EXAM_DIFFICULTIES = {
-  CONCEPT: { label: '개념', labelEn: 'Concept', level: 1 },
-  PATTERN: { label: '유형', labelEn: 'Pattern', level: 2 },
-  REASONING: { label: '추론', labelEn: 'Reasoning', level: 3 },
-  CREATIVE: { label: '창의', labelEn: 'Creative', level: 4 },
+  LEVEL_1: { label: '1', labelEn: 'Level 1', level: 1 },
+  LEVEL_2: { label: '2', labelEn: 'Level 2', level: 2 },
+  LEVEL_3: { label: '3', labelEn: 'Level 3', level: 3 },
+  LEVEL_4: { label: '4', labelEn: 'Level 4', level: 4 },
+  LEVEL_5: { label: '5', labelEn: 'Level 5', level: 5 },
 } as const;
 
 export type ExamDifficultyKey = keyof typeof EXAM_DIFFICULTIES;
 
+// 구 4단계 → 5단계 매핑 (하위 호환)
+export const DIFFICULTY_LEGACY_MAP: Record<string, string> = {
+  concept: '1',
+  pattern: '2',
+  reasoning: '4',
+  creative: '5',
+};
+
 // 3단계 (하위 호환)
 export const DIFFICULTY_3LEVEL_MAP: Record<string, string> = {
+  '1': 'low',
+  '2': 'low',
+  '3': 'medium',
+  '4': 'high',
+  '5': 'high',
+  // 구 키 호환
   concept: 'low',
   pattern: 'medium',
   reasoning: 'high',
@@ -125,12 +140,31 @@ export const CONFIDENCE_THRESHOLDS = {
   LOW: 0.5,
 } as const;
 
-// ── 난이도 색상 (UI용) ──
+// ── 난이도 색상 (UI용, 초록→빨강 그라데이션) ──
 export const DIFFICULTY_COLORS: Record<string, string> = {
-  concept: '#3B82F6',   // blue
-  pattern: '#10B981',   // green
-  reasoning: '#F97316', // orange
-  creative: '#EF4444',  // red
+  '1': '#22C55E',   // green (쉬움)
+  '2': '#84CC16',   // lime
+  '3': '#F59E0B',   // amber (보통)
+  '4': '#F97316',   // orange
+  '5': '#EF4444',   // red (어려움)
+  // 구 키 호환
+  concept: '#22C55E',
+  pattern: '#84CC16',
+  reasoning: '#F97316',
+  creative: '#EF4444',
+};
+
+export const DIFFICULTY_LABELS: Record<string, string> = {
+  '1': '1',
+  '2': '2',
+  '3': '3',
+  '4': '4',
+  '5': '5',
+  // 구 키 호환
+  concept: '1',
+  pattern: '2',
+  reasoning: '4',
+  creative: '5',
 };
 
 // ── 문항유형 색상 (UI용) ──
