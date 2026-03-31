@@ -27,6 +27,7 @@ export interface CommonMistake {
 
 export interface UnitMistakes {
   unit: string;
+  grade?: '중등' | '고등';  // 학년 구분 (중복 단원용)
   mistakes: CommonMistake[];
 }
 

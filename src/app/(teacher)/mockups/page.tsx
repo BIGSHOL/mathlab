@@ -87,7 +87,7 @@ const ALL_PAGES: PageInfo[] = [
 
   // ─── Dev pages ───
   { label: '보석 목업', href: '/dev/gems', icon: Gem, group: 'dev', category: '개발', description: '6종 보석 × 5단계 × 4사이즈 SVG 미리보기' },
-  { label: '토픽별 학습 전략', href: '/exam-analysis/topic-preview', icon: Layers, group: 'dev', category: '개발', description: '134개 토픽별 교육과정 맞춤 학습 전략 확인', isNew: true },
+  { label: '토픽별 학습 전략', href: '/mockups/topic-preview', icon: Layers, group: 'dev', category: '개발', description: '134개 토픽별 교육과정 맞춤 학습 전략 확인', isNew: true },
 ];
 
 const IFRAME_SIZES: Record<ViewMode, { width: string; label: string }> = {

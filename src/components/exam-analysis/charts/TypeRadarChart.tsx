@@ -8,7 +8,7 @@ import {
   Radar,
   ResponsiveContainer,
 } from 'recharts';
-import { QUESTION_TYPE_COLORS, TYPE_TO_DOMAIN, ABILITY_DOMAIN_LABELS, ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
+import { TYPE_TO_DOMAIN, ABILITY_DOMAIN_LABELS, ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 
 type ViewMode = 'type' | 'ability';
@@ -64,42 +64,6 @@ const STANDARD_TYPE_COLORS: Record<string, string> = {
 const DOMAIN_LABELS = ABILITY_DOMAIN_LABELS;
 const DOMAIN_COLORS = ABILITY_DOMAIN_COLORS;
 
-const TYPE_LABELS: Record<string, string> = {
-  calculation: '계산',
-  geometry: '도형',
-  application: '응용',
-  proof: '증명',
-  graph: '그래프',
-  statistics: '통계',
-  algebra: '대수',
-  problem_solving: '문제해결',
-  number: '수와 연산',
-  function: '함수',
-  probability: '확률',
-  equation: '방정식',
-  inequality: '부등식',
-  sequence: '수열',
-  trigonometry: '삼각함수',
-  calculus: '미적분',
-  vector: '벡터',
-  set: '집합',
-  grammar: '문법',
-  vocabulary: '어휘',
-  reading: '독해',
-  listening: '듣기',
-  writing: '서술형',
-  communication: '의사소통',
-};
-
-const POLYGON_NAMES: Record<number, string> = {
-  3: '삼각형',
-  4: '사각형',
-  5: '오각형',
-  6: '육각형',
-  7: '칠각형',
-  8: '팔각형',
-};
-
 export function TypeRadarChart({ data, questions }: TypeRadarChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('type');
 
@@ -125,9 +89,9 @@ export function TypeRadarChart({ data, questions }: TypeRadarChartProps) {
     return counts;
   }, [data]);
 
-  const items = useMemo(() => {
+  // 전체 항목 (범례용 — 0개 포함)
+  const allItems = useMemo(() => {
     if (viewMode === 'ability') {
-      // 능력 영역: 4대 영역 항상 표시 (0개여도 포함)
       const ALL_DOMAINS = ['calculation', 'understanding', 'problem_solving', 'reasoning'] as const;
       return ALL_DOMAINS.map((key) => ({
         key,
@@ -136,7 +100,6 @@ export function TypeRadarChart({ data, questions }: TypeRadarChartProps) {
         color: DOMAIN_COLORS[key] || '#94A3B8',
       }));
     }
-    // 유형: 6대 표준 유형 항상 표시 (0개여도 포함)
     return STANDARD_TYPE_KEYS.map((key) => ({
       key,
       label: STANDARD_TYPE_LABELS[key],
@@ -145,19 +108,23 @@ export function TypeRadarChart({ data, questions }: TypeRadarChartProps) {
     }));
   }, [abilityData, standardTypeData, viewMode]);
 
-  const total = items.reduce((s, i) => s + i.value, 0);
+  // 차트용 항목 (0인 항목 제외 → 다각형 크기 결정)
+  const items = useMemo(() => {
+    return allItems.filter((item) => item.value > 0);
+  }, [allItems]);
+
+  const total = allItems.reduce((s, i) => s + i.value, 0);
   const typeCount = items.length;
-  const polygonName = POLYGON_NAMES[typeCount] || `${typeCount}각형`;
 
   // 2개 이하: 바 차트로 폴백
   if (typeCount <= 2) {
     return (
       <div className="bg-white border rounded-sm p-4">
-        <Header typeCount={typeCount} polygonName="바 차트" viewMode={viewMode} setViewMode={setViewMode} />
+        <Header viewMode={viewMode} setViewMode={setViewMode} />
         <div className="flex gap-6 mt-3">
           {/* 바 차트 */}
           <div className="flex-1 space-y-3">
-            {items.map((item) => {
+            {allItems.map((item) => {
               const pct = total > 0 ? (item.value / total) * 100 : 0;
               return (
                 <div key={item.key}>
@@ -196,7 +163,7 @@ export function TypeRadarChart({ data, questions }: TypeRadarChartProps) {
 
   return (
     <div className="bg-white border rounded-sm p-4">
-      <Header typeCount={typeCount} polygonName={polygonName} viewMode={viewMode} setViewMode={setViewMode} />
+      <Header viewMode={viewMode} setViewMode={setViewMode} />
       <div className="flex gap-4 mt-2">
         {/* 레이더 차트 */}
         <div className="flex-1 min-h-[220px]">
@@ -242,20 +209,15 @@ export function TypeRadarChart({ data, questions }: TypeRadarChartProps) {
                 stroke="#7C3AED"
                 strokeWidth={2}
                 fill="url(#radarGradient)"
-                dot={{
-                  r: 4,
-                  fill: '#7C3AED',
-                  stroke: '#fff',
-                  strokeWidth: 2,
-                }}
+                dot={false}
               />
             </RadarChart>
           </ResponsiveContainer>
         </div>
 
-        {/* 범례 */}
+        {/* 범례 (0개 포함 전체 표시) */}
         <div className="w-36 flex flex-col justify-center gap-2">
-          {items.map((item) => {
+          {allItems.map((item) => {
             const pct = total > 0 ? Math.round((item.value / total) * 100) : 0;
             return (
               <div key={item.key} className="flex items-center gap-2">
@@ -283,13 +245,9 @@ export function TypeRadarChart({ data, questions }: TypeRadarChartProps) {
 
 // ── 헤더 ──
 function Header({
-  typeCount,
-  polygonName,
   viewMode,
   setViewMode,
 }: {
-  typeCount: number;
-  polygonName: string;
   viewMode: ViewMode;
   setViewMode: (mode: ViewMode) => void;
 }) {
@@ -331,9 +289,6 @@ function Header({
             능력
           </button>
         </div>
-        <span className="text-[11px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 font-medium">
-          {typeCount <= 2 ? `${typeCount}개` : polygonName}
-        </span>
       </div>
     </div>
   );
