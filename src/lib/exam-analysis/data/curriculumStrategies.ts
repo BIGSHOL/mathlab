@@ -750,7 +750,7 @@ export const MIDDLE_SCHOOL_CURRICULUM: GradeCurriculum[] = [
         name: '이차함수',
         topics: [
           {
-            keywords: ['y=ax²', '이차함수 y=ax²', '이차함수의 그래프'],
+            keywords: ['이차함수와 그래프', '이차함수의 그래프', 'y=ax²', '이차함수 y=ax²'],
             strategies: [
               'y = ax²의 그래프는 꼭짓점이 원점인 포물선',
               'a > 0이면 아래로 볼록(최솟값 0), a < 0이면 위로 볼록(최댓값 0)',
@@ -770,7 +770,7 @@ export const MIDDLE_SCHOOL_CURRICULUM: GradeCurriculum[] = [
             tags: ['꼭짓점', '평행이동'],
           },
           {
-            keywords: ['이차함수의 최대', '이차함수의 최소', '이차함수의 최댓값', '이차함수의 최솟값'],
+            keywords: ['이차함수의 활용', '이차함수의 최대', '이차함수의 최소', '이차함수의 최댓값', '이차함수의 최솟값'],
             strategies: [
               'a > 0이면 꼭짓점에서 최솟값, a < 0이면 꼭짓점에서 최댓값',
               '정의역이 제한된 경우 구간 양 끝과 꼭짓점에서의 값을 모두 비교',

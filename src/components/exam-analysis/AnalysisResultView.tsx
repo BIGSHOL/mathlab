@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { DIFFICULTY_COLORS, QUESTION_TYPE_COLORS } from '@/lib/exam-analysis/constants';
+import { DIFFICULTY_COLORS, QUESTION_TYPE_COLORS, TYPE_TO_DOMAIN, ABILITY_DOMAIN_LABELS, ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { ChevronRight } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -133,7 +133,7 @@ export function AnalysisResultView({ questions, summary, totalPoints: _totalPoin
   }), [questions]);
 
   const total = questions.length;
-  const colSpan = isStudentExam ? 7 : 6;
+  const colSpan = isStudentExam ? 8 : 7;
   const maxType = Math.max(...typeData.map(t => t.count), 1);
   const maxTopic = Math.max(...topicGroups.map(t => t.count), 1);
 
@@ -274,6 +274,7 @@ export function AnalysisResultView({ questions, summary, totalPoints: _totalPoin
                 <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 w-14">번호</th>
                 <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 w-16">난이도</th>
                 <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 w-16">유형</th>
+                <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 w-16">능력</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-slate-500">단원</th>
                 <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 w-14">배점</th>
                 {isStudentExam && <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 w-14">정답</th>}
@@ -455,6 +456,8 @@ function QRow({ q, isStudent }: { q: AnalyzedQuestion; isStudent: boolean }) {
   const confBg = confPct >= 90 ? 'bg-emerald-50' : confPct >= 70 ? 'bg-yellow-50' : 'bg-red-50';
   const qNum = String(q.question_number);
   const numSize = qNum.length > 2 ? 'text-[10px]' : 'text-sm';
+  const domain = q.ability_domain || TYPE_TO_DOMAIN[q.question_type] || 'calculation';
+  const domainColor = ABILITY_DOMAIN_COLORS[domain] || '#94A3B8';
 
   return (
     <tr className="hover:bg-slate-50">
@@ -466,6 +469,11 @@ function QRow({ q, isStudent }: { q: AnalyzedQuestion; isStudent: boolean }) {
       </td>
       <td className="px-3 py-2 text-center whitespace-nowrap">
         <span className="text-xs text-slate-700">{TYPE_LABELS[q.question_type] || q.question_type}</span>
+      </td>
+      <td className="px-3 py-2 text-center whitespace-nowrap">
+        <span className="text-xs font-medium" style={{ color: domainColor }}>
+          {ABILITY_DOMAIN_LABELS[domain] || domain}
+        </span>
       </td>
       <td className="px-3 py-2 text-xs text-slate-600"><span className="line-clamp-1">{q.topic || '-'}</span></td>
       <td className="px-3 py-2 text-center font-medium text-slate-700 whitespace-nowrap">{q.points ?? '-'}</td>

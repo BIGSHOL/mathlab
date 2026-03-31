@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
         name: true,
         role: true,
         grade: true,
+        classroomId: true,
         createdAt: true,
         profile: {
           select: { totalXp: true, level: true, currentStreak: true, longestStreak: true, lastActiveAt: true },

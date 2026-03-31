@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { DIFFICULTY_COLORS, QUESTION_TYPE_COLORS } from '@/lib/exam-analysis/constants';
+import { DIFFICULTY_COLORS, QUESTION_TYPE_COLORS, TYPE_TO_DOMAIN, ABILITY_DOMAIN_LABELS, ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { AlertTriangle, ChevronLeft, Check } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
@@ -165,6 +165,16 @@ function CommentRow({ q, showDiffReason, examPaperId }: {
             style={{ backgroundColor: `${QUESTION_TYPE_COLORS[q.question_type] || '#94A3B8'}15`, color: QUESTION_TYPE_COLORS[q.question_type] || '#94A3B8' }}>
             {TYPE_LABELS[q.question_type] || q.question_type}
           </span>
+          {(() => {
+            const domain = q.ability_domain || TYPE_TO_DOMAIN[q.question_type] || 'calculation';
+            const domainColor = ABILITY_DOMAIN_COLORS[domain] || '#94A3B8';
+            return (
+              <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-medium"
+                style={{ backgroundColor: `${domainColor}15`, color: domainColor }}>
+                {ABILITY_DOMAIN_LABELS[domain] || domain}
+              </span>
+            );
+          })()}
           {q.points && <span className="text-[10px] text-slate-400">{q.points}점</span>}
         </div>
         {q.ai_comment && <p className="text-xs text-slate-700 leading-relaxed font-medium">{q.ai_comment}</p>}

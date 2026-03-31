@@ -8,7 +8,7 @@ import {
   Radar,
   ResponsiveContainer,
 } from 'recharts';
-import { QUESTION_TYPE_COLORS, ABILITY_DOMAINS } from '@/lib/exam-analysis/constants';
+import { QUESTION_TYPE_COLORS, TYPE_TO_DOMAIN, ABILITY_DOMAIN_LABELS, ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 
 type ViewMode = 'type' | 'ability';
@@ -18,41 +18,51 @@ interface TypeRadarChartProps {
   questions?: AnalyzedQuestion[];
 }
 
-// question_type → ability_domain 자동 매핑 (Gemini가 ability_domain을 반환하지 않을 때)
-const TYPE_TO_DOMAIN: Record<string, string> = {
+// Gemini raw question_type → 6대 표준 유형 매핑
+const TYPE_TO_STANDARD: Record<string, string> = {
   calculation: 'calculation',
   algebra: 'calculation',
   equation: 'calculation',
   inequality: 'calculation',
   number: 'calculation',
-  geometry: 'understanding',
-  graph: 'understanding',
-  set: 'understanding',
-  function: 'understanding',
-  application: 'problem_solving',
-  problem_solving: 'problem_solving',
-  statistics: 'problem_solving',
-  probability: 'problem_solving',
-  proof: 'reasoning',
-  sequence: 'reasoning',
-  trigonometry: 'reasoning',
-  calculus: 'reasoning',
-  vector: 'reasoning',
+  geometry: 'geometry',
+  set: 'geometry',
+  application: 'application',
+  problem_solving: 'application',
+  function: 'application',
+  proof: 'proof',
+  sequence: 'proof',
+  trigonometry: 'proof',
+  calculus: 'proof',
+  vector: 'proof',
+  graph: 'graph',
+  statistics: 'statistics',
+  probability: 'statistics',
 };
 
-const DOMAIN_LABELS: Record<string, string> = {
-  calculation: '계산력',
-  understanding: '이해력',
-  problem_solving: '문제해결력',
-  reasoning: '추론력',
+// 6대 표준 유형
+const STANDARD_TYPE_KEYS = ['calculation', 'geometry', 'application', 'proof', 'graph', 'statistics'] as const;
+
+const STANDARD_TYPE_LABELS: Record<string, string> = {
+  calculation: '계산',
+  geometry: '도형',
+  application: '응용',
+  proof: '증명',
+  graph: '그래프',
+  statistics: '통계',
 };
 
-const DOMAIN_COLORS: Record<string, string> = {
-  calculation: ABILITY_DOMAINS.CALCULATION.color,
-  understanding: ABILITY_DOMAINS.UNDERSTANDING.color,
-  problem_solving: ABILITY_DOMAINS.PROBLEM_SOLVING.color,
-  reasoning: ABILITY_DOMAINS.REASONING.color,
+const STANDARD_TYPE_COLORS: Record<string, string> = {
+  calculation: '#6366F1',
+  geometry: '#8B5CF6',
+  application: '#EC4899',
+  proof: '#14B8A6',
+  graph: '#F59E0B',
+  statistics: '#06B6D4',
 };
+
+const DOMAIN_LABELS = ABILITY_DOMAIN_LABELS;
+const DOMAIN_COLORS = ABILITY_DOMAIN_COLORS;
 
 const TYPE_LABELS: Record<string, string> = {
   calculation: '계산',
@@ -104,22 +114,36 @@ export function TypeRadarChart({ data, questions }: TypeRadarChartProps) {
     return counts;
   }, [questions]);
 
-  // 현재 모드에 따라 데이터 선택
-  const activeData = viewMode === 'type' ? data : abilityData;
-  const activeLabels = viewMode === 'type' ? TYPE_LABELS : DOMAIN_LABELS;
-  const activeColors = viewMode === 'type' ? QUESTION_TYPE_COLORS : DOMAIN_COLORS;
+  // 유형 데이터: Gemini raw → 6대 표준 유형으로 통합
+  const standardTypeData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (value <= 0) continue;
+      const standard = TYPE_TO_STANDARD[key] || 'calculation';
+      counts[standard] = (counts[standard] || 0) + value;
+    }
+    return counts;
+  }, [data]);
 
   const items = useMemo(() => {
-    return Object.entries(activeData)
-      .filter(([, v]) => v > 0)
-      .map(([key, value]) => ({
+    if (viewMode === 'ability') {
+      // 능력 영역: 4대 영역 항상 표시 (0개여도 포함)
+      const ALL_DOMAINS = ['calculation', 'understanding', 'problem_solving', 'reasoning'] as const;
+      return ALL_DOMAINS.map((key) => ({
         key,
-        label: activeLabels[key] || key,
-        value,
-        color: activeColors[key] || '#94A3B8',
-      }))
-      .sort((a, b) => b.value - a.value);
-  }, [activeData, activeLabels, activeColors]);
+        label: DOMAIN_LABELS[key],
+        value: abilityData[key] || 0,
+        color: DOMAIN_COLORS[key] || '#94A3B8',
+      }));
+    }
+    // 유형: 6대 표준 유형 항상 표시 (0개여도 포함)
+    return STANDARD_TYPE_KEYS.map((key) => ({
+      key,
+      label: STANDARD_TYPE_LABELS[key],
+      value: standardTypeData[key] || 0,
+      color: STANDARD_TYPE_COLORS[key] || '#94A3B8',
+    }));
+  }, [abilityData, standardTypeData, viewMode]);
 
   const total = items.reduce((s, i) => s + i.value, 0);
   const typeCount = items.length;

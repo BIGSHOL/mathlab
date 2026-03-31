@@ -22,6 +22,8 @@ import {
   GraduationCap,
   CheckCircle,
   Clock,
+  Filter,
+  X,
 } from 'lucide-react';
 import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Button } from '@/components/ui/Button';
@@ -39,8 +41,37 @@ interface Student {
   id: string;
   name: string;
   grade: number | null;
+  classroomId: string | null;
   profile: { totalXp: number; level: number } | null;
 }
+
+interface ClassroomInfo {
+  id: string;
+  name: string;
+  grade: number | null;
+}
+
+// 학제 필터 옵션
+const SCHOOL_LEVELS = [
+  { value: '', label: '전체' },
+  { value: 'elementary', label: '초등' },
+  { value: 'middle', label: '중등' },
+] as const;
+
+// 학제별 학년 옵션
+const GRADE_OPTIONS: Record<string, { value: number; label: string }[]> = {
+  elementary: [
+    { value: 3, label: '3학년' },
+    { value: 4, label: '4학년' },
+    { value: 5, label: '5학년' },
+    { value: 6, label: '6학년' },
+  ],
+  middle: [
+    { value: 7, label: '1학년' },
+    { value: 8, label: '2학년' },
+    { value: 9, label: '3학년' },
+  ],
+};
 
 interface ReportSummary {
   testsCompleted: number;
@@ -119,10 +150,17 @@ export default function ReportsPage() {
   const [sent, setSent] = useState(false);
   const [search, setSearch] = useState('');
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
+  const [classrooms, setClassrooms] = useState<ClassroomInfo[]>([]);
+  const [filterSchoolLevel, setFilterSchoolLevel] = useState('');
+  const [filterGrade, setFilterGrade] = useState<number | ''>('');
+  const [filterClassroom, setFilterClassroom] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+
+  const activeFilterCount = [filterSchoolLevel, filterGrade, filterClassroom].filter(Boolean).length;
 
   const fetchStudents = useCallback(async () => {
     try {
-      const res = await fetch('/api/users');
+      const res = await fetch('/api/users?limit=100');
       if (res.ok) {
         const json = await res.json();
         const list = (json.data ?? []).filter((u: Student & { role: string }) => u.role === 'STUDENT');
@@ -132,7 +170,17 @@ export default function ReportsPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchStudents(); }, [fetchStudents]);
+  const fetchClassrooms = useCallback(async () => {
+    try {
+      const res = await fetch('/api/classrooms');
+      if (res.ok) {
+        const json = await res.json();
+        setClassrooms((json.data ?? []).map((c: ClassroomInfo) => ({ id: c.id, name: c.name, grade: c.grade })));
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => { fetchStudents(); fetchClassrooms(); }, [fetchStudents, fetchClassrooms]);
 
   const handleGenerate = async () => {
     if (!selectedStudentId) return;
@@ -187,9 +235,18 @@ export default function ReportsPage() {
 
   const selectedStudent = students.find((s) => s.id === selectedStudentId);
 
-  const filteredStudents = students.filter((s) =>
-    s.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredStudents = students.filter((s) => {
+    // 이름 검색
+    if (search && !s.name.toLowerCase().includes(search.toLowerCase())) return false;
+    // 학제 필터
+    if (filterSchoolLevel === 'elementary' && (s.grade == null || s.grade > 6)) return false;
+    if (filterSchoolLevel === 'middle' && (s.grade == null || s.grade < 7 || s.grade > 9)) return false;
+    // 학년 필터
+    if (filterGrade && s.grade !== filterGrade) return false;
+    // 반 필터
+    if (filterClassroom && s.classroomId !== filterClassroom) return false;
+    return true;
+  });
 
   if (!isOwner) {
     return (
@@ -214,7 +271,7 @@ export default function ReportsPage() {
                 <FileText className="w-4 h-4 text-primary shrink-0" />
                 <h1 className="text-base font-bold text-text-primary truncate">학습 리포트</h1>
                 <span className="text-xs text-text-secondary bg-slate-100 px-1.5 py-0.5 rounded-full font-medium shrink-0">
-                  {students.length}
+                  {activeFilterCount > 0 || search ? `${filteredStudents.length}/${students.length}` : students.length}
                 </span>
               </div>
             )}
@@ -230,16 +287,105 @@ export default function ReportsPage() {
 
         {!leftPanelCollapsed && (
           <>
-            <div className="px-3 pt-2 pb-2">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                <input
-                  className="w-full h-8 pl-8 pr-3 bg-white border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary placeholder:text-slate-400"
-                  placeholder="학생 이름 검색..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
+            <div className="px-3 pt-2 pb-2 space-y-2">
+              <div className="flex gap-1.5">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                  <input
+                    className="w-full h-8 pl-8 pr-3 bg-white border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary placeholder:text-slate-400"
+                    placeholder="학생 이름 검색..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </div>
+                <button
+                  onClick={() => setShowFilters((p) => !p)}
+                  className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-sm border transition-colors relative ${
+                    showFilters || activeFilterCount > 0
+                      ? 'bg-primary/10 border-primary/30 text-primary'
+                      : 'bg-white border-slate-200 text-slate-400 hover:text-slate-600'
+                  }`}
+                  title="필터"
+                >
+                  <Filter className="w-3.5 h-3.5" />
+                  {activeFilterCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-primary text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
               </div>
+
+              {showFilters && (
+                <div className="space-y-2 bg-slate-50 rounded-sm p-2 border border-slate-100">
+                  {/* 학제 */}
+                  <div>
+                    <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">학제</label>
+                    <div className="flex gap-0.5 mt-1 bg-slate-100 rounded-sm p-0.5">
+                      {SCHOOL_LEVELS.map((sl) => (
+                        <button
+                          key={sl.value}
+                          onClick={() => {
+                            setFilterSchoolLevel(sl.value);
+                            setFilterGrade('');
+                          }}
+                          className={`flex-1 px-2 py-1 text-xs font-medium rounded-sm transition-colors ${
+                            filterSchoolLevel === sl.value
+                              ? 'bg-white text-primary shadow-sm'
+                              : 'text-slate-500 hover:text-slate-700'
+                          }`}
+                        >
+                          {sl.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 학년 — 학제 선택 시만 표시 */}
+                  {filterSchoolLevel && GRADE_OPTIONS[filterSchoolLevel] && (
+                    <div>
+                      <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">학년</label>
+                      <select
+                        value={filterGrade}
+                        onChange={(e) => setFilterGrade(e.target.value ? Number(e.target.value) : '')}
+                        className="mt-1 w-full h-7 px-2 bg-white border border-slate-200 rounded-sm text-xs focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                      >
+                        <option value="">전체 학년</option>
+                        {GRADE_OPTIONS[filterSchoolLevel].map((g) => (
+                          <option key={g.value} value={g.value}>{g.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* 반 */}
+                  {classrooms.length > 0 && (
+                    <div>
+                      <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">반</label>
+                      <select
+                        value={filterClassroom}
+                        onChange={(e) => setFilterClassroom(e.target.value)}
+                        className="mt-1 w-full h-7 px-2 bg-white border border-slate-200 rounded-sm text-xs focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                      >
+                        <option value="">전체 반</option>
+                        {classrooms.map((c) => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* 필터 초기화 */}
+                  {activeFilterCount > 0 && (
+                    <button
+                      onClick={() => { setFilterSchoolLevel(''); setFilterGrade(''); setFilterClassroom(''); }}
+                      className="flex items-center gap-1 text-xs text-slate-500 hover:text-primary transition-colors"
+                    >
+                      <X className="w-3 h-3" /> 필터 초기화
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="flex-1 overflow-y-auto min-h-0">

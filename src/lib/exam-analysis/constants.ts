@@ -43,6 +43,43 @@ export const ABILITY_DOMAINS = {
 
 export type AbilityDomainKey = keyof typeof ABILITY_DOMAINS;
 
+// ── question_type → ability_domain 매핑 ──
+export const TYPE_TO_DOMAIN: Record<string, string> = {
+  calculation: 'calculation',
+  algebra: 'calculation',
+  equation: 'calculation',
+  inequality: 'calculation',
+  number: 'calculation',
+  geometry: 'understanding',
+  graph: 'understanding',
+  set: 'understanding',
+  function: 'understanding',
+  application: 'problem_solving',
+  problem_solving: 'problem_solving',
+  statistics: 'problem_solving',
+  probability: 'problem_solving',
+  proof: 'reasoning',
+  sequence: 'reasoning',
+  trigonometry: 'reasoning',
+  calculus: 'reasoning',
+  vector: 'reasoning',
+};
+
+// ── 능력 영역 라벨/색상 (lowercase key) ──
+export const ABILITY_DOMAIN_LABELS: Record<string, string> = {
+  calculation: '계산력',
+  understanding: '이해력',
+  problem_solving: '문제해결력',
+  reasoning: '추론력',
+};
+
+export const ABILITY_DOMAIN_COLORS: Record<string, string> = {
+  calculation: ABILITY_DOMAINS.CALCULATION.color,
+  understanding: ABILITY_DOMAINS.UNDERSTANDING.color,
+  problem_solving: ABILITY_DOMAINS.PROBLEM_SOLVING.color,
+  reasoning: ABILITY_DOMAINS.REASONING.color,
+};
+
 // ── 문항 형식 ──
 export const EXAM_QUESTION_FORMATS = ['objective', 'short_answer', 'essay'] as const;
 export type ExamQuestionFormat = (typeof EXAM_QUESTION_FORMATS)[number];

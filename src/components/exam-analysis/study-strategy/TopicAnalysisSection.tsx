@@ -26,7 +26,7 @@ export function TopicAnalysisSection({
   onToggleSection,
 }: TopicAnalysisSectionProps) {
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
-  const [allExpanded, setAllExpanded] = useState(false);
+  // allExpanded 제거됨 — 상위 StudyStrategyTab의 "모든 섹션 접기/펼치기"로 통합
 
   // 전체 통계
   const totalTopics = useMemo(
@@ -41,15 +41,6 @@ export function TopicAnalysisSection({
       else next.add(name);
       return next;
     });
-  };
-
-  const toggleAll = () => {
-    if (allExpanded) {
-      setExpandedChapters(new Set());
-    } else {
-      setExpandedChapters(new Set(chapterGroups.map(g => g.chapterName)));
-    }
-    setAllExpanded(!allExpanded);
   };
 
   if (chapterGroups.length === 0) {
@@ -86,16 +77,6 @@ export function TopicAnalysisSection({
       {/* 확장 내용 */}
       {isSectionExpanded && (
         <div className="px-4 pb-4 border-t">
-          {/* 모두 펼치기 / 접기 */}
-          <div className="flex justify-end pt-3 pb-2">
-            <button
-              onClick={toggleAll}
-              className="text-xs text-primary hover:underline font-medium"
-            >
-              {allExpanded ? '모두 접기' : '모두 펼치기'}
-            </button>
-          </div>
-
           {/* 대단원 목록 */}
           <div className="space-y-2">
             {chapterGroups.map((group, idx) => {

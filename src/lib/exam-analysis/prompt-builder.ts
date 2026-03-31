@@ -22,6 +22,7 @@ import {
   DIFFICULTY_SYSTEM_FRAMEWORK,
 } from './prompt-config-common';
 import type { ExamContext, BuildPromptResponse } from './types';
+import { MIDDLE_SCHOOL_CURRICULUM, HIGH_SCHOOL_CURRICULUM } from './data/curriculumStrategies';
 
 // ── 영어 과목 프롬프트 (인라인, prompt-config-english 미생성 시 대비) ──
 // 영어 관련 설정은 향후 prompt-config-english.ts로 분리 예정
@@ -177,6 +178,14 @@ export class ExamPromptBuilder {
       context.grade_level,
       context.category
     );
+
+    // 허용 소단원 목록 (DB 1:1 매칭용)
+    if (context.subject === '수학' || context.subject.toUpperCase() === 'MATH') {
+      const allowedTopics = this.getAllowedTopicNames(context.grade_level);
+      if (allowedTopics) {
+        guidelines.push(allowedTopics);
+      }
+    }
 
     // 출제범위가 있으면 가이드라인에 강제 추가
     if (context.exam_scope && context.exam_scope.length > 0) {
@@ -727,6 +736,45 @@ export class ExamPromptBuilder {
     }
 
     return templates;
+  }
+
+  /**
+   * DB에서 허용 소단원명 목록을 추출하여 프롬프트 텍스트로 반환
+   * Gemini가 이 목록에 있는 소단원명만 topic에 사용하도록 강제
+   */
+  private static getAllowedTopicNames(gradeLevel: string | null): string | null {
+    const all = [...MIDDLE_SCHOOL_CURRICULUM, ...HIGH_SCHOOL_CURRICULUM];
+
+    // 학년 필터
+    let filtered = all;
+    if (gradeLevel) {
+      const prefix = gradeLevel.replace(/학년|학기/g, '').trim().slice(0, 2);
+      filtered = all.filter(c => c.grade.includes(prefix));
+    }
+    if (!filtered.length) filtered = all;
+
+    // 학년별 소단원명 목록 생성
+    const lines: string[] = [];
+    for (const curr of filtered) {
+      for (const unit of curr.units) {
+        const topicNames = unit.topics.map((t: { keywords: string[] }) => t.keywords[0]);
+        lines.push(`- ${unit.name}: ${topicNames.join(', ')}`);
+      }
+    }
+
+    if (!lines.length) return null;
+
+    return `📋 **[필수] 소단원 분류 목록 (topic 필드에 반드시 아래 이름 사용)**
+
+topic 필드의 소단원(마지막 > 이후)은 **반드시 아래 목록에 있는 이름**을 사용하세요.
+목록에 없는 이름을 사용하면 학습 전략 매칭이 실패합니다.
+
+${lines.join('\n')}
+
+**규칙:**
+- topic 형식: "학년 수학 > 대단원 > 소단원" (예: "중3 수학 > 실수와 그 연산 > 제곱근의 뜻")
+- 소단원은 위 목록의 **정확한 이름**을 사용 (변형/약어 금지)
+- 목록에 정확히 일치하는 소단원이 없으면, 가장 가까운 이름을 선택하고 confidence를 낮추세요`;
   }
 
   /**
