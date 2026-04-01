@@ -565,7 +565,7 @@ export class ExamPromptBuilder {
       ${typeDistExample}
     },
     "average_difficulty": "2",
-    "dominant_type": "calculation"
+    "dominant_type": "algebra"
   },
   "questions": [
     {
@@ -577,7 +577,7 @@ export class ExamPromptBuilder {
       "ability_domain": "calculation",
       "points": 3,
       "topic": "${topicExample}",
-      "ai_comment": "핵심 개념 확인 문제. 공식을 정확히 암기하면 쉽게 풀 수 있다.",
+      "ai_comment": "핵심 개념을 직접 확인하는 문제입니다. 공식을 정확히 암기하면 쉽게 풀 수 있습니다.",
       "confidence": 0.95,
       "confidence_reason": "문항 내용 명확"${studentFields ? ',' + studentFields : ''}
     },
@@ -590,7 +590,7 @@ export class ExamPromptBuilder {
       "ability_domain": "understanding",
       "points": 3,
       "topic": "${topicExample}",
-      "ai_comment": "전형적인 유형 문제. 풀이 순서를 익히면 된다.",
+      "ai_comment": "전형적인 유형 적용 문제입니다. 풀이 순서를 익히면 안정적으로 정답할 수 있습니다.",
       "confidence": 0.90,
       "confidence_reason": "배점 추정"${studentFieldsWrong ? ',' + studentFieldsWrong : ''}
     }
@@ -610,7 +610,7 @@ export class ExamPromptBuilder {
 | ability_domain | "calculation"(계산력), "understanding"(이해력), "problem_solving"(문제해결력), "reasoning"(추론력) 중 하나 — **풀이에 요구되는 사고력** 기준 |
 | points | 배점 (숫자), 불분명 시 null |
 | topic | "과목명 > 대단원 > 소단원" (공백 포함 > 구분) |
-| ai_comment | **정확히 2문장, 존댓말(~입니다/~합니다), 각 문장 20~40자** |
+| ai_comment | **정확히 2문장, 존댓말(~입니다/~합니다), 각 문장 20~40자. 1문장: 출제 의도/핵심 개념, 2문장: 풀이 포인트/주의점. 수식이 불명확하면 "스캔 품질로 인해 일부 수식 판독이 어렵습니다"로 표현. ❌ "문제가 잘못되었다", "조건이 모순이다" 등 출제 오류를 지적하는 표현 금지 — 시험지는 검증된 출제물임!** |
 | confidence | 0.0~1.0 (분석 신뢰도) |
 | confidence_reason | 신뢰도 판정 근거 (최대 20자, 예: "문항 내용 명확", "배점 추정", "스캔 품질 낮음") |${isStudent ? `
 | is_correct | true/false/null (정오 판별, 판단 불가 시 null) |
@@ -636,8 +636,10 @@ export class ExamPromptBuilder {
 예: "도형의 넓이 활용 문제" → question_type: **geometry**, ability_domain: **problem_solving**
 예: "확률 추론 문제" → question_type: **statistics**, ability_domain: **reasoning**
 
-❌ question_type과 ability_domain을 동일하게 넣지 마세요! 서로 다른 관점입니다.
-question_type은 **교육과정 5대 영역**(수학적 소재)이고, ability_domain은 **4대 사고력**(풀이 방식)입니다.
+⚠️ question_type과 ability_domain은 **서로 다른 관점**입니다. 기계적으로 같은 값을 넣지 말고 독립적으로 판단하세요.
+- question_type = **교육과정 5대 영역** (이 문제가 어떤 수학 단원에 해당하는가?)
+- ability_domain = **4대 사고력** (이 문제를 풀려면 어떤 능력이 필요한가?)
+- 같은 단원이라도 문제에 따라 필요한 능력이 다릅니다. (예: 기하 단원의 계산 문제 → geometry + calculation)
 
 **summary 규칙:**
 - difficulty_distribution: 각 난이도별 문항 수 (합계 = total_questions)

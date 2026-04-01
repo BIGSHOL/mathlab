@@ -33,6 +33,7 @@ interface ExamPaperItem {
     totalPoints: number | null;
     earnedPoints: number | null;
     analyzedAt: string | null;
+    modelVersion: string | null;
   }>;
 }
 
@@ -119,6 +120,11 @@ export function ExamPaperList({
                       {latestAnalysis.analyzedAt && (
                         <span className="ml-1 text-slate-300">
                           · {formatAnalyzedAt(latestAnalysis.analyzedAt)}
+                        </span>
+                      )}
+                      {latestAnalysis.modelVersion?.includes('prompt') && (
+                        <span className="ml-1 text-slate-300">
+                          · {latestAnalysis.modelVersion.split('/ ').pop()}
                         </span>
                       )}
                     </p>

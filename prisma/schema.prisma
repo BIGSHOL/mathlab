@@ -638,17 +638,36 @@ model QuizParticipant {
   @@index([sessionId])
 }
 
-// School Information
+// School Information (나이스 API 수집)
 model School {
-  id          String   @id @default(cuid())
-  name        String   @unique @db.VarChar(100)
-  city        String   @db.VarChar(50)
-  district    String   @db.VarChar(50)
-  schoolType  String   @db.VarChar(20)
-  createdAt   DateTime @default(now())
+  id              String   @id @default(cuid())
+  schoolCode      String?  @unique @db.VarChar(20)       // 나이스 표준학교코드
+  name            String   @db.VarChar(100)
+  schoolType      String   @db.VarChar(20)               // elementary, middle, high
+  regionCode      String?  @db.VarChar(10)               // 시도교육청코드 (B10=서울 등)
+  regionName      String?  @db.VarChar(30)               // 시도명 (서울, 경기 등)
+  city            String   @db.VarChar(50)               // 시도 (레거시 호환)
+  district        String   @db.VarChar(50)               // 시군구
+  address         String?  @db.VarChar(300)              // 도로명주소
+  latitude        Float?
+  longitude       Float?
+  foundationType  String?  @db.VarChar(20)               // 국립/공립/사립
+  coeducationType String?  @db.VarChar(20)               // 남녀공학구분
+  highSchoolType  String?  @db.VarChar(30)               // 고교유형
+  phoneNumber     String?  @db.VarChar(30)
+  homepageUrl     String?  @db.VarChar(300)
+  foundationDate  String?  @db.VarChar(20)
+  zoneId          String?  @db.VarChar(30)               // 학구ID (학구도 API)
+  eduSupportCode  String?  @db.VarChar(20)               // 교육지원청코드
+  eduSupportName  String?  @db.VarChar(50)               // 교육지원청명
+  createdAt       DateTime @default(now())
+  dataUpdatedAt   DateTime?
 
   @@index([city, district])
   @@index([schoolType])
+  @@index([regionCode])
+  @@index([name])
+  @@index([zoneId])
 }
 
 // FEAT: Arithmetic Practice Results
@@ -1536,3 +1555,4 @@ model LearnedPattern {
   @@index([subject, patternType])
   @@index([isActive, isAutoApplied])
 }
+

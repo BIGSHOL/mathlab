@@ -3,6 +3,10 @@
  * Math Report 프로젝트에서 이식 — MathLab AI 시스템과 완전 독립
  */
 
+// ── 프롬프트 버전 ──
+// 프롬프트 변경 시 반드시 버전 업! 분석 결과에 기록되어 버전별 비교 가능
+export const PROMPT_VERSION = 'v1.0.0';
+
 // ── 5단계 난이도 (1=쉬움 ~ 5=어려움) ──
 export const EXAM_DIFFICULTIES = {
   LEVEL_1: { label: '1', labelEn: 'Level 1', level: 1 },

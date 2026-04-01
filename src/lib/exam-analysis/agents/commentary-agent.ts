@@ -43,10 +43,18 @@ export interface TeachingRecommendation {
 }
 
 // 하위 호환: 기존 DB 데이터에 study_priority/encouragement가 있을 수 있음
+export interface ScoreStrategy {
+  grade: string;    // "A등급" 등
+  target: string;   // "90점 이상"
+  strategy?: string; // 레거시 (기존 DB 호환)
+  points?: string[]; // 목록형 포인트 (3~4개)
+}
+
 export interface CommentaryResult {
   overall_comment: string;
   exam_characteristics?: string[];
-  score_strategy?: string;
+  score_strategy?: string;  // 레거시 (기존 DB 호환)
+  score_strategies?: ScoreStrategy[];
   strength_areas: string[];
   improvement_areas: string[];
   notable_questions: NotableQuestion[];
@@ -98,6 +106,15 @@ export class CommentaryAgent extends BaseAgent<Record<string, unknown>> {
       : 3;
     const LEVEL_LABELS = ['', '기본', '표준', '응용', '심화', '최고난도'];
 
+    // 난이도별 배점 합계 (정확한 수치 → AI 추정 방지)
+    const diffPoints = [0, 0, 0, 0, 0]; // Level 1~5
+    for (const q of basicAnalysis.questions) {
+      const d = String(q.difficulty);
+      const lvl = d === 'concept' ? 0 : d === 'pattern' ? 1 : d === 'reasoning' ? 3 : d === 'creative' ? 4
+        : (Number(d) >= 1 && Number(d) <= 5) ? Number(d) - 1 : 2;
+      diffPoints[lvl] += q.points || 0;
+    }
+
     // 학년 추출 + 교육과정 단원 참조 데이터
     const curriculumBlock = this.buildCurriculumReference(basicAnalysis);
 
@@ -114,8 +131,10 @@ export class CommentaryAgent extends BaseAgent<Record<string, unknown>> {
 - 획득 점수: ${earned}점 / ${totalPts}점 (정답률 ${totalQ > 0 ? Math.round((correct / totalQ) * 100) : 0}%)`;
     }
 
+    const FORMAT_LABELS: Record<string, string> = { objective: '객관식', short_answer: '단답형', essay: '서술형' };
     const questionsData = basicAnalysis.questions.map((q) => ({
       번호: q.question_number,
+      형식: FORMAT_LABELS[q.question_format || ''] || '객관식',
       난이도: q.difficulty,
       유형: q.question_type,
       능력영역: q.ability_domain,
@@ -140,7 +159,13 @@ export class CommentaryAgent extends BaseAgent<Record<string, unknown>> {
 - 총 문항수: ${totalQ}문항, 총 배점: ${totalPts}점
 - 형식: 객관식 ${basicAnalysis.exam_info.format_distribution.objective}문항, 단답형 ${basicAnalysis.exam_info.format_distribution.short_answer}문항, 서술형 ${basicAnalysis.exam_info.format_distribution.essay}문항
 - **종합 난이도: Level ${overallLevel} (${LEVEL_LABELS[overallLevel]})**
-- 난이도 분포: 1(기본) ${diff['1'] || diff.concept || 0}문항, 2(표준) ${diff['2'] || diff.pattern || 0}문항, 3(응용) ${diff['3'] || 0}문항, 4(심화) ${diff['4'] || diff.reasoning || 0}문항, 5(최고난도) ${diff['5'] || diff.creative || 0}문항
+- 난이도별 분포 및 배점:
+  - Level 1(기본): ${diffCounts[0]}문항, ${diffPoints[0]}점
+  - Level 2(표준): ${diffCounts[1]}문항, ${diffPoints[1]}점
+  - Level 3(응용): ${diffCounts[2]}문항, ${diffPoints[2]}점
+  - Level 4(심화): ${diffCounts[3]}문항, ${diffPoints[3]}점
+  - Level 5(최고난도): ${diffCounts[4]}문항, ${diffPoints[4]}점
+  - Level 1~2 합계: ${diffPoints[0] + diffPoints[1]}점, Level 1~3 합계: ${diffPoints[0] + diffPoints[1] + diffPoints[2]}점, Level 1~4 합계: ${diffPoints[0] + diffPoints[1] + diffPoints[2] + diffPoints[3]}점
 - 유형 분포: 수와연산 ${types.number || 0}, 문자와식 ${types.algebra || 0}, 함수 ${types.function || 0}, 기하 ${types.geometry || 0}, 확률통계 ${types.statistics || 0}
 - 단원별 출제: ${topicSummary}
 ${studentStatsBlock}
@@ -152,9 +177,12 @@ ${JSON.stringify(questionsData, null, 1)}
 ## 출력 형식 (반드시 아래 JSON 구조로 응답)
 
 {
-  "overall_comment": "string (5-8문장의 시험 종합 분석)",
-  "exam_characteristics": ["string (시험 특성 2-4개)"],
-  "score_strategy": "string (난이도별 점수 확보 전략 2-3문장)",
+  "overall_comment": "줄바꿈(\\n)으로 구분된 5-8문장. 1~2문장씩 주제별로 묶어 \\n\\n으로 단락 구분.",
+  "score_strategies": [
+    {"grade": "A등급", "target": "90점 이상", "points": ["핵심 포인트 1", "핵심 포인트 2", "핵심 포인트 3"]},
+    {"grade": "B등급", "target": "70~89점", "points": ["핵심 포인트 1", "핵심 포인트 2", "핵심 포인트 3"]},
+    {"grade": "C등급", "target": "70점 미만", "points": ["핵심 포인트 1", "핵심 포인트 2", "핵심 포인트 3"]}
+  ],
   "strength_areas": ["string (잘 출제된 영역/학생 강점 2-3개)"],
   "improvement_areas": ["string (보완 필요 영역 2-3개)"],
   "notable_questions": [{"question_number": "서술형3", "comment": "string (출제 의도/변별력 관점 분석)"}],
@@ -163,20 +191,31 @@ ${JSON.stringify(questionsData, null, 1)}
 
 ## 작성 지침
 
+### 🚨 톤/표현 규칙 (전체 섹션 공통, 반드시 준수!)
+- **종합 난이도가 Level ${overallLevel}(${LEVEL_LABELS[overallLevel]})입니다. 이 수준에 맞는 표현만 사용하세요!**
+- Level 1~2: "기초 확인 시험", "개념 점검 중심", "기본기 평가" 등 → ❌ "변별력", "고난도", "킬러" 사용 금지
+- Level 3: "응용력을 요구하는 시험", "개념 적용 중심" → ❌ "최상위 변별", "최고난도 시험" 사용 금지
+- Level 4: "심화 문항이 다수 포함된 시험" → "최상위 변별"은 Level 5에서만 사용
+- Level 5: "최고난도 변별력 시험" 표현 가능
+- **과장 표현 금지!** "최고난도 변별형 시험"은 Level 5에서만 허용. Level 3 시험에 "최상위 변별" 등을 쓰면 학부모에게 오해를 줍니다.
+- 퍼센트(%) 사용을 최소화하세요. 100점 만점이면 점수=퍼센트이므로 중복입니다. 점수만 쓰세요.
+
 ### overall_comment (시험 종합 분석)
-- 5-8문장으로 시험 전체를 충분히 분석하세요. 학부모 상담에 활용하므로 내용이 풍부해야 합니다.
-- 반드시 포함할 내용: ① 시험 규모와 형식 ② 난이도 분포와 적정성 평가 ③ 주요 출제 단원과 비중 ④ 출제 경향의 특징
-${hasStudentData ? '- 학생 분석 추가 포함: ⑤ 전체 정답률과 수준 평가 ⑥ 강약점 패턴 요약 ⑦ 향후 학습 방향 한 줄 제언' : ''}
-- 학부모가 "이 시험이 어떤 시험인지", "아이 성적이 어떤 의미인지" 한눈에 이해할 수 있어야 합니다.
+- 5-8문장으로 시험 전체를 분석하세요. **줄바꿈(\\n\\n)으로 단락을 구분**하여 가독성을 높이세요.
+- 단락 구성 예시:
+  - 1단락: 시험 규모/형식/난이도 분포 개요
+  - 2단락: 주요 출제 단원과 비중
+  - 3단락: 출제 경향의 특징 (서술형 비중, 변별력 구조 등)
+${hasStudentData ? '  - 4단락: 학생 정답률/수준 평가 + 향후 학습 방향' : ''}
+- ❌ exam_characteristics는 별도로 작성하지 마세요! overall_comment에 모든 분석을 통합합니다.
 
-### exam_characteristics (시험 특성)
-- 시험의 핵심 특징을 2-4개 간결한 문장으로 작성하세요.
-- 예시: "개념 문항 비중이 높아 기본기 점검에 적합", "서술형 3문항이 총 배점의 30%를 차지하여 변별력이 높음"
-
-### score_strategy (점수 확보 전략)
-- 난이도별 배점 합계를 기반으로 단계별 점수 확보 전략을 2-3문장으로 작성하세요.
-- 반드시 구체적 점수를 포함하세요. 예시: "난이도 1~2 문항을 모두 맞히면 52점(52%)을 확보할 수 있으며, 3단계까지 포함하면 78점(78%)까지 도달 가능합니다. 90점 이상을 목표로 한다면 4단계 심화 문항 중 최소 2문항은 정답해야 합니다."
-- 학부모 상담 시 "우리 아이가 몇 점을 목표로 하려면 어디까지 공부해야 하는지" 설명하는 데 활용됩니다.
+### score_strategies (등급별 점수 확보 전략)
+- **3개 등급, 각각 points 배열(3~4개 항목)로 핵심 포인트를 목록형으로 작성하세요.**
+- 각 포인트는 1문장, 구체적 점수/문항수 포함. 길게 서술하지 말 것!
+- A등급(90점+): 심화+최고난도 공략, 서술형 만점 전략
+- B등급(70~89점): 기본~응용 확실 + 심화 일부
+- C등급(70점 미만): 기본·표준 완벽 확보 + 실수 방지
+- 예시 points: ["Level 1~2 전체 10문항 48점을 실수 없이 확보", "Level 3 응용 중 계산 위주 4문항 우선 공략", "서술형은 풀이 과정만이라도 적어 부분 점수 확보"]
 
 ### strength_areas / improvement_areas
 ${hasStudentData
@@ -184,12 +223,16 @@ ${hasStudentData
     : '- 시험 출제 관점에서 잘 구성된 부분과 보완이 필요한 부분을 각각 2-3개씩 분석하세요.'}
 - 각 항목은 1-2문장의 완결된 설명이어야 합니다 (단편적 키워드 나열 금지).
 - 구체적 수치를 포함하세요 (예: "도형 영역 5문항 중 4문항 정답(정답률 80%)으로 해당 단원의 기본 개념이 안정적으로 형성되어 있습니다").
+- **중요: 시험 범위 밖의 단원이나 유형이 0문항인 것은 당연한 것이므로 절대 지적하지 마세요!** 예를 들어 '실수와 그 연산' 시험에서 함수·확률통계가 0문항인 것은 시험 범위 특성이지 편중이 아닙니다. 시험 범위에 포함되지 않는 단원(이차방정식, 이차함수, 삼각비, 원의 성질, 통계 등)이 출제되지 않은 것도 마찬가지입니다. improvement_areas는 반드시 시험 범위 내에서 실제로 보완이 필요한 부분만 작성하세요.
 
 ### notable_questions (주목할 문항)
 - 변별력이 높거나 출제 의도가 돋보이는 문항 3-5개를 선정하세요.
 ${hasStudentData ? '- 쉬운 문제를 틀렸거나 어려운 문제를 맞힌 경우를 우선 선정하세요.' : ''}
-- **question_number는 반드시 위 "문항 상세"의 "번호" 필드 값을 그대로 사용하세요!** (예: "서술형3"이면 "서술형3", 18이면 18)
-- 숫자만 추출하지 마세요. "서술형3"을 3으로 바꾸면 안 됩니다.
+- **question_number 규칙 (필수!):**
+  - 반드시 위 "문항 상세"의 "번호" 필드 값을 **그대로 복사**하세요.
+  - "서답형3"이면 "서답형3", "서술형2"이면 "서술형2", 18이면 18 — 원본 그대로!
+  - **절대 숫자만 추출하지 마세요!** "서답형3"→3, "서답형5"→5 변환은 금지입니다.
+  - 같은 question_number가 중복 선정되면 안 됩니다.
 - 해당 문항이 왜 주목할 만한지 구체적으로 설명하세요.
 
 ### teaching_recommendations (지도 추천)
@@ -261,7 +304,7 @@ ${phases}
 
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
+      max_tokens: 8192,
       temperature: this.temperature,
       messages: [{ role: 'user', content: prompt }],
     });
@@ -273,43 +316,89 @@ ${phases}
 
     if (!text) throw new Error('AI 응답이 비어있습니다');
 
-    // JSON 추출 (코드펜스 제거)
-    const cleaned = text.replace(/```(?:json)?\s*/g, '').replace(/```\s*$/g, '').trim();
-    let result: Record<string, unknown>;
+    // JSON 추출
+    const result = this.extractJson(text);
+    return this.parseResponse(result, input.basicAnalysis.questions);
+  }
+
+  // ── JSON 추출 (다단계 복구) ──
+
+  private extractJson(text: string): Record<string, unknown> {
+    // 1차: 코드펜스 내 JSON 블록 추출
+    const fenceMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)```/);
+    const candidate = fenceMatch ? fenceMatch[1].trim() : text.trim();
+
+    // 2차: JSON 객체 범위만 추출 (앞뒤 설명 텍스트 제거)
+    const jsonStart = candidate.indexOf('{');
+    const jsonEnd = candidate.lastIndexOf('}');
+    const jsonStr = jsonStart >= 0 && jsonEnd > jsonStart
+      ? candidate.slice(jsonStart, jsonEnd + 1)
+      : candidate;
+
+    // 3차: 직접 파싱
     try {
-      result = JSON.parse(cleaned);
+      return JSON.parse(jsonStr);
     } catch {
-      // 잘린 JSON 복구 시도: 열린 괄호/따옴표 닫기
-      let fixed = cleaned;
-      // 잘린 문자열 닫기
-      const openQuotes = (fixed.match(/"/g) || []).length;
-      if (openQuotes % 2 !== 0) fixed += '"';
-      // 열린 배열/객체 닫기
-      const openBrackets = (fixed.match(/\[/g) || []).length - (fixed.match(/\]/g) || []).length;
-      const openBraces = (fixed.match(/\{/g) || []).length - (fixed.match(/\}/g) || []).length;
-      for (let i = 0; i < openBrackets; i++) fixed += ']';
-      for (let i = 0; i < openBraces; i++) fixed += '}';
-      // 마지막 콤마 제거
-      fixed = fixed.replace(/,\s*([}\]])/g, '$1');
+      // 무시 — 아래에서 복구 시도
+    }
+
+    // 4차: 잘린 JSON 복구
+    let fixed = jsonStr;
+    // 잘린 문자열 값 닫기 (이스케이프된 따옴표 무시)
+    const unescaped = fixed.replace(/\\"/g, '');
+    if ((unescaped.match(/"/g) || []).length % 2 !== 0) fixed += '"';
+    // trailing comma 제거
+    fixed = fixed.replace(/,\s*([}\]])/g, '$1');
+    // 열린 배열/객체 닫기
+    const openBrackets = (fixed.match(/\[/g) || []).length - (fixed.match(/\]/g) || []).length;
+    const openBraces = (fixed.match(/\{/g) || []).length - (fixed.match(/\}/g) || []).length;
+    for (let i = 0; i < openBrackets; i++) fixed += ']';
+    for (let i = 0; i < openBraces; i++) fixed += '}';
+
+    try {
+      return JSON.parse(fixed);
+    } catch {
+      // 무시 — 아래에서 최종 시도
+    }
+
+    // 5차: 잘린 마지막 키-값 쌍 제거 후 재시도
+    const lastComma = fixed.lastIndexOf(',');
+    if (lastComma > 0) {
+      const trimmed = fixed.slice(0, lastComma) + fixed.slice(lastComma + 1).replace(/[^}\]]/g, '');
+      // 닫는 괄호 보정
+      let closing = trimmed;
+      const ob = (closing.match(/\[/g) || []).length - (closing.match(/\]/g) || []).length;
+      const oc = (closing.match(/\{/g) || []).length - (closing.match(/\}/g) || []).length;
+      for (let i = 0; i < ob; i++) closing += ']';
+      for (let i = 0; i < oc; i++) closing += '}';
       try {
-        result = JSON.parse(fixed);
+        return JSON.parse(closing);
       } catch {
-        throw new Error(`AI 총평 JSON 파싱 실패: ${cleaned.slice(0, 200)}...`);
+        // 무시
       }
     }
-    return this.parseResponse(result);
+
+    throw new Error(`AI 총평 JSON 파싱 실패: ${jsonStr.slice(0, 200)}...`);
   }
 
   // ── AI 응답 파싱 ──
 
-  parseResponse(raw: Record<string, unknown>): Record<string, unknown> {
+  parseResponse(raw: Record<string, unknown>, questions?: Array<{ question_number: number | string; question_format: string | null }>): Record<string, unknown> {
     const result: CommentaryResult = {
       overall_comment: String(raw.overall_comment ?? ''),
       exam_characteristics: this.parseStringArray(raw.exam_characteristics),
       score_strategy: raw.score_strategy ? String(raw.score_strategy) : undefined,
+      score_strategies: Array.isArray(raw.score_strategies)
+        ? (raw.score_strategies as Array<Record<string, unknown>>).map(s => ({
+            grade: String(s.grade ?? ''),
+            target: String(s.target ?? ''),
+            strategy: s.strategy ? String(s.strategy) : undefined,
+            points: Array.isArray(s.points) ? (s.points as string[]).map(String) : undefined,
+          }))
+        : undefined,
       strength_areas: this.parseStringArray(raw.strength_areas),
       improvement_areas: this.parseStringArray(raw.improvement_areas),
-      notable_questions: this.parseNotableQuestions(raw.notable_questions),
+      notable_questions: this.parseNotableQuestions(raw.notable_questions, questions),
       teaching_recommendations: this.parseTeachingRecommendations(
         raw.teaching_recommendations ?? raw.study_priority,
       ),
@@ -655,15 +744,40 @@ ${phases}
     return value.map((v) => String(v));
   }
 
-  private parseNotableQuestions(value: unknown): NotableQuestion[] {
+  private parseNotableQuestions(
+    value: unknown,
+    questions?: Array<{ question_number: number | string; question_format: string | null }>,
+  ): NotableQuestion[] {
     if (!Array.isArray(value)) return [];
-    return value.map((v) => {
-      const item = v as Record<string, unknown>;
-      return {
-        question_number: Number(item.question_number ?? 0),
-        comment: String(item.comment ?? ''),
-      };
-    });
+
+    // 실제 문항번호 목록 (보정용)
+    const validNumbers = questions?.map((q) => String(q.question_number)) || [];
+
+    const seen = new Set<string>();
+    return value
+      .map((v) => {
+        const item = v as Record<string, unknown>;
+        let qNum = String(item.question_number ?? '');
+
+        // AI가 숫자만 반환한 경우, 실제 문항 목록에서 매칭 시도
+        if (validNumbers.length > 0 && !validNumbers.includes(qNum)) {
+          const numOnly = qNum.replace(/\D/g, '');
+          // "서답형N", "서술형N" 등 실제 번호에서 같은 숫자를 가진 비-순수숫자 번호 찾기
+          const match = validNumbers.find(
+            (vn) => String(vn) !== numOnly && String(vn).replace(/\D/g, '') === numOnly,
+          );
+          if (match) qNum = match;
+        }
+
+        return { question_number: qNum, comment: String(item.comment ?? '') };
+      })
+      .filter((nq) => {
+        // 중복 제거
+        const key = String(nq.question_number);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }) as NotableQuestion[];
   }
 
   private parseTeachingRecommendations(value: unknown): TeachingRecommendation[] {

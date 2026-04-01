@@ -78,9 +78,10 @@ export function TypeRadarChart({ data, questions }: TypeRadarChartProps) {
   }, [abilityData, standardTypeData, viewMode]);
 
   const total = allItems.reduce((s, i) => s + i.value, 0);
-  // 레이더 차트 데이터 (allItems 사용 → 항상 고정 다각형)
-  const maxValue = Math.max(...allItems.map((i) => i.value), 1);
-  const radarData = allItems.map((item) => ({
+  // 레이더 차트 데이터 (값이 있는 항목만 다각형 구성, 0인 항목은 범례에만 표시)
+  const activeItems = allItems.filter((i) => i.value > 0);
+  const maxValue = Math.max(...activeItems.map((i) => i.value), 1);
+  const radarData = activeItems.map((item) => ({
     name: item.label,
     value: item.value,
     fullMark: maxValue,
@@ -90,65 +91,96 @@ export function TypeRadarChart({ data, questions }: TypeRadarChartProps) {
     <div className="bg-white border rounded-sm p-4">
       <Header viewMode={viewMode} setViewMode={setViewMode} />
       <div className="flex gap-4 mt-2">
-        {/* 레이더 차트 */}
+        {/* 3개 이상: 레이더 다각형 / 2개 이하: 수평 바 */}
         <div className="flex-1 min-h-[220px]">
-          <ResponsiveContainer width="100%" height={220}>
-            <RadarChart
-              data={radarData}
-              cx="50%"
-              cy="50%"
-              outerRadius="65%"
-            >
-              <defs>
-                <linearGradient
-                  id="radarGradient"
-                  x1="0"
-                  y1="0"
-                  x2="1"
-                  y2="1"
-                >
-                  <stop offset="0%" stopColor="#818CF8" stopOpacity={0.6} />
-                  <stop offset="100%" stopColor="#A78BFA" stopOpacity={0.3} />
-                </linearGradient>
-              </defs>
-              <PolarGrid
-                stroke="#E2E8F0"
-                strokeDasharray="3 3"
-                gridType="polygon"
-                fill="#F8FAFC"
-              />
-              <PolarAngleAxis
-                dataKey="name"
-                tickLine={false}
-                tick={({ x, y, payload, cx, cy }) => {
-                  const dx = x - (cx as number);
-                  const dy = y - (cy as number);
-                  const dist = Math.sqrt(dx * dx + dy * dy);
-                  const push = dist > 0 ? 20 / dist : 0;
-                  const nx = x + dx * push;
-                  const ny = y + dy * push;
+          {activeItems.length >= 3 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <RadarChart
+                data={radarData}
+                cx="50%"
+                cy="50%"
+                outerRadius="65%"
+              >
+                <defs>
+                  <linearGradient
+                    id="radarGradient"
+                    x1="0"
+                    y1="0"
+                    x2="1"
+                    y2="1"
+                  >
+                    <stop offset="0%" stopColor="#818CF8" stopOpacity={0.6} />
+                    <stop offset="100%" stopColor="#A78BFA" stopOpacity={0.3} />
+                  </linearGradient>
+                </defs>
+                <PolarGrid
+                  stroke="#E2E8F0"
+                  strokeDasharray="3 3"
+                  gridType="polygon"
+                  fill="#F8FAFC"
+                />
+                <PolarAngleAxis
+                  dataKey="name"
+                  tickLine={false}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  tick={(props: any) => {
+                    const { x, y, payload, cx, cy } = props;
+                    const dx = (x as number) - (cx as number);
+                    const dy = (y as number) - (cy as number);
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const push = dist > 0 ? 20 / dist : 0;
+                    const nx = (x as number) + dx * push;
+                    const ny = (y as number) + dy * push;
+                    return (
+                      <text
+                        x={nx}
+                        y={ny}
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        className="text-[11px] fill-slate-600 font-medium"
+                      >
+                        {payload.value}
+                      </text>
+                    );
+                  }}
+                />
+                <Radar
+                  dataKey="value"
+                  stroke="#7C3AED"
+                  strokeWidth={2}
+                  fill="url(#radarGradient)"
+                  dot={false}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[220px] flex flex-col justify-center gap-3 px-4">
+              {activeItems.length === 0 ? (
+                <p className="text-xs text-slate-400 text-center">데이터가 없습니다</p>
+              ) : (
+                activeItems.map((item) => {
+                  const pct = total > 0 ? Math.round((item.value / total) * 100) : 0;
                   return (
-                    <text
-                      x={nx}
-                      y={ny}
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      className="text-[11px] fill-slate-600 font-medium"
-                    >
-                      {payload.value}
-                    </text>
+                    <div key={item.key} className="flex flex-col gap-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-slate-700">{item.label}</span>
+                        <span className="text-xs font-semibold text-slate-800 tabular-nums">{item.value}문항 ({pct}%)</span>
+                      </div>
+                      <div className="h-6 bg-slate-100 rounded-sm overflow-hidden">
+                        <div
+                          className="h-full rounded-sm transition-all"
+                          style={{
+                            width: `${pct}%`,
+                            background: `linear-gradient(90deg, ${item.color}CC, ${item.color}99)`,
+                          }}
+                        />
+                      </div>
+                    </div>
                   );
-                }}
-              />
-              <Radar
-                dataKey="value"
-                stroke="#7C3AED"
-                strokeWidth={2}
-                fill="url(#radarGradient)"
-                dot={false}
-              />
-            </RadarChart>
-          </ResponsiveContainer>
+                })
+              )}
+            </div>
+          )}
         </div>
 
         {/* 범례 (0개 포함 전체 표시) */}

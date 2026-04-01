@@ -33,7 +33,7 @@ const FEEDBACK_TYPES = [
 ] as const;
 
 export function AnalysisCommentTab({ questions, examPaperId }: AnalysisCommentTabProps) {
-  const [showDiffReason, setShowDiffReason] = useState(true);
+  const [showDiffReason, setShowDiffReason] = useState(false);
 
   const sortedQuestions = useMemo(() =>
     [...questions].sort((a, b) => {

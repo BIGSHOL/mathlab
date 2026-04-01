@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Tabs } from '@/components/ui/Tabs';
 import { ExamPaperList } from '@/components/exam-analysis/ExamPaperList';
@@ -8,9 +8,10 @@ import { ExamUploadForm } from '@/components/exam-analysis/ExamUploadForm';
 import { AnalysisResultView } from '@/components/exam-analysis/AnalysisResultView';
 import { AnalysisCommentTab } from '@/components/exam-analysis/AnalysisCommentTab';
 import { StudyStrategyTab } from '@/components/exam-analysis/StudyStrategyTab';
+import { ExtractToBankModal } from '@/components/exam-analysis/ExtractToBankModal';
 import { toast } from '@/components/ui/Toast';
 import Link from 'next/link';
-import { Plus, X, Settings2, Sparkles, Download, PanelLeftClose, PanelLeftOpen, FileSearch } from 'lucide-react';
+import { Plus, X, Settings2, Sparkles, Download, Database, PanelLeftClose, PanelLeftOpen, FileSearch } from 'lucide-react';
 import type { AnalyzedQuestion, AnalysisSummary } from '@/lib/exam-analysis/types';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import { useAuth } from '@/hooks/useAuth';
@@ -21,6 +22,7 @@ interface ExamPaperData {
   title: string;
   subject: 'MATH' | 'ENGLISH';
   grade: string;
+  category: string | null;
   examType: string;
   status: 'PENDING' | 'ANALYZING' | 'COMPLETED' | 'FAILED';
   analysisStep: number;
@@ -60,8 +62,8 @@ export default function ExamAnalysisPage() {
 
   const limit = 20;
 
-  const fetchList = useCallback(async () => {
-    setLoading(true);
+  const fetchList = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(page), limit: String(limit) });
       if (filterSubject) params.set('subject', filterSubject);
@@ -71,9 +73,9 @@ export default function ExamAnalysisPage() {
       setItems(json.data || []);
       setTotal(json.meta?.total || 0);
     } catch {
-      toast.error('시험지 목록을 불러오지 못했습니다');
+      if (!silent) toast.error('시험지 목록을 불러오지 못했습니다');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [page, filterSubject, filterGrade]);
 
@@ -95,18 +97,21 @@ export default function ExamAnalysisPage() {
     else setSelectedDetail(null);
   }, [selectedId, fetchDetail]);
 
-  // 분석 중 자동 폴링
+  // 분석 중 자동 폴링 — items를 ref로 추적하여 interval 재생성 방지
+  const hasAnalyzing = items.some(i => i.status === 'ANALYZING');
+  const selectedIdRef = useRef(selectedId);
+  selectedIdRef.current = selectedId;
+
   useEffect(() => {
-    const hasAnalyzing = items.some(i => i.status === 'ANALYZING');
     if (!hasAnalyzing) return;
 
     const interval = setInterval(() => {
-      fetchList();
-      if (selectedId) fetchDetail(selectedId);
+      fetchList(true);
+      if (selectedIdRef.current) fetchDetail(selectedIdRef.current);
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [items, selectedId, fetchList, fetchDetail]);
+  }, [hasAnalyzing, fetchList, fetchDetail]);
 
   const handleAnalyze = async (id: string) => {
     setAnalyzing(true);
@@ -123,8 +128,8 @@ export default function ExamAnalysisPage() {
             const err = await res.json();
             toast.error(err.error?.message || '분석 실패');
           }
-          // 서버 완료 시 즉시 갱신
-          fetchList();
+          // 서버 완료 시 즉시 갱신 (silent: 로딩 표시 안 함)
+          fetchList(true);
           if (selectedId === id) fetchDetail(id);
         })
         .catch(() => {
@@ -284,9 +289,15 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
   onRefresh: () => void;
 }) {
   const [activeTab, setActiveTab] = useState<AnalysisTab>('basic');
+  const [showExtractModal, setShowExtractModal] = useState(false);
   const [commentaryLoading, setCommentaryLoading] = useState(false);
   const [commentaryStartTime, setCommentaryStartTime] = useState<number | null>(null);
   const [commentaryElapsed, setCommentaryElapsed] = useState(0);
+
+  // 기출지 변경 시 탭 초기화
+  useEffect(() => {
+    setActiveTab('basic');
+  }, [detail.id]);
 
   // 총평 생성 경과 시간 타이머
   useEffect(() => {
@@ -365,6 +376,11 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
                   <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-sm ${confidenceInfo.color}`}>
                     신뢰도 {confidenceInfo.avg}%
                   </span>
+                  {latestAnalysis?.modelVersion && (
+                    <span className="text-[10px] text-slate-400" title={latestAnalysis.modelVersion}>
+                      {latestAnalysis.modelVersion.includes('prompt') ? latestAnalysis.modelVersion.split('/ ').pop() : `prompt v0`}
+                    </span>
+                  )}
                 </>
               )}
             </div>
@@ -373,11 +389,16 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
           {/* 우측: 버튼 + 등급 뱃지 */}
           <div className="flex items-center gap-3 shrink-0">
             {detail.status === 'COMPLETED' && (
-              <Link href={`/exam-analysis/${detail.id}/print`}>
-                <Button size="sm" variant="secondary">
-                  <Download className="w-4 h-4 mr-1" /> 내보내기
+              <>
+                <Button size="sm" variant="secondary" onClick={() => setShowExtractModal(true)}>
+                  <Database className="w-4 h-4 mr-1" /> 문제은행에 추가
                 </Button>
-              </Link>
+                <Link href={`/exam-analysis/${detail.id}/print`}>
+                  <Button size="sm" variant="secondary">
+                    <Download className="w-4 h-4 mr-1" /> 내보내기
+                  </Button>
+                </Link>
+              </>
             )}
             {(detail.status === 'PENDING' || detail.status === 'FAILED') && (
               <Button onClick={() => onAnalyze(detail.id)} disabled={analyzing}>
@@ -486,6 +507,7 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
               questions={questions}
               onRegenerate={handleGenerateCommentary}
               isRegenerating={commentaryLoading}
+              elapsedSeconds={commentaryElapsed}
             />
           )}
 
@@ -515,6 +537,16 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
           )}
         </>
       )}
+      {/* 문제은행 추출 모달 */}
+      {showExtractModal && (
+        <ExtractToBankModal
+          examPaperId={detail.id}
+          grade={detail.grade}
+          category={detail.category || undefined}
+          examTitle={detail.title}
+          onClose={() => setShowExtractModal(false)}
+        />
+      )}
     </div>
   );
 }
@@ -524,7 +556,7 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
 /** 숫자/키워드에 종류별 다른 색상 하이라이트 */
 function highlightText(text: string): React.ReactNode {
   // 그룹별 패턴: 숫자+단위 | 난이도/위험 | 형식 | 영역/범위 | 기타 강조
-  const pattern = /(\d+(?:\.\d+)?(?:점대?|문항|%|번|개|단계))|(?:최고난도|고난도|킬러|변별력|취약)|(?:서술형\d*|객관식|단답형)|(?:상위권|최상위권|중상위권|하위권|핵심|필수적?|복합|다단계)|(?:'[^']+?'|'[^']+?')/g;
+  const pattern = /(\d+(?:\.\d+)?(?:점대?|문항|번|개|단계))|(?:최고난도|고난도|기본|표준|응용|심화|킬러|변별력|취약)|(?:서술형\d*|객관식|단답형)|(?:상위권|최상위권|중상위권|하위권|핵심|필수적?|복합|다단계)|(?:'[^']+?'|'[^']+?')/g;
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
   let match: RegExpExecArray | null;
@@ -575,11 +607,12 @@ const FORMAT_BADGE: Record<string, { label: string; cls: string }> = {
 
 // ── AI 총평 결과 표시 ──
 
-function CommentarySection({ commentary, questions: allQuestions, onRegenerate, isRegenerating }: {
+function CommentarySection({ commentary, questions: allQuestions, onRegenerate, isRegenerating, elapsedSeconds = 0 }: {
   commentary: CommentaryResult;
   questions: AnalyzedQuestion[];
   onRegenerate: () => void;
   isRegenerating: boolean;
+  elapsedSeconds?: number;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -600,15 +633,14 @@ function CommentarySection({ commentary, questions: allQuestions, onRegenerate, 
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {isFallback && (
+          {!isRegenerating && (
             <Button
               size="sm"
               variant="ghost"
               onClick={onRegenerate}
-              disabled={isRegenerating}
-              className="text-xs text-amber-600 hover:text-amber-700"
+              className={`text-xs ${isFallback ? 'text-amber-600 hover:text-amber-700' : 'text-slate-400 hover:text-slate-600'}`}
             >
-              {isRegenerating ? '재분석 중...' : 'AI 재분석'}
+              {isFallback ? 'AI 재분석' : '재분석'}
             </Button>
           )}
           <button
@@ -622,39 +654,86 @@ function CommentarySection({ commentary, questions: allQuestions, onRegenerate, 
         </div>
       </div>
 
-      {isExpanded && isFallback && (
+      {isExpanded && isFallback && !isRegenerating && (
         <div className="bg-amber-50 border border-amber-200 rounded-sm px-3 py-2 mb-3 flex items-center gap-2">
           <span className="text-amber-500 text-xs">&#9888;</span>
           <p className="text-xs text-amber-700">AI 총평 생성에 실패하여 규칙 기반 요약으로 대체되었습니다. &quot;AI 재분석&quot; 버튼으로 다시 시도할 수 있습니다.</p>
         </div>
       )}
 
+      {isRegenerating && (
+        <div className="mb-3 bg-violet-50 border border-violet-200 rounded-sm px-3 py-2.5">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-medium text-violet-700">AI 재분석 중...</span>
+            <span className="text-[11px] text-violet-500 tabular-nums">{elapsedSeconds}초</span>
+          </div>
+          <div className="h-1.5 bg-violet-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-violet-400 to-purple-500 rounded-full transition-all duration-1000"
+              style={{ width: `${Math.min(elapsedSeconds / 60 * 100, 95)}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       {isExpanded && (
         <div className="space-y-3">
-          {/* 시험 특성 */}
-          {commentary.exam_characteristics && commentary.exam_characteristics.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {commentary.exam_characteristics.map((c, i) => (
-                <span key={i} className="text-xs bg-violet-100 text-violet-700 px-2.5 py-1 rounded-sm font-medium">
-                  {c}
-                </span>
-              ))}
-            </div>
-          )}
-
           {/* 종합 분석 */}
           {commentary.overall_comment && (
             <div className="bg-white/70 rounded-sm p-4 border border-violet-200">
-              <h4 className="text-xs font-semibold text-violet-800 mb-1.5 flex items-center gap-1.5">
+              <h4 className="text-xs font-semibold text-violet-800 mb-2 flex items-center gap-1.5">
                 <span className="w-1 h-3.5 bg-violet-500 rounded-full" />
                 종합 분석
               </h4>
-              <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{highlightText(commentary.overall_comment)}</p>
+              <div className="space-y-2">
+                {commentary.overall_comment.split('\n').filter(Boolean).map((para, i) => (
+                  <p key={i} className="text-sm text-slate-700 leading-relaxed">{highlightText(para.trim())}</p>
+                ))}
+              </div>
             </div>
           )}
 
-          {/* 점수 확보 전략 */}
-          {commentary.score_strategy && (
+          {/* 등급별 점수 확보 전략 */}
+          {commentary.score_strategies && commentary.score_strategies.length > 0 ? (
+            <div>
+              <h4 className="text-xs font-semibold text-indigo-800 mb-2 flex items-center gap-1.5">
+                <span className="w-1 h-3.5 bg-indigo-500 rounded-full" />
+                등급별 점수 확보 전략
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                {commentary.score_strategies.map((s, i) => {
+                  const colors = [
+                    { border: 'border-amber-300', bg: 'bg-amber-50', badge: 'bg-amber-500', label: 'text-amber-800' },
+                    { border: 'border-blue-300', bg: 'bg-blue-50', badge: 'bg-blue-500', label: 'text-blue-800' },
+                    { border: 'border-slate-300', bg: 'bg-slate-50', badge: 'bg-slate-500', label: 'text-slate-700' },
+                  ];
+                  const c = colors[i] || colors[2];
+                  return (
+                    <div key={i} className={`rounded-sm border ${c.border} ${c.bg} p-3`}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`px-1.5 py-0.5 rounded-sm text-[10px] font-bold text-white ${c.badge}`}>
+                          {s.grade.split(' ')[0] || `${i + 1}등급`}
+                        </span>
+                        <span className={`text-xs font-semibold ${c.label}`}>{s.target}</span>
+                      </div>
+                      {s.points && s.points.length > 0 ? (
+                        <ul className="space-y-1">
+                          {s.points.map((p, j) => (
+                            <li key={j} className="flex items-start gap-1.5 text-xs text-slate-700">
+                              <span className="text-slate-400 mt-0.5 shrink-0">•</span>
+                              <span>{highlightText(p)}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : s.strategy ? (
+                        <p className="text-xs text-slate-700 leading-relaxed">{highlightText(s.strategy)}</p>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : commentary.score_strategy ? (
             <div className="bg-white/70 rounded-sm p-4 border border-indigo-200">
               <h4 className="text-xs font-semibold text-indigo-800 mb-1.5 flex items-center gap-1.5">
                 <span className="w-1 h-3.5 bg-indigo-500 rounded-full" />
@@ -662,7 +741,7 @@ function CommentarySection({ commentary, questions: allQuestions, onRegenerate, 
               </h4>
               <p className="text-sm text-slate-700 leading-relaxed">{highlightText(commentary.score_strategy)}</p>
             </div>
-          )}
+          ) : null}
 
           {/* 강점 & 보완점 (2열) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -709,22 +788,29 @@ function CommentarySection({ commentary, questions: allQuestions, onRegenerate, 
               </h4>
               <div className="space-y-2.5">
                 {[...commentary.notable_questions].sort((a, b) => {
-                  const aNum = typeof a.question_number === 'number' ? a.question_number : parseInt(String(a.question_number)) || 999;
-                  const bNum = typeof b.question_number === 'number' ? b.question_number : parseInt(String(b.question_number)) || 999;
+                  const aStr = String(a.question_number);
+                  const bStr = String(b.question_number);
+                  const aIsEssay = /[^\d]/.test(aStr);
+                  const bIsEssay = /[^\d]/.test(bStr);
+                  // 객관식(숫자만) 먼저, 서술형(문자포함) 나중
+                  if (aIsEssay !== bIsEssay) return aIsEssay ? 1 : -1;
+                  // 같은 그룹 내에서는 숫자 추출 후 정렬
+                  const aNum = parseInt(aStr.replace(/\D/g, '')) || 999;
+                  const bNum = parseInt(bStr.replace(/\D/g, '')) || 999;
                   return aNum - bNum;
                 }).map((q, i) => {
-                  const qNum = q.question_number || i + 1;
-                  // 정확 매칭 → "서술형N" 매칭 → 번호 포함 매칭
-                  const matched = allQuestions.find(aq => String(aq.question_number) === String(qNum))
-                    || allQuestions.find(aq => String(aq.question_number) === `서술형${qNum}`)
-                    || allQuestions.find(aq => String(aq.question_number).replace(/\D/g, '') === String(qNum));
+                  const qRaw = String(q.question_number || i + 1);
+                  const qNumOnly = qRaw.replace(/\D/g, '') || qRaw;
+                  // 실제 문항 매칭: 정확 → 숫자 부분 일치
+                  const matched = allQuestions.find(aq => String(aq.question_number) === qRaw)
+                    || allQuestions.find(aq => String(aq.question_number).replace(/\D/g, '') === qNumOnly);
                   const format = matched?.question_format || null;
                   const fmt = format ? FORMAT_BADGE[format] : null;
                   return (
                     <div key={i} className="flex items-start gap-3">
                       <div className="shrink-0 flex flex-col items-center gap-1">
                         <span className="w-8 h-8 rounded-sm bg-slate-800 text-white flex items-center justify-center text-xs font-bold">
-                          {qNum}
+                          {qNumOnly}
                         </span>
                         {fmt && (
                           <span className={`text-[9px] font-medium px-1 py-0.5 rounded-sm ${fmt.cls}`}>

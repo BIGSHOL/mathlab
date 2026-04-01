@@ -6,6 +6,7 @@ import { ExamPromptBuilder } from '@/lib/exam-analysis/prompt-builder';
 import { detectGradingMarks } from '@/lib/exam-analysis/mark-detector';
 import { crossValidateGrading, consolidateDominantTopic } from '@/lib/exam-analysis/cross-validator';
 import type { ExamContext, AnalyzedQuestion } from '@/lib/exam-analysis/types';
+import { PROMPT_VERSION } from '@/lib/exam-analysis/constants';
 import path from 'path';
 import { readFile } from 'fs/promises';
 
@@ -113,7 +114,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         markDetection: markDetection ? JSON.parse(JSON.stringify(markDetection)) as any : null,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         crossValidation: crossValidation ? JSON.parse(JSON.stringify(crossValidation)) as any : null,
-        modelVersion: 'gemini-2.5-flash',
+        modelVersion: `gemini-2.5-flash / prompt ${PROMPT_VERSION}`,
         totalQuestions,
         totalPoints: totalPoints || null,
         earnedPoints: earnedPoints || null,

@@ -470,21 +470,28 @@ if (licenseCheck) return licenseCheck;  // 이용권 없으면 403
 
 PDF 시험지 업로드 → Gemini AI 분석 → 문항별 난이도/유형/능력/단원 구조화
 
-**핵심 구조 (`src/components/exam-analysis/`, `src/lib/exam-analysis/`):**
-- `AnalysisResultView` — 난이도/유형/배점/단원/서술형/변별력/문항 테이블 통합 뷰
-- `AnalysisCommentTab` — 문항별 AI 코멘트 + 피드백 신고
-- `StudyStrategyTab` — 학습 전략 (토픽, 킬러패턴, 타임라인, 서술형 대비 등)
-- `TypeRadarChart` — 유형(6대)/능력(4대) 레이더 차트 (탭 전환)
+**프롬프트 버전:** `PROMPT_VERSION` (`src/lib/exam-analysis/constants.ts`)
+- 현재: **v1.0.0** (5대 교육과정 영역, 5단계 난이도, 서술형 통합 규칙)
+- 분석 결과 DB `modelVersion` 필드에 기록 (예: "gemini-2.5-flash / prompt v1.0.0")
+- **프롬프트 변경 시 반드시 `PROMPT_VERSION` 버전 업!** UI에 표시되어 사용자가 버전별 차이 인지 가능
+- 버전 변경 기준: 영역/난이도 체계, 분류 규칙, ai_comment 규칙, 서술형 처리 규칙 변경
 
-**6대 표준 유형 (question_type):** 계산, 도형, 응용, 증명, 그래프, 통계
-- Gemini raw 타입(18종+) → 6대 표준으로 매핑 (`TYPE_TO_STANDARD`)
-- 레이더 차트: 데이터 있는 항목만 다각형 구성, 범례는 전체 표시(0 포함)
+**핵심 구조 (`src/components/exam-analysis/`, `src/lib/exam-analysis/`):**
+- `AnalysisResultView` — 난이도 도넛차트/배점 토글, 유형 레이더, 단원 출제현황, 문항 테이블
+- `AnalysisCommentTab` — 문항별 AI 코멘트 (난이도/유형/능력/배점 라벨) + 피드백 신고
+- `StudyStrategyTab` — 학습 전략 (토픽, 킬러패턴, 타임라인, 서술형 대비 등)
+- `TypeRadarChart` — 유형(5대)/능력(4대) 레이더 차트 (탭 전환)
+- AI 총평 (`CommentarySection`) — Claude Sonnet 기반 종합 분석, DB 영구 저장, 텍스트 하이라이트
+
+**5대 교육과정 영역 (question_type):** 수와 연산(number), 문자와 식(algebra), 함수(function), 기하(geometry), 확률과 통계(statistics)
+- Gemini raw 타입 → 5대 영역 정규화 (`TYPE_TO_STANDARD` in `constants.ts`)
+- 레이더 차트: 5각형, 데이터 있는 항목만 다각형, 범례 전체 표시
 
 **4대 능력 영역 (ability_domain):** 계산력, 이해력, 문제해결력, 추론력
-- `TYPE_TO_DOMAIN` 매핑으로 question_type → ability_domain 자동 변환
+- AI가 직접 반환, `TYPE_TO_DOMAIN`은 fallback용
 - 공유 상수: `ABILITY_DOMAIN_LABELS`, `ABILITY_DOMAIN_COLORS` (`constants.ts`)
 
-**4단계 난이도:** 개념(concept), 유형(pattern), 추론(reasoning), 창의(creative)
+**5단계 난이도:** "1"(기본), "2"(표준), "3"(응용), "4"(심화), "5"(최고난도)
 
 ### 수기채점 시스템
 
