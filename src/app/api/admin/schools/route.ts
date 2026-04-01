@@ -98,10 +98,11 @@ export async function POST(req: NextRequest) {
   if (isResponse(user)) return user;
 
   const body = await req.json();
-  const { action, schoolId, schoolIds } = body as {
-    action: 'saveGroup' | 'removeFromGroup';
+  const { action, schoolId, schoolIds, groupId: bodyGroupId } = body as {
+    action: 'saveGroup' | 'removeFromGroup' | 'addToGroup';
     schoolId?: string;
     schoolIds?: string[];
+    groupId?: string;
   };
 
   if (action === 'saveGroup' && schoolIds && schoolIds.length > 0) {
@@ -129,6 +130,14 @@ export async function POST(req: NextRequest) {
       data: { nearbyGroupId: null },
     });
     return NextResponse.json({ data: { removed: schoolId } });
+  }
+
+  if (action === 'addToGroup' && schoolId && bodyGroupId) {
+    await prisma.school.update({
+      where: { id: schoolId },
+      data: { nearbyGroupId: bodyGroupId },
+    });
+    return NextResponse.json({ data: { added: schoolId } });
   }
 
   return badRequest('유효하지 않은 요청입니다');

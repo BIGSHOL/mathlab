@@ -19,6 +19,7 @@ interface SchoolItem {
   foundationType: string | null;
   coeducationType: string | null;
   highSchoolType: string | null;
+  nearbyGroupId: string | null;
   zoneId: string | null;
   eduSupportCode: string | null;
   eduSupportName: string | null;
@@ -383,12 +384,13 @@ export default function AdminSchoolsPage() {
           <table className="w-full text-sm table-fixed">
             <colgroup>
               <col className="w-[28%]" />
-              <col className="w-[7%]" />
-              <col className="w-[7%]" />
-              <col className="w-[12%]" />
-              <col className="w-[7%]" />
+              <col className="w-[6%]" />
+              <col className="w-[6%]" />
+              <col className="w-[9%]" />
+              <col className="w-[6%]" />
               <col className="w-[5%]" />
-              <col className="w-[10%]" />
+              <col className="w-[4%]" />
+              <col className="w-[8%]" />
               <col />
             </colgroup>
             <thead>
@@ -399,8 +401,9 @@ export default function AdminSchoolsPage() {
                 <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500">지역</th>
                 <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500">시군구</th>
                 <th className="px-3 py-2.5 text-center text-xs font-semibold text-slate-500">설립</th>
-                <th className="px-3 py-2.5 text-center text-xs font-semibold text-slate-500">학구ID</th>
-                <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500">교육지원청</th>
+                <th className="px-2 py-2.5 text-center text-xs font-semibold text-slate-500">그룹</th>
+                <th className="px-2 py-2.5 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">학구ID</th>
+                <th className="px-2 py-2.5 text-left text-xs font-semibold text-slate-500">교육지원청</th>
               </tr>
             </thead>
             <tbody>
@@ -419,7 +422,7 @@ export default function AdminSchoolsPage() {
                 ))
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-16 text-center">
+                  <td colSpan={9} className="px-4 py-16 text-center">
                     <School className="w-10 h-10 mx-auto mb-3 text-slate-200" />
                     <p className="text-sm text-slate-400">검색 결과가 없습니다</p>
                   </td>
@@ -504,6 +507,13 @@ function SchoolRow({ school: s, isSelected, zoneId, onSchoolClick, onZoneClick, 
         <td className="px-3 py-2 text-xs text-slate-600 truncate">{s.district || '-'}</td>
         <td className="px-3 py-2 text-center text-xs text-slate-500 whitespace-nowrap">{s.foundationType || '-'}</td>
         <td className="px-3 py-2 text-center">
+          {s.nearbyGroupId ? (
+            <Link2 className="w-3.5 h-3.5 text-violet-500 mx-auto" />
+          ) : (
+            <span className="text-slate-300 text-xs">-</span>
+          )}
+        </td>
+        <td className="px-3 py-2 text-center">
           {s.zoneId ? (
             <button
               onClick={(e) => { e.stopPropagation(); onZoneClick(s.zoneId!); }}
@@ -526,7 +536,7 @@ function SchoolRow({ school: s, isSelected, zoneId, onSchoolClick, onZoneClick, 
       {/* 주변 학교 확장 패널 */}
       {isSelected && (
         <tr>
-          <td colSpan={8} className="p-0">
+          <td colSpan={9} className="p-0">
             <NearbyPanel data={nearbyData} loading={nearbyLoading} onRefresh={() => onRefreshNearby(s.id)} />
           </td>
         </tr>
@@ -538,12 +548,26 @@ function SchoolRow({ school: s, isSelected, zoneId, onSchoolClick, onZoneClick, 
 /** 주변 학교 확장 패널 */
 function NearbyPanel({ data, loading, onRefresh }: { data: NearbyResult | null; loading: boolean; onRefresh: () => void }) {
   const [saving, setSaving] = useState(false);
+  const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
+  const [addSearch, setAddSearch] = useState('');
+  const [addResults, setAddResults] = useState<NearbySchool[]>([]);
+  const [addLoading, setAddLoading] = useState(false);
+  const addDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 제외 토글 (그룹 저장 전)
+  const toggleExclude = (id: string) => {
+    setExcludedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
 
   const handleSaveGroup = async () => {
     if (!data) return;
     setSaving(true);
     try {
-      const schoolIds = data.data.map(s => s.id);
+      const schoolIds = data.data.filter(s => !excludedIds.has(s.id)).map(s => s.id);
       const res = await fetch('/api/admin/schools', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -552,6 +576,7 @@ function NearbyPanel({ data, loading, onRefresh }: { data: NearbyResult | null; 
       if (res.ok) {
         const json = await res.json();
         toast.success(`${json.data.count}개교 그룹 저장 완료`);
+        setExcludedIds(new Set());
         onRefresh();
       }
     } finally {
@@ -570,6 +595,42 @@ function NearbyPanel({ data, loading, onRefresh }: { data: NearbyResult | null; 
       onRefresh();
     }
   };
+
+  // 그룹에 학교 추가 (검색)
+  const handleAddSearch = (v: string) => {
+    setAddSearch(v);
+    if (addDebounceRef.current) clearTimeout(addDebounceRef.current);
+    if (!v.trim()) { setAddResults([]); return; }
+    addDebounceRef.current = setTimeout(async () => {
+      setAddLoading(true);
+      try {
+        const res = await fetch(`/api/admin/schools?search=${encodeURIComponent(v)}&limit=5`);
+        if (!res.ok) return;
+        const json = await res.json();
+        // 이미 목록에 있는 학교와 중심 학교 제외
+        const existingIds = new Set([data?.center.id, ...(data?.data.map(s => s.id) || [])]);
+        setAddResults((json.data || []).filter((s: { id: string }) => !existingIds.has(s.id)).slice(0, 5));
+      } finally {
+        setAddLoading(false);
+      }
+    }, 300);
+  };
+
+  const handleAddToGroup = async (schoolId: string) => {
+    if (!data?.groupId) return;
+    const res = await fetch('/api/admin/schools', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'addToGroup', schoolId, groupId: data.groupId }),
+    });
+    if (res.ok) {
+      toast.success('그룹에 추가했습니다');
+      setAddSearch('');
+      setAddResults([]);
+      onRefresh();
+    }
+  };
+
   if (loading) {
     return (
       <div className="bg-cyan-50/40 border-t border-cyan-200 px-6 py-6 flex items-center justify-center gap-2">
@@ -589,8 +650,9 @@ function NearbyPanel({ data, loading, onRefresh }: { data: NearbyResult | null; 
     );
   }
 
-  const sameDistrictItems = data.data.filter(n => n.sameDistrict);
-  const crossDistrictItems = data.data.filter(n => !n.sameDistrict);
+  const visibleData = data.data.filter(n => !excludedIds.has(n.id));
+  const sameDistrictItems = visibleData.filter(n => n.sameDistrict);
+  const crossDistrictItems = visibleData.filter(n => !n.sameDistrict);
   const centerDistrict = data.center.district || '같은 구/군';
   const isGrouped = data.stage === 0;
   const STAGE_LABELS: Record<number, string> = {
@@ -608,7 +670,7 @@ function NearbyPanel({ data, loading, onRefresh }: { data: NearbyResult | null; 
           <MapPin className="w-3.5 h-3.5" />
           주변 학교
           <span className="text-cyan-500 font-normal">
-            ({STAGE_LABELS[data.stage] || ''}, {data.data.length}개교)
+            ({STAGE_LABELS[data.stage] || ''}, {visibleData.length}개교{excludedIds.size > 0 ? ` · ${excludedIds.size}개 제외` : ''})
           </span>
           {isGrouped && (
             <span className="text-[10px] text-violet-600 bg-violet-50 border border-violet-200 rounded-sm px-1.5 py-0.5">그룹 설정됨</span>
@@ -638,28 +700,73 @@ function NearbyPanel({ data, loading, onRefresh }: { data: NearbyResult | null; 
         <p className="text-xs text-slate-400">주변에 같은 학교급 학교가 없습니다</p>
       ) : (
         <div className="border border-cyan-200 rounded-sm overflow-hidden bg-white">
-          <table className="w-full text-xs">
+          <table className="w-full text-xs table-fixed">
+            <colgroup>
+              <col className="w-[40%]" />
+              <col className="w-[10%]" />
+              <col className="w-[14%]" />
+              <col className="w-[10%]" />
+              <col className="w-[10%]" />
+              <col className="w-[5%]" />
+            </colgroup>
             <thead>
               <tr className="bg-cyan-50/80">
                 <th className="px-3 py-1.5 text-left font-semibold text-cyan-700">학교명</th>
-                <th className="px-3 py-1.5 text-center font-semibold text-cyan-700 w-16">거리</th>
-                <th className="px-3 py-1.5 text-left font-semibold text-cyan-700 w-20">시군구</th>
-                <th className="px-3 py-1.5 text-center font-semibold text-cyan-700 w-12">설립</th>
-                <th className="px-3 py-1.5 text-center font-semibold text-cyan-700 w-16">기출</th>
-                {isGrouped && <th className="px-3 py-1.5 text-center font-semibold text-cyan-700 w-10" />}
+                <th className="px-3 py-1.5 text-center font-semibold text-cyan-700">거리</th>
+                <th className="px-3 py-1.5 text-left font-semibold text-cyan-700">시군구</th>
+                <th className="px-3 py-1.5 text-center font-semibold text-cyan-700">설립</th>
+                <th className="px-3 py-1.5 text-center font-semibold text-cyan-700">기출</th>
+                <th />
               </tr>
             </thead>
             <tbody>
               {sameDistrictItems.length > 0 && crossDistrictItems.length > 0 && (
-                <tr><td colSpan={5} className="px-3 py-1 bg-cyan-50/60 text-[10px] font-semibold text-cyan-600">{centerDistrict}</td></tr>
+                <tr><td colSpan={6} className="px-3 py-1 bg-cyan-50/60 text-[10px] font-semibold text-cyan-600">{centerDistrict}</td></tr>
               )}
-              {sameDistrictItems.map(n => <NearbyRow key={n.id} school={n} isGrouped={isGrouped} onRemove={handleRemoveFromGroup} />)}
+              {sameDistrictItems.map(n => (
+                <NearbyRow key={n.id} school={n} onRemove={isGrouped ? handleRemoveFromGroup : toggleExclude} />
+              ))}
               {crossDistrictItems.length > 0 && (
-                <tr><td colSpan={isGrouped ? 6 : 5} className="px-3 py-1 bg-slate-50 text-[10px] font-semibold text-slate-500">인접 지역</td></tr>
+                <tr><td colSpan={6} className="px-3 py-1 bg-slate-50 text-[10px] font-semibold text-slate-500">인접 지역</td></tr>
               )}
-              {crossDistrictItems.map(n => <NearbyRow key={n.id} school={n} isGrouped={isGrouped} onRemove={handleRemoveFromGroup} />)}
+              {crossDistrictItems.map(n => (
+                <NearbyRow key={n.id} school={n} onRemove={isGrouped ? handleRemoveFromGroup : toggleExclude} />
+              ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* 그룹 모드: 학교 추가 검색 */}
+      {isGrouped && (
+        <div className="mt-3">
+          <div className="relative w-64">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+            <input
+              value={addSearch}
+              onChange={e => handleAddSearch(e.target.value)}
+              placeholder="학교 검색하여 그룹에 추가..."
+              className="w-full pl-7 pr-3 py-1 text-xs border border-violet-200 rounded-sm focus:ring-1 focus:ring-violet-300 outline-none bg-white"
+            />
+          </div>
+          {addLoading && <p className="text-[10px] text-slate-400 mt-1">검색 중...</p>}
+          {addResults.length > 0 && (
+            <div className="mt-1 border border-violet-200 rounded-sm bg-white overflow-hidden">
+              {addResults.map((s: NearbySchool) => (
+                <button
+                  key={s.id}
+                  onClick={() => handleAddToGroup(s.id)}
+                  className="w-full flex items-center justify-between px-3 py-1.5 text-xs hover:bg-violet-50 transition-colors border-b border-violet-100 last:border-0"
+                >
+                  <div className="text-left">
+                    <span className="font-medium text-slate-700">{s.name}</span>
+                    {s.district && <span className="text-slate-400 ml-1.5">{s.district}</span>}
+                  </div>
+                  <span className="text-violet-500 text-[10px] shrink-0">+ 추가</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -667,7 +774,7 @@ function NearbyPanel({ data, loading, onRefresh }: { data: NearbyResult | null; 
 }
 
 /** 주변 학교 행 */
-function NearbyRow({ school: n, isGrouped, onRemove }: { school: NearbySchool; isGrouped: boolean; onRemove: (id: string) => void }) {
+function NearbyRow({ school: n, onRemove }: { school: NearbySchool; onRemove: (id: string) => void }) {
   return (
     <tr className="border-t border-cyan-100 hover:bg-cyan-50/50">
       <td className="px-3 py-1.5">
@@ -686,17 +793,15 @@ function NearbyRow({ school: n, isGrouped, onRemove }: { school: NearbySchool; i
           <span className="text-slate-300">-</span>
         )}
       </td>
-      {isGrouped && (
-        <td className="px-1 py-1.5 text-center">
-          <button
-            onClick={(e) => { e.stopPropagation(); onRemove(n.id); }}
-            className="text-slate-300 hover:text-red-500 transition-colors"
-            title="그룹에서 제외"
-          >
-            <Unlink className="w-3 h-3" />
-          </button>
-        </td>
-      )}
+      <td className="px-1 py-1.5 text-center">
+        <button
+          onClick={(e) => { e.stopPropagation(); onRemove(n.id); }}
+          className="text-slate-300 hover:text-red-500 transition-colors"
+          title="제외"
+        >
+          <X className="w-3 h-3" />
+        </button>
+      </td>
     </tr>
   );
 }
