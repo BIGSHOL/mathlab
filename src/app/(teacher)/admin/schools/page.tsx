@@ -39,7 +39,7 @@ interface NearbySchool {
 interface NearbyResult {
   data: NearbySchool[];
   center: { id: string; name: string; district: string | null; examCount: number };
-  radius: number;
+  stage: number; // 1~4 확장 단계
   sameDistrictCount: number;
   message?: string;
 }
@@ -543,6 +543,12 @@ function NearbyPanel({ data, loading }: { data: NearbyResult | null; loading: bo
   const sameDistrictItems = data.data.filter(n => n.sameDistrict);
   const crossDistrictItems = data.data.filter(n => !n.sameDistrict);
   const centerDistrict = data.center.district || '같은 구/군';
+  const STAGE_LABELS: Record<number, string> = {
+    1: `${centerDistrict} 5km`,
+    2: `${centerDistrict} 10km`,
+    3: '전체 5km',
+    4: '전체 10km',
+  };
 
   return (
     <div className="bg-cyan-50/40 border-t border-cyan-200 px-6 py-4">
@@ -551,7 +557,7 @@ function NearbyPanel({ data, loading }: { data: NearbyResult | null; loading: bo
           <MapPin className="w-3.5 h-3.5" />
           주변 학교
           <span className="text-cyan-500 font-normal">
-            ({centerDistrict} {sameDistrictItems.length}개교{crossDistrictItems.length > 0 ? ` + 인접 ${crossDistrictItems.length}개교` : ''})
+            ({STAGE_LABELS[data.stage] || ''}, {data.data.length}개교)
           </span>
         </h4>
         {data.center.examCount > 0 && (
