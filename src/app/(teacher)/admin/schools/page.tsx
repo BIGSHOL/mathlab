@@ -33,12 +33,14 @@ interface NearbySchool {
   highSchoolType: string | null;
   distance: number;
   examCount: number;
+  sameDistrict: boolean;
 }
 
 interface NearbyResult {
   data: NearbySchool[];
-  center: { id: string; name: string; examCount: number };
+  center: { id: string; name: string; district: string | null; examCount: number };
   radius: number;
+  sameDistrictCount: number;
   message?: string;
 }
 
@@ -538,13 +540,19 @@ function NearbyPanel({ data, loading }: { data: NearbyResult | null; loading: bo
     );
   }
 
+  const sameDistrictItems = data.data.filter(n => n.sameDistrict);
+  const crossDistrictItems = data.data.filter(n => !n.sameDistrict);
+  const centerDistrict = data.center.district || '같은 구/군';
+
   return (
     <div className="bg-cyan-50/40 border-t border-cyan-200 px-6 py-4">
       <div className="flex items-center justify-between mb-3">
         <h4 className="text-xs font-semibold text-cyan-800 flex items-center gap-1.5">
           <MapPin className="w-3.5 h-3.5" />
-          반경 {data.radius}km 주변 학교
-          <span className="text-cyan-500 font-normal">({data.data.length}개교)</span>
+          주변 학교
+          <span className="text-cyan-500 font-normal">
+            ({centerDistrict} {sameDistrictItems.length}개교{crossDistrictItems.length > 0 ? ` + 인접 ${crossDistrictItems.length}개교` : ''})
+          </span>
         </h4>
         {data.center.examCount > 0 && (
           <span className="text-[10px] text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-sm px-1.5 py-0.5">
@@ -555,7 +563,7 @@ function NearbyPanel({ data, loading }: { data: NearbyResult | null; loading: bo
       </div>
 
       {data.data.length === 0 ? (
-        <p className="text-xs text-slate-400">반경 {data.radius}km 내에 같은 학교급 학교가 없습니다</p>
+        <p className="text-xs text-slate-400">주변에 같은 학교급 학교가 없습니다</p>
       ) : (
         <div className="border border-cyan-200 rounded-sm overflow-hidden bg-white">
           <table className="w-full text-xs">
@@ -563,45 +571,49 @@ function NearbyPanel({ data, loading }: { data: NearbyResult | null; loading: bo
               <tr className="bg-cyan-50/80">
                 <th className="px-3 py-1.5 text-left font-semibold text-cyan-700">학교명</th>
                 <th className="px-3 py-1.5 text-center font-semibold text-cyan-700 w-16">거리</th>
-                <th className="px-3 py-1.5 text-left font-semibold text-cyan-700">시군구</th>
-                <th className="px-3 py-1.5 text-center font-semibold text-cyan-700 w-14">설립</th>
-                <th className="px-3 py-1.5 text-center font-semibold text-cyan-700 w-14">고교유형</th>
+                <th className="px-3 py-1.5 text-left font-semibold text-cyan-700 w-20">시군구</th>
+                <th className="px-3 py-1.5 text-center font-semibold text-cyan-700 w-12">설립</th>
                 <th className="px-3 py-1.5 text-center font-semibold text-cyan-700 w-16">기출</th>
               </tr>
             </thead>
             <tbody>
-              {data.data.map(n => (
-                <tr key={n.id} className="border-t border-cyan-100 hover:bg-cyan-50/50">
-                  <td className="px-3 py-1.5">
-                    <div className="font-medium text-slate-700">{n.name}</div>
-                    {n.address && <div className="text-[10px] text-slate-400 truncate max-w-[280px]">{n.address}</div>}
-                  </td>
-                  <td className="px-3 py-1.5 text-center">
-                    <span className="tabular-nums font-semibold text-cyan-700">{n.distance}km</span>
-                  </td>
-                  <td className="px-3 py-1.5 text-slate-500">{n.district || '-'}</td>
-                  <td className="px-3 py-1.5 text-center text-slate-500">{n.foundationType || '-'}</td>
-                  <td className="px-3 py-1.5 text-center">
-                    {n.highSchoolType ? (
-                      <span className={HIGH_TYPE_COLOR[n.highSchoolType] || 'text-slate-500'}>
-                        {n.highSchoolType}
-                      </span>
-                    ) : '-'}
-                  </td>
-                  <td className="px-3 py-1.5 text-center">
-                    {n.examCount > 0 ? (
-                      <span className="text-emerald-600 font-semibold">{n.examCount}건</span>
-                    ) : (
-                      <span className="text-slate-300">-</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {sameDistrictItems.length > 0 && crossDistrictItems.length > 0 && (
+                <tr><td colSpan={5} className="px-3 py-1 bg-cyan-50/60 text-[10px] font-semibold text-cyan-600">{centerDistrict}</td></tr>
+              )}
+              {sameDistrictItems.map(n => <NearbyRow key={n.id} school={n} />)}
+              {crossDistrictItems.length > 0 && (
+                <tr><td colSpan={5} className="px-3 py-1 bg-slate-50 text-[10px] font-semibold text-slate-500">인접 지역 (3km 이내)</td></tr>
+              )}
+              {crossDistrictItems.map(n => <NearbyRow key={n.id} school={n} />)}
             </tbody>
           </table>
         </div>
       )}
     </div>
+  );
+}
+
+/** 주변 학교 행 */
+function NearbyRow({ school: n }: { school: NearbySchool }) {
+  return (
+    <tr className="border-t border-cyan-100 hover:bg-cyan-50/50">
+      <td className="px-3 py-1.5">
+        <div className="font-medium text-slate-700">{n.name}</div>
+        {n.address && <div className="text-[10px] text-slate-400 truncate max-w-[300px]">{n.address}</div>}
+      </td>
+      <td className="px-3 py-1.5 text-center">
+        <span className="tabular-nums font-semibold text-cyan-700">{n.distance}km</span>
+      </td>
+      <td className="px-3 py-1.5 text-slate-500">{n.district || '-'}</td>
+      <td className="px-3 py-1.5 text-center text-slate-500">{n.foundationType || '-'}</td>
+      <td className="px-3 py-1.5 text-center">
+        {n.examCount > 0 ? (
+          <span className="text-emerald-600 font-semibold">{n.examCount}건</span>
+        ) : (
+          <span className="text-slate-300">-</span>
+        )}
+      </td>
+    </tr>
   );
 }
 

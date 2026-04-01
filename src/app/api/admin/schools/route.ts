@@ -92,14 +92,16 @@ export async function GET(req: NextRequest) {
   });
 }
 
-// ── 주변 학교 조회 ──
+// ── 주변 학교 조회 (같은 구/군 우선, 부족하면 반경 확장) ──
 
-const NEARBY_RADIUS_KM = 5;
+const CROSS_DISTRICT_RADIUS_KM = 3; // 다른 구/군은 3km 이내만
+const MIN_NEARBY_COUNT = 3;          // 최소 3개는 보여주기
+const EXPAND_RADIUS_KM = 10;         // 부족하면 10km까지 확장
 
 async function handleNearbySchools(schoolId: string) {
   const school = await prisma.school.findUnique({
     where: { id: schoolId },
-    select: { id: true, name: true, latitude: true, longitude: true, schoolType: true, regionCode: true },
+    select: { id: true, name: true, latitude: true, longitude: true, schoolType: true, regionCode: true, district: true },
   });
 
   if (!school) {
@@ -125,13 +127,37 @@ async function handleNearbySchools(schoolId: string) {
     },
   });
 
-  const nearbySchools = candidates
-    .map(s => ({
-      ...s,
-      distance: Math.round(haversineDistance(school.latitude!, school.longitude!, s.latitude!, s.longitude!) * 10) / 10,
-    }))
-    .filter(s => s.distance <= NEARBY_RADIUS_KM)
+  const withDistance = candidates.map(s => ({
+    ...s,
+    distance: Math.round(haversineDistance(school.latitude!, school.longitude!, s.latitude!, s.longitude!) * 10) / 10,
+    sameDistrict: s.district === school.district,
+  }));
+
+  // 1단계: 같은 구/군 학교 (거리 무관)
+  const sameDistrictSchools = withDistance
+    .filter(s => s.sameDistrict)
     .sort((a, b) => a.distance - b.distance);
+
+  // 2단계: 다른 구/군이지만 3km 이내 (경계 학교)
+  const crossDistrictNearby = withDistance
+    .filter(s => !s.sameDistrict && s.distance <= CROSS_DISTRICT_RADIUS_KM)
+    .sort((a, b) => a.distance - b.distance);
+
+  let nearbySchools = [...sameDistrictSchools, ...crossDistrictNearby];
+  let usedRadius = CROSS_DISTRICT_RADIUS_KM;
+
+  // 3단계: 너무 적으면 반경 확장 (시골 지역)
+  if (nearbySchools.length < MIN_NEARBY_COUNT) {
+    nearbySchools = withDistance
+      .filter(s => s.distance <= EXPAND_RADIUS_KM)
+      .sort((a, b) => a.distance - b.distance);
+    usedRadius = EXPAND_RADIUS_KM;
+  } else {
+    // 같은 구 내 학교 수를 기준으로 표시 반경 결정
+    usedRadius = sameDistrictSchools.length > 0
+      ? Math.max(sameDistrictSchools[sameDistrictSchools.length - 1].distance, CROSS_DISTRICT_RADIUS_KM)
+      : CROSS_DISTRICT_RADIUS_KM;
+  }
 
   // 주변 학교들의 기출 분석 건수 조회
   const nearbyNames = nearbySchools.map(s => s.name);
@@ -159,6 +185,7 @@ async function handleNearbySchools(schoolId: string) {
       examCount: examCountMap.get(s.name) || 0,
     })),
     center: { ...school, examCount: centerExamCount },
-    radius: NEARBY_RADIUS_KM,
+    radius: Math.round(usedRadius * 10) / 10,
+    sameDistrictCount: sameDistrictSchools.length,
   });
 }

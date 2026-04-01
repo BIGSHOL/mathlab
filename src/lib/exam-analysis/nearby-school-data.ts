@@ -120,7 +120,9 @@ function extractExamSummary(
 
 // ── 메인 함수 ──
 
-const SEARCH_RADIUS_KM = 5;
+const CROSS_DISTRICT_RADIUS_KM = 3; // 다른 구/군은 3km 이내만
+const MIN_NEARBY_COUNT = 3;          // 최소 3개는 보여주기
+const EXPAND_RADIUS_KM = 10;         // 부족하면 10km까지 확장
 const MAX_NEARBY_EXAMS = 5;
 const MAX_SAME_SCHOOL_EXAMS = 3;
 
@@ -214,19 +216,27 @@ export async function findNearbyExamData(analysisId: string): Promise<NearbyComp
       latitude: { not: null },
       longitude: { not: null },
     },
-    select: { id: true, name: true, latitude: true, longitude: true },
+    select: { id: true, name: true, latitude: true, longitude: true, district: true },
   });
 
-  const nearbySchools = candidateSchools
+  const withDistance = candidateSchools
     .map(s => ({
       ...s,
       distance: haversineDistance(
         school.latitude!, school.longitude!,
         s.latitude!, s.longitude!,
       ),
-    }))
-    .filter(s => s.distance <= SEARCH_RADIUS_KM)
-    .sort((a, b) => a.distance - b.distance);
+      sameDistrict: s.district === school.district,
+    }));
+
+  // 같은 구/군 우선, 부족하면 반경 확장
+  const sameDistrict = withDistance.filter(s => s.sameDistrict).sort((a, b) => a.distance - b.distance);
+  const crossNearby = withDistance.filter(s => !s.sameDistrict && s.distance <= CROSS_DISTRICT_RADIUS_KM).sort((a, b) => a.distance - b.distance);
+
+  let nearbySchools = [...sameDistrict, ...crossNearby];
+  if (nearbySchools.length < MIN_NEARBY_COUNT) {
+    nearbySchools = withDistance.filter(s => s.distance <= EXPAND_RADIUS_KM).sort((a, b) => a.distance - b.distance);
+  }
 
   if (nearbySchools.length === 0) return result;
 
