@@ -12,6 +12,7 @@ import { DIFFICULTY_LEGACY_MAP } from '../constants';
 import type { BasicAnalysisResult, WeaknessProfile, LearningPlan } from '../types';
 import { MIDDLE_SCHOOL_CURRICULUM } from '../data/curriculum';
 import type { GradeCurriculum } from '../data/curriculumStrategies';
+import type { NearbyComparisonData, NearbyExamSummary } from '../nearby-school-data';
 
 function normalizeDiff(key: string): string {
   return DIFFICULTY_LEGACY_MAP[key] || key;
@@ -59,6 +60,7 @@ export interface CommentaryResult {
   improvement_areas: string[];
   notable_questions: NotableQuestion[];
   teaching_recommendations?: TeachingRecommendation[];
+  nearby_comparison?: string; // 주변 학교 기출 비교 분석 (있을 때만)
   // 레거시 (기존 DB 호환)
   study_priority?: TeachingRecommendation[];
   encouragement?: string;
@@ -186,7 +188,8 @@ ${JSON.stringify(questionsData, null, 1)}
   "strength_areas": ["string (잘 출제된 영역/학생 강점 2-3개)"],
   "improvement_areas": ["string (보완 필요 영역 2-3개)"],
   "notable_questions": [{"question_number": "서술형3", "comment": "string (출제 의도/변별력 관점 분석)"}],
-  "teaching_recommendations": [{"topic": "단원명", "priority": 1, "reason": "지도 방향 설명"}]
+  "teaching_recommendations": [{"topic": "단원명", "priority": 1, "reason": "지도 방향 설명"}],
+  "nearby_comparison": "주변 학교 기출 비교 분석 2-4문장 (비교 데이터가 없으면 null)"
 }
 
 ## 작성 지침
@@ -246,7 +249,7 @@ ${hasStudentData ? '- 쉬운 문제를 틀렸거나 어려운 문제를 맞힌 �
 - "~입니다", "~됩니다" 체를 사용하세요.
 - 학생에게 말하는 대화체("잘했어요", "화이팅" 등)를 절대 사용하지 마세요.
 - 수치와 데이터를 근거로 제시하세요.
-- 각 항목은 완결된 문장으로 작성하세요 (중간에 잘리지 않도록).${this.buildExtendedDataBlock(input)}`;
+- 각 항목은 완결된 문장으로 작성하세요 (중간에 잘리지 않도록).${this.buildNearbyComparisonBlock(input)}${this.buildExtendedDataBlock(input)}`;
   }
 
   /** 학습 대책 탭 데이터 (weaknessProfile + learningPlan)를 프롬프트에 주입 */
@@ -289,6 +292,56 @@ ${phases}
       return '\n\n위 학습 대책 데이터도 종합하여, 지도 추천과 종합 분석에 반영하세요.' + blocks.join('');
     }
     return '';
+  }
+
+  /** 주변 학교 기출 비교 데이터 블록 생성 */
+  private buildNearbyComparisonBlock(input: AgentInput): string {
+    const nearby = input.nearbyComparison as NearbyComparisonData | undefined;
+    if (!nearby) return '';
+
+    const hasSameSchool = nearby.sameSchoolExams.length > 0;
+    const hasNearby = nearby.nearbyExams.length > 0;
+    if (!hasSameSchool && !hasNearby) return '';
+
+    const TYPE_LABELS: Record<string, string> = {
+      number: '수와연산', algebra: '문자와식', function: '함수',
+      geometry: '기하', statistics: '확률통계',
+    };
+
+    const formatExamLine = (exam: NearbyExamSummary): string => {
+      const types = Object.entries(exam.typeDistribution)
+        .filter(([, v]) => v > 0)
+        .map(([k, v]) => `${TYPE_LABELS[k] || k} ${v}`)
+        .join('/');
+      const distanceNote = exam.distance > 0 ? ` (${exam.distance}km)` : '';
+      return `- [${exam.schoolName}]${distanceNote} "${exam.examTitle}": ${exam.totalQuestions}문항 ${exam.totalPoints}점, 평균난이도 ${exam.averageDifficulty}, 유형분포(${types}), 주요단원: ${exam.topicSummary}`;
+    };
+
+    const blocks: string[] = ['\n\n## 주변 학교 기출 비교 데이터'];
+
+    if (hasSameSchool) {
+      blocks.push('\n### 같은 학교 이전 기출');
+      for (const exam of nearby.sameSchoolExams) {
+        blocks.push(formatExamLine(exam));
+      }
+    }
+
+    if (hasNearby) {
+      blocks.push(`\n### 반경 ${5}km 내 주변 학교 기출`);
+      for (const exam of nearby.nearbyExams) {
+        blocks.push(formatExamLine(exam));
+      }
+    }
+
+    blocks.push(`
+### 비교 분석 작성 지침
+- 위 주변 학교/이전 기출 데이터가 있으면, overall_comment에 1-2문장 비교 분석을 자연스럽게 포함하세요.
+- "nearby_comparison" 필드에 2-4문장으로 주변 학교와의 차이점을 별도 요약하세요.
+  - 난이도 수준 비교, 출제 영역 비중 차이, 특이한 출제 경향 등
+  - 같은 학교 이전 기출이 있으면 출제 경향 변화(난이도 상승/하락, 영역 비중 변화)도 분석하세요.
+- 주변 학교 데이터가 없으면 "nearby_comparison"은 null로 두세요.`);
+
+    return blocks.join('\n');
   }
 
   // ── Claude Sonnet으로 AI 분석 오버라이드 ──
@@ -402,6 +455,7 @@ ${phases}
       teaching_recommendations: this.parseTeachingRecommendations(
         raw.teaching_recommendations ?? raw.study_priority,
       ),
+      nearby_comparison: raw.nearby_comparison ? String(raw.nearby_comparison) : undefined,
     };
 
     return result as unknown as Record<string, unknown>;

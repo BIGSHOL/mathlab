@@ -693,6 +693,21 @@ function CommentarySection({ commentary, questions: allQuestions, onRegenerate, 
             </div>
           )}
 
+          {/* 주변 학교 비교 분석 */}
+          {commentary.nearby_comparison && (
+            <div className="bg-white/70 rounded-sm p-4 border border-cyan-200">
+              <h4 className="text-xs font-semibold text-cyan-800 mb-2 flex items-center gap-1.5">
+                <span className="w-1 h-3.5 bg-cyan-500 rounded-full" />
+                주변 학교 비교분석
+              </h4>
+              <div className="space-y-2">
+                {commentary.nearby_comparison.split('\n').filter(Boolean).map((para: string, i: number) => (
+                  <p key={i} className="text-sm text-slate-700 leading-relaxed">{highlightText(para.trim())}</p>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* 등급별 점수 확보 전략 */}
           {commentary.score_strategies && commentary.score_strategies.length > 0 ? (
             <div>

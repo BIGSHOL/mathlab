@@ -10,6 +10,7 @@ import { prisma } from '@/lib/db';
 import type { AgentType } from '../constants';
 import type { WeaknessProfile, LearningPlan, BasicAnalysisResult } from '../types';
 import type { AgentInput } from './base-agent';
+import { findNearbyExamData } from '../nearby-school-data';
 
 // 에이전트 lazy import (순환 참조 방지)
 async function getAgent(agentType: AgentType) {
@@ -126,6 +127,16 @@ export async function runExtendedAnalysis(params: {
     }
   }
 
+  // commentary 에이전트용 주변 학교 기출 데이터 사전 수집
+  let nearbyComparisonData: Awaited<ReturnType<typeof findNearbyExamData>> | undefined;
+  if (independentRequested.includes('commentary')) {
+    try {
+      nearbyComparisonData = await findNearbyExamData(analysisId);
+    } catch (e) {
+      console.error('[orchestrator] 주변 학교 데이터 수집 실패 (무시):', e);
+    }
+  }
+
   // 독립 에이전트 병렬 실행
   const independentPromises = independentRequested.map(async (agentType) => {
     if (!forceRegenerate) {
@@ -143,6 +154,7 @@ export async function runExtendedAnalysis(params: {
         basicAnalysis: basicResult,
         weaknessProfile,
         learningPlan,
+        ...(agentType === 'commentary' && nearbyComparisonData ? { nearbyComparison: nearbyComparisonData } : {}),
       };
 
       const agentResult = await agent.run(input);
