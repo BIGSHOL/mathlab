@@ -52,9 +52,12 @@ export async function POST(request: NextRequest) {
     return badRequest('action=analyze 파라미터가 필요합니다');
   }
 
-  // pending 상태의 피드백 전체 조회
+  // pending 상태의 피드백 조회 (테넌트 스코핑)
   const feedbacks = await prisma.examFeedback.findMany({
-    where: { status: 'pending' },
+    where: {
+      status: 'pending',
+      ...(user.tenantId ? { tenantId: user.tenantId } : {}),
+    },
     orderBy: { createdAt: 'desc' },
   });
 

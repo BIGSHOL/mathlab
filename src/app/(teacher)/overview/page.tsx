@@ -122,7 +122,10 @@ export default async function TeacherDashboard({
     ? Math.round((activeStudents / totalStudents) * 100)
     : 0;
 
-  const progressWhere = periodStart ? { updatedAt: { gte: periodStart } } : {};
+  const progressWhere = {
+    ...(periodStart ? { updatedAt: { gte: periodStart } } : {}),
+    user: studentScope,
+  };
   const totalProgress = await prisma.learningProgress.count({ where: progressWhere });
 
   // Focus students (lowest XP)
@@ -175,7 +178,7 @@ export default async function TeacherDashboard({
   const gradeEntries = [...gradeDistribution.entries()].sort((a, b) => a[0] - b[0]);
   const maxGradeCount = Math.max(...gradeEntries.map(([, c]) => c), 1);
 
-  // Recent activity
+  // Recent activity (학생 스코핑 포함)
   const recentActivity = await prisma.learningProgress.findMany({
     where: progressWhere,
     orderBy: { updatedAt: 'desc' },

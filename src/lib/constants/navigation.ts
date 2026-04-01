@@ -210,6 +210,7 @@ const SUPER_ADMIN_NAV_GROUPS: NavGroup[] = [
   {
     id: 'platform', label: '플랫폼 관리', minRole: 'SUPER_ADMIN', style: 'admin', items: [
       { id: 'tenants', label: '지점 관리', href: '/admin/tenants', icon: Building2, minRole: 'SUPER_ADMIN', keywords: ['tenant', '지점', '지사'] },
+      { id: 'schools', label: '학교 관리', href: '/admin/schools', icon: School, minRole: 'SUPER_ADMIN', keywords: ['school', '학교', '학교명'] },
       { id: 'features', label: '기능 관리', href: '/admin/features', icon: ToggleRight, minRole: 'SUPER_ADMIN', keywords: ['feature', '기능', '토글'] },
     ],
   },

@@ -10,7 +10,7 @@ import {
   CurriculumUnit,
 } from '@/types/mathgen';
 import { getCurriculumForLevel, getGradesForLevel } from '@/lib/constants/curriculum';
-import { BookOpen, Layers, Zap, PenTool, Upload, X, ImageIcon } from 'lucide-react';
+import { BookOpen, Layers, Zap, PenTool, Upload, X, ImageIcon, Copy } from 'lucide-react';
 
 interface SelectionPanelProps {
   selection: SelectionState;
@@ -70,10 +70,10 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selection.subUnit, availableSubUnits]);
 
-  // Clipboard paste for image mode
+  // Clipboard paste for image/exact mode
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
-      if (selection.mode !== 'image') return;
+      if (selection.mode !== 'image' && selection.mode !== 'exact') return;
       const items = e.clipboardData?.items;
       if (!items) return;
       for (let i = 0; i < items.length; i++) {
@@ -119,7 +119,7 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
   const isGenerateDisabled = () => {
     if (isLoading) return true;
     if (selection.mode === 'curriculum') return !selection.mainUnit;
-    if (selection.mode === 'image') return !selection.sourceImage;
+    if (selection.mode === 'image' || selection.mode === 'exact') return !selection.sourceImage;
     return false;
   };
 
@@ -156,6 +156,18 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
           <ImageIcon size={16} />
           유사 문제
           {selection.mode === 'image' && (
+            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />
+          )}
+        </button>
+        <button
+          onClick={() => handleChange('mode', 'exact')}
+          className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors relative ${
+            selection.mode === 'exact' ? 'text-primary' : 'text-text-secondary hover:bg-slate-50'
+          }`}
+        >
+          <Copy size={16} />
+          동일 문제
+          {selection.mode === 'exact' && (
             <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />
           )}
         </button>
@@ -332,6 +344,79 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
           </div>
         )}
 
+        {/* EXACT MODE */}
+        {selection.mode === 'exact' && (
+          <div className="space-y-4">
+            <div className="bg-amber-50 p-3 rounded-sm border border-amber-100 text-xs text-amber-700 mb-2">
+              <strong>동일 문제 추출:</strong> 문제 사진을 업로드하면 AI가 텍스트를 그대로 추출하여
+              디지털화합니다. 정답과 풀이도 함께 생성됩니다.
+            </div>
+
+            <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+              <ImageIcon size={16} /> 문제 사진 업로드
+            </label>
+
+            {!selection.sourceImage ? (
+              <div
+                className="border-2 border-dashed border-slate-300 rounded-sm p-8 flex flex-col items-center justify-center text-center hover:bg-slate-50 transition-colors cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handleDrop}
+              >
+                <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mb-3">
+                  <Upload size={24} />
+                </div>
+                <p className="text-sm font-medium text-slate-700">클릭하여 이미지 업로드</p>
+                <p className="text-xs text-slate-400 mt-1">
+                  파일을 여기로 드래그하거나
+                  <br />
+                  <span className="font-semibold text-amber-600">Ctrl+V</span>로 붙여넣으세요
+                </p>
+              </div>
+            ) : (
+              <div className="relative rounded-sm overflow-hidden border border-slate-200 shadow-sm group">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={selection.sourceImage}
+                  alt="업로드된 문제"
+                  className="w-full h-auto object-contain max-h-60 bg-slate-100"
+                />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <button
+                    onClick={() => handleChange('sourceImage', null)}
+                    className="bg-white text-red-500 px-4 py-2 rounded-sm font-medium shadow-lg hover:bg-red-50 transition-colors flex items-center gap-2"
+                  >
+                    <X size={16} /> 이미지 삭제
+                  </button>
+                </div>
+              </div>
+            )}
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={handleImageUpload}
+            />
+
+            {/* 배점 제거 옵션 */}
+            <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-sm border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors">
+              <input
+                type="checkbox"
+                checked={selection.removeScore ?? false}
+                onChange={(e) => handleChange('removeScore', e.target.checked)}
+                className="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary/40"
+              />
+              <div>
+                <span className="text-sm font-medium text-slate-700">배점 제거</span>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  문제 텍스트에서 배점 표시 (예: &quot;(10점)&quot;, &quot;[5점]&quot;)를 자동 제거합니다
+                </p>
+              </div>
+            </label>
+          </div>
+        )}
+
         {/* Shared Options */}
         <div className="space-y-3 pt-2 border-t border-slate-100">
           <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
@@ -342,6 +427,11 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
             {selection.mode === 'image' && (
               <p className="text-xs text-slate-400 mb-2">
                 사진의 문제와 유사한 난이도로 생성되지만, 필요 시 아래 옵션으로 변경할 수 있습니다.
+              </p>
+            )}
+            {selection.mode === 'exact' && (
+              <p className="text-xs text-slate-400 mb-2">
+                동일 문제 추출 시 난이도와 유형은 AI가 자동으로 판별합니다. 아래 옵션은 참고용입니다.
               </p>
             )}
             <div className="grid grid-cols-2 gap-2">
@@ -408,7 +498,7 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
           ) : (
             <>
               <PenTool size={20} />
-              {selection.mode === 'image' ? '유사 문제 생성하기' : '문제 생성하기'}
+              {selection.mode === 'image' ? '유사 문제 생성하기' : selection.mode === 'exact' ? '동일 문제 추출하기' : '문제 생성하기'}
             </>
           )}
         </button>

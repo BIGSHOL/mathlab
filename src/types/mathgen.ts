@@ -42,7 +42,7 @@ export interface GeneratedProblem {
   diagramSpec?: DiagramSpec | any | null;
 }
 
-export type GenerationMode = 'curriculum' | 'image';
+export type GenerationMode = 'curriculum' | 'image' | 'exact';
 
 export interface SelectionState {
   mode: GenerationMode;
@@ -55,4 +55,5 @@ export interface SelectionState {
   difficulty: Difficulty;
   problemType: ProblemType;
   answerType: AnswerType;
+  removeScore?: boolean;
 }

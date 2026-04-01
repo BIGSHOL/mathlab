@@ -39,8 +39,10 @@ export async function POST(request: NextRequest) {
   const currentUser = await requireTeacher();
   if (isResponse(currentUser)) return currentUser;
 
+  let requestMode = 'curriculum';
   try {
     const body = await request.json();
+    requestMode = body.mode || 'curriculum';
 
     const selection: SelectionState = {
       mode: body.mode || 'curriculum',
@@ -53,6 +55,7 @@ export async function POST(request: NextRequest) {
       difficulty: body.difficulty || Difficulty.MEDIUM,
       problemType: body.problemType || ProblemType.TYPE,
       answerType: body.answerType || AnswerType.MULTIPLE_CHOICE,
+      removeScore: body.removeScore ?? false,
     };
 
     const problem = await generateMathProblem(selection);
@@ -117,7 +120,7 @@ export async function POST(request: NextRequest) {
       await prisma.questionGenerationLog.create({
         data: {
           teacherId: currentUser.id,
-          mode: 'curriculum',
+          mode: requestMode,
           success: false,
           errorMessage: error instanceof Error ? error.message : String(error),
         },

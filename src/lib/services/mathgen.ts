@@ -80,15 +80,21 @@ const COMMON_INSTRUCTIONS = `
        - **If Question Format is '주관식/서술형'**:
          - The "choices" array MUST be empty [].
 
-    4. [Boxed Content / <보기> - CRITICAL]
-       - If the problem has a "View" or "Reference" box (common in Korean exams as <보기>), you MUST use Markdown Blockquote syntax (>).
-       - **Structure**:
+    4. [Layout, Line Breaks & Boxed Content - CRITICAL]
+       - **Line Breaks**: You MUST preserve the original line breaks. Do NOT squash text into a single paragraph. Use double newlines (\\n\\n) to separate lines and paragraphs.
+       - **Dialogues**: If the problem contains a dialogue (e.g., Person A: ..., Person B: ...), each speaker's line MUST be on a new line separated by double newlines (\\n\\n).
+       - **Boxed Content**: If ANY part of the problem is enclosed in a box (like <보기>, a dialogue box, or a condition box), you MUST wrap that entire section in a Markdown Blockquote (>).
+         Example:
          > **<보 기>**
          > ㄱ. Statement 1
          > ㄴ. Statement 2
        - **Rules**:
          - The first line inside the blockquote MUST be \`**<보 기>**\`.
-         - Each item (ㄱ, ㄴ, ㄷ...) MUST be on a NEW LINE.
+         - Each item (ㄱ, ㄴ, ㄷ...) MUST be on a NEW LINE within the blockquote.
+         - Dialogue boxes must also use blockquote syntax:
+           > 솔이: 내 사물함의 비밀번호는 ...
+           >
+           > 정우: 힌트 좀 줘.
 
     5. [Visuals & Diagrams - USE PRESETS, NOT COORDINATES]
        - **When to generate**: If the topic involves **Geometry**, **Functions/Graphs**, or **Statistics**.
@@ -136,6 +142,29 @@ function buildTextPrompt(selection: SelectionState): string {
   `;
 }
 
+function buildExactPrompt(removeScore?: boolean): string {
+  const scoreInstruction = removeScore
+    ? `\n       - **CRITICAL**: Remove any score or points mentioned in the problem text (e.g., "(10점)", "[5점]", "4점", "②점"). Do NOT include them in the output.`
+    : '';
+
+  return `
+    You are an expert Mathematics Teacher in South Korea.
+
+    Task: Extract and convert the provided image of a math problem into **EXACTLY THE SAME** problem in text format.
+
+    1. **Extract**: Read the problem text, choices, and any mathematical formulas exactly as they appear in the image.${scoreInstruction}
+       - **CRITICAL**: Preserve the EXACT layout, line breaks, and formatting. If there is a box, use blockquotes. If there is a dialogue, keep each person's speech on a new line.
+    2. **Format**: Convert the extracted content into the required JSON format.
+       - Do NOT change the numbers, functions, or context.
+       - If there are choices in the image, put them in the "choices" array. If there are no choices, leave it empty [].
+       - If there is a diagram, describe it using "diagramSpec" preset-based JSON, or leave it null if not possible.
+       - Provide the correct answer and a detailed solution for the problem.
+       - Estimate the topic and difficulty level.
+
+    ${COMMON_INSTRUCTIONS}
+  `;
+}
+
 function buildImagePrompt(selection: SelectionState): string {
   return `
     You are an expert Mathematics Teacher in South Korea.
@@ -167,15 +196,19 @@ export async function generateMathProblem(selection: SelectionState): Promise<Ge
   const ai = getGeminiClient();
   let contents: unknown;
 
-  if (selection.mode === 'image' && selection.sourceImage) {
+  if ((selection.mode === 'image' || selection.mode === 'exact') && selection.sourceImage) {
     const base64Data = selection.sourceImage.split(',')[1];
     const mimeMatch = selection.sourceImage.match(/data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+).*,.*/);
     const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
 
+    const prompt = selection.mode === 'exact'
+      ? buildExactPrompt(selection.removeScore)
+      : buildImagePrompt(selection);
+
     contents = {
       parts: [
         { inlineData: { mimeType, data: base64Data } },
-        { text: buildImagePrompt(selection) },
+        { text: prompt },
       ],
     };
   } else {

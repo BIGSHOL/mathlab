@@ -206,15 +206,16 @@ export default async function StudentDashboard({
   }
   const maxDailyCount = Math.max(...dailyActivity.map((d) => d.count), 1);
 
-  // 랭킹 미리보기 (상위 5명)
+  // 랭킹 미리보기 (상위 5명 — 같은 테넌트 내)
+  const rankingTenantScope = user.tenantId ? { user: { tenantId: user.tenantId } } : {};
   const topStudents = await prisma.studentProfile.findMany({
-    where: { totalXp: { gt: 0 } },
+    where: { totalXp: { gt: 0 }, ...rankingTenantScope },
     include: { user: { select: { name: true, id: true } } },
     orderBy: { totalXp: 'desc' },
     take: 5,
   });
   const _myRank = profile
-    ? (await prisma.studentProfile.count({ where: { totalXp: { gt: profile.totalXp } } })) + 1
+    ? (await prisma.studentProfile.count({ where: { totalXp: { gt: profile.totalXp }, ...rankingTenantScope } })) + 1
     : null;
 
   // 추천 학습 (배정 과정 기반: 아직 완료하지 않은 개념)
