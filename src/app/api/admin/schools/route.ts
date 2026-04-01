@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireSuperAdmin, isResponse } from '@/lib/api';
+import { requireSuperAdmin, isResponse, badRequest } from '@/lib/api';
 import { haversineDistance } from '@/lib/exam-analysis/nearby-school-data';
 
 export async function GET(req: NextRequest) {
@@ -92,25 +92,112 @@ export async function GET(req: NextRequest) {
   });
 }
 
-// ── 주변 학교 조회 (4단계 확장) ──
+/** POST /api/admin/schools — 그룹 저장/해제 */
+export async function POST(req: NextRequest) {
+  const user = await requireSuperAdmin();
+  if (isResponse(user)) return user;
+
+  const body = await req.json();
+  const { action, schoolId, schoolIds } = body as {
+    action: 'saveGroup' | 'removeFromGroup';
+    schoolId?: string;
+    schoolIds?: string[];
+  };
+
+  if (action === 'saveGroup' && schoolIds && schoolIds.length > 0) {
+    // 그룹 생성: 중심 학교 ID를 그룹ID로 사용
+    const groupId = schoolId || schoolIds[0];
+    // 기존에 이 학교들이 다른 그룹에 속해 있었다면 해제 후 새 그룹으로
+    await prisma.school.updateMany({
+      where: { id: { in: schoolIds } },
+      data: { nearbyGroupId: groupId },
+    });
+    // 중심 학교도 그룹에 포함
+    if (schoolId && !schoolIds.includes(schoolId)) {
+      await prisma.school.update({
+        where: { id: schoolId },
+        data: { nearbyGroupId: groupId },
+      });
+    }
+    const count = await prisma.school.count({ where: { nearbyGroupId: groupId } });
+    return NextResponse.json({ data: { groupId, count } });
+  }
+
+  if (action === 'removeFromGroup' && schoolId) {
+    await prisma.school.update({
+      where: { id: schoolId },
+      data: { nearbyGroupId: null },
+    });
+    return NextResponse.json({ data: { removed: schoolId } });
+  }
+
+  return badRequest('유효하지 않은 요청입니다');
+}
+
+// ── 주변 학교 조회 (그룹 우선, 없으면 4단계 GPS) ──
 
 const MIN_NEARBY = 5;
 
 async function handleNearbySchools(schoolId: string) {
   const school = await prisma.school.findUnique({
     where: { id: schoolId },
-    select: { id: true, name: true, latitude: true, longitude: true, schoolType: true, regionCode: true, district: true },
+    select: {
+      id: true, name: true, latitude: true, longitude: true,
+      schoolType: true, regionCode: true, district: true, nearbyGroupId: true,
+    },
   });
 
   if (!school) {
     return NextResponse.json({ error: { code: 'NOT_FOUND', message: '학교를 찾을 수 없습니다' } }, { status: 404 });
   }
 
+  // ── 그룹이 있으면 그룹 멤버 반환 ──
+  if (school.nearbyGroupId) {
+    const groupMembers = await prisma.school.findMany({
+      where: {
+        nearbyGroupId: school.nearbyGroupId,
+        id: { not: school.id },
+      },
+      select: {
+        id: true, name: true, schoolType: true, latitude: true, longitude: true,
+        district: true, address: true, foundationType: true, highSchoolType: true,
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    // 거리 계산 (GPS 있으면)
+    const withDistance = groupMembers.map(s => ({
+      ...s,
+      distance: (school.latitude && school.longitude && s.latitude && s.longitude)
+        ? Math.round(haversineDistance(school.latitude, school.longitude, s.latitude, s.longitude) * 10) / 10
+        : 0,
+      sameDistrict: s.district === school.district,
+    }));
+    withDistance.sort((a, b) => a.distance - b.distance);
+
+    const nearbyNames = withDistance.map(s => s.name);
+    const [examCounts, centerExamCount] = await Promise.all([
+      nearbyNames.length > 0
+        ? prisma.examPaper.groupBy({ by: ['schoolName'], _count: true, where: { schoolName: { in: nearbyNames }, status: 'COMPLETED' } })
+        : [],
+      prisma.examPaper.count({ where: { schoolName: school.name, status: 'COMPLETED' } }),
+    ]);
+    const examCountMap = new Map((examCounts as Array<{ schoolName: string | null; _count: number }>).map(e => [e.schoolName, e._count]));
+
+    return NextResponse.json({
+      data: withDistance.map(s => ({ ...s, examCount: examCountMap.get(s.name) || 0 })),
+      center: { ...school, examCount: centerExamCount },
+      stage: 0, // 0 = 그룹
+      groupId: school.nearbyGroupId,
+      sameDistrictCount: withDistance.filter(s => s.sameDistrict).length,
+    });
+  }
+
+  // ── 그룹 없으면 4단계 GPS 로직 ──
   if (!school.latitude || !school.longitude) {
     return NextResponse.json({ data: [], center: school, message: 'GPS 좌표 정보가 없습니다' });
   }
 
-  // 같은 시도교육청 내 같은 학교급 학교 가져와서 JS로 거리 필터
   const candidates = await prisma.school.findMany({
     where: {
       regionCode: school.regionCode,
@@ -132,56 +219,26 @@ async function handleNearbySchools(schoolId: string) {
   }));
 
   // 4단계 확장 로직
-  // 1단계: 같은 구/군 + 5km 이내
   let nearbySchools = withDistance.filter(s => s.sameDistrict && s.distance <= 5);
   let stage = 1;
-
-  // 2단계: 같은 구/군 + 10km 이내
-  if (nearbySchools.length < MIN_NEARBY) {
-    nearbySchools = withDistance.filter(s => s.sameDistrict && s.distance <= 10);
-    stage = 2;
-  }
-
-  // 3단계: 전체 + 5km 이내
-  if (nearbySchools.length < MIN_NEARBY) {
-    nearbySchools = withDistance.filter(s => s.distance <= 5);
-    stage = 3;
-  }
-
-  // 4단계: 전체 + 10km 이내
-  if (nearbySchools.length < MIN_NEARBY) {
-    nearbySchools = withDistance.filter(s => s.distance <= 10);
-    stage = 4;
-  }
+  if (nearbySchools.length < MIN_NEARBY) { nearbySchools = withDistance.filter(s => s.sameDistrict && s.distance <= 10); stage = 2; }
+  if (nearbySchools.length < MIN_NEARBY) { nearbySchools = withDistance.filter(s => s.distance <= 5); stage = 3; }
+  if (nearbySchools.length < MIN_NEARBY) { nearbySchools = withDistance.filter(s => s.distance <= 10); stage = 4; }
 
   nearbySchools.sort((a, b) => a.distance - b.distance);
   const sameDistrictCount = nearbySchools.filter(s => s.sameDistrict).length;
 
-  // 주변 학교들의 기출 분석 건수 조회
   const nearbyNames = nearbySchools.map(s => s.name);
-  const examCounts = nearbyNames.length > 0
-    ? await prisma.examPaper.groupBy({
-        by: ['schoolName'],
-        _count: true,
-        where: {
-          schoolName: { in: nearbyNames },
-          status: 'COMPLETED',
-        },
-      })
-    : [];
-
-  const examCountMap = new Map(examCounts.map(e => [e.schoolName, e._count]));
-
-  // 현재 학교의 기출 건수도 포함
-  const centerExamCount = await prisma.examPaper.count({
-    where: { schoolName: school.name, status: 'COMPLETED' },
-  });
+  const [examCounts, centerExamCount] = await Promise.all([
+    nearbyNames.length > 0
+      ? prisma.examPaper.groupBy({ by: ['schoolName'], _count: true, where: { schoolName: { in: nearbyNames }, status: 'COMPLETED' } })
+      : [],
+    prisma.examPaper.count({ where: { schoolName: school.name, status: 'COMPLETED' } }),
+  ]);
+  const examCountMap = new Map((examCounts as Array<{ schoolName: string | null; _count: number }>).map(e => [e.schoolName, e._count]));
 
   return NextResponse.json({
-    data: nearbySchools.map(s => ({
-      ...s,
-      examCount: examCountMap.get(s.name) || 0,
-    })),
+    data: nearbySchools.map(s => ({ ...s, examCount: examCountMap.get(s.name) || 0 })),
     center: { ...school, examCount: centerExamCount },
     stage,
     sameDistrictCount,

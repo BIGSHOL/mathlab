@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Pagination } from '@/components/ui/Pagination';
-import { Search, School, Link2, X, Database, MapPin, FileText, Loader2 } from 'lucide-react';
+import { Search, School, Link2, X, Database, MapPin, FileText, Loader2, Save, Unlink } from 'lucide-react';
+import { toast } from '@/components/ui/Toast';
 import { useAuth } from '@/hooks/useAuth';
 
 interface SchoolItem {
@@ -39,7 +40,8 @@ interface NearbySchool {
 interface NearbyResult {
   data: NearbySchool[];
   center: { id: string; name: string; district: string | null; examCount: number };
-  stage: number; // 1~4 확장 단계
+  stage: number; // 0=그룹, 1~4=GPS 확장 단계
+  groupId?: string;
   sameDistrictCount: number;
   message?: string;
 }
@@ -179,17 +181,29 @@ export default function AdminSchoolsPage() {
     setPage(1);
   };
 
+  const fetchNearby = async (schoolId: string) => {
+    setSelectedSchoolId(schoolId);
+    setNearbyData(null);
+    setNearbyLoading(true);
+    try {
+      const res = await fetch(`/api/admin/schools?nearbyId=${schoolId}`);
+      if (!res.ok) return;
+      setNearbyData(await res.json());
+    } finally {
+      setNearbyLoading(false);
+    }
+  };
+
   const handleSchoolClick = async (schoolId: string) => {
     if (selectedSchoolId === schoolId) {
-      // 같은 학교 다시 클릭 → 닫기
       setSelectedSchoolId(null);
       setNearbyData(null);
       return;
     }
 
-    setSelectedSchoolId(schoolId);
     setNearbyData(null);
     setNearbyLoading(true);
+    setSelectedSchoolId(schoolId);
 
     try {
       const res = await fetch(`/api/admin/schools?nearbyId=${schoolId}`);
@@ -418,6 +432,7 @@ export default function AdminSchoolsPage() {
                   zoneId={zoneId}
                   onSchoolClick={handleSchoolClick}
                   onZoneClick={(z) => { setZoneId(z); setZone(''); setPage(1); }}
+                  onRefreshNearby={fetchNearby}
                   nearbyData={selectedSchoolId === s.id ? nearbyData : null}
                   nearbyLoading={selectedSchoolId === s.id && nearbyLoading}
                 />
@@ -442,12 +457,13 @@ export default function AdminSchoolsPage() {
 }
 
 /** 학교 행 + 주변 학교 확장 패널 */
-function SchoolRow({ school: s, isSelected, zoneId, onSchoolClick, onZoneClick, nearbyData, nearbyLoading }: {
+function SchoolRow({ school: s, isSelected, zoneId, onSchoolClick, onZoneClick, onRefreshNearby, nearbyData, nearbyLoading }: {
   school: SchoolItem;
   isSelected: boolean;
   zoneId: string;
   onSchoolClick: (id: string) => void;
   onZoneClick: (zoneId: string) => void;
+  onRefreshNearby: (id: string) => void;
   nearbyData: NearbyResult | null;
   nearbyLoading: boolean;
 }) {
@@ -511,7 +527,7 @@ function SchoolRow({ school: s, isSelected, zoneId, onSchoolClick, onZoneClick, 
       {isSelected && (
         <tr>
           <td colSpan={8} className="p-0">
-            <NearbyPanel data={nearbyData} loading={nearbyLoading} />
+            <NearbyPanel data={nearbyData} loading={nearbyLoading} onRefresh={() => onRefreshNearby(s.id)} />
           </td>
         </tr>
       )}
@@ -520,7 +536,40 @@ function SchoolRow({ school: s, isSelected, zoneId, onSchoolClick, onZoneClick, 
 }
 
 /** 주변 학교 확장 패널 */
-function NearbyPanel({ data, loading }: { data: NearbyResult | null; loading: boolean }) {
+function NearbyPanel({ data, loading, onRefresh }: { data: NearbyResult | null; loading: boolean; onRefresh: () => void }) {
+  const [saving, setSaving] = useState(false);
+
+  const handleSaveGroup = async () => {
+    if (!data) return;
+    setSaving(true);
+    try {
+      const schoolIds = data.data.map(s => s.id);
+      const res = await fetch('/api/admin/schools', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'saveGroup', schoolId: data.center.id, schoolIds }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        toast.success(`${json.data.count}개교 그룹 저장 완료`);
+        onRefresh();
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRemoveFromGroup = async (targetId: string) => {
+    const res = await fetch('/api/admin/schools', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'removeFromGroup', schoolId: targetId }),
+    });
+    if (res.ok) {
+      toast.success('그룹에서 제외했습니다');
+      onRefresh();
+    }
+  };
   if (loading) {
     return (
       <div className="bg-cyan-50/40 border-t border-cyan-200 px-6 py-6 flex items-center justify-center gap-2">
@@ -543,7 +592,9 @@ function NearbyPanel({ data, loading }: { data: NearbyResult | null; loading: bo
   const sameDistrictItems = data.data.filter(n => n.sameDistrict);
   const crossDistrictItems = data.data.filter(n => !n.sameDistrict);
   const centerDistrict = data.center.district || '같은 구/군';
+  const isGrouped = data.stage === 0;
   const STAGE_LABELS: Record<number, string> = {
+    0: '그룹',
     1: `${centerDistrict} 5km`,
     2: `${centerDistrict} 10km`,
     3: '전체 5km',
@@ -559,13 +610,28 @@ function NearbyPanel({ data, loading }: { data: NearbyResult | null; loading: bo
           <span className="text-cyan-500 font-normal">
             ({STAGE_LABELS[data.stage] || ''}, {data.data.length}개교)
           </span>
+          {isGrouped && (
+            <span className="text-[10px] text-violet-600 bg-violet-50 border border-violet-200 rounded-sm px-1.5 py-0.5">그룹 설정됨</span>
+          )}
         </h4>
-        {data.center.examCount > 0 && (
-          <span className="text-[10px] text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-sm px-1.5 py-0.5">
-            <FileText className="w-3 h-3 inline mr-0.5" />
-            기출 {data.center.examCount}건
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {data.center.examCount > 0 && (
+            <span className="text-[10px] text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-sm px-1.5 py-0.5">
+              <FileText className="w-3 h-3 inline mr-0.5" />
+              기출 {data.center.examCount}건
+            </span>
+          )}
+          {!isGrouped && data.data.length > 0 && (
+            <button
+              onClick={handleSaveGroup}
+              disabled={saving}
+              className="flex items-center gap-1 text-[10px] text-violet-600 bg-violet-50 border border-violet-200 rounded-sm px-2 py-0.5 hover:bg-violet-100 transition-colors disabled:opacity-50"
+            >
+              <Save className="w-3 h-3" />
+              {saving ? '저장 중...' : '그룹 저장'}
+            </button>
+          )}
+        </div>
       </div>
 
       {data.data.length === 0 ? (
@@ -580,17 +646,18 @@ function NearbyPanel({ data, loading }: { data: NearbyResult | null; loading: bo
                 <th className="px-3 py-1.5 text-left font-semibold text-cyan-700 w-20">시군구</th>
                 <th className="px-3 py-1.5 text-center font-semibold text-cyan-700 w-12">설립</th>
                 <th className="px-3 py-1.5 text-center font-semibold text-cyan-700 w-16">기출</th>
+                {isGrouped && <th className="px-3 py-1.5 text-center font-semibold text-cyan-700 w-10" />}
               </tr>
             </thead>
             <tbody>
               {sameDistrictItems.length > 0 && crossDistrictItems.length > 0 && (
                 <tr><td colSpan={5} className="px-3 py-1 bg-cyan-50/60 text-[10px] font-semibold text-cyan-600">{centerDistrict}</td></tr>
               )}
-              {sameDistrictItems.map(n => <NearbyRow key={n.id} school={n} />)}
+              {sameDistrictItems.map(n => <NearbyRow key={n.id} school={n} isGrouped={isGrouped} onRemove={handleRemoveFromGroup} />)}
               {crossDistrictItems.length > 0 && (
-                <tr><td colSpan={5} className="px-3 py-1 bg-slate-50 text-[10px] font-semibold text-slate-500">인접 지역 (3km 이내)</td></tr>
+                <tr><td colSpan={isGrouped ? 6 : 5} className="px-3 py-1 bg-slate-50 text-[10px] font-semibold text-slate-500">인접 지역</td></tr>
               )}
-              {crossDistrictItems.map(n => <NearbyRow key={n.id} school={n} />)}
+              {crossDistrictItems.map(n => <NearbyRow key={n.id} school={n} isGrouped={isGrouped} onRemove={handleRemoveFromGroup} />)}
             </tbody>
           </table>
         </div>
@@ -600,7 +667,7 @@ function NearbyPanel({ data, loading }: { data: NearbyResult | null; loading: bo
 }
 
 /** 주변 학교 행 */
-function NearbyRow({ school: n }: { school: NearbySchool }) {
+function NearbyRow({ school: n, isGrouped, onRemove }: { school: NearbySchool; isGrouped: boolean; onRemove: (id: string) => void }) {
   return (
     <tr className="border-t border-cyan-100 hover:bg-cyan-50/50">
       <td className="px-3 py-1.5">
@@ -619,6 +686,17 @@ function NearbyRow({ school: n }: { school: NearbySchool }) {
           <span className="text-slate-300">-</span>
         )}
       </td>
+      {isGrouped && (
+        <td className="px-1 py-1.5 text-center">
+          <button
+            onClick={(e) => { e.stopPropagation(); onRemove(n.id); }}
+            className="text-slate-300 hover:text-red-500 transition-colors"
+            title="그룹에서 제외"
+          >
+            <Unlink className="w-3 h-3" />
+          </button>
+        </td>
+      )}
     </tr>
   );
 }

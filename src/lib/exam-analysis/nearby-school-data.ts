@@ -127,6 +127,8 @@ const MAX_SAME_SCHOOL_EXAMS = 3;
 /**
  * 주변 학교 기출 비교 데이터 수집
  *
+ * 우선순위: 지점별 커스텀 그룹 → SUPER_ADMIN 디폴트 그룹 → GPS 4단계
+ *
  * @param analysisId - 현재 ExamAnalysis ID
  * @returns 주변 + 같은 학교 기출 요약 데이터 (없으면 빈 배열)
  */
@@ -142,7 +144,7 @@ export async function findNearbyExamData(analysisId: string): Promise<NearbyComp
 
   const examPaper = await prisma.examPaper.findUnique({
     where: { id: analysis.examPaperId },
-    select: { id: true, schoolName: true, title: true },
+    select: { id: true, schoolName: true, title: true, tenantId: true },
   });
   if (!examPaper?.schoolName) return empty;
 
@@ -153,7 +155,7 @@ export async function findNearbyExamData(analysisId: string): Promise<NearbyComp
     },
     select: {
       id: true, name: true, latitude: true, longitude: true,
-      schoolType: true, regionCode: true, district: true,
+      schoolType: true, regionCode: true, district: true, nearbyGroupId: true,
     },
   });
 
@@ -202,43 +204,69 @@ export async function findNearbyExamData(analysisId: string): Promise<NearbyComp
     }
   }
 
-  // 4. GPS 좌표가 없으면 주변 학교 검색 불가 — 같은 학교 데이터만 반환
-  if (!school.latitude || !school.longitude) return result;
+  // 4. 주변 학교 검색: 지점별 커스텀 → SUPER_ADMIN 디폴트 → GPS 4단계
+  let nearbySchoolNames: string[] = [];
 
-  // 5. 같은 regionCode + schoolType의 학교 가져와서 JS에서 거리 필터
-  const candidateSchools = await prisma.school.findMany({
-    where: {
-      regionCode: school.regionCode,
-      schoolType: school.schoolType,
-      id: { not: school.id },
-      latitude: { not: null },
-      longitude: { not: null },
-    },
-    select: { id: true, name: true, latitude: true, longitude: true, district: true },
-  });
+  // 4-1. 지점별 커스텀 그룹 확인
+  if (examPaper.tenantId) {
+    const tenantOverride = await prisma.tenantNearbyGroup.findUnique({
+      where: { tenantId_schoolId: { tenantId: examPaper.tenantId, schoolId: school.id } },
+    });
+    if (tenantOverride) {
+      const tenantGroupMembers = await prisma.tenantNearbyGroup.findMany({
+        where: { tenantId: examPaper.tenantId, groupId: tenantOverride.groupId, schoolId: { not: school.id } },
+        select: { schoolId: true },
+      });
+      const memberSchools = await prisma.school.findMany({
+        where: { id: { in: tenantGroupMembers.map(m => m.schoolId) } },
+        select: { name: true },
+      });
+      nearbySchoolNames = memberSchools.map(s => s.name);
+    }
+  }
 
-  const withDistance = candidateSchools
-    .map(s => ({
+  // 4-2. 지점별 세팅 없으면 SUPER_ADMIN 디폴트 그룹
+  if (nearbySchoolNames.length === 0 && school.nearbyGroupId) {
+    const groupMembers = await prisma.school.findMany({
+      where: { nearbyGroupId: school.nearbyGroupId, id: { not: school.id } },
+      select: { name: true },
+    });
+    nearbySchoolNames = groupMembers.map(s => s.name);
+  }
+
+  // 4-3. 그룹도 없으면 GPS 4단계
+  if (nearbySchoolNames.length === 0 && school.latitude && school.longitude) {
+    // GPS 4단계 확장
+    const candidateSchools = await prisma.school.findMany({
+      where: {
+        regionCode: school.regionCode,
+        schoolType: school.schoolType,
+        id: { not: school.id },
+        latitude: { not: null },
+        longitude: { not: null },
+      },
+      select: { id: true, name: true, latitude: true, longitude: true, district: true },
+    });
+
+    const withDistance = candidateSchools.map(s => ({
       ...s,
-      distance: haversineDistance(
-        school.latitude!, school.longitude!,
-        s.latitude!, s.longitude!,
-      ),
+      distance: haversineDistance(school.latitude!, school.longitude!, s.latitude!, s.longitude!),
       sameDistrict: s.district === school.district,
     }));
 
-  // 4단계 확장: 같은구5km → 같은구10km → 전체5km → 전체10km
-  let nearbySchools = withDistance.filter(s => s.sameDistrict && s.distance <= 5);
-  if (nearbySchools.length < MIN_NEARBY) nearbySchools = withDistance.filter(s => s.sameDistrict && s.distance <= 10);
-  if (nearbySchools.length < MIN_NEARBY) nearbySchools = withDistance.filter(s => s.distance <= 5);
-  if (nearbySchools.length < MIN_NEARBY) nearbySchools = withDistance.filter(s => s.distance <= 10);
-  nearbySchools.sort((a, b) => a.distance - b.distance);
+    let nearbySchools = withDistance.filter(s => s.sameDistrict && s.distance <= 5);
+    if (nearbySchools.length < MIN_NEARBY) nearbySchools = withDistance.filter(s => s.sameDistrict && s.distance <= 10);
+    if (nearbySchools.length < MIN_NEARBY) nearbySchools = withDistance.filter(s => s.distance <= 5);
+    if (nearbySchools.length < MIN_NEARBY) nearbySchools = withDistance.filter(s => s.distance <= 10);
+    nearbySchools.sort((a, b) => a.distance - b.distance);
+    nearbySchoolNames = nearbySchools.map(s => s.name);
+  } else {
+    return result; // GPS도 그룹도 없으면 같은 학교 데이터만
+  }
 
-  if (nearbySchools.length === 0) return result;
+  if (nearbySchoolNames.length === 0) return result;
 
-  // 6. 주변 학교 이름으로 ExamPaper → ExamAnalysis 검색
-  const nearbySchoolNames = nearbySchools.map(s => s.name);
-
+  // 5. 주변 학교 이름으로 ExamPaper → ExamAnalysis 검색
   const nearbyPapers = await prisma.examPaper.findMany({
     where: {
       schoolName: { in: nearbySchoolNames },
@@ -263,10 +291,8 @@ export async function findNearbyExamData(analysisId: string): Promise<NearbyComp
   for (const na of nearbyAnalyses.slice(0, MAX_NEARBY_EXAMS)) {
     const paper = nearbyPapers.find(p => p.id === na.examPaperId);
     if (!paper?.schoolName) continue;
-    const nearbySchool = nearbySchools.find(s => s.name === paper.schoolName);
-    const distance = nearbySchool?.distance ?? 0;
     result.nearbyExams.push(
-      extractExamSummary(paper.schoolName, distance, paper.title || '제목 없음', na),
+      extractExamSummary(paper.schoolName, 0, paper.title || '제목 없음', na),
     );
   }
 

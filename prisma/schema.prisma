@@ -67,6 +67,7 @@ model Tenant {
   dailyQuestions         DailyQuestion[]
   featureFlags           FeatureFlag[]
   tenantLicenses         TenantLicense[]
+  nearbyGroups           TenantNearbyGroup[]
 
   @@index([slug])
   @@index([isActive])
@@ -660,6 +661,7 @@ model School {
   zoneId          String?  @db.VarChar(30)               // 학구ID (학구도 API)
   eduSupportCode  String?  @db.VarChar(20)               // 교육지원청코드
   eduSupportName  String?  @db.VarChar(50)               // 교육지원청명
+  nearbyGroupId   String?  @db.VarChar(50)               // 주변 학교 그룹 (같은 ID = 같은 그룹)
   createdAt       DateTime @default(now())
   dataUpdatedAt   DateTime?
 
@@ -668,6 +670,22 @@ model School {
   @@index([regionCode])
   @@index([name])
   @@index([zoneId])
+  @@index([nearbyGroupId])
+}
+
+// 지점별 주변 학교 그룹 커스텀 (SUPER_ADMIN 디폴트를 지점이 오버라이드)
+model TenantNearbyGroup {
+  id        String   @id @default(cuid())
+  tenantId  String
+  schoolId  String                                        // 기준 학교
+  groupId   String   @db.VarChar(50)                      // 그룹ID (같은 값 = 같은 그룹)
+  createdAt DateTime @default(now())
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, schoolId])                          // 지점당 학교 하나의 그룹만
+  @@index([tenantId, groupId])
+  @@index([groupId])
 }
 
 // FEAT: Arithmetic Practice Results
