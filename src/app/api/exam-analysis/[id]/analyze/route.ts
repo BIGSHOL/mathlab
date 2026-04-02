@@ -34,9 +34,9 @@ export async function POST(request: NextRequest, { params }: Params) {
   if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
 
   if (examPaper.status === 'ANALYZING') {
-    // 5분 이상 ANALYZING 상태면 갇힌 것으로 판단 → 강제 복구 후 재시도
+    // 2분 이상 ANALYZING 상태면 갇힌 것으로 판단 → 재시도 허용
     const stuckMinutes = (Date.now() - new Date(examPaper.updatedAt).getTime()) / 60000;
-    if (stuckMinutes < 5) {
+    if (stuckMinutes < 2) {
       return badRequest('이미 분석이 진행 중입니다');
     }
   }

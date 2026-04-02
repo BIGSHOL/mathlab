@@ -36,8 +36,8 @@ export async function GET(request: NextRequest) {
     }),
   };
 
-  // 5분 이상 ANALYZING 상태에 갇힌 시험지 자동 FAILED 복구
-  const stuckThreshold = new Date(Date.now() - 5 * 60 * 1000);
+  // 2분 이상 ANALYZING 상태에 갇힌 시험지 자동 FAILED 복구
+  const stuckThreshold = new Date(Date.now() - 2 * 60 * 1000);
   await prisma.examPaper.updateMany({
     where: { ...tenantWhere, status: 'ANALYZING', updatedAt: { lt: stuckThreshold } },
     data: { status: 'FAILED', errorMessage: 'ANALYZING 상태 타임아웃 (자동 복구)' },
