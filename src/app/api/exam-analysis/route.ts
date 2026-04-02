@@ -36,8 +36,8 @@ export async function GET(request: NextRequest) {
     }),
   };
 
-  // 10분 이상 ANALYZING 상태에 갇힌 시험지 자동 FAILED 복구
-  const stuckThreshold = new Date(Date.now() - 10 * 60 * 1000);
+  // 5분 이상 ANALYZING 상태에 갇힌 시험지 자동 FAILED 복구
+  const stuckThreshold = new Date(Date.now() - 5 * 60 * 1000);
   await prisma.examPaper.updateMany({
     where: { ...tenantWhere, status: 'ANALYZING', updatedAt: { lt: stuckThreshold } },
     data: { status: 'FAILED', errorMessage: 'ANALYZING 상태 타임아웃 (자동 복구)' },
@@ -122,10 +122,10 @@ export async function POST(request: NextRequest) {
 
   const fileType = files[0].type === 'application/pdf' ? 'pdf' : 'image';
 
-  // 학교명 → School DB 자동 매칭
+  // 학교 매칭: 프론트에서 선택한 schoolId 우선, 없으면 이름으로 자동 매칭
   const schoolName = parsed.data.schoolName || null;
-  let schoolId: string | null = null;
-  if (schoolName) {
+  let schoolId: string | null = parsed.data.schoolId || null;
+  if (!schoolId && schoolName) {
     try {
       schoolId = await matchSchoolByName(schoolName, parsed.data.grade);
     } catch {

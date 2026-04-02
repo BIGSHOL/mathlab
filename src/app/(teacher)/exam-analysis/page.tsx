@@ -117,11 +117,16 @@ export default function ExamAnalysisPage() {
       return;
     }
 
-    const MAX_POLLS = 100; // 최대 5분 (3초 × 100)
+    const MAX_POLLS = 60; // 최대 3분 (3초 × 60)
     const interval = setInterval(() => {
       pollCountRef.current++;
       if (pollCountRef.current > MAX_POLLS) {
         clearInterval(interval);
+        // 클라이언트에서 강제로 ANALYZING → FAILED 전환 (무한폴링 방지)
+        setItems(prev => prev.map(item =>
+          item.status === 'ANALYZING' ? { ...item, status: 'FAILED' as const } : item
+        ));
+        toast.warning('분석 시간이 초과되었습니다. 다시 시도해주세요.');
         return;
       }
       fetchListRef.current(true);

@@ -7,6 +7,7 @@ import { detectGradingMarks } from '@/lib/exam-analysis/mark-detector';
 import { crossValidateGrading, consolidateDominantTopic } from '@/lib/exam-analysis/cross-validator';
 import type { ExamContext, AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { PROMPT_VERSION } from '@/lib/exam-analysis/constants';
+import { matchSchoolByName } from '@/lib/utils/school-matcher';
 import path from 'path';
 import { readFile } from 'fs/promises';
 
@@ -33,15 +34,16 @@ export async function POST(request: NextRequest, { params }: Params) {
   if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
 
   if (examPaper.status === 'ANALYZING') {
-    // 10분 이상 ANALYZING 상태면 갇힌 것으로 판단 → FAILED 복구 후 재시도 허용
+    // 5분 이상 ANALYZING 상태면 갇힌 것으로 판단 → 강제 복구 후 재시도
     const stuckMinutes = (Date.now() - new Date(examPaper.updatedAt).getTime()) / 60000;
-    if (stuckMinutes < 10) {
+    if (stuckMinutes < 5) {
       return badRequest('이미 분석이 진행 중입니다');
     }
-    await prisma.examPaper.update({
-      where: { id },
-      data: { status: 'FAILED', errorMessage: 'ANALYZING 상태 타임아웃 (자동 복구)' },
-    });
+  }
+
+  // 재분석 시 기존 분석 결과 삭제 → 처음부터 다시
+  if (examPaper.status === 'COMPLETED' || examPaper.status === 'FAILED') {
+    await prisma.examAnalysis.deleteMany({ where: { examPaperId: id } });
   }
 
   // 상태 → ANALYZING, step 0
@@ -103,6 +105,20 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     // 내신 원칙 통합
     questions = consolidateDominantTopic(questions);
+
+    // ── 2단계 학교 매칭: schoolId 없고 AI가 학교명 추출했으면 자동 매칭 ──
+    if (!examPaper.schoolId && analysisResult.exam_info.school_name) {
+      try {
+        const aiSchoolName = analysisResult.exam_info.school_name;
+        const matchedId = await matchSchoolByName(aiSchoolName, examPaper.grade);
+        const updateData: Record<string, unknown> = {};
+        if (!examPaper.schoolName) updateData.schoolName = aiSchoolName;
+        if (matchedId) updateData.schoolId = matchedId;
+        if (Object.keys(updateData).length > 0) {
+          await prisma.examPaper.update({ where: { id }, data: updateData });
+        }
+      } catch { /* 매칭 실패해도 분석은 계속 */ }
+    }
 
     // ── Step 4: DB 저장 ──
     await setStep(id, 4);
