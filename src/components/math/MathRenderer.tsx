@@ -106,12 +106,14 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
   );
 
   // [한글 설명] 패턴을 스타일링된 HTML 플레이스홀더로 변환
-  // 단, 마크다운 이미지 ![alt](url) 안의 [alt] 부분은 건드리지 않음
+  // 단, 마크다운 이미지 ![alt](url), 수학 구간 표기 [-2, 4], 보기 항목은 제외
   const processedContent = svgReplacedContent.replace(
     /(?<!!)\[([가-힣\s\d/,×÷+\-a-zA-Z]+)\](?!\()/g,
     (match, desc) => {
       // 보기 항목(ㄱ,ㄴ,ㄷ)이나 그림 번호는 제외
       if (/^[ㄱ-ㅎ]/.test(desc) || /^그림/.test(desc)) return match;
+      // 수학 구간 표기 제외: 숫자/부호/공백/콤마만으로 이루어진 경우 (예: -2, 4 / 0, 5)
+      if (/^[\s\d.,+\-−/]+$/.test(desc)) return match;
       return `<span class="diagram-placeholder">${desc}</span>`;
     }
   );

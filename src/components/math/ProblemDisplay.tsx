@@ -106,6 +106,7 @@ export function ProblemDisplay({ problem, isLoading }: ProblemDisplayProps) {
                     ) : (
                       <div
                         className="w-full overflow-hidden rounded-sm border border-slate-100 bg-white p-6 shadow-sm [&_svg]:w-full [&_svg]:h-auto"
+                        style={{ fontFamily: "'Pretendard', system-ui, sans-serif" }}
                         dangerouslySetInnerHTML={{ __html: problem.diagramSVG! }}
                       />
                     )}

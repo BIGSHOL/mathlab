@@ -5,17 +5,18 @@ export enum SchoolLevel {
 }
 
 export enum Difficulty {
-  LOW = '하',
-  MEDIUM = '중',
-  HIGH = '상',
-  EXTREME = '최상',
+  LEVEL1 = 'Level 1',
+  LEVEL2 = 'Level 2',
+  LEVEL3 = 'Level 3',
+  LEVEL4 = 'Level 4',
+  LEVEL5 = 'Level 5',
 }
 
 export enum ProblemType {
-  CONCEPT = '개념 확인',
-  TYPE = '유형 익히기',
-  SKILL = '실력 다지기',
-  CREATIVE = '창의 융합',
+  CALCULATION = '계산력',
+  UNDERSTANDING = '이해력',
+  PROBLEM_SOLVING = '문제해결력',
+  REASONING = '추론력',
 }
 
 export enum AnswerType {

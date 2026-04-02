@@ -35,10 +35,16 @@ export function DiagramRenderer({ spec, className }: DiagramRendererProps) {
 
   if (!svgHtml) return null;
 
+  // SVG 내 text 요소에 Pretendard 폰트 강제 적용 (AI raw SVG 대응)
+  const styledSvg = svgHtml.replace(
+    /<svg([^>]*)>/,
+    '<svg$1 style="font-family: \'Pretendard\', system-ui, sans-serif;">'
+  );
+
   return (
     <div
       className={`w-full overflow-hidden [&_svg]:w-full [&_svg]:h-auto ${className ?? ''}`}
-      dangerouslySetInnerHTML={{ __html: svgHtml }}
+      dangerouslySetInnerHTML={{ __html: styledSvg }}
     />
   );
 }

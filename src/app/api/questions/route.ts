@@ -37,17 +37,45 @@ export async function GET(request: NextRequest) {
   const hasDomain = searchParams.get('hasDomain');
   if (hasDomain === 'true') where.domain = { not: null };
   else if (hasDomain === 'false') where.domain = null;
+
+  // sourceTag 필터 (AI 생성 문제 등)
+  const sourceTag = searchParams.get('sourceTag');
+  if (sourceTag) where.sourceTag = sourceTag;
+
+  // AND 조건 누적용 배열
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const andConditions: Record<string, any>[] = [];
+
+  // tenant 스코핑: SUPER_ADMIN은 전체 + tenantId 필터 가능, 나머지는 자기 지점 + 공용(null)
+  const filterTenantId = searchParams.get('tenantId');
+  if (user.role === 'SUPER_ADMIN') {
+    if (filterTenantId) where.tenantId = filterTenantId;
+  } else {
+    // 자기 지점 문제 + 공용 문제(tenantId=null)만 조회
+    andConditions.push({ OR: [{ tenantId: user.tenantId }, { tenantId: null }] });
+  }
+
   if (search) {
-    where.OR = [
-      { content: { contains: search } },
-      { chapter: { contains: search } },
-      { answer: { contains: search } },
-    ];
+    andConditions.push({
+      OR: [
+        { content: { contains: search } },
+        { chapter: { contains: search } },
+        { answer: { contains: search } },
+      ],
+    });
+  }
+
+  if (andConditions.length > 0) {
+    where.AND = andConditions;
   }
 
   const [questions, total] = await Promise.all([
     prisma.question.findMany({
       where,
+      include: {
+        tenant: { select: { id: true, name: true } },
+        createdBy: { select: { id: true, name: true } },
+      },
       orderBy: [{ bookCode: 'asc' }, { chapter: 'asc' }, { questionNum: 'asc' }],
       skip: (page - 1) * limit,
       take: limit,

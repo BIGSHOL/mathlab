@@ -68,6 +68,7 @@ model Tenant {
   featureFlags           FeatureFlag[]
   tenantLicenses         TenantLicense[]
   nearbyGroups           TenantNearbyGroup[]
+  questions              Question[]
 
   @@index([slug])
   @@index([isActive])
@@ -133,6 +134,7 @@ model User {
   assignedLicenses             StudentLicense[]  @relation("LicenseAssignedBy")
   examPapersAsTeacher          ExamPaper[]       @relation("ExamPaperTeacher")
   examPapersAsStudent          ExamPaper[]       @relation("ExamPaperStudent")
+  createdQuestions             Question[]        @relation("createdQuestions")
 
   @@index([role])
   @@index([classroomId])
@@ -360,7 +362,13 @@ model Question {
   domain      String?            @db.VarChar(30)   // CALCULATION | UNDERSTANDING | PROBLEM_SOLVING | REASONING
   conceptId   String?                              // 연결된 개념 (계통도 분석용)
 
+  // 지점/생성자 메타데이터
+  tenantId    String?                              // 생성 지점 (null=공용/레거시)
+  createdById String?                              // 생성한 선생님
+
   concept        Concept?           @relation(fields: [conceptId], references: [id], onDelete: SetNull)
+  tenant         Tenant?            @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  createdBy      User?              @relation("createdQuestions", fields: [createdById], references: [id], onDelete: SetNull)
   dailyQuestions DailyQuestion[]
   reviewSchedules ReviewSchedule[]
 
@@ -378,6 +386,8 @@ model Question {
   @@index([type])
   @@index([domain])
   @@index([conceptId])
+  @@index([tenantId])
+  @@index([createdById])
 }
 
 // Concept Prerequisites (self-referencing many-to-many)

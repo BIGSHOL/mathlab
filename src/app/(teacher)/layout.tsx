@@ -3,7 +3,9 @@ import { TeacherBottomNav } from '@/components/layout/TeacherBottomNav';
 import { CommandPalette } from '@/components/layout/CommandPalette';
 import { ToastContainer } from '@/components/ui/Toast';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { DemoGuideBar } from '@/components/demo/DemoGuideBar';
 import { getCurrentUser } from '@/lib/auth';
+import { isDemoUser } from '@/lib/demo';
 import { resolveCurrentTenant } from '@/lib/tenant';
 import { TenantProvider } from '@/components/providers/TenantProvider';
 import { redirect } from 'next/navigation';
@@ -19,10 +21,12 @@ export default async function TeacherLayout({
   if (user.role === 'STUDENT') redirect('/dashboard');
 
   const tenant = await resolveCurrentTenant();
+  const isDemo = isDemoUser(user);
 
   return (
     <TenantProvider tenant={tenant}>
-      <div className="h-screen flex bg-background overflow-hidden print:h-auto print:overflow-visible print:bg-white">
+      <div className={`h-screen flex bg-background overflow-hidden print:h-auto print:overflow-visible print:bg-white ${isDemo ? 'pt-10' : ''}`}>
+        {isDemo && <DemoGuideBar />}
         <Sidebar />
         <main className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden pb-14 md:pb-0 print:overflow-visible">{children}</main>
         <TeacherBottomNav />

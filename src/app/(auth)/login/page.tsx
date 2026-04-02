@@ -56,8 +56,8 @@ export default function LoginPage() {
       return;
     }
 
-    // 직접 네비게이션으로 세션 갱신 + 리다이렉트를 한 번에 처리
-    window.location.href = '/dashboard';
+    // 데모 계정은 데모 허브로, 일반 계정은 대시보드로
+    window.location.href = username === 'demo' ? '/demo' : '/dashboard';
   };
 
   const displayName = tenant?.name || 'Injaewon MathLAB';
