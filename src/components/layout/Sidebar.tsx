@@ -17,6 +17,7 @@ import { UserAvatar } from '@/components/ui/UserAvatar';
 import { LogoIcon } from '@/components/ui/LogoIcon';
 import { useTenant } from '@/components/providers/TenantProvider';
 import { getNavForRole, getAllNavItems, hasMinRole, type NavItem } from '@/lib/constants/navigation';
+import { DEMO_USERNAME } from '@/lib/demo';
 import { useViewingTenantStore } from '@/stores/viewingTenantStore';
 import type { UserRole } from '@/types';
 
@@ -37,7 +38,15 @@ export function Sidebar() {
   const isViewingAsTenant = user?.role === 'SUPER_ADMIN' && !!viewingTenantId;
   const effectiveRole = isViewingAsTenant ? 'OWNER' : (user?.role ?? 'TEACHER');
   const role = effectiveRole as UserRole;
-  const navGroups = getNavForRole(role);
+  const isDemo = user?.username === DEMO_USERNAME;
+  // 데모 계정: 3가지 핵심 기능 + 숙제만 노출
+  const DEMO_ALLOWED_HREFS = ['/overview', '/concepts', '/questions/arithmetic', '/exam-analysis', '/homework', '/student-preview', '/settings'];
+  const rawNavGroups = getNavForRole(role);
+  const navGroups = isDemo
+    ? rawNavGroups
+        .map(g => ({ ...g, items: g.items.filter((item: NavItem) => DEMO_ALLOWED_HREFS.includes(item.href)) }))
+        .filter(g => g.items.length > 0)
+    : rawNavGroups;
   const allItems = getAllNavItems();
   const [collapsed, setCollapsed] = useState(false);
   const displayName = isViewingAsTenant ? (viewingTenantName ?? 'MathLAB') : (tenant?.name || 'MathLAB');
