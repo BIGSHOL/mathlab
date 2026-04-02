@@ -101,11 +101,15 @@ export default function ExamAnalysisPage() {
     else setSelectedDetail(null);
   }, [selectedId, fetchDetail]);
 
-  // 분석 중 자동 폴링 — items를 ref로 추적하여 interval 재생성 방지
+  // 분석 중 자동 폴링 — ref로 함수 참조하여 interval 재생성 방지
   const hasAnalyzing = items.some(i => i.status === 'ANALYZING');
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
   const pollCountRef = useRef(0);
+  const fetchListRef = useRef(fetchList);
+  fetchListRef.current = fetchList;
+  const fetchDetailRef = useRef(fetchDetail);
+  fetchDetailRef.current = fetchDetail;
 
   useEffect(() => {
     if (!hasAnalyzing) {
@@ -120,12 +124,12 @@ export default function ExamAnalysisPage() {
         clearInterval(interval);
         return;
       }
-      fetchList(true);
-      if (selectedIdRef.current) fetchDetail(selectedIdRef.current);
+      fetchListRef.current(true);
+      if (selectedIdRef.current) fetchDetailRef.current(selectedIdRef.current);
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [hasAnalyzing, fetchList, fetchDetail]);
+  }, [hasAnalyzing]);
 
   const handleAnalyze = async (id: string) => {
     setAnalyzing(true);
