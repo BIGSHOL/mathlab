@@ -14,6 +14,7 @@ export const examPaperCreateSchema = z.object({
   unit: z.string().max(200).optional().nullable(),
   examScope: z.array(z.string()).optional().nullable(),
   schoolName: z.string().max(100).optional().nullable(),
+  schoolId: z.string().max(50).optional().nullable(),
   examType: z.enum(['blank', 'student']).default('blank'),
   studentId: z.string().optional().nullable(),
 });
@@ -41,6 +42,8 @@ export const analyzeRequestSchema = z.object({
 export const analyzeExtendedRequestSchema = z.object({
   agents: z.array(z.enum(AGENT_TYPES)).min(1, '분석 에이전트를 선택하세요'),
   forceRegenerate: z.boolean().default(false),
+  includeNearby: z.boolean().default(true),
+  includeYearCompare: z.boolean().default(true),
 });
 
 // ── 목록 조회 쿼리 ──

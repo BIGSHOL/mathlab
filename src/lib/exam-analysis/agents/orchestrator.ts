@@ -43,8 +43,10 @@ export async function runExtendedAnalysis(params: {
   analysisId: string;
   agentTypes: AgentType[];
   forceRegenerate?: boolean;
+  includeNearby?: boolean;
+  includeYearCompare?: boolean;
 }): Promise<OrchestratorResult[]> {
-  const { analysisId, agentTypes, forceRegenerate = false } = params;
+  const { analysisId, agentTypes, forceRegenerate = false, includeNearby = true, includeYearCompare = true } = params;
 
   // 기본 분석 조회
   const analysis = await prisma.examAnalysis.findUnique({
@@ -127,11 +129,16 @@ export async function runExtendedAnalysis(params: {
     }
   }
 
-  // commentary 에이전트용 주변 학교 기출 데이터 사전 수집
+  // commentary 에이전트용 주변 학교 + 연도 비교 데이터 사전 수집
   let nearbyComparisonData: Awaited<ReturnType<typeof findNearbyExamData>> | undefined;
-  if (independentRequested.includes('commentary')) {
+  if (independentRequested.includes('commentary') && (includeNearby || includeYearCompare)) {
     try {
       nearbyComparisonData = await findNearbyExamData(analysisId);
+      // 토글에 따라 데이터 필터링
+      if (nearbyComparisonData) {
+        if (!includeNearby) nearbyComparisonData.nearbyExams = [];
+        if (!includeYearCompare) nearbyComparisonData.sameSchoolExams = [];
+      }
     } catch (e) {
       console.error('[orchestrator] 주변 학교 데이터 수집 실패 (무시):', e);
     }

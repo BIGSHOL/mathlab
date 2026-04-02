@@ -84,7 +84,13 @@ export async function POST(request: NextRequest, { params }: Params) {
     await setStep(id, 3);
 
     const mimeType = examPaper.fileType === 'pdf' ? 'application/pdf' : 'image/jpeg';
-    const analysisResult = await analyzeExam(imageDataList, mimeType, promptResult.combined_prompt);
+    // 3분 타임아웃 — Gemini 응답이 없으면 강제 중단
+    const analysisResult = await Promise.race([
+      analyzeExam(imageDataList, mimeType, promptResult.combined_prompt),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('AI 분석 타임아웃 (3분 초과)')), 180_000),
+      ),
+    ]);
 
     let questions = analysisResult.questions as AnalyzedQuestion[];
 
@@ -120,7 +126,9 @@ export async function POST(request: NextRequest, { params }: Params) {
       } catch { /* 매칭 실패해도 분석은 계속 */ }
     }
 
-    // ── Step 4: DB 저장 ──
+    // ── Step 4: DB 저장 (Gemini 호출 후 DB 연결 재확인) ──
+    // PgBouncer 유휴 연결 끊김 방지: 간단한 쿼리로 커넥션 활성화
+    await prisma.$executeRaw`SELECT 1`;
     await setStep(id, 4);
 
     const totalQuestions = questions.length;

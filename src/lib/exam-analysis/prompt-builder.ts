@@ -547,6 +547,7 @@ export class ExamPromptBuilder {
   "exam_info": {
     "total_questions": 21,
     "total_points": 100,
+    "school_name": "시험지에 적힌 학교명 또는 null (예: 정화중학교, 영남고등학교)",
     "format_distribution": {
       "objective": 16,
       "short_answer": 0,

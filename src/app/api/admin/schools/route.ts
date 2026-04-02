@@ -76,23 +76,24 @@ export async function GET(req: NextRequest) {
       : (Promise.resolve([]) as Promise<Array<{ district: string; _count: number }>>),
     prisma.school.count({ where: { zoneId: { not: null } } }),
     prisma.school.count(),
-    // 기출 카운트: schoolId FK 기준
-    prisma.examPaper.groupBy({
-      by: ['schoolId'],
-      _count: true,
+    // 기출 라벨용 데이터
+    prisma.examPaper.findMany({
       where: { schoolId: { not: null }, status: 'COMPLETED' },
+      select: { schoolId: true, grade: true, category: true, title: true, createdAt: true },
     }),
   ]);
 
-  // 기출 카운트 맵 생성
-  const examCountMap = new Map(
-    (examCountStats as Array<{ schoolId: string | null; _count: number }>)
-      .filter(e => e.schoolId)
-      .map(e => [e.schoolId!, e._count])
+  // 기출 라벨 맵 생성
+  const examLabelsMap = buildExamLabelsMap(
+    examCountStats as Array<{ schoolId: string | null; grade: string; category: string | null; title: string; createdAt: Date }>
   );
 
   return NextResponse.json({
-    data: items.map(s => ({ ...s, examCount: examCountMap.get(s.id) || 0 })),
+    data: items.map(s => ({
+      ...s,
+      examCount: examLabelsMap.get(s.id)?.length || 0,
+      examLabels: examLabelsMap.get(s.id) || [],
+    })),
     meta: { page, limit, total },
     stats: {
       byType: typeStats.map(s => ({ type: s.schoolType, count: s._count })),
@@ -158,21 +159,52 @@ export async function POST(req: NextRequest) {
 
 // ── 기출 라벨 생성 (24-3-1, 24-대수 등) ──
 
-function buildExamLabelsMap(papers: Array<{ schoolId: string | null; grade: string; category: string | null; createdAt: Date }>): Map<string, string[]> {
+// 고등 과목 축약
+const CATEGORY_ABBR: Record<string, string> = {
+  '공통수학1': '공수1', '공통수학2': '공수2',
+  '미적분I': '미적1', '미적분II': '미적2',
+  '확률과 통계': '확통', '확률과통계': '확통',
+};
+
+function buildExamLabelsMap(papers: Array<{ schoolId: string | null; grade: string; category: string | null; title: string; createdAt: Date }>): Map<string, string[]> {
   const map = new Map<string, string[]>();
   for (const p of papers) {
     if (!p.schoolId) continue;
     const labels = map.get(p.schoolId) || [];
-    // 연도 (2자리)
-    const year = String(p.createdAt.getFullYear()).slice(-2);
+
+    // 연도: title에서 "2025년" 추출 우선, 없으면 createdAt
+    const yearMatch = p.title?.match(/(20\d{2})년/);
+    const year = yearMatch ? yearMatch[1].slice(-2) : String(p.createdAt.getFullYear()).slice(-2);
+
     // 학년: "중3" → "3", "고2" → "2"
     const gradeNum = p.grade?.replace(/^[중고]/, '') || '';
-    // 과목/학기: "1학기중간" → "1중간", "대수" → "대수"
-    const cat = p.category?.replace('학기', '') || '';
-    // 조합: 25-3-1중간, 25-2-대수
-    const label = [year, gradeNum, cat].filter(Boolean).join('-');
+    const isHigh = p.grade?.startsWith('고');
+
+    // 고등: category(과목명) 사용 → 26-1-공수1
+    // 중등: 학기+시험종류 → 25-3-1중간
+    let suffix = '';
+    if (isHigh && p.category) {
+      suffix = CATEGORY_ABBR[p.category] || p.category;
+    } else {
+      // category에서 학기 정보 시도
+      let cat = p.category || '';
+      if (!cat || !/\d/.test(cat)) {
+        // title에서 "1학기 중간고사" 추출
+        const semMatch = p.title?.match(/(\d)학기\s*(중간|기말|모의)/);
+        if (semMatch) cat = `${semMatch[1]}${semMatch[2]}`;
+      } else {
+        cat = cat.replace('학기', '');
+      }
+      suffix = cat;
+    }
+
+    const label = [year, gradeNum, suffix].filter(Boolean).join('-');
     if (label && !labels.includes(label)) labels.push(label);
     map.set(p.schoolId, labels);
+  }
+  // 최신순 정렬 (연도 내림 → 학년 내림)
+  for (const [k, v] of map) {
+    map.set(k, v.sort((a, b) => b.localeCompare(a)));
   }
   return map;
 }
@@ -222,7 +254,7 @@ async function handleNearbySchools(schoolId: string) {
     const allIds = [school.id, ...nearbyIds];
     const examPapers = await prisma.examPaper.findMany({
       where: { schoolId: { in: allIds }, status: 'COMPLETED' },
-      select: { schoolId: true, grade: true, category: true, createdAt: true },
+      select: { schoolId: true, grade: true, category: true, title: true, createdAt: true },
     });
     const examLabelsMap = buildExamLabelsMap(examPapers);
 
@@ -274,7 +306,7 @@ async function handleNearbySchools(schoolId: string) {
   const allIds = [school.id, ...nearbyIds];
   const examPapers = await prisma.examPaper.findMany({
     where: { schoolId: { in: allIds }, status: 'COMPLETED' },
-    select: { schoolId: true, grade: true, category: true, createdAt: true },
+    select: { schoolId: true, grade: true, category: true, title: true, createdAt: true },
   });
   const examLabelsMap = buildExamLabelsMap(examPapers);
 

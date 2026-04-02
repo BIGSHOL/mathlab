@@ -311,13 +311,21 @@ ${phases}
     const formatExamLine = (exam: NearbyExamSummary): string => {
       const types = Object.entries(exam.typeDistribution)
         .filter(([, v]) => v > 0)
-        .map(([k, v]) => `${TYPE_LABELS[k] || k} ${v}`)
-        .join('/');
+        .map(([k, v]) => `${TYPE_LABELS[k] || k} ${v}문항`)
+        .join(', ');
       const distanceNote = exam.distance > 0 ? ` (${exam.distance}km)` : '';
-      return `- [${exam.schoolName}]${distanceNote} "${exam.examTitle}": ${exam.totalQuestions}문항 ${exam.totalPoints}점, 평균난이도 ${exam.averageDifficulty}, 유형분포(${types}), 주요단원: ${exam.topicSummary}`;
+      const diff = Number.isInteger(exam.averageDifficulty) ? exam.averageDifficulty : Math.round(exam.averageDifficulty * 10) / 10;
+      // 난이도 분포 상세
+      const diffDist = Object.entries(exam.difficultyDistribution)
+        .filter(([, v]) => v > 0)
+        .sort(([a], [b]) => Number(a) - Number(b))
+        .map(([k, v]) => `Level${k}:${v}문항`)
+        .join(', ');
+      return `- [${exam.schoolName}]${distanceNote} "${exam.examTitle}": ${exam.totalQuestions}문항 ${exam.totalPoints}점\n  Level분포: ${diffDist || `Level${diff}`}\n  영역: ${types}\n  주요단원: ${exam.topicSummary}`;
     };
 
-    const blocks: string[] = ['\n\n## 주변 학교 기출 비교 데이터'];
+    const currentSchoolName = nearby.currentSchool?.name || '이 학교';
+    const blocks: string[] = [`\n\n## 주변 학교 기출 비교 데이터\n현재 분석 중인 시험: **${currentSchoolName}**`];
 
     if (hasSameSchool) {
       blocks.push('\n### 같은 학교 이전 기출');
@@ -327,19 +335,44 @@ ${phases}
     }
 
     if (hasNearby) {
-      blocks.push(`\n### 반경 ${5}km 내 주변 학교 기출`);
+      blocks.push(`\n### 인근 학교 기출 (같은 학년·학기·시험 유형)`);
       for (const exam of nearby.nearbyExams) {
         blocks.push(formatExamLine(exam));
       }
     }
 
     blocks.push(`
-### 비교 분석 작성 지침
-- 위 주변 학교/이전 기출 데이터가 있으면, overall_comment에 1-2문장 비교 분석을 자연스럽게 포함하세요.
-- "nearby_comparison" 필드에 2-4문장으로 주변 학교와의 차이점을 별도 요약하세요.
-  - 난이도 수준 비교, 출제 영역 비중 차이, 특이한 출제 경향 등
-  - 같은 학교 이전 기출이 있으면 출제 경향 변화(난이도 상승/하락, 영역 비중 변화)도 분석하세요.
-- 주변 학교 데이터가 없으면 "nearby_comparison"은 null로 두세요.`);
+### 비교 분석 작성 지침 (중요!)
+
+**핵심 원칙: "${currentSchoolName} vs 인근 학교"의 차이를 수치 기반으로 명확히 대비하세요.**
+**"이 시험" 대신 반드시 "${currentSchoolName}"으로 표기하세요.**
+
+"nearby_comparison" 필드에 항목별로 줄바꿈(\\n)하여 작성. 반드시 각 항목 사이에 \\n을 넣으세요:
+
+1줄 — **Level 비교**: ${currentSchoolName}의 Level 분포와 인근 학교 Level 분포를 구체적으로 대비.
+  - 예: "${currentSchoolName}은 Level 4~5 문항이 8개(38%)인 반면, 침산중은 3개(14%), 대구일중은 5개(24%)로 고난도 비율이 확연히 높습니다."
+  - 단순히 "높다/낮다"가 아니라 문항 수와 비율을 명시
+
+2줄 — **출제 단원 차이**: ${currentSchoolName}에서 집중 출제된 단원 vs 인근 학교에서 집중 출제된 단원을 구체적으로 비교.
+  - 예: "${currentSchoolName}은 '인수분해의 활용'에서 5문항(24점)을 집중 출제했으나, 침산중은 2문항, 대구일중은 3문항으로 상대적으로 낮은 비중입니다."
+
+3줄 — **서술형 비중**: 서술형 배점/문항수를 수치로 대비.
+  - 예: "${currentSchoolName}의 서술형 배점이 35점(35%)으로 침산중(20점, 20%)·대구일중(25점, 25%) 대비 10~15점 높습니다."
+
+4줄 — **이전 기출 변화** (데이터 있는 경우만): ${currentSchoolName}의 이전 시험 대비 Level 변화, 출제 영역 변화.
+
+5줄 — **학생 대비 전략**: 인근 학교 시험도 함께 준비하는 학생을 위한 구체적 조언.
+  - 공통 필수 학습 영역과 ${currentSchoolName}만의 차별 포인트를 분리해서 안내
+
+**작성 규칙**:
+- "평균 난이도", "반경 5km" 표현 금지. "Level"과 "인근 학교"로 표현.
+- 계산 과정(예: "34점+10점=44점")을 노출하지 말고 결과값만 쓰세요(예: "44점").
+- "배점 구조가 다르고" 같은 모호한 표현 금지. 구체적으로 어떻게 다른지 수치로 명시하세요.
+- 서술형 배점 비교 시 각 학교별 실제 수치를 명시하세요(예: "침산중 20점, 대구일중 25점").
+- ${currentSchoolName}이 인근 학교보다 적게 출제한 단원도 짚으세요(예: "사칙계산 2문항으로 침산중 4문항·대구일중 4문항 대비 적음").
+- "이 시험", "이번 시험", "본 시험" 대신 반드시 "${currentSchoolName}"으로 표기하세요.
+- 주변 학교 데이터가 없으면 "nearby_comparison"은 null.
+- overall_comment에는 주변 학교 비교 내용을 넣지 마세요. 비교 분석은 nearby_comparison 필드에만 작성하세요.`);
 
     return blocks.join('\n');
   }

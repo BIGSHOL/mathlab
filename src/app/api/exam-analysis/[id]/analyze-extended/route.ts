@@ -17,7 +17,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   const parsed = analyzeExtendedRequestSchema.safeParse(body);
   if (!parsed.success) return badRequest('분석 에이전트를 선택하세요');
 
-  const { agents, forceRegenerate } = parsed.data;
+  const { agents, forceRegenerate, includeNearby, includeYearCompare } = parsed.data;
 
   const tenantWhere = getTenantFilter(user);
   const examPaper = await prisma.examPaper.findFirst({
@@ -37,6 +37,8 @@ export async function POST(request: NextRequest, { params }: Params) {
       analysisId: latestAnalysis.id,
       agentTypes: agents as AgentType[],
       forceRegenerate,
+      includeNearby,
+      includeYearCompare,
     });
 
     return NextResponse.json({ data: results });

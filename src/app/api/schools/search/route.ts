@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireManager, isResponse } from '@/lib/api';
+import { requireTeacher, isResponse } from '@/lib/api';
 
 /** GET /api/schools/search?q=강남&type=middle — 학교 검색 (MANAGER+) */
 export async function GET(req: NextRequest) {
-  const user = await requireManager();
+  const user = await requireTeacher();
   if (isResponse(user)) return user;
 
   const q = req.nextUrl.searchParams.get('q') || '';

@@ -89,31 +89,48 @@ async function main() {
     }
     console.log(`  ✅ 학생 등록: ${demoStudents.length}명`);
 
-    // 학습 진행 기록
-    const stages = ['READING', 'BLANK_EASY', 'BLANK_HARD', 'BLANK_FULL', 'BLANK_PAGE'] as const;
+    // 학습 진행 기록 — 각 단계별로 별도 record 생성 (completed: true)
+    // 그리드는 stage별 completed=true인 record를 개별 조회
+    const stages = ['READING', 'BLANK_EASY', 'BLANK_HARD', 'BLANK_FULL'] as const;
     let progressCount = 0;
-    for (const student of demoStudents) {
-      for (let i = 0; i < conceptsWithBlanks.length; i++) {
-        const existing = await prisma.learningProgress.findFirst({
-          where: { userId: student.id, conceptId: conceptsWithBlanks[i].id },
-        });
-        if (!existing) {
-          const stageIdx = Math.min(i + 1, 4); // 학생마다 다른 진도
-          await prisma.learningProgress.create({
-            data: {
-              id: uid(),
+
+    // 학생별 다른 진도: 학생0→전부 완료, 학생1→3단계, 학생2→2단계, ...
+    const studentMaxStages = [4, 3, 2, 4, 1]; // 학생별 완료 단계 수
+
+    for (let si = 0; si < demoStudents.length; si++) {
+      const student = demoStudents[si];
+      const maxStage = studentMaxStages[si % studentMaxStages.length];
+
+      for (let ci = 0; ci < conceptsWithBlanks.length; ci++) {
+        // 개념별로 약간 다르게: 앞쪽 개념은 더 많이, 뒤쪽은 덜
+        const conceptMaxStage = Math.max(1, Math.min(maxStage, maxStage - ci + 1));
+
+        for (let stageIdx = 0; stageIdx < conceptMaxStage; stageIdx++) {
+          const existing = await prisma.learningProgress.findFirst({
+            where: {
               userId: student.id,
-              conceptId: conceptsWithBlanks[i].id,
+              conceptId: conceptsWithBlanks[ci].id,
               stage: stages[stageIdx],
-              completedAt: stageIdx >= 3 ? new Date() : null,
-              updatedAt: new Date(),
             },
           });
-          progressCount++;
+          if (!existing) {
+            await prisma.learningProgress.create({
+              data: {
+                id: uid(),
+                userId: student.id,
+                conceptId: conceptsWithBlanks[ci].id,
+                stage: stages[stageIdx],
+                completed: true,
+                completedAt: new Date(Date.now() - (conceptsWithBlanks.length - ci) * 86400000),
+                updatedAt: new Date(),
+              },
+            });
+            progressCount++;
+          }
         }
       }
     }
-    console.log(`  ✅ 학습 진행: ${progressCount}건`);
+    console.log(`  ✅ 학습 진행: ${progressCount}건 (단계별 개별 record)`);
 
     // 개념 숙제
     const conceptHomeworkTitle = '중1 핵심 개념 복습 숙제';
@@ -153,36 +170,120 @@ async function main() {
   // ═══════════════════════════════════════
   console.log('\n── 2. 연산 문제 ──');
 
+  // 기존 데모 연산 숙제 삭제 후 재생성 (dailyProblems가 비어있을 수 있으므로)
   const arithTitle = '중1 정수 사칙연산 연습';
   const existingArith = await prisma.arithmeticHomeworkPlan.findFirst({
     where: { title: arithTitle, tenantId: tenant.id },
   });
-  if (!existingArith) {
-    const hw = await prisma.arithmeticHomeworkPlan.create({
-      data: {
-        id: uid(),
-        title: arithTitle,
-        tenant: { connect: { id: tenant.id } },
-        creator: { connect: { id: demoTeacher.id } },
-        categories: ['int_add', 'int_sub', 'int_mul', 'int_div'],
-        level: 'medium',
-        dailyCount: 10,
-        totalDays: 5,
-        dailyProblems: [],
-        passingScore: 80,
-        startDate: new Date(),
-        updatedAt: new Date(),
-      },
-    });
-    for (const student of demoStudents) {
-      await prisma.arithmeticHomeworkEnrollment.create({
-        data: { id: uid(), planId: hw.id, studentId: student.id },
-      });
-    }
-    console.log(`  ✅ 연산 숙제: ${arithTitle}`);
-  } else {
-    console.log(`  ↳ 연산 숙제 존재`);
+  if (existingArith) {
+    await prisma.arithmeticAttempt.deleteMany({ where: { homeworkPlanId: existingArith.id } });
+    await prisma.arithmeticHomeworkEnrollment.deleteMany({ where: { planId: existingArith.id } });
+    await prisma.arithmeticHomeworkPlan.delete({ where: { id: existingArith.id } });
+    console.log(`  🗑️ 기존 연산 숙제 삭제`);
   }
+
+  // 문제 생성 (arithmetic-generator 사용)
+  const { generateProblems } = await import('../src/lib/services/arithmetic-generator');
+  const categories = ['int_add', 'int_sub', 'int_mul', 'int_div'] as const;
+  const totalDays = 5;
+  const dailyCount = 10;
+  const dailyProblems = [];
+  for (let d = 0; d < totalDays; d++) {
+    const dayProblems = generateProblems(
+      categories[d % categories.length],
+      'medium',
+      dailyCount
+    );
+    dailyProblems.push(dayProblems);
+  }
+  console.log(`  📝 문제 생성: ${totalDays}일 × ${dailyCount}문제`);
+
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - 3); // 3일 전 시작 (일부 일차 완료 상태)
+
+  const hw = await prisma.arithmeticHomeworkPlan.create({
+    data: {
+      id: uid(),
+      title: arithTitle,
+      tenant: { connect: { id: tenant.id } },
+      creator: { connect: { id: demoTeacher.id } },
+      categories: [...categories],
+      level: 'medium',
+      dailyCount,
+      totalDays,
+      dailyProblems,
+      passingScore: 80,
+      startDate,
+      updatedAt: new Date(),
+    },
+  });
+
+  for (const student of demoStudents) {
+    await prisma.arithmeticHomeworkEnrollment.create({
+      data: { id: uid(), planId: hw.id, studentId: student.id },
+    });
+  }
+
+  // 학생별 연산 시도 (과거 일차에 대해)
+  const attemptScores = [
+    [90, 80, 100],  // 학생0: 1~3일차
+    [70, 90],       // 학생1: 1~2일차
+    [100, 100, 80], // 학생2: 1~3일차
+    [60],           // 학생3: 1일차만
+    [80, 90, 70],   // 학생4: 1~3일차
+  ];
+  let attemptCount = 0;
+  for (let si = 0; si < demoStudents.length; si++) {
+    const scores = attemptScores[si % attemptScores.length];
+    for (let d = 0; d < scores.length; d++) {
+      const score = scores[d];
+      const correctCount = Math.round((score / 100) * dailyCount);
+      const attemptId = uid();
+      const totalTime = 120 + Math.floor(Math.random() * 180);
+      await prisma.arithmeticAttempt.create({
+        data: {
+          id: attemptId,
+          studentId: demoStudents[si].id,
+          homeworkPlanId: hw.id,
+          homeworkDayIndex: d,
+          category: String(categories[d % categories.length]),
+          level: 'medium',
+          problemCount: dailyCount,
+          correctCount,
+          score,
+          totalTimeSeconds: totalTime,
+          completedAt: new Date(startDate.getTime() + d * 86400000 + 36000000),
+        },
+      });
+
+      // 개별 답안 생성 (ArithmeticAnswer) — 채점현황 표시에 필요
+      const dayProbs = dailyProblems[d] ?? [];
+      for (let qi = 0; qi < dayProbs.length; qi++) {
+        const prob = dayProbs[qi];
+        // correctCount개 정답, 나머지 오답
+        const isCorrect = qi < correctCount;
+        const wrongChoices = prob.choices.filter((c: string) => c !== prob.answer);
+        const selectedAnswer = isCorrect
+          ? prob.answer
+          : wrongChoices[Math.floor(Math.random() * wrongChoices.length)] ?? prob.choices[0];
+        await prisma.arithmeticAnswer.create({
+          data: {
+            id: uid(),
+            attemptId,
+            problemIndex: qi,
+            content: prob.content,
+            choices: prob.choices,
+            selectedAnswer,
+            correctAnswer: prob.answer,
+            isCorrect,
+            timeSpentSeconds: Math.round(totalTime / dailyCount),
+          },
+        });
+      }
+      attemptCount++;
+    }
+  }
+  console.log(`  ✅ 연산 숙제: ${arithTitle} (시도 ${attemptCount}건)`);
 
   // ═══════════════════════════════════════
   // 3. 기출 분석 (기존 데이터 복제)

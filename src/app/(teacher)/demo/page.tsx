@@ -9,33 +9,11 @@ import {
   CalendarCheck,
   Eye,
   Settings,
-  Code2,
-  Database,
-  Shield,
-  Layers,
-  Puzzle,
-  Brain,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { LogoIcon } from '@/components/ui/LogoIcon';
-
-const platformStats = [
-  { value: '95,000+', label: '코드 라인 수' },
-  { value: '133+', label: 'API 엔드포인트' },
-  { value: '57', label: 'DB 모델' },
-  { value: '526+', label: '소스 파일' },
-];
-
-const techStack = [
-  { icon: Code2, label: 'Next.js 15', color: 'text-slate-700' },
-  { icon: Database, label: 'PostgreSQL + Prisma', color: 'text-blue-600' },
-  { icon: Brain, label: 'Gemini 2.5 Flash', color: 'text-violet-600' },
-  { icon: Shield, label: 'NextAuth JWT', color: 'text-emerald-600' },
-  { icon: Layers, label: 'TypeScript 5.8', color: 'text-sky-600' },
-  { icon: Puzzle, label: 'Zustand + Zod', color: 'text-orange-600' },
-];
 
 export default function DemoHubPage() {
   return (
@@ -55,29 +33,9 @@ export default function DemoHubPage() {
           <h1 className="text-3xl font-black text-text-primary leading-tight mb-2">
             핵심 기능 체험
           </h1>
-          <p className="text-base text-text-secondary max-w-xl mb-6">
+          <p className="text-base text-text-secondary max-w-xl">
             개념 5단계 학습, 연산 문제 생성, 기출 분석 — 3가지 핵심 기능을 직접 체험해보세요.
           </p>
-
-          {/* Stats */}
-          <div className="grid grid-cols-4 gap-2 mb-5">
-            {platformStats.map((stat) => (
-              <Card key={stat.label} padding="sm" className="text-center">
-                <div className="text-xl font-black text-primary">{stat.value}</div>
-                <div className="text-[11px] text-text-secondary font-medium">{stat.label}</div>
-              </Card>
-            ))}
-          </div>
-
-          {/* Tech */}
-          <div className="flex flex-wrap gap-1.5">
-            {techStack.map((tech) => (
-              <span key={tech.label} className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-slate-200 rounded-sm text-[11px] font-semibold text-text-secondary">
-                <tech.icon className={`w-3 h-3 ${tech.color}`} />
-                {tech.label}
-              </span>
-            ))}
-          </div>
         </div>
       </div>
 
@@ -210,7 +168,7 @@ export default function DemoHubPage() {
         </Card>
 
         {/* 숙제 관리 */}
-        <Card padding="lg" className="bg-slate-50/50">
+        <Card padding="lg" className="border-l-4 border-l-amber-500">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 bg-amber-50 rounded-sm flex items-center justify-center shrink-0">
               <CalendarCheck className="w-6 h-6 text-amber-600" />
@@ -219,39 +177,24 @@ export default function DemoHubPage() {
               <div className="flex items-center gap-2 mb-1">
                 <h2 className="text-lg font-bold text-text-primary">숙제 관리</h2>
               </div>
-              <p className="text-sm text-text-secondary mb-3">
+              <p className="text-sm text-text-secondary mb-4">
                 위 3가지 기능과 연계된 숙제를 출제하고 학생별 제출 현황을 추적합니다. 개념 숙제 + 연산 숙제가 준비되어 있습니다.
               </p>
+
+              <div className="flex flex-wrap gap-1.5 mb-4">
+                <span className="px-2 py-0.5 bg-amber-50 text-amber-700 rounded-sm text-xs font-medium border border-amber-200">개념 숙제</span>
+                <span className="px-2 py-0.5 bg-amber-50 text-amber-700 rounded-sm text-xs font-medium border border-amber-200">연산 숙제</span>
+              </div>
+
               <Link href="/homework">
-                <Button size="sm" variant="ghost">
-                  숙제 관리 &rarr;
+                <Button size="sm" variant="primary">
+                  <CalendarCheck className="w-3.5 h-3.5 mr-1" />
+                  숙제 관리
                 </Button>
               </Link>
             </div>
           </div>
         </Card>
-
-        {/* 역할 체계 간략 */}
-        <div className="pt-4">
-          <p className="text-xs text-text-secondary mb-2 font-bold uppercase tracking-widest">Role Hierarchy</p>
-          <div className="flex flex-wrap gap-1.5">
-            {[
-              { role: '학생', color: 'bg-sky-50 text-sky-700 border-sky-200' },
-              { role: '선생님', color: 'bg-blue-50 text-blue-700 border-blue-200' },
-              { role: '팀장', color: 'bg-violet-50 text-violet-700 border-violet-200' },
-              { role: '원장', color: 'bg-amber-50 text-amber-700 border-amber-200', active: true },
-              { role: '플랫폼 관리자', color: 'bg-rose-50 text-rose-700 border-rose-200' },
-            ].map((r, i) => (
-              <span key={r.role} className="flex items-center gap-1">
-                {i > 0 && <span className="text-slate-300 mr-0.5">&rarr;</span>}
-                <span className={`inline-flex items-center px-2 py-1 border rounded-sm text-[11px] font-bold ${r.color} ${r.active ? 'ring-2 ring-primary/30' : ''}`}>
-                  {r.role}
-                  {r.active && <span className="ml-1 text-[9px] opacity-60">(현재)</span>}
-                </span>
-              </span>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );

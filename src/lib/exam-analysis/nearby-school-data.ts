@@ -78,20 +78,11 @@ function extractExamSummary(
   const diffDist = (summary.difficulty_distribution || {}) as Record<string, number>;
   const typeDist = (summary.type_distribution || {}) as Record<string, number>;
 
-  // 평균 난이도 계산
-  const diffCounts = [
-    (diffDist['1'] || 0) + (diffDist.concept || 0),
-    (diffDist['2'] || 0) + (diffDist.pattern || 0),
-    diffDist['3'] || 0,
-    (diffDist['4'] || 0) + (diffDist.reasoning || 0),
-    (diffDist['5'] || 0) + (diffDist.creative || 0),
-  ];
-  const total = diffCounts.reduce((s, c) => s + c, 0);
-  const avgDiff = total > 0
-    ? Math.round(diffCounts.reduce((s, c, i) => s + c * (i + 1), 0) / total * 10) / 10
-    : 0;
+  // 평균 난이도: summary에 이미 계산된 값 사용
+  const avgDiffRaw = summary.average_difficulty;
+  const avgDiff = typeof avgDiffRaw === 'string' ? parseFloat(avgDiffRaw) || 0
+    : typeof avgDiffRaw === 'number' ? avgDiffRaw : 0;
 
-  // 단원 통계
   const questions = (analysis.questions || []) as AnalyzedQuestion[];
   const topicCounts: Record<string, number> = {};
   for (const q of questions) {
@@ -144,20 +135,34 @@ export async function findNearbyExamData(analysisId: string): Promise<NearbyComp
 
   const examPaper = await prisma.examPaper.findUnique({
     where: { id: analysis.examPaperId },
-    select: { id: true, schoolName: true, title: true, tenantId: true },
+    select: { id: true, schoolName: true, schoolId: true, title: true, grade: true, category: true, tenantId: true },
   });
-  if (!examPaper?.schoolName) return empty;
+  if (!examPaper?.schoolId && !examPaper?.schoolName) return empty;
 
-  // 2. schoolName → School 레코드 매칭
-  const school = await prisma.school.findFirst({
-    where: {
-      name: { contains: examPaper.schoolName, mode: 'insensitive' },
-    },
-    select: {
-      id: true, name: true, latitude: true, longitude: true,
-      schoolType: true, regionCode: true, district: true, nearbyGroupId: true,
-    },
-  });
+  // 학년/연도/학기/시험종류 추출 (같은 조건 기출만 비교)
+  const examGrade = examPaper.grade || ''; // "중3", "고1"
+  const yearMatch = examPaper.title?.match(/(20\d{2})년/);
+  const examYear = yearMatch ? yearMatch[1] : null; // "2025"
+  const semMatch = examPaper.title?.match(/(\d)학기\s*(중간|기말|모의)/);
+  const examSemester = semMatch ? semMatch[1] : null; // "1" or "2"
+  const examExamType = semMatch ? semMatch[2] : null;  // "중간" or "기말"
+
+  // 2. schoolId(FK) 우선, 없으면 schoolName으로 매칭
+  const school = examPaper.schoolId
+    ? await prisma.school.findUnique({
+        where: { id: examPaper.schoolId },
+        select: {
+          id: true, name: true, latitude: true, longitude: true,
+          schoolType: true, regionCode: true, district: true, nearbyGroupId: true,
+        },
+      })
+    : await prisma.school.findFirst({
+        where: { name: { contains: examPaper.schoolName!, mode: 'insensitive' } },
+        select: {
+          id: true, name: true, latitude: true, longitude: true,
+          schoolType: true, regionCode: true, district: true, nearbyGroupId: true,
+        },
+      });
 
   if (!school) return empty;
 
@@ -172,11 +177,18 @@ export async function findNearbyExamData(analysisId: string): Promise<NearbyComp
     sameSchoolExams: [],
   };
 
-  // 3. 같은 학교 이전 기출 수집
+  // 테넌트 스코프: 같은 테넌트의 기출만 비교 (복사본 중복 방지)
+  const tenantFilter = examPaper.tenantId ? { tenantId: examPaper.tenantId } : {};
+
+  // 3. 같은 학교 + 같은 학년 이전 기출 수집
   const sameSchoolPapers = await prisma.examPaper.findMany({
     where: {
-      schoolName: examPaper.schoolName,
-      id: { not: examPaper.id }, // 현재 시험 제외
+      ...tenantFilter,
+      ...(examPaper.schoolId
+        ? { schoolId: examPaper.schoolId }
+        : { schoolName: examPaper.schoolName }),
+      id: { not: examPaper.id },
+      grade: examGrade, // 같은 학년만
       status: 'COMPLETED',
     },
     select: { id: true, title: true },
@@ -260,20 +272,44 @@ export async function findNearbyExamData(analysisId: string): Promise<NearbyComp
     if (nearbySchools.length < MIN_NEARBY) nearbySchools = withDistance.filter(s => s.distance <= 10);
     nearbySchools.sort((a, b) => a.distance - b.distance);
     nearbySchoolNames = nearbySchools.map(s => s.name);
-  } else {
-    return result; // GPS도 그룹도 없으면 같은 학교 데이터만
+  }
+  // 그룹도 GPS도 없으면 같은 학교 데이터만 반환
+  if (nearbySchoolNames.length === 0 && !school.latitude && !school.longitude) {
+    return result;
   }
 
   if (nearbySchoolNames.length === 0) return result;
 
-  // 5. 주변 학교 이름으로 ExamPaper → ExamAnalysis 검색
-  const nearbyPapers = await prisma.examPaper.findMany({
+  // 5. 주변 학교 기출 검색 (schoolId FK 기준)
+  const nearbySchoolIds = await prisma.school.findMany({
+    where: { name: { in: nearbySchoolNames } },
+    select: { id: true, name: true },
+  });
+  const nearbyIdToName = new Map(nearbySchoolIds.map(s => [s.id, s.name]));
+
+  const nearbyPapersRaw = await prisma.examPaper.findMany({
     where: {
-      schoolName: { in: nearbySchoolNames },
+      ...tenantFilter,
+      schoolId: { in: [...nearbyIdToName.keys()] },
+      grade: examGrade, // 같은 학년
       status: 'COMPLETED',
     },
-    select: { id: true, title: true, schoolName: true },
+    select: { id: true, title: true, schoolId: true, schoolName: true },
     orderBy: { createdAt: 'desc' },
+  });
+
+  // 같은 연도 + 학기 + 시험종류 필터 (title에서 추출)
+  const nearbyPapers = nearbyPapersRaw.filter(p => {
+    if (!p.title) return false;
+    if (examYear) {
+      const y = p.title.match(/(20\d{2})년/);
+      if (!y || y[1] !== examYear) return false;
+    }
+    if (examSemester && examExamType) {
+      const s = p.title.match(/(\d)학기\s*(중간|기말|모의)/);
+      if (!s || s[1] !== examSemester || s[2] !== examExamType) return false;
+    }
+    return true;
   });
 
   if (nearbyPapers.length === 0) return result;
@@ -290,9 +326,10 @@ export async function findNearbyExamData(analysisId: string): Promise<NearbyComp
 
   for (const na of nearbyAnalyses.slice(0, MAX_NEARBY_EXAMS)) {
     const paper = nearbyPapers.find(p => p.id === na.examPaperId);
-    if (!paper?.schoolName) continue;
+    if (!paper) continue;
+    const schoolDisplayName = (paper.schoolId ? nearbyIdToName.get(paper.schoolId) : null) || paper.schoolName || '알 수 없음';
     result.nearbyExams.push(
-      extractExamSummary(paper.schoolName, 0, paper.title || '제목 없음', na),
+      extractExamSummary(schoolDisplayName, 0, paper.title || '제목 없음', na),
     );
   }
 

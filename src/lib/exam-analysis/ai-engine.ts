@@ -385,10 +385,14 @@ export async function analyzeExam(
     const dominantDiff = Object.entries(recomputedDiffDist).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '3';
     const dominantType = Object.entries(recomputedTypeDist).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'algebra';
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rawSchoolName = (rawResult.exam_info as any)?.school_name;
+
     const result: BasicAnalysisResult = {
       exam_info: {
         total_questions: questions.length,
         total_points: rawResult.exam_info.total_points ?? 100,
+        school_name: typeof rawSchoolName === 'string' ? rawSchoolName : null,
         format_distribution: {
           objective: recomputedFormatDist['objective'] || 0,
           short_answer: recomputedFormatDist['short_answer'] || 0,

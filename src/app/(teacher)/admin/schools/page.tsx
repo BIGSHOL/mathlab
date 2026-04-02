@@ -24,6 +24,7 @@ interface SchoolItem {
   eduSupportCode: string | null;
   eduSupportName: string | null;
   examCount: number;
+  examLabels: string[];
 }
 
 interface NearbySchool {
@@ -517,11 +518,27 @@ function SchoolRow({ school: s, isSelected, zoneId, onSchoolClick, onZoneClick, 
             <span className="text-slate-300 text-xs">-</span>
           )}
         </td>
-        <td className="px-2 py-2 text-center">
-          {s.examCount > 0 ? (
-            <span className="text-emerald-600 text-xs font-semibold">{s.examCount}</span>
+        <td className="px-2 py-2">
+          {s.examLabels?.length > 0 ? (
+            <div className="flex items-center justify-end gap-0.5 group relative">
+              <span className="text-[10px] px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-sm border border-emerald-200 whitespace-nowrap">
+                {s.examLabels[0]}
+              </span>
+              {s.examLabels.length > 1 && (
+                <span className="text-[10px] px-1 py-0.5 bg-slate-100 text-slate-500 rounded-sm cursor-default whitespace-nowrap">
+                  +{s.examLabels.length - 1}
+                  <span className="absolute z-30 right-0 top-full mt-1 hidden group-hover:block bg-white border rounded-sm shadow-lg p-1.5 space-y-0.5 min-w-[80px]">
+                    {s.examLabels.map((label, i) => (
+                      <span key={i} className="block text-[10px] px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-sm border border-emerald-200 whitespace-nowrap">
+                        {label}
+                      </span>
+                    ))}
+                  </span>
+                </span>
+              )}
+            </div>
           ) : (
-            <span className="text-slate-300 text-xs">-</span>
+            <span className="text-slate-300 text-xs text-center block">-</span>
           )}
         </td>
         <td className="px-3 py-2 text-center">

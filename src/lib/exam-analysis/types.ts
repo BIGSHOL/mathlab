@@ -67,6 +67,7 @@ export interface AnalysisSummary {
 export interface ExamInfo {
   total_questions: number;
   total_points: number;
+  school_name?: string | null;
   format_distribution: {
     objective: number;
     short_answer: number;
