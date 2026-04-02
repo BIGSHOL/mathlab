@@ -27,6 +27,7 @@ export const examPaperUpdateSchema = z.object({
   unit: z.string().max(200).optional().nullable(),
   examScope: z.array(z.string()).optional().nullable(),
   schoolName: z.string().max(100).optional().nullable(),
+  schoolId: z.string().max(50).optional().nullable(),
   examType: z.enum(['blank', 'student']).optional(),
 });
 

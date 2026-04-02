@@ -33,7 +33,15 @@ export async function POST(request: NextRequest, { params }: Params) {
   if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
 
   if (examPaper.status === 'ANALYZING') {
-    return badRequest('이미 분석이 진행 중입니다');
+    // 10분 이상 ANALYZING 상태면 갇힌 것으로 판단 → FAILED 복구 후 재시도 허용
+    const stuckMinutes = (Date.now() - new Date(examPaper.updatedAt).getTime()) / 60000;
+    if (stuckMinutes < 10) {
+      return badRequest('이미 분석이 진행 중입니다');
+    }
+    await prisma.examPaper.update({
+      where: { id },
+      data: { status: 'FAILED', errorMessage: 'ANALYZING 상태 타임아웃 (자동 복구)' },
+    });
   }
 
   // 상태 → ANALYZING, step 0

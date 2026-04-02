@@ -665,6 +665,8 @@ model School {
   createdAt       DateTime @default(now())
   dataUpdatedAt   DateTime?
 
+  examPapers      ExamPaper[]
+
   @@index([city, district])
   @@index([schoolType])
   @@index([regionCode])
@@ -1323,6 +1325,7 @@ model ExamPaper {
   unit          String?         @db.VarChar(200)
   examScope     Json?
   schoolName    String?         @db.VarChar(100)
+  schoolId      String?         @db.VarChar(50)               // FK → School (자동 매칭)
   examType      String          @default("blank") @db.VarChar(20)
   fileUrls      String          @db.Text
   fileType      String          @db.VarChar(20)
@@ -1334,11 +1337,13 @@ model ExamPaper {
 
   teacher       User            @relation("ExamPaperTeacher", fields: [teacherId], references: [id])
   student       User?           @relation("ExamPaperStudent", fields: [studentId], references: [id])
+  school        School?         @relation(fields: [schoolId], references: [id])
   analyses      ExamAnalysis[]
 
   @@index([tenantId])
   @@index([teacherId])
   @@index([tenantId, subject])
+  @@index([schoolId])
 }
 
 model ExamAnalysis {

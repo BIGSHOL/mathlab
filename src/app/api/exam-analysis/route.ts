@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse, getTenantFilter, badRequest } from '@/lib/api';
 import { examPaperCreateSchema, examPaperQuerySchema } from '@/lib/exam-analysis/schemas';
+import { matchSchoolByName } from '@/lib/utils/school-matcher';
 import path from 'path';
 import { writeFile, mkdir } from 'fs/promises';
 
@@ -35,12 +36,20 @@ export async function GET(request: NextRequest) {
     }),
   };
 
+  // 10분 이상 ANALYZING 상태에 갇힌 시험지 자동 FAILED 복구
+  const stuckThreshold = new Date(Date.now() - 10 * 60 * 1000);
+  await prisma.examPaper.updateMany({
+    where: { ...tenantWhere, status: 'ANALYZING', updatedAt: { lt: stuckThreshold } },
+    data: { status: 'FAILED', errorMessage: 'ANALYZING 상태 타임아웃 (자동 복구)' },
+  });
+
   const [items, total] = await Promise.all([
     prisma.examPaper.findMany({
       where,
       include: {
         teacher: { select: { id: true, name: true } },
         student: { select: { id: true, name: true } },
+        school: { select: { id: true, name: true, district: true } },
         analyses: {
           orderBy: { createdAt: 'desc' },
           take: 1,
@@ -113,6 +122,17 @@ export async function POST(request: NextRequest) {
 
   const fileType = files[0].type === 'application/pdf' ? 'pdf' : 'image';
 
+  // 학교명 → School DB 자동 매칭
+  const schoolName = parsed.data.schoolName || null;
+  let schoolId: string | null = null;
+  if (schoolName) {
+    try {
+      schoolId = await matchSchoolByName(schoolName, parsed.data.grade);
+    } catch {
+      // 매칭 실패해도 시험지 생성은 계속 진행
+    }
+  }
+
   // DB 생성
   const examPaper = await prisma.examPaper.create({
     data: {
@@ -125,7 +145,8 @@ export async function POST(request: NextRequest) {
       category: parsed.data.category || null,
       unit: parsed.data.unit || null,
       examScope: parsed.data.examScope || undefined,
-      schoolName: parsed.data.schoolName || null,
+      schoolName,
+      schoolId,
       examType: parsed.data.examType,
       fileUrls: savedUrls.join(','),
       fileType,

@@ -27,6 +27,8 @@ interface ExamPaperData {
   status: 'PENDING' | 'ANALYZING' | 'COMPLETED' | 'FAILED';
   analysisStep: number;
   schoolName: string | null;
+  schoolId: string | null;
+  school: { id: string; name: string; district: string } | null;
   errorMessage: string | null;
   createdAt: string;
   teacher: { id: string; name: string };
@@ -35,6 +37,7 @@ interface ExamPaperData {
     id: string;
     questions: AnalyzedQuestion[];
     summary: Record<string, unknown> | null;
+    modelVersion: string | null;
     totalQuestions: number | null;
     totalPoints: number | null;
     earnedPoints: number | null;
@@ -46,6 +49,7 @@ interface ExamPaperData {
 export default function ExamAnalysisPage() {
   const { user } = useAuth();
   const isOwnerPlus = user ? hasMinRole(user.role as 'TEACHER' | 'MANAGER' | 'OWNER' | 'SUPER_ADMIN', 'OWNER') : false;
+  const isManagerPlus = user ? hasMinRole(user.role as 'TEACHER' | 'MANAGER' | 'OWNER' | 'SUPER_ADMIN', 'MANAGER') : false;
   const [items, setItems] = useState<ExamPaperData[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -101,11 +105,21 @@ export default function ExamAnalysisPage() {
   const hasAnalyzing = items.some(i => i.status === 'ANALYZING');
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
+  const pollCountRef = useRef(0);
 
   useEffect(() => {
-    if (!hasAnalyzing) return;
+    if (!hasAnalyzing) {
+      pollCountRef.current = 0;
+      return;
+    }
 
+    const MAX_POLLS = 100; // 최대 5분 (3초 × 100)
     const interval = setInterval(() => {
+      pollCountRef.current++;
+      if (pollCountRef.current > MAX_POLLS) {
+        clearInterval(interval);
+        return;
+      }
       fetchList(true);
       if (selectedIdRef.current) fetchDetail(selectedIdRef.current);
     }, 3000);
@@ -207,6 +221,12 @@ export default function ExamAnalysisPage() {
               fetchList();
             }}
             selectedId={selectedId}
+            canEditSchool={isManagerPlus}
+            onUpdate={(id, data) => {
+              setItems(prev => prev.map(item =>
+                item.id === id ? { ...item, ...data } as ExamPaperData : item
+              ));
+            }}
           />
         ))}
       </aside>

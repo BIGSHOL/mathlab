@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
     where.zoneId = null;
   }
 
-  const [items, total, typeStats, highTypeStats, regionStats, districtStats, zoneCount, totalCount] = await Promise.all([
+  const [items, total, typeStats, highTypeStats, regionStats, districtStats, zoneCount, totalCount, examCountStats] = await Promise.all([
     prisma.school.findMany({
       where,
       orderBy: [{ regionName: 'asc' }, { name: 'asc' }],
@@ -76,10 +76,23 @@ export async function GET(req: NextRequest) {
       : (Promise.resolve([]) as Promise<Array<{ district: string; _count: number }>>),
     prisma.school.count({ where: { zoneId: { not: null } } }),
     prisma.school.count(),
+    // 기출 카운트: schoolId FK 기준
+    prisma.examPaper.groupBy({
+      by: ['schoolId'],
+      _count: true,
+      where: { schoolId: { not: null }, status: 'COMPLETED' },
+    }),
   ]);
 
+  // 기출 카운트 맵 생성
+  const examCountMap = new Map(
+    (examCountStats as Array<{ schoolId: string | null; _count: number }>)
+      .filter(e => e.schoolId)
+      .map(e => [e.schoolId!, e._count])
+  );
+
   return NextResponse.json({
-    data: items,
+    data: items.map(s => ({ ...s, examCount: examCountMap.get(s.id) || 0 })),
     meta: { page, limit, total },
     stats: {
       byType: typeStats.map(s => ({ type: s.schoolType, count: s._count })),

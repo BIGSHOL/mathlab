@@ -23,6 +23,7 @@ interface SchoolItem {
   zoneId: string | null;
   eduSupportCode: string | null;
   eduSupportName: string | null;
+  examCount: number;
 }
 
 interface NearbySchool {
@@ -234,9 +235,9 @@ export default function AdminSchoolsPage() {
       <div className="px-6 py-6">
         {/* 헤더 + 전체 카운트 */}
         <div className="flex items-start justify-between mb-5">
-          <div>
-            <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <Database className="w-5 h-5 text-primary" />
+          <div className="flex-shrink-0">
+            <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2 whitespace-nowrap">
+              <Database className="w-5 h-5 text-primary flex-shrink-0" />
               학교 데이터 관리
             </h1>
             <p className="text-xs text-slate-400 mt-0.5">NEIS API + 학구도 API 수집 · 전국 중·고등학교</p>
@@ -383,13 +384,14 @@ export default function AdminSchoolsPage() {
         <div className="border rounded-sm overflow-hidden">
           <table className="w-full text-sm table-fixed">
             <colgroup>
-              <col className="w-[28%]" />
+              <col className="w-[26%]" />
               <col className="w-[6%]" />
               <col className="w-[6%]" />
               <col className="w-[9%]" />
               <col className="w-[6%]" />
               <col className="w-[5%]" />
               <col className="w-[4%]" />
+              <col className="w-[5%]" />
               <col className="w-[8%]" />
               <col />
             </colgroup>
@@ -402,6 +404,7 @@ export default function AdminSchoolsPage() {
                 <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500">시군구</th>
                 <th className="px-3 py-2.5 text-center text-xs font-semibold text-slate-500">설립</th>
                 <th className="px-2 py-2.5 text-center text-xs font-semibold text-slate-500">그룹</th>
+                <th className="px-2 py-2.5 text-center text-xs font-semibold text-slate-500">기출</th>
                 <th className="px-2 py-2.5 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">학구ID</th>
                 <th className="px-2 py-2.5 text-left text-xs font-semibold text-slate-500">교육지원청</th>
               </tr>
@@ -416,13 +419,14 @@ export default function AdminSchoolsPage() {
                     <td className="px-3 py-3"><div className="h-4 bg-slate-100 rounded-sm w-16 animate-pulse" /></td>
                     <td className="px-3 py-3"><div className="h-4 bg-slate-100 rounded-sm w-12 animate-pulse" /></td>
                     <td className="px-3 py-3"><div className="h-4 bg-slate-100 rounded-sm w-8 mx-auto animate-pulse" /></td>
+                    <td className="px-3 py-3"><div className="h-4 bg-slate-100 rounded-sm w-8 mx-auto animate-pulse" /></td>
                     <td className="px-3 py-3"><div className="h-4 bg-slate-100 rounded-sm w-16 mx-auto animate-pulse" /></td>
                     <td className="px-3 py-3"><div className="h-4 bg-slate-100 rounded-sm w-24 animate-pulse" /></td>
                   </tr>
                 ))
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-16 text-center">
+                  <td colSpan={10} className="px-4 py-16 text-center">
                     <School className="w-10 h-10 mx-auto mb-3 text-slate-200" />
                     <p className="text-sm text-slate-400">검색 결과가 없습니다</p>
                   </td>
@@ -513,6 +517,13 @@ function SchoolRow({ school: s, isSelected, zoneId, onSchoolClick, onZoneClick, 
             <span className="text-slate-300 text-xs">-</span>
           )}
         </td>
+        <td className="px-2 py-2 text-center">
+          {s.examCount > 0 ? (
+            <span className="text-emerald-600 text-xs font-semibold">{s.examCount}</span>
+          ) : (
+            <span className="text-slate-300 text-xs">-</span>
+          )}
+        </td>
         <td className="px-3 py-2 text-center">
           {s.zoneId ? (
             <button
@@ -536,7 +547,7 @@ function SchoolRow({ school: s, isSelected, zoneId, onSchoolClick, onZoneClick, 
       {/* 주변 학교 확장 패널 */}
       {isSelected && (
         <tr>
-          <td colSpan={9} className="p-0">
+          <td colSpan={10} className="p-0">
             <NearbyPanel data={nearbyData} loading={nearbyLoading} onRefresh={() => onRefreshNearby(s.id)} />
           </td>
         </tr>

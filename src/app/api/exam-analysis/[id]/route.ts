@@ -18,6 +18,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
       include: {
         teacher: { select: { id: true, name: true } },
         student: { select: { id: true, name: true } },
+        school: { select: { id: true, name: true, district: true } },
         analyses: {
           orderBy: { createdAt: 'desc' },
           include: {
