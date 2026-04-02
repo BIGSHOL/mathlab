@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const candidates = await prisma.question.findMany({
+    let candidates = await prisma.question.findMany({
       where: {
         type: 'MULTIPLE_CHOICE',
         ...(excludeIds.length > 0 ? { id: { notIn: excludeIds } } : {}),
@@ -58,6 +58,18 @@ export async function GET(request: NextRequest) {
       select: { id: true },
       take: 50,
     });
+
+    // 해당 학년 문제가 없으면 학년 필터 없이 전체에서 선택 (fallback)
+    if (candidates.length === 0 && Object.keys(gradeFilter).length > 0) {
+      candidates = await prisma.question.findMany({
+        where: {
+          type: 'MULTIPLE_CHOICE',
+          ...(excludeIds.length > 0 ? { id: { notIn: excludeIds } } : {}),
+        },
+        select: { id: true },
+        take: 50,
+      });
+    }
 
     if (candidates.length === 0) {
       return NextResponse.json({ data: null });
