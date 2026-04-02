@@ -35,13 +35,13 @@ interface NearbySchool {
   foundationType: string | null;
   highSchoolType: string | null;
   distance: number;
-  examCount: number;
+  examLabels: string[];
   sameDistrict: boolean;
 }
 
 interface NearbyResult {
   data: NearbySchool[];
-  center: { id: string; name: string; district: string | null; examCount: number };
+  center: { id: string; name: string; district: string | null; examLabels: string[] };
   stage: number; // 0=그룹, 1~4=GPS 확장 단계
   groupId?: string;
   sameDistrictCount: number;
@@ -688,10 +688,10 @@ function NearbyPanel({ data, loading, onRefresh }: { data: NearbyResult | null; 
           )}
         </h4>
         <div className="flex items-center gap-2">
-          {data.center.examCount > 0 && (
+          {data.center.examLabels.length > 0 && (
             <span className="text-[10px] text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-sm px-1.5 py-0.5">
               <FileText className="w-3 h-3 inline mr-0.5" />
-              기출 {data.center.examCount}건
+              {data.center.examLabels.join(', ')}
             </span>
           )}
           {!isGrouped && data.data.length > 0 && (
@@ -798,8 +798,8 @@ function NearbyRow({ school: n, onRemove }: { school: NearbySchool; onRemove: (i
       <td className="px-3 py-1.5 text-slate-500">{n.district || '-'}</td>
       <td className="px-3 py-1.5 text-center text-slate-500">{n.foundationType || '-'}</td>
       <td className="px-3 py-1.5 text-center">
-        {n.examCount > 0 ? (
-          <span className="text-emerald-600 font-semibold">{n.examCount}건</span>
+        {n.examLabels.length > 0 ? (
+          <span className="text-emerald-600 font-semibold text-[10px]">{n.examLabels.join(', ')}</span>
         ) : (
           <span className="text-slate-300">-</span>
         )}

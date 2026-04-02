@@ -174,6 +174,10 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
   const [category, setCategory] = useState('');
   const examType = 'blank'; // 시험지 유형 고정 (학생 답안지 분석은 SA 토글로 제어)
   const [schoolName, setSchoolName] = useState('');
+  const [schoolId, setSchoolId] = useState<string | null>(null);
+  const [schoolResults, setSchoolResults] = useState<Array<{ id: string; name: string; district: string | null }>>([]);
+  const [schoolSearching, setSchoolSearching] = useState(false);
+  const schoolDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [examScope, setExamScope] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDragging, setIsDragging] = useState(false);

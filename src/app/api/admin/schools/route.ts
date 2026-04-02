@@ -156,6 +156,27 @@ export async function POST(req: NextRequest) {
   return badRequest('유효하지 않은 요청입니다');
 }
 
+// ── 기출 라벨 생성 (24-3-1, 24-대수 등) ──
+
+function buildExamLabelsMap(papers: Array<{ schoolId: string | null; grade: string; category: string | null; createdAt: Date }>): Map<string, string[]> {
+  const map = new Map<string, string[]>();
+  for (const p of papers) {
+    if (!p.schoolId) continue;
+    const labels = map.get(p.schoolId) || [];
+    // 연도 (2자리)
+    const year = String(p.createdAt.getFullYear()).slice(-2);
+    // 학년: "중3" → "3", "고2" → "2"
+    const gradeNum = p.grade?.replace(/^[중고]/, '') || '';
+    // 과목/학기: "1학기중간" → "1중간", "대수" → "대수"
+    const cat = p.category?.replace('학기', '') || '';
+    // 조합: 25-3-1중간, 25-2-대수
+    const label = [year, gradeNum, cat].filter(Boolean).join('-');
+    if (label && !labels.includes(label)) labels.push(label);
+    map.set(p.schoolId, labels);
+  }
+  return map;
+}
+
 // ── 주변 학교 조회 (그룹 우선, 없으면 4단계 GPS) ──
 
 const MIN_NEARBY = 5;
@@ -197,18 +218,17 @@ async function handleNearbySchools(schoolId: string) {
     }));
     withDistance.sort((a, b) => a.distance - b.distance);
 
-    const nearbyNames = withDistance.map(s => s.name);
-    const [examCounts, centerExamCount] = await Promise.all([
-      nearbyNames.length > 0
-        ? prisma.examPaper.groupBy({ by: ['schoolName'], _count: true, where: { schoolName: { in: nearbyNames }, status: 'COMPLETED' } })
-        : [],
-      prisma.examPaper.count({ where: { schoolName: school.name, status: 'COMPLETED' } }),
-    ]);
-    const examCountMap = new Map((examCounts as Array<{ schoolName: string | null; _count: number }>).map(e => [e.schoolName, e._count]));
+    const nearbyIds = withDistance.map(s => s.id);
+    const allIds = [school.id, ...nearbyIds];
+    const examPapers = await prisma.examPaper.findMany({
+      where: { schoolId: { in: allIds }, status: 'COMPLETED' },
+      select: { schoolId: true, grade: true, category: true, createdAt: true },
+    });
+    const examLabelsMap = buildExamLabelsMap(examPapers);
 
     return NextResponse.json({
-      data: withDistance.map(s => ({ ...s, examCount: examCountMap.get(s.name) || 0 })),
-      center: { ...school, examCount: centerExamCount },
+      data: withDistance.map(s => ({ ...s, examLabels: examLabelsMap.get(s.id) || [] })),
+      center: { ...school, examLabels: examLabelsMap.get(school.id) || [] },
       stage: 0, // 0 = 그룹
       groupId: school.nearbyGroupId,
       sameDistrictCount: withDistance.filter(s => s.sameDistrict).length,
@@ -250,18 +270,17 @@ async function handleNearbySchools(schoolId: string) {
   nearbySchools.sort((a, b) => a.distance - b.distance);
   const sameDistrictCount = nearbySchools.filter(s => s.sameDistrict).length;
 
-  const nearbyNames = nearbySchools.map(s => s.name);
-  const [examCounts, centerExamCount] = await Promise.all([
-    nearbyNames.length > 0
-      ? prisma.examPaper.groupBy({ by: ['schoolName'], _count: true, where: { schoolName: { in: nearbyNames }, status: 'COMPLETED' } })
-      : [],
-    prisma.examPaper.count({ where: { schoolName: school.name, status: 'COMPLETED' } }),
-  ]);
-  const examCountMap = new Map((examCounts as Array<{ schoolName: string | null; _count: number }>).map(e => [e.schoolName, e._count]));
+  const nearbyIds = nearbySchools.map(s => s.id);
+  const allIds = [school.id, ...nearbyIds];
+  const examPapers = await prisma.examPaper.findMany({
+    where: { schoolId: { in: allIds }, status: 'COMPLETED' },
+    select: { schoolId: true, grade: true, category: true, createdAt: true },
+  });
+  const examLabelsMap = buildExamLabelsMap(examPapers);
 
   return NextResponse.json({
-    data: nearbySchools.map(s => ({ ...s, examCount: examCountMap.get(s.name) || 0 })),
-    center: { ...school, examCount: centerExamCount },
+    data: nearbySchools.map(s => ({ ...s, examLabels: examLabelsMap.get(s.id) || [] })),
+    center: { ...school, examLabels: examLabelsMap.get(school.id) || [] },
     stage,
     sameDistrictCount,
   });
