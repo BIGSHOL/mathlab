@@ -5,13 +5,18 @@ import { Button } from '@/components/ui/Button';
 import { Tabs } from '@/components/ui/Tabs';
 import { ExamPaperList } from '@/components/exam-analysis/ExamPaperList';
 import { ExamUploadForm } from '@/components/exam-analysis/ExamUploadForm';
+import dynamic from 'next/dynamic';
+const ArticleEditorModal = dynamic(
+  () => import('@/components/exam-analysis/ArticleEditorModal').then((m) => ({ default: m.ArticleEditorModal })),
+  { ssr: false },
+);
 import { AnalysisResultView } from '@/components/exam-analysis/AnalysisResultView';
 import { AnalysisCommentTab } from '@/components/exam-analysis/AnalysisCommentTab';
 import { StudyStrategyTab } from '@/components/exam-analysis/StudyStrategyTab';
 import { ExtractToBankModal } from '@/components/exam-analysis/ExtractToBankModal';
 import { toast } from '@/components/ui/Toast';
 import Link from 'next/link';
-import { Plus, X, Settings2, Sparkles, Download, Database, PanelLeftClose, PanelLeftOpen, FileSearch } from 'lucide-react';
+import { Plus, X, Settings2, Sparkles, Download, Database, PanelLeftClose, PanelLeftOpen, FileSearch, FileText } from 'lucide-react';
 import type { AnalyzedQuestion, AnalysisSummary } from '@/lib/exam-analysis/types';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import { useAuth } from '@/hooks/useAuth';
@@ -319,9 +324,24 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
 }) {
   const [activeTab, setActiveTab] = useState<AnalysisTab>('basic');
   const [showExtractModal, setShowExtractModal] = useState(false);
+  const [showArticleModal, setShowArticleModal] = useState(false);
   const [commentaryLoading, setCommentaryLoading] = useState(false);
   const [commentaryStartTime, setCommentaryStartTime] = useState<number | null>(null);
   const [commentaryElapsed, setCommentaryElapsed] = useState(0);
+  const [includeNearby, setIncludeNearby] = useState(true);
+  const [includeYearCompare, setIncludeYearCompare] = useState(true);
+  const [nearbyCount, setNearbyCount] = useState<number | null>(null);
+  const [yearCount, setYearCount] = useState<number | null>(null);
+
+  // 주변/연도 기출 건수 조회
+  useEffect(() => {
+    if (!detail.schoolId) { setNearbyCount(0); setYearCount(0); return; }
+    const params = new URLSearchParams({ schoolId: detail.schoolId, grade: detail.grade, examPaperId: detail.id });
+    fetch(`/api/exam-analysis/nearby-count?${params}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { setNearbyCount(d?.data?.nearbyCount ?? 0); setYearCount(d?.data?.yearCount ?? 0); })
+      .catch(() => { setNearbyCount(0); setYearCount(0); });
+  }, [detail.schoolId, detail.grade, detail.id]);
 
   // 기출지 변경 시 탭 초기화
   useEffect(() => {
@@ -360,7 +380,7 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
       const res = await fetch(`/api/exam-analysis/${detail.id}/analyze-extended`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agents: ['commentary'], forceRegenerate: !!commentary }),
+        body: JSON.stringify({ agents: ['commentary'], forceRegenerate: !!commentary, includeNearby, includeYearCompare }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -491,35 +511,58 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
         <>
           {/* AI 총평 섹션 */}
           {!commentary ? (
-            <div className="bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200 rounded-sm p-4 mb-5">
+            <div className="bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-200 rounded-sm px-4 py-2.5 mb-5">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 bg-violet-100 rounded-full flex items-center justify-center ${commentaryLoading ? 'animate-pulse' : ''}`}>
-                    <Sparkles className="w-4 h-4 text-violet-600" />
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 bg-violet-600 rounded-sm flex items-center justify-center shrink-0">
+                    <Sparkles className="w-3.5 h-3.5 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-800">AI 시험 총평</p>
-                    <p className="text-xs text-slate-500">
-                      {commentaryLoading
-                        ? `AI가 시험을 분석하고 있습니다... (${commentaryElapsed}초)`
-                        : '시험 전체에 대한 전문가 수준의 종합 평가를 받아보세요'}
-                    </p>
+                    <h3 className="text-sm font-bold text-slate-900">AI 시험 총평</h3>
+                    {!commentaryLoading && <p className="text-[11px] text-slate-500">시험 전체에 대한 전문가 수준의 종합 평가를 받아보세요</p>}
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  className="bg-violet-600 hover:bg-violet-700 text-white"
-                  onClick={handleGenerateCommentary}
-                  disabled={commentaryLoading}
-                >
-                  {commentaryLoading ? `${commentaryElapsed}초 경과` : '총평 생성'}
-                </Button>
+                <div className="flex items-center gap-2">
+                  {!commentaryLoading && (
+                    <Button
+                      size="sm"
+                      className="bg-violet-600 hover:bg-violet-700 text-white"
+                      onClick={handleGenerateCommentary}
+                    >
+                      총평 생성
+                    </Button>
+                  )}
+                  {detail.schoolId && !commentaryLoading && (
+                    <div className="flex items-center gap-3">
+                      <label className={`flex items-center gap-1 text-[11px] cursor-pointer ${nearbyCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
+                        <input
+                          type="checkbox"
+                          checked={includeNearby && (nearbyCount ?? 0) > 0}
+                          onChange={e => setIncludeNearby(e.target.checked)}
+                          disabled={nearbyCount === 0}
+                          className="w-3 h-3 rounded-sm border-slate-300 text-violet-600 focus:ring-violet-500 disabled:opacity-40"
+                        />
+                        주변 {nearbyCount != null && <span className={nearbyCount > 0 ? 'text-violet-500 font-medium' : ''}>({nearbyCount}교)</span>}
+                      </label>
+                      <label className={`flex items-center gap-1 text-[11px] cursor-pointer ${yearCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
+                        <input
+                          type="checkbox"
+                          checked={includeYearCompare && (yearCount ?? 0) > 0}
+                          onChange={e => setIncludeYearCompare(e.target.checked)}
+                          disabled={yearCount === 0}
+                          className="w-3 h-3 rounded-sm border-slate-300 text-violet-600 focus:ring-violet-500 disabled:opacity-40"
+                        />
+                        연도 {yearCount != null && <span className={yearCount > 0 ? 'text-violet-500 font-medium' : ''}>({yearCount}건)</span>}
+                      </label>
+                    </div>
+                  )}
+                </div>
               </div>
               {commentaryLoading && (
-                <div className="mt-3">
-                  <div className="flex items-center justify-between text-[10px] text-violet-600 mb-1">
-                    <span>문항 분석 → 종합 평가 → 전략 수립</span>
-                    <span>약 30~60초 소요</span>
+                <div className="mt-3 px-1">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-medium text-violet-700">AI 분석 중...</span>
+                    <span className="text-[11px] text-violet-500 tabular-nums">{commentaryElapsed}초</span>
                   </div>
                   <div className="h-1.5 bg-violet-100 rounded-full overflow-hidden">
                     <div
@@ -537,8 +580,37 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
               onRegenerate={handleGenerateCommentary}
               isRegenerating={commentaryLoading}
               elapsedSeconds={commentaryElapsed}
+              includeNearby={includeNearby}
+              onIncludeNearbyChange={setIncludeNearby}
+              nearbyCount={nearbyCount}
+              includeYearCompare={includeYearCompare}
+              onIncludeYearCompareChange={setIncludeYearCompare}
+              yearCount={yearCount}
+              hasSchool={!!detail.schoolId}
             />
           )}
+
+          {/* 기출 분석 글 버튼 (총평 생성 후 활성화) */}
+          {commentary && (() => {
+            const hasArticle = latestAnalysis?.extensions?.some(e => e.agentType === 'blog-article');
+            return (
+              <div className="flex items-center gap-2 mb-4">
+                <Button
+                  size="sm"
+                  onClick={() => setShowArticleModal(true)}
+                  className={hasArticle
+                    ? 'bg-slate-700 hover:bg-slate-800 text-white'
+                    : 'bg-emerald-600 hover:bg-emerald-700 text-white'}
+                >
+                  <FileText className="w-4 h-4 mr-1" />
+                  {hasArticle ? '기출 분석 글 확인' : '기출 분석 글 작성'}
+                </Button>
+                <span className="text-[11px] text-slate-400">
+                  {hasArticle ? '저장된 글을 확인하거나 재생성할 수 있습니다' : 'AI가 블로그 글 + 차트 이미지를 자동 생성합니다'}
+                </span>
+              </div>
+            );
+          })()}
 
           {/* 탭 */}
           <div className="mb-5">
@@ -576,6 +648,14 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
           onClose={() => setShowExtractModal(false)}
         />
       )}
+      {/* 기출 분석 글 에디터 모달 */}
+      {showArticleModal && (
+        <ArticleEditorModal
+          examPaperId={detail.id}
+          schoolName={detail.schoolName}
+          onClose={() => setShowArticleModal(false)}
+        />
+      )}
     </div>
   );
 }
@@ -584,48 +664,69 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
 
 /** 숫자/키워드에 종류별 다른 색상 하이라이트 */
 function highlightText(text: string): React.ReactNode {
-  // 그룹별 패턴: 숫자+단위 | 난이도/위험 | 형식 | 영역/범위 | 기타 강조
-  const pattern = /(\d+(?:\.\d+)?(?:점대?|문항|번|개|단계))|(?:최고난도|고난도|기본|표준|응용|심화|킬러|변별력|취약)|(?:서술형\d*|객관식|단답형)|(?:상위권|최상위권|중상위권|하위권|핵심|필수적?|복합|다단계)|(?:'[^']+?'|'[^']+?')/g;
-  const parts: React.ReactNode[] = [];
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
+  // 1단계: **bold** 마크다운을 분리하여 처리
+  const boldPattern = /\*\*(.+?)\*\*/g;
+  const segments: Array<{ text: string; bold: boolean }> = [];
+  let lastBoldIdx = 0;
+  let boldMatch: RegExpExecArray | null;
 
-  while ((match = pattern.exec(text)) !== null) {
-    if (match.index > lastIndex) {
-      parts.push(text.slice(lastIndex, match.index));
+  while ((boldMatch = boldPattern.exec(text)) !== null) {
+    if (boldMatch.index > lastBoldIdx) {
+      segments.push({ text: text.slice(lastBoldIdx, boldMatch.index), bold: false });
     }
-    const word = match[0];
-    let cls: string;
+    segments.push({ text: boldMatch[1], bold: true });
+    lastBoldIdx = boldPattern.lastIndex;
+  }
+  if (lastBoldIdx < text.length) {
+    segments.push({ text: text.slice(lastBoldIdx), bold: false });
+  }
+  if (segments.length === 0) segments.push({ text, bold: false });
 
-    if (/^\d/.test(word)) {
-      // 숫자: 진한 볼드
-      cls = 'font-bold text-slate-900 text-[13px]';
-    } else if (/최고난도|고난도|킬러|변별력|취약/.test(word)) {
-      // 난이도/위험: 빨간 계열
-      cls = 'font-bold text-red-600 bg-red-50 px-0.5 rounded-sm text-[13px]';
-    } else if (/서술형|객관식|단답형/.test(word)) {
-      // 형식: 파란 계열
-      cls = 'font-bold text-blue-600 bg-blue-50 px-0.5 rounded-sm text-[13px]';
-    } else if (/상위권|최상위권|중상위권|하위권/.test(word)) {
-      // 등급: 녹색 계열
-      cls = 'font-bold text-emerald-600 bg-emerald-50 px-0.5 rounded-sm text-[13px]';
-    } else if (/[''']/.test(word[0])) {
-      // 인용 (단원명 등): 보라 계열
-      cls = 'font-semibold text-violet-700 bg-violet-50 px-0.5 rounded-sm text-[13px]';
+  // 2단계: 각 세그먼트에 키워드 하이라이트 적용
+  const applyHighlight = (str: string, keyPrefix: string): React.ReactNode[] => {
+    const pattern = /(\d+(?:\.\d+)?(?:점대?|문항|번|개|단계|%|점))|(?:최고난도|고난도|기본|표준|응용|심화|킬러|변별력|취약)|(?:서술형\d*|객관식|단답형)|(?:상위권|최상위권|중상위권|하위권|핵심|필수적?|복합|다단계)|(?:'[^']+?'|'[^']+?')/g;
+    const parts: React.ReactNode[] = [];
+    let last = 0;
+    let m: RegExpExecArray | null;
+
+    while ((m = pattern.exec(str)) !== null) {
+      if (m.index > last) parts.push(str.slice(last, m.index));
+      const word = m[0];
+      let cls: string;
+
+      if (/^\d/.test(word)) {
+        cls = 'font-bold text-slate-900 text-[13px]';
+      } else if (/최고난도|고난도|킬러|변별력|취약/.test(word)) {
+        cls = 'font-bold text-red-600 bg-red-50 px-0.5 rounded-sm text-[13px]';
+      } else if (/서술형|객관식|단답형/.test(word)) {
+        cls = 'font-bold text-blue-600 bg-blue-50 px-0.5 rounded-sm text-[13px]';
+      } else if (/상위권|최상위권|중상위권|하위권/.test(word)) {
+        cls = 'font-bold text-emerald-600 bg-emerald-50 px-0.5 rounded-sm text-[13px]';
+      } else if (/[''']/.test(word[0])) {
+        cls = 'font-semibold text-violet-700 bg-violet-50 px-0.5 rounded-sm text-[13px]';
+      } else {
+        cls = 'font-bold text-violet-700 bg-violet-100/60 px-0.5 rounded-sm text-[13px]';
+      }
+
+      parts.push(<span key={`${keyPrefix}-${m.index}`} className={cls}>{word}</span>);
+      last = pattern.lastIndex;
+    }
+
+    if (last < str.length) parts.push(str.slice(last));
+    return parts;
+  };
+
+  const result: React.ReactNode[] = [];
+  segments.forEach((seg, i) => {
+    if (seg.bold) {
+      // bold 구간은 하이라이트 없이 bold만 적용
+      result.push(<strong key={`b${i}`} className="font-bold text-slate-900">{seg.text}</strong>);
     } else {
-      // 핵심/필수/복합 등: 보라 계열
-      cls = 'font-bold text-violet-700 bg-violet-100/60 px-0.5 rounded-sm text-[13px]';
+      result.push(...applyHighlight(seg.text, `s${i}`));
     }
+  });
 
-    parts.push(<span key={match.index} className={cls}>{word}</span>);
-    lastIndex = pattern.lastIndex;
-  }
-
-  if (lastIndex < text.length) {
-    parts.push(text.slice(lastIndex));
-  }
-
-  return parts.length > 0 ? parts : text;
+  return result.length > 0 ? result : text;
 }
 
 const FORMAT_BADGE: Record<string, { label: string; cls: string }> = {
@@ -636,12 +737,19 @@ const FORMAT_BADGE: Record<string, { label: string; cls: string }> = {
 
 // ── AI 총평 결과 표시 ──
 
-function CommentarySection({ commentary, questions: allQuestions, onRegenerate, isRegenerating, elapsedSeconds = 0 }: {
+function CommentarySection({ commentary, questions: allQuestions, onRegenerate, isRegenerating, elapsedSeconds = 0, includeNearby, onIncludeNearbyChange, nearbyCount, includeYearCompare, onIncludeYearCompareChange, yearCount, hasSchool }: {
   commentary: CommentaryResult;
   questions: AnalyzedQuestion[];
   onRegenerate: () => void;
   isRegenerating: boolean;
   elapsedSeconds?: number;
+  includeNearby: boolean;
+  onIncludeNearbyChange: (v: boolean) => void;
+  nearbyCount: number | null;
+  includeYearCompare: boolean;
+  onIncludeYearCompareChange: (v: boolean) => void;
+  yearCount: number | null;
+  hasSchool: boolean;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -672,6 +780,30 @@ function CommentarySection({ commentary, questions: allQuestions, onRegenerate, 
               {isFallback ? 'AI 재분석' : '재분석'}
             </Button>
           )}
+          {hasSchool && !isRegenerating && (
+            <div className="flex items-center gap-3">
+              <label className={`flex items-center gap-1 text-[11px] cursor-pointer ${nearbyCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
+                <input
+                  type="checkbox"
+                  checked={includeNearby && (nearbyCount ?? 0) > 0}
+                  onChange={e => onIncludeNearbyChange(e.target.checked)}
+                  disabled={nearbyCount === 0}
+                  className="w-3 h-3 rounded-sm border-slate-300 text-violet-600 focus:ring-violet-500 disabled:opacity-40"
+                />
+                주변 {nearbyCount != null && <span className={nearbyCount > 0 ? 'text-violet-500 font-medium' : ''}>({nearbyCount}교)</span>}
+              </label>
+              <label className={`flex items-center gap-1 text-[11px] cursor-pointer ${yearCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
+                <input
+                  type="checkbox"
+                  checked={includeYearCompare && (yearCount ?? 0) > 0}
+                  onChange={e => onIncludeYearCompareChange(e.target.checked)}
+                  disabled={yearCount === 0}
+                  className="w-3 h-3 rounded-sm border-slate-300 text-violet-600 focus:ring-violet-500 disabled:opacity-40"
+                />
+                연도 {yearCount != null && <span className={yearCount > 0 ? 'text-violet-500 font-medium' : ''}>({yearCount}건)</span>}
+              </label>
+            </div>
+          )}
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="p-1 text-slate-400 hover:text-slate-600 transition-colors"
@@ -691,7 +823,7 @@ function CommentarySection({ commentary, questions: allQuestions, onRegenerate, 
       )}
 
       {isRegenerating && (
-        <div className="mb-3 bg-violet-50 border border-violet-200 rounded-sm px-3 py-2.5">
+        <div className="mt-3 px-1">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs font-medium text-violet-700">AI 재분석 중...</span>
             <span className="text-[11px] text-violet-500 tabular-nums">{elapsedSeconds}초</span>
@@ -722,20 +854,42 @@ function CommentarySection({ commentary, questions: allQuestions, onRegenerate, 
             </div>
           )}
 
-          {/* 주변 학교 비교 분석 */}
-          {commentary.nearby_comparison && (
-            <div className="bg-white/70 rounded-sm p-4 border border-cyan-200">
-              <h4 className="text-xs font-semibold text-cyan-800 mb-2 flex items-center gap-1.5">
-                <span className="w-1 h-3.5 bg-cyan-500 rounded-full" />
-                주변 학교 비교분석
-              </h4>
-              <div className="space-y-2">
-                {commentary.nearby_comparison.split('\n').filter(Boolean).map((para: string, i: number) => (
-                  <p key={i} className="text-sm text-slate-700 leading-relaxed">{highlightText(para.trim())}</p>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* 주변 학교 비교 + 연도별 비교 (분리 표시) */}
+          {commentary.nearby_comparison && (() => {
+            const paras = commentary.nearby_comparison!.split('\n').filter(Boolean);
+            const yearParas = paras.filter(p => /이전\s*기출|연도|전년|작년|20\d{2}년.*비교/.test(p));
+            const nearbyParas = paras.filter(p => !yearParas.includes(p));
+            return (
+              <>
+                {includeNearby && nearbyParas.length > 0 && (
+                  <div className="bg-white/70 rounded-sm p-4 border border-cyan-200">
+                    <h4 className="text-xs font-semibold text-cyan-800 mb-2 flex items-center gap-1.5">
+                      <span className="w-1 h-3.5 bg-cyan-500 rounded-full" />
+                      주변 학교 비교
+                    </h4>
+                    <div className="space-y-2">
+                      {nearbyParas.map((para: string, i: number) => (
+                        <p key={i} className="text-sm text-slate-700 leading-relaxed">{highlightText(para.trim())}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {includeYearCompare && yearParas.length > 0 && (
+                  <div className="bg-white/70 rounded-sm p-4 border border-amber-200">
+                    <h4 className="text-xs font-semibold text-amber-800 mb-2 flex items-center gap-1.5">
+                      <span className="w-1 h-3.5 bg-amber-500 rounded-full" />
+                      연도별 비교
+                    </h4>
+                    <div className="space-y-2">
+                      {yearParas.map((para: string, i: number) => (
+                        <p key={i} className="text-sm text-slate-700 leading-relaxed">{highlightText(para.trim())}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
 
           {/* 등급별 점수 확보 전략 */}
           {commentary.score_strategies && commentary.score_strategies.length > 0 ? (
