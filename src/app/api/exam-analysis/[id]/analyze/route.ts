@@ -11,6 +11,20 @@ import { matchSchoolByName } from '@/lib/utils/school-matcher';
 import path from 'path';
 import { readFile } from 'fs/promises';
 
+/** fileUrl이 http(s) URL이면 fetch, 로컬 경로면 readFile */
+async function loadFileAsBase64(fileUrl: string): Promise<string> {
+  if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
+    const res = await fetch(fileUrl);
+    if (!res.ok) throw new Error(`파일 다운로드 실패: ${res.status} ${res.statusText}`);
+    const arrayBuf = await res.arrayBuffer();
+    return Buffer.from(arrayBuf).toString('base64');
+  }
+  // 로컬 파일
+  const filePath = path.join(process.cwd(), 'public', fileUrl);
+  const buffer = await readFile(filePath);
+  return buffer.toString('base64');
+}
+
 type Params = { params: Promise<{ id: string }> };
 
 /** 분석 단계 업데이트 헬퍼 */
@@ -60,9 +74,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     const imageDataList: string[] = [];
 
     for (const fileUrl of fileUrls) {
-      const filePath = path.join(process.cwd(), 'public', fileUrl);
-      const buffer = await readFile(filePath);
-      imageDataList.push(buffer.toString('base64'));
+      imageDataList.push(await loadFileAsBase64(fileUrl));
     }
 
     // ── Step 2: 분류 + 프롬프트 구성 ──
