@@ -94,17 +94,52 @@ export async function POST(request: NextRequest, { params }: Params) {
         const baseUrl = forwardedProto
           ? `${forwardedProto}://${request.headers.get('host')}`
           : reqUrl.origin;
-        const chartTokenMap: Record<string, string> = {
-          '{{CHART:difficulty}}': `${baseUrl}/api/exam-analysis/${id}/chart/difficulty`,
-          '{{CHART:type_radar}}': `${baseUrl}/api/exam-analysis/${id}/chart/type-radar`,
-          '{{CHART:topic_bar}}': `${baseUrl}/api/exam-analysis/${id}/chart/topic-bar`,
+        // 캡션용 데이터 추출
+        const totalQ = latestAnalysis.totalQuestions ?? questions.length;
+        const diff = summary.difficulty_distribution;
+        const basicCount = (diff['1'] || 0) + (diff['2'] || 0) + (diff.concept || 0) + (diff.pattern || 0);
+        const advCount = (diff['4'] || 0) + (diff['5'] || 0) + (diff.reasoning || 0) + (diff.creative || 0);
+        const typeD = summary.type_distribution;
+        const topType = Object.entries(typeD).sort(([, a], [, b]) => b - a)[0];
+        const topTypeName: Record<string, string> = {
+          number: '수와 연산', algebra: '문자와 식', function: '함수',
+          geometry: '기하', statistics: '확률과 통계',
+        };
+        // 단원별 상위 3개
+        const topicStats: Record<string, number> = {};
+        for (const q of questions) {
+          const t = (q as { topic?: string }).topic || '미분류';
+          topicStats[t] = (topicStats[t] || 0) + 1;
+        }
+        const topTopics = Object.entries(topicStats)
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 3)
+          .map(([name, count]) => `${name}(${count}문항)`)
+          .join(', ');
+
+        const chartTokenMap: Record<string, { url: string; alt: string; caption: string }> = {
+          '{{CHART:difficulty}}': {
+            url: `${baseUrl}/api/exam-analysis/${id}/chart/difficulty`,
+            alt: '난이도 분포 차트',
+            caption: `▲ 총 ${totalQ}문항 난이도 분포 — 기본·표준 ${basicCount}문항, 심화·최고난도 ${advCount}문항`,
+          },
+          '{{CHART:type_radar}}': {
+            url: `${baseUrl}/api/exam-analysis/${id}/chart/type-radar`,
+            alt: '출제 영역 분포 차트',
+            caption: `▲ 5대 영역 출제 비중 — ${topType ? `${topTypeName[topType[0]] || topType[0]} ${topType[1]}문항 최다 출제` : '영역별 분포'}`,
+          },
+          '{{CHART:topic_bar}}': {
+            url: `${baseUrl}/api/exam-analysis/${id}/chart/topic-bar`,
+            alt: '단원별 출제 현황 차트',
+            caption: `▲ 단원별 출제 현황 — 상위: ${topTopics}`,
+          },
         };
 
         let htmlContent = article.content;
-        for (const [token, url] of Object.entries(chartTokenMap)) {
+        for (const [token, chart] of Object.entries(chartTokenMap)) {
           htmlContent = htmlContent.replace(
             token,
-            `<img src="${url}" alt="차트" style="max-width: 100%; height: auto;" />`,
+            `<img src="${chart.url}" alt="${chart.alt}" style="max-width: 100%; height: auto;" /><p style="text-align: center; color: #64748B; font-size: 13px;">${chart.caption}</p>`,
           );
         }
 
