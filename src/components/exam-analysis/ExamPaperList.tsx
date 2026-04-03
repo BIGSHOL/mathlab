@@ -39,6 +39,16 @@ interface ExamPaperItem {
   }>;
 }
 
+/** 제목에서 학기·시험 종류 라벨 추출 (예: "2025년 1학기 중간고사" → ["1학기", "중간"]) */
+function extractExamLabels(title: string): string[] {
+  const labels: string[] = [];
+  const semMatch = title.match(/(\d)학기/);
+  if (semMatch) labels.push(`${semMatch[1]}학기`);
+  if (/중간/.test(title)) labels.push('중간');
+  else if (/기말/.test(title)) labels.push('기말');
+  return labels;
+}
+
 /** 5단계 상태 판별: 실패 → 분석중 → 완료 → 총평 → 글작성 */
 function getDetailedStatus(item: ExamPaperItem): { label: string; color: string } {
   if (item.status === 'FAILED') return { label: '실패', color: 'bg-red-50 text-red-600 border-red-200' };
@@ -132,11 +142,18 @@ export function ExamPaperList({
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-slate-800 truncate">{item.title}</p>
-                  {/* 상태 + 학교 + 학기 라벨 — 한 줄 */}
-                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                    <span className="text-xs text-slate-500">
-                      {item.subject === 'MATH' ? '수학' : '영어'} · {item.grade}
-                    </span>
+                  {/* 과목·학년 + 문항수·날짜 */}
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {item.subject === 'MATH' ? '수학' : '영어'} · {item.grade}
+                    {latestAnalysis && item.status === 'COMPLETED' && (
+                      <>
+                        {latestAnalysis.totalQuestions && <span className="text-slate-400"> · {latestAnalysis.totalQuestions}문항</span>}
+                        {latestAnalysis.analyzedAt && <span className="text-slate-300"> · {formatAnalyzedAt(latestAnalysis.analyzedAt)}</span>}
+                      </>
+                    )}
+                  </p>
+                  {/* 라벨 줄: 상태 + 학기 + 중간/기말 + 학교 */}
+                  <div className="flex items-center gap-1 mt-1 flex-wrap">
                     {(() => {
                       const s = getDetailedStatus(item);
                       return (
@@ -145,29 +162,21 @@ export function ExamPaperList({
                         </span>
                       );
                     })()}
-                    {item.examType && item.examType !== 'blank' && (
-                      <span className="inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-sm border bg-teal-50 text-teal-600 border-teal-200">
-                        {item.examType === 'midterm' ? '중간' : item.examType === 'final' ? '기말' : item.examType}
+                    {extractExamLabels(item.title).map(label => (
+                      <span key={label} className="inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-sm border bg-teal-50 text-teal-600 border-teal-200">
+                        {label}
                       </span>
-                    )}
+                    ))}
+                    {/* 학교 매칭 뱃지 (인라인) */}
+                    {canEditSchool ? (
+                      <SchoolMatchBadge item={item} onUpdate={onUpdate} />
+                    ) : item.school ? (
+                      <span className="inline-flex items-center gap-0.5 text-[10px] text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-sm px-1.5 py-0.5">
+                        <School className="w-2.5 h-2.5" />
+                        {item.school.name}
+                      </span>
+                    ) : null}
                   </div>
-                  {latestAnalysis && item.status === 'COMPLETED' && (
-                    <p className="text-xs text-slate-400 mt-1">
-                      {latestAnalysis.totalQuestions}문항
-                      {latestAnalysis.analyzedAt && (
-                        <span className="ml-1 text-slate-300">
-                          · {formatAnalyzedAt(latestAnalysis.analyzedAt)}
-                        </span>
-                      )}
-                    </p>
-                  )}
-                  {/* 학교 매칭 표시 */}
-                  {canEditSchool && (
-                    <SchoolMatchBadge
-                      item={item}
-                      onUpdate={onUpdate}
-                    />
-                  )}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   {(item.status === 'PENDING' || item.status === 'FAILED') && (
@@ -295,7 +304,7 @@ function SchoolMatchBadge({ item, onUpdate }: {
   const schoolName = item.school?.name || item.schoolName;
 
   return (
-    <div className="mt-1 relative" ref={containerRef}>
+    <div className="relative inline-flex" ref={containerRef}>
       {item.school ? (
         // 매칭된 상태
         <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-sm px-1.5 py-0.5">

@@ -272,22 +272,35 @@ async function ensureKoreanFonts(): Promise<void> {
   if (fontsReady) return;
 
   if (!existsSync(FONT_DIR)) mkdirSync(FONT_DIR, { recursive: true });
-  const marker = join(FONT_DIR, '.done');
+  const marker = join(FONT_DIR, '.done-v2');
   if (existsSync(marker)) { fontsReady = true; return; }
 
-  // Google Fonts에서 Noto Sans KR 다운로드
+  // Google Fonts에서 Noto Sans KR TTF 다운로드 (IE UA → truetype 포맷 반환)
   const cssRes = await fetch(
-    'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap',
-    { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' } },
+    'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap',
+    { headers: { 'User-Agent': 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0)' } },
   );
   const css = await cssRes.text();
-  const urls = [...css.matchAll(/url\(([^)]+?)\)\s+format\(['"]woff2['"]\)/g)].map(m => m[1]);
 
-  await Promise.all(urls.map(async (url, i) => {
-    const res = await fetch(url);
-    const buf = Buffer.from(await res.arrayBuffer());
-    writeFileSync(join(FONT_DIR, `noto-sans-kr-${i}.woff2`), buf);
-  }));
+  // truetype(.ttf) URL 추출
+  const urls = [...css.matchAll(/url\(([^)]+?)\)\s+format\(['"]truetype['"]\)/g)].map(m => m[1]);
+
+  if (urls.length === 0) {
+    // fallback: 모든 url() 추출
+    const allUrls = [...css.matchAll(/url\(([^)]+?\.(?:ttf|woff2?))\)/g)].map(m => m[1]);
+    for (let i = 0; i < allUrls.length; i++) {
+      const res = await fetch(allUrls[i]);
+      const buf = Buffer.from(await res.arrayBuffer());
+      const ext = allUrls[i].includes('.woff2') ? 'woff2' : allUrls[i].includes('.woff') ? 'woff' : 'ttf';
+      writeFileSync(join(FONT_DIR, `noto-sans-kr-${i}.${ext}`), buf);
+    }
+  } else {
+    await Promise.all(urls.map(async (url, i) => {
+      const res = await fetch(url);
+      const buf = Buffer.from(await res.arrayBuffer());
+      writeFileSync(join(FONT_DIR, `noto-sans-kr-${i}.ttf`), buf);
+    }));
+  }
 
   writeFileSync(marker, 'ok');
   fontsReady = true;
@@ -302,7 +315,7 @@ export async function svgToPng(svg: string, width = CHART_WIDTH): Promise<Buffer
     fitTo: { mode: 'width', value: width * 2 },
     font: {
       fontDirs: [FONT_DIR],
-      loadSystemFonts: false,
+      loadSystemFonts: true,
       defaultFontFamily: 'Noto Sans KR',
     },
   });
