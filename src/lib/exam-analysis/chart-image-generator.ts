@@ -98,10 +98,10 @@ export function generateDifficultyDonutSvg(
 
   // 중앙 텍스트
   arcs.push(`<text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="11" fill="#64748B">총</text>`);
-  arcs.push(`<text x="${cx}" y="${cy + 12}" text-anchor="middle" font-size="20" font-weight="700" fill="#1E293B">${total}문항</text>`);
+  arcs.push(`<text x="${cx}" y="${cy + 12}" text-anchor="middle" font-size="20" font-weight="700" fill="#475569">${total}문항</text>`);
 
   // 제목
-  arcs.push(`<text x="${cx}" y="28" text-anchor="middle" font-size="16" font-weight="700" fill="#1E293B">난이도 분포</text>`);
+  arcs.push(`<text x="${cx}" y="28" text-anchor="middle" font-size="16" font-weight="700" fill="#475569">난이도 분포</text>`);
 
   // 범례
   const legendX = 440;
@@ -109,7 +109,7 @@ export function generateDifficultyDonutSvg(
   for (const d of data) {
     const pct = Math.round((d.value / total) * 100);
     arcs.push(`<rect x="${legendX}" y="${legendY - 6}" width="12" height="12" rx="2" fill="${d.color}"/>`);
-    arcs.push(`<text x="${legendX + 18}" y="${legendY + 3}" font-size="11" fill="#334155">${escapeXml(d.label)}</text>`);
+    arcs.push(`<text x="${legendX + 18}" y="${legendY + 3}" font-size="11" fill="#475569">${escapeXml(d.label)}</text>`);
     arcs.push(`<text x="${legendX + 18}" y="${legendY + 17}" font-size="10" fill="#64748B">${d.value}문항 (${pct}%)</text>`);
     legendY += 38;
   }
@@ -141,7 +141,7 @@ export function generateTypeRadarSvg(
   const parts: string[] = [];
 
   // 제목
-  parts.push(`<text x="${cx}" y="28" text-anchor="middle" font-size="16" font-weight="700" fill="#1E293B">출제 영역 분포</text>`);
+  parts.push(`<text x="${cx}" y="28" text-anchor="middle" font-size="16" font-weight="700" fill="#475569">출제 영역 분포</text>`);
 
   // 배경 그리드 (3단계)
   for (const scale of [0.33, 0.66, 1.0]) {
@@ -187,7 +187,7 @@ export function generateTypeRadarSvg(
     const lx = cx + labelR * Math.cos(angle);
     const ly = cy + labelR * Math.sin(angle);
     const pct = total > 0 ? Math.round((d.value / total) * 100) : 0;
-    parts.push(`<text x="${lx}" y="${ly - 4}" text-anchor="middle" font-size="11" font-weight="600" fill="#334155">${escapeXml(d.label)}</text>`);
+    parts.push(`<text x="${lx}" y="${ly - 4}" text-anchor="middle" font-size="11" font-weight="600" fill="#475569">${escapeXml(d.label)}</text>`);
     parts.push(`<text x="${lx}" y="${ly + 9}" text-anchor="middle" font-size="10" fill="#64748B">${d.value}문항 (${pct}%)</text>`);
   });
 
@@ -196,7 +196,7 @@ export function generateTypeRadarSvg(
   let legendY = 100;
   for (const d of data) {
     parts.push(`<circle cx="${legendX + 5}" cy="${legendY}" r="4" fill="${d.color}"/>`);
-    parts.push(`<text x="${legendX + 14}" y="${legendY + 3}" font-size="10" fill="#334155">${escapeXml(d.label)}: ${d.value}문항</text>`);
+    parts.push(`<text x="${legendX + 14}" y="${legendY + 3}" font-size="10" fill="#475569">${escapeXml(d.label)}: ${d.value}문항</text>`);
     legendY += 22;
   }
 
@@ -240,7 +240,7 @@ export function generateTopicBarSvg(
 
   // 제목
   const chartCenterX = Math.round(barAreaX + barAreaWidth / 2);
-  svgParts.push(`<text x="${chartCenterX}" y="30" text-anchor="middle" font-size="16" font-weight="700" fill="#1E293B">단원별 출제 현황</text>`);
+  svgParts.push(`<text x="${chartCenterX}" y="30" text-anchor="middle" font-size="16" font-weight="700" fill="#475569">단원별 출제 현황</text>`);
 
   // 바 & 라벨
   const COLORS = ['#6366F1', '#8B5CF6', '#A78BFA', '#C084FC', '#D946EF', '#EC4899', '#F472B6', '#F9A8D4'];
@@ -251,13 +251,13 @@ export function generateTopicBarSvg(
     const color = COLORS[i % COLORS.length];
 
     // 단원명 (왼쪽) — 전체 표시
-    svgParts.push(`<text x="${barAreaX - 8}" y="${y + barHeight / 2 + 4}" text-anchor="end" font-size="11" fill="#334155">${escapeXml(topic)}</text>`);
+    svgParts.push(`<text x="${barAreaX - 8}" y="${y + barHeight / 2 + 4}" text-anchor="end" font-size="11" fill="#475569">${escapeXml(topic)}</text>`);
 
     // 바
     svgParts.push(`<rect x="${barAreaX}" y="${y}" width="${Math.max(barW, 4)}" height="${barHeight}" rx="3" fill="${color}" opacity="0.85"/>`);
 
     // 값 라벨
-    svgParts.push(`<text x="${barAreaX + barW + 8}" y="${y + barHeight / 2 + 4}" font-size="11" font-weight="600" fill="#334155">${stats.count}문항 (${stats.pts}점)</text>`);
+    svgParts.push(`<text x="${barAreaX + barW + 8}" y="${y + barHeight / 2 + 4}" font-size="11" font-weight="600" fill="#475569">${stats.count}문항 (${stats.pts}점)</text>`);
   });
 
   const totalHeight = startY + sorted.length * (barHeight + barGap) + 20;

@@ -207,9 +207,18 @@ export function ArticleEditorModal({ examPaperId, schoolName, onClose }: Article
     // 8. data-color → style 보장
     result = result.replace(/<mark(?=[^>]*data-color="([^"]*)")(?![^>]*style)[^>]*>/gi,
       '<mark style="background-color: $1">');
-    // 9. <strong> → <b> (네이버가 <b> 사용)
-    result = result.replace(/<strong>/gi, '<b>');
+    // 9. <strong> → <b> (네이버가 <b> 사용, 속성 포함 매칭)
+    result = result.replace(/<strong([^>]*)>/gi, '<b$1>');
     result = result.replace(/<\/strong>/gi, '</b>');
+    // 10. 보라색(#6741D9) 단원명 강조 → 검정 볼드로 변환 (네이버에서 color leak 방지)
+    result = result.replace(/<span\s+style="color:\s*#6741D9;?">/gi, '<span>');
+    result = result.replace(/<b\s+style="[^"]*color:\s*#6741D9[^"]*">/gi, '<b>');
+    // 10. 이미지 URL: localhost → Vercel 공개 도메인으로 교체
+    //     (로컬 개발 시 생성된 차트 URL이 localhost로 저장되어 네이버에서 접근 불가)
+    result = result.replace(
+      /(<img\s[^>]*src=")http:\/\/localhost:\d+(\/api\/exam-analysis\/)/gi,
+      '$1https://mathlab-mu.vercel.app$2',
+    );
     return result;
   };
 
@@ -226,8 +235,9 @@ export function ArticleEditorModal({ examPaperId, schoolName, onClose }: Article
       container.style.top = '0';
       container.style.opacity = '0';
       container.style.width = '600px'; // 네이버 블로그 본문 폭과 유사하게
-      container.style.fontFamily = 'Pretendard, sans-serif';
+      container.style.fontFamily = '"NanumGothic", "나눔고딕", sans-serif';
       container.style.fontSize = '15px';
+      container.style.fontWeight = 'normal';
       container.style.lineHeight = '1.7';
       container.style.color = '#333';
       document.body.appendChild(container);
