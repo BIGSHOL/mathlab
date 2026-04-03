@@ -5,7 +5,10 @@
  * 블로그 글에 삽입할 차트 이미지를 서버에서 자동 생성
  */
 
-import sharp from 'sharp';
+import { Resvg } from '@resvg/resvg-js';
+import { writeFileSync, existsSync, mkdirSync } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
 import {
   DIFFICULTY_COLORS,
   QUESTION_TYPE_COLORS,
@@ -17,7 +20,7 @@ import type { AnalyzedQuestion } from './types';
 
 const CHART_WIDTH = 680;
 const CHART_HEIGHT = 420;
-const FONT_FAMILY = 'Pretendard, -apple-system, BlinkMacSystemFont, sans-serif';
+const FONT_FAMILY = '"Noto Sans KR", sans-serif';
 
 function svgWrap(inner: string, width = CHART_WIDTH, height = CHART_HEIGHT): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
@@ -224,10 +227,10 @@ export function generateTopicBarSvg(
   }
 
   const maxCount = Math.max(...sorted.map(([, s]) => s.count));
-  // 가장 긴 단원명 기준으로 왼쪽 여백 동적 계산
+  // 가장 긴 단원명 기준으로 왼쪽 여백 동적 계산 (한글은 약 11px/char @font-size 11)
   const maxTopicLen = Math.max(...sorted.map(([t]) => t.length));
-  const barAreaX = Math.max(160, maxTopicLen * 7 + 20);
-  const barAreaWidth = Math.max(150, CHART_WIDTH - barAreaX - 130);
+  const barAreaX = Math.max(170, maxTopicLen * 11 + 24);
+  const barAreaWidth = Math.max(150, CHART_WIDTH - barAreaX - 140);
   const barHeight = 24, barGap = 8;
   const startY = 55;
 
@@ -260,13 +263,52 @@ export function generateTopicBarSvg(
   return svgWrap(svgParts.join('\n'), totalWidth, Math.max(totalHeight, 300));
 }
 
-// ── SVG → PNG 변환 ──
+// ── 한글 폰트 로딩 (서버리스 인스턴스당 1회) ──
+
+const FONT_DIR = join(tmpdir(), 'mathlab-chart-fonts');
+let fontsReady = false;
+
+async function ensureKoreanFonts(): Promise<void> {
+  if (fontsReady) return;
+
+  if (!existsSync(FONT_DIR)) mkdirSync(FONT_DIR, { recursive: true });
+  const marker = join(FONT_DIR, '.done');
+  if (existsSync(marker)) { fontsReady = true; return; }
+
+  // Google Fonts에서 Noto Sans KR 다운로드
+  const cssRes = await fetch(
+    'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap',
+    { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' } },
+  );
+  const css = await cssRes.text();
+  const urls = [...css.matchAll(/url\(([^)]+?)\)\s+format\(['"]woff2['"]\)/g)].map(m => m[1]);
+
+  await Promise.all(urls.map(async (url, i) => {
+    const res = await fetch(url);
+    const buf = Buffer.from(await res.arrayBuffer());
+    writeFileSync(join(FONT_DIR, `noto-sans-kr-${i}.woff2`), buf);
+  }));
+
+  writeFileSync(marker, 'ok');
+  fontsReady = true;
+}
+
+// ── SVG → PNG 변환 (resvg — 한글 폰트 지원) ──
 
 export async function svgToPng(svg: string, width = CHART_WIDTH): Promise<Buffer> {
-  return sharp(Buffer.from(svg))
-    .resize(width * 2, undefined, { fit: 'inside' }) // 2x for retina
-    .png({ quality: 95 })
-    .toBuffer();
+  await ensureKoreanFonts();
+
+  const resvg = new Resvg(svg, {
+    fitTo: { mode: 'width', value: width * 2 },
+    font: {
+      fontDirs: [FONT_DIR],
+      loadSystemFonts: false,
+      defaultFontFamily: 'Noto Sans KR',
+    },
+  });
+
+  const rendered = resvg.render();
+  return Buffer.from(rendered.asPng());
 }
 
 // ── 전체 차트 이미지 생성 (한번에) ──

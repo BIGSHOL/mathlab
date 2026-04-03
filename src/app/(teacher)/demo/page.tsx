@@ -20,17 +20,17 @@ export default function DemoHubPage() {
     <div className="min-h-full">
       {/* Hero */}
       <div className="bg-gradient-to-b from-blue-50/80 via-blue-50/30 to-transparent">
-        <div className="max-w-[1000px] mx-auto px-6 pt-10 pb-10">
-          <div className="flex items-center gap-2.5 mb-5">
+        <div className="max-w-[1000px] mx-auto px-4 sm:px-6 pt-8 sm:pt-10 pb-8 sm:pb-10">
+          <div className="flex items-center gap-2 sm:gap-2.5 mb-5 flex-wrap">
             <LogoIcon className="w-7 h-7" />
             <span className="text-lg font-black tracking-tight">Injaewon MathLAB</span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-primary/10 text-primary text-xs font-bold rounded-full ml-2">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-primary/10 text-primary text-xs font-bold rounded-full">
               <Sparkles className="w-3 h-3" />
               투자자 데모
             </span>
           </div>
 
-          <h1 className="text-3xl font-black text-text-primary leading-tight mb-2">
+          <h1 className="text-2xl sm:text-3xl font-black text-text-primary leading-tight mb-2">
             핵심 기능 체험
           </h1>
           <p className="text-base text-text-secondary max-w-xl">
@@ -40,13 +40,13 @@ export default function DemoHubPage() {
       </div>
 
       {/* 3가지 핵심 기능 */}
-      <div className="max-w-[1000px] mx-auto px-6 pb-16 space-y-6">
+      <div className="max-w-[1000px] mx-auto px-4 sm:px-6 pb-16 space-y-6">
 
         {/* Feature 1: 개념 5단계 */}
         <Card padding="lg" className="border-l-4 border-l-blue-500">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-blue-50 rounded-sm flex items-center justify-center shrink-0">
-              <BookOpen className="w-6 h-6 text-blue-600" />
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-50 rounded-sm flex items-center justify-center shrink-0">
+              <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
@@ -58,7 +58,7 @@ export default function DemoHubPage() {
               </p>
 
               {/* 5단계 시각화 */}
-              <div className="grid grid-cols-5 gap-2 mb-4">
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-4">
                 {[
                   { stage: '1단계', name: '읽기', xp: '5XP', color: 'border-blue-300 bg-blue-50/50 text-blue-700' },
                   { stage: '2단계', name: '빈칸(쉬움)', xp: '10XP', color: 'border-emerald-300 bg-emerald-50/50 text-emerald-700' },
@@ -68,13 +68,13 @@ export default function DemoHubPage() {
                 ].map((s) => (
                   <div key={s.stage} className={`border-l-2 ${s.color} px-2 py-1.5 rounded-sm text-center`}>
                     <div className="text-[10px] font-bold">{s.stage}</div>
-                    <div className="text-xs font-bold">{s.name}</div>
+                    <div className="text-xs font-bold truncate">{s.name}</div>
                     <div className="text-[10px] opacity-70">{s.xp}</div>
                   </div>
                 ))}
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Link href="/concepts">
                   <Button size="sm" variant="primary">
                     <Settings className="w-3.5 h-3.5 mr-1" />
@@ -94,9 +94,9 @@ export default function DemoHubPage() {
 
         {/* Feature 2: 연산 문제 */}
         <Card padding="lg" className="border-l-4 border-l-indigo-500">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-indigo-50 rounded-sm flex items-center justify-center shrink-0">
-              <Calculator className="w-6 h-6 text-indigo-600" />
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-50 rounded-sm flex items-center justify-center shrink-0">
+              <Calculator className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
@@ -116,7 +116,7 @@ export default function DemoHubPage() {
                 <span className="px-2 py-0.5 bg-slate-100 text-text-secondary rounded-sm text-xs">+71개</span>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Link href="/questions/arithmetic">
                   <Button size="sm" variant="primary">
                     <Settings className="w-3.5 h-3.5 mr-1" />
@@ -136,9 +136,9 @@ export default function DemoHubPage() {
 
         {/* Feature 3: 기출 분석 */}
         <Card padding="lg" className="border-l-4 border-l-rose-500">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-rose-50 rounded-sm flex items-center justify-center shrink-0">
-              <BarChart3 className="w-6 h-6 text-rose-600" />
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-rose-50 rounded-sm flex items-center justify-center shrink-0">
+              <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-rose-600" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
@@ -169,9 +169,9 @@ export default function DemoHubPage() {
 
         {/* 숙제 관리 */}
         <Card padding="lg" className="border-l-4 border-l-amber-500">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-amber-50 rounded-sm flex items-center justify-center shrink-0">
-              <CalendarCheck className="w-6 h-6 text-amber-600" />
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-amber-50 rounded-sm flex items-center justify-center shrink-0">
+              <CalendarCheck className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">

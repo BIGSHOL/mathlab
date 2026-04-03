@@ -189,13 +189,13 @@ ${commentary.nearby_comparison ? '8. **주변 학교 비교** — 인근 학교�
 ### 네이버 SEO 최적화 (C-Rank / D.I.A.)
 - **제목**: 25~40자, 핵심 키워드(${schoolName} + 기출 분석)를 앞쪽 15자 이내에 배치
 - **소제목**: <h2>로 각 섹션 구분. 최소 6개
-- **키워드 밀도**: "${schoolName}" + "${grade}"를 본문에 5~8회 자연스럽게 포함
+- **키워드 밀도**: "${schoolName}", "${grade}", "기출 분석", "중간고사"/"기말고사" 등 핵심 키워드를 본문에 최소 15회 이상 자연스럽게 포함. 밀도 2% 이상 목표. 각 섹션 도입부에 학교명+학년을 반복 언급할 것
 - **문단**: 2~4문장씩 짧게 끊어 모바일 가독성 확보. 문장당 40자 이내 권장
 - **이미지 위치**: {{CHART:difficulty}}, {{CHART:type_radar}}, {{CHART:topic_bar}} 토큰을 정확히 해당 섹션 끝에 삽입
 - **태그**: #${schoolName.replace(/\s/g, '')} #기출분석 #${grade || '수학'} 등 7~10개
-- **글 길이**: 2,500~4,000자 (네이버 최적 구간)
+- **글 길이**: 2,500~3,500자. 절대 4,000자를 초과하지 마세요!
 
-### HTML 서식 규칙 (필수! content는 반드시 HTML로 작성)
+### HTML 서식 규칙 (필수! content는 반드시 네이버 블로그 호환 HTML로 작성)
 - content 필드는 **HTML 형식**으로 작성. 마크다운(##, **, -) 사용 금지!
 - 테이블(<table>) 사용 금지! 데이터는 <ul><li> 리스트나 <strong> 텍스트로 표현
 - **소제목**: <h2>시험 개요</h2> 형태로 작성. 모든 섹션에 <h2> 사용
@@ -203,7 +203,11 @@ ${commentary.nearby_comparison ? '8. **주변 학교 비교** — 인근 학교�
 - **개별 문항 제목**: <p><strong>서술형 3번 — Level 5 (13점)</strong></p> 형태로 <strong>만 사용
 - **볼드**: <strong>중요 내용</strong>
 - **리스트**: <ul><li>항목1</li><li>항목2</li></ul>
-- **문단**: <p>텍스트</p> — 반드시 <p> 태그로 감싸기
+- **문단 간격 (네이버 블로그 호환 필수!)**:
+  - 모든 문단은 <p>텍스트</p> 태그로 감싸기
+  - 문단과 문단 사이에 반드시 <p>&nbsp;</p>를 삽입하여 시각적 줄바꿈 확보
+  - 섹션(<h2>) 앞에도 <p>&nbsp;</p> 삽입
+  - 네이버 블로그는 <p> margin을 무시하므로, 빈 줄(<p>&nbsp;</p>)로 간격을 만들어야 함
 - **색상 강조 (핵심 수치/키워드에 적용)**:
   - 핵심 점수/수치: <span style="color: #E03131">84점</span> (빨간색)
   - 등급 라벨: <span style="color: #1971C2">A등급</span> (파란색)
@@ -216,7 +220,7 @@ ${commentary.nearby_comparison ? '8. **주변 학교 비교** — 인근 학교�
   - C등급 전략: <mark style="background-color: #FFE8CC">C등급 핵심 전략</mark> (살구색)
   - 경고/주의 메시지: <mark style="background-color: #FFD8D8">주의 사항</mark> (분홍색)
   - 단원/영역 강조: <mark style="background-color: #E8DEFF">영역 이름</mark> (연보라색)
-- **인용 블록 (핵심 인사이트)**: <blockquote>핵심 요약 문장</blockquote>
+- **<blockquote> 사용 금지!** 네이버 블로그에서 거대한 인용 스타일로 변환됨. 대신 <p><mark style="background-color: #FFF3BF">핵심 메시지</mark></p> 형광펜으로 강조
 - 차트 이미지 위치: {{CHART:difficulty}}, {{CHART:type_radar}}, {{CHART:topic_bar}} 토큰만 삽입 (img 태그 아님)
 
 ### 서식 적용 가이드라인
@@ -225,6 +229,7 @@ ${commentary.nearby_comparison ? '8. **주변 학교 비교** — 인근 학교�
 - Level 1~5 키워드는 난이도별 색상 적용 (1=녹색, 2=라임, 3=주황, 4=오렌지, 5=빨강)
 - 등급별 전략의 등급 라벨(A/B/C)은 파란 볼드
 - 단원명은 보라 볼드
+- blockquote 대신 형광펜(<mark>)으로 핵심 인사이트 강조
 - **형광펜 색상 배분 규칙** (같은 색상만 반복 사용 절대 금지!):
   - 시험 개요 섹션 → 노란색 형광 (#FFF3BF)
   - 난이도 분석 섹션 → 분홍색 형광 (#FFD8D8)
@@ -240,6 +245,7 @@ ${commentary.nearby_comparison ? '8. **주변 학교 비교** — 인근 학교�
 - Level 3 시험에 "최상위 변별" 사용 금지
 - 과장 표현 금지. 수치와 데이터로만 근거 제시
 - "이번 시험" 대신 "${schoolName} ${grade} 시험"으로 구체적 표기
+- **자명한 환산 금지**: 100점 만점 시험에서 "N점으로 전체의 N%"처럼 점수=퍼센트가 자명한 경우 퍼센트를 적지 말 것 (예: ✗ "35점으로 전체의 35%"). 단, 문항수 대비 비율은 유용하므로 표기 (예: ✓ "9문항이 출제되어 43%")
 
 ### 학원 홍보 (자연스럽게)
 - 글 마지막에 "저희 학원에서는 이러한 출제 경향을 반영하여..." 식의 자연스러운 마무리
@@ -248,7 +254,7 @@ ${commentary.nearby_comparison ? '8. **주변 학교 비교** — 인근 학교�
 ## 출력 형식 (반드시 아래 JSON으로만 응답)
 {
   "title": "블로그 제목 (25~40자, 키워드 앞쪽 배치)",
-  "content": "HTML 본문 (<h2>, <h3>, <p>, <strong>, <ul><li>, <mark>, <span style=color>, <blockquote>, {{CHART:*}} 포함)",
+  "content": "HTML 본문 (<h2>, <h3>, <p>, <p>&nbsp;</p>, <strong>, <ul><li>, <mark>, <span style=color>, {{CHART:*}} 포함. blockquote 금지!)",
   "tags": ["#태그1", "#태그2", "..."],
   "metaDescription": "검색 결과 미리보기용 설명 (50~120자, 키워드 포함)"
 }`;

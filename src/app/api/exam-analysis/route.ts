@@ -53,7 +53,10 @@ export async function GET(request: NextRequest) {
         analyses: {
           orderBy: { createdAt: 'desc' },
           take: 1,
-          select: { id: true, totalQuestions: true, totalPoints: true, earnedPoints: true, analyzedAt: true },
+          select: {
+            id: true, totalQuestions: true, totalPoints: true, earnedPoints: true, analyzedAt: true, modelVersion: true,
+            extensions: { select: { agentType: true } },
+          },
         },
       },
       orderBy: { createdAt: 'desc' },

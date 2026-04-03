@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Pagination } from '@/components/ui/Pagination';
-import { StatusBadge } from './StatusBadge';
 import { FileSearch, Play, Trash2, RotateCw, School, X } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
 
@@ -36,7 +35,21 @@ interface ExamPaperItem {
     earnedPoints: number | null;
     analyzedAt: string | null;
     modelVersion: string | null;
+    extensions?: Array<{ agentType: string }>;
   }>;
+}
+
+/** 5단계 상태 판별: 실패 → 분석중 → 완료 → 총평 → 글작성 */
+function getDetailedStatus(item: ExamPaperItem): { label: string; color: string } {
+  if (item.status === 'FAILED') return { label: '실패', color: 'bg-red-50 text-red-600 border-red-200' };
+  if (item.status === 'ANALYZING') return { label: '분석중', color: 'bg-amber-50 text-amber-600 border-amber-200' };
+  if (item.status === 'PENDING') return { label: '대기', color: 'bg-slate-50 text-slate-500 border-slate-200' };
+  // COMPLETED — extensions로 세분화
+  const exts = item.analyses[0]?.extensions || [];
+  const agentTypes = exts.map(e => e.agentType);
+  if (agentTypes.includes('blog-article')) return { label: '글작성', color: 'bg-violet-50 text-violet-600 border-violet-200' };
+  if (agentTypes.includes('commentary')) return { label: '총평', color: 'bg-blue-50 text-blue-600 border-blue-200' };
+  return { label: '완료', color: 'bg-emerald-50 text-emerald-600 border-emerald-200' };
 }
 
 interface ExamPaperListProps {
@@ -119,26 +132,31 @@ export function ExamPaperList({
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-slate-800 truncate">{item.title}</p>
-                  <div className="flex items-center gap-2 mt-1">
+                  {/* 상태 + 학교 + 학기 라벨 — 한 줄 */}
+                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                     <span className="text-xs text-slate-500">
                       {item.subject === 'MATH' ? '수학' : '영어'} · {item.grade}
                     </span>
-                    <StatusBadge status={item.status} />
+                    {(() => {
+                      const s = getDetailedStatus(item);
+                      return (
+                        <span className={`inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-sm border ${s.color}`}>
+                          {s.label}
+                        </span>
+                      );
+                    })()}
+                    {item.examType && item.examType !== 'blank' && (
+                      <span className="inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-sm border bg-teal-50 text-teal-600 border-teal-200">
+                        {item.examType === 'midterm' ? '중간' : item.examType === 'final' ? '기말' : item.examType}
+                      </span>
+                    )}
                   </div>
                   {latestAnalysis && item.status === 'COMPLETED' && (
                     <p className="text-xs text-slate-400 mt-1">
                       {latestAnalysis.totalQuestions}문항
-                      {latestAnalysis.earnedPoints != null && latestAnalysis.totalPoints
-                        ? ` · ${latestAnalysis.earnedPoints}/${latestAnalysis.totalPoints}점`
-                        : ''}
                       {latestAnalysis.analyzedAt && (
                         <span className="ml-1 text-slate-300">
                           · {formatAnalyzedAt(latestAnalysis.analyzedAt)}
-                        </span>
-                      )}
-                      {latestAnalysis.modelVersion?.includes('prompt') && (
-                        <span className="ml-1 text-slate-300">
-                          · {latestAnalysis.modelVersion.split('/ ').pop()}
                         </span>
                       )}
                     </p>
