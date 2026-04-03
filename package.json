@@ -21,6 +21,7 @@
     "@anthropic-ai/sdk": "^0.78.0",
     "@google/genai": "^1.44.0",
     "@resvg/resvg-js": "^2.6.2",
+    "@supabase/supabase-js": "^2.101.1",
     "@tiptap/extension-color": "^3.22.0",
     "@tiptap/extension-highlight": "^3.22.0",
     "@tiptap/extension-image": "^3.22.1",

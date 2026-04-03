@@ -201,8 +201,8 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
         toast.error(`${f.name}: 허용되지 않는 형식`);
         return false;
       }
-      if (f.size > 10 * 1024 * 1024) {
-        toast.error(`${f.name}: 10MB 초과`);
+      if (f.size > 20 * 1024 * 1024) {
+        toast.error(`${f.name}: 20MB 초과`);
         return false;
       }
       return true;
@@ -297,7 +297,7 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
         >
           <Upload className="w-8 h-8 mx-auto text-slate-400 mb-2" />
           <p className="text-sm text-slate-500">클릭하거나 파일을 드래그하세요</p>
-          <p className="text-xs text-slate-400 mt-1">PDF, JPG, PNG, WebP (최대 10MB)</p>
+          <p className="text-xs text-slate-400 mt-1">PDF, JPG, PNG, WebP (최대 20MB)</p>
         </div>
         <input
           ref={fileInputRef}
