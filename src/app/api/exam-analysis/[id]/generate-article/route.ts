@@ -91,9 +91,13 @@ export async function POST(request: NextRequest, { params }: Params) {
         // NEXTAUTH_URL이 localhost일 수 있으므로 request에서 실제 origin 추출
         const reqUrl = new URL(request.url);
         const forwardedProto = request.headers.get('x-forwarded-proto');
-        const baseUrl = forwardedProto
+        let baseUrl = forwardedProto
           ? `${forwardedProto}://${request.headers.get('host')}`
           : reqUrl.origin;
+        // localhost → 프로덕션 도메인으로 강제 교체 (Mixed Content 방지)
+        if (baseUrl.includes('localhost')) {
+          baseUrl = 'https://mathlab-mu.vercel.app';
+        }
         const totalQ = latestAnalysis.totalQuestions ?? questions.length;
 
         const chartTokenMap: Record<string, { url: string; alt: string; caption: string }> = {

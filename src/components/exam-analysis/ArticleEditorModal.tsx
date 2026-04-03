@@ -219,6 +219,7 @@ export function ArticleEditorModal({ examPaperId, schoolName, onClose }: Article
       container.style.fontWeight = 'normal';
       container.style.lineHeight = '1.7';
       container.style.color = '#333';
+      container.style.textAlign = 'left';
       document.body.appendChild(container);
 
       // mark 배경색 보장
