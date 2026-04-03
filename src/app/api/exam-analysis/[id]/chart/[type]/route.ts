@@ -6,6 +6,7 @@ type Params = { params: Promise<{ id: string; type: string }> };
 const TYPE_MAP: Record<string, string> = {
   difficulty: 'difficulty',
   'type-radar': 'typeRadar',
+  'ability-radar': 'abilityRadar',
   'topic-bar': 'topicBar',
 };
 

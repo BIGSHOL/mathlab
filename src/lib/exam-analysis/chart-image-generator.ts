@@ -15,6 +15,8 @@ import {
   DIFFICULTY_COLORS,
   QUESTION_TYPE_COLORS,
   QUESTION_TYPE_LABELS,
+  ABILITY_DOMAIN_LABELS,
+  ABILITY_DOMAIN_COLORS,
 } from './constants';
 import type { AnalyzedQuestion } from './types';
 
@@ -203,6 +205,101 @@ export function generateTypeRadarSvg(
   return svgWrap(parts.join('\n'));
 }
 
+// ── 능력 영역 분포 레이더 차트 ──
+
+export function generateAbilityRadarSvg(
+  questions: AnalyzedQuestion[],
+): string {
+  const abilityKeys = ['calculation', 'understanding', 'problem_solving', 'reasoning'] as const;
+
+  // 문항별 ability_domain 집계
+  const counts: Record<string, number> = {};
+  for (const key of abilityKeys) counts[key] = 0;
+  for (const q of questions) {
+    const domain = q.ability_domain || 'understanding';
+    if (domain in counts) counts[domain]++;
+  }
+
+  const data = abilityKeys.map((key) => ({
+    key,
+    label: ABILITY_DOMAIN_LABELS[key] || key,
+    value: counts[key] || 0,
+    color: ABILITY_DOMAIN_COLORS[key] || '#94A3B8',
+  }));
+
+  const total = data.reduce((s, d) => s + d.value, 0);
+  const maxVal = Math.max(...data.map((d) => d.value), 1);
+
+  const cx = 210, cy = 190, radius = 110;
+  const n = data.length;
+  const angleStep = (2 * Math.PI) / n;
+  const startOffset = -Math.PI / 2;
+
+  const parts: string[] = [];
+
+  // 제목
+  parts.push(`<text x="${cx}" y="28" text-anchor="middle" font-size="16" font-weight="700" fill="#374151">능력 영역 분포</text>`);
+
+  // 배경 그리드 (3단계)
+  for (const scale of [0.33, 0.66, 1.0]) {
+    const r = radius * scale;
+    const points = data.map((_, i) => {
+      const angle = startOffset + i * angleStep;
+      return `${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`;
+    }).join(' ');
+    parts.push(`<polygon points="${points}" fill="none" stroke="#E2E8F0" stroke-width="1"/>`);
+  }
+
+  // 축 선
+  for (let i = 0; i < n; i++) {
+    const angle = startOffset + i * angleStep;
+    const x = cx + radius * Math.cos(angle);
+    const y = cy + radius * Math.sin(angle);
+    parts.push(`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#E2E8F0" stroke-width="1"/>`);
+  }
+
+  // 데이터 다각형
+  if (total > 0) {
+    const dataPoints = data.map((d, i) => {
+      const angle = startOffset + i * angleStep;
+      const r = (d.value / maxVal) * radius;
+      return `${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`;
+    }).join(' ');
+    parts.push(`<polygon points="${dataPoints}" fill="rgba(139,92,246,0.15)" stroke="#8B5CF6" stroke-width="2.5"/>`);
+
+    // 데이터 점
+    data.forEach((d, i) => {
+      const angle = startOffset + i * angleStep;
+      const r = (d.value / maxVal) * radius;
+      const px = cx + r * Math.cos(angle);
+      const py = cy + r * Math.sin(angle);
+      parts.push(`<circle cx="${px}" cy="${py}" r="5" fill="${d.color}" stroke="white" stroke-width="2"/>`);
+    });
+  }
+
+  // 라벨
+  data.forEach((d, i) => {
+    const angle = startOffset + i * angleStep;
+    const labelR = radius + 25;
+    const lx = cx + labelR * Math.cos(angle);
+    const ly = cy + labelR * Math.sin(angle);
+    parts.push(`<text x="${lx}" y="${ly}" text-anchor="middle" font-size="12" font-weight="600" fill="#374151">${escapeXml(d.label)}</text>`);
+  });
+
+  // 범례 (오른쪽)
+  const legendX = 390;
+  let legendY = 100;
+  for (const d of data) {
+    const pct = total > 0 ? Math.round((d.value / total) * 100) : 0;
+    parts.push(`<circle cx="${legendX + 5}" cy="${legendY}" r="4" fill="${d.color}"/>`);
+    parts.push(`<text x="${legendX + 14}" y="${legendY + 3}" font-size="11" fill="#374151">${escapeXml(d.label)}</text>`);
+    parts.push(`<text x="${legendX + 14}" y="${legendY + 17}" font-size="10" fill="#6B7280">${d.value}문항 (${pct}%)</text>`);
+    legendY += 32;
+  }
+
+  return svgWrap(parts.join('\n'));
+}
+
 // ── 단원별 출제 현황 가로 바 차트 ──
 
 export function generateTopicBarSvg(
@@ -366,6 +463,7 @@ export async function svgToPng(svg: string, width = CHART_WIDTH): Promise<Buffer
 export interface ChartImages {
   difficulty: string; // base64 PNG
   typeRadar: string;
+  abilityRadar: string;
   topicBar: string;
 }
 
@@ -373,21 +471,24 @@ export async function generateAllChartImages(
   summary: { difficulty_distribution: Record<string, number>; type_distribution: Record<string, number> },
   questions: AnalyzedQuestion[],
 ): Promise<ChartImages> {
-  const [diffSvg, radarSvg, barSvg] = [
+  const [diffSvg, radarSvg, abilityRadarSvg, barSvg] = [
     generateDifficultyDonutSvg(summary.difficulty_distribution),
     generateTypeRadarSvg(summary.type_distribution),
+    generateAbilityRadarSvg(questions),
     generateTopicBarSvg(questions),
   ];
 
-  const [diffPng, radarPng, barPng] = await Promise.all([
+  const [diffPng, radarPng, abilityPng, barPng] = await Promise.all([
     svgToPng(diffSvg),
     svgToPng(radarSvg),
+    svgToPng(abilityRadarSvg),
     svgToPng(barSvg),
   ]);
 
   return {
     difficulty: diffPng.toString('base64'),
     typeRadar: radarPng.toString('base64'),
+    abilityRadar: abilityPng.toString('base64'),
     topicBar: barPng.toString('base64'),
   };
 }

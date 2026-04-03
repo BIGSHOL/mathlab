@@ -179,7 +179,7 @@ ${nearbyText}
 ### 글 구조 (반드시 이 순서와 소제목을 따르세요)
 1. **시험 개요** — 문항수, 배점, 형식, 종합 난이도를 2~3문장 서술로 자연스럽게 정리. 별도 리스트로 같은 내용을 반복하지 말 것
 2. **난이도 분석** — Level별 분포를 해석하고 학부모 관점에서 의미 설명. 서술문으로 인사이트 전달 후 필요시 리스트로 보충 (서술과 리스트에서 같은 수치를 중복 나열 금지). 끝에 {{CHART:difficulty}} 토큰 삽입
-3. **출제 영역 분석** — 5대 영역 분포와 단원별 비중. 끝에 {{CHART:type_radar}} 토큰 삽입
+3. **출제 영역 분석** — 5대 영역 분포와 단원별 비중. 끝에 {{CHART:type_radar}} 토큰과 {{CHART:ability_radar}} 토큰을 나란히 삽입 (유형 분포 차트 → 능력 분포 차트 순서)
 4. **단원별 출제 현황** — 주요 단원 상세 분석. 끝에 {{CHART:topic_bar}} 토큰 삽입
 5. **주목할 문항 분석** — 킬러 문항 3~5개의 출제 의도와 풀이 포인트
 6. **등급별 점수 확보 전략** — A/B/C 등급별 구체적 전략
@@ -196,7 +196,7 @@ ${commentary.nearby_comparison ? '8. **주변 학교 비교** — 인근 학교�
   - ✗ "성광중 중3 시험은 성광중 중3 기출 분석에서..." (같은 문장에 2회 = 스터핑)
   - ✓ "성광중 중3 시험은 응용~심화 구간에 배점이 집중된 구조로, 기본 개념만으로는 고득점이 어렵습니다." (1회만, 자연스럽게)
 - **문단**: 2~4문장씩 짧게 끊어 모바일 가독성 확보. 문장당 40자 이내 권장
-- **이미지 위치**: {{CHART:difficulty}}, {{CHART:type_radar}}, {{CHART:topic_bar}} 토큰을 정확히 해당 섹션 끝에 삽입
+- **이미지 위치**: {{CHART:difficulty}}, {{CHART:type_radar}}, {{CHART:ability_radar}}, {{CHART:topic_bar}} 토큰을 정확히 해당 섹션 끝에 삽입
 - **태그 규칙 (정확히 따를 것)**:
   - 필수 태그: #${schoolName.replace(/\s/g, '')} #${schoolName.replace(/\s/g, '')}기출 #${schoolName.replace(/\s/g, '')}수학 #${grade ? grade.replace(/\s/g, '') + '수학' : '중학수학'} #기출분석 #수학기출분석 #중간고사기출
   - 주변 학교가 있으면 주변 학교명 태그도 추가: ${nearbyText !== '(주변 학교 비교 데이터 없음)' ? '주변 학교명을 #학교명 형태로 각각 추가' : ''}
@@ -231,7 +231,7 @@ ${commentary.nearby_comparison ? '8. **주변 학교 비교** — 인근 학교�
   - C등급 전략: <mark style="background-color: #FFE8CC">C등급 핵심</mark> (살구색)
   - 경고/주의: <mark style="background-color: #FFD8D8">주의 사항</mark> (분홍색)
   - 영역 강조: <mark style="background-color: #E8DEFF">영역 이름</mark> (연보라색)
-- 차트 이미지 위치: {{CHART:difficulty}}, {{CHART:type_radar}}, {{CHART:topic_bar}} 토큰만 삽입
+- 차트 이미지 위치: {{CHART:difficulty}}, {{CHART:type_radar}}, {{CHART:ability_radar}}, {{CHART:topic_bar}} 토큰만 삽입
 
 **HTML 구조 예시 (반드시 이 패턴을 따를 것!):**
 <h2>성광중 중3 수학 등급별 점수 확보 전략</h2>
