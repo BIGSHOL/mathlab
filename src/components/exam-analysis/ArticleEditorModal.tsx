@@ -183,15 +183,91 @@ export function ArticleEditorModal({ examPaperId, schoolName, onClose }: Article
     }
   }, [tags, title, keyword, htmlContent]);
 
-  // HTML 소스 복사 (네이버 블로그 HTML 편집 모드 붙여넣기용)
-  const handleCopyHtml = async () => {
+  // 네이버 SmartEditor ONE 호환 HTML 전처리
+  const prepareForNaver = (html: string): string => {
+    let result = html;
+    // 1. text-align: left만 제거 (기본값), center/right는 유지
+    result = result.replace(/\s*text-align:\s*left\s*;?/gi, '');
+    // 2. <h2> → <p> 큰 글씨 + <hr> 구분선 (네이버 패턴)
+    result = result.replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi,
+      '<p><span style="font-size: 24px;"><b>$1</b></span></p><hr>');
+    // 3. <h3> → <p> 중간 글씨
+    result = result.replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi,
+      '<p><span style="font-size: 18px;"><b>$1</b></span></p>');
+    // 4. <li><p style="...">내용</p></li> → <p style="...">내용</p> (p 속성 보존!)
+    result = result.replace(/<li[^>]*>(<p\s[^>]*>[\s\S]*?<\/p>)<\/li>/gi, '$1');
+    result = result.replace(/<li[^>]*><p>([\s\S]*?)<\/p><\/li>/gi, '<p>$1</p>');
+    result = result.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '<p>$1</p>');
+    // 5. ul/ol 래퍼 제거
+    result = result.replace(/<\/?[uo]l[^>]*>/gi, '');
+    // 6. 빈 <p> 제거
+    result = result.replace(/<p[^>]*>\s*(<br\s*\/?>)?\s*<\/p>/gi, '');
+    // 7. <blockquote> 유지 (네이버가 인용구로 인식)
+    // blockquote는 변환하지 않음
+    // 8. data-color → style 보장
+    result = result.replace(/<mark(?=[^>]*data-color="([^"]*)")(?![^>]*style)[^>]*>/gi,
+      '<mark style="background-color: $1">');
+    // 9. <strong> → <b> (네이버가 <b> 사용)
+    result = result.replace(/<strong>/gi, '<b>');
+    result = result.replace(/<\/strong>/gi, '</b>');
+    return result;
+  };
+
+  // 서식 복사 (브라우저 네이티브 렌더링 → 선택 → 복사)
+  const handleCopyRichText = async () => {
     try {
-      await navigator.clipboard.writeText(htmlContent);
-      toast.success('HTML 소스가 복사되었습니다. 네이버 블로그 → HTML 모드에 붙여넣기하세요.');
+      const prepared = prepareForNaver(htmlContent);
+
+      const container = document.createElement('div');
+      container.innerHTML = prepared;
+      // 화면 밖에 배치하되 렌더링은 되도록 (display:none이면 선택 불가)
+      container.style.position = 'fixed';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      container.style.opacity = '0';
+      container.style.width = '600px'; // 네이버 블로그 본문 폭과 유사하게
+      container.style.fontFamily = 'Pretendard, sans-serif';
+      container.style.fontSize = '15px';
+      container.style.lineHeight = '1.7';
+      container.style.color = '#333';
+      document.body.appendChild(container);
+
+      // mark 배경색 보장
+      container.querySelectorAll('mark').forEach((el) => {
+        const markEl = el as HTMLElement;
+        if (!markEl.style.backgroundColor) {
+          markEl.style.backgroundColor = markEl.getAttribute('data-color') || '#FFF3BF';
+        }
+      });
+
+      const range = document.createRange();
+      range.selectNodeContents(container);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+
+      document.execCommand('copy');
+
+      selection?.removeAllRanges();
+      document.body.removeChild(container);
+
+      toast.success('서식이 복사되었습니다. 네이버 블로그에 Ctrl+V로 붙여넣기하세요.');
     } catch {
-      toast.error('복사에 실패했습니다');
+      // fallback
+      try {
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const textBlob = new Blob([htmlContent.replace(/<[^>]*>/g, '')], { type: 'text/plain' });
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'text/html': blob, 'text/plain': textBlob }),
+        ]);
+        toast.success('서식이 복사되었습니다.');
+      } catch {
+        await navigator.clipboard.writeText(htmlContent.replace(/<[^>]*>/g, ''));
+        toast.success('텍스트가 복사되었습니다');
+      }
     }
   };
+
 
   // 이미지 다운로드
   const handleDownloadImages = () => {
@@ -376,9 +452,9 @@ export function ArticleEditorModal({ examPaperId, schoolName, onClose }: Article
       {/* 하단 액션 바 */}
       {articleData && (
         <div className="flex items-center gap-2 px-4 py-2.5 border-t border-slate-200 bg-slate-50 shrink-0">
-          <Button size="sm" variant="secondary" onClick={handleCopyHtml}>
+          <Button size="sm" variant="secondary" onClick={handleCopyRichText}>
             <Copy className="w-4 h-4 mr-1" />
-            HTML 소스 복사
+            서식 복사
           </Button>
           <Button size="sm" variant="secondary" onClick={handleDownloadImages}>
             <Download className="w-4 h-4 mr-1" />
