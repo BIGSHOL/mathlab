@@ -5,7 +5,9 @@
  * 블로그 글에 삽입할 차트 이미지를 서버에서 자동 생성
  */
 
-import { Resvg } from '@resvg/resvg-js';
+// Turbopack에서 네이티브 모듈 정적 import 불가 → 런타임 require
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const getResvg = () => require('@resvg/resvg-js').Resvg as typeof import('@resvg/resvg-js').Resvg;
 import { writeFileSync, existsSync, statSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
@@ -352,6 +354,7 @@ async function ensureFonts(): Promise<string[]> {
 export async function svgToPng(svg: string, width = CHART_WIDTH): Promise<Buffer> {
   const fontFiles = await ensureFonts();
 
+  const Resvg = getResvg();
   const resvg = new Resvg(svg, {
     fitTo: { mode: 'width', value: width * 2 },
     font: {

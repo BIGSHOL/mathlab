@@ -183,23 +183,13 @@ export function ArticleEditorModal({ examPaperId, schoolName, onClose }: Article
     }
   }, [tags, title, keyword, htmlContent]);
 
-  // HTML 복사 (네이버 블로그 붙여넣기용)
+  // HTML 소스 복사 (네이버 블로그 HTML 편집 모드 붙여넣기용)
   const handleCopyHtml = async () => {
     try {
-      const blob = new Blob([htmlContent], { type: 'text/html' });
-      const textBlob = new Blob([htmlContent.replace(/<[^>]*>/g, '')], { type: 'text/plain' });
-      await navigator.clipboard.write([
-        new ClipboardItem({
-          'text/html': blob,
-          'text/plain': textBlob,
-        }),
-      ]);
-      toast.success('HTML이 클립보드에 복사되었습니다. 네이버 블로그에 붙여넣기하세요.');
+      await navigator.clipboard.writeText(htmlContent);
+      toast.success('HTML 소스가 복사되었습니다. 네이버 블로그 → HTML 모드에 붙여넣기하세요.');
     } catch {
-      // fallback
-      const text = htmlContent.replace(/<[^>]*>/g, '');
-      await navigator.clipboard.writeText(text);
-      toast.success('텍스트가 복사되었습니다');
+      toast.error('복사에 실패했습니다');
     }
   };
 
@@ -388,7 +378,7 @@ export function ArticleEditorModal({ examPaperId, schoolName, onClose }: Article
         <div className="flex items-center gap-2 px-4 py-2.5 border-t border-slate-200 bg-slate-50 shrink-0">
           <Button size="sm" variant="secondary" onClick={handleCopyHtml}>
             <Copy className="w-4 h-4 mr-1" />
-            글 복사 (HTML)
+            HTML 소스 복사
           </Button>
           <Button size="sm" variant="secondary" onClick={handleDownloadImages}>
             <Download className="w-4 h-4 mr-1" />
