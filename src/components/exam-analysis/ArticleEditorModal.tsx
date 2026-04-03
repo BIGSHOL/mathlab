@@ -8,7 +8,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { X, RefreshCw, Copy, Download, Save, Loader2, Clock } from 'lucide-react';
+import { X, RefreshCw, Copy, Loader2, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 
@@ -45,7 +45,6 @@ export function ArticleEditorModal({ examPaperId, schoolName, onClose }: Article
   const [htmlContent, setHtmlContent] = useState('');
   const [title, setTitle] = useState('');
   const [tags, setTags] = useState<string[]>([]);
-  const [saving, setSaving] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // 저장된 글 로드 → 없으면 자동 생성 시작
@@ -259,48 +258,6 @@ export function ArticleEditorModal({ examPaperId, schoolName, onClose }: Article
   };
 
 
-  // 이미지 다운로드
-  const handleDownloadImages = () => {
-    if (!articleData?.chartImages) {
-      toast.warning('차트 이미지가 없습니다');
-      return;
-    }
-
-    const charts = articleData.chartImages;
-    const items = [
-      { name: 'chart-1-난이도분포.png', data: charts.difficulty },
-      { name: 'chart-2-유형분포.png', data: charts.typeRadar },
-      { name: 'chart-3-단원별현황.png', data: charts.topicBar },
-    ];
-
-    for (const item of items) {
-      const link = document.createElement('a');
-      link.href = `data:image/png;base64,${item.data}`;
-      link.download = item.name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-    toast.success('차트 이미지 3장이 다운로드되었습니다');
-  };
-
-  // 수정 저장
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await fetch(`/api/exam-analysis/${examPaperId}/generate-article`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: htmlContent, title, tags }),
-      });
-      toast.success('저장되었습니다');
-    } catch {
-      toast.error('저장에 실패했습니다');
-    } finally {
-      setSaving(false);
-    }
-  };
-
   // 닫기 시 자동 저장
   const handleClose = async () => {
     if (articleData && htmlContent) {
@@ -348,15 +305,12 @@ export function ArticleEditorModal({ examPaperId, schoolName, onClose }: Article
             <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
             {articleData ? 'AI 재생성' : 'AI 생성'}
           </Button>
-          <Button
-            size="sm"
-            variant="primary"
-            onClick={handleSave}
-            disabled={saving || !articleData}
-          >
-            <Save className="w-4 h-4 mr-1" />
-            저장
-          </Button>
+          {articleData && (
+            <Button size="sm" variant="primary" onClick={handleCopyRichText}>
+              <Copy className="w-4 h-4 mr-1" />
+              서식 복사
+            </Button>
+          )}
         </div>
       </div>
 
@@ -431,22 +385,15 @@ export function ArticleEditorModal({ examPaperId, schoolName, onClose }: Article
 
       </div>
 
-      {/* 하단 액션 바 */}
+      {/* 하단: 태그 + 액션 버튼 */}
       {articleData && (
-        <div className="flex items-center gap-2 px-4 py-2.5 border-t border-slate-200 bg-slate-50 shrink-0">
-          <Button size="sm" variant="secondary" onClick={handleCopyRichText}>
-            <Copy className="w-4 h-4 mr-1" />
-            서식 복사
-          </Button>
-          <Button size="sm" variant="secondary" onClick={handleDownloadImages}>
-            <Download className="w-4 h-4 mr-1" />
-            이미지 다운로드
-          </Button>
-          <div className="ml-auto flex items-center gap-1.5">
-            <span className="text-xs text-slate-400">태그:</span>
-            <div className="flex items-center gap-1 flex-wrap max-w-[400px]">
+        <div className="border-t border-slate-200 bg-slate-50 shrink-0">
+          {/* 태그 영역 */}
+          <div className="px-4 py-2.5 border-b border-slate-100">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-medium text-slate-500">태그</span>
               {tags.map((tag, i) => (
-                <span key={i} className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-sm">
+                <span key={i} className="text-xs bg-slate-200/70 text-slate-600 px-2 py-0.5 rounded-sm">
                   {tag}
                 </span>
               ))}
