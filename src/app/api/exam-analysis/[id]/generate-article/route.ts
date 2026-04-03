@@ -86,17 +86,20 @@ export async function POST(request: NextRequest, { params }: Params) {
         // Step 3: 후처리 + 저장
         send({ type: 'progress', step: 3, totalSteps: 3, message: '글 저장 중...' });
 
-        // {{CHART:*}} 토큰 → <img> 태그 변환
-        let htmlContent = article.content;
-        const chartMap: Record<string, string> = {
-          '{{CHART:difficulty}}': chartImages.difficulty,
-          '{{CHART:type_radar}}': chartImages.typeRadar,
-          '{{CHART:topic_bar}}': chartImages.topicBar,
+        // {{CHART:*}} 토큰 → API URL <img> 태그 변환
+        // 네이버 블로그는 base64 data URI 차단 → API 라우트로 실제 PNG 서빙
+        const baseUrl = process.env.NEXTAUTH_URL || '';
+        const chartTokenMap: Record<string, string> = {
+          '{{CHART:difficulty}}': `${baseUrl}/api/exam-analysis/${id}/chart/difficulty`,
+          '{{CHART:type_radar}}': `${baseUrl}/api/exam-analysis/${id}/chart/type-radar`,
+          '{{CHART:topic_bar}}': `${baseUrl}/api/exam-analysis/${id}/chart/topic-bar`,
         };
-        for (const [token, base64] of Object.entries(chartMap)) {
+
+        let htmlContent = article.content;
+        for (const [token, url] of Object.entries(chartTokenMap)) {
           htmlContent = htmlContent.replace(
             token,
-            `<img src="data:image/png;base64,${base64}" alt="차트" />`,
+            `<img src="${url}" alt="차트" style="max-width: 100%; height: auto;" />`,
           );
         }
 
