@@ -131,6 +131,9 @@ export async function POST(request: NextRequest, { params }: Params) {
           );
         }
 
+        // 하단 크레딧 삽입
+        htmlContent += '<br><br><span style="color: #9CA3AF; font-size: 12px; font-style: italic; letter-spacing: 0.3px;">Powered by <strong style="color: #6366F1; font-style: normal;">Injaewon MathLAB</strong> · AI 기출 분석 시스템으로 제작된 컨텐츠입니다.</span>';
+
         const resultData = {
           title: article.title,
           content: htmlContent,
