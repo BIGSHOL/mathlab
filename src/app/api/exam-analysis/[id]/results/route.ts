@@ -10,20 +10,28 @@ export async function GET(_request: NextRequest, { params }: Params) {
   if (isResponse(user)) return user;
   const { id } = await params;
 
-  const tenantWhere = getTenantFilter(user);
-  const examPaper = await prisma.examPaper.findFirst({
-    where: { id, ...tenantWhere },
-    select: { id: true },
-  });
-  if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
+  try {
+    const tenantWhere = getTenantFilter(user);
+    const examPaper = await prisma.examPaper.findFirst({
+      where: { id, ...tenantWhere },
+      select: { id: true },
+    });
+    if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
 
-  const analyses = await prisma.examAnalysis.findMany({
-    where: { examPaperId: id },
-    include: {
-      extensions: true,
-    },
-    orderBy: { createdAt: 'desc' },
-  });
+    const analyses = await prisma.examAnalysis.findMany({
+      where: { examPaperId: id },
+      include: {
+        extensions: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
 
-  return NextResponse.json({ data: analyses });
+    return NextResponse.json({ data: analyses });
+  } catch (error) {
+    console.error('[exam-analysis results GET] 분석 결과 조회 에러:', error);
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_ERROR', message: '분석 결과를 불러오는 중 오류가 발생했습니다' } },
+      { status: 500 },
+    );
+  }
 }

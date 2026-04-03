@@ -78,26 +78,34 @@ export async function GET(request: NextRequest) {
 
   const tenantWhere = getTenantFilter(user);
 
-  // ── mode=dashboard: 실시간 집계 ──
-  if (modeParam === 'dashboard') {
-    return handleDashboard(tenantWhere, subject, grade, schoolName);
+  try {
+    // ── mode=dashboard: 실시간 집계 ──
+    if (modeParam === 'dashboard') {
+      return handleDashboard(tenantWhere, subject, grade, schoolName);
+    }
+
+    // ── 기존: ExamSchoolTrend 레코드 조회 ──
+    const where: Record<string, unknown> = {
+      ...tenantWhere,
+      ...(subject && { subject }),
+      ...(grade && { grade }),
+      ...(schoolName && { schoolName: { contains: schoolName } }),
+    };
+
+    const trends = await prisma.examSchoolTrend.findMany({
+      where,
+      orderBy: { updatedAt: 'desc' },
+      take: 50,
+    });
+
+    return NextResponse.json({ data: trends });
+  } catch (error) {
+    console.error('[exam-analysis trends GET] 트렌드 조회 에러:', error);
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_ERROR', message: '출제 경향 데이터를 불러오는 중 오류가 발생했습니다' } },
+      { status: 500 },
+    );
   }
-
-  // ── 기존: ExamSchoolTrend 레코드 조회 ──
-  const where: Record<string, unknown> = {
-    ...tenantWhere,
-    ...(subject && { subject }),
-    ...(grade && { grade }),
-    ...(schoolName && { schoolName: { contains: schoolName } }),
-  };
-
-  const trends = await prisma.examSchoolTrend.findMany({
-    where,
-    orderBy: { updatedAt: 'desc' },
-    take: 50,
-  });
-
-  return NextResponse.json({ data: trends });
 }
 
 /** 대시보드 모드: 완료된 분석에서 실시간 집계 */
@@ -320,95 +328,103 @@ export async function POST(request: NextRequest) {
   const user = await requireOwner();
   if (isResponse(user)) return user;
 
-  const tenantWhere = getTenantFilter(user);
-  const body = await request.json();
-  const { subject, grade, period, groupBy } = body;
+  try {
+    const tenantWhere = getTenantFilter(user);
+    const body = await request.json();
+    const { subject, grade, period, groupBy } = body;
 
-  const examPapers = await prisma.examPaper.findMany({
-    where: {
-      ...tenantWhere,
-      status: 'COMPLETED',
-      ...(subject && { subject }),
-      ...(grade && { grade }),
-    },
-    include: {
-      analyses: {
-        orderBy: { createdAt: 'desc' },
-        take: 1,
-        select: { questions: true, summary: true, totalQuestions: true, totalPoints: true },
+    const examPapers = await prisma.examPaper.findMany({
+      where: {
+        ...tenantWhere,
+        status: 'COMPLETED',
+        ...(subject && { subject }),
+        ...(grade && { grade }),
       },
-    },
-  });
+      include: {
+        analyses: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { questions: true, summary: true, totalQuestions: true, totalPoints: true },
+        },
+      },
+    });
 
-  if (!examPapers.length) {
-    return NextResponse.json({ data: null, message: '집계할 데이터가 없습니다' });
-  }
-
-  // 학교별 그룹핑
-  if (groupBy === 'school') {
-    return handleSchoolGrouping(examPapers, user.tenantId || '', subject || 'MATH');
-  }
-
-  // 전체 집계 (5단계 난이도)
-  const totalDiff: Record<string, number> = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
-  const totalType: Record<string, number> = { calculation: 0, geometry: 0, application: 0, proof: 0, graph: 0, statistics: 0 };
-  let totalQuestions = 0;
-  let totalPoints = 0;
-  let sampleCount = 0;
-
-  for (const ep of examPapers) {
-    const analysis = ep.analyses[0];
-    if (!analysis?.summary) continue;
-
-    const summary = analysis.summary as Record<string, unknown>;
-    const diffDist = summary.difficulty_distribution as Record<string, number> | undefined;
-    const typeDist = summary.type_distribution as Record<string, number> | undefined;
-
-    if (diffDist) {
-      for (const [k, v] of Object.entries(diffDist)) {
-        const norm = normDiff(k);
-        if (norm in totalDiff) totalDiff[norm] += v;
-      }
-    }
-    if (typeDist) {
-      for (const [k, v] of Object.entries(typeDist)) {
-        if (k in totalType) totalType[k] += v;
-      }
+    if (!examPapers.length) {
+      return NextResponse.json({ data: null, message: '집계할 데이터가 없습니다' });
     }
 
-    totalQuestions += analysis.totalQuestions || 0;
-    totalPoints += analysis.totalPoints || 0;
-    sampleCount++;
+    // 학교별 그룹핑
+    if (groupBy === 'school') {
+      return handleSchoolGrouping(examPapers, user.tenantId || '', subject || 'MATH');
+    }
+
+    // 전체 집계 (5단계 난이도)
+    const totalDiff: Record<string, number> = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
+    const totalType: Record<string, number> = { calculation: 0, geometry: 0, application: 0, proof: 0, graph: 0, statistics: 0 };
+    let totalQuestions = 0;
+    let totalPoints = 0;
+    let sampleCount = 0;
+
+    for (const ep of examPapers) {
+      const analysis = ep.analyses[0];
+      if (!analysis?.summary) continue;
+
+      const summary = analysis.summary as Record<string, unknown>;
+      const diffDist = summary.difficulty_distribution as Record<string, number> | undefined;
+      const typeDist = summary.type_distribution as Record<string, number> | undefined;
+
+      if (diffDist) {
+        for (const [k, v] of Object.entries(diffDist)) {
+          const norm = normDiff(k);
+          if (norm in totalDiff) totalDiff[norm] += v;
+        }
+      }
+      if (typeDist) {
+        for (const [k, v] of Object.entries(typeDist)) {
+          if (k in totalType) totalType[k] += v;
+        }
+      }
+
+      totalQuestions += analysis.totalQuestions || 0;
+      totalPoints += analysis.totalPoints || 0;
+      sampleCount++;
+    }
+
+    const trendData = {
+      difficulty_distribution: totalDiff,
+      type_distribution: totalType,
+      avg_questions: sampleCount > 0 ? Math.round(totalQuestions / sampleCount) : 0,
+      avg_points: sampleCount > 0 ? Math.round(totalPoints / sampleCount) : 0,
+    };
+
+    const periodStr = period || new Date().toISOString().slice(0, 7);
+    const trend = await prisma.examSchoolTrend.upsert({
+      where: {
+        id: `trend-${user.tenantId}-${subject}-${grade}-${periodStr}`,
+      },
+      create: {
+        id: `trend-${user.tenantId}-${subject}-${grade}-${periodStr}`,
+        tenantId: user.tenantId || '',
+        subject: subject || 'MATH',
+        grade: grade || '',
+        period: periodStr,
+        trendData,
+        sampleSize: sampleCount,
+      },
+      update: {
+        trendData,
+        sampleSize: sampleCount,
+      },
+    });
+
+    return NextResponse.json({ data: trend });
+  } catch (error) {
+    console.error('[exam-analysis trends POST] 트렌드 집계 에러:', error);
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_ERROR', message: '출제 경향 집계 중 오류가 발생했습니다' } },
+      { status: 500 },
+    );
   }
-
-  const trendData = {
-    difficulty_distribution: totalDiff,
-    type_distribution: totalType,
-    avg_questions: sampleCount > 0 ? Math.round(totalQuestions / sampleCount) : 0,
-    avg_points: sampleCount > 0 ? Math.round(totalPoints / sampleCount) : 0,
-  };
-
-  const periodStr = period || new Date().toISOString().slice(0, 7);
-  const trend = await prisma.examSchoolTrend.upsert({
-    where: {
-      id: `trend-${user.tenantId}-${subject}-${grade}-${periodStr}`,
-    },
-    create: {
-      id: `trend-${user.tenantId}-${subject}-${grade}-${periodStr}`,
-      tenantId: user.tenantId || '',
-      subject: subject || 'MATH',
-      grade: grade || '',
-      period: periodStr,
-      trendData,
-      sampleSize: sampleCount,
-    },
-    update: {
-      trendData,
-      sampleSize: sampleCount,
-    },
-  });
-
-  return NextResponse.json({ data: trend });
 }
 
 /** 학교별 그룹 집계 */

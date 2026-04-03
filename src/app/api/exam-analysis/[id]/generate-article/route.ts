@@ -180,28 +180,36 @@ export async function GET(_request: NextRequest, { params }: Params) {
   if (isResponse(user)) return user;
   const { id } = await params;
 
-  const tenantWhere = getTenantFilter(user);
-  const examPaper = await prisma.examPaper.findFirst({
-    where: { id, ...tenantWhere },
-  });
-  if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
+  try {
+    const tenantWhere = getTenantFilter(user);
+    const examPaper = await prisma.examPaper.findFirst({
+      where: { id, ...tenantWhere },
+    });
+    if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
 
-  const latestAnalysis = await prisma.examAnalysis.findFirst({
-    where: { examPaperId: id },
-    orderBy: { createdAt: 'desc' },
-  });
-  if (!latestAnalysis) return NextResponse.json({ data: null });
+    const latestAnalysis = await prisma.examAnalysis.findFirst({
+      where: { examPaperId: id },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!latestAnalysis) return NextResponse.json({ data: null });
 
-  const articleExt = await prisma.examAnalysisExtension.findUnique({
-    where: {
-      analysisId_agentType: {
-        analysisId: latestAnalysis.id,
-        agentType: 'blog-article',
+    const articleExt = await prisma.examAnalysisExtension.findUnique({
+      where: {
+        analysisId_agentType: {
+          analysisId: latestAnalysis.id,
+          agentType: 'blog-article',
+        },
       },
-    },
-  });
+    });
 
-  return NextResponse.json({ data: articleExt?.result ?? null });
+    return NextResponse.json({ data: articleExt?.result ?? null });
+  } catch (error) {
+    console.error('[generate-article GET] 저장된 글 조회 에러:', error);
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_ERROR', message: '저장된 블로그 글을 불러오는 중 오류가 발생했습니다' } },
+      { status: 500 },
+    );
+  }
 }
 
 /** PUT /api/exam-analysis/[id]/generate-article — 수정된 글 저장 */
@@ -210,50 +218,58 @@ export async function PUT(request: NextRequest, { params }: Params) {
   if (isResponse(user)) return user;
   const { id } = await params;
 
-  const tenantWhere = getTenantFilter(user);
-  const examPaper = await prisma.examPaper.findFirst({
-    where: { id, ...tenantWhere },
-  });
-  if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
+  try {
+    const tenantWhere = getTenantFilter(user);
+    const examPaper = await prisma.examPaper.findFirst({
+      where: { id, ...tenantWhere },
+    });
+    if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
 
-  const latestAnalysis = await prisma.examAnalysis.findFirst({
-    where: { examPaperId: id },
-    orderBy: { createdAt: 'desc' },
-  });
-  if (!latestAnalysis) return badRequest('분석 결과가 없습니다');
+    const latestAnalysis = await prisma.examAnalysis.findFirst({
+      where: { examPaperId: id },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!latestAnalysis) return badRequest('분석 결과가 없습니다');
 
-  const body = await request.json();
-  const { content, title, tags } = body;
+    const body = await request.json();
+    const { content, title, tags } = body;
 
-  const existing = await prisma.examAnalysisExtension.findUnique({
-    where: {
-      analysisId_agentType: {
-        analysisId: latestAnalysis.id,
-        agentType: 'blog-article',
+    const existing = await prisma.examAnalysisExtension.findUnique({
+      where: {
+        analysisId_agentType: {
+          analysisId: latestAnalysis.id,
+          agentType: 'blog-article',
+        },
       },
-    },
-  });
-  if (!existing) return notFound('저장된 글이 없습니다');
+    });
+    if (!existing) return notFound('저장된 글이 없습니다');
 
-  // 기존 데이터에 수정 내용 병합
-  const existingResult = existing.result as Record<string, unknown>;
-  const updatedResult = {
-    ...existingResult,
-    ...(content !== undefined && { content }),
-    ...(title !== undefined && { title }),
-    ...(tags !== undefined && { tags }),
-    updatedAt: new Date().toISOString(),
-  };
+    // 기존 데이터에 수정 내용 병합
+    const existingResult = existing.result as Record<string, unknown>;
+    const updatedResult = {
+      ...existingResult,
+      ...(content !== undefined && { content }),
+      ...(title !== undefined && { title }),
+      ...(tags !== undefined && { tags }),
+      updatedAt: new Date().toISOString(),
+    };
 
-  await prisma.examAnalysisExtension.update({
-    where: {
-      analysisId_agentType: {
-        analysisId: latestAnalysis.id,
-        agentType: 'blog-article',
+    await prisma.examAnalysisExtension.update({
+      where: {
+        analysisId_agentType: {
+          analysisId: latestAnalysis.id,
+          agentType: 'blog-article',
+        },
       },
-    },
-    data: { result: updatedResult as unknown as Prisma.InputJsonValue },
-  });
+      data: { result: updatedResult as unknown as Prisma.InputJsonValue },
+    });
 
-  return NextResponse.json({ data: { success: true } });
+    return NextResponse.json({ data: { success: true } });
+  } catch (error) {
+    console.error('[generate-article PUT] 글 저장 에러:', error);
+    return NextResponse.json(
+      { error: { code: 'SAVE_FAILED', message: '블로그 글 저장 중 오류가 발생했습니다' } },
+      { status: 500 },
+    );
+  }
 }

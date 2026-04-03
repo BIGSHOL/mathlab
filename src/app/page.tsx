@@ -169,26 +169,21 @@ export default function LandingPage() {
       </div>
 
       {/* Header */}
-      <header className="flex items-center justify-between border-b border-slate-200 px-6 md:px-10 py-3 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="flex items-center gap-3">
+      <header className="flex items-center justify-between border-b border-slate-200 px-4 md:px-10 py-3 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="flex items-center gap-2 md:gap-3 shrink-0">
           <LogoIcon className="w-6 h-6" />
-          <h2 className="text-lg font-bold tracking-tight text-text-primary">Injaewon MathLAB</h2>
+          <h2 className="text-base md:text-lg font-bold tracking-tight text-text-primary whitespace-nowrap">Injaewon MathLAB</h2>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 md:gap-3">
           <Link
             href="/updates"
             className="text-sm text-text-secondary hover:text-primary transition-colors font-medium flex items-center gap-1.5"
           >
             <Newspaper className="w-4 h-4" />
-            업데이트
+            <span className="hidden sm:inline">업데이트</span>
           </Link>
           <Link href="/login">
-            <Button variant="ghost" size="sm">
-              로그인
-            </Button>
-          </Link>
-          <Link href="/login">
-            <Button size="sm">시작하기</Button>
+            <Button size="sm">로그인</Button>
           </Link>
         </div>
       </header>
@@ -210,8 +205,10 @@ export default function LandingPage() {
                 <br />
                 <span className="text-primary">Injaewon MathLAB</span>
               </h1>
-              <p className="text-text-secondary text-lg md:text-xl max-w-2xl leading-relaxed">
-                5단계 개념 학습, 무한 연산 연습, AI 문제 생성, 시험·숙제 관리까지.
+              <p className="text-text-secondary text-lg md:text-xl max-w-2xl leading-relaxed px-4 sm:px-0 break-keep">
+                5단계 개념 학습, 무한 연산 연습,{' '}
+                <br className="hidden md:block" />
+                AI 문제 생성, 시험·숙제 관리까지.{' '}
                 <br className="hidden md:block" />
                 선생님과 학생 모두를 위한 스마트 수학 플랫폼입니다.
               </p>

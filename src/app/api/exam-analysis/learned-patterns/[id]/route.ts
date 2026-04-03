@@ -10,29 +10,37 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   if (isResponse(user)) return user;
   const { id } = await params;
 
-  const existing = await prisma.learnedPattern.findUnique({
-    where: { id },
-  });
-  if (!existing) return notFound('학습된 패턴을 찾을 수 없습니다');
+  try {
+    const existing = await prisma.learnedPattern.findUnique({
+      where: { id },
+    });
+    if (!existing) return notFound('학습된 패턴을 찾을 수 없습니다');
 
-  const body = await request.json();
-  const { isActive, isAutoApplied, confidence, description } = body;
+    const body = await request.json();
+    const { isActive, isAutoApplied, confidence, description } = body;
 
-  if (confidence !== undefined && (typeof confidence !== 'number' || confidence < 0 || confidence > 1)) {
-    return badRequest('confidence는 0~1 사이 숫자여야 합니다');
+    if (confidence !== undefined && (typeof confidence !== 'number' || confidence < 0 || confidence > 1)) {
+      return badRequest('신뢰도는 0~1 사이 숫자여야 합니다');
+    }
+
+    const updated = await prisma.learnedPattern.update({
+      where: { id },
+      data: {
+        ...(isActive !== undefined && { isActive }),
+        ...(isAutoApplied !== undefined && { isAutoApplied }),
+        ...(confidence !== undefined && { confidence }),
+        ...(description !== undefined && { description }),
+      },
+    });
+
+    return NextResponse.json({ data: updated });
+  } catch (error) {
+    console.error('[exam-analysis learned-patterns PATCH] 패턴 수정 에러:', error);
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_ERROR', message: '학습된 패턴 수정 중 오류가 발생했습니다' } },
+      { status: 500 },
+    );
   }
-
-  const updated = await prisma.learnedPattern.update({
-    where: { id },
-    data: {
-      ...(isActive !== undefined && { isActive }),
-      ...(isAutoApplied !== undefined && { isAutoApplied }),
-      ...(confidence !== undefined && { confidence }),
-      ...(description !== undefined && { description }),
-    },
-  });
-
-  return NextResponse.json({ data: updated });
 }
 
 /** DELETE /api/exam-analysis/learned-patterns/[id] — 패턴 삭제 (OWNER+) */
@@ -41,14 +49,22 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
   if (isResponse(user)) return user;
   const { id } = await params;
 
-  const existing = await prisma.learnedPattern.findUnique({
-    where: { id },
-  });
-  if (!existing) return notFound('학습된 패턴을 찾을 수 없습니다');
+  try {
+    const existing = await prisma.learnedPattern.findUnique({
+      where: { id },
+    });
+    if (!existing) return notFound('학습된 패턴을 찾을 수 없습니다');
 
-  await prisma.learnedPattern.delete({
-    where: { id },
-  });
+    await prisma.learnedPattern.delete({
+      where: { id },
+    });
 
-  return NextResponse.json({ data: { id, deleted: true } });
+    return NextResponse.json({ data: { id, deleted: true } });
+  } catch (error) {
+    console.error('[exam-analysis learned-patterns DELETE] 패턴 삭제 에러:', error);
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_ERROR', message: '학습된 패턴 삭제 중 오류가 발생했습니다' } },
+      { status: 500 },
+    );
+  }
 }

@@ -18,28 +18,36 @@ export async function GET(request: NextRequest) {
 
   const tenantWhere = getTenantFilter(user);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const where: Record<string, any> = {
-    ...tenantWhere,
-    ...(status && { status }),
-    ...(feedbackType && { feedbackType }),
-    ...(examPaperId && { examPaperId }),
-  };
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: Record<string, any> = {
+      ...tenantWhere,
+      ...(status && { status }),
+      ...(feedbackType && { feedbackType }),
+      ...(examPaperId && { examPaperId }),
+    };
 
-  const [items, total] = await Promise.all([
-    prisma.examFeedback.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
-    prisma.examFeedback.count({ where }),
-  ]);
+    const [items, total] = await Promise.all([
+      prisma.examFeedback.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.examFeedback.count({ where }),
+    ]);
 
-  return NextResponse.json({
-    data: items,
-    meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
-  });
+    return NextResponse.json({
+      data: items,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
+  } catch (error) {
+    console.error('[exam-analysis feedback GET] 피드백 목록 조회 에러:', error);
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_ERROR', message: '피드백 목록을 불러오는 중 오류가 발생했습니다' } },
+      { status: 500 },
+    );
+  }
 }
 
 /** POST /api/exam-analysis/feedback — 피드백 생성 (TEACHER+) */
@@ -51,35 +59,42 @@ export async function POST(request: NextRequest) {
   const { examPaperId, analysisId, questionNumber, feedbackType, correction, comment } = body;
 
   if (!examPaperId) {
-    return badRequest('examPaperId는 필수입니다');
+    return badRequest('시험지 ID는 필수입니다');
   }
   if (!feedbackType || !VALID_FEEDBACK_TYPES.includes(feedbackType)) {
-    return badRequest(`feedbackType은 ${VALID_FEEDBACK_TYPES.join(', ')} 중 하나여야 합니다`);
+    return badRequest(`피드백 유형은 ${VALID_FEEDBACK_TYPES.join(', ')} 중 하나여야 합니다`);
   }
 
-  // 시험지 존재 확인
-  const paper = await prisma.examPaper.findUnique({
-    where: { id: examPaperId },
-    select: { id: true, tenantId: true },
-  });
-  if (!paper) {
-    return badRequest('시험지를 찾을 수 없습니다');
+  try {
+    const paper = await prisma.examPaper.findUnique({
+      where: { id: examPaperId },
+      select: { id: true, tenantId: true },
+    });
+    if (!paper) {
+      return badRequest('시험지를 찾을 수 없습니다');
+    }
+
+    const feedback = await prisma.examFeedback.create({
+      data: {
+        tenantId: paper.tenantId,
+        examPaperId,
+        analysisId: analysisId || null,
+        questionNumber: questionNumber ? parseInt(String(questionNumber)) : null,
+        feedbackType,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        correction: correction ? (JSON.parse(JSON.stringify(correction)) as any) : null,
+        comment: comment || null,
+        teacherId: user.id,
+        status: 'pending',
+      },
+    });
+
+    return NextResponse.json({ data: feedback }, { status: 201 });
+  } catch (error) {
+    console.error('[exam-analysis feedback POST] 피드백 생성 에러:', error);
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_ERROR', message: '피드백 등록 중 오류가 발생했습니다' } },
+      { status: 500 },
+    );
   }
-
-  const feedback = await prisma.examFeedback.create({
-    data: {
-      tenantId: paper.tenantId,
-      examPaperId,
-      analysisId: analysisId || null,
-      questionNumber: questionNumber ? parseInt(String(questionNumber)) : null,
-      feedbackType,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      correction: correction ? (JSON.parse(JSON.stringify(correction)) as any) : null,
-      comment: comment || null,
-      teacherId: user.id,
-      status: 'pending',
-    },
-  });
-
-  return NextResponse.json({ data: feedback }, { status: 201 });
 }

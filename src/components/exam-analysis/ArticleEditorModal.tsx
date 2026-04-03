@@ -36,7 +36,7 @@ interface ArticleData {
   };
 }
 
-export function ArticleEditorModal({ examPaperId, schoolName, onClose }: ArticleEditorModalProps) {
+export function ArticleEditorModal({ examPaperId, schoolName: _schoolName, onClose }: ArticleEditorModalProps) {
   const [loading, setLoading] = useState(false);
   const [elapsedSec, setElapsedSec] = useState(0);
   const [progressMsg, setProgressMsg] = useState('');
