@@ -42,10 +42,24 @@ interface ExamPaperItem {
 /** 제목에서 학기·시험 종류 라벨 추출 (예: "2025년 1학기 중간고사" → ["1학기", "중간"]) */
 function extractExamLabels(title: string): string[] {
   const labels: string[] = [];
-  const semMatch = title.match(/(\d)학기/);
-  if (semMatch) labels.push(`${semMatch[1]}학기`);
+
+  // 1) 명시적 "N학기" 패턴 (예: "1학기 중간고사")
+  const semMatch = title.match(/(\d)\s*학기/);
+  if (semMatch) {
+    labels.push(`${semMatch[1]}학기`);
+  } else {
+    // 2) 축약형 — "중31" = 중3 1학기, "고12" = 고1 2학기
+    //    학교급(중/고) + 학년(1~3) + 학기(1~2) 패턴
+    const shortMatch = title.match(/(?:중|고)(\d)([12])\s/);
+    if (shortMatch) {
+      labels.push(`${shortMatch[2]}학기`);
+    }
+  }
+
+  // 시험 종류
   if (/중간/.test(title)) labels.push('중간');
   else if (/기말/.test(title)) labels.push('기말');
+  else if (/모의/.test(title)) labels.push('모의');
   return labels;
 }
 
