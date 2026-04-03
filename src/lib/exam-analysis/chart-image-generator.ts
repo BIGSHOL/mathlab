@@ -61,7 +61,7 @@ export function generateDifficultyDonutSvg(
   })).filter((d) => d.value > 0);
 
   const total = data.reduce((s, d) => s + d.value, 0);
-  if (total === 0) return svgWrap('<text x="400" y="250" text-anchor="middle" font-size="18" fill="#64748B">데이터 없음</text>');
+  if (total === 0) return svgWrap('<text x="400" y="250" text-anchor="middle" font-size="18" fill="#4B5563">데이터 없음</text>');
 
   const cx = 240, cy = 200, outerR = 130, innerR = 70;
   let startAngle = -Math.PI / 2;
@@ -97,11 +97,11 @@ export function generateDifficultyDonutSvg(
   }
 
   // 중앙 텍스트
-  arcs.push(`<text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="11" fill="#64748B">총</text>`);
-  arcs.push(`<text x="${cx}" y="${cy + 12}" text-anchor="middle" font-size="20" font-weight="700" fill="#475569">${total}문항</text>`);
+  arcs.push(`<text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="11" fill="#4B5563">총</text>`);
+  arcs.push(`<text x="${cx}" y="${cy + 12}" text-anchor="middle" font-size="20" font-weight="700" fill="#374151">${total}문항</text>`);
 
   // 제목
-  arcs.push(`<text x="${cx}" y="28" text-anchor="middle" font-size="16" font-weight="700" fill="#475569">난이도 분포</text>`);
+  arcs.push(`<text x="${cx}" y="28" text-anchor="middle" font-size="16" font-weight="700" fill="#374151">난이도 분포</text>`);
 
   // 범례
   const legendX = 440;
@@ -109,8 +109,8 @@ export function generateDifficultyDonutSvg(
   for (const d of data) {
     const pct = Math.round((d.value / total) * 100);
     arcs.push(`<rect x="${legendX}" y="${legendY - 6}" width="12" height="12" rx="2" fill="${d.color}"/>`);
-    arcs.push(`<text x="${legendX + 18}" y="${legendY + 3}" font-size="11" fill="#475569">${escapeXml(d.label)}</text>`);
-    arcs.push(`<text x="${legendX + 18}" y="${legendY + 17}" font-size="10" fill="#64748B">${d.value}문항 (${pct}%)</text>`);
+    arcs.push(`<text x="${legendX + 18}" y="${legendY + 3}" font-size="11" fill="#374151">${escapeXml(d.label)}</text>`);
+    arcs.push(`<text x="${legendX + 18}" y="${legendY + 17}" font-size="10" fill="#4B5563">${d.value}문항 (${pct}%)</text>`);
     legendY += 38;
   }
 
@@ -141,7 +141,7 @@ export function generateTypeRadarSvg(
   const parts: string[] = [];
 
   // 제목
-  parts.push(`<text x="${cx}" y="28" text-anchor="middle" font-size="16" font-weight="700" fill="#475569">출제 영역 분포</text>`);
+  parts.push(`<text x="${cx}" y="28" text-anchor="middle" font-size="16" font-weight="700" fill="#374151">출제 영역 분포</text>`);
 
   // 배경 그리드 (3단계)
   for (const scale of [0.33, 0.66, 1.0]) {
@@ -187,8 +187,8 @@ export function generateTypeRadarSvg(
     const lx = cx + labelR * Math.cos(angle);
     const ly = cy + labelR * Math.sin(angle);
     const pct = total > 0 ? Math.round((d.value / total) * 100) : 0;
-    parts.push(`<text x="${lx}" y="${ly - 4}" text-anchor="middle" font-size="11" font-weight="600" fill="#475569">${escapeXml(d.label)}</text>`);
-    parts.push(`<text x="${lx}" y="${ly + 9}" text-anchor="middle" font-size="10" fill="#64748B">${d.value}문항 (${pct}%)</text>`);
+    parts.push(`<text x="${lx}" y="${ly - 4}" text-anchor="middle" font-size="11" font-weight="600" fill="#374151">${escapeXml(d.label)}</text>`);
+    parts.push(`<text x="${lx}" y="${ly + 9}" text-anchor="middle" font-size="10" fill="#4B5563">${d.value}문항 (${pct}%)</text>`);
   });
 
   // 범례 (오른쪽)
@@ -196,7 +196,7 @@ export function generateTypeRadarSvg(
   let legendY = 100;
   for (const d of data) {
     parts.push(`<circle cx="${legendX + 5}" cy="${legendY}" r="4" fill="${d.color}"/>`);
-    parts.push(`<text x="${legendX + 14}" y="${legendY + 3}" font-size="10" fill="#475569">${escapeXml(d.label)}: ${d.value}문항</text>`);
+    parts.push(`<text x="${legendX + 14}" y="${legendY + 3}" font-size="10" fill="#374151">${escapeXml(d.label)}: ${d.value}문항</text>`);
     legendY += 22;
   }
 
@@ -225,7 +225,7 @@ export function generateTopicBarSvg(
     .slice(0, 8); // 최대 8개
 
   if (sorted.length === 0) {
-    return svgWrap('<text x="400" y="250" text-anchor="middle" font-size="18" fill="#64748B">데이터 없음</text>');
+    return svgWrap('<text x="400" y="250" text-anchor="middle" font-size="18" fill="#4B5563">데이터 없음</text>');
   }
 
   const maxCount = Math.max(...sorted.map(([, s]) => s.count));
@@ -240,7 +240,7 @@ export function generateTopicBarSvg(
 
   // 제목
   const chartCenterX = Math.round(barAreaX + barAreaWidth / 2);
-  svgParts.push(`<text x="${chartCenterX}" y="30" text-anchor="middle" font-size="16" font-weight="700" fill="#475569">단원별 출제 현황</text>`);
+  svgParts.push(`<text x="${chartCenterX}" y="30" text-anchor="middle" font-size="16" font-weight="700" fill="#374151">단원별 출제 현황</text>`);
 
   // 바 & 라벨
   const COLORS = ['#6366F1', '#8B5CF6', '#A78BFA', '#C084FC', '#D946EF', '#EC4899', '#F472B6', '#F9A8D4'];
@@ -251,13 +251,13 @@ export function generateTopicBarSvg(
     const color = COLORS[i % COLORS.length];
 
     // 단원명 (왼쪽) — 전체 표시
-    svgParts.push(`<text x="${barAreaX - 8}" y="${y + barHeight / 2 + 4}" text-anchor="end" font-size="11" fill="#475569">${escapeXml(topic)}</text>`);
+    svgParts.push(`<text x="${barAreaX - 8}" y="${y + barHeight / 2 + 4}" text-anchor="end" font-size="11" fill="#374151">${escapeXml(topic)}</text>`);
 
     // 바
     svgParts.push(`<rect x="${barAreaX}" y="${y}" width="${Math.max(barW, 4)}" height="${barHeight}" rx="3" fill="${color}" opacity="0.85"/>`);
 
     // 값 라벨
-    svgParts.push(`<text x="${barAreaX + barW + 8}" y="${y + barHeight / 2 + 4}" font-size="11" font-weight="600" fill="#475569">${stats.count}문항 (${stats.pts}점)</text>`);
+    svgParts.push(`<text x="${barAreaX + barW + 8}" y="${y + barHeight / 2 + 4}" font-size="11" font-weight="600" fill="#374151">${stats.count}문항 (${stats.pts}점)</text>`);
   });
 
   const totalHeight = startY + sorted.length * (barHeight + barGap) + 20;
@@ -269,27 +269,19 @@ export function generateTopicBarSvg(
 // Google Fonts CSS 파싱 대신 직접 CDN에서 OTF 바이너리 다운로드
 // fontDirs(디렉토리 스캔) 대신 fontFiles(정확한 파일 경로) 사용
 
-const FONT_DIR = join(tmpdir(), 'mathlab-chart-fonts-v5');
-const MIN_FONT_SIZE = 10_000; // 유효 폰트 최소 10KB (woff2 subset은 작을 수 있음)
+const FONT_DIR = join(tmpdir(), 'mathlab-chart-fonts-v6');
+const MIN_FONT_SIZE = 100_000; // TTF는 최소 100KB 이상
 
-// Noto Sans KR woff2 — fontsource CDN (검증 완료: 200 OK, ~540KB)
-// Korean subset + Latin subset = 한글/숫자/영문 모두 커버
+// Noto Sans KR TTF — resvg는 woff2를 지원하지 않으므로 반드시 TTF 사용
+// Google Fonts CDN에서 TTF 직접 다운로드
 const FONT_SOURCES = [
   {
-    file: 'NotoSansKR-Regular-korean.woff2',
-    url: 'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-kr/files/noto-sans-kr-korean-400-normal.woff2',
+    file: 'NotoSansKR-Regular.ttf',
+    url: 'https://cdn.jsdelivr.net/gh/notofonts/noto-cjk/Sans/OTF/Korean/NotoSansCJKkr-Regular.otf',
   },
   {
-    file: 'NotoSansKR-Regular-latin.woff2',
-    url: 'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-kr/files/noto-sans-kr-latin-400-normal.woff2',
-  },
-  {
-    file: 'NotoSansKR-Bold-korean.woff2',
-    url: 'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-kr/files/noto-sans-kr-korean-700-normal.woff2',
-  },
-  {
-    file: 'NotoSansKR-Bold-latin.woff2',
-    url: 'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-kr/files/noto-sans-kr-latin-700-normal.woff2',
+    file: 'NotoSansKR-Bold.ttf',
+    url: 'https://cdn.jsdelivr.net/gh/notofonts/noto-cjk/Sans/OTF/Korean/NotoSansCJKkr-Bold.otf',
   },
 ];
 
