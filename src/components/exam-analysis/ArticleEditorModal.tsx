@@ -11,8 +11,6 @@ import dynamic from 'next/dynamic';
 import { X, RefreshCw, Copy, Download, Save, Loader2, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
-import { ArticleSeoPanel } from './ArticleSeoPanel';
-import { analyzeArticleSeo, type ArticleSeoScore } from '@/lib/exam-analysis/article-seo';
 
 // TipTap은 SSR 불가 → dynamic import
 const ArticleEditor = dynamic(
@@ -47,12 +45,8 @@ export function ArticleEditorModal({ examPaperId, schoolName, onClose }: Article
   const [htmlContent, setHtmlContent] = useState('');
   const [title, setTitle] = useState('');
   const [tags, setTags] = useState<string[]>([]);
-  const [seoScore, setSeoScore] = useState<ArticleSeoScore | null>(null);
   const [saving, setSaving] = useState(false);
-  const seoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const keyword = schoolName || '';
 
   // 저장된 글 로드 → 없으면 자동 생성 시작
   const autoStarted = useRef(false);
@@ -100,7 +94,6 @@ export function ArticleEditorModal({ examPaperId, schoolName, onClose }: Article
     setHtmlContent('');
     setTitle('');
     setTags([]);
-    setSeoScore(null);
     setLoading(true);
     setElapsedSec(0);
     setStreamText('');
@@ -165,23 +158,10 @@ export function ArticleEditorModal({ examPaperId, schoolName, onClose }: Article
     }
   };
 
-  // HTML 변경 → SEO 점수 업데이트 (debounced)
+  // HTML 변경
   const handleHtmlChange = useCallback((html: string) => {
     setHtmlContent(html);
-    if (seoTimerRef.current) clearTimeout(seoTimerRef.current);
-    seoTimerRef.current = setTimeout(() => {
-      const score = analyzeArticleSeo(keyword, title, html, tags);
-      setSeoScore(score);
-    }, 400);
-  }, [keyword, title, tags]);
-
-  // 태그 변경 → SEO 재계산
-  useEffect(() => {
-    if (htmlContent) {
-      const score = analyzeArticleSeo(keyword, title, htmlContent, tags);
-      setSeoScore(score);
-    }
-  }, [tags, title, keyword, htmlContent]);
+  }, []);
 
   // 네이버 SmartEditor ONE 호환 HTML 전처리
   const prepareForNaver = (html: string): string => {
@@ -449,14 +429,6 @@ export function ArticleEditorModal({ examPaperId, schoolName, onClose }: Article
           )}
         </div>
 
-        {/* SEO 사이드바 */}
-        <div className="w-64 border-l border-slate-200 bg-slate-50/50 shrink-0">
-          <ArticleSeoPanel
-            seoScore={seoScore}
-            tags={tags}
-            onTagsChange={setTags}
-          />
-        </div>
       </div>
 
       {/* 하단 액션 바 */}
@@ -470,11 +442,16 @@ export function ArticleEditorModal({ examPaperId, schoolName, onClose }: Article
             <Download className="w-4 h-4 mr-1" />
             이미지 다운로드
           </Button>
-          {articleData.metaDescription && (
-            <span className="ml-auto text-xs text-slate-400 truncate max-w-[300px]">
-              {articleData.metaDescription}
-            </span>
-          )}
+          <div className="ml-auto flex items-center gap-1.5">
+            <span className="text-xs text-slate-400">태그:</span>
+            <div className="flex items-center gap-1 flex-wrap max-w-[400px]">
+              {tags.map((tag, i) => (
+                <span key={i} className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-sm">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>
