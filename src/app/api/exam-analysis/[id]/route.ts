@@ -85,8 +85,26 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
     const tenantWhere = getTenantFilter(user);
     const existing = await prisma.examPaper.findFirst({
       where: { id, ...tenantWhere },
+      select: { id: true, fileUrls: true },
     });
     if (!existing) return notFound('시험지를 찾을 수 없습니다');
+
+    // Supabase Storage 파일 삭제
+    if (existing.fileUrls) {
+      try {
+        const { getSupabase } = await import('@/lib/supabase');
+        const storagePaths: string[] = [];
+        for (const url of existing.fileUrls.split(',')) {
+          const match = url.match(/uploads\/(.+)$/);
+          if (match) storagePaths.push(match[1]);
+        }
+        if (storagePaths.length > 0) {
+          await getSupabase().storage.from('uploads').remove(storagePaths);
+        }
+      } catch {
+        // Storage 삭제 실패해도 DB 삭제는 진행
+      }
+    }
 
     await prisma.examPaper.delete({ where: { id } });
 
