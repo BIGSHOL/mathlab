@@ -13,9 +13,10 @@ import {
   Shield,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { getNavForRole, getAllNavItems, type NavGroup } from '@/lib/constants/navigation';
+import { getNavForRole, getAllNavItems, type NavGroup, type NavItem } from '@/lib/constants/navigation';
 import type { UserRole } from '@/types';
 import { useViewingTenantStore } from '@/stores/viewingTenantStore';
+import { DEMO_USERNAME } from '@/lib/demo';
 
 interface TabDef {
   id: string;
@@ -44,7 +45,14 @@ export function TeacherBottomNav() {
 
   const isViewingAsTenant = user?.role === 'SUPER_ADMIN' && !!viewingTenantId;
   const effectiveRole = isViewingAsTenant ? 'OWNER' : (user?.role ?? 'TEACHER');
-  const navGroups = getNavForRole(effectiveRole as UserRole);
+  const isDemo = user?.username === DEMO_USERNAME;
+  const DEMO_ALLOWED_HREFS = ['/overview', '/concepts', '/questions/arithmetic', '/exam-analysis', '/homework', '/student-preview', '/settings'];
+  const rawNavGroups = getNavForRole(effectiveRole as UserRole);
+  const navGroups = isDemo
+    ? rawNavGroups
+        .map(g => ({ ...g, items: g.items.filter((item: NavItem) => DEMO_ALLOWED_HREFS.includes(item.href)) }))
+        .filter(g => g.items.length > 0)
+    : rawNavGroups;
   const allItems = getAllNavItems();
 
   // 바깥 클릭 시 닫기

@@ -211,7 +211,7 @@ export async function findNearbyExamData(analysisId: string): Promise<NearbyComp
       const paper = sameSchoolPapers.find(p => p.id === sa.examPaperId);
       if (!paper) continue;
       result.sameSchoolExams.push(
-        extractExamSummary(examPaper.schoolName, 0, paper.title || '제목 없음', sa),
+        extractExamSummary(examPaper.schoolName ?? '', 0, paper.title || '제목 없음', sa),
       );
     }
   }
