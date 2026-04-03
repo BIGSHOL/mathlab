@@ -200,34 +200,47 @@ ${commentary.nearby_comparison ? '8. **주변 학교 비교** — 인근 학교�
 - **태그**: #${schoolName.replace(/\s/g, '')} #기출분석 #${grade || '수학'} 등 7~10개
 - **글 길이 (엄격 제한!)**: HTML 태그를 제외한 순수 텍스트 기준 2,500~3,200자. 3,500자 절대 초과 금지! 각 섹션을 핵심만 간결하게 작성. 불필요한 수식어와 반복 설명을 줄일 것
 
-### HTML 서식 규칙 (필수! content는 반드시 네이버 블로그 호환 HTML로 작성)
+### HTML 서식 규칙 (네이버 블로그 100% 호환 — 가장 중요한 규칙!)
+**핵심 원칙: 네이버 블로그는 <p>태그에 자체 마진을 추가하고 <ul><li>를 변형함. 따라서 <br> 기반 단순 HTML만 사용!**
+
 - content 필드는 **HTML 형식**으로 작성. 마크다운(##, **, -) 사용 금지!
-- 테이블(<table>) 사용 금지! 데이터는 <ul><li> 리스트나 <strong> 텍스트로 표현
-- **소제목**: <h2>시험 개요</h2> 형태로 작성. 모든 섹션에 <h2> 사용
-- **<h3> 사용 금지!** 네이버에서 글자 크기가 깨짐. 하위 제목은 <p><strong style="font-size: 17px;">A등급 전략</strong></p> 형태로 사용
-- **개별 문항 제목**: <p><strong>서술형 3번 — Level 5 (13점)</strong></p> 형태로 <strong>만 사용
+- **사용 금지 태그**: <p>, <ul>, <li>, <ol>, <table>, <blockquote>, <h3>, <div> — 네이버가 자체 스타일을 적용하여 레이아웃이 깨짐
+- **사용 가능 태그**: <h2>, <strong>, <span>, <mark>, <br>, <img>, {{CHART:*}} 토큰
+- **소제목**: <h2>시험 개요</h2> 형태. 모든 섹션에 <h2> 사용
+- **하위 제목** (등급별 전략 등): <strong style="font-size: 17px;">A등급 전략</strong><br><br> 형태
+- **개별 문항 제목**: <strong>서술형 3번 — Level 5 (13점)</strong><br> 형태
 - **볼드**: <strong>중요 내용</strong>
-- **리스트**: <ul><li>항목1</li><li>항목2</li></ul>
-- **글자 크기 통일 (네이버 호환 필수!)**: 모든 <p>와 <li>에 style="font-size: 15px;" 추가. 네이버 블로그는 태그별 글자 크기가 다르므로 인라인 스타일로 통일할 것
-- **문단 간격 (네이버 블로그 호환 필수!)**:
-  - 모든 문단은 <p>텍스트</p> 태그로 감싸기
-  - 문단과 문단 사이에 반드시 <p>&nbsp;</p>를 삽입하여 시각적 줄바꿈 확보
-  - 섹션(<h2>) 앞에도 <p>&nbsp;</p> 삽입
-  - 네이버 블로그는 <p> margin을 무시하므로, 빈 줄(<p>&nbsp;</p>)로 간격을 만들어야 함
+- **리스트 항목**: <ul><li> 대신 수동 불릿 사용! "• 항목 내용<br>" 형태로 작성
+  - ✓ • Level 4 심화 7문항 중 계산 위주 문항을 선별하여 추가 점수를 획득해야 합니다.<br>
+  - ✗ <ul><li>Level 4 심화 7문항 중...</li></ul>
+- **줄바꿈**: 문장 끝마다 <br> 삽입. 문단 사이는 <br><br> (빈 줄 효과)
+- **섹션 간 간격**: <h2> 앞에 <br><br> 삽입하여 시각적 구분
+- **글자 크기**: 인라인 스타일 불필요 (네이버 기본 크기로 통일됨). <h2>만 네이버가 적절한 크기로 렌더링
 - **색상 강조 (핵심 수치/키워드에 적용)**:
   - 핵심 점수/수치: <span style="color: #E03131">84점</span> (빨간색)
   - 등급 라벨: <span style="color: #1971C2">A등급</span> (파란색)
   - 난이도 키워드: <span style="color: #E8590C">심화</span> (주황색), <span style="color: #2F9E44">기본</span> (녹색)
   - 단원명 강조: <strong style="color: #6741D9">인수분해</strong> (보라색)
 - **형광펜 (문맥별 다른 색상 사용! 전부 노란색 금지!)**:
-  - 핵심 인사이트/요약: <mark style="background-color: #FFF3BF">핵심 메시지</mark> (노란색)
-  - A등급 전략: <mark style="background-color: #D8F5A2">A등급 핵심 전략</mark> (연두색)
-  - B등급 전략: <mark style="background-color: #BAE3FF">B등급 핵심 전략</mark> (하늘색)
-  - C등급 전략: <mark style="background-color: #FFE8CC">C등급 핵심 전략</mark> (살구색)
-  - 경고/주의 메시지: <mark style="background-color: #FFD8D8">주의 사항</mark> (분홍색)
-  - 단원/영역 강조: <mark style="background-color: #E8DEFF">영역 이름</mark> (연보라색)
-- **<blockquote> 사용 금지!** 네이버 블로그에서 거대한 인용 스타일로 변환됨. 대신 <p><mark style="background-color: #FFF3BF">핵심 메시지</mark></p> 형광펜으로 강조
-- 차트 이미지 위치: {{CHART:difficulty}}, {{CHART:type_radar}}, {{CHART:topic_bar}} 토큰만 삽입 (img 태그 아님)
+  - 핵심 인사이트: <mark style="background-color: #FFF3BF">핵심 메시지</mark> (노란색)
+  - A등급 전략: <mark style="background-color: #D8F5A2">A등급 핵심</mark> (연두색)
+  - B등급 전략: <mark style="background-color: #BAE3FF">B등급 핵심</mark> (하늘색)
+  - C등급 전략: <mark style="background-color: #FFE8CC">C등급 핵심</mark> (살구색)
+  - 경고/주의: <mark style="background-color: #FFD8D8">주의 사항</mark> (분홍색)
+  - 영역 강조: <mark style="background-color: #E8DEFF">영역 이름</mark> (연보라색)
+- 차트 이미지 위치: {{CHART:difficulty}}, {{CHART:type_radar}}, {{CHART:topic_bar}} 토큰만 삽입
+
+**HTML 구조 예시 (반드시 이 패턴을 따를 것!):**
+<h2>성광중 중3 수학 등급별 점수 확보 전략</h2>
+<br>
+<strong style="font-size: 17px;"><span style="color: #1971C2">A등급</span> (90점 이상) 전략</strong><br>
+<mark style="background-color: #D8F5A2">Level 1~3 문항 16문항을 실수 없이 완벽 확보하는 것이 기본 전제입니다.</mark><br>
+• Level 4 심화 7문항 중 최소 5문항 이상을 정확히 풀어 고득점 구간에 진입해야 합니다.<br>
+• 서술형 3문항에서 풀이 과정을 단계별로 명확히 서술하여 감점 없이 점수를 확보해야 합니다.<br>
+<br>
+<strong style="font-size: 17px;"><span style="color: #1971C2">B등급</span> (70~89점) 전략</strong><br>
+<mark style="background-color: #BAE3FF">Level 1~3 문항 합산 48점을 안정적으로 확보하는 것이 우선입니다.</mark><br>
+• 항목 내용...<br>
 
 ### 서식 적용 가이드라인
 - 각 섹션 도입부의 핵심 메시지 1문장은 <mark> 형광펜 처리 (섹션마다 다른 색상 사용!)
@@ -264,7 +277,7 @@ ${commentary.nearby_comparison ? '8. **주변 학교 비교** — 인근 학교�
 ## 출력 형식 (반드시 아래 JSON으로만 응답)
 {
   "title": "블로그 제목 (25~40자, 키워드 앞쪽 배치)",
-  "content": "HTML 본문 (<h2>, <h3>, <p>, <p>&nbsp;</p>, <strong>, <ul><li>, <mark>, <span style=color>, {{CHART:*}} 포함. blockquote 금지!)",
+  "content": "HTML 본문 (<h2>, <strong>, <mark>, <span style=color>, <br>, {{CHART:*}} 사용. <p>/<ul>/<li>/<blockquote>/<h3> 사용 금지!)",
   "tags": ["#태그1", "#태그2", "..."],
   "metaDescription": "검색 결과 미리보기용 설명 (50~120자, 키워드 포함)"
 }`;
