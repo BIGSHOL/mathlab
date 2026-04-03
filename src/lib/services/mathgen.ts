@@ -384,7 +384,7 @@ export async function generateMathProblem(selection: SelectionState): Promise<Ge
         const allText = `${data.question}\n${data.solution || ''}`;
         const fnMatch = allText.match(/[yf]['′]?\s*\([x]\)\s*=\s*([^\n,가-힣(단]+)/);
         if (fnMatch) {
-          let expr = fnMatch[1].trim()
+          const expr = fnMatch[1].trim()
             .replace(/\$/g, '')
             .replace(/\\frac/g, '')
             .replace(/[{}]/g, '')

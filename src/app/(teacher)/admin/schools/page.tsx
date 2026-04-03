@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Pagination } from '@/components/ui/Pagination';
-import { Search, School, Link2, X, Database, MapPin, FileText, Loader2, Save, Unlink } from 'lucide-react';
+import { Search, School, Link2, X, Database, MapPin, FileText, Loader2, Save } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
 import { useAuth } from '@/hooks/useAuth';
 
