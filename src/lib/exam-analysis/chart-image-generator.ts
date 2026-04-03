@@ -20,7 +20,7 @@ import type { AnalyzedQuestion } from './types';
 
 const CHART_WIDTH = 680;
 const CHART_HEIGHT = 420;
-const FONT_FAMILY = 'Pretendard, sans-serif';
+const FONT_FAMILY = "'Noto Sans KR', sans-serif";
 
 function svgWrap(inner: string, width = CHART_WIDTH, height = CHART_HEIGHT): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
@@ -267,24 +267,27 @@ export function generateTopicBarSvg(
 // Google Fonts CSS 파싱 대신 직접 CDN에서 OTF 바이너리 다운로드
 // fontDirs(디렉토리 스캔) 대신 fontFiles(정확한 파일 경로) 사용
 
-const FONT_DIR = join(tmpdir(), 'mathlab-chart-fonts-v4');
-const MIN_FONT_SIZE = 100_000; // 유효 폰트 최소 100KB
+const FONT_DIR = join(tmpdir(), 'mathlab-chart-fonts-v5');
+const MIN_FONT_SIZE = 10_000; // 유효 폰트 최소 10KB (woff2 subset은 작을 수 있음)
 
-// Pretendard OTF — 프로젝트 표준 폰트, jsdelivr CDN 직접 바이너리 URL
+// Noto Sans KR woff2 — fontsource CDN (검증 완료: 200 OK, ~540KB)
+// Korean subset + Latin subset = 한글/숫자/영문 모두 커버
 const FONT_SOURCES = [
   {
-    file: 'Pretendard-Regular.otf',
-    urls: [
-      'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/public/static/Pretendard-Regular.otf',
-      'https://cdn.jsdelivr.net/gh/googlefonts/noto-cjk@main/Sans/OTF/Korean/NotoSansKR-Regular.otf',
-    ],
+    file: 'NotoSansKR-Regular-korean.woff2',
+    url: 'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-kr/files/noto-sans-kr-korean-400-normal.woff2',
   },
   {
-    file: 'Pretendard-Bold.otf',
-    urls: [
-      'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/public/static/Pretendard-Bold.otf',
-      'https://cdn.jsdelivr.net/gh/googlefonts/noto-cjk@main/Sans/OTF/Korean/NotoSansKR-Bold.otf',
-    ],
+    file: 'NotoSansKR-Regular-latin.woff2',
+    url: 'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-kr/files/noto-sans-kr-latin-400-normal.woff2',
+  },
+  {
+    file: 'NotoSansKR-Bold-korean.woff2',
+    url: 'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-kr/files/noto-sans-kr-korean-700-normal.woff2',
+  },
+  {
+    file: 'NotoSansKR-Bold-latin.woff2',
+    url: 'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-kr/files/noto-sans-kr-latin-700-normal.woff2',
   },
 ];
 
@@ -296,28 +299,26 @@ function isFontValid(filePath: string): boolean {
   }
 }
 
-async function downloadFont(urls: string[], destPath: string): Promise<boolean> {
-  for (const url of urls) {
-    try {
-      console.log(`[chart-fonts] Downloading: ${url}`);
-      const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
-      if (!res.ok) {
-        console.warn(`[chart-fonts] HTTP ${res.status} from ${url}`);
-        continue;
-      }
-      const buf = Buffer.from(await res.arrayBuffer());
-      if (buf.length < MIN_FONT_SIZE) {
-        console.warn(`[chart-fonts] Too small (${buf.length}B) from ${url}`);
-        continue;
-      }
-      writeFileSync(destPath, buf);
-      console.log(`[chart-fonts] Saved ${buf.length} bytes → ${destPath}`);
-      return true;
-    } catch (err) {
-      console.warn(`[chart-fonts] Failed ${url}:`, err instanceof Error ? err.message : err);
+async function downloadFont(url: string, destPath: string): Promise<boolean> {
+  try {
+    console.log(`[chart-fonts] Downloading: ${url}`);
+    const res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
+    if (!res.ok) {
+      console.error(`[chart-fonts] HTTP ${res.status} from ${url}`);
+      return false;
     }
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.length < MIN_FONT_SIZE) {
+      console.error(`[chart-fonts] Too small (${buf.length}B) from ${url}`);
+      return false;
+    }
+    writeFileSync(destPath, buf);
+    console.log(`[chart-fonts] OK ${buf.length} bytes → ${destPath}`);
+    return true;
+  } catch (err) {
+    console.error(`[chart-fonts] Failed ${url}:`, err instanceof Error ? err.message : err);
+    return false;
   }
-  return false;
 }
 
 async function ensureFonts(): Promise<string[]> {
@@ -325,19 +326,20 @@ async function ensureFonts(): Promise<string[]> {
 
   const fontPaths: string[] = [];
 
-  for (const source of FONT_SOURCES) {
+  await Promise.all(FONT_SOURCES.map(async (source) => {
     const destPath = join(FONT_DIR, source.file);
 
     // 항상 실제 파일 존재 + 크기 검증 (module-level 캐시 사용 안 함)
     if (!isFontValid(destPath)) {
-      await downloadFont(source.urls, destPath);
+      await downloadFont(source.url, destPath);
     }
 
     if (isFontValid(destPath)) {
       fontPaths.push(destPath);
     }
-  }
+  }));
 
+  console.log(`[chart-fonts] ${fontPaths.length}/${FONT_SOURCES.length} fonts ready in ${FONT_DIR}`);
   if (fontPaths.length === 0) {
     console.error('[chart-fonts] No fonts available! Charts will have no text.');
   }
@@ -355,8 +357,8 @@ export async function svgToPng(svg: string, width = CHART_WIDTH): Promise<Buffer
     font: {
       fontFiles,                          // 정확한 파일 경로 (fontDirs 스캔 대신)
       loadSystemFonts: true,              // 로컬 dev에서 시스템 폰트도 활용
-      defaultFontFamily: 'Pretendard',
-      sansSerifFamily: 'Pretendard',
+      defaultFontFamily: 'Noto Sans KR',
+      sansSerifFamily: 'Noto Sans KR',
     },
   });
 

@@ -88,7 +88,12 @@ export async function POST(request: NextRequest, { params }: Params) {
 
         // {{CHART:*}} 토큰 → API URL <img> 태그 변환
         // 네이버 블로그는 base64 data URI 차단 → API 라우트로 실제 PNG 서빙
-        const baseUrl = process.env.NEXTAUTH_URL || '';
+        // NEXTAUTH_URL이 localhost일 수 있으므로 request에서 실제 origin 추출
+        const reqUrl = new URL(request.url);
+        const forwardedProto = request.headers.get('x-forwarded-proto');
+        const baseUrl = forwardedProto
+          ? `${forwardedProto}://${request.headers.get('host')}`
+          : reqUrl.origin;
         const chartTokenMap: Record<string, string> = {
           '{{CHART:difficulty}}': `${baseUrl}/api/exam-analysis/${id}/chart/difficulty`,
           '{{CHART:type_radar}}': `${baseUrl}/api/exam-analysis/${id}/chart/type-radar`,
