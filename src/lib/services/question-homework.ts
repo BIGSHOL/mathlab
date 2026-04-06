@@ -53,6 +53,7 @@ export interface TodayQuestionHomework {
 interface CreateQuestionHomeworkParams {
   title: string;
   createdBy: string;
+  tenantId?: string | null;
   startDate: string;
   questionIds: string[];
   questionsPerDay: number;
@@ -61,7 +62,7 @@ interface CreateQuestionHomeworkParams {
 }
 
 export async function createQuestionHomeworkPlan(params: CreateQuestionHomeworkParams) {
-  const { title, createdBy, startDate, questionIds, questionsPerDay, passingScore, studentIds } = params;
+  const { title, createdBy, tenantId, startDate, questionIds, questionsPerDay, passingScore, studentIds } = params;
 
   if (questionIds.length === 0) throw new Error('문제를 1개 이상 선택해주세요');
 
@@ -87,6 +88,7 @@ export async function createQuestionHomeworkPlan(params: CreateQuestionHomeworkP
       data: {
         title,
         createdBy,
+        tenantId: tenantId ?? undefined,
         startDate: new Date(startDate),
         totalDays,
         dailyQuestions: JSON.parse(JSON.stringify(dailyQuestions)),

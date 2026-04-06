@@ -441,6 +441,7 @@ export function useQuestionManager() {
   const openQuestion = (q: QuestionItem) => {
     setSelectedQuestion(q);
     setModalMode('view');
+    window.history.replaceState(null, '', `/questions?id=${q.id}`);
   };
 
   const populateEditForm = (q: QuestionItem) => {
@@ -507,6 +508,7 @@ export function useQuestionManager() {
     setSelectedQuestion(null);
     setModalMode('view');
     setSaveSuccess(false);
+    window.history.replaceState(null, '', '/questions');
   };
 
   const saveQuestion = async () => {

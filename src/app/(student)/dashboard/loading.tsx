@@ -1,8 +1,9 @@
 import { Skeleton } from '@/components/ui/Skeleton';
+import { PageContainer } from '@/components/ui/PageContainer';
 
 export default function DashboardLoading() {
   return (
-    <div className="px-4 md:px-8 py-8 w-full">
+    <PageContainer maxWidth="xl">
       {/* 환영 헤더 + XP 뱃지 */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div className="space-y-1.5">
@@ -174,6 +175,6 @@ export default function DashboardLoading() {
           ))}
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

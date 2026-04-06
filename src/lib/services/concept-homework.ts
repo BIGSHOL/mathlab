@@ -84,6 +84,7 @@ function isConceptCompleted(progress: ConceptStageProgress, requiredStage: Stage
 interface CreateConceptHomeworkParams {
   title: string;
   createdBy: string;
+  tenantId?: string | null;
   startDate: string; // YYYY-MM-DD
   conceptIds: string[];
   conceptsPerDay: number;
@@ -92,7 +93,7 @@ interface CreateConceptHomeworkParams {
 }
 
 export async function createConceptHomeworkPlan(params: CreateConceptHomeworkParams) {
-  const { title, createdBy, startDate, conceptIds, conceptsPerDay, requiredStage, studentIds } = params;
+  const { title, createdBy, tenantId, startDate, conceptIds, conceptsPerDay, requiredStage, studentIds } = params;
 
   if (conceptIds.length === 0) throw new Error('개념을 1개 이상 선택해주세요');
   if (conceptsPerDay < 1) throw new Error('하루당 개념 수는 1개 이상이어야 합니다');
@@ -117,6 +118,7 @@ export async function createConceptHomeworkPlan(params: CreateConceptHomeworkPar
     data: {
       title,
       createdBy,
+      tenantId: tenantId ?? undefined,
       startDate: new Date(startDate),
       totalDays,
       dailyConcepts: JSON.parse(JSON.stringify(dailyConcepts)),

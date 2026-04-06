@@ -1,6 +1,7 @@
 import { Award, Star, CheckCircle, Flame, Play, BookOpen, ArrowRight, CalendarCheck, FileQuestion, Trophy, Activity, Sparkles, GraduationCap, XCircle, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { PageContainer } from '@/components/ui/PageContainer';
 import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth';
 import { getViewAsUser } from '@/lib/view-as';
@@ -268,7 +269,7 @@ export default async function StudentDashboard({
   const progressPercent = totalConcepts > 0 ? Math.round((completedCount / totalConcepts) * 100) : 0;
 
   return (
-    <div className="px-4 md:px-8 py-8 w-full">
+    <PageContainer maxWidth="xl">
       {/* ──── 섹션 1: 숙제 배너 + 환영 ──── */}
       {pendingHomework.length > 0 && (
         <Link href="/practice/arithmetic/homework" className="block mb-4">
@@ -738,6 +739,6 @@ export default async function StudentDashboard({
           </div>
         )}
       </Card>
-    </div>
+    </PageContainer>
   );
 }

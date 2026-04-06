@@ -203,42 +203,39 @@ export default function LicenseAssignmentTab() {
     );
   }
 
+  // 활성화된 기능만 필터 (미등록 기능 숨김)
+  const activeFeatures = FEATURES.filter(({ enum: featureEnum }) => !!getLicense(featureEnum));
+
   return (
     <div>
       {/* 좌석 현황 카드 */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
-        {FEATURES.map(({ key, enum: featureEnum, label }) => {
-          const lic = getLicense(featureEnum);
-          const used = lic?.usedSeats ?? 0;
-          const max = lic?.maxSeats ?? 0;
+        {activeFeatures.map(({ key, enum: featureEnum, label }) => {
+          const lic = getLicense(featureEnum)!;
+          const used = lic.usedSeats;
+          const max = lic.maxSeats;
           const remaining = max - used;
           const pct = max > 0 ? Math.round((used / max) * 100) : 0;
-          const isExpired = lic?.expiresAt && new Date(lic.expiresAt) <= new Date();
+          const isExpired = lic.expiresAt && new Date(lic.expiresAt) <= new Date();
 
           return (
-            <div key={key} className={`p-3 rounded-sm border ${isExpired ? 'border-red-200 bg-red-50' : !lic ? 'border-slate-200 bg-slate-50' : 'border-slate-200 bg-white'}`}>
+            <div key={key} className={`p-3 rounded-sm border ${isExpired ? 'border-red-200 bg-red-50' : 'border-slate-200 bg-white'}`}>
               <p className="text-xs font-medium text-text-secondary mb-1">{label}</p>
-              {lic ? (
-                <>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-lg font-bold text-text-primary">{used}</span>
-                    <span className="text-xs text-text-secondary">사용</span>
-                    <span className="text-text-secondary mx-0.5">/</span>
-                    <span className={`text-lg font-bold ${remaining <= 3 ? 'text-red-500' : 'text-emerald-600'}`}>{remaining}</span>
-                    <span className="text-xs text-text-secondary">남음</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-slate-100 rounded-full mt-1.5">
-                    <div
-                      className={`h-full rounded-full transition-all ${pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-amber-500' : 'bg-primary'}`}
-                      style={{ width: `${Math.min(pct, 100)}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-text-secondary mt-1">총 {max}석</p>
-                  {isExpired && <p className="text-xs text-red-500">만료됨</p>}
-                </>
-              ) : (
-                <p className="text-xs text-slate-400 mt-1">미등록</p>
-              )}
+              <div className="flex items-baseline gap-1">
+                <span className="text-lg font-bold text-text-primary">{used}</span>
+                <span className="text-xs text-text-secondary">사용</span>
+                <span className="text-text-secondary mx-0.5">/</span>
+                <span className={`text-lg font-bold ${remaining <= 3 ? 'text-red-500' : 'text-emerald-600'}`}>{remaining}</span>
+                <span className="text-xs text-text-secondary">남음</span>
+              </div>
+              <div className="w-full h-1.5 bg-slate-100 rounded-full mt-1.5">
+                <div
+                  className={`h-full rounded-full transition-all ${pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-amber-500' : 'bg-primary'}`}
+                  style={{ width: `${Math.min(pct, 100)}%` }}
+                />
+              </div>
+              <p className="text-xs text-text-secondary mt-1">총 {max}석</p>
+              {isExpired && <p className="text-xs text-red-500">만료됨</p>}
             </div>
           );
         })}
@@ -251,16 +248,16 @@ export default function LicenseAssignmentTab() {
             <Users className="w-4 h-4 text-primary" />
             <span className="text-sm font-medium text-primary">{selectedStudents.size}명 선택</span>
             <div className="flex-1" />
-            <Button size="sm" onClick={() => bulkAssign(FEATURES.map((f) => f.key))} disabled={saving}>
+            <Button size="sm" onClick={() => bulkAssign(activeFeatures.map((f) => f.key))} disabled={saving}>
               전체 기능 배정
             </Button>
-            <Button size="sm" variant="danger" onClick={() => bulkRevoke(FEATURES.map((f) => f.key))} disabled={saving}>
+            <Button size="sm" variant="danger" onClick={() => bulkRevoke(activeFeatures.map((f) => f.key))} disabled={saving}>
               전체 회수
             </Button>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-text-secondary mr-1">기능별:</span>
-            {FEATURES.map(({ key, label }) => (
+            {activeFeatures.map(({ key, label }) => (
               <div key={key} className="flex items-center gap-0.5">
                 <button
                   onClick={() => bulkAssign([key])}
@@ -339,7 +336,7 @@ export default function LicenseAssignmentTab() {
               </th>
               <th className="px-3 py-2 text-left font-medium text-text-secondary">학생</th>
               <th className="px-3 py-2 text-left font-medium text-text-secondary">반</th>
-              {FEATURES.map((f) => (
+              {activeFeatures.map((f) => (
                 <th key={f.key} className="px-2 py-2 text-center font-medium text-text-secondary whitespace-nowrap">
                   {f.label}
                 </th>
@@ -362,23 +359,19 @@ export default function LicenseAssignmentTab() {
                   <p className="text-xs text-text-secondary">{student.username}</p>
                 </td>
                 <td className="px-3 py-2 text-text-secondary">{student.classroom?.name ?? '-'}</td>
-                {FEATURES.map(({ key, enum: featureEnum }) => {
+                {activeFeatures.map(({ key, enum: featureEnum }) => {
                   const has = hasFeature(student, featureEnum);
-                  const lic = getLicense(featureEnum);
-                  const noPool = !lic;
                   return (
                     <td key={key} className="px-2 py-2 text-center">
                       <button
                         onClick={() => toggleLicense(student.id, key, has)}
-                        disabled={saving || noPool}
+                        disabled={saving}
                         className={`p-1 rounded transition-colors ${
-                          noPool
-                            ? 'text-slate-200 cursor-not-allowed'
-                            : has
-                              ? 'text-emerald-500 hover:bg-emerald-50'
-                              : 'text-slate-300 hover:bg-slate-100 hover:text-slate-500'
+                          has
+                            ? 'text-emerald-500 hover:bg-emerald-50'
+                            : 'text-slate-300 hover:bg-slate-100 hover:text-slate-500'
                         }`}
-                        title={noPool ? '이용권 미등록' : has ? '회수' : '배정'}
+                        title={has ? '회수' : '배정'}
                       >
                         {has ? <Check className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
                       </button>
@@ -389,7 +382,7 @@ export default function LicenseAssignmentTab() {
             ))}
             {filteredStudents.length === 0 && (
               <tr>
-                <td colSpan={3 + FEATURES.length} className="px-3 py-8 text-center text-text-secondary">
+                <td colSpan={3 + activeFeatures.length} className="px-3 py-8 text-center text-text-secondary">
                   학생이 없습니다
                 </td>
               </tr>

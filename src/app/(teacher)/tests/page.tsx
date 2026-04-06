@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from '@/components/ui/Toast';
 import { confirm } from '@/components/ui/ConfirmDialog';
 import {
@@ -48,7 +48,8 @@ export default function TestsPage() {
   })();
   const assigningTest = tests.find((t) => t.id === assigningTestId);
 
-  const [selectedTestId, setSelectedTestId] = useState<string | null>(null);
+  const _searchParams = useSearchParams();
+  const [selectedTestId, setSelectedTestId] = useState<string | null>(_searchParams.get('id'));
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
 
   const selectedTest = tests.find((t) => t.id === selectedTestId);
@@ -58,7 +59,7 @@ export default function TestsPage() {
     setDeleting(test.id);
     try {
       await deleteTest(test.seq);
-      if (selectedTestId === test.id) setSelectedTestId(null);
+      if (selectedTestId === test.id) { setSelectedTestId(null); window.history.replaceState(null, '', '/tests'); }
     } catch {
       toast.error('삭제 실패');
     }
@@ -188,7 +189,7 @@ export default function TestsPage() {
                         return (
                           <button
                             key={test.id}
-                            onClick={() => setSelectedTestId(test.id)}
+                            onClick={() => { setSelectedTestId(test.id); window.history.replaceState(null, '', `/tests?id=${test.id}`); }}
                             className={`w-full text-left px-3 py-2.5 transition-colors hover:bg-slate-100 ${
                               isSelected
                                 ? 'bg-primary/5 border-l-2 border-l-primary'
@@ -244,7 +245,7 @@ export default function TestsPage() {
                 <div className="p-3 max-w-3xl w-full mx-auto">
                   {/* 모바일 뒤로가기 */}
                   <button
-                    onClick={() => setSelectedTestId(null)}
+                    onClick={() => { setSelectedTestId(null); window.history.replaceState(null, '', '/tests'); }}
                     className="md:hidden flex items-center gap-1.5 text-xs text-slate-500 hover:text-primary mb-2"
                   >
                     <PanelLeftOpen className="w-3.5 h-3.5" />

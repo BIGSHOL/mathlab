@@ -10,6 +10,7 @@ import {
   ClipboardCheck,
   Calculator,
   MessageSquare,
+  Users,
 } from 'lucide-react';
 import { InfoBox } from './InfoBox';
 import { SectionTitle } from './SectionTitle';
@@ -59,6 +60,32 @@ export function TeacherDetail({ user, stats, statsLoading, isOwner, onResetPassw
         </div>
       ) : s && (
         <>
+          {/* 담당 반 */}
+          {stats!.classrooms.length > 0 && (
+            <>
+              <SectionTitle icon={Users} title={`담당 반 (${stats!.classrooms.length})`} />
+              <div className="space-y-1.5 mb-3">
+                {stats!.classrooms.map((c) => (
+                  <div key={c.id} className="bg-white border border-slate-200 rounded-sm px-3 py-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-bold text-text-primary">{c.name}</span>
+                      <span className="text-xs text-text-secondary">{c.students.length}명</span>
+                    </div>
+                    {c.students.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {c.students.map((s) => (
+                          <span key={s.id} className="text-xs text-text-secondary bg-slate-50 px-1.5 py-0.5 rounded">
+                            {s.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
           {/* 활동 요약 */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-1">
             <div className="bg-blue-50 rounded-sm p-3">

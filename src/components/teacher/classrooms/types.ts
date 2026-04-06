@@ -15,6 +15,8 @@ export interface ClassroomItem {
   id: string;
   name: string;
   grade: number | null;
+  teacherId: string | null;
+  teacher: { id: string; name: string } | null;
   createdAt: string;
   students: StudentInClassroom[];
 }

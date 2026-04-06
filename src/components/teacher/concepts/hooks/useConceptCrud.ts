@@ -147,6 +147,7 @@ export function useConceptCrud(deps: CrudDeps) {
     if (editingConcept && deps.isDirtyRef() && !(await confirm({ message: '저장하지 않은 변경사항이 있습니다. 다른 개념으로 이동하시겠습니까?', variant: 'warning', confirmLabel: '나가기' }))) return;
     setEditingConcept(concept);
     setIsNewConcept(false);
+    if (concept.id !== '__new__') window.history.replaceState(null, '', `/concepts?id=${concept.id}`);
     deps.setIsContentEditing(false);
     const form = populateForm(concept);
     setEditForm(form);
@@ -208,6 +209,7 @@ export function useConceptCrud(deps: CrudDeps) {
     setIsNewConcept(false);
     deps.setIsContentEditing(false);
     deps.resetBlanks();
+    window.history.replaceState(null, '', '/concepts');
   };
 
   const saveConcept = async () => {

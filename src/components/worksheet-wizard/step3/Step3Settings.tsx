@@ -187,7 +187,7 @@ export function Step3Settings() {
                       setTemplate(t.id as typeof template);
                       if (t.id === 'large') setColumns(1);
                     }}
-                    className={`flex flex-col items-center justify-center p-2 border-2 rounded-lg transition-all ${template === t.id ? 'border-primary bg-primary/5 text-primary font-bold shadow-sm' : 'border-slate-100 bg-white text-slate-500 hover:border-slate-200'
+                    className={`flex flex-col items-center justify-center p-2 border-2 rounded-sm transition-all ${template === t.id ? 'border-primary bg-primary/5 text-primary font-bold shadow-sm' : 'border-slate-100 bg-white text-slate-500 hover:border-slate-200'
                       }`}
                   >
                     <span className="text-[11px]">{t.label}</span>
@@ -254,7 +254,7 @@ export function Step3Settings() {
             </div>
 
             {/* 추가 토글 옵션류 */}
-            <div className="space-y-3 bg-slate-50 p-4 border border-slate-100 rounded-lg">
+            <div className="space-y-3 bg-slate-50 p-4 border border-slate-100 rounded-sm">
               <label className="flex items-center justify-between cursor-pointer group">
                 <div className="flex items-center gap-2 text-xs text-slate-700"><Calendar className="w-3.5 h-3.5 text-slate-400" /> 헤더 오늘 날짜 표시</div>
                 <input type="checkbox" className="sr-only peer" checked={showDate} onChange={(e) => setShowDate(e.target.checked)} />
@@ -466,7 +466,7 @@ const PrintPreview = memo(function PrintPreview({ title, grade, questions }: Pri
       {/* 미리보기 헤더바 & 줌 인/줌 아웃 */}
       <div className="shrink-0 h-14 border-b border-slate-200 bg-white/80 backdrop-blur shadow-sm flex items-center justify-between px-6 z-10">
         <div className="text-sm font-bold text-slate-800">미리보기 (총 {totalPages}장)</div>
-        <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
+        <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-sm">
           <button className="p-1.5 rounded hover:bg-white hover:shadow-sm text-slate-500" onClick={() => setScale(scale - 0.1)}><ZoomOut className="w-4 h-4" /></button>
           <span className="text-xs font-bold w-12 text-center text-slate-700">{Math.round(scale * 100)}%</span>
           <button className="p-1.5 rounded hover:bg-white hover:shadow-sm text-slate-500" onClick={() => setScale(scale + 0.1)}><ZoomIn className="w-4 h-4" /></button>

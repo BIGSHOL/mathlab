@@ -77,7 +77,7 @@ export default function LicenseUsageTab() {
   // 미사용 학생 통합 목록
   const inactiveMap = new Map<string, { id: string; name: string; classroom: string | null; features: string[] }>();
   for (const stat of stats) {
-    if (stat.maxSeats === 0) continue;
+    if (!stat.isActive) continue;
     const info = LICENSE_FEATURE_INFO[stat.feature];
     for (const student of stat.inactiveStudents) {
       if (!inactiveMap.has(student.id)) {
@@ -115,7 +115,7 @@ export default function LicenseUsageTab() {
           {LICENSE_FEATURES_ORDERED.map((feature) => {
             const stat = stats.find((s) => s.feature === feature);
             const info = LICENSE_FEATURE_INFO[feature];
-            if (!stat || stat.maxSeats === 0) return null;
+            if (!stat?.isActive) return null;
 
             const assignedPct = stat.assignedStudentCount > 0 ? 100 : 0;
             const activePct = stat.assignedStudentCount > 0
@@ -179,7 +179,7 @@ export default function LicenseUsageTab() {
             {LICENSE_FEATURES_ORDERED.map((f) => {
               const info = LICENSE_FEATURE_INFO[f];
               const stat = stats.find((s) => s.feature === f);
-              if (!stat || stat.maxSeats === 0) return null;
+              if (!stat?.isActive) return null;
               return (
                 <button
                   key={f}

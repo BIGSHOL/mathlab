@@ -15,6 +15,8 @@ export interface AssignmentParams {
   countMode: CountMode;
   perCatCounts?: Record<string, number>;
   startDate: string;
+  /** 활성 요일 (0=일, 1=월, ..., 6=토). 미지정 시 매일 배정 */
+  activeDays?: number[];
   // Mode specific
   slots?: SlotConfig[];
   categories?: ArithmeticCategory[];

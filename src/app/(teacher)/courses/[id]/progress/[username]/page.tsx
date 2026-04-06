@@ -633,7 +633,7 @@ function BlankAnswerViewer({ exercise, attempts }: {
           </div>
 
           {/* 하단 요약 — 학생 답변 모드일 때 정답/오답 개수, 정답 모드일 때 정답 목록 */}
-          <div className="shrink-0">
+          <div className="shrink-0 max-h-[200px] overflow-y-auto">
             {viewMode === 'student' && latestAttempt ? (
               <>
                 <h4 className="text-xs font-bold text-text-secondary mb-1.5">

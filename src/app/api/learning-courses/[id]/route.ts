@@ -7,6 +7,7 @@ type Ctx = { params: Promise<{ id: string }> };
 
 // GET /api/learning-courses/[id] — 과정 상세 (개념 + 학생별 진행률)
 export async function GET(_req: NextRequest, { params }: Ctx) {
+  try {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
 
@@ -136,11 +137,18 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
       enrollments: enrollmentsWithProgress,
     },
   });
+  } catch (err) {
+    console.error('[GET /api/learning-courses/[id]]', err);
+    return NextResponse.json(
+      { error: { code: 'INTERNAL', message: '과정 조회 중 오류가 발생했습니다' } },
+      { status: 500 }
+    );
+  }
 }
 
 const updateSchema = z.object({
   title: z.string().min(1).max(200).optional(),
-  description: z.string().optional(),
+  description: z.string().nullable().optional(),
   mode: z.enum(['free', 'sequential']).optional(),
   conceptIds: z.array(z.string()).min(1).optional(),
   isActive: z.boolean().optional(),

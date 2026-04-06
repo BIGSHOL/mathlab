@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
     const plan = await createQuestionHomeworkPlan({
       title: title.trim(),
       createdBy: user.id,
+      tenantId: user.viewingTenantId ?? user.tenantId,
       startDate,
       questionIds,
       questionsPerDay: clamp(questionsPerDay || 5, 1, 30),

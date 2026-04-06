@@ -9,7 +9,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { gradeLabel } from '@/components/teacher/students/helpers';
+import { gradeLabel, SCHOOL_LEVEL_OPTIONS, gradeInLevel } from '@/components/teacher/students/helpers';
 import type { ClassroomItem } from './types';
 
 interface ClassroomListPanelProps {
@@ -17,8 +17,13 @@ interface ClassroomListPanelProps {
   onToggleCollapse: () => void;
   search: string;
   onSearchChange: (value: string) => void;
+  filterLevel: string;
+  onFilterLevelChange: (value: string) => void;
+  filterGrade: string;
+  onFilterGradeChange: (value: string) => void;
   loading: boolean;
   classrooms: ClassroomItem[];
+  totalCount: number;
   selectedId: string | null;
   onSelect: (classroom: ClassroomItem) => void;
   onAddClick?: () => void;
@@ -29,8 +34,13 @@ export function ClassroomListPanel({
   onToggleCollapse,
   search,
   onSearchChange,
+  filterLevel,
+  onFilterLevelChange,
+  filterGrade,
+  onFilterGradeChange,
   loading,
   classrooms,
+  totalCount,
   selectedId,
   onSelect,
   onAddClick,
@@ -45,7 +55,7 @@ export function ClassroomListPanel({
               <School className="w-4 h-4 text-primary shrink-0" />
               <h1 className="text-base font-bold text-text-primary truncate">반 관리</h1>
               <span className="text-xs text-text-secondary bg-slate-100 px-1.5 py-0.5 rounded-full font-medium shrink-0">
-                {classrooms.length}
+                {classrooms.length !== totalCount ? `${classrooms.length}/${totalCount}` : classrooms.length}
               </span>
             </div>
           )}
@@ -61,8 +71,8 @@ export function ClassroomListPanel({
 
       {!collapsed && (
         <>
-          {/* 검색 */}
-          <div className="px-3 pt-2 pb-2">
+          {/* 검색 + 필터 */}
+          <div className="px-3 pt-2 pb-2 space-y-2">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
               <input
@@ -71,6 +81,29 @@ export function ClassroomListPanel({
                 value={search}
                 onChange={(e) => onSearchChange(e.target.value)}
               />
+            </div>
+            <div className="flex gap-1.5">
+              <select
+                value={filterLevel}
+                onChange={(e) => { onFilterLevelChange(e.target.value); onFilterGradeChange(''); }}
+                className="flex-1 h-7 px-2 border border-slate-200 rounded-sm text-xs bg-white focus:ring-1 focus:ring-primary/40"
+              >
+                <option value="">전체 학제</option>
+                {SCHOOL_LEVEL_OPTIONS.map((sl) => (
+                  <option key={sl.value} value={sl.value}>{sl.label}</option>
+                ))}
+              </select>
+              <select
+                value={filterGrade}
+                onChange={(e) => onFilterGradeChange(e.target.value)}
+                className="flex-1 h-7 px-2 border border-slate-200 rounded-sm text-xs bg-white focus:ring-1 focus:ring-primary/40"
+                disabled={!filterLevel}
+              >
+                <option value="">전체 학년</option>
+                {filterLevel && SCHOOL_LEVEL_OPTIONS.find((sl) => sl.value === filterLevel)?.grades.map((g) => (
+                  <option key={g} value={g}>{gradeInLevel(g)}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -115,12 +148,18 @@ export function ClassroomListPanel({
                     </div>
                     <div className="min-w-0 flex-1">
                       <span className="text-xs font-medium text-text-primary truncate block">{cr.name}</span>
-                      <div className="flex items-center gap-1 mt-0.5">
+                      <div className="flex items-center gap-1 mt-0.5 flex-wrap">
                         <span className="text-xs text-text-secondary">
                           {cr.grade ? gradeLabel(cr.grade) : '학년 미지정'}
                         </span>
                         <span className="text-xs text-slate-300">&middot;</span>
-                        <span className="text-xs text-text-secondary">학생 {cr.students.length}명</span>
+                        <span className="text-xs text-text-secondary">{cr.students.length}명</span>
+                        {cr.teacher && (
+                          <>
+                            <span className="text-xs text-slate-300">&middot;</span>
+                            <span className="text-xs text-text-secondary truncate">{cr.teacher.name}</span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

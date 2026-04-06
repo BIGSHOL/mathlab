@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { UserCog, X, Eye, EyeOff } from 'lucide-react';
+import { UserCog, Eye, EyeOff } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
 import { confirm } from '@/components/ui/ConfirmDialog';
 import { Button } from '@/components/ui/Button';

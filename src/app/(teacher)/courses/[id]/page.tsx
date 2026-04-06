@@ -6,11 +6,9 @@ import Link from 'next/link';
 import { toast } from '@/components/ui/Toast';
 import { confirm } from '@/components/ui/ConfirmDialog';
 import {
-  ArrowLeft,
   BookOpen,
   Users,
   GraduationCap,
-  CheckCircle,
   Search,
   Check,
   UserPlus,
@@ -19,11 +17,15 @@ import {
   X,
   School,
   ChevronRight,
+  Lock,
+  Unlock,
 } from 'lucide-react';
 import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Button } from '@/components/ui/Button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { PageContainer } from '@/components/ui/PageContainer';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 
 interface ConceptDetail {
@@ -57,6 +59,7 @@ interface CourseDetail {
   seq: number;
   title: string;
   description: string | null;
+  mode: 'free' | 'sequential';
   isActive: boolean;
   createdAt: string;
   concepts: ConceptDetail[];
@@ -232,86 +235,58 @@ export default function CourseDetailPage() {
 
   if (loading) {
     return (
-      <div className="px-4 sm:px-6 py-6 md:py-8 max-w-[1400px] mx-auto">
-        {/* 헤더 (뒤로가기 + 아이콘 + 제목 + 날짜) */}
-        <div className="flex items-center gap-3 mb-8">
-          <Skeleton className="w-9 h-9 rounded-sm" />
+      <PageContainer maxWidth="xl">
+        {/* PageHeader 스켈레톤 */}
+        <div className="flex items-center gap-3 mb-6">
+          <Skeleton className="w-5 h-5 rounded-sm" />
+          <Skeleton className="w-6 h-6 rounded" />
           <div className="flex-1 space-y-1">
-            <div className="flex items-center gap-2">
-              <Skeleton className="w-6 h-6 rounded" />
-              <Skeleton className="h-7 w-48" />
-            </div>
-            <Skeleton className="h-3 w-32" />
+            <Skeleton className="h-7 w-56" />
+            <Skeleton className="h-4 w-40" />
           </div>
-          <Skeleton className="h-3 w-28" />
         </div>
-        {/* 4개 통계 카드 */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          {Array.from({ length: 4 }, (_, i) => (
-            <div key={i} className="bg-white border border-slate-200 rounded-sm p-4 text-center space-y-1.5">
-              <Skeleton className="h-8 w-12 mx-auto" />
-              <Skeleton className="h-3 w-16 mx-auto" />
+        {/* 통계 카드 스켈레톤 */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+          {Array.from({ length: 5 }, (_, i) => (
+            <div key={i} className="bg-white border border-slate-200 rounded-sm p-4 flex flex-col items-center gap-1.5">
+              <Skeleton className="h-6 w-12" />
+              <Skeleton className="h-3 w-10" />
             </div>
           ))}
         </div>
-        {/* 2열 그리드: 개념 (1/3) + 학생 (2/3) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 2열 그리드 스켈레톤 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white border border-slate-200 rounded-sm p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <Skeleton className="w-4 h-4 rounded" />
-              <Skeleton className="h-5 w-28" />
-            </div>
+            <Skeleton className="h-5 w-28 mb-4" />
             <div className="space-y-1.5">
               {Array.from({ length: 5 }, (_, i) => (
-                <div key={i} className="flex items-center gap-2.5 px-3 py-2.5 rounded-sm bg-slate-50 border border-slate-100">
-                  <Skeleton variant="circle" className="w-6 h-6 shrink-0" />
-                  <div className="flex-1 space-y-1">
-                    <Skeleton className="h-3 w-3/4" />
-                    <Skeleton className="h-2.5 w-1/2" />
-                  </div>
-                </div>
+                <Skeleton key={i} className="h-12 w-full rounded-sm" />
               ))}
             </div>
           </div>
-          <div className="lg:col-span-2 bg-white border border-slate-200 rounded-sm p-5">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Skeleton className="w-4 h-4 rounded" />
-                <Skeleton className="h-5 w-24" />
-              </div>
-              <Skeleton className="h-8 w-24 rounded" />
-            </div>
+          <div className="bg-white border border-slate-200 rounded-sm p-5">
+            <Skeleton className="h-5 w-24 mb-4" />
             <div className="space-y-2">
               {Array.from({ length: 4 }, (_, i) => (
-                <div key={i} className="flex items-center gap-3 p-3.5 rounded-sm border border-slate-100">
-                  <Skeleton variant="circle" className="w-10 h-10 shrink-0" />
-                  <div className="flex-1 space-y-1">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-3 w-36" />
-                  </div>
-                  <div className="w-32 space-y-1">
-                    <Skeleton className="h-3 w-full" />
-                    <Skeleton className="h-2 w-full rounded-full" />
-                  </div>
-                </div>
+                <Skeleton key={i} className="h-16 w-full rounded-sm" />
               ))}
             </div>
           </div>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   if (!course) {
     return (
-      <div className="px-4 sm:px-6 py-6 md:py-8 max-w-[1400px] mx-auto">
+      <PageContainer maxWidth="xl">
         <div className="bg-white border border-slate-200 rounded-sm p-12 text-center">
           <p className="text-text-secondary">과정을 찾을 수 없습니다.</p>
           <button onClick={() => router.back()} className="text-primary text-sm hover:underline mt-2 inline-block">
             뒤로가기
           </button>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
@@ -321,150 +296,127 @@ export default function CourseDetailPage() {
   const completedCount = course.enrollments.filter((e) => e.status === 'COMPLETED').length;
 
   return (
-    <div className="px-4 sm:px-6 py-6 md:py-8 max-w-[1400px] mx-auto">
-      {/* 뒤로가기 */}
-      <button onClick={() => router.back()} className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-primary mb-3 transition-colors">
-        <ArrowLeft className="w-3.5 h-3.5" /> 뒤로가기
-      </button>
-
-      {/* ── 프로필 히어로 ── */}
-      <div className="bg-gradient-to-r from-primary/5 via-blue-50/50 to-violet-50/30 border border-slate-200 rounded-sm p-4 sm:p-5 mb-4">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shrink-0 shadow-sm">
-            <GraduationCap className="w-7 h-7 text-white" />
-          </div>
-          <div className="min-w-0 flex-1">
-            {editing ? (
-              <div className="flex flex-col gap-2">
+    <PageContainer maxWidth="xl">
+      {/* 헤더 */}
+      {editing ? (
+        <div className="mb-6">
+          <PageHeader
+            title="과정 정보 수정"
+            subtitle="과정명과 설명을 수정합니다"
+            icon={<Pencil className="w-6 h-6" />}
+            backHref="/courses"
+          />
+          <div className="bg-white rounded-sm border border-slate-200 p-5">
+            <div className="flex flex-col gap-3">
+              <div>
+                <label className="text-sm font-medium text-text-primary mb-1 block">과정명 *</label>
                 <input
-                  className="text-sm font-bold text-text-primary bg-white border border-slate-200 rounded-sm px-2 py-1.5 w-full focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                  className="w-full h-9 px-3 rounded border border-slate-200 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
                   placeholder="과정명"
                   autoFocus
                 />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-text-primary mb-1 block">설명 (선택)</label>
                 <input
-                  className="text-xs text-text-secondary bg-white border border-slate-200 rounded-sm px-2 py-1.5 w-full focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                  className="w-full h-9 px-3 rounded border border-slate-200 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
                   value={editDesc}
                   onChange={(e) => setEditDesc(e.target.value)}
                   placeholder="설명 (선택)"
                 />
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={saveEdit} disabled={saving}>
-                    {saving ? <MathSpinner size="sm" className="mr-1" /> : null}저장
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={cancelEdit}><X className="w-3.5 h-3.5 mr-1" />취소</Button>
-                </div>
               </div>
-            ) : (
-              <>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-bold text-text-primary">{course.title}</h2>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">#{course.seq}</span>
-                  {isManager && (
-                    <button onClick={startEdit} className="p-1 text-slate-400 hover:text-primary transition-colors">
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-                <p className="text-xs text-text-secondary mt-0.5">
-                  {course.description || '설명 없음'} · {new Date(course.createdAt).toLocaleDateString('ko-KR')}
-                </p>
-              </>
-            )}
-          </div>
-          {/* 핵심 수치 */}
-          <div className="hidden sm:flex items-center gap-5 shrink-0">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-primary">
-                <BookOpen className="w-4 h-4" />
-                <span className="text-lg font-bold">{course.concepts.length}</span>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={saveEdit} disabled={saving}>
+                  {saving ? <MathSpinner size="sm" className="mr-1" /> : null}저장
+                </Button>
+                <Button size="sm" variant="ghost" onClick={cancelEdit}><X className="w-3.5 h-3.5 mr-1" />취소</Button>
               </div>
-              <div className="text-xs text-text-secondary">개념</div>
-            </div>
-            <div className="w-px h-8 bg-slate-200" />
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-emerald-500">
-                <Users className="w-4 h-4" />
-                <span className="text-lg font-bold">{course.enrollments.length}</span>
-              </div>
-              <div className="text-xs text-text-secondary">학생</div>
-            </div>
-            <div className="w-px h-8 bg-slate-200" />
-            <div className="text-center">
-              <span className="text-lg font-bold text-amber-500">{avgProgress}%</span>
-              <div className="text-xs text-text-secondary">평균 진행</div>
-            </div>
-            <div className="w-px h-8 bg-slate-200" />
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-violet-500">
-                <CheckCircle className="w-4 h-4" />
-                <span className="text-lg font-bold">{completedCount}</span>
-              </div>
-              <div className="text-xs text-text-secondary">완료</div>
             </div>
           </div>
         </div>
-        {/* 모바일 수치 */}
-        <div className="grid grid-cols-2 gap-2 mt-3 sm:hidden">
-          <div className="text-center bg-white/60 rounded-sm py-1.5">
-            <div className="text-xs font-bold text-primary">{course.concepts.length}개</div>
-            <div className="text-xs text-text-secondary">개념</div>
+      ) : (
+        <PageHeader
+          title={`${course.title}  #${course.seq}`}
+          subtitle={`${course.description || '설명 없음'} · ${course.mode === 'sequential' ? '순차 학습' : '자유 학습'} · ${new Date(course.createdAt).toLocaleDateString('ko-KR')}`}
+          icon={<GraduationCap className="w-6 h-6" />}
+          backHref="/courses"
+          actions={isManager ? (
+            <Button size="sm" variant="ghost" onClick={startEdit}>
+              <Pencil className="w-3.5 h-3.5 mr-1" /> 수정
+            </Button>
+          ) : undefined}
+        />
+      )}
+
+      {/* 통계 요약 카드 */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+        <div className="bg-white border border-slate-200 rounded-sm p-4 text-center">
+          <div className="flex items-center justify-center gap-1 mb-1">
+            {course.mode === 'sequential'
+              ? <><Lock className="w-4 h-4 text-amber-500" /><span className="text-sm font-bold text-amber-500">순차</span></>
+              : <><Unlock className="w-4 h-4 text-emerald-500" /><span className="text-sm font-bold text-emerald-500">자유</span></>
+            }
           </div>
-          <div className="text-center bg-white/60 rounded-sm py-1.5">
-            <div className="text-xs font-bold text-emerald-600">{course.enrollments.length}명</div>
-            <div className="text-xs text-text-secondary">학생</div>
+          <div className="text-xs text-text-secondary">학습 모드</div>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-sm p-4 text-center">
+          <div className="flex items-center justify-center gap-1 text-primary mb-1">
+            <BookOpen className="w-4 h-4" />
+            <span className="text-xl font-bold">{course.concepts.length}</span>
           </div>
-          <div className="text-center bg-white/60 rounded-sm py-1.5">
-            <div className="text-xs font-bold text-amber-600">{avgProgress}%</div>
-            <div className="text-xs text-text-secondary">진행</div>
+          <div className="text-xs text-text-secondary">개념</div>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-sm p-4 text-center">
+          <div className="flex items-center justify-center gap-1 text-emerald-500 mb-1">
+            <Users className="w-4 h-4" />
+            <span className="text-xl font-bold">{course.enrollments.length}</span>
           </div>
-          <div className="text-center bg-white/60 rounded-sm py-1.5">
-            <div className="text-xs font-bold text-violet-600">{completedCount}명</div>
-            <div className="text-xs text-text-secondary">완료</div>
-          </div>
+          <div className="text-xs text-text-secondary">학생</div>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-sm p-4 text-center">
+          <span className="text-xl font-bold text-amber-500">{avgProgress}%</span>
+          <div className="text-xs text-text-secondary">평균 진행</div>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-sm p-4 text-center">
+          <span className="text-xl font-bold text-violet-500">{completedCount}</span>
+          <div className="text-xs text-text-secondary">완료</div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Left: 포함 개념 — 좌측 컬러바 패턴 */}
-        <div>
-          <div className="flex items-center gap-1.5 mb-2">
-            <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center shrink-0">
-              <BookOpen className="w-3 h-3 text-primary" />
-            </div>
-            <h3 className="text-xs font-bold text-text-primary">학습 개념 ({course.concepts.length}개)</h3>
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left: 포함 개념 */}
+        <div className="bg-white rounded-sm border border-slate-200 p-5">
+          <h2 className="font-bold text-text-primary mb-4 flex items-center gap-2">
+            <BookOpen className="w-4 h-4 text-primary" />
+            학습 개념 ({course.concepts.length}개)
+          </h2>
           <div className="space-y-1.5">
             {course.concepts.map((concept, idx) => (
               <div
                 key={concept.id}
-                className="flex items-center bg-white border border-slate-200 rounded-sm overflow-hidden hover:border-primary/40 transition-colors"
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-sm border border-slate-100 hover:border-primary/40 transition-colors"
               >
-                <div className="w-1 self-stretch bg-primary/40 shrink-0" />
-                <div className="flex items-center gap-2 flex-1 min-w-0 px-3 py-2">
-                  <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">{idx + 1}</span>
-                  <div className="min-w-0">
-                    <div className="text-xs font-medium text-text-primary truncate">{concept.title}</div>
-                    {concept.chapter && concept.chapter !== concept.title && (
-                      <div className="text-xs text-text-secondary truncate">{concept.chapter}</div>
-                    )}
-                  </div>
+                <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">{idx + 1}</span>
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-text-primary truncate">{concept.title}</div>
+                  {concept.chapter && concept.chapter !== concept.title && (
+                    <div className="text-xs text-text-secondary truncate">{concept.chapter}</div>
+                  )}
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Right: 배정 학생 — 좌측 컬러바 + ChevronRight */}
-        <div className="lg:col-span-2">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1.5">
-              <div className="w-5 h-5 rounded bg-emerald-100 flex items-center justify-center shrink-0">
-                <Users className="w-3 h-3 text-emerald-600" />
-              </div>
-              <h3 className="text-xs font-bold text-text-primary">배정 학생 ({course.enrollments.length}명)</h3>
-            </div>
+        {/* Right: 배정 학생 */}
+        <div className="bg-white rounded-sm border border-slate-200 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-text-primary flex items-center gap-2">
+              <Users className="w-4 h-4 text-primary" />
+              배정 학생 ({course.enrollments.length}명)
+            </h2>
             {isManager && (
               <Button size="sm" onClick={() => setShowAddStudents(!showAddStudents)}>
                 <UserPlus className="w-3.5 h-3.5 mr-1" />
@@ -560,26 +512,22 @@ export default function CourseDetailPage() {
             </div>
           )}
 
-          {/* 학생 목록 — 좌측 컬러바 패턴 */}
+          {/* 학생 목록 */}
           {course.enrollments.length === 0 ? (
-            <div className="bg-white border border-slate-200 rounded-sm text-center py-8">
+            <div className="text-center py-8">
               <Users className="w-10 h-10 text-slate-300 mx-auto mb-3" />
               <p className="text-text-secondary text-sm">배정된 학생이 없습니다.</p>
             </div>
           ) : (
-            <div className="space-y-1.5">
+            <div className="border border-slate-200 rounded overflow-hidden">
               {course.enrollments.map((enrollment) => (
-                <div key={enrollment.id} className="flex items-center bg-white border border-slate-200 rounded-sm overflow-hidden hover:border-primary/40 transition-colors">
-                  <div className={`w-1 self-stretch shrink-0 ${
-                    enrollment.status === 'COMPLETED' ? 'bg-emerald-400' :
-                    enrollment.status === 'ACTIVE' ? 'bg-primary' : 'bg-slate-200'
-                  }`} />
+                <div key={enrollment.id} className="flex items-center border-b border-slate-200 last:border-0 hover:bg-slate-50/50 transition-colors">
                   <Link
                     href={`/courses/${id}/progress/${enrollment.student.username}`}
-                    className="flex items-center justify-between flex-1 min-w-0 px-3 py-2.5"
+                    className="flex items-center justify-between flex-1 min-w-0 px-3 py-3"
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-primary/60 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-primary to-primary/60 text-white flex items-center justify-center text-sm font-bold shrink-0">
                         {enrollment.student.name[0]}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -657,6 +605,6 @@ export default function CourseDetailPage() {
           )}
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

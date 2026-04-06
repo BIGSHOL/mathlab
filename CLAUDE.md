@@ -16,6 +16,8 @@
 | Database | PostgreSQL + Prisma 6 |
 | Auth | NextAuth 4 (Credentials, JWT) |
 | AI | Google Gemini 2.5 Flash (`@google/genai`), Anthropic Claude (`@anthropic-ai/sdk`) |
+| Storage | Supabase Storage (시험지 PDF 업로드) |
+| Editor | TipTap (기출 분석 블로그 글 리치 에디터) |
 | PDF | pdfjs-dist (클라이언트 사이드 PDF 렌더링) |
 | Styling | Tailwind CSS v4, Framer Motion |
 | Math | KaTeX, MathLive, remark-math, remark-gfm |
@@ -47,7 +49,7 @@
 
 **비용 인식 — 작은 기능도 3단계를 거친다:**
 - 필드 하나(boolean, string 등) 추가에도 스키마 → generate → API → 프론트 전 과정 필요
-- API 라우트가 이미 133개+ → 무분별하게 늘리지 말 것
+- API 라우트가 이미 162개+ → 무분별하게 늘리지 말 것
 - 새 필드 추가 전 판단 기준:
   - **정규 필드**: 검색/필터/정렬에 쓰이거나, 여러 곳에서 참조되는 경우
   - **기존 Json 필드 활용**: 한 곳에서만 쓰이는 부가 정보는 `metadata Json?` 등 기존 유연한 필드에 포함 검토
@@ -201,8 +203,8 @@ import { formatGrade, formatGradeShort, getInitial } from '@/lib/utils/activity'
 src/
 ├── app/
 │   ├── (student)/     # 학생 페이지 (dashboard, subjects, concepts, practice, my-tests, ranking, quiz, quiz-join, profile, diagnostics, solve, help-public, updates)
-│   ├── (teacher)/     # 선생님 페이지 (overview, students, concepts, questions, tests, homework, analytics, quiz, worksheet, manual-grading, reports, level-test, courses, licenses, settings, updates, help, support, student-preview, admin)
-│   ├── api/           # API 라우트 (133+ endpoints)
+│   ├── (teacher)/     # 선생님 페이지 (overview, students, concepts, questions, tests, homework, analytics, quiz, worksheet, manual-grading, reports, level-test, courses, licenses, exam-analysis, settings, updates, help, support, student-preview, admin)
+│   ├── api/           # API 라우트 (162+ endpoints)
 │   └── globals.css    # Tailwind 테마 + 디자인 토큰
 ├── components/
 │   ├── layout/        # Sidebar, DashboardShell, CommandPalette
@@ -219,7 +221,7 @@ src/
 │   ├── ranking/       # 랭킹 UI 컴포넌트 (TopThreePodium, RankingList, RankingInsights, RankChangeIndicator)
 │   ├── student/       # 학생 전용 (DailyMissionCard, DailyQuestionCard, DashboardGamification, RevengeBanner)
 │   ├── report/        # 레벨테스트 보고서 렌더링
-│   ├── exam-analysis/ # 기출 분석 (AnalysisResultView, TypeRadarChart, StudyStrategyTab)
+│   ├── exam-analysis/ # 기출 분석 (AnalysisResultView, TypeRadarChart, StudyStrategyTab, ArticleEditorModal, ExtractToBankModal)
 │   ├── worksheet-wizard/  # 학습지 3단계 위자드 (Step1~3)
 │   ├── level-test-editor/ # 레벨테스트 편집기
 │   ├── level-test/    # 레벨테스트 결과 표시 (ChapterMasteryGrid, DifficultyBreakdown 등)
@@ -234,13 +236,13 @@ src/
 │   ├── view-as.ts     # 선생님→학생 뷰 전환
 │   ├── api/           # API 헬퍼 레이어 (auth, errors, helpers, tenant-scope, license-guard, validation, homework-grid)
 │   ├── schemas/       # Zod 검증 스키마 (auth, concept, gamification, learning, question)
-│   ├── services/      # 핵심 비즈니스 로직 (21개 서비스)
+│   ├── services/      # 핵심 비즈니스 로직 (22개 서비스)
 │   ├── utils/         # 유틸 (blank-generator, pdf-processor, features, curriculumMapping, xp, format, question-order, diagram-resolver, answer-status, date-engine, level-test-feedback, activity)
 │   │   └── svg-diagrams/  # SVG 다이어그램 렌더링 시스템 (26개 타입)
 │   ├── pdf-extract-engine/  # PDF 추출 엔진 (core, ai, hooks, presets — 14파일)
-│   ├── exam-analysis/       # 기출 분석 (types, constants — 6대 유형/4대 능력/4단계 난이도)
+│   ├── exam-analysis/       # 기출 분석 (types, constants, agents, article-generator, chart-image, nearby-school — 5대 영역/4대 능력/5단계 난이도)
 │   ├── diagram/       # 프리셋 기반 구조화 다이어그램 시스템 (DiagramSpec)
-│   ├── constants/     # 교육과정 데이터, 연산 카테고리, 라벨, 시험전략, 학교, 교재
+│   ├── constants/     # 교육과정 데이터, 연산 카테고리, 라벨, 시험전략, 학교(6,004개 GPS), 교재
 │   └── data/          # 정적 데이터 (업데이트 로그, 도움말)
 ├── hooks/             # useAuth, useLearning, useGamification, useFeatureFlags, useBadgeCheck, useSpeed, useFetch, useTests, usePreviewScale, useLicenses, useQuestions 등
 ├── stores/            # Zustand 글로벌 스토어 (gamification, wizard, manualGrading, xpNotification, updateNotification, license, conceptEditor)
@@ -289,21 +291,27 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 
 ### 사이드바 네비게이션
 
-역할 기반 필터링으로 구성 (`src/lib/constants/navigation.ts` → `Sidebar.tsx` / `CommandPalette.tsx` 공유):
+Additive 구조 — 상위 역할이 하위 역할 메뉴를 포함 (`src/lib/constants/navigation.ts` → `Sidebar.tsx` / `CommandPalette.tsx` 공유):
 
-**공통 (TEACHER+):**
-- **홈** (1개): 대시보드
-- **수업** (4개): 학생관리, 개념 조회/관리*, 문제 조회/관리*, 학습 과정
-- **출제·평가** (6개): 연산생성기, 학습지, 숙제관리, 시험관리, 수기채점, PDF 추출
-- **분석**: 학습분석 (TEACHER+), 진단결과 (MANAGER+), 리포트 (OWNER+)
-- **시스템** (4개): 업데이트 내역, 도움말, 설정, 고객지원
+**TEACHER 기본:**
+- **홈**: 대시보드
+- **우리 반**: 학생 목록, 반 목록
+- **출제·준비**: 개념 조회, 문제 조회, 연산 프린트, 문제 프린트
+- **배정·평가**: 시험 출제, 숙제 출제, 퀴즈 배틀
+- **성적·분석**: 학습 현황, 기출 분석, 진단 결과
+- **기타**: 공지사항, 도움말, 설정, 문의하기
 
-**관리자 전용 (보라색 구분선):**
-- **팀 관리** (MANAGER+): 선생님 관리
-- **지점 운영** (OWNER+): 이용권 관리, 반 관리, 사용자 관리
-- **플랫폼** (SUPER_ADMIN): 지점 관리, 기능 관리
+**+ MANAGER 추가 (보라색 구분선):**
+- **팀 관리**: 선생님 관리
 
-*MANAGER+ 는 "관리", TEACHER는 "조회" 라벨 표시
+**+ OWNER 추가:**
+- **지점 운영**: 이용권 관리
+- 라벨 변경: 학생 목록→학생 관리, 반 목록→반 관리, 개념 조회→개념 등록, 문제 조회→문제 출제
+- 성적·분석 + 리포트
+
+**SUPER_ADMIN**: 별도 전용 네비 (플랫폼 관리, 컨텐츠, 시스템)
+
+이용권 없는 메뉴는 자동 숨김 (`licenseFeature` 필터링)
 
 **커맨드 팔레트**: `Ctrl+K`로 전체 메뉴 빠른 검색/이동 (`CommandPalette.tsx`, 네비와 동일 데이터 사용)
 
@@ -419,8 +427,9 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 | `question-tagger.ts` | 문제 자동 분류/태깅 |
 | `hint-generator.ts` | 문제 힌트 생성 |
 | `level-test.ts` | 레벨테스트 관리 |
-| `license.ts` | 이용권/라이선스 관리 |
+| `license.ts` | 이용권/라이선스 관리 (10개 기능, 좌석/OnOff 2유형) |
 | `course-advance.ts` | 학습 과정 진도 관리 |
+| `spaced-review.ts` | 간격 반복 복습 (에빙하우스 망각곡선) |
 
 ### 멀티테넌트 스코핑 (`src/lib/api/tenant-scope.ts`)
 
@@ -444,7 +453,9 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 - `StudentLicense`: 학생 개별 배정 (revokedAt=null이면 활성)
 - 만료일: 학생/지점 이용권 중 빠른 것 적용
 
-**7개 기능 (LicenseFeature enum):** CONCEPT, ARITHMETIC, TIME_ATTACK, TEST, REVENGE, DIAGNOSTIC, QUIZ
+**10개 기능 (LicenseFeature enum):**
+- **좌석 기반 (학생 기능):** CONCEPT, ARITHMETIC, TIME_ATTACK, TEST, REVENGE, DIAGNOSTIC, QUIZ, HOMEWORK
+- **On/Off 기반 (선생님 도구):** EXAM_ANALYSIS, WORKSHEET
 
 **API 가드 패턴:**
 ```typescript
@@ -452,7 +463,8 @@ const licenseCheck = await requireLicense(user, 'arithmetic');
 if (licenseCheck) return licenseCheck;  // 이용권 없으면 403
 ```
 
-**관리:** OWNER → `/licenses` (학생 배정), SUPER_ADMIN → `/admin/tenants/[id]` (지점 좌석 관리)
+**관리:** OWNER → `/licenses` (학생 배정), SUPER_ADMIN → `/admin/tenants/[id]` (지점 좌석/On-Off 관리, 2단 분리 UI)
+**사이드바 연동:** OWNER 사이드바는 `/api/licenses/tenant-features`로 활성 이용권을 조회하여 네비게이션 항목 자동 필터링
 **클라이언트:** `useLicenseStore` (Zustand, Fail-Open — 네트워크 실패 시 허용, 서버 가드가 최종 차단)
 
 ### 학습 과정 시스템
@@ -479,9 +491,22 @@ PDF 시험지 업로드 → Gemini AI 분석 → 문항별 난이도/유형/능�
 **핵심 구조 (`src/components/exam-analysis/`, `src/lib/exam-analysis/`):**
 - `AnalysisResultView` — 난이도 도넛차트/배점 토글, 유형 레이더, 단원 출제현황, 문항 테이블
 - `AnalysisCommentTab` — 문항별 AI 코멘트 (난이도/유형/능력/배점 라벨) + 피드백 신고
-- `StudyStrategyTab` — 학습 전략 (토픽, 킬러패턴, 타임라인, 서술형 대비 등)
+- `StudyStrategyTab` — 학습 전략 10개 섹션 (토픽, 킬러패턴, 타임라인, 서술형 대비, 등급별 전략, 자주 틀리는 유형 등)
 - `TypeRadarChart` — 유형(5대)/능력(4대) 레이더 차트 (탭 전환)
 - AI 총평 (`CommentarySection`) — Claude Sonnet 기반 종합 분석, DB 영구 저장, 텍스트 하이라이트
+- `ArticleEditorModal` — 블로그 글 자동 생성 (AI 기사 + 차트 이미지 + 네이버 서식 복사)
+- `ExtractToBankModal` — 분석된 기출 문항 → 문제은행 일괄 저장
+
+**8개 확장 분석 에이전트** (`src/lib/exam-analysis/agents/`):
+- orchestrator, commentary, weakness, learning, exam-prep, prediction, topic-strategy, score-level-plan
+
+**주변 학교 시스템:**
+- 전국 학교 6,004개 GPS 좌표 100% 보유 (`src/lib/constants/schools.ts`)
+- 같은 구 우선 + 3km 인접 복합 로직으로 주변 학교 자동 그룹화
+- 지점별 커스텀 오버라이드 (학교 제외/추가)
+- 시험지 ↔ School DB 자동 매칭
+
+**Supabase Storage:** 시험지 PDF 업로드는 Supabase Storage 사용 (20MB 제한, 삭제 시 파일 자동 정리)
 
 **5대 교육과정 영역 (question_type):** 수와 연산(number), 문자와 식(algebra), 함수(function), 기하(geometry), 확률과 통계(statistics)
 - Gemini raw 타입 → 5대 영역 정규화 (`TYPE_TO_STANDARD` in `constants.ts`)
@@ -509,6 +534,14 @@ PDF 시험지 업로드 → Gemini AI 분석 → 문항별 난이도/유형/능�
 **오답 분석 → 재도전:**
 - `GET /api/learning/revenge-suggestions` — 오답 3회 이상 유형별 복수전 추천
 - `POST /api/learning/revenge-complete` — 정답 1개당 3XP, 60% 이상 정답 시 승리
+
+### 간격 반복 복습 시스템
+
+에빙하우스 망각곡선 기반 자동 복습 스케줄 (`src/lib/services/spaced-review.ts`):
+- 오답 문제 자동 복습 대기열 추가
+- 복습 간격: 1일(즉시) → 3일 → 7일 → 14일 → 30일
+- 재오답 시 3일 간격으로 리셋
+- 학생 대시보드에 복습 카드 표시
 
 ### 고객 지원 시스템
 
@@ -549,10 +582,11 @@ PDF 시험지 업로드 → Gemini AI 분석 → 문항별 난이도/유형/능�
 **게이미피케이션:** Badge, UserBadge, DailyMission, DailyQuestion, DailyQuestionAttempt, TimeAttackRecord
 **보고서:** ReportHistory, TeacherComment
 **관리:** FeatureFlag, Classroom, Tenant
-**이용권:** TenantLicense, StudentLicense, LicenseUsageLog
+**이용권:** TenantLicense, StudentLicense, LicenseUsageLog (10개 LicenseFeature enum)
 **학습과정:** LearningCourse, LearningCourseConcept, LearningCourseEnrollment
+**기출분석:** ExamPaper, ExamAnalysisResult, ExamAnalysisComment, ExamAnalysisTemplate, ExamArticle, School, SchoolGroupOverride
 **지원:** Inquiry (문의/회신)
-**기타:** StudentProfile(XP/레벨), PointTransaction, DiagnosticResult, ConceptMemo
+**기타:** StudentProfile(XP/레벨), PointTransaction, DiagnosticResult, ConceptMemo, SpacedReviewItem
 
 ## 디자인 토큰
 
@@ -602,6 +636,9 @@ NEXTAUTH_SECRET=your-secret-key
 NEXTAUTH_URL=http://localhost:3000
 GEMINI_API_KEY=your-gemini-api-key
 ANTHROPIC_API_KEY=your-anthropic-api-key
+SUPABASE_URL=your-supabase-url
+SUPABASE_ANON_KEY=your-supabase-anon-key
+KAKAO_REST_API_KEY=your-kakao-api-key
 ```
 
 ## 스크립트
@@ -662,16 +699,16 @@ npx tsx scripts/migrate-question-relations.ts  # questionIds Json → 중간테�
 
 | 항목 | 수치 |
 |------|------|
-| 소스 파일 | 526개 (TS/TSX) |
-| 총 코드량 | ~95,000 LoC |
+| 소스 파일 | 665개 (TS/TSX) |
+| 총 코드량 | ~150,000 LoC |
 | 학생 페이지 | 12개 |
-| 선생님 페이지 | 20개 |
-| API 라우트 | 133개 |
-| 컴포넌트 | 143개 |
-| 서비스 모듈 | 21개 |
-| DB 모델 | 57개, Enum 10개 |
+| 선생님 페이지 | 23개 |
+| API 라우트 | 162개 |
+| 컴포넌트 | 180개 |
+| 서비스 모듈 | 22개 |
+| DB 모델 | 72개, Enum 12개 |
 | SVG 다이어그램 | 26개 타입 (2개 시스템, 통합 렌더러) |
-| 커스텀 훅 | 12개 |
+| 커스텀 훅 | 14개 |
 | Zustand 스토어 | 7개 |
 | Zod 스키마 | 5개 |
 | E2E 테스트 | 3개 (Playwright) |

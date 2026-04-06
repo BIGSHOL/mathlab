@@ -24,7 +24,19 @@ export async function GET() {
     orderBy: { createdAt: 'asc' },
   });
 
-  return NextResponse.json({ data: classrooms });
+  // teacherId → teacher name 해결 (Classroom에 teacher relation 없음)
+  const teacherIds = [...new Set(classrooms.map((c) => c.teacherId).filter(Boolean))] as string[];
+  const teachers = teacherIds.length > 0
+    ? await prisma.user.findMany({ where: { id: { in: teacherIds } }, select: { id: true, name: true } })
+    : [];
+  const teacherMap = new Map(teachers.map((t) => [t.id, t]));
+
+  const data = classrooms.map((c) => ({
+    ...c,
+    teacher: c.teacherId ? teacherMap.get(c.teacherId) ?? null : null,
+  }));
+
+  return NextResponse.json({ data });
 }
 
 /** POST /api/admin/classrooms — 반 생성 (테넌트 자동 연결) */
@@ -33,12 +45,12 @@ export async function POST(request: NextRequest) {
   if (isResponse(user)) return user;
 
   const body = await request.json();
-  const { name, grade } = body;
+  const { name, grade, teacherId } = body;
   if (!name || typeof name !== 'string') return badRequest('반 이름이 필요합니다');
 
   const effectiveTenantId = user.viewingTenantId ?? user.tenantId;
   const classroom = await prisma.classroom.create({
-    data: { name, grade: grade ?? null, teacherId: user.id, tenantId: effectiveTenantId || undefined },
+    data: { name, grade: grade ?? null, teacherId: teacherId || user.id, tenantId: effectiveTenantId || undefined },
   });
 
   return NextResponse.json({ data: classroom });

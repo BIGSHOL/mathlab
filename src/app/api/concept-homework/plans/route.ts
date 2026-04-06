@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
     const plan = await createConceptHomeworkPlan({
       title: title.trim(),
       createdBy: user.id,
+      tenantId: user.viewingTenantId ?? user.tenantId,
       startDate,
       conceptIds,
       conceptsPerDay: clamp(conceptsPerDay || 1, 1, 10),

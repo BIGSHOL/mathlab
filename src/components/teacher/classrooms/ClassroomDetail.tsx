@@ -2,12 +2,17 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Pencil, Trash2, Users, UserPlus, X, Zap, Star, Flame, ChevronRight } from 'lucide-react';
+import { Pencil, Trash2, Users, UserPlus, UserCog, X, Zap, Star, Flame, ChevronRight, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { confirm } from '@/components/ui/ConfirmDialog';
 import { toast } from '@/components/ui/Toast';
-import { gradeLabel, relativeTime } from '@/components/teacher/students/helpers';
+import { gradeLabel, SCHOOL_LEVEL_OPTIONS, gradeInLevel } from '@/components/teacher/students/helpers';
 import type { ClassroomItem, StudentInClassroom } from './types';
+
+interface StudentCourseInfo {
+  courseTitle: string;
+  courseSeq: number;
+}
 
 interface ClassroomDetailProps {
   classroom: ClassroomItem;
@@ -16,6 +21,12 @@ interface ClassroomDetailProps {
   onAssignStudents: () => void;
   onRemoveStudent: (studentId: string) => void;
   readOnly?: boolean;
+  /** 담당 선생님 변경용 선생님 목록 */
+  teachers?: { id: string; name: string; role: string }[];
+  /** 현재 로그인 사용자 이름 */
+  currentUserName?: string;
+  /** 학생 ID → 배정된 코스 정보 (부모에서 계산해서 전달) */
+  studentCourseMap?: Map<string, StudentCourseInfo[]>;
 }
 
 export function ClassroomDetail({
@@ -25,10 +36,21 @@ export function ClassroomDetail({
   onAssignStudents,
   onRemoveStudent,
   readOnly = false,
+  teachers = [],
+  currentUserName,
+  studentCourseMap,
 }: ClassroomDetailProps) {
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(classroom.name);
+  const [editSchoolLevel, setEditSchoolLevel] = useState(() => {
+    const g = classroom.grade;
+    if (!g) return '';
+    if (g <= 6) return 'elementary';
+    if (g <= 9) return 'middle';
+    return 'high';
+  });
   const [editGrade, setEditGrade] = useState(classroom.grade?.toString() ?? '');
+  const [editTeacherId, setEditTeacherId] = useState(classroom.teacherId ?? '');
   const [saving, setSaving] = useState(false);
 
   // 반 통계 계산
@@ -47,7 +69,10 @@ export function ClassroomDetail({
 
   const handleStartEdit = () => {
     setEditName(classroom.name);
-    setEditGrade(classroom.grade?.toString() ?? '');
+    const g = classroom.grade;
+    setEditSchoolLevel(!g ? '' : g <= 6 ? 'elementary' : g <= 9 ? 'middle' : 'high');
+    setEditGrade(g?.toString() ?? '');
+    setEditTeacherId(classroom.teacherId ?? '');
     setEditing(true);
   };
 
@@ -61,6 +86,7 @@ export function ClassroomDetail({
         body: JSON.stringify({
           name: editName.trim(),
           grade: editGrade ? Number(editGrade) : null,
+          teacherId: editTeacherId || null,
         }),
       });
       if (res.ok) {
@@ -109,24 +135,51 @@ export function ClassroomDetail({
             </div>
             <div className="min-w-0 flex-1">
               {editing ? (
-                <div className="flex items-center gap-2 flex-wrap">
-                  <input
-                    type="text"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="px-3 py-1.5 border border-slate-200 rounded-sm text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    autoFocus
-                  />
-                  <input
-                    type="number"
-                    placeholder="학년"
-                    value={editGrade}
-                    onChange={(e) => setEditGrade(e.target.value)}
-                    className="w-20 px-3 py-1.5 border border-slate-200 rounded-sm text-xs focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  />
-                  <Button size="sm" onClick={handleSave} loading={saving}>저장</Button>
-                  <Button size="sm" variant="secondary" onClick={() => setEditing(false)}>취소</Button>
-                </div>
+                <>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="px-2.5 py-1 border border-slate-200 rounded-sm text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/30 w-48"
+                      placeholder="반 이름"
+                      autoFocus
+                    />
+                    <select
+                      value={editSchoolLevel}
+                      onChange={(e) => { setEditSchoolLevel(e.target.value); setEditGrade(''); }}
+                      className="h-8 px-2 border border-slate-200 rounded-sm text-xs focus:ring-2 focus:ring-primary/30"
+                    >
+                      <option value="">학제</option>
+                      {SCHOOL_LEVEL_OPTIONS.map((sl) => (
+                        <option key={sl.value} value={sl.value}>{sl.label}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={editGrade}
+                      onChange={(e) => setEditGrade(e.target.value)}
+                      className="h-8 px-2 border border-slate-200 rounded-sm text-xs focus:ring-2 focus:ring-primary/30"
+                      disabled={!editSchoolLevel}
+                    >
+                      <option value="">학년</option>
+                      {editSchoolLevel && SCHOOL_LEVEL_OPTIONS.find((sl) => sl.value === editSchoolLevel)?.grades.map((g) => (
+                        <option key={g} value={g}>{gradeInLevel(g)}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={editTeacherId}
+                      onChange={(e) => setEditTeacherId(e.target.value)}
+                      className="h-8 px-2 border border-slate-200 rounded-sm text-xs focus:ring-2 focus:ring-primary/30"
+                    >
+                      <option value="">{currentUserName ? `본인 (${currentUserName})` : '담당 선생님'}</option>
+                      {teachers.map((t) => (
+                        <option key={t.id} value={t.id}>{t.name}{t.role === 'OWNER' ? ' (지점장)' : t.role === 'MANAGER' ? ' (팀장)' : ''}</option>
+                      ))}
+                    </select>
+                    <Button size="sm" onClick={handleSave} loading={saving}>저장</Button>
+                    <Button size="sm" variant="secondary" onClick={() => setEditing(false)}>취소</Button>
+                  </div>
+                </>
               ) : (
                 <>
                   <div className="flex items-center gap-2">
@@ -135,9 +188,18 @@ export function ClassroomDetail({
                       {classroom.grade ? gradeLabel(classroom.grade) : '학년 미지정'}
                     </span>
                   </div>
-                  <p className="text-xs text-text-secondary mt-0.5">
-                    생성일 {new Date(classroom.createdAt).toLocaleDateString('ko-KR')}
-                  </p>
+                  <div className="flex items-center gap-2 mt-0.5 text-xs text-text-secondary">
+                    <span>생성일 {new Date(classroom.createdAt).toLocaleDateString('ko-KR')}</span>
+                    {classroom.teacher && (
+                      <>
+                        <span className="text-slate-300">&middot;</span>
+                        <span className="flex items-center gap-1">
+                          <UserCog className="w-3 h-3" />
+                          담임 {classroom.teacher.name}
+                        </span>
+                      </>
+                    )}
+                  </div>
                 </>
               )}
             </div>
@@ -265,9 +327,20 @@ export function ClassroomDetail({
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                    <span className="text-xs text-text-secondary hidden sm:inline">
-                      {relativeTime(s.profile?.lastActiveAt ?? null)}
-                    </span>
+                    {(() => {
+                      const courses = studentCourseMap?.get(s.id);
+                      if (courses && courses.length > 0) {
+                        return (
+                          <span className="text-xs text-primary font-medium hidden sm:inline" title={courses.map((c) => c.courseTitle).join(', ')}>
+                            <BookOpen className="w-3 h-3 inline mr-0.5" />
+                            {courses[0].courseTitle}{courses.length > 1 ? ` +${courses.length - 1}` : ''}
+                          </span>
+                        );
+                      }
+                      return (
+                        <span className="text-xs text-slate-400 hidden sm:inline">미배정</span>
+                      );
+                    })()}
                     <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
                   </div>
                 </Link>

@@ -92,8 +92,7 @@ export default function LicenseOverviewTab() {
         {LICENSE_FEATURES_ORDERED.filter((f) => !TOGGLE_FEATURES.has(f)).map((feature) => {
           const info = LICENSE_FEATURE_INFO[feature];
           const stat = stats.find((s) => s.feature === feature);
-          const hasData = stat && (stat.isActive || stat.usedSeats > 0 || stat.assignedStudentCount > 0 || stat.activeStudentCount > 0);
-          if (!hasData) return null;
+          if (!stat?.isActive) return null;
           return <FeatureCard key={feature} info={info} stat={stat} />;
         })}
       </div>

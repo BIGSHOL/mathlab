@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
     const plan = await createHomeworkPlan({
       title: title.trim(),
       createdBy: user.id,
+      tenantId: user.viewingTenantId ?? user.tenantId,
       progressionMode: mode,
       countMode,
       dailyCount: clamp(body.dailyCount || 20, 1, 100),
@@ -35,6 +36,7 @@ export async function POST(request: NextRequest) {
       retryOnFail: !!body.retryOnFail,
       retryMode: ['wrong_same', 'wrong_new', 'all_same', 'all_new'].includes(body.retryMode) ? body.retryMode : 'wrong_same',
       maxRetries: clamp(body.maxRetries ?? 3, 0, 10),
+      activeDays: Array.isArray(body.activeDays) ? body.activeDays.filter((d: number) => d >= 0 && d <= 6) : undefined,
       slots: mode === 'sequential' ? body.slots : undefined,
       categories: mode === 'round_robin' ? body.categories : undefined,
       daysPerCategory: mode === 'round_robin' ? clamp(body.daysPerCategory || 5, 1, 30) : undefined,

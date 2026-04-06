@@ -342,7 +342,7 @@ export default function PrintWorksheetPage() {
                 <button
                   key={t.id}
                   onClick={() => setOptions({ ...options, template: t.id as PrintTemplate, columns: t.id === 'large' ? 1 : options.columns })}
-                  className={`flex flex-col items-center justify-center py-2.5 px-2 border-2 rounded-lg transition-all ${options.template === t.id ? 'border-primary bg-primary/5 text-primary font-bold' : 'border-slate-100 bg-white text-slate-500 hover:border-slate-300'
+                  className={`flex flex-col items-center justify-center py-2.5 px-2 border-2 rounded-sm transition-all ${options.template === t.id ? 'border-primary bg-primary/5 text-primary font-bold' : 'border-slate-100 bg-white text-slate-500 hover:border-slate-300'
                     }`}
                 >
                   <span className="text-xs">{t.label}</span>
@@ -372,7 +372,7 @@ export default function PrintWorksheetPage() {
           {/* Section: 분할(단) 선택 */}
           <section className={`${options.template === 'large' ? 'opacity-50 pointer-events-none' : ''}`}>
             <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800 mb-3"><Columns2 className="w-4 h-4 text-primary" /> 문항 분할 (단)</h3>
-            <div className="flex gap-2 p-1 bg-slate-100 rounded-lg">
+            <div className="flex gap-2 p-1 bg-slate-100 rounded-sm">
               <button
                 onClick={() => setOptions({ ...options, columns: 1 })}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md transition-all text-xs font-bold ${actualColumns === 1 ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'
@@ -481,7 +481,7 @@ export default function PrintWorksheetPage() {
           </div>
 
           {/* Zoom Controls (Simplified) */}
-          <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
+          <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-sm">
             <button className="p-1.5 rounded hover:bg-white hover:shadow-sm text-slate-500" onClick={() => setScale(scale - 0.1)}><ZoomOut className="w-4 h-4" /></button>
             <span className="text-xs font-bold w-12 text-center text-slate-700">{Math.round(scale * 100)}%</span>
             <button className="p-1.5 rounded hover:bg-white hover:shadow-sm text-slate-500" onClick={() => setScale(scale + 0.1)}><ZoomIn className="w-4 h-4" /></button>

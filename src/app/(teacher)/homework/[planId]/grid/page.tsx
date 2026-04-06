@@ -13,7 +13,12 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Printer,
+  Eye,
+  PenLine,
 } from 'lucide-react';
+import { toast } from '@/components/ui/Toast';
+import { Button } from '@/components/ui/Button';
 import { CATEGORY_LABELS } from '@/lib/services/arithmetic-generator';
 import type { ArithmeticCategory } from '@/lib/services/arithmetic-generator';
 import type { HomeworkDayStatus } from '@/lib/services/homework';
@@ -66,8 +71,8 @@ interface GridData {
 }
 
 const MODE_LABELS: Record<string, string> = {
-  sequential: '순차 진행',
-  round_robin: '라운드 배정',
+  sequential: '구간 지정',
+  round_robin: '순환 배정',
   weekday: '요일별 배정',
 };
 
@@ -176,10 +181,15 @@ export default function HomeworkGridPage() {
   const [gradeFilter, setGradeFilter] = useState<number | undefined>();
   const [searchText, setSearchText] = useState('');
   const [viewMonth, setViewMonth] = useState<string>(''); // 'YYYY-MM'
-  const [detailPanel, setDetailPanel] = useState<{ studentId: string; studentName: string; dayIndex: number; dateStr: string; isEarly?: boolean } | null>(null);
+  const [detailPanel, setDetailPanel] = useState<{ studentId: string; studentName: string; dayIndex: number; dateStr: string; isEarly?: boolean; previewOnly?: boolean } | null>(null);
   const [detailData, setDetailData] = useState<DayDetailData | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [attemptPage, setAttemptPage] = useState(0); // 0 = initial, 1+ = retries
+  const [attemptPage, setAttemptPage] = useState(0);
+
+  // 수기 채점
+  const [gradingMode, setGradingMode] = useState(false);
+  const [gradingResults, setGradingResults] = useState<(boolean | null)[]>([]);
+  const [gradingSaving, setGradingSaving] = useState(false);
 
   const fetchGrid = useCallback(async () => {
     if (!planId || planId === 'undefined') return;
@@ -198,18 +208,17 @@ export default function HomeworkGridPage() {
 
   useEffect(() => { fetchGrid(); }, [fetchGrid]);
 
-  const fetchDayDetail = useCallback(async (studentId: string, dayIndex: number) => {
+  const fetchDayDetail = useCallback(async (studentId: string | null, dayIndex: number) => {
     if (!planId || planId === 'undefined') return;
     setDetailLoading(true);
     setDetailData(null);
     try {
-      const res = await fetch(
-        `/api/arithmetic/homework-plans/${planId}/day-detail?dayIndex=${dayIndex}&studentId=${studentId}`
-      );
+      const params = new URLSearchParams({ dayIndex: String(dayIndex) });
+      if (studentId) params.set('studentId', studentId);
+      const res = await fetch(`/api/arithmetic/homework-plans/${planId}/day-detail?${params}`);
       if (res.ok) {
         const json = await res.json();
         setDetailData(json.data);
-        // 가장 최근 시도(마지막 페이지)로 초기 이동
         setAttemptPage(Math.max(0, (json.data.attempts?.length ?? 1) - 1));
       }
     } catch (err) { console.error('숙제 일별 상세 조회 실패:', err); }
@@ -222,10 +231,55 @@ export default function HomeworkGridPage() {
     fetchDayDetail(studentId, dayIndex);
   };
 
+  const openPreview = (dayIndex: number, dateStr: string) => {
+    setDetailPanel({ studentId: '', studentName: '문제 미리보기', dayIndex, dateStr, previewOnly: true });
+    setAttemptPage(0);
+    fetchDayDetail(null, dayIndex);
+  };
+
   const closeDetail = () => {
     setDetailPanel(null);
     setDetailData(null);
     setAttemptPage(0);
+    setGradingMode(false);
+    setGradingResults([]);
+  };
+
+  const startGrading = () => {
+    if (!detailData) return;
+    setGradingMode(true);
+    setGradingResults(new Array(detailData.problems.length).fill(null));
+  };
+
+  const submitGrading = async () => {
+    if (!detailPanel || !detailData || detailPanel.previewOnly) return;
+    if (gradingResults.some((r) => r === null)) {
+      toast.warning('모든 문제를 채점해주세요');
+      return;
+    }
+    setGradingSaving(true);
+    try {
+      const res = await fetch(`/api/arithmetic/homework-plans/${planId}/manual-grade`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId: detailPanel.studentId,
+          dayIndex: detailPanel.dayIndex,
+          results: gradingResults,
+        }),
+      });
+      const json = await res.json();
+      if (json.error) { toast.error(json.error.message); return; }
+      toast.success(`채점 완료: ${json.data.correctCount}/${json.data.problemCount} (${json.data.score}%)`);
+      setGradingMode(false);
+      setGradingResults([]);
+      fetchDayDetail(detailPanel.studentId, detailPanel.dayIndex);
+      fetchGrid();
+    } catch {
+      toast.error('채점 제출에 실패했습니다');
+    } finally {
+      setGradingSaving(false);
+    }
   };
 
   // Build dateStr → dayIndex lookup from plan dates
@@ -377,6 +431,12 @@ export default function HomeworkGridPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Link
+              href={`/homework/${planId}/print`}
+              className="h-8 px-3 flex items-center gap-1.5 text-xs font-medium text-text-secondary bg-white border border-slate-200 rounded-sm hover:bg-slate-50 transition-colors"
+            >
+              <Printer className="w-3.5 h-3.5" /> 인쇄
+            </Link>
             <input
               type="text"
               value={searchText}
@@ -465,11 +525,15 @@ export default function HomeworkGridPage() {
                 const isPlanDay = dateToIndex.has(calDay.dateStr);
                 const isSun = calDay.dayOfWeek === 0;
                 const isSat = calDay.dayOfWeek === 6;
+                const dayIdx = dateToIndex.get(calDay.dateStr);
+                const isHomeworkDay = homeworkDays.has(calDay.dateStr);
                 return (
                   <th
                     key={i}
-                    className="border-b border-slate-200 py-1.5 text-center"
-                    style={homeworkDays.has(calDay.dateStr) ? { backgroundColor: isToday ? '#bae6fd' : '#e0f2fe' } : undefined}
+                    className={`border-b border-slate-200 py-1.5 text-center ${isHomeworkDay ? 'cursor-pointer hover:bg-blue-100/60' : ''}`}
+                    style={isHomeworkDay ? { backgroundColor: isToday ? '#bae6fd' : '#e0f2fe' } : undefined}
+                    onClick={isHomeworkDay && dayIdx !== undefined ? () => openPreview(dayIdx, calDay.dateStr) : undefined}
+                    title={isHomeworkDay ? `${dayIdx! + 1}일차 문제 미리보기` : undefined}
                   >
                     <div className={`text-xs font-bold ${
                       isToday ? 'text-primary' : !isPlanDay ? 'text-slate-300' : 'text-slate-500'
@@ -651,7 +715,10 @@ export default function HomeworkGridPage() {
           {/* Panel header */}
           <div className="shrink-0 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
             <div className="min-w-0">
-              <div className="text-sm font-bold text-text-primary truncate">{detailPanel.studentName}</div>
+              <div className="text-sm font-bold text-text-primary truncate flex items-center gap-1.5">
+                {detailPanel.previewOnly && <Eye className="w-3.5 h-3.5 text-primary shrink-0" />}
+                {detailPanel.previewOnly ? '문제 미리보기' : detailPanel.studentName}
+              </div>
               <div className="text-xs text-text-secondary flex items-center gap-1">
                 <span>{detailPanel.dayIndex + 1}일차 · {detailPanel.dateStr}</span>
                 {detailPanel.isEarly && (
@@ -664,8 +731,8 @@ export default function HomeworkGridPage() {
             </button>
           </div>
 
-          {/* Attempt pagination (if multiple attempts) */}
-          {detailData && detailData.attempts.length > 1 && (
+          {/* Attempt pagination (if multiple attempts, not in preview mode) */}
+          {!detailPanel.previewOnly && detailData && detailData.attempts.length > 1 && (
             <div className="shrink-0 px-4 py-2 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
               <button
                 onClick={() => setAttemptPage(Math.max(0, attemptPage - 1))}
@@ -728,8 +795,12 @@ export default function HomeworkGridPage() {
 
               return (
               <div className="p-4 space-y-3">
-                {/* Attempt summary */}
-                {currentAttempt ? (
+                {/* Attempt summary (미리보기 모드에서는 숨김) */}
+                {detailPanel.previewOnly ? (
+                  <div className="bg-primary/5 border border-primary/20 rounded-sm p-3 text-center">
+                    <div className="text-xs text-primary font-medium">{problems.length}문제 · {detailPanel.dayIndex + 1}일차</div>
+                  </div>
+                ) : currentAttempt ? (
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div className="bg-slate-50 rounded-sm p-2">
                       <div className="text-xs text-text-secondary">정답</div>
@@ -760,14 +831,86 @@ export default function HomeworkGridPage() {
                       </div>
                     </div>
                   </div>
-                ) : (
-                  <div className="bg-slate-50 rounded-sm p-3 text-center">
+                ) : !detailPanel.previewOnly ? (
+                  <div className="bg-slate-50 rounded-sm p-3 text-center space-y-2">
                     <div className="text-xs text-text-secondary">아직 풀지 않았습니다</div>
+                    {!gradingMode && (
+                      <button
+                        onClick={startGrading}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 rounded-sm hover:bg-primary/20 transition-colors"
+                      >
+                        <PenLine className="w-3 h-3" /> 수기 채점
+                      </button>
+                    )}
+                  </div>
+                ) : null}
+
+                {/* 수기 채점 모드 */}
+                {gradingMode && !detailPanel.previewOnly && (
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-semibold text-text-primary">수기 채점</div>
+                      <div className="flex items-center gap-1.5 text-xs text-text-secondary">
+                        <span className="text-emerald-600 font-bold">{gradingResults.filter((r) => r === true).length}</span>
+                        <span>/</span>
+                        <span>{gradingResults.length}</span>
+                      </div>
+                    </div>
+                    {problems.map((p, idx) => {
+                      return (
+                        <div key={idx} className={`rounded-sm border ${
+                          gradingResults[idx] === true ? 'border-emerald-200 bg-emerald-50/50' :
+                          gradingResults[idx] === false ? 'border-red-200 bg-red-50/50' :
+                          'border-slate-100'
+                        }`}>
+                          <div className="flex items-center gap-2 px-2 py-1.5">
+                            <span className="text-xs font-bold text-slate-400 w-5 text-right shrink-0">{idx + 1}.</span>
+                            <div className="flex-1 text-xs">
+                              <MathRenderer content={p.content} className="[&_.katex]:text-xs [&_p]:my-0" />
+                            </div>
+                            <button
+                              onClick={() => setGradingResults((prev) => { const next = [...prev]; next[idx] = true; return next; })}
+                              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors shrink-0 ${
+                                gradingResults[idx] === true ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-400 hover:bg-emerald-100 hover:text-emerald-600'
+                              }`}
+                            >
+                              O
+                            </button>
+                            <button
+                              onClick={() => setGradingResults((prev) => { const next = [...prev]; next[idx] = false; return next; })}
+                              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors shrink-0 ${
+                                gradingResults[idx] === false ? 'bg-red-500 text-white' : 'bg-slate-100 text-slate-400 hover:bg-red-100 hover:text-red-600'
+                              }`}
+                            >
+                              X
+                            </button>
+                          </div>
+                          {p.choices && p.choices.length > 0 && (
+                            <div className="flex items-center gap-2 px-2 pb-1.5 pl-9">
+                              {p.choices.map((c, ci) => (
+                                <span key={ci} className={`text-xs ${c === p.answer ? 'font-bold text-primary' : 'text-slate-400'}`}>
+                                  {ci + 1}) <MathRenderer content={c.includes('$') ? c : `$${c}$`} className="inline [&_.katex]:text-xs" />
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    <div className="flex gap-2 pt-2">
+                      <Button size="sm" className="flex-1" onClick={submitGrading} loading={gradingSaving}
+                        disabled={gradingResults.some((r) => r === null)}>
+                        채점 제출
+                      </Button>
+                      <Button size="sm" variant="secondary" className="flex-1" onClick={() => { setGradingMode(false); setGradingResults([]); }}>
+                        취소
+                      </Button>
+                    </div>
                   </div>
                 )}
 
-                {/* Problem list */}
-                <div className="space-y-2">
+                {/* Problem list (미리보기 또는 응시 결과 — 수기 채점 모드에서는 숨김) */}
+                {!gradingMode && <div className="space-y-2">
                   <div className="text-xs font-semibold text-text-primary">
                     문제 목록 ({useAnswerAsProblems ? currentAttempt!.answers.length : problems.length}문제)
                   </div>
@@ -882,7 +1025,7 @@ export default function HomeworkGridPage() {
                       );
                     })
                   )}
-                </div>
+                </div>}
               </div>
               );
             })()}

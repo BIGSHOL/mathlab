@@ -29,8 +29,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   const dayIndex = Number(request.nextUrl.searchParams.get('dayIndex'));
   const studentId = request.nextUrl.searchParams.get('studentId');
 
-  if (isNaN(dayIndex) || dayIndex < 0 || !studentId) {
-    return badRequest('dayIndex와 studentId가 필요합니다');
+  if (isNaN(dayIndex) || dayIndex < 0) {
+    return badRequest('dayIndex가 필요합니다');
   }
 
   // Fetch plan's dailyProblems for this day
@@ -39,10 +39,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       where: { seq },
       select: {
         id: true,
+        title: true,
         dailyProblems: true,
         totalDays: true,
         dailyCount: true,
         categories: true,
+        startDate: true,
       },
     }),
     '플랜을 찾을 수 없습니다'
@@ -55,6 +57,20 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
   const allProblems = plan.dailyProblems as unknown as GeneratedProblem[][];
   const dayProblems = allProblems[dayIndex] ?? [];
+
+  // studentId 없으면 문제만 반환 (미리보기 모드)
+  if (!studentId) {
+    return NextResponse.json({
+      data: {
+        student: null,
+        dayIndex,
+        problems: dayProblems,
+        attempts: [],
+        attempt: null,
+        plan: { title: plan.title, totalDays: plan.totalDays, startDate: plan.startDate },
+      },
+    });
+  }
 
   // Fetch student info
   const student = await prisma.user.findUnique({
@@ -108,6 +124,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       problems: dayProblems,
       attempts: attempts.map(mapAttempt),
       attempt: bestAttempt ? mapAttempt(bestAttempt, attempts.indexOf(bestAttempt)) : null,
+      plan: { title: plan.title, totalDays: plan.totalDays, startDate: plan.startDate },
     },
   });
 }

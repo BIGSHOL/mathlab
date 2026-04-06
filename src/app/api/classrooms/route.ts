@@ -29,5 +29,17 @@ export async function GET() {
     orderBy: { createdAt: 'asc' },
   });
 
-  return NextResponse.json({ data: classrooms });
+  // teacherId → teacher name 해결
+  const teacherIds = [...new Set(classrooms.map((c) => c.teacherId).filter(Boolean))] as string[];
+  const teachers = teacherIds.length > 0
+    ? await prisma.user.findMany({ where: { id: { in: teacherIds } }, select: { id: true, name: true } })
+    : [];
+  const teacherMap = new Map(teachers.map((t) => [t.id, t]));
+
+  const data = classrooms.map((c) => ({
+    ...c,
+    teacher: c.teacherId ? teacherMap.get(c.teacherId) ?? null : null,
+  }));
+
+  return NextResponse.json({ data });
 }

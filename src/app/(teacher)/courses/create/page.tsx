@@ -29,7 +29,7 @@ interface StudentItem {
 function CourseCreateInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const preClassroomId = searchParams.get('classroomId');
+  const _preClassroomId = searchParams.get('classroomId');
 
   // Form state
   const [title, setTitle] = useState('');
@@ -73,16 +73,60 @@ function CourseCreateInner() {
     })();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // classroomId 쿼리 파라미터로 반 학생 자동 선택
-  useEffect(() => {
-    if (!preClassroomId || classrooms.length === 0) return;
-    const cr = classrooms.find((c) => c.id === preClassroomId);
-    if (cr) {
-      setSelectedStudentIds(new Set(cr.students.map((s) => s.id)));
-    }
-  }, [preClassroomId, classrooms]);
+  // classroomId 쿼리 파라미터 — 반별 배정 버튼을 미리 선택만 해두고 학생은 전체 해제 상태
+  // (전체 선택은 "전체 선택" 버튼으로 사용자가 직접 선택)
 
-  // 자동 과정명 제안
+  // 선택된 개념 기반 자동 과정명 생성
+  useEffect(() => {
+    if (titleManuallyEdited || selectedConcepts.length === 0) return;
+
+    // 학년별 단원(chapter) 그룹핑
+    const gradeChapterMap = new Map<string, Set<string>>();
+    for (const c of selectedConcepts) {
+      const g = c.grade ?? 'unknown';
+      if (!gradeChapterMap.has(g)) gradeChapterMap.set(g, new Set());
+      if (c.chapter) gradeChapterMap.get(g)!.add(c.chapter);
+    }
+
+    // grade → 짧은 라벨 (초4, 중1 등)
+    const GRADE_SHORT: Record<string, string> = {
+      elementary_3: '초3', elementary_4: '초4', elementary_5: '초5', elementary_6: '초6',
+      middle_1: '중1', middle_2: '중2', middle_3: '중3',
+      high_1: '공통1', high_2: '공통2', high_algebra: '대수',
+      high_calculus1: '미적I', high_prob: '확통', high_calculus2: '미적II', high_geo: '기하',
+    };
+    const gLabel = (g: string) => GRADE_SHORT[g] ?? g;
+
+    // 학기 추출 (grade code 기반)
+    const getSem = (g: string): string => {
+      const firstConcept = selectedConcepts.find((c) => c.grade === g);
+      if (!firstConcept?.conceptCode) return '';
+      const parts = firstConcept.conceptCode.split('-');
+      if (parts.length >= 2) {
+        const semPart = parts[1];
+        if (semPart === '1' || semPart === '2') return semPart;
+      }
+      return '';
+    };
+
+    const parts: string[] = [];
+    for (const [grade, chapters] of gradeChapterMap) {
+      const sem = getSem(grade);
+      const prefix = sem ? `${gLabel(grade)}-${sem}` : gLabel(grade);
+      const chapterList = Array.from(chapters);
+      if (chapterList.length === 1) {
+        parts.push(`${prefix} ${chapterList[0]}`);
+      } else if (chapterList.length <= 2) {
+        parts.push(`${prefix} ${chapterList.join(', ')}`);
+      } else {
+        parts.push(`${prefix} ${chapterList[0]} 외 ${chapterList.length - 1}개`);
+      }
+    }
+
+    setTitle(parts.join(' + '));
+  }, [selectedConcepts, titleManuallyEdited]);
+
+  // CurriculumConceptPicker의 onTitleSuggestion (계통 탭용 — 전체 교체 방식)
   const handleTitleSuggestion = (suggested: string) => {
     if (!titleManuallyEdited) setTitle(suggested);
   };
@@ -103,13 +147,7 @@ function CourseCreateInner() {
     });
   };
 
-  const selectAllStudents = () => {
-    if (selectedStudentIds.size === allStudents.length) {
-      setSelectedStudentIds(new Set());
-    } else {
-      setSelectedStudentIds(new Set(allStudents.map((s) => s.id)));
-    }
-  };
+  // 전체 선택/해제는 인라인으로 처리
 
   // Submit
   const handleSubmit = async () => {
@@ -270,12 +308,22 @@ function CourseCreateInner() {
                   </span>
                 )}
               </h2>
-              <button
-                onClick={selectAllStudents}
-                className="text-xs text-primary hover:underline"
-              >
-                {selectedStudentIds.size === allStudents.length ? '전체 해제' : '전체 선택'}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setSelectedStudentIds(new Set(allStudents.map((s) => s.id)))}
+                  className="text-xs text-primary hover:underline"
+                >
+                  전체 선택
+                </button>
+                {selectedStudentIds.size > 0 && (
+                  <button
+                    onClick={() => setSelectedStudentIds(new Set())}
+                    className="text-xs text-slate-400 hover:text-red-500 hover:underline"
+                  >
+                    전체 해제
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* 반별 일괄 배정 */}

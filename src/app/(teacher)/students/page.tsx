@@ -161,7 +161,7 @@ export default function StudentsPage() {
     if (!(await confirm({ message: `${name} 계정을 삭제하시겠습니까?`, variant: 'danger', confirmLabel: '삭제' }))) return;
     const res = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
     if (res.ok) {
-      if (selectedUser?.id === userId) { setSelectedUser(null); setStats(null); }
+      if (selectedUser?.id === userId) { setSelectedUser(null); setStats(null); window.history.replaceState(null, '', '/students'); }
       fetchUsers();
     } else toast.error('삭제 실패');
   };
@@ -178,6 +178,7 @@ export default function StudentsPage() {
     setShowForm(false);
     setSelectedUser(u);
     fetchStats(u.id);
+    window.history.replaceState(null, '', `/students?id=${u.id}`);
   };
 
   // level/activity 필터 적용 시 filteredUsers 기준, 아니면 서버 total

@@ -23,13 +23,25 @@ const navItems: NavItem[] = [
 
 export function BottomNav() {
   const pathname = usePathname();
-  const { isLicensed } = useLicenses();
+  const { isLicensed, loading: licensesLoading } = useLicenses();
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50">
       <div className="flex items-center justify-around py-2 px-4">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
+          // 로딩 중: licenseFeature 항목은 숨김 (로드 후 표시, 깜빡임 방지)
+          if (item.licenseFeature && licensesLoading) {
+            return (
+              <span
+                key={item.href}
+                className="flex flex-col items-center gap-1 py-1 px-3 min-w-[48px] min-h-[48px] justify-center text-slate-200"
+              >
+                <item.icon className="w-5 h-5" />
+                <span className="text-xs font-medium">{item.label}</span>
+              </span>
+            );
+          }
           const locked = item.licenseFeature ? !isLicensed(item.licenseFeature) : false;
 
           if (locked) {

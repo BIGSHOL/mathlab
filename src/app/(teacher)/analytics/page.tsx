@@ -79,6 +79,7 @@ export default function AnalyticsPage() {
 
   // Teacher comment
   const [commentText, setCommentText] = useState('');
+  const [commentSaveStatus, setCommentSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const commentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Speed analytics for selected student
@@ -132,12 +133,13 @@ export default function AnalyticsPage() {
   const saveComment = useCallback((text: string) => {
     if (!selectedStudent) return;
     if (commentTimerRef.current) clearTimeout(commentTimerRef.current);
+    setCommentSaveStatus('saving');
     commentTimerRef.current = setTimeout(() => {
       fetch('/api/analytics/comments', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ studentId: selectedStudent.id, month: currentMonth, content: text }),
-      }).catch((err) => console.error('코멘트 저장 실패:', err));
+      }).then(() => setCommentSaveStatus('saved')).catch((err) => console.error('코멘트 저장 실패:', err));
     }, 1000);
   }, [selectedStudent, currentMonth]);
 
@@ -638,9 +640,16 @@ export default function AnalyticsPage() {
           {/* Teacher Comment */}
           <section>
             <div className="rounded-sm border border-slate-200 p-6 bg-slate-50">
-              <h3 className="text-lg font-bold text-text-primary mb-3 flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-primary" /> 담당 교사 종합 의견
-              </h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-bold text-text-primary flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-primary" /> 담당 교사 종합 의견
+                </h3>
+                {commentSaveStatus !== 'idle' && (
+                  <span className="text-xs text-slate-400 flex items-center gap-1">
+                    {commentSaveStatus === 'saving' ? '저장 중...' : '자동 저장됨'}
+                  </span>
+                )}
+              </div>
               <textarea
                 className="w-full text-sm text-text-secondary leading-relaxed bg-white border border-slate-200 rounded-sm p-4 min-h-[120px] focus:ring-2 focus:ring-primary/40 focus:border-primary resize-y"
                 placeholder="학생에 대한 종합 의견을 작성해주세요. 이 의견은 학부모 리포트에 포함됩니다."

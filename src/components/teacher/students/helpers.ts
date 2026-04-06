@@ -2,7 +2,23 @@
 
 export function gradeLabel(grade: number | null): string {
   if (!grade) return '-';
-  return grade <= 6 ? `초등 ${grade}학년` : `중등 ${grade - 6}학년`;
+  if (grade <= 6) return `초등 ${grade}학년`;
+  if (grade <= 9) return `중등 ${grade - 6}학년`;
+  return `고등 ${grade - 9}학년`;
+}
+
+/** 학제+학년 옵션 (반 만들기, 학생 등록 등) */
+export const SCHOOL_LEVEL_OPTIONS = [
+  { value: 'elementary', label: '초등', grades: [1, 2, 3, 4, 5, 6] },
+  { value: 'middle', label: '중등', grades: [7, 8, 9] },
+  { value: 'high', label: '고등', grades: [10, 11, 12] },
+] as const;
+
+/** 학제 내 학년 표시 라벨 (7→1학년, 10→1학년) */
+export function gradeInLevel(grade: number): string {
+  if (grade <= 6) return `${grade}학년`;
+  if (grade <= 9) return `${grade - 6}학년`;
+  return `${grade - 9}학년`;
 }
 
 export function relativeTime(iso: string | null): string {

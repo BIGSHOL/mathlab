@@ -217,3 +217,20 @@ export const LEVEL_LABELS: Record<ArithmeticLevel, string> = {
   medium: '보통',
   hard: '어려움',
 };
+
+/** 카테고리 → 학년 라벨 매핑 */
+export const CATEGORY_GRADE: Record<ArithmeticCategory, string> = {
+  add_1digit: '초1', sub_1digit: '초1',
+  add_2digit: '초2', sub_2digit: '초2', mul_table: '초2', unit_convert: '초2',
+  add_3digit: '초3', sub_3digit: '초3', mul_2x1: '초3', div_basic: '초3', div_remainder: '초3', time_calc: '초3',
+  mul_large: '초4', div_large: '초4', frac_add_same: '초4', frac_sub_same: '초4', dec_add: '초4', dec_sub: '초4', angle_calc: '초4', sequence_pattern: '초4',
+  mixed_calc: '초5', frac_add_diff: '초5', frac_sub_diff: '초5', frac_mul: '초5', dec_mul: '초5', gcd_lcm: '초5', avg_calc: '초5', area_calc: '초5',
+  frac_div: '초6', dec_div: '초6', ratio_calc: '초6', percent_calc: '초6', circle_area: '초6', frac_all: '초6', dec_all: '초6',
+  int_add: '중1', int_sub: '중1', int_mul: '중1', int_div: '중1', int_all: '중1',
+  abs_basic: '중1', abs_add: '중1', abs_sub: '중1', abs_mul: '중1', abs_mixed: '중1', abs_all: '중1',
+  pf_exponent: '중1', pf_find: '중1', pf_value: '중1', pf_all: '중1', proportion: '중1', quadrant: '중1',
+  exp_calc: '중2', exp_law: '중2', mono_mul: '중2', mono_div: '중2', poly_add: '중2', poly_sub: '중2', linear_eq: '중2', pythagoras: '중2', similarity: '중2', poly_all: '중2',
+  poly_mul: '중3', mul_formula: '중3', factoring: '중3',
+  sqrt_simplify: '중3', sqrt_add: '중3', sqrt_mul: '중3', sqrt_rationalize: '중3', sqrt_all: '중3',
+  discriminant: '중3', trig_value: '중3', trig_calc: '중3', inscribed_angle: '중3', median_calc: '중3', mode_calc: '중3', deviation_sum: '중3', variance_calc: '중3',
+};

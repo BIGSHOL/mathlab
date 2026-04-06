@@ -42,15 +42,22 @@ export function Sidebar() {
   // 데모 계정: 3가지 핵심 기능 + 숙제만 노출
   const DEMO_ALLOWED_HREFS = ['/overview', '/concepts', '/questions/arithmetic', '/exam-analysis', '/homework', '/student-preview', '/settings'];
   // OWNER/MANAGER: 지점 활성 이용권으로 네비 필터링
+  // loaded=false 동안은 licenseFeature 항목을 숨기고, 로드 후 추가 표시 (깜빡임 방지)
+  // 네트워크 실패 시에만 fail-open (전부 표시)
   const [tenantFeatures, setTenantFeatures] = useState<Set<string> | null>(null);
+  const [featuresLoaded, setFeaturesLoaded] = useState(false);
   const userId = user?.id;
   const userRole = user?.role;
   useEffect(() => {
-    if (!userId || userRole === 'SUPER_ADMIN' || userRole === 'STUDENT') return;
+    if (!userId || userRole === 'SUPER_ADMIN' || userRole === 'STUDENT') {
+      setFeaturesLoaded(true);
+      return;
+    }
     fetch('/api/licenses/tenant-features')
       .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((json) => { if (json.data) setTenantFeatures(new Set(json.data as string[])); })
-      .catch(() => setTenantFeatures(null));
+      .catch(() => setTenantFeatures(null))
+      .finally(() => setFeaturesLoaded(true));
   }, [userId, userRole]);
 
   const rawNavGroups = getNavForRole(role);
@@ -59,7 +66,8 @@ export function Sidebar() {
       ...g,
       items: g.items.filter((item: NavItem) => {
         if (!item.licenseFeature) return true; // 이용권 불필요 항목은 항상 표시
-        if (!tenantFeatures) return true; // 아직 로드 안 됐으면 전부 표시 (fail-open)
+        if (!featuresLoaded) return false; // 로딩 중: licenseFeature 항목 숨김
+        if (!tenantFeatures) return true; // 네트워크 실패 시 fail-open
         return tenantFeatures.has(item.licenseFeature);
       }),
     }))
@@ -185,24 +193,18 @@ export function Sidebar() {
         </button>
       )}
 
-      {/* Admin badge + 지점명 */}
-      {!isViewingAsTenant && hasMinRole(role, 'MANAGER') && !collapsed && (
+      {/* 지점명 배지 */}
+      {!isViewingAsTenant && hasMinRole(role, 'MANAGER') && user?.tenantName && !collapsed && (
         <div className="mx-3 mt-3 px-2.5 py-1.5 rounded-sm bg-violet-50 border border-violet-200">
-          <div className="flex items-center gap-2">
-            <Shield className="w-3.5 h-3.5 text-violet-600 shrink-0" />
-            <span className="text-xs font-bold text-violet-700">관리자 모드</span>
-          </div>
-          {user?.tenantName && (
-            <p className="text-xs text-violet-600 mt-1 truncate flex items-center gap-1">
-              <Building2 className="w-3 h-3 shrink-0" />
-              {user.tenantName}
-            </p>
-          )}
+          <p className="text-xs font-bold text-violet-700 truncate flex items-center gap-1.5">
+            <Building2 className="w-3.5 h-3.5 text-violet-600 shrink-0" />
+            {user.tenantName}
+          </p>
         </div>
       )}
       {!isViewingAsTenant && hasMinRole(role, 'MANAGER') && collapsed && (
-        <div className="mx-auto mt-3" title={user?.tenantName ? `관리자 모드 · ${user.tenantName}` : '관리자 모드'}>
-          <Shield className="w-4 h-4 text-violet-600" />
+        <div className="mx-auto mt-3" title={user?.tenantName || ''}>
+          <Building2 className="w-4 h-4 text-violet-600" />
         </div>
       )}
 

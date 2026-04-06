@@ -28,21 +28,51 @@ function generateDayProblems(
   return all.slice(0, dailyCount);
 }
 
+/** 요일이 활성일인지 확인 (0=일, 1=월, ..., 6=토) */
+function isDayActive(startDate: string, dayOffset: number, activeDays?: number[]): boolean {
+  if (!activeDays || activeDays.length === 0 || activeDays.length === 7) return true;
+  const date = new Date(startDate);
+  date.setDate(date.getDate() + dayOffset);
+  return activeDays.includes(date.getDay());
+}
+
 /** 순차 배정 전략: 슬롯(구간) 기반 */
 export class SequentialStrategy implements AssignmentStrategy {
   generate(params: AssignmentParams): AssignmentResult {
-    const { slots, level, dailyCount, countMode, perCatCounts } = params;
+    const { slots, level, dailyCount, countMode, perCatCounts, startDate, activeDays } = params;
     const dailyProblems: GeneratedProblem[][] = [];
     const allCategorySet = new Set<ArithmeticCategory>();
 
     if (!slots) throw new Error('Sequential 배정을 위한 슬롯 설정이 없습니다');
 
-    for (const slot of slots) {
-      const validCats = slot.categories.filter((c) => IMPLEMENTED_CATEGORIES.has(c));
-      if (validCats.length === 0) continue;
-      validCats.forEach((c) => allCategorySet.add(c));
-      for (let d = 0; d < slot.days; d++) {
-        dailyProblems.push(generateDayProblems(validCats, level, dailyCount, countMode, perCatCounts));
+    const useFilter = activeDays && activeDays.length > 0 && activeDays.length < 7;
+
+    if (!useFilter) {
+      for (const slot of slots) {
+        const validCats = slot.categories.filter((c) => IMPLEMENTED_CATEGORIES.has(c));
+        if (validCats.length === 0) continue;
+        validCats.forEach((c) => allCategorySet.add(c));
+        for (let d = 0; d < slot.days; d++) {
+          dailyProblems.push(generateDayProblems(validCats, level, dailyCount, countMode, perCatCounts));
+        }
+      }
+    } else {
+      let calendarDay = 0;
+      for (const slot of slots) {
+        const validCats = slot.categories.filter((c) => IMPLEMENTED_CATEGORIES.has(c));
+        if (validCats.length === 0) continue;
+        validCats.forEach((c) => allCategorySet.add(c));
+        let assigned = 0;
+        while (assigned < slot.days) {
+          if (isDayActive(startDate, calendarDay, activeDays)) {
+            dailyProblems.push(generateDayProblems(validCats, level, dailyCount, countMode, perCatCounts));
+            assigned++;
+          } else {
+            dailyProblems.push([]); // 쉬는날
+          }
+          calendarDay++;
+          if (calendarDay > 365) break;
+        }
       }
     }
 
@@ -53,7 +83,7 @@ export class SequentialStrategy implements AssignmentStrategy {
 /** 라운드 로빈 전략: 카테고리 순환 */
 export class RoundRobinStrategy implements AssignmentStrategy {
   generate(params: AssignmentParams): AssignmentResult {
-    const { categories, daysPerCategory, level, dailyCount, countMode, perCatCounts } = params;
+    const { categories, daysPerCategory, level, dailyCount, countMode, perCatCounts, startDate, activeDays } = params;
     const dailyProblems: GeneratedProblem[][] = [];
     const allCategorySet = new Set<ArithmeticCategory>();
 
@@ -64,11 +94,28 @@ export class RoundRobinStrategy implements AssignmentStrategy {
     validCats.forEach((c) => allCategorySet.add(c));
 
     const dpc = Math.min(Math.max(1, daysPerCategory || 5), 30);
-    const totalDays = validCats.length * dpc;
+    const targetDays = validCats.length * dpc;
+    const useFilter = activeDays && activeDays.length > 0 && activeDays.length < 7;
 
-    for (let day = 0; day < totalDays; day++) {
-      const cat = validCats[day % validCats.length];
-      dailyProblems.push(generateDayProblems([cat], level, dailyCount, countMode, perCatCounts));
+    if (!useFilter) {
+      for (let day = 0; day < targetDays; day++) {
+        const cat = validCats[day % validCats.length];
+        dailyProblems.push(generateDayProblems([cat], level, dailyCount, countMode, perCatCounts));
+      }
+    } else {
+      let calendarDay = 0;
+      let assignedCount = 0;
+      while (assignedCount < targetDays) {
+        if (isDayActive(startDate, calendarDay, activeDays)) {
+          const cat = validCats[assignedCount % validCats.length];
+          dailyProblems.push(generateDayProblems([cat], level, dailyCount, countMode, perCatCounts));
+          assignedCount++;
+        } else {
+          dailyProblems.push([]); // 쉬는날
+        }
+        calendarDay++;
+        if (calendarDay > 365) break;
+      }
     }
 
     return { dailyProblems, allCategories: Array.from(allCategorySet) };

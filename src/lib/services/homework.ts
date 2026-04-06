@@ -24,6 +24,7 @@ import { computeDayIndex, getDayDate, getDayStatus, toKSTDate, type HomeworkDayS
 interface CreatePlanParams {
   title: string;
   createdBy: string;
+  tenantId?: string | null;
   progressionMode: ProgressionMode;
   countMode: CountMode;
   dailyCount: number;
@@ -34,6 +35,7 @@ interface CreatePlanParams {
   retryOnFail?: boolean;
   retryMode?: RetryMode;
   maxRetries?: number;
+  activeDays?: number[];
   slots?: SlotConfig[];
   categories?: ArithmeticCategory[];
   daysPerCategory?: number;
@@ -43,7 +45,7 @@ interface CreatePlanParams {
 
 export async function createHomeworkPlan(params: CreatePlanParams) {
   const {
-    title, createdBy, progressionMode, studentIds, startDate,
+    title, createdBy, tenantId, progressionMode, studentIds, startDate,
     passingScore, retryOnFail, retryMode, maxRetries, dailyCount
   } = params;
 
@@ -67,6 +69,7 @@ export async function createHomeworkPlan(params: CreatePlanParams) {
         startDate: new Date(startDate),
         dailyProblems: JSON.parse(JSON.stringify(dailyProblems)),
         progressionMode,
+        tenantId: tenantId ?? undefined,
         weekdayMap: progressionMode === 'weekday' ? params.weekdayMap : undefined,
         passingScore: passingScore ?? 80,
         retryOnFail: retryOnFail ?? false,

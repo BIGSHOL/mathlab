@@ -30,6 +30,97 @@ export const TYPE_CONFIG: Record<UpdateType, { label: string; color: string }> =
 };
 
 export const ALL_UPDATES: UpdateLog[] = [
+  // ── 2026-04-06 ──
+  {
+    date: '2026-04-06',
+    title: '이용권 시스템 확장 + 테넌트 데이터 격리 강화 + 사이드바 개선',
+    audience: ['admin'],
+    entries: [
+      { type: 'feature', text: '이용권 3종 추가 — 숙제(HOMEWORK), 학습지(WORKSHEET), 기출분석(EXAM_ANALYSIS) 이용권 신규 등록' },
+      { type: 'feature', text: '이용권 관리 2단 분리 — 좌석 기반(학생 기능) + On/Off 기반(선생님 도구) 구분 UI' },
+      { type: 'feature', text: 'OWNER 사이드바 — 지점명 표시 + 활성 이용권 기반 네비게이션 자동 필터링' },
+      { type: 'feature', text: '선생님 추가 기능 — OWNER가 직접 TEACHER/MANAGER 계정 생성 가능' },
+      { type: 'fix', text: '테넌트 데이터 격리 전수 적용 — SA 지점 조회 시 25개 API의 데이터 소속 버그 수정' },
+      { type: 'fix', text: '이용권 현황 카드 — 미사용/미등록 항목 자동 숨김 + 아이콘 가시성 개선' },
+      { type: 'improve', text: '비밀번호 입력 필드 — 눈 아이콘으로 표시/숨김 전환' },
+    ],
+  },
+  // ── 2026-04-01 ~ 04-03 ──
+  {
+    date: '2026-04-02',
+    title: '기출 분석 블로그 시스템 + Supabase Storage 전환 + 학교 데이터 완성',
+    audience: ['teacher', 'admin'],
+    entries: [
+      { type: 'feature', text: '기출 분석 블로그 글 자동 생성 — AI 기사 작성 + 차트 이미지 생성 + TipTap 리치 에디터' },
+      { type: 'feature', text: '네이버 블로그 서식 복사 — SmartEditor ONE 호환 HTML 변환 (차트 이미지 포함)' },
+      { type: 'feature', text: '시험지 업로드 Supabase Storage 전환 — 20MB 제한, 삭제 시 파일 자동 정리' },
+      { type: 'feature', text: 'SuperAdmin 기출 업로드 관리 페이지 — 전체 시험지 현황 조회/관리' },
+      { type: 'feature', text: '능력 영역 레이더 차트 추가 — 유형(5대)+능력(4대) 레이더 차트 동시 지원' },
+      { type: 'feature', text: '기출→문제은행 추출 — 분석된 기출 문항을 문제은행에 일괄 저장' },
+      { type: 'improve', text: '기출 분석 목록 — 축약형 제목에서 학기 라벨 자동 추출' },
+    ],
+  },
+  {
+    date: '2026-04-01',
+    title: '주변 학교 그룹 시스템 + 전국 학교 데이터 수집',
+    audience: ['teacher', 'admin'],
+    entries: [
+      { type: 'feature', text: '주변 학교 그룹 시스템 — 같은 구 우선 + 3km 인접 복합 로직으로 자동 구성' },
+      { type: 'feature', text: '전국 학교 데이터 6,004개 GPS 좌표 100% 달성 (카카오 키워드 검색 활용)' },
+      { type: 'feature', text: '기출 시험지 ↔ School DB 자동 매칭 — 학교명/학년 기반 자동 연결' },
+      { type: 'feature', text: '지점별 학교 그룹 커스텀 오버라이드 — 제외/추가 가능' },
+      { type: 'add', text: '투자자 데모 시스템 — 3가지 핵심 기능 체험 전용 모드' },
+      { type: 'improve', text: 'AI 문제 생성 개선 + 문제은행 테넌트 스코핑' },
+    ],
+  },
+  // ── 2026-03-29 ~ 03-31 ──
+  {
+    date: '2026-03-30',
+    title: '기출 분석 대규모 고도화 — 5대 영역 + 5단계 난이도 + 134개 토픽',
+    audience: ['teacher', 'admin'],
+    entries: [
+      { type: 'feature', text: '5대 교육과정 영역 마이그레이션 — 수와 연산 / 문자와 식 / 함수 / 기하 / 확률과 통계' },
+      { type: 'feature', text: '5단계 난이도 체계 — 기본 / 표준 / 응용 / 심화 / 최고난도' },
+      { type: 'feature', text: '134개 토픽 1:1 정확 매칭 — 중학교·고등학교 교육과정 소단원 수준 분석' },
+      { type: 'feature', text: '8개 확장 분석 에이전트 — 약점, 학습, 시험준비, 예측, 총평, 토픽전략, 점수별계획 에이전트' },
+      { type: 'feature', text: 'AI 총평 (CommentarySection) — Claude Sonnet 기반 종합 분석, DB 영구 저장' },
+      { type: 'feature', text: '학습 대책 탭 10개 섹션 — 토픽 분석, 킬러패턴, 타임라인, 서술형 대비, 등급별 전략 등' },
+      { type: 'improve', text: '기출 분석 UI/UX 대폭 개선 — 차트, 능력 영역, 피드백 신고 시스템' },
+    ],
+  },
+  {
+    date: '2026-03-29',
+    title: '기출 분석 4단계 통합 — 트렌드 + 패턴 + 분석 + 대시보드',
+    audience: ['teacher', 'admin'],
+    entries: [
+      { type: 'feature', text: '기출 분석 Phase 1~4 통합 — Math Report 프로젝트 완전 이식' },
+      { type: 'feature', text: '트렌드 분석 — 연도별 출제 경향 + 대시보드 위젯' },
+      { type: 'feature', text: '패턴 시스템 — 빈출 패턴 DB 템플릿 + 인쇄 지원' },
+      { type: 'add', text: 'Math Report 원본 교육과정 데이터 ~20,000줄 이식' },
+    ],
+  },
+  // ── 2026-03-27 ──
+  {
+    date: '2026-03-27',
+    title: '간격 반복 복습 시스템 + 인쇄 템플릿 9종 + 모바일 개선',
+    audience: ['teacher', 'admin'],
+    entries: [
+      { type: 'feature', text: '간격 반복(Spaced Repetition) 복습 시스템 — 에빙하우스 망각곡선 기반 자동 복습 스케줄' },
+      { type: 'feature', text: '인쇄 템플릿 9종 확장 — default, exam, minimal, csat, classic, notebook, formal, bubble, large' },
+      { type: 'feature', text: '개인정보처리방침 + 이용약관 페이지 추가' },
+      { type: 'add', text: '망각곡선 1일(즉시복습) 간격 추가 — 재오답 시 3일로 리셋' },
+      { type: 'improve', text: '전체 페이지 모바일 반응형 개선' },
+    ],
+  },
+  {
+    date: '2026-03-27',
+    title: '복습 시스템 도입 — 틀린 문제 자동 복습',
+    audience: ['student'],
+    entries: [
+      { type: 'feature', text: '간격 반복 복습 — 에빙하우스 망각곡선에 따라 틀린 문제가 자동으로 복습 대기열에 추가' },
+      { type: 'improve', text: '복습 카드에서 바로 재도전 가능' },
+    ],
+  },
   // ── 2026-03-26 ──
   {
     date: '2026-03-26',

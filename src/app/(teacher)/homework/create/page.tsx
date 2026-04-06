@@ -2,11 +2,9 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { toast } from '@/components/ui/Toast';
 import {
-  ArrowLeft,
   CalendarCheck,
   Search,
   Check,
@@ -14,9 +12,13 @@ import {
   ArrowUp,
   ArrowDown,
   Plus,
+  School,
+  Users,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { PageContainer } from '@/components/ui/PageContainer';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { CATEGORY_LABELS } from '@/lib/services/arithmetic-generator';
 import type { ArithmeticCategory } from '@/lib/services/arithmetic-generator';
 
@@ -41,9 +43,9 @@ interface StudentItem {
 // ─── Constants ───
 
 const MODE_LABELS: Record<ProgressionMode, { label: string; desc: string }> = {
-  sequential: { label: '순차 진행', desc: 'A→B→C 순서대로' },
-  round_robin: { label: '라운드 배정', desc: 'A→B→C 반복' },
-  weekday: { label: '요일별 배정', desc: '요일마다 지정' },
+  sequential: { label: '구간 지정', desc: '단원별 일수를 직접 설정' },
+  round_robin: { label: '순환 배정', desc: '카테고리를 돌아가며 출제' },
+  weekday: { label: '요일별 배정', desc: '월·화·수 각 요일에 지정' },
 };
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -111,6 +113,9 @@ export default function CreateHomeworkPage() {
   const [rrOrder, setRrOrder] = useState<ArithmeticCategory[]>([]);
   const [daysPerCategory, setDaysPerCategory] = useState(5);
 
+  // 활성 요일 (구간지정/순환배정 공통) — 기본 월~금
+  const [activeDays, setActiveDays] = useState<number[]>([1, 2, 3, 4, 5]);
+
   // Weekday mode
   const [weekdayMap, setWeekdayMap] = useState<Record<string, ArithmeticCategory[]>>({
     '0': [], '1': [], '2': [], '3': [], '4': [], '5': [], '6': [],
@@ -128,6 +133,7 @@ export default function CreateHomeworkPage() {
   const [studentSearch, setStudentSearch] = useState('');
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
+  const [classrooms, setClassrooms] = useState<{ id: string; name: string; students: { id: string }[] }[]>([]);
 
   // ─── Sync selected cats → mode-specific state ───
   useEffect(() => {
@@ -166,16 +172,23 @@ export default function CreateHomeworkPage() {
     });
   }, [selectedCats, dailyCount]);
 
-  // Fetch students
+  // Fetch students + classrooms
   const fetchStudents = useCallback(async () => {
     setLoadingStudents(true);
     try {
       const params = new URLSearchParams({ role: 'STUDENT', limit: '200' });
       if (studentSearch) params.set('search', studentSearch);
-      const res = await fetch(`/api/users?${params}`);
-      if (res.ok) {
-        const json = await res.json();
+      const [userRes, crRes] = await Promise.all([
+        fetch(`/api/users?${params}`),
+        fetch('/api/classrooms'),
+      ]);
+      if (userRes.ok) {
+        const json = await userRes.json();
         setStudents(json.data ?? []);
+      }
+      if (crRes.ok) {
+        const json = await crRes.json();
+        setClassrooms(json.data ?? []);
       }
     } catch (err) { console.error('학생 목록 조회 실패:', err); }
     setLoadingStudents(false);
@@ -253,28 +266,30 @@ export default function CreateHomeworkPage() {
       prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
     );
   };
-  const selectAllStudents = () => {
-    const filteredIds = students.map((s) => s.id);
-    setSelectedStudentIds((prev) =>
-      filteredIds.every((id) => prev.includes(id))
-        ? prev.filter((id) => !filteredIds.includes(id))
-        : [...new Set([...prev, ...filteredIds])]
-    );
-  };
+  // 전체 선택/해제는 인라인으로 처리
 
   // ─── Computed ───
   const summary = useMemo(() => {
     if (mode === 'sequential') {
-      const totalDays = slots.reduce((sum, s) => sum + s.days, 0);
-      return { totalDays, activeDays: totalDays };
+      const activeCount = slots.reduce((sum, s) => sum + s.days, 0);
+      if (activeDays.length < 7 && activeDays.length > 0) {
+        // 활성일 + 쉬는날 포함 총 달력일
+        const calendarDays = Math.ceil(activeCount * 7 / activeDays.length);
+        return { totalDays: calendarDays, activeDays: activeCount };
+      }
+      return { totalDays: activeCount, activeDays: activeCount };
     }
     if (mode === 'round_robin') {
-      const totalDays = rrOrder.length * daysPerCategory;
-      return { totalDays, activeDays: totalDays };
+      const activeCount = rrOrder.length * daysPerCategory;
+      if (activeDays.length < 7 && activeDays.length > 0) {
+        const calendarDays = Math.ceil(activeCount * 7 / activeDays.length);
+        return { totalDays: calendarDays, activeDays: activeCount };
+      }
+      return { totalDays: activeCount, activeDays: activeCount };
     }
     const assignedCount = Object.values(weekdayMap).filter((cats) => cats.length > 0).length;
     return { totalDays: weeks * 7, activeDays: assignedCount * weeks };
-  }, [mode, slots, rrOrder, daysPerCategory, weekdayMap, weeks]);
+  }, [mode, slots, rrOrder, daysPerCategory, weekdayMap, weeks, activeDays]);
 
   const catsInSlots = useMemo(() => new Set(slots.flatMap((s) => s.categories)), [slots]);
 
@@ -314,9 +329,11 @@ export default function CreateHomeworkPage() {
         payload.slots = slots
           .filter((s) => s.categories.length > 0)
           .map((s) => ({ categories: s.categories, days: s.days }));
+        if (activeDays.length < 7) payload.activeDays = activeDays;
       } else if (mode === 'round_robin') {
         payload.categories = rrOrder;
         payload.daysPerCategory = daysPerCategory;
+        if (activeDays.length < 7) payload.activeDays = activeDays;
       } else {
         const cleanMap: Record<string, string[]> = {};
         for (const [day, cats] of Object.entries(weekdayMap)) {
@@ -349,15 +366,15 @@ export default function CreateHomeworkPage() {
 
   // ─── Render ───
   return (
-    <div className="p-4 max-w-[1200px] mx-auto">
-      <div className="flex items-center gap-2 mb-4">
-        <Link href="/homework" className="text-text-secondary hover:text-text-primary">
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <h1 className="text-sm font-bold text-text-primary">숙제 플랜 만들기</h1>
-      </div>
+    <PageContainer maxWidth="xl">
+      <PageHeader
+        title="숙제 플랜 만들기"
+        subtitle="연산 유형을 선택하고 학생에게 배정합니다"
+        icon={<CalendarCheck className="w-6 h-6" />}
+        backHref="/homework"
+      />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-3">
 
           {/* ── Card 1: Title + Start date (one row) ── */}
@@ -492,6 +509,34 @@ export default function CreateHomeworkPage() {
               ))}
             </div>
 
+            {/* ── 활성 요일 선택 (구간지정/순환배정 공통) ── */}
+            {(mode === 'sequential' || mode === 'round_robin') && (
+              <div className="mb-3 flex items-center gap-2">
+                <span className="text-xs text-text-secondary shrink-0">배정 요일</span>
+                {(['일', '월', '화', '수', '목', '금', '토'] as const).map((label, dow) => (
+                  <button
+                    key={dow}
+                    onClick={() => setActiveDays((prev) =>
+                      prev.includes(dow) ? prev.filter((d) => d !== dow) : [...prev, dow].sort()
+                    )}
+                    className={`w-7 h-7 rounded-sm text-xs font-medium transition-colors ${
+                      activeDays.includes(dow)
+                        ? dow === 0 ? 'bg-red-500 text-white' : dow === 6 ? 'bg-blue-500 text-white' : 'bg-primary text-white'
+                        : 'bg-slate-100 text-slate-400'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setActiveDays(activeDays.length === 7 ? [1, 2, 3, 4, 5] : [0, 1, 2, 3, 4, 5, 6])}
+                  className="text-xs text-primary hover:underline ml-1"
+                >
+                  {activeDays.length === 7 ? '주말 제외' : '전체'}
+                </button>
+              </div>
+            )}
+
             {/* ── Sequential: Compact slot rows ── */}
             {mode === 'sequential' && (
               <div className="space-y-1.5 mb-3">
@@ -553,7 +598,7 @@ export default function CreateHomeworkPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-text-secondary shrink-0">카테고리당</span>
+                  <span className="text-xs text-text-secondary shrink-0">반복</span>
                   <div className="flex gap-1.5">
                     {[3, 5, 7, 10].map((n) => (
                       <button
@@ -563,7 +608,7 @@ export default function CreateHomeworkPage() {
                           daysPerCategory === n ? 'bg-primary text-white' : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
                         }`}
                       >
-                        {n}일
+                        {n}바퀴
                       </button>
                     ))}
                   </div>
@@ -825,9 +870,62 @@ export default function CreateHomeworkPage() {
         <div className="lg:col-span-1">
           <Card padding="base">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-bold text-text-primary">학생 선택</h2>
-              <span className="text-xs text-text-secondary">{selectedStudentIds.length}명</span>
+              <h2 className="font-bold text-text-primary flex items-center gap-2">
+                <Users className="w-4 h-4 text-primary" />
+                학생 배정
+                {selectedStudentIds.length > 0 && (
+                  <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">
+                    {selectedStudentIds.length}명
+                  </span>
+                )}
+              </h2>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setSelectedStudentIds(students.map((s) => s.id))}
+                  className="text-xs text-primary hover:underline"
+                >
+                  전체 선택
+                </button>
+                {selectedStudentIds.length > 0 && (
+                  <button
+                    onClick={() => setSelectedStudentIds([])}
+                    className="text-xs text-slate-400 hover:text-red-500 hover:underline"
+                  >
+                    전체 해제
+                  </button>
+                )}
+              </div>
             </div>
+
+            {/* 반별 배정 */}
+            {classrooms.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                <span className="flex items-center gap-1 text-xs text-text-secondary">
+                  <School className="w-3.5 h-3.5" /> 반별 배정:
+                </span>
+                {classrooms.map((cr) => {
+                  const crStudentIds = cr.students.map((s) => s.id);
+                  const allSelected = crStudentIds.length > 0 && crStudentIds.every((id) => selectedStudentIds.includes(id));
+                  return (
+                    <button
+                      key={cr.id}
+                      onClick={() => {
+                        if (allSelected) {
+                          setSelectedStudentIds((prev) => prev.filter((id) => !crStudentIds.includes(id)));
+                        } else {
+                          setSelectedStudentIds((prev) => [...new Set([...prev, ...crStudentIds])]);
+                        }
+                      }}
+                      className={`text-xs px-2.5 py-1 rounded-sm border transition-colors ${
+                        allSelected ? 'bg-primary text-white border-primary' : 'bg-white text-text-secondary border-slate-200 hover:border-primary hover:text-primary'
+                      }`}
+                    >
+                      {cr.name} ({crStudentIds.length})
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             <div className="relative mb-3">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
@@ -835,24 +933,20 @@ export default function CreateHomeworkPage() {
                 type="text"
                 value={studentSearch}
                 onChange={(e) => setStudentSearch(e.target.value)}
-                placeholder="학생 검색..."
-                className="w-full h-8 pl-8 pr-3 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                placeholder="이름 또는 아이디 검색"
+                className="w-full h-9 pl-8 pr-3 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
               />
             </div>
 
-            <button onClick={selectAllStudents} className="text-xs text-primary hover:underline mb-2">
-              {students.every((s) => selectedStudentIds.includes(s.id)) ? '전체 해제' : '전체 선택'}
-            </button>
-
-            <div className="max-h-[360px] overflow-y-auto space-y-1">
+            <div className="max-h-[400px] overflow-y-auto border border-slate-200 rounded-sm">
               {loadingStudents ? (
-                <div className="space-y-1.5 p-1">
+                <div className="space-y-1.5 p-2">
                   {Array.from({ length: 4 }, (_, i) => (
-                    <Skeleton key={i} className="h-8 w-full rounded" />
+                    <Skeleton key={i} className="h-9 w-full rounded" />
                   ))}
                 </div>
               ) : students.length === 0 ? (
-                <p className="text-xs text-text-secondary text-center py-3">학생이 없습니다</p>
+                <p className="text-xs text-text-secondary text-center py-4">학생이 없습니다</p>
               ) : (
                 students.map((student) => {
                   const isSelected = selectedStudentIds.includes(student.id);
@@ -860,18 +954,19 @@ export default function CreateHomeworkPage() {
                     <button
                       key={student.id}
                       onClick={() => toggleStudent(student.id)}
-                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-sm text-xs transition-colors ${
+                      className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm border-b border-slate-100 last:border-0 transition-colors ${
                         isSelected ? 'bg-primary/5' : 'hover:bg-slate-50'
                       }`}
                     >
-                      <div className={`w-3.5 h-3.5 rounded-sm border-2 flex items-center justify-center shrink-0 ${
+                      <div className={`w-4 h-4 rounded-sm border-2 flex items-center justify-center shrink-0 ${
                         isSelected ? 'bg-primary border-primary' : 'border-slate-300'
                       }`}>
-                        {isSelected && <Check className="w-2 h-2 text-white" />}
+                        {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
                       </div>
                       <span className="text-text-primary truncate">{student.name}</span>
+                      <span className="ml-auto text-xs text-text-secondary shrink-0">{student.username}</span>
                       {student.grade && (
-                        <span className="ml-auto text-xs px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded-sm shrink-0">
+                        <span className="text-xs px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded-sm shrink-0">
                           {student.grade > 6 ? `중${student.grade - 6}` : `초${student.grade}`}
                         </span>
                       )}
@@ -881,6 +976,10 @@ export default function CreateHomeworkPage() {
               )}
             </div>
 
+            <p className="text-xs text-slate-400 mt-2">
+              * 학생을 선택하지 않고도 플랜을 먼저 생성할 수 있습니다.
+            </p>
+
             <Button
               className="w-full mt-3"
               onClick={handleSubmit}
@@ -888,14 +987,11 @@ export default function CreateHomeworkPage() {
               disabled={!canSubmit}
             >
               <CalendarCheck className="w-4 h-4 mr-1" />
-              숙제 플랜 생성
+              숙제 플랜 생성{selectedStudentIds.length > 0 ? ` + ${selectedStudentIds.length}명 배정` : ''}
             </Button>
-            <p className="text-xs text-slate-400 mt-2 text-center">
-              학생 없이 생성 후 나중에 배정 가능
-            </p>
           </Card>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

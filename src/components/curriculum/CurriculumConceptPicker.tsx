@@ -140,7 +140,6 @@ export function CurriculumConceptPicker({
           <CurriculumTab
             selectedConcepts={selectedConcepts}
             onAdd={handleAdd}
-            onTitleSuggestion={onTitleSuggestion}
           />
         )}
         {activeTab === 'strand' && (
@@ -170,14 +169,13 @@ export function CurriculumConceptPicker({
 function CurriculumTab({
   selectedConcepts,
   onAdd,
-  onTitleSuggestion,
 }: {
   selectedConcepts: PickerConceptItem[];
   onAdd: (c: PickerConceptItem[]) => void;
-  onTitleSuggestion?: (t: string) => void;
 }) {
   const [schoolLevel, setSchoolLevel] = useState('초등학교');
   const [selectedGrade, setSelectedGrade] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [conceptsByChapter, setConceptsByChapter] = useState<Record<string, PickerConceptItem[]>>({});
@@ -233,6 +231,29 @@ function CurriculumTab({
 
   const selectedIds = useMemo(() => new Set(selectedConcepts.map((c) => c.id)), [selectedConcepts]);
 
+  // 검색 필터 적용
+  const filteredConceptsByChapter = useMemo(() => {
+    if (!searchQuery.trim()) return conceptsByChapter;
+    const q = searchQuery.toLowerCase();
+    const result: Record<string, PickerConceptItem[]> = {};
+    for (const [chapter, concepts] of Object.entries(conceptsByChapter)) {
+      if (chapter.toLowerCase().includes(q)) {
+        result[chapter] = concepts;
+      } else {
+        const matched = concepts.filter(
+          (c) => c.title.toLowerCase().includes(q) || (c.conceptCode?.toLowerCase().includes(q) ?? false)
+        );
+        if (matched.length > 0) result[chapter] = matched;
+      }
+    }
+    return result;
+  }, [conceptsByChapter, searchQuery]);
+
+  const filteredUnits = useMemo(() => {
+    if (!searchQuery.trim()) return units;
+    return units.filter((u) => u.name in filteredConceptsByChapter);
+  }, [units, filteredConceptsByChapter, searchQuery]);
+
   const toggleExpand = (key: string) => {
     setExpandedUnits((prev) => {
       const next = new Set(prev);
@@ -246,12 +267,7 @@ function CurriculumTab({
     const concepts = conceptsByChapter[chapterName];
     if (!concepts) return;
     onAdd(concepts);
-    if (onTitleSuggestion) {
-      const gradeShort = gradeLabel(concepts[0]?.grade);
-      const sem = getSemester(selectedGrade);
-      const prefix = sem ? `${gradeShort}-${sem}` : gradeShort;
-      onTitleSuggestion(`${prefix} ${chapterName}`);
-    }
+    // 과정명은 부모에서 selectedConcepts 변경 시 자동 생성
   };
 
   return (
@@ -290,21 +306,35 @@ function CurriculumTab({
         ))}
       </div>
 
+      {/* 검색 */}
+      <div className="relative">
+        <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="단원명 또는 개념명 검색..."
+          className="w-full border border-gray-300 rounded-sm pl-8 pr-3 py-1.5 text-sm"
+        />
+      </div>
+
       {/* 단원 체크트리 */}
       {loading ? (
         <div className="py-8 text-center text-sm text-gray-400">개념 불러오는 중...</div>
       ) : (
         <div className="max-h-[350px] overflow-y-auto border border-gray-200 rounded-sm divide-y divide-gray-100">
-          {units.length === 0 ? (
-            <div className="py-8 text-center text-sm text-gray-400">학년/학기를 선택해주세요</div>
+          {filteredUnits.length === 0 ? (
+            <div className="py-8 text-center text-sm text-gray-400">
+              {searchQuery.trim() ? '검색 결과가 없습니다' : '학년/학기를 선택해주세요'}
+            </div>
           ) : (
-            units.map((unit) => (
+            filteredUnits.map((unit) => (
               <CurriculumUnitRow
                 key={unit.name}
                 unit={unit}
-                concepts={conceptsByChapter[unit.name] ?? []}
+                concepts={filteredConceptsByChapter[unit.name] ?? conceptsByChapter[unit.name] ?? []}
                 selectedIds={selectedIds}
-                expanded={expandedUnits.has(unit.name)}
+                expanded={expandedUnits.has(unit.name) || !!searchQuery.trim()}
                 onToggle={() => toggleExpand(unit.name)}
                 onAddAll={() => handleAddChapter(unit.name)}
                 onAddOne={(c) => onAdd([c])}
