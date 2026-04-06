@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
 
     const picked = candidates[Math.floor(Math.random() * candidates.length)];
     daily = await prisma.dailyQuestion.create({
-      data: { questionId: picked.id, date: todayDate, tenantId: user.tenantId },
+      data: { questionId: picked.id, date: todayDate, tenantId: user.viewingTenantId ?? user.tenantId },
       include: {
         question: {
           select: { id: true, content: true, choices: true, answer: true, explanation: true, difficulty: true },

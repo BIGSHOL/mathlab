@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
         diagramSVG: diagramSVG ?? undefined,
         domain: tags.domain ?? undefined,
         conceptId: tags.conceptId ?? undefined,
-        tenantId: currentUser.tenantId ?? null,
+        tenantId: currentUser.viewingTenantId ?? currentUser.tenantId ?? null,
         createdById: currentUser.id,
       },
     });

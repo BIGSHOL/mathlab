@@ -398,13 +398,14 @@ export async function POST(request: NextRequest) {
     };
 
     const periodStr = period || new Date().toISOString().slice(0, 7);
+    const effectiveTid = user.viewingTenantId ?? user.tenantId ?? '';
     const trend = await prisma.examSchoolTrend.upsert({
       where: {
-        id: `trend-${user.tenantId}-${subject}-${grade}-${periodStr}`,
+        id: `trend-${effectiveTid}-${subject}-${grade}-${periodStr}`,
       },
       create: {
-        id: `trend-${user.tenantId}-${subject}-${grade}-${periodStr}`,
-        tenantId: user.tenantId || '',
+        id: `trend-${effectiveTid}-${subject}-${grade}-${periodStr}`,
+        tenantId: effectiveTid,
         subject: subject || 'MATH',
         grade: grade || '',
         period: periodStr,

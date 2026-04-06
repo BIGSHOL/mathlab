@@ -13,9 +13,10 @@ export async function GET(request: NextRequest) {
 
     // 테넌트 스코핑: ExamPaper를 통해 해당 테넌트의 examPaperId만 허용
     let tenantExamPaperIds: string[] | null = null;
-    if (user.tenantId) {
+    const effectiveTid = user.viewingTenantId ?? user.tenantId;
+    if (effectiveTid) {
       const tenantPapers = await prisma.examPaper.findMany({
-        where: { tenantId: user.tenantId },
+        where: { tenantId: effectiveTid },
         select: { id: true },
       });
       tenantExamPaperIds = tenantPapers.map(p => p.id);

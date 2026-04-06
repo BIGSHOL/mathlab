@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
         hostId: currentUser.id,
         questionIds,
         joinCode,
-        tenantId: currentUser.tenantId,
+        tenantId: currentUser.viewingTenantId ?? currentUser.tenantId,
       },
     });
 

@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     if (filterTenantId) where.tenantId = filterTenantId;
   } else {
     // 자기 지점 문제 + 공용 문제(tenantId=null)만 조회
-    andConditions.push({ OR: [{ tenantId: user.tenantId }, { tenantId: null }] });
+    andConditions.push({ OR: [{ tenantId: user.viewingTenantId ?? user.tenantId }, { tenantId: null }] });
   }
 
   if (search) {

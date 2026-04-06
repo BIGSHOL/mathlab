@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
         questionCount: questionIds.length,
         maxAttempts: 1,
         createdBy: currentUser.id,
+        tenantId: currentUser.viewingTenantId ?? currentUser.tenantId,
       },
     });
 

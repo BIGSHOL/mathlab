@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
         defaultDueDate: defaultDueDate ? new Date(defaultDueDate) : null,
         allowLateSubmission: allowLateSubmission || false,
         createdBy: currentUser.id,
-        tenantId: currentUser.tenantId,
+        tenantId: currentUser.viewingTenantId ?? currentUser.tenantId,
       },
     });
 

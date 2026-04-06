@@ -19,7 +19,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     // 테넌트 검증: examPaperId를 통해 소유권 확인
     if (existing.examPaperId && user.tenantId) {
       const paper = await prisma.examPaper.findFirst({
-        where: { id: existing.examPaperId, tenantId: user.tenantId },
+        where: { id: existing.examPaperId, tenantId: user.viewingTenantId ?? user.tenantId },
       });
       if (!paper) return notFound('참조 문제를 찾을 수 없습니다');
     }
@@ -66,7 +66,7 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
     // 테넌트 검증
     if (existing.examPaperId && user.tenantId) {
       const paper = await prisma.examPaper.findFirst({
-        where: { id: existing.examPaperId, tenantId: user.tenantId },
+        where: { id: existing.examPaperId, tenantId: user.viewingTenantId ?? user.tenantId },
       });
       if (!paper) return notFound('참조 문제를 찾을 수 없습니다');
     }
