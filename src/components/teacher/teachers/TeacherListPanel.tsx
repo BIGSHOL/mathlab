@@ -3,12 +3,20 @@
 import {
   Search,
   UserCog,
+  UserPlus,
   PanelLeftClose,
   PanelLeftOpen,
   Loader2,
 } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 import { relativeTime } from '@/components/teacher/students/helpers';
 import type { UserItem } from '@/components/teacher/students/types';
+
+const ROLE_LABELS: Record<string, string> = {
+  TEACHER: '선생님',
+  MANAGER: '팀장',
+  OWNER: '지점장',
+};
 
 interface TeacherListPanelProps {
   collapsed: boolean;
@@ -19,6 +27,8 @@ interface TeacherListPanelProps {
   teachers: UserItem[];
   selectedId: string | null;
   onSelect: (teacher: UserItem) => void;
+  onAddClick?: () => void;
+  isOwner?: boolean;
 }
 
 export function TeacherListPanel({
@@ -30,6 +40,8 @@ export function TeacherListPanel({
   teachers,
   selectedId,
   onSelect,
+  onAddClick,
+  isOwner,
 }: TeacherListPanelProps) {
   return (
     <aside className={`shrink-0 border-r border-slate-200 bg-slate-50/30 flex flex-col transition-all duration-200 ${collapsed ? 'w-12' : 'w-72'}`}>
@@ -69,6 +81,17 @@ export function TeacherListPanel({
               />
             </div>
           </div>
+
+          {/* 추가 버튼 (OWNER+) */}
+          {isOwner && onAddClick && (
+            <div className="px-3 pb-2">
+              <Button size="sm" className="w-full" onClick={onAddClick}>
+                <UserPlus className="w-3.5 h-3.5 mr-1" />
+                선생님 추가
+              </Button>
+            </div>
+          )}
+
           <div className="border-b border-slate-200" />
 
           {/* 선생님 목록 */}
@@ -101,6 +124,13 @@ export function TeacherListPanel({
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs font-medium text-text-primary truncate">{t.name}</span>
                         <span className="text-xs text-text-secondary">@{t.username}</span>
+                        {t.role !== 'TEACHER' && (
+                          <span className={`text-[10px] px-1 py-0.5 rounded font-medium ${
+                            t.role === 'OWNER' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
+                          }`}>
+                            {ROLE_LABELS[t.role] || t.role}
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-1 mt-0.5">
                         <span className="text-xs text-text-secondary">

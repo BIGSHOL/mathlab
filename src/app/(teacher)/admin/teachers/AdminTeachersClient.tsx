@@ -1,13 +1,32 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { UserCog } from 'lucide-react';
+import { UserCog, X, Eye, EyeOff } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
 import { confirm } from '@/components/ui/ConfirmDialog';
+import { Button } from '@/components/ui/Button';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import { TeacherListPanel } from '@/components/teacher/teachers/TeacherListPanel';
 import { TeacherDetail } from '@/components/teacher/students/TeacherDetail';
 import type { UserItem, TeacherStats } from '@/components/teacher/students/types';
+
+const ROLE_OPTIONS = [
+  { value: 'TEACHER', label: '선생님', desc: '담당 반 학생 관리, 컨텐츠 CRUD' },
+  { value: 'MANAGER', label: '팀장', desc: '테넌트 내 전체 교사/학생 관리' },
+] as const;
+
+interface TeacherForm {
+  username: string;
+  password: string;
+  name: string;
+  role: 'TEACHER' | 'MANAGER';
+  phone: string;
+  email: string;
+}
+
+const INITIAL_FORM: TeacherForm = {
+  username: '', password: '', name: '', role: 'TEACHER', phone: '', email: '',
+};
 
 export default function AdminTeachersClient() {
   const { user: currentUser } = useAuth();
@@ -21,14 +40,22 @@ export default function AdminTeachersClient() {
   const [stats, setStats] = useState<TeacherStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
 
+  // 선생님 등록 폼
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState<TeacherForm>(INITIAL_FORM);
+  const [formError, setFormError] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [showPw, setShowPw] = useState(false);
+
   const fetchTeachers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/users');
+      const res = await fetch('/api/users?limit=100');
       if (res.ok) {
         const json = await res.json();
         const all: UserItem[] = json.data ?? [];
-        setTeachers(all.filter((u) => u.role === 'TEACHER'));
+        // TEACHER + MANAGER + OWNER (선생님 이상 전부 표시)
+        setTeachers(all.filter((u) => u.role !== 'STUDENT'));
       }
     } finally {
       setLoading(false);
@@ -58,8 +85,56 @@ export default function AdminTeachersClient() {
   }, [teachers, search]);
 
   const handleSelect = (user: UserItem) => {
+    setShowForm(false);
     setSelectedUser(user);
     fetchStats(user.id);
+  };
+
+  const handleAddClick = () => {
+    setSelectedUser(null);
+    setStats(null);
+    setForm(INITIAL_FORM);
+    setFormError('');
+    setShowPw(false);
+    setShowForm(true);
+  };
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError('');
+
+    if (!form.username.trim()) { setFormError('아이디를 입력해주세요.'); return; }
+    if (form.password.length < 4) { setFormError('비밀번호는 4자 이상이어야 합니다.'); return; }
+    if (!form.name.trim()) { setFormError('이름을 입력해주세요.'); return; }
+
+    setCreating(true);
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: form.username.trim(),
+          password: form.password,
+          name: form.name.trim(),
+          role: form.role,
+          phone: form.phone.trim() || undefined,
+          email: form.email.trim() || undefined,
+        }),
+      });
+      const json = await res.json();
+      if (json.error) {
+        setFormError(json.error.message);
+        return;
+      }
+      toast.success(`${form.name} ${form.role === 'MANAGER' ? '팀장' : '선생님'}이 등록되었습니다`);
+      setShowForm(false);
+      setForm(INITIAL_FORM);
+      fetchTeachers();
+    } catch {
+      setFormError('선생님 등록에 실패했습니다.');
+    } finally {
+      setCreating(false);
+    }
   };
 
   const handleResetPassword = async (userId: string) => {
@@ -89,6 +164,8 @@ export default function AdminTeachersClient() {
     }
   };
 
+  const inputCls = 'w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary';
+
   return (
     <div className="flex-1 flex min-h-0">
       {/* 좌측 패널 */}
@@ -101,10 +178,88 @@ export default function AdminTeachersClient() {
         teachers={filteredTeachers}
         selectedId={selectedUser?.id ?? null}
         onSelect={handleSelect}
+        onAddClick={handleAddClick}
+        isOwner={isOwner}
       />
 
-      {/* 우측 상세 */}
-      {selectedUser ? (
+      {/* 우측: 폼 / 상세 / 빈 상태 */}
+      {showForm ? (
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-lg mx-auto p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold text-text-primary">선생님 등록</h2>
+              <button onClick={() => setShowForm(false)} className="p-1 hover:bg-slate-100 rounded-sm text-text-secondary">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreate} className="space-y-4">
+              {/* 아이디 */}
+              <div>
+                <label className="text-xs font-semibold text-text-secondary mb-1 block">아이디 <span className="text-red-500">*</span></label>
+                <input className={inputCls} placeholder="알파벳 또는 숫자" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value.replace(/\s/g, '') })} />
+              </div>
+
+              {/* 비밀번호 */}
+              <div>
+                <label className="text-xs font-semibold text-text-secondary mb-1 block">비밀번호 <span className="text-red-500">*</span></label>
+                <div className="relative">
+                  <input className={`${inputCls} pr-9`} type={showPw ? 'text' : 'password'} placeholder="4자 이상" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+                  <button type="button" tabIndex={-1} onClick={() => setShowPw((p) => !p)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* 이름 */}
+              <div>
+                <label className="text-xs font-semibold text-text-secondary mb-1 block">이름 <span className="text-red-500">*</span></label>
+                <input className={inputCls} placeholder="2자 이상" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              </div>
+
+              {/* 직급 선택 */}
+              <div>
+                <label className="text-xs font-semibold text-text-secondary mb-1 block">직급 <span className="text-red-500">*</span></label>
+                <div className="flex gap-2">
+                  {ROLE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setForm({ ...form, role: opt.value })}
+                      className={`flex-1 px-3 py-2 rounded-sm border text-sm font-medium transition-colors ${
+                        form.role === opt.value
+                          ? 'border-primary bg-primary/5 text-primary'
+                          : 'border-slate-200 text-text-secondary hover:border-slate-300'
+                      }`}
+                    >
+                      {opt.label}
+                      <span className="block text-[10px] font-normal mt-0.5 opacity-70">{opt.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 전화번호 */}
+              <div>
+                <label className="text-xs font-semibold text-text-secondary mb-1 block">전화번호</label>
+                <input className={inputCls} placeholder="010-0000-0000" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+              </div>
+
+              {/* 이메일 */}
+              <div>
+                <label className="text-xs font-semibold text-text-secondary mb-1 block">이메일</label>
+                <input className={inputCls} type="email" placeholder="" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              </div>
+
+              {formError && <p className="text-sm text-red-500">{formError}</p>}
+
+              <Button type="submit" disabled={creating} className="w-full">
+                {creating ? '등록 중...' : '등록'}
+              </Button>
+            </form>
+          </div>
+        </div>
+      ) : selectedUser ? (
         <div className="flex-1 overflow-y-auto">
           <TeacherDetail
             user={selectedUser}

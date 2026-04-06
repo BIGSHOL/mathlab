@@ -63,13 +63,31 @@ export async function GET(request: NextRequest) {
   });
 }
 
-// POST /api/users - Create student account
+// POST /api/users - Create user account (STUDENT/TEACHER/MANAGER)
 export async function POST(request: NextRequest) {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
 
   const parsed = await validateBody(request, createUserSchema);
   if (isResponse(parsed)) return parsed;
+
+  const targetRole = parsed.role ?? 'STUDENT';
+
+  // TEACHER/MANAGER 생성은 OWNER 이상만 허용
+  if (targetRole !== 'STUDENT' && !hasRole(user, 'OWNER')) {
+    return NextResponse.json(
+      { error: { code: 'FORBIDDEN', message: '선생님/팀장 계정은 지점장 이상만 생성할 수 있습니다' } },
+      { status: 403 },
+    );
+  }
+
+  // STUDENT는 grade 필수
+  if (targetRole === 'STUDENT' && !parsed.grade) {
+    return NextResponse.json(
+      { error: { code: 'VALIDATION_ERROR', message: '학생 계정은 학년을 입력해야 합니다' } },
+      { status: 400 },
+    );
+  }
 
   const existing = await prisma.user.findUnique({ where: { username: parsed.username } });
   if (existing) return conflict('이미 사용 중인 아이디입니다');
@@ -81,8 +99,8 @@ export async function POST(request: NextRequest) {
       username: parsed.username,
       passwordHash,
       name: parsed.name,
-      role: 'STUDENT',
-      grade: parsed.grade,
+      role: targetRole,
+      grade: parsed.grade || undefined,
       phone: parsed.phone || undefined,
       email: parsed.email || undefined,
       school: parsed.school || undefined,

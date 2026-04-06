@@ -25,11 +25,13 @@ export const createUserSchema = z.object({
     .string()
     .min(1, '이름을 입력해주세요')
     .max(50, '이름은 50자 이하여야 합니다'),
+  role: z.enum(['STUDENT', 'TEACHER', 'MANAGER']).optional(), // OWNER는 지점 생성 시만
   grade: z
     .number()
     .int()
     .min(1, '학년은 1 이상이어야 합니다')
-    .max(9, '학년은 9 이하여야 합니다'),
+    .max(9, '학년은 9 이하여야 합니다')
+    .optional(), // TEACHER/MANAGER는 grade 불필요
   phone: z.string().max(20).optional(),
   parentName: z.string().max(50).optional(),
   parentPhone: z.string().max(20).optional(),
