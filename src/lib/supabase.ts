@@ -21,6 +21,26 @@ export function getSupabase(): SupabaseClient {
 /** 하위 호환용 alias */
 export const supabase = { get storage() { return getSupabase().storage; } };
 
+/** 지점 로고를 Supabase Storage에 업로드하고 공개 URL 반환 */
+export async function uploadTenantLogo(
+  buffer: Buffer,
+  tenantSlug: string,
+  contentType: string,
+): Promise<string> {
+  const client = getSupabase();
+  const ext = contentType.split('/')[1] || 'png';
+  const path = `tenant-logos/${tenantSlug}.${ext}`;
+
+  const { error } = await client.storage
+    .from('uploads')
+    .upload(path, buffer, { contentType, upsert: true });
+
+  if (error) throw new Error(`로고 업로드 실패: ${error.message}`);
+
+  const { data } = client.storage.from('uploads').getPublicUrl(path);
+  return data.publicUrl;
+}
+
 /** 시험지 파일을 Supabase Storage에 업로드하고 공개 URL 반환 */
 export async function uploadExamFile(
   buffer: Buffer,
