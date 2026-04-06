@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     const feedbacks = await prisma.examFeedback.findMany({
       where: {
         status: 'pending',
-        ...((user.viewingTenantId ?? user.tenantId) ? { tenantId: user.viewingTenantId ?? user.tenantId } : {}),
+        ...(user.tenantId ? { tenantId: user.tenantId } : {}),
       },
       orderBy: { createdAt: 'desc' },
     });

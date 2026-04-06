@@ -185,77 +185,83 @@ export default function AdminTeachersClient() {
       {/* 우측: 폼 / 상세 / 빈 상태 */}
       {showForm ? (
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-lg mx-auto p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-text-primary">선생님 등록</h2>
-              <button onClick={() => setShowForm(false)} className="p-1 hover:bg-slate-100 rounded-sm text-text-secondary">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+          <div className="max-w-2xl mx-auto p-6">
+            <h2 className="text-lg font-bold text-text-primary mb-1">선생님 등록</h2>
+            <p className="text-sm text-text-secondary mb-5">선생님 계정 정보를 입력하세요.</p>
 
-            <form onSubmit={handleCreate} className="space-y-4">
-              {/* 아이디 */}
-              <div>
-                <label className="text-xs font-semibold text-text-secondary mb-1 block">아이디 <span className="text-red-500">*</span></label>
-                <input className={inputCls} placeholder="알파벳 또는 숫자" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value.replace(/\s/g, '') })} />
-              </div>
+            <form onSubmit={handleCreate} className="space-y-5">
+              {formError && (
+                <div className="p-3 rounded-sm bg-red-50 border border-red-200 text-red-600 text-sm">{formError}</div>
+              )}
 
-              {/* 비밀번호 */}
-              <div>
-                <label className="text-xs font-semibold text-text-secondary mb-1 block">비밀번호 <span className="text-red-500">*</span></label>
-                <div className="relative">
-                  <input className={`${inputCls} pr-9`} type={showPw ? 'text' : 'password'} placeholder="4자 이상" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-                  <button type="button" tabIndex={-1} onClick={() => setShowPw((p) => !p)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+              {/* 필수 입력 */}
+              <fieldset className="space-y-3">
+                <legend className="text-xs font-semibold text-text-secondary uppercase tracking-wider border-b border-slate-200 pb-1 mb-2">
+                  필수 입력 사항
+                </legend>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary mb-1">이름 <span className="text-red-500">*</span></label>
+                    <input className={inputCls} placeholder="이름을 입력하세요." value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary mb-1">직급 <span className="text-red-500">*</span></label>
+                    <div className="flex gap-2">
+                      {ROLE_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setForm({ ...form, role: opt.value })}
+                          className={`flex-1 px-2 py-2 rounded-sm border text-sm font-medium transition-colors ${
+                            form.role === opt.value
+                              ? 'border-primary bg-primary/5 text-primary'
+                              : 'border-slate-200 text-text-secondary hover:border-slate-300'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              {/* 이름 */}
-              <div>
-                <label className="text-xs font-semibold text-text-secondary mb-1 block">이름 <span className="text-red-500">*</span></label>
-                <input className={inputCls} placeholder="2자 이상" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-              </div>
-
-              {/* 직급 선택 */}
-              <div>
-                <label className="text-xs font-semibold text-text-secondary mb-1 block">직급 <span className="text-red-500">*</span></label>
-                <div className="flex gap-2">
-                  {ROLE_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setForm({ ...form, role: opt.value })}
-                      className={`flex-1 px-3 py-2 rounded-sm border text-sm font-medium transition-colors ${
-                        form.role === opt.value
-                          ? 'border-primary bg-primary/5 text-primary'
-                          : 'border-slate-200 text-text-secondary hover:border-slate-300'
-                      }`}
-                    >
-                      {opt.label}
-                      <span className="block text-[10px] font-normal mt-0.5 opacity-70">{opt.desc}</span>
-                    </button>
-                  ))}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary mb-1">아이디 <span className="text-red-500">*</span></label>
+                    <input className={inputCls} placeholder="로그인 아이디" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value.replace(/\s/g, '') })} required />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary mb-1">초기 비밀번호 <span className="text-red-500">*</span></label>
+                    <div className="relative">
+                      <input className={`${inputCls} pr-9`} type={showPw ? 'text' : 'password'} placeholder="초기 비밀번호" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
+                      <button type="button" tabIndex={-1} onClick={() => setShowPw((p) => !p)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                        {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
                 </div>
+              </fieldset>
+
+              {/* 선택 입력 */}
+              <fieldset className="space-y-3">
+                <legend className="text-xs font-semibold text-text-secondary uppercase tracking-wider border-b border-slate-200 pb-1 mb-2">
+                  선택 입력 사항
+                </legend>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary mb-1">연락처</label>
+                    <input className={inputCls} placeholder="숫자만 입력하세요." value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^0-9-]/g, '') })} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary mb-1">이메일</label>
+                    <input className={inputCls} type="email" placeholder="예시 : teacher@math.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                  </div>
+                </div>
+              </fieldset>
+
+              <div className="flex gap-3 pt-2">
+                <Button type="submit" disabled={creating}>{creating ? '등록 중...' : '등록하기'}</Button>
+                <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>취소</Button>
               </div>
-
-              {/* 전화번호 */}
-              <div>
-                <label className="text-xs font-semibold text-text-secondary mb-1 block">전화번호</label>
-                <input className={inputCls} placeholder="010-0000-0000" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-              </div>
-
-              {/* 이메일 */}
-              <div>
-                <label className="text-xs font-semibold text-text-secondary mb-1 block">이메일</label>
-                <input className={inputCls} type="email" placeholder="" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-              </div>
-
-              {formError && <p className="text-sm text-red-500">{formError}</p>}
-
-              <Button type="submit" disabled={creating} className="w-full">
-                {creating ? '등록 중...' : '등록'}
-              </Button>
             </form>
           </div>
         </div>
