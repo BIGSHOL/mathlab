@@ -14,7 +14,7 @@ export async function getViewAsUser(searchParams?: { _as?: string; [key: string]
   if (typeof studentId === 'string' && studentId && realUser.role !== 'STUDENT') {
     const student = await prisma.user.findUnique({
       where: { id: studentId, role: 'STUDENT', deletedAt: null },
-      select: { id: true, name: true, username: true, role: true, grade: true, tenantId: true, tenant: { select: { slug: true } } },
+      select: { id: true, name: true, username: true, role: true, grade: true, tenantId: true, tenant: { select: { slug: true, name: true } } },
     });
     if (student) {
       return {
@@ -25,6 +25,7 @@ export async function getViewAsUser(searchParams?: { _as?: string; [key: string]
         grade: student.grade,
         tenantId: student.tenantId,
         tenantSlug: student.tenant?.slug ?? null,
+        tenantName: student.tenant?.name ?? null,
       };
     }
   }

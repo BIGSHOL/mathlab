@@ -26,6 +26,7 @@ export function useAuth() {
         username: (session.user as { username: string }).username,
         role: (session.user as { role: string }).role as UserRole,
         grade: (session.user as { grade: number | null }).grade,
+        tenantName: (session.user as { tenantName?: string | null }).tenantName ?? null,
       }
     : null;
 

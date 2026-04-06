@@ -41,6 +41,7 @@ export const authOptions: NextAuthOptions = {
           grade: user.grade,
           tenantId: user.tenantId,
           tenantSlug: user.tenant?.slug ?? null,
+          tenantName: user.tenant?.name ?? null,
         };
       },
     }),
@@ -54,6 +55,7 @@ export const authOptions: NextAuthOptions = {
         token.username = user.email; // we stored username in email
         token.tenantId = (user as unknown as { tenantId: string | null }).tenantId;
         token.tenantSlug = (user as unknown as { tenantSlug: string | null }).tenantSlug;
+        token.tenantName = (user as unknown as { tenantName: string | null }).tenantName;
       }
       return token;
     },
@@ -65,6 +67,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as { username: string }).username = token.username as string;
         (session.user as { tenantId: string | null }).tenantId = (token.tenantId as string | null) ?? null;
         (session.user as { tenantSlug: string | null }).tenantSlug = (token.tenantSlug as string | null) ?? null;
+        (session.user as { tenantName: string | null }).tenantName = (token.tenantName as string | null) ?? null;
       }
       return session;
     },
@@ -92,5 +95,6 @@ export async function getCurrentUser() {
     grade: number | null;
     tenantId: string | null;
     tenantSlug: string | null;
+    tenantName: string | null;
   };
 }

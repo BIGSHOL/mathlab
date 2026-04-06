@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Shield,
   Bell,
@@ -41,12 +41,33 @@ export function Sidebar() {
   const isDemo = user?.username === DEMO_USERNAME;
   // 데모 계정: 3가지 핵심 기능 + 숙제만 노출
   const DEMO_ALLOWED_HREFS = ['/overview', '/concepts', '/questions/arithmetic', '/exam-analysis', '/homework', '/student-preview', '/settings'];
+  // OWNER/MANAGER: 지점 활성 이용권으로 네비 필터링
+  const [tenantFeatures, setTenantFeatures] = useState<Set<string> | null>(null);
+  useEffect(() => {
+    if (!user || user.role === 'SUPER_ADMIN' || user.role === 'STUDENT') return;
+    fetch('/api/licenses/tenant-features')
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+      .then((json) => { if (json.data) setTenantFeatures(new Set(json.data as string[])); })
+      .catch(() => setTenantFeatures(null));
+  }, [user]);
+
   const rawNavGroups = getNavForRole(role);
+  const filteredNavGroups = rawNavGroups
+    .map((g) => ({
+      ...g,
+      items: g.items.filter((item: NavItem) => {
+        if (!item.licenseFeature) return true; // 이용권 불필요 항목은 항상 표시
+        if (!tenantFeatures) return true; // 아직 로드 안 됐으면 전부 표시 (fail-open)
+        return tenantFeatures.has(item.licenseFeature);
+      }),
+    }))
+    .filter((g) => g.items.length > 0);
+
   const navGroups = isDemo
-    ? rawNavGroups
+    ? filteredNavGroups
         .map(g => ({ ...g, items: g.items.filter((item: NavItem) => DEMO_ALLOWED_HREFS.includes(item.href)) }))
         .filter(g => g.items.length > 0)
-    : rawNavGroups;
+    : filteredNavGroups;
   const allItems = getAllNavItems();
   const [collapsed, setCollapsed] = useState(false);
   const displayName = isViewingAsTenant ? (viewingTenantName ?? 'MathLAB') : (tenant?.name || 'MathLAB');
@@ -162,15 +183,23 @@ export function Sidebar() {
         </button>
       )}
 
-      {/* Admin badge */}
+      {/* Admin badge + 지점명 */}
       {!isViewingAsTenant && hasMinRole(role, 'MANAGER') && !collapsed && (
-        <div className="mx-3 mt-3 flex items-center gap-2 px-2.5 py-1.5 rounded-sm bg-violet-50 border border-violet-200">
-          <Shield className="w-3.5 h-3.5 text-violet-600 shrink-0" />
-          <span className="text-xs font-bold text-violet-700">관리자 모드</span>
+        <div className="mx-3 mt-3 px-2.5 py-1.5 rounded-sm bg-violet-50 border border-violet-200">
+          <div className="flex items-center gap-2">
+            <Shield className="w-3.5 h-3.5 text-violet-600 shrink-0" />
+            <span className="text-xs font-bold text-violet-700">관리자 모드</span>
+          </div>
+          {user?.tenantName && (
+            <p className="text-xs text-violet-600 mt-1 truncate flex items-center gap-1">
+              <Building2 className="w-3 h-3 shrink-0" />
+              {user.tenantName}
+            </p>
+          )}
         </div>
       )}
       {!isViewingAsTenant && hasMinRole(role, 'MANAGER') && collapsed && (
-        <div className="mx-auto mt-3" title="관리자 모드">
+        <div className="mx-auto mt-3" title={user?.tenantName ? `관리자 모드 · ${user.tenantName}` : '관리자 모드'}>
           <Shield className="w-4 h-4 text-violet-600" />
         </div>
       )}

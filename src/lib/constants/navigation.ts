@@ -49,6 +49,8 @@ export interface NavItem {
   minRole: UserRole;
   keywords?: string[];
   disabled?: boolean;
+  /** 이 메뉴가 활성화되려면 지점에 해당 이용권이 필요 (OWNER 사이드바 필터용) */
+  licenseFeature?: string;
 }
 
 export interface NavGroup {
@@ -167,26 +169,26 @@ const OWNER_NAV_GROUPS: NavGroup[] = [
   {
     id: 'analysis', label: '성적·분석', minRole: 'OWNER', items: [
       { id: 'analytics', label: '학습 현황', href: '/analytics', icon: BarChart3, minRole: 'OWNER', keywords: ['analytics', '분석', '통계', '현황'] },
-      { id: 'exam-analysis', label: '기출 분석', href: '/exam-analysis', icon: FileSearch, minRole: 'OWNER', keywords: ['exam', '기출', '분석', '시험지', '내신'] },
-      { id: 'diagnostics', label: '진단 결과', href: '/diagnostics', icon: Stethoscope, minRole: 'OWNER', keywords: ['diagnostic', '진단', '레벨테스트', '결과'] },
-      { id: 'reports', label: '리포트', href: '/reports', icon: ScrollText, minRole: 'OWNER', keywords: ['report', '리포트', '보고서', '레벨테스트'] },
+      { id: 'exam-analysis', label: '기출 분석', href: '/exam-analysis', icon: FileSearch, minRole: 'OWNER', keywords: ['exam', '기출', '분석', '시험지', '내신'], licenseFeature: 'EXAM_ANALYSIS' },
+      { id: 'diagnostics', label: '진단 결과', href: '/diagnostics', icon: Stethoscope, minRole: 'OWNER', keywords: ['diagnostic', '진단', '레벨테스트', '결과'], licenseFeature: 'DIAGNOSTIC' },
+      { id: 'reports', label: '리포트', href: '/reports', icon: ScrollText, minRole: 'OWNER', keywords: ['report', '리포트', '보고서', '레벨테스트'], licenseFeature: 'DIAGNOSTIC' },
     ],
   },
 
   // ─ 출제·준비 ─
   {
     id: 'content', label: '출제·준비', minRole: 'OWNER', items: [
-      { id: 'concepts', label: '개념 등록', href: '/concepts', icon: BookOpen, minRole: 'OWNER', keywords: ['concept', '개념', '빈칸', '등록'] },
-      { id: 'questions', label: '문제 출제', href: '/questions', icon: Database, minRole: 'OWNER', keywords: ['question', '문제', '은행', '출제'] },
-      { id: 'courses', label: '반 관리', href: '/courses', icon: School, minRole: 'OWNER', keywords: ['class', '반', '교실', 'course', '과정', '코스'] },
+      { id: 'concepts', label: '개념 등록', href: '/concepts', icon: BookOpen, minRole: 'OWNER', keywords: ['concept', '개념', '빈칸', '등록'], licenseFeature: 'CONCEPT' },
+      { id: 'questions', label: '문제 출제', href: '/questions', icon: Database, minRole: 'OWNER', keywords: ['question', '문제', '은행', '출제'], licenseFeature: 'TEST' },
+      { id: 'courses', label: '반 관리', href: '/courses', icon: School, minRole: 'OWNER', keywords: ['class', '반', '교실', 'course', '과정', '코스'], licenseFeature: 'CONCEPT' },
     ],
   },
 
   // ─ 배정·평가 ─
   {
     id: 'assessment', label: '배정·평가', minRole: 'OWNER', items: [
-      { id: 'tests', label: '시험 출제', href: '/tests', icon: ClipboardCheck, minRole: 'OWNER', keywords: ['test', '시험', '평가', '출제', '배정'] },
-      { id: 'homework', label: '숙제 출제', href: '/homework', icon: CalendarCheck, minRole: 'OWNER', keywords: ['homework', '숙제', '과제', '배정'] },
+      { id: 'tests', label: '시험 출제', href: '/tests', icon: ClipboardCheck, minRole: 'OWNER', keywords: ['test', '시험', '평가', '출제', '배정'], licenseFeature: 'TEST' },
+      { id: 'homework', label: '숙제 출제', href: '/homework', icon: CalendarCheck, minRole: 'OWNER', keywords: ['homework', '숙제', '과제', '배정'], licenseFeature: 'HOMEWORK' },
     ],
   },
 

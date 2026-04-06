@@ -107,7 +107,7 @@ export async function requireAuthViewAs(request: NextRequest): Promise<AuthUser 
 
     const student = await prisma.user.findUnique({
       where: { id: studentId, role: 'STUDENT', deletedAt: null, ...tenantWhere },
-      select: { id: true, name: true, username: true, role: true, grade: true, tenantId: true, tenant: { select: { slug: true } } },
+      select: { id: true, name: true, username: true, role: true, grade: true, tenantId: true, tenant: { select: { slug: true, name: true } } },
     });
     if (student) {
       return {
@@ -118,6 +118,7 @@ export async function requireAuthViewAs(request: NextRequest): Promise<AuthUser 
         grade: student.grade,
         tenantId: student.tenantId,
         tenantSlug: student.tenant?.slug ?? null,
+        tenantName: student.tenant?.name ?? null,
       };
     }
   }
