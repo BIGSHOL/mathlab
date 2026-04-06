@@ -59,8 +59,9 @@ export default function RevengePage() {
 
   useEffect(() => {
     fetch('/api/learning/revenge-suggestions')
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((json) => { if (json.data) setSuggestions(json.data); })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 

@@ -27,7 +27,7 @@ export function DailyMissionCard() {
 
   useEffect(() => {
     fetch('/api/missions/today')
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((json) => { if (json.data) setData(json.data); })
       .catch(() => {});
   }, []);
@@ -36,7 +36,7 @@ export function DailyMissionCard() {
     if (!data || !data.allComplete || data.xpAwarded > 0 || checking || bonusEarned) return;
     setChecking(true);
     fetch('/api/missions/check', { method: 'POST' })
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((json) => {
         if (json.data?.xpAwarded > 0) {
           setBonusEarned(true);

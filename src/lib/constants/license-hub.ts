@@ -1,6 +1,6 @@
 import {
   BookOpen, Calculator, Zap, ClipboardCheck, Swords,
-  Stethoscope, Radio, FileSearch,
+  Stethoscope, Radio, FileSearch, CalendarCheck, FileSpreadsheet,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { LicenseFeature } from '@prisma/client';
@@ -104,9 +104,31 @@ export const LICENSE_FEATURE_INFO: Record<LicenseFeature, LicenseFeatureInfo> = 
     color: 'bg-indigo-500',
     textColor: 'text-indigo-500',
   },
+  HOMEWORK: {
+    label: '숙제',
+    description: '선생님이 출제한 연산/개념/문제 숙제를 매일 학습합니다',
+    studentCapabilities: ['연산 숙제', '개념 숙제', '문제 숙제', '일별 진행 추적'],
+    teacherLinks: [
+      { label: '숙제 관리', href: '/homework' },
+    ],
+    icon: CalendarCheck,
+    color: 'bg-teal-500',
+    textColor: 'text-teal-500',
+  },
+  WORKSHEET: {
+    label: '학습지',
+    description: '교육과정 기반 문제지를 생성하여 인쇄·배포합니다',
+    studentCapabilities: ['학습지 풀기'],
+    teacherLinks: [
+      { label: '학습지 만들기', href: '/worksheet/create' },
+    ],
+    icon: FileSpreadsheet,
+    color: 'bg-cyan-500',
+    textColor: 'text-cyan-500',
+  },
 };
 
 /** LICENSE_FEATURE_INFO 키를 순서대로 배열 */
 export const LICENSE_FEATURES_ORDERED: LicenseFeature[] = [
-  'CONCEPT', 'ARITHMETIC', 'TIME_ATTACK', 'TEST', 'REVENGE', 'DIAGNOSTIC', 'QUIZ', 'EXAM_ANALYSIS',
+  'CONCEPT', 'ARITHMETIC', 'TIME_ATTACK', 'TEST', 'REVENGE', 'DIAGNOSTIC', 'QUIZ', 'EXAM_ANALYSIS', 'HOMEWORK', 'WORKSHEET',
 ];

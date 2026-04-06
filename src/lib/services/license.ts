@@ -11,7 +11,9 @@ export type LicenseFeatureKey =
   | 'revenge'
   | 'diagnostic'
   | 'quiz'
-  | 'exam_analysis';
+  | 'exam_analysis'
+  | 'homework'
+  | 'worksheet';
 
 export const ALL_LICENSE_FEATURES: LicenseFeatureKey[] = [
   'concept',
@@ -22,6 +24,8 @@ export const ALL_LICENSE_FEATURES: LicenseFeatureKey[] = [
   'diagnostic',
   'quiz',
   'exam_analysis',
+  'homework',
+  'worksheet',
 ];
 
 /** 한글 라벨 */
@@ -34,6 +38,8 @@ export const LICENSE_FEATURE_LABELS: Record<LicenseFeatureKey, string> = {
   diagnostic: '레벨테스트',
   quiz: '실시간 퀴즈',
   exam_analysis: '기출 분석',
+  homework: '숙제',
+  worksheet: '학습지',
 };
 
 /** LicenseFeatureKey ↔ Prisma LicenseFeature enum 매핑 */
@@ -46,6 +52,8 @@ const TO_ENUM: Record<LicenseFeatureKey, LicenseFeature> = {
   diagnostic: 'DIAGNOSTIC',
   quiz: 'QUIZ',
   exam_analysis: 'EXAM_ANALYSIS',
+  homework: 'HOMEWORK',
+  worksheet: 'WORKSHEET',
 };
 
 const FROM_ENUM: Record<LicenseFeature, LicenseFeatureKey> = {
@@ -57,6 +65,8 @@ const FROM_ENUM: Record<LicenseFeature, LicenseFeatureKey> = {
   DIAGNOSTIC: 'diagnostic',
   QUIZ: 'quiz',
   EXAM_ANALYSIS: 'exam_analysis',
+  HOMEWORK: 'homework',
+  WORKSHEET: 'worksheet',
 };
 
 export function toEnum(key: LicenseFeatureKey): LicenseFeature {
@@ -432,11 +442,13 @@ export async function getLicenseUsageStats(
     DIAGNOSTIC: diagnosticAct.map((r) => ({ studentId: r.studentId, date: toDateStr(r.createdAt) })),
     QUIZ: quizAct.map((r) => ({ studentId: r.studentId, date: toDateStr(r.session.createdAt) })),
     EXAM_ANALYSIS: [],
+    HOMEWORK: [], // 숙제 활동은 여러 테이블에 분산되어 있어 별도 집계 필요 시 추가
+    WORKSHEET: [], // 학습지는 선생님 도구이므로 학생 활동 없음
   };
 
   // 4. 기능별 통계 계산
   const allFeatures: LicenseFeature[] = [
-    'CONCEPT', 'ARITHMETIC', 'TIME_ATTACK', 'TEST', 'REVENGE', 'DIAGNOSTIC', 'QUIZ', 'EXAM_ANALYSIS',
+    'CONCEPT', 'ARITHMETIC', 'TIME_ATTACK', 'TEST', 'REVENGE', 'DIAGNOSTIC', 'QUIZ', 'EXAM_ANALYSIS', 'HOMEWORK', 'WORKSHEET',
   ];
 
   // 미사용 학생 이름/반 조회를 위해 한 번에 ID 수집

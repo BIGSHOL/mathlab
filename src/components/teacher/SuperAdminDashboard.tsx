@@ -147,6 +147,9 @@ export default async function SuperAdminDashboard({ period }: Omit<Props, 'user'
     REVENGE: '복수전',
     DIAGNOSTIC: '진단',
     QUIZ: '퀴즈',
+    EXAM_ANALYSIS: '기출분석',
+    HOMEWORK: '숙제',
+    WORKSHEET: '학습지',
   };
 
   const stats = [

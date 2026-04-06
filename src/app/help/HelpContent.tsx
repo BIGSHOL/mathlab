@@ -66,12 +66,13 @@ export function HelpContent({ backHref, backLabel, isLoggedIn, embedded }: Props
 
   useEffect(() => {
     fetch('/api/help')
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((res) => {
         const cats: HelpCategory[] = res.data ?? [];
         setCategories(cats);
         if (cats.length > 0) setSelectedCategoryId(cats[0].id);
       })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 

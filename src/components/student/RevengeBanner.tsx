@@ -10,7 +10,7 @@ export function RevengeBanner() {
 
   useEffect(() => {
     fetch('/api/learning/revenge-suggestions')
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((json) => {
         if (json.data && json.data.length > 0) {
           setHasRevenge(true);

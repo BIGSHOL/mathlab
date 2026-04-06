@@ -30,6 +30,8 @@ enum LicenseFeature {
   DIAGNOSTIC
   QUIZ
   EXAM_ANALYSIS
+  HOMEWORK
+  WORKSHEET
 }
 
 // FEAT: 기출 분석 시스템

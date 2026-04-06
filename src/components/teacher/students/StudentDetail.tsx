@@ -64,7 +64,7 @@ export function StudentDetail({ user, stats, statsLoading, isManager, isOwner, o
 
   useEffect(() => {
     fetch(`/api/users/${user.id}/concept-nav`)
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((json) => {
         if (json.data) {
           setNavMode(json.data.mode);
@@ -93,7 +93,7 @@ export function StudentDetail({ user, stats, statsLoading, isManager, isOwner, o
     setHwWrongExpanded(null);
     setHwWrongLoading(true);
     fetch(`/api/arithmetic/homework-wrong-answers?studentId=${user.id}&period=${hwWrongPeriod}`)
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((json) => setHwWrongData(json.data ?? null))
       .catch((err) => console.error('연산 숙제 오답 조회 실패:', err))
       .finally(() => setHwWrongLoading(false));

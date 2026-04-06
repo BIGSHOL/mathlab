@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth, isResponse } from '@/lib/api';
+import { requireAuth, isResponse, requireLicense } from '@/lib/api';
 import { awardXp } from '@/lib/utils/xp';
 import { getHomeworkDayQuestionIds } from '@/lib/utils/question-order';
 
 export async function POST(request: NextRequest) {
   const user = await requireAuth();
   if (isResponse(user)) return user;
+  const licenseCheck = await requireLicense(user, 'homework');
+  if (licenseCheck) return licenseCheck;
 
   const { planId, dayIndex, answers } = await request.json();
 

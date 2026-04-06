@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuthViewAs, isResponse } from '@/lib/api';
+import { requireAuthViewAs, isResponse, requireLicense } from '@/lib/api';
 import { getHomeworkDayQuestionIds } from '@/lib/utils/question-order';
 
 export async function POST(request: NextRequest) {
   const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
+  const licenseCheck = await requireLicense(user, 'homework');
+  if (licenseCheck) return licenseCheck;
 
   const { planId, dayIndex } = await request.json();
 

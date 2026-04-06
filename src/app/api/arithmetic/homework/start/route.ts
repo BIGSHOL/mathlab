@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuthViewAs, isResponse, badRequest } from '@/lib/api';
+import { requireAuthViewAs, isResponse, badRequest, requireLicense } from '@/lib/api';
 import { startHomeworkAttempt } from '@/lib/services/homework';
 
 /** POST: 숙제 시작 (ArithmeticAttempt 생성 + 문제 반환) */
 export async function POST(request: NextRequest) {
   const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
+  const licenseCheck = await requireLicense(user, 'homework');
+  if (licenseCheck) return licenseCheck;
 
   const body = await request.json();
   const { planId, dayIndex, isRetry } = body;

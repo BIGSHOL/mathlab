@@ -126,7 +126,7 @@ export default function StudentProgressPage() {
 
   useEffect(() => {
     fetch(`/api/learning-courses/${id}/progress/${username}`)
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((json) => {
         setData(json.data);
         if (json.data?.concepts?.length > 0) setSelectedIdx(0);

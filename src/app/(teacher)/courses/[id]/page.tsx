@@ -168,8 +168,8 @@ export default function CourseDetailPage() {
   useEffect(() => {
     if (!showAddStudents) return;
     Promise.all([
-      fetch('/api/users').then((r) => r.json()),
-      fetch('/api/classrooms').then((r) => r.json()),
+      fetch('/api/users').then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); }),
+      fetch('/api/classrooms').then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); }),
     ]).then(([userJson, crJson]) => {
       setAllStudents((userJson.data ?? []).filter((u: StudentItem) => u.role === 'STUDENT'));
       setClassrooms(crJson.data ?? []);

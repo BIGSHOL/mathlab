@@ -33,7 +33,11 @@ interface Tenant {
 
 export default function TenantsPage() {
   const router = useRouter();
-  const { enterTenantView } = useViewingTenantStore();
+  const { enterTenantView, exitTenantView } = useViewingTenantStore();
+
+  // 지점 관리 페이지 진입 시 viewing tenant 해제 (뒤로가기 대응)
+  useEffect(() => { exitTenantView(); }, [exitTenantView]);
+
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -372,7 +376,7 @@ export default function TenantsPage() {
                       variant="ghost"
                       size="sm"
                       title="지점 설정"
-                      onClick={() => router.push(`/admin/tenants/${tenant.id}`)}
+                      onClick={() => router.push(`/admin/tenants/${tenant.slug}`)}
                     >
                       <Settings className="w-4 h-4" />
                     </Button>

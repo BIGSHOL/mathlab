@@ -273,10 +273,10 @@ export default function ConceptPage() {
     if (!id) return;
     Promise.all([
       fetch(`/api/concepts/${id}${asQuery}`)
-        .then((r) => r.json())
+        .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
         .catch(() => null),
       fetch(`/api/concepts/${id}/adjacent${asQuery}`)
-        .then((r) => r.json())
+        .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
         .catch(() => null),
       fetch(`/api/concepts/${id}/memo${asQuery}`)
         .then((r) => r.ok ? r.json() : null)
@@ -300,7 +300,7 @@ export default function ConceptPage() {
   useEffect(() => {
     if (!concept) return;
     fetch(`/api/learning/progress?conceptId=${concept.id}${asSuffix}`)
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((json) => {
         const p = json.data ?? [];
         setProgress(p);
@@ -403,7 +403,7 @@ export default function ConceptPage() {
     if (stage === 'BLANK_EASY' || stage === 'BLANK_HARD' || stage === 'BLANK_FULL') {
       const level = stage === 'BLANK_EASY' ? 1 : stage === 'BLANK_HARD' ? 2 : 3;
       fetch(`/api/concepts/${id}/blanks?level=${level}${asSuffix}`)
-        .then((r) => r.json())
+        .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
         .then((json) => {
           if (json.data) {
             setBlanks(json.data);

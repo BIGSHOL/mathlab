@@ -84,7 +84,7 @@ export default function AdminFeaturesPage() {
   useEffect(() => {
     if (!isSuperAdmin) return;
     fetch('/api/admin/tenants')
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((json) => {
         if (json.data) setTenants(json.data.map((t: TenantOption) => ({ id: t.id, name: t.name, slug: t.slug })));
       });
@@ -97,8 +97,9 @@ export default function AdminFeaturesPage() {
       ? `/api/admin/features?tenantId=${selectedTenantId}`
       : '/api/admin/features';
     fetch(url)
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
       .then((json) => { if (json.data) setFlags(json.data); })
+      .catch(() => { /* DB 연결 오류 등 — 무시 */ })
       .finally(() => setLoading(false));
   }, [selectedTenantId]);
 

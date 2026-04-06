@@ -39,7 +39,7 @@ export function SystematicChainView({
   // 체인 목록 로드
   useEffect(() => {
     fetch('/api/concepts/prerequisite-chain')
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((json) => {
         if (json.data?.chains) {
           setChains(json.data.chains);

@@ -17,7 +17,7 @@ export function ExamAnalysisWidget() {
 
   useEffect(() => {
     fetch('/api/exam-analysis?limit=5')
-      .then(r => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then(json => {
         const items = json.data || [];
         setData({

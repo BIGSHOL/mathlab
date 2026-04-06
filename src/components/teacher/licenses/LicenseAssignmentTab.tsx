@@ -16,6 +16,9 @@ const FEATURES: { key: LicenseFeatureKey; enum: LicenseFeature; label: string }[
   { key: 'revenge', enum: 'REVENGE', label: '복수전' },
   { key: 'diagnostic', enum: 'DIAGNOSTIC', label: '레벨테스트' },
   { key: 'quiz', enum: 'QUIZ', label: '실시간 퀴즈' },
+  { key: 'exam_analysis', enum: 'EXAM_ANALYSIS', label: '기출 분석' },
+  { key: 'homework', enum: 'HOMEWORK', label: '숙제' },
+  { key: 'worksheet', enum: 'WORKSHEET', label: '학습지' },
 ];
 
 interface TenantLicense {

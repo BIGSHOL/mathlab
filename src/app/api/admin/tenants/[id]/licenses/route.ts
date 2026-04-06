@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
 import { requireSuperAdmin, isResponse } from '@/lib/api';
 import {
   getTenantLicenses,
@@ -10,12 +11,21 @@ import {
 
 type RouteParams = { params: Promise<{ id: string }> };
 
+/** id 또는 slug → 실제 tenantId 변환 */
+async function resolveTenantId(idOrSlug: string): Promise<string | null> {
+  if (idOrSlug.length >= 20) return idOrSlug;
+  const tenant = await prisma.tenant.findUnique({ where: { slug: idOrSlug }, select: { id: true } });
+  return tenant?.id ?? null;
+}
+
 /** GET /api/admin/tenants/[id]/licenses — 지점 이용권 목록 */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
-  const { id: tenantId } = await params;
+  const { id } = await params;
+  const tenantId = await resolveTenantId(id);
+  if (!tenantId) return NextResponse.json({ error: { code: 'NOT_FOUND', message: '지점을 찾을 수 없습니다' } }, { status: 404 });
   const licenses = await getTenantLicenses(tenantId);
 
   // enum → key 변환하여 반환
@@ -32,7 +42,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
-  const { id: tenantId } = await params;
+  const { id } = await params;
+  const tenantId = await resolveTenantId(id);
+  if (!tenantId) return NextResponse.json({ error: { code: 'NOT_FOUND', message: '지점을 찾을 수 없습니다' } }, { status: 404 });
   const body = await request.json();
   const { feature, maxSeats, expiresAt, memo, isActive } = body as {
     feature: LicenseFeatureKey;
@@ -73,7 +85,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
-  const { id: tenantId } = await params;
+  const { id } = await params;
+  const tenantId = await resolveTenantId(id);
+  if (!tenantId) return NextResponse.json({ error: { code: 'NOT_FOUND', message: '지점을 찾을 수 없습니다' } }, { status: 404 });
   const body = await request.json();
   const { feature, maxSeats, expiresAt, memo, isActive } = body as {
     feature: LicenseFeatureKey;

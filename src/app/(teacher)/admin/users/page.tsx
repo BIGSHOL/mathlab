@@ -160,10 +160,10 @@ export default function AdminUsersPage() {
 
     Promise.all([
       fetch(`/api/admin/users?${params}`)
-        .then((r) => r.json())
+        .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
         .catch(() => null),
       fetch('/api/admin/activity?limit=1')
-        .then((r) => r.json())
+        .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
         .catch(() => null),
     ]).then(([usersRes, activityRes]) => {
       if (usersRes?.data) setUsers(usersRes.data);
@@ -179,7 +179,7 @@ export default function AdminUsersPage() {
       let url = `/api/admin/activity?userId=${userId}&page=${page}&limit=20`;
       if (date) url += `&date=${date}`;
       fetch(url)
-        .then((r) => r.json())
+        .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
         .then((res) => {
           if (res.data?.activities) {
             setActivities((prev) => (append ? [...prev, ...res.data.activities] : res.data.activities));
@@ -199,7 +199,7 @@ export default function AdminUsersPage() {
     (userId: string, year: number, month: number) => {
       setCalendarLoading(true);
       fetch(`/api/admin/activity?view=calendar&userId=${userId}&year=${year}&month=${month + 1}`)
-        .then((r) => r.json())
+        .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
         .then((res) => {
           if (res.data?.calendar) setCalendarData(res.data.calendar);
         })

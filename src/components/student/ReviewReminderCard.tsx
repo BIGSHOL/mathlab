@@ -38,7 +38,7 @@ export function ReviewReminderCard() {
 
   useEffect(() => {
     fetch('/api/learning/reviews/today')
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((json) => {
         if (json.data) {
           setStats(json.data.stats);

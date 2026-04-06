@@ -11,7 +11,7 @@ export function useFeatureFlags() {
 
   useEffect(() => {
     fetch('/api/features')
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((json) => { if (json.data) setFlags(json.data); })
       .catch(() => {})
       .finally(() => setLoading(false));

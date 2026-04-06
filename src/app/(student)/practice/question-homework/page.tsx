@@ -74,7 +74,7 @@ export default function QuestionHomeworkPage() {
   // Fetch homework list
   useEffect(() => {
     fetch('/api/question-homework/today')
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((json) => {
         setHomeworkList(json.data ?? []);
       })
@@ -392,7 +392,7 @@ export default function QuestionHomeworkPage() {
             setActiveHomework(null);
             // Re-fetch list
             fetch('/api/question-homework/today')
-              .then((r) => r.json())
+              .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
               .then((json) => setHomeworkList(json.data ?? []))
               .catch((err) => console.error('문제 숙제 목록 재조회 실패:', err));
           }}

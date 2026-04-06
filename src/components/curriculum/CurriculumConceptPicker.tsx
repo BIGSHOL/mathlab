@@ -208,7 +208,7 @@ function CurriculumTab({
     if (semester) params.set('semester', String(semester));
 
     fetch(`/api/concepts?${params}`)
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((json) => {
         const concepts: PickerConceptItem[] = (json.data ?? []).map((c: PickerConceptItem) => ({
           id: c.id,
@@ -227,6 +227,7 @@ function CurriculumTab({
         }
         setConceptsByChapter(grouped);
       })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [schoolLevel, selectedGrade]);
 
@@ -416,13 +417,14 @@ function StrandTab({
     if (!selectedChain) return;
     setLoading(true);
     fetch(`/api/concepts/prerequisite-chain?chain=${encodeURIComponent(selectedChain)}`)
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((json) => {
         const nodes: ChainConcept[] = json.data?.nodes ?? [];
         setChainConcepts(nodes);
         setStartIdx(0);
         setEndIdx(Math.max(0, nodes.length - 1));
       })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [selectedChain]);
 
@@ -565,10 +567,11 @@ function FreeTab({
     const params = new URLSearchParams({ limit: '500' });
     if (gradeFilter) params.set('grade', gradeFilter);
     fetch(`/api/concepts?${params}`)
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((json) => setAllConcepts((json.data ?? []).map((c: PickerConceptItem) => ({
         id: c.id, title: c.title, conceptCode: c.conceptCode, grade: c.grade, chapter: c.chapter, section: c.section,
       }))))
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [gradeFilter]);
 

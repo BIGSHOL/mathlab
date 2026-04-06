@@ -61,7 +61,7 @@ export default function StudentPreviewPage() {
   // 학생 목록 로드
   useEffect(() => {
     fetch('/api/users')
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((res) => {
         const list = (res.data || [])
           .filter((u: StudentItem) => u.role === 'STUDENT')

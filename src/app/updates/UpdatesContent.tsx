@@ -21,8 +21,9 @@ export function UpdatesContent({ backHref, backLabel, isLoggedIn, embedded }: Pr
 
   useEffect(() => {
     fetch('/api/updates')
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((res) => setUpdates(res.data ?? []))
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 

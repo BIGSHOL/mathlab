@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireSuperAdmin, isResponse } from '@/lib/api';
 
+/** id 또는 slug로 Prisma where 조건 생성 */
+function tenantWhere(idOrSlug: string) {
+  return idOrSlug.length >= 20 ? { id: idOrSlug } : { slug: idOrSlug };
+}
+
 /**
  * GET /api/admin/tenants/[id] — 지점 상세 (SUPER_ADMIN 전용)
  */
@@ -15,7 +20,7 @@ export async function GET(
   const { id } = await params;
 
   const tenant = await prisma.tenant.findUnique({
-    where: { id },
+    where: tenantWhere(id),
     include: {
       _count: {
         select: {
@@ -36,7 +41,7 @@ export async function GET(
   // 역할별 사용자 수
   const roleCounts = await prisma.user.groupBy({
     by: ['role'],
-    where: { tenantId: id, deletedAt: null },
+    where: { tenantId: tenant.id, deletedAt: null },
     _count: true,
   });
 
@@ -66,7 +71,7 @@ export async function PATCH(
   const { name, logo, isActive, settings } = body;
 
   const tenant = await prisma.tenant.update({
-    where: { id },
+    where: tenantWhere(id),
     data: {
       ...(name !== undefined && { name }),
       ...(logo !== undefined && { logo }),
@@ -91,8 +96,14 @@ export async function DELETE(
   const { id } = await params;
 
   // default 테넌트는 삭제 불가
-  const tenant = await prisma.tenant.findUnique({ where: { id } });
-  if (tenant?.slug === 'default') {
+  const tenant = await prisma.tenant.findUnique({ where: tenantWhere(id) });
+  if (!tenant) {
+    return NextResponse.json(
+      { error: { code: 'NOT_FOUND', message: '지점을 찾을 수 없습니다' } },
+      { status: 404 }
+    );
+  }
+  if (tenant.slug === 'default') {
     return NextResponse.json(
       { error: { code: 'FORBIDDEN', message: '기본 지점은 삭제할 수 없습니다' } },
       { status: 403 }
@@ -100,7 +111,7 @@ export async function DELETE(
   }
 
   await prisma.tenant.update({
-    where: { id },
+    where: { id: tenant.id },
     data: { isActive: false },
   });
 

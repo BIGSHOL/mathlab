@@ -30,7 +30,7 @@ export function DailyQuestionCard() {
 
   useEffect(() => {
     fetch('/api/daily-question/today')
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((json) => { if (json.data) setData(json.data); })
       .catch(() => {})
       .finally(() => setLoading(false));

@@ -192,6 +192,7 @@ export default async function OwnerDashboard({ user, period }: Props) {
   const FEATURE_LABELS: Record<string, string> = {
     CONCEPT: '개념학습', ARITHMETIC: '연산', TIME_ATTACK: '타임어택',
     TEST: '시험', REVENGE: '복수전', DIAGNOSTIC: '진단', QUIZ: '퀴즈',
+    EXAM_ANALYSIS: '기출분석', HOMEWORK: '숙제', WORKSHEET: '학습지',
   };
 
   const periodLabel = period === 'all' ? '전체' : period === '90d' ? '3개월' : period === '30d' ? '월간' : '주간';

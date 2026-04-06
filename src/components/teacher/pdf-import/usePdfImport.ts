@@ -121,7 +121,7 @@ export function usePdfImport(): PdfImportState {
   // --- 과목 목록 로드 (개념 저장용) ---
   useEffect(() => {
     fetch('/api/subjects')
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((json) => {
         const list = json.data || [];
         setSubjects(list);

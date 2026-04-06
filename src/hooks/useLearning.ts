@@ -26,8 +26,9 @@ export function useLearning(conceptId: string) {
 
   useEffect(() => {
     fetch(`/api/learning/progress?conceptId=${conceptId}`)
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((json) => setProgress(json.data ?? []))
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [conceptId]);
 
