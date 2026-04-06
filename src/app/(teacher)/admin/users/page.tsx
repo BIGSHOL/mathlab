@@ -134,11 +134,12 @@ export default function AdminUsersPage() {
   const isOwner = hasRoleClient(currentUser?.role, 'OWNER');
 
   // 원장 이상 권한 체크
+  const currentUserRole = currentUser?.role;
   useEffect(() => {
-    if (currentUser && !hasRoleClient(currentUser.role, 'OWNER')) {
+    if (currentUserRole && !hasRoleClient(currentUserRole, 'OWNER')) {
       router.replace('/overview');
     }
-  }, [currentUser, router]);
+  }, [currentUserRole, router]);
 
   // 검색어 디바운스
   useEffect(() => {

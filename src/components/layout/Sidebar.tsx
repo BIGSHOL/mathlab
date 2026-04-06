@@ -43,13 +43,15 @@ export function Sidebar() {
   const DEMO_ALLOWED_HREFS = ['/overview', '/concepts', '/questions/arithmetic', '/exam-analysis', '/homework', '/student-preview', '/settings'];
   // OWNER/MANAGER: 지점 활성 이용권으로 네비 필터링
   const [tenantFeatures, setTenantFeatures] = useState<Set<string> | null>(null);
+  const userId = user?.id;
+  const userRole = user?.role;
   useEffect(() => {
-    if (!user || user.role === 'SUPER_ADMIN' || user.role === 'STUDENT') return;
+    if (!userId || userRole === 'SUPER_ADMIN' || userRole === 'STUDENT') return;
     fetch('/api/licenses/tenant-features')
       .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((json) => { if (json.data) setTenantFeatures(new Set(json.data as string[])); })
       .catch(() => setTenantFeatures(null));
-  }, [user]);
+  }, [userId, userRole]);
 
   const rawNavGroups = getNavForRole(role);
   const filteredNavGroups = rawNavGroups

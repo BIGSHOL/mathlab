@@ -189,7 +189,7 @@ export function useTestAttempt() {
   const [attempt, setAttempt] = useState<AttemptResult | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const startAttempt = async (testId: string) => {
+  const startAttempt = useCallback(async (testId: string) => {
     setLoading(true);
     try {
       const res = await fetch(`/api/tests/${testId}/attempt`, { method: 'POST' });
@@ -203,9 +203,9 @@ export function useTestAttempt() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const submitAnswer = async (
+  const submitAnswer = useCallback(async (
     attemptId: string,
     questionId: string,
     selectedAnswer: string,
@@ -232,18 +232,18 @@ export function useTestAttempt() {
     }
 
     return json.data;
-  };
+  }, []);
 
-  const completeAttempt = async (attemptId: string): Promise<CompleteResult> => {
+  const completeAttempt = useCallback(async (attemptId: string): Promise<CompleteResult> => {
     const res = await fetch(`/api/tests/attempts/${attemptId}/complete`, {
       method: 'POST',
     });
     if (!res.ok) throw new Error('시험 완료 실패');
     const json = await res.json();
     return json.data;
-  };
+  }, []);
 
-  const loadAttempt = async (attemptId: string) => {
+  const loadAttempt = useCallback(async (attemptId: string) => {
     setLoading(true);
     try {
       const res = await fetch(`/api/tests/attempts/${attemptId}`);
@@ -253,7 +253,7 @@ export function useTestAttempt() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   return { attempt, loading, startAttempt, submitAnswer, completeAttempt, loadAttempt };
 }
