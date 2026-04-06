@@ -7,12 +7,13 @@ export async function GET() {
   const user = await requireAuth();
   if (isResponse(user)) return user;
 
-  if (!user.tenantId) {
+  const effectiveTenantId = user.viewingTenantId ?? user.tenantId;
+  if (!effectiveTenantId) {
     return NextResponse.json({ data: [] });
   }
 
   const licenses = await prisma.tenantLicense.findMany({
-    where: { tenantId: user.tenantId, isActive: true },
+    where: { tenantId: effectiveTenantId, isActive: true },
     select: { feature: true },
   });
 

@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       parentPhone: parsed.parentPhone || undefined,
       birthDate: parsed.birthDate ? new Date(parsed.birthDate) : undefined,
       startDate: parsed.startDate ? new Date(parsed.startDate) : undefined,
-      tenantId: user.tenantId || undefined,
+      tenantId: user.viewingTenantId ?? user.tenantId ?? undefined,
       profile: { create: {} },
     },
     select: { id: true, seq: true, username: true, name: true, role: true, grade: true },

@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       description,
       mode,
       createdBy: user.id,
-      tenantId: user.tenantId,
+      tenantId: user.viewingTenantId ?? user.tenantId,
       concepts: {
         create: conceptIds.map((conceptId, i) => ({
           conceptId,

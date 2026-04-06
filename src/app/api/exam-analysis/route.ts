@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
     // DB 생성
     const examPaper = await prisma.examPaper.create({
       data: {
-        tenantId: user.tenantId || '',
+        tenantId: user.viewingTenantId ?? user.tenantId ?? '',
         teacherId: user.id,
         studentId: parsed.data.studentId || null,
         title: parsed.data.title,

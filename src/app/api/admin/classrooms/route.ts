@@ -36,8 +36,9 @@ export async function POST(request: NextRequest) {
   const { name, grade } = body;
   if (!name || typeof name !== 'string') return badRequest('반 이름이 필요합니다');
 
+  const effectiveTenantId = user.viewingTenantId ?? user.tenantId;
   const classroom = await prisma.classroom.create({
-    data: { name, grade: grade ?? null, teacherId: user.id, tenantId: user.tenantId || undefined },
+    data: { name, grade: grade ?? null, teacherId: user.id, tenantId: effectiveTenantId || undefined },
   });
 
   return NextResponse.json({ data: classroom });
