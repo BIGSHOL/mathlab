@@ -87,26 +87,34 @@ export default function LicenseOverviewTab() {
         />
       </div>
 
-      {/* 좌석 기반 기능 카드 */}
+      {/* 좌석 기반 기능 카드 — 활성이거나 데이터가 있는 항목만 표시 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {LICENSE_FEATURES_ORDERED.filter((f) => !TOGGLE_FEATURES.has(f)).map((feature) => {
           const info = LICENSE_FEATURE_INFO[feature];
           const stat = stats.find((s) => s.feature === feature);
+          const hasData = stat && (stat.isActive || stat.usedSeats > 0 || stat.assignedStudentCount > 0 || stat.activeStudentCount > 0);
+          if (!hasData) return null;
           return <FeatureCard key={feature} info={info} stat={stat} />;
         })}
       </div>
 
-      {/* On/Off 기능 */}
+      {/* On/Off 기능 — 활성인 항목만 표시 */}
+      {LICENSE_FEATURES_ORDERED.filter((f) => TOGGLE_FEATURES.has(f)).some((feature) => {
+        const stat = stats.find((s) => s.feature === feature);
+        return stat?.isActive;
+      }) && (
       <div>
         <p className="text-xs font-semibold text-text-secondary mb-3 uppercase tracking-wider">선생님 도구 · On/Off</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {LICENSE_FEATURES_ORDERED.filter((f) => TOGGLE_FEATURES.has(f)).map((feature) => {
-            const info = LICENSE_FEATURE_INFO[feature];
             const stat = stats.find((s) => s.feature === feature);
+            if (!stat?.isActive) return null;
+            const info = LICENSE_FEATURE_INFO[feature];
             return <ToggleFeatureCard key={feature} info={info} stat={stat} />;
           })}
         </div>
       </div>
+      )}
     </div>
   );
 }
@@ -142,8 +150,8 @@ function FeatureCard({ info, stat }: {
     }`}>
       {/* 헤더: 아이콘 + 제목 */}
       <div className="flex items-start gap-3">
-        <div className={`w-9 h-9 rounded-sm ${info.color} bg-opacity-10 flex items-center justify-center shrink-0`}>
-          <Icon className={`w-4.5 h-4.5 ${info.textColor}`} />
+        <div className="w-9 h-9 rounded-sm bg-slate-100 flex items-center justify-center shrink-0">
+          <Icon className={`w-5 h-5 ${info.textColor}`} />
         </div>
         <div className="flex-1 min-w-0">
           <h4 className="font-bold text-sm text-text-primary">{info.label}</h4>
@@ -229,8 +237,8 @@ function ToggleFeatureCard({ info, stat }: {
   return (
     <div className={`p-4 rounded-sm border ${isActive ? 'border-slate-200 bg-white' : 'border-slate-200 bg-slate-50/50'}`}>
       <div className="flex items-start gap-3">
-        <div className={`w-9 h-9 rounded-sm ${info.color} bg-opacity-10 flex items-center justify-center shrink-0`}>
-          <Icon className={`w-4.5 h-4.5 ${info.textColor}`} />
+        <div className="w-9 h-9 rounded-sm bg-slate-100 flex items-center justify-center shrink-0">
+          <Icon className={`w-5 h-5 ${info.textColor}`} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
