@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { gradeLabel } from './helpers';
 
@@ -30,6 +32,7 @@ interface StudentCreateFormProps {
 const inputCls = 'w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary';
 
 export function StudentCreateForm({ formData, formError, onFormDataChange, onSubmit, onCancel }: StudentCreateFormProps) {
+  const [showPw, setShowPw] = useState(false);
   const set = (field: keyof FormData, value: string | number) =>
     onFormDataChange({ ...formData, [field]: value });
 
@@ -78,7 +81,12 @@ export function StudentCreateForm({ formData, formError, onFormDataChange, onSub
                 <label className="block text-xs font-semibold text-text-secondary mb-1">
                   초기 비밀번호 <span className="text-red-500">*</span>
                 </label>
-                <input className={inputCls} type="password" placeholder="초기 비밀번호" value={formData.password} onChange={(e) => set('password', e.target.value)} required />
+                <div className="relative">
+                  <input className={`${inputCls} pr-9`} type={showPw ? 'text' : 'password'} placeholder="초기 비밀번호" value={formData.password} onChange={(e) => set('password', e.target.value)} required />
+                  <button type="button" tabIndex={-1} onClick={() => setShowPw((p) => !p)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
             </div>
           </fieldset>

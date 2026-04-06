@@ -11,6 +11,8 @@ import {
   Settings,
   PanelLeftClose,
   PanelLeftOpen,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Card } from '@/components/ui/Card';
@@ -211,36 +213,9 @@ export default function SettingsPage() {
                 <Shield className="w-5 h-5 text-primary" /> 보안 설정
               </h2>
               <div className="flex flex-col gap-2">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-primary">현재 비밀번호</label>
-                  <input
-                    className="h-11 px-3 rounded-sm border border-slate-200 bg-white text-text-primary placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all text-[15px]"
-                    type="password"
-                    placeholder="현재 비밀번호 입력"
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-primary">새 비밀번호</label>
-                  <input
-                    className="h-11 px-3 rounded-sm border border-slate-200 bg-white text-text-primary placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all text-[15px]"
-                    type="password"
-                    placeholder="새 비밀번호 입력"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-primary">비밀번호 확인</label>
-                  <input
-                    className="h-11 px-3 rounded-sm border border-slate-200 bg-white text-text-primary placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all text-[15px]"
-                    type="password"
-                    placeholder="비밀번호 재입력"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                  />
-                </div>
+                <PasswordField label="현재 비밀번호" placeholder="현재 비밀번호 입력" value={currentPassword} onChange={setCurrentPassword} />
+                <PasswordField label="새 비밀번호" placeholder="새 비밀번호 입력" value={newPassword} onChange={setNewPassword} />
+                <PasswordField label="비밀번호 확인" placeholder="비밀번호 재입력" value={confirmPassword} onChange={setConfirmPassword} />
               </div>
               <div className="pt-2 border-t border-slate-200">
                 <Button onClick={handleChangePassword} disabled={passwordSaving}>
@@ -317,6 +292,27 @@ export default function SettingsPage() {
           )}
         </div>
       </main>
+    </div>
+  );
+}
+
+function PasswordField({ label, placeholder, value, onChange }: { label: string; placeholder: string; value: string; onChange: (v: string) => void }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-sm font-semibold text-text-primary">{label}</label>
+      <div className="relative">
+        <input
+          className="h-11 w-full px-3 pr-10 rounded-sm border border-slate-200 bg-white text-text-primary placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all text-[15px]"
+          type={show ? 'text' : 'password'}
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+        <button type="button" tabIndex={-1} onClick={() => setShow((p) => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+          {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+        </button>
+      </div>
     </div>
   );
 }

@@ -9,6 +9,8 @@ import {
   Check,
   GraduationCap,
   ClipboardCheck,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Card } from '@/components/ui/Card';
@@ -29,6 +31,7 @@ export default function EnrollWizardPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [createdStudentSeq, setCreatedStudentSeq] = useState<number | null>(null);
+  const [showPw, setShowPw] = useState(false);
 
   const [form, setForm] = useState({
     name: '',
@@ -138,12 +141,17 @@ export default function EnrollWizardPage() {
               </div>
               <div>
                 <label className="text-xs font-semibold text-text-secondary mb-1 block">초기 비밀번호 <span className="text-red-500">*</span></label>
-                <input
-                  className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                  type="password"
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                />
+                <div className="relative">
+                  <input
+                    className="w-full px-3 py-2 pr-9 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                    type={showPw ? 'text' : 'password'}
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  />
+                  <button type="button" tabIndex={-1} onClick={() => setShowPw((p) => !p)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
                 <p className="text-xs text-text-secondary mt-1">기본값: 1234. 학생이 첫 로그인 후 변경을 권장합니다.</p>
               </div>
             </fieldset>
