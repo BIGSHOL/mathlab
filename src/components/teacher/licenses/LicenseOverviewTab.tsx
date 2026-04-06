@@ -103,7 +103,7 @@ export default function LicenseOverviewTab() {
           {LICENSE_FEATURES_ORDERED.filter((f) => TOGGLE_FEATURES.has(f)).map((feature) => {
             const info = LICENSE_FEATURE_INFO[feature];
             const stat = stats.find((s) => s.feature === feature);
-            return <ToggleFeatureCard key={feature} feature={feature} info={info} stat={stat} />;
+            return <ToggleFeatureCard key={feature} info={info} stat={stat} />;
           })}
         </div>
       </div>
@@ -219,8 +219,7 @@ function FeatureCard({ info, stat }: {
   );
 }
 
-function ToggleFeatureCard({ feature, info, stat }: {
-  feature: LicenseFeature;
+function ToggleFeatureCard({ info, stat }: {
   info: typeof LICENSE_FEATURE_INFO[LicenseFeature];
   stat: FeatureStatData | undefined;
 }) {
