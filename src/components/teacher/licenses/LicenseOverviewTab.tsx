@@ -5,8 +5,11 @@ import Link from 'next/link';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { toast } from '@/components/ui/Toast';
 import { LICENSE_FEATURE_INFO, LICENSE_FEATURES_ORDERED } from '@/lib/constants/license-hub';
-import { Activity, ExternalLink, Users, ShieldCheck, TrendingUp } from 'lucide-react';
+import { Activity, ExternalLink, Users, ShieldCheck, TrendingUp, Power } from 'lucide-react';
 import type { LicenseFeature } from '@prisma/client';
+
+/** 좌석 기반이 아닌 On/Off 전용 기능 */
+const TOGGLE_FEATURES: Set<LicenseFeature> = new Set(['EXAM_ANALYSIS', 'WORKSHEET']);
 
 interface FeatureStatData {
   feature: LicenseFeature;
@@ -53,10 +56,11 @@ export default function LicenseOverviewTab() {
     );
   }
 
-  // 종합 통계 계산
-  const totalMaxSeats = stats.reduce((sum, s) => sum + s.maxSeats, 0);
-  const totalUsedSeats = stats.reduce((sum, s) => sum + s.usedSeats, 0);
-  const activeFeatureCount = stats.filter((s) => s.isActive && s.maxSeats > 0).length;
+  // 종합 통계 계산 (좌석 기반 기능만)
+  const seatStats = stats.filter((s) => !TOGGLE_FEATURES.has(s.feature));
+  const totalMaxSeats = seatStats.reduce((sum, s) => sum + s.maxSeats, 0);
+  const totalUsedSeats = seatStats.reduce((sum, s) => sum + s.usedSeats, 0);
+  const activeFeatureCount = stats.filter((s) => s.isActive && (s.maxSeats > 0 || TOGGLE_FEATURES.has(s.feature))).length;
   const totalActiveSum = stats.reduce((sum, s) => sum + s.activeStudentCount, 0);
 
   return (
@@ -73,7 +77,7 @@ export default function LicenseOverviewTab() {
           icon={<ShieldCheck className="w-5 h-5 text-emerald-500 opacity-40" />}
           label="활성 이용권"
           value={`${activeFeatureCount}개`}
-          sub={`총 7개 기능 중`}
+          sub={`총 ${LICENSE_FEATURES_ORDERED.length}개 기능 중`}
         />
         <SummaryCard
           icon={<TrendingUp className="w-5 h-5 text-amber-500 opacity-40" />}
@@ -83,15 +87,25 @@ export default function LicenseOverviewTab() {
         />
       </div>
 
-      {/* 기능별 카드 그리드 */}
+      {/* 좌석 기반 기능 카드 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {LICENSE_FEATURES_ORDERED.map((feature) => {
+        {LICENSE_FEATURES_ORDERED.filter((f) => !TOGGLE_FEATURES.has(f)).map((feature) => {
           const info = LICENSE_FEATURE_INFO[feature];
           const stat = stats.find((s) => s.feature === feature);
-          return (
-            <FeatureCard key={feature} info={info} stat={stat} />
-          );
+          return <FeatureCard key={feature} info={info} stat={stat} />;
         })}
+      </div>
+
+      {/* On/Off 기능 */}
+      <div>
+        <p className="text-xs font-semibold text-text-secondary mb-3 uppercase tracking-wider">선생님 도구 · On/Off</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {LICENSE_FEATURES_ORDERED.filter((f) => TOGGLE_FEATURES.has(f)).map((feature) => {
+            const info = LICENSE_FEATURE_INFO[feature];
+            const stat = stats.find((s) => s.feature === feature);
+            return <ToggleFeatureCard key={feature} feature={feature} info={info} stat={stat} />;
+          })}
+        </div>
       </div>
     </div>
   );
@@ -201,6 +215,55 @@ function FeatureCard({ info, stat }: {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function ToggleFeatureCard({ feature, info, stat }: {
+  feature: LicenseFeature;
+  info: typeof LICENSE_FEATURE_INFO[LicenseFeature];
+  stat: FeatureStatData | undefined;
+}) {
+  const Icon = info.icon;
+  const isActive = stat?.isActive ?? false;
+
+  return (
+    <div className={`p-4 rounded-sm border ${isActive ? 'border-slate-200 bg-white' : 'border-slate-200 bg-slate-50/50'}`}>
+      <div className="flex items-start gap-3">
+        <div className={`w-9 h-9 rounded-sm ${info.color} bg-opacity-10 flex items-center justify-center shrink-0`}>
+          <Icon className={`w-4.5 h-4.5 ${info.textColor}`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h4 className="font-bold text-sm text-text-primary">{info.label}</h4>
+            <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+              isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
+            }`}>
+              <Power className="w-3 h-3 inline mr-0.5" />
+              {isActive ? 'ON' : 'OFF'}
+            </span>
+          </div>
+          <p className="text-xs text-text-secondary mt-0.5 leading-relaxed">{info.description}</p>
+        </div>
+      </div>
+
+      {/* 관련 메뉴 */}
+      {info.teacherLinks.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-end">
+          <div className="flex items-center gap-2">
+            {info.teacherLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="flex items-center gap-1 text-xs text-primary font-medium hover:underline"
+              >
+                {link.label}
+                <ExternalLink className="w-3 h-3" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
