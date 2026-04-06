@@ -57,13 +57,13 @@ export default function StudentsPage() {
     const params = new URLSearchParams();
     params.set('page', String(currentPage));
     params.set('limit', '30');
+    params.set('role', 'STUDENT');
     if (debouncedSearch) params.set('search', debouncedSearch);
     if (gradeFilter !== 'all') params.set('grade', gradeFilter);
     const res = await fetch(`/api/users?${params}`);
     if (res.ok) {
       const json = await res.json();
-      const all: UserItem[] = json.data ?? [];
-      setUsers(all.filter((u) => u.role === 'STUDENT'));
+      setUsers(json.data ?? []);
       setTotalPages(json.meta?.totalPages ?? 1);
       setTotalCount(json.meta?.total ?? 0);
     }
@@ -180,7 +180,9 @@ export default function StudentsPage() {
     fetchStats(u.id);
   };
 
-  const studentCount = totalCount;
+  // level/activity 필터 적용 시 filteredUsers 기준, 아니면 서버 total
+  const hasClientFilter = levelFilter !== 'all' || activityFilter !== 'all';
+  const studentCount = hasClientFilter ? filteredUsers.length : totalCount;
 
   const mobileShowDetail = !!(selectedUser || showForm);
 

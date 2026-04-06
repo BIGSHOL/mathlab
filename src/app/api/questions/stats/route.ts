@@ -1,18 +1,23 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse } from '@/lib/api';
+import { requireTeacher, isResponse, hasRole } from '@/lib/api';
 
 export async function GET() {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
 
+  // 테넌트 스코핑: 자기 지점 문제 + 공용 문제(tenantId=null)
+  const where = hasRole(user, 'SUPER_ADMIN') && !user.viewingTenantId
+    ? {}
+    : { OR: [{ tenantId: user.viewingTenantId || user.tenantId }, { tenantId: null }] };
+
   const [total, byBook, byDifficulty, byType, chapterGroups, sectionGroups] = await Promise.all([
-    prisma.question.count(),
-    prisma.question.groupBy({ by: ['bookCode'], _count: true, orderBy: { bookCode: 'asc' } }),
-    prisma.question.groupBy({ by: ['difficulty'], _count: true }),
-    prisma.question.groupBy({ by: ['type'], _count: true }),
-    prisma.question.groupBy({ by: ['bookCode', 'chapter'], _count: true, orderBy: [{ bookCode: 'asc' }, { chapter: 'asc' }] }),
-    prisma.question.groupBy({ by: ['bookCode', 'section'], where: { section: { not: null } }, _count: true, orderBy: [{ bookCode: 'asc' }, { section: 'asc' }] }),
+    prisma.question.count({ where }),
+    prisma.question.groupBy({ by: ['bookCode'], where, _count: true, orderBy: { bookCode: 'asc' } }),
+    prisma.question.groupBy({ by: ['difficulty'], where, _count: true }),
+    prisma.question.groupBy({ by: ['type'], where, _count: true }),
+    prisma.question.groupBy({ by: ['bookCode', 'chapter'], where, _count: true, orderBy: [{ bookCode: 'asc' }, { chapter: 'asc' }] }),
+    prisma.question.groupBy({ by: ['bookCode', 'section'], where: { ...where, section: { not: null } }, _count: true, orderBy: [{ bookCode: 'asc' }, { section: 'asc' }] }),
   ]);
 
   // bookCode별 chapter/section 목록 구성

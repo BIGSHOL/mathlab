@@ -23,6 +23,9 @@ export async function GET(request: NextRequest) {
     ? { deletedAt: null, ...tenantFilter }
     : await getStudentScope(user);
 
+  const role = searchParams.get('role');
+  if (role) where.role = role;
+
   if (search) {
     where.OR = [
       { name: { contains: search } },

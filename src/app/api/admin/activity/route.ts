@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireOwner, isResponse } from '@/lib/api';
+import { requireOwner, isResponse, getTenantFilter } from '@/lib/api';
+import type { AuthUser } from '@/lib/api/auth';
 import { CATEGORY_LABELS } from '@/lib/services/arithmetic-generator';
 
 const STAGE_LABELS: Record<string, string> = {
@@ -42,11 +43,11 @@ export async function GET(request: NextRequest) {
 
   // view=calendar: 월별 일별 집계
   if (view === 'calendar') {
-    return handleCalendarView(searchParams, userId, role);
+    return handleCalendarView(searchParams, userId, role, user);
   }
 
   // 기본: 타임라인 뷰
-  return handleTimelineView(searchParams, userId, role);
+  return handleTimelineView(searchParams, userId, role, user);
 }
 
 // ── 달력 뷰: 일별 집계 ──
@@ -55,6 +56,7 @@ async function handleCalendarView(
   searchParams: URLSearchParams,
   userId: string | null,
   role: string | null,
+  authUser: AuthUser,
 ) {
   const year = parseInt(searchParams.get('year') ?? String(new Date().getFullYear()));
   const month = parseInt(searchParams.get('month') ?? String(new Date().getMonth() + 1));
@@ -62,8 +64,9 @@ async function handleCalendarView(
   const startDate = new Date(year, month - 1, 1);
   const endDate = new Date(year, month, 1);
 
-  // 대상 사용자
-  const userWhere: Record<string, unknown> = { deletedAt: null };
+  // 대상 사용자 (테넌트 스코핑)
+  const tenantFilter = getTenantFilter(authUser);
+  const userWhere: Record<string, unknown> = { deletedAt: null, ...tenantFilter };
   if (userId) userWhere.id = userId;
   if (role && (role === 'STUDENT' || role === 'TEACHER')) userWhere.role = role;
 
@@ -136,13 +139,15 @@ async function handleTimelineView(
   searchParams: URLSearchParams,
   userId: string | null,
   role: string | null,
+  authUser: AuthUser,
 ) {
   const page = Math.max(1, parseInt(searchParams.get('page') ?? '1'));
   const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') ?? '20')));
   const dateFilter = searchParams.get('date'); // YYYY-MM-DD
 
-  // 대상 사용자 조회
-  const userWhere: Record<string, unknown> = { deletedAt: null };
+  // 대상 사용자 조회 (테넌트 스코핑)
+  const tenantFilter = getTenantFilter(authUser);
+  const userWhere: Record<string, unknown> = { deletedAt: null, ...tenantFilter };
   if (userId) userWhere.id = userId;
   if (role && (role === 'STUDENT' || role === 'TEACHER')) userWhere.role = role;
 
