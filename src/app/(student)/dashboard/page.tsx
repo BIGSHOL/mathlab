@@ -1,4 +1,4 @@
-import { Award, Star, CheckCircle, Flame, Play, BookOpen, ArrowRight, CalendarCheck, FileQuestion, Trophy, Activity, Sparkles, XCircle, BarChart3 } from 'lucide-react';
+import { Award, Star, CheckCircle, Flame, Play, BookOpen, ArrowRight, CalendarCheck, FileQuestion, Trophy, Activity, XCircle, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageContainer } from '@/components/ui/PageContainer';
@@ -235,7 +235,7 @@ export default async function StudentDashboard({
       })()
     : courseConceptIds;
 
-  const recommendedConcepts = hasEnrollments && courseConceptIds.length > 0
+  const _recommendedConcepts = hasEnrollments && courseConceptIds.length > 0
     ? await prisma.concept.findMany({
         where: {
           id: { in: unlockedConceptIds.length > 0 ? unlockedConceptIds : courseConceptIds },

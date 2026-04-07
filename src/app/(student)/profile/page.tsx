@@ -14,10 +14,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { BadgeModalSection } from './BadgeModalSection';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { AvatarEffect } from '@/components/ui/AvatarEffect';
+import { AvatarAccessory } from '@/components/ui/AvatarAccessory';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { GemCollectionSection } from './GemCollectionSection';
 import { partToGemVariant, calculateGemStage } from '@/lib/utils/gem';
 import type { GemVariant } from '@/lib/utils/gem';
+import type { EquippedItems } from '@/types/shop';
+import type { CSSProperties } from 'react';
 
 function timeAgo(date: Date) {
   const diff = Date.now() - date.getTime();
@@ -58,6 +62,22 @@ export default async function ProfilePage({
   const streak = profile?.currentStreak ?? 0;
   const longestStreak = profile?.longestStreak ?? 0;
   const nextLevel = xpToNextLevel(totalXp);
+
+  // ── 장착 아이템 스타일 resolve ──
+  const equipped = (profile?.equippedItems ?? {}) as EquippedItems;
+  const equippedItemIds = Object.values(equipped).filter(Boolean) as string[];
+  const equippedShopItems = equippedItemIds.length > 0
+    ? await prisma.shopItem.findMany({ where: { id: { in: equippedItemIds } }, select: { id: true, category: true, value: true } })
+    : [];
+  const equippedMap = new Map(equippedShopItems.map((i) => [i.id, i]));
+  const frameStyle = equipped.frame && equippedMap.has(equipped.frame) ? equippedMap.get(equipped.frame)!.value as CSSProperties : undefined;
+  const bgStyle = equipped.background && equippedMap.has(equipped.background) ? equippedMap.get(equipped.background)!.value as CSSProperties : undefined;
+  const titleText = equipped.title && equippedMap.has(equipped.title) ? ((equippedMap.get(equipped.title)!.value as Record<string, string>).text ?? '') : '';
+  const nameColorStyle = equipped.nameColor && equippedMap.has(equipped.nameColor) ? equippedMap.get(equipped.nameColor)!.value as CSSProperties : undefined;
+  const avatarSrc = equipped.avatar && equippedMap.has(equipped.avatar) ? ((equippedMap.get(equipped.avatar)!.value as Record<string, string>).src ?? null) : null;
+  const effectType = equipped.effect && equippedMap.has(equipped.effect) ? ((equippedMap.get(equipped.effect)!.value as Record<string, string>).effect ?? null) : null;
+  const hatType = equipped.hat && equippedMap.has(equipped.hat) ? ((equippedMap.get(equipped.hat)!.value as Record<string, string>).hat ?? null) : null;
+  const glassesType = equipped.glasses && equippedMap.has(equipped.glasses) ? ((equippedMap.get(equipped.glasses)!.value as Record<string, string>).glasses ?? null) : null;
 
   const completedConcepts = await prisma.learningProgress.groupBy({
     by: ['conceptId'],
@@ -425,15 +445,24 @@ export default async function ProfilePage({
       {/* ──── 상단: 프로필 헤더 & 학습 스트릭 ──── */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4">
         {/* 1. 프로필 정보 (좌측) */}
-        <Card padding="md" className="rounded-sm flex flex-col justify-between">
+        <Card padding="md" className="rounded-sm flex flex-col justify-between" style={bgStyle}>
           <div className="flex items-center gap-4 mb-4">
-            <UserAvatar name={user.name} badgeIcon={profile?.representativeBadge?.icon} size="xl" />
+            <AvatarEffect effectType={effectType} size={56}>
+              <AvatarAccessory hatType={hatType} glassesType={glassesType} size={56}>
+                <UserAvatar name={user.name} badgeIcon={profile?.representativeBadge?.icon} size="xl" frameStyle={frameStyle} avatarSrc={avatarSrc} />
+              </AvatarAccessory>
+            </AvatarEffect>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2.5">
-                <h1 className="text-lg font-bold text-text-primary truncate">{user.name}</h1>
+                <h1 className="text-lg font-bold truncate" style={nameColorStyle || undefined}>
+                  {user.name}
+                </h1>
                 <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-xp-gold to-amber-500 text-white text-xs font-bold shrink-0">
                   Lv.{level}
                 </span>
+                {titleText && (
+                  <span className="text-xs font-medium text-slate-500 shrink-0">{titleText}</span>
+                )}
                 {dbUser?.grade && (
                   <span className="text-xs text-text-secondary shrink-0">초등 {dbUser.grade}학년</span>
                 )}

@@ -17,6 +17,7 @@ import {
   PanelLeftClose,
   Zap,
   Lock,
+  ShoppingBag,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLicenses } from '@/hooks/useLicenses';
@@ -44,6 +45,7 @@ const mainItems: MenuItem[] = [
 const activityItems: MenuItem[] = [
   { label: '랭킹', href: '/ranking', icon: Trophy },
   { label: '타임어택', href: '/practice/arithmetic/time-attack', icon: Zap, licenseFeature: 'time_attack' },
+  { label: '상점', href: '/shop', icon: ShoppingBag },
 ];
 
 const systemItems: MenuItem[] = [

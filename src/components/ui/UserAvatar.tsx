@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import type { CSSProperties } from 'react';
 
 const SIZE_MAP = {
   xs: 'w-7 h-7 text-xs',
@@ -15,14 +16,39 @@ interface UserAvatarProps {
   badgeIcon?: string | null;
   size?: keyof typeof SIZE_MAP;
   className?: string;
+  /** 상점 프레임 스타일 (인라인) */
+  frameStyle?: CSSProperties;
+  /** 상점 아바타 이미지 경로 */
+  avatarSrc?: string | null;
 }
 
-export function UserAvatar({ name, badgeIcon, size = 'md', className = '' }: UserAvatarProps) {
+export function UserAvatar({ name, badgeIcon, size = 'md', className = '', frameStyle, avatarSrc }: UserAvatarProps) {
   const sizeClass = SIZE_MAP[size];
+
+  // 상점 아바타 이미지 우선
+  if (avatarSrc) {
+    return (
+      <div
+        className={`${sizeClass} rounded-full overflow-hidden shrink-0 ${frameStyle ? '' : 'ring-1 ring-slate-200'} relative bg-gradient-to-b from-sky-50 to-white ${className}`}
+        style={frameStyle}
+      >
+        <Image
+          src={avatarSrc}
+          alt={`${name} 아바타`}
+          fill
+          sizes="56px"
+          className="object-contain"
+        />
+      </div>
+    );
+  }
 
   if (badgeIcon && badgeIcon.startsWith('/')) {
     return (
-      <div className={`${sizeClass} rounded-full overflow-hidden shrink-0 ring-1 ring-amber-200/60 relative ${className}`}>
+      <div
+        className={`${sizeClass} rounded-full overflow-hidden shrink-0 ${frameStyle ? '' : 'ring-1 ring-amber-200/60'} relative ${className}`}
+        style={frameStyle}
+      >
         <Image
           src={badgeIcon}
           alt={`${name} 대표 배지`}
@@ -35,7 +61,10 @@ export function UserAvatar({ name, badgeIcon, size = 'md', className = '' }: Use
   }
 
   return (
-    <div className={`${sizeClass} rounded-full bg-gradient-to-tr from-primary to-accent text-white flex items-center justify-center font-bold shrink-0 ${className}`}>
+    <div
+      className={`${sizeClass} rounded-full bg-gradient-to-tr from-primary to-accent text-white flex items-center justify-center font-bold shrink-0 ${className}`}
+      style={frameStyle}
+    >
       {name[0] ?? '?'}
     </div>
   );

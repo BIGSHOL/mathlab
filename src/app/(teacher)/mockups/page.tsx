@@ -7,7 +7,7 @@ import {
   Eye, ScanEye, FileText, Calculator, CalendarCheck, Zap, Swords, FileQuestion,
   Gamepad2, Stethoscope, Printer, CheckSquare, Shield, ToggleLeft, School, ClipboardCheck,
   Radio, FileUp, AlertTriangle, ScrollText, Layers, LifeBuoy, Newspaper, Route, KeyRound,
-  Building2, Search, Gem,
+  Building2, Search, Gem, ShoppingBag, Crown,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 
@@ -89,13 +89,16 @@ const ALL_PAGES: PageInfo[] = [
   { label: '퀴즈 참여', href: '/quiz-join', icon: Gamepad2, group: 'student', category: '참여', description: '실시간 퀴즈 참여 (PIN 입력)' },
   { label: '랭킹', href: '/ranking', icon: Trophy, group: 'student', category: '참여', description: 'XP/보석 랭킹, 반 대항전' },
   { label: '프로필', href: '/profile', icon: User, group: 'student', category: '참여', description: '개인 정보, 뱃지, 보석 컬렉션' },
+  { label: '상점', href: '/shop', icon: ShoppingBag, group: 'student', category: '참여', description: 'XP로 프레임/배경/칭호/닉네임색상 구매 및 장착', isNew: true },
   { label: '도움말 (학생)', href: '/help-public', icon: HelpCircle, group: 'student', category: '기타', description: '학생용 도움말, FAQ' },
   { label: '업데이트 (학생)', href: '/updates', icon: Newspaper, group: 'student', category: '기타', description: '플랫폼 업데이트 내역' },
 
   // ─── Dev pages ───
   { label: '보석 목업', href: '/dev/gems', icon: Gem, group: 'dev', category: '개발', description: '6종 보석 × 5단계 × 4사이즈 SVG 미리보기' },
   { label: '토픽별 학습 전략', href: '/mockups/topic-preview', icon: Layers, group: 'dev', category: '개발', description: '134개 토픽별 교육과정 맞춤 학습 전략 확인', isNew: true },
-  { label: '기출 업로드 선택 UI', href: '/mockups/exam-upload-selectors', icon: School, group: 'dev', category: '개발', description: '학기 선택, 동명 학교 선택 컴포넌트 테스트', isNew: true },
+{ label: '아바타 크롭 미리보기', href: '/mockups/avatar-preview', icon: User, group: 'dev', category: '개발', description: '9개 포즈 크롭 결과 + 프레임 조합 + 프로필 시뮬레이션', isNew: true },
+  { label: '아바타 이펙트 미리보기', href: '/mockups/effect-preview', icon: Sparkles, group: 'dev', category: '개발', description: '12종 CSS 이펙트 + 크기별/프레임 조합 + 프로필/랭킹 시뮬레이션', isNew: true },
+  { label: '모자·안경 악세사리 미리보기', href: '/mockups/accessory-preview', icon: Crown, group: 'dev', category: '개발', description: '8종 모자 + 6종 안경 SVG 악세사리 + 이펙트 조합 시뮬레이션', isNew: true },
 ];
 
 const IFRAME_SIZES: Record<ViewMode, { width: string; label: string }> = {

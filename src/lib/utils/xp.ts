@@ -97,6 +97,41 @@ export async function awardXp(
   await updateStreak(tx, userId);
 }
 
+/**
+ * 트랜잭션 내에서 XP 차감 + PointTransaction(SPEND) 기록.
+ * totalXp는 건드리지 않고 spentXp만 증가 → 레벨 하락 없음.
+ * @returns 성공 여부 (잔액 부족 시 false)
+ */
+export async function spendXp(
+  tx: PrismaTx,
+  userId: string,
+  amount: number,
+  reason: string,
+  referenceId?: string
+): Promise<boolean> {
+  if (amount <= 0) return false;
+
+  const profile = await tx.studentProfile.findUnique({
+    where: { userId },
+    select: { totalXp: true, spentXp: true },
+  });
+  if (!profile) return false;
+
+  const spendable = profile.totalXp - profile.spentXp;
+  if (spendable < amount) return false;
+
+  await tx.studentProfile.update({
+    where: { userId },
+    data: { spentXp: { increment: amount } },
+  });
+
+  await tx.pointTransaction.create({
+    data: { userId, amount, type: 'SPEND', reason, referenceId },
+  });
+
+  return true;
+}
+
 /** 스트릭 업데이트 — 모든 XP 획득 활동 시 자동 호출 */
 export async function updateStreak(tx: PrismaTx, userId: string) {
   const profile = await tx.studentProfile.findUnique({

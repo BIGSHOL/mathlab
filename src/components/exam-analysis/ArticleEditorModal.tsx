@@ -165,8 +165,6 @@ export function ArticleEditorModal({ examPaperId, schoolName: _schoolName, onClo
   // 네이버 SmartEditor ONE 호환 HTML 전처리
   const prepareForNaver = (html: string): string => {
     let result = html;
-    // 1. text-align: left만 제거 (기본값), center/right는 유지
-    result = result.replace(/\s*text-align:\s*left\s*;?/gi, '');
     // 2. <h2> → <p> 큰 글씨 + <hr> 구분선 (네이버 패턴)
     result = result.replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi,
       '<p><span style="font-size: 24px;"><b>$1</b></span></p><hr>');
@@ -221,6 +219,14 @@ export function ArticleEditorModal({ examPaperId, schoolName: _schoolName, onClo
       container.style.color = '#333';
       container.style.textAlign = 'left';
       document.body.appendChild(container);
+
+      // text-align 미지정 블록에만 left 기본값 부여 (네이버가 컨테이너 스타일을 무시하므로 개별 지정)
+      container.querySelectorAll('p, h2, h3, blockquote, li, div').forEach((el) => {
+        const blockEl = el as HTMLElement;
+        if (!blockEl.style.textAlign) {
+          blockEl.style.textAlign = 'left';
+        }
+      });
 
       // mark 배경색 보장
       container.querySelectorAll('mark').forEach((el) => {
