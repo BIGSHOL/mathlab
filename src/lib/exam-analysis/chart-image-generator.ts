@@ -302,8 +302,8 @@ export function generateAbilityRadarSvg(
 
 // ── 출제 영역 + 능력 영역 통합 레이더 차트 (좌우 배치) ──
 
-const COMBINED_WIDTH = 960;
-const COMBINED_HEIGHT = 420;
+const COMBINED_WIDTH = 1250;
+const COMBINED_HEIGHT = 550;
 
 export function generateCombinedRadarSvg(
   distribution: Record<string, number>,
@@ -323,13 +323,13 @@ export function generateCombinedRadarSvg(
   const typeTotal = typeData.reduce((s, d) => s + d.value, 0);
   const typeMax = Math.max(...typeData.map((d) => d.value), 1);
 
-  const lcx = 200, lcy = 220, lRadius = 110;
+  const lcx = 260, lcy = 285, lRadius = 143;
   const tn = typeData.length;
   const tAngleStep = (2 * Math.PI) / tn;
   const startOffset = -Math.PI / 2;
 
   // 좌측 제목
-  parts.push(`<text x="${lcx}" y="32" text-anchor="middle" font-size="15" font-weight="700" fill="#374151">출제 영역 분포</text>`);
+  parts.push(`<text x="${lcx}" y="40" text-anchor="middle" font-size="18" font-weight="700" fill="#374151">출제 영역 분포</text>`);
 
   // 좌측 배경 그리드
   for (const scale of [0.33, 0.66, 1.0]) {
@@ -359,23 +359,23 @@ export function generateCombinedRadarSvg(
     typeData.forEach((d, i) => {
       const angle = startOffset + i * tAngleStep;
       const r = (d.value / typeMax) * lRadius;
-      parts.push(`<circle cx="${lcx + r * Math.cos(angle)}" cy="${lcy + r * Math.sin(angle)}" r="4" fill="${d.color}" stroke="white" stroke-width="2"/>`);
+      parts.push(`<circle cx="${lcx + r * Math.cos(angle)}" cy="${lcy + r * Math.sin(angle)}" r="5" fill="${d.color}" stroke="white" stroke-width="2"/>`);
     });
   }
 
   // 좌측 라벨
   typeData.forEach((d, i) => {
     const angle = startOffset + i * tAngleStep;
-    const labelR = lRadius + 22;
+    const labelR = lRadius + 28;
     const lx = lcx + labelR * Math.cos(angle);
     const ly = lcy + labelR * Math.sin(angle);
     const pct = typeTotal > 0 ? Math.round((d.value / typeTotal) * 100) : 0;
-    parts.push(`<text x="${lx}" y="${ly - 3}" text-anchor="middle" font-size="10" font-weight="600" fill="#374151">${escapeXml(d.label)}</text>`);
-    parts.push(`<text x="${lx}" y="${ly + 10}" text-anchor="middle" font-size="9" fill="#6B7280">${d.value}문항 (${pct}%)</text>`);
+    parts.push(`<text x="${lx}" y="${ly - 3}" text-anchor="middle" font-size="12" font-weight="600" fill="#374151">${escapeXml(d.label)}</text>`);
+    parts.push(`<text x="${lx}" y="${ly + 12}" text-anchor="middle" font-size="11" fill="#6B7280">${d.value}문항 (${pct}%)</text>`);
   });
 
   // ── 구분선 ──
-  parts.push(`<line x1="480" y1="50" x2="480" y2="390" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4,4"/>`);
+  parts.push(`<line x1="625" y1="60" x2="625" y2="510" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4,4"/>`);
 
   // ── 우측: 능력 영역 분포 (4각형) ──
   const abilityKeys = ['calculation', 'understanding', 'problem_solving', 'reasoning'] as const;
@@ -396,12 +396,12 @@ export function generateCombinedRadarSvg(
   const abilityTotal = abilityData.reduce((s, d) => s + d.value, 0);
   const abilityMax = Math.max(...abilityData.map((d) => d.value), 1);
 
-  const rcx = 680, rcy = 220, rRadius = 110;
+  const rcx = 885, rcy = 285, rRadius = 143;
   const an = abilityData.length;
   const aAngleStep = (2 * Math.PI) / an;
 
   // 우측 제목
-  parts.push(`<text x="${rcx}" y="32" text-anchor="middle" font-size="15" font-weight="700" fill="#374151">능력 영역 분포</text>`);
+  parts.push(`<text x="${rcx}" y="40" text-anchor="middle" font-size="18" font-weight="700" fill="#374151">능력 영역 분포</text>`);
 
   // 우측 배경 그리드
   for (const scale of [0.33, 0.66, 1.0]) {
@@ -431,19 +431,19 @@ export function generateCombinedRadarSvg(
     abilityData.forEach((d, i) => {
       const angle = startOffset + i * aAngleStep;
       const r = (d.value / abilityMax) * rRadius;
-      parts.push(`<circle cx="${rcx + r * Math.cos(angle)}" cy="${rcy + r * Math.sin(angle)}" r="4" fill="${d.color}" stroke="white" stroke-width="2"/>`);
+      parts.push(`<circle cx="${rcx + r * Math.cos(angle)}" cy="${rcy + r * Math.sin(angle)}" r="5" fill="${d.color}" stroke="white" stroke-width="2"/>`);
     });
   }
 
   // 우측 라벨
   abilityData.forEach((d, i) => {
     const angle = startOffset + i * aAngleStep;
-    const labelR = rRadius + 22;
+    const labelR = rRadius + 28;
     const lx = rcx + labelR * Math.cos(angle);
     const ly = rcy + labelR * Math.sin(angle);
     const pct = abilityTotal > 0 ? Math.round((d.value / abilityTotal) * 100) : 0;
-    parts.push(`<text x="${lx}" y="${ly - 3}" text-anchor="middle" font-size="10" font-weight="600" fill="#374151">${escapeXml(d.label)}</text>`);
-    parts.push(`<text x="${lx}" y="${ly + 10}" text-anchor="middle" font-size="9" fill="#6B7280">${d.value}문항 (${pct}%)</text>`);
+    parts.push(`<text x="${lx}" y="${ly - 3}" text-anchor="middle" font-size="12" font-weight="600" fill="#374151">${escapeXml(d.label)}</text>`);
+    parts.push(`<text x="${lx}" y="${ly + 12}" text-anchor="middle" font-size="11" fill="#6B7280">${d.value}문항 (${pct}%)</text>`);
   });
 
   return svgWrap(parts.join('\n'), COMBINED_WIDTH, COMBINED_HEIGHT);
