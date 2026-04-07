@@ -50,6 +50,9 @@ export async function POST(request: NextRequest) {
   const fullXp = STAGE_XP[stage] ?? 0;
   const xpAmount = usedReveal ? Math.floor(fullXp / 2) : fullXp;
 
+  let leveledUp = false;
+  let resultLevel = 1;
+
   // Upsert learning progress + award XP (atomic)
   const progress = await prisma.$transaction(async (tx) => {
     const prog = await tx.learningProgress.upsert({
@@ -72,6 +75,13 @@ export async function POST(request: NextRequest) {
     });
 
     if (xpAmount > 0) {
+      // 레벨업 감지를 위해 이전 레벨 저장
+      const prevProfile = await tx.studentProfile.findUnique({
+        where: { userId: user.id },
+        select: { level: true },
+      });
+      const prevLevel = prevProfile?.level ?? 1;
+
       await tx.pointTransaction.create({
         data: {
           userId: user.id,
@@ -102,6 +112,9 @@ export async function POST(request: NextRequest) {
           data: { level: newLevel },
         });
       }
+
+      leveledUp = newLevel > prevLevel;
+      resultLevel = newLevel;
     }
 
     // 과정 자동 진급 체크 (BLANK_FULL 완료 시)
@@ -118,6 +131,8 @@ export async function POST(request: NextRequest) {
       stage: progress.stage,
       completed: true,
       xpAwarded: xpAmount,
+      leveledUp,
+      newLevel: leveledUp ? resultLevel : undefined,
     },
   });
 }

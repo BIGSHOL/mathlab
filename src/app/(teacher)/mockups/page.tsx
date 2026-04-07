@@ -55,7 +55,9 @@ const ALL_PAGES: PageInfo[] = [
   { label: '실시간 퀴즈', href: '/quiz', icon: Radio, group: 'teacher', category: '진단·분석', description: '실시간 퀴즈 세션 관리' },
   { label: '학습 분석', href: '/analytics', icon: BarChart3, group: 'teacher', category: '진단·분석', description: '학생별 성취도 분석, 캘린더, 속도 분석' },
   { label: '진단 결과', href: '/diagnostics', icon: AlertTriangle, group: 'teacher', category: '진단·분석', description: '학생별 진단 결과 조회' },
-  { label: '리포트', href: '/reports', icon: ScrollText, group: 'teacher', category: '진단·분석', description: '레벨테스트 보고서 관리 (교사용/학부모용)', isNew: true },
+  { label: '리포트', href: '/reports', icon: ScrollText, group: 'teacher', category: '진단·분석', description: '레벨테스트 보고서 관리 (교사용/학부모용)' },
+  { label: '기출 분석', href: '/exam-analysis', icon: FileText, group: 'teacher', category: '진단·분석', description: '기출 시험지 AI 분석, 문항별 난이도/유형/능력 분류', isNew: true },
+  { label: '기출 업로드 관리', href: '/admin/exam-uploads', icon: FileUp, group: 'teacher', category: '진단·분석', description: '[SUPER_ADMIN] 기출 시험지 업로드 관리' },
 
   // ─── Teacher: 시스템 ───
   { label: '이용권 관리', href: '/licenses', icon: KeyRound, group: 'teacher', category: '시스템', description: '학생별 기능 이용권 배정/관리' },
@@ -66,24 +68,29 @@ const ALL_PAGES: PageInfo[] = [
   { label: '학생 화면 보기', href: '/student-preview', icon: ScanEye, group: 'teacher', category: '시스템', description: '학생 시점으로 페이지 확인' },
 
   // ─── Admin pages ───
-  { label: '선생님 관리', href: '/admin/teachers', icon: UserPlus, group: 'admin', category: '팀 관리', description: '[MANAGER+] 소속 선생님 관리' },
-  { label: '반 관리', href: '/admin/classrooms', icon: School, group: 'admin', category: '지점 운영', description: '[OWNER+] 반/학급 관리' },
-  { label: '사용자 관리', href: '/admin/users', icon: Shield, group: 'admin', category: '지점 운영', description: '[OWNER+] 전체 사용자 관리' },
+  { label: '선생님 관리', href: '/admin/teachers', icon: UserPlus, group: 'admin', category: '관리 메뉴', description: '[MANAGER+] 소속 선생님 관리' },
+  { label: '반 관리', href: '/admin/classrooms', icon: School, group: 'admin', category: '지점 관리', description: '[OWNER+] 반/학급 관리' },
+  { label: '사용자 관리', href: '/admin/users', icon: Shield, group: 'admin', category: '지점 관리', description: '[OWNER+] 전체 사용자 관리' },
+  { label: '학교 관리', href: '/admin/schools', icon: School, group: 'admin', category: '플랫폼', description: '[SUPER_ADMIN] 전국 학교 GPS 데이터 관리' },
+  { label: '사운드 관리', href: '/admin/sounds', icon: ToggleLeft, group: 'admin', category: '플랫폼', description: '[SUPER_ADMIN] 효과음 미리듣기/관리' },
   { label: '지점 관리', href: '/admin/tenants', icon: Building2, group: 'admin', category: '플랫폼', description: '[SUPER_ADMIN] 전체 지점 관리' },
   { label: '기능 관리', href: '/admin/features', icon: ToggleLeft, group: 'admin', category: '플랫폼', description: '[SUPER_ADMIN] 기능 플래그 관리' },
 
   // ─── Student pages ───
-  { label: '학생 대시보드', href: '/dashboard', icon: GraduationCap, group: 'student', category: '학습', description: '레벨, XP, 숙제, 일일 미션, 복수전' },
+  { label: '학생 대시보드', href: '/dashboard', icon: GraduationCap, group: 'student', category: '학습', description: '레벨, XP, 숙제, 출석 마일스톤, 반 대항전, 복수전' },
   { label: '단원 목록', href: '/subjects', icon: BookOpen, group: 'student', category: '학습', description: '학년별 과목/개념 목록, 진행도' },
   { label: '내 시험', href: '/my-tests', icon: ClipboardCheck, group: 'student', category: '시험·숙제', description: '배정된 시험 목록, 응시, 결과' },
   { label: '연산 숙제', href: '/practice/arithmetic/homework', icon: CalendarCheck, group: 'student', category: '시험·숙제', description: '오늘의 연산 숙제 풀기' },
+  { label: '개념 숙제', href: '/practice/concept-homework', icon: BookOpen, group: 'student', category: '시험·숙제', description: '배정된 개념 학습 숙제' },
   { label: '문제 숙제', href: '/practice/question-homework', icon: FileQuestion, group: 'student', category: '시험·숙제', description: '배정된 문제 숙제 풀기' },
   { label: '연산 연습', href: '/practice/arithmetic', icon: Calculator, group: 'student', category: '연습', description: '카테고리별 연산 문제 풀기' },
   { label: '타임어택', href: '/practice/arithmetic/time-attack', icon: Zap, group: 'student', category: '연습', description: '시간 제한 연산 도전' },
   { label: '복수전', href: '/practice/revenge', icon: Swords, group: 'student', category: '연습', description: '틀린 문제 다시 풀기' },
   { label: '퀴즈 참여', href: '/quiz-join', icon: Gamepad2, group: 'student', category: '참여', description: '실시간 퀴즈 참여 (PIN 입력)' },
-  { label: '랭킹', href: '/ranking', icon: Trophy, group: 'student', category: '참여', description: 'XP 기반 학생 랭킹' },
-  { label: '프로필', href: '/profile', icon: User, group: 'student', category: '참여', description: '개인 정보, 뱃지, 학습 이력' },
+  { label: '랭킹', href: '/ranking', icon: Trophy, group: 'student', category: '참여', description: 'XP/보석 랭킹, 반 대항전' },
+  { label: '프로필', href: '/profile', icon: User, group: 'student', category: '참여', description: '개인 정보, 뱃지, 보석 컬렉션' },
+  { label: '도움말 (학생)', href: '/help-public', icon: HelpCircle, group: 'student', category: '기타', description: '학생용 도움말, FAQ' },
+  { label: '업데이트 (학생)', href: '/updates', icon: Newspaper, group: 'student', category: '기타', description: '플랫폼 업데이트 내역' },
 
   // ─── Dev pages ───
   { label: '보석 목업', href: '/dev/gems', icon: Gem, group: 'dev', category: '개발', description: '6종 보석 × 5단계 × 4사이즈 SVG 미리보기' },

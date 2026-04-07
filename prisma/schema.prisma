@@ -71,6 +71,7 @@ model Tenant {
   tenantLicenses         TenantLicense[]
   nearbyGroups           TenantNearbyGroup[]
   questions              Question[]
+  classCompetitionWeeks  ClassCompetitionWeek[]
 
   @@index([slug])
   @@index([isActive])
@@ -1589,5 +1590,23 @@ model LearnedPattern {
 
   @@index([subject, patternType])
   @@index([isActive, isAutoApplied])
+}
+
+// ── 반 대항전 주간 결과 ──
+
+model ClassCompetitionWeek {
+  id           String   @id @default(cuid())
+  tenantId     String
+  weekStart    DateTime
+  weekEnd      DateTime
+  results      Json     // [{ classroomId, name, totalXp, memberCount, rank }]
+  winnerId     String?
+  bonusAwarded Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, weekStart])
+  @@index([tenantId])
 }
 

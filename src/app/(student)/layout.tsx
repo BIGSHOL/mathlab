@@ -4,6 +4,7 @@ import { ToastContainer } from '@/components/ui/Toast';
 import { XpToastContainer } from '@/components/ui/XpToast';
 import { UpdateBanner } from '@/components/ui/UpdateBanner';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { CelebrationOverlay } from '@/components/ui/CelebrationOverlay';
 import { getCurrentUser } from '@/lib/auth';
 import { resolveCurrentTenant } from '@/lib/tenant';
 import { TenantProvider } from '@/components/providers/TenantProvider';
@@ -31,6 +32,7 @@ export default async function StudentLayout({
         <XpToastContainer />
         <UpdateBanner />
         <ConfirmDialog />
+        <CelebrationOverlay />
       </div>
     </TenantProvider>
   );

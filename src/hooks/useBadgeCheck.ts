@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { playSound } from '@/lib/sounds';
+import { useGamificationStore } from '@/stores/gamificationStore';
 
 interface Badge {
   id: string;
@@ -19,7 +19,17 @@ export function useBadgeCheck() {
         const json = await res.json();
         const badges = json.data?.newBadges ?? [];
         setNewBadges(badges);
-        if (badges.length > 0) playSound('badge');
+        if (badges.length > 0) {
+          // 축하 오버레이 (사운드는 triggerCelebration 내부에서 재생)
+          useGamificationStore.getState().triggerCelebration({
+            id: `badge-${badges[0].id}`,
+            type: 'badge',
+            title: badges[0].name,
+            subtitle: badges[0].description,
+            icon: badges[0].iconUrl ?? undefined,
+            soundId: 'badge',
+          });
+        }
         return badges as Badge[];
       }
     } catch {

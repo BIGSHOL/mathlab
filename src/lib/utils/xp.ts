@@ -92,9 +92,12 @@ export async function awardXp(
       referenceId,
     },
   });
+
+  // 모든 XP 획득 활동에서 출석 스트릭 업데이트 (dayDiff===0이면 즉시 리턴되므로 안전)
+  await updateStreak(tx, userId);
 }
 
-/** 스트릭 업데이트 (일일 미션 완료 시 호출) */
+/** 스트릭 업데이트 — 모든 XP 획득 활동 시 자동 호출 */
 export async function updateStreak(tx: PrismaTx, userId: string) {
   const profile = await tx.studentProfile.findUnique({
     where: { userId },

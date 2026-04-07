@@ -62,6 +62,40 @@ export function StudentDetail({ user, stats, statsLoading, isManager, isOwner, o
   const [navChains, setNavChains] = useState<string[]>([]);
   const [navSaving, setNavSaving] = useState(false);
 
+  // 소속 반 + 배정 코스
+  const [classroomName, setClassroomName] = useState<string | null>(null);
+  const [courses, setCourses] = useState<{ id: string; title: string; mode: string; status: string }[]>([]);
+
+  useEffect(() => {
+    // 반 정보 — classroomId가 있으면 반 목록에서 매칭
+    if (user.classroomId) {
+      fetch('/api/classrooms')
+        .then((r) => r.ok ? r.json() : null)
+        .then((json) => {
+          const list = json?.data ?? [];
+          const found = list.find((c: { id: string; name: string }) => c.id === user.classroomId);
+          if (found) setClassroomName(found.name);
+        })
+        .catch(() => {});
+    }
+    // 코스 정보 — 전체 조회 후 이 학생이 등록된 코스 필터
+    fetch('/api/learning-courses')
+      .then((r) => r.ok ? r.json() : null)
+      .then((json) => {
+        const list = json?.data ?? [];
+        const enrolled = list.filter((c: { enrollments?: { student: { id: string } }[] }) =>
+          c.enrollments?.some((e: { student: { id: string } }) => e.student.id === user.id)
+        );
+        setCourses(enrolled.map((c: { id: string; title: string; mode: string }) => ({
+          id: c.id,
+          title: c.title,
+          mode: c.mode ?? 'sequential',
+          status: 'ACTIVE',
+        })));
+      })
+      .catch(() => {});
+  }, [user.id, user.classroomId]);
+
   useEffect(() => {
     fetch(`/api/users/${user.id}/concept-nav`)
       .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
@@ -194,6 +228,31 @@ export function StudentDetail({ user, stats, statsLoading, isManager, isOwner, o
           </div>
         </div>
       </div>
+
+      {/* ── 소속 반 · 학습 코스 ── */}
+      {(classroomName || courses.length > 0) && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {classroomName && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 border border-violet-200 rounded-sm text-sm">
+              <GitBranch className="w-3.5 h-3.5 text-violet-500" />
+              <span className="text-violet-700 font-medium">{classroomName}</span>
+            </div>
+          )}
+          {courses.map((c) => (
+            <Link
+              key={c.id}
+              href={`/courses/${c.id}`}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-sm text-sm hover:bg-emerald-100 transition-colors"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-emerald-500" />
+              <span className="text-emerald-700 font-medium">{c.title}</span>
+              <span className="text-xs text-emerald-500">
+                {c.status === 'COMPLETED' ? '완료' : c.status === 'LOCKED' ? '대기' : '진행중'}
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
 
       {statsLoading ? (
         <div className="flex items-center justify-center py-8 text-text-secondary text-xs">

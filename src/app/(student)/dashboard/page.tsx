@@ -1,4 +1,4 @@
-import { Award, Star, CheckCircle, Flame, Play, BookOpen, ArrowRight, CalendarCheck, FileQuestion, Trophy, Activity, Sparkles, GraduationCap, XCircle, BarChart3 } from 'lucide-react';
+import { Award, Star, CheckCircle, Flame, Play, BookOpen, ArrowRight, CalendarCheck, FileQuestion, Trophy, Activity, Sparkles, XCircle, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageContainer } from '@/components/ui/PageContainer';
@@ -52,7 +52,7 @@ export default async function StudentDashboard({
     },
   });
   const enrollmentCount = await prisma.learningCourseEnrollment.count({ where: { studentId: user.id } });
-  const completedCourseCount = await prisma.learningCourseEnrollment.count({ where: { studentId: user.id, status: 'COMPLETED' } });
+  const _completedCourseCount = await prisma.learningCourseEnrollment.count({ where: { studentId: user.id, status: 'COMPLETED' } });
   const hasEnrollments = enrollmentCount > 0;
 
   // enrollment 기반 개념 수
@@ -386,41 +386,6 @@ export default async function StudentDashboard({
         </div>
       </div>
 
-      {/* ──── 현재 학습 과정 배너 ──── */}
-      {hasEnrollments && activeEnrollment && (
-        <Link href="/subjects" className="block mb-6">
-          <div className="bg-gradient-to-r from-primary to-blue-600 rounded-sm p-4 text-white hover:from-blue-700 hover:to-blue-800 transition-colors">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <GraduationCap className="w-8 h-8 opacity-90" />
-                <div>
-                  <p className="text-sm font-medium opacity-80">현재 학습 과정</p>
-                  <p className="font-bold">{activeEnrollment.course.title}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <p className="text-lg font-bold">
-                    {completedCount}/{totalConcepts}
-                  </p>
-                  <p className="text-xs opacity-80">개념 완료</p>
-                </div>
-                <ArrowRight className="w-5 h-5 opacity-80" />
-              </div>
-            </div>
-          </div>
-        </Link>
-      )}
-
-      {hasEnrollments && !activeEnrollment && (
-        <div className="mb-6 bg-slate-50 rounded-sm p-4 border border-slate-200 text-center">
-          <GraduationCap className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-          <p className="text-text-secondary text-sm">
-            {completedCourseCount > 0 ? '모든 배정 과정을 완료했습니다!' : '배정된 학습 과정이 없습니다'}
-          </p>
-        </div>
-      )}
-
       {/* ──── 섹션 2: 통계 카드 4열 ──── */}
       <DashboardStatCards className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-4">
         <Card padding="base" className="flex flex-col gap-2 hover:border-primary/30 transition-all relative overflow-hidden">
@@ -471,9 +436,18 @@ export default async function StudentDashboard({
         <div className="lg:col-span-2">
           <Card padding="md" className="h-full rounded-sm">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold text-text-primary">진행 중인 학습</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-text-primary">
+                  {activeEnrollment ? activeEnrollment.course.title : '최근 학습'}
+                </h2>
+                {activeEnrollment && (
+                  <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">
+                    {completedCount}/{totalConcepts}
+                  </span>
+                )}
+              </div>
               <Link href="/subjects" className="text-primary text-sm font-medium hover:underline flex items-center gap-1">
-                모두 보기 <ArrowRight className="w-4 h-4" />
+                단원 목록 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
             <div className="flex flex-col gap-3">
@@ -548,7 +522,7 @@ export default async function StudentDashboard({
           <Card padding="base" className="rounded-sm">
             <div className="flex items-center gap-2 mb-3">
               <Sparkles className="w-4 h-4 text-primary" />
-              <h2 className="text-sm font-bold text-text-primary">추천 학습</h2>
+              <h2 className="text-sm font-bold text-text-primary">다음에 할 개념</h2>
             </div>
             {recommendedConcepts.length === 0 ? (
               <div className="text-center py-3">

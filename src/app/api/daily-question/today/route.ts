@@ -59,12 +59,19 @@ export async function GET(request: NextRequest) {
       take: 50,
     });
 
-    // 해당 학년 문제가 없으면 학년 필터 없이 전체에서 선택 (fallback)
+    // 해당 학년 문제가 없으면 같은 학교급 내에서 선택 (fallback)
     if (candidates.length === 0 && Object.keys(gradeFilter).length > 0) {
+      const schoolLevelFilter: Record<string, unknown> = {};
+      if (user.grade && user.grade <= 6) {
+        schoolLevelFilter.bookCode = { startsWith: 'E' }; // 초등 전체
+      } else if (user.grade && user.grade <= 9) {
+        schoolLevelFilter.bookCode = { not: { startsWith: 'E' } }; // 중등 이상
+      }
       candidates = await prisma.question.findMany({
         where: {
           type: 'MULTIPLE_CHOICE',
           ...(excludeIds.length > 0 ? { id: { notIn: excludeIds } } : {}),
+          ...schoolLevelFilter,
         },
         select: { id: true },
         take: 50,

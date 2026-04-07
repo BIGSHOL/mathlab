@@ -26,6 +26,40 @@ const KEEP_TOKENS = new Set([
   '즉', '또는', '그리고', '및', '단',
 ]);
 
+// 통문장에서 유지할 일반 서술어/동사 — 수학 용어가 아닌 문장 구조 단어
+// (easy/hard 추출에는 영향 없음, addFullSentenceBlanks에서만 사용)
+const FULL_KEEP_WORDS = new Set([
+  // 서술어/동사 어간 + 활용형
+  '있다', '없다', '된다', '한다', '같다', '있는', '없는', '되는', '하는',
+  '있을', '없을', '있고', '없고', '되고', '하고', '같은', '다른', '다를',
+  '말한다', '부른다', '한다면', '된다면', '있으며', '없으며',
+  '나타낸다', '나타내면', '나타낸', '나타내는', '나타낼', '나타내며',
+  '구한다', '구하면', '구하는', '구할',
+  '이용하여', '이용하면', '이용한', '사용하여', '사용하면', '사용한',
+  '표현한다', '표현하면', '표현한', '표현하는', '표현하며', '표현',
+  '정의한다', '정의하면', '정의한',
+  '만든다', '만들면', '만드는', '만든',
+  '바꾸어', '맞추어', '놓으면', '놓으면서',
+  '읽는다', '읽으며', '읽는', '부르며',
+  '곱한', '곱하면', '곱하여', '곱하는', '곱해',
+  '나누면', '나누어', '나눈', '나누는',
+  '더하면', '더하여', '더한', '빼면', '빼는',
+  // 접속/논리 부사
+  '따라서', '그러므로', '그런데', '하지만', '왜냐하면', '그래서', '그러면',
+  '예를', '들어', '예를들어',
+  '먼저', '다음', '마지막', '항상', '반드시', '모두', '각각', '어떤', '모든',
+  '여기서', '이때', '보통', '간단히', '여러', '일반적으로',
+  // 것/수/때 + 조사 결합형
+  '것을', '것은', '것이', '것의', '것과', '것에', '것도',
+  '수를', '수는', '수가', '수도', '수와',
+  // 일반 명사 (수학 무관)
+  '경우', '경우는', '경우에', '경우가',
+  '방법', '과정', '결과', '예시', '규칙', '성질', '특징',
+  '때문', '이유', '의미',
+  // 지시/연결 표현
+  '이라', '이라고', '라고', '라는', '라면', '이란',
+]);
+
 // Korean consonant initial extraction for hints (초성)
 export function getInitials(str: string): string {
   const initials = [
@@ -228,13 +262,18 @@ export function addFullSentenceBlanks(
 
     for (const part of latexSplit) {
       // LaTeX $...$ → 통째로 하나의 빈칸으로 처리 (부분 빈칸 절대 금지)
-      // 단, □ 등 도형 기호가 포함된 수식은 빈칸 처리하지 않음 (학생 입력 불가)
+      // 단, □ 도형 기호 / 단순 변수·숫자($n$, $2$ 등)는 빈칸 처리하지 않음
       if (part.startsWith('$') && part.endsWith('$') && part.length > 2) {
         if (/[□▢■☐▣▤▥▦◻◼]/.test(part)) {
           newTemplate += part; // 도형 기호 포함 수식은 그대로 유지
           continue;
         }
-        const latexInner = part.slice(1, -1);
+        const latexInner = part.slice(1, -1).trim();
+        // 단순 변수/숫자(1~2글자)는 자명하므로 빈칸 제외: $n$, $2$, $ab$ 등
+        if (latexInner.length <= 2) {
+          newTemplate += part;
+          continue;
+        }
         newTemplate += `{{${nextPosition}}}`;
         newBlanks.push({
           position: nextPosition,
@@ -267,7 +306,9 @@ export function addFullSentenceBlanks(
         const isNumbering = isParenNumbering || isHashNumbering || isPureNumber;
 
         // Decide if this token should be blanked
-        const shouldBlank = !isParticleOrConnector(token) && token.length >= 1 && !isNumbering;
+        // 통문장: 2글자 이상 + 조사/접속사 아님 + 일반 서술어 아님
+        const shouldBlank = !isParticleOrConnector(token) && token.length >= 2
+          && !isNumbering && !FULL_KEEP_WORDS.has(token);
 
         if (shouldBlank) {
           newTemplate += `{{${nextPosition}}}`;

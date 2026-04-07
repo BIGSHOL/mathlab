@@ -239,7 +239,7 @@ export default function HomeworkPrintPage() {
               <span className="text-sm font-bold text-text-primary truncate">{plan.title}</span>
             </div>
           }
-          rightContent={
+          extraControls={
             <div className="flex items-center gap-3">
               <span className="text-xs text-text-secondary">
                 {dayRange[0] + 1}~{dayRange[1] + 1}일차 ({selectedDays.length}일)

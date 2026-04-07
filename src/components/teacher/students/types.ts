@@ -7,6 +7,7 @@ export interface UserItem {
   name: string;
   role: string;
   grade: number | null;
+  classroomId?: string | null;
   createdAt: string;
   profile: {
     totalXp: number;
