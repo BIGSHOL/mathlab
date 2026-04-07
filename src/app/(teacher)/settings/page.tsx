@@ -231,32 +231,10 @@ export default function SettingsPage() {
               <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
                 <Bell className="w-5 h-5 text-primary" /> 알림 설정
               </h2>
-              <div className="flex flex-col gap-2">
-                {[
-                  { label: '학생 가입 알림', desc: '새 학생이 가입하면 알림을 받습니다.', defaultChecked: true },
-                  { label: '학습 완료 알림', desc: '학생이 스테이지를 완료하면 알림을 받습니다.', defaultChecked: false },
-                  { label: '주간 리포트', desc: '매주 월요일 학습 요약 리포트를 받습니다.', defaultChecked: true },
-                  { label: '시스템 공지', desc: '시스템 업데이트 및 공지사항을 받습니다.', defaultChecked: true },
-                  ...(isOwner ? [
-                    { label: '문의 접수 알림', desc: '선생님이 새 문의를 등록하면 알림을 받습니다.', defaultChecked: true },
-                    { label: '선생님 가입 알림', desc: '새 선생님이 가입하면 알림을 받습니다.', defaultChecked: true },
-                  ] : []),
-                ].map((item) => (
-                  <label
-                    key={item.label}
-                    className="flex items-start gap-2 p-2.5 rounded-sm bg-slate-50 border border-slate-100 cursor-pointer hover:bg-slate-100 transition-colors"
-                  >
-                    <input
-                      type="checkbox"
-                      defaultChecked={item.defaultChecked}
-                      className="form-checkbox text-primary rounded-sm border-slate-300 mt-0.5 focus:ring-primary focus:ring-offset-0"
-                    />
-                    <div>
-                      <p className="text-sm font-semibold text-text-primary">{item.label}</p>
-                      <p className="text-sm text-text-secondary mt-0.5">{item.desc}</p>
-                    </div>
-                  </label>
-                ))}
+              <div className="text-center py-8">
+                <Bell className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                <p className="text-sm font-medium text-text-secondary">알림 기능 준비 중</p>
+                <p className="text-xs text-text-secondary mt-1">이메일/푸시 알림 기능이 추후 업데이트될 예정입니다.</p>
               </div>
             </Card>
           )}
@@ -267,26 +245,13 @@ export default function SettingsPage() {
                 <Palette className="w-5 h-5 text-primary" /> 화면 설정
               </h2>
               <div className="flex flex-col gap-2">
-                <div className="flex flex-col gap-2">
-                  <p className="text-sm font-semibold text-text-primary">테마</p>
-                  <div className="flex gap-3">
-                    {['라이트', '다크', '시스템'].map((theme) => (
-                      <button
-                        key={theme}
-                        className={`px-3 py-2 rounded-sm text-sm font-medium transition-colors ${
-                          theme === '라이트'
-                            ? 'bg-primary text-white'
-                            : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
-                        }`}
-                      >
-                        {theme}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-sm text-text-secondary mt-1">
-                    현재 라이트 모드만 지원됩니다. 다크 모드는 추후 업데이트 예정입니다.
-                  </p>
+                <p className="text-sm font-semibold text-text-primary">테마</p>
+                <div className="flex gap-3">
+                  <button className="px-3 py-2 rounded-sm text-sm font-medium bg-primary text-white">라이트</button>
+                  <button className="px-3 py-2 rounded-sm text-sm font-medium bg-slate-100 text-slate-300 cursor-not-allowed" disabled>다크</button>
+                  <button className="px-3 py-2 rounded-sm text-sm font-medium bg-slate-100 text-slate-300 cursor-not-allowed" disabled>시스템</button>
                 </div>
+                <p className="text-xs text-text-secondary mt-1">다크 모드는 추후 업데이트 예정입니다.</p>
               </div>
             </Card>
           )}

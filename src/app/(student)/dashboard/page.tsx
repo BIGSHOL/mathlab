@@ -518,40 +518,6 @@ export default async function StudentDashboard({
           </Card>
         </div>
         <div className="flex flex-col gap-4">
-          {/* 추천 학습 */}
-          <Card padding="base" className="rounded-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="w-4 h-4 text-primary" />
-              <h2 className="text-sm font-bold text-text-primary">다음에 할 개념</h2>
-            </div>
-            {recommendedConcepts.length === 0 ? (
-              <div className="text-center py-3">
-                <CheckCircle className="w-7 h-7 text-emerald-400 mx-auto mb-1.5" />
-                <p className="text-text-secondary text-xs">모든 개념을 완료했습니다!</p>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-1.5">
-                {recommendedConcepts.map((c) => (
-                  <Link
-                    key={c.id}
-                    href={`/concepts/${c.conceptCode ?? c.id}`}
-                    className="flex items-center gap-2.5 p-2.5 rounded-sm bg-slate-50 border border-slate-100 hover:border-primary/30 hover:bg-primary/5 transition-all group"
-                  >
-                    <div className="flex-shrink-0 w-7 h-7 rounded-sm bg-blue-100 text-blue-600 flex items-center justify-center">
-                      <BookOpen className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-text-primary text-xs font-semibold truncate group-hover:text-primary transition-colors">
-                        {c.title}
-                      </p>
-                      <p className="text-text-secondary text-xs">{c.subject.title}</p>
-                    </div>
-                    <ArrowRight className="w-3 h-3 text-slate-300 group-hover:text-primary transition-colors" />
-                  </Link>
-                ))}
-              </div>
-            )}
-          </Card>
           {/* 게이미피케이션 (오늘의 미션 + 오늘의 한 문제) */}
           <DashboardGamification />
         </div>

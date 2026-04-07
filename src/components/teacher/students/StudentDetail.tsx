@@ -57,14 +57,10 @@ export function StudentDetail({ user, stats, statsLoading, isManager, isOwner, o
   const [hwWrongExpanded, setHwWrongExpanded] = useState<string | null>(null);
   const [hwWrongPeriod, setHwWrongPeriod] = useState<string>('all');
 
-  // 개념 네비 모드
-  const [navMode, setNavMode] = useState<string>('curriculum');
-  const [navChains, setNavChains] = useState<string[]>([]);
-  const [navSaving, setNavSaving] = useState(false);
 
   // 소속 반 + 배정 코스
   const [classroomName, setClassroomName] = useState<string | null>(null);
-  const [courses, setCourses] = useState<{ id: string; title: string; mode: string; status: string }[]>([]);
+  const [courses, setCourses] = useState<{ id: string; title: string; mode: string; status: string; totalConcepts: number }[]>([]);
 
   useEffect(() => {
     // 반 정보 — classroomId가 있으면 반 목록에서 매칭
@@ -83,43 +79,25 @@ export function StudentDetail({ user, stats, statsLoading, isManager, isOwner, o
       .then((r) => r.ok ? r.json() : null)
       .then((json) => {
         const list = json?.data ?? [];
-        const enrolled = list.filter((c: { enrollments?: { student: { id: string } }[] }) =>
-          c.enrollments?.some((e: { student: { id: string } }) => e.student.id === user.id)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const enrolled = list.filter((c: any) =>
+          c.enrollments?.some((e: { student: { id: string }; status?: string }) => e.student.id === user.id)
         );
-        setCourses(enrolled.map((c: { id: string; title: string; mode: string }) => ({
-          id: c.id,
-          title: c.title,
-          mode: c.mode ?? 'sequential',
-          status: 'ACTIVE',
-        })));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setCourses(enrolled.map((c: any) => {
+          const enrollment = c.enrollments?.find((e: { student: { id: string } }) => e.student.id === user.id);
+          const totalConcepts = c.concepts?.length ?? 0;
+          return {
+            id: c.id,
+            title: c.title,
+            mode: c.mode ?? 'sequential',
+            status: enrollment?.status ?? 'ACTIVE',
+            totalConcepts,
+          };
+        }));
       })
       .catch(() => {});
   }, [user.id, user.classroomId]);
-
-  useEffect(() => {
-    fetch(`/api/users/${user.id}/concept-nav`)
-      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
-      .then((json) => {
-        if (json.data) {
-          setNavMode(json.data.mode);
-          setNavChains(json.data.availableChains ?? []);
-        }
-      })
-      .catch((err) => console.error('개념 네비 설정 조회 실패:', err));
-  }, [user.id]);
-
-  const saveNavMode = async (mode: string) => {
-    setNavMode(mode);
-    setNavSaving(true);
-    try {
-      await fetch(`/api/users/${user.id}/concept-nav`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode }),
-      });
-    } catch (err) { console.error('개념 네비 모드 저장 실패:', err); }
-    setNavSaving(false);
-  };
 
   useEffect(() => {
     if (!stats) return;
@@ -246,7 +224,12 @@ export function StudentDetail({ user, stats, statsLoading, isManager, isOwner, o
             >
               <BookOpen className="w-3.5 h-3.5 text-emerald-500" />
               <span className="text-emerald-700 font-medium">{c.title}</span>
-              <span className="text-xs text-emerald-500">
+              {c.totalConcepts > 0 && <span className="text-xs text-emerald-500">{c.totalConcepts}개념</span>}
+              <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                c.status === 'COMPLETED' ? 'bg-emerald-200 text-emerald-800' :
+                c.status === 'LOCKED' ? 'bg-slate-100 text-slate-500' :
+                'bg-blue-100 text-blue-700'
+              }`}>
                 {c.status === 'COMPLETED' ? '완료' : c.status === 'LOCKED' ? '대기' : '진행중'}
               </span>
             </Link>
@@ -512,65 +495,7 @@ export function StudentDetail({ user, stats, statsLoading, isManager, isOwner, o
               </div>
             ) : <div />}
 
-            {/* Row 4: 개념 학습 순서 | (빈 칸) */}
-            {isManager && (
-              <div>
-                <SectionTitle icon={GitBranch} title="개념 학습 순서" />
-                <div className="bg-white border border-slate-200 rounded-sm p-3">
-                  <p className="text-xs text-text-secondary mb-2">학생이 개념학습에서 &lsquo;이전/다음&rsquo; 버튼을 누를 때 어떤 순서로 넘어갈지 설정합니다.</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <label
-                      className={`flex items-center gap-2 px-3 py-2 rounded-sm border cursor-pointer transition-colors ${
-                        navMode === 'curriculum'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-slate-200 hover:bg-slate-50'
-                      }`}
-                      onClick={() => saveNavMode('curriculum')}
-                    >
-                      <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 ${navMode === 'curriculum' ? 'border-primary' : 'border-slate-300'}`}>
-                        {navMode === 'curriculum' && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
-                      </span>
-                      <div className="min-w-0">
-                        <span className="text-xs font-medium text-text-primary">교육과정 순서</span>
-                        <span className="block text-xs text-text-secondary mt-0.5">교과서 순서대로</span>
-                      </div>
-                      {navSaving && navMode === 'curriculum' && <Loader2 className="w-3 h-3 animate-spin text-primary ml-auto shrink-0" />}
-                    </label>
-
-                    <div
-                      className={`px-3 py-2 rounded-sm border transition-colors ${
-                        navMode.startsWith('chain:')
-                          ? 'border-primary bg-primary/5'
-                          : 'border-slate-200 hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 ${navMode.startsWith('chain:') ? 'border-primary' : 'border-slate-300'}`}>
-                          {navMode.startsWith('chain:') && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
-                        </span>
-                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                          <span className="text-xs font-medium text-text-primary shrink-0">계통수학 순서</span>
-                          <select
-                            value={navMode.startsWith('chain:') ? navMode : ''}
-                            onChange={(e) => { if (e.target.value) saveNavMode(e.target.value); }}
-                            className="flex-1 min-w-0 px-2 py-0.5 rounded text-xs border border-slate-200 bg-white focus:ring-1 focus:ring-primary/40"
-                            disabled={navSaving}
-                          >
-                            <option value="">분야 선택...</option>
-                            {navChains.map((chain) => (
-                              <option key={chain} value={`chain:${chain}`}>{chain}</option>
-                            ))}
-                          </select>
-                          {navSaving && navMode.startsWith('chain:') && <Loader2 className="w-3 h-3 animate-spin text-primary shrink-0" />}
-                        </div>
-                      </div>
-                      <p className="text-xs text-text-secondary mt-1 ml-5.5">학년을 넘나들며 한 분야를 체계적으로 학습</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            {isManager && <div />}
+            {/* Row 4 제거됨: "개념 학습 순서" → 코스 시스템으로 대체 */}
 
             {/* Row 5: 연산 숙제 오답 | (빈 칸) */}
             {(hwWrongData || hwWrongLoading) && (
