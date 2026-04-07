@@ -556,6 +556,7 @@ export const mathTextbookPlugin: PdfExtractPlugin<ExtractedMathProblem, MathExtr
           }
           // 렌더러 호환 변환
           if (dtype === 'histogram' && Array.isArray(paramObj.bins)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             paramObj.bins = (paramObj.bins as any[]).map((b: any) => ({
               range: [b.rangeStart ?? b.range?.[0] ?? 0, b.rangeEnd ?? b.range?.[1] ?? 0],
               frequency: b.frequency ?? 0,
