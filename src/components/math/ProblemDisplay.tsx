@@ -14,10 +14,12 @@ interface ProblemDisplayProps {
 
 export function ProblemDisplay({ problem, isLoading }: ProblemDisplayProps) {
   const [showSolution, setShowSolution] = useState(false);
+  const [showJson, setShowJson] = useState(false);
   const [printMode, setPrintMode] = useState<'problem' | 'solution' | null>(null);
 
   useEffect(() => {
     setShowSolution(false);
+    setShowJson(false);
   }, [problem]);
 
   // 인쇄 모달 열기
@@ -94,8 +96,19 @@ export function ProblemDisplay({ problem, isLoading }: ProblemDisplayProps) {
             <div className="p-6 md:p-8">
               <MathRenderer content={problem.question} className="text-lg md:text-xl text-slate-800" />
 
-              {/* SVG Diagram */}
-              {(problem.diagramSpec || problem.diagramSVG) && (
+              {/* 원본 이미지 (exact 모드) 또는 SVG Diagram */}
+              {problem.sourceImage ? (
+                <div className="my-8 flex justify-center">
+                  <div className="w-full max-w-lg">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={problem.sourceImage}
+                      alt="원본 문제 이미지"
+                      className="w-full h-auto rounded-sm border border-slate-100 bg-white p-4 shadow-sm"
+                    />
+                  </div>
+                </div>
+              ) : (problem.diagramSpec || problem.diagramSVG) ? (
                 <div className="my-8 flex justify-center">
                   <div className="w-full max-w-lg">
                     {problem.diagramSpec ? (
@@ -112,7 +125,7 @@ export function ProblemDisplay({ problem, isLoading }: ProblemDisplayProps) {
                     )}
                   </div>
                 </div>
-              )}
+              ) : null}
 
               {/* Choices */}
               {problem.choices && problem.choices.length > 0 && (
@@ -135,8 +148,15 @@ export function ProblemDisplay({ problem, isLoading }: ProblemDisplayProps) {
             </div>
           </div>
 
-          {/* Toggle Button */}
-          <div className="flex justify-end">
+          {/* Toggle Buttons */}
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setShowJson(!showJson)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-sm bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm text-sm font-medium"
+            >
+              <FileText size={18} />
+              {showJson ? '수식 숨기기' : '수식 보기'}
+            </button>
             <button
               onClick={() => setShowSolution(!showSolution)}
               className="flex items-center gap-2 px-5 py-2.5 rounded-sm bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm text-sm font-medium"
@@ -145,6 +165,23 @@ export function ProblemDisplay({ problem, isLoading }: ProblemDisplayProps) {
               {showSolution ? '정답 및 해설 숨기기' : '정답 및 해설 확인'}
             </button>
           </div>
+
+          {/* JSON Raw Data */}
+          {showJson && (
+            <div className="bg-white rounded-sm shadow-soft border border-slate-200 overflow-hidden animate-slide-down">
+              <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex items-center gap-2">
+                <FileText className="text-slate-500" size={20} />
+                <span className="font-semibold text-slate-700">생성 데이터 (JSON)</span>
+              </div>
+              <pre className="p-6 text-xs text-slate-600 overflow-x-auto max-h-96 overflow-y-auto bg-slate-50/50">
+                {JSON.stringify(
+                  { ...problem, sourceImage: problem.sourceImage ? '[base64 image]' : undefined },
+                  null,
+                  2,
+                )}
+              </pre>
+            </div>
+          )}
 
           {/* Answer & Solution */}
           {showSolution && (

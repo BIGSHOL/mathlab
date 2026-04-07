@@ -41,6 +41,8 @@ export interface GeneratedProblem {
   diagramSVG?: string | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   diagramSpec?: DiagramSpec | any | null;
+  /** exact 모드에서 원본 업로드 이미지 (base64 data URL) */
+  sourceImage?: string | null;
 }
 
 export type GenerationMode = 'curriculum' | 'image' | 'exact';

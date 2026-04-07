@@ -441,66 +441,63 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
           </div>
         )}
 
-        {/* Shared Options */}
-        <div className="space-y-3 pt-2 border-t border-slate-100">
-          <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-            <Zap size={16} />
-            {selection.mode === 'curriculum' ? '난이도 및 유형' : '생성 옵션'}
-          </label>
-          <div className="space-y-2">
-            {selection.mode === 'image' && (
-              <p className="text-xs text-slate-400 mb-2">
-                사진의 문제와 유사한 난이도로 생성되지만, 필요 시 아래 옵션으로 변경할 수 있습니다.
-              </p>
-            )}
-            {selection.mode === 'exact' && (
-              <p className="text-xs text-slate-400 mb-2">
-                동일 문제 추출 시 난이도와 유형은 AI가 자동으로 판별합니다. 아래 옵션은 참고용입니다.
-              </p>
-            )}
-            <div className="grid grid-cols-2 gap-2">
-              <select
-                value={selection.difficulty}
-                onChange={(e) => handleChange('difficulty', e.target.value)}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-sm outline-none"
-              >
-                {Object.values(Difficulty).map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={selection.problemType}
-                onChange={(e) => handleChange('problemType', e.target.value)}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-sm outline-none"
-              >
-                {Object.values(ProblemType).map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Answer Type Toggle */}
-            <div className="flex bg-slate-50 p-1 rounded-sm border border-slate-200">
-              {Object.values(AnswerType).map((type) => (
-                <button
-                  key={type}
-                  onClick={() => handleChange('answerType', type)}
-                  className={`flex-1 py-2 text-sm font-medium rounded-sm transition-all ${
-                    selection.answerType === type
-                      ? 'bg-white text-primary shadow-sm border border-slate-100'
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
+        {/* Shared Options — 동일 문제 모드에서는 AI가 자동 판별하므로 숨김 */}
+        {selection.mode !== 'exact' && (
+          <div className="space-y-3 pt-2 border-t border-slate-100">
+            <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+              <Zap size={16} />
+              {selection.mode === 'curriculum' ? '난이도 및 유형' : '생성 옵션'}
+            </label>
+            <div className="space-y-2">
+              {selection.mode === 'image' && (
+                <p className="text-xs text-slate-400 mb-2">
+                  사진의 문제와 유사한 난이도로 생성되지만, 필요 시 아래 옵션으로 변경할 수 있습니다.
+                </p>
+              )}
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  value={selection.difficulty}
+                  onChange={(e) => handleChange('difficulty', e.target.value)}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-sm outline-none"
                 >
-                  {type === AnswerType.MULTIPLE_CHOICE ? '객관식' : '주관식'}
-                </button>
-              ))}
+                  {Object.values(Difficulty).map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={selection.problemType}
+                  onChange={(e) => handleChange('problemType', e.target.value)}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-sm outline-none"
+                >
+                  {Object.values(ProblemType).map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Answer Type Toggle */}
+              <div className="flex bg-slate-50 p-1 rounded-sm border border-slate-200">
+                {Object.values(AnswerType).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => handleChange('answerType', type)}
+                    className={`flex-1 py-2 text-sm font-medium rounded-sm transition-all ${
+                      selection.answerType === type
+                        ? 'bg-white text-primary shadow-sm border border-slate-100'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    {type === AnswerType.MULTIPLE_CHOICE ? '객관식' : '주관식'}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Generate Button */}

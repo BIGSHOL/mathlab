@@ -11,14 +11,14 @@ import { TEXTBOOK_CATALOG, getPublisher } from '@/lib/constants/textbook-curricu
 function selectModel(selection: SelectionState): string {
   const { schoolLevel, difficulty, mode } = selection;
 
-  // 이미지 모드(유사/동일)는 SVG 생성 + 고난도 분석 필요 → 항상 상위 모델
-  if (mode === 'image' || mode === 'exact') return 'gemini-2.5-flash';
+  // 이미지 모드(유사/동일)는 SVG 생성 + 고난도 분석 필요 → Pro 모델
+  if (mode === 'image' || mode === 'exact') return 'gemini-3-pro-preview';
 
-  if (schoolLevel === SchoolLevel.HIGH) return 'gemini-3-flash-preview';
+  if (schoolLevel === SchoolLevel.HIGH) return 'gemini-3-pro-preview';
 
   if (schoolLevel === SchoolLevel.MIDDLE) {
     if (difficulty === Difficulty.LEVEL3 || difficulty === Difficulty.LEVEL4 || difficulty === Difficulty.LEVEL5) {
-      return 'gemini-3-flash-preview';
+      return 'gemini-3-pro-preview';
     }
   }
 
@@ -81,6 +81,52 @@ RULES: Use preset names, NOT coordinates. Provide side lengths/angles from the p
   required: ['question', 'answer', 'solution', 'topic', 'difficulty'],
 };
 
+/** exact 모드 전용 스키마 — diagramSpec 제거, diagramSVG로 도형 직접 재현 */
+const EXACT_RESPONSE_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    question: {
+      type: Type.STRING,
+      description: 'The main text. Use Markdown. WRAP MATH IN $...$. NO IMG TAGS.',
+    },
+    choices: {
+      type: Type.ARRAY,
+      items: { type: Type.STRING },
+      description: 'Array of 5 options. Leave EMPTY for subjective. WRAP MATH IN $...$.',
+    },
+    answer: {
+      type: Type.STRING,
+      description: "The final answer. IF OBJECTIVE: Include number (e.g., '(3) ...'). IF SUBJECTIVE: Just the value.",
+    },
+    solution: {
+      type: Type.STRING,
+      description: 'Detailed step-by-step solution. MUST USE NEWLINES BETWEEN STEPS.',
+    },
+    topic: {
+      type: Type.STRING,
+      description: 'Topic label derived from image or selection.',
+    },
+    difficulty: {
+      type: Type.STRING,
+      description: 'Difficulty level.',
+    },
+    diagramSVG: {
+      type: Type.STRING,
+      description: `If the image contains diagrams/figures, reproduce as SVG. CRITICAL RULES:
+- NO LaTeX ($...$) inside SVG <text>! Use plain text + Unicode: ° π θ √ α β ∠
+- Fractions: build vertically with numerator <text>, <line>, denominator <text>
+- SIZE: Draw shapes LARGE. Each shape ≥180px wide, ≥150px tall. Tight viewBox, minimal padding. 2 shapes side by side: viewBox="0 0 520 250"
+- LABELS: font-size="16", font-family="sans-serif". Offset labels 15-20px AWAY from vertices/lines so they never overlap with strokes or angle arcs
+- ANGLE ARCS: Draw arc marks 25px radius from vertex. Place angle label text OUTSIDE the arc, not on top of it
+- RIGHT ANGLE: Draw □ mark (12×12px polyline) at 90° corners
+- stroke-width="2" for shape outlines, "1" for arcs/marks
+- Do NOT include text already in "question" field`,
+      nullable: true,
+    },
+  },
+  required: ['question', 'answer', 'solution', 'topic', 'difficulty'],
+};
+
 const COMMON_INSTRUCTIONS = `
     Requirements:
     1. The problem must be mathematically accurate and suitable for Korean students.
@@ -121,21 +167,21 @@ const COMMON_INSTRUCTIONS = `
            >
            > 정우: 힌트 좀 줘.
 
-    5. [Visuals & Diagrams - USE PRESETS, NOT COORDINATES]
+    5. [Visuals & Diagrams]
        - **When to generate**: If the topic involves **Geometry**, **Functions/Graphs**, or **Statistics**.
-       - **Use "diagramSpec"**: Provide a preset-based JSON. Do NOT calculate coordinates — our system does it automatically.
-       - **Examples**:
-         - 직각삼각형 (밑변 3, 높이 4): { "type":"triangle", "preset":"right", "sides":{"b":4,"c":3} }
-         - 정삼각형 (한 변 6): { "type":"triangle", "preset":"equilateral", "sides":{"a":6} }
-         - 원 (반지름 표시): { "type":"circle", "showRadius":true }
-         - 이차함수 그래프: { "type":"coordinatePlane", "functions":[{"expr":"x^2-2*x+1","label":"y=x²-2x+1"}], "showGrid":true }
-         - 직사각형 (가로 8, 세로 5): { "type":"quadrilateral", "preset":"rectangle", "sides":{"width":8,"height":5} }
-         - 원기둥 (반지름 5, 높이 10): { "type":"solid", "shape":"cylinder", "dimensions":{"radius":5,"height":10}, "showDimensions":true }
-       - **CRITICAL**: Use the actual numbers from your problem in sides/dimensions.
-       - **Functions format**: "x^2+3*x-1" (supports +,-,*,/,^,sin,cos,tan,sqrt,abs,log,ln,pi,e).
-       - **Do NOT provide raw SVG in "diagramSVG"**.
-       - **NEVER generate an empty coordinatePlane without functions/points.** If the problem involves a graph, you MUST include the function expression(s) in "functions" array. Example for a derivative graph: { "type":"coordinatePlane", "functions":[{"expr":"-3*(x-1)^2+3","label":"y=f'(x)"}], "points":[{"coord":[0,0],"label":"O"},{"coord":[1,3]}], "showGrid":true }
-       - **NEVER use HTML tags (span, div, etc.) in the question text to reference diagrams.** Use plain text like "아래 그림과 같다" instead.
+       - **diagramSpec (curriculum/image mode)**: Provide a preset-based JSON. Do NOT calculate coordinates.
+         - Examples: { "type":"triangle", "preset":"right", "sides":{"b":4,"c":3} }, { "type":"coordinatePlane", "functions":[{"expr":"x^2-2*x+1","label":"y=x²-2x+1"}], "showGrid":true }
+         - **Functions format**: "x^2+3*x-1" (supports +,-,*,/,^,sin,cos,tan,sqrt,abs,log,ln,pi,e).
+         - **NEVER generate an empty coordinatePlane without functions/points.**
+       - **diagramSVG (exact mode)**: Provide raw SVG string reproducing the diagram from the image.
+       - **SVG Quality Rules (CRITICAL for diagramSVG)**:
+         - **NO LaTeX** ($...$) inside SVG <text>! Use Unicode: ° π θ √ α β ∠
+         - **ViewBox**: Tight fit. Each shape ≥180px wide, ≥150px tall. Two shapes side by side: viewBox="0 0 520 250"
+         - **Stroke**: Main lines: stroke-width="2". Arcs/marks: stroke-width="1". Color: black.
+         - **Angle arcs**: Draw arc with radius 25px from vertex. Place label text 15-20px OUTSIDE the arc, never overlapping strokes.
+         - **Right angle**: 12×12px polyline □ mark.
+         - **Labels**: font-size="16", font-family="sans-serif". Offset 15-20px away from vertices/lines.
+       - **NEVER use HTML tags (span, div, etc.) in the question text to reference diagrams.**
 
     6. [Solution Quality - WORKBOOK STYLE]
        - Provide a professional, detailed solution similar to famous Korean workbooks (like Ssen, Black Label).
@@ -203,14 +249,18 @@ function buildExactPrompt(removeScore?: boolean): string {
   return `
     You are an expert Mathematics Teacher in South Korea.
 
-    Task: Extract and convert the provided image of a math problem into **EXACTLY THE SAME** problem in text format.
+    Task: Extract ONLY the printed text from the image. The original image will be displayed alongside, so do NOT describe diagrams in text.
 
-    1. **Extract**: Read the problem text, choices, and any mathematical formulas exactly as they appear in the image.${scoreInstruction}
-       - **CRITICAL**: Preserve the EXACT layout, line breaks, and formatting. If there is a box, use blockquotes. If there is a dialogue, keep each person's speech on a new line.
-    2. **Format**: Convert the extracted content into the required JSON format.
-       - Do NOT change the numbers, functions, or context.
+    1. **Extract TEXT ONLY**: Read the problem text exactly as printed in the image.${scoreInstruction}
+       - **CRITICAL**: Extract ONLY the text that is actually written/printed in the image.
+       - Do NOT describe, explain, or transcribe what is shown in diagrams/figures/graphs.
+       - If the image shows a triangle with angles labeled 70° and 45°, do NOT write "세 내각의 크기는 70°, 45°입니다" — that information is in the diagram, not the text.
+       - If the problem says "다음 그림에서" followed by diagrams, just extract "다음 그림에서..." — the diagram will be reproduced as SVG.
+       - Preserve the EXACT layout, line breaks, and formatting. If there is a box, use blockquotes.
+    2. **Format**: Convert the extracted text into the required JSON format.
+       - Do NOT change the numbers, functions, or context of the TEXT.
        - If there are choices in the image, put them in the "choices" array. If there are no choices, leave it empty [].
-       - If there is a diagram with a graph, use "diagramSpec": { "type":"coordinatePlane", "functions":[{"expr":"...","label":"..."}], "showGrid":true }. NEVER leave functions empty.
+       - **Diagrams**: If the image contains diagrams/figures, reproduce them in "diagramSVG" as a complete SVG string. Include ALL angle labels, side lengths, special marks (right angle □, arc marks), and sub-labels like (1),(2). Use viewBox for scaling. Do NOT put diagram content in "question" text.
        - Provide the correct answer and a detailed solution for the problem.
        - Estimate the topic and difficulty level.
 
@@ -246,6 +296,8 @@ function buildImagePrompt(selection: SelectionState): string {
 function sanitizeText(text: string): string {
   if (!text) return text;
   let s = text
+    // 리터럴 \n 문자열 → 실제 줄바꿈 (AI가 JSON에서 이스케이프를 잘못한 경우)
+    .replace(/\\n/g, '\n')
     .replace(/<img[^>]*>/gi, '')
     .replace(/!\[.*?\]\(.*?\)/g, '')
     .replace(/<center>\s*<\/center>/gi, '')
@@ -344,14 +396,32 @@ export async function generateMathProblem(selection: SelectionState): Promise<Ge
   }
 
   const model = selectModel(selection);
-  const response = await ai.models.generateContent({
-    model,
-    contents: contents as string,
-    config: {
-      responseMimeType: 'application/json',
-      responseSchema: RESPONSE_SCHEMA,
-    },
-  });
+  const schema = selection.mode === 'exact' ? EXACT_RESPONSE_SCHEMA : RESPONSE_SCHEMA;
+
+  // Pro 모델은 느리므로 120초, Flash는 60초 타임아웃
+  const timeoutMs = model.includes('pro') ? 120_000 : 60_000;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  let response;
+  try {
+    response = await ai.models.generateContent({
+      model,
+      contents: contents as string,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: schema,
+        abortSignal: controller.signal,
+      },
+    });
+  } catch (err: unknown) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new Error(`AI 응답 시간 초과 (${timeoutMs / 1000}초). 다시 시도해주세요.`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!response.text) {
     throw new Error('No content generated.');
@@ -375,6 +445,7 @@ export async function generateMathProblem(selection: SelectionState): Promise<Ge
     try {
       data = JSON.parse(jsonStr) as GeneratedProblem;
     } catch {
+      console.error('[mathgen] JSON 파싱 실패 — 원본 응답 (첫 500자):', response.text!.slice(0, 500));
       throw new Error('AI 응답 JSON 파싱 실패');
     }
   }
@@ -386,7 +457,17 @@ export async function generateMathProblem(selection: SelectionState): Promise<Ge
     data.diagramSVG = data.diagramSVG
       .replace(/^```(xml|svg)?/i, '')
       .replace(/```$/, '')
-      .trim();
+      .trim()
+      // SVG 안에 LaTeX가 들어간 경우 유니코드로 변환
+      .replace(/\$(\d+)\^\\circ\$/g, '$1°')
+      .replace(/\$\\angle\s*/g, '∠').replace(/\$([^$]*)\$/g, '$1')
+      .replace(/\\circ/g, '°')
+      .replace(/\\angle/g, '∠')
+      .replace(/\\pi/g, 'π')
+      .replace(/\\theta/g, 'θ')
+      .replace(/\\alpha/g, 'α')
+      .replace(/\\beta/g, 'β')
+      .replace(/\\sqrt/g, '√');
   }
 
   // diagramSpec이 문자열로 반환된 경우 파싱
@@ -424,6 +505,11 @@ export async function generateMathProblem(selection: SelectionState): Promise<Ge
         // 추출 실패 시 빈 좌표평면이라도 유지
       }
     }
+  }
+
+  // exact 모드: diagramSpec 제거 (부정확), diagramSVG는 유지 (AI가 직접 SVG로 도형 재현)
+  if (selection.mode === 'exact') {
+    data.diagramSpec = null;
   }
 
   return data;

@@ -31,7 +31,7 @@ export function normalizeDiagram(spec: DiagramSpec): DiagramSpec {
     case 'solid':
       return normalizeSolid(spec);
     case 'composite':
-      return { ...spec, elements: spec.elements.map(normalizeDiagram) };
+      return { ...spec, elements: Array.isArray(spec.elements) ? spec.elements.map(normalizeDiagram) : [] };
     default:
       return spec;
   }

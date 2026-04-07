@@ -35,7 +35,6 @@ export function useQuestionManager() {
   const canEdit = user?.role === 'SUPER_ADMIN';
 
   const [search, setSearch] = useState('');
-  const [searchDebounced, setSearchDebounced] = useState('');
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
   const [schoolLevel, setSchoolLevel] = useState<'middle' | 'elementary'>('middle');
   const [bookFilter, setBookFilter] = useState<string | null>(null);
@@ -56,6 +55,7 @@ export function useQuestionManager() {
   const [, setTotalCount] = useState(0);
   const [chaptersByBook, setChaptersByBook] = useState<Record<string, { chapter: string; count: number }[]>>({});
   const [sectionsByBook, setSectionsByBook] = useState<Record<string, { section: string; count: number }[]>>({});
+  const [sectionsByChapter, setSectionsByChapter] = useState<Record<string, { section: string; count: number }[]>>({});
 
   // View / Edit modal
   const [selectedQuestion, setSelectedQuestion] = useState<QuestionItem | null>(null);
@@ -296,7 +296,7 @@ export function useQuestionManager() {
     }
 
     if (domainFilter !== '전체') params.set('domain', domainFilter);
-    if (searchDebounced) params.set('search', searchDebounced);
+    if (search) params.set('search', search);
     params.set('page', String(currentPage));
     params.set('limit', String(ITEMS_PER_PAGE));
 
@@ -317,7 +317,7 @@ export function useQuestionManager() {
     } finally {
       setLoading(false);
     }
-  }, [bookFilter, chapterFilter, sectionFilter, difficultyFilter, typeFilters, domainFilter, searchDebounced, currentPage, schoolLevel]);
+  }, [bookFilter, chapterFilter, sectionFilter, difficultyFilter, typeFilters, domainFilter, search, currentPage, schoolLevel]);
 
   // 새 문제 추가
   const openCreateModal = () => {
@@ -417,6 +417,7 @@ export function useQuestionManager() {
         setTotalCount(statsJson.data.total);
         if (statsJson.data.chaptersByBook) setChaptersByBook(statsJson.data.chaptersByBook);
         if (statsJson.data.sectionsByBook) setSectionsByBook(statsJson.data.sectionsByBook);
+        if (statsJson.data.sectionsByChapter) setSectionsByChapter(statsJson.data.sectionsByChapter);
       }
       if (conceptsJson?.data) setConcepts(conceptsJson.data.map((c: { id: string; conceptCode: string; title: string }) => ({ id: c.id, conceptCode: c.conceptCode || '', title: c.title })));
     });
@@ -424,15 +425,6 @@ export function useQuestionManager() {
 
   const schoolTotal = (schoolLevel === 'middle' ? MIDDLE_BOOK_CODES : ELEMENTARY_BOOK_CODES)
     .reduce((sum, code) => sum + (bookCounts[code] || 0), 0);
-
-  // Debounce search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearchDebounced(search);
-      setCurrentPage(1);
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [search]);
 
   useEffect(() => {
     fetchQuestions();
@@ -644,7 +636,7 @@ export function useQuestionManager() {
     // Data
     questions, meta, loading,
     bookCounts, schoolTotal,
-    chaptersByBook, sectionsByBook,
+    chaptersByBook, sectionsByBook, sectionsByChapter,
     concepts,
 
     // View/Edit modal

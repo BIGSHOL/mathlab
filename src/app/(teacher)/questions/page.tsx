@@ -65,6 +65,7 @@ export default function QuestionsPage() {
         schoolTotal={mgr.schoolTotal}
         chaptersByBook={mgr.chaptersByBook}
         sectionsByBook={mgr.sectionsByBook}
+        sectionsByChapter={mgr.sectionsByChapter}
       />
 
       {/* ===== Main Content: Question list with search/pagination ===== */}

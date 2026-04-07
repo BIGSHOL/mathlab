@@ -32,6 +32,20 @@ export async function GET() {
     sectionsByBook[g.bookCode].push({ section: g.section as string, count: g._count });
   }
 
+  // bookCode+chapter별 section 목록 (단원 선택 시 해당 단원의 section만 표시)
+  const sectionsByChapter: Record<string, { section: string; count: number }[]> = {};
+  const sectionChapterGroups = await prisma.question.groupBy({
+    by: ['bookCode', 'chapter', 'section'],
+    where: { ...where, section: { not: null } },
+    _count: true,
+    orderBy: [{ bookCode: 'asc' }, { chapter: 'asc' }, { section: 'asc' }],
+  });
+  for (const g of sectionChapterGroups) {
+    const key = `${g.bookCode}::${g.chapter}`;
+    if (!sectionsByChapter[key]) sectionsByChapter[key] = [];
+    sectionsByChapter[key].push({ section: g.section as string, count: g._count });
+  }
+
   return NextResponse.json({
     data: {
       total,
@@ -40,6 +54,7 @@ export async function GET() {
       byType: byType.map((t) => ({ type: t.type, count: t._count })),
       chaptersByBook,
       sectionsByBook,
+      sectionsByChapter,
     },
   });
 }

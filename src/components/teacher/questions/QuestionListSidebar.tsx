@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   BookOpen,
+  ChevronDown,
   FolderOpen,
   PanelLeftClose,
   PanelLeftOpen,
@@ -41,6 +42,7 @@ interface QuestionListSidebarProps {
   schoolTotal: number;
   chaptersByBook: Record<string, { chapter: string; count: number }[]>;
   sectionsByBook: Record<string, { section: string; count: number }[]>;
+  sectionsByChapter: Record<string, { section: string; count: number }[]>;
 }
 
 export function QuestionListSidebar({
@@ -66,7 +68,14 @@ export function QuestionListSidebar({
   schoolTotal,
   chaptersByBook,
   sectionsByBook,
+  sectionsByChapter,
 }: QuestionListSidebarProps) {
+  const [chapterOpen, setChapterOpen] = useState(true);
+  const [sectionOpen, setSectionOpen] = useState(true);
+  const [typeOpen, setTypeOpen] = useState(true);
+  const [difficultyOpen, setDifficultyOpen] = useState(true);
+  const [domainOpen, setDomainOpen] = useState(true);
+
   return (
     <aside className={`shrink-0 border-r border-slate-200 bg-slate-50/30 flex-col transition-all duration-200 ${leftPanelCollapsed ? 'w-12 hidden md:flex' : 'w-full md:w-72'} hidden md:flex`}>
       {/* Panel Header */}
@@ -183,141 +192,161 @@ export function QuestionListSidebar({
           {/* Chapter Filter - 특정 학기 선택 시에만 표시 */}
           {bookFilter && chaptersByBook[bookFilter]?.length > 0 && (
             <Card padding="sm" className="flex flex-col gap-2">
-              <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">
-                단원 필터
-              </h3>
-              <div className="flex flex-col gap-1 max-h-64 overflow-y-auto">
-                <button
-                  onClick={() => { setChapterFilter(null); setSectionFilter(null); setCurrentPage(1); }}
-                  className={`px-3 py-2 rounded-sm text-xs font-medium transition-colors text-left ${
-                    chapterFilter === null
-                      ? 'bg-primary text-white'
-                      : 'bg-slate-100 hover:bg-slate-200 text-text-secondary'
-                  }`}
-                >
-                  전체
-                </button>
-                {chaptersByBook[bookFilter].map((ch) => (
+              <button onClick={() => setChapterOpen((p) => !p)} className="flex items-center justify-between w-full">
+                <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">단원 필터</h3>
+                <ChevronDown className={`w-4 h-4 text-text-tertiary transition-transform ${chapterOpen ? '' : '-rotate-90'}`} />
+              </button>
+              {chapterOpen && (
+                <div className="flex flex-col gap-1 max-h-64 overflow-y-auto">
                   <button
-                    key={ch.chapter}
-                    onClick={() => { setChapterFilter(ch.chapter); setSectionFilter(null); setCurrentPage(1); }}
-                    className={`px-3 py-2 rounded-sm text-xs font-medium transition-colors text-left flex justify-between items-center ${
-                      chapterFilter === ch.chapter
+                    onClick={() => { setChapterFilter(null); setSectionFilter(null); setCurrentPage(1); }}
+                    className={`px-3 py-2 rounded-sm text-xs font-medium transition-colors text-left ${
+                      chapterFilter === null
                         ? 'bg-primary text-white'
                         : 'bg-slate-100 hover:bg-slate-200 text-text-secondary'
                     }`}
                   >
-                    <span>{ch.chapter}</span>
-                    <span className={`text-xs ${chapterFilter === ch.chapter ? 'text-white/70' : 'text-text-tertiary'}`}>{ch.count}</span>
+                    전체
                   </button>
-                ))}
-              </div>
+                  {chaptersByBook[bookFilter].map((ch) => (
+                    <button
+                      key={ch.chapter}
+                      onClick={() => { setChapterFilter(ch.chapter); setSectionFilter(null); setCurrentPage(1); }}
+                      className={`px-3 py-2 rounded-sm text-xs font-medium transition-colors text-left flex justify-between items-center ${
+                        chapterFilter === ch.chapter
+                          ? 'bg-primary text-white'
+                          : 'bg-slate-100 hover:bg-slate-200 text-text-secondary'
+                      }`}
+                    >
+                      <span>{ch.chapter}</span>
+                      <span className={`text-xs ${chapterFilter === ch.chapter ? 'text-white/70' : 'text-text-tertiary'}`}>{ch.count}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </Card>
           )}
 
           {/* Section Filter - 특정 학기 선택 시에만 표시 */}
-          {bookFilter && sectionsByBook[bookFilter]?.length > 0 && (
+          {bookFilter && (() => {
+            // chapter 선택 시 해당 chapter의 section만, 미선택 시 book 전체 section
+            const sectionKey = chapterFilter ? `${bookFilter}::${chapterFilter}` : null;
+            const sections = sectionKey ? sectionsByChapter[sectionKey] : sectionsByBook[bookFilter];
+            return sections;
+          })()?.length > 0 && (
             <Card padding="sm" className="flex flex-col gap-2">
-              <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">
-                유형/코너 필터
-              </h3>
-              <div className="flex flex-col gap-1">
-                <button
-                  onClick={() => { setSectionFilter(null); setCurrentPage(1); }}
-                  className={`px-3 py-2 rounded-sm text-xs font-medium transition-colors text-left ${
-                    sectionFilter === null
-                      ? 'bg-primary text-white'
-                      : 'bg-slate-100 hover:bg-slate-200 text-text-secondary'
-                  }`}
-                >
-                  전체
-                </button>
-                {sectionsByBook[bookFilter].map((s) => (
+              <button onClick={() => setSectionOpen((p) => !p)} className="flex items-center justify-between w-full">
+                <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">유형/코너 필터</h3>
+                <ChevronDown className={`w-4 h-4 text-text-tertiary transition-transform ${sectionOpen ? '' : '-rotate-90'}`} />
+              </button>
+              {sectionOpen && (
+                <div className="flex flex-col gap-1 max-h-64 overflow-y-auto">
                   <button
-                    key={s.section}
-                    onClick={() => { setSectionFilter(s.section); setCurrentPage(1); }}
-                    className={`px-3 py-2 rounded-sm text-xs font-medium transition-colors text-left flex justify-between items-center ${
-                      sectionFilter === s.section
+                    onClick={() => { setSectionFilter(null); setCurrentPage(1); }}
+                    className={`px-3 py-2 rounded-sm text-xs font-medium transition-colors text-left ${
+                      sectionFilter === null
                         ? 'bg-primary text-white'
                         : 'bg-slate-100 hover:bg-slate-200 text-text-secondary'
                     }`}
                   >
-                    <span>{s.section}</span>
-                    <span className={`text-xs ${sectionFilter === s.section ? 'text-white/70' : 'text-text-tertiary'}`}>{s.count}</span>
+                    전체
                   </button>
-                ))}
-              </div>
+                  {(chapterFilter ? sectionsByChapter[`${bookFilter}::${chapterFilter}`] : sectionsByBook[bookFilter])?.map((s) => (
+                    <button
+                      key={s.section}
+                      onClick={() => { setSectionFilter(s.section); setCurrentPage(1); }}
+                      className={`px-3 py-2 rounded-sm text-xs font-medium transition-colors text-left flex justify-between items-center ${
+                        sectionFilter === s.section
+                          ? 'bg-primary text-white'
+                          : 'bg-slate-100 hover:bg-slate-200 text-text-secondary'
+                      }`}
+                    >
+                      <span>{s.section}</span>
+                      <span className={`text-xs ${sectionFilter === s.section ? 'text-white/70' : 'text-text-tertiary'}`}>{s.count}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </Card>
           )}
 
           {/* Type Filter */}
           <Card padding="sm" className="flex flex-col gap-2">
-            <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">
-              유형 필터
-            </h3>
-            <div className="flex flex-col gap-2">
-              {TYPE_OPTIONS.map((type) => (
-                <label key={type} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={typeFilters.has(type)}
-                    onChange={() => toggleTypeFilter(type)}
-                    className="form-checkbox text-primary rounded-sm border-slate-300 focus:ring-primary focus:ring-offset-0"
-                  />
-                  <span className="text-sm font-medium">{type}</span>
-                </label>
-              ))}
-            </div>
+            <button onClick={() => setTypeOpen((p) => !p)} className="flex items-center justify-between w-full">
+              <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">유형 필터</h3>
+              <ChevronDown className={`w-4 h-4 text-text-tertiary transition-transform ${typeOpen ? '' : '-rotate-90'}`} />
+            </button>
+            {typeOpen && (
+              <div className="flex flex-col gap-2">
+                {TYPE_OPTIONS.map((type) => (
+                  <label key={type} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={typeFilters.has(type)}
+                      onChange={() => toggleTypeFilter(type)}
+                      className="form-checkbox text-primary rounded-sm border-slate-300 focus:ring-primary focus:ring-offset-0"
+                    />
+                    <span className="text-sm font-medium">{type}</span>
+                  </label>
+                ))}
+              </div>
+            )}
           </Card>
 
           {/* Difficulty Filter */}
           <Card padding="sm" className="flex flex-col gap-2">
-            <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">
-              난이도
-            </h3>
-            <div className="flex gap-1.5">
-              {DIFFICULTY_OPTIONS.map((d) => (
-                <button
-                  key={d}
-                  onClick={() => {
-                    setDifficultyFilter(d);
-                    setCurrentPage(1);
-                  }}
-                  className={`px-2.5 py-1.5 rounded-sm text-xs font-medium transition-colors ${
-                    difficultyFilter === d
-                      ? 'bg-primary text-white'
-                      : 'bg-slate-100 hover:bg-slate-200 text-text-secondary'
-                  }`}
-                >
-                  {d}
-                </button>
-              ))}
-            </div>
+            <button onClick={() => setDifficultyOpen((p) => !p)} className="flex items-center justify-between w-full">
+              <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">난이도</h3>
+              <ChevronDown className={`w-4 h-4 text-text-tertiary transition-transform ${difficultyOpen ? '' : '-rotate-90'}`} />
+            </button>
+            {difficultyOpen && (
+              <div className="flex gap-1.5">
+                {DIFFICULTY_OPTIONS.map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => {
+                      setDifficultyFilter(d);
+                      setCurrentPage(1);
+                    }}
+                    className={`px-2.5 py-1.5 rounded-sm text-xs font-medium transition-colors ${
+                      difficultyFilter === d
+                        ? 'bg-primary text-white'
+                        : 'bg-slate-100 hover:bg-slate-200 text-text-secondary'
+                    }`}
+                  >
+                    {d}
+                  </button>
+                ))}
+              </div>
+            )}
           </Card>
 
           {/* Domain Filter */}
           <Card padding="sm" className="flex flex-col gap-2">
-            <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">
-              영역
-            </h3>
-            <div className="flex flex-wrap gap-1.5">
-              {DOMAIN_OPTIONS.map((d) => (
-                <button
-                  key={d.key}
-                  onClick={() => {
-                    setDomainFilter(d.key);
-                    setCurrentPage(1);
-                  }}
-                  className={`px-2.5 py-1.5 rounded-sm text-xs font-medium transition-colors ${
-                    domainFilter === d.key
-                      ? 'bg-primary text-white'
-                      : 'bg-slate-100 hover:bg-slate-200 text-text-secondary'
-                  }`}
-                >
-                  {d.label}
-                </button>
-              ))}
-            </div>
+            <button onClick={() => setDomainOpen((p) => !p)} className="flex items-center justify-between w-full">
+              <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">영역</h3>
+              <ChevronDown className={`w-4 h-4 text-text-tertiary transition-transform ${domainOpen ? '' : '-rotate-90'}`} />
+            </button>
+            {domainOpen && (
+              <div className="flex flex-wrap gap-1.5">
+                {DOMAIN_OPTIONS.map((d) => (
+                  <button
+                    key={d.key}
+                    onClick={() => {
+                      setDomainFilter(d.key);
+                      setCurrentPage(1);
+                    }}
+                    className={`px-2.5 py-1.5 rounded-sm text-xs font-medium transition-colors ${
+                      domainFilter === d.key
+                        ? 'bg-primary text-white'
+                        : 'bg-slate-100 hover:bg-slate-200 text-text-secondary'
+                    }`}
+                  >
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </Card>
         </div>
       )}

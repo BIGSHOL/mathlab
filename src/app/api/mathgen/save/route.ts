@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
         choices: choices ?? undefined,
         answer,
         explanation: explanation || undefined,
+        source: 'AI 문제 생성',
         sourceTag: sourceTag || 'AI 생성',
         diagramSpec: diagramSpec ?? undefined,
         diagramSVG: diagramSVG ?? undefined,
