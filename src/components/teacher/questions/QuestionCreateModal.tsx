@@ -48,7 +48,7 @@ export function QuestionCreateModal({
   setCreateForm,
   saving,
   saveSuccess,
-  chaptersByBook,
+  chaptersByBook: _chaptersByBook,
   contentRef,
   explanationRef,
   answerRef,
