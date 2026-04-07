@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireTeacher, isResponse, requireResource, badRequest } from '@/lib/api';
+import { requireTeacher, isResponse, requireResource, badRequest, canAccessStudent } from '@/lib/api';
 import { prisma } from '@/lib/db';
 import type { ArithmeticCategory, ArithmeticLevel } from '@/lib/services/arithmetic-generator';
 
@@ -71,6 +71,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       },
     });
   }
+
+  // 학생 접근 권한 검증
+  const canAccess = await canAccessStudent(user, studentId);
+  if (!canAccess) return badRequest('해당 학생에 접근할 수 없습니다');
 
   // Fetch student info
   const student = await prisma.user.findUnique({
