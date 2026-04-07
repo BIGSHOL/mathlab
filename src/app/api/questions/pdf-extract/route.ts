@@ -105,33 +105,132 @@ const PDF_EXTRACT_SCHEMA = {
               properties: {
                 diagramType: {
                   type: Type.STRING,
-                  description: 'fraction_circle | fraction_rect | number_line | place_value | dot_array | coordinate_plane | triangle | quadrilateral | circle | function_graph | venn_diagram | regular_polygon | flow_chart',
+                  description: '26개 타입: fraction_circle | fraction_rect | number_line | place_value | dot_array | flow_chart | bar_chart | line_graph | picture_graph | pie_chart | band_chart | angle_figure | clock_face | coordinate_plane | circle | triangle | quadrilateral | function_graph | venn_diagram | regular_polygon | histogram | stem_leaf | solid_figure | net_diagram | tree_diagram | scatter_plot',
                 },
-                label: {
-                  type: Type.STRING,
-                  description: '도형 설명 (예: "분수 원 3개 5등분", "수직선 0~1")',
+                label: { type: Type.STRING, description: '도형 설명' },
+                // ── 초등 기본 ──
+                totalParts: { type: Type.NUMBER, description: 'fraction_circle: 등분 수' },
+                coloredParts: { type: Type.NUMBER, description: 'fraction_circle: 색칠 조각 수' },
+                count: { type: Type.NUMBER, description: '도형 개수 (fraction_circle/rect)' },
+                rows: { type: Type.NUMBER, description: '행 수 (fraction_rect, dot_array)' },
+                cols: { type: Type.NUMBER, description: '열 수 (fraction_rect, dot_array)' },
+                coloredCount: { type: Type.NUMBER, description: 'fraction_rect: 색칠 칸 수' },
+                hatching: { type: Type.BOOLEAN, description: '빗금 패턴' },
+                min: { type: Type.NUMBER, description: 'number_line: 최솟값' },
+                max: { type: Type.NUMBER, description: 'number_line: 최댓값' },
+                step: { type: Type.NUMBER, description: '눈금/격자 간격' },
+                hundreds: { type: Type.NUMBER, description: 'place_value: 백 자리' },
+                tens: { type: Type.NUMBER, description: 'place_value: 십 자리' },
+                ones: { type: Type.NUMBER, description: 'place_value: 일 자리' },
+                // ── 초등 차트/그래프 ──
+                categories: { type: Type.ARRAY, items: { type: Type.STRING }, description: 'bar_chart/line_graph: 항목명 배열' },
+                dataValues: { type: Type.ARRAY, items: { type: Type.NUMBER }, description: 'bar_chart/line_graph: 데이터값 배열' },
+                segments: {
+                  type: Type.ARRAY,
+                  items: { type: Type.OBJECT, properties: { label: { type: Type.STRING }, value: { type: Type.NUMBER } }, required: ['label', 'value'] },
+                  description: 'pie_chart/band_chart: 부분 [{label,value}]',
                 },
-                // fraction_circle용
-                totalParts: { type: Type.NUMBER, description: '원 등분 수 (예: 5등분이면 5). fraction_circle 전용' },
-                coloredParts: { type: Type.NUMBER, description: '색칠된 조각 수. fraction_circle 전용' },
-                count: { type: Type.NUMBER, description: '원/사각형 개수. fraction_circle, fraction_rect 공용' },
-                // fraction_rect용
-                rows: { type: Type.NUMBER, description: '행 수. fraction_rect, dot_array 공용' },
-                cols: { type: Type.NUMBER, description: '열 수. fraction_rect, dot_array 공용' },
-                coloredCount: { type: Type.NUMBER, description: '색칠할 칸 수 (앞에서부터). fraction_rect 전용' },
-                hatching: { type: Type.BOOLEAN, description: '빗금(사선) 패턴 사용 여부. 교재에서 색칠 대신 빗금이면 true. fraction_rect 전용' },
-                // number_line용
-                min: { type: Type.NUMBER, description: '수직선 최솟값. number_line 전용' },
-                max: { type: Type.NUMBER, description: '수직선 최댓값. number_line 전용' },
-                step: { type: Type.NUMBER, description: '눈금 간격. number_line 전용' },
-                // place_value용
-                hundreds: { type: Type.NUMBER, description: '백 자리. place_value 전용' },
-                tens: { type: Type.NUMBER, description: '십 자리. place_value 전용' },
-                ones: { type: Type.NUMBER, description: '일 자리. place_value 전용' },
+                title: { type: Type.STRING, description: '차트 제목' },
+                xLabel: { type: Type.STRING, description: '차트 x축 라벨' },
+                yLabel: { type: Type.STRING, description: '차트 y축 라벨' },
+                horizontal: { type: Type.BOOLEAN, description: 'bar_chart: 가로 막대 여부' },
+                // ── 초등 기타 ──
+                angle: { type: Type.NUMBER, description: 'angle_figure: 각도(도)' },
+                ray1Angle: { type: Type.NUMBER, description: 'angle_figure: 시작선 각도' },
+                showProtractor: { type: Type.BOOLEAN, description: 'angle_figure: 각도기 표시' },
+                hour: { type: Type.NUMBER, description: 'clock_face: 시 (1~12)' },
+                minute: { type: Type.NUMBER, description: 'clock_face: 분 (0~59)' },
+                nodes: {
+                  type: Type.ARRAY,
+                  items: { type: Type.OBJECT, properties: { id: { type: Type.STRING }, text: { type: Type.STRING } }, required: ['id', 'text'] },
+                  description: 'flow_chart: 노드 [{id,text}]',
+                },
+                arrows: {
+                  type: Type.ARRAY,
+                  items: { type: Type.OBJECT, properties: { from: { type: Type.STRING }, to: { type: Type.STRING }, label: { type: Type.STRING } }, required: ['from', 'to'] },
+                  description: 'flow_chart: 화살표 [{from,to,label?}]',
+                },
+                // ── 중등 기하 ──
+                vertices: {
+                  type: Type.ARRAY,
+                  items: { type: Type.OBJECT, properties: { x: { type: Type.NUMBER }, y: { type: Type.NUMBER }, label: { type: Type.STRING } }, required: ['x', 'y'] },
+                  description: 'triangle(3개)/quadrilateral(4개): 꼭짓점 [{x,y,label}]',
+                },
+                sideLabels: {
+                  type: Type.ARRAY,
+                  items: { type: Type.OBJECT, properties: { from: { type: Type.NUMBER }, to: { type: Type.NUMBER }, label: { type: Type.STRING } }, required: ['from', 'to', 'label'] },
+                  description: 'triangle/quadrilateral: 변 라벨 [{from,to,label}]',
+                },
+                angleLabels: {
+                  type: Type.ARRAY,
+                  items: { type: Type.OBJECT, properties: { vertex: { type: Type.NUMBER }, value: { type: Type.STRING } }, required: ['vertex', 'value'] },
+                  description: 'triangle/quadrilateral: 각 라벨 [{vertex,value}]',
+                },
+                nSides: { type: Type.NUMBER, description: 'regular_polygon: 변의 수' },
+                diagonals: { type: Type.BOOLEAN, description: 'regular_polygon: 대각선 표시' },
+                cx: { type: Type.NUMBER, description: 'circle: 중심 x' },
+                cy: { type: Type.NUMBER, description: 'circle: 중심 y' },
+                radius: { type: Type.NUMBER, description: 'circle: 반지름' },
+                circleLabels: {
+                  type: Type.ARRAY,
+                  items: { type: Type.OBJECT, properties: { text: { type: Type.STRING }, angle: { type: Type.NUMBER }, position: { type: Type.STRING } }, required: ['text', 'angle'] },
+                  description: 'circle: 라벨 [{text,angle,position?}]',
+                },
+                arcs: {
+                  type: Type.ARRAY,
+                  items: { type: Type.OBJECT, properties: { startAngle: { type: Type.NUMBER }, endAngle: { type: Type.NUMBER }, label: { type: Type.STRING } }, required: ['startAngle', 'endAngle'] },
+                  description: 'circle: 호 [{startAngle,endAngle,label?}]',
+                },
+                // ── 좌표/함수 ──
+                xRange: { type: Type.ARRAY, items: { type: Type.NUMBER }, description: 'coordinate_plane/function_graph: x축 범위 [min,max]' },
+                yRange: { type: Type.ARRAY, items: { type: Type.NUMBER }, description: 'coordinate_plane/function_graph: y축 범위 [min,max]' },
+                points: {
+                  type: Type.ARRAY,
+                  items: { type: Type.OBJECT, properties: { x: { type: Type.NUMBER }, y: { type: Type.NUMBER }, label: { type: Type.STRING } }, required: ['x', 'y'] },
+                  description: 'coordinate_plane/function_graph/scatter_plot: 점 [{x,y,label?}]',
+                },
+                functions: {
+                  type: Type.ARRAY,
+                  items: { type: Type.OBJECT, properties: { expression: { type: Type.STRING }, label: { type: Type.STRING } }, required: ['expression'] },
+                  description: 'function_graph: 함수식 [{expression,label?}]',
+                },
+                // ── 중등 통계 ──
+                bins: {
+                  type: Type.ARRAY,
+                  items: { type: Type.OBJECT, properties: { rangeStart: { type: Type.NUMBER }, rangeEnd: { type: Type.NUMBER }, frequency: { type: Type.NUMBER } }, required: ['rangeStart', 'rangeEnd', 'frequency'] },
+                  description: 'histogram: 계급 [{rangeStart,rangeEnd,frequency}]',
+                },
+                stems: {
+                  type: Type.ARRAY,
+                  items: { type: Type.OBJECT, properties: { stem: { type: Type.NUMBER }, leaves: { type: Type.ARRAY, items: { type: Type.NUMBER } } }, required: ['stem', 'leaves'] },
+                  description: 'stem_leaf: 줄기와 잎 [{stem,leaves}]',
+                },
+                showFrequencyPolygon: { type: Type.BOOLEAN, description: 'histogram: 도수분포다각형' },
+                showTrendLine: { type: Type.BOOLEAN, description: 'scatter_plot: 추세선' },
+                // ── 중등 기타 ──
+                shape: { type: Type.STRING, description: 'solid_figure/net_diagram: cube|rectangular_prism|cylinder|cone|triangular_prism|pyramid|sphere' },
+                dimensions: {
+                  type: Type.OBJECT,
+                  properties: { width: { type: Type.NUMBER }, height: { type: Type.NUMBER }, depth: { type: Type.NUMBER }, radius: { type: Type.NUMBER } },
+                  description: 'solid_figure: 치수',
+                },
+                sets: {
+                  type: Type.ARRAY,
+                  items: { type: Type.OBJECT, properties: { label: { type: Type.STRING }, elements: { type: Type.ARRAY, items: { type: Type.STRING } } }, required: ['label'] },
+                  description: 'venn_diagram: 집합 [{label,elements?}]',
+                },
+                intersectionElements: { type: Type.ARRAY, items: { type: Type.STRING }, description: 'venn_diagram: 교집합 원소' },
+                universalElements: { type: Type.ARRAY, items: { type: Type.STRING }, description: 'venn_diagram: 전체집합 원소' },
+                root: {
+                  type: Type.OBJECT,
+                  properties: { label: { type: Type.STRING }, children: { type: Type.ARRAY, items: { type: Type.STRING } } },
+                  description: 'tree_diagram: 루트 {label,children}',
+                },
+                quadType: { type: Type.STRING, description: 'quadrilateral: rectangle|square|parallelogram|trapezoid|rhombus' },
               },
               required: ['diagramType', 'label'],
             },
-            description: '구조화된 다이어그램. content에 [그림] 플레이스홀더와 대응. 서버에서 SVG로 렌더링. 사용하지 않는 필드는 0으로',
+            description: '구조화된 다이어그램 (26개 타입). [그림N] 플레이스홀더와 1:1 대응. 서버가 SVG로 렌더링',
           },
         },
         required: ['questionNum', 'content', 'problemType'],
@@ -251,26 +350,46 @@ const SYSTEM_PROMPT = `당신은 한국 수학 교재 분석 전문가입니다.
     - "상": 4단계 이상, 고난이도 사고력 (예: 복합 문장제, 증명, 창의력 문제)
     - 판단한 난이도를 difficultyTag에 넣으세요.
     - **초등 저학년 기본 문제는 대부분 "하" 또는 "중하"입니다.** 무조건 "중"으로 넣지 마세요. 그림 보고 빈칸 채우기, 분수 표현하기 등 단순한 문제는 "하"입니다.
-25. **다이어그램: diagramParams 사용** 도형/그래프가 포함된 문제는 **diagramParams** 배열에 파라미터를 출력하세요. 서버가 정확한 SVG로 렌더링합니다.
-    - **content에는 반드시 [그림1], [그림2], [그림3]... 플레이스홀더를 넣으세요.** 1개라도 [그림1] 사용!
-    - [분수 원], [수직선] 같은 라벨 텍스트를 content에 넣지 마세요. 반드시 [그림N] 형식만 사용!
-    - **diagramParams 배열의 순서와 [그림N] 번호가 1:1 대응.** diagramParams[0]이 [그림1], diagramParams[1]이 [그림2]...
-    - **단계별 다이어그램은 반드시 분리!** 한 문제에 여러 단계의 도형이 나오면 각 단계를 별도의 diagramParams 항목 + 별도 [그림N]으로 분리하세요.
-      예: "1÷3 = 1/3이고 [그림1], 4÷3는 1/3이 4개 [그림2], → 4÷3 = 4/3 [그림3]"
-      → diagramParams: [{fraction_rect 1개 3등분 1칸 색칠}, {fraction_rect 4개 3등분 전체 색칠}, {fraction_rect 1개 3등분 4칸 색칠}]
-    - **복잡한 다단계 시각 설명(화살표+여러 색상+단계별 변환 과정 등)은 diagramParams로 무리하지 말고 images 바운딩 박스로 크롭하세요.**
-    - **diagramType별 필수 필드값 (정확히 채우세요!):**
-      - **fraction_circle**: totalParts(등분수, 예:5), coloredParts(색칠수, 예:3), count(원 개수, 예:3)
-        예: "3÷5 원 3개 5등분" → diagramType:"fraction_circle", totalParts:5, coloredParts:0, count:3
-      - **fraction_rect**: rows(행), cols(열), coloredCount(색칠 칸수), count(사각형 개수), hatching(빗금 여부)
-        예: "1/4 색칠" → diagramType:"fraction_rect", rows:4, cols:1, coloredCount:1, count:1
-        예: "세로 3등분" → rows:3, cols:1. "가로 4등분" → rows:1, cols:4
-        예: "빗금 표시된 사각형" → hatching:true (교재에서 사선 빗금이 그려져 있으면 true)
-      - **number_line**: min(최솟값), max(최댓값), step(눈금간격)
-        예: "0~1 수직선 8등분" → diagramType:"number_line", min:0, max:1, step:0.125
-        **수직선에 점이나 호(arc)가 있으면 반드시 marks/highlights도 출력!** (현재 Gemini 스키마에서 지원 안 되므로 images 크롭 병행)
+25. **다이어그램: diagramParams 사용 (26개 타입)** 도형/그래프가 포함된 문제는 **diagramParams** 배열에 파라미터를 출력하세요. 서버가 정확한 SVG로 렌더링합니다.
+    - **content에는 반드시 [그림1], [그림2]... 플레이스홀더를 넣으세요.** diagramParams[0]→[그림1], diagramParams[1]→[그림2]...
+    - [분수 원], [수직선] 같은 라벨 텍스트를 content에 넣지 마세요. 반드시 [그림N] 형식만!
+    - **단계별 다이어그램은 반드시 분리!** 각 단계를 별도 diagramParams 항목 + 별도 [그림N]으로
+    - **복잡한 다단계 시각 설명은 diagramParams로 무리하지 말고 images 바운딩 박스로 크롭**
+    - **diagramType별 필수 필드:**
+      [초등 분수/수]
+      - **fraction_circle**: totalParts, coloredParts, count. 예: totalParts:5, coloredParts:3, count:2
+      - **fraction_rect**: rows, cols, coloredCount, count, hatching. 예: rows:2, cols:5, coloredCount:3
+      - **number_line**: min, max, step. 예: min:0, max:1, step:0.125
       - **place_value**: hundreds, tens, ones
-    - **중요:** 사용하지 않는 숫자 필드는 0으로 넣으세요. 비워두면 안 됩니다.
+      - **dot_array**: rows, cols. 예: rows:3, cols:4
+      [초등 차트]
+      - **bar_chart**: categories, dataValues, title?, xLabel?, yLabel?, horizontal?
+      - **line_graph**: categories, dataValues, title?
+      - **picture_graph**: categories, dataValues, title?
+      - **pie_chart**: segments[{label,value}], title?
+      - **band_chart**: segments[{label,value}], title?
+      [초등 기타]
+      - **angle_figure**: angle(도), ray1Angle?, showProtractor?. 예: angle:60
+      - **clock_face**: hour(1~12), minute(0~59). 예: hour:3, minute:30
+      - **flow_chart**: nodes[{id,text}], arrows[{from,to,label?}]
+      [중등 기하] ⭐ 기하 문제의 도형은 반드시 구조화!
+      - **triangle**: vertices(3개 [{x,y,label}]), sideLabels?([{from,to,label}]), angleLabels?([{vertex,value}])
+      - **quadrilateral**: vertices(4개), sideLabels?, angleLabels?, quadType?(rectangle/parallelogram/trapezoid/rhombus)
+      - **circle**: radius?, cx?, cy?, circleLabels?([{text,angle,position?}]), arcs?([{startAngle,endAngle,label?}])
+      - **regular_polygon**: nSides(변 수), diagonals?
+      [좌표/함수]
+      - **coordinate_plane**: xRange[min,max], yRange[min,max], points?([{x,y,label?}])
+      - **function_graph**: xRange, yRange, functions[{expression,label?}], points?
+      [중등 통계]
+      - **histogram**: bins[{rangeStart,rangeEnd,frequency}], title?, showFrequencyPolygon?
+      - **stem_leaf**: stems[{stem,leaves}], title?
+      - **scatter_plot**: xRange, yRange, points[{x,y}], showTrendLine?
+      [중등 기타]
+      - **solid_figure**: shape(cube/cylinder/cone/...), dimensions?({width,height,depth,radius})
+      - **net_diagram**: shape
+      - **venn_diagram**: sets[{label,elements?}], intersectionElements?, universalElements?
+      - **tree_diagram**: root{label,children}
+    - 좌표(x,y)는 SVG 좌표계. triangle/quadrilateral은 0~100 범위로 배치. from/to는 vertices 인덱스
     - 사진/실물 이미지는 images 바운딩 박스만 사용`;
 
 // ===== 개념 추출 전용 =====
@@ -487,21 +606,50 @@ export async function POST(request: NextRequest) {
       // LaTeX 이스케이프 복원 (\times → tab 등 JSON 파싱 부작용 수정)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const fixedProblems = (data.problems || []).map((p: any) => {
-        // diagramParams (플랫 필드) → renderDiagram으로 정확한 SVG 생성
+        // 26개 타입 전체 플랫 필드 목록
+        const FLAT_KEYS = [
+          'totalParts', 'coloredParts', 'count', 'rows', 'cols', 'coloredCount',
+          'hatching', 'min', 'max', 'step', 'hundreds', 'tens', 'ones',
+          'categories', 'dataValues', 'segments', 'title', 'xLabel', 'yLabel', 'horizontal',
+          'angle', 'ray1Angle', 'showProtractor', 'hour', 'minute', 'nodes', 'arrows',
+          'vertices', 'sideLabels', 'angleLabels', 'nSides', 'diagonals',
+          'cx', 'cy', 'radius', 'circleLabels', 'arcs', 'quadType',
+          'xRange', 'yRange', 'points', 'functions',
+          'bins', 'stems', 'showFrequencyPolygon', 'showTrendLine',
+          'shape', 'dimensions', 'sets', 'intersectionElements', 'universalElements', 'root',
+        ];
+
+        /** 플랫 필드를 params 객체로 병합 + 렌더러 호환 변환 */
+        function collectParams(dp: Record<string, unknown>, dtype: string): Record<string, unknown> {
+          const params: Record<string, unknown> = (dp.params as Record<string, unknown>) || {};
+          for (const key of FLAT_KEYS) {
+            const val = dp[key];
+            if (val !== undefined && val !== null && val !== 0 && val !== '') {
+              params[key] = val;
+            }
+          }
+          // 렌더러 호환 변환
+          if (dtype === 'histogram' && Array.isArray(params.bins)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            params.bins = (params.bins as any[]).map((b: any) => ({
+              range: [b.rangeStart ?? b.range?.[0] ?? 0, b.rangeEnd ?? b.range?.[1] ?? 0],
+              frequency: b.frequency ?? 0,
+            }));
+          }
+          if (params.dataValues && !params.values) { params.values = params.dataValues; delete params.dataValues; }
+          if (params.sideLabels && !params.sides) { params.sides = params.sideLabels; delete params.sideLabels; }
+          if (params.angleLabels && !params.angles) { params.angles = params.angleLabels; delete params.angleLabels; }
+          if (dtype === 'regular_polygon' && params.nSides && !params.sides) { params.sides = params.nSides; delete params.nSides; }
+          return params;
+        }
+
+        // diagramParams → renderDiagram으로 SVG 생성
         const paramSvgs: { svg: string; label: string }[] = [];
         if (Array.isArray(p.diagramParams)) {
           for (const dp of p.diagramParams) {
             const dtype = dp.diagramType || dp.type;
             if (!dtype) continue;
-            // 플랫 필드를 params 객체로 변환
-            const params: Record<string, unknown> = dp.params || {};
-            // 플랫 필드 병합 (스키마에서 명시적으로 정의된 필드들)
-            for (const key of ['totalParts', 'coloredParts', 'count', 'rows', 'cols', 'coloredCount',
-                               'hatching', 'min', 'max', 'step', 'hundreds', 'tens', 'ones']) {
-              if (dp[key] !== undefined && dp[key] !== 0) {
-                params[key] = dp[key];
-              }
-            }
+            const params = collectParams(dp, dtype);
             const svg = renderDiagram({ type: dtype, params });
             if (svg) {
               paramSvgs.push({ svg, label: dp.label || dtype });
@@ -518,13 +666,7 @@ export async function POST(request: NextRequest) {
           for (const dp of p.diagramParams) {
             const dtype = dp.diagramType || dp.type;
             if (!dtype) continue;
-            const paramObj: Record<string, unknown> = dp.params || {};
-            for (const key of ['totalParts', 'coloredParts', 'count', 'rows', 'cols', 'coloredCount',
-                               'hatching', 'min', 'max', 'step', 'hundreds', 'tens', 'ones']) {
-              if (dp[key] !== undefined && dp[key] !== 0) {
-                paramObj[key] = dp[key];
-              }
-            }
+            const paramObj = collectParams(dp, dtype);
             normalizedParams.push({ type: dtype, label: dp.label || dtype, params: paramObj });
           }
         }

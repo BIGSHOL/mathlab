@@ -297,17 +297,63 @@ async function extractFromPdf(
       ? embedBoxItems(p.content || '', p.boxItems)
       : p.content || '';
 
-    // diagramParams 정규화
+    // diagramParams 정규화 — 26개 타입 전체 필드 수집
+    const DIAGRAM_FLAT_KEYS = [
+      // 초등 기본
+      'totalParts', 'coloredParts', 'count', 'rows', 'cols',
+      'coloredCount', 'hatching', 'min', 'max', 'step',
+      'hundreds', 'tens', 'ones',
+      // 초등 차트
+      'categories', 'dataValues', 'segments', 'title', 'xLabel', 'yLabel', 'horizontal',
+      // 초등 기타
+      'angle', 'ray1Angle', 'showProtractor', 'hour', 'minute', 'nodes', 'arrows',
+      // 중등 기하
+      'vertices', 'sideLabels', 'angleLabels', 'nSides', 'diagonals',
+      'cx', 'cy', 'radius', 'circleLabels', 'arcs', 'quadType',
+      // 좌표/함수
+      'xRange', 'yRange', 'points', 'functions',
+      // 통계
+      'bins', 'stems', 'showFrequencyPolygon', 'showTrendLine',
+      // 기타
+      'shape', 'dimensions', 'sets', 'intersectionElements', 'universalElements', 'root',
+    ];
     const normalizedParams: { type: string; label: string; params: Record<string, unknown> }[] = [];
     if (Array.isArray(p.diagramParams)) {
       for (const dp of p.diagramParams) {
         const dtype = dp.diagramType || dp.type;
         if (!dtype) continue;
         const paramObj: Record<string, unknown> = dp.params || {};
-        for (const key of ['totalParts', 'coloredParts', 'count', 'rows', 'cols',
-                           'coloredCount', 'hatching', 'min', 'max', 'step',
-                           'hundreds', 'tens', 'ones']) {
-          if (dp[key] !== undefined && dp[key] !== 0) paramObj[key] = dp[key];
+        for (const key of DIAGRAM_FLAT_KEYS) {
+          const val = dp[key];
+          if (val !== undefined && val !== null && val !== 0 && val !== '') {
+            paramObj[key] = val;
+          }
+        }
+        // bins의 rangeStart/rangeEnd → range 변환 (렌더러 호환)
+        if (dtype === 'histogram' && Array.isArray(paramObj.bins)) {
+          paramObj.bins = (paramObj.bins as any[]).map(b => ({
+            range: [b.rangeStart ?? b.range?.[0] ?? 0, b.rangeEnd ?? b.range?.[1] ?? 0] as [number, number],
+            frequency: b.frequency ?? 0,
+          }));
+        }
+        // dataValues → values 변환 (렌더러 호환)
+        if (paramObj.dataValues && !paramObj.values) {
+          paramObj.values = paramObj.dataValues;
+          delete paramObj.dataValues;
+        }
+        // sideLabels → sides, angleLabels → angles 변환 (렌더러 호환)
+        if (paramObj.sideLabels && !paramObj.sides) {
+          paramObj.sides = paramObj.sideLabels;
+          delete paramObj.sideLabels;
+        }
+        if (paramObj.angleLabels && !paramObj.angles) {
+          paramObj.angles = paramObj.angleLabels;
+          delete paramObj.angleLabels;
+        }
+        // nSides → sides 변환 (regular_polygon 렌더러 호환)
+        if (dtype === 'regular_polygon' && paramObj.nSides && !paramObj.sides) {
+          paramObj.sides = paramObj.nSides;
+          delete paramObj.nSides;
         }
         normalizedParams.push({ type: dtype, label: dp.label || dtype, params: paramObj });
       }
