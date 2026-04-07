@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireTeacher, isResponse, badRequest, clamp, homeworkCreatedByFilter, getTenantFilter } from '@/lib/api';
+import { requireTeacher, isResponse, badRequest, clamp, homeworkCreatedByFilter, getTenantFilter, filterAccessibleStudentIds } from '@/lib/api';
 import { prisma } from '@/lib/db';
 import { createHomeworkPlan } from '@/lib/services/homework';
 import type { ProgressionMode, CountMode } from '@/lib/services/homework';
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       dailyCount: clamp(body.dailyCount || 20, 1, 100),
       perCatCounts: countMode === 'per_category' && body.perCatCounts ? body.perCatCounts : undefined,
       startDate,
-      studentIds: studentIds || [],
+      studentIds: await filterAccessibleStudentIds(user, studentIds || []),
       passingScore: clamp(body.passingScore ?? 80, 0, 100),
       retryOnFail: !!body.retryOnFail,
       retryMode: ['wrong_same', 'wrong_new', 'all_same', 'all_new'].includes(body.retryMode) ? body.retryMode : 'wrong_same',

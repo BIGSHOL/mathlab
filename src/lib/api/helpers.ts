@@ -112,6 +112,22 @@ export async function getScopedStudentIds(user: AuthUser): Promise<string[] | nu
 }
 
 /**
+ * TEACHER가 접근 가능한 학생 ID만 필터링.
+ * MANAGER 이상은 전체 통과, TEACHER는 자기 반 학생만 허용.
+ * 유효하지 않은 ID가 있으면 제거된 목록을 반환.
+ */
+export async function filterAccessibleStudentIds(user: AuthUser, studentIds: string[]): Promise<string[]> {
+  if (studentIds.length === 0) return [];
+  if (hasRoleLocal(user, 'MANAGER')) return studentIds; // MANAGER 이상은 전체 허용
+  const scope = await getStudentScope(user);
+  const valid = await prisma.user.findMany({
+    where: { ...scope, id: { in: studentIds } },
+    select: { id: true },
+  });
+  return valid.map((s) => s.id);
+}
+
+/**
  * 개념 fullContent 정규화:
  * 1. blockquote(>) 마커 제거 — 개념은 인용 박스 불필요
  * 2. 줄 시작 "N." (마크다운 리스트 문법)을 ① ② 동그라미 숫자로 변환
@@ -137,8 +153,7 @@ export function normalizeConceptContent(content: string): string {
     .join('\n');
 }
 
-/** 숙제 플랜 GET 공통 — TEACHER는 자기 것만, OWNER 이상은 자기 테넌트 전체 */
-export function homeworkCreatedByFilter(user: AuthUser): string | undefined {
-  // OWNER 이상은 전체 조회, TEACHER는 자기 것만
-  return hasRoleLocal(user, 'OWNER') ? undefined : user.id;
+/** 숙제 플랜 GET 공통 — 테넌트 내 전체 (getTenantFilter로 격리) */
+export function homeworkCreatedByFilter(_user: AuthUser): string | undefined {
+  return undefined;
 }

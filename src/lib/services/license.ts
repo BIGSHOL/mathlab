@@ -105,8 +105,23 @@ export async function hasLicense(
 /** 학생의 전체 라이선스 상태 일괄 조회 (사이드바/클라이언트용) */
 export async function getStudentLicenses(
   studentId: string
-): Promise<Record<LicenseFeatureKey, { licensed: boolean; expiresAt: Date | null }>> {
+): Promise<Record<LicenseFeatureKey, { licensed: boolean; expiresAt: Date | null; tenantActive: boolean }>> {
   const now = new Date();
+
+  // 학생의 테넌트 조회
+  const student = await prisma.user.findUnique({
+    where: { id: studentId },
+    select: { tenantId: true },
+  });
+
+  // 지점 이용권 활성 상태 조회
+  const tenantLicenses = student?.tenantId
+    ? await prisma.tenantLicense.findMany({
+        where: { tenantId: student.tenantId, isActive: true },
+        select: { feature: true },
+      })
+    : [];
+  const activeTenantFeatures = new Set(tenantLicenses.map((tl) => FROM_ENUM[tl.feature]).filter(Boolean));
 
   const activeLicenses = await prisma.studentLicense.findMany({
     where: {
@@ -116,10 +131,10 @@ export async function getStudentLicenses(
     include: { tenantLicense: true },
   });
 
-  const result = {} as Record<LicenseFeatureKey, { licensed: boolean; expiresAt: Date | null }>;
+  const result = {} as Record<LicenseFeatureKey, { licensed: boolean; expiresAt: Date | null; tenantActive: boolean }>;
 
   for (const key of ALL_LICENSE_FEATURES) {
-    result[key] = { licensed: false, expiresAt: null };
+    result[key] = { licensed: false, expiresAt: null, tenantActive: activeTenantFeatures.has(key) };
   }
 
   for (const sl of activeLicenses) {
@@ -137,7 +152,7 @@ export async function getStudentLicenses(
       ? new Date(Math.min(...dates.map(d => d.getTime())))
       : null;
 
-    result[key] = { licensed: true, expiresAt: effectiveExpiry };
+    result[key] = { licensed: true, expiresAt: effectiveExpiry, tenantActive: true };
   }
 
   return result;

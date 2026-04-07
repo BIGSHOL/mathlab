@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireTeacher, isResponse } from '@/lib/api';
+import { requireTeacher, isResponse, type AuthUser } from '@/lib/api';
 
-type GridFetcher = (seq: number, options: { grade?: number }) => Promise<unknown>;
+type GridFetcher = (seq: number, options: { grade?: number; user?: AuthUser }) => Promise<unknown>;
 type RouteParams = { params: Promise<Record<string, string>> };
 
 /**
@@ -19,7 +19,7 @@ export function createGridHandler(getGridFn: GridFetcher, paramKey = 'seq') {
     const grade = searchParams.get('grade') ? Number(searchParams.get('grade')) : undefined;
 
     try {
-      const grid = await getGridFn(seq, { grade });
+      const grid = await getGridFn(seq, { grade, user });
       return NextResponse.json({ data: grid });
     } catch (err) {
       return NextResponse.json(

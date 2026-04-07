@@ -11,6 +11,7 @@ import { xpToNextLevel } from '@/lib/utils/xp';
 import { getTodayHomework } from '@/lib/services/homework';
 import { getTodayConceptHomework } from '@/lib/services/concept-homework';
 import { getTodayQuestionHomework } from '@/lib/services/question-homework';
+import { hasLicense } from '@/lib/services/license';
 import { DashboardGamification } from '@/components/student/DashboardGamification';
 import { ReviewReminderCard } from '@/components/student/ReviewReminderCard';
 import { DashboardStatCards } from '@/components/student/DashboardStatCards';
@@ -137,18 +138,17 @@ export default async function StudentDashboard({
     BLANK_PAGE: 'Stage 5 - 백지 복원',
   };
 
-  // Today's homework
-  const todayHomework = await getTodayHomework(user.id);
+  // Today's homework (이용권 있을 때만 조회)
+  const hasHomeworkLicense = await hasLicense(user.id, 'homework');
+  const todayHomework = hasHomeworkLicense ? await getTodayHomework(user.id) : [];
   const pendingHomework = todayHomework.filter((h) => h.status !== 'COMPLETED');
 
-  // Today's concept homework
-  const todayConceptHw = await getTodayConceptHomework(user.id);
+  const todayConceptHw = hasHomeworkLicense ? await getTodayConceptHomework(user.id) : [];
   const pendingConceptHw = todayConceptHw.filter((hw) =>
     hw.concepts.some((c) => !c.allCompleted)
   );
 
-  // Today's question homework
-  const todayQuestionHw = await getTodayQuestionHomework(user.id);
+  const todayQuestionHw = hasHomeworkLicense ? await getTodayQuestionHomework(user.id) : [];
   const pendingQuestionHw = todayQuestionHw.filter((hw) => hw.status !== 'COMPLETED');
 
   // 주간 활동 카운트

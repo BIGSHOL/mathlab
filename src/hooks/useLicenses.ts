@@ -13,7 +13,7 @@ import type { LicenseFeatureKey } from '@/lib/services/license';
  */
 export function useLicenses() {
   const { user } = useAuth();
-  const { licenses, loading, fetch: fetchLicenses, isLicensed } = useLicenseStore();
+  const { licenses, loading, fetch: fetchLicenses, isLicensed, isTenantActive } = useLicenseStore();
 
   useEffect(() => {
     if (user) {
@@ -21,5 +21,10 @@ export function useLicenses() {
     }
   }, [user, fetchLicenses]);
 
-  return { licenses, loading, isLicensed: (f: LicenseFeatureKey) => isLicensed(f) };
+  return {
+    licenses,
+    loading,
+    isLicensed: (f: LicenseFeatureKey) => isLicensed(f),
+    isTenantActive: (f: LicenseFeatureKey) => isTenantActive(f),
+  };
 }

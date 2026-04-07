@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, badRequest } from '@/lib/api';
+import { requireTeacher, isResponse, badRequest, filterAccessibleStudentIds } from '@/lib/api';
 import { z } from 'zod';
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest, { params }: Ctx) {
     return badRequest(parsed.error.errors[0]?.message || '입력값 오류');
   }
 
-  const { studentIds } = parsed.data;
+  const studentIds = await filterAccessibleStudentIds(user, parsed.data.studentIds);
 
   // 과정 존재 확인 (seq 또는 id)
   const course = await prisma.learningCourse.findUnique({ where: seq > 0 ? { seq } : { id }, select: { id: true } });

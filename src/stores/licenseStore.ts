@@ -18,14 +18,18 @@ const ALL_UNLOCKED: LicenseMap = {
 
 interface LicenseStore {
   licenses: LicenseMap;
+  /** 지점에 활성화된 기능 (tenantActive). 미활성 기능은 메뉴 자체를 숨김 */
+  tenantActive: LicenseMap;
   loading: boolean;
   fetched: boolean;
   fetch: (role?: string) => Promise<void>;
   isLicensed: (feature: LicenseFeatureKey) => boolean;
+  isTenantActive: (feature: LicenseFeatureKey) => boolean;
 }
 
 export const useLicenseStore = create<LicenseStore>((set, get) => ({
   licenses: ALL_UNLOCKED,
+  tenantActive: ALL_UNLOCKED,
   loading: true,
   fetched: false,
 
@@ -35,7 +39,7 @@ export const useLicenseStore = create<LicenseStore>((set, get) => ({
 
     // 학생이 아닌 경우 전부 해제
     if (role && role !== 'STUDENT') {
-      set({ licenses: ALL_UNLOCKED, loading: false, fetched: true });
+      set({ licenses: ALL_UNLOCKED, tenantActive: ALL_UNLOCKED, loading: false, fetched: true });
       return;
     }
 
@@ -44,21 +48,25 @@ export const useLicenseStore = create<LicenseStore>((set, get) => ({
       const json = await res.json();
       if (json.data) {
         const map: LicenseMap = { ...ALL_UNLOCKED };
+        const tenant: LicenseMap = { ...ALL_UNLOCKED };
         for (const [key, val] of Object.entries(json.data)) {
           if (key in map) {
-            map[key as LicenseFeatureKey] = (val as { licensed: boolean }).licensed;
+            const v = val as { licensed: boolean; tenantActive?: boolean };
+            map[key as LicenseFeatureKey] = v.licensed;
+            tenant[key as LicenseFeatureKey] = v.tenantActive ?? true;
           }
         }
-        set({ licenses: map, loading: false, fetched: true });
+        set({ licenses: map, tenantActive: tenant, loading: false, fetched: true });
       } else {
         // API 실패 시 fail-open
-        set({ licenses: ALL_UNLOCKED, loading: false, fetched: true });
+        set({ licenses: ALL_UNLOCKED, tenantActive: ALL_UNLOCKED, loading: false, fetched: true });
       }
     } catch {
       // fail-open: 네트워크 에러 시 전부 허용 (서버 가드가 실제 차단)
-      set({ licenses: ALL_UNLOCKED, loading: false, fetched: true });
+      set({ licenses: ALL_UNLOCKED, tenantActive: ALL_UNLOCKED, loading: false, fetched: true });
     }
   },
 
   isLicensed: (feature: LicenseFeatureKey) => get().licenses[feature],
+  isTenantActive: (feature: LicenseFeatureKey) => get().tenantActive[feature],
 }));

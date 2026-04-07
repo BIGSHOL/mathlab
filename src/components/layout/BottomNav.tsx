@@ -23,13 +23,15 @@ const navItems: NavItem[] = [
 
 export function BottomNav() {
   const pathname = usePathname();
-  const { isLicensed, loading: licensesLoading } = useLicenses();
+  const { isLicensed, isTenantActive, loading: licensesLoading } = useLicenses();
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50">
       <div className="flex items-center justify-around py-2 px-4">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
+          // 지점에 이용권 자체가 없으면 메뉴 완전 숨김
+          if (item.licenseFeature && !licensesLoading && !isTenantActive(item.licenseFeature)) return null;
           // 로딩 중: licenseFeature 항목은 숨김 (로드 후 표시, 깜빡임 방지)
           if (item.licenseFeature && licensesLoading) {
             return (

@@ -417,7 +417,7 @@ export interface HomeworkGridData {
 
 export async function getHomeworkGrid(
   planSeq: number,
-  filters?: { grade?: number }
+  filters?: { grade?: number; user?: { id: string; role: string } }
 ): Promise<HomeworkGridData> {
   const plan = await prisma.arithmeticHomeworkPlan.findUniqueOrThrow({
     where: { seq: planSeq },
@@ -439,10 +439,24 @@ export async function getHomeworkGrid(
     },
   });
 
-  const enrollmentWhere: Record<string, unknown> = { planId: plan.id };
-  if (filters?.grade) {
-    enrollmentWhere.student = { grade: filters.grade };
+  // TEACHER는 내 반 학생만, MANAGER 이상은 전체
+  const ROLE_LEVEL: Record<string, number> = { STUDENT: 0, TEACHER: 1, MANAGER: 2, OWNER: 3, SUPER_ADMIN: 4 };
+  const isTeacherOnly = filters?.user && (ROLE_LEVEL[filters.user.role] ?? 0) <= 1;
+
+  let myStudentIds: Set<string> | null = null;
+  if (isTeacherOnly && filters?.user) {
+    const myClassrooms = await prisma.classroom.findMany({
+      where: { teacherId: filters.user.id },
+      select: { students: { select: { id: true } } },
+    });
+    myStudentIds = new Set(myClassrooms.flatMap((c) => c.students.map((s) => s.id)));
   }
+
+  const enrollmentWhere: Record<string, unknown> = { planId: plan.id };
+  const studentFilter: Record<string, unknown> = {};
+  if (filters?.grade) studentFilter.grade = filters.grade;
+  if (myStudentIds) studentFilter.id = { in: [...myStudentIds] };
+  if (Object.keys(studentFilter).length > 0) enrollmentWhere.student = studentFilter;
 
   const enrollments = await prisma.arithmeticHomeworkEnrollment.findMany({
     where: enrollmentWhere,

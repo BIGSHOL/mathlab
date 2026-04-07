@@ -58,7 +58,7 @@ export function StudentSidebar() {
   const viewAsId = searchParams.get('_as');
   const { user, logout } = useAuth();
   const tenant = useTenant();
-  const { isLicensed, loading: licensesLoading } = useLicenses();
+  const { isLicensed, isTenantActive, loading: licensesLoading } = useLicenses();
   const { badgeIcon } = useRepresentativeBadge();
   const [collapsed, setCollapsed] = useState(false);
   const displayName = tenant?.name || 'MathLAB';
@@ -82,6 +82,8 @@ export function StudentSidebar() {
     const active = isActive(item);
     // 로딩 중: licenseFeature 항목은 숨김 (로드 후 표시, 깜빡임 방지)
     if (item.licenseFeature && licensesLoading) return null;
+    // 지점에 이용권 자체가 없으면 메뉴 완전 숨김
+    if (item.licenseFeature && !isTenantActive(item.licenseFeature)) return null;
     const locked = item.licenseFeature ? !isLicensed(item.licenseFeature) : false;
 
     // 잠긴 메뉴: 클릭 불가 + 회색 + 자물쇠
