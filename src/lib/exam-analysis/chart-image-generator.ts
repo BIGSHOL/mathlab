@@ -300,6 +300,155 @@ export function generateAbilityRadarSvg(
   return svgWrap(parts.join('\n'));
 }
 
+// ── 출제 영역 + 능력 영역 통합 레이더 차트 (좌우 배치) ──
+
+const COMBINED_WIDTH = 960;
+const COMBINED_HEIGHT = 420;
+
+export function generateCombinedRadarSvg(
+  distribution: Record<string, number>,
+  questions: AnalyzedQuestion[],
+): string {
+  const parts: string[] = [];
+
+  // ── 좌측: 출제 영역 분포 (5각형) ──
+  const types = ['number', 'algebra', 'function', 'geometry', 'statistics'] as const;
+  const typeData = types.map((t) => ({
+    key: t,
+    label: QUESTION_TYPE_LABELS[t] || t,
+    value: distribution[t] || 0,
+    color: QUESTION_TYPE_COLORS[t] || '#94A3B8',
+  }));
+
+  const typeTotal = typeData.reduce((s, d) => s + d.value, 0);
+  const typeMax = Math.max(...typeData.map((d) => d.value), 1);
+
+  const lcx = 200, lcy = 220, lRadius = 110;
+  const tn = typeData.length;
+  const tAngleStep = (2 * Math.PI) / tn;
+  const startOffset = -Math.PI / 2;
+
+  // 좌측 제목
+  parts.push(`<text x="${lcx}" y="32" text-anchor="middle" font-size="15" font-weight="700" fill="#374151">출제 영역 분포</text>`);
+
+  // 좌측 배경 그리드
+  for (const scale of [0.33, 0.66, 1.0]) {
+    const r = lRadius * scale;
+    const points = typeData.map((_, i) => {
+      const angle = startOffset + i * tAngleStep;
+      return `${lcx + r * Math.cos(angle)},${lcy + r * Math.sin(angle)}`;
+    }).join(' ');
+    parts.push(`<polygon points="${points}" fill="none" stroke="#E2E8F0" stroke-width="1"/>`);
+  }
+
+  // 좌측 축 선
+  for (let i = 0; i < tn; i++) {
+    const angle = startOffset + i * tAngleStep;
+    parts.push(`<line x1="${lcx}" y1="${lcy}" x2="${lcx + lRadius * Math.cos(angle)}" y2="${lcy + lRadius * Math.sin(angle)}" stroke="#E2E8F0" stroke-width="1"/>`);
+  }
+
+  // 좌측 데이터 다각형
+  if (typeTotal > 0) {
+    const dp = typeData.map((d, i) => {
+      const angle = startOffset + i * tAngleStep;
+      const r = (d.value / typeMax) * lRadius;
+      return `${lcx + r * Math.cos(angle)},${lcy + r * Math.sin(angle)}`;
+    }).join(' ');
+    parts.push(`<polygon points="${dp}" fill="rgba(99,102,241,0.15)" stroke="#6366F1" stroke-width="2.5"/>`);
+
+    typeData.forEach((d, i) => {
+      const angle = startOffset + i * tAngleStep;
+      const r = (d.value / typeMax) * lRadius;
+      parts.push(`<circle cx="${lcx + r * Math.cos(angle)}" cy="${lcy + r * Math.sin(angle)}" r="4" fill="${d.color}" stroke="white" stroke-width="2"/>`);
+    });
+  }
+
+  // 좌측 라벨
+  typeData.forEach((d, i) => {
+    const angle = startOffset + i * tAngleStep;
+    const labelR = lRadius + 22;
+    const lx = lcx + labelR * Math.cos(angle);
+    const ly = lcy + labelR * Math.sin(angle);
+    const pct = typeTotal > 0 ? Math.round((d.value / typeTotal) * 100) : 0;
+    parts.push(`<text x="${lx}" y="${ly - 3}" text-anchor="middle" font-size="10" font-weight="600" fill="#374151">${escapeXml(d.label)}</text>`);
+    parts.push(`<text x="${lx}" y="${ly + 10}" text-anchor="middle" font-size="9" fill="#6B7280">${d.value}문항 (${pct}%)</text>`);
+  });
+
+  // ── 구분선 ──
+  parts.push(`<line x1="480" y1="50" x2="480" y2="390" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4,4"/>`);
+
+  // ── 우측: 능력 영역 분포 (4각형) ──
+  const abilityKeys = ['calculation', 'understanding', 'problem_solving', 'reasoning'] as const;
+  const counts: Record<string, number> = {};
+  for (const key of abilityKeys) counts[key] = 0;
+  for (const q of questions) {
+    const domain = q.ability_domain || 'understanding';
+    if (domain in counts) counts[domain]++;
+  }
+
+  const abilityData = abilityKeys.map((key) => ({
+    key,
+    label: ABILITY_DOMAIN_LABELS[key] || key,
+    value: counts[key] || 0,
+    color: ABILITY_DOMAIN_COLORS[key] || '#94A3B8',
+  }));
+
+  const abilityTotal = abilityData.reduce((s, d) => s + d.value, 0);
+  const abilityMax = Math.max(...abilityData.map((d) => d.value), 1);
+
+  const rcx = 680, rcy = 220, rRadius = 110;
+  const an = abilityData.length;
+  const aAngleStep = (2 * Math.PI) / an;
+
+  // 우측 제목
+  parts.push(`<text x="${rcx}" y="32" text-anchor="middle" font-size="15" font-weight="700" fill="#374151">능력 영역 분포</text>`);
+
+  // 우측 배경 그리드
+  for (const scale of [0.33, 0.66, 1.0]) {
+    const r = rRadius * scale;
+    const points = abilityData.map((_, i) => {
+      const angle = startOffset + i * aAngleStep;
+      return `${rcx + r * Math.cos(angle)},${rcy + r * Math.sin(angle)}`;
+    }).join(' ');
+    parts.push(`<polygon points="${points}" fill="none" stroke="#E2E8F0" stroke-width="1"/>`);
+  }
+
+  // 우측 축 선
+  for (let i = 0; i < an; i++) {
+    const angle = startOffset + i * aAngleStep;
+    parts.push(`<line x1="${rcx}" y1="${rcy}" x2="${rcx + rRadius * Math.cos(angle)}" y2="${rcy + rRadius * Math.sin(angle)}" stroke="#E2E8F0" stroke-width="1"/>`);
+  }
+
+  // 우측 데이터 다각형
+  if (abilityTotal > 0) {
+    const dp = abilityData.map((d, i) => {
+      const angle = startOffset + i * aAngleStep;
+      const r = (d.value / abilityMax) * rRadius;
+      return `${rcx + r * Math.cos(angle)},${rcy + r * Math.sin(angle)}`;
+    }).join(' ');
+    parts.push(`<polygon points="${dp}" fill="rgba(139,92,246,0.15)" stroke="#8B5CF6" stroke-width="2.5"/>`);
+
+    abilityData.forEach((d, i) => {
+      const angle = startOffset + i * aAngleStep;
+      const r = (d.value / abilityMax) * rRadius;
+      parts.push(`<circle cx="${rcx + r * Math.cos(angle)}" cy="${rcy + r * Math.sin(angle)}" r="4" fill="${d.color}" stroke="white" stroke-width="2"/>`);
+    });
+  }
+
+  // 우측 라벨
+  abilityData.forEach((d, i) => {
+    const angle = startOffset + i * aAngleStep;
+    const labelR = rRadius + 22;
+    const lx = rcx + labelR * Math.cos(angle);
+    const ly = rcy + labelR * Math.sin(angle);
+    const pct = abilityTotal > 0 ? Math.round((d.value / abilityTotal) * 100) : 0;
+    parts.push(`<text x="${lx}" y="${ly - 3}" text-anchor="middle" font-size="10" font-weight="600" fill="#374151">${escapeXml(d.label)}</text>`);
+    parts.push(`<text x="${lx}" y="${ly + 10}" text-anchor="middle" font-size="9" fill="#6B7280">${d.value}문항 (${pct}%)</text>`);
+  });
+
+  return svgWrap(parts.join('\n'), COMBINED_WIDTH, COMBINED_HEIGHT);
+}
+
 // ── 단원별 출제 현황 가로 바 차트 ──
 
 export function generateTopicBarSvg(
@@ -464,6 +613,7 @@ export interface ChartImages {
   difficulty: string; // base64 PNG
   typeRadar: string;
   abilityRadar: string;
+  combinedRadar: string; // 좌우 통합
   topicBar: string;
 }
 
@@ -471,17 +621,19 @@ export async function generateAllChartImages(
   summary: { difficulty_distribution: Record<string, number>; type_distribution: Record<string, number> },
   questions: AnalyzedQuestion[],
 ): Promise<ChartImages> {
-  const [diffSvg, radarSvg, abilityRadarSvg, barSvg] = [
+  const [diffSvg, radarSvg, abilityRadarSvg, combinedRadarSvg, barSvg] = [
     generateDifficultyDonutSvg(summary.difficulty_distribution),
     generateTypeRadarSvg(summary.type_distribution),
     generateAbilityRadarSvg(questions),
+    generateCombinedRadarSvg(summary.type_distribution, questions),
     generateTopicBarSvg(questions),
   ];
 
-  const [diffPng, radarPng, abilityPng, barPng] = await Promise.all([
+  const [diffPng, radarPng, abilityPng, combinedPng, barPng] = await Promise.all([
     svgToPng(diffSvg),
     svgToPng(radarSvg),
     svgToPng(abilityRadarSvg),
+    svgToPng(combinedRadarSvg, COMBINED_WIDTH),
     svgToPng(barSvg),
   ]);
 
@@ -489,6 +641,7 @@ export async function generateAllChartImages(
     difficulty: diffPng.toString('base64'),
     typeRadar: radarPng.toString('base64'),
     abilityRadar: abilityPng.toString('base64'),
+    combinedRadar: combinedPng.toString('base64'),
     topicBar: barPng.toString('base64'),
   };
 }

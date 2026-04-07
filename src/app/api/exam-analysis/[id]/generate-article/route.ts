@@ -116,6 +116,11 @@ export async function POST(request: NextRequest, { params }: Params) {
             alt: '능력 영역 분포',
             caption: '▲ 수학 능력 영역별 분포',
           },
+          '{{CHART:combined_radar}}': {
+            url: `${baseUrl}/api/exam-analysis/${id}/chart/combined-radar`,
+            alt: '출제 영역 및 능력 영역 분포',
+            caption: '▲ 출제 영역(좌) · 능력 영역(우) 분포',
+          },
           '{{CHART:topic_bar}}': {
             url: `${baseUrl}/api/exam-analysis/${id}/chart/topic-bar`,
             alt: '단원별 출제 현황',

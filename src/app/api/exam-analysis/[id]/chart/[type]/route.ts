@@ -7,6 +7,7 @@ const TYPE_MAP: Record<string, string> = {
   difficulty: 'difficulty',
   'type-radar': 'typeRadar',
   'ability-radar': 'abilityRadar',
+  'combined-radar': 'combinedRadar',
   'topic-bar': 'topicBar',
 };
 
