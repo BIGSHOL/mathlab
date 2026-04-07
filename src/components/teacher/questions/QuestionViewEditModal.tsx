@@ -242,6 +242,7 @@ function ViewMode({ selectedQuestion, concepts }: { selectedQuestion: QuestionIt
                 {selectedQuestion.diagramSpec.map((dp, i) => {
                   try {
                     const svg = renderDiagram(dp as unknown as { type: DiagramType; params: Record<string, unknown> });
+                    if (!svg) return null;
                     return (
                       <div key={i} className="border border-slate-100 rounded-sm p-3 bg-white [&_svg]:w-full [&_svg]:h-auto" dangerouslySetInnerHTML={{ __html: svg }} />
                     );
