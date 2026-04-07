@@ -17,6 +17,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Pagination } from '@/components/ui/Pagination';
 import { MathRenderer } from '@/components/math/MathRenderer';
+import { DiagramRenderer } from '@/components/math/DiagramRenderer';
 import { DIFFICULTY_LABELS, TYPE_LABELS, BOOK_LABELS } from '@/types';
 import { QUESTION_DOMAIN_LABELS, QUESTION_DOMAIN_COLORS, ABILITY_DOMAIN_LABELS, ABILITY_DOMAIN_COLORS } from './question-types';
 import {
@@ -227,6 +228,22 @@ export function QuestionListMain({
 
                   <div className="text-sm leading-relaxed font-medium text-text-primary">
                     <MathRenderer content={q.content} />
+                    {(q.diagramSVG || (q.diagramSpec && Array.isArray(q.diagramSpec) && q.diagramSpec.length > 0)) && (
+                      <div className="my-2 flex justify-center">
+                        {q.diagramSVG ? (
+                          <div
+                            className="max-w-md overflow-hidden rounded-sm border border-slate-100 bg-white p-3 [&_svg]:w-full [&_svg]:h-auto"
+                            style={{ fontFamily: "'Pretendard', system-ui, sans-serif" }}
+                            dangerouslySetInnerHTML={{ __html: q.diagramSVG }}
+                          />
+                        ) : q.diagramSpec ? (
+                          <DiagramRenderer
+                            spec={q.diagramSpec}
+                            className="max-w-md rounded-sm border border-slate-100 bg-white p-3 [&_svg]:w-full [&_svg]:h-auto"
+                          />
+                        ) : null}
+                      </div>
+                    )}
                     {q.choices && Array.isArray(q.choices) && (() => {
                       const choices = q.choices as string[];
                       const maxLen = Math.max(...choices.map(c => c.length));
