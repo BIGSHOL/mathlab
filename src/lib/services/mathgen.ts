@@ -1,6 +1,7 @@
 import { Type } from '@google/genai';
 import { GeneratedProblem, SelectionState, SchoolLevel, Difficulty } from '@/types/mathgen';
 import { getGeminiClient, stripCodeFence } from './gemini';
+import { TEXTBOOK_CATALOG, getPublisher } from '@/lib/constants/textbook-curriculum';
 
 /**
  * 학교급 + 난이도에 따라 Gemini 모델 자동 선택
@@ -153,8 +154,31 @@ const COMMON_INSTRUCTIONS = `
     Language: Korean (한국어)
 `;
 
+function buildTextbookContext(textbookId?: string, mainUnit?: string): string {
+  if (!textbookId) return '';
+
+  const textbook = TEXTBOOK_CATALOG.find(t => t.id === textbookId);
+  if (!textbook) return '';
+
+  const publisher = getPublisher(textbook.publisherId);
+  const chapterMapping = textbook.chapters.find(
+    c => c.curriculumNames.some(name => mainUnit?.includes(name)),
+  );
+
+  return `
+    Reference Textbook Context:
+    - Textbook: ${textbook.subject} (${publisher?.name || textbook.publisherId}, 저자: ${textbook.author})
+    - Revision: 2022 개정 교육과정
+    ${chapterMapping ? `- Textbook Chapter: ${chapterMapping.textbookChapter}단원 "${chapterMapping.textbookName}"` : ''}
+    - Style Guide: Generate problems that match the style and difficulty progression of this textbook.
+      Use terminology and problem formats commonly found in Korean ${publisher?.name || ''} math textbooks.
+      Align with 내신(school exam) preparation level for this publisher's curriculum.
+  `;
+}
+
 function buildTextPrompt(selection: SelectionState): string {
   const topicPath = `${selection.schoolLevel} ${selection.grade} > ${selection.mainUnit} > ${selection.subUnit} > ${selection.detailUnit}`;
+  const textbookCtx = buildTextbookContext(selection.textbookId, selection.mainUnit);
 
   return `
     You are an expert Mathematics Teacher in South Korea, specializing in the "2022 Revised National Curriculum" (2022 개정 교육과정).
@@ -166,7 +190,7 @@ function buildTextPrompt(selection: SelectionState): string {
     - Difficulty: ${selection.difficulty} (Level 1=기본, Level 2=표준, Level 3=응용, Level 4=심화, Level 5=최고난도)
     - Target Ability: ${selection.problemType} (계산력=빠른 연산, 이해력=개념 파악, 문제해결력=응용 문제, 추론력=논리적 추론)
     - Question Format: ${selection.answerType}
-
+    ${textbookCtx}
     ${COMMON_INSTRUCTIONS}
   `;
 }

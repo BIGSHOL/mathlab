@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
       problemType: body.problemType || ProblemType.UNDERSTANDING,
       answerType: body.answerType || AnswerType.MULTIPLE_CHOICE,
       removeScore: body.removeScore ?? false,
+      textbookId: body.textbookId || undefined,
     };
 
     const problem = await generateMathProblem(selection);

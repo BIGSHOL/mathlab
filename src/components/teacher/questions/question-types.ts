@@ -4,15 +4,80 @@ import type { DiagramParam } from '@/types/pdf-extract';
 // --- Constants ---
 export const MIDDLE_BOOK_CODES = ['1-1', '1-2', '2-1', '2-2', '3-1', '3-2'] as const;
 export const ELEMENTARY_BOOK_CODES = ['E3-1', 'E3-2', 'E4-1', 'E4-2', 'E5-1', 'E5-2', 'E6-1', 'E6-2'] as const;
+export const HIGH_BOOK_CODES = ['H1-0', 'H2-0', 'HA-0', 'HC1-0', 'HC2-0', 'HP-0', 'HG-0'] as const;
+
+/** 학제 옵션 */
+export const SCHOOL_LEVELS = ['초등학교', '중학교', '고등학교'] as const;
+export type SchoolLevelOption = typeof SCHOOL_LEVELS[number];
+
+/** 학제 → bookCode 접두어 매핑 */
+export const SCHOOL_LEVEL_BOOK_PREFIX: Record<SchoolLevelOption, string> = {
+  '초등학교': 'E',
+  '중학교': '',
+  '고등학교': 'H',
+};
+
+/** bookCode → 학제 역매핑 */
+export function detectSchoolLevel(bookCode: string): SchoolLevelOption {
+  if (bookCode.startsWith('E')) return '초등학교';
+  if (bookCode.startsWith('H')) return '고등학교';
+  return '중학교';
+}
 export const DIFFICULTY_OPTIONS = ['전체', '하', '중', '상', '최상'] as const;
 export const TYPE_OPTIONS = ['객관식', '단답형', '서술형'] as const;
+/** 문제은행 5대 교육과정 영역 (기출분석과 동일 체계) */
 export const DOMAIN_OPTIONS = [
   { key: '전체', label: '전체' },
-  { key: 'CALCULATION', label: '계산력' },
-  { key: 'UNDERSTANDING', label: '이해력' },
-  { key: 'PROBLEM_SOLVING', label: '문제해결력' },
-  { key: 'REASONING', label: '추론력' },
+  { key: 'number', label: '수와 연산' },
+  { key: 'algebra', label: '문자와 식' },
+  { key: 'function', label: '함수' },
+  { key: 'geometry', label: '기하' },
+  { key: 'statistics', label: '확률과 통계' },
 ] as const;
+
+/** 5대 영역 라벨 (domain 값 → 한글) */
+export const QUESTION_DOMAIN_LABELS: Record<string, string> = {
+  number: '수와 연산',
+  algebra: '문자와 식',
+  function: '함수',
+  geometry: '기하',
+  statistics: '확률과 통계',
+  // 레거시 4대 호환
+  CALCULATION: '계산력',
+  UNDERSTANDING: '이해력',
+  PROBLEM_SOLVING: '문제해결력',
+  REASONING: '추론력',
+};
+
+/** 4대 능력영역 라벨 */
+export const ABILITY_DOMAIN_LABELS: Record<string, string> = {
+  CALCULATION: '계산력',
+  UNDERSTANDING: '이해력',
+  PROBLEM_SOLVING: '문제해결력',
+  REASONING: '추론력',
+};
+
+/** 4대 능력영역 뱃지 색상 — 5대 영역과 구분되게 테두리 스타일 */
+export const ABILITY_DOMAIN_COLORS: Record<string, { bg: string; text: string; border?: string }> = {
+  CALCULATION: { bg: 'bg-white', text: 'text-blue-600', border: 'border border-blue-300' },
+  UNDERSTANDING: { bg: 'bg-white', text: 'text-emerald-600', border: 'border border-emerald-300' },
+  PROBLEM_SOLVING: { bg: 'bg-white', text: 'text-orange-600', border: 'border border-orange-300' },
+  REASONING: { bg: 'bg-white', text: 'text-violet-600', border: 'border border-violet-300' },
+};
+
+/** 5대 영역 뱃지 색상 */
+export const QUESTION_DOMAIN_COLORS: Record<string, { bg: string; text: string }> = {
+  number: { bg: 'bg-indigo-100', text: 'text-indigo-700' },
+  algebra: { bg: 'bg-purple-100', text: 'text-purple-700' },
+  function: { bg: 'bg-pink-100', text: 'text-pink-700' },
+  geometry: { bg: 'bg-teal-100', text: 'text-teal-700' },
+  statistics: { bg: 'bg-amber-100', text: 'text-amber-700' },
+  // 레거시
+  CALCULATION: { bg: 'bg-blue-100', text: 'text-blue-700' },
+  UNDERSTANDING: { bg: 'bg-green-100', text: 'text-green-700' },
+  PROBLEM_SOLVING: { bg: 'bg-orange-100', text: 'text-orange-700' },
+  REASONING: { bg: 'bg-violet-100', text: 'text-violet-700' },
+};
 export const ITEMS_PER_PAGE = 10;
 
 // 새 문제 추가 모달에서 사용하는 기본 단원 목록 (fallback)
@@ -53,8 +118,10 @@ export interface QuestionItem {
   answer: string;
   explanation: string | null;
   scoringCriteria: string | null;
+  source: string | null;
   sourceTag: string | null;
   domain: string | null;
+  abilityDomain: string | null;
   conceptId: string | null;
   diagramSpec?: DiagramParam[] | null;
   choiceColumns?: number | null;
@@ -78,6 +145,7 @@ export interface EditFormState {
   section: string;
   sourceTag: string;
   domain: string;
+  abilityDomain: string;
   conceptId: string;
   diagramParams: DiagramParam[];
   choiceColumns: number | null;

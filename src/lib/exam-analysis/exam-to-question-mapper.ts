@@ -33,13 +33,23 @@ const EXAM_FORMAT_TO_TYPE: Record<string, QuestionType> = {
   essay: 'ESSAY',
 };
 
-// ── 능력 영역 매핑 ──
+// ── 능력 영역 매핑 (4대 능력 → abilityDomain 필드) ──
 
-const ABILITY_TO_DOMAIN: Record<string, string> = {
+const ABILITY_TO_ABILITY_DOMAIN: Record<string, string> = {
   calculation: 'CALCULATION',
   understanding: 'UNDERSTANDING',
   problem_solving: 'PROBLEM_SOLVING',
   reasoning: 'REASONING',
+};
+
+// ── 5대 교육과정 영역 매핑 (question_type → domain 필드) ──
+
+const QTYPE_TO_DOMAIN: Record<string, string> = {
+  number: 'number',
+  algebra: 'algebra',
+  function: 'function',
+  geometry: 'geometry',
+  statistics: 'statistics',
 };
 
 // ── topic 파싱 ──
@@ -119,10 +129,11 @@ export interface MergedQuestion {
   explanation?: string;
   source?: string;
   sourceTag?: string;
-  domain?: string;
+  domain?: string;          // 5대 교육과정 영역
+  abilityDomain?: string;   // 4대 능력 영역
   diagramSpec?: unknown;
   diagramSVG?: string;
-  matched: boolean; // 기출분석 매칭 여부
+  matched: boolean;
 }
 
 export interface MergeStats {
@@ -139,19 +150,48 @@ export interface MergeResult {
 
 // ── 메인 병합 함수 ──
 
+/** choices가 있으면 MULTIPLE_CHOICE 강제, choices 없는데 MULTIPLE_CHOICE면 보정 */
+function resolveType(
+  type: QuestionType,
+  choices: string[] | undefined,
+): QuestionType {
+  if (choices && choices.length >= 2) return 'MULTIPLE_CHOICE';
+  if (!choices || choices.length === 0) {
+    if (type === 'MULTIPLE_CHOICE') return 'SHORT_ANSWER';
+  }
+  return type;
+}
+
 export function mergeExtractedWithAnalysis(
   extracted: ExtractedProblemForMerge[],
   analyzed: AnalyzedQuestion[],
   bookCode: string,
   examTitle: string,
 ): MergeResult {
-  // analyzed를 question_number 기준 Map (숫자 부분으로 매칭)
+  // analyzed를 question_number 기준 Map
+  // "서술형1", "서답형2" 같은 비숫자 접두어가 있으면 별도 키로 분리
   const analyzerMap = new Map<number, AnalyzedQuestion>();
+  const maxObjectiveNum = Math.max(
+    0,
+    ...analyzed
+      .filter(q => q.question_format === 'objective' || q.question_format === 'short_answer')
+      .map(q => {
+        const n = typeof q.question_number === 'number'
+          ? q.question_number
+          : parseInt(String(q.question_number).replace(/\D/g, ''), 10);
+        return isNaN(n) ? 0 : n;
+      }),
+  );
+
   for (const q of analyzed) {
-    const num = typeof q.question_number === 'number'
-      ? q.question_number
-      : parseInt(String(q.question_number).replace(/\D/g, ''), 10);
-    if (!isNaN(num)) analyzerMap.set(num, q);
+    const raw = String(q.question_number);
+    const hasTextPrefix = /[가-힣a-zA-Z]/.test(raw); // "서술형1", "서답형2" 등
+    const numPart = parseInt(raw.replace(/\D/g, ''), 10);
+    if (isNaN(numPart)) continue;
+
+    // 서술형/서답형은 객관식 번호 뒤에 이어 붙이기 (충돌 방지)
+    const key = hasTextPrefix ? maxObjectiveNum + numPart : numPart;
+    analyzerMap.set(key, q);
   }
 
   const questions: MergedQuestion[] = [];
@@ -164,6 +204,10 @@ export function mergeExtractedWithAnalysis(
     if (meta) {
       matchedNums.add(ext.questionNum);
       const { chapter, section } = parseTopicToChapter(meta.topic);
+      const rawType = meta.question_format
+        ? EXAM_FORMAT_TO_TYPE[meta.question_format] || (ext.type as QuestionType) || 'SHORT_ANSWER'
+        : (ext.type as QuestionType) || 'SHORT_ANSWER';
+      const finalChoices = ext.choices.length > 0 ? ext.choices : undefined;
 
       questions.push({
         bookCode,
@@ -171,18 +215,16 @@ export function mergeExtractedWithAnalysis(
         section,
         questionNum: ext.questionNum,
         pageNum: ext.pageNum,
-        // 기출분석 메타 우선
         difficulty: EXAM_DIFF_TO_QUESTION[meta.difficulty] || (ext.difficulty as QuestionDifficulty) || 'MEDIUM',
-        type: meta.question_format
-          ? EXAM_FORMAT_TO_TYPE[meta.question_format] || (ext.type as QuestionType) || 'SHORT_ANSWER'
-          : (ext.type as QuestionType) || 'SHORT_ANSWER',
+        type: resolveType(rawType, finalChoices),
         content: ext.content,
-        choices: ext.choices.length > 0 ? ext.choices : undefined,
+        choices: finalChoices,
         answer: ext.answer || '',
         explanation: ext.explanation,
         source: examTitle,
         sourceTag: ext.sourceTag || '기출',
-        domain: meta.ability_domain ? ABILITY_TO_DOMAIN[meta.ability_domain] : undefined,
+        domain: meta.question_type ? QTYPE_TO_DOMAIN[meta.question_type] : undefined,
+        abilityDomain: meta.ability_domain ? ABILITY_TO_ABILITY_DOMAIN[meta.ability_domain] : undefined,
         diagramSpec: ext.diagramParams?.length ? ext.diagramParams : undefined,
         diagramSVG: ext.diagramSvgs?.[0]?.svg,
         matched: true,
@@ -190,15 +232,16 @@ export function mergeExtractedWithAnalysis(
     } else {
       // 매칭 실패: pdf-extract 자체 데이터만 사용
       unmatchedExtracted.push(ext.questionNum);
+      const unmatchedChoices = ext.choices.length > 0 ? ext.choices : undefined;
       questions.push({
         bookCode,
         chapter: ext.sectionHeader || '미분류',
         questionNum: ext.questionNum,
         pageNum: ext.pageNum,
         difficulty: (ext.difficulty as QuestionDifficulty) || 'MEDIUM',
-        type: (ext.type as QuestionType) || 'SHORT_ANSWER',
+        type: resolveType((ext.type as QuestionType) || 'SHORT_ANSWER', unmatchedChoices),
         content: ext.content,
-        choices: ext.choices.length > 0 ? ext.choices : undefined,
+        choices: unmatchedChoices,
         answer: ext.answer || '',
         explanation: ext.explanation,
         source: examTitle,

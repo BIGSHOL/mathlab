@@ -10,6 +10,7 @@ import {
   CurriculumUnit,
 } from '@/types/mathgen';
 import { getCurriculumForLevel, getGradesForLevel } from '@/lib/constants/curriculum';
+import { getTextbooksForGrade, getPublisher } from '@/lib/constants/textbook-curriculum';
 import { BookOpen, Layers, Zap, PenTool, Upload, X, ImageIcon, Copy } from 'lucide-react';
 
 interface SelectionPanelProps {
@@ -214,6 +215,29 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
                   </option>
                 ))}
               </select>
+              {selection.mode === 'curriculum' && (() => {
+                const schoolLevel = selection.schoolLevel === '중학교' ? 'middle' : selection.schoolLevel === '고등학교' ? 'high' : null;
+                if (!schoolLevel) return null;
+                const textbooks = getTextbooksForGrade(schoolLevel, selection.grade);
+                if (textbooks.length === 0) return null;
+                return (
+                  <select
+                    value={selection.textbookId || ''}
+                    onChange={(e) => handleChange('textbookId', e.target.value || undefined)}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-sm outline-none focus:border-primary transition-colors mt-2"
+                  >
+                    <option value="">교과서 미지정 (범용)</option>
+                    {textbooks.map((tb) => {
+                      const pub = getPublisher(tb.publisherId);
+                      return (
+                        <option key={tb.id} value={tb.id}>
+                          {pub?.shortName || tb.publisherId} ({tb.author})
+                        </option>
+                      );
+                    })}
+                  </select>
+                );
+              })()}
             </div>
 
             <div className="space-y-3">

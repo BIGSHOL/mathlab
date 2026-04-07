@@ -19,8 +19,9 @@ import { MathRenderer } from '@/components/math/MathRenderer';
 import { EditableMathRenderer } from '@/components/math/EditableMathRenderer';
 import { renderDiagram } from '@/lib/utils/svg-diagrams';
 import type { DiagramType } from '@/lib/utils/svg-diagrams/types';
-import { DIFFICULTY_LABELS, TYPE_LABELS, BOOK_LABELS, DOMAIN_LABELS, DOMAIN_COLORS } from '@/types';
-import type { QuestionDifficulty, QuestionType, LevelTestDomain } from '@/types';
+import { DIFFICULTY_LABELS, TYPE_LABELS, BOOK_LABELS } from '@/types';
+import type { QuestionDifficulty, QuestionType } from '@/types';
+import { QUESTION_DOMAIN_LABELS, QUESTION_DOMAIN_COLORS, ABILITY_DOMAIN_LABELS, ABILITY_DOMAIN_COLORS } from './question-types';
 import {
   getDifficultyBadgeColor,
   getTopicBadgeColor,
@@ -28,6 +29,7 @@ import {
   type EditFormState,
   type ConceptOption,
 } from './question-types';
+import { CurriculumDropdowns } from './CurriculumDropdowns';
 
 interface QuestionViewEditModalProps {
   selectedQuestion: QuestionItem;
@@ -119,6 +121,7 @@ export function QuestionViewEditModal({
         ) : (
           /* Edit Mode */
           <EditMode
+            selectedQuestion={selectedQuestion}
             editForm={editForm}
             setEditForm={setEditForm}
             concepts={concepts}
@@ -173,11 +176,18 @@ export function QuestionViewEditModal({
 function ViewMode({ selectedQuestion, concepts }: { selectedQuestion: QuestionItem; concepts: ConceptOption[] }) {
   return (
     <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-3 min-h-0">
-      {/* Badges */}
-      <div className="flex gap-2 flex-wrap">
+      {/* Badges — 교재/난이도/유형 → 단원 → 영역 → 개념 */}
+      <div className="flex gap-1.5 flex-wrap">
         <span className="px-2.5 py-1 bg-primary/10 text-primary text-xs font-bold rounded-sm">
-          {BOOK_LABELS[selectedQuestion.bookCode] || selectedQuestion.bookCode}
+          {BOOK_LABELS[selectedQuestion.bookCode] || selectedQuestion.bookCode} #{selectedQuestion.questionNum}
         </span>
+        <span className={`px-2.5 py-1 text-xs font-bold rounded-sm ${getDifficultyBadgeColor(DIFFICULTY_LABELS[selectedQuestion.difficulty])}`}>
+          {DIFFICULTY_LABELS[selectedQuestion.difficulty]}
+        </span>
+        <span className="px-2.5 py-1 border border-slate-200 text-text-secondary text-xs font-bold rounded-sm">
+          {TYPE_LABELS[selectedQuestion.type]}
+        </span>
+        <span className="px-1 text-slate-300">|</span>
         <span className={`px-2.5 py-1 text-xs font-bold rounded-sm ${getTopicBadgeColor(selectedQuestion.chapter)}`}>
           {selectedQuestion.chapter}
         </span>
@@ -186,15 +196,15 @@ function ViewMode({ selectedQuestion, concepts }: { selectedQuestion: QuestionIt
             {selectedQuestion.section}
           </span>
         )}
-        <span className={`px-2.5 py-1 text-xs font-bold rounded-sm ${getDifficultyBadgeColor(DIFFICULTY_LABELS[selectedQuestion.difficulty])}`}>
-          {DIFFICULTY_LABELS[selectedQuestion.difficulty]}
-        </span>
-        <span className="px-2.5 py-1 border border-slate-200 text-text-secondary text-xs font-bold rounded-sm">
-          {TYPE_LABELS[selectedQuestion.type]}
-        </span>
-        {selectedQuestion.domain && DOMAIN_LABELS[selectedQuestion.domain as LevelTestDomain] && (
-          <span className={`px-2 py-1 text-xs font-bold rounded-sm ${DOMAIN_COLORS[selectedQuestion.domain as LevelTestDomain]?.bg} ${DOMAIN_COLORS[selectedQuestion.domain as LevelTestDomain]?.text}`}>
-            {DOMAIN_LABELS[selectedQuestion.domain as LevelTestDomain]}
+        <span className="px-1 text-slate-300">|</span>
+        {selectedQuestion.domain && QUESTION_DOMAIN_LABELS[selectedQuestion.domain] && (
+          <span className={`px-2 py-1 text-xs font-bold rounded-sm ${QUESTION_DOMAIN_COLORS[selectedQuestion.domain]?.bg || 'bg-slate-100'} ${QUESTION_DOMAIN_COLORS[selectedQuestion.domain]?.text || 'text-slate-700'}`}>
+            {QUESTION_DOMAIN_LABELS[selectedQuestion.domain]}
+          </span>
+        )}
+        {selectedQuestion.abilityDomain && ABILITY_DOMAIN_LABELS[selectedQuestion.abilityDomain] && (
+          <span className={`px-2 py-1 text-xs font-bold rounded-sm $${ABILITY_DOMAIN_COLORS[selectedQuestion.abilityDomain]?.border || ''} ${ABILITY_DOMAIN_COLORS[selectedQuestion.abilityDomain]?.bg || 'bg-slate-100'} ${ABILITY_DOMAIN_COLORS[selectedQuestion.abilityDomain]?.text || 'text-slate-700'}`}>
+            {ABILITY_DOMAIN_LABELS[selectedQuestion.abilityDomain]}
           </span>
         )}
         {selectedQuestion.conceptId && (() => {
@@ -206,6 +216,11 @@ function ViewMode({ selectedQuestion, concepts }: { selectedQuestion: QuestionIt
           ) : null;
         })()}
       </div>
+      {selectedQuestion.source && (
+        <div className="text-xs text-slate-400">
+          출처: {selectedQuestion.source}
+        </div>
+      )}
 
       {/* Content */}
       <div className="text-sm">
@@ -277,6 +292,7 @@ function ViewMode({ selectedQuestion, concepts }: { selectedQuestion: QuestionIt
 
 // --- Edit Mode sub-component ---
 function EditMode({
+  selectedQuestion,
   editForm,
   setEditForm,
   concepts,
@@ -292,6 +308,7 @@ function EditMode({
   editDiagram,
   removeDiagram,
 }: {
+  selectedQuestion: QuestionItem;
   editForm: EditFormState;
   setEditForm: React.Dispatch<React.SetStateAction<EditFormState>>;
   concepts: ConceptOption[];
@@ -359,25 +376,19 @@ function EditMode({
     <div className="flex-1 flex divide-x divide-slate-200 min-h-0">
       {/* Left: Editors */}
       <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-2">
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="block text-xs font-bold text-text-secondary mb-1">단원</label>
-            <input
-              className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
-              value={editForm.chapter}
-              onChange={(e) => setEditForm((p) => ({ ...p, chapter: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-text-secondary mb-1">소단원</label>
-            <input
-              className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
-              value={editForm.section}
-              onChange={(e) => setEditForm((p) => ({ ...p, section: e.target.value }))}
-              placeholder="소단원"
-            />
-          </div>
-        </div>
+        <CurriculumDropdowns
+          bookCode={selectedQuestion.bookCode}
+          chapter={editForm.chapter}
+          section={editForm.section}
+          domain={editForm.domain}
+          abilityDomain={(editForm as EditFormState & { abilityDomain?: string }).abilityDomain}
+          onChapterChange={(ch) => setEditForm((p) => ({ ...p, chapter: ch, section: '' }))}
+          onSectionChange={(sec) => setEditForm((p) => ({ ...p, section: sec }))}
+          onDomainChange={(d) => setEditForm((p) => ({ ...p, domain: d }))}
+          onAbilityDomainChange={(a) => setEditForm((p) => ({ ...p, abilityDomain: a }))}
+          showDomain
+          cols={2}
+        />
 
         <div className="grid grid-cols-2 gap-2">
           <div>
@@ -420,22 +431,8 @@ function EditMode({
           </div>
         </div>
 
-        {/* 4대영역 · 개념 태깅 */}
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="block text-xs font-bold text-text-secondary mb-1">4대영역</label>
-            <select
-              className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
-              value={editForm.domain}
-              onChange={(e) => setEditForm((p) => ({ ...p, domain: e.target.value }))}
-            >
-              <option value="">미지정</option>
-              <option value="CALCULATION">계산력</option>
-              <option value="UNDERSTANDING">이해력</option>
-              <option value="PROBLEM_SOLVING">문제해결력</option>
-              <option value="REASONING">추론력</option>
-            </select>
-          </div>
+        {/* 연결 개념 */}
+        <div className="grid grid-cols-1 gap-2">
           <div>
             <label className="block text-xs font-bold text-text-secondary mb-1">연결 개념</label>
             <select

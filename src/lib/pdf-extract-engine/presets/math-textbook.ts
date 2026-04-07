@@ -103,6 +103,20 @@ function stripChoicesFromContent(content: string, choices: string[]): string {
   return content.replace(/(?:\n\s*)?[①②③④⑤]\s*.+/g, '').trimEnd();
 }
 
+const CIRCLE_NUMS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
+
+/** 보기 배열에 ①②③④⑤ 접두어가 없으면 자동 추가 */
+export function ensureChoiceNumbers(choices: string[]): string[] {
+  if (!choices || choices.length === 0) return choices;
+  return choices.map((c, i) => {
+    const trimmed = c.trim();
+    // 이미 ①~⑩ 또는 (1)~(5) 로 시작하면 그대로
+    if (/^[①②③④⑤⑥⑦⑧⑨⑩]/.test(trimmed)) return trimmed;
+    if (/^\(\d+\)/.test(trimmed)) return trimmed;
+    return `${CIRCLE_NUMS[i] || `(${i + 1})`} ${trimmed}`;
+  });
+}
+
 /** ㄱㄴㄷ 보기를 content에 마크다운 인용블록으로 포함 */
 export function embedBoxItems(content: string, boxItems: string[]): string {
   if (boxItems.length === 0) return content;
@@ -176,7 +190,7 @@ export const MATH_EXTRACT_SCHEMA = {
         type: OBJECT,
         properties: {
           questionNum: { type: NUMBER, description: '문제 번호 (예: 131, 132)' },
-          sectionHeader: { type: STRING, description: '유형/단원 제목 (예: "유형 01 서로소")' },
+          sectionHeader: { type: STRING, description: '소단원명. 교육과정 표준 명칭 사용 (예: "소인수분해", "최대공약수와 최소공배수"). "유형 01" 같은 교재 고유 분류는 사용 금지' },
           difficultyTag: { type: STRING, description: '난이도: 하, 중하, 중, 중상, 상' },
           problemType: { type: STRING, description: '문제 유형: 객관식, 주관식, 서술형' },
           content: { type: STRING, description: '문제 본문 (마크다운+LaTeX)' },
@@ -191,6 +205,8 @@ export const MATH_EXTRACT_SCHEMA = {
             description: '<보기> 항목 (ㄱ,ㄴ,ㄷ). 없으면 빈 배열',
           },
           answer: { type: STRING, description: '정답' },
+          domain5: { type: STRING, description: '5대 교육과정 영역: number(수와 연산), algebra(문자와 식), function(함수), geometry(기하), statistics(확률과 통계)' },
+          abilityDomain: { type: STRING, description: '4대 능력 영역: CALCULATION(계산력), UNDERSTANDING(이해력), REASONING(추론력), PROBLEM_SOLVING(문제해결력)' },
           sourceTag: { type: STRING, description: '태그: 대표문제 등' },
           images: {
             type: ARRAY,
@@ -279,10 +295,14 @@ export const MATH_SYSTEM_PROMPT = `당신은 한국 수학 교재 분석 전문�
 3. 객관식 보기(①②③④⑤)는 choices 배열에만 포함. content에는 보기를 절대 포함하지 말 것!
 4. <보기> 항목(ㄱ,ㄴ,ㄷ)은 boxItems에 별도 저장. content에는 포함하지 말 것!
 5. 난이도 태그가 있으면 difficultyTag에 저장
-6. 유형/단원 헤더를 sectionHeader에 저장
+6. **sectionHeader는 반드시 교육과정 표준 소단원명을 사용!**
+   - 올바른 예: "소인수분해", "최대공약수와 최소공배수", "정수와 유리수", "제곱근과 실수"
+   - 잘못된 예: "유형 01 소수와 합성수", "01 소인수분해", "16~18 단답형"
+   - 교재에 "유형 01", "유형 UP 09" 같은 분류가 있어도 무시하고, 해당 내용이 속하는 교육과정 소단원명만 기재
+   - "서술형", "단답형" 같은 문제 형식은 sectionHeader가 아니라 problemType에 저장
 7. "대표문제" 같은 특수 태그는 sourceTag에 저장
 8. 도형/다이어그램은 diagramParams 배열로 출력. content에 [그림1],[그림2]... 플레이스홀더
-9. 정답이 보이면 answer에 포함, 아니면 빈 문자열
+9. **정답(answer)은 확실한 경우에만 기재!** 정답이 명확히 표시되어 있을 때만 입력. 추측하거나 직접 풀어서 정답을 만들지 마세요. 확실하지 않으면 빈 문자열
 10. 개념 요약 박스가 있으면 concepts 배열에 추출
 11. 테두리/박스 영역은 마크다운 인용블록(>)으로 감싸기
 12. 수식: \\\\times, ^{}, \\\\frac 사용. \\\\dfrac은 사용 금지! 반드시 \\\\frac만 사용. 모든 숫자/변수는 $...$로 감싸기
@@ -295,7 +315,18 @@ export const MATH_SYSTEM_PROMPT = `당신은 한국 수학 교재 분석 전문�
 18. 2열 레이아웃은 마크다운 테이블 사용
 19. 온라인 변환: "○표 하세요" → "구하세요", "색칠하세요" → "찾으세요"
 20. AI 난이도 판단: 하(단순)/중하(2단계)/중(2~3단계)/중상(심화)/상(고난이도)
-21. diagramParams 필드별 규칙: fraction_circle(totalParts,coloredParts,count), fraction_rect(rows,cols,coloredCount), number_line(min,max,step), place_value(hundreds,tens,ones). 미사용 숫자 필드는 0`;
+21. **domain5 (5대 교육과정 영역)**: 문제 내용을 보고 반드시 하나를 선택
+   - number: 수와 연산 (소인수분해, 정수, 유리수, 실수, 제곱근 등)
+   - algebra: 문자와 식 (문자식, 방정식, 부등식, 인수분해 등)
+   - function: 함수 (좌표, 그래프, 정비례, 반비례, 일차/이차함수 등)
+   - geometry: 기하 (도형, 작도, 합동, 닮음, 삼각비, 원, 입체도형 등)
+   - statistics: 확률과 통계 (도수분포, 대푯값, 확률, 상관관계 등)
+22. **abilityDomain (4대 능력 영역)**: 문제가 요구하는 핵심 능력을 하나 선택
+   - CALCULATION: 계산력 (계산, 식 정리, 값 구하기)
+   - UNDERSTANDING: 이해력 (개념 이해, 뜻 설명, 성질 파악)
+   - REASONING: 추론력 (증명, 논증, 조건 추론, 도형 성질 추론)
+   - PROBLEM_SOLVING: 문제해결력 (활용 문제, 실생활 응용, 전략 수립)
+23. diagramParams 필드별 규칙: fraction_circle(totalParts,coloredParts,count), fraction_rect(rows,cols,coloredCount), number_line(min,max,step), place_value(hundreds,tens,ones). 미사용 숫자 필드는 0`;
 
 // ============================================================
 // 플러그인 정의
@@ -347,7 +378,7 @@ export const mathTextbookPlugin: PdfExtractPlugin<ExtractedMathProblem, MathExtr
         difficultyTag: p.difficultyTag || '',
         problemType: p.problemType || '주관식',
         content: stripChoicesFromContent(autoWrapMath(fixLatexEscaping(contentText)), p.choices || []),
-        choices: (p.choices || []).map((c: string) => autoWrapMath(fixLatexEscaping(c))),
+        choices: ensureChoiceNumbers((p.choices || []).map((c: string) => autoWrapMath(fixLatexEscaping(c)))),
         boxItems: p.boxItems || [],
         answer: fixLatexEscaping(p.answer || ''),
         explanation: '',
@@ -408,15 +439,31 @@ export const mathSolutionPlugin: PdfExtractPlugin<ExtractedSolution> = {
 3. 풀이(explanation)는 마크다운으로 작성, 수식은 $...$로 감싸기
 4. 풀이가 여러 단계이면 줄바꿈으로 구분
 5. 채점 요소/기준이 있으면 반드시 scoringCriteria 필드에 별도 분리 (explanation에 포함하지 말 것)
-6. 채점 요소가 없으면 scoringCriteria는 빈 문자열`,
+6. 채점 요소가 없으면 scoringCriteria는 빈 문자열
+7. **출처 필터링 (필수!)**: 풀이에 특정 문제집/교재명이 언급되면 반드시 제거하세요.
+   - 예: "RPM 비법노트에 따르면", "쎈 개념 정리", "개념원리에서는" 등 교재 브랜드명 제거
+   - "비법 노트", "핵심 정리", "개념 팁" 등 교재 고유 코너명도 제거
+   - 순수한 수학적 풀이만 남기세요. 풀이 내용 자체는 유지하되 출처 표현만 삭제`,
 
   fixText: fixLatexEscaping,
 
   postProcess: (raw: unknown): ExtractedSolution[] => {
     const data = raw as { solutions?: Record<string, unknown>[] };
+
+    /** 교재 브랜드/코너명 언급 제거 */
+    const stripBookReferences = (text: string): string => {
+      if (!text) return text;
+      return text
+        // "RPM 비법 노트에 따르면", "쎈 개념 정리에서" 등
+        .replace(/\*?\*?(?:RPM|쎈|개념원리|풍산자|마플|블랙라벨|일품|자이스토리|체크체크|우공비|라이트쎈|개념쎈|숨마쿰라우데|수학의\s*정석|최상위|에이급|일등급)\s*(?:비법\s*노트|개념\s*정리|핵심\s*정리|개념\s*팁|비법노트)\*?\*?\s*(?:에\s*따르면|에서는?|에\s*의하면|참고)?\s*/gi, '')
+        // 볼드 마커만 남은 경우 정리
+        .replace(/\*\*\s*\*\*/g, '')
+        .trim();
+    };
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (data?.solutions || []).map((s: any) => {
-      let explanation = fixLatexEscaping(s.explanation || '');
+      let explanation = stripBookReferences(fixLatexEscaping(s.explanation || ''));
       let scoringCriteria = fixLatexEscaping(s.scoringCriteria || '');
 
       // AI가 분리하지 못한 경우 explanation에서 채점 요소 자동 분리

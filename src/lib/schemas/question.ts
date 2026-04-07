@@ -31,6 +31,7 @@ export const createQuestionSchema = z.object({
   source: z.string().max(200).optional(),
   sourceTag: z.string().max(100).optional(),
   domain: z.string().max(30).optional().nullable(),
+  abilityDomain: z.string().max(30).optional().nullable(),
   conceptId: z.string().optional().nullable(),
   diagramSpec: z.any().optional().nullable(),
   diagramSVG: z.string().optional().nullable(),

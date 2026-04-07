@@ -18,14 +18,13 @@ export async function POST(request: NextRequest) {
     // domain/conceptId 미지정 시 자동 태깅
     const taggedQuestions = await Promise.all(
       questions.map(async (q) => {
-        let domain = q.domain || null;
-        let conceptId = q.conceptId || null;
-        if (!domain) {
-          const tag = await autoTag({ chapter: q.chapter, section: q.section, difficulty: q.difficulty, bookCode: q.bookCode });
-          domain = tag.domain;
-          conceptId = conceptId || tag.conceptId;
-        }
-        return { ...q, domain, conceptId };
+        const tag = await autoTag({ chapter: q.chapter, section: q.section, difficulty: q.difficulty, bookCode: q.bookCode });
+        return {
+          ...q,
+          domain: q.domain || tag.domain,
+          abilityDomain: tag.abilityDomain,
+          conceptId: q.conceptId || tag.conceptId,
+        };
       })
     );
 
@@ -47,6 +46,7 @@ export async function POST(request: NextRequest) {
           source: q.source || null,
           sourceTag: q.sourceTag || null,
           domain: q.domain || null,
+          abilityDomain: q.abilityDomain || null,
           conceptId: q.conceptId || null,
           diagramSpec: q.diagramSpec || undefined,
           diagramSVG: q.diagramSVG || null,

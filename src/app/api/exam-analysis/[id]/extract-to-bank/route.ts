@@ -61,7 +61,12 @@ const EXAM_PROMPT_SUFFIX = `
    - 시험지에 도형(삼각형, 사각형, 원, 좌표평면, 그래프 등)이 포함된 문항은 해당 도형을 SVG 코드로 재구성하여 diagramSvgs 배열에 넣으세요.
    - content에는 [그림1], [그림2] 등 플레이스홀더를 넣고, diagramSvgs에 대응하는 SVG를 생성하세요.
    - SVG는 viewBox="0 0 300 300" 기준, 검은색 선(stroke="#333"), 흰색 배경, 꼭짓점 라벨과 변 길이를 텍스트로 포함하세요.
-   - [그림] 플레이스홀더만 남기고 SVG를 생성하지 않는 것은 금지! 도형이 보이면 반드시 SVG로 재구성하세요.`;
+   - [그림] 플레이스홀더만 남기고 SVG를 생성하지 않는 것은 금지! 도형이 보이면 반드시 SVG로 재구성하세요.
+
+9. **sectionHeader는 교육과정 표준 소단원명을 사용!**
+   - "유형 01", "01 소인수분해", "16~18 단답형" 같은 교재 고유 분류 금지
+   - 올바른 예: "소인수분해", "최대공약수와 최소공배수", "제곱근과 실수"
+   - 해당 문항이 어떤 교육과정 소단원에 해당하는지 판단하여 표준 명칭 기재`;
 
 /** POST /api/exam-analysis/[id]/extract-to-bank — 기출시험 문제 추출 */
 export async function POST(request: NextRequest, { params }: Params) {

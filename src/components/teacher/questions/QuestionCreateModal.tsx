@@ -20,9 +20,10 @@ import type { QuestionDifficulty, QuestionType } from '@/types';
 import {
   MIDDLE_BOOK_CODES,
   ELEMENTARY_BOOK_CODES,
-  CHAPTERS_BY_BOOK_DEFAULT,
+  HIGH_BOOK_CODES,
   type CreateFormState,
 } from './question-types';
+import { CurriculumDropdowns } from './CurriculumDropdowns';
 
 interface QuestionCreateModalProps {
   createForm: CreateFormState;
@@ -76,41 +77,19 @@ export function QuestionCreateModal({
         <div className="flex-1 flex divide-x divide-slate-200 min-h-0">
           {/* Left: Form */}
           <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-2">
-            {/* 교재/단원/번호 */}
-            <div className="grid grid-cols-3 gap-2">
+            {/* 교재/문제 번호 */}
+            <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="block text-xs font-bold text-text-secondary mb-1">교재</label>
                 <select
                   className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40"
                   value={createForm.bookCode}
-                  onChange={(e) => setCreateForm((p) => ({ ...p, bookCode: e.target.value, chapter: '' }))}
+                  onChange={(e) => setCreateForm((p) => ({ ...p, bookCode: e.target.value, chapter: '', section: '' }))}
                 >
-                  {[...ELEMENTARY_BOOK_CODES, ...MIDDLE_BOOK_CODES].map((code) => (
+                  {[...ELEMENTARY_BOOK_CODES, ...MIDDLE_BOOK_CODES, ...HIGH_BOOK_CODES].map((code) => (
                     <option key={code} value={code}>{BOOK_LABELS[code] || code}</option>
                   ))}
                 </select>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-text-secondary mb-1">단원</label>
-                {(chaptersByBook[createForm.bookCode]?.length || CHAPTERS_BY_BOOK_DEFAULT[createForm.bookCode]) ? (
-                  <select
-                    className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40"
-                    value={createForm.chapter}
-                    onChange={(e) => setCreateForm((p) => ({ ...p, chapter: e.target.value }))}
-                  >
-                    <option value="">선택</option>
-                    {(chaptersByBook[createForm.bookCode]?.map(c => c.chapter) || CHAPTERS_BY_BOOK_DEFAULT[createForm.bookCode] || []).map((ch) => (
-                      <option key={ch} value={ch}>{ch}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40"
-                    value={createForm.chapter}
-                    onChange={(e) => setCreateForm((p) => ({ ...p, chapter: e.target.value }))}
-                    placeholder="단원명 입력"
-                  />
-                )}
               </div>
               <div>
                 <label className="block text-xs font-bold text-text-secondary mb-1">문제 번호</label>
@@ -124,17 +103,17 @@ export function QuestionCreateModal({
               </div>
             </div>
 
-            {/* 코너/난이도/유형 */}
-            <div className="grid grid-cols-3 gap-2">
-              <div>
-                <label className="block text-xs font-bold text-text-secondary mb-1">코너 (선택)</label>
-                <input
-                  className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40"
-                  value={createForm.section}
-                  onChange={(e) => setCreateForm((p) => ({ ...p, section: e.target.value }))}
-                  placeholder="개념 완성하기, 실력 다지기 등"
-                />
-              </div>
+            {/* 대단원/소단원 (curriculum 기반 드롭다운) */}
+            <CurriculumDropdowns
+              bookCode={createForm.bookCode}
+              chapter={createForm.chapter}
+              section={createForm.section}
+              onChapterChange={(ch) => setCreateForm((p) => ({ ...p, chapter: ch, section: '' }))}
+              onSectionChange={(sec) => setCreateForm((p) => ({ ...p, section: sec }))}
+            />
+
+            {/* 난이도/유형 */}
+            <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="block text-xs font-bold text-text-secondary mb-1">난이도</label>
                 <select
@@ -273,13 +252,19 @@ export function QuestionCreateModal({
 
             {/* 출처 태그 */}
             <div>
-              <label className="block text-xs font-bold text-text-secondary mb-1">출처 태그 (선택)</label>
-              <input
+              <label className="block text-xs font-bold text-text-secondary mb-1">출처 태그</label>
+              <select
                 className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40"
                 value={createForm.sourceTag}
                 onChange={(e) => setCreateForm((p) => ({ ...p, sourceTag: e.target.value }))}
-                placeholder="출처"
-              />
+              >
+                <option value="">미지정</option>
+                <option value="수동 입력">수동 입력</option>
+                <option value="교과서">교과서</option>
+                <option value="기출">기출</option>
+                <option value="PDF 추출">PDF 추출</option>
+                <option value="AI 생성">AI 생성</option>
+              </select>
             </div>
           </div>
 

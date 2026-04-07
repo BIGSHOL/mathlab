@@ -72,6 +72,7 @@ export function useQuestionManager() {
     section: '',
     sourceTag: '',
     domain: '',
+    abilityDomain: '',
     conceptId: '',
     diagramParams: [],
     choiceColumns: null,
@@ -486,6 +487,7 @@ export function useQuestionManager() {
       section: q.section || '',
       sourceTag: q.sourceTag || '',
       domain,
+      abilityDomain: q.abilityDomain || '',
       conceptId,
       diagramParams: (() => {
         const resolved = resolveDiagramSpec(q.diagramSpec);
@@ -526,6 +528,7 @@ export function useQuestionManager() {
         section: editForm.section || null,
         sourceTag: editForm.sourceTag || null,
         domain: editForm.domain || null,
+        abilityDomain: editForm.abilityDomain || null,
         conceptId: editForm.conceptId || null,
         choiceColumns: editForm.choiceColumns,
       };

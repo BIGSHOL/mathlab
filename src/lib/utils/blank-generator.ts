@@ -244,11 +244,16 @@ export function addFullSentenceBlanks(
 ): MergedBlankExercise {
   const { templateText, blanks } = exercise;
 
+  // 통문장 빈칸 상한: easy+hard의 2배, 최소 10개, 최대 30개
+  const easyHardCount = blanks.length;
+  const maxFullBlanks = Math.min(30, Math.max(10, easyHardCount * 2));
+
   // Split template into segments: existing {{N}} markers and text between them
   const segments = templateText.split(/(\{\{\d+\}\})/g);
   let newTemplate = '';
   const newBlanks = [...blanks];
   let nextPosition = blanks.length + 1;
+  let fullCount = 0;
 
   for (const seg of segments) {
     if (/^\{\{\d+\}\}$/.test(seg)) {
@@ -274,14 +279,19 @@ export function addFullSentenceBlanks(
           newTemplate += part;
           continue;
         }
-        newTemplate += `{{${nextPosition}}}`;
-        newBlanks.push({
-          position: nextPosition,
-          answer: part, // $...$  포함하여 정답으로 저장 → 렌더링 시 수식으로 표시
-          hint: latexInner.length <= 3 ? '수식' : latexInner.substring(0, 2) + '…',
-          difficulty: 'full',
-        });
-        nextPosition++;
+        if (fullCount < maxFullBlanks) {
+          newTemplate += `{{${nextPosition}}}`;
+          newBlanks.push({
+            position: nextPosition,
+            answer: part,
+            hint: latexInner.length <= 3 ? '수식' : latexInner.substring(0, 2) + '…',
+            difficulty: 'full',
+          });
+          nextPosition++;
+          fullCount++;
+        } else {
+          newTemplate += part;
+        }
         continue;
       }
 
@@ -310,7 +320,7 @@ export function addFullSentenceBlanks(
         const shouldBlank = !isParticleOrConnector(token) && token.length >= 2
           && !isNumbering && !FULL_KEEP_WORDS.has(token);
 
-        if (shouldBlank) {
+        if (shouldBlank && fullCount < maxFullBlanks) {
           newTemplate += `{{${nextPosition}}}`;
           newBlanks.push({
             position: nextPosition,
@@ -319,6 +329,7 @@ export function addFullSentenceBlanks(
             difficulty: 'full',
           });
           nextPosition++;
+          fullCount++;
         } else {
           newTemplate += token;
         }

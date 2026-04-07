@@ -57,4 +57,6 @@ export interface SelectionState {
   problemType: ProblemType;
   answerType: AnswerType;
   removeScore?: boolean;
+  /** 교과서 ID (textbook-curriculum.ts 기준, 예: 'mirae-m1') */
+  textbookId?: string;
 }

@@ -60,7 +60,12 @@ export async function GET(request: NextRequest) {
       OR: [
         { content: { contains: search } },
         { chapter: { contains: search } },
+        { section: { contains: search } },
         { answer: { contains: search } },
+        { source: { contains: search } },
+        { sourceTag: { contains: search } },
+        { bookCode: { contains: search } },
+        { explanation: { contains: search } },
       ],
     });
   }

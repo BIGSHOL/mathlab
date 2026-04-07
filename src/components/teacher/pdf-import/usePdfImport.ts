@@ -564,7 +564,7 @@ export function usePdfImport(): PdfImportState {
           answer: p.answer || '미입력',
           explanation: p.explanation || undefined,
           source: pdfFile ? pdfFile.name.replace(/\.pdf$/i, '') : undefined,
-          sourceTag: p.sourceTag || undefined,
+          sourceTag: p.sourceTag || 'PDF 추출',
           diagramSpec: p.diagramParams && p.diagramParams.length > 0 ? p.diagramParams : undefined,
           diagramSVG: p.diagramSvgs && p.diagramSvgs.length > 0
             ? p.diagramSvgs.map((d) => d.svg).join('\n')

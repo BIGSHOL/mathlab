@@ -17,8 +17,8 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Pagination } from '@/components/ui/Pagination';
 import { MathRenderer } from '@/components/math/MathRenderer';
-import { DIFFICULTY_LABELS, TYPE_LABELS, BOOK_LABELS, DOMAIN_LABELS, DOMAIN_COLORS } from '@/types';
-import type { LevelTestDomain } from '@/types';
+import { DIFFICULTY_LABELS, TYPE_LABELS, BOOK_LABELS } from '@/types';
+import { QUESTION_DOMAIN_LABELS, QUESTION_DOMAIN_COLORS, ABILITY_DOMAIN_LABELS, ABILITY_DOMAIN_COLORS } from './question-types';
 import {
   ITEMS_PER_PAGE,
   getDifficultyBadgeColor,
@@ -147,37 +147,44 @@ export function QuestionListMain({
                   onClick={() => openQuestion(q)}
                 >
                   <div className="flex justify-between items-start gap-2">
-                    <div className="flex gap-2 flex-wrap">
-                      <span className="px-2.5 py-1 bg-primary/10 text-primary text-xs font-bold rounded-sm">
-                        {BOOK_LABELS[q.bookCode] || q.bookCode}
+                    <div className="flex gap-1.5 flex-wrap">
+                      <span className="px-2 py-1 bg-primary/10 text-primary text-xs font-bold rounded-sm">
+                        {BOOK_LABELS[q.bookCode] || q.bookCode} #{q.questionNum}
                       </span>
-                      <span
-                        className={`px-2.5 py-1 text-xs font-bold rounded-sm ${getTopicBadgeColor(q.chapter)}`}
-                      >
+                      <span className={`px-2 py-1 text-xs font-bold rounded-sm ${getDifficultyBadgeColor(DIFFICULTY_LABELS[q.difficulty])}`}>
+                        {DIFFICULTY_LABELS[q.difficulty]}
+                      </span>
+                      <span className="px-2 py-1 border border-slate-200 text-text-secondary text-xs font-bold rounded-sm">
+                        {TYPE_LABELS[q.type]}
+                      </span>
+                      <span className={`px-2 py-1 text-xs font-bold rounded-sm ${getTopicBadgeColor(q.chapter)}`}>
                         {q.chapter}
                       </span>
-                      {q.section && (
-                        <span className="px-2.5 py-1 border border-slate-200 text-text-secondary text-xs font-bold rounded-sm">
+                      {q.section && q.section !== q.chapter && (
+                        <span className="px-2 py-1 border border-slate-200 text-text-secondary text-xs font-bold rounded-sm">
                           {q.section}
                         </span>
                       )}
-                      <span
-                        className={`px-2.5 py-1 text-xs font-bold rounded-sm ${getDifficultyBadgeColor(
-                          DIFFICULTY_LABELS[q.difficulty]
-                        )}`}
-                      >
-                        {DIFFICULTY_LABELS[q.difficulty]}
-                      </span>
-                      <span className="px-2.5 py-1 border border-slate-200 text-text-secondary text-xs font-bold rounded-sm">
-                        {TYPE_LABELS[q.type]}
-                      </span>
-                      {q.domain && DOMAIN_LABELS[q.domain as LevelTestDomain] && (
-                        <span className={`px-2 py-1 text-xs font-bold rounded-sm ${DOMAIN_COLORS[q.domain as LevelTestDomain]?.bg} ${DOMAIN_COLORS[q.domain as LevelTestDomain]?.text}`}>
-                          {DOMAIN_LABELS[q.domain as LevelTestDomain]}
+                      {q.domain && QUESTION_DOMAIN_LABELS[q.domain] && (
+                        <span className={`px-2 py-1 text-xs font-bold rounded-sm ${QUESTION_DOMAIN_COLORS[q.domain]?.bg || 'bg-slate-100'} ${QUESTION_DOMAIN_COLORS[q.domain]?.text || 'text-slate-700'}`}>
+                          {QUESTION_DOMAIN_LABELS[q.domain]}
+                        </span>
+                      )}
+                      {(q as QuestionItem).abilityDomain && ABILITY_DOMAIN_LABELS[(q as QuestionItem).abilityDomain!] && (
+                        <span className={`px-2 py-1 text-xs font-bold rounded-sm $${ABILITY_DOMAIN_COLORS[(q as QuestionItem).abilityDomain!]?.border || ''} ${ABILITY_DOMAIN_COLORS[(q as QuestionItem).abilityDomain!]?.bg || 'bg-slate-100'} ${ABILITY_DOMAIN_COLORS[(q as QuestionItem).abilityDomain!]?.text || 'text-slate-700'}`}>
+                          {ABILITY_DOMAIN_LABELS[(q as QuestionItem).abilityDomain!]}
+                        </span>
+                      )}
+                      {(q.sourceTag || q.source) && (
+                        <span
+                          className="px-2 py-1 text-xs font-bold rounded-sm bg-amber-50 text-amber-700 border border-amber-200 cursor-default"
+                          title={q.source || ''}
+                        >
+                          {q.sourceTag || '출처'}{q.source ? ` · ${q.source.length > 20 ? q.source.substring(0, 20) + '…' : q.source}` : ''}
                         </span>
                       )}
                     </div>
-                    <div className="flex gap-1 text-text-secondary">
+                    <div className="flex gap-1 text-text-secondary shrink-0">
                       {canEdit && (
                         <>
                           <button
@@ -188,16 +195,16 @@ export function QuestionListMain({
                             <Edit className="w-4 h-4" />
                           </button>
                           {deleteConfirm === q.id ? (
-                            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center gap-1 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                               <button
                                 onClick={() => deleteQuestion(q.id)}
-                                className="p-1 text-red-500 hover:bg-red-50 rounded-sm text-xs font-bold"
+                                className="px-2 py-1 text-red-500 hover:bg-red-50 rounded-sm text-xs font-bold"
                               >
                                 삭제
                               </button>
                               <button
                                 onClick={() => setDeleteConfirm(null)}
-                                className="p-1 hover:bg-slate-100 rounded-sm text-xs"
+                                className="px-2 py-1 hover:bg-slate-100 rounded-sm text-xs"
                               >
                                 취소
                               </button>
@@ -240,15 +247,20 @@ export function QuestionListMain({
                       <KeyRound className="w-3.5 h-3.5" />
                       정답: <MathRenderer content={q.answer} className="inline" />
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setExpandedExplanation(expandedExplanation === q.id ? null : q.id);
-                      }}
-                      className="text-xs font-bold text-primary hover:underline"
-                    >
-                      {expandedExplanation === q.id ? '해설 닫기' : '해설 보기'}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-bold px-1.5 py-0.5 rounded-sm ${q.explanation ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400'}`}>
+                        {q.explanation ? '해설 있음' : '해설 없음'}
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExpandedExplanation(expandedExplanation === q.id ? null : q.id);
+                        }}
+                        className="text-xs font-bold text-primary hover:underline"
+                      >
+                        {expandedExplanation === q.id ? '해설 닫기' : '해설 보기'}
+                      </button>
+                    </div>
                   </div>
                   {expandedExplanation === q.id && (
                     <div className="space-y-2">

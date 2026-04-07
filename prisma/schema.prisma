@@ -138,6 +138,7 @@ model User {
   examPapersAsTeacher          ExamPaper[]       @relation("ExamPaperTeacher")
   examPapersAsStudent          ExamPaper[]       @relation("ExamPaperStudent")
   createdQuestions             Question[]        @relation("createdQuestions")
+  inventories                  UserInventory[]
 
   @@index([role])
   @@index([classroomId])
@@ -306,6 +307,49 @@ model PointTransaction {
   @@index([userId, createdAt(sort: Desc)])
 }
 
+// FEAT: XP 상점
+enum ShopItemCategory {
+  FRAME        // 아바타 테두리
+  BACKGROUND   // 프로필 카드 배경
+  TITLE        // 칭호
+  NAME_COLOR   // 닉네임 색상
+  AVATAR       // 아바타 포즈
+  EFFECT       // 아바타 이펙트 (CSS 애니메이션)
+  HAT          // 모자 악세사리
+  GLASSES      // 안경 악세사리
+}
+
+model ShopItem {
+  id          String           @id @default(cuid())
+  category    ShopItemCategory
+  name        String           @db.VarChar(50)
+  description String?          @db.VarChar(200)
+  price       Int
+  value       Json             // 인라인 스타일 객체
+  preview     String?          @db.VarChar(500)
+  sortOrder   Int              @default(0)
+  isActive    Boolean          @default(true)
+  levelReq    Int              @default(1)
+  createdAt   DateTime         @default(now())
+
+  inventories UserInventory[]
+
+  @@index([category, isActive])
+}
+
+model UserInventory {
+  id          String   @id @default(cuid())
+  userId      String
+  itemId      String
+  purchasedAt DateTime @default(now())
+
+  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item ShopItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, itemId])
+  @@index([userId])
+}
+
 model StudentProfile {
   id              String    @id @default(cuid())
   userId          String    @unique
@@ -318,6 +362,8 @@ model StudentProfile {
   conceptNavMode  String    @default("curriculum") // curriculum | chain:<체인명>
   blankInputMode  String?  // null=반 설정 따름, 'chip' | 'typing'
   representativeBadgeId String?
+  spentXp        Int       @default(0)
+  equippedItems  Json?
   updatedAt       DateTime  @updatedAt
 
   user                User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -361,9 +407,10 @@ model Question {
   diagramSVG     String?            @db.Text          // 레거시 raw SVG (하위 호환)
   choiceColumns  Int?                                 // 보기 열 수: null=자동, 1=1열, 2=2열
 
-  // 4대 영역 & 계통도 연결
-  domain      String?            @db.VarChar(30)   // CALCULATION | UNDERSTANDING | PROBLEM_SOLVING | REASONING
-  conceptId   String?                              // 연결된 개념 (계통도 분석용)
+  // 영역 분류 & 계통도 연결
+  domain         String?         @db.VarChar(30)   // 5대 교육과정 영역: number | algebra | function | geometry | statistics
+  abilityDomain  String?         @db.VarChar(30)   // 4대 능력 영역: CALCULATION | UNDERSTANDING | PROBLEM_SOLVING | REASONING
+  conceptId      String?                           // 연결된 개념 (계통도 분석용)
 
   // 지점/생성자 메타데이터
   tenantId    String?                              // 생성 지점 (null=공용/레거시)
