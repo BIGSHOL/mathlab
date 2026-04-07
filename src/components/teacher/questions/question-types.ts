@@ -124,6 +124,7 @@ export interface QuestionItem {
   abilityDomain: string | null;
   conceptId: string | null;
   diagramSpec?: DiagramParam[] | null;
+  diagramSVG?: string | null;
   choiceColumns?: number | null;
 }
 

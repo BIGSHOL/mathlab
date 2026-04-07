@@ -227,6 +227,32 @@ function ViewMode({ selectedQuestion, concepts }: { selectedQuestion: QuestionIt
         <MathRenderer content={selectedQuestion.content} />
       </div>
 
+      {/* Diagram SVG / DiagramSpec */}
+      {(selectedQuestion.diagramSVG || (selectedQuestion.diagramSpec && selectedQuestion.diagramSpec.length > 0)) && (
+        <div className="my-4 flex justify-center">
+          <div className="w-full max-w-md">
+            {selectedQuestion.diagramSVG ? (
+              <div
+                className="w-full overflow-hidden rounded-sm border border-slate-100 bg-white p-4 [&_svg]:w-full [&_svg]:h-auto"
+                style={{ fontFamily: "'Pretendard', system-ui, sans-serif" }}
+                dangerouslySetInnerHTML={{ __html: selectedQuestion.diagramSVG }}
+              />
+            ) : selectedQuestion.diagramSpec ? (
+              <div className="space-y-3">
+                {selectedQuestion.diagramSpec.map((dp, i) => {
+                  try {
+                    const svg = renderDiagram(dp as unknown as { type: DiagramType; params: Record<string, unknown> });
+                    return (
+                      <div key={i} className="border border-slate-100 rounded-sm p-3 bg-white [&_svg]:w-full [&_svg]:h-auto" dangerouslySetInnerHTML={{ __html: svg }} />
+                    );
+                  } catch { return null; }
+                })}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
+
       {/* Choices */}
       {selectedQuestion.choices && Array.isArray(selectedQuestion.choices) && (() => {
         const choices = selectedQuestion.choices as string[];
