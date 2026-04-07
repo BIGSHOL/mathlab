@@ -165,12 +165,18 @@ export function ArticleEditorModal({ examPaperId, schoolName: _schoolName, onClo
   // 네이버 SmartEditor ONE 호환 HTML 전처리
   const prepareForNaver = (html: string): string => {
     let result = html;
-    // 2. <h2> → <p> 큰 글씨 + <hr> 구분선 (네이버 패턴)
-    result = result.replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi,
-      '<p><span style="font-size: 24px;"><b>$1</b></span></p><hr>');
-    // 3. <h3> → <p> 중간 글씨
-    result = result.replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi,
-      '<p><span style="font-size: 18px;"><b>$1</b></span></p>');
+    // 2. <h2> → <p> 큰 글씨 + <hr> 구분선 (네이버 패턴, style 속성 보존)
+    result = result.replace(/<h2(\s[^>]*)?>(([\s\S]*?))<\/h2>/gi, (_m, attrs, inner) => {
+      const styleMatch = (attrs || '').match(/style="([^"]*)"/);
+      const style = styleMatch ? ` style="${styleMatch[1]}"` : '';
+      return `<p${style}><span style="font-size: 24px;"><b>${inner}</b></span></p><hr>`;
+    });
+    // 3. <h3> → <p> 중간 글씨 (style 속성 보존)
+    result = result.replace(/<h3(\s[^>]*)?>(([\s\S]*?))<\/h3>/gi, (_m, attrs, inner) => {
+      const styleMatch = (attrs || '').match(/style="([^"]*)"/);
+      const style = styleMatch ? ` style="${styleMatch[1]}"` : '';
+      return `<p${style}><span style="font-size: 18px;"><b>${inner}</b></span></p>`;
+    });
     // 4. <li><p style="...">내용</p></li> → <p style="...">내용</p> (p 속성 보존!)
     result = result.replace(/<li[^>]*>(<p\s[^>]*>[\s\S]*?<\/p>)<\/li>/gi, '$1');
     result = result.replace(/<li[^>]*><p>([\s\S]*?)<\/p><\/li>/gi, '<p>$1</p>');
@@ -249,16 +255,17 @@ export function ArticleEditorModal({ examPaperId, schoolName: _schoolName, onClo
 
       toast.success('서식이 복사되었습니다. 네이버 블로그에 Ctrl+V로 붙여넣기하세요.');
     } catch {
-      // fallback
+      // fallback — 전처리된 HTML 사용
+      const fallbackHtml = prepareForNaver(htmlContent);
       try {
-        const blob = new Blob([htmlContent], { type: 'text/html' });
-        const textBlob = new Blob([htmlContent.replace(/<[^>]*>/g, '')], { type: 'text/plain' });
+        const blob = new Blob([fallbackHtml], { type: 'text/html' });
+        const textBlob = new Blob([fallbackHtml.replace(/<[^>]*>/g, '')], { type: 'text/plain' });
         await navigator.clipboard.write([
           new ClipboardItem({ 'text/html': blob, 'text/plain': textBlob }),
         ]);
         toast.success('서식이 복사되었습니다.');
       } catch {
-        await navigator.clipboard.writeText(htmlContent.replace(/<[^>]*>/g, ''));
+        await navigator.clipboard.writeText(fallbackHtml.replace(/<[^>]*>/g, ''));
         toast.success('텍스트가 복사되었습니다');
       }
     }

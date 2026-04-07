@@ -366,18 +366,18 @@ export function generateTopicBarSvg(
 // Google Fonts CSS 파싱 대신 직접 CDN에서 OTF 바이너리 다운로드
 // fontDirs(디렉토리 스캔) 대신 fontFiles(정확한 파일 경로) 사용
 
-const FONT_DIR = join(tmpdir(), 'mathlab-chart-fonts-v6');
+const FONT_DIR = join(tmpdir(), 'mathlab-chart-fonts-v7');
 const MIN_FONT_SIZE = 100_000; // TTF는 최소 100KB 이상
 
-// Noto Sans KR TTF — resvg는 woff2를 지원하지 않으므로 반드시 TTF 사용
-// Google Fonts CDN에서 TTF 직접 다운로드
+// Noto Sans KR OTF — resvg는 woff2를 지원하지 않으므로 OTF/TTF 사용
+// Google Fonts CDN에서 OTF 직접 다운로드 (확장자 일치 필수)
 const FONT_SOURCES = [
   {
-    file: 'NotoSansKR-Regular.ttf',
+    file: 'NotoSansCJKkr-Regular.otf',
     url: 'https://cdn.jsdelivr.net/gh/notofonts/noto-cjk/Sans/OTF/Korean/NotoSansCJKkr-Regular.otf',
   },
   {
-    file: 'NotoSansKR-Bold.ttf',
+    file: 'NotoSansCJKkr-Bold.otf',
     url: 'https://cdn.jsdelivr.net/gh/notofonts/noto-cjk/Sans/OTF/Korean/NotoSansCJKkr-Bold.otf',
   },
 ];
