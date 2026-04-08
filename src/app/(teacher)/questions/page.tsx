@@ -35,6 +35,10 @@ const DiagramEditorPopup = dynamic(
   () => import('@/components/math/DiagramEditorPopup').then(m => m.DiagramEditorPopup),
   { ssr: false, loading: () => null },
 );
+const DiagramSVGEditor = dynamic(
+  () => import('@/components/math/DiagramSVGEditor').then(m => m.DiagramSVGEditor),
+  { ssr: false, loading: () => null },
+);
 
 export default function QuestionsPage() {
   const mgr = useQuestionManager();
@@ -116,6 +120,7 @@ export default function QuestionsPage() {
           openDiagramEditor={mgr.openDiagramEditor}
           editDiagram={mgr.editDiagram}
           removeDiagram={mgr.removeDiagram}
+          openSvgEditor={mgr.openSvgEditor}
           _isOwner={mgr.isOwner}
           canEdit={mgr.canEdit}
         />
@@ -165,6 +170,13 @@ export default function QuestionsPage() {
         diagramIndex={mgr.editingDiagramIdx}
         onClose={() => mgr.setDiagramEditorOpen(false)}
         onSave={mgr.handleDiagramSave}
+      />
+
+      <DiagramSVGEditor
+        isOpen={mgr.svgEditorOpen}
+        initialSvg={mgr.editForm.diagramSVG || ''}
+        onClose={mgr.closeSvgEditor}
+        onSave={mgr.handleSvgEditorSave}
       />
     </div>
   );

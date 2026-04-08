@@ -99,6 +99,8 @@ const ALL_PAGES: PageInfo[] = [
 { label: '아바타 크롭 미리보기', href: '/mockups/avatar-preview', icon: User, group: 'dev', category: '개발', description: '9개 포즈 크롭 결과 + 프레임 조합 + 프로필 시뮬레이션', isNew: true },
   { label: '아바타 이펙트 미리보기', href: '/mockups/effect-preview', icon: Sparkles, group: 'dev', category: '개발', description: '12종 CSS 이펙트 + 크기별/프레임 조합 + 프로필/랭킹 시뮬레이션', isNew: true },
   { label: '모자·안경 악세사리 미리보기', href: '/mockups/accessory-preview', icon: Crown, group: 'dev', category: '개발', description: '8종 모자 + 6종 안경 SVG 악세사리 + 이펙트 조합 시뮬레이션', isNew: true },
+  { label: '해설 생성 비교', href: '/mockups/explanation-compare', icon: Sparkles, group: 'dev', category: '개발', description: 'Gemini Thinking vs Non-Thinking 해설 품질 비교', isNew: true },
+  { label: '도형 편집기', href: '/mockups/diagram-editor', icon: Layers, group: 'dev', category: '개발', description: 'DiagramParams(프리셋) + SVG(코드) 도형 편집기 데모', isNew: true },
 ];
 
 const IFRAME_SIZES: Record<ViewMode, { width: string; label: string }> = {

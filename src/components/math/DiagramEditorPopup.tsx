@@ -8,7 +8,8 @@ import type { DiagramParam } from '@/types/pdf-extract';
 import { TextField } from './diagram-editor/SharedControls';
 import { DiagramSubForm } from './diagram-editor/DiagramSubForm';
 import { DiagramPreview } from './diagram-editor/DiagramPreview';
-import { TYPE_GROUPS, getDefaultParams } from './diagram-editor/types';
+import { PresetSelector } from './diagram-editor/PresetSelector';
+import { getDefaultParams } from './diagram-editor/types';
 
 // ── 메인 팝업 ──
 interface DiagramEditorPopupProps {
@@ -41,11 +42,12 @@ export function DiagramEditorPopup({ isOpen, initialParam, diagramIndex, onClose
     setParams(prev => ({ ...prev, ...updates }));
   }, []);
 
-  // 타입 변경 시 기본 파라미터로 리셋
-  const handleTypeChange = useCallback((newType: DiagramType) => {
-    setDiagramType(newType);
-    setParams(getDefaultParams(newType));
-    setLabel('');
+  // 프리셋/타입 선택 시 파라미터 + 라벨 업데이트
+  const handlePresetSelect = useCallback((type: DiagramType, presetParams: Record<string, unknown>, presetLabel?: string) => {
+    setDiagramType(type);
+    setParams(presetParams);
+    if (presetLabel) setLabel(presetLabel);
+    else setLabel('');
   }, []);
 
   // 실시간 SVG 프리뷰
@@ -95,30 +97,11 @@ export function DiagramEditorPopup({ isOpen, initialParam, diagramIndex, onClose
 
         {/* 바디 */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
-          {/* 타입 선택 */}
-          <div className="mb-4">
-            {TYPE_GROUPS.map((group) => (
-              <div key={group.label} className="mb-2">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{group.label}</span>
-                <div className="flex flex-wrap gap-1.5 mt-1">
-                  {group.types.map((t) => (
-                    <button
-                      key={t.value}
-                      type="button"
-                      onClick={() => handleTypeChange(t.value)}
-                      className={`px-2.5 py-1 text-xs font-medium rounded-sm border transition-colors ${
-                        diagramType === t.value
-                          ? 'bg-primary text-white border-primary'
-                          : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-                      }`}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+          {/* 프리셋 선택 */}
+          <PresetSelector
+            currentType={diagramType}
+            onSelect={handlePresetSelect}
+          />
 
           {/* 2열: 파라미터 + 프리뷰 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

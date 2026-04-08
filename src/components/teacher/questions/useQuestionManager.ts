@@ -75,6 +75,7 @@ export function useQuestionManager() {
     abilityDomain: '',
     conceptId: '',
     diagramParams: [],
+    diagramSVG: null,
     choiceColumns: null,
   });
   const [concepts, setConcepts] = useState<ConceptOption[]>([]);
@@ -97,6 +98,9 @@ export function useQuestionManager() {
   const [diagramEditorOpen, setDiagramEditorOpen] = useState(false);
   const [editingDiagramIdx, setEditingDiagramIdx] = useState<number | null>(null);
   const [diagramMode, setDiagramMode] = useState<'edit' | 'create'>('edit');
+
+  // SVG 도형 편집기 상태
+  const [svgEditorOpen, setSvgEditorOpen] = useState(false);
 
   // 새 문제 추가
   const [isCreateMode, setIsCreateMode] = useState(false);
@@ -273,6 +277,14 @@ export function useQuestionManager() {
       }
       return { ...prev, diagramParams: params, content };
     });
+  };
+
+  // SVG 도형 편집기 열기/저장
+  const openSvgEditor = () => setSvgEditorOpen(true);
+  const closeSvgEditor = () => setSvgEditorOpen(false);
+  const handleSvgEditorSave = (svg: string) => {
+    setEditForm((prev) => ({ ...prev, diagramSVG: svg }));
+    setSvgEditorOpen(false);
   };
 
   // Fetch questions from API
@@ -485,6 +497,7 @@ export function useQuestionManager() {
         const resolved = resolveDiagramSpec(q.diagramSpec);
         return resolved.kind === 'params' ? resolved.data : [];
       })(),
+      diagramSVG: q.diagramSVG || null,
       choiceColumns: q.choiceColumns ?? null,
     });
   };
@@ -538,6 +551,10 @@ export function useQuestionManager() {
             .map((dp) => renderDiagram({ type: dp.type as DiagramType, params: dp.params as Record<string, unknown> }) ?? '')
             .join('\n');
         } catch (err) { console.error('다이어그램 SVG 렌더링 실패:', err); }
+      } else if (editForm.diagramSVG) {
+        // diagramParams 없지만 diagramSVG 직접 편집된 경우 보존
+        body.diagramSVG = editForm.diagramSVG;
+        body.diagramSpec = null;
       } else {
         body.diagramSpec = null;
         body.diagramSVG = null;
@@ -566,6 +583,9 @@ export function useQuestionManager() {
           domain: editForm.domain || null,
           conceptId: editForm.conceptId || null,
           diagramSpec: editForm.diagramParams.length > 0 ? editForm.diagramParams : null,
+          diagramSVG: editForm.diagramParams.length > 0
+            ? (body.diagramSVG as string | null)
+            : editForm.diagramSVG || null,
         };
         setTimeout(() => {
           setSelectedQuestion(updatedQ);
@@ -664,6 +684,10 @@ export function useQuestionManager() {
     editingDiagramIdx, diagramMode,
     openDiagramEditor, editDiagram,
     handleDiagramSave, removeDiagram,
+
+    // SVG Editor
+    svgEditorOpen, setSvgEditorOpen,
+    openSvgEditor, closeSvgEditor, handleSvgEditorSave,
 
     // Refs
     contentRef, explanationRef, answerRef, choiceRefs,

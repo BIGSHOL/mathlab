@@ -261,12 +261,13 @@ export function QuestionListMain({
                     })()}
                   </div>
 
-                  <div className="mt-auto pt-2.5 border-t border-slate-200 flex items-center justify-between">
-                    <div className="text-xs text-text-secondary flex items-center gap-1">
-                      <KeyRound className="w-3.5 h-3.5" />
-                      정답: <MathRenderer content={q.answer} className="inline" />
+                  <div className="mt-auto pt-2.5 border-t border-slate-200 flex items-center justify-between gap-2">
+                    <div className={`text-xs text-text-secondary flex items-center gap-1 min-w-0 flex-1 ${expandedExplanation === q.id ? '' : 'max-h-[1.5em] overflow-hidden'}`}>
+                      <KeyRound className="w-3.5 h-3.5 shrink-0" />
+                      <span className="shrink-0">정답:</span>
+                      <MathRenderer content={q.answer} className="inline" />
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <span className={`text-xs font-bold px-1.5 py-0.5 rounded-sm ${q.explanation ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400'}`}>
                         {q.explanation ? '해설 있음' : '해설 없음'}
                       </span>

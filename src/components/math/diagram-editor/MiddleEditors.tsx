@@ -133,14 +133,20 @@ export function TriangleForm({ params, onChange }: SubFormProps) {
 
 export function QuadrilateralForm({ params, onChange }: SubFormProps) {
   const vertices = Array.isArray(params.vertices) ? params.vertices as Point2DInput[] : [];
-  const QUAD_TYPES = ['rectangle', 'square', 'parallelogram', 'trapezoid', 'rhombus'];
+  const QUAD_TYPES = [
+    { value: 'rectangle', label: '직사각형' },
+    { value: 'square', label: '정사각형' },
+    { value: 'parallelogram', label: '평행사변형' },
+    { value: 'trapezoid', label: '사다리꼴' },
+    { value: 'rhombus', label: '마름모' },
+  ];
 
   return (
     <div className="space-y-2">
       <div>
         <label className="text-xs text-slate-500">유형</label>
         <select value={String(params.type || 'rectangle')} onChange={(e) => onChange({ type: e.target.value })} className="block w-full text-sm px-2 py-1 border border-slate-300 rounded">
-          {QUAD_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+          {QUAD_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
         </select>
       </div>
       <label className="text-xs text-slate-500">꼭짓점 (x, y, 라벨)</label>

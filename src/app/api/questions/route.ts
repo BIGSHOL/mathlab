@@ -70,6 +70,12 @@ export async function GET(request: NextRequest) {
     });
   }
 
+  // 해설 유무 필터
+  const noExplanation = searchParams.get('noExplanation');
+  if (noExplanation === 'true') {
+    andConditions.push({ OR: [{ explanation: null }, { explanation: '' }] });
+  }
+
   if (andConditions.length > 0) {
     where.AND = andConditions;
   }

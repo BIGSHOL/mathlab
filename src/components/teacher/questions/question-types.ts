@@ -149,6 +149,7 @@ export interface EditFormState {
   abilityDomain: string;
   conceptId: string;
   diagramParams: DiagramParam[];
+  diagramSVG: string | null;
   choiceColumns: number | null;
 }
 

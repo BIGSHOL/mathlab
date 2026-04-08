@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Edit,
   Eye,
@@ -13,6 +13,9 @@ import {
   ImageIcon,
   Shapes,
   ClipboardCheck,
+  Search,
+  ChevronDown,
+  Code2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { MathRenderer } from '@/components/math/MathRenderer';
@@ -54,6 +57,7 @@ interface QuestionViewEditModalProps {
   openDiagramEditor: (mode: 'edit' | 'create') => void;
   editDiagram: (idx: number, mode: 'edit' | 'create') => void;
   removeDiagram: (idx: number, mode: 'edit' | 'create') => void;
+  openSvgEditor: () => void;
   _isOwner?: boolean;
   canEdit?: boolean;
 }
@@ -81,6 +85,7 @@ export function QuestionViewEditModal({
   openDiagramEditor,
   editDiagram,
   removeDiagram,
+  openSvgEditor,
   _isOwner,
   canEdit,
 }: QuestionViewEditModalProps) {
@@ -136,6 +141,7 @@ export function QuestionViewEditModal({
             openDiagramEditor={openDiagramEditor}
             editDiagram={editDiagram}
             removeDiagram={removeDiagram}
+            openSvgEditor={openSvgEditor}
           />
         )}
 
@@ -334,6 +340,7 @@ function EditMode({
   openDiagramEditor,
   editDiagram,
   removeDiagram,
+  openSvgEditor,
 }: {
   selectedQuestion: QuestionItem;
   editForm: EditFormState;
@@ -350,6 +357,7 @@ function EditMode({
   openDiagramEditor: (mode: 'edit' | 'create') => void;
   editDiagram: (idx: number, mode: 'edit' | 'create') => void;
   removeDiagram: (idx: number, mode: 'edit' | 'create') => void;
+  openSvgEditor: () => void;
 }) {
   // 렌더링(미리보기) / 마크업 모드 토글
   const [viewMode, setViewMode] = useState<'rendered' | 'raw'>('rendered');
@@ -462,18 +470,12 @@ function EditMode({
         <div className="grid grid-cols-1 gap-2">
           <div>
             <label className="block text-xs font-bold text-text-secondary mb-1">연결 개념</label>
-            <select
-              className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+            <ConceptSearchDropdown
+              concepts={concepts}
               value={editForm.conceptId}
-              onChange={(e) => setEditForm((p) => ({ ...p, conceptId: e.target.value }))}
-            >
-              <option value="">미지정</option>
-              {concepts.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.conceptCode ? `[${c.conceptCode}] ` : ''}{c.title}
-                </option>
-              ))}
-            </select>
+              onChange={(id) => setEditForm((p) => ({ ...p, conceptId: id }))}
+              bookCode={selectedQuestion.bookCode}
+            />
           </div>
         </div>
 
@@ -521,6 +523,17 @@ function EditMode({
                     <Shapes className="w-3.5 h-3.5" />
                     도형
                   </button>
+                  {editForm.diagramSVG && (!editForm.diagramParams || editForm.diagramParams.length === 0) && (
+                    <button
+                      type="button"
+                      onClick={openSvgEditor}
+                      className="flex items-center gap-1 px-2 py-0.5 text-xs text-violet-600 hover:bg-violet-50 rounded-sm transition-colors"
+                      title="SVG 도형 편집"
+                    >
+                      <Code2 className="w-3.5 h-3.5" />
+                      SVG 편집
+                    </button>
+                  )}
                 </>
               )}
             </div>
@@ -707,6 +720,41 @@ function EditMode({
             diagramSvgs={diagramSvgs}
             onDiagramClick={(idx) => editDiagram(idx, 'edit')}
           />
+          {/* content에 [그림] 플레이스홀더 없으면 다이어그램 인라인 표시 (카드 뷰와 동일) */}
+          {!/\[그림/.test(editForm.content) && (
+            (diagramSvgs && diagramSvgs.length > 0) ? (
+              <div className="my-2 flex justify-center">
+                <div className="max-w-md space-y-2">
+                  {diagramSvgs.map((d, i) => d.svg ? (
+                    <div
+                      key={i}
+                      className="border border-slate-100 rounded-sm p-3 bg-white [&_svg]:w-full [&_svg]:h-auto cursor-pointer hover:border-primary/30 transition-colors"
+                      dangerouslySetInnerHTML={{ __html: d.svg }}
+                      onClick={() => editDiagram(i, 'edit')}
+                    />
+                  ) : null)}
+                </div>
+              </div>
+            ) : editForm.diagramSVG ? (
+              <div className="my-2 flex justify-center">
+                <div className="relative group max-w-md">
+                  <div
+                    className="overflow-hidden rounded-sm border border-slate-100 bg-white p-3 [&_svg]:w-full [&_svg]:h-auto cursor-pointer hover:border-violet-300 transition-colors"
+                    style={{ fontFamily: "'Pretendard', system-ui, sans-serif" }}
+                    dangerouslySetInnerHTML={{ __html: editForm.diagramSVG }}
+                    onClick={openSvgEditor}
+                  />
+                  <button
+                    onClick={openSvgEditor}
+                    className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 text-xs bg-violet-500 text-white rounded-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Code2 className="w-3 h-3" />
+                    SVG 편집
+                  </button>
+                </div>
+              </div>
+            ) : null
+          )}
         </div>
 
         {editForm.type === 'MULTIPLE_CHOICE' && editForm.choices.some((c) => c) && (() => {
@@ -825,7 +873,196 @@ function EditMode({
             </div>
           </div>
         )}
+
+        {/* SVG 도형 (diagramParams 없고 diagramSVG만 있을 때) */}
+        {editForm.diagramSVG && (!editForm.diagramParams || editForm.diagramParams.length === 0) && (
+          <div className="border-t border-slate-200 pt-2 mt-2">
+            <h4 className="text-xs font-bold text-text-secondary mb-1.5 flex items-center gap-1">
+              <Code2 className="w-3.5 h-3.5 text-violet-500" />
+              SVG 도형
+            </h4>
+            <div className="relative group border border-slate-100 rounded-sm p-2 bg-white">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-slate-400">SVG 코드 기반 도형</span>
+                <button
+                  onClick={openSvgEditor}
+                  className="flex items-center gap-1 text-xs px-2 py-0.5 text-violet-600 hover:bg-violet-50 rounded transition-colors"
+                >
+                  <Code2 className="w-3 h-3" />
+                  SVG 편집
+                </button>
+              </div>
+              <div
+                className="[&_svg]:max-w-full [&_svg]:h-auto"
+                style={{ fontFamily: "'Pretendard', system-ui, sans-serif" }}
+                dangerouslySetInnerHTML={{ __html: editForm.diagramSVG }}
+              />
+            </div>
+          </div>
+        )}
       </div>
+    </div>
+  );
+}
+
+// --- bookCode → conceptCode 학제/학년 접두사 추출 ---
+function getConceptPrefix(bookCode: string): string {
+  // Elementary: E3-1 → E3, Middle: 1-1 → M1, High: H1-0 → H1, HA-0 → HA
+  if (bookCode.startsWith('E')) return bookCode.split('-')[0]; // E3, E4, ...
+  if (bookCode.startsWith('H')) return bookCode.split('-')[0]; // H1, H2, HA, HC1, ...
+  // Middle: 1-1 → M1, 2-2 → M2
+  const m = bookCode.match(/^(\d)/);
+  return m ? `M${m[1]}` : '';
+}
+
+function getSchoolLabel(prefix: string): string {
+  if (prefix.startsWith('E')) return `초${prefix.slice(1)}`;
+  if (prefix.startsWith('M')) return `중${prefix.slice(1)}`;
+  if (prefix.startsWith('H')) {
+    const g = prefix.slice(1);
+    if (g === 'A') return '대수';
+    if (g === 'C1') return '미적1';
+    if (g === 'C2') return '미적2';
+    if (g === 'P') return '확통';
+    if (g === 'G') return '기하';
+    return `고${g}`;
+  }
+  return prefix;
+}
+
+// --- 연결 개념 검색 드롭다운 ---
+function ConceptSearchDropdown({
+  concepts,
+  value,
+  onChange,
+  bookCode,
+}: {
+  concepts: ConceptOption[];
+  value: string;
+  onChange: (id: string) => void;
+  bookCode: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [filterMode, setFilterMode] = useState<'match' | 'all'>('match');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const prefix = useMemo(() => getConceptPrefix(bookCode), [bookCode]);
+  const selected = concepts.find((c) => c.id === value);
+
+  // 외부 클릭 닫기
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const filtered = useMemo(() => {
+    let list = concepts;
+    // 학제/학년 필터
+    if (filterMode === 'match' && prefix) {
+      list = list.filter((c) => c.conceptCode.startsWith(prefix));
+    }
+    // 검색어 필터
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter(
+        (c) =>
+          c.title.toLowerCase().includes(q) ||
+          c.conceptCode.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [concepts, filterMode, prefix, search]);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => { setOpen(!open); setTimeout(() => inputRef.current?.focus(), 50); }}
+        className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm text-left flex items-center justify-between hover:border-slate-300 transition-colors"
+      >
+        <span className={selected ? 'text-text-primary' : 'text-slate-400'}>
+          {selected ? `[${selected.conceptCode}] ${selected.title}` : '미지정'}
+        </span>
+        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-sm shadow-lg max-h-64 flex flex-col">
+          {/* 검색 + 필터 */}
+          <div className="p-2 border-b border-slate-100 space-y-1.5">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="개념 코드 또는 제목 검색..."
+                className="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-200 rounded-sm focus:ring-1 focus:ring-primary/40 focus:border-primary"
+              />
+            </div>
+            {prefix && (
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => setFilterMode('match')}
+                  className={`px-2 py-0.5 text-xs rounded-sm transition-colors ${
+                    filterMode === 'match'
+                      ? 'bg-primary text-white font-bold'
+                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                  }`}
+                >
+                  {getSchoolLabel(prefix)}만
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterMode('all')}
+                  className={`px-2 py-0.5 text-xs rounded-sm transition-colors ${
+                    filterMode === 'all'
+                      ? 'bg-primary text-white font-bold'
+                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                  }`}
+                >
+                  전체
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* 목록 */}
+          <div className="overflow-y-auto flex-1">
+            <button
+              type="button"
+              onClick={() => { onChange(''); setOpen(false); }}
+              className={`w-full px-3 py-2 text-left text-xs hover:bg-slate-50 ${!value ? 'bg-primary/5 font-bold text-primary' : 'text-slate-500'}`}
+            >
+              미지정
+            </button>
+            {filtered.length === 0 ? (
+              <div className="px-3 py-4 text-xs text-slate-400 text-center">검색 결과 없음</div>
+            ) : (
+              filtered.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => { onChange(c.id); setOpen(false); setSearch(''); }}
+                  className={`w-full px-3 py-2 text-left text-xs hover:bg-slate-50 transition-colors ${
+                    c.id === value ? 'bg-primary/5 font-bold text-primary' : 'text-text-primary'
+                  }`}
+                >
+                  <span className="text-slate-400 mr-1">[{c.conceptCode}]</span>
+                  {c.title}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
