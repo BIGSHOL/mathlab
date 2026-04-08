@@ -39,6 +39,64 @@ interface CompareResult {
 
 type CompareMode = 'both' | 'thinking' | 'noThinking' | 'auto';
 
+/** 해설 텍스트를 **전략**/**풀이**/**핵심 포인트** 섹션으로 분리하여 렌더링 */
+function ExplanationSections({ content }: { content: string }) {
+  // 섹션 헤더 패턴: **전략**, **풀이**, **핵심 포인트** (또는 볼드 없이)
+  const sectionRegex = /\*{0,2}(전략|풀이|핵심\s?포인트)\*{0,2}\s*/g;
+  const parts: { label: string | null; body: string }[] = [];
+  let lastIdx = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = sectionRegex.exec(content)) !== null) {
+    const before = content.slice(lastIdx, match.index).trim();
+    if (before) parts.push({ label: null, body: before });
+    lastIdx = match.index + match[0].length;
+    parts.push({ label: match[1].replace(/\s/g, ''), body: '' });
+  }
+  const remaining = content.slice(lastIdx).trim();
+  if (remaining && parts.length > 0 && parts[parts.length - 1].label && !parts[parts.length - 1].body) {
+    parts[parts.length - 1].body = remaining;
+  } else if (remaining) {
+    parts.push({ label: null, body: remaining });
+  }
+
+  // 섹션이 감지되지 않으면 일반 렌더링
+  if (!parts.some(p => p.label)) {
+    return <MathRenderer content={content} />;
+  }
+
+  // label이 있는 part에 다음 label 전까지의 body를 병합
+  const sections: { label: string; body: string }[] = [];
+  for (const p of parts) {
+    if (p.label) {
+      sections.push({ label: p.label, body: p.body });
+    } else if (sections.length > 0) {
+      sections[sections.length - 1].body += '\n' + p.body;
+    } else {
+      sections.push({ label: '', body: p.body });
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      {sections.map((sec, i) => (
+        <div key={i}>
+          {sec.label && (
+            <div className="border-l-[3px] border-slate-300 bg-slate-50 px-3 py-1.5 mb-1.5">
+              <span className="text-xs font-bold text-slate-600">{sec.label}</span>
+            </div>
+          )}
+          {sec.body && (
+            <div className="text-sm leading-relaxed prose prose-sm max-w-none pl-0.5">
+              <MathRenderer content={sec.body.trim()} />
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function ExplanationComparePage() {
   const [samples, setSamples] = useState<QuestionSample[]>([]);
   const [loading, setLoading] = useState(true);
@@ -331,9 +389,7 @@ export default function ExplanationComparePage() {
                           {gen.thinkingTokens && <> | 사고 {gen.thinkingTokens}</>}
                         </span>
                       </div>
-                      <div className="text-sm leading-relaxed prose prose-sm max-w-none">
-                        <MathRenderer content={gen.explanation || gen.text} />
-                      </div>
+                      <ExplanationSections content={gen.explanation || gen.text} />
                       <button onClick={() => toggleRaw(`${r.question.id}-auto`)} className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-slate-600 mt-3">
                         {expandedRaw.has(`${r.question.id}-auto`) ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                         Raw 텍스트
@@ -432,7 +488,7 @@ export default function ExplanationComparePage() {
                           </span>
                         </div>
                         <div className="text-sm leading-relaxed prose prose-sm max-w-none">
-                          <MathRenderer content={r.noThinking.explanation || r.noThinking.text} />
+                          <ExplanationSections content={r.noThinking.explanation || r.noThinking.text} />
                         </div>
                         <button
                           onClick={() => toggleRaw(`${r.question.id}-noThink`)}
@@ -533,7 +589,7 @@ export default function ExplanationComparePage() {
                           </span>
                         </div>
                         <div className="text-sm leading-relaxed prose prose-sm max-w-none">
-                          <MathRenderer content={r.thinking.explanation || r.thinking.text} />
+                          <ExplanationSections content={r.thinking.explanation || r.thinking.text} />
                         </div>
                         <button
                           onClick={() => toggleRaw(`${r.question.id}-think`)}
