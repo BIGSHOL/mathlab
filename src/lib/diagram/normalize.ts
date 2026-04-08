@@ -123,6 +123,12 @@ function normalizeTriangle(spec: TriangleDiagram): TriangleDiagram {
     result.rightAngle = 0;
   }
 
+  // 새 기하 필드 passthrough
+  if (spec.specialPoints) result.specialPoints = spec.specialPoints;
+  if (spec.auxiliaryLines) result.auxiliaryLines = spec.auxiliaryLines;
+  if (spec.inscribedCircle) result.inscribedCircle = spec.inscribedCircle;
+  if (spec.circumscribedCircle) result.circumscribedCircle = spec.circumscribedCircle;
+
   // 꼭짓점 라벨 자동 생성
   if (!result.labels) {
     const vl = spec.vertexLabels ?? ['A', 'B', 'C'];
@@ -262,6 +268,11 @@ function normalizeQuadrilateral(spec: QuadrilateralDiagram): QuadrilateralDiagra
   } else {
     result.vertices = [[0, SCALE], [SCALE, SCALE], [SCALE, 0], [0, 0]];
   }
+
+  // 새 기하 필드 passthrough
+  if (spec.rightAngleMarks) result.rightAngleMarks = spec.rightAngleMarks;
+  if (spec.congruenceMarks) result.congruenceMarks = spec.congruenceMarks;
+  if (spec.parallelMarks) result.parallelMarks = spec.parallelMarks;
 
   // 꼭짓점 라벨
   if (!result.labels && spec.vertexLabels) {

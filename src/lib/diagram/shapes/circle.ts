@@ -60,6 +60,88 @@ export function renderCircle(spec: CircleDiagram): string {
     }
   }
 
+  // 접선(tangentLine)
+  if (spec.tangentLines) {
+    for (const tl of spec.tangentLines) {
+      const tangentLen = tl.length || 60;
+      const rad = toRadians(tl.angle);
+      const px = cx + radius * Math.cos(rad);
+      const py = cy + radius * Math.sin(rad);
+      const tx = -Math.sin(rad);
+      const ty = Math.cos(rad);
+      const t1: [number, number] = [px + tx * tangentLen, py + ty * tangentLen];
+      const t2: [number, number] = [px - tx * tangentLen, py - ty * tangentLen];
+      // 반지름선 (보조)
+      parts.push(prim.line([cx, cy], [px, py], { dashed: true, strokeWidth: 1 }));
+      // 접선
+      parts.push(prim.line(t1, t2, { strokeWidth: 1.5 }));
+      if (tl.label) {
+        parts.push(prim.text(t1[0] + 6, t1[1] - 6, tl.label, { fontSize: 12 }));
+      }
+    }
+  }
+
+  // 반지름선(radiusLine)
+  if (spec.radiusLines) {
+    for (const rl of spec.radiusLines) {
+      const rad = toRadians(rl.angle);
+      const ex = cx + radius * Math.cos(rad);
+      const ey = cy + radius * Math.sin(rad);
+      parts.push(prim.line([cx, cy], [ex, ey], { strokeWidth: 1.5 }));
+      if (rl.label) {
+        const mx = (cx + ex) / 2;
+        const my = (cy + ey) / 2;
+        parts.push(prim.text(mx + 8, my - 8, rl.label, { fontSize: 12 }));
+      }
+    }
+  }
+
+  // 중심각(centralAngle)
+  if (spec.centralAngles) {
+    for (const ca of spec.centralAngles) {
+      const sRad = toRadians(ca.startAngle);
+      const eRad = toRadians(ca.endAngle);
+      const sx = cx + radius * Math.cos(sRad), sy = cy + radius * Math.sin(sRad);
+      const ex2 = cx + radius * Math.cos(eRad), ey2 = cy + radius * Math.sin(eRad);
+      parts.push(prim.line([cx, cy], [sx, sy], { strokeWidth: 1.5 }));
+      parts.push(prim.line([cx, cy], [ex2, ey2], { strokeWidth: 1.5 }));
+      // 섹터 채움
+      let diff = ca.endAngle - ca.startAngle;
+      if (diff < 0) diff += 360;
+      const largeArc = diff > 180 ? 1 : 0;
+      const sectorD = `M ${cx} ${cy} L ${sx} ${sy} A ${radius} ${radius} 0 ${largeArc} 1 ${ex2} ${ey2} Z`;
+      parts.push(`<path d="${sectorD}" fill="#3b82f6" fill-opacity="0.1" stroke="none"/>`);
+      // 각도 호
+      const arcR = 18;
+      parts.push(prim.path(arcPathStr(cx, cy, arcR, ca.startAngle, ca.endAngle), { strokeWidth: 1.5, color: '#333' }));
+      if (ca.label) {
+        const midA = toRadians((ca.startAngle + ca.endAngle) / 2);
+        parts.push(prim.text(cx + 28 * Math.cos(midA), cy + 28 * Math.sin(midA), ca.label, { fontSize: 12 }));
+      }
+    }
+  }
+
+  // 원주각(inscribedAngle)
+  if (spec.inscribedAngles) {
+    for (const ia of spec.inscribedAngles) {
+      const vRad = toRadians(ia.vertexAngle);
+      const sRad = toRadians(ia.startAngle);
+      const eRad = toRadians(ia.endAngle);
+      const vx = cx + radius * Math.cos(vRad), vy = cy + radius * Math.sin(vRad);
+      const sx = cx + radius * Math.cos(sRad), sy = cy + radius * Math.sin(sRad);
+      const ex2 = cx + radius * Math.cos(eRad), ey2 = cy + radius * Math.sin(eRad);
+      parts.push(prim.line([vx, vy], [sx, sy], { strokeWidth: 1.5 }));
+      parts.push(prim.line([vx, vy], [ex2, ey2], { strokeWidth: 1.5 }));
+      parts.push(prim.dot(vx, vy, 3));
+      if (ia.label) {
+        const midA = toRadians((ia.startAngle + ia.endAngle) / 2);
+        const lx = vx + 20 * Math.cos(midA);
+        const ly = vy + 20 * Math.sin(midA);
+        parts.push(prim.text(lx, ly, ia.label, { fontSize: 12 }));
+      }
+    }
+  }
+
   // 라벨
   if (labels && labels.length > 0) {
     parts.push(prim.renderLabels(labels));

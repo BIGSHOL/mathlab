@@ -106,7 +106,49 @@ export function renderFunctionGraph(params: FunctionGraphParams): string {
     }
   }
 
+  // 영역 음영 (shadedRegions) — 클립 영역 안에 그림
+  if (params.shadedRegions) {
+    for (const sr of params.shadedRegions) {
+      const fi = sr.functionIndex;
+      if (fi < 0 || fi >= funcs.length) continue;
+      const fn = funcs[fi];
+      const color = sr.color || COLORS.primary;
+      const opacity = sr.opacity ?? 0.15;
+      const step = (xMax - xMin) / 200;
+      const regionParts: string[] = [];
+      const xFrom = Math.max(sr.xFrom, xMin);
+      const xTo = Math.min(sr.xTo, xMax);
+      // 시작점: x축 위
+      regionParts.push(`M ${toX(xFrom)} ${toY(0)}`);
+      for (let xVal = xFrom; xVal <= xTo; xVal += step) {
+        try {
+          const yVal = evaluateExpression(fn.expression, xVal);
+          if (isFinite(yVal)) {
+            regionParts.push(`L ${toX(xVal)} ${toY(yVal)}`);
+          }
+        } catch { /* skip */ }
+      }
+      // 끝점에서 x축으로 내려옴
+      regionParts.push(`L ${toX(xTo)} ${toY(0)} Z`);
+      parts.push(`<path d="${regionParts.join(' ')}" fill="${color}" fill-opacity="${opacity}" stroke="none"/>`);
+    }
+  }
+
   parts.push('</g>');
+
+  // 점근선 (asymptotes)
+  if (params.asymptotes) {
+    for (const asym of params.asymptotes) {
+      const asymColor = asym.color || '#EF4444';
+      if (asym.type === 'vertical') {
+        const ax = toX(asym.value);
+        parts.push(line(ax, pad, ax, pad + gridH, { stroke: asymColor, strokeWidth: 1, dashArray: '6,4' }));
+      } else {
+        const ay = toY(asym.value);
+        parts.push(line(pad, ay, pad + gridW, ay, { stroke: asymColor, strokeWidth: 1, dashArray: '6,4' }));
+      }
+    }
+  }
 
   // 함수 라벨 — 각 곡선 위에 배치
   for (let fi = 0; fi < funcs.length; fi++) {

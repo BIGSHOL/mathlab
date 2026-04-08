@@ -39,6 +39,12 @@ export interface NumberLineParams {
   highlights?: { from: number; to: number; color?: string; label?: string; dashed?: boolean }[];
   label?: string;
   showAllTickLabels?: boolean; // true면 모든 눈금에 숫자 표시 (기본: min/max만)
+  /** 점프 화살표 (호 형태) */
+  jumpArrows?: { from: number; to: number; label?: string; color?: string; above?: boolean }[];
+  /** 열린 끝점 (빈 원) */
+  openEndpoints?: number[];
+  /** 닫힌 끝점 (채운 원) */
+  closedEndpoints?: number[];
 }
 
 export interface FractionCircleParams {
@@ -116,6 +122,8 @@ export interface CoordinatePlaneParams {
   gridStep?: number;
   points?: Point2D[];
   lines?: Line2D[];
+  /** 벡터 (화살표 선분) */
+  vectors?: { from: Point2D; to: Point2D; label?: string; color?: string }[];
 }
 
 /** 도형 공통 스타일 옵션 */
@@ -132,12 +140,36 @@ export interface CircleParams extends ShapeStyle {
   radius?: number;
   labels?: { text: string; angle: number; position?: 'outside' | 'center' }[];
   arcs?: { startAngle: number; endAngle: number; label?: string; color?: string; strokeWidth?: number }[];
+  /** 현(chord): 원주 두 점 사이 선분 */
+  chords?: { startAngle: number; endAngle: number; label?: string; color?: string }[];
+  /** 접선: 접점의 각도에서 수직 방향 직선 */
+  tangentLines?: { angle: number; length?: number; label?: string; color?: string }[];
+  /** 반지름선: 중심→원주 */
+  radiusLines?: { angle: number; label?: string; color?: string }[];
+  /** 중심각: 반지름 2개 + 호 + 섹터 채움 */
+  centralAngles?: { startAngle: number; endAngle: number; label?: string; color?: string }[];
+  /** 원주각: 원주 한 점에서 호 양 끝으로 두 현 */
+  inscribedAngles?: { vertexAngle: number; startAngle: number; endAngle: number; label?: string }[];
 }
 
 export interface TriangleParams extends ShapeStyle {
   vertices: [Point2D, Point2D, Point2D];
   sides?: { from: number; to: number; label: string }[];
   angles?: { vertex: number; value: string }[];
+  /** 특수점 표시 (내심, 외심, 무게중심, 수심) */
+  specialPoints?: ('incenter' | 'circumcenter' | 'centroid' | 'orthocenter')[];
+  /** 보조선 표시 (중선, 수선, 각의 이등분선, 수직이등분선) */
+  auxiliaryLines?: ('medians' | 'altitudes' | 'angle_bisectors' | 'perpendicular_bisectors')[];
+  /** 내접원 표시 */
+  inscribedCircle?: boolean;
+  /** 외접원 표시 */
+  circumscribedCircle?: boolean;
+  /** 직각 표시할 꼭짓점 인덱스 */
+  rightAngleMarks?: number[];
+  /** 합동 표시 (변 위 빗금) */
+  congruenceMarks?: { from: number; to: number; ticks: number }[];
+  /** 평행 표시 (변 위 화살표) */
+  parallelMarks?: { from: number; to: number; arrows: number }[];
 }
 
 export interface QuadrilateralParams extends ShapeStyle {
@@ -145,6 +177,14 @@ export interface QuadrilateralParams extends ShapeStyle {
   sides?: { from: number; to: number; label: string }[];
   angles?: { vertex: number; value: string }[];
   type?: 'rectangle' | 'square' | 'parallelogram' | 'trapezoid' | 'rhombus';
+  /** 대각선 (개별 지정) */
+  diagonals?: { from: number; to: number; label?: string; style?: 'solid' | 'dashed' }[];
+  /** 직각 표시할 꼭짓점 인덱스 */
+  rightAngleMarks?: number[];
+  /** 합동 표시 (변 위 빗금) */
+  congruenceMarks?: { from: number; to: number; ticks: number }[];
+  /** 평행 표시 (변 위 화살표) */
+  parallelMarks?: { from: number; to: number; arrows: number }[];
 }
 
 export interface FunctionDef {
@@ -160,6 +200,10 @@ export interface FunctionGraphParams {
   gridStep?: number;
   functions: FunctionDef[];
   points?: Point2D[];
+  /** 영역 음영 (곡선 아래 영역 색칠) */
+  shadedRegions?: { functionIndex: number; xFrom: number; xTo: number; color?: string; opacity?: number }[];
+  /** 점근선 (dashed 수직/수평선) */
+  asymptotes?: { type: 'vertical' | 'horizontal'; value: number; color?: string }[];
 }
 
 export interface VennSet {
@@ -257,6 +301,10 @@ export interface AngleFigureParams {
   label?: string;
   ray1Angle?: number;
   color?: string;
+  /** 추가 각도 표시 (다중 각도) */
+  additionalAngles?: { angle: number; label?: string; color?: string }[];
+  /** 평행선 + 횡단선 패턴 */
+  parallelLines?: { transversalAngle: number; spacing?: number }[];
 }
 
 export interface ClockFaceParams {

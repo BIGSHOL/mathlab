@@ -101,6 +101,9 @@ function normalizeNumberLine(p: P): NumberLineParams {
     marks: arr(p.marks ?? p.points ?? p.markers),
     highlights: arr(p.highlights ?? p.arcs ?? p.jumps ?? p.regions),
     label: p.label,
+    jumpArrows: arr(p.jumpArrows),
+    openEndpoints: arr(p.openEndpoints),
+    closedEndpoints: arr(p.closedEndpoints),
   };
 }
 
@@ -215,6 +218,8 @@ function normalizeAngleFigure(p: P): AngleFigureParams {
     label: p.label,
     ray1Angle: num(p.ray1Angle ?? p.startAngle ?? 0, 0),
     color: p.color,
+    additionalAngles: arr(p.additionalAngles),
+    parallelLines: arr(p.parallelLines),
   };
 }
 
@@ -309,6 +314,68 @@ function normalizeCoordinatePlane(p: P): CoordinatePlaneParams {
     gridStep: num(p.gridStep ?? p.step, 1),
     points: arr(p.points),
     lines: arr(p.lines),
+    vectors: arr(p.vectors),
+  };
+}
+
+function normalizeTriangleParams(p: P): TriangleParams {
+  const verts = arr<P>(p.vertices ?? []).map(v => ({ x: num(v.x, 0), y: num(v.y, 0), label: v.label }));
+  const vertices: [{ x: number; y: number; label?: string }, { x: number; y: number; label?: string }, { x: number; y: number; label?: string }] =
+    verts.length >= 3 ? [verts[0], verts[1], verts[2]] : [{ x: 0, y: 0, label: 'A' }, { x: 100, y: 0, label: 'B' }, { x: 50, y: 80, label: 'C' }];
+  return {
+    vertices,
+    sides: arr(p.sides ?? p.sideLabels),
+    angles: arr(p.angles ?? p.angleLabels),
+    specialPoints: arr(p.specialPoints),
+    auxiliaryLines: arr(p.auxiliaryLines),
+    inscribedCircle: !!p.inscribedCircle,
+    circumscribedCircle: !!p.circumscribedCircle,
+    rightAngleMarks: arr(p.rightAngleMarks),
+    congruenceMarks: arr(p.congruenceMarks),
+    parallelMarks: arr(p.parallelMarks),
+    fill: p.fill,
+    fillOpacity: p.fillOpacity != null ? num(p.fillOpacity, 0.15) : undefined,
+    hatching: !!p.hatching,
+    strokeColor: p.strokeColor,
+  };
+}
+
+function normalizeQuadrilateralParams(p: P): QuadrilateralParams {
+  const verts = arr<P>(p.vertices ?? []).map(v => ({ x: num(v.x, 0), y: num(v.y, 0), label: v.label }));
+  const vertices: [{ x: number; y: number; label?: string }, { x: number; y: number; label?: string }, { x: number; y: number; label?: string }, { x: number; y: number; label?: string }] =
+    verts.length >= 4 ? [verts[0], verts[1], verts[2], verts[3]] : [{ x: 0, y: 0, label: 'A' }, { x: 100, y: 0, label: 'B' }, { x: 100, y: 80, label: 'C' }, { x: 0, y: 80, label: 'D' }];
+  return {
+    vertices,
+    sides: arr(p.sides ?? p.sideLabels),
+    angles: arr(p.angles ?? p.angleLabels),
+    type: p.quadType ?? p.type,
+    diagonals: arr(p.diagonals),
+    rightAngleMarks: arr(p.rightAngleMarks),
+    congruenceMarks: arr(p.congruenceMarks),
+    parallelMarks: arr(p.parallelMarks),
+    fill: p.fill,
+    fillOpacity: p.fillOpacity != null ? num(p.fillOpacity, 0.15) : undefined,
+    hatching: !!p.hatching,
+    strokeColor: p.strokeColor,
+  };
+}
+
+function normalizeCircleParams(p: P): CircleParams {
+  return {
+    cx: p.cx != null ? num(p.cx, 0) : undefined,
+    cy: p.cy != null ? num(p.cy, 0) : undefined,
+    radius: p.radius != null ? num(p.radius, 60) : undefined,
+    labels: arr(p.labels ?? p.circleLabels),
+    arcs: arr(p.arcs),
+    chords: arr(p.chords ?? p.chordLines),
+    tangentLines: arr(p.tangentLines),
+    radiusLines: arr(p.radiusLines),
+    centralAngles: arr(p.centralAngles),
+    inscribedAngles: arr(p.inscribedAngles),
+    fill: p.fill,
+    fillOpacity: p.fillOpacity != null ? num(p.fillOpacity, 0.15) : undefined,
+    hatching: !!p.hatching,
+    strokeColor: p.strokeColor,
   };
 }
 
@@ -353,11 +420,11 @@ export function renderDiagram(data: DiagramData): string | null {
       case 'coordinate_plane':
         return renderCoordinatePlane(normalizeCoordinatePlane(p));
       case 'circle':
-        return renderCircle(p as unknown as CircleParams);
+        return renderCircle(normalizeCircleParams(p));
       case 'triangle':
-        return renderTriangle(p as unknown as TriangleParams);
+        return renderTriangle(normalizeTriangleParams(p));
       case 'quadrilateral':
-        return renderQuadrilateral(p as unknown as QuadrilateralParams);
+        return renderQuadrilateral(normalizeQuadrilateralParams(p));
       case 'function_graph':
         return renderFunctionGraph(p as unknown as FunctionGraphParams);
       case 'venn_diagram':

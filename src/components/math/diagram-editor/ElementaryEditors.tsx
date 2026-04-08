@@ -539,6 +539,8 @@ export function BandChartForm({ params, onChange }: SubFormProps) {
 }
 
 export function AngleFigureForm({ params, onChange }: SubFormProps) {
+  const additionalAngles = Array.isArray(params.additionalAngles) ? params.additionalAngles as { angle: number; label?: string; color?: string }[] : [];
+
   return (
     <div className="space-y-2">
       <NumField label="각도 (°)" value={Number(params.angle) || 90} onChange={(v) => onChange({ angle: v })} min={0} max={360} />
@@ -546,6 +548,22 @@ export function AngleFigureForm({ params, onChange }: SubFormProps) {
       <TextField label="라벨" value={String(params.label || '')} onChange={(v) => onChange({ label: v })} placeholder="예: 60°, ∠A" />
       <BoolField label="각도기 표시" value={!!params.showProtractor} onChange={(v) => onChange({ showProtractor: v })} />
       <ColorSelect value={String(params.color || '#3B82F6')} onChange={(v) => onChange({ color: v })} />
+      {/* 추가 각도 */}
+      <div>
+        <div className="flex items-center justify-between">
+          <label className="text-xs text-slate-500">추가 각도</label>
+          <button type="button" className="text-xs text-primary hover:text-primary/70" onClick={() => onChange({ additionalAngles: [...additionalAngles, { angle: 45 }] })}>
+            + 추가
+          </button>
+        </div>
+        {additionalAngles.map((aa, i) => (
+          <div key={i} className="flex gap-1 mt-1 items-center">
+            <input type="number" value={aa.angle} onChange={(e) => { const a = [...additionalAngles]; a[i] = { ...aa, angle: parseFloat(e.target.value) || 0 }; onChange({ additionalAngles: a }); }} className="w-16 text-xs px-1.5 py-0.5 border border-slate-300 rounded" placeholder="각도°" />
+            <input type="text" value={aa.label || ''} onChange={(e) => { const a = [...additionalAngles]; a[i] = { ...aa, label: e.target.value }; onChange({ additionalAngles: a }); }} className="flex-1 text-xs px-1.5 py-0.5 border border-slate-300 rounded" placeholder="라벨" />
+            <button type="button" onClick={() => onChange({ additionalAngles: additionalAngles.filter((_, j) => j !== i) })} className="text-slate-400 hover:text-red-500 text-xs">×</button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -358,6 +358,22 @@ export const MATH_EXTRACT_SCHEMA = {
                   description: 'tree_diagram: 루트 노드 {label,children}',
                 },
                 quadType: { type: STRING, description: 'quadrilateral: rectangle | square | parallelogram | trapezoid | rhombus' },
+                // ── 기하 확장 (특수점/보조선/접선 등) ──
+                specialPoints: { type: ARRAY, items: { type: STRING }, description: 'triangle: 특수점 ["incenter","circumcenter","centroid","orthocenter"]' },
+                auxiliaryLines: { type: ARRAY, items: { type: STRING }, description: 'triangle: 보조선 ["medians","altitudes","angle_bisectors","perpendicular_bisectors"]' },
+                inscribedCircle: { type: BOOLEAN, description: 'triangle: 내접원 표시' },
+                circumscribedCircle: { type: BOOLEAN, description: 'triangle: 외접원 표시' },
+                rightAngleMarks: { type: ARRAY, items: { type: NUMBER }, description: 'triangle/quadrilateral: 직각 표시할 꼭짓점 인덱스' },
+                congruenceMarks: { type: ARRAY, items: { type: OBJECT, properties: { from: { type: NUMBER }, to: { type: NUMBER }, ticks: { type: NUMBER } }, required: ['from', 'to', 'ticks'] }, description: '합동 표시 (빗금 1~3개)' },
+                parallelMarks: { type: ARRAY, items: { type: OBJECT, properties: { from: { type: NUMBER }, to: { type: NUMBER }, arrows: { type: NUMBER } }, required: ['from', 'to', 'arrows'] }, description: '평행 표시 (화살표 1~2개)' },
+                chordLines: { type: ARRAY, items: { type: OBJECT, properties: { startAngle: { type: NUMBER }, endAngle: { type: NUMBER }, label: { type: STRING } }, required: ['startAngle', 'endAngle'] }, description: 'circle: 현 [{startAngle,endAngle,label?}]' },
+                tangentLines: { type: ARRAY, items: { type: OBJECT, properties: { angle: { type: NUMBER }, label: { type: STRING } }, required: ['angle'] }, description: 'circle: 접선 [{angle,label?}]' },
+                radiusLines: { type: ARRAY, items: { type: OBJECT, properties: { angle: { type: NUMBER }, label: { type: STRING } }, required: ['angle'] }, description: 'circle: 반지름선 [{angle,label?}]' },
+                centralAngles: { type: ARRAY, items: { type: OBJECT, properties: { startAngle: { type: NUMBER }, endAngle: { type: NUMBER }, label: { type: STRING } }, required: ['startAngle', 'endAngle'] }, description: 'circle: 중심각 [{startAngle,endAngle,label?}]' },
+                inscribedAngles: { type: ARRAY, items: { type: OBJECT, properties: { vertexAngle: { type: NUMBER }, startAngle: { type: NUMBER }, endAngle: { type: NUMBER }, label: { type: STRING } }, required: ['vertexAngle', 'startAngle', 'endAngle'] }, description: 'circle: 원주각 [{vertexAngle,startAngle,endAngle,label?}]' },
+                jumpArrows: { type: ARRAY, items: { type: OBJECT, properties: { from: { type: NUMBER }, to: { type: NUMBER }, label: { type: STRING } }, required: ['from', 'to'] }, description: 'number_line: 점프 화살표 [{from,to,label?}]' },
+                vectors: { type: ARRAY, items: { type: OBJECT, properties: { fromX: { type: NUMBER }, fromY: { type: NUMBER }, toX: { type: NUMBER }, toY: { type: NUMBER }, label: { type: STRING } }, required: ['fromX', 'fromY', 'toX', 'toY'] }, description: 'coordinate_plane: 벡터 [{fromX,fromY,toX,toY,label?}]' },
+                asymptotes: { type: ARRAY, items: { type: OBJECT, properties: { type: { type: STRING }, value: { type: NUMBER } }, required: ['type', 'value'] }, description: 'function_graph: 점근선 [{type:"vertical"|"horizontal",value}]' },
               },
               required: ['diagramType', 'label'],
             },
@@ -469,10 +485,18 @@ export const MATH_SYSTEM_PROMPT = `당신은 한국 수학 교재 분석 전문�
 **[중등 — 기하 도형] ⭐ 중요: 기하 문제의 도형은 반드시 구조화!**
 - **triangle**: vertices(꼭짓점 3개 [{x,y,label}]), sideLabels?([{from,to,label}]), angleLabels?([{vertex,value}])
   예: "삼각형 ABC, AB=5, ∠A=60°" → vertices:[{x:0,y:0,label:"A"},{x:100,y:0,label:"B"},{x:30,y:80,label:"C"}], sideLabels:[{from:0,to:1,label:"5"}], angleLabels:[{vertex:0,value:"60°"}]
+  - **특수점/보조선**: specialPoints?(["incenter","circumcenter","centroid","orthocenter"]), auxiliaryLines?(["medians","altitudes","angle_bisectors","perpendicular_bisectors"]), inscribedCircle?, circumscribedCircle?
+  예: "삼각형 내심과 내접원" → specialPoints:["incenter"], inscribedCircle:true, auxiliaryLines:["angle_bisectors"]
+  예: "삼각형 외심과 외접원" → specialPoints:["circumcenter"], circumscribedCircle:true
+  - **합동/평행/직각**: rightAngleMarks?([꼭짓점인덱스]), congruenceMarks?([{from,to,ticks}]), parallelMarks?([{from,to,arrows}])
 - **quadrilateral**: vertices(4개), sideLabels?, angleLabels?, quadType?(rectangle/square/parallelogram/trapezoid/rhombus)
   예: "직사각형 ABCD, AB=8, BC=5" → quadType:"rectangle", vertices:[{x:0,y:0,label:"A"},{x:100,y:0,label:"B"},{x:100,y:60,label:"C"},{x:0,y:60,label:"D"}], sideLabels:[{from:0,to:1,label:"8"},{from:1,to:2,label:"5"}]
+  - rightAngleMarks?, congruenceMarks?, parallelMarks? 사용 가능
 - **circle**: radius?, cx?, cy?, circleLabels?([{text,angle,position?}]), arcs?([{startAngle,endAngle,label?}])
   예: "반지름 5cm 원, 점 P가 90° 위치" → radius:5, circleLabels:[{text:"P",angle:90,position:"outside"},{text:"O",angle:0,position:"center"}]
+  - **현/접선/반지름/중심각/원주각**: chordLines?([{startAngle,endAngle,label?}]), tangentLines?([{angle,label?}]), radiusLines?([{angle,label?}]), centralAngles?([{startAngle,endAngle,label?}]), inscribedAngles?([{vertexAngle,startAngle,endAngle,label?}])
+  예: "원에 접선 PA" → tangentLines:[{angle:90,label:"PA"}]
+  예: "중심각 60°" → centralAngles:[{startAngle:0,endAngle:60,label:"60°"}]
 - **regular_polygon**: nSides(변의 수), diagonals?(대각선 표시)
   예: "정오각형에 대각선" → nSides:5, diagonals:true
 - **angle_figure**: 두 직선이 이루는 각, 평행선+횡단선의 각 등에도 사용
@@ -541,6 +565,12 @@ export const mathTextbookPlugin: PdfExtractPlugin<ExtractedMathProblem, MathExtr
         'xRange', 'yRange', 'points', 'functions',
         'bins', 'stems', 'showFrequencyPolygon', 'showTrendLine',
         'shape', 'dimensions', 'sets', 'intersectionElements', 'universalElements', 'root',
+        // 기하 확장
+        'specialPoints', 'auxiliaryLines', 'inscribedCircle', 'circumscribedCircle',
+        'rightAngleMarks', 'congruenceMarks', 'parallelMarks',
+        'chordLines', 'tangentLines', 'radiusLines', 'centralAngles', 'inscribedAngles',
+        'jumpArrows', 'openEndpoints', 'closedEndpoints',
+        'vectors', 'asymptotes', 'additionalAngles', 'parallelLines',
       ];
       const normalizedParams: MathDiagramParam[] = [];
       if (Array.isArray(p.diagramParams)) {

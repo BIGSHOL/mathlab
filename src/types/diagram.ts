@@ -56,6 +56,14 @@ export interface TriangleDiagram {
   showLengths?: EdgeLength[];
   /** 직각 표시할 꼭짓점 인덱스 */
   rightAngle?: number;
+  /** 특수점 표시 (내심, 외심, 무게중심, 수심) */
+  specialPoints?: ('incenter' | 'circumcenter' | 'centroid' | 'orthocenter')[];
+  /** 보조선 표시 (중선, 수선, 각의 이등분선, 수직이등분선) */
+  auxiliaryLines?: ('medians' | 'altitudes' | 'angle_bisectors' | 'perpendicular_bisectors')[];
+  /** 내접원 표시 */
+  inscribedCircle?: boolean;
+  /** 외접원 표시 */
+  circumscribedCircle?: boolean;
 }
 
 export interface CircleDiagram {
@@ -67,11 +75,17 @@ export interface CircleDiagram {
   /** 현(chord): 원 위 두 점의 각도(degree) */
   chords?: { from: number; to: number; label?: string }[];
   /** 접선: 접점의 각도(degree) */
-  tangentLines?: { angle: number; label?: string }[];
+  tangentLines?: { angle: number; length?: number; label?: string }[];
   /** 호: 시작/끝 각도(degree) */
   arcs?: { from: number; to: number; label?: string }[];
   /** 내접/외접 삼각형 등 */
   inscribedPolygon?: { sides: number; rotation?: number; labels?: string[] };
+  /** 반지름선: 중심→원주 */
+  radiusLines?: { angle: number; label?: string }[];
+  /** 중심각: 반지름 2개 + 호 + 섹터 채움 */
+  centralAngles?: { startAngle: number; endAngle: number; label?: string }[];
+  /** 원주각: 원주 한 점에서 호 양 끝으로 두 현 */
+  inscribedAngles?: { vertexAngle: number; startAngle: number; endAngle: number; label?: string }[];
   labels?: DiagramLabel[];
 }
 
@@ -110,8 +124,14 @@ export interface QuadrilateralDiagram {
   showAngles?: number[];
   angleValues?: string[];
   showLengths?: EdgeLength[];
-  /** 대각선 표시 */
-  diagonals?: boolean;
+  /** 대각선 표시 (boolean 또는 개별 지정) */
+  diagonals?: boolean | { from: number; to: number; label?: string; style?: 'solid' | 'dashed' }[];
+  /** 직각 표시할 꼭짓점 인덱스 */
+  rightAngleMarks?: number[];
+  /** 합동 표시 (변 위 빗금) */
+  congruenceMarks?: { from: number; to: number; ticks: number }[];
+  /** 평행 표시 (변 위 화살표) */
+  parallelMarks?: { from: number; to: number; arrows: number }[];
 }
 
 export interface SolidFigureDiagram {

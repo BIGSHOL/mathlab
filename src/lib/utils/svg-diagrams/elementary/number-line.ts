@@ -106,6 +106,46 @@ export function renderNumberLine(params: NumberLineParams): string {
     }
   }
 
+  // 점프 화살표 (jumpArrows)
+  if (params.jumpArrows) {
+    for (const ja of params.jumpArrows) {
+      const fromX = toX(Number(ja.from));
+      const toXVal = toX(Number(ja.to));
+      const jaColor = ja.color || '#333';
+      const above = ja.above !== false; // 기본 위쪽
+      const midX = (fromX + toXVal) / 2;
+      const arcH = Math.min(Math.abs(toXVal - fromX) * 0.4, 25);
+      const arcY = above ? lineY - arcH : lineY + arcH;
+      const sweepFlag = above ? (ja.to > ja.from ? 1 : 0) : (ja.to > ja.from ? 0 : 1);
+      const arcR = Math.abs(toXVal - fromX) / 2;
+      parts.push(`<path d="M ${fromX} ${lineY} Q ${midX} ${arcY} ${toXVal} ${lineY}" fill="none" stroke="${jaColor}" stroke-width="1.5"/>`);
+      // 화살촉
+      const dx = toXVal > fromX ? -5 : 5;
+      const dy = above ? 4 : -4;
+      parts.push(`<polygon points="${toXVal},${lineY} ${toXVal + dx},${lineY + dy} ${toXVal + dx * 0.3},${lineY}" fill="${jaColor}"/>`);
+      if (ja.label) {
+        const labelY = above ? arcY - 6 : arcY + 12;
+        parts.push(text(midX, labelY, ja.label, { fontSize: 10, fill: jaColor }));
+      }
+    }
+  }
+
+  // 열린 끝점 (빈 원)
+  if (params.openEndpoints) {
+    for (const val of params.openEndpoints) {
+      const x = toX(Number(val));
+      parts.push(svgCircle(x, lineY, 4, { fill: 'white', stroke: '#333', strokeWidth: 1.5 }));
+    }
+  }
+
+  // 닫힌 끝점 (채운 원)
+  if (params.closedEndpoints) {
+    for (const val of params.closedEndpoints) {
+      const x = toX(Number(val));
+      parts.push(svgCircle(x, lineY, 4, { fill: '#333', stroke: '#333', strokeWidth: 1 }));
+    }
+  }
+
   // 전체 레이블
   if (label) {
     parts.push(text(totalW / 2, totalH - 6, label, { fontSize: 11, fontWeight: 'bold' }));

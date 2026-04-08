@@ -89,6 +89,28 @@ export function renderCoordinatePlane(params: CoordinatePlaneParams): string {
     }
   });
 
+  // 벡터 (화살표 선분)
+  if (params.vectors) {
+    for (const vec of params.vectors) {
+      const vfrom = vec.from;
+      const vto = vec.to;
+      const vColor = vec.color || COLORS.purple;
+      const fx = toX(vfrom.x), fy = toY(vfrom.y);
+      const tx = toX(vto.x), ty = toY(vto.y);
+      parts.push(line(fx, fy, tx, ty, { stroke: vColor, strokeWidth: 2 }));
+      // 화살촉
+      const angle = Math.atan2(ty - fy, tx - fx) * (180 / Math.PI);
+      parts.push(arrowHead(tx, ty, angle, 7));
+      // 시작점
+      parts.push(circle(fx, fy, 3, { fill: vColor, stroke: vColor }));
+      if (vec.label) {
+        const mx = (fx + tx) / 2;
+        const my = (fy + ty) / 2;
+        parts.push(katexLabel(mx + 10, my - 10, vec.label, { fontSize: 11 }));
+      }
+    }
+  }
+
   // 점
   points.forEach((p) => {
     const px = toX(p.x);

@@ -221,3 +221,87 @@ export function fitPointsToCanvas(
     toSvg: (p) => [padding + (p.x - minX) * scale, padding + (p.y - minY) * scale],
   };
 }
+
+// ── 기하 표시 헬퍼 ──────────────────────────────────
+
+/**
+ * 직각 표시 (□) — 꼭짓점에서 인접 두 점 방향으로 작은 정사각형
+ */
+export function renderRightAngleMark(
+  px: number, py: number,
+  prevX: number, prevY: number,
+  nextX: number, nextY: number,
+  size = 8,
+): string {
+  const d1x = prevX - px, d1y = prevY - py;
+  const d2x = nextX - px, d2y = nextY - py;
+  const len1 = Math.sqrt(d1x * d1x + d1y * d1y) || 1;
+  const len2 = Math.sqrt(d2x * d2x + d2y * d2y) || 1;
+  const ux1 = d1x / len1 * size, uy1 = d1y / len1 * size;
+  const ux2 = d2x / len2 * size, uy2 = d2y / len2 * size;
+  return `<polyline points="${px + ux1},${py + uy1} ${px + ux1 + ux2},${py + uy1 + uy2} ${px + ux2},${py + uy2}" fill="none" stroke="#333" stroke-width="1"/>`;
+}
+
+/**
+ * 합동 표시 — 변의 중점에 빗금 (tick marks) 1~3개
+ */
+export function renderCongruenceMarks(
+  x1: number, y1: number,
+  x2: number, y2: number,
+  ticks: number,
+): string {
+  const mx = (x1 + x2) / 2;
+  const my = (y1 + y2) / 2;
+  const dx = x2 - x1, dy = y2 - y1;
+  const len = Math.sqrt(dx * dx + dy * dy) || 1;
+  // 빗금 방향: 변에 수직
+  const nx = -dy / len, ny = dx / len;
+  const tickLen = 6;
+  const spacing = 4;
+  const parts: string[] = [];
+  for (let i = 0; i < ticks; i++) {
+    const offset = (i - (ticks - 1) / 2) * spacing;
+    // 변 방향으로 offset
+    const cx = mx + (dx / len) * offset;
+    const cy = my + (dy / len) * offset;
+    const tx1 = cx + nx * tickLen;
+    const ty1 = cy + ny * tickLen;
+    const tx2 = cx - nx * tickLen;
+    const ty2 = cy - ny * tickLen;
+    parts.push(`<line x1="${tx1}" y1="${ty1}" x2="${tx2}" y2="${ty2}" stroke="#333" stroke-width="1.5"/>`);
+  }
+  return parts.join('');
+}
+
+/**
+ * 평행 표시 — 변의 중점에 화살표 1~2개
+ */
+export function renderParallelMarks(
+  x1: number, y1: number,
+  x2: number, y2: number,
+  arrows: number,
+): string {
+  const mx = (x1 + x2) / 2;
+  const my = (y1 + y2) / 2;
+  const dx = x2 - x1, dy = y2 - y1;
+  const len = Math.sqrt(dx * dx + dy * dy) || 1;
+  const ux = dx / len, uy = dy / len;
+  const spacing = 5;
+  const parts: string[] = [];
+  for (let i = 0; i < arrows; i++) {
+    const offset = (i - (arrows - 1) / 2) * spacing;
+    const cx = mx + ux * offset;
+    const cy = my + uy * offset;
+    // 작은 화살촉 (변 방향으로)
+    const headLen = 4;
+    const headW = 3;
+    const tipX = cx + ux * headLen;
+    const tipY = cy + uy * headLen;
+    const b1x = cx - uy * headW;
+    const b1y = cy + ux * headW;
+    const b2x = cx + uy * headW;
+    const b2y = cy - ux * headW;
+    parts.push(`<polygon points="${tipX},${tipY} ${b1x},${b1y} ${b2x},${b2y}" fill="#333"/>`);
+  }
+  return parts.join('');
+}
