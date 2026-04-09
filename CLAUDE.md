@@ -292,12 +292,12 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 - PDF 추출 프롬프트에 해당 학년의 curriculum.ts 단원 목록을 반드시 주입하여 AI가 표준 단원명만 반환하도록 강제.
 - 정규화 스크립트: `npx tsx scripts/normalize-chapters.ts --apply`
 
-**⚠️ questionNum — 절대 규칙:**
-- 같은 `bookCode + chapter` 내에서 `questionNum`은 **1번부터 시작하는 유일한 순번**이어야 한다. 중복 금지.
-- 순서: section → 등록일시(createdAt) 순으로 정렬 후 대단원별 1번부터 부여.
-- 새 문제 추가 시: 해당 `bookCode + chapter`의 `MAX(questionNum) + 1`로 부여.
-- 일괄 추출 후: `scripts/normalize-chapters.ts`로 전체 재정렬 가능.
-- UI 표시: "소인수분해 #15" = 소인수분해 단원의 15번째 문제.
+**⚠️ questionNum — 절대 규칙 (소스 유형별 분리):**
+- **교과서 추출**: 같은 `bookCode + chapter` 내에서 #1부터 유일 순번. section → createdAt 순 정렬.
+- **기출 (시험지)**: 같은 `bookCode` 내에서 #1부터 유일 순번. **원본 시험지의 문항 순서를 반드시 유지** (대단원별 재정렬 금지).
+- **AI 생성**: 생성 순서대로 순번 부여.
+- 새 문제 추가 시: 해당 범위의 `MAX(questionNum) + 1`로 부여.
+- 일괄 추출 후: `scripts/normalize-chapters.ts`로 교과서 문제만 재정렬 가능 (기출 제외).
 
 ### 연산 생성기
 

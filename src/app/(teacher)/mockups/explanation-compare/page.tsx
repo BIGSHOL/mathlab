@@ -119,9 +119,10 @@ export default function ExplanationComparePage() {
       const res = await fetch(`/api/questions?bookCode=${bookCode}&limit=200&noExplanation=true`);
       const json = await res.json();
       if (json.data) {
-        setSamples(json.data);
+        const sorted = (json.data as QuestionSample[]).sort((a, b) => a.questionNum - b.questionNum);
+        setSamples(sorted);
         // 전체 자동 선택
-        setSelectedIds(new Set(json.data.map((q: QuestionSample) => q.id)));
+        setSelectedIds(new Set(sorted.map((q: QuestionSample) => q.id)));
       }
     } catch {
       toast.error('문제 목록을 불러올 수 없습니다');

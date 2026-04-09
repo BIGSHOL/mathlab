@@ -303,7 +303,7 @@ function ViewMode({ selectedQuestion, concepts, onExplanationSaved }: { selected
       <div className="border-t border-slate-200 pt-2.5">
         <h3 className="text-sm font-bold mb-2">해설</h3>
         {selectedQuestion.explanation ? (
-          <div className="px-3 py-2 bg-slate-50 rounded-sm border border-slate-100 text-sm">
+          <div className="px-3 py-2 bg-slate-50 rounded-sm border border-slate-100 text-sm whitespace-pre-line">
             <MathRenderer content={selectedQuestion.explanation} />
           </div>
         ) : (
@@ -1144,7 +1144,7 @@ function ExplanationGeneratorInline({ question, onSaved }: { question: QuestionI
 
   if (generated) {
     return (
-      <div className="px-3 py-2 bg-slate-50 rounded-sm border border-slate-100 text-sm">
+      <div className="px-3 py-2 bg-slate-50 rounded-sm border border-slate-100 text-sm whitespace-pre-line">
         <MathRenderer content={generated} />
       </div>
     );
