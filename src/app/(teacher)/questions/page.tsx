@@ -80,8 +80,6 @@ export default function QuestionsPage() {
 
       {/* ===== Main Content: Question list with search/pagination ===== */}
       <QuestionListMain
-        search={mgr.search}
-        setSearch={mgr.setSearch}
         bookFilter={mgr.bookFilter}
         difficultyFilter={mgr.difficultyFilter}
         meta={mgr.meta}

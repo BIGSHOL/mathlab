@@ -28,8 +28,6 @@ import {
 } from './question-types';
 
 interface QuestionListMainProps {
-  search: string;
-  setSearch: (search: string) => void;
   bookFilter: string | null;
   difficultyFilter: string;
   meta: Meta;
@@ -50,8 +48,6 @@ interface QuestionListMainProps {
 }
 
 export function QuestionListMain({
-  search,
-  setSearch,
   bookFilter,
   difficultyFilter,
   meta,
