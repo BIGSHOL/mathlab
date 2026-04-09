@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { X, Code2, Eye, EyeOff, Shapes } from 'lucide-react';
+import { X, Code2, EyeOff, Shapes } from 'lucide-react';
 import { renderDiagram } from '@/lib/utils/svg-diagrams';
 import type { DiagramType } from '@/lib/utils/svg-diagrams/types';
 import { PresetSelector } from '@/components/math/diagram-editor/PresetSelector';

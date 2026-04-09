@@ -9,7 +9,7 @@ import {
   rightAnglePath,
   midpoint,
   labelOffset,
-  distance,
+  distance as _distance,
 } from '../utils';
 import {
   computeIncenter, computeCircumcenter, computeCentroid, computeOrthocenter,

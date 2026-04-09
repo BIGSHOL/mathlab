@@ -116,8 +116,8 @@ export function renderNumberLine(params: NumberLineParams): string {
       const midX = (fromX + toXVal) / 2;
       const arcH = Math.min(Math.abs(toXVal - fromX) * 0.4, 25);
       const arcY = above ? lineY - arcH : lineY + arcH;
-      const sweepFlag = above ? (ja.to > ja.from ? 1 : 0) : (ja.to > ja.from ? 0 : 1);
-      const arcR = Math.abs(toXVal - fromX) / 2;
+      const _sweepFlag = above ? (ja.to > ja.from ? 1 : 0) : (ja.to > ja.from ? 0 : 1);
+      const _arcR = Math.abs(toXVal - fromX) / 2;
       parts.push(`<path d="M ${fromX} ${lineY} Q ${midX} ${arcY} ${toXVal} ${lineY}" fill="none" stroke="${jaColor}" stroke-width="1.5"/>`);
       // 화살촉
       const dx = toXVal > fromX ? -5 : 5;

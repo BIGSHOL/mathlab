@@ -138,15 +138,6 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const results: Record<
-    string,
-    {
-      question: (typeof questions)[0];
-      noThinking?: GenResult;
-      thinking?: GenResult;
-    }
-  > = {};
-
   // 구조화 출력 스키마
   const responseSchema = {
     type: Type.OBJECT,
@@ -173,7 +164,7 @@ export async function POST(req: NextRequest) {
         idx++;
         const prompt = buildPrompt(q);
         const effectiveMode = resolveMode(q.difficulty);
-        const result: typeof results[string] = { question: q };
+        const result: { question: typeof q; noThinking?: GenResult; thinking?: GenResult } = { question: q };
 
         // Non-Thinking
         if (effectiveMode === 'noThinking' || effectiveMode === 'both') {
