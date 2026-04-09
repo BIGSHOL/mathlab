@@ -30,6 +30,7 @@ export interface CurriculumUnit {
 }
 
 import { DiagramSpec } from './diagram';
+import { DiagramParam } from './pdf-extract';
 
 export interface GeneratedProblem {
   question: string;
@@ -40,7 +41,9 @@ export interface GeneratedProblem {
   difficulty: string;
   diagramSVG?: string | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  diagramSpec?: DiagramSpec | any | null;
+  diagramSpec?: DiagramSpec | DiagramParam[] | any | null;
+  /** 구조화된 다이어그램 파라미터 (26개 타입) — 신규 디폴트 */
+  diagramParams?: DiagramParam[] | null;
   /** exact 모드에서 원본 업로드 이미지 (base64 data URL) */
   sourceImage?: string | null;
 }

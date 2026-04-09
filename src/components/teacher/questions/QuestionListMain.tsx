@@ -211,18 +211,18 @@ export function QuestionListMain({
 
                   <div className="text-sm leading-relaxed font-medium text-text-primary">
                     <MathRenderer content={q.content} />
-                    {(q.diagramSVG || (q.diagramSpec && Array.isArray(q.diagramSpec) && q.diagramSpec.length > 0)) && (
+                    {(q.diagramSpec || q.diagramSVG) && (
                       <div className="my-2 flex justify-center">
-                        {q.diagramSVG ? (
+                        {q.diagramSpec && (Array.isArray(q.diagramSpec) ? q.diagramSpec.length > 0 : true) ? (
+                          <DiagramRenderer
+                            spec={q.diagramSpec}
+                            className="max-w-md rounded-sm border border-slate-100 bg-white p-3 [&_svg]:w-full [&_svg]:h-auto"
+                          />
+                        ) : q.diagramSVG ? (
                           <div
                             className="max-w-md overflow-hidden rounded-sm border border-slate-100 bg-white p-3 [&_svg]:w-full [&_svg]:h-auto"
                             style={{ fontFamily: "'Pretendard', system-ui, sans-serif" }}
                             dangerouslySetInnerHTML={{ __html: q.diagramSVG }}
-                          />
-                        ) : q.diagramSpec ? (
-                          <DiagramRenderer
-                            spec={q.diagramSpec}
-                            className="max-w-md rounded-sm border border-slate-100 bg-white p-3 [&_svg]:w-full [&_svg]:h-auto"
                           />
                         ) : null}
                       </div>

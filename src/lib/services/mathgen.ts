@@ -2,6 +2,8 @@ import { Type } from '@google/genai';
 import { GeneratedProblem, SelectionState, SchoolLevel, Difficulty } from '@/types/mathgen';
 import { getGeminiClient, stripCodeFence } from './gemini';
 import { TEXTBOOK_CATALOG, getPublisher } from '@/lib/constants/textbook-curriculum';
+import { DIAGRAM_PARAMS_SCHEMA } from '@/lib/constants/diagram-schema';
+import { normalizeDiagramParams } from '@/lib/utils/diagram-param-collect';
 
 /**
  * 학교급 + 난이도에 따라 Gemini 모델 자동 선택
@@ -55,33 +57,18 @@ const RESPONSE_SCHEMA = {
     },
     diagramSVG: {
       type: Type.STRING,
-      description: 'DEPRECATED. Use diagramSpec instead. Raw SVG fallback only if diagramSpec cannot represent the diagram.',
+      description: 'DEPRECATED fallback. Only use if diagramParams cannot represent the diagram (e.g., very complex custom layouts).',
       nullable: true,
     },
-    diagramSpec: {
-      type: Type.OBJECT,
-      description: `Structured diagram spec. Do NOT provide coordinates — use presets and the system calculates geometry automatically.
-
-TYPES:
-1. triangle: { type:"triangle", preset:"right"|"equilateral"|"isosceles"|"scalene"|"right-isosceles", sides?:{a:3,b:4,c:5}, angles?:{A:90,B:60,C:30}, vertexLabels?:["A","B","C"] }
-2. circle: { type:"circle", showRadius?:true, showDiameter?:true, chords?:[{from:30,to:150}], arcs?:[{from:0,to:90,label:"l"}] }
-3. coordinatePlane: { type:"coordinatePlane", functions?:[{expr:"x^2-2*x+1",label:"y=f(x)"}], points?:[{coord:[1,0],label:"P"}], showGrid?:true }
-   (xRange/yRange auto-calculated from functions)
-4. quadrilateral: { type:"quadrilateral", preset:"square"|"rectangle"|"parallelogram"|"rhombus"|"trapezoid", sides?:{width:8,height:5,top:4}, vertexLabels?:["A","B","C","D"], diagonals?:true }
-5. solid: { type:"solid", shape:"cube"|"cylinder"|"cone"|"sphere"|"prism"|"pyramid", dimensions?:{radius:5,height:10}, showDimensions?:true }
-6. composite: { type:"composite", elements:[...specs] }
-
-RULES: Use preset names, NOT coordinates. Provide side lengths/angles from the problem. The system handles all geometry.`,
+    diagramParams: {
+      ...DIAGRAM_PARAMS_SCHEMA,
       nullable: true,
-      properties: {
-        type: { type: Type.STRING, description: 'Diagram type' },
-      },
     },
   },
   required: ['question', 'answer', 'solution', 'topic', 'difficulty'],
 };
 
-/** exact 모드 전용 스키마 — diagramSpec 제거, diagramSVG로 도형 직접 재현 */
+/** exact 모드 전용 스키마 — diagramParams 우선, diagramSVG 폴백 */
 const EXACT_RESPONSE_SCHEMA = {
   type: Type.OBJECT,
   properties: {
@@ -110,17 +97,18 @@ const EXACT_RESPONSE_SCHEMA = {
       type: Type.STRING,
       description: 'Difficulty level.',
     },
+    diagramParams: {
+      ...DIAGRAM_PARAMS_SCHEMA,
+      description: '이미지의 도형을 26개 타입 중 하나로 구조화. diagramSVG보다 우선 사용.',
+      nullable: true,
+    },
     diagramSVG: {
       type: Type.STRING,
-      description: `If the image contains diagrams/figures, reproduce as SVG. CRITICAL RULES:
+      description: `Fallback: ONLY use if diagramParams cannot represent the diagram (complex custom shapes). CRITICAL RULES:
 - NO LaTeX ($...$) inside SVG <text>! Use plain text + Unicode: ° π θ √ α β ∠
-- Fractions: build vertically with numerator <text>, <line>, denominator <text>
-- SIZE: Draw shapes LARGE. Each shape ≥180px wide, ≥150px tall. Tight viewBox, minimal padding. 2 shapes side by side: viewBox="0 0 520 250"
-- LABELS: font-size="16", font-family="sans-serif". Offset labels 15-20px AWAY from vertices/lines so they never overlap with strokes or angle arcs
-- ANGLE ARCS: Draw arc marks 25px radius from vertex. Place angle label text OUTSIDE the arc, not on top of it
-- RIGHT ANGLE: Draw □ mark (12×12px polyline) at 90° corners
-- stroke-width="2" for shape outlines, "1" for arcs/marks
-- Do NOT include text already in "question" field`,
+- SIZE: Each shape ≥180px wide, ≥150px tall. Tight viewBox.
+- LABELS: font-size="16", font-family="sans-serif". Offset 15-20px from vertices.
+- RIGHT ANGLE: 12×12px polyline □ mark. stroke-width="2" for outlines, "1" for arcs.`,
       nullable: true,
     },
   },
@@ -139,7 +127,7 @@ const COMMON_INSTRUCTIONS = `
          - Correct: "$x^2 + x$"
        - **NO HTML TAGS**: NEVER include ANY HTML tags in the output text. No <img>, <span>, <div>, <br>, or any other HTML element. Use only plain text and Markdown with LaTeX ($...$, $$...$$).
        - **NO Markdown images**: Do NOT use ![...](...) syntax.
-       - **NO PLACEHOLDERS**: Do NOT write "[Diagram]", "[그래프]", or any placeholder text. If a diagram is needed, use the "diagramSpec" field.
+       - **NO PLACEHOLDERS**: Do NOT write "[Diagram]", "[그래프]", or any placeholder text. If a diagram is needed, use the "diagramParams" field.
        - **NO \\dfrac**: NEVER use \\dfrac. Always use \\frac instead. \\dfrac creates oversized fractions in inline math.
        - **NO LINE BREAKS before conditions**: Trailing conditions like "(단, ...)", "(단, $a < b$)", "(정답 2개)" MUST stay on the same line as the preceding sentence. NEVER put them on a new line.
 
@@ -167,20 +155,21 @@ const COMMON_INSTRUCTIONS = `
            >
            > 정우: 힌트 좀 줘.
 
-    5. [Visuals & Diagrams]
+    5. [Visuals & Diagrams — diagramParams]
        - **When to generate**: If the topic involves **Geometry**, **Functions/Graphs**, or **Statistics**.
-       - **diagramSpec (curriculum/image mode)**: Provide a preset-based JSON. Do NOT calculate coordinates.
-         - Examples: { "type":"triangle", "preset":"right", "sides":{"b":4,"c":3} }, { "type":"coordinatePlane", "functions":[{"expr":"x^2-2*x+1","label":"y=x²-2x+1"}], "showGrid":true }
-         - **Functions format**: "x^2+3*x-1" (supports +,-,*,/,^,sin,cos,tan,sqrt,abs,log,ln,pi,e).
-         - **NEVER generate an empty coordinatePlane without functions/points.**
-       - **diagramSVG (exact mode)**: Provide raw SVG string reproducing the diagram from the image.
-       - **SVG Quality Rules (CRITICAL for diagramSVG)**:
-         - **NO LaTeX** ($...$) inside SVG <text>! Use Unicode: ° π θ √ α β ∠
-         - **ViewBox**: Tight fit. Each shape ≥180px wide, ≥150px tall. Two shapes side by side: viewBox="0 0 520 250"
-         - **Stroke**: Main lines: stroke-width="2". Arcs/marks: stroke-width="1". Color: black.
-         - **Angle arcs**: Draw arc with radius 25px from vertex. Place label text 15-20px OUTSIDE the arc, never overlapping strokes.
-         - **Right angle**: 12×12px polyline □ mark.
-         - **Labels**: font-size="16", font-family="sans-serif". Offset 15-20px away from vertices/lines.
+       - Use the "diagramParams" array field with structured 26-type diagrams. The server renders SVG automatically.
+       - **Key Types & Examples**:
+         - **triangle**: { diagramType:"triangle", label:"삼각형", vertices:[{x:0,y:0,label:"A"},{x:100,y:0,label:"B"},{x:0,y:80,label:"C"}], sideLabels:[{from:0,to:1,label:"5"}], angleLabels:[{vertex:2,value:"90°"}] }
+         - **quadrilateral**: { diagramType:"quadrilateral", label:"사각형", vertices:[{x:0,y:80},{x:100,y:80},{x:100,y:0},{x:0,y:0}], quadType:"rectangle" }
+         - **circle**: { diagramType:"circle", label:"원", cx:100, cy:100, radius:80 }
+         - **function_graph**: { diagramType:"function_graph", label:"함수 그래프", functions:[{expression:"-3*(x-1)^2+3",label:"y=f(x)"}], xRange:[-2,5], yRange:[-5,5], points:[{x:1,y:3,label:"꼭짓점"}] }
+         - **coordinate_plane**: { diagramType:"coordinate_plane", label:"좌표평면", xRange:[-5,5], yRange:[-5,5], points:[{x:2,y:3,label:"A"}] }
+         - **solid_figure**: { diagramType:"solid_figure", label:"입체도형", shape:"cylinder", dimensions:{radius:5,height:10} }
+         - **number_line**: { diagramType:"number_line", label:"수직선", min:0, max:10, step:1 }
+         - **venn_diagram**: { diagramType:"venn_diagram", label:"벤 다이어그램", sets:[{label:"A",elements:["1","3"]},{label:"B",elements:["2","4"]}], intersectionElements:["5"] }
+       - **Functions format**: JS math syntax — +,-,*,/,^ (e.g., "x^2+3*x-1"). Supports sin,cos,tan,sqrt,abs,log,ln,pi,e.
+       - **NEVER generate an empty function_graph without functions.**
+       - **diagramSVG**: ONLY as fallback for shapes that cannot be expressed by the 26 types.
        - **NEVER use HTML tags (span, div, etc.) in the question text to reference diagrams.**
 
     6. [Solution Quality - WORKBOOK STYLE]
@@ -260,7 +249,7 @@ function buildExactPrompt(removeScore?: boolean): string {
     2. **Format**: Convert the extracted text into the required JSON format.
        - Do NOT change the numbers, functions, or context of the TEXT.
        - If there are choices in the image, put them in the "choices" array. If there are no choices, leave it empty [].
-       - **Diagrams**: If the image contains diagrams/figures, reproduce them in "diagramSVG" as a complete SVG string. Include ALL angle labels, side lengths, special marks (right angle □, arc marks), and sub-labels like (1),(2). Use viewBox for scaling. Do NOT put diagram content in "question" text.
+       - **Diagrams**: If the image contains diagrams/figures, reproduce them using "diagramParams" array with the 26-type structured format. Include ALL angle labels, side lengths, and special marks. Do NOT put diagram content in "question" text. Only use "diagramSVG" as a last resort for shapes that cannot be expressed by the 26 types.
        - Provide the correct answer and a detailed solution for the problem.
        - Estimate the topic and difficulty level.
 
@@ -282,10 +271,10 @@ function buildImagePrompt(selection: SelectionState): string {
        - Target Difficulty: ${selection.difficulty} (Adjust the generated problem to match this difficulty if possible, otherwise stick to the image's level).
        - Question Format: ${selection.answerType} (Force the output to be this format).
 
-    4. **Diagrams/Graphs**: If the original image has a function graph, use "diagramSpec" JSON:
-       - Example: { "type":"coordinatePlane", "functions":[{"expr":"-3*(x-1)^2+3","label":"y=f'(x)"}], "points":[{"coord":[0,0],"label":"O"},{"coord":[2,0]}], "showGrid":true }
-       - "expr" uses JS math syntax: +,-,*,/,^ (e.g., "-3*(x-1)^2+3" for a downward parabola with vertex at (1,3))
-       - **You MUST include at least one function in the "functions" array. NEVER submit an empty coordinatePlane.**
+    4. **Diagrams/Graphs**: If the original image has a function graph, use "diagramParams" array:
+       - Example: [{ "diagramType":"function_graph", "label":"함수 그래프", "functions":[{"expression":"-3*(x-1)^2+3","label":"y=f'(x)"}], "xRange":[-2,5], "yRange":[-5,5], "points":[{"x":0,"y":0,"label":"O"},{"x":2,"y":0}] }]
+       - "expression" uses JS math syntax: +,-,*,/,^ (e.g., "-3*(x-1)^2+3")
+       - **You MUST include at least one function. NEVER submit an empty function_graph.**
        - Include key points (x-intercepts, vertices) in the "points" array.
        - Do NOT use diagramSVG.
 
@@ -470,46 +459,55 @@ export async function generateMathProblem(selection: SelectionState): Promise<Ge
       .replace(/\\sqrt/g, '√');
   }
 
-  // diagramSpec이 문자열로 반환된 경우 파싱
-  if (data.diagramSpec && typeof data.diagramSpec === 'string') {
-    try {
-      data.diagramSpec = JSON.parse(data.diagramSpec);
-    } catch {
-      data.diagramSpec = null;
-    }
-  }
+  // diagramParams 정규화 (Gemini 플랫 응답 → { type, label, params } 형태)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (Array.isArray((data as any).diagramParams)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rawParams = (data as any).diagramParams as Record<string, unknown>[];
+    const normalized = normalizeDiagramParams(rawParams);
 
-  // coordinatePlane인데 functions가 비어있으면 → 문제/해설 텍스트에서 함수 추출 시도
-  if (data.diagramSpec && typeof data.diagramSpec === 'object') {
-    const spec = data.diagramSpec as Record<string, unknown>;
-    if (spec.type === 'coordinatePlane') {
-      const fns = spec.functions as unknown[] | undefined;
-      if (!fns || fns.length === 0) {
-        // f'(x) = -3x(x-2) 같은 패턴에서 함수 추출
-        const allText = `${data.question}\n${data.solution || ''}`;
-        const fnMatch = allText.match(/[yf]['′]?\s*\([x]\)\s*=\s*([^\n,가-힣(단]+)/);
-        if (fnMatch) {
-          const expr = fnMatch[1].trim()
-            .replace(/\$/g, '')
-            .replace(/\\frac/g, '')
-            .replace(/[{}]/g, '')
-            .replace(/\s+/g, '')
-            // LaTeX → JS math
-            .replace(/(\d)([x])/g, '$1*$2')
-            .replace(/([)])([x(])/g, '$1*$2');
-          if (expr && expr.length > 2) {
-            spec.functions = [{ expr, label: "y=f'(x)" }];
-            spec.showGrid = true;
+    // function_graph인데 functions가 비어있으면 → 문제/해설 텍스트에서 함수 추출 시도
+    for (const dp of normalized) {
+      if (dp.type === 'function_graph') {
+        const fns = dp.params.functions as unknown[] | undefined;
+        if (!fns || fns.length === 0) {
+          const allText = `${data.question}\n${data.solution || ''}`;
+          const fnMatch = allText.match(/[yf]['′]?\s*\([x]\)\s*=\s*([^\n,가-힣(단]+)/);
+          if (fnMatch) {
+            const expr = fnMatch[1].trim()
+              .replace(/\$/g, '')
+              .replace(/\\frac/g, '')
+              .replace(/[{}]/g, '')
+              .replace(/\s+/g, '')
+              .replace(/(\d)([x])/g, '$1*$2')
+              .replace(/([)])([x(])/g, '$1*$2');
+            if (expr && expr.length > 2) {
+              dp.params.functions = [{ expression: expr, label: "y=f'(x)" }];
+            }
           }
         }
-        // 추출 실패 시 빈 좌표평면이라도 유지
+      }
+    }
+
+    // DB 저장용: diagramSpec 필드에 DiagramParam[] 배열로 저장
+    data.diagramSpec = normalized.length > 0 ? normalized : null;
+  }
+
+  // 레거시 diagramSpec (객체) 폴백 — 이전 스키마에서 생성된 데이터 처리
+  if (data.diagramSpec && typeof data.diagramSpec === 'object' && !Array.isArray(data.diagramSpec)) {
+    if (typeof data.diagramSpec === 'string') {
+      try {
+        data.diagramSpec = JSON.parse(data.diagramSpec);
+      } catch {
+        data.diagramSpec = null;
       }
     }
   }
 
-  // exact 모드: diagramSpec 제거 (부정확), diagramSVG는 유지 (AI가 직접 SVG로 도형 재현)
-  if (selection.mode === 'exact') {
-    data.diagramSpec = null;
+  // exact 모드: diagramParams가 있으면 diagramSVG 폴백 제거
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (selection.mode === 'exact' && Array.isArray(data.diagramSpec) && (data.diagramSpec as any[]).length > 0) {
+    data.diagramSVG = null;
   }
 
   return data;

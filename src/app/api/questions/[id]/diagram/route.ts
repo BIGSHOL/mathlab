@@ -2,17 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireSuperAdmin, isResponse, notFound, serverError } from '@/lib/api';
 import { GoogleGenAI, Type } from '@google/genai';
+import { DIAGRAM_PARAMS_SCHEMA } from '@/lib/constants/diagram-schema';
+import { normalizeDiagramParams } from '@/lib/utils/diagram-param-collect';
 
 const DIAGRAM_SCHEMA = {
   type: Type.OBJECT,
   properties: {
-    diagramSpec: {
-      type: Type.OBJECT,
-      description: `Structured diagram specification. Types: triangle, circle, coordinatePlane, quadrilateral, solid, composite. Use mathematical coordinates.`,
+    diagramParams: {
+      ...DIAGRAM_PARAMS_SCHEMA,
+      description: '구조화된 다이어그램 파라미터 (26개 타입). 서버가 SVG로 렌더링.',
       nullable: true,
-      properties: {
-        type: { type: Type.STRING },
-      },
     },
     needsDiagram: {
       type: Type.BOOLEAN,
@@ -58,9 +57,16 @@ Problem: ${question.content}
 ${choicesText ? `Choices:\n${choicesText}` : ''}
 Chapter: ${question.chapter}
 
-If the problem involves geometry, functions/graphs, or statistics, create an appropriate diagramSpec.
-Diagram types: triangle, circle, coordinatePlane, quadrilateral, solid (cube/cylinder/cone/sphere/prism/pyramid), composite.
-Use mathematical coordinates. Provide accurate vertices, dimensions, and labels based on the problem's actual values.
+If the problem involves geometry, functions/graphs, or statistics, create an appropriate diagramParams array.
+Use the 26-type structured format:
+- triangle: vertices [{x,y,label}], sideLabels [{from,to,label}], angleLabels [{vertex,value}]
+- quadrilateral: vertices [{x,y,label}], quadType (rectangle|square|parallelogram|trapezoid|rhombus)
+- circle: cx, cy, radius, arcs [{startAngle,endAngle,label}]
+- function_graph: functions [{expression,label}], xRange, yRange, points [{x,y,label}]
+- coordinate_plane: xRange, yRange, points [{x,y,label}]
+- solid_figure: shape (cube|cylinder|cone|sphere|triangular_prism|pyramid), dimensions
+- venn_diagram: sets [{label,elements}], intersectionElements
+Provide accurate coordinates, dimensions, and labels based on the problem's actual values.
 If the problem does not need a diagram, set needsDiagram to false.`;
 
     const response = await ai.models.generateContent({
@@ -78,25 +84,23 @@ If the problem does not need a diagram, set needsDiagram to false.`;
 
     const result = JSON.parse(response.text.trim());
 
-    if (!result.needsDiagram || !result.diagramSpec) {
+    if (!result.needsDiagram || !result.diagramParams || !Array.isArray(result.diagramParams) || result.diagramParams.length === 0) {
       return NextResponse.json({
         data: { needsDiagram: false, message: '이 문제는 도형이 필요하지 않습니다' },
       });
     }
 
-    // diagramSpec이 문자열인 경우 파싱
-    let spec = result.diagramSpec;
-    if (typeof spec === 'string') {
-      spec = JSON.parse(spec);
-    }
+    // Gemini 플랫 응답 → 정규화된 DiagramParam[] 배열
+    const normalized = normalizeDiagramParams(result.diagramParams);
 
     await prisma.question.update({
       where: { id },
-      data: { diagramSpec: spec },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data: { diagramSpec: normalized as any },
     });
 
     return NextResponse.json({
-      data: { needsDiagram: true, diagramSpec: spec },
+      data: { needsDiagram: true, diagramSpec: normalized },
     });
   } catch (error) {
     console.error('Diagram generation error:', error);

@@ -244,17 +244,11 @@ function ViewMode({ selectedQuestion, concepts, onExplanationSaved }: { selected
         <MathRenderer content={selectedQuestion.content} />
       </div>
 
-      {/* Diagram SVG / DiagramSpec */}
-      {(selectedQuestion.diagramSVG || (selectedQuestion.diagramSpec && selectedQuestion.diagramSpec.length > 0)) && (
+      {/* Diagram: diagramSpec(DiagramParam[]) 우선, diagramSVG 폴백 */}
+      {(selectedQuestion.diagramSpec || selectedQuestion.diagramSVG) && (
         <div className="my-4 flex justify-center">
           <div className="w-full max-w-md">
-            {selectedQuestion.diagramSVG ? (
-              <div
-                className="w-full overflow-hidden rounded-sm border border-slate-100 bg-white p-4 [&_svg]:w-full [&_svg]:h-auto"
-                style={{ fontFamily: "'Pretendard', system-ui, sans-serif" }}
-                dangerouslySetInnerHTML={{ __html: selectedQuestion.diagramSVG }}
-              />
-            ) : selectedQuestion.diagramSpec ? (
+            {selectedQuestion.diagramSpec && selectedQuestion.diagramSpec.length > 0 ? (
               <div className="space-y-3">
                 {selectedQuestion.diagramSpec.map((dp, i) => {
                   try {
@@ -266,6 +260,12 @@ function ViewMode({ selectedQuestion, concepts, onExplanationSaved }: { selected
                   } catch { return null; }
                 })}
               </div>
+            ) : selectedQuestion.diagramSVG ? (
+              <div
+                className="w-full overflow-hidden rounded-sm border border-slate-100 bg-white p-4 [&_svg]:w-full [&_svg]:h-auto"
+                style={{ fontFamily: "'Pretendard', system-ui, sans-serif" }}
+                dangerouslySetInnerHTML={{ __html: selectedQuestion.diagramSVG }}
+              />
             ) : null}
           </div>
         </div>

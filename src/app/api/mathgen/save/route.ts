@@ -19,9 +19,12 @@ export async function POST(request: NextRequest) {
       content, choices, answer, explanation,
       bookCode, chapter, section,
       difficulty, type,
-      diagramSpec, diagramSVG,
+      diagramSpec, diagramParams, diagramSVG,
       sourceTag,
     } = body;
+
+    // diagramParams가 있으면 diagramSpec 필드에 DiagramParam[] 배열로 저장
+    const finalDiagramSpec = diagramParams ?? diagramSpec;
 
     if (!content || !answer || !bookCode || !chapter || !difficulty || !type) {
       return badRequest('필수 필드가 누락되었습니다');
@@ -52,7 +55,7 @@ export async function POST(request: NextRequest) {
         explanation: explanation || undefined,
         source: 'AI 문제 생성',
         sourceTag: sourceTag || 'AI 생성',
-        diagramSpec: diagramSpec ?? undefined,
+        diagramSpec: finalDiagramSpec ?? undefined,
         diagramSVG: diagramSVG ?? undefined,
         domain: tags.domain ?? undefined,
         conceptId: tags.conceptId ?? undefined,
