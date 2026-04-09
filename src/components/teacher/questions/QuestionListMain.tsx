@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import {
-  Search,
   Plus,
   FileText,
   Download,
@@ -103,18 +102,6 @@ export function QuestionListMain({
         )}
       </div>
 
-      {/* Search */}
-      <div className="relative w-full">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-        <input
-          className="w-full h-8 pl-8 pr-3 bg-white border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary placeholder:text-slate-400"
-          placeholder="검색어 입력 후 Enter (예: 소인수분해, 이차방정식)..."
-          defaultValue={search}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') setSearch(e.currentTarget.value);
-          }}
-        />
-      </div>
 
       {/* Mobile filter info */}
       <div className="flex lg:hidden items-center gap-2 text-sm text-text-secondary">

@@ -7,6 +7,7 @@ import {
   FolderOpen,
   PanelLeftClose,
   PanelLeftOpen,
+  Search,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { BOOK_LABELS } from '@/types';
@@ -38,6 +39,8 @@ interface QuestionListSidebarProps {
   setSourceFilter: (source: string) => void;
   noExplanation: boolean;
   setNoExplanation: (v: boolean) => void;
+  search: string;
+  setSearch: (s: string) => void;
   typeFilters: Set<string>;
   toggleTypeFilter: (type: string) => void;
   setCurrentPage: (page: number) => void;
@@ -68,6 +71,8 @@ export function QuestionListSidebar({
   setSourceFilter,
   noExplanation,
   setNoExplanation,
+  search,
+  setSearch,
   typeFilters,
   toggleTypeFilter,
   setCurrentPage,
@@ -110,6 +115,19 @@ export function QuestionListSidebar({
 
       {!leftPanelCollapsed && (
         <div className="flex-1 flex flex-col gap-2 p-3 md:p-4 overflow-y-auto">
+          {/* Search */}
+          <div className="relative w-full">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+            <input
+              className="w-full h-8 pl-8 pr-3 bg-white border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary placeholder:text-slate-400"
+              placeholder="문제 검색..."
+              defaultValue={search}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') { setSearch(e.currentTarget.value); setCurrentPage(1); }
+              }}
+            />
+          </div>
+
           {/* School Level Tabs */}
           <Card padding="sm" className="flex flex-col gap-2">
             <div className="flex gap-2 items-center">
