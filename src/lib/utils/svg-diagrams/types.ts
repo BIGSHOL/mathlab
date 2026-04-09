@@ -124,6 +124,8 @@ export interface CoordinatePlaneParams {
   lines?: Line2D[];
   /** 벡터 (화살표 선분) */
   vectors?: { from: Point2D; to: Point2D; label?: string; color?: string }[];
+  /** 눈금 숫자 숨기기 (개념적 스케치용) */
+  hideTickLabels?: boolean;
 }
 
 /** 도형 공통 스타일 옵션 */
@@ -204,6 +206,8 @@ export interface FunctionGraphParams {
   shadedRegions?: { functionIndex: number; xFrom: number; xTo: number; color?: string; opacity?: number }[];
   /** 점근선 (dashed 수직/수평선) */
   asymptotes?: { type: 'vertical' | 'horizontal'; value: number; color?: string }[];
+  /** 눈금 숫자 숨기기 (개념적 스케치용) — true면 축 숫자 라벨 생략 */
+  hideTickLabels?: boolean;
 }
 
 export interface VennSet {

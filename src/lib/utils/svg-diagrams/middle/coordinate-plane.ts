@@ -7,9 +7,17 @@ export function renderCoordinatePlane(params: CoordinatePlaneParams): string {
   const [xMin, xMax] = xRange;
   const [yMin, yMax] = yRange;
 
+  // 범위가 너무 넓으면 눈금 간격 자동 조정 (최대 ~15셀)
+  const xSpan = xMax - xMin;
+  const ySpan = yMax - yMin;
+  const effectiveGridStep = Math.max(
+    gridStep,
+    Math.ceil(Math.max(xSpan, ySpan) / 15),
+  );
+
   const cellSize = 30;
-  const xCells = Math.round((xMax - xMin) / gridStep);
-  const yCells = Math.round((yMax - yMin) / gridStep);
+  const xCells = Math.round(xSpan / effectiveGridStep);
+  const yCells = Math.round(ySpan / effectiveGridStep);
   const gridW = xCells * cellSize;
   const gridH = yCells * cellSize;
   const pad = 30;
@@ -53,22 +61,27 @@ export function renderCoordinatePlane(params: CoordinatePlaneParams): string {
     parts.push(katexLabel(originX, pad - 20, 'y', { fontSize: 13 }));
   }
 
-  // 축 눈금 라벨
-  for (let v = xMin; v <= xMax; v += gridStep) {
+  // 축 눈금 라벨 — hideTickLabels=true면 숫자 생략
+  const hideTicks = params.hideTickLabels === true;
+  for (let v = xMin; v <= xMax; v += effectiveGridStep) {
     if (v === 0) continue;
     const x = toX(v);
     if (yMin <= 0 && yMax >= 0) {
       parts.push(line(x, originY - 3, x, originY + 3, { stroke: axisColor }));
     }
-    parts.push(katexLabel(x, (yMin <= 0 && yMax >= 0 ? originY : pad + gridH) + 16, v.toString(), { fontSize: 11 }));
+    if (!hideTicks) {
+      parts.push(katexLabel(x, (yMin <= 0 && yMax >= 0 ? originY : pad + gridH) + 16, v.toString(), { fontSize: 11 }));
+    }
   }
-  for (let v = yMin; v <= yMax; v += gridStep) {
+  for (let v = yMin; v <= yMax; v += effectiveGridStep) {
     if (v === 0) continue;
     const y = toY(v);
     if (xMin <= 0 && xMax >= 0) {
       parts.push(line(originX - 3, y, originX + 3, y, { stroke: axisColor }));
     }
-    parts.push(katexLabel((xMin <= 0 && xMax >= 0 ? originX : pad) - 14, y, v.toString(), { fontSize: 11 }));
+    if (!hideTicks) {
+      parts.push(katexLabel((xMin <= 0 && xMax >= 0 ? originX : pad) - 14, y, v.toString(), { fontSize: 11 }));
+    }
   }
   // 원점 O
   if (xMin <= 0 && xMax >= 0 && yMin <= 0 && yMax >= 0) {

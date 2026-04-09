@@ -57,15 +57,18 @@ export function renderFunctionGraph(params: FunctionGraphParams): string {
     parts.push(katexLabel(originX, pad - 20, 'y', { fontSize: 13 }));
   }
 
-  // 눈금 — KaTeX foreignObject로 렌더링 (넓은 범위는 자동 간격 조정)
+  // 눈금 — hideTickLabels=true면 눈금선만 표시하고 숫자 생략 (개념적 스케치)
+  const hideTicks = params.hideTickLabels === true;
   for (let v = xMin; v <= xMax; v += effectiveGridStep) {
     if (v === 0) continue;
     const x = toX(v);
     if (yMin <= 0 && yMax >= 0) {
       parts.push(line(x, originY - 3, x, originY + 3, { stroke: '#333' }));
     }
-    const ty = (yMin <= 0 && yMax >= 0 ? originY : pad + gridH) + 16;
-    parts.push(katexLabel(x, ty, v.toString(), { fontSize: 11 }));
+    if (!hideTicks) {
+      const ty = (yMin <= 0 && yMax >= 0 ? originY : pad + gridH) + 16;
+      parts.push(katexLabel(x, ty, v.toString(), { fontSize: 11 }));
+    }
   }
   for (let v = yMin; v <= yMax; v += effectiveGridStep) {
     if (v === 0) continue;
@@ -73,8 +76,10 @@ export function renderFunctionGraph(params: FunctionGraphParams): string {
     if (xMin <= 0 && xMax >= 0) {
       parts.push(line(originX - 3, y, originX + 3, y, { stroke: '#333' }));
     }
-    const tx = (xMin <= 0 && xMax >= 0 ? originX : pad) - 14;
-    parts.push(katexLabel(tx, y, v.toString(), { fontSize: 11 }));
+    if (!hideTicks) {
+      const tx = (xMin <= 0 && xMax >= 0 ? originX : pad) - 14;
+      parts.push(katexLabel(tx, y, v.toString(), { fontSize: 11 }));
+    }
   }
   if (xMin <= 0 && xMax >= 0 && yMin <= 0 && yMax >= 0) {
     parts.push(katexLabel(originX - 12, originY + 14, 'O', { fontSize: 12 }));

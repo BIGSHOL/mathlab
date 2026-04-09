@@ -101,6 +101,11 @@ export const DIAGRAM_PARAM_ITEM_SCHEMA = {
       items: { type: Type.OBJECT, properties: { expression: { type: Type.STRING }, label: { type: Type.STRING } }, required: ['expression'] },
       description: 'function_graph: 함수식 [{expression,label?}]. JS math 문법: +,-,*,/,^ (예: "-3*(x-1)^2+3")',
     },
+    hideTickLabels: {
+      type: Type.BOOLEAN,
+      description: 'coordinate_plane/function_graph: true면 축 눈금 숫자 숨김 (개념적 스케치용). 원본 이미지에 좌표값이 없는 스케치면 true.',
+      nullable: true,
+    },
     // ── 중등 통계 ──
     bins: {
       type: Type.ARRAY,

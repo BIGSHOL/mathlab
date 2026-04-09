@@ -187,7 +187,8 @@ const COMMON_INSTRUCTIONS = `
          - **If Multiple Choice**: MUST start with the choice number in parentheses or circled number, followed by the value (e.g., "(3) 5" or "③ 5").
          - **If Subjective**: Strictly contain the final result (e.g., "5", "$4\\pi$", "x=2"). Do not include the full sentence "The answer is...".
 
-    7. The output MUST be valid JSON.
+    7. **NEVER output the literal string "undefined"** in any field. If a value is unknown, omit it or use an empty string.
+    8. The output MUST be valid JSON.
 
     Language: Korean (한국어)
 `;
@@ -280,6 +281,12 @@ function buildImagePrompt(selection: SelectionState): string {
        - **You MUST include at least one function. NEVER submit an empty function_graph.**
        - Include key points (x-intercepts, vertices) in the "points" array.
        - Do NOT use diagramSVG.
+       - **CRITICAL — MATCH THE ORIGINAL STYLE**:
+         - If the original image shows a **conceptual sketch** (no tick values, just curve shapes + labeled points like O, A, B), you MUST generate the same style.
+         - Set "hideTickLabels": true in the diagramParams to hide coordinate numbers on axes.
+         - Only include the labeled points (O, A, B, etc.) and function labels (y=f(x), y=g(x)) that appear in the original image.
+         - Do NOT compute precise coordinates from the solution and plot them. The diagram is a SKETCH, not a calculator graph.
+         - Use small ranges (xRange:[-3,5], yRange:[-5,5]) just enough to show the curve shapes.
 
     ${COMMON_INSTRUCTIONS}
   `;
@@ -303,22 +310,43 @@ function sanitizeText(text: string): string {
     .replace(/<\s*\/?(?:span|div|p|br|img|center)[^>]*>/gi, '')
     // "< spanclass = ..." 같은 극단적 변형 (공백 포함 꺾쇠 패턴)
     .replace(/<\s*spanclass[^>]*>([\s\S]*?)<\s*\/\s*span\s*>/gi, '$1')
+    // "undefined" 텍스트 제거 (AI가 JS undefined를 출력한 경우)
+    .replace(/\.?undefined/g, '')
     .trim();
 
-  // LaTeX 명령어 연속 표현이 $...$ 밖에 있는 경우 전체를 하나의 $...$로 감싸기
-  // 예: "h\left(-\frac{3}{2}\alpha\right)" → "$h\left(-\frac{3}{2}\alpha\right)$"
-  // 예: "\frac{3}{2}\alpha" → "$\frac{3}{2}\alpha$"
-  s = s.replace(/(?<!\$)(?:[a-zA-Z]*\\(?:frac|left|right|sqrt|alpha|beta|gamma|theta|pi|overline|bar|hat|vec|text)\b[^$\n]*?)(?=[\s,가-힣.]|$)/g, (match) => {
-    // 이미 $로 감싸져 있으면 스킵
-    if (match.startsWith('$') || match.endsWith('$')) return match;
-    // 비어있거나 너무 짧으면 스킵
-    if (match.trim().length < 3) return match;
-    return `$${match.trim()}$`;
-  });
+  // 줄 단위 LaTeX 래핑 — $ 밖에 LaTeX 명령어가 있는 줄을 전체 수식 감지 후 래핑
+  s = s.split('\n').map(l => {
+    // 이미 $$...$$로 감싸진 줄은 건너뜀
+    const trimmed = l.trim();
+    if (trimmed.startsWith('$$') && trimmed.endsWith('$$')) return l;
 
-  // 단일 LaTeX 명령어가 $...$ 밖에 노출된 경우 감싸기
-  // \frac, \geq, \leq, \alpha 등
-  s = s.replace(/(?<!\$)\\(frac|geq|leq|geqslant|leqslant|alpha|beta|gamma|sqrt|pi|theta|neq|pm|mp|times|div|cdot|infty|sum|prod|int|lim|log|ln|sin|cos|tan)\b/g, (match) => {
+    // $ 밖에 LaTeX 명령어(\frac, \left, \overline 등)가 있는지 확인
+    // $...$로 감싸진 영역을 제거한 뒤 검사
+    const outsideDollar = trimmed.replace(/\$[^$]+\$/g, '');
+    const hasBareLaTeX = /\\(?:frac|left|right|sqrt|alpha|beta|gamma|theta|pi|overline|mathrm|bar|hat|vec|times|cdot|leq|geq|neq|pm|mp)\b/.test(outsideDollar);
+
+    if (hasBareLaTeX) {
+      // 수식 줄인지 판별: = 포함하고 대부분 수학기호
+      const stripped = trimmed.replace(/\$/g, '');
+      const isFormulaLine = trimmed.includes('=') && /^[^가-힣]*$/.test(stripped);
+      if (isFormulaLine) {
+        // 순수 수식 줄 → $$...$$로 래핑
+        return `$$${stripped}$$`;
+      }
+      // 혼합 줄: LaTeX 명령어 + 주변 수식 부분을 $ 안에 넣기
+      // 패턴: \cmd{...} 또는 \cmd(...) 체인을 하나의 $...$로 감싸기
+      return l.replace(/(?<!\$)([a-zA-Z0-9()^_+\-=/*.,\s]*\\(?:frac|left|right|sqrt|alpha|beta|gamma|theta|pi|overline|mathrm|bar|hat|vec|times|cdot|leq|geq|neq|pm|mp)[^$가-힣\n]*)/g, (match) => {
+        if (match.includes('$')) return match;
+        const clean = match.trim();
+        if (clean.length < 3) return match;
+        return ` $${clean}$ `;
+      });
+    }
+    return l;
+  }).join('\n');
+
+  // 단일 LaTeX 명령어가 여전히 $...$ 밖에 있으면 개별 래핑
+  s = s.replace(/(?<!\$)\\(frac|geq|leq|geqslant|leqslant|alpha|beta|gamma|sqrt|pi|theta|neq|pm|mp|times|div|cdot|infty|sum|prod|int|lim|overline|mathrm)\b/g, (match) => {
     return `$${match}$`;
   });
 
@@ -327,9 +355,12 @@ function sanitizeText(text: string): string {
     return `$${match}$`;
   });
 
-  // 이중 $$ 오류 정리: $...$$ → $...$, $$...$ → $...$
-  s = s.replace(/\$\$([^$]+)\$/g, '$$$1$');
-  s = s.replace(/\$([^$]+)\$\$/g, '$$$1$');
+  // 이중 $$ 오류 정리: 인라인에서 실수로 $$가 된 경우
+  // $$ 블록 수식(줄 단독)은 보존, 인라인 $$는 $로 교정
+  s = s.replace(/([가-힣\s])\$\$([^$]+)\$\$([가-힣\s])/g, '$1$$$2$$$3');
+
+  // 인접한 $$ 합치기: $expr1$$expr2$ → $expr1 expr2$
+  s = s.replace(/\$([^$]+)\$\$([^$]+)\$/g, '$$$1 $2$');
 
   // 수식 줄 후처리: $가 비정상적으로 배치된 줄 수정
   s = s.split('\n').map(line => {
