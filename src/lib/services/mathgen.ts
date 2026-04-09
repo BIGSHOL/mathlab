@@ -129,6 +129,7 @@ const COMMON_INSTRUCTIONS = `
        - **NO Markdown images**: Do NOT use ![...](...) syntax.
        - **NO PLACEHOLDERS**: Do NOT write "[Diagram]", "[그래프]", or any placeholder text. If a diagram is needed, use the "diagramParams" field.
        - **NO \\dfrac**: NEVER use \\dfrac. Always use \\frac instead. \\dfrac creates oversized fractions in inline math.
+       - **NO \\text{}**: NEVER use \\text{} inside math mode. For labels like O, A, B, just use the plain letter: $O$, $A$, $B$. For Korean text inside math, close the $, write Korean, then reopen $.
        - **NO LINE BREAKS before conditions**: Trailing conditions like "(단, ...)", "(단, $a < b$)", "(정답 2개)" MUST stay on the same line as the preceding sentence. NEVER put them on a new line.
 
     3. [Question Format Rules - CRITICAL]
@@ -295,6 +296,11 @@ function buildImagePrompt(selection: SelectionState): string {
 function sanitizeText(text: string): string {
   if (!text) return text;
   let s = text
+    // 탭/BS/FF 문자 복구 → LaTeX 명령어가 JSON escape로 깨진 경우
+    // \text→tab+"ext", \beta→BS+"eta", \frac→FF+"rac" 복구
+    .replace(/\t(ext|imes|heta|an(?![a-z]))/g, '\\t$1')
+    .replace(/\x08(ar|eta|oldsymbol|f)/g, '\\b$1')
+    .replace(/\x0c(rac|orall)/g, '\\f$1')
     // 리터럴 \n 문자열 → 실제 줄바꿈 (AI가 JSON에서 이스케이프를 잘못한 경우)
     .replace(/\\n/g, '\n')
     .replace(/<img[^>]*>/gi, '')
@@ -464,12 +470,19 @@ export async function generateMathProblem(selection: SelectionState): Promise<Ge
     throw new Error('No content generated.');
   }
 
+  // LaTeX 백슬래시 보호: JSON.parse 전에 \t, \b, \f 등이 탭/BS/FF로 해석되지 않도록
+  // \text → tab+"ext", \frac → FF+"rac", \beta → BS+"eta" 방지
+  // JSON 유효 이스케이프(\", \\, \/, \b, \f, \n, \r, \t, \u)와 충돌하는 LaTeX 명령어 보호
+  function protectLatexInJson(raw: string): string {
+    return raw.replace(/\\([^"\\\/bfnrtu])/g, '\\\\$1');
+  }
+
   let data: GeneratedProblem;
   try {
-    data = JSON.parse(stripCodeFence(response.text!)) as GeneratedProblem;
+    data = JSON.parse(protectLatexInJson(stripCodeFence(response.text!))) as GeneratedProblem;
   } catch {
     // JSON이 잘린 경우 — 닫는 괄호를 추가해서 복구 시도
-    let jsonStr = stripCodeFence(response.text!);
+    let jsonStr = protectLatexInJson(stripCodeFence(response.text!));
     // 열린 문자열 닫기
     const lastQuote = jsonStr.lastIndexOf('"');
     if (lastQuote > 0 && jsonStr.slice(lastQuote + 1).indexOf('"') === -1) {
