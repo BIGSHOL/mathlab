@@ -169,6 +169,7 @@ const COMMON_INSTRUCTIONS = `
          - **venn_diagram**: { diagramType:"venn_diagram", label:"벤 다이어그램", sets:[{label:"A",elements:["1","3"]},{label:"B",elements:["2","4"]}], intersectionElements:["5"] }
        - **Functions format**: JS math syntax — +,-,*,/,^ (e.g., "x^2+3*x-1"). Supports sin,cos,tan,sqrt,abs,log,ln,pi,e.
        - **NEVER generate an empty function_graph without functions.**
+       - **KEEP RANGES SMALL**: Use conceptual/schematic ranges (e.g., xRange:[-3,5], yRange:[-4,6]). Do NOT compute exact function values to set ranges. Maximum range span should be ~10-12 units per axis.
        - **diagramSVG**: ONLY as fallback for shapes that cannot be expressed by the 26 types.
        - **NEVER use HTML tags (span, div, etc.) in the question text to reference diagrams.**
 
@@ -180,6 +181,8 @@ const COMMON_INSTRUCTIONS = `
          - **EVERY mathematical expression in the solution MUST be wrapped in $...$ or $$...$$. NO EXCEPTIONS.**
          - A line that is entirely a formula MUST be wrapped in $$...$$ (block math).
          - NEVER mix bare math with $...$ in the same line (e.g., WRONG: "f'(x) = 12x^3 - $x^2$"). Either wrap the ENTIRE expression or use block math.
+         - NEVER use \alpha, \beta, \frac, \left, \right OUTSIDE of $...$. ALL LaTeX commands MUST be inside delimiters.
+         - WRONG: "점 B의 x좌표가 \alpha이므로" → CORRECT: "점 B의 $x$좌표가 $\\alpha$이므로"
        - **Answer Field**:
          - **If Multiple Choice**: MUST start with the choice number in parentheses or circled number, followed by the value (e.g., "(3) 5" or "③ 5").
          - **If Subjective**: Strictly contain the final result (e.g., "5", "$4\\pi$", "x=2"). Do not include the full sentence "The answer is...".
@@ -302,17 +305,31 @@ function sanitizeText(text: string): string {
     .replace(/<\s*spanclass[^>]*>([\s\S]*?)<\s*\/\s*span\s*>/gi, '$1')
     .trim();
 
-  // LaTeX 명령어가 $...$ 밖에 노출된 경우 감싸기
-  // \frac, \geq, \leq, \alpha, \beta, \sqrt 등이 $ 밖에 있으면 래핑
+  // LaTeX 명령어 연속 표현이 $...$ 밖에 있는 경우 전체를 하나의 $...$로 감싸기
+  // 예: "h\left(-\frac{3}{2}\alpha\right)" → "$h\left(-\frac{3}{2}\alpha\right)$"
+  // 예: "\frac{3}{2}\alpha" → "$\frac{3}{2}\alpha$"
+  s = s.replace(/(?<!\$)(?:[a-zA-Z]*\\(?:frac|left|right|sqrt|alpha|beta|gamma|theta|pi|overline|bar|hat|vec|text)\b[^$\n]*?)(?=[\s,가-힣.]|$)/g, (match) => {
+    // 이미 $로 감싸져 있으면 스킵
+    if (match.startsWith('$') || match.endsWith('$')) return match;
+    // 비어있거나 너무 짧으면 스킵
+    if (match.trim().length < 3) return match;
+    return `$${match.trim()}$`;
+  });
+
+  // 단일 LaTeX 명령어가 $...$ 밖에 노출된 경우 감싸기
+  // \frac, \geq, \leq, \alpha 등
   s = s.replace(/(?<!\$)\\(frac|geq|leq|geqslant|leqslant|alpha|beta|gamma|sqrt|pi|theta|neq|pm|mp|times|div|cdot|infty|sum|prod|int|lim|log|ln|sin|cos|tan)\b/g, (match) => {
     return `$${match}$`;
   });
 
-  // x^n, a^2 등 $ 밖의 거듭제곱 패턴 래핑 (단, 이미 $ 안에 있는 것 제외)
-  // 안전하게: 단어경계 + 변수^숫자 패턴만
+  // x^n, a^2 등 $ 밖의 거듭제곱 패턴 래핑
   s = s.replace(/(?<!\$)(?<!\w)([a-zA-Z]\^[\d{][^$\s,.)]*)/g, (match) => {
     return `$${match}$`;
   });
+
+  // 이중 $$ 오류 정리: $...$$ → $...$, $$...$ → $...$
+  s = s.replace(/\$\$([^$]+)\$/g, '$$$1$');
+  s = s.replace(/\$([^$]+)\$\$/g, '$$$1$');
 
   // 수식 줄 후처리: $가 비정상적으로 배치된 줄 수정
   s = s.split('\n').map(line => {

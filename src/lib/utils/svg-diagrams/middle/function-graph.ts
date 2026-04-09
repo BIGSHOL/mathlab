@@ -7,9 +7,17 @@ export function renderFunctionGraph(params: FunctionGraphParams): string {
   const [xMin, xMax] = xRange;
   const [yMin, yMax] = yRange;
 
+  // 범위가 너무 넓으면 눈금 간격 자동 조정 (최대 ~15셀로 제한)
+  const xSpan = xMax - xMin;
+  const ySpan = yMax - yMin;
+  const effectiveGridStep = Math.max(
+    gridStep,
+    Math.ceil(Math.max(xSpan, ySpan) / 15),
+  );
+
   const cellSize = 30;
-  const xCells = Math.round((xMax - xMin) / gridStep);
-  const yCells = Math.round((yMax - yMin) / gridStep);
+  const xCells = Math.round(xSpan / effectiveGridStep);
+  const yCells = Math.round(ySpan / effectiveGridStep);
   const gridW = xCells * cellSize;
   const gridH = yCells * cellSize;
   const pad = 30;
@@ -49,8 +57,8 @@ export function renderFunctionGraph(params: FunctionGraphParams): string {
     parts.push(katexLabel(originX, pad - 20, 'y', { fontSize: 13 }));
   }
 
-  // 눈금 — KaTeX foreignObject로 렌더링 (흰색 배경 불필요 — foreignObject 자체가 배경)
-  for (let v = xMin; v <= xMax; v += gridStep) {
+  // 눈금 — KaTeX foreignObject로 렌더링 (넓은 범위는 자동 간격 조정)
+  for (let v = xMin; v <= xMax; v += effectiveGridStep) {
     if (v === 0) continue;
     const x = toX(v);
     if (yMin <= 0 && yMax >= 0) {
@@ -59,7 +67,7 @@ export function renderFunctionGraph(params: FunctionGraphParams): string {
     const ty = (yMin <= 0 && yMax >= 0 ? originY : pad + gridH) + 16;
     parts.push(katexLabel(x, ty, v.toString(), { fontSize: 11 }));
   }
-  for (let v = yMin; v <= yMax; v += gridStep) {
+  for (let v = yMin; v <= yMax; v += effectiveGridStep) {
     if (v === 0) continue;
     const y = toY(v);
     if (xMin <= 0 && xMax >= 0) {

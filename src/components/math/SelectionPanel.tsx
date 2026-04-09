@@ -11,7 +11,7 @@ import {
 } from '@/types/mathgen';
 import { getCurriculumForLevel, getGradesForLevel } from '@/lib/constants/curriculum';
 import { getTextbooksForGrade, getPublisher } from '@/lib/constants/textbook-curriculum';
-import { BookOpen, Layers, Zap, PenTool, Upload, X, ImageIcon, Copy } from 'lucide-react';
+import { BookOpen, Layers, Zap, PenTool, Upload, X, ImageIcon, Copy, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
 interface SelectionPanelProps {
   selection: SelectionState;
@@ -24,6 +24,7 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
   const [availableMainUnits, setAvailableMainUnits] = useState<CurriculumUnit[]>([]);
   const [availableSubUnits, setAvailableSubUnits] = useState<CurriculumUnit[]>([]);
   const [availableDetailUnits, setAvailableDetailUnits] = useState<CurriculumUnit[]>([]);
+  const [collapsed, setCollapsed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (field: keyof SelectionState, value: unknown) => {
@@ -125,17 +126,41 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
   };
 
   return (
-    <div className="w-full lg:w-80 bg-white border-r border-slate-200 h-full flex flex-col print:hidden shadow-lg z-10">
-      <div className="p-6 border-b border-slate-100">
-        <h1 className="text-xl font-bold text-text-primary flex items-center gap-2">
-          <PenTool className="text-primary" size={22} />
-          AI 문제 생성기
-        </h1>
-        <p className="text-xs text-text-secondary mt-1">2022 개정 교육과정 기반</p>
+    <div className={`${collapsed ? 'w-12' : 'w-full lg:w-80'} bg-white border-r border-slate-200 h-full flex flex-col print:hidden shadow-lg z-10 transition-all duration-200`}>
+      <div className={`border-b border-slate-100 flex items-center ${collapsed ? 'p-3 justify-center' : 'p-6'}`}>
+        {!collapsed && (
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl font-bold text-text-primary flex items-center gap-2">
+              <PenTool className="text-primary" size={22} />
+              AI 문제 생성기
+            </h1>
+            <p className="text-xs text-text-secondary mt-1">2022 개정 교육과정 기반</p>
+          </div>
+        )}
+        <button
+          onClick={() => setCollapsed((p) => !p)}
+          className="p-1 hover:bg-slate-100 rounded-sm text-text-secondary transition-colors shrink-0"
+          title={collapsed ? '패널 열기' : '패널 접기'}
+        >
+          {collapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+        </button>
       </div>
 
+      {collapsed && (
+        <div className="flex flex-col items-center gap-2 py-3">
+          <button
+            onClick={onGenerate}
+            disabled={isGenerateDisabled()}
+            className={`p-2 rounded-sm transition-colors ${isGenerateDisabled() ? 'text-slate-300' : 'text-primary hover:bg-primary/10'}`}
+            title="문제 생성"
+          >
+            <PenTool size={18} />
+          </button>
+        </div>
+      )}
+
       {/* Mode Tabs */}
-      <div className="flex border-b border-slate-200">
+      {!collapsed && <><div className="flex border-b border-slate-200">
         <button
           onClick={() => handleChange('mode', 'curriculum')}
           className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors relative ${
@@ -524,6 +549,7 @@ export function SelectionPanel({ selection, onChange, onGenerate, isLoading }: S
           )}
         </button>
       </div>
+      </>}
     </div>
   );
 }

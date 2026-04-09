@@ -7,7 +7,7 @@ import { ProblemDisplay } from '@/components/math/ProblemDisplay';
 import { useDemo } from '@/hooks/useDemo';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
-import { Save } from 'lucide-react';
+import { Save, ArrowLeft } from 'lucide-react';
 import {
   SelectionState,
   GeneratedProblem,
@@ -140,8 +140,23 @@ export default function GeneratePage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-64px)] w-full bg-background print:h-auto print:bg-white print:block">
-      <div className="flex w-full h-full overflow-hidden print:h-auto print:overflow-visible print:block">
+    <div className="flex flex-col h-[calc(100vh-64px)] w-full bg-background print:h-auto print:bg-white print:block">
+      {/* 상단 네비게이션 바 */}
+      <div className="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center gap-3 print:hidden">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push('/questions')}
+          className="gap-1.5"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          문제 은행
+        </Button>
+        <span className="text-slate-300">|</span>
+        <h1 className="text-sm font-semibold text-slate-700">AI 문제 생성</h1>
+      </div>
+
+      <div className="flex flex-1 min-h-0 w-full overflow-hidden print:h-auto print:overflow-visible print:block">
         <SelectionPanel
           selection={selection}
           onChange={setSelection}
@@ -149,7 +164,7 @@ export default function GeneratePage() {
           isLoading={isLoading}
         />
 
-        <div className="flex-1 flex flex-col h-full relative print:h-auto print:w-full print:block">
+        <div className="flex-1 flex flex-col min-h-0 relative print:h-auto print:w-full print:block">
           {/* Curriculum breadcrumb / Mode label */}
           {problem && (
             <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between print:hidden">
