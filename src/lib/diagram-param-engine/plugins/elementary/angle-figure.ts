@@ -12,6 +12,8 @@ export const angleFigurePlugin: DiagramPlugin<AngleFigureParams> = {
       label: p.label as string,
       ray1Angle: num(p.ray1Angle ?? p.startAngle ?? 0, 0),
       color: p.color as string,
+      additionalAngles: Array.isArray(p.additionalAngles) ? p.additionalAngles : undefined,
+      parallelLines: Array.isArray(p.parallelLines) ? p.parallelLines : undefined,
     };
   },
   render: renderAngleFigure,

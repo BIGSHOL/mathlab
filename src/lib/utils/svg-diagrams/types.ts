@@ -301,8 +301,8 @@ export interface AngleFigureParams {
   label?: string;
   ray1Angle?: number;
   color?: string;
-  /** 추가 각도 표시 (다중 각도) */
-  additionalAngles?: { angle: number; label?: string; color?: string }[];
+  /** 추가 각도 표시 (다중 각도, 누적 방식) */
+  additionalAngles?: { angle: number; label?: string; color?: string; showArc?: boolean }[];
   /** 평행선 + 횡단선 패턴 */
   parallelLines?: { transversalAngle: number; spacing?: number }[];
 }

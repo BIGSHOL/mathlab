@@ -138,6 +138,42 @@ export function renderTriangle(spec: TriangleDiagram): string {
     }
   }
 
+  // 외각 연장선 + 외각 호
+  if (spec.exteriorAngles) {
+    for (const ext of spec.exteriorAngles) {
+      const { vertex: vi, extendFrom: fi, value, extensionLength = 50 } = ext;
+      if (vi < 0 || vi > 2 || fi < 0 || fi > 2 || vi === fi) continue;
+
+      const vPt = vertices[vi];      // 꼭짓점
+      const fPt = vertices[fi];      // 연장할 변의 반대쪽 점
+
+      // 연장 방향: fPt → vPt를 넘어서 연장
+      const dx = vPt[0] - fPt[0];
+      const dy = vPt[1] - fPt[1];
+      const len = Math.sqrt(dx * dx + dy * dy) || 1;
+      const ux = dx / len, uy = dy / len;
+      const extEnd: Point = [vPt[0] + ux * extensionLength, vPt[1] + uy * extensionLength];
+
+      // 연장선 (점선)
+      parts.push(prim.line(vPt, extEnd, { dashed: true, strokeWidth: 1.5, color: '#666' }));
+
+      // 외각 호: 연장선 끝 방향 ~ 다른 변 방향 사이의 호
+      const otherIdx = [0, 1, 2].find(i => i !== vi && i !== fi)!;
+      const oPt = vertices[otherIdx];
+      const extAngle = angleBetween(vPt, extEnd);
+      const otherAngle = angleBetween(vPt, oPt);
+      parts.push(prim.path(arcPath(vPt[0], vPt[1], 22, toDegrees(otherAngle), toDegrees(extAngle)), { color: '#E65100' }));
+
+      // 외각 값 라벨
+      if (value) {
+        const midAngle = (extAngle + otherAngle) / 2;
+        const lx = vPt[0] + Math.cos(midAngle) * 34;
+        const ly = vPt[1] + Math.sin(midAngle) * 34;
+        parts.push(prim.text(lx, ly, value, { fontSize: 12, color: '#E65100' }));
+      }
+    }
+  }
+
   // 변의 길이 표시
   if (showLengths) {
     const center: Point = [

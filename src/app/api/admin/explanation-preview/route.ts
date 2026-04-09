@@ -13,7 +13,7 @@ const DIFFICULTY_GUIDE: Record<string, string> = {
   BASIC: '1~2줄 (150자 이내). 계산 과정만. 설명·개념 언급 금지.',
   MEDIUM: '2~3줄 (200자 이내). 핵심 풀이만 간결하게.',
   HIGH: '3~4줄 (300자 이내). **전략** 한 줄 + **풀이**.',
-  HIGHEST: '4~6줄 (500자 이내). **전략** → **풀이** → **핵심 포인트**. 장황 금지.',
+  HIGHEST: '최대 300자. **전략** 1줄 → **풀이** 핵심 계산만 → **핵심 포인트** 1줄. 절대 300자 초과 금지.',
 };
 
 function buildPrompt(q: {
@@ -46,7 +46,10 @@ function buildPrompt(q: {
   빈 줄(\\n\\n) 위치: **전략** 뒤, **핵심 포인트** 앞. 이 두 곳에 반드시 빈 줄을 넣어라.
 - **글자 수 제한을 반드시 지켜라.** 위 난이도별 글자 수를 초과하면 안 됨.
 - 중학교 교과서 해설 수준. 수능 해설처럼 길고 상세하게 쓰지 마라.
-- 보기 하나하나 검증하는 식의 나열 금지. 정답 도출 과정만 간결하게.
+- 객관식: 정답 보기만 풀이하라. 오답 보기를 하나하나 검증하지 마라.
+- 객관식 풀이에서 보기를 언급할 때 반드시 번호를 붙여라 (예: "①번: ...", "③번: ...").
+- 어떤 난이도든 절대 300자를 넘기지 마라. 중간 과정을 생략하고 핵심 단계만 써라.
+- 서술형이라도 풀이를 장황하게 쓰지 마라. 핵심 식 전개 → 답 도출만.
 
 반환 형식 (순수 JSON, 코드펜스 없이):
 {"answer": "정답 문자열", "explanation": "해설 문자열", "answerChanged": true/false}
@@ -161,71 +164,89 @@ export async function POST(req: NextRequest) {
     return difficulty === 'HIGH' || difficulty === 'HIGHEST' ? 'thinking' : 'noThinking';
   }
 
-  for (const q of questions) {
-    const prompt = buildPrompt(q);
-    const effectiveMode = resolveMode(q.difficulty);
-    results[q.id] = { question: q };
+  // NDJSON 스트리밍: 문제별로 실시간 전송
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      let idx = 0;
+      for (const q of questions) {
+        idx++;
+        const prompt = buildPrompt(q);
+        const effectiveMode = resolveMode(q.difficulty);
+        const result: typeof results[string] = { question: q };
 
-    // Non-Thinking
-    if (effectiveMode === 'noThinking' || effectiveMode === 'both') {
-      const start = Date.now();
-      try {
-        const res = await client.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          config: {
-            temperature: 0.3,
-            responseMimeType: 'application/json',
-            responseSchema,
-          },
-        });
-        const usage = res.usageMetadata;
-        const parsed = parseGenResponse(res.text || '');
-        results[q.id].noThinking = {
-          ...parsed,
-          time: Date.now() - start,
-          inputTokens: usage?.promptTokenCount,
-          outputTokens: usage?.candidatesTokenCount,
-        };
-      } catch (e) {
-        results[q.id].noThinking = {
-          text: `오류: ${e instanceof Error ? e.message : String(e)}`,
-          time: Date.now() - start,
-        };
+        // Non-Thinking
+        if (effectiveMode === 'noThinking' || effectiveMode === 'both') {
+          const start = Date.now();
+          try {
+            const res = await client.models.generateContent({
+              model: 'gemini-2.5-flash',
+              contents: [{ role: 'user', parts: [{ text: prompt }] }],
+              config: {
+                temperature: 0.3,
+                responseMimeType: 'application/json',
+                responseSchema,
+              },
+            });
+            const usage = res.usageMetadata;
+            const parsed = parseGenResponse(res.text || '');
+            result.noThinking = {
+              ...parsed,
+              time: Date.now() - start,
+              inputTokens: usage?.promptTokenCount,
+              outputTokens: usage?.candidatesTokenCount,
+            };
+          } catch (e) {
+            result.noThinking = {
+              text: `오류: ${e instanceof Error ? e.message : String(e)}`,
+              time: Date.now() - start,
+            };
+          }
+        }
+
+        // Thinking
+        if (effectiveMode === 'thinking' || effectiveMode === 'both') {
+          const start = Date.now();
+          try {
+            const res = await client.models.generateContent({
+              model: 'gemini-2.5-flash',
+              contents: [{ role: 'user', parts: [{ text: prompt }] }],
+              config: {
+                temperature: 0.3,
+                responseMimeType: 'application/json',
+                responseSchema,
+                thinkingConfig: { thinkingBudget: 512 },
+              },
+            });
+            const usage = res.usageMetadata;
+            const parsed = parseGenResponse(res.text || '');
+            result.thinking = {
+              ...parsed,
+              time: Date.now() - start,
+              inputTokens: usage?.promptTokenCount,
+              outputTokens: usage?.candidatesTokenCount,
+              thinkingTokens: (usage as Record<string, number>)?.thoughtsTokenCount,
+            };
+          } catch (e) {
+            result.thinking = {
+              text: `오류: ${e instanceof Error ? e.message : String(e)}`,
+              time: Date.now() - start,
+            };
+          }
+        }
+
+        // 문제별로 NDJSON 전송
+        const line = JSON.stringify({ id: q.id, idx, total: questions.length, result }) + '\n';
+        controller.enqueue(encoder.encode(line));
       }
-    }
+      controller.close();
+    },
+  });
 
-    // Thinking
-    if (effectiveMode === 'thinking' || effectiveMode === 'both') {
-      const start = Date.now();
-      try {
-        const res = await client.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          config: {
-            temperature: 0.3,
-            responseMimeType: 'application/json',
-            responseSchema,
-            thinkingConfig: { thinkingBudget: 1024 },
-          },
-        });
-        const usage = res.usageMetadata;
-        const parsed = parseGenResponse(res.text || '');
-        results[q.id].thinking = {
-          ...parsed,
-          time: Date.now() - start,
-          inputTokens: usage?.promptTokenCount,
-          outputTokens: usage?.candidatesTokenCount,
-          thinkingTokens: (usage as Record<string, number>)?.thoughtsTokenCount,
-        };
-      } catch (e) {
-        results[q.id].thinking = {
-          text: `오류: ${e instanceof Error ? e.message : String(e)}`,
-          time: Date.now() - start,
-        };
-      }
-    }
-  }
-
-  return NextResponse.json({ data: results });
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'application/x-ndjson',
+      'Cache-Control': 'no-cache',
+    },
+  });
 }

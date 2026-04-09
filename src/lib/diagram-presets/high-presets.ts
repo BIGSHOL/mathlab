@@ -489,4 +489,126 @@ export const HIGH_PRESETS: DiagramPreset[] = [
     diagramType: 'tree_diagram',
     defaultParams: { root: { label: '전체', children: [{ label: 'A', probability: 'P(A)', children: [{ label: 'B', probability: 'P(B|A)' }, { label: 'Bᶜ', probability: 'P(Bᶜ|A)' }] }, { label: 'Aᶜ', probability: 'P(Aᶜ)', children: [{ label: 'B', probability: 'P(B|Aᶜ)' }, { label: 'Bᶜ', probability: 'P(Bᶜ|Aᶜ)' }] }] }, title: '조건부확률', orientation: 'horizontal' },
   },
+
+  // ═══════════════════════════════════════
+  // 추가 프리셋 — Tier 1 (교육 필수)
+  // ═══════════════════════════════════════
+  {
+    id: 'h-stat-normal-sigma',
+    name: '정규분포 σ 구간',
+    description: '±1σ, ±2σ, ±3σ 구간',
+    schoolLevel: 'high',
+    gradeKey: '확률과 통계',
+    chapter: '통계',
+    diagramType: 'function_graph',
+    defaultParams: { xRange: [-4, 4], yRange: [-0.05, 0.5], gridStep: 1, functions: [{ expression: 'exp(-x^2/2)/sqrt(2*3.14159)', label: 'N(0,1)' }], points: [{ x: -1, y: 0, label: '-σ' }, { x: 1, y: 0, label: 'σ' }, { x: -2, y: 0, label: '-2σ' }, { x: 2, y: 0, label: '2σ' }] },
+  },
+
+  // ═══════════════════════════════════════
+  // 추가 프리셋 — Tier 2 (교육 효과 높음)
+  // ═══════════════════════════════════════
+  {
+    id: 'h-alg-exp-log-inverse',
+    name: '지수-로그 역함수',
+    description: 'y=2ˣ와 y=log₂x는 y=x 대칭',
+    schoolLevel: 'high',
+    gradeKey: '대수',
+    chapter: '지수함수와 로그함수',
+    diagramType: 'function_graph',
+    defaultParams: { xRange: [-4, 6], yRange: [-4, 6], gridStep: 1, functions: [{ expression: '2^x', label: 'y=2ˣ', color: '#3B82F6' }, { expression: 'log(x)/log(2)', label: 'y=log₂x', color: '#EF4444' }, { expression: 'x', label: 'y=x', color: '#9CA3AF' }], points: [{ x: 0, y: 1, label: '' }, { x: 1, y: 0, label: '' }] },
+  },
+  {
+    id: 'h-alg-trig-transform',
+    name: '삼각함수 변환',
+    description: '진폭·주기·위상 변환',
+    schoolLevel: 'high',
+    gradeKey: '대수',
+    chapter: '삼각함수',
+    diagramType: 'function_graph',
+    defaultParams: { xRange: [-7, 7], yRange: [-3, 3], gridStep: 1, functions: [{ expression: 'sin(x)', label: 'y=sin x', color: '#9CA3AF' }, { expression: '2*sin(x)', label: 'y=2sin x', color: '#3B82F6' }, { expression: 'sin(2*x)', label: 'y=sin 2x', color: '#EF4444' }], points: [] },
+  },
+  {
+    id: 'h-geo-parabola-focus',
+    name: '포물선 초점·준선',
+    description: '초점 F와 준선 표시',
+    schoolLevel: 'high',
+    gradeKey: '기하',
+    chapter: '이차곡선',
+    diagramType: 'coordinate_plane',
+    defaultParams: { xRange: [-2, 8], yRange: [-5, 5], gridStep: 1, points: [{ x: 1, y: 0, label: 'F(1,0)' }, { x: 0, y: 0, label: 'O' }], lines: [{ points: [{ x: -1, y: -5 }, { x: -1, y: 5 }], color: '#EF4444', style: 'dashed' }] },
+  },
+  {
+    id: 'h-geo-ellipse-def',
+    name: '타원 정의',
+    description: 'PF₁ + PF₂ = 2a',
+    schoolLevel: 'high',
+    gradeKey: '기하',
+    chapter: '이차곡선',
+    diagramType: 'coordinate_plane',
+    defaultParams: { xRange: [-6, 6], yRange: [-4, 4], gridStep: 1, points: [{ x: -3, y: 0, label: 'F₁' }, { x: 3, y: 0, label: 'F₂' }, { x: 0, y: 0, label: 'O' }, { x: 4, y: 0, label: 'a' }, { x: 0, y: 2.6, label: 'b' }], lines: [{ points: [{ x: -3, y: 0 }, { x: 2, y: 2.6 }], color: '#3B82F6', style: 'dashed' }, { points: [{ x: 3, y: 0 }, { x: 2, y: 2.6 }], color: '#3B82F6', style: 'dashed' }] },
+  },
+  {
+    id: 'h-cm1-cubic',
+    name: '삼차함수',
+    description: 'y = x³ - 3x 그래프',
+    schoolLevel: 'high',
+    gradeKey: '공통수학1',
+    chapter: '방정식과 부등식',
+    diagramType: 'function_graph',
+    defaultParams: { xRange: [-3, 3], yRange: [-4, 4], gridStep: 1, functions: [{ expression: 'x^3-3*x', label: 'y=x³-3x' }], points: [{ x: -1, y: 2, label: '극대' }, { x: 1, y: -2, label: '극소' }] },
+  },
+
+  // ═══════════════════════════════════════
+  // 추가 프리셋 — Tier 3 (활용도 보완)
+  // ═══════════════════════════════════════
+  {
+    id: 'h-cm2-asymptote',
+    name: '점근선 시각화',
+    description: '유리함수의 점근선',
+    schoolLevel: 'high',
+    gradeKey: '공통수학2',
+    chapter: '함수와 그래프',
+    diagramType: 'function_graph',
+    defaultParams: { xRange: [-6, 8], yRange: [-6, 8], gridStep: 1, functions: [{ expression: '1/(x-1)+2', label: 'y=1/(x-1)+2', color: '#3B82F6' }], points: [{ x: 1, y: 8, label: 'x=1' }, { x: -6, y: 2, label: 'y=2' }] },
+  },
+  {
+    id: 'h-calc1-riemann',
+    name: '리만합 (정적분 정의)',
+    description: '구분구적법 직사각형 근사',
+    schoolLevel: 'high',
+    gradeKey: '미적분I',
+    chapter: '적분',
+    diagramType: 'function_graph',
+    defaultParams: { xRange: [-1, 4], yRange: [-1, 10], gridStep: 1, functions: [{ expression: 'x^2', label: 'y=x²' }], points: [{ x: 0, y: 0, label: 'a=0' }, { x: 3, y: 0, label: 'b=3' }] },
+  },
+  {
+    id: 'h-calc1-mvt',
+    name: '평균값 정리',
+    description: '접선과 할선이 평행',
+    schoolLevel: 'high',
+    gradeKey: '미적분I',
+    chapter: '미분',
+    diagramType: 'function_graph',
+    defaultParams: { xRange: [-1, 5], yRange: [-1, 6], gridStep: 1, functions: [{ expression: 'sqrt(x)', label: 'y=√x', color: '#3B82F6' }], points: [{ x: 1, y: 1, label: 'a' }, { x: 4, y: 2, label: 'b' }] },
+  },
+  {
+    id: 'h-geo-3d-axes',
+    name: '공간좌표 (3차원)',
+    description: 'x, y, z축 좌표계',
+    schoolLevel: 'high',
+    gradeKey: '기하',
+    chapter: '공간도형과 공간좌표',
+    diagramType: 'solid_figure',
+    defaultParams: { shape: 'cube', labels: [{ text: 'x', position: 'width' }, { text: 'y', position: 'depth' }, { text: 'z', position: 'height' }], showHiddenEdges: true, color: '#3B82F6' },
+  },
+  {
+    id: 'h-geo-hyperbola-def',
+    name: '쌍곡선 정의',
+    description: '|PF₁ - PF₂| = 2a',
+    schoolLevel: 'high',
+    gradeKey: '기하',
+    chapter: '이차곡선',
+    diagramType: 'coordinate_plane',
+    defaultParams: { xRange: [-6, 6], yRange: [-5, 5], gridStep: 1, points: [{ x: -4, y: 0, label: 'F₁' }, { x: 4, y: 0, label: 'F₂' }, { x: 0, y: 0, label: 'O' }], lines: [{ points: [{ x: -6, y: -4.5 }, { x: 6, y: 4.5 }], color: '#9CA3AF', style: 'dashed' }, { points: [{ x: -6, y: 4.5 }, { x: 6, y: -4.5 }], color: '#9CA3AF', style: 'dashed' }] },
+  },
 ];

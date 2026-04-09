@@ -241,7 +241,9 @@ src/
 │   │   └── svg-diagrams/  # SVG 다이어그램 렌더링 시스템 (26개 타입)
 │   ├── pdf-extract-engine/  # PDF 추출 엔진 (core, ai, hooks, presets — 14파일)
 │   ├── exam-analysis/       # 기출 분석 (types, constants, agents, article-generator, chart-image, nearby-school — 5대 영역/4대 능력/5단계 난이도)
-│   ├── diagram/       # 프리셋 기반 구조화 다이어그램 시스템 (DiagramSpec)
+│   ├── diagram/       # 프리셋 기반 구조화 다이어그램 시스템 (DiagramSpec 6유형)
+│   ├── diagram-presets/   # 교육과정별 다이어그램 프리셋 (초65+중58+고45=168개)
+│   ├── diagram-param-engine/  # 플러그인 기반 normalize→render 엔진 (26개 플러그인)
 │   ├── constants/     # 교육과정 데이터, 연산 카테고리, 라벨, 시험전략, 학교(6,004개 GPS), 교재
 │   └── data/          # 정적 데이터 (업데이트 로그, 도움말)
 ├── hooks/             # useAuth, useLearning, useGamification, useFeatureFlags, useBadgeCheck, useSpeed, useFetch, useTests, usePreviewScale, useLicenses, useQuestions 등
@@ -283,6 +285,19 @@ Grade 코드: `elementary_3`, `middle_1`, `high_algebra` 등
 - **고등**: 3단계 — chapter = 대단원 (예: "다항식", "방정식과 부등식"), section/sectionSub = 중/소단원
 - 고등 grade 매핑: `high_1`→공통수학1, `high_2`→공통수학2, `high_algebra`→대수, `high_calculus1`→미적분I, `high_prob`→확률과 통계, `high_calculus2`→미적분II, `high_geo`→기하
 - 개념 편집기 드롭다운은 `curriculum.ts`의 **정확한 문자열**과 매칭 → DB chapter/section 값은 반드시 curriculum.ts와 일치해야 함
+
+**⚠️ 문제(Question) 단원 매핑 — 절대 규칙:**
+- **chapter/section 값은 반드시 `curriculum.ts`의 정확한 문자열이어야 한다.** 출판사별 변형 단원명 사용 금지.
+- PDF 추출, AI 생성, 수동 등록 등 어떤 경로든 문제 저장 전에 curriculum.ts 표준 단원명으로 매핑할 것.
+- PDF 추출 프롬프트에 해당 학년의 curriculum.ts 단원 목록을 반드시 주입하여 AI가 표준 단원명만 반환하도록 강제.
+- 정규화 스크립트: `npx tsx scripts/normalize-chapters.ts --apply`
+
+**⚠️ questionNum — 절대 규칙:**
+- 같은 `bookCode + chapter` 내에서 `questionNum`은 **1번부터 시작하는 유일한 순번**이어야 한다. 중복 금지.
+- 순서: section → 등록일시(createdAt) 순으로 정렬 후 대단원별 1번부터 부여.
+- 새 문제 추가 시: 해당 `bookCode + chapter`의 `MAX(questionNum) + 1`로 부여.
+- 일괄 추출 후: `scripts/normalize-chapters.ts`로 전체 재정렬 가능.
+- UI 표시: "소인수분해 #15" = 소인수분해 단원의 15번째 문제.
 
 ### 연산 생성기
 
@@ -352,26 +367,54 @@ Additive 구조 — 상위 역할이 하위 역할 메뉴를 포함 (`src/lib/co
 
 ### SVG 다이어그램 시스템
 
-두 가지 병렬 시스템이 존재:
+두 가지 병렬 시스템이 존재하며, DB에는 `diagramSpec Json?` (구조화) + `diagramSVG String?` (레거시 1개) 필드로 저장:
 
-**1. SVG-Diagrams (26개 타입)** — `src/lib/utils/svg-diagrams/`
+**1. DiagramParam[] (SVG-Diagrams, 26개 타입)** — `src/lib/utils/svg-diagrams/`
+- 용도: PDF 추출 시 Gemini가 반환하는 파라미터 배열 → SVG 렌더링
 - 진입점: `renderDiagram(data)` in `index.ts`
 - 공유 유틸: `svg-utils.ts` (svgWrap, line, text, katexLabel, circle, rect, arrowHead, COLORS)
 - 각 타입별 normalize 함수가 Gemini의 불규칙한 파라미터명 처리
 - **초등 (13):** number_line, fraction_circle, fraction_rect, place_value, dot_array, flow_chart, bar_chart, line_graph, picture_graph, pie_chart, band_chart, angle_figure, clock_face
 - **중등 (13):** coordinate_plane, circle, triangle, quadrilateral, function_graph, venn_diagram, regular_polygon, histogram, stem_leaf, solid_figure, net_diagram, tree_diagram, scatter_plot
+  - `shapes.ts`에 circle/triangle/quadrilateral/regular_polygon 4개 서브렌더러 통합
 
-**2. DiagramSpec (프리셋 기반)** — `src/lib/diagram/`
-- 프리셋 기반 좌표 계산 (`preset: 'right' | 'equilateral' | 'isosceles'` 등)
-- AI가 좌표 대신 프리셋을 선택 → 정확한 도형 생성
-- 타입: triangle, circle, quadrilateral, coordinatePlane, solid, composite
+**2. DiagramSpec (프리셋 기반, 6개 유형 + 17개 프리셋)** — `src/lib/diagram/`
+- 용도: AI 문제 생성 시 좌표 없이 프리셋+속성만으로 정확한 도형 생성
+- 렌더러: `src/lib/diagram/shapes/` — triangle, circle, quadrilateral, coordinate, solid (5개 파일)
+- 정규화: `src/lib/diagram/normalize.ts` — 프리셋 → 좌표 자동 계산
+- 타입 정의: `src/types/diagram.ts`
 
-**통합 렌더러:** `DiagramRenderer.tsx` — `resolveDiagramSpec()` (`src/lib/utils/diagram-resolver.ts`)로 런타임 판별 후 적절한 렌더러 호출
+| 유형 | 프리셋/기능 |
+|------|------------|
+| `triangle` | right, equilateral, isosceles, scalene, right-isosceles + 특수점(내심/외심/무게중심/수심), 보조선(중선/수선/각이등분선/수직이등분선), 내접원/외접원, 외각연장선/외각호 |
+| `circle` | 현, 접선, 호, 중심각, 원주각, 내접다각형, 반지름선 |
+| `quadrilateral` | square, rectangle, parallelogram, rhombus, trapezoid, general + 대각선, 합동표시(빗금), 평행표시(화살표), 직각표시 |
+| `coordinatePlane` | 함수그래프(수식→자동계산), 점, 직선/선분, 영역색칠 |
+| `solid` | cube, cylinder, cone, sphere, prism, pyramid |
+| `composite` | 위 도형들 조합 (소문항 2개 이상 도형 배치) |
+
+**통합 렌더러:** `DiagramRenderer.tsx` — `resolveDiagramSpec()` (`src/lib/utils/diagram-resolver.ts`)로 런타임 판별
 - `DiagramSpec` (단일 객체, AI 생성) → `renderDiagram` from `@/lib/diagram/renderer`
 - `DiagramParam[]` (배열, PDF 추출) → `renderDiagram` from `@/lib/utils/svg-diagrams`
 - DB `diagramSpec Json?` 필드에 두 포맷이 혼재 → 런타임 다형성으로 처리
+- `diagramSVG String?` — 레거시 raw SVG (현재 1개만 존재, 폴백 렌더링)
 
-**편집기:** `DiagramEditorPopup.tsx` — 26개 타입 모두 GUI 편집 가능
+**3. 교육과정 프리셋 (168개)** — `src/lib/diagram-presets/`
+- 학교급/학년/학기/단원별로 교육적으로 의미 있는 다이어그램 기본값을 미리 정의
+- 초등 65개 (1~6학년, 12학기) + 중등 58개 (1~3학년, 6학기) + 고등 45개 (7과목)
+- 총 25개 학년/학기 키 커버
+- 트리 구조: 학교급 → 학년/학기 → 단원 → 프리셋 목록
+- 검색: `searchPresets(query)`, 학년별 그룹: `groupPresetsByGrade(level)`
+
+**4. 파라미터 엔진 (플러그인 기반)** — `src/lib/diagram-param-engine/`
+- `DiagramParamEngine` 클래스: 플러그인 레지스트리 + normalize → render 파이프라인
+- 26개 타입 전체에 대한 플러그인 (`plugins/elementary/` 13개 + `plugins/middle/` 13개)
+- 각 플러그인: `normalize(raw) → params`, `render(params) → SVG` 두 단계
+
+**편집기:** `DiagramEditorPopup.tsx` — 26개 DiagramParam 타입 모두 GUI 편집 가능
+- 타입별 기본 파라미터: `src/components/math/diagram-editor/types.ts`
+
+**DB 현황:** diagramSpec 927개 / diagramSVG 1개 (레거시)
 
 ### 수학 렌더링 컴포넌트 (`src/components/math/`)
 
@@ -380,7 +423,7 @@ Additive 구조 — 상위 역할이 하위 역할 메뉴를 포함 (`src/lib/co
 | `MathRenderer` | 읽기전용 마크다운+LaTeX+SVG+GFM 테이블 렌더링 (remark-gfm + remark-math + rehype-katex) |
 | `EditableMathRenderer` | 수식 클릭 편집 모드 (onMathClick 콜백) |
 | `DiagramRenderer` | DiagramSpec / DiagramParam[] 통합 → SVG 렌더링 (런타임 판별) |
-| `DiagramEditorPopup` | 26개 다이어그램 타입 GUI 편집기 |
+| `DiagramEditorPopup` | 26개 DiagramParam 타입 GUI 편집기 |
 | `ProblemDisplay` | 문제 전체 표시 (보기, 풀이, 인쇄) |
 | `MathLivePopup` | MathLive 수식 입력 팝업 |
 | `InlineMathText` | 인라인 수학 표시 |
@@ -727,7 +770,7 @@ npx tsx scripts/migrate-question-relations.ts  # questionIds Json → 중간테�
 | 컴포넌트 | 180개 |
 | 서비스 모듈 | 22개 |
 | DB 모델 | 72개, Enum 12개 |
-| SVG 다이어그램 | 26개 타입 (2개 시스템, 통합 렌더러) |
+| 다이어그램 | DiagramParam 26개 타입 + DiagramSpec 6개 유형 11개 프리셋 + 교육과정 프리셋 168개 + 플러그인 엔진 26개 |
 | 커스텀 훅 | 14개 |
 | Zustand 스토어 | 7개 |
 | Zod 스키마 | 5개 |

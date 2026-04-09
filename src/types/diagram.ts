@@ -64,6 +64,17 @@ export interface TriangleDiagram {
   inscribedCircle?: boolean;
   /** 외접원 표시 */
   circumscribedCircle?: boolean;
+  /** 외각 표시: 꼭짓점에서 변을 연장하여 외각 호와 값을 표시 */
+  exteriorAngles?: {
+    /** 꼭짓점 인덱스 (0=A, 1=B, 2=C) */
+    vertex: number;
+    /** 연장할 변의 반대쪽 꼭짓점 인덱스 (이 변을 꼭짓점 너머로 연장) */
+    extendFrom: number;
+    /** 외각 값 표시 (예: "130°") */
+    value?: string;
+    /** 연장선 길이 (기본 50) */
+    extensionLength?: number;
+  }[];
 }
 
 export interface CircleDiagram {

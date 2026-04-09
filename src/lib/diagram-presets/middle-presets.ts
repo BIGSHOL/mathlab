@@ -5,6 +5,80 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
   // ═══════════════════════════════════════
   // 1학년 1학기
   // ═══════════════════════════════════════
+
+  // ── 문자의 사용과 식 ──
+  {
+    id: 'm1-1-expr-rect-area',
+    name: '직사각형 넓이 (변수)',
+    description: '가로 a, 세로 b인 직사각형으로 식의 값 구하기',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '문자의 사용과 식',
+    diagramType: 'quadrilateral',
+    defaultParams: { vertices: [{ x: 10, y: 10, label: 'A' }, { x: 160, y: 10, label: 'B' }, { x: 160, y: 110, label: 'C' }, { x: 10, y: 110, label: 'D' }], sides: [{ from: 0, to: 1, label: 'a' }, { from: 1, to: 2, label: 'b' }], type: 'rectangle', rightAngleMarks: [0] },
+  },
+  {
+    id: 'm1-1-expr-l-shape',
+    name: 'L자형 도형 (넓이)',
+    description: 'L자형 복합 도형 넓이를 문자식으로 표현',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '문자의 사용과 식',
+    diagramType: 'fraction_rect',
+    defaultParams: { rows: 3, cols: 2, coloredCells: [0, 1, 2, 3, 4], count: 1, color: '#3B82F6' },
+  },
+  {
+    id: 'm1-1-expr-cutout',
+    name: '직사각형 빼기 도형',
+    description: '직사각형에서 정사각형 빼기 — 색칠 영역이 남은 부분',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '문자의 사용과 식',
+    diagramType: 'fraction_rect',
+    defaultParams: { rows: 2, cols: 6, coloredCells: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], count: 1, color: '#3B82F6' },
+  },
+  {
+    id: 'm1-1-expr-staircase',
+    name: '계단형 도형 (둘레)',
+    description: '계단 모양 도형의 둘레 길이를 문자식으로 표현',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '문자의 사용과 식',
+    diagramType: 'fraction_rect',
+    defaultParams: { rows: 3, cols: 3, coloredCells: [0, 3, 4, 6, 7, 8], count: 1, color: '#10B981' },
+  },
+  {
+    id: 'm1-1-expr-poster-grid',
+    name: '포스터 배치 (격자)',
+    description: '벽에 포스터를 격자로 배치한 모양',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '문자의 사용과 식',
+    diagramType: 'fraction_rect',
+    defaultParams: { rows: 2, cols: 4, coloredCount: 8, count: 1, color: '#F97316' },
+  },
+  {
+    id: 'm1-1-expr-flowchart',
+    name: '징검다리 판별 (흐름도)',
+    description: '일차식 예/아니요 분기 징검다리',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '문자의 사용과 식',
+    diagramType: 'flow_chart',
+    defaultParams: { nodes: [{ id: 'n0', text: '2x+1' }, { id: 'n1', text: '일차식?' }, { id: 'n2', text: '예 →' }, { id: 'n3', text: '아니요 ↓' }], arrows: [{ from: 'n0', to: 'n1' }, { from: 'n1', to: 'n2', label: '예' }, { from: 'n1', to: 'n3', label: '아니요' }] },
+  },
+
+  // ── 일차방정식 ──
+  {
+    id: 'm1-1-eq-trapezoid',
+    name: '사다리꼴 넓이 활용',
+    description: '사다리꼴의 윗변/아랫변/높이로 일차방정식 세우기',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '일차방정식',
+    diagramType: 'quadrilateral',
+    defaultParams: { vertices: [{ x: 40, y: 10, label: 'A' }, { x: 140, y: 10, label: 'B' }, { x: 170, y: 110, label: 'C' }, { x: 10, y: 110, label: 'D' }], sides: [{ from: 0, to: 1, label: 'x' }, { from: 2, to: 3, label: 'x+2' }], type: 'trapezoid' },
+  },
   {
     id: 'm1-1-coord-basic',
     name: '좌표평면 (순서쌍)',
@@ -77,7 +151,14 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     gradeKey: '1학년 2학기',
     chapter: '기본 도형',
     diagramType: 'angle_figure',
-    defaultParams: { angle: 60, showProtractor: false, label: '60°', ray1Angle: 0, color: '#3B82F6' },
+    defaultParams: {
+      angle: 50, ray1Angle: 0, label: '50°', color: '#3B82F6', showProtractor: false,
+      additionalAngles: [
+        { angle: 130, label: '130°', color: '#F97316' },
+        { angle: 50, label: '50°', color: '#3B82F6' },
+        { angle: 130, label: '', showArc: false },
+      ],
+    },
   },
   {
     id: 'm1-2-basic-parallel',
@@ -87,7 +168,10 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     gradeKey: '1학년 2학기',
     chapter: '기본 도형',
     diagramType: 'angle_figure',
-    defaultParams: { angle: 50, showProtractor: false, label: '50°', ray1Angle: 0, color: '#3B82F6' },
+    defaultParams: {
+      angle: 55, ray1Angle: 0, label: '', color: '#3B82F6', showProtractor: false,
+      parallelLines: [{ transversalAngle: 55, spacing: 60 }],
+    },
   },
   {
     id: 'm1-2-basic-perpendicular',
@@ -97,7 +181,13 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     gradeKey: '1학년 2학기',
     chapter: '기본 도형',
     diagramType: 'angle_figure',
-    defaultParams: { angle: 90, showProtractor: false, label: '90°', ray1Angle: 0, color: '#3B82F6' },
+    defaultParams: {
+      angle: 90, ray1Angle: 0, label: '', color: '#3B82F6', showProtractor: false,
+      additionalAngles: [
+        { angle: 90, label: '', showArc: false },
+        { angle: 90, label: '', showArc: false },
+      ],
+    },
   },
   {
     id: 'm1-2-constr-sss',
@@ -325,7 +415,7 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     gradeKey: '2학년 2학기',
     chapter: '삼각형의 성질',
     diagramType: 'triangle',
-    defaultParams: { vertices: [{ x: 100, y: 10, label: 'A' }, { x: 20, y: 150, label: 'B' }, { x: 180, y: 150, label: 'C' }], sides: [], angles: [] },
+    defaultParams: { vertices: [{ x: 100, y: 10, label: 'A' }, { x: 20, y: 150, label: 'B' }, { x: 180, y: 150, label: 'C' }], sides: [], angles: [], specialPoints: ['circumcenter'], auxiliaryLines: ['perpendicular_bisectors'], circumscribedCircle: true },
   },
   {
     id: 'm2-2-tri-incenter',
@@ -335,7 +425,7 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     gradeKey: '2학년 2학기',
     chapter: '삼각형의 성질',
     diagramType: 'triangle',
-    defaultParams: { vertices: [{ x: 100, y: 10, label: 'A' }, { x: 10, y: 150, label: 'B' }, { x: 190, y: 150, label: 'C' }], sides: [], angles: [] },
+    defaultParams: { vertices: [{ x: 100, y: 10, label: 'A' }, { x: 10, y: 150, label: 'B' }, { x: 190, y: 150, label: 'C' }], sides: [], angles: [], specialPoints: ['incenter'], auxiliaryLines: ['angle_bisectors'], inscribedCircle: true },
   },
   {
     id: 'm2-2-quad-parallel',
@@ -395,7 +485,7 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     gradeKey: '2학년 2학기',
     chapter: '도형의 닮음',
     diagramType: 'triangle',
-    defaultParams: { vertices: [{ x: 100, y: 10, label: 'A' }, { x: 10, y: 150, label: 'B' }, { x: 190, y: 150, label: 'C' }], sides: [], angles: [] },
+    defaultParams: { vertices: [{ x: 100, y: 10, label: 'A' }, { x: 10, y: 150, label: 'B' }, { x: 190, y: 150, label: 'C' }], sides: [], angles: [], specialPoints: ['centroid'], auxiliaryLines: ['medians'] },
   },
   {
     id: 'm2-2-pytha',
@@ -604,5 +694,117 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     chapter: '통계',
     diagramType: 'scatter_plot',
     defaultParams: { points: [{ x: 1, y: 5 }, { x: 2, y: 2 }, { x: 3, y: 6 }, { x: 4, y: 3 }, { x: 5, y: 7 }, { x: 6, y: 1 }], xRange: [0, 7], yRange: [0, 8], xLabel: 'x', yLabel: 'y', gridStep: 1, showTrendLine: false },
+  },
+
+  // ═══════════════════════════════════════
+  // 추가 프리셋 — Tier 1 (교육 필수)
+  // ═══════════════════════════════════════
+  {
+    id: 'm1-1-int-numline',
+    name: '정수 수직선',
+    description: '양수·음수를 수직선에 표시',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '정수와 유리수',
+    diagramType: 'number_line',
+    defaultParams: { min: -5, max: 5, step: 1, marks: [{ value: -3, label: '-3', color: '#EF4444', showDot: true }, { value: 2, label: '+2', color: '#3B82F6', showDot: true }], showAllTickLabels: true },
+  },
+  {
+    id: 'm2-1-ineq-compound',
+    name: '복합부등식 수직선',
+    description: '-1 ≤ x < 3 범위 표시',
+    schoolLevel: 'middle',
+    gradeKey: '2학년 1학기',
+    chapter: '일차부등식',
+    diagramType: 'number_line',
+    defaultParams: { min: -4, max: 5, step: 1, highlights: [{ from: -1, to: 3, color: '#3B82F6', label: '' }], closedEndpoints: [-1], openEndpoints: [3] },
+  },
+  {
+    id: 'm3-1-real-numline',
+    name: '무리수 수직선',
+    description: '√2, √3 위치 표시',
+    schoolLevel: 'middle',
+    gradeKey: '3학년 1학기',
+    chapter: '실수와 그 연산',
+    diagramType: 'number_line',
+    defaultParams: { min: 0, max: 3, step: 0.5, marks: [{ value: 1, label: '1', showDot: true }, { value: 1.414, label: '√2', color: '#EF4444', showDot: true }, { value: 1.732, label: '√3', color: '#3B82F6', showDot: true }, { value: 2, label: '2', showDot: true }], showAllTickLabels: true },
+  },
+
+  // ═══════════════════════════════════════
+  // 추가 프리셋 — Tier 2 (교육 효과 높음)
+  // ═══════════════════════════════════════
+  {
+    id: 'm1-2-perp-bisector',
+    name: '수직이등분선 작도',
+    description: '변의 수직이등분선',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 2학기',
+    chapter: '작도와 합동',
+    diagramType: 'triangle',
+    defaultParams: { vertices: [{ x: 100, y: 10, label: 'A' }, { x: 20, y: 150, label: 'B' }, { x: 180, y: 150, label: 'C' }], sides: [{ from: 1, to: 2, label: '' }], angles: [], auxiliaryLines: ['perpendicular_bisectors'] },
+  },
+  {
+    id: 'm3-2-trig-unit',
+    name: '단위원 삼각비',
+    description: '반지름 1인 원에서 sinθ, cosθ',
+    schoolLevel: 'middle',
+    gradeKey: '3학년 2학기',
+    chapter: '삼각비',
+    diagramType: 'circle',
+    defaultParams: { radius: 70, labels: [{ text: 'O', position: 'center' }, { text: '1', position: 'radius' }], arcs: [{ startAngle: 0, endAngle: 60, label: '60°' }] },
+  },
+  {
+    id: 'm3-2-circle-chord-perp',
+    name: '현의 수직이등분선',
+    description: '현의 수직이등분선은 중심을 지남',
+    schoolLevel: 'middle',
+    gradeKey: '3학년 2학기',
+    chapter: '원의 성질',
+    diagramType: 'circle',
+    defaultParams: { radius: 70, labels: [{ text: 'O', position: 'center' }, { text: 'M', position: 'chord_midpoint' }], arcs: [] },
+  },
+  {
+    id: 'm3-2-law-sines',
+    name: '사인법칙',
+    description: 'a/sinA = b/sinB = c/sinC',
+    schoolLevel: 'middle',
+    gradeKey: '3학년 2학기',
+    chapter: '삼각비',
+    diagramType: 'triangle',
+    defaultParams: { vertices: [{ x: 100, y: 10, label: 'A' }, { x: 10, y: 150, label: 'B' }, { x: 190, y: 150, label: 'C' }], sides: [{ from: 0, to: 1, label: 'b' }, { from: 1, to: 2, label: 'a' }, { from: 0, to: 2, label: 'c' }], angles: [{ vertex: 0, value: 'A' }, { vertex: 1, value: 'B' }, { vertex: 2, value: 'C' }] },
+  },
+  {
+    id: 'm1-1-prop-compare',
+    name: '정비례 vs 반비례',
+    description: 'y=2x와 y=6/x 비교',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '정비례와 반비례',
+    diagramType: 'function_graph',
+    defaultParams: { xRange: [-6, 6], yRange: [-6, 6], gridStep: 1, functions: [{ expression: '2*x', label: 'y=2x (정비례)', color: '#3B82F6' }, { expression: '6/x', label: 'y=6/x (반비례)', color: '#EF4444' }], points: [] },
+  },
+
+  // ═══════════════════════════════════════
+  // 추가 프리셋 — Tier 3 (활용도 보완)
+  // ═══════════════════════════════════════
+  {
+    id: 'm3-1-quad-shift',
+    name: '이차함수 평행이동',
+    description: 'y=x², y=(x-2)², y=x²+3 비교',
+    schoolLevel: 'middle',
+    gradeKey: '3학년 1학기',
+    chapter: '이차함수',
+    diagramType: 'function_graph',
+    defaultParams: { xRange: [-4, 6], yRange: [-2, 10], gridStep: 1, functions: [{ expression: 'x^2', label: 'y=x²', color: '#9CA3AF' }, { expression: '(x-2)^2', label: 'y=(x-2)²', color: '#3B82F6' }, { expression: 'x^2+3', label: 'y=x²+3', color: '#EF4444' }], points: [{ x: 0, y: 0, label: 'O' }, { x: 2, y: 0, label: '' }, { x: 0, y: 3, label: '' }] },
+  },
+  {
+    id: 'm2-2-angle-bisector',
+    name: '각의 이등분선',
+    description: '삼각형 각의 이등분선',
+    schoolLevel: 'middle',
+    gradeKey: '2학년 2학기',
+    chapter: '삼각형의 성질',
+    diagramType: 'triangle',
+    defaultParams: { vertices: [{ x: 100, y: 10, label: 'A' }, { x: 10, y: 150, label: 'B' }, { x: 190, y: 150, label: 'C' }], sides: [], angles: [], auxiliaryLines: ['angle_bisectors'] },
   },
 ];

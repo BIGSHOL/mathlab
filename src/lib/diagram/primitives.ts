@@ -50,13 +50,14 @@ export function text(
   x: number,
   y: number,
   content: string,
-  options?: { fontSize?: number; anchor?: string; baseline?: string; fontWeight?: string },
+  options?: { fontSize?: number; anchor?: string; baseline?: string; fontWeight?: string; color?: string },
 ): string {
   const fs = options?.fontSize ?? STYLE.FONT_SIZE;
   const anchor = options?.anchor ?? 'middle';
   const baseline = options?.baseline ?? 'middle';
   const fw = options?.fontWeight ? ` font-weight="${options.fontWeight}"` : '';
-  return `<text x="${x}" y="${y}" font-size="${fs}" font-family="${STYLE.FONT_FAMILY}" text-anchor="${anchor}" dominant-baseline="${baseline}"${fw}>${escapeXml(content)}</text>`;
+  const fill = options?.color ? ` fill="${options.color}"` : '';
+  return `<text x="${x}" y="${y}" font-size="${fs}" font-family="${STYLE.FONT_FAMILY}" text-anchor="${anchor}" dominant-baseline="${baseline}"${fw}${fill}>${escapeXml(content)}</text>`;
 }
 
 /** SVG path */

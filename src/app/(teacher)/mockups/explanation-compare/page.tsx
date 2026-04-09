@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Sparkles, Loader2, RefreshCw, Brain, Zap, Clock, Hash, ChevronDown, ChevronUp } from 'lucide-react';
+import { Sparkles, Loader2, RefreshCw, Brain, Zap, Clock, Hash, ChevronDown, ChevronUp, Save, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { toast } from '@/components/ui/Toast';
@@ -39,7 +39,7 @@ interface CompareResult {
 
 type CompareMode = 'both' | 'thinking' | 'noThinking' | 'auto';
 
-/** 해설 텍스트를 **전략**/**풀이**/**핵심 포인트** 섹션으로 분리하여 렌더링 */
+/** 해설 텍스트를 전략/풀이/핵심 포인트 섹션으로 분리하여 렌더링 */
 function ExplanationSections({ content }: { content: string }) {
   // 섹션 헤더 패턴: **전략**, **풀이**, **핵심 포인트** (또는 볼드 없이)
   const sectionRegex = /\*{0,2}(전략|풀이|핵심\s?포인트)\*{0,2}\s*/g;
@@ -101,29 +101,34 @@ export default function ExplanationComparePage() {
   const [samples, setSamples] = useState<QuestionSample[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [results, setResults] = useState<Record<string, CompareResult>>({});
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [mode, setMode] = useState<CompareMode>('auto');
   const [expandedRaw, setExpandedRaw] = useState<Set<string>>(new Set());
+  const [bookCode, setBookCode] = useState('3-1');
+  const [saving, setSaving] = useState(false);
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
   // 해설 없는 문제 샘플 로드
   const fetchSamples = useCallback(async () => {
     setLoading(true);
+    setResults({});
+    setSavedIds(new Set());
     try {
-      const res = await fetch('/api/questions?bookCode=1-1&limit=30&noExplanation=true');
+      const res = await fetch(`/api/questions?bookCode=${bookCode}&limit=200&noExplanation=true`);
       const json = await res.json();
       if (json.data) {
         setSamples(json.data);
-        // 처음 5개 자동 선택
-        const first5 = json.data.slice(0, 5).map((q: QuestionSample) => q.id);
-        setSelectedIds(new Set(first5));
+        // 전체 자동 선택
+        setSelectedIds(new Set(json.data.map((q: QuestionSample) => q.id)));
       }
     } catch {
       toast.error('문제 목록을 불러올 수 없습니다');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [bookCode]);
 
   useEffect(() => { fetchSamples(); }, [fetchSamples]);
 
@@ -135,6 +140,7 @@ export default function ExplanationComparePage() {
     }
     setGenerating(true);
     setResults({});
+    setProgress({ current: 0, total: selectedIds.size });
     try {
       const res = await fetch('/api/admin/explanation-preview', {
         method: 'POST',
@@ -144,13 +150,30 @@ export default function ExplanationComparePage() {
           mode,
         }),
       });
-      const json = await res.json();
-      if (json.data) {
-        setResults(json.data);
-        toast.success('해설 생성 완료');
-      } else {
-        toast.error(json.error?.message || '생성 실패');
+      if (!res.ok || !res.body) {
+        toast.error('생성 실패');
+        setGenerating(false);
+        return;
       }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const msg = JSON.parse(line);
+            setProgress({ current: msg.idx, total: msg.total });
+            setResults(prev => ({ ...prev, [msg.id]: msg.result }));
+          } catch { /* skip */ }
+        }
+      }
+      toast.success('해설 생성 완료');
     } catch {
       toast.error('해설 생성 중 오류가 발생했습니다');
     } finally {
@@ -184,7 +207,56 @@ export default function ExplanationComparePage() {
     });
   };
 
+  // DB 저장
+  const handleSave = async () => {
+    const saveItems: { id: string; explanation: string; answer?: string }[] = [];
+    for (const [id, r] of Object.entries(results)) {
+      if (savedIds.has(id)) continue;
+      const isThinking = r.question.difficulty === 'HIGH' || r.question.difficulty === 'HIGHEST';
+      const gen = mode === 'auto' ? (isThinking ? r.thinking : r.noThinking) : (r.thinking || r.noThinking);
+      if (!gen?.explanation) continue;
+      saveItems.push({
+        id,
+        explanation: gen.explanation,
+        answer: gen.answerChanged ? gen.answer : undefined,
+      });
+    }
+    if (saveItems.length === 0) {
+      toast.warning('저장할 해설이 없습니다');
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch('/api/admin/explanation-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: saveItems }),
+      });
+      const json = await res.json();
+      if (json.data) {
+        setSavedIds(prev => {
+          const next = new Set(prev);
+          for (const item of saveItems) next.add(item.id);
+          return next;
+        });
+        toast.success(`${json.data.saved}개 해설 저장 완료 (정답 변경: ${json.data.answerChanged}개)`);
+      } else {
+        toast.error(json.error?.message || '저장 실패');
+      }
+    } catch {
+      toast.error('저장 중 오류');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const resultList = Object.values(results);
+  const unsavedCount = resultList.filter(r => {
+    if (savedIds.has(r.question.id)) return false;
+    const isThinking = r.question.difficulty === 'HIGH' || r.question.difficulty === 'HIGHEST';
+    const gen = mode === 'auto' ? (isThinking ? r.thinking : r.noThinking) : (r.thinking || r.noThinking);
+    return !!gen?.explanation;
+  }).length;
 
   // 비용 계산
   const totalStats = resultList.reduce(
@@ -221,6 +293,20 @@ export default function ExplanationComparePage() {
       {/* Controls */}
       <Card className="p-4 mb-6">
         <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-text-secondary">교재:</span>
+            {['3-1', '1-1'].map(bc => (
+              <button
+                key={bc}
+                onClick={() => setBookCode(bc)}
+                className={`px-3 py-1.5 rounded-sm text-xs font-bold transition-colors ${
+                  bookCode === bc ? 'bg-slate-700 text-white' : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
+                }`}
+              >
+                {bc}
+              </button>
+            ))}
+          </div>
           <div className="flex items-center gap-2">
             <span className="text-sm font-bold text-text-secondary">모드:</span>
             {([
@@ -259,7 +345,7 @@ export default function ExplanationComparePage() {
               {generating ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  생성 중...
+                  {progress.current}/{progress.total}
                 </>
               ) : (
                 <>
@@ -268,6 +354,20 @@ export default function ExplanationComparePage() {
                 </>
               )}
             </Button>
+            {unsavedCount > 0 && (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={handleSave}
+                disabled={saving}
+              >
+                {saving ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> 저장 중...</>
+                ) : (
+                  <><Save className="w-4 h-4" /> DB 저장 ({unsavedCount}개)</>
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </Card>
@@ -278,9 +378,9 @@ export default function ExplanationComparePage() {
       ) : (
         <div className="mb-8">
           <h2 className="text-sm font-bold text-text-secondary mb-3">
-            해설 없는 문제 목록 (bookCode: 1-1)
+            해설 없는 문제 목록 (bookCode: {bookCode}) — {samples.length}개
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-[300px] overflow-y-auto pr-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-[600px] overflow-y-auto pr-1">
             {samples.map(q => (
               <button
                 key={q.id}
@@ -325,11 +425,19 @@ export default function ExplanationComparePage() {
 
       {/* Generating indicator */}
       {generating && (
-        <div className="flex items-center justify-center gap-3 py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
-          <span className="text-sm text-text-secondary">
-            Gemini로 해설 생성 중... ({selectedIds.size}개 문제)
-          </span>
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            <span className="text-sm font-bold text-text-secondary">
+              해설 생성 중... {progress.current}/{progress.total}
+            </span>
+          </div>
+          <div className="w-full bg-slate-100 rounded-full h-2">
+            <div
+              className="bg-primary h-2 rounded-full transition-all duration-300"
+              style={{ width: `${progress.total ? (progress.current / progress.total) * 100 : 0}%` }}
+            />
+          </div>
         </div>
       )}
 
@@ -365,6 +473,11 @@ export default function ExplanationComparePage() {
                       {isThinking ? 'Thinking' : 'Non-Thinking'}
                     </span>
                     <span className="text-[10px] text-slate-400 truncate">{r.question.chapter}</span>
+                    {savedIds.has(r.question.id) && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-green-100 text-green-600 flex items-center gap-0.5">
+                        <CheckCircle className="w-3 h-3" /> 저장됨
+                      </span>
+                    )}
                   </div>
                   <div className="text-xs text-text-secondary mb-3 line-clamp-2">
                     <MathRenderer content={r.question.content} />
@@ -376,9 +489,9 @@ export default function ExplanationComparePage() {
                           gen.answerChanged ? 'bg-red-50 border border-red-200 text-red-700' : 'bg-green-50 border border-green-200 text-green-700'
                         }`}>
                           {gen.answerChanged ? (
-                            <><span className="font-bold">정답 변경:</span> {r.question.answer} → <span className="font-bold">{gen.answer}</span></>
+                            <><span className="font-bold">정답 변경:</span> <MathRenderer content={r.question.answer} /> → <span className="font-bold"><MathRenderer content={gen.answer || ''} /></span></>
                           ) : (
-                            <><span className="font-bold">정답 확인:</span> {gen.answer}</>
+                            <><span className="font-bold">정답 확인:</span> <MathRenderer content={gen.answer || ''} /></>
                           )}
                         </div>
                       )}
@@ -474,9 +587,9 @@ export default function ExplanationComparePage() {
                               : 'bg-green-50 border border-green-200 text-green-700'
                           }`}>
                             {r.noThinking.answerChanged ? (
-                              <><span className="font-bold">정답 변경:</span> {r.question.answer} → <span className="font-bold">{r.noThinking.answer}</span></>
+                              <><span className="font-bold">정답 변경:</span> <MathRenderer content={r.question.answer} /> → <span className="font-bold"><MathRenderer content={r.noThinking.answer || ''} /></span></>
                             ) : (
-                              <><span className="font-bold">정답 확인:</span> {r.noThinking.answer}</>
+                              <><span className="font-bold">정답 확인:</span> <MathRenderer content={r.noThinking.answer || ''} /></>
                             )}
                           </div>
                         )}
@@ -574,9 +687,9 @@ export default function ExplanationComparePage() {
                               : 'bg-green-50 border border-green-200 text-green-700'
                           }`}>
                             {r.thinking.answerChanged ? (
-                              <><span className="font-bold">정답 변경:</span> {r.question.answer} → <span className="font-bold">{r.thinking.answer}</span></>
+                              <><span className="font-bold">정답 변경:</span> <MathRenderer content={r.question.answer} /> → <span className="font-bold"><MathRenderer content={r.thinking.answer || ''} /></span></>
                             ) : (
-                              <><span className="font-bold">정답 확인:</span> {r.thinking.answer}</>
+                              <><span className="font-bold">정답 확인:</span> <MathRenderer content={r.thinking.answer || ''} /></>
                             )}
                           </div>
                         )}

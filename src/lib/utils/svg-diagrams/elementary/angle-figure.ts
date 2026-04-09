@@ -90,31 +90,47 @@ export function renderAngleFigure(params: AngleFigureParams): string {
     }
   }
 
-  // 추가 각도 (additionalAngles)
+  // 추가 각도 (additionalAngles) — 누적 방식
   if (params.additionalAngles) {
+    let cumAngle = ray1Angle + angleDeg; // 이전 각도 끝 지점부터 누적
     for (const aa of params.additionalAngles) {
       const aaColor = aa.color || COLORS.secondary;
       const aaDeg = Math.max(0, Math.min(360, Number(aa.angle) || 45));
-      const aaRay2Rad = (-(ray1Angle + angleDeg + aaDeg) * Math.PI) / 180;
+      const prevRad = (-cumAngle * Math.PI) / 180;
+      cumAngle += aaDeg;
+      const aaRay2Rad = (-cumAngle * Math.PI) / 180;
+      // 반직선
       const aaR2x = cx + r * Math.cos(aaRay2Rad);
       const aaR2y = cy + r * Math.sin(aaRay2Rad);
       parts.push(line(cx, cy, aaR2x, aaR2y, { strokeWidth: 1.5 }));
-      parts.push(arrowHead(aaR2x, aaR2y, -(ray1Angle + angleDeg + aaDeg), 6));
-      // 호
-      const aaArcR = arcR + 8;
-      const aaStart = (-(ray1Angle + angleDeg) * Math.PI) / 180;
-      const aaEnd = aaRay2Rad;
-      const aaAx1 = cx + aaArcR * Math.cos(aaStart);
-      const aaAy1 = cy + aaArcR * Math.sin(aaStart);
-      const aaAx2 = cx + aaArcR * Math.cos(aaEnd);
-      const aaAy2 = cy + aaArcR * Math.sin(aaEnd);
-      const aaLargeArc = aaDeg > 180 ? 1 : 0;
-      parts.push(`<path d="M ${aaAx1.toFixed(2)} ${aaAy1.toFixed(2)} A ${aaArcR} ${aaArcR} 0 ${aaLargeArc} 0 ${aaAx2.toFixed(2)} ${aaAy2.toFixed(2)}" fill="none" stroke="${aaColor}" stroke-width="1.5"/>`);
-      const aaLabel = aa.label || `${aaDeg}°`;
-      const aaMidRad = (-(ray1Angle + angleDeg + aaDeg / 2) * Math.PI) / 180;
-      const aaLx = cx + (aaArcR + 14) * Math.cos(aaMidRad);
-      const aaLy = cy + (aaArcR + 14) * Math.sin(aaMidRad);
-      parts.push(katexLabel(aaLx, aaLy, aaLabel, { fontSize: 11 }));
+      parts.push(arrowHead(aaR2x, aaR2y, -cumAngle, 6));
+      // 호 (showArc가 false가 아닌 경우에만)
+      if (aa.showArc !== false) {
+        const aaArcR = arcR + 8;
+        if (aaDeg === 90) {
+          // 직각 표시
+          const sz = 12;
+          const ux1 = Math.cos(prevRad) * sz;
+          const uy1 = Math.sin(prevRad) * sz;
+          const ux2 = Math.cos(aaRay2Rad) * sz;
+          const uy2 = Math.sin(aaRay2Rad) * sz;
+          parts.push(`<polyline points="${cx + ux1},${cy + uy1} ${cx + ux1 + ux2},${cy + uy1 + uy2} ${cx + ux2},${cy + uy2}" fill="none" stroke="${aaColor}" stroke-width="1"/>`);
+        } else {
+          const aaAx1 = cx + aaArcR * Math.cos(prevRad);
+          const aaAy1 = cy + aaArcR * Math.sin(prevRad);
+          const aaAx2 = cx + aaArcR * Math.cos(aaRay2Rad);
+          const aaAy2 = cy + aaArcR * Math.sin(aaRay2Rad);
+          const aaLargeArc = aaDeg > 180 ? 1 : 0;
+          parts.push(`<path d="M ${aaAx1.toFixed(2)} ${aaAy1.toFixed(2)} A ${aaArcR} ${aaArcR} 0 ${aaLargeArc} 0 ${aaAx2.toFixed(2)} ${aaAy2.toFixed(2)}" fill="none" stroke="${aaColor}" stroke-width="1.5"/>`);
+        }
+        // 라벨
+        const aaLabel = aa.label || `${aaDeg}°`;
+        const aaMidRad = (-(cumAngle - aaDeg / 2) * Math.PI) / 180;
+        const aaLabelDist = aaDeg === 90 ? 22 : arcR + 22;
+        const aaLx = cx + aaLabelDist * Math.cos(aaMidRad);
+        const aaLy = cy + aaLabelDist * Math.sin(aaMidRad);
+        parts.push(katexLabel(aaLx, aaLy, aaLabel, { fontSize: 11 }));
+      }
     }
   }
 
