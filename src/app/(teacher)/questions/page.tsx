@@ -61,6 +61,10 @@ export default function QuestionsPage() {
         setDifficultyFilter={mgr.setDifficultyFilter}
         domainFilter={mgr.domainFilter}
         setDomainFilter={mgr.setDomainFilter}
+        sourceFilter={mgr.sourceFilter}
+        setSourceFilter={mgr.setSourceFilter}
+        noExplanation={mgr.noExplanation}
+        setNoExplanation={mgr.setNoExplanation}
         typeFilters={mgr.typeFilters}
         toggleTypeFilter={mgr.toggleTypeFilter}
         setCurrentPage={mgr.setCurrentPage}

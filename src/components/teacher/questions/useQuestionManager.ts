@@ -43,6 +43,8 @@ export function useQuestionManager() {
   const [difficultyFilter, setDifficultyFilter] = useState<string>('전체');
   const [typeFilters, setTypeFilters] = useState<Set<string>>(new Set(TYPE_OPTIONS));
   const [domainFilter, setDomainFilter] = useState<string>('전체');
+  const [sourceFilter, setSourceFilter] = useState<string>('전체'); // 전체|교과서|기출|AI 생성
+  const [noExplanation, setNoExplanation] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedExplanation, setExpandedExplanation] = useState<string | null>(null);
 
@@ -308,6 +310,8 @@ export function useQuestionManager() {
     }
 
     if (domainFilter !== '전체') params.set('domain', domainFilter);
+    if (sourceFilter !== '전체') params.set('sourceTag', sourceFilter);
+    if (noExplanation) params.set('noExplanation', 'true');
     if (search) params.set('search', search);
     params.set('page', String(currentPage));
     params.set('limit', String(ITEMS_PER_PAGE));
@@ -329,7 +333,7 @@ export function useQuestionManager() {
     } finally {
       setLoading(false);
     }
-  }, [bookFilter, chapterFilter, sectionFilter, difficultyFilter, typeFilters, domainFilter, search, currentPage, schoolLevel]);
+  }, [bookFilter, chapterFilter, sectionFilter, difficultyFilter, typeFilters, domainFilter, sourceFilter, noExplanation, search, currentPage, schoolLevel]);
 
   // 새 문제 추가
   const openCreateModal = () => {
@@ -649,6 +653,8 @@ export function useQuestionManager() {
     sectionFilter, setSectionFilter,
     difficultyFilter, setDifficultyFilter,
     domainFilter, setDomainFilter,
+    sourceFilter, setSourceFilter,
+    noExplanation, setNoExplanation,
     typeFilters, toggleTypeFilter,
     currentPage, setCurrentPage,
     expandedExplanation, setExpandedExplanation,
