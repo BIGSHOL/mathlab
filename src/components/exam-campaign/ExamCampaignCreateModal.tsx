@@ -414,6 +414,9 @@ export function ExamCampaignCreateModal({ onClose, onCreated }: ExamCampaignCrea
               <p className="text-xs text-amber-600">
                 생성과 동시에 큐레이터가 같은/인근 학교 기출과 문제은행을 자동 매칭합니다 (몇 초 소요).
               </p>
+              <p className="text-xs text-purple-600">
+                ✨ 매칭된 문제가 50개 미만이면 부족분을 AI 예상 문제로 자동 보강합니다 (최대 20개, +10~20초).
+              </p>
             </div>
           )}
         </div>

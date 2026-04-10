@@ -99,6 +99,8 @@ export async function GET(request: NextRequest) {
               topChapters?: Array<{ chapter: string; pct: number }>;
               averageDifficulty?: number;
               totalSamplesAnalyzed?: number;
+              mode?: 'exam_based' | 'scope_based' | 'ai_filled';
+              aiFilledCount?: number;
             }
           | null;
 
@@ -121,6 +123,8 @@ export async function GET(request: NextRequest) {
                 topChapters: (pattern.topChapters ?? []).slice(0, 5),
                 averageDifficulty: pattern.averageDifficulty ?? 0,
                 totalSamples: pattern.totalSamplesAnalyzed ?? 0,
+                mode: pattern.mode ?? 'exam_based',
+                aiFilledCount: pattern.aiFilledCount ?? 0,
               }
             : null,
         };

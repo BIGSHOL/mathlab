@@ -34,6 +34,10 @@ export interface PatternAnalysis {
   totalSamplesAnalyzed: number;
   /** 평균 난이도 (1~5) */
   averageDifficulty: number;
+  /** 큐레이션 모드: 'exam_based' = 기출 기반, 'scope_based' = 시험범위만, 'ai_filled' = scope + AI 보강 */
+  mode?: 'exam_based' | 'scope_based' | 'ai_filled';
+  /** AI 예상 문제로 자동 보강된 개수 (fallback 시) */
+  aiFilledCount?: number;
 }
 
 export interface CuratorResult {
@@ -344,6 +348,8 @@ export async function curateCampaign(campaignId: string): Promise<CuratorResult>
     sourceSchools,
     totalSamplesAnalyzed: totalAnalyzed,
     averageDifficulty: diffN > 0 ? Math.round((diffSum / diffN) * 10) / 10 : 0,
+    mode: totalAnalyzed > 0 ? 'exam_based' : 'scope_based',
+    aiFilledCount: 0,
   };
 
   // ── 3. 문제은행 매칭 ──
@@ -352,14 +358,14 @@ export async function curateCampaign(campaignId: string): Promise<CuratorResult>
     ? scope.map((s) => ({ chapter: { contains: s.chapter, mode: 'insensitive' as const } }))
     : [];
 
+  // 주의: Prisma where에 OR 키를 두 번 쓰면 뒤에 오는 것이 앞을 덮어쓰므로 AND로 묶어야 한다.
   const curatedQuestions = bookCodes.length > 0 || chapterFilters.length > 0
     ? await prisma.question.findMany({
         where: {
-          ...(bookCodes.length > 0 && { bookCode: { in: bookCodes } }),
-          ...(chapterFilters.length > 0 && { OR: chapterFilters }),
-          OR: [
-            { tenantId: campaign.tenantId },
-            { tenantId: null },
+          AND: [
+            ...(bookCodes.length > 0 ? [{ bookCode: { in: bookCodes } }] : []),
+            ...(chapterFilters.length > 0 ? [{ OR: chapterFilters }] : []),
+            { OR: [{ tenantId: campaign.tenantId }, { tenantId: null }] },
           ],
         },
         select: { id: true },
@@ -390,9 +396,26 @@ export async function curateCampaign(campaignId: string): Promise<CuratorResult>
   };
 }
 
-/** 캠페인 큐레이션 → DB 저장 → 상태를 ACTIVE로 전환 */
+/** 캠페인 풀의 최소 목표 문제 수 (이보다 적으면 AI fallback 시도) */
+const MIN_TARGET_QUESTIONS = 50;
+/** AI fallback으로 한 번에 생성할 수 있는 최대 문제 수 (비용 캡) */
+const AI_FILL_MAX = 20;
+
+/**
+ * 캠페인 큐레이션 → DB 저장 → 상태를 ACTIVE로 전환.
+ *
+ * 동작:
+ *   1. 같은/인근 학교 기출 + 문제은행 매칭 결과를 먼저 저장 (PREPARING 유지)
+ *   2. 매칭된 문제 수가 MIN_TARGET_QUESTIONS 미만이면 부족분을 Gemini 예상 문제로 자동 보강
+ *      - 시험범위만 알고 기출 데이터가 없는 학교에서도 캠페인이 의미 있도록 함
+ *   3. 마지막에 ACTIVE로 전환
+ *
+ * AI 호출 실패(키 미설정/네트워크) 시에는 조용히 스킵하고 그대로 ACTIVE 처리.
+ */
 export async function runCurationAndActivate(campaignId: string): Promise<CuratorResult> {
   const result = await curateCampaign(campaignId);
+
+  // 1. 1차 저장 (큐레이션 결과 + 모드)
   await prisma.examCampaign.update({
     where: { id: campaignId },
     data: {
@@ -400,9 +423,47 @@ export async function runCurationAndActivate(campaignId: string): Promise<Curato
       curatedConceptIds: result.curatedConceptIds,
       patternAnalysis: result.patternAnalysis as unknown as Prisma.InputJsonValue,
       curatedAt: new Date(),
-      status: 'ACTIVE',
     },
   });
+
+  // 2. AI fallback: 매칭 문제가 부족하면 보강
+  if (result.curatedQuestionIds.length < MIN_TARGET_QUESTIONS) {
+    const need = Math.min(
+      MIN_TARGET_QUESTIONS - result.curatedQuestionIds.length,
+      AI_FILL_MAX,
+    );
+    try {
+      // 동적 import로 순환 의존 회피 (predictor도 curator의 타입을 참조하므로)
+      const { generatePredictedQuestions } = await import('./exam-campaign-predictor');
+      const aiResult = await generatePredictedQuestions({ campaignId, count: need });
+      if (aiResult.generated > 0) {
+        result.curatedQuestionIds = [...result.curatedQuestionIds, ...aiResult.questionIds];
+        // 패턴 분석 메타 갱신
+        const updatedPattern: PatternAnalysis = {
+          ...result.patternAnalysis,
+          mode: 'ai_filled',
+          aiFilledCount: aiResult.generated,
+        };
+        result.patternAnalysis = updatedPattern;
+        await prisma.examCampaign.update({
+          where: { id: campaignId },
+          data: {
+            patternAnalysis: updatedPattern as unknown as Prisma.InputJsonValue,
+          },
+        });
+      }
+    } catch (err) {
+      // 키 미설정/네트워크 에러 등 — 캠페인은 그대로 진행
+      console.error('[curator] AI fallback skipped:', err);
+    }
+  }
+
+  // 3. ACTIVE 전환
+  await prisma.examCampaign.update({
+    where: { id: campaignId },
+    data: { status: 'ACTIVE' },
+  });
+
   return result;
 }
 

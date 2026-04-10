@@ -335,6 +335,8 @@ function CampaignDetailCard({
           totalSamplesAnalyzed?: number;
           averageDifficulty?: number;
           sourceSchools?: Array<{ schoolName: string; examCount: number }>;
+          mode?: 'exam_based' | 'scope_based' | 'ai_filled';
+          aiFilledCount?: number;
         };
       }
     | null;
@@ -400,9 +402,14 @@ function CampaignDetailCard({
                 출처: {d.patternAnalysis.sourceSchools?.map((s) => s.schoolName).join(', ') || '없음'}
               </p>
             </div>
+          ) : d.patternAnalysis?.mode === 'ai_filled' ? (
+            <div className="bg-purple-50 border border-purple-200 rounded-sm p-2.5 text-xs text-purple-700">
+              기출 데이터 없음 — 시험범위 기반 문제은행 매칭 + AI 예상 문제{' '}
+              <span className="font-semibold">{d.patternAnalysis.aiFilledCount}개</span> 자동 보강
+            </div>
           ) : (
             <p className="text-xs text-amber-600">
-              주변 학교 기출 데이터가 없어 패턴 분석을 만들 수 없습니다
+              기출 데이터 없음 — 시험범위 기반 문제은행 매칭만 사용 중
             </p>
           )}
         </>

@@ -43,6 +43,8 @@ interface ExamPrepCampaign {
     topChapters: Array<{ chapter: string; pct: number }>;
     averageDifficulty: number;
     totalSamples: number;
+    mode?: 'exam_based' | 'scope_based' | 'ai_filled';
+    aiFilledCount?: number;
   } | null;
 }
 
