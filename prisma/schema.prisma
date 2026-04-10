@@ -72,6 +72,7 @@ model Tenant {
   nearbyGroups           TenantNearbyGroup[]
   questions              Question[]
   classCompetitionWeeks  ClassCompetitionWeek[]
+  examCampaigns          ExamCampaign[]
 
   @@index([slug])
   @@index([isActive])
@@ -139,6 +140,8 @@ model User {
   examPapersAsStudent          ExamPaper[]       @relation("ExamPaperStudent")
   createdQuestions             Question[]        @relation("createdQuestions")
   inventories                  UserInventory[]
+  createdExamCampaigns         ExamCampaign[]    @relation("ExamCampaignCreator")
+  examCampaignEnrollments      ExamCampaignEnrollment[] @relation("ExamCampaignEnrollments")
 
   @@index([role])
   @@index([classroomId])
@@ -726,6 +729,7 @@ model School {
   dataUpdatedAt   DateTime?
 
   examPapers      ExamPaper[]
+  examCampaigns   ExamCampaign[]
 
   @@index([city, district])
   @@index([schoolType])
@@ -1218,8 +1222,9 @@ model Classroom {
   settings  Json?    // { blankInputMode?: 'chip' | 'typing' }
   createdAt DateTime @default(now())
 
-  tenant   Tenant? @relation(fields: [tenantId], references: [id])
-  students User[]
+  tenant        Tenant?        @relation(fields: [tenantId], references: [id])
+  students      User[]
+  examCampaigns ExamCampaign[]
 
   @@index([teacherId])
   @@index([tenantId])
@@ -1637,6 +1642,86 @@ model LearnedPattern {
 
   @@index([subject, patternType])
   @@index([isActive, isAutoApplied])
+}
+
+// ══════════════════════════════════════════════════════════════
+// FEAT: 내신대비 자동학습 시스템 (Exam Campaign)
+// ══════════════════════════════════════════════════════════════
+
+enum ExamCampaignType {
+  MIDTERM     // 중간고사
+  FINAL       // 기말고사
+  PERFORMANCE // 수행평가 (확장용)
+}
+
+enum ExamCampaignStatus {
+  PREPARING  // 큐레이션 진행 중
+  ACTIVE     // 학생 학습 중
+  COMPLETED  // 시험 후 종료
+  ARCHIVED   // 보관
+}
+
+/// 내신 시험을 D-day까지 자동 학습으로 준비하는 캠페인.
+/// 선생님이 학교+학년+시험구분+범위를 지정하면, 큐레이터가
+/// 같은/인근 학교 기출 + 단원 매칭 문제 + 출제 패턴을 모아 캠페인 풀을 만든다.
+model ExamCampaign {
+  id              String              @id @default(cuid())
+  seq             Int                 @unique @default(autoincrement())
+  tenantId        String
+  classroomId     String?
+  schoolId        String?
+  schoolName      String?             @db.VarChar(100)
+  title           String              @db.VarChar(200)
+  grade           String              @db.VarChar(30)   // "middle_2", "high_algebra" 등
+  semester        Int                                    // 1 | 2 (고등은 0)
+  examType        ExamCampaignType
+  examDate        DateTime            @db.Date           // 시험일 (D-day 기준)
+  scopeChapters   Json                                    // [{chapter: string, sections?: string[]}]
+  status          ExamCampaignStatus  @default(PREPARING)
+
+  // 큐레이션 결과 (curator 1회 실행)
+  curatedQuestionIds Json?            // string[]  (기출 + 매칭 문제)
+  curatedConceptIds  Json?            // string[]  (시험범위 개념)
+  patternAnalysis    Json?            // PatternAnalysis 구조 (출제 빈도/난이도/킬러유형)
+  curatedAt          DateTime?
+
+  createdById     String
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
+  classroom   Classroom?  @relation(fields: [classroomId], references: [id])
+  school      School?     @relation(fields: [schoolId], references: [id])
+  createdBy   User        @relation("ExamCampaignCreator", fields: [createdById], references: [id])
+  enrollments ExamCampaignEnrollment[]
+
+  @@index([tenantId])
+  @@index([classroomId])
+  @@index([status])
+  @@index([examDate])
+  @@index([tenantId, status])
+}
+
+/// 학생별 캠페인 등록. P2에서 schedule(D-day 일정)이 자동 생성된다.
+model ExamCampaignEnrollment {
+  id              String       @id @default(cuid())
+  campaignId      String
+  studentId       String
+  status          String       @default("ACTIVE") @db.VarChar(20) // ACTIVE | COMPLETED | DROPPED
+  schedule        Json?        // [{dayIndex, date, phase, activities: [{type, refId, completed}]}]
+  weakChapters    Json?        // string[]
+  progressPct     Int          @default(0)
+  predictedGrade  String?      @db.VarChar(10)
+  startedAt       DateTime?
+  completedAt     DateTime?
+  enrolledAt      DateTime     @default(now())
+
+  campaign  ExamCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  student   User         @relation("ExamCampaignEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, studentId])
+  @@index([studentId])
+  @@index([campaignId])
 }
 
 // ── 반 대항전 주간 결과 ──
