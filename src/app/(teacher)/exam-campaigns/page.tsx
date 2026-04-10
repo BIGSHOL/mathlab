@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Target, Plus, School as SchoolIcon, Calendar, Users, BarChart3, Trash2, RefreshCw } from 'lucide-react';
+import { Target, Plus, School as SchoolIcon, Calendar, Users, BarChart3, Trash2, RefreshCw, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -26,6 +26,12 @@ interface CampaignListItem {
   school: { id: string; name: string; district: string } | null;
   createdBy: { id: string; name: string };
   _count: { enrollments: number };
+}
+
+interface ClassroomMin {
+  id: string;
+  name: string;
+  grade: number | null;
 }
 
 const STATUS_LABELS: Record<CampaignListItem['status'], { label: string; cls: string }> = {
@@ -133,6 +139,22 @@ export default function ExamCampaignsPage() {
     }
   }, [fetchItems]);
 
+  const handleEnrollClassroom = useCallback(async (campaignId: string, classroomId: string) => {
+    try {
+      const res = await fetch(`/api/exam-campaigns/${campaignId}/enroll`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ classroomId }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error?.message ?? '실패');
+      toast.success(`${json.data?.enrolled ?? 0}명 등록 완료`);
+      await fetchItems();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '학생 등록에 실패했습니다');
+    }
+  }, [fetchItems]);
+
   const selected = useMemo(() => items.find((c) => c.id === selectedId) ?? null, [items, selectedId]);
 
   return (
@@ -221,6 +243,7 @@ export default function ExamCampaignsPage() {
                 campaign={selected}
                 onDelete={() => handleDelete(selected.id)}
                 onRecurate={() => handleRecurate(selected.id)}
+                onEnrollClassroom={(classroomId) => handleEnrollClassroom(selected.id, classroomId)}
               />
             ) : (
               <div className="bg-white rounded-sm border border-slate-200 p-6 text-center text-sm text-text-secondary">
@@ -247,13 +270,17 @@ function CampaignDetailCard({
   campaign,
   onDelete,
   onRecurate,
+  onEnrollClassroom,
 }: {
   campaign: CampaignListItem;
   onDelete: () => void;
   onRecurate: () => void;
+  onEnrollClassroom: (classroomId: string) => void;
 }) {
   const [detail, setDetail] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
+  const [classrooms, setClassrooms] = useState<ClassroomMin[]>([]);
+  const [enrollClassroomId, setEnrollClassroomId] = useState('');
 
   useEffect(() => {
     let cancel = false;
@@ -270,6 +297,12 @@ function CampaignDetailCard({
       cancel = true;
     };
   }, [campaign.id]);
+
+  useEffect(() => {
+    fetch('/api/classrooms')
+      .then((r) => r.json())
+      .then((j) => setClassrooms(j.data ?? []));
+  }, []);
 
   const d = detail as
     | {
@@ -353,6 +386,42 @@ function CampaignDetailCard({
           )}
         </>
       ) : null}
+
+      {/* 반 단위 학생 등록 */}
+      {campaign.status === 'ACTIVE' && (
+        <div className="border-t border-slate-100 pt-3">
+          <div className="text-xs font-medium text-text-secondary mb-1.5 flex items-center gap-1">
+            <UserPlus className="w-3 h-3" /> 학생 등록
+          </div>
+          <div className="flex gap-2">
+            <select
+              value={enrollClassroomId}
+              onChange={(e) => setEnrollClassroomId(e.target.value)}
+              className="flex-1 px-2 py-1.5 border border-slate-200 rounded-sm text-xs"
+            >
+              <option value="">반 선택</option>
+              {classrooms.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name} {c.grade ? `(${c.grade}학년)` : ''}
+                </option>
+              ))}
+            </select>
+            <Button
+              size="sm"
+              disabled={!enrollClassroomId}
+              onClick={() => {
+                onEnrollClassroom(enrollClassroomId);
+                setEnrollClassroomId('');
+              }}
+            >
+              일괄 등록
+            </Button>
+          </div>
+          <p className="text-xs text-slate-400 mt-1">
+            반의 모든 학생에게 D-day 자동 일정이 생성됩니다
+          </p>
+        </div>
+      )}
 
       <div className="flex gap-2 pt-2 border-t border-slate-100">
         <Button variant="secondary" size="sm" onClick={onRecurate}>
