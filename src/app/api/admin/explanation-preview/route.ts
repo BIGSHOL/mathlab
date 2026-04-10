@@ -66,9 +66,10 @@ export async function POST(req: NextRequest) {
   if (isResponse(user)) return user;
 
   const body = await req.json();
-  const { questionIds, mode } = body as {
+  const { questionIds, mode, model: modelParam } = body as {
     questionIds: string[];
     mode: 'thinking' | 'noThinking' | 'both' | 'auto';
+    model?: string;
   };
 
   if (!questionIds?.length) {
@@ -77,6 +78,8 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
+
+  const model = modelParam || 'gemini-2.5-flash';
 
   const questions = await prisma.question.findMany({
     where: { id: { in: questionIds } },
@@ -171,7 +174,7 @@ export async function POST(req: NextRequest) {
           const start = Date.now();
           try {
             const res = await client.models.generateContent({
-              model: 'gemini-2.5-flash',
+              model,
               contents: [{ role: 'user', parts: [{ text: prompt }] }],
               config: {
                 temperature: 0.3,
@@ -200,7 +203,7 @@ export async function POST(req: NextRequest) {
           const start = Date.now();
           try {
             const res = await client.models.generateContent({
-              model: 'gemini-2.5-flash',
+              model,
               contents: [{ role: 'user', parts: [{ text: prompt }] }],
               config: {
                 temperature: 0.3,

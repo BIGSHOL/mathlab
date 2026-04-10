@@ -39,6 +39,13 @@ interface CompareResult {
 
 type CompareMode = 'both' | 'thinking' | 'noThinking' | 'auto';
 
+const MODEL_OPTIONS: { value: string; label: string; desc: string }[] = [
+  { value: 'gemini-2.5-flash', label: '2.5 Flash', desc: '현재 사용 (GA, 저렴)' },
+  { value: 'gemini-2.5-flash-lite', label: '2.5 Flash Lite', desc: '최저가, 빠름' },
+  { value: 'gemini-3-flash-preview', label: '3 Flash Preview', desc: '신형 Flash (실험)' },
+  { value: 'gemini-3-pro-preview', label: '3 Pro Preview', desc: '최고 품질 (느리고 비쌈)' },
+];
+
 /** 해설 텍스트를 전략/풀이/핵심 포인트 섹션으로 분리하여 렌더링 */
 function ExplanationSections({ content }: { content: string }) {
   // 섹션 헤더 패턴: **전략**, **풀이**, **핵심 포인트** (또는 볼드 없이)
@@ -107,6 +114,7 @@ export default function ExplanationComparePage() {
   const [mode, setMode] = useState<CompareMode>('auto');
   const [expandedRaw, setExpandedRaw] = useState<Set<string>>(new Set());
   const [bookCode, setBookCode] = useState('3-1');
+  const [model, setModel] = useState<string>('gemini-2.5-flash');
   const [saving, setSaving] = useState(false);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
@@ -149,6 +157,7 @@ export default function ExplanationComparePage() {
         body: JSON.stringify({
           questionIds: [...selectedIds],
           mode,
+          model,
         }),
       });
       if (!res.ok || !res.body) {
@@ -307,6 +316,20 @@ export default function ExplanationComparePage() {
                 {bc}
               </button>
             ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-text-secondary">모델:</span>
+            <select
+              value={model}
+              onChange={e => setModel(e.target.value)}
+              className="px-3 py-1.5 rounded-sm text-xs font-bold bg-slate-100 text-text-secondary border border-slate-200 hover:bg-slate-200 focus:outline-none focus:ring-1 focus:ring-primary"
+            >
+              {MODEL_OPTIONS.map(m => (
+                <option key={m.value} value={m.value}>
+                  {m.label} — {m.desc}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm font-bold text-text-secondary">모드:</span>
