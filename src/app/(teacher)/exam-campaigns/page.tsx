@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Target, Plus, School as SchoolIcon, Calendar, Users, BarChart3, Trash2, RefreshCw, UserPlus } from 'lucide-react';
+import { Target, Plus, School as SchoolIcon, Calendar, Users, BarChart3, Trash2, RefreshCw, UserPlus, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -155,6 +155,23 @@ export default function ExamCampaignsPage() {
     }
   }, [fetchItems]);
 
+  const handlePredictQuestions = useCallback(async (campaignId: string) => {
+    try {
+      toast.info('AI 예상 문제를 생성 중입니다 (10~20초)');
+      const res = await fetch(`/api/exam-campaigns/${campaignId}/predict-questions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ count: 5 }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error?.message ?? '실패');
+      toast.success(`${json.data?.generated ?? 0}개 예상 문제가 생성되어 캠페인에 추가되었습니다`);
+      await fetchItems();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'AI 예상 문제 생성에 실패했습니다');
+    }
+  }, [fetchItems]);
+
   const selected = useMemo(() => items.find((c) => c.id === selectedId) ?? null, [items, selectedId]);
 
   return (
@@ -244,6 +261,7 @@ export default function ExamCampaignsPage() {
                 onDelete={() => handleDelete(selected.id)}
                 onRecurate={() => handleRecurate(selected.id)}
                 onEnrollClassroom={(classroomId) => handleEnrollClassroom(selected.id, classroomId)}
+                onPredictQuestions={() => handlePredictQuestions(selected.id)}
               />
             ) : (
               <div className="bg-white rounded-sm border border-slate-200 p-6 text-center text-sm text-text-secondary">
@@ -271,11 +289,13 @@ function CampaignDetailCard({
   onDelete,
   onRecurate,
   onEnrollClassroom,
+  onPredictQuestions,
 }: {
   campaign: CampaignListItem;
   onDelete: () => void;
   onRecurate: () => void;
   onEnrollClassroom: (classroomId: string) => void;
+  onPredictQuestions: () => void;
 }) {
   const [detail, setDetail] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
@@ -423,9 +443,12 @@ function CampaignDetailCard({
         </div>
       )}
 
-      <div className="flex gap-2 pt-2 border-t border-slate-100">
+      <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
         <Button variant="secondary" size="sm" onClick={onRecurate}>
-          <RefreshCw className="w-3.5 h-3.5 mr-1" /> 큐레이션 재실행
+          <RefreshCw className="w-3.5 h-3.5 mr-1" /> 큐레이션
+        </Button>
+        <Button variant="secondary" size="sm" onClick={onPredictQuestions}>
+          <Sparkles className="w-3.5 h-3.5 mr-1" /> AI 예상문제
         </Button>
         <button
           onClick={onDelete}

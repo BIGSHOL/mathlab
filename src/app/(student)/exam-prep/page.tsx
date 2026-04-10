@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Target, Calendar, CheckCircle2, Circle, BookOpen, FileQuestion, Trophy, Clock, BarChart3, ChevronRight, RotateCw } from 'lucide-react';
+import { Target, Calendar, CheckCircle2, Circle, BookOpen, FileQuestion, Trophy, Clock, BarChart3, ChevronRight, RotateCw, TrendingUp, Sparkles } from 'lucide-react';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { LoadingEmptyState } from '@/components/ui/LoadingEmptyState';
@@ -192,6 +192,30 @@ function CampaignDetail({
   campaign: ExamPrepCampaign;
   onActivityComplete: (dayIndex: number, activityIndex: number, activity: ScheduleActivity) => void;
 }) {
+  const [prediction, setPrediction] = useState<{
+    predictedGrade: string;
+    expectedScore: number;
+    confidence: number;
+    reasoning: string;
+  } | null>(null);
+  const [predictionLoading, setPredictionLoading] = useState(false);
+
+  const fetchPrediction = useCallback(async () => {
+    setPredictionLoading(true);
+    try {
+      const res = await fetch(`/api/exam-campaigns/enrollments/${campaign.enrollmentId}/grade-prediction`);
+      const json = await res.json();
+      if (res.ok && json.data) setPrediction(json.data);
+    } catch {
+      // 무시
+    }
+    setPredictionLoading(false);
+  }, [campaign.enrollmentId]);
+
+  useEffect(() => {
+    fetchPrediction();
+  }, [fetchPrediction]);
+
   return (
     <div className="space-y-4">
       {/* 헤더 */}
@@ -290,6 +314,34 @@ function CampaignDetail({
             ))}
           </div>
         </div>
+      )}
+
+      {/* 모의 등급 예측 */}
+      {prediction && (
+        <div className="bg-gradient-to-br from-primary/5 to-purple-50 rounded-sm border border-primary/20 p-5">
+          <h3 className="font-semibold text-text-primary mb-3 flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-primary" /> 모의 등급 예측
+            <Sparkles className="w-3 h-3 text-purple-500 ml-auto" />
+          </h3>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div>
+              <div className="text-2xl font-bold text-primary">{prediction.predictedGrade}</div>
+              <div className="text-xs text-text-secondary">예상 등급</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-text-primary">{prediction.expectedScore}점</div>
+              <div className="text-xs text-text-secondary">예상 점수</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-slate-600">{prediction.confidence}%</div>
+              <div className="text-xs text-text-secondary">신뢰도</div>
+            </div>
+          </div>
+          <p className="text-xs text-text-secondary mt-3 text-center">{prediction.reasoning}</p>
+        </div>
+      )}
+      {predictionLoading && !prediction && (
+        <div className="text-xs text-slate-400 text-center py-2">등급 예측 분석 중...</div>
       )}
 
       {/* 출제 패턴 */}
