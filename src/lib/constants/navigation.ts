@@ -95,6 +95,7 @@ const NAV_GROUPS: NavGroup[] = [
     id: 'assessment', label: '배정·평가', minRole: 'TEACHER', items: [
       { id: 'tests', label: '시험 출제', href: '/tests', icon: ClipboardCheck, minRole: 'TEACHER', keywords: ['test', '시험', '평가', '출제', '배정'], licenseFeature: 'TEST' },
       { id: 'homework', label: '숙제 출제', href: '/homework', icon: CalendarCheck, minRole: 'TEACHER', keywords: ['homework', '숙제', '과제', '배정'] },
+      { id: 'exam-campaigns', label: '내신대비 캠페인', href: '/exam-campaigns', icon: Target, minRole: 'TEACHER', keywords: ['exam', '내신', '대비', '캠페인', '시험준비'], licenseFeature: 'EXAM_PREP' },
       { id: 'quiz', label: '퀴즈 배틀', href: '/quiz', icon: Radio, minRole: 'TEACHER', keywords: ['quiz', '퀴즈', '실시간', '대결'] },
     ],
   },

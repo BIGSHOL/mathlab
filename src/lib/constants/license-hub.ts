@@ -1,6 +1,6 @@
 import {
   BookOpen, Calculator, Zap, ClipboardCheck, Swords,
-  Stethoscope, Radio, FileSearch, CalendarCheck, FileSpreadsheet,
+  Stethoscope, Radio, FileSearch, CalendarCheck, FileSpreadsheet, Target,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { LicenseFeature } from '@prisma/client';
@@ -126,9 +126,20 @@ export const LICENSE_FEATURE_INFO: Record<LicenseFeature, LicenseFeatureInfo> = 
     color: 'bg-cyan-500',
     textColor: 'text-cyan-500',
   },
+  EXAM_PREP: {
+    label: '내신대비',
+    description: '학교별 내신 시험을 D-day까지 자동 학습 일정으로 준비합니다',
+    studentCapabilities: ['D-day 자동 일정', '오늘의 학습', '모의 등급 예측', '출제 패턴 분석'],
+    teacherLinks: [
+      { label: '내신대비 캠페인', href: '/exam-campaigns' },
+    ],
+    icon: Target,
+    color: 'bg-rose-500',
+    textColor: 'text-rose-500',
+  },
 };
 
 /** LICENSE_FEATURE_INFO 키를 순서대로 배열 */
 export const LICENSE_FEATURES_ORDERED: LicenseFeature[] = [
-  'CONCEPT', 'ARITHMETIC', 'TIME_ATTACK', 'TEST', 'REVENGE', 'DIAGNOSTIC', 'QUIZ', 'EXAM_ANALYSIS', 'HOMEWORK', 'WORKSHEET',
+  'CONCEPT', 'ARITHMETIC', 'TIME_ATTACK', 'TEST', 'REVENGE', 'DIAGNOSTIC', 'QUIZ', 'EXAM_ANALYSIS', 'HOMEWORK', 'WORKSHEET', 'EXAM_PREP',
 ];

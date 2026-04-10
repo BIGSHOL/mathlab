@@ -19,6 +19,7 @@ const FEATURES: { key: LicenseFeatureKey; enum: LicenseFeature; label: string }[
   { key: 'exam_analysis', enum: 'EXAM_ANALYSIS', label: '기출 분석' },
   { key: 'homework', enum: 'HOMEWORK', label: '숙제' },
   { key: 'worksheet', enum: 'WORKSHEET', label: '학습지' },
+  { key: 'exam_prep', enum: 'EXAM_PREP', label: '내신대비' },
 ];
 
 interface TenantLicense {

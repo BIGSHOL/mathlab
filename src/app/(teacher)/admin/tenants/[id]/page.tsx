@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Building2, ArrowLeft, Users, School, Save, UserCog, GraduationCap, Shield, KeyRound, Plus, Check, X, BookOpen, Calculator, Zap, ClipboardCheck, Swords, Stethoscope, Radio, FileSearch, CalendarCheck, FileSpreadsheet, Upload, Trash2 } from 'lucide-react';
+import { Building2, ArrowLeft, Users, School, Save, UserCog, GraduationCap, Shield, KeyRound, Plus, Check, X, BookOpen, Calculator, Zap, ClipboardCheck, Swords, Stethoscope, Radio, FileSearch, CalendarCheck, FileSpreadsheet, Upload, Trash2, Target } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { toast } from '@/components/ui/Toast';
@@ -19,6 +19,7 @@ const SEAT_FEATURES = [
   { key: 'diagnostic', label: '레벨테스트', icon: Stethoscope, color: 'text-violet-500' },
   { key: 'quiz', label: '실시간 퀴즈', icon: Radio, color: 'text-pink-500' },
   { key: 'homework', label: '숙제', icon: CalendarCheck, color: 'text-teal-500' },
+  { key: 'exam_prep', label: '내신대비', icon: Target, color: 'text-rose-500' },
 ] as const;
 
 /** On/Off 기반: 지점 단위 활성/비활성 */

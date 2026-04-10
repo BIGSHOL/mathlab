@@ -13,6 +13,7 @@ import {
   requireAuthViewAs,
   isResponse,
   serverError,
+  requireLicense,
 } from '@/lib/api';
 import type { ScheduleDay } from '@/lib/services/exam-campaign-scheduler';
 
@@ -47,6 +48,9 @@ function dateToISO(d: Date): string {
 export async function GET(request: NextRequest) {
   const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
+
+  const licenseCheck = await requireLicense(user, 'exam_prep');
+  if (licenseCheck) return licenseCheck;
 
   try {
     const enrollments = await prisma.examCampaignEnrollment.findMany({

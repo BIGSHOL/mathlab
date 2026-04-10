@@ -32,6 +32,7 @@ enum LicenseFeature {
   EXAM_ANALYSIS
   HOMEWORK
   WORKSHEET
+  EXAM_PREP
 }
 
 // FEAT: 기출 분석 시스템

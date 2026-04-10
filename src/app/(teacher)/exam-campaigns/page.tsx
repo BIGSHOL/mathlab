@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, useCallback } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Target, Plus, School as SchoolIcon, Calendar, Users, BarChart3, Trash2, RefreshCw, UserPlus, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -442,6 +443,13 @@ function CampaignDetailCard({
           </p>
         </div>
       )}
+
+      <Link
+        href={`/exam-campaigns/${campaign.id}/monitor`}
+        className="block w-full text-center py-2 bg-primary/10 text-primary text-sm font-medium rounded-sm hover:bg-primary/20"
+      >
+        학생 진도 모니터링 →
+      </Link>
 
       <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
         <Button variant="secondary" size="sm" onClick={onRecurate}>

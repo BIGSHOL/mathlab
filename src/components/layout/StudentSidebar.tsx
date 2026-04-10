@@ -18,6 +18,7 @@ import {
   Zap,
   Lock,
   ShoppingBag,
+  Target,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLicenses } from '@/hooks/useLicenses';
@@ -40,6 +41,7 @@ const mainItems: MenuItem[] = [
   { label: '단원 목록', href: '/subjects', icon: BookOpen, licenseFeature: 'concept' },
   { label: '연산 연습', href: '/practice/arithmetic', icon: Calculator, licenseFeature: 'arithmetic' },
   { label: '나의 시험', href: '/my-tests', icon: ClipboardCheck, licenseFeature: 'test' },
+  { label: '내신대비', href: '/exam-prep', icon: Target, licenseFeature: 'exam_prep' },
 ];
 
 const activityItems: MenuItem[] = [
