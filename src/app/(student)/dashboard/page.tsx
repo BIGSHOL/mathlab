@@ -15,6 +15,7 @@ import { hasLicense } from '@/lib/services/license';
 import { DashboardGamification } from '@/components/student/DashboardGamification';
 import { ReviewReminderCard } from '@/components/student/ReviewReminderCard';
 import { DashboardStatCards } from '@/components/student/DashboardStatCards';
+import { ExamPrepWidget } from '@/components/student/ExamPrepWidget';
 
 export default async function StudentDashboard({
   searchParams,
@@ -521,6 +522,11 @@ export default async function StudentDashboard({
           {/* 게이미피케이션 (오늘의 미션 + 오늘의 한 문제) */}
           <DashboardGamification />
         </div>
+      </div>
+
+      {/* ──── 내신대비 위젯 ──── */}
+      <div className="mb-4">
+        <ExamPrepWidget />
       </div>
 
       {/* ──── 간격 반복 복습 ──── */}
