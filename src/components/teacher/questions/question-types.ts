@@ -126,6 +126,9 @@ export interface QuestionItem {
   diagramSpec?: DiagramParam[] | null;
   diagramSVG?: string | null;
   choiceColumns?: number | null;
+  variantOfId?: string | null;
+  variantSeed?: number | null;
+  variantSource?: string | null;
 }
 
 export interface Meta {

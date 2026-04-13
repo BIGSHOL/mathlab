@@ -77,6 +77,13 @@
 - 객관식 보기: 항상 `grid-cols-2` + 테두리 박스 스타일 (`px-3 py-2 bg-slate-50 rounded-sm border`)
 - 새 뷰/페이지 추가 시 기존 렌더링 패턴을 반드시 확인 후 동일하게 적용
 
+**`<보기>` 블록 그리드 — 인라인 마커 방식:**
+- blockquote(`>`) 안에 `<보기>` 또는 `<보기:cols=N>` 마커 작성 (N = 1|2|3|auto)
+- 마커 없으면 기본 2열, `cols=auto`는 항목 개수 기반 자동(≥6 → 3열, ≥3 → 2열)
+- 파싱/치환 유틸: `src/lib/utils/box-grid.ts` (`readBoxColsFromContent`, `writeBoxColsToContent`)
+- 문제 편집 UI에서 "보기 열" 버튼 그룹(자동/1/2/3열)으로 마커 자동 편집
+- 렌더러가 마커를 자동 숨기고 `<보기>` 라벨로 치환 → DB에 저장된 마커가 모든 뷰(편집/미리보기/학생/인쇄)에 동일 적용
+
 ### 4. API 응답 형식 (일관성 유지)
 
 ```typescript
@@ -338,6 +345,43 @@ Additive 구조 — 상위 역할이 하위 역할 메뉴를 포함 (`src/lib/co
 - 해설 PDF 별도 업로드로 정답/풀이 매칭 지원
 - 관련 파일: `src/types/pdf-extract.ts`, `src/lib/utils/pdf-processor.ts`, `src/app/api/questions/pdf-extract/`
 
+**⚠️ SUPER_ADMIN 전용 (Gemini quota 보호) — 3중 방어:**
+- API: `/api/questions/pdf-extract`, `/api/questions/pdf-extract-solutions`, `/api/exam-analysis/[id]/extract-to-bank` 모두 `requireSuperAdmin`
+- UI: `/questions/pdf-import` 페이지 자체 가드 (role !== SUPER_ADMIN 시 `/overview` 리다이렉트)
+- 네비: `navigation.ts`에서 `minRole: 'SUPER_ADMIN'` 필터링
+
+### 기출 시험지 배치 추출 시스템
+
+분석 완료된 ExamPaper를 SUPER_ADMIN이 승인하면 Vercel Cron이 야간에 일괄 추출 → 지점 전용 문제은행 저장.
+
+**플로우:**
+```
+PDF 업로드 → 수동 분석 → status=COMPLETED
+   → SUPER_ADMIN 대시보드에서 체크 + 승인
+   → 지금 실행 / 예약 실행 (Vercel Cron 5분 간격 틱)
+   → Gemini 추출 → ExamPaper.tenantId 주입 → Question 저장
+```
+
+**스키마:**
+- `ExamPaper`: `extractApproved`, `extractApprovedBy/At`, `extractAttempts`, `lastExtractError`
+- `Question.examPaperId` FK (시험지별 문제 추적, idempotent 재추출)
+- `ExamExtractSchedule` — 예약 스케줄 + 실행 결과 로그 (PENDING|RUNNING|DONE|FAILED|CANCELLED)
+
+**핵심 서비스:** `src/lib/services/exam-extract-batch.ts`
+- `extractAndSaveExamPaper()` — 단일 시험지 Gemini 추출 + idempotent 저장 (기존 Question 삭제 후 재생성)
+- `processPendingSchedules()` — 도래한 스케줄 순차 실행, 틱당 최대 5건 (남으면 다음 틱)
+
+**API:**
+- `GET /api/admin/extract-queue` — 시험지 목록 (filter: pending/approved/extracted/all)
+- `POST /api/admin/extract-queue/approve` — 일괄 승인/취소
+- `POST /api/admin/extract-schedule` — 즉시 실행 or scheduledAt 예약
+- `DELETE /api/admin/extract-schedule/[id]` — PENDING 스케줄 취소
+- `GET /api/cron/extract-batch-tick` — Cron 틱 (CRON_SECRET 인증)
+
+**배포 환경변수:** `CRON_SECRET` 필수 (Vercel env, Cron 헤더 Bearer 인증용)
+**Vercel Cron 설정:** `vercel.json` → `*/5 * * * *`
+**UI:** `/admin/extract-queue` (SUPER_ADMIN 전용)
+
 **교과서 PDF 보유 현황 (G:\, 22개정):**
 
 | 학년 | 보유 출판사 | 추출 상태 |
@@ -540,6 +584,9 @@ if (licenseCheck) return licenseCheck;  // 이용권 없으면 403
 3. 과정 COMPLETED 처리 → 다음 LOCKED 과정 자동 ACTIVE 전환
 
 **선생님 관리:** `/courses` (과정 생성, 개념 추가, 학생 배정)
+- 반 중심 뷰: `LearningCourse.tenantId`만 있고 `classroomId` 없음 → **지점(Tenant) 단위 공용**
+- "이 반의 학습 코스" = 반 학생 중 enrollment된 코스 (간접 연결)
+- 재사용 경로: 반 상세에 **"기존 코스 배정"** 모달 — 지점 공용 코스 중 해당 반에 미배정 학생이 있는 것 표시 → 클릭 시 `POST /api/learning-courses/[seq]/enroll`로 반 전원 일괄 enroll (중복은 스킵)
 
 ### 기출 분석 시스템
 
@@ -601,10 +648,25 @@ PDF 시험지 업로드 → Gemini AI 분석 → 문항별 난이도/유형/능�
 ### 간격 반복 복습 시스템
 
 에빙하우스 망각곡선 기반 자동 복습 스케줄 (`src/lib/services/spaced-review.ts`):
-- 오답 문제 자동 복습 대기열 추가
-- 복습 간격: 1일(즉시) → 3일 → 7일 → 14일 → 30일
-- 재오답 시 3일 간격으로 리셋
-- 학생 대시보드에 복습 카드 표시
+- **간격 5단계**: `REVIEW_INTERVALS = [1, 3, 7, 14, 30]` — 1일(다음 수업일) → 3일 → 7일 → 14일 → 30일 → 완전 습득(`status='completed'`)
+- **오답 발생 시(최초)**: 1일 후 복습 스케줄 생성, `status='active'`
+- **복습 중 오답**: `status='failed'` 마킹, 이후 스케줄 생성 안 함 → **별도 관리 대상** (재학습/집중 지도)
+- **복습 외 상황에서 재오답**: 기존 `active` 스케줄을 1일로 리셋 (failed는 건드리지 않음)
+- 모든 조회는 `status='active'` 필터 적용 (failed/completed는 일반 복습에 노출 안 됨)
+
+**ReviewSchedule 주요 필드:** `status`, `failureCount`, `streak`, `interval`, `reviewAt`, `completedAt`
+
+**핵심 함수:**
+- `createReviewSchedule()` — 오답 발생 시 호출
+- `completeReview(id, isCorrect)` — 복습 완료 처리 (정답: 다음 간격 or completed / 오답: failed)
+- `getDailyTestItems(studentId, count=4)` — **매 수업 3~4문항 복습 테스트용**, 최근 오답 우선(`createdAt DESC`)
+- `getFailedReviews(studentId, limit)` — 별도 관리 목록
+- `getTodayReviews(studentId, limit)` — 오늘 예정 active 항목
+- `getReviewStats(studentId)` — pending / completedToday / totalCompleted / failedCount
+
+**API:**
+- `GET /api/learning/review-daily-test?count=4` — 매 수업 복습 테스트 (3~4문항)
+- `GET /api/learning/review-failed?limit=50` — 탈락 항목 (View-As 지원)
 
 ### 고객 지원 시스템
 
@@ -647,7 +709,7 @@ PDF 시험지 업로드 → Gemini AI 분석 → 문항별 난이도/유형/능�
 **관리:** FeatureFlag, Classroom, Tenant
 **이용권:** TenantLicense, StudentLicense, LicenseUsageLog (10개 LicenseFeature enum)
 **학습과정:** LearningCourse, LearningCourseConcept, LearningCourseEnrollment
-**기출분석:** ExamPaper, ExamAnalysisResult, ExamAnalysisComment, ExamAnalysisTemplate, ExamArticle, School, SchoolGroupOverride
+**기출분석:** ExamPaper, ExamAnalysisResult, ExamAnalysisComment, ExamAnalysisTemplate, ExamArticle, School, SchoolGroupOverride, ExamExtractSchedule (배치 추출)
 **지원:** Inquiry (문의/회신)
 **기타:** StudentProfile(XP/레벨), PointTransaction, DiagnosticResult, ConceptMemo, SpacedReviewItem
 
@@ -733,6 +795,8 @@ npx tsx scripts/migrate-question-relations.ts  # questionIds Json → 중간테�
 - **문제 순서 조회 시 반드시 헬퍼 함수 사용**: `getTestQuestionIds()`, `getQuizQuestionIds()`, `getHomeworkDayQuestionIds()` (`@/lib/utils/question-order`)
   - `test.questionIds as string[]` 직접 캐스팅 금지 → 중간테이블 우선 조회 헬퍼 사용
   - 새 시험/퀴즈/숙제 생성 시 Json + 중간테이블 Dual-Write 유지
+- **`/api/questions/bulk` 호출 시 tenantId 자동 결정:** examPaperId 있으면 해당 시험지 tenantId 우선 → 지점 전용 문제 보장. SUPER_ADMIN이 override 없이 호출하면 `tenantId=null`(공용)
+- **`<보기>` 블록 편집 시 `box-grid.ts` 유틸 사용** — 직접 문자열 치환 금지 (마커 포맷 변경 시 한 곳만 수정)
 
 ## Skills & Agents
 
@@ -766,10 +830,10 @@ npx tsx scripts/migrate-question-relations.ts  # questionIds Json → 중간테�
 | 총 코드량 | ~150,000 LoC |
 | 학생 페이지 | 12개 |
 | 선생님 페이지 | 23개 |
-| API 라우트 | 162개 |
+| API 라우트 | 167개 (배치 추출 5개 추가) |
 | 컴포넌트 | 180개 |
-| 서비스 모듈 | 22개 |
-| DB 모델 | 72개, Enum 12개 |
+| 서비스 모듈 | 23개 (exam-extract-batch 추가) |
+| DB 모델 | 73개, Enum 12개 |
 | 다이어그램 | DiagramParam 26개 타입 + DiagramSpec 6개 유형 11개 프리셋 + 교육과정 프리셋 168개 + 플러그인 엔진 26개 |
 | 커스텀 훅 | 14개 |
 | Zustand 스토어 | 7개 |

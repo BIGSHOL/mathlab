@@ -13,7 +13,7 @@ export const DEFAULT_BOX_COLS: BoxCols = 2;
 
 /** blockquote 첫 줄 텍스트에서 cols 지정자 추출 */
 export function parseBoxCols(headerLine: string): BoxCols | null {
-  const m = headerLine.match(/<보기(?::cols=(auto|1|2|3))?>/);
+  const m = headerLine.match(/\\?<보기(?::cols=(auto|1|2|3))?\\?>/);
   if (!m) return null;
   if (!m[1]) return DEFAULT_BOX_COLS;
   if (m[1] === 'auto') return 'auto';
@@ -64,9 +64,9 @@ export function writeBoxColsToContent(content: string, cols: BoxCols | null): st
     const line = lines[i];
     const prefix = line.match(/^>\s?/)?.[0] ?? '';
     const rest = line.slice(prefix.length);
-    if (/<보기(?::cols=(?:auto|1|2|3))?>/.test(rest)) {
+    if (/\\?<보기(?::cols=(?:auto|1|2|3))?\\?>/.test(rest)) {
       // 기존 마커 치환
-      lines[i] = prefix + rest.replace(/<보기(?::cols=(?:auto|1|2|3))?>/, newMarker);
+      lines[i] = prefix + rest.replace(/\\?<보기(?::cols=(?:auto|1|2|3))?\\?>/, newMarker);
       return lines.join('\n');
     }
   }

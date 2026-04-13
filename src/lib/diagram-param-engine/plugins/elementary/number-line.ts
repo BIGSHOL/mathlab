@@ -15,6 +15,10 @@ export const numberLinePlugin: DiagramPlugin<NumberLineParams> = {
       marks: arr(p.marks ?? p.points ?? p.markers),
       highlights: arr(p.highlights ?? p.arcs ?? p.jumps ?? p.regions),
       label: p.label as string,
+      showAllTickLabels: p.showAllTickLabels as boolean | undefined,
+      jumpArrows: arr(p.jumpArrows),
+      openEndpoints: arr(p.openEndpoints),
+      closedEndpoints: arr(p.closedEndpoints),
     };
   },
   render: renderNumberLine,

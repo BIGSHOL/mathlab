@@ -15,10 +15,12 @@ export function renderSolidFigure(params: SolidFigureParams): string {
 
   const parts: string[] = [];
 
+  const faceLabels = Array.isArray(params.faceLabels) ? params.faceLabels : [];
+
   switch (shape) {
     case 'cube':
     case 'rectangular_prism':
-      return renderPrism(parts, w, h, d, showHidden, color, labels, shape === 'cube');
+      return renderPrism(parts, w, h, d, showHidden, color, labels, shape === 'cube', faceLabels.length > 0 ? faceLabels : undefined);
 
     case 'cylinder':
       return renderCylinder(parts, r, h, showHidden, color, labels);
@@ -42,8 +44,10 @@ export function renderSolidFigure(params: SolidFigureParams): string {
 
 type Label = { position: string; text: string };
 
+type FaceLabel = { face: 'front' | 'top' | 'right'; text: string; color?: string };
+
 /** 직육면체/정육면체 */
-function renderPrism(parts: string[], _w: number, _h: number, _d: number, showHidden: boolean, color: string, labels: Label[], isCube: boolean): string {
+function renderPrism(parts: string[], _w: number, _h: number, _d: number, showHidden: boolean, color: string, labels: Label[], isCube: boolean, faceLabels?: FaceLabel[]): string {
   // 등축투영 좌표 (고정 크기)
   const scale = isCube ? 1 : 1;
   const fw = 80 * scale, fh = 80 * scale, fd = 40 * scale;
@@ -72,7 +76,28 @@ function renderPrism(parts: string[], _w: number, _h: number, _d: number, showHi
     parts.push(line(f[0][0], f[0][1], b[0][0], b[0][1], { stroke: '#999', strokeWidth: 1, dashArray: dash }));
   }
 
-  // 라벨
+  // 면 텍스트 (faceLabels)
+  if (faceLabels) {
+    for (const fl of faceLabels) {
+      const txt = fl.text.replace(/^\$+|\$+$/g, '').trim();
+      if (!txt) continue;
+      if (fl.face === 'front') {
+        const cx = (f[0][0] + f[1][0]) / 2;
+        const cy = (f[0][1] + f[3][1]) / 2;
+        parts.push(katexLabel(cx, cy, txt, { fontSize: 16 }));
+      } else if (fl.face === 'top') {
+        const cx = (f[3][0] + b[2][0]) / 2;
+        const cy = (f[3][1] + b[2][1]) / 2;
+        parts.push(katexLabel(cx, cy, txt, { fontSize: 14 }));
+      } else if (fl.face === 'right') {
+        const cx = (f[1][0] + b[2][0]) / 2;
+        const cy = (f[1][1] + b[2][1]) / 2;
+        parts.push(katexLabel(cx, cy, txt, { fontSize: 14 }));
+      }
+    }
+  }
+
+  // 라벨 (치수)
   renderLabels(parts, labels, {
     width: [(f[0][0] + f[1][0]) / 2, f[0][1] + 14],
     height: [f[0][0] - 14, (f[0][1] + f[3][1]) / 2],

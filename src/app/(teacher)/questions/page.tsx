@@ -65,6 +65,8 @@ export default function QuestionsPage() {
         setSourceFilter={mgr.setSourceFilter}
         noExplanation={mgr.noExplanation}
         setNoExplanation={mgr.setNoExplanation}
+        noDiagram={mgr.noDiagram}
+        setNoDiagram={mgr.setNoDiagram}
         search={mgr.search}
         setSearch={mgr.setSearch}
         typeFilters={mgr.typeFilters}

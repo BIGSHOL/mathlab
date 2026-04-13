@@ -9,6 +9,7 @@ import type {
   ExtractionMode,
 } from '@/types/pdf-extract';
 import { mapDifficulty, mapType, embedBoxItems, stripChoicesFromContent } from '@/types/pdf-extract';
+import { ensureChoiceNumbers } from '@/lib/pdf-extract-engine/presets/math-textbook';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import type { PdfImportState, StepNumber } from './types';
 import {
@@ -347,7 +348,7 @@ export function usePdfImport(): PdfImportState {
               difficultyTag: p.difficultyTag || '',
               problemType: p.problemType || '주관식',
               content: autoWrapMath(contentText),
-              choices: (p.choices || []).map((c: string) => autoWrapMath(c)),
+              choices: ensureChoiceNumbers((p.choices || []).map((c: string) => autoWrapMath(c))),
               boxItems: p.boxItems || [],
               answer: p.answer || '',
               explanation: '',

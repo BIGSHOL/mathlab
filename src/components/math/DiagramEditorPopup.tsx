@@ -25,6 +25,7 @@ export function DiagramEditorPopup({ isOpen, initialParam, diagramIndex, onClose
   const [params, setParams] = useState<Record<string, unknown>>(initialParam?.params ?? getDefaultParams((initialParam?.type as DiagramType) ?? 'fraction_rect'));
   const [label, setLabel] = useState(initialParam?.label ?? '');
   const [align, setAlign] = useState<'left' | 'center' | 'right'>(initialParam?.align ?? 'left');
+  const [size, setSize] = useState<'small' | 'medium' | 'large' | 'full'>(initialParam?.size ?? 'full');
 
   // initialParam이 바뀌면 상태 초기화
   useEffect(() => {
@@ -34,6 +35,7 @@ export function DiagramEditorPopup({ isOpen, initialParam, diagramIndex, onClose
       setParams(initialParam?.params ?? getDefaultParams(type));
       setLabel(initialParam?.label ?? '');
       setAlign(initialParam?.align ?? 'left');
+      setSize(initialParam?.size ?? 'full');
     }
   }, [isOpen, initialParam]);
 
@@ -61,7 +63,7 @@ export function DiagramEditorPopup({ isOpen, initialParam, diagramIndex, onClose
 
   const handleSave = useCallback(() => {
     const svg = renderDiagram({ type: diagramType, params }) ?? '';
-    onSave({ type: diagramType, label: label || diagramType, params, align }, svg);
+    onSave({ type: diagramType, label: label || diagramType, params, align, size }, svg);
   }, [diagramType, params, label, align, onSave]);
 
   // ESC 키
@@ -119,6 +121,24 @@ export function DiagramEditorPopup({ isOpen, initialParam, diagramIndex, onClose
                       onClick={() => setAlign(val)}
                       className={`px-2.5 py-1 text-xs border rounded-sm transition-colors ${
                         align === val ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      {lbl}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* 크기 옵션 */}
+              <div>
+                <label className="text-xs text-slate-500">도형 크기</label>
+                <div className="flex gap-1.5 mt-1">
+                  {([['small', '소'], ['medium', '중'], ['large', '대'], ['full', '전체']] as const).map(([val, lbl]) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => setSize(val)}
+                      className={`px-2.5 py-1 text-xs border rounded-sm transition-colors ${
+                        size === val ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
                       }`}
                     >
                       {lbl}

@@ -22,12 +22,11 @@ interface ReviewItem {
 }
 
 const INTERVAL_LABELS: Record<number, { label: string; color: string }> = {
-  1: { label: '즉시복습', color: 'text-rose-700 bg-rose-50' },
+  1: { label: '다음날', color: 'text-rose-700 bg-rose-50' },
   3: { label: '3일차', color: 'text-red-600 bg-red-50' },
   7: { label: '1주차', color: 'text-orange-600 bg-orange-50' },
   14: { label: '2주차', color: 'text-amber-600 bg-amber-50' },
   30: { label: '1달차', color: 'text-blue-600 bg-blue-50' },
-  60: { label: '2달차', color: 'text-purple-600 bg-purple-50' },
 };
 
 export function ReviewReminderCard() {
@@ -66,9 +65,11 @@ export function ReviewReminderCard() {
             </p>
           </div>
         </div>
-        <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
-          {stats.pendingCount}
-        </span>
+        <Link href="/practice/review-test">
+          <Button size="sm">
+            <RotateCcw className="w-3.5 h-3.5 mr-1" /> 복습 테스트 시작
+          </Button>
+        </Link>
       </div>
 
       <div className="space-y-1.5">

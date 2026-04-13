@@ -102,7 +102,8 @@ export function renderNumberLine(params: NumberLineParams): string {
       parts.push(svgCircle(x, lineY, 3.5, { fill: color, stroke: 'white', strokeWidth: 1 }));
     }
     if (mark.label) {
-      parts.push(text(x, lineY - 14, mark.label, { fontSize: 10, fill: color, fontWeight: 'bold' }));
+      const labelY = mark.labelBelow ? lineY + 22 : lineY - 14;
+      parts.push(text(x, labelY, mark.label, { fontSize: 10, fill: color, fontWeight: 'bold' }));
     }
   }
 

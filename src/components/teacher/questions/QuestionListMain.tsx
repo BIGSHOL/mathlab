@@ -137,6 +137,14 @@ export function QuestionListMain({
                       <span className="px-2 py-1 bg-primary/10 text-primary text-xs font-bold rounded-sm">
                         {BOOK_LABELS[q.bookCode] || q.bookCode} #{q.questionNum}
                       </span>
+                      {((q as { _count?: { variants?: number } })._count?.variants ?? 0) > 0 && (
+                        <span
+                          className="px-2 py-1 bg-violet-100 text-violet-700 text-xs font-bold rounded-sm"
+                          title="동형 변형 (숫자만 다른 같은 유형 문제)"
+                        >
+                          +{(q as { _count?: { variants?: number } })._count?.variants}
+                        </span>
+                      )}
                       <span className={`px-2 py-1 text-xs font-bold rounded-sm ${getDifficultyBadgeColor(DIFFICULTY_LABELS[q.difficulty])}`}>
                         {DIFFICULTY_LABELS[q.difficulty]}
                       </span>

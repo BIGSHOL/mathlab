@@ -260,6 +260,23 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     defaultParams: { shape: 'cube', labels: [], showHiddenEdges: true, color: '#3B82F6' },
   },
   {
+    id: 'm1-1-dice-faces',
+    name: '주사위 (면에 숫자)',
+    description: '보이는 3면에 숫자/분수를 표시한 주사위',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '정수와 유리수',
+    diagramType: 'solid_figure',
+    defaultParams: {
+      shape: 'cube', showHiddenEdges: false, color: '#F9A8D4',
+      faceLabels: [
+        { face: 'front', text: '\\frac{2}{3}' },
+        { face: 'top', text: '-9' },
+        { face: 'right', text: '1' },
+      ],
+    },
+  },
+  {
     id: 'm1-2-solid-rev',
     name: '회전체 (원기둥)',
     description: '직사각형 회전 → 원기둥',
@@ -697,6 +714,73 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
   },
 
   // ═══════════════════════════════════════
+  // 숫자 피라미드 (flow_chart 기반)
+  // ═══════════════════════════════════════
+  {
+    id: 'm1-1-num-pyramid-3',
+    name: '숫자 피라미드 (3단)',
+    description: '3단 삼각형 배열 — 각 칸은 아래 두 수의 합',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '정수와 유리수',
+    diagramType: 'flow_chart',
+    defaultParams: {
+      nodes: [
+        { id: 'a', text: '?', x: 80, y: 0, shape: 'circle', size: 20, color: '#FEF3C7' },
+        { id: 'b', text: '3', x: 40, y: 50, shape: 'circle', size: 20 },
+        { id: 'c', text: '5', x: 120, y: 50, shape: 'circle', size: 20 },
+        { id: 'd', text: '-2', x: 0, y: 100, shape: 'circle', size: 20 },
+        { id: 'e', text: '5', x: 80, y: 100, shape: 'circle', size: 20 },
+        { id: 'f', text: '0', x: 160, y: 100, shape: 'circle', size: 20 },
+      ],
+      arrows: [
+        { from: 'b', to: 'a', noArrowHead: true },
+        { from: 'c', to: 'a', noArrowHead: true },
+        { from: 'd', to: 'b', noArrowHead: true },
+        { from: 'e', to: 'b', noArrowHead: true },
+        { from: 'e', to: 'c', noArrowHead: true },
+        { from: 'f', to: 'c', noArrowHead: true },
+      ],
+    },
+  },
+  {
+    id: 'm1-1-num-pyramid-4',
+    name: '숫자 피라미드 (4단)',
+    description: '4단 삼각형 배열 — 한 변에 놓인 수의 합이 같음',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '정수와 유리수',
+    diagramType: 'flow_chart',
+    defaultParams: {
+      nodes: [
+        { id: 'a', text: 'A', x: 120, y: 0, shape: 'circle', size: 20, color: '#FEF3C7' },
+        { id: 'b', text: '8', x: 70, y: 45, shape: 'circle', size: 20 },
+        { id: 'c', text: '-4', x: 170, y: 45, shape: 'circle', size: 20 },
+        { id: 'd', text: 'B', x: 20, y: 90, shape: 'circle', size: 20, color: '#FEF3C7' },
+        { id: 'e', text: '', x: 120, y: 90, shape: 'circle', size: 20 },
+        { id: 'f', text: '6', x: 220, y: 90, shape: 'circle', size: 20 },
+        { id: 'g', text: '-5', x: 0, y: 135, shape: 'circle', size: 20 },
+        { id: 'h', text: '10', x: 80, y: 135, shape: 'circle', size: 20 },
+        { id: 'i', text: '-7', x: 160, y: 135, shape: 'circle', size: 20 },
+        { id: 'j', text: '9', x: 240, y: 135, shape: 'circle', size: 20 },
+      ],
+      arrows: [
+        { from: 'b', to: 'a', noArrowHead: true },
+        { from: 'c', to: 'a', noArrowHead: true },
+        { from: 'd', to: 'b', noArrowHead: true },
+        { from: 'e', to: 'b', noArrowHead: true },
+        { from: 'e', to: 'c', noArrowHead: true },
+        { from: 'f', to: 'c', noArrowHead: true },
+        { from: 'g', to: 'd', noArrowHead: true },
+        { from: 'h', to: 'd', noArrowHead: true },
+        { from: 'h', to: 'e', noArrowHead: true },
+        { from: 'i', to: 'e', noArrowHead: true },
+        { from: 'i', to: 'f', noArrowHead: true },
+        { from: 'j', to: 'f', noArrowHead: true },
+      ],
+    },
+  },
+
   // 추가 프리셋 — Tier 1 (교육 필수)
   // ═══════════════════════════════════════
   {
@@ -708,6 +792,26 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     chapter: '정수와 유리수',
     diagramType: 'number_line',
     defaultParams: { min: -5, max: 5, step: 1, marks: [{ value: -3, label: '-3', color: '#EF4444', showDot: true }, { value: 2, label: '+2', color: '#3B82F6', showDot: true }], showAllTickLabels: true },
+  },
+  {
+    id: 'm1-1-numline-points',
+    name: '수직선 위의 점',
+    description: '수직선 위 점에 문자(A, B, C…) 표시',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '정수와 유리수',
+    diagramType: 'number_line',
+    defaultParams: { min: -3, max: 3, step: 1, showAllTickLabels: true, marks: [{ value: -2, label: 'A', color: '#333', showDot: true }, { value: -1, label: 'B', color: '#333', showDot: true }, { value: 0, label: 'C', color: '#333', showDot: true }, { value: 1, label: 'D', color: '#333', showDot: true }, { value: 2, label: 'E', color: '#333', showDot: true }] },
+  },
+  {
+    id: 'm1-1-numline-points-below',
+    name: '수직선 아래 점 표시',
+    description: '수직선 아래에 문자(A, B, C…) 표시',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '정수와 유리수',
+    diagramType: 'number_line',
+    defaultParams: { min: -3, max: 3, step: 1, showAllTickLabels: true, marks: [{ value: -2, label: 'A', color: '#333', showDot: true, labelBelow: true }, { value: -1, label: 'B', color: '#333', showDot: true, labelBelow: true }, { value: 0, label: 'C', color: '#333', showDot: true, labelBelow: true }, { value: 1, label: 'D', color: '#333', showDot: true, labelBelow: true }, { value: 2, label: 'E', color: '#333', showDot: true, labelBelow: true }] },
   },
   {
     id: 'm2-1-ineq-compound',

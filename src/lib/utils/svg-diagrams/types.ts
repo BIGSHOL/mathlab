@@ -35,7 +35,7 @@ export interface NumberLineParams {
   min: number;
   max: number;
   step: number;
-  marks?: { value: number; label?: string; color?: string; showDot?: boolean }[];
+  marks?: { value: number; label?: string; color?: string; showDot?: boolean; labelBelow?: boolean }[];
   highlights?: { from: number; to: number; color?: string; label?: string; dashed?: boolean }[];
   label?: string;
   showAllTickLabels?: boolean; // true면 모든 눈금에 숫자 표시 (기본: min/max만)
@@ -89,12 +89,17 @@ export interface FlowChartNode {
   text: string;
   x?: number;
   y?: number;
+  shape?: 'rect' | 'circle' | 'diamond';
+  size?: number; // 원: 반지름, 사각형: 너비 (기본 100)
+  color?: string;
+  textColor?: string;
 }
 
 export interface FlowChartArrow {
   from: string;
   to: string;
   label?: string;
+  noArrowHead?: boolean; // true면 화살촉 없이 선만 그림
 }
 
 export interface FlowChartParams {
@@ -349,6 +354,8 @@ export interface StemLeafParams {
 export interface SolidFigureParams {
   shape: 'cube' | 'rectangular_prism' | 'cylinder' | 'cone' | 'triangular_prism' | 'pyramid' | 'sphere';
   labels?: { position: string; text: string }[];
+  /** 면에 텍스트 표시 (정육면체/직육면체: front, top, right) */
+  faceLabels?: { face: 'front' | 'top' | 'right'; text: string; color?: string }[];
   dimensions?: { width?: number; height?: number; depth?: number; radius?: number };
   showHiddenEdges?: boolean;
   color?: string;

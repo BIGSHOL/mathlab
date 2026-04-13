@@ -53,6 +53,11 @@ export async function GET(request: NextRequest) {
     andConditions.push({ OR: [{ explanation: null }, { explanation: '' }] });
   }
 
+  const noDiagram = searchParams.get('noDiagram');
+  if (noDiagram === 'true') {
+    andConditions.push({ diagramSpec: { equals: null } });
+  }
+
   if (andConditions.length > 0) {
     where.AND = andConditions;
   }

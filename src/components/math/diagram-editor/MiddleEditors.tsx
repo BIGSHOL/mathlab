@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, Trash2, FunctionSquare } from 'lucide-react';
+import { MathLivePopup } from '../MathLivePopup';
 import type { SubFormProps, Point2DInput } from './types';
 import { LINE_COLOR_OPTIONS } from './types';
 import {
@@ -571,17 +572,104 @@ const SOLID_SHAPES = [
   { value: 'sphere', label: '구' },
 ];
 
+const FACE_OPTIONS = [
+  { value: 'front', label: '앞면' },
+  { value: 'top', label: '윗면' },
+  { value: 'right', label: '옆면' },
+] as const;
+
+/** $ 기호 제거 — katexLabel은 raw LaTeX만 받음 */
+function stripDollar(s: string): string {
+  return s.replace(/^\$+|\$+$/g, '').trim();
+}
+
 export function SolidFigureForm({ params, onChange }: SubFormProps) {
+  const shape = String(params.shape || 'cube');
+  const hasFaces = shape === 'cube' || shape === 'rectangular_prism';
+  const faceLabels: { face: string; text: string }[] = Array.isArray(params.faceLabels) ? params.faceLabels : [];
+  const [mathEditIdx, setMathEditIdx] = useState<number | null>(null);
+
   return (
     <div className="space-y-2">
       <div>
         <label className="text-xs text-slate-500">도형</label>
-        <select value={String(params.shape || 'cube')} onChange={(e) => onChange({ shape: e.target.value })} className="block w-full text-sm px-2 py-1 border border-slate-300 rounded">
+        <select value={shape} onChange={(e) => onChange({ shape: e.target.value })} className="block w-full text-sm px-2 py-1 border border-slate-300 rounded">
           {SOLID_SHAPES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
         </select>
       </div>
       <BoolField label="숨은 모서리 (점선)" value={params.showHiddenEdges !== false} onChange={(v) => onChange({ showHiddenEdges: v })} />
       <ColorSelect value={String(params.color || '#3B82F6')} onChange={(v) => onChange({ color: v })} />
+
+      {hasFaces && (
+        <div>
+          <div className="flex items-center justify-between">
+            <label className="text-xs text-slate-500">면 텍스트</label>
+            <button
+              type="button"
+              className="text-xs text-primary hover:underline"
+              onClick={() => {
+                const used = new Set(faceLabels.map(f => f.face));
+                const next = FACE_OPTIONS.find(o => !used.has(o.value));
+                if (next) onChange({ faceLabels: [...faceLabels, { face: next.value, text: '' }] });
+              }}
+            >+ 추가</button>
+          </div>
+          {faceLabels.map((fl, i) => (
+            <div key={i} className="flex gap-1 mt-1 items-center">
+              <select
+                value={fl.face}
+                onChange={(e) => {
+                  const updated = [...faceLabels];
+                  updated[i] = { ...fl, face: e.target.value };
+                  onChange({ faceLabels: updated });
+                }}
+                className="text-xs px-1 py-1 border border-slate-300 rounded w-16"
+              >
+                {FACE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+              <input
+                type="text"
+                value={fl.text}
+                onChange={(e) => {
+                  const updated = [...faceLabels];
+                  updated[i] = { ...fl, text: stripDollar(e.target.value) };
+                  onChange({ faceLabels: updated });
+                }}
+                placeholder="\frac{1}{2}"
+                className="flex-1 text-xs px-2 py-1 border border-slate-300 rounded"
+              />
+              <button
+                type="button"
+                onClick={() => setMathEditIdx(i)}
+                className="text-slate-400 hover:text-primary"
+                title="수식 편집기"
+              >
+                <FunctionSquare className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => onChange({ faceLabels: faceLabels.filter((_, j) => j !== i) })}
+                className="text-slate-400 hover:text-red-500"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+          {mathEditIdx !== null && mathEditIdx < faceLabels.length && (
+            <MathLivePopup
+              isOpen
+              initialLatex={faceLabels[mathEditIdx].text}
+              onClose={() => setMathEditIdx(null)}
+              onInsert={(latex) => {
+                const updated = [...faceLabels];
+                updated[mathEditIdx] = { ...updated[mathEditIdx], text: stripDollar(latex) };
+                onChange({ faceLabels: updated });
+                setMathEditIdx(null);
+              }}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }

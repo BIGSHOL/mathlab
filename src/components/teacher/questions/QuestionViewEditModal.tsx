@@ -394,9 +394,9 @@ function EditMode({
     return editForm.diagramParams.map((dp) => {
       try {
         const svg = renderDiagram({ type: dp.type as DiagramType, params: dp.params as Record<string, unknown> }) ?? '';
-        return { svg, label: dp.label || '' };
+        return { svg, label: dp.label || '', align: dp.align, size: dp.size };
       } catch {
-        return { svg: '', label: dp.label || '' };
+        return { svg: '', label: dp.label || '', align: dp.align, size: dp.size };
       }
     });
   }, [editForm.diagramParams]);

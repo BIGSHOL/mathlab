@@ -2,10 +2,10 @@
  * 간격 반복(Spaced Repetition) 복습 서비스
  *
  * 에빙하우스 망각곡선 기반:
- * - 오답 발생 → 3일 후 첫 복습
- * - 복습 정답 → 다음 간격으로 이동 (3→7→14→30→60일)
- * - 복습 오답 → 3일로 리셋
- * - 60일 복습 정답 → 완전 습득 (더 이상 복습 안 함)
+ * - 오답 발생 → 1일 후(다음 수업일) 첫 복습
+ * - 복습 정답 → 다음 간격으로 이동 (1→3→7→14→30일)
+ * - 복습 오답 → 1일로 리셋
+ * - 30일 복습 정답 → 완전 습득 (더 이상 복습 안 함)
  *
  * 사용처:
  * 1. 학생 대시보드 — "오늘의 복습" 카드
@@ -15,8 +15,8 @@
 
 import { prisma } from '@/lib/db';
 
-/** 간격 단계 (일) — 1일(바로 다음날) → 3일 → 7일 → 14일 → 30일 → 60일 */
-export const REVIEW_INTERVALS = [1, 3, 7, 14, 30, 60] as const;
+/** 간격 단계 (일) — 1일(다음 수업일) → 3일 → 7일 → 14일 → 30일 */
+export const REVIEW_INTERVALS = [1, 3, 7, 14, 30] as const;
 
 /** 다음 간격 계산 */
 function getNextInterval(currentInterval: number): number | null {
@@ -50,19 +50,20 @@ interface CreateReviewParams {
 
 /**
  * 오답 발생 시 복습 스케줄 생성
- * - 미완료 스케줄이 있으면 → 3일로 리셋 (다시 틀렸으므로 처음부터)
- * - 없으면 → 3일 후 첫 복습으로 생성
+ * - 미완료 스케줄이 있으면 → 1일로 리셋 (다시 틀렸으므로 처음부터)
+ * - 없으면 → 1일 후(다음 수업일) 첫 복습으로 생성
  */
 export async function createReviewSchedule(params: CreateReviewParams) {
   const { studentId, questionId, conceptId, sourceType, sourceId } = params;
   if (!questionId && !conceptId) return null;
 
-  // 기존 미완료 스케줄 확인
+  // 기존 active 스케줄 확인 (failed/completed는 별도 관리이므로 무시)
   const existing = await prisma.reviewSchedule.findFirst({
     where: {
       studentId,
       ...(questionId ? { questionId } : {}),
       ...(conceptId ? { conceptId } : {}),
+      status: 'active',
       completedAt: null,
     },
   });
@@ -70,7 +71,7 @@ export async function createReviewSchedule(params: CreateReviewParams) {
   const reviewAt = new Date();
   reviewAt.setDate(reviewAt.getDate() + REVIEW_INTERVALS[0]);
 
-  // 이미 진행 중인 스케줄이 있으면 → 3일로 리셋 (다시 틀렸으므로)
+  // 이미 진행 중인 active 스케줄이 있으면 → 1일로 리셋
   if (existing) {
     return prisma.reviewSchedule.update({
       where: { id: existing.id },
@@ -94,6 +95,7 @@ export async function createReviewSchedule(params: CreateReviewParams) {
       interval: REVIEW_INTERVALS[0],
       reviewAt,
       streak: 0,
+      status: 'active',
     },
   });
 }
@@ -104,24 +106,36 @@ export async function createReviewSchedule(params: CreateReviewParams) {
 
 /**
  * 복습 완료 처리
- * - 정답: 다음 간격으로 새 스케줄 생성 (60일 정답이면 완료)
- * - 오답: 3일 간격으로 리셋하여 새 스케줄 생성
+ * - 정답 + 다음 간격 존재: 새 스케줄 생성
+ * - 정답 + 30일 간격 통과: status='completed' (완전 습득)
+ * - 오답 (복습 도중): status='failed' (별도 관리, 이후 스케줄 없음)
  */
 export async function completeReview(reviewId: string, isCorrect: boolean, score?: number) {
   const review = await prisma.reviewSchedule.findUnique({ where: { id: reviewId } });
   if (!review || review.completedAt) return null;
 
-  // 현재 스케줄 완료 처리
-  const newStreak = isCorrect ? review.streak + 1 : 0;
-  await prisma.reviewSchedule.update({
-    where: { id: reviewId },
-    data: { completedAt: new Date(), score: score ?? (isCorrect ? 100 : 0), streak: newStreak },
-  });
-
-  // 다음 간격 계산
   if (isCorrect) {
     const nextInterval = getNextInterval(review.interval);
-    if (!nextInterval) return null; // 60일 정답 → 완전 습득, 더 이상 스케줄 없음
+    const newStreak = review.streak + 1;
+
+    if (!nextInterval) {
+      // 30일 정답 → 완전 습득
+      return prisma.reviewSchedule.update({
+        where: { id: reviewId },
+        data: {
+          completedAt: new Date(),
+          score: score ?? 100,
+          streak: newStreak,
+          status: 'completed',
+        },
+      });
+    }
+
+    // 현재 스케줄 완료 + 다음 간격 스케줄 생성
+    await prisma.reviewSchedule.update({
+      where: { id: reviewId },
+      data: { completedAt: new Date(), score: score ?? 100, streak: newStreak, status: 'completed' },
+    });
 
     const reviewAt = new Date();
     reviewAt.setDate(reviewAt.getDate() + nextInterval);
@@ -136,26 +150,80 @@ export async function completeReview(reviewId: string, isCorrect: boolean, score
         interval: nextInterval,
         reviewAt,
         streak: newStreak,
-      },
-    });
-  } else {
-    // 오답 → 3일 리셋
-    const reviewAt = new Date();
-    reviewAt.setDate(reviewAt.getDate() + REVIEW_INTERVALS[0]);
-
-    return prisma.reviewSchedule.create({
-      data: {
-        studentId: review.studentId,
-        questionId: review.questionId,
-        conceptId: review.conceptId,
-        sourceType: review.sourceType,
-        sourceId: review.sourceId,
-        interval: REVIEW_INTERVALS[0],
-        reviewAt,
-        streak: 0,
+        status: 'active',
       },
     });
   }
+
+  // 오답 → failed 마킹, 이후 스케줄 없음 (별도 관리 대상)
+  return prisma.reviewSchedule.update({
+    where: { id: reviewId },
+    data: {
+      completedAt: new Date(),
+      score: score ?? 0,
+      streak: 0,
+      status: 'failed',
+      failureCount: { increment: 1 },
+    },
+  });
+}
+
+// ──────────────────────────────────────
+// 별도 관리 (failed) 항목 조회
+// ──────────────────────────────────────
+
+/**
+ * 복습 중 탈락한 항목 조회 (별도 관리 대상)
+ * - 선생님이 집중 지도하거나, 재학습 큐에 넣을 때 사용
+ */
+export async function getFailedReviews(studentId: string, limit = 50) {
+  return prisma.reviewSchedule.findMany({
+    where: { studentId, status: 'failed' },
+    include: {
+      question: {
+        select: { id: true, chapter: true, section: true, difficulty: true, content: true, choices: true, answer: true, domain: true },
+      },
+      concept: {
+        select: { id: true, title: true, chapter: true, section: true, conceptCode: true, grade: true },
+      },
+    },
+    orderBy: { completedAt: 'desc' },
+    take: limit,
+  });
+}
+
+// ──────────────────────────────────────
+// 일일 복습 테스트 (3~4문항)
+// ──────────────────────────────────────
+
+/**
+ * 매 수업일마다 치르는 짧은 복습 테스트용 항목 조회
+ * - active 상태 + 오늘까지 복습 예정 항목
+ * - 최근 오답 우선 (createdAt DESC)
+ * - 기본 4문항
+ */
+export async function getDailyTestItems(studentId: string, count = 4) {
+  const now = new Date();
+  now.setHours(23, 59, 59, 999);
+
+  return prisma.reviewSchedule.findMany({
+    where: {
+      studentId,
+      status: 'active',
+      reviewAt: { lte: now },
+      completedAt: null,
+    },
+    include: {
+      question: {
+        select: { id: true, chapter: true, section: true, difficulty: true, content: true, choices: true, answer: true, domain: true },
+      },
+      concept: {
+        select: { id: true, title: true, chapter: true, section: true, conceptCode: true, grade: true },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: count,
+  });
 }
 
 // ──────────────────────────────────────
@@ -174,6 +242,7 @@ export async function getTodayReviews(studentId: string, limit = 20) {
   return prisma.reviewSchedule.findMany({
     where: {
       studentId,
+      status: 'active',
       reviewAt: { lte: now },
       completedAt: null,
     },
@@ -260,6 +329,7 @@ export async function getCampaignPendingReviews(params: {
       studentId: params.studentId,
       sourceType: 'exam_campaign',
       sourceId: params.campaignId,
+      status: 'active',
       completedAt: null,
     },
     select: { id: true, questionId: true, conceptId: true, reviewAt: true, interval: true },
@@ -275,9 +345,9 @@ export async function getReviewStats(studentId: string) {
   const now = new Date();
   now.setHours(23, 59, 59, 999);
 
-  const [pendingCount, completedToday, totalCompleted] = await Promise.all([
+  const [pendingCount, completedToday, totalCompleted, failedCount] = await Promise.all([
     prisma.reviewSchedule.count({
-      where: { studentId, reviewAt: { lte: now }, completedAt: null },
+      where: { studentId, status: 'active', reviewAt: { lte: now }, completedAt: null },
     }),
     prisma.reviewSchedule.count({
       where: {
@@ -289,9 +359,12 @@ export async function getReviewStats(studentId: string) {
       },
     }),
     prisma.reviewSchedule.count({
-      where: { studentId, completedAt: { not: null } },
+      where: { studentId, status: 'completed' },
+    }),
+    prisma.reviewSchedule.count({
+      where: { studentId, status: 'failed' },
     }),
   ]);
 
-  return { pendingCount, completedToday, totalCompleted };
+  return { pendingCount, completedToday, totalCompleted, failedCount };
 }

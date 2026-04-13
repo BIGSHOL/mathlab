@@ -9,6 +9,7 @@ export const solidFigurePlugin: DiagramPlugin<SolidFigureParams> = {
     return {
       shape: (p.shape ?? p.type ?? 'cube') as SolidFigureParams['shape'],
       labels: arr(p.labels),
+      faceLabels: arr(p.faceLabels),
       dimensions: (p.dimensions ?? {}) as Record<string, number>,
       showHiddenEdges: p.showHiddenEdges !== false,
       color: p.color as string,

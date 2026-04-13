@@ -11,6 +11,8 @@ import {
   FileSpreadsheet,
   PenLine,
   FileText,
+  FileSearch,
+  Printer,
   Users,
   Database,
   Zap,
@@ -23,6 +25,7 @@ import {
   School,
   Timer,
   Flame,
+  RotateCcw,
   ScrollText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -82,9 +85,17 @@ const features = [
     icon: Brain,
     title: '간격 반복 복습',
     description:
-      '에빙하우스 망각곡선 기반으로 오답을 3일→7일→14일→30일→60일 간격으로 자동 복습. 숙제와 학습에 슬쩍 끼워넣어 자연스럽게 기억을 강화합니다.',
+      '에빙하우스 망각곡선 기반으로 오답을 1일→3일→7일→14일→30일 간격으로 자동 복습. 매 수업 3~4문항 미니 테스트로 자연스럽게 기억을 강화합니다.',
     color: 'text-amber-500',
     bg: 'bg-amber-50',
+  },
+  {
+    icon: FileSearch,
+    title: '기출 분석',
+    description:
+      '학교 기출 시험지를 AI가 분석 — 5대 교육과정 영역, 4대 능력, 5단계 난이도를 자동 분류하고 학습 대책까지 제시합니다.',
+    color: 'text-cyan-500',
+    bg: 'bg-cyan-50',
   },
 ];
 
@@ -146,18 +157,20 @@ const teacherTools = [
   { icon: ClipboardCheck, label: '시험 관리', desc: '시험 출제 · 배정 · 결과 분석' },
   { icon: Target, label: '레벨테스트', desc: '진단 테스트로 취약 영역 파악' },
   { icon: Radio, label: '실시간 퀴즈', desc: 'PIN 입력 실시간 퀴즈 세션' },
-  { icon: FileSpreadsheet, label: '학습지', desc: '교육과정 기반 문제지 위자드' },
+  { icon: FileSpreadsheet, label: '학습지 위자드', desc: '3단계 위자드로 교육과정 맞춤 문제지 생성' },
   { icon: PenLine, label: '수기 채점', desc: '서술형 답안 수기 채점 인터페이스' },
   { icon: FileText, label: 'PDF 추출', desc: 'PDF 문제집 → AI 구조화 추출' },
   { icon: BarChart3, label: '학습 분석', desc: '진도율 · 정답률 · 취약 단원 분석' },
+  { icon: FileSearch, label: '기출 분석', desc: '학교 시험지 AI 분석 · 학습 대책 제시' },
+  { icon: Printer, label: '인쇄 템플릿', desc: '9종 템플릿 · 8색 테마 · 1/2단 레이아웃' },
   { icon: ScrollText, label: '리포트', desc: 'AI 레벨테스트 보고서 생성' },
 ];
 
 const stats = [
   { value: '초3 ~ 고3', label: '지원 학년' },
   { value: '79+', label: '연산 카테고리' },
-  { value: '5단계', label: '개념 학습법' },
-  { value: 'AI', label: '자동 문제 생성' },
+  { value: '26종', label: '수학 다이어그램' },
+  { value: 'AI', label: '자동 문제 생성 · 분석' },
 ];
 
 export default function LandingPage() {
@@ -255,11 +268,11 @@ export default function LandingPage() {
                 수학 학습의 모든 단계를 하나의 플랫폼에서 관리하세요.
               </p>
             </div>
-            <div className="flex flex-wrap justify-center gap-8">
-              {features.map((feature, idx) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {features.map((feature) => (
                 <Card
                   key={feature.title}
-                  className={`p-8 hover:border-primary/30 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group w-full md:w-[calc(50%-16px)] ${idx < 4 ? 'lg:w-[calc(25%-24px)]' : 'lg:w-[calc(33.333%-22px)]'}`}
+                  className="p-8 hover:border-primary/30 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group"
                 >
                   <div
                     className={`${feature.bg} w-14 h-14 rounded-sm flex items-center justify-center ${feature.color} mb-6 group-hover:scale-110 transition-transform`}
@@ -321,7 +334,7 @@ export default function LandingPage() {
           <div className="max-w-[1400px] mx-auto px-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
               {/* 선생님 */}
-              <div>
+              <div className="flex flex-col">
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-bold mb-6">
                   <GraduationCap className="w-4 h-4" />
                   선생님
@@ -333,9 +346,10 @@ export default function LandingPage() {
                 </h3>
                 <p className="text-text-secondary leading-relaxed mb-8">
                   학생·반 관리, 개념·문제 관리, 숙제 출제, 시험·레벨테스트, 실시간 퀴즈, 학습지 생성,
-                  수기 채점, PDF 문제 추출, AI 리포트까지 — 수학 학원의 모든 업무를 디지털로 전환합니다.
+                  수기 채점, 기출 분석, AI 리포트까지 — 수학 학원의 모든 업무를 디지털로 전환합니다.
+                  지점별 이용권으로 필요한 기능만 선택해 운영하세요.
                 </p>
-                <div className="overflow-x-clip overflow-y-visible [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]">
+                <div className="overflow-x-clip overflow-y-visible mt-auto [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]">
                   <div className="flex gap-2 w-max animate-[marquee_30s_linear_infinite] hover:[animation-play-state:paused] py-10 -my-10">
                     {[...teacherTools, ...teacherTools].map((tool, i) => (
                       <div
@@ -355,7 +369,7 @@ export default function LandingPage() {
               </div>
 
               {/* 학생 */}
-              <div>
+              <div className="flex flex-col">
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/10 text-secondary text-sm font-bold mb-6">
                   <Trophy className="w-4 h-4" />
                   학생
@@ -369,7 +383,7 @@ export default function LandingPage() {
                   개념 학습, 빈칸 암기, 연산 연습, 시험 응시까지 모든 학습을 온라인으로. XP 포인트와
                   랭킹 시스템으로 자기주도 학습 습관을 만들어갑니다.
                 </p>
-                <div className="overflow-x-clip overflow-y-visible [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]">
+                <div className="overflow-x-clip overflow-y-visible mt-auto [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]">
                   <div className="flex gap-2 w-max animate-[marquee_30s_linear_infinite] hover:[animation-play-state:paused] py-10 -my-10">
                     {[...Array(2)].flatMap((_, setIdx) =>
                       [
@@ -379,7 +393,8 @@ export default function LandingPage() {
                         { icon: Flame, text: '일일 미션', desc: '매일 자동 생성되는 학습 미션' },
                         { icon: Target, text: '레벨테스트', desc: '취약 영역 진단 · AI 보고서' },
                         { icon: Trophy, text: 'XP · 랭킹', desc: '포인트 · 레벨업 · 뱃지 시스템' },
-                        { icon: CheckCircle2, text: '숙제 · 시험', desc: '숙제 제출 · 시험 응시 · 오답 복수전' },
+                        { icon: CheckCircle2, text: '숙제 · 시험', desc: '숙제 제출 · 시험 응시' },
+                        { icon: RotateCcw, text: '오답 복수전', desc: '틀린 문제를 다시 도전해서 승리' },
                       ].map((item, i) => (
                         <div
                           key={`${item.text}-${setIdx}-${i}`}
@@ -412,8 +427,8 @@ export default function LandingPage() {
                 AI가 함께하는 학습
               </h2>
               <p className="text-text-secondary text-lg max-w-2xl leading-relaxed">
-                AI를 활용하여 개념에서 자동으로 빈칸 문제를 생성하고, PDF에서 문제를 추출하며,
-                레벨테스트 결과를 AI가 분석하여 맞춤형 보고서를 제공합니다.
+                AI가 개념 빈칸 생성, PDF 문제 추출, 기출 시험지 분석, 학습 보고서 작성까지 —
+                선생님의 반복 업무를 자동화하고 학생에게는 맞춤형 학습을 제공합니다.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mt-6 w-full max-w-4xl">
                 {[
@@ -423,11 +438,11 @@ export default function LandingPage() {
                   },
                   {
                     title: 'PDF 문제 추출',
-                    desc: 'PDF 파일에서 문제·보기·정답을 자동으로 인식하여 추출',
+                    desc: 'PDF 파일에서 문제·보기·정답·도형을 구조화하여 문제은행에 저장',
                   },
                   {
-                    title: '도형·그래프 분석',
-                    desc: '수학 도형과 그래프를 자동 인식하여 구조화된 SVG로 변환',
+                    title: '기출 시험지 분석',
+                    desc: '학교 기출을 5대 영역 · 4대 능력 · 5단계 난이도로 자동 분류',
                   },
                   {
                     title: 'AI 학습 보고서',
@@ -455,10 +470,13 @@ export default function LandingPage() {
             </p>
             <Link href="/login">
               <Button size="lg">
-                무료로 시작하기
+                학습 시작하기
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
+            <p className="text-xs text-text-secondary/70 mt-4">
+              학원 계약 후 이용권 단위로 기능 배정 · 학생/선생님 계정은 관리자가 생성합니다
+            </p>
           </div>
         </section>
       </main>

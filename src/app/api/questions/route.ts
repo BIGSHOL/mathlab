@@ -12,8 +12,10 @@ export async function GET(request: NextRequest) {
   if (isResponse(params)) return params;
 
   const { bookCode, chapter, section, difficulty, type, search, page = 1, limit = 20 } = params;
-  // 드래프트는 기본 제외 (명시적으로 includeDrafts=true일 때만 포함)
-  const includeDrafts = new URL(request.url).searchParams.get('includeDrafts') === 'true';
+  // 드래프트/변형은 기본 제외 (명시적으로 옵션 플래그가 있을 때만 포함)
+  const _searchParams = new URL(request.url).searchParams;
+  const includeDrafts = _searchParams.get('includeDrafts') === 'true';
+  const includeVariants = _searchParams.get('includeVariants') === 'true';
 
   // bookCodePrefix: 학교급 필터 (E = 초등, 빈 문자열 = 중등)
   const { searchParams } = new URL(request.url);
@@ -22,6 +24,7 @@ export async function GET(request: NextRequest) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const where: Record<string, any> = {};
   if (!includeDrafts) where.isDraft = false;
+  if (!includeVariants) where.variantOfId = null;
   if (bookCode) {
     where.bookCode = bookCode;
   } else if (bookCodePrefix !== null) {
@@ -59,24 +62,42 @@ export async function GET(request: NextRequest) {
   }
 
   if (search) {
-    andConditions.push({
-      OR: [
-        { content: { contains: search } },
-        { chapter: { contains: search } },
-        { section: { contains: search } },
-        { answer: { contains: search } },
-        { source: { contains: search } },
-        { sourceTag: { contains: search } },
-        { bookCode: { contains: search } },
-        { explanation: { contains: search } },
-      ],
-    });
+    // 공백 구분 다중 토큰 AND 검색. "..."로 구문 묶기 지원. 각 토큰은 필드 OR, 토큰 간 AND.
+    const tokens: string[] = [];
+    const tokenRe = /"([^"]+)"|(\S+)/g;
+    let tm: RegExpExecArray | null;
+    while ((tm = tokenRe.exec(search)) !== null) {
+      const t = (tm[1] ?? tm[2] ?? '').trim();
+      if (t) tokens.push(t);
+    }
+    for (const tok of tokens) {
+      const numMatch = tok.match(/^#?(\d+)$/);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const orConds: Record<string, any>[] = [
+        { content: { contains: tok } },
+        { chapter: { contains: tok } },
+        { section: { contains: tok } },
+        { answer: { contains: tok } },
+        { source: { contains: tok } },
+        { sourceTag: { contains: tok } },
+        { bookCode: { contains: tok } },
+        { explanation: { contains: tok } },
+      ];
+      if (numMatch) orConds.push({ questionNum: Number(numMatch[1]) });
+      andConditions.push({ OR: orConds });
+    }
   }
 
   // 해설 유무 필터
   const noExplanation = searchParams.get('noExplanation');
   if (noExplanation === 'true') {
     andConditions.push({ OR: [{ explanation: null }, { explanation: '' }] });
+  }
+
+  // 그림 없는 문제만
+  const noDiagram = searchParams.get('noDiagram');
+  if (noDiagram === 'true') {
+    andConditions.push({ diagramSpec: { equals: null } });
   }
 
   if (andConditions.length > 0) {
@@ -89,6 +110,7 @@ export async function GET(request: NextRequest) {
       include: {
         tenant: { select: { id: true, name: true } },
         createdBy: { select: { id: true, name: true } },
+        _count: { select: { variants: true } },
       },
       orderBy: [{ bookCode: 'asc' }, { chapter: 'asc' }, { questionNum: 'asc' }],
       skip: (page - 1) * limit,

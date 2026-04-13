@@ -262,6 +262,7 @@ function normalizeSolidFigure(p: P): SolidFigureParams {
   return {
     shape: p.shape ?? p.type ?? 'cube',
     labels: arr(p.labels),
+    faceLabels: arr(p.faceLabels),
     dimensions: p.dimensions ?? {},
     showHiddenEdges: p.showHiddenEdges !== false,
     color: p.color,

@@ -171,6 +171,29 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
+/* 수학 문제 내 테이블 렌더링 — 헤더 없는 숫자 격자/매직스퀘어/전개도 */
+.num-grid {
+  border-collapse: collapse;
+  display: inline-block;
+  margin: 0.5rem 0;
+}
+.num-grid td {
+  border: 1px solid #94a3b8;
+  width: 2.5rem;
+  height: 2.5rem;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 0.95em;
+  padding: 0.25rem;
+  background: white;
+}
+/* 전개도/퍼즐 바깥의 투명 셀 (테두리·배경 제거) */
+.num-grid td.empty,
+.num-grid td[data-empty="true"] {
+  border: none;
+  background: transparent;
+}
+
 /* problem-solving.html: Math Grid Background */
 .math-grid-bg {
   background-image:

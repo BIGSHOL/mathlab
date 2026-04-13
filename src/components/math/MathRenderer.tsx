@@ -13,6 +13,7 @@ interface DiagramSvgItem {
   svg: string;
   label: string;
   align?: 'left' | 'center' | 'right';
+  size?: 'small' | 'medium' | 'large' | 'full';
 }
 
 interface MathRendererProps {
@@ -47,11 +48,19 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
   if (diagramSvgs && diagramSvgs.length > 0) {
     // SVG 교체 헬퍼: blockquote(>) 안이면 인라인, 밖이면 블록
     let svgIdx = 0;
+    const SIZE_STYLE: Record<string, string> = {
+      small: 'max-width:160px',
+      medium: 'max-width:280px',
+      large: 'max-width:400px',
+      full: 'width:100%',
+    };
     const replaceSvg = (fullMatch: string, svg: string, input: string, offset: number, idx?: number) => {
       const dIdx = idx ?? svgIdx++;
+      const item = diagramSvgs![dIdx];
       const clickAttr = onDiagramClick ? ` data-diagram-idx="${dIdx}" style="cursor:pointer"` : '';
-      const align = diagramSvgs![dIdx]?.align;
+      const align = item?.align;
       const alignClass = align === 'center' ? ' diagram-align-center' : align === 'right' ? ' diagram-align-right' : '';
+      const sizeStyle = SIZE_STYLE[item?.size || 'full'] || SIZE_STYLE.full;
       // offset 이전의 마지막 줄이 '>'로 시작하면 blockquote 안
       const before = input.substring(0, offset);
       const lastNewline = before.lastIndexOf('\n');
@@ -61,7 +70,7 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
         const singleLineSvg = svg.replace(/\n\s*/g, '');
         return `<span class="diagram-svg-inline-bq${alignClass}"${clickAttr}>${singleLineSvg}</span>`;
       }
-      return `\n\n<div class="diagram-svg-inline${alignClass}"${clickAttr}>${svg}</div>\n\n`;
+      return `\n\n<div class="diagram-svg-inline${alignClass}" style="${sizeStyle}"${clickAttr}>${svg}</div>\n\n`;
     };
 
     // [그림N] → N번째(0-indexed) SVG로 교체
@@ -95,14 +104,45 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
     .replace(/\\\([\s\S]*?\\\)/g, (match, p1) => `$${p1}$`)
     .replace(/\\\[[\s\S]*?\\\]/g, (match, p1) => `$$$${p1}$$$$`);
 
-  // 인라인 수식($...$) 내 \dfrac → \frac 변환
-  // \dfrac은 displaystyle을 강제하여 분수가 거대해짐. \frac은 인라인에서 자연스러운 크기
-  // 블록 수식($$...$$)은 변환하지 않음
+  // 인라인 $...$ 안에 multi-line 환경(\begin{cases|align|array|matrix|pmatrix|bmatrix|vmatrix|split|gather})이
+  // 들어있으면 블록 수식 $$...$$로 자동 승격 (KaTeX가 인라인에서 제대로 렌더 못함)
+  // ⚠️ 이미 $$...$$ 인 부분은 건드리지 않도록 앞/뒤에 $가 없어야 함 (negative lookbehind/ahead)
+  const MULTILINE_ENV = /\\begin\{(cases|align|aligned|array|matrix|pmatrix|bmatrix|vmatrix|split|gather|gathered)\}/;
+  svgReplacedContent = svgReplacedContent.replace(
+    /(?<!\$)\$(?!\$)((?:[^$\\]|\\.)+?)(?<!\$)\$(?!\$)/g,
+    (match, inner) => (MULTILINE_ENV.test(inner) ? `$$${inner}$$` : match),
+  );
+
+  // 인라인 수식($...$) 내 \dfrac → \frac 변환 + KaTeX 미지원 유니코드 기호 치환
+  // \dfrac은 displaystyle 강제로 분수가 거대해짐. \frac은 인라인에서 자연스러운 크기
+  // ℃, ℉, Ω, Å 등 KaTeX Main-Regular에 없는 문자는 LaTeX 명령어로 변환
+  const UNICODE_MATH_MAP: Array<[RegExp, string]> = [
+    [/℃/g, '{}^\\circ\\mathrm{C}'],
+    [/℉/g, '{}^\\circ\\mathrm{F}'],
+    [/Ω/g, '\\Omega'],
+    [/Å/g, '\\mathrm{\\AA}'],
+    [/㎡/g, '\\mathrm{m}^2'],
+    [/㎥/g, '\\mathrm{m}^3'],
+    [/㎝/g, '\\mathrm{cm}'],
+    [/㎜/g, '\\mathrm{mm}'],
+    [/㎞/g, '\\mathrm{km}'],
+    [/㎏/g, '\\mathrm{kg}'],
+  ];
   svgReplacedContent = svgReplacedContent.replace(
     /\$(?!\$)((?:[^$\\]|\\.)*)\$/g,
     (match, inner) => {
-      const fixed = inner.replace(/\\dfrac(?![a-zA-Z])/g, '\\frac');
+      let fixed = inner.replace(/\\dfrac(?![a-zA-Z])/g, '\\frac');
+      for (const [re, repl] of UNICODE_MATH_MAP) fixed = fixed.replace(re, repl);
       return `$${fixed}$`;
+    }
+  );
+  // 블록 수식($$...$$)도 동일 처리
+  svgReplacedContent = svgReplacedContent.replace(
+    /\$\$([\s\S]*?)\$\$/g,
+    (_m, inner) => {
+      let fixed = inner;
+      for (const [re, repl] of UNICODE_MATH_MAP) fixed = fixed.replace(re, repl);
+      return `$$${fixed}$$`;
     }
   );
 

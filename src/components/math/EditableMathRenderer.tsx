@@ -21,6 +21,8 @@ interface Segment {
 interface DiagramSvgItem {
   svg: string;
   label: string;
+  align?: 'left' | 'center' | 'right';
+  size?: 'small' | 'medium' | 'large' | 'full';
 }
 
 interface EditableMathRendererProps {
@@ -234,13 +236,17 @@ export function EditableMathRenderer({
           idx = diagramIdxRef.current++;
         }
         if (idx >= 0 && idx < diagramSvgs!.length) {
+          const item = diagramSvgs![idx];
+          const sizeMap: Record<string, string> = { small: '160px', medium: '280px', large: '400px' };
+          const maxW = sizeMap[item.size || ''] || undefined;
           return (
             <span
               key={`${keyPrefix}-svg${i}`}
               className={`diagram-svg-inline inline-block align-middle rounded transition-all${onDiagramClick ? ' cursor-pointer hover:ring-2 hover:ring-blue-400 hover:ring-offset-1' : ''}`}
+              style={maxW ? { maxWidth: maxW } : undefined}
               onClick={onDiagramClick ? (e) => { e.stopPropagation(); onDiagramClick(idx); } : undefined}
               title={onDiagramClick ? '클릭하여 도형 편집' : undefined}
-              dangerouslySetInnerHTML={{ __html: diagramSvgs![idx].svg }}
+              dangerouslySetInnerHTML={{ __html: item.svg }}
             />
           );
         }
@@ -419,7 +425,7 @@ export function EditableMathRenderer({
             >
               {header.map(({ line, text }, i) => {
                 // cols 마커가 포함된 헤더 줄은 "<보기>" 라벨로 대체
-                if (/<보기(?::cols=(?:auto|1|2|3))?>/.test(text)) {
+                if (/\\?<보기(?::cols=(?:auto|1|2|3))?\\?>/.test(text)) {
                   return <div key={`h-${i}`}><strong>&lt;보기&gt;</strong></div>;
                 }
                 return <div key={`h-${i}`}>{line}</div>;

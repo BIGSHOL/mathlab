@@ -57,6 +57,7 @@ export interface DiagramParam {
   label: string;  // 도형 설명
   params: Record<string, unknown>;  // 타입별 파라미터
   align?: 'left' | 'center' | 'right';  // 도형 정렬 (기본: inline/left)
+  size?: 'small' | 'medium' | 'large' | 'full';  // 도형 크기 (기본: full)
 }
 
 /** PDF 페이지 정보 */
@@ -129,9 +130,24 @@ export function mapType(tag: string): QuestionType {
 export function stripChoicesFromContent(content: string, choices: string[]): string {
   if (!choices || choices.length === 0) return content;
   let cleaned = content;
-  // 1) ①~⑩ 으로 시작하는 라인 전체 제거
-  cleaned = cleaned.replace(/^[ \t]*[①②③④⑤⑥⑦⑧⑨⑩]\s*.+$/gm, '');
-  // 2) "1." "2." ... "1)" "2)" 형태가 choices 개수 만큼 연속될 때 제거 (보기로 추정)
+
+  // 1) ①~⑩ 으로 시작하는 라인 전체 제거 (blockquote >, 들여쓰기, 볼드 마커 허용)
+  //    매칭 범위: 해당 줄 전체 (줄 끝까지 — . 뒤에 숫자/한자/기호 모두 포함)
+  cleaned = cleaned.replace(/^[ \t]*(?:>[ \t]*)?\*{0,2}[①②③④⑤⑥⑦⑧⑨⑩][ \t]*.+$/gm, '');
+
+  // 2) ① 접두어 없이 choices 텍스트 자체가 본문에 들어간 경우 제거
+  //    각 choice의 앞부분 20자를 fingerprint로 삼아 본문에서 해당 fingerprint로
+  //    시작하는 짧은 라인(choice 길이의 ±20% 범위)이면 제거
+  for (const choice of choices) {
+    const clean = choice.replace(/^[ \t]*[①②③④⑤⑥⑦⑧⑨⑩\d.)]+\s*/, '').trim();
+    if (clean.length < 4) continue;
+    const fp = clean.slice(0, Math.min(20, clean.length)).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // fingerprint로 시작하는 독립 라인 제거 (너무 긴 문단 내 등장은 건드리지 않음)
+    const re = new RegExp(`^[ \\t]*(?:>[ \\t]*)?${fp}.{0,${Math.ceil(clean.length * 1.3)}}$`, 'gm');
+    cleaned = cleaned.replace(re, '');
+  }
+
+  // 3) "1." "2." ... "1)" "2)" 형태가 choices 개수 만큼 연속될 때 제거
   if (choices.length >= 2) {
     const numericRe = new RegExp(
       `(?:^[ \\t]*[1-9]\\d?[.)]\\s*.+\\n?){${choices.length},${choices.length + 2}}`,
@@ -139,6 +155,7 @@ export function stripChoicesFromContent(content: string, choices: string[]): str
     );
     cleaned = cleaned.replace(numericRe, '');
   }
+
   return cleaned.replace(/\n{3,}/g, '\n\n').trimEnd();
 }
 

@@ -131,7 +131,7 @@ export function katexFO(
   const leftX = anchor === 'middle' ? x - w / 2 : anchor === 'start' ? x : x - w;
   const justify = anchor === 'middle' ? 'center' : anchor === 'start' ? 'flex-start' : 'flex-end';
   const html = katex.renderToString(latex, { throwOnError: false, output: 'html' });
-  return `<foreignObject x="${leftX.toFixed(1)}" y="${topY.toFixed(1)}" width="${w}" height="${h}"><div xmlns="http://www.w3.org/1999/xhtml" style="display:flex;align-items:flex-start;justify-content:${justify};height:100%;font-size:${fs}px;">${html}</div></foreignObject>`;
+  return `<foreignObject x="${leftX.toFixed(1)}" y="${topY.toFixed(1)}" width="${w}" height="${h}"><div xmlns="http://www.w3.org/1999/xhtml" style="display:flex;align-items:center;justify-content:${justify};height:100%;font-size:${fs}px;">${html}</div></foreignObject>`;
 }
 
 /** katexFO 센터 정렬 — y가 텍스트 중심 (기존 text() 대체용) */
@@ -141,7 +141,8 @@ export function katexLabel(
   opts: { fontSize?: number; anchor?: 'start' | 'middle' | 'end' } = {}
 ): string {
   const fs = opts.fontSize || 13;
-  const h = fs * 1.8;
+  const hasFrac = /\\frac/.test(latex);
+  const h = hasFrac ? fs * 3.2 : fs * 1.8;
   const w = Math.max(20, latex.length * fs * 0.65 + 8);
   return katexFO(x, cy - h / 2, latex, { w, h, fontSize: fs, anchor: opts.anchor });
 }

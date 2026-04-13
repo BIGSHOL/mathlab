@@ -30,6 +30,44 @@ export const TYPE_CONFIG: Record<UpdateType, { label: string; color: string }> =
 };
 
 export const ALL_UPDATES: UpdateLog[] = [
+  // ── 2026-04-13 ──
+  {
+    date: '2026-04-13',
+    title: '에빙하우스 복습 테스트 + 매 수업 3~4문항 미니 테스트',
+    audience: ['teacher', 'admin'],
+    entries: [
+      { type: 'feature', text: '매 수업 복습 테스트 — 1일→3일→7일→14일→30일 간격으로 3~4문항 자동 선별 (최근 오답 우선)' },
+      { type: 'feature', text: '복습 중 오답은 별도 관리 목록으로 이동 — 자동 스케줄에서 빠지고 선생님이 집중 지도할 수 있도록 분리' },
+      { type: 'improve', text: '간격 체계 단순화 — 60일 단계 제거, 30일 통과 시 완전 습득 처리' },
+      { type: 'improve', text: '학생 대시보드 복습 카드 — "복습 테스트 시작" 버튼 추가, 바로 미니 테스트 진행 가능' },
+    ],
+  },
+  {
+    date: '2026-04-13',
+    title: '복습 테스트 학생용 페이지',
+    audience: ['student'],
+    entries: [
+      { type: 'feature', text: '오늘의 복습 테스트 — 대시보드에서 바로 4문항 미니 테스트 시작' },
+      { type: 'feature', text: '별도 관리 목록 — 복습 중 틀린 문제/개념을 모아볼 수 있는 전용 페이지' },
+    ],
+  },
+  {
+    date: '2026-04-13',
+    title: '기출 배치 추출 시스템 + 보기 박스 그리드 + PDF 추출 잠금',
+    audience: ['admin'],
+    entries: [
+      { type: 'feature', text: '기출 시험지 배치 추출 대기열 — SUPER_ADMIN 승인 기반, 즉시 실행 + 예약 실행 지원 (Vercel Cron 5분 간격)' },
+      { type: 'feature', text: 'ExamExtractSchedule 모델 신규 — 스케줄 이력/결과/재시도 카운터 추적' },
+      { type: 'feature', text: 'Question.examPaperId FK 추가 — 시험지별 추출 문제 추적, idempotent 재추출 가능' },
+      { type: 'feature', text: '기존 코스 배정 UI — 반 상세에서 지점 공용 코스를 재사용 (중복 생성 방지)' },
+      { type: 'feature', text: '보기 박스 그리드 커스터마이징 — `<보기:cols=N>` 인라인 마커로 1/2/3열 + 자동 선택' },
+      { type: 'feature', text: 'ReviewSchedule 상태 필드 추가 — active/completed/failed 구분, failureCount 추적' },
+      { type: 'feature', text: '복습 테스트 API — /api/learning/review-daily-test, /api/learning/review-failed' },
+      { type: 'fix', text: 'PDF 추출 SUPER_ADMIN 전용 잠금 — API(3개) + UI + 네비 3중 방어 (Gemini quota 보호)' },
+      { type: 'fix', text: '/api/questions/bulk — tenantId + createdById 자동 주입 (지점 전용 문제 보장)' },
+      { type: 'improve', text: 'MathRenderer/EditableMathRenderer 공용 컴포넌트 강화 — 보기 박스 그리드 정렬 일관화 (42개 사용처 자동 반영)' },
+    ],
+  },
   // ── 2026-04-06 ──
   {
     date: '2026-04-06',
@@ -48,16 +86,23 @@ export const ALL_UPDATES: UpdateLog[] = [
   // ── 2026-04-01 ~ 04-03 ──
   {
     date: '2026-04-02',
-    title: '기출 분석 블로그 시스템 + Supabase Storage 전환 + 학교 데이터 완성',
+    title: '기출 분석 블로그 시스템 + 학교 데이터 완성',
     audience: ['teacher', 'admin'],
     entries: [
-      { type: 'feature', text: '기출 분석 블로그 글 자동 생성 — AI 기사 작성 + 차트 이미지 생성 + TipTap 리치 에디터' },
-      { type: 'feature', text: '네이버 블로그 서식 복사 — SmartEditor ONE 호환 HTML 변환 (차트 이미지 포함)' },
-      { type: 'feature', text: '시험지 업로드 Supabase Storage 전환 — 20MB 제한, 삭제 시 파일 자동 정리' },
-      { type: 'feature', text: 'SuperAdmin 기출 업로드 관리 페이지 — 전체 시험지 현황 조회/관리' },
+      { type: 'feature', text: '기출 분석 블로그 글 자동 생성 — AI가 기사 작성 + 차트 이미지 포함된 리치 에디터 제공' },
+      { type: 'feature', text: '네이버 블로그 서식으로 바로 복사 — 차트 이미지까지 한 번에 붙여넣기' },
       { type: 'feature', text: '능력 영역 레이더 차트 추가 — 유형(5대)+능력(4대) 레이더 차트 동시 지원' },
       { type: 'feature', text: '기출→문제은행 추출 — 분석된 기출 문항을 문제은행에 일괄 저장' },
       { type: 'improve', text: '기출 분석 목록 — 축약형 제목에서 학기 라벨 자동 추출' },
+    ],
+  },
+  {
+    date: '2026-04-02',
+    title: '시험지 스토리지 인프라 + 관리자 업로드 페이지',
+    audience: ['admin'],
+    entries: [
+      { type: 'feature', text: '시험지 업로드 Supabase Storage 전환 — 20MB 제한, 삭제 시 파일 자동 정리' },
+      { type: 'feature', text: 'SuperAdmin 기출 업로드 관리 페이지 — 전체 시험지 현황 조회/관리' },
     ],
   },
   {
@@ -66,11 +111,19 @@ export const ALL_UPDATES: UpdateLog[] = [
     audience: ['teacher', 'admin'],
     entries: [
       { type: 'feature', text: '주변 학교 그룹 시스템 — 같은 구 우선 + 3km 인접 복합 로직으로 자동 구성' },
-      { type: 'feature', text: '전국 학교 데이터 6,004개 GPS 좌표 100% 달성 (카카오 키워드 검색 활용)' },
-      { type: 'feature', text: '기출 시험지 ↔ School DB 자동 매칭 — 학교명/학년 기반 자동 연결' },
-      { type: 'feature', text: '지점별 학교 그룹 커스텀 오버라이드 — 제외/추가 가능' },
+      { type: 'feature', text: '전국 학교 데이터 6,004개 GPS 좌표 완성' },
+      { type: 'feature', text: '기출 시험지 ↔ 학교 자동 매칭 — 학교명/학년 기반 자동 연결' },
+      { type: 'feature', text: '지점별 학교 그룹 커스텀 — 학교 제외/추가 가능' },
+      { type: 'improve', text: 'AI 문제 생성 품질 개선' },
+    ],
+  },
+  {
+    date: '2026-04-01',
+    title: '문제은행 지점 격리 + 투자자 데모',
+    audience: ['admin'],
+    entries: [
       { type: 'add', text: '투자자 데모 시스템 — 3가지 핵심 기능 체험 전용 모드' },
-      { type: 'improve', text: 'AI 문제 생성 개선 + 문제은행 테넌트 스코핑' },
+      { type: 'improve', text: '문제은행 테넌트 스코핑 적용 — 지점별 데이터 격리 확대' },
     ],
   },
   // ── 2026-03-29 ~ 03-31 ──
@@ -83,7 +136,7 @@ export const ALL_UPDATES: UpdateLog[] = [
       { type: 'feature', text: '5단계 난이도 체계 — 기본 / 표준 / 응용 / 심화 / 최고난도' },
       { type: 'feature', text: '134개 토픽 1:1 정확 매칭 — 중학교·고등학교 교육과정 소단원 수준 분석' },
       { type: 'feature', text: '8개 확장 분석 에이전트 — 약점, 학습, 시험준비, 예측, 총평, 토픽전략, 점수별계획 에이전트' },
-      { type: 'feature', text: 'AI 총평 (CommentarySection) — Claude Sonnet 기반 종합 분석, DB 영구 저장' },
+      { type: 'feature', text: 'AI 종합 총평 — 시험지 전반에 대한 분석 코멘트 자동 생성' },
       { type: 'feature', text: '학습 대책 탭 10개 섹션 — 토픽 분석, 킬러패턴, 타임라인, 서술형 대비, 등급별 전략 등' },
       { type: 'improve', text: '기출 분석 UI/UX 대폭 개선 — 차트, 능력 영역, 피드백 신고 시스템' },
     ],
@@ -93,9 +146,16 @@ export const ALL_UPDATES: UpdateLog[] = [
     title: '기출 분석 4단계 통합 — 트렌드 + 패턴 + 분석 + 대시보드',
     audience: ['teacher', 'admin'],
     entries: [
-      { type: 'feature', text: '기출 분석 Phase 1~4 통합 — Math Report 프로젝트 완전 이식' },
+      { type: 'feature', text: '기출 분석 시스템 4단계 통합 완성' },
       { type: 'feature', text: '트렌드 분석 — 연도별 출제 경향 + 대시보드 위젯' },
-      { type: 'feature', text: '패턴 시스템 — 빈출 패턴 DB 템플릿 + 인쇄 지원' },
+      { type: 'feature', text: '패턴 시스템 — 빈출 패턴 템플릿 + 인쇄 지원' },
+    ],
+  },
+  {
+    date: '2026-03-29',
+    title: 'Math Report 이식 완료',
+    audience: ['admin'],
+    entries: [
       { type: 'add', text: 'Math Report 원본 교육과정 데이터 ~20,000줄 이식' },
     ],
   },
@@ -132,7 +192,7 @@ export const ALL_UPDATES: UpdateLog[] = [
       { type: 'feature', text: '학습 과정 순차/자유 모드 — 순차 모드 시 이전 개념 완료 전까지 다음 개념 잠금' },
       { type: 'feature', text: '학부모용 보고서 페이지 목업 추가' },
       { type: 'add', text: '초등 빈칸 237개 일괄 생성 — 개선된 프롬프트로 고품질 빈칸 추출' },
-      { type: 'add', text: '기능 플래그 2종 추가 — AI 빈칸 채점, 음성 읽기 인증' },
+      { type: 'add', text: '기능 토글 2종 추가 — AI 빈칸 채점, 음성 읽기 인증' },
       { type: 'improve', text: '개념 콘텐츠 3뷰(미리보기/편집/원본) 렌더링 통일' },
       { type: 'improve', text: '기능 관리 페이지 2단 그리드 레이아웃으로 개선' },
       { type: 'fix', text: '개념 콘텐츠 편집기 개선 + 초등 개념 데이터 정리' },
@@ -150,13 +210,20 @@ export const ALL_UPDATES: UpdateLog[] = [
   // ── 2026-03-25 ──
   {
     date: '2026-03-25',
-    title: '반 관리 통합 + 전체 UI 리디자인 + API 페이지네이션',
+    title: '반 관리 통합 + 전체 UI 리디자인',
     audience: ['teacher', 'admin'],
     entries: [
       { type: 'feature', text: '반 관리 + 학습 코스 통합 페이지 — 반별 학생/과정을 한 화면에서 관리' },
-      { type: 'feature', text: 'MathRenderer GFM 테이블 지원 — 마크다운 표를 깔끔하게 렌더링' },
-      { type: 'feature', text: '목록 API 전체 페이지네이션 적용 — 대량 데이터 효율적 조회' },
+      { type: 'feature', text: '마크다운 표 렌더링 지원 — 문제/해설에서 표 형식 사용 가능' },
       { type: 'improve', text: '전체 디자인 일관성 통일 + 모바일 가독성 개선' },
+    ],
+  },
+  {
+    date: '2026-03-25',
+    title: '페이지네이션 + 스켈레톤 정비 + PDF 추출 프롬프트',
+    audience: ['admin'],
+    entries: [
+      { type: 'feature', text: '목록 API 전체 페이지네이션 적용 — 대량 데이터 효율적 조회' },
       { type: 'improve', text: 'PDF 추출 프롬프트 개선 — 더 정확한 문제 구조화' },
       { type: 'fix', text: '학생 스켈레톤 페이지 전면 재검토 + 미사용 v2 삭제' },
       { type: 'fix', text: '랜딩페이지 프로젝트 현황과 일치시킴' },
@@ -209,8 +276,8 @@ export const ALL_UPDATES: UpdateLog[] = [
       { type: 'feature', text: '스켈레톤 로딩 UI — 대시보드, 랭킹, 오버뷰 페이지에 로딩 스켈레톤 적용' },
       { type: 'feature', text: 'XP 획득 토스트 알림 — 학습 완료 시 XP 획득량을 실시간 표시' },
       { type: 'feature', text: 'MotionStagger 애니메이션 — 카드/리스트 순차 등장 효과' },
-      { type: 'feature', text: '레벨테스트 보고서 AI 전면 전환 — Claude Sonnet 4.6으로 모든 멘트 AI 생성' },
-      { type: 'improve', text: 'Claude Haiku 3.5 → 4.5 업그레이드 (보고서 품질 향상)' },
+      { type: 'feature', text: '레벨테스트 보고서 AI 전면 전환 — 모든 멘트 AI 자동 생성 품질 향상' },
+      { type: 'improve', text: 'AI 보고서 품질 향상 — 상위 모델로 업그레이드' },
       { type: 'improve', text: 'ProgressBar 애니메이션 강화 (부드러운 진행률 표시)' },
       { type: 'improve', text: 'StatCard 마이크로 인터랙션 추가' },
     ],
@@ -234,8 +301,8 @@ export const ALL_UPDATES: UpdateLog[] = [
     entries: [
       { type: 'feature', text: '빈칸 학습 오답 시 정답 공개 → 학생이 직접 재입력하여 다음 단계 진행 가능 (XP 절반 지급)' },
       { type: 'feature', text: '대시보드 기간 설정 — 최근 7일/30일/3개월/전체 기간 필터링' },
-      { type: 'add', text: '학습 힌트/정답공개 사용 이력 DB 추적 (hintCount, revealCount, usedReveal)' },
-      { type: 'fix', text: '대시보드 "기간 설정" 버튼이 인쇄(window.print)로 연결되던 버그 수정' },
+      { type: 'add', text: '학습 힌트/정답공개 사용 이력 기록' },
+      { type: 'fix', text: '대시보드 "기간 설정" 버튼이 인쇄 창으로 연결되던 버그 수정' },
       { type: 'improve', text: '활동률·학습기록·최근활동이 선택 기간에 맞게 필터링되도록 개선' },
     ],
   },
@@ -256,9 +323,16 @@ export const ALL_UPDATES: UpdateLog[] = [
     audience: ['teacher', 'admin'],
     entries: [
       { type: 'feature', text: 'Ctrl+K 커맨드 팔레트 — 모든 메뉴를 키보드로 빠르게 검색/이동' },
-      { type: 'feature', text: '글로벌 토스트 알림 시스템 — 성공/오류/경고/정보 알림 자동 표시' },
-      { type: 'improve', text: '전체 페이지 alert() 팝업 → 토스트 알림으로 교체 (25개 파일, 67개 항목)' },
-      { type: 'improve', text: '전체 UI 폰트 Pretendard로 통일 (일관된 시각 경험)' },
+      { type: 'feature', text: '토스트 알림 시스템 — 성공/오류/경고/정보 알림 자동 표시' },
+      { type: 'improve', text: '전체 페이지 팝업 알림을 부드러운 토스트로 교체' },
+      { type: 'improve', text: '전체 UI 폰트 통일 (일관된 시각 경험)' },
+    ],
+  },
+  {
+    date: '2026-03-17',
+    title: 'API 코드 리팩터링',
+    audience: ['admin'],
+    entries: [
       { type: 'improve', text: 'API 코드 DRY 리팩터링 — Zod 스키마 재사용, 라우트 핸들러 팩토리 적용' },
     ],
   },
@@ -275,8 +349,8 @@ export const ALL_UPDATES: UpdateLog[] = [
       { type: 'feature', text: '분수 사각형/원 조각 클릭 편집 — 개별 셀 색칠/빗금 지원' },
       { type: 'add', text: '도형 정렬 옵션 (왼쪽/가운데/오른쪽)' },
       { type: 'add', text: '수직선 마크 점 표시/숨기기 옵션 및 점 색상 커스텀' },
-      { type: 'fix', text: '분수 사각형 빗금(hatching)이 미리보기에 표시되지 않던 버그 수정' },
-      { type: 'fix', text: 'Backspace 키로 텍스트 삭제 시 브라우저 뒤로가기 발생하던 문제 수정' },
+      { type: 'fix', text: '분수 사각형 빗금이 미리보기에 표시되지 않던 버그 수정' },
+      { type: 'fix', text: '텍스트 삭제 시 브라우저 뒤로가기가 발생하던 문제 수정' },
     ],
   },
   {
@@ -294,11 +368,11 @@ export const ALL_UPDATES: UpdateLog[] = [
   // ── 2026-03-14~15 ──
   {
     date: '2026-03-14',
-    title: 'SVG 다이어그램 렌더링 시스템 & 프리셋 도형',
+    title: '다이어그램 렌더링 시스템 & 프리셋 도형',
     audience: ['teacher', 'admin'],
     entries: [
-      { type: 'feature', text: 'SVG 다이어그램 렌더링 시스템 — AI가 생성한 도형을 정확한 SVG로 변환' },
-      { type: 'feature', text: '프리셋 기반 도형 시스템 — AI가 좌표 대신 프리셋(직각삼각형, 정삼각형 등)을 선택하여 정확도 향상' },
+      { type: 'feature', text: '다이어그램 렌더링 시스템 — AI가 생성한 도형을 정확한 그림으로 표시' },
+      { type: 'feature', text: '프리셋 기반 도형 — AI가 직각삼각형/정삼각형 등 프리셋을 선택해 정확도 향상' },
       { type: 'add', text: '초등 다이어그램 13종: 수직선, 분수원, 분수사각형, 자릿값, 점배열, 순서도 등' },
       { type: 'add', text: '중등 다이어그램 13종: 좌표평면, 원, 삼각형, 사각형, 함수그래프, 벤다이어그램 등' },
       { type: 'improve', text: 'PDF 추출 시 도형/이미지 자동 감지 및 크롭' },
@@ -314,8 +388,15 @@ export const ALL_UPDATES: UpdateLog[] = [
       { type: 'feature', text: '4단계 위자드: 업로드 → 페이지 선택 → AI 추출 미리보기 → 저장' },
       { type: 'add', text: '해설 PDF 별도 업로드 → 문제번호로 정답/풀이 자동 매칭' },
       { type: 'add', text: '페이지 썸네일 그리드 + 전체선택/범위선택' },
+      { type: 'improve', text: '수식 렌더링 전면 적용 — 모든 페이지에서 깔끔한 수식 표시' },
+    ],
+  },
+  {
+    date: '2026-03-13',
+    title: 'API 성능 최적화',
+    audience: ['admin'],
+    entries: [
       { type: 'improve', text: 'API 병목 30곳 최적화 — DB 쿼리 개선, 불필요한 include 제거' },
-      { type: 'improve', text: 'KaTeX 수식 렌더링 전면 적용' },
     ],
   },
   // ── 2026-03-12 ──
@@ -377,10 +458,10 @@ export const ALL_UPDATES: UpdateLog[] = [
     title: '연산 생성기 인쇄/미리보기 대폭 개선',
     audience: ['teacher', 'admin'],
     entries: [
-      { type: 'feature', text: 'A4 용지 비율 인쇄 미리보기 (CSS transform scale)' },
+      { type: 'feature', text: 'A4 용지 비율 인쇄 미리보기' },
       { type: 'feature', text: '2열×10행 레이아웃, 페이지 자동 분할' },
-      { type: 'improve', text: 'KaTeX 수식 렌더링 적용 (분수, 제곱근, 다항식)' },
-      { type: 'improve', text: 'Split Panel 레이아웃 (좌측 설정 + 우측 미리보기)' },
+      { type: 'improve', text: '수식 렌더링 적용 (분수, 제곱근, 다항식)' },
+      { type: 'improve', text: '좌측 설정 + 우측 미리보기 나란히 배치' },
       { type: 'add', text: '문제 수 입력 (최대 1000문제, 경고 표시)' },
       { type: 'add', text: '정답 표시/숨기기 토글' },
     ],
@@ -392,7 +473,7 @@ export const ALL_UPDATES: UpdateLog[] = [
     entries: [
       { type: 'feature', text: '문제은행 학년/단원/유형별 필터링 시스템' },
       { type: 'improve', text: '사이드바 네비게이션 아이콘 및 구조 개선' },
-      { type: 'add', text: '연산 생성기 KaTeX 수식 표시 개선' },
+      { type: 'add', text: '연산 생성기 수식 표시 개선' },
     ],
   },
   // ── 학생용 ──
@@ -403,7 +484,7 @@ export const ALL_UPDATES: UpdateLog[] = [
     entries: [
       { type: 'feature', text: '연산 연습 유형 62개로 확장 (초2~중3)' },
       { type: 'add', text: '단위 변환, 시간 계산, 각도, 넓이, 통계 등 추가' },
-      { type: 'improve', text: '수식 표시가 더 깔끔해졌어요 (KaTeX)' },
+      { type: 'improve', text: '수식 표시가 더 깔끔해졌어요' },
     ],
   },
   {
@@ -433,7 +514,7 @@ export const ALL_UPDATES: UpdateLog[] = [
     audience: ['public', 'teacher', 'admin'],
     entries: [
       { type: 'feature', text: '시험 시스템 통합 + 풀이 속도 분석' },
-      { type: 'feature', text: 'MathLive 수식 편집기 통합' },
+      { type: 'feature', text: '수식 편집기 통합 — 손쉬운 수학 기호 입력' },
       { type: 'add', text: 'PDF 파서 개선' },
       { type: 'add', text: '대시보드, 학습 분석, 레벨테스트 등 다수 페이지 추가' },
     ],

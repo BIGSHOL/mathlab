@@ -39,6 +39,8 @@ interface QuestionListSidebarProps {
   setSourceFilter: (source: string) => void;
   noExplanation: boolean;
   setNoExplanation: (v: boolean) => void;
+  noDiagram: boolean;
+  setNoDiagram: (v: boolean) => void;
   search: string;
   setSearch: (s: string) => void;
   typeFilters: Set<string>;
@@ -71,6 +73,8 @@ export function QuestionListSidebar({
   setSourceFilter,
   noExplanation,
   setNoExplanation,
+  noDiagram,
+  setNoDiagram,
   search,
   setSearch,
   typeFilters,
@@ -85,9 +89,7 @@ export function QuestionListSidebar({
 }: QuestionListSidebarProps) {
   const [chapterOpen, setChapterOpen] = useState(true);
   const [sectionOpen, setSectionOpen] = useState(true);
-  const [typeOpen, setTypeOpen] = useState(true);
-  const [difficultyOpen, setDifficultyOpen] = useState(true);
-  const [domainOpen, setDomainOpen] = useState(true);
+  const [filterOpen, setFilterOpen] = useState(true);
 
   return (
     <aside className={`shrink-0 border-r border-slate-200 bg-slate-50/30 flex-col transition-all duration-200 ${leftPanelCollapsed ? 'w-12 hidden md:flex' : 'w-full md:w-72'} hidden md:flex`}>
@@ -262,7 +264,7 @@ export function QuestionListSidebar({
           })()?.length > 0 && (
             <Card padding="sm" className="flex flex-col gap-2">
               <button onClick={() => setSectionOpen((p) => !p)} className="flex items-center justify-between w-full">
-                <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">유형/코너 필터</h3>
+                <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">소단원 필터</h3>
                 <ChevronDown className={`w-4 h-4 text-text-tertiary transition-transform ${sectionOpen ? '' : '-rotate-90'}`} />
               </button>
               {sectionOpen && (
@@ -296,116 +298,117 @@ export function QuestionListSidebar({
             </Card>
           )}
 
-          {/* Type Filter */}
+          {/* 통합 필터 (유형 + 난이도 + 영역 + 출처 + 해설) */}
           <Card padding="sm" className="flex flex-col gap-2">
-            <button onClick={() => setTypeOpen((p) => !p)} className="flex items-center justify-between w-full">
-              <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">유형 필터</h3>
-              <ChevronDown className={`w-4 h-4 text-text-tertiary transition-transform ${typeOpen ? '' : '-rotate-90'}`} />
+            <button onClick={() => setFilterOpen((p) => !p)} className="flex items-center justify-between w-full">
+              <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">필터</h3>
+              <ChevronDown className={`w-4 h-4 text-text-tertiary transition-transform ${filterOpen ? '' : '-rotate-90'}`} />
             </button>
-            {typeOpen && (
-              <div className="flex flex-col gap-2">
-                {TYPE_OPTIONS.map((type) => (
-                  <label key={type} className="flex items-center gap-2 cursor-pointer">
+            {filterOpen && (
+              <div className="flex flex-col gap-2.5">
+                {/* 유형 (다중 선택 pill) */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-text-tertiary shrink-0 w-10">유형</span>
+                  <div className="flex flex-wrap gap-1">
+                    {TYPE_OPTIONS.map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => { toggleTypeFilter(type); setCurrentPage(1); }}
+                        className={`px-2 py-1 rounded-sm text-xs font-medium transition-colors ${
+                          typeFilters.has(type)
+                            ? 'bg-primary text-white'
+                            : 'bg-slate-100 hover:bg-slate-200 text-text-secondary'
+                        }`}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 난이도 */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-text-tertiary shrink-0 w-10">난이도</span>
+                  <div className="flex flex-wrap gap-1">
+                    {DIFFICULTY_OPTIONS.map((d) => (
+                      <button
+                        key={d}
+                        onClick={() => { setDifficultyFilter(d); setCurrentPage(1); }}
+                        className={`px-2 py-1 rounded-sm text-xs font-medium transition-colors ${
+                          difficultyFilter === d
+                            ? 'bg-primary text-white'
+                            : 'bg-slate-100 hover:bg-slate-200 text-text-secondary'
+                        }`}
+                      >
+                        {d}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 영역 */}
+                <div className="flex items-start gap-2">
+                  <span className="text-xs font-medium text-text-tertiary shrink-0 w-10 pt-1">영역</span>
+                  <div className="flex flex-wrap gap-1">
+                    {DOMAIN_OPTIONS.map((d) => (
+                      <button
+                        key={d.key}
+                        onClick={() => { setDomainFilter(d.key); setCurrentPage(1); }}
+                        className={`px-2 py-1 rounded-sm text-xs font-medium transition-colors ${
+                          domainFilter === d.key
+                            ? 'bg-primary text-white'
+                            : 'bg-slate-100 hover:bg-slate-200 text-text-secondary'
+                        }`}
+                      >
+                        {d.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 출처 */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-text-tertiary shrink-0 w-10">출처</span>
+                  <div className="flex flex-wrap gap-1">
+                    {['전체', '교과서', '기출', 'AI 생성'].map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => { setSourceFilter(s); setCurrentPage(1); }}
+                        className={`px-2 py-1 rounded-sm text-xs font-medium transition-colors ${
+                          sourceFilter === s
+                            ? 'bg-primary text-white'
+                            : 'bg-slate-100 hover:bg-slate-200 text-text-secondary'
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 체크박스 필터 */}
+                <div className="border-t border-slate-100 pt-2 flex flex-col gap-1.5">
+                  <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={typeFilters.has(type)}
-                      onChange={() => toggleTypeFilter(type)}
-                      className="form-checkbox text-primary rounded-sm border-slate-300 focus:ring-primary focus:ring-offset-0"
+                      checked={noExplanation}
+                      onChange={(e) => { setNoExplanation(e.target.checked); setCurrentPage(1); }}
+                      className="w-3.5 h-3.5 rounded-sm border-slate-300 text-primary focus:ring-primary/40"
                     />
-                    <span className="text-sm font-medium">{type}</span>
+                    <span className="text-xs font-medium text-text-secondary">해설 없는 문제만</span>
                   </label>
-                ))}
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={noDiagram}
+                      onChange={(e) => { setNoDiagram(e.target.checked); setCurrentPage(1); }}
+                      className="w-3.5 h-3.5 rounded-sm border-slate-300 text-primary focus:ring-primary/40"
+                    />
+                    <span className="text-xs font-medium text-text-secondary">그림 없는 문제만</span>
+                  </label>
+                </div>
               </div>
             )}
-          </Card>
-
-          {/* Difficulty Filter */}
-          <Card padding="sm" className="flex flex-col gap-2">
-            <button onClick={() => setDifficultyOpen((p) => !p)} className="flex items-center justify-between w-full">
-              <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">난이도</h3>
-              <ChevronDown className={`w-4 h-4 text-text-tertiary transition-transform ${difficultyOpen ? '' : '-rotate-90'}`} />
-            </button>
-            {difficultyOpen && (
-              <div className="flex gap-1.5">
-                {DIFFICULTY_OPTIONS.map((d) => (
-                  <button
-                    key={d}
-                    onClick={() => {
-                      setDifficultyFilter(d);
-                      setCurrentPage(1);
-                    }}
-                    className={`px-2.5 py-1.5 rounded-sm text-xs font-medium transition-colors ${
-                      difficultyFilter === d
-                        ? 'bg-primary text-white'
-                        : 'bg-slate-100 hover:bg-slate-200 text-text-secondary'
-                    }`}
-                  >
-                    {d}
-                  </button>
-                ))}
-              </div>
-            )}
-          </Card>
-
-          {/* Domain Filter */}
-          <Card padding="sm" className="flex flex-col gap-2">
-            <button onClick={() => setDomainOpen((p) => !p)} className="flex items-center justify-between w-full">
-              <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">영역</h3>
-              <ChevronDown className={`w-4 h-4 text-text-tertiary transition-transform ${domainOpen ? '' : '-rotate-90'}`} />
-            </button>
-            {domainOpen && (
-              <div className="flex flex-wrap gap-1.5">
-                {DOMAIN_OPTIONS.map((d) => (
-                  <button
-                    key={d.key}
-                    onClick={() => {
-                      setDomainFilter(d.key);
-                      setCurrentPage(1);
-                    }}
-                    className={`px-2.5 py-1.5 rounded-sm text-xs font-medium transition-colors ${
-                      domainFilter === d.key
-                        ? 'bg-primary text-white'
-                        : 'bg-slate-100 hover:bg-slate-200 text-text-secondary'
-                    }`}
-                  >
-                    {d.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </Card>
-
-          {/* 출처 필터 */}
-          <Card className="p-3">
-            <h3 className="text-sm font-bold text-text-secondary mb-2">출처</h3>
-            <div className="flex flex-wrap gap-1.5">
-              {['전체', '교과서', '기출', 'AI 생성'].map((s) => (
-                <button
-                  key={s}
-                  onClick={() => { setSourceFilter(s); setCurrentPage(1); }}
-                  className={`px-2.5 py-1.5 rounded-sm text-xs font-medium transition-colors ${
-                    sourceFilter === s
-                      ? 'bg-primary text-white'
-                      : 'bg-slate-100 hover:bg-slate-200 text-text-secondary'
-                  }`}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          </Card>
-
-          {/* 해설 없음 토글 */}
-          <Card className="p-3">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={noExplanation}
-                onChange={(e) => { setNoExplanation(e.target.checked); setCurrentPage(1); }}
-                className="w-4 h-4 rounded-sm border-slate-300 text-primary focus:ring-primary/40"
-              />
-              <span className="text-sm font-medium text-text-secondary">해설 없는 문제만</span>
-            </label>
           </Card>
         </div>
       )}
