@@ -33,7 +33,9 @@ const createCampaignSchema = z.object({
   semester: z.number().int().min(0).max(2),
   examType: z.enum(['MIDTERM', 'FINAL', 'PERFORMANCE']),
   examDate: z.string().min(1, '시험일을 입력하세요'),
+  isDateTentative: z.boolean().optional().default(false),
   scopeChapters: z.array(scopeChapterSchema).min(1, '시험 범위를 1개 이상 선택하세요'),
+  isScopeTentative: z.boolean().optional().default(false),
 });
 
 const querySchema = z.object({
@@ -133,7 +135,9 @@ export async function POST(request: NextRequest) {
         semester: parsed.data.semester,
         examType: parsed.data.examType as ExamCampaignType,
         examDate,
+        isDateTentative: parsed.data.isDateTentative,
         scopeChapters: parsed.data.scopeChapters,
+        isScopeTentative: parsed.data.isScopeTentative,
         status: 'PREPARING',
         createdById: user.id,
       },

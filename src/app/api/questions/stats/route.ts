@@ -1,15 +1,61 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse, hasRole } from '@/lib/api';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
 
+  const { searchParams } = new URL(request.url);
+
   // 테넌트 스코핑: 자기 지점 문제 + 공용 문제(tenantId=null)
-  const where = hasRole(user, 'SUPER_ADMIN') && !user.viewingTenantId
-    ? {}
-    : { OR: [{ tenantId: user.viewingTenantId || user.tenantId }, { tenantId: null }] };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const andConditions: Record<string, any>[] = [];
+
+  if (!(hasRole(user, 'SUPER_ADMIN') && !user.viewingTenantId)) {
+    andConditions.push({ OR: [{ tenantId: user.viewingTenantId || user.tenantId }, { tenantId: null }] });
+  }
+
+  // 콘텐츠 필터 (questions API와 동일)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const where: Record<string, any> = { isDraft: false };
+
+  const search = searchParams.get('search');
+  if (search) {
+    andConditions.push({
+      OR: [
+        { content: { contains: search } },
+        { chapter: { contains: search } },
+        { section: { contains: search } },
+        { answer: { contains: search } },
+        { source: { contains: search } },
+        { sourceTag: { contains: search } },
+        { bookCode: { contains: search } },
+        { explanation: { contains: search } },
+      ],
+    });
+  }
+
+  const difficulty = searchParams.get('difficulty');
+  if (difficulty) where.difficulty = difficulty;
+
+  const type = searchParams.get('type');
+  if (type) where.type = type;
+
+  const domain = searchParams.get('domain');
+  if (domain) where.domain = domain;
+
+  const sourceTag = searchParams.get('sourceTag');
+  if (sourceTag) where.sourceTag = sourceTag;
+
+  const noExplanation = searchParams.get('noExplanation');
+  if (noExplanation === 'true') {
+    andConditions.push({ OR: [{ explanation: null }, { explanation: '' }] });
+  }
+
+  if (andConditions.length > 0) {
+    where.AND = andConditions;
+  }
 
   const [total, byBook, byDifficulty, byType, chapterGroups, sectionGroups] = await Promise.all([
     prisma.question.count({ where }),

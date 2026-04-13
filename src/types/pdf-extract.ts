@@ -125,14 +125,51 @@ export function mapType(tag: string): QuestionType {
   return TYPE_MAP[tag.trim()] || 'SHORT_ANSWER';
 }
 
-/** ㄱㄴㄷ 보기를 content에 마크다운 인용블록으로 포함 */
+/** AI가 content에 객관식 보기(①~⑤ 또는 1.~5.)를 넣은 경우 제거 */
+export function stripChoicesFromContent(content: string, choices: string[]): string {
+  if (!choices || choices.length === 0) return content;
+  let cleaned = content;
+  // 1) ①~⑩ 으로 시작하는 라인 전체 제거
+  cleaned = cleaned.replace(/^[ \t]*[①②③④⑤⑥⑦⑧⑨⑩]\s*.+$/gm, '');
+  // 2) "1." "2." ... "1)" "2)" 형태가 choices 개수 만큼 연속될 때 제거 (보기로 추정)
+  if (choices.length >= 2) {
+    const numericRe = new RegExp(
+      `(?:^[ \\t]*[1-9]\\d?[.)]\\s*.+\\n?){${choices.length},${choices.length + 2}}`,
+      'gm',
+    );
+    cleaned = cleaned.replace(numericRe, '');
+  }
+  return cleaned.replace(/\n{3,}/g, '\n\n').trimEnd();
+}
+
+/** ㄱㄴㄷ 보기를 content에 마크다운 인용블록으로 포함 (중복 방지 후처리 포함) */
 export function embedBoxItems(content: string, boxItems: string[]): string {
   if (boxItems.length === 0) return content;
+
+  // 1) AI가 content에 이미 포함시킨 <보기> 헤더 제거 (다양한 변형 대응)
+  let cleaned = content.replace(
+    /^[ \t]*[>]?[ \t]*\*{0,2}[\\]?[<〈＜\[(]\s*보기\s*[>〉＞\])][\\]?\*{0,2}[ \t]*$/gm,
+    '',
+  );
+
+  // 2) AI가 content에 인라인한 boxItems 라인 제거
+  for (const item of boxItems) {
+    const labelMatch = item.match(/^[ \t]*([ㄱ-ㅎa-zA-Z①-⑩\d]+)\s*[.)]/);
+    if (!labelMatch) continue;
+    const label = labelMatch[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp(`^[ \\t]*[>]?[ \\t]*${label}\\s*[.)]\\s*.*$`, 'gm');
+    cleaned = cleaned.replace(re, '');
+  }
+
+  // 3) 연속된 빈 줄 정리
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n').trimEnd();
+
+  // 4) 정상 boxBlock 1회만 부착
   const boxBlock = [
     '',
     '> **\\<보기\\>**',
     '>',
     ...boxItems.map((item) => `> ${item}`),
   ].join('\n');
-  return content + boxBlock;
+  return cleaned + boxBlock;
 }

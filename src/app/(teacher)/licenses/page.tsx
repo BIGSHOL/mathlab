@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Tabs } from '@/components/ui/Tabs';
-import { KeyRound, LayoutDashboard, Users, BarChart3 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { KeyRound, LayoutDashboard, Users, BarChart3, ShieldAlert } from 'lucide-react';
+import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import LicenseOverviewTab from '@/components/teacher/licenses/LicenseOverviewTab';
 import LicenseAssignmentTab from '@/components/teacher/licenses/LicenseAssignmentTab';
 import LicenseUsageTab from '@/components/teacher/licenses/LicenseUsageTab';
@@ -12,7 +14,31 @@ import LicenseUsageTab from '@/components/teacher/licenses/LicenseUsageTab';
 type TabKey = 'overview' | 'assignment' | 'usage';
 
 export default function LicensesPage() {
+  const { user, isLoading: authLoading } = useAuth();
+  const isOwner = hasRoleClient(user?.role, 'OWNER');
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
+
+  if (authLoading) {
+    return (
+      <PageContainer maxWidth="xl">
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-[400px] w-full" />
+        </div>
+      </PageContainer>
+    );
+  }
+
+  if (!isOwner) {
+    return (
+      <PageContainer maxWidth="xl">
+        <div className="flex flex-col items-center justify-center py-20 text-text-secondary">
+          <ShieldAlert className="w-8 h-8 mb-2 text-slate-300" />
+          <p className="text-sm">지점장 이상 권한이 필요합니다</p>
+        </div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer maxWidth="xl">

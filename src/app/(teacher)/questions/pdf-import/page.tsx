@@ -13,6 +13,9 @@ import {
   STEPS,
 } from '@/components/teacher/pdf-import';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 const PdfStepLoading = () => (
   <div className="space-y-4">
@@ -40,7 +43,24 @@ const SaveStep = dynamic(
 );
 
 export default function PdfImportPage() {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
   const state = usePdfImport();
+
+  useEffect(() => {
+    if (!isLoading && user && user.role !== 'SUPER_ADMIN') {
+      router.replace('/overview');
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading || !user || user.role !== 'SUPER_ADMIN') {
+    return (
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 md:py-8">
+        <Skeleton className="h-10 w-64 mb-4" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 md:py-8">
@@ -166,6 +186,7 @@ export default function PdfImportPage() {
           extracting={state.extracting}
           progress={state.progress}
           problems={state.problems}
+          draftSavedCount={state.draftSavedCount}
           editingIdx={state.editingIdx}
           setEditingIdx={state.setEditingIdx}
           expandedIdx={state.expandedIdx}

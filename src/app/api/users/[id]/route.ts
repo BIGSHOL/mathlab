@@ -1,27 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
-import { requireOwner, requireTeacher, isResponse, validateBody, requireResource, hasRole, forbidden } from '@/lib/api';
+import { requireOwner, requireManager, isResponse, validateBody, requireResource, hasRole, forbidden } from '@/lib/api';
 import { getTenantFilter } from '@/lib/api/tenant-scope';
 import { updateUserSchema } from '@/lib/schemas/auth';
 
-// PATCH /api/users/:id
+// PATCH /api/users/:id (MANAGER+ only, 테넌트 격리 + 역할 계층 보호)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const user = await requireTeacher();
+  const user = await requireManager();
   if (isResponse(user)) return user;
 
   const parsed = await validateBody(request, updateUserSchema);
   if (isResponse(parsed)) return parsed;
 
+  // 테넌트 격리: 같은 테넌트 사용자만 수정 가능 (SUPER_ADMIN 예외)
+  const tenantFilter = getTenantFilter(user);
   const targetUser = await requireResource(
-    () => prisma.user.findUnique({ where: { id, deletedAt: null } }),
+    () => prisma.user.findUnique({ where: { id, deletedAt: null, ...tenantFilter }, select: { id: true, role: true } }),
     '사용자를 찾을 수 없습니다'
   );
   if (isResponse(targetUser)) return targetUser;
+
+  // 역할 계층 보호: 자기 이상 역할은 수정 불가
+  if (hasRole(targetUser, user.role)) {
+    return forbidden('동급 이상 역할의 사용자는 수정할 수 없습니다');
+  }
 
   const updateData: Record<string, unknown> = {};
   if (parsed.name) updateData.name = parsed.name;

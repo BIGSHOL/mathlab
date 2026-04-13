@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { School, Users, Search, Plus, GraduationCap, BookOpen, Trash2, ChevronRight, Lock, Unlock } from 'lucide-react';
+import { School, Users, Search, Plus, GraduationCap, BookOpen, Trash2, ChevronRight, Lock, Unlock, X, Check } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
 import { confirm } from '@/components/ui/ConfirmDialog';
@@ -59,6 +59,11 @@ export default function CoursesPage() {
   const [assignPage, setAssignPage] = useState(0);
   const [saving, setSaving] = useState(false);
   const ASSIGN_PAGE_SIZE = 20;
+
+  // 기존 코스 배정 모달
+  const [showAssignExisting, setShowAssignExisting] = useState(false);
+  const [assignExistingBusy, setAssignExistingBusy] = useState<string | null>(null);
+  const [existingSearch, setExistingSearch] = useState('');
 
   const fetchData = useCallback(async () => {
     try {
@@ -257,6 +262,51 @@ export default function CoursesPage() {
     return filteredStudentsForAssign.slice(start, start + ASSIGN_PAGE_SIZE);
   }, [filteredStudentsForAssign, assignPage]);
 
+  // ── 기존 코스 배정 ──
+
+  const assignableCourses = useMemo(() => {
+    if (!selectedClassroom) return [];
+    const classStudentIds = new Set(selectedClassroom.students.map((s) => s.id));
+    const q = existingSearch.trim().toLowerCase();
+    return courses
+      .map((c) => {
+        const enrolledCount = c.enrollments?.filter((e) => classStudentIds.has(e.student.id)).length ?? 0;
+        const pending = selectedClassroom.students.length - enrolledCount;
+        return { course: c, enrolledCount, pending };
+      })
+      .filter(({ pending }) => pending > 0)
+      .filter(({ course }) => !q || course.title.toLowerCase().includes(q));
+  }, [courses, selectedClassroom, existingSearch]);
+
+  const handleAssignExistingCourse = async (courseId: string, seq: number) => {
+    if (!selectedClassroom) return;
+    const studentIds = selectedClassroom.students.map((s) => s.id);
+    if (studentIds.length === 0) {
+      toast.warning('이 반에 배정된 학생이 없습니다');
+      return;
+    }
+    setAssignExistingBusy(courseId);
+    try {
+      const res = await fetch(`/api/learning-courses/${seq}/enroll`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentIds }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        const { enrolled, skipped } = json.data;
+        toast.success(`${enrolled}명 배정 완료${skipped > 0 ? ` (${skipped}명은 이미 배정됨)` : ''}`);
+        await fetchData();
+        if (assignableCourses.length <= 1) setShowAssignExisting(false);
+      } else {
+        toast.error(json.error?.message || '배정에 실패했습니다');
+      }
+    } catch {
+      toast.error('배정 중 오류가 발생했습니다');
+    }
+    setAssignExistingBusy(null);
+  };
+
   // ── 코스 삭제 ──
 
   const handleDeleteCourse = async (courseId: string, title: string) => {
@@ -315,11 +365,16 @@ export default function CoursesPage() {
                   <h3 className="text-xs font-bold text-text-primary">학습 코스 ({classroomCourses.length}개)</h3>
                 </div>
                 {isManager && (
-                  <Link href={`/courses/create?classroomId=${selectedClassroom.id}`}>
-                    <Button size="sm">
-                      <Plus className="w-3.5 h-3.5 mr-1" /> 새 코스 만들기
+                  <div className="flex items-center gap-1.5">
+                    <Button size="sm" variant="secondary" onClick={() => { setExistingSearch(''); setShowAssignExisting(true); }}>
+                      <BookOpen className="w-3.5 h-3.5 mr-1" /> 기존 코스 배정
                     </Button>
-                  </Link>
+                    <Link href={`/courses/create?classroomId=${selectedClassroom.id}`}>
+                      <Button size="sm">
+                        <Plus className="w-3.5 h-3.5 mr-1" /> 새 코스 만들기
+                      </Button>
+                    </Link>
+                  </div>
                 )}
               </div>
 
@@ -401,6 +456,77 @@ export default function CoursesPage() {
             <School className="w-12 h-12 mx-auto mb-3 opacity-15" />
             <p className="text-sm font-medium">반을 선택하세요</p>
             <p className="text-xs mt-1">좌측 목록에서 반을 선택하거나 새로 만들어보세요.</p>
+          </div>
+        </div>
+      )}
+
+      {/* 기존 코스 배정 모달 */}
+      {isManager && showAssignExisting && selectedClassroom && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAssignExisting(false)}>
+          <div className="bg-white rounded-sm w-full max-w-lg mx-4 flex flex-col max-h-[80vh]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-slate-200">
+              <div>
+                <h3 className="font-bold text-text-primary">기존 코스 배정</h3>
+                <p className="text-xs text-text-secondary mt-0.5">{selectedClassroom.name} · 학생 {selectedClassroom.students.length}명</p>
+              </div>
+              <button onClick={() => setShowAssignExisting(false)} className="p-1 text-slate-400 hover:text-slate-700 rounded-sm">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-3 border-b border-slate-200">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="코스명 검색"
+                  value={existingSearch}
+                  onChange={(e) => setExistingSearch(e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3">
+              {assignableCourses.length === 0 ? (
+                <div className="text-center py-10 text-text-secondary">
+                  <BookOpen className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                  <p className="text-sm">배정 가능한 코스가 없습니다.</p>
+                  <p className="text-xs mt-1">이미 모든 학생에게 배정되었거나, 지점에 코스가 없습니다.</p>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {assignableCourses.map(({ course, enrolledCount, pending }) => (
+                    <button
+                      key={course.id}
+                      onClick={() => handleAssignExistingCourse(course.id, course.seq)}
+                      disabled={assignExistingBusy !== null}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 bg-white border border-slate-200 rounded-sm hover:border-primary/40 hover:bg-primary/5 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <div className="w-8 h-8 rounded-sm bg-primary/10 flex items-center justify-center shrink-0">
+                        <BookOpen className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm font-medium text-text-primary truncate">{course.title}</span>
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 shrink-0">
+                            {course.mode === 'sequential' ? <><Lock className="w-2.5 h-2.5 inline mr-0.5" />순차</> : <><Unlock className="w-2.5 h-2.5 inline mr-0.5" />자유</>}
+                          </span>
+                        </div>
+                        <div className="text-xs text-text-secondary mt-0.5">
+                          개념 {course.conceptCount}개 · 이 반 {enrolledCount}/{selectedClassroom.students.length} 배정
+                          <span className="text-primary font-medium"> · +{pending}명 추가</span>
+                        </div>
+                      </div>
+                      {assignExistingBusy === course.id ? (
+                        <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin shrink-0" />
+                      ) : (
+                        <Check className="w-4 h-4 text-slate-300 shrink-0" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

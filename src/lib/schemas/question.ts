@@ -54,6 +54,8 @@ export const updateQuestionSchema = createQuestionSchema
 
 export const bulkCreateQuestionsSchema = z.object({
   questions: z.array(createQuestionSchema).min(1).max(200),
+  examPaperId: z.string().optional(),
+  tenantIdOverride: z.string().optional(),  // SUPER_ADMIN/배치가 지점 지정 시
 });
 
 export type QuestionQuery = z.infer<typeof questionQuerySchema>;

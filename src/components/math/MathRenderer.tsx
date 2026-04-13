@@ -7,6 +7,7 @@ import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
+import { parseBoxCols, resolveCols, DEFAULT_BOX_COLS } from '@/lib/utils/box-grid';
 
 interface DiagramSvgItem {
   svg: string;
@@ -305,25 +306,34 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
 
 
 
-            // <보기> 등 제목 줄과 항목 분리
+            // <보기> 등 제목 줄과 항목 분리, cols 마커 파싱
             const header: React.ReactNode[][] = [];
             const items: React.ReactNode[][] = [];
+            let parsedCols = parseBoxCols('');
             for (const line of lines) {
+              const maybeCols = parseBoxCols(line.text);
+              if (maybeCols !== null && parsedCols === null) parsedCols = maybeCols;
               if (items.length === 0 && (line.text.includes('보기') || line.text.trim() === '')) {
-                header.push(line.nodes);
+                // 마커가 있는 헤더는 마커를 제거한 "보기" 텍스트로 대체
+                if (maybeCols !== null) {
+                  header.push([<strong key="hdr">&lt;보기&gt;</strong>]);
+                } else {
+                  header.push(line.nodes);
+                }
               } else {
                 items.push(line.nodes);
               }
             }
+            const effectiveCols = resolveCols(parsedCols ?? DEFAULT_BOX_COLS, items.length);
 
             return (
               <div className="border border-slate-300 px-5 py-3 my-3 rounded-md bg-slate-50 text-slate-900 not-italic w-fit max-w-full">
                 {header.map((h, i) => <div key={`h-${i}`}>{h}</div>)}
                 {items.length > 0 && (() => {
-                  const maxLen = Math.max(...items.map((it) => it.map(extractText).join('').length));
-                  const useGrid = items.length >= 3 && maxLen <= 15;
+                  const colsClass = effectiveCols === 3 ? 'grid-cols-3' : effectiveCols === 2 ? 'grid-cols-2' : 'grid-cols-1';
+                  const gridClass = items.length >= 2 ? `grid ${colsClass} gap-x-6 gap-y-1` : '';
                   return (
-                    <div className={useGrid ? 'grid grid-cols-2 gap-x-6 gap-y-1' : ''}>
+                    <div className={gridClass}>
                       {items.map((item, i) => (
                         <div key={`i-${i}`}>{item}</div>
                       ))}

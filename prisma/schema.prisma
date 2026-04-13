@@ -419,10 +419,17 @@ model Question {
   // 지점/생성자 메타데이터
   tenantId    String?                              // 생성 지점 (null=공용/레거시)
   createdById String?                              // 생성한 선생님
+  examPaperId String?                              // 기출 시험지 출처 (배치 추출)
+
+  // 드래프트(임시 저장) — PDF 추출 중 크래시 대비
+  isDraft      Boolean @default(false)
+  draftBatchId String? @db.VarChar(40)             // 클라이언트 생성 UUID (추출 세션 단위)
+  draftOwnerId String?                              // 드래프트 소유 선생님
 
   concept        Concept?           @relation(fields: [conceptId], references: [id], onDelete: SetNull)
   tenant         Tenant?            @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   createdBy      User?              @relation("createdQuestions", fields: [createdById], references: [id], onDelete: SetNull)
+  examPaper      ExamPaper?         @relation("ExamPaperQuestions", fields: [examPaperId], references: [id], onDelete: SetNull)
   dailyQuestions DailyQuestion[]
   reviewSchedules ReviewSchedule[]
 
@@ -440,6 +447,9 @@ model Question {
   @@index([type])
   @@index([domain])
   @@index([conceptId])
+  @@index([examPaperId])
+  @@index([isDraft, draftOwnerId])
+  @@index([draftBatchId])
   @@index([tenantId])
   @@index([createdById])
 }
@@ -1398,6 +1408,14 @@ model ExamPaper {
   status        ExamPaperStatus @default(PENDING)
   analysisStep  Int             @default(0)   // 0=대기, 1=파일로드, 2=분류, 3=AI분석, 4=저장
   errorMessage  String?         @db.Text
+  extractedToBankAt DateTime?                  // 문제은행에 추출된 시각 (내신대비 자동 감지용)
+  extractedQuestionCount Int?                  // 추출된 문제 수
+  // ── 배치 추출 승인/재시도 메타 ──
+  extractApproved     Boolean   @default(false)  // SUPER_ADMIN 승인 여부
+  extractApprovedBy   String?                     // 승인자 userId
+  extractApprovedAt   DateTime?
+  extractAttempts     Int       @default(0)       // 배치 시도 횟수
+  lastExtractError    String?   @db.Text          // 최근 추출 실패 사유
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
@@ -1405,11 +1423,30 @@ model ExamPaper {
   student       User?           @relation("ExamPaperStudent", fields: [studentId], references: [id])
   school        School?         @relation(fields: [schoolId], references: [id])
   analyses      ExamAnalysis[]
+  extractedQuestions Question[] @relation("ExamPaperQuestions")
 
   @@index([tenantId])
   @@index([teacherId])
   @@index([tenantId, subject])
   @@index([schoolId])
+  @@index([status, extractApproved, extractedToBankAt])
+}
+
+// ExamPaper 배치 추출 스케줄
+model ExamExtractSchedule {
+  id           String   @id @default(cuid())
+  tenantId     String?                      // 스케줄 생성 지점 (참고용)
+  scheduledAt  DateTime                     // 실행 예정 시각
+  status       String   @default("PENDING") @db.VarChar(20)  // PENDING | RUNNING | DONE | FAILED | CANCELLED
+  examPaperIds String[]                     // 처리할 시험지 ID 목록
+  createdBy    String                       // SUPER_ADMIN userId
+  createdAt    DateTime @default(now())
+  startedAt    DateTime?
+  finishedAt   DateTime?
+  result       Json?                        // { success, failed, skipped, errors: [{id, error}] }
+
+  @@index([status, scheduledAt])
+  @@index([createdBy])
 }
 
 model ExamAnalysis {
@@ -1677,6 +1714,8 @@ model ExamCampaign {
   semester        Int                                    // 1 | 2 (고등은 0)
   examType        ExamCampaignType
   examDate        DateTime            @db.Date           // 시험일 (D-day 기준)
+  isDateTentative  Boolean            @default(false)    // 임시 시험일 여부 (학교 공지 전 추정)
+  isScopeTentative Boolean            @default(false)    // 임시 시험범위 여부 (확정 전 예상 범위)
   scopeChapters   Json                                    // [{chapter: string, sections?: string[]}]
   status          ExamCampaignStatus  @default(PREPARING)
 

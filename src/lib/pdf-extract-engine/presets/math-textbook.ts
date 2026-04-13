@@ -96,11 +96,22 @@ export function mapType(tag: string): MathQuestionType {
   return TYPE_MAP[tag.trim()] || 'SHORT_ANSWER';
 }
 
-/** AI가 content에 보기(①~⑤)를 포함시킨 경우 후처리로 제거 */
-function stripChoicesFromContent(content: string, choices: string[]): string {
+/** AI가 content에 보기(①~⑤ 또는 1.~5., 1)~5))를 포함시킨 경우 후처리로 제거 */
+export function stripChoicesFromContent(content: string, choices: string[]): string {
   if (!choices || choices.length === 0) return content;
-  // ①~⑤ 로 시작하는 줄들을 content 끝에서 제거
-  return content.replace(/(?:\n\s*)?[①②③④⑤]\s*.+/g, '').trimEnd();
+  let cleaned = content;
+  // 1) ①~⑩ 으로 시작하는 라인 전체 제거
+  cleaned = cleaned.replace(/^[ \t]*[①②③④⑤⑥⑦⑧⑨⑩]\s*.+$/gm, '');
+  // 2) 라인 시작이 "1." "2." ... "5." 또는 "1)" "2)" ... "5)" + 공백 + 텍스트 — 보기 형태로 추정
+  //    단, 문제 본문에서 "1." "2."로 시작하는 정상 문장이 있으면 같이 지워질 위험.
+  //    안전장치: choices 길이만큼만 패턴이 연속되어 있을 때만 제거.
+  const numericRe = new RegExp(
+    `(?:^[ \\t]*[1-9]\\d?[.)]\\s*.+\\n?){${Math.min(choices.length, 5)},${choices.length}}`,
+    'gm',
+  );
+  cleaned = cleaned.replace(numericRe, '');
+  // 3) 연속된 빈 줄 정리
+  return cleaned.replace(/\n{3,}/g, '\n\n').trimEnd();
 }
 
 const CIRCLE_NUMS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
@@ -117,16 +128,32 @@ export function ensureChoiceNumbers(choices: string[]): string[] {
   });
 }
 
-/** ㄱㄴㄷ 보기를 content에 마크다운 인용블록으로 포함 */
+/** ㄱㄴㄷ 보기를 content에 마크다운 인용블록으로 포함 (중복 방지 후처리 포함) */
 export function embedBoxItems(content: string, boxItems: string[]): string {
   if (boxItems.length === 0) return content;
+
+  // 1) AI가 content에 이미 포함시킨 <보기> 헤더 제거
+  let cleaned = content.replace(
+    /^[ \t]*[>]?[ \t]*\*{0,2}[\\]?[<〈＜\[(]\s*보기\s*[>〉＞\])][\\]?\*{0,2}[ \t]*$/gm,
+    '',
+  );
+  // 2) AI가 content에 인라인한 boxItems 라인 제거
+  for (const item of boxItems) {
+    const labelMatch = item.match(/^[ \t]*([ㄱ-ㅎa-zA-Z①-⑩\d]+)\s*[.)]/);
+    if (!labelMatch) continue;
+    const label = labelMatch[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp(`^[ \\t]*[>]?[ \\t]*${label}\\s*[.)]\\s*.*$`, 'gm');
+    cleaned = cleaned.replace(re, '');
+  }
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n').trimEnd();
+
   const boxBlock = [
     '',
     '> **\\<보기\\>**',
     '>',
     ...boxItems.map((item) => `> ${item}`),
   ].join('\n');
-  return content + boxBlock;
+  return cleaned + boxBlock;
 }
 
 /** 수학 텍스트에서 $...$로 감싸지지 않은 숫자/변수를 자동 래핑 */
@@ -414,8 +441,16 @@ export const MATH_SYSTEM_PROMPT = `당신은 한국 수학 교재 분석 전문�
 [규칙]
 1. 각 문제의 번호, 유형(객관식/주관식/서술형), 난이도 태그를 식별
 2. 문제 본문은 마크다운으로 작성. 모든 수식은 $...$로 감싸기
-3. 객관식 보기(①②③④⑤)는 choices 배열에만 포함. content에는 보기를 절대 포함하지 말 것!
-4. <보기> 항목(ㄱ,ㄴ,ㄷ)은 boxItems에 별도 저장. content에는 포함하지 말 것!
+3. **객관식 보기(①②③④⑤ 또는 1./2./3./4./5.)는 choices 배열에만 저장!**
+   - content에는 절대 포함하지 마세요 (UI에서 별도 카드로 자동 렌더링됨)
+   - ❌ 잘못: content="다음 중 옳은 것을 모두 고르면?\\n① 1은 모든 자연수와 서로소이다\\n② ..." + choices=["1은 모든 자연수와...","..."] → **중복 표시**
+   - ✅ 올바름: content="다음 중 옳은 것을 모두 고르면? (정답 2개)" + choices=["$1$은 모든 자연수와 서로소이다.", "서로 다른 두 홀수는 서로소이다.", ...]
+   - 정답이 여러 개여도 마찬가지. content는 발문(질문 문장)까지만, 보기는 무조건 choices 배열로 분리.
+4. **<보기> 항목(ㄱ,ㄴ,ㄷ,ㄹ,ㅁ,ㅂ)은 boxItems 배열에만 저장!**
+   - content에는 boxItems 항목을 절대 포함하지 마세요 (UI에서 자동 렌더링됨)
+   - ❌ 잘못된 예: content에 "ㄱ. 6\\nㄴ. 10\\nㄷ. 19" 포함 + boxItems에 같은 내용 → **중복 표시됨**
+   - ✅ 올바른 예: content는 "다음 보기 중 ~ 구하시오." 까지만, boxItems = ["ㄱ. $6$", "ㄴ. $10$", ...]
+   - "<보기>", "〈보기〉", "[보기]" 같은 헤더도 content에 넣지 말 것 (boxItems 존재 시 자동 추가됨)
 5. 난이도 태그가 있으면 difficultyTag에 저장
 6. **sectionHeader는 반드시 교육과정 표준 소단원명을 사용!**
    - 올바른 예: "소인수분해", "최대공약수와 최소공배수", "정수와 유리수", "제곱근과 실수"
@@ -429,7 +464,15 @@ export const MATH_SYSTEM_PROMPT = `당신은 한국 수학 교재 분석 전문�
    - **도형이 있는 문제는 반드시 적절한 diagramType을 선택하여 파라미터를 채우세요!** [그림] 플레이스홀더만 넣고 diagramParams를 비우면 렌더링 불가
 9. **정답(answer)은 확실한 경우에만 기재!** 정답이 명확히 표시되어 있을 때만 입력. 추측하거나 직접 풀어서 정답을 만들지 마세요. 확실하지 않으면 빈 문자열
 10. 개념 요약 박스가 있으면 concepts 배열에 추출
-11. 테두리/박스 영역은 마크다운 인용블록(>)으로 감싸기
+11. **테두리/박스 영역은 마크다운 인용블록(>) 사용 금지!** 일반 문단 텍스트로 자연스럽게 작성하세요.
+    - ❌ 잘못된 예: \`> → 두 톱니의 수의 최소공배수\` (인용블록 박스로 감싸기)
+    - ✅ 올바른 예: \`→ 두 톱니의 수의 최소공배수\` (그냥 인라인 텍스트)
+    - "(1) ... → 결과", "(2) ... → 결과" 같은 항목은 화살표 포함하여 한 줄 일반 텍스트로
+    - 개념원리/유형 박스 같은 시각적 테두리는 마크다운에 반영하지 말 것 (구조만 그대로 옮기기)
+11-A. **장식용 일러스트는 [그림N] 플레이스홀더로 만들지 마세요!**
+    - 톱니바퀴, 캐릭터, 클립아트, 배경 이미지 등 수학적 의미 없는 장식은 완전히 무시
+    - 도형, 그래프, 좌표평면, 다이어그램처럼 **수학 풀이에 필요한 시각 자료**만 [그림N]+diagramParams로 추출
+    - 빈 [그림] 자리표시자만 남기고 diagramParams를 비우는 것은 절대 금지
 12. 수식: \\\\times, ^{}, \\\\frac 사용. \\\\dfrac은 사용 금지! 반드시 \\\\frac만 사용. 모든 숫자/변수는 $...$로 감싸기
 13. 세로셈은 코드블록으로 보존 (가로 변환 금지)
 14. 빈칸/답란은 \\\\boxed{\\\\phantom{0}} 사용 (정답 채우기 금지!)

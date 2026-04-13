@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Target, Plus, School as SchoolIcon, Calendar, Users, BarChart3, Trash2, RefreshCw, UserPlus, Sparkles } from 'lucide-react';
+import { Target, Plus, School as SchoolIcon, Calendar, Users, BarChart3, Trash2, RefreshCw, UserPlus, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -64,6 +64,14 @@ function gradeLabel(grade: string): string {
   }
   if (grade.startsWith('elementary_')) return `초${grade.replace('elementary_', '')}`;
   return grade;
+}
+
+/** 반 grade(1~12 통합 스케일) → 초N/중N/고N 표기 */
+function formatClassroomGrade(g: number): string {
+  if (g >= 1 && g <= 6) return `초${g}`;
+  if (g >= 7 && g <= 9) return `중${g - 6}`;
+  if (g >= 10 && g <= 12) return `고${g - 9}`;
+  return `${g}학년`;
 }
 
 function dDayLabel(examDate: string): { label: string; cls: string } {
@@ -129,7 +137,11 @@ export default function ExamCampaignsPage() {
     }
   }, [fetchItems, selectedId]);
 
+  const [recurating, setRecurating] = useState(false);
   const handleRecurate = useCallback(async (id: string) => {
+    if (recurating) return;
+    setRecurating(true);
+    toast.info('큐레이션을 실행하는 중…');
     try {
       const res = await fetch(`/api/exam-campaigns/${id}/curate`, { method: 'POST' });
       if (!res.ok) throw new Error();
@@ -137,8 +149,10 @@ export default function ExamCampaignsPage() {
       await fetchItems();
     } catch {
       toast.error('큐레이션 재실행에 실패했습니다');
+    } finally {
+      setRecurating(false);
     }
-  }, [fetchItems]);
+  }, [fetchItems, recurating]);
 
   const handleEnrollClassroom = useCallback(async (campaignId: string, classroomId: string) => {
     try {
@@ -261,6 +275,7 @@ export default function ExamCampaignsPage() {
                 campaign={selected}
                 onDelete={() => handleDelete(selected.id)}
                 onRecurate={() => handleRecurate(selected.id)}
+                recurating={recurating}
                 onEnrollClassroom={(classroomId) => handleEnrollClassroom(selected.id, classroomId)}
                 onPredictQuestions={() => handlePredictQuestions(selected.id)}
               />
@@ -291,12 +306,14 @@ function CampaignDetailCard({
   onRecurate,
   onEnrollClassroom,
   onPredictQuestions,
+  recurating,
 }: {
   campaign: CampaignListItem;
   onDelete: () => void;
   onRecurate: () => void;
   onEnrollClassroom: (classroomId: string) => void;
   onPredictQuestions: () => void;
+  recurating: boolean;
 }) {
   const [detail, setDetail] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
@@ -337,6 +354,7 @@ function CampaignDetailCard({
           sourceSchools?: Array<{ schoolName: string; examCount: number }>;
           mode?: 'exam_based' | 'scope_based' | 'ai_filled';
           aiFilledCount?: number;
+          unextractedPapers?: Array<{ id: string; title: string }>;
         };
       }
     | null;
@@ -364,6 +382,28 @@ function CampaignDetailCard({
               ))}
             </div>
           </div>
+
+          {d.patternAnalysis?.unextractedPapers && d.patternAnalysis.unextractedPapers.length > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-sm p-3 space-y-2">
+              <div className="text-xs font-medium text-amber-800">
+                이 학교 기출 {d.patternAnalysis.unextractedPapers.length}개가 문제은행에 아직 추출되지 않았습니다
+              </div>
+              <p className="text-[11px] text-amber-700">
+                추출하면 캠페인 문제 풀에 실제 기출 문항이 포함되어 품질이 향상됩니다.
+              </p>
+              <div className="space-y-1">
+                {d.patternAnalysis.unextractedPapers.slice(0, 3).map((p) => (
+                  <Link
+                    key={p.id}
+                    href={`/exam-analysis?paperId=${p.id}&action=extract`}
+                    className="block text-[11px] px-2 py-1 bg-white border border-amber-300 rounded-sm hover:bg-amber-100 truncate"
+                  >
+                    {p.title} →
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-blue-50 rounded-sm p-2 text-center">
@@ -430,7 +470,7 @@ function CampaignDetailCard({
               <option value="">반 선택</option>
               {classrooms.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name} {c.grade ? `(${c.grade}학년)` : ''}
+                  {c.name} {c.grade ? `(${formatClassroomGrade(c.grade)})` : ''}
                 </option>
               ))}
             </select>
@@ -459,8 +499,12 @@ function CampaignDetailCard({
       </Link>
 
       <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
-        <Button variant="secondary" size="sm" onClick={onRecurate}>
-          <RefreshCw className="w-3.5 h-3.5 mr-1" /> 큐레이션
+        <Button variant="secondary" size="sm" onClick={onRecurate} disabled={recurating}>
+          {recurating ? (
+            <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> 실행 중…</>
+          ) : (
+            <><RefreshCw className="w-3.5 h-3.5 mr-1" /> 큐레이션</>
+          )}
         </Button>
         <Button variant="secondary" size="sm" onClick={onPredictQuestions}>
           <Sparkles className="w-3.5 h-3.5 mr-1" /> AI 예상문제

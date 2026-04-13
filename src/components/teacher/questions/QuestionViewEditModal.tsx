@@ -36,6 +36,7 @@ import {
 import { CurriculumDropdowns } from './CurriculumDropdowns';
 import { toast } from '@/components/ui/Toast';
 import { useAuth } from '@/hooks/useAuth';
+import { readBoxColsFromContent, writeBoxColsToContent, type BoxCols } from '@/lib/utils/box-grid';
 
 interface QuestionViewEditModalProps {
   selectedQuestion: QuestionItem;
@@ -380,6 +381,13 @@ function EditMode({
   const choiceCols: 'auto' | 1 | 2 = editForm.choiceColumns === 1 ? 1 : editForm.choiceColumns === 2 ? 2 : 'auto';
   const setChoiceCols = (v: 'auto' | 1 | 2) => setEditForm((p) => ({ ...p, choiceColumns: v === 'auto' ? null : v }));
 
+  // <보기> 블록 열 수 (content 내 인라인 마커로 저장)
+  const hasBoxBlock = /<보기/.test(editForm.content ?? '');
+  const currentBoxCols: BoxCols = (readBoxColsFromContent(editForm.content ?? '') ?? 2);
+  const setBoxCols = (v: BoxCols) => {
+    setEditForm((p) => ({ ...p, content: writeBoxColsToContent(p.content ?? '', v) }));
+  };
+
   // 도형 SVG 미리계산 (rendered 모드에서 [그림] 플레이스홀더 렌더링용)
   const diagramSvgs = React.useMemo(() => {
     if (!editForm.diagramParams?.length) return undefined;
@@ -497,7 +505,26 @@ function EditMode({
         <div>
           <div className="flex items-center justify-between mb-1">
             <label className="text-xs font-bold text-text-secondary">문제 내용</label>
-            <div className="flex gap-1">
+            <div className="flex items-center gap-1">
+              {hasBoxBlock && (
+                <div className="flex items-center gap-1 mr-1">
+                  <span className="text-xs text-slate-400">보기 열</span>
+                  {([ 'auto', 1, 2, 3 ] as const).map((opt) => (
+                    <button
+                      key={String(opt)}
+                      type="button"
+                      onClick={() => setBoxCols(opt)}
+                      className={`px-1.5 py-0.5 text-xs rounded transition-colors ${
+                        currentBoxCols === opt
+                          ? 'bg-primary text-white font-bold'
+                          : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                      }`}
+                    >
+                      {opt === 'auto' ? '자동' : `${opt}열`}
+                    </button>
+                  ))}
+                </div>
+              )}
               <button
                 type="button"
                 onClick={() => setViewMode((v) => v === 'rendered' ? 'raw' : 'rendered')}

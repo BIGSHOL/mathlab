@@ -180,13 +180,15 @@ export function TeacherDetail({ user, stats, statsLoading, isOwner, onResetPassw
       <div className="border-t border-slate-200 pt-3 mt-4">
         <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">액션</h3>
         <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => onResetPassword(user.id)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-primary bg-primary/5 hover:bg-primary/10 rounded-sm transition-colors"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            비밀번호 초기화
-          </button>
+          {isOwner && (
+            <button
+              onClick={() => onResetPassword(user.id)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-primary bg-primary/5 hover:bg-primary/10 rounded-sm transition-colors"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              비밀번호 초기화
+            </button>
+          )}
           {isOwner && (
             <button
               onClick={() => onDelete(user.id, user.name)}

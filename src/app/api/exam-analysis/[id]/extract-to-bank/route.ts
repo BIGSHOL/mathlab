@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, getTenantFilter, notFound, badRequest } from '@/lib/api';
+import { requireSuperAdmin, isResponse, getTenantFilter, notFound, badRequest } from '@/lib/api';
 import { getGeminiClient } from '@/lib/services/gemini';
 import {
   MATH_EXTRACT_SCHEMA,
@@ -70,7 +70,7 @@ const EXAM_PROMPT_SUFFIX = `
 
 /** POST /api/exam-analysis/[id]/extract-to-bank — 기출시험 문제 추출 */
 export async function POST(request: NextRequest, { params }: Params) {
-  const user = await requireTeacher();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
   const { id } = await params;
 

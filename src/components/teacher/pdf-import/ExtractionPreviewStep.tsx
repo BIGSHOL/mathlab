@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Pagination } from '@/components/ui/Pagination';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { EditableMathRenderer } from '@/components/math/EditableMathRenderer';
 import { DiagramEditorPopup } from '@/components/math/DiagramEditorPopup';
@@ -41,6 +42,7 @@ interface ExtractionPreviewStepProps {
   extracting: boolean;
   progress: PdfExtractProgress;
   problems: ExtractedProblem[];
+  draftSavedCount?: number;
   editingIdx: number | null;
   setEditingIdx: (idx: number | null) => void;
   expandedIdx: number | null;
@@ -87,6 +89,7 @@ interface ExtractionPreviewStepProps {
 export function ExtractionPreviewStep({
   extractionMode,
   extracting,
+  draftSavedCount = 0,
   progress,
   problems,
   editingIdx,
@@ -140,6 +143,11 @@ export function ExtractionPreviewStep({
               style={{ width: `${progress.total > 0 ? (progress.done / progress.total) * 100 : 0}%` }}
             />
           </div>
+          {draftSavedCount > 0 && (
+            <div className="mt-2 text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-sm px-2 py-1">
+              ⬇ DB 자동 저장 중 — 이미 {draftSavedCount}문제 보존됨 (시스템 다운/창 닫힘 시에도 안전)
+            </div>
+          )}
         </Card>
       )}
 
@@ -303,53 +311,16 @@ export function ExtractionPreviewStep({
             </Card>
           )}
 
-          {/* 문제 목록 — sectionHeader 기준 그룹화 (문제 모드에서만) */}
-          {problems.length > 0 && <div className="space-y-6 mb-6">
-            {(() => {
-              // sectionHeader 기준으로 그룹화 (순서 유지)
-              const groups: { header: string; items: { problem: ExtractedProblem; idx: number }[] }[] = [];
-              problems.forEach((p, idx) => {
-                const header = p.sectionHeader || '미분류';
-                const last = groups[groups.length - 1];
-                if (last && last.header === header) {
-                  last.items.push({ problem: p, idx });
-                } else {
-                  groups.push({ header, items: [{ problem: p, idx }] });
-                }
-              });
-
-              return groups.map((group, gi) => (
-                <div key={`${group.header}-${gi}`}>
-                  {/* 유형 헤더 */}
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-sm">
-                      <BookOpen className="w-4 h-4 text-primary" />
-                      <span className="text-sm font-semibold text-primary">{group.header}</span>
-                      <span className="text-xs text-primary/60">{group.items.length}문제</span>
-                    </div>
-                    <div className="flex-1 h-px bg-slate-200" />
-                  </div>
-
-                  {/* 해당 유형의 문제들 */}
-                  <div className="space-y-4 pl-2 border-l-2 border-primary/20">
-                    {group.items.map(({ problem: p, idx }) => (
-                      <ProblemCard
-                        key={`${p.questionNum}-${idx}`}
-                        problem={p}
-                        index={idx}
-                        isEditing={editingIdx === idx}
-                        isExpanded={expandedIdx === idx}
-                        onToggleExpand={() => setExpandedIdx(expandedIdx === idx ? null : idx)}
-                        onEdit={() => setEditingIdx(editingIdx === idx ? null : idx)}
-                        onUpdate={(updates) => updateProblem(idx, updates)}
-                        onDelete={() => deleteProblem(idx)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ));
-            })()}
-          </div>}
+          {/* 문제 목록 — sectionHeader 기준 그룹화 + 페이지네이션 */}
+          {problems.length > 0 && <PaginatedProblems
+            problems={problems}
+            editingIdx={editingIdx}
+            expandedIdx={expandedIdx}
+            setEditingIdx={setEditingIdx}
+            setExpandedIdx={setExpandedIdx}
+            updateProblem={updateProblem}
+            deleteProblem={deleteProblem}
+          />}
 
           {/* 하단 버튼 */}
           <div className="flex justify-between">
@@ -384,6 +355,115 @@ interface ProblemCardProps {
   onEdit: () => void;
   onUpdate: (updates: Partial<ExtractedProblem>) => void;
   onDelete: () => void;
+}
+
+function PaginatedProblems({
+  problems,
+  editingIdx,
+  expandedIdx,
+  setEditingIdx,
+  setExpandedIdx,
+  updateProblem,
+  deleteProblem,
+}: {
+  problems: ExtractedProblem[];
+  editingIdx: number | null;
+  expandedIdx: number | null;
+  setEditingIdx: (idx: number | null) => void;
+  setExpandedIdx: (idx: number | null) => void;
+  updateProblem: (idx: number, updates: Partial<ExtractedProblem>) => void;
+  deleteProblem: (idx: number) => void;
+}) {
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(30);
+  const total = problems.length;
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+  const safePage = Math.min(page, totalPages);
+  const startIdx = (safePage - 1) * perPage;
+  const endIdx = Math.min(startIdx + perPage, total);
+  const slice = problems.slice(startIdx, endIdx);
+
+  // 편집/펼침 중인 카드가 다른 페이지로 이동하면 자동 점프
+  const focusedIdx = editingIdx ?? expandedIdx;
+  if (focusedIdx !== null && (focusedIdx < startIdx || focusedIdx >= endIdx)) {
+    const targetPage = Math.floor(focusedIdx / perPage) + 1;
+    if (targetPage !== safePage) setTimeout(() => setPage(targetPage), 0);
+  }
+
+  // 페이지 슬라이스 안에서 sectionHeader 그룹화
+  const groups: { header: string; items: { problem: ExtractedProblem; idx: number }[] }[] = [];
+  slice.forEach((p, sliceIdx) => {
+    const idx = startIdx + sliceIdx;
+    const header = p.sectionHeader || '미분류';
+    const last = groups[groups.length - 1];
+    if (last && last.header === header) {
+      last.items.push({ problem: p, idx });
+    } else {
+      groups.push({ header, items: [{ problem: p, idx }] });
+    }
+  });
+
+  return (
+    <div className="space-y-6 mb-6">
+      {/* 상단 페이지네이션 컨트롤 */}
+      <div className="flex items-center justify-between bg-slate-50 rounded-sm px-3 py-2 sticky top-0 z-10">
+        <div className="text-xs text-slate-600">
+          {startIdx + 1}–{endIdx} / 총 <span className="font-semibold">{total}</span>문제
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="text-xs text-slate-500 flex items-center gap-1">
+            페이지당
+            <select
+              value={perPage}
+              onChange={(e) => { setPerPage(Number(e.target.value)); setPage(1); }}
+              className="text-xs border border-slate-200 rounded-sm px-1 py-0.5"
+            >
+              <option value={20}>20</option>
+              <option value={30}>30</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </label>
+          <Pagination currentPage={safePage} totalPages={totalPages} onPageChange={setPage} compact />
+        </div>
+      </div>
+
+      {groups.map((group, gi) => (
+        <div key={`${group.header}-${gi}-${safePage}`}>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-sm">
+              <BookOpen className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold text-primary">{group.header}</span>
+              <span className="text-xs text-primary/60">{group.items.length}문제</span>
+            </div>
+            <div className="flex-1 h-px bg-slate-200" />
+          </div>
+          <div className="space-y-4 pl-2 border-l-2 border-primary/20">
+            {group.items.map(({ problem: p, idx }) => (
+              <ProblemCard
+                key={`${p.questionNum}-${idx}`}
+                problem={p}
+                index={idx}
+                isEditing={editingIdx === idx}
+                isExpanded={expandedIdx === idx}
+                onToggleExpand={() => setExpandedIdx(expandedIdx === idx ? null : idx)}
+                onEdit={() => setEditingIdx(editingIdx === idx ? null : idx)}
+                onUpdate={(updates) => updateProblem(idx, updates)}
+                onDelete={() => deleteProblem(idx)}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {/* 하단 페이지네이션 */}
+      {totalPages > 1 && (
+        <div className="flex justify-center pt-4 border-t border-slate-100">
+          <Pagination currentPage={safePage} totalPages={totalPages} onPageChange={setPage} />
+        </div>
+      )}
+    </div>
+  );
 }
 
 function ProblemCard({ problem, isEditing, isExpanded, onToggleExpand, onEdit, onUpdate, onDelete }: ProblemCardProps) {

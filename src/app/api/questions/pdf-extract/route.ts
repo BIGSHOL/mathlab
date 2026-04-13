@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireTeacher, isResponse, badRequest } from '@/lib/api';
+import { requireSuperAdmin, isResponse, badRequest } from '@/lib/api';
 import { GoogleGenAI, Type } from '@google/genai';
 import { renderDiagram } from '@/lib/utils/svg-diagrams';
 import { DIAGRAM_PARAM_ITEM_SCHEMA } from '@/lib/constants/diagram-schema';
@@ -342,8 +342,17 @@ const CONCEPT_SYSTEM_PROMPT = `당신은 한국 수학 교재의 개념 페이�
 4. **표(table) 제외**: 마크다운 테이블(|...|)을 생성하지 않음. 표 내용이 핵심 개념이면 문장으로 풀어서 설명
 5. **방법/절차**: 순서 유지하여 ①②③ 또는 번호 목록으로
 6. **참고/개념플러스/보충**: 해당 개념 설명 뒤에 자연스럽게 본문에 통합
-7. **도형/다이어그램**: 텍스트로 완전히 설명 가능하면 텍스트로 설명. 불가능한 경우만 images 바운딩 박스 사용
+7. **도형/다이어그램**:
+   - 텍스트로 완전히 설명 가능하면 텍스트로 설명
+   - 수학적으로 의미 있는 도형(좌표평면, 그래프, 기하 도형 등)만 images 바운딩 박스 사용
+   - **장식용 일러스트(톱니바퀴, 캐릭터, 클립아트 등 수학적 의미 없는 그림)는 절대 추출하지 말고 완전히 무시**
+   - 빈 박스/플레이스홀더만 남기는 것 금지
 8. **읽는 방법**: [읽는 방법] 등 보조 설명도 본문에 포함
+9. **인용블록(>) 사용 금지!** 모든 내용은 일반 문단 텍스트로 작성
+   - ❌ 잘못: \`> → 두 톱니의 수의 최소공배수\` (blockquote 박스)
+   - ✅ 올바름: \`→ 두 톱니의 수의 최소공배수\` (인라인 텍스트)
+   - "(1) ... → 결과", "(2) ... → 결과" 같은 항목은 화살표를 포함한 한 줄 일반 텍스트로
+   - 교재의 시각적 박스/테두리는 마크다운 박스로 옮기지 말 것 — 구조만 유지하고 자연스러운 텍스트 흐름으로
 
 [줄바꿈 규칙]
 - (1), (2), (3) 등 하위 항목 시작 전에 줄바꿈
@@ -380,7 +389,7 @@ interface PageInput {
 
 // POST /api/questions/pdf-extract — PDF 페이지에서 문제 추출
 export async function POST(request: NextRequest) {
-  const user = await requireTeacher();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
   const body = await request.json();

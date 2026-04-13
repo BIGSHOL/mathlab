@@ -181,7 +181,7 @@ export function QuestionListSidebar({
                     bookFilter === null ? 'bg-primary/20' : 'bg-slate-100'
                   }`}
                 >
-                  {schoolTotal || meta.total}
+                  {bookFilter === null ? meta.total : schoolTotal || meta.total}
                 </span>
               </button>
               {(schoolLevel === 'middle' ? MIDDLE_BOOK_CODES : ELEMENTARY_BOOK_CODES).map((code) => (

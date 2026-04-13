@@ -923,13 +923,15 @@ export function StudentDetail({ user, stats, statsLoading, isManager, isOwner, o
             <AlertTriangle className="w-3.5 h-3.5" />
             오답 관리
           </Link>
-          <button
-            onClick={() => onResetPassword(user.id)}
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium text-primary bg-primary/5 border border-primary/20 hover:bg-primary/10 rounded-sm transition-colors"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            비밀번호 초기화
-          </button>
+          {isManager && (
+            <button
+              onClick={() => onResetPassword(user.id)}
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium text-primary bg-primary/5 border border-primary/20 hover:bg-primary/10 rounded-sm transition-colors"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              비밀번호 초기화
+            </button>
+          )}
           {isOwner && (
             <button
               onClick={() => onDelete(user.id, user.name)}

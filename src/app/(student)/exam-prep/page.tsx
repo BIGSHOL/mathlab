@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Target, Calendar, CheckCircle2, Circle, BookOpen, FileQuestion, Trophy, Clock, BarChart3, ChevronRight, RotateCw, TrendingUp, Sparkles } from 'lucide-react';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -15,6 +16,8 @@ interface ScheduleActivity {
   estimatedMinutes: number;
   completed: boolean;
   completedAt?: string;
+  skipped?: boolean;
+  skippedAt?: string;
 }
 
 interface ScheduleDay {
@@ -66,6 +69,7 @@ const ACTIVITY_ICONS = {
 export default function StudentExamPrepPage() {
   const [campaigns, setCampaigns] = useState<ExamPrepCampaign[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -88,24 +92,43 @@ export default function StudentExamPrepPage() {
 
   const handleActivityClick = useCallback(
     async (enrollmentId: string, dayIndex: number, activityIndex: number, activity: ScheduleActivity) => {
-      // 일단 진도 표시 (낙관적 업데이트)
+      // 문제풀이 활동: 전용 solve 페이지로 이동 (거기서 제출 시 진도+오답 처리)
+      if (activity.type === 'questions' || activity.type === 'mock_test' || activity.type === 'review') {
+        router.push(`/exam-prep/${enrollmentId}/solve?day=${dayIndex}&act=${activityIndex}`);
+        return;
+      }
+
+      // 개념 학습: 개념 페이지 새 탭 + 진도 완료 표시
+      if (activity.type === 'concept' && activity.refId) {
+        try {
+          await fetch(`/api/exam-campaigns/enrollments/${enrollmentId}/progress`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dayIndex, activityIndex }),
+          });
+          toast.success('개념 학습을 완료로 표시했습니다');
+          await fetchData();
+        } catch {
+          toast.error('진도 업데이트에 실패했습니다');
+        }
+        window.open(`/concepts/${activity.refId}`, '_blank');
+      }
+    },
+    [fetchData, router],
+  );
+
+  const handleActivitySkip = useCallback(
+    async (enrollmentId: string, dayIndex: number, activityIndex: number) => {
       try {
         await fetch(`/api/exam-campaigns/enrollments/${enrollmentId}/progress`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ dayIndex, activityIndex }),
+          body: JSON.stringify({ dayIndex, activityIndex, skip: true }),
         });
-        toast.success('완료 처리되었습니다');
+        toast.info('건너뛰었습니다. 다음 활동이 열립니다');
         await fetchData();
       } catch {
-        toast.error('진도 업데이트에 실패했습니다');
-      }
-
-      // 라우팅 (활동 타입별)
-      // 실제 학습 페이지로의 라우팅은 추후 P4에서 mock_test 처리 등을 보강한다.
-      if (activity.type === 'concept' && activity.refId) {
-        // 학생 개념 학습 페이지로 이동 (별도 탭)
-        window.open(`/concepts/${activity.refId}`, '_blank');
+        toast.error('건너뛰기 실패');
       }
     },
     [fetchData],
@@ -172,6 +195,9 @@ export default function StudentExamPrepPage() {
                 onActivityComplete={(dayIdx, actIdx, activity) =>
                   handleActivityClick(selected.enrollmentId, dayIdx, actIdx, activity)
                 }
+                onActivitySkip={(dayIdx, actIdx) =>
+                  handleActivitySkip(selected.enrollmentId, dayIdx, actIdx)
+                }
               />
             ) : (
               <div className="bg-white rounded-sm border border-slate-200 p-8 text-center text-text-secondary">
@@ -190,9 +216,11 @@ export default function StudentExamPrepPage() {
 function CampaignDetail({
   campaign,
   onActivityComplete,
+  onActivitySkip,
 }: {
   campaign: ExamPrepCampaign;
   onActivityComplete: (dayIndex: number, activityIndex: number, activity: ScheduleActivity) => void;
+  onActivitySkip: (dayIndex: number, activityIndex: number) => void;
 }) {
   const [prediction, setPrediction] = useState<{
     predictedGrade: string;
@@ -278,13 +306,35 @@ function CampaignDetail({
             <p className="text-sm text-slate-400 py-4 text-center">오늘 예정된 학습이 없습니다</p>
           ) : (
             <div className="space-y-2">
-              {campaign.todayDay.activities.map((activity, idx) => (
-                <ActivityRow
-                  key={idx}
-                  activity={activity}
-                  onClick={() => onActivityComplete(campaign.todayDay!.dayIndex, idx, activity)}
-                />
-              ))}
+              {(() => {
+                const acts = campaign.todayDay!.activities;
+                const firstUnresolvedIdx = acts.findIndex((a) => !a.completed && !a.skipped);
+                return acts.map((activity, idx) => {
+                  const resolved = activity.completed || activity.skipped;
+                  const isNext = idx === firstUnresolvedIdx;
+                  const locked = !resolved && !isNext;
+                  return (
+                    <ActivityRow
+                      key={idx}
+                      activity={activity}
+                      locked={locked}
+                      isNext={isNext}
+                      onClick={() => {
+                        if (locked) {
+                          toast.info('이전 활동을 먼저 완료하거나 건너뛰세요');
+                          return;
+                        }
+                        onActivityComplete(campaign.todayDay!.dayIndex, idx, activity);
+                      }}
+                      onSkip={
+                        isNext && !resolved
+                          ? () => onActivitySkip(campaign.todayDay!.dayIndex, idx)
+                          : undefined
+                      }
+                    />
+                  );
+                });
+              })()}
             </div>
           )}
         </div>
@@ -376,39 +426,73 @@ function CampaignDetail({
 function ActivityRow({
   activity,
   onClick,
+  onSkip,
+  locked = false,
+  isNext = false,
 }: {
   activity: ScheduleActivity;
   onClick: () => void;
+  onSkip?: () => void;
+  locked?: boolean;
+  isNext?: boolean;
 }) {
   const Icon = ACTIVITY_ICONS[activity.type];
+  const bg = activity.completed
+    ? 'bg-green-50 border-green-200'
+    : activity.skipped
+      ? 'bg-amber-50 border-amber-200'
+      : locked
+        ? 'bg-slate-50 border-slate-200 opacity-60 cursor-not-allowed'
+        : isNext
+          ? 'bg-primary/5 border-primary ring-1 ring-primary/20'
+          : 'bg-white border-slate-200 hover:border-primary hover:bg-primary/5';
+
   return (
-    <button
-      onClick={onClick}
-      className={`w-full flex items-center gap-3 p-3 rounded-sm border text-left transition-colors ${
-        activity.completed
-          ? 'bg-green-50 border-green-200'
-          : 'bg-white border-slate-200 hover:border-primary hover:bg-primary/5'
-      }`}
-    >
-      {activity.completed ? (
-        <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-      ) : (
-        <Circle className="w-5 h-5 text-slate-300 flex-shrink-0" />
-      )}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <Icon className="w-4 h-4 text-slate-500" />
-          <span
-            className={`font-medium text-sm ${
-              activity.completed ? 'text-slate-500 line-through' : 'text-text-primary'
-            }`}
-          >
-            {activity.title}
-          </span>
+    <div className={`flex items-stretch gap-0 rounded-sm border ${bg}`}>
+      <button
+        onClick={onClick}
+        disabled={locked}
+        className="flex-1 flex items-center gap-3 p-3 text-left disabled:cursor-not-allowed"
+      >
+        {activity.completed ? (
+          <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+        ) : activity.skipped ? (
+          <Circle className="w-5 h-5 text-amber-400 flex-shrink-0" />
+        ) : locked ? (
+          <Circle className="w-5 h-5 text-slate-200 flex-shrink-0" />
+        ) : (
+          <Circle className="w-5 h-5 text-primary flex-shrink-0" />
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <Icon className="w-4 h-4 text-slate-500" />
+            <span
+              className={`font-medium text-sm ${
+                activity.completed ? 'text-slate-500 line-through'
+                  : activity.skipped ? 'text-amber-700'
+                  : 'text-text-primary'
+              }`}
+            >
+              {activity.title}
+            </span>
+            {activity.skipped && <span className="text-[10px] text-amber-600 font-semibold">건너뜀</span>}
+            {isNext && !activity.completed && !activity.skipped && (
+              <span className="text-[10px] text-primary font-semibold">지금 할 일</span>
+            )}
+          </div>
+          <p className="text-xs text-slate-400 mt-0.5">예상 {activity.estimatedMinutes}분</p>
         </div>
-        <p className="text-xs text-slate-400 mt-0.5">예상 {activity.estimatedMinutes}분</p>
-      </div>
-      <ChevronRight className="w-4 h-4 text-slate-300" />
-    </button>
+        <ChevronRight className="w-4 h-4 text-slate-300" />
+      </button>
+      {onSkip && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onSkip(); }}
+          className="px-3 text-xs text-slate-500 hover:text-amber-600 hover:bg-amber-50 border-l border-slate-200"
+          title="건너뛰기"
+        >
+          건너뛰기
+        </button>
+      )}
+    </div>
   );
 }

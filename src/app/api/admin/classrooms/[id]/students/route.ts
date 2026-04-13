@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireOwner, isResponse, badRequest, notFound, forbidden, getTenantFilter, hasRole } from '@/lib/api';
+import { requireManager, isResponse, badRequest, notFound, forbidden, getTenantFilter, hasRole } from '@/lib/api';
 
 /** PATCH /api/admin/classrooms/:id/students — 학생 배정 (테넌트 검증) */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await requireOwner();
+  const user = await requireManager();
   if (isResponse(user)) return user;
   const { id } = await params;
 

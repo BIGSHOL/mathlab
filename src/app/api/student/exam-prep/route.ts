@@ -15,7 +15,8 @@ import {
   serverError,
   requireLicense,
 } from '@/lib/api';
-import type { ScheduleDay } from '@/lib/services/exam-campaign-scheduler';
+import type { ScheduleDay, ScheduleActivity } from '@/lib/services/exam-campaign-scheduler';
+import { getCampaignPendingReviews } from '@/lib/services/spaced-review';
 
 interface ExamPrepCampaign {
   enrollmentId: string;
@@ -79,10 +80,82 @@ export async function GET(request: NextRequest) {
     today.setHours(0, 0, 0, 0);
     const todayISO = dateToISO(today);
 
+    // 스케줄 내 concept refId → 제목 일괄 조회 (기존 enrollment 대응)
+    const allConceptIds = new Set<string>();
+    for (const e of enrollments) {
+      const sch = (e.schedule as unknown as ScheduleDay[]) ?? [];
+      for (const d of sch) {
+        for (const a of d.activities) {
+          if (a.type === 'concept' && a.refId) allConceptIds.add(a.refId);
+        }
+      }
+    }
+    const conceptList = allConceptIds.size > 0
+      ? await prisma.concept.findMany({
+          where: { id: { in: Array.from(allConceptIds) } },
+          select: { id: true, title: true },
+        })
+      : [];
+    const conceptTitleMap = new Map(conceptList.map((c) => [c.id, c.title]));
+    const enrich = (day: ScheduleDay): ScheduleDay => ({
+      ...day,
+      activities: day.activities.map((a) =>
+        a.type === 'concept' && a.refId && conceptTitleMap.has(a.refId)
+          ? { ...a, title: conceptTitleMap.get(a.refId)! }
+          : a,
+      ),
+    });
+
+    // 각 enrollment에 대한 캠페인 오답 복습 대기열 프리로드
+    const pendingByCampaign = new Map<string, { questionIds: string[]; conceptIds: string[] }>();
+    for (const e of enrollments) {
+      const pending = await getCampaignPendingReviews({
+        studentId: user.id,
+        campaignId: e.campaign.id,
+        limit: 50,
+      });
+      pendingByCampaign.set(e.campaign.id, {
+        questionIds: pending.filter((p) => p.questionId).map((p) => p.questionId!),
+        conceptIds: pending.filter((p) => p.conceptId).map((p) => p.conceptId!),
+      });
+    }
+
+    const applyReviewPriority = (campaignId: string) => (day: ScheduleDay): ScheduleDay => {
+      const pending = pendingByCampaign.get(campaignId);
+      if (!pending) return day;
+      // Phase 5 review 활동에 실제 오답 문제/개념 주입
+      if (day.phase === 5) {
+        const next: ScheduleActivity[] = day.activities.map((a) => {
+          if (a.type !== 'review') return a;
+          const ids = [...pending.questionIds].slice(0, 20);
+          if (ids.length === 0) return a;
+          return {
+            ...a,
+            refIds: ids,
+            title: `누적 오답 복습 ${ids.length}문제`,
+          };
+        });
+        return { ...day, activities: next };
+      }
+      // Phase 3 약점 보강: 앞에 오답 최대 3개 우선 배치
+      if (day.phase === 3) {
+        const priority = pending.questionIds.slice(0, 3);
+        if (priority.length === 0) return day;
+        const next: ScheduleActivity[] = day.activities.map((a) => {
+          if (a.type !== 'questions' || !a.refIds) return a;
+          const merged = Array.from(new Set([...priority, ...a.refIds]));
+          return { ...a, refIds: merged, title: `약점 보강 ${merged.length}문제 (오답 ${priority.length})` };
+        });
+        return { ...day, activities: next };
+      }
+      return day;
+    };
+
     const result: ExamPrepCampaign[] = enrollments
       .filter((e) => e.campaign.status !== 'ARCHIVED')
       .map((e) => {
-        const schedule = (e.schedule as unknown as ScheduleDay[]) ?? [];
+        const withTitles = ((e.schedule as unknown as ScheduleDay[]) ?? []).map(enrich);
+        const schedule = withTitles.map(applyReviewPriority(e.campaign.id));
         const examDate = new Date(e.campaign.examDate);
         examDate.setHours(0, 0, 0, 0);
         const daysLeft = Math.round(

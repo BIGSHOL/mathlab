@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { requireOwner, isResponse, notFound, forbidden, hasRole, validateBody } from '@/lib/api';
+import { requireManager, isResponse, notFound, forbidden, hasRole, validateBody } from '@/lib/api';
 
 const classroomSettingsSchema = z.object({
   blankInputMode: z.enum(['chip', 'typing']).optional(),
@@ -32,7 +32,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await requireOwner();
+  const user = await requireManager();
   if (isResponse(user)) return user;
   const { id } = await params;
 
@@ -61,7 +61,7 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await requireOwner();
+  const user = await requireManager();
   if (isResponse(user)) return user;
   const { id } = await params;
 

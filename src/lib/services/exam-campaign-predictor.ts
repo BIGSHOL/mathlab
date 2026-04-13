@@ -78,6 +78,8 @@ function gradeToBookCode(grade: string, semester: number): string {
 export async function generatePredictedQuestions(params: {
   campaignId: string;
   count?: number;
+  /** 생성할 난이도 분포 목표 (없으면 자동 보완) — { BASIC: n, MEDIUM: n, HIGH: n, HIGHEST: n } */
+  difficultyTarget?: Partial<Record<QuestionDifficulty, number>>;
 }): Promise<{ generated: number; questionIds: string[] }> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('GEMINI_API_KEY not set');
@@ -103,6 +105,20 @@ export async function generatePredictedQuestions(params: {
   const pattern = campaign.patternAnalysis as unknown as PatternAnalysis | null;
   const scope = (campaign.scopeChapters as unknown as Array<{ chapter: string }>) ?? [];
 
+  // 난이도 목표 문자열: AI 프롬프트에 명시적으로 지시
+  const DIFFICULTY_LABEL: Record<QuestionDifficulty, string> = {
+    BASIC: '"2"(기본)',
+    MEDIUM: '"3"(보통)',
+    HIGH: '"4"(심화)',
+    HIGHEST: '"5"(최고난도)',
+  };
+  const targetEntries = params.difficultyTarget
+    ? Object.entries(params.difficultyTarget).filter(([, n]) => (n ?? 0) > 0)
+    : [];
+  const difficultyGuidance = targetEntries.length > 0
+    ? `난이도 분포 (반드시 준수):\n${targetEntries.map(([lv, n]) => `- ${DIFFICULTY_LABEL[lv as QuestionDifficulty]} ${n}문제`).join('\n')}`
+    : '난이도는 "3"(응용)~"5"(최고난도)에서 다양하게 분포';
+
   // 패턴 컨텍스트 구성
   const topChaptersText = pattern?.topChapters?.length
     ? pattern.topChapters.slice(0, 5).map((tc) => `- ${tc.chapter} (${tc.pct}%)`).join('\n')
@@ -125,7 +141,7 @@ ${killerText}
 
 <요구사항>
 1. ${count}개 문제 모두 5지선다 객관식
-2. 난이도는 "3"(응용)~"5"(최고난도)에서 다양하게 분포
+2. ${difficultyGuidance}
 3. 수식은 LaTeX($...$)로 작성, \\dfrac 금지 → \\frac 사용
 4. 각 문제는 자주_출제되는_단원 중 하나에 매핑
 5. 풀이는 단계별로 친절하게 작성
@@ -235,21 +251,44 @@ export async function predictGrade(enrollmentId: string): Promise<GradePredictio
   const pattern = enrollment.campaign.patternAnalysis as unknown as PatternAnalysis | null;
   const avgDifficulty = pattern?.averageDifficulty ?? 3;
 
-  // 기본 가정: 진도 100% 완주 학생은 평균 80점
-  // 평균 난이도가 높을수록 점수 보정 (난이도 5 → -10점, 난이도 1 → +5점)
-  const difficultyAdjust = (3 - avgDifficulty) * 5;
-  const baseFromProgress = enrollment.progressPct * 0.8; // 진도 100 → 80점 베이스
-
-  // Phase 4(실전모의) 완료 가중치 — Phase 4 활동 완료율이 높으면 +10점까지
   const schedule = (enrollment.schedule as unknown as ScheduleDay[]) ?? [];
-  const phase4Activities = schedule.filter((d) => d.phase === 4).flatMap((d) => d.activities);
-  const phase4Done =
-    phase4Activities.length > 0
-      ? phase4Activities.filter((a) => a.completed).length / phase4Activities.length
-      : 0;
-  const mockBonus = phase4Done * 10;
+  const allActivities = schedule.flatMap((d) => d.activities.map((a) => ({ ...a, phase: d.phase })));
 
-  const expectedScore = Math.max(0, Math.min(100, Math.round(baseFromProgress + difficultyAdjust + mockBonus)));
+  // 실제 응시 기반 정답률 집계 (모든 Phase 통합)
+  const graded = allActivities.filter(
+    (a) => typeof a.correctCount === 'number' && typeof a.totalCount === 'number' && (a.totalCount ?? 0) > 0,
+  );
+  const totalAnswered = graded.reduce((s, a) => s + (a.totalCount ?? 0), 0);
+  const totalCorrect = graded.reduce((s, a) => s + (a.correctCount ?? 0), 0);
+  const actualAccuracy = totalAnswered > 0 ? totalCorrect / totalAnswered : null;
+
+  // Phase 4(실전모의) 정답률 — 실전 성적이 가장 신뢰도 높음
+  const phase4 = allActivities.filter((a) => a.phase === 4);
+  const phase4Graded = phase4.filter((a) => typeof a.totalCount === 'number' && (a.totalCount ?? 0) > 0);
+  const phase4Answered = phase4Graded.reduce((s, a) => s + (a.totalCount ?? 0), 0);
+  const phase4Correct = phase4Graded.reduce((s, a) => s + (a.correctCount ?? 0), 0);
+  const phase4Accuracy = phase4Answered > 0 ? phase4Correct / phase4Answered : null;
+  const phase4Done = phase4.length > 0 ? phase4.filter((a) => a.completed).length / phase4.length : 0;
+
+  // 난이도 보정: 난이도 5면 -10, 1이면 +10
+  const difficultyAdjust = (3 - avgDifficulty) * 5;
+
+  // 점수 산정 가중치
+  // - 실제 응시 데이터 있으면: Phase 4 정답률 * 40 + 전체 정답률 * 40 + 진도 10 + 난이도 10
+  // - 없으면: 기존 진도 기반 방식 (진도*0.8 + difficulty + mockBonus)
+  let expectedScore: number;
+  if (actualAccuracy !== null) {
+    const base =
+      (phase4Accuracy ?? actualAccuracy) * 40 + // 실전 모의 40점
+      actualAccuracy * 40 +                       // 전체 정답률 40점
+      (enrollment.progressPct / 100) * 10 +       // 진도 10점
+      10;                                         // 기본 10점
+    expectedScore = Math.max(0, Math.min(100, Math.round(base + difficultyAdjust)));
+  } else {
+    const baseFromProgress = enrollment.progressPct * 0.8;
+    const mockBonus = phase4Done * 10;
+    expectedScore = Math.max(0, Math.min(100, Math.round(baseFromProgress + difficultyAdjust + mockBonus)));
+  }
 
   let predictedGrade: string;
   if (expectedScore >= 95) predictedGrade = '1등급';
@@ -262,12 +301,17 @@ export async function predictGrade(enrollmentId: string): Promise<GradePredictio
   else if (expectedScore >= 40) predictedGrade = '8등급';
   else predictedGrade = '9등급';
 
-  // 신뢰도: 진도가 낮으면 신뢰도도 낮음
-  const confidence = Math.min(95, Math.round(enrollment.progressPct * 0.9 + 10));
+  // 신뢰도: 응시 표본이 많을수록 + 진도 높을수록 높음
+  const sampleBonus = Math.min(30, Math.floor(totalAnswered / 3));
+  const confidence = Math.min(95, Math.round(enrollment.progressPct * 0.5 + sampleBonus + 10));
 
-  const reasoning = `진도 ${enrollment.progressPct}% · 평균 난이도 ${avgDifficulty.toFixed(
-    1,
-  )} · 모의고사 완료율 ${Math.round(phase4Done * 100)}% 기반`;
+  const reasoning = actualAccuracy !== null
+    ? `실제 정답률 ${Math.round(actualAccuracy * 100)}% (${totalCorrect}/${totalAnswered}) · ` +
+      (phase4Accuracy !== null
+        ? `모의고사 ${Math.round(phase4Accuracy * 100)}% · `
+        : '') +
+      `진도 ${enrollment.progressPct}% · 평균 난이도 ${avgDifficulty.toFixed(1)}`
+    : `진도 ${enrollment.progressPct}% · 평균 난이도 ${avgDifficulty.toFixed(1)} · 아직 응시 데이터 부족`;
 
   // 캐시 업데이트
   await prisma.examCampaignEnrollment.update({

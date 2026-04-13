@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
-import { requireTeacher, validateBody, isResponse, conflict, hasRole, getStudentScope, getTenantFilter } from '@/lib/api';
+import { requireTeacher, requireManager, validateBody, isResponse, conflict, hasRole, getStudentScope, getTenantFilter } from '@/lib/api';
 import { createUserSchema } from '@/lib/schemas/auth';
 
 // GET /api/users - List students (역할 기반 스코핑)
@@ -63,9 +63,9 @@ export async function GET(request: NextRequest) {
   });
 }
 
-// POST /api/users - Create user account (STUDENT/TEACHER/MANAGER)
+// POST /api/users - Create user account (MANAGER+ only, TEACHER/MANAGER 생성은 OWNER+)
 export async function POST(request: NextRequest) {
-  const user = await requireTeacher();
+  const user = await requireManager();
   if (isResponse(user)) return user;
 
   const parsed = await validateBody(request, createUserSchema);

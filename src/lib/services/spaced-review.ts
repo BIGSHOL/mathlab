@@ -44,7 +44,7 @@ interface CreateReviewParams {
   studentId: string;
   questionId?: string;
   conceptId?: string;
-  sourceType: 'test' | 'blank' | 'arithmetic';
+  sourceType: 'test' | 'blank' | 'arithmetic' | 'exam_campaign';
   sourceId?: string;
 }
 
@@ -220,6 +220,51 @@ export async function getReviewsForInjection(
     },
     orderBy: { reviewAt: 'asc' },
     take: limit,
+  });
+}
+
+/**
+ * 캠페인에서 발생한 오답을 일괄 기록 (내신대비 전용)
+ */
+export async function recordCampaignWrongAnswers(params: {
+  studentId: string;
+  campaignId: string;
+  wrongQuestionIds: string[];
+  wrongConceptIds: string[];
+}) {
+  const { studentId, campaignId, wrongQuestionIds, wrongConceptIds } = params;
+  const promises: Promise<unknown>[] = [];
+  for (const qId of wrongQuestionIds) {
+    promises.push(createReviewSchedule({
+      studentId, questionId: qId, sourceType: 'exam_campaign', sourceId: campaignId,
+    }));
+  }
+  for (const cId of wrongConceptIds) {
+    promises.push(createReviewSchedule({
+      studentId, conceptId: cId, sourceType: 'exam_campaign', sourceId: campaignId,
+    }));
+  }
+  await Promise.all(promises);
+}
+
+/**
+ * 캠페인 관련 미완료 오답만 조회 (Phase 3 보강, Phase 5 누적 복습용)
+ */
+export async function getCampaignPendingReviews(params: {
+  studentId: string;
+  campaignId: string;
+  limit?: number;
+}) {
+  return prisma.reviewSchedule.findMany({
+    where: {
+      studentId: params.studentId,
+      sourceType: 'exam_campaign',
+      sourceId: params.campaignId,
+      completedAt: null,
+    },
+    select: { id: true, questionId: true, conceptId: true, reviewAt: true, interval: true },
+    orderBy: { reviewAt: 'asc' },
+    take: params.limit ?? 50,
   });
 }
 

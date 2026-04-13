@@ -322,6 +322,7 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
   onAnalyze: (id: string) => void;
   onRefresh: () => void;
 }) {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<AnalysisTab>('basic');
   const [showExtractModal, setShowExtractModal] = useState(false);
   const [showArticleModal, setShowArticleModal] = useState(false);
@@ -439,9 +440,11 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
           <div className="flex items-center gap-3 shrink-0">
             {detail.status === 'COMPLETED' && (
               <>
-                <Button size="sm" variant="secondary" onClick={() => setShowExtractModal(true)}>
-                  <Database className="w-4 h-4 mr-1" /> 문제은행에 추가
-                </Button>
+                {user?.role === 'SUPER_ADMIN' && (
+                  <Button size="sm" variant="secondary" onClick={() => setShowExtractModal(true)}>
+                    <Database className="w-4 h-4 mr-1" /> 문제은행에 추가
+                  </Button>
+                )}
                 <Link href={`/exam-analysis/${detail.id}/print`}>
                   <Button size="sm" variant="secondary">
                     <Download className="w-4 h-4 mr-1" /> 내보내기

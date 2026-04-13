@@ -403,6 +403,7 @@ export function useQuestionManager() {
         setTimeout(() => {
           closeCreateModal();
           fetchQuestions();
+          fetchStats();
         }, 800);
       } else {
         toast.error('문제 생성에 실패했습니다.');
@@ -414,30 +415,48 @@ export function useQuestionManager() {
     }
   };
 
-  // Fetch book counts + concepts in parallel (once on mount)
+  // concepts는 한 번만 로드
   useEffect(() => {
-    Promise.all([
-      fetch('/api/questions/stats')
-        .then((res) => res.json())
-        .catch(() => null),
-      fetch('/api/concepts?limit=200')
-        .then((r) => r.ok ? r.json() : null)
-        .catch(() => null),
-    ]).then(([statsJson, conceptsJson]) => {
-      if (statsJson?.data) {
-        const counts: Record<string, number> = {};
-        statsJson.data.byBook.forEach((b: { bookCode: string; count: number }) => {
-          counts[b.bookCode] = b.count;
-        });
-        setBookCounts(counts);
-        setTotalCount(statsJson.data.total);
-        if (statsJson.data.chaptersByBook) setChaptersByBook(statsJson.data.chaptersByBook);
-        if (statsJson.data.sectionsByBook) setSectionsByBook(statsJson.data.sectionsByBook);
-        if (statsJson.data.sectionsByChapter) setSectionsByChapter(statsJson.data.sectionsByChapter);
-      }
-      if (conceptsJson?.data) setConcepts(conceptsJson.data.map((c: { id: string; conceptCode: string; title: string }) => ({ id: c.id, conceptCode: c.conceptCode || '', title: c.title })));
-    });
+    fetch('/api/concepts?limit=200')
+      .then((r) => r.ok ? r.json() : null)
+      .then((json) => {
+        if (json?.data) setConcepts(json.data.map((c: { id: string; conceptCode: string; title: string }) => ({ id: c.id, conceptCode: c.conceptCode || '', title: c.title })));
+      })
+      .catch(() => null);
   }, []);
+
+  // stats는 필터 변경 시 다시 가져오기 (검색, 난이도, 유형, 영역, 출처, 해설 필터)
+  const fetchStats = useCallback(() => {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (difficultyFilter !== '전체') params.set('difficulty', DIFFICULTY_TO_ENUM[difficultyFilter]);
+    const selectedTypes = Array.from(typeFilters);
+    if (selectedTypes.length === 1) params.set('type', TYPE_TO_ENUM[selectedTypes[0]]);
+    if (domainFilter !== '전체') params.set('domain', domainFilter);
+    if (sourceFilter !== '전체') params.set('sourceTag', sourceFilter);
+    if (noExplanation) params.set('noExplanation', 'true');
+    const qs = params.toString();
+    fetch(`/api/questions/stats${qs ? `?${qs}` : ''}`)
+      .then((res) => res.json())
+      .then((statsJson) => {
+        if (statsJson?.data) {
+          const counts: Record<string, number> = {};
+          statsJson.data.byBook.forEach((b: { bookCode: string; count: number }) => {
+            counts[b.bookCode] = b.count;
+          });
+          setBookCounts(counts);
+          setTotalCount(statsJson.data.total);
+          if (statsJson.data.chaptersByBook) setChaptersByBook(statsJson.data.chaptersByBook);
+          if (statsJson.data.sectionsByBook) setSectionsByBook(statsJson.data.sectionsByBook);
+          if (statsJson.data.sectionsByChapter) setSectionsByChapter(statsJson.data.sectionsByChapter);
+        }
+      })
+      .catch(() => null);
+  }, [search, difficultyFilter, typeFilters, domainFilter, sourceFilter, noExplanation]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   const schoolTotal = (schoolLevel === 'middle' ? MIDDLE_BOOK_CODES : ELEMENTARY_BOOK_CODES)
     .reduce((sum, code) => sum + (bookCounts[code] || 0), 0);
@@ -596,6 +615,7 @@ export function useQuestionManager() {
           setModalMode('view');
           setSaveSuccess(false);
           fetchQuestions();
+          fetchStats();
         }, 800);
       } else {
         toast.error('문제 저장에 실패했습니다.');
@@ -614,6 +634,7 @@ export function useQuestionManager() {
         setDeleteConfirm(null);
         if (selectedQuestion?.id === id) closeModal();
         fetchQuestions();
+        fetchStats();
       } else {
         toast.error('문제 삭제에 실패했습니다.');
       }
@@ -661,7 +682,7 @@ export function useQuestionManager() {
 
     // Data
     questions, meta, loading,
-    bookCounts, schoolTotal,
+    bookCounts, schoolTotal, fetchStats,
     chaptersByBook, sectionsByBook, sectionsByChapter,
     concepts,
 

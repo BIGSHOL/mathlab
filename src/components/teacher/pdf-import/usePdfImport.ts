@@ -8,7 +8,7 @@ import type {
   PdfExtractProgress,
   ExtractionMode,
 } from '@/types/pdf-extract';
-import { mapDifficulty, mapType, embedBoxItems } from '@/types/pdf-extract';
+import { mapDifficulty, mapType, embedBoxItems, stripChoicesFromContent } from '@/types/pdf-extract';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import type { PdfImportState, StepNumber } from './types';
 import {
@@ -93,6 +93,9 @@ export function usePdfImport(): PdfImportState {
   const [progress, setProgress] = useState<PdfExtractProgress>({ done: 0, total: 0 });
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  // DB 드래프트 자동 저장 — 추출 중 크래시 대비
+  const [draftBatchId, setDraftBatchId] = useState<string | null>(null);
+  const [draftSavedCount, setDraftSavedCount] = useState(0);
 
   // 개념 추출
   const [concepts, setConcepts] = useState<ExtractedConcept[]>([]);
@@ -253,6 +256,13 @@ export function usePdfImport(): PdfImportState {
     setConcepts([]);
     setError('');
 
+    // 드래프트 배치 ID 생성 — DB 자동 저장 키
+    const newBatchId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    setDraftBatchId(newBatchId);
+    setDraftSavedCount(0);
+
     const sortedPages = Array.from(selectedPages).sort((a, b) => a - b);
     setProgress({ done: 0, total: sortedPages.length });
 
@@ -321,9 +331,12 @@ export function usePdfImport(): PdfImportState {
           for (const p of pageResults) {
             const images = Array.isArray(p.images) ? p.images : [];
             const diagramSvgs: { svg: string; label: string }[] = Array.isArray(p.diagramSvgs) ? p.diagramSvgs : [];
+            // AI가 간혹 content에 객관식 보기를 중복 포함 → 후처리로 제거
+            const choicesArr: string[] = Array.isArray(p.choices) ? p.choices : [];
+            const contentBase = stripChoicesFromContent(p.content || '', choicesArr);
             const contentText = p.boxItems?.length > 0
-              ? embedBoxItems(p.content || '', p.boxItems)
-              : p.content || '';
+              ? embedBoxItems(contentBase, p.boxItems)
+              : contentBase;
 
             const svgResults: { svg: string; label: string }[] = [...diagramSvgs];
 
@@ -362,6 +375,41 @@ export function usePdfImport(): PdfImportState {
           bookCode,
           savedAt: Date.now(),
         });
+
+        // ⭐ DB 드래프트 자동 저장 — 시스템 다운/브라우저 종료에도 보존
+        if (newProblems.length > 0) {
+          try {
+            const draftPayload = newProblems.map((p) => ({
+              bookCode,
+              chapter: p.sectionHeader || (chapters[0] ?? ''),
+              section: p.sectionHeader || null,
+              questionNum: p.questionNum,
+              pageNum: p.pageNum,
+              difficulty: p.difficulty,
+              type: p.type,
+              content: p.content,
+              choices: p.choices,
+              answer: p.answer || '',
+              explanation: p.explanation || '',
+              source: pdfFile?.name || null,
+              sourceTag: p.sourceTag || null,
+              diagramSpec: p.diagramParams ?? undefined,
+              diagramSVG: p.diagramSvgs?.[0]?.svg ?? null,
+            }));
+            await fetch('/api/questions/bulk', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                questions: draftPayload,
+                isDraft: true,
+                draftBatchId: newBatchId,
+              }),
+            });
+            setDraftSavedCount((c) => c + newProblems.length);
+          } catch (err) {
+            console.error('드래프트 자동 저장 실패:', err);
+          }
+        }
       } catch (err) {
         console.error(`페이지 ${pageNum} 추출 실패:`, err);
       }
@@ -633,6 +681,17 @@ export function usePdfImport(): PdfImportState {
 
       setResult({ created: questionsCreated, conceptsCreated });
       clearBackup(); // 저장 성공 → 백업 정리
+      // 드래프트 배치도 정리 (정식 등록되었으므로 중복 방지)
+      if (draftBatchId) {
+        try {
+          await fetch('/api/questions/drafts/discard', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ batchId: draftBatchId }),
+          });
+        } catch (e) { console.error('드래프트 정리 실패:', e); }
+        setDraftBatchId(null);
+      }
       setStep(4);
     } catch (err) {
       setError(err instanceof Error ? err.message : '저장 중 오류가 발생했습니다');
@@ -675,6 +734,20 @@ export function usePdfImport(): PdfImportState {
     problems,
     extracting,
     progress,
+    draftBatchId,
+    draftSavedCount,
+    discardDrafts: async () => {
+      if (!draftBatchId) return;
+      try {
+        await fetch('/api/questions/drafts/discard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ batchId: draftBatchId }),
+        });
+      } catch { /* 무시 */ }
+      setDraftBatchId(null);
+      setDraftSavedCount(0);
+    },
     editingIdx,
     setEditingIdx,
     expandedIdx,

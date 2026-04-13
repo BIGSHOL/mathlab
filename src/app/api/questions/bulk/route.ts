@@ -12,10 +12,38 @@ export async function POST(request: NextRequest) {
   const parsed = await validateBody(request, bulkCreateQuestionsSchema);
   if (isResponse(parsed)) return parsed;
 
-  const { questions } = parsed;
+  const { questions, examPaperId, tenantIdOverride } = parsed;
+
+  // 드래프트 파라미터
+  const reqBody = await request.clone().json().catch(() => ({}));
+  const isDraft: boolean = Boolean(reqBody?.isDraft);
+  const draftBatchId: string | undefined = reqBody?.draftBatchId;
+
+  // tenantId 결정
+  // 1) examPaperId 있으면 해당 시험지의 tenantId 우선 (지점 전용 문제 보장)
+  // 2) SUPER_ADMIN + tenantIdOverride 지정 시 사용
+  // 3) 일반 사용자는 본인 지점
+  // 4) SUPER_ADMIN + override 없음 → null (공용)
+  let resolvedTenantId: string | null = null;
+  let resolvedExamPaper: { id: string; tenantId: string } | null = null;
+
+  if (examPaperId) {
+    const paper = await prisma.examPaper.findUnique({
+      where: { id: examPaperId },
+      select: { id: true, tenantId: true },
+    });
+    if (!paper) {
+      return NextResponse.json({ error: { code: 'NOT_FOUND', message: '시험지를 찾을 수 없습니다' } }, { status: 404 });
+    }
+    resolvedExamPaper = paper;
+    resolvedTenantId = paper.tenantId;
+  } else if (user.role === 'SUPER_ADMIN' && tenantIdOverride) {
+    resolvedTenantId = tenantIdOverride;
+  } else if (user.role !== 'SUPER_ADMIN') {
+    resolvedTenantId = user.viewingTenantId ?? user.tenantId ?? null;
+  }
 
   try {
-    // domain/conceptId 미지정 시 자동 태깅
     const taggedQuestions = await Promise.all(
       questions.map(async (q) => {
         const tag = await autoTag({ chapter: q.chapter, section: q.section, difficulty: q.difficulty, bookCode: q.bookCode });
@@ -29,6 +57,15 @@ export async function POST(request: NextRequest) {
     );
 
     const result = await prisma.$transaction(async (tx) => {
+      // Idempotent: examPaperId 지정 시 기존 Question 삭제 후 재생성
+      let deletedCount = 0;
+      if (resolvedExamPaper && !isDraft) {
+        const del = await tx.question.deleteMany({
+          where: { examPaperId: resolvedExamPaper.id, isDraft: false },
+        });
+        deletedCount = del.count;
+      }
+
       const created = await tx.question.createMany({
         data: taggedQuestions.map((q) => ({
           bookCode: q.bookCode,
@@ -50,14 +87,31 @@ export async function POST(request: NextRequest) {
           conceptId: q.conceptId || null,
           diagramSpec: q.diagramSpec || undefined,
           diagramSVG: q.diagramSVG || null,
+          tenantId: resolvedTenantId,
+          createdById: user.id,
+          examPaperId: resolvedExamPaper?.id ?? null,
+          isDraft,
+          draftBatchId: isDraft ? (draftBatchId ?? null) : null,
+          draftOwnerId: isDraft ? user.id : null,
         })),
         skipDuplicates: true,
       });
-      return created;
+
+      if (resolvedExamPaper && !isDraft && created.count > 0) {
+        await tx.examPaper.update({
+          where: { id: resolvedExamPaper.id },
+          data: {
+            extractedToBankAt: new Date(),
+            extractedQuestionCount: created.count,
+            lastExtractError: null,
+          },
+        }).catch(() => { /* 무시 */ });
+      }
+      return { created: created.count, deleted: deletedCount };
     });
 
     return NextResponse.json(
-      { data: { created: result.count } },
+      { data: { created: result.created, replaced: result.deleted } },
       { status: 201 }
     );
   } catch (err) {

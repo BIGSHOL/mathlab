@@ -158,6 +158,7 @@ const SUPER_ADMIN_NAV_GROUPS: NavGroup[] = [
       { id: 'schools', label: '학교 관리', href: '/admin/schools', icon: School, minRole: 'SUPER_ADMIN', keywords: ['school', '학교', '학교명'] },
       { id: 'features', label: '기능 관리', href: '/admin/features', icon: ToggleRight, minRole: 'SUPER_ADMIN', keywords: ['feature', '기능', '토글'] },
       { id: 'exam-uploads', label: '기출 업로드', href: '/admin/exam-uploads', icon: FileUp, minRole: 'SUPER_ADMIN', keywords: ['exam', '기출', '업로드', '시험지'] },
+      { id: 'extract-queue', label: '기출 추출 대기열', href: '/admin/extract-queue', icon: FileText, minRole: 'SUPER_ADMIN', keywords: ['extract', '추출', '대기열', '배치', '승인', '기출'] },
     ],
   },
   {

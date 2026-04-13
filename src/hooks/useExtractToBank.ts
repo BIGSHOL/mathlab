@@ -88,7 +88,7 @@ export function useExtractToBank(examPaperId: string) {
       const res = await fetch('/api/questions/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ questions: toSave }),
+        body: JSON.stringify({ questions: toSave, examPaperId }),
       });
 
       if (!res.ok) {

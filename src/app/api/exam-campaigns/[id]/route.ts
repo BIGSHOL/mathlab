@@ -31,6 +31,8 @@ const updateSchema = z.object({
     .optional(),
   status: z.enum(['PREPARING', 'ACTIVE', 'COMPLETED', 'ARCHIVED']).optional(),
   classroomId: z.string().nullable().optional(),
+  isDateTentative: z.boolean().optional(),
+  isScopeTentative: z.boolean().optional(),
 });
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -102,6 +104,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (parsed.data.scopeChapters !== undefined) data.scopeChapters = parsed.data.scopeChapters;
     if (parsed.data.status !== undefined) data.status = parsed.data.status;
     if (parsed.data.classroomId !== undefined) data.classroomId = parsed.data.classroomId;
+    if (parsed.data.isDateTentative !== undefined) data.isDateTentative = parsed.data.isDateTentative;
+    if (parsed.data.isScopeTentative !== undefined) data.isScopeTentative = parsed.data.isScopeTentative;
 
     const updated = await prisma.examCampaign.update({
       where: { id },

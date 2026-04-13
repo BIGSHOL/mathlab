@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 import katex from 'katex';
+import { parseBoxCols, resolveCols, DEFAULT_BOX_COLS } from '@/lib/utils/box-grid';
 
 interface Segment {
   type: 'text' | 'math' | 'image' | 'blank';
@@ -356,14 +357,78 @@ export function EditableMathRenderer({
   return (
     <div className={`text-slate-800 ${className}`}>
       {blocks.map((block, bi) => {
-        const inner = block.segs.map((seg, si) => renderSegment(seg, `${bi}-${si}`));
         if (block.inBq) {
+          // 세그먼트를 줄 단위로 분할 — 텍스트 내 \n 기준
+          const lines: React.ReactNode[][] = [[]];
+          const lineTexts: string[] = [''];
+          block.segs.forEach((seg, si) => {
+            if (seg.type === 'text') {
+              const display = seg.text.replace(/^>\s?/gm, '');
+              const parts = display.split('\n');
+              parts.forEach((part, pi) => {
+                if (pi > 0) {
+                  lines.push([]);
+                  lineTexts.push('');
+                }
+                if (part) {
+                  // 텍스트 세그먼트를 해당 줄로 추가 (bold/diagram 처리는 renderSegment 경유)
+                  const fakeSeg: typeof seg = { ...seg, text: part };
+                  lines[lines.length - 1].push(renderSegment(fakeSeg, `${bi}-${si}-${pi}`));
+                  lineTexts[lineTexts.length - 1] += part;
+                }
+              });
+            } else {
+              lines[lines.length - 1].push(renderSegment(seg, `${bi}-${si}`));
+              // 수식/빈칸은 텍스트 길이 추정 어려우니 자리 표시만
+              lineTexts[lineTexts.length - 1] += '$';
+            }
+          });
+
+          // 빈 줄 제거 (헤더 줄 "<보기>" 등은 보존)
+          const nonEmpty = lines
+            .map((line, i) => ({ line, text: lineTexts[i].trim() }))
+            .filter(({ line, text }) => line.length > 0 || text.length > 0);
+
+          // 헤더(보기 등) / 항목(ㄱ. ㄴ. ㄷ. ...) 분리 + cols 마커 파싱
+          const itemPrefixRe = /^\s*[ㄱ-ㅎ①-⑮0-9]+[.)]/;
+          const header: typeof nonEmpty = [];
+          const items: typeof nonEmpty = [];
+          let parsedCols = null as ReturnType<typeof parseBoxCols>;
+          let itemMode = false;
+          for (const row of nonEmpty) {
+            const maybeCols = parseBoxCols(row.text);
+            if (maybeCols !== null && parsedCols === null) parsedCols = maybeCols;
+            if (!itemMode && !itemPrefixRe.test(row.text)) {
+              header.push(row);
+            } else {
+              itemMode = true;
+              items.push(row);
+            }
+          }
+
+          const effectiveCols = resolveCols(parsedCols ?? DEFAULT_BOX_COLS, items.length);
+          const colsClass = effectiveCols === 3 ? 'grid-cols-3' : effectiveCols === 2 ? 'grid-cols-2' : 'grid-cols-1';
+          const gridClass = items.length >= 2
+            ? `grid ${colsClass} gap-x-6 gap-y-1`
+            : '';
+
           return (
             <div
               key={bi}
               className="border border-slate-300 px-6 py-3 my-2 rounded-md bg-slate-50 w-fit max-w-full"
             >
-              {inner}
+              {header.map(({ line, text }, i) => {
+                // cols 마커가 포함된 헤더 줄은 "<보기>" 라벨로 대체
+                if (/<보기(?::cols=(?:auto|1|2|3))?>/.test(text)) {
+                  return <div key={`h-${i}`}><strong>&lt;보기&gt;</strong></div>;
+                }
+                return <div key={`h-${i}`}>{line}</div>;
+              })}
+              {items.length > 0 && (
+                <div className={gridClass || undefined}>
+                  {items.map(({ line }, i) => <div key={`i-${i}`}>{line}</div>)}
+                </div>
+              )}
             </div>
           );
         }

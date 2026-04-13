@@ -72,6 +72,9 @@ export interface PdfImportState {
   problems: ExtractedProblem[];
   extracting: boolean;
   progress: PdfExtractProgress;
+  draftBatchId: string | null;
+  draftSavedCount: number;
+  discardDrafts: () => Promise<void>;
   editingIdx: number | null;
   setEditingIdx: (idx: number | null) => void;
   expandedIdx: number | null;

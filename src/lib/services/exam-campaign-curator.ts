@@ -26,6 +26,8 @@ export interface PatternAnalysis {
   topChapters: Array<{ chapter: string; count: number; pct: number }>;
   /** 5단계 난이도 분포 (1~5) */
   difficultyDist: Record<string, number>;
+  /** 같은 학교의 기출 시험지 중 문제은행 미추출 목록 (UX 유도용) */
+  unextractedPapers?: Array<{ id: string; title: string }>;
   /** 킬러 유형 (난이도 4~5 + 자주 출제되는 단원) */
   killerTypes: Array<{ topic: string; difficulty: string; count: number }>;
   /** 출처 학교 목록 */
@@ -210,6 +212,7 @@ export async function curateCampaign(campaignId: string): Promise<CuratorResult>
     paperTitle: string;
     questions: AnalyzedQuestionRow[];
   }> = [];
+  let unextractedPapersAccum: Array<{ id: string; title: string }> = [];
 
   // 같은 학교 기출
   if (campaign.schoolId) {
@@ -220,10 +223,15 @@ export async function curateCampaign(campaignId: string): Promise<CuratorResult>
         status: 'COMPLETED',
         ...(koreanGrade && { grade: koreanGrade }),
       },
-      select: { id: true, title: true, schoolName: true },
+      select: { id: true, title: true, schoolName: true, extractedToBankAt: true },
       orderBy: { createdAt: 'desc' },
       take: 5,
     });
+
+    // 미추출 시험지 → UX 제안용 (아래 patternAnalysis 최종 조립 시 주입)
+    unextractedPapersAccum = sameSchoolPapers
+      .filter((p) => !p.extractedToBankAt)
+      .map((p) => ({ id: p.id, title: p.title ?? '제목 없음' }));
 
     if (sameSchoolPapers.length > 0) {
       const analyses = await prisma.examAnalysis.findMany({
@@ -350,6 +358,7 @@ export async function curateCampaign(campaignId: string): Promise<CuratorResult>
     averageDifficulty: diffN > 0 ? Math.round((diffSum / diffN) * 10) / 10 : 0,
     mode: totalAnalyzed > 0 ? 'exam_based' : 'scope_based',
     aiFilledCount: 0,
+    unextractedPapers: unextractedPapersAccum.length > 0 ? unextractedPapersAccum : undefined,
   };
 
   // ── 3. 문제은행 매칭 ──
@@ -432,10 +441,52 @@ export async function runCurationAndActivate(campaignId: string): Promise<Curato
       MIN_TARGET_QUESTIONS - result.curatedQuestionIds.length,
       AI_FILL_MAX,
     );
+
+    // 현재 풀의 난이도 분포 계산 → 부족 구간에 AI 배분
+    const poolDiffCounts = await prisma.question.groupBy({
+      by: ['difficulty'],
+      where: { id: { in: result.curatedQuestionIds } },
+      _count: true,
+    });
+    const poolMap: Record<string, number> = { BASIC: 0, MEDIUM: 0, HIGH: 0, HIGHEST: 0 };
+    for (const row of poolDiffCounts) poolMap[row.difficulty] = row._count;
+
+    // 목표: 각 난이도 풀에 최소 5개씩 — 부족분을 AI로 채움
+    const TARGET_PER_LEVEL = 5;
+    const gap: Record<string, number> = {
+      BASIC: Math.max(0, TARGET_PER_LEVEL - poolMap.BASIC),
+      MEDIUM: Math.max(0, TARGET_PER_LEVEL - poolMap.MEDIUM),
+      HIGH: Math.max(0, TARGET_PER_LEVEL - poolMap.HIGH),
+      HIGHEST: Math.max(0, TARGET_PER_LEVEL - poolMap.HIGHEST),
+    };
+    const totalGap = gap.BASIC + gap.MEDIUM + gap.HIGH + gap.HIGHEST;
+
+    // need 한도 안에서 gap 비율대로 배분. 부족 없으면 난이도 목표 없이 요청.
+    const difficultyTarget: Partial<Record<'BASIC'|'MEDIUM'|'HIGH'|'HIGHEST', number>> = {};
+    if (totalGap > 0) {
+      let remaining = need;
+      for (const lv of ['BASIC','MEDIUM','HIGH','HIGHEST'] as const) {
+        const portion = Math.min(gap[lv], Math.round((gap[lv] / totalGap) * need));
+        if (portion > 0 && remaining > 0) {
+          const assigned = Math.min(portion, remaining);
+          difficultyTarget[lv] = assigned;
+          remaining -= assigned;
+        }
+      }
+      // 남은 분량은 HIGH에 몰아넣기(심화 보강 선호)
+      if (remaining > 0) {
+        difficultyTarget.HIGH = (difficultyTarget.HIGH ?? 0) + remaining;
+      }
+    }
+
     try {
       // 동적 import로 순환 의존 회피 (predictor도 curator의 타입을 참조하므로)
       const { generatePredictedQuestions } = await import('./exam-campaign-predictor');
-      const aiResult = await generatePredictedQuestions({ campaignId, count: need });
+      const aiResult = await generatePredictedQuestions({
+        campaignId,
+        count: need,
+        difficultyTarget: totalGap > 0 ? difficultyTarget : undefined,
+      });
       if (aiResult.generated > 0) {
         result.curatedQuestionIds = [...result.curatedQuestionIds, ...aiResult.questionIds];
         // 패턴 분석 메타 갱신

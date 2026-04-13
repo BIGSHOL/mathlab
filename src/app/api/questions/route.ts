@@ -12,6 +12,8 @@ export async function GET(request: NextRequest) {
   if (isResponse(params)) return params;
 
   const { bookCode, chapter, section, difficulty, type, search, page = 1, limit = 20 } = params;
+  // 드래프트는 기본 제외 (명시적으로 includeDrafts=true일 때만 포함)
+  const includeDrafts = new URL(request.url).searchParams.get('includeDrafts') === 'true';
 
   // bookCodePrefix: 학교급 필터 (E = 초등, 빈 문자열 = 중등)
   const { searchParams } = new URL(request.url);
@@ -19,6 +21,7 @@ export async function GET(request: NextRequest) {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const where: Record<string, any> = {};
+  if (!includeDrafts) where.isDraft = false;
   if (bookCode) {
     where.bookCode = bookCode;
   } else if (bookCodePrefix !== null) {

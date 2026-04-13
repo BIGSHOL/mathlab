@@ -35,6 +35,14 @@ export interface ScheduleActivity {
   completed: boolean;
   /** 완료 시각 (ISO) */
   completedAt?: string;
+  /** 건너뛰기 여부 — 완료로 집계되지는 않지만 UI상 다음 활동이 열림 */
+  skipped?: boolean;
+  /** 건너뛴 시각 (ISO) */
+  skippedAt?: string;
+  /** 최근 응시 정답 수 (채점 결과) */
+  correctCount?: number;
+  /** 최근 응시 총 문제 수 */
+  totalCount?: number;
 }
 
 export interface ScheduleDay {
@@ -157,7 +165,14 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
   return out;
 }
 
-function buildPhase1Activities(conceptIds: string[], totalPhaseDays: number): ScheduleActivity[][] {
+const PHASE1_WARMUP_QUESTIONS_PER_DAY = 3;
+
+function buildPhase1Activities(
+  conceptIds: string[],
+  totalPhaseDays: number,
+  conceptTitles?: Record<string, string>,
+  warmupPool: string[] = [],
+): ScheduleActivity[][] {
   // 개념 복습: conceptIds를 totalPhaseDays에 균등 분배
   if (conceptIds.length === 0 || totalPhaseDays === 0) {
     return Array.from({ length: totalPhaseDays }, () => []);
@@ -167,15 +182,32 @@ function buildPhase1Activities(conceptIds: string[], totalPhaseDays: number): Sc
   const result: ScheduleActivity[][] = [];
   for (let d = 0; d < totalPhaseDays; d++) {
     const chunk = chunks[d] ?? [];
-    result.push(
-      chunk.map((id) => ({
-        type: 'concept' as const,
-        refId: id,
-        title: '개념 학습',
-        estimatedMinutes: 10,
-        completed: false,
-      })),
-    );
+    const acts: ScheduleActivity[] = chunk.map((id) => ({
+      type: 'concept' as const,
+      refId: id,
+      title: conceptTitles?.[id] ?? '개념 학습',
+      estimatedMinutes: 10,
+      completed: false,
+    }));
+    // 개념 학습 뒤에 워밍업 문제 3개를 추가 — 지루함 방지 + 이해 확인
+    if (warmupPool.length > 0) {
+      const start = (d * PHASE1_WARMUP_QUESTIONS_PER_DAY) % Math.max(1, warmupPool.length);
+      const picked: string[] = [];
+      for (let i = 0; i < PHASE1_WARMUP_QUESTIONS_PER_DAY; i++) {
+        picked.push(warmupPool[(start + i) % warmupPool.length]);
+      }
+      const unique = Array.from(new Set(picked));
+      if (unique.length > 0) {
+        acts.push({
+          type: 'questions',
+          refIds: unique,
+          title: `워밍업 ${unique.length}문제 — 오늘 개념 확인`,
+          estimatedMinutes: unique.length * 2,
+          completed: false,
+        });
+      }
+    }
+    result.push(acts);
   }
   return result;
 }
@@ -261,6 +293,8 @@ export interface BuildScheduleParams {
   curatedConceptIds: string[];
   /** 큐레이션된 문제 ID 목록 (기출 + 매칭 문제 풀) */
   curatedQuestionIds: string[];
+  /** 개념 ID → 제목 매핑 (학생 UI 표시용) */
+  conceptTitles?: Record<string, string>;
 }
 
 /**
@@ -304,7 +338,13 @@ export function buildSchedule(params: BuildScheduleParams): ScheduleDay[] {
     let activities: ScheduleActivity[][];
     switch (plan.phase) {
       case 1:
-        activities = buildPhase1Activities(params.curatedConceptIds, phaseDays);
+        // Phase 1에 워밍업 문제 풀: 난이도 낮은 기출부터 사용(앞쪽 30%)
+        activities = buildPhase1Activities(
+          params.curatedConceptIds,
+          phaseDays,
+          params.conceptTitles,
+          params.curatedQuestionIds.slice(0, Math.ceil(params.curatedQuestionIds.length * 0.3)),
+        );
         break;
       case 2:
         activities = buildQuestionPhaseActivities(phase2Pool, phaseDays, 2);
@@ -377,11 +417,22 @@ export async function enrollStudentInCampaign(params: {
   const conceptIds = (campaign.curatedConceptIds as unknown as string[]) ?? [];
   const questionIds = (campaign.curatedQuestionIds as unknown as string[]) ?? [];
 
+  const concepts = conceptIds.length > 0
+    ? await prisma.concept.findMany({
+        where: { id: { in: conceptIds } },
+        select: { id: true, title: true },
+      })
+    : [];
+  const conceptTitles: Record<string, string> = Object.fromEntries(
+    concepts.map((c) => [c.id, c.title]),
+  );
+
   const schedule = buildSchedule({
     examDate: campaign.examDate,
     enrollmentDate: new Date(),
     curatedConceptIds: conceptIds,
     curatedQuestionIds: questionIds,
+    conceptTitles,
   });
 
   const enrollment = await prisma.examCampaignEnrollment.create({
@@ -433,6 +484,8 @@ export async function markActivityCompleted(params: {
   enrollmentId: string;
   dayIndex: number;
   activityIndex: number;
+  correctCount?: number;
+  totalCount?: number;
 }): Promise<{ progressPct: number }> {
   const enrollment = await prisma.examCampaignEnrollment.findUnique({
     where: { id: params.enrollmentId },
@@ -449,6 +502,10 @@ export async function markActivityCompleted(params: {
   if (!activity.completed) {
     activity.completed = true;
     activity.completedAt = new Date().toISOString();
+  }
+  if (typeof params.correctCount === 'number' && typeof params.totalCount === 'number') {
+    activity.correctCount = params.correctCount;
+    activity.totalCount = params.totalCount;
   }
 
   // 진도율 재계산
@@ -469,4 +526,37 @@ export async function markActivityCompleted(params: {
   });
 
   return { progressPct };
+}
+
+/**
+ * 활동을 건너뛰기로 표시. 진도율 집계에는 포함되지 않으나 다음 활동 언락을 허용한다.
+ */
+export async function markActivitySkipped(params: {
+  enrollmentId: string;
+  dayIndex: number;
+  activityIndex: number;
+}): Promise<{ progressPct: number }> {
+  const enrollment = await prisma.examCampaignEnrollment.findUnique({
+    where: { id: params.enrollmentId },
+    select: { id: true, schedule: true, progressPct: true },
+  });
+  if (!enrollment) throw new Error('ENROLLMENT_NOT_FOUND');
+
+  const schedule = (enrollment.schedule as unknown as ScheduleDay[]) ?? [];
+  const day = schedule.find((d) => d.dayIndex === params.dayIndex);
+  if (!day) throw new Error('DAY_NOT_FOUND');
+  const activity = day.activities[params.activityIndex];
+  if (!activity) throw new Error('ACTIVITY_NOT_FOUND');
+
+  if (!activity.completed) {
+    activity.skipped = true;
+    activity.skippedAt = new Date().toISOString();
+  }
+
+  await prisma.examCampaignEnrollment.update({
+    where: { id: params.enrollmentId },
+    data: { schedule: schedule as unknown as Prisma.InputJsonValue },
+  });
+
+  return { progressPct: enrollment.progressPct };
 }
