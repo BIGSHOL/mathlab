@@ -15,11 +15,13 @@ export function useLicenses() {
   const { user } = useAuth();
   const { licenses, loading, fetch: fetchLicenses, isLicensed, isTenantActive } = useLicenseStore();
 
+  const userRole = user?.role;
   useEffect(() => {
-    if (user) {
-      fetchLicenses(user.role);
+    if (userRole) {
+      fetchLicenses(userRole);
     }
-  }, [user, fetchLicenses]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userRole]);
 
   return {
     licenses,

@@ -47,11 +47,12 @@ export default function PdfImportPage() {
   const router = useRouter();
   const state = usePdfImport();
 
+  const userRole = user?.role;
   useEffect(() => {
-    if (!isLoading && user && user.role !== 'SUPER_ADMIN') {
+    if (!isLoading && userRole && userRole !== 'SUPER_ADMIN') {
       router.replace('/overview');
     }
-  }, [user, isLoading, router]);
+  }, [userRole, isLoading, router]);
 
   if (isLoading || !user || user.role !== 'SUPER_ADMIN') {
     return (

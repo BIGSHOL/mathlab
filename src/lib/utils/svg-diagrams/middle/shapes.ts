@@ -613,5 +613,55 @@ export function renderRegularPolygon(params: RegularPolygonParams): string {
     parts.push(katexLabel(mx + (dx / dd) * 14, my + (dy / dd) * 14, params.sideLength, { fontSize: 11 }));
   }
 
+  // 각도 표시 (내각/외각)
+  if (params.angles) {
+    for (const alg of params.angles) {
+      const idx = alg.vertex;
+      if (idx >= n) continue;
+      const [vx, vy] = verts[idx];
+      const prevIdx = (idx + n - 1) % n;
+      const nextIdx = (idx + 1) % n;
+      const [px, py] = verts[prevIdx];
+      const [nx, ny] = verts[nextIdx];
+      const aPrev = Math.atan2(py - vy, px - vx);
+      const aNext = Math.atan2(ny - vy, nx - vx);
+
+      const arcR = 18;
+
+      if (!alg.exterior) {
+        const x1 = vx + arcR * Math.cos(aPrev);
+        const y1 = vy + arcR * Math.sin(aPrev);
+        const x2 = vx + arcR * Math.cos(aNext);
+        const y2 = vy + arcR * Math.sin(aNext);
+        parts.push(`<path d="M ${x1} ${y1} A ${arcR} ${arcR} 0 0 1 ${x2} ${y2}" fill="none" stroke="${strokeColor}" stroke-width="1.2"/>`);
+
+        if (alg.text) {
+          const bisectAngle = -Math.PI / 2 + (2 * Math.PI * idx) / n + Math.PI;
+          parts.push(katexLabel(vx + 28 * Math.cos(bisectAngle), vy + 28 * Math.sin(bisectAngle), alg.text, { fontSize: 11 }));
+        }
+      } else {
+        const extAngle = aPrev + Math.PI;
+        const extLen = 35;
+        const ex2 = vx + extLen * Math.cos(extAngle);
+        const ey2 = vy + extLen * Math.sin(extAngle);
+        parts.push(line(vx, vy, ex2, ey2, { stroke: strokeColor, dashArray: '4,3', strokeWidth: 1.2 }));
+
+        const ax1 = vx + arcR * Math.cos(extAngle);
+        const ay1 = vy + arcR * Math.sin(extAngle);
+        const ax2 = vx + arcR * Math.cos(aNext);
+        const ay2 = vy + arcR * Math.sin(aNext);
+
+        parts.push(`<path d="M ${ax1} ${ay1} A ${arcR} ${arcR} 0 0 1 ${ax2} ${ay2}" fill="none" stroke="${strokeColor}" stroke-width="1.2"/>`);
+
+        if (alg.text) {
+          const dirX = Math.cos(extAngle) + Math.cos(aNext);
+          const dirY = Math.sin(extAngle) + Math.sin(aNext);
+          const d = Math.sqrt(dirX * dirX + dirY * dirY) || 1;
+          parts.push(katexLabel(vx + 28 * (dirX / d), vy + 28 * (dirY / d), alg.text, { fontSize: 11 }));
+        }
+      }
+    }
+  }
+
   return svgWrap(parts.join('\n    '), totalW, totalH);
 }

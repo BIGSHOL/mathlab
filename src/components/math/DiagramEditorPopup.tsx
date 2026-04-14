@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { X, Shapes } from 'lucide-react';
 import { renderDiagram } from '@/lib/utils/svg-diagrams';
 import type { DiagramType } from '@/lib/utils/svg-diagrams/types';
@@ -66,13 +66,15 @@ export function DiagramEditorPopup({ isOpen, initialParam, diagramIndex, onClose
     onSave({ type: diagramType, label: label || diagramType, params, align, size }, svg);
   }, [diagramType, params, label, align, onSave]);
 
-  // ESC 키
+  // ESC 키 — onClose ref로 안정화
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   useEffect(() => {
     if (!isOpen) return;
-    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onCloseRef.current(); };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -109,7 +111,6 @@ export function DiagramEditorPopup({ isOpen, initialParam, diagramIndex, onClose
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* 좌측: 파라미터 */}
             <div className="space-y-3">
-              <TextField label="도형 설명" value={label} onChange={setLabel} placeholder="예: 3등분 색칠 사각형" />
               {/* 정렬 옵션 */}
               <div>
                 <label className="text-xs text-slate-500">도형 정렬</label>
@@ -119,9 +120,8 @@ export function DiagramEditorPopup({ isOpen, initialParam, diagramIndex, onClose
                       key={val}
                       type="button"
                       onClick={() => setAlign(val)}
-                      className={`px-2.5 py-1 text-xs border rounded-sm transition-colors ${
-                        align === val ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-                      }`}
+                      className={`px-2.5 py-1 text-xs border rounded-sm transition-colors ${align === val ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                        }`}
                     >
                       {lbl}
                     </button>
@@ -137,9 +137,8 @@ export function DiagramEditorPopup({ isOpen, initialParam, diagramIndex, onClose
                       key={val}
                       type="button"
                       onClick={() => setSize(val)}
-                      className={`px-2.5 py-1 text-xs border rounded-sm transition-colors ${
-                        size === val ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-                      }`}
+                      className={`px-2.5 py-1 text-xs border rounded-sm transition-colors ${size === val ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                        }`}
                     >
                       {lbl}
                     </button>

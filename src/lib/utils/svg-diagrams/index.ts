@@ -228,6 +228,8 @@ function normalizeClockFace(p: P): ClockFaceParams {
     hour: num(p.hour ?? p.hours ?? p.h, 12),
     minute: num(p.minute ?? p.minutes ?? p.min ?? p.m, 0),
     showNumbers: p.showNumbers !== false,
+    showMinuteTicks: p.showMinuteTicks,
+    show5MinuteTicks: p.show5MinuteTicks,
     label: p.label,
   };
 }
@@ -266,6 +268,11 @@ function normalizeSolidFigure(p: P): SolidFigureParams {
     dimensions: p.dimensions ?? {},
     showHiddenEdges: p.showHiddenEdges !== false,
     color: p.color,
+    viewAngle: p.viewAngle,
+    viewDepth: p.viewDepth,
+    gridDivisions: p.gridDivisions ?? undefined,
+    showGridLines: p.showGridLines,
+    showCornerUnit: p.showCornerUnit,
   };
 }
 

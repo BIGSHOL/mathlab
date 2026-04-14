@@ -91,7 +91,8 @@ export default function ExtractQueuePage() {
 
   useEffect(() => {
     if (user?.role === 'SUPER_ADMIN') fetchData();
-  }, [user, fetchData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.role, filter]);
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => {

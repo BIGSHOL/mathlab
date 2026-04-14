@@ -500,6 +500,36 @@ export function RegularPolygonForm({ params, onChange }: SubFormProps) {
           <p className="text-xs text-slate-400 mt-1">꼭짓점 번호: 0 (상단) ~ {nSides - 1} (시계방향)</p>
         </div>
       )}
+
+      {/* 각도(내각/외각) 목록 */}
+      <div>
+        <div className="flex items-center justify-between">
+          <label className="text-xs text-slate-500">각도 표시</label>
+          <button type="button" className="text-xs text-primary hover:text-primary/70" onClick={() => {
+            const arr = Array.isArray(params.angles) ? [...(params.angles as any[])] : [];
+            onChange({ angles: [...arr, { vertex: 0, exterior: false, text: '' }] });
+          }}>
+            <Plus className="w-3 h-3 inline" /> 추가
+          </button>
+        </div>
+        {Array.isArray(params.angles) && (params.angles as any[]).map((ang: any, i: number) => (
+          <div key={i} className="flex gap-1 mt-1 items-center">
+            <input type="number" value={ang.vertex} min={0} max={nSides - 1} onChange={(e) => {
+              const arr = [...(params.angles as any[])]; arr[i] = { ...ang, vertex: parseInt(e.target.value) || 0 }; onChange({ angles: arr });
+            }} className="w-12 text-xs px-1 py-0.5 border border-slate-300 rounded" title="꼭짓점 번호" />
+            <select value={ang.exterior ? 'exterior' : 'interior'} onChange={(e) => {
+              const arr = [...(params.angles as any[])]; arr[i] = { ...ang, exterior: e.target.value === 'exterior' }; onChange({ angles: arr });
+            }} className="text-xs px-1 py-0.5 border border-slate-300 rounded">
+              <option value="interior">내각</option>
+              <option value="exterior">외각</option>
+            </select>
+            <input type="text" value={ang.text || ''} placeholder="각도(라벨)" onChange={(e) => {
+              const arr = [...(params.angles as any[])]; arr[i] = { ...ang, text: e.target.value }; onChange({ angles: arr });
+            }} className="flex-1 text-xs px-1 py-0.5 border border-slate-300 rounded" />
+            <button type="button" onClick={() => onChange({ angles: (params.angles as any[]).filter((_: any, j: number) => j !== i) })} className="text-slate-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
+          </div>
+        ))}
+      </div>
       <TextField label="변의 길이" value={String(params.sideLength || '')} onChange={(v) => onChange({ sideLength: v })} placeholder="예: 5cm" />
       <ShapeStyleFields params={params} onChange={onChange} />
     </div>
@@ -586,21 +616,67 @@ function stripDollar(s: string): string {
 export function SolidFigureForm({ params, onChange }: SubFormProps) {
   const shape = String(params.shape || 'cube');
   const hasFaces = shape === 'cube' || shape === 'rectangular_prism';
+  const hasDims = !!(params.dimensions as Record<string, number>)?.width || !!(params.dimensions as Record<string, number>)?.height;
   const faceLabels: { face: string; text: string }[] = Array.isArray(params.faceLabels) ? params.faceLabels : [];
   const [mathEditIdx, setMathEditIdx] = useState<number | null>(null);
+  // 치수가 있으면 정육면체/직육면체만 선택 가능
+  const shapeOptions = hasDims ? SOLID_SHAPES.filter(s => s.value === 'cube' || s.value === 'rectangular_prism') : SOLID_SHAPES;
 
   return (
     <div className="space-y-2">
       <div>
         <label className="text-xs text-slate-500">도형</label>
         <select value={shape} onChange={(e) => onChange({ shape: e.target.value })} className="block w-full text-sm px-2 py-1 border border-slate-300 rounded">
-          {SOLID_SHAPES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+          {shapeOptions.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
         </select>
       </div>
       <BoolField label="숨은 모서리 (점선)" value={params.showHiddenEdges !== false} onChange={(v) => onChange({ showHiddenEdges: v })} />
       <ColorSelect value={String(params.color || '#3B82F6')} onChange={(v) => onChange({ color: v })} />
+      <div className="grid grid-cols-2 gap-2">
+        <NumField label="투영 각도(°)" value={Number(params.viewAngle ?? 30)} onChange={(v) => onChange({ viewAngle: v })} min={0} max={90} step={5} />
+        <NumField label="깊이 비율" value={Number(params.viewDepth ?? 0.77)} onChange={(v) => onChange({ viewDepth: v })} min={0.1} max={2.0} step={0.1} />
+      </div>
 
+      {/* 치수 입력 (가로/세로/높이) — 부피/겉넓이 문제용 */}
       {hasFaces && (
+        <div>
+          <label className="text-xs text-slate-500">치수 (cm) — 값이 있으면 자동 라벨 표시</label>
+          <div className="grid grid-cols-3 gap-2 mt-1">
+            <NumField label="가로(W)" value={Number((params.dimensions as Record<string, number>)?.width) || 0} onChange={(v) => onChange({ dimensions: { ...((params.dimensions as object) || {}), width: v } })} min={0} step={1} />
+            <NumField label="세로(D)" value={Number((params.dimensions as Record<string, number>)?.depth) || 0} onChange={(v) => onChange({ dimensions: { ...((params.dimensions as object) || {}), depth: v } })} min={0} step={1} />
+            <NumField label="높이(H)" value={Number((params.dimensions as Record<string, number>)?.height) || 0} onChange={(v) => onChange({ dimensions: { ...((params.dimensions as object) || {}), height: v } })} min={0} step={1} />
+          </div>
+          <p className="text-xs text-slate-400 mt-0.5">0이면 해당 치수 라벨 숨김</p>
+        </div>
+      )}
+      {hasFaces && (
+        <div className="mt-2 pt-2 border-t border-slate-200">
+          <div className="flex flex-col gap-1.5">
+            <BoolField label="전체 격자 선 표시" value={params.showGridLines === true} onChange={(v) => {
+              const updates: any = { showGridLines: v };
+              if (v && !params.gridDivisions) updates.gridDivisions = { w: 4, h: 3, d: 2 };
+              onChange(updates);
+            }} />
+            <BoolField label="좌하단 코너 단위 블록 표시" value={params.showCornerUnit === true} onChange={(v) => {
+              const updates: any = { showCornerUnit: v };
+              if (v && !params.gridDivisions) updates.gridDivisions = { w: 4, h: 3, d: 2 };
+              onChange(updates);
+            }} />
+          </div>
+          {(Boolean(params.showGridLines) || Boolean(params.showCornerUnit)) && (
+            <div className="mt-2 bg-slate-50 p-2 rounded border border-slate-100">
+              <label className="text-xs text-slate-500">분할 칸 수 (격자 및 블록 크기 결정)</label>
+              <div className="grid grid-cols-3 gap-2 mt-1">
+                <NumField label="가로" value={Number((params.gridDivisions as Record<string, number>)?.w) || 1} onChange={(v) => onChange({ gridDivisions: { ...((params.gridDivisions as object) || {}), w: v } })} min={1} step={1} />
+                <NumField label="세로" value={Number((params.gridDivisions as Record<string, number>)?.d) || 1} onChange={(v) => onChange({ gridDivisions: { ...((params.gridDivisions as object) || {}), d: v } })} min={1} step={1} />
+                <NumField label="높이" value={Number((params.gridDivisions as Record<string, number>)?.h) || 1} onChange={(v) => onChange({ gridDivisions: { ...((params.gridDivisions as object) || {}), h: v } })} min={1} step={1} />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {hasFaces && !hasDims && (
         <div>
           <div className="flex items-center justify-between">
             <label className="text-xs text-slate-500">면 텍스트</label>

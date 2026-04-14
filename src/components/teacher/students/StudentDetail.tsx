@@ -109,7 +109,7 @@ export function StudentDetail({ user, stats, statsLoading, isManager, isOwner, o
       .then((json) => setHwWrongData(json.data ?? null))
       .catch((err) => console.error('연산 숙제 오답 조회 실패:', err))
       .finally(() => setHwWrongLoading(false));
-  }, [stats, user.id, hwWrongPeriod]);
+  }, [stats?.summary?.testAvgScore, user.id, hwWrongPeriod]); // stats 객체 대신 primitive 값 사용
 
   const toggleAttemptDetail = async (attemptId: string) => {
     if (expandedAttemptId === attemptId) {

@@ -9,7 +9,7 @@
  */
 
 export type BoxCols = 'auto' | 1 | 2 | 3;
-export const DEFAULT_BOX_COLS: BoxCols = 2;
+export const DEFAULT_BOX_COLS: BoxCols = 'auto';
 
 /** blockquote 첫 줄 텍스트에서 cols 지정자 추출 */
 export function parseBoxCols(headerLine: string): BoxCols | null {

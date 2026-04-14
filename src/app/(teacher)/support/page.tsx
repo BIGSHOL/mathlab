@@ -100,9 +100,11 @@ export default function SupportPage() {
     }
   }, []);
 
+  const userId = user?.id;
   useEffect(() => {
-    if (user) fetchInquiries();
-  }, [user, fetchInquiries]);
+    if (userId) fetchInquiries();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   const handleSubmit = async () => {
     if (!title.trim() || !content.trim()) return;

@@ -6,6 +6,8 @@ export function renderClockFace(params: ClockFaceParams): string {
   const hour = Math.max(1, Math.min(12, Math.round(Number(params.hour) || 12)));
   const minute = Math.max(0, Math.min(59, Math.round(Number(params.minute) || 0)));
   const showNumbers = params.showNumbers !== false;
+  const showMinuteTicks = params.showMinuteTicks !== false;
+  const show5MinuteTicks = params.show5MinuteTicks !== false;
   const label = params.label;
 
   const r = 65;
@@ -32,7 +34,9 @@ export function renderClockFace(params: ClockFaceParams): string {
     const y1 = cy + innerR * Math.sin(angle);
     const x2 = cx + outerR * Math.cos(angle);
     const y2 = cy + outerR * Math.sin(angle);
-    parts.push(line(x1, y1, x2, y2, { strokeWidth: isMain ? 2 : 1.2 }));
+    if (show5MinuteTicks) {
+      parts.push(line(x1, y1, x2, y2, { strokeWidth: isMain ? 2 : 1.2 }));
+    }
 
     // 숫자
     if (showNumbers) {
@@ -44,14 +48,16 @@ export function renderClockFace(params: ClockFaceParams): string {
   }
 
   // 분 눈금 (5분 간격이 아닌 것)
-  for (let i = 0; i < 60; i++) {
-    if (i % 5 === 0) continue; // 이미 시 눈금에서 처리
-    const angle = ((i * 6 - 90) * Math.PI) / 180;
-    const x1 = cx + (r - 5) * Math.cos(angle);
-    const y1 = cy + (r - 5) * Math.sin(angle);
-    const x2 = cx + (r - 3) * Math.cos(angle);
-    const y2 = cy + (r - 3) * Math.sin(angle);
-    parts.push(line(x1, y1, x2, y2, { stroke: '#AAA', strokeWidth: 0.5 }));
+  if (showMinuteTicks) {
+    for (let i = 0; i < 60; i++) {
+      if (i % 5 === 0) continue; // 이미 시 눈금에서 처리
+      const angle = ((i * 6 - 90) * Math.PI) / 180;
+      const x1 = cx + (r - 5) * Math.cos(angle);
+      const y1 = cy + (r - 5) * Math.sin(angle);
+      const x2 = cx + (r - 3) * Math.cos(angle);
+      const y2 = cy + (r - 3) * Math.sin(angle);
+      parts.push(line(x1, y1, x2, y2, { stroke: '#AAA', strokeWidth: 0.5 }));
+    }
   }
 
   // 시침 (짧고 굵음)

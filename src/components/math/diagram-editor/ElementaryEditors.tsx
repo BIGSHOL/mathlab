@@ -272,6 +272,10 @@ export function NumberLineForm({ params, onChange }: SubFormProps) {
         <NumField label="눈금 간격" value={Number(p.step) || 0.1} onChange={(v) => onChange({ step: v })} step={0.01} min={0.01} />
       </div>
       <BoolField label="모든 눈금에 숫자 표시" value={!!p.showAllTickLabels} onChange={(v) => onChange({ showAllTickLabels: v })} />
+      <div className="flex gap-3">
+        <BoolField label="← 왼쪽 화살표" value={!!p.arrowLeft} onChange={(v) => onChange({ arrowLeft: v })} />
+        <BoolField label="오른쪽 화살표 →" value={p.arrowRight !== false} onChange={(v) => onChange({ arrowRight: v })} />
+      </div>
       {/* 마크 */}
       <div>
         <div className="flex items-center justify-between">
@@ -295,6 +299,10 @@ export function NumberLineForm({ params, onChange }: SubFormProps) {
             <label className="flex items-center gap-0.5 text-xs text-slate-500 cursor-pointer shrink-0" title="점 표시">
               <input type="checkbox" checked={m.showDot !== false} onChange={(e) => { const arr = [...marks]; arr[i] = { ...m, showDot: e.target.checked }; onChange({ marks: arr }); }} className="rounded w-3 h-3" />
               점
+            </label>
+            <label className="flex items-center gap-0.5 text-xs text-slate-500 cursor-pointer shrink-0" title="라벨 아래 표시">
+              <input type="checkbox" checked={!!(m as Record<string, unknown>).labelBelow} onChange={(e) => { const arr = [...marks]; arr[i] = { ...m, labelBelow: e.target.checked }; onChange({ marks: arr }); }} className="rounded w-3 h-3" />
+              ↓
             </label>
             <button type="button" onClick={() => onChange({ marks: marks.filter((_, j) => j !== i) })} className="text-slate-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
           </div>
@@ -574,6 +582,8 @@ export function ClockFaceForm({ params, onChange }: SubFormProps) {
       <NumField label="시" value={Number(params.hour) || 12} onChange={(v) => onChange({ hour: v })} min={1} max={12} />
       <NumField label="분" value={Number(params.minute) || 0} onChange={(v) => onChange({ minute: v })} min={0} max={59} />
       <BoolField label="숫자 표시" value={params.showNumbers !== false} onChange={(v) => onChange({ showNumbers: v })} />
+      <BoolField label="1분 단위(작은눈금) 표시" value={params.showMinuteTicks !== false} onChange={(v) => onChange({ showMinuteTicks: v })} />
+      <BoolField label="5분 단위(큰눈금) 표시" value={params.show5MinuteTicks !== false} onChange={(v) => onChange({ show5MinuteTicks: v })} />
       <TextField label="라벨" value={String(params.label || '')} onChange={(v) => onChange({ label: v })} placeholder="예: 3시" />
     </div>
   );

@@ -61,10 +61,17 @@ export function renderNumberLine(params: NumberLineParams): string {
     }
   }
 
+  // 화살표 방향 (기본: 오른쪽만)
+  const arrowR = params.arrowRight !== false;
+  const arrowL = params.arrowLeft === true;
+  const lineExtL = arrowL ? 12 : 8;
+  const lineExtR = arrowR ? 12 : 8;
+
   // 메인 라인 (교재 스타일: 굵은 선)
-  parts.push(line(leftPad - 8, lineY, leftPad + lineW + 8, lineY, { strokeWidth: 2.5 }));
-  // 오른쪽 화살표
-  parts.push(arrowHead(leftPad + lineW + 8, lineY, 0, 7));
+  parts.push(line(leftPad - lineExtL, lineY, leftPad + lineW + lineExtR, lineY, { strokeWidth: 2.5 }));
+  // 화살표
+  if (arrowR) parts.push(arrowHead(leftPad + lineW + lineExtR, lineY, 0, 7));
+  if (arrowL) parts.push(arrowHead(leftPad - lineExtL, lineY, 180, 7));
 
   // 눈금 (교재 스타일: 얇은 선)
   // showAllTickLabels가 false(기본)면 min/max/marks만 라벨 표시
