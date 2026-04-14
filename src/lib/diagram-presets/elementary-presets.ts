@@ -6,6 +6,16 @@ export const ELEMENTARY_PRESETS: DiagramPreset[] = [
   // 1학년 1학기
   // ═══════════════════════════════════════
   {
+    id: 'e1-1-count-numline',
+    name: '수 세기 수직선',
+    description: '1부터 9까지 수직선',
+    schoolLevel: 'elementary',
+    gradeKey: '1학년 1학기',
+    chapter: '9까지의 수',
+    diagramType: 'number_line',
+    defaultParams: { min: 0, max: 9, step: 1, marks: [{ value: 5, label: '5', color: '#3B82F6', showDot: true }] },
+  },
+  {
     id: 'e1-1-shape-dot1',
     name: '모양 찾기 (3×3)',
     description: '점 배열로 여러 가지 모양 표현',
@@ -69,10 +79,30 @@ export const ELEMENTARY_PRESETS: DiagramPreset[] = [
     diagramType: 'clock_face',
     defaultParams: { hour: 4, minute: 30, showNumbers: true, label: '' },
   },
+  {
+    id: 'e1-2-clock-quarter',
+    name: '시계 (15분)',
+    description: '2시 15분 시계',
+    schoolLevel: 'elementary',
+    gradeKey: '1학년 2학기',
+    chapter: '시계 보기와 규칙 찾기',
+    diagramType: 'clock_face',
+    defaultParams: { hour: 2, minute: 15, showNumbers: true, label: '' },
+  },
 
   // ═══════════════════════════════════════
   // 2학년 1학기
   // ═══════════════════════════════════════
+  {
+    id: 'e2-1-place-hundreds',
+    name: '자릿값 (백의 자리)',
+    description: '백·십·일의 자리 블록',
+    schoolLevel: 'elementary',
+    gradeKey: '2학년 1학기',
+    chapter: '세 자리 수',
+    diagramType: 'place_value',
+    defaultParams: { hundreds: 2, tens: 3, ones: 5 },
+  },
   {
     id: 'e2-1-shape-tri',
     name: '삼각형',
@@ -211,6 +241,16 @@ export const ELEMENTARY_PRESETS: DiagramPreset[] = [
     diagramType: 'number_line',
     defaultParams: { min: 0, max: 1, step: 0.1 },
   },
+  {
+    id: 'e5-1-frac-decimal',
+    name: '분수와 소수 대응',
+    description: '1/2 = 0.5 수직선 대응',
+    schoolLevel: 'elementary',
+    gradeKey: '3학년 1학기',
+    chapter: '분수와 소수',
+    diagramType: 'number_line',
+    defaultParams: { min: 0, max: 1, step: 0.1, marks: [{ value: 0.25, label: '1/4' }, { value: 0.5, label: '1/2', color: '#3B82F6' }, { value: 0.75, label: '3/4' }] },
+  },
 
   // ═══════════════════════════════════════
   // 3학년 2학기
@@ -270,6 +310,16 @@ export const ELEMENTARY_PRESETS: DiagramPreset[] = [
   // 4학년 1학기
   // ═══════════════════════════════════════
   {
+    id: 'e3-1-place-thousands',
+    name: '자릿값 (큰 수)',
+    description: '자릿값 표로 수 나타내기',
+    schoolLevel: 'elementary',
+    gradeKey: '4학년 1학기',
+    chapter: '큰 수',
+    diagramType: 'place_value',
+    defaultParams: { hundreds: 4, tens: 0, ones: 7 },
+  },
+  {
     id: 'e4-1-angle-measure',
     name: '각도 재기',
     description: '각도기로 60° 재기',
@@ -301,6 +351,16 @@ export const ELEMENTARY_PRESETS: DiagramPreset[] = [
     chapter: '각도',
     diagramType: 'triangle',
     defaultParams: { vertices: [{ x: 100, y: 10, label: '' }, { x: 10, y: 150, label: '' }, { x: 190, y: 150, label: '' }], sides: [], angles: [{ vertex: 0, value: '60°' }, { vertex: 1, value: '60°' }, { vertex: 2, value: '60°' }] },
+  },
+  {
+    id: 'e4-1-quad-angle-sum',
+    name: '사각형 내각의 합 (360°)',
+    description: '사각형 네 내각의 합',
+    schoolLevel: 'elementary',
+    gradeKey: '4학년 1학기',
+    chapter: '각도',
+    diagramType: 'quadrilateral',
+    defaultParams: { vertices: [{ x: 20, y: 20, label: '' }, { x: 170, y: 10, label: '' }, { x: 180, y: 130, label: '' }, { x: 30, y: 140, label: '' }], sides: [], angles: [{ vertex: 0, value: '80°' }, { vertex: 1, value: '100°' }, { vertex: 2, value: '90°' }, { vertex: 3, value: '90°' }], type: 'general' },
   },
   {
     id: 'e4-1-move-slide',
@@ -532,7 +592,7 @@ export const ELEMENTARY_PRESETS: DiagramPreset[] = [
     gradeKey: '5학년 2학기',
     chapter: '직육면체',
     diagramType: 'solid_figure',
-    defaultParams: { shape: 'prism', labels: [], showHiddenEdges: true, color: '#3B82F6' },
+    defaultParams: { shape: 'rectangular_prism', labels: [], showHiddenEdges: true, color: '#3B82F6' },
   },
   {
     id: 'e5-2-net-cube',
@@ -556,7 +616,7 @@ export const ELEMENTARY_PRESETS: DiagramPreset[] = [
     gradeKey: '6학년 1학기',
     chapter: '각기둥과 각뿔',
     diagramType: 'solid_figure',
-    defaultParams: { shape: 'prism', labels: [], showHiddenEdges: true, color: '#3B82F6' },
+    defaultParams: { shape: 'rectangular_prism', labels: [], showHiddenEdges: true, color: '#3B82F6' },
   },
   {
     id: 'e6-1-pyramid',
@@ -576,7 +636,7 @@ export const ELEMENTARY_PRESETS: DiagramPreset[] = [
     gradeKey: '6학년 1학기',
     chapter: '각기둥과 각뿔',
     diagramType: 'net_diagram',
-    defaultParams: { shape: 'prism', labels: [], foldLines: true, color: '#3B82F6' },
+    defaultParams: { shape: 'rectangular_prism', labels: [], foldLines: true, color: '#3B82F6' },
   },
   {
     id: 'e6-1-net-pyramid',
@@ -619,6 +679,16 @@ export const ELEMENTARY_PRESETS: DiagramPreset[] = [
     defaultParams: { segments: [{ label: '걷기', value: 40 }, { label: '자전거', value: 25 }, { label: '버스', value: 20 }, { label: '자동차', value: 15 }], title: '등교 방법', showPercent: true },
   },
   {
+    id: 'e6-1-ratio-pie',
+    name: '비율 원그래프',
+    description: '비율을 원그래프로 표현',
+    schoolLevel: 'elementary',
+    gradeKey: '6학년 1학기',
+    chapter: '여러 가지 그래프',
+    diagramType: 'pie_chart',
+    defaultParams: { segments: [{ label: '남학생', value: 55 }, { label: '여학생', value: 45 }], title: '반 구성', showPercent: true },
+  },
+  {
     id: 'e6-1-vol-prism',
     name: '직육면체 부피',
     description: '가로 × 세로 × 높이',
@@ -626,7 +696,7 @@ export const ELEMENTARY_PRESETS: DiagramPreset[] = [
     gradeKey: '6학년 1학기',
     chapter: '직육면체의 부피와 겉넓이',
     diagramType: 'solid_figure',
-    defaultParams: { shape: 'prism', labels: [{ text: '4cm', position: 'width' }, { text: '3cm', position: 'depth' }, { text: '5cm', position: 'height' }], showHiddenEdges: true, color: '#3B82F6' },
+    defaultParams: { shape: 'rectangular_prism', dimensions: { width: 4, depth: 3, height: 5 }, showHiddenEdges: true, color: '#3B82F6' },
   },
   {
     id: 'e6-1-vol-cube',
@@ -636,7 +706,7 @@ export const ELEMENTARY_PRESETS: DiagramPreset[] = [
     gradeKey: '6학년 1학기',
     chapter: '직육면체의 부피와 겉넓이',
     diagramType: 'solid_figure',
-    defaultParams: { shape: 'cube', labels: [{ text: '3cm', position: 'width' }], showHiddenEdges: true, color: '#10B981' },
+    defaultParams: { shape: 'cube', dimensions: { width: 3, height: 3, depth: 3 }, showHiddenEdges: true, color: '#10B981' },
   },
 
   // ═══════════════════════════════════════
@@ -701,87 +771,5 @@ export const ELEMENTARY_PRESETS: DiagramPreset[] = [
     chapter: '원기둥, 원뿔, 구',
     diagramType: 'solid_figure',
     defaultParams: { shape: 'sphere', labels: [], showHiddenEdges: true, color: '#10B981' },
-  },
-
-  // ═══════════════════════════════════════
-  // 추가 프리셋 — Tier 1 (교육 필수)
-  // ═══════════════════════════════════════
-  {
-    id: 'e2-1-place-hundreds',
-    name: '자릿값 (백의 자리)',
-    description: '백·십·일의 자리 블록',
-    schoolLevel: 'elementary',
-    gradeKey: '2학년 1학기',
-    chapter: '세 자리 수',
-    diagramType: 'place_value',
-    defaultParams: { hundreds: 2, tens: 3, ones: 5 },
-  },
-  {
-    id: 'e3-1-place-thousands',
-    name: '자릿값 (큰 수)',
-    description: '자릿값 표로 수 나타내기',
-    schoolLevel: 'elementary',
-    gradeKey: '3학년 1학기',
-    chapter: '큰 수',
-    diagramType: 'place_value',
-    defaultParams: { hundreds: 4, tens: 0, ones: 7 },
-  },
-  {
-    id: 'e5-1-frac-decimal',
-    name: '분수와 소수 대응',
-    description: '1/2 = 0.5 수직선 대응',
-    schoolLevel: 'elementary',
-    gradeKey: '5학년 1학기',
-    chapter: '분수와 소수',
-    diagramType: 'number_line',
-    defaultParams: { min: 0, max: 1, step: 0.1, marks: [{ value: 0.25, label: '1/4' }, { value: 0.5, label: '1/2', color: '#3B82F6' }, { value: 0.75, label: '3/4' }] },
-  },
-  {
-    id: 'e4-1-quad-angle-sum',
-    name: '사각형 내각의 합 (360°)',
-    description: '사각형 네 내각의 합',
-    schoolLevel: 'elementary',
-    gradeKey: '4학년 1학기',
-    chapter: '각도',
-    diagramType: 'quadrilateral',
-    defaultParams: { vertices: [{ x: 20, y: 20, label: '' }, { x: 170, y: 10, label: '' }, { x: 180, y: 130, label: '' }, { x: 30, y: 140, label: '' }], sides: [], angles: [{ vertex: 0, value: '80°' }, { vertex: 1, value: '100°' }, { vertex: 2, value: '90°' }, { vertex: 3, value: '90°' }], type: 'general' },
-  },
-
-  // ═══════════════════════════════════════
-  // 추가 프리셋 — Tier 2 (교육 효과 높음)
-  // ═══════════════════════════════════════
-  {
-    id: 'e6-1-ratio-pie',
-    name: '비율 원그래프',
-    description: '비율을 원그래프로 표현',
-    schoolLevel: 'elementary',
-    gradeKey: '6학년 1학기',
-    chapter: '여러 가지 그래프',
-    diagramType: 'pie_chart',
-    defaultParams: { segments: [{ label: '남학생', value: 55 }, { label: '여학생', value: 45 }], title: '반 구성', showPercent: true },
-  },
-
-  // ═══════════════════════════════════════
-  // 추가 프리셋 — Tier 3 (활용도 보완)
-  // ═══════════════════════════════════════
-  {
-    id: 'e1-2-clock-quarter',
-    name: '시계 (15분)',
-    description: '2시 15분 시계',
-    schoolLevel: 'elementary',
-    gradeKey: '1학년 2학기',
-    chapter: '시계 보기와 규칙 찾기',
-    diagramType: 'clock_face',
-    defaultParams: { hour: 2, minute: 15, showNumbers: true, label: '' },
-  },
-  {
-    id: 'e1-1-count-numline',
-    name: '수 세기 수직선',
-    description: '1부터 9까지 수직선',
-    schoolLevel: 'elementary',
-    gradeKey: '1학년 1학기',
-    chapter: '9까지의 수',
-    diagramType: 'number_line',
-    defaultParams: { min: 0, max: 9, step: 1, marks: [{ value: 5, label: '5', color: '#3B82F6', showDot: true }] },
   },
 ];

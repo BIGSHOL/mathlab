@@ -72,7 +72,25 @@ export class PredictionAgent extends BaseAgent<PerformancePrediction> {
       expected_improvement: learningPlan.expected_improvement,
     });
 
-    return `${systemInstruction}
+    return `════════════════════════════════════════════════
+🔒 하드 제약 (HARD CONSTRAINTS) — 위반 시 출력 무효
+════════════════════════════════════════════════
+H1. JSON 객체 하나만 출력. 코드펜스(\`\`\`)·서술문 금지. { 로 시작, } 로 종료.
+H2. 스키마에 정의된 키만 사용. 예측 점수(predicted_score)는 숫자만, 현재 점수 대비 현실적 범위(통상 +0~25점).
+H3. 문자열 내 수식·숫자·변수는 \$...\$로 래핑. 한글은 \$...\$ 밖. \\text{한글} 금지. \\dfrac 금지 → \\frac.
+H4. 인접 수식 \$A\$\$B\$ 금지 → \$A\$ \$B\$. □→\\square, ○→\\bigcirc.
+H5. 입력 learningPlan에 없는 단계(phase)를 지어내지 말 것. 추측 금지.
+
+════════════════════════════════════════════════
+📤 출력 전 자기검증 (SELF-VERIFY)
+════════════════════════════════════════════════
+V1. 출력이 { 로 시작해 } 로 끝나는가?
+V2. \\dfrac·\\text{한글}·백틱이 없는가?
+V3. 예측 점수가 0~100 범위이며 현재 점수 기반 현실적 증가인가?
+V4. 모든 수치·변수가 \$...\$로 래핑되었는가?
+════════════════════════════════════════════════
+
+${systemInstruction}
 
 ## 분석 데이터
 

@@ -670,6 +670,13 @@ function EditMode({
           <div className="flex items-center justify-between mb-1">
             <label className="text-xs font-bold text-text-secondary">해설</label>
             <div className="flex gap-1">
+              <ExplanationRegenerateButton
+                questionId={selectedQuestion.id}
+                hasExisting={!!editForm.explanation}
+                onGenerated={(explanation, answer) => {
+                  setEditForm((p) => ({ ...p, explanation, ...(answer ? { answer } : {}) }));
+                }}
+              />
               {viewMode === 'raw' && (
                 <>
                   <button
@@ -1188,5 +1195,72 @@ function ExplanationGeneratorInline({ question, onSaved }: { question: QuestionI
         )}
       </Button>
     </div>
+  );
+}
+
+/** 편집 모드용: 해설 재생성 버튼 (SUPER_ADMIN 전용, 저장 없이 editForm만 업데이트) */
+function ExplanationRegenerateButton({
+  questionId,
+  hasExisting,
+  onGenerated,
+}: {
+  questionId: string;
+  hasExisting: boolean;
+  onGenerated: (explanation: string, answer?: string) => void;
+}) {
+  const { user } = useAuth();
+  const [generating, setGenerating] = useState(false);
+
+  if (user?.role !== 'SUPER_ADMIN') return null;
+
+  const handleClick = async () => {
+    if (hasExisting) {
+      const ok = window.confirm('기존 해설을 AI로 재생성한 내용으로 덮어씁니다. 저장 버튼을 눌러야 DB에 반영됩니다. 계속할까요?');
+      if (!ok) return;
+    }
+    setGenerating(true);
+    try {
+      const res = await fetch('/api/admin/explanation-preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questionIds: [questionId], mode: 'auto' }),
+      });
+      if (!res.ok || !res.body) { toast.error('생성 실패'); return; }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+      }
+      const line = buffer.trim().split('\n').pop();
+      if (!line) { toast.error('응답 없음'); return; }
+      const msg = JSON.parse(line);
+      const gen = msg.result?.thinking || msg.result?.noThinking;
+      if (!gen?.explanation) { toast.error('해설 생성 실패'); return; }
+      onGenerated(gen.explanation, gen.answerChanged ? gen.answer : undefined);
+      toast.success('해설이 재생성되었습니다. 저장 버튼을 눌러 반영하세요.');
+    } catch {
+      toast.error('해설 재생성 중 오류');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={generating}
+      className="flex items-center gap-1 px-2 py-0.5 text-xs text-violet-600 hover:bg-violet-50 rounded-sm transition-colors disabled:opacity-50"
+      title={hasExisting ? 'AI로 해설 재생성 (기존 내용 덮어씀)' : 'AI로 해설 생성'}
+    >
+      {generating ? (
+        <><Loader2 className="w-3.5 h-3.5 animate-spin" /> 생성 중</>
+      ) : (
+        <><Sparkles className="w-3.5 h-3.5" /> {hasExisting ? 'AI 재생성' : 'AI 생성'}</>
+      )}
+    </button>
   );
 }

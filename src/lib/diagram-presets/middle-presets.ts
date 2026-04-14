@@ -6,6 +6,142 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
   // 1학년 1학기
   // ═══════════════════════════════════════
 
+  // ── 소인수分해 (최대공약수/최소공배수) ──
+  {
+    id: 'm1-1-gcd-brick-box',
+    name: '직육면체 벽돌 쌓기 (최대공약수)',
+    description: '직육면체 상자를 같은 크기의 정육면체 벽돌로 빈틈없이 채우기 — 한 변은 세 변의 최대공약수',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '소인수분해',
+    diagramType: 'solid_figure',
+    defaultParams: {
+      shape: 'rectangular_prism',
+      dimensions: { width: 120, height: 90, depth: 60 },
+      showHiddenEdges: true,
+      color: '#EC4899',
+      gridDivisions: { w: 4, h: 3, d: 2 },
+    },
+  },
+  {
+    id: 'm1-1-lcm-cube-build',
+    name: '정육면체 만들기 (최소공배수)',
+    description: '직육면체 벽돌을 쌓아 가장 작은 정육면체 만들기 — 한 변은 세 변의 최소공배수',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '소인수분해',
+    diagramType: 'solid_figure',
+    defaultParams: {
+      shape: 'cube',
+      showHiddenEdges: true,
+      color: '#10B981',
+      gridDivisions: { w: 5, h: 3, d: 4 },
+    },
+  },
+
+  // ── 정수와 유리수 ──
+  {
+    id: 'm1-1-dice-faces',
+    name: '주사위 (면에 숫자)',
+    description: '보이는 3면에 숫자/분수를 표시한 주사위',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '정수와 유리수',
+    diagramType: 'solid_figure',
+    defaultParams: {
+      shape: 'cube', showHiddenEdges: false, color: '#F9A8D4',
+      faceLabels: [
+        { face: 'front', text: '\\frac{2}{3}' },
+        { face: 'top', text: '-9' },
+        { face: 'right', text: '1' },
+      ],
+    },
+  },
+  {
+    id: 'm1-1-num-pyramid-3',
+    name: '숫자 피라미드 (3단)',
+    description: '3단 삼각형 배열 — 각 칸은 아래 두 수의 합',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '정수와 유리수',
+    diagramType: 'flow_chart',
+    defaultParams: {
+      nodes: [
+        { id: 'a', text: '?', x: 80, y: 0, shape: 'circle', size: 20, color: '#FEF3C7' },
+        { id: 'b', text: '3', x: 40, y: 50, shape: 'circle', size: 20 },
+        { id: 'c', text: '5', x: 120, y: 50, shape: 'circle', size: 20 },
+        { id: 'd', text: '-2', x: 0, y: 100, shape: 'circle', size: 20 },
+        { id: 'e', text: '5', x: 80, y: 100, shape: 'circle', size: 20 },
+        { id: 'f', text: '0', x: 160, y: 100, shape: 'circle', size: 20 },
+      ],
+      arrows: [
+        { from: 'b', to: 'a', noArrowHead: true },
+        { from: 'c', to: 'a', noArrowHead: true },
+        { from: 'd', to: 'b', noArrowHead: true },
+        { from: 'e', to: 'b', noArrowHead: true },
+        { from: 'e', to: 'c', noArrowHead: true },
+        { from: 'f', to: 'c', noArrowHead: true },
+      ],
+    },
+  },
+  {
+    id: 'm1-1-num-pyramid-4',
+    name: '숫자 피라미드 (4단)',
+    description: '4단 삼각형 배열 — 한 변에 놓인 수의 합이 같음',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '정수와 유리수',
+    diagramType: 'flow_chart',
+    defaultParams: {
+      nodes: [
+        { id: 'a', text: 'A', x: 120, y: 0, shape: 'circle', size: 20, color: '#FEF3C7' },
+        { id: 'b', text: '8', x: 70, y: 45, shape: 'circle', size: 20 },
+        { id: 'c', text: '-4', x: 170, y: 45, shape: 'circle', size: 20 },
+        { id: 'd', text: 'B', x: 20, y: 90, shape: 'circle', size: 20, color: '#FEF3C7' },
+        { id: 'e', text: '', x: 120, y: 90, shape: 'circle', size: 20 },
+        { id: 'f', text: '6', x: 220, y: 90, shape: 'circle', size: 20 },
+        { id: 'g', text: '-5', x: 0, y: 135, shape: 'circle', size: 20 },
+        { id: 'h', text: '10', x: 80, y: 135, shape: 'circle', size: 20 },
+        { id: 'i', text: '-7', x: 160, y: 135, shape: 'circle', size: 20 },
+        { id: 'j', text: '9', x: 240, y: 135, shape: 'circle', size: 20 },
+      ],
+      arrows: [
+        { from: 'b', to: 'a', noArrowHead: true },
+        { from: 'c', to: 'a', noArrowHead: true },
+        { from: 'd', to: 'b', noArrowHead: true },
+        { from: 'e', to: 'b', noArrowHead: true },
+        { from: 'e', to: 'c', noArrowHead: true },
+        { from: 'f', to: 'c', noArrowHead: true },
+        { from: 'g', to: 'd', noArrowHead: true },
+        { from: 'h', to: 'd', noArrowHead: true },
+        { from: 'h', to: 'e', noArrowHead: true },
+        { from: 'i', to: 'e', noArrowHead: true },
+        { from: 'i', to: 'f', noArrowHead: true },
+        { from: 'j', to: 'f', noArrowHead: true },
+      ],
+    },
+  },
+  {
+    id: 'm1-1-int-numline',
+    name: '정수 수직선',
+    description: '양수·음수를 수직선에 표시',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '정수와 유리수',
+    diagramType: 'number_line',
+    defaultParams: { min: -5, max: 5, step: 1, marks: [{ value: -3, label: '-3', color: '#EF4444', showDot: true }, { value: 2, label: '+2', color: '#3B82F6', showDot: true }], showAllTickLabels: true },
+  },
+  {
+    id: 'm1-1-numline-points',
+    name: '수직선 위의 점',
+    description: '수직선 위 점에 문자 표시 (라벨 위/아래 토글, 좌우 화살표 토글)',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '정수와 유리수',
+    diagramType: 'number_line',
+    defaultParams: { min: -3, max: 3, step: 1, showAllTickLabels: true, arrowLeft: true, arrowRight: true, marks: [{ value: -2, label: 'A', color: '#333', showDot: true }, { value: -1, label: 'B', color: '#333', showDot: true }, { value: 0, label: 'C', color: '#333', showDot: true }, { value: 1, label: 'D', color: '#333', showDot: true }, { value: 2, label: 'E', color: '#333', showDot: true }] },
+  },
+
   // ── 문자의 사용과 식 ──
   {
     id: 'm1-1-expr-rect-area',
@@ -79,6 +215,8 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     diagramType: 'quadrilateral',
     defaultParams: { vertices: [{ x: 40, y: 10, label: 'A' }, { x: 140, y: 10, label: 'B' }, { x: 170, y: 110, label: 'C' }, { x: 10, y: 110, label: 'D' }], sides: [{ from: 0, to: 1, label: 'x' }, { from: 2, to: 3, label: 'x+2' }], type: 'trapezoid' },
   },
+
+  // ── 좌표와 그래프 ──
   {
     id: 'm1-1-coord-basic',
     name: '좌표평면 (순서쌍)',
@@ -109,6 +247,8 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     diagramType: 'coordinate_plane',
     defaultParams: { xRange: [-5, 5], yRange: [-5, 5], gridStep: 1, points: [{ x: 3, y: 4, label: '제1사분면' }, { x: -3, y: 2, label: '제2사분면' }, { x: -2, y: -3, label: '제3사분면' }, { x: 4, y: -2, label: '제4사분면' }], lines: [] },
   },
+
+  // ── 정비례와 반비례 ──
   {
     id: 'm1-1-prop-direct',
     name: '정비례 그래프',
@@ -139,10 +279,22 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     diagramType: 'function_graph',
     defaultParams: { xRange: [-5, 5], yRange: [-5, 5], gridStep: 1, functions: [{ expression: '-x', label: 'y=-x' }], points: [] },
   },
+  {
+    id: 'm1-1-prop-compare',
+    name: '정비례 vs 반비례',
+    description: 'y=2x와 y=6/x 비교',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '정비례와 반비례',
+    diagramType: 'function_graph',
+    defaultParams: { xRange: [-6, 6], yRange: [-6, 6], gridStep: 1, functions: [{ expression: '2*x', label: 'y=2x (정비례)', color: '#3B82F6' }, { expression: '6/x', label: 'y=6/x (반비례)', color: '#EF4444' }], points: [] },
+  },
 
   // ═══════════════════════════════════════
   // 1학년 2학기
   // ═══════════════════════════════════════
+
+  // ── 기본 도형 ──
   {
     id: 'm1-2-basic-angle',
     name: '맞꼭지각',
@@ -189,6 +341,8 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
       ],
     },
   },
+
+  // ── 작도와 합동 ──
   {
     id: 'm1-2-constr-sss',
     name: '삼각형 작도 (SSS)',
@@ -220,6 +374,18 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     defaultParams: { vertices: [{ x: 10, y: 140, label: 'A' }, { x: 190, y: 140, label: 'B' }, { x: 100, y: 20, label: 'C' }], sides: [{ from: 0, to: 1, label: '8cm' }], angles: [{ vertex: 0, value: '50°' }, { vertex: 1, value: '70°' }] },
   },
   {
+    id: 'm1-2-perp-bisector',
+    name: '수직이등분선 작도',
+    description: '변의 수직이등분선',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 2학기',
+    chapter: '작도와 합동',
+    diagramType: 'triangle',
+    defaultParams: { vertices: [{ x: 100, y: 10, label: 'A' }, { x: 20, y: 150, label: 'B' }, { x: 180, y: 150, label: 'C' }], sides: [{ from: 1, to: 2, label: '' }], angles: [], auxiliaryLines: ['perpendicular_bisectors'] },
+  },
+
+  // ── 평면도형 ──
+  {
     id: 'm1-2-plane-polygon',
     name: '다각형 (내각의 합)',
     description: '정육각형 내각의 합',
@@ -249,6 +415,8 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     diagramType: 'circle',
     defaultParams: { radius: 60, labels: [{ text: 'O', position: 'center' }, { text: 'r', position: 'radius' }], arcs: [{ startAngle: 0, endAngle: 90, label: '90°' }] },
   },
+
+  // ── 입체도형 ──
   {
     id: 'm1-2-solid-poly',
     name: '다면체 (정다면체)',
@@ -258,23 +426,6 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     chapter: '입체도형',
     diagramType: 'solid_figure',
     defaultParams: { shape: 'cube', labels: [], showHiddenEdges: true, color: '#3B82F6' },
-  },
-  {
-    id: 'm1-1-dice-faces',
-    name: '주사위 (면에 숫자)',
-    description: '보이는 3면에 숫자/분수를 표시한 주사위',
-    schoolLevel: 'middle',
-    gradeKey: '1학년 1학기',
-    chapter: '정수와 유리수',
-    diagramType: 'solid_figure',
-    defaultParams: {
-      shape: 'cube', showHiddenEdges: false, color: '#F9A8D4',
-      faceLabels: [
-        { face: 'front', text: '\\frac{2}{3}' },
-        { face: 'top', text: '-9' },
-        { face: 'right', text: '1' },
-      ],
-    },
   },
   {
     id: 'm1-2-solid-rev',
@@ -306,6 +457,8 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     diagramType: 'solid_figure',
     defaultParams: { shape: 'sphere', labels: [], showHiddenEdges: true, color: '#7C3AED' },
   },
+
+  // ── 자료의 정리와 해석 ──
   {
     id: 'm1-2-data-stem',
     name: '줄기와 잎 그림',
@@ -340,6 +493,30 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
   // ═══════════════════════════════════════
   // 2학년 1학기
   // ═══════════════════════════════════════
+
+  // ── 일차부등식 ──
+  {
+    id: 'm2-1-ineq-numline',
+    name: '일차부등식 (수직선)',
+    description: '부등식의 해를 수직선에 표시',
+    schoolLevel: 'middle',
+    gradeKey: '2학년 1학기',
+    chapter: '일차부등식',
+    diagramType: 'number_line',
+    defaultParams: { min: -5, max: 5, step: 1, marks: [{ value: 3, label: 'x=3', color: '#EF4444' }], highlights: [{ from: -5, to: 3, color: '#3B82F6' }] },
+  },
+  {
+    id: 'm2-1-ineq-compound',
+    name: '복합부등식 수직선',
+    description: '-1 ≤ x < 3 범위 표시',
+    schoolLevel: 'middle',
+    gradeKey: '2학년 1학기',
+    chapter: '일차부등식',
+    diagramType: 'number_line',
+    defaultParams: { min: -4, max: 5, step: 1, highlights: [{ from: -1, to: 3, color: '#3B82F6', label: '' }], closedEndpoints: [-1], openEndpoints: [3] },
+  },
+
+  // ── 일차함수 ──
   {
     id: 'm2-1-linear-basic',
     name: '일차함수 (기본)',
@@ -390,20 +567,12 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     diagramType: 'function_graph',
     defaultParams: { xRange: [-5, 5], yRange: [-5, 5], gridStep: 1, functions: [{ expression: '0.5*x+2', label: 'y=½x+2', color: '#3B82F6' }, { expression: '0.5*x-1', label: 'y=½x-1', color: '#EF4444' }], points: [] },
   },
-  {
-    id: 'm2-1-ineq-numline',
-    name: '일차부등식 (수직선)',
-    description: '부등식의 해를 수직선에 표시',
-    schoolLevel: 'middle',
-    gradeKey: '2학년 1학기',
-    chapter: '일차부등식',
-    diagramType: 'number_line',
-    defaultParams: { min: -5, max: 5, step: 1, marks: [{ value: 3, label: 'x=3', color: '#EF4444' }], highlights: [{ from: -5, to: 3, color: '#3B82F6' }] },
-  },
 
   // ═══════════════════════════════════════
   // 2학년 2학기
   // ═══════════════════════════════════════
+
+  // ── 삼각형의 성질 ──
   {
     id: 'm2-2-tri-isosceles',
     name: '이등변삼각형의 성질',
@@ -445,6 +614,18 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     defaultParams: { vertices: [{ x: 100, y: 10, label: 'A' }, { x: 10, y: 150, label: 'B' }, { x: 190, y: 150, label: 'C' }], sides: [], angles: [], specialPoints: ['incenter'], auxiliaryLines: ['angle_bisectors'], inscribedCircle: true },
   },
   {
+    id: 'm2-2-angle-bisector',
+    name: '각의 이등분선',
+    description: '삼각형 각의 이등분선',
+    schoolLevel: 'middle',
+    gradeKey: '2학년 2학기',
+    chapter: '삼각형의 성질',
+    diagramType: 'triangle',
+    defaultParams: { vertices: [{ x: 100, y: 10, label: 'A' }, { x: 10, y: 150, label: 'B' }, { x: 190, y: 150, label: 'C' }], sides: [], angles: [], auxiliaryLines: ['angle_bisectors'] },
+  },
+
+  // ── 사각형의 성질 ──
+  {
     id: 'm2-2-quad-parallel',
     name: '평행사변형',
     description: '대변이 평행하고 같음',
@@ -474,6 +655,8 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     diagramType: 'quadrilateral',
     defaultParams: { vertices: [{ x: 20, y: 20, label: 'A' }, { x: 140, y: 20, label: 'B' }, { x: 140, y: 140, label: 'C' }, { x: 20, y: 140, label: 'D' }], sides: [{ from: 0, to: 1, label: 'a' }], angles: [], type: 'square' },
   },
+
+  // ── 도형의 닮음 ──
   {
     id: 'm2-2-similar',
     name: '닮음 (AA 닮음)',
@@ -504,6 +687,8 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     diagramType: 'triangle',
     defaultParams: { vertices: [{ x: 100, y: 10, label: 'A' }, { x: 10, y: 150, label: 'B' }, { x: 190, y: 150, label: 'C' }], sides: [], angles: [], specialPoints: ['centroid'], auxiliaryLines: ['medians'] },
   },
+
+  // ── 피타고라스 정리 ──
   {
     id: 'm2-2-pytha',
     name: '피타고라스 정리',
@@ -524,6 +709,8 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     diagramType: 'triangle',
     defaultParams: { vertices: [{ x: 10, y: 150, label: 'A' }, { x: 190, y: 150, label: 'B' }, { x: 10, y: 10, label: 'C' }], sides: [{ from: 0, to: 1, label: '?' }, { from: 0, to: 2, label: '8' }, { from: 1, to: 2, label: '10' }], angles: [{ vertex: 0, value: '90°' }] },
   },
+
+  // ── 확률 ──
   {
     id: 'm2-2-prob-tree',
     name: '경우의 수 (수형도)',
@@ -548,6 +735,20 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
   // ═══════════════════════════════════════
   // 3학년 1학기
   // ═══════════════════════════════════════
+
+  // ── 실수와 그 연산 ──
+  {
+    id: 'm3-1-real-numline',
+    name: '무리수 수직선',
+    description: '√2, √3 위치 표시',
+    schoolLevel: 'middle',
+    gradeKey: '3학년 1학기',
+    chapter: '실수와 그 연산',
+    diagramType: 'number_line',
+    defaultParams: { min: 0, max: 3, step: 0.5, marks: [{ value: 1, label: '1', showDot: true }, { value: 1.414, label: '√2', color: '#EF4444', showDot: true }, { value: 1.732, label: '√3', color: '#3B82F6', showDot: true }, { value: 2, label: '2', showDot: true }], showAllTickLabels: true },
+  },
+
+  // ── 이차함수 ──
   {
     id: 'm3-1-quad-basic',
     name: '이차함수 (기본형)',
@@ -608,10 +809,22 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     diagramType: 'function_graph',
     defaultParams: { xRange: [-4, 4], yRange: [-5, 5], gridStep: 1, functions: [{ expression: 'x^2-4', label: 'y=x²-4' }], points: [{ x: -2, y: 0, label: '(-2,0)' }, { x: 2, y: 0, label: '(2,0)' }] },
   },
+  {
+    id: 'm3-1-quad-shift',
+    name: '이차함수 평행이동',
+    description: 'y=x², y=(x-2)², y=x²+3 비교',
+    schoolLevel: 'middle',
+    gradeKey: '3학년 1학기',
+    chapter: '이차함수',
+    diagramType: 'function_graph',
+    defaultParams: { xRange: [-4, 6], yRange: [-2, 10], gridStep: 1, functions: [{ expression: 'x^2', label: 'y=x²', color: '#9CA3AF' }, { expression: '(x-2)^2', label: 'y=(x-2)²', color: '#3B82F6' }, { expression: 'x^2+3', label: 'y=x²+3', color: '#EF4444' }], points: [{ x: 0, y: 0, label: 'O' }, { x: 2, y: 0, label: '' }, { x: 0, y: 3, label: '' }] },
+  },
 
   // ═══════════════════════════════════════
   // 3학년 2학기
   // ═══════════════════════════════════════
+
+  // ── 삼각비 ──
   {
     id: 'm3-2-trig-basic',
     name: '삼각비 (기본)',
@@ -642,6 +855,28 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     diagramType: 'triangle',
     defaultParams: { vertices: [{ x: 10, y: 150, label: 'A' }, { x: 190, y: 150, label: 'B' }, { x: 190, y: 10, label: 'C' }], sides: [{ from: 0, to: 1, label: '20m' }, { from: 1, to: 2, label: 'h' }], angles: [{ vertex: 1, value: '90°' }, { vertex: 0, value: '35°' }] },
   },
+  {
+    id: 'm3-2-trig-unit',
+    name: '단위원 삼각비',
+    description: '반지름 1인 원에서 sinθ, cosθ',
+    schoolLevel: 'middle',
+    gradeKey: '3학년 2학기',
+    chapter: '삼각비',
+    diagramType: 'circle',
+    defaultParams: { radius: 70, labels: [{ text: 'O', position: 'center' }, { text: '1', position: 'radius' }], arcs: [{ startAngle: 0, endAngle: 60, label: '60°' }] },
+  },
+  {
+    id: 'm3-2-law-sines',
+    name: '사인법칙',
+    description: 'a/sinA = b/sinB = c/sinC',
+    schoolLevel: 'middle',
+    gradeKey: '3학년 2학기',
+    chapter: '삼각비',
+    diagramType: 'triangle',
+    defaultParams: { vertices: [{ x: 100, y: 10, label: 'A' }, { x: 10, y: 150, label: 'B' }, { x: 190, y: 150, label: 'C' }], sides: [{ from: 0, to: 1, label: 'b' }, { from: 1, to: 2, label: 'a' }, { from: 0, to: 2, label: 'c' }], angles: [{ vertex: 0, value: 'A' }, { vertex: 1, value: 'B' }, { vertex: 2, value: 'C' }] },
+  },
+
+  // ── 원의 성질 ──
   {
     id: 'm3-2-circle-chord',
     name: '원과 현',
@@ -683,6 +918,18 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     defaultParams: { radius: 70, labels: [{ text: 'O', position: 'center' }], arcs: [{ startAngle: 30, endAngle: 150, label: '' }] },
   },
   {
+    id: 'm3-2-circle-chord-perp',
+    name: '현의 수직이등분선',
+    description: '현의 수직이등분선은 중심을 지남',
+    schoolLevel: 'middle',
+    gradeKey: '3학년 2학기',
+    chapter: '원의 성질',
+    diagramType: 'circle',
+    defaultParams: { radius: 70, labels: [{ text: 'O', position: 'center' }, { text: 'M', position: 'chord_midpoint' }], arcs: [] },
+  },
+
+  // ── 통계 ──
+  {
     id: 'm3-2-stat-scatter',
     name: '산점도 (양의 상관)',
     description: '양의 상관관계 산점도',
@@ -711,204 +958,5 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     chapter: '통계',
     diagramType: 'scatter_plot',
     defaultParams: { points: [{ x: 1, y: 5 }, { x: 2, y: 2 }, { x: 3, y: 6 }, { x: 4, y: 3 }, { x: 5, y: 7 }, { x: 6, y: 1 }], xRange: [0, 7], yRange: [0, 8], xLabel: 'x', yLabel: 'y', gridStep: 1, showTrendLine: false },
-  },
-
-  // ═══════════════════════════════════════
-  // 숫자 피라미드 (flow_chart 기반)
-  // ═══════════════════════════════════════
-  {
-    id: 'm1-1-num-pyramid-3',
-    name: '숫자 피라미드 (3단)',
-    description: '3단 삼각형 배열 — 각 칸은 아래 두 수의 합',
-    schoolLevel: 'middle',
-    gradeKey: '1학년 1학기',
-    chapter: '정수와 유리수',
-    diagramType: 'flow_chart',
-    defaultParams: {
-      nodes: [
-        { id: 'a', text: '?', x: 80, y: 0, shape: 'circle', size: 20, color: '#FEF3C7' },
-        { id: 'b', text: '3', x: 40, y: 50, shape: 'circle', size: 20 },
-        { id: 'c', text: '5', x: 120, y: 50, shape: 'circle', size: 20 },
-        { id: 'd', text: '-2', x: 0, y: 100, shape: 'circle', size: 20 },
-        { id: 'e', text: '5', x: 80, y: 100, shape: 'circle', size: 20 },
-        { id: 'f', text: '0', x: 160, y: 100, shape: 'circle', size: 20 },
-      ],
-      arrows: [
-        { from: 'b', to: 'a', noArrowHead: true },
-        { from: 'c', to: 'a', noArrowHead: true },
-        { from: 'd', to: 'b', noArrowHead: true },
-        { from: 'e', to: 'b', noArrowHead: true },
-        { from: 'e', to: 'c', noArrowHead: true },
-        { from: 'f', to: 'c', noArrowHead: true },
-      ],
-    },
-  },
-  {
-    id: 'm1-1-num-pyramid-4',
-    name: '숫자 피라미드 (4단)',
-    description: '4단 삼각형 배열 — 한 변에 놓인 수의 합이 같음',
-    schoolLevel: 'middle',
-    gradeKey: '1학년 1학기',
-    chapter: '정수와 유리수',
-    diagramType: 'flow_chart',
-    defaultParams: {
-      nodes: [
-        { id: 'a', text: 'A', x: 120, y: 0, shape: 'circle', size: 20, color: '#FEF3C7' },
-        { id: 'b', text: '8', x: 70, y: 45, shape: 'circle', size: 20 },
-        { id: 'c', text: '-4', x: 170, y: 45, shape: 'circle', size: 20 },
-        { id: 'd', text: 'B', x: 20, y: 90, shape: 'circle', size: 20, color: '#FEF3C7' },
-        { id: 'e', text: '', x: 120, y: 90, shape: 'circle', size: 20 },
-        { id: 'f', text: '6', x: 220, y: 90, shape: 'circle', size: 20 },
-        { id: 'g', text: '-5', x: 0, y: 135, shape: 'circle', size: 20 },
-        { id: 'h', text: '10', x: 80, y: 135, shape: 'circle', size: 20 },
-        { id: 'i', text: '-7', x: 160, y: 135, shape: 'circle', size: 20 },
-        { id: 'j', text: '9', x: 240, y: 135, shape: 'circle', size: 20 },
-      ],
-      arrows: [
-        { from: 'b', to: 'a', noArrowHead: true },
-        { from: 'c', to: 'a', noArrowHead: true },
-        { from: 'd', to: 'b', noArrowHead: true },
-        { from: 'e', to: 'b', noArrowHead: true },
-        { from: 'e', to: 'c', noArrowHead: true },
-        { from: 'f', to: 'c', noArrowHead: true },
-        { from: 'g', to: 'd', noArrowHead: true },
-        { from: 'h', to: 'd', noArrowHead: true },
-        { from: 'h', to: 'e', noArrowHead: true },
-        { from: 'i', to: 'e', noArrowHead: true },
-        { from: 'i', to: 'f', noArrowHead: true },
-        { from: 'j', to: 'f', noArrowHead: true },
-      ],
-    },
-  },
-
-  // 추가 프리셋 — Tier 1 (교육 필수)
-  // ═══════════════════════════════════════
-  {
-    id: 'm1-1-int-numline',
-    name: '정수 수직선',
-    description: '양수·음수를 수직선에 표시',
-    schoolLevel: 'middle',
-    gradeKey: '1학년 1학기',
-    chapter: '정수와 유리수',
-    diagramType: 'number_line',
-    defaultParams: { min: -5, max: 5, step: 1, marks: [{ value: -3, label: '-3', color: '#EF4444', showDot: true }, { value: 2, label: '+2', color: '#3B82F6', showDot: true }], showAllTickLabels: true },
-  },
-  {
-    id: 'm1-1-numline-points',
-    name: '수직선 위의 점',
-    description: '수직선 위 점에 문자(A, B, C…) 표시',
-    schoolLevel: 'middle',
-    gradeKey: '1학년 1학기',
-    chapter: '정수와 유리수',
-    diagramType: 'number_line',
-    defaultParams: { min: -3, max: 3, step: 1, showAllTickLabels: true, marks: [{ value: -2, label: 'A', color: '#333', showDot: true }, { value: -1, label: 'B', color: '#333', showDot: true }, { value: 0, label: 'C', color: '#333', showDot: true }, { value: 1, label: 'D', color: '#333', showDot: true }, { value: 2, label: 'E', color: '#333', showDot: true }] },
-  },
-  {
-    id: 'm1-1-numline-points-below',
-    name: '수직선 아래 점 표시',
-    description: '수직선 아래에 문자(A, B, C…) 표시',
-    schoolLevel: 'middle',
-    gradeKey: '1학년 1학기',
-    chapter: '정수와 유리수',
-    diagramType: 'number_line',
-    defaultParams: { min: -3, max: 3, step: 1, showAllTickLabels: true, marks: [{ value: -2, label: 'A', color: '#333', showDot: true, labelBelow: true }, { value: -1, label: 'B', color: '#333', showDot: true, labelBelow: true }, { value: 0, label: 'C', color: '#333', showDot: true, labelBelow: true }, { value: 1, label: 'D', color: '#333', showDot: true, labelBelow: true }, { value: 2, label: 'E', color: '#333', showDot: true, labelBelow: true }] },
-  },
-  {
-    id: 'm2-1-ineq-compound',
-    name: '복합부등식 수직선',
-    description: '-1 ≤ x < 3 범위 표시',
-    schoolLevel: 'middle',
-    gradeKey: '2학년 1학기',
-    chapter: '일차부등식',
-    diagramType: 'number_line',
-    defaultParams: { min: -4, max: 5, step: 1, highlights: [{ from: -1, to: 3, color: '#3B82F6', label: '' }], closedEndpoints: [-1], openEndpoints: [3] },
-  },
-  {
-    id: 'm3-1-real-numline',
-    name: '무리수 수직선',
-    description: '√2, √3 위치 표시',
-    schoolLevel: 'middle',
-    gradeKey: '3학년 1학기',
-    chapter: '실수와 그 연산',
-    diagramType: 'number_line',
-    defaultParams: { min: 0, max: 3, step: 0.5, marks: [{ value: 1, label: '1', showDot: true }, { value: 1.414, label: '√2', color: '#EF4444', showDot: true }, { value: 1.732, label: '√3', color: '#3B82F6', showDot: true }, { value: 2, label: '2', showDot: true }], showAllTickLabels: true },
-  },
-
-  // ═══════════════════════════════════════
-  // 추가 프리셋 — Tier 2 (교육 효과 높음)
-  // ═══════════════════════════════════════
-  {
-    id: 'm1-2-perp-bisector',
-    name: '수직이등분선 작도',
-    description: '변의 수직이등분선',
-    schoolLevel: 'middle',
-    gradeKey: '1학년 2학기',
-    chapter: '작도와 합동',
-    diagramType: 'triangle',
-    defaultParams: { vertices: [{ x: 100, y: 10, label: 'A' }, { x: 20, y: 150, label: 'B' }, { x: 180, y: 150, label: 'C' }], sides: [{ from: 1, to: 2, label: '' }], angles: [], auxiliaryLines: ['perpendicular_bisectors'] },
-  },
-  {
-    id: 'm3-2-trig-unit',
-    name: '단위원 삼각비',
-    description: '반지름 1인 원에서 sinθ, cosθ',
-    schoolLevel: 'middle',
-    gradeKey: '3학년 2학기',
-    chapter: '삼각비',
-    diagramType: 'circle',
-    defaultParams: { radius: 70, labels: [{ text: 'O', position: 'center' }, { text: '1', position: 'radius' }], arcs: [{ startAngle: 0, endAngle: 60, label: '60°' }] },
-  },
-  {
-    id: 'm3-2-circle-chord-perp',
-    name: '현의 수직이등분선',
-    description: '현의 수직이등분선은 중심을 지남',
-    schoolLevel: 'middle',
-    gradeKey: '3학년 2학기',
-    chapter: '원의 성질',
-    diagramType: 'circle',
-    defaultParams: { radius: 70, labels: [{ text: 'O', position: 'center' }, { text: 'M', position: 'chord_midpoint' }], arcs: [] },
-  },
-  {
-    id: 'm3-2-law-sines',
-    name: '사인법칙',
-    description: 'a/sinA = b/sinB = c/sinC',
-    schoolLevel: 'middle',
-    gradeKey: '3학년 2학기',
-    chapter: '삼각비',
-    diagramType: 'triangle',
-    defaultParams: { vertices: [{ x: 100, y: 10, label: 'A' }, { x: 10, y: 150, label: 'B' }, { x: 190, y: 150, label: 'C' }], sides: [{ from: 0, to: 1, label: 'b' }, { from: 1, to: 2, label: 'a' }, { from: 0, to: 2, label: 'c' }], angles: [{ vertex: 0, value: 'A' }, { vertex: 1, value: 'B' }, { vertex: 2, value: 'C' }] },
-  },
-  {
-    id: 'm1-1-prop-compare',
-    name: '정비례 vs 반비례',
-    description: 'y=2x와 y=6/x 비교',
-    schoolLevel: 'middle',
-    gradeKey: '1학년 1학기',
-    chapter: '정비례와 반비례',
-    diagramType: 'function_graph',
-    defaultParams: { xRange: [-6, 6], yRange: [-6, 6], gridStep: 1, functions: [{ expression: '2*x', label: 'y=2x (정비례)', color: '#3B82F6' }, { expression: '6/x', label: 'y=6/x (반비례)', color: '#EF4444' }], points: [] },
-  },
-
-  // ═══════════════════════════════════════
-  // 추가 프리셋 — Tier 3 (활용도 보완)
-  // ═══════════════════════════════════════
-  {
-    id: 'm3-1-quad-shift',
-    name: '이차함수 평행이동',
-    description: 'y=x², y=(x-2)², y=x²+3 비교',
-    schoolLevel: 'middle',
-    gradeKey: '3학년 1학기',
-    chapter: '이차함수',
-    diagramType: 'function_graph',
-    defaultParams: { xRange: [-4, 6], yRange: [-2, 10], gridStep: 1, functions: [{ expression: 'x^2', label: 'y=x²', color: '#9CA3AF' }, { expression: '(x-2)^2', label: 'y=(x-2)²', color: '#3B82F6' }, { expression: 'x^2+3', label: 'y=x²+3', color: '#EF4444' }], points: [{ x: 0, y: 0, label: 'O' }, { x: 2, y: 0, label: '' }, { x: 0, y: 3, label: '' }] },
-  },
-  {
-    id: 'm2-2-angle-bisector',
-    name: '각의 이등분선',
-    description: '삼각형 각의 이등분선',
-    schoolLevel: 'middle',
-    gradeKey: '2학년 2학기',
-    chapter: '삼각형의 성질',
-    diagramType: 'triangle',
-    defaultParams: { vertices: [{ x: 100, y: 10, label: 'A' }, { x: 10, y: 150, label: 'B' }, { x: 190, y: 150, label: 'C' }], sides: [], angles: [], auxiliaryLines: ['angle_bisectors'] },
   },
 ];

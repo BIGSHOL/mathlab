@@ -104,6 +104,18 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
     .replace(/\\\([\s\S]*?\\\)/g, (match, p1) => `$${p1}$`)
     .replace(/\\\[[\s\S]*?\\\]/g, (match, p1) => `$$$${p1}$$$$`);
 
+  // 인접 인라인 수식 글루 복원: "$A$$B$" → "$A$ $B$"
+  // DB에 공백 없이 붙은 두 inline이 저장된 경우, $$가 block 구분자로 오인되어 파싱 실패.
+  // A, B 모두 단일 줄 / $ 미포함일 때만 분리. 여러 번 반복 적용하여 연쇄 케이스 대응.
+  for (let i = 0; i < 5; i++) {
+    const next = svgReplacedContent.replace(
+      /\$([^$\n]+)\$\$([^$\n]+)\$/g,
+      (_m, a, b) => `$${a}$ $${b}$`,
+    );
+    if (next === svgReplacedContent) break;
+    svgReplacedContent = next;
+  }
+
   // 인라인 $...$ 안에 multi-line 환경(\begin{cases|align|array|matrix|pmatrix|bmatrix|vmatrix|split|gather})이
   // 들어있으면 블록 수식 $$...$$로 자동 승격 (KaTeX가 인라인에서 제대로 렌더 못함)
   // ⚠️ 이미 $$...$$ 인 부분은 건드리지 않도록 앞/뒤에 $가 없어야 함 (negative lookbehind/ahead)

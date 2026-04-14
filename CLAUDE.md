@@ -349,6 +349,34 @@ Additive 구조 — 상위 역할이 하위 역할 메뉴를 포함 (`src/lib/co
 - UI: `/questions/pdf-import` 페이지 자체 가드 (role !== SUPER_ADMIN 시 `/overview` 리다이렉트)
 - 네비: `navigation.ts`에서 `minRole: 'SUPER_ADMIN'` 필터링
 
+**후처리 정규화 (Gemini 추출 오류 자동 보정) — `src/lib/pdf-extract-engine/ai/post-processor.ts`:**
+- `normalizeMathText(text)` — content/choices/explanation/scoringCriteria에 적용
+  1. `fixLatexEscaping` — JSON 이스케이프 복원, 리터럴 `\n` → 실제 줄바꿈, `\dfrac` → `\frac`
+  2. 수식 밖 `\textrm{X}` / `\text{X}` / `\mathrm{X}` → `X`, `\textbf{X}` → `**X**`, `\textit{X}` → `*X*`
+  3. 인접 인라인 수식 글루 분리: `$A$$B$` → `$A$ $B$` (최대 5회 반복)
+  4. 블록 수식 `$$...$$` 내 2줄 이상 + `=` 2개 이상 → `\begin{aligned}...\end{aligned}` 자동 래핑
+  5. 연속 공백/3+ 줄바꿈 정리 (수식 내부는 보호)
+- `normalizeAnswerField(answer)` — 정답 필드 전용
+  - LaTeX 커맨드 감지(`\frac`, `\sqrt`, `\times`, `^{`, `_{` 등) + `$` 미포함 시 자동 `$...$` 래핑
+  - 콤마 구분된 여러 정답도 각각 래핑
+- **추출 프롬프트 규칙 (Gemini에 사전 지시):**
+  - 다단계 계산식은 반드시 `\begin{aligned}...\end{aligned}` 사용 (평문 `\n`으로 = 나열 금지)
+  - 인라인 수식 연속 시 공백 필수 (`$A$ $B$`, 금지 `$A$$B$`)
+  - `answer` 필드에 LaTeX 수식 있으면 반드시 `$...$` 감싸기
+  - 해설이 페이지 경계를 넘으면 끝까지 합쳐서 추출
+- **해설 추출 페이지 경계 처리:** `pdf-extract-solutions/route.ts`는 3-페이지 슬라이딩 윈도우로 호출. dedupe 우선순위: (1) answer 존재 > (2) explanation 길이 > (3) scoringCriteria 길이
+
+**기존 데이터 정리 스크립트:**
+- `scripts/fix-aligned-explanations.ts` — literal `\n` + aligned 변환 + 글루 분리
+- `scripts/fix-case-markers.ts` — `(\textrm{i})` / `따라서` / `이상에서` 앞 줄바꿈
+- `scripts/fix-textrm-leftover.ts` — 수식 밖 `\textrm`/`\text`/`\mathrm` 제거
+- `scripts/fix-answer-latex-wrap.ts` — 정답 필드 `$...$` 래핑
+- `scripts/find-noBreak-explanations.ts` — 줄바꿈 없는 긴 해설 탐지 (읽기 전용)
+
+**편집 모드 AI 해설 재생성 버튼 (SUPER_ADMIN 전용):**
+- `QuestionViewEditModal.tsx::ExplanationRegenerateButton` — 편집 폼의 해설 라벨 영역
+- 기존 해설 있으면 confirm 다이얼로그, editForm만 업데이트 (사용자가 저장 버튼으로 확정)
+
 ### 기출 시험지 배치 추출 시스템
 
 분석 완료된 ExamPaper를 SUPER_ADMIN이 승인하면 Vercel Cron이 야간에 일괄 추출 → 지점 전용 문제은행 저장.

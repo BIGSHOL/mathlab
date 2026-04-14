@@ -45,6 +45,10 @@ export interface NumberLineParams {
   openEndpoints?: number[];
   /** 닫힌 끝점 (채운 원) */
   closedEndpoints?: number[];
+  /** 왼쪽 화살표 표시 (기본 false) */
+  arrowLeft?: boolean;
+  /** 오른쪽 화살표 표시 (기본 true) */
+  arrowRight?: boolean;
 }
 
 export interface FractionCircleParams {
@@ -236,6 +240,7 @@ export interface RegularPolygonParams extends ShapeStyle {
   labels?: { vertex: number; text: string }[];
   diagonals?: boolean | { from: number; to: number; style?: 'solid' | 'dashed' }[];
   sideLength?: string;
+  angles?: { vertex: number; text?: string; exterior?: boolean }[];
 }
 
 // --- 초등 추가 ---
@@ -320,6 +325,8 @@ export interface ClockFaceParams {
   hour: number;
   minute: number;
   showNumbers?: boolean;
+  showMinuteTicks?: boolean;
+  show5MinuteTicks?: boolean;
   label?: string;
 }
 
@@ -359,6 +366,12 @@ export interface SolidFigureParams {
   dimensions?: { width?: number; height?: number; depth?: number; radius?: number };
   showHiddenEdges?: boolean;
   color?: string;
+  /** 격자 분할(최대공약수/최소공배수 시각화용) 사용 모드 관련 */
+  gridDivisions?: { w?: number; h?: number; d?: number };
+  showGridLines?: boolean;
+  showCornerUnit?: boolean;
+  viewAngle?: number;
+  viewDepth?: number;
 }
 
 export interface NetDiagramParams {

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import {
   Plus,
   FileText,
@@ -11,6 +12,7 @@ import {
   KeyRound,
   Loader2,
   Sparkles,
+  BookOpen,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -66,6 +68,7 @@ export function QuestionListMain({
   isOwner,
   canEdit,
 }: QuestionListMainProps) {
+  const [explanationOnly, setExplanationOnly] = useState(false);
   return (
     <main className="flex-1 flex flex-col min-w-0 bg-white p-3 md:p-4 gap-3 overflow-y-auto">
       {/* Page Header */}
@@ -76,26 +79,37 @@ export function QuestionListMain({
             초등·중등 수학 문제 검색 및 관리. 전체 {meta.total.toLocaleString()}개의 문제
           </p>
         </div>
-        {canEdit && (
-          <div className="flex gap-2">
-            <Link href="/questions/generate">
-              <Button variant="secondary" size="sm">
-                <Sparkles className="w-4 h-4 mr-2" />
-                AI 문제 생성
+        <div className="flex gap-2 items-center">
+          <Button
+            variant={explanationOnly ? 'primary' : 'secondary'}
+            size="sm"
+            onClick={() => setExplanationOnly((v) => !v)}
+            title="문제 본문을 숨기고 해설만 미리보기"
+          >
+            <BookOpen className="w-4 h-4 mr-2" />
+            {explanationOnly ? '해설만 보는 중' : '해설만 보기'}
+          </Button>
+          {canEdit && (
+            <>
+              <Link href="/questions/generate">
+                <Button variant="secondary" size="sm">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  AI 문제 생성
+                </Button>
+              </Link>
+              {isOwner && (
+                <Button variant="secondary" size="sm">
+                  <Download className="w-4 h-4 mr-2" />
+                  PDF 내보내기
+                </Button>
+              )}
+              <Button size="sm" onClick={openCreateModal}>
+                <Plus className="w-4 h-4 mr-2" />
+                새 문제 추가
               </Button>
-            </Link>
-            {isOwner && (
-              <Button variant="secondary" size="sm">
-                <Download className="w-4 h-4 mr-2" />
-                PDF 내보내기
-              </Button>
-            )}
-            <Button size="sm" onClick={openCreateModal}>
-              <Plus className="w-4 h-4 mr-2" />
-              새 문제 추가
-            </Button>
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </div>
 
 
@@ -118,7 +132,7 @@ export function QuestionListMain({
       ) : (
         <>
           {/* Questions Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+          <div className="columns-1 lg:columns-2 gap-2 [&>*]:mb-2 [&>*]:break-inside-avoid">
             {questions.length === 0 ? (
               <div className="col-span-full text-center py-8 text-text-secondary">
                 <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
@@ -217,7 +231,8 @@ export function QuestionListMain({
                     </div>
                   </div>
 
-                  <div className="text-sm leading-relaxed font-medium text-text-primary">
+                  {!explanationOnly && (
+                  <div className="text-sm font-medium text-text-primary">
                     <MathRenderer content={q.content} />
                     {(q.diagramSpec || q.diagramSVG) && (
                       <div className="my-2 flex justify-center">
@@ -251,6 +266,7 @@ export function QuestionListMain({
                       );
                     })()}
                   </div>
+                  )}
 
                   <div className="mt-auto pt-2.5 border-t border-slate-200 flex items-center justify-between gap-2">
                     <div className={`text-xs text-text-secondary flex items-center gap-1 min-w-0 flex-1 ${expandedExplanation === q.id ? '' : 'max-h-[1.5em] overflow-hidden'}`}>
@@ -273,7 +289,7 @@ export function QuestionListMain({
                       </button>
                     </div>
                   </div>
-                  {expandedExplanation === q.id && (
+                  {(expandedExplanation === q.id || explanationOnly) && (
                     <div className="space-y-2">
                       <div className="text-xs text-text-secondary bg-slate-50 rounded-sm p-2.5 border border-slate-100">
                         {q.explanation ? (

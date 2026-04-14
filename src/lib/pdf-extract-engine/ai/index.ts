@@ -1,6 +1,8 @@
 export { extractViaProxy, extractDirect } from './extractor';
 export {
   fixLatexEscaping,
+  normalizeMathText,
+  normalizeAnswerField,
   stripCodeFence,
   deepFixText,
   stripDataUrlPrefix,

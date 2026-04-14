@@ -3,6 +3,37 @@
  * Python prompt_config_math.py에서 1:1 이식
  */
 
+// ── 하네스: 수학 분류 하드 제약 (난이도/영역/능력 정합성 강제) ──
+export const MATH_CLASSIFICATION_HARNESS = `════════════════════════════════════════════════
+🔒 수학 분류 하드 제약 (MATH CLASSIFICATION HARNESS) — 위반 시 출력 무효
+════════════════════════════════════════════════
+MH1. difficulty ∈ { "1", "2", "3", "4", "5" } — **문자열만**. 숫자/한글/영문 금지.
+MH2. question_type ∈ { number, algebra, function, geometry, statistics } — 5개 허용값만.
+   - 매핑 가이드 (AI가 판단):
+     · number: 수와 연산, 정수/유리수/실수, 소인수분해, 지수/로그의 수치 계산
+     · algebra: 문자와 식, 방정식, 부등식, 다항식, 수열
+     · function: 일차/이차/삼차/지수/로그/삼각/유리/무리 함수, 미적분
+     · geometry: 평면/입체도형, 합동, 닮음, 피타고라스, 삼각비, 벡터, 공간도형
+     · statistics: 경우의 수, 확률, 통계, 자료 정리, 분포
+MH3. ability_domain ∈ { CALCULATION, UNDERSTANDING, REASONING, PROBLEM_SOLVING } — **대문자 영문만**.
+   - CALCULATION: 수치·식 계산이 풀이의 핵심
+   - UNDERSTANDING: 개념/정의/성질을 식별·적용
+   - REASONING: 논리적 추론, 증명, 일반화
+   - PROBLEM_SOLVING: 여러 개념을 조합, 실생활·비정형 상황 해석
+MH4. topic 형식은 "과목명 > 대단원 > 소단원" 고정. \`>\` 앞뒤 공백 필수.
+MH5. 수식은 KaTeX. \`\\dfrac\` 금지 → \`\\frac\` 사용. 한글을 \`$...$\` 안에 넣지 말 것.
+MH6. ai_comment는 정확히 2문장. 존댓말(~입니다/~합니다). 각 20~40자. 수식 없이 자연어 위주.
+MH7. 추측 금지 — 이미지에서 확인 불가 시 confidence ≤ 0.3, 텍스트 필드는 빈 문자열.
+
+📤 자기검증 (MATH SELF-VERIFY)
+MV1. 모든 문항의 difficulty/question_type/ability_domain이 위 허용값 내인가?
+MV2. topic 문자열이 제공된 허용 목록과 **완전 일치**하는가? (오타·공백 차이 0건)
+MV3. ai_comment가 2문장·존댓말·문장당 20~40자를 모두 충족하는가?
+MV4. 수식에 \`\\dfrac\` 또는 한글 포함 \`$...$\`가 없는가?
+════════════════════════════════════════════════
+
+`;
+
 // ── 수학 토픽 분류표 (학년별) ──
 export const MATH_TOPICS: Record<string, string> = {
   '중1': `[중1 수학]
@@ -136,7 +167,7 @@ export const SUBJECT_MATCHING_RULES = `⚠️ **[필수] 과목 추출 및 단�
    - "기하" → [기하]`;
 
 // ── 수학 난이도 시스템 (5단계) ──
-export const MATH_DIFFICULTY_SYSTEM_4LEVEL = `🚨 **수학 난이도 5단계 시스템 (엄격 적용)**:
+export const MATH_DIFFICULTY_SYSTEM_4LEVEL = MATH_CLASSIFICATION_HARNESS + `🚨 **수학 난이도 5단계 시스템 (엄격 적용)**:
 
 **핵심 원칙: 문제를 푸는데 필요한 사고의 깊이로 판단!**
 **난이도 값은 반드시 문자열 "1", "2", "3", "4", "5" 중 하나를 사용하세요.**

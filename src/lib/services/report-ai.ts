@@ -66,7 +66,26 @@ export async function generateReportAI(input: ReportAIInput): Promise<ReportAIOu
 
     const domainKeys = Object.keys(input.domainScores).filter(k => !k.startsWith('_'));
 
-    const prompt = `당신은 한국 수학 학원의 전문 교육 상담사입니다. 학부모에게 전달할 레벨테스트 보고서의 모든 멘트를 작성해주세요.
+    const prompt = `════════════════════════════════════════════════
+🔒 하드 제약 (HARD CONSTRAINTS) — 위반 시 출력 무효
+════════════════════════════════════════════════
+H1. 출력은 **순수 JSON 객체 하나**만. 코드펜스(\`\`\`), 서술문, 선행/후행 텍스트 금지.
+H2. 모든 멘트는 **한국어 존댓말**(~입니다/~합니다). 영문 문장 금지. 이모지 금지.
+H3. 지정된 문장 수(예: 4~5문장, 2~3문장)를 **엄격히 준수**. 초과/미달 금지.
+H4. 학생 이름 지정 시작(예: "${input.studentName} 학생은...")이 명시된 항목은 **반드시 해당 문구로 시작**.
+H5. 수치 인용 시 입력으로 주어진 값만 사용. **추측·창작 금지** (존재하지 않는 점수/단원 생성 금지).
+H6. 수식 표기가 필요하면 KaTeX, \`\\dfrac\` 금지 → \`\\frac\`. 한글을 \`$...$\` 안에 넣지 말 것.
+H7. JSON 키와 구조는 아래 템플릿과 **완전 일치**. 키 추가/삭제/이름변경 금지.
+H8. 부정적·단정적 표현 지양. "~이 부족합니다" 대신 "~을 보완하면 좋겠습니다" 식의 건설적 어조.
+
+📤 자기검증 (SELF-VERIFY) — 반환 직전 체크
+V1. 응답이 \`{\`로 시작하고 \`}\`로 끝나는가?
+V2. 모든 필수 키가 존재하고 값이 빈 문자열이 아닌가?
+V3. 지정된 문장 수와 시작 문구가 정확한가?
+V4. 인용한 수치가 모두 입력 데이터 범위 내인가?
+════════════════════════════════════════════════
+
+당신은 한국 수학 학원의 전문 교육 상담사입니다. 학부모에게 전달할 레벨테스트 보고서의 모든 멘트를 작성해주세요.
 
 <student_info>
 이름: ${input.studentName}
@@ -165,7 +184,33 @@ export async function generateParentReportAI(input: ParentReportAIInput): Promis
       .map(c => `- ${c.name}: ${c.accuracy}% (${c.total}문항)`)
       .join('\n');
 
-    const prompt = `당신은 한국 수학 학원의 학부모 상담 전문가입니다.
+    const prompt = `════════════════════════════════════════════════
+🔒 하드 제약 (HARD CONSTRAINTS) — 위반 시 출력 무효
+════════════════════════════════════════════════
+H1. 출력은 **순수 JSON 객체 하나**만. 코드펜스(\`\`\`json), 서술문, 선행/후행 텍스트 금지.
+H2. 모든 텍스트는 **한국어**, 학부모 대상이므로 **전문용어 지양 + 일상 언어**. 이모지 금지.
+H3. JSON 키/구조는 아래 템플릿과 **완전 일치**. 키 추가/삭제/이름변경/순서 무시 금지.
+H4. 열거형 필드는 지정값만 허용:
+   - mistakePatterns[].type ∈ { "calculation_error", "concept_gap", "careless", "time_pressure" }
+   - actionItems[].period ∈ { "today", "this_week", "next_week" }
+   - studyRecommendation ∈ { "self", "short_course", "academy" }
+H5. 수치 필드 범위 엄수: percentage 0~100, severityScore 0.0~1.0, cognitiveAssessment 각 항 0~100.
+H6. simpleExplanation은 반드시 "${input.studentName} 학생은..."으로 시작, 3~4문장.
+H7. 입력 데이터에 없는 단원/수치 **창작 금지**. 취약/강점 단원은 입력의 weak_areas/strong_areas 기반.
+H8. studyRecommendation 판단 기준 엄수: 정답률 70%+ → "self", 50~69% → "short_course", 50% 미만 → "academy".
+H9. mistakeSummary.carelessCount/conceptGapCount는 템플릿 내 고정값(\`${statusCounts.careless + statusCounts.partial}\`, \`${statusCounts.conceptGap}\`)을 그대로 사용.
+H10. 수식이 필요하면 KaTeX, \`\\dfrac\` 금지 → \`\\frac\`. 한글을 \`$...$\` 안에 넣지 말 것.
+
+📤 자기검증 (SELF-VERIFY) — 반환 직전 체크
+V1. 응답이 \`{\`로 시작/\`}\`로 끝나는가? 코드펜스 없음?
+V2. 모든 enum 필드가 허용값 집합 내인가?
+V3. learningPhases가 정확히 3단계이고 각 단계에 name/duration/topics/checkpoint가 모두 있는가?
+V4. actionItems가 today/this_week/next_week 3개 period를 모두 포함하는가?
+V5. studyRecommendation과 정답률(${input.overallAccuracy}%) 관계가 H8과 일치하는가?
+V6. 인용한 단원명이 입력 chapter_scores/weak_areas/strong_areas에 실존하는가?
+════════════════════════════════════════════════
+
+당신은 한국 수학 학원의 학부모 상담 전문가입니다.
 레벨테스트 결과를 학부모가 쉽게 이해할 수 있도록 분석하고, 구체적이고 실천 가능한 조언을 제공하세요.
 전문 용어를 피하고 일상 언어를 사용하세요.
 

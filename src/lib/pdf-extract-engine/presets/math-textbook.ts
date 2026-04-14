@@ -18,7 +18,7 @@
  */
 
 import type { PdfExtractPlugin } from '../types';
-import { fixLatexEscaping } from '../ai/post-processor';
+import { fixLatexEscaping, normalizeMathText, normalizeAnswerField } from '../ai/post-processor';
 import { createPageFilter } from '../core/page-filter';
 
 // ============================================================
@@ -433,6 +433,26 @@ export const MATH_EXTRACT_SCHEMA = {
 
 export const MATH_SYSTEM_PROMPT = `당신은 한국 수학 교재 분석 전문가입니다.
 
+════════════════════════════════════════════════
+🔒 하드 제약 (HARD CONSTRAINTS) — 위반 시 출력 무효
+════════════════════════════════════════════════
+H1. **2단(좌/우 칼럼) 레이아웃 인식**: 한국 수학 교재는 거의 2단. 반드시 좌측 칼럼을 위→아래로 **완독 후** 우측 칼럼으로 이동. 좌우 번갈아(zigzag) 읽지 말 것. 문제/풀이가 칼럼 경계를 넘어 이어지면 반드시 합치기.
+H2. **도형/기호 문자 → LaTeX 커맨드 변환**: □→\\square, ○→\\bigcirc, △→\\triangle, ∴→\\therefore, ∵→\\because, ⇒→\\Rightarrow. 모두 $...$ 내부에 기재.
+H3. **OCR 오류 기호 금지**: £, ¥, ¢, Á, Ñ, É, Ö, Ü, ¼, ½, ¾ 등 한국 수학 교재에 없는 문자는 출력 금지. 인식 불확실하면 \\text{?}로 표기하고 해당 항목 스킵.
+H4. **정답 추측 금지**: 원본에 명시된 정답만 전사. 없으면 빈 문자열. 추측/계산하지 말 것.
+H5. **숫자/변수는 반드시 $...$ 안에**: \`가로 5cm\` ❌, \`가로 $5\\,\\text{cm}$\` → \`가로 $5$ cm\` ✅ (단위는 바깥).
+
+════════════════════════════════════════════════
+📤 출력 전 자기검증 (SELF-VERIFY) — 모든 항목에 대해 수행
+════════════════════════════════════════════════
+V1. 이 출력에 £, ¥, ¢, Á, Ñ, ¼ 등 OCR 오류 의심 기호가 있는가? 있으면 재작성.
+V2. 각 content/explanation에 \\dfrac, \\textrm{한글}, \\text{한글} 이 남아있는가? 있으면 제거/\\frac/평문으로.
+V3. 각 choices 내용이 content에도 중복 포함되어 있는가? 있으면 content에서 제거.
+V4. 객관식/서술형 문제의 answer가 명시되지 않았는데 추측해서 넣었는가? 비워라.
+V5. diagramParams를 비운 [그림N] 플레이스홀더가 있는가? 있으면 파라미터 채우거나 [그림N]을 content에서 제거.
+
+════════════════════════════════════════════════
+
 ⚠️ **절대 최우선 원칙 — 학습 우선 추출 (Learning-first extraction)**
 이 시스템은 학습 플랫폼입니다. 시각적 충실도보다 **학습 가능성**이 절대 우선.
 - **한글 용어는 반드시 LaTeX($...$) 바깥 마크다운 텍스트**로 작성 — 빈칸 학습 생성기가 LaTeX 안은 보호 구간으로 처리해 추출 불가
@@ -715,10 +735,10 @@ export const mathTextbookPlugin: PdfExtractPlugin<ExtractedMathProblem, MathExtr
         sectionHeader: fixLatexEscaping(p.sectionHeader || ''),
         difficultyTag: p.difficultyTag || '',
         problemType: p.problemType || '주관식',
-        content: stripChoicesFromContent(autoWrapMath(fixLatexEscaping(contentText)), p.choices || []),
-        choices: ensureChoiceNumbers((p.choices || []).map((c: string) => autoWrapMath(fixLatexEscaping(c)))),
+        content: normalizeMathText(stripChoicesFromContent(autoWrapMath(fixLatexEscaping(contentText)), p.choices || [])),
+        choices: ensureChoiceNumbers((p.choices || []).map((c: string) => normalizeMathText(autoWrapMath(fixLatexEscaping(c))))),
         boxItems: p.boxItems || [],
-        answer: fixLatexEscaping(p.answer || ''),
+        answer: normalizeAnswerField(fixLatexEscaping(p.answer || '')),
         explanation: '',
         scoringCriteria: '',
         sourceTag: ['서술형', '객관식', '주관식'].includes(p.sourceTag || '') ? '' : (p.sourceTag || ''),
@@ -771,11 +791,28 @@ export const mathSolutionPlugin: PdfExtractPlugin<ExtractedSolution> = {
   systemPrompt: `당신은 한국 수학 교재 해설 분석 전문가입니다.
 주어진 해설 페이지 이미지에서 각 문제의 정답과 풀이를 추출하세요.
 
+[⚠️ 레이아웃 인식 — 절대 준수]
+A. 대부분의 한국 수학 교재 해설은 **2단(좌/우 칼럼)** 레이아웃이다.
+B. **좌측 칼럼을 위→아래로 완독한 후** 우측 칼럼을 위→아래로 읽는다. 좌우 번갈아 읽지 말 것.
+C. 한 문제의 풀이가 **좌측 칼럼 하단에서 우측 칼럼 상단으로 이어지는 경우**가 흔하다. 반드시 하나의 explanation으로 합쳐라.
+D. 우측 칼럼 상단에 문제번호 없이 풀이 내용만 있으면, 이전(좌측 하단) 문제의 연장이다.
+E. **자기검증:** 각 explanation이 "따라서 …" / "∴ …" / "답:" 등 결론으로 마무리되는지 확인. 중간에서 끊긴 느낌이면 이어지는 부분을 찾아 합쳐라. 못 찾으면 끝에 "[⚠️ 해설 중단 가능성]" 명시.
+
 [규칙]
 1. 문제번호(questionNum)를 정확히 식별
-2. 정답(answer)은 원문 그대로 (예: "⑤", "2개", "1")
+2. 정답(answer)은 원문 그대로 (예: "⑤", "2개", "1"). LaTeX 수식이면 반드시 $...$로 감쌀 것 (예: "$\\frac{5}{4}$")
 3. 풀이(explanation)는 마크다운으로 작성, 수식은 $...$로 감싸기
+3-1. **도형/기호 문자는 반드시 LaTeX 커맨드로 ($...$ 안에):**
+     - □→\\square, ○→\\bigcirc, △→\\triangle, ∴→\\therefore, ∵→\\because, ⇒→\\Rightarrow
+3-2. **불확실한 기호는 추측 금지.** 정확히 안 보이면 \\text{?}로 표기하고 해당 문제 누락 가능.
+     £, ¥, ¢, Á, Ñ, ¼, ½, ¾ 등 한국 수학 교재에 없는 기호가 보이면 OCR 오류 가능성 → 재확인/건너뛰기.
 4. 풀이가 여러 단계이면 줄바꿈으로 구분
+4-1. **다단계 계산식(2줄 이상 연속되는 = 변형)은 반드시 \`aligned\` 환경으로 묶어라.**
+   올바른 예: "$$\\begin{aligned}&A+B \\\\&=C \\\\&=D\\end{aligned}$$"
+   규칙: 각 줄 앞에 &, 줄 사이 \\\\(백슬래시 2개), 마지막 줄엔 붙이지 않음.
+   잘못된 예(금지): "$$A+B\\n=C\\n=D$$" ← 평문 줄바꿈, 렌더링 깨짐
+   단일 등식은 $A=B$ 인라인으로 작성. aligned 남용 금지.
+4-2. 인접한 인라인 수식 사이엔 반드시 공백. \`$A$$B$\` 금지, \`$A$ $B$\` 사용.
 5. 채점 요소/기준이 있으면 반드시 scoringCriteria 필드에 별도 분리 (explanation에 포함하지 말 것)
 6. 채점 요소가 없으면 scoringCriteria는 빈 문자열
 7. **출처 필터링 (필수!)**: 풀이에 특정 문제집/교재명이 언급되면 반드시 제거하세요.
@@ -801,8 +838,8 @@ export const mathSolutionPlugin: PdfExtractPlugin<ExtractedSolution> = {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (data?.solutions || []).map((s: any) => {
-      let explanation = stripBookReferences(fixLatexEscaping(s.explanation || ''));
-      let scoringCriteria = fixLatexEscaping(s.scoringCriteria || '');
+      let explanation = stripBookReferences(normalizeMathText(s.explanation || ''));
+      let scoringCriteria = normalizeMathText(s.scoringCriteria || '');
 
       // AI가 분리하지 못한 경우 explanation에서 채점 요소 자동 분리
       if (!scoringCriteria) {
@@ -815,7 +852,7 @@ export const mathSolutionPlugin: PdfExtractPlugin<ExtractedSolution> = {
 
       return {
         questionNum: s.questionNum,
-        answer: fixLatexEscaping(s.answer || ''),
+        answer: normalizeAnswerField(fixLatexEscaping(s.answer || '')),
         explanation,
         scoringCriteria,
       };

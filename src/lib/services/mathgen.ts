@@ -116,6 +116,34 @@ const EXACT_RESPONSE_SCHEMA = {
 };
 
 const COMMON_INSTRUCTIONS = `
+    ════════════════════════════════════════════════
+    🔒 하드 제약 (HARD CONSTRAINTS) — 위반 시 출력 무효
+    ════════════════════════════════════════════════
+    H1. 출력은 순수 JSON만. 코드펜스(\`\`\`json), 서술문, 주석, 설명 문장 일절 금지.
+    H2. 한글을 $...$ 안에 넣지 말 것. \\text{한글}, \\textrm{한글}, \\mathrm{한글} 금지.
+        - WRONG: $x\\text{의 값}$ / CORRECT: $x$의 값
+    H3. \\dfrac 절대 금지 → 반드시 \\frac 사용.
+    H4. 연속된 인라인 수식 사이에 공백 필수.
+        - WRONG: $A$$B$ / CORRECT: $A$ $B$
+    H5. 모든 숫자·영문 변수·수학 기호는 $...$로 래핑. 단 보기 번호(①②③④⑤)와 ㄱㄴㄷ 라벨은 예외.
+    H6. 도형 기호는 LaTeX 커맨드만: □→\\square, ○→\\bigcirc, △→\\triangle, ∠→\\angle.
+    H7. 다단계 계산식(3줄 이상 = 연쇄)은 $$\\begin{aligned}...\\end{aligned}$$ 사용.
+    H8. OCR 혼동 문자 금지: £ ¥ ¢ Á Ñ ¼ ½ ¾ — 숫자/라틴 문자/LaTeX로 대체.
+    H9. 정답 추측 금지. 문제에서 정답이 유일하게 결정되지 않으면 answer를 비우고 solution에 근거를 명시.
+    H10. "undefined", "[Diagram]", "[그래프]", "(이미지 참고)" 같은 플레이스홀더 금지.
+
+    ════════════════════════════════════════════════
+    📤 출력 전 자기검증 (SELF-VERIFY) — 전송 직전 반드시 체크
+    ════════════════════════════════════════════════
+    V1. question/solution/choices에서 \\dfrac 검색 → 0건인가?
+    V2. \\text{...}, \\textrm{...}, \\mathrm{...} 안에 한글 → 0건인가?
+    V3. "$...$$...$" 붙어있는 인라인 수식 → 모두 공백으로 분리됐는가?
+    V4. 출력 전체가 { 로 시작해 } 로 끝나는 순수 JSON인가? (코드펜스/설명문 0건)
+    V5. 모든 숫자·변수가 $...$에 래핑됐는가? (예: "점 A에서 거리 3" → "점 $A$에서 거리 $3$")
+    V6. 객관식이면 choices 정확히 5개, 주관식이면 []인가?
+    V7. answer 필드에 추측 값이 들어가지 않았는가? (불확실 시 빈 문자열)
+    ════════════════════════════════════════════════
+
     Requirements:
     1. The problem must be mathematically accurate and suitable for Korean students.
     2. [Text Formatting & LaTeX - CRITICAL]
@@ -221,6 +249,17 @@ function buildTextPrompt(selection: SelectionState): string {
   const textbookCtx = buildTextbookContext(selection.textbookId, selection.mainUnit);
 
   return `
+    ════════════════════════════════════════════════
+    🔒 생성 전용 하드 제약 (GENERATE MODE)
+    ════════════════════════════════════════════════
+    H-G1. 아래 Curriculum Path/Difficulty/Target Ability/Question Format을 하나라도 이탈하면 출력 무효.
+    H-G2. 난이도 Level 1~2는 단일 개념·2단계 이내 풀이, Level 4~5는 복합 개념·4단계 이상 풀이로 차별화.
+    H-G3. 주어진 subUnit/detailUnit에 등장하지 않는 개념을 끌어오지 말 것 (교육과정 이탈 금지).
+    H-G4. 생성된 문제가 정답이 유일하게 결정되는지 스스로 풀어본 뒤 확인. 다중해/모호하면 재생성.
+
+    📤 SELF-VERIFY (생성): V8. 출력 topic이 실제 subUnit과 일치하는가? V9. 난이도 레벨이 풀이 단계 수와 정합하는가?
+    ════════════════════════════════════════════════
+
     You are an expert Mathematics Teacher in South Korea, specializing in the "2022 Revised National Curriculum" (2022 개정 교육과정).
 
     Task: Create a mathematics problem based on the following specifications.
@@ -241,6 +280,18 @@ function buildExactPrompt(removeScore?: boolean): string {
     : '';
 
   return `
+    ════════════════════════════════════════════════
+    🔒 추출 전용 하드 제약 (EXACT EXTRACT MODE)
+    ════════════════════════════════════════════════
+    H-E1. 이미지에 없는 문장·숫자·조건을 추가로 생성하지 말 것. OCR 신뢰도 낮으면 빈칸/유사 후보 대신 명시.
+    H-E2. 도형 내부 라벨(각도, 변 길이)은 question 텍스트에 중복 기재 금지 → diagramParams에만.
+    H-E3. 객관식 보기 ①②③④⑤는 choices 배열로만. question 본문에 포함 금지.
+    H-E4. 해설(solution)은 이미지에 없는 경우 직접 풀어 작성하되, 추측 정답은 H9에 따라 처리.
+    H-E5. OCR로 의심스러운 문자(£¥¢ÁÑ¼½¾ 등)는 문맥상 올바른 수학 기호로 교정.
+
+    📤 SELF-VERIFY (추출): V10. 추출 텍스트가 이미지에 실제 존재하는가? V11. 도형 정보가 question과 diagramParams에 중복되지 않는가?
+    ════════════════════════════════════════════════
+
     You are an expert Mathematics Teacher in South Korea.
 
     Task: Extract ONLY the printed text from the image. The original image will be displayed alongside, so do NOT describe diagrams in text.
@@ -264,6 +315,18 @@ function buildExactPrompt(removeScore?: boolean): string {
 
 function buildImagePrompt(selection: SelectionState): string {
   return `
+    ════════════════════════════════════════════════
+    🔒 유사문제 생성 하드 제약 (SIMILAR FROM IMAGE MODE)
+    ════════════════════════════════════════════════
+    H-S1. 원본 문제를 그대로 복사 금지. 숫자/함수/상황을 반드시 변경하되 핵심 개념·난이도 유지.
+    H-S2. 원본을 "풀이"하지 말 것 → 새 문제를 "출제"할 것.
+    H-S3. 원본이 스케치형 그래프면 hideTickLabels:true + 라벨(O,A,B)만 유지. 계산된 정확 좌표 플롯 금지.
+    H-S4. function_graph는 반드시 functions 배열에 최소 1개 이상의 expression 포함. 빈 배열 금지.
+    H-S5. xRange/yRange는 ±10~12 이내. 함수의 실제 극값에 맞춰 계산 금지 (개념적 스케치).
+
+    📤 SELF-VERIFY (유사): V12. 원본과 숫자/함수가 달라졌는가? V13. diagramParams가 원본 스타일(스케치 vs 정밀)을 따르는가?
+    ════════════════════════════════════════════════
+
     You are an expert Mathematics Teacher in South Korea.
 
     Task: Analyze the provided image of a math problem and generate a **NEW, SIMILAR** problem.
