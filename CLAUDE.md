@@ -250,7 +250,6 @@ src/
 │   ├── exam-analysis/       # 기출 분석 (types, constants, agents, article-generator, chart-image, nearby-school — 5대 영역/4대 능력/5단계 난이도)
 │   ├── diagram/       # 프리셋 기반 구조화 다이어그램 시스템 (DiagramSpec 6유형)
 │   ├── diagram-presets/   # 교육과정별 다이어그램 프리셋 (초65+중58+고45=168개)
-│   ├── diagram-param-engine/  # 플러그인 기반 normalize→render 엔진 (26개 플러그인)
 │   ├── constants/     # 교육과정 데이터, 연산 카테고리, 라벨, 시험전략, 학교(6,004개 GPS), 교재
 │   └── data/          # 정적 데이터 (업데이트 로그, 도움말)
 ├── hooks/             # useAuth, useLearning, useGamification, useFeatureFlags, useBadgeCheck, useSpeed, useFetch, useTests, usePreviewScale, useLicenses, useQuestions 등
@@ -450,10 +449,10 @@ PDF 업로드 → 수동 분석 → status=COMPLETED
 - 트리 구조: 학교급 → 학년/학기 → 단원 → 프리셋 목록
 - 검색: `searchPresets(query)`, 학년별 그룹: `groupPresetsByGrade(level)`
 
-**4. 파라미터 엔진 (플러그인 기반)** — `src/lib/diagram-param-engine/`
-- `DiagramParamEngine` 클래스: 플러그인 레지스트리 + normalize → render 파이프라인
-- 26개 타입 전체에 대한 플러그인 (`plugins/elementary/` 13개 + `plugins/middle/` 13개)
-- 각 플러그인: `normalize(raw) → params`, `render(params) → SVG` 두 단계
+**4. 렌더 디스패처 + normalize** — `src/lib/utils/svg-diagrams/index.ts`
+- `renderDiagram({ type, params })` 단일 진입점. 26개 타입 switch로 분기.
+- Gemini가 반환하는 불규칙 파라미터명(`totalParts`/`parts`/`denominator` 등)을 타입별 `normalize*()` 함수로 정규화한 뒤 렌더.
+- 함수 그래프 표현식은 `shared/expression-parser.ts`의 안전 파서(재귀 하강)로 평가 — `new Function` 사용 금지.
 
 **편집기:** `DiagramEditorPopup.tsx` — 26개 DiagramParam 타입 모두 GUI 편집 가능
 - 타입별 기본 파라미터: `src/components/math/diagram-editor/types.ts`
@@ -834,7 +833,7 @@ npx tsx scripts/migrate-question-relations.ts  # questionIds Json → 중간테�
 | 컴포넌트 | 180개 |
 | 서비스 모듈 | 23개 (exam-extract-batch 추가) |
 | DB 모델 | 73개, Enum 12개 |
-| 다이어그램 | DiagramParam 26개 타입 + DiagramSpec 6개 유형 11개 프리셋 + 교육과정 프리셋 168개 + 플러그인 엔진 26개 |
+| 다이어그램 | DiagramParam 26개 타입 + DiagramSpec 6개 유형 11개 프리셋 + 교육과정 프리셋 168개 |
 | 커스텀 훅 | 14개 |
 | Zustand 스토어 | 7개 |
 | Zod 스키마 | 5개 |

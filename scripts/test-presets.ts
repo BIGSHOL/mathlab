@@ -1,5 +1,5 @@
 import { ALL_PRESETS, groupPresetsByGrade, searchPresets, gradeKeyToShortLabel } from '../src/lib/diagram-presets';
-import { renderDiagram } from '../src/lib/diagram-param-engine';
+import { renderDiagram } from '../src/lib/utils/svg-diagrams';
 
 console.log('\n=== 프리셋 시스템 테스트 ===');
 console.log('총 프리셋:', ALL_PRESETS.length);
