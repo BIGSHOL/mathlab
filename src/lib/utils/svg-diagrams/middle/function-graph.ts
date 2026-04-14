@@ -1,5 +1,6 @@
 import { FunctionGraphParams } from '../types';
 import { svgWrap, line, circle, arrowHead, katexLabel, COLORS, createCoordinateMapper } from '../shared/svg-utils';
+import { compileExpression } from '../shared/expression-parser';
 
 /** 함수 그래프 SVG 생성 (좌표평면 + 함수 곡선) */
 export function renderFunctionGraph(params: FunctionGraphParams): string {
@@ -89,9 +90,20 @@ export function renderFunctionGraph(params: FunctionGraphParams): string {
   parts.push(`<defs><clipPath id="fn-clip"><rect x="${pad}" y="${pad}" width="${gridW}" height="${gridH}"/></clipPath></defs>`);
   parts.push(`<g clip-path="url(#fn-clip)">`);
 
-  // 함수 곡선
+  // 함수 곡선 — 안전 파서로 1회 컴파일 후 샘플링
+  const compiled: (((x: number) => number) | null)[] = funcs.map((fn) => {
+    try {
+      return compileExpression(fn.expression);
+    } catch (e) {
+      console.warn(`[function-graph] 수식 파싱 실패: "${fn.expression}"`, e);
+      return null;
+    }
+  });
+
   for (let fi = 0; fi < funcs.length; fi++) {
     const fn = funcs[fi];
+    const evaluator = compiled[fi];
+    if (!evaluator) continue;
     const color = fn.color || '#333';
     const dashAttr = fn.dashed ? ' stroke-dasharray="6 4"' : '';
     const step = (xMax - xMin) / 200;
@@ -100,7 +112,7 @@ export function renderFunctionGraph(params: FunctionGraphParams): string {
 
     for (let xVal = xMin; xVal <= xMax; xVal += step) {
       try {
-        const yVal = evaluateExpression(fn.expression, xVal);
+        const yVal = evaluator(xVal);
         if (!isFinite(yVal)) {
           started = false;
           continue;
@@ -124,7 +136,8 @@ export function renderFunctionGraph(params: FunctionGraphParams): string {
     for (const sr of params.shadedRegions) {
       const fi = sr.functionIndex;
       if (fi < 0 || fi >= funcs.length) continue;
-      const fn = funcs[fi];
+      const evaluator = compiled[fi];
+      if (!evaluator) continue;
       const color = sr.color || COLORS.primary;
       const opacity = sr.opacity ?? 0.15;
       const step = (xMax - xMin) / 200;
@@ -135,7 +148,7 @@ export function renderFunctionGraph(params: FunctionGraphParams): string {
       regionParts.push(`M ${toX(xFrom)} ${toY(0)}`);
       for (let xVal = xFrom; xVal <= xTo; xVal += step) {
         try {
-          const yVal = evaluateExpression(fn.expression, xVal);
+          const yVal = evaluator(xVal);
           if (isFinite(yVal)) {
             regionParts.push(`L ${toX(xVal)} ${toY(yVal)}`);
           }
@@ -167,6 +180,8 @@ export function renderFunctionGraph(params: FunctionGraphParams): string {
   for (let fi = 0; fi < funcs.length; fi++) {
     const fn = funcs[fi];
     if (!fn.label) continue;
+    const evaluator = compiled[fi];
+    if (!evaluator) continue;
 
     // 곡선 중간~우측 적절한 위치에 라벨 배치
     let placed = false;
@@ -174,7 +189,7 @@ export function renderFunctionGraph(params: FunctionGraphParams): string {
     for (const ratio of tryXPositions) {
       const xVal = xMin + (xMax - xMin) * ratio;
       try {
-        const yVal = evaluateExpression(fn.expression, xVal);
+        const yVal = evaluator(xVal);
         if (isFinite(yVal) && yVal >= yMin && yVal <= yMax) {
           const lx = toX(xVal);
           const ly = toY(yVal);
@@ -205,20 +220,3 @@ export function renderFunctionGraph(params: FunctionGraphParams): string {
   return svgWrap(parts.join('\n    '), totalW, totalH);
 }
 
-/** 간단한 수식 평가 (x 변수 지원) */
-function evaluateExpression(expr: string, x: number): number {
-  // 안전한 수식 평가: x, 기본 연산, Math 함수만 허용
-  const sanitized = expr
-    .replace(/\^/g, '**')
-    .replace(/abs/g, 'Math.abs')
-    .replace(/sqrt/g, 'Math.sqrt')
-    .replace(/sin/g, 'Math.sin')
-    .replace(/cos/g, 'Math.cos')
-    .replace(/tan/g, 'Math.tan')
-    .replace(/log/g, 'Math.log')
-    .replace(/pi/g, 'Math.PI');
-
-  // eslint-disable-next-line no-new-func
-  const fn = new Function('x', `return (${sanitized})`);
-  return fn(x);
-}

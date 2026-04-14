@@ -69,8 +69,12 @@ export function renderCircle(params: CircleParams): string {
       const y1 = cy + r * Math.sin(startRad);
       const x2 = cx + r * Math.cos(endRad);
       const y2 = cy + r * Math.sin(endRad);
-      const sweep = arc.endAngle - arc.startAngle > 180 ? 1 : 0;
-      const d = `M ${x1} ${y1} A ${r} ${r} 0 ${sweep} 0 ${x2} ${y2}`;
+      // 360° wrap 보정 — endAngle < startAngle이면 +360 정규화
+      let arcDiff = arc.endAngle - arc.startAngle;
+      while (arcDiff < 0) arcDiff += 360;
+      const largeArc = arcDiff > 180 ? 1 : 0;
+      // sweep-flag=0: SVG에서 반시계(visual CCW) — 수학 좌표계와 일치
+      const d = `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 0 ${x2} ${y2}`;
       parts.push(`<path d="${d}" fill="none" stroke="${arcColor}" stroke-width="${arcStrokeW}"/>`);
       if (arc.label) {
         const midAngle = (-(arc.startAngle + arc.endAngle) / 2 * Math.PI) / 180;

@@ -19,8 +19,10 @@ export function renderSolidFigure(params: SolidFigureParams): string {
 
   switch (shape) {
     case 'cube':
+      // 정육면체: 치수를 받아도 1:1:1로 고정
+      return renderPrism(parts, 1, 1, 1, showHidden, color, labels, true, faceLabels.length > 0 ? faceLabels : undefined);
     case 'rectangular_prism':
-      return renderPrism(parts, w, h, d, showHidden, color, labels, shape === 'cube', faceLabels.length > 0 ? faceLabels : undefined);
+      return renderPrism(parts, w, h, d, showHidden, color, labels, false, faceLabels.length > 0 ? faceLabels : undefined);
 
     case 'cylinder':
       return renderCylinder(parts, r, h, showHidden, color, labels);
@@ -47,10 +49,17 @@ type Label = { position: string; text: string };
 type FaceLabel = { face: 'front' | 'top' | 'right'; text: string; color?: string };
 
 /** 직육면체/정육면체 */
-function renderPrism(parts: string[], _w: number, _h: number, _d: number, showHidden: boolean, color: string, labels: Label[], isCube: boolean, faceLabels?: FaceLabel[]): string {
-  // 등축투영 좌표 (고정 크기)
-  const scale = isCube ? 1 : 1;
-  const fw = 80 * scale, fh = 80 * scale, fd = 40 * scale;
+function renderPrism(parts: string[], w: number, h: number, d: number, showHidden: boolean, color: string, labels: Label[], isCube: boolean, faceLabels?: FaceLabel[]): string {
+  // 등축투영 좌표: 실제 w/h/d 비율 반영 (최대 변을 기준 120px로 스케일 후 깊이는 50% 원근)
+  // 정육면체는 고정 1:1:1
+  const rawW = isCube ? 1 : Math.max(0.1, w);
+  const rawH = isCube ? 1 : Math.max(0.1, h);
+  const rawD = isCube ? 1 : Math.max(0.1, d);
+  const maxDim = Math.max(rawW, rawH, rawD);
+  const baseSize = 90;
+  const fw = (rawW / maxDim) * baseSize;
+  const fh = (rawH / maxDim) * baseSize;
+  const fd = (rawD / maxDim) * baseSize * 0.55; // 원근감
 
   // 전면 사각형
   const f = [[40, 60 + fh], [40 + fw, 60 + fh], [40 + fw, 60], [40, 60]]; // 좌하, 우하, 우상, 좌상
