@@ -10,14 +10,17 @@ export async function POST(request: NextRequest) {
   if (isResponse(user)) return user;
 
   const parsed = await validateBody(request, bulkCreateQuestionsSchema);
-  if (isResponse(parsed)) return parsed;
+  if (isResponse(parsed)) {
+    // 어떤 필드에서 실패했는지 서버 로그 (Vercel 로그에서 확인)
+    try {
+      const body = await parsed.clone().json();
+      console.error('[bulk] validation failed:', JSON.stringify(body?.error?.details ?? body));
+    } catch { /* ignore */ }
+    return parsed;
+  }
 
-  const { questions, examPaperId, tenantIdOverride } = parsed;
-
-  // 드래프트 파라미터
-  const reqBody = await request.clone().json().catch(() => ({}));
-  const isDraft: boolean = Boolean(reqBody?.isDraft);
-  const draftBatchId: string | undefined = reqBody?.draftBatchId;
+  const { questions, examPaperId, tenantIdOverride, isDraft: isDraftFlag, draftBatchId } = parsed;
+  const isDraft = Boolean(isDraftFlag);
 
   // tenantId 결정
   // 1) examPaperId 있으면 해당 시험지의 tenantId 우선 (지점 전용 문제 보장)
