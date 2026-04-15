@@ -5,7 +5,26 @@
 
 import { GoogleGenAI } from '@google/genai';
 import type { AgentType } from '../constants';
+import { AGENT_PROMPT_VERSIONS } from '../constants';
 import type { BasicAnalysisResult } from '../types';
+import { normalizeMathText } from '@/lib/pdf-extract-engine/ai/post-processor';
+
+/**
+ * AI 응답 객체의 모든 문자열 필드에 수식 정규화를 재귀 적용.
+ * \dfrac→\frac, \text{한글} 제거, 인접 수식 글루 분리, literal \n 복원 등.
+ */
+function deepNormalizeMath<T>(value: T): T {
+  if (typeof value === 'string') return normalizeMathText(value) as unknown as T;
+  if (Array.isArray(value)) return value.map(deepNormalizeMath) as unknown as T;
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      out[k] = deepNormalizeMath(v);
+    }
+    return out as unknown as T;
+  }
+  return value;
+}
 
 // 독립 Gemini 클라이언트 (ai-engine.ts와 동일 패턴)
 let _agentClient: GoogleGenAI | null = null;
@@ -29,6 +48,11 @@ export interface AgentInput {
 export abstract class BaseAgent<TResult> {
   abstract readonly agentType: AgentType;
   abstract readonly temperature: number;
+
+  /** 에이전트별 프롬프트 버전 (constants.AGENT_PROMPT_VERSIONS 참조) */
+  get promptVersion(): string {
+    return AGENT_PROMPT_VERSIONS[this.agentType] ?? 'v0.0.0';
+  }
 
   /**
    * AI 프롬프트 생성
@@ -79,8 +103,11 @@ export abstract class BaseAgent<TResult> {
 
     // 코드 펜스 제거
     const cleaned = text.replace(/```(?:json)?\s*/g, '').replace(/```\s*$/g, '').trim();
-    const result = JSON.parse(cleaned);
-    return this.parseResponse(result);
+    const parsed = JSON.parse(cleaned);
+    // 수식 정규화 하네스: 모든 문자열 필드에 normalizeMathText 적용
+    // (\dfrac→\frac, \text{한글} 제거, $A$$B$→$A$ $B$, literal \n 복원 등)
+    const normalized = deepNormalizeMath(parsed);
+    return this.parseResponse(normalized);
   }
 
   // ── 공통 유틸 ──

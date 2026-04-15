@@ -12,6 +12,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { AnalyzedQuestion } from './types';
 import type { CommentaryResult } from './agents/commentary-agent';
 import { QUESTION_TYPE_LABELS } from './constants';
+import { normalizeMathText } from '@/lib/pdf-extract-engine/ai/post-processor';
 
 // ── 타입 ──
 
@@ -489,10 +490,10 @@ export async function generateExamArticle(
   const raw = extractJson(text);
 
   return {
-    title: String(raw.title || ''),
-    content: String(raw.content || ''),
+    title: normalizeMathText(String(raw.title || '')),
+    content: normalizeMathText(String(raw.content || '')),
     tags: Array.isArray(raw.tags) ? raw.tags.map(String) : [],
-    metaDescription: String(raw.metaDescription || raw.meta_description || ''),
+    metaDescription: normalizeMathText(String(raw.metaDescription || raw.meta_description || '')),
     generatedAt: new Date().toISOString(),
   };
 }
@@ -550,10 +551,10 @@ export async function generateExamArticleStream(
   const raw = extractJson(fullText);
 
   return {
-    title: String(raw.title || ''),
-    content: String(raw.content || ''),
+    title: normalizeMathText(String(raw.title || '')),
+    content: normalizeMathText(String(raw.content || '')),
     tags: Array.isArray(raw.tags) ? raw.tags.map(String) : [],
-    metaDescription: String(raw.metaDescription || raw.meta_description || ''),
+    metaDescription: normalizeMathText(String(raw.metaDescription || raw.meta_description || '')),
     generatedAt: new Date().toISOString(),
   };
 }

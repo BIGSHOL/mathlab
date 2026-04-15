@@ -106,9 +106,10 @@ export async function runExtendedAnalysis(params: {
       if (agentType === 'weakness') weaknessProfile = agentResult as unknown as WeaknessProfile;
       if (agentType === 'learning') learningPlan = agentResult as unknown as LearningPlan;
 
-      // DB 저장
+      // DB 저장 — _meta에 에이전트별 프롬프트 버전 기록 (버전별 품질 비교용)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const jsonResult = JSON.parse(JSON.stringify(agentResult)) as any;
+      jsonResult._meta = { promptVersion: agent.promptVersion, generatedAt: new Date().toISOString() };
       await prisma.examAnalysisExtension.upsert({
         where: { analysisId_agentType: { analysisId, agentType } },
         create: { analysisId, agentType, result: jsonResult },
@@ -168,6 +169,7 @@ export async function runExtendedAnalysis(params: {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const jsonResult = JSON.parse(JSON.stringify(agentResult)) as any;
+      jsonResult._meta = { promptVersion: agent.promptVersion, generatedAt: new Date().toISOString() };
       await prisma.examAnalysisExtension.upsert({
         where: { analysisId_agentType: { analysisId, agentType } },
         create: { analysisId, agentType, result: jsonResult },

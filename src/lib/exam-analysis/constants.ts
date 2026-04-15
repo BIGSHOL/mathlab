@@ -161,6 +161,21 @@ export const AGENT_TYPES = [
 
 export type AgentType = (typeof AGENT_TYPES)[number];
 
+// ── 에이전트별 프롬프트 버전 ──
+// 각 에이전트의 프롬프트를 수정할 때 해당 버전 반드시 업데이트!
+// orchestrator가 저장 시 result._meta.promptVersion으로 기록 → 버전별 품질 비교 가능
+// v1.0.0 — 2026-04-15 초기 H1~H5 하드 제약 + 수식 정규화 후처리 하네스 도입
+export const AGENT_PROMPT_VERSIONS: Record<AgentType, string> = {
+  'weakness': 'v1.0.0',
+  'learning': 'v1.0.0',
+  'prediction': 'v1.0.0',
+  'commentary': 'v1.0.0',
+  'topic-strategy': 'v1.0.0',
+  'exam-prep': 'v1.0.0',
+  'score-level-plan': 'v1.0.0',
+  'trends-insights': 'v1.0.0',
+};
+
 // ── 템플릿 유형 ──
 export const TEMPLATE_TYPES = ['detailed', 'summary', 'parent', 'print'] as const;
 export type TemplateType = (typeof TEMPLATE_TYPES)[number];
