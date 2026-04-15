@@ -5,7 +5,6 @@ import { X, Shapes } from 'lucide-react';
 import { renderDiagram } from '@/lib/utils/svg-diagrams';
 import type { DiagramType } from '@/lib/utils/svg-diagrams/types';
 import type { DiagramParam } from '@/types/pdf-extract';
-import { TextField } from './diagram-editor/SharedControls';
 import { DiagramSubForm } from './diagram-editor/DiagramSubForm';
 import { DiagramPreview } from './diagram-editor/DiagramPreview';
 import { PresetSelector } from './diagram-editor/PresetSelector';

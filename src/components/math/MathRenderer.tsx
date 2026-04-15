@@ -7,7 +7,7 @@ import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
-import { parseBoxCols, resolveCols, DEFAULT_BOX_COLS } from '@/lib/utils/box-grid';
+import { parseBoxCols, resolveCols } from '@/lib/utils/box-grid';
 import { parseImageTitle as sharedParseImageTitle, preprocessMathText } from './shared/text-preprocess';
 
 interface MathOccurrence {

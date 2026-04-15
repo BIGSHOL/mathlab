@@ -75,7 +75,8 @@ function renderPrism(parts: string[], rw: number, rh: number, rd: number, showHi
 
   const hasDims = rw !== 1 || rh !== 1 || rd !== 1 || (faceLabels && faceLabels.length > 0 ? false : true); // If default 1,1,1 keep it simple unless we specifically want to show labels. Actually let's just check if any dimension is explicitly set and not all are 1s if we want to avoid showing 1cm everywhere by default. The best way is assuming UI explicitly passes dimensions we should render them if > 0.
   const wantsDimensions = rw > 0 || rh > 0 || rd > 0;
-  const hasLabels = wantsDimensions && (rw !== 1 || rh !== 1 || rd !== 1);
+  const _hasLabels = wantsDimensions && (rw !== 1 || rh !== 1 || rd !== 1);
+  void _hasLabels;
   const padL = hasDims ? 40 : 40, padT = hasDims ? 35 : 40, padR = hasDims ? 75 : 30, padB = hasDims ? 50 : 20;
   const ox = padL, oy = padT + fh;
   // 전면 사각형 (FBL, FBR, FTR, FTL)
