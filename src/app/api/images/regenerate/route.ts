@@ -63,26 +63,30 @@ export async function POST(request: NextRequest) {
     return badRequest('입력 이미지가 너무 큽니다 (최대 6MB)');
   }
 
-  const bgDirective = transparentBackground
-    ? `
-[BACKGROUND — TRANSPARENT]
-- Output MUST have a fully TRANSPARENT background (PNG with alpha channel)
-- NO white, cream, or colored backdrop — only the subject objects
-- Empty areas around objects MUST be transparent (alpha=0)
-- Do NOT include any background texture, gradient, scenery, or fill color`
-    : '';
+  // 하네스: 배경은 항상 순백(#FFFFFF) — 크로마키로 언제든 투명화 가능하도록 강제
+  const bgDirective = `
+[BACKGROUND — PURE WHITE #FFFFFF — MANDATORY]
+- The background MUST be pure flat white (#FFFFFF), edge to edge
+- NO gradient, NO shadow falling onto background, NO texture, NO pattern, NO scenery, NO vignette
+- NO cream, beige, off-white, light gray, or any tinted background — ONLY #FFFFFF
+- Objects must sit cleanly on the white with crisp edges (no soft white haze blending into object)
+- Do NOT place any colored backdrop, table surface, floor, wall, or environment behind the subject
+- This is required so the white can be chroma-keyed to transparent downstream — any non-white background breaks the pipeline`.trim();
 
   const fullPrompt = `${NO_TEXT_DIRECTIVE}
+
 ${bgDirective}
 
 Recreate the attached reference image in the same style and composition, but as a FRESH AI-generated illustration. Preserve:
 - Overall composition, object arrangement, layout
-- Color palette and art style (cartoon / illustration / realistic)
+- Color palette and art style of the SUBJECT (cartoon / illustration / realistic)
 - Number and type of objects
 
 Additional user instruction: ${userPrompt?.trim() || '(none — match the reference as closely as possible)'}
 
-REMINDER: NO text, NO letters, NO numbers, NO labels anywhere in the output. Pure visual only.${transparentBackground ? ' Output as transparent PNG.' : ''}`;
+REMINDER:
+- NO text, NO letters, NO numbers, NO labels anywhere in the output. Pure visual only.
+- Background MUST be pure white #FFFFFF (flat, no gradient, no shadow on background).`;
 
   try {
     const client = getGeminiClient();
