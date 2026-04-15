@@ -6,13 +6,17 @@
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
-const STUDENT_ID = 'cmmdeyfro0003vdb8atfcu41a';
 
 async function main() {
+  const studentUser = await prisma.user.findFirst({ where: { username: 'student01' } });
+  if (!studentUser) throw new Error('student01 not found');
+  const STUDENT_ID = studentUser.id;
+  console.log('Student:', STUDENT_ID);
+
   // 1. chapter별 객관식 문제 수 확인
   const groups = await prisma.question.groupBy({
     by: ['chapter', 'difficulty'],
-    where: { chapter: { not: '' }, type: 'MULTIPLE_CHOICE' },
+    where: { chapter: { not: '' }, type: 'MULTIPLE_CHOICE', source: { contains: 'RPM' } },
     _count: { id: true },
     orderBy: { _count: { id: 'desc' } },
     take: 15,
@@ -63,6 +67,7 @@ async function main() {
         chapter: group.chapter,
         difficulty: group.difficulty as any,
         type: 'MULTIPLE_CHOICE',
+        source: { contains: 'RPM' },
       },
       take: 5,
     });

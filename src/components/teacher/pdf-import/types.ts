@@ -119,4 +119,15 @@ export interface PdfImportState {
   recoveryData: { problems: ExtractedProblem[]; concepts: ExtractedConcept[]; bookCode: string; savedAt: number } | null;
   restoreBackup: () => void;
   dismissBackup: () => void;
+
+  // 개념 중복 충돌 (Layer B)
+  conceptConflict: {
+    layer: 'B';
+    rows: Array<{
+      row: number;
+      title: string;
+      existing: { id: string; title: string; grade: string | null; chapter: string | null; section: string | null };
+    }>;
+  } | null;
+  resolveConceptConflict: (action: 'force' | 'skip' | 'cancel') => Promise<void>;
 }

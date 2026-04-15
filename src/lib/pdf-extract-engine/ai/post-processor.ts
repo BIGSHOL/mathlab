@@ -38,7 +38,7 @@ export function normalizeMathText(text: string): string {
   if (!text) return text;
   let out = fixLatexEscaping(text);
 
-  // 1.5) 수식 밖에 남은 LaTeX 텍스트 커맨드 정리 (\textrm{}, \text{}, \mathrm{} 등)
+  // 1.5) 수식 밖 LaTeX 커맨드 정리 (\textrm{}, \text{}, \mathrm{} / \therefore / \qquad 등)
   //      수식 내부는 보호
   {
     const blocks: string[] = [];
@@ -52,13 +52,129 @@ export function normalizeMathText(text: string): string {
         return `\u0000MB${i}\u0000`;
       });
     t = t
+      // 텍스트 래퍼 제거
       .replace(/\\textrm\{([^}]*)\}/g, '$1')
       .replace(/\\text\{([^}]*)\}/g, '$1')
       .replace(/\\mathrm\{([^}]*)\}/g, '$1')
       .replace(/\\textbf\{([^}]*)\}/g, '**$1**')
-      .replace(/\\textit\{([^}]*)\}/g, '*$1*');
+      .replace(/\\textit\{([^}]*)\}/g, '*$1*')
+      // 논리 기호 → 유니코드 (수식 바깥에서도 자연스럽게 보이도록)
+      .replace(/\\therefore\b/g, '∴')
+      .replace(/\\because\b/g, '∵')
+      // 스페이싱 커맨드 → 실제 공백
+      .replace(/\\qquad\b/g, '  ')
+      .replace(/\\quad\b/g, ' ')
+      .replace(/\\[;,:!]/g, ' ')
+      // 생략 기호 → 유니코드 (수식 바깥에서 렌더링 안정)
+      .replace(/\\ldots\b/g, '…')
+      .replace(/\\cdots\b/g, '…')
+      .replace(/\\dots\b/g, '…')
+      // `[N단계]`, `[$n$단계]` 같은 패턴 → **bold** (사각 박스 렌더링 방지)
+      //  마크다운 링크 `[text](url)` / 이미지 `![alt](url)`는 제외
+      .replace(/(?<!!)\[([^\]\n]*단계)\](?!\()/g, '**$1**')
+      // \text{\textcircled{N}} 중첩 → \text{①} (수식 내부 보호 위해 \text 유지)
+      .replace(/\\text\{\\textcircled\{(\d+)\}\}/g, (_m, n: string) => {
+        const num = Number(n);
+        if (num >= 1 && num <= 20) return `\\text{${String.fromCharCode(0x2460 + num - 1)}}`;
+        return _m;
+      })
+      // \textcircled{N} (1~20) → 유니코드 ①②③…
+      .replace(/\\textcircled\{(\d+)\}/g, (_m, n: string) => {
+        const num = Number(n);
+        if (num >= 1 && num <= 20) return String.fromCharCode(0x2460 + num - 1);
+        return _m;
+      })
+      // \textcircled{한글음절 가~하} → ㉮㉯㉰…, \textcircled{자음 ㄱ~ㅎ} → ㉠㉡㉢…
+      .replace(/\\textcircled\{([가-힣])\}/g, (_m, ch: string) => {
+        const map: Record<string, string> = {
+          '가':'㉮','나':'㉯','다':'㉰','라':'㉱','마':'㉲',
+          '바':'㉳','사':'㉴','아':'㉵','자':'㉶','차':'㉷',
+          '카':'㉸','타':'㉹','파':'㉺','하':'㉻',
+        };
+        return map[ch] || _m;
+      })
+      .replace(/\\textcircled\{([ㄱ-ㅎ])\}/g, (_m, ch: string) => {
+        const map: Record<string, string> = {
+          'ㄱ':'㉠','ㄴ':'㉡','ㄷ':'㉢','ㄹ':'㉣','ㅁ':'㉤',
+          'ㅂ':'㉥','ㅅ':'㉦','ㅇ':'㉧','ㅈ':'㉨','ㅊ':'㉩',
+          'ㅋ':'㉪','ㅌ':'㉫','ㅍ':'㉬','ㅎ':'㉭',
+        };
+        return map[ch] || _m;
+      });
+
+    // 1.7.5) "=로 시작하는 줄에 LaTeX 커맨드 있는데 $ 없음" → $...$로 감싸기
+    //         (이전 수식의 연장인 케이스 자동 감지)
+    {
+      const LATEX_CMD_IN_LINE = /\\(frac|tfrac|sqrt|times|div|cdot|pm|mp|leq|geq|neq|therefore|because|pi|angle)\b/;
+      t = t.split('\n').map(line => {
+        const trimmed = line.trim();
+        if (!/^=/.test(trimmed)) return line;
+        if (!LATEX_CMD_IN_LINE.test(line)) return line;
+        if (line.includes('$')) return line;
+        const ws = line.match(/^\s*/)?.[0] || '';
+        return `${ws}$${line.slice(ws.length)}$`;
+      }).join('\n');
+    }
     out = t.replace(/\u0000MB(\d+)\u0000/g, (_, i) => blocks[Number(i)] ?? '');
   }
+
+  // 1.6) 빈 수식 `$ $` / `$  $` 제거 (수식 바깥, 공백/탭만 포함된 경우)
+  //      줄바꿈은 제외 — 별개 수식 간 경계일 수 있음
+  {
+    const blocks: string[] = [];
+    let t = out
+      .replace(/\$\$[\s\S]*?\$\$/g, (m) => `\u0000MB${blocks.push(m) - 1}\u0000`)
+      .replace(/\$[^$\n]*\$/g, (m) => `\u0000MB${blocks.push(m) - 1}\u0000`);
+    t = t.replace(/\$[ \t]{1,6}\$/g, ' ');
+    out = t.replace(/\u0000MB(\d+)\u0000/g, (_, i) => blocks[Number(i)] ?? '');
+  }
+
+  // 1.7) 보기/결론 라인 홀수 $ 보정
+  //   (a) 보기 라인 (①②③…, ㄱ./ㄴ./…) + 끝 $ 누락 → 뒤에 $ 추가
+  //   (b) ∴/∵로 시작하는 라인 + 앞 $ 누락 (끝에만 $) → 앞에 $ 추가
+  //   (c) =로 시작하는 라인 + 앞 $ 누락 (끝에만 $) → 앞에 $ 추가 (연속식 복원)
+  out = out.split('\n').map(line => {
+    const count = (line.match(/\$/g) || []).length;
+    if (count === 0 || count % 2 === 0) return line;
+
+    // (a) 보기/한글 기호로 시작
+    if (/^[①②③④⑤⑥⑦⑧⑨⑩㉠㉡㉢㉣㉤㉮㉯㉰㉱㉲㉳]|^[ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊ]\./.test(line)) {
+      const trimmed = line.trimEnd();
+      if (!trimmed.endsWith('$')) return trimmed + '$';
+      return line;
+    }
+    // (b) ∴/∵/\therefore/\because 시작 + 끝 $ → 앞 $ 추가
+    const therMatch = line.match(/^(\s*)([∴∵])\s*(.+)$/);
+    if (therMatch) {
+      const [, ws, sym, rest] = therMatch;
+      if (rest.trimEnd().endsWith('$') && !rest.startsWith('$')) {
+        return `${ws}${sym} $${rest}`;
+      }
+    }
+    // (c) =로 시작 + 끝 $ → 앞 $ 추가
+    if (/^\s*=/.test(line) && line.trimEnd().endsWith('$')) {
+      const ws = line.match(/^\s*/)?.[0] || '';
+      return `${ws}$${line.slice(ws.length)}`;
+    }
+    return line;
+  }).join('\n');
+
+  // 1.8) 블록 수식 $$...$$ + 인라인 $\begin{aligned}...\end{aligned}$ 내부 \frac → \tfrac
+  //      displaystyle/aligned 환경에서 분수 거대화 방지
+  out = out.replace(/\$\$([\s\S]*?)\$\$/g, (full, inner: string) => {
+    if (!/\\frac\b/.test(inner)) return full;
+    return `$$${inner.replace(/\\frac\b/g, '\\tfrac')}$$`;
+  });
+  // 인라인 $\begin{aligned|array|cases|...}...\end{...}$ 도 처리
+  out = out.replace(/\$(\\begin\{(?:aligned|array|cases|matrix|pmatrix|bmatrix|vmatrix|gathered|split)\}[\s\S]*?\\end\{(?:aligned|array|cases|matrix|pmatrix|bmatrix|vmatrix|gathered|split)\})\$/g, (_full, inner: string) => {
+    if (!/\\frac\b/.test(inner)) return `$${inner}$`;
+    return `$${inner.replace(/\\frac\b/g, '\\tfrac')}$`;
+  });
+
+  // 1.9) 연속 $$$+ 해체: 4개→ `$$\n\n$$`, 3개→ `$$\n$`
+  out = out
+    .replace(/\${4,}/g, '$$\n\n$$')
+    .replace(/\${3}/g, '$$\n$');
 
   // 2) 인접 인라인 수식 글루 분리 — 최대 5회 반복 ($A$$B$$C$... 연쇄 대응)
   for (let i = 0; i < 5; i++) {
@@ -121,6 +237,32 @@ export function normalizeAnswerField(answer: string): string {
   // 예: "\times, \times, \bigcirc" → "$\times, \times, \bigcirc$"
   //     "\frac{5}{4}"              → "$\frac{5}{4}$"
   return `$${trimmed}$`;
+}
+
+/**
+ * 객관식 정답이 "값"(예: "9", "36", "120")으로 들어온 경우, choices와 대조해
+ * 해당 보기 번호(①②③④⑤)로 변환.
+ * - 이미 ①②③/ㄱㄴㄷ/㉠㉡㉢ 형식이면 그대로 반환
+ * - 매칭 실패 시 원본 그대로
+ */
+export function resolveMultipleChoiceAnswer(answer: string, choices: string[] | null | undefined): string {
+  if (!answer || !Array.isArray(choices) || choices.length === 0) return answer;
+  const trimmed = answer.trim();
+  // 올바른 형식은 건드리지 않음
+  if (/^[①②③④⑤⑥⑦⑧⑨⑩,\s]+$/.test(trimmed)) return trimmed;
+  if (/^[ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊ,\s]+$/.test(trimmed)) return trimmed;
+  if (/^[㉠㉡㉢㉣㉤㉮㉯㉰㉱㉲,\s]+$/.test(trimmed)) return trimmed;
+
+  const normalize = (s: string) => s
+    .replace(/^[①②③④⑤⑥⑦⑧⑨⑩]\s*/, '')
+    .replace(/\$/g, '')
+    .replace(/\s+/g, '')
+    .replace(/[^0-9A-Za-z\-+\/\\{}.()]/g, '');
+  const normAns = normalize(trimmed);
+  if (!normAns) return trimmed;
+  const idx = choices.findIndex(c => normalize(c) === normAns);
+  if (idx < 0) return trimmed;
+  return '①②③④⑤⑥⑦⑧⑨⑩'[idx] || trimmed;
 }
 
 /**

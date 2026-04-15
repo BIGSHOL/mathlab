@@ -41,6 +41,10 @@ const SaveStep = dynamic(
   () => import('@/components/teacher/pdf-import/SaveStep').then(m => m.SaveStep),
   { ssr: false, loading: PdfStepLoading },
 );
+const ConceptConflictDialog = dynamic(
+  () => import('@/components/teacher/pdf-import/ConceptConflictDialog').then(m => m.ConceptConflictDialog),
+  { ssr: false },
+);
 
 export default function PdfImportPage() {
   const { user, isLoading } = useAuth();
@@ -226,6 +230,13 @@ export default function PdfImportPage() {
       {state.step === 4 && state.result && (
         <SaveStep result={state.result} bookCode={state.bookCode} />
       )}
+
+      {/* 개념 중복 충돌 다이얼로그 (Layer B) */}
+      <ConceptConflictDialog
+        conflict={state.conceptConflict}
+        submitting={state.submitting}
+        onResolve={state.resolveConceptConflict}
+      />
     </div>
   );
 }

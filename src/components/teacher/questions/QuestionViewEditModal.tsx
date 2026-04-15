@@ -57,6 +57,7 @@ interface QuestionViewEditModalProps {
   openMathPopup: (field: 'content' | 'answer' | 'explanation' | 'choice', choiceIndex?: number) => void;
   openMathEdit: (field: 'content' | 'answer' | 'explanation' | 'choice', latex: string, start: number, end: number, choiceIndex?: number) => void;
   openImagePopup: (field: 'content' | 'explanation') => void;
+  openImageEdit: (field: 'content' | 'explanation', info: { src: string; alt: string; title: string; start: number; end: number }) => void;
   openDiagramEditor: (mode: 'edit' | 'create') => void;
   editDiagram: (idx: number, mode: 'edit' | 'create') => void;
   removeDiagram: (idx: number, mode: 'edit' | 'create') => void;
@@ -85,6 +86,7 @@ export function QuestionViewEditModal({
   openMathPopup,
   openMathEdit,
   openImagePopup,
+  openImageEdit,
   openDiagramEditor,
   editDiagram,
   removeDiagram,
@@ -149,6 +151,7 @@ export function QuestionViewEditModal({
             openMathPopup={openMathPopup}
             openMathEdit={openMathEdit}
             openImagePopup={openImagePopup}
+            openImageEdit={openImageEdit}
             openDiagramEditor={openDiagramEditor}
             editDiagram={editDiagram}
             removeDiagram={removeDiagram}
@@ -351,6 +354,7 @@ function EditMode({
   openMathPopup,
   openMathEdit,
   openImagePopup,
+  openImageEdit,
   openDiagramEditor,
   editDiagram,
   removeDiagram,
@@ -368,6 +372,7 @@ function EditMode({
   openMathPopup: (field: 'content' | 'answer' | 'explanation' | 'choice', choiceIndex?: number) => void;
   openMathEdit: (field: 'content' | 'answer' | 'explanation' | 'choice', latex: string, start: number, end: number, choiceIndex?: number) => void;
   openImagePopup: (field: 'content' | 'explanation') => void;
+  openImageEdit: (field: 'content' | 'explanation', info: { src: string; alt: string; title: string; start: number; end: number }) => void;
   openDiagramEditor: (mode: 'edit' | 'create') => void;
   editDiagram: (idx: number, mode: 'edit' | 'create') => void;
   removeDiagram: (idx: number, mode: 'edit' | 'create') => void;
@@ -587,6 +592,7 @@ function EditMode({
                 <MathRenderer
                   content={editForm.content}
                   onMathClick={(latex, start, end) => openMathEdit('content', latex, start, end)}
+                  onImageClick={(info) => openImageEdit('content', info)}
                   diagramSvgs={diagramSvgs}
                   onDiagramClick={(idx) => editDiagram(idx, 'edit')}
                 />
@@ -646,22 +652,40 @@ function EditMode({
         <div>
           <div className="flex items-center justify-between mb-1">
             <label className="text-xs font-bold text-text-secondary">정답</label>
-            <button
-              type="button"
-              onClick={() => openMathPopup('answer')}
-              className="flex items-center gap-1 px-2 py-0.5 text-xs text-primary hover:bg-primary/10 rounded-sm transition-colors"
-              title="수식 삽입"
-            >
-              <FunctionSquare className="w-3.5 h-3.5" />
-              수식
-            </button>
+            {viewMode === 'raw' && (
+              <button
+                type="button"
+                onClick={() => openMathPopup('answer')}
+                className="flex items-center gap-1 px-2 py-0.5 text-xs text-primary hover:bg-primary/10 rounded-sm transition-colors"
+                title="수식 삽입"
+              >
+                <FunctionSquare className="w-3.5 h-3.5" />
+                수식
+              </button>
+            )}
           </div>
-          <input
-            ref={answerRef}
-            className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
-            value={editForm.answer}
-            onChange={(e) => setEditForm((p) => ({ ...p, answer: e.target.value }))}
-          />
+          {viewMode === 'rendered' ? (
+            <div
+              className="min-h-[42px] px-3 py-2 border border-slate-200 rounded-sm text-sm bg-white"
+              onClick={!editForm.answer ? () => setViewMode('raw') : undefined}
+            >
+              {editForm.answer ? (
+                <MathRenderer
+                  content={editForm.answer}
+                  onMathClick={(latex, start, end) => openMathEdit('answer', latex, start, end)}
+                />
+              ) : (
+                <span className="text-slate-400 italic text-xs cursor-text">정답이 비어있습니다. 마크업 버튼을 눌러 입력하세요.</span>
+              )}
+            </div>
+          ) : (
+            <input
+              ref={answerRef}
+              className="w-full px-3 py-2 border border-slate-200 rounded-sm text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
+              value={editForm.answer}
+              onChange={(e) => setEditForm((p) => ({ ...p, answer: e.target.value }))}
+            />
+          )}
         </div>
 
         {/* 해설 */}
@@ -709,6 +733,7 @@ function EditMode({
                 <MathRenderer
                   content={editForm.explanation}
                   onMathClick={(latex, start, end) => openMathEdit('explanation', latex, start, end)}
+                  onImageClick={(info) => openImageEdit('explanation', info)}
                 />
               ) : (
                 <span className="text-slate-400 italic text-xs cursor-text">해설이 비어있습니다. 마크업 버튼을 눌러 입력하세요.</span>

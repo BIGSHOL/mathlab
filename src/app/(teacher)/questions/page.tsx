@@ -123,6 +123,7 @@ export default function QuestionsPage() {
           openMathPopup={mgr.openMathPopup}
           openMathEdit={mgr.openMathEdit}
           openImagePopup={mgr.openImagePopup}
+          openImageEdit={mgr.openImageEdit}
           openDiagramEditor={mgr.openDiagramEditor}
           editDiagram={mgr.editDiagram}
           removeDiagram={mgr.removeDiagram}
@@ -163,8 +164,9 @@ export default function QuestionsPage() {
 
       <ImageUploadPopup
         isOpen={mgr.imagePopup.open}
-        onClose={() => mgr.setImagePopup((p) => ({ ...p, open: false }))}
+        onClose={() => mgr.setImagePopup((p) => ({ ...p, open: false, editRange: undefined, initial: undefined }))}
         onInsert={mgr.handleImageInsert}
+        initial={mgr.imagePopup.initial}
       />
 
       <DiagramEditorPopup

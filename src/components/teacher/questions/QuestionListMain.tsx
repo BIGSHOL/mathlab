@@ -232,44 +232,44 @@ export function QuestionListMain({
                   </div>
 
                   {!explanationOnly && (
-                  <div className="text-sm font-medium text-text-primary">
-                    <MathRenderer content={q.content} />
-                    {(q.diagramSpec || q.diagramSVG) && (
-                      <div className="my-2 flex justify-center">
-                        {q.diagramSpec && (Array.isArray(q.diagramSpec) ? q.diagramSpec.length > 0 : true) ? (
-                          <DiagramRenderer
-                            spec={q.diagramSpec}
-                            className="max-w-md rounded-sm border border-slate-100 bg-white p-3 [&_svg]:w-full [&_svg]:h-auto"
-                          />
-                        ) : q.diagramSVG ? (
-                          <div
-                            className="max-w-md overflow-hidden rounded-sm border border-slate-100 bg-white p-3 [&_svg]:w-full [&_svg]:h-auto"
-                            style={{ fontFamily: "'Pretendard', system-ui, sans-serif" }}
-                            dangerouslySetInnerHTML={{ __html: q.diagramSVG }}
-                          />
-                        ) : null}
-                      </div>
-                    )}
-                    {q.choices && Array.isArray(q.choices) && (() => {
-                      const choices = q.choices as string[];
-                      const maxLen = Math.max(...choices.map(c => c.length));
-                      const autoCols = maxLen > 25 ? 1 : 2;
-                      const finalCols = (q as QuestionItem).choiceColumns ?? autoCols;
-                      return (
-                        <div className={`grid ${finalCols === 2 ? 'grid-cols-2' : 'grid-cols-1'} gap-2 mt-2 text-sm`}>
-                          {choices.map((c, i) => (
-                            <div key={i} className="px-3 py-2 bg-slate-50 rounded-sm border border-slate-100">
-                              <MathRenderer content={c} />
-                            </div>
-                          ))}
+                    <div className="text-sm font-medium text-text-primary">
+                      <MathRenderer content={q.content} />
+                      {(q.diagramSpec || q.diagramSVG) && (
+                        <div className="my-2 flex justify-center">
+                          {q.diagramSpec && (Array.isArray(q.diagramSpec) ? q.diagramSpec.length > 0 : true) ? (
+                            <DiagramRenderer
+                              spec={q.diagramSpec}
+                              className="max-w-md rounded-sm border border-slate-100 bg-white p-3 [&_svg]:w-full [&_svg]:h-auto"
+                            />
+                          ) : q.diagramSVG ? (
+                            <div
+                              className="max-w-md overflow-hidden rounded-sm border border-slate-100 bg-white p-3 [&_svg]:w-full [&_svg]:h-auto"
+                              style={{ fontFamily: "'Pretendard', system-ui, sans-serif" }}
+                              dangerouslySetInnerHTML={{ __html: q.diagramSVG }}
+                            />
+                          ) : null}
                         </div>
-                      );
-                    })()}
-                  </div>
+                      )}
+                      {q.choices && Array.isArray(q.choices) && (() => {
+                        const choices = q.choices as string[];
+                        const maxLen = Math.max(...choices.map(c => c.length));
+                        const autoCols = maxLen > 25 ? 1 : 2;
+                        const finalCols = (q as QuestionItem).choiceColumns ?? autoCols;
+                        return (
+                          <div className={`grid ${finalCols === 2 ? 'grid-cols-2' : 'grid-cols-1'} gap-2 mt-2 text-sm`}>
+                            {choices.map((c, i) => (
+                              <div key={i} className="px-3 py-2 bg-slate-50 rounded-sm border border-slate-100">
+                                <MathRenderer content={c} />
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
                   )}
 
                   <div className="mt-auto pt-2.5 border-t border-slate-200 flex items-center justify-between gap-2">
-                    <div className={`text-xs text-text-secondary flex items-center gap-1 min-w-0 flex-1 ${expandedExplanation === q.id ? '' : 'max-h-[1.5em] overflow-hidden'}`}>
+                    <div className="text-xs text-text-secondary flex items-center gap-1 min-w-0 flex-1">
                       <KeyRound className="w-3.5 h-3.5 shrink-0" />
                       <span className="shrink-0">정답:</span>
                       <MathRenderer content={q.answer} className="inline" />
@@ -278,15 +278,17 @@ export function QuestionListMain({
                       <span className={`text-xs font-bold px-1.5 py-0.5 rounded-sm ${q.explanation ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400'}`}>
                         {q.explanation ? '해설 있음' : '해설 없음'}
                       </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setExpandedExplanation(expandedExplanation === q.id ? null : q.id);
-                        }}
-                        className="text-xs font-bold text-primary hover:underline"
-                      >
-                        {expandedExplanation === q.id ? '해설 닫기' : '해설 보기'}
-                      </button>
+                      {!explanationOnly && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedExplanation(expandedExplanation === q.id ? null : q.id);
+                          }}
+                          className="text-xs font-bold text-primary hover:underline"
+                        >
+                          {expandedExplanation === q.id ? '해설 닫기' : '해설 보기'}
+                        </button>
+                      )}
                     </div>
                   </div>
                   {(expandedExplanation === q.id || explanationOnly) && (

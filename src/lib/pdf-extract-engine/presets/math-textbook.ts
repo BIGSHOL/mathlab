@@ -18,7 +18,7 @@
  */
 
 import type { PdfExtractPlugin } from '../types';
-import { fixLatexEscaping, normalizeMathText, normalizeAnswerField } from '../ai/post-processor';
+import { fixLatexEscaping, normalizeMathText, normalizeAnswerField, resolveMultipleChoiceAnswer } from '../ai/post-processor';
 import { createPageFilter } from '../core/page-filter';
 
 // ============================================================
@@ -563,6 +563,17 @@ V5. diagramParams를 비운 [그림N] 플레이스홀더가 있는가? 있으면
     - ✅ 사다리꼴 나눗셈 (좌측 나누는 수, 우측 각 수):
       "$\\\\begin{array}{r|ccc} & 4x & 5x & 6x \\\\\\\\ \\\\hline x) & 4 & 5 & 6 \\\\\\\\ \\\\hline 2) & 2 & 5 & 3 \\\\end{array}$"
     - 규칙: 각 소인수(또는 수)는 고정된 열 점유. 해당 값이 없는 행은 셀 비움. GCD/LCM 행은 \`\\\\hline\` 위에 라벨 \`(\\\\text{최대공약수}) =\` / \`(\\\\text{최소공배수}) =\`. \`aligned\`는 \`\\\\hline\` 미지원 → 구분선 있으면 반드시 \`array\` 사용.
+16-C. **[공통 안티패턴 — 문제·보기·답 모두 적용]**
+    (1) 보기 라인 \`$\` 닫힘 필수: \`① $(-7)+(-5)=-12$\` (\`$\` 양쪽). 닫힘 누락 절대 금지.
+    (2) \`\\ldots\`, \`\\cdots\`, \`\\dots\`는 반드시 수식 내부(\`$...$\`)에. 바깥 사용 시 유니코드 \`…\`로 대체.
+    (3) \`\\frac\`, \`\\sqrt\`, \`\\times\`, \`\\div\` 등 모든 LaTeX 수식 커맨드는 반드시 \`$...$\`로 감쌀 것.
+    (4) \`\\therefore\`, \`\\because\` 수식 바깥 사용 시 유니코드 \`∴\`, \`∵\`로.
+    (5) \`\\textcircled{숫자}\` → 유니코드 \`①②③…\`, \`\\textcircled{한글음절(가,나,다…)}\` → \`㉮㉯㉰…\`, \`\\textcircled{자음(ㄱ,ㄴ,ㄷ…)}\` → \`㉠㉡㉢…\`.
+    (6) \`[1단계]\`, \`[$n$단계]\` 사각 박스 형식 금지 → \`**1단계**\`, \`**$n$단계**\` (굵게).
+    (7) 한글 텍스트에 \`$\`를 씌우지 말 것. \`$(이익)...\` 금지 → \`(이익)...\`, 연산자만 감싸기.
+    (8) 인라인 수식은 한 줄에서만 완결. 여러 줄 계산식은 \`$\\begin{aligned}...\\end{aligned}$\` 한 줄로 작성 (실제 개행 없이).
+    (9) 블록 \`$$...$$\` 내부 \`\\frac\`는 displaystyle로 거대화되므로 \`\\tfrac\` 사용.
+    (10) 객관식 정답(answer)은 반드시 **보기 번호**(①~⑤ / ㄱㄴㄷ / ㉠㉡㉢). "9", "720 m" 같은 값만 적지 말 것.
 17. 원본 충실성: 임의 추가/해석 금지
 18. 2열 레이아웃은 마크다운 테이블 사용
 19. 온라인 변환: "○표 하세요" → "구하세요", "색칠하세요" → "찾으세요"
@@ -783,7 +794,11 @@ ${textLayer}
         content: normalizeMathText(stripChoicesFromContent(autoWrapMath(fixLatexEscaping(contentText)), p.choices || [])),
         choices: ensureChoiceNumbers((p.choices || []).map((c: string) => normalizeMathText(autoWrapMath(fixLatexEscaping(c))))),
         boxItems: p.boxItems || [],
-        answer: normalizeAnswerField(fixLatexEscaping(p.answer || '')),
+        answer: (() => {
+          const normalizedChoices = ensureChoiceNumbers((p.choices || []).map((c: string) => normalizeMathText(autoWrapMath(fixLatexEscaping(c)))));
+          const rawAns = normalizeAnswerField(fixLatexEscaping(p.answer || ''));
+          return resolveMultipleChoiceAnswer(rawAns, normalizedChoices);
+        })(),
         explanation: '',
         scoringCriteria: '',
         sourceTag: ['서술형', '객관식', '주관식'].includes(p.sourceTag || '') ? '' : (p.sourceTag || ''),
@@ -878,6 +893,28 @@ E. **자기검증:** 각 explanation이 "따라서 …" / "∴ …" / "답:" 등
    단일 등식은 \`$A=B$\` 인라인. aligned 남용 금지.
 
 4-D. **원본의 "답 ④", "답 ⑤" 등 끝부분 답 표기는 explanation에 넣지 말 것.** answer 필드에만 저장. 중복 금지.
+
+4-F. **[안티패턴 금지 — 실제 발견된 오류 사례]**:
+   (1) ❌ 객관식 보기 줄에 \`$\` 열고 안 닫기: \`① $(-7)+(-5)=-12\` (닫는 \`$\` 누락) → ✅ \`① $(-7)+(-5)=-12$\`
+   (2) ❌ \`\\ldots\`, \`\\cdots\`, \`\\dots\` 수식 바깥 노출: \`$1, 2, 3$, \\ldots 이므로\` → ✅ \`$1, 2, 3, \\ldots$ 이므로\` 또는 \`$1, 2, 3$, … 이므로\` (유니코드)
+   (3) ❌ \`\\frac\`, \`\\sqrt\`, \`\\times\` 등 수식 커맨드를 \`$\` 감싸지 않기: \`$a$ + \\frac{1}{2}\` → ✅ \`$a + \\frac{1}{2}$\`
+   (4) ❌ \`\\therefore\`, \`\\because\`를 수식 바깥에: \`$x=5$ \\therefore y=3\` → ✅ \`$x=5$ ∴ $y=3$\` (유니코드 또는 $감싸기)
+   (5) ❌ \`$$\` 블록 사이 \`$ $\` 빈 수식 잔존: \`$$...$$ $ $ 에 대입\` → ✅ \`$$...$$\\n에 대입\`
+   (6) ❌ 연속 \`$$$$\` (4개 이상): \`...$$$$...\` → ✅ 두 블록 사이에 줄바꿈: \`...$$\\n\\n$$...\`
+   (7) ❌ 블록 \`$$\` 내부 \`\\frac\` 사용 (거대화): \`$$\\frac{1}{5 \\times 6}$$\` → ✅ \`$$\\tfrac{1}{5 \\times 6}$$\` (displaystyle에선 \\tfrac)
+   (8) ❌ \`\\textcircled{숫자/한글}\` 수식 바깥: \`\\textcircled{1}\`, \`\\textcircled{가}\` → ✅ 유니코드 \`①\`, \`㉮\` 사용 (또는 \`$\\textcircled{1}$\`)
+   (9) ❌ \`[1단계]\`, \`[$n$단계]\` 사각 박스 형식: \`[1단계]의 도형\` (마크다운이 각괄호를 버튼 박스로 렌더) → ✅ \`**1단계**의 도형\` 또는 \`**$n$단계**의 도형\`
+   (10) ❌ \`∴\`/\`∵\`로 시작하는 라인에 여는 \`$\` 누락: \`∴ -3.8>-4$\` → ✅ \`∴ $-3.8>-4$\`
+   (11) ❌ \`=\`로 시작하는 연속식에 여는 \`$\` 누락: \`= \\frac{1}{5}\` → ✅ \`$= \\frac{1}{5}$\` (이전 \`$...$\`의 연장)
+   (12) ❌ 객관식 다단계 계산을 \`$ ... $\` 하나로 여러 줄에 걸치기 (KaTeX 인라인은 줄바꿈 불가):
+        \`\`\`
+        $\\left(+\\frac{11}{5}\\right)+(-1)+\\left(+\\frac{4}{5}\\right)
+        = ...
+        = 2$
+        \`\`\`
+        → ✅ 한 줄 \`aligned\`: \`$\\begin{aligned} &A \\\\\\\\ &=B \\\\\\\\ &=C \\end{aligned}$\` (모든 \`\\\\\\\\\`는 한 줄에, 실제 개행 없이)
+   (13) ❌ 한글 본문에 \`$\` 잘못 붙이기: \`$(이익) = (판매 가격) - (원가)이므로\` (KaTeX가 한글을 수식으로 렌더해 깨짐) → ✅ \`(이익) = (판매 가격) $-$ (원가)이므로\` (연산자만 \`$\`로 감싸기)
+   (14) ❌ 객관식 정답에 "보기 값"만 적기: \`"9"\`, \`"36"\`, \`"720 m"\` → ✅ 반드시 보기 번호 \`"④"\`, \`"③"\` (값과 번호 매칭 필수)
 
 4-E. **원본 PDF의 시각적 구조(블록 들여쓰기, 표, 박스)를 **반드시 해당 마크다운 / LaTeX 환경으로 재현**. 텍스트 평문화 금지.**
    - 소인수분해 세로정렬표 → \`array\` (아래 4-3 참고)

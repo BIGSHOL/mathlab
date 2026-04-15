@@ -35,6 +35,7 @@ export const createConceptSchema = z.object({
   ...conceptBaseFields,
   sortOrder: z.number().int().default(0),
   prerequisites: z.array(z.string()).optional(),
+  force: z.boolean().optional(), // Layer B 유력 중복 무시 옵션 (Layer A는 불가)
 });
 
 // update = base 필드 전부 optional + nullable 파생
@@ -55,6 +56,7 @@ export const bulkConceptItemSchema = z.object({
 export const bulkCreateConceptSchema = z.object({
   subjectId: z.string().min(1),
   concepts: z.array(bulkConceptItemSchema).min(1, '최소 1개의 개념이 필요합니다').max(200, '최대 200개까지 가능합니다'),
+  force: z.boolean().optional(), // Layer B 유력 중복 무시 옵션 (Layer A는 불가)
 });
 
 export const blankQuerySchema = z.object({

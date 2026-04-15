@@ -182,6 +182,10 @@ export interface MathPopupState {
 export interface ImagePopupState {
   open: boolean;
   field: 'content' | 'explanation';
+  /** 편집 대상 이미지 원본 마크다운 범위 (있으면 편집 모드) */
+  editRange?: { start: number; end: number };
+  /** 편집 모드 초기값 */
+  initial?: { url: string; alt?: string; width?: string; alignment?: string };
 }
 
 export interface ConceptOption {

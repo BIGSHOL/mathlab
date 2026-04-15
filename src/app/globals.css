@@ -52,9 +52,17 @@
 .katex {
   font-size: 1.15em !important;
 }
-/* 분수만 크게: 분자/분모 텍스트 스케일업 */
+/* 분수만 크게: 분자/분모 텍스트 스케일업 (인라인 기준) */
 .katex .mfrac {
-  font-size: 1.4em;
+  font-size: 1.2em;
+}
+/* 블록(display) 수식 안에서는 분수가 이미 displaystyle로 커지므로 기본 크기 유지 */
+.katex-display .mfrac {
+  font-size: 1em;
+}
+/* 블록 수식 행간 확보 — aligned 다단계식에서 겹침 방지 */
+.katex-display {
+  line-height: 1.4;
 }
 
 

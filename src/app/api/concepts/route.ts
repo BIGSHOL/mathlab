@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireTeacher, requireSuperAdmin, validateQuery, validateBody, isResponse, normalizeConceptContent } from '@/lib/api';
 import { conceptQuerySchema, createConceptSchema } from '@/lib/schemas/concept';
+import { detectDuplicates } from '@/lib/concept-dedupe';
 
 // GET /api/concepts?subjectId=xxx&grade=middle_1&category=concept&part=calc&search=xxx
 export async function GET(request: NextRequest) {
@@ -92,7 +93,38 @@ export async function POST(request: NextRequest) {
   const parsed = await validateBody(request, createConceptSchema);
   if (isResponse(parsed)) return parsed;
 
-  const { prerequisites, ...data } = parsed;
+  const { prerequisites, force, ...data } = parsed;
+
+  // 중복 검사 (Layer A 확정 / Layer B 유력)
+  const [conflict] = await detectDuplicates([
+    { title: data.title, grade: data.grade, chapter: data.chapter, section: data.section },
+  ]);
+  if (conflict) {
+    if (conflict.layer === 'A') {
+      return NextResponse.json(
+        {
+          error: {
+            code: 'CONCEPT_EXACT_DUPLICATE',
+            message: `동일한 개념이 이미 존재합니다 (${conflict.existing.chapter || '-'} / ${conflict.existing.section || '-'} / ${conflict.existing.title})`,
+            details: conflict,
+          },
+        },
+        { status: 409 }
+      );
+    }
+    if (conflict.layer === 'B' && !force) {
+      return NextResponse.json(
+        {
+          error: {
+            code: 'CONCEPT_LIKELY_DUPLICATE',
+            message: `같은 단원에 동일한 제목의 개념이 있습니다 (${conflict.existing.section || '-'} / ${conflict.existing.title}). 의도적으로 구분하려면 force=true로 다시 요청하세요.`,
+            details: conflict,
+          },
+        },
+        { status: 409 }
+      );
+    }
+  }
 
   // 개념 내용 정규화 (blockquote 제거 + 번호 → 동그라미 숫자)
   if (data.fullContent) {

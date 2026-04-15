@@ -205,7 +205,7 @@ export function useQuestionManager() {
     }
   }, [mathPopup, isCreateMode]);
 
-  // 이미지 삽입
+  // 이미지 삽입 (새)
   const openImagePopup = (field: 'content' | 'explanation') => {
     const el = field === 'content' ? contentRef.current : explanationRef.current;
     if (el) {
@@ -214,18 +214,37 @@ export function useQuestionManager() {
     setImagePopup({ open: true, field });
   };
 
-  const handleImageInsert = useCallback((markdown: string) => {
-    const { field } = imagePopup;
-    const { start, end } = cursorPosRef.current;
-    const splice = (text: string) =>
-      text.substring(0, start) + markdown + text.substring(end);
+  // 기존 이미지 편집
+  const openImageEdit = (field: 'content' | 'explanation', info: { src: string; alt: string; title: string; start: number; end: number }) => {
+    // title 예: "50% center"
+    const [widthPart, alignPart] = (info.title || '').split(/\s+/);
+    setImagePopup({
+      open: true,
+      field,
+      editRange: { start: info.start, end: info.end },
+      initial: { url: info.src, alt: info.alt, width: widthPart, alignment: alignPart },
+    });
+  };
 
+  const handleImageInsert = useCallback((markdown: string) => {
+    const { field, editRange } = imagePopup;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const setter = (isCreateMode ? setCreateForm : setEditForm) as React.Dispatch<React.SetStateAction<any>>;
-    if (field === 'content') {
-      setter((p: Record<string, unknown>) => ({ ...p, content: splice(p.content as string) }));
-    } else if (field === 'explanation') {
-      setter((p: Record<string, unknown>) => ({ ...p, explanation: splice(p.explanation as string) }));
+    const setter = (isCreateMode ? setCreateForm : setEditForm) as unknown as React.Dispatch<React.SetStateAction<Record<string, any>>>;
+    const fieldKey = field === 'content' ? 'content' : 'explanation';
+    if (editRange) {
+      // 편집 모드: 기존 이미지 마크다운 교체. 선행/후행 줄바꿈 트림 (insert 규약 때문에 생긴 것)
+      const trimmed = markdown.replace(/^\n+/, '').replace(/\n+$/, '');
+      setter((p) => {
+        const text = (p[fieldKey] as string) || '';
+        return { ...p, [fieldKey]: text.substring(0, editRange.start) + trimmed + text.substring(editRange.end) };
+      });
+    } else {
+      // 새 삽입: 커서 위치에
+      const { start, end } = cursorPosRef.current;
+      setter((p) => {
+        const text = (p[fieldKey] as string) || '';
+        return { ...p, [fieldKey]: text.substring(0, start) + markdown + text.substring(end) };
+      });
     }
   }, [imagePopup, isCreateMode]);
 
@@ -708,7 +727,7 @@ export function useQuestionManager() {
 
     // Image popup
     imagePopup, setImagePopup,
-    openImagePopup, handleImageInsert,
+    openImagePopup, openImageEdit, handleImageInsert,
 
     // Diagram
     diagramEditorOpen, setDiagramEditorOpen,

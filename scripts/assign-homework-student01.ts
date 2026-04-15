@@ -19,7 +19,7 @@ async function main() {
     console.log('Student:', student.id, student.username);
 
     // 2. admin 찾기 (TEACHER 또는 ADMIN 역할)
-    let admin = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
+    let admin = await prisma.user.findFirst({ where: { role: 'SUPER_ADMIN' } });
     if (!admin) {
         admin = await prisma.user.findFirst({ where: { role: 'TEACHER' } });
     }
@@ -34,7 +34,10 @@ async function main() {
     });
 
     // 4. 문제 5개 가져오기
-    const qs = await prisma.question.findMany({ take: 5 });
+    const qs = await prisma.question.findMany({
+        where: { source: { contains: 'RPM' } },
+        take: 5,
+    });
     if (qs.length < 1) throw new Error('No questions found');
     console.log('Questions:', qs.length);
 

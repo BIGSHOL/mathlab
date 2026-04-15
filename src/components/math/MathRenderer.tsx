@@ -92,11 +92,13 @@ interface MathRendererProps {
   onDiagramClick?: (idx: number) => void;
   /** 수식 클릭 시 호출. latex/start/end는 원본 content 기준 좌표 */
   onMathClick?: (latex: string, start: number, end: number) => void;
+  /** 이미지 클릭 시 호출 — 편집용 */
+  onImageClick?: (info: { src: string; alt: string; title: string; start: number; end: number }) => void;
 }
 
 const parseImageTitle = sharedParseImageTitle;
 
-export function MathRenderer({ content, className = '', inline, diagramSvgs, onDiagramClick, onMathClick }: MathRendererProps) {
+export function MathRenderer({ content, className = '', inline, diagramSvgs, onDiagramClick, onMathClick, onImageClick }: MathRendererProps) {
   // onMathClick 모드: 원본 content에서 math 위치 사전 수집 (rehype 플러그인이 사용)
   const mathOccurrences = React.useMemo(
     () => (onMathClick ? collectMathOccurrences(content) : []),
@@ -434,7 +436,8 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
               </div>
             );
           },
-          img: ({ src, alt, title }) => {
+          img: ({ src: rawSrc, alt, title }) => {
+            const src = typeof rawSrc === 'string' ? rawSrc : '';
             // src가 비어있으면 렌더링하지 않음 (콘솔 에러 방지)
             if (!src) return <span className="text-slate-400 text-sm">[{alt || '이미지'}]</span>;
             const { width, align } = parseImageTitle(title ?? undefined);
@@ -442,37 +445,38 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
             if (width) style.width = width;
             if (!width) style.maxWidth = '100%';
 
+            const clickable = !!onImageClick;
+            const handleImgClick = (e: React.MouseEvent<HTMLImageElement>) => {
+              if (!onImageClick) return;
+              e.preventDefault();
+              e.stopPropagation();
+              // 원본 content에서 해당 이미지 마크다운 위치 찾기
+              const imgRegex = /!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g;
+              let m: RegExpExecArray | null;
+              while ((m = imgRegex.exec(content)) !== null) {
+                if (m[2] === src && (m[1] || '') === (alt || '') && (m[3] || '') === (title || '')) {
+                  onImageClick({ src, alt: alt || '', title: title || '', start: m.index, end: m.index + m[0].length });
+                  return;
+                }
+              }
+              // 못 찾으면 최소 정보만 전달 (첫 매치로 폴백)
+              imgRegex.lastIndex = 0;
+              const first = imgRegex.exec(content);
+              if (first) {
+                onImageClick({ src, alt: alt || '', title: title || '', start: first.index, end: first.index + first[0].length });
+              }
+            };
+            const imgClass = (base: string) => `${base}${clickable ? ' cursor-pointer hover:ring-2 hover:ring-primary/40 transition-shadow' : ''}`;
+
             if (align === 'left') {
-              return (
-                <img
-                  src={src}
-                  alt={alt || ''}
-                  style={style}
-                  className="float-left mr-4 mb-2 rounded-sm"
-                />
-              );
+              return <img src={src} alt={alt || ''} style={style} onClick={handleImgClick} className={imgClass('float-left mr-4 mb-2 rounded-sm')} />;
             }
-
             if (align === 'right') {
-              return (
-                <img
-                  src={src}
-                  alt={alt || ''}
-                  style={style}
-                  className="float-right ml-4 mb-2 rounded-sm"
-                />
-              );
+              return <img src={src} alt={alt || ''} style={style} onClick={handleImgClick} className={imgClass('float-right ml-4 mb-2 rounded-sm')} />;
             }
-
-            // center (기본값)
             return (
               <span className="flex justify-center my-2">
-                <img
-                  src={src}
-                  alt={alt || ''}
-                  style={style}
-                  className="rounded-sm"
-                />
+                <img src={src} alt={alt || ''} style={style} onClick={handleImgClick} className={imgClass('rounded-sm')} />
               </span>
             );
           },

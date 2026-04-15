@@ -588,6 +588,127 @@ export function usePdfImport(): PdfImportState {
     setProblems((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  // --- 개념 저장 (force/skip 지원) ---
+  const [conceptConflict, setConceptConflict] = useState<{
+    layer: 'B';
+    rows: Array<{ row: number; title: string; existing: { id: string; title: string; grade: string | null; chapter: string | null; section: string | null } }>;
+  } | null>(null);
+  const [pendingResult, setPendingResult] = useState<{ questionsCreated: number } | null>(null);
+
+  const buildConceptsPayload = useCallback(
+    (skipIndices: Set<number>) => {
+      const gradeCode = bookCodeToGradeCode(bookCode);
+      const semester = bookCodeToSemester(bookCode);
+      const sorted = [...concepts].sort((a, b) => {
+        const numA = parseInt(a.title.match(/^(\d+)/)?.[1] || '999', 10);
+        const numB = parseInt(b.title.match(/^(\d+)/)?.[1] || '999', 10);
+        return numA - numB;
+      });
+      return sorted
+        .filter((_, i) => !skipIndices.has(i))
+        .map((c, i) => ({
+          title: c.title,
+          fullContent: c.content,
+          sortOrder: i,
+          grade: gradeCode,
+          semester,
+          chapter: matchChapter(c.sectionHeader, chapters) || (chapters.length > 0 ? chapters[0] : undefined),
+          section: c.sectionCode || c.sectionHeader || undefined,
+          category: 'concept' as const,
+          source: pdfFile ? pdfFile.name.replace(/\.pdf$/i, '') : `PDF 추출 (${bookCode})`,
+        }));
+    },
+    [concepts, bookCode, chapters, pdfFile]
+  );
+
+  const trySaveConcepts = useCallback(
+    async (opts: { force: boolean; skipIndices: Set<number> }): Promise<
+      { status: 'ok'; created: number } | { status: 'conflict' } | { status: 'error'; message: string }
+    > => {
+      const payload = buildConceptsPayload(opts.skipIndices);
+      if (payload.length === 0) return { status: 'ok', created: 0 };
+      try {
+        const res = await fetch('/api/concepts/bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subjectId, concepts: payload, force: opts.force }),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          return { status: 'ok', created: json.data?.created || 0 };
+        }
+        const errJson = await res.json().catch(() => null);
+        const code = errJson?.error?.code;
+        if (code === 'CONCEPT_LIKELY_DUPLICATE' && !opts.force) {
+          setConceptConflict({
+            layer: 'B',
+            rows: errJson.error.details as Array<{
+              row: number;
+              title: string;
+              existing: { id: string; title: string; grade: string | null; chapter: string | null; section: string | null };
+            }>,
+          });
+          return { status: 'conflict' };
+        }
+        return { status: 'error', message: errJson?.error?.message || '개념 저장 실패' };
+      } catch (e) {
+        return { status: 'error', message: e instanceof Error ? e.message : '개념 저장 실패' };
+      }
+    },
+    [buildConceptsPayload, subjectId]
+  );
+
+  const resolveConceptConflict = useCallback(
+    async (action: 'force' | 'skip' | 'cancel') => {
+      const conflict = conceptConflict;
+      const pending = pendingResult;
+      if (!conflict) return;
+
+      if (action === 'cancel') {
+        setConceptConflict(null);
+        setPendingResult(null);
+        return;
+      }
+
+      setSubmitting(true);
+      const skipIndices = action === 'skip' ? new Set(conflict.rows.map((r) => r.row)) : new Set<number>();
+      const useForce = action === 'force';
+      const result = await trySaveConcepts({ force: useForce, skipIndices });
+
+      if (result.status === 'error') {
+        setError(result.message);
+        setSubmitting(false);
+        return;
+      }
+      if (result.status === 'conflict') {
+        // 연쇄 충돌 — 재오픈 (드문 경우)
+        setSubmitting(false);
+        return;
+      }
+
+      setConceptConflict(null);
+      setPendingResult(null);
+      setResult({
+        created: pending?.questionsCreated ?? 0,
+        conceptsCreated: result.created,
+      });
+      clearBackup();
+      if (draftBatchId) {
+        try {
+          await fetch('/api/questions/drafts/discard', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ batchId: draftBatchId }),
+          });
+        } catch (e) { console.error('드래프트 정리 실패:', e); }
+        setDraftBatchId(null);
+      }
+      setStep(4);
+      setSubmitting(false);
+    },
+    [conceptConflict, pendingResult, trySaveConcepts, draftBatchId]
+  );
+
   // --- 저장 ---
   const handleSave = async () => {
     setSubmitting(true);
@@ -641,42 +762,18 @@ export function usePdfImport(): PdfImportState {
         : isOwner && saveConcepts && concepts.length > 0 && subjectId; // 문제 모드: OWNER 옵션
 
       if (shouldSaveConcepts) {
-        const gradeCode = bookCodeToGradeCode(bookCode);
-        const semester = bookCodeToSemester(bookCode);
-        try {
-          const conceptRes = await fetch('/api/concepts/bulk', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              subjectId,
-              concepts: [...concepts]
-                .sort((a, b) => {
-                  const numA = parseInt(a.title.match(/^(\d+)/)?.[1] || '999', 10);
-                  const numB = parseInt(b.title.match(/^(\d+)/)?.[1] || '999', 10);
-                  return numA - numB;
-                })
-                .map((c, i) => ({
-                title: c.title,
-                fullContent: c.content,
-                sortOrder: i,
-                grade: gradeCode,
-                semester,
-                chapter: matchChapter(c.sectionHeader, chapters) || (chapters.length > 0 ? chapters[0] : undefined),
-                section: c.sectionCode || c.sectionHeader || undefined,
-                category: 'concept',
-                source: pdfFile ? pdfFile.name.replace(/\.pdf$/i, '') : `PDF 추출 (${bookCode})`,
-              })),
-            }),
-          });
-          if (conceptRes.ok) {
-            const conceptJson = await conceptRes.json();
-            conceptsCreated = conceptJson.data?.created || 0;
-          } else {
-            const errJson = await conceptRes.json().catch(() => null);
-            console.error('개념 저장 실패:', errJson?.error?.message);
-          }
-        } catch (e) {
-          console.error('개념 저장 실패:', e);
+        const saveResult = await trySaveConcepts({ force: false, skipIndices: new Set() });
+        if (saveResult.status === 'conflict') {
+          // 충돌 발생 → 모달 열고 대기. handleSave 흐름은 여기서 중단.
+          // 사용자가 모달에서 선택하면 resolveConceptConflict가 이어받아 진행.
+          setPendingResult({ questionsCreated });
+          setSubmitting(false);
+          return;
+        }
+        if (saveResult.status === 'error') {
+          console.error('개념 저장 실패:', saveResult.message);
+        } else {
+          conceptsCreated = saveResult.created;
         }
       }
 
@@ -783,5 +880,7 @@ export function usePdfImport(): PdfImportState {
     recoveryData,
     restoreBackup,
     dismissBackup,
+    conceptConflict,
+    resolveConceptConflict,
   };
 }

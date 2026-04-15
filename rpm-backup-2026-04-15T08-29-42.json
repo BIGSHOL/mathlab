@@ -1,0 +1,4367 @@
+{
+  "count": 623,
+  "backedUpAt": "2026-04-15T08-29-42",
+  "questions": [
+    {
+      "id": "cmnzs9z7z0000l804z8az2b7j",
+      "questionNum": 42,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z7z0001l804uj6xl2op",
+      "questionNum": 43,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z7z0002l804f9u6boqx",
+      "questionNum": 44,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z7z0003l804lff77r21",
+      "questionNum": 45,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z7z0004l804snw09imp",
+      "questionNum": 46,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z7z0005l804izbhomsy",
+      "questionNum": 47,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z7z0006l80485kuoh68",
+      "questionNum": 48,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z7z0007l804h2eb31f1",
+      "questionNum": 49,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z7z0008l804cw999bfk",
+      "questionNum": 50,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z7z0009l8042670b5ch",
+      "questionNum": 51,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z7z000al804qofyt9dh",
+      "questionNum": 52,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z7z000bl804n1026uw1",
+      "questionNum": 53,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z7z000cl80454mfqzf0",
+      "questionNum": 54,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z7z000dl8048s4rab5h",
+      "questionNum": 55,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z7z000el804pxi14u7h",
+      "questionNum": 56,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z7z000fl804jwezi8f4",
+      "questionNum": 57,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z7z000gl8049pn8zes2",
+      "questionNum": 58,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z80000hl804ecvbmx8p",
+      "questionNum": 59,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z80000il804h6gh3dtc",
+      "questionNum": 60,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z80000jl804k8xnqg4m",
+      "questionNum": 61,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z80000kl804d7xxexzt",
+      "questionNum": 62,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z80000ll804obodde89",
+      "questionNum": 63,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z80000ml804ysrw0wkj",
+      "questionNum": 64,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z80000nl804sug4pimn",
+      "questionNum": 65,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z80000ol8048jkvt2xc",
+      "questionNum": 66,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z80000pl804a3rhhu7m",
+      "questionNum": 67,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z80000ql8045ya0oorr",
+      "questionNum": 68,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z80000rl804wb5anbs4",
+      "questionNum": 69,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z80000sl8041tc0yu2g",
+      "questionNum": 70,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z80000tl804klkt4c1k",
+      "questionNum": 71,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z80000ul804045nedbr",
+      "questionNum": 72,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z80000vl804dvqvltzf",
+      "questionNum": 73,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z80000wl8047cmr4hqn",
+      "questionNum": 74,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z80000xl8040e46g0zu",
+      "questionNum": 75,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z80000yl804l7hl5pjq",
+      "questionNum": 76,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z80000zl8047620pa98",
+      "questionNum": 77,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z810010l804e42ftmt3",
+      "questionNum": 78,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z810011l804qga14hk8",
+      "questionNum": 79,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z810012l804hv1r9woa",
+      "questionNum": 80,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z810013l80443nhw5cf",
+      "questionNum": 81,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z810014l8043xa6if59",
+      "questionNum": 82,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z810015l804nn3v89t8",
+      "questionNum": 83,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z810016l8043q46z5he",
+      "questionNum": 84,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z810017l804n2lv9pk1",
+      "questionNum": 85,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z810018l80427m1erg4",
+      "questionNum": 86,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z810019l8048mq83olz",
+      "questionNum": 87,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z81001al8047bld1ff6",
+      "questionNum": 88,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z81001bl804x61aezxh",
+      "questionNum": 89,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z81001cl804hnyu9hb9",
+      "questionNum": 90,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z81001dl804cbn481lz",
+      "questionNum": 91,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z81001el804d72javw8",
+      "questionNum": 92,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z81001fl8048i9qskhw",
+      "questionNum": 93,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z81001gl804si8pob9r",
+      "questionNum": 94,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z81001hl80491sbs7rt",
+      "questionNum": 95,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z81001il804rvbafeal",
+      "questionNum": 96,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z82001jl804lwii391n",
+      "questionNum": 97,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z82001kl804ds7bgg9i",
+      "questionNum": 98,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z82001ll804in9kiqhl",
+      "questionNum": 99,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z82001ml804fc4oyrq3",
+      "questionNum": 100,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z82001nl804yc2hvhls",
+      "questionNum": 101,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z82001ol804020vyrr3",
+      "questionNum": 102,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z82001pl804dkyxo2ka",
+      "questionNum": 103,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzs9z82001ql804nqpxc2kb",
+      "questionNum": 104,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn00000jg045ztsf5hj",
+      "questionNum": 131,
+      "answer": "⑤",
+      "explanation": "두 수의 최대공약수를 각각 구해 보면\n① $\\text{GCD}(6, 8) = 2$\n② $\\text{GCD}(9, 15) = 3$\n③ $\\text{GCD}(10, 25) = 5$\n④ $\\text{GCD}(12, 21) = 3$\n⑤ $\\text{GCD}(14, 27) = 1$\n따라서 두 수가 서로소인 것은 ⑤이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn10001jg04qvm5zbvh",
+      "questionNum": 132,
+      "answer": "2개",
+      "explanation": "$2 \\times 3^2 = 18$\n주어진 수들과 18의 최대공약수를 각각 구하면\nㄱ. $\\text{GCD}(18, 6) = 6$\nㄴ. $\\text{GCD}(18, 2) = 2$\nㄷ. $\\text{GCD}(18, 1) = 1$\nㄹ. $\\text{GCD}(18, 3) = 3$\nㅁ. $\\text{GCD}(18, 1) = 1$\nㅂ. $\\text{GCD}(18, 18) = 18$\n따라서 $2 \\times 3^2$과 서로소인 것은 ㄷ, ㅁ의 2개이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn10002jg04ptkizdwt",
+      "questionNum": 133,
+      "answer": "①, ③",
+      "explanation": "② 3과 9는 홀수이지만 최대공약수가 3이므로 서로소가 아니다.\n④ 서로소인 두 자연수의 공약수는 1이다.\n⑤ 9와 16은 서로소이지만 둘 다 소수가 아니다.\n따라서 옳은 것은 ①, ③이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn10003jg04nmuy9xsl",
+      "questionNum": 134,
+      "answer": "③",
+      "explanation": "$28=2^2 \\times 7$이므로 28과 서로소인 자연수는 2와 7을 모두 소인수로 갖지 않는 수이다.따라서 20보다 크고 30보다 작은 자연수 중에서 28과 서로소인 수는 23, 25, 27, 29의 4개이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn10004jg044m1986e0",
+      "questionNum": 135,
+      "answer": "①",
+      "explanation": "$2^3 \\times 3^3$, $2^2 \\times 3^2 \\times 5$(최대공약수) = $2 \\times 3^2$참고 $2=2^1$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn10005jg04gav8hiog",
+      "questionNum": 136,
+      "answer": "④",
+      "explanation": "$2^2 \\times 3^3 \\times 5$, $3^2 \\times 5$(최대공약수) = $3 \\times 5 = 15$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn10006jg04nu9eikv4",
+      "questionNum": 137,
+      "answer": "1",
+      "explanation": "$2^2 \\times 3^2 \\times 5^5$, $2^3 \\times 3^3 \\times 5^4$(최대공약수) = $3^2 \\times 5^3$따라서 $a=2$, $b=3$이므로 $b-a=3-2=1$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn10007jg04j8t7fjai",
+      "questionNum": 138,
+      "answer": "5",
+      "explanation": "$180=2^2 \\times 3^2 \\times 5$, $900=2^2 \\times 3^2 \\times 5^2$이므로$2^2 \\times 3^3 \\times 5$, $900=2^2 \\times 3^2 \\times 5^2$(최대공약수) = $2^2 \\times 3^2 \\times 5$따라서 $a=2$, $b=2$, $c=1$이므로 $a+b+c=2+2+1=5$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn10008jg04pany4y0g",
+      "questionNum": 139,
+      "answer": "④",
+      "explanation": "$2^2 \\times 3 \\times 5$ $2^2 \\times 5^2$(최대공약수) = $2^2 \\times 5$공약수는 최대공약수의 약수이므로 공약수가 아닌 것은 ④이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn10009jg04i6sgwndg",
+      "questionNum": 140,
+      "answer": "⑤",
+      "explanation": "A와 B의 공약수는 최대공약수인 48의 약수 1, 2, 3, 4, 6, 8, 12, 16, 24, 48이므로 A와 B의 공약수가 아닌 것은 ⑤이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn1000ajg04rvrc87k6",
+      "questionNum": 141,
+      "answer": "②",
+      "explanation": "$90=2 \\times 3^2 \\times 5$, $144=2^4 \\times 3^2$(최대공약수) = $2 \\times 3^2$공약수는 최대공약수의 약수이므로 공약수가 아닌 것은 ②이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn1000bjg04sqf8h6fi",
+      "questionNum": 142,
+      "answer": "④",
+      "explanation": "$2^2 \\times 3^3 \\times 7$, $2^4 \\times 3 \\times 7^2$(최대공약수) = $2^2 \\times 3 \\times 7$공약수는 최대공약수의 약수이므로 공약수는 $(2+1) \\times (1+1) \\times (1+1)=12$(개)",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn1000cjg04rt91m2m9",
+      "questionNum": 143,
+      "answer": "③",
+      "explanation": "가능한 한 많은 학생들에게 똑같이 나누어 주려면 학생 수는 12, 60, 72의 최대공약수이어야 한다.$12=2^2 \\times 3$, $72=2^3 \\times 3^2$(최대공약수) = $2^2 \\times 3 = 12$따라서 나누어 줄 수 있는 학생은 12명이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn2000djg04tvn9detm",
+      "questionNum": 144,
+      "answer": "35명",
+      "explanation": "빵은 2개가 남고, 음료수는 3개가 남았으므로빵 $72-2=70$(개), 음료수 $108-3=105$(개)이면 학생들에게 똑같이 나누어 줄 수 있다.즉 학생 수는 70, 105의 최대공약수이다.$70=2 \\times 5 \\times 7$ $105=3 \\times 5 \\times 7$(최대공약수) = $5 \\times 7=35$따라서 학생은 35명이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn2000ejg0425hacli1",
+      "questionNum": 145,
+      "answer": "10개, 남학생: 6명, 여학생: 5명",
+      "explanation": "가능한 한 많이 만들 수 있는 조의 수는 60, 50의 최대공약수이다.\n$60=2^2 \\times 3 \\times 5$ $50=2 \\times 5^2$(최대공약수) = $2 \\times 5=10$\n따라서 만들 수 있는 조는 10개이다.\n이때 각 조에 속하는 학생은남학생: $60 \\div 10=6$(명)여학생: $50 \\div 10=5$(명)",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn2000fjg04we2nvdb2",
+      "questionNum": 146,
+      "answer": "⑴ 40 cm ⑵ 28",
+      "explanation": "⑴ \n정사각형 모양의 타일의 한 변의 길이는 160과 280의 공약수이어야 하고, 가능한 한 큰 타일이려면 타일의 한 변의 길이는 160과 280의 최대공약수이어야 한다.\n$160=2^5 \\times 5$ $280=2^3 \\times 5 \\times 7$(최대공약수) $=2^3 \\times 5 = 40$\n따라서 타일의 한 변의 길이는 $40\\text{ cm}$이다.\n⑵ \n가로: $160 \\div 40 = 4$ (개)\n세로: $280 \\div 40 = 7$ (개)이므로 필요한 타일의 개수는 $4 \\times 7 = 28$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn2000gjg04fa7o7m8j",
+      "questionNum": 147,
+      "answer": "20장",
+      "explanation": "정사각형 모양의 색종이의 한 변의 길이는 60과 48의 공약수이어야 하고, 색종이의 수를 가능한 한 적게 하려면 색종이의 한 변의 길이는 60과 48의 최대공약수이어야 한다.\n$60=2^2 \\times 3 \\times 5$ $48=2^4 \\times 3$(최대공약수) $=2^2 \\times 3 = 12\n$\n색종이의 한 변의 길이는 $12\\text{ cm}$이므로 필요한 색종이는\n가로: $60 \\div 12 = 5$ (장)\n세로: $48 \\div 12 = 4$ (장)∴ $5 \\times 4 = 20$ (장)",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn2000hjg04uszjhb0a",
+      "questionNum": 148,
+      "answer": "24개",
+      "explanation": "정육면체 모양의 벽돌의 한 모서리의 길이는 120, 60, 90의 공약수이어야 하고, 벽돌의 크기를 최대로 하려면 벽돌의 한 모서리의 길이는 120, 60, 90의 최대공약수이어야 한다.\n$120 = 2^3 \\times 3 \\times 5$, $60 = 2^2 \\times 3 \\times 5$, $90 = 2 \\times 3^2 \\times 5$\n벽돌의 한 모서리의 길이는 $30\\text{ cm}$이므로 필요한 벽돌은\n가로: $120 \\div 30 = 4$ (개)\n세로: $60 \\div 30 = 2$ (개)\n높이: $90 \\div 30 = 3$ (개)\n∴ $4 \\times 2 \\times 3 = 24$ (개)",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn2000ijg04ftd0sdit",
+      "questionNum": 149,
+      "answer": "④",
+      "explanation": "나무 사이의 간격이 최대가 되게 심으려면 나무 사이의 간격은 120, 160의 최대공약수이어야 한다.\n$120=2^3 \\times 3 \\times 5$ $160=2^5 \\times 5$(최대공약수) $=2^3 \\times 5 = 40$\n나무 사이의 간격이 $40\\text{ m}$이므로 필요한 나무는\n가로: $120 \\div 40 = 3$ (그루)\n세로: $160 \\div 40 = 4$ (그루)\n그런데 네 모퉁이에는 반드시 나무를 심으므로 필요한 나무는 $(3+4) \\times 2 = 14$ (그루)",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn2000jjg04rq4vep2o",
+      "questionNum": 150,
+      "answer": "③",
+      "explanation": "가능한 한 화분을 적게 놓으려면 화분 사이의 간격은 420, 270의 최대공약수이어야 한다.$420=2^2 \\times 3 \\times 5 \\times 7$ $270=2 \\times 3^3 \\times 5$(최대공약수) $=2 \\times 3 \\times 5 = 30$따라서 화분 사이의 간격은 $30\\text{ cm}$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn2000kjg04p5osa7xi",
+      "questionNum": 151,
+      "answer": "22개",
+      "explanation": "가능한 한 기둥을 적게 세우려면 기둥 사이의 간격은 108, 90의 최대공약수이어야 한다.$108=2^2 \\times 3^3$ $90=2 \\times 3^2 \\times 5$(최대공약수) $=2 \\times 3^2 = 18$기둥 사이의 간격은 $18\\text{ m}$이므로 필요한 기둥은가로: $108 \\div 18 = 6$ (개), 세로: $90 \\div 18 = 5$ (개)그런데 네 모퉁이에는 반드시 기둥을 세우므로 필요한 기둥은$(6+5) \\times 2 = 22$ (개)",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn2000ljg04yzpxm98d",
+      "questionNum": 152,
+      "answer": "④",
+      "explanation": "$2 \\times 3 \\times 7$, $3^2 \\times 5$(최소공배수) $=2^3 \\times 3^2 \\times 5 \\times 7 \\times 11$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn2000mjg040yta2gqm",
+      "questionNum": 153,
+      "answer": "③",
+      "explanation": "$12=2^2 \\times 3$, $60=2^2 \\times 3 \\times 5$(최소공배수) $=2^3 \\times 3 \\times 5$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn2000njg04cs15qp2c",
+      "questionNum": 154,
+      "answer": "④",
+      "explanation": "두 수의 최소공배수를 각각 구해 보면① $2^2 \\times 3^2 \\times 7$② $2^3 \\times 3 \\times 7$③ $2^2 \\times 3 \\times 7$④ $2^3 \\times 3^2 \\times 7$⑤ $2^5 \\times 3^4 \\times 5 \\times 7$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn2000ojg04xova4uep",
+      "questionNum": 155,
+      "answer": "9",
+      "explanation": "$2^a \\times 3^b \\times 5^c$, $90=2 \\times 3^2 \\times 5$(최소공배수) $=2^2 \\times 3^2 \\times 5$따라서 $a=2$, $b=2$, $c=5$이므로$a+b+c=2+2+5=9$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn2000pjg04e30y90c8",
+      "questionNum": 156,
+      "answer": "①",
+      "explanation": "$2^2 \\times 3$, $2 \\times 3^3 \\times 5$ 의 최소공배수는 $2^2 \\times 3^3 \\times 5$ 이다.공배수는 최소공배수의 배수이므로 공배수가 아닌 것은 ① 이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn2000qjg041rsp0byb",
+      "questionNum": 157,
+      "answer": "②",
+      "explanation": "공배수는 최소공배수의 배수이므로 100 이하의 자연수 중 18의 배수는 18, 36, 54, 72, 90의 5개이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn2000rjg04cye4i0e8",
+      "questionNum": 158,
+      "answer": "②",
+      "explanation": "공배수는 최소공배수의 배수이므로 공배수가 아닌 것은 ②이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn2000sjg0439891w4v",
+      "questionNum": 159,
+      "answer": "720",
+      "explanation": "$8=2^3$\n$15=3 \\times 5$\n$24=2^3 \\times 3$\n(최소공배수) $=2^3 \\times 3 \\times 5=120$\n따라서 8, 15, 24의 최소공배수는 120이고, $120 \\times 5=600$, $120 \\times 6=720$이므로 700에 가장 가까운 공배수는 720이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn2000tjg04q7wot4vf",
+      "questionNum": 160,
+      "answer": "③",
+      "explanation": "주어진 두 자연수는 $2^a \\times 3^2 \\times 5$와 $2^3 \\times 3^b$이다.\n최대공약수가 $2^2 \\times 3^2$이므로, 소인수 2의 지수는 $\\min(a, 3)=2 \\implies a=2$이다. 소인수 3의 지수는 $\\min(2, b)=2 \\implies b \\ge 2$이다.\n최소공배수가 $2^3 \\times 3^a \\times 5$이므로, 소인수 3의 지수는 $\\max(2, b)=a$이다. $a=2$이므로 $\\max(2, b)=2 \\implies b \\le 2$이다.\n따라서 $b \\ge 2$와 $b \\le 2$를 만족하는 $b$는 $b=2$이다.\n$\\\\therefore a+b=2+2=4$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn2000ujg043xojbbm4",
+      "questionNum": 161,
+      "answer": "9",
+      "explanation": "주어진 세 자연수는 $2^a \\times 3^2$, $2^3 \\times 3^b \\times 5$, $2^2 \\times 3^2 \\times c$이다.\n최대공약수가 $2 \\times 3^2$이므로, 소인수 2의 지수는 $\\min(a, 3, 2)=1 \\implies a=1$이다.\n최소공배수가 $2^3 \\times 3^3 \\times 5$이므로, 소인수 3의 지수는 $\\max(2, b, 2)=3 \\implies b=3$이다. 소인수 5의 지수는 1이므로 $c=5$이다.\n$\\\\therefore a+b+c=1+3+5=9$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn2000vjg04m6f68lrv",
+      "questionNum": 162,
+      "answer": "4",
+      "explanation": "주어진 세 자연수는 $2^2 \\times 3^a$, $2^b \\times 3$, $2^3 \\times 3 \\times 5$이다.\n최소공배수가 $720 = 2^4 \\times 3^2 \\times 5$이므로,\n소인수 2의 지수는 $\\max(2, b, 3)=4 \\implies b=4$이다.\n소인수 3의 지수는 $\\max(a, 1, 1)=2 \\implies a=2$이다.\n소인수 5의 지수는 $\\max(0, 0, 1)=1$이다.\n따라서 $b=4$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn2000wjg04j0ib0u23",
+      "questionNum": 163,
+      "answer": "16",
+      "explanation": "주어진 두 자연수는 $2^a \\times 3^2 \\times 5^3$와 $2^5 \\times 3^b \\times c$이다.\n최대공약수가 $2^4 \\times 3$이므로, 소인수 2의 지수는 $\\min(a, 5)=4 \\implies a=4$이다. 공통인 소인수 3의 지수는 $\\min(2, b)=1 \\implies b=1$이다.\n최소공배수가 $2^5 \\times 3^2 \\times 5^3 \\times 11$이므로, 소인수 11의 지수가 1인 것은 두 번째 자연수에서 왔으므로 $c=11$이다.\n$\\\\therefore a+b+c=4+1+11=16$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn9000xjg04yga3ug8w",
+      "questionNum": 164,
+      "answer": "3",
+      "explanation": "세 자연수 $4x$, $5x$, $6x$를 각각 소인수분해하여 소수별 자리를 맞춰 정리하면 다음과 같다.                        \n                                                                                                                     $\\begin{array}{rlrlrll} 4 \\times x &= 2^2 & & & & \\times\\, x \\\\ 5 \\times x &= & & & 5 & \\times\\, x \\\\ 6 \\times x   &= 2 & \\times\\, 3 & & & \\times\\, x \\\\ \\hline (\\text{최소공배수}) &= 2^2 & \\times\\, 3 & & \\times\\, 5 & \\times\\, x\n  = 60x \\end{array}$                                                                                                                                                                                                                  \n  세 수의 최소공배수가 $180$이므로 $60x = 180$, 즉 $x=3$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn9000yjg04bzd78mb4",
+      "questionNum": 165,
+      "answer": "③",
+      "explanation": "세 자연수 $3x$, $4x$, $6x$를 각각 소인수분해하여 소수별 자리를 맞춰 정리하면 다음과 같다.                        \n                                                                                                                     $\\begin{array}{rlll} 3 \\times x = & & 3 & \\times\\, x \\\\ 4 \\times x = & 2^2 & & \\times\\, x \\\\ 6 \\times x = & 2 &    \\times\\, 3 & \\times\\, x \\\\ \\hline (\\text{최소공배수}) = & 2^2 & \\times\\, 3 & \\times\\, x = 12 \\times x \\end{array}$                                                                                                                                                                                                                        \n  세 수의 최소공배수가 $72$이므로 $12x = 72$, 즉 $x=6$이다.                                                        \n                                                                                                                   \n  따라서 세 자연수의 최대공약수는 $x=6$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn9000zjg04fg1ojm67",
+      "questionNum": 166,
+      "answer": "48n",
+      "explanation": "세 자연수 $8n, 12n, 16n$의 최소공배수는 다음과 같이 구할 수 있다.\n$8n=2^3 \\times n$\n$12n=2^2 \\times 3 \\times n$\n$16n=2^4 \\times n$\n(최소공배수) $=2^4 \\times 3 \\times n=48n$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn90010jg04b2gjgofj",
+      "questionNum": 167,
+      "answer": "260",
+      "explanation": "세 자연수를 $2x, 5x, 6x$ ($x$는 자연수)라 하면\n$2x=2\\times x$\n$5x=5\\times x$\n$6x=2\\times3\\times x$\n(최소공배수) $=2\\times3\\times5\\times x=30x$\n세 수의 최소공배수가 600이므로 $30x=600$ $\\therefore x=20$\n따라서 세 자연수는 $40, 100, 120$이므로 그 합은 $40+100+120=260$\n\n**다른 풀이**\n세 자연수를 $2x, 5x, 6x$ ($x$는 자연수)라 하면\n```\nx | 2x 5x 6x\n2 | 2  5  6\n  | 1  5  3\n```\n$\\therefore$ (최소공배수) $=x\\times2\\times1\\times5\\times3=30x$\n세 수의 최소공배수가 600이므로 $30x=600$ $\\therefore x=20$\n따라서 세 자연수는 $40, 100, 120$이므로 그 합은 $40+100+120=260$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn90011jg04bkq3edom",
+      "questionNum": 168,
+      "answer": "24",
+      "explanation": "$A, 20=2^2\\times5$의 최소공배수가 $2^3\\times3\\times5$이므로 $A$는 $2^3\\times3\\times$(자연수)의 꼴이고 최소공배수인 $2^3\\times3\\times5$의 약수이어야 한다.\n따라서 구하는 가장 작은 자연수는 $2^3\\times3=24$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn90012jg04h1s5af9a",
+      "questionNum": 169,
+      "answer": "⑤",
+      "explanation": "$4=2^2, 15=3\\times5$이므로 $N$은 $3^2\\times$(자연수)의 꼴이고 최소공배수인 $2^2\\times3^2\\times5$의 약수이어야 한다.\n① $9=3^2\\times1$\n② $18=3^2\\times2$\n③ $36=3^2\\times2^2$\n④ $45=3^2\\times5$\n⑤ $60=2^2\\times3\\times5$\n따라서 $N$의 값이 될 수 없는 것은 ⑤이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn90013jg04ktpnwq0v",
+      "questionNum": 170,
+      "answer": "③",
+      "explanation": "$15=3\\times5, 30=2\\times3\\times5, 150=2\\times3\\times5^2$이므로 $a$는 $5^2\\times$(자연수)의 꼴이고 최소공배수인 $2\\times3\\times5^2$의 약수이어야 한다.\n따라서 $a$가 될 수 있는 수는 $5^2=25, 2\\times5^2=50, 3\\times5^2=75, 2\\times3\\times5^2=150$의 4개이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn90014jg049gs81bh2",
+      "questionNum": 171,
+      "answer": "⑴ 60 cm ⑵ 20",
+      "explanation": "⑴ 가장 작은 정사각형을 만들려고 하므로 정사각형의 한 변의 길이는 12와 15의 최소공배수이다.\n$12=2^2\\times3$\n$15=3\\times5$\n(최소공배수) $=2^2\\times3\\times5=60$\n따라서 정사각형의 한 변의 길이는 60 cm이다.\n⑵ 가로: $60\\div12=5$ (장)\n세로: $60\\div15=4$ (장)\n이므로 필요한 색종이의 수는 $5\\times4=20$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn90015jg04n4b3z436",
+      "questionNum": 172,
+      "answer": "②",
+      "explanation": "가장 작은 정육면체를 만들려고 하므로 정육면체의 한 모서리의 길이는 6, 8, 3의 최소공배수이다.\n$6=2\\times3$\n$8=2^3$\n$3=3$\n(최소공배수) $=2^3\\times3=24$\n따라서 정육면체의 한 모서리의 길이는 24 cm이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn90016jg04v9tul5ig",
+      "questionNum": 173,
+      "answer": "360 cm, 3600",
+      "explanation": "되도록 작은 정육면체를 만들려고 하므로 정육면체의 한 모서리의 길이는 24, 30, 18의 최소공배수이다.\n$24=2^3\\times3$\n$30=2\\times3\\times5$\n$18=2\\times3^2$\n(최소공배수) $=2^3\\times3^2\\times5=360$\n정육면체의 한 모서리의 길이는 360 cm이므로 필요한 벽돌은\n가로: $360\\div24=15$ (개)\n세로: $360\\div30=12$ (개)\n높이: $360\\div18=20$ (개)\n$\\therefore 15\\times12\\times20=3600$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn90017jg04zn68zjd1",
+      "questionNum": 174,
+      "answer": "오전 10시",
+      "explanation": "오전 9시 이후 처음으로 다시 동시에 출발하는 시각은 20과 15의 최소공배수만큼의 시간이 지난 후입니다.\n$20 = 2^2 \\times 5$\n$15 = 3 \\times 5$\n(최소공배수)$ = 2^2 \\times 3 \\times 5 = 60$\n따라서 두 버스는 60분마다 동시에 출발하므로 오전 9시 이후 처음으로 다시 동시에 출발하는 시각은 60분, 즉 1시간 후인 오전 10시입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jn90018jg040sbususu",
+      "questionNum": 175,
+      "answer": "④",
+      "explanation": "$6 = 2 \\times 3$, $9 = 3^2$의 최소공배수는 $2 \\times 3^2 = 18$이므로 두 사람이 처음으로 다시 도서관에서 만날 때까지 걸리는 기간은 18일입니다.\n$18 = 7 \\times 2 + 4$이므로 구하는 요일은 월요일로부터 4일 후인 금요일입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna0019jg04yz20ruly",
+      "questionNum": 176,
+      "answer": "180초",
+      "explanation": "두 사람이 출발 지점에서 처음으로 다시 만날 때까지 걸리는 시간은 45와 60의 최소공배수만큼의 시간이 지난 후입니다.\n$45 = 3^2 \\times 5$\n$60 = 2^2 \\times 3 \\times 5$\n(최소공배수)$ = 2^2 \\times 3^2 \\times 5 = 180$\n따라서 두 사람이 출발 지점에서 처음으로 다시 만나게 되는 것은 출발한 지 180초 후입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna001ajg04uf66a50u",
+      "questionNum": 177,
+      "answer": "오전 7시 40분",
+      "explanation": "오전 6시 이후 처음으로 다시 동시에 출발하는 시각은 20, 25, 10의 최소공배수만큼의 시간이 지난 후입니다.\n$20 = 2^2 \\times 5$\n$25 = 5^2$\n$10 = 2 \\times 5$\n(최소공배수)$ = 2^2 \\times 5^2 = 100$\n따라서 세 열차는 100분마다 동시에 출발하므로 오전 6시 이후 처음으로 다시 동시에 출발하는 시각은 100분 후, 즉 1시간 40분 후인 오전 7시 40분입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna001bjg0459k2up43",
+      "questionNum": 178,
+      "answer": "②",
+      "explanation": "두 톱니바퀴가 같은 톱니에서 처음으로 다시 맞물릴 때까지 맞물린 톱니의 수는 45와 30의 최소공배수입니다.\n$45 = 3^2 \\times 5$\n$30 = 2 \\times 3 \\times 5$\n(최소공배수)$ = 2 \\times 3^2 \\times 5 = 90$\n따라서 두 톱니바퀴가 같은 톱니에서 처음으로 다시 맞물리려면 톱니바퀴 B는 $90 \\div 30 = 3$ (바퀴) 회전해야 합니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna001cjg04dmcots7x",
+      "questionNum": 179,
+      "answer": "48",
+      "explanation": "두 톱니바퀴가 같은 톱니에서 처음으로 다시 맞물릴 때까지 맞물린 톱니의 수는 16과 24의 최소공배수입니다.\n$16 = 2^4$\n$24 = 2^3 \\times 3$\n(최소공배수)$ = 2^4 \\times 3 = 48$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna001djg04p3ahukmo",
+      "questionNum": 180,
+      "answer": "A: 4바퀴, B: 5바퀴",
+      "explanation": "두 톱니바퀴가 같은 톱니에서 처음으로 다시 맞물릴 때까지 맞물린 톱니의 수는 75와 60의 최소공배수입니다.\n$75 = 3 \\times 5^2$\n$60 = 2^2 \\times 3 \\times 5$\n(최소공배수)$ = 2^2 \\times 3 \\times 5^2 = 300$\n따라서 두 톱니바퀴가 같은 톱니에서 처음으로 다시 맞물리는 것은\nA: $300 \\div 75 = 4$ (바퀴)\nB: $300 \\div 60 = 5$ (바퀴) 회전한 후입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna001ejg049pfk4p5q",
+      "questionNum": 181,
+      "answer": "②",
+      "explanation": "$18 = 6 \\times 3$, $30 = 6 \\times 5$, $N$의 최소공배수가 $630 = 6 \\times (3 \\times 5 \\times 7)$이므로 $N$은 $6 \\times 7 \\times (\\text{자연수})$의 꼴이고 최소공배수인 $6 \\times (3 \\times 5 \\times 7)$의 약수이어야 합니다.\n따라서 $N$의 값이 될 수 있는 수는\n$6 \\times 7 = 42$\n$6 \\times 7 \\times 3 = 126$\n$6 \\times 7 \\times 5 = 210$\n$6 \\times 7 \\times 3 \\times 5 = 630$\n이므로 $N$의 값이 될 수 없는 것은 ②입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna001fjg04znrbynz1",
+      "questionNum": 182,
+      "answer": "③",
+      "explanation": "$6 = 3 \\times 2$, $15 = 3 \\times 5$, $N$의 최소공배수가 $210 = 3 \\times (2 \\times 5 \\times 7)$이므로 $N$은 $3 \\times 7 \\times (\\text{자연수})$의 꼴이고 최소공배수인 $3 \\times (2 \\times 5 \\times 7)$의 약수이어야 합니다.\n따라서 $N$의 값이 될 수 있는 수는\n$3 \\times 7 = 21$\n$3 \\times 7 \\times 2 = 42$\n$3 \\times 7 \\times 5 = 105$\n$3 \\times 7 \\times 2 \\times 5 = 210$\n이므로 $N$의 값이 될 수 없는 것은 ③입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna001gjg04037yqmmf",
+      "questionNum": 183,
+      "answer": "594",
+      "explanation": "$36 = 18 \\times 2$, $90 = 18 \\times 5$, $N$의 최소공배수가 $540 = 18 \\times (2 \\times 3 \\times 5)$이므로 $N$은 $18 \\times 3 \\times (\\text{자연수})$의 꼴이고 최소공배수인 $18 \\times (2 \\times 3 \\times 5)$의 약수이어야 합니다.\n따라서 $N$의 값이 될 수 있는 수는\n$18 \\times 3 = 54$\n$18 \\times 3 \\times 2 = 108$\n$18 \\times 3 \\times 5 = 270$\n$18 \\times 3 \\times 2 \\times 5 = 540$\n즉 가장 큰 수는 540이고, 가장 작은 수는 54이므로 구하는 합은 $540 + 54 = 594$입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna001hjg04nypcg5ui",
+      "questionNum": 184,
+      "answer": "③",
+      "explanation": "최대공약수가 $8$이고 $A>B$이므로 $A=8 \\times a$, $B=8 \\times b$ ($a$, $b$는 서로소, $a>b$)라 하면 최소공배수가\n$280$이므로 $8 \\times a \\times b = 280$ $\\therefore a \\times b = 35$\n\n(i) $a=35$, $b=1$일 때, $A = 8 \\times 35 = 280$, $B = 8 \\times 1 = 8$\n\n(ii) $a=7$, $b=5$일 때, $A = 8 \\times 7 = 56$, $B = 8 \\times 5 = 40$\n\n(i), (ii)에서 $A+B=96$이어야 하므로 $A=56$, $B=40$\n\n$\\therefore A-B = 56-40 = 16$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna001ijg04vg9w5sdm",
+      "questionNum": 185,
+      "answer": "②, ⑤",
+      "explanation": "최대공약수가 $26$이고 $A>B$이므로 $A=26a$, $B=26b$ ($a$, $b$는 서로소, $a>b$)라 하면 최소공배수가 $156$이므로 $26 \\times a \\times b = 156$입니다. 따라서 $a \\times b = 6$입니다.(i) $a=6$, $b=1$일 때, $A=26 \\times 6 = 156$, $B=26 \\times 1 = 26$입니다.(ii) $a=3$, $b=2$일 때, $A=26 \\times 3 = 78$, $B=26 \\times 2 = 52$입니다.(i), (ii)에서 $A+B$의 값이 될 수 있는 수는 $156+26=182$, $78+52=130$입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna001jjg04f81m0vll",
+      "questionNum": 186,
+      "answer": "55",
+      "explanation": "최대공약수가 $5$이고 $A>B$이므로 $A=5a$, $B=5b$ ($a$, $b$는 서로소, $a>b$)라 하면 최소공배수가 $120$이므로 $5 \\times a \\times b = 120$입니다. 따라서 $a \\times b = 24$입니다.(i) $a=24$, $b=1$일 때, $A=5 \\times 24 = 120$, $B=5 \\times 1 = 5$입니다.(ii) $a=8$, $b=3$일 때, $A=5 \\times 8 = 40$, $B=5 \\times 3 = 15$입니다.(i), (ii)에서 $A-B=25$이어야 하므로 $A=40$, $B=15$입니다. 그러므로 $A+B=40+15=55$입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna001kjg04piwlknta",
+      "questionNum": 187,
+      "answer": "③",
+      "explanation": "서로소는 최대공약수가 $1$인 두 자연수임을 이용합니다. 두 수의 최대공약수를 각각 구해 보면 ① $2$ ② $3$ ③ $1$ ④ $7$ ⑤ $3$입니다. 따라서 두 수가 서로소인 것은 ③입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna001ljg04sz5ewj1c",
+      "questionNum": 188,
+      "answer": "③",
+      "explanation": "네모 안에 각 수를 대입해 봅니다. ③ $\\Box=54=2 \\times 3^3$이면 $2^3 \\times \\Box = 2^3 \\times 2 \\times 3^3 = 2^4 \\times 3^3$이므로 $2^4 \\times 3^3$, $2^2 \\times 3^5 \\times 7$의 최대공약수는 $2^2 \\times 3^3 = 108$입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna001mjg04dc8710uu",
+      "questionNum": 189,
+      "answer": "③",
+      "explanation": "공약수는 최대공약수의 약수임을 이용합니다. $2^3 \\times 3^2$, $2^2 \\times 3^3 \\times 7$의 최대공약수는 $2^2 \\times 3^2$입니다. 공약수는 최대공약수의 약수이므로 공약수가 아닌 것은 ③입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna001njg048k69qavs",
+      "questionNum": 190,
+      "answer": "4개",
+      "explanation": "공약수는 최대공약수의 약수임을 이용합니다. $A$와 $B$의 최대공약수가 $28$이므로 $A$와 $B$의 공약수는 $1, 2, 4, 7, 14, 28$입니다. $B$와 $C$의 최대공약수가 $42$이므로 $B$와 $C$의 공약수는 $1, 2, 3, 6, 7, 14, 21, 42$입니다. 따라서 $A, B, C$의 공약수는 $1, 2, 7, 14$의 4개입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna001ojg04ran4nonq",
+      "questionNum": 191,
+      "answer": "④",
+      "explanation": "가능한 한 많은 학생들에게 나누어 주어야 하므로 최대공약수를 이용합니다. 사과는 $3$개가 부족하고, 복숭아와 딸기는 각각 $1$개, $2$개가 남으므로 사과 $27+3=30$ (개), 복숭아 $46-1=45$ (개), 딸기 $77-2=75$ (개)가 있으면 학생들에게 똑같이 나누어 줄 수 있습니다. 즉, 학생 수는 $30, 45, 75$의 최대공약수입니다. $30 = 2 \\times 3 \\times 5$, $45 = 3^2 \\times 5$, $75 = 3 \\times 5^2$입니다. (최대공약수) $= 3 \\times 5 = 15$입니다. 따라서 학생은 $15$명입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna001pjg04ljzet3xj",
+      "questionNum": 192,
+      "answer": "②",
+      "explanation": "세 수를 모두 자연수가 되게 하려면 $n$은 세 분자의 공약수이어야 합니다. $n$은 $110, 220, 275$의 공약수입니다. $110 = 2 \\times 5 \\times 11$, $220 = 2^2 \\times 5 \\times 11$, $275 = 5^2 \\times 11$입니다. (최대공약수) $= 5 \\times 11 = 55$입니다. $110, 220, 275$의 최대공약수는 $55$이므로 $55$의 약수 중 두 자리 자연수 $n$은 $11, 55$의 2개입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna001qjg04rvgj72wb",
+      "questionNum": 193,
+      "answer": "②",
+      "explanation": "어떤 수로 $37$을 나누면 $5$가 남고, $90$을 나누면 $2$가 남는다는 것은 그 수로 $37-5$, $90-2$를 나누면 나누어떨어지는 것임을 이용합니다. 어떤 수로 $37-5=32$, $90-2=88$을 나누면 나누어떨어지므로 구하는 수는 $32, 88$의 최대공약수입니다. $32 = 2^5$, $88 = 2^3 \\times 11$입니다. (최대공약수) $= 2^3 = 8$입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna001rjg04ydzpqjyr",
+      "questionNum": 194,
+      "answer": "④",
+      "explanation": "전략: 공통인 소인수의 거듭제곱에서 최대공약수는 지수가 작거나 같은 것을 택하고, 최소공배수는 지수가 크거나 같은 것을 택한다.\n주어진 수들은 $3^2 \\times 5$, $2 \\times 3^2 \\times 5$, $3^3 \\times 5^2 \\times 7$이다.\n최대공약수: 공통인 소인수의 지수 중 가장 작은 것을 택한다.\n소인수 3: $3^2, 3^2, 3^3$ 중 최소 지수는 2이므로 $3^2$.\n소인수 5: $5^1, 5^1, 5^2$ 중 최소 지수는 1이므로 $5^1$.\n소인수 2, 7: 공통인 소인수가 아니므로 포함하지 않는다.\n따라서 (최대공약수) $= 3^2 \\times 5$.\n\n최소공배수: 공통인 소인수의 지수 중 가장 큰 것을 택하고, 공통이 아닌 소인수도 모두 택한다.\n소인수 2: $2^0, 2^1, 2^0$ 중 최대 지수는 1이므로 $2^1$.\n소인수 3: $3^2, 3^2, 3^3$ 중 최대 지수는 3이므로 $3^3$.\n소인수 5: $5^1, 5^1, 5^2$ 중 최대 지수는 2이므로 $5^2$.\n소인수 7: $7^0, 7^0, 7^1$ 중 최대 지수는 1이므로 $7^1$.\n따라서 (최소공배수) $= 2 \\times 3^3 \\times 5^2 \\times 7$.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna001sjg04wfzokmmh",
+      "questionNum": 195,
+      "answer": "④",
+      "explanation": "전략: 공통인 소인수의 거듭제곱에서 최대공약수는 지수가 작거나 같은 것을 택하고, 최소공배수는 지수가 크거나 같은 것을 택한다.\n④ $2^2 \\times 3^3$, $2 \\times 3 \\times 5$의 최대공약수는 공통인 소인수 2와 3에 대해 각각 최소 지수를 택하므로 $2^1 \\times 3^1 = 2 \\times 3$이다.\n최소공배수는 모든 소인수에 대해 최대 지수를 택하므로 $2^2 \\times 3^3 \\times 5$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna001tjg04u2x3ngc4",
+      "questionNum": 196,
+      "answer": "②, ⑤",
+      "explanation": "전략: 공약수의 개수는 최대공약수의 약수의 개수와 같음을 이용한다.\n① $16$과 $81$의 최대공약수는 $1$이므로 서로소이다. (옳은 설명)\n② $2^2 \\times 3^4$, $2 \\times 3^2 \\times 5$의 최대공약수는 $2 \\times 3^2$이다. $36 = 2^2 \\times 3^2$은 $2 \\times 3^2$의 약수가 아니므로 공약수가 아니다. (옳지 않은 설명)\n③ $2^3 \\times 3^2 \\times 7$, $2^2 \\times 3 \\times 5^2$, $2^2 \\times 3^3 \\times 5$의 최대공약수는 $2^2 \\times 3$이다. 따라서 공약수의 개수는 $(2+1) \\times (1+1) = 3 \\times 2 = 6$ (개)이다. (옳은 설명)\n④ $2 \\times 3^2$, $2^2 \\times 5$의 최소공배수는 $2^2 \\times 3^2 \\times 5$이므로 $180 = 2^2 \\times 3^2 \\times 5$는 두 수의 공배수이다. (옳은 설명)\n⑤ $4$와 $9$는 최대공약수가 $1$이므로 서로소이지만, $4$는 합성수이고 $9$도 합성수이므로 둘 다 소수는 아니다. (옳지 않은 설명)\n따라서 옳지 않은 것은 ②, ⑤이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna001ujg048fo17c3l",
+      "questionNum": 197,
+      "answer": "②",
+      "explanation": "전략: 먼저 최소공배수를 구한다.\n주어진 수들은 $2^2 \\times 3$, $3 \\times 5$, $2 \\times 3 \\times 5$이다.\n최소공배수는 모든 소인수에 대해 최대 지수를 택하므로 $2^2 \\times 3^1 \\times 5^1 = 2^2 \\times 3 \\times 5 = 60$이다.\n공배수는 최소공배수의 배수이므로 $60$의 배수가 아닌 것을 찾는다.\n① $60 = 60 \\times 1$\n② $90 = 60 \\times 1.5$ 이므로 $60$의 배수가 아니다.\n③ $120 = 60 \\times 2$\n④ $180 = 60 \\times 3$\n⑤ $300 = 60 \\times 5$\n따라서 공배수가 아닌 것은 ②이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna001vjg046pvn4qd0",
+      "questionNum": 198,
+      "answer": "9",
+      "explanation": "**전략** 공통인 소인수의 거듭제곱에서 최대공약수는 지수가 작거나 같은 것을 택하고, 최소공배수는 지수가 크거나      같은 것을 택한다.                                                                                                \n                                                                                                                     $\\begin{array}{rllll}  & 2\\,\\times & 3^a & & \\\\ & & 3^3 & \\times\\, 5^c & \\\\ & & 3^b & \\times\\, 5 & \\times\\, 7^d    \\\\ \\hline (\\text{최대공약수}) = & & 3^2 & \\times\\, 5 & \\\\ (\\text{최소공배수}) = & 2\\,\\times & 3^4 & \\times\\, 5^2 \n  & \\times\\, 7 \\end{array}$                                                                                                                                                                                                             \n최대공약수에서 공통인 소인수 $3$의 지수 $a$, $3$, $b$ 중 가장 작은 것이 $2$이므로 $a$, $b$ 중 하나는 $2$이다.                                                                                                                       \n  최소공배수에서 소인수 $3$의 지수 $a$, $3$, $b$ 중 가장 큰 것이 $4$이므로 $a$, $b$ 중 하나는 $4$이다.\n\n  $\\therefore a=2, b=4$ 또는 $a=4, b=2$\n\n  또한 최소공배수에서 소인수 $5$의 지수 $1$, $c$ 중 큰 것이 $2$이므로 $c=2$\n\n  소인수 $7$의 지수가 $1$이므로 $d=1$\n\n  $\\therefore a+b+c+d = 2+4+2+1 = 9$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jna001wjg04r1ji3665",
+      "questionNum": 199,
+      "answer": "④",
+      "explanation": "전략: 공통인 소인수의 거듭제곱에서 최대공약수는 지수가 작거나 같은 것을 택하고, 최소공배수는 지수가 크거나 같은 것을 택한다.\n$A$의 소인수는 $2, 3, 5, 7$이므로 $A=2^a \\times 3^b \\times 5^c \\times 7^d$ ($a, b, c, d$는 자연수)라 할 수 있다.\n주어진 두 수는 $A = 2^a \\times 3^b \\times 5^c \\times 7^d$와 $2^1 \\times 3^2 \\times 7^2$이다.\n최대공약수(GCD)는 $2^1 \\times 3^1 \\times 7^2$이고, 최소공배수(LCM)는 $2^1 \\times 3^2 \\times 5^1 \\times 7^3$이다.\n\n각 소인수의 지수를 비교하여 $a, b, c, d$ 값을 구한다.\n1.  소인수 2의 지수: $\\max(a, 1) = 1$. 따라서 $a=1$.\n2.  소인수 3의 지수: $\\min(b, 2) = 1$. 따라서 $b=1$.\n3.  소인수 5의 지수: $2^1 \\times 3^2 \\times 7^2$에는 소인수 5가 없으므로 지수는 0이다. LCM에서 소인수 5의 지수가 1이므로 $c=1$.\n4.  소인수 7의 지수: $\\max(d, 2) = 3$. 따라서 $d=3$.\n\n$\\therefore A = 2^1 \\times 3^1 \\times 5^1 \\times 7^3 = 2 \\times 3 \\times 5 \\times 7^3$.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jnb001xjg044e2ahax0",
+      "questionNum": 200,
+      "answer": "③",
+      "explanation": "전략: $x$를 제외한 수를 소인수분해하여 최소공배수를 $x$를 사용하여 나타낸다.\n주어진 세 수는 $3x$, $4x$, $5x$이다.\n각 수를 소인수분해하면:\n$3x = 3 \\times x$\n$4x = 2^2 \\times x$\n$5x = 5 \\times x$\n\n세 수의 최소공배수는 모든 소인수에 대해 최대 지수를 택하므로 $2^2 \\times 3 \\times 5 \\times x = 60x$이다.\n문제에서 세 수의 최소공배수가 $300$이라고 주어졌으므로:\n$60x = 300$\n$x = 300 \\div 60$\n$x = 5$\n\n따라서 세 자연수 $3x, 4x, 5x$는 $3 \\times 5 = 15$, $4 \\times 5 = 20$, $5 \\times 5 = 25$이다.\n이 중에서 가장 큰 수는 $25$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jnb001yjg04f3fff9m3",
+      "questionNum": 201,
+      "answer": "④",
+      "explanation": "전략: 15, 60을 소인수분해한 후 $n$의 조건을 생각해 본다.\n$15 = 3 \\times 5$\n$60 = 2^2 \\times 3 \\times 5$\n두 수의 최소공배수가 $2^2 \\times 3 \\times 5$이 되려면 $n$은 $2^2 \\times (\\text{자연수})$의 꼴이고, $2^2 \\times 3 \\times 5$의 약수여야 한다.\n즉, $n$은 $2^2$을 인수로 포함해야 하고, $3$과 $5$의 지수는 $0$ 또는 $1$이어야 한다. 또한 $n$은 $2^2 \\times 3 \\times 5$ 이외의 소인수를 포함해서는 안 된다.\n\n각 보기를 소인수분해하여 조건을 확인한다.\n① $4 = 2^2$: 조건을 만족한다.\n② $12 = 2^2 \\times 3$: 조건을 만족한다.\n③ $20 = 2^2 \\times 5$: 조건을 만족한다.\n④ $40 = 2^3 \\times 5$: $2^3$을 인수로 포함하고 있어 $2^2$의 꼴이 아니므로 최소공배수가 $2^2 \\times 3 \\times 5$가 될 수 없다. ($n$이 $2^3$을 가지면 최소공배수도 $2^3$을 가져야 함)\n⑤ $60 = 2^2 \\times 3 \\times 5$: 조건을 만족한다.\n\n따라서 $n$의 값이 될 수 없는 것은 ④ $40$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jnb001zjg04achdejei",
+      "questionNum": 202,
+      "answer": "⑤",
+      "explanation": "전략: 처음으로 다시 두 사람이 함께 봉사활동을 하려면 최소공배수만큼의 기간이 필요함을 이용한다.5월 2일 이후 처음으로 다시 함께 봉사활동을 하는 날은 6, 8의 최소공배수만큼의 날짜가 지난 후이다.$6=2 \\times 3$ $8=2^3$(최소공배수) $=2^3 \\times 3=24$따라서 기은이와 지형이는 24일마다 같은 장소에서 봉사활동을 하므로 5월 2일 이후 처음으로 다시 함께 봉사활동을 하는 날은 24일 후인 5월 26일이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jnb0020jg04c6zu7hum",
+      "questionNum": 203,
+      "answer": "④",
+      "explanation": "전략: 세 톱니바퀴가 같은 톱니에서 처음으로 다시 동시에 맞물릴 때까지 맞물린 톱니의 수는 세 톱니바퀴의 톱니의 수의 최소공배수와 같음을 이용한다.세 톱니바퀴가 같은 톱니에서 처음으로 다시 동시에 맞물릴 때까지 맞물린 톱니의 수는 12, 20, 24의 최소공배수이다.$12=2^2 \\times 3$, $24=2^3 \\times 3$(최소공배수) $=2^3 \\times 3 \\times 5=120$따라서 세 톱니바퀴가 같은 톱니에서 처음으로 다시 동시에 맞물리려면 톱니바퀴 A는 $120 \\div 12=10$ (바퀴) 회전해야 한다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jnb0021jg04xqia234v",
+      "questionNum": 204,
+      "answer": "122",
+      "explanation": "전략: 구하는 자연수보다 2가 작으면 3, 5, 8로 모두 나누어떨어짐을 이용한다.3, 5, 8 중 어느 수로 나누어도 2가 남으므로 구하는 자연수를 $x$라 하면 $x-2$는 3, 5, 8의 공배수이다.3, 5, $8=2^3$의 최소공배수는 $2^3 \\times 3 \\times 5=120$이므로 $x-2$는 120의 배수이다.즉 $x-2=120, 240, \\dots$이므로 $x=122, 242, \\dots$따라서 가장 작은 세 자리 자연수는 122이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jnb0022jg04ay3m76jp",
+      "questionNum": 205,
+      "answer": "108/7",
+      "explanation": "전략: 세 분수에 곱하여 모두 자연수가 되게 하려면 $\\frac{\\text{(분모들의 공배수)}}{\\text{(분자들의 공약수)}}$의 꼴을 곱해야 한다.구하는 분수를 $\\frac{B}{A}$라 하면 \n$A$는 $35=5 \\times 7, 56=2^3 \\times 7$의 최대공약수이어야 하므로\n$A=7$ \n$B$는 $6=2 \\times 3, 12=2^2 \\times 3, 27=3^3$의 최소공배수이어야 하므로 $B=2^2 \\times 3^3=108$\n따라서 구하는 분수는 $\\frac{108}{7}$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jnb0023jg043nw4odz8",
+      "questionNum": 206,
+      "answer": "⑤",
+      "explanation": "전략: 두 자연수 A, B의 최대공약수가 G이면 $A=G \\times a, B=G \\times b$ (a, b는 서로소)로 놓을 수 있다.$72=18 \\times 4, 108=18 \\times 6$, A의 최대공약수가 18이므로 A는 $18 \\times a$ (a는 2와 서로소)의 꼴이다.⑤ $144=18 \\times 8$이므로 $a=8$이때 8은 2와 서로소가 아니므로 A의 값이 될 수 없다.다른 풀이: 세 수의 최대공약수가 18이므로 $a$는 4, 6과의 공약수가 1뿐이어야 한다.즉 짝수가 아니어야 하므로 $a=1, 3, 5, 7, 9, \\dots$ $\\therefore A=18, 54, 90, 126, 162, \\dots$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jnb0024jg04e3rmamu6",
+      "questionNum": 207,
+      "answer": "③",
+      "explanation": "전략: 두 자연수 A, B의 최대공약수가 G이면 $A=G \\times a, B=G \\times b$ (a, b는 서로소)로 놓고 최대공약수와 최소공배수의 관계를 이용한다.최대공약수가 8이고 $A<B$이므로$A=8 \\times a, B=8 \\times b$ (a, b는 서로소, $a<b$)라 하면 최소공배수가 32이므로$8 \\times a \\times b=32 \\therefore a \\times b=4$즉 $a=1, b=4$이므로 $A=8 \\times 1=8, B=8 \\times 4=32$ $\\therefore B-A=32-8=24$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jnb0025jg04pc7qx1jq",
+      "questionNum": 208,
+      "answer": "56",
+      "explanation": "전략: 사진의 크기를 최대로 하므로 최대공약수를 이용한다.가능한 한 큰 정사각형 모양의 사진을 붙이려고 하므로 사진의 한 변의 길이는 180과 144의 최대공약수이어야 한다.$180=2^2 \\times 3^2 \\times 5$, $\\therefore x=36$가로: $180 \\div 36=5$ (장)세로: $144 \\div 36=4$ (장)의 사진이 필요하므로$y=5 \\times 4=20$ $\\therefore x+y=36+20=56$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jnb0026jg04erp3qre3",
+      "questionNum": 209,
+      "answer": "⑴ 3 ⑵ 9",
+      "explanation": "1. 주어진 세 수를 소인수분해 한다.$15 \\times a = 3 \\times 5 \\times a$, $45 \\times a = 3^2 \\times 5 \\times a$\n2. 세 수의 최소공배수는 $2 \\times 3^2 \\times 5 \\times a = 90 \\times a$ 이다.최소공배수가 270이므로 $90 \\times a = 270$ 에서 $a=3$ 이다.\n3. 세 자연수의 최대공약수는 $3 \\times a = 3 \\times 3 = 9$ 이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jnb0027jg046zy6y5kd",
+      "questionNum": 210,
+      "answer": "60",
+      "explanation": "1. 두 자연수 $A, B$의 최대공약수가 $G$이면 $A=G \\times a$, $B=G \\times b$ (단, $a, b$는 서로소)로 놓을 수 있다.\n2. 최대공약수가 6이고 $A<B$이므로 $A=6 \\times a$, $B=6 \\times b$ (단, $a, b$는 서로소, $a<b$)로 놓는다.\n3. 두 수의 곱이 756이므로 $(6 \\times a) \\times (6 \\times b) = 756$ 이다. $36 \\times a \\times b = 756$ 이므로 $a \\times b = 21$ 이다.\n4. $a \\times b = 21$을 만족하는 서로소인 $a, b$ (단, $a<b$)의 순서쌍은 $(1, 21)$, $(3, 7)$ 이다.\n   (i) $a=1, b=21$일 때, $A = 6 \\times 1 = 6$, $B = 6 \\times 21 = 126$\n   (ii) $a=3, b=7$일 때, $A = 6 \\times 3 = 18$, $B = 6 \\times 7 = 42$\n5. $A, B$가 두 자리 자연수이므로 $A=18, B=42$ 이다.\n6. $A+B = 18+42=60$ 이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jnb0028jg04y2dgh7c0",
+      "questionNum": 211,
+      "answer": "오후 8시 4분",
+      "explanation": "1. 세 네온사인이 처음으로 다시 동시에 켜지는 시각은 각각의 주기를 계산한 후 최소공배수를 이용하여 구한다.\n   A가 켜진 후 다시 켜지는 데 걸리는 시간: $14+2=16$ (초)\n   B가 켜진 후 다시 켜지는 데 걸리는 시간: $17+3=20$ (초)\n   C가 켜진 후 다시 켜지는 데 걸리는 시간: $20+4=24$ (초)\n2. 16, 20, 24의 최소공배수를 구한다.\n   $16=2^4$\n   $20=2^2 \\times 5$\n   $24=2^3 \\times 3$\n   최소공배수는 $2^4 \\times 3 \\times 5 = 240$ 이다.\n3. 따라서 세 네온사인은 240초마다 동시에 켜지므로, 오후 8시 이후 처음으로 다시 동시에 켜지는 시각은 240초 후, 즉 4분 후인 오후 8시 4분이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jnb0029jg044mrc9r3f",
+      "questionNum": 212,
+      "answer": "③",
+      "explanation": "1. 주어진 최대공약수와 최소공배수를 이용하여 $N$의 조건을 생각해 본다.\n   $30=15 \\times 2$\n   $75=15 \\times 5$\n   $30, 75, N$의 최대공약수가 15이므로 $N$은 $15 \\times k$ (단, $k$는 자연수) 꼴이어야 한다.\n2. $30, 75, N$의 최소공배수가 $450=15 \\times (2 \\times 3 \\times 5)$ 이므로 $N$은 $15 \\times 3 \\times (2^a \\times 5^b)$ 꼴이어야 한다. 여기서 $a \\le 1, b \\le 1$ 이다.\n3. $N$의 값이 될 수 있는 수는 다음과 같다:\n   $15 \\times 3 = 45$\n   $15 \\times (3 \\times 2) = 90$\n   $15 \\times (3 \\times 5) = 225$\n   $15 \\times (3 \\times 2 \\times 5) = 450$\n4. 따라서 $N$의 값이 될 수 없는 것은 ③ 이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnwu6jnb002ajg04qcahet6f",
+      "questionNum": 213,
+      "answer": "20",
+      "explanation": "1. 두 자연수 $A, B$의 최대공약수가 $G$이면 $A=G \\times a$, $B=G \\times b$ (단, $a, b$는 서로소)로 놓을 수 있다.\n2. 조건 (가)에서 $A, B$의 최대공약수가 4이고 $A>B$이므로 $A=4 \\times a$, $B=4 \\times b$ (단, $a, b$는 서로소, $a>b$)로 놓는다.\n3. 조건 (나)에서 $A, B$의 최소공배수가 144이므로 $4 \\times a \\times b = 144$ 이다. $a \\times b = 36$ 이다.\n4. $a \\times b = 36$을 만족하는 서로소인 $a, b$ (단, $a>b$)의 순서쌍을 찾는다.\n   (i) $a=36, b=1$일 때, $A = 4 \\times 36 = 144$, $B = 4 \\times 1 = 4$\n   (ii) $a=9, b=4$일 때, $A = 4 \\times 9 = 36$, $B = 4 \\times 4 = 16$\n5. 조건 (다)에서 $A+B=52$ 이어야 하므로, (ii)의 경우 $A=36, B=16$ 이 $A+B=36+16=52$를 만족한다.\n6. 따라서 $A-B = 36-16=20$ 이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpv0000lb04y7ipagih",
+      "questionNum": 264,
+      "answer": "④",
+      "explanation": "① 지하 2층 -> $-2$층\n② 지출 3000원 -> $-3000$원\n③ 20% 증가 -> $+20$\n⑤ 해발 800 m -> $+800$ m\n따라서 옳은 것은 ④ 이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpv0001lb04g2ue5wp2",
+      "questionNum": 265,
+      "answer": "⑤",
+      "explanation": "⑤ 영하 $5^\\text{o}\\text{C}$ -> $-5^\\text{o}\\text{C}$\n따라서 옳지 않은 것은 ⑤이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpv0002lb04er540ydx",
+      "questionNum": 266,
+      "answer": "③",
+      "explanation": "① 해저 200 m -> $-200$ m\n② 500원 손해 -> $-500$ 원\n③ 지상 7층 -> $+7$ 층\n④ 영하 $3^\\text{o}\\text{C}$ -> $-3^\\text{o}\\text{C}$\n⑤ 10% 할인 -> $-10$\n따라서 나머지 넷과 부호가 다른 하나는 ③이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpv0003lb04lr4ir6dc",
+      "questionNum": 267,
+      "answer": "②",
+      "explanation": "⑤ $-\\frac{9}{3} = -3$이므로 정수이다.\n따라서 정수가 아닌 것은 ② 이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpv0004lb04qgiwa350",
+      "questionNum": 268,
+      "answer": "②, ④",
+      "explanation": "음수가 아닌 정수는 $0$ 또는 양의 정수이다.\n④ $\\frac{20}{4} = 5$이므로 양의 정수이다.\n따라서 음수가 아닌 정수는 ②, ④ 이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpv0005lb044rac5ygj",
+      "questionNum": 269,
+      "answer": "4",
+      "explanation": "양의 정수는 $9$, $+\\frac{6}{2}=+3$의 2개이므로 $a=2$\n음의 정수는 $-6$, $-\\frac{12}{3}=-4$의 2개이므로 $b=2$\n$\\therefore a+b=2+2=4$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpv0006lb04burqal6q",
+      "questionNum": 270,
+      "answer": "④",
+      "explanation": "① 정수는 $-1$, $\\frac{12}{6}=2$, $0$, $6$의 4개이다.\n② 주어진 수는 모두 유리수이므로 7개이다.\n③ 자연수는 $\\frac{12}{6}=2$, $6$의 2개이다.\n④ 음의 유리수는 $-2.5$, $-1$, $-\\frac{1}{5}$의 3개이다.\n⑤ 정수가 아닌 유리수는 $-2.5$, $\\frac{4}{3}$, $-\\frac{1}{5}$의 3개이다.\n따라서 옳은 것은 ④이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpv0007lb04bad0mrrn",
+      "questionNum": 271,
+      "answer": "③, ④",
+      "explanation": "⑤ $-\\frac{42}{7}=-6$이므로 정수이다.\n따라서 정수가 아닌 유리수는 ③, ④ 이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpv0008lb043uesb3ti",
+      "questionNum": 272,
+      "answer": "5",
+      "explanation": "양의 유리수는 $6.1$, $\\frac{2}{5}$, $\\frac{16}{4}$, $11$의 4개이므로 $x=4$\n음의 유리수는 $-5$, $-\\frac{2}{3}$, $-3.2$의 3개이므로 $y=3$\n정수가 아닌 유리수는 $6.1$, $-\\frac{2}{3}$, $\\frac{2}{5}$, $-3.2$의 4개이므로 $z=4$\n$\\therefore x-y+z=4-3+4=5$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpv0009lb04lhd47ted",
+      "questionNum": 273,
+      "answer": "⑤",
+      "explanation": "⑤ $0$과 $1$ 사이에는 정수가 없다.\n따라서 옳지 않은 것은 ⑤이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpw000alb04hay34yrg",
+      "questionNum": 274,
+      "answer": "③, ⑤",
+      "explanation": "① $-1$과 $0$ 사이에는 무수히 많은 유리수가 존재한다.\n② 양의 정수가 아닌 정수는 $0$ 또는 음의 정수이다.\n④ 유리수는 양의 유리수, $0$, 음의 유리수로 이루어져 있다.\n따라서 옳은 것은 ③, ⑤ 이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpw000blb04xcw001t0",
+      "questionNum": 275,
+      "answer": "③",
+      "explanation": "ㄱ. 가장 작은 양의 정수는 $1$이다.\nㄷ. $-\\frac{2}{3}$는 유리수이지만 $\\frac{\\text{(자연수)}}{\\text{(자연수)}}$의 꼴로 나타낼 수 없다.\n이상에서 옳은 것은 ㄴ, ㄹ이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpw000clb04p57k6z27",
+      "questionNum": 276,
+      "answer": "⑤",
+      "explanation": "문제에서 옳은 것을 고르는 문제이다. 주어진 선택지 중 ⑤번이 옳다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpw000dlb04vo5ykbbc",
+      "questionNum": 277,
+      "answer": "③",
+      "explanation": "문제에서 옳지 않은 것을 고르는 문제이다. 주어진 선택지 중 ③번(C: 0)이 옳지 않다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpw000elb04i9z866ei",
+      "questionNum": 278,
+      "answer": "-4, 5",
+      "explanation": "주어진 수를 수직선 위에 나타내면 -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6과 같다. 이 수직선에서 가장 왼쪽에 있는 수는 -4이고, 가장 오른쪽에 있는 수는 5이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpw000flb04n86tswsz",
+      "questionNum": 279,
+      "answer": "③",
+      "explanation": "주어진 수를 수직선 위에 나타내면 다음과 같다. 수직선에는 -3, -2, -1, 0, 1, 2, 3이 표시되어 있고, -2는 ①, 2는 ②, -1은 ③, 0은 ④, 1은 ⑤로 표시되어 있다. 따라서 왼쪽에서 두 번째에 있는 수는 ③에 해당하는 값이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpw000glb04aatlo9he",
+      "questionNum": 280,
+      "answer": "④",
+      "explanation": "주어진 수들은 다음과 같다: A: $-5/2$, B: $-2$, C: $-1/3$, D: $0$, E: $3/2$, F: $2$. \nㄱ. 양수는 $E(3/2)$와 $F(2)$로 2개이다. (옳음) \nㄴ. 정수는 $B(-2)$, $D(0)$, $F(2)$로 3개이다. (옳음) \nㄷ. 점 $A$가 나타내는 수는 $-5/2$이다. (옳음) \n이상에서 옳은 것은 ㄱ, ㄴ, ㄷ이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpw000hlb04b8yckibu",
+      "questionNum": 281,
+      "answer": "a=-2, b=1",
+      "explanation": "$-7/4 = -1 {3}/{4}$이고, $4/3 = 1 {1}/{3}$이므로 두 수를 수직선 위에 나타내면 다음과 같다.\n$-7/4$에 가장 가까운 정수는 $-2$이므로 $a=-2$이다.\n$4/3$에 가장 가까운 정수는 $1$이므로 $b=1$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpw000ilb04fpyj0vkz",
+      "questionNum": 282,
+      "answer": "②",
+      "explanation": "수직선에서 $-5$와 $3$을 나타내는 두 점으로부터 같은 거리에 있는 점은 두 수의 평균과 같다. 따라서 그 수는 $(-5+3)/2 = -2/2 = -1$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpw000jlb042oqtsfjv",
+      "questionNum": 283,
+      "answer": "③",
+      "explanation": "조건 (가)에서 $a$를 나타내는 점은 $2$로부터 거리가 $5$인 점이므로, $|a-2|=5$이다. 따라서 $a-2=5$ 또는 $a-2=-5$이므로, $a=7$ 또는 $a=-3$이다.\n조건 (나)에서 $a$를 나타내는 점은 $0$을 나타내는 점의 왼쪽에 있으므로 $a<0$이다.\n두 조건을 모두 만족하는 $a$의 값은 $-3$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpw000klb04cnai42nc",
+      "questionNum": 284,
+      "answer": "a=-4, b=10",
+      "explanation": "두 수 $a$, $b$를 나타내는 두 점 사이의 거리가 $14$이고, 두 점으로부터 같은 거리에 있는 점이 나타내는 수는 $3$이므로, $a$와 $b$는 $3$으로부터 각각 $14 \\times {1}/{2} = 7$만큼 떨어져 있다.\n따라서 $a = 3-7 = -4$이고, $b = 3+7 = 10$이다.\n$b>0$이라는 조건을 만족하므로, $a=-4$, $b=10$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpw000llb04ar3a77rn",
+      "questionNum": 285,
+      "answer": "③",
+      "explanation": "절댓값이 $3$인 두 수는 $3$과 $-3$이다. 수직선 위에서 두 점 사이의 거리는 큰 수에서 작은 수를 빼면 되므로, $3 - (-3) = 3+3 = 6$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpw000mlb044mch37h0",
+      "questionNum": 286,
+      "answer": "5",
+      "explanation": "$a = |-3/2| = 3/2$이다.\n절댓값이 $3.5$인 수는 $3.5$와 $-3.5$이다. 이 중 양수는 $3.5$이므로 $b=3.5$이다.\n$a+b = 3/2 + 3.5 = 3/2 + 7/2 = (3+7)/2 = 10/2 = 5$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpw000nlb04anm2eijq",
+      "questionNum": 287,
+      "answer": "1",
+      "explanation": "$|a|-|b|+|c| = |-8/5| - |-1| + |2/5|$ 이다.\n절댓값을 계산하면 $8/5 - 1 + 2/5$ 이다.\n이를 계산하면 $(8/5 + 2/5) - 1 = 10/5 - 1 = 2 - 1 = 1$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpw000olb04iqyafn23",
+      "questionNum": 288,
+      "answer": "a=5",
+      "explanation": "절댓값이 $5$인 수는 $5$와 $-5$이다. 이 중에서 수직선 위에서 $0$을 나타내는 점의 오른쪽에 있는 수는 양수를 의미하므로 $5$이다.\n따라서 $a=5$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpw000plb04jofjynrx",
+      "questionNum": 296,
+      "answer": "-7",
+      "explanation": "절댓값이 같고 부호가 반대인 두 수를 나타내는 두 점 사이의 거리가 14이므로 두 수를 나타내는 두 점은 0을 나타내는 점으로부터의 거리가 각각 $14 \\times \\frac{1}{2} = 7$이다.\n따라서 두 수는 7, -7 이고 이 중 음수는 -7 이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpw000qlb04y5li3nd9",
+      "questionNum": 297,
+      "answer": "2, -2",
+      "explanation": "절댓값이 같고 부호가 반대인 두 수를 나타내는 두 점 사이의 거리가 4이므로 두 수를 나타내는 두 점은 0을 나타내는 점으로부터의 거리가 각각 $4 \\times \\frac{1}{2} = 2$이다.\n따라서 두 수는 2, -2이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpw000rlb0473s9wi0m",
+      "questionNum": 298,
+      "answer": "$\\frac{8}{3}$",
+      "explanation": "조건 (가), (나)에서 $a, b$를 나타내는 두 점은 0을 나타내는 점으로부터의 거리가 각각 $\\frac{16}{3} \\times \\frac{1}{2} = \\frac{8}{3}$이다.\n이때 조건 (다)에서 $a$는 양수이므로 $a=\\frac{8}{3}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpw000slb04egspahjz",
+      "questionNum": 299,
+      "answer": "①, ④",
+      "explanation": "② 양수는 음수보다 크므로 $\\frac{1}{3} > -1$\n③ $\\frac{3}{7} = \\frac{6}{14}, \\frac{1}{2} = \\frac{7}{14}$ 이므로 $\\frac{3}{7} < \\frac{1}{2}$\n④ $|-3.8|=3.8, |-4|=4$ 이므로 $|-3.8|<|-4|$ ∴ $-3.8>-4$\n⑤ $|-1.5|=1.5=\\frac{6}{4}$ 이므로 $|-1.5|<\\frac{7}{4}$\n따라서 옳은 것은 ①, ④ 이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpw000tlb04ksqarocv",
+      "questionNum": 300,
+      "answer": "⑤",
+      "explanation": "① 양수는 음수보다 크므로 $-6 < 1$\n② $|3|=3, |-4|=4$ 이므로 $|3| < |-4|$\n③ 음수는 0보다 작으므로 $-1 < 0$\n④ $|-2|=2, |-5|=5$ 이므로 $|-2| < |-5|$\n⑤ $|-3|=3, |-8|=8$ 이므로 $|-3|<|-8|$ ∴ $-3 > -8$\n따라서 $\\square$ 안에 알맞은 부등호가 나머지 넷과 다른 하나는 ⑤ 이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpw000ulb04ibxoql91",
+      "questionNum": 301,
+      "answer": "0.7",
+      "explanation": "주어진 수를 작은 수부터 차례대로 나열하면\n$-3, -\\frac{2}{3}, 0, 0.7, \\frac{8}{5}, 2$\n따라서 네 번째에 오는 수는 0.7 이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx000vlb040zolc9af",
+      "questionNum": 302,
+      "answer": "③",
+      "explanation": "어진 수를 작은 수부터 차례대로 나열하면                                                                        \n                                                                                                                     $-4.1,\\ -2,\\ -\\frac{4}{3},\\ 0,\\ \\frac{7}{3},\\ 5$                                                                                                                                                                                   ─\n  주어진 수를 절댓값이 작은 수부터 차례대로 나열하면                                                                                                                                                                                  \n  $0,\\ -\\frac{4}{3},\\ -2,\\ \\frac{7}{3},\\ -4.1,\\ 5$                                                                 \n                                                                                                                   \n  ③ 가장 큰 음수는 $-\\frac{4}{3}$이다.                                                                                                                                                                                                  따라서 옳지 않은 것은 ③이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx000wlb04dm2iaf10",
+      "questionNum": 303,
+      "answer": "②",
+      "explanation": "문제에서 주어진 조건 중, ② $x \\le -2$는 옳지 않다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx000xlb04z7f69r12",
+      "questionNum": 304,
+      "answer": "④",
+      "explanation": "$x$는 $-4$보다 작지 않고 $\\implies x \\ge -4$.\n$x$는 $5$보다 크지 않다. $\\implies x \\le 5$.\n따라서 $-4 \\le x \\le 5$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx000ylb04fvssw83p",
+      "questionNum": 305,
+      "answer": "②, ④",
+      "explanation": "주어진 부등식 $- \\frac{1}{2} < x \\le \\frac{3}{4}$을 나타내는 것은 ②와 ④이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx000zlb04th8ryh3v",
+      "questionNum": 306,
+      "answer": "④",
+      "explanation": "$- \\frac{7}{3} = -2.333\\ldots$, $\\frac{9}{4} = 2.25$이므로 $- \\frac{7}{3}$과 $\\frac{9}{4}$ 사이에 있는 정수는 $-2, -1, 0, 1, 2$이다. 따라서 5개이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx0010lb04awifapnm",
+      "questionNum": 307,
+      "answer": "8",
+      "explanation": "$- \\frac{7}{2} = -3.5$이므로 $-3.5 < x \\le 4$를 만족시키는 정수 $x$는 $-3, -2, -1, 0, 1, 2, 3, 4$이다. 따라서 8개이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx0011lb04lxlc09uc",
+      "questionNum": 308,
+      "answer": "-2",
+      "explanation": "$- \\frac{12}{5} = -2.4$, $\\frac{5}{3} = 1.666\\ldots$이므로 $- \\frac{12}{5}$와 $\\frac{5}{3}$ 사이에 있는 정수는 $-2, -1, 0, 1$이다. 이 중 절댓값이 가장 큰 수는 $-2$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx0012lb04y4dfayc3",
+      "questionNum": 309,
+      "answer": "③",
+      "explanation": "$\\frac{1}{3} = \\frac{5}{15}$, $\\frac{4}{5} = \\frac{12}{15}$이므로 $\\frac{1}{3}$과 $\\frac{4}{5}$ 사이에 있는 분모가 $15$인 기약분수는 $\\frac{7}{15}, \\frac{8}{15}, \\frac{11}{15}$이다. 따라서 3개이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx0013lb04h0ckeu7f",
+      "questionNum": 310,
+      "answer": "$a=-5, b=10$",
+      "explanation": "조건 (나)에서 수직선 위에서 $0$을 나타내는 점과 $b$를 나타내는 점 사이의 거리는 $0$을 나타내는 점과 $a$를 나타내는 점 사이의 거리의 $2$배이므로 $|b|=2|a|$이다. 조건 (다)에서 수직선 위에서 $a, b$를 나타내는 두 점 사이의 거리가 $15$이고 조건 (가)에서 $a<0, b>0$이므로 두 수 $a, b$를 나타내는 점을 각각 A, B라 하고 수직선 위에 나타내면 그림과 같다. 그림에서 $a=-5, b=10$으로 나타난다. 이를 식으로 확인하면, $a<0$이므로 $|a|=-a$, $b>0$이므로 $|b|=b$. 따라서 $|b|=2|a|$에서 $b=2(-a)=-2a$이다. 두 점 사이의 거리는 $b-a=15$이므로 $-2a-a=15 \\implies -3a=15 \\implies a=-5$. $b=-2a = -2(-5)=10$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx0014lb04neu7j4e2",
+      "questionNum": 311,
+      "answer": "$a=3, b=-2$",
+      "explanation": "조건 (나)에서 $|b|=2$이므로 $b=2$ 또는 $b=-2$이다. 이때 조건 (가)에서 $b<0$이므로 $b=-2$이다. 조건 (다)에서 $|a|+|b|=5$이고 $|b|=2$이므로 $|a|+2=5 \\implies |a|=3$이다. 그런데 조건 (가)에서 $a>0$이므로 $a=3$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx0015lb04xfb85526",
+      "questionNum": 312,
+      "answer": "$a=8, b=-2$",
+      "explanation": "$a>b$이고 부호가 반대이므로 $a>0, b<0$이다. $a$의 절댓값이 $b$의 절댓값의 $4$배이므로 수직선 위에서 $0$을 나타내는 점과 $a$를 나타내는 점 사이의 거리는 $0$을 나타내는 점과 $b$를 나타내는 점 사이의 거리의 $4$배이다. 즉, $|a|=4|b|$이다. 또 수직선 위에서 $a, b$를 나타내는 두 점 사이의 거리가 $10$이므로 두 수 $a, b$를 나타내는 점을 각각 A, B라 하고 수직선 위에 나타내면 그림과 같다. 그림에서 $a=8, b=-2$로 나타난다. 이를 식으로 확인하면, $a>0$이므로 $|a|=a$, $b<0$이므로 $|b|=-b$. 따라서 $|a|=4|b|$에서 $a=4(-b)=-4b$이다. 두 점 사이의 거리는 $a-b=10$이므로 $a-b=10 \\implies -4b-b=10 \\implies -5b=10 \\implies b=-2$. $a=-4b = -4(-2)=8$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx0016lb0489kyhxvb",
+      "questionNum": 313,
+      "answer": "$b<a<c$",
+      "explanation": "조건 (나), (라)에서 $b$는 $-6$보다 크고 절댓값이 $-6$의 절댓값과 같으므로 $b=6$이다. 조건 (나)에서 $c$는 $-6$보다 크고, 조건 (가), (다)에서 $a$는 $6$보다 크고 $c$보다 $-6$에 더 가까우므로 $6<a<c$이다. 따라서 $b<a<c$이다. 이때 세 수 $a, b, c$를 수직선 위에 나타내면 그림과 같다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx0017lb0421h5uiy1",
+      "questionNum": 314,
+      "answer": "c<b<a",
+      "explanation": "조건 (가), (다)에서 $c$는 $-4$보다 크고 $|c|=|-4|=4$이므로 $c=4$이다.\n조건 (가)에서 $a$는 $-4$보다 크고, 조건 (나)에서 $b$는 $4$보다 크고, 조건 (라)에서 $a$는 $b$보다 $-4$에서 더 멀리 떨어져 있으므로 $4<b<a$이다.\n따라서 $c<b<a$이다.\n이때 세 수 $a, b, c$를 수직선 위에 나타내면 다음과 같다: (-4, 0, c(=4), b, a 순)",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx0018lb04gp0opfor",
+      "questionNum": 315,
+      "answer": "d<a<c<b",
+      "explanation": "조건 (가), (다)에서 $a<0, c>0$이고 $|a|=|c|$이므로 $a$와 $c$를 수직선 위에 나타내면 다음과 같다: (a, 0, c 순)\n또 조건 (나), (라)에서 $b$와 $d$를 수직선 위에 나타내면 다음과 같다: (d, a, 0, c, b 순)\n따라서 $d<a<c<b$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx0019lb04xcx7eq65",
+      "questionNum": 322,
+      "answer": "a=-8, b=3",
+      "explanation": "절댓값이 $a$ ($a>0$)인 수는 $+a, -a$임을 이용한다.\n$|a|=8$이므로 $a=8$ 또는 $a=-8$이다.\n수직선 위에서 $a$를 나타내는 점은 $0$을 나타내는 점의 왼쪽에 있으므로 $a=-8$이다.\n$|b|=3$이므로 $b=3$ 또는 $b=-3$이다.\n수직선 위에서 $b$를 나타내는 점은 $0$을 나타내는 점의 오른쪽에 있으므로 $b=3$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx001alb04ubaip56z",
+      "questionNum": 323,
+      "answer": "④",
+      "explanation": "수의 절댓값이 작을수록 수직선에서 그 수를 나타내는 점은 $0$을 나타내는 점에서 가깝다.\n각 수의 절댓값을 구하면:\n$|-\\frac{7}{2}| = \\frac{7}{2} = 3.5$\n$|3| = 3$\n$|-2.8| = 2.8$\n$|\\frac{5}{3}| = \\frac{5}{3} \\approx 1.67$\n$|-2| = 2$\n절댓값이 작은 순서대로 나열하면:\n$|\\frac{5}{3}| < |-2| < |-2.8| < |3| < |-\\frac{7}{2}|$\n따라서 $0$을 나타내는 점에서 가장 가까운 것은 $\\frac{5}{3}$에 해당하는 ④이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx001blb043qv6xhou",
+      "questionNum": 324,
+      "answer": "②",
+      "explanation": "먼저 절댓값이 $\\frac{2}{3}$ 이상 $4$ 미만인 정수를 구해 본다.\n절댓값이 $\\frac{2}{3}$ 이상 $4$ 미만인 정수는 절댓값이 $1, 2, 3$인 수이다.\n절댓값이 $1$인 수는 $1, -1$\n절댓값이 $2$인 수는 $2, -2$\n절댓값이 $3$인 수는 $3, -3$\n따라서 구하는 정수의 개수는 총 $6$개이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx001clb048jfz0o3s",
+      "questionNum": 325,
+      "answer": "-1, 0, 1",
+      "explanation": "전략: $|\\frac{n}{2}| <1$을 만족시키는 정수 $n$의 값을 구해 본다.\n$|\\frac{n}{2}| <1$에서 $|\\frac{n}{2}| < |\\frac{2}{2}|$이므로\n$|n|<2$\n$n$은 정수이므로 $|n|=0, 1$\n$|n|=0$일 때, $n=0$\n$|n|=1$일 때, $n=1, -1$\n따라서 구하는 정수 $n$의 값은 $-1, 0, 1$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx001dlb0473v8bzhh",
+      "questionNum": 326,
+      "answer": "5",
+      "explanation": "전략: $a, b$는 절댓값이 같고 부호가 반대인 두 수임을 이용한다.\n$a = |- \\frac{5}{2}| = \\frac{5}{2}$\n$b$는 $a$와 절댓값이 같고 부호가 반대이므로 $b = - \\frac{5}{2}$\n따라서 $a, b$를 나타내는 두 점 사이의 거리는 $\\frac{5}{2} \\times 2 = 5$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx001elb04hy68b27f",
+      "questionNum": 327,
+      "answer": "②, ⑤",
+      "explanation": "전략: 절댓값의 성질을 생각해 본다.\n② $|2|=|-2|$이지만 $2 \\neq -2$이다.\n⑤ $a=3, b=-5$이면 $3>-5$이지만 $|3|<|-5|$이다.\n따라서 옳지 않은 것은 ②, ⑤이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx001flb04s1i3taux",
+      "questionNum": 328,
+      "answer": "⑤",
+      "explanation": "전략: 양수끼리는 절댓값이 큰 수가 크고, 음수끼리는 절댓값이 큰 수가 작음을 이용한다.\n① $\\frac{1}{3} = \\frac{2}{6}, \\frac{1}{2} = \\frac{3}{6}$이므로 $\\frac{1}{3} < \\frac{1}{2}$\n② $|- \\frac{1}{2}| = \\frac{1}{2} = \\frac{5}{10}, |- \\frac{1}{5}| = \\frac{1}{5} = \\frac{2}{10}$이므로 $|- \\frac{1}{2}| > |- \\frac{1}{5}|$ $\\therefore - \\frac{1}{2} < - \\frac{1}{5}$\n③ 음수는 $0$보다 작으므로 $0 > - \\frac{1}{2}$\n④ $|-4|=4$이므로 $|-4|>0$\n⑤ $|-5|=5, |3|=3$이므로 $|-5|>|3|$\n따라서 옳은 것은 ⑤이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx001glb04e9egj0c3",
+      "questionNum": 329,
+      "answer": "①, ⑤",
+      "explanation": "전략: 주어진 수를 작은 수부터 차례대로 나열해 본다.\n주어진 수를 작은 수부터 차례대로 나열하면 $-5, - \\frac{9}{3}, -2.7, 0, 3.1, \\frac{11}{2}$\n주어진 수를 절댓값이 작은 수부터 차례대로 나열하면 $0, -2.7, - \\frac{9}{3}, 3.1, -5, \\frac{11}{2}$\n② 가장 작은 수는 $-5$이다.\n③ 수직선 위에 나타내었을 때, 왼쪽에서 세 번째에 오는 수는 $-2.7$이다.\n④ 가장 큰 음수는 $-2.7$이다.\n따라서 옳은 것은 ①, ⑤이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx001hlb04vxxjec1j",
+      "questionNum": 330,
+      "answer": "④",
+      "explanation": "전략: ‘작지 않다.’는 ‘크거나 같다.’를 의미하고 ‘크지 않다.’는 ‘작거나 같다.’를 의미한다.\n④ $-1 \\le x < 3$\n따라서 옳지 않은 것은 ④이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx001ilb046024z20d",
+      "questionNum": 331,
+      "answer": "②",
+      "explanation": "전략: 먼저 주어진 분수 $- \\frac{9}{2}$와 $\\frac{7}{3}$을 소수로 나타낸다.\n$- \\frac{9}{2} = -4.5, \\frac{7}{3} = 2.333\\cdots$이므로 $- \\frac{9}{2}$와 $\\frac{7}{3}$ 사이에 있는 정수는\n$-4, -3, -2, -1, 0, 1, 2$의 7개이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpx001jlb04ipcxu4ca",
+      "questionNum": 332,
+      "answer": "-3",
+      "explanation": "전략: 먼저 조건 ㈎를 만족시키는 $a$의 값을 구한다.\n조건 ㈎에서 $a$는 $-3 \\le a < 2$인 정수이므로\n$-3, -2, -1, 0, 1$\n조건 ㈏에서 $|a|>2$이므로\n$a=-3$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpy001klb04c8ky0o21",
+      "questionNum": 333,
+      "answer": "4",
+      "explanation": "전략: $- \\frac{2}{3}$와 $\\frac{1}{4}$을 분모가 $12$인 분수로 통분한 후 두 수 사이에 있는 수를 생각해 본다.\n$- \\frac{2}{3} = - \\frac{8}{12}, \\frac{1}{4} = \\frac{3}{12}$이므로 $- \\frac{8}{12}$과 $\\frac{3}{12}$ 사이에 있는 정수가\n아닌 유리수 중에서 기약분수로 나타내었을 때 분모가 $12$인 유리수는\n$- \\frac{7}{12}, - \\frac{5}{12}, - \\frac{1}{12}, \\frac{1}{12}$의 4개이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpy001llb0418ifxsmc",
+      "questionNum": 334,
+      "answer": "-7, 3",
+      "explanation": "전략: $a$의 값에 따라 경우를 나누어 생각해 본다.\n$|a|=5$이므로 $a=5, -5$\n(i) $a=5$일 때, 두 수 $a, b$를 나타내는 두 점의 한가운데에 있는 점이 나타내는 수가 $-1$이므로 오른쪽 그림에서 $b=-7$\n(ii) $a=-5$일 때, 두 수 $a, b$를 나타내는 두 점의 한가운데에 있는 점이 나타내는 수가 $-1$이므로 오른쪽 그림에서 $b=3$\n(i), (ii)에서 구하는 $b$의 값은 $-7, 3$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpy001mlb042wn62k1y",
+      "questionNum": 335,
+      "answer": "2",
+      "explanation": "$-\\frac{8}{5} = -1.6$보다 작은 수 중에서 가장 큰 정수는 $-2$이므로 $a=-2$\n따라서 $-2$와 절댓값이 같으면서 부호가 반대인 수는 $2$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpy001nlb04denmn10n",
+      "questionNum": 336,
+      "answer": "5",
+      "explanation": "$-\\frac{7}{3} = -2\\frac{1}{3}$, $\\frac{13}{4} = 3\\frac{1}{4}$이므로 $-\\frac{7}{3}$과 $\\frac{13}{4}$을 수직선 위에 나타내면 다음 그림과 같다.\n$-\\frac{7}{3}$에 가장 가까운 정수는 $-2$이므로 $a=-2$\n$\\frac{13}{4}$에 가장 가까운 정수는 $3$이므로 $b=3$\n따라서 $-2$보다 크고 $3$보다 크지 않은 정수는 $-1, 0, 1, 2, 3$의 $5$개이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpy001olb04t63nazr6",
+      "questionNum": 337,
+      "answer": "4",
+      "explanation": "$-\\frac{9}{2} \\le x \\le 3$을 만족시키는 정수 $x$는 $-4, -3, -2, -1, 0, 1, 2, 3$\n이 중 절댓값이 가장 큰 수는 $-4$이므로 $a=-4$\n절댓값이 가장 작은 수는 $0$이므로 $b=0$\n$\\therefore |a|-|b|=|-4|-|0|=4-0=4$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpy001plb043sl4vjgr",
+      "questionNum": 338,
+      "answer": "2",
+      "explanation": "$-5$는 정수이므로 $< -5 > = 1$\n$1.8$은 정수가 아닌 유리수이므로 $< 1.8 > = 2$\n$\\frac{54}{9} = 6$은 정수이므로 $< \\frac{54}{9} > = 1$\n$\\therefore < -5 > + < 1.8 > - < \\frac{54}{9} > = 1+2-1=2$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpy001qlb04hxvjpd0j",
+      "questionNum": 339,
+      "answer": "7",
+      "explanation": "먼저 $|a|+|b|=4$를 만족시키는 $|a|, |b|$의 값을 구한다.\n(i) $|a|=0, |b|=4$일 때, $a=0$이고 $b=4, -4$. 그런데 $a<b$이므로 $(a, b)$는 $(0, 4)$\n(ii) $|a|=1, |b|=3$일 때, $a=1, -1$이고 $b=3, -3$. 그런데 $a<b$이므로 $(a, b)$는 $(1, 3), (-1, 3)$\n(iii) $|a|=2, |b|=2$일 때, $a=2, -2$이고 $b=2, -2$. 그런데 $a<b$이므로 $(a, b)$는 $(-2, 2)$\n(iv) $|a|=3, |b|=1$일 때, $a=3, -3$이고 $b=1, -1$. 그런데 $a<b$이므로 $(a, b)$는 $(-3, 1), (-3, -1)$\n(v) $|a|=4, |b|=0$일 때, $a=4, -4$이고 $b=0$. 그런데 $a<b$이므로 $(a, b)$는 $(-4, 0)$\n이상에서 $(a, b)$의 개수는 $7$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpy001rlb043zwwimra",
+      "questionNum": 340,
+      "answer": "a=8, b=-4",
+      "explanation": "먼저 $a, b$의 부호를 따져 본다.\n$a>b$이고 부호가 반대이므로 $a>0, b<0$\n$|a|=2|b|$이므로 수직선 위에서 $0$을 나타내는 점과 $a$를 나타내는 점 사이의 거리는 $0$을 나타내는 점과 $b$를 나타내는 점 사이의 거리의 $2$배이다.\n수직선 위에서 $a, b$를 나타내는 두 점 사이의 거리가 $12$이므로 두 수 $a, b$를 나타내는 점을 각각 $A, B$라 하고 수직선 위에 나타내면 다음 그림과 같다.\n$\\therefore a=8, b=-4$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpy001slb04i3sdrkzh",
+      "questionNum": 341,
+      "answer": "a<c<b",
+      "explanation": "먼저 조건 (다), (라)를 이용하여 $a$의 값을 구한다.\n조건 (다), (라)에서 $a$는 $-3$보다 크고 절댓값이 $-3$의 절댓값과 같으므로 $a=3$\n조건 (가)에서 $c$는 $6$보다 크고, 조건 (나), (다)에서 $b$는 $-3$보다 크고 $c$보다 $0$에서 더 멀리 떨어져 있으므로 $6<c<b$\n$\\therefore a<c<b$\n이때 세 수 $a, b, c$를 수직선 위에 나타내면 다음 그림과 같다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpy001tlb04ctwpp4kx",
+      "questionNum": 403,
+      "answer": "④",
+      "explanation": "① (-7)+(-5)=-(7+5)=-12\n② (+10)+(-3)=+(10-3)=7\n③ (-1/6)+(-1/3)=(-1/6)+(-2/6)=-(1/6+2/6)=-1/2\n④ (+0.5)+(-1/2)=(+1/2)+(-1/2)=0\n⑤ (-6.3)+(+1.2)=-(6.3-1.2)=-5.1\n따라서 옳은 것은 ④ 이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpy001ulb04c6ov7b90",
+      "questionNum": 404,
+      "answer": "②",
+      "explanation": "0을 나타내는 점에서 오른쪽으로 4만큼 이동한 다음 다시 왼쪽으로 9만큼 이동한 것이 0을 나타내는 점에서 왼쪽으로 5만큼 이동한 것과 같음을 나타낸다. \\t\n. (+4)+(-9)=-5",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpy001vlb04shd2i9vd",
+      "questionNum": 405,
+      "answer": "⑤",
+      "explanation": "① (-8)+(-6)=-(8+6)=-14\n② (-25)+(+13)=-(25-13)=-12\n③ (+6.5)+(-0.5)=+(6.5-0.5)=6\n④ (+3/5)+(+5/6)=(+18/30)+(+25/30)=+(18/30+25/30)=43/30\n⑤ (-1/12)+(+1/3)=(-1/12)+(+4/12)=+(4/12-1/12)=1/4\n따라서 옳지 않은 것은 ⑤ 이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpy001wlb042zcra129",
+      "questionNum": 406,
+      "answer": "㉠ 교환법칙 ㉡ 결합법칙",
+      "explanation": "해설 없음",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpy001xlb049eewwmmw",
+      "questionNum": 407,
+      "answer": "㈎ 교환 ㈏ 결합 ㈐ -11 ㈑ -8",
+      "explanation": "(-6.3)+(+3)+(-4.7)\n=(-6.3)+(-4.7)+(+3) (덧셈의 교환 법칙)\n={[(-6.3)+(-4.7)]}+(+3) (덧셈의 결합 법칙)\n=(-11)+(+3)= -8",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpy001ylb04ozuawepz",
+      "questionNum": 408,
+      "answer": "2",
+      "explanation": "(+11/5)+(-1)+(+4/5)\n=(+11/5)+(+4/5)+(-1) (1단계)\n=[(+11/5)+(+4/5)]+(-1) (2단계)\n=(+3)+(-1)=2 (3단계)",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpy001zlb04hj6a8z5o",
+      "questionNum": 409,
+      "answer": "⑤",
+      "explanation": "① $(+5)-(+8)=(+5)+(-8)=-3$\n② $(-10)-(-10)=(-10)+(+10)=0$\n③ $(+\\frac{2}{3})-(-\\frac{5}{6})=(+\\frac{4}{6})+(+\\frac{5}{6})=\\frac{3}{2}$\n④ $(-3.8)-(-1.9)=(-3.8)+(+1.9)=-1.9$\n⑤ $(-\\frac{1}{2})-(+3.5)=(-\\frac{1}{2})+(-\\frac{7}{2})=-4$\n따라서 옳지 않은 것은 ⑤ 이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpy0020lb0466g8xmb9",
+      "questionNum": 410,
+      "answer": "②, ⑤",
+      "explanation": "0을 나타내는 점에서 오른쪽으로 3만큼 이동한 다음 다시 왼쪽으로 7만큼 이동한 것이 0을 나타내는 점에서 왼쪽으로 4만큼 이동한 것과 같음을 나타낸다.\n$\\therefore (+3)-(+7)=-4$ 또는 $(+3)+(-7)=-4$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpy0021lb04ezlb8k4v",
+      "questionNum": 411,
+      "answer": "$-\\frac{11}{6}$",
+      "explanation": "절댓값이 가장 큰 수는 $-\\frac{10}{3}$이므로 $a=-\\frac{10}{3}$\n절댓값이 가장 작은 수는 $-\\frac{3}{2}$이므로 $b=-\\frac{3}{2}$\n$\\therefore a-b=(-\\frac{10}{3})-(-\\frac{3}{2})=(-\\frac{20}{6})+(+\\frac{9}{6})=-\\frac{11}{6}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpy0022lb04lw4ao5iz",
+      "questionNum": 412,
+      "answer": "⑤",
+      "explanation": "① $(+6)+(-9)-(-2)=(+6)+(-9)+(+2)\n=\\{(+6)+(+2)\\}+(-9)=(+8)+(-9)=-1$\n② $(-1.8)-(+3.2)+(+8)=(-1.8)+(-3.2)+(+8)\n=\\{(-1.8)+(-3.2)\\}+(+8)=(-5)+(+8)=3$\n③ $(-3.6)+(+5.4)-(-7.2)=(-3.6)+(+5.4)+(+7.2)\n=(-3.6)+\\{(+5.4)+(+7.2)\\}$\n$=(-3.6)+(+12.6)=9$\n④ $(-\\frac{3}{4})-(-1)+(-\\frac{1}{4})=(-\\frac{3}{4})+(+1)+(-\\frac{1}{4})\n=\\{(-\\frac{3}{4})+(-\\frac{1}{4})\\}+(+1)=(-1)+(+1)=0$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpy0023lb047tzp5kol",
+      "questionNum": 413,
+      "answer": "②",
+      "explanation": "$(-8)+(+1.3)-(+5)-(-4.7)$\n$=(-8)+(+1.3)+(-5)+(+4.7)$\n$=\\{(-8)+(-5)\\}+\\{(+1.3)+(+4.7)\\}$\n$=(-13)+(+6)=-7$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpy0024lb04okq2wjza",
+      "questionNum": 414,
+      "answer": "③",
+      "explanation": "① $(+\\frac{1}{2})-(-\\frac{3}{8})+(-\\frac{1}{4})=(+\\frac{1}{2})+(+\\frac{3}{8})+(-\\frac{1}{4})\n=\\{(+\\frac{4}{8})+(+\\frac{3}{8})\\}+(-\\frac{1}{4})=(+\\frac{7}{8})+(-\\frac{2}{8})=\\frac{5}{8}$\n② $(-1.3)+(+0.7)-(+4.2)=(-1.3)+(+0.7)+(-4.2)\n=\\{(-1.3)+(-4.2)\\}+(+0.7)=(-5.5)+(+0.7)=-4.8$\n③ $(-\\frac{3}{5})-(-\\frac{1}{3})+(-\\frac{11}{15})=(-\\frac{3}{5})+(+\\frac{1}{3})+(-\\frac{11}{15})\n=\\{(-\\frac{9}{15})+(-\\frac{11}{15})\\}+(+\\frac{1}{3})=(-\\frac{20}{15})+(+\\frac{1}{3})=(-\\frac{4}{3})+(+\\frac{1}{3})=-1$\n④ $(+\\frac{1}{4})+(-0.5)-(+0.75)=(+\\frac{1}{4})+(-0.5)+(-0.75)\n=(+\\frac{1}{4})+\\{(-0.5)+(-0.75)\\}=(+\\frac{1}{4})+(-1.25)\n=(+\\frac{1}{4})+(-\\frac{5}{4})=-1$\n⑤ $(+\\frac{2}{3})+(-\\frac{1}{2})+(-\\frac{1}{3})-(-\\frac{5}{6})\n=(+\\frac{4}{6})+(-\\frac{3}{6})+(-\\frac{2}{6})+(+\\frac{5}{6})\n=\\{(+\\frac{4}{6})+(+\\frac{5}{6})\\}+\\{(-\\frac{3}{6})+(-\\frac{2}{6})\\}=(+\\frac{9}{6})+(-\\frac{5}{6})=\\frac{4}{6}=\\frac{2}{3}$\n따라서 옳지 않은 것은 ③이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpy0025lb04pnj2ol27",
+      "questionNum": 415,
+      "answer": "②",
+      "explanation": "① $2 - 5 + \\frac{1}{2} = (+2) - (+5) + \\left(+\\frac{1}{2}\\right)$\n$= (+2) + (-5) + \\left(+\\frac{1}{2}\\right)$ $= \\{(+2) + (-5)\\} + \\left(+\\frac{1}{2}\\right)$ ─\n$= (-3) + \\left(+\\frac{1}{2}\\right)$\n$= \\left(-\\frac{6}{2}\\right) + \\left(+\\frac{1}{2}\\right) = -\\frac{5}{2}$\n\n② $-\\frac{1}{3} + 4 + \\frac{5}{3} = \\left(-\\frac{1}{3}\\right) + (+4) + \\left(+\\frac{5}{3}\\right)$\n$= \\left(-\\frac{1}{3}\\right) + \\left\\{\\left(+\\frac{12}{3}\\right) + \\left(+\\frac{5}{3}\\right)\\right\\}$\n$= \\left(-\\frac{1}{3}\\right) + \\left(+\\frac{17}{3}\\right) = \\frac{16}{3}$\n\n③ $8.5 - 9 + 4.5 = (+8.5) - (+9) + (+4.5)$\n$= (+8.5) + (-9) + (+4.5)$\n$= \\{(+8.5) + (+4.5)\\} + (-9)$\n$= (+13) + (-9) = 4$\n\n④ $-\\frac{5}{2} - \\frac{5}{6} + \\frac{4}{3} = \\left(-\\frac{5}{2}\\right) - \\left(+\\frac{5}{6}\\right) +\n\\left(+\\frac{4}{3}\\right)$\n$= \\left(-\\frac{5}{2}\\right) + \\left(-\\frac{5}{6}\\right) + \\left(+\\frac{4}{3}\\right)$\n$= \\left\\{\\left(-\\frac{15}{6}\\right) + \\left(-\\frac{5}{6}\\right)\\right\\} + \\left(+\\frac{4}{3}\\right)$\n$= \\left(-\\frac{10}{3}\\right) + \\left(+\\frac{4}{3}\\right) = -2$\n\n⑤ $-1 + \\frac{9}{2} - \\frac{1}{4} = (-1) + \\left(+\\frac{9}{2}\\right) - \\left(+\\frac{1}{4}\\right)$\n$= (-1) + \\left(+\\frac{9}{2}\\right) + \\left(-\\frac{1}{4}\\right)$\n$= \\left\\{\\left(-\\frac{4}{4}\\right) + \\left(-\\frac{1}{4}\\right)\\right\\} + \\left(+\\frac{9}{2}\\right)$\n$= \\left(-\\frac{5}{4}\\right) + \\left(+\\frac{18}{4}\\right) = \\frac{13}{4}$\n\n따라서 계산 결과가 가장 큰 것은 ②이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpy0026lb0450ote44a",
+      "questionNum": 416,
+      "answer": "②",
+      "explanation": "$-15+16+7-35-3+5$\n$=(-15)+(+16)+(+7)-(+35)-(+3)+(+5)$\n$=(-15)+(+16)+(+7)+(-35)+(-3)+(+5)$\n$=\\{(-15)+(-35)+(-3)\\}+\\{(+16)+(+7)+(+5)\\}$\n$=(-53)+(+28)=-25$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpz0027lb046zxd4edt",
+      "questionNum": 417,
+      "answer": "-1",
+      "explanation": "$-\\frac{1}{2}+1-\\frac{1}{5}+\\frac{3}{10}-1.6$\n$=(-\\frac{1}{2})+(+1)-(+\\frac{1}{5})+(+\\frac{3}{10})-(+1.6)$\n$=(-\\frac{1}{2})+(+1)+(-\\frac{1}{5})+(+\\frac{3}{10})+(-1.6)$\n$=[(-\\frac{1}{2})+(-\\frac{1}{5})+(-1.6)]+[(+1)+(+\\frac{3}{10})]$\n$=[(-\\frac{5}{10})+(-\\frac{2}{10})+(-\\frac{16}{10})]+[(+\\frac{10}{10})+(+\\frac{3}{10})]$\n$=(-\\frac{23}{10})+(+\\frac{13}{10})=-1$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpz0028lb047sndnpv7",
+      "questionNum": 418,
+      "answer": "\\frac{5}{12}",
+      "explanation": "A$=\\frac{3}{4}-1+\\frac{2}{3}-\\frac{1}{2}$\n$=(+\\frac{3}{4})-(+1)+(+\\frac{2}{3})-(+\\frac{1}{2})$\n$=(+\\frac{3}{4})+(-1)+(+\\frac{2}{3})+(-\\frac{1}{2})$\n$=[(+\\frac{3}{4})+(+\\frac{2}{3})]+[(-1)+(-\\frac{1}{2})]$\n$=[(+\\frac{9}{12})+(+\\frac{8}{12})]+[(-\\frac{2}{2})+(-\\frac{1}{2})]$\n$=(+\\frac{17}{12})+(-\\frac{3}{2})$\n$=(+\\frac{17}{12})+(-\\frac{18}{12})=-\\frac{1}{12}$\nB$=-0.7-2-4.3+7.5$\n$=(-0.7)-(+2)-(+4.3)+(+7.5)$\n$=(-0.7)+(-2)+(-4.3)+(+7.5)$\n$=\\{(-0.7)+(-2)+(-4.3)\\}+(+7.5)$\n$=(-7)+(+7.5)=+\\frac{1}{2}$\n$\\therefore A+B=(-\\frac{1}{12})+(+\\frac{1}{2})$\n$=(-\\frac{1}{12})+(+\\frac{6}{12})=\\frac{5}{12}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpz0029lb0441n8dnu6",
+      "questionNum": 419,
+      "answer": "④",
+      "explanation": "$a=6+(-3)=3$\n$b=\\frac{1}{3}-\\frac{1}{2}=\\frac{2}{6}-\\frac{3}{6}=-\\frac{1}{6}$\n$\\therefore a-b=3-(-\\frac{1}{6})=\\frac{18}{6}+\\frac{1}{6}=\\frac{19}{6}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpz002alb04wjuasdko",
+      "questionNum": 420,
+      "answer": "9",
+      "explanation": "$a=-1+6=5$\n따라서 $a$보다 $-4$만큼 작은 수는\n$a-(-4)=5-(-4)=5+4=9$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpz002blb04uwjkclef",
+      "questionNum": 421,
+      "answer": "③",
+      "explanation": "① $-(+\\frac{1}{2})+3=-\\frac{1}{2}+\\frac{6}{2}=\\frac{5}{2}$\n② $-3-(-\\frac{11}{4})=-\\frac{12}{4}+\\frac{11}{4}=-\\frac{1}{4}$\n③ $6-(-\\frac{4}{3})=\\frac{18}{3}+\\frac{4}{3}=\\frac{22}{3}$\n④ $\\frac{6}{5}-4=\\frac{6}{5}-\\frac{20}{5}=-\\frac{14}{5}$\n⑤ $-\\frac{2}{3}+\\frac{9}{2}=-\\frac{4}{6}+\\frac{27}{6}=\\frac{23}{6}$\n따라서 가장 큰 수는 ③이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpz002clb04w7iur9o5",
+      "questionNum": 422,
+      "answer": "$-\\frac{7}{12}",
+      "explanation": "$a=\\frac{2}{3}-(-\\frac{1}{2})=\\frac{4}{6}+\\frac{3}{6}=\\frac{7}{6}$\n$b=-\\frac{3}{4}+\\frac{4}{3}=-\\frac{9}{12}+\\frac{16}{12}=\\frac{7}{12}$\n$\\therefore b-a=\\frac{7}{12}-\\frac{7}{6}=\\frac{7}{12}-\\frac{14}{12}=-\\frac{7}{12}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpz002dlb04h7y0js8v",
+      "questionNum": 423,
+      "answer": "①",
+      "explanation": "$a - \\left(-\\frac{1}{2}\\right) = \\frac{2}{5}$ 에서$a = \\frac{2}{5} + \\left(-\\frac{1}{2}\\right) = \\frac{4}{10} + \\left(-\\frac{5}{10}\\right) = -\\frac{1}{10}$, $\\therefore a+b = -\\frac{1}{10} + \\left(-\\frac{17}{10}\\right) = -\\frac{18}{10} = -\\frac{9}{5}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpz002elb04f3abke3b",
+      "questionNum": 424,
+      "answer": "$\\frac{7}{4}$",
+      "explanation": "$-\\frac{5}{4} - \\square = -3$ 에서$\\square = -\\frac{5}{4} - (-3) = -\\frac{5}{4} + \\frac{12}{4} = \\frac{7}{4}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpz002flb04m9c78fs8",
+      "questionNum": 425,
+      "answer": "6",
+      "explanation": "$A+(-5)=-2$ 에서$A=-2-(-5)=-2+5=3$, $\\therefore A-B=3-(-3)=3+3=6$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpz002glb04lbfrf73t",
+      "questionNum": 426,
+      "answer": "2",
+      "explanation": "$-\\frac{1}{2} + \\square - \\left(+\\frac{1}{3}\\right) = \\frac{7}{6}$ 에서$-\\frac{1}{2} + \\square + \\left(-\\frac{1}{3}\\right) = \\frac{7}{6}$, $-\\frac{5}{6} + \\square = \\frac{7}{6}$ $\\therefore \\square = \\frac{7}{6} - \\left(-\\frac{5}{6}\\right) = \\frac{7}{6} + \\frac{5}{6} = \\frac{12}{6} = 2$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpz002hlb04qopvekix",
+      "questionNum": 427,
+      "answer": "2",
+      "explanation": "어떤 유리수를 $\\square$라 하면 $\\square + \\left(-\\frac{2}{3}\\right) = \\frac{2}{3}$ $\\therefore \\square = \\frac{2}{3} - \\left(-\\frac{2}{3}\\right) = \\frac{2}{3} + \\frac{2}{3} = \\frac{4}{3}$따라서 바르게 계산하면$\\frac{4}{3} - \\left(-\\frac{2}{3}\\right) = \\frac{4}{3} + \\frac{2}{3} = \\frac{6}{3} = 2$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpz002ilb04mivz99iy",
+      "questionNum": 428,
+      "answer": "⑴ -13 ⑵ 17",
+      "explanation": "(1) 어떤 유리수를 $\\square$라 하면$4+\\square = -9$ $\\therefore \\square = -9-4 = -13$(2) 바르게 계산하면$4-(-13) = 4+13=17$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpz002jlb04237f6y5u",
+      "questionNum": 429,
+      "answer": "$\\frac{3}{20}$",
+      "explanation": "어떤 유리수를 $\\square$라 하면 $\\square - \\frac{1}{5} = -\\frac{1}{4}$ $\\therefore \\square = -\\frac{1}{4} + \\frac{1}{5} = -\\frac{5}{20} + \\frac{4}{20} = -\\frac{1}{20}$따라서 바르게 계산하면$-\\frac{1}{20} + \\frac{1}{5} = -\\frac{1}{20} + \\frac{4}{20} = \\frac{3}{20}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpz002klb04w0vkxcww",
+      "questionNum": 430,
+      "answer": "$-\\frac{3}{2}$",
+      "explanation": "$a$의 절댓값이 $\\frac{5}{6}$이므로 $a=\\frac{5}{6}$ 또는 $a=-\\frac{5}{6}$ $b$의 절댓값이 $\\frac{2}{3}$이므로 $b=\\frac{2}{3}$ 또는 $b=-\\frac{2}{3}$\n(i) $a=\\frac{5}{6}, b=\\frac{2}{3}$일 때,\n$a+b=\\frac{5}{6}+\\frac{2}{3}=\\frac{5}{6}+\\frac{4}{6}=\\frac{9}{6}=\\frac{3}{2}$\n(ii) $a=\\frac{5}{6}, b=-\\frac{2}{3}$일 때,\n$a+b=\\frac{5}{6}+\\left(-\\frac{2}{3}\\right)=\\frac{5}{6}+\\left(-\\frac{4}{6}\\right)=\\frac{1}{6}$\n(iii) $a=-\\frac{5}{6}, b=\\frac{2}{3}$일 때,\n$a+b=-\\frac{5}{6}+\\frac{2}{3}=-\\frac{5}{6}+\\frac{4}{6}=-\\frac{1}{6}$\n(iv) $a=-\\frac{5}{6}, b=-\\frac{2}{3}$일 때,\n$a+b=-\\frac{5}{6}+\\left(-\\frac{2}{3}\\right)=-\\frac{5}{6}+\\left(-\\frac{4}{6}\\right)=-\\frac{9}{6}=-\\frac{3}{2}$\n이상에서 $a+b$의 값 중에서 가장 작은 값은 $-\\frac{3}{2}$이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpz002llb048q686cxn",
+      "questionNum": 431,
+      "answer": "④",
+      "explanation": "$a$의 절댓값이 $2$이므로 $a=2$ 또는 $a=-2$, $a+b$의 값 중에서 가장 큰 값은 $a, b$가 모두 양수일 때이다.따라서 $a+b$의 값 중에서 가장 큰 값은$2+7=9$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpz002mlb040pyiq4le",
+      "questionNum": 432,
+      "answer": "9",
+      "explanation": "$|a|=3$에서 $a=3$ 또는 $a=-3$, $a-b$의 값 중에서 가장 큰 값은 $a$가 양수, $b$가 음수일 때이다.따라서 $a-b$의 값 중에서 가장 큰 값은$3-(-6)=3+6=9$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpz002nlb04xgo7o5nx",
+      "questionNum": 433,
+      "answer": "13/3",
+      "explanation": "$|a| = \\frac{3}{2}$에서 $a = \\frac{3}{2}$ 또는 $a = -\\frac{3}{2}$\n$|b| = \\frac{2}{3}$에서 $b = \\frac{2}{3}$ 또는 $b = -\\frac{2}{3}$\n$a-b$의 값 중에서 가장 큰 값은 $a$가 양수, $b$가 음수일 때이므로\n$M = \\frac{3}{2} - (-\\frac{2}{3}) = \\frac{9}{6} + \\frac{4}{6} = \\frac{13}{6}$\n$a-b$의 값 중에서 가장 작은 값은 $a$가 음수, $b$가 양수일 때이므로\nm $= -\\frac{3}{2} - \\frac{2}{3} = -\\frac{9}{6} - \\frac{4}{6} = -\\frac{13}{6}$\n$\\therefore M-m = \\frac{13}{6} - (-\\frac{13}{6}) = \\frac{13}{6} + \\frac{13}{6} = \\frac{26}{6} = \\frac{13}{3}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpz002olb044thiwedp",
+      "questionNum": 434,
+      "answer": "1050명",
+      "explanation": "$700-50+250+300-150=1050$ (명)",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpz002plb04xl9cpfio",
+      "questionNum": 435,
+      "answer": "49 kg",
+      "explanation": "$50+0.8-1.5+0.3-0.6=49$ (kg)",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpz002qlb04aqu3jppk",
+      "questionNum": 436,
+      "answer": "320개",
+      "explanation": "월요일에 $\\Box$개의 빵이 판매되었다고 하면\n$\\Box-30-45-15+70=300$\n$\\Box-20=300$\n$\\therefore \\Box=320$\n따라서 월요일에 판매된 빵은 320개이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpz002rlb04ui8pyaxd",
+      "questionNum": 437,
+      "answer": "-12",
+      "explanation": "$-5+10+(-7)+9=7$이므로 한 변에 놓인 네 수의 합은 7이어야 한다.\n$A+(-4)+6+9=7$에서 $A+11=7$\n$\\therefore A=7-11=-4$\n$A+8+B+(-5)=7$에서\n$-4+8+B+(-5)=7$, $B+(-1)=7$\n$\\therefore B=7-(-1)=7+1=8$\n$\\therefore A-B=-4-8=-12$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otpz002slb04jyv94pkg",
+      "questionNum": 438,
+      "answer": "a=-1, b=-2",
+      "explanation": "$0+1+(-4)=-3$이므로 대각선에 있는 세 수의 합은 $-3$이어야 한다.\n$2+a+(-4)=-3$에서 $a+(-2)=-3$\n$\\therefore a=-3-(-2)=-3+2=-1$\n$b+a+0=-3$에서 $b+(-1)+0=-3$\n$b+(-1)=-3$\n$\\therefore b=-3-(-1)=-3+1=-2$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq0002tlb04cd3lgund",
+      "questionNum": 439,
+      "answer": "31/12",
+      "explanation": "$a+(-2)=-\\frac{1}{4}$에서\n$a=-\\frac{1}{4}-(-2)=-\\frac{1}{4}+\\frac{8}{4}=\\frac{7}{4}$\n$b+(-\\frac{1}{3})=-\\frac{1}{4}$에서\n$b=-\\frac{1}{4}-(-\\frac{1}{3})=-\\frac{3}{12}+\\frac{4}{12}=\\frac{1}{12}$\n$\\frac{1}{2}+c=-\\frac{1}{4}$에서\n$c=-\\frac{1}{4}-\\frac{1}{2}=-\\frac{1}{4}-\\frac{2}{4}=-\\frac{3}{4}$\n$\\therefore a+b-c = \\frac{7}{4} + \\frac{1}{12} - (-\\frac{3}{4})$\n$= \\frac{21}{12} + \\frac{1}{12} + \\frac{9}{12} = \\frac{31}{12}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq0002ulb04hkf3qg81",
+      "questionNum": 440,
+      "answer": "④",
+      "explanation": "① $(-5)\\times(-1.4)=+(5\\times1.4)=7$\n② $(+\\frac{5}{7})\\times(-\\frac{14}{15})=-(\\frac{5}{7}\\times\\frac{14}{15})=-\\frac{2}{3}$\n④ $(+15)\\times(-\\frac{3}{5})\\times(+\\frac{2}{3})=-(15\\times\\frac{3}{5}\\times\\frac{2}{3})=-6$\n⑤ $(-\\frac{5}{6})\\times(-\\frac{3}{10})\\times(+\\frac{2}{7})=+(\\frac{5}{6}\\times\\frac{3}{10}\\times\\frac{2}{7})=\\frac{1}{14}$\n따라서 옳지 않은 것은 ④이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq0002vlb04scgr1wmo",
+      "questionNum": 441,
+      "answer": "③",
+      "explanation": "① $(-3)\\times(-5)=+(3\\times5)=15$\n② $(+7)\\times(-4)=-(7\\times4)=-28$\n③ $(-6)\\times(+9)=-(6\\times9)=-54$\n④ $(-\\frac{1}{2})\\times(-12)=+(\\frac{1}{2}\\times12)=6$\n⑤ $(+10)\\times(-4.5)=-(10\\times4.5)=-45$\n따라서 계산 결과가 가장 작은 것은 ③이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq0002wlb040z1x00lx",
+      "questionNum": 442,
+      "answer": "-15",
+      "explanation": "$A = (+\\frac{2}{3}) \\times (-\\frac{15}{4}) = -(\\frac{2}{3} \\times \\frac{15}{4}) = -\\frac{5}{2}$\n$B = (-1.5) \\times (+\\frac{8}{3}) \\times (-\\frac{3}{2}) = +(\\frac{3}{2} \\times \\frac{8}{3} \\times \\frac{3}{2}) = 6$\n$\\therefore A \\times B = (-\\frac{5}{2}) \\times 6 = -15$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq0002xlb04g0uqm6qz",
+      "questionNum": 443,
+      "answer": "1/25",
+      "explanation": "곱해진 음수가 12개로 짝수 개이므로\n$(-\\frac{1}{3}) \\times (-\\frac{3}{5}) \\times (-\\frac{5}{7}) \\times \\cdots \\times (-\\frac{23}{25})$\n$= +(\\frac{1}{3} \\times \\frac{3}{5} \\times \\frac{5}{7} \\times \\cdots \\times \\frac{23}{25}) = \\frac{1}{25}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq0002ylb04mnh7guih",
+      "questionNum": 444,
+      "answer": "㉠ 교환법칙 ㉡ 결합법칙",
+      "explanation": "해설 없음",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq0002zlb04h60ooltr",
+      "questionNum": 445,
+      "answer": "70",
+      "explanation": "$(+\\frac{3}{2})\\times(-7)\\times(-\\frac{10}{3})\\times(+2)$\n$=(+\\frac{3}{2})\\times(-\\frac{10}{3})\\times(-7)\\times(+2)$ (곱셈의 교환 법칙)\n$=\\{(-\\frac{3}{2})\\times(-\\frac{10}{3})\\}\\times\\{(-7)\\times(+2)\\}$ (곱셈의 결합 법칙)\n$=(-5)\\times(-14)=70$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq00030lb040vas01e1",
+      "questionNum": 446,
+      "answer": "-6",
+      "explanation": "$(+8)\\times(-0.15)\\times(+5)$\n$=(+8)\\times(+5)\\times(-0.15)$\n$=\\{(+8)\\times(+5)\\}\\times(-0.15)$\n$=(+40)\\times(-\\frac{3}{20})=-6$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq00031lb04brnb0gd8",
+      "questionNum": 447,
+      "answer": "②",
+      "explanation": "주어진 네 유리수 중 서로 다른 세 수를 뽑아 곱한 값이 가장 작으려면 음수만 3개를 뽑아야 한다.\n$\\therefore (-\\frac{7}{3})\\times(-\\frac{6}{7})\\times(-4)=-(\\frac{7}{3}\\times\\frac{6}{7}\\times 4)=-8$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq00032lb043phpajz6",
+      "questionNum": 448,
+      "answer": "⑤",
+      "explanation": "주어진 네 유리수 중 서로 다른 세 수를 뽑아 곱한 값이 가장 크려면 음수 2개, 양수 1개를 뽑아야 하고, 음수 2개는 절댓값이 큰 수이어야 한다.\n$\\therefore (-\\frac{3}{2})\\times(-3)\\times\\frac{1}{2}=+(\\frac{3}{2}\\times 3\\times\\frac{1}{2})=\\frac{9}{4}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq00033lb043j3esdh4",
+      "questionNum": 449,
+      "answer": "7",
+      "explanation": "주어진 네 유리수 중 서로 다른 세 수를 뽑아 곱한 값이 가장 크려면 음수 2개, 양수 1개를 뽑아야 하고, 양수 1개는 절댓값이 큰 수이어야 한다. 즉 가장 큰 값은\n$(-\\frac{1}{2})\\times(-3)\\times 2=+(\\frac{1}{2}\\times 3\\times 2)=3$\n또 주어진 네 유리수 중 서로 다른 세 수를 뽑아 곱한 값이 가장 작으려면 음수 1개, 양수 2개를 뽑아야 하고, 음수 1개는 절댓값이 큰 수이어야 한다. 즉 가장 작은 값은\n$(-3)\\times\\frac{2}{3}\\times 2=-(3\\times\\frac{2}{3}\\times 2)=-4$\n따라서 구하는 차는\n$3-(-4)=3+4=7$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq00034lb04f7cpwef8",
+      "questionNum": 450,
+      "answer": "③",
+      "explanation": "③ $-3^4 = -81$\n따라서 옳지 않은 것은 ③이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq00035lb04obypxy3i",
+      "questionNum": 451,
+      "answer": "②",
+      "explanation": "① $(-2)^3 = -8$\n② $-3^2 = -9$\n③ $-(-1)^4 = -1$\n④ $(-3)^3 \\times \\frac{1}{9} = (-27) \\times \\frac{1}{9} = -3$\n⑤ $(-\\frac{1}{4})^2 \\times (-32) = \\frac{1}{16} \\times (-32) = -2$\n따라서 계산 결과가 가장 작은 것은 ②이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq00036lb0439b195ao",
+      "questionNum": 452,
+      "answer": "$-\\frac{1}{4}$",
+      "explanation": "$(-\\frac{1}{2})^3 = -\\frac{1}{8}$, $- (-\\frac{1}{2})^2 = -\\frac{1}{4}$,\n$(-\\frac{1}{2})^2 = \\frac{1}{4}$, $- (-\\frac{1}{2})^3 = -(-\\frac{1}{8}) = \\frac{1}{8}$\n따라서 가장 큰 수는 $(-\\frac{1}{2})^2$이고 가장 작은 수는 $-\\frac{1}{2}$이므로 그 합은\n$(-\\frac{1}{2})^2 + (-\\frac{1}{2}) = \\frac{1}{4} + (-\\frac{1}{2}) = \\frac{1}{4} + (-\\frac{2}{4}) = -\\frac{1}{4}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq00037lb04obwh575v",
+      "questionNum": 453,
+      "answer": "-6",
+      "explanation": "$(-4)^2\\times(-\\frac{3}{2})^3\\times(-\\frac{1}{3})^2$\n$=16\\times(-\\frac{27}{8})\\times\\frac{1}{9}$\n$=-(16\\times\\frac{27}{8}\\times\\frac{1}{9})=-6$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq00038lb04z87kg4l2",
+      "questionNum": 454,
+      "answer": "③",
+      "explanation": "$(-1)+(-1)^2+(-1)^3+\\cdots+(-1)^{50}$\n$=(-1)+1+(-1)+1+\\cdots+(-1)+1$\n$=\\{(-1)+1\\}+\\{(-1)+1\\}+\\cdots+\\{(-1)+1\\}$\n$=0+0+\\cdots+0=0$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq00039lb048ncn3kiq",
+      "questionNum": 455,
+      "answer": "①",
+      "explanation": "$-1^{102}-(-1)^{100}+(-1)^{99}$\n$=-1-1+(-1)$\n$=-1-1-1=-3$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq0003alb04s07eqor8",
+      "questionNum": 456,
+      "answer": "②",
+      "explanation": "$n$이 홀수이므로 $n+2$도 홀수이다.\n$\\therefore -1^n+(-1)^{n+2}-(-1)^n = -1+(-1)-(-1)$\n$= -1-1+1=-1$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq0003blb0440nq3k1w",
+      "questionNum": 457,
+      "answer": "1",
+      "explanation": "$n$이 짝수이므로 $n+1$은 홀수, $2n$은 짝수이다.\n$\\therefore (-1)^n-(-1)^{n+1}-(-1)^{2n} = 1-(-1)-1$\n$=1+1-1=1$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq0003clb04bntsjwri",
+      "questionNum": 458,
+      "answer": "12",
+      "explanation": "$a \\times (b-c) = a \\times b - a \\times c$\n$= 3 - (-9)$\n$= 3 + 9 = 12$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq0003dlb04xlw217ij",
+      "questionNum": 459,
+      "answer": "⑤",
+      "explanation": "$(-2) \\times (-7) + 3 \\times (-2) + (-2) \\times (-4)$\n$= (-2) \\times (-7) + (-2) \\times 3 + (-2) \\times (-4)$ (㉠ 곱셈의 교환법칙)\n$= (-2) \\times \\{(-7) + 3 + (-4)\\}$ (㉡ 분배법칙)\n$= (-2) \\times \\{3 + (-7) + (-4)\\}$ (㉢ 덧셈의 교환법칙)\n$= (-2) \\times \\{3 + (-11)\\}$ (㉣ 덧셈의 결합법칙)\n$= (-2) \\times (-8)$\n$= 16$\n따라서 계산 과정에서 사용하지 않은 계산 법칙은 ⑤ (곱셈의 결합법칙)이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq0003elb04g6hbbzzn",
+      "questionNum": 460,
+      "answer": "-17",
+      "explanation": "$a \\times (b+c) = -7$ 에서 $a \\times b + a \\times c = -7$\n$a \\times b = 10$이므로\n$10 + a \\times c = -7$\n$a \\times c = -17$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq0003flb04kpzd1umj",
+      "questionNum": 461,
+      "answer": "36",
+      "explanation": "$31 \\times (-0.4) + 29 \\times (-0.4)$\n$= (31+29) \\times (-0.4)$\n$= 60 \\times (-0.4)$\n$= -24$\n이므로 $a=60, b=-24$\n따라서 $a+b = 60 + (-24) = 36$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq0003glb04ww6wevja",
+      "questionNum": 462,
+      "answer": "④",
+      "explanation": "두 수의 곱이 1이 아닌 것을 찾는다.\n④ $\\frac{1}{10} \\times 0.1 = \\frac{1}{10} \\times \\frac{1}{10} = \\frac{1}{100}$\n따라서 두 수가 서로 역수가 아닌 것은 ④이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq0003hlb04ibm3q4tt",
+      "questionNum": 463,
+      "answer": "②",
+      "explanation": "$1\\frac{2}{3} = \\frac{5}{3}$의 역수는 $\\frac{3}{5}$이므로 $a=\\frac{3}{5}$\n$-0.2 = -\\frac{1}{5}$의 역수는 $-5$이므로 $b=-5$\n따라서 $a \\times b = \\frac{3}{5} \\times (-5) = -3$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq1003ilb04gidhvgnv",
+      "questionNum": 464,
+      "answer": "2",
+      "explanation": "$a$는 $-4$의 역수이므로 $a = -\\frac{1}{4}$\n$b$는 $\\frac{4}{7}$의 역수이므로 $b = \\frac{7}{4}$\n따라서 $b-a = \\frac{7}{4} - (-\\frac{1}{4}) = \\frac{7}{4} + \\frac{1}{4} = 2$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq1003jlb043uds76cs",
+      "questionNum": 465,
+      "answer": "④",
+      "explanation": "① $(+36) \\div (-9) = -(36 \\div 9) = -4$\n③ $(-27) \\div (+\\frac{3}{2}) = (-27) \\times (+\\frac{2}{3}) = -18$\n④ $(-\\frac{3}{5}) \\div (-\\frac{9}{25}) = (-\\frac{3}{5}) \\times (-\\frac{25}{9}) = \\frac{5}{3}$\n⑤ $(+4.2) \\div (+0.6) = +(4.2 \\div 0.6) = 7$\n따라서 옳지 않은 것은 ④이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq1003klb04jhbjmnu8",
+      "questionNum": 466,
+      "answer": "③",
+      "explanation": "① $(-48) \\div (-8) = +(48 \\div 8) = 6$\n② $(+84) \\div (-7) = -(84 \\div 7) = -12$\n③ $(-12) \\div (+\\frac{3}{5}) = (-12) \\times (+\\frac{5}{3}) = -20$\n④ $(+\\frac{5}{6}) \\div (-\\frac{1}{3}) = (+\\frac{5}{6}) \\times (-3) = -\\frac{5}{2}$\n⑤ $(-\\frac{2}{3}) \\div (-\\frac{2}{9}) = (-\\frac{2}{3}) \\times (-\\frac{9}{2}) = 3$\n따라서 계산 결과가 가장 작은 것은 ③이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq1003llb045lyki3i5",
+      "questionNum": 467,
+      "answer": "3",
+      "explanation": "$A = (-\\frac{9}{14}) \\div (+\\frac{3}{7}) = (-\\frac{9}{14}) \\times (+\\frac{7}{3}) = -\\frac{3}{2}$\n$B = (-\\frac{1}{4}) \\div (+0.5) = (-\\frac{1}{4}) \\div (+\\frac{1}{2})$\n$= (-\\frac{1}{4}) \\times (+2) = -\\frac{1}{2}$\n따라서 $A \\div B = (-\\frac{3}{2}) \\div (-\\frac{1}{2}) = (-\\frac{3}{2}) \\times (-2) = 3$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq1003mlb04js2bz5t7",
+      "questionNum": 468,
+      "answer": "⑤",
+      "explanation": "① $(-7) \\times (-6) \\div (-3) = -(7 \\times 6 \\div 3) = -14$\n② $(+\\frac{5}{6}) \\div (-\\frac{3}{4}) \\times (+\\frac{1}{2}) = (+\\frac{5}{6}) \\times (-\\frac{4}{3}) \\times (+\\frac{1}{2}) = -(\\frac{5}{6} \\times \\frac{4}{3} \\times \\frac{1}{2}) = -\\frac{5}{9}$\n③ $(+2) \\times (-\\frac{1}{10}) \\div (-\\frac{1}{5})^2 = (+2) \\times (-\\frac{1}{10}) \\div \\frac{1}{25} = (+2) \\times (-\\frac{1}{10}) \\times 25 = -(2 \\times \\frac{1}{10} \\times 25) = -5$\n④ $(-\\frac{9}{4}) \\div (-\\frac{1}{16}) \\div (-3^3) = (-\\frac{9}{4}) \\div (-\\frac{1}{16}) \\div (-27) = (-\\frac{9}{4}) \\times (-16) \\times (-\\frac{1}{27}) = -(\\frac{9}{4} \\times 16 \\times \\frac{1}{27}) = -\\frac{4}{3}$\n⑤ $(-\\frac{1}{2})^2 \\times (+6) \\div (+24) = (+\\frac{1}{4}) \\times (+6) \\times (+\\frac{1}{24}) = +(\\frac{1}{4} \\times 6 \\times \\frac{1}{24}) = \\frac{1}{16}$\n따라서 옳은 것은 ⑤이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq1003nlb049kaxwpdc",
+      "questionNum": 469,
+      "answer": "④",
+      "explanation": "① ${-\\frac{3}{7}} \\div (-9) \\times (-21) = -\\frac{3}{7} \\times \\frac{1}{(-9)} \\times (-21) = -1$\n② $\\frac{8}{5} \\times \\left(-\\frac{5}{12}\\right) \\div \\frac{2}{3} = \\frac{8}{5} \\times \\left(-\\frac{5}{12}\\right) \\times \\frac{3}{2} = -1$\n③ $(-1)^5 \\times \\left(-\\frac{1}{2}\\right)^2 \\div \\frac{1}{4} = (-1) \\times \\frac{1}{4} \\times 4 = -1$\n④ $\\left(-\\frac{3}{4}\\right)^2 \\div \\left(-\\frac{3}{16}\\right) \\times \\frac{1}{6} = \\frac{9}{16} \\times \\left(-\\frac{16}{3}\\right) \\times \\frac{1}{6} = -\\frac{1}{2}$\n⑤ $\\left(-\\frac{1}{6}\\right) \\times (-3)^3 \\div (-4.5) = \\left(-\\frac{1}{6}\\right) \\times (-27) \\div \\left(-\\frac{9}{2}\\right) = \\left(-\\frac{1}{6}\\right) \\times (-27) \\times \\left(-\\frac{2}{9}\\right) = -1$\n따라서 계산 결과가 나머지 넷과 다른 하나는 ④이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq1003olb04wk7botyh",
+      "questionNum": 470,
+      "answer": "-84",
+      "explanation": "$A = -\\frac{8}{5} \\div \\left(-\\frac{4}{7}\\right) = -\\frac{8}{5} \\times \\left(-\\frac{7}{4}\\right) = \\frac{7}{2}$\n$B = (-2)^3 \\times \\frac{4}{3} \\div \\left(-\\frac{2}{3}\\right)^2 = (-8) \\times \\frac{4}{3} \\div \\frac{4}{9} = (-8) \\times \\frac{4}{3} \\times \\frac{9}{4} = -24$\n$\\therefore A \\times B = \\frac{7}{2} \\times (-24) = -84$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq1003plb049tc517ld",
+      "questionNum": 471,
+      "answer": "②",
+      "explanation": "$\\frac{1}{6} \\times [-20 - \\{3^2 + (\\frac{1}{4} - \\frac{1}{6}) \\times 12\\}]$\n$= \\frac{1}{6} \\times [-20 - \\{9 + (\\frac{3}{12} - \\frac{2}{12}) \\times 12\\}]$\n$= \\frac{1}{6} \\times [-20 - \\{9 + \\frac{1}{12} \\times 12\\}]$\n$= \\frac{1}{6} \\times \\{-20 - (9+1)\\}$\n$= \\frac{1}{6} \\times (-20-10)$\n$= \\frac{1}{6} \\times (-30) = -5$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq1003qlb04fi38689z",
+      "questionNum": 472,
+      "answer": "㉤, ㉣, ㉢, ㉡, ㉠",
+      "explanation": "해설 없음",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq1003rlb04fr0w3k9g",
+      "questionNum": 473,
+      "answer": "⑴ 2 ⑵ 7",
+      "explanation": "⑴ $-1 - \\{-2 - (3-4) \\times (-2)^2 - 5\\}$\n$= -1 - \\{-2 - (-1) \\times 4 - 5\\}$\n$= -1 - \\{-2 - (-4) - 5\\}$\n$= -1 - (-2+4-5)$\n$= -1 - (-3)$\n$= -1+3=2$\n⑵ ${-\\frac{3}{4}} \\div \\left(-\\frac{1}{2}\\right)^2 - (-2)^3 \\times \\frac{5}{4}$\n$= -\\frac{3}{4} \\div \\frac{1}{4} - (-8) \\times \\frac{5}{4}$\n$= -\\frac{3}{4} \\times 4 - (-8) \\times \\frac{5}{4}$\n$= -3 - (-10)$\n$= -3+10=7$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq1003slb0483eqxbi1",
+      "questionNum": 474,
+      "answer": "④",
+      "explanation": "$(-1)^3 \\times [\\{\\left(-\\frac{3}{2}\\right)^2 \\div \\left(\\frac{7}{4} - \\frac{9}{4}\\right)\\} - 1] + 1$\n$= (-1) \\times [\\{\\frac{9}{4} \\div \\left(-\\frac{2}{4}\\right)\\} - 1] + 1$\n$= (-1) \\times [\\{\\frac{9}{4} \\div \\left(-\\frac{1}{2}\\right)\\} - 1] + 1$\n$= (-1) \\times [\\{\\frac{9}{4} \\times (-2)\\} - 1] + 1$\n$= (-1) \\times \\{-\\frac{9}{2} - 1\\} + 1$\n$= (-1) \\times \\{-\\frac{11}{2}\\} + 1$\n$= \\frac{11}{2} + 1 = \\frac{13}{2}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq1003tlb04wkr6qw7h",
+      "questionNum": 475,
+      "answer": "③",
+      "explanation": "① $\\frac{1}{2} + \\left(-\\frac{1}{2}\\right)^2 \\div \\left(\\frac{5}{6} - \\frac{4}{3}\\right) - 2$\n$= \\frac{1}{2} + \\frac{1}{4} \\div \\left(\\frac{5}{6} - \\frac{8}{6}\\right) - 2$\n$= \\frac{1}{2} + \\frac{1}{4} \\div \\left(-\\frac{3}{6}\\right) - 2$\n$= \\frac{1}{2} + \\frac{1}{4} \\div \\left(-\\frac{1}{2}\\right) - 2$\n$= \\frac{1}{2} + \\frac{1}{4} \\times (-2) - 2$\n$= \\frac{1}{2} - \\frac{1}{2} - 2 = -2$\n\n② $\\left(-\\frac{1}{4}\\right)^2 \\times 8 - 3 \\div \\left(\\frac{2}{3} + \\frac{5}{6}\\right)$\n$= \\frac{1}{16} \\times 8 - 3 \\div \\left(\\frac{4}{6} + \\frac{5}{6}\\right)$\n$= \\frac{1}{2} - 3 \\div \\frac{9}{6}$\n$= \\frac{1}{2} - 3 \\div \\frac{3}{2}$\n$= \\frac{1}{2} - 3 \\times \\frac{2}{3}$\n$= \\frac{1}{2} - 2 = -\\frac{3}{2}$\n\n③ ${-\\frac{3}{4}} - \\left[-\\frac{1}{5} - \\left\\{-\\frac{3}{4} + \\frac{1}{2}\\right\\}\\right]$\n$= -\\frac{3}{4} - \\left[-\\frac{1}{5} - \\left\\{-\\frac{3}{4} + \\frac{2}{4}\\right\\}\\right]$\n$= -\\frac{3}{4} - \\left[-\\frac{1}{5} - \\left\\{-\\frac{1}{4}\\right\\}\\right]$\n$= -\\frac{3}{4} - \\left\\{-\\frac{1}{5} + \\frac{1}{4}\\right\\}$\n$= -\\frac{3}{4} - \\left\\{-\\frac{4}{20} + \\frac{5}{20}\\right\\}$\n$= -\\frac{3}{4} - \\frac{1}{20}$\n$= -\\frac{15}{20} - \\frac{1}{20} = -\\frac{16}{20} = -\\frac{4}{5}$\n\n④ $-4 + \\left[1 - \\left\\{-\\frac{1}{2}\\right\\} \\times \\frac{1}{3}\\right] \\div \\frac{7}{6}$\n$= -4 + \\left[1 - \\left\\{-\\frac{1}{6}\\right\\}\\right] \\div \\frac{7}{6}$\n$= -4 + \\left[1 + \\frac{1}{6}\\right] \\div \\frac{7}{6}$\n$= -4 + \\frac{7}{6} \\div \\frac{7}{6}$\n$= -4 + \\frac{7}{6} \\times \\frac{6}{7}$\n$= -4 + 1 = -3$\n\n ⑤ $\\{(-3-9) \\div \\frac{3}{5} + 13\\} \\times \\frac{1}{7} = \\{(-12) \\times \\frac{5}{3} + 13\\} \\times \\frac{1}{7}$                       $= (-20+13) \\times \\frac{1}{7}$                                                                                                    \n  $= (-7) \\times \\frac{1}{7} = -1$                                           4\n  \n  따라서 계산 결과가 가장 큰 것은 ③이다. ",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq1003ulb04b4l5g2it",
+      "questionNum": 476,
+      "answer": "-2",
+      "explanation": "주어진 식은 $34-4 \\times [5-\\{(-\\frac{2}{3})^3 - (\\frac{7}{4}-\\frac{3}{2})\\}]$입니다.\n먼저 괄호 안의 식을 계산합니다.\n$34-4 \\times [5-\\{(-\\frac{27}{8}) - (\\frac{7}{4}-\\frac{6}{4})\\}]$ \n$=34-4 \\times [5-\\{(-\\frac{27}{8}) - \\frac{1}{4}\\}]$ \n$=34-4 \\times [5-\\{(-\\frac{27}{8}) - \\frac{2}{8}\\}]$ \n$=34-4 \\times [5-\\{(-\\frac{29}{8})\\}]$ \n$=34-4 \\times [5+\\frac{29}{8}]$ \n$=34-4 \\times [\\frac{40}{8}+\\frac{29}{8}]$ \n$=34-4 \\times \\frac{69}{8}$ \n$=34-\\frac{69}{2}$ \n$=\\frac{68}{2}-\\frac{69}{2}$ \n$=-\\frac{1}{2}$\n따라서 구하는 역수는 $-2$입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq1003vlb04qvij0wl5",
+      "questionNum": 477,
+      "answer": "2",
+      "explanation": "$(-\\frac{7}{6}) \\times a=14$에서\n$a=14 \\div (-\\frac{7}{6})=14 \\times (-\\frac{6}{7})=-12$\n$\\frac{5}{3} \\div b=-10$에서\n$b=\\frac{5}{3} \\div (-10)=\\frac{5}{3} \\times (-\\frac{1}{10})=-\\frac{1}{6}$\n그러므로 $a \\times b=(-12) \\times (-\\frac{1}{6})=2$입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq1003wlb0454txsyod",
+      "questionNum": 478,
+      "answer": "\\frac{5}{6}",
+      "explanation": "$\\Box \\times (-\\frac{3}{5})=-\\frac{1}{2}$에서\n$\\Box = (-\\frac{1}{2}) \\div (-\\frac{3}{5})$ \n$= (-\\frac{1}{2}) \\times (-\\frac{5}{3})$ \n$= \\frac{5}{6}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq1003xlb040q33a9pq",
+      "questionNum": 479,
+      "answer": "-\\frac{3}{4}",
+      "explanation": "$a \\times (-2)=4$에서\n$a=4 \\div (-2)=4 \\times (-\\frac{1}{2})=-2$\n$b \\div (-\\frac{3}{4})=-2$에서\n$b=(-2) \\times (-\\frac{3}{4})=\\frac{3}{2}$\n그러므로 $b \\div a=\\frac{3}{2} \\div (-2)=\\frac{3}{2} \\times (-\\frac{1}{2})=-\\frac{3}{4}$입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq1003ylb04s8m36rjl",
+      "questionNum": 480,
+      "answer": "$\\frac{5}{4}$",
+      "explanation": "$(-\\frac{3}{4}) \\div \\Box \\times (-\\frac{2}{3})=\\frac{2}{5}$에서\n$(-\\frac{3}{4}) \\div \\Box = \\frac{2}{5} \\div (-\\frac{2}{3})$\n$(-\\frac{3}{4}) \\div \\Box = \\frac{2}{5} \\times (-\\frac{3}{2})$\n$(-\\frac{3}{4}) \\div \\Box = -\\frac{3}{5}$\n$\\Box = (-\\frac{3}{4}) \\div (-\\frac{3}{5})$\n$\\Box = (-\\frac{3}{4}) \\times (-\\frac{5}{3})$\n$\\Box = \\frac{5}{4}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq1003zlb045i59bimh",
+      "questionNum": 481,
+      "answer": "\\frac{24}{5}",
+      "explanation": "어떤 유리수를 $\\Box$라 하면 $\\Box \\times (-\\frac{1}{2}) = \\frac{6}{5}$입니다.\n따라서 $\\Box = \\frac{6}{5} \\div (-\\frac{1}{2}) = \\frac{6}{5} \\times (-2) = -\\frac{12}{5}$입니다.\n바르게 계산하면 $(-\\frac{12}{5}) \\div (-\\frac{1}{2}) = (-\\frac{12}{5}) \\times (-2) = \\frac{24}{5}$입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq10040lb04fvi0xmny",
+      "questionNum": 482,
+      "answer": "⑴ -\\frac{1}{3} ⑵ -72",
+      "explanation": "⑴ 어떤 유리수를 $\\Box$라 하면 $24 \\times \\Box = -8$입니다.\n$\\Box = (-8) \\div 24 = (-8) \\times \\frac{1}{24} = -\\frac{1}{3}$\n⑵ 바르게 계산하면 $24 \\div (-\\frac{1}{3}) = 24 \\times (-3) = -72$입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq10041lb043i6k8fd5",
+      "questionNum": 483,
+      "answer": "-\\frac{9}{40}",
+      "explanation": "어떤 유리수를 $\\Box$라 하면 $\\Box \\div (-\\frac{3}{4})=-\\frac{2}{5}$입니다.\n$\\Box = (-\\frac{2}{5}) \\times (-\\frac{3}{4}) = \\frac{3}{10}$\n따라서 바르게 계산하면 $\\frac{3}{10} \\times (-\\frac{3}{4}) = -\\frac{9}{40}$입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq10042lb04bo2yv3c4",
+      "questionNum": 484,
+      "answer": "④",
+      "explanation": "$a \\times b<0$에서 $a$, $b$의 부호는 다릅니다.\n그런데 $a-b>0$에서 $a>b$이므로 $a>0$, $b<0$입니다.\n이때 $a \\div c<0$에서 $a$, $c$의 부호는 다르므로 $c<0$입니다.\n따라서 $a>0$, $b<0$, $c<0$입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq10043lb04e3m60zzm",
+      "questionNum": 485,
+      "answer": "⑤",
+      "explanation": "①, ② $a \\times b<0$에서 $a$, $b$의 부호는 다르고 $a<b$이므로 $a<0$, $b>0$입니다.\n③ $a-b$: (음수) - (양수) = (음수) $\\implies a-b<0$\n④ $b-a$: (양수) - (음수) = (양수) $\\implies b-a>0$\n⑤ $a \\div b$: (음수) $\\div$ (양수) = (음수) $\\implies a \\div b<0$\n따라서 옳지 않은 것은 ⑤입니다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq10044lb048zlvi85a",
+      "questionNum": 486,
+      "answer": "①",
+      "explanation": "$a \\times b > 0$에서 $a$, $b$의 부호는 같다. 그런데 $a+b < 0$이므로 $a < 0$, $b < 0$. 이때 $b \\div c > 0$에서 $b$, $c$의 부호는 같으므로 $c < 0$. $\\therefore a < 0, b < 0, c < 0$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq10045lb04jixw4ony",
+      "questionNum": 487,
+      "answer": "a<0, b<0, c>0",
+      "explanation": "$b \\div c < 0$에서 $b$, $c$의 부호는 다르다. 그런데 $b < c$이므로 $b < 0, c > 0$. 이때 $a \\times b > 0$에서 $a$, $b$의 부호는 같으므로 $a < 0$. $\\therefore a < 0, b < 0, c > 0$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq10046lb041jyc760a",
+      "questionNum": 488,
+      "answer": "④",
+      "explanation": "$a = -\\frac{1}{2}$이라 하면\n① $-a = -(-\\frac{1}{2}) = \\frac{1}{2}$\n② $-a^2 = -(-\\frac{1}{2})^2 = -\\frac{1}{4}$\n③ $-a^3 = -(-\\frac{1}{2})^3 = -(-\\frac{1}{8}) = \\frac{1}{8}$\n④ $-\\frac{1}{a} = -(1 \\div a) = -[1 \\div (-\\frac{1}{2})] = -\\{1 \\times (-2)\\} = -(-2) = 2$\n⑤ $-\\frac{1}{a^2} = -(1 \\div a^2) = -\\{1 \\div (-\\frac{1}{2})^2\\} = -\\{1 \\div \\frac{1}{4}\\} = -(1 \\times 4) = -4$\n따라서 가장 큰 수는 ④이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq10047lb04oc7n2q2n",
+      "questionNum": 489,
+      "answer": "④",
+      "explanation": "$a = -2$라 하면\n① $a = -2$\n② $-a = -(-2) = 2$\n③ $a^2 = (-2)^2 = 4$\n④ $-a^2 = -(-2)^2 = -4$\n⑤ $\\frac{1}{a} = -\\frac{1}{2}$\n따라서 가장 작은 수는 ④이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq20048lb048uzw756b",
+      "questionNum": 490,
+      "answer": "⑤",
+      "explanation": "$a = \\frac{1}{2}$이라 하면\n① $-a^2 = -(\\frac{1}{2})^2 = -\\frac{1}{4}$\n② $(-a)^2 = (-\\frac{1}{2})^2 = \\frac{1}{4}$\n③ $\\frac{1}{a} = 1 \\div a = 1 \\div \\frac{1}{2} = 1 \\times 2 = 2$\n④ $\\frac{1}{a} = 2$이므로 $-\\frac{1}{a} = -2$\n⑤ $\\frac{1}{a} = 2$이므로 $(\\frac{1}{a})^2 = 2^2 = 4$\n따라서 가장 큰 수는 ⑤이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq20049lb04e9yzkqba",
+      "questionNum": 491,
+      "answer": "4점",
+      "explanation": "5번의 가위바위보를 하여 지애는 3번 이겼으므로 2번 졌고, 이서는 2번 이기고 3번 졌다.\n지애의 점수는 $3 \\times 3 + 2 \\times (-1) = 9 + (-2) = 7$ (점)\n이서의 점수는 $2 \\times 3 + 3 \\times (-1) = 6 + (-3) = 3$ (점)\n따라서 지애의 점수와 이서의 점수의 차는 $7 - 3 = 4$ (점)",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq2004alb04neya28dp",
+      "questionNum": 492,
+      "answer": "64점",
+      "explanation": "지우는 4문제를 맞히고 2문제를 틀렸으므로 얻은 점수는 $4 \\times 5 + 2 \\times (-3) = 20 + (-6) = 14$ (점)\n따라서 지우의 점수는 $50 + 14 = 64$ (점)",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq2004blb04ev6qivnb",
+      "questionNum": 493,
+      "answer": "③",
+      "explanation": "A, B 두 사람이 얻은 점수를 각각 구하면\n(A의 점수) $= -3 + 4 \\times 2 - 1 + 2 \\times 2 = -3 + 8 - 1 + 4 = 8$ (점)\n(B의 점수) $= -5 - 3 + 2 \\times 2 + 6 \\times 2 = -5 - 3 + 4 + 12 = 8$ (점)\n따라서 A, B의 점수가 같다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq2004clb04743o6m1y",
+      "questionNum": 494,
+      "answer": "⑴ \\frac{11}{6} ⑵ \\frac{11}{10} ⑶ \\frac{14}{15}",
+      "explanation": "⑴ 두 점 A, B 사이의 거리는 $\\frac{5}{3} - (-\\frac{1}{6}) = \\frac{10}{6} + \\frac{1}{6} = \\frac{11}{6}$\n⑵ 점 C는 두 점 A, B 사이를 $3:2$로 나누는 점이므로 두 점 A, C 사이의 거리는 두 점 A, B 사이의 거리의 $\\frac{3}{3+2} = \\frac{3}{5}$이다.\n즉 두 점 A, C 사이의 거리는 $\\frac{11}{6} \\times \\frac{3}{5} = \\frac{11}{10}$\n⑶ 점 C가 나타내는 수는 $-\\frac{1}{6} + \\frac{11}{10} = -\\frac{5}{30} + \\frac{33}{30} = \\frac{28}{30} = \\frac{14}{15}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq2004dlb043rl725vu",
+      "questionNum": 495,
+      "answer": "\\frac{1}{6}",
+      "explanation": "두 점 A, B 사이의 거리는 $1 - (-\\frac{1}{4}) = \\frac{4}{4} + \\frac{1}{4} = \\frac{5}{4}$\n두 점 A, C 사이의 거리는 $\\frac{5}{4} \\times \\frac{1}{1+2} = \\frac{5}{4} \\times \\frac{1}{3} = \\frac{5}{12}$\n따라서 점 C가 나타내는 수는 $-\\frac{1}{4} + \\frac{5}{12} = -\\frac{3}{12} + \\frac{5}{12} = \\frac{2}{12} = \\frac{1}{6}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq2004elb04rb452hy7",
+      "questionNum": 496,
+      "answer": "-7/10",
+      "explanation": "두 점 A, B 사이의 거리는 $2 - \\left(-\\frac{5}{2}\\right) = \\frac{4}{2} + \\frac{5}{2} = \\frac{9}{2}$\n두 점 A, C 사이의 거리는 $\\frac{9}{2} \\times \\frac{2}{2+3} = \\frac{9}{2} \\times \\frac{2}{5} = \\frac{9}{5}$\n따라서 점 C가 나타내는 수는 $-\\frac{5}{2} + \\frac{9}{5} = -\\frac{25}{10} + \\frac{18}{10} = -\\frac{7}{10}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq2004flb041b09n324",
+      "questionNum": 497,
+      "answer": "⑤",
+      "explanation": "뺄셈의 경우 빼는 수의 부호를 바꾸어 더한다.\n① $(+9)+(-3)=+(9-3)=6$\n② $(-2)+(-8)=-(2+8)=-10$\n③ $(+4)-(-11) =(+4)+(+11) =+(4+11)=15$\n④ $\\left(-\\frac{1}{3}\\right)+\\left(+\\frac{2}{5}\\right) = \\left(-\\frac{5}{15}\\right)+\\left(+\\frac{6}{15}\\right) =+\\left(\\frac{6}{15} - \\frac{5}{15}\\right) = \\frac{1}{15}$\n⑤ $\\left(-\\frac{7}{4}\\right)-(+0.25)=\\left(-\\frac{7}{4}\\right)+\\left(-\\frac{1}{4}\\right)=-\\left(\\frac{7}{4} + \\frac{1}{4}\\right)=-2$\n따라서 옳은 것은 ⑤이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq2004glb04nnad7ecx",
+      "questionNum": 498,
+      "answer": "㈎ 교환 ㈏ 결합 ㈐ -2 ㈑ 6",
+      "explanation": "덧셈의 계산 법칙을 생각해 본다.\n$(+2.4)+\\left(-\\frac{1}{3}\\right)+(+5.6)+\\left(-\\frac{5}{3}\\right)$\n$=(+2.4)+(+5.6)+\\left(-\\frac{1}{3}\\right)+\\left(-\\frac{5}{3}\\right)$ (덧셈의 교환 법칙)\n$=\\{(+2.4)+(+5.6)\\} + \\left\\{\\left(-\\frac{1}{3}\\right)+\\left(-\\frac{5}{3}\\right)\\right\\}$ (덧셈의 결합 법칙)\n$=(+8)+(-2)=6$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq2004hlb04hszwsujl",
+      "questionNum": 499,
+      "answer": "D",
+      "explanation": "(일교차) = (최고 기온) - (최저 기온)임을 이용하여 각 도시의 일교차를 구해 본다.\n각 도시의 일교차는 다음과 같다.\nA: $-2.6-(-8.8)=-2.6+8.8=6.2$ ($^{\\circ}$C)\nB: $-1.5-(-6)=-1.5+6=4.5$ ($^{\\circ}$C)\nC: $0-(-3.2)=0+3.2=3.2$ ($^{\\circ}$C)\nD: $3.7-(-4.5)=3.7+4.5=8.2$ ($^{\\circ}$C)\nE: $2.8-(-1.9)=2.8+1.9=4.7$ ($^{\\circ}$C)\n따라서 일교차가 가장 큰 도시는 D이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq2004ilb04uzib7ihv",
+      "questionNum": 500,
+      "answer": "④",
+      "explanation": "덧셈과 뺄셈의 혼합 계산 뺄셈은 모두 덧셈으로 고친 후 덧셈의 계산 법칙을 이용하여 계산한다.\n① $(-5)-(+4)+(+9) =(-5)+(-4)+(+9) =\\{(-5)+(-4)\\}+(+9) =(-9)+(+9)=0$\n② $\\left(+\\frac{2}{5}\\right)+(-2.4)-(-3) =\\left(+\\frac{2}{5}\\right)+\\left(-\\frac{12}{5}\\right)+(+3) =\\left\\{\\left(+\\frac{2}{5}\\right)+\\left(-\\frac{12}{5}\\right)\\right\\}+(+3) =(-2)+(+3)=1$\n③ $-4-7-8+4 =(-4)-(+7)-(+8)+(+4) =(-4)+(-7)+(-8)+(+4) =\\{(-4)+(-7)+(-8)\\}+(+4) =(-19)+(+4)=-15$\n④ $-\\frac{3}{4}+\\frac{11}{20}-\\frac{3}{10} =\\left(-\\frac{3}{4}\\right)+\\left(+\\frac{11}{20}\\right)-\\left(+\\frac{3}{10}\\right) =\\left(-\\frac{3}{4}\\right)+\\left(+\\frac{11}{20}\\right)+\\left(-\\frac{3}{10}\\right) =\\left\\{\\left(-\\frac{15}{20}\\right)+\\left(-\\frac{6}{20}\\right)\\right\\}+\\left(+\\frac{11}{20}\\right) =\\left(-\\frac{21}{20}\\right)+\\left(+\\frac{11}{20}\\right)=-\\frac{10}{20}=-\\frac{1}{2}$\n⑤ $3-0.8-7-4.2 =(+3)-(+0.8)-(+7)-(+4.2) =(+3)+(-0.8)+(-7)+(-4.2) =\\{(+3)+(-7)\\} + \\{(-0.8)+(-4.2)\\} =(-4)+(-5)=-9$\n따라서 옳지 않은 것은 ④이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq2004jlb04fs4tbxg6",
+      "questionNum": 501,
+      "answer": "⑤",
+      "explanation": "덧셈과 뺄셈 사이의 관계를 이용한다.\n$A+\\left(-\\frac{1}{2}\\right)=-\\frac{5}{6}$에서 $A=-\\frac{5}{6}-\\left(-\\frac{1}{2}\\right)=-\\frac{5}{6}+\\frac{3}{6}=-\\frac{2}{6}=-\\frac{1}{3}$\n$1-B=-\\frac{4}{3}$에서 $B=1-\\left(-\\frac{4}{3}\\right)=\\frac{3}{3}+\\frac{4}{3}=\\frac{7}{3}$\n$\\therefore A+B=-\\frac{1}{3}+\\frac{7}{3}=\\frac{6}{3}=2$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq2004klb04o52wgce7",
+      "questionNum": 502,
+      "answer": "5800명",
+      "explanation": "주어진 상황을 덧셈과 뺄셈으로 나타낸다.\n$5000-500+700-300+900=5800$ (명)",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq2004llb04ogf8ohpq",
+      "questionNum": 503,
+      "answer": "11",
+      "explanation": "전략: 세로에 놓인 네 수의 합을 구한 후 덧셈과 뺄셈 사이의 관계를 이용한다.\n$0+5+3+(-3)=5$이므로 가로, 세로에 놓인 네 수의 합은 모두 5이어야 한다.\n$-4+5+a+(-3)=5$에서\n$a+(-2)=5$\n$\\therefore a=5-(-2)=7$\n$7+(-2)+b+(-4)=5$에서\n$1+b=5$\n$\\therefore b=5-1=4$\n$7+6+c+0=5$에서\n$13+c=5$\n$\\therefore c=5-13=-8$\n$\\therefore a-b-c =7-4-(-8)=7-4+8=11$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq2004mlb0446nl7ddl",
+      "questionNum": 504,
+      "answer": "④",
+      "explanation": "전략: 곱해지는 음수의 개수에 따라 먼저 부호를 결정한다.\n① $(+9) \\times \\left(-\\frac{1}{3}\\right)=-\\left(9 \\times \\frac{1}{3}\\right)=-3$\n② $(-0.75) \\times (+4)=-\\left(\\frac{3}{4} \\times 4\\right)=-3$\n③ $\\left(-\\frac{5}{2}\\right) \\times \\left(+\\frac{6}{5}\\right)=-\\left(\\frac{5}{2} \\times \\frac{6}{5}\\right)=-3$\n④ $(+3) \\times \\left(+\\frac{1}{6}\\right) \\times (-8)=-\\left(3 \\times \\frac{1}{6} \\times 8\\right)=-4$\n⑤ $\\left(-\\frac{3}{4}\\right) \\times \\left(-\\frac{2}{3}\\right) \\times (-6)=-\\left(\\frac{3}{4} \\times \\frac{2}{3} \\times 6\\right)=-3$\n따라서 계산 결과가 나머지 넷과 다른 하나는 ④이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq2004nlb04n4z0dy85",
+      "questionNum": 505,
+      "answer": "②",
+      "explanation": "전략: (음수)$^n$의 부호는 $n$이 짝수이면 $+$, $n$이 홀수이면 $-$를 이용한다.\n① $(-1)^3=-1$\n② $|-3|=3$\n④ $(-2)^2=4$\n⑤ $-3^2=-9$\n따라서 작은 수부터 차례대로 나열하면 ⑤, ①, ③, ②, ④이므로 네 번째에 오는 수는 ②이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq2004olb04tzeliq0b",
+      "questionNum": 506,
+      "answer": "3",
+      "explanation": "전략: $(-1)^{\\text{홀수}}=-1$, $(-1)^{\\text{짝수}}=1$임을 이용한다.\n$n$이 홀수일 때, $n+1$, $n \\times 2$는 짝수이고 $n+2$는 홀수이다.\n$\\therefore (-1)^{n+1}-(-1)^{n+2}+(-1)^{n \\times 2} = 1-(-1)+1$\n$=1+1+1=3$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq2004plb0434uejz9y",
+      "questionNum": 507,
+      "answer": "③",
+      "explanation": "전략: 덧셈에 대한 곱셈의 분배법칙을 이용한다.\n$a(b+c)=-15$에서\n$ab+ac=-15$\n$ab=-6$이므로\n$-6+ac=-15$\n$\\therefore ac=-9$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq2004qlb04ox2mmanz",
+      "questionNum": 508,
+      "answer": "4",
+      "explanation": "전략: $xy+xz=x(y+z)$임을 이용한다.\n$a=0.05 \\times 127+0.05 \\times (-27)$\n$=0.05 \\times \\{127+(-27)\\}$\n$=0.05 \\times 100=5$\n따라서 5보다 작은 자연수는 1, 2, 3, 4의 4개이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq2004rlb04sgj2mqsb",
+      "questionNum": 509,
+      "answer": "-21",
+      "explanation": "전략: $\\frac{b}{a}$의 역수는 $\\frac{a}{b}$\n$-\\frac{1}{9}$의 역수는 $-9$이므로 $x=-9$\n$2\\frac{1}{3}=\\frac{7}{3}$의 역수는 $\\frac{3}{7}$이므로 $y=\\frac{3}{7}$\n$\\therefore x \\div y=(-9) \\div \\frac{3}{7}=(-9) \\times \\frac{7}{3}=-21$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq2004slb04aifpg81l",
+      "questionNum": 510,
+      "answer": "④",
+      "explanation": "전략: 두 수의 곱이 1 $\\Rightarrow$ 두 수는 서로 역수\n마주 보는 면에 적힌 두 수의 곱이 1이므로 마주 보는 면에 적힌 두 수는 서로 역수이다.\n$-\\frac{2}{3}$의 역수는 $-\\frac{3}{2}$, $\\frac{1}{4}$의 역수는 $4$, $-9$의 역수는 $-\\frac{1}{9}$이므로\n구하는 곱은\n$\\left(-\\frac{3}{2}\\right) \\times 4 \\times \\left(-\\frac{1}{9}\\right)=+\\left(\\frac{3}{2} \\times 4 \\times \\frac{1}{9}\\right)=\\frac{2}{3}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq2004tlb04ujvujlp0",
+      "questionNum": 511,
+      "answer": "$\\frac{4}{15}$",
+      "explanation": "전략: 곱셈과 나눗셈의 혼합 계산 $\\Rightarrow$ 나눗셈은 곱셈으로 고쳐서 계산한다.\n$A=\\left(-\\frac{5}{6}\\right) \\div (-2)^2 \\times \\frac{8}{5}=\\left(-\\frac{5}{6}\\right) \\div 4 \\times \\frac{8}{5}$\n$=\\left(-\\frac{5}{6}\\right) \\times \\frac{1}{4} \\times \\frac{8}{5}=-\\left(\\frac{5}{6} \\times \\frac{1}{4} \\times \\frac{8}{5}\\right)=-\\frac{1}{3}$\n$B=\\frac{3}{4} \\div \\left(-\\frac{15}{8}\\right) \\times (-1)^3 \\div \\frac{2}{3}$\n$=\\frac{3}{4} \\times \\left(-\\frac{8}{15}\\right) \\times (-1) \\times \\frac{3}{2}$\n$=+\\left(\\frac{3}{4} \\times \\frac{8}{15} \\times 1 \\times \\frac{3}{2}\\right)=\\frac{3}{5}$\n$\\therefore A+B=-\\frac{1}{3}+\\frac{3}{5}=-\\frac{5}{15}+\\frac{9}{15}=\\frac{4}{15}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq2004ulb047b9m8eq7",
+      "questionNum": 512,
+      "answer": "③",
+      "explanation": "전략: 덧셈, 뺄셈, 곱셈, 나눗셈의 혼합 계산은 거듭제곱 $\\rightarrow$ 괄호 $\\rightarrow$ 곱셈, 나눗셈 $\\rightarrow$ 덧셈, 뺄셈의 순서로 계산한다.\n$1-\\left[(-1)^3 - \\left\\{-2+\\frac{3}{4} \\times \\left(1-\\frac{1}{3}\\right)\\right\\} \\div \\frac{1}{2}\\right]$\n$=1-\\left[-1-\\left\\{-2+\\frac{3}{4} \\times \\frac{2}{3}\\right\\} \\div \\frac{1}{2}\\right]$\n$=1-\\left[-1-\\left\\{-2+\\frac{1}{2}\\right\\} \\div \\frac{1}{2}\\right]$\n$=1-\\left[-1-\\left\\{-\\frac{3}{2}\\right\\} \\times 2\\right]$\n$=1-(-1+3)$\n$=1-2=-1$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq2004vlb044q6pmpoi",
+      "questionNum": 513,
+      "answer": "$-\\frac16$",
+      "explanation": "**전략** 곱셈과 나눗셈 사이의 관계를 이용한다.\n\n$\\left(-\\frac{2}{3}\\right)^2 \\times \\square \\div \\left(-\\frac{4}{27}\\right) = \\frac{1}{2}$ 에서\n\n$\\frac{4}{9} \\times \\square = \\frac{1}{2} \\times \\left(-\\frac{4}{27}\\right)$, $\\frac{4}{9} \\times \\square =\n-\\frac{2}{27}$\n\n$\\therefore \\square = \\left(-\\frac{2}{27}\\right) \\div \\frac{4}{9} = \\left(-\\frac{2}{27}\\right) \\times \\frac{9}{4}\n= -\\frac{1}{6}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq2004wlb04p77skahl",
+      "questionNum": 514,
+      "answer": "3",
+      "explanation": "전략: 어떤 유리수를 $\\square$라 하고 식을 세운다.\n어떤 유리수를 $\\square$라 하면 $\\square \\div \\left(-\\frac{9}{7}\\right) = -\\frac{10}{3}$\n\n$\\therefore \\square = \\left(-\\frac{10}{3}\\right) \\times \\left(-\\frac{9}{7}\\right) = \\frac{30}{7}$\n\n따라서 바르게 계산하면 $\\frac{30}{7} + \\left(-\\frac{9}{7}\\right) = 3$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq3004xlb04jwc8846k",
+      "questionNum": 515,
+      "answer": "③",
+      "explanation": "$a \\times b < 0$에서 $a, b$의 부호는 다르다.한편 $a-b<0$에서 $a<b$이므로 $a<0, b>0$이다.② $a<0, b>0$이고 $|a|<|b|$이므로 $a+b>0$③ $-a>0, b>0$이므로 $-a+b>0$④ $b>0, -|a|<0$이고 $|a|<|b|$이므로 $b-|a|>0$⑤ $-a>0, -b<0$이고 $|a|<|b|$이므로 $-a-b<0$따라서 옳지 않은 것은 ③이다.",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq3004ylb04skshes74",
+      "questionNum": 516,
+      "answer": "6",
+      "explanation": "**전략** $p$보다 $q$만큼 큰 수 ➡ $p+q$, $p$보다 $q$만큼 작은 수 ➡ $p-q$\n\n$a = -\\frac{9}{2} - (-1) = -\\frac{9}{2} + \\frac{2}{2} = -\\frac{7}{2}$ … 1단계\n\n$b = 3 + \\left(-\\frac{1}{3}\\right) = \\frac{9}{3} + \\left(-\\frac{1}{3}\\right) = \\frac{8}{3}$ … 2단계\n\n따라서 $-\\frac{7}{2} < x < \\frac{8}{3}$을 만족시키는 정수 $x$는 $-3, -2, -1, 0, 1, 2$의 6개이다. … 3단계",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq3004zlb04fztnb2w0",
+      "questionNum": 517,
+      "answer": "$\\frac{13}{6}$",
+      "explanation": "[전략] 가능한 $a$, $b$의 값을 구한 후 $a-b$의 값이 가장 큰 경우와 가장 작은 경우를 생각해 본다.\n$a$의 절댓값이 $\\frac{1}{3}$이므로 $a = \\frac{1}{3}$ 또는 $a = -\\frac{1}{3}$ ─\n\n$b$의 절댓값이 $\\frac{3}{4}$이므로 $b = \\frac{3}{4}$ 또는 $b = -\\frac{3}{4}$\n\n$a-b$의 값 중에서 가장 큰 값은 $a$가 양수, $b$가 음수일 때이므로\n\n$M = \\frac{1}{3} - \\left(-\\frac{3}{4}\\right) = \\frac{4}{12} + \\frac{9}{12} = \\frac{13}{12}$\n\n$a-b$의 값 중에서 가장 작은 값은 $a$가 음수, $b$가 양수일 때이므로\n\n$m = -\\frac{1}{3} - \\frac{3}{4} = -\\frac{4}{12} - \\frac{9}{12} = -\\frac{13}{12}$\n\n$\\therefore M - m = \\frac{13}{12} - \\left(-\\frac{13}{12}\\right) = \\frac{13}{12} + \\frac{13}{12} = \\frac{13}{6}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq30050lb04zf2hol20",
+      "questionNum": 518,
+      "answer": "5",
+      "explanation": "0518:\n**전략** 세 수의 곱이 가장 클 때와 가장 작을 때의 수의 조건을 생각해 본다.\n\n주어진 네 유리수 중 서로 다른 세 수를 뽑아 곱한 값이 가장 크려면 음수 2개, 양수 1개를 뽑아야 하고, 음수 2개는\n절댓값이 큰 수이어야 한다.\n\n즉 가장 큰 값은\n\n$\\left(-\\frac{2}{3}\\right) \\times (-6) \\times \\frac{7}{4} = +\\left(\\frac{2}{3} \\times 6 \\times \\frac{7}{4}\\right)\n= 7$ … 1단계\n\n또 주어진 네 유리수 중 서로 다른 세 수를 뽑아 곱한 값이 가장 작으려면 음수 3개를 뽑아야 한다.\n\n즉 가장 작은 값은\n\n$\\left(-\\frac{2}{3}\\right) \\times \\left(-\\frac{1}{2}\\right) \\times (-6) = -\\left(\\frac{2}{3} \\times \\frac{1}{2}\n\\times 6\\right) = -2$ … 2단계\n\n따라서 구하는 합은 $7 + (-2) = 5$ … 3단계",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq30051lb04vf9wctmn",
+      "questionNum": 519,
+      "answer": "$-\\frac13$",
+      "explanation": "**전략** 먼저 $A$의 값을 구한 후 $A \\times B = 1$임을 이용하여 $B$의 값을 구한다.\n\n$A = \\left(-\\frac{1}{2}\\right)^2 \\times (-3^2) \\div \\left(+\\frac{3}{4}\\right)$\n\n$= \\frac{1}{4} \\times (-9) \\times \\left(+\\frac{4}{3}\\right)$\n\n$= -\\left(\\frac{1}{4} \\times 9 \\times \\frac{4}{3}\\right) = -3$ … 1단계\n\n이때 $A \\times B = 1$에서 $B$는 $A$의 역수이므로\n\n$B = -\\frac{1}{3}$ … 2단계",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq30052lb04nzq6u6go",
+      "questionNum": 520,
+      "answer": "$\\frac{1}{10}$",
+      "explanation": "**전략** 주어진 조건에 따라 식을 변형한 후 더하여 없어지는 수의 규칙을 찾는다.\n\n$\\frac{1}{5 \\times 6} + \\frac{1}{6 \\times 7} + \\cdots + \\frac{1}{9 \\times 10}$\n\n$= \\left(\\frac{1}{5} - \\not\\frac{1}{6}\\right) + \\left(\\not\\frac{1}{6} - \\not\\frac{1}{7}\\right) + \\cdots + \\left(\\not\\frac{1}{9} -\n\\frac{1}{10}\\right)$\n\n$= \\frac{1}{5} - \\frac{1}{10} = \\frac{2}{10} - \\frac{1}{10} = \\frac{1}{10}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq30053lb04znaznl43",
+      "questionNum": 521,
+      "answer": "a<0, b<0, c<0, d<0",
+      "explanation": "**전략** 먼저 $a \\times b \\times c \\times d > 0$, $a \\times c \\times d < 0$임을 이용하여 $b$의 부호를 구한다.    \n                                                                                                                     $a \\times b \\times c \\times d > 0$, $a \\times c \\times d < 0$이므로\n                                                                                                                   \n  $b < 0$                                                                                                                                                                                                                             \n  $a < b$이므로          \n                                                                                                                                                                                                               $a < 0$                                                                                                                                                                                                                               $a < 0$, $a \\times c \\times d < 0$에서 $c \\times d > 0$이므로 \n$c$, $d$의 부호는 같다.                                                                                                                                                 이때 $c + d < 0$이므로   \n                                                                                                                                                                                                             $c < 0,\\ d < 0$        \n                                                                                                                                                                                                               $\\therefore a < 0,\\ b < 0,\\ c < 0,\\ d < 0$ ",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq30054lb0495e3qgmw",
+      "questionNum": 522,
+      "answer": "16",
+      "explanation": "0을 나타내는 점을 기준으로 신양이와 민구의 돌의 위치를 구해 본다.신양이는 7번 이기고 3번 비기고 5번 졌으므로 신양이의 돌의 위치는$$7 \\times 5 + 3 \\times (-2) + 5 \\times (-3) = 35 - 6 - 15 = 14$ $민구는 5번 이기고 3번 비기고 7번 졌으므로 민구의 돌의 위치는$ $5 \\times 5 + 3 \\times (-2) + 7 \\times (-3) = 25 - 6 - 21 = -2$ $따라서 신양이와 민구의 돌 사이의 거리는$ $14 - (-2) = 14 + 2 = 16$$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnx1otq30055lb04omrkod6h",
+      "questionNum": 523,
+      "answer": "$-\\frac15$",
+      "explanation": "**전략** 먼저 두 점 A, B 사이의 거리를 구한다.\n\n두 점 A, B 사이의 거리는\n\n$\\frac{7}{10} - \\left(-\\frac{1}{2}\\right) = \\frac{7}{10} + \\frac{5}{10} = \\frac{6}{5}$\n\n두 점 A, C 사이의 거리는\n\n$\\frac{6}{5} \\times \\frac{1}{1+3} = \\frac{6}{5} \\times \\frac{1}{4} = \\frac{3}{10}$\n\n따라서 점 C가 나타내는 수는\n\n$-\\frac{1}{2} + \\frac{3}{10} = -\\frac{5}{10} + \\frac{3}{10} = -\\frac{1}{5}$",
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrv0000ii04sk9szd9r",
+      "questionNum": 588,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrw0001ii046dl0p9vk",
+      "questionNum": 589,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrw0002ii04doovbkug",
+      "questionNum": 590,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrx0003ii04t8pxey5c",
+      "questionNum": 591,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrx0004ii044wto747h",
+      "questionNum": 592,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrx0005ii04udq07hbl",
+      "questionNum": 593,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrx0006ii04epqg3vn1",
+      "questionNum": 594,
+      "answer": "④",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrx0007ii04o871v7t7",
+      "questionNum": 595,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrx0008ii0486840uz3",
+      "questionNum": 596,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrx0009ii04tp3dwzyh",
+      "questionNum": 597,
+      "answer": "②",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrx000aii04vi5zl5c6",
+      "questionNum": 598,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrx000bii0483j5zpmp",
+      "questionNum": 599,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrx000cii0476h3zr4y",
+      "questionNum": 600,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrx000dii04iklc0b9y",
+      "questionNum": 601,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrx000eii04omsuhjgg",
+      "questionNum": 602,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrx000fii04h5vujoe0",
+      "questionNum": 603,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrx000gii04c8jocfvk",
+      "questionNum": 604,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrx000hii04ws33i8lp",
+      "questionNum": 605,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrx000iii04qv4mwkjb",
+      "questionNum": 606,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymry000jii04lo49vb1s",
+      "questionNum": 607,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymry000kii041z5xuixt",
+      "questionNum": 608,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymry000lii04ruq2in23",
+      "questionNum": 609,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymry000mii04hfbyli8p",
+      "questionNum": 610,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymry000nii04hslemqry",
+      "questionNum": 611,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymry000oii04j6cjss5c",
+      "questionNum": 612,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymry000pii042fad1var",
+      "questionNum": 613,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymry000qii0408wqh4gy",
+      "questionNum": 614,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymry000rii04ta5o6mcu",
+      "questionNum": 615,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymry000sii04gv73lcfn",
+      "questionNum": 616,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymry000tii04yfb1faks",
+      "questionNum": 617,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymry000uii04m865p3b1",
+      "questionNum": 618,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymry000vii049goivkqg",
+      "questionNum": 619,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymry000wii043apupjgj",
+      "questionNum": 620,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymry000xii04gxiez4mz",
+      "questionNum": 621,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymry000yii049h2664ze",
+      "questionNum": 622,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymry000zii04wne9otbf",
+      "questionNum": 623,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymry0010ii04ffzqy8qf",
+      "questionNum": 624,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymry0011ii04eg1wjtif",
+      "questionNum": 625,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrz0012ii04eqv1lugy",
+      "questionNum": 626,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrz0013ii04dc75udba",
+      "questionNum": 627,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrz0014ii04ldebj0cd",
+      "questionNum": 628,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrz0015ii04o7t8djmm",
+      "questionNum": 629,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrz0016ii04ke45zei7",
+      "questionNum": 630,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrz0017ii04yfi5oxhq",
+      "questionNum": 631,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrz0018ii04rjvjz5rk",
+      "questionNum": 632,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrz0019ii04n0uo2awe",
+      "questionNum": 633,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrz001aii04124efgrn",
+      "questionNum": 634,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrz001bii04n9jig3e4",
+      "questionNum": 635,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrz001cii0412w4jy2g",
+      "questionNum": 636,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrz001dii04vrfyphq7",
+      "questionNum": 637,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrz001eii04pa38ido1",
+      "questionNum": 638,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrz001fii0437r7jdrq",
+      "questionNum": 639,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrz001gii04gs10kg69",
+      "questionNum": 640,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrz001hii04qfryco7a",
+      "questionNum": 641,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrz001iii04p904rejh",
+      "questionNum": 642,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrz001jii04xotn2r40",
+      "questionNum": 643,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymrz001kii042zdqv175",
+      "questionNum": 644,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms0001lii047urhi1xj",
+      "questionNum": 645,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms0001mii04wjaezyu5",
+      "questionNum": 646,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms0001nii04h3tmqh18",
+      "questionNum": 647,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms0001oii04sapfwy8c",
+      "questionNum": 648,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms0001pii04lw47p2zq",
+      "questionNum": 649,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms0001qii0479i801va",
+      "questionNum": 650,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms0001rii04zla188e2",
+      "questionNum": 651,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms0001sii04ivxhfep1",
+      "questionNum": 652,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms0001tii04i87s9p0a",
+      "questionNum": 653,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms0001uii04453dnsvo",
+      "questionNum": 654,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms0001vii04ehh11so2",
+      "questionNum": 655,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms0001wii04t5l73jhj",
+      "questionNum": 656,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms0001xii04t9j9ph2c",
+      "questionNum": 657,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms0001yii04e0zruge1",
+      "questionNum": 658,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms0001zii04xwkod6hv",
+      "questionNum": 659,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms00020ii04k798fzti",
+      "questionNum": 660,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms00021ii04ywug8e5p",
+      "questionNum": 661,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms00022ii04439zk6x7",
+      "questionNum": 662,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms10023ii048tecw8zt",
+      "questionNum": 663,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms10024ii04b8kj1uye",
+      "questionNum": 664,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms10025ii04z5zp18uo",
+      "questionNum": 665,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms10026ii042lrntcne",
+      "questionNum": 666,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms10027ii04jfxjgts6",
+      "questionNum": 667,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms10028ii04z790r7at",
+      "questionNum": 668,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms10029ii04hex6ihaz",
+      "questionNum": 669,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms1002aii042j7v959p",
+      "questionNum": 670,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms1002bii04irrl8bxb",
+      "questionNum": 671,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms1002cii04dyccejl6",
+      "questionNum": 672,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms1002dii04gcc6akja",
+      "questionNum": 673,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms1002eii0458w7hrdq",
+      "questionNum": 674,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms1002fii042jrsflto",
+      "questionNum": 675,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms1002gii04noi8xj70",
+      "questionNum": 676,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms1002hii04jqarzntz",
+      "questionNum": 677,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms1002iii04uwdi0jbp",
+      "questionNum": 678,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms1002jii04xolboya7",
+      "questionNum": 679,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms1002kii049ymasrux",
+      "questionNum": 680,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms2002lii04jat5ep3i",
+      "questionNum": 681,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms2002mii04p8h001qn",
+      "questionNum": 682,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms2002nii04es2005dl",
+      "questionNum": 683,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms2002oii04natby6ck",
+      "questionNum": 684,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms2002pii04psavfpjn",
+      "questionNum": 685,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms2002qii04e2y6oelw",
+      "questionNum": 686,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms2002rii04mqpvolcw",
+      "questionNum": 687,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms2002sii04fvrkccvn",
+      "questionNum": 688,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms2002tii04umfdzi5w",
+      "questionNum": 689,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms2002uii0449kuf1k4",
+      "questionNum": 690,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms2002vii04lx3rzv5z",
+      "questionNum": 691,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms2002wii04tv4vix7z",
+      "questionNum": 692,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms2002xii04n3jopa6r",
+      "questionNum": 693,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms2002yii04tvjt9l3m",
+      "questionNum": 721,
+      "answer": "⑤",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms2002zii04tg9dcnl8",
+      "questionNum": 722,
+      "answer": "③",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms20030ii04zcx8b0r1",
+      "questionNum": 723,
+      "answer": "①, ④",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms20031ii040ycg18zg",
+      "questionNum": 724,
+      "answer": "③",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms30032ii04kvhxsxex",
+      "questionNum": 725,
+      "answer": "③",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms30033ii04eao1yndk",
+      "questionNum": 726,
+      "answer": "(1) $6x-3=2x$\n(2) $5x+2=6x-3$",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms30034ii04c8ewy4gb",
+      "questionNum": 727,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms30035ii04gge04ns5",
+      "questionNum": 728,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms30036ii04ckcdyg6a",
+      "questionNum": 729,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms30037ii042gr5n0xt",
+      "questionNum": 730,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms30038ii04h0tw86yw",
+      "questionNum": 731,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms30039ii04n3uixoz5",
+      "questionNum": 732,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms3003aii043flyc3os",
+      "questionNum": 733,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms3003bii04f223xf87",
+      "questionNum": 734,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms3003cii046y04cz6x",
+      "questionNum": 735,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms3003dii04wt5x8yey",
+      "questionNum": 736,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms3003eii0465sxu697",
+      "questionNum": 737,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms3003fii047j942yhl",
+      "questionNum": 738,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms3003gii040tks6nh0",
+      "questionNum": 739,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms3003hii04jjt2qxh8",
+      "questionNum": 740,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms3003iii04ydjlqyt9",
+      "questionNum": 741,
+      "answer": "⑤",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms3003jii04ow7ptact",
+      "questionNum": 742,
+      "answer": "⑤",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms4003kii04ihex8xg6",
+      "questionNum": 743,
+      "answer": "①",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms4003lii04il5558jk",
+      "questionNum": 744,
+      "answer": "③",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms4003mii04qlxyh1b6",
+      "questionNum": 745,
+      "answer": "①, ⑤",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms4003nii04vgxvfyag",
+      "questionNum": 746,
+      "answer": "④",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms4003oii04ipycm3q7",
+      "questionNum": 747,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms4003pii04kxlp4l1k",
+      "questionNum": 748,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms4003qii04y6s7zhld",
+      "questionNum": 749,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms4003rii0482yoi3ur",
+      "questionNum": 750,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms4003sii049fol446u",
+      "questionNum": 751,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms4003tii04udwvbay3",
+      "questionNum": 752,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms4003uii04ew005u80",
+      "questionNum": 753,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms4003vii04s1ly7xlq",
+      "questionNum": 754,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms4003wii04f0c39u3y",
+      "questionNum": 755,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms4003xii04h4jy22ep",
+      "questionNum": 756,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms4003yii04qcgl83px",
+      "questionNum": 757,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms4003zii04r3y05skv",
+      "questionNum": 758,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms40040ii040ne39s6q",
+      "questionNum": 759,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms40041ii04tihj9kz8",
+      "questionNum": 760,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms50042ii04o6omth3x",
+      "questionNum": 761,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms50043ii04483vygus",
+      "questionNum": 762,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms50044ii04rcfk670r",
+      "questionNum": 763,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms50045ii04qseutbkp",
+      "questionNum": 764,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms50046ii04cjmzg908",
+      "questionNum": 765,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms50047ii04j3w4wgi5",
+      "questionNum": 766,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms50048ii04vi8aqlcx",
+      "questionNum": 767,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms50049ii04xcy59vln",
+      "questionNum": 768,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms5004aii04v8sgno9n",
+      "questionNum": 769,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms5004bii04cgbx2srj",
+      "questionNum": 770,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms5004cii04ugrcxwpw",
+      "questionNum": 771,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms5004dii04ov3tehle",
+      "questionNum": 772,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms5004eii04ltvyibpg",
+      "questionNum": 773,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms5004fii04fnjtkfxb",
+      "questionNum": 774,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms5004gii04450l939k",
+      "questionNum": 775,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms5004hii04sudall2n",
+      "questionNum": 776,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms5004iii04k4t1s23w",
+      "questionNum": 777,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms5004jii042e10owgm",
+      "questionNum": 778,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms5004kii04u6icljiq",
+      "questionNum": 779,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms5004lii04k0m012co",
+      "questionNum": 780,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms6004mii045opyby0h",
+      "questionNum": 781,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms6004nii04i8abzfl9",
+      "questionNum": 782,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms6004oii04vcjnvutt",
+      "questionNum": 783,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms6004pii04hx22ocri",
+      "questionNum": 784,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms6004qii04nlnnhuju",
+      "questionNum": 785,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms6004rii04r9cinxqc",
+      "questionNum": 786,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms6004sii04xjwn9m9o",
+      "questionNum": 787,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms6004tii04knboso6t",
+      "questionNum": 788,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms6004uii04xrg4ojp7",
+      "questionNum": 789,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms6004vii04dhzjni4a",
+      "questionNum": 790,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms6004wii0473e3boni",
+      "questionNum": 791,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms6004xii04rdelfltx",
+      "questionNum": 792,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms6004yii04b28cevrg",
+      "questionNum": 793,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms6004zii04delwj8bo",
+      "questionNum": 794,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms60050ii04q3t54gcn",
+      "questionNum": 795,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms60051ii0480vxq9vh",
+      "questionNum": 796,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms60052ii04x9l64sho",
+      "questionNum": 797,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms60053ii042zk44hf9",
+      "questionNum": 798,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms70054ii04srb2jxj7",
+      "questionNum": 799,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms70055ii0479op5gs9",
+      "questionNum": 800,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms70056ii04lmwk9eso",
+      "questionNum": 801,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms70057ii048ine2fw4",
+      "questionNum": 802,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms70058ii045zvy5htl",
+      "questionNum": 803,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms70059ii04yr5e6gn2",
+      "questionNum": 804,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms7005aii04i82en1vi",
+      "questionNum": 805,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms7005bii04w9l1pg9m",
+      "questionNum": 806,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms7005cii04c15wwly5",
+      "questionNum": 816,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms7005dii048d8rjkil",
+      "questionNum": 817,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms7005eii04mr9ku9kn",
+      "questionNum": 818,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms7005fii04dcva6gec",
+      "questionNum": 819,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms7005gii04s5shgsm9",
+      "questionNum": 820,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms7005hii041clxuspv",
+      "questionNum": 821,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms7005iii04zhuui2mf",
+      "questionNum": 822,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms7005jii04xvhgef25",
+      "questionNum": 823,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms7005kii0405vgut5e",
+      "questionNum": 824,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms8005lii04hptxeryv",
+      "questionNum": 825,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms8005mii04v6alwf2s",
+      "questionNum": 826,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms8005nii04vtaqfuhq",
+      "questionNum": 827,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms8005oii04k2sptv54",
+      "questionNum": 828,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms8005pii04fygtt370",
+      "questionNum": 829,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms8005qii04pd6c8yzt",
+      "questionNum": 830,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms8005rii0487x994is",
+      "questionNum": 831,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms8005sii0460mw14kx",
+      "questionNum": 832,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms8005tii04a9ypb7ks",
+      "questionNum": 833,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms8005uii04zn97cgk6",
+      "questionNum": 834,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms8005vii040yx3dydb",
+      "questionNum": 835,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms8005wii04igsjvqqi",
+      "questionNum": 836,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms8005xii04jkoyrqld",
+      "questionNum": 837,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms8005yii047sbkufw9",
+      "questionNum": 838,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms8005zii04nc8u1caw",
+      "questionNum": 839,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms80060ii04refiqiud",
+      "questionNum": 840,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms80061ii045dbkcmvo",
+      "questionNum": 841,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms90062ii04h3qcg3kr",
+      "questionNum": 842,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms90063ii04cawt7rb8",
+      "questionNum": 843,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms90064ii040thizu18",
+      "questionNum": 844,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms90065ii04fpzk640x",
+      "questionNum": 845,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms90066ii04i3rc5ou5",
+      "questionNum": 846,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms90067ii04gkniw8jd",
+      "questionNum": 847,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms90068ii048jnwx9gt",
+      "questionNum": 848,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms90069ii04pj8blixh",
+      "questionNum": 849,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms9006aii04jgx92cmb",
+      "questionNum": 850,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms9006bii04g0qxuzpl",
+      "questionNum": 851,
+      "answer": "120",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms9006cii04u2pxmkau",
+      "questionNum": 852,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms9006dii04lrsb8xx5",
+      "questionNum": 853,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms9006eii0437wop7oa",
+      "questionNum": 854,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms9006fii04knv7e0lg",
+      "questionNum": 855,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms9006gii04sfyywd1u",
+      "questionNum": 856,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms9006hii046ghlz7bg",
+      "questionNum": 857,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms9006iii04tv0wem3k",
+      "questionNum": 858,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpyms9006jii046ji5w22y",
+      "questionNum": 859,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsa006kii04h6bb3936",
+      "questionNum": 860,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsa006lii04ylyp8qcg",
+      "questionNum": 861,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsa006mii04fe2l6ox0",
+      "questionNum": 862,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsa006nii042c8nnjvt",
+      "questionNum": 863,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsa006oii04osqjisp4",
+      "questionNum": 864,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsa006pii04tx4ytntm",
+      "questionNum": 865,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsa006qii04wih9ic5i",
+      "questionNum": 866,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsa006rii040hzey3ci",
+      "questionNum": 867,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsa006sii04ilor1bub",
+      "questionNum": 868,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsa006tii04xsa4a3w1",
+      "questionNum": 869,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsa006uii04h7iudj27",
+      "questionNum": 870,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsa006vii04d1wuaswz",
+      "questionNum": 871,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsa006wii04e1n76xpo",
+      "questionNum": 872,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsa006xii0474nfswfw",
+      "questionNum": 873,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsa006yii04q2320w5j",
+      "questionNum": 874,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsa006zii04t3dc83hh",
+      "questionNum": 875,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsa0070ii04xdugrjpw",
+      "questionNum": 876,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsa0071ii044jc086j5",
+      "questionNum": 877,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsb0072ii041age42rr",
+      "questionNum": 878,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsb0073ii04mtel4396",
+      "questionNum": 879,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsb0074ii04hknqcsbn",
+      "questionNum": 880,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsb0075ii04ywiylg07",
+      "questionNum": 881,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsb0076ii04zwf8zkl2",
+      "questionNum": 882,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsb0077ii04a248keft",
+      "questionNum": 883,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsb0078ii048i0xirje",
+      "questionNum": 884,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsb0079ii043ft3e5iy",
+      "questionNum": 885,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsb007aii04hdt4453v",
+      "questionNum": 886,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsb007bii04gfocodi5",
+      "questionNum": 887,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsb007cii04ss9jfiwq",
+      "questionNum": 888,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsb007dii04o3gzsfem",
+      "questionNum": 889,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsb007eii04dh8k6pot",
+      "questionNum": 890,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsb007fii04i1xr5px2",
+      "questionNum": 891,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsb007gii04l5hpytt8",
+      "questionNum": 892,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsb007hii0475hn05dv",
+      "questionNum": 893,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsc007iii04ycoaiu4n",
+      "questionNum": 894,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsc007jii04eh3dpm31",
+      "questionNum": 895,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsc007kii049yszhh56",
+      "questionNum": 896,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsc007lii04fjtmodb1",
+      "questionNum": 897,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsc007mii0415gbhmcy",
+      "questionNum": 898,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsc007nii040slpqd1j",
+      "questionNum": 899,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsc007oii045q7f3ejn",
+      "questionNum": 900,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsc007pii04re1uejdw",
+      "questionNum": 901,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsc007qii04ynzdizm8",
+      "questionNum": 902,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsc007rii04ksumn1z2",
+      "questionNum": 903,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsc007sii04ckanqbra",
+      "questionNum": 904,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsc007tii04mu18mpv3",
+      "questionNum": 905,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsc007uii04kvdytf1j",
+      "questionNum": 906,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsc007vii04yyrw1nl8",
+      "questionNum": 907,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsc007wii04j2sufc4z",
+      "questionNum": 908,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsd007xii04b43vvci4",
+      "questionNum": 909,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsd007yii04vzecr4c1",
+      "questionNum": 910,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsd007zii04wdmsu7qy",
+      "questionNum": 911,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsd0080ii04w2nyjznr",
+      "questionNum": 912,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsd0081ii04h5zt5p1f",
+      "questionNum": 913,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    },
+    {
+      "id": "cmnzpymsd0082ii04z8gkr37v",
+      "questionNum": 914,
+      "answer": "미입력",
+      "explanation": null,
+      "scoringCriteria": null
+    }
+  ]
+}
