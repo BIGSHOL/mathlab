@@ -376,7 +376,8 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
                 items.push(line.nodes);
               }
             }
-            const effectiveCols = resolveCols(parsedCols ?? DEFAULT_BOX_COLS, items.length);
+            // <보기> 마커가 있을 때만 그리드 적용. 없으면 1열(계산식 등 일반 blockquote 보호)
+            const effectiveCols = parsedCols !== null ? resolveCols(parsedCols, items.length) : 1;
 
             return (
               <div className="border border-slate-300 px-5 py-3 my-3 rounded-md bg-slate-50 text-slate-900 not-italic w-fit max-w-full">

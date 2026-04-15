@@ -34,6 +34,18 @@ interface EditableMathRendererProps {
   diagramSvgs?: DiagramSvgItem[];
 }
 
+/** HTML entity 디코딩 — MathRenderer(rehype-raw)와 뷰 일관성 유지용 */
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&nbsp;/g, '\u00A0')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, n) => String.fromCharCode(parseInt(n, 16)))
+    .replace(/&amp;/g, '&');
+}
+
 function parseImageTitle(title: string | undefined): { width?: string; align?: string } {
   if (!title) return {};
   const parts = title.trim().split(/\s+/);
@@ -282,7 +294,8 @@ export function EditableMathRenderer({
         .join('\n')
         // 마크다운 백슬래시 이스케이프 해제 (\< → <, \> → > 등)
         .replace(/\\([<>\\*_`~\[\](){}#.!|+\-])/g, '$1');
-      return <React.Fragment key={key}>{renderTextWithDiagrams(display, key)}</React.Fragment>;
+      const decoded = decodeHtmlEntities(display);
+      return <React.Fragment key={key}>{renderTextWithDiagrams(decoded, key)}</React.Fragment>;
     }
 
     if (seg.type === 'image') {
@@ -369,7 +382,7 @@ export function EditableMathRenderer({
           const lineTexts: string[] = [''];
           block.segs.forEach((seg, si) => {
             if (seg.type === 'text') {
-              const display = seg.text.replace(/^>\s?/gm, '');
+              const display = decodeHtmlEntities(seg.text.replace(/^>\s?/gm, ''));
               const parts = display.split('\n');
               parts.forEach((part, pi) => {
                 if (pi > 0) {
