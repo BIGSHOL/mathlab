@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 268.3471648731214 185" width="268.3471648731214" height="185" style="font-family: 'Pretendard', sans-serif; font-size: 14px;">
+  <g transform="translate(10, 10)">
+    <polygon points="40,115 120,115 120,35 40,35" fill="#3B82F6" fill-opacity="0.1" stroke="#3B82F6" stroke-width="1.5"/>
+    <polygon points="40,35,120,35,173.34716487312141,4.200000000000003,93.34716487312143,4.200000000000003" fill="#3B82F6" fill-opacity="0.08" stroke="#3B82F6" stroke-width="1.5"/>
+    <polygon points="120,115,120,35,173.34716487312141,4.200000000000003,173.34716487312141,84.2" fill="#3B82F6" fill-opacity="0.05" stroke="#3B82F6" stroke-width="1.5"/>
+    <line x1="93.34716487312143" y1="84.2" x2="173.34716487312141" y2="84.2" stroke="#999" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="93.34716487312143" y1="84.2" x2="93.34716487312143" y2="4.200000000000003" stroke="#999" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="40" y1="115" x2="93.34716487312143" y2="84.2" stroke="#999" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="60" y1="115" x2="60" y2="35" stroke="#3B82F6" stroke-width="0.8" stroke-opacity="0.55"/>
+    <line x1="80" y1="115" x2="80" y2="35" stroke="#3B82F6" stroke-width="0.8" stroke-opacity="0.55"/>
+    <line x1="100" y1="115" x2="100" y2="35" stroke="#3B82F6" stroke-width="0.8" stroke-opacity="0.55"/>
+    <line x1="40" y1="61.66666666666667" x2="120" y2="61.66666666666667" stroke="#3B82F6" stroke-width="0.8" stroke-opacity="0.55"/>
+    <line x1="40" y1="88.33333333333334" x2="120" y2="88.33333333333334" stroke="#3B82F6" stroke-width="0.8" stroke-opacity="0.55"/>
+    <line x1="60" y1="35" x2="113.34716487312143" y2="4.200000000000003" stroke="#3B82F6" stroke-width="0.8" stroke-opacity="0.55"/>
+    <line x1="80" y1="35" x2="133.34716487312141" y2="4.200000000000003" stroke="#3B82F6" stroke-width="0.8" stroke-opacity="0.55"/>
+    <line x1="100" y1="35" x2="153.34716487312141" y2="4.200000000000003" stroke="#3B82F6" stroke-width="0.8" stroke-opacity="0.55"/>
+    <line x1="66.67358243656071" y1="19.6" x2="146.6735824365607" y2="19.6" stroke="#3B82F6" stroke-width="0.8" stroke-opacity="0.55"/>
+    <line x1="120" y1="88.33333333333334" x2="173.34716487312141" y2="57.53333333333334" stroke="#3B82F6" stroke-width="0.8" stroke-opacity="0.55"/>
+    <line x1="120" y1="61.66666666666667" x2="173.34716487312141" y2="30.866666666666674" stroke="#3B82F6" stroke-width="0.8" stroke-opacity="0.55"/>
+    <line x1="146.6735824365607" y1="99.6" x2="146.6735824365607" y2="19.6" stroke="#3B82F6" stroke-width="0.8" stroke-opacity="0.55"/>
+    <polygon points="40,115 60,115 60,88.33333333333333 40,88.33333333333333" fill="#6D28D9" fill-opacity="0.9" stroke="#6D28D9" stroke-width="2"/>
+    <polygon points="40,88.33333333333333,60,88.33333333333333,86.67358243656071,72.93333333333334,66.67358243656071,72.93333333333334" fill="#6D28D9" fill-opacity="0.7" stroke="#6D28D9" stroke-width="2"/>
+    <polygon points="60,115,60,88.33333333333333,86.67358243656071,72.93333333333334,86.67358243656071,99.6" fill="#6D28D9" fill-opacity="0.55" stroke="#6D28D9" stroke-width="2"/>
+    <path d="M 40.0 115.0 Q 48.0 120.6 56.0 124.0" fill="none" stroke="#555" stroke-width="0.8" stroke-dasharray="5,3"/>
+    <path d="M 104.0 124.0 Q 112.0 120.6 120.0 115.0" fill="none" stroke="#555" stroke-width="0.8" stroke-dasharray="5,3"/>
+    <foreignObject x="59.1" y="122.3" width="41.800000000000004" height="23.400000000000002"><div xmlns="http://www.w3.org/1999/xhtml" style="display:flex;align-items:center;justify-content:center;height:100%;font-size:13px;"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">90</span><span class="mord mathnormal">c</span><span class="mord mathnormal">m</span></span></span></span></div></foreignObject>
+    <path d="M 120.0 115.0 Q 132.5 114.1 142.2 112.3" fill="none" stroke="#555" stroke-width="0.8" stroke-dasharray="5,3"/>
+    <path d="M 174.2 93.8 Q 175.2 89.4 173.3 84.2" fill="none" stroke="#555" stroke-width="0.8" stroke-dasharray="5,3"/>
+    <foreignObject x="151.8" y="98.3" width="41.800000000000004" height="23.400000000000002"><div xmlns="http://www.w3.org/1999/xhtml" style="display:flex;align-items:center;justify-content:center;height:100%;font-size:13px;"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">60</span><span class="mord mathnormal">c</span><span class="mord mathnormal">m</span></span></span></span></div></foreignObject>
+    <path d="M 173.3 4.2 Q 178.9 12.2 182.3 20.2" fill="none" stroke="#555" stroke-width="0.8" stroke-dasharray="5,3"/>
+    <path d="M 182.3 68.2 Q 178.9 76.2 173.3 84.2" fill="none" stroke="#555" stroke-width="0.8" stroke-dasharray="5,3"/>
+    <foreignObject x="174.2" y="32.5" width="50.25" height="23.400000000000002"><div xmlns="http://www.w3.org/1999/xhtml" style="display:flex;align-items:center;justify-content:center;height:100%;font-size:13px;"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">120</span><span class="mord mathnormal">c</span><span class="mord mathnormal">m</span></span></span></span></div></foreignObject>
+  </g>
+</svg>

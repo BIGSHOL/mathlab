@@ -3,6 +3,11 @@
 import React, { useMemo } from 'react';
 import katex from 'katex';
 import { parseBoxCols, resolveCols, DEFAULT_BOX_COLS } from '@/lib/utils/box-grid';
+import {
+  decodeHtmlEntities as sharedDecodeHtmlEntities,
+  parseImageTitle as sharedParseImageTitle,
+  preprocessMathText,
+} from './shared/text-preprocess';
 
 interface Segment {
   type: 'text' | 'math' | 'image' | 'blank';
@@ -34,33 +39,8 @@ interface EditableMathRendererProps {
   diagramSvgs?: DiagramSvgItem[];
 }
 
-/** HTML entity 디코딩 — MathRenderer(rehype-raw)와 뷰 일관성 유지용 */
-function decodeHtmlEntities(text: string): string {
-  return text
-    .replace(/&nbsp;/g, '\u00A0')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, n) => String.fromCharCode(parseInt(n, 16)))
-    .replace(/&amp;/g, '&');
-}
-
-function parseImageTitle(title: string | undefined): { width?: string; align?: string } {
-  if (!title) return {};
-  const parts = title.trim().split(/\s+/);
-  let width: string | undefined;
-  let align: string | undefined;
-  for (const part of parts) {
-    if (part.endsWith('%')) {
-      const num = parseInt(part);
-      if (num >= 10 && num <= 100) width = `${num}%`;
-    } else if (['left', 'center', 'right'].includes(part)) {
-      align = part;
-    }
-  }
-  return { width, align };
-}
+const decodeHtmlEntities = sharedDecodeHtmlEntities;
+const parseImageTitle = sharedParseImageTitle;
 
 /** 원본 content에서 blockquote (> 또는 >) 줄의 문자 범위 계산 */
 function computeBlockquoteRanges(content: string): [number, number][] {
@@ -95,6 +75,9 @@ export function EditableMathRenderer({
   className = '',
   diagramSvgs,
 }: EditableMathRendererProps) {
+  // 공유 수식 전처리 (\(\)→$, \dfrac→\frac, $A$$B$ 글루 등) — MathRenderer와 동일 입력 보장
+  const preprocessed = useMemo(() => preprocessMathText(content), [content]);
+
   const segments = useMemo(() => {
     const result: Segment[] = [];
     // 이미지, 수식, 빈칸 마커를 모두 파싱
@@ -102,11 +85,11 @@ export function EditableMathRenderer({
     let lastEnd = 0;
     let match;
 
-    while ((match = combinedRegex.exec(content)) !== null) {
+    while ((match = combinedRegex.exec(preprocessed)) !== null) {
       if (match.index > lastEnd) {
         result.push({
           type: 'text',
-          text: content.slice(lastEnd, match.index),
+          text: preprocessed.slice(lastEnd, match.index),
           start: lastEnd,
           end: match.index,
         });
@@ -157,20 +140,20 @@ export function EditableMathRenderer({
       lastEnd = match.index + match[0].length;
     }
 
-    if (lastEnd < content.length) {
+    if (lastEnd < preprocessed.length) {
       result.push({
         type: 'text',
-        text: content.slice(lastEnd),
+        text: preprocessed.slice(lastEnd),
         start: lastEnd,
-        end: content.length,
+        end: preprocessed.length,
       });
     }
 
     return result;
-  }, [content]);
+  }, [preprocessed]);
 
   // blockquote 범위 계산 (줄 단위)
-  const bqRanges = useMemo(() => computeBlockquoteRanges(content), [content]);
+  const bqRanges = useMemo(() => computeBlockquoteRanges(preprocessed), [preprocessed]);
   const isInBq = (pos: number) => bqRanges.some(([s, e]) => pos >= s && pos < e);
 
   // 텍스트 세그먼트가 blockquote 경계를 넘으면 분할
@@ -189,16 +172,16 @@ export function EditableMathRenderer({
       let pos = seg.start;
       for (const boundary of sorted) {
         if (boundary > pos) {
-          result.push({ type: 'text', text: content.slice(pos, boundary), start: pos, end: boundary });
+          result.push({ type: 'text', text: preprocessed.slice(pos, boundary), start: pos, end: boundary });
         }
         pos = boundary;
       }
       if (pos < seg.end) {
-        result.push({ type: 'text', text: content.slice(pos, seg.end), start: pos, end: seg.end });
+        result.push({ type: 'text', text: preprocessed.slice(pos, seg.end), start: pos, end: seg.end });
       }
     }
     return result;
-  }, [segments, bqRanges, content]);
+  }, [segments, bqRanges, preprocessed]);
 
   // 세그먼트를 blockquote/normal 블록으로 그룹화
   const blocks = useMemo(() => {

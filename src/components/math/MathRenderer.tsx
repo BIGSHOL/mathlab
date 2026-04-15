@@ -8,6 +8,7 @@ import remarkBreaks from 'remark-breaks';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import { parseBoxCols, resolveCols, DEFAULT_BOX_COLS } from '@/lib/utils/box-grid';
+import { parseImageTitle as sharedParseImageTitle, preprocessMathText } from './shared/text-preprocess';
 
 interface DiagramSvgItem {
   svg: string;
@@ -25,22 +26,7 @@ interface MathRendererProps {
   onDiagramClick?: (idx: number) => void;
 }
 
-function parseImageTitle(title: string | undefined): { width?: string; align?: string } {
-  if (!title) return {};
-  const parts = title.trim().split(/\s+/);
-  let width: string | undefined;
-  let align: string | undefined;
-
-  for (const part of parts) {
-    if (part.endsWith('%')) {
-      const num = parseInt(part);
-      if (num >= 10 && num <= 100) width = `${num}%`;
-    } else if (['left', 'center', 'right'].includes(part)) {
-      align = part;
-    }
-  }
-  return { width, align };
-}
+const parseImageTitle = sharedParseImageTitle;
 
 export function MathRenderer({ content, className = '', inline, diagramSvgs, onDiagramClick }: MathRendererProps) {
   // [그림] / [그림1] / [그림2] 플레이스홀더를 diagramSvgs의 인라인 SVG로 교체
@@ -99,64 +85,8 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
     );
   }
 
-  // LLM 출력에서 많이 쓰이는 \(\), \[\] 형태를 $와 $$로 교체
-  svgReplacedContent = svgReplacedContent
-    .replace(/\\\([\s\S]*?\\\)/g, (match, p1) => `$${p1}$`)
-    .replace(/\\\[[\s\S]*?\\\]/g, (match, p1) => `$$$${p1}$$$$`);
-
-  // 인접 인라인 수식 글루 복원: "$A$$B$" → "$A$ $B$"
-  // DB에 공백 없이 붙은 두 inline이 저장된 경우, $$가 block 구분자로 오인되어 파싱 실패.
-  // A, B 모두 단일 줄 / $ 미포함일 때만 분리. 여러 번 반복 적용하여 연쇄 케이스 대응.
-  for (let i = 0; i < 5; i++) {
-    const next = svgReplacedContent.replace(
-      /\$([^$\n]+)\$\$([^$\n]+)\$/g,
-      (_m, a, b) => `$${a}$ $${b}$`,
-    );
-    if (next === svgReplacedContent) break;
-    svgReplacedContent = next;
-  }
-
-  // 인라인 $...$ 안에 multi-line 환경(\begin{cases|align|array|matrix|pmatrix|bmatrix|vmatrix|split|gather})이
-  // 들어있으면 블록 수식 $$...$$로 자동 승격 (KaTeX가 인라인에서 제대로 렌더 못함)
-  // ⚠️ 이미 $$...$$ 인 부분은 건드리지 않도록 앞/뒤에 $가 없어야 함 (negative lookbehind/ahead)
-  const MULTILINE_ENV = /\\begin\{(cases|align|aligned|array|matrix|pmatrix|bmatrix|vmatrix|split|gather|gathered)\}/;
-  svgReplacedContent = svgReplacedContent.replace(
-    /(?<!\$)\$(?!\$)((?:[^$\\]|\\.)+?)(?<!\$)\$(?!\$)/g,
-    (match, inner) => (MULTILINE_ENV.test(inner) ? `$$${inner}$$` : match),
-  );
-
-  // 인라인 수식($...$) 내 \dfrac → \frac 변환 + KaTeX 미지원 유니코드 기호 치환
-  // \dfrac은 displaystyle 강제로 분수가 거대해짐. \frac은 인라인에서 자연스러운 크기
-  // ℃, ℉, Ω, Å 등 KaTeX Main-Regular에 없는 문자는 LaTeX 명령어로 변환
-  const UNICODE_MATH_MAP: Array<[RegExp, string]> = [
-    [/℃/g, '{}^\\circ\\mathrm{C}'],
-    [/℉/g, '{}^\\circ\\mathrm{F}'],
-    [/Ω/g, '\\Omega'],
-    [/Å/g, '\\mathrm{\\AA}'],
-    [/㎡/g, '\\mathrm{m}^2'],
-    [/㎥/g, '\\mathrm{m}^3'],
-    [/㎝/g, '\\mathrm{cm}'],
-    [/㎜/g, '\\mathrm{mm}'],
-    [/㎞/g, '\\mathrm{km}'],
-    [/㎏/g, '\\mathrm{kg}'],
-  ];
-  svgReplacedContent = svgReplacedContent.replace(
-    /\$(?!\$)((?:[^$\\]|\\.)*)\$/g,
-    (match, inner) => {
-      let fixed = inner.replace(/\\dfrac(?![a-zA-Z])/g, '\\frac');
-      for (const [re, repl] of UNICODE_MATH_MAP) fixed = fixed.replace(re, repl);
-      return `$${fixed}$`;
-    }
-  );
-  // 블록 수식($$...$$)도 동일 처리
-  svgReplacedContent = svgReplacedContent.replace(
-    /\$\$([\s\S]*?)\$\$/g,
-    (_m, inner) => {
-      let fixed = inner;
-      for (const [re, repl] of UNICODE_MATH_MAP) fixed = fixed.replace(re, repl);
-      return `$$${fixed}$$`;
-    }
-  );
+  // 공유 수식 전처리 (\(\)→$, $A$$B$ 글루, \dfrac→\frac, 유니코드 등) — EditableMathRenderer와 동일
+  svgReplacedContent = preprocessMathText(svgReplacedContent);
 
   // [한글 설명] 패턴을 스타일링된 HTML 플레이스홀더로 변환
   // 단, 마크다운 이미지 ![alt](url), 수학 구간 표기 [-2, 4], 보기 항목은 제외
