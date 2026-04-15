@@ -261,7 +261,7 @@ export function FractionCircleForm({ params, onChange }: SubFormProps) {
 
 export function NumberLineForm({ params, onChange }: SubFormProps) {
   const p = params;
-  const marks = Array.isArray(p.marks) ? p.marks as { value: number; label?: string; color?: string; showDot?: boolean }[] : [];
+  const marks = Array.isArray(p.marks) ? p.marks as { value: number; label?: string; color?: string; showDot?: boolean; labelBelow?: boolean }[] : [];
   const highlights = Array.isArray(p.highlights) ? p.highlights as { from: number; to: number; label?: string; color?: string; dashed?: boolean }[] : [];
 
   return (
