@@ -10,6 +10,72 @@ import rehypeRaw from 'rehype-raw';
 import { parseBoxCols, resolveCols, DEFAULT_BOX_COLS } from '@/lib/utils/box-grid';
 import { parseImageTitle as sharedParseImageTitle, preprocessMathText } from './shared/text-preprocess';
 
+interface MathOccurrence {
+  latex: string;
+  start: number;
+  end: number;
+}
+
+/** 원본 source에서 모든 $...$ / $$...$$ 위치/latex를 순서대로 수집 */
+function collectMathOccurrences(source: string): MathOccurrence[] {
+  const result: MathOccurrence[] = [];
+  let i = 0;
+  while (i < source.length) {
+    if (source[i] === '$' && source[i + 1] === '$') {
+      const end = source.indexOf('$$', i + 2);
+      if (end !== -1) {
+        result.push({ latex: source.slice(i + 2, end), start: i, end: end + 2 });
+        i = end + 2;
+        continue;
+      }
+    }
+    if (source[i] === '$' && source[i + 1] !== '$' && (i === 0 || source[i - 1] !== '$')) {
+      let j = i + 1;
+      while (j < source.length && source[j] !== '\n' && !(source[j] === '$' && source[j - 1] !== '\\' && source[j + 1] !== '$')) {
+        j++;
+      }
+      if (j < source.length && source[j] === '$') {
+        result.push({ latex: source.slice(i + 1, j), start: i, end: j + 1 });
+        i = j + 1;
+        continue;
+      }
+    }
+    i++;
+  }
+  return result;
+}
+
+/**
+ * rehype 플러그인: KaTeX 출력 노드 (span.katex / span.katex-display)를 순서대로 찾아
+ * 미리 수집한 math 위치/latex로 data-math-* 속성을 부여.
+ * 클릭 위임용 (data-math-latex / data-math-start / data-math-end).
+ */
+function rehypeMathPositions(occurrences: MathOccurrence[]) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (tree: any) => {
+    let idx = 0;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const walk = (node: any) => {
+      if (!node) return;
+      if (node.type === 'element' && node.tagName === 'span' && Array.isArray(node.properties?.className)) {
+        const cls: string[] = node.properties.className;
+        if (cls.includes('katex') || cls.includes('katex-display')) {
+          const occ = occurrences[idx++];
+          if (occ) {
+            node.properties['data-math-latex'] = occ.latex;
+            node.properties['data-math-start'] = String(occ.start);
+            node.properties['data-math-end'] = String(occ.end);
+            node.properties.className = [...cls, 'editable-math'];
+          }
+          return; // .katex 내부는 더 들어가지 않음 (중첩 .katex 없음)
+        }
+      }
+      if (Array.isArray(node.children)) node.children.forEach(walk);
+    };
+    walk(tree);
+  };
+}
+
 interface DiagramSvgItem {
   svg: string;
   label: string;
@@ -24,12 +90,22 @@ interface MathRendererProps {
   inline?: boolean;
   diagramSvgs?: DiagramSvgItem[];
   onDiagramClick?: (idx: number) => void;
+  /** 수식 클릭 시 호출. latex/start/end는 원본 content 기준 좌표 */
+  onMathClick?: (latex: string, start: number, end: number) => void;
 }
 
 const parseImageTitle = sharedParseImageTitle;
 
-export function MathRenderer({ content, className = '', inline, diagramSvgs, onDiagramClick }: MathRendererProps) {
-  // [그림] / [그림1] / [그림2] 플레이스홀더를 diagramSvgs의 인라인 SVG로 교체
+export function MathRenderer({ content, className = '', inline, diagramSvgs, onDiagramClick, onMathClick }: MathRendererProps) {
+  // onMathClick 모드: 원본 content에서 math 위치 사전 수집 (rehype 플러그인이 사용)
+  const mathOccurrences = React.useMemo(
+    () => (onMathClick ? collectMathOccurrences(content) : []),
+    [onMathClick, content],
+  );
+  const mathPositionsPlugin = React.useMemo(
+    () => (onMathClick ? rehypeMathPositions(mathOccurrences) : null),
+    [onMathClick, mathOccurrences],
+  );
   let svgReplacedContent = content;
   if (diagramSvgs && diagramSvgs.length > 0) {
     // SVG 교체 헬퍼: blockquote(>) 안이면 인라인, 밖이면 블록
@@ -85,8 +161,10 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
     );
   }
 
-  // 공유 수식 전처리 (\(\)→$, $A$$B$ 글루, \dfrac→\frac, 유니코드 등) — EditableMathRenderer와 동일
-  svgReplacedContent = preprocessMathText(svgReplacedContent);
+  // onMathClick 미사용 시에만 preprocessMathText 적용 (좌표 보존이 우선이라 wrap 모드는 스킵)
+  if (!onMathClick) {
+    svgReplacedContent = preprocessMathText(svgReplacedContent);
+  }
 
   // [한글 설명] 패턴을 스타일링된 HTML 플레이스홀더로 변환
   // 단, 마크다운 이미지 ![alt](url), 수학 구간 표기 [-2, 4], 보기 항목은 제외
@@ -105,12 +183,28 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
 
   return (
     <Tag
-      className={inline ? className : `prose prose-slate max-w-none prose-p:my-2 prose-headings:my-3 ${className}`}
-      onClick={onDiagramClick ? (e) => {
-        const el = (e.target as HTMLElement).closest('[data-diagram-idx]');
-        if (el) {
-          e.stopPropagation();
-          onDiagramClick(parseInt(el.getAttribute('data-diagram-idx')!));
+      className={`${inline ? className : `prose prose-slate max-w-none prose-p:my-2 prose-headings:my-3 ${className}`}${onMathClick ? ' math-clickable' : ''}`}
+      onClick={(onDiagramClick || onMathClick) ? (e) => {
+        const target = e.target as HTMLElement;
+        if (onMathClick) {
+          // KaTeX 출력은 .editable-math 안에 .katex 등으로 들어가므로 closest로 찾음
+          const mathEl = target.closest('[data-math-latex]');
+          if (mathEl) {
+            e.stopPropagation();
+            onMathClick(
+              mathEl.getAttribute('data-math-latex') || '',
+              Number(mathEl.getAttribute('data-math-start')),
+              Number(mathEl.getAttribute('data-math-end')),
+            );
+            return;
+          }
+        }
+        if (onDiagramClick) {
+          const el = target.closest('[data-diagram-idx]');
+          if (el) {
+            e.stopPropagation();
+            onDiagramClick(parseInt(el.getAttribute('data-diagram-idx')!));
+          }
         }
       } : undefined}
     >
@@ -118,6 +212,16 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
         /* 인라인 수식을 원자적 단위로 — 등호/답 부분이 줄 끝에서 분리되지 않도록 */
         .katex {
           display: inline-block;
+        }
+        /* 편집 가능한 수식 — onMathClick 활성 시에만 cursor/hover 표시 */
+        .math-clickable .editable-math {
+          cursor: pointer;
+          border-radius: 3px;
+          transition: background-color 0.15s, box-shadow 0.15s;
+        }
+        .math-clickable .editable-math:hover {
+          background-color: rgba(59, 130, 246, 0.1);
+          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
         }
         /* SVG 다이어그램 인라인 렌더링 */
         .diagram-svg-inline {
@@ -213,7 +317,11 @@ export function MathRenderer({ content, className = '', inline, diagramSvgs, onD
       `}</style>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]}
-        rehypePlugins={[rehypeRaw, [rehypeKatex, { strict: false }]]}
+        rehypePlugins={[
+          rehypeRaw,
+          [rehypeKatex, { strict: false }],
+          ...(mathPositionsPlugin ? [() => mathPositionsPlugin] : []),
+        ]}
         components={{
           p: inline
             ? ({ children }) => <span>{children}</span>

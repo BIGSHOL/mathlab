@@ -1,7 +1,7 @@
 'use client';
 
+import { useState } from 'react';
 import { MathRenderer } from '@/components/math/MathRenderer';
-import { EditableMathRenderer } from '@/components/math/EditableMathRenderer';
 
 interface TestCase {
   title: string;
@@ -89,7 +89,7 @@ const TEST_CASES: TestCase[] = [
   },
 ];
 
-function CompareCard({ tc }: { tc: TestCase }) {
+function CompareCard({ tc, onMathClick }: { tc: TestCase; onMathClick: (latex: string, start: number, end: number) => void }) {
   return (
     <div className="border border-slate-300 rounded-sm bg-white">
       <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
@@ -105,9 +105,9 @@ function CompareCard({ tc }: { tc: TestCase }) {
           </div>
         </div>
         <div className="p-4">
-          <div className="text-xs font-medium text-green-700 mb-2">EditableMathRenderer (편집 미리보기)</div>
-          <div className="border border-green-200 rounded-sm p-3 bg-green-50/30 min-h-[80px]">
-            <EditableMathRenderer content={tc.content} />
+          <div className="text-xs font-medium text-purple-700 mb-2">MathRenderer + onMathClick (편집 모드)</div>
+          <div className="border border-purple-200 rounded-sm p-3 bg-purple-50/30 min-h-[80px]">
+            <MathRenderer content={tc.content} onMathClick={onMathClick} />
           </div>
         </div>
       </div>
@@ -123,18 +123,36 @@ function CompareCard({ tc }: { tc: TestCase }) {
 }
 
 export default function RendererComparePage() {
+  const [lastClick, setLastClick] = useState<{ latex: string; start: number; end: number } | null>(null);
+  const handleMathClick = (latex: string, start: number, end: number) => {
+    setLastClick({ latex, start, end });
+  };
   return (
-    <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6 md:py-8 space-y-4">
+    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 md:py-8 space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">렌더러 비교 — 뷰 일관성 검증</h1>
+        <h1 className="text-2xl font-bold text-slate-900">렌더러 비교 — 뷰 일관성 검증 + B 통합 시연</h1>
         <p className="text-sm text-slate-600 mt-1">
-          MathRenderer (조회 모드) vs EditableMathRenderer (편집 모드) 같은 입력에 대한 출력을 좌우 비교.
-          공유 전처리 유틸 적용 후 두 렌더러의 결과가 동일해야 함.
+          좌: MathRenderer (조회) / 중: MathRenderer + onMathClick (B 통합) / 우: EditableMathRenderer (기존).
+          중간 컬럼의 수식을 클릭하면 아래에 latex/start/end가 표시됨.
         </p>
       </div>
 
+      <div className="sticky top-0 z-10 bg-white border border-slate-300 rounded-sm p-3 shadow-sm">
+        <div className="text-xs text-slate-600 mb-1">마지막 수식 클릭:</div>
+        {lastClick ? (
+          <div className="font-mono text-sm text-slate-900">
+            <span className="text-purple-700">latex</span>=<span className="bg-yellow-100 px-1">{lastClick.latex}</span>
+            {' '}
+            <span className="text-purple-700">start</span>={lastClick.start}{' '}
+            <span className="text-purple-700">end</span>={lastClick.end}
+          </div>
+        ) : (
+          <div className="text-sm text-slate-400">중간 컬럼의 수식을 클릭해보세요</div>
+        )}
+      </div>
+
       {TEST_CASES.map((tc, i) => (
-        <CompareCard key={i} tc={tc} />
+        <CompareCard key={i} tc={tc} onMathClick={handleMathClick} />
       ))}
     </div>
   );

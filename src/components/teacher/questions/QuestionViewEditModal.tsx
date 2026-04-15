@@ -20,7 +20,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { MathRenderer } from '@/components/math/MathRenderer';
-import { EditableMathRenderer } from '@/components/math/EditableMathRenderer';
 import { renderDiagram } from '@/lib/utils/svg-diagrams';
 import type { DiagramType } from '@/lib/utils/svg-diagrams/types';
 import { DIFFICULTY_LABELS, TYPE_LABELS, BOOK_LABELS } from '@/types';
@@ -585,7 +584,7 @@ function EditMode({
               onClick={!editForm.content ? () => setViewMode('raw') : undefined}
             >
               {editForm.content ? (
-                <EditableMathRenderer
+                <MathRenderer
                   content={editForm.content}
                   onMathClick={(latex, start, end) => openMathEdit('content', latex, start, end)}
                   diagramSvgs={diagramSvgs}
@@ -707,7 +706,7 @@ function EditMode({
               onClick={!editForm.explanation ? () => setViewMode('raw') : undefined}
             >
               {editForm.explanation ? (
-                <EditableMathRenderer
+                <MathRenderer
                   content={editForm.explanation}
                   onMathClick={(latex, start, end) => openMathEdit('explanation', latex, start, end)}
                 />
@@ -762,7 +761,7 @@ function EditMode({
         </div>
 
         <div className="text-sm">
-          <EditableMathRenderer
+          <MathRenderer
             content={editForm.content}
             onMathClick={(latex, start, end) => openMathEdit('content', latex, start, end)}
             diagramSvgs={diagramSvgs}
@@ -832,7 +831,7 @@ function EditMode({
                 {editForm.choices.map((c, i) =>
                   c ? (
                     <div key={i} className="px-3 py-2 bg-slate-50 rounded-sm border border-slate-100">
-                      <EditableMathRenderer
+                      <MathRenderer
                         content={c}
                         onMathClick={(latex, start, end) => openMathEdit('choice', latex, start, end, i)}
                       />
@@ -851,7 +850,7 @@ function EditMode({
               정답
             </h4>
             <div className="px-3 py-2 bg-primary/5 rounded-sm text-sm">
-              <EditableMathRenderer
+              <MathRenderer
                 content={editForm.answer}
                 onMathClick={(latex, start, end) => openMathEdit('answer', latex, start, end)}
               />
@@ -863,7 +862,7 @@ function EditMode({
           <div className="border-t border-slate-200 pt-2 mt-2">
             <h4 className="text-xs font-bold text-text-secondary mb-1.5">해설</h4>
             <div className="px-3 py-2 bg-white rounded-sm border border-slate-100 text-sm">
-              <EditableMathRenderer
+              <MathRenderer
                 content={editForm.explanation}
                 onMathClick={(latex, start, end) => openMathEdit('explanation', latex, start, end)}
               />

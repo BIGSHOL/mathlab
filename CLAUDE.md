@@ -491,8 +491,7 @@ PDF 업로드 → 수동 분석 → status=COMPLETED
 
 | 컴포넌트 | 용도 |
 |----------|------|
-| `MathRenderer` | 읽기전용 마크다운+LaTeX+SVG+GFM 테이블 렌더링 (remark-gfm + remark-math + rehype-katex) |
-| `EditableMathRenderer` | 수식 클릭 편집 모드 (onMathClick 콜백) |
+| `MathRenderer` | 마크다운+LaTeX+SVG+GFM 테이블 렌더링. `onMathClick` prop 시 수식 클릭 편집 모드 활성 (원본 content 좌표 보존). EditableMathRenderer 흡수 통합 (2026-04-15) |
 | `DiagramRenderer` | DiagramSpec / DiagramParam[] 통합 → SVG 렌더링 (런타임 판별) |
 | `DiagramEditorPopup` | 26개 DiagramParam 타입 GUI 편집기 |
 | `ProblemDisplay` | 문제 전체 표시 (보기, 풀이, 인쇄) |

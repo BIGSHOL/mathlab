@@ -21,7 +21,6 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Pagination } from '@/components/ui/Pagination';
 import { MathRenderer } from '@/components/math/MathRenderer';
-import { EditableMathRenderer } from '@/components/math/EditableMathRenderer';
 import { DiagramEditorPopup } from '@/components/math/DiagramEditorPopup';
 import { MathLivePopup } from '@/components/math/MathLivePopup';
 import { DIFFICULTY_LABELS, TYPE_LABELS } from '@/types';
@@ -894,7 +893,7 @@ function EditForm({ problem, onUpdate, onClose }: EditFormProps) {
             <div className="mt-2 flex items-start gap-2">
               <span className="text-xs font-medium text-blue-600 shrink-0 mt-0.5">풀이</span>
               <div className="text-sm">
-                <EditableMathRenderer content={explanation} onMathClick={handleMathClick('explanation')} />
+                <MathRenderer content={explanation} onMathClick={handleMathClick('explanation')} />
               </div>
             </div>
           )}

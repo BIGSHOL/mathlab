@@ -1,20 +1,93 @@
+Total RPM: 332
+By source: { 'RPM 중1-1': 63, '22개정 RPM 중 1-1 학생용': 269 }
 
-node:internal/modules/run_main:123
-    triggerUncaughtException(
-    ^
-Error: Transform failed with 1 error:
-D:\mathlab\scripts\rpm-audit.ts:26:280: ERROR: Unterminated regular expression
-    at failureErrorWithLog (D:\mathlab\node_modules\esbuild\lib\main.js:1748:15)
-    at D:\mathlab\node_modules\esbuild\lib\main.js:1017:50
-    at responseCallbacks.<computed> (D:\mathlab\node_modules\esbuild\lib\main.js:884:9)
-    at handleIncomingPacket (D:\mathlab\node_modules\esbuild\lib\main.js:939:12)
-    at Socket.readFromStdout (D:\mathlab\node_modules\esbuild\lib\main.js:862:7)
-    at Socket.emit (node:events:518:28)
-    at addChunk (node:internal/streams/readable:561:12)
-    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
-    at Readable.push (node:internal/streams/readable:392:5)
-    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23) {
-  name: 'TransformError'
+Unusual: 18 / 332
+By reason: {
+  EXCESS_WS: 10,
+  ANSWER_IN_EXPL: 10,
+  MC_ANS_BAD: 1,
+  LITERAL_BSN: 2,
+  TOO_SHORT: 2
 }
 
-Node.js v22.17.1
+=== 이슈별 questionNum ===
+ANSWER_IN_EXPL (10): 184, 415, 513, 514, 516, 517, 518, 519, 520, 523
+EXCESS_WS (10): 164, 165, 184, 198, 415, 475, 513, 514, 517, 518
+LITERAL_BSN (2): 327, 520
+MC_ANS_BAD (1): 302
+TOO_SHORT (2): 434, 435
+
+====== EXCESS_WS ======
+-- #164 [cmnwu6jn9000xjg04yga3ug8w] 22개정 RPM 중 1-1 학생용 / 미분류 type=SHORT_ANSWER --
+A: "3"
+E(199): 세 자연수 $4x, 5x, 6x$의 최소공배수는 다음과 같이 구할 수 있다.
+```
+x | 4x   5x   6x
+2 | 4    5    6
+  | 2    5    3
+```
+최소공배수 = $x \times 2 \times 2 \times 5 \times 3 = 60x$.
+세 수의 최소공배수가 180이므로 $60x=180 \implies x=3$이다.
+-- #165 [cmnwu6jn9000yjg04bzd78mb4] 22개정 RPM 중 1-1 학생용 / 미분류 type=MULTIPLE_CHOICE --
+A: "③"
+E(306): 세 자연수 $3x, 4x, 6x$의 최소공배수는 다음과 같이 구할 수 있다.
+```
+x | 3x   4x   6x
+2 | 3    4    6
+3 | 3    2    3
+  | 1    2    1
+```
+최소공배수 = $x \times 2 \times 3 \times 1 \times 2 \times 1 = 12x$.
+세 수의 최소공배수가 72이므로 $12x=72 \implies x=6$이다.
+따라서 세 자연수의 최대공약수는 $x=6$이다.
+(참고: 최대공약수는 공약수만 곱하므로 $x \times 2 \times 3$이 아니라 $x$이다.)
+
+====== ANSWER_IN_EXPL ======
+-- #184 [cmnwu6jna001hjg04nypcg5ui] 22개정 RPM 중 1-1 학생용 / 미분류 type=MULTIPLE_CHOICE --
+A: "③"
+E(624): 최대공약수가 $8$이고 $A>B$이므로 $A=8 \times a$, $B=8 \times b$ ($a$, $b$는 서로소, $a>b$)라 하면 최소공배수가
+$280$이므로 $8 \times a \times b = 280$ $\therefore a \times b = 35$                                                                                     
+                                                                                                                   
+  (i) $a=35$, $b=1$일 때, $A = 8 \times 35 = 280$, $B = 8 \times 1 = 8$                                            
+
+  (ii) $a=7$, $b=5$일 때, $A = 8 
+-- #415 [cmnx1otpy0025lb04pnj2ol27] 22개정 RPM 중 1-1 학생용 / 미분류 type=MULTIPLE_CHOICE --
+A: "②"
+E(1894): ① $2 - 5 + \frac{1}{2} = (+2) - (+5) + \left(+\frac{1}{2}\right)$                                                
+  $= (+2) + (-5) + \left(+\frac{1}{2}\right)$                                                                        $= \{(+2) + (-5)\} + \left(+\frac{1}{2}\right)$                                                                 ─
+  $= (-3) + \left(+\frac{1}{2}\right)$                                                                             
+  $= \left(-\frac{6}{2}\right) + \left(
+
+====== MC_ANS_BAD ======
+-- #302 [cmnx1otpx000vlb040zolc9af] 22개정 RPM 중 1-1 학생용 / 미분류 type=MULTIPLE_CHOICE --
+A: "미입력"
+E(67): 주어진 수를 작은 수부터 차례대로 나열하면
+$-4.1, -2, -\frac{4}{3}, 0, \frac{7}{3}, 5$
+
+====== LITERAL_BSN ======
+-- #327 [cmnx1otpx001elb04hy68b27f] 22개정 RPM 중 1-1 학생용 / 미분류 type=MULTIPLE_CHOICE --
+A: "②, ⑤"
+E(112): 전략: 절댓값의 성질을 생각해 본다.
+② $|2|=|-2|$이지만 $2 \neq -2$이다.
+⑤ $a=3, b=-5$이면 $3>-5$이지만 $|3|<|-5|$이다.
+따라서 옳지 않은 것은 ②, ⑤이다.
+-- #520 [cmnx1otq30052lb04nzq6u6go] 22개정 RPM 중 1-1 학생용 / 미분류 type=SHORT_ANSWER --
+A: "$\\frac{1}{10}$"
+E(387): **전략** 주어진 조건에 따라 식을 변형한 후 더하여 없어지는 수의 규칙을 찾는다.
+
+  $\frac{1}{5 \times 6} + \frac{1}{6 \times 7} + \cdots + \frac{1}{9 \times 10}$
+
+  $= \left(\frac{1}{5} - \not\frac{1}{6}\right) + \left(\not\frac{1}{6} - \not\frac{1}{7}\right) + \cdots + \left(\not\frac{1}{9} -
+   \frac{1}{10}\right)$
+
+  $= \frac{1}{5} - \frac{1}{10} = \frac{2}{10} - \frac{1}{10} = \frac{1}{10}$
+
+  정답: $\frac{1}{10}$
+
+====== TOO_SHORT ======
+-- #434 [cmnx1otpz002olb044thiwedp] 22개정 RPM 중 1-1 학생용 / 미분류 type=SHORT_ANSWER --
+A: "1050명"
+E(29): $700-50+250+300-150=1050$ (명)
+-- #435 [cmnx1otpz002plb04xl9cpfio] 22개정 RPM 중 1-1 학생용 / 미분류 type=SHORT_ANSWER --
+A: "49 kg"
+E(28): $50+0.8-1.5+0.3-0.6=49$ (kg)
