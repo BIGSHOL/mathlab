@@ -75,8 +75,9 @@ export function EditableMathRenderer({
   className = '',
   diagramSvgs,
 }: EditableMathRendererProps) {
-  // 공유 수식 전처리 (\(\)→$, \dfrac→\frac, $A$$B$ 글루 등) — MathRenderer와 동일 입력 보장
-  const preprocessed = useMemo(() => preprocessMathText(content), [content]);
+  // 위치 좌표는 ORIGINAL content 기준 (consumer의 splice가 원본에 적용되므로).
+  // preprocessMathText는 math 세그먼트의 latex 렌더링에만 적용 (표시용 \dfrac→\frac 등).
+  const preprocessed = content;
 
   const segments = useMemo(() => {
     const result: Segment[] = [];
@@ -105,9 +106,11 @@ export function EditableMathRenderer({
           end: match.index + match[0].length,
         });
       } else if (match[4] !== undefined) {
+        // 표시용으로만 preprocessMathText 적용 (\dfrac→\frac, 유니코드 등). 원본 latex은 편집 콜백용.
+        const displayLatex = preprocessMathText(`$${match[4]}$`).slice(1, -1);
         let html: string;
         try {
-          html = katex.renderToString(match[4], {
+          html = katex.renderToString(displayLatex, {
             throwOnError: false,
             output: 'html',
             strict: false,
