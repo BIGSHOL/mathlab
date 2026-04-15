@@ -53,7 +53,7 @@ export const updateQuestionSchema = createQuestionSchema
   });
 
 export const bulkCreateQuestionsSchema = z.object({
-  questions: z.array(createQuestionSchema).min(1).max(200),
+  questions: z.array(createQuestionSchema).min(1).max(1000),
   examPaperId: z.string().optional(),
   tenantIdOverride: z.string().optional(),  // SUPER_ADMIN/배치가 지점 지정 시
   isDraft: z.boolean().optional(),
