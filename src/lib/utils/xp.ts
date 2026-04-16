@@ -53,6 +53,9 @@ export const XP_REWARDS = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type PrismaTx = { studentProfile: any; pointTransaction: any };
 
+/** 스트릭 프리즈 마일스톤 — 해당 스트릭 달성 시 프리즈 1개 지급 */
+export const STREAK_FREEZE_MILESTONES = [7, 14, 30, 60, 100];
+
 /**
  * 트랜잭션 내에서 XP 부여 + 레벨 갱신 + PointTransaction 기록
  * grading.ts, manual-grading.ts 등에서 반복되던 패턴 통합
@@ -136,7 +139,12 @@ export async function spendXp(
 export async function updateStreak(tx: PrismaTx, userId: string) {
   const profile = await tx.studentProfile.findUnique({
     where: { userId },
-    select: { currentStreak: true, longestStreak: true, lastActiveAt: true },
+    select: {
+      currentStreak: true,
+      longestStreak: true,
+      lastActiveAt: true,
+      streakFreezeCount: true,
+    },
   });
   if (!profile) return;
 
@@ -149,22 +157,44 @@ export async function updateStreak(tx: PrismaTx, userId: string) {
   const dayDiff = lastActive ? Math.floor((today.getTime() - lastActive.getTime()) / 86400000) : 999;
 
   if (dayDiff === 0) return; // 오늘 이미 갱신됨
+
   if (dayDiff === 1) {
     // 어제 활동 → 연속
     const newStreak = profile.currentStreak + 1;
+
+    // 마일스톤 달성 시 프리즈 지급
+    const crossedMilestone = STREAK_FREEZE_MILESTONES.find(
+      (m) => profile.currentStreak < m && newStreak >= m,
+    );
+
     await tx.studentProfile.update({
       where: { userId },
       data: {
         currentStreak: newStreak,
         longestStreak: Math.max(profile.longestStreak, newStreak),
         lastActiveAt: now,
+        ...(crossedMilestone ? { streakFreezeCount: { increment: 1 } } : {}),
       },
     });
-  } else {
-    // 하루 이상 빠짐 → 리셋
+    return;
+  }
+
+  if (dayDiff === 2 && (profile.streakFreezeCount ?? 0) > 0) {
+    // 2일 공백 + 프리즈 보유 → 소비 후 streak 유지
     await tx.studentProfile.update({
       where: { userId },
-      data: { currentStreak: 1, lastActiveAt: now },
+      data: {
+        streakFreezeCount: { decrement: 1 },
+        streakFreezeUsedAt: now,
+        lastActiveAt: now,
+      },
     });
+    return;
   }
+
+  // 하루 이상 빠짐 (프리즈 없음) → 리셋
+  await tx.studentProfile.update({
+    where: { userId },
+    data: { currentStreak: 1, lastActiveAt: now },
+  });
 }

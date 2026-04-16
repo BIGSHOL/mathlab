@@ -16,6 +16,8 @@ import { DashboardGamification } from '@/components/student/DashboardGamificatio
 import { ReviewReminderCard } from '@/components/student/ReviewReminderCard';
 import { DashboardStatCards } from '@/components/student/DashboardStatCards';
 import { ExamPrepWidget } from '@/components/student/ExamPrepWidget';
+import { NextBestActionCard, type NextBestAction } from '@/components/student/NextBestActionCard';
+import { DailyRouletteCard } from '@/components/student/DailyRouletteCard';
 
 export default async function StudentDashboard({
   searchParams,
@@ -269,96 +271,124 @@ export default async function StudentDashboard({
   const completedCount = completedConcepts.length;
   const progressPercent = totalConcepts > 0 ? Math.round((completedCount / totalConcepts) * 100) : 0;
 
+  // ──── Next Best Action — 우선순위 로직 (단일 CTA) ────
+  const nextAction: NextBestAction | null = (() => {
+    // 1. 연산 숙제 pending
+    if (pendingHomework.length > 0) {
+      const hw = pendingHomework[0];
+      return {
+        kind: 'arithmetic_hw',
+        title: '오늘의 연산 숙제',
+        subtitle: `${hw.planTitle} · ${hw.dayLabel} · ${hw.dailyCount}문제`,
+        href: '/practice/arithmetic/homework',
+        ctaLabel: '풀기',
+        estimatedMinutes: Math.max(5, Math.round(hw.dailyCount * 0.7)),
+        badge: `${hw.dailyCount}문제`,
+      };
+    }
+    // 2. 개념 숙제 pending
+    if (pendingConceptHw.length > 0) {
+      const hw = pendingConceptHw[0];
+      const pendingConcepts = hw.concepts.filter((c) => !c.allCompleted);
+      const first = pendingConcepts[0];
+      return {
+        kind: 'concept_hw',
+        title: '오늘의 개념 숙제',
+        subtitle: `${hw.planTitle} · ${pendingConcepts.length}개 남음`,
+        href: first ? `/concepts/${first.id}` : '/subjects',
+        ctaLabel: '학습하기',
+        estimatedMinutes: pendingConcepts.length * 12,
+        badge: `${pendingConcepts.length}개`,
+      };
+    }
+    // 3. 문제 숙제 pending
+    if (pendingQuestionHw.length > 0) {
+      const hw = pendingQuestionHw[0];
+      return {
+        kind: 'question_hw',
+        title: '오늘의 문제 숙제',
+        subtitle: `${hw.planTitle} · ${hw.dayLabel} · ${hw.questionCount}문제`,
+        href: '/practice/question-homework',
+        ctaLabel: '풀기',
+        estimatedMinutes: Math.max(10, hw.questionCount * 2),
+        badge: `${hw.questionCount}문제`,
+      };
+    }
+    // 4. 오답 3개 이상 → 복수전
+    if (uniqueWrongAnswers.length >= 3) {
+      return {
+        kind: 'revenge',
+        title: '복수전에 도전!',
+        subtitle: `최근 오답 ${uniqueWrongAnswers.length}개를 정복해 보세요`,
+        href: '/practice/revenge',
+        ctaLabel: '도전',
+        estimatedMinutes: 8,
+        badge: '🔥 오답 복수',
+      };
+    }
+    // 5. 진행 중 과정에서 다음 개념
+    if (activeEnrollment && courseProgressItems.length > 0) {
+      const item = courseProgressItems[0];
+      return {
+        kind: 'course_continue',
+        title: '이어서 학습하기',
+        subtitle: `${activeEnrollment.course.title} · ${item.concept.title}`,
+        href: `/concepts/${item.concept.conceptCode ?? item.conceptId}`,
+        ctaLabel: '이어서',
+        estimatedMinutes: 15,
+      };
+    }
+    // 6. fallback — 단원 탐색
+    return {
+      kind: 'practice',
+      title: '오늘도 학습 시작!',
+      subtitle: '단원을 골라 학습을 시작해 보세요',
+      href: '/subjects',
+      ctaLabel: '시작하기',
+      estimatedMinutes: 10,
+    };
+  })();
+
+  const hasOtherPendingHw =
+    (pendingHomework.length > 0 && nextAction?.kind !== 'arithmetic_hw') ||
+    (pendingConceptHw.length > 0 && nextAction?.kind !== 'concept_hw') ||
+    (pendingQuestionHw.length > 0 && nextAction?.kind !== 'question_hw');
+
   return (
     <PageContainer maxWidth="xl">
-      {/* ──── 섹션 1: 숙제 배너 + 환영 ──── */}
-      {pendingHomework.length > 0 && (
-        <Link href="/practice/arithmetic/homework" className="block mb-4">
-          <div className="bg-gradient-to-r from-indigo-500 to-violet-500 rounded-sm p-4 text-white hover:from-indigo-600 hover:to-violet-600 transition-colors">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <CalendarCheck className="w-8 h-8 opacity-90" />
-                <div>
-                  <p className="text-sm font-medium opacity-80">오늘의 연산 숙제</p>
-                  <p className="font-bold">
-                    {pendingHomework[0].planTitle} · {pendingHomework[0].dayLabel} · {pendingHomework[0].dailyCount}문제
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 bg-white/20 rounded-sm px-4 py-2">
-                <Play className="w-4 h-4" />
-                <span className="font-bold text-sm">풀기</span>
-                <ArrowRight className="w-4 h-4" />
-              </div>
-            </div>
-          </div>
-        </Link>
-      )}
+      {/* ──── 섹션 1: 지금 할 일 (단일 CTA) ──── */}
+      {nextAction && <NextBestActionCard action={nextAction} />}
 
-      {pendingConceptHw.length > 0 && (
-        <div className="mb-4">
-          {pendingConceptHw.map((hw) => {
-            const pending = hw.concepts.filter((c) => !c.allCompleted);
-            const firstConcept = pending[0];
-            return (
-              <Link key={hw.planId} href={firstConcept ? `/concepts/${firstConcept.id}` : '/subjects'} className="block mb-2 last:mb-0">
-                <div className="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-sm p-4 text-white hover:from-emerald-600 hover:to-teal-600 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <BookOpen className="w-8 h-8 opacity-90" />
-                      <div>
-                        <p className="text-sm font-medium opacity-80">오늘의 개념 숙제 · {hw.dayLabel}</p>
-                        <p className="font-bold">
-                          {hw.planTitle} · {pending.length}개 남음
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      {hw.concepts.map((c) => (
-                        <div key={c.id} className="flex gap-0.5">
-                          {c.stages.map((s, i) => (
-                            <div
-                              key={i}
-                              className={`w-2 h-2 rounded-sm ${
-                                s.completed ? 'bg-white' : 'bg-white/30'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      )}
-
-      {pendingQuestionHw.length > 0 && (
-        <div className="mb-4">
-          {pendingQuestionHw.map((hw) => (
-            <Link key={hw.planId} href="/practice/question-homework" className="block mb-2 last:mb-0">
-              <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-sm p-4 text-white hover:from-amber-600 hover:to-orange-600 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <FileQuestion className="w-8 h-8 opacity-90" />
-                    <div>
-                      <p className="text-sm font-medium opacity-80">오늘의 문제 숙제</p>
-                      <p className="font-bold">
-                        {hw.planTitle} · {hw.dayLabel} · {hw.questionCount}문제
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 bg-white/20 rounded-sm px-4 py-2">
-                    <Play className="w-4 h-4" />
-                    <span className="font-bold text-sm">풀기</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </div>
-                </div>
-              </div>
+      {/* 남은 숙제들은 작은 칩으로 요약 표시 */}
+      {hasOtherPendingHw && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {pendingHomework.length > 0 && nextAction?.kind !== 'arithmetic_hw' && (
+            <Link
+              href="/practice/arithmetic/homework"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-semibold hover:bg-indigo-100 transition-colors"
+            >
+              <CalendarCheck className="w-3.5 h-3.5" />
+              연산 숙제 {pendingHomework[0].dailyCount}문제
             </Link>
-          ))}
+          )}
+          {pendingConceptHw.length > 0 && nextAction?.kind !== 'concept_hw' && (
+            <Link
+              href="/subjects"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold hover:bg-emerald-100 transition-colors"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              개념 숙제 {pendingConceptHw.reduce((n, hw) => n + hw.concepts.filter((c) => !c.allCompleted).length, 0)}개
+            </Link>
+          )}
+          {pendingQuestionHw.length > 0 && nextAction?.kind !== 'question_hw' && (
+            <Link
+              href="/practice/question-homework"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold hover:bg-amber-100 transition-colors"
+            >
+              <FileQuestion className="w-3.5 h-3.5" />
+              문제 숙제 {pendingQuestionHw.reduce((n, hw) => n + hw.questionCount, 0)}문제
+            </Link>
+          )}
         </div>
       )}
 
@@ -519,6 +549,8 @@ export default async function StudentDashboard({
           </Card>
         </div>
         <div className="flex flex-col gap-4">
+          {/* 일일 룰렛 */}
+          <DailyRouletteCard />
           {/* 게이미피케이션 (오늘의 미션 + 오늘의 한 문제) */}
           <DashboardGamification />
         </div>

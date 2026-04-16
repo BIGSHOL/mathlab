@@ -1,4 +1,8 @@
 import { prisma } from '@/lib/db';
+import { awardXp } from '@/lib/utils/xp';
+
+/** 개별 미션 완료 시 지급되는 XP */
+export const MISSION_ITEM_XP = 5;
 
 interface MissionDef {
   type: string;
@@ -95,6 +99,7 @@ export async function getOrCreateTodayMission(userId: string) {
       target: m.target,
       current: 0,
       completed: false,
+      rewarded: false,
     }));
 
     mission = await prisma.dailyMission.create({
@@ -117,8 +122,11 @@ export async function checkMissionProgress(userId: string) {
   if (!mission || mission.allComplete) return mission;
 
   const missions = mission.missions as Array<{
-    type: string; label: string; target: number; current: number; completed: boolean;
+    type: string; label: string; target: number; current: number; completed: boolean; rewarded?: boolean;
   }>;
+
+  // 개별 보상 이벤트 수집 (이번 체크에서 새로 완료된 미션들)
+  const newlyCompleted: Array<{ type: string; label: string }> = [];
 
   for (const m of missions) {
     if (m.completed) continue;
@@ -261,6 +269,21 @@ export async function checkMissionProgress(userId: string) {
         break;
       }
     }
+
+    // 새로 완료된 미션 감지 (아직 보상 안 받은)
+    if (m.completed && !m.rewarded) {
+      m.rewarded = true;
+      newlyCompleted.push({ type: m.type, label: m.label });
+    }
+  }
+
+  // 개별 완료 보상 지급 (트랜잭션)
+  if (newlyCompleted.length > 0) {
+    await prisma.$transaction(async (tx) => {
+      for (const completed of newlyCompleted) {
+        await awardXp(tx, userId, MISSION_ITEM_XP, 'MISSION_ITEM', completed.type);
+      }
+    });
   }
 
   const allComplete = missions.every((m) => m.completed);
@@ -270,5 +293,6 @@ export async function checkMissionProgress(userId: string) {
     data: { missions, allComplete },
   });
 
-  return updated;
+  // newlyCompleted 정보를 결과에 함께 돌려주기 위해 확장 객체 반환
+  return Object.assign(updated, { newlyCompleted });
 }

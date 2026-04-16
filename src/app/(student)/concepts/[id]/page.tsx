@@ -83,12 +83,18 @@ const BASE_STAGES = [
 ];
 const BLANK_PAGE_STAGE = { key: 'BLANK_PAGE' as LearningStage, label: '백지복원', color: 'bg-violet-500', icon: '5' };
 
+interface VisualAssets {
+  topImage?: { url: string; alt?: string; caption?: string };
+  inlineImages?: Array<{ position: number; url: string; alt?: string }>;
+}
+
 interface ConceptData {
   id: string;
   title: string;
   fullContent: string;
   part: string | null;
   subject: { title: string; gradeLevel: number };
+  visualAssets?: VisualAssets | null;
 }
 
 interface BlankData {
@@ -840,6 +846,22 @@ export default function ConceptPage() {
                 className="prose prose-slate max-w-none "
                 style={{ fontSize: fontCfg.size, lineHeight: fontCfg.readingLeading }}
               >
+                {concept.visualAssets?.topImage?.url && (
+                  <figure className="mb-4 rounded-sm overflow-hidden border border-slate-200 bg-slate-50">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={concept.visualAssets.topImage.url}
+                      alt={concept.visualAssets.topImage.alt ?? concept.title}
+                      className="w-full h-auto block max-h-80 object-contain"
+                      loading="lazy"
+                    />
+                    {concept.visualAssets.topImage.caption && (
+                      <figcaption className="text-xs text-slate-500 italic px-3 py-1.5 border-t border-slate-200 bg-white">
+                        {concept.visualAssets.topImage.caption}
+                      </figcaption>
+                    )}
+                  </figure>
+                )}
                 <MathRenderer content={concept.fullContent.replace(/\n/g, '<br/>')} />
               </div>
             )}

@@ -13,6 +13,7 @@ import {
   Trophy,
   Lightbulb,
   RotateCcw,
+  Bot,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -22,6 +23,7 @@ import type { DiagramSpec } from '@/types/diagram';
 import { useTestAttempt } from '@/hooks/useTests';
 import { playSound } from '@/lib/sounds';
 import { DIFFICULTY_LABELS } from '@/types';
+import { AITutorModal } from '@/components/learning/AITutorModal';
 
 interface QuestionData {
   id: string;
@@ -58,6 +60,7 @@ export default function TestPlayPage() {
   const [initError, setInitError] = useState(false);
 
   // 힌트 관련 상태
+  const [tutorOpen, setTutorOpen] = useState(false);
   const [hintData, setHintData] = useState<{
     hint: string;
     eliminatedChoices: number[];
@@ -476,7 +479,30 @@ export default function TestPlayPage() {
                     <MathRenderer content={feedback.explanation} />
                   </p>
                 )}
+                {!feedback.isCorrect && currentQuestion && (
+                  <div className="mt-3 flex justify-start">
+                    <button
+                      type="button"
+                      onClick={() => setTutorOpen(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white rounded-sm text-xs font-bold hover:from-violet-600 hover:to-fuchsia-600 transition-colors shadow-sm"
+                    >
+                      <Bot className="w-3.5 h-3.5" />
+                      AI에게 물어보기
+                    </button>
+                  </div>
+                )}
               </div>
+            )}
+
+            {/* AI 튜터 모달 */}
+            {currentQuestion && (
+              <AITutorModal
+                isOpen={tutorOpen}
+                onClose={() => setTutorOpen(false)}
+                questionId={currentQuestion.id}
+                studentAnswer={selectedAnswer}
+                questionPreview={currentQuestion.content.slice(0, 200)}
+              />
             )}
 
             {/* Action buttons */}
