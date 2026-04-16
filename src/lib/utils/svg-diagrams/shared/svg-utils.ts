@@ -119,6 +119,18 @@ export function fractionText(num: number, den: number): string {
  * @param latex KaTeX 수식 문자열 (예: "\\frac{3}{8}", "1", "x")
  * @param opts w/h: foreignObject 크기, fontSize: 기본 폰트 크기
  */
+/**
+ * 한글 런을 `\text{...}`로 자동 래핑 — KaTeX의 unicodeTextInMathMode 경고 제거.
+ * 프리셋/렌더러가 `'직각'`, `'y=2x (정비례)'` 같은 한글 혼합 라벨을 그대로 전달해도
+ * KaTeX math mode 안에서 한글만 text mode로 안전하게 렌더링됨.
+ * - `\text{꼭짓점}(1,-2)` → 한글은 text 모드, 괄호·숫자는 math 모드
+ * - 이미 `\text{...}`로 감싸진 한글은 중복 래핑되지 않도록 바깥쪽 백슬래시 체크는 생략 (KaTeX가 중첩 허용)
+ */
+function wrapKoreanForKatex(latex: string): string {
+  // Hangul 자모(\u3131-\u318E) + 완성형 음절(\uAC00-\uD7A3)
+  return latex.replace(/[\u3131-\u318E\uAC00-\uD7A3]+/g, (run) => `\\text{${run}}`);
+}
+
 export function katexFO(
   x: number, topY: number,
   latex: string,
@@ -130,7 +142,7 @@ export function katexFO(
   const anchor = opts.anchor || 'middle';
   const leftX = anchor === 'middle' ? x - w / 2 : anchor === 'start' ? x : x - w;
   const justify = anchor === 'middle' ? 'center' : anchor === 'start' ? 'flex-start' : 'flex-end';
-  const html = katex.renderToString(latex, { throwOnError: false, output: 'html' });
+  const html = katex.renderToString(wrapKoreanForKatex(latex), { throwOnError: false, output: 'html' });
   return `<foreignObject x="${leftX.toFixed(1)}" y="${topY.toFixed(1)}" width="${w}" height="${h}"><div xmlns="http://www.w3.org/1999/xhtml" style="display:flex;align-items:center;justify-content:${justify};height:100%;font-size:${fs}px;">${html}</div></foreignObject>`;
 }
 

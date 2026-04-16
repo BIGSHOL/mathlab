@@ -249,7 +249,7 @@ src/
 │   ├── pdf-extract-engine/  # PDF 추출 엔진 (core, ai, hooks, presets — 14파일)
 │   ├── exam-analysis/       # 기출 분석 (types, constants, agents, article-generator, chart-image, nearby-school — 5대 영역/4대 능력/5단계 난이도)
 │   ├── diagram/       # 프리셋 기반 구조화 다이어그램 시스템 (DiagramSpec 6유형)
-│   ├── diagram-presets/   # 교육과정별 다이어그램 프리셋 (초65+중58+고45=168개)
+│   ├── diagram-presets/   # 교육과정별 다이어그램 프리셋 (초72+중81+고56=209개)
 │   ├── constants/     # 교육과정 데이터, 연산 카테고리, 라벨, 시험전략, 학교(6,004개 GPS), 교재
 │   └── data/          # 정적 데이터 (업데이트 로그, 도움말)
 ├── hooks/             # useAuth, useLearning, useGamification, useFeatureFlags, useBadgeCheck, useSpeed, useFetch, useTests, usePreviewScale, useLicenses, useQuestions 등
@@ -470,9 +470,9 @@ PDF 업로드 → 수동 분석 → status=COMPLETED
 - DB `diagramSpec Json?` 필드에 두 포맷이 혼재 → 런타임 다형성으로 처리
 - `diagramSVG String?` — 레거시 raw SVG (현재 1개만 존재, 폴백 렌더링)
 
-**3. 교육과정 프리셋 (168개)** — `src/lib/diagram-presets/`
+**3. 교육과정 프리셋 (209개)** — `src/lib/diagram-presets/`
 - 학교급/학년/학기/단원별로 교육적으로 의미 있는 다이어그램 기본값을 미리 정의
-- 초등 65개 (1~6학년, 12학기) + 중등 58개 (1~3학년, 6학기) + 고등 45개 (7과목)
+- 초등 72개 (1~6학년, 12학기) + 중등 81개 (1~3학년, 6학기) + 고등 56개 (7과목)
 - 총 25개 학년/학기 키 커버
 - 트리 구조: 학교급 → 학년/학기 → 단원 → 프리셋 목록
 - 검색: `searchPresets(query)`, 학년별 그룹: `groupPresetsByGrade(level)`
@@ -860,7 +860,7 @@ npx tsx scripts/migrate-question-relations.ts  # questionIds Json → 중간테�
 | 컴포넌트 | 180개 |
 | 서비스 모듈 | 23개 (exam-extract-batch 추가) |
 | DB 모델 | 73개, Enum 12개 |
-| 다이어그램 | DiagramParam 26개 타입 + DiagramSpec 6개 유형 11개 프리셋 + 교육과정 프리셋 168개 |
+| 다이어그램 | DiagramParam 26개 타입 + DiagramSpec 6개 유형 17개 프리셋 + 교육과정 프리셋 209개 |
 | 커스텀 훅 | 14개 |
 | Zustand 스토어 | 7개 |
 | Zod 스키마 | 5개 |
