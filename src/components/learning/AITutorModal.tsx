@@ -75,7 +75,7 @@ export function AITutorModal({ isOpen, onClose, questionId, studentAnswer, quest
       if (answer) {
         setMessages((prev) => [...prev, { role: 'tutor', content: answer }]);
       }
-    } catch (_e) {
+    } catch {
       toast.error('네트워크 오류');
     } finally {
       setLoading(false);

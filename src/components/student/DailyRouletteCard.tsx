@@ -54,7 +54,7 @@ export function DailyRouletteCard() {
           playSound('badge' as never);
         }
       }, 1400);
-    } catch (_e) {
+    } catch {
       toast.error('네트워크 오류');
       setSpinning(false);
     }
