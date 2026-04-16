@@ -10,7 +10,14 @@ export async function GET(request: NextRequest) {
 
   const profile = await prisma.studentProfile.findUnique({
     where: { userId: user.id },
-    select: { totalXp: true, level: true, currentStreak: true, longestStreak: true },
+    select: {
+      totalXp: true,
+      level: true,
+      currentStreak: true,
+      longestStreak: true,
+      streakFreezeCount: true,
+      lastActiveAt: true,
+    },
   });
 
   if (!profile) {
@@ -19,12 +26,18 @@ export async function GET(request: NextRequest) {
 
   const nextLevel = xpToNextLevel(profile.totalXp);
 
+  const hoursSinceLastActive = profile.lastActiveAt
+    ? Math.floor((Date.now() - profile.lastActiveAt.getTime()) / 3600000)
+    : 999;
+
   return NextResponse.json({
     data: {
       totalXp: profile.totalXp,
       level: profile.level,
       currentStreak: profile.currentStreak,
       longestStreak: profile.longestStreak,
+      streakFreezeCount: profile.streakFreezeCount,
+      hoursSinceLastActive,
       xpToNextLevel: nextLevel.remaining,
     },
   });

@@ -152,7 +152,8 @@ export async function submitAnswer(params: {
       earned = isCorrect ? Math.round(basePoints * 0.5) : 0;
     } else {
       combo = isCorrect ? streak + 1 : 0;
-      earned = isCorrect ? basePoints : 0;
+      // 콤보 배수 적용: 3연속 1.5×, 5연속 2×, 10연속 3×
+      earned = isCorrect ? Math.round(basePoints * getComboMultiplier(combo)) : 0;
     }
 
     const statusInfo = classifyAnswer({

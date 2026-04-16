@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuthViewAs, isResponse, badRequest } from '@/lib/api';
+import { checkAndAwardBadges } from '@/lib/services/badge-checker';
 
 /** Resolve concept by conceptCode or cuid id */
 async function resolveConceptId(rawId: string): Promise<string | null> {
@@ -50,6 +51,9 @@ export async function PUT(
     update: { content },
     create: { userId: user.id, conceptId, content },
   });
+
+  // 뱃지 체크 (memo_50 등)
+  checkAndAwardBadges(user.id).catch((e) => console.error('[badge-check-memo]', e));
 
   return NextResponse.json({ data: { id: memo.id } });
 }

@@ -1,4 +1,12 @@
 import { prisma } from '@/lib/db';
+import {
+  countEarnsAtHoursKST,
+  countWeekendActiveDays,
+  hasMarathonDay,
+  hasHighRevealDay,
+  hasLoneQuizCorrect,
+  checkAndRecordRanking,
+} from './badge-helpers';
 
 interface BadgeCondition {
   type: string;
@@ -20,11 +28,15 @@ export async function checkAndAwardBadges(userId: string): Promise<string[]> {
     if (existingIds.has(badge.id)) continue;
 
     const condition = badge.condition as BadgeCondition;
-    const met = await checkCondition(userId, condition);
-
-    if (met) {
-      await prisma.userBadge.create({ data: { userId, badgeId: badge.id } });
-      newBadgeIds.push(badge.id);
+    try {
+      const met = await checkCondition(userId, condition);
+      if (met) {
+        await prisma.userBadge.create({ data: { userId, badgeId: badge.id } });
+        newBadgeIds.push(badge.id);
+      }
+    } catch (e) {
+      // 개별 뱃지 체크 실패가 전체 체크를 중단시키지 않도록
+      console.error(`[badge-checker] ${badge.id} 체크 실패:`, e);
     }
   }
 
@@ -69,13 +81,21 @@ async function checkCondition(userId: string, condition: BadgeCondition): Promis
       return count.length >= getThreshold(condition, 'value', 'count');
     }
 
-    // ── 백지쓰기 완벽 통과 ──
+    // ── 백지쓰기 완벽 통과 ── (FIX: BlankAttempt 기반)
     case 'blank_perfect': {
-      // 오답 없이 한 번에 통과 (attempts === 1이고 completed)
-      const count = await prisma.learningProgress.count({
-        where: { userId, stage: 'BLANK_FULL', completed: true, attempts: 1 },
-      });
-      return count >= getThreshold(condition, 'value', 'count');
+      // BLANK_FULL 단계에서 첫 시도에 전부 맞춘 개념 수 카운트
+      const rows = await prisma.$queryRaw<Array<{ cnt: bigint }>>`
+        SELECT COUNT(DISTINCT "conceptId")::bigint as cnt FROM (
+          SELECT DISTINCT ON ("conceptId")
+            "conceptId", "allCorrect", "createdAt"
+          FROM "BlankAttempt"
+          WHERE "studentId" = ${userId}
+            AND stage = 'BLANK_FULL'
+          ORDER BY "conceptId", "createdAt" ASC
+        ) first_attempts
+        WHERE "allCorrect" = true
+      `;
+      return Number(rows[0]?.cnt ?? 0) >= getThreshold(condition, 'value', 'count');
     }
 
     // ── 타임어택 (timeattack / time_attack_record) ──
@@ -119,11 +139,11 @@ async function checkCondition(userId: string, condition: BadgeCondition): Promis
       return Number(perfectTests[0]?.count ?? 0) >= getThreshold(condition, 'value', 'count');
     }
 
-    // ── 복수전 성공 (revenge_success / revenge) ──
+    // ── 복수전 성공 ── (FIX: 정답 문제 수로 변경)
     case 'revenge_success':
     case 'revenge': {
-      const count = await prisma.pointTransaction.count({
-        where: { userId, reason: 'REVENGE' },
+      const count = await prisma.revengeAnswer.count({
+        where: { isCorrect: true, attempt: { studentId: userId } },
       });
       return count >= getThreshold(condition, 'value', 'count');
     }
@@ -139,7 +159,6 @@ async function checkCondition(userId: string, condition: BadgeCondition): Promis
 
     // ── 점수 향상 (recovery) ──
     case 'recovery': {
-      // 가장 최근 2개의 시험 결과 비교
       const attempts = await prisma.testAttempt.findMany({
         where: { studentId: userId, completedAt: { not: null } },
         orderBy: { completedAt: 'desc' },
@@ -151,15 +170,84 @@ async function checkCondition(userId: string, condition: BadgeCondition): Promis
       return improvement >= getThreshold(condition, 'value');
     }
 
-    // ── 히든/시간 기반 업적: 서버에서 자동 체크 불가, 클라이언트 이벤트로 수여 ──
-    case 'hidden_owl':
+    // ── 망각 곡선 복습 완료 (NEW) ──
+    case 'forgetting': {
+      const count = await prisma.reviewSchedule.count({
+        where: { studentId: userId, status: 'completed' },
+      });
+      return count >= getThreshold(condition, 'value', 'count');
+    }
+
+    // ── 메모 작성 (NEW) ──
+    case 'memo': {
+      const count = await prisma.conceptMemo.count({ where: { userId } });
+      return count >= getThreshold(condition, 'value', 'count');
+    }
+
+    // ── 진단 완료 (NEW) ──
+    case 'diagnostic': {
+      const count = await prisma.diagnosticResult.count({ where: { studentId: userId } });
+      return count >= getThreshold(condition, 'value', 'count');
+    }
+
+    // ── 퀴즈 우승 (NEW) ──
+    case 'quiz_win': {
+      const count = await prisma.quizParticipant.count({
+        where: { studentId: userId, rank: 1 },
+      });
+      return count >= getThreshold(condition, 'value', 'count');
+    }
+
+    // ── 랭킹 1위 (NEW) ──
+    case 'ranking': {
+      return await checkAndRecordRanking(userId);
+    }
+
+    // ── 숙제 스트릭 (NEW) ──
+    case 'homework_streak': {
+      const profile = await prisma.studentProfile.findUnique({
+        where: { userId },
+        select: { homeworkStreak: true },
+      });
+      return (profile?.homeworkStreak ?? 0) >= getThreshold(condition, 'value', 'days');
+    }
+
+    // ── 히든: 올빼미족 (0~3시 KST) ──
+    case 'hidden_owl': {
+      const hits = await countEarnsAtHoursKST(userId, [0, 1, 2, 3]);
+      return hits >= 1;
+    }
+
+    // ── 얼리버드 (6~7시 KST) ──
+    case 'earlybird': {
+      const hits = await countEarnsAtHoursKST(userId, [6, 7]);
+      return hits >= 1;
+    }
+
+    // ── 주말 학습 (토/일 + 일별 ≥ 50XP) ──
+    case 'weekend': {
+      const days = await countWeekendActiveDays(userId, 50);
+      return days >= getThreshold(condition, 'value', 'count');
+    }
+
+    // ── 마라톤 (하루 5시간+) ──
+    case 'hidden_marathon': {
+      return await hasMarathonDay(userId, 5);
+    }
+
+    // ── 답 보기 50회 (하루) ──
+    case 'hidden_answer': {
+      return await hasHighRevealDay(userId, 50);
+    }
+
+    // ── 퀴즈 혼자 정답 ──
+    case 'hidden_quiz': {
+      return await hasLoneQuizCorrect(userId);
+    }
+
+    // ── 시스템 에러 발견 (클라이언트 트리거) ──
     case 'hidden_error':
-    case 'hidden_marathon':
-    case 'hidden_answer':
-    case 'hidden_quiz':
-    case 'earlybird':
-    case 'weekend':
-      return false; // 별도 이벤트 트리거로 수여
+      return false; // /api/badges/award-hidden 에서 직접 수여
 
     default:
       return false;

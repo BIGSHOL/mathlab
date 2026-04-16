@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthViewAs, isResponse, badRequest, requireLicense } from '@/lib/api';
 import { prisma } from '@/lib/db';
 import { awardXp } from '@/lib/utils/xp';
+import { checkAndAwardBadges } from '@/lib/services/badge-checker';
 
 interface AnswerItem {
   questionId: string;
@@ -84,6 +85,9 @@ export async function POST(request: NextRequest) {
       if (newLevel > prevLevel) leveledUp = true;
     }
   }
+
+  // 뱃지 체크 (복수전 관련 뱃지 트리거)
+  checkAndAwardBadges(user.id).catch((e) => console.error('[badge-check-revenge]', e));
 
   return NextResponse.json({
     data: {

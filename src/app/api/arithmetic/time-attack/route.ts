@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db';
 import { generateProblems, IMPLEMENTED_CATEGORIES } from '@/lib/services/arithmetic-generator';
 import type { ArithmeticCategory, ArithmeticLevel } from '@/lib/services/arithmetic-generator';
 import { awardXp } from '@/lib/utils/xp';
+import { checkAndAwardBadges } from '@/lib/services/badge-checker';
 
 const VALID_LEVELS: ArithmeticLevel[] = ['easy', 'medium', 'hard'];
 const TIME_LIMIT = 30; // 초
@@ -103,6 +104,9 @@ export async function POST(request: NextRequest) {
     }
 
     const isNewRecord = !previousBest || correctCount > previousBest.correctCount;
+
+    // 뱃지 체크 (타임어택/레벨업 트리거)
+    checkAndAwardBadges(user.id).catch((e) => console.error('[badge-check-timeattack]', e));
 
     return NextResponse.json({
       data: {

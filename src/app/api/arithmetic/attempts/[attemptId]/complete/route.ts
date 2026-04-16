@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, isResponse, notFound, badRequest } from '@/lib/api';
 import { prisma } from '@/lib/db';
 import { calculateLevel } from '@/lib/utils/xp';
+import { checkAndAwardBadges } from '@/lib/services/badge-checker';
 
 /** POST: 연산 연습 완료 → XP 부여 */
 export async function POST(
@@ -73,6 +74,9 @@ export async function POST(
       });
     }
   });
+
+  // 뱃지 조건 체크 (fire-and-forget)
+  checkAndAwardBadges(user.id).catch((e) => console.error('[badge-check-arithmetic]', e));
 
   return NextResponse.json({
     data: {
