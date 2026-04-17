@@ -45,6 +45,46 @@ function getThreatLevel(wrongCount: number) {
   return { label: '주의', flames: 1, color: 'text-yellow-400' };
 }
 
+/**
+ * 보기 번호를 객관식 정답 필드에서 추출합니다.
+ * 지원 형식: "⑤", "⑤ $12$", "(5) $12$", "5)", "5", "5,6", "④, ⑤" 등
+ * 주관식이거나 보기 번호를 찾을 수 없으면 원본 문자열을 정규화하여 반환합니다.
+ */
+function extractChoiceNumbers(answer: string): string {
+  if (!answer) return '';
+  const CIRCLED = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
+  const nums = new Set<string>();
+  // 1) 원형 숫자 ①②③④⑤
+  for (let i = 0; i < CIRCLED.length; i++) {
+    if (answer.includes(CIRCLED[i])) nums.add(String(i + 1));
+  }
+  // 2) 괄호 형식 (1) (5)
+  const parenMatches = answer.match(/\((\d+)\)/g);
+  if (parenMatches) {
+    for (const m of parenMatches) {
+      const n = m.replace(/[()]/g, '');
+      if (n.length <= 2) nums.add(n);
+    }
+  }
+  // 3) 숫자) 형식 "1)" "5)"
+  const trailParen = answer.match(/\b(\d+)\)/g);
+  if (trailParen) {
+    for (const m of trailParen) nums.add(m.replace(')', ''));
+  }
+  // 4) 원형/괄호가 없고 순수 숫자 시작이면 (예: "5" 또는 "5, 6") 추출
+  if (nums.size === 0) {
+    const pure = answer.trim().match(/^(\d+)(?:\s*[,、]\s*\d+)*$/);
+    if (pure) {
+      for (const n of answer.match(/\d+/g) ?? []) nums.add(n);
+    }
+  }
+  if (nums.size > 0) {
+    return [...nums].sort().join(',');
+  }
+  // 정답이 보기 번호 형식이 아니면 원본을 공백/대소문자 정규화하여 반환 (주관식)
+  return answer.trim().replace(/\s+/g, ' ').toUpperCase();
+}
+
 export default function RevengePage() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,8 +108,10 @@ export default function RevengePage() {
   const handleAnswer = (answer: string) => {
     if (feedback !== null || !selected) return;
     const q = selected.questions[currentIdx];
-    const norm = (s: string) => s.trim().replace(/\s+/g, ' ').toUpperCase();
-    const isCorrect = norm(answer) === norm(q.answer);
+    if (!q) return;
+    const correctNums = extractChoiceNumbers(q.answer);
+    const selectedNum = extractChoiceNumbers(answer);
+    const isCorrect = correctNums !== '' && correctNums === selectedNum;
     setSelectedChoice(answer);
     setFeedback(isCorrect);
     playSound(isCorrect ? 'correct' : 'wrong');
@@ -78,7 +120,9 @@ export default function RevengePage() {
 
   const handleNext = async () => {
     if (!selected) return;
-    if (currentIdx >= selected.questions.length - 1) {
+    if (finished) return; // 이미 완료 처리 중이면 중복 실행 금지
+    const lastIdx = selected.questions.length - 1;
+    if (currentIdx >= lastIdx) {
       setFinished(true);
       const finalAnswers = [...answers];
       const res = await fetch('/api/learning/revenge-complete', {
@@ -93,7 +137,8 @@ export default function RevengePage() {
         if (json.data.xpEarned > 0) useXpNotification.getState().show(json.data.xpEarned);
       }
     } else {
-      setCurrentIdx((i) => i + 1);
+      // 범위를 넘지 않도록 Math.min 가드 — Strict Mode 이중 호출 및 빠른 연속 클릭 대응
+      setCurrentIdx((i) => Math.min(i + 1, lastIdx));
       setFeedback(null);
       setSelectedChoice(null);
     }
@@ -379,11 +424,11 @@ export default function RevengePage() {
                                 <div className="flex flex-col gap-1 text-sm">
                                   <div className="flex items-center gap-2">
                                     <XCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />
-                                    <span className="text-red-400">내 답: <MathRenderer content={a.selectedAnswer} className="prose-invert" /></span>
+                                    <span className="text-red-400">내 답: <MathRenderer inline content={a.selectedAnswer} className="prose-invert" /></span>
                                   </div>
                                   <div className="flex items-center gap-2">
                                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                    <span className="text-emerald-400">정답: <MathRenderer content={q.answer} className="prose-invert" /></span>
+                                    <span className="text-emerald-400">정답: <MathRenderer inline content={q.answer} className="prose-invert" /></span>
                                   </div>
                                   {q.explanation && (
                                     <div className="mt-2 text-xs text-slate-400 bg-slate-900/50 rounded-sm p-3">
@@ -436,6 +481,14 @@ export default function RevengePage() {
   // 3. 풀이 화면 (배틀 모드)
   // ═══════════════════════════════════════
   const q = selected.questions[currentIdx];
+  // 방어: currentIdx가 범위를 넘으면 결과 처리 대기 상태로 취급
+  if (!q) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-slate-400 text-sm">결과 집계 중...</div>
+      </div>
+    );
+  }
   const diff = DIFFICULTY_CONFIG[selected.difficulty] ?? DIFFICULTY_CONFIG.MEDIUM;
   const progress = ((currentIdx + (feedback !== null ? 1 : 0)) / selected.questions.length) * 100;
 
@@ -515,7 +568,8 @@ export default function RevengePage() {
               <div className="grid grid-cols-1 gap-3">
                 {(q.choices as string[]).map((choice, idx) => {
                   const choiceNum = String(idx + 1);
-                  const isCorrectChoice = choiceNum === q.answer.trim();
+                  const correctNums = extractChoiceNumbers(q.answer);
+                  const isCorrectChoice = correctNums.split(',').includes(choiceNum);
                   const isSelected = selectedChoice === choiceNum;
                   const showResult = feedback !== null;
                   const choiceLabels = ['①', '②', '③', '④', '⑤'];
@@ -578,9 +632,9 @@ export default function RevengePage() {
                         <XCircle className="w-6 h-6 text-red-400" />
                         <div>
                           <span className="font-bold text-red-400 text-lg">오답</span>
-                          <p className="text-sm text-red-400/70">
-                            정답: <MathRenderer content={q.answer} className="prose-invert" />
-                          </p>
+                          <div className="text-sm text-red-400/70">
+                            정답: <MathRenderer inline content={q.answer} className="prose-invert" />
+                          </div>
                         </div>
                       </>
                     )}

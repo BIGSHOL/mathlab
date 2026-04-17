@@ -50,8 +50,9 @@ export async function GET(request: NextRequest) {
   const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
 
+  // 내신대비 이용권이 없으면 조용히 빈 배열 반환 (대시보드 카드 숨김용)
   const licenseCheck = await requireLicense(user, 'exam_prep');
-  if (licenseCheck) return licenseCheck;
+  if (licenseCheck) return NextResponse.json({ data: [] });
 
   try {
     const enrollments = await prisma.examCampaignEnrollment.findMany({
