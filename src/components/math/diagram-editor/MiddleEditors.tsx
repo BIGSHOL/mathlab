@@ -324,7 +324,8 @@ export function QuadrilateralForm({ params, onChange }: SubFormProps) {
   const vertices = Array.isArray(params.vertices) ? params.vertices as Point2DInput[] : [];
   const sides = Array.isArray(params.sides) ? params.sides as { from: number; to: number; label: string; curve?: boolean | Record<string, unknown> }[] : [];
   const maxIdx = Math.max(0, vertices.length - 1);
-  const clampIdx = (n: number) => Math.max(0, Math.min(maxIdx, Number.isFinite(n) ? n : 0));
+  const _clampIdx = (n: number) => Math.max(0, Math.min(maxIdx, Number.isFinite(n) ? n : 0));
+  void _clampIdx;
   const type = String(params.type || 'rectangle');
   const dims = extractQuadDimensions(type, vertices);
   const hints = QUAD_POSITION_HINTS[type] ?? QUAD_VERTEX_BADGES;
