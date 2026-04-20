@@ -15,6 +15,7 @@ import {
   RegularPolygonForm, HistogramForm, StemLeafForm,
   SolidFigureForm, NetDiagramForm, TreeDiagramForm, ScatterPlotForm,
 } from './MiddleEditors';
+import { PolygonForm } from './PolygonForm';
 
 export function DiagramSubForm({ type, params, onChange }: { type: DiagramType } & SubFormProps) {
   switch (type) {
@@ -34,6 +35,7 @@ export function DiagramSubForm({ type, params, onChange }: { type: DiagramType }
     case 'coordinate_plane': return <CoordinatePlaneForm params={params} onChange={onChange} />;
     case 'triangle': return <TriangleForm params={params} onChange={onChange} />;
     case 'quadrilateral': return <QuadrilateralForm params={params} onChange={onChange} />;
+    case 'polygon': return <PolygonForm params={params} onChange={onChange} />;
     case 'circle': return <CircleForm params={params} onChange={onChange} />;
     case 'function_graph': return <FunctionGraphForm params={params} onChange={onChange} />;
     case 'venn_diagram': return <VennDiagramForm params={params} onChange={onChange} />;

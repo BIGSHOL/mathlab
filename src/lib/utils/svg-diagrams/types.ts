@@ -19,6 +19,7 @@ export type DiagramType =
   | 'circle'
   | 'triangle'
   | 'quadrilateral'
+  | 'polygon'
   | 'function_graph'
   | 'venn_diagram'
   | 'regular_polygon'
@@ -405,6 +406,43 @@ export interface ScatterPlotParams {
   trendLineColor?: string;
 }
 
+// ─── 임의 N각형 (계단형, L자, T자, ㄷ자, 집 모양 등) ───
+export interface PolygonParams {
+  /** 꼭짓점 좌표 배열 (3개 이상) */
+  vertices: Point2D[];
+  /** 꼭짓점 이름 (기본 표시 안 함) */
+  vertexLabels?: string[];
+  /** 변 라벨 (edge 인덱스 + 텍스트) — 변의 외측 법선 방향으로 자동 배치 */
+  showLengths?: { edge: [number, number]; value: string }[];
+  /** 직각 표시할 꼭짓점 인덱스 배열 (오목 꼭짓점도 도형 내부로 정확히 그려짐) */
+  rightAngleMarks?: number[];
+  /** 도형 전체 채움 색 (regions 미사용 시) */
+  fill?: string;
+  /** 영역 분할 — 각 영역을 다른 색으로 + 라벨 (centroid 자동 배치) */
+  regions?: Array<{
+    /** 이 영역을 구성하는 꼭짓점 인덱스 */
+    vertexIndices: number[];
+    fill?: string;
+    label?: string;
+    labelOffset?: Point2D;
+  }>;
+  /** 분할선 — 도형 내부에 그릴 보조선 */
+  splitLines?: Array<{
+    from: number;
+    to: number;
+    style?: 'solid' | 'dashed';
+    color?: string;
+  }>;
+  /** 도형 외곽을 감싸는 점선 곡선 (교과서 풍) */
+  outlineCurve?: {
+    inflate?: number;
+    color?: string;
+    dashArray?: string;
+  };
+  /** 임의 라벨 (정밀 좌표) */
+  labels?: { position: Point2D; text: string; fontSize?: number }[];
+}
+
 // 통합 파라미터 유니온
 export type DiagramParams =
   | NumberLineParams
@@ -424,6 +462,7 @@ export type DiagramParams =
   | CircleParams
   | TriangleParams
   | QuadrilateralParams
+  | PolygonParams
   | FunctionGraphParams
   | VennDiagramParams
   | RegularPolygonParams

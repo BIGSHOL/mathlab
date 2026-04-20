@@ -38,6 +38,7 @@ export const TYPE_GROUPS = [
       { value: 'coordinate_plane' as DiagramType, label: '좌표평면' },
       { value: 'triangle' as DiagramType, label: '삼각형' },
       { value: 'quadrilateral' as DiagramType, label: '사각형' },
+      { value: 'polygon' as DiagramType, label: '다각형 (계단/L/T/ㄷ자/오각형)' },
       { value: 'circle' as DiagramType, label: '원' },
       { value: 'regular_polygon' as DiagramType, label: '정다각형' },
       { value: 'function_graph' as DiagramType, label: '함수 그래프' },
@@ -92,6 +93,23 @@ export function getDefaultParams(type: DiagramType): Record<string, unknown> {
       return { vertices: [{ x: 100, y: 10, label: 'A' }, { x: 10, y: 150, label: 'B' }, { x: 190, y: 150, label: 'C' }], sides: [], angles: [] };
     case 'quadrilateral':
       return { vertices: [{ x: 30, y: 10, label: 'A' }, { x: 170, y: 10, label: 'B' }, { x: 190, y: 130, label: 'C' }, { x: 10, y: 130, label: 'D' }], sides: [], angles: [], type: 'rectangle' };
+    case 'polygon':
+      // 기본: 2단 계단 (넓이 문제용)
+      return {
+        vertices: [
+          { x: 0, y: 120 },
+          { x: 200, y: 120 },
+          { x: 200, y: 60 },
+          { x: 100, y: 60 },
+          { x: 100, y: 0 },
+          { x: 0, y: 0 },
+        ],
+        rightAngleMarks: [0, 1, 2, 3, 4, 5],
+        fill: '#A7F3D0',
+        showLengths: [],
+        regions: [],
+        splitLines: [],
+      };
     case 'circle':
       return { radius: 60, labels: [], arcs: [] };
     case 'function_graph':

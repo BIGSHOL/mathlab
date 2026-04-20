@@ -772,4 +772,92 @@ export const ELEMENTARY_PRESETS: DiagramPreset[] = [
     diagramType: 'solid_figure',
     defaultParams: { shape: 'sphere', labels: [], showHiddenEdges: true, color: '#10B981' },
   },
+
+  // ═══════════════════════════════════════
+  // 5학년 1학기 — 다각형의 둘레와 넓이 (보충 polygon 프리셋)
+  // ═══════════════════════════════════════
+  {
+    id: 'e5-1-polygon-staircase-2',
+    name: '2단 계단',
+    description: '정사각형 2개를 계단 모양으로 — 넓이/둘레',
+    schoolLevel: 'elementary',
+    gradeKey: '5학년 1학기',
+    chapter: '다각형의 둘레와 넓이',
+    diagramType: 'polygon',
+    defaultParams: {
+      vertices: [{ x: 0, y: 120 }, { x: 200, y: 120 }, { x: 200, y: 60 }, { x: 100, y: 60 }, { x: 100, y: 0 }, { x: 0, y: 0 }],
+      rightAngleMarks: [0, 1, 2, 3, 4, 5],
+      fill: '#A7F3D0',
+    },
+  },
+  {
+    id: 'e5-1-polygon-staircase-3',
+    name: '3단 계단',
+    description: '정사각형 3개 계단',
+    schoolLevel: 'elementary',
+    gradeKey: '5학년 1학기',
+    chapter: '다각형의 둘레와 넓이',
+    diagramType: 'polygon',
+    defaultParams: {
+      vertices: [{ x: 0, y: 180 }, { x: 240, y: 180 }, { x: 240, y: 120 }, { x: 160, y: 120 }, { x: 160, y: 60 }, { x: 80, y: 60 }, { x: 80, y: 0 }, { x: 0, y: 0 }],
+      rightAngleMarks: [0, 1, 2, 3, 4, 5, 6, 7],
+      fill: '#FDE68A',
+    },
+  },
+  {
+    id: 'e5-1-polygon-l-shape',
+    name: 'L자 도형',
+    description: 'L자 6각형 넓이 — 두 직사각형 분할',
+    schoolLevel: 'elementary',
+    gradeKey: '5학년 1학기',
+    chapter: '다각형의 둘레와 넓이',
+    diagramType: 'polygon',
+    defaultParams: {
+      vertices: [{ x: 0, y: 120 }, { x: 200, y: 120 }, { x: 200, y: 60 }, { x: 80, y: 60 }, { x: 80, y: 0 }, { x: 0, y: 0 }],
+      rightAngleMarks: [0, 1, 2, 3, 4, 5],
+      fill: '#DBEAFE',
+    },
+  },
+  {
+    id: 'e5-1-polygon-t-shape',
+    name: 'T자 도형',
+    description: 'T자 8각형',
+    schoolLevel: 'elementary',
+    gradeKey: '5학년 1학기',
+    chapter: '다각형의 둘레와 넓이',
+    diagramType: 'polygon',
+    defaultParams: {
+      vertices: [{ x: 0, y: 60 }, { x: 200, y: 60 }, { x: 200, y: 120 }, { x: 120, y: 120 }, { x: 120, y: 200 }, { x: 80, y: 200 }, { x: 80, y: 120 }, { x: 0, y: 120 }],
+      rightAngleMarks: [0, 1, 2, 3, 4, 5, 6, 7],
+      fill: '#FCE7F3',
+    },
+  },
+  {
+    id: 'e5-1-polygon-u-shape',
+    name: 'ㄷ자/U자 도형',
+    description: '가운데 파인 ㄷ자 모양',
+    schoolLevel: 'elementary',
+    gradeKey: '5학년 1학기',
+    chapter: '다각형의 둘레와 넓이',
+    diagramType: 'polygon',
+    defaultParams: {
+      vertices: [{ x: 0, y: 0 }, { x: 200, y: 0 }, { x: 200, y: 200 }, { x: 140, y: 200 }, { x: 140, y: 60 }, { x: 60, y: 60 }, { x: 60, y: 200 }, { x: 0, y: 200 }],
+      rightAngleMarks: [0, 1, 2, 3, 4, 5, 6, 7],
+      fill: '#FEF3C7',
+    },
+  },
+  {
+    id: 'e5-1-polygon-house',
+    name: '집 모양 오각형',
+    description: '직사각형 + 삼각형 합성 — 분리 계산 문제',
+    schoolLevel: 'elementary',
+    gradeKey: '5학년 1학기',
+    chapter: '다각형의 둘레와 넓이',
+    diagramType: 'polygon',
+    defaultParams: {
+      vertices: [{ x: 0, y: 200 }, { x: 200, y: 200 }, { x: 200, y: 80 }, { x: 100, y: 0 }, { x: 0, y: 80 }],
+      rightAngleMarks: [0, 1, 2, 3, 4],
+      fill: '#E0E0F0',
+    },
+  },
 ];

@@ -30,6 +30,8 @@ import { renderClockFace } from './elementary/clock-face';
 // 중등
 import { renderCoordinatePlane } from './middle/coordinate-plane';
 import { renderCircle, renderTriangle, renderQuadrilateral, renderRegularPolygon } from './middle/shapes';
+import { renderPolygon } from './middle/polygon';
+import type { PolygonParams } from './types';
 import { renderFunctionGraph } from './middle/function-graph';
 import { renderVennDiagram } from './middle/venn-diagram';
 import { renderHistogram } from './middle/histogram';
@@ -73,6 +75,34 @@ function normalizeFractionCircle(p: P): FractionCircleParams {
     color: p.color,
     hatching: !!p.hatching,
     label: p.label,
+  };
+}
+
+/** PolygonParams normalize — Gemini 및 UI 편집기에서 오는 다양한 형식 허용 */
+function normalizePolygon(p: P): PolygonParams {
+  // vertices: [{x,y}] 또는 [[x,y]] 둘 다 허용
+  const rawVerts = arr<unknown>(p.vertices ?? p.points ?? []);
+  const vertices = rawVerts
+    .map((v): { x: number; y: number } | null => {
+      if (Array.isArray(v) && v.length >= 2) return { x: num(v[0], 0), y: num(v[1], 0) };
+      if (v && typeof v === 'object' && 'x' in v && 'y' in v) {
+        const o = v as { x?: unknown; y?: unknown };
+        return { x: num(o.x, 0), y: num(o.y, 0) };
+      }
+      return null;
+    })
+    .filter((v): v is { x: number; y: number } => v !== null);
+
+  return {
+    vertices,
+    vertexLabels: Array.isArray(p.vertexLabels) ? p.vertexLabels : undefined,
+    showLengths: arr(p.showLengths ?? p.sides),
+    rightAngleMarks: Array.isArray(p.rightAngleMarks) ? p.rightAngleMarks : undefined,
+    fill: p.fill,
+    regions: arr(p.regions),
+    splitLines: arr(p.splitLines),
+    outlineCurve: p.outlineCurve,
+    labels: arr(p.labels),
   };
 }
 
@@ -433,6 +463,8 @@ export function renderDiagram(data: DiagramData): string | null {
         return renderTriangle(normalizeTriangleParams(p));
       case 'quadrilateral':
         return renderQuadrilateral(normalizeQuadrilateralParams(p));
+      case 'polygon':
+        return renderPolygon(normalizePolygon(p));
       case 'function_graph':
         return renderFunctionGraph(p as unknown as FunctionGraphParams);
       case 'venn_diagram':
