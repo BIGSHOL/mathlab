@@ -186,6 +186,30 @@ function wrapKoreanForKatex(latex: string): string {
   return latex.replace(/[\u3131-\u318E\uAC00-\uD7A3]+/g, (run) => `\\text{${run}}`);
 }
 
+/**
+ * 사용자 친화적인 수학 유니코드 기호를 KaTeX가 이해하는 LaTeX 명령으로 치환.
+ * 프리셋/AI 생성 라벨에서 ½·√·π 등 직관적 기호를 쓸 수 있도록 자동 변환.
+ */
+function normalizeUnicodeMath(latex: string): string {
+  // 이미 LaTeX 명령(\frac, \sqrt 등)이 포함되어 있으면 중복 변환 안 하는 편이 안전
+  let s = latex;
+  // 분수
+  s = s.replace(/½/g, '\\frac{1}{2}').replace(/⅓/g, '\\frac{1}{3}').replace(/⅔/g, '\\frac{2}{3}');
+  s = s.replace(/¼/g, '\\frac{1}{4}').replace(/¾/g, '\\frac{3}{4}');
+  s = s.replace(/⅕/g, '\\frac{1}{5}').replace(/⅙/g, '\\frac{1}{6}').replace(/⅛/g, '\\frac{1}{8}');
+  // 지수·첨자 유니코드
+  s = s.replace(/²/g, '^{2}').replace(/³/g, '^{3}').replace(/⁴/g, '^{4}').replace(/⁵/g, '^{5}');
+  s = s.replace(/°/g, '^{\\circ}');
+  // 제곱근: √x → \sqrt{x}, √2 → \sqrt{2}, √(...) → \sqrt{...}
+  s = s.replace(/√\(([^()]+)\)/g, '\\sqrt{$1}');
+  s = s.replace(/√([A-Za-z0-9]+)/g, '\\sqrt{$1}');
+  // 특수 기호
+  s = s.replace(/π/g, '\\pi').replace(/∞/g, '\\infty');
+  s = s.replace(/≤/g, '\\leq').replace(/≥/g, '\\geq').replace(/≠/g, '\\neq');
+  s = s.replace(/×/g, '\\times').replace(/÷/g, '\\div').replace(/±/g, '\\pm');
+  return s;
+}
+
 export function katexFO(
   x: number, topY: number,
   latex: string,
@@ -197,7 +221,7 @@ export function katexFO(
   const anchor = opts.anchor || 'middle';
   const leftX = anchor === 'middle' ? x - w / 2 : anchor === 'start' ? x : x - w;
   const justify = anchor === 'middle' ? 'center' : anchor === 'start' ? 'flex-start' : 'flex-end';
-  const html = katex.renderToString(wrapKoreanForKatex(latex), { throwOnError: false, output: 'html' });
+  const html = katex.renderToString(wrapKoreanForKatex(normalizeUnicodeMath(latex)), { throwOnError: false, output: 'html' });
   return `<foreignObject x="${leftX.toFixed(1)}" y="${topY.toFixed(1)}" width="${w}" height="${h}"><div xmlns="http://www.w3.org/1999/xhtml" style="display:flex;align-items:center;justify-content:${justify};height:100%;font-size:${fs}px;">${html}</div></foreignObject>`;
 }
 

@@ -279,9 +279,11 @@ export function renderPolygon(params: PolygonParams): string {
 
       if (curve) {
         const opts = typeof curve === 'object' ? curve : {};
-        const baseInflate = opts.inflate ?? 10;
-        const color = opts.color ?? TEXTBOOK_STYLE.AUX_STROKE;
-        const dashArray = opts.dashArray ?? '4,3';
+        const baseInflate = opts.inflate ?? 12;
+        // 교과서 측정 표기 — 본선과 동일 주블루 + 점선 + 살짝 굵게 (가독성)
+        const color = opts.color ?? TEXTBOOK_STYLE.MAIN_STROKE;
+        const dashArray = opts.dashArray ?? '5,3';
+        const strokeWidth = 1.4;
 
         // 변의 외측 법선 방향 (오목 폴리곤 대응)
         const mx = (a[0] + b[0]) / 2;
@@ -339,12 +341,12 @@ export function renderPolygon(params: PolygonParams): string {
         const p2x = q2x + (r2x - q2x) * t2;
         const p2y = q2y + (r2y - q2y) * t2;
 
-        // 두 점선 piece (중간은 라벨이 앉을 자리 → 비움)
+        // 두 점선 piece (중간은 라벨이 앉을 자리 → 비움) — 교과서 스타일 통일
         parts.push(
-          `<path d="M ${a[0]} ${a[1]} Q ${q1x} ${q1y} ${p1x} ${p1y}" fill="none" stroke="${color}" stroke-width="1" stroke-dasharray="${dashArray}"/>`,
+          `<path d="M ${a[0]} ${a[1]} Q ${q1x} ${q1y} ${p1x} ${p1y}" fill="none" stroke="${color}" stroke-width="${strokeWidth}" stroke-dasharray="${dashArray}" stroke-linecap="round"/>`,
         );
         parts.push(
-          `<path d="M ${p2x} ${p2y} Q ${r2x} ${r2y} ${b[0]} ${b[1]}" fill="none" stroke="${color}" stroke-width="1" stroke-dasharray="${dashArray}"/>`,
+          `<path d="M ${p2x} ${p2y} Q ${r2x} ${r2y} ${b[0]} ${b[1]}" fill="none" stroke="${color}" stroke-width="${strokeWidth}" stroke-dasharray="${dashArray}" stroke-linecap="round"/>`,
         );
 
         // 라벨은 호의 apex (P(0.5) = midpoint + n * inflate) 에 정확히 앉음

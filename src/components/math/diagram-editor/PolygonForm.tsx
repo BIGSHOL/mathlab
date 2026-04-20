@@ -17,7 +17,7 @@
 import React from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import type { SubFormProps, Point2DInput } from './types';
-import { PointListEditor } from './SharedControls';
+import { PointListEditor, NumInput } from './SharedControls';
 
 const POLYGON_PRESETS: { name: string; params: Record<string, unknown> }[] = [
   {
@@ -221,30 +221,26 @@ export function PolygonForm({ params, onChange }: SubFormProps) {
           const clampIdx = (n: number) => Math.max(0, Math.min(maxIdx, Number.isFinite(n) ? n : 0));
           return (
           <div key={i} className="flex gap-1 mt-1 items-center">
-            <input
-              type="number"
+            <NumInput
               min={0}
               max={maxIdx}
               value={s.edge[0]}
-              onChange={(e) => {
+              onChange={(v) => {
                 const arr = [...showLengths];
-                const raw = parseInt(e.target.value);
-                arr[i] = { ...s, edge: [clampIdx(isNaN(raw) ? 0 : raw), s.edge[1]] };
+                arr[i] = { ...s, edge: [v, s.edge[1]] };
                 onChange({ showLengths: arr });
               }}
               className="w-12 text-xs px-1 py-0.5 border border-slate-300 rounded"
               title={`from (0~${maxIdx})`}
             />
             <span className="text-xs">→</span>
-            <input
-              type="number"
+            <NumInput
               min={0}
               max={maxIdx}
               value={s.edge[1]}
-              onChange={(e) => {
+              onChange={(v) => {
                 const arr = [...showLengths];
-                const raw = parseInt(e.target.value);
-                arr[i] = { ...s, edge: [s.edge[0], clampIdx(isNaN(raw) ? 0 : raw)] };
+                arr[i] = { ...s, edge: [s.edge[0], v] };
                 onChange({ showLengths: arr });
               }}
               className="w-12 text-xs px-1 py-0.5 border border-slate-300 rounded"
@@ -307,30 +303,26 @@ export function PolygonForm({ params, onChange }: SubFormProps) {
           const clampIdx = (n: number) => Math.max(0, Math.min(maxIdx, Number.isFinite(n) ? n : 0));
           return (
           <div key={i} className="flex gap-1 mt-1 items-center">
-            <input
-              type="number"
+            <NumInput
               min={0}
               max={maxIdx}
               value={sl.from}
-              onChange={(e) => {
+              onChange={(v) => {
                 const arr = [...splitLines];
-                const raw = parseInt(e.target.value);
-                arr[i] = { ...sl, from: clampIdx(isNaN(raw) ? 0 : raw) };
+                arr[i] = { ...sl, from: v };
                 onChange({ splitLines: arr });
               }}
               className="w-12 text-xs px-1 py-0.5 border border-slate-300 rounded"
               title={`from (0~${maxIdx})`}
             />
             <span className="text-xs">→</span>
-            <input
-              type="number"
+            <NumInput
               min={0}
               max={maxIdx}
               value={sl.to}
-              onChange={(e) => {
+              onChange={(v) => {
                 const arr = [...splitLines];
-                const raw = parseInt(e.target.value);
-                arr[i] = { ...sl, to: clampIdx(isNaN(raw) ? 0 : raw) };
+                arr[i] = { ...sl, to: v };
                 onChange({ splitLines: arr });
               }}
               className="w-12 text-xs px-1 py-0.5 border border-slate-300 rounded"

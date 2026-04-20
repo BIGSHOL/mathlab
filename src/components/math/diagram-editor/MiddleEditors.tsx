@@ -8,7 +8,7 @@ import type { SubFormProps, Point2DInput } from './types';
 import { LINE_COLOR_OPTIONS } from './types';
 import {
   NumField, BoolField, ColorSelect, TextField, ShapeStyleFields,
-  PointListEditor, ElementsInput, ElementsField,
+  PointListEditor, ElementsInput, ElementsField, NumInput,
 } from './SharedControls';
 
 // ── 중등 서브폼들 ──
@@ -34,21 +34,130 @@ export function CoordinatePlaneForm({ params, onChange }: SubFormProps) {
   );
 }
 
+const TRI_VERTEX_BADGES = ['①', '②', '③'];
+const TRI_PRESETS: Record<string, (dims: { base: number; height: number; apexOffset: number }) => Point2DInput[]> = {
+  right: ({ base, height }) => [
+    { x: 0, y: 0, label: 'A' },
+    { x: 0, y: height, label: 'B' },
+    { x: base, y: height, label: 'C' },
+  ],
+  equilateral: ({ base }) => [
+    { x: base / 2, y: 0, label: 'A' },
+    { x: 0, y: (base * Math.sqrt(3)) / 2, label: 'B' },
+    { x: base, y: (base * Math.sqrt(3)) / 2, label: 'C' },
+  ],
+  isosceles: ({ base, height }) => [
+    { x: base / 2, y: 0, label: 'A' },
+    { x: 0, y: height, label: 'B' },
+    { x: base, y: height, label: 'C' },
+  ],
+  scalene: ({ base, height, apexOffset }) => [
+    { x: Math.max(0, Math.min(base, apexOffset)), y: 0, label: 'A' },
+    { x: 0, y: height, label: 'B' },
+    { x: base, y: height, label: 'C' },
+  ],
+};
+
+function extractTriDimensions(verts: Point2DInput[]): { base: number; height: number; apexOffset: number } {
+  if (!verts || verts.length < 3) return { base: 180, height: 140, apexOffset: 90 };
+  const xs = verts.map(v => v.x);
+  const ys = verts.map(v => v.y);
+  const base = Math.max(...xs) - Math.min(...xs);
+  const height = Math.max(...ys) - Math.min(...ys);
+  // 최상단 꼭짓점의 x 위치 (기울기 근사)
+  const topVert = verts.reduce((min, v) => v.y < min.y ? v : min, verts[0]);
+  const apexOffset = topVert.x - Math.min(...xs);
+  return { base: Math.max(20, base), height: Math.max(20, height), apexOffset };
+}
+
 export function TriangleForm({ params, onChange }: SubFormProps) {
+  const [mode, setMode] = useState<'simple' | 'advanced'>('simple');
+  const [preset, setPreset] = useState<'right' | 'equilateral' | 'isosceles' | 'scalene'>('isosceles');
   const vertices = Array.isArray(params.vertices) ? params.vertices as Point2DInput[] : [{ x: 100, y: 10, label: 'A' }, { x: 10, y: 150, label: 'B' }, { x: 190, y: 150, label: 'C' }];
-  const sides = Array.isArray(params.sides) ? params.sides as { from: number; to: number; label: string }[] : [];
+  const sides = Array.isArray(params.sides) ? params.sides as { from: number; to: number; label: string; curve?: boolean | Record<string, unknown> }[] : [];
   const angles = Array.isArray(params.angles) ? params.angles as { vertex: number; value: string }[] : [];
+  const dims = extractTriDimensions(vertices);
+
+  const regenTriangle = (nextPreset: typeof preset, patch: Partial<typeof dims> = {}) => {
+    const next = { ...dims, ...patch };
+    const verts = TRI_PRESETS[nextPreset](next);
+    onChange({ vertices: verts });
+  };
 
   return (
     <div className="space-y-2">
-      <label className="text-xs text-slate-500">꼭짓점 (x, y, 라벨)</label>
-      {vertices.map((v, i) => (
-        <div key={i} className="flex gap-1 items-center">
-          <input type="number" value={v.x} onChange={(e) => { const arr = [...vertices]; arr[i] = { ...v, x: parseFloat(e.target.value) || 0 }; onChange({ vertices: arr }); }} className="w-16 text-xs px-1.5 py-0.5 border border-slate-300 rounded" />
-          <input type="number" value={v.y} onChange={(e) => { const arr = [...vertices]; arr[i] = { ...v, y: parseFloat(e.target.value) || 0 }; onChange({ vertices: arr }); }} className="w-16 text-xs px-1.5 py-0.5 border border-slate-300 rounded" />
-          <input type="text" value={v.label || ''} onChange={(e) => { const arr = [...vertices]; arr[i] = { ...v, label: e.target.value }; onChange({ vertices: arr }); }} className="flex-1 text-xs px-1.5 py-0.5 border border-slate-300 rounded" />
+      {/* 모드 토글 */}
+      <div className="flex gap-1">
+        <button type="button" onClick={() => setMode('simple')} className={`text-xs px-2 py-0.5 rounded ${mode === 'simple' ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+          치수 입력
+        </button>
+        <button type="button" onClick={() => setMode('advanced')} className={`text-xs px-2 py-0.5 rounded ${mode === 'advanced' ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+          꼭짓점 직접 편집
+        </button>
+      </div>
+
+      {mode === 'simple' ? (
+        <div className="space-y-1.5 bg-slate-50 rounded p-2">
+          <div>
+            <label className="text-xs text-slate-600">종류</label>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {[
+                { k: 'right', label: '직각삼각형' },
+                { k: 'equilateral', label: '정삼각형' },
+                { k: 'isosceles', label: '이등변삼각형' },
+                { k: 'scalene', label: '일반삼각형' },
+              ].map(({ k, label }) => (
+                <button key={k} type="button" onClick={() => { setPreset(k as typeof preset); regenTriangle(k as typeof preset); }} className={`text-xs px-2 py-0.5 rounded border ${preset === k ? 'bg-primary text-white border-primary' : 'bg-white border-slate-300 hover:border-primary'}`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 pt-1">
+            <label className="text-xs text-slate-600 w-14">밑변</label>
+            <NumInput min={20} max={400} value={Math.round(dims.base)} onChange={(v) => regenTriangle(preset, { base: v })} className="w-20 text-sm px-1.5 py-0.5 border border-slate-300 rounded" />
+            <span className="text-xs text-slate-400">px</span>
+          </div>
+          {preset !== 'equilateral' && (
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-slate-600 w-14">높이</label>
+              <NumInput min={20} max={400} value={Math.round(dims.height)} onChange={(v) => regenTriangle(preset, { height: v })} className="w-20 text-sm px-1.5 py-0.5 border border-slate-300 rounded" />
+              <span className="text-xs text-slate-400">px</span>
+            </div>
+          )}
+          {preset === 'scalene' && (
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-slate-600 w-14">꼭지 기울기</label>
+              <NumInput min={0} max={400} value={Math.round(dims.apexOffset)} onChange={(v) => regenTriangle(preset, { apexOffset: v })} className="w-20 text-sm px-1.5 py-0.5 border border-slate-300 rounded" />
+              <span className="text-xs text-slate-400">px (좌에서)</span>
+            </div>
+          )}
+          <p className="text-[10px] text-slate-400 pt-1">💡 치수를 바꾸면 꼭짓점이 자동 재배치됩니다</p>
         </div>
-      ))}
+      ) : (
+        (() => {
+          const bboxMaxY = Math.max(0, ...vertices.map(v => v.y));
+          return (
+            <div className="space-y-1.5">
+              <div className="flex items-start justify-between gap-2">
+                <label className="text-xs text-slate-500 shrink-0">꼭짓점 (x, y, 라벨)</label>
+                <span className="text-[10px] text-slate-400 whitespace-nowrap">원점(0,0) = 좌하단 · y↑</span>
+              </div>
+              {vertices.map((v, i) => {
+                const displayY = Math.round((bboxMaxY - v.y) * 100) / 100;
+                return (
+                  <div key={i} className="flex gap-1 items-center">
+                    <span className="shrink-0 w-6 text-xs text-slate-500 tabular-nums">{TRI_VERTEX_BADGES[i]}</span>
+                    <NumInput value={v.x} onChange={(nx) => { const arr = [...vertices]; arr[i] = { ...v, x: nx }; onChange({ vertices: arr }); }} className="w-14 text-xs px-1.5 py-0.5 border border-slate-300 rounded" placeholder="x" />
+                    <NumInput value={displayY} onChange={(userY) => { const arr = [...vertices]; arr[i] = { ...v, y: bboxMaxY - userY }; onChange({ vertices: arr }); }} className="w-14 text-xs px-1.5 py-0.5 border border-slate-300 rounded" placeholder="y" />
+                    <input type="text" value={v.label || ''} onChange={(e) => { const arr = [...vertices]; arr[i] = { ...v, label: e.target.value }; onChange({ vertices: arr }); }} className="flex-1 text-xs px-1.5 py-0.5 border border-slate-300 rounded" placeholder="라벨(예: A)" />
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()
+      )}
       {/* 변 라벨 */}
       <div>
         <div className="flex items-center justify-between">
@@ -59,10 +168,14 @@ export function TriangleForm({ params, onChange }: SubFormProps) {
         </div>
         {sides.map((s, i) => (
           <div key={i} className="flex gap-1 mt-1 items-center">
-            <input type="number" value={s.from} min={0} max={2} onChange={(e) => { const arr = [...sides]; const n = parseInt(e.target.value); arr[i] = { ...s, from: Math.max(0, Math.min(2, isNaN(n) ? 0 : n)) }; onChange({ sides: arr }); }} className="w-10 text-xs px-1 py-0.5 border border-slate-300 rounded" />
+            <NumInput value={s.from} min={0} max={2} onChange={(v) => { const arr = [...sides]; arr[i] = { ...s, from: v }; onChange({ sides: arr }); }} className="w-10 text-xs px-1 py-0.5 border border-slate-300 rounded" />
             <span className="text-xs text-slate-400">&ndash;</span>
-            <input type="number" value={s.to} min={0} max={2} onChange={(e) => { const arr = [...sides]; const n = parseInt(e.target.value); arr[i] = { ...s, to: Math.max(0, Math.min(2, isNaN(n) ? 0 : n)) }; onChange({ sides: arr }); }} className="w-10 text-xs px-1 py-0.5 border border-slate-300 rounded" />
-            <input type="text" value={s.label} onChange={(e) => { const arr = [...sides]; arr[i] = { ...s, label: e.target.value }; onChange({ sides: arr }); }} className="flex-1 text-xs px-1.5 py-0.5 border border-slate-300 rounded" placeholder="라벨" />
+            <NumInput value={s.to} min={0} max={2} onChange={(v) => { const arr = [...sides]; arr[i] = { ...s, to: v }; onChange({ sides: arr }); }} className="w-10 text-xs px-1 py-0.5 border border-slate-300 rounded" />
+            <input type="text" value={s.label} onChange={(e) => { const arr = [...sides]; arr[i] = { ...s, label: e.target.value }; onChange({ sides: arr }); }} className="flex-1 text-xs px-1.5 py-0.5 border border-slate-300 rounded" placeholder="a, b, 5, x+1 등 (변수 italic 자동)" title="숫자 또는 변수/수식. $...$ 로 명시적 KaTeX도 가능" />
+            <label className="flex items-center gap-1 text-[10px] text-slate-500 whitespace-nowrap cursor-pointer" title="변을 감싸는 점선 호(측정 표기법) 표시">
+              <input type="checkbox" checked={!!s.curve} onChange={(e) => { const arr = [...sides]; arr[i] = { ...s, curve: e.target.checked || undefined }; onChange({ sides: arr }); }} className="w-3 h-3" />
+              호
+            </label>
             <button type="button" onClick={() => onChange({ sides: sides.filter((_, j) => j !== i) })} className="text-slate-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
           </div>
         ))}
@@ -77,7 +190,7 @@ export function TriangleForm({ params, onChange }: SubFormProps) {
         </div>
         {angles.map((a, i) => (
           <div key={i} className="flex gap-1 mt-1 items-center">
-            <input type="number" value={a.vertex} min={0} max={2} onChange={(e) => { const arr = [...angles]; const n = parseInt(e.target.value); arr[i] = { ...a, vertex: Math.max(0, Math.min(2, isNaN(n) ? 0 : n)) }; onChange({ angles: arr }); }} className="w-10 text-xs px-1 py-0.5 border border-slate-300 rounded" title="꼭짓점 인덱스" />
+            <NumInput value={a.vertex} min={0} max={2} onChange={(v) => { const arr = [...angles]; arr[i] = { ...a, vertex: v }; onChange({ angles: arr }); }} className="w-10 text-xs px-1 py-0.5 border border-slate-300 rounded" title="꼭짓점 인덱스" />
             <input type="text" value={a.value} onChange={(e) => { const arr = [...angles]; arr[i] = { ...a, value: e.target.value }; onChange({ angles: arr }); }} className="flex-1 text-xs px-1.5 py-0.5 border border-slate-300 rounded" placeholder="예: 60°" />
             <button type="button" onClick={() => onChange({ angles: angles.filter((_, j) => j !== i) })} className="text-slate-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
           </div>
@@ -133,8 +246,89 @@ export function TriangleForm({ params, onChange }: SubFormProps) {
   );
 }
 
+/**
+ * 사각형 유형별 기본 꼭짓점 생성.
+ * 원점(0,0)을 좌상단으로 하고 y는 아래 방향. 사용자가 직접 좌표를 고민하지 않아도
+ * 유형만 선택하면 적절한 꼭짓점이 자동 배치된다.
+ */
+function makeQuadVertices(type: string, dims: { w?: number; h?: number; topW?: number; skew?: number; d1?: number; d2?: number }): Point2DInput[] {
+  switch (type) {
+    case 'square': {
+      const s = Math.max(20, dims.w ?? 120);
+      return [{ x: 0, y: 0 }, { x: s, y: 0 }, { x: s, y: s }, { x: 0, y: s }];
+    }
+    case 'parallelogram': {
+      const w = Math.max(20, dims.w ?? 140);
+      const h = Math.max(20, dims.h ?? 80);
+      const sk = dims.skew ?? 30;
+      return [{ x: sk, y: 0 }, { x: w + sk, y: 0 }, { x: w, y: h }, { x: 0, y: h }];
+    }
+    case 'trapezoid': {
+      const bottomW = Math.max(20, dims.w ?? 160);
+      const topW = Math.max(10, Math.min(bottomW, dims.topW ?? 80));
+      const h = Math.max(20, dims.h ?? 80);
+      const off = (bottomW - topW) / 2;
+      return [{ x: off, y: 0 }, { x: off + topW, y: 0 }, { x: bottomW, y: h }, { x: 0, y: h }];
+    }
+    case 'rhombus': {
+      const d1 = Math.max(20, dims.d1 ?? 120);
+      const d2 = Math.max(20, dims.d2 ?? 80);
+      return [{ x: d1 / 2, y: 0 }, { x: d1, y: d2 / 2 }, { x: d1 / 2, y: d2 }, { x: 0, y: d2 / 2 }];
+    }
+    case 'rectangle':
+    default: {
+      const w = Math.max(20, dims.w ?? 160);
+      const h = Math.max(20, dims.h ?? 100);
+      return [{ x: 0, y: 0 }, { x: w, y: 0 }, { x: w, y: h }, { x: 0, y: h }];
+    }
+  }
+}
+
+/** 현재 꼭짓점 배열에서 유형별 간단 치수를 역산 (사용자가 타입 간 전환 시 치수 유지) */
+function extractQuadDimensions(type: string, verts: Point2DInput[]): { w: number; h: number; topW?: number; skew?: number; d1?: number; d2?: number } {
+  if (!verts || verts.length < 4) return { w: 160, h: 100 };
+  const xs = verts.map(v => v.x);
+  const ys = verts.map(v => v.y);
+  const w = Math.max(...xs) - Math.min(...xs);
+  const h = Math.max(...ys) - Math.min(...ys);
+  switch (type) {
+    case 'square': return { w: Math.max(w, h), h: Math.max(w, h) };
+    case 'parallelogram': {
+      // 0번과 3번 사이의 수평 차이 = skew
+      const skew = Math.max(0, verts[0].x - verts[3].x);
+      return { w: w - skew, h, skew };
+    }
+    case 'trapezoid': {
+      // 위 변 (vertex 0 → 1), 아래 변 (3 → 2)
+      const topW = Math.abs(verts[1].x - verts[0].x);
+      return { w, h, topW };
+    }
+    case 'rhombus': {
+      return { w, h, d1: w, d2: h };
+    }
+    default: return { w, h };
+  }
+}
+
+const QUAD_VERTEX_BADGES = ['①', '②', '③', '④'];
+const QUAD_POSITION_HINTS: Record<string, string[]> = {
+  rectangle: ['좌상', '우상', '우하', '좌하'],
+  square: ['좌상', '우상', '우하', '좌하'],
+  parallelogram: ['좌상', '우상', '우하', '좌하'],
+  trapezoid: ['좌상', '우상', '우하', '좌하'],
+  rhombus: ['상', '우', '하', '좌'],
+};
+
 export function QuadrilateralForm({ params, onChange }: SubFormProps) {
+  const [mode, setMode] = useState<'simple' | 'advanced'>('simple');
   const vertices = Array.isArray(params.vertices) ? params.vertices as Point2DInput[] : [];
+  const sides = Array.isArray(params.sides) ? params.sides as { from: number; to: number; label: string; curve?: boolean | Record<string, unknown> }[] : [];
+  const maxIdx = Math.max(0, vertices.length - 1);
+  const clampIdx = (n: number) => Math.max(0, Math.min(maxIdx, Number.isFinite(n) ? n : 0));
+  const type = String(params.type || 'rectangle');
+  const dims = extractQuadDimensions(type, vertices);
+  const hints = QUAD_POSITION_HINTS[type] ?? QUAD_VERTEX_BADGES;
+
   const QUAD_TYPES = [
     { value: 'rectangle', label: '직사각형' },
     { value: 'square', label: '정사각형' },
@@ -143,22 +337,150 @@ export function QuadrilateralForm({ params, onChange }: SubFormProps) {
     { value: 'rhombus', label: '마름모' },
   ];
 
+  const updateDims = (patch: Partial<typeof dims>) => {
+    const next = { ...dims, ...patch };
+    onChange({ vertices: makeQuadVertices(type, next) });
+  };
+
+  const handleTypeChange = (newType: string) => {
+    // 유형 변경 시 현재 치수를 유지한 채 새 꼭짓점 생성
+    const kept = extractQuadDimensions(type, vertices);
+    onChange({ type: newType, vertices: makeQuadVertices(newType, kept) });
+  };
+
   return (
     <div className="space-y-2">
       <div>
         <label className="text-xs text-slate-500">유형</label>
-        <select value={String(params.type || 'rectangle')} onChange={(e) => onChange({ type: e.target.value })} className="block w-full text-sm px-2 py-1 border border-slate-300 rounded">
+        <select value={type} onChange={(e) => handleTypeChange(e.target.value)} className="block w-full text-sm px-2 py-1 border border-slate-300 rounded">
           {QUAD_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
         </select>
       </div>
-      <label className="text-xs text-slate-500">꼭짓점 (x, y, 라벨)</label>
-      {vertices.map((v, i) => (
-        <div key={i} className="flex gap-1 items-center">
-          <input type="number" value={v.x} onChange={(e) => { const arr = [...vertices]; arr[i] = { ...v, x: parseFloat(e.target.value) || 0 }; onChange({ vertices: arr }); }} className="w-16 text-xs px-1.5 py-0.5 border border-slate-300 rounded" />
-          <input type="number" value={v.y} onChange={(e) => { const arr = [...vertices]; arr[i] = { ...v, y: parseFloat(e.target.value) || 0 }; onChange({ vertices: arr }); }} className="w-16 text-xs px-1.5 py-0.5 border border-slate-300 rounded" />
-          <input type="text" value={v.label || ''} onChange={(e) => { const arr = [...vertices]; arr[i] = { ...v, label: e.target.value }; onChange({ vertices: arr }); }} className="flex-1 text-xs px-1.5 py-0.5 border border-slate-300 rounded" />
+
+      {/* 모드 토글 */}
+      <div className="flex gap-1 pt-1">
+        <button type="button" onClick={() => setMode('simple')} className={`text-xs px-2 py-0.5 rounded ${mode === 'simple' ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+          치수 입력
+        </button>
+        <button type="button" onClick={() => setMode('advanced')} className={`text-xs px-2 py-0.5 rounded ${mode === 'advanced' ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+          꼭짓점 직접 편집
+        </button>
+      </div>
+
+      {mode === 'simple' ? (
+        // ── 치수 입력 모드 ──
+        <div className="space-y-1.5 bg-slate-50 rounded p-2">
+          {type === 'square' ? (
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-slate-600 w-14">한 변</label>
+              <NumInput min={20} max={400} value={Math.round(dims.w)} onChange={(v) => updateDims({ w: v })} className="w-20 text-sm px-1.5 py-0.5 border border-slate-300 rounded" />
+              <span className="text-xs text-slate-400">px</span>
+            </div>
+          ) : type === 'rhombus' ? (
+            <>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-slate-600 w-14">가로 대각선</label>
+                <NumInput min={20} max={400} value={Math.round(dims.d1 ?? dims.w)} onChange={(v) => updateDims({ d1: v })} className="w-20 text-sm px-1.5 py-0.5 border border-slate-300 rounded" />
+                <span className="text-xs text-slate-400">px</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-slate-600 w-14">세로 대각선</label>
+                <NumInput min={20} max={400} value={Math.round(dims.d2 ?? dims.h)} onChange={(v) => updateDims({ d2: v })} className="w-20 text-sm px-1.5 py-0.5 border border-slate-300 rounded" />
+                <span className="text-xs text-slate-400">px</span>
+              </div>
+            </>
+          ) : type === 'trapezoid' ? (
+            <>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-slate-600 w-14">아래 변</label>
+                <NumInput min={20} max={400} value={Math.round(dims.w)} onChange={(v) => updateDims({ w: v })} className="w-20 text-sm px-1.5 py-0.5 border border-slate-300 rounded" />
+                <span className="text-xs text-slate-400">px</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-slate-600 w-14">위 변</label>
+                <NumInput min={10} max={400} value={Math.round(dims.topW ?? dims.w * 0.5)} onChange={(v) => updateDims({ topW: v })} className="w-20 text-sm px-1.5 py-0.5 border border-slate-300 rounded" />
+                <span className="text-xs text-slate-400">px</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-slate-600 w-14">높이</label>
+                <NumInput min={20} max={400} value={Math.round(dims.h)} onChange={(v) => updateDims({ h: v })} className="w-20 text-sm px-1.5 py-0.5 border border-slate-300 rounded" />
+                <span className="text-xs text-slate-400">px</span>
+              </div>
+            </>
+          ) : (
+            // rectangle, parallelogram
+            <>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-slate-600 w-14">가로</label>
+                <NumInput min={20} max={400} value={Math.round(dims.w)} onChange={(v) => updateDims({ w: v })} className="w-20 text-sm px-1.5 py-0.5 border border-slate-300 rounded" />
+                <span className="text-xs text-slate-400">px</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-slate-600 w-14">세로</label>
+                <NumInput min={20} max={400} value={Math.round(dims.h)} onChange={(v) => updateDims({ h: v })} className="w-20 text-sm px-1.5 py-0.5 border border-slate-300 rounded" />
+                <span className="text-xs text-slate-400">px</span>
+              </div>
+              {type === 'parallelogram' && (
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-slate-600 w-14">기울기</label>
+                  <NumInput min={0} max={100} value={Math.round(dims.skew ?? 30)} onChange={(v) => updateDims({ skew: v })} className="w-20 text-sm px-1.5 py-0.5 border border-slate-300 rounded" />
+                  <span className="text-xs text-slate-400">px (위쪽 밀림)</span>
+                </div>
+              )}
+            </>
+          )}
+          <p className="text-[10px] text-slate-400 pt-1">💡 치수를 바꾸면 꼭짓점이 자동 재배치됩니다</p>
         </div>
-      ))}
+      ) : (
+        // ── 꼭짓점 직접 편집 모드 (수학 좌표계: 원점=좌하단, y는 위로) ──
+        (() => {
+          // 내부 저장은 SVG(y↓) 그대로이지만 UI에서는 y를 뒤집어서 보여준다.
+          // bboxMaxY를 기준으로 displayY = bboxMaxY - svgY.
+          const bboxMaxY = Math.max(0, ...vertices.map(v => v.y));
+          return (
+            <div className="space-y-1.5">
+              <div className="flex items-start justify-between gap-2">
+                <label className="text-xs text-slate-500 shrink-0">꼭짓점 (x, y, 라벨)</label>
+                <span className="text-[10px] text-slate-400 whitespace-nowrap">원점(0,0) = 좌하단 · y↑</span>
+              </div>
+              {vertices.map((v, i) => {
+                const displayY = Math.round((bboxMaxY - v.y) * 100) / 100;
+                return (
+                  <div key={i} className="flex gap-1 items-center">
+                    <span className="shrink-0 whitespace-nowrap text-xs text-slate-500 tabular-nums w-14" title={hints[i]}>{QUAD_VERTEX_BADGES[i]} {hints[i] ? `(${hints[i]})` : ''}</span>
+                    <NumInput value={v.x} onChange={(nx) => { const arr = [...vertices]; arr[i] = { ...v, x: nx }; onChange({ vertices: arr }); }} className="w-14 text-xs px-1.5 py-0.5 border border-slate-300 rounded" placeholder="x" />
+                    <NumInput value={displayY} onChange={(userY) => { const arr = [...vertices]; arr[i] = { ...v, y: bboxMaxY - userY }; onChange({ vertices: arr }); }} className="w-14 text-xs px-1.5 py-0.5 border border-slate-300 rounded" placeholder="y" />
+                    <input type="text" value={v.label || ''} onChange={(e) => { const arr = [...vertices]; arr[i] = { ...v, label: e.target.value }; onChange({ vertices: arr }); }} className="flex-1 text-xs px-1.5 py-0.5 border border-slate-300 rounded" placeholder="라벨(예: A)" />
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()
+      )}
+
+      {/* 변 라벨 — polygon 편집기와 동일한 구조 (변 인덱스 + 값 + 호 토글) */}
+      <div>
+        <div className="flex items-center justify-between">
+          <label className="text-xs text-slate-500">변 라벨 ({sides.length}개)</label>
+          <button type="button" className="text-xs text-primary hover:text-primary/70" onClick={() => onChange({ sides: [...sides, { from: 0, to: 1, label: '' }] })}>
+            <Plus className="w-3 h-3 inline" /> 추가
+          </button>
+        </div>
+        {sides.map((s, i) => (
+          <div key={i} className="flex gap-1 mt-1 items-center">
+            <NumInput min={0} max={maxIdx} value={s.from} onChange={(v) => { const arr = [...sides]; arr[i] = { ...s, from: v }; onChange({ sides: arr }); }} className="w-10 text-xs px-1 py-0.5 border border-slate-300 rounded" title={`from (0~${maxIdx})`} />
+            <span className="text-xs text-slate-400">→</span>
+            <NumInput min={0} max={maxIdx} value={s.to} onChange={(v) => { const arr = [...sides]; arr[i] = { ...s, to: v }; onChange({ sides: arr }); }} className="w-10 text-xs px-1 py-0.5 border border-slate-300 rounded" title={`to (0~${maxIdx})`} />
+            <input type="text" value={s.label} onChange={(e) => { const arr = [...sides]; arr[i] = { ...s, label: e.target.value }; onChange({ sides: arr }); }} className="flex-1 text-xs px-1.5 py-0.5 border border-slate-300 rounded" placeholder="a, b, 5, x+1 등 (변수 italic 자동)" title="숫자 또는 변수/수식. $...$ 로 명시적 KaTeX도 가능" />
+            <label className="flex items-center gap-1 text-[10px] text-slate-500 whitespace-nowrap cursor-pointer" title="변을 감싸는 점선 호(측정 표기법) 표시">
+              <input type="checkbox" checked={!!s.curve} onChange={(e) => { const arr = [...sides]; arr[i] = { ...s, curve: e.target.checked || undefined }; onChange({ sides: arr }); }} className="w-3 h-3" />
+              호
+            </label>
+            <button type="button" onClick={() => onChange({ sides: sides.filter((_, j) => j !== i) })} className="text-slate-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
+          </div>
+        ))}
+      </div>
       <ShapeStyleFields params={params} onChange={onChange} />
     </div>
   );
@@ -531,7 +853,38 @@ export function RegularPolygonForm({ params, onChange }: SubFormProps) {
           </div>
         ))}
       </div>
-      <TextField label="변의 길이" value={String(params.sideLength || '')} onChange={(v) => onChange({ sideLength: v })} placeholder="예: 5cm" />
+      {/* 변 라벨 + 호 토글 — 여러 변에 라벨 및 측정 표기용 호 */}
+      {(() => {
+        const showLengths = Array.isArray(params.showLengths)
+          ? (params.showLengths as { edge: [number, number]; value: string; curve?: boolean | Record<string, unknown> }[])
+          : [];
+        const nSides = Number(params.sides) || 3;
+        const maxIdx = Math.max(0, nSides - 1);
+        return (
+          <div>
+            <div className="flex items-center justify-between">
+              <label className="text-xs text-slate-500">변 라벨 ({showLengths.length}개)</label>
+              <button type="button" className="text-xs text-primary hover:text-primary/70" onClick={() => onChange({ showLengths: [...showLengths, { edge: [0, 1], value: '' }] })}>
+                <Plus className="w-3 h-3 inline" /> 추가
+              </button>
+            </div>
+            {showLengths.map((s, i) => (
+              <div key={i} className="flex gap-1 mt-1 items-center">
+                <NumInput min={0} max={maxIdx} value={s.edge[0]} onChange={(v) => { const arr = [...showLengths]; arr[i] = { ...s, edge: [v, s.edge[1]] }; onChange({ showLengths: arr }); }} className="w-10 text-xs px-1 py-0.5 border border-slate-300 rounded" title={`from (0~${maxIdx})`} />
+                <span className="text-xs text-slate-400">→</span>
+                <NumInput min={0} max={maxIdx} value={s.edge[1]} onChange={(v) => { const arr = [...showLengths]; arr[i] = { ...s, edge: [s.edge[0], v] }; onChange({ showLengths: arr }); }} className="w-10 text-xs px-1 py-0.5 border border-slate-300 rounded" title={`to (0~${maxIdx})`} />
+                <input type="text" value={s.value} onChange={(e) => { const arr = [...showLengths]; arr[i] = { ...s, value: e.target.value }; onChange({ showLengths: arr }); }} className="flex-1 text-xs px-1.5 py-0.5 border border-slate-300 rounded" placeholder="a, b, 5, x+1 등 (변수 italic 자동)" />
+                <label className="flex items-center gap-1 text-[10px] text-slate-500 whitespace-nowrap cursor-pointer" title="변을 감싸는 점선 호(측정 표기법) 표시">
+                  <input type="checkbox" checked={!!s.curve} onChange={(e) => { const arr = [...showLengths]; arr[i] = { ...s, curve: e.target.checked || undefined }; onChange({ showLengths: arr }); }} className="w-3 h-3" />
+                  호
+                </label>
+                <button type="button" onClick={() => onChange({ showLengths: showLengths.filter((_, j) => j !== i) })} className="text-slate-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+      <TextField label="변의 길이 (단일, 레거시)" value={String(params.sideLength || '')} onChange={(v) => onChange({ sideLength: v })} placeholder="변 라벨 배열이 있으면 무시됨" />
       <ShapeStyleFields params={params} onChange={onChange} />
     </div>
   );

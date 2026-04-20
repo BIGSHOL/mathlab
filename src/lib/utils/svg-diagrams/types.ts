@@ -166,7 +166,7 @@ export interface CircleParams extends ShapeStyle {
 
 export interface TriangleParams extends ShapeStyle {
   vertices: [Point2D, Point2D, Point2D];
-  sides?: { from: number; to: number; label: string }[];
+  sides?: { from: number; to: number; label: string; curve?: boolean | { inflate?: number; color?: string; dashArray?: string } }[];
   angles?: { vertex: number; value: string }[];
   /** 특수점 표시 (내심, 외심, 무게중심, 수심) */
   specialPoints?: ('incenter' | 'circumcenter' | 'centroid' | 'orthocenter')[];
@@ -186,7 +186,7 @@ export interface TriangleParams extends ShapeStyle {
 
 export interface QuadrilateralParams extends ShapeStyle {
   vertices: [Point2D, Point2D, Point2D, Point2D];
-  sides?: { from: number; to: number; label: string }[];
+  sides?: { from: number; to: number; label: string; curve?: boolean | { inflate?: number; color?: string; dashArray?: string } }[];
   angles?: { vertex: number; value: string }[];
   type?: 'rectangle' | 'square' | 'parallelogram' | 'trapezoid' | 'rhombus';
   /** 대각선 (개별 지정) */
@@ -240,7 +240,10 @@ export interface RegularPolygonParams extends ShapeStyle {
   sides: number;
   labels?: { vertex: number; text: string }[];
   diagonals?: boolean | { from: number; to: number; style?: 'solid' | 'dashed' }[];
+  /** 단일 변 길이 (기존 호환 — 한 변만 라벨) */
   sideLength?: string;
+  /** 여러 변 라벨 + 호 옵션 (교과서 스타일 통일) */
+  showLengths?: { edge: [number, number]; value: string; curve?: boolean | { inflate?: number; color?: string; dashArray?: string } }[];
   angles?: { vertex: number; text?: string; exterior?: boolean }[];
 }
 

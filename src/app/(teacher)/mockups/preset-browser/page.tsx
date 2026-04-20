@@ -13,7 +13,6 @@ import { ALL_PRESETS, gradeKeyToShortLabel } from '@/lib/diagram-presets';
 import { SHAPE_PRESETS } from '@/lib/diagram-presets/shape-presets';
 import { renderDiagram as renderSpec } from '@/lib/diagram/renderer';
 import { renderDiagram as renderParam } from '@/lib/utils/svg-diagrams';
-import type { DiagramParam } from '@/types/pdf-extract';
 
 type Tab = 'legacy' | 'new' | 'all';
 
