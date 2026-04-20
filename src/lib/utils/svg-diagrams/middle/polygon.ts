@@ -12,7 +12,7 @@
  */
 
 import { PolygonParams } from '../types';
-import { svgWrap, renderRightAngleMark, polygon as svgPolygon, text as svgText } from '../shared/svg-utils';
+import { svgWrap, renderRightAngleMark, polygon as svgPolygon, text as svgText, katexLabel } from '../shared/svg-utils';
 
 type Point = [number, number];
 
@@ -86,6 +86,27 @@ function outlineCurvePath(vertices: Point[], inflate: number): string {
   }
   segs.push('Z');
   return segs.join(' ');
+}
+
+/**
+ * 변 라벨/꼭짓점 라벨에서 수학 표기법 자동 감지.
+ * - `$...$` 감싸진 것은 내부 내용을 KaTeX 수식으로 처리
+ * - 숫자만 있으면 plain text
+ * - 문자(a,b,x,y...) 또는 수식 기호(+,-,=,^,_) 포함 시 KaTeX로 렌더 → italic 자동
+ */
+function renderLengthLabel(x: number, y: number, value: string, fontSize = 13): string {
+  if (!value) return '';
+  const trimmed = value.trim();
+  // 1) `$...$` 명시적 수식
+  if (trimmed.startsWith('$') && trimmed.endsWith('$') && trimmed.length > 2) {
+    return katexLabel(x, y, trimmed.slice(1, -1), { fontSize });
+  }
+  // 2) 순수 숫자 (소수점/분수 포함)
+  if (/^[\d.,\s]+$/.test(trimmed)) {
+    return svgText(x, y, trimmed, { fontSize });
+  }
+  // 3) 문자/수식 기호 → KaTeX (변수 italic, 지수, 분수 등 지원)
+  return katexLabel(x, y, trimmed, { fontSize });
 }
 
 /** PolygonParams → SVG 문자열 */
@@ -198,26 +219,26 @@ export function renderPolygon(params: PolygonParams): string {
     }
   }
 
-  // 변의 길이 표시 — 외측 법선 방향
+  // 변의 길이 표시 — 외측 법선 방향 + KaTeX 자동 렌더 (변수는 italic)
   if (params.showLengths) {
     for (const { edge, value } of params.showLengths) {
       const [from, to] = edge;
       if (from < 0 || from >= vertices.length || to < 0 || to >= vertices.length) continue;
-      const [lx, ly] = edgeLabelOffset(vertices[from], vertices[to], vertices, 16);
-      parts.push(svgText(lx, ly, value, { fontSize: 13 }));
+      const [lx, ly] = edgeLabelOffset(vertices[from], vertices[to], vertices, 18);
+      parts.push(renderLengthLabel(lx, ly, value, 13));
     }
   }
 
-  // 사용자 정의 라벨
+  // 사용자 정의 라벨 — KaTeX 자동 렌더
   if (params.labels && params.labels.length > 0) {
     for (const l of params.labels) {
       const pos = Array.isArray(l.position) ? l.position : toTuple(l.position as { x: number; y: number });
       const [lx, ly] = pos;
-      parts.push(svgText(lx - minX, ly - minY, l.text, { fontSize: l.fontSize ?? 13 }));
+      parts.push(renderLengthLabel(lx - minX, ly - minY, l.text, l.fontSize ?? 13));
     }
   }
 
-  // 꼭짓점 라벨
+  // 꼭짓점 라벨 — KaTeX (A, B, C도 수학 기울임으로 표기)
   if (params.vertexLabels) {
     const [cx, cy] = polygonCentroid(vertices);
     const defaults = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
@@ -225,13 +246,12 @@ export function renderPolygon(params: PolygonParams): string {
       const lbl = params.vertexLabels[i] ?? defaults[i] ?? `V${i}`;
       if (!lbl) continue;
       const v = vertices[i];
-      // 꼭짓점에서 centroid 반대방향으로 18px
       const dx = v[0] - cx;
       const dy = v[1] - cy;
       const dl = Math.sqrt(dx * dx + dy * dy) || 1;
-      const lx = v[0] + (dx / dl) * 18;
-      const ly = v[1] + (dy / dl) * 18;
-      parts.push(svgText(lx, ly, lbl, { fontSize: 13, fontWeight: 'bold' }));
+      const lx = v[0] + (dx / dl) * 20;
+      const ly = v[1] + (dy / dl) * 20;
+      parts.push(katexLabel(lx, ly, lbl, { fontSize: 13 }));
     }
   }
 

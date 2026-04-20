@@ -199,7 +199,8 @@ export function PolygonForm({ params, onChange }: SubFormProps) {
                 onChange({ showLengths: arr });
               }}
               className="flex-1 text-xs px-1.5 py-0.5 border border-slate-300 rounded"
-              placeholder="a / 5 / b+1"
+              placeholder="a, b, 5, x+1, $\\frac{a}{2}$ 등 (변수는 자동 italic)"
+              title="숫자 또는 변수/수식. 변수 입력 시 자동으로 italic 렌더. $...$ 로 명시적 KaTeX도 가능"
             />
             <button
               type="button"
