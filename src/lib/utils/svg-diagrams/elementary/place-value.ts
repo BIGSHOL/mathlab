@@ -1,5 +1,5 @@
 import { PlaceValueParams } from '../types';
-import { svgWrap, rect, katexLabel, COLORS } from '../shared/svg-utils';
+import { svgWrap, rect, katexLabel, COLORS, TEXTBOOK_STYLE } from '../shared/svg-utils';
 
 /** 수 모형 SVG 생성 (백의 자리=큰 사각형, 십의 자리=막대, 일의 자리=작은 정사각형) */
 export function renderPlaceValue(params: PlaceValueParams): string {
@@ -13,14 +13,14 @@ export function renderPlaceValue(params: PlaceValueParams): string {
   for (let i = 0; i < hundreds; i++) {
     const x = xOffset;
     // 10×10 격자
-    parts.push(rect(x, 0, hundredSize, hundredSize, { fill: COLORS.primary, stroke: '#333', strokeWidth: 1 }));
+    parts.push(rect(x, 0, hundredSize, hundredSize, { fill: COLORS.primary, stroke: TEXTBOOK_STYLE.AXIS_COLOR, strokeWidth: 1 }));
     parts.push(`<rect x="${x}" y="0" width="${hundredSize}" height="${hundredSize}" fill="${COLORS.primary}" opacity="0.25"/>`);
     // 격자선
     for (let g = 1; g < 10; g++) {
       const gx = x + (hundredSize / 10) * g;
       const gy = (hundredSize / 10) * g;
-      parts.push(`<line x1="${gx}" y1="0" x2="${gx}" y2="${hundredSize}" stroke="#333" stroke-width="0.3"/>`);
-      parts.push(`<line x1="${x}" y1="${gy}" x2="${x + hundredSize}" y2="${gy}" stroke="#333" stroke-width="0.3"/>`);
+      parts.push(`<line x1="${gx}" y1="0" x2="${gx}" y2="${hundredSize}" stroke="${TEXTBOOK_STYLE.AXIS_COLOR}" stroke-width="0.3"/>`);
+      parts.push(`<line x1="${x}" y1="${gy}" x2="${x + hundredSize}" y2="${gy}" stroke="${TEXTBOOK_STYLE.AXIS_COLOR}" stroke-width="0.3"/>`);
     }
     parts.push(katexLabel(x + hundredSize / 2, hundredSize + 14, '100', { fontSize: 10 }));
     xOffset += hundredSize + gap;
@@ -32,12 +32,12 @@ export function renderPlaceValue(params: PlaceValueParams): string {
   if (tens > 0 && hundreds > 0) xOffset += 4;
   for (let i = 0; i < tens; i++) {
     const x = xOffset;
-    parts.push(rect(x, 0, tenW, tenH, { fill: COLORS.green, stroke: '#333', strokeWidth: 0.8 }));
+    parts.push(rect(x, 0, tenW, tenH, { fill: COLORS.green, stroke: TEXTBOOK_STYLE.AXIS_COLOR, strokeWidth: 0.8 }));
     parts.push(`<rect x="${x}" y="0" width="${tenW}" height="${tenH}" fill="${COLORS.green}" opacity="0.3"/>`);
     // 격자선
     for (let g = 1; g < 10; g++) {
       const gy = (tenH / 10) * g;
-      parts.push(`<line x1="${x}" y1="${gy}" x2="${x + tenW}" y2="${gy}" stroke="#333" stroke-width="0.3"/>`);
+      parts.push(`<line x1="${x}" y1="${gy}" x2="${x + tenW}" y2="${gy}" stroke="${TEXTBOOK_STYLE.AXIS_COLOR}" stroke-width="0.3"/>`);
     }
     xOffset += tenW + 3;
   }
@@ -54,7 +54,7 @@ export function renderPlaceValue(params: PlaceValueParams): string {
     const col = i % 5;
     const x = onesStartX + col * (oneSize + 2);
     const y = row * (oneSize + 2);
-    parts.push(rect(x, y, oneSize, oneSize, { fill: COLORS.secondary, stroke: '#333', strokeWidth: 0.8 }));
+    parts.push(rect(x, y, oneSize, oneSize, { fill: COLORS.secondary, stroke: TEXTBOOK_STYLE.AXIS_COLOR, strokeWidth: 0.8 }));
     parts.push(`<rect x="${x}" y="${y}" width="${oneSize}" height="${oneSize}" fill="${COLORS.secondary}" opacity="0.3"/>`);
   }
   if (ones > 0) {

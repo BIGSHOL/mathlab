@@ -1,5 +1,5 @@
 import { BarChartParams } from '../types';
-import { svgWrap, line, rect, text, katexLabel, arrowHead, COLORS } from '../shared/svg-utils';
+import { svgWrap, line, rect, text, katexLabel, arrowHead, COLORS, TEXTBOOK_STYLE } from '../shared/svg-utils';
 
 /** 막대그래프 SVG 생성 (초4) */
 export function renderBarChart(params: BarChartParams): string {
@@ -52,13 +52,13 @@ export function renderBarChart(params: BarChartParams): string {
     parts.push(line(leftPad, toY(maxVal) - 10, leftPad, topPad + chartH, { strokeWidth: 1.5 }));
     parts.push(arrowHead(leftPad, toY(maxVal) - 10, -90, 6));
     if (yLabel) {
-      parts.push(text(12, topPad + chartH / 2, yLabel, { fontSize: 10, fill: '#666' }));
+      parts.push(text(12, topPad + chartH / 2, yLabel, { fontSize: 10, fill: TEXTBOOK_STYLE.PLAIN_TEXT_COLOR }));
     }
 
     // x축
     parts.push(line(leftPad, topPad + chartH, leftPad + chartW, topPad + chartH, { strokeWidth: 1.5 }));
     if (xLabel) {
-      parts.push(text(leftPad + chartW / 2, totalH - 4, xLabel, { fontSize: 10, fill: '#666' }));
+      parts.push(text(leftPad + chartW / 2, totalH - 4, xLabel, { fontSize: 10, fill: TEXTBOOK_STYLE.PLAIN_TEXT_COLOR }));
     }
 
     // 막대
@@ -70,7 +70,7 @@ export function renderBarChart(params: BarChartParams): string {
       parts.push(rect(x, y, barW, h, { fill: barColor, stroke: barColor, strokeWidth: 1 }));
       parts.push(`<rect x="${x}" y="${y}" width="${barW}" height="${h}" fill="${barColor}" fill-opacity="0.5" stroke="${barColor}" stroke-width="1"/>`);
       // 범주 라벨
-      parts.push(text(x + barW / 2, topPad + chartH + 16, categories[i], { fontSize: 10, fill: '#333' }));
+      parts.push(text(x + barW / 2, topPad + chartH + 16, categories[i], { fontSize: 10, fill: TEXTBOOK_STYLE.PLAIN_TEXT_COLOR }));
     }
 
     return svgWrap(parts.join('\n    '), totalW, totalH);
@@ -113,7 +113,7 @@ export function renderBarChart(params: BarChartParams): string {
       const w = (val / maxVal) * chartW;
       parts.push(`<rect x="${leftPad}" y="${y}" width="${w}" height="${barH}" fill="${barColor}" fill-opacity="0.5" stroke="${barColor}" stroke-width="1"/>`);
       // 범주 라벨 (왼쪽)
-      parts.push(text(leftPad - 6, y + barH / 2, categories[i], { fontSize: 10, fill: '#333', anchor: 'end' }));
+      parts.push(text(leftPad - 6, y + barH / 2, categories[i], { fontSize: 10, fill: TEXTBOOK_STYLE.PLAIN_TEXT_COLOR, anchor: 'end' }));
     }
 
     return svgWrap(parts.join('\n    '), totalW, totalH);

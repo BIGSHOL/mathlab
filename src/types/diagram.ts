@@ -75,6 +75,10 @@ export interface TriangleDiagram {
     /** 연장선 길이 (기본 50) */
     extensionLength?: number;
   }[];
+  /** 도형 채우기 색 (기본 none) */
+  fill?: string;
+  /** 도형 외곽을 따라가는 점선 곡선 (교과서 풍 데코) */
+  outlineCurve?: OutlineCurveOptions;
 }
 
 export interface CircleDiagram {
@@ -143,6 +147,66 @@ export interface QuadrilateralDiagram {
   congruenceMarks?: { from: number; to: number; ticks: number }[];
   /** 평행 표시 (변 위 화살표) */
   parallelMarks?: { from: number; to: number; arrows: number }[];
+  /** 도형 채우기 색 (예: "#D6F0E0", 기본 none) */
+  fill?: string;
+  /** 대각선 분할 — 두 삼각형을 다른 색으로 자동 채움 + 영역 라벨 (① ② 등) */
+  splitDiagonal?: {
+    from: number;
+    to: number;
+    fillA?: string;
+    fillB?: string;
+    labelA?: string;
+    labelB?: string;
+    style?: 'solid' | 'dashed';
+  };
+  /** 도형 외곽을 따라가는 점선 곡선 (교과서 풍 데코) */
+  outlineCurve?: OutlineCurveOptions;
+}
+
+/** 도형 외곽을 부드러운 점선 곡선으로 감싸는 옵션 (교과서 스타일 데코) */
+export interface OutlineCurveOptions {
+  /** 곡선 스타일 — 'arc'는 원호 근사, 'bezier'는 베지어 (기본 bezier) */
+  style?: 'arc' | 'bezier';
+  /** 외곽으로 부풀리는 정도 (px, 기본 12) */
+  inflate?: number;
+  /** 선 색 (기본 #999) */
+  color?: string;
+  /** 점선 dash 패턴 (기본 "4,3") */
+  dashArray?: string;
+}
+
+/** 임의 N각형 (5각형, 6각형, L자, T자, 계단형 등) */
+export interface PolygonDiagram {
+  type: 'polygon';
+  /** 꼭짓점 좌표 배열 (3개 이상, 시계방향 또는 반시계방향) */
+  vertices: Point[];
+  /** 꼭짓점 이름 (기본 A, B, C, ... 자동 생성) */
+  vertexLabels?: string[];
+  /** 임의 위치 라벨 */
+  labels?: DiagramLabel[];
+  /** 변의 길이 표시 (자동 위치 — 변 중앙에 외측 offset) */
+  showLengths?: EdgeLength[];
+  /** 직각 표시할 꼭짓점 인덱스 배열 */
+  rightAngleMarks?: number[];
+  /** 도형 전체 채움 색 (regions 미사용 시) */
+  fill?: string;
+  /** 영역 분할 — 분할선이 만드는 부분 영역을 다른 색으로 채우고 라벨 표시 */
+  regions?: Array<{
+    /** 이 영역을 구성하는 꼭짓점 인덱스 (다각형 내부에서) */
+    vertexIndices: number[];
+    fill?: string;
+    label?: string;
+    labelOffset?: Point;
+  }>;
+  /** 분할선 — 도형 내부에 그릴 보조선 (꼭짓점 → 꼭짓점) */
+  splitLines?: Array<{
+    from: number;
+    to: number;
+    style?: 'solid' | 'dashed';
+    color?: string;
+  }>;
+  /** 도형 외곽을 따라가는 점선 곡선 (교과서 풍 데코) */
+  outlineCurve?: OutlineCurveOptions;
 }
 
 export interface SolidFigureDiagram {
@@ -166,5 +230,6 @@ export type DiagramSpec =
   | CircleDiagram
   | CoordinatePlaneDiagram
   | QuadrilateralDiagram
+  | PolygonDiagram
   | SolidFigureDiagram
   | CompositeDiagram;

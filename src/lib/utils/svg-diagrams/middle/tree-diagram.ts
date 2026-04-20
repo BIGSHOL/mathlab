@@ -1,5 +1,5 @@
 import { TreeDiagramParams, TreeNode } from '../types';
-import { svgWrap, line, text, katexLabel } from '../shared/svg-utils';
+import { svgWrap, line, text, katexLabel, TEXTBOOK_STYLE } from '../shared/svg-utils';
 
 interface LayoutNode {
   label: string;
@@ -109,7 +109,7 @@ export function renderTreeDiagram(params: TreeDiagramParams): string {
     for (const child of n.children) {
       const cx = pad + child.x;
       const cy = pad + child.y + titleH;
-      parts.push(line(nx, ny, cx, cy, { stroke: '#555', strokeWidth: 1.2 }));
+      parts.push(line(nx, ny, cx, cy, { stroke: TEXTBOOK_STYLE.MAIN_STROKE, strokeWidth: 1.2 }));
 
       // 확률 라벨 (분기선 중간)
       if (child.probability) {
@@ -126,7 +126,7 @@ export function renderTreeDiagram(params: TreeDiagramParams): string {
       // 배경 (가독성)
       const bgW = Math.max(20, n.label.length * 8 + 10);
       parts.push(`<rect x="${nx - bgW / 2}" y="${ny - 10}" width="${bgW}" height="20" rx="3" fill="white" stroke="#DDD" stroke-width="0.8"/>`);
-      parts.push(text(nx, ny, n.label, { fontSize: 11, fill: '#333' }));
+      parts.push(text(nx, ny, n.label, { fontSize: 11, fill: TEXTBOOK_STYLE.LABEL_COLOR }));
     }
 
     n.children.forEach(renderNode);

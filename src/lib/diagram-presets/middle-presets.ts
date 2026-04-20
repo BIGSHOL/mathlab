@@ -959,4 +959,91 @@ export const MIDDLE_PRESETS: DiagramPreset[] = [
     diagramType: 'scatter_plot',
     defaultParams: { points: [{ x: 1, y: 5 }, { x: 2, y: 2 }, { x: 3, y: 6 }, { x: 4, y: 3 }, { x: 5, y: 7 }, { x: 6, y: 1 }], xRange: [0, 7], yRange: [0, 8], xLabel: 'x', yLabel: 'y', gridStep: 1, showTrendLine: false },
   },
+
+  // ═══════════════════════════════════════
+  // 중1 1학기 — 문자와 식 (polygon + 변수 길이)
+  // ═══════════════════════════════════════
+  {
+    id: 'm1-1-polygon-house-var',
+    name: '집 모양 오각형 (문자)',
+    description: '교과서 0596(2) — 상단 삼각형+하단 직사각형. 길이를 변수 a, b로 표현',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '문자와 식',
+    diagramType: 'polygon',
+    defaultParams: {
+      vertices: [{ x: 0, y: 200 }, { x: 200, y: 200 }, { x: 200, y: 80 }, { x: 100, y: 0 }, { x: 0, y: 80 }],
+      // 지붕 꼭짓점(2,3,4)은 90°가 아니므로 직각 표시하지 않음
+      rightAngleMarks: [0, 1],
+      splitLines: [{ from: 2, to: 4, style: 'dashed' }],
+      regions: [
+        { vertexIndices: [0, 1, 2, 4], fill: '#E0E0F0', label: '②' },
+        { vertexIndices: [4, 2, 3], fill: '#FFEDD5', label: '①' },
+      ],
+      showLengths: [
+        { edge: [0, 1], value: 'a' },
+        { edge: [1, 2], value: 'b' },
+        { edge: [2, 3], value: '2' },
+      ],
+    },
+  },
+  {
+    id: 'm1-1-polygon-staircase-var',
+    name: '2단 계단 (문자)',
+    description: '계단 모양 둘레/넓이 — 변수 a, b 사용 (자동 italic)',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '문자와 식',
+    diagramType: 'polygon',
+    defaultParams: {
+      vertices: [{ x: 0, y: 120 }, { x: 200, y: 120 }, { x: 200, y: 60 }, { x: 100, y: 60 }, { x: 100, y: 0 }, { x: 0, y: 0 }],
+      rightAngleMarks: [0, 1, 2, 3, 4, 5],
+      fill: '#A7F3D0',
+      showLengths: [
+        { edge: [5, 0], value: 'a' },
+        { edge: [0, 1], value: 'b' },
+        { edge: [4, 5], value: 'a' },
+        { edge: [2, 3], value: 'b-a' },
+      ],
+    },
+  },
+  {
+    id: 'm1-1-polygon-l-var',
+    name: 'L자 도형 (문자)',
+    description: 'L자 6각형 — 변수 a, b, c, d (자동 italic)',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '문자와 식',
+    diagramType: 'polygon',
+    defaultParams: {
+      vertices: [{ x: 0, y: 120 }, { x: 200, y: 120 }, { x: 200, y: 60 }, { x: 80, y: 60 }, { x: 80, y: 0 }, { x: 0, y: 0 }],
+      rightAngleMarks: [0, 1, 2, 3, 4, 5],
+      fill: '#DBEAFE',
+      showLengths: [
+        { edge: [5, 0], value: 'a' },
+        { edge: [0, 1], value: 'b' },
+        { edge: [1, 2], value: 'c' },
+        { edge: [4, 5], value: 'd' },
+      ],
+    },
+  },
+  {
+    id: 'm1-1-quad-split-var',
+    name: '사각형 대각선 분할 (문자)',
+    description: '교과서 0596(1) 스타일 — 직각 2개 사각형을 대각선으로 두 직각삼각형으로',
+    schoolLevel: 'middle',
+    gradeKey: '1학년 1학기',
+    chapter: '문자와 식',
+    diagramType: 'quadrilateral',
+    defaultParams: {
+      vertices: [{ x: 10, y: 40 }, { x: 120, y: 10 }, { x: 140, y: 110 }, { x: 20, y: 130 }],
+      rightAngleMarks: [0, 2],
+      sides: [
+        { from: 0, to: 1, label: '5' },
+        { from: 1, to: 2, label: '4' },
+        { from: 2, to: 3, label: 'b' },
+        { from: 3, to: 0, label: 'a' },
+      ],
+    },
+  },
 ];

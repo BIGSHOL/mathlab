@@ -16,8 +16,10 @@ async function findPort(start, max = start + 10) {
   return start; // fallback
 }
 
-const port = await findPort(3000);
-if (port !== 3000) console.log(`\x1b[33m⚠ 포트 3000 사용 중 → ${port}번으로 시작합니다\x1b[0m\n`);
+// PORT 환경변수가 지정되면 우선 사용 (Claude Code preview 등 외부 래퍼 호환)
+const envPort = process.env.PORT ? parseInt(process.env.PORT, 10) : null;
+const port = envPort && Number.isFinite(envPort) ? envPort : await findPort(3000);
+if (!envPort && port !== 3000) console.log(`\x1b[33m⚠ 포트 3000 사용 중 → ${port}번으로 시작합니다\x1b[0m\n`);
 
 const child = spawn(`npx next dev --turbopack -p ${port}`, {
   stdio: 'inherit',

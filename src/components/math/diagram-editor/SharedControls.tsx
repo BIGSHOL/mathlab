@@ -13,16 +13,84 @@ export function NumField({ label, value, onChange, min, max, step }: {
   return (
     <div>
       <label className="text-xs text-slate-500">{label}</label>
-      <input
-        type="number"
+      <NumInput
         value={value}
+        onChange={onChange}
         min={min}
         max={max}
         step={step ?? 1}
-        onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
         className="block w-full text-sm px-2 py-1 border border-slate-300 rounded"
       />
     </div>
+  );
+}
+
+/**
+ * 제어된 숫자 입력 — 타이핑 중 "" / "0xx" / "-" 같은 중간 상태를 유지하고,
+ * 유효한 수치일 때만 부모 onChange를 호출한다.
+ *
+ * 일반 `<input type="number" value={parseFloat||0}>` 패턴이 가진 버그 해결:
+ *   - 사용자가 백스페이스로 비워도 곧바로 0이 되어 남는 문제
+ *   - 앞에 0을 붙여 "080"이 됐을 때 parseFloat 결과가 기존 값과 같으면
+ *     React가 DOM 재동기화를 생략해 "080"이 그대로 표시되는 문제
+ */
+export function NumInput({ value, onChange, min, max, step, className, placeholder, title }: {
+  value: number;
+  onChange: (v: number) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+  className?: string;
+  placeholder?: string;
+  title?: string;
+}) {
+  const [text, setText] = useState<string>(() => String(value));
+
+  // 외부 value가 바뀌면 text 동기화 (단, 현재 text가 같은 수치면 유지해서 사용자 커서 보존)
+  useEffect(() => {
+    const parsed = parseFloat(text);
+    if (!Number.isFinite(parsed) || parsed !== value) {
+      setText(String(value));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  const commit = (raw: string) => {
+    if (raw === '' || raw === '-' || raw === '.') return; // 중간 상태, 커밋 보류
+    const n = parseFloat(raw);
+    if (!Number.isFinite(n)) return;
+    let clamped = n;
+    if (typeof min === 'number') clamped = Math.max(min, clamped);
+    if (typeof max === 'number') clamped = Math.min(max, clamped);
+    if (clamped !== value) onChange(clamped);
+  };
+
+  return (
+    <input
+      type="number"
+      value={text}
+      min={min}
+      max={max}
+      step={step ?? 1}
+      placeholder={placeholder}
+      title={title}
+      onChange={(e) => {
+        setText(e.target.value);
+        commit(e.target.value);
+      }}
+      onBlur={() => {
+        const n = parseFloat(text);
+        if (!Number.isFinite(n)) setText(String(value));
+        else {
+          let clamped = n;
+          if (typeof min === 'number') clamped = Math.max(min, clamped);
+          if (typeof max === 'number') clamped = Math.min(max, clamped);
+          setText(String(clamped));
+          if (clamped !== value) onChange(clamped);
+        }
+      }}
+      className={className}
+    />
   );
 }
 

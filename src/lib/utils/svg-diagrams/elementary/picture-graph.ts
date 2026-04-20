@@ -1,5 +1,5 @@
 import { PictureGraphParams } from '../types';
-import { svgWrap, text, line, katexLabel, COLORS } from '../shared/svg-utils';
+import { svgWrap, text, line, katexLabel, COLORS, TEXTBOOK_STYLE } from '../shared/svg-utils';
 
 /** 그림그래프 SVG 생성 (초3) */
 export function renderPictureGraph(params: PictureGraphParams): string {
@@ -34,7 +34,7 @@ export function renderPictureGraph(params: PictureGraphParams): string {
   for (let i = 0; i < n; i++) {
     const y = topPad + i * rowH + rowH / 2;
     // 범주 라벨
-    parts.push(text(catW / 2, y, categories[i], { fontSize: 11, fill: '#333' }));
+    parts.push(text(catW / 2, y, categories[i], { fontSize: 11, fill: TEXTBOOK_STYLE.PLAIN_TEXT_COLOR }));
     // 구분선
     parts.push(line(catW, topPad + i * rowH, catW, topPad + (i + 1) * rowH, { stroke: '#E5E7EB', strokeWidth: 0.5 }));
 

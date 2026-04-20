@@ -1,5 +1,5 @@
 import { ScatterPlotParams } from '../types';
-import { svgWrap, line, circle, text, katexLabel, arrowHead, COLORS, createCoordinateMapper } from '../shared/svg-utils';
+import { svgWrap, line, circle, text, katexLabel, arrowHead, COLORS, createCoordinateMapper, TEXTBOOK_STYLE } from '../shared/svg-utils';
 
 /** 산점도 SVG 생성 (중3) */
 export function renderScatterPlot(params: ScatterPlotParams): string {
@@ -54,7 +54,7 @@ export function renderScatterPlot(params: ScatterPlotParams): string {
   parts.push(line(leftPad - 5, originY, leftPad + gridW + 10, originY, { strokeWidth: 1.5 }));
   parts.push(arrowHead(leftPad + gridW + 10, originY, 0, 6));
   if (xLabel) {
-    parts.push(text(leftPad + gridW / 2, totalH - 4, xLabel, { fontSize: 10, fill: '#666' }));
+    parts.push(text(leftPad + gridW / 2, totalH - 4, xLabel, { fontSize: 10, fill: TEXTBOOK_STYLE.PLAIN_TEXT_COLOR }));
   }
 
   // y축
@@ -62,7 +62,7 @@ export function renderScatterPlot(params: ScatterPlotParams): string {
   parts.push(line(originX, topPad + gridH + 5, originX, topPad - 10, { strokeWidth: 1.5 }));
   parts.push(arrowHead(originX, topPad - 10, -90, 6));
   if (yLabel) {
-    parts.push(text(8, topPad + gridH / 2, yLabel, { fontSize: 10, fill: '#666' }));
+    parts.push(text(8, topPad + gridH / 2, yLabel, { fontSize: 10, fill: TEXTBOOK_STYLE.PLAIN_TEXT_COLOR }));
   }
 
   // 축 눈금

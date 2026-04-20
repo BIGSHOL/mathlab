@@ -1,5 +1,5 @@
 import { HistogramParams } from '../types';
-import { svgWrap, line, text, katexLabel, arrowHead, COLORS, createCoordinateMapper } from '../shared/svg-utils';
+import { svgWrap, line, text, katexLabel, arrowHead, COLORS, createCoordinateMapper, TEXTBOOK_STYLE } from '../shared/svg-utils';
 
 /** 히스토그램 SVG 생성 (중1) */
 export function renderHistogram(params: HistogramParams): string {
@@ -53,14 +53,14 @@ export function renderHistogram(params: HistogramParams): string {
   parts.push(line(leftPad, toY(yMaxVal) - 10, leftPad, topPad + chartH, { strokeWidth: 1.5 }));
   parts.push(arrowHead(leftPad, toY(yMaxVal) - 10, -90, 6));
   if (yLabel) {
-    parts.push(text(12, topPad + chartH / 2, yLabel, { fontSize: 10, fill: '#666' }));
+    parts.push(text(12, topPad + chartH / 2, yLabel, { fontSize: 10, fill: TEXTBOOK_STYLE.PLAIN_TEXT_COLOR }));
   }
 
   // x축
   parts.push(line(leftPad, topPad + chartH, leftPad + chartW + 10, topPad + chartH, { strokeWidth: 1.5 }));
   parts.push(arrowHead(leftPad + chartW + 10, topPad + chartH, 0, 6));
   if (xLabel) {
-    parts.push(text(leftPad + chartW / 2, totalH - 4, xLabel, { fontSize: 10, fill: '#666' }));
+    parts.push(text(leftPad + chartW / 2, totalH - 4, xLabel, { fontSize: 10, fill: TEXTBOOK_STYLE.PLAIN_TEXT_COLOR }));
   }
 
   // 히스토그램 막대 (서로 붙어있음)

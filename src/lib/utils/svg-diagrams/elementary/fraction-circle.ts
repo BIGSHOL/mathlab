@@ -1,5 +1,5 @@
 import { FractionCircleParams } from '../types';
-import { svgWrap, text, COLORS, hatchPatternDef } from '../shared/svg-utils';
+import { svgWrap, text, COLORS, hatchPatternDef, TEXTBOOK_STYLE } from '../shared/svg-utils';
 
 /** 단일 분수 원 렌더링 (cx, cy 기준) */
 function renderSingleCircle(
@@ -15,14 +15,14 @@ function renderSingleCircle(
     const isColored = coloredSet.has(0);
     const isHatched = hatchedSet.has(0) || (isColored && globalHatching);
     if (isHatched) {
-      parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${isColored ? color : 'white'}" fill-opacity="${isColored ? 0.2 : 1}" stroke="#555" stroke-width="1.5"/>`);
+      parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${isColored ? color : 'white'}" fill-opacity="${isColored ? 0.2 : 1}" stroke="${TEXTBOOK_STYLE.MAIN_STROKE}" stroke-width="1.5"/>`);
       parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#${patternId})" stroke="none"/>`);
     } else {
-      parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${isColored ? color : 'white'}" fill-opacity="${isColored ? 0.3 : 1}" stroke="#555" stroke-width="1.5"/>`);
+      parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${isColored ? color : 'white'}" fill-opacity="${isColored ? 0.3 : 1}" stroke="${TEXTBOOK_STYLE.MAIN_STROKE}" stroke-width="1.5"/>`);
     }
   } else {
     // 배경 원 (흰색)
-    parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="white" stroke="#555" stroke-width="1.5"/>`);
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="white" stroke="${TEXTBOOK_STYLE.MAIN_STROKE}" stroke-width="1.5"/>`);
 
     // 파이 조각
     const angleStep = (2 * Math.PI) / totalParts;
@@ -56,15 +56,15 @@ function renderSingleCircle(
       const angle = -Math.PI / 2 + i * angleStep;
       const x1 = cx + r * Math.cos(angle);
       const y1 = cy + r * Math.sin(angle);
-      parts.push(`<line x1="${cx}" y1="${cy}" x2="${x1.toFixed(2)}" y2="${y1.toFixed(2)}" stroke="#555" stroke-width="1"/>`);
+      parts.push(`<line x1="${cx}" y1="${cy}" x2="${x1.toFixed(2)}" y2="${y1.toFixed(2)}" stroke="${TEXTBOOK_STYLE.MAIN_STROKE}" stroke-width="1"/>`);
     }
 
     // 외곽선 다시 그리기
-    parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#555" stroke-width="1.5"/>`);
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${TEXTBOOK_STYLE.MAIN_STROKE}" stroke-width="1.5"/>`);
   }
 
   // 중앙 점
-  parts.push(`<circle cx="${cx}" cy="${cy}" r="1.5" fill="#555"/>`);
+  parts.push(`<circle cx="${cx}" cy="${cy}" r="1.5" fill="${TEXTBOOK_STYLE.MAIN_STROKE}"/>`);
 
   return parts.join('\n    ');
 }

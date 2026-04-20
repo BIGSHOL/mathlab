@@ -1,5 +1,5 @@
 import { SolidFigureParams } from '../types';
-import { svgWrap, line, katexLabel, COLORS } from '../shared/svg-utils';
+import { svgWrap, line, katexLabel, COLORS, TEXTBOOK_STYLE } from '../shared/svg-utils';
 
 /** 입체도형 SVG 생성 (초5-중1) */
 export function renderSolidFigure(params: SolidFigureParams): string {
@@ -140,7 +140,7 @@ function renderPrism(parts: string[], rw: number, rh: number, rd: number, showHi
 
   // 치수 자동 라벨 (dimensions > 1일 때 곡선+라벨)
   if (wantsDimensions) {
-    const dimDash = '5,3'; const dimC = '#555';
+    const dimDash = '5,3'; const dimC = TEXTBOOK_STYLE.MAIN_STROKE;
     const bezAt = (p0: number[], p1: number[], p2: number[], t: number) =>
       [(1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * p1[0] + t ** 2 * p2[0], (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * p1[1] + t ** 2 * p2[1]];
     const lerp2 = (a: number[], b: number[], t: number) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
@@ -351,7 +351,7 @@ function renderSphere(parts: string[], _r: number, color: string, labels: Label[
   // 세로 대원 (점선)
   parts.push(`<ellipse cx="${cx}" cy="${cy}" rx="${sr * 0.3}" ry="${sr}" fill="none" stroke="${color}" stroke-width="1" stroke-dasharray="4,3"/>`);
   // 중심점
-  parts.push(`<circle cx="${cx}" cy="${cy}" r="2" fill="#333"/>`);
+  parts.push(`<circle cx="${cx}" cy="${cy}" r="2" fill="${TEXTBOOK_STYLE.POINT_COLOR}"/>`);
 
   renderLabels(parts, labels, {
     radius: [cx + sr / 2 + 10, cy + 14],

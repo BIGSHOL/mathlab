@@ -1,5 +1,6 @@
 import { CircleParams, TriangleParams, QuadrilateralParams, RegularPolygonParams, ShapeStyle, Point2D } from '../types';
-import { svgWrap, line, circle as svgCircle, katexLabel, COLORS, renderRightAngleMark, renderCongruenceMarks, renderParallelMarks } from '../shared/svg-utils';
+import { svgWrap, line, circle as svgCircle, katexLabel, COLORS, renderRightAngleMark, renderCongruenceMarks, renderParallelMarks, TEXTBOOK_STYLE } from '../shared/svg-utils';
+import { renderSideLabel } from '../shared/side-label-curve';
 import {
   computeIncenter, computeCircumcenter, computeCentroid, computeOrthocenter,
   computeInradius, computeCircumradius, footOfPerpendicular, midpoint as geoMidpoint,
@@ -40,7 +41,7 @@ export function renderCircle(params: CircleParams): string {
   const { fillAttr, extraFill } = shapeFillAttrs(params, patternId);
   parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" ${fillAttr} stroke="${strokeColor}" stroke-width="2"/>`);
   if (extraFill) parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" ${extraFill} stroke="none"/>`);
-  parts.push(svgCircle(cx, cy, 2, { fill: '#333' })); // 중심점
+  parts.push(svgCircle(cx, cy, 2, { fill: TEXTBOOK_STYLE.POINT_COLOR })); // 중심점
 
   // 라벨
   if (params.labels) {
@@ -88,7 +89,7 @@ export function renderCircle(params: CircleParams): string {
   // 현(chord)
   if (params.chords) {
     for (const chord of params.chords) {
-      const chordColor = chord.color || '#333';
+      const chordColor = chord.color || TEXTBOOK_STYLE.MAIN_STROKE;
       const startRad = (-chord.startAngle * Math.PI) / 180;
       const endRad = (-chord.endAngle * Math.PI) / 180;
       const x1 = cx + r * Math.cos(startRad);
@@ -107,7 +108,7 @@ export function renderCircle(params: CircleParams): string {
   // 반지름선(radiusLine)
   if (params.radiusLines) {
     for (const rl of params.radiusLines) {
-      const rlColor = rl.color || '#333';
+      const rlColor = rl.color || TEXTBOOK_STYLE.MAIN_STROKE;
       const rad = (-rl.angle * Math.PI) / 180;
       const ex = cx + r * Math.cos(rad);
       const ey = cy + r * Math.sin(rad);
@@ -387,18 +388,12 @@ export function renderTriangle(params: TriangleParams): string {
     }
   }
 
-  // 변 라벨
+  // 변 라벨 — 공용 호/라벨 렌더 헬퍼 (polygon/triangle/quadrilateral 통일)
   if (params.sides) {
     for (const s of params.sides) {
-      const [x1, y1] = pts[s.from];
-      const [x2, y2] = pts[s.to];
-      const mx = (x1 + x2) / 2;
-      const my = (y1 + y2) / 2;
-      const cx = (pts[0][0] + pts[1][0] + pts[2][0]) / 3;
-      const cy = (pts[0][1] + pts[1][1] + pts[2][1]) / 3;
-      const dx = mx - cx, dy = my - cy;
-      const dd = Math.sqrt(dx * dx + dy * dy) || 1;
-      parts.push(katexLabel(mx + (dx / dd) * 14, my + (dy / dd) * 14, s.label, { fontSize: 11 }));
+      const a: [number, number] = [pts[s.from][0], pts[s.from][1]];
+      const b: [number, number] = [pts[s.to][0], pts[s.to][1]];
+      parts.push(...renderSideLabel(a, b, s.label, s.curve, pts, 13));
     }
   }
 
@@ -465,18 +460,24 @@ export function renderQuadrilateral(params: QuadrilateralParams): string {
     }
   }
 
-  // 변 라벨
+  // 변 라벨 — 공용 호/라벨 렌더 헬퍼 (polygon/triangle/quadrilateral 통일)
   if (params.sides) {
     for (const s of params.sides) {
-      const [x1, y1] = pts[s.from];
-      const [x2, y2] = pts[s.to];
-      const mx = (x1 + x2) / 2;
-      const my = (y1 + y2) / 2;
-      const cx = pts.reduce((sum, p) => sum + p[0], 0) / 4;
-      const cy = pts.reduce((sum, p) => sum + p[1], 0) / 4;
-      const dx = mx - cx, dy = my - cy;
+      const a: [number, number] = [pts[s.from][0], pts[s.from][1]];
+      const b: [number, number] = [pts[s.to][0], pts[s.to][1]];
+      parts.push(...renderSideLabel(a, b, s.label, s.curve, pts, 13));
+    }
+  }
+
+  // 각도 라벨 — 꼭짓점 내부 방향으로 배치 (80°, 100° 등)
+  if (params.angles) {
+    for (const a of params.angles) {
+      const [px, py] = pts[a.vertex];
+      const cx = pts.reduce((s, p) => s + p[0], 0) / 4;
+      const cy = pts.reduce((s, p) => s + p[1], 0) / 4;
+      const dx = cx - px, dy = cy - py;
       const dd = Math.sqrt(dx * dx + dy * dy) || 1;
-      parts.push(katexLabel(mx + (dx / dd) * 14, my + (dy / dd) * 14, s.label, { fontSize: 11 }));
+      parts.push(katexLabel(px + (dx / dd) * 22, py + (dy / dd) * 22, a.value, { fontSize: 11 }));
     }
   }
 
@@ -602,8 +603,15 @@ export function renderRegularPolygon(params: RegularPolygonParams): string {
     }
   }
 
-  // 변 길이 라벨
-  if (params.sideLength) {
+  // 여러 변 라벨 + 호 — 공용 헬퍼로 다각형과 동일 스타일 보장
+  if (Array.isArray(params.showLengths) && params.showLengths.length > 0) {
+    for (const s of params.showLengths) {
+      const [fi, ti] = s.edge;
+      if (fi < 0 || fi >= n || ti < 0 || ti >= n) continue;
+      parts.push(...renderSideLabel(verts[fi], verts[ti], s.value, s.curve, verts, 13));
+    }
+  } else if (params.sideLength) {
+    // 레거시: 단일 변(0→1)만 라벨, 호 없음
     const [x1, y1] = verts[0];
     const [x2, y2] = verts[1];
     const mx = (x1 + x2) / 2;

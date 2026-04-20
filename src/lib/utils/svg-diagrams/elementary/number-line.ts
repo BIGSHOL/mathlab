@@ -1,5 +1,5 @@
 import { NumberLineParams } from '../types';
-import { svgWrap, line, text, arrowHead, circle as svgCircle, katexFO, fractionFO, COLORS } from '../shared/svg-utils';
+import { svgWrap, line, text, arrowHead, circle as svgCircle, katexFO, fractionFO, COLORS, TEXTBOOK_STYLE } from '../shared/svg-utils';
 
 /** 소수를 분수 문자열로 변환 시도 (1/8 → "1/8") */
 function formatTickLabel(val: number): string {
@@ -48,7 +48,7 @@ export function renderNumberLine(params: NumberLineParams): string {
     const toVal = Number(hl.to) || max;
     const x1 = toX(fromVal);
     const x2 = toX(toVal);
-    const color = hl.color || '#333';
+    const color = hl.color || TEXTBOOK_STYLE.MAIN_STROKE;
     // 호(arc) 형태로 하이라이트 표시 (초등 수직선 스타일)
     const midX = (x1 + x2) / 2;
     const arcR = (x2 - x1) / 2;
@@ -119,7 +119,7 @@ export function renderNumberLine(params: NumberLineParams): string {
     for (const ja of params.jumpArrows) {
       const fromX = toX(Number(ja.from));
       const toXVal = toX(Number(ja.to));
-      const jaColor = ja.color || '#333';
+      const jaColor = ja.color || TEXTBOOK_STYLE.MAIN_STROKE;
       const above = ja.above !== false; // 기본 위쪽
       const midX = (fromX + toXVal) / 2;
       const arcH = Math.min(Math.abs(toXVal - fromX) * 0.4, 25);
@@ -142,7 +142,7 @@ export function renderNumberLine(params: NumberLineParams): string {
   if (params.openEndpoints) {
     for (const val of params.openEndpoints) {
       const x = toX(Number(val));
-      parts.push(svgCircle(x, lineY, 4, { fill: 'white', stroke: '#333', strokeWidth: 1.5 }));
+      parts.push(svgCircle(x, lineY, 4, { fill: 'white', stroke: TEXTBOOK_STYLE.MAIN_STROKE, strokeWidth: 1.5 }));
     }
   }
 
@@ -150,7 +150,7 @@ export function renderNumberLine(params: NumberLineParams): string {
   if (params.closedEndpoints) {
     for (const val of params.closedEndpoints) {
       const x = toX(Number(val));
-      parts.push(svgCircle(x, lineY, 4, { fill: '#333', stroke: '#333', strokeWidth: 1 }));
+      parts.push(svgCircle(x, lineY, 4, { fill: TEXTBOOK_STYLE.POINT_COLOR, stroke: TEXTBOOK_STYLE.POINT_COLOR, strokeWidth: 1 }));
     }
   }
 

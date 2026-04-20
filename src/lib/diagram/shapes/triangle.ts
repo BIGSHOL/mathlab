@@ -1,5 +1,5 @@
 import { TriangleDiagram, Point } from '@/types/diagram';
-import { polygon, renderLabels } from '../primitives';
+import { polygon, strokedPolygon, renderLabels, outlineCurve } from '../primitives';
 import * as prim from '../primitives';
 import {
   vertexAngle as _vertexAngle,
@@ -7,8 +7,9 @@ import {
   toDegrees,
   arcPath,
   rightAnglePath,
-  midpoint,
+  midpoint as _midpoint,
   labelOffset,
+  edgeLabelOffset,
   distance as _distance,
 } from '../utils';
 import {
@@ -89,7 +90,21 @@ export function renderTriangle(spec: TriangleDiagram): string {
     parts.push(prim.circle(ic.x, ic.y, ir, { dashed: true }));
   }
 
-  // 삼각형 본체
+  // 외곽 점선 곡선 (도형 뒤)
+  if (spec.outlineCurve) {
+    parts.push(outlineCurve(vertices, {
+      inflate: spec.outlineCurve.inflate ?? 14,
+      color: spec.outlineCurve.color ?? '#999',
+      dashArray: spec.outlineCurve.dashArray ?? '4,3',
+    }));
+  }
+
+  // 채움 색 (도형 본체 stroke 전에 fill만 따로 그리기)
+  if (spec.fill) {
+    parts.push(strokedPolygon(vertices, { fill: spec.fill, stroke: 'none' }));
+  }
+
+  // 삼각형 본체 (테두리)
   parts.push(polygon(vertices));
 
   // 직각 표시
@@ -155,7 +170,7 @@ export function renderTriangle(spec: TriangleDiagram): string {
       const extEnd: Point = [vPt[0] + ux * extensionLength, vPt[1] + uy * extensionLength];
 
       // 연장선 (점선)
-      parts.push(prim.line(vPt, extEnd, { dashed: true, strokeWidth: 1.5, color: '#666' }));
+      parts.push(prim.line(vPt, extEnd, { dashed: true, strokeWidth: 1.5, color: prim.STYLE.AUX_STROKE }));
 
       // 외각 호: 연장선 끝 방향 ~ 다른 변 방향 사이의 호
       const otherIdx = [0, 1, 2].find(i => i !== vi && i !== fi)!;
@@ -174,16 +189,11 @@ export function renderTriangle(spec: TriangleDiagram): string {
     }
   }
 
-  // 변의 길이 표시
+  // 변의 길이 표시 — 변의 외측 법선 방향으로 배치
   if (showLengths) {
-    const center: Point = [
-      (vertices[0][0] + vertices[1][0] + vertices[2][0]) / 3,
-      (vertices[0][1] + vertices[1][1] + vertices[2][1]) / 3,
-    ];
     for (const { edge, value } of showLengths) {
-      const mid = midpoint(vertices[edge[0]], vertices[edge[1]]);
-      const offset = labelOffset(mid, center, 16);
-      parts.push(prim.text(offset[0], offset[1], value, { fontSize: 13 }));
+      const pos = edgeLabelOffset(vertices[edge[0]], vertices[edge[1]], vertices, 16);
+      parts.push(prim.text(pos[0], pos[1], value, { fontSize: 13 }));
     }
   }
 

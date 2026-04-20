@@ -113,7 +113,7 @@ export function renderCircle(spec: CircleDiagram): string {
       parts.push(`<path d="${sectorD}" fill="#3b82f6" fill-opacity="0.1" stroke="none"/>`);
       // 각도 호
       const arcR = 18;
-      parts.push(prim.path(arcPathStr(cx, cy, arcR, ca.startAngle, ca.endAngle), { strokeWidth: 1.5, color: '#333' }));
+      parts.push(prim.path(arcPathStr(cx, cy, arcR, ca.startAngle, ca.endAngle), { strokeWidth: 1.5, color: prim.STYLE.ANGLE_ARC_COLOR }));
       if (ca.label) {
         const midA = toRadians((ca.startAngle + ca.endAngle) / 2);
         parts.push(prim.text(cx + 28 * Math.cos(midA), cy + 28 * Math.sin(midA), ca.label, { fontSize: 12 }));

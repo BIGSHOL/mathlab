@@ -1,5 +1,5 @@
 import { ClockFaceParams } from '../types';
-import { svgWrap, line, katexLabel } from '../shared/svg-utils';
+import { svgWrap, line, katexLabel, TEXTBOOK_STYLE } from '../shared/svg-utils';
 
 /** 시계 SVG 생성 (초2-3) */
 export function renderClockFace(params: ClockFaceParams): string {
@@ -19,7 +19,7 @@ export function renderClockFace(params: ClockFaceParams): string {
   const parts: string[] = [];
 
   // 외곽 원
-  parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="white" stroke="#333" stroke-width="2.5"/>`);
+  parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="white" stroke="${TEXTBOOK_STYLE.MAIN_STROKE}" stroke-width="2.5"/>`);
   // 안쪽 원 (장식)
   parts.push(`<circle cx="${cx}" cy="${cy}" r="${r - 4}" fill="none" stroke="#E5E7EB" stroke-width="0.8"/>`);
 
@@ -75,7 +75,7 @@ export function renderClockFace(params: ClockFaceParams): string {
   parts.push(line(cx, cy, mx, my, { strokeWidth: 2 }));
 
   // 중심점
-  parts.push(`<circle cx="${cx}" cy="${cy}" r="3.5" fill="#333"/>`);
+  parts.push(`<circle cx="${cx}" cy="${cy}" r="3.5" fill="${TEXTBOOK_STYLE.POINT_COLOR}"/>`);
   parts.push(`<circle cx="${cx}" cy="${cy}" r="1.5" fill="white"/>`);
 
   // 라벨

@@ -1,5 +1,5 @@
 import { CoordinatePlaneParams } from '../types';
-import { svgWrap, line, circle, arrowHead, katexLabel, COLORS, createCoordinateMapper } from '../shared/svg-utils';
+import { svgWrap, line, circle, arrowHead, katexLabel, COLORS, createCoordinateMapper, TEXTBOOK_STYLE } from '../shared/svg-utils';
 
 /** 좌표평면 SVG 생성 */
 export function renderCoordinatePlane(params: CoordinatePlaneParams): string {
@@ -46,7 +46,7 @@ export function renderCoordinatePlane(params: CoordinatePlaneParams): string {
   // x축, y축
   const originX = toX(0);
   const originY = toY(0);
-  const axisColor = '#333';
+  const axisColor = TEXTBOOK_STYLE.AXIS_COLOR;
 
   // x축
   if (yMin <= 0 && yMax >= 0) {
