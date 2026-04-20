@@ -1,5 +1,5 @@
 import { QuadrilateralDiagram, Point } from '@/types/diagram';
-import { polygon, renderLabels } from '../primitives';
+import { polygon, strokedPolygon, renderLabels, polygonCentroid, outlineCurve } from '../primitives';
 import * as prim from '../primitives';
 import {
   angleBetween,
@@ -12,15 +12,67 @@ import {
 
 export function renderQuadrilateral(spec: QuadrilateralDiagram): string {
   const vertices = spec.vertices ?? [[0, 150], [150, 150], [150, 0], [0, 0]];
-  const { labels, showAngles, angleValues, showLengths, diagonals } = spec;
+  const { labels, showAngles, angleValues, showLengths, diagonals, splitDiagonal, fill, outlineCurve: outlineOpt } = spec;
   const parts: string[] = [];
   const center: Point = [
     (vertices[0][0] + vertices[1][0] + vertices[2][0] + vertices[3][0]) / 4,
     (vertices[0][1] + vertices[1][1] + vertices[2][1] + vertices[3][1]) / 4,
   ];
 
-  // 사각형 본체
+  // 외곽 점선 곡선 (도형 뒤에 그리기)
+  if (outlineOpt) {
+    parts.push(outlineCurve(vertices, {
+      inflate: outlineOpt.inflate ?? 14,
+      color: outlineOpt.color ?? '#999',
+      dashArray: outlineOpt.dashArray ?? '4,3',
+    }));
+  }
+
+  // splitDiagonal: 대각선으로 두 영역을 색칠하고 라벨 표시
+  if (splitDiagonal) {
+    const i = splitDiagonal.from;
+    const j = splitDiagonal.to;
+    if (i >= 0 && i < 4 && j >= 0 && j < 4 && i !== j) {
+      // 두 영역 추출 (대각선이 i↔j일 때)
+      const regionA = collectRegion(vertices as Point[], i, j);
+      const regionB = collectRegion(vertices as Point[], j, i);
+      if (splitDiagonal.fillA) {
+        parts.push(strokedPolygon(regionA, { fill: splitDiagonal.fillA, stroke: 'none' }));
+      }
+      if (splitDiagonal.fillB) {
+        parts.push(strokedPolygon(regionB, { fill: splitDiagonal.fillB, stroke: 'none' }));
+      }
+    }
+  } else if (fill) {
+    // 단순 fill 사용
+    parts.push(strokedPolygon(vertices as Point[], { fill, stroke: 'none' }));
+  }
+
+  // 사각형 본체 (테두리만, fill은 위에서 처리)
   parts.push(polygon(vertices));
+
+  // splitDiagonal: 분할선 그리기 (본체 위에)
+  if (splitDiagonal) {
+    const i = splitDiagonal.from;
+    const j = splitDiagonal.to;
+    if (i >= 0 && i < 4 && j >= 0 && j < 4 && i !== j) {
+      parts.push(prim.line(vertices[i], vertices[j], {
+        strokeWidth: 1.2,
+        dashed: splitDiagonal.style === 'dashed',
+      }));
+      // 영역 라벨 (centroid)
+      const regionA = collectRegion(vertices as Point[], i, j);
+      const regionB = collectRegion(vertices as Point[], j, i);
+      if (splitDiagonal.labelA) {
+        const c = polygonCentroid(regionA);
+        parts.push(prim.text(c[0], c[1], splitDiagonal.labelA, { fontSize: 14, fontWeight: 'bold' }));
+      }
+      if (splitDiagonal.labelB) {
+        const c = polygonCentroid(regionB);
+        parts.push(prim.text(c[0], c[1], splitDiagonal.labelB, { fontSize: 14, fontWeight: 'bold' }));
+      }
+    }
+  }
 
   // 대각선
   if (diagonals) {
@@ -135,10 +187,10 @@ export function renderQuadrilateral(spec: QuadrilateralDiagram): string {
     }
   }
 
-  // 꼭짓점 라벨
+  // 꼭짓점 라벨 — vertexLabels가 명시되었거나 사용자가 labels 배열을 주었을 때만 그림
   if (labels && labels.length > 0) {
     parts.push(renderLabels(labels));
-  } else {
+  } else if (spec.vertexLabels) {
     const defaultLabels = ['A', 'B', 'C', 'D'];
     for (let i = 0; i < 4; i++) {
       const pos = labelOffset(vertices[i], center, 20);
@@ -147,4 +199,20 @@ export function renderQuadrilateral(spec: QuadrilateralDiagram): string {
   }
 
   return parts.join('\n');
+}
+
+/**
+ * 4-꼭짓점 사각형에서 i→j 대각선 한쪽 영역의 꼭짓점들을 시계방향으로 수집.
+ * 예: 4각형 [0,1,2,3]에서 (0,2)면 영역A=[0,1,2], 영역B=[2,3,0]
+ */
+function collectRegion(vertices: Point[], start: number, end: number): Point[] {
+  const n = vertices.length;
+  const result: Point[] = [];
+  let i = start;
+  while (true) {
+    result.push(vertices[i]);
+    if (i === end) break;
+    i = (i + 1) % n;
+  }
+  return result;
 }

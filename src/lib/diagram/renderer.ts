@@ -4,6 +4,7 @@ import { normalizeDiagram } from './normalize';
 import { renderTriangle } from './shapes/triangle';
 import { renderCircle } from './shapes/circle';
 import { renderQuadrilateral } from './shapes/quadrilateral';
+import { renderPolygon } from './shapes/polygon';
 import { renderCoordinatePlane, coordinatePlaneViewBox } from './shapes/coordinate';
 import { renderSolid, solidViewBox } from './shapes/solid';
 
@@ -33,6 +34,8 @@ function renderShape(spec: DiagramSpec): string {
       return renderCircle(spec);
     case 'quadrilateral':
       return renderQuadrilateral(spec);
+    case 'polygon':
+      return renderPolygon(spec);
     case 'coordinatePlane':
       return renderCoordinatePlane(spec);
     case 'solid':
@@ -60,6 +63,8 @@ function getViewBox(spec: DiagramSpec): string {
     }
     case 'quadrilateral':
       return computeViewBox(spec.vertices ?? [[0,0],[150,0],[150,150],[0,150]]);
+    case 'polygon':
+      return computeViewBox(spec.vertices ?? [[0,0],[100,0],[50,100]]);
     case 'coordinatePlane':
       return coordinatePlaneViewBox(spec);
     case 'solid':
@@ -85,6 +90,8 @@ function collectPoints(spec: DiagramSpec): Point[] {
     }
     case 'quadrilateral':
       return [...(spec.vertices ?? [[0,0],[150,0],[150,150],[0,150]])];
+    case 'polygon':
+      return [...(spec.vertices ?? [[0,0],[100,0],[50,100]])];
     case 'coordinatePlane':
       return [[0, 0], [400, 360]];
     case 'solid':

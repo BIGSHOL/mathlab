@@ -24,6 +24,10 @@ export function convertSpecToParams(spec: DiagramSpec): DiagramParam[] {
     case 'composite':
       // composite → 각 element를 재귀 변환 후 flat
       return (spec.elements ?? []).flatMap(convertSpecToParams);
+    case 'polygon':
+      // polygon은 신규 타입 — 레거시 DiagramParam 시스템에 동등 매핑 없음.
+      // 직접 렌더 경로(`@/lib/diagram/renderer`)로 표시 권장.
+      return [];
     default:
       return [];
   }

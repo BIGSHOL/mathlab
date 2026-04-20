@@ -1,5 +1,5 @@
 import { TriangleDiagram, Point } from '@/types/diagram';
-import { polygon, renderLabels } from '../primitives';
+import { polygon, strokedPolygon, renderLabels, outlineCurve } from '../primitives';
 import * as prim from '../primitives';
 import {
   vertexAngle as _vertexAngle,
@@ -89,7 +89,21 @@ export function renderTriangle(spec: TriangleDiagram): string {
     parts.push(prim.circle(ic.x, ic.y, ir, { dashed: true }));
   }
 
-  // 삼각형 본체
+  // 외곽 점선 곡선 (도형 뒤)
+  if (spec.outlineCurve) {
+    parts.push(outlineCurve(vertices, {
+      inflate: spec.outlineCurve.inflate ?? 14,
+      color: spec.outlineCurve.color ?? '#999',
+      dashArray: spec.outlineCurve.dashArray ?? '4,3',
+    }));
+  }
+
+  // 채움 색 (도형 본체 stroke 전에 fill만 따로 그리기)
+  if (spec.fill) {
+    parts.push(strokedPolygon(vertices, { fill: spec.fill, stroke: 'none' }));
+  }
+
+  // 삼각형 본체 (테두리)
   parts.push(polygon(vertices));
 
   // 직각 표시

@@ -109,3 +109,81 @@ export function filledRegion(
   const pts = points.map(([x, y]) => `${x},${y}`).join(' ');
   return `<polygon points="${pts}" fill="${color}" fill-opacity="${opacity}" stroke="none"/>`;
 }
+
+/**
+ * stroke 옵션을 받아 일반 polygon 그리기 (stroke 색상/굵기 커스터마이즈 가능).
+ * 기존 polygon()은 stroke를 STYLE.MAIN_STROKE로 고정하므로 이 함수가 필요한 경우 별도 사용.
+ */
+export function strokedPolygon(
+  points: Point[],
+  options?: { fill?: string; stroke?: string; strokeWidth?: number; dashed?: boolean },
+): string {
+  const sw = options?.strokeWidth ?? STYLE.MAIN_STROKE_WIDTH;
+  const fill = options?.fill ?? 'none';
+  const stroke = options?.stroke ?? STYLE.MAIN_STROKE;
+  const dash = options?.dashed ? ` stroke-dasharray="${STYLE.DASHED}"` : '';
+  const pts = points.map(([x, y]) => `${x},${y}`).join(' ');
+  return `<polygon points="${pts}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"${dash} stroke-linejoin="round"/>`;
+}
+
+/** 다각형 꼭짓점들의 무게중심 (centroid) — 영역 라벨 자동 배치용 */
+export function polygonCentroid(points: Point[]): Point {
+  if (points.length === 0) return [0, 0];
+  let sx = 0, sy = 0;
+  for (const [x, y] of points) {
+    sx += x;
+    sy += y;
+  }
+  return [sx / points.length, sy / points.length];
+}
+
+/**
+ * 도형 외곽을 따라가는 점선 곡선 (교과서 풍 데코) — quadratic Bezier로 각 변마다 외측 부풀림.
+ * vertices: 도형 꼭짓점 (시계/반시계 방향). 닫힌 도형으로 가정.
+ * inflate: 외측으로 부풀리는 정도 (px). 음수면 내측.
+ * 변별로 분할된 path 문자열을 반환 (실제로는 한 path로 이어 그림).
+ */
+export function outlineCurvePath(
+  vertices: Point[],
+  inflate: number = 12,
+): string {
+  if (vertices.length < 3) return '';
+  // 도형 중심 — 외측 방향 결정에 사용
+  const cx = vertices.reduce((s, v) => s + v[0], 0) / vertices.length;
+  const cy = vertices.reduce((s, v) => s + v[1], 0) / vertices.length;
+
+  const segments: string[] = [];
+  for (let i = 0; i < vertices.length; i++) {
+    const a = vertices[i];
+    const b = vertices[(i + 1) % vertices.length];
+    // 변의 중점
+    const mx = (a[0] + b[0]) / 2;
+    const my = (a[1] + b[1]) / 2;
+    // 중점에서 도형 중심을 향한 단위 벡터의 반대(외측 방향)
+    let dx = mx - cx;
+    let dy = my - cy;
+    const dlen = Math.sqrt(dx * dx + dy * dy) || 1;
+    dx /= dlen;
+    dy /= dlen;
+    // 컨트롤 포인트: 외측으로 inflate만큼
+    const cpx = mx + dx * inflate;
+    const cpy = my + dy * inflate;
+    if (i === 0) segments.push(`M ${a[0]} ${a[1]}`);
+    segments.push(`Q ${cpx} ${cpy} ${b[0]} ${b[1]}`);
+  }
+  segments.push('Z');
+  return segments.join(' ');
+}
+
+/** outlineCurvePath를 점선 path로 그리는 편의 함수 */
+export function outlineCurve(
+  vertices: Point[],
+  options?: { inflate?: number; color?: string; dashArray?: string; strokeWidth?: number },
+): string {
+  const d = outlineCurvePath(vertices, options?.inflate ?? 12);
+  if (!d) return '';
+  const color = options?.color ?? '#999';
+  const dash = options?.dashArray ?? '4,3';
+  const sw = options?.strokeWidth ?? 1;
+  return `<path d="${d}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-dasharray="${dash}"/>`;
+}

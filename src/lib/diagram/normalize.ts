@@ -4,6 +4,7 @@ import {
   CircleDiagram,
   CoordinatePlaneDiagram,
   QuadrilateralDiagram,
+  PolygonDiagram,
   SolidFigureDiagram,
   Point,
 } from '@/types/diagram';
@@ -28,6 +29,8 @@ export function normalizeDiagram(spec: DiagramSpec): DiagramSpec {
       return normalizeCoordinatePlane(spec);
     case 'quadrilateral':
       return normalizeQuadrilateral(spec);
+    case 'polygon':
+      return normalizePolygon(spec);
     case 'solid':
       return normalizeSolid(spec);
     case 'composite':
@@ -35,6 +38,42 @@ export function normalizeDiagram(spec: DiagramSpec): DiagramSpec {
     default:
       return spec;
   }
+}
+
+// ─── 임의 N각형 정규화 ────────────────────────────────────
+
+function normalizePolygon(spec: PolygonDiagram): PolygonDiagram {
+  const SCALE = 200;
+  const result = { ...spec };
+  if (!result.vertices || result.vertices.length < 3) {
+    // 폴백: 기본 5각형 (집 모양)
+    result.vertices = [
+      [0, 100], [100, 100], [100, 40], [50, 0], [0, 40],
+    ];
+  } else {
+    // 좌표 스케일 검증 (너무 작거나 크면 조정)
+    result.vertices = scaleVerticesN(result.vertices, SCALE);
+  }
+  return result;
+}
+
+/** N개 꼭짓점 스케일 조정 (적정 크기로) */
+function scaleVerticesN(vertices: Point[], targetScale: number): Point[] {
+  const xs = vertices.map((v) => v[0]);
+  const ys = vertices.map((v) => v[1]);
+  const width = Math.max(...xs) - Math.min(...xs);
+  const height = Math.max(...ys) - Math.min(...ys);
+  const maxDim = Math.max(width, height);
+  if (maxDim < 10 || maxDim > 500) {
+    const scale = targetScale / (maxDim || 1);
+    const minX = Math.min(...xs);
+    const minY = Math.min(...ys);
+    return vertices.map((v) => [
+      (v[0] - minX) * scale,
+      (v[1] - minY) * scale,
+    ]);
+  }
+  return vertices;
 }
 
 // ─── 삼각형 정규화 ────────────────────────────────────
