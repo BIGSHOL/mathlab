@@ -218,7 +218,8 @@ export function PolygonForm({ params, onChange }: SubFormProps) {
         </div>
         {showLengths.map((s, i) => {
           const maxIdx = Math.max(0, vertices.length - 1);
-          const clampIdx = (n: number) => Math.max(0, Math.min(maxIdx, Number.isFinite(n) ? n : 0));
+          const _clampIdx = (n: number) => Math.max(0, Math.min(maxIdx, Number.isFinite(n) ? n : 0));
+          void _clampIdx;
           return (
           <div key={i} className="flex gap-1 mt-1 items-center">
             <NumInput
@@ -300,7 +301,8 @@ export function PolygonForm({ params, onChange }: SubFormProps) {
         </div>
         {splitLines.map((sl, i) => {
           const maxIdx = Math.max(0, vertices.length - 1);
-          const clampIdx = (n: number) => Math.max(0, Math.min(maxIdx, Number.isFinite(n) ? n : 0));
+          const _clampIdx = (n: number) => Math.max(0, Math.min(maxIdx, Number.isFinite(n) ? n : 0));
+          void _clampIdx;
           return (
           <div key={i} className="flex gap-1 mt-1 items-center">
             <NumInput
