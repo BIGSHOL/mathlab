@@ -856,7 +856,8 @@ export const ELEMENTARY_PRESETS: DiagramPreset[] = [
     diagramType: 'polygon',
     defaultParams: {
       vertices: [{ x: 0, y: 200 }, { x: 200, y: 200 }, { x: 200, y: 80 }, { x: 100, y: 0 }, { x: 0, y: 80 }],
-      rightAngleMarks: [0, 1, 2, 3, 4],
+      // 지붕 꼭짓점(2,3,4)은 90°가 아니므로 직각 표시하지 않음
+      rightAngleMarks: [0, 1],
       fill: '#E0E0F0',
     },
   },

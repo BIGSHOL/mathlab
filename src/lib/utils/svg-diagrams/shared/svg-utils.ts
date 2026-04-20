@@ -1,6 +1,32 @@
 import katex from 'katex';
 
-/** 공통 SVG 유틸리티 */
+/**
+ * 공통 SVG 유틸리티 — 교과서 스타일 토큰 일치 (DiagramSpec primitives.ts와 동일).
+ *
+ * 교과서 스타일 기본값:
+ * - MAIN stroke: #3B82F6 (브랜드 블루)
+ * - LABEL color: #1E40AF (진한 블루, italic)
+ * - AUX stroke: #60A5FA (보조 블루)
+ * - GRID: #E5E7EB, AXIS: #334155
+ *
+ * 새 도형/프리셋 추가 시 이 모듈의 유틸을 사용하여 색상을 하드코딩하지 말 것.
+ * 반드시 커스텀 색이 필요하면 함수 옵션에 stroke/fill을 명시적으로 전달.
+ */
+export const TEXTBOOK_STYLE = {
+  MAIN_STROKE: '#3B82F6',
+  MAIN_STROKE_WIDTH: 1.8,
+  AUX_STROKE: '#60A5FA',
+  AUX_STROKE_WIDTH: 1,
+  LABEL_COLOR: '#1E40AF',
+  LABEL_FONT_STYLE: 'italic',
+  PLAIN_TEXT_COLOR: '#334155',
+  GRID_COLOR: '#E5E7EB',
+  AXIS_COLOR: '#334155',
+  POINT_COLOR: '#1E40AF',
+  FILL_TINT: '#EFF6FF',
+  FILL_OPACITY: 0.35,
+  FONT_FAMILY: "'Pretendard', system-ui, sans-serif",
+} as const;
 
 export function svgWrap(
   content: string,
@@ -21,10 +47,10 @@ export function line(
   x1: number, y1: number, x2: number, y2: number,
   opts: { stroke?: string; strokeWidth?: number; dashArray?: string } = {}
 ): string {
-  const stroke = opts.stroke || '#333';
-  const sw = opts.strokeWidth || 1.5;
+  const stroke = opts.stroke || TEXTBOOK_STYLE.MAIN_STROKE;
+  const sw = opts.strokeWidth || TEXTBOOK_STYLE.MAIN_STROKE_WIDTH;
   const dash = opts.dashArray ? ` stroke-dasharray="${opts.dashArray}"` : '';
-  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${stroke}" stroke-width="${sw}"${dash}/>`;
+  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${stroke}" stroke-width="${sw}"${dash} stroke-linecap="round"/>`;
 }
 
 export function circle(
@@ -32,8 +58,8 @@ export function circle(
   opts: { fill?: string; stroke?: string; strokeWidth?: number } = {}
 ): string {
   const fill = opts.fill || 'none';
-  const stroke = opts.stroke || '#333';
-  const sw = opts.strokeWidth || 1.5;
+  const stroke = opts.stroke || TEXTBOOK_STYLE.MAIN_STROKE;
+  const sw = opts.strokeWidth || TEXTBOOK_STYLE.MAIN_STROKE_WIDTH;
   return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
 }
 
@@ -42,21 +68,26 @@ export function rect(
   opts: { fill?: string; stroke?: string; strokeWidth?: number; rx?: number } = {}
 ): string {
   const fill = opts.fill || 'none';
-  const stroke = opts.stroke || '#333';
-  const sw = opts.strokeWidth || 1.5;
+  const stroke = opts.stroke || TEXTBOOK_STYLE.MAIN_STROKE;
+  const sw = opts.strokeWidth || TEXTBOOK_STYLE.MAIN_STROKE_WIDTH;
   const rx = opts.rx ? ` rx="${opts.rx}"` : '';
   return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"${rx}/>`;
 }
 
+/**
+ * 텍스트 — 교과서 스타일 기본(라벨은 italic + 진한 블루). 정자체·회색이 필요하면 plain=true.
+ */
 export function text(
   x: number, y: number, content: string,
-  opts: { anchor?: string; fontSize?: number; fill?: string; fontWeight?: string; fontStyle?: string; dominantBaseline?: string } = {}
+  opts: { anchor?: string; fontSize?: number; fill?: string; fontWeight?: string; fontStyle?: string; dominantBaseline?: string; plain?: boolean } = {}
 ): string {
   const anchor = opts.anchor || 'middle';
   const fs = opts.fontSize || 13;
-  const fill = opts.fill || '#333';
+  const defaultFill = opts.plain ? TEXTBOOK_STYLE.PLAIN_TEXT_COLOR : TEXTBOOK_STYLE.LABEL_COLOR;
+  const fill = opts.fill || defaultFill;
   const fw = opts.fontWeight ? ` font-weight="${opts.fontWeight}"` : '';
-  const fst = opts.fontStyle ? ` font-style="${opts.fontStyle}"` : '';
+  const defaultFontStyle = opts.plain ? undefined : TEXTBOOK_STYLE.LABEL_FONT_STYLE;
+  const fst = (opts.fontStyle ?? defaultFontStyle) ? ` font-style="${opts.fontStyle ?? defaultFontStyle}"` : '';
   const db = opts.dominantBaseline || 'central';
   return `<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="${fs}" fill="${fill}"${fw}${fst} dominant-baseline="${db}">${escapeXml(content)}</text>`;
 }
@@ -66,26 +97,50 @@ export function polygon(
   opts: { fill?: string; stroke?: string; strokeWidth?: number } = {}
 ): string {
   const fill = opts.fill || 'none';
-  const stroke = opts.stroke || '#333';
-  const sw = opts.strokeWidth || 1.5;
+  const stroke = opts.stroke || TEXTBOOK_STYLE.MAIN_STROKE;
+  const sw = opts.strokeWidth || TEXTBOOK_STYLE.MAIN_STROKE_WIDTH;
   const pts = points.map(([x, y]) => `${x},${y}`).join(' ');
-  return `<polygon points="${pts}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+  return `<polygon points="${pts}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
 }
 
 export function path(d: string, opts: { fill?: string; stroke?: string; strokeWidth?: number } = {}): string {
   const fill = opts.fill || 'none';
-  const stroke = opts.stroke || '#333';
-  const sw = opts.strokeWidth || 1.5;
+  const stroke = opts.stroke || TEXTBOOK_STYLE.MAIN_STROKE;
+  const sw = opts.strokeWidth || TEXTBOOK_STYLE.MAIN_STROKE_WIDTH;
   return `<path d="${d}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
 }
 
-export function arrowHead(x: number, y: number, angle: number, size = 6): string {
+export function arrowHead(x: number, y: number, angle: number, size = 6, color: string = TEXTBOOK_STYLE.MAIN_STROKE): string {
   const rad = (angle * Math.PI) / 180;
   const x1 = x - size * Math.cos(rad - 0.4);
   const y1 = y - size * Math.sin(rad - 0.4);
   const x2 = x - size * Math.cos(rad + 0.4);
   const y2 = y - size * Math.sin(rad + 0.4);
-  return `<polygon points="${x},${y} ${x1},${y1} ${x2},${y2}" fill="#333"/>`;
+  return `<polygon points="${x},${y} ${x1},${y1} ${x2},${y2}" fill="${color}"/>`;
+}
+
+/**
+ * 교과서 스타일 직각 표시 마커 — 꼭짓점 v에서 인접 변(p1, p2) 방향으로 정사각형.
+ * DiagramSpec의 rightAngleMark()와 동일 로직 (두 시스템의 시각 일치 보장).
+ */
+export function rightAngleMark(
+  v: [number, number],
+  p1: [number, number],
+  p2: [number, number],
+  opts: { size?: number; color?: string; strokeWidth?: number } = {}
+): string {
+  const size = opts.size ?? 10;
+  const color = opts.color ?? TEXTBOOK_STYLE.MAIN_STROKE;
+  const sw = opts.strokeWidth ?? TEXTBOOK_STYLE.AUX_STROKE_WIDTH;
+  const len = (a: [number, number], b: [number, number]) => Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+  const u1x = (p1[0] - v[0]) / len(v, p1);
+  const u1y = (p1[1] - v[1]) / len(v, p1);
+  const u2x = (p2[0] - v[0]) / len(v, p2);
+  const u2y = (p2[1] - v[1]) / len(v, p2);
+  const a: [number, number] = [v[0] + u1x * size, v[1] + u1y * size];
+  const b: [number, number] = [v[0] + u1x * size + u2x * size, v[1] + u1y * size + u2y * size];
+  const c: [number, number] = [v[0] + u2x * size, v[1] + u2y * size];
+  return `<polyline points="${a[0]},${a[1]} ${b[0]},${b[1]} ${c[0]},${c[1]}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linejoin="round"/>`;
 }
 
 export function arrow(

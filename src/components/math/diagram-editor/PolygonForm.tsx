@@ -71,16 +71,73 @@ const POLYGON_PRESETS: { name: string; params: Record<string, unknown> }[] = [
   {
     name: '집 모양',
     params: {
+      // 지붕 꼭짓점(2,3,4)은 90°가 아니므로 직각 표시하지 않음 (바닥 두 모서리만 직각)
       vertices: [{ x: 0, y: 200 }, { x: 200, y: 200 }, { x: 200, y: 80 }, { x: 100, y: 0 }, { x: 0, y: 80 }],
-      rightAngleMarks: [0, 1, 2, 3, 4],
+      rightAngleMarks: [0, 1],
       fill: '#E0E0F0',
     },
   },
 ];
 
-type ShowLength = { edge: [number, number]; value: string };
+type ShowLength = {
+  edge: [number, number];
+  value: string;
+  curve?: boolean | { inflate?: number; dashArray?: string; color?: string };
+};
 type SplitLine = { from: number; to: number; style?: string; color?: string };
 type Region = { vertexIndices: number[]; fill?: string; label?: string };
+
+/**
+ * 쉼표 구분 정수 배열 입력 — trailing comma / 공백을 허용하여 타이핑 도중 쉼표가 삭제되는 현상 방지
+ * (기존 `value={arr.join(',')}` 방식은 "0,1,2," 입력 시 마지막 쉼표가 즉시 사라지는 버그가 있음)
+ */
+function IndexListInput({
+  value,
+  onChange,
+  placeholder,
+  className,
+  title,
+}: {
+  value: number[];
+  onChange: (nums: number[]) => void;
+  placeholder?: string;
+  className?: string;
+  title?: string;
+}) {
+  const [raw, setRaw] = React.useState<string>(() => value.join(','));
+
+  // 외부에서 값이 바뀌면 (프리셋 적용, 삭제 등) raw 동기화.
+  // 단, 사용자가 타이핑 중이면 (raw를 파싱한 결과가 value와 같으면) 건드리지 않음.
+  React.useEffect(() => {
+    const parsed = raw
+      .split(',')
+      .map((s) => parseInt(s.trim()))
+      .filter((n) => !isNaN(n));
+    const same =
+      parsed.length === value.length && parsed.every((n, i) => n === value[i]);
+    if (!same) setRaw(value.join(','));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  return (
+    <input
+      type="text"
+      value={raw}
+      onChange={(e) => {
+        const v = e.target.value;
+        setRaw(v);
+        const nums = v
+          .split(',')
+          .map((s) => parseInt(s.trim()))
+          .filter((n) => !isNaN(n));
+        onChange(nums);
+      }}
+      className={className}
+      placeholder={placeholder}
+      title={title}
+    />
+  );
+}
 
 export function PolygonForm({ params, onChange }: SubFormProps) {
   const vertices = Array.isArray(params.vertices) ? (params.vertices as Point2DInput[]) : [];
@@ -127,18 +184,12 @@ export function PolygonForm({ params, onChange }: SubFormProps) {
 
       <div>
         <label className="text-xs text-slate-500">직각 표시할 꼭짓점 (인덱스, 쉼표 구분)</label>
-        <input
-          type="text"
-          value={rightAngleMarks.join(',')}
-          onChange={(e) => {
-            const nums = e.target.value
-              .split(',')
-              .map((s) => parseInt(s.trim()))
-              .filter((n) => !isNaN(n));
-            onChange({ rightAngleMarks: nums });
-          }}
+        <IndexListInput
+          value={rightAngleMarks}
+          onChange={(nums) => onChange({ rightAngleMarks: nums })}
           className="block w-full text-sm px-2 py-1 border border-slate-300 rounded"
           placeholder="0,1,2,3,4,5"
+          title="볼록 꼭짓점만 렌더됩니다 (오목 꼭짓점은 자동 스킵)"
         />
       </div>
 
@@ -165,30 +216,39 @@ export function PolygonForm({ params, onChange }: SubFormProps) {
             <Plus className="w-3 h-3 inline" /> 추가
           </button>
         </div>
-        {showLengths.map((s, i) => (
+        {showLengths.map((s, i) => {
+          const maxIdx = Math.max(0, vertices.length - 1);
+          const clampIdx = (n: number) => Math.max(0, Math.min(maxIdx, Number.isFinite(n) ? n : 0));
+          return (
           <div key={i} className="flex gap-1 mt-1 items-center">
             <input
               type="number"
+              min={0}
+              max={maxIdx}
               value={s.edge[0]}
               onChange={(e) => {
                 const arr = [...showLengths];
-                arr[i] = { ...s, edge: [parseInt(e.target.value) || 0, s.edge[1]] };
+                const raw = parseInt(e.target.value);
+                arr[i] = { ...s, edge: [clampIdx(isNaN(raw) ? 0 : raw), s.edge[1]] };
                 onChange({ showLengths: arr });
               }}
               className="w-12 text-xs px-1 py-0.5 border border-slate-300 rounded"
-              title="from"
+              title={`from (0~${maxIdx})`}
             />
             <span className="text-xs">→</span>
             <input
               type="number"
+              min={0}
+              max={maxIdx}
               value={s.edge[1]}
               onChange={(e) => {
                 const arr = [...showLengths];
-                arr[i] = { ...s, edge: [s.edge[0], parseInt(e.target.value) || 0] };
+                const raw = parseInt(e.target.value);
+                arr[i] = { ...s, edge: [s.edge[0], clampIdx(isNaN(raw) ? 0 : raw)] };
                 onChange({ showLengths: arr });
               }}
               className="w-12 text-xs px-1 py-0.5 border border-slate-300 rounded"
-              title="to"
+              title={`to (0~${maxIdx})`}
             />
             <input
               type="text"
@@ -202,6 +262,22 @@ export function PolygonForm({ params, onChange }: SubFormProps) {
               placeholder="a, b, 5, x+1, $\\frac{a}{2}$ 등 (변수는 자동 italic)"
               title="숫자 또는 변수/수식. 변수 입력 시 자동으로 italic 렌더. $...$ 로 명시적 KaTeX도 가능"
             />
+            <label
+              className="flex items-center gap-1 text-[10px] text-slate-500 whitespace-nowrap cursor-pointer"
+              title="변을 감싸는 점선 호(측정 표기법) 표시"
+            >
+              <input
+                type="checkbox"
+                checked={!!s.curve}
+                onChange={(e) => {
+                  const arr = [...showLengths];
+                  arr[i] = { ...s, curve: e.target.checked || undefined };
+                  onChange({ showLengths: arr });
+                }}
+                className="w-3 h-3"
+              />
+              호
+            </label>
             <button
               type="button"
               onClick={() => onChange({ showLengths: showLengths.filter((_, j) => j !== i) })}
@@ -210,7 +286,8 @@ export function PolygonForm({ params, onChange }: SubFormProps) {
               <Trash2 className="w-3 h-3" />
             </button>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* 분할선 */}
@@ -225,30 +302,39 @@ export function PolygonForm({ params, onChange }: SubFormProps) {
             <Plus className="w-3 h-3 inline" /> 추가
           </button>
         </div>
-        {splitLines.map((sl, i) => (
+        {splitLines.map((sl, i) => {
+          const maxIdx = Math.max(0, vertices.length - 1);
+          const clampIdx = (n: number) => Math.max(0, Math.min(maxIdx, Number.isFinite(n) ? n : 0));
+          return (
           <div key={i} className="flex gap-1 mt-1 items-center">
             <input
               type="number"
+              min={0}
+              max={maxIdx}
               value={sl.from}
               onChange={(e) => {
                 const arr = [...splitLines];
-                arr[i] = { ...sl, from: parseInt(e.target.value) || 0 };
+                const raw = parseInt(e.target.value);
+                arr[i] = { ...sl, from: clampIdx(isNaN(raw) ? 0 : raw) };
                 onChange({ splitLines: arr });
               }}
               className="w-12 text-xs px-1 py-0.5 border border-slate-300 rounded"
-              title="from"
+              title={`from (0~${maxIdx})`}
             />
             <span className="text-xs">→</span>
             <input
               type="number"
+              min={0}
+              max={maxIdx}
               value={sl.to}
               onChange={(e) => {
                 const arr = [...splitLines];
-                arr[i] = { ...sl, to: parseInt(e.target.value) || 0 };
+                const raw = parseInt(e.target.value);
+                arr[i] = { ...sl, to: clampIdx(isNaN(raw) ? 0 : raw) };
                 onChange({ splitLines: arr });
               }}
               className="w-12 text-xs px-1 py-0.5 border border-slate-300 rounded"
-              title="to"
+              title={`to (0~${maxIdx})`}
             />
             <select
               value={sl.style || 'solid'}
@@ -270,7 +356,8 @@ export function PolygonForm({ params, onChange }: SubFormProps) {
               <Trash2 className="w-3 h-3" />
             </button>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* 영역 분할 */}
@@ -287,21 +374,16 @@ export function PolygonForm({ params, onChange }: SubFormProps) {
         </div>
         {regions.map((r, i) => (
           <div key={i} className="flex gap-1 mt-1 items-center">
-            <input
-              type="text"
-              value={(r.vertexIndices ?? []).join(',')}
-              onChange={(e) => {
-                const nums = e.target.value
-                  .split(',')
-                  .map((s) => parseInt(s.trim()))
-                  .filter((n) => !isNaN(n));
+            <IndexListInput
+              value={r.vertexIndices ?? []}
+              onChange={(nums) => {
                 const arr = [...regions];
                 arr[i] = { ...r, vertexIndices: nums };
                 onChange({ regions: arr });
               }}
               className="flex-1 text-xs px-1 py-0.5 border border-slate-300 rounded"
               placeholder="0,1,2,3"
-              title="꼭짓점 인덱스"
+              title="꼭짓점 인덱스 (쉼표 구분)"
             />
             <input
               type="text"

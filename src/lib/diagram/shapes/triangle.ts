@@ -170,7 +170,7 @@ export function renderTriangle(spec: TriangleDiagram): string {
       const extEnd: Point = [vPt[0] + ux * extensionLength, vPt[1] + uy * extensionLength];
 
       // 연장선 (점선)
-      parts.push(prim.line(vPt, extEnd, { dashed: true, strokeWidth: 1.5, color: '#666' }));
+      parts.push(prim.line(vPt, extEnd, { dashed: true, strokeWidth: 1.5, color: prim.STYLE.AUX_STROKE }));
 
       // 외각 호: 연장선 끝 방향 ~ 다른 변 방향 사이의 호
       const otherIdx = [0, 1, 2].find(i => i !== vi && i !== fi)!;

@@ -1,5 +1,5 @@
 import { StemLeafParams } from '../types';
-import { svgWrap, line, text, katexLabel } from '../shared/svg-utils';
+import { svgWrap, line, text, katexLabel, TEXTBOOK_STYLE } from '../shared/svg-utils';
 
 /** 줄기잎그림 SVG 생성 (중1) */
 export function renderStemLeaf(params: StemLeafParams): string {
@@ -34,8 +34,8 @@ export function renderStemLeaf(params: StemLeafParams): string {
 
   // 헤더
   const headerY = topPad;
-  parts.push(text(tableX + stemW / 2, headerY + headerH / 2, stemLabel, { fontSize: 11, fontWeight: 'bold', fill: '#555' }));
-  parts.push(text(dividerX + leafW / 2, headerY + headerH / 2, leafLabel, { fontSize: 11, fontWeight: 'bold', fill: '#555' }));
+  parts.push(text(tableX + stemW / 2, headerY + headerH / 2, stemLabel, { fontSize: 11, fontWeight: 'bold', fill: TEXTBOOK_STYLE.PLAIN_TEXT_COLOR }));
+  parts.push(text(dividerX + leafW / 2, headerY + headerH / 2, leafLabel, { fontSize: 11, fontWeight: 'bold', fill: TEXTBOOK_STYLE.PLAIN_TEXT_COLOR }));
 
   // 헤더 아래 구분선
   parts.push(line(tableX, headerY + headerH, tableX + stemW + leafW, headerY + headerH, { strokeWidth: 1.5 }));
@@ -67,7 +67,7 @@ export function renderStemLeaf(params: StemLeafParams): string {
   }
 
   // 외곽 테두리
-  parts.push(`<rect x="${tableX}" y="${headerY}" width="${stemW + leafW}" height="${headerH + stems.length * rowH}" fill="none" stroke="#555" stroke-width="1.5" rx="2"/>`);
+  parts.push(`<rect x="${tableX}" y="${headerY}" width="${stemW + leafW}" height="${headerH + stems.length * rowH}" fill="none" stroke="${TEXTBOOK_STYLE.MAIN_STROKE}" stroke-width="1.5" rx="2"/>`);
 
   return svgWrap(parts.join('\n    '), totalW, totalH);
 }

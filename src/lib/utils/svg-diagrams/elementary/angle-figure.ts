@@ -1,5 +1,5 @@
 import { AngleFigureParams } from '../types';
-import { svgWrap, line, arrowHead, katexLabel, COLORS } from '../shared/svg-utils';
+import { svgWrap, line, arrowHead, katexLabel, COLORS, TEXTBOOK_STYLE } from '../shared/svg-utils';
 
 /** 각도 그림 SVG 생성 (초4) */
 export function renderAngleFigure(params: AngleFigureParams): string {
@@ -41,7 +41,7 @@ export function renderAngleFigure(params: AngleFigureParams): string {
     const uy1 = Math.sin(ray1Rad) * sz;
     const ux2 = Math.cos(ray2Rad) * sz;
     const uy2 = Math.sin(ray2Rad) * sz;
-    parts.push(`<polyline points="${cx + ux1},${cy + uy1} ${cx + ux1 + ux2},${cy + uy1 + uy2} ${cx + ux2},${cy + uy2}" fill="none" stroke="#333" stroke-width="1"/>`);
+    parts.push(`<polyline points="${cx + ux1},${cy + uy1} ${cx + ux1 + ux2},${cy + uy1 + uy2} ${cx + ux2},${cy + uy2}" fill="none" stroke="${TEXTBOOK_STYLE.MAIN_STROKE}" stroke-width="1"/>`);
   } else {
     // 각도 호
     const arcStart = ray1Rad;
@@ -64,7 +64,7 @@ export function renderAngleFigure(params: AngleFigureParams): string {
   parts.push(katexLabel(lx, ly, labelText, { fontSize: 12 }));
 
   // 꼭짓점 점
-  parts.push(`<circle cx="${cx}" cy="${cy}" r="2" fill="#333"/>`);
+  parts.push(`<circle cx="${cx}" cy="${cy}" r="2" fill="${TEXTBOOK_STYLE.POINT_COLOR}"/>`);
 
   // 각도기
   if (showProtractor) {
@@ -145,7 +145,7 @@ export function renderAngleFigure(params: AngleFigureParams): string {
         const ly = cy + offset;
         parts.push(line(cx - lineLen, ly, cx + lineLen, ly, { strokeWidth: 1.5 }));
         // 평행 화살표 표시
-        parts.push(`<polygon points="${cx + lineLen - 8},${ly - 3} ${cx + lineLen},${ly} ${cx + lineLen - 8},${ly + 3}" fill="#333"/>`);
+        parts.push(`<polygon points="${cx + lineLen - 8},${ly - 3} ${cx + lineLen},${ly} ${cx + lineLen - 8},${ly + 3}" fill="${TEXTBOOK_STYLE.POINT_COLOR}"/>`);
       }
       // 횡단선
       const tLen = spacing * 1.2;

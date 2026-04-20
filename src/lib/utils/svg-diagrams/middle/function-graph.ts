@@ -1,5 +1,5 @@
 import { FunctionGraphParams } from '../types';
-import { svgWrap, line, circle, arrowHead, katexLabel, COLORS, createCoordinateMapper } from '../shared/svg-utils';
+import { svgWrap, line, circle, arrowHead, katexLabel, COLORS, createCoordinateMapper, TEXTBOOK_STYLE } from '../shared/svg-utils';
 import { compileExpression } from '../shared/expression-parser';
 
 /** 함수 그래프 SVG 생성 (좌표평면 + 함수 곡선) */
@@ -48,12 +48,12 @@ export function renderFunctionGraph(params: FunctionGraphParams): string {
   const originY = toY(0);
 
   if (yMin <= 0 && yMax >= 0) {
-    parts.push(line(pad - 10, originY, pad + gridW + 15, originY, { stroke: '#333', strokeWidth: 1.5 }));
+    parts.push(line(pad - 10, originY, pad + gridW + 15, originY, { stroke: TEXTBOOK_STYLE.AXIS_COLOR, strokeWidth: 1.5 }));
     parts.push(arrowHead(pad + gridW + 15, originY, 0, 6));
     parts.push(katexLabel(pad + gridW + 20, originY, 'x', { fontSize: 13, anchor: 'start' }));
   }
   if (xMin <= 0 && xMax >= 0) {
-    parts.push(line(originX, pad + gridH + 10, originX, pad - 15, { stroke: '#333', strokeWidth: 1.5 }));
+    parts.push(line(originX, pad + gridH + 10, originX, pad - 15, { stroke: TEXTBOOK_STYLE.AXIS_COLOR, strokeWidth: 1.5 }));
     parts.push(arrowHead(originX, pad - 15, -90, 6));
     parts.push(katexLabel(originX, pad - 20, 'y', { fontSize: 13 }));
   }
@@ -64,7 +64,7 @@ export function renderFunctionGraph(params: FunctionGraphParams): string {
     if (v === 0) continue;
     const x = toX(v);
     if (yMin <= 0 && yMax >= 0) {
-      parts.push(line(x, originY - 3, x, originY + 3, { stroke: '#333' }));
+      parts.push(line(x, originY - 3, x, originY + 3, { stroke: TEXTBOOK_STYLE.AXIS_COLOR }));
     }
     if (!hideTicks) {
       const ty = (yMin <= 0 && yMax >= 0 ? originY : pad + gridH) + 16;
@@ -75,7 +75,7 @@ export function renderFunctionGraph(params: FunctionGraphParams): string {
     if (v === 0) continue;
     const y = toY(v);
     if (xMin <= 0 && xMax >= 0) {
-      parts.push(line(originX - 3, y, originX + 3, y, { stroke: '#333' }));
+      parts.push(line(originX - 3, y, originX + 3, y, { stroke: TEXTBOOK_STYLE.AXIS_COLOR }));
     }
     if (!hideTicks) {
       const tx = (xMin <= 0 && xMax >= 0 ? originX : pad) - 14;
@@ -104,7 +104,7 @@ export function renderFunctionGraph(params: FunctionGraphParams): string {
     const fn = funcs[fi];
     const evaluator = compiled[fi];
     if (!evaluator) continue;
-    const color = fn.color || '#333';
+    const color = fn.color || TEXTBOOK_STYLE.MAIN_STROKE;
     const dashAttr = fn.dashed ? ' stroke-dasharray="6 4"' : '';
     const step = (xMax - xMin) / 200;
     const pathParts: string[] = [];

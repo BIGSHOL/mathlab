@@ -1,5 +1,5 @@
 import { BandChartParams } from '../types';
-import { svgWrap, line, text, katexLabel, COLORS } from '../shared/svg-utils';
+import { svgWrap, line, text, katexLabel, COLORS, TEXTBOOK_STYLE } from '../shared/svg-utils';
 
 const BAND_COLORS = [COLORS.primary, COLORS.secondary, COLORS.green, COLORS.purple, COLORS.red, COLORS.yellow];
 
@@ -45,7 +45,7 @@ export function renderBandChart(params: BandChartParams): string {
 
     // 구간 라벨 (상단)
     const midX = xOffset + w / 2;
-    parts.push(text(midX, bandY - 6, seg.label, { fontSize: 10, fill: '#333' }));
+    parts.push(text(midX, bandY - 6, seg.label, { fontSize: 10, fill: TEXTBOOK_STYLE.PLAIN_TEXT_COLOR }));
 
     // 백분율 (띠 안에)
     if (showPercent && w > 20) {
@@ -57,7 +57,7 @@ export function renderBandChart(params: BandChartParams): string {
   }
 
   // 외곽선
-  parts.push(`<rect x="${leftPad}" y="${bandY}" width="${bandW}" height="${bandH}" fill="none" stroke="#555" stroke-width="1.5"/>`);
+  parts.push(`<rect x="${leftPad}" y="${bandY}" width="${bandW}" height="${bandH}" fill="none" stroke="${TEXTBOOK_STYLE.MAIN_STROKE}" stroke-width="1.5"/>`);
 
   // 하단 눈금 (0%, 50%, 100%)
   const tickY = bandY + bandH + 4;

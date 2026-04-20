@@ -1,18 +1,29 @@
 import { Point, DiagramLabel } from '@/types/diagram';
 
-/** SVG 스타일 상수 */
+/**
+ * 교과서 스타일 SVG 토큰 — 모든 프리셋 도형의 기본값.
+ * - 주 색상: 브랜드 블루 (#3B82F6)
+ * - 보조 색상: 동일 블루의 낮은 투명도 (각도 호/보조선)
+ * - 폰트: Pretendard italic (수학 변수)
+ * - 채움: 없음(none) 또는 블루 5% 투명
+ */
 export const STYLE = {
-  MAIN_STROKE: '#000000',
-  MAIN_STROKE_WIDTH: 2,
+  MAIN_STROKE: '#3B82F6',
+  MAIN_STROKE_WIDTH: 1.8,
+  AUX_STROKE: '#60A5FA',
   AUX_STROKE_WIDTH: 1,
   DASHED: '6,4',
   FONT_SIZE: 14,
   FONT_FAMILY: "'Pretendard', system-ui, -apple-system, sans-serif",
-  ANGLE_ARC_COLOR: '#333333',
-  GRID_COLOR: '#e0e0e0',
-  AXIS_COLOR: '#000000',
+  LABEL_COLOR: '#1E40AF',
+  LABEL_STYLE: 'italic',
+  ANGLE_ARC_COLOR: '#60A5FA',
+  GRID_COLOR: '#E5E7EB',
+  AXIS_COLOR: '#334155',
   POINT_RADIUS: 3,
-  POINT_COLOR: '#000000',
+  POINT_COLOR: '#1E40AF',
+  FILL_TINT: '#EFF6FF',
+  FILL_OPACITY: 0.35,
 } as const;
 
 /** SVG 선분 */
@@ -45,19 +56,51 @@ export function dot(x: number, y: number, r?: number, color?: string): string {
   return `<circle cx="${x}" cy="${y}" r="${r ?? STYLE.POINT_RADIUS}" fill="${color ?? STYLE.POINT_COLOR}"/>`;
 }
 
-/** SVG 텍스트 라벨 */
+/**
+ * SVG 텍스트 라벨 — 교과서 스타일(italic + LABEL_COLOR) 기본값.
+ * 명시적으로 다른 스타일이 필요하면 options로 재정의.
+ */
 export function text(
   x: number,
   y: number,
   content: string,
-  options?: { fontSize?: number; anchor?: string; baseline?: string; fontWeight?: string; color?: string },
+  options?: { fontSize?: number; anchor?: string; baseline?: string; fontWeight?: string; color?: string; italic?: boolean; plain?: boolean },
 ): string {
   const fs = options?.fontSize ?? STYLE.FONT_SIZE;
   const anchor = options?.anchor ?? 'middle';
   const baseline = options?.baseline ?? 'middle';
   const fw = options?.fontWeight ? ` font-weight="${options.fontWeight}"` : '';
-  const fill = options?.color ? ` fill="${options.color}"` : '';
-  return `<text x="${x}" y="${y}" font-size="${fs}" font-family="${STYLE.FONT_FAMILY}" text-anchor="${anchor}" dominant-baseline="${baseline}"${fw}${fill}>${escapeXml(content)}</text>`;
+  // plain=true이면 기본 검정/정자체 (주석·단위 텍스트용), 그 외에는 교과서 스타일 기본값
+  const defaultColor = options?.plain ? '#334155' : STYLE.LABEL_COLOR;
+  const color = options?.color ?? defaultColor;
+  const fill = ` fill="${color}"`;
+  const italic = !options?.plain && (options?.italic ?? true);
+  const fs2 = italic ? ' font-style="italic"' : '';
+  return `<text x="${x}" y="${y}" font-size="${fs}" font-family="${STYLE.FONT_FAMILY}" text-anchor="${anchor}" dominant-baseline="${baseline}"${fw}${fs2}${fill}>${escapeXml(content)}</text>`;
+}
+
+/**
+ * 교과서 스타일 직각 표시 마커 — 꼭짓점(v)에서 인접 변(p1, p2) 방향으로 작은 정사각형.
+ * 모든 도형에서 동일한 모양·굵기·색을 보장하기 위해 중앙 primitive로 제공.
+ */
+export function rightAngleMark(
+  v: Point,
+  p1: Point,
+  p2: Point,
+  options?: { size?: number; color?: string; strokeWidth?: number },
+): string {
+  const size = options?.size ?? 10;
+  const color = options?.color ?? STYLE.MAIN_STROKE;
+  const sw = options?.strokeWidth ?? STYLE.AUX_STROKE_WIDTH;
+  const len = (a: Point, b: Point) => Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+  const u1x = (p1[0] - v[0]) / len(v, p1);
+  const u1y = (p1[1] - v[1]) / len(v, p1);
+  const u2x = (p2[0] - v[0]) / len(v, p2);
+  const u2y = (p2[1] - v[1]) / len(v, p2);
+  const a: Point = [v[0] + u1x * size, v[1] + u1y * size];
+  const b: Point = [v[0] + u1x * size + u2x * size, v[1] + u1y * size + u2y * size];
+  const c: Point = [v[0] + u2x * size, v[1] + u2y * size];
+  return `<polyline points="${a[0]},${a[1]} ${b[0]},${b[1]} ${c[0]},${c[1]}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linejoin="round"/>`;
 }
 
 /** SVG path */

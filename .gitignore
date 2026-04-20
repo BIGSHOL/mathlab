@@ -64,3 +64,4 @@ __pycache__/
 # Data files (PDFs, textbooks, etc.)
 /data/
 !src/lib/data/
+scripts/test-textbook-shapes-output.html

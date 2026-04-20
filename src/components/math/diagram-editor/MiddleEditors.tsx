@@ -59,9 +59,9 @@ export function TriangleForm({ params, onChange }: SubFormProps) {
         </div>
         {sides.map((s, i) => (
           <div key={i} className="flex gap-1 mt-1 items-center">
-            <input type="number" value={s.from} min={0} max={2} onChange={(e) => { const arr = [...sides]; arr[i] = { ...s, from: parseInt(e.target.value) || 0 }; onChange({ sides: arr }); }} className="w-10 text-xs px-1 py-0.5 border border-slate-300 rounded" />
+            <input type="number" value={s.from} min={0} max={2} onChange={(e) => { const arr = [...sides]; const n = parseInt(e.target.value); arr[i] = { ...s, from: Math.max(0, Math.min(2, isNaN(n) ? 0 : n)) }; onChange({ sides: arr }); }} className="w-10 text-xs px-1 py-0.5 border border-slate-300 rounded" />
             <span className="text-xs text-slate-400">&ndash;</span>
-            <input type="number" value={s.to} min={0} max={2} onChange={(e) => { const arr = [...sides]; arr[i] = { ...s, to: parseInt(e.target.value) || 0 }; onChange({ sides: arr }); }} className="w-10 text-xs px-1 py-0.5 border border-slate-300 rounded" />
+            <input type="number" value={s.to} min={0} max={2} onChange={(e) => { const arr = [...sides]; const n = parseInt(e.target.value); arr[i] = { ...s, to: Math.max(0, Math.min(2, isNaN(n) ? 0 : n)) }; onChange({ sides: arr }); }} className="w-10 text-xs px-1 py-0.5 border border-slate-300 rounded" />
             <input type="text" value={s.label} onChange={(e) => { const arr = [...sides]; arr[i] = { ...s, label: e.target.value }; onChange({ sides: arr }); }} className="flex-1 text-xs px-1.5 py-0.5 border border-slate-300 rounded" placeholder="라벨" />
             <button type="button" onClick={() => onChange({ sides: sides.filter((_, j) => j !== i) })} className="text-slate-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
           </div>
@@ -77,7 +77,7 @@ export function TriangleForm({ params, onChange }: SubFormProps) {
         </div>
         {angles.map((a, i) => (
           <div key={i} className="flex gap-1 mt-1 items-center">
-            <input type="number" value={a.vertex} min={0} max={2} onChange={(e) => { const arr = [...angles]; arr[i] = { ...a, vertex: parseInt(e.target.value) || 0 }; onChange({ angles: arr }); }} className="w-10 text-xs px-1 py-0.5 border border-slate-300 rounded" title="꼭짓점 인덱스" />
+            <input type="number" value={a.vertex} min={0} max={2} onChange={(e) => { const arr = [...angles]; const n = parseInt(e.target.value); arr[i] = { ...a, vertex: Math.max(0, Math.min(2, isNaN(n) ? 0 : n)) }; onChange({ angles: arr }); }} className="w-10 text-xs px-1 py-0.5 border border-slate-300 rounded" title="꼭짓점 인덱스" />
             <input type="text" value={a.value} onChange={(e) => { const arr = [...angles]; arr[i] = { ...a, value: e.target.value }; onChange({ angles: arr }); }} className="flex-1 text-xs px-1.5 py-0.5 border border-slate-300 rounded" placeholder="예: 60°" />
             <button type="button" onClick={() => onChange({ angles: angles.filter((_, j) => j !== i) })} className="text-slate-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
           </div>
@@ -488,9 +488,9 @@ export function RegularPolygonForm({ params, onChange }: SubFormProps) {
           </div>
           {diagArray.map((d, i) => (
             <div key={i} className="flex gap-1 mt-1 items-center">
-              <input type="number" value={d.from} min={0} max={nSides - 1} onChange={(e) => { const arr = [...diagArray]; arr[i] = { ...d, from: parseInt(e.target.value) || 0 }; onChange({ diagonals: arr }); }} className="w-12 text-xs px-1 py-0.5 border border-slate-300 rounded" title="꼭짓점 시작" />
+              <input type="number" value={d.from} min={0} max={nSides - 1} onChange={(e) => { const arr = [...diagArray]; const n = parseInt(e.target.value); arr[i] = { ...d, from: Math.max(0, Math.min(nSides - 1, isNaN(n) ? 0 : n)) }; onChange({ diagonals: arr }); }} className="w-12 text-xs px-1 py-0.5 border border-slate-300 rounded" title="꼭짓점 시작" />
               <span className="text-xs text-slate-400">&ndash;</span>
-              <input type="number" value={d.to} min={0} max={nSides - 1} onChange={(e) => { const arr = [...diagArray]; arr[i] = { ...d, to: parseInt(e.target.value) || 0 }; onChange({ diagonals: arr }); }} className="w-12 text-xs px-1 py-0.5 border border-slate-300 rounded" title="꼭짓점 끝" />
+              <input type="number" value={d.to} min={0} max={nSides - 1} onChange={(e) => { const arr = [...diagArray]; const n = parseInt(e.target.value); arr[i] = { ...d, to: Math.max(0, Math.min(nSides - 1, isNaN(n) ? 0 : n)) }; onChange({ diagonals: arr }); }} className="w-12 text-xs px-1 py-0.5 border border-slate-300 rounded" title="꼭짓점 끝" />
               <select value={d.style || 'solid'} onChange={(e) => { const arr = [...diagArray]; arr[i] = { ...d, style: e.target.value as 'solid' | 'dashed' }; onChange({ diagonals: arr }); }} className="text-xs px-1 py-0.5 border border-slate-300 rounded">
                 <option value="solid">실선</option>
                 <option value="dashed">점선</option>
@@ -516,7 +516,7 @@ export function RegularPolygonForm({ params, onChange }: SubFormProps) {
         {Array.isArray(params.angles) && (params.angles as any[]).map((ang: any, i: number) => (
           <div key={i} className="flex gap-1 mt-1 items-center">
             <input type="number" value={ang.vertex} min={0} max={nSides - 1} onChange={(e) => {
-              const arr = [...(params.angles as any[])]; arr[i] = { ...ang, vertex: parseInt(e.target.value) || 0 }; onChange({ angles: arr });
+              const arr = [...(params.angles as any[])]; const n = parseInt(e.target.value); arr[i] = { ...ang, vertex: Math.max(0, Math.min(nSides - 1, isNaN(n) ? 0 : n)) }; onChange({ angles: arr });
             }} className="w-12 text-xs px-1 py-0.5 border border-slate-300 rounded" title="꼭짓점 번호" />
             <select value={ang.exterior ? 'exterior' : 'interior'} onChange={(e) => {
               const arr = [...(params.angles as any[])]; arr[i] = { ...ang, exterior: e.target.value === 'exterior' }; onChange({ angles: arr });
@@ -561,7 +561,7 @@ export function HistogramForm({ params, onChange }: SubFormProps) {
             <span className="text-xs text-slate-400">~</span>
             <input type="number" value={b.range[1]} onChange={(e) => { const arr = [...bins]; arr[i] = { ...b, range: [b.range[0], parseFloat(e.target.value) || 0] }; onChange({ bins: arr }); }} className="w-14 text-xs px-1 py-0.5 border border-slate-300 rounded" title="끝" />
             <span className="text-xs text-slate-400">도수:</span>
-            <input type="number" value={b.frequency} onChange={(e) => { const arr = [...bins]; arr[i] = { ...b, frequency: parseInt(e.target.value) || 0 }; onChange({ bins: arr }); }} className="w-12 text-xs px-1 py-0.5 border border-slate-300 rounded" />
+            <input type="number" value={b.frequency} min={0} onChange={(e) => { const arr = [...bins]; const n = parseInt(e.target.value); arr[i] = { ...b, frequency: Math.max(0, isNaN(n) ? 0 : n) }; onChange({ bins: arr }); }} className="w-12 text-xs px-1 py-0.5 border border-slate-300 rounded" />
             <button type="button" onClick={() => onChange({ bins: bins.filter((_, j) => j !== i) })} className="text-slate-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
           </div>
         ))}
@@ -582,7 +582,7 @@ export function StemLeafForm({ params, onChange }: SubFormProps) {
         </div>
         {stems.map((s, i) => (
           <div key={i} className="flex gap-1 mt-1 items-center">
-            <input type="number" value={s.stem} onChange={(e) => { const arr = [...stems]; arr[i] = { ...s, stem: parseInt(e.target.value) || 0 }; onChange({ stems: arr }); }} className="w-12 text-xs px-1 py-0.5 border border-slate-300 rounded" title="줄기" />
+            <input type="number" value={s.stem} min={0} onChange={(e) => { const arr = [...stems]; const n = parseInt(e.target.value); arr[i] = { ...s, stem: Math.max(0, isNaN(n) ? 0 : n) }; onChange({ stems: arr }); }} className="w-12 text-xs px-1 py-0.5 border border-slate-300 rounded" title="줄기" />
             <span className="text-xs text-slate-400">|</span>
             <input type="text" value={Array.isArray(s.leaves) ? s.leaves.join(', ') : ''} onChange={(e) => { const arr = [...stems]; arr[i] = { ...s, leaves: e.target.value.split(',').map(x => parseInt(x.trim())).filter(n => !isNaN(n)) }; onChange({ stems: arr }); }} className="flex-1 text-xs px-1.5 py-0.5 border border-slate-300 rounded" placeholder="잎 (쉼표 구분)" />
             <button type="button" onClick={() => onChange({ stems: stems.filter((_, j) => j !== i) })} className="text-slate-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>

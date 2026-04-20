@@ -1,5 +1,5 @@
 import { VennDiagramParams } from '../types';
-import { svgWrap, katexLabel, COLORS } from '../shared/svg-utils';
+import { svgWrap, katexLabel, COLORS, TEXTBOOK_STYLE } from '../shared/svg-utils';
 
 const DEFAULT_SET_COLORS = [COLORS.primary, COLORS.red, COLORS.green];
 
@@ -40,7 +40,7 @@ export function renderVennDiagram(params: VennDiagramParams): string {
 
     // 전체집합 사각형
     if (universal) {
-      parts.push(`<rect x="10" y="10" width="${totalW - 20}" height="${totalH - 20}" fill="none" stroke="#333" stroke-width="1.5" rx="4"/>`);
+      parts.push(`<rect x="10" y="10" width="${totalW - 20}" height="${totalH - 20}" fill="none" stroke="${TEXTBOOK_STYLE.MAIN_STROKE}" stroke-width="1.5" rx="4"/>`);
       parts.push(katexLabel(totalW - 24, 28, 'U', { fontSize: 13 }));
       if (universal.elements?.length) {
         parts.push(katexLabel(totalW - 30, totalH - 28, universal.elements.join(',\\; '), { fontSize: 10, anchor: 'end' }));
@@ -87,7 +87,7 @@ export function renderVennDiagram(params: VennDiagramParams): string {
   ];
 
   if (universal) {
-    parts.push(`<rect x="10" y="10" width="${totalW - 20}" height="${totalH - 20}" fill="none" stroke="#333" stroke-width="1.5" rx="4"/>`);
+    parts.push(`<rect x="10" y="10" width="${totalW - 20}" height="${totalH - 20}" fill="none" stroke="${TEXTBOOK_STYLE.MAIN_STROKE}" stroke-width="1.5" rx="4"/>`);
     parts.push(katexLabel(totalW - 24, 28, 'U', { fontSize: 13 }));
     if (universal.elements?.length) {
       parts.push(katexLabel(totalW - 30, totalH - 28, universal.elements.join(',\\; '), { fontSize: 10, anchor: 'end' }));

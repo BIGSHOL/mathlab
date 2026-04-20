@@ -87,7 +87,7 @@ function renderCylinder(
   const parts: string[] = [];
 
   // 윗면 타원
-  parts.push(`<ellipse cx="${cx}" cy="${topY}" rx="${r}" ry="${ry}" fill="none" stroke="#000" stroke-width="2"/>`);
+  parts.push(`<ellipse cx="${cx}" cy="${topY}" rx="${r}" ry="${ry}" fill="none" stroke="${prim.STYLE.MAIN_STROKE}" stroke-width="2"/>`);
 
   // 옆면 세로선
   parts.push(prim.line([cx - r, topY], [cx - r, bottomY]));
@@ -95,10 +95,10 @@ function renderCylinder(
 
   // 아랫면 타원 (앞쪽 반만 실선, 뒤쪽은 점선)
   parts.push(
-    `<path d="M ${cx - r} ${bottomY} A ${r} ${ry} 0 0 0 ${cx + r} ${bottomY}" fill="none" stroke="#000" stroke-width="2"/>`,
+    `<path d="M ${cx - r} ${bottomY} A ${r} ${ry} 0 0 0 ${cx + r} ${bottomY}" fill="none" stroke="${prim.STYLE.MAIN_STROKE}" stroke-width="2"/>`,
   );
   parts.push(
-    `<path d="M ${cx - r} ${bottomY} A ${r} ${ry} 0 0 1 ${cx + r} ${bottomY}" fill="none" stroke="#000" stroke-width="1" stroke-dasharray="6,4"/>`,
+    `<path d="M ${cx - r} ${bottomY} A ${r} ${ry} 0 0 1 ${cx + r} ${bottomY}" fill="none" stroke="${prim.STYLE.MAIN_STROKE}" stroke-width="1" stroke-dasharray="6,4"/>`,
   );
 
   if (showDim) {
@@ -136,10 +136,10 @@ function renderCone(
 
   // 밑면 타원
   parts.push(
-    `<path d="M ${cx - r} ${bottomY} A ${r} ${ry} 0 0 0 ${cx + r} ${bottomY}" fill="none" stroke="#000" stroke-width="2"/>`,
+    `<path d="M ${cx - r} ${bottomY} A ${r} ${ry} 0 0 0 ${cx + r} ${bottomY}" fill="none" stroke="${prim.STYLE.MAIN_STROKE}" stroke-width="2"/>`,
   );
   parts.push(
-    `<path d="M ${cx - r} ${bottomY} A ${r} ${ry} 0 0 1 ${cx + r} ${bottomY}" fill="none" stroke="#000" stroke-width="1" stroke-dasharray="6,4"/>`,
+    `<path d="M ${cx - r} ${bottomY} A ${r} ${ry} 0 0 1 ${cx + r} ${bottomY}" fill="none" stroke="${prim.STYLE.MAIN_STROKE}" stroke-width="1" stroke-dasharray="6,4"/>`,
   );
 
   // 높이 점선
@@ -169,7 +169,7 @@ function renderSphere(
 
   // 적도선 (점선 타원)
   parts.push(
-    `<ellipse cx="${cx}" cy="${cy}" rx="${r}" ry="${r * 0.3}" fill="none" stroke="#000" stroke-width="1" stroke-dasharray="6,4"/>`,
+    `<ellipse cx="${cx}" cy="${cy}" rx="${r}" ry="${r * 0.3}" fill="none" stroke="${prim.STYLE.MAIN_STROKE}" stroke-width="1" stroke-dasharray="6,4"/>`,
   );
 
   // 중심점

@@ -1,5 +1,5 @@
 import { FractionRectParams } from '../types';
-import { svgWrap, text, COLORS, hatchPatternDef } from '../shared/svg-utils';
+import { svgWrap, text, COLORS, hatchPatternDef, TEXTBOOK_STYLE } from '../shared/svg-utils';
 
 /** 단일 분수 사각형 렌더링 */
 function renderSingleRect(
@@ -27,13 +27,13 @@ function renderSingleRect(
         // 빗금 셀: 색칠도 함께면 연한 배경 + 빗금, 아니면 흰 배경 + 빗금
         const bg = isColored ? color : 'white';
         const bgOpacity = isColored ? 0.2 : 1;
-        parts.push(`<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" fill="${bg}" fill-opacity="${bgOpacity}" stroke="#555" stroke-width="1"/>`);
+        parts.push(`<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" fill="${bg}" fill-opacity="${bgOpacity}" stroke="${TEXTBOOK_STYLE.MAIN_STROKE}" stroke-width="1"/>`);
         parts.push(`<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" fill="url(#${patternId})" stroke="none"/>`);
       } else if (isColored) {
-        parts.push(`<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" fill="${color}" fill-opacity="0.35" stroke="#555" stroke-width="1"/>`);
+        parts.push(`<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" fill="${color}" fill-opacity="0.35" stroke="${TEXTBOOK_STYLE.MAIN_STROKE}" stroke-width="1"/>`);
         parts.push(`<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" fill="${color}" fill-opacity="0.15" stroke="none"/>`);
       } else {
-        parts.push(`<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" fill="white" stroke="#555" stroke-width="1"/>`);
+        parts.push(`<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" fill="white" stroke="${TEXTBOOK_STYLE.MAIN_STROKE}" stroke-width="1"/>`);
       }
     }
   }
@@ -41,7 +41,7 @@ function renderSingleRect(
   // 외곽선 강조
   const gridW = cols * cellW;
   const gridH = rows * cellH;
-  parts.push(`<rect x="${ox}" y="${oy}" width="${gridW}" height="${gridH}" fill="none" stroke="#555" stroke-width="1.5"/>`);
+  parts.push(`<rect x="${ox}" y="${oy}" width="${gridW}" height="${gridH}" fill="none" stroke="${TEXTBOOK_STYLE.MAIN_STROKE}" stroke-width="1.5"/>`);
 
   return parts.join('\n    ');
 }

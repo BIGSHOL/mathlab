@@ -80,18 +80,25 @@ function normalizeFractionCircle(p: P): FractionCircleParams {
 
 /** PolygonParams normalize — Gemini 및 UI 편집기에서 오는 다양한 형식 허용 */
 function normalizePolygon(p: P): PolygonParams {
-  // vertices: [{x,y}] 또는 [[x,y]] 둘 다 허용
+  // vertices: [{x,y,label?}] 또는 [[x,y]] 둘 다 허용. 편집기의 inline label을 보존한다.
   const rawVerts = arr<unknown>(p.vertices ?? p.points ?? []);
   const vertices = rawVerts
-    .map((v): { x: number; y: number } | null => {
+    .map((v): { x: number; y: number; label?: string } | null => {
       if (Array.isArray(v) && v.length >= 2) return { x: num(v[0], 0), y: num(v[1], 0) };
       if (v && typeof v === 'object' && 'x' in v && 'y' in v) {
-        const o = v as { x?: unknown; y?: unknown };
-        return { x: num(o.x, 0), y: num(o.y, 0) };
+        const o = v as { x?: unknown; y?: unknown; label?: unknown };
+        const out: { x: number; y: number; label?: string } = {
+          x: num(o.x, 0),
+          y: num(o.y, 0),
+        };
+        if (typeof o.label === 'string' && o.label.trim()) {
+          out.label = o.label.trim();
+        }
+        return out;
       }
       return null;
     })
-    .filter((v): v is { x: number; y: number } => v !== null);
+    .filter((v): v is { x: number; y: number; label?: string } => v !== null);
 
   return {
     vertices,

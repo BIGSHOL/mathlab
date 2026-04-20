@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "node scripts/dev.mjs",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && tsx scripts/check-textbook-style.ts && next build",
+    "check:style": "tsx scripts/check-textbook-style.ts",
     "start": "next start",
     "lint": "next lint",
     "test:e2e": "playwright test",

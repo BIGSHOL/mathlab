@@ -1,5 +1,5 @@
 import { CircleParams, TriangleParams, QuadrilateralParams, RegularPolygonParams, ShapeStyle, Point2D } from '../types';
-import { svgWrap, line, circle as svgCircle, katexLabel, COLORS, renderRightAngleMark, renderCongruenceMarks, renderParallelMarks } from '../shared/svg-utils';
+import { svgWrap, line, circle as svgCircle, katexLabel, COLORS, renderRightAngleMark, renderCongruenceMarks, renderParallelMarks, TEXTBOOK_STYLE } from '../shared/svg-utils';
 import {
   computeIncenter, computeCircumcenter, computeCentroid, computeOrthocenter,
   computeInradius, computeCircumradius, footOfPerpendicular, midpoint as geoMidpoint,
@@ -40,7 +40,7 @@ export function renderCircle(params: CircleParams): string {
   const { fillAttr, extraFill } = shapeFillAttrs(params, patternId);
   parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" ${fillAttr} stroke="${strokeColor}" stroke-width="2"/>`);
   if (extraFill) parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" ${extraFill} stroke="none"/>`);
-  parts.push(svgCircle(cx, cy, 2, { fill: '#333' })); // 중심점
+  parts.push(svgCircle(cx, cy, 2, { fill: TEXTBOOK_STYLE.POINT_COLOR })); // 중심점
 
   // 라벨
   if (params.labels) {
@@ -88,7 +88,7 @@ export function renderCircle(params: CircleParams): string {
   // 현(chord)
   if (params.chords) {
     for (const chord of params.chords) {
-      const chordColor = chord.color || '#333';
+      const chordColor = chord.color || TEXTBOOK_STYLE.MAIN_STROKE;
       const startRad = (-chord.startAngle * Math.PI) / 180;
       const endRad = (-chord.endAngle * Math.PI) / 180;
       const x1 = cx + r * Math.cos(startRad);
@@ -107,7 +107,7 @@ export function renderCircle(params: CircleParams): string {
   // 반지름선(radiusLine)
   if (params.radiusLines) {
     for (const rl of params.radiusLines) {
-      const rlColor = rl.color || '#333';
+      const rlColor = rl.color || TEXTBOOK_STYLE.MAIN_STROKE;
       const rad = (-rl.angle * Math.PI) / 180;
       const ex = cx + r * Math.cos(rad);
       const ey = cy + r * Math.sin(rad);

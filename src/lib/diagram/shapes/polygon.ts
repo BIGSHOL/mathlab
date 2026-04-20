@@ -70,7 +70,7 @@ export function renderPolygon(spec: PolygonDiagram): string {
       parts.push(prim.line(vertices[sl.from], vertices[sl.to], {
         strokeWidth: 1.2,
         dashed: sl.style === 'dashed',
-        color: sl.color ?? '#000000',
+        color: sl.color ?? prim.STYLE.MAIN_STROKE,
       }));
     }
   }

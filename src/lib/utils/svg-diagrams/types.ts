@@ -412,8 +412,13 @@ export interface PolygonParams {
   vertices: Point2D[];
   /** 꼭짓점 이름 (기본 표시 안 함) */
   vertexLabels?: string[];
-  /** 변 라벨 (edge 인덱스 + 텍스트) — 변의 외측 법선 방향으로 자동 배치 */
-  showLengths?: { edge: [number, number]; value: string }[];
+  /** 변 라벨 (edge 인덱스 + 텍스트) — 변의 외측 법선 방향으로 자동 배치.
+   *  `curve`를 주면 변 길이를 감싸는 점선 호(측정 표기법)가 함께 렌더링됨. */
+  showLengths?: {
+    edge: [number, number];
+    value: string;
+    curve?: boolean | { inflate?: number; dashArray?: string; color?: string };
+  }[];
   /** 직각 표시할 꼭짓점 인덱스 배열 (오목 꼭짓점도 도형 내부로 정확히 그려짐) */
   rightAngleMarks?: number[];
   /** 도형 전체 채움 색 (regions 미사용 시) */

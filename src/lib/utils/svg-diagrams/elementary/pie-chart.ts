@@ -1,5 +1,5 @@
 import { PieChartParams } from '../types';
-import { svgWrap, text, katexLabel, COLORS } from '../shared/svg-utils';
+import { svgWrap, text, katexLabel, COLORS, TEXTBOOK_STYLE } from '../shared/svg-utils';
 
 const PIE_COLORS = [COLORS.primary, COLORS.secondary, COLORS.green, COLORS.purple, COLORS.red, COLORS.yellow, COLORS.gray];
 
@@ -74,7 +74,7 @@ export function renderPieChart(params: PieChartParams): string {
   }
 
   // 외곽선
-  parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#555" stroke-width="1.5"/>`);
+  parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${TEXTBOOK_STYLE.MAIN_STROKE}" stroke-width="1.5"/>`);
 
   // 범례 (오른쪽)
   const legendX = cx + r + 24;
@@ -84,7 +84,7 @@ export function renderPieChart(params: PieChartParams): string {
     const color = seg.color || PIE_COLORS[i % PIE_COLORS.length];
     const ly = legendStartY + i * 20;
     parts.push(`<rect x="${legendX}" y="${ly - 5}" width="12" height="12" rx="2" fill="${color}" fill-opacity="0.6"/>`);
-    parts.push(text(legendX + 18, ly + 1, seg.label, { fontSize: 10, fill: '#333', anchor: 'start' }));
+    parts.push(text(legendX + 18, ly + 1, seg.label, { fontSize: 10, fill: TEXTBOOK_STYLE.PLAIN_TEXT_COLOR, anchor: 'start' }));
   }
 
   return svgWrap(parts.join('\n    '), totalW, totalH);
