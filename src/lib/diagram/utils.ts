@@ -126,3 +126,46 @@ export function labelOffset(
   const angle = angleBetween(center, point);
   return [point[0] + Math.cos(angle) * offset, point[1] + Math.sin(angle) * offset];
 }
+
+/** 점이 다각형 내부에 있는지 판별 (ray casting) */
+export function pointInPolygon(p: Point, poly: Point[]): boolean {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const xi = poly[i][0], yi = poly[i][1];
+    const xj = poly[j][0], yj = poly[j][1];
+    const intersects =
+      (yi > p[1]) !== (yj > p[1]) &&
+      p[0] < ((xj - xi) * (p[1] - yi)) / ((yj - yi) || 1e-9) + xi;
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}
+
+/**
+ * 변(edge)의 외측 법선 방향으로 라벨 위치 계산.
+ * 오목(concave) 다각형에서도 정확하게 외측을 향하게 해주는 centroid 기반의 개선판.
+ *
+ * - edge [a, b]의 중점 m
+ * - 법선 후보 n1=(-dy,dx), n2=(dy,-dx) 중에서 "도형 외부로 향하는" 것 선택
+ * - 판별: m + n1을 point-in-polygon으로 검사 → 외부면 n1, 내부면 n2
+ */
+export function edgeLabelOffset(
+  a: Point,
+  b: Point,
+  polygon: Point[],
+  offset: number = 16,
+): Point {
+  const mx = (a[0] + b[0]) / 2;
+  const my = (a[1] + b[1]) / 2;
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const len = Math.sqrt(dx * dx + dy * dy) || 1;
+  // 법선 후보 (단위벡터)
+  const nx = -dy / len;
+  const ny = dx / len;
+  // 1px 짜리 probe로 내/외 판별 (offset이 너무 크면 오목부 폭을 넘어갈 수 있음)
+  const probe: Point = [mx + nx, my + ny];
+  const outwardX = pointInPolygon(probe, polygon) ? -nx : nx;
+  const outwardY = pointInPolygon(probe, polygon) ? -ny : ny;
+  return [mx + outwardX * offset, my + outwardY * offset];
+}

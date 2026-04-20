@@ -8,6 +8,7 @@ import {
   rightAnglePath,
   midpoint,
   labelOffset,
+  edgeLabelOffset,
 } from '../utils';
 
 export function renderQuadrilateral(spec: QuadrilateralDiagram): string {
@@ -178,12 +179,11 @@ export function renderQuadrilateral(spec: QuadrilateralDiagram): string {
     }
   }
 
-  // 변의 길이 표시
+  // 변의 길이 표시 — 변의 외측 법선 방향으로 배치 (비대칭/오목 대응)
   if (showLengths) {
     for (const { edge, value } of showLengths) {
-      const mid = midpoint(vertices[edge[0]], vertices[edge[1]]);
-      const offset = labelOffset(mid, center, 16);
-      parts.push(prim.text(offset[0], offset[1], value, { fontSize: 13 }));
+      const pos = edgeLabelOffset(vertices[edge[0]], vertices[edge[1]], vertices as Point[], 16);
+      parts.push(prim.text(pos[0], pos[1], value, { fontSize: 13 }));
     }
   }
 

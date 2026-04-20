@@ -8,8 +8,9 @@ import {
 } from '../primitives';
 import * as prim from '../primitives';
 import {
-  midpoint,
   labelOffset,
+  edgeLabelOffset,
+  pointInPolygon,
   rightAnglePath,
 } from '../utils';
 
@@ -89,7 +90,7 @@ export function renderPolygon(spec: PolygonDiagram): string {
     }
   }
 
-  // 직각 표시
+  // 직각 표시 — 오목(concave) 꼭짓점에서도 도형 내부 방향으로 사각형이 그려지도록 보정
   if (rightAngleMarks) {
     const n = vertices.length;
     for (const idx of rightAngleMarks) {
@@ -97,18 +98,35 @@ export function renderPolygon(spec: PolygonDiagram): string {
       const v = vertices[idx];
       const prev = vertices[(idx - 1 + n) % n];
       const next = vertices[(idx + 1) % n];
-      parts.push(prim.path(rightAnglePath(v, prev, next, 12)));
+      // 사각형 마커가 도형 내부를 향하는지 probe로 확인
+      // rightAnglePath 중간 지점(v + (prev_dir + next_dir)*size)이 폴리곤 내부면 그대로,
+      // 외부면 prev/next를 반대로 전달하여 반대쪽으로 그림
+      const sz = 12;
+      const dx1 = prev[0] - v[0], dy1 = prev[1] - v[1];
+      const dx2 = next[0] - v[0], dy2 = next[1] - v[1];
+      const l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1) || 1;
+      const l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2) || 1;
+      const probe: Point = [
+        v[0] + (dx1 / l1) * sz + (dx2 / l2) * sz,
+        v[1] + (dy1 / l1) * sz + (dy2 / l2) * sz,
+      ];
+      if (pointInPolygon(probe, vertices)) {
+        parts.push(prim.path(rightAnglePath(v, prev, next, sz)));
+      } else {
+        // 외부 쪽으로 그어졌다면 inward 방향을 다시 잡기 어려움 →
+        // prev/next가 도형 내부를 향하도록 회전된 방향에서 그리기
+        parts.push(prim.path(rightAnglePath(v, next, prev, sz)));
+      }
     }
   }
 
-  // 변의 길이 표시
+  // 변의 길이 표시 — 변의 외측 법선 방향으로 배치 (오목 다각형에서도 정확)
   if (showLengths) {
     for (const { edge, value } of showLengths) {
       const [from, to] = edge;
       if (from < 0 || from >= vertices.length || to < 0 || to >= vertices.length) continue;
-      const mid = midpoint(vertices[from], vertices[to]);
-      const offset = labelOffset(mid, center, 16);
-      parts.push(prim.text(offset[0], offset[1], value, { fontSize: 13 }));
+      const pos = edgeLabelOffset(vertices[from], vertices[to], vertices, 16);
+      parts.push(prim.text(pos[0], pos[1], value, { fontSize: 13 }));
     }
   }
 

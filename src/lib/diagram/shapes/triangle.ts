@@ -7,8 +7,9 @@ import {
   toDegrees,
   arcPath,
   rightAnglePath,
-  midpoint,
+  midpoint as _midpoint,
   labelOffset,
+  edgeLabelOffset,
   distance as _distance,
 } from '../utils';
 import {
@@ -188,16 +189,11 @@ export function renderTriangle(spec: TriangleDiagram): string {
     }
   }
 
-  // 변의 길이 표시
+  // 변의 길이 표시 — 변의 외측 법선 방향으로 배치
   if (showLengths) {
-    const center: Point = [
-      (vertices[0][0] + vertices[1][0] + vertices[2][0]) / 3,
-      (vertices[0][1] + vertices[1][1] + vertices[2][1]) / 3,
-    ];
     for (const { edge, value } of showLengths) {
-      const mid = midpoint(vertices[edge[0]], vertices[edge[1]]);
-      const offset = labelOffset(mid, center, 16);
-      parts.push(prim.text(offset[0], offset[1], value, { fontSize: 13 }));
+      const pos = edgeLabelOffset(vertices[edge[0]], vertices[edge[1]], vertices, 16);
+      parts.push(prim.text(pos[0], pos[1], value, { fontSize: 13 }));
     }
   }
 

@@ -111,7 +111,7 @@ const cases: Case[] = [
   },
   {
     title: 'T자 8각형 polygon + splitLines',
-    desc: 'T자 모양을 2개 직사각형으로 분할',
+    desc: 'T자 모양을 2개 직사각형으로 분할 + 모든 변 라벨 + outlineCurve',
     spec: {
       type: 'polygon',
       vertices: [
@@ -127,8 +127,38 @@ const cases: Case[] = [
         { vertexIndices: [6, 3, 4, 5], fill: '#CFFAFE', label: '②' },
       ],
       showLengths: [
+        { edge: [7, 0], value: 'a' },
+        { edge: [0, 1], value: 'b' },
+        { edge: [1, 2], value: 'c' },
+        { edge: [2, 3], value: 'd' },
+        { edge: [3, 4], value: 'e' },
+        { edge: [4, 5], value: 'f' },
+        { edge: [5, 6], value: 'g' },
+        { edge: [6, 7], value: 'h' },
+      ],
+      outlineCurve: { inflate: 12 },
+    },
+  },
+  {
+    title: 'ㄷ자 8각형 polygon (깊은 오목부)',
+    desc: '오목부가 큰 ㄷ자 모양 — 라벨·외곽곡선 외측 배치 검증',
+    spec: {
+      type: 'polygon',
+      vertices: [
+        [0, 0], [200, 0], [200, 200], [140, 200],
+        [140, 60], [60, 60], [60, 200], [0, 200],
+      ],
+      rightAngleMarks: [0, 1, 2, 3, 4, 5, 6, 7],
+      fill: '#FEF3C7',
+      showLengths: [
         { edge: [0, 1], value: 'a' },
-        { edge: [3, 4], value: 'b' },
+        { edge: [1, 2], value: 'b' },
+        { edge: [2, 3], value: 'c' },
+        { edge: [3, 4], value: 'd' },
+        { edge: [4, 5], value: 'e' },
+        { edge: [5, 6], value: 'f' },
+        { edge: [6, 7], value: 'g' },
+        { edge: [7, 0], value: 'h' },
       ],
     },
   },

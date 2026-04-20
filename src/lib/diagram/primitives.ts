@@ -141,16 +141,15 @@ export function polygonCentroid(points: Point[]): Point {
  * 도형 외곽을 따라가는 점선 곡선 (교과서 풍 데코) — quadratic Bezier로 각 변마다 외측 부풀림.
  * vertices: 도형 꼭짓점 (시계/반시계 방향). 닫힌 도형으로 가정.
  * inflate: 외측으로 부풀리는 정도 (px). 음수면 내측.
- * 변별로 분할된 path 문자열을 반환 (실제로는 한 path로 이어 그림).
+ *
+ * 각 변의 외측 방향은 **변 자체의 법선 + point-in-polygon 판별**로 결정.
+ * centroid 기반 폴백보다 오목(concave) 도형에서도 정확하게 외측으로 그려짐.
  */
 export function outlineCurvePath(
   vertices: Point[],
   inflate: number = 12,
 ): string {
   if (vertices.length < 3) return '';
-  // 도형 중심 — 외측 방향 결정에 사용
-  const cx = vertices.reduce((s, v) => s + v[0], 0) / vertices.length;
-  const cy = vertices.reduce((s, v) => s + v[1], 0) / vertices.length;
 
   const segments: string[] = [];
   for (let i = 0; i < vertices.length; i++) {
@@ -159,20 +158,38 @@ export function outlineCurvePath(
     // 변의 중점
     const mx = (a[0] + b[0]) / 2;
     const my = (a[1] + b[1]) / 2;
-    // 중점에서 도형 중심을 향한 단위 벡터의 반대(외측 방향)
-    let dx = mx - cx;
-    let dy = my - cy;
-    const dlen = Math.sqrt(dx * dx + dy * dy) || 1;
-    dx /= dlen;
-    dy /= dlen;
+    // 법선 후보 (단위벡터)
+    const edx = b[0] - a[0];
+    const edy = b[1] - a[1];
+    const elen = Math.sqrt(edx * edx + edy * edy) || 1;
+    const nx = -edy / elen;
+    const ny = edx / elen;
+    // probe로 내/외 판별 (1px)
+    const probeInside = pointInPolygonLocal([mx + nx, my + ny], vertices);
+    const outX = probeInside ? -nx : nx;
+    const outY = probeInside ? -ny : ny;
     // 컨트롤 포인트: 외측으로 inflate만큼
-    const cpx = mx + dx * inflate;
-    const cpy = my + dy * inflate;
+    const cpx = mx + outX * inflate;
+    const cpy = my + outY * inflate;
     if (i === 0) segments.push(`M ${a[0]} ${a[1]}`);
     segments.push(`Q ${cpx} ${cpy} ${b[0]} ${b[1]}`);
   }
   segments.push('Z');
   return segments.join(' ');
+}
+
+/** 로컬 point-in-polygon (primitives 내부 전용, utils 순환 참조 방지) */
+function pointInPolygonLocal(p: Point, poly: Point[]): boolean {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const xi = poly[i][0], yi = poly[i][1];
+    const xj = poly[j][0], yj = poly[j][1];
+    const intersects =
+      (yi > p[1]) !== (yj > p[1]) &&
+      p[0] < ((xj - xi) * (p[1] - yi)) / ((yj - yi) || 1e-9) + xi;
+    if (intersects) inside = !inside;
+  }
+  return inside;
 }
 
 /** outlineCurvePath를 점선 path로 그리는 편의 함수 */
