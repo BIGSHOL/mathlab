@@ -27,6 +27,20 @@ export function QuestionPreview() {
   const questionIndex = questions.findIndex((q) => q.id === activeQuestionId);
   const answer = activeQuestionId ? answers.get(activeQuestionId) : undefined;
 
+  // [그림N] 인라인 치환용 SVG — diagramSpec에서 렌더 (Hook은 early return 이전에 호출)
+  const diagramSvgs = useMemo(() => {
+    const spec = (question as { diagramSpec?: Array<{ type: string; params: Record<string, unknown>; label?: string; align?: 'left' | 'center' | 'right'; size?: 'small' | 'medium' | 'large' | 'full' }> } | undefined)?.diagramSpec;
+    if (!spec || !Array.isArray(spec) || spec.length === 0) return undefined;
+    return spec.map((dp) => {
+      try {
+        const svg = renderDiagram({ type: dp.type as DiagramType, params: dp.params }) ?? '';
+        return { svg, label: dp.label || '', align: dp.align, size: dp.size };
+      } catch {
+        return { svg: '', label: dp.label || '', align: dp.align, size: dp.size };
+      }
+    });
+  }, [question]);
+
   if (!question) {
     return (
       <div className="flex items-center justify-center h-full text-slate-400">
@@ -38,20 +52,6 @@ export function QuestionPreview() {
   const choices = question.choices as Array<{ label: string; text: string }> | null;
   const diff = DIFFICULTY_LABELS[question.difficulty];
   const domain = question.domain ? DOMAIN_LABELS[question.domain] : null;
-
-  // [그림N] 인라인 치환용 SVG — diagramSpec에서 렌더
-  const diagramSvgs = useMemo(() => {
-    const spec = (question as { diagramSpec?: Array<{ type: string; params: Record<string, unknown>; label?: string; align?: 'left' | 'center' | 'right'; size?: 'small' | 'medium' | 'large' | 'full' }> }).diagramSpec;
-    if (!spec || !Array.isArray(spec) || spec.length === 0) return undefined;
-    return spec.map((dp) => {
-      try {
-        const svg = renderDiagram({ type: dp.type as DiagramType, params: dp.params }) ?? '';
-        return { svg, label: dp.label || '', align: dp.align, size: dp.size };
-      } catch {
-        return { svg: '', label: dp.label || '', align: dp.align, size: dp.size };
-      }
-    });
-  }, [question]);
 
   return (
     <div className="h-full overflow-y-auto p-4 space-y-4">
