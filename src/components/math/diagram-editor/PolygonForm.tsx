@@ -17,7 +17,7 @@
 import React from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import type { SubFormProps, Point2DInput } from './types';
-import { PointListEditor, NumInput, ShapeStyleFields } from './SharedControls';
+import { PointListEditor, NumInput, ShapeStyleFields, ColorPickerInput } from './SharedControls';
 
 const POLYGON_PRESETS: { name: string; params: Record<string, unknown> }[] = [
   {
@@ -198,23 +198,37 @@ export function PolygonForm({ params, onChange }: SubFormProps) {
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label className="text-xs text-slate-500">채움 색 (비우면 투명)</label>
-          <input
-            type="text"
-            value={String(params.fill ?? '')}
-            onChange={(e) => onChange({ fill: e.target.value || undefined })}
-            className="block w-full text-sm px-2 py-1 border border-slate-300 rounded"
-            placeholder="#A7F3D0"
-          />
+          <div className="flex gap-1 items-center">
+            <input
+              type="text"
+              value={String(params.fill ?? '')}
+              onChange={(e) => onChange({ fill: e.target.value || undefined })}
+              className="flex-1 text-sm px-2 py-1 border border-slate-300 rounded"
+              placeholder="#A7F3D0"
+            />
+            <ColorPickerInput
+              value={typeof params.fill === 'string' ? params.fill : undefined}
+              onChange={(v) => onChange({ fill: v })}
+              title="커스텀 채움 색상"
+            />
+          </div>
         </div>
         <div>
           <label className="text-xs text-slate-500">선 색상 (비우면 기본)</label>
-          <input
-            type="text"
-            value={String(params.strokeColor ?? '')}
-            onChange={(e) => onChange({ strokeColor: e.target.value || undefined })}
-            className="block w-full text-sm px-2 py-1 border border-slate-300 rounded"
-            placeholder="#3B82F6"
-          />
+          <div className="flex gap-1 items-center">
+            <input
+              type="text"
+              value={String(params.strokeColor ?? '')}
+              onChange={(e) => onChange({ strokeColor: e.target.value || undefined })}
+              className="flex-1 text-sm px-2 py-1 border border-slate-300 rounded"
+              placeholder="#3B82F6"
+            />
+            <ColorPickerInput
+              value={typeof params.strokeColor === 'string' ? params.strokeColor : undefined}
+              onChange={(v) => onChange({ strokeColor: v })}
+              title="커스텀 선 색상"
+            />
+          </div>
         </div>
       </div>
 
@@ -526,6 +540,15 @@ export function PolygonForm({ params, onChange }: SubFormProps) {
               className="w-20 text-xs px-1 py-0.5 border border-slate-300 rounded"
               placeholder="#..."
               title="fill"
+            />
+            <ColorPickerInput
+              value={r.fill}
+              onChange={(v) => {
+                const arr = [...regions];
+                arr[i] = { ...r, fill: v ?? '' };
+                onChange({ regions: arr });
+              }}
+              title="영역 색상 선택"
             />
             <input
               type="text"
