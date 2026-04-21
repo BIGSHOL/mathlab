@@ -17,7 +17,7 @@
 import React from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import type { SubFormProps, Point2DInput } from './types';
-import { PointListEditor, NumInput } from './SharedControls';
+import { PointListEditor, NumInput, ShapeStyleFields } from './SharedControls';
 
 const POLYGON_PRESETS: { name: string; params: Record<string, unknown> }[] = [
   {
@@ -193,16 +193,30 @@ export function PolygonForm({ params, onChange }: SubFormProps) {
         />
       </div>
 
-      <div>
-        <label className="text-xs text-slate-500">채움 색 (비우면 투명)</label>
-        <input
-          type="text"
-          value={String(params.fill ?? '')}
-          onChange={(e) => onChange({ fill: e.target.value || undefined })}
-          className="block w-full text-sm px-2 py-1 border border-slate-300 rounded"
-          placeholder="#A7F3D0"
-        />
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="text-xs text-slate-500">채움 색 (비우면 투명)</label>
+          <input
+            type="text"
+            value={String(params.fill ?? '')}
+            onChange={(e) => onChange({ fill: e.target.value || undefined })}
+            className="block w-full text-sm px-2 py-1 border border-slate-300 rounded"
+            placeholder="#A7F3D0"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-slate-500">선 색상 (비우면 기본)</label>
+          <input
+            type="text"
+            value={String(params.strokeColor ?? '')}
+            onChange={(e) => onChange({ strokeColor: e.target.value || undefined })}
+            className="block w-full text-sm px-2 py-1 border border-slate-300 rounded"
+            placeholder="#3B82F6"
+          />
+        </div>
       </div>
+
+      <ShapeStyleFields params={params} onChange={onChange} />
 
       {/* 변 라벨 */}
       <div>

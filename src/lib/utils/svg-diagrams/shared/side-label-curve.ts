@@ -96,8 +96,8 @@ export function renderSideLabel(
   if (curve) {
     const opts = typeof curve === 'object' ? curve : {};
     const baseInflate = opts.inflate ?? 12;
-    // 호는 교과서 측정 표기이므로 본선(MAIN_STROKE)과 동일 블루로 그리되 점선 처리
-    const color = opts.color ?? TEXTBOOK_STYLE.MAIN_STROKE;
+    // 호(측정 표기용 곡선)는 본선 색과 구분되도록 항상 검정으로 고정 — 색상 override 무시
+    const color = '#000000';
     const dashArray = opts.dashArray ?? '5,3';
     const strokeWidth = 1.4;
 

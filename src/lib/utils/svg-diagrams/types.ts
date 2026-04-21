@@ -410,7 +410,7 @@ export interface ScatterPlotParams {
 }
 
 // ─── 임의 N각형 (계단형, L자, T자, ㄷ자, 집 모양 등) ───
-export interface PolygonParams {
+export interface PolygonParams extends ShapeStyle {
   /** 꼭짓점 좌표 배열 (3개 이상) */
   vertices: Point2D[];
   /** 꼭짓점 이름 (기본 표시 안 함) */

@@ -195,8 +195,9 @@ export function renderPolygon(params: PolygonParams): string {
     parts.push(svgPolygon(vertices, { fill: params.fill, stroke: 'none' }));
   }
 
-  // 도형 본체 (테두리만)
-  parts.push(svgPolygon(vertices, { fill: 'none', stroke: TEXTBOOK_STYLE.MAIN_STROKE, strokeWidth: TEXTBOOK_STYLE.MAIN_STROKE_WIDTH }));
+  // 도형 본체 (테두리만) — params.strokeColor로 override 가능
+  const bodyStroke = params.strokeColor || TEXTBOOK_STYLE.MAIN_STROKE;
+  parts.push(svgPolygon(vertices, { fill: 'none', stroke: bodyStroke, strokeWidth: TEXTBOOK_STYLE.MAIN_STROKE_WIDTH }));
 
   // 분할선 (보조선)
   if (params.splitLines) {

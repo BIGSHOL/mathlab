@@ -194,6 +194,23 @@ export function QuestionViewEditModal({
 
 // --- View Mode sub-component ---
 function ViewMode({ selectedQuestion, concepts, onExplanationSaved }: { selectedQuestion: QuestionItem; concepts: ConceptOption[]; onExplanationSaved?: (explanation: string, answer?: string) => void }) {
+  // [그림N] 인라인 치환용 SVG 목록 — diagramSpec에서 렌더
+  const viewDiagramSvgs = React.useMemo(() => {
+    const spec = selectedQuestion.diagramSpec;
+    if (!spec || spec.length === 0) return undefined;
+    return spec.map((dp) => {
+      try {
+        const svg = renderDiagram(dp as unknown as { type: DiagramType; params: Record<string, unknown> }) ?? '';
+        return { svg, label: dp.label || '', align: dp.align, size: dp.size };
+      } catch {
+        return { svg: '', label: dp.label || '', align: dp.align, size: dp.size };
+      }
+    });
+  }, [selectedQuestion.diagramSpec]);
+
+  // content에 [그림N] 마커가 하나라도 있으면 인라인 치환되므로, 아래 별도 렌더링 블록은 생략
+  const contentHasDiagramMarker = /\[그림\d+\]/.test(selectedQuestion.content ?? '');
+
   return (
     <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-3 min-h-0">
       {/* Badges — 교재/난이도/유형 → 단원 → 영역 → 개념 */}
@@ -242,13 +259,13 @@ function ViewMode({ selectedQuestion, concepts, onExplanationSaved }: { selected
         </div>
       )}
 
-      {/* Content */}
+      {/* Content — [그림N] 마커가 있으면 diagramSvgs로 인라인 치환됨 */}
       <div className="text-sm">
-        <MathRenderer content={selectedQuestion.content} />
+        <MathRenderer content={selectedQuestion.content} diagramSvgs={viewDiagramSvgs} />
       </div>
 
-      {/* Diagram: diagramSpec(DiagramParam[]) 우선, diagramSVG 폴백 */}
-      {(selectedQuestion.diagramSpec || selectedQuestion.diagramSVG) && (
+      {/* Diagram: content에 [그림N] 마커가 없을 때만 별도 렌더 (폴백) */}
+      {!contentHasDiagramMarker && (selectedQuestion.diagramSpec || selectedQuestion.diagramSVG) && (
         <div className="my-4 flex justify-center">
           <div className="w-full max-w-md">
             {selectedQuestion.diagramSpec && selectedQuestion.diagramSpec.length > 0 ? (
