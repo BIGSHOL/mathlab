@@ -86,6 +86,7 @@ type ShowLength = {
 };
 type SplitLine = { from: number; to: number; style?: string; color?: string };
 type Region = { vertexIndices: number[]; fill?: string; label?: string };
+type Perpendicular = { fromVertex: number; toEdge: [number, number]; label?: string; rightAngle?: boolean; style?: string };
 
 /**
  * 쉼표 구분 정수 배열 입력 — trailing comma / 공백을 허용하여 타이핑 도중 쉼표가 삭제되는 현상 방지
@@ -145,6 +146,7 @@ export function PolygonForm({ params, onChange }: SubFormProps) {
   const showLengths = Array.isArray(params.showLengths) ? (params.showLengths as ShowLength[]) : [];
   const splitLines = Array.isArray(params.splitLines) ? (params.splitLines as SplitLine[]) : [];
   const regions = Array.isArray(params.regions) ? (params.regions as Region[]) : [];
+  const perpendiculars = Array.isArray(params.perpendiculars) ? (params.perpendiculars as Perpendicular[]) : [];
 
   const applyPreset = (p: typeof POLYGON_PRESETS[number]) => {
     // 프리셋 적용 시 vertices + rightAngleMarks + fill만 바꾸고 나머지 필드는 초기화
@@ -364,6 +366,126 @@ export function PolygonForm({ params, onChange }: SubFormProps) {
               <Trash2 className="w-3 h-3" />
             </button>
           </div>
+          );
+        })}
+      </div>
+
+      {/* 수선 (꼭짓점 → 변 위 직각선) */}
+      <div>
+        <div className="flex items-center justify-between">
+          <label
+            className="text-xs text-slate-500"
+            title="꼭짓점에서 지정한 변까지 직각으로 내리는 선. 삼각형 높이 등에 사용"
+          >
+            수선 ({perpendiculars.length}개)
+          </label>
+          <button
+            type="button"
+            className="text-xs text-primary hover:text-primary/70"
+            onClick={() =>
+              onChange({
+                perpendiculars: [
+                  ...perpendiculars,
+                  { fromVertex: 0, toEdge: [1, 2], label: '', rightAngle: true, style: 'solid' },
+                ],
+              })
+            }
+          >
+            <Plus className="w-3 h-3 inline" /> 추가
+          </button>
+        </div>
+        {perpendiculars.map((p, i) => {
+          const maxIdx = Math.max(0, vertices.length - 1);
+          return (
+            <div key={i} className="flex gap-1 mt-1 items-center">
+              <NumInput
+                min={0}
+                max={maxIdx}
+                value={p.fromVertex}
+                onChange={(v) => {
+                  const arr = [...perpendiculars];
+                  arr[i] = { ...p, fromVertex: v };
+                  onChange({ perpendiculars: arr });
+                }}
+                className="w-10 text-xs px-1 py-0.5 border border-slate-300 rounded"
+                title={`출발 꼭짓점 (0~${maxIdx})`}
+              />
+              <span className="text-xs">⊥</span>
+              <NumInput
+                min={0}
+                max={maxIdx}
+                value={p.toEdge[0]}
+                onChange={(v) => {
+                  const arr = [...perpendiculars];
+                  arr[i] = { ...p, toEdge: [v, p.toEdge[1]] };
+                  onChange({ perpendiculars: arr });
+                }}
+                className="w-10 text-xs px-1 py-0.5 border border-slate-300 rounded"
+                title={`변의 한쪽 끝 (0~${maxIdx})`}
+              />
+              <span className="text-xs">-</span>
+              <NumInput
+                min={0}
+                max={maxIdx}
+                value={p.toEdge[1]}
+                onChange={(v) => {
+                  const arr = [...perpendiculars];
+                  arr[i] = { ...p, toEdge: [p.toEdge[0], v] };
+                  onChange({ perpendiculars: arr });
+                }}
+                className="w-10 text-xs px-1 py-0.5 border border-slate-300 rounded"
+                title={`변의 반대쪽 끝 (0~${maxIdx})`}
+              />
+              <input
+                type="text"
+                value={p.label || ''}
+                onChange={(e) => {
+                  const arr = [...perpendiculars];
+                  arr[i] = { ...p, label: e.target.value };
+                  onChange({ perpendiculars: arr });
+                }}
+                className="flex-1 text-xs px-1.5 py-0.5 border border-slate-300 rounded"
+                placeholder="길이 라벨 (예: 2, h)"
+                title="수선 옆에 표시할 길이/문자"
+              />
+              <select
+                value={p.style || 'solid'}
+                onChange={(e) => {
+                  const arr = [...perpendiculars];
+                  arr[i] = { ...p, style: e.target.value };
+                  onChange({ perpendiculars: arr });
+                }}
+                className="text-xs px-1 py-0.5 border border-slate-300 rounded"
+              >
+                <option value="solid">실선</option>
+                <option value="dashed">점선</option>
+              </select>
+              <label
+                className="flex items-center gap-0.5 text-[10px] text-slate-500 whitespace-nowrap cursor-pointer"
+                title="수선의 발에 직각 표시"
+              >
+                <input
+                  type="checkbox"
+                  checked={p.rightAngle !== false}
+                  onChange={(e) => {
+                    const arr = [...perpendiculars];
+                    arr[i] = { ...p, rightAngle: e.target.checked };
+                    onChange({ perpendiculars: arr });
+                  }}
+                  className="w-3 h-3"
+                />
+                ⊥
+              </label>
+              <button
+                type="button"
+                onClick={() =>
+                  onChange({ perpendiculars: perpendiculars.filter((_, j) => j !== i) })
+                }
+                className="text-slate-400 hover:text-red-500"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </div>
           );
         })}
       </div>
