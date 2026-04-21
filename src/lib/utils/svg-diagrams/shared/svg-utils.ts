@@ -26,6 +26,8 @@ export const TEXTBOOK_STYLE = {
   FILL_TINT: '#EFF6FF',
   FILL_OPACITY: 0.35,
   FONT_FAMILY: "'Pretendard', system-ui, sans-serif",
+  // 측정 표기용 점선 호 색상 — 본선(파랑)과 시각적으로 구분하기 위해 검정 고정
+  MEASUREMENT_ARC_COLOR: '#000000',
 } as const;
 
 export function svgWrap(

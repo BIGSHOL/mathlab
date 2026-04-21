@@ -97,7 +97,7 @@ export function renderSideLabel(
     const opts = typeof curve === 'object' ? curve : {};
     const baseInflate = opts.inflate ?? 12;
     // 호(측정 표기용 곡선)는 본선 색과 구분되도록 항상 검정으로 고정 — 색상 override 무시
-    const color = '#000000';
+    const color = TEXTBOOK_STYLE.MEASUREMENT_ARC_COLOR;
     const dashArray = opts.dashArray ?? '5,3';
     const strokeWidth = 1.4;
 
