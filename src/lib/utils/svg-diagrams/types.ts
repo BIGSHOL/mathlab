@@ -447,6 +447,22 @@ export interface PolygonParams extends ShapeStyle {
     color?: string;
     dashArray?: string;
   };
+  /** 수선 (꼭짓점 → 변 위로 직각으로 내리는 선)
+   *  삼각형 높이 / 사각형 내부 보조선 등에 사용. */
+  perpendiculars?: Array<{
+    /** 수선을 내리는 출발 꼭짓점 인덱스 */
+    fromVertex: number;
+    /** 수선이 닿을 변 (변의 양 끝 꼭짓점 인덱스) */
+    toEdge: [number, number];
+    /** 수선 길이 라벨 (예: "2", "h", "$\\frac{a}{2}$") */
+    label?: string;
+    /** 수선의 발에 직각 표시 (기본 true) */
+    rightAngle?: boolean;
+    /** 선 스타일 (기본 solid) */
+    style?: 'solid' | 'dashed';
+    /** 선 색상 (기본 MAIN_STROKE) */
+    color?: string;
+  }>;
   /** 임의 라벨 (정밀 좌표) */
   labels?: { position: Point2D; text: string; fontSize?: number }[];
 }

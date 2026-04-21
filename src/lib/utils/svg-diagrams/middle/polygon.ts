@@ -171,6 +171,15 @@ export function renderPolygon(params: PolygonParams): string {
 
   const parts: string[] = [];
 
+  // 빗금 패턴 정의 (hatching=true이면 fill에 사용)
+  const hatchId = `poly-hatch-${Math.random().toString(36).slice(2, 8)}`;
+  if (params.hatching) {
+    const hatchStroke = params.strokeColor || TEXTBOOK_STYLE.MAIN_STROKE;
+    parts.push(
+      `<defs><pattern id="${hatchId}" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="${hatchStroke}" stroke-width="1.2" stroke-opacity="0.6"/></pattern></defs>`,
+    );
+  }
+
   // 외곽 점선 곡선 (도형 뒤)
   if (params.outlineCurve) {
     const d = outlineCurvePath(vertices, params.outlineCurve.inflate ?? 14);
@@ -191,8 +200,18 @@ export function renderPolygon(params: PolygonParams): string {
         parts.push(svgPolygon(regVerts, { fill: region.fill, stroke: 'none' }));
       }
     }
-  } else if (params.fill) {
-    parts.push(svgPolygon(vertices, { fill: params.fill, stroke: 'none' }));
+    // regions 위에 빗금 오버레이 (전체 다각형에 걸쳐서)
+    if (params.hatching) {
+      parts.push(svgPolygon(vertices, { fill: `url(#${hatchId})`, stroke: 'none' }));
+    }
+  } else if (params.fill || params.hatching) {
+    // 색채움 먼저, 그 위에 빗금 오버레이
+    if (params.fill) {
+      parts.push(svgPolygon(vertices, { fill: params.fill, stroke: 'none' }));
+    }
+    if (params.hatching) {
+      parts.push(svgPolygon(vertices, { fill: `url(#${hatchId})`, stroke: 'none' }));
+    }
   }
 
   // 도형 본체 (테두리만) — params.strokeColor로 override 가능
@@ -208,6 +227,66 @@ export function renderPolygon(params: PolygonParams): string {
       const dash = sl.style === 'dashed' ? ' stroke-dasharray="5,4"' : '';
       const stroke = sl.color ?? TEXTBOOK_STYLE.MAIN_STROKE;
       parts.push(`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${stroke}" stroke-width="1.2"${dash}/>`);
+    }
+  }
+
+  // 수선 (꼭짓점 → 변 위 직각으로 내리는 선)
+  if (params.perpendiculars) {
+    for (const perp of params.perpendiculars) {
+      if (perp.fromVertex < 0 || perp.fromVertex >= vertices.length) continue;
+      if (perp.toEdge[0] < 0 || perp.toEdge[0] >= vertices.length) continue;
+      if (perp.toEdge[1] < 0 || perp.toEdge[1] >= vertices.length) continue;
+      const P = vertices[perp.fromVertex];
+      const A = vertices[perp.toEdge[0]];
+      const B = vertices[perp.toEdge[1]];
+      // 선분 AB 위 수선의 발 F 계산
+      const abx = B[0] - A[0];
+      const aby = B[1] - A[1];
+      const abLen2 = abx * abx + aby * aby;
+      if (abLen2 < 1e-6) continue; // 0길이 변은 스킵
+      const t = ((P[0] - A[0]) * abx + (P[1] - A[1]) * aby) / abLen2;
+      const Fx = A[0] + t * abx;
+      const Fy = A[1] + t * aby;
+      const dash = perp.style === 'dashed' ? ' stroke-dasharray="5,4"' : '';
+      const stroke = perp.color ?? TEXTBOOK_STYLE.MAIN_STROKE;
+      // 수선
+      parts.push(`<line x1="${P[0]}" y1="${P[1]}" x2="${Fx}" y2="${Fy}" stroke="${stroke}" stroke-width="1.2"${dash}/>`);
+      // 직각 표시 (기본 true)
+      if (perp.rightAngle !== false) {
+        const pfx = P[0] - Fx;
+        const pfy = P[1] - Fy;
+        const pfLen = Math.sqrt(pfx * pfx + pfy * pfy);
+        if (pfLen > 1e-6) {
+          const abLen = Math.sqrt(abLen2);
+          const s = 8; // 직각 마크 크기
+          // 단위 벡터: F→P 방향, 변 AB 방향 (F에서 P쪽으로 붙도록 부호 조정)
+          const nx = pfx / pfLen;
+          const ny = pfy / pfLen;
+          // 변 방향: F에서 A쪽으로 갈지 B쪽으로 갈지는 t<0.5이면 B쪽, 아니면 A쪽으로 (도형 내부로)
+          const sign = t < 0.5 ? 1 : -1;
+          const ex = (abx / abLen) * sign;
+          const ey = (aby / abLen) * sign;
+          const p1x = Fx + ex * s;
+          const p1y = Fy + ey * s;
+          const p2x = Fx + ex * s + nx * s;
+          const p2y = Fy + ey * s + ny * s;
+          const p3x = Fx + nx * s;
+          const p3y = Fy + ny * s;
+          parts.push(
+            `<path d="M ${p1x} ${p1y} L ${p2x} ${p2y} L ${p3x} ${p3y}" fill="none" stroke="${stroke}" stroke-width="1.2"/>`,
+          );
+        }
+      }
+      // 라벨 (수선 중점 옆)
+      if (perp.label) {
+        const mx = (P[0] + Fx) / 2;
+        const my = (P[1] + Fy) / 2;
+        // 수선 방향의 수직(변 방향) 쪽으로 10px 떨어뜨려 배치
+        const abLen = Math.sqrt(abLen2);
+        const offX = (abx / abLen) * 10;
+        const offY = (aby / abLen) * 10;
+        parts.push(renderLengthLabel(mx + offX, my + offY, perp.label, 13));
+      }
     }
   }
 
