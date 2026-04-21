@@ -19,6 +19,8 @@ import { Button } from '@/components/ui/Button';
 import { Pagination } from '@/components/ui/Pagination';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { DiagramRenderer } from '@/components/math/DiagramRenderer';
+import { renderDiagram } from '@/lib/utils/svg-diagrams';
+import type { DiagramType } from '@/lib/utils/svg-diagrams/types';
 import { DIFFICULTY_LABELS, TYPE_LABELS, BOOK_LABELS } from '@/types';
 import { QUESTION_DOMAIN_LABELS, QUESTION_DOMAIN_COLORS, ABILITY_DOMAIN_LABELS, ABILITY_DOMAIN_COLORS } from './question-types';
 import {
@@ -231,10 +233,24 @@ export function QuestionListMain({
                     </div>
                   </div>
 
-                  {!explanationOnly && (
+                  {!explanationOnly && (() => {
+                    // [그림N] 인라인 치환용 SVG 미리계산 (diagramSpec이 배열일 때만)
+                    const inlineDiagramSvgs = Array.isArray(q.diagramSpec) && q.diagramSpec.length > 0
+                      ? q.diagramSpec.map((dp) => {
+                          try {
+                            const svg = renderDiagram({ type: dp.type as DiagramType, params: dp.params as Record<string, unknown> }) ?? '';
+                            return { svg, label: dp.label || '', align: dp.align, size: dp.size };
+                          } catch {
+                            return { svg: '', label: dp.label || '', align: dp.align, size: dp.size };
+                          }
+                        })
+                      : undefined;
+                    // content에 [그림N] 마커가 하나라도 있으면 인라인 치환되므로 아래 별도 렌더는 생략
+                    const contentHasMarker = /\[그림\d+\]/.test(q.content ?? '');
+                    return (
                     <div className="text-sm font-medium text-text-primary">
-                      <MathRenderer content={q.content} />
-                      {(q.diagramSpec || q.diagramSVG) && (
+                      <MathRenderer content={q.content} diagramSvgs={inlineDiagramSvgs} />
+                      {!contentHasMarker && (q.diagramSpec || q.diagramSVG) && (
                         <div className="my-2 flex justify-center">
                           {q.diagramSpec && (Array.isArray(q.diagramSpec) ? q.diagramSpec.length > 0 : true) ? (
                             <DiagramRenderer
@@ -266,7 +282,8 @@ export function QuestionListMain({
                         );
                       })()}
                     </div>
-                  )}
+                    );
+                  })()}
 
                   <div className="mt-auto pt-2.5 border-t border-slate-200 flex items-center justify-between gap-2">
                     <div className="text-xs text-text-secondary flex items-center gap-1 min-w-0 flex-1">
