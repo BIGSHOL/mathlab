@@ -1,6 +1,9 @@
 'use client';
 
+import { useMemo } from 'react';
 import { MathRenderer } from '@/components/math/MathRenderer';
+import { renderDiagram } from '@/lib/utils/svg-diagrams';
+import type { DiagramType } from '@/lib/utils/svg-diagrams/types';
 import { useManualGradingStore } from '@/stores/manualGradingStore';
 
 const DIFFICULTY_LABELS: Record<string, { label: string; color: string }> = {
@@ -36,6 +39,20 @@ export function QuestionPreview() {
   const diff = DIFFICULTY_LABELS[question.difficulty];
   const domain = question.domain ? DOMAIN_LABELS[question.domain] : null;
 
+  // [그림N] 인라인 치환용 SVG — diagramSpec에서 렌더
+  const diagramSvgs = useMemo(() => {
+    const spec = (question as { diagramSpec?: Array<{ type: string; params: Record<string, unknown>; label?: string; align?: 'left' | 'center' | 'right'; size?: 'small' | 'medium' | 'large' | 'full' }> }).diagramSpec;
+    if (!spec || !Array.isArray(spec) || spec.length === 0) return undefined;
+    return spec.map((dp) => {
+      try {
+        const svg = renderDiagram({ type: dp.type as DiagramType, params: dp.params }) ?? '';
+        return { svg, label: dp.label || '', align: dp.align, size: dp.size };
+      } catch {
+        return { svg: '', label: dp.label || '', align: dp.align, size: dp.size };
+      }
+    });
+  }, [question]);
+
   return (
     <div className="h-full overflow-y-auto p-4 space-y-4">
       {/* 헤더 */}
@@ -56,9 +73,9 @@ export function QuestionPreview() {
         )}
       </div>
 
-      {/* 문제 내용 */}
+      {/* 문제 내용 — [그림N] 마커는 diagramSvgs로 인라인 치환됨 */}
       <div className="text-sm text-text-primary leading-relaxed">
-        <MathRenderer content={question.content} />
+        <MathRenderer content={question.content} diagramSvgs={diagramSvgs} />
       </div>
 
       {/* 보기 (객관식) */}

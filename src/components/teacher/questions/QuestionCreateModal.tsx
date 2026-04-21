@@ -60,6 +60,20 @@ export function QuestionCreateModal({
   editDiagram,
   removeDiagram,
 }: QuestionCreateModalProps) {
+  // [그림N] 인라인 치환용 SVG — createForm.diagramParams에서 렌더
+  const previewDiagramSvgs = React.useMemo(() => {
+    const params = createForm.diagramParams;
+    if (!params || params.length === 0) return undefined;
+    return params.map((dp) => {
+      try {
+        const svg = renderDiagram({ type: dp.type as DiagramType, params: dp.params as Record<string, unknown> }) ?? '';
+        return { svg, label: dp.label || '', align: dp.align, size: dp.size };
+      } catch {
+        return { svg: '', label: dp.label || '', align: dp.align, size: dp.size };
+      }
+    });
+  }, [createForm.diagramParams]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-2.5" onClick={closeCreateModal}>
       <div
@@ -276,7 +290,7 @@ export function QuestionCreateModal({
 
             <div className="text-sm">
               {createForm.content ? (
-                <MathRenderer content={createForm.content} />
+                <MathRenderer content={createForm.content} diagramSvgs={previewDiagramSvgs} />
               ) : (
                 <p className="text-slate-400 italic text-sm">문제 내용을 입력하면 미리보기가 표시됩니다</p>
               )}
