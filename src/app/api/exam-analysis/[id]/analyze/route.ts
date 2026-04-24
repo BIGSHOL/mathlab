@@ -80,14 +80,38 @@ export async function POST(request: NextRequest, { params }: Params) {
     // ── Step 2: 분류 + 프롬프트 구성 ──
     await setStep(id, 2);
 
+    // examPaper.examScope JSON에 저장된 메타(연도/학기/종류) 추출
+    const scopeRaw = examPaper.examScope as unknown;
+    let examScopeArr: string[] | null = null;
+    let examYear: number | null = null;
+    let examSemester: number | null = null;
+    let examCategory: 'MIDTERM' | 'FINAL' | 'MOCK' | 'OTHER' | null = null;
+    if (Array.isArray(scopeRaw)) {
+      examScopeArr = scopeRaw as string[];
+    } else if (scopeRaw && typeof scopeRaw === 'object') {
+      const obj = scopeRaw as Record<string, unknown>;
+      if (Array.isArray(obj.topics)) examScopeArr = obj.topics as string[];
+      if (typeof obj.examYear === 'number') examYear = obj.examYear;
+      if (typeof obj.examSemester === 'number') examSemester = obj.examSemester;
+      if (typeof obj.examCategory === 'string') {
+        const cat = obj.examCategory.toUpperCase();
+        if (cat === 'MIDTERM' || cat === 'FINAL' || cat === 'MOCK' || cat === 'OTHER') {
+          examCategory = cat;
+        }
+      }
+    }
+
     const context: ExamContext = {
       subject: examPaper.subject === 'MATH' ? '수학' : '영어',
       grade_level: examPaper.grade,
       unit: examPaper.unit,
       category: examPaper.category,
-      exam_scope: examPaper.examScope as string[] | null,
+      exam_scope: examScopeArr,
       paper_type: examPaper.examType,
       has_essay: true,
+      exam_year: examYear,
+      exam_semester: examSemester,
+      exam_category: examCategory,
     };
 
     const promptResult = await ExamPromptBuilder.buildWithDbContext(context);

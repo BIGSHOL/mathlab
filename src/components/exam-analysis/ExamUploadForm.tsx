@@ -66,6 +66,9 @@ interface ParsedMetadata {
   grade: string;
   subject: 'MATH' | 'ENGLISH';
   category: string;
+  examYear?: string;     // 예: "2024"
+  examSemester?: string; // "1" | "2"
+  examCategory?: string; // "MIDTERM" | "FINAL" | "MOCK"
 }
 
 function parseFilename(filename: string): ParsedMetadata | null {
@@ -115,12 +118,19 @@ function parseFilename(filename: string): ParsedMetadata | null {
 
     // 시험 정보
     let examInfo = parts[3] || parts[2] || '';
+    let examYear: string | undefined;
+    let examSemester: string | undefined;
+    let examCategory: string | undefined;
     const examMatch = examInfo.match(/(\d{2})[-\s]*(\d)[-\s]*(중간|기말|모의)/);
     if (examMatch) {
       const year = `20${examMatch[1]}`;
       const semester = examMatch[2];
       const typeMap: Record<string, string> = { 중간: '중간고사', 기말: '기말고사', 모의: '모의고사' };
+      const enumMap: Record<string, string> = { 중간: 'MIDTERM', 기말: 'FINAL', 모의: 'MOCK' };
       examInfo = `${year}년 ${semester}학기 ${typeMap[examMatch[3]]}`;
+      examYear = year;
+      examSemester = semester;
+      examCategory = enumMap[examMatch[3]];
     }
 
     return {
@@ -129,6 +139,9 @@ function parseFilename(filename: string): ParsedMetadata | null {
       grade,
       subject,
       category,
+      examYear,
+      examSemester,
+      examCategory,
     };
   }
 
@@ -174,6 +187,9 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
   const [category, setCategory] = useState('');
   const examType = 'blank'; // 시험지 유형 고정 (학생 답안지 분석은 SA 토글로 제어)
   const [schoolName, setSchoolName] = useState('');
+  const [examYear, setExamYear] = useState('');        // "2024"
+  const [examSemester, setExamSemester] = useState(''); // "1" | "2"
+  const [examCategory, setExamCategory] = useState(''); // MIDTERM | FINAL | MOCK | OTHER
   const [examScope, setExamScope] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -191,6 +207,9 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
     if (parsed.grade) setGrade(parsed.grade);
     if (parsed.subject) setSubject(parsed.subject);
     if (parsed.category) setCategory(parsed.category);
+    if (parsed.examYear) setExamYear(parsed.examYear);
+    if (parsed.examSemester) setExamSemester(parsed.examSemester);
+    if (parsed.examCategory) setExamCategory(parsed.examCategory);
     setAutoFilled(true);
   }, [title]);
 
@@ -264,6 +283,10 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
         examType,
         schoolName: schoolName.trim() || null,
         examScope: examScope.length > 0 ? examScope : null,
+        // 파일명에서 추출 불가한 필드 — 선생님이 직접 입력
+        examYear: examYear ? Number(examYear) : null,
+        examSemester: examSemester ? Number(examSemester) : null,
+        examCategory: examCategory || null,
       }));
 
       const res = await fetch('/api/exam-analysis', { method: 'POST', body: formData });
@@ -399,6 +422,54 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
             placeholder="선택 사항"
             className="w-full px-3 py-2 border rounded-sm text-sm"
           />
+        </div>
+
+        {/* 파일명에서 추출 불가한 필드 — 필요시 직접 입력 */}
+        <div className="col-span-2 pt-2 border-t border-slate-100">
+          <p className="text-xs text-slate-500 mb-2">
+            시험 정보 (파일명에 없으면 직접 선택)
+          </p>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">연도</label>
+              <select
+                value={examYear}
+                onChange={e => setExamYear(e.target.value)}
+                className="w-full px-2 py-2 border rounded-sm text-sm"
+              >
+                <option value="">선택</option>
+                {Array.from({ length: 7 }, (_, i) => new Date().getFullYear() - i).map(y => (
+                  <option key={y} value={String(y)}>{y}년</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">학기</label>
+              <select
+                value={examSemester}
+                onChange={e => setExamSemester(e.target.value)}
+                className="w-full px-2 py-2 border rounded-sm text-sm"
+              >
+                <option value="">선택</option>
+                <option value="1">1학기</option>
+                <option value="2">2학기</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">시험 종류</label>
+              <select
+                value={examCategory}
+                onChange={e => setExamCategory(e.target.value)}
+                className="w-full px-2 py-2 border rounded-sm text-sm"
+              >
+                <option value="">선택</option>
+                <option value="MIDTERM">중간고사</option>
+                <option value="FINAL">기말고사</option>
+                <option value="MOCK">모의고사</option>
+                <option value="OTHER">기타</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 

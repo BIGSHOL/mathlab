@@ -313,6 +313,29 @@ function getOverallDifficultyLevel(summary: AnalysisSummary | null): number {
   return Math.round(weightedAvg); // 1~5
 }
 
+// 난이도 근거 (툴팁용) — 단계별 문항 수 + 가중평균 계산 공식
+function getDifficultyBreakdown(summary: AnalysisSummary | null): {
+  counts: number[]; total: number; weightedAvg: number;
+} | null {
+  if (!summary?.difficulty_distribution) return null;
+  const d = summary.difficulty_distribution;
+  const counts = [
+    (d['1'] || d.concept || 0),
+    (d['2'] || d.pattern || 0),
+    (d['3'] || 0),
+    (d['4'] || d.reasoning || 0),
+    (d['5'] || d.creative || 0),
+  ];
+  const total = counts.reduce((s, c) => s + c, 0);
+  if (!total) return null;
+  const weightedAvg = counts.reduce((s, c, i) => s + c * (i + 1), 0) / total;
+  return { counts, total, weightedAvg };
+}
+
+const DIFF_LEVEL_LABELS: Record<number, string> = {
+  1: '기본', 2: '표준', 3: '응용', 4: '심화', 5: '최고난도',
+};
+
 // ── 분석 결과 상세 뷰 ──
 type AnalysisTab = 'basic' | 'comments' | 'strategy';
 
@@ -461,17 +484,42 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
             {/* 종합 난이도 카드 */}
             {detail.status === 'COMPLETED' && diffLevel > 0 && (() => {
               const activeColor = DIFF_BAR_COLORS[diffLevel - 1];
+              const breakdown = getDifficultyBreakdown(summary);
+              const tooltipTitle = breakdown
+                ? [
+                    `종합 난이도 Level ${diffLevel} (${DIFF_LEVEL_LABELS[diffLevel] ?? ''}) — 가중평균 ${breakdown.weightedAvg.toFixed(2)}/5`,
+                    '',
+                    '▶ 단계별 문항 수',
+                    ...breakdown.counts.map((c, i) =>
+                      `  ${i + 1}(${DIFF_LEVEL_LABELS[i + 1]}): ${c}문항${c > 0 ? ` (${Math.round(c / breakdown.total * 100)}%)` : ''}`
+                    ),
+                    '',
+                    `총 ${breakdown.total}문항 × 각 난이도 가중치 → Level ${diffLevel}로 산정`,
+                  ].join('\n')
+                : `Level ${diffLevel}`;
               return (
-                <div className="flex items-center gap-3 px-3 py-2.5 rounded-sm border" style={{ borderColor: `${activeColor}50`, backgroundColor: `${activeColor}0A` }}>
+                <div
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-sm border cursor-help"
+                  style={{ borderColor: `${activeColor}50`, backgroundColor: `${activeColor}0A` }}
+                  title={tooltipTitle}
+                >
                   <div className="flex flex-col items-center gap-1.5">
                     <span className="text-[10px] font-semibold text-slate-500">시험 난이도</span>
                     <div className="flex gap-0.5">
                       {[1, 2, 3, 4, 5].map(level => {
                         const isActive = level === diffLevel;
                         const color = DIFF_BAR_COLORS[level - 1];
+                        const levelCount = breakdown?.counts[level - 1] ?? 0;
+                        const levelPct = breakdown && breakdown.total > 0
+                          ? Math.round(levelCount / breakdown.total * 100)
+                          : 0;
+                        const cellTitle = breakdown
+                          ? `${level}단계 (${DIFF_LEVEL_LABELS[level]}): ${levelCount}문항${levelPct > 0 ? ` · ${levelPct}%` : ''}`
+                          : `${level}단계`;
                         return (
                           <div
                             key={level}
+                            title={cellTitle}
                             className={`w-6 h-6 rounded-sm flex items-center justify-center text-[10px] font-bold transition-all ${
                               isActive ? 'ring-2 ring-offset-1 shadow-sm scale-110' : 'opacity-25'
                             }`}
@@ -489,6 +537,11 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
                   </div>
                   <div className="border-l pl-3" style={{ borderColor: `${activeColor}30` }}>
                     <span className="text-base font-extrabold" style={{ color: activeColor }}>Level {diffLevel}</span>
+                    {breakdown && (
+                      <div className="text-[10px] text-slate-500 font-medium mt-0.5">
+                        평균 {breakdown.weightedAvg.toFixed(1)}/5
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -628,6 +681,8 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
               totalPoints={totalPoints ?? null}
               earnedPoints={latestAnalysis.earnedPoints ?? null}
               examType={detail.examType}
+              examPaperId={detail.id}
+              grade={detail.grade}
             />
           )}
           {activeTab === 'comments' && (

@@ -193,16 +193,26 @@ export class ExamPromptBuilder {
       }
     }
 
-    // 출제범위가 있으면 가이드라인에 강제 추가
+    // 학기/시험종류 기반 기본 제약 (출제범위 미설정 시에도 동작)
+    const periodHint = this.buildPeriodHint(context);
+    if (periodHint) {
+      guidelines.push(periodHint);
+    }
+
+    // 출제범위가 있으면 가이드라인에 강제 추가 (HARD 제약)
     if (context.exam_scope && context.exam_scope.length > 0) {
-      guidelines.push(`🎯 **[필수] 출제범위 제한**
+      guidelines.push(`🎯 **[ABSOLUTE] 출제범위 제한 — 이 규칙은 그림/시각 증거보다 우선합니다**
 
-이 시험의 출제범위는 다음 단원으로 한정되어 있습니다. **아래 단원 목록에 없는 단원으로 분류하지 마세요!**
+이 시험의 출제범위는 다음 단원으로 **완전히 한정**되어 있습니다:
 
-출제범위: ${context.exam_scope.join(', ')}
+**출제범위**: ${context.exam_scope.join(' / ')}
 
-- 위 단원 목록에 포함되지 않는 주제로 분류하면 **confidence를 0.3 이하**로 설정
-- 문제가 출제범위 밖의 개념을 사용하더라도, 핵심 학습 목표가 출제범위 내 단원이면 해당 단원으로 분류`);
+**절대 규칙 (위반 시 분석 무효):**
+1. ❌ **출제범위 밖 단원으로 chapter/section 을 배정하지 말 것.** 그림에 원·삼각형·그래프 등이 보여도, 실제 **풀이 과정에 필요한 개념**이 출제범위에 속하는지로 판단하라.
+2. ❌ 시각적 장식(도형 그림)만으로 단원을 유추하는 것을 금지한다. 문제의 **요구하는 계산/추론/공식**을 기준으로 하라.
+3. ✅ 문제의 풀이가 출제범위의 개념(인수분해·이차방정식·제곱근 등)을 사용한다면 그 단원을 선택하라. 설령 문제에 원이 등장해도 **원의 성질** 단원이 아니다.
+4. ✅ 출제범위 밖으로 분류하고 싶다면 **반드시 \`chapter: "UNKNOWN"\`, \`topic: "UNKNOWN"\`, \`confidence ≤ 0.4\`로 반환**하라. 사용자가 나중에 직접 편집한다. 틀린 단원보다 UNKNOWN이 낫다.
+5. 자기 검증(V 체크): 모든 문항의 chapter 가 출제범위 단원 내에 있는가? 아니면 UNKNOWN으로 교체하라.`);
     }
 
     const combined = this.combinePrompts({
@@ -849,6 +859,108 @@ V8. 추측성 단원명/설명이 없는가? 불확실한 항목은 confidence�
     }
 
     return templates;
+  }
+
+  /**
+   * 학년 + 학기 + 시험종류 조합에서 일반적인 출제 단원 범위를 힌트로 생성.
+   * 출제범위(examScope)가 명시되지 않았을 때도 최소한의 시기적 제약을 걸어
+   * "원과 현"처럼 다른 학기 단원으로 잘못 분류되는 것을 예방한다.
+   */
+  private static buildPeriodHint(context: ExamContext): string | null {
+    const year = context.exam_year;
+    const semester = context.exam_semester;
+    const category = context.exam_category;
+
+    // 학년도 없고 학기/시험종류도 없으면 힌트 없음
+    if (!context.grade_level && !semester && !category) return null;
+
+    const gradeLabel = context.grade_level || '해당 학년';
+    const semesterLabel = semester ? `${semester}학기` : '';
+    const catMap: Record<string, string> = {
+      MIDTERM: '중간고사',
+      FINAL: '기말고사',
+      MOCK: '모의고사',
+      OTHER: '기타 시험',
+    };
+    const catLabel = category ? (catMap[category] ?? category) : '';
+
+    // 중학교 학기별 일반 단원 범위 (22개정 기준 — 출판사 공통)
+    const MIDDLE_PERIOD_HINTS: Record<string, { first_mid?: string; first_final?: string; second_mid?: string; second_final?: string }> = {
+      '중1': {
+        first_mid: '소인수분해, 최대공약수/최소공배수, 정수와 유리수',
+        first_final: '정수와 유리수의 사칙연산, 문자와 식(문자의 사용, 일차식의 계산)',
+        second_mid: '좌표평면과 그래프, 정비례/반비례, 기본도형',
+        second_final: '작도와 합동, 평면도형의 성질, 입체도형',
+      },
+      '중2': {
+        first_mid: '유리수와 순환소수, 단항식/다항식의 계산',
+        first_final: '일차부등식, 연립일차방정식, 일차함수',
+        second_mid: '일차함수와 일차방정식, 도형의 성질(삼각형/사각형)',
+        second_final: '도형의 닮음, 피타고라스 정리, 확률',
+      },
+      '중3': {
+        first_mid: '제곱근과 실수, 다항식의 곱셈/인수분해',
+        first_final: '이차방정식, 이차함수',
+        second_mid: '삼각비',
+        second_final: '원의 성질(원과 현/접선, 원주각), 통계(대푯값/산포도/상관관계)',
+      },
+    };
+
+    const gradeKey = gradeLabel.replace(/\s/g, '').slice(0, 2); // "중3"
+    const periodMap = MIDDLE_PERIOD_HINTS[gradeKey];
+
+    let likelyTopics: string | null = null;
+    let excludedTopics: string | null = null;
+    if (periodMap && semester && category) {
+      const isFinal = category === 'FINAL';
+      if (semester === 1 && !isFinal) {
+        likelyTopics = periodMap.first_mid ?? null;
+        excludedTopics = [periodMap.first_final, periodMap.second_mid, periodMap.second_final].filter(Boolean).join(' / ') || null;
+      } else if (semester === 1 && isFinal) {
+        likelyTopics = [periodMap.first_mid, periodMap.first_final].filter(Boolean).join(' + ') || null;
+        excludedTopics = [periodMap.second_mid, periodMap.second_final].filter(Boolean).join(' / ') || null;
+      } else if (semester === 2 && !isFinal) {
+        likelyTopics = periodMap.second_mid ?? null;
+        excludedTopics = [periodMap.second_final].filter(Boolean).join(' / ') || null;
+      } else if (semester === 2 && isFinal) {
+        likelyTopics = [periodMap.second_mid, periodMap.second_final].filter(Boolean).join(' + ') || null;
+      }
+    }
+
+    // 학년 전체 단원 (학기 정보가 없을 때도 학년 밖은 배제하는 용도)
+    const gradeAllTopics = periodMap
+      ? [periodMap.first_mid, periodMap.first_final, periodMap.second_mid, periodMap.second_final].filter(Boolean).join(' / ')
+      : null;
+
+    const parts: string[] = [];
+    parts.push(`📅 **[ABSOLUTE] 시험 시기/학년 제약 — 그림·시각 증거보다 우선**`);
+    parts.push('');
+    const headerPieces = [year ? `${year}년` : '', gradeLabel, semesterLabel, catLabel].filter(Boolean).join(' ');
+    parts.push(`이 시험은 **${headerPieces || gradeLabel}**입니다.`);
+    if (likelyTopics) {
+      parts.push('');
+      parts.push(`✅ **이 시기의 일반적 출제 단원 (이 범위 내에서만 chapter 선택)**: ${likelyTopics}`);
+    } else if (gradeAllTopics) {
+      parts.push('');
+      parts.push(`✅ **${gradeLabel} 전 학년 단원 (이 밖의 학년 단원 선택 금지)**: ${gradeAllTopics}`);
+    }
+    if (excludedTopics) {
+      parts.push('');
+      parts.push(`❌ **이 시기 이후에 배우는 단원 (절대 분류 금지)**: ${excludedTopics}`);
+      parts.push(`이 단원들은 해당 학기 이후에 다루므로 **그림이 비슷해 보여도 여기로 분류하지 말 것**.`);
+    }
+    parts.push('');
+    parts.push(`🔒 **하드 제약 (위반 시 분석 무효 처리)**:`);
+    parts.push(`1. 모든 문항의 chapter는 반드시 위에 나열된 "출제 단원" 또는 "전 학년 단원" 내에 있어야 한다.`);
+    parts.push(`2. **확신 없으면 추측하지 말고 \`chapter: "UNKNOWN"\`, \`topic: "UNKNOWN"\`, \`confidence ≤ 0.4\`로 반환하라.** 사용자가 나중에 직접 편집한다. 틀린 단원을 배정하는 것보다 UNKNOWN이 **훨씬** 낫다.`);
+    parts.push(`3. 금지 단원(이후 학기)으로 분류하고 싶다면 **반드시 UNKNOWN으로 대체**하고 \`confidence_reason\`에 "시기 외 단원 의심 — 사용자 확인 필요" 명시.`);
+    parts.push(`4. 시각적 장식(원·삼각형·그래프 그림)만으로 단원을 유추하지 말 것. **실제 풀이에 사용되는 공식·개념**으로 판단하라.`);
+    parts.push(`   - 예: 도넛 모양 원 그림이 있어도 풀이가 \`(a+b)(a-b)=a²-b²\` 인수분해라면 단원은 **다항식의 인수분해** (원의 성질 아님).`);
+    parts.push(`   - 예: 좌표 그래프가 그려져 있어도 풀이가 이차방정식의 근이면 단원은 **이차방정식**.`);
+    parts.push(`   - 풀이가 떠오르지 않으면 억지로 단원을 짜맞추지 말고 UNKNOWN으로.`);
+    parts.push(`5. 자기 검증(V 체크): 반환 직전 모든 문항의 chapter를 위 목록과 대조하라. 벗어난 항목은 UNKNOWN으로 변경.`);
+
+    return parts.join('\n');
   }
 
   /**

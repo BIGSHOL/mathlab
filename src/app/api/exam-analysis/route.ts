@@ -148,6 +148,20 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // examScope JSON에 연도/학기/종류 메타 포함 (단순 array 레거시 호환 유지)
+    const hasScopeMeta =
+      parsed.data.examYear != null ||
+      parsed.data.examSemester != null ||
+      parsed.data.examCategory != null;
+    const scopeValue: unknown = hasScopeMeta
+      ? {
+          topics: parsed.data.examScope || [],
+          examYear: parsed.data.examYear ?? null,
+          examSemester: parsed.data.examSemester ?? null,
+          examCategory: parsed.data.examCategory ?? null,
+        }
+      : (parsed.data.examScope || undefined);
+
     // DB 생성
     const examPaper = await prisma.examPaper.create({
       data: {
@@ -159,7 +173,7 @@ export async function POST(request: NextRequest) {
         grade: parsed.data.grade,
         category: parsed.data.category || null,
         unit: parsed.data.unit || null,
-        examScope: parsed.data.examScope || undefined,
+        examScope: scopeValue as never,
         schoolName,
         schoolId,
         examType: parsed.data.examType,

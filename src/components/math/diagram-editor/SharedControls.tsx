@@ -127,6 +127,41 @@ export function ColorSelect({ value, onChange }: {
   );
 }
 
+/**
+ * 네이티브 컬러피커 — 프리셋 스와치 옆에 두어 임의의 hex 색을 선택 가능.
+ * value가 없으면 회색 체크무늬로 "미지정" 상태 표시.
+ */
+export function ColorPickerInput({
+  value, onChange, title,
+}: {
+  value: string | undefined;
+  onChange: (v: string | undefined) => void;
+  title?: string;
+}) {
+  const hex = value && /^#[0-9a-f]{6}$/i.test(value) ? value : '#3B82F6';
+  return (
+    <span className="inline-flex items-center gap-1">
+      <input
+        type="color"
+        value={hex}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-6 h-6 rounded-sm border border-slate-200 cursor-pointer p-0"
+        title={title || '커스텀 색상'}
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={() => onChange(undefined)}
+          className="text-[10px] text-slate-400 hover:text-red-500 px-1"
+          title="색상 지정 해제"
+        >
+          ✕
+        </button>
+      )}
+    </span>
+  );
+}
+
 /** 도형 공통 스타일 (면 색칠/빗금/선 색상) */
 export function ShapeStyleFields({ params, onChange }: SubFormProps) {
   const STROKE_COLORS = [
@@ -153,7 +188,7 @@ export function ShapeStyleFields({ params, onChange }: SubFormProps) {
       {/* 선 색상 */}
       <div>
         <label className="text-xs text-slate-500">선 색상</label>
-        <div className="flex gap-1.5 mt-1">
+        <div className="flex gap-1.5 mt-1 items-center">
           {STROKE_COLORS.map((c) => (
             <button
               key={c.value}
@@ -164,6 +199,12 @@ export function ShapeStyleFields({ params, onChange }: SubFormProps) {
               title={c.label}
             />
           ))}
+          <span className="w-px h-4 bg-slate-200 mx-1" />
+          <ColorPickerInput
+            value={typeof params.strokeColor === 'string' ? params.strokeColor : undefined}
+            onChange={(v) => onChange({ strokeColor: v })}
+            title="커스텀 선 색상"
+          />
         </div>
       </div>
       {/* 면 색상 */}
@@ -180,6 +221,12 @@ export function ShapeStyleFields({ params, onChange }: SubFormProps) {
               title={c.label}
             />
           ))}
+          <span className="w-px h-4 bg-slate-200 mx-1" />
+          <ColorPickerInput
+            value={typeof params.fill === 'string' ? params.fill : undefined}
+            onChange={(v) => onChange({ fill: v })}
+            title="커스텀 면 색상"
+          />
         </div>
       </div>
       <div className="flex gap-4">

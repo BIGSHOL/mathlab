@@ -218,19 +218,19 @@ export function renderPolygon(params: PolygonParams): string {
   const bodyStroke = params.strokeColor || TEXTBOOK_STYLE.MAIN_STROKE;
   parts.push(svgPolygon(vertices, { fill: 'none', stroke: bodyStroke, strokeWidth: TEXTBOOK_STYLE.MAIN_STROKE_WIDTH }));
 
-  // 분할선 (보조선)
+  // 분할선 (보조선) — 색상 미지정 시 본선(bodyStroke)과 일치
   if (params.splitLines) {
     for (const sl of params.splitLines) {
       if (sl.from < 0 || sl.from >= vertices.length || sl.to < 0 || sl.to >= vertices.length) continue;
       const a = vertices[sl.from];
       const b = vertices[sl.to];
       const dash = sl.style === 'dashed' ? ' stroke-dasharray="5,4"' : '';
-      const stroke = sl.color ?? TEXTBOOK_STYLE.MAIN_STROKE;
+      const stroke = sl.color ?? bodyStroke;
       parts.push(`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${stroke}" stroke-width="1.2"${dash}/>`);
     }
   }
 
-  // 수선 (꼭짓점 → 변 위 직각으로 내리는 선)
+  // 수선 (꼭짓점 → 변 위 직각으로 내리는 선) — 색상 미지정 시 본선과 일치
   if (params.perpendiculars) {
     for (const perp of params.perpendiculars) {
       if (perp.fromVertex < 0 || perp.fromVertex >= vertices.length) continue;
@@ -248,7 +248,7 @@ export function renderPolygon(params: PolygonParams): string {
       const Fx = A[0] + t * abx;
       const Fy = A[1] + t * aby;
       const dash = perp.style === 'dashed' ? ' stroke-dasharray="5,4"' : '';
-      const stroke = perp.color ?? TEXTBOOK_STYLE.MAIN_STROKE;
+      const stroke = perp.color ?? bodyStroke;
       // 수선
       parts.push(`<line x1="${P[0]}" y1="${P[1]}" x2="${Fx}" y2="${Fy}" stroke="${stroke}" stroke-width="1.2"${dash}/>`);
       // 직각 표시 (기본 true)

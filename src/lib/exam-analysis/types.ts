@@ -270,6 +270,12 @@ export interface ExamContext {
   exam_scope: string[] | null;
   paper_type: string;
   has_essay: boolean;
+  /** 시험 연도 (예: 2024) — 참고용 */
+  exam_year?: number | null;
+  /** 시험 학기 (1 | 2) — 단원 범위 유추에 사용 */
+  exam_semester?: number | null;
+  /** 시험 종류 (MIDTERM | FINAL | MOCK | OTHER) — 단원 범위 유추에 사용 */
+  exam_category?: 'MIDTERM' | 'FINAL' | 'MOCK' | 'OTHER' | null;
 }
 
 export interface BuildPromptRequest {
