@@ -17,6 +17,10 @@ export const examPaperCreateSchema = z.object({
   schoolId: z.string().max(50).optional().nullable(),
   examType: z.enum(['blank', 'student']).default('blank'),
   studentId: z.string().optional().nullable(),
+  // 파일명에서 추출 불가한 필드 — 선생님이 직접 입력
+  examYear: z.number().int().min(2000).max(2100).optional().nullable(),
+  examSemester: z.number().int().min(0).max(2).optional().nullable(),
+  examCategory: z.enum(['MIDTERM', 'FINAL', 'MOCK', 'OTHER']).optional().nullable(),
 });
 
 // ── 시험지 수정 ──

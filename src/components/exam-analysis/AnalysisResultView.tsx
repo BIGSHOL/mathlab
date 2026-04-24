@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { DIFFICULTY_COLORS, DIFFICULTY_LABELS as DIFF_LABELS_MAP, DIFFICULTY_LEGACY_MAP, TYPE_TO_DOMAIN, ABILITY_DOMAIN_LABELS, ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
-import { ChevronRight, AlertTriangle } from 'lucide-react';
+import { ChevronRight, AlertTriangle, Pencil, Check, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { toast } from '@/components/ui/Toast';
+import { getTopicOptionsByGrade } from './utils/topic-options';
 
 // 차트 컴포넌트 (recharts는 SSR 미지원이므로 lazy load)
 const TypeRadarChart = dynamic(() => import('./charts/TypeRadarChart').then(m => ({ default: m.TypeRadarChart })), { ssr: false });
@@ -25,6 +27,10 @@ interface AnalysisResultViewProps {
   totalPoints: number | null;
   earnedPoints: number | null;
   examType: string;
+  /** 시험지 ID — 수동 단원 편집 API 호출용 */
+  examPaperId?: string;
+  /** 학년 (중1/중3/고1 등) — 편집 시 단원 드롭다운 옵션 필터링 */
+  grade?: string | null;
 }
 
 const DIFFICULTY_LABELS: Record<string, string> = {
@@ -68,7 +74,21 @@ function checkPointsReliable(qs: AnalyzedQuestion[], expectedTotal: number | nul
 
 // ── 메인 컴포넌트 ──
 
-export function AnalysisResultView({ questions, summary, totalPoints: _totalPoints, earnedPoints: _earnedPoints, examType }: AnalysisResultViewProps) {
+export function AnalysisResultView({ questions: questionsProp, summary, totalPoints: _totalPoints, earnedPoints: _earnedPoints, examType, examPaperId, grade }: AnalysisResultViewProps) {
+  // 수동 편집된 단원은 로컬 state에 반영 (페이지 리로드 없이 즉시 표시)
+  const [editedTopics, setEditedTopics] = React.useState<Record<string, string>>({});
+  const questions = React.useMemo(() => {
+    if (!Object.keys(editedTopics).length) return questionsProp;
+    return questionsProp.map((q) => {
+      const key = String(q.question_number);
+      return editedTopics[key] !== undefined
+        ? { ...q, topic: editedTopics[key] }
+        : q;
+    });
+  }, [questionsProp, editedTopics]);
+  const handleTopicUpdate = React.useCallback((qNum: string | number, newTopic: string) => {
+    setEditedTopics((prev) => ({ ...prev, [String(qNum)]: newTopic }));
+  }, []);
   const isStudentExam = examType === 'student';
 
   // 배점 신뢰도 판정
@@ -267,7 +287,7 @@ export function AnalysisResultView({ questions, summary, totalPoints: _totalPoin
                     <span className="text-xs font-semibold text-sky-600">객관식</span>
                     <span className="text-xs text-slate-400 ml-2">{grouped.objective.length}문항</span>
                   </td></tr>
-                  {grouped.objective.map((q, i) => <QRow key={`o-${i}`} q={q} isStudent={isStudentExam} />)}
+                  {grouped.objective.map((q, i) => <QRow key={`o-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} grade={grade} onTopicUpdate={handleTopicUpdate} />)}
                 </>
               )}
               {grouped.shortAnswer.length > 0 && (
@@ -276,7 +296,7 @@ export function AnalysisResultView({ questions, summary, totalPoints: _totalPoin
                     <span className="text-xs font-semibold text-teal-600">단답형</span>
                     <span className="text-xs text-slate-400 ml-2">{grouped.shortAnswer.length}문항</span>
                   </td></tr>
-                  {grouped.shortAnswer.map((q, i) => <QRow key={`s-${i}`} q={q} isStudent={isStudentExam} />)}
+                  {grouped.shortAnswer.map((q, i) => <QRow key={`s-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} grade={grade} onTopicUpdate={handleTopicUpdate} />)}
                 </>
               )}
               {grouped.essay.length > 0 && (
@@ -285,7 +305,7 @@ export function AnalysisResultView({ questions, summary, totalPoints: _totalPoin
                     <span className="text-xs font-semibold text-amber-600">서술형</span>
                     <span className="text-xs text-slate-400 ml-2">{grouped.essay.length}문항</span>
                   </td></tr>
-                  {grouped.essay.map((q, i) => <QRow key={`e-${i}`} q={q} isStudent={isStudentExam} />)}
+                  {grouped.essay.map((q, i) => <QRow key={`e-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} grade={grade} onTopicUpdate={handleTopicUpdate} />)}
                 </>
               )}
             </tbody>
@@ -401,13 +421,21 @@ function TopicSection({ topicGroups, maxTopic, total, chartColors }: {
 }
 
 
-function QRow({ q, isStudent }: { q: AnalyzedQuestion; isStudent: boolean }) {
+function QRow({ q, isStudent, examPaperId, grade, onTopicUpdate }: {
+  q: AnalyzedQuestion;
+  isStudent: boolean;
+  examPaperId?: string;
+  grade?: string | null;
+  onTopicUpdate?: (qNum: string | number, newTopic: string) => void;
+}) {
   const confPct = Math.round((q.confidence || 0) * 100);
   const confColor = confPct >= 90 ? 'text-emerald-600' : confPct >= 70 ? 'text-yellow-600' : 'text-red-500';
   const confBg = confPct >= 90 ? 'bg-emerald-50' : confPct >= 70 ? 'bg-yellow-50' : 'bg-red-50';
   const qNum = String(q.question_number);
   const numSize = qNum.length > 2 ? 'text-[10px]' : 'text-sm';
-  const domain = q.ability_domain || TYPE_TO_DOMAIN[q.question_type] || 'calculation';
+  // AI가 대문자 enum(CALCULATION/UNDERSTANDING/...)으로 반환하므로 소문자 정규화
+  const rawDomain = q.ability_domain || TYPE_TO_DOMAIN[q.question_type] || 'calculation';
+  const domain = String(rawDomain).toLowerCase();
   const domainColor = ABILITY_DOMAIN_COLORS[domain] || '#94A3B8';
 
   return (
@@ -426,7 +454,15 @@ function QRow({ q, isStudent }: { q: AnalyzedQuestion; isStudent: boolean }) {
           {ABILITY_DOMAIN_LABELS[domain] || domain}
         </span>
       </td>
-      <td className="px-3 py-2 text-xs text-slate-600"><span className="line-clamp-1">{q.topic || '-'}</span></td>
+      <td className="px-3 py-2 text-xs text-slate-600">
+        <TopicCell
+          topic={q.topic}
+          questionNumber={q.question_number}
+          examPaperId={examPaperId}
+          grade={grade}
+          onTopicUpdate={onTopicUpdate}
+        />
+      </td>
       <td className="px-3 py-2 text-center font-medium text-slate-700 whitespace-nowrap">{q.points ?? '-'}</td>
       {isStudent && (
         <td className="px-3 py-2 text-center">
@@ -444,5 +480,153 @@ function QRow({ q, isStudent }: { q: AnalyzedQuestion; isStudent: boolean }) {
         </span>
       </td>
     </tr>
+  );
+}
+
+// ══════════════════════════════════════════
+// 단원 셀 — 표시/편집 모드 전환
+// ══════════════════════════════════════════
+
+function TopicCell({
+  topic,
+  questionNumber,
+  examPaperId,
+  grade,
+  onTopicUpdate,
+}: {
+  topic: string | null | undefined;
+  questionNumber: string | number;
+  examPaperId?: string;
+  grade?: string | null;
+  onTopicUpdate?: (qNum: string | number, newTopic: string) => void;
+}) {
+  const [editing, setEditing] = React.useState(false);
+  const [value, setValue] = React.useState('');
+  const [saving, setSaving] = React.useState(false);
+
+  const currentTopic = (topic || '').trim();
+  const isUnknown = !currentTopic || /UNKNOWN|미정|unknown/i.test(currentTopic);
+  const options = React.useMemo(() => getTopicOptionsByGrade(grade), [grade]);
+  const canEdit = !!examPaperId;
+
+  const handleOpen = () => {
+    setValue(isUnknown ? '' : currentTopic);
+    setEditing(true);
+  };
+  const handleCancel = () => {
+    setEditing(false);
+    setValue('');
+  };
+  const handleSave = async () => {
+    if (!examPaperId) return;
+    const next = value.trim();
+    if (!next) {
+      toast.warning('단원을 선택하거나 입력하세요');
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch(
+        `/api/exam-analysis/${examPaperId}/questions/${encodeURIComponent(String(questionNumber))}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topic: next }),
+        },
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error?.message || '저장 실패');
+      }
+      onTopicUpdate?.(questionNumber, next);
+      toast.success('단원이 수정되었습니다');
+      setEditing(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '저장에 실패했습니다');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-1">
+        {options.length > 0 ? (
+          <select
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            className="flex-1 min-w-0 px-2 py-1 text-xs border rounded-sm focus:ring-1 focus:ring-primary focus:border-primary"
+            disabled={saving}
+            autoFocus
+          >
+            <option value="">선택</option>
+            {options.map((opt) => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder="단원 입력"
+            className="flex-1 min-w-0 px-2 py-1 text-xs border rounded-sm focus:ring-1 focus:ring-primary focus:border-primary"
+            disabled={saving}
+            autoFocus
+          />
+        )}
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving}
+          className="p-1 rounded-sm text-emerald-600 hover:bg-emerald-50 disabled:opacity-50"
+          title="저장"
+        >
+          <Check className="w-3.5 h-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={handleCancel}
+          disabled={saving}
+          className="p-1 rounded-sm text-slate-400 hover:bg-slate-100 disabled:opacity-50"
+          title="취소"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    );
+  }
+
+  if (isUnknown) {
+    return (
+      <button
+        type="button"
+        disabled={!canEdit}
+        onClick={canEdit ? handleOpen : undefined}
+        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-medium ${canEdit ? 'hover:bg-amber-100 cursor-pointer' : 'cursor-help'}`}
+        title={canEdit
+          ? 'AI가 단원을 확신하지 못했습니다. 클릭하여 수동으로 지정하세요.'
+          : 'AI가 단원을 확신하지 못했습니다.'}
+      >
+        <AlertTriangle className="w-3 h-3 shrink-0" />
+        {canEdit ? '미정 · 클릭하여 지정' : '미정'}
+      </button>
+    );
+  }
+
+  return (
+    <div className="group flex items-center gap-1">
+      <span className="line-clamp-1 flex-1 min-w-0">{currentTopic}</span>
+      {canEdit && (
+        <button
+          type="button"
+          onClick={handleOpen}
+          className="opacity-0 group-hover:opacity-100 p-1 rounded-sm text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-opacity"
+          title="단원 수정"
+        >
+          <Pencil className="w-3 h-3" />
+        </button>
+      )}
+    </div>
   );
 }

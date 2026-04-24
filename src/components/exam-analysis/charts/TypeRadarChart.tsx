@@ -41,7 +41,8 @@ export function TypeRadarChart({ data, questions }: TypeRadarChartProps) {
     if (!questions?.length) return {};
     const counts: Record<string, number> = {};
     for (const q of questions) {
-      const domain = q.ability_domain || TYPE_TO_DOMAIN[q.question_type] || 'calculation';
+      const rawDomain = q.ability_domain || TYPE_TO_DOMAIN[q.question_type] || 'calculation';
+      const domain = String(rawDomain).toLowerCase();
       counts[domain] = (counts[domain] || 0) + 1;
     }
     return counts;

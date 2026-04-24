@@ -171,7 +171,8 @@ function CommentRow({ q, showDiffReason, examPaperId }: {
           <span className="text-[10px] text-slate-300 mx-0.5">·</span>
           <span className="text-[10px] font-medium text-slate-500">능력</span>
           {(() => {
-            const domain = q.ability_domain || TYPE_TO_DOMAIN[q.question_type] || 'calculation';
+            const rawDomain = q.ability_domain || TYPE_TO_DOMAIN[q.question_type] || 'calculation';
+            const domain = String(rawDomain).toLowerCase();
             const domainColor = ABILITY_DOMAIN_COLORS[domain] || '#94A3B8';
             return (
               <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-semibold"
