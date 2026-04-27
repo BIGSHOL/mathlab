@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
-import { Upload, X, FileText, Image as ImageIcon, Sparkles } from 'lucide-react';
+import { Upload, X, FileText, Image as ImageIcon, Sparkles, AlertTriangle } from 'lucide-react';
 import { ExamScopeSelector } from './ExamScopeSelector';
 
 interface ExamUploadFormProps {
@@ -68,7 +68,85 @@ interface ParsedMetadata {
   category: string;
   examYear?: string;     // 예: "2024"
   examSemester?: string; // "1" | "2"
-  examCategory?: string; // "MIDTERM" | "FINAL" | "MOCK"
+  examCategory?: string; // "MIDTERM" | "FINAL" | "MOCK" | "OTHER"
+}
+
+const EXAM_TYPE_LABEL: Record<string, string> = {
+  MIDTERM: '중간고사',
+  FINAL: '기말고사',
+  MOCK: '모의고사',
+  OTHER: '',
+};
+
+/**
+ * 전체 파일명에서 시험 메타 정보를 자유롭게 추출.
+ * 다양한 표기를 지원:
+ * - 2자리 연도: `24-1-중간`, `24년`, `24학년도`
+ * - 4자리 연도: `2024-1-중간`, `2024년`, `2024 6월`
+ * - 모의고사 월 표기: `2020-6`, `20206`, `2024년 9월`, `6월모평`
+ * - 시험 종류 키워드: `중간/기말/모의/모평/모의평가`
+ */
+function extractExamMeta(text: string): {
+  examYear?: string;
+  examSemester?: string;
+  examCategory?: string;
+} {
+  let examYear: string | undefined;
+  let examSemester: string | undefined;
+  let examCategory: string | undefined;
+
+  // 1) 시험 종류 키워드 (긴 키워드 우선)
+  if (/모의평가|모의고사|모평|모의/.test(text)) examCategory = 'MOCK';
+  else if (/중간고사|중간/.test(text)) examCategory = 'MIDTERM';
+  else if (/기말고사|기말/.test(text)) examCategory = 'FINAL';
+
+  // 2) 학기 직접 추출
+  const semMatch = text.match(/([12])\s*학기/);
+  if (semMatch) examSemester = semMatch[1];
+
+  // 3) 4자리 연도 추출 (2018~2030)
+  const year4Match = text.match(/(20[1-3]\d)/);
+  if (year4Match) {
+    const y = parseInt(year4Match[1], 10);
+    if (y >= 2018 && y <= 2030) examYear = year4Match[1];
+  }
+
+  // 4) 모의고사인데 학기 미정이면 월에서 추정 (1~6월=1학기, 7~12월=2학기)
+  if (examCategory === 'MOCK' && !examSemester) {
+    const monthExplicit = text.match(/(\d{1,2})\s*월/);
+    if (monthExplicit) {
+      const m = parseInt(monthExplicit[1], 10);
+      if (m >= 1 && m <= 12) examSemester = m >= 7 ? '2' : '1';
+    } else if (examYear) {
+      // "2020-6", "20206", "2020_6" 형태 — 연도 직후 1~2자리 숫자
+      const yearMonth = text.match(new RegExp(`${examYear}[\\s\\-_]?(\\d{1,2})(?!\\d)`));
+      if (yearMonth) {
+        const m = parseInt(yearMonth[1], 10);
+        if (m >= 1 && m <= 12) examSemester = m >= 7 ? '2' : '1';
+      }
+    }
+  }
+
+  // 5) 4자리 연도 못 찾았으면 2자리 연도 fallback
+  if (!examYear) {
+    const year2Patterns = [
+      /(?:^|\D)(\d{2})\s*학년도/,
+      /(?:^|\D)(\d{2})\s*년/,
+      /(?:^|\D)(\d{2})[-\s_](\d)/, // 24-1, 24 1 형식
+    ];
+    for (const re of year2Patterns) {
+      const m = text.match(re);
+      if (m) {
+        const yy = parseInt(m[1], 10);
+        if (yy >= 18 && yy <= 30) {
+          examYear = `20${m[1]}`;
+          break;
+        }
+      }
+    }
+  }
+
+  return { examYear, examSemester, examCategory };
 }
 
 function parseFilename(filename: string): ParsedMetadata | null {
@@ -116,11 +194,14 @@ function parseFilename(filename: string): ParsedMetadata | null {
     const displaySubject = displaySubjectMap[subjectAbbr] || subjectAbbr || (subject === 'ENGLISH' ? '영어' : '수학');
     const displayGrade = gradeNum ? `${gradeNum}학년` : parts[1];
 
-    // 시험 정보
+    // 시험 정보 — 우선 전체 파일명에서 자유 추출 → strict 패턴은 덮어쓰기
     let examInfo = parts[3] || parts[2] || '';
-    let examYear: string | undefined;
-    let examSemester: string | undefined;
-    let examCategory: string | undefined;
+    const metaFromAll = extractExamMeta(cleaned);
+    let examYear: string | undefined = metaFromAll.examYear;
+    let examSemester: string | undefined = metaFromAll.examSemester;
+    let examCategory: string | undefined = metaFromAll.examCategory;
+
+    // strict 패턴 (24-1-중간) 매치 시 우선 적용
     const examMatch = examInfo.match(/(\d{2})[-\s]*(\d)[-\s]*(중간|기말|모의)/);
     if (examMatch) {
       const year = `20${examMatch[1]}`;
@@ -131,6 +212,15 @@ function parseFilename(filename: string): ParsedMetadata | null {
       examYear = year;
       examSemester = semester;
       examCategory = enumMap[examMatch[3]];
+    } else if (examYear || examSemester || examCategory) {
+      // examMeta 결과로 표시용 examInfo 재조립
+      const labelParts: string[] = [];
+      if (examYear) labelParts.push(`${examYear}년`);
+      if (examSemester) labelParts.push(`${examSemester}학기`);
+      if (examCategory && EXAM_TYPE_LABEL[examCategory]) {
+        labelParts.push(EXAM_TYPE_LABEL[examCategory]);
+      }
+      if (labelParts.length) examInfo = labelParts.join(' ');
     }
 
     return {
@@ -158,22 +248,45 @@ function parseFilename(filename: string): ParsedMetadata | null {
   const gradePatterns = [
     { re: /중\s*(\d)/, fmt: (m: RegExpMatchArray) => `중${m[1]}` },
     { re: /고\s*(\d)/, fmt: (m: RegExpMatchArray) => `고${m[1]}` },
-    { re: /(\d)\s*학년/, fmt: (m: RegExpMatchArray) => school.includes('중') ? `중${m[1]}` : `고${m[1]}` },
+    {
+      re: /(\d)\s*학년/,
+      fmt: (m: RegExpMatchArray) => {
+        if (school.includes('중')) return `중${m[1]}`;
+        if (school.includes('고')) return `고${m[1]}`;
+        return ''; // 학교 단서 없으면 grade 추정 보류
+      },
+    },
   ];
   for (const { re, fmt } of gradePatterns) {
     const m = cleaned.match(re);
-    if (m) { grade = fmt(m); break; }
+    if (m) {
+      const g = fmt(m);
+      if (g) { grade = g; break; }
+    }
   }
 
   // 과목 추출
   if (/영어|english/i.test(cleaned)) subject = 'ENGLISH';
 
+  // 시험 메타 (전체 파일명 기반)
+  const examMeta = extractExamMeta(cleaned);
+
   // 제목 생성
   const title = cleaned.replace(/[_-]/g, ' ').replace(/\s+/g, ' ').trim();
 
-  if (!school && !grade) return null;
+  // 어떤 정보든 하나라도 있으면 반환 (school·grade 없어도 examMeta 있으면 자동 채움)
+  if (!school && !grade && !examMeta.examYear && !examMeta.examCategory) return null;
 
-  return { title, school, grade, subject, category: '' };
+  return {
+    title,
+    school,
+    grade,
+    subject,
+    category: '',
+    examYear: examMeta.examYear,
+    examSemester: examMeta.examSemester,
+    examCategory: examMeta.examCategory,
+  };
 }
 
 // ── 컴포넌트 ──
@@ -438,7 +551,8 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
                 className="w-full px-2 py-2 border rounded-sm text-sm"
               >
                 <option value="">선택</option>
-                {Array.from({ length: 7 }, (_, i) => new Date().getFullYear() - i).map(y => (
+                {/* 2030 → 2018 (미래 5년 + 과거 8년 커버) */}
+                {Array.from({ length: 13 }, (_, i) => 2030 - i).map(y => (
                   <option key={y} value={String(y)}>{y}년</option>
                 ))}
               </select>
@@ -482,6 +596,12 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
           onChange={setExamScope}
         />
       )}
+
+      {/* 업로드 전 확인 경고 */}
+      <div className="flex items-start gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-sm text-xs text-amber-700">
+        <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+        <span>업로드 전 <strong>연도 · 학년 · 학기 · 시험 종류</strong>가 제대로 선택되었는지 다시 확인해주세요.</span>
+      </div>
 
       {/* 버튼 */}
       <div className="flex justify-end gap-2 pt-2">
