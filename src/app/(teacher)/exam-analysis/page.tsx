@@ -349,6 +349,7 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
   const [activeTab, setActiveTab] = useState<AnalysisTab>('basic');
   const [showExtractModal, setShowExtractModal] = useState(false);
   const [showArticleModal, setShowArticleModal] = useState(false);
+  const [showDiffModal, setShowDiffModal] = useState(false);
   const [commentaryLoading, setCommentaryLoading] = useState(false);
   const [commentaryStartTime, setCommentaryStartTime] = useState<number | null>(null);
   const [commentaryElapsed, setCommentaryElapsed] = useState(0);
@@ -481,27 +482,17 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
               </Button>
             )}
 
-            {/* 종합 난이도 카드 */}
+            {/* 종합 난이도 카드 — 클릭 시 판단 기준 모달 */}
             {detail.status === 'COMPLETED' && diffLevel > 0 && (() => {
               const activeColor = DIFF_BAR_COLORS[diffLevel - 1];
               const breakdown = getDifficultyBreakdown(summary);
-              const tooltipTitle = breakdown
-                ? [
-                    `종합 난이도 Level ${diffLevel} (${DIFF_LEVEL_LABELS[diffLevel] ?? ''}) — 가중평균 ${breakdown.weightedAvg.toFixed(2)}/5`,
-                    '',
-                    '▶ 단계별 문항 수',
-                    ...breakdown.counts.map((c, i) =>
-                      `  ${i + 1}(${DIFF_LEVEL_LABELS[i + 1]}): ${c}문항${c > 0 ? ` (${Math.round(c / breakdown.total * 100)}%)` : ''}`
-                    ),
-                    '',
-                    `총 ${breakdown.total}문항 × 각 난이도 가중치 → Level ${diffLevel}로 산정`,
-                  ].join('\n')
-                : `Level ${diffLevel}`;
               return (
-                <div
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-sm border cursor-help"
+                <button
+                  type="button"
+                  onClick={() => setShowDiffModal(true)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-sm border cursor-pointer hover:shadow-sm transition-all text-left"
                   style={{ borderColor: `${activeColor}50`, backgroundColor: `${activeColor}0A` }}
-                  title={tooltipTitle}
+                  aria-label="시험 난이도 판단 기준 보기"
                 >
                   <div className="flex flex-col items-center gap-1.5">
                     <span className="text-[10px] font-semibold text-slate-500">시험 난이도</span>
@@ -509,17 +500,9 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
                       {[1, 2, 3, 4, 5].map(level => {
                         const isActive = level === diffLevel;
                         const color = DIFF_BAR_COLORS[level - 1];
-                        const levelCount = breakdown?.counts[level - 1] ?? 0;
-                        const levelPct = breakdown && breakdown.total > 0
-                          ? Math.round(levelCount / breakdown.total * 100)
-                          : 0;
-                        const cellTitle = breakdown
-                          ? `${level}단계 (${DIFF_LEVEL_LABELS[level]}): ${levelCount}문항${levelPct > 0 ? ` · ${levelPct}%` : ''}`
-                          : `${level}단계`;
                         return (
                           <div
                             key={level}
-                            title={cellTitle}
                             className={`w-6 h-6 rounded-sm flex items-center justify-center text-[10px] font-bold transition-all ${
                               isActive ? 'ring-2 ring-offset-1 shadow-sm scale-110' : 'opacity-25'
                             }`}
@@ -543,7 +526,7 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
                       </div>
                     )}
                   </div>
-                </div>
+                </button>
               );
             })()}
           </div>
@@ -714,6 +697,67 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
           onClose={() => setShowArticleModal(false)}
         />
       )}
+
+      {/* 시험 난이도 판단 기준 — 간이 모달 */}
+      {showDiffModal && diffLevel > 0 && (() => {
+        const breakdown = getDifficultyBreakdown(summary);
+        const activeColor = DIFF_BAR_COLORS[diffLevel - 1];
+        const levelLabel = DIFF_LEVEL_LABELS[diffLevel] ?? '';
+        const distLabel = breakdown
+          ? breakdown.counts.map((c, i) => `${i + 1}단계 ${c}문항`).join(' · ')
+          : '';
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+            onClick={() => setShowDiffModal(false)}
+          >
+            <div
+              className="bg-white rounded-sm shadow-xl max-w-md w-full p-5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <h3 className="text-base font-bold text-slate-800">
+                    시험 난이도 <span style={{ color: activeColor }}>Level {diffLevel}</span>
+                    <span className="text-slate-500 font-medium"> ({levelLabel})</span>
+                  </h3>
+                  {breakdown && (
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      가중평균 {breakdown.weightedAvg.toFixed(2)}/5 · 총 {breakdown.total}문항
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowDiffModal(false)}
+                  className="text-slate-400 hover:text-slate-700"
+                  aria-label="닫기"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-2.5 text-sm leading-relaxed text-slate-700">
+                <p>
+                  AI가 시험지의 모든 문항을 <strong>1~5단계</strong> (1=기본 · 2=표준 · 3=응용 · 4=심화 · 5=최고난도) 로 분류한 뒤, 단계별 문항 수에 1~5의 가중치를 곱해 합산하고 총 문항 수로 나눠 <strong>가중평균</strong>을 구합니다.
+                </p>
+                {breakdown && (
+                  <p>
+                    이 시험은 분포가 <strong>{distLabel}</strong>로, 가중평균이 <strong>{breakdown.weightedAvg.toFixed(2)}점</strong>이 나와 반올림하여 <strong>Level {diffLevel}</strong>로 산정되었습니다.
+                  </p>
+                )}
+                <p className="text-xs text-slate-500 pt-2 border-t border-slate-100">
+                  평균 2.5점 미만은 평이한 시험(Lv 1~2), 3.5점 이상은 변별력이 높은 시험(Lv 4~5)으로 봅니다. 4·5단계 문항 비율이 높을수록 상위권 변별 의도가 강한 시험입니다.
+                </p>
+              </div>
+
+              <div className="mt-4 flex justify-end">
+                <Button variant="secondary" size="sm" onClick={() => setShowDiffModal(false)}>닫기</Button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

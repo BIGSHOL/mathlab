@@ -25,6 +25,8 @@ interface ExamPaperItem {
   schoolName: string | null;
   schoolId: string | null;
   school: { id: string; name: string; district: string } | null;
+  // examScope: 신형 = { topics, examYear, examSemester, examCategory }, 레거시 = string[] | null
+  examScope?: unknown;
   createdAt: string;
   teacher: { id: string; name: string };
   student: { id: string; name: string } | null;
@@ -38,6 +40,13 @@ interface ExamPaperItem {
     extensions?: Array<{ agentType: string }>;
   }>;
 }
+
+const EXAM_CATEGORY_LABEL: Record<string, string> = {
+  MIDTERM: '중간',
+  FINAL: '기말',
+  MOCK: '모의',
+  OTHER: '기타',
+};
 
 /** 제목에서 학기·시험 종류 라벨 추출 (예: "2025년 1학기 중간고사" → ["1학기", "중간"]) */
 function extractExamLabels(title: string): string[] {
@@ -61,6 +70,27 @@ function extractExamLabels(title: string): string[] {
   else if (/기말/.test(title)) labels.push('기말');
   else if (/모의/.test(title)) labels.push('모의');
   return labels;
+}
+
+/**
+ * examScope JSON(우선) 또는 title(폴백)에서 라벨 추출.
+ * 신형: `{ topics, examYear, examSemester, examCategory }` → 정확한 라벨
+ * 레거시: `string[]` 또는 null → 제목 정규식으로 폴백
+ */
+function getExamLabels(item: ExamPaperItem): string[] {
+  const labels: string[] = [];
+  const scope = item.examScope;
+  if (scope && typeof scope === 'object' && !Array.isArray(scope)) {
+    const s = scope as { examYear?: number | null; examSemester?: number | null; examCategory?: string | null };
+    if (s.examYear) labels.push(`${s.examYear}년`);
+    if (s.examSemester) labels.push(`${s.examSemester}학기`);
+    if (s.examCategory && EXAM_CATEGORY_LABEL[s.examCategory]) {
+      labels.push(EXAM_CATEGORY_LABEL[s.examCategory]);
+    }
+    if (labels.length) return labels;
+  }
+  // 폴백: 제목에서 추출 (레거시 데이터)
+  return extractExamLabels(item.title);
 }
 
 /** 5단계 상태 판별: 실패 → 분석중 → 완료 → 총평 → 글작성 */
@@ -176,7 +206,7 @@ export function ExamPaperList({
                         </span>
                       );
                     })()}
-                    {extractExamLabels(item.title).map(label => (
+                    {getExamLabels(item).map(label => (
                       <span key={label} className="inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-sm border bg-teal-50 text-teal-600 border-teal-200">
                         {label}
                       </span>
