@@ -201,6 +201,11 @@ export const DIFFICULTY_COLORS: Record<string, string> = {
   creative: '#EF4444',
 };
 
+/** 난이도 1~5 인덱스 기반 막대 색상 (DIFFICULTY_COLORS 단일 진실의 원천) */
+export const DIFFICULTY_BAR_COLORS: readonly string[] = ['1', '2', '3', '4', '5'].map(
+  (k) => DIFFICULTY_COLORS[k],
+);
+
 export const DIFFICULTY_LABELS: Record<string, string> = {
   '1': '1',
   '2': '2',

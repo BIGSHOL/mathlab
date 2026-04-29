@@ -19,6 +19,7 @@ import Link from 'next/link';
 import { Plus, X, Settings2, Sparkles, Download, Database, PanelLeftClose, PanelLeftOpen, FileSearch, FileText } from 'lucide-react';
 import type { AnalyzedQuestion, AnalysisSummary } from '@/lib/exam-analysis/types';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
+import { DIFFICULTY_BAR_COLORS } from '@/lib/exam-analysis/constants';
 import { useAuth } from '@/hooks/useAuth';
 import { hasMinRole } from '@/lib/constants/navigation';
 
@@ -292,7 +293,7 @@ function getConfidenceInfo(questions: AnalyzedQuestion[]) {
 }
 
 // ── 종합 난이도 (1~5) 계산 ──
-const DIFF_BAR_COLORS = ['#22C55E', '#84CC16', '#F59E0B', '#F97316', '#EF4444'];
+// DIFFICULTY_BAR_COLORS는 constants.ts에서 import (DIFFICULTY_COLORS 단일 진실의 원천)
 
 function getOverallDifficultyLevel(summary: AnalysisSummary | null): number {
   if (!summary?.difficulty_distribution) return 0;
@@ -484,7 +485,7 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
 
             {/* 종합 난이도 카드 — 클릭 시 판단 기준 모달 */}
             {detail.status === 'COMPLETED' && diffLevel > 0 && (() => {
-              const activeColor = DIFF_BAR_COLORS[diffLevel - 1];
+              const activeColor = DIFFICULTY_BAR_COLORS[diffLevel - 1];
               const breakdown = getDifficultyBreakdown(summary);
               return (
                 <button
@@ -499,7 +500,7 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
                     <div className="flex gap-0.5">
                       {[1, 2, 3, 4, 5].map(level => {
                         const isActive = level === diffLevel;
-                        const color = DIFF_BAR_COLORS[level - 1];
+                        const color = DIFFICULTY_BAR_COLORS[level - 1];
                         return (
                           <div
                             key={level}
@@ -701,7 +702,7 @@ function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: {
       {/* 시험 난이도 판단 기준 — 간이 모달 */}
       {showDiffModal && diffLevel > 0 && (() => {
         const breakdown = getDifficultyBreakdown(summary);
-        const activeColor = DIFF_BAR_COLORS[diffLevel - 1];
+        const activeColor = DIFFICULTY_BAR_COLORS[diffLevel - 1];
         const levelLabel = DIFF_LEVEL_LABELS[diffLevel] ?? '';
         const distLabel = breakdown
           ? breakdown.counts.map((c, i) => `${i + 1}단계 ${c}문항`).join(' · ')

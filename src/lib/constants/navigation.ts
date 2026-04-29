@@ -113,6 +113,7 @@ const NAV_GROUPS: NavGroup[] = [
   // ─ 기타 ─
   {
     id: 'system', label: '기타', minRole: 'TEACHER', items: [
+      // /updates는 root 라우트 (src/app/updates/page.tsx) — 학생/선생/비로그인 모두 접근. StudentSidebar에도 동일 링크.
       { id: 'updates', label: '공지사항', href: '/updates', icon: Newspaper, minRole: 'TEACHER', keywords: ['update', '업데이트', '변경', '공지'] },
       { id: 'help', label: '도움말', href: '/help', icon: LifeBuoy, minRole: 'TEACHER', keywords: ['help', '도움말', '가이드', '사용법'] },
       { id: 'settings', label: '설정', href: '/settings', icon: Settings, minRole: 'TEACHER', keywords: ['setting', '설정', '환경'] },
