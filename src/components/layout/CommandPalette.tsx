@@ -18,9 +18,34 @@ export function CommandPalette() {
 
   const role = (user?.role ?? 'TEACHER') as UserRole;
 
+  // 지점 활성 이용권 (Sidebar와 동일 패턴)
+  // loaded=false 동안은 licenseFeature 항목을 숨기고, 로드 후 추가 표시 (깜빡임 방지)
+  // 네트워크 실패 시에만 fail-open (전부 표시)
+  const [tenantFeatures, setTenantFeatures] = useState<Set<string> | null>(null);
+  const [featuresLoaded, setFeaturesLoaded] = useState(false);
+  const userId = user?.id;
+  const userRole = user?.role;
+  useEffect(() => {
+    if (!userId || userRole === 'SUPER_ADMIN' || userRole === 'STUDENT') {
+      setFeaturesLoaded(true);
+      return;
+    }
+    fetch('/api/licenses/tenant-features')
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+      .then((json) => { if (json.data) setTenantFeatures(new Set(json.data as string[])); })
+      .catch(() => setTenantFeatures(null))
+      .finally(() => setFeaturesLoaded(true));
+  }, [userId, userRole]);
+
   const allCommands = useMemo(() => {
-    return getCommandsForRole(role);
-  }, [role]);
+    const raw = getCommandsForRole(role);
+    return raw.filter((cmd) => {
+      if (!cmd.licenseFeature) return true; // 이용권 불필요 항목은 항상 표시
+      if (!featuresLoaded) return false; // 로딩 중: licenseFeature 항목 숨김
+      if (!tenantFeatures) return true; // 네트워크 실패 시 fail-open
+      return tenantFeatures.has(cmd.licenseFeature);
+    });
+  }, [role, tenantFeatures, featuresLoaded]);
 
   const groups = useMemo(() => {
     const seen = new Set<string>();

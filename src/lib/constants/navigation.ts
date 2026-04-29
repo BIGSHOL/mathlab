@@ -212,6 +212,8 @@ export interface CommandItem {
   icon: LucideIcon;
   keywords: string[];
   group: string;
+  /** 이 항목이 활성화되려면 지점에 해당 이용권이 필요 (CommandPalette 필터용) */
+  licenseFeature?: string;
 }
 
 /** 역할에 맞는 CommandPalette 항목 반환 */
@@ -227,6 +229,7 @@ export function getCommandsForRole(role: UserRole): CommandItem[] {
         icon: item.icon,
         keywords: item.keywords ?? [],
         group: g.label,
+        licenseFeature: item.licenseFeature,
       })),
   );
 }
