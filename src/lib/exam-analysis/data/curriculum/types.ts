@@ -85,18 +85,8 @@ export interface EssayAdvancedGuide {
   scoringTips: string[];
 }
 
-export interface KillerPattern {
-  type: string;
-  description: string;
-  approach: string[];
-  timeEstimate: string;
-}
-
-export interface KillerQuestionType {
-  grade: string;
-  topic: string;
-  patterns: KillerPattern[];
-}
+// KillerPattern, KillerQuestionType은 ./killerPatterns.ts로 이동 (2026-04-29).
+// 본 파일에 있던 stale 정의는 실사용 코드(어댑터)와 형태가 달라 제거함.
 
 export interface RecommendedBook {
   name: string;

@@ -3,7 +3,8 @@
  *
  * 수능 및 내신에서 자주 출제되는 고난도 유형과 학년 간 연계를 정의합니다.
  */
-import type { GradeConnection, KillerQuestionType } from '../curriculum/types';
+import type { GradeConnection } from '../curriculum/types';
+import type { KillerQuestionType } from './types';
 
 /**
  * 영어 학년 간 연계

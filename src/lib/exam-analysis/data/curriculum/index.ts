@@ -51,11 +51,14 @@ export { ENCOURAGEMENT_MESSAGES, getEncouragementMessages } from './encouragemen
 // 시간 배분 전략
 export { TIME_ALLOCATION_STRATEGIES } from './timeAllocationStrategies';
 
-// 아직 분리되지 않은 것들 - 기존 파일에서 re-export
+// 학년 연계
+export { GRADE_CONNECTIONS, findGradeConnections } from './gradeConnections';
+
+// 킬러 문항 유형
 export {
-  GRADE_CONNECTIONS,
-  findGradeConnections,
   KILLER_QUESTION_TYPES,
   findKillerPatterns,
   getKillerPatternsByGrade,
-} from '../curriculumStrategies';
+  type KillerPattern,
+  type KillerQuestionType,
+} from './killerPatterns';

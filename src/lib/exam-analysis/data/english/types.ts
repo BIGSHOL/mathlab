@@ -4,7 +4,7 @@
  * 수학과 공통된 타입은 curriculum/types.ts에서 재사용합니다.
  */
 
-// 공통 타입 재사용
+// 공통 타입 재사용 (KillerPattern/KillerQuestionType은 영어 자체 정의)
 export type {
   TopicStrategy,
   GradeUnit,
@@ -14,13 +14,27 @@ export type {
   LevelStrategy,
   TimeStrategy,
   GradeConnection,
-  KillerPattern,
-  KillerQuestionType,
   RecommendedBook,
   LevelBooks,
   LevelRecommendation,
   EncouragementMessages,
 } from '../curriculum/types';
+
+// 영어 시스템 전용 KillerPattern/KillerQuestionType (수학과 형태 다름)
+// 수학: { unit, keywords, killerPatterns: [{ pattern, difficulty, frequency, ... }] }
+// 영어: { grade, topic, patterns: [{ type, description, approach, timeEstimate }] }
+export interface KillerPattern {
+  type: string;
+  description: string;
+  approach: string[];
+  timeEstimate: string;
+}
+
+export interface KillerQuestionType {
+  grade: string;
+  topic: string;
+  patterns: KillerPattern[];
+}
 
 /**
  * 영어 문제 유형

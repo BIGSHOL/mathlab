@@ -7,7 +7,7 @@ import {
   findCommonMistakes,
   findKillerPatterns,
   findGradeConnections,
-} from '@/lib/exam-analysis/data/curriculumStrategies';
+} from '@/lib/exam-analysis/data/curriculum';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ChevronDown, AlertTriangle, Zap, ArrowRightLeft, BookOpen } from 'lucide-react';

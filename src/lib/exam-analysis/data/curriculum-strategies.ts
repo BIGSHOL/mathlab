@@ -15,10 +15,10 @@ import {
   ESSAY_CHECKLIST,
   ESSAY_ADVANCED_GUIDE,
   FOUR_WEEK_TIMELINE,
-  KILLER_QUESTION_TYPES,
   ENCOURAGEMENT_MESSAGES,
-  GRADE_CONNECTIONS,
 } from './curriculumStrategies';
+import { KILLER_QUESTION_TYPES } from './curriculum/killerPatterns';
+import { GRADE_CONNECTIONS } from './curriculum/gradeConnections';
 import { findCommonMistakes as _findCommonMistakes } from './curriculum/commonMistakes';
 
 import {
@@ -77,11 +77,12 @@ export {
 export type {
   CommonMistake,
   GradeConnection as RawGradeConnection,
-  KillerQuestionType,
   EssayCheckItem,
   StudyTimeline,
   LevelStrategy,
 } from './curriculum/types';
+
+export type { KillerQuestionType } from './curriculum/killerPatterns';
 
 export type {
   TimeAllocationStrategy,
