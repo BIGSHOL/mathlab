@@ -64,13 +64,12 @@ export async function POST(request: NextRequest) {
       data: {
         title,
         hostId: currentUser.id,
-        questionIds,
         joinCode,
         tenantId: currentUser.viewingTenantId ?? currentUser.tenantId,
       },
     });
 
-    // Dual-Write: 중간테이블에도 기록
+    // 중간테이블 기록 (questionIds Json 컬럼 제거 후 단일 진실의 원천)
     await tx.quizSessionQuestion.createMany({
       data: parseStringIds(questionIds).map((qId, idx) => ({
         sessionId: created.id,

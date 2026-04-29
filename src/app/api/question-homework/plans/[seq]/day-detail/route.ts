@@ -23,7 +23,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
   const plan = await prisma.questionHomeworkPlan.findUnique({
     where: { seq: Number(seq) },
-    select: { id: true, totalDays: true, passingScore: true, dailyQuestions: true },
+    select: { id: true, totalDays: true, passingScore: true },
   });
   if (!plan) return badRequest('플랜을 찾을 수 없습니다');
   if (dayIndex >= plan.totalDays) return badRequest('유효하지 않은 일차입니다');
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     select: { id: true, name: true, grade: true },
   });
 
-  // 해당 일차의 문제: 중간테이블 우선, 없으면 dailyQuestions Json 폴백
+  // 해당 일차의 문제 (HomeworkQuestion 중간테이블 — 단일 진실의 원천)
   const hwQuestions = await prisma.homeworkQuestion.findMany({
     where: { planId: plan.id, dayIndex },
     orderBy: { sortOrder: 'asc' },
@@ -53,41 +53,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     },
   });
 
-  let questions: { id: string; content: string; choices: string[]; answer: string; explanation: string | null; chapter: string | null; difficulty: string }[];
-
-  if (hwQuestions.length > 0) {
-    questions = hwQuestions.map(hq => ({
-      id: hq.question.id,
-      content: hq.question.content,
-      choices: (hq.question.choices as string[]) ?? [],
-      answer: hq.question.answer,
-      explanation: hq.question.explanation,
-      chapter: hq.question.chapter,
-      difficulty: hq.question.difficulty,
-    }));
-  } else {
-    // Json 폴백: dailyQuestions[dayIndex]에서 문제 ID 추출
-    const allDaily = plan.dailyQuestions as string[][] | null;
-    const dayQIds = allDaily?.[dayIndex] ?? [];
-    if (dayQIds.length > 0) {
-      const qRecords = await prisma.question.findMany({
-        where: { id: { in: dayQIds } },
-        select: { id: true, content: true, choices: true, answer: true, explanation: true, chapter: true, difficulty: true },
-      });
-      // dayQIds 순서 유지
-      questions = dayQIds.map(id => qRecords.find(q => q.id === id)).filter(Boolean).map(q => ({
-        id: q!.id,
-        content: q!.content,
-        choices: (q!.choices as string[]) ?? [],
-        answer: q!.answer,
-        explanation: q!.explanation,
-        chapter: q!.chapter,
-        difficulty: q!.difficulty,
-      }));
-    } else {
-      questions = [];
-    }
-  }
+  const questions = hwQuestions.map(hq => ({
+    id: hq.question.id,
+    content: hq.question.content,
+    choices: (hq.question.choices as string[]) ?? [],
+    answer: hq.question.answer,
+    explanation: hq.question.explanation,
+    chapter: hq.question.chapter,
+    difficulty: hq.question.difficulty,
+  }));
 
   // 학생 답안 조회
   const attempt = await prisma.questionHomeworkAttempt.findFirst({

@@ -492,9 +492,7 @@ model Test {
   description         String?  @db.Text
   grade               Int
   testType            String   @db.VarChar(30)  // concept, cumulative, chapter_final
-  /// @deprecated 중간테이블 TestQuestion 사용. getTestQuestionIds() 헬퍼 통과 필수. 폴백/마이그레이션 종료 후 제거 예정.
-  questionIds         Json                       // String[] - Question ID 배열 (deprecated)
-  questionCount       Int
+  questionCount       Int                        // 중간테이블 TestQuestion에서 정렬된 ID 조회 (getTestQuestionIds 헬퍼)
   timeLimitMin        Int?                       // 제한 시간 (분)
   shuffleOptions      Boolean  @default(false)
   isActive            Boolean  @default(true)
@@ -694,8 +692,7 @@ model QuizSession {
   id          String     @id @default(cuid())
   title       String     @db.VarChar(200)
   hostId      String
-  /// @deprecated 중간테이블 QuizSessionQuestion 사용. getQuizQuestionIds() 헬퍼 통과 필수. 폴백/마이그레이션 종료 후 제거 예정.
-  questionIds Json                          // String[] (deprecated)
+  // 중간테이블 QuizSessionQuestion에서 정렬된 ID 조회 (getQuizQuestionIds 헬퍼)
   status      QuizStatus @default(WAITING)
   currentQ          Int        @default(0)
   joinCode          String     @unique @db.VarChar(6)
@@ -925,8 +922,7 @@ model QuestionHomeworkPlan {
   createdBy       String
   startDate       DateTime @db.Date
   totalDays       Int
-  /// @deprecated 중간테이블 HomeworkQuestion 사용. getHomeworkAllDailyQuestionIds() 헬퍼 통과 필수. 폴백/마이그레이션 종료 후 제거 예정.
-  dailyQuestions  Json     // string[][] - 날짜별 문제 ID 배열 (deprecated)
+  // 중간테이블 HomeworkQuestion에서 dayIndex+sortOrder로 조회 (getHomeworkAllDailyQuestionIds 헬퍼)
   passingScore    Int      @default(80)
   isActive        Boolean  @default(true)
   tenantId        String?

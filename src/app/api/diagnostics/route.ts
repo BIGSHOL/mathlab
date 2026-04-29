@@ -21,7 +21,6 @@ export async function POST(request: NextRequest) {
         title: `[진단] ${title}`,
         grade,
         testType: `diagnostic_${diagnosticType.toLowerCase()}`,
-        questionIds,
         questionCount: questionIds.length,
         maxAttempts: 1,
         createdBy: currentUser.id,

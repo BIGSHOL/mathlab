@@ -97,7 +97,6 @@ export async function PATCH(
     await tx.test.update({
       where: { seq },
       data: {
-        questionIds,
         questionCount: questionIds.length,
       },
     });
@@ -109,7 +108,7 @@ export async function PATCH(
       });
     }
 
-    // Dual-Write: TestQuestion 중간테이블 갱신
+    // 중간테이블 TestQuestion 갱신 (단일 진실의 원천)
     await tx.testQuestion.deleteMany({ where: { testId: test.id } });
     await tx.testQuestion.createMany({
       data: parsedIds.map((qId, idx) => ({

@@ -91,12 +91,11 @@ export async function createQuestionHomeworkPlan(params: CreateQuestionHomeworkP
         tenantId: tenantId ?? undefined,
         startDate: new Date(startDate),
         totalDays,
-        dailyQuestions: JSON.parse(JSON.stringify(dailyQuestions)),
         passingScore: passingScore ?? 80,
       },
     });
 
-    // Dual-Write: HomeworkQuestion 중간테이블
+    // 중간테이블 HomeworkQuestion 기록 (dailyQuestions Json 컬럼 제거 후 단일 진실의 원천)
     const hwData: { planId: string; questionId: string; dayIndex: number; sortOrder: number }[] = [];
     for (let dayIdx = 0; dayIdx < dailyQuestions.length; dayIdx++) {
       for (let sortIdx = 0; sortIdx < dailyQuestions[dayIdx].length; sortIdx++) {
@@ -310,10 +309,8 @@ export async function listQuestionHomeworkPlans(createdBy?: string) {
   });
 
   return plans.map((p) => {
-    // 중간테이블 count 우선, 0이면 Json 폴백
-    const totalQuestions = p._count.homeworkQuestions > 0
-      ? p._count.homeworkQuestions
-      : ((p.dailyQuestions as unknown as string[][])?.flat().length ?? 0);
+    // 중간테이블 count (단일 진실의 원천)
+    const totalQuestions = p._count.homeworkQuestions;
     const currentDay = computeDayIndex(p.startDate);
     const progress = Math.min(Math.max(currentDay + 1, 0), p.totalDays);
 

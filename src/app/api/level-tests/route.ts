@@ -53,7 +53,6 @@ export async function POST(request: NextRequest) {
         title,
         grade,
         testType: 'level_test',
-        questionIds,
         questionCount: questionIds.length,
         timeLimitMin: timeLimitMin || null,
         shuffleOptions: false,

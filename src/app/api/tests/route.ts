@@ -128,7 +128,6 @@ export async function POST(request: NextRequest) {
         description: description || null,
         grade,
         testType: testType || 'concept',
-        questionIds,
         questionCount: questionIds.length,
         timeLimitMin: timeLimitMin || null,
         shuffleOptions: shuffleOptions || false,
@@ -140,7 +139,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Dual-Write: 중간테이블에도 기록
+    // 중간테이블 기록 (questionIds Json 컬럼 제거 후 단일 진실의 원천)
     await tx.testQuestion.createMany({
       data: parseStringIds(questionIds).map((qId, idx) => ({
         testId: created.id,

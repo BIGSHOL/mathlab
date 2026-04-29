@@ -9,8 +9,8 @@
  *     chapter/difficulty 중 하나라도 다르면 선택 금지. (현재 구현이 이 규칙을 만족해야 함)
  * H2. 중복 금지: `usedIds` 추적으로 **동일 변형 내부 + 변형 간** 중복 배정 금지. 후보 고갈 시 원본 유지(fallback).
  * H3. 문항 수 보존: 모든 변형은 원본과 동일한 `questionCount`와 동일한 sortOrder 길이를 가져야 함.
- * H4. Dual-Write (전환기): Test.questionIds(Json, @deprecated) + TestQuestion(중간테이블, 정식) 동시 기록 (트랜잭션 내 원자성).
- *     읽기는 getTestQuestionIds() 헬퍼 통과 — 중간테이블 우선, Json 폴백. 마이그레이션 종료 후 Json 컬럼 제거 예정.
+ * H4. 중간테이블 단일화 (2026-04-29): TestQuestion 중간테이블에만 기록 — Test.questionIds Json 컬럼 제거됨.
+ *     읽기는 getTestQuestionIds() 헬퍼 통과 (중간테이블 정렬 결과 반환).
  * H5. 향후 AI 기반 "동형 문제(숫자만 다른 같은 유형)" 생성 시 프롬프트 제약:
  *     - 같은 개념·같은 풀이 구조 유지, 숫자/변수값만 변경
  *     - 난이도(difficulty) 유지, 정답 타입(MULTIPLE_CHOICE/SHORT_ANSWER/ESSAY) 유지
@@ -105,7 +105,6 @@ export async function generateVariants(config: VariantConfig) {
           title: `${title} (변형 ${String.fromCharCode(65 + v)})`,
           grade,
           testType,
-          questionIds: variantQuestionIds,
           questionCount: variantQuestionIds.length,
           timeLimitMin: timeLimitMin ?? null,
           shuffleOptions: shuffleOptions ?? false,
@@ -114,7 +113,7 @@ export async function generateVariants(config: VariantConfig) {
         },
       });
 
-      // Dual-Write: TestQuestion 중간테이블
+      // 중간테이블 TestQuestion 기록 (questionIds Json 컬럼 제거 후 단일 진실의 원천)
       await tx.testQuestion.createMany({
         data: variantQuestionIds.map((qId: string, idx: number) => ({
           testId: test.id,
