@@ -2,6 +2,12 @@
  * 2022 개정 교육과정 기반 수학 단원별 학습 전략
  *
  * 분석된 토픽(단원)에 매칭되는 구체적인 학습 가이드를 제공합니다.
+ *
+ * ⚠️ 모듈화 진행 중 (~12,000줄, 레거시 단일 파일):
+ * 새 모듈화 구조: ./curriculum/ 디렉토리 (middleSchoolCurriculum.ts, highSchoolCurriculum.ts 등)
+ * 일부 데이터(MIDDLE_SCHOOL_CURRICULUM, HIGH_SCHOOL_CURRICULUM)가 두 곳에 중복 존재.
+ * → 점진적 이전: 새 import 시 ./curriculum/ 경로 우선 사용. 단, 본 파일이 진실의 원천 유지.
+ * → 향후 작업: 모든 데이터를 ./curriculum/*로 분해 후 본 파일 삭제 (별도 세션 권장).
  */
 
 export interface TopicStrategy {

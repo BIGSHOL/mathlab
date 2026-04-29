@@ -40,7 +40,7 @@ import {
 
 import {
   findMultipleTopicStrategies,
-} from './topicLevelStrategies';
+} from './curriculum/topicLevelStrategies';
 
 import {
   isTopicMatch,
@@ -89,7 +89,7 @@ export type {
 
 export type {
   TopicStrategies,
-} from './topicLevelStrategies';
+} from './curriculum/topicLevelStrategies';
 
 // ══════════════════════════════════════════════════════════════════════
 // 컴포넌트용 인터페이스 (study-strategy 섹션 컴포넌트가 사용하는 형태)
