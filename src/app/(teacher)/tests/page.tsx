@@ -66,14 +66,14 @@ export default function TestsPage() {
     setDeleting(null);
   };
 
-  const handleStartQuiz = useCallback(async (test: { title: string; questionIds: string[] }) => {
-    if (test.questionIds.length === 0) { toast.error('문제가 없는 시험입니다'); return; }
+  const handleStartQuiz = useCallback(async (test: { id: string; title: string; questionCount: number }) => {
+    if (test.questionCount === 0) { toast.error('문제가 없는 시험입니다'); return; }
     setCreatingQuiz(true);
     try {
       const res = await fetch('/api/quiz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: `${test.title} 퀴즈`, questionIds: test.questionIds }),
+        body: JSON.stringify({ title: `${test.title} 퀴즈`, testId: test.id }),
       });
       if (res.ok) {
         const json = await res.json();

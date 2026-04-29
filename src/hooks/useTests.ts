@@ -10,6 +10,7 @@ interface Test {
   description: string | null;
   grade: number;
   testType: string;
+  /** @deprecated 중간테이블 사용. UI는 questionCount 우선 사용 */
   questionIds: string[];
   questionCount: number;
   timeLimitMin: number | null;

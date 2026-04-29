@@ -26,9 +26,8 @@ interface QuizSessionItem {
   joinCode: string;
   status: 'WAITING' | 'ACTIVE' | 'COMPLETED';
   currentQ: number;
-  questionIds: string[];
   createdAt: string;
-  _count: { participants: number };
+  _count: { participants: number; sessionQuestions: number };
 }
 
 const STATUS_LABELS: Record<string, string> = { WAITING: '대기 중', ACTIVE: '진행 중', COMPLETED: '종료' };
@@ -507,7 +506,7 @@ export default function QuizPage() {
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        {Array.isArray(s.questionIds) ? s.questionIds.length : 0}문제
+                        {s._count.sessionQuestions}문제
                       </span>
                     </div>
                   </div>

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse, badRequest, getTenantFilter } from '@/lib/api';
-import { parseStringIds } from '@/lib/utils/question-order';
+import { parseStringIds, getTestQuestionIds } from '@/lib/utils/question-order';
 
 function generateJoinCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -19,7 +19,7 @@ export async function GET() {
 
   const sessions = await prisma.quizSession.findMany({
     where: { hostId: currentUser.id, ...tenantWhere },
-    include: { _count: { select: { participants: true } } },
+    include: { _count: { select: { participants: true, sessionQuestions: true } } },
     orderBy: { createdAt: 'desc' },
     take: 50,
   });
@@ -33,10 +33,20 @@ export async function POST(request: NextRequest) {
   if (isResponse(currentUser)) return currentUser;
 
   const body = await request.json();
-  const { title, questionIds } = body;
+  const { title, testId } = body;
+  let { questionIds } = body;
 
-  if (!title || !questionIds?.length) {
-    return badRequest('제목과 문제를 선택하세요');
+  if (!title) {
+    return badRequest('제목을 입력하세요');
+  }
+
+  // testId 기반 생성: 중간테이블 헬퍼로 questionIds 조회 (deprecated Json 의존 제거)
+  if (testId && (!questionIds || !questionIds.length)) {
+    questionIds = await getTestQuestionIds(testId);
+  }
+
+  if (!questionIds?.length) {
+    return badRequest('문제를 선택하세요');
   }
 
   // Generate unique join code
