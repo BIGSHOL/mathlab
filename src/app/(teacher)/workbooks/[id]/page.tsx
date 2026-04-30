@@ -3,13 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { BookText, Printer, Trash2, FolderPlus, FileText, ClipboardCheck, BookOpen } from 'lucide-react';
+import { BookText, Printer, Trash2, FolderPlus, FileText, ClipboardCheck, BookOpen, CheckSquare } from 'lucide-react';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Card } from '@/components/ui/Card';
 import { toast } from '@/components/ui/Toast';
+import { AddOxBundleModal } from '@/components/workbook-shared/AddOxBundleModal';
 import type { AnswerSpaceSizeInput } from '@/lib/schemas/workbook';
 
 interface SectionItem {
@@ -73,6 +74,7 @@ const KIND_LABELS: Record<string, { label: string; icon: React.ReactNode }> = {
   ARITHMETIC_DAY: { label: '연산 숙제', icon: <FileText className="w-4 h-4" /> },
   HOMEWORK_DAY: { label: '문제 숙제', icon: <FileText className="w-4 h-4" /> },
   EXAM_PAPER: { label: '기출', icon: <FileText className="w-4 h-4" /> },
+  OX_BUNDLE: { label: 'O/X 묶음', icon: <CheckSquare className="w-4 h-4" /> },
 };
 
 export default function WorkbookDetailPage() {
@@ -84,6 +86,7 @@ export default function WorkbookDetailPage() {
   const [loading, setLoading] = useState(true);
   const [creatingSection, setCreatingSection] = useState(false);
   const [newSectionTitle, setNewSectionTitle] = useState('');
+  const [oxBundleSectionId, setOxBundleSectionId] = useState<string | null>(null);
 
   useEffect(() => {
     void load();
@@ -248,7 +251,7 @@ export default function WorkbookDetailPage() {
 
             {section.items.length === 0 ? (
               <p className="text-sm text-slate-400 py-3 text-center bg-slate-50 rounded-sm">
-                아직 추가된 항목이 없습니다. 시험·문제·개념 페이지에서 &quot;워크북에 추가&quot; 버튼을 눌러 항목을 담으세요.
+                아직 추가된 항목이 없습니다. 시험·문제·개념 페이지에서 &quot;워크북에 추가&quot; 버튼을 누르거나, 아래 &quot;OX 묶음 추가&quot;로 시작하세요.
               </p>
             ) : (
               <ul className="space-y-2">
@@ -298,6 +301,18 @@ export default function WorkbookDetailPage() {
                 })}
               </ul>
             )}
+
+            {/* 섹션 단위 액션 버튼: OX 묶음 추가 */}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setOxBundleSectionId(section.id)}
+              >
+                <CheckSquare className="w-4 h-4" />
+                OX 묶음 추가
+              </Button>
+            </div>
           </Card>
         ))}
 
@@ -342,6 +357,19 @@ export default function WorkbookDetailPage() {
             섹션을 만들거나, 다른 페이지에서 &quot;워크북에 추가&quot; 버튼을 눌러 컨텐츠를 모으세요
           </p>
         </Card>
+      )}
+
+      {/* OX 묶음 추가 모달 */}
+      {oxBundleSectionId && (
+        <AddOxBundleModal
+          workbookId={id}
+          sectionId={oxBundleSectionId}
+          onClose={() => setOxBundleSectionId(null)}
+          onAdded={() => {
+            setOxBundleSectionId(null);
+            void load();
+          }}
+        />
       )}
     </PageContainer>
   );

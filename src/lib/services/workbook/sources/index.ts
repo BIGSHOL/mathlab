@@ -2,6 +2,7 @@ import type { WorkbookSectionItem } from '@prisma/client';
 import { expandTestItem } from './test.adapter';
 import { expandQuestionItem } from './question.adapter';
 import { expandConceptItem } from './concept.adapter';
+import { expandOxBundleItem } from './ox-bundle.adapter';
 import type { NormalizedItem } from '../types';
 
 /**
@@ -24,6 +25,8 @@ export async function dispatchAdapter(
       return expandQuestionItem(item, positionInSection);
     case 'CONCEPT_DOC':
       return expandConceptItem(item);
+    case 'OX_BUNDLE':
+      return expandOxBundleItem(item, positionInSection);
     case 'ARITHMETIC_DAY':
     case 'EXAM_PAPER':
     case 'HOMEWORK_DAY':
@@ -49,7 +52,12 @@ export async function expandSectionItems(
   for (const item of items) {
     const expanded = await dispatchAdapter(item, questionPosition);
     results.push(...expanded);
-    if (item.kind === 'QUESTION') questionPosition += 1;
+    if (item.kind === 'QUESTION') {
+      questionPosition += 1;
+    } else if (item.kind === 'OX_BUNDLE') {
+      // OX_BUNDLE: 1개 항목이 N개로 펼쳐지므로 펼친 개수만큼 카운터 증가
+      questionPosition += expanded.length;
+    }
   }
 
   return results;

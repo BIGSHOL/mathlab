@@ -2000,6 +2000,7 @@ enum WorkbookSectionItemKind {
   CONCEPT_DOC // Concept fullContent
   EXAM_PAPER // ExamPaper 전체 (Question.examPaperId FK)
   HOMEWORK_DAY // QuestionHomeworkPlan dailyQuestions[dayIndex]
+  OX_BUNDLE // OxStatement[] (inlineData.statementIds) — 워크북 전용 묶음
 }
 
 enum AnswerSpaceSize {

@@ -128,6 +128,7 @@ async function checkFkExists(input: {
   homeworkPlanId?: string | null;
   conceptId?: string | null;
   examPaperId?: string | null;
+  inlineData?: Record<string, unknown> | null;
 }): Promise<boolean> {
   switch (input.kind) {
     case 'QUESTION':
@@ -148,6 +149,15 @@ async function checkFkExists(input: {
     case 'EXAM_PAPER':
       if (!input.examPaperId) return false;
       return !!(await prisma.examPaper.findUnique({ where: { id: input.examPaperId }, select: { id: true } }));
+    case 'OX_BUNDLE': {
+      const data = input.inlineData as { statementIds?: string[] } | null;
+      if (!data?.statementIds?.length) return false;
+      // 모든 statementId가 OxStatement에 존재하고 활성 상태인지 검증
+      const count = await prisma.oxStatement.count({
+        where: { id: { in: data.statementIds }, isActive: true },
+      });
+      return count === data.statementIds.length;
+    }
     default:
       return false;
   }

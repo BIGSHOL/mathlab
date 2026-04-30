@@ -11,6 +11,7 @@ export const workbookKindSchema = z.enum([
   'CONCEPT_DOC',
   'EXAM_PAPER',
   'HOMEWORK_DAY',
+  'OX_BUNDLE',
 ]);
 
 export const answerSpaceSizeSchema = z.enum(['NONE', 'SMALL', 'MEDIUM', 'LARGE', 'XLARGE']);
@@ -86,7 +87,19 @@ const KIND_REQUIRED_FK: Record<z.infer<typeof workbookKindSchema>, readonly (typ
   HOMEWORK_DAY: ['homeworkPlanId', 'homeworkDayIndex'],
   CONCEPT_DOC: ['conceptId'],
   EXAM_PAPER: ['examPaperId'],
+  OX_BUNDLE: [], // FK 없음 — inlineData.statementIds 사용
 };
+
+/** OX_BUNDLE inlineData 검증 — workbookItemInputSchema에서 kind === 'OX_BUNDLE'일 때 적용 */
+export const oxBundleInlineDataSchema = z.object({
+  category: z.string().min(1),
+  level: z.enum(['easy', 'medium', 'hard']),
+  questionTypes: z.array(z.string()).optional(),
+  statementIds: z.array(z.string()).min(1).max(100),
+  count: z.number().int().min(1).max(100),
+});
+
+export type OxBundleInlineData = z.infer<typeof oxBundleInlineDataSchema>;
 
 const itemFkFieldsSchema = z.object({
   questionId: z.string().nullable().optional(),

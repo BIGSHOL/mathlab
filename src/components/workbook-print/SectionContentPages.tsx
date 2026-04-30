@@ -2,6 +2,7 @@ import { A4PrintPage } from '@/components/print-preview';
 import { PrintableHeader } from '@/components/print-preview/PrintableHeader';
 import { QuestionBlock } from './QuestionBlock';
 import { ConceptBlock } from './ConceptBlock';
+import { OxBundleBlock } from './OxBundleBlock';
 import { estimateQuestionHeight, PAGE_CONTENT_HEIGHT } from '@/lib/utils/print-estimate';
 import type { NormalizedItem } from '@/lib/services/workbook/sources';
 import type { PrintOptionsInput } from '@/lib/schemas/workbook';
@@ -50,7 +51,7 @@ export function SectionContentPages({
             />
             <div className="py-2">
               {pageItems.map((item) => (
-                <RenderItem key={item.itemId} item={item} large={isLargeTemplate} />
+                <RenderItem key={item.itemId} item={item} large={isLargeTemplate} showAnswers={preset.showAnswers} />
               ))}
             </div>
             <PageNumberFooter pageNumber={startPageNumber + pageIdx} />
@@ -61,9 +62,12 @@ export function SectionContentPages({
   );
 }
 
-function RenderItem({ item, large }: { item: NormalizedItem; large: boolean }) {
+function RenderItem({ item, large, showAnswers }: { item: NormalizedItem; large: boolean; showAnswers: boolean }) {
   if (item.kind === 'CONCEPT_DOC') {
     return <ConceptBlock item={item} />;
+  }
+  if (item.kind === 'OX_BUNDLE') {
+    return <OxBundleBlock item={item} large={large} showAnswers={showAnswers} />;
   }
   return <QuestionBlock item={item} large={large} />;
 }
@@ -116,6 +120,11 @@ export function estimateItemHeight(item: NormalizedItem, preset: PrintOptionsInp
     // 개념 문서: 마크다운 길이 기반 단순 추정
     const len = item.documentMarkdown?.length ?? 0;
     return Math.max(200, Math.ceil(len / 40) * 24 + 80);
+  }
+
+  if (item.kind === 'OX_BUNDLE') {
+    // OX 진술: 한 줄 ~36px (진술 내용 + 줄 끝 답란). 풀이공간 NONE 가정.
+    return 36;
   }
 
   return estimateQuestionHeight({
