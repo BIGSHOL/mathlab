@@ -16,6 +16,7 @@ const ALL_UNLOCKED: LicenseMap = {
   worksheet: true,
   exam_prep: true,
   ox_quiz: true,
+  workbook: true,
 };
 
 interface LicenseStore {

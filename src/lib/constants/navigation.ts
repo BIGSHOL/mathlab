@@ -26,6 +26,7 @@ import {
   Volume2,
   FileSearch,
   CheckSquare,
+  BookText,
   type LucideIcon,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
@@ -88,6 +89,7 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'arithmetic', label: '연산 프린트', href: '/questions/arithmetic', icon: Calculator, minRole: 'TEACHER', keywords: ['arithmetic', '연산', '계산', '출제', '생성'] },
       { id: 'ox-quiz', label: 'OX 출제', href: '/questions/ox', icon: CheckSquare, minRole: 'TEACHER', keywords: ['ox', '퀴즈', '참거짓', '진술', '오엑스'], licenseFeature: 'OX_QUIZ' },
       { id: 'worksheet', label: '문제 프린트', href: '/worksheet/create', icon: FileSpreadsheet, minRole: 'TEACHER', keywords: ['worksheet', '학습지', '프린트', '만들기', '문제'] },
+      { id: 'workbooks', label: '워크북 생성', href: '/workbooks', icon: BookText, minRole: 'TEACHER', keywords: ['workbook', '워크북', '책', '묶음', '인쇄', '풀이공간'], licenseFeature: 'WORKBOOK' },
       { id: 'pdf-import', label: 'PDF 추출', href: '/questions/pdf-import', icon: FileText, minRole: 'SUPER_ADMIN', keywords: ['pdf', '추출', 'ocr', '가져오기'] },
     ],
   },

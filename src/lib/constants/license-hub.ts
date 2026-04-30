@@ -1,6 +1,6 @@
 import {
   BookOpen, Calculator, Zap, ClipboardCheck, Swords,
-  Stethoscope, Radio, FileSearch, CalendarCheck, FileSpreadsheet, Target, CheckSquare,
+  Stethoscope, Radio, FileSearch, CalendarCheck, FileSpreadsheet, Target, CheckSquare, BookText,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { LicenseFeature } from '@prisma/client';
@@ -148,9 +148,20 @@ export const LICENSE_FEATURE_INFO: Record<LicenseFeature, LicenseFeatureInfo> = 
     color: 'bg-orange-500',
     textColor: 'text-orange-500',
   },
+  WORKBOOK: {
+    label: '워크북',
+    description: '인쇄 가능한 컨텐츠를 한 권의 책으로 묶고 풀이공간을 인쇄합니다',
+    studentCapabilities: [],
+    teacherLinks: [
+      { label: '워크북 생성', href: '/workbooks' },
+    ],
+    icon: BookText,
+    color: 'bg-indigo-500',
+    textColor: 'text-indigo-500',
+  },
 };
 
 /** LICENSE_FEATURE_INFO 키를 순서대로 배열 */
 export const LICENSE_FEATURES_ORDERED: LicenseFeature[] = [
-  'CONCEPT', 'ARITHMETIC', 'TIME_ATTACK', 'TEST', 'REVENGE', 'DIAGNOSTIC', 'QUIZ', 'EXAM_ANALYSIS', 'HOMEWORK', 'WORKSHEET', 'EXAM_PREP', 'OX_QUIZ',
+  'CONCEPT', 'ARITHMETIC', 'TIME_ATTACK', 'TEST', 'REVENGE', 'DIAGNOSTIC', 'QUIZ', 'EXAM_ANALYSIS', 'HOMEWORK', 'WORKSHEET', 'EXAM_PREP', 'OX_QUIZ', 'WORKBOOK',
 ];

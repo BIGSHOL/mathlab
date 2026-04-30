@@ -15,7 +15,8 @@ export type LicenseFeatureKey =
   | 'homework'
   | 'worksheet'
   | 'exam_prep'
-  | 'ox_quiz';
+  | 'ox_quiz'
+  | 'workbook';
 
 export const ALL_LICENSE_FEATURES: LicenseFeatureKey[] = [
   'concept',
@@ -30,6 +31,7 @@ export const ALL_LICENSE_FEATURES: LicenseFeatureKey[] = [
   'worksheet',
   'exam_prep',
   'ox_quiz',
+  'workbook',
 ];
 
 /** 한글 라벨 */
@@ -46,6 +48,7 @@ export const LICENSE_FEATURE_LABELS: Record<LicenseFeatureKey, string> = {
   worksheet: '학습지',
   exam_prep: '내신대비',
   ox_quiz: 'O/X 퀴즈',
+  workbook: '워크북',
 };
 
 /** LicenseFeatureKey ↔ Prisma LicenseFeature enum 매핑 */
@@ -62,6 +65,7 @@ const TO_ENUM: Record<LicenseFeatureKey, LicenseFeature> = {
   worksheet: 'WORKSHEET',
   exam_prep: 'EXAM_PREP',
   ox_quiz: 'OX_QUIZ',
+  workbook: 'WORKBOOK',
 };
 
 const FROM_ENUM: Record<LicenseFeature, LicenseFeatureKey> = {
@@ -77,6 +81,7 @@ const FROM_ENUM: Record<LicenseFeature, LicenseFeatureKey> = {
   WORKSHEET: 'worksheet',
   EXAM_PREP: 'exam_prep',
   OX_QUIZ: 'ox_quiz',
+  WORKBOOK: 'workbook',
 };
 
 export function toEnum(key: LicenseFeatureKey): LicenseFeature {
@@ -476,11 +481,12 @@ export async function getLicenseUsageStats(
     WORKSHEET: [], // 학습지는 선생님 도구이므로 학생 활동 없음
     EXAM_PREP: [], // 내신대비 활동은 enrollment.schedule 안에 분산되어 있어 별도 집계 필요 시 추가
     OX_QUIZ: oxQuizAct.map((r) => ({ studentId: r.studentId, date: toDateStr(r.createdAt) })),
+    WORKBOOK: [], // 워크북은 선생님 도구이므로 학생 활동 없음
   };
 
   // 4. 기능별 통계 계산
   const allFeatures: LicenseFeature[] = [
-    'CONCEPT', 'ARITHMETIC', 'TIME_ATTACK', 'TEST', 'REVENGE', 'DIAGNOSTIC', 'QUIZ', 'EXAM_ANALYSIS', 'HOMEWORK', 'WORKSHEET', 'EXAM_PREP', 'OX_QUIZ',
+    'CONCEPT', 'ARITHMETIC', 'TIME_ATTACK', 'TEST', 'REVENGE', 'DIAGNOSTIC', 'QUIZ', 'EXAM_ANALYSIS', 'HOMEWORK', 'WORKSHEET', 'EXAM_PREP', 'OX_QUIZ', 'WORKBOOK',
   ];
 
   // 미사용 학생 이름/반 조회를 위해 한 번에 ID 수집

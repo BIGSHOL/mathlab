@@ -34,6 +34,7 @@ enum LicenseFeature {
   WORKSHEET
   EXAM_PREP
   OX_QUIZ
+  WORKBOOK
 }
 
 // FEAT: 기출 분석 시스템
@@ -52,102 +53,104 @@ enum ExamSubject {
 // FEAT: 멀티테넌시 — 지점(학원) 관리
 model Tenant {
   id        String   @id @default(cuid())
-  slug      String   @unique @db.VarChar(50)   // 서브도메인: "gangnam" → gangnam.mathlab.com
-  name      String   @db.VarChar(100)           // 표시명: "강남점"
-  logo      String?  @db.VarChar(500)           // 커스텀 로고 URL
-  settings  Json?                                // 지점별 설정 (색상, 기능 토글 등)
+  slug      String   @unique @db.VarChar(50) // 서브도메인: "gangnam" → gangnam.mathlab.com
+  name      String   @db.VarChar(100) // 표시명: "강남점"
+  logo      String?  @db.VarChar(500) // 커스텀 로고 URL
+  settings  Json? // 지점별 설정 (색상, 기능 토글 등)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users                  User[]
-  classrooms             Classroom[]
-  tests                  Test[]
-  learningCourses        LearningCourse[]
+  users                   User[]
+  classrooms              Classroom[]
+  tests                   Test[]
+  learningCourses         LearningCourse[]
   arithmeticHomeworkPlans ArithmeticHomeworkPlan[]
-  conceptHomeworkPlans   ConceptHomeworkPlan[]
-  questionHomeworkPlans  QuestionHomeworkPlan[]
-  quizSessions           QuizSession[]
-  dailyQuestions         DailyQuestion[]
-  featureFlags           FeatureFlag[]
-  tenantLicenses         TenantLicense[]
-  nearbyGroups           TenantNearbyGroup[]
-  questions              Question[]
-  classCompetitionWeeks  ClassCompetitionWeek[]
-  examCampaigns          ExamCampaign[]
-  oxQuizPlans            OxQuizPlan[]
+  conceptHomeworkPlans    ConceptHomeworkPlan[]
+  questionHomeworkPlans   QuestionHomeworkPlan[]
+  quizSessions            QuizSession[]
+  dailyQuestions          DailyQuestion[]
+  featureFlags            FeatureFlag[]
+  tenantLicenses          TenantLicense[]
+  nearbyGroups            TenantNearbyGroup[]
+  questions               Question[]
+  classCompetitionWeeks   ClassCompetitionWeek[]
+  examCampaigns           ExamCampaign[]
+  oxQuizPlans             OxQuizPlan[]
+  workbooks               Workbook[]
 
   @@index([slug])
   @@index([isActive])
 }
 
 model User {
-  id            String    @id @default(cuid())
-  seq           Int       @unique @default(autoincrement())
-  username      String    @unique @db.VarChar(50)
-  passwordHash  String    @db.VarChar(255)
-  name          String    @db.VarChar(50)
-  role          Role      @default(STUDENT)
-  grade         Int?
-  phone         String?   @db.VarChar(20)
-  email         String?   @db.VarChar(100)
-  school        String?   @db.VarChar(100)
-  birthDate     DateTime?
-  address       String?   @db.VarChar(200)
-  startDate     DateTime?
-  notes         String?   @db.Text
-  parentName    String?   @db.VarChar(50)
-  parentPhone   String?   @db.VarChar(20)
-  classroomId   String?
-  tenantId      String?
-  profileImage  String?   @db.VarChar(500)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime?
+  id           String    @id @default(cuid())
+  seq          Int       @unique @default(autoincrement())
+  username     String    @unique @db.VarChar(50)
+  passwordHash String    @db.VarChar(255)
+  name         String    @db.VarChar(50)
+  role         Role      @default(STUDENT)
+  grade        Int?
+  phone        String?   @db.VarChar(20)
+  email        String?   @db.VarChar(100)
+  school       String?   @db.VarChar(100)
+  birthDate    DateTime?
+  address      String?   @db.VarChar(200)
+  startDate    DateTime?
+  notes        String?   @db.Text
+  parentName   String?   @db.VarChar(50)
+  parentPhone  String?   @db.VarChar(20)
+  classroomId  String?
+  tenantId     String?
+  profileImage String?   @db.VarChar(500)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
 
-  tenant         Tenant?   @relation(fields: [tenantId], references: [id])
-  sessions       Session[]
-  profile        StudentProfile?
-  progress       LearningProgress[]
-  transactions   PointTransaction[]
-  createdTests   Test[]          @relation("TestCreator")
-  testAttempts   TestAttempt[]   @relation("StudentAttempts")
-  assignments    TestAssignment[] @relation("StudentAssignments")
-  inquiries      Inquiry[]       @relation("InquiryAuthor")
-  repliedInquiries Inquiry[]     @relation("InquiryReplier")
-  arithmeticAttempts ArithmeticAttempt[]
-  conceptMemos       ConceptMemo[]
-  teacherComments    TeacherComment[] @relation("TeacherComments")
-  studentComments    TeacherComment[] @relation("StudentComments")
-  generationLogs     QuestionGenerationLog[]
-  createdHomeworkPlans   ArithmeticHomeworkPlan[]        @relation("HomeworkPlanCreator")
-  homeworkEnrollments    ArithmeticHomeworkEnrollment[]   @relation("HomeworkEnrollments")
-  createdConceptHomeworkPlans ConceptHomeworkPlan[]       @relation("ConceptHomeworkPlanCreator")
-  conceptHomeworkEnrollments  ConceptHomeworkEnrollment[] @relation("ConceptHomeworkEnrollments")
-  createdQuestionHomeworkPlans QuestionHomeworkPlan[]     @relation("QuestionHomeworkPlanCreator")
-  questionHomeworkEnrollments  QuestionHomeworkEnrollment[] @relation("QuestionHomeworkEnrollments")
+  tenant                       Tenant?                        @relation(fields: [tenantId], references: [id])
+  sessions                     Session[]
+  profile                      StudentProfile?
+  progress                     LearningProgress[]
+  transactions                 PointTransaction[]
+  createdTests                 Test[]                         @relation("TestCreator")
+  testAttempts                 TestAttempt[]                  @relation("StudentAttempts")
+  assignments                  TestAssignment[]               @relation("StudentAssignments")
+  inquiries                    Inquiry[]                      @relation("InquiryAuthor")
+  repliedInquiries             Inquiry[]                      @relation("InquiryReplier")
+  arithmeticAttempts           ArithmeticAttempt[]
+  conceptMemos                 ConceptMemo[]
+  teacherComments              TeacherComment[]               @relation("TeacherComments")
+  studentComments              TeacherComment[]               @relation("StudentComments")
+  generationLogs               QuestionGenerationLog[]
+  createdHomeworkPlans         ArithmeticHomeworkPlan[]       @relation("HomeworkPlanCreator")
+  homeworkEnrollments          ArithmeticHomeworkEnrollment[] @relation("HomeworkEnrollments")
+  createdConceptHomeworkPlans  ConceptHomeworkPlan[]          @relation("ConceptHomeworkPlanCreator")
+  conceptHomeworkEnrollments   ConceptHomeworkEnrollment[]    @relation("ConceptHomeworkEnrollments")
+  createdQuestionHomeworkPlans QuestionHomeworkPlan[]         @relation("QuestionHomeworkPlanCreator")
+  questionHomeworkEnrollments  QuestionHomeworkEnrollment[]   @relation("QuestionHomeworkEnrollments")
   questionHomeworkAttempts     QuestionHomeworkAttempt[]
-  classroom                    Classroom?                       @relation(fields: [classroomId], references: [id])
+  classroom                    Classroom?                     @relation(fields: [classroomId], references: [id])
   timeAttackRecords            TimeAttackRecord[]
   dailyQuestionAttempts        DailyQuestionAttempt[]
   dailyMissions                DailyMission[]
   badges                       UserBadge[]
-  learningCourseEnrollments    LearningCourseEnrollment[] @relation("LearningCourseEnrollments")
-  createdLearningCourses       LearningCourse[]           @relation("LearningCourseCreator")
+  learningCourseEnrollments    LearningCourseEnrollment[]     @relation("LearningCourseEnrollments")
+  createdLearningCourses       LearningCourse[]               @relation("LearningCourseCreator")
   blankAttempts                BlankAttempt[]
   revengeAttempts              RevengeAttempt[]
-  reviewSchedules              ReviewSchedule[]  @relation("UserReviews")
-  studentLicenses              StudentLicense[]  @relation("StudentLicenses")
-  assignedLicenses             StudentLicense[]  @relation("LicenseAssignedBy")
-  examPapersAsTeacher          ExamPaper[]       @relation("ExamPaperTeacher")
-  examPapersAsStudent          ExamPaper[]       @relation("ExamPaperStudent")
-  createdQuestions             Question[]        @relation("createdQuestions")
+  reviewSchedules              ReviewSchedule[]               @relation("UserReviews")
+  studentLicenses              StudentLicense[]               @relation("StudentLicenses")
+  assignedLicenses             StudentLicense[]               @relation("LicenseAssignedBy")
+  examPapersAsTeacher          ExamPaper[]                    @relation("ExamPaperTeacher")
+  examPapersAsStudent          ExamPaper[]                    @relation("ExamPaperStudent")
+  createdQuestions             Question[]                     @relation("createdQuestions")
   inventories                  UserInventory[]
-  createdExamCampaigns         ExamCampaign[]    @relation("ExamCampaignCreator")
-  examCampaignEnrollments      ExamCampaignEnrollment[] @relation("ExamCampaignEnrollments")
+  createdExamCampaigns         ExamCampaign[]                 @relation("ExamCampaignCreator")
+  examCampaignEnrollments      ExamCampaignEnrollment[]       @relation("ExamCampaignEnrollments")
   oxQuizAttempts               OxQuizAttempt[]
-  createdOxQuizPlans           OxQuizPlan[]      @relation("OxQuizPlanCreator")
-  oxQuizEnrollments            OxQuizEnrollment[] @relation("OxQuizEnrollments")
+  createdOxQuizPlans           OxQuizPlan[]                   @relation("OxQuizPlanCreator")
+  oxQuizEnrollments            OxQuizEnrollment[]             @relation("OxQuizEnrollments")
+  createdWorkbooks             Workbook[]                     @relation("WorkbookCreator")
 
   @@index([role])
   @@index([classroomId])
@@ -189,27 +192,28 @@ model Concept {
   sortOrder    Int      @default(0)
   conceptCode  String?  @unique @db.VarChar(20)
   grade        String?  @db.VarChar(20)
-  semester     Int?                        // 학기: 1 또는 2
-  chapter      String?  @db.VarChar(100)   // 대단원: "자연수의 혼합 계산"
-  section      String?  @db.VarChar(100)   // 중단원: "덧셈과 뺄셈이 섞여 있는 식"
-  sectionSub   String?  @db.VarChar(100)   // 소단원
+  semester     Int? // 학기: 1 또는 2
+  chapter      String?  @db.VarChar(100) // 대단원: "자연수의 혼합 계산"
+  section      String?  @db.VarChar(100) // 중단원: "덧셈과 뺄셈이 섞여 있는 식"
+  sectionSub   String?  @db.VarChar(100) // 소단원
   category     String?  @db.VarChar(20)
   part         String?  @db.VarChar(20)
-  source       String?  @db.VarChar(200)   // 출처
+  source       String?  @db.VarChar(200) // 출처
   keywords     String?  @db.Text
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  subject          Subject              @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  blanks           BlankExercise[]
-  progress         LearningProgress[]
-  prerequisiteFor  ConceptPrerequisite[] @relation("PrerequisiteFor")
-  prerequisites    ConceptPrerequisite[] @relation("HasPrerequisite")
+  subject                Subject                 @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  blanks                 BlankExercise[]
+  progress               LearningProgress[]
+  prerequisiteFor        ConceptPrerequisite[]   @relation("PrerequisiteFor")
+  prerequisites          ConceptPrerequisite[]   @relation("HasPrerequisite")
   questions              Question[]
   learningCourseConcepts LearningCourseConcept[]
   blankAttempts          BlankAttempt[]
   reviewSchedules        ReviewSchedule[]
   oxStatements           OxStatement[]
+  workbookItems          WorkbookSectionItem[]
 
   @@index([subjectId])
   @@index([subjectId, sortOrder])
@@ -219,8 +223,8 @@ model Concept {
 model BlankExercise {
   id           String   @id @default(cuid())
   conceptId    String
-  level        Int      // 1=easy, 2=hard
-  blanks       Json     // [{position, answer, hint}]
+  level        Int // 1=easy, 2=hard
+  blanks       Json // [{position, answer, hint}]
   templateText String   @db.Text
   createdAt    DateTime @default(now())
 
@@ -239,12 +243,12 @@ enum Stage {
 }
 
 model LearningProgress {
-  id          String    @id @default(cuid())
-  userId      String
-  conceptId   String
-  stage       Stage
-  completed   Boolean   @default(false)
-  attempts    Int       @default(0)
+  id            String    @id @default(cuid())
+  userId        String
+  conceptId     String
+  stage         Stage
+  completed     Boolean   @default(false)
+  attempts      Int       @default(0)
   score         Int?
   hintCount     Int       @default(0)
   revealCount   Int       @default(0)
@@ -265,18 +269,18 @@ model LearningProgress {
 
 // FEAT: 빈칸 학습 시도 이력 (개별 답변 저장)
 model BlankAttempt {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   studentId   String
   conceptId   String
-  stage       Stage     // READING, BLANK_EASY, BLANK_HARD, BLANK_FULL, BLANK_PAGE
-  score       Int       @default(0) // 정답률 %
-  allCorrect  Boolean   @default(false)
-  hintCount   Int       @default(0)
-  revealCount Int       @default(0)
-  createdAt   DateTime  @default(now())
+  stage       Stage // READING, BLANK_EASY, BLANK_HARD, BLANK_FULL, BLANK_PAGE
+  score       Int      @default(0) // 정답률 %
+  allCorrect  Boolean  @default(false)
+  hintCount   Int      @default(0)
+  revealCount Int      @default(0)
+  createdAt   DateTime @default(now())
 
-  student User           @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  concept Concept         @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  student User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  concept Concept          @relation(fields: [conceptId], references: [id], onDelete: Cascade)
   answers BlankAnswerLog[]
 
   @@index([studentId, conceptId, stage])
@@ -286,7 +290,7 @@ model BlankAttempt {
 model BlankAnswerLog {
   id              String  @id @default(cuid())
   attemptId       String
-  blankPosition   Int     // 빈칸 번호 (1, 2, 3...)
+  blankPosition   Int // 빈칸 번호 (1, 2, 3...)
   submittedAnswer String  @db.Text
   correctAnswer   String  @db.Text
   isCorrect       Boolean
@@ -319,14 +323,14 @@ model PointTransaction {
 
 // FEAT: XP 상점
 enum ShopItemCategory {
-  FRAME        // 아바타 테두리
-  BACKGROUND   // 프로필 카드 배경
-  TITLE        // 칭호
-  NAME_COLOR   // 닉네임 색상
-  AVATAR       // 아바타 포즈
-  EFFECT       // 아바타 이펙트 (CSS 애니메이션)
-  HAT          // 모자 악세사리
-  GLASSES      // 안경 악세사리
+  FRAME // 아바타 테두리
+  BACKGROUND // 프로필 카드 배경
+  TITLE // 칭호
+  NAME_COLOR // 닉네임 색상
+  AVATAR // 아바타 포즈
+  EFFECT // 아바타 이펙트 (CSS 애니메이션)
+  HAT // 모자 악세사리
+  GLASSES // 안경 악세사리
 }
 
 model ShopItem {
@@ -335,7 +339,7 @@ model ShopItem {
   name        String           @db.VarChar(50)
   description String?          @db.VarChar(200)
   price       Int
-  value       Json             // 인라인 스타일 객체
+  value       Json // 인라인 스타일 객체
   preview     String?          @db.VarChar(500)
   sortOrder   Int              @default(0)
   isActive    Boolean          @default(true)
@@ -361,27 +365,27 @@ model UserInventory {
 }
 
 model StudentProfile {
-  id              String    @id @default(cuid())
-  userId          String    @unique
-  totalXp         Int       @default(0)
-  level           Int       @default(1)
-  currentStreak   Int       @default(0)
-  longestStreak   Int       @default(0)
-  lastActiveAt    DateTime?
-  notifCheckedAt  DateTime? // 과제 알림 마지막 확인 시점
-  conceptNavMode  String    @default("curriculum") // curriculum | chain:<체인명>
-  blankInputMode  String?  // null=반 설정 따름, 'chip' | 'typing'
+  id                    String    @id @default(cuid())
+  userId                String    @unique
+  totalXp               Int       @default(0)
+  level                 Int       @default(1)
+  currentStreak         Int       @default(0)
+  longestStreak         Int       @default(0)
+  lastActiveAt          DateTime?
+  notifCheckedAt        DateTime? // 과제 알림 마지막 확인 시점
+  conceptNavMode        String    @default("curriculum") // curriculum | chain:<체인명>
+  blankInputMode        String? // null=반 설정 따름, 'chip' | 'typing'
   representativeBadgeId String?
-  spentXp        Int       @default(0)
-  equippedItems  Json?
+  spentXp               Int       @default(0)
+  equippedItems         Json?
   // 학생 자습 엔진 대개조 — 신규 필드
-  streakFreezeCount    Int       @default(0)  // 보유한 스트릭 프리즈 수
-  streakFreezeUsedAt   DateTime? // 마지막 프리즈 사용 시점
-  homeworkStreak       Int       @default(0)  // 숙제 연속 완료 일수
-  homeworkLastDate     DateTime? // 숙제 마지막 완료일 (동일 날짜 중복 방지)
-  everRankedFirstAt    DateTime? // 지점 랭킹 1위를 최초 달성한 시점
-  badgeShards          Int       @default(0)  // 가차 보상: 뱃지 샤드
-  updatedAt       DateTime  @updatedAt
+  streakFreezeCount     Int       @default(0) // 보유한 스트릭 프리즈 수
+  streakFreezeUsedAt    DateTime? // 마지막 프리즈 사용 시점
+  homeworkStreak        Int       @default(0) // 숙제 연속 완료 일수
+  homeworkLastDate      DateTime? // 숙제 마지막 완료일 (동일 날짜 중복 방지)
+  everRankedFirstAt     DateTime? // 지점 랭킹 1위를 최초 달성한 시점
+  badgeShards           Int       @default(0) // 가차 보상: 뱃지 샤드
+  updatedAt             DateTime  @updatedAt
 
   user                User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   representativeBadge Badge? @relation(fields: [representativeBadgeId], references: [id], onDelete: SetNull)
@@ -391,76 +395,78 @@ model StudentProfile {
 
 // FEAT-2: Question Bank
 enum QuestionDifficulty {
-  BASIC   // 하
-  MEDIUM  // 중
-  HIGH    // 상
+  BASIC // 하
+  MEDIUM // 중
+  HIGH // 상
   HIGHEST // 최상
 }
 
 enum QuestionType {
   MULTIPLE_CHOICE // 객관식
-  SHORT_ANSWER    // 단답형
-  ESSAY           // 서술형
+  SHORT_ANSWER // 단답형
+  ESSAY // 서술형
 }
 
 model Question {
-  id          String             @id @default(cuid())
-  bookCode    String             @db.VarChar(10)   // "1-1" ~ "3-2"
-  chapter     String             @db.VarChar(200)  // 대단원
-  section     String?            @db.VarChar(200)  // 중단원/코너
-  questionNum Int                                  // 문제 번호
-  pageNum     Int?                                 // PDF 페이지
+  id          String  @id @default(cuid())
+  bookCode    String  @db.VarChar(10) // "1-1" ~ "3-2"
+  chapter     String  @db.VarChar(200) // 대단원
+  section     String? @db.VarChar(200) // 중단원/코너
+  questionNum Int // 문제 번호
+  pageNum     Int? // PDF 페이지
 
-  difficulty  QuestionDifficulty
-  type        QuestionType
-  content     String             @db.Text
-  choices     Json?                                // ["①...", "②...", ...]
-  answer      String             @db.Text
+  difficulty      QuestionDifficulty
+  type            QuestionType
+  content         String             @db.Text
+  choices         Json? // ["①...", "②...", ...]
+  answer          String             @db.Text
   explanation     String?            @db.Text
-  scoringCriteria String?            @db.Text          // 채점 요소 (해설에서 분리)
-  source      String?            @db.VarChar(200)  // 교재 출처 (예: "RPM 중1-1")
-  sourceTag   String?            @db.VarChar(100)  // "핵심문제 익히기" 등
-  diagramSpec    Json?                                // 구조화된 도형 명세 (다형성 JSON)
-  diagramSVG     String?            @db.Text          // 레거시 raw SVG (하위 호환)
-  choiceColumns  Int?                                 // 보기 열 수: null=자동, 1=1열, 2=2열
+  scoringCriteria String?            @db.Text // 채점 요소 (해설에서 분리)
+  source          String?            @db.VarChar(200) // 교재 출처 (예: "RPM 중1-1")
+  sourceTag       String?            @db.VarChar(100) // "핵심문제 익히기" 등
+  diagramSpec     Json? // 구조화된 도형 명세 (다형성 JSON)
+  diagramSVG      String?            @db.Text // 레거시 raw SVG (하위 호환)
+  choiceColumns   Int? // 보기 열 수: null=자동, 1=1열, 2=2열
 
   // 영역 분류 & 계통도 연결
-  domain         String?         @db.VarChar(30)   // 5대 교육과정 영역: number | algebra | function | geometry | statistics
-  abilityDomain  String?         @db.VarChar(30)   // 4대 능력 영역: CALCULATION | UNDERSTANDING | PROBLEM_SOLVING | REASONING
-  conceptId      String?                           // 연결된 개념 (계통도 분석용)
+  domain        String? @db.VarChar(30) // 5대 교육과정 영역: number | algebra | function | geometry | statistics
+  abilityDomain String? @db.VarChar(30) // 4대 능력 영역: CALCULATION | UNDERSTANDING | PROBLEM_SOLVING | REASONING
+  conceptId     String? // 연결된 개념 (계통도 분석용)
 
   // 지점/생성자 메타데이터
-  tenantId    String?                              // 생성 지점 (null=공용/레거시)
-  createdById String?                              // 생성한 선생님
-  examPaperId String?                              // 기출 시험지 출처 (배치 추출)
+  tenantId    String? // 생성 지점 (null=공용/레거시)
+  createdById String? // 생성한 선생님
+  examPaperId String? // 기출 시험지 출처 (배치 추출)
 
   // 드래프트(임시 저장) — PDF 추출 중 크래시 대비
   isDraft      Boolean @default(false)
-  draftBatchId String? @db.VarChar(40)             // 클라이언트 생성 UUID (추출 세션 단위)
-  draftOwnerId String?                              // 드래프트 소유 선생님
+  draftBatchId String? @db.VarChar(40) // 클라이언트 생성 UUID (추출 세션 단위)
+  draftOwnerId String? // 드래프트 소유 선생님
 
   // 동형 변형(숫자만 다른 같은 유형) — 원본↔변형 연결
-  variantOfId    String?                            // 원본 문제 ID (변형이면 채워짐, 원본이면 null)
-  variantSeed    Int?                                // 같은 원본의 N번째 변형 (1, 2, 3, ...)
-  variantSource  String?  @db.VarChar(20)           // 'ai' | 'rule' | 'manual' (생성 방법)
+  variantOfId   String? // 원본 문제 ID (변형이면 채워짐, 원본이면 null)
+  variantSeed   Int? // 같은 원본의 N번째 변형 (1, 2, 3, ...)
+  variantSource String? @db.VarChar(20) // 'ai' | 'rule' | 'manual' (생성 방법)
 
-  concept        Concept?           @relation(fields: [conceptId], references: [id], onDelete: SetNull)
-  tenant         Tenant?            @relation(fields: [tenantId], references: [id], onDelete: SetNull)
-  createdBy      User?              @relation("createdQuestions", fields: [createdById], references: [id], onDelete: SetNull)
-  examPaper      ExamPaper?         @relation("ExamPaperQuestions", fields: [examPaperId], references: [id], onDelete: SetNull)
-  variantOf      Question?          @relation("QuestionVariants", fields: [variantOfId], references: [id], onDelete: Cascade)
-  variants       Question[]         @relation("QuestionVariants")
-  dailyQuestions DailyQuestion[]
+  concept         Concept?         @relation(fields: [conceptId], references: [id], onDelete: SetNull)
+  tenant          Tenant?          @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  createdBy       User?            @relation("createdQuestions", fields: [createdById], references: [id], onDelete: SetNull)
+  examPaper       ExamPaper?       @relation("ExamPaperQuestions", fields: [examPaperId], references: [id], onDelete: SetNull)
+  variantOf       Question?        @relation("QuestionVariants", fields: [variantOfId], references: [id], onDelete: Cascade)
+  variants        Question[]       @relation("QuestionVariants")
+  dailyQuestions  DailyQuestion[]
   reviewSchedules ReviewSchedule[]
 
   // 중간테이블 역방향 관계
-  testQuestions         TestQuestion[]
-  quizSessionQuestions  QuizSessionQuestion[]
-  homeworkQuestions     HomeworkQuestion[]
+  testQuestions        TestQuestion[]
+  quizSessionQuestions QuizSessionQuestion[]
+  homeworkQuestions    HomeworkQuestion[]
+  workbookItems        WorkbookSectionItem[]
 
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
+  @@unique([variantOfId, variantSeed])
   @@index([bookCode])
   @@index([bookCode, chapter])
   @@index([difficulty])
@@ -471,19 +477,18 @@ model Question {
   @@index([isDraft, draftOwnerId])
   @@index([draftBatchId])
   @@index([variantOfId])
-  @@unique([variantOfId, variantSeed])
   @@index([tenantId])
   @@index([createdById])
 }
 
 // Concept Prerequisites (self-referencing many-to-many)
 model ConceptPrerequisite {
-  id              String  @id @default(cuid())
-  conceptId       String
-  prerequisiteId  String
+  id             String @id @default(cuid())
+  conceptId      String
+  prerequisiteId String
 
-  concept       Concept @relation("HasPrerequisite", fields: [conceptId], references: [id], onDelete: Cascade)
-  prerequisite  Concept @relation("PrerequisiteFor", fields: [prerequisiteId], references: [id], onDelete: Cascade)
+  concept      Concept @relation("HasPrerequisite", fields: [conceptId], references: [id], onDelete: Cascade)
+  prerequisite Concept @relation("PrerequisiteFor", fields: [prerequisiteId], references: [id], onDelete: Cascade)
 
   @@unique([conceptId, prerequisiteId])
   @@index([conceptId])
@@ -492,30 +497,31 @@ model ConceptPrerequisite {
 
 // FEAT-3: Test System
 model Test {
-  id                  String   @id @default(cuid())
-  seq                 Int      @unique @default(autoincrement())
-  title               String   @db.VarChar(200)
-  description         String?  @db.Text
+  id                  String    @id @default(cuid())
+  seq                 Int       @unique @default(autoincrement())
+  title               String    @db.VarChar(200)
+  description         String?   @db.Text
   grade               Int
-  testType            String   @db.VarChar(30)  // concept, cumulative, chapter_final
-  questionCount       Int                        // 중간테이블 TestQuestion에서 정렬된 ID 조회 (getTestQuestionIds 헬퍼)
-  timeLimitMin        Int?                       // 제한 시간 (분)
-  shuffleOptions      Boolean  @default(false)
-  isActive            Boolean  @default(true)
-  maxAttempts         Int?                       // null=무제한, 1=재시험불가
-  defaultDueDate      DateTime?                  // 배정 시 기본 마감일
-  allowLateSubmission Boolean  @default(false)   // 기한 후 지각 제출 허용
+  testType            String    @db.VarChar(30) // concept, cumulative, chapter_final
+  questionCount       Int // 중간테이블 TestQuestion에서 정렬된 ID 조회 (getTestQuestionIds 헬퍼)
+  timeLimitMin        Int? // 제한 시간 (분)
+  shuffleOptions      Boolean   @default(false)
+  isActive            Boolean   @default(true)
+  maxAttempts         Int? // null=무제한, 1=재시험불가
+  defaultDueDate      DateTime? // 배정 시 기본 마감일
+  allowLateSubmission Boolean   @default(false) // 기한 후 지각 제출 허용
   createdBy           String
   tenantId            String?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
-  tenant          Tenant?           @relation(fields: [tenantId], references: [id])
-  creator         User              @relation("TestCreator", fields: [createdBy], references: [id])
+  tenant          Tenant?               @relation(fields: [tenantId], references: [id])
+  creator         User                  @relation("TestCreator", fields: [createdBy], references: [id])
   attempts        TestAttempt[]
   assignments     TestAssignment[]
   levelTestConfig LevelTestConfig?
   testQuestions   TestQuestion[]
+  workbookItems   WorkbookSectionItem[]
 
   @@index([grade])
   @@index([createdBy])
@@ -524,27 +530,27 @@ model Test {
 }
 
 model TestAttempt {
-  id             String    @id @default(cuid())
-  testId         String
-  studentId      String
-  attemptNumber  Int       @default(1)
-  assignmentId   String?
-  startedAt      DateTime  @default(now())
-  completedAt    DateTime?
-  score          Int       @default(0)
-  maxScore       Int       @default(0)
-  correctCount   Int       @default(0)
-  totalCount     Int       @default(0)
-  xpEarned       Int       @default(0)
-  comboMax       Int       @default(0)
-  questionOrder  Json?                                          // 셔플된 문제 순서 (string[])
-  entryMethod    String    @default("online") @db.VarChar(20)
-  enteredBy      String?
-  createdAt      DateTime  @default(now())
+  id            String    @id @default(cuid())
+  testId        String
+  studentId     String
+  attemptNumber Int       @default(1)
+  assignmentId  String?
+  startedAt     DateTime  @default(now())
+  completedAt   DateTime?
+  score         Int       @default(0)
+  maxScore      Int       @default(0)
+  correctCount  Int       @default(0)
+  totalCount    Int       @default(0)
+  xpEarned      Int       @default(0)
+  comboMax      Int       @default(0)
+  questionOrder Json? // 셔플된 문제 순서 (string[])
+  entryMethod   String    @default("online") @db.VarChar(20)
+  enteredBy     String?
+  createdAt     DateTime  @default(now())
 
-  test       Test              @relation(fields: [testId], references: [id], onDelete: Cascade)
-  student    User              @relation("StudentAttempts", fields: [studentId], references: [id], onDelete: Cascade)
-  assignment TestAssignment?   @relation(fields: [assignmentId], references: [id])
+  test       Test            @relation(fields: [testId], references: [id], onDelete: Cascade)
+  student    User            @relation("StudentAttempts", fields: [studentId], references: [id], onDelete: Cascade)
+  assignment TestAssignment? @relation(fields: [assignmentId], references: [id])
   answers    AnswerLog[]
 
   @@index([studentId])
@@ -584,24 +590,24 @@ model TestAssignment {
 }
 
 model AnswerLog {
-  id               String   @id @default(cuid())
-  attemptId        String
-  questionId       String
-  selectedAnswer   String   @db.Text
-  isCorrect        Boolean
-  timeSpentSeconds Int
-  comboCount       Int      @default(0)
-  pointsEarned     Int      @default(0)
-  statusClassification String?  @db.VarChar(20)
-  flagged          Boolean  @default(false)
-  flagReason       String?  @db.VarChar(100)
-  hintUsed         Boolean  @default(false)
+  id                    String   @id @default(cuid())
+  attemptId             String
+  questionId            String
+  selectedAnswer        String   @db.Text
+  isCorrect             Boolean
+  timeSpentSeconds      Int
+  comboCount            Int      @default(0)
+  pointsEarned          Int      @default(0)
+  statusClassification  String?  @db.VarChar(20)
+  flagged               Boolean  @default(false)
+  flagReason            String?  @db.VarChar(100)
+  hintUsed              Boolean  @default(false)
   // 1차 오답 기록 (null이면 1차 정답이었음)
   firstSelectedAnswer   String?  @db.Text
   firstTimeSpentSeconds Int?
-  createdAt        DateTime @default(now())
+  createdAt             DateTime @default(now())
 
-  attempt  TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  attempt TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
 
   @@unique([attemptId, questionId])
   @@index([attemptId])
@@ -615,20 +621,20 @@ enum InquiryStatus {
 }
 
 model Inquiry {
-  id         String        @id @default(cuid())
-  userId     String
-  title      String        @db.VarChar(200)
-  category   String        @db.VarChar(50)
-  content    String        @db.Text
-  status     InquiryStatus @default(PENDING)
-  reply      String?       @db.Text
-  repliedAt  DateTime?
-  repliedBy  String?
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+  id        String        @id @default(cuid())
+  userId    String
+  title     String        @db.VarChar(200)
+  category  String        @db.VarChar(50)
+  content   String        @db.Text
+  status    InquiryStatus @default(PENDING)
+  reply     String?       @db.Text
+  repliedAt DateTime?
+  repliedBy String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
-  user       User          @relation("InquiryAuthor", fields: [userId], references: [id])
-  replier    User?         @relation("InquiryReplier", fields: [repliedBy], references: [id])
+  user    User  @relation("InquiryAuthor", fields: [userId], references: [id])
+  replier User? @relation("InquiryReplier", fields: [repliedBy], references: [id])
 
   @@index([userId])
   @@index([status])
@@ -639,12 +645,12 @@ model DiagnosticResult {
   id              String   @id @default(cuid())
   attemptId       String   @unique
   studentId       String
-  diagnosticType  String   @db.VarChar(20)  // ENTRANCE, UNIT, LEVEL
-  recommendLevel  String   @db.VarChar(20)  // 추천 레벨
-  weakAreas       Json                       // 취약 영역 배열 [{chapter, accuracy}]
-  strongAreas     Json                       // 우수 영역 배열
-  overallAccuracy Int                        // 전체 정답률 (%)
-  domainScores    Json?                      // 4대 영역 점수 { CALCULATION: {total,correct,accuracy}, ... }
+  diagnosticType  String   @db.VarChar(20) // ENTRANCE, UNIT, LEVEL
+  recommendLevel  String   @db.VarChar(20) // 추천 레벨
+  weakAreas       Json // 취약 영역 배열 [{chapter, accuracy}]
+  strongAreas     Json // 우수 영역 배열
+  overallAccuracy Int // 전체 정답률 (%)
+  domainScores    Json? // 4대 영역 점수 { CALCULATION: {total,correct,accuracy}, ... }
   createdAt       DateTime @default(now())
 
   @@index([studentId])
@@ -653,10 +659,10 @@ model DiagnosticResult {
 
 // FEAT: Level Test Configuration
 model LevelTestConfig {
-  id              String @id @default(cuid())
-  testId          String @unique
-  questionDomains  Json   // { [questionId]: "CALCULATION"|"UNDERSTANDING"|"PROBLEM_SOLVING"|"REASONING" }
-  questionsPerPage Int?   // null = 자동, 숫자 = 페이지당 고정 문제 수
+  id               String  @id @default(cuid())
+  testId           String  @unique
+  questionDomains  Json // { [questionId]: "CALCULATION"|"UNDERSTANDING"|"PROBLEM_SOLVING"|"REASONING" }
+  questionsPerPage Int? // null = 자동, 숫자 = 페이지당 고정 문제 수
   spacing          String? @db.VarChar(10) // 문제 간 여백: compact, normal, wide (기본 normal)
 
   test Test @relation(fields: [testId], references: [id], onDelete: Cascade)
@@ -678,10 +684,10 @@ model Parent {
 model ReportHistory {
   id        String   @id @default(cuid())
   studentId String
-  type      String   @db.VarChar(30)  // WEEKLY, TEST_RESULT, DIAGNOSTIC
-  content   Json                       // 리포트 내용 JSON
+  type      String   @db.VarChar(30) // WEEKLY, TEST_RESULT, DIAGNOSTIC
+  content   Json // 리포트 내용 JSON
   sentAt    DateTime @default(now())
-  channel   String   @db.VarChar(20)  // KAKAO, SMS, EMAIL
+  channel   String   @db.VarChar(20) // KAKAO, SMS, EMAIL
 
   @@index([studentId])
   @@index([studentId, type])
@@ -695,16 +701,16 @@ enum QuizStatus {
 }
 
 model QuizSession {
-  id          String     @id @default(cuid())
-  title       String     @db.VarChar(200)
-  hostId      String
+  id                String     @id @default(cuid())
+  title             String     @db.VarChar(200)
+  hostId            String
   // 중간테이블 QuizSessionQuestion에서 정렬된 ID 조회 (getQuizQuestionIds 헬퍼)
-  status      QuizStatus @default(WAITING)
+  status            QuizStatus @default(WAITING)
   currentQ          Int        @default(0)
   joinCode          String     @unique @db.VarChar(6)
   startedAt         DateTime?
   endedAt           DateTime?
-  questionChangedAt DateTime?              // 문제 전환 시각 (클라이언트 시간 보정용)
+  questionChangedAt DateTime? // 문제 전환 시각 (클라이언트 시간 보정용)
   tenantId          String?
   createdAt         DateTime   @default(now())
 
@@ -727,7 +733,7 @@ model QuizParticipant {
   correctCount Int    @default(0)
   rank         Int?
 
-  session QuizSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  session QuizSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   answers QuizAnswerLog[]
 
   @@unique([sessionId, studentId])
@@ -736,32 +742,32 @@ model QuizParticipant {
 
 // School Information (나이스 API 수집)
 model School {
-  id              String   @id @default(cuid())
-  schoolCode      String?  @unique @db.VarChar(20)       // 나이스 표준학교코드
-  name            String   @db.VarChar(100)
-  schoolType      String   @db.VarChar(20)               // elementary, middle, high
-  regionCode      String?  @db.VarChar(10)               // 시도교육청코드 (B10=서울 등)
-  regionName      String?  @db.VarChar(30)               // 시도명 (서울, 경기 등)
-  city            String   @db.VarChar(50)               // 시도 (레거시 호환)
-  district        String   @db.VarChar(50)               // 시군구
-  address         String?  @db.VarChar(300)              // 도로명주소
+  id              String    @id @default(cuid())
+  schoolCode      String?   @unique @db.VarChar(20) // 나이스 표준학교코드
+  name            String    @db.VarChar(100)
+  schoolType      String    @db.VarChar(20) // elementary, middle, high
+  regionCode      String?   @db.VarChar(10) // 시도교육청코드 (B10=서울 등)
+  regionName      String?   @db.VarChar(30) // 시도명 (서울, 경기 등)
+  city            String    @db.VarChar(50) // 시도 (레거시 호환)
+  district        String    @db.VarChar(50) // 시군구
+  address         String?   @db.VarChar(300) // 도로명주소
   latitude        Float?
   longitude       Float?
-  foundationType  String?  @db.VarChar(20)               // 국립/공립/사립
-  coeducationType String?  @db.VarChar(20)               // 남녀공학구분
-  highSchoolType  String?  @db.VarChar(30)               // 고교유형
-  phoneNumber     String?  @db.VarChar(30)
-  homepageUrl     String?  @db.VarChar(300)
-  foundationDate  String?  @db.VarChar(20)
-  zoneId          String?  @db.VarChar(30)               // 학구ID (학구도 API)
-  eduSupportCode  String?  @db.VarChar(20)               // 교육지원청코드
-  eduSupportName  String?  @db.VarChar(50)               // 교육지원청명
-  nearbyGroupId   String?  @db.VarChar(50)               // 주변 학교 그룹 (같은 ID = 같은 그룹)
-  createdAt       DateTime @default(now())
+  foundationType  String?   @db.VarChar(20) // 국립/공립/사립
+  coeducationType String?   @db.VarChar(20) // 남녀공학구분
+  highSchoolType  String?   @db.VarChar(30) // 고교유형
+  phoneNumber     String?   @db.VarChar(30)
+  homepageUrl     String?   @db.VarChar(300)
+  foundationDate  String?   @db.VarChar(20)
+  zoneId          String?   @db.VarChar(30) // 학구ID (학구도 API)
+  eduSupportCode  String?   @db.VarChar(20) // 교육지원청코드
+  eduSupportName  String?   @db.VarChar(50) // 교육지원청명
+  nearbyGroupId   String?   @db.VarChar(50) // 주변 학교 그룹 (같은 ID = 같은 그룹)
+  createdAt       DateTime  @default(now())
   dataUpdatedAt   DateTime?
 
-  examPapers      ExamPaper[]
-  examCampaigns   ExamCampaign[]
+  examPapers    ExamPaper[]
+  examCampaigns ExamCampaign[]
 
   @@index([city, district])
   @@index([schoolType])
@@ -775,13 +781,13 @@ model School {
 model TenantNearbyGroup {
   id        String   @id @default(cuid())
   tenantId  String
-  schoolId  String                                        // 기준 학교
-  groupId   String   @db.VarChar(50)                      // 그룹ID (같은 값 = 같은 그룹)
+  schoolId  String // 기준 학교
+  groupId   String   @db.VarChar(50) // 그룹ID (같은 값 = 같은 그룹)
   createdAt DateTime @default(now())
 
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  @@unique([tenantId, schoolId])                          // 지점당 학교 하나의 그룹만
+  @@unique([tenantId, schoolId]) // 지점당 학교 하나의 그룹만
   @@index([tenantId, groupId])
   @@index([groupId])
 }
@@ -806,7 +812,7 @@ model ArithmeticAttempt {
 
   student      User                    @relation(fields: [studentId], references: [id], onDelete: Cascade)
   answers      ArithmeticAnswer[]
-  homeworkPlan ArithmeticHomeworkPlan?  @relation("HomeworkAttempts", fields: [homeworkPlanId], references: [id])
+  homeworkPlan ArithmeticHomeworkPlan? @relation("HomeworkAttempts", fields: [homeworkPlanId], references: [id])
 
   @@index([studentId])
   @@index([studentId, createdAt(sort: Desc)])
@@ -839,27 +845,28 @@ model ArithmeticHomeworkPlan {
   seq             Int      @unique @default(autoincrement())
   title           String   @db.VarChar(200)
   createdBy       String
-  categories      Json     // ArithmeticCategory[]
+  categories      Json // ArithmeticCategory[]
   level           String   @db.VarChar(10)
   dailyCount      Int
   totalDays       Int
   startDate       DateTime @db.Date
-  dailyProblems   Json     // GeneratedProblem[][]
+  dailyProblems   Json // GeneratedProblem[][]
   progressionMode String   @default("sequential") @db.VarChar(20) // sequential | round_robin | weekday
-  weekdayMap      Json?    // weekday mode: { "1": "add_1digit", ... } (0=Sun...6=Sat)
-  passingScore    Int      @default(80)    // 통과 점수 (정답률 %)
+  weekdayMap      Json? // weekday mode: { "1": "add_1digit", ... } (0=Sun...6=Sat)
+  passingScore    Int      @default(80) // 통과 점수 (정답률 %)
   retryOnFail     Boolean  @default(false) // 미통과 시 재시도 필수
   retryMode       String   @default("wrong_same") @db.VarChar(20) // wrong_same | wrong_new | all_same | all_new
-  maxRetries      Int      @default(3)     // 최대 재시도 횟수
+  maxRetries      Int      @default(3) // 최대 재시도 횟수
   isActive        Boolean  @default(true)
   tenantId        String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  tenant      Tenant?                       @relation(fields: [tenantId], references: [id])
-  creator     User                          @relation("HomeworkPlanCreator", fields: [createdBy], references: [id])
-  enrollments ArithmeticHomeworkEnrollment[]
-  attempts    ArithmeticAttempt[]           @relation("HomeworkAttempts")
+  tenant        Tenant?                        @relation(fields: [tenantId], references: [id])
+  creator       User                           @relation("HomeworkPlanCreator", fields: [createdBy], references: [id])
+  enrollments   ArithmeticHomeworkEnrollment[]
+  attempts      ArithmeticAttempt[]            @relation("HomeworkAttempts")
+  workbookItems WorkbookSectionItem[]
 
   @@index([createdBy])
   @@index([isActive])
@@ -874,7 +881,7 @@ model ArithmeticHomeworkEnrollment {
   enrolledAt DateTime @default(now())
 
   plan    ArithmeticHomeworkPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-  student User                  @relation("HomeworkEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
+  student User                   @relation("HomeworkEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([planId, studentId])
   @@index([studentId])
@@ -889,7 +896,7 @@ model ConceptHomeworkPlan {
   createdBy     String
   startDate     DateTime @db.Date
   totalDays     Int
-  dailyConcepts Json     // string[][] - 날짜별 개념 ID 배열
+  dailyConcepts Json // string[][] - 날짜별 개념 ID 배열
   requiredStage Stage    @default(BLANK_FULL) // 완료로 인정할 최소 단계
   isActive      Boolean  @default(true)
   tenantId      String?
@@ -913,7 +920,7 @@ model ConceptHomeworkEnrollment {
   enrolledAt DateTime @default(now())
 
   plan    ConceptHomeworkPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-  student User               @relation("ConceptHomeworkEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
+  student User                @relation("ConceptHomeworkEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([planId, studentId])
   @@index([studentId])
@@ -922,24 +929,25 @@ model ConceptHomeworkEnrollment {
 
 // FEAT: Question Homework Plans (문제은행 숙제)
 model QuestionHomeworkPlan {
-  id              String   @id @default(cuid())
-  seq             Int      @unique @default(autoincrement())
-  title           String   @db.VarChar(200)
-  createdBy       String
-  startDate       DateTime @db.Date
-  totalDays       Int
+  id           String   @id @default(cuid())
+  seq          Int      @unique @default(autoincrement())
+  title        String   @db.VarChar(200)
+  createdBy    String
+  startDate    DateTime @db.Date
+  totalDays    Int
   // 중간테이블 HomeworkQuestion에서 dayIndex+sortOrder로 조회 (getHomeworkAllDailyQuestionIds 헬퍼)
-  passingScore    Int      @default(80)
-  isActive        Boolean  @default(true)
-  tenantId        String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  passingScore Int      @default(80)
+  isActive     Boolean  @default(true)
+  tenantId     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  tenant           Tenant?                       @relation(fields: [tenantId], references: [id])
-  creator          User                          @relation("QuestionHomeworkPlanCreator", fields: [createdBy], references: [id])
-  enrollments      QuestionHomeworkEnrollment[]
-  attempts         QuestionHomeworkAttempt[]
+  tenant            Tenant?                      @relation(fields: [tenantId], references: [id])
+  creator           User                         @relation("QuestionHomeworkPlanCreator", fields: [createdBy], references: [id])
+  enrollments       QuestionHomeworkEnrollment[]
+  attempts          QuestionHomeworkAttempt[]
   homeworkQuestions HomeworkQuestion[]
+  workbookItems     WorkbookSectionItem[]
 
   @@index([createdBy])
   @@index([isActive])
@@ -954,7 +962,7 @@ model QuestionHomeworkEnrollment {
   enrolledAt DateTime @default(now())
 
   plan    QuestionHomeworkPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-  student User                @relation("QuestionHomeworkEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
+  student User                 @relation("QuestionHomeworkEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([planId, studentId])
   @@index([studentId])
@@ -966,7 +974,7 @@ model QuestionHomeworkAttempt {
   planId       String
   studentId    String
   dayIndex     Int
-  answers      Json      // { questionId: string, selectedAnswer: string, isCorrect: boolean }[]
+  answers      Json // { questionId: string, selectedAnswer: string, isCorrect: boolean }[]
   correctCount Int       @default(0)
   totalCount   Int       @default(0)
   score        Int       @default(0) // 정답률 %
@@ -974,7 +982,7 @@ model QuestionHomeworkAttempt {
   createdAt    DateTime  @default(now())
 
   plan    QuestionHomeworkPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-  student User               @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student User                 @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([planId, studentId, dayIndex])
   @@index([studentId])
@@ -1061,12 +1069,12 @@ model FeatureFlag {
   key       String   @db.VarChar(50)
   enabled   Boolean  @default(true)
   label     String   @db.VarChar(100)
-  tenantId  String?                          // null = 글로벌 기본값, 값 있으면 테넌트 전용
+  tenantId  String? // null = 글로벌 기본값, 값 있으면 테넌트 전용
   updatedAt DateTime @updatedAt
 
   tenant Tenant? @relation(fields: [tenantId], references: [id])
 
-  @@unique([key, tenantId])  // 테넌트별 키 고유
+  @@unique([key, tenantId]) // 테넌트별 키 고유
   @@index([tenantId])
 }
 
@@ -1077,7 +1085,7 @@ model TimeAttackRecord {
   category     String   @db.VarChar(30)
   level        String   @db.VarChar(10)
   correctCount Int
-  totalTime    Int      // 제한시간(초), 항상 30
+  totalTime    Int // 제한시간(초), 항상 30
   createdAt    DateTime @default(now())
 
   student User               @relation(fields: [studentId], references: [id], onDelete: Cascade)
@@ -1088,17 +1096,17 @@ model TimeAttackRecord {
 }
 
 model TimeAttackAnswer {
-  id               String           @id @default(cuid())
-  recordId         String
-  problemIndex     Int
-  content          String
-  choices          Json
-  selectedAnswer   String
-  correctAnswer    String
-  isCorrect        Boolean
-  timeSpentMs      Int              @default(0)
-  comboCount       Int              @default(0)
-  createdAt        DateTime         @default(now())
+  id             String   @id @default(cuid())
+  recordId       String
+  problemIndex   Int
+  content        String
+  choices        Json
+  selectedAnswer String
+  correctAnswer  String
+  isCorrect      Boolean
+  timeSpentMs    Int      @default(0)
+  comboCount     Int      @default(0)
+  createdAt      DateTime @default(now())
 
   record TimeAttackRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
 
@@ -1106,18 +1114,18 @@ model TimeAttackAnswer {
 }
 
 model RevengeAttempt {
-  id               String          @id @default(cuid())
+  id               String   @id @default(cuid())
   studentId        String
-  chapter          String          @db.VarChar(200)
-  difficulty       String          @db.VarChar(20)
-  correctCount     Int             @default(0)
-  totalCount       Int             @default(0)
-  accuracy         Int             @default(0)
-  xpEarned         Int             @default(0)
-  isVictory        Boolean         @default(false)
-  totalTimeSeconds Int             @default(0)
-  completedAt      DateTime        @default(now())
-  createdAt        DateTime        @default(now())
+  chapter          String   @db.VarChar(200)
+  difficulty       String   @db.VarChar(20)
+  correctCount     Int      @default(0)
+  totalCount       Int      @default(0)
+  accuracy         Int      @default(0)
+  xpEarned         Int      @default(0)
+  isVictory        Boolean  @default(false)
+  totalTimeSeconds Int      @default(0)
+  completedAt      DateTime @default(now())
+  createdAt        DateTime @default(now())
 
   answers RevengeAnswer[]
   student User            @relation(fields: [studentId], references: [id], onDelete: Cascade)
@@ -1127,15 +1135,15 @@ model RevengeAttempt {
 }
 
 model RevengeAnswer {
-  id               String         @id @default(cuid())
+  id               String   @id @default(cuid())
   attemptId        String
   questionId       String
   problemIndex     Int
   selectedAnswer   String
   correctAnswer    String
   isCorrect        Boolean
-  timeSpentSeconds Int            @default(0)
-  createdAt        DateTime       @default(now())
+  timeSpentSeconds Int      @default(0)
+  createdAt        DateTime @default(now())
 
   attempt RevengeAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
 
@@ -1152,11 +1160,11 @@ model DailyQuestion {
   tenantId   String?
   createdAt  DateTime @default(now())
 
-  tenant   Tenant?              @relation(fields: [tenantId], references: [id])
-  question Question            @relation(fields: [questionId], references: [id])
+  tenant   Tenant?                @relation(fields: [tenantId], references: [id])
+  question Question               @relation(fields: [questionId], references: [id])
   attempts DailyQuestionAttempt[]
 
-  @@unique([date, tenantId])  // 테넌트별 일일 문제
+  @@unique([date, tenantId]) // 테넌트별 일일 문제
   @@index([date])
   @@index([tenantId])
 }
@@ -1181,7 +1189,7 @@ model DailyMission {
   id          String   @id @default(cuid())
   studentId   String
   date        DateTime @db.Date
-  missions    Json     // [{type, target, current, label, completed}]
+  missions    Json // [{type, target, current, label, completed}]
   allComplete Boolean  @default(false)
   xpAwarded   Int      @default(0)
   createdAt   DateTime @default(now())
@@ -1195,20 +1203,20 @@ model DailyMission {
 
 // FEAT: 간격 반복 복습 스케줄
 model ReviewSchedule {
-  id          String    @id @default(cuid())
-  studentId   String
-  questionId  String?
-  conceptId   String?
-  sourceType  String    @db.VarChar(30)   // "test" | "blank" | "arithmetic"
-  sourceId    String?   @db.VarChar(100)
-  interval    Int                          // 현재 간격 (일): 1, 3, 7, 14, 30
-  reviewAt    DateTime                     // 복습 예정일
-  completedAt DateTime?                    // 복습 완료일
-  score       Int?                         // 복습 시 정답률
-  streak      Int       @default(0)        // 연속 정답 횟수
-  status      String    @default("active") @db.VarChar(20)  // "active" | "completed" | "failed"
-  failureCount Int      @default(0)        // 복습 중 오답 누적 횟수
-  createdAt   DateTime  @default(now())
+  id           String    @id @default(cuid())
+  studentId    String
+  questionId   String?
+  conceptId    String?
+  sourceType   String    @db.VarChar(30) // "test" | "blank" | "arithmetic"
+  sourceId     String?   @db.VarChar(100)
+  interval     Int // 현재 간격 (일): 1, 3, 7, 14, 30
+  reviewAt     DateTime // 복습 예정일
+  completedAt  DateTime? // 복습 완료일
+  score        Int? // 복습 시 정답률
+  streak       Int       @default(0) // 연속 정답 횟수
+  status       String    @default("active") @db.VarChar(20) // "active" | "completed" | "failed"
+  failureCount Int       @default(0) // 복습 중 오답 누적 횟수
+  createdAt    DateTime  @default(now())
 
   student  User      @relation("UserReviews", fields: [studentId], references: [id], onDelete: Cascade)
   question Question? @relation(fields: [questionId], references: [id])
@@ -1254,7 +1262,7 @@ model Classroom {
   grade     Int?
   teacherId String?
   tenantId  String?
-  settings  Json?    // { blankInputMode?: 'chip' | 'typing' }
+  settings  Json? // { blankInputMode?: 'chip' | 'typing' }
   createdAt DateTime @default(now())
 
   tenant        Tenant?        @relation(fields: [tenantId], references: [id])
@@ -1279,13 +1287,13 @@ model LearningCourse {
   description String?  @db.Text
   createdBy   String
   isActive    Boolean  @default(true)
-  mode        String   @default("free") @db.VarChar(20)  // "sequential" | "free"
+  mode        String   @default("free") @db.VarChar(20) // "sequential" | "free"
   tenantId    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  tenant      Tenant?                   @relation(fields: [tenantId], references: [id])
-  creator     User                      @relation("LearningCourseCreator", fields: [createdBy], references: [id])
+  tenant      Tenant?                    @relation(fields: [tenantId], references: [id])
+  creator     User                       @relation("LearningCourseCreator", fields: [createdBy], references: [id])
   concepts    LearningCourseConcept[]
   enrollments LearningCourseEnrollment[]
 
@@ -1296,7 +1304,7 @@ model LearningCourse {
 
 model LearningCourseConcept {
   id        String @id @default(cuid())
-  courseId   String
+  courseId  String
   conceptId String
   sortOrder Int    @default(0)
 
@@ -1309,7 +1317,7 @@ model LearningCourseConcept {
 
 model LearningCourseEnrollment {
   id          String       @id @default(cuid())
-  courseId     String
+  courseId    String
   studentId   String
   sortOrder   Int          @default(0)
   status      CourseStatus @default(LOCKED)
@@ -1376,8 +1384,8 @@ model TenantLicense {
   tenantId  String
   feature   LicenseFeature
   maxSeats  Int
-  usedSeats Int            @default(0)  // 현재 배정 수 (비정규화, 빠른 조회)
-  expiresAt DateTime?                   // null = 무기한
+  usedSeats Int            @default(0) // 현재 배정 수 (비정규화, 빠른 조회)
+  expiresAt DateTime? // null = 무기한
   memo      String?        @db.Text
   isActive  Boolean        @default(true)
   createdAt DateTime       @default(now())
@@ -1386,7 +1394,7 @@ model TenantLicense {
   tenant          Tenant           @relation(fields: [tenantId], references: [id])
   studentLicenses StudentLicense[]
 
-  @@unique([tenantId, feature])  // 지점당 기능별 하나
+  @@unique([tenantId, feature]) // 지점당 기능별 하나
   @@index([tenantId])
 }
 
@@ -1396,10 +1404,10 @@ model StudentLicense {
   studentId       String
   tenantLicenseId String
   feature         LicenseFeature // 비정규화 (빠른 조회)
-  expiresAt       DateTime?      // null = TenantLicense 만료일 따름
-  assignedBy      String         // 배정한 OWNER의 userId
+  expiresAt       DateTime? // null = TenantLicense 만료일 따름
+  assignedBy      String // 배정한 OWNER의 userId
   assignedAt      DateTime       @default(now())
-  revokedAt       DateTime?      // null = 활성 중
+  revokedAt       DateTime? // null = 활성 중
 
   student        User          @relation("StudentLicenses", fields: [studentId], references: [id])
   tenantLicense  TenantLicense @relation(fields: [tenantLicenseId], references: [id])
@@ -1414,40 +1422,41 @@ model StudentLicense {
 // ══════════════════════════════════════════════════════════════
 
 model ExamPaper {
-  id            String          @id @default(cuid())
-  tenantId      String
-  teacherId     String
-  studentId     String?
-  title         String          @db.VarChar(200)
-  subject       ExamSubject     @default(MATH)
-  grade         String          @db.VarChar(30)
-  category      String?         @db.VarChar(50)
-  unit          String?         @db.VarChar(200)
-  examScope     Json?
-  schoolName    String?         @db.VarChar(100)
-  schoolId      String?         @db.VarChar(50)               // FK → School (자동 매칭)
-  examType      String          @default("blank") @db.VarChar(20)
-  fileUrls      String          @db.Text
-  fileType      String          @db.VarChar(20)
-  status        ExamPaperStatus @default(PENDING)
-  analysisStep  Int             @default(0)   // 0=대기, 1=파일로드, 2=분류, 3=AI분석, 4=저장
-  errorMessage  String?         @db.Text
-  extractedToBankAt DateTime?                  // 문제은행에 추출된 시각 (내신대비 자동 감지용)
-  extractedQuestionCount Int?                  // 추출된 문제 수
+  id                     String          @id @default(cuid())
+  tenantId               String
+  teacherId              String
+  studentId              String?
+  title                  String          @db.VarChar(200)
+  subject                ExamSubject     @default(MATH)
+  grade                  String          @db.VarChar(30)
+  category               String?         @db.VarChar(50)
+  unit                   String?         @db.VarChar(200)
+  examScope              Json?
+  schoolName             String?         @db.VarChar(100)
+  schoolId               String?         @db.VarChar(50) // FK → School (자동 매칭)
+  examType               String          @default("blank") @db.VarChar(20)
+  fileUrls               String          @db.Text
+  fileType               String          @db.VarChar(20)
+  status                 ExamPaperStatus @default(PENDING)
+  analysisStep           Int             @default(0) // 0=대기, 1=파일로드, 2=분류, 3=AI분석, 4=저장
+  errorMessage           String?         @db.Text
+  extractedToBankAt      DateTime? // 문제은행에 추출된 시각 (내신대비 자동 감지용)
+  extractedQuestionCount Int? // 추출된 문제 수
   // ── 배치 추출 승인/재시도 메타 ──
-  extractApproved     Boolean   @default(false)  // SUPER_ADMIN 승인 여부
-  extractApprovedBy   String?                     // 승인자 userId
-  extractApprovedAt   DateTime?
-  extractAttempts     Int       @default(0)       // 배치 시도 횟수
-  lastExtractError    String?   @db.Text          // 최근 추출 실패 사유
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  extractApproved        Boolean         @default(false) // SUPER_ADMIN 승인 여부
+  extractApprovedBy      String? // 승인자 userId
+  extractApprovedAt      DateTime?
+  extractAttempts        Int             @default(0) // 배치 시도 횟수
+  lastExtractError       String?         @db.Text // 최근 추출 실패 사유
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
 
-  teacher       User            @relation("ExamPaperTeacher", fields: [teacherId], references: [id])
-  student       User?           @relation("ExamPaperStudent", fields: [studentId], references: [id])
-  school        School?         @relation(fields: [schoolId], references: [id])
-  analyses      ExamAnalysis[]
-  extractedQuestions Question[] @relation("ExamPaperQuestions")
+  teacher            User                  @relation("ExamPaperTeacher", fields: [teacherId], references: [id])
+  student            User?                 @relation("ExamPaperStudent", fields: [studentId], references: [id])
+  school             School?               @relation(fields: [schoolId], references: [id])
+  analyses           ExamAnalysis[]
+  extractedQuestions Question[]            @relation("ExamPaperQuestions")
+  workbookItems      WorkbookSectionItem[]
 
   @@index([tenantId])
   @@index([teacherId])
@@ -1458,50 +1467,50 @@ model ExamPaper {
 
 // ExamPaper 배치 추출 스케줄
 model ExamExtractSchedule {
-  id           String   @id @default(cuid())
-  tenantId     String?                      // 스케줄 생성 지점 (참고용)
-  scheduledAt  DateTime                     // 실행 예정 시각
-  status       String   @default("PENDING") @db.VarChar(20)  // PENDING | RUNNING | DONE | FAILED | CANCELLED
-  examPaperIds String[]                     // 처리할 시험지 ID 목록
-  createdBy    String                       // SUPER_ADMIN userId
-  createdAt    DateTime @default(now())
+  id           String    @id @default(cuid())
+  tenantId     String? // 스케줄 생성 지점 (참고용)
+  scheduledAt  DateTime // 실행 예정 시각
+  status       String    @default("PENDING") @db.VarChar(20) // PENDING | RUNNING | DONE | FAILED | CANCELLED
+  examPaperIds String[] // 처리할 시험지 ID 목록
+  createdBy    String // SUPER_ADMIN userId
+  createdAt    DateTime  @default(now())
   startedAt    DateTime?
   finishedAt   DateTime?
-  result       Json?                        // { success, failed, skipped, errors: [{id, error}] }
+  result       Json? // { success, failed, skipped, errors: [{id, error}] }
 
   @@index([status, scheduledAt])
   @@index([createdBy])
 }
 
 model ExamAnalysis {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   examPaperId     String
   questions       Json
   summary         Json?
   markDetection   Json?
   crossValidation Json?
-  modelVersion    String?  @db.VarChar(50)
+  modelVersion    String?   @db.VarChar(50)
   totalQuestions  Int?
   totalPoints     Int?
   earnedPoints    Int?
   analyzedAt      DateTime?
-  createdAt       DateTime @default(now())
+  createdAt       DateTime  @default(now())
 
-  examPaper       ExamPaper              @relation(fields: [examPaperId], references: [id], onDelete: Cascade)
-  extensions      ExamAnalysisExtension[]
+  examPaper  ExamPaper               @relation(fields: [examPaperId], references: [id], onDelete: Cascade)
+  extensions ExamAnalysisExtension[]
 
   @@index([examPaperId])
 }
 
 model ExamAnalysisExtension {
-  id            String   @id @default(cuid())
-  analysisId    String
-  agentType     String   @db.VarChar(30)
-  result        Json
-  errorMessage  String?  @db.Text
-  createdAt     DateTime @default(now())
+  id           String   @id @default(cuid())
+  analysisId   String
+  agentType    String   @db.VarChar(30)
+  result       Json
+  errorMessage String?  @db.Text
+  createdAt    DateTime @default(now())
 
-  analysis      ExamAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  analysis ExamAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
 
   @@unique([analysisId, agentType])
   @@index([analysisId])
@@ -1510,15 +1519,15 @@ model ExamAnalysisExtension {
 // ── 패턴 시스템 (오답 패턴 DB) ──
 
 model ExamProblemCategory {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   subject     ExamSubject
-  name        String   @db.VarChar(100)
-  nameEn      String?  @db.VarChar(100)
-  description String?  @db.Text
+  name        String      @db.VarChar(100)
+  nameEn      String?     @db.VarChar(100)
+  description String?     @db.Text
   parentId    String?
-  sortOrder   Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
+  sortOrder   Int         @default(0)
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
 
   parent       ExamProblemCategory?  @relation("ExamCategoryHierarchy", fields: [parentId], references: [id])
   children     ExamProblemCategory[] @relation("ExamCategoryHierarchy")
@@ -1546,21 +1555,21 @@ model ExamProblemType {
 }
 
 model ExamErrorPattern {
-  id              String      @id @default(cuid())
-  problemTypeId   String?
-  subject         ExamSubject
-  name            String      @db.VarChar(200)
-  description     String      @db.Text
-  errorType       String      @default("concept") @db.VarChar(30)
-  frequency       Int         @default(0)
-  severity        Int         @default(1)
-  wrongExamples   Json?
-  correctExamples Json?
-  feedbackMessage String?     @db.Text
+  id                String      @id @default(cuid())
+  problemTypeId     String?
+  subject           ExamSubject
+  name              String      @db.VarChar(200)
+  description       String      @db.Text
+  errorType         String      @default("concept") @db.VarChar(30)
+  frequency         Int         @default(0)
+  severity          Int         @default(1)
+  wrongExamples     Json?
+  correctExamples   Json?
+  feedbackMessage   String?     @db.Text
   detectionKeywords Json?
-  isActive        Boolean     @default(true)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  isActive          Boolean     @default(true)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
 
   problemType  ExamProblemType?          @relation(fields: [problemTypeId], references: [id], onDelete: SetNull)
   matchHistory ExamPatternMatchHistory[]
@@ -1570,31 +1579,31 @@ model ExamErrorPattern {
 }
 
 model ExamPromptTemplate {
-  id          String      @id @default(cuid())
-  subject     ExamSubject
-  agentType   String      @db.VarChar(30)
-  name        String      @db.VarChar(200)
-  version     Int         @default(1)
-  template    String      @db.Text
-  variables   Json?
-  isActive    Boolean     @default(true)
-  isDefault   Boolean     @default(false)
-  createdBy   String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id        String      @id @default(cuid())
+  subject   ExamSubject
+  agentType String      @db.VarChar(30)
+  name      String      @db.VarChar(200)
+  version   Int         @default(1)
+  template  String      @db.Text
+  variables Json?
+  isActive  Boolean     @default(true)
+  isDefault Boolean     @default(false)
+  createdBy String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 
   @@unique([subject, agentType, version])
   @@index([subject, agentType, isActive])
 }
 
 model ExamPatternExample {
-  id          String      @id @default(cuid())
-  patternId   String
-  subject     ExamSubject
-  input       String      @db.Text
-  output      String      @db.Text
-  metadata    Json?
-  createdAt   DateTime    @default(now())
+  id        String      @id @default(cuid())
+  patternId String
+  subject   ExamSubject
+  input     String      @db.Text
+  output    String      @db.Text
+  metadata  Json?
+  createdAt DateTime    @default(now())
 
   @@index([patternId])
   @@index([subject])
@@ -1608,7 +1617,7 @@ model ExamPatternMatchHistory {
   confidence  Float
   matchedAt   DateTime @default(now())
 
-  pattern     ExamErrorPattern @relation(fields: [patternId], references: [id], onDelete: Cascade)
+  pattern ExamErrorPattern @relation(fields: [patternId], references: [id], onDelete: Cascade)
 
   @@index([patternId])
   @@index([analysisId])
@@ -1617,21 +1626,21 @@ model ExamPatternMatchHistory {
 // ── 트렌드 + 참조 문제 ──
 
 model ExamSchoolTrend {
-  id             String      @id @default(cuid())
-  tenantId       String
-  subject        ExamSubject
-  grade          String      @db.VarChar(30)
-  period         String      @db.VarChar(30)
-  schoolName     String?     @db.VarChar(100)
-  trendData      Json
-  sampleSize     Int         @default(0)
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  id         String      @id @default(cuid())
+  tenantId   String
+  subject    ExamSubject
+  grade      String      @db.VarChar(30)
+  period     String      @db.VarChar(30)
+  schoolName String?     @db.VarChar(100)
+  trendData  Json
+  sampleSize Int         @default(0)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
 
   // 확장 필드
-  trendSummary   Json?       // { difficultyLevel, characteristics, focusAreas }
-  aiInsight      String?     @db.Text
-  topicFrequency Json?       // [{topic, count, pct, avgDifficulty, totalPoints}]
+  trendSummary   Json? // { difficultyLevel, characteristics, focusAreas }
+  aiInsight      String? @db.Text
+  topicFrequency Json? // [{topic, count, pct, avgDifficulty, totalPoints}]
 
   @@index([tenantId, subject, grade])
   @@index([period])
@@ -1639,27 +1648,27 @@ model ExamSchoolTrend {
 }
 
 model ExamQuestionReference {
-  id             String      @id @default(cuid())
-  subject        ExamSubject
-  grade          String      @db.VarChar(30)
-  difficulty     String      @db.VarChar(20)
-  questionType   String      @db.VarChar(30)
-  content        String      @db.Text
-  answer         String?     @db.Text
-  source         String?     @db.VarChar(200)
-  metadata       Json?
-  createdAt      DateTime    @default(now())
+  id           String      @id @default(cuid())
+  subject      ExamSubject
+  grade        String      @db.VarChar(30)
+  difficulty   String      @db.VarChar(20)
+  questionType String      @db.VarChar(30)
+  content      String      @db.Text
+  answer       String?     @db.Text
+  source       String?     @db.VarChar(200)
+  metadata     Json?
+  createdAt    DateTime    @default(now())
 
   // 자동수집 + 검토 워크플로 필드
-  reviewStatus   String      @default("pending") @db.VarChar(20) // pending, approved, rejected
+  reviewStatus   String    @default("pending") @db.VarChar(20) // pending, approved, rejected
   examPaperId    String?
   analysisId     String?
   questionNumber Int?
   confidence     Float?
-  topicHierarchy String?     @db.VarChar(300)
+  topicHierarchy String?   @db.VarChar(300)
   reviewedAt     DateTime?
   reviewedBy     String?
-  reviewNote     String?     @db.Text
+  reviewNote     String?   @db.Text
 
   @@index([subject, grade])
   @@index([difficulty])
@@ -1670,18 +1679,18 @@ model ExamQuestionReference {
 // ── 피드백 시스템 (선생님 교정 → 학습 루프) ──
 
 model ExamFeedback {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   tenantId       String
   examPaperId    String
   analysisId     String?
   questionNumber Int?
-  feedbackType   String   @db.VarChar(30) // wrong_topic, wrong_difficulty, wrong_recognition, other
+  feedbackType   String    @db.VarChar(30) // wrong_topic, wrong_difficulty, wrong_recognition, other
   correction     Json?
-  comment        String?  @db.Text
+  comment        String?   @db.Text
   teacherId      String
-  status         String   @default("pending") @db.VarChar(20) // pending, processed, applied
+  status         String    @default("pending") @db.VarChar(20) // pending, processed, applied
   processedAt    DateTime?
-  createdAt      DateTime @default(now())
+  createdAt      DateTime  @default(now())
 
   @@index([tenantId])
   @@index([examPaperId])
@@ -1711,52 +1720,52 @@ model LearnedPattern {
 // ══════════════════════════════════════════════════════════════
 
 enum ExamCampaignType {
-  MIDTERM     // 중간고사
-  FINAL       // 기말고사
+  MIDTERM // 중간고사
+  FINAL // 기말고사
   PERFORMANCE // 수행평가 (확장용)
 }
 
 enum ExamCampaignStatus {
-  PREPARING  // 큐레이션 진행 중
-  ACTIVE     // 학생 학습 중
-  COMPLETED  // 시험 후 종료
-  ARCHIVED   // 보관
+  PREPARING // 큐레이션 진행 중
+  ACTIVE // 학생 학습 중
+  COMPLETED // 시험 후 종료
+  ARCHIVED // 보관
 }
 
 /// 내신 시험을 D-day까지 자동 학습으로 준비하는 캠페인.
 /// 선생님이 학교+학년+시험구분+범위를 지정하면, 큐레이터가
 /// 같은/인근 학교 기출 + 단원 매칭 문제 + 출제 패턴을 모아 캠페인 풀을 만든다.
 model ExamCampaign {
-  id              String              @id @default(cuid())
-  seq             Int                 @unique @default(autoincrement())
-  tenantId        String
-  classroomId     String?
-  schoolId        String?
-  schoolName      String?             @db.VarChar(100)
-  title           String              @db.VarChar(200)
-  grade           String              @db.VarChar(30)   // "middle_2", "high_algebra" 등
-  semester        Int                                    // 1 | 2 (고등은 0)
-  examType        ExamCampaignType
-  examDate        DateTime            @db.Date           // 시험일 (D-day 기준)
-  isDateTentative  Boolean            @default(false)    // 임시 시험일 여부 (학교 공지 전 추정)
-  isScopeTentative Boolean            @default(false)    // 임시 시험범위 여부 (확정 전 예상 범위)
-  scopeChapters   Json                                    // [{chapter: string, sections?: string[]}]
-  status          ExamCampaignStatus  @default(PREPARING)
+  id               String             @id @default(cuid())
+  seq              Int                @unique @default(autoincrement())
+  tenantId         String
+  classroomId      String?
+  schoolId         String?
+  schoolName       String?            @db.VarChar(100)
+  title            String             @db.VarChar(200)
+  grade            String             @db.VarChar(30) // "middle_2", "high_algebra" 등
+  semester         Int // 1 | 2 (고등은 0)
+  examType         ExamCampaignType
+  examDate         DateTime           @db.Date // 시험일 (D-day 기준)
+  isDateTentative  Boolean            @default(false) // 임시 시험일 여부 (학교 공지 전 추정)
+  isScopeTentative Boolean            @default(false) // 임시 시험범위 여부 (확정 전 예상 범위)
+  scopeChapters    Json // [{chapter: string, sections?: string[]}]
+  status           ExamCampaignStatus @default(PREPARING)
 
   // 큐레이션 결과 (curator 1회 실행)
-  curatedQuestionIds Json?            // string[]  (기출 + 매칭 문제)
-  curatedConceptIds  Json?            // string[]  (시험범위 개념)
-  patternAnalysis    Json?            // PatternAnalysis 구조 (출제 빈도/난이도/킬러유형)
+  curatedQuestionIds Json? // string[]  (기출 + 매칭 문제)
+  curatedConceptIds  Json? // string[]  (시험범위 개념)
+  patternAnalysis    Json? // PatternAnalysis 구조 (출제 빈도/난이도/킬러유형)
   curatedAt          DateTime?
 
-  createdById     String
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  tenant      Tenant      @relation(fields: [tenantId], references: [id])
-  classroom   Classroom?  @relation(fields: [classroomId], references: [id])
-  school      School?     @relation(fields: [schoolId], references: [id])
-  createdBy   User        @relation("ExamCampaignCreator", fields: [createdById], references: [id])
+  tenant      Tenant                   @relation(fields: [tenantId], references: [id])
+  classroom   Classroom?               @relation(fields: [classroomId], references: [id])
+  school      School?                  @relation(fields: [schoolId], references: [id])
+  createdBy   User                     @relation("ExamCampaignCreator", fields: [createdById], references: [id])
   enrollments ExamCampaignEnrollment[]
 
   @@index([tenantId])
@@ -1768,20 +1777,20 @@ model ExamCampaign {
 
 /// 학생별 캠페인 등록. P2에서 schedule(D-day 일정)이 자동 생성된다.
 model ExamCampaignEnrollment {
-  id              String       @id @default(cuid())
-  campaignId      String
-  studentId       String
-  status          String       @default("ACTIVE") @db.VarChar(20) // ACTIVE | COMPLETED | DROPPED
-  schedule        Json?        // [{dayIndex, date, phase, activities: [{type, refId, completed}]}]
-  weakChapters    Json?        // string[]
-  progressPct     Int          @default(0)
-  predictedGrade  String?      @db.VarChar(10)
-  startedAt       DateTime?
-  completedAt     DateTime?
-  enrolledAt      DateTime     @default(now())
+  id             String    @id @default(cuid())
+  campaignId     String
+  studentId      String
+  status         String    @default("ACTIVE") @db.VarChar(20) // ACTIVE | COMPLETED | DROPPED
+  schedule       Json? // [{dayIndex, date, phase, activities: [{type, refId, completed}]}]
+  weakChapters   Json? // string[]
+  progressPct    Int       @default(0)
+  predictedGrade String?   @db.VarChar(10)
+  startedAt      DateTime?
+  completedAt    DateTime?
+  enrolledAt     DateTime  @default(now())
 
-  campaign  ExamCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  student   User         @relation("ExamCampaignEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
+  campaign ExamCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  student  User         @relation("ExamCampaignEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([campaignId, studentId])
   @@index([studentId])
@@ -1795,7 +1804,7 @@ model ClassCompetitionWeek {
   tenantId     String
   weekStart    DateTime
   weekEnd      DateTime
-  results      Json     // [{ classroomId, name, totalXp, memberCount, rank }]
+  results      Json // [{ classroomId, name, totalXp, memberCount, rank }]
   winnerId     String?
   bonusAwarded Boolean  @default(false)
   createdAt    DateTime @default(now())
@@ -1812,11 +1821,11 @@ model ClassCompetitionWeek {
 
 /// 답 보기/힌트 사용 로그 — hidden_answer 뱃지 조건용
 model RevealLog {
-  id        String   @id @default(cuid())
-  userId    String
-  kind      String   @db.VarChar(30)   // 'hint' | 'answer_reveal' | 'auto_reveal'
-  referenceId String? @db.VarChar(100) // questionId 등 (옵션)
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  userId      String
+  kind        String   @db.VarChar(30) // 'hint' | 'answer_reveal' | 'auto_reveal'
+  referenceId String?  @db.VarChar(100) // questionId 등 (옵션)
+  createdAt   DateTime @default(now())
 
   @@index([userId, createdAt(sort: Desc)])
 }
@@ -1826,9 +1835,9 @@ model DailyRoulette {
   id          String   @id @default(cuid())
   studentId   String
   date        DateTime @db.Date
-  rewardType  String   @db.VarChar(30)  // 'xp_small' | 'xp_medium' | 'xp_large' | 'streak_freeze' | 'badge_shard' | 'jackpot'
-  rewardValue Int      @default(0)       // 실제 지급된 값 (XP 등)
-  rewardMeta  Json?                      // 추가 메타 정보
+  rewardType  String   @db.VarChar(30) // 'xp_small' | 'xp_medium' | 'xp_large' | 'streak_freeze' | 'badge_shard' | 'jackpot'
+  rewardValue Int      @default(0) // 실제 지급된 값 (XP 등)
+  rewardMeta  Json? // 추가 메타 정보
   createdAt   DateTime @default(now())
 
   @@unique([studentId, date])
@@ -1840,8 +1849,8 @@ model TutorChatLog {
   id         String   @id @default(cuid())
   userId     String
   questionId String?
-  studentQ   String   @db.Text  // 학생 질문 (또는 "AI에게 물어보기" 자동 생성)
-  aiAnswer   String   @db.Text  // AI 응답
+  studentQ   String   @db.Text // 학생 질문 (또는 "AI에게 물어보기" 자동 생성)
+  aiAnswer   String   @db.Text // AI 응답
   createdAt  DateTime @default(now())
 
   @@index([userId, createdAt(sort: Desc)])
@@ -1854,28 +1863,28 @@ model TutorChatLog {
 //   - statementId FK는 Phase 2에서 활성화 (DB OxStatement 마이그레이션 후)
 model OxStatement {
   id          String   @id @default(cuid())
-  categoryId  String   @db.VarChar(40)      // [legacy] 압축 카테고리 (호환용 유지)
+  categoryId  String   @db.VarChar(40) // [legacy] 압축 카테고리 (호환용 유지)
   conceptId   String?
-  level       String   @db.VarChar(10)     // 'easy'|'medium'|'hard'
-  content     String   @db.Text             // 진술문 (LaTeX 포함 가능)
-  answer      String   @db.VarChar(1)       // 'O' | 'X'
+  level       String   @db.VarChar(10) // 'easy'|'medium'|'hard'
+  content     String   @db.Text // 진술문 (LaTeX 포함 가능)
+  answer      String   @db.VarChar(1) // 'O' | 'X'
   explanation String?  @db.Text
-  source      String   @db.VarChar(20)     // 'curated' | 'algorithm' | 'ai'
+  source      String   @db.VarChar(20) // 'curated' | 'algorithm' | 'ai'
   isActive    Boolean  @default(true)
   createdBy   String?
-  tenantId    String?                        // null=글로벌
+  tenantId    String? // null=글로벌
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // ── Phase 3 분류 체계 (curriculum.ts 표준 명칭) ──
-  schoolLevel  String?  @db.VarChar(20)   // 'elementary' | 'middle' | 'high'
-  grade        String?  @db.VarChar(20)   // 'middle_1' | 'middle_2' | ...
-  semester     Int?                        // 1 | 2 (고등=0)
-  part         String?  @db.VarChar(20)   // 'calc' | 'algebra' | 'func' | 'geo' | 'data'
-  chapter      String?  @db.VarChar(100)  // 대단원 (예: '소인수분해')
-  section      String?  @db.VarChar(100)  // 중단원 (예: '소인수분해')
-  sectionSub   String?  @db.VarChar(100)  // 소단원
-  questionType String?  @db.VarChar(30)   // 'definition' | 'property' | 'computation' | 'application' | 'misconception'
+  schoolLevel  String? @db.VarChar(20) // 'elementary' | 'middle' | 'high'
+  grade        String? @db.VarChar(20) // 'middle_1' | 'middle_2' | ...
+  semester     Int? // 1 | 2 (고등=0)
+  part         String? @db.VarChar(20) // 'calc' | 'algebra' | 'func' | 'geo' | 'data'
+  chapter      String? @db.VarChar(100) // 대단원 (예: '소인수분해')
+  section      String? @db.VarChar(100) // 중단원 (예: '소인수분해')
+  sectionSub   String? @db.VarChar(100) // 소단원
+  questionType String? @db.VarChar(30) // 'definition' | 'property' | 'computation' | 'application' | 'misconception'
 
   concept Concept? @relation(fields: [conceptId], references: [id], onDelete: SetNull)
 
@@ -1901,7 +1910,7 @@ model OxQuizAttempt {
   completedAt      DateTime?
   createdAt        DateTime  @default(now())
 
-  homeworkPlanId   String?   // null=자유연습, 값=숙제 응시
+  homeworkPlanId   String? // null=자유연습, 값=숙제 응시
   homeworkDayIndex Int?
 
   student      User           @relation(fields: [studentId], references: [id], onDelete: Cascade)
@@ -1918,7 +1927,7 @@ model OxQuizAnswer {
   id               String   @id @default(cuid())
   attemptId        String
   problemIndex     Int
-  statementId      String?  @db.VarChar(60)  // 정적 ID 또는 cuid (Phase 2에서 OxStatement FK 활성화)
+  statementId      String?  @db.VarChar(60) // 정적 ID 또는 cuid (Phase 2에서 OxStatement FK 활성화)
   content          String   @db.Text
   correctAnswer    String   @db.VarChar(1)
   selectedAnswer   String   @db.VarChar(1)
@@ -1941,12 +1950,12 @@ model OxQuizPlan {
   seq             Int      @unique @default(autoincrement())
   title           String   @db.VarChar(200)
   createdBy       String
-  categories      Json                   // OxQuizCategory[]
+  categories      Json // OxQuizCategory[]
   level           String   @db.VarChar(10)
   dailyCount      Int
   totalDays       Int
   startDate       DateTime @db.Date
-  dailyStatements Json                   // OxStatement[][] 사전 생성
+  dailyStatements Json // OxStatement[][] 사전 생성
   passingScore    Int      @default(80)
   retryOnFail     Boolean  @default(false)
   isActive        Boolean  @default(true)
@@ -1978,3 +1987,101 @@ model OxQuizEnrollment {
   @@index([planId])
 }
 
+// ============================================================
+// FEAT: 워크북(Workbook) — 인쇄용 책 형식 컨텐츠 묶음
+// 프린트 가능한 6종 컨텐츠(시험·문제·연산·숙제·기출·개념)를
+// 한 권의 책으로 묶고 각 문항 아래 풀이공간을 인쇄한다.
+// ============================================================
+
+enum WorkbookSectionItemKind {
+  TEST_PAPER // Test 전체
+  QUESTION // 단일 Question (문제은행/시험·숙제 부분 공통)
+  ARITHMETIC_DAY // ArithmeticHomeworkPlan dailyProblems[dayIndex]
+  CONCEPT_DOC // Concept fullContent
+  EXAM_PAPER // ExamPaper 전체 (Question.examPaperId FK)
+  HOMEWORK_DAY // QuestionHomeworkPlan dailyQuestions[dayIndex]
+}
+
+enum AnswerSpaceSize {
+  NONE
+  SMALL // ~20mm
+  MEDIUM // ~45mm
+  LARGE // ~80mm
+  XLARGE // ~120mm
+}
+
+model Workbook {
+  id                 String          @id @default(cuid())
+  seq                Int             @unique @default(autoincrement())
+  title              String          @db.VarChar(200)
+  subtitle           String?         @db.VarChar(200)
+  studentLabel       String?         @db.VarChar(100) // 표지 인쇄: "고1-A반 / 김철수"
+  semesterLabel      String?         @db.VarChar(50) // 표지 인쇄: "2026년 1학기"
+  academyName        String?         @db.VarChar(100)
+  ownerName          String?         @db.VarChar(50)
+  printPreset        Json // PrintOptions (template/color/columns/spacing/...)
+  defaultAnswerSpace AnswerSpaceSize @default(MEDIUM)
+  separateAnswerKey  Boolean         @default(true) // 정답·해설 별책 모드
+  showToc            Boolean         @default(true)
+  showCover          Boolean         @default(true)
+  pageEstimates      Json? // { sectionId: startPageNumber } 캐시
+  createdBy          String
+  tenantId           String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  tenant   Tenant?           @relation(fields: [tenantId], references: [id])
+  creator  User              @relation("WorkbookCreator", fields: [createdBy], references: [id])
+  sections WorkbookSection[]
+
+  @@index([createdBy])
+  @@index([tenantId])
+}
+
+model WorkbookSection {
+  id           String  @id @default(cuid())
+  workbookId   String
+  sortOrder    Int
+  title        String  @db.VarChar(200)
+  description  String? @db.Text
+  startNewPage Boolean @default(true)
+
+  workbook Workbook              @relation(fields: [workbookId], references: [id], onDelete: Cascade)
+  items    WorkbookSectionItem[]
+
+  @@index([workbookId, sortOrder])
+}
+
+model WorkbookSectionItem {
+  id                 String                  @id @default(cuid())
+  sectionId          String
+  sortOrder          Int
+  kind               WorkbookSectionItemKind
+  // 폴리모픽 FK — kind에 따라 정확히 하나만 채워짐 (Zod refine으로 강제)
+  questionId         String?
+  testId             String?
+  arithmeticPlanId   String?
+  arithmeticDayIndex Int?
+  homeworkPlanId     String?
+  homeworkDayIndex   Int?
+  conceptId          String?
+  examPaperId        String?
+  inlineData         Json? // ArithmeticHomeworkPlan dailyProblems 스냅샷 등
+  answerSpace        AnswerSpaceSize         @default(MEDIUM)
+  customLabel        String?                 @db.VarChar(200)
+  hideQuestionNum    Boolean                 @default(false)
+
+  section        WorkbookSection         @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  question       Question?               @relation(fields: [questionId], references: [id], onDelete: Restrict)
+  test           Test?                   @relation(fields: [testId], references: [id], onDelete: Restrict)
+  arithmeticPlan ArithmeticHomeworkPlan? @relation(fields: [arithmeticPlanId], references: [id], onDelete: Restrict)
+  homeworkPlan   QuestionHomeworkPlan?   @relation(fields: [homeworkPlanId], references: [id], onDelete: Restrict)
+  concept        Concept?                @relation(fields: [conceptId], references: [id], onDelete: Restrict)
+  examPaper      ExamPaper?              @relation(fields: [examPaperId], references: [id], onDelete: Restrict)
+
+  @@index([sectionId, sortOrder])
+  @@index([questionId])
+  @@index([testId])
+  @@index([conceptId])
+  @@index([examPaperId])
+}

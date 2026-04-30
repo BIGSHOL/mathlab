@@ -9,6 +9,12 @@ import { Button } from '@/components/ui/Button';
 import { PrintableHeader } from '@/components/print-preview/PrintableHeader';
 import { A4Page } from '@/components/print-preview';
 import { usePreviewScale } from '@/hooks/usePreviewScale';
+import {
+  estimateQuestionHeight,
+  estimateRenderedLength,
+  resolveChoiceCols,
+  PAGE_CONTENT_HEIGHT,
+} from '@/lib/utils/print-estimate';
 
 const MODE_LABELS = { test: '시험', level_test: '레벨테스트', worksheet: '학습지' } as const;
 const COLORS = [
@@ -342,35 +348,6 @@ export function Step3Settings() {
 
 // === A4 분할 알고리즘 ===
 type QItem = { id: string; content: string; choices: string[] | null; answer: string; explanation?: string | null; difficulty: string; chapter: string };
-const PAGE_CONTENT_HEIGHT = 880;
-
-/** 보기 내용 길이를 기준으로 1열/2열 자동 판별 */
-function getChoiceColsAuto(choices: string[] | null): 1 | 2 {
-  if (!choices || choices.length === 0) return 2;
-  const maxLen = Math.max(...choices.map(c => c.replace(/^[①②③④⑤]\s*/, '').length));
-  return maxLen > 25 ? 1 : 2;
-}
-
-/** KaTeX 수식을 짧은 플레이스홀더로 치환하여 렌더링 기준 글자수 추정 */
-function estimateRenderedLength(text: string): number {
-  return text.replace(/\$\$[^$]+\$\$/g, '@@@@').replace(/\$[^$]+\$/g, '@@').length;
-}
-
-function estimateQuestionHeight(q: QItem, cols: 1 | 2, template: string, spacingPx: number): number {
-  let h = 45;
-  const isLarge = template === 'large';
-  const charsPerLine = cols === 1 ? (isLarge ? 35 : 60) : (isLarge ? 20 : 30);
-  const lines = Math.ceil(estimateRenderedLength(q.content) / charsPerLine);
-  h += lines * (isLarge ? 34 : 24);
-
-  if (q.choices && q.choices.length > 0) {
-    const choicesCount = q.choices.length;
-    const choiceCols = getChoiceColsAuto(q.choices);
-    const rows = Math.ceil(choicesCount / choiceCols);
-    h += rows * (isLarge ? 36 : 28) + 10;
-  }
-  return h + Math.max(0, spacingPx);
-}
 
 function paginateQuestions(questions: QItem[], cols: 1 | 2, template: string, spacingPx: number): QItem[][][] {
   const pages: QItem[][][] = [];
@@ -379,7 +356,13 @@ function paginateQuestions(questions: QItem[], cols: 1 | 2, template: string, sp
   let currentH = 0;
 
   for (const q of questions) {
-    const qh = estimateQuestionHeight(q, cols, template, spacingPx);
+    const qh = estimateQuestionHeight({
+      contentMarkdown: q.content,
+      choices: q.choices,
+      template,
+      columns: cols,
+      spacing: spacingPx,
+    });
 
     if (currentPage[currentColumnIdx].length > 0 && currentH + qh > PAGE_CONTENT_HEIGHT) {
       if (cols === 2 && currentColumnIdx === 0) {
@@ -569,7 +552,7 @@ const PrintPreview = memo(function PrintPreview({ title, grade, questions }: Pri
                                 </div>
 
                                 {q.choices && q.choices.length > 0 && (
-                                  <div className={`grid gap-x-4 gap-y-3 text-slate-700 ${choiceContentClass} ${getChoiceColsAuto(q.choices) === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                                  <div className={`grid gap-x-4 gap-y-3 text-slate-700 ${choiceContentClass} ${resolveChoiceCols(q.choices) === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
                                     {(q.choices as string[]).map((choice, ci) => {
                                       // 원래 DB 문항에 포함된 '① ', '②' 등의 흑백 원문자를 제거
                                       const cleanChoice = choice.replace(/^[①②③④⑤]\s*/, '').trim();
