@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { BookText, Printer, Trash2, FolderPlus, FileText, ClipboardCheck, BookOpen, CheckSquare } from 'lucide-react';
+import { BookText, Printer, Trash2, FolderPlus, FileText, ClipboardCheck, BookOpen, CheckSquare, Plus, ChevronDown } from 'lucide-react';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/Button';
@@ -11,7 +11,12 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { Card } from '@/components/ui/Card';
 import { toast } from '@/components/ui/Toast';
 import { AddOxBundleModal } from '@/components/workbook-shared/AddOxBundleModal';
+import { AddQuestionToWorkbookModal } from '@/components/workbook-shared/AddQuestionToWorkbookModal';
+import { AddConceptToWorkbookModal } from '@/components/workbook-shared/AddConceptToWorkbookModal';
+import { AddTestToWorkbookModal } from '@/components/workbook-shared/AddTestToWorkbookModal';
 import type { AnswerSpaceSizeInput } from '@/lib/schemas/workbook';
+
+type AddContentKind = 'QUESTION' | 'CONCEPT_DOC' | 'TEST_PAPER' | 'OX_BUNDLE';
 
 interface SectionItem {
   id: string;
@@ -26,7 +31,63 @@ interface SectionItem {
   answerSpace: AnswerSpaceSizeInput;
   customLabel: string | null;
   hideQuestionNum: boolean;
-  inlineData: { blankLevel?: 0 | 1 | 2 | 3 } | null;
+  inlineData: {
+    blankLevel?: 0 | 1 | 2 | 3;
+    category?: string;
+    statementIds?: string[];
+    count?: number;
+  } | null;
+
+  // ── API include join 데이터 ──
+  question?: { id: string; bookCode: string; chapter: string; section: string | null; questionNum: number; content: string; difficulty: string } | null;
+  test?: { id: string; title: string; questionCount: number; grade: number } | null;
+  concept?: { id: string; title: string; conceptCode: string | null; chapter: string | null; section: string | null } | null;
+  examPaper?: { id: string; title: string; schoolName: string | null; grade: string } | null;
+}
+
+const OX_CATEGORY_LABELS: Record<string, string> = {
+  m1_pf_misconception: '소인수분해',
+  m1_int_rational: '정수와 유리수',
+  m1_equation: '일차방정식',
+  m1_geometry: '기본 도형',
+  m1_statistics: '자료의 정리와 해석',
+};
+
+/** SectionItem → 사람이 읽는 라벨 (제목/코드/뱃지) */
+function getItemLabels(item: SectionItem): { primary: string; secondary?: string } {
+  switch (item.kind) {
+    case 'QUESTION': {
+      const q = item.question;
+      if (!q) return { primary: '(삭제된 문제)', secondary: undefined };
+      const meta = `${q.bookCode} · ${q.chapter}${q.section ? ' · ' + q.section : ''} · #${q.questionNum}`;
+      const preview = q.content.replace(/\$[^$]+\$/g, '□').replace(/\s+/g, ' ').slice(0, 60);
+      return { primary: meta, secondary: preview };
+    }
+    case 'TEST_PAPER': {
+      const t = item.test;
+      if (!t) return { primary: '(삭제된 시험지)' };
+      return { primary: t.title, secondary: `${t.grade}학년 · ${t.questionCount}문항` };
+    }
+    case 'CONCEPT_DOC': {
+      const c = item.concept;
+      if (!c) return { primary: '(삭제된 개념)' };
+      const meta = c.chapter ? `${c.chapter}${c.section ? ' · ' + c.section : ''}` : (c.conceptCode ?? '');
+      return { primary: c.title, secondary: meta || undefined };
+    }
+    case 'EXAM_PAPER': {
+      const e = item.examPaper;
+      if (!e) return { primary: '(삭제된 기출 시험지)' };
+      return { primary: e.title, secondary: e.schoolName ? `${e.schoolName} · ${e.grade}` : e.grade };
+    }
+    case 'OX_BUNDLE': {
+      const cat = item.inlineData?.category;
+      const count = item.inlineData?.count ?? item.inlineData?.statementIds?.length ?? 0;
+      const catLabel = cat ? OX_CATEGORY_LABELS[cat] ?? cat : 'OX 묶음';
+      return { primary: `${catLabel} ${count}개 묶음`, secondary: 'O/X 진술' };
+    }
+    default:
+      return { primary: item.kind };
+  }
 }
 
 const BLANK_LEVEL_OPTIONS: { value: 0 | 1 | 2 | 3; label: string }[] = [
@@ -86,7 +147,10 @@ export default function WorkbookDetailPage() {
   const [loading, setLoading] = useState(true);
   const [creatingSection, setCreatingSection] = useState(false);
   const [newSectionTitle, setNewSectionTitle] = useState('');
-  const [oxBundleSectionId, setOxBundleSectionId] = useState<string | null>(null);
+  /** 컨텐츠 추가 모달 — { sectionId, kind } 또는 null. kind에 따라 모달 분기. */
+  const [addModal, setAddModal] = useState<{ sectionId: string; kind: AddContentKind } | null>(null);
+  /** 섹션별 드롭다운 열림 상태 */
+  const [openDropdownSection, setOpenDropdownSection] = useState<string | null>(null);
 
   useEffect(() => {
     void load();
@@ -262,12 +326,13 @@ export default function WorkbookDetailPage() {
 
             {section.items.length === 0 ? (
               <p className="text-sm text-slate-400 py-3 text-center bg-slate-50 rounded-sm">
-                아직 추가된 항목이 없습니다. 시험·문제·개념 페이지에서 &quot;워크북에 추가&quot; 버튼을 누르거나, 아래 &quot;OX 묶음 추가&quot;로 시작하세요.
+                아직 추가된 항목이 없습니다. 아래 &quot;컨텐츠 추가&quot; 버튼으로 문제·개념·시험지·OX를 담거나, 다른 페이지에서 &quot;워크북에 추가&quot; 버튼을 누를 수 있어요.
               </p>
             ) : (
               <ul className="space-y-2">
                 {section.items.map((item) => {
                   const kindInfo = KIND_LABELS[item.kind] ?? { label: item.kind, icon: <FileText className="w-4 h-4" /> };
+                  const labels = getItemLabels(item);
                   return (
                     <li
                       key={item.id}
@@ -275,10 +340,19 @@ export default function WorkbookDetailPage() {
                     >
                       <div className="text-slate-400 shrink-0">{kindInfo.icon}</div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-slate-700">{kindInfo.label}</div>
-                        <div className="text-xs text-slate-400 truncate">
-                          {item.customLabel ?? item.questionId ?? item.testId ?? item.conceptId ?? item.examPaperId ?? '—'}
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-[11px] font-semibold text-text-secondary px-1.5 py-0.5 rounded-sm bg-slate-100 shrink-0">
+                            {kindInfo.label}
+                          </span>
+                          <span className="text-sm font-semibold text-text-primary truncate">
+                            {item.customLabel ?? labels.primary}
+                          </span>
                         </div>
+                        {labels.secondary && (
+                          <div className="text-xs text-text-secondary truncate">
+                            {labels.secondary}
+                          </div>
+                        )}
                       </div>
                       {item.kind === 'CONCEPT_DOC' && (
                         <select
@@ -313,16 +387,52 @@ export default function WorkbookDetailPage() {
               </ul>
             )}
 
-            {/* 섹션 단위 액션 버튼: OX 묶음 추가 */}
-            <div className="mt-3 flex flex-wrap gap-2">
+            {/* 섹션 단위 컨텐츠 추가 — 드롭다운 */}
+            <div className="mt-3 relative">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setOxBundleSectionId(section.id)}
+                onClick={() =>
+                  setOpenDropdownSection(openDropdownSection === section.id ? null : section.id)
+                }
               >
-                <CheckSquare className="w-4 h-4" />
-                OX 묶음 추가
+                <Plus className="w-4 h-4" />
+                컨텐츠 추가
+                <ChevronDown className="w-3.5 h-3.5 ml-0.5" />
               </Button>
+              {openDropdownSection === section.id && (
+                <>
+                  {/* 클릭 외부 영역 — 닫기 */}
+                  <div
+                    className="fixed inset-0 z-30"
+                    onClick={() => setOpenDropdownSection(null)}
+                  />
+                  <div className="absolute top-full left-0 mt-1 z-40 bg-white border border-slate-200 rounded-sm shadow-lg overflow-hidden min-w-[180px]">
+                    {[
+                      { kind: 'QUESTION' as const, label: '문제', icon: <FileText className="w-4 h-4" />, desc: '문제은행에서 선택' },
+                      { kind: 'CONCEPT_DOC' as const, label: '개념', icon: <BookOpen className="w-4 h-4" />, desc: '개념 문서' },
+                      { kind: 'TEST_PAPER' as const, label: '시험지', icon: <ClipboardCheck className="w-4 h-4" />, desc: '시험지 통째로' },
+                      { kind: 'OX_BUNDLE' as const, label: 'O/X 묶음', icon: <CheckSquare className="w-4 h-4" />, desc: '진술 묶음 N개' },
+                    ].map((opt) => (
+                      <button
+                        key={opt.kind}
+                        type="button"
+                        onClick={() => {
+                          setAddModal({ sectionId: section.id, kind: opt.kind });
+                          setOpenDropdownSection(null);
+                        }}
+                        className="w-full flex items-start gap-2.5 px-3 py-2 text-left hover:bg-slate-50 transition border-b border-slate-100 last:border-0"
+                      >
+                        <div className="text-slate-500 mt-0.5">{opt.icon}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-text-primary">{opt.label}</div>
+                          <div className="text-[11px] text-text-secondary">{opt.desc}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </Card>
         ))}
@@ -383,14 +493,44 @@ export default function WorkbookDetailPage() {
         </Card>
       )}
 
-      {/* OX 묶음 추가 모달 */}
-      {oxBundleSectionId && (
+      {/* 컨텐츠 추가 모달 — kind에 따라 분기 */}
+      {addModal?.kind === 'OX_BUNDLE' && (
         <AddOxBundleModal
           workbookId={id}
-          sectionId={oxBundleSectionId}
-          onClose={() => setOxBundleSectionId(null)}
+          sectionId={addModal.sectionId}
+          onClose={() => setAddModal(null)}
           onAdded={() => {
-            setOxBundleSectionId(null);
+            setAddModal(null);
+            void load();
+          }}
+        />
+      )}
+      {addModal?.kind === 'QUESTION' && (
+        <AddQuestionToWorkbookModal
+          workbookId={id}
+          sectionId={addModal.sectionId}
+          onClose={() => setAddModal(null)}
+          onAdded={() => {
+            void load(); // 모달은 닫지 않음 (계속 추가 가능)
+          }}
+        />
+      )}
+      {addModal?.kind === 'CONCEPT_DOC' && (
+        <AddConceptToWorkbookModal
+          workbookId={id}
+          sectionId={addModal.sectionId}
+          onClose={() => setAddModal(null)}
+          onAdded={() => {
+            void load();
+          }}
+        />
+      )}
+      {addModal?.kind === 'TEST_PAPER' && (
+        <AddTestToWorkbookModal
+          workbookId={id}
+          sectionId={addModal.sectionId}
+          onClose={() => setAddModal(null)}
+          onAdded={() => {
             void load();
           }}
         />

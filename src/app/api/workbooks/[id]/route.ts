@@ -21,7 +21,17 @@ async function findWorkbookOrNull(id: string, tenantWhere: Record<string, unknow
       sections: {
         orderBy: { sortOrder: 'asc' },
         include: {
-          items: { orderBy: { sortOrder: 'asc' } },
+          items: {
+            orderBy: { sortOrder: 'asc' },
+            include: {
+              question: {
+                select: { id: true, bookCode: true, chapter: true, section: true, questionNum: true, content: true, difficulty: true },
+              },
+              test: { select: { id: true, title: true, questionCount: true, grade: true } },
+              concept: { select: { id: true, title: true, conceptCode: true, chapter: true, section: true } },
+              examPaper: { select: { id: true, title: true, schoolName: true, grade: true } },
+            },
+          },
         },
       },
       creator: { select: { name: true } },
