@@ -19,6 +19,45 @@ interface Props {
 }
 
 /**
+ * 단일 섹션 페이지 본문 — A4 래퍼 없이 내용만 (미리보기/인쇄 공유).
+ */
+export function SectionContentPageInner({
+  workbookTitle,
+  sectionTitle,
+  pageNumber,
+  pageItems,
+  preset,
+  isFirstPage,
+}: {
+  workbookTitle: string;
+  sectionTitle: string;
+  pageNumber: number;
+  pageItems: NormalizedItem[];
+  preset: PrintOptionsInput;
+  isFirstPage: boolean;
+}) {
+  const isLargeTemplate = preset.template === 'large';
+  return (
+    <div className="relative h-full flex flex-col">
+      <PrintableHeader
+        variant={preset.template}
+        title={workbookTitle}
+        subtitle={sectionTitle}
+        accentColor={preset.color}
+        isFirstPage={isFirstPage}
+        showDate={preset.showDate}
+      />
+      <div className="py-2 flex-1">
+        {pageItems.map((item) => (
+          <RenderItem key={item.itemId} item={item} large={isLargeTemplate} showAnswers={preset.showAnswers} />
+        ))}
+      </div>
+      <PageNumberFooter pageNumber={pageNumber} />
+    </div>
+  );
+}
+
+/**
  * 섹션의 NormalizedItem[]를 PAGE_CONTENT_HEIGHT 단위로 자동 분할하여 여러 A4 페이지로 렌더.
  *
  * 페이지 번호는 startPageNumber부터 시작.
@@ -33,31 +72,21 @@ export function SectionContentPages({
   isFirstPageOfBook = false,
 }: Props) {
   const pages = paginateItems(items, preset);
-  const isLargeTemplate = preset.template === 'large';
 
   return (
     <>
-      {pages.map((pageItems, pageIdx) => {
-        const isFirst = isFirstPageOfBook && pageIdx === 0;
-        return (
-          <A4PrintPage key={pageIdx}>
-            <PrintableHeader
-              variant={preset.template}
-              title={workbookTitle}
-              subtitle={sectionTitle}
-              accentColor={preset.color}
-              isFirstPage={isFirst}
-              showDate={preset.showDate}
-            />
-            <div className="py-2">
-              {pageItems.map((item) => (
-                <RenderItem key={item.itemId} item={item} large={isLargeTemplate} showAnswers={preset.showAnswers} />
-              ))}
-            </div>
-            <PageNumberFooter pageNumber={startPageNumber + pageIdx} />
-          </A4PrintPage>
-        );
-      })}
+      {pages.map((pageItems, pageIdx) => (
+        <A4PrintPage key={pageIdx}>
+          <SectionContentPageInner
+            workbookTitle={workbookTitle}
+            sectionTitle={sectionTitle}
+            pageNumber={startPageNumber + pageIdx}
+            pageItems={pageItems}
+            preset={preset}
+            isFirstPage={isFirstPageOfBook && pageIdx === 0}
+          />
+        </A4PrintPage>
+      ))}
     </>
   );
 }
@@ -87,7 +116,7 @@ function PageNumberFooter({ pageNumber }: { pageNumber: number }) {
  * 아이템 배열을 PAGE_CONTENT_HEIGHT 기준으로 페이지 단위로 분할.
  * 각 페이지에 누적 높이가 한계를 넘기 직전까지 채움.
  */
-function paginateItems(items: NormalizedItem[], preset: PrintOptionsInput): NormalizedItem[][] {
+export function paginateItems(items: NormalizedItem[], preset: PrintOptionsInput): NormalizedItem[][] {
   const pages: NormalizedItem[][] = [];
   let current: NormalizedItem[] = [];
   let currentHeight = 0;

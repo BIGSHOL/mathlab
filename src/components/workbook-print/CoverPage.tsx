@@ -11,10 +11,9 @@ interface Props {
 }
 
 /**
- * 워크북 표지 페이지 (1페이지).
- * 학원명, 책 제목, 학생 이름, 학기를 큰 활자로 표시.
+ * 표지 본문 — A4 래퍼 없이 내용만 (미리보기/인쇄 공유).
  */
-export function CoverPage({
+export function CoverPageContent({
   title,
   subtitle,
   studentLabel,
@@ -24,8 +23,7 @@ export function CoverPage({
   accentColor,
 }: Props) {
   return (
-    <A4PrintPage paddingClass="">
-      <div className="h-full flex flex-col items-center justify-between py-16 px-12">
+    <div className="h-full flex flex-col items-center justify-between py-16 px-12">
         {/* 상단: 학원/원장 */}
         <div className="text-center">
           {academyName && (
@@ -64,6 +62,16 @@ export function CoverPage({
           )}
         </div>
       </div>
+  );
+}
+
+/**
+ * 워크북 표지 페이지 (인쇄용 wrapper).
+ */
+export function CoverPage(props: Props) {
+  return (
+    <A4PrintPage paddingClass="">
+      <CoverPageContent {...props} />
     </A4PrintPage>
   );
 }

@@ -1,14 +1,21 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Printer, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
-import { CoverPage } from '@/components/workbook-print/CoverPage';
-import { TocPage } from '@/components/workbook-print/TocPage';
-import { SectionDivider } from '@/components/workbook-print/SectionDivider';
-import { SectionContentPages, estimateItemHeight } from '@/components/workbook-print/SectionContentPages';
+import { A4Page, A4PrintPage } from '@/components/print-preview/A4Page';
+import { ZoomToolbar } from '@/components/print-preview/ZoomToolbar';
+import { usePreviewScale } from '@/hooks/usePreviewScale';
+import { CoverPageContent } from '@/components/workbook-print/CoverPage';
+import { TocPageContent } from '@/components/workbook-print/TocPage';
+import { SectionDividerContent } from '@/components/workbook-print/SectionDivider';
+import {
+  SectionContentPageInner,
+  paginateItems,
+  estimateItemHeight,
+} from '@/components/workbook-print/SectionContentPages';
 import { PAGE_CONTENT_HEIGHT } from '@/lib/utils/print-estimate';
 import type { NormalizedItem } from '@/lib/services/workbook/sources';
 import type { PrintOptionsInput } from '@/lib/schemas/workbook';
@@ -54,6 +61,16 @@ export default function WorkbookPrintPage() {
   const [payload, setPayload] = useState<PrintPayload | null>(null);
   const [calcState, setCalcState] = useState<CalcState>('loading');
 
+  // 표준 인쇄 미리보기 엔진
+  const {
+    scale,
+    setScale,
+    scalePercent,
+    galleryRef,
+    fitToContainer,
+    setScaleFromSlider,
+  } = usePreviewScale();
+
   useEffect(() => {
     fetch(`/api/workbooks/${id}/print`)
       .then((r) => r.json())
@@ -74,10 +91,75 @@ export default function WorkbookPrintPage() {
     return computePageEstimates(payload);
   }, [payload]);
 
+  // 평면 페이지 배열 — 각 페이지가 ReactNode로 캡슐화됨
+  // A4Page (미리보기) 와 A4PrintPage (인쇄) 양쪽에서 동일하게 렌더
+  const flatPages = useMemo<ReactNode[]>(() => {
+    if (!payload) return [];
+    const { workbook, sections } = payload;
+    const accentColor = workbook.printPreset.color;
+    const tocEntries = sections.map((s) => ({
+      sectionId: s.id,
+      title: s.title,
+      pageNumber: sectionStartPages[s.id] ?? 1,
+    }));
+
+    const pages: ReactNode[] = [];
+
+    if (workbook.showCover) {
+      pages.push(
+        <CoverPageContent
+          title={workbook.title}
+          subtitle={workbook.subtitle}
+          studentLabel={workbook.studentLabel}
+          semesterLabel={workbook.semesterLabel}
+          academyName={workbook.academyName}
+          ownerName={workbook.ownerName}
+          accentColor={accentColor}
+        />
+      );
+    }
+
+    if (workbook.showToc && tocEntries.length > 0) {
+      pages.push(<TocPageContent entries={tocEntries} accentColor={accentColor} />);
+    }
+
+    sections.forEach((section, sIdx) => {
+      const startPage = sectionStartPages[section.id] ?? 1;
+      const isFirstSection = sIdx === 0 && !workbook.showCover && !workbook.showToc;
+
+      if (section.startNewPage) {
+        pages.push(
+          <SectionDividerContent
+            index={sIdx + 1}
+            title={section.title}
+            description={section.description}
+            accentColor={accentColor}
+          />
+        );
+      }
+
+      const startPageNumber = section.startNewPage ? startPage + 1 : startPage;
+      const itemPages = paginateItems(section.items, workbook.printPreset);
+      itemPages.forEach((pageItems, pIdx) => {
+        pages.push(
+          <SectionContentPageInner
+            workbookTitle={workbook.title}
+            sectionTitle={section.title}
+            pageNumber={startPageNumber + pIdx}
+            pageItems={pageItems}
+            preset={workbook.printPreset}
+            isFirstPage={isFirstSection && pIdx === 0}
+          />
+        );
+      });
+    });
+
+    return pages;
+  }, [payload, sectionStartPages]);
+
   // 계산이 끝나면 ready 상태로 전환 (다음 frame에서)
   useEffect(() => {
     if (calcState === 'first-render' && payload) {
-      // requestAnimationFrame 2번으로 렌더 완료 후 상태 전환
       requestAnimationFrame(() => {
         requestAnimationFrame(() => setCalcState('ready'));
       });
@@ -122,17 +204,11 @@ export default function WorkbookPrintPage() {
   }
 
   const { workbook, sections } = payload;
-  const accentColor = workbook.printPreset.color;
-  const tocEntries = sections.map((s) => ({
-    sectionId: s.id,
-    title: s.title,
-    pageNumber: sectionStartPages[s.id] ?? 1,
-  }));
 
   return (
-    <div className="bg-slate-100 min-h-screen">
+    <div className="flex flex-col h-screen bg-white">
       {/* 인쇄 시 숨김 — 미리보기용 헤더 */}
-      <div className="print:hidden sticky top-0 z-30 bg-white border-b shadow-sm px-4 py-3 flex items-center justify-between">
+      <div className="print:hidden shrink-0 px-4 py-3 border-b border-slate-200 bg-white flex items-center justify-between">
         <Button
           variant="ghost"
           size="sm"
@@ -144,16 +220,26 @@ export default function WorkbookPrintPage() {
         <div className="text-sm text-slate-500">
           {sections.length}개 섹션 · 총 {totalPages}페이지
         </div>
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={handlePrint}
-          disabled={calcState !== 'ready'}
-        >
-          <Printer className="w-4 h-4 mr-1.5" />
-          인쇄
-        </Button>
+        <div className="w-[88px]" />
       </div>
+
+      {/* 표준 줌 툴바 (다른 인쇄 페이지와 동일 패턴) */}
+      <ZoomToolbar
+        scale={scale}
+        scalePercent={scalePercent}
+        onScaleFromSlider={setScaleFromSlider}
+        onSetScale={setScale}
+        onFitToContainer={fitToContainer}
+        onPrint={calcState === 'ready' ? handlePrint : undefined}
+        leftContent={
+          <>
+            <span className="text-sm font-bold text-text-primary truncate max-w-[280px]">{workbook.title}</span>
+            <span className="text-xs text-text-secondary">
+              {sections.length}개 섹션 · {flatPages.length}페이지
+            </span>
+          </>
+        }
+      />
 
       {/* 계산 중 인쇄 차단 오버레이 */}
       {calcState !== 'ready' && (
@@ -166,55 +252,28 @@ export default function WorkbookPrintPage() {
         </div>
       )}
 
-      {/* 책 본문 */}
-      <div className="workbook-print-root max-w-[210mm] mx-auto py-6 print:py-0 print:max-w-none">
-        {workbook.showCover && (
-          <CoverPage
-            title={workbook.title}
-            subtitle={workbook.subtitle}
-            studentLabel={workbook.studentLabel}
-            semesterLabel={workbook.semesterLabel}
-            academyName={workbook.academyName}
-            ownerName={workbook.ownerName}
-            accentColor={accentColor}
-          />
-        )}
-
-        {workbook.showToc && tocEntries.length > 0 && (
-          <TocPage entries={tocEntries} accentColor={accentColor} />
-        )}
-
-        {sections.map((section, sIdx) => {
-          const startPage = sectionStartPages[section.id] ?? 1;
-          return (
-            <div key={section.id}>
-              {section.startNewPage && (
-                <SectionDivider
-                  index={sIdx + 1}
-                  title={section.title}
-                  description={section.description}
-                  accentColor={accentColor}
-                />
-              )}
-              <SectionContentPages
-                workbookTitle={workbook.title}
-                sectionTitle={section.title}
-                startPageNumber={section.startNewPage ? startPage + 1 : startPage}
-                items={section.items}
-                preset={workbook.printPreset}
-                isFirstPageOfBook={sIdx === 0 && !workbook.showCover && !workbook.showToc}
-              />
-            </div>
-          );
-        })}
+      {/* A4 미리보기 갤러리 (가로 스크롤, A4Page에 그림자/테두리) */}
+      <div
+        ref={galleryRef}
+        className="flex-1 overflow-x-auto overflow-y-auto p-2.5 bg-slate-100 print:hidden"
+      >
+        <div className="flex gap-3 h-full items-start">
+          {flatPages.map((page, idx) => (
+            <A4Page key={idx} scale={scale} paddingClass="px-12 py-10">
+              {page}
+            </A4Page>
+          ))}
+        </div>
       </div>
 
-      <style jsx global>{`
-        @media print {
-          body { background: white !important; }
-          .workbook-print-root { padding: 0 !important; }
-        }
-      `}</style>
+      {/* 실제 인쇄용 렌더링 */}
+      <div className="hidden print:block">
+        {flatPages.map((page, idx) => (
+          <A4PrintPage key={idx} paddingClass="px-12 py-10">
+            {page}
+          </A4PrintPage>
+        ))}
+      </div>
     </div>
   );
 }
