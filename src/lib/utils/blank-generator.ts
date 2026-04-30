@@ -244,9 +244,9 @@ export function addFullSentenceBlanks(
 ): MergedBlankExercise {
   const { templateText, blanks } = exercise;
 
-  // 통문장 빈칸 상한: easy+hard의 2배, 최소 10개, 최대 30개
-  const easyHardCount = blanks.length;
-  const maxFullBlanks = Math.min(30, Math.max(10, easyHardCount * 2));
+  // 통문장(full) 빈칸 상한: 평균 8개, 최대 10개 — easy/hard와 동일 표준
+  // (이전: easy+hard의 2배, max 30 → 평균 21개로 폭주)
+  const maxFullBlanks = 10;
 
   // Split template into segments: existing {{N}} markers and text between them
   const segments = templateText.split(/(\{\{\d+\}\})/g);
