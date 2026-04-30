@@ -33,6 +33,7 @@ enum LicenseFeature {
   HOMEWORK
   WORKSHEET
   EXAM_PREP
+  OX_QUIZ
 }
 
 // FEAT: 기출 분석 시스템
@@ -74,6 +75,7 @@ model Tenant {
   questions              Question[]
   classCompetitionWeeks  ClassCompetitionWeek[]
   examCampaigns          ExamCampaign[]
+  oxQuizPlans            OxQuizPlan[]
 
   @@index([slug])
   @@index([isActive])
@@ -143,6 +145,9 @@ model User {
   inventories                  UserInventory[]
   createdExamCampaigns         ExamCampaign[]    @relation("ExamCampaignCreator")
   examCampaignEnrollments      ExamCampaignEnrollment[] @relation("ExamCampaignEnrollments")
+  oxQuizAttempts               OxQuizAttempt[]
+  createdOxQuizPlans           OxQuizPlan[]      @relation("OxQuizPlanCreator")
+  oxQuizEnrollments            OxQuizEnrollment[] @relation("OxQuizEnrollments")
 
   @@index([role])
   @@index([classroomId])
@@ -204,6 +209,7 @@ model Concept {
   learningCourseConcepts LearningCourseConcept[]
   blankAttempts          BlankAttempt[]
   reviewSchedules        ReviewSchedule[]
+  oxStatements           OxStatement[]
 
   @@index([subjectId])
   @@index([subjectId, sortOrder])
@@ -1840,5 +1846,135 @@ model TutorChatLog {
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([questionId])
+}
+
+// FEAT: O/X 퀴즈 (참/거짓 진술) 시스템
+// Phase 1: 정적 큐레이션 뱅크 → 자유연습/숙제/인쇄
+// 정적 ID 형식: `curated-{cat}-{NNN}` (예: 'curated-m1-pf-001')
+//   - statementId FK는 Phase 2에서 활성화 (DB OxStatement 마이그레이션 후)
+model OxStatement {
+  id          String   @id @default(cuid())
+  categoryId  String   @db.VarChar(40)      // [legacy] 압축 카테고리 (호환용 유지)
+  conceptId   String?
+  level       String   @db.VarChar(10)     // 'easy'|'medium'|'hard'
+  content     String   @db.Text             // 진술문 (LaTeX 포함 가능)
+  answer      String   @db.VarChar(1)       // 'O' | 'X'
+  explanation String?  @db.Text
+  source      String   @db.VarChar(20)     // 'curated' | 'algorithm' | 'ai'
+  isActive    Boolean  @default(true)
+  createdBy   String?
+  tenantId    String?                        // null=글로벌
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // ── Phase 3 분류 체계 (curriculum.ts 표준 명칭) ──
+  schoolLevel  String?  @db.VarChar(20)   // 'elementary' | 'middle' | 'high'
+  grade        String?  @db.VarChar(20)   // 'middle_1' | 'middle_2' | ...
+  semester     Int?                        // 1 | 2 (고등=0)
+  part         String?  @db.VarChar(20)   // 'calc' | 'algebra' | 'func' | 'geo' | 'data'
+  chapter      String?  @db.VarChar(100)  // 대단원 (예: '소인수분해')
+  section      String?  @db.VarChar(100)  // 중단원 (예: '소인수분해')
+  sectionSub   String?  @db.VarChar(100)  // 소단원
+  questionType String?  @db.VarChar(30)   // 'definition' | 'property' | 'computation' | 'application' | 'misconception'
+
+  concept Concept? @relation(fields: [conceptId], references: [id], onDelete: SetNull)
+
+  @@index([categoryId, level, isActive])
+  @@index([conceptId])
+  @@index([tenantId])
+  @@index([schoolLevel, grade, semester])
+  @@index([chapter, section])
+  @@index([questionType])
+}
+
+model OxQuizAttempt {
+  id               String    @id @default(cuid())
+  studentId        String
+  category         String    @db.VarChar(40)
+  level            String    @db.VarChar(10)
+  problemCount     Int
+  correctCount     Int       @default(0)
+  score            Int       @default(0)
+  xpEarned         Int       @default(0)
+  comboMax         Int       @default(0)
+  totalTimeSeconds Int       @default(0)
+  completedAt      DateTime?
+  createdAt        DateTime  @default(now())
+
+  homeworkPlanId   String?   // null=자유연습, 값=숙제 응시
+  homeworkDayIndex Int?
+
+  student      User           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  answers      OxQuizAnswer[]
+  homeworkPlan OxQuizPlan?    @relation("OxHomeworkAttempts", fields: [homeworkPlanId], references: [id])
+
+  @@index([studentId])
+  @@index([studentId, createdAt(sort: Desc)])
+  @@index([homeworkPlanId, homeworkDayIndex])
+  @@index([studentId, homeworkPlanId])
+}
+
+model OxQuizAnswer {
+  id               String   @id @default(cuid())
+  attemptId        String
+  problemIndex     Int
+  statementId      String?  @db.VarChar(60)  // 정적 ID 또는 cuid (Phase 2에서 OxStatement FK 활성화)
+  content          String   @db.Text
+  correctAnswer    String   @db.VarChar(1)
+  selectedAnswer   String   @db.VarChar(1)
+  isCorrect        Boolean
+  timeSpentSeconds Int      @default(0)
+  comboCount       Int      @default(0)
+  pointsEarned     Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  attempt OxQuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  // Phase 2 전환 시:
+  //   statement OxStatement? @relation(fields: [statementId], references: [id], onDelete: SetNull)
+
+  @@index([attemptId])
+  @@index([statementId])
+}
+
+model OxQuizPlan {
+  id              String   @id @default(cuid())
+  seq             Int      @unique @default(autoincrement())
+  title           String   @db.VarChar(200)
+  createdBy       String
+  categories      Json                   // OxQuizCategory[]
+  level           String   @db.VarChar(10)
+  dailyCount      Int
+  totalDays       Int
+  startDate       DateTime @db.Date
+  dailyStatements Json                   // OxStatement[][] 사전 생성
+  passingScore    Int      @default(80)
+  retryOnFail     Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  tenantId        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant      Tenant?            @relation(fields: [tenantId], references: [id])
+  creator     User               @relation("OxQuizPlanCreator", fields: [createdBy], references: [id])
+  enrollments OxQuizEnrollment[]
+  attempts    OxQuizAttempt[]    @relation("OxHomeworkAttempts")
+
+  @@index([createdBy])
+  @@index([tenantId])
+  @@index([isActive])
+}
+
+model OxQuizEnrollment {
+  id         String   @id @default(cuid())
+  planId     String
+  studentId  String
+  enrolledAt DateTime @default(now())
+
+  plan    OxQuizPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  student User       @relation("OxQuizEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, studentId])
+  @@index([studentId])
+  @@index([planId])
 }
 

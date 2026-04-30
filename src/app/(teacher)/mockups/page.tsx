@@ -48,6 +48,7 @@ const ALL_PAGES: PageInfo[] = [
   { label: '시험 관리', href: '/tests', icon: ClipboardCheck, group: 'teacher', category: '출제·평가', description: '시험 목록, 배정, 결과 관리' },
   { label: '시험 출제', href: '/tests/create', icon: FileText, group: 'teacher', category: '출제·평가', description: '문제 선택 → 시험 생성' },
   { label: '수기 채점', href: '/manual-grading', icon: CheckSquare, group: 'teacher', category: '출제·평가', description: '서술형 답안 수기 채점' },
+  { label: 'O/X 출제', href: '/questions/ox', icon: CheckSquare, group: 'teacher', category: '출제·평가', description: '참/거짓 진술 워크북 인쇄 (중1 5개 단원, 정답표 토글)', isNew: true },
 
   // ─── Teacher: 진단·분석 ───
   { label: '레벨테스트', href: '/level-test', icon: Stethoscope, group: 'teacher', category: '진단·분석', description: '진단 테스트 목록, 생성, 결과' },
@@ -75,6 +76,7 @@ const ALL_PAGES: PageInfo[] = [
   { label: '사운드 관리', href: '/admin/sounds', icon: ToggleLeft, group: 'admin', category: '플랫폼', description: '[SUPER_ADMIN] 효과음 미리듣기/관리' },
   { label: '지점 관리', href: '/admin/tenants', icon: Building2, group: 'admin', category: '플랫폼', description: '[SUPER_ADMIN] 전체 지점 관리' },
   { label: '기능 관리', href: '/admin/features', icon: ToggleLeft, group: 'admin', category: '플랫폼', description: '[SUPER_ADMIN] 기능 플래그 관리' },
+  { label: 'O/X 진술 관리', href: '/admin/ox-statements', icon: CheckSquare, group: 'admin', category: '플랫폼', description: '[SUPER_ADMIN] O/X 큐레이션 뱅크 CRUD (DB 우선 + 정적 폴백)', isNew: true },
 
   // ─── Student pages ───
   { label: '학생 대시보드', href: '/dashboard', icon: GraduationCap, group: 'student', category: '학습', description: '레벨, XP, 숙제, 출석 마일스톤, 반 대항전, 복수전' },
@@ -83,7 +85,9 @@ const ALL_PAGES: PageInfo[] = [
   { label: '연산 숙제', href: '/practice/arithmetic/homework', icon: CalendarCheck, group: 'student', category: '시험·숙제', description: '오늘의 연산 숙제 풀기' },
   { label: '개념 숙제', href: '/practice/concept-homework', icon: BookOpen, group: 'student', category: '시험·숙제', description: '배정된 개념 학습 숙제' },
   { label: '문제 숙제', href: '/practice/question-homework', icon: FileQuestion, group: 'student', category: '시험·숙제', description: '배정된 문제 숙제 풀기' },
+  { label: 'O/X 숙제', href: '/practice/ox/homework', icon: CalendarCheck, group: 'student', category: '시험·숙제', description: '오늘의 O/X 진술 숙제 풀기 (Day별 통과 여부)', isNew: true },
   { label: '연산 연습', href: '/practice/arithmetic', icon: Calculator, group: 'student', category: '연습', description: '카테고리별 연산 문제 풀기' },
+  { label: 'O/X 퀴즈', href: '/practice/ox', icon: CheckSquare, group: 'student', category: '연습', description: '참/거짓 진술 자유연습 (중1 5개 단원, O/X 토글, 즉시 채점)', isNew: true },
   { label: '타임어택', href: '/practice/arithmetic/time-attack', icon: Zap, group: 'student', category: '연습', description: '시간 제한 연산 도전' },
   { label: '복수전', href: '/practice/revenge', icon: Swords, group: 'student', category: '연습', description: '틀린 문제 다시 풀기' },
   { label: '퀴즈 참여', href: '/quiz-join', icon: Gamepad2, group: 'student', category: '참여', description: '실시간 퀴즈 참여 (PIN 입력)' },

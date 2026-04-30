@@ -25,6 +25,7 @@ import {
   Target,
   Volume2,
   FileSearch,
+  CheckSquare,
   type LucideIcon,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
@@ -85,6 +86,7 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'concepts', label: '개념 관리', href: '/concepts', icon: BookOpen, minRole: 'SUPER_ADMIN', keywords: ['concept', '개념', '빈칸', '등록', '출제', '조회'], licenseFeature: 'CONCEPT' },
       { id: 'questions', label: '문제 관리', href: '/questions', icon: Database, minRole: 'SUPER_ADMIN', keywords: ['question', '문제', '은행', '출제', '조회'], licenseFeature: 'TEST' },
       { id: 'arithmetic', label: '연산 프린트', href: '/questions/arithmetic', icon: Calculator, minRole: 'TEACHER', keywords: ['arithmetic', '연산', '계산', '출제', '생성'] },
+      { id: 'ox-quiz', label: 'OX 출제', href: '/questions/ox', icon: CheckSquare, minRole: 'TEACHER', keywords: ['ox', '퀴즈', '참거짓', '진술', '오엑스'], licenseFeature: 'OX_QUIZ' },
       { id: 'worksheet', label: '문제 프린트', href: '/worksheet/create', icon: FileSpreadsheet, minRole: 'TEACHER', keywords: ['worksheet', '학습지', '프린트', '만들기', '문제'] },
       { id: 'pdf-import', label: 'PDF 추출', href: '/questions/pdf-import', icon: FileText, minRole: 'SUPER_ADMIN', keywords: ['pdf', '추출', 'ocr', '가져오기'] },
     ],

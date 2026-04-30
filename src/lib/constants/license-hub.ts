@@ -1,6 +1,6 @@
 import {
   BookOpen, Calculator, Zap, ClipboardCheck, Swords,
-  Stethoscope, Radio, FileSearch, CalendarCheck, FileSpreadsheet, Target,
+  Stethoscope, Radio, FileSearch, CalendarCheck, FileSpreadsheet, Target, CheckSquare,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { LicenseFeature } from '@prisma/client';
@@ -137,9 +137,20 @@ export const LICENSE_FEATURE_INFO: Record<LicenseFeature, LicenseFeatureInfo> = 
     color: 'bg-rose-500',
     textColor: 'text-rose-500',
   },
+  OX_QUIZ: {
+    label: 'O/X 퀴즈',
+    description: '참/거짓 진술 문제로 개념 오개념을 잡습니다',
+    studentCapabilities: ['진술 정오 판별', '오개념 학습', '숙제 응시', '인쇄 워크북'],
+    teacherLinks: [
+      { label: 'OX 출제', href: '/questions/ox' },
+    ],
+    icon: CheckSquare,
+    color: 'bg-orange-500',
+    textColor: 'text-orange-500',
+  },
 };
 
 /** LICENSE_FEATURE_INFO 키를 순서대로 배열 */
 export const LICENSE_FEATURES_ORDERED: LicenseFeature[] = [
-  'CONCEPT', 'ARITHMETIC', 'TIME_ATTACK', 'TEST', 'REVENGE', 'DIAGNOSTIC', 'QUIZ', 'EXAM_ANALYSIS', 'HOMEWORK', 'WORKSHEET', 'EXAM_PREP',
+  'CONCEPT', 'ARITHMETIC', 'TIME_ATTACK', 'TEST', 'REVENGE', 'DIAGNOSTIC', 'QUIZ', 'EXAM_ANALYSIS', 'HOMEWORK', 'WORKSHEET', 'EXAM_PREP', 'OX_QUIZ',
 ];

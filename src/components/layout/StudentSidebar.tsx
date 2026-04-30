@@ -19,6 +19,7 @@ import {
   Lock,
   ShoppingBag,
   Target,
+  CheckSquare,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLicenses } from '@/hooks/useLicenses';
@@ -40,6 +41,7 @@ const mainItems: MenuItem[] = [
   { label: '대시보드', href: '/dashboard', icon: Home },
   { label: '단원 목록', href: '/subjects', icon: BookOpen, licenseFeature: 'concept' },
   { label: '연산 연습', href: '/practice/arithmetic', icon: Calculator, licenseFeature: 'arithmetic' },
+  { label: 'O/X 퀴즈', href: '/practice/ox', icon: CheckSquare, licenseFeature: 'ox_quiz' },
   { label: '나의 시험', href: '/my-tests', icon: ClipboardCheck, licenseFeature: 'test' },
   { label: '내신대비', href: '/exam-prep', icon: Target, licenseFeature: 'exam_prep' },
 ];
