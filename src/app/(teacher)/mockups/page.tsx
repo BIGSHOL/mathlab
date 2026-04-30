@@ -7,7 +7,7 @@ import {
   Eye, ScanEye, FileText, Calculator, CalendarCheck, Zap, Swords, FileQuestion,
   Gamepad2, Stethoscope, Printer, CheckSquare, Shield, ToggleLeft, School, ClipboardCheck,
   Radio, FileUp, AlertTriangle, ScrollText, Layers, LifeBuoy, Newspaper, Route, KeyRound,
-  Building2, Search, Gem, ShoppingBag, Crown,
+  Building2, Search, Gem, ShoppingBag, Crown, BookText,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 
@@ -41,6 +41,8 @@ const ALL_PAGES: PageInfo[] = [
   { label: 'AI 문제 생성', href: '/questions/generate', icon: Sparkles, group: 'teacher', category: '출제·평가', description: 'AI 기반 문제 자동 생성 (Gemini)' },
   { label: 'PDF 추출', href: '/questions/pdf-import', icon: FileUp, group: 'teacher', category: '출제·평가', description: 'PDF에서 문제 일괄 추출 (Gemini Vision)' },
   { label: '학습지 생성', href: '/worksheet/create', icon: Printer, group: 'teacher', category: '출제·평가', description: '3단계 위자드로 교육과정 기반 문제지 생성' },
+  { label: '워크북 목록', href: '/workbooks', icon: BookText, group: 'teacher', category: '출제·평가', description: '인쇄 가능한 컨텐츠를 한 권의 책으로 묶어 풀이공간과 함께 인쇄', isNew: true },
+  { label: '워크북 생성', href: '/workbooks/new', icon: BookText, group: 'teacher', category: '출제·평가', description: '새 워크북 만들기 — 표지/학생/학기/템플릿/색상/풀이공간 설정', isNew: true },
   { label: '숙제 관리', href: '/homework', icon: CalendarCheck, group: 'teacher', category: '출제·평가', description: '연산/개념/문제 숙제 플랜 관리' },
   { label: '연산 숙제 생성', href: '/homework/create', icon: Calculator, group: 'teacher', category: '출제·평가', description: '연산 숙제 플랜 생성' },
   { label: '개념 숙제 생성', href: '/homework/concept-create', icon: BookOpen, group: 'teacher', category: '출제·평가', description: '개념 학습 숙제 플랜 생성' },
@@ -101,6 +103,7 @@ const ALL_PAGES: PageInfo[] = [
   { label: '모자·안경 악세사리 미리보기', href: '/mockups/accessory-preview', icon: Crown, group: 'dev', category: '개발', description: '8종 모자 + 6종 안경 SVG 악세사리 + 이펙트 조합 시뮬레이션', isNew: true },
   { label: '해설 생성 비교', href: '/mockups/explanation-compare', icon: Sparkles, group: 'dev', category: '개발', description: 'Gemini Thinking vs Non-Thinking 해설 품질 비교', isNew: true },
   { label: '도형 편집기', href: '/mockups/diagram-editor', icon: Layers, group: 'dev', category: '개발', description: 'DiagramParams(프리셋) + SVG(코드) 도형 편집기 데모', isNew: true },
+  { label: '워크북 컴포넌트 미리보기', href: '/mockups/workbook-preview', icon: BookText, group: 'dev', category: '개발', description: '풀이공간 4단계, 표지, 목차, 챕터 구분, 문항+풀이공간, 개념 문서를 DB 없이 한 화면에서 시연', isNew: true },
 ];
 
 const IFRAME_SIZES: Record<ViewMode, { width: string; label: string }> = {

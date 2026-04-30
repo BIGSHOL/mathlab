@@ -14,7 +14,8 @@ export type LicenseFeatureKey =
   | 'exam_analysis'
   | 'homework'
   | 'worksheet'
-  | 'exam_prep';
+  | 'exam_prep'
+  | 'workbook';
 
 export const ALL_LICENSE_FEATURES: LicenseFeatureKey[] = [
   'concept',
@@ -28,6 +29,7 @@ export const ALL_LICENSE_FEATURES: LicenseFeatureKey[] = [
   'homework',
   'worksheet',
   'exam_prep',
+  'workbook',
 ];
 
 /** 한글 라벨 */
@@ -43,6 +45,7 @@ export const LICENSE_FEATURE_LABELS: Record<LicenseFeatureKey, string> = {
   homework: '숙제',
   worksheet: '학습지',
   exam_prep: '내신대비',
+  workbook: '워크북',
 };
 
 /** LicenseFeatureKey ↔ Prisma LicenseFeature enum 매핑 */
@@ -58,6 +61,7 @@ const TO_ENUM: Record<LicenseFeatureKey, LicenseFeature> = {
   homework: 'HOMEWORK',
   worksheet: 'WORKSHEET',
   exam_prep: 'EXAM_PREP',
+  workbook: 'WORKBOOK',
 };
 
 const FROM_ENUM: Record<LicenseFeature, LicenseFeatureKey> = {
@@ -72,6 +76,7 @@ const FROM_ENUM: Record<LicenseFeature, LicenseFeatureKey> = {
   HOMEWORK: 'homework',
   WORKSHEET: 'worksheet',
   EXAM_PREP: 'exam_prep',
+  WORKBOOK: 'workbook',
 };
 
 export function toEnum(key: LicenseFeatureKey): LicenseFeature {
@@ -465,6 +470,7 @@ export async function getLicenseUsageStats(
     HOMEWORK: [], // 숙제 활동은 여러 테이블에 분산되어 있어 별도 집계 필요 시 추가
     WORKSHEET: [], // 학습지는 선생님 도구이므로 학생 활동 없음
     EXAM_PREP: [], // 내신대비 활동은 enrollment.schedule 안에 분산되어 있어 별도 집계 필요 시 추가
+    WORKBOOK: [], // 워크북은 선생님 도구이므로 학생 활동 없음
   };
 
   // 4. 기능별 통계 계산

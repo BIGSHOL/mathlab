@@ -9,6 +9,8 @@ import { DIFFICULTY_LABELS } from '@/types';
 import { usePreviewScale } from '@/hooks/usePreviewScale';
 import { A4Page, A4PrintPage } from '@/components/print-preview';
 import { PrintableHeader } from '@/components/print-preview/PrintableHeader';
+import { estimateQuestionHeight, estimateRenderedLength, PAGE_CONTENT_HEIGHT } from '@/lib/utils/print-estimate';
+import { AddToWorkbookButton } from '@/components/workbook-shared/AddToWorkbookButton';
 
 interface QuestionData {
   id: string;
@@ -77,33 +79,6 @@ function getChoiceCols(q: QuestionData): 1 | 2 {
   return maxLen > 25 ? 1 : 2;
 }
 
-// 헤더 공간에 따라 가용 높이가 바뀔 수 있지만 단순화를 위해 여유 있게 계산
-const PAGE_CONTENT_HEIGHT = 880;
-
-/** KaTeX 수식을 짧은 플레이스홀더로 치환하여 렌더링 기준 글자수 추정 */
-function estimateRenderedLength(text: string): number {
-  return text.replace(/\$\$[^$]+\$\$/g, '@@@@').replace(/\$[^$]+\$/g, '@@').length;
-}
-
-function estimateQuestionHeight(q: QuestionData, cols: 1 | 2, template: string, spacingPx: number): number {
-  let h = 45; // 번호+메타 정보
-
-  // 초등확대(large) 템플릿일 땐 글씨가 크므로 줄당 글자수를 적게 잡고 높이를 크게 늘림
-  const isLarge = template === 'large';
-  const charsPerLine = cols === 1 ? (isLarge ? 35 : 60) : (isLarge ? 20 : 30);
-  const lines = Math.ceil(estimateRenderedLength(q.content) / charsPerLine);
-
-  h += lines * (isLarge ? 34 : 24);
-
-  if (q.choices && q.choices.length > 0) {
-    const choicesCount = q.choices.length;
-    const choiceCols = getChoiceCols(q);
-    const rows = Math.ceil(choicesCount / choiceCols);
-    h += rows * (isLarge ? 36 : 28) + 10;
-  }
-  return h + Math.max(0, spacingPx); // 문항 간 여백
-}
-
 function paginateQuestions(questions: QuestionData[], cols: 1 | 2, template: string, spacingPx: number): QuestionData[][][] {
   const pages: QuestionData[][][] = [];
   let currentPage: QuestionData[][] = Array(cols).fill(null).map(() => []);
@@ -111,7 +86,14 @@ function paginateQuestions(questions: QuestionData[], cols: 1 | 2, template: str
   let currentH = 0;
 
   for (const q of questions) {
-    const qh = estimateQuestionHeight(q, cols, template, spacingPx);
+    const qh = estimateQuestionHeight({
+      contentMarkdown: q.content,
+      choices: q.choices,
+      choiceColumns: q.choiceColumns as 1 | 2 | null,
+      template,
+      columns: cols,
+      spacing: spacingPx,
+    });
 
     if (currentPage[currentColumnIdx].length > 0 && currentH + qh > PAGE_CONTENT_HEIGHT) {
       if (cols === 2 && currentColumnIdx === 0) {
@@ -459,7 +441,7 @@ export default function PrintWorksheetPage() {
         </div>
 
         {/* 인쇄 버튼 고정 영역 */}
-        <div className="mt-auto p-4 border-t border-slate-200 bg-white">
+        <div className="mt-auto p-4 border-t border-slate-200 bg-white space-y-2">
           <button
             onClick={() => window.print()}
             className="w-full flex items-center justify-center gap-2 py-3.5 bg-slate-900 hover:bg-black text-white rounded-xl font-bold shadow-md transition-transform active:scale-95"
@@ -467,6 +449,16 @@ export default function PrintWorksheetPage() {
             <Printer className="w-5 h-5" />
             학습지 인쇄하기
           </button>
+          {test && (
+            <AddToWorkbookButton
+              kind="TEST_PAPER"
+              refId={test.id}
+              displayTitle={test.title}
+              variant="secondary"
+              size="md"
+              className="w-full"
+            />
+          )}
         </div>
       </aside>
 
