@@ -216,12 +216,23 @@ export default function WorkbookDetailPage() {
         icon={<BookText className="w-6 h-6" />}
         backHref="/workbooks"
         actions={
-          <Link href={`/workbooks/${id}/print`}>
-            <Button variant="primary" size="md" disabled={totalItems === 0}>
-              <Printer className="w-4 h-4 mr-1.5" />
-              인쇄 미리보기
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => setCreatingSection(true)}
+              disabled={creatingSection}
+            >
+              <FolderPlus className="w-4 h-4 mr-1.5" />
+              섹션 추가
             </Button>
-          </Link>
+            <Link href={`/workbooks/${id}/print`}>
+              <Button variant="primary" size="md" disabled={totalItems === 0}>
+                <Printer className="w-4 h-4 mr-1.5" />
+                인쇄 미리보기
+              </Button>
+            </Link>
+          </div>
         }
       />
 
@@ -316,8 +327,8 @@ export default function WorkbookDetailPage() {
           </Card>
         ))}
 
-        {/* 섹션 추가 */}
-        {creatingSection ? (
+        {/* 섹션 입력 폼 (생성 중일 때) — 빈 상태/일반 상태 공통 */}
+        {creatingSection && (
           <div className="border border-primary/30 rounded-sm p-4 bg-primary/5 space-y-2">
             <input
               type="text"
@@ -337,7 +348,10 @@ export default function WorkbookDetailPage() {
               </Button>
             </div>
           </div>
-        ) : (
+        )}
+
+        {/* 섹션 추가 점선 버튼 — 섹션이 1개 이상일 때만, 입력 중이면 숨김 */}
+        {!creatingSection && workbook.sections.length > 0 && (
           <button
             type="button"
             className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-slate-300 rounded-sm text-slate-500 hover:border-primary hover:text-primary transition"
@@ -349,13 +363,23 @@ export default function WorkbookDetailPage() {
         )}
       </div>
 
-      {workbook.sections.length === 0 && (
-        <Card className="p-8 text-center mt-6">
-          <BookText className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-600 font-medium mb-1">아직 섹션이 없습니다</p>
-          <p className="text-sm text-slate-500">
-            섹션을 만들거나, 다른 페이지에서 &quot;워크북에 추가&quot; 버튼을 눌러 컨텐츠를 모으세요
+      {/* 빈 상태 카드 — CTA 버튼 통합 */}
+      {workbook.sections.length === 0 && !creatingSection && (
+        <Card className="p-10 text-center mt-6">
+          <BookText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+          <p className="text-slate-700 font-bold text-base mb-1">아직 섹션이 없습니다</p>
+          <p className="text-sm text-slate-500 mb-5">
+            섹션을 만들어 컨텐츠를 묶거나, 다른 페이지에서 &quot;워크북에 추가&quot; 버튼을 눌러 항목을 모을 수 있어요
           </p>
+          <div className="flex gap-2 justify-center">
+            <Button variant="primary" onClick={() => setCreatingSection(true)}>
+              <FolderPlus className="w-4 h-4" />
+              첫 섹션 만들기
+            </Button>
+            <Button variant="ghost" onClick={() => router.push('/workbooks')}>
+              목록으로
+            </Button>
+          </div>
         </Card>
       )}
 
