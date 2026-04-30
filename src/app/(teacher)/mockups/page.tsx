@@ -8,6 +8,7 @@ import {
   Gamepad2, Stethoscope, Printer, CheckSquare, Shield, ToggleLeft, School, ClipboardCheck,
   Radio, FileUp, AlertTriangle, ScrollText, Layers, LifeBuoy, Newspaper, Route, KeyRound,
   Building2, Search, Gem, ShoppingBag, Crown, BookText,
+  Target, RotateCcw, TrendingUp, FileSearch, Megaphone,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 
@@ -61,6 +62,9 @@ const ALL_PAGES: PageInfo[] = [
   { label: '리포트', href: '/reports', icon: ScrollText, group: 'teacher', category: '진단·분석', description: '레벨테스트 보고서 관리 (교사용/학부모용)' },
   { label: '기출 분석', href: '/exam-analysis', icon: FileText, group: 'teacher', category: '진단·분석', description: '기출 시험지 AI 분석, 문항별 난이도/유형/능력 분류', isNew: true },
   { label: '기출 업로드 관리', href: '/admin/exam-uploads', icon: FileUp, group: 'teacher', category: '진단·분석', description: '[SUPER_ADMIN] 기출 시험지 업로드 관리' },
+  { label: '기출 분석 관리', href: '/exam-analysis/admin', icon: FileSearch, group: 'teacher', category: '진단·분석', description: '[SUPER_ADMIN] 분석 결과 검수, 신뢰도 검토, 피드백 처리' },
+  { label: '기출 트렌드', href: '/exam-analysis/admin/trends', icon: TrendingUp, group: 'teacher', category: '진단·분석', description: '[SUPER_ADMIN] 학년·학교별 출제 패턴, 단원별 빈도 트렌드' },
+  { label: '내신대비 캠페인', href: '/exam-campaigns', icon: Target, group: 'teacher', category: '진단·분석', description: '학교별 시험을 D-day까지 자동 준비하는 캠페인 생성·관리' },
 
   // ─── Teacher: 시스템 ───
   { label: '이용권 관리', href: '/licenses', icon: KeyRound, group: 'teacher', category: '시스템', description: '학생별 기능 이용권 배정/관리' },
@@ -69,6 +73,7 @@ const ALL_PAGES: PageInfo[] = [
   { label: '업데이트 내역', href: '/updates', icon: Newspaper, group: 'teacher', category: '시스템', description: '개발 히스토리, 변경 사항 확인' },
   { label: '고객지원', href: '/support', icon: HelpCircle, group: 'teacher', category: '시스템', description: 'FAQ, 문의하기' },
   { label: '학생 화면 보기', href: '/student-preview', icon: ScanEye, group: 'teacher', category: '시스템', description: '학생 시점으로 페이지 확인' },
+  { label: '데모/시연', href: '/demo', icon: Megaphone, group: 'teacher', category: '시스템', description: '플랫폼 핵심 기능 시연 페이지 (영업·마케팅용)' },
 
   // ─── Admin pages ───
   { label: '선생님 관리', href: '/admin/teachers', icon: UserPlus, group: 'admin', category: '관리 메뉴', description: '[MANAGER+] 소속 선생님 관리' },
@@ -79,19 +84,22 @@ const ALL_PAGES: PageInfo[] = [
   { label: '지점 관리', href: '/admin/tenants', icon: Building2, group: 'admin', category: '플랫폼', description: '[SUPER_ADMIN] 전체 지점 관리' },
   { label: '기능 관리', href: '/admin/features', icon: ToggleLeft, group: 'admin', category: '플랫폼', description: '[SUPER_ADMIN] 기능 플래그 관리' },
   { label: 'O/X 진술 관리', href: '/admin/ox-statements', icon: CheckSquare, group: 'admin', category: '플랫폼', description: '[SUPER_ADMIN] O/X 큐레이션 뱅크 CRUD (DB 우선 + 정적 폴백)', isNew: true },
+  { label: '기출 추출 대기열', href: '/admin/extract-queue', icon: Layers, group: 'admin', category: '플랫폼', description: '[SUPER_ADMIN] 분석 완료된 시험지 승인 → 야간 배치 일괄 추출' },
 
   // ─── Student pages ───
   { label: '학생 대시보드', href: '/dashboard', icon: GraduationCap, group: 'student', category: '학습', description: '레벨, XP, 숙제, 출석 마일스톤, 반 대항전, 복수전' },
   { label: '단원 목록', href: '/subjects', icon: BookOpen, group: 'student', category: '학습', description: '학년별 과목/개념 목록, 진행도' },
   { label: '내 시험', href: '/my-tests', icon: ClipboardCheck, group: 'student', category: '시험·숙제', description: '배정된 시험 목록, 응시, 결과' },
   { label: '연산 숙제', href: '/practice/arithmetic/homework', icon: CalendarCheck, group: 'student', category: '시험·숙제', description: '오늘의 연산 숙제 풀기' },
-  { label: '개념 숙제', href: '/practice/concept-homework', icon: BookOpen, group: 'student', category: '시험·숙제', description: '배정된 개념 학습 숙제' },
   { label: '문제 숙제', href: '/practice/question-homework', icon: FileQuestion, group: 'student', category: '시험·숙제', description: '배정된 문제 숙제 풀기' },
   { label: 'O/X 숙제', href: '/practice/ox/homework', icon: CalendarCheck, group: 'student', category: '시험·숙제', description: '오늘의 O/X 진술 숙제 풀기 (Day별 통과 여부)', isNew: true },
+  { label: '내신대비', href: '/exam-prep', icon: Target, group: 'student', category: '시험·숙제', description: '학교 시험 D-day 자동 학습 일정으로 준비 (오늘의 학습 + 등급 예측)' },
   { label: '연산 연습', href: '/practice/arithmetic', icon: Calculator, group: 'student', category: '연습', description: '카테고리별 연산 문제 풀기' },
   { label: 'O/X 퀴즈', href: '/practice/ox', icon: CheckSquare, group: 'student', category: '연습', description: '참/거짓 진술 자유연습 (중1 5개 단원, O/X 토글, 즉시 채점)', isNew: true },
   { label: '타임어택', href: '/practice/arithmetic/time-attack', icon: Zap, group: 'student', category: '연습', description: '시간 제한 연산 도전' },
   { label: '복수전', href: '/practice/revenge', icon: Swords, group: 'student', category: '연습', description: '틀린 문제 다시 풀기' },
+  { label: '오늘의 복습 테스트', href: '/practice/review-test', icon: RotateCcw, group: 'student', category: '연습', description: '간격 반복 복습 테스트 (매 수업 3~4문항, 1·3·7·14·30일 주기)' },
+  { label: '복습 별도 관리', href: '/practice/review-failed', icon: AlertTriangle, group: 'student', category: '연습', description: '복습 중 틀려서 자동 스케줄에서 빠진 항목 (선생님과 함께 재학습)' },
   { label: '퀴즈 참여', href: '/quiz-join', icon: Gamepad2, group: 'student', category: '참여', description: '실시간 퀴즈 참여 (PIN 입력)' },
   { label: '랭킹', href: '/ranking', icon: Trophy, group: 'student', category: '참여', description: 'XP/보석 랭킹, 반 대항전' },
   { label: '프로필', href: '/profile', icon: User, group: 'student', category: '참여', description: '개인 정보, 뱃지, 보석 컬렉션' },
@@ -107,6 +115,10 @@ const ALL_PAGES: PageInfo[] = [
   { label: '모자·안경 악세사리 미리보기', href: '/mockups/accessory-preview', icon: Crown, group: 'dev', category: '개발', description: '8종 모자 + 6종 안경 SVG 악세사리 + 이펙트 조합 시뮬레이션', isNew: true },
   { label: '해설 생성 비교', href: '/mockups/explanation-compare', icon: Sparkles, group: 'dev', category: '개발', description: 'Gemini Thinking vs Non-Thinking 해설 품질 비교', isNew: true },
   { label: '도형 편집기', href: '/mockups/diagram-editor', icon: Layers, group: 'dev', category: '개발', description: 'DiagramParams(프리셋) + SVG(코드) 도형 편집기 데모', isNew: true },
+  { label: '해설 후처리 감사', href: '/mockups/audit-explanations', icon: AlertTriangle, group: 'dev', category: '개발', description: '해설 LaTeX 정규화 후 의심 패턴 자동 검출 (Audit)' },
+  { label: '프리셋 브라우저', href: '/mockups/preset-browser', icon: Layers, group: 'dev', category: '개발', description: '교육과정 단원별 다이어그램 프리셋 209개 검색·미리보기' },
+  { label: '렌더러 비교', href: '/mockups/renderer-compare', icon: Eye, group: 'dev', category: '개발', description: 'MathRenderer 변환 검증 (\\dfrac→\\frac, NBSP, 글루 분리 등)' },
+  { label: '교과서 도형 검증', href: '/mockups/textbook-shapes', icon: Layers, group: 'dev', category: '개발', description: '26개 SVG 다이어그램 타입 렌더링 검증 모음' },
   { label: '워크북 컴포넌트 미리보기', href: '/mockups/workbook-preview', icon: BookText, group: 'dev', category: '개발', description: '풀이공간 4단계, 표지, 목차, 챕터 구분, 문항+풀이공간, 개념 문서를 DB 없이 한 화면에서 시연', isNew: true },
 ];
 
