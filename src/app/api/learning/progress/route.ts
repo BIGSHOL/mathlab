@@ -117,10 +117,8 @@ export async function POST(request: NextRequest) {
       resultLevel = newLevel;
     }
 
-    // 과정 자동 진급 체크 (BLANK_FULL 완료 시)
-    if (stage === 'BLANK_FULL') {
-      await checkAndAdvanceCourse(tx, user.id, conceptId);
-    }
+    // 과정 자동 진급 체크 (course.requiredStage 도달 시 진급, 미달이면 즉시 return)
+    await checkAndAdvanceCourse(tx, user.id, conceptId);
 
     return prog;
   });

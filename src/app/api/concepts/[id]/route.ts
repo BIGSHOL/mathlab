@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth, requireSuperAdmin, isResponse, notFound, validateBody, normalizeConceptContent } from '@/lib/api';
+import { requireAuthViewAs, requireSuperAdmin, requireLicense, isResponse, notFound, validateBody, normalizeConceptContent } from '@/lib/api';
 import { updateConceptSchema } from '@/lib/schemas/concept';
 
 /** Resolve concept by conceptCode or cuid id (single query) */
@@ -14,11 +14,13 @@ async function resolveConceptId(id: string): Promise<string | null> {
 
 // GET /api/concepts/:id — id can be conceptCode or cuid
 export async function GET(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await requireAuth();
+  const user = await requireAuthViewAs(request);
   if (isResponse(user)) return user;
+  const licenseCheck = await requireLicense(user, 'concept');
+  if (licenseCheck) return licenseCheck;
 
   const { id } = await params;
   const conceptId = await resolveConceptId(id);

@@ -1281,16 +1281,17 @@ enum CourseStatus {
 }
 
 model LearningCourse {
-  id          String   @id @default(cuid())
-  seq         Int      @unique @default(autoincrement())
-  title       String   @db.VarChar(200)
-  description String?  @db.Text
-  createdBy   String
-  isActive    Boolean  @default(true)
-  mode        String   @default("free") @db.VarChar(20) // "sequential" | "free"
-  tenantId    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  seq           Int      @unique @default(autoincrement())
+  title         String   @db.VarChar(200)
+  description   String?  @db.Text
+  createdBy     String
+  isActive      Boolean  @default(true)
+  mode          String   @default("free") @db.VarChar(20) // "sequential" | "free"
+  requiredStage Stage    @default(BLANK_FULL) // 코스 진급으로 인정할 최소 단계
+  tenantId      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   tenant      Tenant?                    @relation(fields: [tenantId], references: [id])
   creator     User                       @relation("LearningCourseCreator", fields: [createdBy], references: [id])

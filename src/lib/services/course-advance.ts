@@ -4,7 +4,7 @@ type Tx = Omit<Prisma.TransactionClient, '$connect' | '$disconnect' | '$on' | '$
 
 /**
  * 학습 과정 자동 진급 로직.
- * BLANK_FULL 단계 완료 시 호출되어, ACTIVE 과정의 모든 개념이 완료되었는지 확인.
+ * 단계 완료 시 호출되어, ACTIVE 과정의 모든 개념이 course.requiredStage 까지 완료되었는지 확인.
  * 완료 시 과정 COMPLETED + 다음 LOCKED → ACTIVE 전환.
  */
 export async function checkAndAdvanceCourse(tx: Tx, userId: string, conceptId: string) {
@@ -20,12 +20,12 @@ export async function checkAndAdvanceCourse(tx: Tx, userId: string, conceptId: s
   const courseConceptIds = enrollment.course.concepts.map((c) => c.conceptId);
   if (!courseConceptIds.includes(conceptId)) return null;
 
-  // 2. 이 과정의 모든 concept이 BLANK_FULL 완료인지 확인
+  // 2. 이 과정의 모든 concept이 requiredStage 완료인지 확인
   const completedCount = await tx.learningProgress.count({
     where: {
       userId,
       conceptId: { in: courseConceptIds },
-      stage: 'BLANK_FULL',
+      stage: enrollment.course.requiredStage,
       completed: true,
     },
   });

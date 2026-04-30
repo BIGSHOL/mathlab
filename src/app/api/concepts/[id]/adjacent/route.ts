@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth, isResponse, notFound } from '@/lib/api';
+import { requireAuthViewAs, requireLicense, isResponse, notFound } from '@/lib/api';
 import { CROSS_GRADE_CHAINS } from '@/lib/constants/concepts';
 
 /** Resolve concept by conceptCode or cuid id */
@@ -72,8 +72,10 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const authUser = await requireAuth();
+  const authUser = await requireAuthViewAs(request);
   if (isResponse(authUser)) return authUser;
+  const licenseCheck = await requireLicense(authUser, 'concept');
+  if (licenseCheck) return licenseCheck;
 
   const { id: rawId } = await params;
   const id = await resolveConceptId(rawId) ?? rawId;
