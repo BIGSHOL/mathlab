@@ -11,7 +11,7 @@ import type { AgentType } from '../constants';
 import { DIFFICULTY_LEGACY_MAP } from '../constants';
 import type { BasicAnalysisResult, WeaknessProfile, LearningPlan } from '../types';
 import { MIDDLE_SCHOOL_CURRICULUM } from '../data/curriculum';
-import type { GradeCurriculum } from '../data/curriculumStrategies';
+import type { GradeCurriculum } from '../data/curriculum';
 import type { NearbyComparisonData, NearbyExamSummary } from '../nearby-school-data';
 
 function normalizeDiff(key: string): string {

@@ -22,7 +22,7 @@ import {
   DIFFICULTY_SYSTEM_FRAMEWORK,
 } from './prompt-config-common';
 import type { ExamContext, BuildPromptResponse } from './types';
-import { MIDDLE_SCHOOL_CURRICULUM, HIGH_SCHOOL_CURRICULUM } from './data/curriculumStrategies';
+import { MIDDLE_SCHOOL_CURRICULUM, HIGH_SCHOOL_CURRICULUM } from './data/curriculum';
 
 // ── 영어 과목 프롬프트 (인라인, prompt-config-english 미생성 시 대비) ──
 // 영어 관련 설정은 향후 prompt-config-english.ts로 분리 예정

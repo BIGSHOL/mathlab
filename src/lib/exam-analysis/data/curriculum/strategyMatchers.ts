@@ -4,7 +4,8 @@
  */
 
 import type { TopicStrategy } from './types';
-import { MIDDLE_SCHOOL_CURRICULUM, HIGH_SCHOOL_CURRICULUM } from '../curriculumStrategies';
+import { MIDDLE_SCHOOL_CURRICULUM } from './middleSchoolCurriculum';
+import { HIGH_SCHOOL_CURRICULUM } from './highSchoolCurriculum';
 
 /**
  * 토픽 문자열에서 소단원명(마지막 > 이후)을 추출하고,

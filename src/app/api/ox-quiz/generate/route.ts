@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, isResponse, badRequest } from '@/lib/api';
+import { requireTeacher, isResponse, badRequest, serverError } from '@/lib/api';
 import { prisma } from '@/lib/db';
 import {
   generateOxFromQuery,
@@ -33,7 +33,7 @@ const VALID_TYPES: OxQuestionType[] = [
  *  - balanceAnswers: O/X 균등 분배 (기본 true)
  */
 export async function POST(request: NextRequest) {
-  const user = await requireAuth();
+  const user = await requireTeacher();
   if (isResponse(user)) return user;
 
   const body = await request.json();
@@ -70,17 +70,23 @@ export async function POST(request: NextRequest) {
 
   const problemCount = Math.min(Math.max(1, count || 20), 1000);
 
-  const problems = await generateOxFromQuery(
-    {
-      category,
-      chapter,
-      section,
-      questionType: qtypes,
-      level: levels,
-    },
-    problemCount,
-    { balanceAnswers: balanceAnswers !== false },
-  );
+  let problems;
+  try {
+    problems = await generateOxFromQuery(
+      {
+        category,
+        chapter,
+        section,
+        questionType: qtypes,
+        level: levels,
+      },
+      problemCount,
+      { balanceAnswers: balanceAnswers !== false },
+    );
+  } catch (e) {
+    console.error('[ox-quiz generate]', e);
+    return serverError('OX 진술 출제에 실패했습니다');
+  }
 
   // 선생님 활동 로깅 (실패해도 무시)
   await prisma.questionGenerationLog

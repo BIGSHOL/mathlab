@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireTeacher, isResponse, notFound, forbidden } from '@/lib/api';
+import { requireTeacher, isResponse, notFound, badRequest, getTenantFilter } from '@/lib/api';
 import { prisma } from '@/lib/db';
+import { z } from 'zod';
+
+const updatePlanSchema = z.object({
+  title: z.string().trim().min(1).optional(),
+  isActive: z.boolean().optional(),
+  passingScore: z.number().min(0).max(100).optional(),
+});
 
 /** GET: OX 숙제 플랜 단건 조회 */
 export async function GET(
@@ -11,8 +18,10 @@ export async function GET(
   if (isResponse(user)) return user;
 
   const { id } = await params;
-  const plan = await prisma.oxQuizPlan.findUnique({
-    where: { id },
+  const tenantWhere = getTenantFilter(user);
+
+  const plan = await prisma.oxQuizPlan.findFirst({
+    where: { id, ...tenantWhere },
     include: {
       enrollments: {
         select: {
@@ -29,15 +38,6 @@ export async function GET(
 
   if (!plan) return notFound('OX 숙제 플랜을 찾을 수 없습니다');
 
-  // 다른 테넌트 데이터 접근 차단 (SUPER_ADMIN 제외)
-  if (
-    user.role !== 'SUPER_ADMIN' &&
-    plan.tenantId &&
-    plan.tenantId !== (user.viewingTenantId ?? user.tenantId)
-  ) {
-    return forbidden('해당 숙제에 접근할 권한이 없습니다');
-  }
-
   return NextResponse.json({ data: plan });
 }
 
@@ -50,24 +50,33 @@ export async function PATCH(
   if (isResponse(user)) return user;
 
   const { id } = await params;
-  const body = await request.json();
+  const tenantWhere = getTenantFilter(user);
 
-  const existing = await prisma.oxQuizPlan.findUnique({ where: { id } });
-  if (!existing) return notFound('OX 숙제 플랜을 찾을 수 없습니다');
-  if (
-    user.role !== 'SUPER_ADMIN' &&
-    existing.tenantId &&
-    existing.tenantId !== (user.viewingTenantId ?? user.tenantId)
-  ) {
-    return forbidden('수정 권한이 없습니다');
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return badRequest('JSON 파싱에 실패했습니다');
   }
+
+  const parsed = updatePlanSchema.safeParse(body);
+  if (!parsed.success) {
+    return badRequest('입력값이 올바르지 않습니다', parsed.error.issues.map((i) => ({
+      field: i.path.join('.'),
+      message: i.message,
+    })));
+  }
+
+  const existing = await prisma.oxQuizPlan.findFirst({
+    where: { id, ...tenantWhere },
+    select: { id: true },
+  });
+  if (!existing) return notFound('OX 숙제 플랜을 찾을 수 없습니다');
 
   const data: Record<string, unknown> = {};
-  if (typeof body.title === 'string' && body.title.trim()) data.title = body.title.trim();
-  if (typeof body.isActive === 'boolean') data.isActive = body.isActive;
-  if (typeof body.passingScore === 'number') {
-    data.passingScore = Math.min(100, Math.max(0, Math.round(body.passingScore)));
-  }
+  if (parsed.data.title !== undefined) data.title = parsed.data.title;
+  if (parsed.data.isActive !== undefined) data.isActive = parsed.data.isActive;
+  if (parsed.data.passingScore !== undefined) data.passingScore = Math.round(parsed.data.passingScore);
 
   const updated = await prisma.oxQuizPlan.update({
     where: { id },
@@ -86,15 +95,13 @@ export async function DELETE(
   if (isResponse(user)) return user;
 
   const { id } = await params;
-  const existing = await prisma.oxQuizPlan.findUnique({ where: { id } });
+  const tenantWhere = getTenantFilter(user);
+
+  const existing = await prisma.oxQuizPlan.findFirst({
+    where: { id, ...tenantWhere },
+    select: { id: true },
+  });
   if (!existing) return notFound('OX 숙제 플랜을 찾을 수 없습니다');
-  if (
-    user.role !== 'SUPER_ADMIN' &&
-    existing.tenantId &&
-    existing.tenantId !== (user.viewingTenantId ?? user.tenantId)
-  ) {
-    return forbidden('삭제 권한이 없습니다');
-  }
 
   await prisma.oxQuizPlan.delete({ where: { id } });
   return NextResponse.json({ data: { id, deleted: true } });
