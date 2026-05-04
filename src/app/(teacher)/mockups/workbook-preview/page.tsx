@@ -66,22 +66,22 @@ const DEMO_ESSAY: NormalizedItem = {
 
 const CONCEPT_FULL = `이차방정식 $ax^2 + bx + c = 0$ ($a \\neq 0$)의 두 근을 $\\alpha$, $\\beta$라 할 때, 다음이 성립한다.
 
-- 두 근의 합: $\\alpha + \\beta = -\\dfrac{b}{a}$
-- 두 근의 곱: $\\alpha \\beta = \\dfrac{c}{a}$
+- 두 근의 합: $\\alpha + \\beta = -\\frac{b}{a}$
+- 두 근의 곱: $\\alpha \\beta = \\frac{c}{a}$
 
 이를 **근과 계수의 관계**라고 한다. 이 관계는 두 근을 직접 구하지 않고도 그 합과 곱을 알 수 있게 해 주는 강력한 도구이다.`;
 
 const CONCEPT_BLANK_EASY = `이차방정식 $ax^2 + bx + c = 0$ ($a \\neq 0$)의 두 근을 $\\alpha$, $\\beta$라 할 때, 다음이 성립한다.
 
-- 두 근의 합: $\\alpha + \\beta = -\\dfrac{b}{a}$
-- 두 근의 곱: $\\alpha \\beta = \\dfrac{c}{a}$
+- 두 근의 합: $\\alpha + \\beta = -\\frac{b}{a}$
+- 두 근의 곱: $\\alpha \\beta = \\frac{c}{a}$
 
 이를 **＿＿＿＿＿**라고 한다. 이 관계는 두 근을 직접 구하지 않고도 그 합과 곱을 알 수 있게 해 주는 강력한 도구이다.`;
 
 const CONCEPT_BLANK_HARD = `＿＿＿＿＿ $ax^2 + bx + c = 0$ ($a \\neq 0$)의 두 근을 $\\alpha$, $\\beta$라 할 때, 다음이 ＿＿＿＿＿한다.
 
-- 두 근의 ＿＿＿＿＿: $\\alpha + \\beta = -\\dfrac{b}{a}$
-- 두 근의 ＿＿＿＿＿: $\\alpha \\beta = \\dfrac{c}{a}$
+- 두 근의 ＿＿＿＿＿: $\\alpha + \\beta = -\\frac{b}{a}$
+- 두 근의 ＿＿＿＿＿: $\\alpha \\beta = \\frac{c}{a}$
 
 이를 **＿＿＿＿＿**라고 한다. 이 ＿＿＿＿＿는 두 근을 직접 ＿＿＿＿＿ 않고도 그 합과 곱을 알 수 있게 해 주는 강력한 도구이다.`;
 
