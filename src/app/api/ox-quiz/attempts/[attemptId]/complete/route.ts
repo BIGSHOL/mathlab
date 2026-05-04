@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, isResponse, notFound, badRequest } from '@/lib/api';
+import { requireAuth, isResponse, notFound, badRequest, serverError } from '@/lib/api';
 import { prisma } from '@/lib/db';
 import { calculateLevel } from '@/lib/utils/xp';
 import { checkAndAwardBadges } from '@/lib/services/badge-checker';
@@ -31,48 +31,53 @@ export async function POST(
 
   let leveledUp = false;
 
-  await prisma.$transaction(async (tx) => {
-    await tx.oxQuizAttempt.update({
-      where: { id: attemptId },
-      data: {
-        completedAt: new Date(),
-        score: totalPoints,
-        xpEarned,
-      },
-    });
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.oxQuizAttempt.update({
+        where: { id: attemptId },
+        data: {
+          completedAt: new Date(),
+          score: totalPoints,
+          xpEarned,
+        },
+      });
 
-    const profile = await tx.studentProfile.findUnique({
-      where: { userId: user.id },
-      select: { totalXp: true, level: true },
-    });
-
-    if (profile) {
-      const newTotalXp = profile.totalXp + xpEarned;
-      const newLevel = calculateLevel(newTotalXp);
-      leveledUp = newLevel > profile.level;
-
-      await tx.studentProfile.update({
+      const profile = await tx.studentProfile.findUnique({
         where: { userId: user.id },
-        data: {
-          totalXp: newTotalXp,
-          level: newLevel,
-          lastActiveAt: new Date(),
-        },
+        select: { totalXp: true, level: true },
       });
-    }
 
-    if (xpEarned > 0) {
-      await tx.pointTransaction.create({
-        data: {
-          userId: user.id,
-          amount: xpEarned,
-          type: 'EARN',
-          reason: 'O/X 퀴즈 완료',
-          referenceId: attemptId,
-        },
-      });
-    }
-  });
+      if (profile) {
+        const newTotalXp = profile.totalXp + xpEarned;
+        const newLevel = calculateLevel(newTotalXp);
+        leveledUp = newLevel > profile.level;
+
+        await tx.studentProfile.update({
+          where: { userId: user.id },
+          data: {
+            totalXp: newTotalXp,
+            level: newLevel,
+            lastActiveAt: new Date(),
+          },
+        });
+      }
+
+      if (xpEarned > 0) {
+        await tx.pointTransaction.create({
+          data: {
+            userId: user.id,
+            amount: xpEarned,
+            type: 'EARN',
+            reason: 'O/X 퀴즈 완료',
+            referenceId: attemptId,
+          },
+        });
+      }
+    });
+  } catch (e) {
+    console.error('[ox-quiz complete POST]', e);
+    return serverError('완료 처리에 실패했습니다');
+  }
 
   // 배지 체크 (fire-and-forget)
   checkAndAwardBadges(user.id).catch((e) => console.error('[badge-check-ox]', e));
