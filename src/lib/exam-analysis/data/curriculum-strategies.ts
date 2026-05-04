@@ -1,7 +1,7 @@
 /**
  * 교육과정 전략 데이터 어댑터
  *
- * 실제 데이터는 curriculumStrategies.ts (~10,000줄)와 curriculum/ 디렉토리에 있음.
+ * 실제 데이터는 curriculum/ 디렉토리에 있음.
  * 이 파일은 study-strategy 컴포넌트에서 사용하는 인터페이스로 변환하는 어댑터 역할.
  */
 
@@ -16,7 +16,7 @@ import {
   ESSAY_ADVANCED_GUIDE,
   FOUR_WEEK_TIMELINE,
   ENCOURAGEMENT_MESSAGES,
-} from './curriculumStrategies';
+} from './curriculum';
 import { KILLER_QUESTION_TYPES } from './curriculum/killerPatterns';
 import { GRADE_CONNECTIONS } from './curriculum/gradeConnections';
 import { findCommonMistakes as _findCommonMistakes } from './curriculum/commonMistakes';
