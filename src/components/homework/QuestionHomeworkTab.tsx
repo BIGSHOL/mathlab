@@ -21,6 +21,7 @@ import {
   X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { AddToWorkbookButton } from '@/components/workbook-shared/AddToWorkbookButton';
 
 interface QuestionHomeworkPlan {
   id: string;
@@ -250,6 +251,7 @@ export default function QuestionHomeworkTab() {
                   <Link href={`/homework/question/${selectedPlan.seq}/grid`}>
                     <Button size="sm" variant="secondary" className="text-xs"><BarChart3 className="w-3.5 h-3.5 mr-1" />숙제부</Button>
                   </Link>
+                  <QuestionHomeworkDayWorkbookAdder plan={selectedPlan} />
                   <Button size="sm" variant="secondary" className="text-xs" onClick={() => handleToggleActive(selectedPlan.seq, !selectedPlan.isActive)}>
                     {selectedPlan.isActive ? <><PowerOff className="w-3.5 h-3.5 mr-1" />비활성화</> : <><Power className="w-3.5 h-3.5 mr-1" />활성화</>}
                   </Button>
@@ -333,6 +335,43 @@ export default function QuestionHomeworkTab() {
           </div>
         )}
       </main>
+    </div>
+  );
+}
+
+/**
+ * 문제 숙제의 특정 일차를 워크북에 추가하는 헬퍼.
+ * 헤더에서는 PlanDetail이 아닌 QuestionHomeworkPlan(목록 카드 데이터)도 들어올 수 있어
+ * 필요한 필드만 좁힌 인터페이스로 받는다.
+ */
+function QuestionHomeworkDayWorkbookAdder({ plan }: { plan: { id: string; title: string; totalDays: number } }) {
+  const [dayIndex, setDayIndex] = useState(0);
+  if (plan.totalDays <= 0) return null;
+  return (
+    <div className="flex items-center gap-1">
+      {plan.totalDays > 1 && (
+        <select
+          value={dayIndex}
+          onChange={(e) => setDayIndex(Number(e.target.value))}
+          className="h-7 px-1.5 text-xs border border-slate-200 rounded-sm bg-white focus:outline-none focus:border-primary"
+          aria-label="일차 선택"
+        >
+          {Array.from({ length: plan.totalDays }, (_, i) => (
+            <option key={i} value={i}>
+              {i + 1}일차
+            </option>
+          ))}
+        </select>
+      )}
+      <AddToWorkbookButton
+        kind="HOMEWORK_DAY"
+        refId={plan.id}
+        dayIndex={dayIndex}
+        displayTitle={`${plan.title} · ${dayIndex + 1}일차`}
+        variant="secondary"
+        size="sm"
+        label="워크북"
+      />
     </div>
   );
 }

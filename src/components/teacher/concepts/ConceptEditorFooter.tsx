@@ -2,6 +2,7 @@
 
 import { Edit, Save, Loader2 } from 'lucide-react';
 import type { ConceptManagerReturn } from './useConceptManager';
+import { AddToWorkbookButton } from '@/components/workbook-shared/AddToWorkbookButton';
 
 interface ConceptEditorFooterProps {
   mgr: ConceptManagerReturn;
@@ -10,7 +11,7 @@ interface ConceptEditorFooterProps {
 export function ConceptEditorFooter({ mgr }: ConceptEditorFooterProps) {
   const {
     isOwner,
-    editingBlank, isNewBlank, isNewConcept, isContentEditing, setIsContentEditing,
+    editingConcept, editingBlank, isNewBlank, isNewConcept, isContentEditing, setIsContentEditing,
     editForm, blankForm,
     saving, blankSaving,
     isDirty, conceptDirty, blankDirty,
@@ -24,8 +25,24 @@ export function ConceptEditorFooter({ mgr }: ConceptEditorFooterProps) {
   const setEditingBlankFn = setEditingBlank;
   const setIsNewBlankFn = setIsNewBlank;
 
+  // 저장된 개념(편집 중 신규 X, 빈칸 모드 X)일 때만 워크북 추가 노출
+  const canAddToWorkbook =
+    !!editingConcept?.id && !isNewConcept && !editingBlank && !isNewBlank && !isContentEditing;
+
   return (
-    <div className="shrink-0 bg-white border-t border-slate-200 px-3 py-2.5 flex items-center justify-end gap-2">
+    <div className="shrink-0 bg-white border-t border-slate-200 px-3 py-2.5 flex items-center justify-between gap-2">
+      {canAddToWorkbook ? (
+        <AddToWorkbookButton
+          kind="CONCEPT_DOC"
+          refId={editingConcept!.id}
+          displayTitle={editForm.title}
+          variant="secondary"
+          size="sm"
+        />
+      ) : (
+        <span />
+      )}
+      <div className="flex items-center gap-2">
       <button
         type="button"
         onClick={(editingBlank || isNewBlank) ? cancelBlankEdit : cancelEditing}
@@ -72,6 +89,7 @@ export function ConceptEditorFooter({ mgr }: ConceptEditorFooterProps) {
           {(saving || blankSaving) ? '저장 중...' : '저장'}
         </button>
       )}
+      </div>
     </div>
   );
 }

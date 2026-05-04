@@ -23,8 +23,11 @@ const TEMPLATES = [
   { id: 'exam', label: '모의고사' },
   { id: 'large', label: '초등확대' },
   { id: 'minimal', label: '미니멀' },
+  { id: 'csat', label: '수능형' },
   { id: 'classic', label: '클래식' },
   { id: 'notebook', label: '노트형' },
+  { id: 'formal', label: '격식형' },
+  { id: 'bubble', label: '말풍선' },
 ] as const;
 
 export default function NewWorkbookPage() {

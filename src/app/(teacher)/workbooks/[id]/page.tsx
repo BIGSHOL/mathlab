@@ -1,9 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { BookText, Printer, Trash2, FolderPlus, FileText, ClipboardCheck, BookOpen, CheckSquare, Plus, ChevronDown } from 'lucide-react';
+import { BookText, Printer, Trash2, FolderPlus, FileText, ClipboardCheck, BookOpen, CheckSquare, Plus, ChevronDown, ChevronUp, Settings, Pencil, Check, X, GripVertical } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/Button';
@@ -14,6 +24,8 @@ import { AddOxBundleModal } from '@/components/workbook-shared/AddOxBundleModal'
 import { AddQuestionToWorkbookModal } from '@/components/workbook-shared/AddQuestionToWorkbookModal';
 import { AddConceptToWorkbookModal } from '@/components/workbook-shared/AddConceptToWorkbookModal';
 import { AddTestToWorkbookModal } from '@/components/workbook-shared/AddTestToWorkbookModal';
+import { WorkbookMetaModal } from '@/components/workbook-shared/WorkbookMetaModal';
+import { CATEGORY_LABELS as OX_CATEGORY_LABELS } from '@/lib/services/ox-generator';
 import type { AnswerSpaceSizeInput } from '@/lib/schemas/workbook';
 
 type AddContentKind = 'QUESTION' | 'CONCEPT_DOC' | 'TEST_PAPER' | 'OX_BUNDLE';
@@ -26,7 +38,9 @@ interface SectionItem {
   testId: string | null;
   conceptId: string | null;
   arithmeticPlanId: string | null;
+  arithmeticDayIndex: number | null;
   homeworkPlanId: string | null;
+  homeworkDayIndex: number | null;
   examPaperId: string | null;
   answerSpace: AnswerSpaceSizeInput;
   customLabel: string | null;
@@ -43,15 +57,9 @@ interface SectionItem {
   test?: { id: string; title: string; questionCount: number; grade: number } | null;
   concept?: { id: string; title: string; conceptCode: string | null; chapter: string | null; section: string | null } | null;
   examPaper?: { id: string; title: string; schoolName: string | null; grade: string } | null;
+  arithmeticPlan?: { id: string; title: string; totalDays: number } | null;
+  homeworkPlan?: { id: string; title: string; totalDays: number } | null;
 }
-
-const OX_CATEGORY_LABELS: Record<string, string> = {
-  m1_pf_misconception: '소인수분해',
-  m1_int_rational: '정수와 유리수',
-  m1_equation: '일차방정식',
-  m1_geometry: '기본 도형',
-  m1_statistics: '자료의 정리와 해석',
-};
 
 /** SectionItem → 사람이 읽는 라벨 (제목/코드/뱃지) */
 function getItemLabels(item: SectionItem): { primary: string; secondary?: string } {
@@ -79,10 +87,24 @@ function getItemLabels(item: SectionItem): { primary: string; secondary?: string
       if (!e) return { primary: '(삭제된 기출 시험지)' };
       return { primary: e.title, secondary: e.schoolName ? `${e.schoolName} · ${e.grade}` : e.grade };
     }
+    case 'ARITHMETIC_DAY': {
+      const p = item.arithmeticPlan;
+      const day = item.arithmeticDayIndex ?? 0;
+      if (!p) return { primary: '(삭제된 연산 숙제)' };
+      return { primary: p.title, secondary: `${day + 1}일차 · 연산 숙제` };
+    }
+    case 'HOMEWORK_DAY': {
+      const p = item.homeworkPlan;
+      const day = item.homeworkDayIndex ?? 0;
+      if (!p) return { primary: '(삭제된 문제 숙제)' };
+      return { primary: p.title, secondary: `${day + 1}일차 · 문제 숙제` };
+    }
     case 'OX_BUNDLE': {
       const cat = item.inlineData?.category;
       const count = item.inlineData?.count ?? item.inlineData?.statementIds?.length ?? 0;
-      const catLabel = cat ? OX_CATEGORY_LABELS[cat] ?? cat : 'OX 묶음';
+      const catLabel = cat
+        ? ((OX_CATEGORY_LABELS as Record<string, string>)[cat] ?? cat)
+        : 'OX 묶음';
       return { primary: `${catLabel} ${count}개 묶음`, secondary: 'O/X 진술' };
     }
     default:
@@ -113,10 +135,13 @@ interface Workbook {
   subtitle: string | null;
   studentLabel: string | null;
   semesterLabel: string | null;
+  academyName: string | null;
+  ownerName: string | null;
   defaultAnswerSpace: AnswerSpaceSizeInput;
   separateAnswerKey: boolean;
   showCover: boolean;
   showToc: boolean;
+  printPreset: import('@/lib/schemas/workbook').PrintOptionsInput;
   sections: Section[];
 }
 
@@ -151,6 +176,10 @@ export default function WorkbookDetailPage() {
   const [addModal, setAddModal] = useState<{ sectionId: string; kind: AddContentKind } | null>(null);
   /** 섹션별 드롭다운 열림 상태 */
   const [openDropdownSection, setOpenDropdownSection] = useState<string | null>(null);
+  /** 표지·인쇄 옵션 편집 모달 */
+  const [metaModalOpen, setMetaModalOpen] = useState(false);
+  /** 섹션 인라인 편집: { id, title, description } 또는 null */
+  const [editingSection, setEditingSection] = useState<{ id: string; title: string; description: string } | null>(null);
 
   useEffect(() => {
     void load();
@@ -218,6 +247,155 @@ export default function WorkbookDetailPage() {
     });
   }
 
+  // 드래그 시작에 6px 이상 움직여야 발동 → 클릭과 충돌 방지
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+
+  /** 드래그 종료 — 같은 섹션 내에서만 정렬 (섹션 간 이동은 ↑↓ 버튼) */
+  async function handleDragEnd(event: DragEndEvent, sectionId: string) {
+    const { active, over } = event;
+    if (!workbook || !over || active.id === over.id) return;
+    const section = workbook.sections.find((s) => s.id === sectionId);
+    if (!section) return;
+    const fromIdx = section.items.findIndex((it) => it.id === active.id);
+    const toIdx = section.items.findIndex((it) => it.id === over.id);
+    if (fromIdx < 0 || toIdx < 0) return;
+
+    const reorderedItems = arrayMove(section.items, fromIdx, toIdx);
+    setWorkbook((wb) =>
+      wb
+        ? {
+            ...wb,
+            sections: wb.sections.map((s) => (s.id === sectionId ? { ...s, items: reorderedItems } : s)),
+          }
+        : wb,
+    );
+
+    const orders = reorderedItems.map((it, i) => ({ itemId: it.id, sectionId, sortOrder: i }));
+    try {
+      const res = await fetch(`/api/workbooks/${id}/items/reorder`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orders }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      toast.error('순서를 저장하지 못했습니다');
+      void load();
+    }
+  }
+
+  /**
+   * 아이템을 위/아래로 한 칸 이동.
+   * - 같은 섹션 내: 인접 아이템과 swap
+   * - 섹션 첫 항목에서 ↑: 이전 섹션의 마지막으로 이동
+   * - 섹션 마지막 항목에서 ↓: 다음 섹션의 처음으로 이동
+   * 양방향 모두 낙관적 UI + 단일 reorder POST.
+   */
+  async function moveItem(sectionId: string, itemId: string, direction: 'up' | 'down') {
+    if (!workbook) return;
+    const sIdx = workbook.sections.findIndex((s) => s.id === sectionId);
+    if (sIdx < 0) return;
+    const section = workbook.sections[sIdx];
+    const idx = section.items.findIndex((it) => it.id === itemId);
+    if (idx < 0) return;
+
+    const newSections = workbook.sections.map((s) => ({ ...s, items: [...s.items] }));
+    let affectedSectionIds: string[] = [];
+
+    if (direction === 'up') {
+      if (idx > 0) {
+        // 같은 섹션 내 swap
+        const items = newSections[sIdx].items;
+        [items[idx], items[idx - 1]] = [items[idx - 1], items[idx]];
+        affectedSectionIds = [sectionId];
+      } else if (sIdx > 0) {
+        // 이전 섹션 마지막으로 이동
+        const [moved] = newSections[sIdx].items.splice(0, 1);
+        newSections[sIdx - 1].items.push(moved);
+        affectedSectionIds = [sectionId, newSections[sIdx - 1].id];
+      } else {
+        return; // 첫 섹션 첫 항목 — 더 이상 위로 못 감
+      }
+    } else {
+      if (idx < section.items.length - 1) {
+        const items = newSections[sIdx].items;
+        [items[idx], items[idx + 1]] = [items[idx + 1], items[idx]];
+        affectedSectionIds = [sectionId];
+      } else if (sIdx < newSections.length - 1) {
+        // 다음 섹션 처음으로 이동
+        const [moved] = newSections[sIdx].items.splice(idx, 1);
+        newSections[sIdx + 1].items.unshift(moved);
+        affectedSectionIds = [sectionId, newSections[sIdx + 1].id];
+      } else {
+        return;
+      }
+    }
+
+    // 낙관적 UI 갱신
+    setWorkbook((wb) => (wb ? { ...wb, sections: newSections } : wb));
+
+    // 서버 동기화 — 영향받은 섹션들의 항목 모두 sortOrder 재부여
+    const orders = newSections
+      .filter((s) => affectedSectionIds.includes(s.id))
+      .flatMap((s) => s.items.map((it, i) => ({ itemId: it.id, sectionId: s.id, sortOrder: i })));
+
+    try {
+      const res = await fetch(`/api/workbooks/${id}/items/reorder`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orders }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      toast.error('순서를 저장하지 못했습니다');
+      void load();
+    }
+  }
+
+  async function saveSectionEdit() {
+    if (!editingSection) return;
+    if (!editingSection.title.trim()) {
+      toast.warning('섹션 제목을 입력하세요');
+      return;
+    }
+    const { id: sId, title, description } = editingSection;
+    try {
+      const res = await fetch(`/api/workbooks/${id}/sections/${sId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: title.trim(), description: description.trim() || null }),
+      });
+      if (!res.ok) throw new Error();
+      setWorkbook((wb) =>
+        wb
+          ? {
+              ...wb,
+              sections: wb.sections.map((s) => (s.id === sId ? { ...s, title: title.trim(), description: description.trim() || null } : s)),
+            }
+          : wb,
+      );
+      setEditingSection(null);
+      toast.success('섹션이 수정되었습니다');
+    } catch {
+      toast.error('섹션 수정에 실패했습니다');
+    }
+  }
+
+  async function deleteSection(sectionId: string, hasItems: boolean) {
+    const msg = hasItems
+      ? '섹션과 그 안의 모든 항목이 삭제됩니다. 계속하시겠습니까?'
+      : '이 섹션을 삭제하시겠습니까?';
+    if (!confirm(msg)) return;
+    try {
+      const res = await fetch(`/api/workbooks/${id}/sections/${sectionId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      setWorkbook((wb) => (wb ? { ...wb, sections: wb.sections.filter((s) => s.id !== sectionId) } : wb));
+      toast.success('섹션이 삭제되었습니다');
+    } catch {
+      toast.error('섹션 삭제에 실패했습니다');
+    }
+  }
+
   async function deleteItem(itemId: string) {
     if (!confirm('이 항목을 워크북에서 제거할까요?')) return;
     try {
@@ -281,6 +459,10 @@ export default function WorkbookDetailPage() {
         backHref="/workbooks"
         actions={
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="md" onClick={() => setMetaModalOpen(true)}>
+              <Settings className="w-4 h-4 mr-1.5" />
+              표지·인쇄 설정
+            </Button>
             <Button
               variant="secondary"
               size="md"
@@ -316,12 +498,55 @@ export default function WorkbookDetailPage() {
       <div className="space-y-4">
         {workbook.sections.map((section, sIdx) => (
           <Card key={section.id} className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-bold text-slate-900">
-                <span className="text-primary mr-2">Chapter {sIdx + 1}</span>
-                {section.title}
-              </h3>
-              <span className="text-xs text-slate-400">{section.items.length}개 항목</span>
+            <div className="flex items-center justify-between mb-3 gap-3">
+              {editingSection?.id === section.id ? (
+                <div className="flex-1 flex items-center gap-2">
+                  <span className="text-primary font-bold shrink-0">Chapter {sIdx + 1}</span>
+                  <input
+                    autoFocus
+                    type="text"
+                    value={editingSection.title}
+                    onChange={(e) => setEditingSection((s) => (s ? { ...s, title: e.target.value } : s))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') void saveSectionEdit();
+                      if (e.key === 'Escape') setEditingSection(null);
+                    }}
+                    className="flex-1 h-8 px-2 border border-primary/40 rounded-sm focus:outline-none focus:border-primary text-sm"
+                  />
+                  <Button variant="ghost" size="sm" onClick={() => void saveSectionEdit()}>
+                    <Check className="w-4 h-4 text-emerald-600" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setEditingSection(null)}>
+                    <X className="w-4 h-4 text-slate-400" />
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <h3 className="font-bold text-slate-900 truncate">
+                    <span className="text-primary mr-2">Chapter {sIdx + 1}</span>
+                    {section.title}
+                  </h3>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <span className="text-xs text-slate-400 mr-1">{section.items.length}개 항목</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditingSection({ id: section.id, title: section.title, description: section.description ?? '' })}
+                      aria-label="섹션 편집"
+                    >
+                      <Pencil className="w-3.5 h-3.5 text-slate-500" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => void deleteSection(section.id, section.items.length > 0)}
+                      aria-label="섹션 삭제"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
 
             {section.items.length === 0 ? (
@@ -329,15 +554,18 @@ export default function WorkbookDetailPage() {
                 아직 추가된 항목이 없습니다. 아래 &quot;컨텐츠 추가&quot; 버튼으로 문제·개념·시험지·OX를 담거나, 다른 페이지에서 &quot;워크북에 추가&quot; 버튼을 누를 수 있어요.
               </p>
             ) : (
-              <ul className="space-y-2">
-                {section.items.map((item) => {
-                  const kindInfo = KIND_LABELS[item.kind] ?? { label: item.kind, icon: <FileText className="w-4 h-4" /> };
-                  const labels = getItemLabels(item);
-                  return (
-                    <li
-                      key={item.id}
-                      className="flex items-center gap-3 p-3 border border-slate-200 rounded-sm bg-white"
-                    >
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={(e) => void handleDragEnd(e, section.id)}
+              >
+                <SortableContext items={section.items.map((it) => it.id)} strategy={verticalListSortingStrategy}>
+                  <ul className="space-y-2">
+                    {section.items.map((item) => {
+                      const kindInfo = KIND_LABELS[item.kind] ?? { label: item.kind, icon: <FileText className="w-4 h-4" /> };
+                      const labels = getItemLabels(item);
+                      return (
+                        <SortableItemWrapper key={item.id} id={item.id}>
                       <div className="text-slate-400 shrink-0">{kindInfo.icon}</div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
@@ -378,13 +606,50 @@ export default function WorkbookDetailPage() {
                           </option>
                         ))}
                       </select>
+                      {/* 순서 이동 — 워크북 첫 섹션·첫 항목 / 마지막 섹션·마지막 항목에서만 비활성
+                          (섹션 경계에서는 다음/이전 섹션으로 점프) */}
+                      {(() => {
+                        const idxInSec = section.items.indexOf(item);
+                        const isAbsoluteFirst = sIdx === 0 && idxInSec === 0;
+                        const isAbsoluteLast = sIdx === workbook.sections.length - 1 && idxInSec === section.items.length - 1;
+                        const upTitle = idxInSec === 0 && sIdx > 0 ? '이전 섹션으로 이동' : '위로';
+                        const downTitle = idxInSec === section.items.length - 1 && sIdx < workbook.sections.length - 1
+                          ? '다음 섹션으로 이동'
+                          : '아래로';
+                        return (
+                          <div className="flex flex-col">
+                            <button
+                              type="button"
+                              disabled={isAbsoluteFirst}
+                              onClick={() => moveItem(section.id, item.id, 'up')}
+                              className="p-0.5 text-slate-400 hover:text-text-primary disabled:opacity-30 disabled:hover:text-slate-400"
+                              aria-label={upTitle}
+                              title={upTitle}
+                            >
+                              <ChevronUp className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isAbsoluteLast}
+                              onClick={() => moveItem(section.id, item.id, 'down')}
+                              className="p-0.5 text-slate-400 hover:text-text-primary disabled:opacity-30 disabled:hover:text-slate-400"
+                              aria-label={downTitle}
+                              title={downTitle}
+                            >
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        );
+                      })()}
                       <Button variant="ghost" size="sm" onClick={() => deleteItem(item.id)}>
                         <Trash2 className="w-4 h-4 text-red-500" />
                       </Button>
-                    </li>
-                  );
-                })}
-              </ul>
+                        </SortableItemWrapper>
+                      );
+                    })}
+                  </ul>
+                </SortableContext>
+              </DndContext>
             )}
 
             {/* 섹션 단위 컨텐츠 추가 — 드롭다운 */}
@@ -535,6 +800,64 @@ export default function WorkbookDetailPage() {
           }}
         />
       )}
+
+      {metaModalOpen && workbook && (
+        <WorkbookMetaModal
+          workbookId={id}
+          initial={{
+            title: workbook.title,
+            subtitle: workbook.subtitle,
+            studentLabel: workbook.studentLabel,
+            semesterLabel: workbook.semesterLabel,
+            academyName: workbook.academyName,
+            ownerName: workbook.ownerName,
+            defaultAnswerSpace: workbook.defaultAnswerSpace,
+            separateAnswerKey: workbook.separateAnswerKey,
+            showCover: workbook.showCover,
+            showToc: workbook.showToc,
+            printPreset: workbook.printPreset,
+          }}
+          onClose={() => setMetaModalOpen(false)}
+          onSaved={(updated) => {
+            setWorkbook((wb) => (wb ? { ...wb, ...updated } : wb));
+          }}
+        />
+      )}
     </PageContainer>
+  );
+}
+
+/**
+ * 드래그 가능한 항목 행 wrapper.
+ * 좌측에 GripVertical 핸들 + 기존 행 콘텐츠를 children으로 받음.
+ * 드래그 중에는 opacity 50%로 시각화.
+ */
+function SortableItemWrapper({ id, children }: { id: string; children: ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : undefined,
+    position: 'relative' as const,
+  };
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-3 p-3 border border-slate-200 rounded-sm bg-white"
+      {...attributes}
+    >
+      <button
+        {...listeners}
+        type="button"
+        className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 shrink-0 -ml-1 p-0.5"
+        aria-label="드래그하여 순서 변경"
+        title="드래그하여 순서 변경"
+      >
+        <GripVertical className="w-4 h-4" />
+      </button>
+      {children}
+    </li>
   );
 }

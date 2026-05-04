@@ -27,6 +27,7 @@ import { useTests } from '@/hooks/useTests';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import { AssignPanel } from '@/components/test/AssignPanel';
 import { LevelTestTab } from '@/components/test/LevelTestTab';
+import { AddToWorkbookButton } from '@/components/workbook-shared/AddToWorkbookButton';
 import { TEST_TYPE_LABELS } from '@/lib/constants/labels';
 
 type TestTab = 'test' | 'level_test';
@@ -345,6 +346,13 @@ export default function TestsPage() {
                         결과 보기
                       </Button>
                     </Link>
+                    <AddToWorkbookButton
+                      kind="TEST_PAPER"
+                      refId={selectedTest.id}
+                      displayTitle={selectedTest.title}
+                      variant="secondary"
+                      size="sm"
+                    />
                     <Button
                       variant="ghost"
                       size="sm"
