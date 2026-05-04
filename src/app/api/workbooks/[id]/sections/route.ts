@@ -6,6 +6,7 @@ import {
   badRequest,
   notFound,
   getTenantFilter,
+  requireLicense,
   serverError,
 } from '@/lib/api';
 import { workbookSectionInputSchema } from '@/lib/schemas/workbook';
@@ -20,6 +21,9 @@ interface RouteParams {
 export async function POST(request: NextRequest, ctx: RouteParams) {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
+
+  const licenseCheck = await requireLicense(user, 'workbook');
+  if (licenseCheck) return licenseCheck;
 
   const { id } = await ctx.params;
   const tenantWhere = getTenantFilter(user);

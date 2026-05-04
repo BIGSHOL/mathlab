@@ -6,6 +6,7 @@ import {
   badRequest,
   notFound,
   getTenantFilter,
+  requireLicense,
   serverError,
 } from '@/lib/api';
 import { workbookItemUpdateSchema } from '@/lib/schemas/workbook';
@@ -26,6 +27,9 @@ const itemPatchSchema = workbookItemUpdateSchema.extend({
 export async function PATCH(request: NextRequest, ctx: RouteParams) {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
+
+  const licenseCheck = await requireLicense(user, 'workbook');
+  if (licenseCheck) return licenseCheck;
 
   const { id, itemId } = await ctx.params;
   const tenantWhere = getTenantFilter(user);
@@ -77,6 +81,9 @@ export async function PATCH(request: NextRequest, ctx: RouteParams) {
 export async function DELETE(_req: NextRequest, ctx: RouteParams) {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
+
+  const licenseCheck = await requireLicense(user, 'workbook');
+  if (licenseCheck) return licenseCheck;
 
   const { id, itemId } = await ctx.params;
   const tenantWhere = getTenantFilter(user);

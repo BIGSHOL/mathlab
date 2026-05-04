@@ -6,6 +6,7 @@ import {
   badRequest,
   notFound,
   getTenantFilter,
+  requireLicense,
   serverError,
 } from '@/lib/api';
 import { updateWorkbookSchema } from '@/lib/schemas/workbook';
@@ -43,6 +44,9 @@ export async function GET(_req: NextRequest, ctx: RouteParams) {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
 
+  const licenseCheck = await requireLicense(user, 'workbook');
+  if (licenseCheck) return licenseCheck;
+
   const { id } = await ctx.params;
   const workbook = await findWorkbookOrNull(id, getTenantFilter(user));
   if (!workbook) return notFound('워크북을 찾을 수 없습니다');
@@ -53,6 +57,9 @@ export async function GET(_req: NextRequest, ctx: RouteParams) {
 export async function PATCH(request: NextRequest, ctx: RouteParams) {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
+
+  const licenseCheck = await requireLicense(user, 'workbook');
+  if (licenseCheck) return licenseCheck;
 
   const { id } = await ctx.params;
   const tenantWhere = getTenantFilter(user);
@@ -89,6 +96,9 @@ export async function PATCH(request: NextRequest, ctx: RouteParams) {
 export async function DELETE(_req: NextRequest, ctx: RouteParams) {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
+
+  const licenseCheck = await requireLicense(user, 'workbook');
+  if (licenseCheck) return licenseCheck;
 
   const { id } = await ctx.params;
   const tenantWhere = getTenantFilter(user);
