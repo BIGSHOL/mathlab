@@ -33,6 +33,7 @@ interface PrintWorkbook {
   separateAnswerKey: boolean;
   showToc: boolean;
   showCover: boolean;
+  pageEstimates: Record<string, number> | null;
 }
 
 interface PrintSection {
@@ -165,6 +166,29 @@ export default function WorkbookPrintPage() {
       });
     }
   }, [calcState, payload]);
+
+  // ready 진입 시 페이지 추정 캐시 저장 (다음 인쇄 시 즉시 표시 최적화)
+  // 캐시값과 신규 계산값이 동일하면 스킵하여 불필요한 PUT 회피
+  useEffect(() => {
+    if (calcState !== 'ready' || !payload) return;
+    const cached = (payload.workbook.pageEstimates as Record<string, number> | null) ?? null;
+    const sameAsCached =
+      cached &&
+      Object.keys(sectionStartPages).length === Object.keys(cached).length &&
+      Object.entries(sectionStartPages).every(([k, v]) => cached[k] === v);
+    if (sameAsCached) return;
+
+    const controller = new AbortController();
+    fetch(`/api/workbooks/${id}/page-estimates`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ estimates: sectionStartPages }),
+      signal: controller.signal,
+    }).catch(() => {
+      // 캐시 저장은 best-effort — 실패해도 사용자에게 노출하지 않음
+    });
+    return () => controller.abort();
+  }, [calcState, payload, sectionStartPages, id]);
 
   // 인쇄 차단: 계산 중 Ctrl+P 차단
   useEffect(() => {

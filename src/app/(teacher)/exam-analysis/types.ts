@@ -13,6 +13,7 @@ export interface ExamPaperData {
   schoolId: string | null;
   school: { id: string; name: string; district: string } | null;
   errorMessage: string | null;
+  extractedToBankAt: string | null;
   createdAt: string;
   teacher: { id: string; name: string };
   student: { id: string; name: string } | null;

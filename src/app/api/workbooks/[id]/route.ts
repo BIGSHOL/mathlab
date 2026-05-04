@@ -6,7 +6,7 @@ import {
   badRequest,
   notFound,
   getTenantFilter,
-  requireLicense,
+  requireTenantFeature,
   serverError,
 } from '@/lib/api';
 import { updateWorkbookSchema } from '@/lib/schemas/workbook';
@@ -31,6 +31,8 @@ async function findWorkbookOrNull(id: string, tenantWhere: Record<string, unknow
               test: { select: { id: true, title: true, questionCount: true, grade: true } },
               concept: { select: { id: true, title: true, conceptCode: true, chapter: true, section: true } },
               examPaper: { select: { id: true, title: true, schoolName: true, grade: true } },
+              arithmeticPlan: { select: { id: true, title: true, totalDays: true } },
+              homeworkPlan: { select: { id: true, title: true, totalDays: true } },
             },
           },
         },
@@ -44,7 +46,7 @@ export async function GET(_req: NextRequest, ctx: RouteParams) {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
 
-  const licenseCheck = await requireLicense(user, 'workbook');
+  const licenseCheck = await requireTenantFeature(user, 'workbook');
   if (licenseCheck) return licenseCheck;
 
   const { id } = await ctx.params;
@@ -58,7 +60,7 @@ export async function PATCH(request: NextRequest, ctx: RouteParams) {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
 
-  const licenseCheck = await requireLicense(user, 'workbook');
+  const licenseCheck = await requireTenantFeature(user, 'workbook');
   if (licenseCheck) return licenseCheck;
 
   const { id } = await ctx.params;
@@ -97,7 +99,7 @@ export async function DELETE(_req: NextRequest, ctx: RouteParams) {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
 
-  const licenseCheck = await requireLicense(user, 'workbook');
+  const licenseCheck = await requireTenantFeature(user, 'workbook');
   if (licenseCheck) return licenseCheck;
 
   const { id } = await ctx.params;

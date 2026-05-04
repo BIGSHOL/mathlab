@@ -5,7 +5,7 @@ import {
   isResponse,
   badRequest,
   getTenantFilter,
-  requireLicense,
+  requireTenantFeature,
   serverError,
 } from '@/lib/api';
 import { createWorkbookSchema, workbookListQuerySchema } from '@/lib/schemas/workbook';
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
 
-  const licenseCheck = await requireLicense(user, 'workbook');
+  const licenseCheck = await requireTenantFeature(user, 'workbook');
   if (licenseCheck) return licenseCheck;
 
   const { searchParams } = new URL(request.url);
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
 
-  const licenseCheck = await requireLicense(user, 'workbook');
+  const licenseCheck = await requireTenantFeature(user, 'workbook');
   if (licenseCheck) return licenseCheck;
 
   let body: unknown;

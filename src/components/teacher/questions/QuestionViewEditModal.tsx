@@ -33,6 +33,7 @@ import { CurriculumDropdowns } from './CurriculumDropdowns';
 import { ConceptSearchDropdown } from './ConceptSearchDropdown';
 import { ExplanationGeneratorInline, ExplanationRegenerateButton } from './ExplanationGenerators';
 import { readBoxColsFromContent, writeBoxColsToContent, type BoxCols } from '@/lib/utils/box-grid';
+import { AddToWorkbookButton } from '@/components/workbook-shared/AddToWorkbookButton';
 
 interface QuestionViewEditModalProps {
   selectedQuestion: QuestionItem;
@@ -157,13 +158,22 @@ export function QuestionViewEditModal({
         )}
 
         {/* Footer */}
-        <div className="shrink-0 border-t border-slate-200 px-3 py-2.5 flex justify-end gap-2">
+        <div className="shrink-0 border-t border-slate-200 px-3 py-2.5 flex justify-between items-center gap-2">
           {modalMode === 'view' ? (
-            <Button variant="secondary" size="sm" onClick={closeModal}>
-              닫기
-            </Button>
-          ) : (
             <>
+              <AddToWorkbookButton
+                kind="QUESTION"
+                refId={selectedQuestion.id}
+                displayTitle={`#${selectedQuestion.questionNum} · ${selectedQuestion.bookCode}`}
+                variant="secondary"
+                size="sm"
+              />
+              <Button variant="secondary" size="sm" onClick={closeModal}>
+                닫기
+              </Button>
+            </>
+          ) : (
+            <div className="flex items-center gap-2 ml-auto">
               <Button variant="secondary" size="sm" onClick={() => setModalMode('view')}>
                 취소
               </Button>
@@ -181,7 +191,7 @@ export function QuestionViewEditModal({
                 )}
                 {saving ? '저장 중...' : saveSuccess ? '저장됨' : '저장'}
               </Button>
-            </>
+            </div>
           )}
         </div>
       </div>

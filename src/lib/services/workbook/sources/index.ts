@@ -3,16 +3,16 @@ import { expandTestItem } from './test.adapter';
 import { expandQuestionItem } from './question.adapter';
 import { expandConceptItem } from './concept.adapter';
 import { expandOxBundleItem } from './ox-bundle.adapter';
+import { expandArithmeticDayItem } from './arithmetic-day.adapter';
+import { expandExamPaperItem } from './exam-paper.adapter';
+import { expandHomeworkDayItem } from './homework-day.adapter';
 import type { NormalizedItem } from '../types';
 
 /**
  * kind에 따라 적절한 어댑터로 dispatch.
  *
- * MVP는 TEST_PAPER/QUESTION/CONCEPT_DOC 3종만 지원.
- * 나머지(ARITHMETIC_DAY/EXAM_PAPER/HOMEWORK_DAY)는 후속 PR에서 추가.
- *
  * @param item DB의 WorkbookSectionItem
- * @param positionInSection 섹션 내 0-based 위치 (단일 Question 번호 매김용)
+ * @param positionInSection 섹션 내 0-based 위치 (단일 항목/펼침형 번호 매김용)
  */
 export async function dispatchAdapter(
   item: WorkbookSectionItem,
@@ -28,10 +28,11 @@ export async function dispatchAdapter(
     case 'OX_BUNDLE':
       return expandOxBundleItem(item, positionInSection);
     case 'ARITHMETIC_DAY':
+      return expandArithmeticDayItem(item, positionInSection);
     case 'EXAM_PAPER':
+      return expandExamPaperItem(item);
     case 'HOMEWORK_DAY':
-      // 후속 PR에서 구현 — 현재는 빈 배열 반환하여 graceful degradation
-      return [];
+      return expandHomeworkDayItem(item, positionInSection);
     default:
       return [];
   }
@@ -40,9 +41,19 @@ export async function dispatchAdapter(
 /**
  * 섹션 단위로 모든 아이템을 펼쳐 NormalizedItem[]로 반환.
  *
- * 같은 섹션 내에서 단일 Question에 연속 번호(1,2,3...)를 부여하기 위해
- * positionInSection을 카운터로 전달.
+ * 섹션 내 연속 번호 매김 정책:
+ * - QUESTION/OX_BUNDLE/ARITHMETIC_DAY/HOMEWORK_DAY: positionInSection 기반 — 펼친 N개만큼 카운터 증가
+ * - TEST_PAPER: 자체 내부 번호(1, 2, 3 ...) 사용 → 카운터 미증가
+ * - EXAM_PAPER: 원본 시험지의 questionNum 보존 → 카운터 미증가
+ * - CONCEPT_DOC: 번호 미부여 → 카운터 미증가
  */
+const ADVANCES_NUMBERING: ReadonlySet<WorkbookSectionItem['kind']> = new Set([
+  'QUESTION',
+  'OX_BUNDLE',
+  'ARITHMETIC_DAY',
+  'HOMEWORK_DAY',
+]);
+
 export async function expandSectionItems(
   items: WorkbookSectionItem[],
 ): Promise<NormalizedItem[]> {
@@ -52,10 +63,7 @@ export async function expandSectionItems(
   for (const item of items) {
     const expanded = await dispatchAdapter(item, questionPosition);
     results.push(...expanded);
-    if (item.kind === 'QUESTION') {
-      questionPosition += 1;
-    } else if (item.kind === 'OX_BUNDLE') {
-      // OX_BUNDLE: 1개 항목이 N개로 펼쳐지므로 펼친 개수만큼 카운터 증가
+    if (ADVANCES_NUMBERING.has(item.kind)) {
       questionPosition += expanded.length;
     }
   }

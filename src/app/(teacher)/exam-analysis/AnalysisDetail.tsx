@@ -11,6 +11,7 @@ import { AnalysisResultView } from '@/components/exam-analysis/AnalysisResultVie
 import { AnalysisCommentTab } from '@/components/exam-analysis/AnalysisCommentTab';
 import { StudyStrategyTab } from '@/components/exam-analysis/StudyStrategyTab';
 import { ExtractToBankModal } from '@/components/exam-analysis/ExtractToBankModal';
+import { AddToWorkbookButton } from '@/components/workbook-shared/AddToWorkbookButton';
 import { useAuth } from '@/hooks/useAuth';
 import type { AnalysisSummary } from '@/lib/exam-analysis/types';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
@@ -157,6 +158,16 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
                   <Button size="sm" variant="secondary" onClick={() => setShowExtractModal(true)}>
                     <Database className="w-4 h-4 mr-1" /> 문제은행에 추가
                   </Button>
+                )}
+                {/* 추출 완료된 시험지만 워크북에 추가 가능 (Question.examPaperId FK 필요) */}
+                {detail.extractedToBankAt && (
+                  <AddToWorkbookButton
+                    kind="EXAM_PAPER"
+                    refId={detail.id}
+                    displayTitle={detail.title}
+                    variant="secondary"
+                    size="sm"
+                  />
                 )}
                 <Link href={`/exam-analysis/${detail.id}/print`}>
                   <Button size="sm" variant="secondary">

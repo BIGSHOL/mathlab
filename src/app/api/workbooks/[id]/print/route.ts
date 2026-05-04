@@ -5,7 +5,7 @@ import {
   isResponse,
   notFound,
   getTenantFilter,
-  requireLicense,
+  requireTenantFeature,
 } from '@/lib/api';
 import { expandSectionItems } from '@/lib/services/workbook/sources';
 
@@ -23,7 +23,7 @@ export async function GET(_req: NextRequest, ctx: RouteParams) {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
 
-  const licenseCheck = await requireLicense(user, 'workbook');
+  const licenseCheck = await requireTenantFeature(user, 'workbook');
   if (licenseCheck) return licenseCheck;
 
   const { id } = await ctx.params;

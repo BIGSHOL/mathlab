@@ -31,6 +31,7 @@ import { CATEGORY_LABELS, CATEGORY_GRADE } from '@/lib/services/arithmetic-gener
 import type { ArithmeticCategory } from '@/lib/services/arithmetic-generator';
 import ConceptHomeworkTab from '@/components/homework/ConceptHomeworkTab';
 import QuestionHomeworkTab from '@/components/homework/QuestionHomeworkTab';
+import { AddToWorkbookButton } from '@/components/workbook-shared/AddToWorkbookButton';
 
 interface HomeworkPlan {
   id: string;
@@ -568,6 +569,7 @@ export default function HomeworkPage() {
                       </Button>
                     </Link>
                   )}
+                  <ArithmeticDayWorkbookAdder plan={selectedPlan} />
                   <Button
                     size="sm"
                     variant="secondary"
@@ -821,6 +823,42 @@ export default function HomeworkPage() {
       </main>
     </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * 연산 숙제의 특정 일차를 워크북에 추가하는 헬퍼.
+ * 일차 select + AddToWorkbookButton 조합 — totalDays가 1이면 select 생략.
+ */
+function ArithmeticDayWorkbookAdder({ plan }: { plan: HomeworkPlan }) {
+  const [dayIndex, setDayIndex] = useState(0);
+  if (plan.totalDays <= 0) return null;
+  return (
+    <div className="flex items-center gap-1">
+      {plan.totalDays > 1 && (
+        <select
+          value={dayIndex}
+          onChange={(e) => setDayIndex(Number(e.target.value))}
+          className="h-7 px-1.5 text-xs border border-slate-200 rounded-sm bg-white focus:outline-none focus:border-primary"
+          aria-label="일차 선택"
+        >
+          {Array.from({ length: plan.totalDays }, (_, i) => (
+            <option key={i} value={i}>
+              {i + 1}일차
+            </option>
+          ))}
+        </select>
+      )}
+      <AddToWorkbookButton
+        kind="ARITHMETIC_DAY"
+        refId={plan.id}
+        dayIndex={dayIndex}
+        displayTitle={`${plan.title} · ${dayIndex + 1}일차`}
+        variant="secondary"
+        size="sm"
+        label="워크북"
+      />
     </div>
   );
 }

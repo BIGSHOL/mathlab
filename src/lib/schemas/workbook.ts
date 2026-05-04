@@ -189,7 +189,8 @@ export const updateWorkbookSchema = workbookMetaSchema.partial().extend({
 });
 
 // ─────────────────────────────────────────────────────────────────
-// Items 재정렬 (drag-drop)
+// Items 재정렬 (drag-drop) — 후속 PR에서 /reorder API와 함께 사용 예정.
+// 현재는 정의만 유지하여 외부 사용처/테스트 호환성 확보.
 // ─────────────────────────────────────────────────────────────────
 
 export const reorderItemsSchema = z.object({
