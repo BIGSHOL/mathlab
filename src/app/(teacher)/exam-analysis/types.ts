@@ -1,0 +1,32 @@
+import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
+
+export interface ExamPaperData {
+  id: string;
+  title: string;
+  subject: 'MATH' | 'ENGLISH';
+  grade: string;
+  category: string | null;
+  examType: string;
+  status: 'PENDING' | 'ANALYZING' | 'COMPLETED' | 'FAILED';
+  analysisStep: number;
+  schoolName: string | null;
+  schoolId: string | null;
+  school: { id: string; name: string; district: string } | null;
+  errorMessage: string | null;
+  createdAt: string;
+  teacher: { id: string; name: string };
+  student: { id: string; name: string } | null;
+  analyses: Array<{
+    id: string;
+    questions: AnalyzedQuestion[];
+    summary: Record<string, unknown> | null;
+    modelVersion: string | null;
+    totalQuestions: number | null;
+    totalPoints: number | null;
+    earnedPoints: number | null;
+    analyzedAt: string | null;
+    extensions: Array<{ id: string; agentType: string; result?: Record<string, unknown>; createdAt: string; errorMessage: string | null }>;
+  }>;
+}
+
+export type AnalysisTab = 'basic' | 'comments' | 'strategy';
