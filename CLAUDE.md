@@ -852,16 +852,17 @@ npx tsx scripts/migrate-question-relations.ts  # questionIds Json → 중간테�
 
 | 항목 | 수치 |
 |------|------|
-| 소스 파일 | 665개 (TS/TSX) |
-| 총 코드량 | ~150,000 LoC |
-| 학생 페이지 | 12개 |
-| 선생님 페이지 | 23개 |
-| API 라우트 | 167개 (배치 추출 5개 추가) |
-| 컴포넌트 | 180개 |
-| 서비스 모듈 | 23개 (exam-extract-batch 추가) |
-| DB 모델 | 73개, Enum 12개 |
+| 소스 파일 | 825개 (TS/TSX) |
+| 총 코드량 | ~190,000 LoC |
+| 학생 페이지 | 23개 |
+| 선생님 페이지 | 66개 (+ mockups 12개) |
+| API 라우트 | 216개 (116개 도메인 디렉토리) |
+| 컴포넌트 | 212개 |
+| 서비스 모듈 | 40개 (workbook, ox-quiz 등 신규 도메인 포함) |
+| DB 모델 | 89개, Enum 17개 (LicenseFeature에 OX_QUIZ, WORKBOOK 추가) |
 | 다이어그램 | DiagramParam 26개 타입 + DiagramSpec 6개 유형 17개 프리셋 + 교육과정 프리셋 209개 |
 | 커스텀 훅 | 14개 |
-| Zustand 스토어 | 7개 |
+| Zustand 스토어 | 8개 (workbookStore 추가) |
 | Zod 스키마 | 5개 |
 | E2E 테스트 | 3개 (Playwright) |
+| 스크립트 | 177개 (.ts/.js/.py, scripts/) |
