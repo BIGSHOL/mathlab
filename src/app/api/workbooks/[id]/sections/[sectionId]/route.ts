@@ -19,6 +19,7 @@ const sectionPatchSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   description: z.string().nullable().optional(),
   startNewPage: z.boolean().optional(),
+  columnsOverride: z.union([z.literal(1), z.literal(2)]).nullable().optional(),
 });
 
 async function findOwnedSection(workbookId: string, sectionId: string, tenantWhere: Record<string, unknown>) {

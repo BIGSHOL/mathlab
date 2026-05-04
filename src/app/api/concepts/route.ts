@@ -13,9 +13,14 @@ export async function GET(request: NextRequest) {
   if (isResponse(params)) return params;
 
   const { subjectId, gradeLevel, grade, category, part, semester, chapter, section, search, page = 1, limit = 20 } = params;
+  // ?source=textbook-rich 로 호출하면 워크북 전용 본문만 조회 (워크북 모달용)
+  // 기본은 일반 개념만 (textbook-rich 제외) — 선생도 일반 개념 관리에서는 안 보이게
+  const sourceFilter = new URL(request.url).searchParams.get('source');
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const where: Record<string, any> = {};
+  const where: Record<string, any> = sourceFilter === 'textbook-rich'
+    ? { source: 'textbook-rich' }
+    : { NOT: { source: 'textbook-rich' } };
   if (subjectId) where.subjectId = subjectId;
   if (gradeLevel) where.subject = { gradeLevel };
   if (grade) {

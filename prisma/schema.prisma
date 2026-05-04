@@ -2041,12 +2041,13 @@ model Workbook {
 }
 
 model WorkbookSection {
-  id           String  @id @default(cuid())
-  workbookId   String
-  sortOrder    Int
-  title        String  @db.VarChar(200)
-  description  String? @db.Text
-  startNewPage Boolean @default(true)
+  id              String  @id @default(cuid())
+  workbookId      String
+  sortOrder       Int
+  title           String  @db.VarChar(200)
+  description     String? @db.Text
+  startNewPage    Boolean @default(true)
+  columnsOverride Int? // 1 또는 2 — null이면 워크북 전역 printPreset.columns 따름
 
   workbook Workbook              @relation(fields: [workbookId], references: [id], onDelete: Cascade)
   items    WorkbookSectionItem[]

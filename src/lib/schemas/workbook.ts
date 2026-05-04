@@ -165,6 +165,8 @@ export const workbookSectionInputSchema = z.object({
   description: z.string().nullable().optional(),
   startNewPage: z.boolean().default(true),
   sortOrder: z.number().int().min(0).optional(),
+  /** 1 또는 2 — null이면 워크북 전역 columns 따름 */
+  columnsOverride: z.union([z.literal(1), z.literal(2)]).nullable().optional(),
 });
 
 export const workbookSectionsBulkSchema = z.object({

@@ -32,12 +32,15 @@ export function AddConceptToWorkbookModal({ workbookId, sectionId, onClose, onAd
   const [results, setResults] = useState<ConceptRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState<Set<string>>(new Set());
+  // 워크북 출력 전용 풍부 본문(textbook-rich) 카테고리 토글
+  const [richMode, setRichMode] = useState(false);
 
   const fetchList = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (search.trim()) params.set('search', search.trim());
+      if (richMode) params.set('source', 'textbook-rich');
 
       // 학년·학기 매핑 (curriculum 키 → API)
       if (filter.level && filter.gradeKey) {
@@ -66,7 +69,7 @@ export function AddConceptToWorkbookModal({ workbookId, sectionId, onClose, onAd
       console.error('[AddConceptToWorkbookModal] 조회 실패:', err);
     }
     setLoading(false);
-  }, [search, filter]);
+  }, [search, filter, richMode]);
 
   useEffect(() => {
     const timer = setTimeout(() => void fetchList(), 300);
@@ -112,16 +115,40 @@ export function AddConceptToWorkbookModal({ workbookId, sectionId, onClose, onAd
       footerHint="클릭하면 즉시 워크북에 추가됩니다 (계속 추가 가능)"
     >
       <div className="space-y-2 mb-3 shrink-0">
-        {/* 검색 */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="개념 제목 검색..."
-            className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-sm text-sm bg-white focus:outline-none focus:border-primary"
-          />
+        {/* 검색 + 카테고리 segmented */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="개념 제목 검색..."
+              className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-sm text-sm bg-white focus:outline-none focus:border-primary"
+            />
+          </div>
+          {/* 일반 / 풍부 본문 segmented */}
+          <div className="inline-flex rounded-sm border border-slate-200 overflow-hidden text-xs shrink-0">
+            <button
+              type="button"
+              onClick={() => setRichMode(false)}
+              className={`px-3 py-2 transition-colors ${
+                !richMode ? 'bg-primary text-white font-semibold' : 'bg-white text-text-secondary hover:bg-slate-50'
+              }`}
+            >
+              학생 학습용
+            </button>
+            <button
+              type="button"
+              onClick={() => setRichMode(true)}
+              className={`px-3 py-2 transition-colors border-l border-slate-200 ${
+                richMode ? 'bg-primary text-white font-semibold' : 'bg-white text-text-secondary hover:bg-slate-50'
+              }`}
+              title="워크북 출력 전용 풍부 본문 (학생 빈칸 학습과 분리)"
+            >
+              📖 풍부 본문
+            </button>
+          </div>
         </div>
 
         {/* 캐스케이드: 학제 → 학년 → 대단원 → 중단원 */}

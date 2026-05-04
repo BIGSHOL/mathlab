@@ -60,8 +60,12 @@ export default async function StudentDashboard({
 
   // enrollment 기반 개념 수
   const courseConceptIds = activeEnrollment?.course.concepts.map((c) => c.conceptId) ?? [];
+  // 워크북 출력 전용 본문(textbook-rich)은 학생 대시보드 카운트에서 제외
   const totalConcepts = hasEnrollments ? courseConceptIds.length : await prisma.concept.count({
-    where: user.grade ? { subject: { gradeLevel: user.grade } } : {},
+    where: {
+      ...(user.grade ? { subject: { gradeLevel: user.grade } } : {}),
+      NOT: { source: 'textbook-rich' },
+    },
   });
 
   const completedConcepts = await prisma.learningProgress.groupBy({
@@ -238,10 +242,12 @@ export default async function StudentDashboard({
       })()
     : courseConceptIds;
 
+  // 워크북 출력 전용 본문(textbook-rich)은 학생 추천에서 제외
   const _recommendedConcepts = hasEnrollments && courseConceptIds.length > 0
     ? await prisma.concept.findMany({
         where: {
           id: { in: unlockedConceptIds.length > 0 ? unlockedConceptIds : courseConceptIds },
+          source: { not: 'textbook-rich' },
           NOT: {
             progress: {
               some: { userId: user.id, stage: 'BLANK_FULL', completed: true },
@@ -256,6 +262,7 @@ export default async function StudentDashboard({
       ? await prisma.concept.findMany({
           where: {
             ...(user.grade ? { subject: { gradeLevel: user.grade } } : {}),
+            source: { not: 'textbook-rich' },
             NOT: {
               progress: {
                 some: { userId: user.id, stage: 'BLANK_FULL', completed: true },

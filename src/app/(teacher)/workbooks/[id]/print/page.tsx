@@ -42,6 +42,8 @@ interface PrintSection {
   description: string | null;
   startNewPage: boolean;
   sortOrder: number;
+  /** 1 또는 2 — null이면 워크북 전역 columns 따름 */
+  columnsOverride: 1 | 2 | null;
   items: NormalizedItem[];
 }
 
@@ -140,7 +142,10 @@ export default function WorkbookPrintPage() {
       }
 
       const startPageNumber = section.startNewPage ? startPage + 1 : startPage;
-      const itemPages = paginateItems(section.items, workbook.printPreset);
+      const effectivePreset = section.columnsOverride
+        ? { ...workbook.printPreset, columns: section.columnsOverride }
+        : workbook.printPreset;
+      const itemPages = paginateItems(section.items, effectivePreset);
       itemPages.forEach((pageItems, pIdx) => {
         pages.push(
           <SectionContentPageInner
@@ -148,7 +153,7 @@ export default function WorkbookPrintPage() {
             sectionTitle={section.title}
             pageNumber={startPageNumber + pIdx}
             pageItems={pageItems}
-            preset={workbook.printPreset}
+            preset={effectivePreset}
             isFirstPage={isFirstSection && pIdx === 0}
           />
         );
@@ -323,12 +328,17 @@ function computePageEstimates(payload: PrintPayload): {
     tentativeStarts[section.id] = cursor;
     if (section.startNewPage) cursor += 1; // SectionDivider 페이지
 
-    // 섹션 본문 페이지 수 계산
+    // 섹션 본문 페이지 수 계산 — columnsOverride가 있으면 페이지당 가용 높이 2배
+    const effectivePreset = section.columnsOverride
+      ? { ...workbook.printPreset, columns: section.columnsOverride }
+      : workbook.printPreset;
+    const pageHeightLimit = (effectivePreset.columns === 2 ? 2 : 1) * PAGE_CONTENT_HEIGHT;
+
     let h = 0;
     let pages = 1;
     for (const item of section.items) {
-      const ih = estimateItemHeight(item, workbook.printPreset);
-      if (h + ih > PAGE_CONTENT_HEIGHT && h > 0) {
+      const ih = estimateItemHeight(item, effectivePreset);
+      if (h + ih > pageHeightLimit && h > 0) {
         pages += 1;
         h = ih;
       } else {

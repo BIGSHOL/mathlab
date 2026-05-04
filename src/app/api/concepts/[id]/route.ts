@@ -29,8 +29,10 @@ export async function GET(
     return notFound('개념을 찾을 수 없습니다');
   }
 
-  const concept = await prisma.concept.findUnique({
-    where: { id: conceptId },
+  // 워크북 출력 전용 본문(textbook-rich)은 학생 측 상세 조회에서 제외
+  // (선생/관리자가 워크북에서 직접 사용할 때는 별도 경로로 접근)
+  const concept = await prisma.concept.findFirst({
+    where: { id: conceptId, NOT: { source: 'textbook-rich' } },
     include: {
       subject: { select: { title: true, gradeLevel: true } },
       prerequisites: {

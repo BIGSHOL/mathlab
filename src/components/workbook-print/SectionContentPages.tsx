@@ -47,7 +47,7 @@ export function SectionContentPageInner({
         isFirstPage={isFirstPage}
         showDate={preset.showDate}
       />
-      <div className="py-2 flex-1">
+      <div className={`py-2 flex-1 ${preset.columns === 2 ? 'columns-2 gap-x-4' : ''}`}>
         {pageItems.map((item) => (
           <RenderItem key={item.itemId} item={item} large={isLargeTemplate} showAnswers={preset.showAnswers} />
         ))}
@@ -121,10 +121,13 @@ export function paginateItems(items: NormalizedItem[], preset: PrintOptionsInput
   let current: NormalizedItem[] = [];
   let currentHeight = 0;
 
+  // 2단이면 페이지당 사용 가능한 높이가 두 배 (좌우 컬럼 합산 기준)
+  const pageHeightLimit = (preset.columns === 2 ? 2 : 1) * PAGE_CONTENT_HEIGHT;
+
   for (const item of items) {
     const itemHeight = estimateItemHeight(item, preset);
 
-    if (current.length > 0 && currentHeight + itemHeight > PAGE_CONTENT_HEIGHT) {
+    if (current.length > 0 && currentHeight + itemHeight > pageHeightLimit) {
       pages.push(current);
       current = [item];
       currentHeight = itemHeight;

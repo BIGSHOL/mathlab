@@ -15,8 +15,9 @@ export async function GET(request: NextRequest) {
   }
 
   // 해당 학년의 모든 개념 조회 (학년당 10~40개이므로 페이지네이션 불필요)
+  // 워크북 출력 전용 본문(textbook-rich)은 학생 트리에서 제외
   const concepts = await prisma.concept.findMany({
-    where: { grade },
+    where: { grade, NOT: { source: 'textbook-rich' } },
     select: {
       id: true,
       title: true,

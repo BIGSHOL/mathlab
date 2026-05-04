@@ -63,6 +63,7 @@ export async function POST(request: NextRequest, ctx: RouteParams) {
         title: parsed.data.title,
         description: parsed.data.description ?? null,
         startNewPage: parsed.data.startNewPage,
+        columnsOverride: parsed.data.columnsOverride ?? null,
         sortOrder,
       },
     });

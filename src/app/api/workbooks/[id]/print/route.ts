@@ -47,6 +47,7 @@ export async function GET(_req: NextRequest, ctx: RouteParams) {
       title: section.title,
       description: section.description,
       startNewPage: section.startNewPage,
+      columnsOverride: section.columnsOverride,
       sortOrder: section.sortOrder,
       items: await expandSectionItems(section.items),
     })),
