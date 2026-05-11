@@ -3,10 +3,6 @@ import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse, getTenantFilter, badRequest } from '@/lib/api';
 import { examPaperCreateSchema, examPaperQuerySchema } from '@/lib/exam-analysis/schemas';
 import { matchSchoolByName } from '@/lib/utils/school-matcher';
-import { uploadExamFile } from '@/lib/supabase';
-
-const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 
 /** GET /api/exam-analysis — 시험지 목록 조회 */
 export async function GET(request: NextRequest) {
@@ -78,44 +74,35 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/** POST /api/exam-analysis — 시험지 업로드 + 생성 */
+/**
+ * POST /api/exam-analysis — 시험지 레코드 생성
+ *
+ * 파일은 클라이언트가 사전에 /api/exam-analysis/signed-upload-urls로 발급받은
+ * signed URL을 통해 Supabase Storage에 직접 업로드한 뒤, 그 publicUrl을 본 API에
+ * 전달한다 (Vercel 본문 4.5MB 한계 우회).
+ *
+ * Request: JSON { fileUrls: string[], fileType: 'pdf' | 'image', ...metadata }
+ */
 export async function POST(request: NextRequest) {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
 
-  let formData: FormData;
+  let payload: Record<string, unknown>;
   try {
-    formData = await request.formData();
+    payload = await request.json();
   } catch {
-    return badRequest('요청 데이터를 읽을 수 없습니다. 파일을 다시 업로드해 주세요.');
+    return badRequest('요청 데이터를 읽을 수 없습니다');
   }
 
-  const files = formData.getAll('files') as File[];
-  const metadataRaw = formData.get('metadata') as string | null;
-
-  if (!files.length) return badRequest('파일을 업로드하세요');
-
-  // 파일 검증
-  for (const file of files) {
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      return badRequest(`허용되지 않는 파일 형식입니다: ${file.type}. JPG, PNG, WebP, PDF만 지원합니다.`);
-    }
-    if (file.size > MAX_FILE_SIZE) {
-      return badRequest('파일 크기가 10MB를 초과합니다. 파일을 압축하거나 나눠서 업로드하세요.');
-    }
+  const fileUrls = payload.fileUrls;
+  if (!Array.isArray(fileUrls) || fileUrls.length === 0 || !fileUrls.every(u => typeof u === 'string' && u.length > 0)) {
+    return badRequest('업로드된 파일 URL이 필요합니다');
   }
 
-  // 메타데이터 파싱
-  let metadata: Record<string, unknown> = {};
-  if (metadataRaw) {
-    try {
-      metadata = JSON.parse(metadataRaw);
-    } catch {
-      return badRequest('메타데이터 형식이 올바르지 않습니다');
-    }
-  }
+  const fileTypeRaw = payload.fileType;
+  const fileType = fileTypeRaw === 'pdf' || fileTypeRaw === 'image' ? fileTypeRaw : 'pdf';
 
-  const parsed = examPaperCreateSchema.safeParse(metadata);
+  const parsed = examPaperCreateSchema.safeParse(payload);
   if (!parsed.success) {
     return badRequest('시험지 정보가 올바르지 않습니다', parsed.error.issues.map(i => ({
       field: i.path.join('.'),
@@ -124,19 +111,6 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Supabase Storage에 파일 업로드
-    const savedUrls: string[] = [];
-
-    for (const file of files) {
-      const ext = file.name.split('.').pop() || 'jpg';
-      const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const publicUrl = await uploadExamFile(buffer, filename, file.type);
-      savedUrls.push(publicUrl);
-    }
-
-    const fileType = files[0].type === 'application/pdf' ? 'pdf' : 'image';
-
     // 학교 매칭: 프론트에서 선택한 schoolId 우선, 없으면 이름으로 자동 매칭
     const schoolName = parsed.data.schoolName || null;
     let schoolId: string | null = parsed.data.schoolId || null;
@@ -162,7 +136,6 @@ export async function POST(request: NextRequest) {
         }
       : (parsed.data.examScope || undefined);
 
-    // DB 생성
     const examPaper = await prisma.examPaper.create({
       data: {
         tenantId: user.viewingTenantId ?? user.tenantId ?? '',
@@ -177,29 +150,16 @@ export async function POST(request: NextRequest) {
         schoolName,
         schoolId,
         examType: parsed.data.examType,
-        fileUrls: savedUrls.join(','),
+        fileUrls: fileUrls.join(','),
         fileType,
       },
     });
 
     return NextResponse.json({ data: examPaper }, { status: 201 });
   } catch (error) {
-    console.error('[exam-analysis POST] 시험지 업로드 에러:', error);
-    const msg = error instanceof Error ? error.message : '';
-    if (msg.includes('ENOSPC') || msg.includes('no space')) {
-      return NextResponse.json(
-        { error: { code: 'STORAGE_FULL', message: '서버 저장 공간이 부족합니다. 관리자에게 문의하세요.' } },
-        { status: 500 },
-      );
-    }
-    if (msg.includes('EACCES') || msg.includes('permission')) {
-      return NextResponse.json(
-        { error: { code: 'PERMISSION_ERROR', message: '파일 저장 권한이 없습니다. 관리자에게 문의하세요.' } },
-        { status: 500 },
-      );
-    }
+    console.error('[exam-analysis POST] 시험지 생성 에러:', error);
     return NextResponse.json(
-      { error: { code: 'UPLOAD_FAILED', message: '시험지 업로드 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.' } },
+      { error: { code: 'CREATE_FAILED', message: '시험지 등록 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요' } },
       { status: 500 },
     );
   }

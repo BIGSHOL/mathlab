@@ -289,6 +289,23 @@ function parseFilename(filename: string): ParsedMetadata | null {
   };
 }
 
+/** Response가 JSON이면 error.message를 꺼내고, 아니면 status별 친화 메시지 반환 */
+async function extractErrorMessage(res: Response, fallback: string): Promise<string> {
+  if (res.status === 413) return '파일이 너무 큽니다. 파일 크기를 줄이거나 PDF를 분할해 주세요';
+  if (res.status === 401) return '로그인이 필요합니다. 다시 로그인해 주세요';
+  if (res.status === 403) return '권한이 없습니다. 관리자에게 문의하세요';
+  const ct = res.headers.get('content-type') ?? '';
+  if (ct.includes('application/json')) {
+    try {
+      const body = await res.json();
+      if (body?.error?.message) return body.error.message;
+    } catch {
+      // JSON 파싱 실패 — fallback 사용
+    }
+  }
+  return fallback;
+}
+
 // ── 컴포넌트 ──
 
 export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
@@ -309,6 +326,8 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
   const [autoFilled, setAutoFilled] = useState(false);
 
   const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png', '.webp'];
+  const MAX_FILE_SIZE_MB = 50; // Supabase Storage 직접 업로드 (서버 본문 우회)
+  const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
   // 파일명에서 메타데이터 자동 채움
   const autoFillFromFilename = useCallback((filename: string) => {
@@ -333,8 +352,8 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
         toast.error(`${f.name}: 허용되지 않는 형식`);
         return false;
       }
-      if (f.size > 20 * 1024 * 1024) {
-        toast.error(`${f.name}: 20MB 초과`);
+      if (f.size > MAX_FILE_SIZE_BYTES) {
+        toast.error(`${f.name}: ${MAX_FILE_SIZE_MB}MB 초과 (PDF는 분할 업로드 권장)`);
         return false;
       }
       return true;
@@ -386,26 +405,58 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
 
     setIsSubmitting(true);
     try {
-      const formData = new FormData();
-      files.forEach(f => formData.append('files', f));
-      formData.append('metadata', JSON.stringify({
-        title: title.trim(),
-        subject,
-        grade,
-        category: category || null,
-        examType,
-        schoolName: schoolName.trim() || null,
-        examScope: examScope.length > 0 ? examScope : null,
-        // 파일명에서 추출 불가한 필드 — 선생님이 직접 입력
-        examYear: examYear ? Number(examYear) : null,
-        examSemester: examSemester ? Number(examSemester) : null,
-        examCategory: examCategory || null,
-      }));
+      // 1단계: 파일 개수만큼 signed upload URL 발급
+      const urlRes = await fetch('/api/exam-analysis/signed-upload-urls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          files: files.map(f => ({ name: f.name, type: f.type })),
+        }),
+      });
+      if (!urlRes.ok) {
+        throw new Error(await extractErrorMessage(urlRes, '업로드 URL 발급에 실패했습니다'));
+      }
+      const urlJson = await urlRes.json();
+      const slots = urlJson.data as Array<{ signedUrl: string; publicUrl: string; contentType: string }>;
+      if (slots.length !== files.length) {
+        throw new Error('업로드 슬롯 수가 일치하지 않습니다');
+      }
 
-      const res = await fetch('/api/exam-analysis', { method: 'POST', body: formData });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error?.message || '업로드 실패');
+      // 2단계: 각 파일을 Supabase Storage로 직접 PUT 업로드
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const slot = slots[i];
+        const putRes = await fetch(slot.signedUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': slot.contentType || file.type },
+          body: file,
+        });
+        if (!putRes.ok) {
+          throw new Error(`'${file.name}' 업로드에 실패했습니다 (${putRes.status})`);
+        }
+      }
+
+      // 3단계: 시험지 레코드 생성
+      const createRes = await fetch('/api/exam-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title.trim(),
+          subject,
+          grade,
+          category: category || null,
+          examType,
+          schoolName: schoolName.trim() || null,
+          examScope: examScope.length > 0 ? examScope : null,
+          examYear: examYear ? Number(examYear) : null,
+          examSemester: examSemester ? Number(examSemester) : null,
+          examCategory: examCategory || null,
+          fileUrls: slots.map(s => s.publicUrl),
+          fileType: files[0].type === 'application/pdf' ? 'pdf' : 'image',
+        }),
+      });
+      if (!createRes.ok) {
+        throw new Error(await extractErrorMessage(createRes, '시험지 등록에 실패했습니다'));
       }
 
       toast.success('시험지가 업로드되었습니다');
@@ -433,7 +484,7 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
         >
           <Upload className="w-8 h-8 mx-auto text-slate-400 mb-2" />
           <p className="text-sm text-slate-500">클릭하거나 파일을 드래그하세요</p>
-          <p className="text-xs text-slate-400 mt-1">PDF, JPG, PNG, WebP (최대 20MB)</p>
+          <p className="text-xs text-slate-400 mt-1">PDF, JPG, PNG, WebP (최대 {MAX_FILE_SIZE_MB}MB)</p>
         </div>
         <input
           ref={fileInputRef}

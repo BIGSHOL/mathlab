@@ -67,3 +67,34 @@ export async function uploadExamFile(
 
   return urlData.publicUrl;
 }
+
+/**
+ * 시험지 파일 직접 업로드용 signed URL 발급.
+ * 클라이언트는 반환된 signedUrl로 직접 Supabase에 PUT → Vercel 4.5MB 본문 한계 우회.
+ */
+export async function createSignedExamUploadUrl(filename: string): Promise<{
+  signedUrl: string;
+  token: string;
+  path: string;
+  publicUrl: string;
+}> {
+  const client = getSupabase();
+  const path = `exam-analysis/${filename}`;
+
+  const { data, error } = await client.storage
+    .from('uploads')
+    .createSignedUploadUrl(path);
+
+  if (error || !data) {
+    throw new Error(`signed URL 발급 실패: ${error?.message ?? '알 수 없는 오류'}`);
+  }
+
+  const { data: urlData } = client.storage.from('uploads').getPublicUrl(path);
+
+  return {
+    signedUrl: data.signedUrl,
+    token: data.token,
+    path: data.path,
+    publicUrl: urlData.publicUrl,
+  };
+}
