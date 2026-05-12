@@ -1,0 +1,31 @@
+/* student-concept-detail-hifi.html V1 (책처럼 — 좌측 이론/우측 예시·확인) */
+
+.concept-head { background: linear-gradient(135deg, var(--primary-50), #fff); border-bottom: 1px solid var(--line); padding: 18px 28px; }
+.concept-head .crumb { font-size: 12px; color: var(--ink-3); }
+.concept-head h1 { margin: 4px 0 6px; font-size: 22px; }
+.concept-head .meta { display: flex; gap: 10px; font-size: 12px; color: var(--ink-2); align-items: center; }
+.concept-head .pbar { width: 200px; }
+
+/* V1 book layout */
+.book { display: grid; grid-template-columns: 1.4fr 1fr; gap: 0; min-height: 560px; }
+.book .lhs { padding: 28px 32px; border-right: 1px solid var(--line); overflow-y: auto; }
+.book .rhs { background: var(--bg); padding: 28px; overflow-y: auto; }
+.book h2 { font-size: 18px; margin: 0 0 12px; letter-spacing: -0.01em; }
+.book h3 { font-size: 14px; margin: 18px 0 8px; color: var(--primary); }
+.book p { line-height: 1.7; color: var(--ink-2); font-size: 14px; margin: 0 0 12px; }
+.formula { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; font-family: 'Times New Roman', serif; font-style: italic; font-size: 17px; text-align: center; margin: 8px 0 16px; color: var(--ink); }
+.formula b { color: var(--primary); font-style: normal; }
+.key-point { background: var(--gold-bg); border-left: 3px solid var(--gold); padding: 10px 14px; border-radius: 6px; font-size: 13px; line-height: 1.6; color: #78350F; margin: 10px 0; }
+.example { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 12px; }
+.example .label { font-size: 11px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+.example .q { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+.example .steps { background: var(--bg); border-radius: 6px; padding: 10px 12px; font-size: 13px; line-height: 1.7; color: var(--ink-2); }
+.example .steps span { color: var(--primary); font-weight: 700; }
+
+.check-q { background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.check-q .num { background: var(--primary); color: #fff; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 800; }
+.check-q .opt { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 6px; font-size: 13px; cursor: pointer; }
+.check-q .opt:hover { border-color: var(--primary); }
+.check-q .opt.on { border-color: var(--primary); background: var(--primary-50); }
+.check-q .opt .pip { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--ink-4); display: grid; place-items: center; font-size: 10px; font-weight: 800; color: var(--ink-3); flex-shrink: 0; }
+.check-q .opt.on .pip { border-color: var(--primary); background: var(--primary); color: #fff; }

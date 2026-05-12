@@ -1,0 +1,145 @@
+/* landing-auth-hifi.html S1-S3 공통 페이지 스타일 (3개 인증 페이지 공유) */
+
+/* ──────────── landing styles ──────────── */
+.lp-shell { background: #fff; min-height: 100%; }
+.lp-nav { display: flex; align-items: center; padding: 16px 40px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,0.96); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 10; }
+.lp-nav .logo { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 16px; color: var(--ink); text-decoration: none; }
+.lp-nav .logo .mk { width: 28px; height: 28px; background: var(--primary); color: #fff; border-radius: 7px; display: grid; place-items: center; font-weight: 800; font-size: 14px; }
+.lp-nav .menu { display: flex; gap: 24px; margin-left: 48px; }
+.lp-nav .menu a { color: var(--ink-2); text-decoration: none; font-weight: 600; font-size: 13px; }
+.lp-nav .menu a:hover { color: var(--ink); }
+.lp-nav .right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+.hero { padding: 56px 40px 40px; background: linear-gradient(180deg, #F8FAFC, #fff); position: relative; overflow: hidden; }
+.hero-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; max-width: 1100px; margin: 0 auto; align-items: center; }
+.hero h2 { font-size: 44px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 800; margin: 0 0 18px; text-wrap: pretty; }
+.hero h2 .accent { color: var(--primary); }
+.hero .sub { font-size: 16px; line-height: 1.6; color: var(--ink-2); margin-bottom: 24px; text-wrap: pretty; }
+.hero .cta-row { display: flex; gap: 10px; align-items: center; }
+
+.lp-btn { padding: 12px 22px; border-radius: 10px; font-weight: 700; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border: none; cursor: pointer; transition: transform 0.1s; }
+.lp-btn:hover { transform: translateY(-1px); }
+.lp-btn.primary { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(59,91,219,0.3); }
+.lp-btn.ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--line); }
+.hero .proof { display: flex; gap: 18px; margin-top: 24px; color: var(--ink-3); font-size: 12px; align-items: center; }
+.hero .proof b { color: var(--ink); }
+
+.hero-visual { position: relative; height: 360px; }
+.hero-card { position: absolute; background: #fff; border-radius: 14px; box-shadow: 0 12px 32px rgba(15,23,42,0.12); padding: 16px; }
+.hc-1 { width: 250px; top: 0; left: 0; }
+.hc-2 { width: 220px; bottom: 0; right: 0; }
+.hc-3 { width: 200px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2; }
+.hc-mini-stat { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; border-bottom: 1px solid var(--line-2); }
+.hc-mini-stat:last-child { border-bottom: none; }
+.hc-mini-stat .lb { font-size: 11px; color: var(--ink-3); }
+.hc-mini-stat .v { font-size: 16px; font-weight: 800; }
+.hc-mini-stat .ic { width: 28px; height: 28px; border-radius: 6px; display: grid; place-items: center; font-size: 13px; }
+.float-emoji { position: absolute; font-size: 24px; opacity: 0.3; }
+
+.stats-row { padding: 36px 40px; background: var(--bg-2); border-block: 1px solid var(--line); }
+.stats-row .row { max-width: 1100px; margin: 0 auto; gap: 36px; }
+.stat-block { text-align: center; }
+.stat-block .v { font-size: 36px; font-weight: 800; color: var(--primary); }
+.stat-block .lb { font-size: 12px; color: var(--ink-3); font-weight: 600; margin-top: 2px; }
+
+.features { padding: 60px 40px; max-width: 1100px; margin: 0 auto; }
+.features h3 { font-size: 28px; font-weight: 800; text-align: center; margin: 0 0 8px; letter-spacing: -0.01em; }
+.features .sub { text-align: center; color: var(--ink-3); margin-bottom: 36px; font-size: 14px; }
+.feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.feature-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 22px; }
+.feature-card .ico { width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center; font-size: 20px; margin-bottom: 14px; }
+.feature-card h4 { font-size: 16px; font-weight: 800; margin: 0 0 6px; }
+.feature-card p { font-size: 13px; line-height: 1.6; color: var(--ink-2); margin: 0; }
+.feature-card .tag { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 99px; background: var(--success-bg); color: var(--success); font-weight: 700; margin-top: 10px; }
+
+.pricing { padding: 60px 40px; background: var(--bg-2); border-block: 1px solid var(--line); }
+.pricing-inner { max-width: 1000px; margin: 0 auto; }
+.pricing h3 { font-size: 28px; font-weight: 800; text-align: center; margin: 0 0 8px; }
+.pricing .sub { text-align: center; color: var(--ink-3); margin-bottom: 36px; font-size: 14px; }
+.plan-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.plan-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 26px 22px; position: relative; }
+.plan-card.recommended { border: 2px solid var(--primary); transform: translateY(-6px); }
+.plan-card.recommended::before { content: '⭐ 추천'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--primary); color: #fff; padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 800; }
+.plan-card .name { font-weight: 800; font-size: 15px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.05em; }
+.plan-card .price { font-size: 36px; font-weight: 800; margin: 6px 0 2px; }
+.plan-card .price small { font-size: 14px; color: var(--ink-3); font-weight: 600; }
+.plan-card .per { font-size: 12px; color: var(--ink-3); margin-bottom: 18px; }
+.plan-card ul { list-style: none; padding: 0; margin: 0 0 22px; }
+.plan-card li { padding: 5px 0; font-size: 13px; color: var(--ink-2); display: flex; gap: 8px; align-items: center; }
+.plan-card li::before { content: '✓'; color: var(--success); font-weight: 800; }
+.plan-card li.dim { color: var(--ink-3); text-decoration: line-through; }
+.plan-card li.dim::before { content: '×'; color: var(--ink-3); }
+
+/* ──────────── auth styles ──────────── */
+.auth-stage { background: linear-gradient(135deg, #EEF2FF 0%, #F8FAFC 50%, #FAFAFA 100%); min-height: 100vh; display: grid; place-items: center; padding: 40px 20px; position: relative; overflow: hidden; }
+.auth-stage::before { content: ''; position: absolute; top: -100px; left: -100px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(59,91,219,0.1), transparent 70%); }
+.auth-stage::after { content: ''; position: absolute; bottom: -100px; right: -100px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(139,92,246,0.1), transparent 70%); }
+.auth-card { background: #fff; border-radius: 18px; box-shadow: 0 12px 40px rgba(15,23,42,0.08); padding: 36px; max-width: 420px; width: 100%; position: relative; z-index: 2; }
+.auth-logo { display: flex; align-items: center; gap: 8px; justify-content: center; margin-bottom: 6px; }
+.auth-logo .mk { width: 36px; height: 36px; background: var(--primary); color: #fff; border-radius: 9px; display: grid; place-items: center; font-weight: 800; font-size: 17px; }
+.auth-logo .name { font-weight: 800; font-size: 18px; }
+.auth-card h2 { text-align: center; font-size: 22px; font-weight: 800; margin: 16px 0 6px; }
+.auth-card .desc { text-align: center; font-size: 13px; color: var(--ink-3); margin-bottom: 24px; }
+
+.role-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background: var(--bg); padding: 4px; border-radius: 10px; margin-bottom: 22px; }
+.role-tab { padding: 10px 6px; text-align: center; border-radius: 7px; font-size: 12px; font-weight: 700; cursor: pointer; color: var(--ink-3); }
+.role-tab.on { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.role-tab .ic { font-size: 18px; display: block; margin-bottom: 2px; }
+
+.auth-field { margin-bottom: 14px; }
+.auth-field label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-2); margin-bottom: 6px; }
+.auth-field .input { width: 100%; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 9px; font-size: 14px; box-sizing: border-box; }
+.auth-field .input:focus { outline: none; border-color: var(--primary); }
+.auth-field .input.with-icon { padding-left: 38px; }
+.auth-field .wrap { position: relative; }
+.auth-field .wrap .ic { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--ink-3); }
+
+.code-input { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.code-input input { padding: 14px 0; text-align: center; border: 1.5px solid var(--line); border-radius: 8px; font-size: 22px; font-weight: 800; font-family: ui-monospace, monospace; }
+.code-input input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59,91,219,0.15); }
+
+.divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--ink-3); font-size: 11px; }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+.social-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.social-btn { padding: 12px; border: 1.5px solid var(--line); border-radius: 9px; background: #fff; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.social-btn.kakao { background: #FEE500; border-color: #FEE500; color: #191919; }
+.social-btn.naver { background: #03C75A; border-color: #03C75A; color: #fff; }
+.social-btn.google { background: #fff; }
+
+.legal { font-size: 11px; color: var(--ink-3); text-align: center; margin-top: 18px; line-height: 1.6; }
+.legal a { color: var(--primary); text-decoration: none; }
+
+/* student join (code) variant */
+.student-join-info { background: var(--primary-50); border-radius: 10px; padding: 14px; margin-bottom: 18px; font-size: 12px; color: var(--ink-2); line-height: 1.6; }
+.student-join-info b { color: var(--ink); }
+
+/* ──────────── onboarding styles ──────────── */
+.onb-shell { background: var(--bg-2); padding: 24px; min-height: 100vh; }
+.onb-progress { display: flex; gap: 4px; max-width: 720px; margin: 0 auto 18px; }
+.onb-step-bar { flex: 1; height: 4px; background: var(--line-2); border-radius: 99px; }
+.onb-step-bar.done { background: var(--success); }
+.onb-step-bar.active { background: var(--primary); }
+.onb-frame { max-width: 720px; margin: 0 auto; background: #fff; border-radius: 14px; box-shadow: 0 4px 18px rgba(15,23,42,0.05); padding: 32px; }
+.onb-step-num { font-size: 11px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.1em; }
+.onb-frame h3 { font-size: 24px; font-weight: 800; margin: 6px 0 6px; letter-spacing: -0.01em; }
+.onb-frame .desc { font-size: 13px; color: var(--ink-3); margin-bottom: 24px; line-height: 1.6; }
+
+.onb-field { margin-bottom: 16px; }
+.onb-field label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-2); margin-bottom: 6px; }
+.onb-input { width: 100%; padding: 11px 14px; border: 1.5px solid var(--line); border-radius: 9px; font-size: 14px; box-sizing: border-box; }
+
+.onb-pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+.onb-pick .opt { padding: 18px 12px; border: 1.5px solid var(--line); border-radius: 12px; text-align: center; cursor: pointer; background: #fff; }
+.onb-pick .opt:hover { border-color: var(--primary); }
+.onb-pick .opt.on { border-color: var(--primary); background: var(--primary-50); }
+.onb-pick .opt .ic { font-size: 28px; display: block; margin-bottom: 6px; }
+.onb-pick .opt .nm { font-size: 13px; font-weight: 700; }
+.onb-pick .opt .sub { font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+
+.onb-foot { display: flex; gap: 10px; margin-top: 24px; }
+.onb-foot .btn-skip { background: transparent; border: none; color: var(--ink-3); font-weight: 600; cursor: pointer; padding: 12px 18px; }
+
+.copy-code { display: flex; gap: 8px; align-items: center; background: #FEFCE8; border: 2px dashed #EAB308; border-radius: 12px; padding: 18px; margin: 16px 0; }
+.copy-code .code { font-family: ui-monospace, monospace; font-weight: 800; font-size: 22px; flex: 1; text-align: center; letter-spacing: 0.1em; color: #713F12; }
+.copy-code .btn-copy { background: #713F12; color: #fff; padding: 8px 14px; border-radius: 7px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; }

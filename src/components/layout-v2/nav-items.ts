@@ -12,6 +12,8 @@ export const STUDENT_NAV: SidebarNavGroup[] = [
     items: [
       { icon: '🏠', label: '대시보드', href: '/v2/dashboard' },
       { icon: '📚', label: '단원학습', href: '/v2/curriculum' },
+      { icon: '🌲', label: '학습 트리', href: '/v2/learn' },
+      { icon: '📖', label: '개념 상세', href: '/v2/concept-detail' },
       { icon: '📝', label: '숙제', href: '/v2/homework', badge: 3 },
       { icon: '🧪', label: '시험', href: '/v2/exam' },
     ],
@@ -20,6 +22,7 @@ export const STUDENT_NAV: SidebarNavGroup[] = [
     title: '즐기기',
     items: [
       { icon: '⚡', label: '연산연습', href: '/v2/practice' },
+      { icon: '⭕', label: 'OX 퀴즈', href: '/v2/ox-quiz' },
       { icon: '🏆', label: '랭킹', href: '/v2/ranking' },
       { icon: '🛍', label: '마켓', href: '/v2/shop' },
       { icon: '👤', label: '내 프로필', href: '/v2/profile' },
@@ -42,6 +45,7 @@ export const TEACHER_NAV: SidebarNavGroup[] = [
   {
     title: '컨텐츠',
     items: [
+      { icon: '🌲', label: '개념·문제', href: '/v2/teacher/concepts' },
       { icon: '📝', label: '숙제 출제', href: '/v2/teacher/homework' },
       { icon: '🧪', label: '시험 관리', href: '/v2/teacher/exam' },
       { icon: '📄', label: '학습지', href: '/v2/teacher/worksheet' },

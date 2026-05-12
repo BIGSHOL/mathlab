@@ -24,12 +24,24 @@ type Section = {
 
 const SECTIONS: Section[] = [
   {
+    title: '인증·온보딩',
+    accent: '#8B5CF6',
+    pages: [
+      { href: '/v2/landing', emoji: '🌐', title: '랜딩 페이지', variant: 'S1', note: '학원장 가치 제안 + 가격 + CTA' },
+      { href: '/v2/login', emoji: '🔐', title: '로그인', variant: 'S2', note: '역할별 분기 + SNS' },
+      { href: '/v2/onboarding', emoji: '🚀', title: '온보딩 (Step 3/5)', variant: 'S3', note: '학원 셋업 5단계' },
+    ],
+  },
+  {
     title: '학생',
     accent: 'var(--primary)',
     pages: [
       { href: '/v2/dashboard', emoji: '🏠', title: '대시보드', variant: 'V2', note: '오늘의 미션·캘린더·연속 학습' },
       { href: '/v2/curriculum', emoji: '📚', title: '단원학습', variant: 'V1', note: '교과 트리 + 진도' },
+      { href: '/v2/learn', emoji: '🌲', title: '학습 트리', variant: 'V1', note: '커리큘럼 + 5단계 학습' },
+      { href: '/v2/concept-detail', emoji: '📖', title: '개념 상세', variant: 'V1', note: '책처럼 (이론 + 예시)' },
       { href: '/v2/practice', emoji: '⚡', title: '연산 연습', variant: 'V2', note: '타임어택' },
+      { href: '/v2/ox-quiz', emoji: '⭕', title: 'OX 퀴즈', variant: 'V2', note: 'PC 듀얼 버튼 + 키보드' },
       { href: '/v2/homework', emoji: '📝', title: '숙제', variant: 'V1', note: '문제 카드 + 진행률' },
       { href: '/v2/exam', emoji: '🧪', title: '시험', variant: 'V1', note: '응시 / 채점 결과' },
       { href: '/v2/results', emoji: '📊', title: '결과 분석', variant: 'V2', note: '오답 패턴 + AI 코멘트' },
@@ -44,6 +56,7 @@ const SECTIONS: Section[] = [
     pages: [
       { href: '/v2/teacher/dashboard', emoji: '🏠', title: '대시보드', variant: 'V1', note: '트리아지 — 위험 학생 우선' },
       { href: '/v2/teacher/students', emoji: '👥', title: '학생 관리', variant: 'V2', note: '마스터-디테일' },
+      { href: '/v2/teacher/concepts', emoji: '🌲', title: '개념·문제', variant: 'V1', note: '트리 + 카드 + 문제 풀' },
       { href: '/v2/teacher/homework', emoji: '📝', title: '숙제 출제', variant: 'V2', note: '4단계 빌더' },
       { href: '/v2/teacher/exam', emoji: '🧪', title: '시험 관리', variant: 'V3', note: '수기 채점 인터페이스' },
       { href: '/v2/teacher/worksheet', emoji: '📄', title: '학습지', variant: 'V3', note: 'DIY 편집기' },

@@ -1,0 +1,32 @@
+/* teacher-concepts-hifi.html V1 (좌측 트리 + 우측 개념 카드 그리드) */
+
+.page-head { padding: 18px 28px; border-bottom: 1px solid var(--line); background: #fff; }
+.page-head h1 { margin: 0; font-size: 20px; }
+
+.tc-shell { display: grid; grid-template-columns: 320px 1fr; min-height: 600px; }
+.tc-tree { background: var(--bg); border-right: 1px solid var(--line); padding: 18px 14px; overflow-y: auto; }
+.tc-tree h3 { font-size: 11px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 10px; padding: 0 6px; font-weight: 800; }
+.tc-tree .search { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; font-size: 13px; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: var(--ink-3); }
+
+.tree-node { padding: 6px 8px; border-radius: 6px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.tree-node:hover { background: rgba(99, 102, 241, 0.06); }
+.tree-node.l0 { font-weight: 800; font-size: 13px; color: var(--ink); margin-top: 8px; }
+.tree-node.l1 { font-weight: 700; padding-left: 16px; }
+.tree-node.l2 { padding-left: 32px; color: var(--ink-2); font-weight: 500; }
+.tree-node.l3 { padding-left: 48px; color: var(--ink-2); font-size: 12px; }
+.tree-node.cur { background: var(--primary-50); color: var(--primary); font-weight: 700; }
+.tree-node .ch { font-size: 9px; color: var(--ink-4); width: 12px; }
+.tree-node .count { margin-left: auto; font-size: 10px; color: var(--ink-4); background: #fff; padding: 1px 6px; border-radius: 99px; font-variant-numeric: tabular-nums; }
+.tree-node.cur .count { background: var(--primary); color: #fff; }
+
+.tc-detail { padding: 22px 28px; overflow-y: auto; }
+.concept-card-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.ccard { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.15s; }
+.ccard:hover { border-color: var(--primary); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.ccard .head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.ccard .num { background: var(--bg); color: var(--ink-3); font-weight: 800; font-size: 11px; padding: 2px 8px; border-radius: 4px; }
+.ccard .nm { font-weight: 700; font-size: 14px; }
+.ccard .meta { display: flex; gap: 8px; font-size: 11px; color: var(--ink-3); flex-wrap: wrap; margin-top: 8px; }
+.ccard .pbar { height: 4px; background: var(--bg); border-radius: 99px; overflow: hidden; margin-top: 8px; }
+.ccard .pbar i { display: block; height: 100%; background: var(--primary); border-radius: 99px; }
+.ccard.warn { border-color: var(--gold); background: var(--gold-bg); }

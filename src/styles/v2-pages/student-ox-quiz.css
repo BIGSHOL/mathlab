@@ -1,0 +1,36 @@
+/* student-ox-quiz-hifi.html V2 (PC 듀얼 버튼 — 키보드 모드) */
+
+.ox-head { background: linear-gradient(135deg, var(--primary-50), #fff); border-bottom: 1px solid var(--line); padding: 16px 28px; }
+.ox-head h1 { margin: 4px 0; font-size: 20px; }
+.ox-head .meta { font-size: 12px; color: var(--ink-2); display: flex; gap: 10px; align-items: center; }
+
+.dual-stage { padding: 28px 32px; min-height: 560px; }
+.dual-grid { display: grid; grid-template-columns: 1fr 280px; gap: 24px; }
+.dual-q { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 32px; min-height: 320px; display: flex; flex-direction: column; }
+.dual-q .q-text-big { font-size: 28px; font-weight: 700; line-height: 1.4; text-wrap: pretty; flex: 1; display: flex; align-items: center; }
+.dual-q .q-formula-big { background: var(--bg); border-radius: 12px; padding: 22px; text-align: center; font-family: 'Times New Roman', serif; font-style: italic; font-size: 32px; margin: 16px 0; }
+
+.dual-keys { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
+.key-btn { background: #fff; border: 2px solid; border-radius: 14px; padding: 22px; display: flex; align-items: center; gap: 16px; cursor: pointer; transition: all 0.15s; }
+.key-btn.o { border-color: var(--success); }
+.key-btn.x { border-color: var(--danger); }
+.key-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.key-btn .glyph { width: 56px; height: 56px; border-radius: 12px; display: grid; place-items: center; font-size: 32px; font-weight: 900; color: #fff; }
+.key-btn.o .glyph { background: var(--success); }
+.key-btn.x .glyph { background: var(--danger); }
+.key-btn .lb { font-size: 18px; font-weight: 800; }
+.key-btn .kbd { font-family: ui-monospace, monospace; background: var(--bg); padding: 3px 8px; border-radius: 4px; font-size: 12px; color: var(--ink-3); margin-left: auto; border: 1px solid var(--line); }
+
+.dual-side { display: flex; flex-direction: column; gap: 14px; }
+.progress-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+.progress-card .lb { font-size: 11px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; }
+.progress-card .val { font-size: 26px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.progress-card .sub { font-size: 12px; color: var(--ink-3); }
+
+.heat-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; padding: 12px; background: #fff; border-radius: 12px; border: 1px solid var(--line); }
+.heat-grid .cell { aspect-ratio: 1; border-radius: 3px; }
+.heat-grid .cell.o { background: var(--success); }
+.heat-grid .cell.x { background: var(--danger); }
+.heat-grid .cell.cur { background: var(--primary); animation: pulseCur 1.2s infinite; }
+.heat-grid .cell.todo { background: var(--bg); border: 1px solid var(--line); }
+@keyframes pulseCur { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
