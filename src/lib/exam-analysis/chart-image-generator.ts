@@ -624,12 +624,12 @@ export async function svgToPng(svg: string, width = CHART_WIDTH): Promise<Buffer
 
 // ── 전체 차트 이미지 생성 (한번에) ──
 
-// 새 글은 difficulty + abilityRadar 두 차트만 사용 (분석 화면과 동일 구성).
-// typeRadar/combinedRadar/topicBar는 옛 글 호환을 위해 chart 라우트에서 서빙은 유지하지만
-// 새로 생성하지 않음.
+// 새 글은 분석 화면과 동일하게 difficulty + abilityRadar + topicBar 세 차트 사용.
+// typeRadar/combinedRadar는 옛 글 호환을 위해 chart 라우트에서 서빙은 유지하지만 새로 생성하지 않음.
 export interface ChartImages {
   difficulty: string; // base64 PNG
   abilityRadar: string;
+  topicBar: string;
 }
 
 export async function generateAllChartImages(
@@ -638,14 +638,17 @@ export async function generateAllChartImages(
 ): Promise<ChartImages> {
   const diffSvg = generateDifficultyDonutSvg(summary.difficulty_distribution);
   const abilityRadarSvg = generateAbilityRadarSvg(questions);
+  const topicBarSvg = generateTopicBarSvg(questions);
 
-  const [diffPng, abilityPng] = await Promise.all([
+  const [diffPng, abilityPng, topicBarPng] = await Promise.all([
     svgToPng(diffSvg),
     svgToPng(abilityRadarSvg),
+    svgToPng(topicBarSvg),
   ]);
 
   return {
     difficulty: diffPng.toString('base64'),
     abilityRadar: abilityPng.toString('base64'),
+    topicBar: topicBarPng.toString('base64'),
   };
 }

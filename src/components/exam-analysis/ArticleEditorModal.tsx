@@ -31,9 +31,15 @@ interface ArticleData {
   metaDescription: string;
   chartImages?: {
     difficulty: string;
-    typeRadar: string;
+    abilityRadar: string;
     topicBar: string;
   };
+}
+
+interface ChartUrls {
+  difficulty?: string;
+  ability_radar?: string;
+  topic_bar?: string;
 }
 
 export function ArticleEditorModal({ examPaperId, schoolName: _schoolName, onClose }: ArticleEditorModalProps) {
@@ -41,6 +47,7 @@ export function ArticleEditorModal({ examPaperId, schoolName: _schoolName, onClo
   const [elapsedSec, setElapsedSec] = useState(0);
   const [progressMsg, setProgressMsg] = useState('');
   const [streamText, setStreamText] = useState(''); // AI 실시간 타이핑
+  const [chartUrls, setChartUrls] = useState<ChartUrls>({}); // route에서 미리 송신된 차트 URL (스트림 중 토큰 치환용)
   const [articleData, setArticleData] = useState<ArticleData | null>(null);
   const [htmlContent, setHtmlContent] = useState('');
   const [title, setTitle] = useState('');
@@ -96,6 +103,7 @@ export function ArticleEditorModal({ examPaperId, schoolName: _schoolName, onClo
     setLoading(true);
     setElapsedSec(0);
     setStreamText('');
+    setChartUrls({});
     setProgressMsg('준비 중...');
     timerRef.current = setInterval(() => setElapsedSec((s) => s + 1), 1000);
 
@@ -130,6 +138,9 @@ export function ArticleEditorModal({ examPaperId, schoolName: _schoolName, onClo
 
             if (event.type === 'progress') {
               setProgressMsg(event.message);
+            } else if (event.type === 'chart-urls') {
+              // route가 차트 PNG 생성 직후 보내는 사전 URL — 스트림 중 토큰 치환에 사용
+              setChartUrls(event.urls as ChartUrls);
             } else if (event.type === 'stream') {
               accumulatedStream += event.delta;
               setStreamText(accumulatedStream);
@@ -371,7 +382,7 @@ export function ArticleEditorModal({ examPaperId, schoolName: _schoolName, onClo
                   <div className="relative">
                     <div
                       className="prose prose-base max-w-none prose-h2:text-[1.4rem] prose-h2:font-bold prose-h2:text-slate-900 prose-h2:mt-6 prose-h2:mb-2 prose-h2:pb-1.5 prose-h2:border-b prose-h2:border-slate-200 prose-h3:text-[1.1rem] prose-h3:font-semibold prose-h3:text-slate-800 prose-p:text-slate-700 prose-p:leading-relaxed prose-strong:text-slate-900 prose-li:text-slate-700"
-                      dangerouslySetInnerHTML={{ __html: extractHtmlFromStream(streamText) }}
+                      dangerouslySetInnerHTML={{ __html: extractHtmlFromStream(streamText, chartUrls) }}
                     />
                     <span className="inline-block w-2 h-5 bg-violet-400 animate-pulse ml-0.5 align-middle" />
                   </div>
@@ -421,7 +432,34 @@ export function ArticleEditorModal({ examPaperId, schoolName: _schoolName, onClo
 
 // ── 스트리밍 JSON에서 content HTML 추출 (실시간 프리뷰용) ──
 
-function extractHtmlFromStream(raw: string): string {
+const CHART_PLACEHOLDER_STYLE = 'display:block;width:100%;height:200px;background:#F1F5F9;border:1px dashed #CBD5E1;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#94A3B8;font-size:13px;margin:1rem 0';
+
+const CHART_CAPTION: Record<string, string> = {
+  difficulty: '난이도 분포',
+  ability_radar: '능력 영역 분포',
+  topic_bar: '단원별 출제 현황',
+};
+
+/** 미완성 태그 잘라내기 — 마지막 '<' 이후가 '>'로 안 닫혔으면 그 직전까지만 */
+function safeTrimHtml(html: string): string {
+  const lastOpen = html.lastIndexOf('<');
+  const lastClose = html.lastIndexOf('>');
+  return lastOpen > lastClose ? html.slice(0, lastOpen) : html;
+}
+
+/** 본문에 박힌 {{CHART:*}} 토큰을 실제 <img>(URL 있음) 또는 placeholder div로 치환 */
+function replaceChartTokens(html: string, urls: ChartUrls): string {
+  return html.replace(/\{\{CHART:(difficulty|ability_radar|topic_bar)\}\}/g, (_m, key: string) => {
+    const url = (urls as Record<string, string | undefined>)[key];
+    const caption = CHART_CAPTION[key] || '차트';
+    if (url) {
+      return `<img src="${url}" alt="${caption}" style="max-width:100%;height:auto;border-radius:6px;margin:1rem 0" /><p style="text-align:center;color:#64748B;font-size:13px;margin-top:-0.5rem">▲ ${caption}</p>`;
+    }
+    return `<div style="${CHART_PLACEHOLDER_STYLE}">${caption} 차트 생성 중…</div>`;
+  });
+}
+
+function extractHtmlFromStream(raw: string, chartUrls: ChartUrls = {}): string {
   // "content": " 마커를 찾아서 그 이후 내용만 추출
   const marker = raw.match(/"content"\s*:\s*"/);
   if (!marker || marker.index === undefined) {
@@ -456,7 +494,14 @@ function extractHtmlFromStream(raw: string): string {
     .replace(/\\\\/g, '\\')
     .replace(/\\t/g, '\t');
 
-  return content;
+  // 폐지된 차트 토큰 제거 (옛 모델이 출력해도 잔재 없도록)
+  content = content.replace(/\{\{CHART:(type_radar|combined_radar)\}\}/g, '');
+
+  // 차트 토큰을 실제 <img>(URL 있음) 또는 placeholder로 치환
+  content = replaceChartTokens(content, chartUrls);
+
+  // 미완성 HTML 태그 안전 절단 (마지막 '<...' 이 '>'로 안 닫혔으면 잘라냄)
+  return safeTrimHtml(content);
 }
 
 // ── 간단 마크다운 → HTML 변환 (서버에서 마크다운으로 받은 경우) ──

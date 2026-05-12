@@ -12,7 +12,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import katex from 'katex';
 import type { AnalyzedQuestion } from './types';
 import type { CommentaryResult } from './agents/commentary-agent';
-import { QUESTION_TYPE_LABELS } from './constants';
+import { QUESTION_TYPE_LABELS, DIFFICULTY_LEGACY_MAP } from './constants';
 import { normalizeMathText } from '@/lib/pdf-extract-engine/ai/post-processor';
 
 // ── 영문 enum 차단 (UI normalizeKoreanLabels 와 동일) ──
@@ -159,6 +159,116 @@ export interface ArticleGenerationResult {
   generatedAt: string;
 }
 
+// ── 분석 인사이트 헬퍼 (블로그 본문 정성 표현용) ──
+// 분석 화면 컴포넌트(DiscriminationSection/QuestionPointsChart/EssayAnalysisSection)와 동일 공식.
+// 차트가 없는 데이터는 정성 라벨로만 변환하여 수치 노출에 따른 독자 혼란 방지.
+
+function normalizeDiffNum(key: string | number): number {
+  const k = String(key);
+  const mapped = DIFFICULTY_LEGACY_MAP[k] || k;
+  const n = Number(mapped);
+  return Number.isFinite(n) && n >= 1 && n <= 5 ? n : 3;
+}
+
+/** 변별력 정성 라벨 (DiscriminationSection.calculateDiscriminationScore와 동일 공식) */
+function calcDiscriminationLabel(questions: AnalyzedQuestion[]): {
+  overallLabel: '높음' | '적정' | '다소 낮음' | '낮음';
+  poorRatioLabel: '대부분' | '다수' | '일부' | '소수';
+} {
+  if (questions.length === 0) return { overallLabel: '적정', poorRatioLabel: '소수' };
+
+  const scores = questions.map((q) => {
+    const points = q.points || 3;
+    const nd = normalizeDiffNum(q.difficulty);
+    const mult = ({ 1: 0.3, 2: 0.5, 3: 0.65, 4: 0.8, 5: 1.0 } as Record<number, number>)[nd] || 0.5;
+    let base = (points * mult) / 10 * 100;
+    if (q.question_format === 'essay') base *= 1.2;
+    if ((nd === 1 || nd === 2) && points >= 5) base *= 0.7;
+    if ((nd === 4 || nd === 5) && points >= 4) base *= 1.15;
+    return Math.min(100, Math.max(0, Math.round(base)));
+  });
+
+  const avg = Math.round(scores.reduce((s, n) => s + n, 0) / scores.length);
+  const poorCount = scores.filter((s) => s < 40).length;
+  const poorRatio = poorCount / scores.length;
+
+  const overallLabel = avg >= 70 ? '높음' : avg >= 50 ? '적정' : avg >= 35 ? '다소 낮음' : '낮음';
+  const poorRatioLabel = poorRatio >= 0.5 ? '대부분' : poorRatio >= 0.3 ? '다수' : poorRatio >= 0.1 ? '일부' : '소수';
+
+  return { overallLabel, poorRatioLabel };
+}
+
+/** 배점-난이도 갭 분석 (QuestionPointsChart와 동일 공식, 갭 수치는 노출 안 함) */
+function calcPointsDifficultyGaps(questions: AnalyzedQuestion[]): {
+  overpriced: Array<{ num: string | number; points: number; level: number }>;
+  underpriced: Array<{ num: string | number; points: number; level: number }>;
+} {
+  if (questions.length === 0) return { overpriced: [], underpriced: [] };
+
+  // 난이도별 평균 배점
+  const sumByLevel: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  const cntByLevel: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  for (const q of questions) {
+    const lv = normalizeDiffNum(q.difficulty);
+    sumByLevel[lv] += q.points || 0;
+    cntByLevel[lv]++;
+  }
+  const avgByLevel: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  for (let i = 1; i <= 5; i++) avgByLevel[i] = cntByLevel[i] > 0 ? sumByLevel[i] / cntByLevel[i] : 0;
+
+  // 문항별 갭 계산 (절댓값 30% 이상만 필터)
+  const items = questions
+    .map((q) => {
+      const lv = normalizeDiffNum(q.difficulty);
+      const points = q.points || 0;
+      const expected = avgByLevel[lv] || 3;
+      const gap = points - expected;
+      const gapRatio = expected > 0 ? Math.abs(gap) / expected : 0;
+      return { num: q.question_number, points, level: lv, gap, gapRatio };
+    })
+    .filter((i) => i.gapRatio > 0.3)
+    .sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap));
+
+  const overpriced = items.filter((i) => i.gap > 0).slice(0, 3).map(({ num, points, level }) => ({ num, points, level }));
+  const underpriced = items.filter((i) => i.gap < 0).slice(0, 3).map(({ num, points, level }) => ({ num, points, level }));
+  return { overpriced, underpriced };
+}
+
+/** 서술형 집중 통계 (EssayAnalysisSection와 동일) */
+function calcEssayInsight(questions: AnalyzedQuestion[], totalPts: number): {
+  essayCount: number;
+  essayPts: number;
+  weightPct: number;
+  avgLevelLabel: string;
+  topicsLabel: string;
+} | null {
+  const essays = questions.filter((q) => q.question_format === 'essay');
+  if (essays.length === 0) return null;
+
+  const essayPts = essays.reduce((s, q) => s + (q.points || 0), 0);
+  const weightPct = totalPts > 0 ? Math.round((essayPts / totalPts) * 100) : 0;
+
+  const avgLevelNum = essays.reduce((s, q) => s + normalizeDiffNum(q.difficulty), 0) / essays.length;
+  const avgLevelLabel = avgLevelNum < 1.5 ? '기본 수준'
+    : avgLevelNum < 2.5 ? '주로 표준 수준'
+      : avgLevelNum < 3.5 ? '주로 응용 수준'
+        : avgLevelNum < 4.5 ? '주로 심화 수준'
+          : '최고난도 수준';
+
+  // 단원별 배점 집계 (마지막 소단원명 기준)
+  const topicMap: Record<string, number> = {};
+  for (const q of essays) {
+    const t = (q.topic || '미분류').split(' > ').pop() || '미분류';
+    topicMap[t] = (topicMap[t] || 0) + (q.points || 0);
+  }
+  const topicsLabel = Object.entries(topicMap)
+    .sort(([, a], [, b]) => b - a)
+    .map(([t, p]) => `${t}(${p}점)`)
+    .join(' / ');
+
+  return { essayCount: essays.length, essayPts, weightPct, avgLevelLabel, topicsLabel };
+}
+
 // ── 프롬프트 빌더 ──
 
 function buildArticlePrompt(input: ArticleGenerationInput): string {
@@ -179,6 +289,16 @@ function buildArticlePrompt(input: ArticleGenerationInput): string {
     return [];
   })();
   const scopeLabel = examScopeTopics.length ? examScopeTopics.join(', ') : (examPaper.unit || '미지정');
+
+  // 분석 인사이트 (정성 표현용 — 차트 없는 데이터는 수치 노출 금지)
+  const discrim = calcDiscriminationLabel(analysis.questions);
+  const gaps = calcPointsDifficultyGaps(analysis.questions);
+  const essayInsight = calcEssayInsight(analysis.questions, analysis.totalPoints);
+
+  const formatItem = (i: { num: string | number; points: number; level: number }) =>
+    `${i.num}번(${i.points}점/Level ${i.level})`;
+  const overpricedLabel = gaps.overpriced.length ? gaps.overpriced.map(formatItem).join(', ') : '(없음)';
+  const underpricedLabel = gaps.underpriced.length ? gaps.underpriced.map(formatItem).join(', ') : '(없음)';
 
   // 난이도 분포 텍스트
   const diff = analysis.summary.difficulty_distribution;
@@ -307,6 +427,26 @@ function buildArticlePrompt(input: ArticleGenerationInput): string {
 - 형식: 객관식 ${formats.objective}문항, 단답형 ${formats.short_answer}문항, 서술형 ${formats.essay}문항
 - 종합 난이도: Level ${overallLevel} (${LEVEL_NAMES[overallLevel]})
 
+## 추가 분석 인사이트 (본문 자연어로 녹일 것 — 수치 직접 노출 금지!)
+
+**변별력 평가 (차트 없음 → 정성 표현만 사용):**
+- 전체 변별력 라벨: **${discrim.overallLabel}**  (가능값: 높음 / 적정 / 다소 낮음 / 낮음)
+- 변별력 주의 등급 문항 비중: **${discrim.poorRatioLabel}**  (가능값: 대부분 / 다수 / 일부 / 소수)
+- 활용: 섹션 1 "시험 개요"에 한 문장으로 자연스럽게 녹일 것. "변별력이 ${discrim.overallLabel === '높음' ? '높은 편' : discrim.overallLabel === '적정' ? '적정한 수준' : discrim.overallLabel === '다소 낮음' ? '다소 낮은 편' : '약한 편'}" 같은 표현 사용.
+- **금지**: "변별력 지수 38점", "주의 등급 10문항" 같은 정확 수치/카운트 노출 절대 금지.
+
+**배점-난이도 갭 (차트 없음 → 갭 수치 노출 금지):**
+- 난이도 대비 배점이 높아 **공략 우선 가치가 큰 문항**: ${overpricedLabel}
+- 노력 대비 점수 효율이 낮은 **함정 문항**: ${underpricedLabel}
+- 활용: 섹션 6 "등급별 전략"에서 A등급은 공략 우선 문항을 콕 집어 가이드, B/C등급은 함정 문항 회피 가이드.
+- **금지**: "+4.4", "-3.6" 같은 갭 수치 노출 절대 금지. 문항 번호 + 배점 + 난이도까지만.
+
+${essayInsight ? `**서술형 집중 분석 (차트 있음 — 수치 노출 OK):**
+- 서술형 ${essayInsight.essayCount}문항이 전체 배점의 **${essayInsight.weightPct}%** 차지 (${essayInsight.essayPts}점)
+- 평균 난이도: **${essayInsight.avgLevelLabel}**
+- 단원별 출제: ${essayInsight.topicsLabel}
+- 활용: 섹션 1 또는 섹션 7에서 서술형이 차지하는 무게를 강조. 답안 작성 훈련의 필요성을 자연스럽게 연결.` : ''}
+
 ## 난이도 분포
 ${diffLines}
 - 난이도별 배점: Level1 ${diffPoints[0]}점, Level2 ${diffPoints[1]}점, Level3 ${diffPoints[2]}점, Level4 ${diffPoints[3]}점, Level5 ${diffPoints[4]}점
@@ -374,7 +514,7 @@ ${nearbyText}
    - **미출제 영역 언급 금지**: 4대 능력 중 한 문항도 없는 영역은 절대 언급하지 말 것. "~은 한 문항도 없습니다"는 정보 가치가 없음
    - **클리셰 금지**: "균형 잡힌 시험" 같은 뻔한 일반론 금지. 대신 가장 비중이 큰 능력 영역이 학생에게 어떤 의미인지(어떤 학습 습관이 필요한지)를 구체적으로 서술
    - 끝에 {{CHART:ability_radar}} 토큰 삽입 (능력 영역 분포 레이더 차트)
-4. **단원별 출제 현황** — 단원별 배점의 '이유'를 추측하거나, 학생이 느낄 체감 난이도와 연결. 차트 없이 본문 텍스트로만 서술 (단원명·문항수·배점은 본문에 자연스럽게 포함)
+4. **단원별 출제 현황** — 단원별 배점의 '이유'를 추측하거나, 학생이 느낄 체감 난이도와 연결. 끝에 {{CHART:topic_bar}} 토큰 삽입 (단원별 문항 수 + 배점 막대)
 5. **주목할 문항 분석** — **[분석 전략: ${seedNotable}]** 3~5개 문항을 선정하되, 이 전략에 맞게 서술
 6. **등급별 점수 확보 전략** — **[서술 방식: ${seedGradeStyle}]** A/B/C 등급 모두 충분히 깊게 다루되, 이 서술 방식에 맞게 작성. "~해야 합니다"만 반복하지 말고 현실적 조언
 7. **학습 방향 제안** — **[구성 전략: ${seedLearning}]** 이 전략에 맞게 구체적인 학습 순서와 이유를 제시
@@ -391,7 +531,7 @@ ${commentary.nearby_comparison ? '8. **주변 학교 비교** — 다른 학교�
   - ✗ "성광중 중3 시험은 성광중 중3 기출 분석에서..." (같은 문장에 2회 = 스터핑)
   - ✓ "성광중 중3 시험은 응용~심화 구간에 배점이 집중된 구조로, 기본 개념만으로는 고득점이 어렵습니다." (1회만, 자연스럽게)
 - **문단**: 2~4문장씩 짧게 끊어 모바일 가독성 확보. 문장당 40자 이내 권장
-- **이미지 위치**: {{CHART:difficulty}}, {{CHART:ability_radar}} 두 토큰만 정확히 해당 섹션 끝에 삽입. **다른 차트 토큰({{CHART:type_radar}}, {{CHART:combined_radar}}, {{CHART:topic_bar}})은 절대 사용 금지!** "▲ 21문항 난이도 분포" 같은 텍스트 캡션으로 대체하지 말고 반드시 토큰 문자열 그대로 출력
+- **이미지 위치**: {{CHART:difficulty}}, {{CHART:ability_radar}}, {{CHART:topic_bar}} 세 토큰만 정확히 해당 섹션 끝에 삽입. **다른 차트 토큰({{CHART:type_radar}}, {{CHART:combined_radar}})은 절대 사용 금지!** "▲ 21문항 난이도 분포" 같은 텍스트 캡션으로 대체하지 말고 반드시 토큰 문자열 그대로 출력
 - **태그 규칙 (정확히 따를 것)**:
   - 필수 태그: #${schoolName.replace(/\s/g, '')} #${schoolName.replace(/\s/g, '')}기출 #${schoolName.replace(/\s/g, '')}수학 #${grade ? grade.replace(/\s/g, '') + '수학' : '중학수학'} #기출분석 #수학기출분석 #중간고사기출
   - 주변 학교가 있으면 주변 학교명 태그도 추가: ${nearbyText !== '(주변 학교 비교 데이터 없음)' ? '주변 학교명을 #학교명 형태로 각각 추가' : ''}
@@ -427,7 +567,7 @@ ${commentary.nearby_comparison ? '8. **주변 학교 비교** — 다른 학교�
   - C등급 전략: <mark style='background-color: #FFE8CC'>C등급 핵심</mark> (살구색)
   - 경고/주의: <mark style='background-color: #FFD8D8'>주의 사항</mark> (분홍색)
   - 영역 강조: <mark style='background-color: #E8D5FF'>영역 이름</mark> (연보라색)
-- 차트 이미지 위치: {{CHART:difficulty}}, {{CHART:ability_radar}} 두 토큰만 삽입 (그 외 차트 토큰 금지)
+- 차트 이미지 위치: {{CHART:difficulty}}, {{CHART:ability_radar}}, {{CHART:topic_bar}} 세 토큰만 삽입. {{CHART:type_radar}} / {{CHART:combined_radar}} 사용 금지
 
 **HTML 구조 예시 (태그 패턴 참고용 — 문장 표현은 매번 새롭게 작성!):**
 <h2>성광중 중3 수학 등급별 점수 확보 전략</h2>

@@ -51,11 +51,31 @@ export async function POST(request: NextRequest, { params }: Params) {
         controller.enqueue(encoder.encode(JSON.stringify(data) + '\n'));
       };
 
+      // baseUrl 계산 — 차트 URL을 스트림 중에도 보내기 위해 try 전에 미리 산출
+      const reqUrl = new URL(request.url);
+      const forwardedProto = request.headers.get('x-forwarded-proto');
+      let baseUrl = forwardedProto
+        ? `${forwardedProto}://${request.headers.get('host')}`
+        : reqUrl.origin;
+      if (baseUrl.includes('localhost')) {
+        baseUrl = 'https://mathlab-mu.vercel.app';
+      }
+
       try {
         // Step 1: 차트 이미지 생성
         send({ type: 'progress', step: 1, totalSteps: 3, message: '차트 이미지 생성 중...' });
         const chartImages = await generateAllChartImages(summary, questions);
         send({ type: 'progress', step: 1, totalSteps: 3, message: '차트 이미지 3종 생성 완료' });
+
+        // 스트림 중 토큰 치환용 차트 URL 사전 송신 (클라이언트는 placeholder → 실제 <img>로 자연스러운 전환)
+        send({
+          type: 'chart-urls',
+          urls: {
+            difficulty: `${baseUrl}/api/exam-analysis/${id}/chart/difficulty`,
+            ability_radar: `${baseUrl}/api/exam-analysis/${id}/chart/ability-radar`,
+            topic_bar: `${baseUrl}/api/exam-analysis/${id}/chart/topic-bar`,
+          },
+        });
 
         // Step 2: AI 글 생성 (스트리밍)
         send({ type: 'progress', step: 2, totalSteps: 3, message: 'AI가 블로그 글을 작성하고 있습니다...' });
@@ -86,23 +106,12 @@ export async function POST(request: NextRequest, { params }: Params) {
         // Step 3: 후처리 + 저장
         send({ type: 'progress', step: 3, totalSteps: 3, message: '글 저장 중...' });
 
-        // {{CHART:*}} 토큰 → API URL <img> 태그 변환
+        // {{CHART:*}} 토큰 → API URL <img> 태그 변환 (baseUrl은 try 진입 전 계산됨)
         // 네이버 블로그는 base64 data URI 차단 → API 라우트로 실제 PNG 서빙
-        // NEXTAUTH_URL이 localhost일 수 있으므로 request에서 실제 origin 추출
-        const reqUrl = new URL(request.url);
-        const forwardedProto = request.headers.get('x-forwarded-proto');
-        let baseUrl = forwardedProto
-          ? `${forwardedProto}://${request.headers.get('host')}`
-          : reqUrl.origin;
-        // localhost → 프로덕션 도메인으로 강제 교체 (Mixed Content 방지)
-        if (baseUrl.includes('localhost')) {
-          baseUrl = 'https://mathlab-mu.vercel.app';
-        }
         const totalQ = latestAnalysis.totalQuestions ?? questions.length;
 
-        // 블로그 글은 분석 화면과 동일하게 '난이도 분포' + '능력 영역 분포' 두 차트만 사용.
-        // 옛 글에는 type_radar/combined_radar/topic_bar 토큰이 본문에 남아있을 수 있으므로,
-        // AI가 실수로 다시 생성하더라도 깨지지 않게 제거 처리.
+        // 블로그 글은 분석 화면과 동일하게 난이도 + 능력 영역 + 단원별 세 차트만 사용.
+        // type_radar/combined_radar는 옛 글에 남아있을 수 있어 폐지 토큰으로 흔적 없이 제거.
         const chartTokenMap: Record<string, { url: string; alt: string; caption: string }> = {
           '{{CHART:difficulty}}': {
             url: `${baseUrl}/api/exam-analysis/${id}/chart/difficulty`,
@@ -114,10 +123,15 @@ export async function POST(request: NextRequest, { params }: Params) {
             alt: '능력 영역 분포',
             caption: '▲ 수학 능력 영역별 분포',
           },
+          '{{CHART:topic_bar}}': {
+            url: `${baseUrl}/api/exam-analysis/${id}/chart/topic-bar`,
+            alt: '단원별 출제 현황',
+            caption: '▲ 단원별 문항 수 및 배점',
+          },
         };
 
-        // 폐지된 토큰 — AI가 출력해도 흔적 없이 제거
-        const RETIRED_CHART_TOKENS = ['{{CHART:type_radar}}', '{{CHART:combined_radar}}', '{{CHART:topic_bar}}'];
+        // 폐지된 토큰 — AI가 출력해도 흔적 없이 제거 (type_radar/combined_radar 한정)
+        const RETIRED_CHART_TOKENS = ['{{CHART:type_radar}}', '{{CHART:combined_radar}}'];
 
         let htmlContent = article.content;
         for (const [token, chart] of Object.entries(chartTokenMap)) {
