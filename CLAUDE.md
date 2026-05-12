@@ -284,6 +284,111 @@ const scopeLabel = examScopeTopics.length ? examScopeTopics.join(', ') : '미지
   - 기존 데이터 마이그레이션 없이 dual-format 운용하면 반드시 정규화 헬퍼 통과
   - 검색 명령: `grep -rn "필드명" src/ --include="*.ts" --include="*.tsx"`
 
+### 12. AI 출력 · 스트리밍 · UI 표시 — 자주 빠지는 함정 7종
+
+이번 세션(2026-05-12)에서 실제로 발생해 디버깅이 까다로웠던 사례 모음. 같은 함정에 다시 빠지지 않도록 패턴화.
+
+#### 12-1. AI 모델 max_tokens 한도는 한글 본문 기준으로 산정
+
+**증상**: Claude 응답이 `content` 중간에서 잘림 → `JSON.parse` 회복 불가 → 클라이언트 "준비 중..." 무한 잔류
+**원인**: `max_tokens=8192`로는 한글 본문(2,500~3,200자) + JSON 오버헤드 + HTML 마크업이 못 들어감
+**규칙**:
+- Claude/Gemini 호출 시 한글 출력 한도 = **글자 수 × 약 5배 토큰 여유**로 산정
+- 본문 작성형(블로그·보고서): 최소 **16,384 토큰** (`generateExamArticle` 패턴)
+- `JSON.parse` 실패 시 **정규식 partial fallback** 필수 (각 필드를 독립 추출하여 부분 복구)
+- `response.stop_reason === 'max_tokens'`이면 `console.warn`로 노출
+- 사례: [article-generator.ts:extractJson + extractFieldsByRegex](src/lib/exam-analysis/article-generator.ts)
+
+#### 12-2. 병렬 함수 호출 안의 fetch/파일I/O는 module-level Promise로 캐싱
+
+**증상**: 한 요청에서 폰트 10번 동시 다운로드 (Regular 5번 + Bold 5번 = 165MB 네트워크 낭비)
+**원인**: `Promise.all([svgToPng × 5])` → 각 `svgToPng`가 `ensureFonts()` 호출 → 5번이 동시에 파일 부재 판정 → 5번 다운로드
+**규칙**:
+```ts
+// ❌ 매 호출마다 체크 + 다운로드 (race)
+async function ensureX() {
+  if (!exists(path)) await download(path);
+  return path;
+}
+
+// ✅ module-level Promise 캐싱 (첫 호출만 다운로드, 후속은 같은 Promise await)
+let readyPromise: Promise<string> | null = null;
+async function ensureX() {
+  if (readyPromise) return readyPromise;
+  readyPromise = (async () => { /* 실제 다운로드 */ })();
+  return readyPromise;
+}
+// 실패 시 readyPromise = null로 되돌려 재시도 허용
+```
+- Vercel Serverless 인스턴스는 격리됨 → cross-request stale 우려 없음
+- 사례: [chart-image-generator.ts:ensureFonts](src/lib/exam-analysis/chart-image-generator.ts)
+
+#### 12-3. AI 반환 값 키 매칭은 항상 정규화 후 비교
+
+**증상**: 능력 영역 레이더 차트가 0%로 빈 다각형
+**원인**: AI가 `ability_domain`을 `'CALCULATION'` / `'Problem-Solving'` / `'Calculation'` 등 변형으로 반환. raw 값으로 매칭 시 `'calculation'` 키와 불일치
+**규칙**:
+```ts
+// ❌ raw 값 그대로 매칭
+if (domain in counts) counts[domain]++;
+
+// ✅ 대소문자 + 하이픈/언더스코어 정규화 + question_type fallback
+const raw = q.ability_domain || TYPE_TO_DOMAIN[q.question_type] || 'calculation';
+const domain = String(raw).toLowerCase().replace(/-/g, '_');
+if (domain in counts) counts[domain]++;
+```
+- AnalyzedQuestion의 `ability_domain` / `question_type` / `question_format` 등 enum성 필드 모두 적용
+- 사례: [chart-image-generator.ts:generateAbilityRadarSvg](src/lib/exam-analysis/chart-image-generator.ts)
+
+#### 12-4. 클라이언트와 서버가 같은 데이터를 처리할 땐 정규화 패턴 통일
+
+**증상**: 분석 화면(클라이언트)은 능력 영역 차트를 정상 표시하는데, 블로그 글(서버 차트 생성)은 0%로 빈 차트
+**원인**: 분석 화면 `TypeRadarChart.tsx`은 이미 `toLowerCase()` 정규화 적용. 서버 `chart-image-generator.ts`는 raw 매칭. 같은 questions 배열인데 결과가 다름
+**규칙**:
+- 같은 입력 데이터에 대해 클라이언트·서버가 다른 결과를 만들면 사용자가 어디를 신뢰해야 할지 혼란
+- 정규화·집계 로직은 **공용 유틸로 추출 권장**: `src/lib/exam-analysis/question-stats.ts` 같은 위치
+- 추출 전이라도 패턴을 인라인으로 복제해 양쪽 결과를 일치시킬 것
+- 사례: [DiscriminationSection.tsx의 변별력 공식](src/components/exam-analysis/DiscriminationSection.tsx) ↔ [article-generator.ts의 calcDiscriminationLabel](src/lib/exam-analysis/article-generator.ts) — 동일 공식 복제
+
+#### 12-5. 사용자 노출 텍스트에 검증 불가 수치 노출 금지
+
+**증상**: 블로그 글에 "변별력 지수 38점" / "갭 +4.4" 같은 수치를 직접 노출하면 학부모 독자는 그 수치의 기준점을 몰라 혼란
+**원인**: 그래프/표로 보이는 수치는 시각적 맥락이 있지만, 본문 텍스트로만 노출되는 추상 수치는 기준점 부재
+**규칙**:
+| 데이터 종류 | 처리 |
+|------------|------|
+| 차트/표로 같이 보이는 수치 | 정확 수치 OK (난이도 분포, 단원 배점 등) |
+| 본문 빈출 + 합산으로 자체 검증되는 수치 | 정확 수치 OK (서술형 21점 / 21% 등) |
+| 추상 지수 / 갭 / 분포 점수 (시각 자료 없음) | **정성 라벨로 변환** ("높은 편 / 적정 / 다소 낮은 편 / 낮음") |
+
+```ts
+// ✅ 정성 라벨 매핑 패턴
+const overallLabel = avg >= 70 ? '높음' : avg >= 50 ? '적정' : avg >= 35 ? '다소 낮음' : '낮음';
+```
+- AI 프롬프트에 "수치 노출 금지" 명시 + 금지/허용 예시 함께 제공
+- 사례: [article-generator.ts:calcDiscriminationLabel](src/lib/exam-analysis/article-generator.ts) + 프롬프트 "## 추가 분석 인사이트" 섹션
+
+#### 12-6. 스트리밍 응답은 최종 결과와 시각적 점프 최소화
+
+**증상**: 글 작성 중에는 `{"title":"...","content":"<h2>...` raw JSON이 보이다가 완료 시점에 갑자기 깔끔한 HTML로 점프
+**원인**: 클라이언트가 stream 텍스트를 raw 그대로 표시
+**규칙 (4단계)**:
+1. **JSON wrapper 실시간 스트립**: 정규식으로 `"content":"..."` 값만 실시간 추출, title/tags/메타는 표시 제외
+2. **HTML 실시간 렌더링**: `dangerouslySetInnerHTML`로 즉시 렌더링하되 미완성 태그 `safeTrim` (마지막 `<` 이후가 `>`로 안 닫혔으면 절단)
+3. **참조 자원 사전 송신**: 차트 PNG 같은 자원은 본 스트림 시작 전에 별도 이벤트(`chart-urls`)로 URL을 미리 전송 → 클라이언트가 토큰을 실시간 `<img>`로 치환
+4. **자원 도착 전 placeholder**: 회색 박스("차트 생성 중…")로 자리 유지 → URL 도착 시 자연스럽게 실제 이미지로 전환
+- 사례: [ArticleEditorModal.tsx:extractHtmlFromStream + replaceChartTokens](src/components/exam-analysis/ArticleEditorModal.tsx) + [generate-article/route.ts:chart-urls 이벤트](src/app/api/exam-analysis/[id]/generate-article/route.ts)
+
+#### 12-7. 반올림 표시는 미세 차이를 가린다
+
+**증상**: 시험 난이도 Level 2.5와 Level 2.9가 모두 박스 3 강조로 동일하게 보임 → 사용자가 두 시험을 같은 난이도로 오해
+**원인**: `Math.round(weightedAvg)`만 시각화에 사용
+**규칙**:
+- 정수 카테고리(박스/뱃지/등급)는 round 결과로 강조해 카테고리적 인식 제공
+- **동시에 정확한 소수점 위치를 가리키는 마커**(▼/●/슬라이더) 추가 → 미세 차이도 시각화
+- 정확한 원본 값은 `title` 속성에 hover 노출 (예: `title="정확한 가중평균: 2.92"`)
+- 사례: [AnalysisDetail.tsx 난이도 카드의 ▼ 마커](src/app/(teacher)/exam-analysis/AnalysisDetail.tsx)
+
 ## 프로젝트 구조
 
 ```
