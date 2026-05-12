@@ -1,12 +1,13 @@
 /**
  * v2 사이드바 메뉴 정의 (학생/선생님/관리자).
  *
- * 모든 href 는 /v2/* 경로. 기존 라우트(/dashboard, /overview 등)와 분리되어
- * v2 페이지 트리에서만 사용된다.
+ * NOTE: 모든 href 는 현재 /v2/* 경로. 매니페스트(handoff/02-PAGE-MANIFEST.md)는
+ * 기존 v1 라우트(`/dashboard`, `/overview`)에 v2 디자인 이식 지향이므로
+ * Phase 5.5 (권한/라이선스 메타 선결) 시 href 를 v1 라우트로 일괄 변경 예정.
  */
-import type { SidebarNavGroup } from './Sidebar';
+import type { SidebarV2NavGroup } from './SidebarV2';
 
-export const STUDENT_NAV: SidebarNavGroup[] = [
+export const STUDENT_NAV: SidebarV2NavGroup[] = [
   {
     title: '학습',
     items: [
@@ -34,7 +35,7 @@ export const STUDENT_NAV: SidebarNavGroup[] = [
   },
 ];
 
-export const TEACHER_NAV: SidebarNavGroup[] = [
+export const TEACHER_NAV: SidebarV2NavGroup[] = [
   {
     title: '운영',
     items: [
@@ -60,7 +61,7 @@ export const TEACHER_NAV: SidebarNavGroup[] = [
   },
 ];
 
-export const ADMIN_NAV: SidebarNavGroup[] = [
+export const ADMIN_NAV: SidebarV2NavGroup[] = [
   {
     title: '관리',
     items: [

@@ -2,8 +2,8 @@
  * 관리자 Feature Flags V3 — data/refact/pages/admin-hifi.html S3 변형
  * 기능별 토글 / 단계별 롤아웃 % / 베타 학원 지정.
  */
-import { AppShell, Sidebar, Topbar, ADMIN_NAV } from '@/components/layout-v2';
-import { Button } from '@/components/ui-v2';
+import { AppShell, SidebarV2, Topbar, ADMIN_NAV } from '@/components/layout';
+import { ButtonV2 } from '@/components/ui';
 import '@/styles/v2-pages/admin.css';
 
 type FlagTag = 'beta' | 'exp' | 'stable';
@@ -49,7 +49,7 @@ export default function AdminFeaturesV2Page() {
     <AppShell
       className="admin"
       sidebar={
-        <Sidebar
+        <SidebarV2
           brand="MathLAB · Admin"
           groups={ADMIN_NAV}
           user={{ name: data.admin.name, meta: data.admin.meta, avatarBg: data.admin.avatarBg }}
@@ -61,8 +61,8 @@ export default function AdminFeaturesV2Page() {
         subtitle={<span>활성 <b>28</b> · 베타 <b>7</b> · 실험 <b>3</b></span>}
         right={
           <>
-            <Button>📥 변경 이력</Button>
-            <Button variant="primary">＋ 새 플래그</Button>
+            <ButtonV2>📥 변경 이력</ButtonV2>
+            <ButtonV2 variant="primary">＋ 새 플래그</ButtonV2>
           </>
         }
       />
@@ -120,9 +120,9 @@ export default function AdminFeaturesV2Page() {
                 )}
               </div>
               <div className="row gap-4">
-                <Button style={{ fontSize: 11, padding: '3px 8px' }}>설정</Button>
+                <ButtonV2 style={{ fontSize: 11, padding: '3px 8px' }}>설정</ButtonV2>
                 {f.bumpStep && (
-                  <Button variant="primary" style={{ fontSize: 11, padding: '3px 8px' }}>+{f.bumpStep}%</Button>
+                  <ButtonV2 variant="primary" style={{ fontSize: 11, padding: '3px 8px' }}>+{f.bumpStep}%</ButtonV2>
                 )}
               </div>
             </div>

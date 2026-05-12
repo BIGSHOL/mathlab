@@ -1,16 +1,26 @@
+/**
+ * /admin/tenants — Pattern F V1 (어드민 테이블) 지점 관리.
+ * 시안: data/refact2/pages/pattern-f-admin-table-hifi.html § V1 + admin-tenants.html § A1
+ *
+ * 기존 데이터 fetch + state + 핸들러 유지, JSX 만 V1 디자인으로 교체.
+ */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Building2, Plus, Users, Settings,
-  Search, KeyRound, AlertTriangle, GraduationCap,
-} from 'lucide-react';
+import { Building2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { toast } from '@/components/ui/Toast';
-import { Skeleton } from '@/components/ui/Skeleton';
-import { PageContainer } from '@/components/ui/PageContainer';
+import {
+  AdminTopbar,
+  AdminFilterBar,
+  AdminAppliedChips,
+  AdminTable,
+  AdminStatsRow,
+  AdminPagination,
+  type AdminTableColumn,
+} from '@/components/admin-table';
 import { useViewingTenantStore } from '@/stores/viewingTenantStore';
 
 interface Tenant {
@@ -31,12 +41,15 @@ interface Tenant {
   _count: { users: number; classrooms: number };
 }
 
+const PAGE_SIZE = 10;
+
 export default function TenantsPage() {
   const router = useRouter();
   const { enterTenantView, exitTenantView } = useViewingTenantStore();
 
-  // 지점 관리 페이지 진입 시 viewing tenant 해제 (뒤로가기 대응)
-  useEffect(() => { exitTenantView(); }, [exitTenantView]);
+  useEffect(() => {
+    exitTenantView();
+  }, [exitTenantView]);
 
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,6 +57,7 @@ export default function TenantsPage() {
   const [creating, setCreating] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
+  const [page, setPage] = useState(1);
   const [newSlug, setNewSlug] = useState('');
   const [newName, setNewName] = useState('');
   const [ownerUsername, setOwnerUsername] = useState('');
@@ -57,7 +71,9 @@ export default function TenantsPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchTenants(); }, [fetchTenants]);
+  useEffect(() => {
+    fetchTenants();
+  }, [fetchTenants]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,124 +131,279 @@ export default function TenantsPage() {
     }
   };
 
-  // 필터링
+  // ── 필터링 + 페이지네이션 ──
   const filtered = tenants
     .filter((t) => statusFilter === 'ALL' || (statusFilter === 'ACTIVE' ? t.isActive : !t.isActive))
     .filter((t) => !search || t.name.includes(search) || t.slug.includes(search));
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageRows = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
-  // 요약 통계
-  const activeTenants = tenants.filter((t) => t.isActive).length;
-  const totalStudents = tenants.reduce((s, t) => s + t.studentCount, 0);
-  const totalTeachers = tenants.reduce((s, t) => s + t.teacherCount, 0);
-  const totalLicenses = tenants.reduce((s, t) => s + t.licenseCount, 0);
+  // ── 요약 통계 ──
+  const totalCount = tenants.length;
+  const activeCount = tenants.filter((t) => t.isActive).length;
+  const inactiveCount = totalCount - activeCount;
   const expiringTotal = tenants.reduce((s, t) => s + t.expiringLicenses, 0);
 
-  return (
-    <PageContainer maxWidth="xl">
-      {/* 헤더 */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-violet-100 rounded-sm">
-            <Building2 className="w-5 h-5 text-violet-600" />
+  // ── 적용 필터 chips ──
+  const appliedChips = [
+    statusFilter !== 'ALL' && {
+      id: 'status',
+      label: statusFilter === 'ACTIVE' ? '활성' : '비활성',
+      onRemove: () => setStatusFilter('ALL'),
+    },
+    search.trim() && {
+      id: 'search',
+      label: `검색: ${search}`,
+      onRemove: () => setSearch(''),
+    },
+  ].filter(Boolean) as Array<{ id: string; label: React.ReactNode; onRemove?: () => void }>;
+
+  // ── 테이블 컬럼 ──
+  const columns: AdminTableColumn<Tenant>[] = [
+    {
+      id: 'name',
+      header: '학원명',
+      sortable: false,
+      render: (t) => (
+        <div className="who">
+          <div className="av" style={{ background: t.isActive ? 'var(--primary)' : 'var(--ink-3)' }}>
+            <Building2 className="w-3 h-3" strokeWidth={2.5} />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-text-primary">지점 관리</h1>
-            <p className="text-sm text-text-secondary">서브도메인 기반 멀티 지점 관리</p>
+            <div style={{ fontWeight: 700 }}>{t.name}</div>
+            <div className="role">
+              {t.slug === 'default' ? '본사' : `${t.slug}.mathlab.com`}
+            </div>
           </div>
         </div>
-        <Button onClick={() => setShowCreate(!showCreate)} size="sm">
-          <Plus className="w-4 h-4 mr-1" />
-          새 지점
-        </Button>
-      </div>
-
-      {/* 요약 통계 카드 */}
-      {!loading && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-          <StatCard
-            icon={<Building2 className="w-4 h-4 text-primary" />}
-            label="활성 지점"
-            value={`${activeTenants} / ${tenants.length}`}
-          />
-          <StatCard
-            icon={<GraduationCap className="w-4 h-4 text-blue-500" />}
-            label="전체 학생"
-            value={`${totalStudents.toLocaleString()}명`}
-          />
-          <StatCard
-            icon={<Users className="w-4 h-4 text-violet-500" />}
-            label="전체 선생님"
-            value={`${totalTeachers}명`}
-          />
-          <StatCard
-            icon={<KeyRound className="w-4 h-4 text-green-500" />}
-            label="활성 이용권"
-            value={`${totalLicenses}개`}
-          />
-          <StatCard
-            icon={<AlertTriangle className="w-4 h-4 text-amber-500" />}
-            label="만료 임박"
-            value={`${expiringTotal}건`}
-            warn={expiringTotal > 0}
-          />
-        </div>
-      )}
-
-      {/* 검색 + 필터 */}
-      <div className="flex items-center gap-3 mb-4">
-        <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="지점명 또는 슬러그 검색..."
-            className="w-full h-9 pl-9 pr-3 rounded-sm border border-slate-200 text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary"
-          />
-        </div>
-        <div className="flex gap-1.5">
-          {(['ALL', 'ACTIVE', 'INACTIVE'] as const).map((s) => (
+      ),
+    },
+    {
+      id: 'students',
+      header: '학생',
+      render: (t) => `${t.studentCount}명`,
+    },
+    {
+      id: 'teachers',
+      header: '선생님',
+      render: (t) => `${t.teacherCount}명`,
+    },
+    {
+      id: 'classrooms',
+      header: '반',
+      render: (t) => `${t.classroomCount}`,
+    },
+    {
+      id: 'activity',
+      header: '주간 활동',
+      render: (t) => (
+        <span
+          style={{
+            color:
+              t.activityRate >= 70
+                ? 'var(--success)'
+                : t.activityRate >= 40
+                ? 'var(--warn)'
+                : 'var(--danger)',
+            fontWeight: 700,
+          }}
+        >
+          {t.activityRate}%
+        </span>
+      ),
+    },
+    {
+      id: 'license',
+      header: '이용권',
+      render: (t) => {
+        if (t.licenseCount === 0) return <span style={{ color: 'var(--ink-3)' }}>—</span>;
+        const ratio = t.totalSeats > 0 ? (t.usedSeats / t.totalSeats) * 100 : 0;
+        const tone =
+          t.expiringLicenses > 0 ? 'warn' : ratio > 90 ? 'warn' : 'indigo';
+        return (
+          <span className={`badge ${tone}`}>
+            {t.licenseCount}개{t.totalSeats > 0 ? ` · ${Math.round(ratio)}%` : ''}
+          </span>
+        );
+      },
+    },
+    {
+      id: 'created',
+      header: '가입일',
+      render: (t) => new Date(t.createdAt).toISOString().slice(0, 7),
+      cellStyle: { fontFamily: 'ui-monospace, monospace', color: 'var(--ink-3)', fontSize: 12 },
+    },
+    {
+      id: 'status',
+      header: '상태',
+      render: (t) => {
+        if (!t.isActive) return <span className="badge red">비활성</span>;
+        if (t.expiringLicenses > 0)
+          return (
+            <span className="badge yellow">
+              <AlertTriangle className="inline w-3 h-3 mr-0.5" />
+              만료 임박
+            </span>
+          );
+        return <span className="badge green">활성</span>;
+      },
+    },
+    {
+      id: 'actions',
+      header: '',
+      className: 'row-actions',
+      render: (t) => (
+        <div className="row-actions" onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => router.push(`/admin/tenants/${t.slug}`)}
+          >
+            설정
+          </button>
+          {t.slug !== 'default' && (
             <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 rounded-sm text-xs font-medium transition-colors ${
-                statusFilter === s ? 'bg-primary text-white' : 'bg-slate-100 text-text-secondary hover:bg-slate-200'
-              }`}
+              type="button"
+              className={`btn${t.isActive ? '' : ' accent'}`}
+              onClick={() => toggleActive(t)}
             >
-              {s === 'ALL' ? '전체' : s === 'ACTIVE' ? '활성' : '비활성'}
+              {t.isActive ? '비활성화' : '활성화'}
             </button>
-          ))}
+          )}
         </div>
-      </div>
+      ),
+    },
+  ];
 
-      {/* 지점 생성 폼 */}
-      {showCreate && (
-        <div className="bg-white rounded-sm border border-slate-200 p-5 mb-6">
-          <form onSubmit={handleCreate} className="space-y-4">
-            <h3 className="text-sm font-semibold text-text-primary">지점 정보</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
+  return (
+    <div className="app no-side" style={{ minHeight: 'auto', padding: '24px' }}>
+      <div className="adm-frame">
+        <AdminTopbar
+          title="지점 관리"
+          meta={loading ? '불러오는 중...' : `총 ${totalCount}개 · 활성 ${activeCount}`}
+          actions={
+            <>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => {
+                  /* TODO: CSV 내보내기 */
+                }}
+              >
+                📥 내보내기 (CSV)
+              </button>
+              <button
+                type="button"
+                className="btn primary"
+                onClick={() => setShowCreate(!showCreate)}
+              >
+                + 새 지점 등록
+              </button>
+            </>
+          }
+        />
+
+        {!loading && (
+          <AdminStatsRow
+            stats={[
+              { label: '총 지점', value: totalCount, delta: '+0 이번달', deltaTone: 'up' },
+              {
+                label: '활성',
+                value: activeCount,
+                delta: totalCount > 0 ? `${Math.round((activeCount / totalCount) * 100)}%` : '0%',
+              },
+              {
+                label: '비활성',
+                value: inactiveCount,
+                delta: inactiveCount > 0 ? '관리 필요' : '없음',
+                deltaTone: inactiveCount > 0 ? 'warn' : 'neutral',
+              },
+              {
+                label: '만료 임박',
+                value: expiringTotal,
+                delta: expiringTotal > 0 ? '7일 이내 ⚠' : '없음',
+                deltaTone: expiringTotal > 0 ? 'danger' : 'neutral',
+                highlight: expiringTotal > 0,
+              },
+            ]}
+          />
+        )}
+
+        <AdminFilterBar
+          searchPlaceholder="🔍 지점명·슬러그 검색"
+          searchValue={search}
+          onSearchChange={(v) => {
+            setSearch(v);
+            setPage(1);
+          }}
+          filters={[
+            {
+              id: 'status',
+              label: '상태',
+              value: statusFilter,
+              options: [
+                { value: 'ALL', label: '전체' },
+                { value: 'ACTIVE', label: '활성' },
+                { value: 'INACTIVE', label: '비활성' },
+              ],
+              onChange: (v) => {
+                setStatusFilter(v as 'ALL' | 'ACTIVE' | 'INACTIVE');
+                setPage(1);
+              },
+            },
+          ]}
+        />
+
+        {appliedChips.length > 0 && (
+          <AdminAppliedChips
+            chips={appliedChips}
+            onClearAll={() => {
+              setSearch('');
+              setStatusFilter('ALL');
+              setPage(1);
+            }}
+          />
+        )}
+
+        {showCreate && (
+          <div
+            style={{
+              padding: '20px 20px 24px',
+              borderBottom: '1px solid var(--line)',
+              background: 'var(--bg)',
+            }}
+          >
+            <form onSubmit={handleCreate} className="flex flex-col gap-4">
+              <h3 className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
+                지점 정보
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Input
+                    label="슬러그 (서브도메인)"
+                    placeholder="gangnam"
+                    value={newSlug}
+                    onChange={(e) =>
+                      setNewSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
+                    }
+                    required
+                  />
+                  <p className="text-xs mt-1" style={{ color: 'var(--ink-3)' }}>
+                    {newSlug ? `${newSlug}.mathlab.com` : 'xxx.mathlab.com'}
+                  </p>
+                </div>
                 <Input
-                  label="슬러그 (서브도메인)"
-                  placeholder="gangnam"
-                  value={newSlug}
-                  onChange={(e) => setNewSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                  label="지점 이름"
+                  placeholder="강남점"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
                   required
                 />
-                <p className="text-xs text-text-secondary mt-1">
-                  {newSlug ? `${newSlug}.mathlab.com` : 'xxx.mathlab.com'}
-                </p>
               </div>
-              <Input
-                label="지점 이름"
-                placeholder="강남점"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="border-t border-slate-100 pt-4">
-              <h3 className="text-sm font-semibold text-text-primary mb-3">지점장 계정</h3>
+              <h3 className="text-sm font-semibold mt-2" style={{ color: 'var(--ink)' }}>
+                지점장 계정
+              </h3>
               <div className="grid grid-cols-3 gap-3">
                 <Input
                   label="아이디"
@@ -256,172 +427,45 @@ export default function TenantsPage() {
                   required
                 />
               </div>
-            </div>
-
-            <div className="flex justify-end">
-              <Button type="submit" disabled={creating}>
-                {creating ? '생성 중...' : '지점 + 지점장 생성'}
-              </Button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* 지점 목록 */}
-      {loading ? (
-        <div className="space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-24 rounded-sm" />
-          ))}
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center py-12 text-text-secondary text-sm bg-white rounded-sm border border-slate-200">
-          {search ? `"${search}" 검색 결과 없음` : '등록된 지점이 없습니다'}
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {filtered.map((tenant) => (
-            <div
-              key={tenant.id}
-              className={`bg-white rounded-sm border p-4 transition-colors cursor-pointer ${
-                tenant.isActive ? 'border-slate-200 hover:border-primary/40 hover:shadow-sm' : 'border-red-200 bg-red-50/50'
-              }`}
-              onClick={() => {
-                if (tenant.isActive) {
-                  enterTenantView(tenant.id, tenant.name);
-                  router.push('/overview');
-                }
-              }}
-            >
-              <div className="flex items-center justify-between">
-                {/* 좌측: 기본 정보 */}
-                <div className="flex items-center gap-4">
-                  <div className={`p-2 rounded-sm ${tenant.isActive ? 'bg-blue-100' : 'bg-red-100'}`}>
-                    <Building2 className={`w-5 h-5 ${tenant.isActive ? 'text-blue-600' : 'text-red-500'}`} />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-text-primary">{tenant.name}</h3>
-                      {tenant.slug === 'default' && (
-                        <span className="text-xs bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded font-medium">본사</span>
-                      )}
-                      {!tenant.isActive && (
-                        <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-medium">비활성</span>
-                      )}
-                      {tenant.expiringLicenses > 0 && (
-                        <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5">
-                          <AlertTriangle className="w-2.5 h-2.5" />
-                          이용권 {tenant.expiringLicenses}건 만료 임박
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-text-secondary">{tenant.slug}.mathlab.com</p>
-                  </div>
-                </div>
-
-                {/* 우측: 통계 + 액션 */}
-                <div className="flex items-center gap-6">
-                  {/* 핵심 메트릭 */}
-                  <div className="hidden md:flex items-center gap-5 text-sm">
-                    <div className="text-center">
-                      <p className="text-xs text-text-secondary">학생</p>
-                      <p className="font-semibold text-text-primary">{tenant.studentCount}명</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-xs text-text-secondary">선생님</p>
-                      <p className="font-semibold text-text-primary">{tenant.teacherCount}명</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-xs text-text-secondary">반</p>
-                      <p className="font-semibold text-text-primary">{tenant.classroomCount}</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-xs text-text-secondary">주간 활동률</p>
-                      <p className={`font-semibold ${
-                        tenant.activityRate >= 70 ? 'text-green-600' :
-                        tenant.activityRate >= 40 ? 'text-amber-600' : 'text-red-500'
-                      }`}>
-                        {tenant.activityRate}%
-                      </p>
-                    </div>
-                    {tenant.licenseCount > 0 && (
-                      <div className="text-center">
-                        <p className="text-xs text-text-secondary">이용권</p>
-                        <div className="flex items-center gap-1">
-                          <div className="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full ${
-                                tenant.totalSeats > 0 && tenant.usedSeats / tenant.totalSeats > 0.9
-                                  ? 'bg-amber-500' : 'bg-primary'
-                              }`}
-                              style={{
-                                width: tenant.totalSeats > 0
-                                  ? `${Math.min(100, (tenant.usedSeats / tenant.totalSeats) * 100)}%`
-                                  : '0%',
-                              }}
-                            />
-                          </div>
-                          <span className="text-xs text-text-secondary">
-                            {tenant.totalSeats > 0
-                              ? `${Math.round((tenant.usedSeats / tenant.totalSeats) * 100)}%`
-                              : '-'}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      title="지점 설정"
-                      onClick={() => router.push(`/admin/tenants/${tenant.slug}`)}
-                    >
-                      <Settings className="w-4 h-4" />
-                    </Button>
-                    {tenant.slug !== 'default' && (
-                      <button
-                        onClick={() => toggleActive(tenant)}
-                        title={tenant.isActive ? '비활성화' : '활성화'}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
-                          tenant.isActive ? 'bg-green-500' : 'bg-slate-300'
-                        }`}
-                      >
-                        <span className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
-                          tenant.isActive ? 'translate-x-6' : 'translate-x-1'
-                        }`} />
-                      </button>
-                    )}
-                  </div>
-                </div>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="ghost" onClick={() => setShowCreate(false)}>
+                  취소
+                </Button>
+                <Button type="submit" disabled={creating}>
+                  {creating ? '생성 중...' : '지점 + 지점장 생성'}
+                </Button>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </PageContainer>
-  );
-}
+            </form>
+          </div>
+        )}
 
-function StatCard({
-  icon,
-  label,
-  value,
-  warn,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  warn?: boolean;
-}) {
-  return (
-    <div className={`bg-white rounded-sm border p-4 ${warn ? 'border-amber-200' : 'border-slate-200'}`}>
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium text-text-secondary">{label}</span>
-        {icon}
+        <AdminTable
+          columns={columns}
+          rows={pageRows}
+          rowKey={(t) => t.id}
+          rowClassName={(t) =>
+            !t.isActive ? 'danger-row' : t.expiringLicenses > 0 ? 'warn-row' : undefined
+          }
+          loading={loading}
+          emptyMessage={
+            search ? `"${search}" 검색 결과 없음` : '등록된 지점이 없습니다'
+          }
+          onRowClick={(t) => {
+            if (t.isActive) {
+              enterTenantView(t.id, t.name);
+              router.push('/overview');
+            }
+          }}
+        />
+
+        <AdminPagination
+          currentPage={safePage}
+          totalPages={totalPages}
+          totalCount={filtered.length}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+        />
       </div>
-      <p className={`text-lg font-bold ${warn ? 'text-amber-600' : 'text-text-primary'}`}>{value}</p>
     </div>
   );
 }

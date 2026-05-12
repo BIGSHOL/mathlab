@@ -2,8 +2,8 @@
  * 학생 프로필 V1 — data/refact/pages/student-profile-hifi.html V1 변형
  * 메인 — 레벨 카드 + 핵심 지표 + 단원 숙련도 + 정답률 + 배지.
  */
-import { AppShell, Sidebar, Topbar, STUDENT_NAV } from '@/components/layout-v2';
-import { Button } from '@/components/ui-v2';
+import { AppShell, SidebarV2, Topbar, STUDENT_NAV } from '@/components/layout';
+import { ButtonV2 } from '@/components/ui';
 import '@/styles/v2-pages/student-profile.css';
 
 // TODO: Prisma — StudentProfile + UserBadge + 단원 마스터리 join
@@ -44,7 +44,7 @@ export default function StudentProfileV2Page() {
   return (
     <AppShell
       sidebar={
-        <Sidebar
+        <SidebarV2
           groups={STUDENT_NAV}
           user={{ name: data.user.name, meta: `Lv.${data.user.level} · 🪙 ${data.user.coins.toLocaleString()} P` }}
         />
@@ -55,8 +55,8 @@ export default function StudentProfileV2Page() {
         subtitle={`${data.user.grade} · ${data.user.tenure}`}
         right={
           <>
-            <Button>⚙️ 설정</Button>
-            <Button>📤 공유</Button>
+            <ButtonV2>⚙️ 설정</ButtonV2>
+            <ButtonV2>📤 공유</ButtonV2>
           </>
         }
       />

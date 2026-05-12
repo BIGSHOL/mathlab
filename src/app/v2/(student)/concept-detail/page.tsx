@@ -2,8 +2,8 @@
  * 학생 개념 학습 상세 V1 — data/refact/pages/student-concept-detail-hifi.html V1 변형
  * 책처럼 — 좌측 이론, 우측 예시·확인.
  */
-import { AppShell, Sidebar, STUDENT_NAV } from '@/components/layout-v2';
-import { Button, Chip, ProgressBar } from '@/components/ui-v2';
+import { AppShell, SidebarV2, STUDENT_NAV } from '@/components/layout';
+import { ButtonV2, Chip, ProgressBarV2 } from '@/components/ui';
 import '@/styles/v2-pages/student-concept-detail.css';
 
 // TODO: Prisma — Concept + BlankExercise + 학습 진행률
@@ -55,7 +55,7 @@ export default function ConceptDetailV2Page() {
   return (
     <AppShell
       sidebar={
-        <Sidebar
+        <SidebarV2
           groups={STUDENT_NAV}
           user={{ name: data.student.name, meta: data.student.meta, avatarBg: data.student.avatarBg }}
         />
@@ -70,7 +70,7 @@ export default function ConceptDetailV2Page() {
           <span>·</span>
           <span>📺 강의 영상 {data.concept.videoLen}</span>
           <span className="spacer" style={{ flex: 1 }} />
-          <ProgressBar value={data.concept.progress} />
+          <ProgressBarV2 value={data.concept.progress} />
           <span className="text-3">{data.concept.progressLabel}</span>
         </div>
       </div>
@@ -111,11 +111,11 @@ export default function ConceptDetailV2Page() {
           <p>인수분해가 깔끔하게 안 되는 식, 계수가 분수·소수인 식, 학교 시험에서 풀이 과정을 요구할 때.</p>
 
           <div className="row gap-6 mt-16" style={{ paddingTop: 14, borderTop: '1px solid var(--line)' }}>
-            <Button>← 이전: 인수분해 풀이</Button>
+            <ButtonV2>← 이전: 인수분해 풀이</ButtonV2>
             <span className="spacer" />
-            <Button>📌 북마크</Button>
-            <Button>🤖 AI에게 질문</Button>
-            <Button variant="primary">다음: 활용 문제 →</Button>
+            <ButtonV2>📌 북마크</ButtonV2>
+            <ButtonV2>🤖 AI에게 질문</ButtonV2>
+            <ButtonV2 variant="primary">다음: 활용 문제 →</ButtonV2>
           </div>
         </div>
 
@@ -159,7 +159,7 @@ export default function ConceptDetailV2Page() {
             </div>
             <div className="row mt-16" style={{ justifyContent: 'flex-end', gap: 6 }}>
               <span className="text-3" style={{ marginRight: 'auto', fontSize: 11 }}>💡 힌트 보기</span>
-              <Button variant="primary" style={{ padding: '6px 14px' }}>확인</Button>
+              <ButtonV2 variant="primary" style={{ padding: '6px 14px' }}>확인</ButtonV2>
             </div>
           </div>
 

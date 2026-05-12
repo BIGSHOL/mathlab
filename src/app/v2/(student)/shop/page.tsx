@@ -2,8 +2,8 @@
  * 학생 마켓(환전) V2 — data/refact/pages/student-market-hifi.html V2 변형
  * 환전하기 — 포인트(P) → 매스머니(M) 슬라이더 + 환율 + 거래 내역.
  */
-import { AppShell, Sidebar, Topbar, STUDENT_NAV } from '@/components/layout-v2';
-import { Button } from '@/components/ui-v2';
+import { AppShell, SidebarV2, Topbar, STUDENT_NAV } from '@/components/layout';
+import { ButtonV2 } from '@/components/ui';
 
 // TODO: Prisma — StudentProfile.points + PointTransaction + 환율 설정
 const MOCK = {
@@ -34,7 +34,7 @@ export default function StudentShopV2Page() {
   return (
     <AppShell
       sidebar={
-        <Sidebar
+        <SidebarV2
           groups={STUDENT_NAV}
           user={{ name: data.user.name, meta: `Lv.${data.user.level} · 🪙 ${data.user.coins.toLocaleString()} P` }}
         />
@@ -43,7 +43,7 @@ export default function StudentShopV2Page() {
       <Topbar
         title="환전"
         subtitle="포인트를 매스머니로 변환합니다 · 매스머니는 환불 불가"
-        right={<Button>‹ 마켓으로</Button>}
+        right={<ButtonV2>‹ 마켓으로</ButtonV2>}
       />
 
       <div className="main">
@@ -67,9 +67,9 @@ export default function StudentShopV2Page() {
                 <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--ink-3)' }}>P · 학습 포인트</span>
               </div>
               <div className="row gap-4 mt-8">
-                <Button style={{ fontSize: 11, padding: '4px 10px' }}>25%</Button>
-                <Button style={{ fontSize: 11, padding: '4px 10px' }}>50%</Button>
-                <Button style={{ fontSize: 11, padding: '4px 10px' }}>최대</Button>
+                <ButtonV2 style={{ fontSize: 11, padding: '4px 10px' }}>25%</ButtonV2>
+                <ButtonV2 style={{ fontSize: 11, padding: '4px 10px' }}>50%</ButtonV2>
+                <ButtonV2 style={{ fontSize: 11, padding: '4px 10px' }}>최대</ButtonV2>
               </div>
             </div>
 
@@ -97,9 +97,9 @@ export default function StudentShopV2Page() {
               <div className="row between"><span className="text-3">최소 환전</span><b>{data.exchange.minP} P</b></div>
             </div>
 
-            <Button variant="primary" size="xl" className="mt-16" style={{ width: '100%', fontWeight: 800 }}>
+            <ButtonV2 variant="primary" size="xl" className="mt-16" style={{ width: '100%', fontWeight: 800 }}>
               {data.exchange.fromAmount.toLocaleString()} P → {data.exchange.toAmount.toLocaleString()} M 환전하기
-            </Button>
+            </ButtonV2>
             <div className="text-3 mt-8" style={{ textAlign: 'center' }}>
               ⚠️ 환전 후 포인트로 되돌릴 수 없습니다
             </div>

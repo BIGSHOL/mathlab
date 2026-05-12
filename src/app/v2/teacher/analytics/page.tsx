@@ -4,8 +4,8 @@
  *
  * SVG 차트는 정적 마크업 placeholder. // TODO: Recharts 변환.
  */
-import { AppShell, Sidebar, Topbar, TEACHER_NAV } from '@/components/layout-v2';
-import { Button } from '@/components/ui-v2';
+import { AppShell, SidebarV2, Topbar, TEACHER_NAV } from '@/components/layout';
+import { ButtonV2 } from '@/components/ui';
 import '@/styles/v2-pages/teacher-analytics.css';
 
 // TODO: Prisma — Classroom + AnswerLog + Submission 집계
@@ -35,7 +35,7 @@ export default function TeacherAnalyticsV2Page() {
   return (
     <AppShell
       sidebar={
-        <Sidebar
+        <SidebarV2
           groups={TEACHER_NAV}
           user={{ name: data.teacher.name, meta: data.teacher.branch, avatarBg: data.teacher.avatarBg }}
         />
@@ -52,13 +52,13 @@ export default function TeacherAnalyticsV2Page() {
         subtitle={
           <>
             <span className="text-3">기간:</span>{' '}
-            <Button style={{ fontSize: 12, padding: '5px 10px' }}>최근 4주</Button>
+            <ButtonV2 style={{ fontSize: 12, padding: '5px 10px' }}>최근 4주</ButtonV2>
           </>
         }
         right={
           <>
-            <Button>📊 비교 보기</Button>
-            <Button>📄 리포트로 내보내기</Button>
+            <ButtonV2>📊 비교 보기</ButtonV2>
+            <ButtonV2>📄 리포트로 내보내기</ButtonV2>
           </>
         }
       />
@@ -131,7 +131,7 @@ export default function TeacherAnalyticsV2Page() {
                   <i style={{ display: 'block', width: `${t.avgAcc}%`, height: '100%', background: SEV_COLOR[t.severity] }} />
                 </div>
                 <div style={{ width: 50, textAlign: 'right', fontWeight: 800, color: SEV_COLOR[t.severity] }}>{t.avgAcc}%</div>
-                <Button style={{ fontSize: 12, padding: '5px 10px' }}>보충 출제</Button>
+                <ButtonV2 style={{ fontSize: 12, padding: '5px 10px' }}>보충 출제</ButtonV2>
               </div>
             ))}
           </div>
@@ -142,7 +142,7 @@ export default function TeacherAnalyticsV2Page() {
           <div className="chart-head">
             <h3>🌡 단원 × 학생 히트맵</h3>
             <span style={{ flex: 1 }} />
-            <Button style={{ fontSize: 12, padding: '5px 10px' }}>전체 학생</Button>
+            <ButtonV2 style={{ fontSize: 12, padding: '5px 10px' }}>전체 학생</ButtonV2>
           </div>
           {/* TODO: implement — 단원x학생 그리드 히트맵 */}
           <div className="chart-placeholder">🌡 32명 × 12단원 히트맵 — 정답률 색상 단계별 표시</div>

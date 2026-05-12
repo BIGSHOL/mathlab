@@ -3,8 +3,8 @@
  * 수동 채점 — 서술형 사진 채점 + 동일오답 일괄 처리.
  * 풀스크린 (사이드바 없음).
  */
-import { AppShell, Topbar } from '@/components/layout-v2';
-import { Button, Chip } from '@/components/ui-v2';
+import { AppShell, Topbar } from '@/components/layout';
+import { ButtonV2, Chip } from '@/components/ui';
 import '@/styles/v2-pages/teacher-exam.css';
 
 const MOCK = {
@@ -49,8 +49,8 @@ export default function TeacherExamV2Page() {
                 <i style={{ display: 'block', width: `${data.progress}%`, height: '100%', background: 'var(--warn)' }} />
               </div>
             </div>
-            <Button>↩ 자동 저장됨</Button>
-            <Button variant="primary">완료 & 공개</Button>
+            <ButtonV2>↩ 자동 저장됨</ButtonV2>
+            <ButtonV2 variant="primary">완료 & 공개</ButtonV2>
           </>
         }
       />
@@ -60,9 +60,9 @@ export default function TeacherExamV2Page() {
         <div className="stu-list">
           <h4>학생 60명 — 진행 상태</h4>
           <div className="row" style={{ padding: '0 14px 8px', gap: 6 }}>
-            <Button variant="ghost" style={{ fontSize: 11, padding: '4px 8px' }}>전체</Button>
-            <Button variant="ghost" style={{ fontSize: 11, padding: '4px 8px', color: 'var(--warn)' }}>미채점 36</Button>
-            <Button variant="ghost" style={{ fontSize: 11, padding: '4px 8px' }}>완료 24</Button>
+            <ButtonV2 variant="ghost" style={{ fontSize: 11, padding: '4px 8px' }}>전체</ButtonV2>
+            <ButtonV2 variant="ghost" style={{ fontSize: 11, padding: '4px 8px', color: 'var(--warn)' }}>미채점 36</ButtonV2>
+            <ButtonV2 variant="ghost" style={{ fontSize: 11, padding: '4px 8px' }}>완료 24</ButtonV2>
           </div>
           {data.students.map((s, i) => (
             <div key={i} className={`stu-row${s.active ? ' active' : ''}`}>
@@ -92,8 +92,8 @@ export default function TeacherExamV2Page() {
               </div>
             </div>
             <span style={{ flex: 1 }} />
-            <Button variant="ghost">← 이전</Button>
-            <Button>다음 학생 →</Button>
+            <ButtonV2 variant="ghost">← 이전</ButtonV2>
+            <ButtonV2>다음 학생 →</ButtonV2>
           </div>
 
           {/* Q20: 부분점수 케이스 */}
@@ -163,8 +163,8 @@ export default function TeacherExamV2Page() {
                     이지원 + 11명이 &quot;x = 4 또는 8 둘 다&quot;라고 답했습니다. 가로&gt;세로 조건 누락. 일괄로 같은 점수·피드백 적용 가능.
                   </div>
                   <div className="row gap-4">
-                    <Button variant="primary" style={{ fontSize: 12, flex: 1 }}>12명에 일괄 적용</Button>
-                    <Button style={{ fontSize: 12 }}>개별 채점</Button>
+                    <ButtonV2 variant="primary" style={{ fontSize: 12, flex: 1 }}>12명에 일괄 적용</ButtonV2>
+                    <ButtonV2 style={{ fontSize: 12 }}>개별 채점</ButtonV2>
                   </div>
                 </div>
               </div>

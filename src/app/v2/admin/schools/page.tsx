@@ -2,8 +2,8 @@
  * 관리자 학교 DB V2 — data/refact/pages/admin-hifi.html S2 변형
  * 전국 학교 + 기출 보유 현황 + 커버리지 통계 (no-side 풀스크린).
  */
-import { AppShell, Sidebar, Topbar, ADMIN_NAV } from '@/components/layout-v2';
-import { Button } from '@/components/ui-v2';
+import { AppShell, SidebarV2, Topbar, ADMIN_NAV } from '@/components/layout';
+import { ButtonV2 } from '@/components/ui';
 import '@/styles/v2-pages/admin.css';
 
 // TODO: Prisma — School + ExamPaper 집계 (cover/missing 통계 포함)
@@ -44,7 +44,7 @@ export default function AdminSchoolsV2Page() {
     <AppShell
       className="admin"
       sidebar={
-        <Sidebar
+        <SidebarV2
           brand="MathLAB · Admin"
           groups={ADMIN_NAV}
           user={{ name: data.admin.name, meta: data.admin.meta, avatarBg: data.admin.avatarBg }}
@@ -57,8 +57,8 @@ export default function AdminSchoolsV2Page() {
         right={
           <>
             <input className="search-input" style={{ width: 240 }} placeholder="🔍 학교명·지역" />
-            <Button>📥 일괄 업로드</Button>
-            <Button variant="primary">＋ 학교 추가</Button>
+            <ButtonV2>📥 일괄 업로드</ButtonV2>
+            <ButtonV2 variant="primary">＋ 학교 추가</ButtonV2>
           </>
         }
       />

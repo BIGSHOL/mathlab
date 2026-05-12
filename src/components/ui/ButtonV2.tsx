@@ -1,11 +1,11 @@
 import * as React from 'react';
 
-type ButtonVariant = 'default' | 'primary' | 'gold' | 'ghost';
-type ButtonSize = 'md' | 'lg' | 'xl';
+type ButtonV2Variant = 'default' | 'primary' | 'gold' | 'ghost';
+type ButtonV2Size = 'md' | 'lg' | 'xl';
 
-export type ButtonProps = {
-  variant?: ButtonVariant;
-  size?: ButtonSize;
+export type ButtonV2Props = {
+  variant?: ButtonV2Variant;
+  size?: ButtonV2Size;
   className?: string;
   children: React.ReactNode;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>;
@@ -13,14 +13,17 @@ export type ButtonProps = {
 /**
  * v2 디자인 시스템 Button.
  * mathlab-v2.css 의 .btn .btn.primary .btn.gold .btn.ghost .btn.lg .btn.xl 매핑.
+ *
+ * v1 `<Button>` 과 별개 컴포넌트 — v1은 Tailwind class 기반, v2는 mathlab-v2.css 클래스 기반.
+ * v2 디자인 시안 페이지에서 사용. v1 사용처는 그대로 v1 `<Button>` 유지.
  */
-export function Button({
+export function ButtonV2({
   variant = 'default',
   size = 'md',
   className,
   children,
   ...rest
-}: ButtonProps) {
+}: ButtonV2Props) {
   const classes = ['btn'];
   if (variant !== 'default') classes.push(variant);
   if (size !== 'md') classes.push(size);

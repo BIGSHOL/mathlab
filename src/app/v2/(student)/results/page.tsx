@@ -2,8 +2,8 @@
  * 학생 결과 리포트 V2 — data/refact/pages/student-exam-hifi.html V3 변형
  * 시즌 최고 기록 — 점수 + 등수 + 단원별 분석 + 오답 노트.
  */
-import { AppShell, Sidebar, Topbar, STUDENT_NAV } from '@/components/layout-v2';
-import { Button, Chip, CurrencyChip } from '@/components/ui-v2';
+import { AppShell, SidebarV2, Topbar, STUDENT_NAV } from '@/components/layout';
+import { ButtonV2, Chip, CurrencyChip } from '@/components/ui';
 import '@/styles/v2-pages/student-results.css';
 
 // TODO: Prisma — TestAttempt + AnswerLog 집계
@@ -38,7 +38,7 @@ export default function StudentResultsV2Page() {
   return (
     <AppShell
       sidebar={
-        <Sidebar
+        <SidebarV2
           groups={STUDENT_NAV}
           user={{ name: data.user.name, meta: `Lv.${data.user.level} · 🪙 ${data.user.coins.toLocaleString()}` }}
         />
@@ -133,9 +133,9 @@ export default function StudentResultsV2Page() {
               <div style={{ fontSize: 13, color: 'var(--ink-2)', marginTop: 4 }}>
                 {data.weakTopic.name} 단원 — 보충 학습 {data.weakTopic.count}문항이 자동 추가됩니다.
               </div>
-              <Button variant="primary" className="mt-8" style={{ background: 'var(--danger)' }}>
+              <ButtonV2 variant="primary" className="mt-8" style={{ background: 'var(--danger)' }}>
                 보충 학습 시작 →
-              </Button>
+              </ButtonV2>
             </div>
           </div>
 
@@ -153,7 +153,7 @@ export default function StudentResultsV2Page() {
                 >
                   <span style={{ fontWeight: 800, color: 'var(--danger)' }}>{w.num}</span>
                   <span className="text-2">{w.topic}</span>
-                  <Button style={{ marginLeft: 'auto', padding: '4px 10px', fontSize: 12 }}>해설</Button>
+                  <ButtonV2 style={{ marginLeft: 'auto', padding: '4px 10px', fontSize: 12 }}>해설</ButtonV2>
                 </div>
               ))}
             </div>

@@ -4,19 +4,19 @@ import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-export type SidebarNavItem = {
+export type SidebarV2NavItem = {
   icon: React.ReactNode; // emoji or icon
   label: string;
   href: string;
   badge?: number | string;
 };
 
-export type SidebarNavGroup = {
+export type SidebarV2NavGroup = {
   title: string;
-  items: SidebarNavItem[];
+  items: SidebarV2NavItem[];
 };
 
-export type SidebarUser = {
+export type SidebarV2User = {
   name: string;
   /** 첫 글자가 아바타에 표시됨 */
   meta?: string;
@@ -24,11 +24,11 @@ export type SidebarUser = {
   avatarBg?: string;
 };
 
-export type SidebarProps = {
+export type SidebarV2Props = {
   brand?: React.ReactNode; // 기본 'MathLAB'
   brandMark?: React.ReactNode; // 기본 'M'
-  groups: SidebarNavGroup[];
-  user?: SidebarUser;
+  groups: SidebarV2NavGroup[];
+  user?: SidebarV2User;
 };
 
 function initial(name: string): string {
@@ -42,15 +42,16 @@ function initial(name: string): string {
  * v2 디자인 시스템 Sidebar (학생/선생님/관리자 공용).
  * mathlab-v2.css 의 .side .brand .nav-group .nav-item .me 매핑.
  *
- * - 현재 활성 경로는 usePathname() 으로 자동 감지 (또는 href 정확 일치).
+ * - 현재 활성 경로는 usePathname() 으로 자동 감지.
  * - 학생/선생님/관리자 페이지마다 다른 NAV_GROUPS 상수를 import 해 props 로 전달.
+ * - v1 `<Sidebar>` 와 별개 컴포넌트 — v1은 권한별 분기 자동, v2는 props 받아 렌더.
  */
-export function Sidebar({
+export function SidebarV2({
   brand = 'MathLAB',
   brandMark = 'M',
   groups,
   user,
-}: SidebarProps) {
+}: SidebarV2Props) {
   const pathname = usePathname() ?? '';
 
   return (

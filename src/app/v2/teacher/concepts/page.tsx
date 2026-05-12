@@ -2,8 +2,8 @@
  * 선생님 개념 관리 V1 — data/refact/pages/teacher-concepts-hifi.html V1 변형
  * 좌측 트리 + 우측 개념 카드 그리드 + 문제 풀 목록.
  */
-import { AppShell, Sidebar, TEACHER_NAV } from '@/components/layout-v2';
-import { Button, Chip } from '@/components/ui-v2';
+import { AppShell, SidebarV2, TEACHER_NAV } from '@/components/layout';
+import { ButtonV2, Chip } from '@/components/ui';
 import '@/styles/v2-pages/teacher-concepts.css';
 
 interface TreeNode {
@@ -66,7 +66,7 @@ export default function TeacherConceptsV2Page() {
   return (
     <AppShell
       sidebar={
-        <Sidebar
+        <SidebarV2
           groups={TEACHER_NAV}
           user={{ name: data.teacher.name, meta: data.teacher.meta, avatarBg: data.teacher.avatarBg }}
         />
@@ -76,10 +76,10 @@ export default function TeacherConceptsV2Page() {
         <h1>개념·문제 관리</h1>
         <p className="text-2">총 1,247개 개념 · 28,309문제 · <span className="text-warn">12개 검토 대기</span></p>
         <div className="row gap-6 mt-12">
-          <Button>📥 일괄 가져오기 (CSV)</Button>
-          <Button>📤 내보내기</Button>
+          <ButtonV2>📥 일괄 가져오기 (CSV)</ButtonV2>
+          <ButtonV2>📤 내보내기</ButtonV2>
           <span className="spacer" style={{ flex: 1 }} />
-          <Button variant="primary">+ 개념 추가</Button>
+          <ButtonV2 variant="primary">+ 개념 추가</ButtonV2>
         </div>
       </div>
 
@@ -111,8 +111,8 @@ export default function TeacherConceptsV2Page() {
             </div>
             <span className="spacer" style={{ flex: 1 }} />
             <div className="row gap-6">
-              <Button>⚙️ 단원 설정</Button>
-              <Button variant="primary">+ 새 개념</Button>
+              <ButtonV2>⚙️ 단원 설정</ButtonV2>
+              <ButtonV2 variant="primary">+ 새 개념</ButtonV2>
             </div>
           </div>
 

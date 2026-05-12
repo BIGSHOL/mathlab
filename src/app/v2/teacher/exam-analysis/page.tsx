@@ -3,8 +3,8 @@
  * 단원 × 연도 출제 빈도 매트릭스 — 대치중 5년치 데이터 기반.
  * 풀스크린 (사이드바 없음).
  */
-import { AppShell, Topbar } from '@/components/layout-v2';
-import { Button } from '@/components/ui-v2';
+import { AppShell, Topbar } from '@/components/layout';
+import { ButtonV2 } from '@/components/ui';
 import '@/styles/v2-pages/teacher-exam-analysis.css';
 
 // TODO: Prisma — ExamPaper + ExamAnalysis 집계
@@ -61,9 +61,9 @@ export default function TeacherExamAnalysisV2Page() {
         right={
           <>
             <span className="text-3" style={{ fontSize: 12 }}>기간:</span>
-            <Button style={{ fontSize: 12, padding: '5px 10px' }}>최근 5년 ▾</Button>
+            <ButtonV2 style={{ fontSize: 12, padding: '5px 10px' }}>최근 5년 ▾</ButtonV2>
             <span className="text-3" style={{ fontSize: 12 }}>단위:</span>
-            <Button style={{ fontSize: 12, padding: '5px 10px' }}>소단원 ▾</Button>
+            <ButtonV2 style={{ fontSize: 12, padding: '5px 10px' }}>소단원 ▾</ButtonV2>
           </>
         }
       />

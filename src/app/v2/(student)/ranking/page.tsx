@@ -2,8 +2,8 @@
  * 학생 랭킹 V3 — data/refact/pages/student-ranking-hifi.html V3 변형
  * 학원 전체 — 반 vs 반 + TOP 100 명예의 전당 + 활동 피드.
  */
-import { AppShell, Sidebar, Topbar, STUDENT_NAV } from '@/components/layout-v2';
-import { Button } from '@/components/ui-v2';
+import { AppShell, SidebarV2, Topbar, STUDENT_NAV } from '@/components/layout';
+import { ButtonV2 } from '@/components/ui';
 import '@/styles/v2-pages/student-ranking.css';
 
 // TODO: Prisma — Tenant 내 Classroom 별 평균 P 집계 + StudentProfile.xp Top 100
@@ -37,7 +37,7 @@ export default function StudentRankingV2Page() {
   return (
     <AppShell
       sidebar={
-        <Sidebar
+        <SidebarV2
           groups={STUDENT_NAV}
           user={{ name: data.user.name, meta: `Lv.${data.user.level} · 🪙 ${data.user.coins.toLocaleString()} P` }}
         />
@@ -123,7 +123,7 @@ export default function StudentRankingV2Page() {
 
           <div className="lb-row" style={{ background: 'var(--bg)', padding: '8px 14px', justifyContent: 'center' }}>
             <div style={{ gridColumn: 'span 6', textAlign: 'center' }}>
-              <Button>전체 TOP 100 보기 →</Button>
+              <ButtonV2>전체 TOP 100 보기 →</ButtonV2>
             </div>
           </div>
         </div>

@@ -3,8 +3,8 @@
  * DIY 편집기 — 좌측 문제 라이브러리 + 가운데 학습지 캔버스 + 우측 설정 패널.
  * 풀스크린 (사이드바 없음).
  */
-import { AppShell, Topbar } from '@/components/layout-v2';
-import { Button } from '@/components/ui-v2';
+import { AppShell, Topbar } from '@/components/layout';
+import { ButtonV2 } from '@/components/ui';
 import '@/styles/v2-pages/teacher-worksheet.css';
 
 type LibItem = {
@@ -85,10 +85,10 @@ export default function TeacherWorksheetV2Page() {
         }
         right={
           <>
-            <Button style={{ fontSize: 12, padding: '5px 10px' }}>↶ 실행취소</Button>
-            <Button>👁️ 미리보기</Button>
-            <Button>💾 임시저장</Button>
-            <Button variant="primary">🖨️ 인쇄 / PDF</Button>
+            <ButtonV2 style={{ fontSize: 12, padding: '5px 10px' }}>↶ 실행취소</ButtonV2>
+            <ButtonV2>👁️ 미리보기</ButtonV2>
+            <ButtonV2>💾 임시저장</ButtonV2>
+            <ButtonV2 variant="primary">🖨️ 인쇄 / PDF</ButtonV2>
           </>
         }
       />
@@ -181,11 +181,11 @@ export default function TeacherWorksheetV2Page() {
           <div className="col" style={{ gap: 8 }}>
             <div className="row between">
               <span className="text-3" style={{ fontSize: 12 }}>용지 크기</span>
-              <Button style={{ fontSize: 11, padding: '4px 10px' }}>{data.settings.paperSize} ▾</Button>
+              <ButtonV2 style={{ fontSize: 11, padding: '4px 10px' }}>{data.settings.paperSize} ▾</ButtonV2>
             </div>
             <div className="row between">
               <span className="text-3" style={{ fontSize: 12 }}>단 구성</span>
-              <Button style={{ fontSize: 11, padding: '4px 10px' }}>{data.settings.columns} ▾</Button>
+              <ButtonV2 style={{ fontSize: 11, padding: '4px 10px' }}>{data.settings.columns} ▾</ButtonV2>
             </div>
             <label className="row" style={{ gap: 8, fontSize: 12 }}>
               <input type="checkbox" defaultChecked={data.settings.titleVisible} />
@@ -202,8 +202,8 @@ export default function TeacherWorksheetV2Page() {
           </div>
 
           <h4>🤖 AI 도구</h4>
-          <Button variant="primary" style={{ width: '100%' }}>AI에게 추천받기</Button>
-          <Button style={{ width: '100%', marginTop: 6 }}>난이도 자동 균형</Button>
+          <ButtonV2 variant="primary" style={{ width: '100%' }}>AI에게 추천받기</ButtonV2>
+          <ButtonV2 style={{ width: '100%', marginTop: 6 }}>난이도 자동 균형</ButtonV2>
         </div>
       </div>
     </AppShell>

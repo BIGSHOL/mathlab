@@ -2,8 +2,8 @@
  * 학생 단원학습 V1 — data/refact/pages/student-learn-hifi.html V1 변형
  * 커리큘럼 트리 — 정통 학습 위계 (학원에서 익숙한 좌측 트리 + 우측 상세).
  */
-import { AppShell, Sidebar, Topbar, STUDENT_NAV } from '@/components/layout-v2';
-import { Button, Chip, CurrencyChip } from '@/components/ui-v2';
+import { AppShell, SidebarV2, Topbar, STUDENT_NAV } from '@/components/layout';
+import { ButtonV2, Chip, CurrencyChip } from '@/components/ui';
 import '@/styles/v2-pages/student-curriculum.css';
 
 // TODO: Prisma — LearningCourse + LearningCourseConcept + LearningCourseEnrollment
@@ -62,7 +62,7 @@ export default function StudentCurriculumV2Page() {
   return (
     <AppShell
       sidebar={
-        <Sidebar
+        <SidebarV2
           groups={STUDENT_NAV}
           user={{ name: data.user.name, meta: `Lv.${data.user.level} · 🪙 ${data.user.coins.toLocaleString()}` }}
         />
@@ -76,7 +76,7 @@ export default function StudentCurriculumV2Page() {
             <CurrencyChip kind="streak" value={12} />
             <CurrencyChip kind="coin" value={2450} />
             <CurrencyChip kind="gem" value={5} />
-            <Button>검색</Button>
+            <ButtonV2>검색</ButtonV2>
           </>
         }
       />
@@ -148,9 +148,9 @@ export default function StudentCurriculumV2Page() {
                   </div>
                 </div>
                 {step.disabled ? (
-                  <Button disabled>{step.button}</Button>
+                  <ButtonV2 disabled>{step.button}</ButtonV2>
                 ) : (
-                  <Button variant={step.primary ? 'primary' : 'default'}>{step.button}</Button>
+                  <ButtonV2 variant={step.primary ? 'primary' : 'default'}>{step.button}</ButtonV2>
                 )}
               </div>
             ))}

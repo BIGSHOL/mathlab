@@ -4,7 +4,7 @@
  *
  * 사이드바 없이 전체 화면을 사용하는 풀스크린 풀이 모드.
  */
-import { Button, Chip } from '@/components/ui-v2';
+import { ButtonV2, Chip } from '@/components/ui';
 import '@/styles/v2-pages/student-practice.css';
 
 // TODO: Prisma — Question.find + ArithmeticAttempt 진행 상태
@@ -59,9 +59,9 @@ export default function StudentPracticeV2Page() {
               ✏️ 풀이 공간 <span className="text-3" style={{ fontWeight: 500 }}>(태블릿: Apple Pencil)</span>
             </span>
             <div className="row gap-4">
-              <Button style={{ padding: '5px 10px' }}>↶</Button>
-              <Button style={{ padding: '5px 10px' }}>↷</Button>
-              <Button style={{ padding: '5px 10px' }}>🧹 지우기</Button>
+              <ButtonV2 style={{ padding: '5px 10px' }}>↶</ButtonV2>
+              <ButtonV2 style={{ padding: '5px 10px' }}>↷</ButtonV2>
+              <ButtonV2 style={{ padding: '5px 10px' }}>🧹 지우기</ButtonV2>
             </div>
           </div>
           <div
@@ -130,7 +130,7 @@ export default function StudentPracticeV2Page() {
               </div>
               <div className="text-3">{data.hint.message}</div>
             </div>
-            <Button
+            <ButtonV2
               style={{
                 padding: '5px 10px',
                 fontSize: 12,
@@ -140,7 +140,7 @@ export default function StudentPracticeV2Page() {
               }}
             >
               사용
-            </Button>
+            </ButtonV2>
           </div>
         </div>
       </div>

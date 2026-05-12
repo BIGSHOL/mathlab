@@ -2,8 +2,8 @@
  * 선생님 대시보드 V1 — data/refact/pages/teacher-dashboard-hifi.html V1 변형
  * 트리아지 — 위험 학생 우선 + KPI 4개 + 오늘 일정 + 우수 학생.
  */
-import { AppShell, Sidebar, Topbar, TEACHER_NAV } from '@/components/layout-v2';
-import { Button, Chip } from '@/components/ui-v2';
+import { AppShell, SidebarV2, Topbar, TEACHER_NAV } from '@/components/layout';
+import { ButtonV2, Chip } from '@/components/ui';
 import '@/styles/v2-pages/teacher-dashboard.css';
 
 // TODO: Prisma — Classroom + Student + risk-score 집계
@@ -44,7 +44,7 @@ export default function TeacherDashboardV2Page() {
   return (
     <AppShell
       sidebar={
-        <Sidebar
+        <SidebarV2
           groups={TEACHER_NAV}
           user={{ name: data.teacher.name, meta: data.teacher.branch, avatarBg: data.teacher.avatarBg }}
         />
@@ -61,9 +61,9 @@ export default function TeacherDashboardV2Page() {
         subtitle={`${data.classInfo.date} · 담당 ${data.classInfo.size}명`}
         right={
           <>
-            <Button>🔍 검색</Button>
-            <Button>🔔 알림</Button>
-            <Button variant="primary">＋ 새 숙제</Button>
+            <ButtonV2>🔍 검색</ButtonV2>
+            <ButtonV2>🔔 알림</ButtonV2>
+            <ButtonV2 variant="primary">＋ 새 숙제</ButtonV2>
           </>
         }
       />
@@ -120,13 +120,13 @@ export default function TeacherDashboardV2Page() {
                   </div>
                   <div className="col" style={{ gap: 6 }}>
                     {t.actions.map((a, j) => (
-                      <Button
+                      <ButtonV2
                         key={j}
                         variant={j === 0 ? 'primary' : 'default'}
                         style={{ fontSize: 12, padding: '6px 12px' }}
                       >
                         {a}
-                      </Button>
+                      </ButtonV2>
                     ))}
                   </div>
                 </div>

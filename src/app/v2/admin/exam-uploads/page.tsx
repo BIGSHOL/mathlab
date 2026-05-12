@@ -2,8 +2,8 @@
  * 관리자 시험지 업로드 검수 V4 — data/refact/pages/admin-hifi.html S4 변형
  * 4단계 칸반 보드: 대기 → OCR 처리중 → 검수 → 완료.
  */
-import { AppShell, Sidebar, Topbar, ADMIN_NAV } from '@/components/layout-v2';
-import { Button } from '@/components/ui-v2';
+import { AppShell, SidebarV2, Topbar, ADMIN_NAV } from '@/components/layout';
+import { ButtonV2 } from '@/components/ui';
 import '@/styles/v2-pages/admin.css';
 
 interface UploadCard {
@@ -75,7 +75,7 @@ export default function AdminExamUploadsV2Page() {
     <AppShell
       className="admin"
       sidebar={
-        <Sidebar
+        <SidebarV2
           brand="MathLAB · Admin"
           groups={ADMIN_NAV}
           user={{ name: data.admin.name, meta: data.admin.meta, avatarBg: data.admin.avatarBg }}
@@ -88,8 +88,8 @@ export default function AdminExamUploadsV2Page() {
         right={
           <>
             <span className="text-3" style={{ fontSize: 12 }}>담당:</span>
-            <Button style={{ fontSize: 12, padding: '5px 10px' }}>전체 ▾</Button>
-            <Button variant="primary">＋ 업로드</Button>
+            <ButtonV2 style={{ fontSize: 12, padding: '5px 10px' }}>전체 ▾</ButtonV2>
+            <ButtonV2 variant="primary">＋ 업로드</ButtonV2>
           </>
         }
       />

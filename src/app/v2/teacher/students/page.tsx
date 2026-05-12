@@ -2,8 +2,8 @@
  * 선생님 학생 관리 V2 — data/refact/pages/teacher-students-hifi.html V2 변형
  * 마스터-디테일 — 좌측 학생 목록 + 우측 학생 상세 (개념별 숙지도 + 활동 타임라인 + AI 추천).
  */
-import { AppShell, Sidebar, Topbar, TEACHER_NAV } from '@/components/layout-v2';
-import { Button, Chip } from '@/components/ui-v2';
+import { AppShell, SidebarV2, Topbar, TEACHER_NAV } from '@/components/layout';
+import { ButtonV2, Chip } from '@/components/ui';
 import '@/styles/v2-pages/teacher-students.css';
 
 type Tone = 'danger' | 'warn' | 'gold' | 'gray' | 'indigo' | 'success';
@@ -73,7 +73,7 @@ export default function TeacherStudentsV2Page() {
   return (
     <AppShell
       sidebar={
-        <Sidebar
+        <SidebarV2
           groups={TEACHER_NAV}
           user={{ name: data.teacher.name, meta: data.teacher.branch, avatarBg: data.teacher.avatarBg }}
         />
@@ -84,9 +84,9 @@ export default function TeacherStudentsV2Page() {
         subtitle={`${data.classInfo.className} · ${data.classInfo.size}명`}
         right={
           <>
-            <Button>📨 메시지</Button>
-            <Button>📑 리포트</Button>
-            <Button variant="primary">＋ 보충 숙제</Button>
+            <ButtonV2>📨 메시지</ButtonV2>
+            <ButtonV2>📑 리포트</ButtonV2>
+            <ButtonV2 variant="primary">＋ 보충 숙제</ButtonV2>
           </>
         }
       />
@@ -182,7 +182,7 @@ export default function TeacherStudentsV2Page() {
                   </div>
                 ))}
               </div>
-              <Button variant="primary" style={{ width: '100%', marginTop: 12 }}>🎯 약점 단원 보충 숙제 (3개)</Button>
+              <ButtonV2 variant="primary" style={{ width: '100%', marginTop: 12 }}>🎯 약점 단원 보충 숙제 (3개)</ButtonV2>
             </div>
 
             {/* 우: 활동 타임라인 */}
@@ -212,9 +212,9 @@ export default function TeacherStudentsV2Page() {
               {d.ai.summary}
             </div>
             <div className="row gap-4" style={{ marginTop: 12 }}>
-              <Button variant="primary">추천 숙제 검토</Button>
-              <Button>학부모 메시지 초안</Button>
-              <Button variant="ghost">무시</Button>
+              <ButtonV2 variant="primary">추천 숙제 검토</ButtonV2>
+              <ButtonV2>학부모 메시지 초안</ButtonV2>
+              <ButtonV2 variant="ghost">무시</ButtonV2>
             </div>
           </div>
         </div>

@@ -4,8 +4,8 @@
  *
  * 풀스크린 모드 (사이드바 없음, no-side AppShell). 현재 단계 2/4 = 문제 선택.
  */
-import { AppShell, Topbar } from '@/components/layout-v2';
-import { Button, Chip } from '@/components/ui-v2';
+import { AppShell, Topbar } from '@/components/layout';
+import { ButtonV2, Chip } from '@/components/ui';
 import '@/styles/v2-pages/teacher-homework.css';
 
 type QLvl = 'l1' | 'l2' | 'l3' | 'l4';
@@ -55,9 +55,9 @@ export default function TeacherHomeworkV2Page() {
         subtitle={<span style={{ fontWeight: 700, fontSize: 14 }}>새 숙제 — 단계 2/4</span>}
         right={
           <>
-            <Button>임시 저장</Button>
-            <Button>미리보기</Button>
-            <Button variant="primary">다음 →</Button>
+            <ButtonV2>임시 저장</ButtonV2>
+            <ButtonV2>미리보기</ButtonV2>
+            <ButtonV2 variant="primary">다음 →</ButtonV2>
           </>
         }
       />
@@ -91,15 +91,15 @@ export default function TeacherHomeworkV2Page() {
             <h3 style={{ margin: 0, fontSize: 18 }}>문제 선택 — 근의 공식</h3>
             <div className="row gap-4">
               <Chip tone="indigo">선택 {selectedCount}문항</Chip>
-              <Button variant="ghost" style={{ fontSize: 12 }}>전체 해제</Button>
+              <ButtonV2 variant="ghost" style={{ fontSize: 12 }}>전체 해제</ButtonV2>
             </div>
           </div>
           <div className="row" style={{ gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
-            <Button variant="primary" style={{ fontSize: 12, padding: '5px 12px' }}>AI 추천</Button>
-            <Button style={{ fontSize: 12, padding: '5px 12px' }}>기출</Button>
-            <Button style={{ fontSize: 12, padding: '5px 12px' }}>난이도 1</Button>
-            <Button style={{ fontSize: 12, padding: '5px 12px' }}>난이도 2</Button>
-            <Button style={{ fontSize: 12, padding: '5px 12px' }}>난이도 3</Button>
+            <ButtonV2 variant="primary" style={{ fontSize: 12, padding: '5px 12px' }}>AI 추천</ButtonV2>
+            <ButtonV2 style={{ fontSize: 12, padding: '5px 12px' }}>기출</ButtonV2>
+            <ButtonV2 style={{ fontSize: 12, padding: '5px 12px' }}>난이도 1</ButtonV2>
+            <ButtonV2 style={{ fontSize: 12, padding: '5px 12px' }}>난이도 2</ButtonV2>
+            <ButtonV2 style={{ fontSize: 12, padding: '5px 12px' }}>난이도 3</ButtonV2>
             <span style={{ flex: 1 }} />
             <span className="text-3" style={{ fontSize: 12 }}>총 142문항</span>
           </div>
@@ -163,7 +163,7 @@ export default function TeacherHomeworkV2Page() {
             {data.estimatedMinutes}<span style={{ fontSize: 12, color: 'var(--ink-3)' }}> 분</span>
           </div>
           <div className="text-3" style={{ fontSize: 11 }}>평균 학생 기준</div>
-          <Button style={{ width: '100%', marginTop: 14 }}>📄 학습지 PDF로</Button>
+          <ButtonV2 style={{ width: '100%', marginTop: 14 }}>📄 학습지 PDF로</ButtonV2>
         </div>
       </div>
     </AppShell>

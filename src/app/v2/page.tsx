@@ -5,7 +5,7 @@
  * 본 프로덕션 사이드바에는 노출하지 않음 (배포 전까지 직접 URL 진입).
  */
 import Link from 'next/link';
-import { AppShell, Topbar } from '@/components/layout-v2';
+import { AppShell, Topbar } from '@/components/layout';
 import '@/styles/v2-pages/index-grid.css';
 
 type Page = {

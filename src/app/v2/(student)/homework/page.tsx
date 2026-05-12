@@ -2,8 +2,8 @@
  * 학생 숙제 V1 — data/refact/pages/student-homework-hifi.html V1 변형
  * 리스트형 — 한눈에 모든 숙제 + 필터 + 정렬.
  */
-import { AppShell, Sidebar, Topbar, STUDENT_NAV } from '@/components/layout-v2';
-import { Button, Chip, CurrencyChip, ProgressBar } from '@/components/ui-v2';
+import { AppShell, SidebarV2, Topbar, STUDENT_NAV } from '@/components/layout';
+import { ButtonV2, Chip, CurrencyChip, ProgressBarV2 } from '@/components/ui';
 import '@/styles/v2-pages/student-homework.css';
 
 // TODO: Prisma — ArithmeticHomeworkPlan + ConceptHomeworkPlan + QuestionHomeworkPlan
@@ -43,7 +43,7 @@ export default function StudentHomeworkV2Page() {
   return (
     <AppShell
       sidebar={
-        <Sidebar
+        <SidebarV2
           groups={STUDENT_NAV}
           user={{ name: data.user.name, meta: `Lv.${data.user.level} · 🪙 ${data.user.coins.toLocaleString()}` }}
         />
@@ -63,12 +63,12 @@ export default function StudentHomeworkV2Page() {
 
       <div className="main">
         <div className="row gap-12">
-          <Button variant="primary">전체 ({total})</Button>
-          <Button>미완료 ({inProgress})</Button>
-          <Button>완료 ({completed})</Button>
+          <ButtonV2 variant="primary">전체 ({total})</ButtonV2>
+          <ButtonV2>미완료 ({inProgress})</ButtonV2>
+          <ButtonV2>완료 ({completed})</ButtonV2>
           <span className="spacer" style={{ flex: 1 }} />
           <span className="text-3">정렬:</span>
-          <Button>마감일 ▾</Button>
+          <ButtonV2>마감일 ▾</ButtonV2>
         </div>
 
         {data.groups.map(group => (
@@ -84,7 +84,7 @@ export default function StudentHomeworkV2Page() {
                   <div className="meta">{hw.meta}</div>
                 </div>
                 <div className="pcell">
-                  <ProgressBar value={hw.done} max={hw.total} variant={hw.status === 'done' ? 'gold' : 'default'} />
+                  <ProgressBarV2 value={hw.done} max={hw.total} variant={hw.status === 'done' ? 'gold' : 'default'} />
                   <span className="text-3">{hw.done}/{hw.total}</span>
                 </div>
                 <div>
@@ -93,9 +93,9 @@ export default function StudentHomeworkV2Page() {
                 </div>
                 <div className="due">{hw.est}</div>
                 {hw.button === '잠김' ? (
-                  <Button disabled>잠김</Button>
+                  <ButtonV2 disabled>잠김</ButtonV2>
                 ) : (
-                  <Button variant={'primary' in hw && hw.primary ? 'primary' : 'default'}>{hw.button}</Button>
+                  <ButtonV2 variant={'primary' in hw && hw.primary ? 'primary' : 'default'}>{hw.button}</ButtonV2>
                 )}
               </div>
             ))}

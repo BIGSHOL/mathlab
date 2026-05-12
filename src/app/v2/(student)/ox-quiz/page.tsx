@@ -2,8 +2,8 @@
  * 학생 OX 퀴즈 V2 — data/refact/pages/student-ox-quiz-hifi.html V2 변형
  * PC 듀얼 버튼 — 키보드 모드 (왼손 ← X / 오른손 → O).
  */
-import { AppShell, Sidebar, STUDENT_NAV } from '@/components/layout-v2';
-import { Chip, ProgressBar } from '@/components/ui-v2';
+import { AppShell, SidebarV2, STUDENT_NAV } from '@/components/layout';
+import { Chip, ProgressBarV2 } from '@/components/ui';
 import '@/styles/v2-pages/student-ox-quiz.css';
 
 // TODO: Prisma — QuestionHomeworkPlan (OX 변형) + 답안 로그
@@ -35,7 +35,7 @@ export default function OxQuizV2Page() {
   return (
     <AppShell
       sidebar={
-        <Sidebar
+        <SidebarV2
           groups={STUDENT_NAV}
           user={{ name: data.student.name, meta: data.student.meta, avatarBg: data.student.avatarBg }}
         />
@@ -99,7 +99,7 @@ export default function OxQuizV2Page() {
               <div className="lb">남은 시간</div>
               <div className="val" style={{ color: 'var(--danger)' }}>{String(data.stats.timeLeftSec).padStart(2, '0')}″</div>
               <div style={{ marginTop: 12 }}>
-                <ProgressBar value={data.stats.timeLeftPct} size="lg" />
+                <ProgressBarV2 value={data.stats.timeLeftPct} size="lg" />
               </div>
             </div>
 

@@ -2,8 +2,8 @@
  * 학생 단원학습 V1 — data/refact/pages/student-learn-hifi.html V1 변형
  * 커리큘럼 트리 — 정통 학습 위계 (mathflat 스타일).
  */
-import { AppShell, Sidebar, Topbar, STUDENT_NAV } from '@/components/layout-v2';
-import { Button, Chip, CurrencyChip } from '@/components/ui-v2';
+import { AppShell, SidebarV2, Topbar, STUDENT_NAV } from '@/components/layout';
+import { ButtonV2, Chip, CurrencyChip } from '@/components/ui';
 import '@/styles/v2-pages/student-learn.css';
 
 // TODO: Prisma — LearningCourse + LearningCourseConcept + 진도 데이터
@@ -57,7 +57,7 @@ export default function StudentLearnV2Page() {
   return (
     <AppShell
       sidebar={
-        <Sidebar
+        <SidebarV2
           groups={STUDENT_NAV}
           user={{ name: data.student.name, meta: data.student.meta, avatarBg: data.student.avatarBg }}
         />
@@ -75,7 +75,7 @@ export default function StudentLearnV2Page() {
             <CurrencyChip kind="streak" value={data.header.streak} />
             <CurrencyChip kind="coin" value={data.header.coin.toLocaleString()} />
             <CurrencyChip kind="gem" value={data.header.gem} />
-            <Button>검색</Button>
+            <ButtonV2>검색</ButtonV2>
           </>
         }
       />
@@ -150,12 +150,12 @@ export default function StudentLearnV2Page() {
                     )}
                   </div>
                 </div>
-                <Button
+                <ButtonV2
                   variant={lesson.actionVariant ?? 'default'}
                   disabled={lesson.disabled}
                 >
                   {lesson.action}
-                </Button>
+                </ButtonV2>
               </div>
             ))}
           </div>

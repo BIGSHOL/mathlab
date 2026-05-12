@@ -767,3 +767,22 @@ body {
    data/refact/pages/mathlab.css 의 :root 제거 버전
    ============================================ */
 @import '../styles/mathlab-v2.css';
+
+/* ============================================
+   v2 Practice Suite — B Group 컴포넌트
+   data/refact2 핸드오프 (HomeworkLayout, QuestionCard, ChoiceList,
+   OXButtons, TimerRing, HintPanel, ResultCard, LeaderboardRow)
+   ============================================ */
+@import '../styles/v2-components/practice-suite.css';
+
+/* ============================================
+   Pattern G — 정적 문서 (W2)
+   data/refact2 design v0.4 § Pattern G
+   ============================================ */
+@import '../styles/patterns/docs.css';
+
+/* ============================================
+   Pattern F — 어드민 테이블 (W3)
+   data/refact2 design v0.4 § Pattern F
+   ============================================ */
+@import '../styles/patterns/admin-table.css';

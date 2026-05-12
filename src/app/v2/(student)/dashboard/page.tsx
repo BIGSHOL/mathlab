@@ -4,14 +4,14 @@
  * 변환 절차:
  *   1) sample tsx (data/refact/handoff/sample-student-dashboard-page.tsx) 베이스
  *   2) ./dashboard.css import 제거 (mathlab-v2.css 는 globals.css 에서 import됨)
- *   3) 인라인 StudentSidebar / NAV_ITEMS → @/components/layout-v2 사용
+ *   3) 인라인 StudentSidebar / NAV_ITEMS → @/components/layout 사용
  *   4) Stat 카드들 → StatTile 컴포넌트
  *   5) Topbar 마크업 → Topbar 컴포넌트
  *
  * MOCK 데이터. // TODO: Prisma 표시로 교체 지점 명시.
  */
-import { AppShell, Sidebar, Topbar, STUDENT_NAV } from '@/components/layout-v2';
-import { Button, Card, CardHead, Chip, ProgressBar, StatTile } from '@/components/ui-v2';
+import { AppShell, SidebarV2, Topbar, STUDENT_NAV } from '@/components/layout';
+import { ButtonV2, CardV2, CardV2Head, Chip, ProgressBarV2, StatTile } from '@/components/ui';
 
 // ==============================================================
 // MOCK DATA — 추후 Prisma + NextAuth getServerSession() 로 교체
@@ -58,7 +58,7 @@ export default function StudentDashboardV2Page() {
   return (
     <AppShell
       sidebar={
-        <Sidebar
+        <SidebarV2
           groups={STUDENT_NAV}
           user={{
             name: data.user.name,
@@ -73,9 +73,9 @@ export default function StudentDashboardV2Page() {
         subtitle={`최근 4주 · ${data.user.grade}`}
         right={
           <>
-            <Button>7일</Button>
-            <Button variant="primary">4주</Button>
-            <Button>학기</Button>
+            <ButtonV2>7일</ButtonV2>
+            <ButtonV2 variant="primary">4주</ButtonV2>
+            <ButtonV2>학기</ButtonV2>
           </>
         }
       />
@@ -130,8 +130,8 @@ function DailyTrend({ goal }: { goal: typeof MOCK.todayGoal }) {
 
   return (
     <div className="grid mt-16" style={{ gridTemplateColumns: '2fr 1fr' }}>
-      <Card>
-        <CardHead
+      <CardV2>
+        <CardV2Head
           title="일별 학습 추이"
           right={
             <div className="row text-3" style={{ gap: 12 }}>
@@ -174,10 +174,10 @@ function DailyTrend({ goal }: { goal: typeof MOCK.todayGoal }) {
           <span>2주 전</span>
           <span>이번주</span>
         </div>
-      </Card>
+      </CardV2>
 
-      <Card>
-        <CardHead title="오늘 목표" />
+      <CardV2>
+        <CardV2Head title="오늘 목표" />
         <div style={{ display: 'grid', placeItems: 'center', padding: '8px 0' }}>
           <svg width={160} height={160} viewBox="0 0 160 160">
             <circle cx={80} cy={80} r={64} fill="none" stroke="#F1F5F9" strokeWidth={14} />
@@ -202,9 +202,9 @@ function DailyTrend({ goal }: { goal: typeof MOCK.todayGoal }) {
         </div>
         <div className="row between mt-8 text-2">
           <span>{goal.target - goal.solved}문제 더!</span>
-          <Button variant="primary">계속하기</Button>
+          <ButtonV2 variant="primary">계속하기</ButtonV2>
         </div>
-      </Card>
+      </CardV2>
     </div>
   );
 }
@@ -213,8 +213,8 @@ function UnitMastery({ units }: { units: typeof MOCK.unitMastery }) {
   const doneCount = units.filter(u => u.status === 'done').length;
 
   return (
-    <Card className="mt-16">
-      <CardHead
+    <CardV2 className="mt-16">
+      <CardV2Head
         title="단원별 마스터리"
         right={
           <span className="text-3">
@@ -225,7 +225,7 @@ function UnitMastery({ units }: { units: typeof MOCK.unitMastery }) {
       <div className="grid grid-4">
         {units.map(u => <UnitCard key={u.id} unit={u} />)}
       </div>
-    </Card>
+    </CardV2>
   );
 }
 
@@ -257,7 +257,7 @@ function UnitCard({ unit }: { unit: typeof MOCK.unitMastery[number] }) {
       {unit.status === 'active' && unit.percent != null && (
         <>
           <div className="mt-8">
-            <ProgressBar value={unit.percent} />
+            <ProgressBarV2 value={unit.percent} />
           </div>
           <div className="text-3 mt-8">정답률 {unit.accuracy}% · {unit.progress}</div>
         </>

@@ -2,8 +2,8 @@
  * 학생 시험 로비 V1 — data/refact/pages/student-exam-hifi.html V1 변형
  * 시험 로비 — 예정 · 응시 가능 · 완료 시험 한눈에.
  */
-import { AppShell, Sidebar, Topbar, STUDENT_NAV } from '@/components/layout-v2';
-import { Button, Chip, CurrencyChip } from '@/components/ui-v2';
+import { AppShell, SidebarV2, Topbar, STUDENT_NAV } from '@/components/layout';
+import { ButtonV2, Chip, CurrencyChip } from '@/components/ui';
 import '@/styles/v2-pages/student-exam.css';
 
 // TODO: Prisma — Test + TestAssignment + TestAttempt
@@ -32,7 +32,7 @@ export default function StudentExamV2Page() {
   return (
     <AppShell
       sidebar={
-        <Sidebar
+        <SidebarV2
           groups={STUDENT_NAV}
           user={{ name: data.user.name, meta: `Lv.${data.user.level} · 🪙 ${data.user.coins.toLocaleString()}` }}
         />
@@ -66,7 +66,7 @@ export default function StudentExamV2Page() {
                 <div className="text-3 mt-8">{data.live.meta}</div>
               </div>
             </div>
-            <Button variant="primary" size="xl">🔴 응시 시작</Button>
+            <ButtonV2 variant="primary" size="xl">🔴 응시 시작</ButtonV2>
           </div>
           <div style={{ background: 'var(--danger-bg)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: 'var(--danger)' }}>
             ⚠️ {data.live.warn}
@@ -99,7 +99,7 @@ export default function StudentExamV2Page() {
               >
                 {e.upcoming ? <>💡 <b>{e.tip}</b></> : e.tip}
               </div>
-              {e.disabled ? <Button disabled>{e.button}</Button> : <Button>{e.button}</Button>}
+              {e.disabled ? <ButtonV2 disabled>{e.button}</ButtonV2> : <ButtonV2>{e.button}</ButtonV2>}
             </div>
           ))}
         </div>
@@ -131,7 +131,7 @@ export default function StudentExamV2Page() {
                 <Chip tone={c.rankTone}>{c.rank}</Chip>
                 {c.classAvg && <> <span className="text-3">{c.classAvg}</span></>}
               </div>
-              <Button>리포트</Button>
+              <ButtonV2>리포트</ButtonV2>
             </div>
           ))}
         </div>

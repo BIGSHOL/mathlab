@@ -2,8 +2,8 @@
  * 관리자 학원(테넌트) 관리 V1 — data/refact/pages/admin-hifi.html S1 변형
  * 좌측 마스터(테이블) + 우측 드로어(상세).
  */
-import { AppShell, Sidebar, Topbar, ADMIN_NAV } from '@/components/layout-v2';
-import { Button } from '@/components/ui-v2';
+import { AppShell, SidebarV2, Topbar, ADMIN_NAV } from '@/components/layout';
+import { ButtonV2 } from '@/components/ui';
 import '@/styles/v2-pages/admin.css';
 
 // TODO: Prisma — Tenant + TenantLicense + 활성 학생/MRR 집계
@@ -65,7 +65,7 @@ export default function AdminTenantsV2Page() {
     <AppShell
       className="admin"
       sidebar={
-        <Sidebar
+        <SidebarV2
           brand="MathLAB · Admin"
           groups={ADMIN_NAV}
           user={{ name: data.admin.name, meta: data.admin.meta, avatarBg: data.admin.avatarBg }}
@@ -78,8 +78,8 @@ export default function AdminTenantsV2Page() {
         right={
           <>
             <input className="search-input" style={{ width: 240 }} placeholder="🔍 학원명·관리자·전화번호" />
-            <Button>📥 CSV 내보내기</Button>
-            <Button variant="primary">＋ 새 학원</Button>
+            <ButtonV2>📥 CSV 내보내기</ButtonV2>
+            <ButtonV2 variant="primary">＋ 새 학원</ButtonV2>
           </>
         }
       />
@@ -110,7 +110,7 @@ export default function AdminTenantsV2Page() {
             ))}
             <span className="spacer" />
             <span className="text-3" style={{ fontSize: 11 }}>정렬:</span>
-            <Button style={{ fontSize: 11, padding: '4px 10px' }}>최근 가입 ▾</Button>
+            <ButtonV2 style={{ fontSize: 11, padding: '4px 10px' }}>최근 가입 ▾</ButtonV2>
           </div>
 
           {/* table */}
@@ -212,8 +212,8 @@ export default function AdminTenantsV2Page() {
           </div>
 
           <div className="row gap-6" style={{ marginTop: 18 }}>
-            <Button style={{ flex: 1, fontSize: 12 }}>로그인 대신하기</Button>
-            <Button variant="primary" style={{ flex: 1, fontSize: 12 }}>상세 보기</Button>
+            <ButtonV2 style={{ flex: 1, fontSize: 12 }}>로그인 대신하기</ButtonV2>
+            <ButtonV2 variant="primary" style={{ flex: 1, fontSize: 12 }}>상세 보기</ButtonV2>
           </div>
         </div>
       </div>

@@ -65,3 +65,6 @@ __pycache__/
 /data/
 !src/lib/data/
 scripts/test-textbook-shapes-output.html
+
+# Dev server output log
+.dev-out.txt
