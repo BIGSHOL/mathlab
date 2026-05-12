@@ -321,22 +321,40 @@ body {
 
 .spark { width: 100%; height: 60px; display: block; }
 
-/* ───────── utility ───────── */
-.row { display: flex; align-items: center; gap: 8px; }
-.between { justify-content: space-between; }
-.col { display: flex; flex-direction: column; gap: 8px; }
-.gap-4 { gap: 4px; } .gap-12 { gap: 12px; } .gap-16 { gap: 16px; } .gap-24 { gap: 24px; }
-.grid { display: grid; gap: 16px; }
-.grid-2 { grid-template-columns: 1fr 1fr; }
-.grid-3 { grid-template-columns: repeat(3,1fr); }
-.grid-4 { grid-template-columns: repeat(4,1fr); }
-.grid-5 { grid-template-columns: repeat(5,1fr); }
-.grid-6 { grid-template-columns: repeat(6,1fr); }
-.mt-8 { margin-top: 8px; } .mt-16 { margin-top: 16px; } .mt-24 { margin-top: 24px; }
-.text-3 { color: var(--ink-3); font-size: 12px; }
-.text-2 { color: var(--ink-2); font-size: 13px; }
-.bold { font-weight: 700; }
-.center { text-align: center; }
+/* ───────── utility (v2 페이지 스코프 — .app 안에서만 적용) ───────── */
+/*
+ * Tailwind 의 mt-8/16/24, gap-4/12/16/24, grid-N 등과 클래스명이 같지만
+ * 값(픽셀)이 달라서 v1 페이지(Tailwind 사용)에 회귀를 일으킴.
+ * 따라서 v2 페이지 루트(.app 또는 명시적 v2 컨테이너) 안에서만 유효하도록 스코프.
+ */
+.app .row, .lp-shell .row, .auth-stage .row, .onb-shell .row { display: flex; align-items: center; gap: 8px; }
+.app .between, .lp-shell .between, .auth-stage .between, .onb-shell .between { justify-content: space-between; }
+.app .col, .lp-shell .col, .auth-stage .col, .onb-shell .col { display: flex; flex-direction: column; gap: 8px; }
+.app .gap-4, .lp-shell .gap-4, .auth-stage .gap-4, .onb-shell .gap-4 { gap: 4px; }
+.app .gap-6, .lp-shell .gap-6, .auth-stage .gap-6, .onb-shell .gap-6 { gap: 6px; }
+.app .gap-8, .lp-shell .gap-8, .auth-stage .gap-8, .onb-shell .gap-8 { gap: 8px; }
+.app .gap-10, .lp-shell .gap-10, .auth-stage .gap-10, .onb-shell .gap-10 { gap: 10px; }
+.app .gap-12, .lp-shell .gap-12, .auth-stage .gap-12, .onb-shell .gap-12 { gap: 12px; }
+.app .gap-16, .lp-shell .gap-16, .auth-stage .gap-16, .onb-shell .gap-16 { gap: 16px; }
+.app .gap-24, .lp-shell .gap-24, .auth-stage .gap-24, .onb-shell .gap-24 { gap: 24px; }
+.app .grid, .lp-shell .grid, .auth-stage .grid, .onb-shell .grid { display: grid; gap: 16px; }
+.app .grid-2, .lp-shell .grid-2, .auth-stage .grid-2, .onb-shell .grid-2 { grid-template-columns: 1fr 1fr; }
+.app .grid-3, .lp-shell .grid-3, .auth-stage .grid-3, .onb-shell .grid-3 { grid-template-columns: repeat(3,1fr); }
+.app .grid-4, .lp-shell .grid-4, .auth-stage .grid-4, .onb-shell .grid-4 { grid-template-columns: repeat(4,1fr); }
+.app .grid-5, .lp-shell .grid-5, .auth-stage .grid-5, .onb-shell .grid-5 { grid-template-columns: repeat(5,1fr); }
+.app .grid-6, .lp-shell .grid-6, .auth-stage .grid-6, .onb-shell .grid-6 { grid-template-columns: repeat(6,1fr); }
+.app .mt-6, .lp-shell .mt-6, .auth-stage .mt-6, .onb-shell .mt-6 { margin-top: 6px; }
+.app .mt-8, .lp-shell .mt-8, .auth-stage .mt-8, .onb-shell .mt-8 { margin-top: 8px; }
+.app .mt-12, .lp-shell .mt-12, .auth-stage .mt-12, .onb-shell .mt-12 { margin-top: 12px; }
+.app .mt-16, .lp-shell .mt-16, .auth-stage .mt-16, .onb-shell .mt-16 { margin-top: 16px; }
+.app .mt-24, .lp-shell .mt-24, .auth-stage .mt-24, .onb-shell .mt-24 { margin-top: 24px; }
+.app .mb-6, .lp-shell .mb-6, .auth-stage .mb-6, .onb-shell .mb-6 { margin-bottom: 6px; }
+.app .mb-12, .lp-shell .mb-12, .auth-stage .mb-12, .onb-shell .mb-12 { margin-bottom: 12px; }
+.app .mb-16, .lp-shell .mb-16, .auth-stage .mb-16, .onb-shell .mb-16 { margin-bottom: 16px; }
+.app .text-3, .lp-shell .text-3, .auth-stage .text-3, .onb-shell .text-3 { color: var(--ink-3); font-size: 12px; }
+.app .text-2, .lp-shell .text-2, .auth-stage .text-2, .onb-shell .text-2 { color: var(--ink-2); font-size: 13px; }
+.app .bold, .lp-shell .bold, .auth-stage .bold, .onb-shell .bold { font-weight: 700; }
+.app .center, .lp-shell .center, .auth-stage .center, .onb-shell .center { text-align: center; }
 
 /* ───────── footer note (변형 비교 페이지) ───────── */
 .compare-foot {
