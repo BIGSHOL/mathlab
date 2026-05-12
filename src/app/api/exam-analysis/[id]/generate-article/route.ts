@@ -68,7 +68,7 @@ export async function POST(request: NextRequest, { params }: Params) {
               grade: examPaper.grade,
               category: examPaper.category,
               unit: examPaper.unit,
-              examScope: examPaper.examScope as string[] | null,
+              examScope: examPaper.examScope,
             },
             analysis: {
               questions,

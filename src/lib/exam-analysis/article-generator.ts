@@ -14,6 +14,30 @@ import type { CommentaryResult } from './agents/commentary-agent';
 import { QUESTION_TYPE_LABELS } from './constants';
 import { normalizeMathText } from '@/lib/pdf-extract-engine/ai/post-processor';
 
+// ── 영문 enum 차단 (UI normalizeKoreanLabels 와 동일) ──
+const ARTICLE_ENUM_KO_MAP: Record<string, string> = {
+  CALCULATION: '계산력',
+  UNDERSTANDING: '이해력',
+  PROBLEM_SOLVING: '문제해결력',
+  'PROBLEM SOLVING': '문제해결력',
+  REASONING: '추론력',
+  NUMBER: '수와 연산',
+  ALGEBRA: '문자와 식',
+  FUNCTION: '함수',
+  GEOMETRY: '기하',
+  STATISTICS: '확률과 통계',
+};
+
+function stripEnglishEnums(text: string): string {
+  if (!text) return text;
+  let out = text;
+  for (const [k, v] of Object.entries(ARTICLE_ENUM_KO_MAP)) {
+    const re = new RegExp(`\\b${k.replace(/ /g, '[ _]')}\\b`, 'g');
+    out = out.replace(re, v);
+  }
+  return out;
+}
+
 // ── 타입 ──
 
 export interface ArticleGenerationInput {
@@ -23,7 +47,8 @@ export interface ArticleGenerationInput {
     grade: string | null;
     category: string | null;
     unit: string | null;
-    examScope: string[] | null;
+    // Prisma Json? — 신형 {topics, examYear, examSemester, examCategory} 객체 또는 레거시 string[] 또는 null
+    examScope: unknown;
   };
   analysis: {
     questions: AnalyzedQuestion[];
@@ -54,6 +79,17 @@ function buildArticlePrompt(input: ArticleGenerationInput): string {
   const grade = examPaper.grade || '';
   const totalQ = analysis.totalQuestions;
   const totalPts = analysis.totalPoints;
+
+  // examScope 정규화: 신형 {topics: [...]} 객체, 레거시 string[], null 모두 안전 처리
+  const examScopeTopics: string[] = (() => {
+    const raw = examPaper.examScope;
+    if (Array.isArray(raw)) return raw as string[];
+    if (raw && typeof raw === 'object' && Array.isArray((raw as { topics?: unknown }).topics)) {
+      return (raw as { topics: string[] }).topics;
+    }
+    return [];
+  })();
+  const scopeLabel = examScopeTopics.length ? examScopeTopics.join(', ') : (examPaper.unit || '미지정');
 
   // 난이도 분포 텍스트
   const diff = analysis.summary.difficulty_distribution;
@@ -177,7 +213,7 @@ function buildArticlePrompt(input: ArticleGenerationInput): string {
 ## 시험 정보
 - 학교: ${schoolName}
 - 학년: ${grade}
-- 시험 범위: ${examPaper.examScope?.join(', ') || examPaper.unit || '미지정'}
+- 시험 범위: ${scopeLabel}
 - 총 문항수: ${totalQ}문항, 총 배점: ${totalPts}점
 - 형식: 객관식 ${formats.objective}문항, 단답형 ${formats.short_answer}문항, 서술형 ${formats.essay}문항
 - 종합 난이도: Level ${overallLevel} (${LEVEL_NAMES[overallLevel]})
@@ -222,6 +258,13 @@ ${nearbyText}
 - ✓ "Level 1~2 합산 48점이 핵심입니다" (평문)
 - \\dfrac 금지 → \\frac. \\text{한글}/\\textrm{한글} 금지 (한글은 \$ 밖에 평문으로)
 - 인접 수식 \$A\$\$B\$ 금지 → \$A\$ \$B\$
+
+### 영문 enum 사용 금지 (필수)
+- 능력영역은 **"계산력 / 이해력 / 문제해결력 / 추론력"** 으로만 표기
+- 유형은 **"수와 연산 / 문자와 식 / 함수 / 기하 / 확률과 통계"** 로만 표기
+- **CALCULATION, UNDERSTANDING, PROBLEM_SOLVING, REASONING, NUMBER, ALGEBRA, FUNCTION, GEOMETRY, STATISTICS** 같은 영문 토큰을 글에 한 글자도 포함하지 말 것
+- ✗ "CALCULATION 영역에서 강세", "PROBLEM_SOLVING 능력 필요"
+- ✓ "계산력 영역에서 강세", "문제해결력이 필요"
 
 ### 글 구조 (이 순서를 따르되, 각 섹션의 도입 방식은 매번 달라야 합니다)
 1. **시험 개요** — **[도입 전략: ${seedOpening}]** 이 전략에 맞는 핵심 특징 하나로 시작하세요. 단순 나열이 아닌, 이 시험의 '성격'을 한 문장으로 규정한 뒤 세부 정보를 풀어서 설명
@@ -498,10 +541,10 @@ export async function generateExamArticle(
   const raw = extractJson(text);
 
   return {
-    title: normalizeMathText(String(raw.title || '')),
-    content: normalizeMathText(String(raw.content || '')),
-    tags: Array.isArray(raw.tags) ? raw.tags.map(String) : [],
-    metaDescription: normalizeMathText(String(raw.metaDescription || raw.meta_description || '')),
+    title: stripEnglishEnums(normalizeMathText(String(raw.title || ''))),
+    content: stripEnglishEnums(normalizeMathText(String(raw.content || ''))),
+    tags: Array.isArray(raw.tags) ? raw.tags.map(t => stripEnglishEnums(String(t))) : [],
+    metaDescription: stripEnglishEnums(normalizeMathText(String(raw.metaDescription || raw.meta_description || ''))),
     generatedAt: new Date().toISOString(),
   };
 }
@@ -559,10 +602,10 @@ export async function generateExamArticleStream(
   const raw = extractJson(fullText);
 
   return {
-    title: normalizeMathText(String(raw.title || '')),
-    content: normalizeMathText(String(raw.content || '')),
-    tags: Array.isArray(raw.tags) ? raw.tags.map(String) : [],
-    metaDescription: normalizeMathText(String(raw.metaDescription || raw.meta_description || '')),
+    title: stripEnglishEnums(normalizeMathText(String(raw.title || ''))),
+    content: stripEnglishEnums(normalizeMathText(String(raw.content || ''))),
+    tags: Array.isArray(raw.tags) ? raw.tags.map(t => stripEnglishEnums(String(t))) : [],
+    metaDescription: stripEnglishEnums(normalizeMathText(String(raw.metaDescription || raw.meta_description || ''))),
     generatedAt: new Date().toISOString(),
   };
 }

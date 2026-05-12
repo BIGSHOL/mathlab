@@ -133,6 +133,28 @@ hasRole(user, 'TEACHER');  // ROLE_LEVEL[user.role] >= ROLE_LEVEL['TEACHER']
 - 레벨테스트 결과 → 학습 보고서 AI 생성
 - 환경변수: `ANTHROPIC_API_KEY`
 
+**⚠️ AI 출력 텍스트 — 한글 라벨 강제 + KaTeX 렌더링 (하네스 규칙)**
+
+기출분석/AI 총평/블로그 글 등 **AI가 생성한 모든 사용자 노출 텍스트**는 다음 두 규칙을 반드시 따라야 한다.
+
+1. **영문 enum 노출 절대 금지** — 다음 토큰은 한글 라벨로만 표시:
+   - `CALCULATION` → 계산력, `UNDERSTANDING` → 이해력
+   - `PROBLEM_SOLVING` → 문제해결력, `REASONING` → 추론력
+   - `NUMBER` → 수와 연산, `ALGEBRA` → 문자와 식
+   - `FUNCTION` → 함수, `GEOMETRY` → 기하, `STATISTICS` → 확률과 통계
+   - **3중 방어**:
+     ① AI 입력 데이터에서 영문 enum을 한글로 사전 변환 (예: `commentary-agent.ts::toKoreanAbility/toKoreanType`)
+     ② 프롬프트에 영문 enum 금지 룰 명시 (`commentary-agent.ts` H6, V6 검증 + `article-generator.ts` "영문 enum 사용 금지" 섹션)
+     ③ AI 응답 파싱 시 `stripEnglishEnums()` 적용 (commentary-agent parseResponse, article-generator title/content/tags/metaDescription)
+   - 새 AI 에이전트 추가 시: 위 3중 방어를 반드시 동일 패턴으로 적용
+
+2. **`$...$` 패턴은 반드시 KaTeX로 렌더링** — raw `$` 가 사용자 화면에 노출되면 안 됨:
+   - 사용자에게 표시되는 모든 AI 생성 텍스트는 `renderInlineMath()` 를 거쳐야 한다 (`src/lib/exam-analysis/rendering.tsx`)
+   - 단순 `{q.ai_comment}` 같은 직접 출력 금지 → `{renderInlineMath(q.ai_comment, keyPrefix)}` 사용
+   - `renderInlineMath` 는 내부적으로 `normalizeKoreanLabels` 도 자동 적용 → 한글 라벨 강제까지 동시 처리됨
+   - 적용 지점 (점검 시 반드시 확인): `AnalysisCommentTab` (ai_comment, difficulty_reason), `CommentarySection` (overall_comment, nearby_comparison, score_strategies, strength/improvement areas, notable_questions, teaching_recommendations), `[id]/print/page.tsx` (q.ai_comment)
+   - 새 AI 응답 텍스트 렌더링 추가 시: `renderInlineMath` 거치는지 반드시 확인하고, 그렇지 않으면 raw `$` 노출 발생
+
 **3D 업적 뱃지 디자인 생성 (이미지 AI 공통 규칙):**
 - **마스터 프롬프트**: `A high quality 3D mobile game achievement badge icon representing [주제]. Exclude all English letters. The icon must feature the bold Korean text '[한글 업적명]' built into the 3D design beautifully. Vibrant colors, premium, glossy, isolated on simple background, cartoonish, high quality render.`
 - **필수 지침**: 영문 텍스트 오염을 막기 위해 `Exclude all English letters.` 옵션을 무조건 포함해야 함.

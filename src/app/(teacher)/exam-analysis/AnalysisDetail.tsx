@@ -17,7 +17,7 @@ import type { AnalysisSummary } from '@/lib/exam-analysis/types';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import { DIFFICULTY_BAR_COLORS } from '@/lib/exam-analysis/constants';
 import type { ExamPaperData, AnalysisTab } from './types';
-import { getConfidenceInfo, getOverallDifficultyLevel, getDifficultyBreakdown } from './helpers';
+import { getConfidenceInfo, getOverallDifficultyLevel, getDifficultyBreakdown, interpolateDifficultyColor } from './helpers';
 import { DIFF_LEVEL_LABELS } from './constants';
 import { CommentarySection } from './CommentarySection';
 import { AnalyzingProgress } from './AnalyzingProgress';
@@ -194,8 +194,10 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
 
             {/* 종합 난이도 카드 — 클릭 시 판단 기준 모달 */}
             {detail.status === 'COMPLETED' && diffLevel > 0 && (() => {
-              const activeColor = DIFFICULTY_BAR_COLORS[diffLevel - 1];
               const breakdown = getDifficultyBreakdown(summary);
+              // 가중평균이 있으면 소수점 위치 기준 그라데이션, 없으면 정수 Level 색
+              const avg = breakdown?.weightedAvg ?? diffLevel;
+              const activeColor = interpolateDifficultyColor(avg);
               return (
                 <button
                   type="button"
@@ -219,7 +221,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
                             style={{
                               backgroundColor: color,
                               color: '#fff',
-                              ...(isActive ? { boxShadow: `0 0 0 1.5px #fff, 0 0 0 3px ${color}` } : {}),
+                              ...(isActive ? { boxShadow: `0 0 0 1.5px #fff, 0 0 0 3px ${activeColor}` } : {}),
                             }}
                           >
                             {level}
@@ -229,10 +231,10 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
                     </div>
                   </div>
                   <div className="border-l pl-3" style={{ borderColor: `${activeColor}30` }}>
-                    <span className="text-base font-extrabold" style={{ color: activeColor }}>Level {diffLevel}</span>
+                    <span className="text-base font-extrabold" style={{ color: activeColor }}>Level {avg.toFixed(1)}</span>
                     {breakdown && (
                       <div className="text-[10px] text-slate-500 font-medium mt-0.5">
-                        평균 {breakdown.weightedAvg.toFixed(1)}/5
+                        {breakdown.total}문항 가중평균
                       </div>
                     )}
                   </div>
@@ -411,7 +413,8 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
       {/* 시험 난이도 판단 기준 — 간이 모달 */}
       {showDiffModal && diffLevel > 0 && (() => {
         const breakdown = getDifficultyBreakdown(summary);
-        const activeColor = DIFFICULTY_BAR_COLORS[diffLevel - 1];
+        const avg = breakdown?.weightedAvg ?? diffLevel;
+        const activeColor = interpolateDifficultyColor(avg);
         const levelLabel = DIFF_LEVEL_LABELS[diffLevel] ?? '';
         const distLabel = breakdown
           ? breakdown.counts.map((c, i) => `${i + 1}단계 ${c}문항`).join(' · ')
@@ -428,7 +431,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <h3 className="text-base font-bold text-slate-800">
-                    시험 난이도 <span style={{ color: activeColor }}>Level {diffLevel}</span>
+                    시험 난이도 <span style={{ color: activeColor }}>Level {avg.toFixed(1)}</span>
                     <span className="text-slate-500 font-medium"> ({levelLabel})</span>
                   </h3>
                   {breakdown && (
@@ -453,7 +456,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
                 </p>
                 {breakdown && (
                   <p>
-                    이 시험은 분포가 <strong>{distLabel}</strong>로, 가중평균이 <strong>{breakdown.weightedAvg.toFixed(2)}점</strong>이 나와 반올림하여 <strong>Level {diffLevel}</strong>로 산정되었습니다.
+                    이 시험은 분포가 <strong>{distLabel}</strong>로, 가중평균 <strong>{breakdown.weightedAvg.toFixed(2)}점</strong> → <strong>Level {avg.toFixed(1)}</strong>로 산정되었습니다. (정수 그룹: Level {diffLevel})
                   </p>
                 )}
                 <p className="text-xs text-slate-500 pt-2 border-t border-slate-100">

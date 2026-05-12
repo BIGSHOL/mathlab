@@ -1,7 +1,37 @@
-import { Fragment, type ReactNode } from 'react';
-import katex from 'katex';
-import 'katex/dist/katex.min.css';
 import type { AnalyzedQuestion, AnalysisSummary } from '@/lib/exam-analysis/types';
+import { DIFFICULTY_BAR_COLORS } from '@/lib/exam-analysis/constants';
+
+// renderInlineMath / highlightText / normalizeKoreanLabels 는 lib/exam-analysis/rendering 에서 단일 진실의 원천으로 유지.
+// 페이지/컴포넌트 어디서든 사용하려면 이 helpers 또는 @/lib/exam-analysis/rendering 을 사용.
+export { renderInlineMath, highlightText, normalizeKoreanLabels } from '@/lib/exam-analysis/rendering';
+
+// ── 난이도 색상 그라데이션 보간 ──
+/**
+ * 가중평균 난이도(예: 2.4) 를 DIFFICULTY_BAR_COLORS 의 인접 두 단계 사이로 보간.
+ * 1.0 → Level 1 색, 2.5 → Level 2~3 중간 색, 5.0 → Level 5 색.
+ */
+export function interpolateDifficultyColor(level: number): string {
+  const clamped = Math.max(1, Math.min(5, level));
+  const idx = Math.floor(clamped - 1); // 0~3 (Level 1~4 의 시작 인덱스)
+  const frac = clamped - 1 - idx;       // 0~1 (해당 단계 내 비율)
+  if (frac === 0 || idx >= DIFFICULTY_BAR_COLORS.length - 1) {
+    return DIFFICULTY_BAR_COLORS[Math.min(idx, DIFFICULTY_BAR_COLORS.length - 1)];
+  }
+  const from = hexToRgb(DIFFICULTY_BAR_COLORS[idx]);
+  const to = hexToRgb(DIFFICULTY_BAR_COLORS[idx + 1]);
+  if (!from || !to) return DIFFICULTY_BAR_COLORS[idx];
+  const r = Math.round(from.r + (to.r - from.r) * frac);
+  const g = Math.round(from.g + (to.g - from.g) * frac);
+  const b = Math.round(from.b + (to.b - from.b) * frac);
+  return `#${[r, g, b].map(v => v.toString(16).padStart(2, '0')).join('')}`;
+}
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const m = hex.trim().match(/^#?([a-f0-9]{6})$/i);
+  if (!m) return null;
+  const v = parseInt(m[1], 16);
+  return { r: (v >> 16) & 0xff, g: (v >> 8) & 0xff, b: v & 0xff };
+}
 
 // ── 신뢰도 계산 ──
 export function getConfidenceInfo(questions: AnalyzedQuestion[]) {
@@ -49,113 +79,4 @@ export function getDifficultyBreakdown(summary: AnalysisSummary | null): {
   if (!total) return null;
   const weightedAvg = counts.reduce((s, c, i) => s + c * (i + 1), 0) / total;
   return { counts, total, weightedAvg };
-}
-
-// ── KaTeX inline 수식 렌더링 헬퍼 ──
-/**
- * `$...$` 패턴을 분리해 KaTeX 로 렌더링하고, 그 외 텍스트는 highlightText 로 처리.
- * 단순 정수($1$ 등)도 KaTeX 로 렌더되면 자연스러운 숫자로 보임 → AI 가 과도하게
- * \$ 를 감싸도 raw \$ 가 화면에 노출되지 않음 (안전망).
- */
-export function renderInlineMath(text: string, keyPrefix = 'm'): ReactNode {
-  // `$수식$` 패턴 — 빈 \$ 또는 \$ 사이에 \$ 없는 것만 매칭
-  const parts = text.split(/(\$[^$\n]+?\$)/g);
-  if (parts.length === 1) return highlightText(text);
-
-  return (
-    <>
-      {parts.map((part, i) => {
-        if (part.length >= 2 && part.startsWith('$') && part.endsWith('$')) {
-          const tex = part.slice(1, -1);
-          // \frac, \sqrt 같은 진짜 LaTeX 가 있으면 KaTeX 렌더
-          // 단순 숫자/한글이어도 KaTeX 가 무난히 처리
-          try {
-            const html = katex.renderToString(tex, {
-              throwOnError: false,
-              strict: false,
-              output: 'html',
-            });
-            return (
-              <span
-                key={`${keyPrefix}-${i}`}
-                className="katex-inline"
-                dangerouslySetInnerHTML={{ __html: html }}
-              />
-            );
-          } catch {
-            return <Fragment key={`${keyPrefix}-${i}`}>{part}</Fragment>;
-          }
-        }
-        return <Fragment key={`${keyPrefix}-${i}`}>{highlightText(part)}</Fragment>;
-      })}
-    </>
-  );
-}
-
-// ── AI 총평 텍스트 하이라이트 ──
-/** 숫자/키워드에 종류별 다른 색상 하이라이트 */
-export function highlightText(text: string): ReactNode {
-  // 1단계: **bold** 마크다운을 분리하여 처리
-  const boldPattern = /\*\*(.+?)\*\*/g;
-  const segments: Array<{ text: string; bold: boolean }> = [];
-  let lastBoldIdx = 0;
-  let boldMatch: RegExpExecArray | null;
-
-  while ((boldMatch = boldPattern.exec(text)) !== null) {
-    if (boldMatch.index > lastBoldIdx) {
-      segments.push({ text: text.slice(lastBoldIdx, boldMatch.index), bold: false });
-    }
-    segments.push({ text: boldMatch[1], bold: true });
-    lastBoldIdx = boldPattern.lastIndex;
-  }
-  if (lastBoldIdx < text.length) {
-    segments.push({ text: text.slice(lastBoldIdx), bold: false });
-  }
-  if (segments.length === 0) segments.push({ text, bold: false });
-
-  // 2단계: 각 세그먼트에 키워드 하이라이트 적용
-  const applyHighlight = (str: string, keyPrefix: string): ReactNode[] => {
-    const pattern = /(\d+(?:\.\d+)?(?:점대?|문항|번|개|단계|%|점))|(?:최고난도|고난도|기본|표준|응용|심화|킬러|변별력|취약)|(?:서술형\d*|객관식|단답형)|(?:상위권|최상위권|중상위권|하위권|핵심|필수적?|복합|다단계)|(?:'[^']+?'|'[^']+?')/g;
-    const parts: ReactNode[] = [];
-    let last = 0;
-    let m: RegExpExecArray | null;
-
-    while ((m = pattern.exec(str)) !== null) {
-      if (m.index > last) parts.push(str.slice(last, m.index));
-      const word = m[0];
-      let cls: string;
-
-      if (/^\d/.test(word)) {
-        cls = 'font-bold text-slate-900 text-[13px]';
-      } else if (/최고난도|고난도|킬러|변별력|취약/.test(word)) {
-        cls = 'font-bold text-red-600 bg-red-50 px-0.5 rounded-sm text-[13px]';
-      } else if (/서술형|객관식|단답형/.test(word)) {
-        cls = 'font-bold text-blue-600 bg-blue-50 px-0.5 rounded-sm text-[13px]';
-      } else if (/상위권|최상위권|중상위권|하위권/.test(word)) {
-        cls = 'font-bold text-emerald-600 bg-emerald-50 px-0.5 rounded-sm text-[13px]';
-      } else if (/[''']/.test(word[0])) {
-        cls = 'font-semibold text-violet-700 bg-violet-50 px-0.5 rounded-sm text-[13px]';
-      } else {
-        cls = 'font-bold text-violet-700 bg-violet-100/60 px-0.5 rounded-sm text-[13px]';
-      }
-
-      parts.push(<span key={`${keyPrefix}-${m.index}`} className={cls}>{word}</span>);
-      last = pattern.lastIndex;
-    }
-
-    if (last < str.length) parts.push(str.slice(last));
-    return parts;
-  };
-
-  const result: ReactNode[] = [];
-  segments.forEach((seg, i) => {
-    if (seg.bold) {
-      // bold 구간은 하이라이트 없이 bold만 적용
-      result.push(<strong key={`b${i}`} className="font-bold text-slate-900">{seg.text}</strong>);
-    } else {
-      result.push(...applyHighlight(seg.text, `s${i}`));
-    }
-  });
-
-  return result.length > 0 ? result : text;
 }

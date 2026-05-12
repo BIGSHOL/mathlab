@@ -8,7 +8,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { BaseAgent, type AgentInput } from './base-agent';
 import type { AgentType } from '../constants';
-import { DIFFICULTY_LEGACY_MAP } from '../constants';
+import { DIFFICULTY_LEGACY_MAP, ABILITY_DOMAIN_LABELS } from '../constants';
 import type { BasicAnalysisResult, WeaknessProfile, LearningPlan } from '../types';
 import { MIDDLE_SCHOOL_CURRICULUM } from '../data/curriculum';
 import type { GradeCurriculum } from '../data/curriculum';
@@ -16,6 +16,51 @@ import type { NearbyComparisonData, NearbyExamSummary } from '../nearby-school-d
 
 function normalizeDiff(key: string): string {
   return DIFFICULTY_LEGACY_MAP[key] || key;
+}
+
+// ── 영문 enum → 한글 라벨 (AI 입력/출력 정규화용) ──
+const QUESTION_TYPE_LABELS_KO: Record<string, string> = {
+  number: '수와 연산',
+  algebra: '문자와 식',
+  function: '함수',
+  geometry: '기하',
+  statistics: '확률과 통계',
+};
+
+function toKoreanType(raw: string | null | undefined): string {
+  if (!raw) return '미분류';
+  const k = String(raw).toLowerCase();
+  return QUESTION_TYPE_LABELS_KO[k] || raw;
+}
+
+function toKoreanAbility(raw: string | null | undefined): string {
+  if (!raw) return '계산력';
+  const k = String(raw).toLowerCase();
+  return ABILITY_DOMAIN_LABELS[k] || raw;
+}
+
+// ── 영문 enum 차단 (AI 출력 방어막 — UI normalizeKoreanLabels 와 동일 매핑) ──
+const ENUM_KO_MAP: Record<string, string> = {
+  CALCULATION: '계산력',
+  UNDERSTANDING: '이해력',
+  PROBLEM_SOLVING: '문제해결력',
+  'PROBLEM SOLVING': '문제해결력',
+  REASONING: '추론력',
+  NUMBER: '수와 연산',
+  ALGEBRA: '문자와 식',
+  FUNCTION: '함수',
+  GEOMETRY: '기하',
+  STATISTICS: '확률과 통계',
+};
+
+function stripEnglishEnums(text: string): string {
+  if (!text) return text;
+  let out = text;
+  for (const [k, v] of Object.entries(ENUM_KO_MAP)) {
+    const re = new RegExp(`\\b${k.replace(/ /g, '[ _]')}\\b`, 'g');
+    out = out.replace(re, v);
+  }
+  return out;
 }
 
 /** 난이도 분포에서 5단계 합산 값 추출 */
@@ -134,12 +179,13 @@ export class CommentaryAgent extends BaseAgent<Record<string, unknown>> {
     }
 
     const FORMAT_LABELS: Record<string, string> = { objective: '객관식', short_answer: '단답형', essay: '서술형' };
+    // AI 가 한글 라벨로 사고하도록 입력 데이터의 영문 enum 을 한글로 사전 변환
     const questionsData = basicAnalysis.questions.map((q) => ({
       번호: q.question_number,
       형식: FORMAT_LABELS[q.question_format || ''] || '객관식',
       난이도: q.difficulty,
-      유형: q.question_type,
-      능력영역: q.ability_domain,
+      유형: toKoreanType(q.question_type),
+      능력영역: toKoreanAbility(q.ability_domain),
       단원: q.topic,
       배점: q.points,
       ...(hasStudentData ? {
@@ -158,6 +204,7 @@ H2. "## 출력 형식" 섹션에 정의된 키만 사용. 임의 키 추가 금�
 H3. **\$...\$는 진짜 수식에만 사용** — 변수($x$, $a$, $k$), 식($x^2+1$, $\\sqrt{3}$, $\\frac{a}{b}$), LaTeX 명령(\\frac, \\sqrt, \\times 등)이 포함된 경우만. **단순 정수(1, 2, 3, 4, 5)·점수(48점)·문항수(9문항)·한글(기본, 표준, 응용)에는 \$ 사용 금지** — 평문 그대로. 예: "Level 2 (표준) 7문항 34점" (O), "Level $2$ ($표준$) $7$문항 $34$점" (X). \\text{한글}/\\textrm{한글} 금지. \\dfrac 금지 → \\frac.
 H4. 인접 수식 \$A\$\$B\$ 금지 → \$A\$ \$B\$. □→\\square, ○→\\bigcirc.
 H5. 입력 데이터에 없는 문항번호·학교명·배점·점수를 지어내지 말 것. 주변 학교 통계/토픽/배점 분포는 입력값 그대로 인용.
+H6. **영문 enum 사용 절대 금지** — 능력영역은 "계산력/이해력/문제해결력/추론력"으로만, 유형은 "수와 연산/문자와 식/함수/기하/확률과 통계"로만 표기. CALCULATION, UNDERSTANDING, PROBLEM_SOLVING, REASONING, NUMBER, ALGEBRA, FUNCTION, GEOMETRY, STATISTICS 같은 영문 토큰을 출력에 한 글자도 포함하지 말 것. (예: "CALCULATION 영역" ❌, "계산력 영역" ✅)
 
 ════════════════════════════════════════════════
 📤 출력 전 자기검증 (SELF-VERIFY)
@@ -167,6 +214,7 @@ V2. \\dfrac·\\text{한글}·백틱이 없는가?
 V3. 언급한 문항번호·학교명이 모두 입력 데이터에 존재하는가?
 V4. \$...\$가 **진짜 수식에만** 쓰였는가? 단순 정수("1", "2", "9문항", "48점")나 한글("기본", "표준")에 \$가 붙어 있지 않은가? (보기번호 ①②③④⑤, ㄱㄴㄷ 제외)
 V5. 추측성 단정("반드시 나올 것", "100% 출제") 대신 입력 데이터 근거 표현을 썼는가?
+V6. 출력 텍스트 어디에도 **CALCULATION/UNDERSTANDING/PROBLEM_SOLVING/REASONING/NUMBER/ALGEBRA/FUNCTION/GEOMETRY/STATISTICS** 영문 enum 단어가 없는가? (한글 라벨로만 표기)
 ════════════════════════════════════════════════
 
 당신은 수학 교육 전문가이자 기출 시험 분석 컨설턴트입니다.
@@ -489,25 +537,36 @@ ${phases}
   // ── AI 응답 파싱 ──
 
   parseResponse(raw: Record<string, unknown>, questions?: Array<{ question_number: number | string; question_format: string | null }>): Record<string, unknown> {
+    // 모든 출력 텍스트에서 영문 enum → 한글 라벨 치환 (방어막)
+    const norm = (v: unknown) => stripEnglishEnums(String(v ?? ''));
+    const normArr = (arr: unknown) => this.parseStringArray(arr).map(stripEnglishEnums);
+
     const result: CommentaryResult = {
-      overall_comment: String(raw.overall_comment ?? ''),
-      exam_characteristics: this.parseStringArray(raw.exam_characteristics),
-      score_strategy: raw.score_strategy ? String(raw.score_strategy) : undefined,
+      overall_comment: norm(raw.overall_comment),
+      exam_characteristics: normArr(raw.exam_characteristics),
+      score_strategy: raw.score_strategy ? norm(raw.score_strategy) : undefined,
       score_strategies: Array.isArray(raw.score_strategies)
         ? (raw.score_strategies as Array<Record<string, unknown>>).map(s => ({
-            grade: String(s.grade ?? ''),
-            target: String(s.target ?? ''),
-            strategy: s.strategy ? String(s.strategy) : undefined,
-            points: Array.isArray(s.points) ? (s.points as string[]).map(String) : undefined,
+            grade: norm(s.grade),
+            target: norm(s.target),
+            strategy: s.strategy ? norm(s.strategy) : undefined,
+            points: Array.isArray(s.points) ? (s.points as string[]).map(p => stripEnglishEnums(String(p))) : undefined,
           }))
         : undefined,
-      strength_areas: this.parseStringArray(raw.strength_areas),
-      improvement_areas: this.parseStringArray(raw.improvement_areas),
-      notable_questions: this.parseNotableQuestions(raw.notable_questions, questions),
+      strength_areas: normArr(raw.strength_areas),
+      improvement_areas: normArr(raw.improvement_areas),
+      notable_questions: this.parseNotableQuestions(raw.notable_questions, questions).map(nq => ({
+        question_number: nq.question_number,
+        comment: stripEnglishEnums(nq.comment),
+      })),
       teaching_recommendations: this.parseTeachingRecommendations(
         raw.teaching_recommendations ?? raw.study_priority,
-      ),
-      nearby_comparison: raw.nearby_comparison ? String(raw.nearby_comparison) : undefined,
+      ).map(tr => ({
+        topic: stripEnglishEnums(tr.topic),
+        priority: tr.priority,
+        reason: stripEnglishEnums(tr.reason),
+      })),
+      nearby_comparison: raw.nearby_comparison ? norm(raw.nearby_comparison) : undefined,
     };
 
     return result as unknown as Record<string, unknown>;

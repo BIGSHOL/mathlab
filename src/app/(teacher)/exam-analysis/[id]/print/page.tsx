@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { Printer, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import type { AnalyzedQuestion, AnalysisSummary } from '@/lib/exam-analysis/types';
+import { renderInlineMath } from '@/lib/exam-analysis/rendering';
 
 // ── 타입 ──
 
@@ -367,7 +368,9 @@ export default function ExamAnalysisPrintPage() {
                           </>
                         )}
                         <td className="px-2 py-1.5 text-text-secondary max-w-[180px]">
-                          <span className="line-clamp-2">{q.ai_comment ?? '-'}</span>
+                          <span className="line-clamp-2">
+                            {q.ai_comment ? renderInlineMath(q.ai_comment, `pr-${q.question_number}`) : '-'}
+                          </span>
                         </td>
                       </tr>
                     ))

@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { DIFFICULTY_COLORS, DIFFICULTY_LEGACY_MAP, QUESTION_TYPE_COLORS, TYPE_TO_DOMAIN, ABILITY_DOMAIN_LABELS, ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
+import { renderInlineMath } from '@/lib/exam-analysis/rendering';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { AlertTriangle, ChevronLeft, Check } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
@@ -189,9 +190,15 @@ function CommentRow({ q, showDiffReason, examPaperId }: {
             </>
           )}
         </div>
-        {q.ai_comment && <p className="text-xs text-slate-700 leading-relaxed font-medium">{q.ai_comment}</p>}
+        {q.ai_comment && (
+          <p className="text-xs text-slate-700 leading-relaxed font-medium">
+            {renderInlineMath(q.ai_comment, `ac-${q.question_number}`)}
+          </p>
+        )}
         {showDiffReason && q.difficulty_reason && (
-          <p className="text-[11px] text-slate-400 mt-1">난이도 근거: {q.difficulty_reason}</p>
+          <p className="text-[11px] text-slate-400 mt-1">
+            난이도 근거: {renderInlineMath(q.difficulty_reason, `dr-${q.question_number}`)}
+          </p>
         )}
       </div>
 
