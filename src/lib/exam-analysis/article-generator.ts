@@ -456,7 +456,7 @@ ${commentary.nearby_comparison ? '8. **주변 학교 비교** — 다른 학교�
 }`;
 }
 
-// ── JSON 추출 (commentary-agent 패턴 재사용) ──
+// ── JSON 추출 (commentary-agent 패턴 + 정규식 partial fallback) ──
 
 function extractJson(text: string): Record<string, unknown> {
   // 1차: 코드펜스 내 JSON
@@ -508,7 +508,88 @@ function extractJson(text: string): Record<string, unknown> {
     }
   }
 
-  throw new Error(`블로그 글 JSON 파싱 실패: ${jsonStr.slice(0, 200)}...`);
+  // 6차: 정규식 기반 partial 필드 추출 (content 가 max_tokens 초과로 중간에 잘렸을 때 fallback)
+  // title/metaDescription/tags 는 보통 짧아서 살아남고, content 만 잘리는 케이스가 다수
+  const partial = extractFieldsByRegex(jsonStr);
+  if (partial.title || partial.content) {
+    return partial;
+  }
+
+  // 최종 실패: 디버그 용이하도록 잘린 끝부분도 포함
+  const tail = jsonStr.length > 200 ? `...${jsonStr.slice(-200)}` : '';
+  throw new Error(
+    `블로그 글 JSON 파싱 실패 (응답 길이 ${jsonStr.length}자, 토큰 한도 초과 가능성): ${jsonStr.slice(0, 200)}${tail}`,
+  );
+}
+
+/**
+ * JSON 전체 파싱이 실패해도 각 필드를 정규식으로 부분 추출.
+ * Claude 가 max_tokens 한도 직전까지 출력하다 content 중간에서 잘려도, title/tags/metaDescription 은 살릴 수 있도록.
+ */
+function extractFieldsByRegex(jsonStr: string): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+
+  // title: "..." — JSON 문자열은 큰따옴표로 감싸지고 escape 된 \" 만 안쪽 허용
+  const titleMatch = jsonStr.match(/"title"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  if (titleMatch) {
+    try {
+      result.title = JSON.parse(`"${titleMatch[1]}"`);
+    } catch {
+      result.title = titleMatch[1];
+    }
+  }
+
+  // metaDescription
+  const metaMatch = jsonStr.match(/"meta(?:Description|_description)"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  if (metaMatch) {
+    try {
+      result.metaDescription = JSON.parse(`"${metaMatch[1]}"`);
+    } catch {
+      result.metaDescription = metaMatch[1];
+    }
+  }
+
+  // tags: ["..."] — 배열 자체가 잘리지 않은 경우만 시도
+  const tagsMatch = jsonStr.match(/"tags"\s*:\s*(\[[^\]]*\])/);
+  if (tagsMatch) {
+    try {
+      result.tags = JSON.parse(tagsMatch[1]);
+    } catch {
+      // 무시
+    }
+  }
+
+  // content: "..." — 잘려도 가능한 만큼 추출
+  // 1) 정상 완료: ",\\s*\"<다음키>"|\\s*}" 앞까지
+  const contentFullMatch = jsonStr.match(/"content"\s*:\s*"((?:[^"\\]|\\.)*)"\s*[,}]/);
+  if (contentFullMatch) {
+    try {
+      result.content = JSON.parse(`"${contentFullMatch[1]}"`);
+    } catch {
+      result.content = contentFullMatch[1];
+    }
+  } else {
+    // 2) 잘림 케이스: content 시작 이후 문자열을 끝까지 추출 (마지막 따옴표 없음)
+    const contentStart = jsonStr.search(/"content"\s*:\s*"/);
+    if (contentStart >= 0) {
+      const after = jsonStr.slice(contentStart).match(/"content"\s*:\s*"([\s\S]*)$/);
+      if (after) {
+        // tags/metaDescription 토큰 직전까지 잘라내기 (있으면)
+        let body = after[1];
+        const nextKey = body.search(/",\s*"(?:tags|metaDescription|meta_description)"/);
+        if (nextKey >= 0) body = body.slice(0, nextKey);
+        // 끝의 unescape 된 따옴표 제거
+        body = body.replace(/"+$/, '');
+        try {
+          result.content = JSON.parse(`"${body}"`);
+        } catch {
+          result.content = body;
+        }
+      }
+    }
+  }
+
+  return result;
 }
 
 // ── 메인 생성 함수 (일괄) ──
@@ -526,7 +607,9 @@ export async function generateExamArticle(
 
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 8192,
+    // 16K 토큰: 한글 본문(약 2,500~3,200자) + JSON 오버헤드 + HTML 마크업 여유.
+    // 8K 는 잦은 잘림(max_tokens 종료) → JSON 파싱 실패 유발.
+    max_tokens: 16384,
     temperature: 0.75,
     messages: [{ role: 'user', content: prompt }],
   });
@@ -537,6 +620,11 @@ export async function generateExamArticle(
     .join('');
 
   if (!text) throw new Error('AI 응답이 비어있습니다');
+
+  // stop_reason 이 'max_tokens' 면 응답이 잘렸을 가능성 — 로그로 노출 후 partial 파싱 시도
+  if (response.stop_reason === 'max_tokens') {
+    console.warn('[article-generator] max_tokens 도달 — 응답이 잘렸을 수 있음. partial 파싱 시도.');
+  }
 
   const raw = extractJson(text);
 
@@ -567,7 +655,9 @@ export async function generateExamArticleStream(
 
   const stream = client.messages.stream({
     model: 'claude-sonnet-4-6',
-    max_tokens: 8192,
+    // 16K 토큰: 한글 본문(약 2,500~3,200자) + JSON 오버헤드 + HTML 마크업 여유.
+    // 8K 는 잦은 잘림(max_tokens 종료) → JSON 파싱 실패 유발.
+    max_tokens: 16384,
     temperature: 0.75,
     messages: [{ role: 'user', content: prompt }],
   });
@@ -594,10 +684,15 @@ export async function generateExamArticleStream(
     }
   });
 
-  await stream.finalMessage();
+  const finalMsg = await stream.finalMessage();
   flush(); // 남은 버퍼 전송
 
   if (!fullText) throw new Error('AI 응답이 비어있습니다');
+
+  // stop_reason 이 'max_tokens' 면 응답이 잘렸을 가능성 — 로그로 노출 후 partial 파싱 시도
+  if (finalMsg.stop_reason === 'max_tokens') {
+    console.warn('[article-generator] stream max_tokens 도달 — 응답이 잘렸을 수 있음. partial 파싱 시도.');
+  }
 
   const raw = extractJson(fullText);
 
