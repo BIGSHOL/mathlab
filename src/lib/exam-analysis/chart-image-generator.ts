@@ -17,6 +17,7 @@ import {
   QUESTION_TYPE_LABELS,
   ABILITY_DOMAIN_LABELS,
   ABILITY_DOMAIN_COLORS,
+  TYPE_TO_DOMAIN,
 } from './constants';
 import type { AnalyzedQuestion } from './types';
 
@@ -212,11 +213,14 @@ export function generateAbilityRadarSvg(
 ): string {
   const abilityKeys = ['calculation', 'understanding', 'problem_solving', 'reasoning'] as const;
 
-  // 문항별 ability_domain 집계
+  // 문항별 ability_domain 집계 — AnalysisResultView/TypeRadarChart와 동일한 견고 정규화:
+  // 1) raw 값 toLowerCase (AI가 'CALCULATION', 'Problem-Solving' 등 변형 반환해도 매칭)
+  // 2) ability_domain 비어 있으면 question_type → TYPE_TO_DOMAIN fallback
   const counts: Record<string, number> = {};
   for (const key of abilityKeys) counts[key] = 0;
   for (const q of questions) {
-    const domain = q.ability_domain || 'understanding';
+    const rawDomain = q.ability_domain || TYPE_TO_DOMAIN[q.question_type] || 'calculation';
+    const domain = String(rawDomain).toLowerCase().replace(/-/g, '_');
     if (domain in counts) counts[domain]++;
   }
 
@@ -382,7 +386,9 @@ export function generateCombinedRadarSvg(
   const counts: Record<string, number> = {};
   for (const key of abilityKeys) counts[key] = 0;
   for (const q of questions) {
-    const domain = q.ability_domain || 'understanding';
+    // generateAbilityRadarSvg와 동일 정규화 (대소문자/하이픈 변형 보정)
+    const rawDomain = q.ability_domain || TYPE_TO_DOMAIN[q.question_type] || 'calculation';
+    const domain = String(rawDomain).toLowerCase().replace(/-/g, '_');
     if (domain in counts) counts[domain]++;
   }
 
@@ -561,30 +567,39 @@ async function downloadFont(url: string, destPath: string): Promise<boolean> {
   }
 }
 
+// 모듈 레벨 캐시 — 같은 인스턴스의 동시·후속 호출은 첫 다운로드 Promise를 재사용.
+// Vercel Serverless 인스턴스는 격리되므로 cross-request stale 우려 없음.
+// 실패 시 null 로 되돌려 다음 호출에서 재시도 가능.
+let fontsReadyPromise: Promise<string[]> | null = null;
+
 async function ensureFonts(): Promise<string[]> {
-  if (!existsSync(FONT_DIR)) mkdirSync(FONT_DIR, { recursive: true });
+  if (fontsReadyPromise) return fontsReadyPromise;
 
-  const fontPaths: string[] = [];
+  fontsReadyPromise = (async () => {
+    if (!existsSync(FONT_DIR)) mkdirSync(FONT_DIR, { recursive: true });
 
-  await Promise.all(FONT_SOURCES.map(async (source) => {
-    const destPath = join(FONT_DIR, source.file);
+    const fontPaths: string[] = [];
 
-    // 항상 실제 파일 존재 + 크기 검증 (module-level 캐시 사용 안 함)
-    if (!isFontValid(destPath)) {
-      await downloadFont(source.url, destPath);
+    await Promise.all(FONT_SOURCES.map(async (source) => {
+      const destPath = join(FONT_DIR, source.file);
+      if (!isFontValid(destPath)) {
+        await downloadFont(source.url, destPath);
+      }
+      if (isFontValid(destPath)) {
+        fontPaths.push(destPath);
+      }
+    }));
+
+    console.log(`[chart-fonts] ${fontPaths.length}/${FONT_SOURCES.length} fonts ready in ${FONT_DIR}`);
+    if (fontPaths.length === 0) {
+      console.error('[chart-fonts] No fonts available! Charts will have no text.');
+      fontsReadyPromise = null; // 다음 호출 시 재다운로드 시도
     }
 
-    if (isFontValid(destPath)) {
-      fontPaths.push(destPath);
-    }
-  }));
+    return fontPaths;
+  })();
 
-  console.log(`[chart-fonts] ${fontPaths.length}/${FONT_SOURCES.length} fonts ready in ${FONT_DIR}`);
-  if (fontPaths.length === 0) {
-    console.error('[chart-fonts] No fonts available! Charts will have no text.');
-  }
-
-  return fontPaths;
+  return fontsReadyPromise;
 }
 
 // ── SVG → PNG 변환 (resvg — 한글 폰트 지원) ──
