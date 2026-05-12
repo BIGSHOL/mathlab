@@ -9,6 +9,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import katex from 'katex';
 import type { AnalyzedQuestion } from './types';
 import type { CommentaryResult } from './agents/commentary-agent';
 import { QUESTION_TYPE_LABELS } from './constants';
@@ -36,6 +37,94 @@ function stripEnglishEnums(text: string): string {
     out = out.replace(re, v);
   }
   return out;
+}
+
+// ── LaTeX → 표시 가능한 형태로 변환 (블로그 컨텍스트 안전망) ──
+/**
+ * AI 가 프롬프트 무시하고 \$...\$ LaTeX 를 출력했을 경우 안전망.
+ *
+ * - 간단한 패턴(\\sqrt, \\frac, ^N, _N)은 유니코드/평문으로 변환 (네이버 호환)
+ * - 변환 실패 시 KaTeX HTML 로 렌더링 (TipTap 프리뷰/MathLab UI 에서는 보임)
+ *   네이버 게시 시 CSS 가 없어 깨질 수 있으나, 적어도 raw "\$\\sqrt..." 보다는 낫다
+ *
+ * 호출 순서:
+ *   1. simplifyLatexToPlain — 간단 패턴 유니코드 치환 (네이버 안전)
+ *   2. renderRemainingLatexToKatex — 남은 \$...\$ 만 KaTeX HTML 로 (UI 표시용 최후 보루)
+ */
+
+const SUPER_MAP: Record<string, string> = {
+  '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵',
+  '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '+': '⁺', '-': '⁻', '=': '⁼', 'n': 'ⁿ',
+};
+const SUB_MAP: Record<string, string> = {
+  '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄', '5': '₅',
+  '6': '₆', '7': '₇', '8': '₈', '9': '₉', 'n': 'ₙ', 'k': 'ₖ', 'i': 'ᵢ', 'j': 'ⱼ',
+};
+
+function toSuperscript(s: string): string | null {
+  let out = '';
+  for (const ch of s) {
+    if (SUPER_MAP[ch] != null) out += SUPER_MAP[ch];
+    else return null; // 변환 불가능 문자 포함 시 폴백
+  }
+  return out;
+}
+
+function toSubscript(s: string): string | null {
+  let out = '';
+  for (const ch of s) {
+    if (SUB_MAP[ch] != null) out += SUB_MAP[ch];
+    else return null;
+  }
+  return out;
+}
+
+/** 단순한 LaTeX 토큰을 유니코드/평문으로 변환 — 변환 실패하면 원문 반환 */
+function simplifyLatexInline(tex: string): string {
+  let s = tex;
+  // \sqrt{X} → √(X)
+  s = s.replace(/\\sqrt\s*\{([^{}]+)\}/g, '√($1)');
+  // \frac{a}{b} → a/b
+  s = s.replace(/\\frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}/g, '$1/$2');
+  // \dfrac{a}{b} → a/b
+  s = s.replace(/\\dfrac\s*\{([^{}]+)\}\s*\{([^{}]+)\}/g, '$1/$2');
+  // \le → ≤, \ge → ≥, \ne → ≠
+  s = s.replace(/\\le\b/g, '≤').replace(/\\ge\b/g, '≥').replace(/\\ne\b/g, '≠');
+  // \times → ×, \cdot → ·, \div → ÷
+  s = s.replace(/\\times\b/g, '×').replace(/\\cdot\b/g, '·').replace(/\\div\b/g, '÷');
+  // \pi → π, \theta → θ, \sigma → σ, \alpha → α, \beta → β
+  s = s.replace(/\\pi\b/g, 'π').replace(/\\theta\b/g, 'θ').replace(/\\sigma\b/g, 'σ')
+       .replace(/\\alpha\b/g, 'α').replace(/\\beta\b/g, 'β').replace(/\\gamma\b/g, 'γ');
+  // ^N (한 자리) → 유니코드 superscript
+  s = s.replace(/\^\{([^{}]+)\}/g, (_, exp) => toSuperscript(exp) ?? `^${exp}`);
+  s = s.replace(/\^([0-9+\-=n])/g, (_, exp) => toSuperscript(exp) ?? `^${exp}`);
+  // _N → 유니코드 subscript
+  s = s.replace(/_\{([^{}]+)\}/g, (_, sub) => toSubscript(sub) ?? `_${sub}`);
+  s = s.replace(/_([0-9nkij])/g, (_, sub) => toSubscript(sub) ?? `_${sub}`);
+  // 빈 중괄호 / 단순 중괄호 제거
+  s = s.replace(/\{([^{}]*)\}/g, '$1');
+  return s;
+}
+
+/** content/title/metaDescription 에서 \$...\$ → 유니코드/평문 변환 + 잔여는 KaTeX HTML */
+function normalizeLatexForBlog(text: string): string {
+  if (!text) return text;
+  return text.replace(/\$([^$\n]+?)\$/g, (match, tex) => {
+    const plain = simplifyLatexInline(tex);
+    // 변환 후에도 LaTeX 명령(\\)이 남아있으면 KaTeX HTML 로 fallback
+    if (/\\[a-zA-Z]/.test(plain)) {
+      try {
+        return katex.renderToString(tex, {
+          throwOnError: false,
+          strict: false,
+          output: 'html',
+        });
+      } catch {
+        return match; // 최종 폴백: 원문 그대로
+      }
+    }
+    return plain;
+  });
 }
 
 // ── 타입 ──
@@ -251,13 +340,25 @@ ${nearbyText}
 
 ## 글 작성 규칙
 
-### 수식 표기 규칙 (필수)
-- **\$...\$ 는 진짜 수식에만**: 변수($x$, $a$, $k$), 식($x^2+1$, $\\sqrt{3}$, $\\frac{a}{b}$), LaTeX 명령(\\frac, \\sqrt, \\times, \\le 등)이 포함된 경우만 \$로 감싸기
-- **단순 정수·점수·문항수·한글에는 \$ 사용 금지**: "Level 2", "표준", "9문항", "48점", "반평균 76%" 모두 평문 그대로
-- ✗ "Level $1$~$2$ 합산 $48$점이 핵심입니다" (단순 정수에 $ 사용 — 금지)
-- ✓ "Level 1~2 합산 48점이 핵심입니다" (평문)
-- \\dfrac 금지 → \\frac. \\text{한글}/\\textrm{한글} 금지 (한글은 \$ 밖에 평문으로)
-- 인접 수식 \$A\$\$B\$ 금지 → \$A\$ \$B\$
+### 수식 표기 규칙 (네이버 블로그 컨텍스트 — 필수)
+**핵심 원칙: 이 글은 네이버 블로그에 게시됩니다. 네이버는 KaTeX/LaTeX 를 렌더링하지 않습니다.**
+**따라서 \$...\$ LaTeX 문법을 사용하면 안 됩니다. 사용자에게 raw "\\sqrt{A^2}", "\\frac{a}{b}" 가 그대로 보이게 됩니다.**
+
+- **\$...\$ 절대 사용 금지** — 단순 변수 \$x\$, \$a\$ 도 사용 금지
+- **수식은 유니코드 문자 + 평문으로 표현**:
+  - 제곱: x², a², n³  (² ³ 유니코드 — Alt+0178/0179)
+  - 첨자: x₁, x₂, aₙ  (₁ ₂ ₙ 유니코드)
+  - 분수: a/b 또는 "분자÷분모"  ("\\frac{a}{b}" 금지)
+  - 제곱근: √(A²) 또는 "A² 의 제곱근"  ("\\sqrt{A^2}" 금지)
+  - 절댓값: |A|  (수직바 사용)
+  - 부등호: ≤, ≥, ≠  (\\le, \\ge 금지)
+  - 곱셈: × 또는 ·  (\\times 금지)
+  - 시그마: Σ, 적분 ∫, 파이 π, 세타 θ
+- **수식이 너무 복잡하면 자연어로 풀어쓰세요**:
+  - ✗ \$\\sqrt{A^2} = |A|\$ 원리를 적용해
+  - ✓ √(A²) = |A| 원리를 적용해
+  - ✓ "A² 의 제곱근은 A 의 절댓값과 같다" 원리를 적용해
+- **점수·문항수·등급도 평문**: "Level 2", "9문항", "48점" — \$ 없이
 
 ### 영문 enum 사용 금지 (필수)
 - 능력영역은 **"계산력 / 이해력 / 문제해결력 / 추론력"** 으로만 표기
@@ -628,11 +729,18 @@ export async function generateExamArticle(
 
   const raw = extractJson(text);
 
+  // 안전망 변환 체인:
+  //   normalizeMathText  — LaTeX 정규화 (\dfrac → \frac, 줄바꿈 정리 등)
+  //   stripEnglishEnums  — 영문 enum → 한글 라벨
+  //   normalizeLatexForBlog — \$...\$ → 유니코드/평문 (블로그 컨텍스트, 네이버 호환)
+  const processBlogText = (s: string) =>
+    normalizeLatexForBlog(stripEnglishEnums(normalizeMathText(s)));
+
   return {
-    title: stripEnglishEnums(normalizeMathText(String(raw.title || ''))),
-    content: stripEnglishEnums(normalizeMathText(String(raw.content || ''))),
+    title: processBlogText(String(raw.title || '')),
+    content: processBlogText(String(raw.content || '')),
     tags: Array.isArray(raw.tags) ? raw.tags.map(t => stripEnglishEnums(String(t))) : [],
-    metaDescription: stripEnglishEnums(normalizeMathText(String(raw.metaDescription || raw.meta_description || ''))),
+    metaDescription: processBlogText(String(raw.metaDescription || raw.meta_description || '')),
     generatedAt: new Date().toISOString(),
   };
 }
@@ -696,11 +804,18 @@ export async function generateExamArticleStream(
 
   const raw = extractJson(fullText);
 
+  // 안전망 변환 체인:
+  //   normalizeMathText  — LaTeX 정규화 (\dfrac → \frac, 줄바꿈 정리 등)
+  //   stripEnglishEnums  — 영문 enum → 한글 라벨
+  //   normalizeLatexForBlog — \$...\$ → 유니코드/평문 (블로그 컨텍스트, 네이버 호환)
+  const processBlogText = (s: string) =>
+    normalizeLatexForBlog(stripEnglishEnums(normalizeMathText(s)));
+
   return {
-    title: stripEnglishEnums(normalizeMathText(String(raw.title || ''))),
-    content: stripEnglishEnums(normalizeMathText(String(raw.content || ''))),
+    title: processBlogText(String(raw.title || '')),
+    content: processBlogText(String(raw.content || '')),
     tags: Array.isArray(raw.tags) ? raw.tags.map(t => stripEnglishEnums(String(t))) : [],
-    metaDescription: stripEnglishEnums(normalizeMathText(String(raw.metaDescription || raw.meta_description || ''))),
+    metaDescription: processBlogText(String(raw.metaDescription || raw.meta_description || '')),
     generatedAt: new Date().toISOString(),
   };
 }
