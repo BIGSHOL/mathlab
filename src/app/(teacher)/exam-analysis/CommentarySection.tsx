@@ -5,7 +5,7 @@ import { Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
-import { highlightText } from './helpers';
+import { renderInlineMath } from './helpers';
 import { FORMAT_BADGE } from './constants';
 
 interface CommentarySectionProps {
@@ -134,7 +134,7 @@ export function CommentarySection({
               </h4>
               <div className="space-y-2">
                 {commentary.overall_comment.split('\n').filter(Boolean).map((para, i) => (
-                  <p key={i} className="text-sm text-slate-700 leading-relaxed">{highlightText(para.trim())}</p>
+                  <p key={i} className="text-sm text-slate-700 leading-relaxed">{renderInlineMath(para.trim())}</p>
                 ))}
               </div>
             </div>
@@ -155,7 +155,7 @@ export function CommentarySection({
                     </h4>
                     <div className="space-y-2">
                       {nearbyParas.map((para: string, i: number) => (
-                        <p key={i} className="text-sm text-slate-700 leading-relaxed">{highlightText(para.trim())}</p>
+                        <p key={i} className="text-sm text-slate-700 leading-relaxed">{renderInlineMath(para.trim())}</p>
                       ))}
                     </div>
                   </div>
@@ -168,7 +168,7 @@ export function CommentarySection({
                     </h4>
                     <div className="space-y-2">
                       {yearParas.map((para: string, i: number) => (
-                        <p key={i} className="text-sm text-slate-700 leading-relaxed">{highlightText(para.trim())}</p>
+                        <p key={i} className="text-sm text-slate-700 leading-relaxed">{renderInlineMath(para.trim())}</p>
                       ))}
                     </div>
                   </div>
@@ -205,12 +205,12 @@ export function CommentarySection({
                           {s.points.map((p, j) => (
                             <li key={j} className="flex items-start gap-1.5 text-xs text-slate-700">
                               <span className="text-slate-400 mt-0.5 shrink-0">•</span>
-                              <span>{highlightText(p)}</span>
+                              <span>{renderInlineMath(p)}</span>
                             </li>
                           ))}
                         </ul>
                       ) : s.strategy ? (
-                        <p className="text-xs text-slate-700 leading-relaxed">{highlightText(s.strategy)}</p>
+                        <p className="text-xs text-slate-700 leading-relaxed">{renderInlineMath(s.strategy)}</p>
                       ) : null}
                     </div>
                   );
@@ -223,7 +223,7 @@ export function CommentarySection({
                 <span className="w-1 h-3.5 bg-indigo-500 rounded-full" />
                 점수 확보 전략
               </h4>
-              <p className="text-sm text-slate-700 leading-relaxed">{highlightText(commentary.score_strategy)}</p>
+              <p className="text-sm text-slate-700 leading-relaxed">{renderInlineMath(commentary.score_strategy)}</p>
             </div>
           ) : null}
 
@@ -239,7 +239,7 @@ export function CommentarySection({
                   {commentary.strength_areas.map((s, i) => (
                     <li key={i} className="flex items-start gap-1.5 text-xs text-slate-700">
                       <span className="text-green-500 mt-0.5 shrink-0">+</span>
-                      <span>{highlightText(s)}</span>
+                      <span>{renderInlineMath(s)}</span>
                     </li>
                   ))}
                 </ul>
@@ -255,7 +255,7 @@ export function CommentarySection({
                   {commentary.improvement_areas.map((s, i) => (
                     <li key={i} className="flex items-start gap-1.5 text-xs text-slate-700">
                       <span className="text-amber-500 mt-0.5 shrink-0">!</span>
-                      <span>{highlightText(s)}</span>
+                      <span>{renderInlineMath(s)}</span>
                     </li>
                   ))}
                 </ul>
@@ -302,7 +302,7 @@ export function CommentarySection({
                           </span>
                         )}
                       </div>
-                      <p className="flex-1 text-xs text-slate-700 leading-relaxed pt-1">{highlightText(q.comment)}</p>
+                      <p className="flex-1 text-xs text-slate-700 leading-relaxed pt-1">{renderInlineMath(q.comment)}</p>
                     </div>
                   );
                 })}
@@ -330,7 +330,7 @@ export function CommentarySection({
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-slate-800">{sp.topic}</p>
-                        <p className="text-slate-500 mt-0.5">{highlightText(sp.reason)}</p>
+                        <p className="text-slate-500 mt-0.5">{renderInlineMath(sp.reason)}</p>
                       </div>
                     </div>
                   ))}

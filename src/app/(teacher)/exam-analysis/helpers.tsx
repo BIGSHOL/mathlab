@@ -1,4 +1,6 @@
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
 import type { AnalyzedQuestion, AnalysisSummary } from '@/lib/exam-analysis/types';
 
 // ── 신뢰도 계산 ──
@@ -47,6 +49,47 @@ export function getDifficultyBreakdown(summary: AnalysisSummary | null): {
   if (!total) return null;
   const weightedAvg = counts.reduce((s, c, i) => s + c * (i + 1), 0) / total;
   return { counts, total, weightedAvg };
+}
+
+// ── KaTeX inline 수식 렌더링 헬퍼 ──
+/**
+ * `$...$` 패턴을 분리해 KaTeX 로 렌더링하고, 그 외 텍스트는 highlightText 로 처리.
+ * 단순 정수($1$ 등)도 KaTeX 로 렌더되면 자연스러운 숫자로 보임 → AI 가 과도하게
+ * \$ 를 감싸도 raw \$ 가 화면에 노출되지 않음 (안전망).
+ */
+export function renderInlineMath(text: string, keyPrefix = 'm'): ReactNode {
+  // `$수식$` 패턴 — 빈 \$ 또는 \$ 사이에 \$ 없는 것만 매칭
+  const parts = text.split(/(\$[^$\n]+?\$)/g);
+  if (parts.length === 1) return highlightText(text);
+
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part.length >= 2 && part.startsWith('$') && part.endsWith('$')) {
+          const tex = part.slice(1, -1);
+          // \frac, \sqrt 같은 진짜 LaTeX 가 있으면 KaTeX 렌더
+          // 단순 숫자/한글이어도 KaTeX 가 무난히 처리
+          try {
+            const html = katex.renderToString(tex, {
+              throwOnError: false,
+              strict: false,
+              output: 'html',
+            });
+            return (
+              <span
+                key={`${keyPrefix}-${i}`}
+                className="katex-inline"
+                dangerouslySetInnerHTML={{ __html: html }}
+              />
+            );
+          } catch {
+            return <Fragment key={`${keyPrefix}-${i}`}>{part}</Fragment>;
+          }
+        }
+        return <Fragment key={`${keyPrefix}-${i}`}>{highlightText(part)}</Fragment>;
+      })}
+    </>
+  );
 }
 
 // ── AI 총평 텍스트 하이라이트 ──
