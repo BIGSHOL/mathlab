@@ -1,0 +1,104 @@
+/* student-practice-hifi.html V2 (분할 보기 + 키패드) 페이지 고유 스타일 */
+
+.qbody { font-size: 17px; line-height: 1.7; color: var(--ink); }
+.qbody .stem {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px 22px;
+  font-size: 16px;
+}
+.qbody .formula {
+  display: inline-block;
+  padding: 0 6px;
+  font-family: 'Cambria Math', 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 18px;
+}
+
+.qclock {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: ui-monospace, monospace;
+  font-weight: 700;
+  background: var(--ink);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 99px;
+  font-size: 13px;
+}
+
+.answer-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  background: var(--bg-2);
+  border: 2px solid var(--primary);
+  border-radius: 12px;
+  font-family: 'Cambria Math', serif;
+  font-size: 24px;
+  min-height: 64px;
+  box-shadow: var(--shadow-glow);
+}
+.answer-input .caret {
+  width: 2px; height: 28px; background: var(--primary);
+  animation: caret 1s step-end infinite;
+}
+@keyframes caret { 50% { opacity: 0; } }
+
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.keypad .key {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px 0;
+  font-family: 'Cambria Math', 'Pretendard Variable', serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 0 1px 0 var(--line);
+  text-align: center;
+}
+.keypad .key:hover { background: var(--bg); }
+.keypad .key:active { transform: translateY(1px); }
+.keypad .key.op { background: var(--primary-50); color: var(--primary); }
+.keypad .key.fn {
+  background: #FFF7ED;
+  color: #C2410C;
+  font-size: 14px;
+  padding: 18px 4px;
+}
+.keypad .key.del { background: var(--danger-bg); color: var(--danger); }
+.keypad .key.submit {
+  background: linear-gradient(135deg, var(--primary), var(--navy));
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  grid-column: span 3;
+}
+
+.split {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  min-height: 720px;
+}
+.split .q-pane {
+  padding: 28px 32px;
+  overflow: auto;
+  background: var(--bg-2);
+  border-right: 1px solid var(--line);
+}
+.split .key-pane {
+  padding: 24px;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
