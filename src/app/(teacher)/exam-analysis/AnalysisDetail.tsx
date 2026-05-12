@@ -58,9 +58,13 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
       .catch(() => { setNearbyCount(0); setYearCount(0); });
   }, [detail.schoolId, detail.grade, detail.id]);
 
-  // 기출지 변경 시 탭 초기화
+  // 기출지 변경 시 탭 + 총평 생성 상태 초기화
+  // (다른 시험지에서 총평 생성 중인데 이 시험지로 전환하면 진행 프로그레스가 잘못 보이는 버그 방지)
   useEffect(() => {
     setActiveTab('basic');
+    setCommentaryLoading(false);
+    setCommentaryStartTime(null);
+    setCommentaryElapsed(0);
   }, [detail.id]);
 
   // 총평 생성 경과 시간 타이머
@@ -89,14 +93,17 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
 
   const handleGenerateCommentary = async () => {
     if (!latestAnalysis) return;
+    const startId = detail.id; // 응답 처리 시 시험지 전환 여부 검증용
     setCommentaryLoading(true);
     setCommentaryStartTime(Date.now());
     try {
-      const res = await fetch(`/api/exam-analysis/${detail.id}/analyze-extended`, {
+      const res = await fetch(`/api/exam-analysis/${startId}/analyze-extended`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ agents: ['commentary'], forceRegenerate: !!commentary, includeNearby, includeYearCompare }),
       });
+      // 사용자가 다른 시험지로 전환했으면 응답 무시 (UI/toast/refresh 모두 영향 X)
+      if (startId !== detail.id) return;
       if (!res.ok) {
         const err = await res.json();
         toast.error(err.error?.message || '총평 생성에 실패했습니다');
@@ -105,10 +112,13 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
       toast.success('총평이 생성되었습니다');
       onRefresh();
     } catch {
-      toast.error('총평 생성 중 오류가 발생했습니다');
+      if (startId === detail.id) toast.error('총평 생성 중 오류가 발생했습니다');
     } finally {
-      setCommentaryLoading(false);
-      setCommentaryStartTime(null);
+      // 같은 시험지에서만 로딩 해제 (다른 시험지로 전환된 경우는 useEffect reset이 처리)
+      if (startId === detail.id) {
+        setCommentaryLoading(false);
+        setCommentaryStartTime(null);
+      }
     }
   };
 
