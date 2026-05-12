@@ -100,40 +100,33 @@ export async function POST(request: NextRequest, { params }: Params) {
         }
         const totalQ = latestAnalysis.totalQuestions ?? questions.length;
 
+        // 블로그 글은 분석 화면과 동일하게 '난이도 분포' + '능력 영역 분포' 두 차트만 사용.
+        // 옛 글에는 type_radar/combined_radar/topic_bar 토큰이 본문에 남아있을 수 있으므로,
+        // AI가 실수로 다시 생성하더라도 깨지지 않게 제거 처리.
         const chartTokenMap: Record<string, { url: string; alt: string; caption: string }> = {
           '{{CHART:difficulty}}': {
             url: `${baseUrl}/api/exam-analysis/${id}/chart/difficulty`,
             alt: '난이도 분포',
             caption: `▲ ${totalQ}문항 난이도 분포`,
           },
-          '{{CHART:type_radar}}': {
-            url: `${baseUrl}/api/exam-analysis/${id}/chart/type-radar`,
-            alt: '출제 영역 분포',
-            caption: '▲ 교육과정 영역별 출제 비중',
-          },
           '{{CHART:ability_radar}}': {
             url: `${baseUrl}/api/exam-analysis/${id}/chart/ability-radar`,
             alt: '능력 영역 분포',
             caption: '▲ 수학 능력 영역별 분포',
           },
-          '{{CHART:combined_radar}}': {
-            url: `${baseUrl}/api/exam-analysis/${id}/chart/combined-radar`,
-            alt: '출제 영역 및 능력 영역 분포',
-            caption: '▲ 출제 영역(좌) · 능력 영역(우) 분포',
-          },
-          '{{CHART:topic_bar}}': {
-            url: `${baseUrl}/api/exam-analysis/${id}/chart/topic-bar`,
-            alt: '단원별 출제 현황',
-            caption: '▲ 단원별 문항 수 및 배점',
-          },
         };
+
+        // 폐지된 토큰 — AI가 출력해도 흔적 없이 제거
+        const RETIRED_CHART_TOKENS = ['{{CHART:type_radar}}', '{{CHART:combined_radar}}', '{{CHART:topic_bar}}'];
 
         let htmlContent = article.content;
         for (const [token, chart] of Object.entries(chartTokenMap)) {
-          htmlContent = htmlContent.replace(
-            token,
+          htmlContent = htmlContent.split(token).join(
             `<img src="${chart.url}" alt="${chart.alt}" style="max-width: 100%; height: auto;" /><p style="text-align: center; color: #64748B; font-size: 13px;">${chart.caption}</p>`,
           );
+        }
+        for (const token of RETIRED_CHART_TOKENS) {
+          htmlContent = htmlContent.split(token).join('');
         }
 
         const resultData = {

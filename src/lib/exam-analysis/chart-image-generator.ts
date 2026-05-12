@@ -624,39 +624,28 @@ export async function svgToPng(svg: string, width = CHART_WIDTH): Promise<Buffer
 
 // ── 전체 차트 이미지 생성 (한번에) ──
 
+// 새 글은 difficulty + abilityRadar 두 차트만 사용 (분석 화면과 동일 구성).
+// typeRadar/combinedRadar/topicBar는 옛 글 호환을 위해 chart 라우트에서 서빙은 유지하지만
+// 새로 생성하지 않음.
 export interface ChartImages {
   difficulty: string; // base64 PNG
-  typeRadar: string;
   abilityRadar: string;
-  combinedRadar: string; // 좌우 통합
-  topicBar: string;
 }
 
 export async function generateAllChartImages(
   summary: { difficulty_distribution: Record<string, number>; type_distribution: Record<string, number> },
   questions: AnalyzedQuestion[],
 ): Promise<ChartImages> {
-  const [diffSvg, radarSvg, abilityRadarSvg, combinedRadarSvg, barSvg] = [
-    generateDifficultyDonutSvg(summary.difficulty_distribution),
-    generateTypeRadarSvg(summary.type_distribution),
-    generateAbilityRadarSvg(questions),
-    generateCombinedRadarSvg(summary.type_distribution, questions),
-    generateTopicBarSvg(questions),
-  ];
+  const diffSvg = generateDifficultyDonutSvg(summary.difficulty_distribution);
+  const abilityRadarSvg = generateAbilityRadarSvg(questions);
 
-  const [diffPng, radarPng, abilityPng, combinedPng, barPng] = await Promise.all([
+  const [diffPng, abilityPng] = await Promise.all([
     svgToPng(diffSvg),
-    svgToPng(radarSvg),
     svgToPng(abilityRadarSvg),
-    svgToPng(combinedRadarSvg, COMBINED_WIDTH),
-    svgToPng(barSvg),
   ]);
 
   return {
     difficulty: diffPng.toString('base64'),
-    typeRadar: radarPng.toString('base64'),
     abilityRadar: abilityPng.toString('base64'),
-    combinedRadar: combinedPng.toString('base64'),
-    topicBar: barPng.toString('base64'),
   };
 }
