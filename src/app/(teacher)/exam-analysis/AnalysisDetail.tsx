@@ -208,26 +208,40 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
                 >
                   <div className="flex flex-col items-center gap-1.5">
                     <span className="text-[10px] font-semibold text-slate-500">시험 난이도</span>
-                    <div className="flex gap-0.5">
-                      {[1, 2, 3, 4, 5].map(level => {
-                        const isActive = level === diffLevel;
-                        const color = DIFFICULTY_BAR_COLORS[level - 1];
-                        return (
-                          <div
-                            key={level}
-                            className={`w-6 h-6 rounded-sm flex items-center justify-center text-[10px] font-bold transition-all ${
-                              isActive ? 'ring-2 ring-offset-1 shadow-sm scale-110' : 'opacity-25'
-                            }`}
-                            style={{
-                              backgroundColor: color,
-                              color: '#fff',
-                              ...(isActive ? { boxShadow: `0 0 0 1.5px #fff, 0 0 0 3px ${activeColor}` } : {}),
-                            }}
-                          >
-                            {level}
-                          </div>
-                        );
-                      })}
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex gap-0.5">
+                        {[1, 2, 3, 4, 5].map(level => {
+                          const isActive = level === diffLevel;
+                          const color = DIFFICULTY_BAR_COLORS[level - 1];
+                          return (
+                            <div
+                              key={level}
+                              className={`w-6 h-6 rounded-sm flex items-center justify-center text-[10px] font-bold transition-all ${
+                                isActive ? 'ring-2 ring-offset-1 shadow-sm scale-110' : 'opacity-25'
+                              }`}
+                              style={{
+                                backgroundColor: color,
+                                color: '#fff',
+                                ...(isActive ? { boxShadow: `0 0 0 1.5px #fff, 0 0 0 3px ${activeColor}` } : {}),
+                              }}
+                            >
+                              {level}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {/* ▼ 마커 — 정확한 가중평균 위치 (2.5와 2.9 미세 차이 시각화) */}
+                      <div className="relative h-1.5">
+                        <div
+                          className="absolute top-0 -translate-x-1/2 transition-all"
+                          style={{ left: `${(Math.max(1, Math.min(5, avg)) - 1) * 26 + 12}px` }}
+                          title={`정확한 가중평균: ${avg.toFixed(2)}`}
+                        >
+                          <svg width="8" height="6" viewBox="0 0 8 6" aria-hidden="true">
+                            <polygon points="4,0 0,6 8,6" fill={activeColor} />
+                          </svg>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div className="border-l pl-3" style={{ borderColor: `${activeColor}30` }}>
