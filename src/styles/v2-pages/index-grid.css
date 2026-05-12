@@ -1,0 +1,88 @@
+/* /v2 페이지 인덱스 — 23개 페이지 카드 그리드 */
+
+.v2-index-section {
+  margin-bottom: 28px;
+}
+
+.v2-index-h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+  padding: 6px 0 10px;
+  margin: 8px 0 14px;
+  border-bottom: 1.5px solid var(--line);
+}
+.v2-index-h2 .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+}
+.v2-index-h2 .count {
+  margin-left: 4px;
+  background: var(--bg);
+  color: var(--ink-3);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 99px;
+}
+
+.v2-index-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.v2-index-card {
+  display: block;
+  padding: 14px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-r-sm);
+  text-decoration: none;
+  color: var(--ink);
+  transition: all 0.15s ease;
+}
+.v2-index-card:hover {
+  border-color: var(--color-indigo-200);
+  box-shadow: var(--shadow-card-md);
+  transform: translateY(-1px);
+}
+.v2-index-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.v2-index-card-head .emoji {
+  font-size: 20px;
+  line-height: 1;
+}
+.v2-index-card-head .variant {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 99px;
+  letter-spacing: 0.04em;
+}
+.v2-index-card-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.v2-index-card-note {
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+.v2-index-card-href {
+  font-size: 10px;
+  color: var(--ink-4);
+  margin-top: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}

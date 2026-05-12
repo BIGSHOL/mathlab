@@ -5,6 +5,8 @@ export type AppShellProps = {
   children: React.ReactNode;
   /** 사이드바 없이 single column 으로 렌더 */
   noSide?: boolean;
+  /** 추가 클래스명 (예: 'admin' — slate 사이드바 테마) */
+  className?: string;
 };
 
 /**
@@ -16,10 +18,14 @@ export type AppShellProps = {
  *     <Topbar title="대시보드" />
  *     <div className="main">...</div>
  *   </AppShell>
+ *
+ *   {admin slate 테마}
+ *   <AppShell className="admin" sidebar={<Sidebar groups={ADMIN_NAV} />}>...</AppShell>
  */
-export function AppShell({ sidebar, children, noSide }: AppShellProps) {
+export function AppShell({ sidebar, children, noSide, className }: AppShellProps) {
+  const cls = ['app', noSide ? 'no-side' : null, className].filter(Boolean).join(' ');
   return (
-    <div className={`app${noSide ? ' no-side' : ''}`}>
+    <div className={cls}>
       {!noSide && sidebar}
       <div>{children}</div>
     </div>

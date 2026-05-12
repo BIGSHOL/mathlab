@@ -226,6 +226,64 @@ import { formatGrade, formatGradeShort, getInitial } from '@/lib/utils/activity'
 - 새 페이지에서 요일, 활동레벨, 정답률 색상, 학년 포맷 등이 필요할 때 이 유틸을 사용할 것
 - 페이지 로컬에 동일 로직을 별도 정의하지 말 것
 
+### 11. Prisma `Json?` 필드 — 타입 캐스팅 절대 금지, 진입부 정규화 필수
+
+**원칙: Prisma `Json?` 필드는 런타임에 어떤 JSON 값(객체/배열/문자열/null)이든 들어올 수 있다. 저장 포맷이 시간에 따라 진화하면 동일 필드에 여러 형태가 혼재하므로, 구체 타입으로 캐스팅하면 컴파일러를 속여 런타임 `TypeError`를 만든다.**
+
+**❌ 금지 — 컴파일러를 속이는 거짓 캐스팅:**
+```ts
+// 타입 선언에 거짓말
+interface Input { examScope: string[] | null }   // ❌ DB에는 객체도 들어 있다
+
+// 호출부에서 강제 캐스팅
+examScope: examPaper.examScope as string[] | null   // ❌ 거짓을 통과시킴
+
+// 배열 메서드 직접 호출
+examPaper.examScope?.join(', ')                     // ❌ 객체면 즉시 TypeError
+metadata.items.map(...)                             // ❌ items가 정말 배열인가?
+```
+
+**✅ 권장 — 함수 진입부에서 한 번 정규화 후, 정규화된 값만 사용:**
+```ts
+// 타입 선언은 정직하게 unknown
+interface Input { examScope: unknown }
+
+// 함수 시작 지점에서 정규화
+const examScopeTopics: string[] = (() => {
+  const raw = examPaper.examScope;
+  if (Array.isArray(raw)) return raw as string[];                          // 레거시 string[]
+  if (raw && typeof raw === 'object' && Array.isArray((raw as { topics?: unknown }).topics)) {
+    return (raw as { topics: string[] }).topics;                           // 신형 { topics: [...] }
+  }
+  return [];
+})();
+const scopeLabel = examScopeTopics.length ? examScopeTopics.join(', ') : '미지정';
+```
+
+**검증 순서 — `.join`/`.map`/`.length`/`.includes` 등 배열 메서드 호출 전 반드시:**
+1. `Array.isArray(raw)` — 진짜 배열인지 확인
+2. `raw && typeof raw === 'object'` — 객체 여부 + null 체크 동시에
+3. Optional chaining(`raw?.field`)만으로는 부족하다 — 타입까지 확인할 것
+
+**해당 필드 목록 (현재 프로젝트의 주요 `Json?` 필드):**
+- `ExamPaper.examScope` — 신형 `{ topics, examYear, examSemester, examCategory }` 객체 vs 레거시 `string[]`
+- `Question.diagramSpec` — `DiagramSpec` 객체 vs `DiagramParam[]` 배열 (런타임 다형성, `resolveDiagramSpec()` 사용)
+- `Question.choices` — `string[]` 또는 null
+- `Test.questionIds`, `QuizSession.questionIds`, `*HomeworkPlan.questionIds` — `string[]` (중간테이블 전환기, 헬퍼 `getTestQuestionIds()` 등 사용)
+- 기타 모든 스키마의 `Json?` 필드
+
+**위반 시 실제 사례 (2026-05-12 핫픽스):**
+- [article-generator.ts](src/lib/exam-analysis/article-generator.ts)이 `examScope: string[] | null`로 거짓 타입 선언
+- [generate-article/route.ts](src/app/api/exam-analysis/[id]/generate-article/route.ts)이 `as string[] | null`로 거짓 캐스팅
+- `examScope?.join(', ')` 호출 → 신형 객체 시험지에서 `TypeError: examScope?.join is not a function` → API 500 → "기출 분석 글 작성" modal이 "준비 중..."에서 무한 잔류
+- 동일 프로젝트의 [analyze/route.ts:84-100](src/app/api/exam-analysis/[id]/analyze/route.ts:84), [nearby-count/route.ts:45,82](src/app/api/exam-analysis/nearby-count/route.ts:45), [ExamPaperList.tsx:82-87](src/components/exam-analysis/ExamPaperList.tsx:82)은 이미 안전 정규화 패턴 적용됨 — **새 코드는 이 패턴을 반드시 따를 것**
+
+**스키마 진화 시 체크리스트:**
+- `Json?` 필드의 저장 포맷을 바꿀 때 (예: `string[]` → `{ topics, ...meta }`)
+  - **모든 소비 지점**(읽는 곳)을 grep으로 찾아 정규화 패턴 적용 여부 확인
+  - 기존 데이터 마이그레이션 없이 dual-format 운용하면 반드시 정규화 헬퍼 통과
+  - 검색 명령: `grep -rn "필드명" src/ --include="*.ts" --include="*.tsx"`
+
 ## 프로젝트 구조
 
 ```
