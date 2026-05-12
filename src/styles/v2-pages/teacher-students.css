@@ -1,0 +1,110 @@
+/* teacher-students-hifi.html V2 (마스터-디테일) 페이지 고유 스타일 */
+
+.fchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: 99px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--ink-2);
+}
+.fchip.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.delta-down { color: var(--danger); font-weight: 700; }
+.delta-flat { color: var(--ink-4); font-weight: 700; }
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 0;
+  min-height: 720px;
+}
+.detail-list {
+  border-right: 1px solid var(--line);
+  background: var(--bg);
+  overflow-y: auto;
+  max-height: 720px;
+}
+.detail-list .ditem {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line-2);
+  cursor: pointer;
+}
+.detail-list .ditem:hover { background: var(--bg-2); }
+.detail-list .ditem.active {
+  background: var(--bg-2);
+  border-left: 3px solid var(--primary);
+  padding-left: 11px;
+}
+.detail-list .ditem .nm { font-weight: 700; font-size: 13px; }
+.detail-list .ditem .meta { font-size: 11px; color: var(--ink-3); }
+.detail-list .ditem .pct {
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.detail-content {
+  padding: 24px;
+  overflow-y: auto;
+  max-height: 720px;
+  min-width: 0;
+}
+.detail-content h2 { white-space: nowrap; }
+
+.skill-row {
+  display: grid;
+  grid-template-columns: 160px 1fr 70px;
+  gap: 12px;
+  align-items: center;
+  padding: 7px 0;
+}
+.skill-row .lb { font-size: 12px; font-weight: 600; }
+.skill-row .vl {
+  font-size: 12px; font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.perf-bar {
+  height: 8px;
+  background: var(--line-2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.perf-bar > i { display: block; height: 100%; }
+
+.tl-row {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--line);
+}
+.tl-row:last-child { border: none; }
+.tl-row .tm {
+  font-size: 11px; color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.tl-row .ev { font-size: 13px; font-weight: 600; }
+.tl-row .ev.act { color: var(--primary); }
+.tl-row .ev .sub {
+  display: block;
+  font-size: 11px;
+  color: var(--ink-3);
+  font-weight: 400;
+  margin-top: 2px;
+}

@@ -1,0 +1,57 @@
+/* teacher-exam-analysis-hifi.html V2 (출제 매트릭스) 페이지 고유 스타일 */
+
+.matrix {
+  display: grid;
+  gap: 3px;
+  font-size: 11px;
+  overflow-x: auto;
+}
+.matrix .col-lb {
+  padding: 6px 4px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink-3);
+}
+.matrix .row-lb {
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.matrix .cell {
+  aspect-ratio: 1.6/1;
+  min-height: 32px;
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 11px;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.matrix .cell:hover {
+  transform: scale(1.12);
+  z-index: 2;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+.freq-0 { background: var(--line-2); color: var(--ink-3); }
+.freq-1 { background: #DBEAFE; color: #1E40AF; }
+.freq-2 { background: #93C5FD; color: #1E3A8A; }
+.freq-3 { background: #3B82F6; color: #fff; }
+.freq-4 { background: #1E40AF; color: #fff; }
+.freq-5 { background: #1E3A8A; color: #FBBF24; box-shadow: 0 0 0 2px #FBBF24 inset; }
+
+.freq-legend {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.freq-legend .sw {
+  width: 18px;
+  height: 12px;
+  border-radius: 3px;
+}
