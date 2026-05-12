@@ -3,7 +3,7 @@
  * 트리아지 — 위험 학생 우선 + KPI 4개 + 오늘 일정 + 우수 학생.
  */
 import { AppShell, Sidebar, Topbar, TEACHER_NAV } from '@/components/layout-v2';
-import { Button, Chip, StatTile } from '@/components/ui-v2';
+import { Button, Chip } from '@/components/ui-v2';
 import '@/styles/v2-pages/teacher-dashboard.css';
 
 // TODO: Prisma — Classroom + Student + risk-score 집계
