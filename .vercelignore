@@ -1,6 +1,6 @@
 /data/
 e2e/
-docs/
+/docs/
 contracts/
 *.pdf
 .claude/
