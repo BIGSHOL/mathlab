@@ -107,13 +107,15 @@ export async function runExtendedAnalysis(params: {
       if (agentType === 'learning') learningPlan = agentResult as unknown as LearningPlan;
 
       // DB 저장 — _meta에 에이전트별 프롬프트 버전 기록 (버전별 품질 비교용)
+      // 폴백 발생 시 errorMessage 에 AI 실패 원인 기록 → orchestrator 가 다음 호출 시 캐시 무시 + 진단 정보 노출
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const jsonResult = JSON.parse(JSON.stringify(agentResult)) as any;
       jsonResult._meta = { promptVersion: agent.promptVersion, generatedAt: new Date().toISOString() };
+      const fallbackMsg = agent.lastAiFailure ? `AI 실패(폴백): ${agent.lastAiFailure}` : null;
       await prisma.examAnalysisExtension.upsert({
         where: { analysisId_agentType: { analysisId, agentType } },
-        create: { analysisId, agentType, result: jsonResult },
-        update: { result: jsonResult, errorMessage: null },
+        create: { analysisId, agentType, result: jsonResult, errorMessage: fallbackMsg },
+        update: { result: jsonResult, errorMessage: fallbackMsg },
       });
 
       results.push({ agentType, result: agentResult, status: 'completed' });
@@ -167,13 +169,15 @@ export async function runExtendedAnalysis(params: {
 
       const agentResult = await agent.run(input);
 
+      // 폴백 발생 시 errorMessage 에 AI 실패 원인 기록 → 다음 호출 시 캐시 무시 + 진단 정보 노출
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const jsonResult = JSON.parse(JSON.stringify(agentResult)) as any;
       jsonResult._meta = { promptVersion: agent.promptVersion, generatedAt: new Date().toISOString() };
+      const fallbackMsg = agent.lastAiFailure ? `AI 실패(폴백): ${agent.lastAiFailure}` : null;
       await prisma.examAnalysisExtension.upsert({
         where: { analysisId_agentType: { analysisId, agentType } },
-        create: { analysisId, agentType, result: jsonResult },
-        update: { result: jsonResult, errorMessage: null },
+        create: { analysisId, agentType, result: jsonResult, errorMessage: fallbackMsg },
+        update: { result: jsonResult, errorMessage: fallbackMsg },
       });
 
       return { agentType, result: agentResult, status: 'completed' as const };

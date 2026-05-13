@@ -12,8 +12,11 @@ import { normalizeMathText } from '@/lib/pdf-extract-engine/ai/post-processor';
 /**
  * AI 응답 객체의 모든 문자열 필드에 수식 정규화를 재귀 적용.
  * \dfrac→\frac, \text{한글} 제거, 인접 수식 글루 분리, literal \n 복원 등.
+ *
+ * CommentaryAgent 처럼 base-agent.aiAnalysis 를 오버라이드하는 에이전트에서
+ * 동일한 정규화 일관성을 유지하기 위해 export.
  */
-function deepNormalizeMath<T>(value: T): T {
+export function deepNormalizeMath<T>(value: T): T {
   if (typeof value === 'string') return normalizeMathText(value) as unknown as T;
   if (Array.isArray(value)) return value.map(deepNormalizeMath) as unknown as T;
   if (value && typeof value === 'object') {
@@ -49,6 +52,12 @@ export abstract class BaseAgent<TResult> {
   abstract readonly agentType: AgentType;
   abstract readonly temperature: number;
 
+  /**
+   * 마지막 AI 호출이 실패해서 ruleBased 폴백으로 갔다면 여기에 에러 메시지가 들어감.
+   * orchestrator 가 이 값을 읽어서 DB의 errorMessage 필드에 기록 → 다음 호출 시 캐시 무시 + 진단 정보 노출.
+   */
+  lastAiFailure: string | null = null;
+
   /** 에이전트별 프롬프트 버전 (constants.AGENT_PROMPT_VERSIONS 참조) */
   get promptVersion(): string {
     return AGENT_PROMPT_VERSIONS[this.agentType] ?? 'v0.0.0';
@@ -73,9 +82,12 @@ export abstract class BaseAgent<TResult> {
    * 에이전트 실행 (AI 우선, 실패 시 규칙 기반)
    */
   async run(input: AgentInput): Promise<TResult> {
+    this.lastAiFailure = null;
     try {
       return await this.aiAnalysis(input);
     } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      this.lastAiFailure = msg;
       console.error(`[${this.agentType}] AI 분석 실패, 규칙 기반 폴백:`, e);
       return this.ruleBased(input);
     }

@@ -6,7 +6,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { BaseAgent, type AgentInput } from './base-agent';
+import { BaseAgent, deepNormalizeMath, type AgentInput } from './base-agent';
 import type { AgentType } from '../constants';
 import { DIFFICULTY_LEGACY_MAP, ABILITY_DOMAIN_LABELS } from '../constants';
 import type { BasicAnalysisResult, WeaknessProfile, LearningPlan } from '../types';
@@ -457,7 +457,11 @@ ${phases}
 
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 8192,
+      // 16K 토큰: 한글 본문(5~8문장 overall_comment + 3등급 score_strategies + strength/improvement
+      //   + notable_questions 3~5개 + teaching_recommendations 5개 + nearby_comparison 5줄) + JSON
+      //   오버헤드 여유. 8K 는 주변 학교 비교 데이터가 붙으면 잦은 잘림(max_tokens 종료) →
+      //   JSON 파싱 실패 → 규칙 기반 폴백 유발. (article-generator.ts 와 동일 패턴)
+      max_tokens: 16384,
       temperature: this.temperature,
       messages: [{ role: 'user', content: prompt }],
     });
@@ -469,9 +473,15 @@ ${phases}
 
     if (!text) throw new Error('AI 응답이 비어있습니다');
 
-    // JSON 추출
+    // stop_reason 이 'max_tokens' 면 응답이 잘렸을 가능성 — 진단 로그
+    if (response.stop_reason === 'max_tokens') {
+      console.warn('[commentary-agent] max_tokens 도달 — 응답이 잘렸을 수 있음. partial 파싱 시도.');
+    }
+
+    // JSON 추출 + 수식 정규화 (base-agent 와 동일 패턴: \dfrac→\frac, \text{한글} 제거, literal \n 복원)
     const result = this.extractJson(text);
-    return this.parseResponse(result, input.basicAnalysis.questions);
+    const normalized = deepNormalizeMath(result);
+    return this.parseResponse(normalized, input.basicAnalysis.questions);
   }
 
   // ── JSON 추출 (다단계 복구) ──
