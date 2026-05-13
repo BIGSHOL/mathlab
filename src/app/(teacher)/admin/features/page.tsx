@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ToggleRight, Globe, Info, Building2, RotateCcw } from 'lucide-react';
+import { ToggleRight, Globe, Building2, RotateCcw, LayoutGrid, List } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { LoadingEmptyState } from '@/components/ui/LoadingEmptyState';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -67,6 +67,8 @@ const FEATURE_META: Record<string, { description: string; impact: string }> = {
   },
 };
 
+type ViewMode = 'card' | 'table';
+
 export default function AdminFeaturesPage() {
   const { user } = useAuth();
   const isSuperAdmin = hasRoleClient(user?.role, 'SUPER_ADMIN');
@@ -75,6 +77,7 @@ export default function AdminFeaturesPage() {
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState<string | null>(null);
   const [resetting, setResetting] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
 
   // SUPER_ADMIN 전용: 지점 선택
   const [tenants, setTenants] = useState<TenantOption[]>([]);
@@ -127,7 +130,6 @@ export default function AdminFeaturesPage() {
       : `/api/admin/features/${key}`;
     const res = await fetch(url, { method: 'DELETE' });
     if (res.ok) {
-      // 리셋 후 목록 새로고침
       const listUrl = selectedTenantId
         ? `/api/admin/features?tenantId=${selectedTenantId}`
         : '/api/admin/features';
@@ -176,7 +178,7 @@ export default function AdminFeaturesPage() {
         </div>
       )}
 
-      {/* 요약 */}
+      {/* 요약 + 뷰 토글 */}
       {!loading && flags.length > 0 && (
         <div className="flex items-center gap-4 mb-6 flex-wrap">
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-slate-100 text-xs text-text-secondary">
@@ -206,6 +208,36 @@ export default function AdminFeaturesPage() {
               </>
             )}
           </div>
+          {/* 뷰 토글 */}
+          <div
+            style={{
+              display: 'flex',
+              gap: 2,
+              padding: 3,
+              background: 'var(--bg)',
+              border: '1px solid var(--line)',
+              borderRadius: 6,
+            }}
+          >
+            <button
+              onClick={() => setViewMode('card')}
+              className={`flex items-center gap-1 px-2 py-1 text-xs font-bold rounded-sm transition-colors ${
+                viewMode === 'card' ? 'bg-white text-primary shadow-sm' : 'text-text-secondary'
+              }`}
+            >
+              <LayoutGrid className="w-3 h-3" />
+              카드
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`flex items-center gap-1 px-2 py-1 text-xs font-bold rounded-sm transition-colors ${
+                viewMode === 'table' ? 'bg-white text-primary shadow-sm' : 'text-text-secondary'
+              }`}
+            >
+              <List className="w-3 h-3" />
+              테이블
+            </button>
+          </div>
         </div>
       )}
 
@@ -215,69 +247,196 @@ export default function AdminFeaturesPage() {
         icon={<ToggleRight className="w-10 h-10 text-slate-300" />}
         message="등록된 기능 플래그가 없습니다."
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {flags.map((flag) => {
-            const meta = FEATURE_META[flag.key];
-            return (
-              <Card
-                key={flag.key}
-                className={`transition-colors ${
-                  flag.enabled ? 'border-slate-200' : 'border-slate-100 bg-slate-50/50'
-                } ${flag.isOverride ? 'ring-1 ring-violet-200' : ''}`}
-              >
-                <div className="px-5 py-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <h3 className={`font-semibold whitespace-nowrap ${flag.enabled ? 'text-text-primary' : 'text-text-secondary'}`}>
-                        {flag.label}
-                      </h3>
-                      {flag.isOverride && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 font-medium whitespace-nowrap">
-                          지점 커스텀
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0 ml-3">
-                      {flag.isOverride && (
-                        <button
-                          onClick={() => handleReset(flag.key)}
-                          disabled={resetting === flag.key}
-                          className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 transition-colors disabled:opacity-50"
-                          title="글로벌 기본값으로 되돌리기"
-                        >
-                          <RotateCcw className={`w-3.5 h-3.5 ${resetting === flag.key ? 'animate-spin' : ''}`} />
-                          되돌리기
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleToggle(flag.key, !flag.enabled)}
-                        disabled={toggling === flag.key}
-                        className={`relative w-12 h-7 rounded-full transition-colors ${
-                          flag.enabled ? 'bg-primary' : 'bg-slate-300'
-                        } ${toggling === flag.key ? 'opacity-50' : ''}`}
-                      >
+        {/* ─── 테이블 뷰 (Pattern D V3 dg-bulk-table) ─── */}
+        {viewMode === 'table' ? (
+          <div className="dg-frame">
+            <table className="dg-bulk-table">
+              <thead>
+                <tr>
+                  <th>키</th>
+                  <th>기능명</th>
+                  <th>설명</th>
+                  <th>영향 범위</th>
+                  <th>상태</th>
+                  <th style={{ width: 100, textAlign: 'center' }}>토글</th>
+                  <th style={{ width: 90, textAlign: 'right' }}>액션</th>
+                </tr>
+              </thead>
+              <tbody>
+                {flags.map((flag) => {
+                  const meta = FEATURE_META[flag.key];
+                  return (
+                    <tr key={flag.key} className={flag.isOverride ? 'selected' : undefined}>
+                      <td>
                         <span
-                          className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${
-                            flag.enabled ? 'translate-x-5' : 'translate-x-0'
-                          }`}
-                        />
-                      </button>
-                    </div>
-                  </div>
-                  {meta && (
-                    <>
-                      <p className="text-sm text-text-secondary mb-1.5">{meta.description}</p>
-                      <div className="flex items-center gap-1.5 text-xs text-text-secondary">
-                        <Info className="w-3 h-3 shrink-0" />
-                        <span>{meta.impact}</span>
+                          style={{
+                            fontFamily: 'ui-monospace, monospace',
+                            fontSize: 11,
+                            color: 'var(--ink-3)',
+                            background: 'var(--bg)',
+                            padding: '2px 6px',
+                            borderRadius: 4,
+                            border: '1px solid var(--line)',
+                          }}
+                        >
+                          {flag.key}
+                        </span>
+                      </td>
+                      <td className="name">
+                        {flag.label}
+                        {flag.isOverride && (
+                          <span
+                            className="grade-tag"
+                            style={{
+                              marginLeft: 6,
+                              background: '#F5F3FF',
+                              color: '#6D28D9',
+                              borderColor: '#C4B5FD',
+                              fontSize: 10,
+                            }}
+                          >
+                            지점 커스텀
+                          </span>
+                        )}
+                      </td>
+                      <td
+                        style={{
+                          maxWidth: 280,
+                          fontSize: 12,
+                          color: 'var(--ink-2)',
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {meta?.description ?? '—'}
+                      </td>
+                      <td style={{ maxWidth: 220, fontSize: 11, color: 'var(--ink-3)', lineHeight: 1.5 }}>
+                        {meta?.impact ?? '—'}
+                      </td>
+                      <td>
+                        <span className={`status-tag ${flag.enabled ? 'active' : 'paused'}`}>
+                          {flag.enabled ? '활성' : '비활성'}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <button
+                          onClick={() => handleToggle(flag.key, !flag.enabled)}
+                          disabled={toggling === flag.key}
+                          className={`relative w-11 h-6 rounded-full transition-colors ${
+                            flag.enabled ? 'bg-primary' : 'bg-slate-300'
+                          } ${toggling === flag.key ? 'opacity-50' : ''}`}
+                          aria-label={`${flag.label} ${flag.enabled ? '비활성화' : '활성화'}`}
+                        >
+                          <span
+                            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                              flag.enabled ? 'translate-x-5' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                      </td>
+                      <td className="actions-cell">
+                        {flag.isOverride ? (
+                          <button
+                            onClick={() => handleReset(flag.key)}
+                            disabled={resetting === flag.key}
+                            className="row-act"
+                            style={{ color: '#6D28D9' }}
+                            title="글로벌 기본값으로 되돌리기"
+                          >
+                            <RotateCcw
+                              className={`w-3.5 h-3.5 inline ${resetting === flag.key ? 'animate-spin' : ''}`}
+                            />
+                            <span style={{ marginLeft: 4 }}>되돌리기</span>
+                          </button>
+                        ) : (
+                          <span style={{ color: 'var(--ink-3)', fontSize: 10 }}>—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            <div className="dg-bulk-foot">
+              <span>
+                {flags.length}개 기능 · 활성 <b style={{ color: 'var(--success)' }}>{enabledCount}</b>{' '}
+                · 비활성 <b>{flags.length - enabledCount}</b>
+                {isViewingTenant && overrideCount > 0 && (
+                  <>
+                    {' · '}지점 커스텀 <b style={{ color: '#6D28D9' }}>{overrideCount}</b>
+                  </>
+                )}
+              </span>
+              <div className="sp" />
+              <span style={{ color: 'var(--ink-3)', fontSize: 11 }}>
+                {isViewingTenant ? selectedTenant?.name : '글로벌 기본값'} 기준
+              </span>
+            </div>
+          </div>
+        ) : (
+          /* ─── 카드 뷰 (기존) ─── */
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {flags.map((flag) => {
+              const meta = FEATURE_META[flag.key];
+              return (
+                <Card
+                  key={flag.key}
+                  className={`transition-colors ${
+                    flag.enabled ? 'border-slate-200' : 'border-slate-100 bg-slate-50/50'
+                  } ${flag.isOverride ? 'ring-1 ring-violet-200' : ''}`}
+                >
+                  <div className="px-5 py-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <h3 className={`font-semibold whitespace-nowrap ${flag.enabled ? 'text-text-primary' : 'text-text-secondary'}`}>
+                          {flag.label}
+                        </h3>
+                        {flag.isOverride && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 font-medium whitespace-nowrap">
+                            지점 커스텀
+                          </span>
+                        )}
                       </div>
-                    </>
-                  )}
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+                      <div className="flex items-center gap-2 shrink-0 ml-3">
+                        {flag.isOverride && (
+                          <button
+                            onClick={() => handleReset(flag.key)}
+                            disabled={resetting === flag.key}
+                            className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 transition-colors disabled:opacity-50"
+                            title="글로벌 기본값으로 되돌리기"
+                          >
+                            <RotateCcw className={`w-3.5 h-3.5 ${resetting === flag.key ? 'animate-spin' : ''}`} />
+                            되돌리기
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleToggle(flag.key, !flag.enabled)}
+                          disabled={toggling === flag.key}
+                          className={`relative w-12 h-7 rounded-full transition-colors ${
+                            flag.enabled ? 'bg-primary' : 'bg-slate-300'
+                          } ${toggling === flag.key ? 'opacity-50' : ''}`}
+                        >
+                          <span
+                            className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${
+                              flag.enabled ? 'translate-x-5' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+                    {meta && (
+                      <>
+                        <p className="text-sm text-text-secondary mb-1.5">{meta.description}</p>
+                        <div className="flex items-center gap-1.5 text-xs text-text-secondary">
+                          <span>{meta.impact}</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </LoadingEmptyState>
     </div>
   );
