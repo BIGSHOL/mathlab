@@ -18,7 +18,6 @@ import {
   Tier,
   ProgressBarV2,
   StatTile,
-  Avatar,
   CurrencyChip,
   QuestionCard,
   ChoiceList,
@@ -223,7 +222,7 @@ export default function PreviewV2Page() {
               <ProgressBarV2 value={80} variant="xp" />
             </div>
             <div>
-              <div className="text-3 mt-8">showLabel — 자동 "3 / 30"</div>
+              <div className="text-3 mt-8">showLabel — 자동 &quot;3 / 30&quot;</div>
               <ProgressBarV2 value={3} max={30} showLabel />
             </div>
             <div>

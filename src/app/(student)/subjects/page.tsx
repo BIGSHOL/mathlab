@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ChevronRight, GraduationCap, Lock, CheckCircle, BookOpen, Sparkles } from 'lucide-react';
+import { ChevronRight, GraduationCap, CheckCircle, BookOpen, Sparkles } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { PageContainer } from '@/components/ui/PageContainer';

@@ -2,7 +2,6 @@ import {
   Star, Flame, BookOpen, Trophy, ClipboardCheck, Calculator,
   CheckCircle, XCircle, History, ArrowRight, Layers,
 } from 'lucide-react';
-import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Card } from '@/components/ui/Card';
 import { getCurrentUser } from '@/lib/auth';
 import { getViewAsUser } from '@/lib/view-as';

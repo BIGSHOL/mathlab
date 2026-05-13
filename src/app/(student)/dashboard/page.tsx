@@ -61,7 +61,7 @@ export default async function StudentDashboard({
   const hasEnrollments = enrollmentCount > 0;
 
   const courseConceptIds = activeEnrollment?.course.concepts.map((c) => c.conceptId) ?? [];
-  const totalConcepts = hasEnrollments
+  const _totalConcepts = hasEnrollments
     ? courseConceptIds.length
     : await prisma.concept.count({ where: user.grade ? { subject: { gradeLevel: user.grade } } : {} });
 

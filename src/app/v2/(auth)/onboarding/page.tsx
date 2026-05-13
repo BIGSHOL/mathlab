@@ -115,7 +115,6 @@ export default function OnboardingWizardPage() {
     }
   })();
 
-  const isLast = step === STEPS.length - 1;
   const isCompletion = step === STEPS.length - 1;
 
   return (

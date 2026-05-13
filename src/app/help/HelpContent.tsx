@@ -20,7 +20,7 @@ import { ArrowLeft } from 'lucide-react';
 import { LogoIcon } from '@/components/ui/LogoIcon';
 import { DocsLayout, DocsToc, AnchorNav } from '@/components/docs';
 import type { DocsTocGroup } from '@/components/docs';
-import type { HelpCategory, HelpItem } from '@/lib/data/help';
+import type { HelpCategory } from '@/lib/data/help';
 
 interface Props {
   backHref: string;

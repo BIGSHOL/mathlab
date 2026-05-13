@@ -251,20 +251,7 @@ export default function QueuePage() {
   const [tab, setTab] = useState<'kanban' | 'activity'>('kanban');
   const [filter, setFilter] = useState<'all' | 'mine' | 'urgent'>('all');
 
-  // 권한 가드
-  if (isLoading) {
-    return (
-      <div className="flex-1 flex items-center justify-center text-text-secondary">
-        로딩 중...
-      </div>
-    );
-  }
-  if (!user) {
-    router.push('/login');
-    return null;
-  }
-
-  // 필터 적용
+  // 필터 적용 (Hooks rule: early return 전에 호출)
   const filteredBoard = useMemo(() => {
     if (filter === 'all') return MOCK_BOARD;
     const filterFn = (card: TaskCard) => {
@@ -276,6 +263,19 @@ export default function QueuePage() {
       Object.entries(MOCK_BOARD).map(([k, v]) => [k, { ...v, cards: v.cards.filter(filterFn) }])
     ) as typeof MOCK_BOARD;
   }, [filter]);
+
+  // 권한 가드 (모든 Hooks 호출 후)
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center text-text-secondary">
+        로딩 중...
+      </div>
+    );
+  }
+  if (!user) {
+    router.push('/login');
+    return null;
+  }
 
   const totalActive =
     filteredBoard.todo.cards.length +
