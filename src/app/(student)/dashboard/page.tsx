@@ -401,6 +401,32 @@ export default async function StudentDashboard({
 
       {/* ───── Main ───── */}
       <div className="main">
+        {/* V3 GAME HUD — 시즌 배너 (시안: student-dashboard-hifi.html § V3) */}
+        {(() => {
+          const seasonNum = Math.ceil((new Date().getMonth() + 1) / 3); // 분기 = 시즌
+          const seasonNames = ['겨울 도전', '봄의 정복자', '여름 마스터', '가을 챔피언'];
+          const seasonName = seasonNames[seasonNum - 1] ?? '시즌';
+          const expPct = nextLevel.required > 0 ? Math.round((nextLevel.current / nextLevel.required) * 100) : 0;
+          const remainingXp = Math.max(0, nextLevel.required - nextLevel.current);
+          return (
+            <div className="rr-season-banner">
+              <div>
+                <div className="kicker">SEASON {seasonNum} · {seasonName}</div>
+                <div className="ttl">다음 레벨까지 {remainingXp.toLocaleString()} XP</div>
+                <div className="desc">Lv.{level + 1} 달성 시 새 칭호 + 보상 코인</div>
+                <div className="bar-row">
+                  <div className="bar-wrap"><i style={{ width: `${expPct}%` }} /></div>
+                  <div className="bar-meta">
+                    <span>{nextLevel.current.toLocaleString()} / {nextLevel.required.toLocaleString()}</span>
+                    <span>🔥 {streak}일 연속</span>
+                  </div>
+                </div>
+              </div>
+              <div className="trophy">🏆</div>
+            </div>
+          );
+        })()}
+
         {/* HERO: Next Best Action (다크 인디고 그라데이션) */}
         <div
           className="card elev"

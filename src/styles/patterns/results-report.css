@@ -590,6 +590,74 @@
   }
 }
 
+/* ═════════════ V3 게임 HUD — 시즌 배너 ═════════════
+   시안: data/refact2/pages/student-dashboard-hifi.html § V3
+   ─ 인디고 → 퍼플 → 핑크 그라데이션 + 골드 EXP 바 + 큰 🏆 이모지
+*/
+.rr-season-banner {
+  background: linear-gradient(120deg, #6366F1 0%, #8B5CF6 50%, #EC4899 100%);
+  color: #fff;
+  border-radius: var(--r-lg);
+  padding: 22px 28px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  border: none;
+}
+.rr-season-banner .kicker {
+  font-size: 11px;
+  opacity: 0.85;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+.rr-season-banner .ttl {
+  font-size: 22px;
+  font-weight: 800;
+  margin-top: 4px;
+}
+.rr-season-banner .desc {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-top: 2px;
+}
+.rr-season-banner .bar-row {
+  margin-top: 12px;
+  max-width: 360px;
+}
+.rr-season-banner .bar-wrap {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.rr-season-banner .bar-wrap > i {
+  display: block;
+  height: 100%;
+  background: #FBBF24;
+  border-radius: 99px;
+  transition: width 0.5s ease;
+}
+.rr-season-banner .bar-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  opacity: 0.9;
+  margin-top: 6px;
+}
+.rr-season-banner .trophy {
+  font-size: 88px;
+  line-height: 1;
+}
+
+@media (max-width: 640px) {
+  .rr-season-banner { grid-template-columns: 1fr; }
+  .rr-season-banner .trophy { font-size: 56px; text-align: right; }
+}
+
 /* ── Empty/Loading states ── */
 .rr-empty {
   padding: 32px 20px;
