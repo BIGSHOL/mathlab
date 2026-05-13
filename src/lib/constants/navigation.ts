@@ -27,6 +27,7 @@ import {
   FileSearch,
   CheckSquare,
   BookText,
+  ListTodo,
   type LucideIcon,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
@@ -70,6 +71,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     id: 'home', label: '홈', minRole: 'TEACHER', items: [
       { id: 'overview', label: '대시보드', href: '/overview', icon: LayoutDashboard, minRole: 'TEACHER', keywords: ['dashboard', '홈', '메인'] },
+      { id: 'queue', label: '작업 큐', href: '/queue', icon: ListTodo, minRole: 'TEACHER', keywords: ['queue', '큐', '작업', '할일', 'todo', '칸반', 'kanban', '액티비티', '피드'] },
     ],
   },
 
