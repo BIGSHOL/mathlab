@@ -792,3 +792,9 @@ body {
    data/refact2 design v0.4 § Pattern B (V1 점수 영웅)
    ============================================ */
 @import '../styles/patterns/results-report.css';
+
+/* ============================================
+   Pattern A — 위자드 빌더 (W5)
+   data/refact2 design v0.4 § Pattern A (V1 좌측 stepper · V2 가로 progress · V3 실시간 시안)
+   ============================================ */
+@import '../styles/patterns/wizard.css';
