@@ -810,3 +810,9 @@ body {
    data/refact2 design v0.4 § Pattern E (V1 칸반 · V2 간트 · V3 액티비티)
    ============================================ */
 @import '../styles/patterns/kanban-timeline.css';
+
+/* ============================================
+   Pattern D — 데이터 그리드 (W7)
+   data/refact2 design v0.4 § Pattern D (V1 스프레드시트 · V2 히트맵 · V3 일괄편집)
+   ============================================ */
+@import '../styles/patterns/data-grid.css';

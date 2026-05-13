@@ -1,0 +1,761 @@
+/* ============================================================
+   Pattern D — 데이터 그리드 + 셀 편집 (W7)
+   시안: data/refact2/pages/pattern-d-data-grid-hifi.html
+   변형 3종:
+     V1 — 스프레드시트형 (점수 일괄 입력, 셀 인라인 편집)
+     V2 — 매트릭스 히트맵 (학생 × 단원 마스터리)
+     V3 — 일괄 편집 + 선택 액션바 (학생 목록 다수 선택)
+
+   prefix: .dg-* (Data-Grid) — 충돌 방지
+   토큰 매핑:
+     시안 --success-50  → --success-bg
+     시안 --success-700 → var(--success)
+     시안 --warning     → --warn
+     시안 --warning-50  → --warn-bg
+     시안 --warning-700 → var(--warn)
+     시안 --danger-50   → --danger-bg
+     시안 --danger-700  → var(--danger)
+   ============================================================ */
+
+/* ── 공통 프레임 ── */
+.dg-frame {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.dg-topbar {
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+  background: var(--bg-2);
+}
+.dg-topbar .title {
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--ink);
+}
+.dg-topbar .meta {
+  color: var(--ink-3);
+  font-size: 13px;
+}
+.dg-topbar .sp { flex: 1; }
+
+.dg-btn {
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  border-radius: var(--r);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+.dg-btn:hover { background: var(--bg); }
+.dg-btn.primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.dg-btn.primary:hover { background: var(--primary-600); border-color: var(--primary-600); }
+.dg-btn.danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+.dg-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  background: var(--bg-2);
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dg-chip.on {
+  background: var(--primary-50);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+/* ═════════════ V1: 스프레드시트형 ═════════════ */
+.dg-v1-toolbar {
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.dg-v1-toolbar .group {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 0 8px;
+  border-right: 1px solid var(--line);
+}
+.dg-v1-toolbar .group:last-child { border-right: none; }
+.dg-v1-toolbar .lb {
+  font-size: 11px;
+  color: var(--ink-3);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+.dg-v1-toolbar .save-status {
+  font-size: 12px;
+  color: var(--success);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dg-v1-toolbar .save-status .pulse {
+  width: 8px;
+  height: 8px;
+  background: var(--success);
+  border-radius: 50%;
+  animation: dg-pulse 1.5s ease-in-out infinite;
+}
+@keyframes dg-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.dg-v1-toolbar .icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.dg-v1-toolbar .icon-btn:hover { background: var(--bg-2); color: var(--ink); }
+
+.dg-sheet-wrap {
+  overflow: auto;
+  max-height: 600px;
+  background: var(--bg-2);
+}
+.dg-sheet {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+}
+.dg-sheet thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.dg-sheet thead th {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-top: none;
+  padding: 0;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.dg-sheet thead th .h-inner {
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+}
+.dg-sheet thead th.col-idx {
+  width: 40px;
+  background: var(--bg-2);
+  position: sticky;
+  left: 0;
+  z-index: 4;
+}
+.dg-sheet thead th.col-name {
+  min-width: 110px;
+  background: var(--bg-2);
+  position: sticky;
+  left: 40px;
+  z-index: 3;
+}
+.dg-sheet thead th.col-q { min-width: 76px; }
+.dg-sheet thead th .q-num {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.dg-sheet thead th .q-meta {
+  font-size: 10px;
+  color: var(--ink-3);
+  margin-left: auto;
+  font-weight: 600;
+}
+.dg-sheet thead th.col-total {
+  background: var(--primary-50);
+  min-width: 70px;
+}
+.dg-sheet thead th.col-grade {
+  background: var(--bg-2);
+  min-width: 60px;
+}
+
+.dg-sheet tbody td {
+  border: 1px solid var(--line);
+  padding: 0;
+  height: 38px;
+  vertical-align: middle;
+}
+.dg-sheet tbody td.idx {
+  background: var(--bg-2);
+  color: var(--ink-3);
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 0 8px;
+  position: sticky;
+  left: 0;
+}
+.dg-sheet tbody td.name {
+  background: var(--bg-2);
+  padding: 0 12px;
+  font-weight: 700;
+  color: var(--ink);
+  position: sticky;
+  left: 40px;
+  z-index: 1;
+}
+.dg-sheet tbody td.name .meta {
+  color: var(--ink-3);
+  font-size: 10px;
+  font-weight: 500;
+}
+.dg-sheet tbody td.cell {
+  background: var(--bg-2);
+  position: relative;
+}
+.dg-sheet tbody td.cell .inp {
+  width: 100%;
+  height: 100%;
+  padding: 0 12px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: center;
+  font-family: inherit;
+}
+.dg-sheet tbody td.cell .inp:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--primary);
+  background: var(--primary-50);
+}
+.dg-sheet tbody td.cell.wrong .inp { color: var(--danger); }
+.dg-sheet tbody td.cell.empty {
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 6px,
+    var(--bg) 6px,
+    var(--bg) 7px
+  );
+}
+.dg-sheet tbody td.cell.selected {
+  box-shadow: inset 0 0 0 2px var(--primary);
+  background: var(--primary-50);
+}
+.dg-sheet tbody td.total {
+  background: var(--primary-50);
+  text-align: center;
+  font-weight: 800;
+  color: var(--primary);
+}
+.dg-sheet tbody td.grade {
+  background: var(--bg);
+  text-align: center;
+}
+.dg-sheet tbody td.grade .g-pill {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 800;
+}
+.dg-sheet .g-pill.A { background: var(--success-bg); color: var(--success); }
+.dg-sheet .g-pill.B { background: var(--primary-50); color: var(--primary); }
+.dg-sheet .g-pill.C { background: var(--warn-bg); color: var(--warn); }
+.dg-sheet .g-pill.D { background: var(--danger-bg); color: var(--danger); }
+.dg-sheet tbody tr:hover td { background: var(--bg); }
+.dg-sheet tbody tr:hover td.name { background: var(--bg); }
+
+.dg-v1-foot {
+  padding: 12px 20px;
+  background: var(--bg-2);
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--ink-3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.dg-v1-foot b { color: var(--ink); font-weight: 800; }
+.dg-v1-foot .sp { flex: 1; }
+.dg-v1-foot kbd {
+  padding: 1px 6px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+}
+
+/* ═════════════ V2: 매트릭스 히트맵 ═════════════ */
+.dg-heat-wrap {
+  padding: 20px 24px;
+}
+.dg-heat-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.dg-heat-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-left: auto;
+}
+.dg-heat-legend .step {
+  width: 22px;
+  height: 14px;
+  border: 1px solid var(--line);
+}
+.dg-heat-legend .lo {
+  color: var(--danger);
+  font-weight: 700;
+  margin-right: 6px;
+}
+.dg-heat-legend .hi {
+  color: var(--success);
+  font-weight: 700;
+  margin-left: 6px;
+}
+
+.dg-heat-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.dg-heat-table th {
+  padding: 8px 4px;
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--ink-3);
+  border-bottom: 1px solid var(--line);
+  vertical-align: bottom;
+}
+.dg-heat-table th.row-h {
+  text-align: left;
+  padding-left: 12px;
+  width: 130px;
+  font-weight: 800;
+  color: var(--ink);
+  font-size: 13px;
+}
+.dg-heat-table th.col-h {
+  writing-mode: horizontal-tb;
+  min-width: 70px;
+}
+.dg-heat-table th.col-h .lb {
+  display: block;
+  line-height: 1.3;
+  font-size: 10px;
+  color: var(--ink-2);
+}
+.dg-heat-table td {
+  padding: 0;
+  text-align: center;
+}
+.dg-heat-cell {
+  width: 100%;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 13px;
+  transition: transform 0.1s;
+  position: relative;
+}
+.dg-heat-cell:hover {
+  transform: scale(1.08);
+  z-index: 2;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.dg-heat-cell.selected {
+  box-shadow: inset 0 0 0 3px var(--ink);
+  z-index: 3;
+}
+
+/* 히트맵 색 단계 (CSS 변수로 노출 — JSX에서 lib 추가 옵션) */
+.dg-heat-cell[data-tone="1"] { background: #FCA5A5; color: #fff; }
+.dg-heat-cell[data-tone="2"] { background: #FED7AA; }
+.dg-heat-cell[data-tone="3"] { background: #FDE68A; }
+.dg-heat-cell[data-tone="4"] { background: #D9F99D; }
+.dg-heat-cell[data-tone="5"] { background: #86EFAC; }
+.dg-heat-cell[data-tone="6"] { background: #22C55E; color: #fff; }
+
+.dg-heat-table .name-cell {
+  text-align: left;
+  padding-left: 12px;
+  font-weight: 700;
+  font-size: 13px;
+  background: var(--bg);
+  color: var(--ink);
+  border-right: 1px solid var(--line);
+}
+.dg-heat-table .name-cell .grade {
+  font-size: 10px;
+  color: var(--ink-3);
+  font-weight: 600;
+  margin-left: 4px;
+}
+.dg-heat-table .avg-cell {
+  background: var(--bg);
+  font-weight: 800;
+  padding: 0 10px;
+  border-left: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.dg-heat-side {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 14px;
+}
+.dg-heat-detail {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px 18px;
+}
+.dg-heat-detail h4 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: var(--ink);
+}
+.dg-heat-detail .meta {
+  font-size: 12px;
+  color: var(--ink-3);
+  margin-bottom: 12px;
+}
+.dg-heat-detail .grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.dg-heat-detail .stat {
+  padding: 10px 12px;
+  background: var(--bg-2);
+  border-radius: 6px;
+  border: 1px solid var(--line);
+}
+.dg-heat-detail .stat .lb {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--ink-3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.dg-heat-detail .stat .v {
+  font-size: 20px;
+  font-weight: 800;
+  margin-top: 2px;
+  color: var(--ink);
+}
+.dg-heat-edit {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px 18px;
+}
+.dg-heat-edit h4 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--ink);
+}
+.dg-heat-edit .row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.dg-heat-edit .row:last-child { border-bottom: none; }
+.dg-heat-edit .row b {
+  font-weight: 700;
+  color: var(--ink);
+}
+.dg-heat-edit .actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+.dg-heat-edit .actions .dg-btn {
+  flex: 1;
+  justify-content: center;
+  text-align: center;
+}
+
+/* ═════════════ V3: 일괄 편집 + 선택 액션바 ═════════════ */
+.dg-bulk-toolbar {
+  padding: 14px 20px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+  background: var(--bg-2);
+}
+.dg-bulk-toolbar .search {
+  padding: 8px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  font-size: 13px;
+  min-width: 200px;
+  font-family: inherit;
+}
+.dg-bulk-toolbar .search:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.dg-bulk-actionbar {
+  background: linear-gradient(180deg, var(--ink) 0%, #111827 100%);
+  color: #fff;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.dg-bulk-actionbar .count {
+  font-weight: 800;
+  font-size: 14px;
+}
+.dg-bulk-actionbar .count b {
+  font-size: 18px;
+  color: #FCD34D;
+}
+.dg-bulk-actionbar .clear {
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: underline;
+  font-size: 12px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+}
+.dg-bulk-actionbar .clear:hover { color: rgba(255, 255, 255, 0.9); }
+.dg-bulk-actionbar .sp { flex: 1; }
+.dg-bulk-actionbar .btn-d {
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+}
+.dg-bulk-actionbar .btn-d:hover { background: rgba(255, 255, 255, 0.2); }
+.dg-bulk-actionbar .btn-d.danger {
+  background: var(--danger);
+  border-color: var(--danger);
+}
+.dg-bulk-actionbar .btn-d.primary {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.dg-bulk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.dg-bulk-table thead th {
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ink-3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.dg-bulk-table thead th.check {
+  width: 40px;
+  padding-left: 16px;
+}
+.dg-bulk-table thead th.sortable {
+  cursor: pointer;
+}
+.dg-bulk-table thead th.sortable:hover { color: var(--ink); }
+.dg-bulk-table thead th .sort {
+  color: var(--primary);
+  margin-left: 4px;
+}
+.dg-bulk-table tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+  color: var(--ink);
+}
+.dg-bulk-table tbody td.check { padding-left: 16px; }
+.dg-bulk-table tbody tr:hover { background: var(--bg); }
+.dg-bulk-table tbody tr.selected { background: var(--primary-50); }
+.dg-bulk-table tbody tr.selected:hover { background: var(--primary-100); }
+.dg-bulk-table .check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+.dg-bulk-table .name { font-weight: 700; }
+.dg-bulk-table .grade-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: var(--bg);
+  color: var(--ink-3);
+  border: 1px solid var(--line);
+  font-weight: 600;
+}
+.dg-bulk-table .status-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-weight: 700;
+}
+.dg-bulk-table .status-tag.active {
+  background: var(--success-bg);
+  color: var(--success);
+  border: 1px solid var(--success);
+}
+.dg-bulk-table .status-tag.paused {
+  background: var(--warn-bg);
+  color: var(--warn);
+  border: 1px solid var(--warn);
+}
+.dg-bulk-table .status-tag.risk {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
+.dg-bulk-table .editable {
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: text;
+  display: inline-block;
+  min-width: 40px;
+}
+.dg-bulk-table .editable:hover {
+  border-color: var(--line);
+  background: var(--bg-2);
+}
+.dg-bulk-table .editable.editing {
+  border-color: var(--primary);
+  background: var(--primary-50);
+}
+.dg-bulk-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.dg-bulk-table .actions-cell { text-align: right; }
+.dg-bulk-table .row-act {
+  display: inline-block;
+  padding: 4px 8px;
+  color: var(--ink-3);
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 11px;
+  background: none;
+  border: none;
+  font-family: inherit;
+}
+.dg-bulk-table .row-act:hover {
+  background: var(--bg-2);
+  color: var(--ink);
+}
+
+.dg-bulk-foot {
+  padding: 12px 20px;
+  background: var(--bg-2);
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  align-items: center;
+  color: var(--ink-3);
+  flex-wrap: wrap;
+}
+.dg-bulk-foot .pager {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.dg-bulk-foot .pager .pg {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.dg-bulk-foot .pager .pg:hover { background: var(--bg-2); color: var(--ink); }
+.dg-bulk-foot .pager .pg.on {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.dg-bulk-foot .sp { flex: 1; }
+
+/* ── 반응형 ── */
+@media (max-width: 1100px) {
+  .dg-heat-side { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 720px) {
+  .dg-bulk-actionbar { gap: 8px; padding: 10px 14px; }
+  .dg-bulk-actionbar .btn-d { padding: 6px 10px; font-size: 11px; }
+}
