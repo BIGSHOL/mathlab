@@ -798,3 +798,9 @@ body {
    data/refact2 design v0.4 § Pattern A (V1 좌측 stepper · V2 가로 progress · V3 실시간 시안)
    ============================================ */
 @import '../styles/patterns/wizard.css';
+
+/* ============================================
+   Pattern C — 마스터-디테일 (W6)
+   data/refact2 design v0.4 § Pattern C (V1 트리+디테일 · V2 리스트+탭 · V3 카드 그리드)
+   ============================================ */
+@import '../styles/patterns/master-detail.css';
