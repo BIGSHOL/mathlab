@@ -12,8 +12,35 @@ import Anthropic from '@anthropic-ai/sdk';
 import katex from 'katex';
 import type { AnalyzedQuestion } from './types';
 import type { CommentaryResult } from './agents/commentary-agent';
-import { QUESTION_TYPE_LABELS, DIFFICULTY_LEGACY_MAP } from './constants';
+import { DIFFICULTY_LEGACY_MAP, QUESTION_TYPE_LABELS } from './constants';
 import { normalizeMathText } from '@/lib/pdf-extract-engine/ai/post-processor';
+import {
+  classifySignals,
+  buildBlueprint,
+  type Archetype,
+  type ChartId,
+  type ClosingTone,
+  type GradeBand,
+} from './article-archetype';
+import {
+  composeBlueprint,
+  type ArticleVariables,
+  type BuildChunkContext,
+} from './article-modules';
+import {
+  buildSystemBase,
+  buildArchetypeHeader,
+  buildFactsAndDataBlock,
+  buildSectionGuides,
+  buildFormatRules,
+  buildOutputSchema,
+  assembleArticlePrompt,
+  type FactsBlockInput,
+} from './article-prompt-builders';
+import {
+  checkAntiPatterns,
+  type AntiPatternWarning,
+} from './article-anti-patterns';
 
 // ── 영문 enum 차단 (UI normalizeKoreanLabels 와 동일) ──
 const ARTICLE_ENUM_KO_MAP: Record<string, string> = {
@@ -151,12 +178,25 @@ export interface ArticleGenerationInput {
   commentary: CommentaryResult;
 }
 
+export interface BlueprintInfo {
+  archetype: Archetype;
+  reason: string;
+  tone: ClosingTone;
+  charts: ChartId[];
+  gradeBands: GradeBand[];
+  selectedModuleIds: string[];
+}
+
 export interface ArticleGenerationResult {
   title: string;
   content: string;       // 마크다운 ({{CHART:*}} 토큰 포함)
   tags: string[];
   metaDescription: string;
   generatedAt: string;
+  // ── 신규 (하위 호환을 위해 optional) ──
+  archetype?: Archetype;
+  blueprintInfo?: BlueprintInfo;
+  antiPatternWarnings?: AntiPatternWarning[];
 }
 
 // ── 분석 인사이트 헬퍼 (블로그 본문 정성 표현용) ──
