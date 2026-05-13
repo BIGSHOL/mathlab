@@ -3,7 +3,6 @@
  *
  * 운영 재개 시 git revert (5413cfa4 이전 LandingV1으로 복원).
  */
-import Link from 'next/link';
 
 export const metadata = {
   title: '사이트 점검 중 — Injaewon MathLAB',
@@ -128,26 +127,6 @@ export default function MaintenancePage() {
           </div>
         </div>
 
-        {/* 운영자 로그인 — 작게 */}
-        <div
-          style={{
-            marginTop: 32,
-            paddingTop: 20,
-            borderTop: '1px solid var(--line)',
-          }}
-        >
-          <Link
-            href="/login"
-            style={{
-              fontSize: 12,
-              color: 'var(--ink-3)',
-              textDecoration: 'none',
-              fontWeight: 500,
-            }}
-          >
-            로그인 →
-          </Link>
-        </div>
       </div>
     </div>
   );
