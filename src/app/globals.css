@@ -804,3 +804,9 @@ body {
    data/refact2 design v0.4 § Pattern C (V1 트리+디테일 · V2 리스트+탭 · V3 카드 그리드)
    ============================================ */
 @import '../styles/patterns/master-detail.css';
+
+/* ============================================
+   Pattern E — 칸반 / 타임라인 (W6)
+   data/refact2 design v0.4 § Pattern E (V1 칸반 · V2 간트 · V3 액티비티)
+   ============================================ */
+@import '../styles/patterns/kanban-timeline.css';
