@@ -452,6 +452,144 @@
   cursor: not-allowed;
 }
 
+/* ═════════════ 프로필 헤더 (V1) ═════════════
+   시안: data/refact2/pages/student-profile-hifi.html § V1 `.prof-hero`
+   ─ 인디고 → 퍼플 그라데이션 + 골드 EXP 바 + 우측 sub-cards (연속/등수)
+   ─ profile 페이지에서 헤더만 활용. Hero score 와 구별됨.
+*/
+.rr-prof-hero {
+  background: linear-gradient(135deg, #1E1B4B 0%, #4338CA 60%, #7C3AED 100%);
+  border-radius: 22px;
+  color: #fff;
+  padding: 28px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 24px;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+.rr-prof-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 85% 30%, rgba(251, 191, 36, 0.25), transparent 60%);
+  pointer-events: none;
+}
+.rr-prof-hero > * { position: relative; z-index: 1; }
+
+.rr-prof-av {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #A78BFA, #7C3AED);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 900;
+  font-size: 48px;
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.2),
+    0 0 0 8px rgba(251, 191, 36, 0.4);
+}
+
+.rr-prof-name {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  margin-top: 6px;
+}
+
+.rr-prof-sub {
+  font-size: 13px;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+
+.rr-prof-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: none;
+}
+.rr-prof-chip.gold {
+  background: rgba(251, 191, 36, 0.2);
+  color: #FBBF24;
+}
+
+.rr-prof-lvl-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  opacity: 0.85;
+  margin-top: 16px;
+}
+.rr-prof-lvl-row b { font-weight: 700; letter-spacing: 0.05em; }
+
+.rr-prof-lvl-bar {
+  height: 10px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+.rr-prof-lvl-bar > i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #FBBF24, #FDE047);
+  border-radius: 99px;
+  transition: width 0.5s ease;
+}
+
+.rr-prof-side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: right;
+}
+.rr-prof-side .pill {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 8px 14px;
+  min-width: 110px;
+}
+.rr-prof-side .pill .l {
+  font-size: 10px;
+  opacity: 0.7;
+}
+.rr-prof-side .pill .v {
+  font-size: 22px;
+  font-weight: 900;
+  margin-top: 2px;
+}
+.rr-prof-side .pill .v.gold { color: #FBBF24; }
+
+@media (max-width: 768px) {
+  .rr-prof-hero {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+  }
+  .rr-prof-av {
+    width: 80px;
+    height: 80px;
+    font-size: 32px;
+  }
+  .rr-prof-name { font-size: 22px; }
+  .rr-prof-side {
+    grid-column: 1 / 3;
+    flex-direction: row;
+    text-align: left;
+    justify-content: space-between;
+  }
+}
+
 /* ── Empty/Loading states ── */
 .rr-empty {
   padding: 32px 20px;

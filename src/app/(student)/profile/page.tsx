@@ -439,103 +439,82 @@ export default async function ProfilePage({
     </div>
   );
 
+  // Pattern B V1 풍 프로필 헤더용 데이터
+  const gradeLabel = (() => {
+    if (!dbUser?.grade) return null;
+    if (dbUser.grade <= 6) return `초${dbUser.grade}`;
+    if (dbUser.grade <= 9) return `중${dbUser.grade - 6}`;
+    return `고${dbUser.grade - 9}`;
+  })();
+  const expPct = nextLevel.required > 0 ? Math.round((nextLevel.current / nextLevel.required) * 100) : 0;
+
   return (
     <PageContainer maxWidth="lg">
       <div className="flex flex-col gap-6">
-      {/* ──── 상단: 프로필 헤더 & 학습 스트릭 ──── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4">
-        {/* 1. 프로필 정보 (좌측) */}
-        <Card padding="md" className="rounded-sm flex flex-col justify-between" style={bgStyle}>
-          <div className="flex items-center gap-4 mb-4">
-            <AvatarEffect effectType={effectType} size={56}>
-              <AvatarAccessory hatType={hatType} glassesType={glassesType} size={56}>
-                <UserAvatar name={user.name} badgeIcon={profile?.representativeBadge?.icon} size="xl" frameStyle={frameStyle} avatarSrc={avatarSrc} />
-              </AvatarAccessory>
-            </AvatarEffect>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-lg font-bold truncate" style={nameColorStyle || undefined}>
-                  {user.name}
-                </h1>
-                <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-xp-gold to-amber-500 text-white text-xs font-bold shrink-0">
-                  Lv.{level}
-                </span>
-                {titleText && (
-                  <span className="text-xs font-medium text-slate-500 shrink-0">{titleText}</span>
-                )}
-                {dbUser?.grade && (
-                  <span className="text-xs text-text-secondary shrink-0">초등 {dbUser.grade}학년</span>
-                )}
-              </div>
-              <div className="mt-2">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-xs text-text-secondary">Lv.{level} → Lv.{level + 1}</span>
-                  <span className="text-xs text-text-secondary">{nextLevel.current}/{nextLevel.required} XP</span>
-                </div>
-                <ProgressBar
-                  value={nextLevel.current}
-                  max={nextLevel.required}
-                  color="bg-gradient-to-r from-xp-gold to-amber-500"
-                />
-              </div>
-            </div>
+      {/* ──── 상단: V1 프로필 헤더 (시안: student-profile-hifi.html § V1) ──── */}
+      <div className="rr-prof-hero" style={bgStyle}>
+        <div className="rr-prof-av">
+          <AvatarEffect effectType={effectType} size={120}>
+            <AvatarAccessory hatType={hatType} glassesType={glassesType} size={120}>
+              <UserAvatar name={user.name} badgeIcon={profile?.representativeBadge?.icon} size="xl" frameStyle={frameStyle} avatarSrc={avatarSrc} />
+            </AvatarAccessory>
+          </AvatarEffect>
+        </div>
+        <div>
+          <div className="flex gap-2 flex-wrap mb-2">
+            <span className="rr-prof-chip gold">⭐ Lv.{level}</span>
+            {gradeLabel && <span className="rr-prof-chip">{gradeLabel}</span>}
+            {titleText && <span className="rr-prof-chip">{titleText}</span>}
           </div>
+          <div className="rr-prof-name" style={nameColorStyle || undefined}>{user.name}</div>
+          <div className="rr-prof-sub">총 XP {totalXp.toLocaleString()} · {totalLearningDays}일 학습</div>
+          <div className="rr-prof-lvl-row">
+            <span><b>Lv.{level} → Lv.{level + 1}</b></span>
+            <span>{nextLevel.current.toLocaleString()} / {nextLevel.required.toLocaleString()} XP</span>
+          </div>
+          <div className="rr-prof-lvl-bar"><i style={{ width: `${expPct}%` }} /></div>
+        </div>
+        <div className="rr-prof-side">
+          <div className="pill">
+            <div className="l">연속 출석</div>
+            <div className="v gold">🔥 {streak}일</div>
+          </div>
+          <div className="pill">
+            <div className="l">최장 기록</div>
+            <div className="v">{longestStreak}일</div>
+          </div>
+        </div>
+      </div>
 
-          {/* 미니 통계 */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-auto">
-            {miniStats.map((s) => (
-              <div key={s.label} className={`flex items-center gap-1.5 px-2.5 py-2 rounded-sm ${s.color}`}>
-                {s.icon}
-                <div className="min-w-0">
-                  <p className="text-xs font-medium opacity-70">{s.label}</p>
-                  <p className="text-sm font-extrabold leading-tight">{s.value}</p>
+      {/* ──── core stats — V1 4-column stat tiles ──── */}
+      <div className="rr-kpi-grid">
+        {miniStats.map((s) => (
+          <div key={s.label} className="rr-kpi-card">
+            <div className="lb flex items-center gap-1.5">{s.icon}{s.label}</div>
+            <div className="v">{s.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ──── 학습 스트릭 — 최근 7일 (시안 V1 외 보존 기능) ──── */}
+      <Card className="rounded-sm overflow-hidden">
+        <div className="flex items-center px-4 py-3 border-b border-slate-100 gap-1.5 bg-slate-50/50">
+          <Flame className="w-3.5 h-3.5 text-orange-500" />
+          <h2 className="text-sm font-bold text-text-primary">최근 7일 학습</h2>
+        </div>
+        <div className="p-4">
+          <div className="flex items-center gap-1.5">
+            {weekDays.map((d) => (
+              <div key={d.date} className="flex flex-col items-center gap-1 flex-1">
+                <div className={`w-full aspect-square rounded-md flex items-center justify-center max-w-[64px] ${d.active ? 'bg-orange-500' : 'bg-slate-100'}`}>
+                  {d.active && <Flame className="w-3 h-3 text-white" />}
                 </div>
+                <span className={`text-[9px] font-medium ${d.active ? 'text-orange-600' : 'text-slate-400'}`}>{d.label}</span>
               </div>
             ))}
           </div>
-        </Card>
-
-        {/* 2. 학습 스트릭 (우측) */}
-        <Card className="rounded-sm overflow-hidden flex flex-col">
-          <div className="flex items-center px-4 py-3 border-b border-slate-100 gap-1.5 bg-slate-50/50">
-            <Flame className="w-3.5 h-3.5 text-orange-500" />
-            <h2 className="text-sm font-bold text-text-primary">학습 스트릭</h2>
-          </div>
-          <div className="p-4 flex-1 flex flex-col justify-center">
-            {/* 숫자 지표 */}
-            <div className="flex items-center gap-5 mb-4">
-              <div>
-                <p className="text-xs text-text-secondary">현재 연속</p>
-                <p className="text-base font-extrabold text-orange-600">{streak}일</p>
-              </div>
-              <div>
-                <p className="text-xs text-text-secondary">최장 기록</p>
-                <p className="text-base font-extrabold text-text-primary">{longestStreak}일</p>
-              </div>
-              <div>
-                <p className="text-xs text-text-secondary">총 학습일</p>
-                <p className="text-base font-extrabold text-blue-600">{totalLearningDays}일</p>
-              </div>
-            </div>
-
-            {/* 주간 활동 */}
-            <p className="text-xs text-text-secondary mb-1.5">최근 7일</p>
-            <div className="flex items-center gap-1.5">
-              {weekDays.map((d) => (
-                <div key={d.date} className="flex flex-col items-center gap-1 flex-1">
-                  <div className={`w-full aspect-square rounded-md flex items-center justify-center ${d.active
-                    ? 'bg-orange-500'
-                    : 'bg-slate-100'
-                    }`}>
-                    {d.active && <Flame className="w-3 h-3 text-white" />}
-                  </div>
-                  <span className={`text-[9px] font-medium ${d.active ? 'text-orange-600' : 'text-slate-400'}`}>{d.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
-      </div>
+        </div>
+      </Card>
 
       {/* ──── 보석 컬렉션 ──── */}
       <GemCollectionSection gems={gemStats} totalCompleted={gemTotalCompleted} totalInProgress={gemTotalInProgress} />
