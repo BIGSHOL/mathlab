@@ -351,7 +351,12 @@ function PdfImportPreview({
 
       <h4 style={{ marginTop: 24 }}>가이드</h4>
       <div className="summary" style={{ fontSize: 12, lineHeight: 1.7, color: 'var(--ink-3)' }}>
-        {currentStep === 1 && '교재 코드는 같은 책끼리 묶는 식별자입니다. 예: <b style={{color: "var(--ink)"}}>EOM23S1</b> (동아 중2 1학기)'}
+        {currentStep === 1 && (
+          <>
+            교재 코드는 같은 책끼리 묶는 식별자입니다. 예{' '}
+            <b style={{ color: 'var(--ink)' }}>EOM23S1</b> (동아 중2 1학기)
+          </>
+        )}
         {currentStep === 2 && '문제 페이지만 정확히 선택해 주세요. 목차/표지/해설은 별도 절차로 처리됩니다.'}
         {currentStep === 3 && 'AI 추출 후 각 문제의 단원/난이도/정답을 검토하세요. 잘못된 단원은 드래그로 수정 가능합니다.'}
         {currentStep === 4 && '저장이 완료되었습니다. 문제은행에서 즉시 활용 가능합니다.'}
