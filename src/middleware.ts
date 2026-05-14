@@ -7,24 +7,48 @@ import { NextResponse, type NextRequest } from 'next/server';
  * - API 요청은 503 JSON 응답
  * - 정적 자산(_next, favicon, .png/.css 등)은 matcher에서 이미 제외
  *
- * 운영 재개 방법 (택 1):
- *   1. Vercel 환경 변수 `MAINTENANCE_MODE=false` 설정 후 redeploy
- *   2. 로컬에서 이 파일을 git revert 또는 아래 라인을 `=== 'true'`로 변경
+ * 운영자 우회 방법 (시크릿 URL + 쿠키):
+ *   1. Vercel 환경 변수에 `MAINTENANCE_BYPASS_TOKEN=<랜덤문자열>` 설정
+ *   2. `https://<도메인>/?unlock=<그_값>` 방문 → 쿠키 발급 + /login redirect
+ *   3. 이후 30일간 점검 모드 우회 (브라우저별로 유지)
+ *   4. 우회 해제: `https://<도메인>/?lock=1` 방문 → 쿠키 삭제
  *
- * 로컬 개발 시: .env.local 에 `MAINTENANCE_MODE=false` 추가하면 평소처럼 사용 가능
+ * 운영 재개 방법:
+ *   1. Vercel 환경 변수 `MAINTENANCE_MODE=false` 설정 후 redeploy
+ *   2. 또는 이 파일을 git revert
+ *
+ * 로컬 개발: .env.local 에 `MAINTENANCE_MODE=false` 추가
  */
 const MAINTENANCE_MODE = process.env.MAINTENANCE_MODE !== 'false';
+const BYPASS_TOKEN = process.env.MAINTENANCE_BYPASS_TOKEN || '';
+const BYPASS_COOKIE = 'maintenance_bypass';
 
 /** 점검 모드에서도 통과시킬 경로 */
 const MAINTENANCE_ALLOWED_EXACT = new Set(['/']);
 const MAINTENANCE_ALLOWED_PREFIX = ['/_next/', '/favicon'];
 
 /**
+ * 시간 안정 문자열 비교 (timing attack 방지)
+ */
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
+
+/** 요청의 쿠키 또는 쿼리에서 우회 토큰 검증 */
+function hasValidBypass(req: NextRequest): boolean {
+  if (!BYPASS_TOKEN) return false;
+  const cookieToken = req.cookies.get(BYPASS_COOKIE)?.value;
+  if (cookieToken && safeCompare(cookieToken, BYPASS_TOKEN)) return true;
+  return false;
+}
+
+/**
  * Host 헤더에서 서브도메인 추출.
- * - gangnam.mathlab.com → "gangnam"
- * - mathlab.com → null (본사)
- * - gangnam.localhost:3000 → "gangnam" (로컬 개발)
- * - localhost:3000 → null
  */
 function extractSubdomain(hostname: string): string | null {
   const host = hostname.split(':')[0];
@@ -39,7 +63,7 @@ function extractSubdomain(hostname: string): string | null {
   return null;
 }
 
-/** 인증이 필요한 경로 prefix (점검 모드 OFF 시 사용) */
+/** 인증이 필요한 경로 prefix (점검 모드 OFF 또는 우회된 사용자) */
 const AUTH_PROTECTED_PREFIXES = [
   '/dashboard',
   '/subjects',
@@ -72,7 +96,6 @@ const authMiddleware = withAuth(
       response.headers.set('x-tenant-slug', subdomain);
     }
 
-    // Teacher+ routes (TEACHER/MANAGER/OWNER/SUPER_ADMIN)
     if (
       path.startsWith('/students') ||
       path.startsWith('/analytics') ||
@@ -98,10 +121,35 @@ const authMiddleware = withAuth(
 
 export default function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
+  const url = req.nextUrl;
+
+  // ── 시크릿 URL 처리: /?unlock=<token> ──
+  if (path === '/' && BYPASS_TOKEN) {
+    const unlockParam = url.searchParams.get('unlock');
+    if (unlockParam && safeCompare(unlockParam, BYPASS_TOKEN)) {
+      // 쿠키 발급 후 /login으로 redirect (쿼리 제거)
+      const redirectUrl = new URL('/login', req.url);
+      const response = NextResponse.redirect(redirectUrl);
+      response.cookies.set(BYPASS_COOKIE, BYPASS_TOKEN, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 30, // 30일
+        path: '/',
+      });
+      return response;
+    }
+
+    // ── 시크릿 URL: /?lock=1 → 쿠키 삭제 ──
+    if (url.searchParams.get('lock') === '1') {
+      const response = NextResponse.redirect(new URL('/', req.url));
+      response.cookies.delete(BYPASS_COOKIE);
+      return response;
+    }
+  }
 
   // ── 1단계: 점검 모드 ──
-  if (MAINTENANCE_MODE) {
-    // 허용 경로는 통과
+  if (MAINTENANCE_MODE && !hasValidBypass(req)) {
     if (MAINTENANCE_ALLOWED_EXACT.has(path)) {
       return NextResponse.next();
     }
@@ -109,7 +157,6 @@ export default function middleware(req: NextRequest) {
       return NextResponse.next();
     }
 
-    // API 요청은 503 JSON
     if (path.startsWith('/api/')) {
       return NextResponse.json(
         {
@@ -122,13 +169,11 @@ export default function middleware(req: NextRequest) {
       );
     }
 
-    // 그 외 모든 경로 → 점검 페이지로 redirect
     return NextResponse.redirect(new URL('/', req.url));
   }
 
-  // ── 2단계: 평소 인증 가드 (보호 라우트만) ──
+  // ── 2단계: 평소 인증 가드 (점검 모드 OFF 또는 우회된 사용자) ──
   if (isAuthProtected(path)) {
-    // withAuth 함수는 NextRequest를 받음 — 타입 단언 필요
     return (authMiddleware as unknown as (req: NextRequest) => Response)(req);
   }
 
@@ -137,9 +182,6 @@ export default function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    // 정적 자산 제외 모든 요청
-    // - _next/static, _next/image, favicon.ico
-    // - 확장자 있는 파일 (.png, .css, .js 등)
     '/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)',
   ],
 };
