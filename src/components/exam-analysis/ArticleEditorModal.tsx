@@ -8,7 +8,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { X, RefreshCw, Copy, Loader2, Clock } from 'lucide-react';
+import { X, RefreshCw, Copy, Loader2, Clock, ChevronDown, ChevronUp, AlertTriangle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 
@@ -24,6 +24,22 @@ interface ArticleEditorModalProps {
   onClose: () => void;
 }
 
+interface AntiPatternWarning {
+  type: string;
+  label: string;
+  occurrences: number;
+  excerpt: string;
+}
+
+interface BlueprintInfo {
+  archetype: string;
+  reason: string;
+  tone: string;
+  charts: string[];
+  gradeBands: Array<{ label: string; cutDesc: string; subFocus?: string }>;
+  selectedModuleIds: string[];
+}
+
 interface ArticleData {
   title: string;
   content: string;
@@ -34,16 +50,47 @@ interface ArticleData {
     abilityRadar: string;
     topicBar: string;
   };
+  // ── Hybrid Archetype × Composition ──
+  archetype?: string;
+  blueprintInfo?: BlueprintInfo;
+  antiPatternWarnings?: AntiPatternWarning[];
 }
 
 interface ChartUrls {
   difficulty?: string;
   ability_radar?: string;
   topic_bar?: string;
+  discrimination?: string;
 }
+
+interface ArticleVariables {
+  academyName: string;
+  teacherName: string;
+  branchTag: string;
+}
+
+const VARIABLES_STORAGE_KEY = 'mathlab_article_variables';
+
+const ARCHETYPE_LABELS: Record<string, string> = {
+  foundation: '기본 위주',
+  'top-tier': '최상위 변별',
+  'essay-heavy': '서술형 중심',
+  'unit-focused': '단원 집중',
+  balanced: '균형형',
+};
+
+const ARCHETYPE_COLORS: Record<string, string> = {
+  foundation: 'bg-green-50 text-green-700 border-green-200',
+  'top-tier': 'bg-rose-50 text-rose-700 border-rose-200',
+  'essay-heavy': 'bg-amber-50 text-amber-700 border-amber-200',
+  'unit-focused': 'bg-blue-50 text-blue-700 border-blue-200',
+  balanced: 'bg-slate-50 text-slate-700 border-slate-200',
+};
 
 export function ArticleEditorModal({ examPaperId, schoolName: _schoolName, onClose }: ArticleEditorModalProps) {
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true); // 저장된 글 첫 로드 진행 중
+  const [loadError, setLoadError] = useState<string | null>(null); // fetch 실패 (네트워크/권한)
   const [elapsedSec, setElapsedSec] = useState(0);
   const [progressMsg, setProgressMsg] = useState('');
   const [streamText, setStreamText] = useState(''); // AI 실시간 타이핑
@@ -52,31 +99,83 @@ export function ArticleEditorModal({ examPaperId, schoolName: _schoolName, onClo
   const [htmlContent, setHtmlContent] = useState('');
   const [title, setTitle] = useState('');
   const [tags, setTags] = useState<string[]>([]);
+  // ── Hybrid Archetype × Composition ──
+  const [variables, setVariables] = useState<ArticleVariables>({ academyName: '', teacherName: '', branchTag: '' });
+  const [blueprintInfo, setBlueprintInfo] = useState<BlueprintInfo | null>(null);
+  const [showVariables, setShowVariables] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // 저장된 글 로드 → 없으면 자동 생성 시작
-  const autoStarted = useRef(false);
+  // 변수 — localStorage 로드 / 저장
   useEffect(() => {
-    const loadOrGenerate = async () => {
-      try {
-        const res = await fetch(`/api/exam-analysis/${examPaperId}/generate-article`);
-        const json = await res.json();
-        if (json.data) {
-          applyArticleData(json.data);
-          return;
+    try {
+      const raw = localStorage.getItem(VARIABLES_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          setVariables({
+            academyName: typeof parsed.academyName === 'string' ? parsed.academyName : '',
+            teacherName: typeof parsed.teacherName === 'string' ? parsed.teacherName : '',
+            branchTag: typeof parsed.branchTag === 'string' ? parsed.branchTag : '',
+          });
         }
+      }
+    } catch {
+      // 무시
+    }
+  }, []);
+
+  const updateVariables = useCallback((partial: Partial<ArticleVariables>) => {
+    setVariables((prev) => {
+      const next = { ...prev, ...partial };
+      try {
+        localStorage.setItem(VARIABLES_STORAGE_KEY, JSON.stringify(next));
       } catch {
         // 무시
       }
-      // 저장된 글 없음 → 자동 생성
-      if (!autoStarted.current) {
-        autoStarted.current = true;
-        handleGenerate();
+      return next;
+    });
+  }, []);
+
+  // 저장된 글 로드 → 없으면 변수 입력 대기 (사용자가 명시적으로 "AI 생성" 클릭)
+  const loadSavedArticle = useCallback(async () => {
+    setInitialLoading(true);
+    setLoadError(null);
+    try {
+      const res = await fetch(`/api/exam-analysis/${examPaperId}/generate-article`);
+      if (!res.ok) {
+        // 403 (Vercel Protection 등) / 5xx 등 응답 실패 — 빈 글과 구분
+        if (res.status === 404) {
+          // 정말 글이 없는 상태 → 학원 정보 입력 UI로
+          setShowVariables(true);
+          return;
+        }
+        const text = await res.text().catch(() => '');
+        const isHtml = text.trim().startsWith('<');
+        throw new Error(
+          isHtml
+            ? `서버 응답이 비정상입니다 (HTTP ${res.status}). 새로고침 후 다시 시도해 주세요.`
+            : `글을 불러오지 못했습니다 (HTTP ${res.status})`,
+        );
       }
-    };
-    loadOrGenerate();
+      const json = await res.json();
+      if (json.data) {
+        applyArticleData(json.data);
+      } else {
+        // 응답은 정상이지만 글이 없음 → 학원 정보 입력 UI
+        setShowVariables(true);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '글을 불러오지 못했습니다';
+      setLoadError(msg);
+    } finally {
+      setInitialLoading(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [examPaperId]);
+
+  useEffect(() => {
+    loadSavedArticle();
+  }, [loadSavedArticle]);
 
   const applyArticleData = (data: ArticleData) => {
     setArticleData(data);
@@ -100,16 +199,26 @@ export function ArticleEditorModal({ examPaperId, schoolName: _schoolName, onClo
     setHtmlContent('');
     setTitle('');
     setTags([]);
+    setLoadError(null);
     setLoading(true);
     setElapsedSec(0);
     setStreamText('');
     setChartUrls({});
     setProgressMsg('준비 중...');
+    setShowVariables(true); // 재작성 시 학원 정보 패널 자동 펼침
     timerRef.current = setInterval(() => setElapsedSec((s) => s + 1), 1000);
 
     try {
+      // 학원/강사 변수 — 빈 값은 자동으로 trim된 후 undefined로 처리 (서버가 graceful degrade)
+      const body = {
+        academyName: variables.academyName.trim() || undefined,
+        teacherName: variables.teacherName.trim() || undefined,
+        branchTag: variables.branchTag.trim() || undefined,
+      };
       const res = await fetch(`/api/exam-analysis/${examPaperId}/generate-article`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
       });
 
       if (!res.ok || !res.body) {
@@ -141,12 +250,18 @@ export function ArticleEditorModal({ examPaperId, schoolName: _schoolName, onClo
             } else if (event.type === 'chart-urls') {
               // route가 차트 PNG 생성 직후 보내는 사전 URL — 스트림 중 토큰 치환에 사용
               setChartUrls(event.urls as ChartUrls);
+            } else if (event.type === 'blueprint-info') {
+              // archetype/모듈 정보 — 스트림 시작 직후 송신됨 (사용자에게 "어떤 시험으로 분류됐는지" 노출)
+              setBlueprintInfo(event.info as BlueprintInfo);
             } else if (event.type === 'stream') {
               accumulatedStream += event.delta;
               setStreamText(accumulatedStream);
             } else if (event.type === 'result') {
               // 최종 결과 — 에디터에 로드
               applyArticleData(event as ArticleData);
+              if ((event as ArticleData).blueprintInfo) {
+                setBlueprintInfo((event as ArticleData).blueprintInfo!);
+              }
               toast.success('블로그 글이 생성되었습니다');
             } else if (event.type === 'error') {
               throw new Error(event.error);
@@ -339,6 +454,146 @@ export function ArticleEditorModal({ examPaperId, schoolName: _schoolName, onClo
         </div>
       </div>
 
+      {/* 변수 + Blueprint 패널 (Hybrid Archetype × Composition) */}
+      <div className="border-b border-slate-200 bg-slate-50/50 shrink-0">
+        {/* 토글 헤더 — 항상 보임 */}
+        <button
+          type="button"
+          onClick={() => setShowVariables(!showVariables)}
+          className="w-full flex items-center gap-2 px-4 py-2 text-xs hover:bg-slate-100 transition-colors"
+        >
+          {/* 학원/강사 상태 */}
+          <span className="text-slate-500">학원 정보:</span>
+          {variables.academyName.trim() ? (
+            <span className="text-slate-700 font-medium">
+              {variables.academyName}
+              {variables.teacherName.trim() && ` · ${variables.teacherName}`}
+            </span>
+          ) : (
+            <span className="text-amber-600">미입력 (CTA가 단순 마무리로 처리됨)</span>
+          )}
+
+          {/* archetype 배지 — 생성 후 표시 */}
+          {blueprintInfo && (
+            <span
+              className={`ml-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-sm border text-[11px] font-medium ${
+                ARCHETYPE_COLORS[blueprintInfo.archetype] || 'bg-slate-50 text-slate-700 border-slate-200'
+              }`}
+              title={blueprintInfo.reason}
+            >
+              <Sparkles className="w-3 h-3" />
+              {ARCHETYPE_LABELS[blueprintInfo.archetype] || blueprintInfo.archetype}
+            </span>
+          )}
+
+          {/* 안티패턴 경고 카운트 */}
+          {articleData?.antiPatternWarnings && articleData.antiPatternWarnings.length > 0 && (
+            <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-medium">
+              <AlertTriangle className="w-3 h-3" />
+              경고 {articleData.antiPatternWarnings.length}건
+            </span>
+          )}
+
+          <span className="ml-auto flex items-center gap-1 text-slate-400">
+            {showVariables ? '접기' : '펼치기'}
+            {showVariables ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </span>
+        </button>
+
+        {/* 펼친 패널 */}
+        {showVariables && (
+          <div className="px-4 pb-3 pt-1 space-y-3 border-t border-slate-100">
+            {/* 변수 입력 — 학원명/강사명/특색 */}
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <label className="block text-[11px] text-slate-500 mb-1">학원명</label>
+                <input
+                  type="text"
+                  value={variables.academyName}
+                  onChange={(e) => updateVariables({ academyName: e.target.value })}
+                  placeholder="예: 김원장수학"
+                  className="w-full text-sm px-2 py-1.5 border border-slate-200 rounded-sm focus:outline-none focus:border-violet-300"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] text-slate-500 mb-1">강사명 (선택)</label>
+                <input
+                  type="text"
+                  value={variables.teacherName}
+                  onChange={(e) => updateVariables({ teacherName: e.target.value })}
+                  placeholder="예: 김수학 원장"
+                  className="w-full text-sm px-2 py-1.5 border border-slate-200 rounded-sm focus:outline-none focus:border-violet-300"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] text-slate-500 mb-1">지점 특색 (선택, 1줄)</label>
+                <input
+                  type="text"
+                  value={variables.branchTag}
+                  onChange={(e) => updateVariables({ branchTag: e.target.value })}
+                  placeholder="예: 상위권 1:1 맞춤"
+                  className="w-full text-sm px-2 py-1.5 border border-slate-200 rounded-sm focus:outline-none focus:border-violet-300"
+                />
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-400">
+              입력하지 않으면 마지막 CTA가 단순 마무리로 처리됩니다. 무특색 &ldquo;문의 주시기 바랍니다&rdquo; CTA를 방지하기 위함입니다.
+            </p>
+
+            {/* Blueprint 정보 — 생성 후 */}
+            {blueprintInfo && (
+              <div className="border-t border-slate-100 pt-2.5 space-y-1.5">
+                <div className="flex items-center gap-2 text-[11px]">
+                  <span className="text-slate-500">분류 근거:</span>
+                  <span className="text-slate-700">{blueprintInfo.reason}</span>
+                </div>
+                <div className="flex items-start gap-2 text-[11px]">
+                  <span className="text-slate-500 shrink-0">선정된 섹션:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {blueprintInfo.selectedModuleIds.map((id) => (
+                      <span key={id} className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded-sm">
+                        {id}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-[11px]">
+                  <span className="text-slate-500">등급 라벨:</span>
+                  <span className="text-slate-700">
+                    {blueprintInfo.gradeBands.map((b) => `${b.label}(${b.cutDesc})`).join(' · ')}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* 안티패턴 경고 목록 */}
+            {articleData?.antiPatternWarnings && articleData.antiPatternWarnings.length > 0 && (
+              <div className="border-t border-slate-100 pt-2.5">
+                <div className="flex items-center gap-1.5 text-[11px] text-amber-700 mb-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <span className="font-medium">생성된 글에서 감지된 anti-pattern</span>
+                </div>
+                <ul className="space-y-1 text-[11px]">
+                  {articleData.antiPatternWarnings.map((w, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="text-amber-600 shrink-0">·</span>
+                      <span className="text-slate-700">
+                        <span className="font-medium">{w.label}</span>
+                        {w.occurrences > 1 && <span className="text-amber-600"> ({w.occurrences}회)</span>}
+                        {w.excerpt && <span className="text-slate-400 ml-1">— &ldquo;...{w.excerpt}...&rdquo;</span>}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-[11px] text-slate-400 mt-1.5">
+                  자동 차단하지 않습니다 — 에디터에서 직접 수정하거나 AI 재생성을 시도하세요.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* 메인 영역 */}
       <div className="flex flex-1 min-h-0">
         {/* 에디터 */}
@@ -399,11 +654,55 @@ export function ArticleEditorModal({ examPaperId, schoolName: _schoolName, onClo
               htmlContent={htmlContent}
               onHtmlChange={handleHtmlChange}
             />
-          ) : (
-            /* 초기 상태 (자동 생성 대기) */
+          ) : initialLoading ? (
+            /* 저장된 글 fetch 중 — 빈 상태 UI가 깜빡이지 않도록 명시적 로딩 표시 */
             <div className="flex-1 flex flex-col items-center justify-center gap-3 text-slate-400">
-              <Loader2 className="w-8 h-8 animate-spin text-violet-300" />
-              <p className="text-base">준비 중...</p>
+              <Loader2 className="w-10 h-10 animate-spin text-slate-300" />
+              <p className="text-sm">저장된 글 불러오는 중...</p>
+            </div>
+          ) : loadError ? (
+            /* fetch 실패 — Vercel Protection, 네트워크, 5xx 등 */
+            <div className="flex-1 flex flex-col items-center justify-center gap-4 px-8 text-center">
+              <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center">
+                <span className="text-2xl">⚠️</span>
+              </div>
+              <div className="space-y-1 max-w-md">
+                <p className="text-base font-medium text-slate-700">글을 불러올 수 없습니다</p>
+                <p className="text-sm text-slate-500 leading-relaxed">{loadError}</p>
+              </div>
+              <div className="flex gap-2">
+                <Button size="md" variant="secondary" onClick={loadSavedArticle}>
+                  다시 시도
+                </Button>
+                <Button size="md" variant="primary" onClick={handleGenerate} disabled={loading}>
+                  <Sparkles className="w-4 h-4 mr-1.5" />
+                  새로 작성
+                </Button>
+              </div>
+            </div>
+          ) : (
+            /* 진짜 빈 상태 — 저장된 글이 없음, 학원 정보 입력 + 명시적 생성 시작 */
+            <div className="flex-1 flex flex-col items-center justify-center gap-5 px-8 text-center">
+              <Sparkles className="w-12 h-12 text-violet-300" />
+              <div className="space-y-2 max-w-lg">
+                <p className="text-lg font-medium text-slate-700">
+                  학원 정보를 입력하고 AI 생성을 시작하세요
+                </p>
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  상단의 <span className="text-slate-700 font-medium">&ldquo;학원 정보&rdquo;</span> 패널에서 학원명·강사명을 입력하면 글 마지막의 CTA에 자연스럽게 반영됩니다.
+                  <br />
+                  미입력 시 CTA가 단순 마무리로 처리됩니다 (학원 특색이 빠진 무명 CTA를 방지하기 위함).
+                </p>
+              </div>
+              <Button size="md" variant="primary" onClick={handleGenerate} disabled={loading}>
+                <Sparkles className="w-4 h-4 mr-1.5" />
+                AI 생성 시작
+              </Button>
+              {!variables.academyName.trim() && (
+                <p className="text-xs text-amber-600">
+                  💡 학원명을 비워둔 채로 생성해도 됩니다 — CTA는 단순 마무리로 처리됩니다.
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -438,6 +737,7 @@ const CHART_CAPTION: Record<string, string> = {
   difficulty: '난이도 분포',
   ability_radar: '능력 영역 분포',
   topic_bar: '단원별 출제 현황',
+  discrimination: '변별력 분석',
 };
 
 /** 미완성 태그 잘라내기 — 마지막 '<' 이후가 '>'로 안 닫혔으면 그 직전까지만 */
@@ -449,7 +749,7 @@ function safeTrimHtml(html: string): string {
 
 /** 본문에 박힌 {{CHART:*}} 토큰을 실제 <img>(URL 있음) 또는 placeholder div로 치환 */
 function replaceChartTokens(html: string, urls: ChartUrls): string {
-  return html.replace(/\{\{CHART:(difficulty|ability_radar|topic_bar)\}\}/g, (_m, key: string) => {
+  return html.replace(/\{\{CHART:(difficulty|ability_radar|topic_bar|discrimination)\}\}/g, (_m, key: string) => {
     const url = (urls as Record<string, string | undefined>)[key];
     const caption = CHART_CAPTION[key] || '차트';
     if (url) {
