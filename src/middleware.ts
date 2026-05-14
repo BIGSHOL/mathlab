@@ -26,6 +26,11 @@ const BYPASS_COOKIE = 'maintenance_bypass';
 /** 점검 모드에서도 통과시킬 경로 */
 const MAINTENANCE_ALLOWED_EXACT = new Set(['/']);
 const MAINTENANCE_ALLOWED_PREFIX = ['/_next/', '/favicon'];
+/** 점검 모드에서도 통과시킬 동적 경로 패턴 (네이버 블로그 등 외부 임베드 호환) */
+const MAINTENANCE_ALLOWED_PATTERNS = [
+  // 기출 분석 차트 PNG — 블로그 글에 외부 임베드되므로 점검 중에도 익명 접근 허용
+  /^\/api\/exam-analysis\/[^/]+\/chart\//,
+];
 
 /**
  * 시간 안정 문자열 비교 (timing attack 방지)
@@ -154,6 +159,9 @@ export default function middleware(req: NextRequest) {
       return NextResponse.next();
     }
     if (MAINTENANCE_ALLOWED_PREFIX.some((p) => path.startsWith(p))) {
+      return NextResponse.next();
+    }
+    if (MAINTENANCE_ALLOWED_PATTERNS.some((p) => p.test(path))) {
       return NextResponse.next();
     }
 
