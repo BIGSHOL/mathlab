@@ -5,7 +5,8 @@
 
 // ── 프롬프트 버전 ──
 // 프롬프트 변경 시 반드시 버전 업! 분석 결과에 기록되어 버전별 비교 가능
-export const PROMPT_VERSION = 'v1.0.0';
+// v1.0.5 (2026-05-14): 문항 번호 누락 금지 룰 추가 + 후처리 갭 자동 보정 (평균 기반 정밀 추측)
+export const PROMPT_VERSION = 'v1.0.5';
 
 // ── 5단계 난이도 (1=쉬움 ~ 5=어려움) ──
 export const EXAM_DIFFICULTIES = {

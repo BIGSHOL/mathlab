@@ -438,6 +438,44 @@ function QRow({ q, isStudent, examPaperId, grade, onTopicUpdate }: {
   const domain = String(rawDomain).toLowerCase();
   const domainColor = ABILITY_DOMAIN_COLORS[domain] || '#94A3B8';
 
+  // ── Placeholder 판별 (v1.0.5 갭 자동 보정) ──
+  // confidence=0이고 ai_comment가 ⚠️로 시작하면 자동 분석 실패 placeholder
+  const isPlaceholder = q.confidence === 0 && (q.ai_comment?.startsWith('⚠️') ?? false);
+
+  if (isPlaceholder) {
+    const placeholderTooltip = q.ai_comment || '자동 분석 실패';
+    return (
+      <tr className="bg-amber-50 hover:bg-amber-100/60" title={placeholderTooltip}>
+        <td className={`px-3 py-2 font-semibold text-amber-700 whitespace-nowrap ${numSize}`}>
+          <AlertTriangle className="inline w-3 h-3 mr-0.5 -mt-0.5" />
+          {q.question_number}
+        </td>
+        <td className="px-3 py-2 text-center text-slate-300">—</td>
+        <td className="px-3 py-2 text-center text-slate-300">—</td>
+        <td className="px-3 py-2 text-center text-slate-300">—</td>
+        <td className="px-3 py-2 text-xs text-amber-700 italic">분석 실패 — 수동 확인 필요</td>
+        <td className="px-3 py-2 text-center font-medium whitespace-nowrap">
+          {q.points !== null && q.points > 0 ? (
+            <span className="text-amber-700" title="객관식 평균 기준 자동 추정">
+              {q.points}<span className="text-[10px] ml-0.5">*</span>
+            </span>
+          ) : (
+            <span className="text-amber-600 font-bold text-base">?</span>
+          )}
+        </td>
+        {isStudent && <td className="px-3 py-2 text-center text-slate-300">—</td>}
+        <td className="px-3 py-2 text-center">
+          <span
+            className="inline-block px-1.5 py-0.5 rounded text-[11px] font-medium text-amber-700 bg-amber-100 cursor-help"
+            title={q.confidence_reason || placeholderTooltip}
+          >
+            0%
+          </span>
+        </td>
+      </tr>
+    );
+  }
+
   return (
     <tr className="hover:bg-slate-50">
       <td className={`px-3 py-2 font-semibold text-slate-700 whitespace-nowrap ${numSize}`}>{q.question_number}</td>

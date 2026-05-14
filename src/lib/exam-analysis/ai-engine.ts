@@ -279,6 +279,130 @@ function validateAndPenalize(result: BasicAnalysisResult): BasicAnalysisResult {
 }
 
 /**
+ * 문항 번호 갭 자동 보정 (v1.0.5)
+ *
+ * AI가 일부 문항을 판독하지 못해 question_number 시퀀스에 갭이 생긴 경우,
+ * 누락 번호 자리에 placeholder 문항을 삽입한다.
+ *
+ * 점수 분배 전략:
+ *  - 판단 가능한 객관식 문항들의 평균 점수를 기준으로 합리적 범위 계산
+ *  - 점수차(총점 - 합계)가 평균 × 갭수의 ±50% 범위 안이면 → 자동 분배 (정밀 추측)
+ *  - 그 외엔 points = null (UI에서 "?" 표시) — 사용자가 직접 입력해야 함
+ *
+ * 모든 placeholder는:
+ *  - difficulty / question_type / ability_domain / topic = null
+ *  - confidence = 0
+ *  - ai_comment = "⚠️ 자동 분석 실패 — 수동 확인 필요"
+ *
+ * 주의: 서술형 문항은 question_number가 "서술형1" 같은 문자열이라 갭 감지 대상에서 제외.
+ */
+function fillNumberGaps(result: BasicAnalysisResult): BasicAnalysisResult {
+  const { exam_info, questions } = result;
+
+  // 객관식/단답형(숫자 번호) 문항만 갭 감지 대상
+  const numericQuestions = questions.filter((q) => {
+    if (q.question_format === 'essay') return false;
+    const n = typeof q.question_number === 'string'
+      ? parseInt(q.question_number, 10)
+      : q.question_number;
+    return !isNaN(n);
+  });
+
+  if (numericQuestions.length < 2) return result;
+
+  // 번호 시퀀스 정렬
+  const nums = numericQuestions
+    .map((q) => Number(q.question_number))
+    .sort((a, b) => a - b);
+
+  const min = nums[0];
+  const max = nums[nums.length - 1];
+
+  // 갭 찾기
+  const existing = new Set(nums);
+  const missing: number[] = [];
+  for (let n = min; n <= max; n++) {
+    if (!existing.has(n)) missing.push(n);
+  }
+
+  if (missing.length === 0) return result;
+
+  // 판단 가능한 객관식 평균 (points가 있는 것만)
+  const objWithPoints = numericQuestions.filter((q) => q.points !== null && q.points > 0);
+  const objAvg = objWithPoints.length > 0
+    ? objWithPoints.reduce((s, q) => s + (q.points ?? 0), 0) / objWithPoints.length
+    : 0;
+
+  // 현재 합계와 점수차
+  const currentSum = questions.reduce((s, q) => s + (q.points ?? 0), 0);
+  const totalPoints = exam_info.total_points || 100;
+  const diff = totalPoints - currentSum;
+
+  // 정밀 추측 가능 조건: 평균 × 갭수의 ±50% 범위 안
+  let perGap: number | null = null;
+  let reason = '판독 실패 — 점수 수동 입력 필요';
+
+  if (objAvg > 0 && missing.length > 0 && diff > 0) {
+    const expected = objAvg * missing.length;
+    const tolerance = expected * 0.5;
+    const lower = expected - tolerance;
+    const upper = expected + tolerance;
+
+    if (diff >= lower && diff <= upper) {
+      perGap = Math.round(diff / missing.length);
+      reason = `갭 자동 보정 (객관식 평균 ${objAvg.toFixed(1)}점 기준)`;
+    }
+  }
+
+  // placeholder 생성
+  const placeholders: AnalyzedQuestion[] = missing.map((n) => ({
+    question_number: n,
+    question_format: 'objective',
+    difficulty: '1',
+    difficulty_reason: null,
+    question_type: 'algebra' as AnalyzedQuestion['question_type'],
+    ability_domain: null,
+    points: perGap,
+    topic: null,
+    ai_comment: perGap !== null
+      ? '⚠️ 이 문항은 자동 분석에 실패했습니다. 시험지를 확인하고 정보를 직접 입력해 주세요. (점수는 객관식 평균을 기준으로 자동 추정)'
+      : '⚠️ 이 문항은 자동 분석에 실패했습니다. 시험지를 확인하고 점수와 정보를 직접 입력해 주세요.',
+    confidence: 0,
+    confidence_reason: reason,
+    is_correct: null,
+    student_answer: null,
+    earned_points: null,
+    error_type: null,
+  }));
+
+  // 번호 순으로 정렬 (서술형은 뒤에)
+  const merged = [...questions, ...placeholders];
+  const sorted = merged.sort((a, b) => {
+    const aIsEssay = a.question_format === 'essay';
+    const bIsEssay = b.question_format === 'essay';
+    if (aIsEssay && !bIsEssay) return 1;
+    if (!aIsEssay && bIsEssay) return -1;
+
+    const aNum = typeof a.question_number === 'string'
+      ? parseInt(a.question_number, 10) || 0
+      : a.question_number;
+    const bNum = typeof b.question_number === 'string'
+      ? parseInt(b.question_number, 10) || 0
+      : b.question_number;
+    return aNum - bNum;
+  });
+
+  return {
+    ...result,
+    exam_info: {
+      ...exam_info,
+      total_questions: sorted.length,
+    },
+    questions: sorted,
+  };
+}
+
+/**
  * 분석 결과 기본 구조 검증
  */
 function validateBasicResult(result: unknown): result is BasicAnalysisResult {
@@ -409,7 +533,9 @@ export async function analyzeExam(
     };
 
     // 배점 검증 및 페널티 적용
-    return validateAndPenalize(result);
+    const validated = validateAndPenalize(result);
+    // 문항 번호 갭 자동 보정 (v1.0.5)
+    return fillNumberGaps(validated);
   } catch (error) {
     if (error instanceof Error && error.message.includes('AI 분석 결과')) {
       throw error;
