@@ -9,6 +9,7 @@ const TYPE_MAP: Record<string, string> = {
   'ability-radar': 'abilityRadar',
   'combined-radar': 'combinedRadar',
   'topic-bar': 'topicBar',
+  discrimination: 'discrimination',
 };
 
 /** GET /api/exam-analysis/[id]/chart/[type] — 차트 PNG 이미지 서빙 (네이버 블로그 호환) */

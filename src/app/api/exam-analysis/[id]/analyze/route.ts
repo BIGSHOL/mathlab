@@ -187,6 +187,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         totalPoints: totalPoints || null,
         earnedPoints: earnedPoints || null,
         analyzedAt: new Date(),
+        analyzedBy: user.id, // 분석 실행자 기록
       },
     });
 

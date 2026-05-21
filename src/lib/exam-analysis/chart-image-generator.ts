@@ -622,14 +622,131 @@ export async function svgToPng(svg: string, width = CHART_WIDTH): Promise<Buffer
   return Buffer.from(rendered.asPng());
 }
 
+// ── 변별력 분석 차트 (DiscriminationSection 공식과 동일) ──
+
+const DISCRIM_GRADES = [
+  { key: 'excellent', label: '우수', color: '#22C55E', desc: '실력 차이가 잘 드러남' },
+  { key: 'good', label: '양호', color: '#3B82F6', desc: '적절한 평가 가능' },
+  { key: 'fair', label: '보통', color: '#F59E0B', desc: '점수 차이 영향 적음' },
+  { key: 'poor', label: '주의', color: '#EF4444', desc: '실력 차이 드러나지 않음' },
+] as const;
+
+function calcDiscriminationScore(q: AnalyzedQuestion): number {
+  const points = q.points || 3;
+  const dRaw = String(q.difficulty);
+  const dMap: Record<string, string> = { concept: '1', pattern: '2', reasoning: '4', creative: '5' };
+  const nd = dMap[dRaw] || dRaw;
+  const mult = ({ '1': 0.3, '2': 0.5, '3': 0.65, '4': 0.8, '5': 1.0 } as Record<string, number>)[nd] || 0.5;
+  let base = (points * mult) / 10 * 100;
+  if (q.question_format === 'essay') base *= 1.2;
+  if ((nd === '1' || nd === '2') && points >= 5) base *= 0.7;
+  if ((nd === '4' || nd === '5') && points >= 4) base *= 1.15;
+  return Math.min(100, Math.max(0, Math.round(base)));
+}
+
+function gradeOf(score: number): typeof DISCRIM_GRADES[number]['key'] {
+  if (score >= 80) return 'excellent';
+  if (score >= 60) return 'good';
+  if (score >= 40) return 'fair';
+  return 'poor';
+}
+
+export function generateDiscriminationSvg(questions: AnalyzedQuestion[]): string {
+  if (questions.length === 0) {
+    return svgWrap('<text x="340" y="210" text-anchor="middle" font-size="18" fill="#4B5563">데이터 없음</text>');
+  }
+
+  const scores = questions.map(calcDiscriminationScore);
+  const avg = Math.round(scores.reduce((s, n) => s + n, 0) / scores.length);
+  const counts: Record<string, number> = { excellent: 0, good: 0, fair: 0, poor: 0 };
+  for (const s of scores) counts[gradeOf(s)]++;
+  const total = scores.length;
+
+  const overallGrade = DISCRIM_GRADES.find((g) => g.key === gradeOf(avg))!;
+
+  const items: string[] = [];
+  // 제목
+  items.push(`<text x="340" y="28" text-anchor="middle" font-size="16" font-weight="700" fill="#374151">변별력 분석</text>`);
+
+  // 좌측: 원형 게이지 (평균 변별력 지수)
+  const gcx = 165, gcy = 215, gR = 78, gInnerR = 56;
+  const ratio = avg / 100;
+  const endAngle = -Math.PI / 2 + ratio * 2 * Math.PI;
+  const largeArc = ratio > 0.5 ? 1 : 0;
+  // 배경 원
+  items.push(`<circle cx="${gcx}" cy="${gcy}" r="${gR}" fill="${overallGrade.color}1A" stroke="${overallGrade.color}40" stroke-width="1"/>`);
+  // 도넛 호 (실제 평균)
+  const sx = gcx + gR * Math.cos(-Math.PI / 2);
+  const sy = gcy + gR * Math.sin(-Math.PI / 2);
+  const ex = gcx + gR * Math.cos(endAngle);
+  const ey = gcy + gR * Math.sin(endAngle);
+  const ix2 = gcx + gInnerR * Math.cos(endAngle);
+  const iy2 = gcy + gInnerR * Math.sin(endAngle);
+  const ix1 = gcx + gInnerR * Math.cos(-Math.PI / 2);
+  const iy1 = gcy + gInnerR * Math.sin(-Math.PI / 2);
+  if (ratio > 0.001) {
+    items.push(`<path d="M${sx},${sy} A${gR},${gR} 0 ${largeArc},1 ${ex},${ey} L${ix2},${iy2} A${gInnerR},${gInnerR} 0 ${largeArc},0 ${ix1},${iy1} Z" fill="${overallGrade.color}"/>`);
+  }
+  // 중앙 숫자
+  items.push(`<text x="${gcx}" y="${gcy - 6}" text-anchor="middle" font-size="13" fill="#6B7280">평균</text>`);
+  items.push(`<text x="${gcx}" y="${gcy + 18}" text-anchor="middle" font-size="30" font-weight="700" fill="${overallGrade.color}">${avg}</text>`);
+  items.push(`<text x="${gcx}" y="${gcy + 36}" text-anchor="middle" font-size="11" fill="#6B7280">/100</text>`);
+  // 게이지 아래 등급 라벨
+  items.push(`<rect x="${gcx - 36}" y="${gcy + gR + 16}" width="72" height="24" rx="4" fill="${overallGrade.color}"/>`);
+  items.push(`<text x="${gcx}" y="${gcy + gR + 33}" text-anchor="middle" font-size="13" font-weight="700" fill="white">${overallGrade.label}</text>`);
+
+  // 우측: 4등급 막대 차트
+  const chartLeft = 330;
+  const chartTop = 70;
+  const chartW = 320;
+  const chartH = 230;
+  const barAreaH = chartH - 60; // 라벨 영역 제외
+  const barW = 50;
+  const barGap = (chartW - 4 * barW) / 5;
+  const maxCount = Math.max(...Object.values(counts), 1);
+
+  // Y축 가이드 라인 (5개 눈금)
+  for (let i = 0; i <= 4; i++) {
+    const y = chartTop + barAreaH - (i / 4) * barAreaH;
+    items.push(`<line x1="${chartLeft}" y1="${y}" x2="${chartLeft + chartW}" y2="${y}" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="${i === 0 ? '0' : '3,3'}"/>`);
+  }
+
+  // 4개 막대
+  DISCRIM_GRADES.forEach((g, idx) => {
+    const c = counts[g.key];
+    const pct = total > 0 ? Math.round((c / total) * 100) : 0;
+    const bx = chartLeft + barGap + idx * (barW + barGap);
+    const bh = barAreaH * (c / maxCount);
+    const by = chartTop + barAreaH - bh;
+    items.push(`<rect x="${bx}" y="${by}" width="${barW}" height="${bh}" rx="3" fill="${g.color}"/>`);
+    // 막대 위 숫자
+    if (c > 0) {
+      items.push(`<text x="${bx + barW / 2}" y="${by - 6}" text-anchor="middle" font-size="13" font-weight="700" fill="${g.color}">${c}</text>`);
+    }
+    // 라벨 (등급명)
+    items.push(`<text x="${bx + barW / 2}" y="${chartTop + barAreaH + 18}" text-anchor="middle" font-size="12" font-weight="600" fill="#374151">${g.label}</text>`);
+    // 퍼센트
+    items.push(`<text x="${bx + barW / 2}" y="${chartTop + barAreaH + 34}" text-anchor="middle" font-size="10" fill="#6B7280">${pct}%</text>`);
+  });
+
+  // 우측 상단 캡션
+  items.push(`<text x="${chartLeft + chartW}" y="${chartTop - 12}" text-anchor="end" font-size="11" fill="#6B7280">총 ${total}문항</text>`);
+
+  // 하단 설명
+  items.push(`<text x="${chartLeft + chartW / 2}" y="${chartTop + chartH + 8}" text-anchor="middle" font-size="10" fill="#9CA3AF">변별력 = 난이도·배점·형식 기반 정성 지수 (0~100)</text>`);
+
+  return svgWrap(items.join('\n'));
+}
+
 // ── 전체 차트 이미지 생성 (한번에) ──
 
-// 새 글은 분석 화면과 동일하게 difficulty + abilityRadar + topicBar 세 차트 사용.
+// 새 글은 분석 화면과 동일하게 difficulty + abilityRadar + topicBar + discrimination 4종 차트 사용.
 // typeRadar/combinedRadar는 옛 글 호환을 위해 chart 라우트에서 서빙은 유지하지만 새로 생성하지 않음.
 export interface ChartImages {
   difficulty: string; // base64 PNG
   abilityRadar: string;
   topicBar: string;
+  discrimination: string;  // 신규
 }
 
 export async function generateAllChartImages(
@@ -639,16 +756,19 @@ export async function generateAllChartImages(
   const diffSvg = generateDifficultyDonutSvg(summary.difficulty_distribution);
   const abilityRadarSvg = generateAbilityRadarSvg(questions);
   const topicBarSvg = generateTopicBarSvg(questions);
+  const discrimSvg = generateDiscriminationSvg(questions);
 
-  const [diffPng, abilityPng, topicBarPng] = await Promise.all([
+  const [diffPng, abilityPng, topicBarPng, discrimPng] = await Promise.all([
     svgToPng(diffSvg),
     svgToPng(abilityRadarSvg),
     svgToPng(topicBarSvg),
+    svgToPng(discrimSvg),
   ]);
 
   return {
     difficulty: diffPng.toString('base64'),
     abilityRadar: abilityPng.toString('base64'),
     topicBar: topicBarPng.toString('base64'),
+    discrimination: discrimPng.toString('base64'),
   };
 }

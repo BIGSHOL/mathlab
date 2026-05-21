@@ -143,6 +143,8 @@ model User {
   assignedLicenses             StudentLicense[]               @relation("LicenseAssignedBy")
   examPapersAsTeacher          ExamPaper[]                    @relation("ExamPaperTeacher")
   examPapersAsStudent          ExamPaper[]                    @relation("ExamPaperStudent")
+  analyzedExams                ExamAnalysis[]                 @relation("ExamAnalysisAnalyzedBy")
+  runExamExtensions            ExamAnalysisExtension[]        @relation("ExamAnalysisExtensionLastRunBy")
   createdQuestions             Question[]                     @relation("createdQuestions")
   inventories                  UserInventory[]
   createdExamCampaigns         ExamCampaign[]                 @relation("ExamCampaignCreator")
@@ -1495,26 +1497,33 @@ model ExamAnalysis {
   totalPoints     Int?
   earnedPoints    Int?
   analyzedAt      DateTime?
+  analyzedBy      String? // 분석 마지막 실행자 userId (재실행 시 갱신)
   createdAt       DateTime  @default(now())
 
-  examPaper  ExamPaper               @relation(fields: [examPaperId], references: [id], onDelete: Cascade)
-  extensions ExamAnalysisExtension[]
+  examPaper      ExamPaper               @relation(fields: [examPaperId], references: [id], onDelete: Cascade)
+  extensions     ExamAnalysisExtension[]
+  analyzedByUser User?                   @relation("ExamAnalysisAnalyzedBy", fields: [analyzedBy], references: [id])
 
   @@index([examPaperId])
+  @@index([analyzedBy])
 }
 
 model ExamAnalysisExtension {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   analysisId   String
-  agentType    String   @db.VarChar(30)
+  agentType    String    @db.VarChar(30)
   result       Json
-  errorMessage String?  @db.Text
-  createdAt    DateTime @default(now())
+  errorMessage String?   @db.Text
+  lastRunBy    String? // 마지막 실행자 userId (재실행 시 갱신, 예: commentary, blog-article 등)
+  lastRunAt    DateTime? // 마지막 실행 시각 (createdAt은 최초 생성, lastRunAt은 갱신 추적)
+  createdAt    DateTime  @default(now())
 
-  analysis ExamAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  analysis      ExamAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  lastRunByUser User?        @relation("ExamAnalysisExtensionLastRunBy", fields: [lastRunBy], references: [id])
 
   @@unique([analysisId, agentType])
   @@index([analysisId])
+  @@index([lastRunBy])
 }
 
 // ── 패턴 시스템 (오답 패턴 DB) ──

@@ -37,7 +37,14 @@ interface ExamPaperItem {
     earnedPoints: number | null;
     analyzedAt: string | null;
     modelVersion: string | null;
-    extensions?: Array<{ agentType: string }>;
+    analyzedBy?: string | null;
+    analyzedByUser?: { id: string; name: string } | null;
+    extensions?: Array<{
+      agentType: string;
+      lastRunBy?: string | null;
+      lastRunAt?: string | null;
+      lastRunByUser?: { id: string; name: string } | null;
+    }>;
   }>;
 }
 
@@ -221,6 +228,22 @@ export function ExamPaperList({
                       </span>
                     ) : null}
                   </div>
+                  {/* 실행자 메타 라인 — 분석/총평/글 누가 했는지 (있는 것만) */}
+                  {(() => {
+                    const analyst = latestAnalysis?.analyzedByUser?.name;
+                    const commentaryActor = latestAnalysis?.extensions?.find(e => e.agentType === 'commentary')?.lastRunByUser?.name;
+                    const articleActor = latestAnalysis?.extensions?.find(e => e.agentType === 'blog-article')?.lastRunByUser?.name;
+                    const parts: string[] = [];
+                    if (analyst) parts.push(`분석 ${analyst}`);
+                    if (commentaryActor) parts.push(`총평 ${commentaryActor}`);
+                    if (articleActor) parts.push(`글 ${articleActor}`);
+                    if (parts.length === 0) return null;
+                    return (
+                      <p className="text-[10px] text-slate-400 mt-1 truncate" title={parts.join(' · ')}>
+                        {parts.join(' · ')}
+                      </p>
+                    );
+                  })()}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   {(item.status === 'PENDING' || item.status === 'FAILED') && (

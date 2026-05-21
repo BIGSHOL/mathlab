@@ -15,6 +15,23 @@ export async function POST(request: NextRequest, { params }: Params) {
   if (isResponse(user)) return user;
   const { id } = await params;
 
+  // 학원/강사/지점특색 변수 (선택 입력, body가 비어도 OK)
+  let variables: { academyName?: string; teacherName?: string; branchTag?: string } = {};
+  try {
+    const body = await request.json();
+    if (body && typeof body === 'object') {
+      const trim = (v: unknown) =>
+        typeof v === 'string' && v.trim().length > 0 ? v.trim() : undefined;
+      variables = {
+        academyName: trim(body.academyName),
+        teacherName: trim(body.teacherName),
+        branchTag: trim(body.branchTag),
+      };
+    }
+  } catch {
+    // 빈 body는 OK — 변수 없이 생성 (CTA는 단순 마무리로 degrade)
+  }
+
   const tenantWhere = getTenantFilter(user);
   const examPaper = await prisma.examPaper.findFirst({
     where: { id, ...tenantWhere },
@@ -74,6 +91,7 @@ export async function POST(request: NextRequest, { params }: Params) {
             difficulty: `${baseUrl}/api/exam-analysis/${id}/chart/difficulty`,
             ability_radar: `${baseUrl}/api/exam-analysis/${id}/chart/ability-radar`,
             topic_bar: `${baseUrl}/api/exam-analysis/${id}/chart/topic-bar`,
+            discrimination: `${baseUrl}/api/exam-analysis/${id}/chart/discrimination`,
           },
         });
 
@@ -98,9 +116,12 @@ export async function POST(request: NextRequest, { params }: Params) {
             },
             commentary,
           },
-          (delta) => {
-            send({ type: 'stream', delta });
+          {
+            onDelta: (delta) => send({ type: 'stream', delta }),
+            // archetype/모듈 정보 — 스트림 시작 직후 클라이언트로 송신
+            onBlueprint: (info) => send({ type: 'blueprint-info', info }),
           },
+          variables,
         );
 
         // Step 3: 후처리 + 저장
@@ -110,7 +131,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         // 네이버 블로그는 base64 data URI 차단 → API 라우트로 실제 PNG 서빙
         const totalQ = latestAnalysis.totalQuestions ?? questions.length;
 
-        // 블로그 글은 분석 화면과 동일하게 난이도 + 능력 영역 + 단원별 세 차트만 사용.
+        // 블로그 글은 분석 화면과 동일하게 난이도 + 능력 영역 + 단원별 + 변별력 네 차트 사용.
         // type_radar/combined_radar는 옛 글에 남아있을 수 있어 폐지 토큰으로 흔적 없이 제거.
         const chartTokenMap: Record<string, { url: string; alt: string; caption: string }> = {
           '{{CHART:difficulty}}': {
@@ -127,6 +148,11 @@ export async function POST(request: NextRequest, { params }: Params) {
             url: `${baseUrl}/api/exam-analysis/${id}/chart/topic-bar`,
             alt: '단원별 출제 현황',
             caption: '▲ 단원별 문항 수 및 배점',
+          },
+          '{{CHART:discrimination}}': {
+            url: `${baseUrl}/api/exam-analysis/${id}/chart/discrimination`,
+            alt: '변별력 분석',
+            caption: '▲ 평균 변별력 지수 + 등급별 문항 분포',
           },
         };
 
@@ -150,9 +176,14 @@ export async function POST(request: NextRequest, { params }: Params) {
           metaDescription: article.metaDescription,
           chartImages,
           generatedAt: article.generatedAt,
+          // ── 신규 (Hybrid Archetype × Composition) ──
+          archetype: article.archetype,
+          blueprintInfo: article.blueprintInfo,
+          antiPatternWarnings: article.antiPatternWarnings,
         };
 
-        // DB 저장
+        // DB 저장 (블로그 글 마지막 생성자 추적)
+        const now = new Date();
         await prisma.examAnalysisExtension.upsert({
           where: {
             analysisId_agentType: {
@@ -164,10 +195,14 @@ export async function POST(request: NextRequest, { params }: Params) {
             analysisId: latestAnalysis.id,
             agentType: 'blog-article',
             result: resultData as unknown as Prisma.InputJsonValue,
+            lastRunBy: user.id,
+            lastRunAt: now,
           },
           update: {
             result: resultData as unknown as Prisma.InputJsonValue,
             errorMessage: null,
+            lastRunBy: user.id,
+            lastRunAt: now,
           },
         });
 

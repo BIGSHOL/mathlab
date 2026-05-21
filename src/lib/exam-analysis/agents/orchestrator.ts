@@ -45,8 +45,11 @@ export async function runExtendedAnalysis(params: {
   forceRegenerate?: boolean;
   includeNearby?: boolean;
   includeYearCompare?: boolean;
+  /** 실행자 userId — extension의 lastRunBy 추적용 */
+  userId?: string;
 }): Promise<OrchestratorResult[]> {
-  const { analysisId, agentTypes, forceRegenerate = false, includeNearby = true, includeYearCompare = true } = params;
+  const { analysisId, agentTypes, forceRegenerate = false, includeNearby = true, includeYearCompare = true, userId } = params;
+  const now = new Date();
 
   // 기본 분석 조회
   const analysis = await prisma.examAnalysis.findUnique({
@@ -114,8 +117,8 @@ export async function runExtendedAnalysis(params: {
       const fallbackMsg = agent.lastAiFailure ? `AI 실패(폴백): ${agent.lastAiFailure}` : null;
       await prisma.examAnalysisExtension.upsert({
         where: { analysisId_agentType: { analysisId, agentType } },
-        create: { analysisId, agentType, result: jsonResult, errorMessage: fallbackMsg },
-        update: { result: jsonResult, errorMessage: fallbackMsg },
+        create: { analysisId, agentType, result: jsonResult, errorMessage: fallbackMsg, lastRunBy: userId ?? null, lastRunAt: now },
+        update: { result: jsonResult, errorMessage: fallbackMsg, lastRunBy: userId ?? null, lastRunAt: now },
       });
 
       results.push({ agentType, result: agentResult, status: 'completed' });
@@ -124,9 +127,9 @@ export async function runExtendedAnalysis(params: {
       await prisma.examAnalysisExtension.upsert({
         where: { analysisId_agentType: { analysisId, agentType } },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        create: { analysisId, agentType, result: {} as any, errorMessage: errorMsg },
+        create: { analysisId, agentType, result: {} as any, errorMessage: errorMsg, lastRunBy: userId ?? null, lastRunAt: now },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        update: { result: {} as any, errorMessage: errorMsg },
+        update: { result: {} as any, errorMessage: errorMsg, lastRunBy: userId ?? null, lastRunAt: now },
       });
       results.push({ agentType, result: null, status: 'failed', error: errorMsg });
     }
@@ -176,8 +179,8 @@ export async function runExtendedAnalysis(params: {
       const fallbackMsg = agent.lastAiFailure ? `AI 실패(폴백): ${agent.lastAiFailure}` : null;
       await prisma.examAnalysisExtension.upsert({
         where: { analysisId_agentType: { analysisId, agentType } },
-        create: { analysisId, agentType, result: jsonResult, errorMessage: fallbackMsg },
-        update: { result: jsonResult, errorMessage: fallbackMsg },
+        create: { analysisId, agentType, result: jsonResult, errorMessage: fallbackMsg, lastRunBy: userId ?? null, lastRunAt: now },
+        update: { result: jsonResult, errorMessage: fallbackMsg, lastRunBy: userId ?? null, lastRunAt: now },
       });
 
       return { agentType, result: agentResult, status: 'completed' as const };
@@ -186,9 +189,9 @@ export async function runExtendedAnalysis(params: {
       await prisma.examAnalysisExtension.upsert({
         where: { analysisId_agentType: { analysisId, agentType } },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        create: { analysisId, agentType, result: {} as any, errorMessage: errorMsg },
+        create: { analysisId, agentType, result: {} as any, errorMessage: errorMsg, lastRunBy: userId ?? null, lastRunAt: now },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        update: { result: {} as any, errorMessage: errorMsg },
+        update: { result: {} as any, errorMessage: errorMsg, lastRunBy: userId ?? null, lastRunAt: now },
       });
       return { agentType, result: null, status: 'failed' as const, error: errorMsg };
     }

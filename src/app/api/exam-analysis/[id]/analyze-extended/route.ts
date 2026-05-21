@@ -39,6 +39,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       forceRegenerate,
       includeNearby,
       includeYearCompare,
+      userId: user.id, // 각 extension의 lastRunBy 추적
     });
 
     return NextResponse.json({ data: results });

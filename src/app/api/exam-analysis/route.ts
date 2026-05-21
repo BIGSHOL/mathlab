@@ -50,7 +50,16 @@ export async function GET(request: NextRequest) {
             take: 1,
             select: {
               id: true, totalQuestions: true, totalPoints: true, earnedPoints: true, analyzedAt: true, modelVersion: true,
-              extensions: { select: { agentType: true } },
+              analyzedBy: true,
+              analyzedByUser: { select: { id: true, name: true } },
+              extensions: {
+                select: {
+                  agentType: true,
+                  lastRunBy: true,
+                  lastRunAt: true,
+                  lastRunByUser: { select: { id: true, name: true } },
+                },
+              },
             },
           },
         },
