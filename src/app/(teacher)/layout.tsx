@@ -9,6 +9,7 @@ import { isDemoUser } from '@/lib/demo';
 import { resolveCurrentTenant } from '@/lib/tenant';
 import { TenantProvider } from '@/components/providers/TenantProvider';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 
 export default async function TeacherLayout({
   children,
@@ -23,14 +24,19 @@ export default async function TeacherLayout({
   const tenant = await resolveCurrentTenant();
   const isDemo = isDemoUser(user);
 
+  // 기출분석 전용 우회 토큰 보유자: 사이드바/하단 내비/커맨드 팔레트 숨김
+  // (middleware가 이미 화이트리스트 외 경로 차단하지만, 클릭 자체를 막아 UX 혼란 제거)
+  const cookieStore = await cookies();
+  const examOnlyMode = !!cookieStore.get('exam_analysis_bypass')?.value;
+
   return (
     <TenantProvider tenant={tenant}>
       <div className={`h-screen flex bg-background overflow-hidden print:h-auto print:overflow-visible print:bg-white ${isDemo ? 'pt-10' : ''}`}>
         {isDemo && <DemoGuideBar />}
-        <Sidebar />
+        {!examOnlyMode && <Sidebar />}
         <main className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden pb-14 md:pb-0 print:overflow-visible">{children}</main>
-        <TeacherBottomNav />
-        <CommandPalette />
+        {!examOnlyMode && <TeacherBottomNav />}
+        {!examOnlyMode && <CommandPalette />}
         <ToastContainer />
         <ConfirmDialog />
       </div>
