@@ -24,10 +24,14 @@ export default async function TeacherLayout({
   const tenant = await resolveCurrentTenant();
   const isDemo = isDemoUser(user);
 
-  // 기출분석 전용 우회 토큰 보유자: 사이드바/하단 내비/커맨드 팔레트 숨김
-  // (middleware가 이미 화이트리스트 외 경로 차단하지만, 클릭 자체를 막아 UX 혼란 제거)
+  // 기출분석 전용 모드: 사이드바/하단 내비/커맨드 팔레트 숨김
+  // 두 가지 조건 중 하나라도 참이면 활성화:
+  //   1) 외부 사용자 — exam_analysis_bypass 쿠키 보유
+  //   2) 기출분석 전용 계정 — username이 csganga* 패턴 (본인 브라우저 테스트 포함)
   const cookieStore = await cookies();
-  const examOnlyMode = !!cookieStore.get('exam_analysis_bypass')?.value;
+  const hasBypassCookie = !!cookieStore.get('exam_analysis_bypass')?.value;
+  const isExamOnlyAccount = /^csganga\d+$/i.test(user.username ?? '');
+  const examOnlyMode = hasBypassCookie || isExamOnlyAccount;
 
   return (
     <TenantProvider tenant={tenant}>

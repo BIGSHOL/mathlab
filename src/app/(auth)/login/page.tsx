@@ -56,8 +56,12 @@ export default function LoginPage() {
       return;
     }
 
-    // 데모 계정은 데모 허브로, 일반 계정은 대시보드로
-    window.location.href = username === 'demo' ? '/demo' : '/dashboard';
+    // 라우팅: 데모 → /demo, 기출분석 전용 계정(csganga*) → /exam-analysis, 그 외 → /dashboard
+    const target =
+      username === 'demo' ? '/demo'
+      : /^csganga\d+$/i.test(username) ? '/exam-analysis'
+      : '/dashboard';
+    window.location.href = target;
   };
 
   const displayName = tenant?.name || 'Injaewon MathLAB';
