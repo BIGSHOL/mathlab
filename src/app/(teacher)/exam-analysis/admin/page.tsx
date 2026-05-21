@@ -949,9 +949,10 @@ export default function ExamAnalysisAdminPage() {
   const visibleTabs = isTeacherAdminOnly
     ? ADMIN_TABS.filter((t) => t.key === 'teachers')
     : ADMIN_TABS;
-  const [activeTab, setActiveTab] = useState<AdminTabKey>(
-    isTeacherAdminOnly ? 'teachers' : 'references',
-  );
+  const [activeTab, setActiveTab] = useState<AdminTabKey>('references');
+  // activeTab이 visibleTabs에 없으면 강제 보정 (useState 초기값은 user 로드 전 평가되므로)
+  const effectiveTab: AdminTabKey =
+    visibleTabs.some((t) => t.key === activeTab) ? activeTab : (visibleTabs[0]?.key ?? 'references');
 
   // ── 권한 체크 ──
 
@@ -992,7 +993,7 @@ export default function ExamAnalysisAdminPage() {
         <div className="mb-6">
           <Tabs
             items={visibleTabs}
-            activeKey={activeTab}
+            activeKey={effectiveTab}
             onChange={setActiveTab}
             variant="underline"
           />
@@ -1000,9 +1001,9 @@ export default function ExamAnalysisAdminPage() {
       )}
 
       {/* 탭 콘텐츠 */}
-      {activeTab === 'references' && <ReferenceTab />}
-      {activeTab === 'feedback' && <FeedbackLearningTab />}
-      {activeTab === 'teachers' && <TeachersTab />}
+      {effectiveTab === 'references' && <ReferenceTab />}
+      {effectiveTab === 'feedback' && <FeedbackLearningTab />}
+      {effectiveTab === 'teachers' && <TeachersTab />}
     </PageContainer>
   );
 }
