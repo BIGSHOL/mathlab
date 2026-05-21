@@ -395,6 +395,9 @@ export function ArticleEditorModal({ examPaperId, schoolName: _schoolName, onClo
         toast.success('텍스트가 복사되었습니다');
       }
     }
+
+    // 복사 이벤트 추적 (fire-and-forget) — 강사별 활동 로그용
+    fetch(`/api/exam-analysis/${examPaperId}/article-copy`, { method: 'POST' }).catch(() => {});
   };
 
 

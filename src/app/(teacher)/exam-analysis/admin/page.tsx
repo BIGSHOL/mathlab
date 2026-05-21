@@ -612,6 +612,21 @@ interface TeacherUsageRow {
   };
 }
 
+type ActivityType = 'analyze' | 'commentary' | 'article' | 'copy';
+
+interface ActivityEvent {
+  type: ActivityType;
+  timestamp: string;
+  examPaper: { id: string; title: string; schoolName: string | null } | null;
+}
+
+const ACTIVITY_LABELS: Record<ActivityType, { label: string; color: string }> = {
+  analyze: { label: '분석', color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  commentary: { label: '총평', color: 'bg-purple-100 text-purple-700 border-purple-200' },
+  article: { label: '글 작성', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+  copy: { label: '복사', color: 'bg-amber-100 text-amber-700 border-amber-200' },
+};
+
 function formatRelative(iso: string | null): string {
   if (!iso) return '활동 없음';
   const date = new Date(iso);
@@ -626,12 +641,110 @@ function formatRelative(iso: string | null): string {
   return date.toISOString().slice(0, 10);
 }
 
+function formatTimestamp(iso: string): string {
+  const d = new Date(iso);
+  const yy = String(d.getFullYear()).slice(2);
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${yy}.${mm}.${dd} ${hh}:${min}`;
+}
+
+// ── 강사 활동 로그 모달 ──
+function TeacherActivityLogModal({
+  teacher,
+  onClose,
+}: {
+  teacher: { id: string; name: string; username: string };
+  onClose: () => void;
+}) {
+  const [events, setEvents] = useState<ActivityEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/exam-analysis/teacher-usage/${teacher.id}/log`)
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((j) => { if (!cancelled) setEvents(j.data?.events || []); })
+      .catch(() => { if (!cancelled) toast.error('활동 로그를 불러오지 못했습니다'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [teacher.id]);
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div
+        className="bg-white rounded-sm w-full max-w-3xl max-h-[80vh] flex flex-col shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-text-primary">{teacher.name} 활동 로그</h3>
+            <p className="text-xs text-slate-500 font-mono">{teacher.username}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1 text-slate-400 hover:text-slate-700 rounded"
+            aria-label="닫기"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4">
+          {loading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          ) : events.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-text-secondary">
+              <p className="text-sm">활동 기록이 없습니다</p>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {events.map((e, i) => {
+                const meta = ACTIVITY_LABELS[e.type];
+                return (
+                  <div
+                    key={`${e.type}-${e.timestamp}-${i}`}
+                    className="flex items-center gap-2 py-2 px-2 border-b border-slate-100 last:border-b-0 hover:bg-slate-50"
+                  >
+                    <span className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded-sm border shrink-0 w-14 justify-center ${meta.color}`}>
+                      {meta.label}
+                    </span>
+                    <span className="text-xs text-slate-500 font-mono shrink-0">
+                      {formatTimestamp(e.timestamp)}
+                    </span>
+                    <span className="text-sm text-slate-700 font-medium shrink-0 max-w-[140px] truncate">
+                      {e.examPaper?.schoolName ?? '학교 미상'}
+                    </span>
+                    <span className="text-sm text-slate-500 truncate flex-1" title={e.examPaper?.title ?? ''}>
+                      {e.examPaper?.title ?? '(시험지 정보 없음)'}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        <div className="px-4 py-2 border-t border-slate-200 text-xs text-slate-400 flex items-center justify-between">
+          <span>총 {events.length}건 (최대 500건)</span>
+          <span>분석 · 총평 · 글 작성 · 복사 통합</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TeachersTab() {
   const [rows, setRows] = useState<TeacherUsageRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [saving, setSaving] = useState(false);
+  const [selectedTeacher, setSelectedTeacher] = useState<{ id: string; name: string; username: string } | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -731,9 +844,17 @@ function TeachersTab() {
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={row.id} className="border-t border-slate-100 hover:bg-slate-50">
+              <tr
+                key={row.id}
+                className="border-t border-slate-100 hover:bg-blue-50/40 cursor-pointer"
+                onClick={() => {
+                  if (editingId === row.id) return; // 편집 중일 때는 모달 안 열기
+                  setSelectedTeacher({ id: row.id, name: row.name, username: row.username });
+                }}
+                title="클릭하여 활동 로그 보기"
+              >
                 <td className="px-3 py-2 font-mono text-xs text-slate-500">{row.username}</td>
-                <td className="px-3 py-2">
+                <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
                   {editingId === row.id ? (
                     <div className="flex items-center gap-1">
                       <input
@@ -759,7 +880,7 @@ function TeachersTab() {
                     <div className="flex items-center gap-2 group">
                       <span className="font-medium">{row.name}</span>
                       <button
-                        onClick={() => startEdit(row)}
+                        onClick={(e) => { e.stopPropagation(); startEdit(row); }}
                         className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-primary transition-opacity"
                         title="이름 수정"
                       >
@@ -796,8 +917,15 @@ function TeachersTab() {
       </div>
 
       <p className="mt-3 text-xs text-slate-400">
-        이름을 변경하면 기출분석 화면의 &quot;분석 X · 총평 Y · 글 Z&quot; 라벨이 자동 업데이트됩니다.
+        강사 행을 클릭하면 시간순 활동 로그를 볼 수 있고, 이름 펜 아이콘으로 분석자 표시 이름을 바꿀 수 있습니다.
       </p>
+
+      {selectedTeacher && (
+        <TeacherActivityLogModal
+          teacher={selectedTeacher}
+          onClose={() => setSelectedTeacher(null)}
+        />
+      )}
     </div>
   );
 }
@@ -816,7 +944,14 @@ const ADMIN_TABS = [
 
 export default function ExamAnalysisAdminPage() {
   const { user, isLoading: authLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<AdminTabKey>('references');
+  // injaewon 관리자: 강사 탭만 노출, 기본 활성 탭도 강사
+  const isTeacherAdminOnly = user?.username === 'injaewon';
+  const visibleTabs = isTeacherAdminOnly
+    ? ADMIN_TABS.filter((t) => t.key === 'teachers')
+    : ADMIN_TABS;
+  const [activeTab, setActiveTab] = useState<AdminTabKey>(
+    isTeacherAdminOnly ? 'teachers' : 'references',
+  );
 
   // ── 권한 체크 ──
 
@@ -852,15 +987,17 @@ export default function ExamAnalysisAdminPage() {
         backHref="/exam-analysis"
       />
 
-      {/* 상단 탭 */}
-      <div className="mb-6">
-        <Tabs
-          items={ADMIN_TABS}
-          activeKey={activeTab}
-          onChange={setActiveTab}
-          variant="underline"
-        />
-      </div>
+      {/* 상단 탭 (injaewon은 강사 탭만) */}
+      {visibleTabs.length > 1 && (
+        <div className="mb-6">
+          <Tabs
+            items={visibleTabs}
+            activeKey={activeTab}
+            onChange={setActiveTab}
+            variant="underline"
+          />
+        </div>
+      )}
 
       {/* 탭 콘텐츠 */}
       {activeTab === 'references' && <ReferenceTab />}

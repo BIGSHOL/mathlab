@@ -145,6 +145,7 @@ model User {
   examPapersAsStudent          ExamPaper[]                    @relation("ExamPaperStudent")
   analyzedExams                ExamAnalysis[]                 @relation("ExamAnalysisAnalyzedBy")
   runExamExtensions            ExamAnalysisExtension[]        @relation("ExamAnalysisExtensionLastRunBy")
+  articleCopyEvents            ArticleCopyEvent[]
   createdQuestions             Question[]                     @relation("createdQuestions")
   inventories                  UserInventory[]
   createdExamCampaigns         ExamCampaign[]                 @relation("ExamCampaignCreator")
@@ -1460,6 +1461,7 @@ model ExamPaper {
   analyses           ExamAnalysis[]
   extractedQuestions Question[]            @relation("ExamPaperQuestions")
   workbookItems      WorkbookSectionItem[]
+  articleCopyEvents  ArticleCopyEvent[]
 
   @@index([tenantId])
   @@index([teacherId])
@@ -1524,6 +1526,23 @@ model ExamAnalysisExtension {
   @@unique([analysisId, agentType])
   @@index([analysisId])
   @@index([lastRunBy])
+}
+
+// ── 블로그 글 복사 이벤트 (append-only 로그) ──
+// 강사가 "서식 복사" 버튼으로 네이버 블로그 등에 복사한 시점을 추적.
+// 강사별 활동 로그 화면(/exam-analysis/admin "강사" 탭)에서 시간순 표시.
+model ArticleCopyEvent {
+  id          String   @id @default(cuid())
+  examPaperId String
+  userId      String
+  copiedAt    DateTime @default(now())
+
+  examPaper ExamPaper @relation(fields: [examPaperId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([examPaperId])
+  @@index([userId])
+  @@index([copiedAt])
 }
 
 // ── 패턴 시스템 (오답 패턴 DB) ──
