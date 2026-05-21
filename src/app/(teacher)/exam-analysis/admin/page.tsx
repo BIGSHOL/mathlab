@@ -18,6 +18,9 @@ import {
   RefreshCw,
   ToggleLeft,
   ToggleRight,
+  Users,
+  Pencil,
+  Save,
 } from 'lucide-react';
 import { QUESTION_TYPE_LABELS } from '@/lib/exam-analysis/constants';
 
@@ -591,14 +594,224 @@ function FeedbackLearningTab() {
 }
 
 // ══════════════════════════════════════
+// 강사 탭 — 명단 + 인라인 이름 편집 + 사용 현황 통계
+// ══════════════════════════════════════
+
+interface TeacherUsageRow {
+  id: string;
+  username: string;
+  name: string;
+  createdAt: string;
+  stats: {
+    analyzeCount: number;
+    commentaryCount: number;
+    articleCount: number;
+    otherCount: number;
+    totalActions: number;
+    lastActivity: string | null;
+  };
+}
+
+function formatRelative(iso: string | null): string {
+  if (!iso) return '활동 없음';
+  const date = new Date(iso);
+  const diffMs = Date.now() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return '방금';
+  if (diffMin < 60) return `${diffMin}분 전`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return `${diffH}시간 전`;
+  const diffD = Math.floor(diffH / 24);
+  if (diffD < 30) return `${diffD}일 전`;
+  return date.toISOString().slice(0, 10);
+}
+
+function TeachersTab() {
+  const [rows, setRows] = useState<TeacherUsageRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/exam-analysis/teacher-usage');
+      if (!res.ok) throw new Error();
+      const json = await res.json();
+      setRows(json.data || []);
+    } catch {
+      toast.error('강사 명단을 불러오지 못했습니다');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const startEdit = (row: TeacherUsageRow) => {
+    setEditingId(row.id);
+    setEditName(row.name);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditName('');
+  };
+
+  const saveEdit = async (id: string) => {
+    const trimmed = editName.trim();
+    if (!trimmed) {
+      toast.warning('이름을 입력하세요');
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/users/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: trimmed }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error?.message || '저장 실패');
+      }
+      toast.success('이름이 저장되었습니다');
+      setRows((prev) => prev.map((r) => (r.id === id ? { ...r, name: trimmed } : r)));
+      cancelEdit();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '저장에 실패했습니다');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-3">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    );
+  }
+
+  if (rows.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-text-secondary">
+        <Users className="w-12 h-12 mb-3 text-slate-300" />
+        <p className="text-sm">등록된 강사가 없습니다</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="mb-4 flex items-center justify-between">
+        <p className="text-sm text-text-secondary">
+          침산점 강사 {rows.length}명 · 분석/총평/글 작성 누적 통계
+        </p>
+        <Button size="sm" variant="ghost" onClick={fetchData} title="새로고침">
+          <RefreshCw className="w-4 h-4" />
+        </Button>
+      </div>
+
+      <div className="overflow-x-auto border border-slate-200 rounded-sm">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 text-slate-600 text-xs">
+            <tr>
+              <th className="px-3 py-2 text-left font-medium">아이디</th>
+              <th className="px-3 py-2 text-left font-medium">이름 (분석자 표시)</th>
+              <th className="px-3 py-2 text-center font-medium">분석</th>
+              <th className="px-3 py-2 text-center font-medium">총평</th>
+              <th className="px-3 py-2 text-center font-medium">블로그 글</th>
+              <th className="px-3 py-2 text-center font-medium">총 작업</th>
+              <th className="px-3 py-2 text-left font-medium">최근 활동</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.id} className="border-t border-slate-100 hover:bg-slate-50">
+                <td className="px-3 py-2 font-mono text-xs text-slate-500">{row.username}</td>
+                <td className="px-3 py-2">
+                  {editingId === row.id ? (
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') saveEdit(row.id);
+                          if (e.key === 'Escape') cancelEdit();
+                        }}
+                        autoFocus
+                        disabled={saving}
+                        className="border border-primary rounded-sm px-2 py-1 text-sm w-40 focus:outline-none"
+                      />
+                      <Button size="sm" variant="primary" onClick={() => saveEdit(row.id)} disabled={saving}>
+                        <Save className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={cancelEdit} disabled={saving}>
+                        <X className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 group">
+                      <span className="font-medium">{row.name}</span>
+                      <button
+                        onClick={() => startEdit(row)}
+                        className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-primary transition-opacity"
+                        title="이름 수정"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </td>
+                <td className="px-3 py-2 text-center">
+                  <span className={row.stats.analyzeCount > 0 ? 'font-semibold text-blue-600' : 'text-slate-400'}>
+                    {row.stats.analyzeCount}
+                  </span>
+                </td>
+                <td className="px-3 py-2 text-center">
+                  <span className={row.stats.commentaryCount > 0 ? 'font-semibold text-purple-600' : 'text-slate-400'}>
+                    {row.stats.commentaryCount}
+                  </span>
+                </td>
+                <td className="px-3 py-2 text-center">
+                  <span className={row.stats.articleCount > 0 ? 'font-semibold text-emerald-600' : 'text-slate-400'}>
+                    {row.stats.articleCount}
+                  </span>
+                </td>
+                <td className="px-3 py-2 text-center font-bold text-slate-700">
+                  {row.stats.totalActions}
+                </td>
+                <td className="px-3 py-2 text-xs text-slate-600">
+                  {formatRelative(row.stats.lastActivity)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="mt-3 text-xs text-slate-400">
+        이름을 변경하면 기출분석 화면의 &quot;분석 X · 총평 Y · 글 Z&quot; 라벨이 자동 업데이트됩니다.
+      </p>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════
 // 메인 페이지
 // ══════════════════════════════════════
 
-type AdminTabKey = 'references' | 'feedback';
+type AdminTabKey = 'references' | 'feedback' | 'teachers';
 
 const ADMIN_TABS = [
   { key: 'references' as const, label: '레퍼런스', icon: BookOpen },
   { key: 'feedback' as const, label: '피드백/학습', icon: MessageSquare },
+  { key: 'teachers' as const, label: '강사', icon: Users },
 ];
 
 export default function ExamAnalysisAdminPage() {
@@ -652,6 +865,7 @@ export default function ExamAnalysisAdminPage() {
       {/* 탭 콘텐츠 */}
       {activeTab === 'references' && <ReferenceTab />}
       {activeTab === 'feedback' && <FeedbackLearningTab />}
+      {activeTab === 'teachers' && <TeachersTab />}
     </PageContainer>
   );
 }
