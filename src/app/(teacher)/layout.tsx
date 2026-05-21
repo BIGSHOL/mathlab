@@ -1,6 +1,7 @@
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TeacherBottomNav } from '@/components/layout/TeacherBottomNav';
 import { CommandPalette } from '@/components/layout/CommandPalette';
+import { ExamOnlyTopBar } from '@/components/layout/ExamOnlyTopBar';
 import { ToastContainer } from '@/components/ui/Toast';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { DemoGuideBar } from '@/components/demo/DemoGuideBar';
@@ -39,6 +40,7 @@ export default async function TeacherLayout({
       <div className={`h-screen flex bg-background overflow-hidden print:h-auto print:overflow-visible print:bg-white ${isDemo ? 'pt-10' : ''}`}>
         {isDemo && <DemoGuideBar />}
         {!examOnlyMode && <Sidebar />}
+        {examOnlyMode && <ExamOnlyTopBar />}
         <main className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden pb-14 md:pb-0 print:overflow-visible">{children}</main>
         {!examOnlyMode && <TeacherBottomNav />}
         {!examOnlyMode && <CommandPalette />}
