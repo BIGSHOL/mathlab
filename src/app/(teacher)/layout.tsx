@@ -10,7 +10,6 @@ import { isDemoUser } from '@/lib/demo';
 import { resolveCurrentTenant } from '@/lib/tenant';
 import { TenantProvider } from '@/components/providers/TenantProvider';
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
 
 export default async function TeacherLayout({
   children,
@@ -26,14 +25,13 @@ export default async function TeacherLayout({
   const isDemo = isDemoUser(user);
 
   // 기출분석 전용 모드: 사이드바/하단 내비/커맨드 팔레트 숨김
-  // 두 가지 조건 중 하나라도 참이면 활성화:
-  //   1) 외부 사용자 — exam_analysis_bypass 쿠키 보유
-  //   2) 기출분석 전용 계정 — username이 csganga* 또는 injaewon (관리자)
-  const cookieStore = await cookies();
-  const hasBypassCookie = !!cookieStore.get('exam_analysis_bypass')?.value;
+  // 계정(username)이 csganga* 또는 injaewon일 때만 활성화.
+  // ⚠️ exam_analysis_bypass 쿠키 기반 판정은 쓰지 않는다 — 본인이 외부 사용자
+  //    테스트로 시크릿 URL을 한 번 방문하면 쿠키가 30일 박혀, 이후 본인 계정으로
+  //    로그인해도 사이드바가 사라지는 문제가 있었음. 외부 사용자는 어차피
+  //    csganga*/injaewon 계정으로만 로그인하므로 username 판정으로 충분.
   const username = user.username ?? '';
-  const isExamOnlyAccount = /^csganga\d+$/i.test(username) || username === 'injaewon';
-  const examOnlyMode = hasBypassCookie || isExamOnlyAccount;
+  const examOnlyMode = /^csganga\d+$/i.test(username) || username === 'injaewon';
 
   return (
     <TenantProvider tenant={tenant}>
