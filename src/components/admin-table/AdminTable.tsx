@@ -43,6 +43,10 @@ export type AdminTableProps<T> = {
   emptyMessage?: React.ReactNode;
   /** 행 클릭 핸들러 */
   onRowClick?: (row: T) => void;
+  /** 확장된 행의 키 (renderExpandedRow와 함께 사용) */
+  expandedRowKey?: string | number | null;
+  /** 확장 행 콘텐츠 렌더 — 해당 행 바로 아래 colSpan 전체 폭으로 표시 */
+  renderExpandedRow?: (row: T) => React.ReactNode;
   className?: string;
 };
 
@@ -72,6 +76,8 @@ export function AdminTable<T>({
   skeletonRows = 5,
   emptyMessage = '표시할 데이터가 없습니다.',
   onRowClick,
+  expandedRowKey,
+  renderExpandedRow,
   className,
 }: AdminTableProps<T>) {
   const classes = ['adm-table'];
@@ -124,23 +130,33 @@ export function AdminTable<T>({
             rows.map((row, i) => {
               const key = rowKey ? rowKey(row, i) : i;
               const extraClass = rowClassName?.(row);
+              const isExpanded =
+                expandedRowKey != null && key === expandedRowKey && !!renderExpandedRow;
               return (
-                <tr
-                  key={key}
-                  className={extraClass}
-                  onClick={onRowClick ? () => onRowClick(row) : undefined}
-                  style={onRowClick ? { cursor: 'pointer' } : undefined}
-                >
-                  {columns.map((col) => (
-                    <td
-                      key={col.id}
-                      className={col.className}
-                      style={col.cellStyle}
-                    >
-                      {col.render(row, i)}
-                    </td>
-                  ))}
-                </tr>
+                <React.Fragment key={key}>
+                  <tr
+                    className={extraClass}
+                    onClick={onRowClick ? () => onRowClick(row) : undefined}
+                    style={onRowClick ? { cursor: 'pointer' } : undefined}
+                  >
+                    {columns.map((col) => (
+                      <td
+                        key={col.id}
+                        className={col.className}
+                        style={col.cellStyle}
+                      >
+                        {col.render(row, i)}
+                      </td>
+                    ))}
+                  </tr>
+                  {isExpanded && (
+                    <tr className="adm-expanded-row">
+                      <td colSpan={columns.length} style={{ padding: 0 }}>
+                        {renderExpandedRow!(row)}
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               );
             })
           )}
