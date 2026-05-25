@@ -39,6 +39,23 @@ export default function ExamAnalysisPage() {
       if (filterSubject) params.set('subject', filterSubject);
       if (filterGrade) params.set('grade', filterGrade);
       const res = await fetch(`/api/exam-analysis?${params}`);
+      if (!res.ok) {
+        // 503/500/403 등의 응답을 빈 목록으로 삼키지 말고 사용자에게 노출
+        const err = await res.json().catch(() => null);
+        const code = err?.error?.code as string | undefined;
+        if (!silent) {
+          if (res.status === 503 || code === 'MAINTENANCE') {
+            toast.warning('시스템 점검 중입니다. 잠시 후 다시 이용해 주세요');
+          } else if (res.status === 403) {
+            toast.error(err?.error?.message || '시험지 목록에 접근할 권한이 없습니다');
+          } else {
+            toast.error(err?.error?.message || '시험지 목록을 불러오지 못했습니다');
+          }
+        }
+        setItems([]);
+        setTotal(0);
+        return;
+      }
       const json = await res.json();
       setItems(json.data || []);
       setTotal(json.meta?.total || 0);

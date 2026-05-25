@@ -46,6 +46,7 @@ const EXAM_ALLOWED_EXACT = new Set([
   '/',                              // 점검 페이지 (토큰 재발급용)
   '/login',                         // NextAuth 로그인
   '/exam-analysis',                 // 메인
+  '/api/exam-analysis',             // 시험지 목록 GET/POST (슬래시 없는 정확 경로 — PREFIX와 별도 명시)
   '/api/tenant/current',            // 로그인 폼 테넌트 조회
   '/api/licenses/tenant-features',  // 사이드바 메뉴 필터링
 ]);
