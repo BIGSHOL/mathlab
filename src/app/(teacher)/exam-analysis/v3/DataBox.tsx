@@ -28,10 +28,11 @@ export function DataBox({ box, keyPrefix = '' }: { box: DataBoxType; keyPrefix?:
 type Row = DataBoxType['rows'][number];
 
 function BarsBody({ rows, keyPrefix }: { rows: Row[]; keyPrefix: string }) {
-  // 막대 비율 정규화 — 모든 row가 percentage("80%")이면 그대로, 절대값(7문항/27점)은 max 기준
+  // 막대 비율 정규화 — percentage이면 그대로, 절대값은 max 기준 + 1.15x padding으로 시각 차이 강조
   const rawValues = rows.map((r) => parseInt(r.value, 10) || 0);
   const allPercent = rows.every((r) => /%\s*$/.test(String(r.value).trim()));
-  const maxVal = Math.max(...rawValues, 1);
+  const maxRaw = Math.max(...rawValues, 1);
+  const maxVal = allPercent ? 100 : Math.max(maxRaw * 1.15, 1);
   return (
     <>
       {rows.map((r, i) => {

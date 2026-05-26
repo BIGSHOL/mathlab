@@ -289,10 +289,12 @@ function renderDataBox(box: DataBoxData): string {
   const label = `<p style="margin:0 0 12px;font-family:Pretendard,sans-serif;font-size:10px;letter-spacing:0.14em;color:#888;font-weight:800;">${escapeHtml(box.label)}</p>`;
 
   if (box.kind === 'bars') {
-    // 막대 비율 정규화 — 모든 row가 percentage("80%") 형태이면 그대로 사용, 그 외(문항/점 같은 절대값)는 max 기준 정규화.
+    // 막대 비율 정규화 — percentage이면 그대로, 절대값은 max 기준 정규화.
+    // maxVal padding 1.15x 추가: max row가 ~87%로 표시되어 다른 row와 시각적 차이가 더 두드러짐.
     const rawValues = box.rows.map((r) => parseInt(r.value, 10) || 0);
     const allPercent = box.rows.every((r) => /%\s*$/.test(String(r.value).trim()));
-    const maxVal = Math.max(...rawValues, 1);
+    const maxRaw = Math.max(...rawValues, 1);
+    const maxVal = allPercent ? 100 : Math.max(maxRaw * 1.15, 1);
     // 네이버 SmartEditor는 3-level nested table을 한 글자씩 세로 분리. 1-level로 단순화.
     const rows = box.rows.map((r) => {
       const v = parseInt(r.value, 10) || 0;
