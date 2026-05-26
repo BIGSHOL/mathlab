@@ -949,7 +949,7 @@ function renderDataBoxNaver(box: NonNullable<NonNullable<MergedCommentary['blog_
         <td width="120" align="right" style="padding:8px 0 4px 8px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:13px;font-weight:700;color:${color};white-space:nowrap;">${escapeHtml(r.value)}</td>
       </tr>
     </table>
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 14px;border-collapse:collapse;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="table-layout:fixed;width:100%;margin:0 0 14px;border-collapse:collapse;">
       <tr>${cells.join('')}</tr>
     </table>`;
       }).join('');
@@ -1094,10 +1094,10 @@ function renderDifficultyStackedBarNaver(questions: AnalyzedQuestion[]): string 
         <td align="right" style="padding:6px 0 4px 8px;font-family:Pretendard,sans-serif;font-size:12px;color:#888;white-space:nowrap;">${s.count}문항 · ${s.points}점</td>
       </tr>
     </table>
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 3px;border-collapse:collapse;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="table-layout:fixed;width:100%;margin:0 0 3px;border-collapse:collapse;">
       <tr>${countCells.join('')}</tr>
     </table>
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 14px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="table-layout:fixed;width:100%;margin:0 0 14px;">
       <tr>
         ${ptsPct > 0 ? `<td width="${ptsPct}%" height="6" bgcolor="${s.color}" style="background:${s.color};font-size:1px;line-height:1px;">&nbsp;</td>` : ''}
         ${ptsGrey > 0 ? `<td width="${ptsGrey}%" height="6" bgcolor="#dddddd" style="background:#dddddd;font-size:1px;line-height:1px;">&nbsp;</td>` : ''}
@@ -1109,7 +1109,7 @@ function renderDifficultyStackedBarNaver(questions: AnalyzedQuestion[]): string 
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;background:#fafafa;border:1px solid #ddd;">
   <tr><td style="padding:20px 22px;">
     <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.14em;color:#888;font-weight:800;">FIGURE · 난이도별 배점 분포</p>
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin:0 0 18px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="table-layout:fixed;width:100%;border-collapse:collapse;margin:0 0 18px;">
       <tr>${barCells}</tr>
     </table>
     <p style="margin:0 0 10px;font-family:Pretendard,sans-serif;font-size:10px;color:#888;">각 난이도: <b style="color:#121212;">상단 grid = 문항수</b> (최대 ${maxCount}칸) · <b style="color:#121212;">하단 막대 = 배점</b> (최대 ${maxPoints}점)</p>
