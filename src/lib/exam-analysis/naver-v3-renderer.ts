@@ -206,13 +206,15 @@ function renderDifficultyStackedBar(questions: AnalyzedQuestion[]): string {
     return `<td width="${pct}%" height="32" align="center" style="background:${s.color};color:#fff;font-family:Pretendard,sans-serif;font-size:11px;font-weight:700;">${label}</td>`;
   }).join('');
 
+  // swatch를 td bgcolor로 — 네이버는 div+background를 잃을 수 있어 td bgcolor가 안전
   const legendRows = stats.map((s) => {
     const pct = totalPts > 0 ? Math.round((s.points / totalPts) * 100) : 0;
     return `
       <tr>
-        <td width="16" style="padding:6px 0;"><div style="width:12px;height:12px;background:${s.color};"></div></td>
-        <td width="120" style="padding:6px 8px 6px 8px;font-family:Pretendard,sans-serif;font-size:12px;font-weight:700;color:#121212;">Lv ${s.level} · ${s.label}</td>
-        <td style="padding:6px 0;font-family:Pretendard,sans-serif;font-size:12px;color:#888;">${s.count}문항 · ${s.points}점 · ${pct}%</td>
+        <td width="14" height="14" bgcolor="${s.color}" style="background:${s.color};width:14px;height:14px;font-size:1px;line-height:1px;">&nbsp;</td>
+        <td width="8" style="font-size:1px;line-height:1px;">&nbsp;</td>
+        <td width="120" style="padding:6px 8px 6px 0;font-family:Pretendard,sans-serif;font-size:12px;font-weight:700;color:#121212;white-space:nowrap;">Lv ${s.level} · ${s.label}</td>
+        <td style="padding:6px 0;font-family:Pretendard,sans-serif;font-size:12px;color:#888;white-space:nowrap;">${s.count}문항 · ${s.points}점 · ${pct}%</td>
       </tr>`;
   }).join('');
 
@@ -287,12 +289,20 @@ function renderDataBox(box: DataBoxData): string {
   const label = `<p style="margin:0 0 12px;font-family:Pretendard,sans-serif;font-size:10px;letter-spacing:0.14em;color:#888;font-weight:800;">${escapeHtml(box.label)}</p>`;
 
   if (box.kind === 'bars') {
-    // 네이버 SmartEditor는 3-level nested table(외층 + 행 컨테이너 + bar 셀)을 깨뜨림.
-    // → 각 단원 행을 별도 1-level table로 분리. 외층 box 1개 + 각 행 별 table 1개씩 (총 nested 1 level).
+    // 막대 비율 정규화 — 모든 row가 percentage("80%") 형태이면 그대로 사용, 그 외(문항/점 같은 절대값)는 max 기준 정규화.
+    const rawValues = box.rows.map((r) => parseInt(r.value, 10) || 0);
+    const allPercent = box.rows.every((r) => /%\s*$/.test(String(r.value).trim()));
+    const maxVal = Math.max(...rawValues, 1);
+    // 네이버 SmartEditor는 3-level nested table을 한 글자씩 세로 분리. 1-level로 단순화.
     const rows = box.rows.map((r) => {
-      const pct = Math.max(0, Math.min(100, parseInt(r.value, 10) || 0));
-      const color = r.highlight && pct < 50 ? '#BF1722' : (pct >= 80 ? '#2F7B3A' : '#121212');
-      // bar는 td 2개(색상 + 회색)로 단일 행에 배치. nested 없음.
+      const v = parseInt(r.value, 10) || 0;
+      const pct = allPercent
+        ? Math.max(0, Math.min(100, v))
+        : Math.round((v / maxVal) * 100);
+      // 색상: 퍼센트 형식(정답률 등)이면 우수/주의 색 분기, 절대값(문항/점)은 highlight 만 빨강
+      const color = allPercent
+        ? (r.highlight && v < 50 ? '#BF1722' : (v >= 80 ? '#2F7B3A' : '#121212'))
+        : (r.highlight ? '#BF1722' : '#121212');
       const greyPct = 100 - pct;
       // 라벨 + 값을 한 줄, bar를 별도 줄 stack — nested table 없는 1-level 구조.
       // 라벨이 한글 "정수와 유리수의 계산"처럼 길어도 width 가변으로 안전.
@@ -320,11 +330,13 @@ function renderDataBox(box: DataBoxData): string {
   }
 
   if (box.kind === 'table') {
-    const rows = box.rows.map((r, i) => {
-      const bg = r.highlight ? 'background:#FFF8E0;' : (i === 0 ? 'background:#121212;color:#fff;' : 'background:#fff;');
-      const labelColor = i === 0 ? '#fff' : '#121212';
-      const valColor = i === 0 ? '#fff' : (r.highlight ? '#BF1722' : '#2A2A2A');
-      const fontWeight = r.highlight || i === 0 ? '800' : '600';
+    // i === 0을 헤더로 강제하지 않음 — highlight=true인 첫 행이 노란 배경+흰 글씨로 안 보이는 문제 방지.
+    // 모든 row를 데이터 행으로 동일 처리 (헤더 의도면 box.label에 자연스럽게).
+    const rows = box.rows.map((r) => {
+      const bg = r.highlight ? 'background:#FFF8E0;' : 'background:#fff;';
+      const labelColor = '#121212';
+      const valColor = r.highlight ? '#BF1722' : '#2A2A2A';
+      const fontWeight = r.highlight ? '800' : '600';
       return `
         <tr style="${bg}">
           <td style="padding:11px 12px;font-family:Pretendard,sans-serif;font-size:12px;font-weight:${fontWeight};color:${labelColor};border-bottom:1px solid #eee;">${escapeHtml(r.label)}</td>

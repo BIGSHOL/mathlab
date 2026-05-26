@@ -914,10 +914,19 @@ function renderDataBoxNaver(box: NonNullable<NonNullable<MergedCommentary['blog_
   const label = `<p style="margin:0 0 12px;font-family:Pretendard,sans-serif;font-size:10px;letter-spacing:0.14em;color:#888;font-weight:800;">${escapeHtml(box.label)}</p>`;
 
   if (box.kind === 'bars') {
+    // 막대 비율 정규화 — percentage이면 그대로, 절대값(문항/점)은 max 기준 정규화
+    const rawValues = box.rows.map((r) => parseInt(r.value, 10) || 0);
+    const allPercent = box.rows.every((r) => /%\s*$/.test(String(r.value).trim()));
+    const maxVal = Math.max(...rawValues, 1);
     // 네이버 SmartEditor는 3-level nested table을 한 글자씩 세로 분리. 1-level로 단순화.
     const rows = box.rows.map((r) => {
-      const pct = Math.max(0, Math.min(100, parseInt(r.value, 10) || 0));
-      const color = r.highlight && pct < 50 ? '#BF1722' : (pct >= 80 ? '#2F7B3A' : '#121212');
+      const v = parseInt(r.value, 10) || 0;
+      const pct = allPercent
+        ? Math.max(0, Math.min(100, v))
+        : Math.round((v / maxVal) * 100);
+      const color = allPercent
+        ? (r.highlight && v < 50 ? '#BF1722' : (v >= 80 ? '#2F7B3A' : '#121212'))
+        : (r.highlight ? '#BF1722' : '#121212');
       const greyPct = 100 - pct;
       // 라벨 압축("기본 (Level 1)" → "기본·Lv1") + nowrap — 네이버 한 글자 분리 방지
       const shortLabel = shortenDataLabel(r.label);
@@ -943,11 +952,12 @@ function renderDataBoxNaver(box: NonNullable<NonNullable<MergedCommentary['blog_
   }
 
   if (box.kind === 'table') {
-    const rows = box.rows.map((r, i) => {
-      const bg = r.highlight ? 'background:#FFF8E0;' : (i === 0 ? 'background:#121212;color:#fff;' : 'background:#fff;');
-      const labelColor = i === 0 ? '#fff' : (r.highlight ? '#121212' : '#121212');
-      const valColor = i === 0 ? '#fff' : (r.highlight ? '#BF1722' : '#2A2A2A');
-      const fontWeight = r.highlight || i === 0 ? '800' : '600';
+    // i === 0 강제 헤더 처리 제거 — highlight=true 첫 행이 흰 글씨로 안 보이는 문제 방지
+    const rows = box.rows.map((r) => {
+      const bg = r.highlight ? 'background:#FFF8E0;' : 'background:#fff;';
+      const labelColor = '#121212';
+      const valColor = r.highlight ? '#BF1722' : '#2A2A2A';
+      const fontWeight = r.highlight ? '800' : '600';
       return `
         <tr style="${bg}">
           <td style="padding:11px 12px;font-family:Pretendard,sans-serif;font-size:12px;font-weight:${fontWeight};color:${labelColor};border-bottom:1px solid #eee;">${escapeHtml(r.label)}</td>
@@ -1006,14 +1016,15 @@ function renderDifficultyStackedBarNaver(questions: AnalyzedQuestion[]): string 
     return `<td width="${pct}%" height="32" align="center" style="background:${s.color};color:#fff;font-family:Pretendard,sans-serif;font-size:11px;font-weight:700;">${label}</td>`;
   }).join('');
 
-  // legend (table 5행)
+  // legend — swatch를 td bgcolor로 (네이버는 div+background를 잃음)
   const legendRows = stats.map((s) => {
     const pct = totalPts > 0 ? Math.round((s.points / totalPts) * 100) : 0;
     return `
       <tr>
-        <td width="16" style="padding:6px 0;"><div style="width:12px;height:12px;background:${s.color};"></div></td>
-        <td width="120" style="padding:6px 8px 6px 8px;font-family:Pretendard,sans-serif;font-size:12px;font-weight:700;color:#121212;">Lv ${s.level} · ${s.label}</td>
-        <td style="padding:6px 0;font-family:Pretendard,sans-serif;font-size:12px;color:#888;">${s.count}문항 · ${s.points}점 · ${pct}%</td>
+        <td width="14" height="14" bgcolor="${s.color}" style="background:${s.color};width:14px;height:14px;font-size:1px;line-height:1px;">&nbsp;</td>
+        <td width="8" style="font-size:1px;line-height:1px;">&nbsp;</td>
+        <td width="120" style="padding:6px 8px 6px 0;font-family:Pretendard,sans-serif;font-size:12px;font-weight:700;color:#121212;white-space:nowrap;">Lv ${s.level} · ${s.label}</td>
+        <td style="padding:6px 0;font-family:Pretendard,sans-serif;font-size:12px;color:#888;white-space:nowrap;">${s.count}문항 · ${s.points}점 · ${pct}%</td>
       </tr>`;
   }).join('');
 

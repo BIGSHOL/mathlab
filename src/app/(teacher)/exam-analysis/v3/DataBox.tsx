@@ -28,13 +28,20 @@ export function DataBox({ box, keyPrefix = '' }: { box: DataBoxType; keyPrefix?:
 type Row = DataBoxType['rows'][number];
 
 function BarsBody({ rows, keyPrefix }: { rows: Row[]; keyPrefix: string }) {
+  // 막대 비율 정규화 — 모든 row가 percentage("80%")이면 그대로, 절대값(7문항/27점)은 max 기준
+  const rawValues = rows.map((r) => parseInt(r.value, 10) || 0);
+  const allPercent = rows.every((r) => /%\s*$/.test(String(r.value).trim()));
+  const maxVal = Math.max(...rawValues, 1);
   return (
     <>
       {rows.map((r, i) => {
-        const pct = parseInt(r.value, 10) || 0;
-        const safePct = Math.max(0, Math.min(100, pct));
-        const tone: 'up' | 'down' | 'mid' =
-          r.highlight && pct < 50 ? 'down' : pct >= 80 ? 'up' : 'mid';
+        const v = parseInt(r.value, 10) || 0;
+        const safePct = allPercent
+          ? Math.max(0, Math.min(100, v))
+          : Math.round((v / maxVal) * 100);
+        const tone: 'up' | 'down' | 'mid' = allPercent
+          ? (r.highlight && v < 50 ? 'down' : v >= 80 ? 'up' : 'mid')
+          : (r.highlight ? 'down' : 'mid');
         const fillCls = tone === 'up' ? 'v3-up' : tone === 'down' ? 'v3-down' : '';
         return (
           <div
