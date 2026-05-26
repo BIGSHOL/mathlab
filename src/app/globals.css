@@ -871,10 +871,12 @@ body {
 .v3-feature .v3-feature-lhs p { font-family: var(--font-serif-kr, 'Noto Serif KR', serif); font-size: 16px; line-height: 1.7; color: #DDD; margin: 0 0 14px; word-break: keep-all; }
 /* 검정 배경(.v3-feature) strong → 황색 굵게 (검정 텍스트 안 보이는 문제 방지 — Phase 0 사용자 피드백) */
 .v3-feature .v3-feature-lhs p strong { background: none !important; color: #FFA940 !important; font-weight: 700; padding: 0; }
-/* AI가 임의로 삽입한 span/mark/font 의 인라인 색상을 강제 무효 — V3 디자인 시스템 색상만 사용 */
-.v3-feature .v3-feature-lhs p span,
-.v3-feature .v3-feature-lhs p mark,
-.v3-feature .v3-feature-lhs p font { color: inherit !important; background: transparent !important; }
+/* 강력한 색상 강제 — AI가 raw HTML(<span style="color:..."> 등)을 삽입해도 검정 배경에서 안 보이는 문제 차단 */
+.v3-feature .v3-feature-lhs p { color: #DDD !important; }
+.v3-feature .v3-feature-lhs p *:not(strong) { color: inherit !important; background: transparent !important; }
+.v3-feature .v3-feature-lhs h2 { color: #fff !important; }
+.v3-feature .v3-feature-lhs h2 *:not(.v3-em) { color: inherit !important; background: transparent !important; }
+.v3-feature .v3-feature-lhs h2 .v3-em { color: #FFA940 !important; font-style: italic; background: none !important; }
 /* 본문 섹션 안에서도 임의 보라색/검정 인라인 색상 무효 (V3는 자체 색상 토큰만 사용) */
 .v3-section p span[style*="color"],
 .v3-section p mark,
@@ -930,6 +932,19 @@ body {
 .v3-data-box .v3-data-row.v3-highlight .v3-data-nm,
 .v3-data-box .v3-data-row.v3-highlight .v3-data-val,
 .v3-data-box .v3-data-row.v3-highlight .v3-data-v-num { color: #BF1722; font-weight: 800; }
+
+/* V3 난이도별 배점 분포 — 상단 stacked bar + 각 난이도별 2행(문항수 grid + 배점 막대) */
+.v3-diff-stacked { display: flex; height: 36px; border-radius: 4px; overflow: hidden; margin: 0 0 8px; }
+.v3-diff-stacked > div { display: flex; align-items: center; justify-content: center; color: #fff; font-family: var(--font-display, 'Pretendard Variable', sans-serif); font-size: 12px; font-weight: 700; }
+.v3-diff-level-block { margin: 0 0 14px; }
+.v3-diff-level-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.v3-diff-swatch { width: 14px; height: 14px; flex-shrink: 0; }
+.v3-diff-label { font-family: var(--font-display, 'Pretendard Variable', sans-serif); font-size: 12px; font-weight: 700; color: #121212; white-space: nowrap; }
+.v3-diff-detail { font-family: var(--font-display, 'Pretendard Variable', sans-serif); font-size: 12px; color: #888; margin-left: auto; white-space: nowrap; }
+.v3-diff-count-grid { display: grid; gap: 2px; margin-bottom: 3px; }
+.v3-diff-count-cell { height: 10px; border-radius: 1px; }
+.v3-diff-pts-track { height: 6px; background: #DDD; border-radius: 1px; }
+.v3-diff-pts-fill { height: 100%; border-radius: 1px; }
 
 /* V3 데이터 박스 — 이산 grid 시각화 (사용자 피드백) */
 .v3-data-row-grid { margin: 0 0 14px; }
