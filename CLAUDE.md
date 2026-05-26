@@ -839,6 +839,102 @@ PDF 시험지 업로드 → Gemini AI 분석 → 문항별 난이도/유형/능�
 
 **5단계 난이도:** "1"(기본), "2"(표준), "3"(응용), "4"(심화), "5"(최고난도)
 
+---
+
+### 기출 분석 V3 리디자인 (2026-05-27, commentary v1.1.0)
+
+**기존 문제**: AI 총평/블로그가 "과학논문 같다" — 텍스트 단락 위주, 강조 요소 `<blockquote>` 하나뿐, 인포그래픽 부재.
+
+**디자인 핸드오프**: `data/handoff-exam-analysis-v3/` (사용자 직접 제작) — NYT Science 톤(검정+빨강 #BF1722+황색 #FFA940+#FFF8E0) + Q&A 인터뷰 구조 + 9개 신규 필드.
+
+**완료 작업 (Phase 1~5 + 12회 후속 fix):**
+
+#### Phase 1~5 핵심 구조
+- `CommentaryResult` 타입 확장 (commentary-agent.ts): V3 신규 필드 9개 optional — `blog_kicker`, `blog_headline`, `blog_dek`, `feature_callout`, `grade_cuts`, `topic_performance`, `blog_qa`, `conclusion`, `pull_quote`
+- **Two-pass Claude 호출** (commentary-agent.ts): 기존 commentary 호출 + 별도 `generateV3Extension()` 호출로 신규 필드만 생성. max_tokens 16384, JSON 정규화(undefined→null/trailing comma 제거), `stripEnglishEnums` + `stripRawHtml`(raw HTML 제거) 재귀 적용.
+- `AGENT_PROMPT_VERSIONS.commentary` v1.0.0 → **v1.1.0** bump (constants.ts) — lazy migration 트리거.
+- **V3 컴포넌트 8개** (`src/app/(teacher)/exam-analysis/v3/`): helpers, DataBox, DifficultyStackedBar, FormatBreakdown, KillerMap, FeatureCallout, QASection, V3CommentaryView.
+- **네이버 V3 렌더러** (`src/lib/exam-analysis/naver-v3-renderer.ts`): `buildNaverV3Html()` + 9개 블록 렌더러. `<table>` + 인라인 style만, 720px 폭 고정.
+- AnalysisDetail에 **[V3 네이버 복사]** 버튼 + CommentarySection에 V3 안내 배너 (legacy → V3 마이그 트리거).
+- 폰트 (layout.tsx): Noto Serif KR (400/500/600/700) + **Abril Fatface** (거대 숫자) + Bodoni Moda (fallback).
+- 시안 도구: `scripts/generate-v3-preview*.ts` (재시안 보존)
+
+#### 어려웠던 부분 — 네이버 SmartEditor 호환성
+
+**증상 → 원인 → 해결** (시행착오 학습):
+
+1. **Q&A 블록 한 글자씩 세로 분리** ("Q1"이 "Q"+"1" 세로) → nested table 3-level + 좁은 width cell이 한글을 한 글자씩 강제 줄바꿈 → **nested table 제거, 1-level stack 구조** (Q번호+질문+답변을 단일 td)
+2. **DATA bars 라벨 세로 분리** ("기본 (Level 1)" → "기 본 ( L e v e l 1 )") → 영문+숫자+괄호 혼합은 word-break:keep-all 미적용 → **`shortenDataLabel()`** 헬퍼로 "기본 (Level 1)" → "기본·Lv1" 압축
+3. **bars 막대 비율 작음** (7문항이 7% width) → 절대값을 width%로 직접 사용 → **max 기준 정규화** + 1.15x padding
+4. **bars 모두 똑같은 길이** → max row가 100% width라 다른 row와 시각 차이 부족 → 사용자 제안 **이산 카운트 grid 시각화** (max 7문항 → 7칸 grid, 각 row 자기 카운트만큼 채움)
+5. **stacked bar 세로 stack** (35%/35%/30%가 위아래 분리) → 네이버 기본 `table-layout:auto`가 빈 cell의 contents 너비(=0)를 우선 → **`table-layout:fixed;width:100%`** 강제
+6. **legend swatch 안 보임** (div+background 색상 박스) → 네이버가 div+background 잃음 → **td bgcolor + width/height 명시 + `<td>&nbsp;</td>`**
+7. **table 첫 행 흰 글씨** (highlight=true가 노란 배경 + 흰 글씨로 안 보임) → `i === 0`을 헤더로 강제 처리 → **헤더 강제 제거**, 모든 row 데이터 행으로 동일 처리
+8. **검정 배경 글씨 안 보임** → AI가 raw HTML(`<span style="color:#6741D9">`)을 임의 삽입 → **`stripRawHtml()` 서버 측 제거 + CSS `*:not(strong) { color: inherit !important; }` 강력 override**
+
+#### AI 응답 비결정성 처리
+
+- **raw HTML 임의 삽입**: V2 article-generator의 보라색 강조 패턴을 학습하여 V3 응답에도 `<span style="color:..."`, `<mark>`, `<font>`, `<strong>` 출력. `stripRawHtml()` 정규식으로 제거하되 markdown `**bold**`로 변환 보존.
+- **JSON 파싱 함정**: AI가 종종 `: undefined` 출력 → `JSON.parse` 실패. 정규식 `:\s*undefined` → `: null` 사전 치환 + `,\s*([}\]])` → `$1` trailing comma 제거.
+- **라벨 형식 일관성 부족**: AI가 value를 "27점" / "23점 / 7문항" / "85%" 등 다양하게 응답. `extractCount()`는 "X문항"/"X개" 매치 우선, fallback parseInt. `allHaveCount` 조건으로 grid vs 막대 분기.
+- **영문 enum 노출 (CALCULATION, NUMBER 등)**: `stripEnglishEnums()` 재귀 적용 (blog_qa.answer[], feature_callout.body[] 등 nested 필드까지).
+- **V3 시스템 프롬프트 11개 절대 규칙** (commentary-agent.ts::SYSTEM_PROMPT_V3): raw HTML 금지 / 영문 enum 금지 / `\dfrac` 금지 / 존댓말 / 짧은 라벨(10자 이내) / `"X문항"` 또는 `"X점 / Y문항"` 형식 등
+
+#### Q1 동적 질문 패턴 (비교 데이터 가용성 기반)
+
+`buildV3UserPrompt`가 `base.nearby_comparison` 길이 + 정규식 매치로 가용성 판단:
+- 작년✓+주변✓ → "작년이나 인근 학교와 비교해서..."
+- 작년✓ only → "작년 시험과 비교해서..."
+- 주변✓ only → "인근 학교 시험과 비교해서..."
+- 둘 다✗ → "이번 시험은 전반적으로 어떤 구성인가요?" (비교 표현 금지)
+
+#### FIGURE 난이도별 배점 분포 — 사용자 제안 그대로
+
+상단 stacked bar (정수 % + 합 100 보정) + 각 난이도마다 2행 (문항수 grid + 배점 막대) + 난이도별 색상 (V3_DIFF_COLORS = 녹·옅녹·회·황·빨).
+
+#### 3-way 동기화 필수
+
+V3 동일 fix를 **3곳에 모두 적용**:
+1. `src/app/(teacher)/exam-analysis/v3/*.tsx` (production V3 UI)
+2. `src/lib/exam-analysis/naver-v3-renderer.ts` (네이버 호환 빌더)
+3. `scripts/generate-v3-preview-html.ts` (시안 빌더 — 재시안용 보존)
+
+한 곳만 fix하면 다른 곳과 일치하지 않아 디버깅 어려움.
+
+#### Lazy migration 미구현 → 명시 클릭
+
+`AGENT_PROMPT_VERSIONS.commentary` bump으로 자동 stale 감지 + 재호출은 **현재 구현 안 됨**. orchestrator가 promptVersion 비교 로직 미보유. 사용자가 안내 배너의 **[V3로 재분석]** 명시 클릭 → forceRegenerate=true 호출 → V3 데이터 생성.
+
+#### 네이버 호환 패턴 (필수)
+
+1. `<table>` + 인라인 `style` **만** (flex/grid/li/h2/외부 CSS 금지)
+2. 폭 **720px 고정** (네이버 본문 폭)
+3. **`table-layout:fixed;width:100%`** — cell width% 보장 (auto는 contents 우선)
+4. **nested table 1-level 한도** (2-level 이상은 한 글자씩 세로 분리)
+5. **div+background → td bgcolor + width/height** (네이버는 div 색상 잃음)
+6. **inline color/background → CSS override 강제** (`*:not(strong) { color: inherit !important; }`)
+7. **word-break:keep-all** (한글) + **white-space:nowrap** (영문+숫자 혼합)
+8. cellpadding="0" cellspacing="0" 명시 + cell 내 `&nbsp;` 채움
+
+#### 향후 남은 작업
+
+| 우선순위 | 작업 | 비고 |
+|---|---|---|
+| 중 | **차트 4종 PNG V3 톤 재생성** | 현재 보라/분홍 — NYT 흑백+빨강+황색 톤과 불일치 (chart-image-generator.ts 수정) |
+| 중 | **Lazy migration 자동화** | useEffect로 stale 감지 시 자동 forceRegenerate. 사용자 동의 후 적용 권장 |
+| 낮 | **V3 모드 토글 UI** | commentary-spec.md 옵션. 사용자가 V2/V3 전환 가능 |
+| 낮 | **차트 PNG 네이버 CDN 호스팅** | 현재 base64라 사이즈 큼. 외부 URL로 최적화 |
+| 낮 | **grade_cuts 자동 추정** | 학생 응답 분포 기반. 현재는 AI 추정만 |
+| 낮 | **V3 인쇄 모드 (/print 페이지)** | 인쇄는 여전히 V2 마크업 |
+| 매우 낮 | **사용량 통계** | V3 사용 비율, [V3 네이버 복사] 클릭, 학부모 피드백 |
+
+#### 학습된 함정 — 디버깅 시간 주의
+
+1. **시안 ↔ production ↔ 네이버 빌더 불일치**: 사용자 화면이 어느 코드의 결과인지 확인하지 않고 fix하면 다른 영역만 수정됨
+2. **사용자 분석본 vs 시안 데이터**: 시안은 정화중1, 사용자 보고는 다른 학교일 수 있음. AI value 형식(`"27점"` vs `"23점 / 7문항"`) 차이로 동작 달라짐
+3. **Vercel 배포 시간차**: 푸시 직후(~2-3분) 결과는 옛 코드 — 사용자가 본 화면이 새 코드 결과라고 단정하지 말 것
+4. **AI 응답 형식**: AI가 매번 일관된 형식으로 응답하지 않음. 클라이언트 측 정규화 + 시스템 프롬프트 강제 둘 다 필요
+
 ### 수기채점 시스템
 
 **프로세스 (`src/lib/services/manual-grading.ts`):**
