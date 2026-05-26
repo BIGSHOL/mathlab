@@ -63,6 +63,31 @@ function stripEnglishEnums(text: string): string {
   return out;
 }
 
+/**
+ * V3 응답 텍스트에서 raw HTML 태그 제거.
+ * AI가 가끔 <span style="color:#6741D9">, <mark>, <font color="..."> 등 V2 article-generator 패턴을
+ * 학습하여 임의로 삽입함 → 검정 배경의 피처 박스에서 안 보이는 글씨 발생.
+ * V3는 오직 **markdown bold**만 허용. 다른 강조 마크업은 서버에서 strip.
+ */
+function stripRawHtml(text: string): string {
+  if (!text) return text;
+  return text
+    // span/mark/font/em/i/u/sub/sup 등 인라인 태그 제거 (내용 보존)
+    .replace(/<\/?(?:span|mark|font|small|em|i|u|sub|sup|big|tt)[^>]*>/gi, '')
+    // <b>는 markdown ** 와 중복이므로 제거 (내용 보존)
+    .replace(/<\/?b>/gi, '')
+    // <strong>은 markdown으로 변환 — **text**
+    .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, '**$1**')
+    // 인라인 color/background-color 스타일 직접 노출 시 제거
+    .replace(/\s*style="[^"]*color\s*:[^";]+;?[^"]*"/gi, '')
+    .replace(/\s*style="[^"]*background[^"]*"/gi, '');
+}
+
+/** stripRawHtml + stripEnglishEnums 한 번에 적용 — V3 텍스트 정규화 */
+function normalizeText(text: string): string {
+  return stripEnglishEnums(stripRawHtml(text));
+}
+
 /** 난이도 분포에서 5단계 합산 값 추출 */
 function getDiffCounts(diff: Record<string, number>): { level1: number; level2: number; level3: number; level4: number; level5: number } {
   const get = (keys: string[]) => keys.reduce((s, k) => s + (diff[k] || 0), 0);
@@ -249,9 +274,10 @@ const SYSTEM_PROMPT_V3 = `너는 한국 중·고등학교 수학 시험 분석�
 3. **\\dfrac 금지, \\text{한글} 금지.** 단순 정수·점수·한글에 \$ 사용 금지 (보기번호 ①②③④⑤, ㄱㄴㄷ 제외).
 4. **존댓말 "~습니다" 통일.** 평어체 섞지 말 것.
 5. **answer 문단은 3~4줄 이내.** 짧게 끊어 쓰기.
-6. **데이터 인용은 \`**굵게**\` 마크다운**.
+6. **데이터 인용은 \`**굵게**\` 마크다운만 사용**. \`<strong>\`, \`<b>\`, \`<mark>\`, \`<span style="color:...">\`, \`<font color="...">\` 같은 raw HTML 태그/인라인 색상 스타일 절대 출력 금지. **오직 \`**굵게**\` 마크다운만** 허용.
 7. **충분히 못 채우는 필드는 undefined.** 거짓 placeholder 금지.
 8. blog_qa 항목은 최소 3개 이상. 5개 미만이어도 OK (정직성 우선).
+9. **단원명/숫자에 색상 지정 금지** — V3 디자인 시스템이 색상을 통제. 텍스트에 보라색·빨강 등 임의 색상 인라인 적용하면 검정 배경에서 안 보임.
 
 ## 톤 가이드
 
@@ -688,20 +714,20 @@ ${phases}
   /** V3 응답에 stripEnglishEnums 재귀 적용 (nested 필드까지 — Plan agent 검토 반영) */
   private parseV3Response(raw: V3Extension): V3Extension {
     return {
-      blog_kicker: raw.blog_kicker ? stripEnglishEnums(String(raw.blog_kicker)) : undefined,
-      blog_headline: raw.blog_headline ? stripEnglishEnums(String(raw.blog_headline)) : undefined,
-      blog_dek: raw.blog_dek ? stripEnglishEnums(String(raw.blog_dek)) : undefined,
+      blog_kicker: raw.blog_kicker ? normalizeText(String(raw.blog_kicker)) : undefined,
+      blog_headline: raw.blog_headline ? normalizeText(String(raw.blog_headline)) : undefined,
+      blog_dek: raw.blog_dek ? normalizeText(String(raw.blog_dek)) : undefined,
       feature_callout: raw.feature_callout
         ? {
             big_number: String(raw.feature_callout.big_number ?? ''),
             big_number_unit: raw.feature_callout.big_number_unit ? String(raw.feature_callout.big_number_unit) : undefined,
-            big_number_label: stripEnglishEnums(String(raw.feature_callout.big_number_label ?? '')),
-            title: stripEnglishEnums(String(raw.feature_callout.title ?? '')),
+            big_number_label: normalizeText(String(raw.feature_callout.big_number_label ?? '')),
+            title: normalizeText(String(raw.feature_callout.title ?? '')),
             // body 가 string으로 올 수 있음 → Array.isArray 가드 (엣지케이스 #3)
             body: Array.isArray(raw.feature_callout.body)
-              ? raw.feature_callout.body.map((p) => stripEnglishEnums(String(p)))
+              ? raw.feature_callout.body.map((p) => normalizeText(String(p)))
               : raw.feature_callout.body
-                ? [stripEnglishEnums(String(raw.feature_callout.body))]
+                ? [normalizeText(String(raw.feature_callout.body))]
                 : [],
           }
         : undefined,
@@ -709,25 +735,25 @@ ${phases}
       topic_performance: Array.isArray(raw.topic_performance)
         ? raw.topic_performance.map((tp) => ({
             ...tp,
-            topic: stripEnglishEnums(String(tp.topic ?? '')),
+            topic: normalizeText(String(tp.topic ?? '')),
           }))
         : undefined,
       blog_qa: Array.isArray(raw.blog_qa)
         ? raw.blog_qa.map((qa) => ({
-            question: stripEnglishEnums(String(qa.question ?? '')),
+            question: normalizeText(String(qa.question ?? '')),
             answer: Array.isArray(qa.answer)
-              ? qa.answer.map((p) => stripEnglishEnums(String(p)))
+              ? qa.answer.map((p) => normalizeText(String(p)))
               : qa.answer
-                ? [stripEnglishEnums(String(qa.answer))]
+                ? [normalizeText(String(qa.answer))]
                 : [],
             data_box: qa.data_box
               ? {
-                  label: stripEnglishEnums(String(qa.data_box.label ?? '')),
+                  label: normalizeText(String(qa.data_box.label ?? '')),
                   kind: qa.data_box.kind,
                   rows: Array.isArray(qa.data_box.rows)
                     ? qa.data_box.rows.map((r) => ({
-                        label: stripEnglishEnums(String(r.label ?? '')),
-                        value: stripEnglishEnums(String(r.value ?? '')),
+                        label: normalizeText(String(r.label ?? '')),
+                        value: normalizeText(String(r.value ?? '')),
                         highlight: r.highlight,
                       }))
                     : [],
@@ -737,14 +763,14 @@ ${phases}
         : undefined,
       conclusion: raw.conclusion
         ? {
-            kicker: raw.conclusion.kicker ? stripEnglishEnums(String(raw.conclusion.kicker)) : undefined,
-            body: stripEnglishEnums(String(raw.conclusion.body ?? '')),
+            kicker: raw.conclusion.kicker ? normalizeText(String(raw.conclusion.kicker)) : undefined,
+            body: normalizeText(String(raw.conclusion.body ?? '')),
           }
         : undefined,
       pull_quote: raw.pull_quote
         ? {
-            text: stripEnglishEnums(String(raw.pull_quote.text ?? '')),
-            cite: raw.pull_quote.cite ? stripEnglishEnums(String(raw.pull_quote.cite)) : undefined,
+            text: normalizeText(String(raw.pull_quote.text ?? '')),
+            cite: raw.pull_quote.cite ? normalizeText(String(raw.pull_quote.cite)) : undefined,
           }
         : undefined,
     };
@@ -879,7 +905,7 @@ ${topicsLine}
 
   parseResponse(raw: Record<string, unknown>, questions?: Array<{ question_number: number | string; question_format: string | null }>): Record<string, unknown> {
     // 모든 출력 텍스트에서 영문 enum → 한글 라벨 치환 (방어막)
-    const norm = (v: unknown) => stripEnglishEnums(String(v ?? ''));
+    const norm = (v: unknown) => normalizeText(String(v ?? ''));
     const normArr = (arr: unknown) => this.parseStringArray(arr).map(stripEnglishEnums);
 
     const result: CommentaryResult = {
@@ -891,7 +917,7 @@ ${topicsLine}
             grade: norm(s.grade),
             target: norm(s.target),
             strategy: s.strategy ? norm(s.strategy) : undefined,
-            points: Array.isArray(s.points) ? (s.points as string[]).map(p => stripEnglishEnums(String(p))) : undefined,
+            points: Array.isArray(s.points) ? (s.points as string[]).map(p => normalizeText(String(p))) : undefined,
           }))
         : undefined,
       strength_areas: normArr(raw.strength_areas),
