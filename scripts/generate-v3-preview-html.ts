@@ -51,6 +51,16 @@ function normDiff(raw: string): string {
   return map[raw] || raw;
 }
 
+/** DATA 박스 라벨 압축 — "기본 (Level 1)" → "기본·Lv1" */
+function shortenDataLabel(raw: string): string {
+  return String(raw ?? '')
+    .replace(/\s*\(Level\s+(\d+)\)\s*/gi, '·Lv$1')
+    .replace(/\s*\(Lv\s*(\d+)\)\s*/gi, '·Lv$1')
+    .replace(/^Level\s+(\d+)\s*/i, 'Lv$1 ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 // V3 톤 난이도 색상 (녹색→회색→황색→빨강 그라데이션)
 const V3_DIFF_COLORS = ['#2F7B3A', '#6F9C76', '#888', '#DA8B2C', '#BF1722'];
 const V3_DIFF_LABELS = ['기본', '표준', '응용', '심화', '최고난도'];
@@ -909,12 +919,13 @@ function renderDataBoxNaver(box: NonNullable<NonNullable<MergedCommentary['blog_
       const pct = Math.max(0, Math.min(100, parseInt(r.value, 10) || 0));
       const color = r.highlight && pct < 50 ? '#BF1722' : (pct >= 80 ? '#2F7B3A' : '#121212');
       const greyPct = 100 - pct;
-      // 라벨 + 값 한 줄 / bar 별도 줄 stack — nested table 없는 1-level
+      // 라벨 압축("기본 (Level 1)" → "기본·Lv1") + nowrap — 네이버 한 글자 분리 방지
+      const shortLabel = shortenDataLabel(r.label);
       return `
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 12px;">
       <tr>
-        <td style="padding:6px 8px 4px 0;font-family:Pretendard,sans-serif;font-size:13px;font-weight:700;color:${color};word-break:keep-all;">${escapeHtml(r.label)}</td>
-        <td width="60" align="right" style="padding:6px 0 4px 8px;font-family:'Bodoni Moda',serif;font-size:14px;font-weight:700;color:${color};white-space:nowrap;">${escapeHtml(r.value)}</td>
+        <td style="padding:6px 8px 4px 0;font-family:Pretendard,sans-serif;font-size:13px;font-weight:700;color:${color};white-space:nowrap;word-break:keep-all;">${escapeHtml(shortLabel)}</td>
+        <td width="60" align="right" style="padding:6px 0 4px 8px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:14px;font-weight:700;color:${color};white-space:nowrap;">${escapeHtml(r.value)}</td>
       </tr>
       <tr>
         <td width="${pct}%" height="6" bgcolor="${color}" style="background:${color};font-size:1px;line-height:1px;">&nbsp;</td>

@@ -24,6 +24,19 @@ export function normDiff(raw: string): string {
 }
 
 /**
+ * DATA 박스 라벨 압축 — "기본 (Level 1)" → "기본·Lv1" 형태.
+ * 영문+숫자+한글 혼합 라벨이 좁은 cell에서 한 글자씩 세로 분리되는 문제 방지.
+ */
+export function shortenDataLabel(raw: string): string {
+  return String(raw ?? '')
+    .replace(/\s*\(Level\s+(\d+)\)\s*/gi, '·Lv$1')
+    .replace(/\s*\(Lv\s*(\d+)\)\s*/gi, '·Lv$1')
+    .replace(/^Level\s+(\d+)\s*/i, 'Lv$1 ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
  * **bold** 마크다운 → <strong> + 노란 형광펜 강조
  * 흰 배경 본문용. 검정 배경에서는 CSS `.v3-feature .lhs p strong` override 가 황색으로 덮어씀.
  *

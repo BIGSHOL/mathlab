@@ -9,7 +9,7 @@
  * 시안: scripts/generate-v3-preview-html.ts::renderDataBoxApp 의 JSX 버전
  */
 
-import { markdownToHighlighted } from './helpers';
+import { markdownToHighlighted, shortenDataLabel } from './helpers';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 
 type DataBoxType = NonNullable<NonNullable<CommentaryResult['blog_qa']>[number]['data_box']>;
@@ -41,7 +41,7 @@ function BarsBody({ rows, keyPrefix }: { rows: Row[]; keyPrefix: string }) {
             key={`${keyPrefix}-${i}`}
             className={`v3-data-row v3-data-row-bars${r.highlight ? ' v3-highlight' : ''}`}
           >
-            <span className="v3-data-nm">{r.label}</span>
+            <span className="v3-data-nm" title={r.label}>{shortenDataLabel(r.label)}</span>
             <div className="v3-data-track">
               <div className={`v3-data-fill ${fillCls}`} style={{ width: `${safePct}%` }} />
             </div>

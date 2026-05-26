@@ -54,6 +54,19 @@ function normDiff(raw: string): string {
   return map[raw] || raw;
 }
 
+/**
+ * DATA 박스 라벨 압축 — AI가 "기본 (Level 1)" 같이 영문+숫자 섞어 출력하면 네이버에서
+ * 한 글자씩 세로 분리됨. "기본·Lv1" 형태로 압축해 1줄로 표시.
+ */
+function shortenDataLabel(raw: string): string {
+  return String(raw ?? '')
+    .replace(/\s*\(Level\s+(\d+)\)\s*/gi, '·Lv$1')
+    .replace(/\s*\(Lv\s*(\d+)\)\s*/gi, '·Lv$1')
+    .replace(/^Level\s+(\d+)\s*/i, 'Lv$1 ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 const V3_DIFF_COLORS = ['#2F7B3A', '#6F9C76', '#888', '#DA8B2C', '#BF1722'];
 const V3_DIFF_LABELS = ['기본', '표준', '응용', '심화', '최고난도'];
 
@@ -283,10 +296,12 @@ function renderDataBox(box: DataBoxData): string {
       const greyPct = 100 - pct;
       // 라벨 + 값을 한 줄, bar를 별도 줄 stack — nested table 없는 1-level 구조.
       // 라벨이 한글 "정수와 유리수의 계산"처럼 길어도 width 가변으로 안전.
+      // shortenDataLabel으로 "기본 (Level 1)" → "기본·Lv1" 압축 (네이버 한 글자씩 분리 방지).
+      const shortLabel = shortenDataLabel(r.label);
       return `
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 12px;">
       <tr>
-        <td style="padding:6px 8px 4px 0;font-family:Pretendard,sans-serif;font-size:13px;font-weight:700;color:${color};word-break:keep-all;">${escapeHtml(r.label)}</td>
+        <td style="padding:6px 8px 4px 0;font-family:Pretendard,sans-serif;font-size:13px;font-weight:700;color:${color};white-space:nowrap;word-break:keep-all;">${escapeHtml(shortLabel)}</td>
         <td width="60" align="right" style="padding:6px 0 4px 8px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:14px;font-weight:700;color:${color};white-space:nowrap;">${escapeHtml(r.value)}</td>
       </tr>
       <tr>
