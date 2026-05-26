@@ -852,7 +852,7 @@ body {
 .v3-kpi { padding: 24px 16px; text-align: center; border-right: 1px solid #333; }
 .v3-kpi:last-child { border-right: none; }
 .v3-kpi .v3-kpi-lb { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #888; font-weight: 700; }
-.v3-kpi .v3-kpi-v { font-family: var(--font-bodoni, 'Bodoni Moda', serif); font-size: 36px; font-weight: 900; line-height: 1; margin-top: 8px; }
+.v3-kpi .v3-kpi-v { font-family: var(--font-abril, 'Abril Fatface', 'Bodoni Moda', serif); font-size: 36px; font-weight: 900; line-height: 1; margin-top: 8px; }
 .v3-kpi-1 .v3-kpi-v { color: #FFA940; }
 .v3-kpi-2 .v3-kpi-v, .v3-kpi-3 .v3-kpi-v { color: #fff; }
 .v3-kpi-4 .v3-kpi-v { color: #2F7B3A; }
@@ -873,7 +873,7 @@ body {
 .v3-feature .v3-feature-lhs p strong { background: none !important; color: #FFA940 !important; font-weight: 700; padding: 0; }
 .v3-feature .v3-feature-rhs { text-align: center; }
 .v3-feature .v3-feature-rhs .v3-big-num {
-  font-family: var(--font-bodoni, 'Bodoni Moda', serif); font-size: 180px; font-weight: 900; line-height: 1;
+  font-family: var(--font-abril, 'Abril Fatface', 'Bodoni Moda', serif); font-size: 180px; font-weight: 900; line-height: 1;
   color: #FFA940; text-shadow: 0 8px 30px rgba(255, 169, 64, 0.25); letter-spacing: -0.04em;
 }
 .v3-feature .v3-feature-rhs .v3-big-num .v3-big-num-of { font-size: 60px; color: #888; }
@@ -882,7 +882,7 @@ body {
 /* V3 본문 섹션 */
 .v3-section { padding: 40px 64px; border-bottom: 1px solid #EEE; max-width: 1080px; margin: 0 auto; position: relative; }
 .v3-section .v3-section-num {
-  font-family: var(--font-bodoni, 'Bodoni Moda', serif); font-size: 60px; font-weight: 900; line-height: 1;
+  font-family: var(--font-abril, 'Abril Fatface', 'Bodoni Moda', serif); font-size: 60px; font-weight: 900; line-height: 1;
   color: #BF1722; opacity: 0.18; float: right; margin: -10px -16px 0 0;
 }
 .v3-section h3 {
@@ -914,7 +914,7 @@ body {
 .v3-data-box .v3-data-row-table:last-child { border-bottom: none; }
 .v3-data-box .v3-data-row .v3-data-nm { font-family: var(--font-display, 'Pretendard Variable', sans-serif); font-size: 13px; font-weight: 700; word-break: keep-all; }
 .v3-data-box .v3-data-row .v3-data-val { font-family: var(--font-display, 'Pretendard Variable', sans-serif); font-size: 13px; color: #2A2A2A; word-break: keep-all; }
-.v3-data-box .v3-data-row .v3-data-v-num { font-family: var(--font-bodoni, 'Bodoni Moda', serif); font-size: 16px; font-weight: 700; text-align: right; white-space: nowrap; }
+.v3-data-box .v3-data-row .v3-data-v-num { font-family: var(--font-abril, 'Abril Fatface', 'Bodoni Moda', serif); font-size: 16px; font-weight: 700; text-align: right; white-space: nowrap; }
 .v3-data-box .v3-data-row .v3-data-track { height: 6px; background: #DDD; position: relative; }
 .v3-data-box .v3-data-row .v3-data-track .v3-data-fill { height: 100%; background: #121212; }
 .v3-data-box .v3-data-row .v3-data-track .v3-data-fill.v3-up { background: #2F7B3A; }
@@ -946,7 +946,7 @@ body {
 .v3-info-caption b { color: #121212; }
 .v3-stacked-bar { display: flex; height: 32px; border-radius: 4px; overflow: hidden; border: 1px solid #DDD; }
 .v3-stacked-bar > div { display: flex; align-items: center; justify-content: center; color: #fff; font-family: var(--font-display, 'Pretendard Variable', sans-serif); font-size: 11px; font-weight: 700; }
-.v3-stacked-bar.v3-stacked-bar-format > div { font-family: var(--font-bodoni, 'Bodoni Moda', serif); font-size: 14px; }
+.v3-stacked-bar.v3-stacked-bar-format > div { font-family: var(--font-abril, 'Abril Fatface', 'Bodoni Moda', serif); font-size: 14px; }
 .v3-stacked-legend { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; margin-top: 14px; }
 .v3-stacked-legend > div { display: flex; align-items: center; gap: 8px; font-family: var(--font-display, 'Pretendard Variable', sans-serif); font-size: 12px; }
 .v3-stacked-legend .v3-legend-swatch { width: 12px; height: 12px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
@@ -955,7 +955,7 @@ body {
 .v3-format-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .v3-format-card { text-align: center; padding: 16px 8px; background: #fff; border: 1px solid #EEE; border-top: 3px solid #121212; }
 .v3-format-card .v3-format-label { font-family: var(--font-display, 'Pretendard Variable', sans-serif); font-size: 10px; letter-spacing: 0.14em; color: #888; font-weight: 700; margin: 0; text-transform: uppercase; }
-.v3-format-card .v3-format-count { font-family: var(--font-bodoni, 'Bodoni Moda', serif); font-size: 28px; font-weight: 900; margin: 6px 0 2px; line-height: 1; }
+.v3-format-card .v3-format-count { font-family: var(--font-abril, 'Abril Fatface', 'Bodoni Moda', serif); font-size: 28px; font-weight: 900; margin: 6px 0 2px; line-height: 1; }
 .v3-format-card .v3-format-unit { font-size: 13px; color: #888; font-weight: 400; }
 .v3-format-card .v3-format-points { font-family: var(--font-display, 'Pretendard Variable', sans-serif); font-size: 12px; color: #444; margin: 0; }
 .v3-info-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 24px 0; }

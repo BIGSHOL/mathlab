@@ -413,7 +413,7 @@ export function buildCommentaryHtml(args: BuildHtmlArgs): string {
 <title>V3 시안 · ${escapeHtml(headline)}</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Bodoni+Moda:ital,wght@0,400;0,700;0,900;1,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Bodoni+Moda:ital,wght@0,400;0,700;0,900;1,400&family=Abril+Fatface&display=swap">
 <style>
   * { box-sizing: border-box; }
   body { background: #f0eee8; margin: 0; font-family: 'Pretendard Variable', sans-serif; color: #121212; }
@@ -450,7 +450,7 @@ export function buildCommentaryHtml(args: BuildHtmlArgs): string {
   .kpi { padding: 24px 16px; text-align: center; border-right: 1px solid #333; }
   .kpi:last-child { border-right: none; }
   .kpi .lb { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #888; font-weight: 700; }
-  .kpi .v { font-family: 'Bodoni Moda', serif; font-size: 36px; font-weight: 900; line-height: 1; margin-top: 8px; }
+  .kpi .v { font-family: 'Abril Fatface', 'Bodoni Moda', serif; font-size: 36px; font-weight: 900; line-height: 1; margin-top: 8px; }
   /* 시안 KPI 색상: 1=황색, 2·3=흰색, 4=녹색 */
   .kpi-1 .v { color: #FFA940; }
   .kpi-2 .v, .kpi-3 .v { color: #fff; }
@@ -471,7 +471,7 @@ export function buildCommentaryHtml(args: BuildHtmlArgs): string {
   .v3-feature .lhs p strong { background: none !important; color: #FFA940 !important; font-weight: 700; padding: 0; }
   .v3-feature .rhs { text-align: center; }
   .v3-feature .rhs .big-num {
-    font-family: 'Bodoni Moda', serif; font-size: 180px; font-weight: 900; line-height: 1;
+    font-family: 'Abril Fatface', 'Bodoni Moda', serif; font-size: 180px; font-weight: 900; line-height: 1;
     color: #FFA940; text-shadow: 0 8px 30px rgba(255, 169, 64, 0.25); letter-spacing: -0.04em;
   }
   .v3-feature .rhs .big-num .of { font-size: 60px; color: #888; }
@@ -480,7 +480,7 @@ export function buildCommentaryHtml(args: BuildHtmlArgs): string {
   /* 본문 섹션 */
   .v3-section { padding: 40px 64px; border-bottom: 1px solid #EEE; max-width: 1080px; margin: 0 auto; position: relative; }
   .v3-section .num {
-    font-family: 'Bodoni Moda', serif; font-size: 60px; font-weight: 900; line-height: 1;
+    font-family: 'Abril Fatface', 'Bodoni Moda', serif; font-size: 60px; font-weight: 900; line-height: 1;
     color: #BF1722; opacity: 0.18; float: right; margin: -10px -16px 0 0;
   }
   .v3-section h3 {
@@ -508,7 +508,7 @@ export function buildCommentaryHtml(args: BuildHtmlArgs): string {
   .data-box .row-table:last-child { border-bottom: none; }
   .data-box .row .nm { font-family: 'Pretendard Variable', sans-serif; font-size: 13px; font-weight: 700; word-break: keep-all; }
   .data-box .row .val { font-family: 'Pretendard Variable', sans-serif; font-size: 13px; color: #2A2A2A; word-break: keep-all; }
-  .data-box .row .v-num { font-family: 'Bodoni Moda', serif; font-size: 16px; font-weight: 700; text-align: right; white-space: nowrap; }
+  .data-box .row .v-num { font-family: 'Abril Fatface', 'Bodoni Moda', serif; font-size: 16px; font-weight: 700; text-align: right; white-space: nowrap; }
   .data-box .row .track { height: 6px; background: #DDD; position: relative; }
   .data-box .row .track .fill { height: 100%; background: #121212; }
   .data-box .row .track .fill.up { background: #2F7B3A; }
@@ -550,7 +550,7 @@ export function buildCommentaryHtml(args: BuildHtmlArgs): string {
   .v3-format-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .v3-format-card { text-align: center; padding: 16px 8px; background: #fff; border: 1px solid #EEE; border-top: 3px solid #121212; }
   .v3-format-label { font-family: 'Pretendard Variable', sans-serif; font-size: 10px; letter-spacing: 0.14em; color: #888; font-weight: 700; margin: 0; text-transform: uppercase; }
-  .v3-format-count { font-family: 'Bodoni Moda', serif; font-size: 28px; font-weight: 900; margin: 6px 0 2px; line-height: 1; }
+  .v3-format-count { font-family: 'Abril Fatface', 'Bodoni Moda', serif; font-size: 28px; font-weight: 900; margin: 6px 0 2px; line-height: 1; }
   .v3-format-unit { font-size: 13px; color: #888; font-weight: 400; }
   .v3-format-points { font-family: 'Pretendard Variable', sans-serif; font-size: 12px; color: #444; margin: 0; }
   .v3-info-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 24px 0; }
@@ -565,7 +565,7 @@ export function buildCommentaryHtml(args: BuildHtmlArgs): string {
   .strategy-col { padding: 24px 20px; border-right: 1px solid #DDD; background: #FAFAFA; font-family: 'Pretendard Variable', sans-serif; }
   .strategy-col:last-child { border-right: none; }
   .strategy-col.top { background: linear-gradient(180deg, #FFF8E0, #FFE9A8); }
-  .strategy-col .grade-label { font-family: 'Bodoni Moda', serif; font-size: 24px; font-weight: 900; color: #BF1722; }
+  .strategy-col .grade-label { font-family: 'Abril Fatface', 'Bodoni Moda', serif; font-size: 24px; font-weight: 900; color: #BF1722; }
   .strategy-col .target { font-family: 'Noto Serif KR', serif; font-size: 18px; font-weight: 700; margin: 6px 0 14px; }
   .strategy-col ul { list-style: none; padding: 0; margin: 0; }
   .strategy-col li { padding: 7px 0; font-size: 13px; line-height: 1.6; color: #2A2A2A; border-bottom: 1px dotted #DDD; }
@@ -586,10 +586,10 @@ export function buildCommentaryHtml(args: BuildHtmlArgs): string {
 
   /* 주목할 문항 (검정 박스) */
   .v3-section-dark { background: #121212; color: #fff; max-width: 1080px; margin: 0 auto; padding: 40px 64px; border-radius: 0; border-bottom: 1px solid #EEE; }
-  .notable-h { font-family: 'Bodoni Moda', serif; font-size: 24px; font-weight: 700; margin: 0 0 22px; color: #FFA940; }
+  .notable-h { font-family: 'Abril Fatface', 'Bodoni Moda', serif; font-size: 24px; font-weight: 700; margin: 0 0 22px; color: #FFA940; }
   .notable-item { display: grid; grid-template-columns: 70px 1fr; gap: 16px; padding: 16px 0; border-bottom: 1px solid #333; }
   .notable-item:last-child { border-bottom: none; }
-  .notable-qn { font-family: 'Bodoni Moda', serif; font-size: 32px; font-weight: 900; color: #FFA940; line-height: 1; }
+  .notable-qn { font-family: 'Abril Fatface', 'Bodoni Moda', serif; font-size: 32px; font-weight: 900; color: #FFA940; line-height: 1; }
   .notable-comment { font-family: 'Pretendard Variable', sans-serif; font-size: 14px; line-height: 1.7; color: #E5E5E5; word-break: keep-all; }
   .notable-comment strong { color: #FFA940 !important; background: none !important; }
 
@@ -841,7 +841,7 @@ ${naverFormatBar}` : '';
 <title>V3 시안 · 네이버 블로그 · ${escapeHtml(headline)}</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Bodoni+Moda:ital,wght@0,400;0,700;0,900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Bodoni+Moda:ital,wght@0,400;0,700;0,900&family=Abril+Fatface&display=swap">
 <style>
   body { background: #f0eee8; margin: 0; font-family: 'Pretendard Variable', sans-serif; color: #121212; }
   .page-shell { max-width: 1100px; margin: 0 auto; padding: 32px 24px 96px; }

@@ -140,19 +140,19 @@ function renderKpiRow(questions: AnalyzedQuestion[], meta: NaverV3Meta): string 
   <tr>
     <td align="center" style="padding:20px 8px;border-right:1px solid #333;">
       <p style="margin:0 0 4px;font-family:Pretendard,sans-serif;font-size:10px;letter-spacing:0.14em;color:#888;font-weight:700;">평균 난이도</p>
-      <p style="margin:0;font-family:'Bodoni Moda',serif;font-size:28px;font-weight:900;color:#FFA940;line-height:1;">${weighted.toFixed(1)}<span style="font-size:14px;color:#888;">/5</span></p>
+      <p style="margin:0;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:28px;font-weight:900;color:#FFA940;line-height:1;">${weighted.toFixed(1)}<span style="font-size:14px;color:#888;">/5</span></p>
     </td>
     <td align="center" style="padding:20px 8px;border-right:1px solid #333;">
       <p style="margin:0 0 4px;font-family:Pretendard,sans-serif;font-size:10px;letter-spacing:0.14em;color:#888;font-weight:700;">킬러 비중</p>
-      <p style="margin:0;font-family:'Bodoni Moda',serif;font-size:28px;font-weight:900;color:#fff;line-height:1;">${killerPct}<span style="font-size:14px;color:#BF1722;">%</span></p>
+      <p style="margin:0;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:28px;font-weight:900;color:#fff;line-height:1;">${killerPct}<span style="font-size:14px;color:#BF1722;">%</span></p>
     </td>
     <td align="center" style="padding:20px 8px;border-right:1px solid #333;">
       <p style="margin:0 0 4px;font-family:Pretendard,sans-serif;font-size:10px;letter-spacing:0.14em;color:#888;font-weight:700;">서술형</p>
-      <p style="margin:0;font-family:'Bodoni Moda',serif;font-size:28px;font-weight:900;color:#fff;line-height:1;">${essayCount}<span style="font-size:14px;color:#888;">문항</span></p>
+      <p style="margin:0;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:28px;font-weight:900;color:#fff;line-height:1;">${essayCount}<span style="font-size:14px;color:#888;">문항</span></p>
     </td>
     <td align="center" style="padding:20px 8px;">
       <p style="margin:0 0 4px;font-family:Pretendard,sans-serif;font-size:10px;letter-spacing:0.14em;color:#888;font-weight:700;">총 배점</p>
-      <p style="margin:0;font-family:'Bodoni Moda',serif;font-size:28px;font-weight:900;color:#2F7B3A;line-height:1;">${totalPts}<span style="font-size:14px;color:#888;">점</span></p>
+      <p style="margin:0;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:28px;font-weight:900;color:#2F7B3A;line-height:1;">${totalPts}<span style="font-size:14px;color:#888;">점</span></p>
     </td>
   </tr>
 </table>`;
@@ -164,7 +164,7 @@ function renderFeatureCallout(fc: NonNullable<CommentaryResult['feature_callout'
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 32px;">
   <tr>
     <td align="center" style="padding:36px 20px;background:#fafafa;border:1px solid #ddd;">
-      <p style="margin:0;font-family:'Bodoni Moda',serif;font-size:96px;font-weight:900;line-height:1;color:#BF1722;letter-spacing:-0.04em;">${escapeHtml(fc.big_number)}${fc.big_number_unit ? `<span style="font-size:40px;color:#888;">${escapeHtml(fc.big_number_unit)}</span>` : ''}</p>
+      <p style="margin:0;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:96px;font-weight:900;line-height:1;color:#BF1722;letter-spacing:-0.04em;">${escapeHtml(fc.big_number)}${fc.big_number_unit ? `<span style="font-size:40px;color:#888;">${escapeHtml(fc.big_number_unit)}</span>` : ''}</p>
       <p style="margin:8px 0 0;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.16em;color:#888;font-weight:700;">${escapeHtml(fc.big_number_label)}</p>
       <p style="margin:18px 0 0;font-family:'Noto Serif KR',serif;font-size:18px;font-weight:700;color:#121212;line-height:1.4;max-width:520px;word-break:keep-all;">${escapeHtml(fc.title)}</p>
       ${body.map((p) => `<p style="margin:10px 0 0;font-family:'Noto Serif KR',serif;font-size:14px;color:#444;line-height:1.7;max-width:520px;word-break:keep-all;">${markdownToInlineBold(p)}</p>`).join('')}
@@ -234,7 +234,7 @@ function renderFormatBreakdown(questions: AnalyzedQuestion[]): string {
   const cards = stats.map((s) => `
     <td width="33%" align="center" valign="top" style="padding:18px 8px;background:#fff;border:1px solid #eee;border-top:3px solid ${s.color};">
       <p style="margin:0;font-family:Pretendard,sans-serif;font-size:10px;letter-spacing:0.14em;color:#888;font-weight:700;">${s.label}</p>
-      <p style="margin:6px 0 2px;font-family:'Bodoni Moda',serif;font-size:28px;font-weight:900;color:${s.color};line-height:1;">${s.count}<span style="font-size:13px;color:#888;font-weight:400;">문항</span></p>
+      <p style="margin:6px 0 2px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:28px;font-weight:900;color:${s.color};line-height:1;">${s.count}<span style="font-size:13px;color:#888;font-weight:400;">문항</span></p>
       <p style="margin:0;font-family:Pretendard,sans-serif;font-size:12px;color:#444;">${s.points}점</p>
     </td>`).join('<td width="8"></td>');
 
@@ -260,7 +260,7 @@ function renderQABlock(qa: QAItem, idx: number): string {
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0 16px;border-top:1px solid #DDD;">
   <tr><td style="padding-top:18px;">
     <p style="margin:0 0 10px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.14em;color:#BF1722;font-weight:800;">Q${idx} · 학부모 인터뷰</p>
-    <p style="margin:0 0 14px;font-family:'Bodoni Moda',serif;font-size:32px;font-weight:900;color:#BF1722;line-height:1;letter-spacing:-0.02em;">Q${idx}.</p>
+    <p style="margin:0 0 14px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:32px;font-weight:900;color:#BF1722;line-height:1;letter-spacing:-0.02em;">Q${idx}.</p>
     <p style="margin:0 0 16px;font-family:'Noto Serif KR',serif;font-size:20px;font-weight:700;color:#121212;line-height:1.4;word-break:keep-all;">${escapeHtml(qa.question)}</p>
     ${answer.map((p) => `<p style="margin:0 0 14px;font-family:'Noto Serif KR',serif;font-size:15px;line-height:1.85;color:#2A2A2A;word-break:keep-all;">${markdownToInlineBold(p)}</p>`).join('')}
   </td></tr>
@@ -287,7 +287,7 @@ function renderDataBox(box: DataBoxData): string {
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 12px;">
       <tr>
         <td style="padding:6px 8px 4px 0;font-family:Pretendard,sans-serif;font-size:13px;font-weight:700;color:${color};word-break:keep-all;">${escapeHtml(r.label)}</td>
-        <td width="60" align="right" style="padding:6px 0 4px 8px;font-family:'Bodoni Moda',serif;font-size:14px;font-weight:700;color:${color};white-space:nowrap;">${escapeHtml(r.value)}</td>
+        <td width="60" align="right" style="padding:6px 0 4px 8px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:14px;font-weight:700;color:${color};white-space:nowrap;">${escapeHtml(r.value)}</td>
       </tr>
       <tr>
         <td width="${pct}%" height="6" bgcolor="${color}" style="background:${color};font-size:1px;line-height:1px;">&nbsp;</td>
@@ -313,7 +313,7 @@ function renderDataBox(box: DataBoxData): string {
       return `
         <tr style="${bg}">
           <td style="padding:11px 12px;font-family:Pretendard,sans-serif;font-size:12px;font-weight:${fontWeight};color:${labelColor};border-bottom:1px solid #eee;">${escapeHtml(r.label)}</td>
-          <td style="padding:11px 12px;font-family:'Bodoni Moda',serif;font-size:16px;font-weight:700;color:${valColor};text-align:right;border-bottom:1px solid #eee;">${markdownToInlineBold(r.value)}</td>
+          <td style="padding:11px 12px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:16px;font-weight:700;color:${valColor};text-align:right;border-bottom:1px solid #eee;">${markdownToInlineBold(r.value)}</td>
         </tr>`;
     }).join('');
     return `
