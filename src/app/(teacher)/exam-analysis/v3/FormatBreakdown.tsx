@@ -1,0 +1,55 @@
+/**
+ * V3 인포그래픽 2: 문제 형식 분포 (객관식/단답형/서술형)
+ *
+ * 상단 stacked bar + 하단 3카드 (각 카드 상단에 색상 보더).
+ *
+ * 시안: scripts/generate-v3-preview-html.ts::renderFormatBreakdown 의 JSX 버전
+ */
+
+import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
+
+const FORMATS = [
+  { key: 'objective' as const, label: '객관식', color: '#121212' },
+  { key: 'short_answer' as const, label: '단답형', color: '#888' },
+  { key: 'essay' as const, label: '서술형', color: '#BF1722' },
+];
+
+export function FormatBreakdown({ questions }: { questions: AnalyzedQuestion[] }) {
+  const stats = FORMATS.map((f) => {
+    const fQ = questions.filter((q) => q.question_format === f.key);
+    return { ...f, count: fQ.length, points: fQ.reduce((s, q) => s + (q.points || 0), 0) };
+  });
+  const totalPts = stats.reduce((s, x) => s + x.points, 0);
+  if (totalPts === 0) return null;
+
+  return (
+    <figure className="v3-info-fig">
+      <figcaption className="v3-info-label">FIGURE · 문제 형식 분포</figcaption>
+      <div className="v3-stacked-bar v3-stacked-bar-format" style={{ height: '26px', marginBottom: '14px' }}>
+        {stats
+          .filter((s) => s.points > 0)
+          .map((s) => {
+            const pct = (s.points / totalPts) * 100;
+            const label = pct >= 12 ? `${Math.round(pct)}%` : '';
+            return (
+              <div key={s.key} style={{ background: s.color, width: `${pct}%`, height: '100%' }}>
+                {label}
+              </div>
+            );
+          })}
+      </div>
+      <div className="v3-format-grid">
+        {stats.map((s) => (
+          <div key={s.key} className="v3-format-card" style={{ borderTopColor: s.color }}>
+            <p className="v3-format-label">{s.label}</p>
+            <p className="v3-format-count" style={{ color: s.color }}>
+              {s.count}
+              <span className="v3-format-unit">문항</span>
+            </p>
+            <p className="v3-format-points">{s.points}점</p>
+          </div>
+        ))}
+      </div>
+    </figure>
+  );
+}

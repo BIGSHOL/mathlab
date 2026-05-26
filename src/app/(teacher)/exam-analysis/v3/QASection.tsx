@@ -1,0 +1,33 @@
+/**
+ * V3 Q&A 단일 섹션
+ *
+ * 빨강 outlined 큰 번호(num) + 키커(Q1 · 학부모 인터뷰) + 질문(28px Noto Serif) +
+ * 답변 문단들(17px + 형광펜) + DataBox.
+ *
+ * 시안: scripts/generate-v3-preview-html.ts::buildCommentaryHtml 의 qaSections JSX 버전
+ */
+
+import { markdownToHighlighted } from './helpers';
+import { DataBox } from './DataBox';
+import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
+
+interface QASectionProps {
+  qa: NonNullable<CommentaryResult['blog_qa']>[number];
+  sectionNum: string;    // "02" 등 zero-pad
+  qaIndex: number;       // Q1, Q2... 라벨용 (0-based)
+}
+
+export function QASection({ qa, sectionNum, qaIndex }: QASectionProps) {
+  const answer = Array.isArray(qa.answer) ? qa.answer : qa.answer ? [qa.answer] : [];
+  return (
+    <section className="v3-section">
+      <span className="v3-section-num">{sectionNum}</span>
+      <div className="v3-section-sub">Q{qaIndex + 1} · 학부모 인터뷰</div>
+      <h3>{qa.question}</h3>
+      {answer.map((p, i) => (
+        <p key={`qa-${qaIndex}-${i}`}>{markdownToHighlighted(p, `qa-${qaIndex}-${i}`)}</p>
+      ))}
+      {qa.data_box && <DataBox box={qa.data_box} keyPrefix={`qa-${qaIndex}`} />}
+    </section>
+  );
+}

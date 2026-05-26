@@ -1,12 +1,21 @@
 import type { Metadata } from 'next';
-import { Noto_Serif_KR } from 'next/font/google';
+import { Noto_Serif_KR, Bodoni_Moda } from 'next/font/google';
 import { SessionProvider } from '@/components/providers/SessionProvider';
 import './globals.css';
 
+// V3 NYT Science 톤 — Noto Serif KR (본문) + Bodoni Moda (거대 숫자)
 const notoSerifKR = Noto_Serif_KR({
   subsets: ['latin'],
-  weight: ['400', '700'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-serif-kr',
+  display: 'swap',
+});
+
+const bodoniModa = Bodoni_Moda({
+  subsets: ['latin'],
+  weight: ['400', '700', '900'],
+  style: ['normal', 'italic'],
+  variable: '--font-bodoni',
   display: 'swap',
 });
 
@@ -34,7 +43,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
       </head>
-      <body className={`${notoSerifKR.variable} antialiased overflow-hidden`}>
+      <body className={`${notoSerifKR.variable} ${bodoniModa.variable} antialiased overflow-hidden`}>
         <SessionProvider>{children}</SessionProvider>
       </body>
     </html>

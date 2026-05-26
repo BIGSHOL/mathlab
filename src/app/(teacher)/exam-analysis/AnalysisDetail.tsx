@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { Sparkles, Database, Download, FileText, X } from 'lucide-react';
+import { Sparkles, Database, Download, FileText, X, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Tabs } from '@/components/ui/Tabs';
 import { toast } from '@/components/ui/Toast';
@@ -21,6 +21,7 @@ import { getConfidenceInfo, getOverallDifficultyLevel, getDifficultyBreakdown, i
 import { DIFF_LEVEL_LABELS } from './constants';
 import { CommentarySection } from './CommentarySection';
 import { AnalyzingProgress } from './AnalyzingProgress';
+import { buildNaverV3Html } from '@/lib/exam-analysis/naver-v3-renderer';
 
 const ArticleEditorModal = dynamic(
   () => import('@/components/exam-analysis/ArticleEditorModal').then((m) => ({ default: m.ArticleEditorModal })),
@@ -119,6 +120,53 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
         setCommentaryLoading(false);
         setCommentaryStartTime(null);
       }
+    }
+  };
+
+  /**
+   * V3 시안 (Q&A 인터뷰) HTML을 RichText로 클립보드 복사 — 네이버 블로그 본문에 그대로 붙여넣기.
+   * 차트 URL은 향후 통합 (현재는 텍스트 + 인포그래픽만).
+   */
+  const handleCopyV3Naver = async () => {
+    if (!commentary || !commentary.blog_qa?.length) {
+      toast.error('V3 데이터가 없습니다. 총평 재생성 후 다시 시도하세요.');
+      return;
+    }
+    try {
+      const html = buildNaverV3Html({
+        commentary,
+        questions,
+        meta: {
+          examTitle: detail.title,
+          grade: detail.grade,
+          schoolName: detail.schoolName ?? null,
+          analyzedAt: latestAnalysis?.analyzedAt ?? null,
+        },
+      });
+      // RichText 복사 (ArticleEditorModal과 동일 패턴)
+      const container = document.createElement('div');
+      container.innerHTML = html;
+      container.style.position = 'fixed';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      container.style.opacity = '0';
+      container.style.width = '720px';
+      document.body.appendChild(container);
+      try {
+        const range = document.createRange();
+        range.selectNodeContents(container);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        const ok = document.execCommand('copy');
+        selection?.removeAllRanges();
+        if (!ok) throw new Error('execCommand copy 실패');
+        toast.success('V3 시안이 클립보드에 복사되었습니다. 네이버 블로그에 붙여넣으세요.');
+      } finally {
+        document.body.removeChild(container);
+      }
+    } catch (e) {
+      toast.error('복사 실패: ' + (e instanceof Error ? e.message : String(e)));
     }
   };
 
@@ -352,14 +400,21 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
               onIncludeYearCompareChange={setIncludeYearCompare}
               yearCount={yearCount}
               hasSchool={!!detail.schoolId}
+              examMeta={{
+                title: detail.title,
+                grade: detail.grade,
+                schoolName: detail.schoolName ?? null,
+                analyzedAt: latestAnalysis?.analyzedAt ?? null,
+              }}
             />
           )}
 
           {/* 기출 분석 글 버튼 (총평 생성 후 활성화) */}
           {commentary && (() => {
             const hasArticle = latestAnalysis?.extensions?.some(e => e.agentType === 'blog-article');
+            const hasV3 = !!commentary.blog_qa && commentary.blog_qa.length > 0;
             return (
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2 mb-4 flex-wrap">
                 <Button
                   size="sm"
                   onClick={() => setShowArticleModal(true)}
@@ -370,6 +425,17 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
                   <FileText className="w-4 h-4 mr-1" />
                   {hasArticle ? '기출 분석 글 확인' : '기출 분석 글 작성'}
                 </Button>
+                {hasV3 && (
+                  <Button
+                    size="sm"
+                    onClick={handleCopyV3Naver}
+                    className="bg-[#BF1722] hover:bg-[#9A1219] text-white"
+                    title="V3 시안(Q&A 인터뷰)을 네이버 블로그용 HTML로 클립보드에 복사"
+                  >
+                    <Copy className="w-4 h-4 mr-1" />
+                    V3 네이버 복사
+                  </Button>
+                )}
                 <span className="text-[11px] text-slate-400">
                   {hasArticle ? '저장된 글을 확인하거나 재생성할 수 있습니다' : 'AI가 블로그 글 + 차트 이미지를 자동 생성합니다'}
                 </span>

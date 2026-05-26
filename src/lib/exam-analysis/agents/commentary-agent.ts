@@ -109,7 +109,153 @@ export interface CommentaryResult {
   // 레거시 (기존 DB 호환)
   study_priority?: TeachingRecommendation[];
   encouragement?: string;
+
+  // ─────────────────────────────────────────────────────────────
+  // V3 리디자인 신규 필드 (모두 optional, V3 프롬프트로 별도 호출)
+  // 시안: data/handoff-exam-analysis-v3/exam-analysis-{commentary,blog-naver}-hifi.html
+  // graceful degradation: 필드 없으면 컴포넌트가 hidden 또는 legacy fallback
+  // ─────────────────────────────────────────────────────────────
+
+  /** 헤더 키커 — "시험 분석 · 안양외고 2학기 중간고사" 형식 */
+  blog_kicker?: string;
+
+  /** 메인 헤드라인 — "변별의 무게중심이 이동했다 — '킬러'에서 '연결'로" */
+  blog_headline?: string;
+
+  /** 서브 헤드라인 (dek) — 헤드라인 부연 1~2문장 */
+  blog_dek?: string;
+
+  /** 피처 박스 — 거대 숫자 + 짧은 분석 1개 */
+  feature_callout?: {
+    big_number: string;        // "2.9"
+    big_number_unit?: string;  // "/5"
+    big_number_label: string;  // "2025 평균 난이도"
+    title: string;             // "30문항 중 17%만 '킬러'였다"
+    body: string[];            // 2~3 문단
+  };
+
+  /** 등급별 컷 — AI 가 학생 응답 분포 기반 추정. 없으면 hidden */
+  grade_cuts?: Array<{
+    grade: string;             // "1등급"
+    score: number;             // 88
+    previous_score?: number;   // 92
+    delta?: number;            // -4
+    student_count?: number;    // 3
+  }>;
+
+  /** 단원별 정답률 + 라벨 (강점·약점·중립) */
+  topic_performance?: Array<{
+    topic: string;             // "이차함수"
+    question_count: number;    // 8
+    correct_rate: number;      // 0.80 (0-1)
+    label: 'strong' | 'weak' | 'neutral';
+  }>;
+
+  /** 블로그 Q&A — 학부모 시점 5문항 (학교 없으면 4문항). AI 못 만들면 빈 배열 */
+  blog_qa?: Array<{
+    question: string;          // "올해 시험이 작년보다 쉬워졌다는데, 정말인가요?"
+    answer: string[];          // 1~2 문단 (markdown 가능, 강조는 **로)
+    data_box?: {               // 답변 아래 데이터 박스 (선택)
+      label: string;           // "DATA · 난이도 분포 비교"
+      kind: 'comparison' | 'bars' | 'table';
+      rows: Array<{ label: string; value: string; highlight?: boolean }>;
+    };
+  }>;
+
+  /** 결론 박스 — "다음 시험을 준비하는 학생에게" */
+  conclusion?: {
+    kicker?: string;           // "CONCLUSION · 다음 시험을 준비하는 학생에게"
+    body: string;              // 2~3 문장
+  };
+
+  /** 큰 인용구 (블로그 본문 중간 삽입용) */
+  pull_quote?: {
+    text: string;              // 인용 본문
+    cite?: string;             // 출처 라벨
+  };
 }
+
+// ── V3 신규 필드 추출 타입 (Two-pass Claude 호출용) ──
+
+type V3Extension = Pick<
+  CommentaryResult,
+  | 'blog_kicker'
+  | 'blog_headline'
+  | 'blog_dek'
+  | 'feature_callout'
+  | 'grade_cuts'
+  | 'topic_performance'
+  | 'blog_qa'
+  | 'conclusion'
+  | 'pull_quote'
+>;
+
+// ── V3 시스템 프롬프트 (blog-prompt-spec.md + Phase 0 시안 검증 완료) ──
+
+const SYSTEM_PROMPT_V3 = `너는 한국 중·고등학교 수학 시험 분석가다. 학원이 학부모에게 보여줄 블로그 글을 위한 신규 V3 필드를 생성한다.
+
+## 출력 형식 — 오직 아래 키만 포함한 JSON 객체 하나만 출력 (코드펜스/설명문 금지)
+
+{
+  "blog_kicker": "시험 분석 · {학교명} {학년} {시험명}",
+  "blog_headline": "시험의 핵심을 한 문장으로 (예: 변별의 무게중심이 이동했다)",
+  "blog_dek": "헤드라인을 풀어 설명하는 1~2 문장 부연",
+  "feature_callout": {
+    "big_number": "강조할 단일 숫자 (예: 2.9, 17%, -4점)",
+    "big_number_unit": "단위 (예: /5, 점, %) — 없으면 생략",
+    "big_number_label": "그 숫자가 무엇인지 (예: 2025 평균 난이도)",
+    "title": "거대 숫자를 풀어 설명하는 헤드라인 — 일부에 따옴표로 강조 가능 (예: 30문항 중 '17%만' 킬러였다)",
+    "body": ["2~3 문단 부연 설명 — **굵게**로 데이터 인용"]
+  },
+  "blog_qa": [
+    {
+      "question": "학부모 시점의 자연스러운 질문 ('우리 아이...' 같은 친근한 톤)",
+      "answer": ["1~2 문단. 데이터 인용은 **굵게**. '~습니다' 존댓말로 통일."],
+      "data_box": {
+        "label": "DATA · 무엇에 관한 데이터인지",
+        "kind": "comparison | bars | table",
+        "rows": [{ "label": "행 라벨", "value": "값 또는 % 문자열 (예: 80%)", "highlight": false }]
+      }
+    }
+  ],
+  "grade_cuts": [
+    { "grade": "1등급", "score": 88, "previous_score": 92, "delta": -4, "student_count": 3 }
+  ],
+  "topic_performance": [
+    { "topic": "단원명", "question_count": 8, "correct_rate": 0.80, "label": "strong" }
+  ],
+  "conclusion": {
+    "kicker": "CONCLUSION · 다음 시험을 준비하는 학생에게",
+    "body": "2~3 문장 행동 지침"
+  },
+  "pull_quote": {
+    "text": "시험 핵심을 짧게 압축한 한 문장",
+    "cite": "출처 라벨 (예: 매스랩 AI 분석)"
+  }
+}
+
+## blog_qa 5문항 — 정확한 패턴
+
+- Q1: 시험이 작년 대비 어떻게 변했나? (난이도·구성)
+- Q2: 우리 아이 점수가 안 나온 단원은 어디인가? (단원별 정답률 기반) — data_box.kind="bars"
+- Q3: 1등급 받으려면 몇 점이 필요한가? (등급 컷) — data_box.kind="table" (학생 응답 데이터 있을 때만)
+- Q4: 인근 학교 대비 우리 학교 시험은 어떤가? (학교 비교) — schoolId 없으면 이 질문 생략하고 4문항으로
+- Q5: 다음 시험을 위해 학생은 뭘 해야 하나? (구체 액션 3개)
+
+## 절대 규칙
+
+1. **데이터에 없는 숫자/이름을 지어내지 말 것.** 학생 응답 분포가 없으면 grade_cuts는 빈 배열. 학교 정보 없으면 Q4 생략.
+2. **영문 enum 금지** — 능력영역은 "계산력/이해력/문제해결력/추론력", 유형은 "수와 연산/문자와 식/함수/기하/확률과 통계". CALCULATION, NUMBER 같은 영문 토큰 한 글자도 출력 금지.
+3. **\\dfrac 금지, \\text{한글} 금지.** 단순 정수·점수·한글에 \$ 사용 금지 (보기번호 ①②③④⑤, ㄱㄴㄷ 제외).
+4. **존댓말 "~습니다" 통일.** 평어체 섞지 말 것.
+5. **answer 문단은 3~4줄 이내.** 짧게 끊어 쓰기.
+6. **데이터 인용은 \`**굵게**\` 마크다운**.
+7. **충분히 못 채우는 필드는 undefined.** 거짓 placeholder 금지.
+8. blog_qa 항목은 최소 3개 이상. 5개 미만이어도 OK (정직성 우선).
+
+## 톤 가이드
+
+학부모가 읽는다는 전제. 어려운 입시 용어를 풀어쓰기. 데이터는 반드시 본문에 인용. "이번 시험은 어렵다"가 아니라 "**88점**이 1등급 컷이다" 식.`;
 
 // ── 에이전트 구현 ──
 
@@ -481,7 +627,192 @@ ${phases}
     // JSON 추출 + 수식 정규화 (base-agent 와 동일 패턴: \dfrac→\frac, \text{한글} 제거, literal \n 복원)
     const result = this.extractJson(text);
     const normalized = deepNormalizeMath(result);
-    return this.parseResponse(normalized, input.basicAnalysis.questions);
+    const base = this.parseResponse(normalized, input.basicAnalysis.questions) as unknown as CommentaryResult;
+
+    // V3 신규 필드 별도 호출 (Two-pass). 실패해도 base만 반환 — graceful degradation.
+    let v3: V3Extension = {};
+    try {
+      v3 = await this.generateV3Extension(input, base, apiKey);
+    } catch (e) {
+      console.warn('[commentary-agent V3] 확장 실패, legacy 결과만 반환:', e instanceof Error ? e.message : e);
+    }
+
+    return { ...base, ...v3 } as unknown as Record<string, unknown>;
+  }
+
+  // ── V3 신규 필드 별도 Claude 호출 (Two-pass) ──
+  // Phase 0 시안 단계에서 검증된 프롬프트와 정규화 패턴 사용 (scripts/generate-v3-preview.ts 기반)
+
+  private async generateV3Extension(
+    input: AgentInput,
+    base: CommentaryResult,
+    apiKey: string,
+  ): Promise<V3Extension> {
+    const client = new Anthropic({ apiKey });
+    const userPrompt = this.buildV3UserPrompt(input, base);
+
+    const response = await client.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 16384,
+      temperature: 0.6,
+      system: SYSTEM_PROMPT_V3,
+      messages: [{ role: 'user', content: userPrompt }],
+    });
+
+    if (response.stop_reason === 'max_tokens') {
+      console.warn('[commentary-agent V3] max_tokens 도달 — 응답이 잘렸을 수 있음');
+    }
+
+    const text = response.content
+      .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+      .map((b) => b.text)
+      .join('');
+
+    if (!text) throw new Error('V3 응답 비어있음');
+
+    // JSON 추출 + Phase 0 발견 함정 정규화 (undefined → null, trailing comma 제거)
+    const startIdx = text.indexOf('{');
+    const endIdx = text.lastIndexOf('}');
+    if (startIdx < 0 || endIdx <= startIdx) {
+      throw new Error(`V3 JSON 객체 미발견: ${text.slice(0, 200)}`);
+    }
+    let json = text.slice(startIdx, endIdx + 1);
+    json = json.replace(/:\s*undefined/g, ': null');
+    json = json.replace(/,\s*([}\]])/g, '$1');
+
+    const raw = JSON.parse(json) as V3Extension;
+    const normalized = deepNormalizeMath(raw) as V3Extension;
+    return this.parseV3Response(normalized);
+  }
+
+  /** V3 응답에 stripEnglishEnums 재귀 적용 (nested 필드까지 — Plan agent 검토 반영) */
+  private parseV3Response(raw: V3Extension): V3Extension {
+    return {
+      blog_kicker: raw.blog_kicker ? stripEnglishEnums(String(raw.blog_kicker)) : undefined,
+      blog_headline: raw.blog_headline ? stripEnglishEnums(String(raw.blog_headline)) : undefined,
+      blog_dek: raw.blog_dek ? stripEnglishEnums(String(raw.blog_dek)) : undefined,
+      feature_callout: raw.feature_callout
+        ? {
+            big_number: String(raw.feature_callout.big_number ?? ''),
+            big_number_unit: raw.feature_callout.big_number_unit ? String(raw.feature_callout.big_number_unit) : undefined,
+            big_number_label: stripEnglishEnums(String(raw.feature_callout.big_number_label ?? '')),
+            title: stripEnglishEnums(String(raw.feature_callout.title ?? '')),
+            // body 가 string으로 올 수 있음 → Array.isArray 가드 (엣지케이스 #3)
+            body: Array.isArray(raw.feature_callout.body)
+              ? raw.feature_callout.body.map((p) => stripEnglishEnums(String(p)))
+              : raw.feature_callout.body
+                ? [stripEnglishEnums(String(raw.feature_callout.body))]
+                : [],
+          }
+        : undefined,
+      grade_cuts: Array.isArray(raw.grade_cuts) ? raw.grade_cuts : undefined,
+      topic_performance: Array.isArray(raw.topic_performance)
+        ? raw.topic_performance.map((tp) => ({
+            ...tp,
+            topic: stripEnglishEnums(String(tp.topic ?? '')),
+          }))
+        : undefined,
+      blog_qa: Array.isArray(raw.blog_qa)
+        ? raw.blog_qa.map((qa) => ({
+            question: stripEnglishEnums(String(qa.question ?? '')),
+            answer: Array.isArray(qa.answer)
+              ? qa.answer.map((p) => stripEnglishEnums(String(p)))
+              : qa.answer
+                ? [stripEnglishEnums(String(qa.answer))]
+                : [],
+            data_box: qa.data_box
+              ? {
+                  label: stripEnglishEnums(String(qa.data_box.label ?? '')),
+                  kind: qa.data_box.kind,
+                  rows: Array.isArray(qa.data_box.rows)
+                    ? qa.data_box.rows.map((r) => ({
+                        label: stripEnglishEnums(String(r.label ?? '')),
+                        value: stripEnglishEnums(String(r.value ?? '')),
+                        highlight: r.highlight,
+                      }))
+                    : [],
+                }
+              : undefined,
+          }))
+        : undefined,
+      conclusion: raw.conclusion
+        ? {
+            kicker: raw.conclusion.kicker ? stripEnglishEnums(String(raw.conclusion.kicker)) : undefined,
+            body: stripEnglishEnums(String(raw.conclusion.body ?? '')),
+          }
+        : undefined,
+      pull_quote: raw.pull_quote
+        ? {
+            text: stripEnglishEnums(String(raw.pull_quote.text ?? '')),
+            cite: raw.pull_quote.cite ? stripEnglishEnums(String(raw.pull_quote.cite)) : undefined,
+          }
+        : undefined,
+    };
+  }
+
+  /** V3 user prompt — 시안 단계의 buildUserPrompt와 동일 구조 (검증됨) */
+  private buildV3UserPrompt(input: AgentInput, base: CommentaryResult): string {
+    const { basicAnalysis } = input;
+    const totalQ = basicAnalysis.questions.length;
+    const totalPts = basicAnalysis.exam_info.total_points;
+    const types = basicAnalysis.summary.type_distribution;
+    const diff = basicAnalysis.summary.difficulty_distribution as Record<string, number>;
+
+    // 가중 평균 난이도 (5단계 기준)
+    const counts = [diff['1'] || 0, diff['2'] || 0, diff['3'] || 0, diff['4'] || 0, diff['5'] || 0];
+    const sum = counts.reduce((s, c) => s + c, 0);
+    const weighted = sum > 0 ? counts.reduce((s, c, i) => s + c * (i + 1), 0) / sum : 0;
+
+    // 단원별 통계 (학생 응답 포함, 최대 8개)
+    const topicStats: Record<string, { count: number; correct: number; total: number; pts: number }> = {};
+    for (const q of basicAnalysis.questions) {
+      const raw = q.topic || '미분류';
+      const parts = raw.split('>').map((s) => s.trim());
+      const t = parts[parts.length - 1];
+      if (!topicStats[t]) topicStats[t] = { count: 0, correct: 0, total: 0, pts: 0 };
+      topicStats[t].count++;
+      topicStats[t].pts += q.points || 0;
+      if (q.is_correct !== null) {
+        topicStats[t].total++;
+        if (q.is_correct === true) topicStats[t].correct++;
+      }
+    }
+    const topicBreakdown = Object.entries(topicStats)
+      .map(([topic, s]) => ({ topic, ...s }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
+
+    const hasStudentData = basicAnalysis.questions.some((q) => q.is_correct !== null);
+    const schoolName = basicAnalysis.exam_info.school_name ?? null;
+    const hasSchool = !!schoolName;
+
+    const topicsLine = topicBreakdown
+      .map((t) =>
+        hasStudentData
+          ? `${t.topic}: ${t.count}문항(${t.pts}점), 정답률 ${t.total > 0 ? Math.round((t.correct / t.total) * 100) : 0}%`
+          : `${t.topic}: ${t.count}문항(${t.pts}점)`,
+      )
+      .join('\n');
+
+    return `## 시험 정보
+- 학교: ${schoolName ?? '(정보 없음)'} ${hasSchool ? '' : '(주변 학교 비교 불가)'}
+- 규모: 총 ${totalQ}문항, ${totalPts}점
+- 평균 난이도(가중): ${weighted.toFixed(1)} / 5
+- 난이도 분포: 기본(1) ${counts[0]} · 표준(2) ${counts[1]} · 응용(3) ${counts[2]} · 심화(4) ${counts[3]} · 최고난도(5) ${counts[4]}
+- 형식: 객관식 ${basicAnalysis.exam_info.format_distribution.objective}문항, 단답형 ${basicAnalysis.exam_info.format_distribution.short_answer}문항, 서술형 ${basicAnalysis.exam_info.format_distribution.essay}문항
+- 유형: 수와연산 ${types.number || 0}, 문자와식 ${types.algebra || 0}, 함수 ${types.function || 0}, 기하 ${types.geometry || 0}, 확률통계 ${types.statistics || 0}
+- 학생 응답 데이터: ${hasStudentData ? '있음' : '없음 (출제 분석만 가능)'}
+
+## 단원별 출제 (상위 ${topicBreakdown.length}개)
+${topicsLine}
+
+## 기존 AI 총평 (참고용)
+- overall_comment: ${base.overall_comment.slice(0, 600)}
+- strength_areas: ${(base.strength_areas || []).join(' / ')}
+- improvement_areas: ${(base.improvement_areas || []).join(' / ')}
+- nearby_comparison: ${base.nearby_comparison ? base.nearby_comparison.slice(0, 400) : '(없음)'}
+
+위 데이터로 시스템 프롬프트의 V3 신규 필드 JSON을 작성하세요. **데이터에 없는 숫자/이름을 지어내지 말 것.** 학생 응답이 없으면 grade_cuts는 빈 배열. 학교 정보가 없으면 Q4 (학교 비교)를 생략하고 4문항만 작성.`;
   }
 
   // ── JSON 추출 (다단계 복구) ──

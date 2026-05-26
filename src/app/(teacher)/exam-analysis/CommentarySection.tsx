@@ -7,6 +7,7 @@ import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import { renderInlineMath } from './helpers';
 import { FORMAT_BADGE } from './constants';
+import { V3CommentaryView, type V3Meta, type V3ChartImages } from './v3/V3CommentaryView';
 
 interface CommentarySectionProps {
   commentary: CommentaryResult;
@@ -21,6 +22,15 @@ interface CommentarySectionProps {
   onIncludeYearCompareChange: (v: boolean) => void;
   yearCount: number | null;
   hasSchool: boolean;
+  /** V3 메타 정보 (있으면 V3 헤더에 사용. 없으면 blog_kicker/blog_headline 폴백) */
+  examMeta?: {
+    title: string;
+    grade: string;
+    schoolName: string | null;
+    analyzedAt: string | null;
+  };
+  /** V3 차트 PNG (선택). 분석 화면에서 차트가 이미 별도 렌더 중이면 미전달. */
+  v3Charts?: V3ChartImages;
 }
 
 export function CommentarySection({
@@ -36,11 +46,89 @@ export function CommentarySection({
   onIncludeYearCompareChange,
   yearCount,
   hasSchool,
+  examMeta,
+  v3Charts,
 }: CommentarySectionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // V3 활성화 조건 — Q&A 1개 이상 있으면 V3 마크업 사용 (lazy migration 후 점진 적용)
+  const useV3 = !!commentary.blog_qa && commentary.blog_qa.length > 0;
+
   // 폴백 감지: 규칙 기반 결과는 overall_comment가 "총 N문항"으로 시작
   const isFallback = commentary.overall_comment?.startsWith('총 ') && !commentary.overall_comment?.includes('이번 시험');
+
+  // V3 모드 — 상단에 작은 컨트롤 row + V3CommentaryView
+  if (useV3 && isExpanded) {
+    const meta: V3Meta = {
+      examTitle: examMeta?.title || '',
+      grade: examMeta?.grade || '',
+      schoolName: examMeta?.schoolName ?? null,
+      analyzedAt: examMeta?.analyzedAt ?? null,
+      totalQuestions: allQuestions.length,
+      totalPoints: allQuestions.reduce((s, q) => s + (q.points || 0), 0),
+      hasStudentData: allQuestions.some((q) => q.is_correct !== null),
+    };
+    return (
+      <div className="bg-white border border-slate-200 rounded-sm mb-5 overflow-hidden">
+        {/* 컨트롤 row (재분석 + 체크박스 + 접기) */}
+        <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100 bg-slate-50">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+            <span className="text-xs font-bold text-slate-700">AI 시험 총평</span>
+            <span className="text-[10px] tracking-[0.14em] uppercase text-[#BF1722] font-extrabold ml-1">V3</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {!isRegenerating && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onRegenerate}
+                className="text-xs text-slate-400 hover:text-slate-600"
+              >
+                재분석
+              </Button>
+            )}
+            {hasSchool && !isRegenerating && (
+              <div className="flex items-center gap-3">
+                <label className={`flex items-center gap-1 text-[11px] cursor-pointer ${nearbyCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <input
+                    type="checkbox"
+                    checked={includeNearby && (nearbyCount ?? 0) > 0}
+                    onChange={(e) => onIncludeNearbyChange(e.target.checked)}
+                    disabled={nearbyCount === 0}
+                    className="w-3 h-3 rounded-sm border-slate-300 text-violet-600 focus:ring-violet-500 disabled:opacity-40"
+                  />
+                  주변 {nearbyCount != null && <span className={nearbyCount > 0 ? 'text-violet-500 font-medium' : ''}>({nearbyCount}교)</span>}
+                </label>
+                <label className={`flex items-center gap-1 text-[11px] cursor-pointer ${yearCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <input
+                    type="checkbox"
+                    checked={includeYearCompare && (yearCount ?? 0) > 0}
+                    onChange={(e) => onIncludeYearCompareChange(e.target.checked)}
+                    disabled={yearCount === 0}
+                    className="w-3 h-3 rounded-sm border-slate-300 text-violet-600 focus:ring-violet-500 disabled:opacity-40"
+                  />
+                  연도 {yearCount != null && <span className={yearCount > 0 ? 'text-violet-500 font-medium' : ''}>({yearCount}건)</span>}
+                </label>
+              </div>
+            )}
+            <button
+              onClick={() => setIsExpanded(false)}
+              className="p-1 text-slate-400 hover:text-slate-600 transition-colors"
+              aria-label="접기"
+            >
+              <svg className="w-4 h-4 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        {/* V3 콘텐츠 */}
+        <V3CommentaryView commentary={commentary} questions={allQuestions} meta={meta} charts={v3Charts} />
+      </div>
+    );
+  }
+  // V3 접힘 또는 legacy → 기존 흐름
 
   return (
     <div className={`bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-200 rounded-sm mb-5 ${isExpanded ? 'p-5' : 'px-4 py-2.5'}`}>
@@ -105,6 +193,22 @@ export function CommentarySection({
         <div className="bg-amber-50 border border-amber-200 rounded-sm px-3 py-2 mb-3 flex items-center gap-2">
           <span className="text-amber-500 text-xs">&#9888;</span>
           <p className="text-xs text-amber-700">AI 총평 생성에 실패하여 규칙 기반 요약으로 대체되었습니다. &quot;AI 재분석&quot; 버튼으로 다시 시도할 수 있습니다.</p>
+        </div>
+      )}
+
+      {/* V3 안내 배너 — 기존 commentary는 있는데 V3 신규 필드가 없을 때 (lazy migration 안내) */}
+      {isExpanded && !isFallback && !isRegenerating && !useV3 && (
+        <div className="bg-gradient-to-r from-rose-50 to-amber-50 border border-rose-200 rounded-sm px-3 py-2 mb-3 flex items-center gap-2 text-xs">
+          <Sparkles className="w-3.5 h-3.5 text-[#BF1722] shrink-0" />
+          <span className="text-slate-700 flex-1">
+            <b className="text-[#BF1722]">V3 새 UI</b> — 잡지 스타일 인포그래픽 · Q&amp;A 인터뷰 · 거대 숫자 헤더로 업그레이드 가능합니다.
+            <button
+              onClick={onRegenerate}
+              className="ml-1.5 underline font-bold text-[#BF1722] hover:text-[#9A1219]"
+            >
+              V3로 재분석
+            </button>
+          </span>
         </div>
       )}
 

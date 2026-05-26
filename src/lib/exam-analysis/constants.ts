@@ -166,11 +166,14 @@ export type AgentType = (typeof AGENT_TYPES)[number];
 // 각 에이전트의 프롬프트를 수정할 때 해당 버전 반드시 업데이트!
 // orchestrator가 저장 시 result._meta.promptVersion으로 기록 → 버전별 품질 비교 가능
 // v1.0.0 — 2026-04-15 초기 H1~H5 하드 제약 + 수식 정규화 후처리 하네스 도입
+// commentary v1.1.0 — 2026-05-26 V3 리디자인 (Q&A 5문항, feature_callout, grade_cuts,
+//   topic_performance, conclusion, pull_quote 등 신규 필드 — Two-pass Claude 호출 추가)
+//   bump으로 기존 분석본은 페이지 진입 시 자동 V3 갱신 (lazy migration)
 export const AGENT_PROMPT_VERSIONS: Record<AgentType, string> = {
   'weakness': 'v1.0.0',
   'learning': 'v1.0.0',
   'prediction': 'v1.0.0',
-  'commentary': 'v1.0.0',
+  'commentary': 'v1.1.0',
   'topic-strategy': 'v1.0.0',
   'exam-prep': 'v1.0.0',
   'score-level-plan': 'v1.0.0',
