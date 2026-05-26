@@ -259,13 +259,29 @@ const SYSTEM_PROMPT_V3 = `너는 한국 중·고등학교 수학 시험 분석�
   }
 }
 
-## blog_qa 5문항 — 정확한 패턴
+## blog_qa 5문항 — 데이터 가용성에 따라 동적 조정 (필수!)
 
-- Q1: 시험이 작년 대비 어떻게 변했나? (난이도·구성)
-- Q2: 우리 아이 점수가 안 나온 단원은 어디인가? (단원별 정답률 기반) — data_box.kind="bars"
-- Q3: 1등급 받으려면 몇 점이 필요한가? (등급 컷) — data_box.kind="table" (학생 응답 데이터 있을 때만)
-- Q4: 인근 학교 대비 우리 학교 시험은 어떤가? (학교 비교) — schoolId 없으면 이 질문 생략하고 4문항으로
-- Q5: 다음 시험을 위해 학생은 뭘 해야 하나? (구체 액션 3개)
+### Q1: 시험 구성 (질문은 비교 데이터 유무에 따라 변화)
+**입력 데이터의 "비교 데이터 가용성" 섹션을 반드시 확인 후 적절한 패턴 선택:**
+- **작년 ✓ + 주변 ✓** → "작년이나 인근 학교와 비교해서 얼마나 어려운 편인가요?"
+- **작년 ✓ + 주변 ✗** → "작년 시험과 비교해서 얼마나 어려운 편인가요?"
+- **작년 ✗ + 주변 ✓** → "인근 학교 시험과 비교해서 얼마나 어려운 편인가요?"
+- **둘 다 ✗** → "이번 시험은 전반적으로 어떤 구성인가요?" (단독 분석, 비교 표현 금지)
+
+**중요**: 비교 데이터가 없는데 "작년 대비", "인근 학교 대비" 같은 표현을 답변에 쓰지 말 것. 데이터에 없는 비교는 무조건 금지.
+
+### Q2: 단원 분석 (data_box.kind="bars" — value는 "X점 / Y문항" 형식)
+- "우리 아이가 점수를 잃기 쉬운 단원은 어디인가요?" (학생 응답 있을 때)
+- "이번 시험에서 가장 비중이 큰 단원은 어디인가요?" (출제 분석 only)
+
+### Q3: 등급 컷 (data_box.kind="table" — 학생 응답 있을 때만)
+- "1등급을 받으려면 몇 점이 필요한가요?" — 학생 응답 데이터 없으면 이 질문 생략
+
+### Q4: 학교 비교 (주변 학교 데이터 있을 때만)
+- "인근 학교 대비 우리 학교 시험은 어떤가요?" — schoolId/주변 데이터 없으면 생략
+
+### Q5: 학습 방향 (항상 포함)
+- "다음 시험을 위해 학생은 뭘 해야 하나요?" (구체 액션 3개)
 
 ## 절대 규칙
 
@@ -813,6 +829,12 @@ ${phases}
     const hasStudentData = basicAnalysis.questions.some((q) => q.is_correct !== null);
     const schoolName = basicAnalysis.exam_info.school_name ?? null;
     const hasSchool = !!schoolName;
+    // 비교 데이터 가용성 — base.nearby_comparison 텍스트 길이로 판단
+    const nearbyText = base.nearby_comparison || '';
+    const hasNearby = nearbyText.length > 50;
+    // 연도별 비교는 nearby_comparison 안에 또는 overall_comment에 "이전 기출/연도/전년/작년/20XX년 비교" 패턴
+    const yearRegex = /이전\s*기출|연도\s*비교|전년\s*대비|작년\s*대비|20\d{2}년.*비교/;
+    const hasYearCompare = yearRegex.test(nearbyText) || yearRegex.test(base.overall_comment || '');
 
     const topicsLine = topicBreakdown
       .map((t) =>
@@ -830,6 +852,11 @@ ${phases}
 - 형식: 객관식 ${basicAnalysis.exam_info.format_distribution.objective}문항, 단답형 ${basicAnalysis.exam_info.format_distribution.short_answer}문항, 서술형 ${basicAnalysis.exam_info.format_distribution.essay}문항
 - 유형: 수와연산 ${types.number || 0}, 문자와식 ${types.algebra || 0}, 함수 ${types.function || 0}, 기하 ${types.geometry || 0}, 확률통계 ${types.statistics || 0}
 - 학생 응답 데이터: ${hasStudentData ? '있음' : '없음 (출제 분석만 가능)'}
+
+## 비교 데이터 가용성 (Q1 질문 패턴 결정에 사용 — 시스템 프롬프트의 Q1 규칙 따를 것!)
+- 주변 학교 비교 데이터: ${hasNearby ? '✓ 있음' : '✗ 없음'}
+- 작년·이전 기출 비교 데이터: ${hasYearCompare ? '✓ 있음' : '✗ 없음'}
+- → Q1 질문은 위 4가지 패턴 중 하나로만 출력. 비교 데이터 없으면 답변에서도 비교 표현 금지.
 
 ## 단원별 출제 (상위 ${topicBreakdown.length}개)
 ${topicsLine}
