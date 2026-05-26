@@ -931,6 +931,14 @@ body {
 .v3-data-box .v3-data-row.v3-highlight .v3-data-val,
 .v3-data-box .v3-data-row.v3-highlight .v3-data-v-num { color: #BF1722; font-weight: 800; }
 
+/* V3 데이터 박스 — 이산 grid 시각화 (사용자 피드백) */
+.v3-data-row-grid { margin: 0 0 14px; }
+.v3-data-row-grid-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.v3-data-row-grid .v3-data-nm { font-family: var(--font-display, 'Pretendard Variable', sans-serif); font-size: 13px; font-weight: 700; word-break: keep-all; }
+.v3-data-row-grid .v3-data-v-num { font-family: var(--font-abril, 'Abril Fatface', serif); font-size: 14px; font-weight: 700; white-space: nowrap; }
+.v3-data-grid { display: grid; gap: 3px; }
+.v3-data-grid-cell { height: 14px; border-radius: 2px; }
+
 /* V3 인용구 */
 .v3-quote-block {
   border-top: 1px solid #121212; border-bottom: 1px solid #121212;

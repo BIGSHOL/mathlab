@@ -289,26 +289,71 @@ function renderDataBox(box: DataBoxData): string {
   const label = `<p style="margin:0 0 12px;font-family:Pretendard,sans-serif;font-size:10px;letter-spacing:0.14em;color:#888;font-weight:800;">${escapeHtml(box.label)}</p>`;
 
   if (box.kind === 'bars') {
-    // 막대 비율 정규화 — percentage이면 그대로, 절대값은 max 기준 정규화.
-    // maxVal padding 1.15x 추가: max row가 ~87%로 표시되어 다른 row와 시각적 차이가 더 두드러짐.
-    const rawValues = box.rows.map((r) => parseInt(r.value, 10) || 0);
+    // 이산적인 카운트 grid 시각화 — max 카운트가 N이면 N칸 grid, 각 row는 자기 카운트만큼 채움 + 나머지 회색.
+    // 막대 비율 % 보다 직관적 (예: 7문항 중 6칸 채움 vs 7칸 채움). 사용자 피드백.
+    const extractCount = (raw: string): number => {
+      // "27점 / 6문항" 같은 형식에서 "문항" 또는 "개" 매치 우선, 없으면 첫 숫자
+      const m = String(raw).match(/(\d+)\s*(?:문항|개|개항)/);
+      if (m) return parseInt(m[1], 10);
+      const fallback = parseInt(String(raw), 10);
+      return Number.isFinite(fallback) ? fallback : 0;
+    };
+    const counts = box.rows.map((r) => extractCount(r.value));
     const allPercent = box.rows.every((r) => /%\s*$/.test(String(r.value).trim()));
+    // grid는 모든 row가 "X문항"/"X개" 패턴 + max ≤ 30 일 때만 사용 (점수만 있으면 막대 비율 폴백)
+    const countRegex = /(\d+)\s*(?:문항|개|개항)/;
+    const allHaveCount = box.rows.every((r) => countRegex.test(String(r.value)));
+    const maxCount = allPercent ? 0 : Math.max(...counts, 1);
+    const useGrid = allHaveCount && !allPercent && maxCount > 0 && maxCount <= 30;
+
+    if (useGrid) {
+      const rows = box.rows.map((r, idx) => {
+        const cnt = counts[idx];
+        const color = r.highlight ? '#BF1722' : '#121212';
+        const cellWidthPct = (100 / maxCount).toFixed(2);
+        const cells: string[] = [];
+        for (let i = 0; i < maxCount; i++) {
+          const filled = i < cnt;
+          const cellColor = filled ? color : '#dddddd';
+          cells.push(
+            `<td width="${cellWidthPct}%" height="14" bgcolor="${cellColor}" style="background:${cellColor};font-size:1px;line-height:1px;border-right:2px solid #fff;">&nbsp;</td>`,
+          );
+        }
+        const shortLabel = shortenDataLabel(r.label);
+        return `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 4px;">
+      <tr>
+        <td style="padding:8px 8px 4px 0;font-family:Pretendard,sans-serif;font-size:13px;font-weight:700;color:${color};white-space:nowrap;word-break:keep-all;">${escapeHtml(shortLabel)}</td>
+        <td width="120" align="right" style="padding:8px 0 4px 8px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:13px;font-weight:700;color:${color};white-space:nowrap;">${escapeHtml(r.value)}</td>
+      </tr>
+    </table>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 14px;border-collapse:collapse;">
+      <tr>${cells.join('')}</tr>
+    </table>`;
+      }).join('');
+      return `
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fafafa;border-left:3px solid #BF1722;margin:14px 0 24px;">
+  <tr><td style="padding:14px 18px;">
+    ${label}
+    <p style="margin:0 0 12px;font-family:Pretendard,sans-serif;font-size:10px;color:#888;">총 ${maxCount}칸 기준 · 채워진 칸 = 해당 row의 문항수</p>
+    ${rows}
+  </td></tr>
+</table>`;
+    }
+
+    // percentage 데이터 폴백 — 막대 비율 시각화
+    const rawValues = box.rows.map((r) => parseInt(r.value, 10) || 0);
     const maxRaw = Math.max(...rawValues, 1);
     const maxVal = allPercent ? 100 : Math.max(maxRaw * 1.15, 1);
-    // 네이버 SmartEditor는 3-level nested table을 한 글자씩 세로 분리. 1-level로 단순화.
     const rows = box.rows.map((r) => {
       const v = parseInt(r.value, 10) || 0;
       const pct = allPercent
         ? Math.max(0, Math.min(100, v))
         : Math.round((v / maxVal) * 100);
-      // 색상: 퍼센트 형식(정답률 등)이면 우수/주의 색 분기, 절대값(문항/점)은 highlight 만 빨강
       const color = allPercent
         ? (r.highlight && v < 50 ? '#BF1722' : (v >= 80 ? '#2F7B3A' : '#121212'))
         : (r.highlight ? '#BF1722' : '#121212');
       const greyPct = 100 - pct;
-      // 라벨 + 값을 한 줄, bar를 별도 줄 stack — nested table 없는 1-level 구조.
-      // 라벨이 한글 "정수와 유리수의 계산"처럼 길어도 width 가변으로 안전.
-      // shortenDataLabel으로 "기본 (Level 1)" → "기본·Lv1" 압축 (네이버 한 글자씩 분리 방지).
       const shortLabel = shortenDataLabel(r.label);
       return `
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 12px;">

@@ -28,9 +28,58 @@ export function DataBox({ box, keyPrefix = '' }: { box: DataBoxType; keyPrefix?:
 type Row = DataBoxType['rows'][number];
 
 function BarsBody({ rows, keyPrefix }: { rows: Row[]; keyPrefix: string }) {
-  // 막대 비율 정규화 — percentage이면 그대로, 절대값은 max 기준 + 1.15x padding으로 시각 차이 강조
-  const rawValues = rows.map((r) => parseInt(r.value, 10) || 0);
+  // 이산적인 카운트 grid 시각화 (사용자 피드백) — max 카운트 N이면 N칸, 각 row 자기 카운트만큼 채움
+  const extractCount = (raw: string): number => {
+    const m = String(raw).match(/(\d+)\s*(?:문항|개|개항)/);
+    if (m) return parseInt(m[1], 10);
+    const fallback = parseInt(String(raw), 10);
+    return Number.isFinite(fallback) ? fallback : 0;
+  };
+  const counts = rows.map((r) => extractCount(r.value));
   const allPercent = rows.every((r) => /%\s*$/.test(String(r.value).trim()));
+  const countRegex = /(\d+)\s*(?:문항|개|개항)/;
+  const allHaveCount = rows.every((r) => countRegex.test(String(r.value)));
+  const maxCount = allPercent ? 0 : Math.max(...counts, 1);
+  const useGrid = allHaveCount && !allPercent && maxCount > 0 && maxCount <= 30;
+
+  if (useGrid) {
+    return (
+      <>
+        {rows.map((r, i) => {
+          const cnt = counts[i];
+          const color = r.highlight ? '#BF1722' : '#121212';
+          return (
+            <div
+              key={`${keyPrefix}-${i}`}
+              className={`v3-data-row-grid${r.highlight ? ' v3-highlight' : ''}`}
+            >
+              <div className="v3-data-row-grid-header">
+                <span className="v3-data-nm" title={r.label} style={{ color }}>
+                  {shortenDataLabel(r.label)}
+                </span>
+                <span className="v3-data-v-num" style={{ color }}>{r.value}</span>
+              </div>
+              <div
+                className="v3-data-grid"
+                style={{ gridTemplateColumns: `repeat(${maxCount}, 1fr)` }}
+              >
+                {Array.from({ length: maxCount }).map((_, idx) => (
+                  <div
+                    key={idx}
+                    className="v3-data-grid-cell"
+                    style={{ background: idx < cnt ? color : '#DDD' }}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </>
+    );
+  }
+
+  // percentage 데이터 폴백 — 기존 막대 비율
+  const rawValues = rows.map((r) => parseInt(r.value, 10) || 0);
   const maxRaw = Math.max(...rawValues, 1);
   const maxVal = allPercent ? 100 : Math.max(maxRaw * 1.15, 1);
   return (
