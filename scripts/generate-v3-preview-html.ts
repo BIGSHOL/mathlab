@@ -772,22 +772,19 @@ export function buildNaverBlogHtml(args: BuildHtmlArgs): string {
   </tr>
 </table>` : '';
 
-  // ── 4. Q&A 5블록 ──
+  // ── 4. Q&A 5블록 — Naver SmartEditor 호환을 위해 nested table 제거, 1-level stack 구조 ──
   const qaBlocks = (c.blog_qa || []).map((qa, idx) => {
     const dataBox = qa.data_box ? renderDataBoxNaver(qa.data_box) : '';
     return `
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;">
-  <tr>
-    <td width="60" valign="top" style="padding-right:14px;">
-      <p style="margin:0;font-family:'Bodoni Moda',serif;font-size:42px;font-weight:900;color:#BF1722;line-height:1;">Q${idx + 1}</p>
-    </td>
-    <td valign="top">
-      <p style="margin:0 0 10px;font-family:'Noto Serif KR',serif;font-size:20px;font-weight:700;color:#121212;line-height:1.4;word-break:keep-all;">${escapeHtml(qa.question)}</p>
-      ${qa.answer.map((p) => `<p style="margin:0 0 14px;font-family:'Noto Serif KR',serif;font-size:15px;line-height:1.85;color:#2A2A2A;word-break:keep-all;">${markdownToInlineBold(p)}</p>`).join('')}
-      ${dataBox}
-    </td>
-  </tr>
-</table>`;
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0 16px;border-top:1px solid #DDD;">
+  <tr><td style="padding-top:18px;">
+    <p style="margin:0 0 10px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.14em;color:#BF1722;font-weight:800;">Q${idx + 1} · 학부모 인터뷰</p>
+    <p style="margin:0 0 14px;font-family:'Bodoni Moda',serif;font-size:32px;font-weight:900;color:#BF1722;line-height:1;letter-spacing:-0.02em;">Q${idx + 1}.</p>
+    <p style="margin:0 0 16px;font-family:'Noto Serif KR',serif;font-size:20px;font-weight:700;color:#121212;line-height:1.4;word-break:keep-all;">${escapeHtml(qa.question)}</p>
+    ${qa.answer.map((p) => `<p style="margin:0 0 14px;font-family:'Noto Serif KR',serif;font-size:15px;line-height:1.85;color:#2A2A2A;word-break:keep-all;">${markdownToInlineBold(p)}</p>`).join('')}
+  </td></tr>
+</table>
+${dataBox}`;
   }).join('\n');
 
   // ── 4-A. 네이버용 인포그래픽: 난이도 stacked bar + 형식 분포 (table 기반) ──
@@ -900,30 +897,29 @@ function renderDataBoxNaver(box: NonNullable<NonNullable<MergedCommentary['blog_
   const label = `<p style="margin:0 0 12px;font-family:Pretendard,sans-serif;font-size:10px;letter-spacing:0.14em;color:#888;font-weight:800;">${escapeHtml(box.label)}</p>`;
 
   if (box.kind === 'bars') {
+    // 네이버 SmartEditor는 3-level nested table을 한 글자씩 세로 분리. 1-level로 단순화.
     const rows = box.rows.map((r) => {
       const pct = Math.max(0, Math.min(100, parseInt(r.value, 10) || 0));
       const color = r.highlight && pct < 50 ? '#BF1722' : (pct >= 80 ? '#2F7B3A' : '#121212');
+      const greyPct = 100 - pct;
+      // 라벨 + 값 한 줄 / bar 별도 줄 stack — nested table 없는 1-level
       return `
-        <tr>
-          <td width="100" style="padding:5px 0;font-family:Pretendard,sans-serif;font-size:12px;font-weight:700;color:${color};">${escapeHtml(r.label)}</td>
-          <td style="padding:5px 0;">
-            <table width="100%" cellpadding="0" cellspacing="0" border="0">
-              <tr>
-                <td width="${pct}%" height="6" style="background:${color};"></td>
-                <td style="background:#ddd;"></td>
-              </tr>
-            </table>
-          </td>
-          <td width="40" style="padding:5px 0 5px 8px;text-align:right;font-family:'Bodoni Moda',serif;font-size:13px;font-weight:700;color:${color};">${escapeHtml(r.value)}</td>
-        </tr>`;
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 12px;">
+      <tr>
+        <td style="padding:6px 8px 4px 0;font-family:Pretendard,sans-serif;font-size:13px;font-weight:700;color:${color};word-break:keep-all;">${escapeHtml(r.label)}</td>
+        <td width="60" align="right" style="padding:6px 0 4px 8px;font-family:'Bodoni Moda',serif;font-size:14px;font-weight:700;color:${color};white-space:nowrap;">${escapeHtml(r.value)}</td>
+      </tr>
+      <tr>
+        <td width="${pct}%" height="6" bgcolor="${color}" style="background:${color};font-size:1px;line-height:1px;">&nbsp;</td>
+        <td width="${greyPct}%" height="6" bgcolor="#dddddd" style="background:#dddddd;font-size:1px;line-height:1px;">&nbsp;</td>
+      </tr>
+    </table>`;
     }).join('');
     return `
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fafafa;border-left:3px solid #BF1722;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fafafa;border-left:3px solid #BF1722;margin:14px 0 24px;">
   <tr><td style="padding:14px 18px;">
     ${label}
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      ${rows}
-    </table>
+    ${rows}
   </td></tr>
 </table>`;
   }
