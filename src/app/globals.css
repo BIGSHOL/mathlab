@@ -966,10 +966,12 @@ body {
 .v3-format-card .v3-format-count { font-family: var(--font-abril, 'Abril Fatface', 'Bodoni Moda', serif); font-size: 28px; font-weight: 900; margin: 6px 0 2px; line-height: 1; }
 .v3-format-card .v3-format-unit { font-size: 13px; color: #888; font-weight: 400; }
 .v3-format-card .v3-format-points { font-family: var(--font-display, 'Pretendard Variable', sans-serif); font-size: 12px; color: #444; margin: 0; }
-.v3-info-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 24px 0; }
+/* 형식 분포(3카드)는 좁게, 문항 지도(다수 셀)는 넓게 배치 — 시각적 균형 */
+.v3-info-grid-2 { display: grid; grid-template-columns: 1fr 1.4fr; gap: 18px; margin: 24px 0; align-items: stretch; }
 .v3-info-grid-2 .v3-info-fig { margin: 0; }
-.v3-killer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); gap: 5px; }
-.v3-killer-cell { padding: 7px 4px; text-align: center; font-family: var(--font-display, 'Pretendard Variable', sans-serif); font-size: 11px; font-weight: 700; border: 1px solid #121212; border-radius: 3px; }
+/* 셀 width 일정하게(38px) — 한글 prefix는 KillerMap에서 축약 처리 */
+.v3-killer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 4px; }
+.v3-killer-cell { padding: 6px 3px; text-align: center; font-family: var(--font-display, 'Pretendard Variable', sans-serif); font-size: 11px; font-weight: 700; border: 1px solid #121212; border-radius: 3px; white-space: nowrap; overflow: hidden; }
 .v3-killer-legend { display: flex; gap: 16px; margin-top: 14px; font-family: var(--font-display, 'Pretendard Variable', sans-serif); font-size: 11px; color: #444; flex-wrap: wrap; }
 .v3-killer-legend > span { display: flex; align-items: center; }
 .v3-killer-legend .v3-killer-dot { display: inline-block; width: 10px; height: 10px; border: 1px solid currentColor; margin-right: 6px; vertical-align: middle; }

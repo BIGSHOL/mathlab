@@ -149,6 +149,13 @@ function renderKillerMap(questions: AnalyzedQuestion[]): string {
     });
   if (list.length === 0) return '';
 
+  // 셀 라벨 축약 — "서답형1"/"서술형1" → "서1", "단답형1" → "단1"
+  const shortLabel = (raw: number | string): string =>
+    String(raw)
+      .replace(/^서답형\s*/, '서')
+      .replace(/^서술형\s*/, '서')
+      .replace(/^단답형\s*/, '단');
+
   const cells = list.map((q) => {
     let bg = 'transparent';
     let border = '#121212';
@@ -164,7 +171,7 @@ function renderKillerMap(questions: AnalyzedQuestion[]): string {
       border = '#888';
     }
     if (q.isEssay) bg = q.diff === '5' ? '#BF1722' : '#FFF8E0';
-    return `<div class="v3-killer-cell" style="background:${bg};color:${textColor};border-color:${border};">${escapeHtml(String(q.num))}${q.isEssay ? '<sup style="font-size:8px;margin-left:2px;">✎</sup>' : ''}</div>`;
+    return `<div class="v3-killer-cell" style="background:${bg};color:${textColor};border-color:${border};" title="${escapeHtml(String(q.num))}">${escapeHtml(shortLabel(q.num))}${q.isEssay ? '<sup style="font-size:8px;margin-left:2px;">✎</sup>' : ''}</div>`;
   }).join('');
 
   return `
@@ -553,10 +560,10 @@ export function buildCommentaryHtml(args: BuildHtmlArgs): string {
   .v3-format-count { font-family: 'Abril Fatface', 'Bodoni Moda', serif; font-size: 28px; font-weight: 900; margin: 6px 0 2px; line-height: 1; }
   .v3-format-unit { font-size: 13px; color: #888; font-weight: 400; }
   .v3-format-points { font-family: 'Pretendard Variable', sans-serif; font-size: 12px; color: #444; margin: 0; }
-  .v3-info-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 24px 0; }
+  .v3-info-grid-2 { display: grid; grid-template-columns: 1fr 1.4fr; gap: 18px; margin: 24px 0; align-items: stretch; }
   .v3-info-grid-2 .v3-info-fig { margin: 0; }
-  .v3-killer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); gap: 5px; }
-  .v3-killer-cell { padding: 7px 4px; text-align: center; font-family: 'Pretendard Variable', sans-serif; font-size: 11px; font-weight: 700; border: 1px solid #121212; border-radius: 3px; }
+  .v3-killer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 4px; }
+  .v3-killer-cell { padding: 6px 3px; text-align: center; font-family: 'Pretendard Variable', sans-serif; font-size: 11px; font-weight: 700; border: 1px solid #121212; border-radius: 3px; white-space: nowrap; overflow: hidden; }
   .v3-killer-legend { display: flex; gap: 16px; margin-top: 14px; font-family: 'Pretendard Variable', sans-serif; font-size: 11px; color: #444; flex-wrap: wrap; }
   .v3-killer-legend .dot { display: inline-block; width: 10px; height: 10px; border: 1px solid currentColor; margin-right: 6px; vertical-align: middle; }
 

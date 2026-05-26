@@ -27,6 +27,15 @@ export function KillerMap({ questions }: { questions: AnalyzedQuestion[] }) {
 
   if (list.length === 0) return null;
 
+  /** 셀 라벨 축약 — "서답형1"/"서술형1" → "서1", "단답형1" → "단1" (셀 폭 일관성 유지) */
+  const shortLabel = (raw: number | string): string => {
+    const s = String(raw);
+    return s
+      .replace(/^서답형\s*/, '서')
+      .replace(/^서술형\s*/, '서')
+      .replace(/^단답형\s*/, '단');
+  };
+
   return (
     <figure className="v3-info-fig">
       <figcaption className="v3-info-label">FIGURE · 문항별 난이도 지도</figcaption>
@@ -53,8 +62,9 @@ export function KillerMap({ questions }: { questions: AnalyzedQuestion[] }) {
               key={`${q.num}-${i}`}
               className="v3-killer-cell"
               style={{ background: bg, color: textColor, borderColor: border }}
+              title={String(q.num)}
             >
-              {String(q.num)}
+              {shortLabel(q.num)}
               {q.isEssay && <sup style={{ fontSize: '8px', marginLeft: '2px' }}>✎</sup>}
             </div>
           );
