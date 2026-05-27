@@ -404,7 +404,6 @@ function renderDataBox(box: DataBoxData): string {
       const color = allPercent
         ? (r.highlight && v < 50 ? '#BF1722' : (v >= 80 ? '#2F7B3A' : '#121212'))
         : (r.highlight ? '#BF1722' : '#121212');
-      const greyPct = 100 - pct;
       const shortLabel = shortenDataLabel(r.label);
       const ptsPx2 = Math.round((pct / 100) * NAVER_BAR_WIDTH);
       const greyPx2 = NAVER_BAR_WIDTH - ptsPx2;
