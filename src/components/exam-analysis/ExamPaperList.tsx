@@ -2,8 +2,26 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Pagination } from '@/components/ui/Pagination';
-import { FileSearch, Play, Trash2, RotateCw, School, X } from 'lucide-react';
+import { FileSearch, Play, Trash2, RotateCw, School, X, RefreshCw } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
+import { PROMPT_VERSION } from '@/lib/exam-analysis/constants';
+
+/**
+ * 분석본의 프롬프트 버전이 현재 PROMPT_VERSION과 일치하는지 검사.
+ * modelVersion 포맷: "gemini-X.Y-z / prompt vA.B.C"
+ * 일치하지 않으면 구버전으로 간주 → 재분석 권장.
+ */
+function isStalePrompt(modelVersion: string | null | undefined): boolean {
+  if (!modelVersion) return false;
+  return !modelVersion.includes(`prompt ${PROMPT_VERSION}`);
+}
+
+/** modelVersion에서 prompt vX.Y.Z만 추출 (예: "gemini-3.1-pro-preview / prompt v1.0.5" → "v1.0.5") */
+function extractPromptVersion(modelVersion: string | null | undefined): string | null {
+  if (!modelVersion) return null;
+  const m = modelVersion.match(/prompt\s+(v[\d.]+)/i);
+  return m ? m[1] : null;
+}
 
 function formatAnalyzedAt(dateStr: string): string {
   const d = new Date(dateStr);
@@ -203,7 +221,7 @@ export function ExamPaperList({
                       </>
                     )}
                   </p>
-                  {/* 라벨 줄: 상태 + 학기 + 중간/기말 + 학교 */}
+                  {/* 라벨 줄: 상태 + 학기 + 중간/기말 + 구버전 + 학교 */}
                   <div className="flex items-center gap-1 mt-1 flex-wrap">
                     {(() => {
                       const s = getDetailedStatus(item);
@@ -213,6 +231,15 @@ export function ExamPaperList({
                         </span>
                       );
                     })()}
+                    {/* 구버전 프롬프트 뱃지 (분석본이 있고 현재 PROMPT_VERSION과 다를 때만) */}
+                    {item.status === 'COMPLETED' && isStalePrompt(latestAnalysis?.modelVersion) && (
+                      <span
+                        className="inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-sm border bg-slate-100 text-slate-500 border-slate-300"
+                        title={`구버전 프롬프트 (${extractPromptVersion(latestAnalysis?.modelVersion) || '?'}). 현재 ${PROMPT_VERSION} — 우측 재분석 버튼으로 최신 버전으로 갱신할 수 있습니다.`}
+                      >
+                        구버전 {extractPromptVersion(latestAnalysis?.modelVersion) || ''}
+                      </span>
+                    )}
                     {getExamLabels(item).map(label => (
                       <span key={label} className="inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-sm border bg-teal-50 text-teal-600 border-teal-200">
                         {label}
@@ -253,6 +280,25 @@ export function ExamPaperList({
                       title="분석 실행"
                     >
                       {item.status === 'FAILED' ? <RotateCw className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                    </button>
+                  )}
+                  {/* 구버전 프롬프트 재분석 버튼 — COMPLETED + stale 일 때만 */}
+                  {item.status === 'COMPLETED' && isStalePrompt(latestAnalysis?.modelVersion) && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const oldVer = extractPromptVersion(latestAnalysis?.modelVersion) || '?';
+                        if (!confirm(
+                          `구버전 프롬프트(${oldVer})로 분석된 시험지입니다.\n` +
+                          `현재 버전(${PROMPT_VERSION})으로 재분석하시겠습니까?\n\n` +
+                          `※ 기존 분석 결과와 총평/블로그 글은 삭제됩니다.`,
+                        )) return;
+                        onAnalyze(item.id);
+                      }}
+                      className="p-1 text-amber-500 hover:text-amber-700"
+                      title={`구버전(${extractPromptVersion(latestAnalysis?.modelVersion) || '?'}) → ${PROMPT_VERSION} 재분석`}
+                    >
+                      <RefreshCw className="w-4 h-4" />
                     </button>
                   )}
                   <button

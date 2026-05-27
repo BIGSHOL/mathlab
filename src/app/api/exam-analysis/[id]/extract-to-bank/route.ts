@@ -114,7 +114,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     }));
 
     const response = await client.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.1-pro-preview',
       contents: [{
         role: 'user',
         parts: [...imageParts, { text: prompt }],

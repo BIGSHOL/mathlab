@@ -21,7 +21,7 @@ function getClient(): GoogleGenAI {
   return _client;
 }
 
-const MODEL = 'gemini-2.5-flash';
+const MODEL = 'gemini-3.1-pro-preview';
 
 // ── 유틸 함수 ──
 
@@ -86,7 +86,7 @@ export function parseJsonResponse<T = unknown>(text: string): T {
   try {
     return JSON.parse(cleaned) as T;
   } catch {
-    // 잘린 JSON 복구 시도
+    // ── 1단계: 잘린 JSON 구조 복구 + trailing comma 제거 + undefined → null ──
     let fixed = cleaned;
     const openQuotes = (fixed.match(/"/g) || []).length;
     if (openQuotes % 2 !== 0) fixed += '"';
@@ -95,12 +95,35 @@ export function parseJsonResponse<T = unknown>(text: string): T {
     for (let i = 0; i < openBrackets; i++) fixed += ']';
     for (let i = 0; i < openBraces; i++) fixed += '}';
     fixed = fixed.replace(/,\s*([}\]])/g, '$1');
+    fixed = fixed.replace(/:\s*undefined\b/g, ': null');
     try {
       return JSON.parse(fixed) as T;
     } catch (e2) {
-      throw new Error(
-        `AI 응답 JSON 파싱 실패: ${e2 instanceof Error ? e2.message : String(e2)}\n원본: ${text.slice(0, 500)}`
-      );
+      // ── 2단계: invalid escape character 자동 정정 ──
+      // Gemini가 ai_comment 등에 LaTeX(\dfrac, \frac, \(, \) 등)를 JSON 이스케이프 없이 출력하면
+      // "Bad escaped character in JSON" 발생. JSON 표준 valid escape는
+      //   \" \\ \/ \b \f \n \r \t \uXXXX 만 허용.
+      // 그 외의 `\X` 는 `\\X` 로 변환하여 LaTeX 백슬래시를 보존.
+      // 또한 string literal 내부 raw control character (raw newline 등)도 escape.
+      let fixed2 = fixed.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+      // string literal 안의 raw newline/tab/CR → 이스케이프 (대략적 — string 진입 후 닫히기 전까지)
+      fixed2 = fixed2.replace(/"((?:[^"\\]|\\.)*)"/g, (_m, inner: string) => {
+        const escaped = inner
+          .replace(/\r\n/g, '\\n')
+          .replace(/\n/g, '\\n')
+          .replace(/\r/g, '\\n')
+          .replace(/\t/g, '\\t');
+        return `"${escaped}"`;
+      });
+      try {
+        const parsed = JSON.parse(fixed2) as T;
+        console.warn('[ai-engine] JSON 파싱: invalid escape 자동 정정 후 성공 (LaTeX 백슬래시 추정)');
+        return parsed;
+      } catch (e3) {
+        throw new Error(
+          `AI 응답 JSON 파싱 실패: ${e3 instanceof Error ? e3.message : String(e3)}\n원본: ${text.slice(0, 500)}`
+        );
+      }
     }
   }
 }
@@ -122,6 +145,7 @@ interface GeminiVisionCallOptions {
   jsonMode?: boolean;        // responseMimeType: 'application/json' 사용 여부
   temperature?: number;
   mimeTypeHint?: string;     // 파일 형식 힌트 (image/jpeg, application/pdf 등)
+  modelOverride?: string;    // 모델 ID override (기본: MODEL 상수 = gemini-3.1-pro-preview)
 }
 
 /**
@@ -133,6 +157,7 @@ async function callGeminiVision<T = unknown>({
   jsonMode = true,
   temperature = 0.1,
   mimeTypeHint,
+  modelOverride,
 }: GeminiVisionCallOptions): Promise<T> {
   const client = getClient();
 
@@ -160,7 +185,7 @@ async function callGeminiVision<T = unknown>({
   }
 
   const response = await client.models.generateContent({
-    model: MODEL,
+    model: modelOverride || MODEL,
     contents: [
       {
         role: 'user',
@@ -432,7 +457,8 @@ function validateBasicResult(result: unknown): result is BasicAnalysisResult {
 export async function analyzeExam(
   images: string[],
   mimeTypeHint: string,
-  combinedPrompt: string
+  combinedPrompt: string,
+  modelOverride?: string,
 ): Promise<BasicAnalysisResult> {
   if (!images.length) {
     throw new Error('분석할 이미지가 없습니다');
@@ -449,6 +475,7 @@ export async function analyzeExam(
       jsonMode: true,
       temperature: 0.1,
       mimeTypeHint: mimeTypeHint,
+      modelOverride,
     });
 
     // 구조 검증

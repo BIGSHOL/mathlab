@@ -22,7 +22,7 @@ function getClient(): GoogleGenAI {
   return _client;
 }
 
-const MODEL = 'gemini-2.5-flash';
+const MODEL = 'gemini-3.5-flash';
 
 // ── 채점 마크 감지 프롬프트 ──
 

@@ -80,7 +80,7 @@ function checkPointsReliable(qs: AnalyzedQuestion[], expectedTotal: number | nul
 function getPointsSuggestion(qs: AnalyzedQuestion[], expectedTotal: number | null): {
   needed: boolean;
   diff: number; // (현재 합계) - (기준 만점). 양수면 초과, 음수면 부족
-  target: AnalyzedQuestion | null;
+  target: AnalyzedQuestion;
   newPoints: number;
   reason: string;
 } | null {

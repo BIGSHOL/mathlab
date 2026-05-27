@@ -40,10 +40,10 @@ interface CompareResult {
 type CompareMode = 'both' | 'thinking' | 'noThinking' | 'auto';
 
 const MODEL_OPTIONS: { value: string; label: string; desc: string }[] = [
-  { value: 'gemini-2.5-flash', label: '2.5 Flash', desc: '현재 사용 (GA, 저렴)' },
-  { value: 'gemini-2.5-flash-lite', label: '2.5 Flash Lite', desc: '최저가, 빠름' },
-  { value: 'gemini-3-flash-preview', label: '3 Flash Preview', desc: '신형 Flash (실험)' },
-  { value: 'gemini-3-pro-preview', label: '3 Pro Preview', desc: '최고 품질 (느리고 비쌈)' },
+  { value: 'gemini-3.5-flash', label: '3.5 Flash', desc: '신형 GA (2026-05, 메인 권장)' },
+  { value: 'gemini-3.1-pro-preview', label: '3.1 Pro Preview', desc: '최고 품질 (정확도 우선, 비쌈)' },
+  { value: 'gemini-3.1-flash-lite', label: '3.1 Flash Lite', desc: '최저가, 빠름 (가벼운 작업)' },
+  { value: 'gemini-2.5-flash', label: '2.5 Flash (구버전)', desc: '비교용 (이전 모델)' },
 ];
 
 /** 해설 텍스트를 전략/풀이/핵심 포인트 섹션으로 분리하여 렌더링 */
@@ -114,7 +114,7 @@ export default function ExplanationComparePage() {
   const [mode, setMode] = useState<CompareMode>('auto');
   const [expandedRaw, setExpandedRaw] = useState<Set<string>>(new Set());
   const [bookCode, setBookCode] = useState('3-1');
-  const [model, setModel] = useState<string>('gemini-2.5-flash');
+  const [model, setModel] = useState<string>('gemini-3.5-flash');
   const [saving, setSaving] = useState(false);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 

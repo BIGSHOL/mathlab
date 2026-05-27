@@ -103,7 +103,7 @@ export interface PdfExtractPlugin<TItem, TMeta = unknown> {
 export interface ExtractionConfig<TMeta = unknown> {
   /** Gemini API 키 */
   apiKey: string;
-  /** AI 모델 (기본: 'gemini-2.5-flash') */
+  /** AI 모델 (기본: 'gemini-3.1-pro-preview') */
   model?: string;
   /** 렌더링 스케일 (기본: 2.0) */
   scale?: number;

@@ -14,17 +14,17 @@ function selectModel(selection: SelectionState): string {
   const { schoolLevel, difficulty, mode } = selection;
 
   // 이미지 모드(유사/동일)는 SVG 생성 + 고난도 분석 필요 → Pro 모델
-  if (mode === 'image' || mode === 'exact') return 'gemini-3-pro-preview';
+  if (mode === 'image' || mode === 'exact') return 'gemini-3.1-pro-preview';
 
-  if (schoolLevel === SchoolLevel.HIGH) return 'gemini-3-pro-preview';
+  if (schoolLevel === SchoolLevel.HIGH) return 'gemini-3.1-pro-preview';
 
   if (schoolLevel === SchoolLevel.MIDDLE) {
     if (difficulty === Difficulty.LEVEL3 || difficulty === Difficulty.LEVEL4 || difficulty === Difficulty.LEVEL5) {
-      return 'gemini-3-pro-preview';
+      return 'gemini-3.1-pro-preview';
     }
   }
 
-  return 'gemini-2.5-flash';
+  return 'gemini-3.5-flash';
 }
 
 const RESPONSE_SCHEMA = {

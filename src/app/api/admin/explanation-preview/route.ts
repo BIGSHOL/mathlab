@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const model = modelParam || 'gemini-2.5-flash';
+  const model = modelParam || 'gemini-3.5-flash';
 
   const questions = await prisma.question.findMany({
     where: { id: { in: questionIds } },

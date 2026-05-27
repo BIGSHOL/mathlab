@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       : '이 도형을 SVG로 변환하세요.';
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash',
       contents: [
         {
           role: 'user',

@@ -6,7 +6,9 @@
 // ── 프롬프트 버전 ──
 // 프롬프트 변경 시 반드시 버전 업! 분석 결과에 기록되어 버전별 비교 가능
 // v1.0.5 (2026-05-14): 문항 번호 누락 금지 룰 추가 + 후처리 갭 자동 보정 (평균 기반 정밀 추측)
-export const PROMPT_VERSION = 'v1.0.5';
+// v1.1.0 (2026-05-27): Gemini 3.1 Pro Preview 업그레이드 + confidence_reason 화이트리스트 + JSON 안전 출력 가이드 (ai_comment LaTeX 금지) + 8개 학년/학기 단원명 curriculum.ts 동기화
+// v1.2.0 (2026-05-27): 난이도/신뢰도 하네스 강화 — H11 5단계 절대 기준(정답률) + H12 6축 종합 평가 + H13 분포 강제(3에 몰지 마라) + H14 위치 휴리스틱 + H15 신뢰도 5단계 매핑 + H16 reason↔value 매핑 + H17 일률 출력 금지 (95% 모두 동일 금지) + V10~V13 자기검증 룰 + schema 예시 다양화 (4단계/서술형/0.82/0.78 포함)
+export const PROMPT_VERSION = 'v1.2.0';
 
 // ── 5단계 난이도 (1=쉬움 ~ 5=어려움) ──
 export const EXAM_DIFFICULTIES = {

@@ -154,7 +154,7 @@ export async function extractDirect<TItem, TMeta = unknown>(
 ): Promise<ExtractionResult<TItem>> {
   const {
     apiKey,
-    model = 'gemini-2.5-flash',
+    model = 'gemini-3.1-pro-preview',
     onProgress,
     meta,
     maxImageSize = 5 * 1024 * 1024,

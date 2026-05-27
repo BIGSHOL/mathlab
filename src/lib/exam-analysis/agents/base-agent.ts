@@ -41,7 +41,7 @@ function getAgentClient(): GoogleGenAI {
   return _agentClient;
 }
 
-const MODEL_NAME = 'gemini-2.5-flash';
+const MODEL_NAME = 'gemini-3.5-flash';
 
 export interface AgentInput {
   basicAnalysis: BasicAnalysisResult;

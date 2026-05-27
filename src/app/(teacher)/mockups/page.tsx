@@ -114,6 +114,7 @@ const ALL_PAGES: PageInfo[] = [
   { label: '아바타 이펙트 미리보기', href: '/mockups/effect-preview', icon: Sparkles, group: 'dev', category: '개발', description: '12종 CSS 이펙트 + 크기별/프레임 조합 + 프로필/랭킹 시뮬레이션', isNew: true },
   { label: '모자·안경 악세사리 미리보기', href: '/mockups/accessory-preview', icon: Crown, group: 'dev', category: '개발', description: '8종 모자 + 6종 안경 SVG 악세사리 + 이펙트 조합 시뮬레이션', isNew: true },
   { label: '해설 생성 비교', href: '/mockups/explanation-compare', icon: Sparkles, group: 'dev', category: '개발', description: 'Gemini Thinking vs Non-Thinking 해설 품질 비교', isNew: true },
+  { label: '시험지 분석 모델 비교', href: '/mockups/exam-analysis-compare', icon: FileSearch, group: 'dev', category: '개발', description: '같은 시험지를 4개 Gemini 모델(2.5/3.5/Pro Preview/Lite)로 동시 분석 → 정확도/속도/비용 비교 (DB 저장 X)', isNew: true },
   { label: '도형 편집기', href: '/mockups/diagram-editor', icon: Layers, group: 'dev', category: '개발', description: 'DiagramParams(프리셋) + SVG(코드) 도형 편집기 데모', isNew: true },
   { label: '해설 후처리 감사', href: '/mockups/audit-explanations', icon: AlertTriangle, group: 'dev', category: '개발', description: '해설 LaTeX 정규화 후 의심 패턴 자동 검출 (Audit)' },
   { label: '프리셋 브라우저', href: '/mockups/preset-browser', icon: Layers, group: 'dev', category: '개발', description: '교육과정 단원별 다이어그램 프리셋 209개 검색·미리보기' },

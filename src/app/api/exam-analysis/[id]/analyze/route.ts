@@ -182,7 +182,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         markDetection: markDetection ? JSON.parse(JSON.stringify(markDetection)) as any : null,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         crossValidation: crossValidation ? JSON.parse(JSON.stringify(crossValidation)) as any : null,
-        modelVersion: `gemini-2.5-flash / prompt ${PROMPT_VERSION}`,
+        modelVersion: `gemini-3.1-pro-preview / prompt ${PROMPT_VERSION}`,
         totalQuestions,
         totalPoints: totalPoints || null,
         earnedPoints: earnedPoints || null,

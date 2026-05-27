@@ -152,7 +152,7 @@ JSON 스키마에 맞춰 응답하세요.`;
 
   const client = getGeminiClient();
   const response = await client.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3.5-flash',
     contents: prompt,
     config: {
       responseMimeType: 'application/json',
@@ -423,7 +423,7 @@ ${phaseStatsText}
   try {
     const client = new Anthropic({ apiKey });
     const message = await client.messages.create({
-      model: 'claude-sonnet-4-5',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1500,
       messages: [{ role: 'user', content: prompt }],
     });
