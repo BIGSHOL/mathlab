@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
@@ -8,6 +8,11 @@ import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-age
 import { renderInlineMath } from './helpers';
 import { FORMAT_BADGE } from './constants';
 import { V3CommentaryView, type V3Meta, type V3ChartImages } from './v3/V3CommentaryView';
+import { V4CommentaryView } from './v4/V4CommentaryView';
+
+/** 사용자 뷰 모드 (localStorage 키) */
+const VIEW_MODE_KEY = 'mathlab_commentary_view_mode';
+type ViewMode = 'v3' | 'v4';
 
 interface CommentarySectionProps {
   commentary: CommentaryResult;
@@ -50,14 +55,34 @@ export function CommentarySection({
   v3Charts,
 }: CommentarySectionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('v3');
 
-  // V3 활성화 조건 — Q&A 1개 이상 있으면 V3 마크업 사용 (lazy migration 후 점진 적용)
+  // localStorage에서 사용자 선호 viewMode 복원 (마운트 시 1회)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(VIEW_MODE_KEY);
+      if (saved === 'v3' || saved === 'v4') {
+        setViewMode(saved);
+      }
+    } catch {
+      /* SSR/private 모드 등 무시 */
+    }
+  }, []);
+
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    try {
+      localStorage.setItem(VIEW_MODE_KEY, mode);
+    } catch { /* 무시 */ }
+  };
+
+  // V3 활성화 조건 — Q&A 1개 이상 있으면 V3/V4 마크업 사용 (lazy migration 후 점진 적용)
   const useV3 = !!commentary.blog_qa && commentary.blog_qa.length > 0;
 
   // 폴백 감지: 규칙 기반 결과는 overall_comment가 "총 N문항"으로 시작
   const isFallback = commentary.overall_comment?.startsWith('총 ') && !commentary.overall_comment?.includes('이번 시험');
 
-  // V3 모드 — 상단에 작은 컨트롤 row + V3CommentaryView
+  // V3/V4 모드 — 상단에 작은 컨트롤 row + view 컴포넌트
   if (useV3 && isExpanded) {
     const meta: V3Meta = {
       examTitle: examMeta?.title || '',
@@ -73,9 +98,35 @@ export function CommentarySection({
         {/* 컨트롤 row (재분석 + 체크박스 + 접기) */}
         <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100 bg-slate-50">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+            <Sparkles className={`w-3.5 h-3.5 ${viewMode === 'v4' ? 'text-amber-700' : 'text-violet-600'}`} />
             <span className="text-xs font-bold text-slate-700">AI 시험 총평</span>
-            <span className="text-[10px] tracking-[0.14em] uppercase text-[#BF1722] font-extrabold ml-1">V3</span>
+            {/* V3 / V4 segmented control */}
+            <div className="inline-flex border border-slate-300 rounded-sm overflow-hidden ml-1" role="tablist" aria-label="총평 표시 모드">
+              <button
+                type="button"
+                onClick={() => handleViewModeChange('v3')}
+                className={`px-2 py-0.5 text-[10px] font-bold tracking-[0.08em] transition-colors ${
+                  viewMode === 'v3'
+                    ? 'bg-[#BF1722] text-white'
+                    : 'bg-white text-slate-400 hover:text-slate-600'
+                }`}
+                title="NYT Science 매거진 톤"
+              >
+                V3
+              </button>
+              <button
+                type="button"
+                onClick={() => handleViewModeChange('v4')}
+                className={`px-2 py-0.5 text-[10px] font-bold tracking-[0.08em] transition-colors ${
+                  viewMode === 'v4'
+                    ? 'bg-amber-700 text-white'
+                    : 'bg-white text-slate-400 hover:text-slate-600'
+                }`}
+                title="갈수학학원 스타일 (테이블 중심)"
+              >
+                V4
+              </button>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {!isRegenerating && (
@@ -123,8 +174,12 @@ export function CommentarySection({
             </button>
           </div>
         </div>
-        {/* V3 콘텐츠 */}
-        <V3CommentaryView commentary={commentary} questions={allQuestions} meta={meta} charts={v3Charts} />
+        {/* V3 / V4 콘텐츠 */}
+        {viewMode === 'v4' ? (
+          <V4CommentaryView commentary={commentary} questions={allQuestions} meta={meta} charts={v3Charts} />
+        ) : (
+          <V3CommentaryView commentary={commentary} questions={allQuestions} meta={meta} charts={v3Charts} />
+        )}
       </div>
     );
   }

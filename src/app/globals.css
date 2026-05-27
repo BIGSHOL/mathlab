@@ -1035,3 +1035,217 @@ body {
 /* V3 푸터 */
 .v3-footer { padding: 22px 64px; border-top: 1px solid #DDD; background: #FAFAFA; display: flex; align-items: center; justify-content: space-between; }
 .v3-footer .v3-footer-meta { font-family: var(--font-display, 'Pretendard Variable', sans-serif); font-size: 12px; color: #888; }
+
+/* ──────────────────────────────────────────────
+   V4 (갈수학학원 스타일) — 테이블 중심 학원 블로그 톤
+   사용자 벤치마킹 스크린샷 기반. V3와 prefix 분리, 충돌 0.
+   ────────────────────────────────────────────── */
+
+/* V4 컨테이너 */
+.v4 { background: #fff; border: 1px solid #DDD; border-radius: 10px; padding: 36px 48px; max-width: 1080px; margin: 0 auto; }
+
+/* V4 헤더 */
+.v4-top { margin-bottom: 32px; padding-bottom: 16px; border-bottom: 2px solid #8B4513; }
+.v4-kicker {
+  display: inline-block;
+  font-family: var(--font-display, 'Pretendard Variable', sans-serif);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: #8B4513;
+  font-weight: 700;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.v4-headline {
+  font-family: var(--font-serif-kr, 'Noto Serif KR', serif);
+  font-size: 26px;
+  font-weight: 700;
+  color: #1A1A1A;
+  margin: 0 0 10px;
+  line-height: 1.4;
+  word-break: keep-all;
+}
+.v4-dek {
+  font-family: var(--font-display, 'Pretendard Variable', sans-serif);
+  font-size: 14px;
+  color: #555;
+  margin: 0;
+  line-height: 1.6;
+  word-break: keep-all;
+}
+
+/* V4 섹션 */
+.v4-section { margin-bottom: 36px; }
+
+/* V4 ✏ 헤딩 */
+.v4-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #E5E5E5;
+}
+.v4-heading-icon {
+  font-size: 18px;
+  color: #8B4513;
+  line-height: 1;
+}
+.v4-heading-text {
+  font-family: var(--font-display, 'Pretendard Variable', sans-serif);
+  font-size: 17px;
+  font-weight: 700;
+  color: #1A1A1A;
+  word-break: keep-all;
+}
+.v4-heading-sub {
+  font-family: var(--font-display, 'Pretendard Variable', sans-serif);
+  font-size: 12px;
+  color: #888;
+  font-weight: 500;
+}
+
+/* V4 시험 개요 테이블 */
+.v4-overview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-display, 'Pretendard Variable', sans-serif);
+  border: 1px solid #E5E5E5;
+}
+.v4-overview-table tr:not(:last-child) { border-bottom: 1px solid #F0F0F0; }
+.v4-overview-label {
+  background: #F8F8F8;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #555;
+  text-align: left;
+  width: 130px;
+  vertical-align: top;
+  word-break: keep-all;
+  border-right: 1px solid #E5E5E5;
+}
+.v4-overview-value {
+  padding: 10px 14px;
+  font-size: 14px;
+  color: #2A2A2A;
+  vertical-align: top;
+  word-break: keep-all;
+  line-height: 1.6;
+}
+.v4-overview-value strong { color: #8B4513; font-weight: 700; }
+.v4-meta-sub { color: #888; font-size: 12px; font-weight: 400; }
+
+/* V4 문제별 난이도 테이블 (행 색상 코딩) */
+.v4-diff-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-display, 'Pretendard Variable', sans-serif);
+  border: 1px solid #E5E5E5;
+}
+.v4-diff-table thead { background: #F8F8F8; }
+.v4-diff-table th {
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #555;
+  text-align: left;
+  letter-spacing: 0.02em;
+  border-bottom: 2px solid #E5E5E5;
+}
+.v4-diff-table td {
+  padding: 8px 14px;
+  font-size: 13px;
+  color: #2A2A2A;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  word-break: keep-all;
+}
+.v4-diff-num { font-family: var(--font-abril, 'Abril Fatface', 'Bodoni Moda', serif); }
+.v4-diff-num strong { font-size: 15px; color: #1A1A1A; }
+.v4-diff-topic { color: #2A2A2A; }
+.v4-diff-level { white-space: nowrap; font-weight: 600; }
+.v4-diff-points { white-space: nowrap; text-align: right; }
+.v4-diff-points strong { font-family: var(--font-abril, 'Abril Fatface', 'Bodoni Moda', serif); font-size: 15px; }
+
+/* V4 회색 박스 (출제 특징 요약, 일반 단락) */
+.v4-grey-box {
+  background: #F8F8F8;
+  border-left: 3px solid #8B4513;
+  padding: 16px 20px;
+  border-radius: 0 4px 4px 0;
+}
+.v4-grey-box p {
+  font-family: var(--font-serif-kr, 'Noto Serif KR', serif);
+  font-size: 15px;
+  line-height: 1.85;
+  color: #2A2A2A;
+  margin: 0;
+  word-break: keep-all;
+}
+.v4-grey-box p strong { color: #8B4513; font-weight: 700; }
+/* AI raw HTML 색상 무력화 (v3와 동일 패턴) */
+.v4-grey-box p span[style*="color"],
+.v4-grey-box p mark,
+.v4-grey-box p font { color: inherit !important; background: transparent !important; }
+
+/* V4 결론 박스 (노란/베이지 톤) */
+.v4-conclusion-box {
+  background: #FFF8E0;
+  border: 1px solid #FFD700;
+  border-left: 4px solid #FFD700;
+  padding: 20px 24px;
+  border-radius: 4px;
+}
+.v4-conclusion-title {
+  font-family: var(--font-display, 'Pretendard Variable', sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: #8B4513;
+  margin-bottom: 10px;
+  letter-spacing: 0.02em;
+}
+.v4-conclusion-box p {
+  font-family: var(--font-serif-kr, 'Noto Serif KR', serif);
+  font-size: 15px;
+  line-height: 1.85;
+  color: #1A1A1A;
+  margin: 0;
+  word-break: keep-all;
+}
+.v4-conclusion-box p strong { color: #8B4513; font-weight: 700; }
+.v4-conclusion-box p span[style*="color"],
+.v4-conclusion-box p mark,
+.v4-conclusion-box p font { color: inherit !important; background: transparent !important; }
+
+/* V4 차트 그리드 */
+.v4-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.v4-chart {
+  margin: 0;
+  background: #fff;
+  border: 1px solid #E5E5E5;
+  border-radius: 4px;
+  padding: 12px;
+}
+.v4-chart img { width: 100%; height: auto; display: block; }
+.v4-chart figcaption {
+  font-family: var(--font-display, 'Pretendard Variable', sans-serif);
+  font-size: 11px;
+  color: #888;
+  margin-top: 8px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* V4 반응형 — 좁은 화면에서 차트 1열 */
+@media (max-width: 768px) {
+  .v4 { padding: 20px 16px; }
+  .v4-charts-grid { grid-template-columns: 1fr; }
+  .v4-headline { font-size: 22px; }
+  .v4-overview-label { width: 100px; font-size: 12px; }
+  .v4-overview-value { font-size: 13px; }
+  .v4-diff-table th, .v4-diff-table td { padding: 6px 8px; font-size: 12px; }
+}
