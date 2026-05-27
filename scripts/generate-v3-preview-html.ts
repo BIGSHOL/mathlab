@@ -1056,7 +1056,7 @@ function renderDataBoxNaver(box: NonNullable<NonNullable<MergedCommentary['blog_
 
 // ── 네이버용 인포그래픽 (table 기반) ──
 
-/** 난이도별 배점 stacked bar — 네이버 호환 (td bgcolor 패턴, 7f82e52d 검증) */
+/** 난이도별 배점 stacked bar — 네이버 호환 (5카드 가로 배치, 형식 분포 패턴) */
 function renderDifficultyStackedBarNaver(questions: AnalyzedQuestion[]): string {
   const stats = [1, 2, 3, 4, 5].map((lv) => {
     const lvQ = questions.filter((q) => normDiff(String(q.difficulty)) === String(lv));
@@ -1070,48 +1070,23 @@ function renderDifficultyStackedBarNaver(questions: AnalyzedQuestion[]): string 
   });
   const totalPts = stats.reduce((s, x) => s + x.points, 0);
   if (totalPts === 0) return '';
+  const totalCount = stats.reduce((s, x) => s + x.count, 0);
 
-  const maxCount = Math.max(...stats.map((s) => s.count), 1);
-  const maxPoints = Math.max(...stats.map((s) => s.points), 1);
-  const cellWidthPct = (100 / maxCount).toFixed(2);
-
-  const levelBlocks = stats.map((s) => {
-    const countCells: string[] = [];
-    for (let i = 0; i < maxCount; i++) {
-      const filled = i < s.count;
-      const c = filled ? s.color : '#dddddd';
-      countCells.push(
-        `<td width="${cellWidthPct}%" height="14" bgcolor="${c}" style="background:${c};font-size:1px;line-height:1px;border-right:2px solid #fff;">&nbsp;</td>`,
-      );
-    }
-    const ptsPct = s.points > 0 ? Math.round((s.points / maxPoints) * 100) : 0;
-    const greyPct = 100 - ptsPct;
-
-    return `
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 4px;">
-      <tr>
-        <td style="padding:8px 8px 4px 0;font-family:Pretendard,sans-serif;font-size:13px;font-weight:700;color:${s.color};white-space:nowrap;">Lv ${s.level} · ${s.label}</td>
-        <td width="140" align="right" style="padding:8px 0 4px 8px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:13px;font-weight:700;color:${s.color};white-space:nowrap;">${s.count}문항 · ${s.points}점</td>
-      </tr>
-    </table>
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 3px;border-collapse:collapse;">
-      <tr>${countCells.join('')}</tr>
-    </table>
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 14px;">
-      <tr>
-        ${ptsPct > 0 ? `<td width="${ptsPct}%" height="6" bgcolor="${s.color}" style="background:${s.color};font-size:1px;line-height:1px;">&nbsp;</td>` : ''}
-        ${greyPct > 0 ? `<td width="${greyPct}%" height="6" bgcolor="#dddddd" style="background:#dddddd;font-size:1px;line-height:1px;">&nbsp;</td>` : ''}
-      </tr>
-    </table>`;
-  }).join('');
+  const cards = stats.map((s) => `
+    <td width="19%" align="center" valign="top" style="padding:14px 4px;background:#fff;border:1px solid #eee;border-top:3px solid ${s.color};">
+      <p style="margin:0;font-family:Pretendard,sans-serif;font-size:10px;letter-spacing:0.06em;color:#666;font-weight:700;white-space:nowrap;">Lv ${s.level} · ${s.label}</p>
+      <p style="margin:8px 0 2px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:30px;font-weight:900;color:${s.color};line-height:1;">${s.count}<span style="font-size:12px;color:#888;font-weight:400;">문항</span></p>
+      <p style="margin:0;font-family:Pretendard,sans-serif;font-size:12px;color:#444;font-weight:600;">${s.points}점</p>
+    </td>`).join('<td width="1%">&nbsp;</td>');
 
   return `
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;background:#fafafa;border-left:3px solid #BF1722;">
-  <tr><td style="padding:14px 18px;">
-    <p style="margin:0 0 10px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.14em;color:#888;font-weight:800;">FIGURE · 난이도별 배점 분포</p>
-    <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:10px;color:#888;">총 ${maxCount}칸 기준 · 채워진 칸 = 문항수 · 하단 막대 = 배점 (최대 ${maxPoints}점)</p>
-    ${levelBlocks}
-    <p style="margin:6px 0 0;font-family:Pretendard,sans-serif;font-size:11px;color:#888;line-height:1.5;">총 ${totalPts}점 · ${questions.length}문항.</p>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;background:#fafafa;border:1px solid #ddd;">
+  <tr><td style="padding:20px 22px;">
+    <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.14em;color:#888;font-weight:800;">FIGURE · 난이도별 배점 분포</p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>${cards}</tr>
+    </table>
+    <p style="margin:14px 0 0;font-family:Pretendard,sans-serif;font-size:11px;color:#888;line-height:1.5;">총 ${totalPts}점 · ${totalCount}문항. 상단 색상 보더 = 난이도(녹→황→빨 그라데이션).</p>
   </td></tr>
 </table>`;
 }
