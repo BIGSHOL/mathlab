@@ -208,8 +208,8 @@ function renderFeatureCallout(fc: NonNullable<CommentaryResult['feature_callout'
 </table>`;
 }
 
-// 네이버 본문 폭 720px - padding 약 40px ≈ 680px (figure 컨테이너) - 안쪽 padding 약 44px ≈ 636px
-const NAVER_BAR_WIDTH = 636;
+// 5카드 가로 배치 패턴으로 전환하면서 NAVER_BAR_WIDTH 사용 안 함 (inline-block span px 너비가 네이버에서 제거됨)
+// td bgcolor + width% 패턴은 콘텐츠 풍부한 카드(형식 분포 패턴)에만 적용
 
 function renderDifficultyStackedBar(questions: AnalyzedQuestion[]): string {
   const stats = [1, 2, 3, 4, 5].map((lv) => {

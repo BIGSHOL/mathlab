@@ -283,7 +283,7 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
               <li>배점이 추정값인 경우 (시험지에 점수 표기 누락)</li>
               <li>출제범위 외 단원이 의심되는 경우</li>
             </ul>
-            <p className="text-xs text-slate-500 leading-relaxed">ℹ️ AI는 시험지의 메타데이터만 추출하며 문제 풀이를 직접 수행하지는 않습니다. 다만 자율 추론 과정에서 "계산 결과가 선택지에 없음" 같은 자체 검산 사유가 표시될 수 있습니다 (이 경우 OCR 오인식 또는 출제 오류일 수 있으니 해당 문항은 수동 확인 권장).</p>
+            <p className="text-xs text-slate-500 leading-relaxed">ℹ️ AI는 시험지의 메타데이터만 추출하며 문제 풀이를 직접 수행하지는 않습니다. 다만 자율 추론 과정에서 &ldquo;계산 결과가 선택지에 없음&rdquo; 같은 자체 검산 사유가 표시될 수 있습니다 (이 경우 OCR 오인식 또는 출제 오류일 수 있으니 해당 문항은 수동 확인 권장).</p>
           </>
         } />
         <span className={`text-sm font-bold ${avgConfidence >= 90 ? 'text-emerald-600' : avgConfidence >= 70 ? 'text-yellow-600' : 'text-red-500'}`}>
