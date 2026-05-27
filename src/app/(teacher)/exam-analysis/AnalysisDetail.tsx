@@ -335,8 +335,8 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
         </div>
       )}
 
-      {/* ── 분석 중 ── */}
-      {detail.status === 'ANALYZING' && (
+      {/* ── 분석 중 ── (latestAnalysis가 있으면 stale status 무시 — 분석 결과가 있다 = 완료) */}
+      {detail.status === 'ANALYZING' && !latestAnalysis && (
         <AnalyzingProgress serverStep={detail.analysisStep} />
       )}
 

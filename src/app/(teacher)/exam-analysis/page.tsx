@@ -68,10 +68,10 @@ export default function ExamAnalysisPage() {
 
   useEffect(() => { fetchList(); }, [fetchList]);
 
-  // 상세 조회
+  // 상세 조회 (cache:'no-store' — 분석 진행 중 stale 데이터 방지)
   const fetchDetail = useCallback(async (id: string) => {
     try {
-      const res = await fetch(`/api/exam-analysis/${id}`);
+      const res = await fetch(`/api/exam-analysis/${id}`, { cache: 'no-store' });
       const json = await res.json();
       setSelectedDetail(json.data);
     } catch {
