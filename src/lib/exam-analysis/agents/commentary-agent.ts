@@ -445,11 +445,11 @@ V3는 NYT Science 매거진 톤이지만 V4는 **갈수학학원 블로그 스�
 
   "v4_final_strategy": [
     {
-      "area": "수와 식의 계산 (영역명)",
-      "current_status": "학생 현재 상태 추정 (예: 기본 개념 익숙)",
-      "action": "권장 학습 액션 (예: 심화 응용 문제 반복 + 계산 정확도 점검)"
+      "area": "다음 시험 단원 (예: 일차함수와 그래프 — 다음 단원)",
+      "current_status": "이번 시험 영역과의 연계 (예: 연립방정식 활용 능력이 일차함수 그래프 해석의 전제)",
+      "action": "다음 시험 대비 액션 (예: 일차함수 그래프 작도 + 식 변환 반복 학습)"
     }
-    // ... 영역별로 3~5개. 기말고사 또는 다음 시험 대비.
+    // ... 다음 시험을 가정한 영역별 3~5개.
   ]
 }
 
@@ -463,6 +463,29 @@ R5. **markdown bold 강조** — body 안에 **굵게**로 핵심 강조. v4_exa
 R6. **단원명은 정확히** — 사용자가 제공한 question.topic에서 추출. 임의로 단원명 만들지 말 것.
 R7. **분석 톤** — 학원 보고서 톤. 매거진 X. "이번 시험은 ~입니다" 식의 단정조. 학부모/학생이 이해 가능한 용어.
 R8. **객관적 데이터 기반** — questions 배열의 정보를 가공만 할 것. AI 추정/창작 금지.
+R9. **raw HTML 금지** — body 안에 <span style="color:...">, <font color>, <mark> 등 색상 지정 HTML 절대 금지. 강조는 오직 markdown \`**bold**\`만. 색상은 UI 디자인 시스템이 통제.
+
+## ⚠️ v4_final_strategy — 다음 시험 인식 (가장 중요)
+
+**v4_final_strategy의 "다음 시험"은 이번 시험과 다른 시험**이다. 시험 종류에 따라 다음 시험을 정확히 식별:
+
+| 이번 시험 | 다음 시험 (action 작성 대상) | 범위 |
+|---|---|---|
+| **중간고사** | 같은 학기 **기말고사** | **이번에 출제 안 된 단원** + 일부 겹치는 단원 |
+| **기말고사** | 다음 학년 같은 학기 **중간고사** | 다음 학년 교육과정 (예: 중2 1학기 기말 → 중3 1학기 중간) |
+| **모의고사** | 다음 회차 **모의고사** | 누적 범위 확대 |
+| **OTHER** | 다음 학기/회차 | 학기 진행에 따라 추정 |
+
+**잘못된 예시 (절대 금지)**:
+- 이번 시험 범위가 "수와 연산 / 식의 계산 / 일차방정식"인데, action에 "**수와 연산** 심화 반복"이라고 작성 → ❌ 이미 본 시험. 의미 없음.
+
+**올바른 예시**:
+- 이번이 중1-1 중간고사 (범위: 소인수분해, 정수와 유리수) → 다음은 중1-1 기말 (범위: 정수와 유리수 마무리, 문자의 사용, 일차방정식)
+  - action: "**문자의 사용** 단원 선행 + 등식 변형 연습", "**일차방정식의 활용** 유형 학습"
+- 이번이 중2-1 중간고사 (범위: 유리수와 순환소수, 식의 계산, 일차부등식) → 다음은 중2-1 기말 (범위: 연립일차방정식, 일차함수)
+  - action: "**연립일차방정식** 대입법·가감법 익히기", "**일차함수와 그래프** 기초 학습"
+
+**area 필드는 다음 시험에 새로 출제될 단원**으로 작성. current_status는 이번 시험에서 보인 학생의 학습 상태와 다음 시험에서의 영향을 연결.
 
 ## 톤 가이드
 
@@ -972,6 +995,12 @@ ${phases}
   /** V4 신규 필드 생성 (Claude Sonnet 4.6, 별도 호출).
    * API endpoint `/api/exam-analysis/[id]/generate-v4`에서 호출.
    * V3와 독립 — V3 데이터 없어도 작동.
+   *
+   * input에 다음 필드 추가 가능 (다음 시험 인식용):
+   *   - examCategory: 'MIDTERM' | 'FINAL' | 'MOCK' | 'OTHER' | null
+   *   - grade: string (예: '중2')
+   *   - examYear: number (예: 2026)
+   *   - examSemester: number (1 또는 2)
    */
   async generateV4Extension(input: AgentInput): Promise<V4Extension> {
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -1015,7 +1044,8 @@ ${phases}
     return this.parseV4Response(normalized);
   }
 
-  /** V4 응답 정규화 — stripEnglishEnums 재귀 + 필수 필드 fallback */
+  /** V4 응답 정규화 — stripRawHtml + stripEnglishEnums 재귀 + 필수 필드 fallback
+   *  raw HTML 색상(span style=color, mark, font) 제거 + 영문 enum 한글 변환 */
   private parseV4Response(raw: V4Extension): V4Extension {
     const norm = (v: unknown): string => normalizeText(String(v ?? ''));
 
@@ -1069,13 +1099,39 @@ ${phases}
     };
   }
 
-  /** V4 user prompt — V3와 유사하지만 더 직설적 데이터 위주 */
+  /** V4 user prompt — V3와 유사하지만 더 직설적 데이터 위주 + 다음 시험 인식 추가 */
   private buildV4UserPrompt(input: AgentInput): string {
     const { basicAnalysis } = input;
     const totalQ = basicAnalysis.questions.length;
     const totalPts = basicAnalysis.exam_info.total_points;
     const schoolName = basicAnalysis.exam_info.school_name || '';
     const diff = basicAnalysis.summary.difficulty_distribution as Record<string, number>;
+
+    // 시험 메타 (다음 시험 식별용) — input.examMeta 또는 input.examPaperContext에서 옴
+    const examMeta = (input as unknown as {
+      examCategory?: 'MIDTERM' | 'FINAL' | 'MOCK' | 'OTHER' | null;
+      grade?: string | null;
+      examYear?: number | null;
+      examSemester?: number | null;
+    });
+    const examCategory = examMeta.examCategory || null;
+    const grade = examMeta.grade || '';
+    const examSemester = examMeta.examSemester || null;
+
+    // 다음 시험 식별 (사용자 요청 — 기말 대비 전략의 핵심)
+    const nextExamHint = (() => {
+      if (!examCategory) return '다음 시험 (학기/회차 추정)';
+      if (examCategory === 'MIDTERM') {
+        return `**다음 시험: 같은 학기 기말고사** (이번 범위에 없던 단원 + 일부 겹치는 단원). 학년: ${grade}, 학기: ${examSemester || '?'}`;
+      }
+      if (examCategory === 'FINAL') {
+        return `**다음 시험: 다음 학년 같은 학기 중간고사** (학년 진급 후 새 단원). 이번 학년/학기: ${grade} ${examSemester || '?'}학기 → 다음: 한 학년 위 동일 학기 중간`;
+      }
+      if (examCategory === 'MOCK') {
+        return `**다음 시험: 다음 회차 모의고사** (누적 범위 확대)`;
+      }
+      return '다음 시험 (학기/회차 추정)';
+    })();
 
     // 가중 평균 난이도
     const counts = [diff['1'] || 0, diff['2'] || 0, diff['3'] || 0, diff['4'] || 0, diff['5'] || 0];
@@ -1127,16 +1183,30 @@ ${phases}
     return `## 시험 메타데이터
 
 - 학교: ${schoolName || '미지정'}
-- 학년: ${input.basicAnalysis.exam_info ? '시험지 메타 참고' : '미지정'}
+- 학년: ${grade || '미지정'}
+- 학기: ${examSemester || '미지정'}
+- 시험 종류: ${examCategory || 'OTHER'}
 - 총 문항: ${totalQ}
 - 총 배점: ${totalPts}
 - 평균 난이도(가중): ${weighted.toFixed(2)} / 5 (${diffLabel})
 - 최다 난이도: ${peakDiffText}
 - 서술형: ${essaySummary}
 
-## 단원별 출제
+## 단원별 출제 (이번 시험 출제 범위 = 다음 시험에는 출제 안 될 가능성 높음)
 
 ${topicSummary || '미분류'}
+
+## 🚨 다음 시험 정보 (v4_final_strategy 작성 시 반드시 참조)
+
+${nextExamHint}
+
+**v4_final_strategy.area는 위의 "단원별 출제"에 있는 단원이 아닌, 다음 시험에 새로 출제될 단원으로 작성하세요.**
+이번 시험에 이미 본 단원을 "다음 시험 대비"로 다시 권하는 것은 잘못입니다.
+
+다음 시험 범위 추정 가이드 (학년/학기/시험종류 기반):
+- 중학교 교육과정 표준 진도를 참고하여, 이번 시험에 없는 단원 중 다음 시험에 나올 가능성 높은 단원을 area로 작성
+- 예: 중2 1학기 중간 (수와 연산, 식의 계산, 일차부등식 출제) → 다음 기말 = 연립일차방정식, 일차함수
+- 예: 중1 1학기 중간 (소인수분해, 정수와 유리수 출제) → 다음 기말 = 문자의 사용, 일차방정식
 
 ## 문항 전체 (V4_difficulty_rows 생성에 사용)
 
@@ -1144,7 +1214,10 @@ ${questionDetails}
 
 ---
 
-위 데이터로 V4 출력 형식 5개 키를 모두 생성하세요. 갈수학학원 스타일 — 테이블 중심, 직설적, 학원 보고서 톤. JSON만 출력.`;
+위 데이터로 V4 출력 형식 5개 키를 모두 생성하세요. 갈수학학원 스타일 — 테이블 중심, 직설적, 학원 보고서 톤. JSON만 출력.
+
+⚠️ 색상 강조 금지: body 안에 \`<span style="color">\`, \`<font>\`, \`<mark>\` 등 raw HTML 색상 절대 사용 금지. 강조는 \`**bold**\`만 사용.
+⚠️ v4_final_strategy.area는 다음 시험 범위로 작성 (이번 시험 범위 X).`;
   }
 
   /** V3 user prompt — 시안 단계의 buildUserPrompt와 동일 구조 (검증됨) */

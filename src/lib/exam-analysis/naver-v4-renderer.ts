@@ -58,10 +58,8 @@ function escapeHtml(s: string): string {
 }
 
 function markdownToInlineBold(text: string): string {
-  return escapeHtml(text).replace(
-    /\*\*(.+?)\*\*/g,
-    `<strong style="color:${V4_ACCENT};font-weight:700;">$1</strong>`,
-  );
+  // 사용자 요청 (2026-05-27): 자동 색상 강조 제거. font-weight만 유지.
+  return escapeHtml(text).replace(/\*\*(.+?)\*\*/g, '<strong style="font-weight:700;">$1</strong>');
 }
 
 function joinKoreanCounters(text: string): string {
@@ -178,13 +176,13 @@ function renderExamOverview(o: NonNullable<CommentaryResult['v4_exam_overview']>
     ['학년 · 학교', o.school ? `${o.grade} · ${o.school}` : o.grade],
     ['문항 · 만점', `${o.total_questions}문항 · ${o.total_points}점`],
     ['출제 범위', o.range],
-    ['전체 난이도', `<strong style="color:${V4_ACCENT};font-weight:700;">${escapeHtml(o.avg_difficulty_label)}</strong>`],
+    ['전체 난이도', `<strong style="font-weight:700;">${escapeHtml(o.avg_difficulty_label)}</strong>`],
     ['최고 난이도', o.peak_difficulty],
   ];
   if (o.essay_summary) {
     rows.push(['서술형', o.essay_summary]);
   }
-  rows.push(['한 줄 요약', `<strong style="color:${V4_ACCENT};font-weight:700;">${escapeHtml(o.one_liner)}</strong>`]);
+  rows.push(['한 줄 요약', `<strong style="font-weight:700;">${escapeHtml(o.one_liner)}</strong>`]);
 
   const trs = rows
     .map(
@@ -258,7 +256,7 @@ function renderExamFeatures(f: NonNullable<CommentaryResult['v4_exam_features']>
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
         <td bgcolor="${V4_HEADER_BG}" style="background:${V4_HEADER_BG};border-left:4px solid ${V4_ACCENT};padding:18px 22px;font-family:'Noto Serif KR','맑은 고딕',serif;font-size:15px;line-height:1.85;color:#2A2A2A;word-break:keep-all;">
-          <p style="margin:0 0 10px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:15px;font-weight:700;color:${V4_ACCENT};word-break:keep-all;">${markdownToInlineBold(f.headline)}</p>
+          <p style="margin:0 0 10px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:15px;font-weight:700;color:#1A1A1A;word-break:keep-all;">${markdownToInlineBold(f.headline)}</p>
           <p style="margin:0;font-family:'Noto Serif KR','맑은 고딕',serif;font-size:15px;line-height:1.85;color:#2A2A2A;word-break:keep-all;">${markdownToInlineBold(f.body)}</p>
         </td>
       </tr>

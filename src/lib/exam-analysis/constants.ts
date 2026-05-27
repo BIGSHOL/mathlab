@@ -186,8 +186,9 @@ export const AGENT_PROMPT_VERSIONS: Record<AgentType, string> = {
  * V4 (갈수학학원 스타일) 별도 프롬프트 버전.
  * commentary와 독립 — 사용자가 V4 토글 클릭 시 lazy 생성.
  * v1.0.0 (2026-05-27): 5섹션 구조 (exam_overview / difficulty_rows / exam_features / main_analysis / final_strategy)
+ * v1.1.0 (2026-05-27): raw HTML 색상 금지 + 다음 시험 인식 (중간→기말 / 기말→다음 학년 / examCategory prompt 전달)
  */
-export const COMMENTARY_V4_PROMPT_VERSION = 'v1.0.0';
+export const COMMENTARY_V4_PROMPT_VERSION = 'v1.1.0';
 
 // ── 템플릿 유형 ──
 export const TEMPLATE_TYPES = ['detailed', 'summary', 'parent', 'print'] as const;

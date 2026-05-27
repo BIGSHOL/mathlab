@@ -1044,6 +1044,13 @@ body {
 /* V4 컨테이너 */
 .v4 { background: #fff; border: 1px solid #DDD; border-radius: 10px; padding: 36px 48px; max-width: 1080px; margin: 0 auto; }
 
+/* V4 AI raw HTML 색상 무력화 — 자동 형광펜/색상 강조 전면 제거 (사용자 요청 2026-05-27)
+   AI가 임의로 삽입한 색상(span style=color, mark, font color)을 모두 본문색으로 통일.
+   strong 자체는 font-weight만 유지 (위 룰에서 처리). */
+.v4 span[style*="color"],
+.v4 mark,
+.v4 font { color: inherit !important; background: transparent !important; }
+
 /* V4 헤더 */
 .v4-top { margin-bottom: 32px; padding-bottom: 16px; border-bottom: 2px solid #8B4513; }
 .v4-kicker {
@@ -1133,7 +1140,7 @@ body {
   word-break: keep-all;
   line-height: 1.6;
 }
-.v4-overview-value strong { color: #8B4513; font-weight: 700; }
+.v4-overview-value strong { font-weight: 700; }
 .v4-meta-sub { color: #888; font-size: 12px; font-weight: 400; }
 
 /* V4 문제별 난이도 테이블 (행 색상 코딩) */
@@ -1182,7 +1189,7 @@ body {
   margin: 0;
   word-break: keep-all;
 }
-.v4-grey-box p strong { color: #8B4513; font-weight: 700; }
+.v4-grey-box p strong { font-weight: 700; }
 /* AI raw HTML 색상 무력화 (v3와 동일 패턴) */
 .v4-grey-box p span[style*="color"],
 .v4-grey-box p mark,
@@ -1212,7 +1219,7 @@ body {
   margin: 0;
   word-break: keep-all;
 }
-.v4-conclusion-box p strong { color: #8B4513; font-weight: 700; }
+.v4-conclusion-box p strong { font-weight: 700; }
 .v4-conclusion-box p span[style*="color"],
 .v4-conclusion-box p mark,
 .v4-conclusion-box p font { color: inherit !important; background: transparent !important; }
@@ -1263,7 +1270,7 @@ body {
   margin: 0;
   word-break: keep-all;
 }
-.v4-features-body strong { color: #8B4513; font-weight: 700; }
+.v4-features-body strong { font-weight: 700; }
 
 /* V4 주요 공정 분석 — 영역별 블록 */
 .v4-main-analysis { display: flex; flex-direction: column; gap: 18px; }
@@ -1287,7 +1294,7 @@ body {
   margin: 0;
   word-break: keep-all;
 }
-.v4-analysis-body strong { color: #8B4513; font-weight: 700; }
+.v4-analysis-body strong { font-weight: 700; }
 
 /* V4 기말 대비 전략 테이블 */
 .v4-strategy-table {
@@ -1316,7 +1323,7 @@ body {
   line-height: 1.6;
 }
 .v4-strategy-table td:nth-child(2) { color: #555; }
-.v4-strategy-table td strong { color: #8B4513; font-weight: 700; }
+.v4-strategy-table td strong { font-weight: 700; }
 .v4-strategy-area { background: #F8F8F8; }
 
 /* V4 반응형 — 좁은 화면에서 차트 1열 */

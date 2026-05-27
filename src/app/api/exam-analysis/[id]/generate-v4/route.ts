@@ -77,7 +77,31 @@ export async function POST(request: NextRequest, { params }: Params) {
       questions,
     };
 
-    const v4Extension = await agent.generateV4Extension({ basicAnalysis });
+    // examScope에서 시험 종류 / 학기 / 연도 추출 (다음 시험 식별용)
+    const scopeRaw = examPaper.examScope as unknown;
+    let examYear: number | null = null;
+    let examSemester: number | null = null;
+    let examCategory: 'MIDTERM' | 'FINAL' | 'MOCK' | 'OTHER' | null = null;
+    if (scopeRaw && typeof scopeRaw === 'object' && !Array.isArray(scopeRaw)) {
+      const obj = scopeRaw as Record<string, unknown>;
+      if (typeof obj.examYear === 'number') examYear = obj.examYear;
+      if (typeof obj.examSemester === 'number') examSemester = obj.examSemester;
+      if (typeof obj.examCategory === 'string') {
+        const cat = obj.examCategory.toUpperCase();
+        if (cat === 'MIDTERM' || cat === 'FINAL' || cat === 'MOCK' || cat === 'OTHER') {
+          examCategory = cat;
+        }
+      }
+    }
+
+    const v4Extension = await agent.generateV4Extension({
+      basicAnalysis,
+      // 다음 시험 인식용 메타 (buildV4UserPrompt가 사용)
+      examCategory,
+      grade: examPaper.grade,
+      examYear,
+      examSemester,
+    } as unknown as Parameters<typeof agent.generateV4Extension>[0]);
 
     // 기존 commentary extension에 V4 필드 머지 저장
     const now = new Date();
