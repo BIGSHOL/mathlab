@@ -52,6 +52,12 @@ export default function RootLayout({
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
           crossOrigin="anonymous"
         />
+        {/* V3 거대 숫자용 Abril Fatface — next/font 다운로드 실패 시 폴백 */}
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Abril+Fatface&display=swap"
+          crossOrigin="anonymous"
+        />
       </head>
       <body className={`${notoSerifKR.variable} ${bodoniModa.variable} ${abrilFatface.variable} antialiased overflow-hidden`}>
         <SessionProvider>{children}</SessionProvider>

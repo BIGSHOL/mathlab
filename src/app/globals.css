@@ -870,13 +870,29 @@ body {
 .v3-feature .v3-feature-lhs h2 .v3-em { color: #FFA940; font-style: italic; }
 .v3-feature .v3-feature-lhs p { font-family: var(--font-serif-kr, 'Noto Serif KR', serif); font-size: 16px; line-height: 1.7; color: #DDD; margin: 0 0 14px; word-break: keep-all; }
 /* 검정 배경(.v3-feature) strong → 황색 굵게 (검정 텍스트 안 보이는 문제 방지 — Phase 0 사용자 피드백) */
-.v3-feature .v3-feature-lhs p strong { background: none !important; color: #FFA940 !important; font-weight: 700; padding: 0; }
-/* 강력한 색상 강제 — AI가 raw HTML(<span style="color:..."> 등)을 삽입해도 검정 배경에서 안 보이는 문제 차단 */
+.v3-feature .v3-feature-lhs p strong { background: none !important; color: #FFA940 !important; font-weight: 700 !important; padding: 0; font-size: inherit !important; }
+/* 강력한 색상/크기 강제 — AI가 raw HTML(<span style>, <small>, <em> 등) 삽입해도 부모 크기 유지 */
 .v3-feature .v3-feature-lhs p { color: #DDD !important; }
-.v3-feature .v3-feature-lhs p *:not(strong) { color: inherit !important; background: transparent !important; }
+.v3-feature .v3-feature-lhs p *:not(strong) {
+  color: inherit !important;
+  background: transparent !important;
+  font-size: inherit !important;
+  font-family: inherit !important;
+  font-style: inherit !important;
+}
 .v3-feature .v3-feature-lhs h2 { color: #fff !important; }
-.v3-feature .v3-feature-lhs h2 *:not(.v3-em) { color: inherit !important; background: transparent !important; }
-.v3-feature .v3-feature-lhs h2 .v3-em { color: #FFA940 !important; font-style: italic; background: none !important; }
+.v3-feature .v3-feature-lhs h2 *:not(.v3-em) {
+  color: inherit !important;
+  background: transparent !important;
+  font-size: inherit !important;
+  font-family: inherit !important;
+  font-style: inherit !important;
+  font-weight: inherit !important;
+}
+.v3-feature .v3-feature-lhs h2 .v3-em { color: #FFA940 !important; font-style: italic !important; background: none !important; font-size: inherit !important; }
+/* 거대 숫자 폰트 강제 — !important로 우선 적용 (CSS variable 미적용 시 폴백 보장) */
+.v3-feature .v3-feature-rhs .v3-big-num { font-family: 'Abril Fatface', var(--font-abril), 'Bodoni Moda', serif !important; }
+.v3-kpi .v3-kpi-v, .v3-format-card .v3-format-count, .v3-section-num, .v3-data-v-num { font-family: 'Abril Fatface', var(--font-abril), 'Bodoni Moda', serif !important; }
 /* 본문 섹션 안에서도 임의 보라색/검정 인라인 색상 무효 (V3는 자체 색상 토큰만 사용) */
 .v3-section p span[style*="color"],
 .v3-section p mark,
