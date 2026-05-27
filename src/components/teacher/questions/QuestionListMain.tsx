@@ -17,6 +17,7 @@ import {
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Pagination } from '@/components/ui/Pagination';
+import { toast } from '@/components/ui/Toast';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { DiagramRenderer } from '@/components/math/DiagramRenderer';
 import { renderDiagram } from '@/lib/utils/svg-diagrams';
@@ -100,7 +101,24 @@ export function QuestionListMain({
                 </Button>
               </Link>
               {isOwner && (
-                <Button variant="secondary" size="sm">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    if (questions.length === 0) {
+                      toast.warning('인쇄할 문항이 없습니다');
+                      return;
+                    }
+                    try {
+                      // 현재 페이지의 문항을 sessionStorage에 직렬화 (URL 쿼리는 100+ id 시 너무 길어짐)
+                      sessionStorage.setItem('questionsPrintData', JSON.stringify(questions));
+                      window.open('/questions/print', '_blank');
+                    } catch (e) {
+                      toast.error('인쇄 데이터 준비 실패');
+                      console.error('[questions/print] sessionStorage 저장 실패:', e);
+                    }
+                  }}
+                >
                   <Download className="w-4 h-4 mr-2" />
                   PDF 내보내기
                 </Button>

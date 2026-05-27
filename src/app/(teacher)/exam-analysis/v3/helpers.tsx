@@ -1,7 +1,7 @@
 /**
  * V3 리디자인 공통 헬퍼
  *
- * - markdownToHighlighted: **bold** → <strong> + 노란 형광펜
+ * - markdownToHighlighted: **bold** → <strong> (v1.2.0: 노란 형광펜 제거, AI bold만 신뢰)
  * - renderTitleWithEmphasis: 'quoted' → 황색 italic (검정 배경의 피처 박스 헤드라인용)
  * - joinKoreanCounters: 한국어 수사+의존명사를 nbsp로 묶어 줄바꿈 개선
  * - normDiff: 4단계 → 5단계 정규화 (concept→1, pattern→2, reasoning→4, creative→5)

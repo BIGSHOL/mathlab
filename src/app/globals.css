@@ -926,9 +926,11 @@ body {
   font-family: var(--font-serif-kr, 'Noto Serif KR', serif); font-size: 17px; line-height: 1.85;
   color: #2A2A2A; margin: 0 0 14px; word-break: keep-all;
 }
+/* v1.2.0 (2026-05-27): 자동 형광펜(linear-gradient) + padding 제거 — AI가 이미 **bold**로 강조를 넣었으므로
+   클라이언트 추가 형광펜은 이중 서식으로 글씨 크기 영향 발생.
+   <strong> 태그는 유지 (font-weight 700) → 굵게만 표시. */
 .v3-section p strong {
-  background: linear-gradient(180deg, transparent 65%, #FFE066 65%);
-  padding: 0 3px; color: #121212; font-weight: 700;
+  color: #121212; font-weight: 700;
 }
 
 /* V3 데이터 박스 */

@@ -39,11 +39,11 @@ export function escapeHtml(s: string): string {
     .replace(/'/g, '&#39;');
 }
 
-/** **bold** → <strong> + 노란 형광펜 (앱 화면용, inline-block) */
+/** **bold** → <strong> (v1.2.0: 자동 형광펜 제거 — AI bold만 신뢰. 굵게만 표시) */
 function markdownToHighlighted(text: string): string {
   return escapeHtml(text).replace(
     /\*\*(.+?)\*\*/g,
-    '<strong style="background:linear-gradient(180deg,transparent 65%,#FFE066 65%);padding:0 3px;color:#121212;font-weight:700;">$1</strong>',
+    '<strong style="color:#121212;font-weight:700;">$1</strong>',
   );
 }
 

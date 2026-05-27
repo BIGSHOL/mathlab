@@ -13,6 +13,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { toast } from '@/components/ui/Toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { ListTodo, Activity } from 'lucide-react';
@@ -423,7 +424,40 @@ export default function QueuePage() {
             <span className="meta">최근 3일 · 활동 {MOCK_TIMELINE.flatMap((d) => d.items).length}건</span>
             <div className="sp" />
             <button className="kt-btn">📤 학부모에게 공유</button>
-            <button className="kt-btn">📥 활동 내보내기</button>
+            <button
+              className="kt-btn"
+              onClick={() => {
+                const headers = ['날짜', '시간', '활동유형', '설명'];
+                const rows: string[][] = [];
+                for (const day of MOCK_TIMELINE) {
+                  for (const it of day.items) {
+                    // desc에서 HTML 태그 제거
+                    const descText = it.desc.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+                    rows.push([day.date, it.time, it.who, descText]);
+                  }
+                }
+                if (rows.length === 0) {
+                  toast.warning('내보낼 활동이 없습니다');
+                  return;
+                }
+                const csv = [headers, ...rows]
+                  .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))
+                  .join('\n');
+                // UTF-8 BOM(﻿) — Excel 한글 깨짐 방지
+                const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `activity-${new Date().toISOString().slice(0, 10)}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+                toast.success(`활동 ${rows.length}건 CSV 다운로드 완료`);
+              }}
+            >
+              📥 활동 내보내기
+            </button>
           </div>
           <div className="kt-activity-wrap">
             <div className="kt-act-main">

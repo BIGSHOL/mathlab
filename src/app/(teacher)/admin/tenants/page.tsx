@@ -288,7 +288,36 @@ export default function TenantsPage() {
                 type="button"
                 className="btn"
                 onClick={() => {
-                  /* TODO: CSV 내보내기 */
+                  if (tenants.length === 0) {
+                    toast.warning('내보낼 지점이 없습니다');
+                    return;
+                  }
+                  const headers = [
+                    'ID', '지점명', '슬러그', '활성', '학생수', '강사수',
+                    '반수', '활동률(%)', '라이선스수', '총좌석', '사용좌석',
+                    '만료임박', '생성일',
+                  ];
+                  const rows = tenants.map((t) => [
+                    t.id, t.name, t.slug, t.isActive ? 'Y' : 'N',
+                    t.studentCount, t.teacherCount, t.classroomCount,
+                    t.activityRate, t.licenseCount, t.totalSeats,
+                    t.usedSeats, t.expiringLicenses,
+                    new Date(t.createdAt).toLocaleDateString('ko-KR'),
+                  ]);
+                  const csv = [headers, ...rows]
+                    .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))
+                    .join('\n');
+                  // UTF-8 BOM(﻿) — Excel 한글 깨짐 방지
+                  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `tenants-${new Date().toISOString().slice(0, 10)}.csv`;
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  URL.revokeObjectURL(url);
+                  toast.success(`${tenants.length}개 지점 CSV 다운로드 완료`);
                 }}
               >
                 📥 내보내기 (CSV)
