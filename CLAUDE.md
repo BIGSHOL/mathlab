@@ -905,16 +905,53 @@ V3 동일 fix를 **3곳에 모두 적용**:
 
 `AGENT_PROMPT_VERSIONS.commentary` bump으로 자동 stale 감지 + 재호출은 **현재 구현 안 됨**. orchestrator가 promptVersion 비교 로직 미보유. 사용자가 안내 배너의 **[V3로 재분석]** 명시 클릭 → forceRegenerate=true 호출 → V3 데이터 생성.
 
-#### 네이버 호환 패턴 (필수)
+#### 네이버 호환 패턴 — 절대 금지/필수 (6시간 디버깅으로 얻은 교훈)
 
-1. `<table>` + 인라인 `style` **만** (flex/grid/li/h2/외부 CSS 금지)
-2. 폭 **720px 고정** (네이버 본문 폭)
-3. **`table-layout:fixed;width:100%`** — cell width% 보장 (auto는 contents 우선)
-4. **nested table 1-level 한도** (2-level 이상은 한 글자씩 세로 분리)
-5. **div+background → td bgcolor + width/height** (네이버는 div 색상 잃음)
-6. **inline color/background → CSS override 강제** (`*:not(strong) { color: inherit !important; }`)
-7. **word-break:keep-all** (한글) + **white-space:nowrap** (영문+숫자 혼합)
-8. cellpadding="0" cellspacing="0" 명시 + cell 내 `&nbsp;` 채움
+**⚠️ 네이버 SmartEditor는 외부 HTML을 자체 schema로 변환하면서 다음을 제거한다 (필터링 X, 변환 시 손실):**
+- `<div>` 의 background, width
+- `inline-block <span>` 의 background, width (이게 가장 큰 함정 — 브라우저 미리보기에선 잘 보임)
+- 외부 CSS 클래스
+- `flex`, `grid`, `li`, `h2~h6` 시맨틱
+
+##### 🚫 절대 사용 금지 (Naver Killers)
+- ❌ `<span style="display:inline-block;width:Npx;background:..."></span>` — **background/width 모두 사라짐**. 브라우저는 OK, 네이버는 빈 span만 남김.
+- ❌ `<div style="background:#color;...">` — div 자체는 살아남지만 background 제거됨
+- ❌ flex/grid 레이아웃 (네이버가 block stack으로 변환)
+- ❌ nested table 2-level 이상 (한국어가 한 글자씩 세로로 분리됨)
+- ❌ `<li>`, `<h2~h6>` 시맨틱 태그 (자체 schema 변환 손실)
+- ❌ `<style>` 블록, 외부 CSS
+
+##### ✅ 살아남는 패턴 (Naver-safe)
+- ✅ **카드 패턴 (가장 안정적)** — `<td width="N%" style="background:#fff;border-top:3px solid #color;padding:14px;">` 안에 **콘텐츠 풍부** (라벨 + 큰 숫자 + 보조 텍스트). 콘텐츠가 가득 차면 width%가 무시되지 않음.
+  - 검증: 형식 분포 카드(객관식/단답형/서술형), 5단계 난이도 카드
+- ✅ **HTML4 deprecated `bgcolor` 속성** + **width/height 속성** + **`&nbsp;` 콘텐츠** + `font-size:1px;line-height:1px`
+  ```html
+  <td width="50%" height="6" bgcolor="#BF1722" style="background:#BF1722;font-size:1px;line-height:1px;">&nbsp;</td>
+  ```
+  - 막대 1개에는 작동, **grid (다수 작은 cell)는 cell width%가 무시되어 줄바꿈 위험**
+- ✅ `<table>` + 인라인 `style`만 사용
+- ✅ 폭 **720px 고정**, `cellpadding="0" cellspacing="0"`
+- ✅ `word-break:keep-all` (한글) + `white-space:nowrap` (영문+숫자 혼합)
+- ✅ `*:not(strong) { color: inherit !important; }` CSS override (AI raw HTML 색상 무력화)
+
+##### 🎯 시각화 결정 트리 — "이 시각화를 어떤 패턴으로 만들 것인가?"
+
+| 데이터 종류 | 추천 패턴 | 이유 |
+|---|---|---|
+| 카테고리별 비교 (3~5개) | **카드 가로 배치** (각 width 19~33% + 풍부한 콘텐츠) | 검증된 최강 패턴. width% 100% 보장. |
+| 단일 막대 (1개 데이터의 진행률) | td bgcolor + width="N%" + &nbsp; | 막대 1개는 width% 작동 |
+| 다수 grid (5~7+ 작은 cell) | **PNG 이미지로 생성** (chart-image-generator) | td grid는 cell width% 무시 위험. 이미지가 안전 |
+| 표 (라벨+값 정렬) | `<table>` + `<tr>` + `<td>` 표준 | 가장 호환성 좋음 |
+| 라벨/값 정렬 (한 줄) | `<td>` 좌우 align + `<td width="120" align="right">` | float:right는 작동 안 함 |
+
+##### 🚨 작동하던 패턴을 임의로 바꾸지 말 것 (이번 세션의 가장 큰 손실)
+- `aea5274e` 커밋에서 td bgcolor 패턴을 "더 모던하다"는 이유로 inline-block span으로 전면 전환 → 네이버에서 모든 시각화 사라짐 → 3 commit으로 복원
+- **교훈**: 네이버 호환 패턴은 "보기에 구식이어도 작동하는" 패턴을 보존. HTML4 deprecated 속성(`bgcolor`, `width`)이 SmartEditor 호환성에는 정답일 수 있음. 모던하다고 더 나은 게 아님.
+
+##### 검증 필수 — 시각화가 작동한다는 것을 어떻게 확인?
+1. dev 서버에 디버그 API (`/api/xdebug/v3-naver/[id]`) 만들어 **720px 컨테이너**로 시각 확인
+2. **실제 네이버 글쓰기에 붙여넣기** — 브라우저 미리보기와 결과가 다를 수 있음 (가장 흔한 실수)
+3. 브라우저 미리보기는 inline-block span도 잘 보이게 함 → **네이버 실측이 유일한 진실**
 
 #### 향후 남은 작업
 
@@ -934,6 +971,10 @@ V3 동일 fix를 **3곳에 모두 적용**:
 2. **사용자 분석본 vs 시안 데이터**: 시안은 정화중1, 사용자 보고는 다른 학교일 수 있음. AI value 형식(`"27점"` vs `"23점 / 7문항"`) 차이로 동작 달라짐
 3. **Vercel 배포 시간차**: 푸시 직후(~2-3분) 결과는 옛 코드 — 사용자가 본 화면이 새 코드 결과라고 단정하지 말 것
 4. **AI 응답 형식**: AI가 매번 일관된 형식으로 응답하지 않음. 클라이언트 측 정규화 + 시스템 프롬프트 강제 둘 다 필요
+5. **브라우저 미리보기 ≠ 네이버 실측**: dev 서버나 디버그 페이지에서는 inline-block span, div+background가 잘 보이지만 네이버에 붙여넣으면 다 사라짐. 네이버 실측이 유일한 진실
+6. **td width="N%" + `&nbsp;` 만 = 작동 안 함**: cell width%는 콘텐츠가 풍부할 때만 보존. nbsp만 있으면 cell이 줄어들고 줄바꿈됨. 막대 1개는 OK, grid (5+ cell)는 위험
+7. **헤드라인은 데이터 직설 X**: AI가 "기본 문항 0개, 표준부터 시작하는 응용 중심 시험" 같이 부정어로 시작하고 평이하게 마무리하는 경향. NYT Science 톤 "변별이 시작되는 지점" 같이 시사형/명사 종결로 강제하는 프롬프트 가이드 필요 (commentary v1.2.0)
+8. **prompt v1.0.0 vs commentary v1.2.0 혼동**: 분석본 페이지 헤더의 "prompt v1.0.0"은 modelVersion(시험지 분석), commentary는 ExamAnalysisExtension.result에 별도 저장. promptVersion 표시가 다르다고 V3 데이터 없는 게 아님
 
 ### 수기채점 시스템
 

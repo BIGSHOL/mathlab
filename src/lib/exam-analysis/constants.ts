@@ -173,7 +173,7 @@ export const AGENT_PROMPT_VERSIONS: Record<AgentType, string> = {
   'weakness': 'v1.0.0',
   'learning': 'v1.0.0',
   'prediction': 'v1.0.0',
-  'commentary': 'v1.1.0',
+  'commentary': 'v1.2.0',
   'topic-strategy': 'v1.0.0',
   'exam-prep': 'v1.0.0',
   'score-level-plan': 'v1.0.0',
