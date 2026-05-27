@@ -20,6 +20,33 @@ async function loadFileAsBase64(fileUrl: string): Promise<string> {
   return buffer.toString('base64');
 }
 
+/**
+ * 모듈 레벨 base64 이미지 캐시 — 같은 examPaperId의 이미지를 4개 모델 호출 시 1번만 로드.
+ * Key: examPaperId+fileUrls, Value: base64 배열 + 캐시 만료 시각 (10분).
+ * 메모리 절약 + 응답 속도 개선 (~5MB 이미지 × 3회 추가 로드 절약).
+ */
+const imageCache = new Map<string, { data: string[]; expiresAt: number }>();
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10분
+
+async function loadImagesWithCache(examPaperId: string, fileUrls: string[]): Promise<{ data: string[]; cached: boolean }> {
+  const key = `${examPaperId}::${fileUrls.join(',')}`;
+  const cached = imageCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) {
+    return { data: cached.data, cached: true };
+  }
+  // 만료된 다른 항목 정리 (메모리 누수 방지)
+  for (const [k, v] of imageCache.entries()) {
+    if (v.expiresAt <= Date.now()) imageCache.delete(k);
+  }
+  // 새로 로드
+  const data: string[] = [];
+  for (const fileUrl of fileUrls) {
+    data.push(await loadFileAsBase64(fileUrl));
+  }
+  imageCache.set(key, { data, expiresAt: Date.now() + CACHE_TTL_MS });
+  return { data, cached: false };
+}
+
 type Params = { params: Promise<{ id: string }> };
 
 const ALLOWED_MODELS = new Set([
@@ -59,13 +86,13 @@ export async function POST(request: NextRequest, { params }: Params) {
   try {
     const startMs = Date.now();
 
-    // 파일 로드
+    // 파일 로드 (캐시 활용 — 같은 examPaperId 1회만 디스크 IO + base64 변환)
     const fileUrls = examPaper.fileUrls.split(',');
-    const imageDataList: string[] = [];
-    for (const fileUrl of fileUrls) {
-      imageDataList.push(await loadFileAsBase64(fileUrl));
-    }
+    const { data: imageDataList, cached: imagesCached } = await loadImagesWithCache(id, fileUrls);
     const loadMs = Date.now() - startMs;
+    if (imagesCached) {
+      console.log(`[analyze-compare] image cache hit (${id}) — ${loadMs}ms`);
+    }
 
     // examPaper.examScope 추출
     const scopeRaw = examPaper.examScope as unknown;

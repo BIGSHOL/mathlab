@@ -196,17 +196,29 @@ export default function ExamAnalysisComparePage() {
       return;
     }
 
-    // 선택된 모델만 loading 상태로
+    // 모든 선택 모델을 idle → loading으로 초기화 (대기 상태 표시)
     setResults((prev) => {
       const next = { ...prev };
       for (const modelId of selectedModels) {
-        next[modelId] = { status: 'loading' };
+        next[modelId] = { status: 'idle' };
       }
       return next;
     });
 
-    // 병렬 호출 (Promise.all로 동시에 시작, 각자 완료 시 즉시 결과 표시)
-    const promises = Array.from(selectedModels).map(async (modelId) => {
+    // ⚠️ 순차 호출 — Promise.all로 4개 동시 호출 시 dev 서버 OOM crash 발생.
+    // 모델별 base64 이미지 + Gemini API 응답이 메모리 누적 → process killed.
+    // 가벼운 모델부터 시작하여 빠른 피드백 + 무거운 Pro Preview는 마지막.
+    const orderedModels = COMPARE_MODELS
+      .filter((m) => selectedModels.has(m.id))
+      .map((m) => m.id);
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const modelId of orderedModels) {
+      // 현재 모델만 loading으로 전환
+      setResults((prev) => ({ ...prev, [modelId]: { status: 'loading' } }));
+
       try {
         const res = await fetch(
           `/api/exam-analysis/${selectedPaperId}/analyze-compare?model=${encodeURIComponent(modelId)}`,
@@ -221,17 +233,24 @@ export default function ExamAnalysisComparePage() {
           ...prev,
           [modelId]: { status: 'success', result: json.data as CompareResult },
         }));
+        successCount++;
       } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
         setResults((prev) => ({
           ...prev,
           [modelId]: { status: 'error', message },
         }));
+        errorCount++;
       }
-    });
+    }
 
-    await Promise.all(promises);
-    toast.success('모든 모델 분석 완료');
+    if (errorCount === 0) {
+      toast.success(`${successCount}개 모델 분석 완료`);
+    } else if (successCount === 0) {
+      toast.error(`모든 모델 분석 실패 (${errorCount}개)`);
+    } else {
+      toast.warning(`${successCount}개 성공 / ${errorCount}개 실패`);
+    }
   }, [selectedPaperId, selectedModels]);
 
   const anyLoading = Object.values(results).some((r) => r.status === 'loading');

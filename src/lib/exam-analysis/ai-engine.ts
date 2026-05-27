@@ -98,7 +98,7 @@ export function parseJsonResponse<T = unknown>(text: string): T {
     fixed = fixed.replace(/:\s*undefined\b/g, ': null');
     try {
       return JSON.parse(fixed) as T;
-    } catch (e2) {
+    } catch {
       // ── 2단계: invalid escape character 자동 정정 ──
       // Gemini가 ai_comment 등에 LaTeX(\dfrac, \frac, \(, \) 등)를 JSON 이스케이프 없이 출력하면
       // "Bad escaped character in JSON" 발생. JSON 표준 valid escape는
