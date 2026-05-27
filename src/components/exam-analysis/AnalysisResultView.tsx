@@ -6,7 +6,7 @@ import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { ChevronRight, AlertTriangle, Pencil, Check, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { toast } from '@/components/ui/Toast';
-import { getTopicOptionsByGrade } from './utils/topic-options';
+import { getTopicOptionsByGrade, getTopicOptionsGrouped } from './utils/topic-options';
 
 // 차트 컴포넌트 (recharts는 SSR 미지원이므로 lazy load)
 const TypeRadarChart = dynamic(() => import('./charts/TypeRadarChart').then(m => ({ default: m.TypeRadarChart })), { ssr: false });
@@ -197,11 +197,14 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
             <p className="font-semibold mb-1">신뢰도란?</p>
             <p className="mb-2">AI가 각 문항의 난이도, 유형, 단원 등을 얼마나 확신하는지 나타내는 수치입니다. 문항별 신뢰도의 평균값으로 계산됩니다.</p>
             <p className="font-semibold mb-1">신뢰도가 낮아지는 경우:</p>
-            <ul className="list-disc list-inside space-y-0.5">
+            <ul className="list-disc list-inside space-y-0.5 mb-2">
               <li>문항 텍스트가 불명확하거나 스캔 품질이 낮음</li>
               <li>비정형적인 문제 유형이나 출제 형식</li>
               <li>교육과정에 없는 내용이 포함됨</li>
+              <li>객관식 검산 결과가 선택지에 없음 (출제 오류 또는 OCR 오인식 의심)</li>
+              <li>배점이 추정값인 경우 (시험지에 점수 표기 누락)</li>
             </ul>
+            <p className="text-xs text-slate-500 leading-relaxed">⚠️ AI는 객관식 문항의 정답을 직접 계산해 선택지와 대조합니다. 불일치 시 문제 오류 또는 OCR 오인식을 의심할 수 있으니, 해당 문항은 수동 확인을 권장합니다.</p>
           </>
         } />
         <span className={`text-sm font-bold ${avgConfidence >= 90 ? 'text-emerald-600' : avgConfidence >= 70 ? 'text-yellow-600' : 'text-red-500'}`}>
@@ -545,6 +548,7 @@ function TopicCell({
   const currentTopic = (topic || '').trim();
   const isUnknown = !currentTopic || /UNKNOWN|미정|unknown/i.test(currentTopic);
   const options = React.useMemo(() => getTopicOptionsByGrade(grade), [grade]);
+  const groupedOptions = React.useMemo(() => getTopicOptionsGrouped(grade), [grade]);
   const canEdit = !!examPaperId;
 
   const handleOpen = () => {
@@ -598,9 +602,17 @@ function TopicCell({
             autoFocus
           >
             <option value="">선택</option>
-            {options.map((opt) => (
-              <option key={opt} value={opt}>{opt}</option>
-            ))}
+            {groupedOptions.length > 0
+              ? groupedOptions.map((g) => (
+                  <optgroup key={g.label} label={g.label}>
+                    {g.options.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </optgroup>
+                ))
+              : options.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
           </select>
         ) : (
           <input
