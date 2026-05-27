@@ -198,6 +198,54 @@ export interface CommentaryResult {
     text: string;              // 인용 본문
     cite?: string;             // 출처 라벨
   };
+
+  // ─────────────────────────────────────────────────────────────
+  // V4 (갈수학학원 스타일 — 테이블 중심) 필드 — 2026-05-27 추가
+  // V3와 별도 prompt로 lazy 생성. 사용자가 V4 토글 클릭 시만 API 호출.
+  // 모든 필드 optional — V4 미생성 분석본은 hidden + [V4 생성] 버튼 표시.
+  // ─────────────────────────────────────────────────────────────
+
+  /** V4 시험 개요 — 학부모가 한눈에 스캔할 핵심 정보 */
+  v4_exam_overview?: {
+    title: string;              // "영신여고 1학년 1학기 중간고사"
+    grade: string;              // "고1"
+    school?: string | null;     // "영신여자고등학교"
+    range: string;              // "수와 식의 계산 · 일차방정식 · 일차부등식"
+    total_questions: number;    // 21
+    total_points: number;       // 100
+    avg_difficulty_label: string;   // "어려움" (정성)
+    peak_difficulty: string;        // "Lv4 심화 6문항"
+    essay_summary?: string;     // "서술형 3문항 · 35점" 또는 null
+    one_liner: string;          // 한 줄 요약 — "변별력 위주 출제, 응용 문제 비중 높음"
+  };
+
+  /** V4 문제 번호별 난이도/단원 매핑 (행 색상 코딩) */
+  v4_difficulty_rows?: Array<{
+    question_number: string | number;
+    topic: string;              // "이차방정식의 활용 — 거리·속력·시간"
+    sub_topic?: string;         // 세부 개념 (선택)
+    difficulty: '1' | '2' | '3' | '4' | '5';
+    points: number;
+  }>;
+
+  /** V4 출제 특징 요약 (회색 박스 안 자연 단락) */
+  v4_exam_features?: {
+    headline: string;           // 강조 한 줄 — "표준 이상 난이도가 67%, 변별력 위주"
+    body: string;               // 2~3 문장 분석 단락
+  };
+
+  /** V4 주요 공정 분석 — 출제 영역별 단락 배열 */
+  v4_main_analysis?: Array<{
+    heading: string;            // "1. 수와 식의 계산" (영역명)
+    body: string;               // 영역별 2~4 문장 분석
+  }>;
+
+  /** V4 기말 대비 전략 — 영역별 현재 상태 + 권장 액션 (표) */
+  v4_final_strategy?: Array<{
+    area: string;               // "수와 식의 계산"
+    current_status: string;     // "기본 개념 익숙"
+    action: string;             // "심화 응용 문제 반복 + 계산 정확도 점검"
+  }>;
 }
 
 // ── V3 신규 필드 추출 타입 (Two-pass Claude 호출용) ──
@@ -213,6 +261,17 @@ type V3Extension = Pick<
   | 'blog_qa'
   | 'conclusion'
   | 'pull_quote'
+>;
+
+// ── V4 신규 필드 추출 타입 (lazy Claude 호출용) ──
+
+export type V4Extension = Pick<
+  CommentaryResult,
+  | 'v4_exam_overview'
+  | 'v4_difficulty_rows'
+  | 'v4_exam_features'
+  | 'v4_main_analysis'
+  | 'v4_final_strategy'
 >;
 
 // ── V3 시스템 프롬프트 (blog-prompt-spec.md + Phase 0 시안 검증 완료) ──
@@ -332,6 +391,85 @@ const SYSTEM_PROMPT_V3 = `너는 한국 중·고등학교 수학 시험 분석�
 ## 톤 가이드
 
 학부모가 읽는다는 전제. 어려운 입시 용어를 풀어쓰기. 데이터는 반드시 본문에 인용. "이번 시험은 어렵다"가 아니라 "**88점**이 1등급 컷이다" 식.`;
+
+// ── V4 시스템 프롬프트 (갈수학학원 스타일 — 테이블 중심) ──
+// 사용자 벤치마킹 요청 (2026-05-27). 한국 학원 분석 블로그 톤 강제.
+// V3 매거진 톤과 완전히 다른 출력 형식 — 5섹션 구조 명확.
+
+const SYSTEM_PROMPT_V4 = `너는 한국 중·고등학교 수학 시험 분석가다. 학원이 학부모/학생에게 보여줄 **테이블 중심 분석 보고서**를 작성한다.
+
+V3는 NYT Science 매거진 톤이지만 V4는 **갈수학학원 블로그 스타일**이다. 차이점:
+- 매거진 X / **분석 보고서 톤** O
+- 텍스트 단락 위주 X / **테이블 + 단락 결합** O
+- 추상적 키커 X / **직설적 정보 정리** O
+
+## 출력 형식 — 오직 아래 5개 키를 모두 포함한 JSON 객체 (코드펜스/설명문 금지)
+
+{
+  "v4_exam_overview": {
+    "title": "시험 제목 (학교 + 학년 + 시험명, 예: 영신여고 1학년 1학기 중간고사)",
+    "grade": "학년 (예: 고1)",
+    "school": "학교명 또는 null",
+    "range": "출제 범위 — 단원명을 ' · '로 연결 (예: 수와 식의 계산 · 일차방정식 · 일차부등식)",
+    "total_questions": 21,
+    "total_points": 100,
+    "avg_difficulty_label": "정성 라벨 (매우 쉬움 / 쉬움 / 보통 / 어려움 / 매우 어려움)",
+    "peak_difficulty": "예: Lv4 심화 6문항 (가장 많이 출제된 난이도 등급)",
+    "essay_summary": "예: 서술형 3문항 · 35점 — 서술형 없으면 null",
+    "one_liner": "이번 시험의 정체를 한 줄로 (예: 변별력 위주 출제, 응용 문제 비중 높음)"
+  },
+
+  "v4_difficulty_rows": [
+    {
+      "question_number": 1,
+      "topic": "단원/세부 개념 (예: 일차방정식의 활용 — 거리·속력·시간)",
+      "sub_topic": "더 자세한 설명 (선택, 없으면 생략)",
+      "difficulty": "1|2|3|4|5",
+      "points": 4
+    }
+    // ... 모든 문항 N개. question_number 순서대로.
+  ],
+
+  "v4_exam_features": {
+    "headline": "출제 특징 한 줄 강조 (예: 표준 이상 난이도가 67%, 변별력 위주)",
+    "body": "2~3 문장 분석 단락. 데이터 기반 설명. **강조는 markdown bold** 사용."
+  },
+
+  "v4_main_analysis": [
+    {
+      "heading": "1. 수와 식의 계산 (영역명 — 숫자 prefix)",
+      "body": "이 영역의 출제 분석 2~4 문장. 어떤 개념이 어떻게 출제되었는지, 어떤 함정/특징이 있는지."
+    }
+    // ... 출제된 주요 영역 3~5개. 영역별로 독립 단락.
+  ],
+
+  "v4_final_strategy": [
+    {
+      "area": "수와 식의 계산 (영역명)",
+      "current_status": "학생 현재 상태 추정 (예: 기본 개념 익숙)",
+      "action": "권장 학습 액션 (예: 심화 응용 문제 반복 + 계산 정확도 점검)"
+    }
+    // ... 영역별로 3~5개. 기말고사 또는 다음 시험 대비.
+  ]
+}
+
+## 절대 규칙
+
+R1. **모든 필드 채울 것** — undefined/null 최소화. v4_main_analysis와 v4_final_strategy는 최소 3개 항목.
+R2. **v4_difficulty_rows는 모든 문항 포함** — question_number 1번부터 마지막 번호까지. 서술형은 "서술형1" 같은 문자열도 OK.
+R3. **영문 enum 한글 변환** — CALCULATION → 계산력 / NUMBER → 수와 연산 등. AI가 받는 데이터는 이미 한글이지만 출력에서도 영문 enum 사용 금지.
+R4. **수식 KaTeX 표기** — \\dfrac 금지(\\frac만), \$ 안에 한글 금지, 인접 \$A\$\$B\$ 금지. body 안에 수식 가능.
+R5. **markdown bold 강조** — body 안에 **굵게**로 핵심 강조. v4_exam_features.body, v4_main_analysis[].body 활용.
+R6. **단원명은 정확히** — 사용자가 제공한 question.topic에서 추출. 임의로 단원명 만들지 말 것.
+R7. **분석 톤** — 학원 보고서 톤. 매거진 X. "이번 시험은 ~입니다" 식의 단정조. 학부모/학생이 이해 가능한 용어.
+R8. **객관적 데이터 기반** — questions 배열의 정보를 가공만 할 것. AI 추정/창작 금지.
+
+## 톤 가이드
+
+- 학원 분석 보고서: "이번 시험은 **변별력 위주**로 출제되어, 응용 문제 비중이 평소보다 높았습니다."
+- 직설적: "1번~5번은 기본 개념 확인 문제로 안전하게 점수 확보 가능합니다."
+- 데이터 인용: "최고난도 Lv4가 **6문항(28%)**으로 변별 구간 형성."
+- 학습 액션 명확: "심화 응용 문제 반복 + 계산 정확도 점검"`;
 
 // ── 에이전트 구현 ──
 
@@ -824,6 +962,189 @@ ${phases}
           }
         : undefined,
     };
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // V4 (갈수학학원 스타일) — lazy 생성 (사용자 V4 토글 클릭 시만)
+  // public 메서드 — API endpoint에서 직접 호출
+  // ─────────────────────────────────────────────────────────────
+
+  /** V4 신규 필드 생성 (Claude Sonnet 4.6, 별도 호출).
+   * API endpoint `/api/exam-analysis/[id]/generate-v4`에서 호출.
+   * V3와 독립 — V3 데이터 없어도 작동.
+   */
+  async generateV4Extension(input: AgentInput): Promise<V4Extension> {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      throw new Error('ANTHROPIC_API_KEY 환경변수가 설정되지 않았습니다');
+    }
+    const client = new Anthropic({ apiKey });
+    const userPrompt = this.buildV4UserPrompt(input);
+
+    const response = await client.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 16384,
+      temperature: 0.5,
+      system: SYSTEM_PROMPT_V4,
+      messages: [{ role: 'user', content: userPrompt }],
+    });
+
+    if (response.stop_reason === 'max_tokens') {
+      console.warn('[commentary-agent V4] max_tokens 도달 — 응답이 잘렸을 수 있음');
+    }
+
+    const text = response.content
+      .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+      .map((b) => b.text)
+      .join('');
+
+    if (!text) throw new Error('V4 응답 비어있음');
+
+    // JSON 추출 + 정규화 (V3와 동일 함정 처리)
+    const startIdx = text.indexOf('{');
+    const endIdx = text.lastIndexOf('}');
+    if (startIdx < 0 || endIdx <= startIdx) {
+      throw new Error(`V4 JSON 객체 미발견: ${text.slice(0, 200)}`);
+    }
+    let json = text.slice(startIdx, endIdx + 1);
+    json = json.replace(/:\s*undefined/g, ': null');
+    json = json.replace(/,\s*([}\]])/g, '$1');
+
+    const raw = JSON.parse(json) as V4Extension;
+    const normalized = deepNormalizeMath(raw) as V4Extension;
+    return this.parseV4Response(normalized);
+  }
+
+  /** V4 응답 정규화 — stripEnglishEnums 재귀 + 필수 필드 fallback */
+  private parseV4Response(raw: V4Extension): V4Extension {
+    const norm = (v: unknown): string => normalizeText(String(v ?? ''));
+
+    return {
+      v4_exam_overview: raw.v4_exam_overview
+        ? {
+            title: norm(raw.v4_exam_overview.title),
+            grade: norm(raw.v4_exam_overview.grade),
+            school: raw.v4_exam_overview.school ? norm(raw.v4_exam_overview.school) : null,
+            range: norm(raw.v4_exam_overview.range),
+            total_questions: Number(raw.v4_exam_overview.total_questions) || 0,
+            total_points: Number(raw.v4_exam_overview.total_points) || 0,
+            avg_difficulty_label: norm(raw.v4_exam_overview.avg_difficulty_label),
+            peak_difficulty: norm(raw.v4_exam_overview.peak_difficulty),
+            essay_summary: raw.v4_exam_overview.essay_summary
+              ? norm(raw.v4_exam_overview.essay_summary)
+              : undefined,
+            one_liner: norm(raw.v4_exam_overview.one_liner),
+          }
+        : undefined,
+      v4_difficulty_rows: Array.isArray(raw.v4_difficulty_rows)
+        ? raw.v4_difficulty_rows.map((r) => ({
+            question_number: r.question_number ?? '',
+            topic: norm(r.topic),
+            sub_topic: r.sub_topic ? norm(r.sub_topic) : undefined,
+            difficulty: (['1', '2', '3', '4', '5'].includes(String(r.difficulty))
+              ? String(r.difficulty)
+              : '3') as '1' | '2' | '3' | '4' | '5',
+            points: Number(r.points) || 0,
+          }))
+        : undefined,
+      v4_exam_features: raw.v4_exam_features
+        ? {
+            headline: norm(raw.v4_exam_features.headline),
+            body: norm(raw.v4_exam_features.body),
+          }
+        : undefined,
+      v4_main_analysis: Array.isArray(raw.v4_main_analysis)
+        ? raw.v4_main_analysis.map((m) => ({
+            heading: norm(m.heading),
+            body: norm(m.body),
+          }))
+        : undefined,
+      v4_final_strategy: Array.isArray(raw.v4_final_strategy)
+        ? raw.v4_final_strategy.map((s) => ({
+            area: norm(s.area),
+            current_status: norm(s.current_status),
+            action: norm(s.action),
+          }))
+        : undefined,
+    };
+  }
+
+  /** V4 user prompt — V3와 유사하지만 더 직설적 데이터 위주 */
+  private buildV4UserPrompt(input: AgentInput): string {
+    const { basicAnalysis } = input;
+    const totalQ = basicAnalysis.questions.length;
+    const totalPts = basicAnalysis.exam_info.total_points;
+    const schoolName = basicAnalysis.exam_info.school_name || '';
+    const diff = basicAnalysis.summary.difficulty_distribution as Record<string, number>;
+
+    // 가중 평균 난이도
+    const counts = [diff['1'] || 0, diff['2'] || 0, diff['3'] || 0, diff['4'] || 0, diff['5'] || 0];
+    const sum = counts.reduce((s, c) => s + c, 0);
+    const weighted = sum > 0 ? counts.reduce((s, c, i) => s + c * (i + 1), 0) / sum : 0;
+    const diffLabel =
+      weighted >= 4.0 ? '매우 어려움' :
+      weighted >= 3.3 ? '어려움' :
+      weighted >= 2.7 ? '보통' :
+      weighted >= 2.0 ? '쉬움' : '매우 쉬움';
+
+    // 가장 많은 난이도
+    const peakIdx = counts.indexOf(Math.max(...counts));
+    const peakLabels = ['1 기본', '2 표준', '3 응용', '4 심화', '5 최고난도'];
+    const peakDiffText = sum > 0 ? `Lv${peakIdx + 1} ${peakLabels[peakIdx].split(' ')[1]} ${counts[peakIdx]}문항` : '미분류';
+
+    // 서술형 요약
+    const essayQs = basicAnalysis.questions.filter((q) => q.question_format === 'essay');
+    const essayPoints = essayQs.reduce((s, q) => s + (q.points || 0), 0);
+    const essaySummary = essayQs.length > 0 ? `서술형 ${essayQs.length}문항 · ${essayPoints}점` : 'null';
+
+    // 단원 집계
+    const topicMap: Record<string, { count: number; points: number }> = {};
+    for (const q of basicAnalysis.questions) {
+      if (!q.topic) continue;
+      const parts = q.topic.split('>').map((s) => s.trim()).filter(Boolean);
+      const mainUnit = parts.length >= 2 ? parts[parts.length - 2] : parts[parts.length - 1] || q.topic;
+      if (!topicMap[mainUnit]) topicMap[mainUnit] = { count: 0, points: 0 };
+      topicMap[mainUnit].count++;
+      topicMap[mainUnit].points += q.points || 0;
+    }
+    const topicSummary = Object.entries(topicMap)
+      .sort((a, b) => b[1].count - a[1].count)
+      .map(([t, v]) => `- ${t}: ${v.count}문항 / ${v.points}점`)
+      .join('\n');
+
+    // 문항별 상세 (V4_difficulty_rows 생성 가이드)
+    const questionDetails = basicAnalysis.questions
+      .map((q) => {
+        const num = q.question_number;
+        const topic = q.topic || '미분류';
+        const lv = q.difficulty || '3';
+        const pts = q.points ?? 0;
+        const fmt = q.question_format === 'essay' ? '[서술형]' : '';
+        return `${num}번: ${topic} / Lv${lv} / ${pts}점 ${fmt}`;
+      })
+      .join('\n');
+
+    return `## 시험 메타데이터
+
+- 학교: ${schoolName || '미지정'}
+- 학년: ${input.basicAnalysis.exam_info ? '시험지 메타 참고' : '미지정'}
+- 총 문항: ${totalQ}
+- 총 배점: ${totalPts}
+- 평균 난이도(가중): ${weighted.toFixed(2)} / 5 (${diffLabel})
+- 최다 난이도: ${peakDiffText}
+- 서술형: ${essaySummary}
+
+## 단원별 출제
+
+${topicSummary || '미분류'}
+
+## 문항 전체 (V4_difficulty_rows 생성에 사용)
+
+${questionDetails}
+
+---
+
+위 데이터로 V4 출력 형식 5개 키를 모두 생성하세요. 갈수학학원 스타일 — 테이블 중심, 직설적, 학원 보고서 톤. JSON만 출력.`;
   }
 
   /** V3 user prompt — 시안 단계의 buildUserPrompt와 동일 구조 (검증됨) */

@@ -474,6 +474,8 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
                 schoolName: detail.schoolName ?? null,
                 analyzedAt: latestAnalysis?.analyzedAt ?? null,
               }}
+              examPaperId={detail.id}
+              onV4Generated={() => onRefresh()}
             />
           )}
 

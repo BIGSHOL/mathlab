@@ -8,7 +8,8 @@ import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-age
 import { renderInlineMath } from './helpers';
 import { FORMAT_BADGE } from './constants';
 import { V3CommentaryView, type V3Meta, type V3ChartImages } from './v3/V3CommentaryView';
-import { V4CommentaryView } from './v4/V4CommentaryView';
+import { V4CommentaryView, hasV4Data } from './v4/V4CommentaryView';
+import { toast } from '@/components/ui/Toast';
 
 /** 사용자 뷰 모드 (localStorage 키) */
 const VIEW_MODE_KEY = 'mathlab_commentary_view_mode';
@@ -36,6 +37,10 @@ interface CommentarySectionProps {
   };
   /** V3 차트 PNG (선택). 분석 화면에서 차트가 이미 별도 렌더 중이면 미전달. */
   v3Charts?: V3ChartImages;
+  /** V4 lazy 생성용 시험지 ID. 미전달 시 V4 모드는 데이터 있을 때만 활성. */
+  examPaperId?: string;
+  /** V4 생성 완료 시 부모에게 알림 (commentary state 갱신용) */
+  onV4Generated?: (updatedCommentary: CommentaryResult) => void;
 }
 
 export function CommentarySection({
@@ -53,9 +58,52 @@ export function CommentarySection({
   hasSchool,
   examMeta,
   v3Charts,
+  examPaperId,
+  onV4Generated,
 }: CommentarySectionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('v3');
+  const [v4Generating, setV4Generating] = useState(false);
+  const [v4ElapsedSeconds, setV4ElapsedSeconds] = useState(0);
+
+  // V4 생성 진행 시간 카운터
+  useEffect(() => {
+    if (!v4Generating) {
+      setV4ElapsedSeconds(0);
+      return;
+    }
+    const id = setInterval(() => setV4ElapsedSeconds((p) => p + 1), 1000);
+    return () => clearInterval(id);
+  }, [v4Generating]);
+
+  // V4 lazy 생성 핸들러
+  const handleGenerateV4 = async (force = false) => {
+    if (!examPaperId) {
+      toast.error('시험지 ID 누락 — V4 생성 불가');
+      return;
+    }
+    setV4Generating(true);
+    try {
+      const res = await fetch(`/api/exam-analysis/${examPaperId}/generate-v4`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ force }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: {} }));
+        throw new Error(err?.error?.message || `HTTP ${res.status}`);
+      }
+      const json = await res.json();
+      const newCommentary = { ...commentary, ...json.data } as CommentaryResult;
+      onV4Generated?.(newCommentary);
+      toast.success('V4 분석이 생성되었습니다');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'V4 생성 실패';
+      toast.error(msg);
+    } finally {
+      setV4Generating(false);
+    }
+  };
 
   // localStorage에서 사용자 선호 viewMode 복원 (마운트 시 1회)
   useEffect(() => {
@@ -176,7 +224,36 @@ export function CommentarySection({
         </div>
         {/* V3 / V4 콘텐츠 */}
         {viewMode === 'v4' ? (
-          <V4CommentaryView commentary={commentary} questions={allQuestions} meta={meta} charts={v3Charts} />
+          hasV4Data(commentary) ? (
+            <V4CommentaryView commentary={commentary} questions={allQuestions} meta={meta} charts={v3Charts} />
+          ) : (
+            <div className="p-10 flex flex-col items-center justify-center bg-amber-50/50">
+              {v4Generating ? (
+                <>
+                  <div className="animate-spin w-8 h-8 border-3 border-amber-700 border-t-transparent rounded-full mb-4" />
+                  <p className="text-sm font-bold text-amber-900 mb-1">V4 (갈수학학원 스타일) 생성 중...</p>
+                  <p className="text-xs text-amber-700">{v4ElapsedSeconds}초 경과 · 평균 30~60초 소요</p>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-8 h-8 text-amber-700 mb-3" />
+                  <p className="text-sm font-bold text-slate-900 mb-1">V4 분석이 아직 생성되지 않았습니다</p>
+                  <p className="text-xs text-slate-500 mb-4 text-center max-w-md">
+                    갈수학학원 스타일의 테이블 중심 분석을 별도 AI 호출로 생성합니다.<br />
+                    예상 비용: ~$0.30 · 소요 시간: 30~60초
+                  </p>
+                  <Button
+                    size="sm"
+                    onClick={() => handleGenerateV4(false)}
+                    className="bg-amber-700 hover:bg-amber-800 text-white"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                    V4 분석 생성
+                  </Button>
+                </>
+              )}
+            </div>
+          )
         ) : (
           <V3CommentaryView commentary={commentary} questions={allQuestions} meta={meta} charts={v3Charts} />
         )}

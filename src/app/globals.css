@@ -1240,6 +1240,85 @@ body {
   text-align: center;
 }
 
+/* V4 출제 특징 요약 박스 (회색 박스 + 강조 headline) */
+.v4-features-box {
+  background: #F8F8F8;
+  border-left: 4px solid #8B4513;
+  padding: 18px 22px;
+  border-radius: 0 4px 4px 0;
+}
+.v4-features-headline {
+  font-family: var(--font-display, 'Pretendard Variable', sans-serif);
+  font-size: 15px;
+  font-weight: 700;
+  color: #8B4513;
+  margin-bottom: 10px;
+  word-break: keep-all;
+}
+.v4-features-body {
+  font-family: var(--font-serif-kr, 'Noto Serif KR', serif);
+  font-size: 15px;
+  line-height: 1.85;
+  color: #2A2A2A;
+  margin: 0;
+  word-break: keep-all;
+}
+.v4-features-body strong { color: #8B4513; font-weight: 700; }
+
+/* V4 주요 공정 분석 — 영역별 블록 */
+.v4-main-analysis { display: flex; flex-direction: column; gap: 18px; }
+.v4-analysis-block {
+  border-left: 3px solid #FFD700;
+  padding: 4px 0 4px 14px;
+}
+.v4-analysis-heading {
+  font-family: var(--font-display, 'Pretendard Variable', sans-serif);
+  font-size: 15px;
+  font-weight: 700;
+  color: #1A1A1A;
+  margin: 0 0 8px;
+  word-break: keep-all;
+}
+.v4-analysis-body {
+  font-family: var(--font-serif-kr, 'Noto Serif KR', serif);
+  font-size: 14px;
+  line-height: 1.8;
+  color: #2A2A2A;
+  margin: 0;
+  word-break: keep-all;
+}
+.v4-analysis-body strong { color: #8B4513; font-weight: 700; }
+
+/* V4 기말 대비 전략 테이블 */
+.v4-strategy-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-display, 'Pretendard Variable', sans-serif);
+  border: 1px solid #E5E5E5;
+}
+.v4-strategy-table thead { background: #FFF8E0; }
+.v4-strategy-table th {
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #8B4513;
+  text-align: left;
+  letter-spacing: 0.02em;
+  border-bottom: 2px solid #FFD700;
+}
+.v4-strategy-table td {
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #2A2A2A;
+  border-bottom: 1px solid #F0F0F0;
+  vertical-align: top;
+  word-break: keep-all;
+  line-height: 1.6;
+}
+.v4-strategy-table td:nth-child(2) { color: #555; }
+.v4-strategy-table td strong { color: #8B4513; font-weight: 700; }
+.v4-strategy-area { background: #F8F8F8; }
+
 /* V4 반응형 — 좁은 화면에서 차트 1열 */
 @media (max-width: 768px) {
   .v4 { padding: 20px 16px; }
@@ -1248,4 +1327,5 @@ body {
   .v4-overview-label { width: 100px; font-size: 12px; }
   .v4-overview-value { font-size: 13px; }
   .v4-diff-table th, .v4-diff-table td { padding: 6px 8px; font-size: 12px; }
+  .v4-strategy-table th, .v4-strategy-table td { padding: 6px 8px; font-size: 12px; }
 }
