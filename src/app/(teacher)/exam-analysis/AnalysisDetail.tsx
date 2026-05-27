@@ -125,7 +125,11 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
 
   /**
    * V3 시안 (Q&A 인터뷰) HTML을 RichText로 클립보드 복사 — 네이버 블로그 본문에 그대로 붙여넣기.
-   * 차트 URL은 향후 통합 (현재는 텍스트 + 인포그래픽만).
+   *
+   * 차트 PNG 통합 (2026-05-27):
+   * - 차트는 V2 [기출 분석 글 작성]을 한 번이라도 누른 분석본에서만 사용 가능 (DB의 blog-article extension에 저장됨).
+   * - HEAD 요청으로 chart endpoint 존재 확인 → 있으면 absolute URL로 buildNaverV3Html에 전달.
+   * - 없으면 차트 없이 진행 + toast로 안내.
    */
   const handleCopyV3Naver = async () => {
     if (!commentary || !commentary.blog_qa?.length) {
@@ -133,9 +137,22 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
       return;
     }
     try {
+      // 차트 URL 가용성 확인 (HEAD 요청)
+      const baseUrl = window.location.origin;
+      const chartUrls: { topicBar?: string; discrimination?: string } = {};
+      const tryFetch = async (type: 'topic-bar' | 'discrimination', key: 'topicBar' | 'discrimination') => {
+        try {
+          const r = await fetch(`/api/exam-analysis/${detail.id}/chart/${type}`, { method: 'HEAD' });
+          if (r.ok) chartUrls[key] = `${baseUrl}/api/exam-analysis/${detail.id}/chart/${type}`;
+        } catch { /* 차트 없음 — 무시 */ }
+      };
+      await Promise.all([tryFetch('topic-bar', 'topicBar'), tryFetch('discrimination', 'discrimination')]);
+      const hasCharts = Object.keys(chartUrls).length > 0;
+
       const html = buildNaverV3Html({
         commentary,
         questions,
+        chartUrls: hasCharts ? chartUrls : undefined,
         meta: {
           examTitle: detail.title,
           grade: detail.grade,
@@ -161,7 +178,11 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
         const ok = document.execCommand('copy');
         selection?.removeAllRanges();
         if (!ok) throw new Error('execCommand copy 실패');
-        toast.success('V3 시안이 클립보드에 복사되었습니다. 네이버 블로그에 붙여넣으세요.');
+        if (hasCharts) {
+          toast.success('V3 시안 (차트 포함)이 클립보드에 복사되었습니다.');
+        } else {
+          toast.success('V3 시안이 클립보드에 복사되었습니다. (차트 추가하려면 [기출 분석 글 작성] 먼저 클릭)');
+        }
       } finally {
         document.body.removeChild(container);
       }
