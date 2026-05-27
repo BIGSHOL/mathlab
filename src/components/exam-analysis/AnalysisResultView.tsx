@@ -72,6 +72,41 @@ function checkPointsReliable(qs: AnalyzedQuestion[], expectedTotal: number | nul
   return { reliable: true, pointsSum, total, deviationPct, reason: '' };
 }
 
+/**
+ * 배점 자동 보정 제안 — 합계가 만점에서 ±1~10점 벗어나면 가장 신뢰도 낮은 문항을 조정 후보로 제시.
+ * 사용자 보고 (2026-05-27): 101점으로 분석된 케이스 → 11번 배점이 11→3점으로 잘못 인식되어 -8점,
+ * 다른 보정으로 +9점 → 순 +1점 초과. 100점 만점이 알려져 있으면 가장 낮은 신뢰도 문항을 ±1점 조정 제안.
+ */
+function getPointsSuggestion(qs: AnalyzedQuestion[], expectedTotal: number | null): {
+  needed: boolean;
+  diff: number; // (현재 합계) - (기준 만점). 양수면 초과, 음수면 부족
+  target: AnalyzedQuestion | null;
+  newPoints: number;
+  reason: string;
+} | null {
+  const total = (expectedTotal && expectedTotal > 0) ? expectedTotal : 100;
+  const pointsSum = qs.reduce((s, q) => s + (q.points ?? 0), 0);
+  const diff = pointsSum - total;
+  // 표준 만점에서 ±1~10점 벗어난 경우만 보정 제안 (그 이상이면 별도 검토 필요)
+  if (diff === 0 || Math.abs(diff) > 10) return null;
+  // 가장 신뢰도 낮은 문항 (배점 > 0 + null/0이 아닌 것 중) → confidence ASC 정렬
+  const candidates = qs
+    .filter((q) => (q.points ?? 0) > 0 && (q.confidence ?? 1) < 1)
+    .sort((a, b) => (a.confidence ?? 1) - (b.confidence ?? 1));
+  if (candidates.length === 0) return null;
+  const target = candidates[0];
+  const currentPts = target.points ?? 0;
+  const newPts = currentPts - diff; // diff>0(초과)이면 -, diff<0(부족)이면 +
+  if (newPts < 1 || newPts > 50) return null; // 비현실적 배점은 제외
+  return {
+    needed: true,
+    diff,
+    target,
+    newPoints: newPts,
+    reason: target.confidence_reason || (target.confidence === 0 ? '배점 추정' : '신뢰도 낮음'),
+  };
+}
+
 // ── 메인 컴포넌트 ──
 
 export function AnalysisResultView({ questions: questionsProp, summary, totalPoints: _totalPoints, earnedPoints: _earnedPoints, examType, examPaperId, grade }: AnalysisResultViewProps) {
@@ -96,6 +131,41 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
     () => checkPointsReliable(questions, _totalPoints),
     [questions, _totalPoints]
   );
+
+  // 배점 자동 보정 제안 (101점/99점 같은 small deviation에 대해 가장 낮은 신뢰도 문항 조정)
+  const pointsSuggestion = useMemo(
+    () => getPointsSuggestion(questions, _totalPoints),
+    [questions, _totalPoints]
+  );
+
+  // 자동 보정 적용 핸들러 — 제안된 문항의 배점을 PATCH 후 로컬 state 갱신
+  const [applyingFix, setApplyingFix] = React.useState(false);
+  const handleApplyPointsFix = async () => {
+    if (!pointsSuggestion || !examPaperId) return;
+    setApplyingFix(true);
+    try {
+      const qNum = pointsSuggestion.target.question_number;
+      const res = await fetch(
+        `/api/exam-analysis/${examPaperId}/questions/${encodeURIComponent(String(qNum))}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ points: pointsSuggestion.newPoints }),
+        },
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error?.message || '배점 수정 실패');
+      }
+      toast.success(`${qNum}번 배점이 ${pointsSuggestion.target.points}점 → ${pointsSuggestion.newPoints}점으로 보정되었습니다`);
+      // 페이지 새로고침으로 새 데이터 fetch (questions 상태가 prop이라 직접 변경 불가)
+      window.location.reload();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '보정 실패');
+    } finally {
+      setApplyingFix(false);
+    }
+  };
 
   // 난이도 분포 (5단계, 레거시 키 통합)
   const diffData = useMemo(() => {
@@ -231,6 +301,33 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
               난이도·유형·단원 분석은 정상 표시됩니다.
             </p>
           </div>
+        </div>
+      )}
+
+      {/* ══ 배점 자동 보정 제안 (small deviation ±1~10점) ══ */}
+      {pointsCheck.reliable && pointsSuggestion?.needed && examPaperId && (
+        <div className="bg-blue-50 border border-blue-200 rounded-sm p-3 flex items-start gap-2.5">
+          <AlertTriangle className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-blue-800">
+              배점 합계 {pointsCheck.pointsSum}점 · 만점 {pointsCheck.total}점에서 {pointsSuggestion.diff > 0 ? '+' : ''}{pointsSuggestion.diff}점 차이
+            </p>
+            <p className="text-xs text-blue-700 mt-1">
+              가장 신뢰도 낮은 문항을 자동 보정하면 정확한 만점이 됩니다:
+              <span className="font-semibold mx-1">
+                {pointsSuggestion.target.question_number}번 {pointsSuggestion.target.points}점 → {pointsSuggestion.newPoints}점
+              </span>
+              <span className="text-blue-500">(사유: {pointsSuggestion.reason})</span>
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleApplyPointsFix}
+            disabled={applyingFix}
+            className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-3 py-1.5 rounded-sm shrink-0"
+          >
+            {applyingFix ? '보정 중...' : '자동 보정'}
+          </button>
         </div>
       )}
 
