@@ -186,6 +186,9 @@ function renderFeatureCallout(fc: NonNullable<CommentaryResult['feature_callout'
 </table>`;
 }
 
+// 네이버 본문 폭 720px - padding 약 40px ≈ 680px (figure 컨테이너) - 안쪽 padding 약 44px ≈ 636px
+const NAVER_BAR_WIDTH = 636;
+
 function renderDifficultyStackedBar(questions: AnalyzedQuestion[]): string {
   const stats = [1, 2, 3, 4, 5].map((lv) => {
     const lvQ = questions.filter((q) => normDiff(String(q.difficulty)) === String(lv));
@@ -214,27 +217,32 @@ function renderDifficultyStackedBar(questions: AnalyzedQuestion[]): string {
   }
   const barCells = stackedRaw.map((s, i) => {
     const pct = intPcts[i];
+    const pxWidth = Math.round((pct / 100) * NAVER_BAR_WIDTH);
     const label = pct >= 8 ? `${pct}%` : '';
-    return `<td width="${pct}%" height="36" bgcolor="${s.color}" align="center" style="background:${s.color};color:#fff;font-family:Pretendard,sans-serif;font-size:12px;font-weight:700;">${label}</td>`;
+    // px 단위 + style% 둘 다 명시 — 네이버가 어느 쪽 인식하든 너비 보장
+    return `<td width="${pxWidth}" height="36" bgcolor="${s.color}" align="center" style="width:${pct}%;background:${s.color};color:#fff;font-family:Pretendard,sans-serif;font-size:12px;font-weight:700;">${label}</td>`;
   }).join('');
 
   // 각 난이도마다 2행 — 문항수 grid + 배점 막대 (난이도 색상)
   const maxCount = Math.max(...stats.map((s) => s.count), 1);
   const maxPoints = Math.max(...stats.map((s) => s.points), 1);
   const levelBlocks = stats.map((s) => {
-    // 문항수 grid (max 문항수 칸 — 각 row 자기 카운트만큼 채움)
+    // 문항수 grid (max 문항수 칸 — 각 row 자기 카운트만큼 채움). px 단위 강제.
+    const cellPxWidth = Math.floor(NAVER_BAR_WIDTH / maxCount);
     const cellWidthPct = (100 / maxCount).toFixed(2);
     const countCells: string[] = [];
     for (let i = 0; i < maxCount; i++) {
       const filled = i < s.count;
       const c = filled ? s.color : '#dddddd';
       countCells.push(
-        `<td width="${cellWidthPct}%" height="10" bgcolor="${c}" style="background:${c};font-size:1px;line-height:1px;border-right:2px solid #fff;">&nbsp;</td>`,
+        `<td width="${cellPxWidth}" height="10" bgcolor="${c}" style="width:${cellWidthPct}%;background:${c};font-size:1px;line-height:1px;border-right:2px solid #fff;">&nbsp;</td>`,
       );
     }
-    // 배점 막대 (max 배점 기준 %)
+    // 배점 막대 (max 배점 기준 %) — px 단위 강제
     const ptsPct = Math.round((s.points / maxPoints) * 100);
     const ptsGrey = 100 - ptsPct;
+    const ptsPx = Math.round((ptsPct / 100) * NAVER_BAR_WIDTH);
+    const ptsGreyPx = NAVER_BAR_WIDTH - ptsPx;
 
     return `
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 4px;">
@@ -250,8 +258,8 @@ function renderDifficultyStackedBar(questions: AnalyzedQuestion[]): string {
     </table>
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="table-layout:fixed;width:100%;margin:0 0 14px;">
       <tr>
-        ${ptsPct > 0 ? `<td width="${ptsPct}%" height="6" bgcolor="${s.color}" style="background:${s.color};font-size:1px;line-height:1px;">&nbsp;</td>` : ''}
-        ${ptsGrey > 0 ? `<td width="${ptsGrey}%" height="6" bgcolor="#dddddd" style="background:#dddddd;font-size:1px;line-height:1px;">&nbsp;</td>` : ''}
+        ${ptsPct > 0 ? `<td width="${ptsPx}" height="6" bgcolor="${s.color}" style="width:${ptsPct}%;background:${s.color};font-size:1px;line-height:1px;">&nbsp;</td>` : ''}
+        ${ptsGrey > 0 ? `<td width="${ptsGreyPx}" height="6" bgcolor="#dddddd" style="width:${ptsGrey}%;background:#dddddd;font-size:1px;line-height:1px;">&nbsp;</td>` : ''}
       </tr>
     </table>`;
   }).join('');
@@ -347,13 +355,14 @@ function renderDataBox(box: DataBoxData): string {
       const rows = box.rows.map((r, idx) => {
         const cnt = counts[idx];
         const color = r.highlight ? '#BF1722' : '#121212';
+        const cellPxWidth = Math.floor(NAVER_BAR_WIDTH / maxCount);
         const cellWidthPct = (100 / maxCount).toFixed(2);
         const cells: string[] = [];
         for (let i = 0; i < maxCount; i++) {
           const filled = i < cnt;
           const cellColor = filled ? color : '#dddddd';
           cells.push(
-            `<td width="${cellWidthPct}%" height="14" bgcolor="${cellColor}" style="background:${cellColor};font-size:1px;line-height:1px;border-right:2px solid #fff;">&nbsp;</td>`,
+            `<td width="${cellPxWidth}" height="14" bgcolor="${cellColor}" style="width:${cellWidthPct}%;background:${cellColor};font-size:1px;line-height:1px;border-right:2px solid #fff;">&nbsp;</td>`,
           );
         }
         const shortLabel = shortenDataLabel(r.label);
@@ -392,6 +401,8 @@ function renderDataBox(box: DataBoxData): string {
         : (r.highlight ? '#BF1722' : '#121212');
       const greyPct = 100 - pct;
       const shortLabel = shortenDataLabel(r.label);
+      const ptsPx2 = Math.round((pct / 100) * NAVER_BAR_WIDTH);
+      const greyPx2 = NAVER_BAR_WIDTH - ptsPx2;
       return `
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 12px;">
       <tr>
@@ -399,8 +410,8 @@ function renderDataBox(box: DataBoxData): string {
         <td width="60" align="right" style="padding:6px 0 4px 8px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:14px;font-weight:700;color:${color};white-space:nowrap;">${escapeHtml(r.value)}</td>
       </tr>
       <tr>
-        <td width="${pct}%" height="6" bgcolor="${color}" style="background:${color};font-size:1px;line-height:1px;">&nbsp;</td>
-        <td width="${greyPct}%" height="6" bgcolor="#dddddd" style="background:#dddddd;font-size:1px;line-height:1px;">&nbsp;</td>
+        <td width="${ptsPx2}" height="6" bgcolor="${color}" style="width:${pct}%;background:${color};font-size:1px;line-height:1px;">&nbsp;</td>
+        <td width="${greyPx2}" height="6" bgcolor="#dddddd" style="width:${greyPct}%;background:#dddddd;font-size:1px;line-height:1px;">&nbsp;</td>
       </tr>
     </table>`;
     }).join('');
