@@ -1056,7 +1056,7 @@ function renderDataBoxNaver(box: NonNullable<NonNullable<MergedCommentary['blog_
 
 // ── 네이버용 인포그래픽 (table 기반) ──
 
-/** 난이도별 배점 stacked bar — 네이버 호환 (table) */
+/** 난이도별 배점 stacked bar — 네이버 호환 (td bgcolor 패턴, 7f82e52d 검증) */
 function renderDifficultyStackedBarNaver(questions: AnalyzedQuestion[]): string {
   const stats = [1, 2, 3, 4, 5].map((lv) => {
     const lvQ = questions.filter((q) => normDiff(String(q.difficulty)) === String(lv));
@@ -1071,65 +1071,47 @@ function renderDifficultyStackedBarNaver(questions: AnalyzedQuestion[]): string 
   const totalPts = stats.reduce((s, x) => s + x.points, 0);
   if (totalPts === 0) return '';
 
-  // 상단 stacked bar — 정수 % + 합 100 보정
-  const segRaw = stats.filter((s) => s.points > 0).map((s) => ({
-    pct: (s.points / totalPts) * 100,
-    color: s.color,
-  }));
-  const intPcts = segRaw.map((x) => Math.round(x.pct));
-  const sumInt = intPcts.reduce((s, n) => s + n, 0);
-  if (sumInt !== 100 && intPcts.length > 0) intPcts[0] += 100 - sumInt;
-  const barCells = segRaw.map((s, i) => {
-    const pct = intPcts[i];
-    const label = pct >= 8 ? `${pct}%` : '';
-    return `<td width="${pct}%" height="36" bgcolor="${s.color}" align="center" style="background:${s.color};color:#fff;font-family:Pretendard,sans-serif;font-size:12px;font-weight:700;">${label}</td>`;
-  }).join('');
-
-  // 각 난이도별 2행 — 문항수 grid + 배점 막대 (난이도 색상)
   const maxCount = Math.max(...stats.map((s) => s.count), 1);
   const maxPoints = Math.max(...stats.map((s) => s.points), 1);
+  const cellWidthPct = (100 / maxCount).toFixed(2);
+
   const levelBlocks = stats.map((s) => {
-    const cellWidthPct = (100 / maxCount).toFixed(2);
     const countCells: string[] = [];
     for (let i = 0; i < maxCount; i++) {
       const filled = i < s.count;
       const c = filled ? s.color : '#dddddd';
       countCells.push(
-        `<td width="${cellWidthPct}%" height="10" bgcolor="${c}" style="background:${c};font-size:1px;line-height:1px;border-right:2px solid #fff;">&nbsp;</td>`,
+        `<td width="${cellWidthPct}%" height="14" bgcolor="${c}" style="background:${c};font-size:1px;line-height:1px;border-right:2px solid #fff;">&nbsp;</td>`,
       );
     }
-    const ptsPct = Math.round((s.points / maxPoints) * 100);
-    const ptsGrey = 100 - ptsPct;
+    const ptsPct = s.points > 0 ? Math.round((s.points / maxPoints) * 100) : 0;
+    const greyPct = 100 - ptsPct;
+
     return `
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 4px;">
       <tr>
-        <td width="14" height="14" bgcolor="${s.color}" style="background:${s.color};width:14px;height:14px;font-size:1px;line-height:1px;">&nbsp;</td>
-        <td width="8" style="font-size:1px;line-height:1px;">&nbsp;</td>
-        <td style="padding:6px 8px 4px 0;font-family:Pretendard,sans-serif;font-size:12px;font-weight:700;color:#121212;white-space:nowrap;">Lv ${s.level} · ${s.label}</td>
-        <td align="right" style="padding:6px 0 4px 8px;font-family:Pretendard,sans-serif;font-size:12px;color:#888;white-space:nowrap;">${s.count}문항 · ${s.points}점</td>
+        <td style="padding:8px 8px 4px 0;font-family:Pretendard,sans-serif;font-size:13px;font-weight:700;color:${s.color};white-space:nowrap;">Lv ${s.level} · ${s.label}</td>
+        <td width="140" align="right" style="padding:8px 0 4px 8px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:13px;font-weight:700;color:${s.color};white-space:nowrap;">${s.count}문항 · ${s.points}점</td>
       </tr>
     </table>
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="table-layout:fixed;width:100%;margin:0 0 3px;border-collapse:collapse;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 3px;border-collapse:collapse;">
       <tr>${countCells.join('')}</tr>
     </table>
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="table-layout:fixed;width:100%;margin:0 0 14px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 14px;">
       <tr>
         ${ptsPct > 0 ? `<td width="${ptsPct}%" height="6" bgcolor="${s.color}" style="background:${s.color};font-size:1px;line-height:1px;">&nbsp;</td>` : ''}
-        ${ptsGrey > 0 ? `<td width="${ptsGrey}%" height="6" bgcolor="#dddddd" style="background:#dddddd;font-size:1px;line-height:1px;">&nbsp;</td>` : ''}
+        ${greyPct > 0 ? `<td width="${greyPct}%" height="6" bgcolor="#dddddd" style="background:#dddddd;font-size:1px;line-height:1px;">&nbsp;</td>` : ''}
       </tr>
     </table>`;
   }).join('');
 
   return `
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;background:#fafafa;border:1px solid #ddd;">
-  <tr><td style="padding:20px 22px;">
-    <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.14em;color:#888;font-weight:800;">FIGURE · 난이도별 배점 분포</p>
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="table-layout:fixed;width:100%;border-collapse:collapse;margin:0 0 18px;">
-      <tr>${barCells}</tr>
-    </table>
-    <p style="margin:0 0 10px;font-family:Pretendard,sans-serif;font-size:10px;color:#888;">각 난이도: <b style="color:#121212;">상단 grid = 문항수</b> (최대 ${maxCount}칸) · <b style="color:#121212;">하단 막대 = 배점</b> (최대 ${maxPoints}점)</p>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;background:#fafafa;border-left:3px solid #BF1722;">
+  <tr><td style="padding:14px 18px;">
+    <p style="margin:0 0 10px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.14em;color:#888;font-weight:800;">FIGURE · 난이도별 배점 분포</p>
+    <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:10px;color:#888;">총 ${maxCount}칸 기준 · 채워진 칸 = 문항수 · 하단 막대 = 배점 (최대 ${maxPoints}점)</p>
     ${levelBlocks}
-    <p style="margin:6px 0 0;font-family:Pretendard,sans-serif;font-size:11px;color:#888;line-height:1.5;">상단 stacked bar = 배점 비중. 총 ${totalPts}점 · ${questions.length}문항.</p>
+    <p style="margin:6px 0 0;font-family:Pretendard,sans-serif;font-size:11px;color:#888;line-height:1.5;">총 ${totalPts}점 · ${questions.length}문항.</p>
   </td></tr>
 </table>`;
 }

@@ -225,66 +225,54 @@ function renderDifficultyStackedBar(questions: AnalyzedQuestion[]): string {
   const totalPts = stats.reduce((s, x) => s + x.points, 0);
   if (totalPts === 0) return '';
 
-  // 상단 stacked bar — 배점 비율, width는 정수%로 강제 (네이버 호환)
-  const stackedRaw = stats.filter((s) => s.points > 0).map((s) => ({
-    pct: (s.points / totalPts) * 100,
-    color: s.color,
-    label: s.label,
-  }));
-  // 정수 % 변환 + 합 100 보정
-  const intPcts = stackedRaw.map((x) => Math.round(x.pct));
-  const sumInt = intPcts.reduce((s, n) => s + n, 0);
-  if (sumInt !== 100 && intPcts.length > 0) {
-    intPcts[0] += 100 - sumInt; // 첫 segment에 보정 추가
-  }
-  // 네이버는 td width%/px 자주 무시 → table 우회. inline-block span + px width로 가로 배치.
-  const barSpans = stackedRaw.map((s, i) => {
-    const pct = intPcts[i];
-    const pxWidth = Math.round((pct / 100) * NAVER_BAR_WIDTH);
-    const label = pct >= 8 ? `${pct}%` : '';
-    return `<span style="display:inline-block;width:${pxWidth}px;height:36px;line-height:36px;background:${s.color};color:#fff;font-family:Pretendard,sans-serif;font-size:12px;font-weight:700;text-align:center;vertical-align:top;">${label}</span>`;
-  }).join('');
+  // ⚠️ 네이버 SmartEditor는 inline-block span의 background/width를 모두 제거함.
+  // DataBox bars grid가 작동했던 td bgcolor 패턴(7f82e52d) 1:1 복제 — 사용자 검증 완료.
+  // 각 난이도마다 2행: 문항수 grid + 배점 막대.
 
-  // 각 난이도마다 2행 — 문항수 grid + 배점 막대 (난이도 색상)
   const maxCount = Math.max(...stats.map((s) => s.count), 1);
   const maxPoints = Math.max(...stats.map((s) => s.points), 1);
+  const cellWidthPct = (100 / maxCount).toFixed(2);
+
   const levelBlocks = stats.map((s) => {
-    // 문항수 grid — inline-block span으로 (table 우회)
-    const cellPxWidth = Math.floor(NAVER_BAR_WIDTH / maxCount) - 2; // gap 2px
-    const countSpans: string[] = [];
+    // 행 1: 헤더 (라벨 + 값, 색상은 텍스트 컬러로 식별 — swatch 없음)
+    // 행 2: 문항수 grid (td bgcolor 패턴)
+    const countCells: string[] = [];
     for (let i = 0; i < maxCount; i++) {
       const filled = i < s.count;
       const c = filled ? s.color : '#dddddd';
-      countSpans.push(
-        `<span style="display:inline-block;width:${cellPxWidth}px;height:10px;background:${c};margin-right:2px;vertical-align:top;"></span>`,
+      countCells.push(
+        `<td width="${cellWidthPct}%" height="14" bgcolor="${c}" style="background:${c};font-size:1px;line-height:1px;border-right:2px solid #fff;">&nbsp;</td>`,
       );
     }
-    // 배점 막대 — inline-block span
-    const ptsPct = Math.round((s.points / maxPoints) * 100);
-    const ptsGrey = 100 - ptsPct;
-    const ptsPx = Math.round((ptsPct / 100) * NAVER_BAR_WIDTH);
-    const ptsGreyPx = NAVER_BAR_WIDTH - ptsPx;
-    const ptsSpans = [
-      ptsPct > 0 ? `<span style="display:inline-block;width:${ptsPx}px;height:6px;background:${s.color};vertical-align:top;"></span>` : '',
-      ptsGrey > 0 ? `<span style="display:inline-block;width:${ptsGreyPx}px;height:6px;background:#dddddd;vertical-align:top;"></span>` : '',
-    ].join('');
+    // 행 3: 배점 막대 (td bgcolor 패턴)
+    const ptsPct = s.points > 0 ? Math.round((s.points / maxPoints) * 100) : 0;
+    const greyPct = 100 - ptsPct;
 
     return `
-    <p style="margin:0 0 4px;padding:0;font-family:Pretendard,sans-serif;font-size:12px;line-height:1.4;white-space:nowrap;">
-      <span style="display:inline-block;width:14px;height:14px;background:${s.color};vertical-align:middle;margin-right:8px;"></span><b style="color:#121212;font-weight:700;">Lv ${s.level} · ${s.label}</b><span style="float:right;color:#888;">${s.count}문항 · ${s.points}점</span>
-    </p>
-    <p style="margin:0 0 3px;padding:0;line-height:0;font-size:0;white-space:nowrap;">${countSpans.join('')}</p>
-    <p style="margin:0 0 14px;padding:0;line-height:0;font-size:0;white-space:nowrap;">${ptsSpans}</p>`;
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 4px;">
+      <tr>
+        <td style="padding:8px 8px 4px 0;font-family:Pretendard,sans-serif;font-size:13px;font-weight:700;color:${s.color};white-space:nowrap;">Lv ${s.level} · ${s.label}</td>
+        <td width="140" align="right" style="padding:8px 0 4px 8px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:13px;font-weight:700;color:${s.color};white-space:nowrap;">${s.count}문항 · ${s.points}점</td>
+      </tr>
+    </table>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 3px;border-collapse:collapse;">
+      <tr>${countCells.join('')}</tr>
+    </table>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 14px;">
+      <tr>
+        ${ptsPct > 0 ? `<td width="${ptsPct}%" height="6" bgcolor="${s.color}" style="background:${s.color};font-size:1px;line-height:1px;">&nbsp;</td>` : ''}
+        ${greyPct > 0 ? `<td width="${greyPct}%" height="6" bgcolor="#dddddd" style="background:#dddddd;font-size:1px;line-height:1px;">&nbsp;</td>` : ''}
+      </tr>
+    </table>`;
   }).join('');
 
   return `
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;background:#fafafa;border:1px solid #ddd;">
-  <tr><td style="padding:20px 22px;">
-    <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.14em;color:#888;font-weight:800;">FIGURE · 난이도별 배점 분포</p>
-    <p style="margin:0 0 18px;padding:0;line-height:0;font-size:0;white-space:nowrap;width:100%;">${barSpans}</p>
-    <p style="margin:0 0 10px;font-family:Pretendard,sans-serif;font-size:10px;color:#888;">각 난이도: <b style="color:#121212;">상단 grid = 문항수</b> (최대 ${maxCount}칸) · <b style="color:#121212;">하단 막대 = 배점</b> (최대 ${maxPoints}점)</p>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;background:#fafafa;border-left:3px solid #BF1722;">
+  <tr><td style="padding:14px 18px;">
+    <p style="margin:0 0 10px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.14em;color:#888;font-weight:800;">FIGURE · 난이도별 배점 분포</p>
+    <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:10px;color:#888;">총 ${maxCount}칸 기준 · 채워진 칸 = 문항수 · 하단 막대 = 배점 (최대 ${maxPoints}점)</p>
     ${levelBlocks}
-    <p style="margin:6px 0 0;font-family:Pretendard,sans-serif;font-size:11px;color:#888;line-height:1.5;">상단 stacked bar = 배점 비중. 총 ${totalPts}점 · ${questions.length}문항.</p>
+    <p style="margin:6px 0 0;font-family:Pretendard,sans-serif;font-size:11px;color:#888;line-height:1.5;">총 ${totalPts}점 · ${questions.length}문항.</p>
   </td></tr>
 </table>`;
 }
@@ -362,25 +350,34 @@ function renderDataBox(box: DataBoxData): string {
     const maxCount = allPercent ? 0 : Math.max(...counts, 1);
     const useGrid = allHaveCount && !allPercent && maxCount > 0 && maxCount <= 30;
 
+    // ⚠️ 네이버 SmartEditor는 inline-block span의 background/width를 모두 제거함.
+    // 반드시 <td bgcolor="" width="" height=""> + &nbsp; 패턴을 사용해야 시각화가 살아남음.
+    // 7f82e52d 패턴 — 사용자 검증 완료. aea5274e에서 inline-block으로 잘못 전환했던 것을 복원.
+
     if (useGrid) {
       const rows = box.rows.map((r, idx) => {
         const cnt = counts[idx];
         const color = r.highlight ? '#BF1722' : '#121212';
-        const cellPxWidth = Math.floor(NAVER_BAR_WIDTH / maxCount) - 2; // gap 2px
-        const cellSpans: string[] = [];
+        const cellWidthPct = (100 / maxCount).toFixed(2);
+        const cells: string[] = [];
         for (let i = 0; i < maxCount; i++) {
           const filled = i < cnt;
           const cellColor = filled ? color : '#dddddd';
-          cellSpans.push(
-            `<span style="display:inline-block;width:${cellPxWidth}px;height:14px;background:${cellColor};margin-right:2px;vertical-align:top;"></span>`,
+          cells.push(
+            `<td width="${cellWidthPct}%" height="14" bgcolor="${cellColor}" style="background:${cellColor};font-size:1px;line-height:1px;border-right:2px solid #fff;">&nbsp;</td>`,
           );
         }
         const shortLabel = shortenDataLabel(r.label);
         return `
-    <p style="margin:0 0 4px;padding:0;font-family:Pretendard,sans-serif;font-size:13px;line-height:1.4;white-space:nowrap;">
-      <b style="color:${color};font-weight:700;">${escapeHtml(shortLabel)}</b><span style="float:right;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:14px;font-weight:700;color:${color};">${escapeHtml(r.value)}</span>
-    </p>
-    <p style="margin:0 0 14px;padding:0;line-height:0;font-size:0;white-space:nowrap;">${cellSpans.join('')}</p>`;
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 4px;">
+      <tr>
+        <td style="padding:8px 8px 4px 0;font-family:Pretendard,sans-serif;font-size:13px;font-weight:700;color:${color};white-space:nowrap;word-break:keep-all;">${escapeHtml(shortLabel)}</td>
+        <td width="120" align="right" style="padding:8px 0 4px 8px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:13px;font-weight:700;color:${color};white-space:nowrap;">${escapeHtml(r.value)}</td>
+      </tr>
+    </table>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 14px;border-collapse:collapse;">
+      <tr>${cells.join('')}</tr>
+    </table>`;
       }).join('');
       return `
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fafafa;border-left:3px solid #BF1722;margin:14px 0 24px;">
@@ -392,7 +389,7 @@ function renderDataBox(box: DataBoxData): string {
 </table>`;
     }
 
-    // percentage 데이터 폴백 — 막대 비율 시각화
+    // percentage 데이터 폴백 — 막대 비율 시각화 (td bgcolor 패턴)
     const rawValues = box.rows.map((r) => parseInt(r.value, 10) || 0);
     const maxRaw = Math.max(...rawValues, 1);
     const maxVal = allPercent ? 100 : Math.max(maxRaw * 1.15, 1);
@@ -404,17 +401,19 @@ function renderDataBox(box: DataBoxData): string {
       const color = allPercent
         ? (r.highlight && v < 50 ? '#BF1722' : (v >= 80 ? '#2F7B3A' : '#121212'))
         : (r.highlight ? '#BF1722' : '#121212');
+      const greyPct = 100 - pct;
       const shortLabel = shortenDataLabel(r.label);
-      const ptsPx2 = Math.round((pct / 100) * NAVER_BAR_WIDTH);
-      const greyPx2 = NAVER_BAR_WIDTH - ptsPx2;
       return `
-    <p style="margin:0 0 4px;padding:0;font-family:Pretendard,sans-serif;font-size:13px;line-height:1.4;white-space:nowrap;">
-      <b style="color:${color};font-weight:700;">${escapeHtml(shortLabel)}</b><span style="float:right;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:14px;font-weight:700;color:${color};">${escapeHtml(r.value)}</span>
-    </p>
-    <p style="margin:0 0 12px;padding:0;line-height:0;font-size:0;white-space:nowrap;">
-      ${ptsPx2 > 0 ? `<span style="display:inline-block;width:${ptsPx2}px;height:6px;background:${color};vertical-align:top;"></span>` : ''}
-      ${greyPx2 > 0 ? `<span style="display:inline-block;width:${greyPx2}px;height:6px;background:#dddddd;vertical-align:top;"></span>` : ''}
-    </p>`;
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 12px;">
+      <tr>
+        <td style="padding:6px 8px 4px 0;font-family:Pretendard,sans-serif;font-size:13px;font-weight:700;color:${color};white-space:nowrap;word-break:keep-all;">${escapeHtml(shortLabel)}</td>
+        <td width="60" align="right" style="padding:6px 0 4px 8px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:14px;font-weight:700;color:${color};white-space:nowrap;">${escapeHtml(r.value)}</td>
+      </tr>
+      <tr>
+        ${pct > 0 ? `<td width="${pct}%" height="6" bgcolor="${color}" style="background:${color};font-size:1px;line-height:1px;">&nbsp;</td>` : ''}
+        ${greyPct > 0 ? `<td width="${greyPct}%" height="6" bgcolor="#dddddd" style="background:#dddddd;font-size:1px;line-height:1px;">&nbsp;</td>` : ''}
+      </tr>
+    </table>`;
     }).join('');
     return `
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fafafa;border-left:3px solid #BF1722;margin:14px 0 24px;">
