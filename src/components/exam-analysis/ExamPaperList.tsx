@@ -100,17 +100,17 @@ function getExamLabels(item: ExamPaperItem): string[] {
   return extractExamLabels(item.title);
 }
 
-/** 5단계 상태 판별: 실패 → 분석중 → 완료 → 총평 → 글작성 */
+/** 5단계 상태 판별 — 업로드 → 분석중 → 분석완료 → 총평완료 → 글작성 완료 (사용자 제안 라벨) */
 function getDetailedStatus(item: ExamPaperItem): { label: string; color: string } {
   if (item.status === 'FAILED') return { label: '실패', color: 'bg-red-50 text-red-600 border-red-200' };
   if (item.status === 'ANALYZING') return { label: '분석중', color: 'bg-amber-50 text-amber-600 border-amber-200' };
-  if (item.status === 'PENDING') return { label: '대기', color: 'bg-slate-50 text-slate-500 border-slate-200' };
+  if (item.status === 'PENDING') return { label: '업로드', color: 'bg-slate-50 text-slate-500 border-slate-200' };
   // COMPLETED — extensions로 세분화
   const exts = item.analyses[0]?.extensions || [];
   const agentTypes = exts.map(e => e.agentType);
-  if (agentTypes.includes('blog-article')) return { label: '글작성', color: 'bg-violet-50 text-violet-600 border-violet-200' };
-  if (agentTypes.includes('commentary')) return { label: '총평', color: 'bg-blue-50 text-blue-600 border-blue-200' };
-  return { label: '완료', color: 'bg-emerald-50 text-emerald-600 border-emerald-200' };
+  if (agentTypes.includes('blog-article')) return { label: '글작성 완료', color: 'bg-violet-50 text-violet-600 border-violet-200' };
+  if (agentTypes.includes('commentary')) return { label: '총평완료', color: 'bg-blue-50 text-blue-600 border-blue-200' };
+  return { label: '분석완료', color: 'bg-emerald-50 text-emerald-600 border-emerald-200' };
 }
 
 interface ExamPaperListProps {

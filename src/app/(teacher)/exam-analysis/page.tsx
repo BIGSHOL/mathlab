@@ -85,7 +85,8 @@ export default function ExamAnalysisPage() {
   }, [selectedId, fetchDetail]);
 
   // 분석 중 자동 폴링 — ref로 함수 참조하여 interval 재생성 방지
-  const hasAnalyzing = items.some(i => i.status === 'ANALYZING');
+  // selectedDetail.status도 확인 — 사이드바 items 갱신 전이라도 detail이 ANALYZING이면 polling 시작
+  const hasAnalyzing = items.some(i => i.status === 'ANALYZING') || selectedDetail?.status === 'ANALYZING';
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
   const pollCountRef = useRef(0);
