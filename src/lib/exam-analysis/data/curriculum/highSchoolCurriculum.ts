@@ -289,7 +289,7 @@ export const HIGH_SCHOOL_CURRICULUM: GradeCurriculum[] = [
     semester: '1학기',
     units: [
       {
-        name: '지수와 로그',
+        name: '지수함수와 로그함수',
         topics: [
           {
             keywords: ['지수', '지수법칙', '거듭제곱근'],
@@ -421,7 +421,7 @@ export const HIGH_SCHOOL_CURRICULUM: GradeCurriculum[] = [
     semester: '2학기',
     units: [
       {
-        name: '함수의 극한',
+        name: '함수의 극한과 연속',
         topics: [
           {
             keywords: ['극한', '함수의 극한', '부정형'],

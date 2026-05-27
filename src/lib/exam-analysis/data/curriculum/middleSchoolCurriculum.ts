@@ -60,7 +60,7 @@ export const MIDDLE_SCHOOL_CURRICULUM: GradeCurriculum[] = [
         ],
       },
       {
-        name: '문자와 식',
+        name: '문자의 사용과 식',
         topics: [
           {
             keywords: ['문자의 사용', '식의 값'],
@@ -110,7 +110,7 @@ export const MIDDLE_SCHOOL_CURRICULUM: GradeCurriculum[] = [
         ],
       },
       {
-        name: '좌표평면과 그래프',
+        name: '좌표와 그래프',
         topics: [
           {
             keywords: ['좌표평면', '순서쌍', '좌표'],
@@ -207,7 +207,7 @@ export const MIDDLE_SCHOOL_CURRICULUM: GradeCurriculum[] = [
         ],
       },
       {
-        name: '통계',
+        name: '자료의 정리와 해석',
         topics: [
           {
             keywords: ['도수분포', '히스토그램', '상대도수', '줄기와 잎'],
