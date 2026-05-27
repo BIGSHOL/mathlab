@@ -265,16 +265,16 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
         <InfoTooltip content={
           <>
             <p className="font-semibold mb-1">신뢰도란?</p>
-            <p className="mb-2">AI가 각 문항의 난이도, 유형, 단원 등을 얼마나 확신하는지 나타내는 수치입니다. 문항별 신뢰도의 평균값으로 계산됩니다.</p>
+            <p className="mb-2">AI가 각 문항의 <strong>메타데이터(난이도·유형·단원·배점)</strong>를 얼마나 확신하는지 나타내는 수치입니다. 문항별 신뢰도의 평균값으로 계산됩니다.</p>
             <p className="font-semibold mb-1">신뢰도가 낮아지는 경우:</p>
             <ul className="list-disc list-inside space-y-0.5 mb-2">
               <li>문항 텍스트가 불명확하거나 스캔 품질이 낮음</li>
               <li>비정형적인 문제 유형이나 출제 형식</li>
               <li>교육과정에 없는 내용이 포함됨</li>
-              <li>객관식 검산 결과가 선택지에 없음 (출제 오류 또는 OCR 오인식 의심)</li>
               <li>배점이 추정값인 경우 (시험지에 점수 표기 누락)</li>
+              <li>출제범위 외 단원이 의심되는 경우</li>
             </ul>
-            <p className="text-xs text-slate-500 leading-relaxed">⚠️ AI는 객관식 문항의 정답을 직접 계산해 선택지와 대조합니다. 불일치 시 문제 오류 또는 OCR 오인식을 의심할 수 있으니, 해당 문항은 수동 확인을 권장합니다.</p>
+            <p className="text-xs text-slate-500 leading-relaxed">ℹ️ AI는 시험지의 메타데이터만 추출하며 문제 풀이를 직접 수행하지는 않습니다. 다만 자율 추론 과정에서 "계산 결과가 선택지에 없음" 같은 자체 검산 사유가 표시될 수 있습니다 (이 경우 OCR 오인식 또는 출제 오류일 수 있으니 해당 문항은 수동 확인 권장).</p>
           </>
         } />
         <span className={`text-sm font-bold ${avgConfidence >= 90 ? 'text-emerald-600' : avgConfidence >= 70 ? 'text-yellow-600' : 'text-red-500'}`}>
