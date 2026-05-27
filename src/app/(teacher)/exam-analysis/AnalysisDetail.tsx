@@ -22,6 +22,7 @@ import { DIFF_LEVEL_LABELS } from './constants';
 import { CommentarySection } from './CommentarySection';
 import { AnalyzingProgress } from './AnalyzingProgress';
 import { buildNaverV3Html } from '@/lib/exam-analysis/naver-v3-renderer';
+import { buildNaverV4Html } from '@/lib/exam-analysis/naver-v4-renderer';
 
 const ArticleEditorModal = dynamic(
   () => import('@/components/exam-analysis/ArticleEditorModal').then((m) => ({ default: m.ArticleEditorModal })),
@@ -209,6 +210,70 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
           toast.success('V3 시안 (차트 포함)이 클립보드에 복사되었습니다.');
         } else {
           toast.success('V3 시안이 클립보드에 복사되었습니다. (차트 추가하려면 [기출 분석 글 작성] 먼저 클릭)');
+        }
+      } finally {
+        document.body.removeChild(container);
+      }
+    } catch (e) {
+      toast.error('복사 실패: ' + (e instanceof Error ? e.message : String(e)));
+    }
+  };
+
+  /**
+   * V4 (갈수학학원 스타일) RichText 복사 → 네이버 SmartEditor 붙여넣기
+   * V3와 동일 패턴, naver-v4-renderer 사용.
+   */
+  const handleCopyV4Naver = async () => {
+    if (!commentary || !commentary.v4_exam_overview) {
+      toast.error('V4 데이터가 없습니다. AI 시험 총평에서 V4 분석을 먼저 생성하세요.');
+      return;
+    }
+    try {
+      // 차트 URL 가용성 확인 (V3와 동일)
+      const baseUrl = window.location.origin;
+      const chartUrls: { topicBar?: string; discrimination?: string } = {};
+      const tryFetch = async (type: 'topic-bar' | 'discrimination', key: 'topicBar' | 'discrimination') => {
+        try {
+          const r = await fetch(`/api/exam-analysis/${detail.id}/chart/${type}`, { method: 'HEAD' });
+          if (r.ok) chartUrls[key] = `${baseUrl}/api/exam-analysis/${detail.id}/chart/${type}`;
+        } catch { /* 차트 없음 무시 */ }
+      };
+      await Promise.all([tryFetch('topic-bar', 'topicBar'), tryFetch('discrimination', 'discrimination')]);
+      const hasCharts = Object.keys(chartUrls).length > 0;
+
+      const html = buildNaverV4Html({
+        commentary,
+        chartUrls: hasCharts ? chartUrls : undefined,
+        meta: {
+          examTitle: detail.title,
+          grade: detail.grade,
+          schoolName: detail.schoolName ?? null,
+          analyzedAt: latestAnalysis?.analyzedAt ?? null,
+        },
+      });
+
+      // RichText 복사 (V3와 동일 패턴)
+      const container = document.createElement('div');
+      container.innerHTML = html;
+      container.style.position = 'fixed';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      container.style.opacity = '0';
+      container.style.width = '720px';
+      document.body.appendChild(container);
+      try {
+        const range = document.createRange();
+        range.selectNodeContents(container);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        const ok = document.execCommand('copy');
+        selection?.removeAllRanges();
+        if (!ok) throw new Error('execCommand copy 실패');
+        if (hasCharts) {
+          toast.success('V4 시안 (차트 포함)이 클립보드에 복사되었습니다.');
+        } else {
+          toast.success('V4 시안이 클립보드에 복사되었습니다. (차트 추가하려면 [기출 분석 글 작성] 먼저 클릭)');
         }
       } finally {
         document.body.removeChild(container);
@@ -504,6 +569,17 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
                   >
                     <Copy className="w-4 h-4 mr-1" />
                     V3 네이버 복사
+                  </Button>
+                )}
+                {commentary?.v4_exam_overview && (
+                  <Button
+                    size="sm"
+                    onClick={handleCopyV4Naver}
+                    className="bg-amber-700 hover:bg-amber-800 text-white"
+                    title="V4 시안(갈수학학원 스타일 테이블 중심)을 네이버 블로그용 HTML로 클립보드에 복사"
+                  >
+                    <Copy className="w-4 h-4 mr-1" />
+                    V4 네이버 복사
                   </Button>
                 )}
                 <span className="text-[11px] text-slate-400">
