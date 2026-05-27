@@ -15,8 +15,23 @@ import type { ChartImages } from '../src/lib/exam-analysis/chart-image-generator
 
 // ── 공통 유틸 ──
 
+/** 한국어 수사+의존명사 nbsp 묶기 — "단 한 개도 없다" 줄바꿈 분리 방지 */
+function joinKoreanCounters(text: string): string {
+  if (!text) return text;
+  const NBSP = ' ';
+  return text
+    .replace(
+      /(한|두|세|네|다섯|여섯|일곱|여덟|아홉|열|첫|단|매)\s+(개|명|사람|곳|분|번|줄|문항|점|가지|칸|쪽|마디|학기|과목)/g,
+      `$1${NBSP}$2`,
+    )
+    .replace(
+      /(\d+)\s+(개|명|곳|분|번|줄|문항|점|가지|월|일|년|등급|학년|학기)/g,
+      `$1${NBSP}$2`,
+    );
+}
+
 export function escapeHtml(s: string): string {
-  return String(s)
+  return joinKoreanCounters(String(s))
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')

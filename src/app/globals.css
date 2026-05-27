@@ -838,6 +838,7 @@ body {
   font-family: var(--font-serif-kr, 'Noto Serif KR', serif); font-size: 48px; font-weight: 700;
   line-height: 1.15; margin: 14px 0 14px; color: #121212; letter-spacing: -0.01em;
   max-width: 880px; word-break: keep-all;
+  text-wrap: balance;
 }
 .v3-top .v3-dek {
   font-family: var(--font-serif-kr, 'Noto Serif KR', serif); font-size: 18px; line-height: 1.55;
@@ -866,6 +867,7 @@ body {
 .v3-feature .v3-feature-lhs h2 {
   font-family: var(--font-serif-kr, 'Noto Serif KR', serif); font-size: 36px; font-weight: 700;
   line-height: 1.2; margin: 0 0 14px; color: #fff; word-break: keep-all;
+  text-wrap: balance; /* 헤드라인 마지막 줄이 너무 짧지 않게 균형 분배 (Chrome 114+) */
 }
 .v3-feature .v3-feature-lhs h2 .v3-em { color: #FFA940; font-style: italic; }
 .v3-feature .v3-feature-lhs p { font-family: var(--font-serif-kr, 'Noto Serif KR', serif); font-size: 16px; line-height: 1.7; color: #DDD; margin: 0 0 14px; word-break: keep-all; }

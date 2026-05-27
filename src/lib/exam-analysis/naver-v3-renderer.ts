@@ -35,8 +35,12 @@ export interface NaverV3Meta {
 
 // ── 유틸 ──
 
+/**
+ * HTML escape + 한국어 수사+의존명사 nbsp 자동 묶기.
+ * 모든 사용자 노출 텍스트가 자동으로 줄바꿈 개선 처리됨.
+ */
 function escapeHtml(s: string): string {
-  return String(s ?? '')
+  return joinKoreanCounters(String(s ?? ''))
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -44,7 +48,7 @@ function escapeHtml(s: string): string {
     .replace(/'/g, '&#39;');
 }
 
-/** **bold** → <strong> (네이버 호환, 색만) */
+/** **bold** → <strong> (네이버 호환, 색만). escapeHtml에서 이미 nbsp 처리됨 */
 function markdownToInlineBold(text: string): string {
   return escapeHtml(text).replace(/\*\*(.+?)\*\*/g, '<strong style="color:#121212;font-weight:700;">$1</strong>');
 }
@@ -52,6 +56,24 @@ function markdownToInlineBold(text: string): string {
 function normDiff(raw: string): string {
   const map: Record<string, string> = { concept: '1', pattern: '2', reasoning: '4', creative: '5' };
   return map[raw] || raw;
+}
+
+/**
+ * 한국어 수사+의존명사를 non-breaking space로 묶기 — 줄바꿈 개선.
+ * "단 한 개도 없다" → "단 한 개도 없다" → 줄 끝에서 "한 개도"가 한 단위로 묶임.
+ */
+function joinKoreanCounters(text: string): string {
+  if (!text) return text;
+  const NBSP = ' ';
+  return text
+    .replace(
+      /(한|두|세|네|다섯|여섯|일곱|여덟|아홉|열|첫|단|매)\s+(개|명|사람|곳|분|번|줄|문항|점|가지|칸|쪽|마디|학기|과목)/g,
+      `$1${NBSP}$2`,
+    )
+    .replace(
+      /(\d+)\s+(개|명|곳|분|번|줄|문항|점|가지|월|일|년|등급|학년|학기)/g,
+      `$1${NBSP}$2`,
+    );
 }
 
 /**
