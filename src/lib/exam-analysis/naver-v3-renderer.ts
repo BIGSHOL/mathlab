@@ -237,62 +237,51 @@ function renderDifficultyStackedBar(questions: AnalyzedQuestion[]): string {
   if (sumInt !== 100 && intPcts.length > 0) {
     intPcts[0] += 100 - sumInt; // 첫 segment에 보정 추가
   }
-  const barCells = stackedRaw.map((s, i) => {
+  // 네이버는 td width%/px 자주 무시 → table 우회. inline-block span + px width로 가로 배치.
+  const barSpans = stackedRaw.map((s, i) => {
     const pct = intPcts[i];
     const pxWidth = Math.round((pct / 100) * NAVER_BAR_WIDTH);
     const label = pct >= 8 ? `${pct}%` : '';
-    // px 단위 + style% 둘 다 명시 — 네이버가 어느 쪽 인식하든 너비 보장
-    return `<td width="${pxWidth}" height="36" bgcolor="${s.color}" align="center" style="width:${pct}%;background:${s.color};color:#fff;font-family:Pretendard,sans-serif;font-size:12px;font-weight:700;">${label}</td>`;
+    return `<span style="display:inline-block;width:${pxWidth}px;height:36px;line-height:36px;background:${s.color};color:#fff;font-family:Pretendard,sans-serif;font-size:12px;font-weight:700;text-align:center;vertical-align:top;">${label}</span>`;
   }).join('');
 
   // 각 난이도마다 2행 — 문항수 grid + 배점 막대 (난이도 색상)
   const maxCount = Math.max(...stats.map((s) => s.count), 1);
   const maxPoints = Math.max(...stats.map((s) => s.points), 1);
   const levelBlocks = stats.map((s) => {
-    // 문항수 grid (max 문항수 칸 — 각 row 자기 카운트만큼 채움). px 단위 강제.
-    const cellPxWidth = Math.floor(NAVER_BAR_WIDTH / maxCount);
-    const cellWidthPct = (100 / maxCount).toFixed(2);
-    const countCells: string[] = [];
+    // 문항수 grid — inline-block span으로 (table 우회)
+    const cellPxWidth = Math.floor(NAVER_BAR_WIDTH / maxCount) - 2; // gap 2px
+    const countSpans: string[] = [];
     for (let i = 0; i < maxCount; i++) {
       const filled = i < s.count;
       const c = filled ? s.color : '#dddddd';
-      countCells.push(
-        `<td width="${cellPxWidth}" height="10" bgcolor="${c}" style="width:${cellWidthPct}%;background:${c};font-size:1px;line-height:1px;border-right:2px solid #fff;">&nbsp;</td>`,
+      countSpans.push(
+        `<span style="display:inline-block;width:${cellPxWidth}px;height:10px;background:${c};margin-right:2px;vertical-align:top;"></span>`,
       );
     }
-    // 배점 막대 (max 배점 기준 %) — px 단위 강제
+    // 배점 막대 — inline-block span
     const ptsPct = Math.round((s.points / maxPoints) * 100);
     const ptsGrey = 100 - ptsPct;
     const ptsPx = Math.round((ptsPct / 100) * NAVER_BAR_WIDTH);
     const ptsGreyPx = NAVER_BAR_WIDTH - ptsPx;
+    const ptsSpans = [
+      ptsPct > 0 ? `<span style="display:inline-block;width:${ptsPx}px;height:6px;background:${s.color};vertical-align:top;"></span>` : '',
+      ptsGrey > 0 ? `<span style="display:inline-block;width:${ptsGreyPx}px;height:6px;background:#dddddd;vertical-align:top;"></span>` : '',
+    ].join('');
 
     return `
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 4px;">
-      <tr>
-        <td width="14" height="14" bgcolor="${s.color}" style="background:${s.color};width:14px;height:14px;font-size:1px;line-height:1px;">&nbsp;</td>
-        <td width="8" style="font-size:1px;line-height:1px;">&nbsp;</td>
-        <td style="padding:6px 8px 4px 0;font-family:Pretendard,sans-serif;font-size:12px;font-weight:700;color:#121212;white-space:nowrap;">Lv ${s.level} · ${s.label}</td>
-        <td align="right" style="padding:6px 0 4px 8px;font-family:Pretendard,sans-serif;font-size:12px;color:#888;white-space:nowrap;">${s.count}문항 · ${s.points}점</td>
-      </tr>
-    </table>
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="table-layout:fixed;width:100%;margin:0 0 3px;border-collapse:collapse;">
-      <tr>${countCells.join('')}</tr>
-    </table>
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="table-layout:fixed;width:100%;margin:0 0 14px;">
-      <tr>
-        ${ptsPct > 0 ? `<td width="${ptsPx}" height="6" bgcolor="${s.color}" style="width:${ptsPct}%;background:${s.color};font-size:1px;line-height:1px;">&nbsp;</td>` : ''}
-        ${ptsGrey > 0 ? `<td width="${ptsGreyPx}" height="6" bgcolor="#dddddd" style="width:${ptsGrey}%;background:#dddddd;font-size:1px;line-height:1px;">&nbsp;</td>` : ''}
-      </tr>
-    </table>`;
+    <p style="margin:0 0 4px;padding:0;font-family:Pretendard,sans-serif;font-size:12px;line-height:1.4;white-space:nowrap;">
+      <span style="display:inline-block;width:14px;height:14px;background:${s.color};vertical-align:middle;margin-right:8px;"></span><b style="color:#121212;font-weight:700;">Lv ${s.level} · ${s.label}</b><span style="float:right;color:#888;">${s.count}문항 · ${s.points}점</span>
+    </p>
+    <p style="margin:0 0 3px;padding:0;line-height:0;font-size:0;white-space:nowrap;">${countSpans.join('')}</p>
+    <p style="margin:0 0 14px;padding:0;line-height:0;font-size:0;white-space:nowrap;">${ptsSpans}</p>`;
   }).join('');
 
   return `
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;background:#fafafa;border:1px solid #ddd;">
   <tr><td style="padding:20px 22px;">
     <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.14em;color:#888;font-weight:800;">FIGURE · 난이도별 배점 분포</p>
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="table-layout:fixed;width:100%;border-collapse:collapse;margin:0 0 18px;">
-      <tr>${barCells}</tr>
-    </table>
+    <p style="margin:0 0 18px;padding:0;line-height:0;font-size:0;white-space:nowrap;width:100%;">${barSpans}</p>
     <p style="margin:0 0 10px;font-family:Pretendard,sans-serif;font-size:10px;color:#888;">각 난이도: <b style="color:#121212;">상단 grid = 문항수</b> (최대 ${maxCount}칸) · <b style="color:#121212;">하단 막대 = 배점</b> (최대 ${maxPoints}점)</p>
     ${levelBlocks}
     <p style="margin:6px 0 0;font-family:Pretendard,sans-serif;font-size:11px;color:#888;line-height:1.5;">상단 stacked bar = 배점 비중. 총 ${totalPts}점 · ${questions.length}문항.</p>
@@ -377,27 +366,21 @@ function renderDataBox(box: DataBoxData): string {
       const rows = box.rows.map((r, idx) => {
         const cnt = counts[idx];
         const color = r.highlight ? '#BF1722' : '#121212';
-        const cellPxWidth = Math.floor(NAVER_BAR_WIDTH / maxCount);
-        const cellWidthPct = (100 / maxCount).toFixed(2);
-        const cells: string[] = [];
+        const cellPxWidth = Math.floor(NAVER_BAR_WIDTH / maxCount) - 2; // gap 2px
+        const cellSpans: string[] = [];
         for (let i = 0; i < maxCount; i++) {
           const filled = i < cnt;
           const cellColor = filled ? color : '#dddddd';
-          cells.push(
-            `<td width="${cellPxWidth}" height="14" bgcolor="${cellColor}" style="width:${cellWidthPct}%;background:${cellColor};font-size:1px;line-height:1px;border-right:2px solid #fff;">&nbsp;</td>`,
+          cellSpans.push(
+            `<span style="display:inline-block;width:${cellPxWidth}px;height:14px;background:${cellColor};margin-right:2px;vertical-align:top;"></span>`,
           );
         }
         const shortLabel = shortenDataLabel(r.label);
         return `
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 4px;">
-      <tr>
-        <td style="padding:8px 8px 4px 0;font-family:Pretendard,sans-serif;font-size:13px;font-weight:700;color:${color};white-space:nowrap;word-break:keep-all;">${escapeHtml(shortLabel)}</td>
-        <td width="120" align="right" style="padding:8px 0 4px 8px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:13px;font-weight:700;color:${color};white-space:nowrap;">${escapeHtml(r.value)}</td>
-      </tr>
-    </table>
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="table-layout:fixed;width:100%;margin:0 0 14px;border-collapse:collapse;">
-      <tr>${cells.join('')}</tr>
-    </table>`;
+    <p style="margin:0 0 4px;padding:0;font-family:Pretendard,sans-serif;font-size:13px;line-height:1.4;white-space:nowrap;">
+      <b style="color:${color};font-weight:700;">${escapeHtml(shortLabel)}</b><span style="float:right;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:14px;font-weight:700;color:${color};">${escapeHtml(r.value)}</span>
+    </p>
+    <p style="margin:0 0 14px;padding:0;line-height:0;font-size:0;white-space:nowrap;">${cellSpans.join('')}</p>`;
       }).join('');
       return `
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fafafa;border-left:3px solid #BF1722;margin:14px 0 24px;">
@@ -426,16 +409,13 @@ function renderDataBox(box: DataBoxData): string {
       const ptsPx2 = Math.round((pct / 100) * NAVER_BAR_WIDTH);
       const greyPx2 = NAVER_BAR_WIDTH - ptsPx2;
       return `
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 12px;">
-      <tr>
-        <td style="padding:6px 8px 4px 0;font-family:Pretendard,sans-serif;font-size:13px;font-weight:700;color:${color};white-space:nowrap;word-break:keep-all;">${escapeHtml(shortLabel)}</td>
-        <td width="60" align="right" style="padding:6px 0 4px 8px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:14px;font-weight:700;color:${color};white-space:nowrap;">${escapeHtml(r.value)}</td>
-      </tr>
-      <tr>
-        <td width="${ptsPx2}" height="6" bgcolor="${color}" style="width:${pct}%;background:${color};font-size:1px;line-height:1px;">&nbsp;</td>
-        <td width="${greyPx2}" height="6" bgcolor="#dddddd" style="width:${greyPct}%;background:#dddddd;font-size:1px;line-height:1px;">&nbsp;</td>
-      </tr>
-    </table>`;
+    <p style="margin:0 0 4px;padding:0;font-family:Pretendard,sans-serif;font-size:13px;line-height:1.4;white-space:nowrap;">
+      <b style="color:${color};font-weight:700;">${escapeHtml(shortLabel)}</b><span style="float:right;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:14px;font-weight:700;color:${color};">${escapeHtml(r.value)}</span>
+    </p>
+    <p style="margin:0 0 12px;padding:0;line-height:0;font-size:0;white-space:nowrap;">
+      ${ptsPx2 > 0 ? `<span style="display:inline-block;width:${ptsPx2}px;height:6px;background:${color};vertical-align:top;"></span>` : ''}
+      ${greyPx2 > 0 ? `<span style="display:inline-block;width:${greyPx2}px;height:6px;background:#dddddd;vertical-align:top;"></span>` : ''}
+    </p>`;
     }).join('');
     return `
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fafafa;border-left:3px solid #BF1722;margin:14px 0 24px;">
