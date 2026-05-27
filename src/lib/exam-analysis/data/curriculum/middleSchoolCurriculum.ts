@@ -229,7 +229,7 @@ export const MIDDLE_SCHOOL_CURRICULUM: GradeCurriculum[] = [
     semester: '1학기',
     units: [
       {
-        name: '수와 연산',
+        name: '유리수와 순환소수',
         topics: [
           {
             keywords: ['유리수', '순환소수', '유한소수'],
@@ -279,7 +279,7 @@ export const MIDDLE_SCHOOL_CURRICULUM: GradeCurriculum[] = [
         ],
       },
       {
-        name: '부등식',
+        name: '일차부등식',
         topics: [
           {
             keywords: ['일차부등식', '부등호', '해집합'],
@@ -294,7 +294,7 @@ export const MIDDLE_SCHOOL_CURRICULUM: GradeCurriculum[] = [
         ],
       },
       {
-        name: '연립방정식',
+        name: '연립일차방정식',
         topics: [
           {
             keywords: ['연립방정식', '가감법', '대입법'],
