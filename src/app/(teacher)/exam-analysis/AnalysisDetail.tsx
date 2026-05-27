@@ -88,6 +88,33 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
   const confidenceInfo = useMemo(() => getConfidenceInfo(questions), [questions]);
   const diffLevel = useMemo(() => getOverallDifficultyLevel(summary), [summary]);
 
+  // 총평 생성 사전 차단 — 배점 합계가 만점과 다르거나 단원 UNKNOWN 있으면 차단
+  const readinessCheck = useMemo(() => {
+    if (!questions.length) return { ready: false, reasons: ['분석 결과가 없습니다'] };
+    const reasons: string[] = [];
+    // 배점 합계 검증 (totalPoints가 있으면 기준, 없으면 100점 기본)
+    const expectedTotal = totalPoints && totalPoints > 0 ? totalPoints : 100;
+    const pointsSum = questions.reduce((s, q) => s + (q.points ?? 0), 0);
+    if (pointsSum !== expectedTotal) {
+      const diff = pointsSum - expectedTotal;
+      reasons.push(`배점 합계 ${pointsSum}점 (만점 ${expectedTotal}점에서 ${diff > 0 ? '+' : ''}${diff}점 차이)`);
+    }
+    // 미인식 배점 (null/0) 검증
+    const missingPoints = questions.filter((q) => q.points === null || q.points === 0).length;
+    if (missingPoints > 0) {
+      reasons.push(`${missingPoints}개 문항의 배점이 미인식 상태`);
+    }
+    // 단원 UNKNOWN 검증
+    const unknownTopics = questions.filter((q) => {
+      const t = (q.topic || '').trim();
+      return !t || /UNKNOWN|미정|unknown/i.test(t);
+    }).length;
+    if (unknownTopics > 0) {
+      reasons.push(`${unknownTopics}개 문항의 단원이 미분류 상태`);
+    }
+    return { ready: reasons.length === 0, reasons };
+  }, [questions, totalPoints]);
+
   // 총평 데이터: extensions에서 commentary 에이전트 결과 추출
   const commentaryExt = latestAnalysis?.extensions?.find(e => e.agentType === 'commentary');
   const commentary = (commentaryExt?.result as unknown as CommentaryResult) ?? null;
@@ -360,8 +387,14 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
                   {!commentaryLoading && (
                     <Button
                       size="sm"
-                      className="bg-violet-600 hover:bg-violet-700 text-white"
+                      className="bg-violet-600 hover:bg-violet-700 text-white disabled:bg-slate-300 disabled:cursor-not-allowed"
                       onClick={handleGenerateCommentary}
+                      disabled={!readinessCheck.ready}
+                      title={
+                        readinessCheck.ready
+                          ? '총평 생성'
+                          : '먼저 다음을 완성하세요:\n' + readinessCheck.reasons.map(r => '• ' + r).join('\n')
+                      }
                     >
                       총평 생성
                     </Button>
@@ -392,6 +425,20 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
                   )}
                 </div>
               </div>
+              {/* ── 총평 생성 차단 경고 ── */}
+              {!readinessCheck.ready && !commentaryLoading && (
+                <div className="mt-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-sm">
+                  <p className="text-xs font-semibold text-amber-800 mb-1">총평 생성 전 다음을 완성하세요:</p>
+                  <ul className="text-[11px] text-amber-700 space-y-0.5 list-disc list-inside">
+                    {readinessCheck.reasons.map((r, i) => (
+                      <li key={i}>{r}</li>
+                    ))}
+                  </ul>
+                  <p className="text-[11px] text-amber-600 mt-1.5 leading-relaxed">
+                    아래 문항 테이블에서 <strong>배점은 클릭하여 직접 입력</strong>, <strong>단원은 ✏️ 아이콘으로 수정</strong> 가능합니다.
+                  </p>
+                </div>
+              )}
               {commentaryLoading && (
                 <div className="mt-3 px-1">
                   <div className="flex items-center justify-between mb-1.5">

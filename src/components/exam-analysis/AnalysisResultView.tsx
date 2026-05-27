@@ -112,17 +112,26 @@ function getPointsSuggestion(qs: AnalyzedQuestion[], expectedTotal: number | nul
 export function AnalysisResultView({ questions: questionsProp, summary, totalPoints: _totalPoints, earnedPoints: _earnedPoints, examType, examPaperId, grade }: AnalysisResultViewProps) {
   // 수동 편집된 단원은 로컬 state에 반영 (페이지 리로드 없이 즉시 표시)
   const [editedTopics, setEditedTopics] = React.useState<Record<string, string>>({});
+  const [editedPoints, setEditedPoints] = React.useState<Record<string, number>>({});
   const questions = React.useMemo(() => {
-    if (!Object.keys(editedTopics).length) return questionsProp;
+    if (!Object.keys(editedTopics).length && !Object.keys(editedPoints).length) return questionsProp;
     return questionsProp.map((q) => {
       const key = String(q.question_number);
-      return editedTopics[key] !== undefined
-        ? { ...q, topic: editedTopics[key] }
-        : q;
+      const topic = editedTopics[key];
+      const points = editedPoints[key];
+      if (topic === undefined && points === undefined) return q;
+      return {
+        ...q,
+        ...(topic !== undefined ? { topic } : {}),
+        ...(points !== undefined ? { points } : {}),
+      };
     });
-  }, [questionsProp, editedTopics]);
+  }, [questionsProp, editedTopics, editedPoints]);
   const handleTopicUpdate = React.useCallback((qNum: string | number, newTopic: string) => {
     setEditedTopics((prev) => ({ ...prev, [String(qNum)]: newTopic }));
+  }, []);
+  const handlePointsUpdate = React.useCallback((qNum: string | number, newPoints: number) => {
+    setEditedPoints((prev) => ({ ...prev, [String(qNum)]: newPoints }));
   }, []);
   const isStudentExam = examType === 'student';
 
@@ -387,7 +396,7 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
                     <span className="text-xs font-semibold text-sky-600">객관식</span>
                     <span className="text-xs text-slate-400 ml-2">{grouped.objective.length}문항</span>
                   </td></tr>
-                  {grouped.objective.map((q, i) => <QRow key={`o-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} grade={grade} onTopicUpdate={handleTopicUpdate} />)}
+                  {grouped.objective.map((q, i) => <QRow key={`o-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} grade={grade} onTopicUpdate={handleTopicUpdate} onPointsUpdate={handlePointsUpdate} />)}
                 </>
               )}
               {grouped.shortAnswer.length > 0 && (
@@ -396,7 +405,7 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
                     <span className="text-xs font-semibold text-teal-600">단답형</span>
                     <span className="text-xs text-slate-400 ml-2">{grouped.shortAnswer.length}문항</span>
                   </td></tr>
-                  {grouped.shortAnswer.map((q, i) => <QRow key={`s-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} grade={grade} onTopicUpdate={handleTopicUpdate} />)}
+                  {grouped.shortAnswer.map((q, i) => <QRow key={`s-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} grade={grade} onTopicUpdate={handleTopicUpdate} onPointsUpdate={handlePointsUpdate} />)}
                 </>
               )}
               {grouped.essay.length > 0 && (
@@ -405,7 +414,7 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
                     <span className="text-xs font-semibold text-amber-600">서술형</span>
                     <span className="text-xs text-slate-400 ml-2">{grouped.essay.length}문항</span>
                   </td></tr>
-                  {grouped.essay.map((q, i) => <QRow key={`e-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} grade={grade} onTopicUpdate={handleTopicUpdate} />)}
+                  {grouped.essay.map((q, i) => <QRow key={`e-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} grade={grade} onTopicUpdate={handleTopicUpdate} onPointsUpdate={handlePointsUpdate} />)}
                 </>
               )}
             </tbody>
@@ -521,12 +530,13 @@ function TopicSection({ topicGroups, maxTopic, total, chartColors }: {
 }
 
 
-function QRow({ q, isStudent, examPaperId, grade, onTopicUpdate }: {
+function QRow({ q, isStudent, examPaperId, grade, onTopicUpdate, onPointsUpdate }: {
   q: AnalyzedQuestion;
   isStudent: boolean;
   examPaperId?: string;
   grade?: string | null;
   onTopicUpdate?: (qNum: string | number, newTopic: string) => void;
+  onPointsUpdate?: (qNum: string | number, newPoints: number) => void;
 }) {
   const confPct = Math.round((q.confidence || 0) * 100);
   const confColor = confPct >= 90 ? 'text-emerald-600' : confPct >= 70 ? 'text-yellow-600' : 'text-red-500';
@@ -601,7 +611,14 @@ function QRow({ q, isStudent, examPaperId, grade, onTopicUpdate }: {
           onTopicUpdate={onTopicUpdate}
         />
       </td>
-      <td className="px-3 py-2 text-center font-medium text-slate-700 whitespace-nowrap">{q.points ?? '-'}</td>
+      <td className="px-3 py-2 text-center font-medium text-slate-700 whitespace-nowrap">
+        <PointsCell
+          points={q.points}
+          questionNumber={q.question_number}
+          examPaperId={examPaperId}
+          onPointsUpdate={onPointsUpdate}
+        />
+      </td>
       {isStudent && (
         <td className="px-3 py-2 text-center">
           {q.is_correct === true && <span className="text-emerald-600 font-bold">O</span>}
@@ -770,6 +787,137 @@ function TopicCell({
           onClick={handleOpen}
           className="opacity-0 group-hover:opacity-100 p-1 rounded-sm text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-opacity"
           title="단원 수정"
+        >
+          <Pencil className="w-3 h-3" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════
+// 배점 셀 — 표시/편집 모드 전환 (사용자 수동 보정)
+// ══════════════════════════════════════════
+
+function PointsCell({
+  points,
+  questionNumber,
+  examPaperId,
+  onPointsUpdate,
+}: {
+  points: number | null;
+  questionNumber: string | number;
+  examPaperId?: string;
+  onPointsUpdate?: (qNum: string | number, newPoints: number) => void;
+}) {
+  const [editing, setEditing] = React.useState(false);
+  const [value, setValue] = React.useState('');
+  const [saving, setSaving] = React.useState(false);
+  const canEdit = !!examPaperId;
+
+  const handleOpen = () => {
+    setValue(String(points ?? ''));
+    setEditing(true);
+  };
+  const handleCancel = () => {
+    setEditing(false);
+    setValue('');
+  };
+  const handleSave = async () => {
+    if (!examPaperId) return;
+    const next = parseInt(value, 10);
+    if (!Number.isFinite(next) || next < 0 || next > 100) {
+      toast.warning('배점은 0~100 사이의 정수입니다');
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch(
+        `/api/exam-analysis/${examPaperId}/questions/${encodeURIComponent(String(questionNumber))}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ points: next }),
+        },
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error?.message || '저장 실패');
+      }
+      onPointsUpdate?.(questionNumber, next);
+      toast.success('배점이 수정되었습니다');
+      setEditing(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '저장에 실패했습니다');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-0.5 justify-center">
+        <input
+          type="number"
+          min={0}
+          max={100}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleSave();
+            else if (e.key === 'Escape') handleCancel();
+          }}
+          className="w-14 px-1.5 py-0.5 text-xs text-center border rounded-sm focus:ring-1 focus:ring-primary focus:border-primary"
+          disabled={saving}
+          autoFocus
+        />
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving}
+          className="p-0.5 rounded-sm text-emerald-600 hover:bg-emerald-50 disabled:opacity-50"
+          title="저장"
+        >
+          <Check className="w-3 h-3" />
+        </button>
+        <button
+          type="button"
+          onClick={handleCancel}
+          disabled={saving}
+          className="p-0.5 rounded-sm text-slate-400 hover:bg-slate-100 disabled:opacity-50"
+          title="취소"
+        >
+          <X className="w-3 h-3" />
+        </button>
+      </div>
+    );
+  }
+
+  const isMissing = points === null || points === 0;
+  if (isMissing) {
+    return (
+      <button
+        type="button"
+        disabled={!canEdit}
+        onClick={canEdit ? handleOpen : undefined}
+        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-medium ${canEdit ? 'hover:bg-amber-100 cursor-pointer' : 'cursor-help'}`}
+        title={canEdit ? '배점 미인식 — 클릭하여 입력' : '배점 미인식'}
+      >
+        <AlertTriangle className="w-3 h-3" />
+        {canEdit ? '입력' : '?'}
+      </button>
+    );
+  }
+
+  return (
+    <div className="group inline-flex items-center gap-0.5">
+      <span>{points}</span>
+      {canEdit && (
+        <button
+          type="button"
+          onClick={handleOpen}
+          className="opacity-0 group-hover:opacity-100 p-0.5 rounded-sm text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-opacity"
+          title="배점 수정"
         >
           <Pencil className="w-3 h-3" />
         </button>
