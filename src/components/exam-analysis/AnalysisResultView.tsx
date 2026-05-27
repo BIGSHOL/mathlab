@@ -328,6 +328,10 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
               </span>
               <span className="text-blue-500">(사유: {pointsSuggestion.reason})</span>
             </p>
+            <p className="text-xs font-bold text-red-600 mt-1.5 flex items-start gap-1">
+              <span className="shrink-0">⚠️</span>
+              <span>자동 보정은 <u>신뢰도 기반 추정</u>입니다. <strong>반드시 시험지 원본을 확인</strong>한 후 적용하거나, 아래 문항 테이블에서 정확한 배점을 직접 수정해 주세요.</span>
+            </p>
           </div>
           <button
             type="button"
