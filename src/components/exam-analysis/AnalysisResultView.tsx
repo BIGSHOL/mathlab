@@ -665,8 +665,35 @@ function TopicCell({
   const groupedOptions = React.useMemo(() => getTopicOptionsGrouped(grade), [grade]);
   const canEdit = !!examPaperId;
 
+  // currentTopic을 옵션 value 형식으로 정규화 — AI가 저장하는 형식은
+  // "중2 수학 > 수와 연산 > 유리수" (prefix 포함)이지만 옵션 value는
+  // "수와 연산 > 유리수" (대단원 > 소단원)이라 직접 매칭 안 됨.
+  // 모든 옵션 value를 모은 뒤 currentTopic의 끝부분과 매칭하거나, 단순히 마지막 2단계만 사용.
+  const allOptionValues = React.useMemo(() => {
+    const set = new Set<string>();
+    groupedOptions.forEach((g) => g.options.forEach((o) => set.add(o.value)));
+    options.forEach((o) => set.add(o));
+    return set;
+  }, [groupedOptions, options]);
+  const normalizedCurrentTopic = React.useMemo(() => {
+    if (!currentTopic || isUnknown) return '';
+    // 1차: 그대로 매칭
+    if (allOptionValues.has(currentTopic)) return currentTopic;
+    // 2차: 마지막 2단계로 매칭 (대단원 > 소단원)
+    const parts = currentTopic.split(' > ');
+    if (parts.length >= 2) {
+      const last2 = parts.slice(-2).join(' > ');
+      if (allOptionValues.has(last2)) return last2;
+    }
+    // 3차: 부분 매칭 (옵션 value가 currentTopic의 일부로 포함)
+    for (const v of allOptionValues) {
+      if (currentTopic.endsWith(v) || currentTopic.includes(v)) return v;
+    }
+    return currentTopic;
+  }, [currentTopic, isUnknown, allOptionValues]);
+
   const handleOpen = () => {
-    setValue(isUnknown ? '' : currentTopic);
+    setValue(isUnknown ? '' : normalizedCurrentTopic);
     setEditing(true);
   };
   const handleCancel = () => {

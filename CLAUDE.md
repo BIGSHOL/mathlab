@@ -975,6 +975,22 @@ V3 동일 fix를 **3곳에 모두 적용**:
 6. **td width="N%" + `&nbsp;` 만 = 작동 안 함**: cell width%는 콘텐츠가 풍부할 때만 보존. nbsp만 있으면 cell이 줄어들고 줄바꿈됨. 막대 1개는 OK, grid (5+ cell)는 위험
 7. **헤드라인은 데이터 직설 X**: AI가 "기본 문항 0개, 표준부터 시작하는 응용 중심 시험" 같이 부정어로 시작하고 평이하게 마무리하는 경향. NYT Science 톤 "변별이 시작되는 지점" 같이 시사형/명사 종결로 강제하는 프롬프트 가이드 필요 (commentary v1.2.0)
 8. **prompt v1.0.0 vs commentary v1.2.0 혼동**: 분석본 페이지 헤더의 "prompt v1.0.0"은 modelVersion(시험지 분석), commentary는 ExamAnalysisExtension.result에 별도 저장. promptVersion 표시가 다르다고 V3 데이터 없는 게 아님
+9. **두 개의 curriculum 데이터 소스 분리 부채**: `src/lib/constants/curriculum.ts` (UI 드롭다운) vs `src/lib/exam-analysis/data/curriculum/middleSchoolCurriculum.ts` + `highSchoolCurriculum.ts` (AI prompt). 단원명이 별개로 운영되어 8건+ 불일치 발견 (중1-1 "문자와 식" vs "문자의 사용과 식", 중1-2 "통계" vs "자료의 정리와 해석", 중2-1 "수와 연산" vs "유리수와 순환소수", 고2 "지수와 로그" vs "지수함수와 로그함수" 등). **새 단원 추가 시 양쪽 동기화 필수**. 향후 single source of truth로 통합 권장. analysis 구조는 grade 기반(고1/고2/고3), constants는 subject 기반(공통수학1/공통수학2/대수/...)이라 통합 시 매핑 로직 필요.
+10. **AI confidence_reason 자유 텍스트 함정**: Gemini가 시스템 프롬프트의 메타데이터 추출 지시를 우회하여 자율 추론으로 "계산 결과가 선택지에 없음, 문제 오류 의심" 같은 검산 기반 사유를 confidence_reason에 출력. **enum/화이트리스트로 가드 필수** — prompt-builder.ts:626 confidence_reason 가이드에 허용 사유 명시 + 금지 사유 명시 ("너는 메타데이터만 추출하며 풀이를 수행하지 않는다"). AI에게 "출제 오류 지적 금지"를 ai_comment에만 적용하면 다른 필드로 우회.
+11. **사이드바 polling 트리거 부족**: page.tsx의 `hasAnalyzing`이 `items.some(...)`만 보면 분석본 진입 직후 selectedDetail은 ANALYZING이지만 items 갱신 전이라 polling 트리거 안 됨 → 사용자가 사이드바에 "대기"로 보임. **`|| selectedDetail?.status === 'ANALYZING'` 추가 필수**.
+12. **stale ANALYZING 상태로 인한 progress UI stuck**: 분석 완료 후에도 fetch 캐시로 detail.status가 ANALYZING 그대로 → progress UI 진행 표시. 이중 방어: ① `cache:'no-store'` 명시 ② 조건 강화 `detail.status === 'ANALYZING' && !latestAnalysis` (분석 결과가 있으면 stale status 무시).
+13. **UI 컴포넌트 옵션 value ↔ DB 저장 값 형식 불일치**: TopicCell이 select option value를 짧은 형식(`"수와 연산 > 유리수"`)으로 두는데 AI가 저장하는 topic은 prefix 포함 형식(`"중2 수학 > 수와 연산 > 유리수"`)이라 분류된 단원이 드롭다운에 자동 선택 안 됨. **handleOpen에서 normalize 매칭 필수** (1차: 그대로 / 2차: 마지막 2단계 / 3차: 부분 매칭).
+14. **hover tooltip이 마우스에 가림**: InfoTooltip이 `onMouseEnter`로 표시되면 화면 작거나 가장자리에서 마우스 커서가 본문을 가리고, 마우스를 옮기면 닫혀 사용성 나쁨. **클릭 모달 패턴으로 전환** — 화면 중앙 fixed + 백드롭 + X 버튼 + ESC 키.
+15. **총평 생성 사전 차단 패턴**: 부정확한 데이터(배점 합계 ≠ 만점, UNKNOWN 단원)로 AI 호출하면 비용 낭비 + 품질 저하. `readinessCheck` useMemo로 검증 후 [총평 생성] 버튼 disabled + 호박색 경고 배너로 미완성 항목 리스트 표시 + 인라인 편집 가이드 (배점 클릭, 단원 ✏️).
+
+#### V3 모듈 3-way 동기화 체크리스트 (네이버 호환 fix 시)
+
+V3 마크업 변경 시 반드시 3곳 모두 동기화:
+1. `src/app/(teacher)/exam-analysis/v3/*.tsx` — production V3 UI (브라우저 직접 렌더)
+2. `src/lib/exam-analysis/naver-v3-renderer.ts` — 네이버 호환 HTML 빌더 (RichText 클립보드 복사)
+3. `scripts/generate-v3-preview-html.ts` — 시안 빌더 (재시안 도구 보존)
+
+한 곳만 fix하면 다른 영역과 결과 다름 → 디버깅 시간 폭증. 검증은 항상 **네이버 실제 붙여넣기**로 (브라우저 미리보기 불충분).
 
 ### 수기채점 시스템
 
