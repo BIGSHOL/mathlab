@@ -637,8 +637,7 @@ export function generateTopicBarSvg(
   const maxTopicLen = Math.max(...sorted.map(([t]) => t.length));
   const barAreaX = Math.max(170, maxTopicLen * 11 + 24);
   const barAreaWidth = Math.max(150, CHART_WIDTH - barAreaX - 140);
-  const barHeight = 24, barGap = 8;
-  const startY = 55;
+  // 실제 사용 값은 아래 barHeightUp/barGapUp/startYUp (업그레이드 버전 — 그라데이션+섀도우+큰 폰트)
 
   const svgParts: string[] = [];
 
