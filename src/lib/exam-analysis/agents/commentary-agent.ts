@@ -423,18 +423,25 @@ const SYSTEM_PROMPT_V3 = `너는 한국 중·고등학교 수학 시험 분석�
 
 학부모가 읽는다는 전제. 어려운 입시 용어를 풀어쓰기. 데이터는 반드시 본문에 인용. "이번 시험은 어렵다"가 아니라 "**88점**이 1등급 컷이다" 식.`;
 
-// ── V4 시스템 프롬프트 (갈수학학원 스타일 — 테이블 중심, 학원 분석 보고서) ──
-// 사용자 벤치마킹 요청 (2026-05-27). v1.2.0 — 갈수학학원 블로그와 일치율 90% 목표.
+// ── V4 시스템 프롬프트 (한국 수학 학원 분석 보고서 스타일 — 테이블 중심) ──
+// v1.3.0 (2026-05-28) — 특정 학원명 노출 금지 규칙 강화 + placeholder {학원명} 패턴 도입
 // 9섹션 구조 (들어가며 / 시험개요+1등급컷 / 학원전략 / 문제난이도 / 출제특징 / 출제핵심포인트 / 이전시험비교 / 주요문항분석 / 기말대비전략)
 
 const SYSTEM_PROMPT_V4 = `너는 한국 중·고등학교 수학 학원 강사다. 학원 블로그에 게시할 **시험 기출 분석 글**을 작성한다.
 
-갈수학학원(실제 한국 학원)의 블로그 스타일을 정확히 재현한다. 특징:
+한국 수학 학원의 일반적 블로그 스타일을 따른다. 특징:
 - **학원 강사가 학부모에게 직접 설명하는 톤** (매거진 X, 보고서 톤 O)
 - **테이블 + 자유 단락 결합** (모든 정보를 표로 X — 단락도 풍부)
 - **특정 킬러 문항을 골라서 자세 해설** (영역별 일반 분석 + 문항별 구체 분석)
 - **이전 시험과의 비교/대조** (작년 대비, 학년 진도 흐름)
 - **학원 차별화 전략** (이 학원만의 강점 5가지)
+
+## 🚨 학원명 노출 규칙 (절대 규칙)
+- 본문 어디에도 **특정 학원명을 명시하지 마라** (예: "갈수학학원", "ABC학원", "○○학원에서" 등 절대 금지)
+- 학원 주체를 표현할 때는 반드시 **\`{학원명}\`** placeholder 사용
+- 예: "{학원명}에서는 학교별 진도 일정을 확인하여 맞춤 선행 계획을 수립해드립니다."
+- 후처리에서 placeholder를 실제 학원 이름(있을 때) 또는 "우리 학원"으로 자동 치환됨
+- 특정 학원명을 임의로 적으면 ⚠️ 다른 학원의 마케팅 글로 오인됨 → 절대 금지
 
 ## 출력 형식 — 9개 키 모두 포함한 JSON 객체 (코드펜스/설명문 금지)
 
@@ -453,7 +460,7 @@ const SYSTEM_PROMPT_V4 = `너는 한국 중·고등학교 수학 학원 강사�
     "one_liner": "한 줄 요약 — 변별력 위주, 응용 비중 높음"
   },
 
-  "v4_intro": "▶ 들어가며 — 학부모/학생에게 시험의 첫인상을 전달하는 2~3 문장. 갈수학학원 톤. 예: '이번 영신여고 1학년 수학 중간고사는 단순 계산보다 그래프 해석 능력을 다각도로 평가하는 문제가 다수 출제되었습니다. 작년과 비교하면 변별 문항이 늘어났고, 풀이 과정을 단계별로 정리하지 못한 학생은 부분 감점을 피하기 어려웠을 것으로 예상됩니다.'",
+  "v4_intro": "▶ 들어가며 — 학부모/학생에게 시험의 첫인상을 전달하는 2~3 문장. 학원 분석 보고서 톤. 예: '이번 영신여고 1학년 수학 중간고사는 단순 계산보다 그래프 해석 능력을 다각도로 평가하는 문제가 다수 출제되었습니다. 작년과 비교하면 변별 문항이 늘어났고, 풀이 과정을 단계별로 정리하지 못한 학생은 부분 감점을 피하기 어려웠을 것으로 예상됩니다.'",
 
   "v4_academy_strategy": [
     {
@@ -464,7 +471,7 @@ const SYSTEM_PROMPT_V4 = `너는 한국 중·고등학교 수학 학원 강사�
       "title": "2. 서술형 단계별 풀이 훈련",
       "body": "..."
     }
-    // 3~5개. 갈수학학원 "1등급을 위한 N가지 전략" 스타일 — 학원 차별화 포인트
+    // 3~5개. "1등급을 위한 N가지 전략" 스타일 — 학원 차별화 포인트 (학원명 명시 X, {학원명} placeholder 사용)
   ],
 
   "v4_difficulty_rows": [
@@ -487,7 +494,7 @@ const SYSTEM_PROMPT_V4 = `너는 한국 중·고등학교 수학 학원 강사�
   "v4_main_analysis": [
     {
       "heading": "1. 유리수와 순환소수 (영역명 — 숫자 prefix)",
-      "body": "이 영역의 출제 분석 2~4 문장. 어떤 개념이 어떻게 출제되었는지, 어떤 함정/특징이 있는지. 갈수학학원 '▶ 출제 핵심 포인트' 스타일."
+      "body": "이 영역의 출제 분석 2~4 문장. 어떤 개념이 어떻게 출제되었는지, 어떤 함정/특징이 있는지. '▶ 출제 핵심 포인트' 스타일."
     }
     // 출제된 주요 영역 3~5개. 영역별 독립 단락.
   ],
@@ -501,7 +508,7 @@ const SYSTEM_PROMPT_V4 = `너는 한국 중·고등학교 수학 학원 강사�
     {
       "question_number": 17,
       "title": "선택형 17번 — 연립방정식 활용 (Lv4, 5점)",
-      "body": "출제 의도, 풀이 핵심, 함정 요소를 3~5 문장으로 자세 해설. 갈수학학원 '▶ 주요 문항 분석' 스타일. 학부모가 '이 문제가 왜 어려운지' 정확히 알 수 있도록."
+      "body": "출제 의도, 풀이 핵심, 함정 요소를 3~5 문장으로 자세 해설. '▶ 주요 문항 분석' 스타일. 학부모가 '이 문제가 왜 어려운지' 정확히 알 수 있도록."
     },
     {
       "question_number": "서술형1",
@@ -1109,13 +1116,29 @@ ${phases}
 
     const raw = JSON.parse(json) as V4Extension;
     const normalized = deepNormalizeMath(raw) as V4Extension;
-    return this.parseV4Response(normalized);
+
+    // 학원명 인식 — input의 academyName 또는 fallback "우리 학원"
+    const academyName = (input as unknown as { academyName?: string | null }).academyName || null;
+    return this.parseV4Response(normalized, academyName);
   }
 
-  /** V4 응답 정규화 — stripRawHtml + stripEnglishEnums 재귀 + 필수 필드 fallback
-   *  raw HTML 색상(span style=color, mark, font) 제거 + 영문 enum 한글 변환 */
-  private parseV4Response(raw: V4Extension): V4Extension {
-    const norm = (v: unknown): string => normalizeText(String(v ?? ''));
+  /** V4 응답 정규화 — stripRawHtml + stripEnglishEnums + 학원명 placeholder 치환 + 필수 필드 fallback
+   *  raw HTML 색상(span style=color, mark, font) 제거 + 영문 enum 한글 변환
+   *  학원명 처리: {학원명} placeholder + 다른 학원명 잔여(갈수학학원 등) → academyName 또는 "우리 학원" */
+  private parseV4Response(raw: V4Extension, academyName: string | null = null): V4Extension {
+    // 학원명 치환 헬퍼 (AI가 placeholder 무시하고 "갈수학학원" 등 직접 적었을 때 강제 치환)
+    const replacement = academyName?.trim() || '우리 학원';
+    const stripAcademy = (text: string): string => {
+      if (!text) return text;
+      let out = text;
+      // 1. AI가 지시한 placeholder 치환
+      out = out.replace(/\{학원명\}/g, replacement);
+      // 2. 알려진 다른 학원명들 (벤치마크 누출) — 강제 치환
+      out = out.replace(/갈수학학원/g, replacement);
+      out = out.replace(/갈수학(?!학원)/g, replacement);
+      return out;
+    };
+    const norm = (v: unknown): string => stripAcademy(normalizeText(String(v ?? '')));
 
     return {
       v4_exam_overview: raw.v4_exam_overview
@@ -1205,10 +1228,12 @@ ${phases}
       grade?: string | null;
       examYear?: number | null;
       examSemester?: number | null;
+      academyName?: string | null;
     });
     const examCategory = examMeta.examCategory || null;
     const grade = examMeta.grade || '';
     const examSemester = examMeta.examSemester || null;
+    const academyName = examMeta.academyName?.trim() || null;
 
     // 다음 시험 식별 (사용자 요청 — 기말 대비 전략의 핵심)
     const nextExamHint = (() => {
@@ -1284,6 +1309,12 @@ ${phases}
 - 최다 난이도: ${peakDiffText}
 - 서술형: ${essaySummary}
 
+## 🏫 학원 정보 (학원명 절대 임의로 만들지 말 것!)
+${academyName
+  ? `- 학원명: **${academyName}** — 본문에 학원 주체를 표현할 때는 \`{학원명}\` placeholder만 사용 (후처리에서 자동 치환됨)`
+  : `- 학원명: **미지정** — 본문에 학원 주체를 표현할 때는 \`{학원명}\` placeholder만 사용 (후처리에서 "우리 학원"으로 치환됨)`}
+- 본문에 "갈수학학원", "ABC학원" 같은 특정 학원명 절대 금지 (다른 학원 마케팅으로 오인됨)
+
 ## 단원별 출제 (이번 시험 출제 범위 = 다음 시험에는 출제 안 될 가능성 높음)
 
 ${topicSummary || '미분류'}
@@ -1306,7 +1337,9 @@ ${questionDetails}
 
 ---
 
-위 데이터로 V4 출력 형식 5개 키를 모두 생성하세요. 갈수학학원 스타일 — 테이블 중심, 직설적, 학원 보고서 톤. JSON만 출력.
+위 데이터로 V4 출력 형식 5개 키를 모두 생성하세요. 학원 분석 보고서 스타일 — 테이블 중심, 직설적, 학원 보고서 톤. JSON만 출력.
+
+⚠️ 학원명 노출 금지: 본문 어디에도 "갈수학학원", "ABC학원" 같은 특정 학원명 절대 금지. 학원 주체는 \`{학원명}\` placeholder로만 표현 (후처리에서 실제 이름으로 치환됨).
 
 ⚠️ 색상 강조 금지: body 안에 \`<span style="color">\`, \`<font>\`, \`<mark>\` 등 raw HTML 색상 절대 사용 금지. 강조는 \`**bold**\`만 사용.
 ⚠️ v4_final_strategy.area는 다음 시험 범위로 작성 (이번 시험 범위 X).`;

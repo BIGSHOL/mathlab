@@ -29,6 +29,17 @@ export async function POST(request: NextRequest, { params }: Params) {
   });
   if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
 
+  // 사용자 소속 지점(학원) 이름 조회 — V4 본문의 {학원명} placeholder 치환에 사용
+  // 없으면 후처리에서 "우리 학원"으로 fallback
+  let academyName: string | null = null;
+  if (user.tenantId) {
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: user.tenantId },
+      select: { name: true },
+    });
+    academyName = tenant?.name?.trim() || null;
+  }
+
   // 최신 분석 결과 조회
   const latestAnalysis = await prisma.examAnalysis.findFirst({
     where: { examPaperId: id },
@@ -101,6 +112,8 @@ export async function POST(request: NextRequest, { params }: Params) {
       grade: examPaper.grade,
       examYear,
       examSemester,
+      // 학원명 (V4 본문 {학원명} placeholder 치환용)
+      academyName,
     } as unknown as Parameters<typeof agent.generateV4Extension>[0]);
 
     // 기존 commentary extension에 V4 필드 머지 저장

@@ -17,9 +17,12 @@
  *  11. ▶ 다음 시험 대비 전략 (영역별 테이블)
  */
 
+import { useMemo } from 'react';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import type { V3Meta, V3ChartImages } from '../v3/V3CommentaryView';
+import { useAuth } from '@/hooks/useAuth';
+import { stripCommentaryAcademyNames } from './helpers';
 import { SectionHeading } from './SectionHeading';
 import { IntroSection } from './IntroSection';
 import { ExamOverviewTable } from './ExamOverviewTable';
@@ -39,7 +42,13 @@ interface V4CommentaryViewProps {
 }
 
 export function V4CommentaryView({ commentary, meta, charts }: V4CommentaryViewProps) {
-  const c = commentary;
+  const { user } = useAuth();
+  // 학원명 deep-strip (기존 데이터의 "갈수학학원" 잔여 + {학원명} placeholder → tenant 이름 or "우리 학원")
+  // 메모이즈 — commentary/tenantName 바뀔 때만 재실행
+  const c = useMemo(
+    () => stripCommentaryAcademyNames(commentary, user?.tenantName ?? null),
+    [commentary, user?.tenantName],
+  );
 
   // 차트 표시 조건
   const showCharts = !!charts && Object.values(charts).some((v) => !!v);

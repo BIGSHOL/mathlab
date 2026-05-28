@@ -299,6 +299,8 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
           grade: detail.grade,
           schoolName: detail.schoolName ?? null,
           analyzedAt: latestAnalysis?.analyzedAt ?? null,
+          // 학원명 — tenant.name (session에서 옴) → V4 본문 {학원명} placeholder 치환
+          academyName: user?.tenantName ?? null,
         },
       });
 

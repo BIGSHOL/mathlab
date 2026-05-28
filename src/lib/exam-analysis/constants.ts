@@ -183,13 +183,14 @@ export const AGENT_PROMPT_VERSIONS: Record<AgentType, string> = {
 };
 
 /**
- * V4 (갈수학학원 스타일) 별도 프롬프트 버전.
+ * V4 (학원 분석 보고서 스타일) 별도 프롬프트 버전.
  * commentary와 독립 — 사용자가 V4 토글 클릭 시 lazy 생성.
  * v1.0.0 (2026-05-27): 5섹션 구조 (exam_overview / difficulty_rows / exam_features / main_analysis / final_strategy)
  * v1.1.0 (2026-05-27): raw HTML 색상 금지 + 다음 시험 인식 (중간→기말 / 기말→다음 학년 / examCategory prompt 전달)
- * v1.2.0 (2026-05-27): 갈수학 일치율 90% — 5개 신규 필드 (v4_intro / v4_academy_strategy / v4_previous_comparison / v4_key_questions / v4_difficulty_rows[].analysis_short / v4_exam_overview.expected_grade_cut) + 9섹션 재정렬 + ✏→▶ 헤딩 변경
+ * v1.2.0 (2026-05-27): 일치율 90% — 5개 신규 필드 (v4_intro / v4_academy_strategy / v4_previous_comparison / v4_key_questions / v4_difficulty_rows[].analysis_short / v4_exam_overview.expected_grade_cut) + 9섹션 재정렬 + ✏→▶ 헤딩 변경
+ * v1.3.0 (2026-05-28): 특정 학원명 노출 금지 + {학원명} placeholder 도입 (tenant.name 자동 치환, 없으면 "우리 학원")
  */
-export const COMMENTARY_V4_PROMPT_VERSION = 'v1.2.0';
+export const COMMENTARY_V4_PROMPT_VERSION = 'v1.3.0';
 
 // ── 템플릿 유형 ──
 export const TEMPLATE_TYPES = ['detailed', 'summary', 'parent', 'print'] as const;

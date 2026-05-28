@@ -22,6 +22,8 @@ export interface NaverV4Meta {
   schoolName: string | null;
   grade: string;
   analyzedAt: string | null;
+  /** 학원명 — V4 본문 {학원명} placeholder 치환에 사용. null이면 "우리 학원" 사용. */
+  academyName?: string | null;
 }
 
 export interface NaverV4ChartUrls {
@@ -103,11 +105,32 @@ function stripLatexForNaver(text: string): string {
   return out;
 }
 
+// ── 학원명 치환 (V4 본문 {학원명} placeholder 또는 기존 분석본의 학원명 잔여 처리) ──
+// 사용자 요청 (2026-05-28): "갈수학학원" 같은 특정 학원명 노출 금지.
+// 모듈 레벨 상태 — buildNaverV4Html 진입 시 setAcademyReplacement()로 설정.
+let _academyReplacement = '우리 학원';
+
+function setAcademyReplacement(name: string | null | undefined): void {
+  _academyReplacement = name?.trim() || '우리 학원';
+}
+
+function stripAcademyNames(text: string): string {
+  if (!text) return text;
+  let out = text;
+  // 1. AI prompt placeholder
+  out = out.replace(/\{학원명\}/g, _academyReplacement);
+  // 2. 벤치마크 누출 학원명 (강제 치환)
+  out = out.replace(/갈수학학원/g, _academyReplacement);
+  out = out.replace(/갈수학(?!학원)/g, _academyReplacement);
+  return out;
+}
+
 // ── 유틸 ──
 
 function escapeHtml(s: string): string {
   // 입력 텍스트에 LaTeX/$ 가 있어도 사용자 화면에서 안 보이도록 사전 처리
-  const sanitized = stripLatexForNaver(joinKoreanCounters(String(s ?? '')));
+  // + 학원명 placeholder/잔여를 tenant 이름 또는 "우리 학원"으로 치환
+  const sanitized = stripAcademyNames(stripLatexForNaver(joinKoreanCounters(String(s ?? ''))));
   return sanitized
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -116,7 +139,7 @@ function escapeHtml(s: string): string {
     .replace(/'/g, '&#39;');
 }
 
-/** **bold** → <strong> (네이버 호환). LaTeX 자동 변환됨 (escapeHtml에서). */
+/** **bold** → <strong> (네이버 호환). LaTeX/학원명 자동 변환됨 (escapeHtml에서). */
 function md(text: string): string {
   return escapeHtml(text).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 }
@@ -144,6 +167,8 @@ export function buildNaverV4Html(args: {
   chartUrls?: NaverV4ChartUrls;
 }): string {
   const { commentary, meta, chartUrls } = args;
+  // 학원명 치환 기준 설정 — tenant 이름 있으면 사용, 없으면 "우리 학원"
+  setAcademyReplacement(meta.academyName);
   const c = commentary;
   const parts: string[] = [];
 

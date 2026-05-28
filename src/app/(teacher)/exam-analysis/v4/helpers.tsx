@@ -11,10 +11,80 @@
 
 import React from 'react';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
+import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import { renderInlineMath } from '@/lib/exam-analysis/rendering';
 
 // V3 helpers 일부만 재export (markdownToHighlighted는 V4 자체 구현 — 자동 색상 강조 X)
 export { normDiff, V3_DIFF_LABELS, V3_DIFF_COLORS } from '../v3/helpers';
+
+// ── 학원명 치환 (V4 전용) ──
+// 사용자 요청 (2026-05-28): 본문에 특정 학원명 ("갈수학학원" 등) 노출 금지.
+// V4 commentary 데이터의 모든 텍스트 필드에서 {학원명} placeholder + 알려진 학원명을 치환.
+// academyName 있으면 그 이름으로, 없으면 "우리 학원"으로.
+
+export function stripAcademyText(text: string, academyName: string | null | undefined): string {
+  if (!text) return text;
+  const replacement = academyName?.trim() || '우리 학원';
+  return text
+    .replace(/\{학원명\}/g, replacement)
+    .replace(/갈수학학원/g, replacement)
+    .replace(/갈수학(?!학원)/g, replacement);
+}
+
+/** V4 commentary 전체에서 학원명을 deep-strip. */
+export function stripCommentaryAcademyNames(
+  c: CommentaryResult,
+  academyName: string | null | undefined,
+): CommentaryResult {
+  const s = (text: string | undefined): string | undefined =>
+    text == null ? text : stripAcademyText(text, academyName);
+
+  return {
+    ...c,
+    v4_exam_overview: c.v4_exam_overview
+      ? {
+          ...c.v4_exam_overview,
+          title: s(c.v4_exam_overview.title) ?? c.v4_exam_overview.title,
+          range: s(c.v4_exam_overview.range) ?? c.v4_exam_overview.range,
+          peak_difficulty: s(c.v4_exam_overview.peak_difficulty) ?? c.v4_exam_overview.peak_difficulty,
+          essay_summary: s(c.v4_exam_overview.essay_summary),
+          expected_grade_cut: s(c.v4_exam_overview.expected_grade_cut),
+          one_liner: s(c.v4_exam_overview.one_liner) ?? c.v4_exam_overview.one_liner,
+        }
+      : c.v4_exam_overview,
+    v4_intro: s(c.v4_intro),
+    v4_academy_strategy: c.v4_academy_strategy?.map((item) => ({
+      title: s(item.title) ?? item.title,
+      body: s(item.body) ?? item.body,
+    })),
+    v4_exam_features: c.v4_exam_features
+      ? {
+          headline: s(c.v4_exam_features.headline) ?? c.v4_exam_features.headline,
+          body: s(c.v4_exam_features.body) ?? c.v4_exam_features.body,
+        }
+      : c.v4_exam_features,
+    v4_main_analysis: c.v4_main_analysis?.map((item) => ({
+      heading: s(item.heading) ?? item.heading,
+      body: s(item.body) ?? item.body,
+    })),
+    v4_previous_comparison: c.v4_previous_comparison
+      ? {
+          headline: s(c.v4_previous_comparison.headline) ?? c.v4_previous_comparison.headline,
+          body: s(c.v4_previous_comparison.body) ?? c.v4_previous_comparison.body,
+        }
+      : c.v4_previous_comparison,
+    v4_key_questions: c.v4_key_questions?.map((kq) => ({
+      ...kq,
+      title: s(kq.title) ?? kq.title,
+      body: s(kq.body) ?? kq.body,
+    })),
+    v4_final_strategy: c.v4_final_strategy?.map((row) => ({
+      area: s(row.area) ?? row.area,
+      current_status: s(row.current_status) ?? row.current_status,
+      action: s(row.action) ?? row.action,
+    })),
+  };
+}
 
 /**
  * V4 markdown bold → <strong> 변환 (자동 키워드 색상 강조 X).
