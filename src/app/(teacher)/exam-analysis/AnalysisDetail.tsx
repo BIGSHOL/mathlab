@@ -222,15 +222,13 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
       container.querySelectorAll('p, h2, h3, td, th, div, span').forEach((el) => {
         const blockEl = el as HTMLElement;
         if (!blockEl.style.textAlign) blockEl.style.textAlign = 'left';
+        // 한글 단어 중간 분리 방지 (네이버 가독성 개선)
+        if (!blockEl.style.wordBreak) blockEl.style.wordBreak = 'keep-all';
       });
       container.querySelectorAll('table').forEach((tbl) => {
         const tableEl = tbl as HTMLTableElement;
         if (!tableEl.style.tableLayout) tableEl.style.tableLayout = 'fixed';
         if (!tableEl.style.borderCollapse) tableEl.style.borderCollapse = 'collapse';
-      });
-      container.querySelectorAll('td, th').forEach((el) => {
-        const cellEl = el as HTMLElement;
-        if (!cellEl.style.wordBreak) cellEl.style.wordBreak = 'keep-all';
       });
 
       try {
@@ -325,17 +323,14 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
       container.querySelectorAll('p, h2, h3, td, th, div, span').forEach((el) => {
         const blockEl = el as HTMLElement;
         if (!blockEl.style.textAlign) blockEl.style.textAlign = 'left';
+        // 모든 inline 텍스트에 word-break: keep-all (한글 단어 중간 분리 방지)
+        if (!blockEl.style.wordBreak) blockEl.style.wordBreak = 'keep-all';
       });
       // 모든 table에 table-layout: fixed 강제 (V3에서 학습한 네이버 호환 핵심)
       container.querySelectorAll('table').forEach((tbl) => {
         const tableEl = tbl as HTMLTableElement;
         if (!tableEl.style.tableLayout) tableEl.style.tableLayout = 'fixed';
         if (!tableEl.style.borderCollapse) tableEl.style.borderCollapse = 'collapse';
-      });
-      // 모든 td에 word-break: keep-all 강제 (한글 단어 분리 방지)
-      container.querySelectorAll('td, th').forEach((el) => {
-        const cellEl = el as HTMLElement;
-        if (!cellEl.style.wordBreak) cellEl.style.wordBreak = 'keep-all';
       });
 
       try {
