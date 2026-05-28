@@ -9,10 +9,22 @@
  * 동일 CommentaryResult 데이터를 다른 표현으로 렌더.
  */
 
+import React from 'react';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
+import { renderInlineMath } from '@/lib/exam-analysis/rendering';
 
-// V3 helpers 재export — V4도 동일 사용
-export { markdownToHighlighted, normDiff, V3_DIFF_LABELS, V3_DIFF_COLORS } from '../v3/helpers';
+// V3 helpers 일부만 재export (markdownToHighlighted는 V4 자체 구현 — 자동 색상 강조 X)
+export { normDiff, V3_DIFF_LABELS, V3_DIFF_COLORS } from '../v3/helpers';
+
+/**
+ * V4 markdown bold → <strong> 변환 (자동 키워드 색상 강조 X).
+ * 사용자 요청 (2026-05-28): V4는 V3의 자동 키워드 색상(기본/표준/서술형/숫자/...) 적용 안 함.
+ * KaTeX 수식은 유지, **bold**는 굵게만, 그 외 단어별 색상 강조 차단.
+ */
+export function markdownToHighlighted(text: string, keyPrefix = ''): React.ReactNode {
+  if (!text) return null;
+  return renderInlineMath(text, keyPrefix || 'v4', { disableHighlight: true });
+}
 
 // ── V4 디자인 토큰 ──
 

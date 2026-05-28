@@ -23,12 +23,15 @@ import 'katex/dist/katex.min.css';
  * @example
  * <p>{renderInlineMath(q.ai_comment, `c-${q.question_number}`)}</p>
  */
-export function renderInlineMath(text: string, keyPrefix = 'm'): ReactNode {
+export function renderInlineMath(text: string, keyPrefix = 'm', options?: { disableHighlight?: boolean }): ReactNode {
   // 영문 enum 방어막: 사용자 노출 직전 한글로 치환
   const normalized = normalizeKoreanLabels(text);
+  // disableHighlight: V4 같이 자동 키워드 색상 강조가 필요 없는 경우 (사용자 요청 2026-05-28)
+  // → highlightText 대신 plain text + markdown bold만 처리
+  const disableHL = options?.disableHighlight === true;
   // `$수식$` 패턴 — 빈 $ 또는 $ 사이에 $ 없는 것만 매칭
   const parts = normalized.split(/(\$[^$\n]+?\$)/g);
-  if (parts.length === 1) return highlightText(normalized);
+  if (parts.length === 1) return disableHL ? renderPlainWithBold(normalized) : highlightText(normalized);
 
   return (
     <>
@@ -54,10 +57,27 @@ export function renderInlineMath(text: string, keyPrefix = 'm'): ReactNode {
             return <Fragment key={`${keyPrefix}-${i}`}>{part}</Fragment>;
           }
         }
-        return <Fragment key={`${keyPrefix}-${i}`}>{highlightText(part)}</Fragment>;
+        return <Fragment key={`${keyPrefix}-${i}`}>{disableHL ? renderPlainWithBold(part) : highlightText(part)}</Fragment>;
       })}
     </>
   );
+}
+
+// ── plain 텍스트 + markdown bold만 처리 (자동 키워드 색상 강조 X) ──
+/**
+ * V4 같이 자동 색상 강조가 필요 없는 곳에 사용.
+ * **bold** → <strong> 단순 변환만. 키워드 패턴 매칭 없음.
+ * 사용자 요청 (2026-05-28): V3/V4 자동 색상 강조 차단.
+ */
+function renderPlainWithBold(text: string): ReactNode {
+  if (!text) return null;
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={`pwb-b-${i}`} className="font-bold">{part.slice(2, -2)}</strong>;
+    }
+    return <Fragment key={`pwb-t-${i}`}>{part}</Fragment>;
+  });
 }
 
 // ── AI 총평 텍스트 하이라이트 ──

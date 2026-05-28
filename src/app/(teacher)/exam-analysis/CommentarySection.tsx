@@ -65,16 +65,45 @@ export function CommentarySection({
   const [viewMode, setViewMode] = useState<ViewMode>('v3');
   const [v4Generating, setV4Generating] = useState(false);
   const [v4ElapsedSeconds, setV4ElapsedSeconds] = useState(0);
+  const [v4Logs, setV4Logs] = useState<Array<{ time: string; msg: string }>>([]);
 
-  // V4 생성 진행 시간 카운터
+  // V4 생성 진행 시간 카운터 + 단계별 자동 로그 (분석 progress 패턴)
   useEffect(() => {
     if (!v4Generating) {
       setV4ElapsedSeconds(0);
+      setV4Logs([]);
       return;
     }
     const id = setInterval(() => setV4ElapsedSeconds((p) => p + 1), 1000);
     return () => clearInterval(id);
   }, [v4Generating]);
+
+  // V4 단계별 로그 자동 추가 (hh:mm:ss 형식, 분석 progress와 동일 톤)
+  useEffect(() => {
+    if (!v4Generating) return;
+    const nowHHMMSS = () => {
+      const d = new Date();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    };
+    const milestones: Array<{ at: number; msg: string }> = [
+      { at: 1, msg: 'Claude Sonnet 4.6 호출 시작' },
+      { at: 5, msg: '시험 메타 + 단원별 출제 분석 입력 중' },
+      { at: 10, msg: '9섹션 구조 생성 중 (들어가며 · 시험 개요 · 학원 전략)' },
+      { at: 18, msg: '문제 번호별 난이도 · 한 줄 해설 생성 중' },
+      { at: 28, msg: '출제 특징 · 핵심 포인트 단락 작성 중' },
+      { at: 38, msg: '이전 시험 비교 · 킬러 문항 분석 중' },
+      { at: 48, msg: '다음 시험 대비 전략 작성 중' },
+      { at: 58, msg: 'JSON 응답 정규화 + DB 저장 중' },
+    ];
+    const matched = milestones.find((m) => m.at === v4ElapsedSeconds);
+    if (matched) {
+      setV4Logs((prev) => {
+        if (prev.find((p) => p.msg === matched.msg)) return prev;
+        return [...prev, { time: nowHHMMSS(), msg: matched.msg }];
+      });
+    }
+  }, [v4Generating, v4ElapsedSeconds]);
 
   // V4 lazy 생성 핸들러
   const handleGenerateV4 = async (force = false) => {
@@ -247,13 +276,30 @@ export function CommentarySection({
           hasV4Data(commentary) ? (
             <V4CommentaryView commentary={commentary} questions={allQuestions} meta={meta} charts={v3Charts} />
           ) : (
-            <div className="p-10 flex flex-col items-center justify-center bg-amber-50/50">
+            <div className="p-8 bg-amber-50/50">
               {v4Generating ? (
-                <>
+                <div className="flex flex-col items-center">
                   <div className="animate-spin w-8 h-8 border-3 border-amber-700 border-t-transparent rounded-full mb-4" />
                   <p className="text-sm font-bold text-amber-900 mb-1">V4 (갈수학학원 스타일) 생성 중...</p>
-                  <p className="text-xs text-amber-700">{v4ElapsedSeconds}초 경과 · 평균 30~60초 소요</p>
-                </>
+                  <p className="text-xs text-amber-700 mb-4">{v4ElapsedSeconds}초 경과 · 평균 30~60초 소요</p>
+                  {/* 분석 progress와 동일 톤 실시간 로그 panel */}
+                  {v4Logs.length > 0 && (
+                    <div className="w-full max-w-2xl">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[11px] font-semibold text-amber-800">실행 로그</span>
+                        <span className="text-[10px] text-amber-600">{v4Logs.length}개 항목</span>
+                      </div>
+                      <div className="bg-slate-900 text-slate-100 rounded-sm px-3 py-2 max-h-40 overflow-y-auto font-mono text-[11px] leading-relaxed">
+                        {v4Logs.map((entry, idx) => (
+                          <div key={idx} className="flex gap-2">
+                            <span className="text-slate-400 shrink-0">{entry.time}</span>
+                            <span className="text-slate-100">{entry.msg}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <>
                   <Sparkles className="w-8 h-8 text-amber-700 mb-3" />
