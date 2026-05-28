@@ -188,7 +188,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
           analyzedAt: latestAnalysis?.analyzedAt ?? null,
         },
       });
-      // RichText 복사 (ArticleEditorModal과 동일 패턴)
+      // RichText 복사 — V2 prepareForNaver 패턴 차용 (element별 inline style 강제)
       const container = document.createElement('div');
       container.innerHTML = html;
       container.style.position = 'fixed';
@@ -196,7 +196,29 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
       container.style.top = '0';
       container.style.opacity = '0';
       container.style.width = '720px';
+      container.style.fontFamily = '"NanumGothic", "나눔고딕", "맑은 고딕", "Noto Serif KR", sans-serif';
+      container.style.fontSize = '15px';
+      container.style.fontWeight = 'normal';
+      container.style.lineHeight = '1.7';
+      container.style.color = '#333';
+      container.style.textAlign = 'left';
       document.body.appendChild(container);
+
+      // V2 패턴: element별 inline style 강제 (네이버가 컨테이너 스타일 무시)
+      container.querySelectorAll('p, h2, h3, td, th, div, span').forEach((el) => {
+        const blockEl = el as HTMLElement;
+        if (!blockEl.style.textAlign) blockEl.style.textAlign = 'left';
+      });
+      container.querySelectorAll('table').forEach((tbl) => {
+        const tableEl = tbl as HTMLTableElement;
+        if (!tableEl.style.tableLayout) tableEl.style.tableLayout = 'fixed';
+        if (!tableEl.style.borderCollapse) tableEl.style.borderCollapse = 'collapse';
+      });
+      container.querySelectorAll('td, th').forEach((el) => {
+        const cellEl = el as HTMLElement;
+        if (!cellEl.style.wordBreak) cellEl.style.wordBreak = 'keep-all';
+      });
+
       try {
         const range = document.createRange();
         range.selectNodeContents(container);
@@ -252,15 +274,40 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
         },
       });
 
-      // RichText 복사 (V3와 동일 패턴)
+      // RichText 복사 — V2 prepareForNaver 패턴 차용 (네이버가 컨테이너 스타일 무시 → element별 inline 강제)
       const container = document.createElement('div');
       container.innerHTML = html;
+      // 컨테이너 기본 스타일 (V2 handleCopyRichText 동일)
       container.style.position = 'fixed';
       container.style.left = '-9999px';
       container.style.top = '0';
       container.style.opacity = '0';
       container.style.width = '720px';
+      container.style.fontFamily = '"NanumGothic", "나눔고딕", "맑은 고딕", "Noto Serif KR", sans-serif';
+      container.style.fontSize = '15px';
+      container.style.fontWeight = 'normal';
+      container.style.lineHeight = '1.7';
+      container.style.color = '#333';
+      container.style.textAlign = 'left';
       document.body.appendChild(container);
+
+      // V2 패턴: 네이버가 컨테이너 스타일 무시 → 개별 block 요소에 inline style 강제
+      container.querySelectorAll('p, h2, h3, td, th, div, span').forEach((el) => {
+        const blockEl = el as HTMLElement;
+        if (!blockEl.style.textAlign) blockEl.style.textAlign = 'left';
+      });
+      // 모든 table에 table-layout: fixed 강제 (V3에서 학습한 네이버 호환 핵심)
+      container.querySelectorAll('table').forEach((tbl) => {
+        const tableEl = tbl as HTMLTableElement;
+        if (!tableEl.style.tableLayout) tableEl.style.tableLayout = 'fixed';
+        if (!tableEl.style.borderCollapse) tableEl.style.borderCollapse = 'collapse';
+      });
+      // 모든 td에 word-break: keep-all 강제 (한글 단어 분리 방지)
+      container.querySelectorAll('td, th').forEach((el) => {
+        const cellEl = el as HTMLElement;
+        if (!cellEl.style.wordBreak) cellEl.style.wordBreak = 'keep-all';
+      });
+
       try {
         const range = document.createRange();
         range.selectNodeContents(container);
