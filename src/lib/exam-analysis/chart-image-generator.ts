@@ -28,9 +28,16 @@ const CHART_HEIGHT = 420;
 const FONT_FAMILY = "'Noto Sans KR', sans-serif";
 
 function svgWrap(inner: string, width = CHART_WIDTH, height = CHART_HEIGHT): string {
+  // v1.1 (2026-05-28): 배경에 미세 그라데이션 + 보더로 카드 느낌 강화
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+<defs>
+  <linearGradient id="chart-bg" x1="0%" y1="0%" x2="0%" y2="100%">
+    <stop offset="0%" stop-color="#FFFFFF"/>
+    <stop offset="100%" stop-color="#FAFBFC"/>
+  </linearGradient>
+</defs>
 <style>text { font-family: ${FONT_FAMILY}; }</style>
-<rect width="${width}" height="${height}" fill="white" rx="12"/>
+<rect width="${width}" height="${height}" fill="url(#chart-bg)" rx="12" stroke="#E5E7EB" stroke-width="1"/>
 ${inner}
 </svg>`;
 }
@@ -49,6 +56,16 @@ const DIFFICULTY_LEVEL_LABELS: Record<string, string> = {
   '5': '최고난도 (Level 5)',
 };
 
+/** 컬러 hex → 더 밝은 변형 (그라데이션 시작색). 단순 RGB shift. */
+function lightenColor(hex: string, amount = 0.25): string {
+  const m = hex.replace('#', '').match(/.{1,2}/g);
+  if (!m) return hex;
+  const [r, g, b] = m.map((x) => parseInt(x, 16));
+  const lighten = (c: number) => Math.min(255, Math.round(c + (255 - c) * amount));
+  const toHex = (c: number) => c.toString(16).padStart(2, '0');
+  return '#' + toHex(lighten(r)) + toHex(lighten(g)) + toHex(lighten(b));
+}
+
 export function generateDifficultyDonutSvg(
   distribution: Record<string, number>,
 ): string {
@@ -61,14 +78,51 @@ export function generateDifficultyDonutSvg(
       + (lv === '4' ? (distribution.reasoning || 0) : 0)
       + (lv === '5' ? (distribution.creative || 0) : 0),
     color: DIFFICULTY_COLORS[lv] || '#94A3B8',
+    level: lv,
   })).filter((d) => d.value > 0);
 
   const total = data.reduce((s, d) => s + d.value, 0);
   if (total === 0) return svgWrap('<text x="400" y="250" text-anchor="middle" font-size="18" fill="#4B5563">데이터 없음</text>');
 
-  const cx = 240, cy = 200, outerR = 130, innerR = 70;
+  // 차트 크기 확대 + 위치 조정 (이전 240,200,130,70 → 260,220,150,80)
+  const cx = 260, cy = 220, outerR = 150, innerR = 88;
   let startAngle = -Math.PI / 2;
   const arcs: string[] = [];
+
+  // ── SVG defs: 그라데이션 5종 + 드롭 섀도우 필터 ──
+  const defs: string[] = ['<defs>'];
+  for (const d of data) {
+    const lightColor = lightenColor(d.color, 0.3);
+    defs.push(
+      `<linearGradient id="grad-diff-${d.level}" x1="0%" y1="0%" x2="100%" y2="100%">` +
+        `<stop offset="0%" stop-color="${lightColor}"/>` +
+        `<stop offset="100%" stop-color="${d.color}"/>` +
+      `</linearGradient>`,
+    );
+  }
+  // 드롭 섀도우 — 도넛에 깊이감
+  defs.push(
+    `<filter id="donut-shadow" x="-20%" y="-20%" width="140%" height="140%">` +
+      `<feGaussianBlur in="SourceAlpha" stdDeviation="3"/>` +
+      `<feOffset dx="0" dy="2" result="offsetblur"/>` +
+      `<feComponentTransfer><feFuncA type="linear" slope="0.18"/></feComponentTransfer>` +
+      `<feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>` +
+    `</filter>`,
+  );
+  // 텍스트 가독성용 미세 그림자 (퍼센트 라벨)
+  defs.push(
+    `<filter id="text-shadow" x="-50%" y="-50%" width="200%" height="200%">` +
+      `<feGaussianBlur in="SourceAlpha" stdDeviation="0.6"/>` +
+      `<feOffset dx="0" dy="0.5"/>` +
+      `<feComponentTransfer><feFuncA type="linear" slope="0.45"/></feComponentTransfer>` +
+      `<feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>` +
+    `</filter>`,
+  );
+  defs.push('</defs>');
+  arcs.push(defs.join(''));
+
+  // 도넛 그룹 (필터 적용)
+  arcs.push(`<g filter="url(#donut-shadow)">`);
 
   for (const d of data) {
     const sliceAngle = (d.value / total) * 2 * Math.PI;
@@ -84,37 +138,59 @@ export function generateDifficultyDonutSvg(
     const x4 = cx + innerR * Math.cos(startAngle);
     const y4 = cy + innerR * Math.sin(startAngle);
 
-    arcs.push(`<path d="M${x1},${y1} A${outerR},${outerR} 0 ${largeArc},1 ${x2},${y2} L${x3},${y3} A${innerR},${innerR} 0 ${largeArc},0 ${x4},${y4} Z" fill="${d.color}" stroke="white" stroke-width="2"/>`);
+    arcs.push(
+      `<path d="M${x1},${y1} A${outerR},${outerR} 0 ${largeArc},1 ${x2},${y2} L${x3},${y3} A${innerR},${innerR} 0 ${largeArc},0 ${x4},${y4} Z" ` +
+      `fill="url(#grad-diff-${d.level})" stroke="white" stroke-width="3" stroke-linejoin="round"/>`,
+    );
+    startAngle = endAngle;
+  }
+  arcs.push('</g>');
 
-    // 퍼센트 라벨
+  // 퍼센트 라벨 (별도 그룹 — shadow filter 미적용)
+  startAngle = -Math.PI / 2;
+  for (const d of data) {
+    const sliceAngle = (d.value / total) * 2 * Math.PI;
     const midAngle = startAngle + sliceAngle / 2;
     const labelR = (outerR + innerR) / 2;
     const lx = cx + labelR * Math.cos(midAngle);
     const ly = cy + labelR * Math.sin(midAngle);
     const pct = Math.round((d.value / total) * 100);
-    if (pct >= 5) {
-      arcs.push(`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="600" fill="white">${pct}%</text>`);
+    if (pct >= 4) {
+      arcs.push(
+        `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central" font-size="16" font-weight="800" fill="white" filter="url(#text-shadow)">${pct}%</text>`,
+      );
     }
-
-    startAngle = endAngle;
+    startAngle += sliceAngle;
   }
 
-  // 중앙 텍스트
-  arcs.push(`<text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="11" fill="#4B5563">총</text>`);
-  arcs.push(`<text x="${cx}" y="${cy + 12}" text-anchor="middle" font-size="20" font-weight="700" fill="#374151">${total}문항</text>`);
+  // 중앙 텍스트 (더 크고 명확)
+  arcs.push(`<text x="${cx}" y="${cy - 10}" text-anchor="middle" font-size="11" fill="#94A3B8" font-weight="500" letter-spacing="0.1em">TOTAL</text>`);
+  arcs.push(`<text x="${cx}" y="${cy + 18}" text-anchor="middle" font-size="34" font-weight="800" fill="#1F2937">${total}</text>`);
+  arcs.push(`<text x="${cx}" y="${cy + 38}" text-anchor="middle" font-size="11" fill="#64748B" font-weight="600">문항</text>`);
 
-  // 제목
-  arcs.push(`<text x="${cx}" y="28" text-anchor="middle" font-size="16" font-weight="700" fill="#374151">난이도 분포</text>`);
+  // 제목 (왼쪽 위, 강조 라인 추가)
+  arcs.push(`<rect x="32" y="26" width="4" height="20" rx="2" fill="#3B82F6"/>`);
+  arcs.push(`<text x="46" y="42" font-size="18" font-weight="700" fill="#1F2937">난이도 분포</text>`);
 
-  // 범례
-  const legendX = 440;
-  let legendY = 80;
+  // 범례 (우측, 카드 형태) — rect 더 넓게 + 둥글게
+  const legendX = 460;
+  let legendY = 100;
+  const swatchSize = 14;
   for (const d of data) {
     const pct = Math.round((d.value / total) * 100);
-    arcs.push(`<rect x="${legendX}" y="${legendY - 6}" width="12" height="12" rx="2" fill="${d.color}"/>`);
-    arcs.push(`<text x="${legendX + 18}" y="${legendY + 3}" font-size="11" fill="#374151">${escapeXml(d.label)}</text>`);
-    arcs.push(`<text x="${legendX + 18}" y="${legendY + 17}" font-size="10" fill="#4B5563">${d.value}문항 (${pct}%)</text>`);
-    legendY += 38;
+    // 색상 swatch (둥근 사각형 + 미세 보더)
+    arcs.push(
+      `<rect x="${legendX}" y="${legendY - swatchSize / 2 - 2}" width="${swatchSize}" height="${swatchSize}" rx="3" fill="url(#grad-diff-${d.level})" stroke="${d.color}" stroke-width="0.5"/>`,
+    );
+    // 라벨 (큰 글씨)
+    arcs.push(
+      `<text x="${legendX + swatchSize + 10}" y="${legendY + 1}" font-size="13" font-weight="600" fill="#1F2937">${escapeXml(d.label)}</text>`,
+    );
+    // 보조 정보 (작은 글씨)
+    arcs.push(
+      `<text x="${legendX + swatchSize + 10}" y="${legendY + 17}" font-size="11" fill="#94A3B8" font-weight="500">${d.value}문항 · ${pct}%</text>`,
+    );
+    legendY += 40;
   }
 
   return svgWrap(arcs.join('\n'));
