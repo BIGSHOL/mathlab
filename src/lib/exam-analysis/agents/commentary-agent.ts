@@ -216,8 +216,18 @@ export interface CommentaryResult {
     avg_difficulty_label: string;   // "어려움" (정성)
     peak_difficulty: string;        // "Lv4 심화 6문항"
     essay_summary?: string;     // "서술형 3문항 · 35점" 또는 null
+    expected_grade_cut?: string;    // "예상 1등급 컷: 88점 / 2등급: 78점" (v1.2.0 추가)
     one_liner: string;          // 한 줄 요약 — "변별력 위주 출제, 응용 문제 비중 높음"
   };
+
+  /** V4 들어가며 — 시험 인상 전달 단락 (v1.2.0 추가, 갈수학 ▶ 들어가며) */
+  v4_intro?: string;
+
+  /** V4 학원 차별화 전략 — N가지 학원 마케팅 포인트 (v1.2.0 추가, 갈수학 "1등급을 위한 학원의 N가지 전략") */
+  v4_academy_strategy?: Array<{
+    title: string;              // "1. 단원별 핵심 유형 완전 마스터"
+    body: string;               // 짧은 설명 (1~2 문장)
+  }>;
 
   /** V4 문제 번호별 난이도/단원 매핑 (행 색상 코딩) */
   v4_difficulty_rows?: Array<{
@@ -226,6 +236,7 @@ export interface CommentaryResult {
     sub_topic?: string;         // 세부 개념 (선택)
     difficulty: '1' | '2' | '3' | '4' | '5';
     points: number;
+    analysis_short?: string;    // 한 줄 해설 (v1.2.0 추가, 갈수학 "문항 분석" 컬럼)
   }>;
 
   /** V4 출제 특징 요약 (회색 박스 안 자연 단락) */
@@ -240,11 +251,27 @@ export interface CommentaryResult {
     body: string;               // 영역별 2~4 문장 분석
   }>;
 
+  /** V4 이전 시험 비교/대조 (v1.2.0 추가, 갈수학 ▶ 이전 시험과의 비교/대조)
+   * AI가 학교/학년 표준 진도와 동일 시험 분포를 비교 분석. 데이터 없으면 hidden. */
+  v4_previous_comparison?: {
+    headline: string;           // "작년 대비 변별력 강화, 서술형 비중 5%p 증가"
+    body: string;               // 2~3 문장 비교 분석
+  };
+
+  /** V4 주요 킬러 문항 분석 — 특정 문항별 자세 해설 (v1.2.0 추가, 갈수학 ▶ 주요 문항 분석)
+   * v4_main_analysis가 영역별이라면 이것은 특정 번호 3~5개 골라 자세 분석.
+   * 학부모가 "어떤 번호가 어떻게 어려운지" 정확히 파악 가능. */
+  v4_key_questions?: Array<{
+    question_number: string | number;
+    title: string;              // "선택형 17번 — 이차함수 그래프 평행이동 (Lv4, 5점)"
+    body: string;               // 자세한 출제 의도/풀이 포인트/함정 (3~5 문장)
+  }>;
+
   /** V4 기말 대비 전략 — 영역별 현재 상태 + 권장 액션 (표) */
   v4_final_strategy?: Array<{
-    area: string;               // "수와 식의 계산"
-    current_status: string;     // "기본 개념 익숙"
-    action: string;             // "심화 응용 문제 반복 + 계산 정확도 점검"
+    area: string;               // "다음 시험: 일차함수와 그래프"
+    current_status: string;     // "현재 학습 상태"
+    action: string;             // "권장 학습 액션"
   }>;
 }
 
@@ -268,9 +295,13 @@ type V3Extension = Pick<
 export type V4Extension = Pick<
   CommentaryResult,
   | 'v4_exam_overview'
+  | 'v4_intro'
+  | 'v4_academy_strategy'
   | 'v4_difficulty_rows'
   | 'v4_exam_features'
   | 'v4_main_analysis'
+  | 'v4_previous_comparison'
+  | 'v4_key_questions'
   | 'v4_final_strategy'
 >;
 
@@ -392,64 +423,101 @@ const SYSTEM_PROMPT_V3 = `너는 한국 중·고등학교 수학 시험 분석�
 
 학부모가 읽는다는 전제. 어려운 입시 용어를 풀어쓰기. 데이터는 반드시 본문에 인용. "이번 시험은 어렵다"가 아니라 "**88점**이 1등급 컷이다" 식.`;
 
-// ── V4 시스템 프롬프트 (갈수학학원 스타일 — 테이블 중심) ──
-// 사용자 벤치마킹 요청 (2026-05-27). 한국 학원 분석 블로그 톤 강제.
-// V3 매거진 톤과 완전히 다른 출력 형식 — 5섹션 구조 명확.
+// ── V4 시스템 프롬프트 (갈수학학원 스타일 — 테이블 중심, 학원 분석 보고서) ──
+// 사용자 벤치마킹 요청 (2026-05-27). v1.2.0 — 갈수학학원 블로그와 일치율 90% 목표.
+// 9섹션 구조 (들어가며 / 시험개요+1등급컷 / 학원전략 / 문제난이도 / 출제특징 / 출제핵심포인트 / 이전시험비교 / 주요문항분석 / 기말대비전략)
 
-const SYSTEM_PROMPT_V4 = `너는 한국 중·고등학교 수학 시험 분석가다. 학원이 학부모/학생에게 보여줄 **테이블 중심 분석 보고서**를 작성한다.
+const SYSTEM_PROMPT_V4 = `너는 한국 중·고등학교 수학 학원 강사다. 학원 블로그에 게시할 **시험 기출 분석 글**을 작성한다.
 
-V3는 NYT Science 매거진 톤이지만 V4는 **갈수학학원 블로그 스타일**이다. 차이점:
-- 매거진 X / **분석 보고서 톤** O
-- 텍스트 단락 위주 X / **테이블 + 단락 결합** O
-- 추상적 키커 X / **직설적 정보 정리** O
+갈수학학원(실제 한국 학원)의 블로그 스타일을 정확히 재현한다. 특징:
+- **학원 강사가 학부모에게 직접 설명하는 톤** (매거진 X, 보고서 톤 O)
+- **테이블 + 자유 단락 결합** (모든 정보를 표로 X — 단락도 풍부)
+- **특정 킬러 문항을 골라서 자세 해설** (영역별 일반 분석 + 문항별 구체 분석)
+- **이전 시험과의 비교/대조** (작년 대비, 학년 진도 흐름)
+- **학원 차별화 전략** (이 학원만의 강점 5가지)
 
-## 출력 형식 — 오직 아래 5개 키를 모두 포함한 JSON 객체 (코드펜스/설명문 금지)
+## 출력 형식 — 9개 키 모두 포함한 JSON 객체 (코드펜스/설명문 금지)
 
 {
   "v4_exam_overview": {
-    "title": "시험 제목 (학교 + 학년 + 시험명, 예: 영신여고 1학년 1학기 중간고사)",
+    "title": "학교 + 학년 + 시험명 (예: 영신여고 1학년 1학기 중간고사)",
     "grade": "학년 (예: 고1)",
     "school": "학교명 또는 null",
-    "range": "출제 범위 — 단원명을 ' · '로 연결 (예: 수와 식의 계산 · 일차방정식 · 일차부등식)",
+    "range": "출제 범위 — 단원명 ' · '로 연결 (예: 수와 식의 계산 · 일차방정식 · 일차부등식)",
     "total_questions": 21,
     "total_points": 100,
-    "avg_difficulty_label": "정성 라벨 (매우 쉬움 / 쉬움 / 보통 / 어려움 / 매우 어려움)",
-    "peak_difficulty": "예: Lv4 심화 6문항 (가장 많이 출제된 난이도 등급)",
-    "essay_summary": "예: 서술형 3문항 · 35점 — 서술형 없으면 null",
-    "one_liner": "이번 시험의 정체를 한 줄로 (예: 변별력 위주 출제, 응용 문제 비중 높음)"
+    "avg_difficulty_label": "정성 라벨 (매우 쉬움/쉬움/보통/어려움/매우 어려움)",
+    "peak_difficulty": "Lv4 심화 6문항 (가장 많이 출제된 등급)",
+    "essay_summary": "서술형 3문항 · 35점 (없으면 null)",
+    "expected_grade_cut": "예상 1등급 컷: 88점 / 2등급: 78점 (학교 평균 추정 기반)",
+    "one_liner": "한 줄 요약 — 변별력 위주, 응용 비중 높음"
   },
+
+  "v4_intro": "▶ 들어가며 — 학부모/학생에게 시험의 첫인상을 전달하는 2~3 문장. 갈수학학원 톤. 예: '이번 영신여고 1학년 수학 중간고사는 단순 계산보다 그래프 해석 능력을 다각도로 평가하는 문제가 다수 출제되었습니다. 작년과 비교하면 변별 문항이 늘어났고, 풀이 과정을 단계별로 정리하지 못한 학생은 부분 감점을 피하기 어려웠을 것으로 예상됩니다.'",
+
+  "v4_academy_strategy": [
+    {
+      "title": "1. 단원별 핵심 유형 완전 마스터",
+      "body": "이 학원에서 제공하는 차별화 학습 방법 1~2 문장. 학부모 마케팅 톤."
+    },
+    {
+      "title": "2. 서술형 단계별 풀이 훈련",
+      "body": "..."
+    }
+    // 3~5개. 갈수학학원 "1등급을 위한 N가지 전략" 스타일 — 학원 차별화 포인트
+  ],
 
   "v4_difficulty_rows": [
     {
       "question_number": 1,
-      "topic": "단원/세부 개념 (예: 일차방정식의 활용 — 거리·속력·시간)",
-      "sub_topic": "더 자세한 설명 (선택, 없으면 생략)",
+      "topic": "단원 — 핵심 개념 (예: 유리수와 순환소수 — 유리수)",
+      "sub_topic": "세부 설명 (선택)",
       "difficulty": "1|2|3|4|5",
-      "points": 4
+      "points": 4,
+      "analysis_short": "한 줄 해설 (예: 기본 정의 확인 — 정확한 암기로 안전 득점)"
     }
-    // ... 모든 문항 N개. question_number 순서대로.
+    // 모든 문항 N개. question_number 순서대로.
   ],
 
   "v4_exam_features": {
-    "headline": "출제 특징 한 줄 강조 (예: 표준 이상 난이도가 67%, 변별력 위주)",
-    "body": "2~3 문장 분석 단락. 데이터 기반 설명. **강조는 markdown bold** 사용."
+    "headline": "출제 특징 한 줄 강조 (예: Lv1~Lv2 기본·표준 문항이 전체의 57%, 서술형 35점이 실질 변별 구간)",
+    "body": "2~3 문장 분석 단락. 데이터 기반."
   },
 
   "v4_main_analysis": [
     {
-      "heading": "1. 수와 식의 계산 (영역명 — 숫자 prefix)",
-      "body": "이 영역의 출제 분석 2~4 문장. 어떤 개념이 어떻게 출제되었는지, 어떤 함정/특징이 있는지."
+      "heading": "1. 유리수와 순환소수 (영역명 — 숫자 prefix)",
+      "body": "이 영역의 출제 분석 2~4 문장. 어떤 개념이 어떻게 출제되었는지, 어떤 함정/특징이 있는지. 갈수학학원 '▶ 출제 핵심 포인트' 스타일."
     }
-    // ... 출제된 주요 영역 3~5개. 영역별로 독립 단락.
+    // 출제된 주요 영역 3~5개. 영역별 독립 단락.
+  ],
+
+  "v4_previous_comparison": {
+    "headline": "작년 동일 시험 대비 비교 한 줄 (예: 작년 대비 Lv4 비중 +10%p, 서술형 배점 +5점)",
+    "body": "2~3 문장. 이전 시험과의 변화/유사점. 학년 진도 흐름 반영. 데이터 없으면 학년 표준 진도 기반 추정."
+  },
+
+  "v4_key_questions": [
+    {
+      "question_number": 17,
+      "title": "선택형 17번 — 연립방정식 활용 (Lv4, 5점)",
+      "body": "출제 의도, 풀이 핵심, 함정 요소를 3~5 문장으로 자세 해설. 갈수학학원 '▶ 주요 문항 분석' 스타일. 학부모가 '이 문제가 왜 어려운지' 정확히 알 수 있도록."
+    },
+    {
+      "question_number": "서술형1",
+      "title": "서술형 1번 — 다항식의 계산 전 과정 서술 (Lv3, 13점)",
+      "body": "..."
+    }
+    // 킬러 문항 3~5개. Lv3~Lv5 + 서술형 우선 선정.
   ],
 
   "v4_final_strategy": [
     {
-      "area": "다음 시험 단원 (예: 일차함수와 그래프 — 다음 단원)",
-      "current_status": "이번 시험 영역과의 연계 (예: 연립방정식 활용 능력이 일차함수 그래프 해석의 전제)",
-      "action": "다음 시험 대비 액션 (예: 일차함수 그래프 작도 + 식 변환 반복 학습)"
+      "area": "다음 시험에 새로 출제될 단원 (예: 일차함수와 그래프)",
+      "current_status": "이번 시험에서 보인 학생 상태와 다음 단원과의 연계",
+      "action": "구체 학습 액션"
     }
-    // ... 다음 시험을 가정한 영역별 3~5개.
+    // 다음 시험 가정 영역별 3~5개.
   ]
 }
 
@@ -1063,8 +1131,18 @@ ${phases}
             essay_summary: raw.v4_exam_overview.essay_summary
               ? norm(raw.v4_exam_overview.essay_summary)
               : undefined,
+            expected_grade_cut: raw.v4_exam_overview.expected_grade_cut
+              ? norm(raw.v4_exam_overview.expected_grade_cut)
+              : undefined,
             one_liner: norm(raw.v4_exam_overview.one_liner),
           }
+        : undefined,
+      v4_intro: raw.v4_intro ? norm(raw.v4_intro) : undefined,
+      v4_academy_strategy: Array.isArray(raw.v4_academy_strategy)
+        ? raw.v4_academy_strategy.map((s) => ({
+            title: norm(s.title),
+            body: norm(s.body),
+          }))
         : undefined,
       v4_difficulty_rows: Array.isArray(raw.v4_difficulty_rows)
         ? raw.v4_difficulty_rows.map((r) => ({
@@ -1075,6 +1153,7 @@ ${phases}
               ? String(r.difficulty)
               : '3') as '1' | '2' | '3' | '4' | '5',
             points: Number(r.points) || 0,
+            analysis_short: r.analysis_short ? norm(r.analysis_short) : undefined,
           }))
         : undefined,
       v4_exam_features: raw.v4_exam_features
@@ -1087,6 +1166,19 @@ ${phases}
         ? raw.v4_main_analysis.map((m) => ({
             heading: norm(m.heading),
             body: norm(m.body),
+          }))
+        : undefined,
+      v4_previous_comparison: raw.v4_previous_comparison
+        ? {
+            headline: norm(raw.v4_previous_comparison.headline),
+            body: norm(raw.v4_previous_comparison.body),
+          }
+        : undefined,
+      v4_key_questions: Array.isArray(raw.v4_key_questions)
+        ? raw.v4_key_questions.map((kq) => ({
+            question_number: kq.question_number ?? '',
+            title: norm(kq.title),
+            body: norm(kq.body),
           }))
         : undefined,
       v4_final_strategy: Array.isArray(raw.v4_final_strategy)

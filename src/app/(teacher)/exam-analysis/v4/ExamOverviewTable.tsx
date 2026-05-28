@@ -36,6 +36,13 @@ export function ExamOverviewTable({ overview }: ExamOverviewTableProps) {
     rows.push({ label: '서술형', value: overview.essay_summary });
   }
 
+  if (overview.expected_grade_cut) {
+    rows.push({
+      label: '예상 등급 컷',
+      value: <strong>{overview.expected_grade_cut}</strong>,
+    });
+  }
+
   rows.push({
     label: '한 줄 요약',
     value: <strong>{overview.one_liner}</strong>,

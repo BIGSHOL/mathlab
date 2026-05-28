@@ -1084,7 +1084,7 @@ body {
 /* V4 섹션 */
 .v4-section { margin-bottom: 36px; }
 
-/* V4 ✏ 헤딩 */
+/* V4 ▶ 헤딩 (v1.2.0: ✏ → ▶ 검정 삼각형, 갈수학학원 스타일) */
 .v4-heading {
   display: flex;
   align-items: baseline;
@@ -1094,8 +1094,8 @@ body {
   border-bottom: 1px solid #E5E5E5;
 }
 .v4-heading-icon {
-  font-size: 18px;
-  color: #8B4513;
+  font-size: 14px;
+  color: #1A1A1A;
   line-height: 1;
 }
 .v4-heading-text {
@@ -1326,6 +1326,119 @@ body {
 .v4-strategy-table td strong { font-weight: 700; }
 .v4-strategy-area { background: #F8F8F8; }
 
+/* V4 들어가며 박스 (v1.2.0) */
+.v4-intro-box {
+  background: #FFF8E0;
+  border: 1px solid #FFD700;
+  border-left: 4px solid #8B4513;
+  padding: 18px 22px;
+  border-radius: 4px;
+}
+.v4-intro-box p {
+  font-family: var(--font-serif-kr, 'Noto Serif KR', serif);
+  font-size: 15px;
+  line-height: 1.85;
+  color: #1A1A1A;
+  margin: 0;
+  word-break: keep-all;
+}
+.v4-intro-box p strong { font-weight: 700; }
+
+/* V4 학원 차별화 전략 (v1.2.0) — 분홍 톤 카드 */
+.v4-academy-strategy { display: flex; flex-direction: column; gap: 10px; }
+.v4-strategy-row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  background: #FFF4F4;
+  border: 1px solid #FFD0D0;
+  border-radius: 6px;
+  padding: 14px 16px;
+}
+.v4-strategy-num {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  background: #BF1722;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-abril, 'Abril Fatface', 'Bodoni Moda', serif);
+  font-size: 14px;
+  font-weight: 700;
+}
+.v4-strategy-content { flex: 1; }
+.v4-strategy-title {
+  font-family: var(--font-display, 'Pretendard Variable', sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: #1A1A1A;
+  margin: 0 0 6px;
+  word-break: keep-all;
+}
+.v4-strategy-body {
+  font-family: var(--font-serif-kr, 'Noto Serif KR', serif);
+  font-size: 13px;
+  line-height: 1.7;
+  color: #555;
+  margin: 0;
+  word-break: keep-all;
+}
+.v4-strategy-body strong { font-weight: 700; }
+
+/* V4 이전 시험 비교 박스 (v1.2.0) — 옅은 분홍 톤 */
+.v4-previous-box {
+  background: #FFF8F8;
+  border-left: 4px solid #BF1722;
+  padding: 16px 20px;
+  border-radius: 0 4px 4px 0;
+}
+.v4-previous-headline {
+  font-family: var(--font-display, 'Pretendard Variable', sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: #BF1722;
+  margin-bottom: 10px;
+  word-break: keep-all;
+}
+.v4-previous-body {
+  font-family: var(--font-serif-kr, 'Noto Serif KR', serif);
+  font-size: 14px;
+  line-height: 1.85;
+  color: #2A2A2A;
+  margin: 0;
+  word-break: keep-all;
+}
+.v4-previous-body strong { font-weight: 700; }
+
+/* V4 주요 문항 분석 (v1.2.0) — 킬러 문항별 블록 */
+.v4-key-questions { display: flex; flex-direction: column; gap: 16px; }
+.v4-key-block {
+  background: #FAFAFA;
+  border-left: 4px solid #1A1A1A;
+  padding: 14px 18px;
+  border-radius: 0 4px 4px 0;
+}
+.v4-key-title {
+  font-family: var(--font-display, 'Pretendard Variable', sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: #1A1A1A;
+  margin: 0 0 8px;
+  word-break: keep-all;
+}
+.v4-key-body {
+  font-family: var(--font-serif-kr, 'Noto Serif KR', serif);
+  font-size: 13px;
+  line-height: 1.85;
+  color: #2A2A2A;
+  margin: 0;
+  word-break: keep-all;
+}
+.v4-key-body strong { font-weight: 700; }
+
 /* V4 반응형 — 좁은 화면에서 차트 1열 */
 @media (max-width: 768px) {
   .v4 { padding: 20px 16px; }
@@ -1335,4 +1448,8 @@ body {
   .v4-overview-value { font-size: 13px; }
   .v4-diff-table th, .v4-diff-table td { padding: 6px 8px; font-size: 12px; }
   .v4-strategy-table th, .v4-strategy-table td { padding: 6px 8px; font-size: 12px; }
+  .v4-strategy-row { padding: 10px 12px; gap: 10px; }
+  .v4-strategy-num { width: 24px; height: 24px; font-size: 12px; }
+  .v4-strategy-title { font-size: 13px; }
+  .v4-strategy-body { font-size: 12px; }
 }

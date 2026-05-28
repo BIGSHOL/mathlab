@@ -14,7 +14,7 @@ interface SectionHeadingProps {
 export function SectionHeading({ title, subtitle }: SectionHeadingProps) {
   return (
     <div className="v4-heading">
-      <span className="v4-heading-icon" aria-hidden="true">✏</span>
+      <span className="v4-heading-icon" aria-hidden="true">▶</span>
       <span className="v4-heading-text">{title}</span>
       {subtitle && <span className="v4-heading-sub">{subtitle}</span>}
     </div>

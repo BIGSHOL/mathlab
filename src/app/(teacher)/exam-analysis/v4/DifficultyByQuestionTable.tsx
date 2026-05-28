@@ -53,6 +53,11 @@ export function DifficultyByQuestionTable({ rows }: DifficultyByQuestionTablePro
                     {row.sub_topic}
                   </div>
                 )}
+                {row.analysis_short && (
+                  <div className="v4-diff-analysis" style={{ marginTop: '4px', fontSize: '12px', color: '#666' }}>
+                    {row.analysis_short}
+                  </div>
+                )}
               </td>
               <td className="v4-diff-level">
                 Lv {validLv} <span className="v4-meta-sub">{diffLabel}</span>

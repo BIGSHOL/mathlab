@@ -1,35 +1,40 @@
 /**
- * V4 통합 뷰 — 갈수학학원 스타일 (테이블 중심)
+ * V4 통합 뷰 — 갈수학학원 스타일 (테이블 중심, 9섹션)
  *
- * AI 생성 v4_* 필드를 사용. 데이터 없으면 lazy 생성 안내(부모 컴포넌트 처리).
+ * v1.2.0 (2026-05-27): 갈수학 일치율 90% 목표로 5섹션 추가 + 순서 재정렬.
  *
- * 본문 구조:
+ * 섹션 순서 (갈수학 블로그 패턴):
  *  1. 헤더 (시험명 + 한 줄 요약)
- *  2. ✏ 시험 개요 (테이블)
- *  3. ✏ 문제 번호별 난이도/단원 (테이블, 행 색상 코딩)
- *  4. ✏ 출제 특징 요약 (회색 박스)
- *  5. ✏ 주요 공정 분석 (영역별 단락)
- *  6. ✏ 기말 대비 전략 (영역별 테이블)
- *  7. 차트 4종 PNG (선택)
+ *  2. ▶ 들어가며 (시험 첫인상 단락)
+ *  3. ▶ 시험 개요 (테이블 + 1등급 컷)
+ *  4. 1등급 수학을 위한 학원 차별화 N가지 전략
+ *  5. ▶ 문제 난이도 / 출제 단원 (행 색상 코딩 + 한 줄 해설)
+ *  6. ▶ 출제 특징 요약 (회색 박스)
+ *  7. ▶ 출제 핵심 포인트 (영역별 단락) — main_analysis
+ *  8. ▶ 이전 시험과의 비교/대조
+ *  9. ▶ 주요 문항 분석 (킬러 문항 3~5개)
+ *  10. 차트 4종 PNG (선택)
+ *  11. ▶ 다음 시험 대비 전략 (영역별 테이블)
  */
 
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import type { V3Meta, V3ChartImages } from '../v3/V3CommentaryView';
 import { SectionHeading } from './SectionHeading';
+import { IntroSection } from './IntroSection';
 import { ExamOverviewTable } from './ExamOverviewTable';
+import { AcademyStrategy } from './AcademyStrategy';
 import { DifficultyByQuestionTable } from './DifficultyByQuestionTable';
 import { ExamFeatures } from './ExamFeatures';
 import { MainAnalysis } from './MainAnalysis';
+import { PreviousComparison } from './PreviousComparison';
+import { KeyQuestions } from './KeyQuestions';
 import { FinalStrategyTable } from './FinalStrategyTable';
 
 interface V4CommentaryViewProps {
   commentary: CommentaryResult;
-  /** 분석 결과 — 사용 안 함 (V4Extension 데이터만 사용) */
   questions?: AnalyzedQuestion[];
-  /** 메타 정보 — V4 미생성 시 헤더 폴백용 */
   meta: V3Meta;
-  /** 차트 4종 (선택) */
   charts?: V3ChartImages;
 }
 
@@ -44,7 +49,7 @@ export function V4CommentaryView({ commentary, meta, charts }: V4CommentaryViewP
     return `data:image/png;base64,${s}`;
   };
 
-  // 헤더 (V4 overview가 있으면 그것 사용, 없으면 meta 폴백)
+  // 헤더
   const headerTitle = c.v4_exam_overview?.title || meta.examTitle;
   const headerSchoolGrade = c.v4_exam_overview
     ? [c.v4_exam_overview.school, c.v4_exam_overview.grade].filter(Boolean).join(' · ')
@@ -60,15 +65,31 @@ export function V4CommentaryView({ commentary, meta, charts }: V4CommentaryViewP
         {headerOneLiner && <p className="v4-dek">{headerOneLiner}</p>}
       </header>
 
-      {/* ② 시험 개요 */}
+      {/* ② 들어가며 */}
+      {c.v4_intro && (
+        <section className="v4-section">
+          <SectionHeading title="들어가며" />
+          <IntroSection intro={c.v4_intro} />
+        </section>
+      )}
+
+      {/* ③ 시험 개요 (1등급 컷 포함) */}
       {c.v4_exam_overview && (
         <section className="v4-section">
-          <SectionHeading title="시험 개요" />
+          <SectionHeading title="시험 개요 및 1등급 컷 예상" />
           <ExamOverviewTable overview={c.v4_exam_overview} />
         </section>
       )}
 
-      {/* ③ 문제 번호별 난이도 / 출제 단원 */}
+      {/* ④ 학원 차별화 전략 */}
+      {c.v4_academy_strategy && c.v4_academy_strategy.length > 0 && (
+        <section className="v4-section">
+          <SectionHeading title="1등급 수학을 위한 학원 차별화 전략" subtitle={`${c.v4_academy_strategy.length}가지`} />
+          <AcademyStrategy items={c.v4_academy_strategy} />
+        </section>
+      )}
+
+      {/* ⑤ 문제 번호별 난이도 / 출제 단원 */}
       {c.v4_difficulty_rows && c.v4_difficulty_rows.length > 0 && (
         <section className="v4-section">
           <SectionHeading
@@ -79,7 +100,7 @@ export function V4CommentaryView({ commentary, meta, charts }: V4CommentaryViewP
         </section>
       )}
 
-      {/* ④ 출제 특징 요약 */}
+      {/* ⑥ 출제 특징 요약 */}
       {c.v4_exam_features && (
         <section className="v4-section">
           <SectionHeading title="출제 특징 요약" />
@@ -87,15 +108,31 @@ export function V4CommentaryView({ commentary, meta, charts }: V4CommentaryViewP
         </section>
       )}
 
-      {/* ⑤ 주요 공정 분석 */}
+      {/* ⑦ 출제 핵심 포인트 (영역별) */}
       {c.v4_main_analysis && c.v4_main_analysis.length > 0 && (
         <section className="v4-section">
-          <SectionHeading title="주요 공정 분석" subtitle="영역별" />
+          <SectionHeading title="출제 핵심 포인트" subtitle="영역별" />
           <MainAnalysis items={c.v4_main_analysis} />
         </section>
       )}
 
-      {/* ⑥ 차트 4종 (선택적) */}
+      {/* ⑧ 이전 시험과의 비교/대조 */}
+      {c.v4_previous_comparison && (
+        <section className="v4-section">
+          <SectionHeading title="이전 시험과의 비교 · 대조" />
+          <PreviousComparison comparison={c.v4_previous_comparison} />
+        </section>
+      )}
+
+      {/* ⑨ 주요 문항 분석 (킬러 문항) */}
+      {c.v4_key_questions && c.v4_key_questions.length > 0 && (
+        <section className="v4-section">
+          <SectionHeading title="주요 문항 분석" subtitle={`킬러 ${c.v4_key_questions.length}문항`} />
+          <KeyQuestions items={c.v4_key_questions} />
+        </section>
+      )}
+
+      {/* ⑩ 차트 4종 (선택) */}
       {showCharts && (
         <section className="v4-section">
           <SectionHeading title="시각 분석" subtitle="난이도 · 능력 · 단원 · 변별력" />
@@ -132,10 +169,10 @@ export function V4CommentaryView({ commentary, meta, charts }: V4CommentaryViewP
         </section>
       )}
 
-      {/* ⑦ 기말 대비 전략 */}
+      {/* ⑪ 다음 시험 대비 전략 */}
       {c.v4_final_strategy && c.v4_final_strategy.length > 0 && (
         <section className="v4-section">
-          <SectionHeading title="기말고사 대비 전략" subtitle="영역별 권장" />
+          <SectionHeading title="다음 시험 대비 전략" subtitle="영역별 권장" />
           <FinalStrategyTable rows={c.v4_final_strategy} />
         </section>
       )}
@@ -143,11 +180,7 @@ export function V4CommentaryView({ commentary, meta, charts }: V4CommentaryViewP
   );
 }
 
-/** V4 데이터 존재 여부 (lazy 생성 트리거용) */
+/** V4 데이터 존재 여부 (lazy 생성 트리거용) — v4_exam_overview 있으면 V4로 간주 */
 export function hasV4Data(commentary: CommentaryResult): boolean {
-  return !!(
-    commentary.v4_exam_overview &&
-    commentary.v4_difficulty_rows &&
-    commentary.v4_difficulty_rows.length > 0
-  );
+  return !!commentary.v4_exam_overview;
 }

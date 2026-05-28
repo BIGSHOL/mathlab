@@ -93,39 +93,63 @@ export function buildNaverV4Html(args: {
   // ① 헤더
   parts.push(renderHeader(c, meta));
 
-  // ② 시험 개요
+  // ② 들어가며 (v1.2.0)
+  if (c.v4_intro) {
+    parts.push(renderSectionHeading('들어가며'));
+    parts.push(renderIntro(c.v4_intro));
+  }
+
+  // ③ 시험 개요 (1등급 컷 포함)
   if (c.v4_exam_overview) {
-    parts.push(renderSectionHeading('시험 개요'));
+    parts.push(renderSectionHeading('시험 개요 및 1등급 컷 예상'));
     parts.push(renderExamOverview(c.v4_exam_overview));
   }
 
-  // ③ 문제 번호별 난이도/단원
+  // ④ 학원 차별화 전략 (v1.2.0)
+  if (c.v4_academy_strategy && c.v4_academy_strategy.length > 0) {
+    parts.push(renderSectionHeading('1등급 수학을 위한 학원 차별화 전략', `${c.v4_academy_strategy.length}가지`));
+    parts.push(renderAcademyStrategy(c.v4_academy_strategy));
+  }
+
+  // ⑤ 문제 번호별 난이도/단원 (한 줄 해설 컬럼 추가)
   if (c.v4_difficulty_rows && c.v4_difficulty_rows.length > 0) {
     parts.push(renderSectionHeading('문제 난이도 · 출제 단원', `${c.v4_difficulty_rows.length}문항`));
     parts.push(renderDifficultyTable(c.v4_difficulty_rows));
   }
 
-  // ④ 출제 특징 요약
+  // ⑥ 출제 특징 요약
   if (c.v4_exam_features) {
     parts.push(renderSectionHeading('출제 특징 요약'));
     parts.push(renderExamFeatures(c.v4_exam_features));
   }
 
-  // ⑤ 주요 공정 분석
+  // ⑦ 출제 핵심 포인트 (영역별)
   if (c.v4_main_analysis && c.v4_main_analysis.length > 0) {
-    parts.push(renderSectionHeading('주요 공정 분석', '영역별'));
+    parts.push(renderSectionHeading('출제 핵심 포인트', '영역별'));
     parts.push(renderMainAnalysis(c.v4_main_analysis));
   }
 
-  // ⑥ 차트 (선택)
+  // ⑧ 이전 시험과의 비교/대조 (v1.2.0)
+  if (c.v4_previous_comparison) {
+    parts.push(renderSectionHeading('이전 시험과의 비교 · 대조'));
+    parts.push(renderPreviousComparison(c.v4_previous_comparison));
+  }
+
+  // ⑨ 주요 문항 분석 (v1.2.0)
+  if (c.v4_key_questions && c.v4_key_questions.length > 0) {
+    parts.push(renderSectionHeading('주요 문항 분석', `킬러 ${c.v4_key_questions.length}문항`));
+    parts.push(renderKeyQuestions(c.v4_key_questions));
+  }
+
+  // ⑩ 차트 (선택)
   if (chartUrls && Object.values(chartUrls).some((v) => !!v)) {
     parts.push(renderSectionHeading('시각 분석', '난이도 · 능력 · 단원 · 변별력'));
     parts.push(renderCharts(chartUrls));
   }
 
-  // ⑦ 기말 대비 전략
+  // ⑪ 다음 시험 대비 전략
   if (c.v4_final_strategy && c.v4_final_strategy.length > 0) {
-    parts.push(renderSectionHeading('기말고사 대비 전략', '영역별 권장'));
+    parts.push(renderSectionHeading('다음 시험 대비 전략', '영역별 권장'));
     parts.push(renderFinalStrategy(c.v4_final_strategy));
   }
 
@@ -158,8 +182,8 @@ function renderSectionHeading(title: string, subtitle?: string): string {
   <tr><td style="padding:24px 0 10px;border-bottom:1px solid ${V4_BORDER};">
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
-        <td valign="baseline" style="padding-right:8px;width:24px;">
-          <span style="font-size:18px;color:${V4_ACCENT};">✏</span>
+        <td valign="baseline" style="padding-right:8px;width:20px;">
+          <span style="font-size:14px;color:#1A1A1A;">▶</span>
         </td>
         <td valign="baseline">
           <span style="font-family:'맑은 고딕',Pretendard,sans-serif;font-size:16px;font-weight:700;color:#1A1A1A;word-break:keep-all;">${escapeHtml(title)}</span>
@@ -167,6 +191,86 @@ function renderSectionHeading(title: string, subtitle?: string): string {
         </td>
       </tr>
     </table>
+  </td></tr>`;
+}
+
+function renderIntro(intro: string): string {
+  return `
+  <tr><td style="padding:14px 0 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td bgcolor="#FFF8E0" style="background:#FFF8E0;border-left:4px solid ${V4_ACCENT};padding:18px 22px;font-family:'Noto Serif KR','맑은 고딕',serif;font-size:15px;line-height:1.85;color:#1A1A1A;word-break:keep-all;">
+          <p style="margin:0;font-family:'Noto Serif KR','맑은 고딕',serif;font-size:15px;line-height:1.85;color:#1A1A1A;word-break:keep-all;">${markdownToInlineBold(intro)}</p>
+        </td>
+      </tr>
+    </table>
+  </td></tr>`;
+}
+
+function renderAcademyStrategy(items: NonNullable<CommentaryResult['v4_academy_strategy']>): string {
+  const trs = items
+    .map(
+      (item, i) => `
+      <tr>
+        <td style="padding:6px 0;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFF4F4" style="background:#FFF4F4;border:1px solid #FFD0D0;border-radius:6px;">
+            <tr>
+              <td width="40" valign="top" style="padding:14px 0 14px 14px;">
+                <table cellpadding="0" cellspacing="0" border="0">
+                  <tr><td width="28" height="28" bgcolor="#BF1722" align="center" style="background:#BF1722;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:14px;font-weight:700;color:#fff;border-radius:50%;line-height:28px;">${i + 1}</td></tr>
+                </table>
+              </td>
+              <td valign="top" style="padding:14px 16px 14px 10px;">
+                <p style="margin:0 0 6px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:14px;font-weight:700;color:#1A1A1A;word-break:keep-all;">${escapeHtml(item.title)}</p>
+                <p style="margin:0;font-family:'Noto Serif KR','맑은 고딕',serif;font-size:13px;line-height:1.7;color:#555;word-break:keep-all;">${markdownToInlineBold(item.body)}</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>`,
+    )
+    .join('');
+
+  return `
+  <tr><td style="padding:14px 0 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      ${trs}
+    </table>
+  </td></tr>`;
+}
+
+function renderPreviousComparison(c: NonNullable<CommentaryResult['v4_previous_comparison']>): string {
+  return `
+  <tr><td style="padding:14px 0 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td bgcolor="#FFF8F8" style="background:#FFF8F8;border-left:4px solid #BF1722;padding:16px 20px;font-family:'Noto Serif KR','맑은 고딕',serif;font-size:14px;line-height:1.85;color:#2A2A2A;word-break:keep-all;">
+          <p style="margin:0 0 10px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:14px;font-weight:700;color:#BF1722;word-break:keep-all;">${markdownToInlineBold(c.headline)}</p>
+          <p style="margin:0;font-family:'Noto Serif KR','맑은 고딕',serif;font-size:14px;line-height:1.85;color:#2A2A2A;word-break:keep-all;">${markdownToInlineBold(c.body)}</p>
+        </td>
+      </tr>
+    </table>
+  </td></tr>`;
+}
+
+function renderKeyQuestions(items: NonNullable<CommentaryResult['v4_key_questions']>): string {
+  const blocks = items
+    .map(
+      (kq) => `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:14px;">
+      <tr>
+        <td bgcolor="#FAFAFA" style="background:#FAFAFA;border-left:4px solid #1A1A1A;padding:14px 18px;">
+          <p style="margin:0 0 8px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:14px;font-weight:700;color:#1A1A1A;word-break:keep-all;">${escapeHtml(kq.title)}</p>
+          <p style="margin:0;font-family:'Noto Serif KR','맑은 고딕',serif;font-size:13px;line-height:1.85;color:#2A2A2A;word-break:keep-all;">${markdownToInlineBold(kq.body)}</p>
+        </td>
+      </tr>
+    </table>`,
+    )
+    .join('');
+
+  return `
+  <tr><td style="padding:14px 0 0;">
+    ${blocks}
   </td></tr>`;
 }
 
@@ -181,6 +285,9 @@ function renderExamOverview(o: NonNullable<CommentaryResult['v4_exam_overview']>
   ];
   if (o.essay_summary) {
     rows.push(['서술형', o.essay_summary]);
+  }
+  if (o.expected_grade_cut) {
+    rows.push(['예상 등급 컷', `<strong style="font-weight:700;">${escapeHtml(o.expected_grade_cut)}</strong>`]);
   }
   rows.push(['한 줄 요약', `<strong style="font-weight:700;">${escapeHtml(o.one_liner)}</strong>`]);
 
@@ -234,6 +341,7 @@ function renderDifficultyTable(rows: NonNullable<CommentaryResult['v4_difficulty
         <td style="padding:8px 12px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:13px;color:#2A2A2A;border-bottom:1px solid rgba(0,0,0,0.05);word-break:keep-all;">
           ${escapeHtml(row.topic)}
           ${row.sub_topic ? `<div style="margin-top:2px;color:#888;font-size:12px;">${escapeHtml(row.sub_topic)}</div>` : ''}
+          ${row.analysis_short ? `<div style="margin-top:4px;color:#666;font-size:12px;line-height:1.5;">${escapeHtml(row.analysis_short)}</div>` : ''}
         </td>
         <td style="padding:8px 12px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:13px;color:#2A2A2A;font-weight:600;border-bottom:1px solid rgba(0,0,0,0.05);white-space:nowrap;">Lv${validLv} <span style="color:#888;font-size:12px;font-weight:400;">${diffLabel}</span></td>
         <td align="right" style="padding:8px 12px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:15px;font-weight:700;color:#1A1A1A;border-bottom:1px solid rgba(0,0,0,0.05);white-space:nowrap;">${row.points}<span style="color:#888;font-size:12px;font-weight:400;"> 점</span></td>
