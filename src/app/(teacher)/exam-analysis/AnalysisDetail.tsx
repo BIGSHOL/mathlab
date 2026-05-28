@@ -165,16 +165,25 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
       return;
     }
     try {
-      // 차트 URL 가용성 확인 (HEAD 요청)
+      // 차트 PNG 미리 워밍업 + URL 수집 (lazy 생성 트리거)
       const baseUrl = window.location.origin;
-      const chartUrls: { topicBar?: string; discrimination?: string } = {};
-      const tryFetch = async (type: 'topic-bar' | 'discrimination', key: 'topicBar' | 'discrimination') => {
+      toast.info('차트 이미지 준비 중... (최초 5~10초 소요)');
+      const chartUrls: { topicBar?: string; discrimination?: string; difficulty?: string; abilityRadar?: string } = {};
+      const tryFetch = async (
+        type: 'topic-bar' | 'discrimination' | 'difficulty' | 'ability-radar',
+        key: 'topicBar' | 'discrimination' | 'difficulty' | 'abilityRadar',
+      ) => {
         try {
-          const r = await fetch(`/api/exam-analysis/${detail.id}/chart/${type}`, { method: 'HEAD' });
+          const r = await fetch(`/api/exam-analysis/${detail.id}/chart/${type}`);
           if (r.ok) chartUrls[key] = `${baseUrl}/api/exam-analysis/${detail.id}/chart/${type}`;
         } catch { /* 차트 없음 — 무시 */ }
       };
-      await Promise.all([tryFetch('topic-bar', 'topicBar'), tryFetch('discrimination', 'discrimination')]);
+      await Promise.all([
+        tryFetch('topic-bar', 'topicBar'),
+        tryFetch('discrimination', 'discrimination'),
+        tryFetch('difficulty', 'difficulty'),
+        tryFetch('ability-radar', 'abilityRadar'),
+      ]);
       const hasCharts = Object.keys(chartUrls).length > 0;
 
       const html = buildNaverV3Html({
@@ -251,16 +260,28 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
       return;
     }
     try {
-      // 차트 URL 가용성 확인 (V3와 동일)
+      // 차트 PNG 미리 워밍업 + URL 수집 (lazy 생성 트리거)
+      // GET 요청으로 변경 — chart endpoint가 blog-article 없으면 즉시 generateAllChartImages 호출하여
+      // PNG 4종 생성 + DB 저장. 첫 1개 GET이 5~10초 걸려도 같은 호출에 4개 모두 만들어지므로 후속 cache hit.
       const baseUrl = window.location.origin;
-      const chartUrls: { topicBar?: string; discrimination?: string } = {};
-      const tryFetch = async (type: 'topic-bar' | 'discrimination', key: 'topicBar' | 'discrimination') => {
+      toast.info('차트 이미지 준비 중... (최초 5~10초 소요)');
+      const chartUrls: { topicBar?: string; discrimination?: string; difficulty?: string; abilityRadar?: string } = {};
+      const tryFetch = async (
+        type: 'topic-bar' | 'discrimination' | 'difficulty' | 'ability-radar',
+        key: 'topicBar' | 'discrimination' | 'difficulty' | 'abilityRadar',
+      ) => {
         try {
-          const r = await fetch(`/api/exam-analysis/${detail.id}/chart/${type}`, { method: 'HEAD' });
+          const r = await fetch(`/api/exam-analysis/${detail.id}/chart/${type}`);
           if (r.ok) chartUrls[key] = `${baseUrl}/api/exam-analysis/${detail.id}/chart/${type}`;
         } catch { /* 차트 없음 무시 */ }
       };
-      await Promise.all([tryFetch('topic-bar', 'topicBar'), tryFetch('discrimination', 'discrimination')]);
+      // 4개 모두 병렬 fetch — 첫 1개가 lazy 생성으로 4개 모두 저장하므로 나머지 cache hit
+      await Promise.all([
+        tryFetch('topic-bar', 'topicBar'),
+        tryFetch('discrimination', 'discrimination'),
+        tryFetch('difficulty', 'difficulty'),
+        tryFetch('ability-radar', 'abilityRadar'),
+      ]);
       const hasCharts = Object.keys(chartUrls).length > 0;
 
       const html = buildNaverV4Html({

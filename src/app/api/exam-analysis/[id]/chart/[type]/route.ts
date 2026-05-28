@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
+import { generateAllChartImages } from '@/lib/exam-analysis/chart-image-generator';
+import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 
 type Params = { params: Promise<{ id: string; type: string }> };
 
@@ -12,7 +15,13 @@ const TYPE_MAP: Record<string, string> = {
   discrimination: 'discrimination',
 };
 
-/** GET /api/exam-analysis/[id]/chart/[type] — 차트 PNG 이미지 서빙 (네이버 블로그 호환) */
+/**
+ * GET /api/exam-analysis/[id]/chart/[type] — 차트 PNG 이미지 서빙 (네이버 블로그 호환)
+ *
+ * Lazy 생성 (v2 2026-05-28): blog-article extension 없으면 즉시 chart-image-generator 호출하여
+ * PNG 생성 + DB 저장 후 반환. V4 네이버 복사 시 사용자가 "기출 분석 글 작성" 안 눌렀어도
+ * 차트(인포그래픽) 자동 포함되도록.
+ */
 export async function GET(_request: NextRequest, { params }: Params) {
   const { id, type } = await params;
 
@@ -26,6 +35,9 @@ export async function GET(_request: NextRequest, { params }: Params) {
       where: { examPaperId: id },
       orderBy: { createdAt: 'desc' },
       select: {
+        id: true,
+        questions: true,
+        summary: true,
         extensions: {
           where: { agentType: 'blog-article' },
           select: { result: true },
@@ -33,15 +45,67 @@ export async function GET(_request: NextRequest, { params }: Params) {
       },
     });
 
-    const articleResult = latestAnalysis?.extensions[0]?.result as Record<string, unknown> | undefined;
-    const chartImages = articleResult?.chartImages as Record<string, string> | undefined;
-    const base64 = chartImages?.[imageKey];
-
-    if (!base64) {
+    if (!latestAnalysis) {
       return NextResponse.json(
-        { error: { code: 'NOT_FOUND', message: '차트 이미지를 찾을 수 없습니다. 블로그 글을 먼저 생성해 주세요.' } },
+        { error: { code: 'NOT_FOUND', message: '분석 결과가 없습니다. 기본 분석을 먼저 실행해 주세요.' } },
         { status: 404 },
       );
+    }
+
+    const articleResult = latestAnalysis.extensions[0]?.result as Record<string, unknown> | undefined;
+    let chartImages = articleResult?.chartImages as Record<string, string> | undefined;
+    let base64 = chartImages?.[imageKey];
+
+    // ── Lazy 생성: 차트 PNG가 없으면 즉시 생성 + 저장 (V4 네이버 복사 지원) ──
+    if (!base64) {
+      const questions = latestAnalysis.questions as unknown as AnalyzedQuestion[];
+      const summary = latestAnalysis.summary as unknown as {
+        difficulty_distribution: Record<string, number>;
+        type_distribution: Record<string, number>;
+      };
+
+      if (!questions || !summary) {
+        return NextResponse.json(
+          { error: { code: 'NOT_FOUND', message: '차트 생성에 필요한 데이터가 없습니다.' } },
+          { status: 404 },
+        );
+      }
+
+      try {
+        chartImages = await generateAllChartImages(summary, questions) as unknown as Record<string, string>;
+      } catch (genErr) {
+        console.error('[chart GET] lazy 차트 생성 실패:', genErr);
+        return NextResponse.json(
+          { error: { code: 'CHART_GEN_FAILED', message: '차트 이미지 생성 중 오류가 발생했습니다' } },
+          { status: 500 },
+        );
+      }
+
+      // blog-article extension 업서트 — 기존 article 데이터 보존하면서 chartImages만 머지
+      const existingResult = (articleResult || {}) as Record<string, unknown>;
+      const mergedResult = { ...existingResult, chartImages };
+      const now = new Date();
+      await prisma.examAnalysisExtension.upsert({
+        where: { analysisId_agentType: { analysisId: latestAnalysis.id, agentType: 'blog-article' } },
+        create: {
+          analysisId: latestAnalysis.id,
+          agentType: 'blog-article',
+          result: mergedResult as unknown as Prisma.InputJsonValue,
+          lastRunAt: now,
+        },
+        update: {
+          result: mergedResult as unknown as Prisma.InputJsonValue,
+          lastRunAt: now,
+        },
+      });
+
+      base64 = chartImages?.[imageKey];
+      if (!base64) {
+        return NextResponse.json(
+          { error: { code: 'NOT_FOUND', message: '해당 차트 타입 이미지를 생성할 수 없었습니다.' } },
+          { status: 404 },
+        );
+      }
     }
 
     const buffer = Buffer.from(base64, 'base64');
