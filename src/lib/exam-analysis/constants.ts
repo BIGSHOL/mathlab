@@ -189,8 +189,9 @@ export const AGENT_PROMPT_VERSIONS: Record<AgentType, string> = {
  * v1.1.0 (2026-05-27): raw HTML 색상 금지 + 다음 시험 인식 (중간→기말 / 기말→다음 학년 / examCategory prompt 전달)
  * v1.2.0 (2026-05-27): 일치율 90% — 5개 신규 필드 (v4_intro / v4_academy_strategy / v4_previous_comparison / v4_key_questions / v4_difficulty_rows[].analysis_short / v4_exam_overview.expected_grade_cut) + 9섹션 재정렬 + ✏→▶ 헤딩 변경
  * v1.3.0 (2026-05-28): 특정 학원명 노출 금지 + {학원명} placeholder 도입 (tenant.name 자동 치환, 없으면 "우리 학원")
+ * v1.4.0 (2026-05-28): v4_final_strategy 의미 변경 — "다음 시험 대비" → "이번 시험 출제 단원별 피드백" (다음 시험 추측 금지)
  */
-export const COMMENTARY_V4_PROMPT_VERSION = 'v1.3.0';
+export const COMMENTARY_V4_PROMPT_VERSION = 'v1.4.0';
 
 // ── 템플릿 유형 ──
 export const TEMPLATE_TYPES = ['detailed', 'summary', 'parent', 'print'] as const;

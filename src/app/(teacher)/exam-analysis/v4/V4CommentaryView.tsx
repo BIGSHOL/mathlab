@@ -178,10 +178,10 @@ export function V4CommentaryView({ commentary, meta, charts }: V4CommentaryViewP
         </section>
       )}
 
-      {/* ⑪ 다음 시험 대비 전략 */}
+      {/* ⑪ 이번 시험 단원별 피드백 (2026-05-28: '다음 시험 대비'에서 변경 — 의미 명확화) */}
       {c.v4_final_strategy && c.v4_final_strategy.length > 0 && (
         <section className="v4-section">
-          <SectionHeading title="다음 시험 대비 전략" subtitle="영역별 권장" />
+          <SectionHeading title="이번 시험 단원별 피드백" subtitle="단원별 학습 방향" />
           <FinalStrategyTable rows={c.v4_final_strategy} />
         </section>
       )}

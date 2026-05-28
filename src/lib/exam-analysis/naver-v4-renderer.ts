@@ -229,9 +229,9 @@ export function buildNaverV4Html(args: {
     parts.push(renderCharts(chartUrls));
   }
 
-  // ⑪ 다음 시험 대비 전략
+  // ⑪ 이번 시험 단원별 피드백 (사용자 요청 2026-05-28: '다음 시험 대비'에서 변경 — 모호함 해소)
   if (c.v4_final_strategy && c.v4_final_strategy.length > 0) {
-    parts.push(renderH2('다음 시험 대비 전략'));
+    parts.push(renderH2('이번 시험 단원별 피드백'));
     parts.push(renderFinalStrategy(c.v4_final_strategy));
   }
 
@@ -323,12 +323,12 @@ function renderDifficultyList(rows: NonNullable<CommentaryResult['v4_difficulty_
     return aNum - bNum;
   });
 
-  // 헤더 행
+  // 헤더 행 — 번호 컬럼 너비 70px ("서술형1" 한 줄 표시) + 난이도/배점 살짝 축소 → 단원 컬럼 보존
   const headerRow = `<tr bgcolor="#F8F8F8">` +
-    `<th style="padding: 8px 10px; font-size: 12px; font-weight: 700; color: #555; text-align: left; border-bottom: 2px solid #DDD; width: 50px;">번호</th>` +
+    `<th style="padding: 8px 10px; font-size: 12px; font-weight: 700; color: #555; text-align: left; border-bottom: 2px solid #DDD; width: 70px;">번호</th>` +
     `<th style="padding: 8px 10px; font-size: 12px; font-weight: 700; color: #555; text-align: left; border-bottom: 2px solid #DDD;">단원 · 핵심 개념</th>` +
-    `<th style="padding: 8px 10px; font-size: 12px; font-weight: 700; color: #555; text-align: left; border-bottom: 2px solid #DDD; width: 110px;">난이도</th>` +
-    `<th style="padding: 8px 10px; font-size: 12px; font-weight: 700; color: #555; text-align: right; border-bottom: 2px solid #DDD; width: 60px;">배점</th>` +
+    `<th style="padding: 8px 10px; font-size: 12px; font-weight: 700; color: #555; text-align: left; border-bottom: 2px solid #DDD; width: 100px;">난이도</th>` +
+    `<th style="padding: 8px 10px; font-size: 12px; font-weight: 700; color: #555; text-align: right; border-bottom: 2px solid #DDD; width: 55px;">배점</th>` +
     `</tr>`;
 
   // 데이터 행 (난이도별 행 배경 색상 — bgcolor 속성)
@@ -345,7 +345,7 @@ function renderDifficultyList(rows: NonNullable<CommentaryResult['v4_difficulty_
         : '';
 
       return `<tr bgcolor="${bg}">` +
-        `<td style="padding: 8px 10px; font-size: 14px; font-weight: 700; color: #1A1A1A; border-bottom: 1px solid rgba(0,0,0,0.05); vertical-align: top;">${escapeHtml(numStr)}</td>` +
+        `<td style="padding: 8px 10px; font-size: 14px; font-weight: 700; color: #1A1A1A; border-bottom: 1px solid rgba(0,0,0,0.05); vertical-align: top; white-space: nowrap;">${escapeHtml(numStr)}</td>` +
         `<td style="padding: 8px 10px; font-size: 13px; color: #2A2A2A; border-bottom: 1px solid rgba(0,0,0,0.05); vertical-align: top; word-break: keep-all;">${topic}${subTopicLine}</td>` +
         `<td style="padding: 8px 10px; font-size: 13px; font-weight: 600; color: #1A1A1A; border-bottom: 1px solid rgba(0,0,0,0.05); vertical-align: top; white-space: nowrap;">Lv${validLv} <span style='color: #888; font-size: 12px; font-weight: 400;'>${diffLabel}</span></td>` +
         `<td style="padding: 8px 10px; font-size: 14px; font-weight: 700; color: #1A1A1A; text-align: right; border-bottom: 1px solid rgba(0,0,0,0.05); vertical-align: top; white-space: nowrap;">${row.points}점</td>` +
@@ -387,11 +387,11 @@ function renderPreviousComparison(c: NonNullable<CommentaryResult['v4_previous_c
 }
 
 function renderKeyQuestions(items: NonNullable<CommentaryResult['v4_key_questions']>): string {
-  // 킬러 문항 — ⚡ 아이콘 + 강조 배경 + 본문
+  // 킬러 문항 — ⚡ 아이콘 + 강조 배경 + 본문 (title과 body 빈 줄 없이 붙여 표시 — 갈수학 스타일)
   return items
     .map(
       (kq) =>
-        `<mark style='background: ${V4_HIGHLIGHT_ORANGE}; padding: 3px 8px; font-size: 17px;'><strong>⚡ ${escapeHtml(kq.title)}</strong></mark><br><br>` +
+        `<mark style='background: ${V4_HIGHLIGHT_ORANGE}; padding: 3px 8px; font-size: 17px;'><strong>⚡ ${escapeHtml(kq.title)}</strong></mark><br>` +
         `<span style='font-size: 15px;'>${md(kq.body)}</span><br><br>`,
     )
     .join('');
@@ -399,13 +399,13 @@ function renderKeyQuestions(items: NonNullable<CommentaryResult['v4_key_question
 
 function renderFinalStrategy(rows: NonNullable<CommentaryResult['v4_final_strategy']>): string {
   // 영역별: ▸ 마커 + accent 영역명 + 현재/액션 라벨 강조
-  // mark 라벨은 본문보다 살짝 크게(16px) — 형광펜 강조 효과 극대화
+  // mark 라벨은 본문보다 확실히 크게(18px) — 다른 헤드라인 mark와 동일 사이즈
   return rows
     .map(
       (row) =>
         `<strong style='font-size: 17px; color: ${V4_ACCENT};'>▸ ${escapeHtml(row.area)}</strong><br>` +
-        `<mark style='background: ${V4_HIGHLIGHT_PINK}; padding: 3px 8px; font-size: 16px;'><strong>현재 상태</strong></mark> <span style='font-size: 15px;'>${md(row.current_status)}</span><br>` +
-        `<mark style='background: ${V4_HIGHLIGHT_GREEN}; padding: 3px 8px; font-size: 16px;'><strong>실행 액션</strong></mark> <span style='font-size: 15px;'>${md(row.action)}</span><br><br>`,
+        `<mark style='background: ${V4_HIGHLIGHT_PINK}; padding: 4px 10px; font-size: 18px;'><strong>현재 상태</strong></mark> <span style='font-size: 15px;'>${md(row.current_status)}</span><br>` +
+        `<mark style='background: ${V4_HIGHLIGHT_GREEN}; padding: 4px 10px; font-size: 18px;'><strong>실행 액션</strong></mark> <span style='font-size: 15px;'>${md(row.action)}</span><br><br>`,
     )
     .join('');
 }
