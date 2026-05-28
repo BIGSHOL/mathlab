@@ -212,24 +212,40 @@ export function generateTypeRadarSvg(
   const total = data.reduce((s, d) => s + d.value, 0);
   const maxVal = Math.max(...data.map((d) => d.value), 1);
 
-  const cx = 210, cy = 190, radius = 110;
+  // 차트 영역 확대 (210,190,110 → 230,225,135) — abilityRadar와 동일 사이즈
+  const cx = 230, cy = 225, radius = 135;
   const n = data.length;
   const angleStep = (2 * Math.PI) / n;
   const startOffset = -Math.PI / 2;
 
   const parts: string[] = [];
 
-  // 제목
-  parts.push(`<text x="${cx}" y="28" text-anchor="middle" font-size="16" font-weight="700" fill="#374151">출제 영역 분포</text>`);
+  // ── defs: 다각형 그라데이션 + 섀도우 ──
+  parts.push(`<defs>` +
+    `<radialGradient id="grad-type" cx="50%" cy="50%" r="50%">` +
+      `<stop offset="0%" stop-color="rgba(99,102,241,0.35)"/>` +
+      `<stop offset="100%" stop-color="rgba(99,102,241,0.05)"/>` +
+    `</radialGradient>` +
+    `<filter id="type-shadow" x="-20%" y="-20%" width="140%" height="140%">` +
+      `<feGaussianBlur in="SourceAlpha" stdDeviation="2"/>` +
+      `<feOffset dx="0" dy="1"/>` +
+      `<feComponentTransfer><feFuncA type="linear" slope="0.2"/></feComponentTransfer>` +
+      `<feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>` +
+    `</filter>` +
+  `</defs>`);
 
-  // 배경 그리드 (3단계)
+  // 제목 (좌측 위 + 강조 라인)
+  parts.push(`<rect x="32" y="26" width="4" height="20" rx="2" fill="#6366F1"/>`);
+  parts.push(`<text x="46" y="42" font-size="18" font-weight="700" fill="#1F2937">출제 영역 분포</text>`);
+
+  // 배경 그리드 (3단계) — 더 진하게
   for (const scale of [0.33, 0.66, 1.0]) {
     const r = radius * scale;
     const points = data.map((_, i) => {
       const angle = startOffset + i * angleStep;
       return `${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`;
     }).join(' ');
-    parts.push(`<polygon points="${points}" fill="none" stroke="#E2E8F0" stroke-width="1"/>`);
+    parts.push(`<polygon points="${points}" fill="none" stroke="#E5E7EB" stroke-width="${scale === 1.0 ? 1.5 : 1}"/>`);
   }
 
   // 축 선
@@ -237,46 +253,51 @@ export function generateTypeRadarSvg(
     const angle = startOffset + i * angleStep;
     const x = cx + radius * Math.cos(angle);
     const y = cy + radius * Math.sin(angle);
-    parts.push(`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#E2E8F0" stroke-width="1"/>`);
+    parts.push(`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#E5E7EB" stroke-width="1"/>`);
   }
 
-  // 데이터 다각형
+  // 데이터 다각형 (그라데이션 + 섀도우)
   if (total > 0) {
     const dataPoints = data.map((d, i) => {
       const angle = startOffset + i * angleStep;
       const r = (d.value / maxVal) * radius;
       return `${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`;
     }).join(' ');
-    parts.push(`<polygon points="${dataPoints}" fill="rgba(99,102,241,0.15)" stroke="#6366F1" stroke-width="2.5"/>`);
+    parts.push(`<polygon points="${dataPoints}" fill="url(#grad-type)" stroke="#6366F1" stroke-width="3" stroke-linejoin="round" filter="url(#type-shadow)"/>`);
 
-    // 데이터 점
+    // 데이터 점 (더 크게 + 흰 보더)
     data.forEach((d, i) => {
       const angle = startOffset + i * angleStep;
       const r = (d.value / maxVal) * radius;
       const px = cx + r * Math.cos(angle);
       const py = cy + r * Math.sin(angle);
-      parts.push(`<circle cx="${px}" cy="${py}" r="5" fill="${d.color}" stroke="white" stroke-width="2"/>`);
+      parts.push(`<circle cx="${px}" cy="${py}" r="7" fill="${d.color}" stroke="white" stroke-width="3"/>`);
+      // 값 표시 (점 위)
+      if (d.value > 0) {
+        parts.push(`<text x="${px}" y="${py - 12}" text-anchor="middle" font-size="11" font-weight="700" fill="#1F2937">${d.value}</text>`);
+      }
     });
   }
 
-  // 라벨
+  // 라벨 (영역명, 더 크게)
   data.forEach((d, i) => {
     const angle = startOffset + i * angleStep;
-    const labelR = radius + 25;
+    const labelR = radius + 28;
     const lx = cx + labelR * Math.cos(angle);
     const ly = cy + labelR * Math.sin(angle);
-    const pct = total > 0 ? Math.round((d.value / total) * 100) : 0;
-    parts.push(`<text x="${lx}" y="${ly - 4}" text-anchor="middle" font-size="11" font-weight="600" fill="#374151">${escapeXml(d.label)}</text>`);
-    parts.push(`<text x="${lx}" y="${ly + 9}" text-anchor="middle" font-size="10" fill="#4B5563">${d.value}문항 (${pct}%)</text>`);
+    parts.push(`<text x="${lx}" y="${ly}" text-anchor="middle" font-size="13" font-weight="700" fill="#1F2937">${escapeXml(d.label)}</text>`);
   });
 
-  // 범례 (오른쪽)
-  const legendX = 390;
+  // 범례 (우측 카드)
+  const legendX = 460;
   let legendY = 100;
+  const swatchSize = 14;
   for (const d of data) {
-    parts.push(`<circle cx="${legendX + 5}" cy="${legendY}" r="4" fill="${d.color}"/>`);
-    parts.push(`<text x="${legendX + 14}" y="${legendY + 3}" font-size="10" fill="#374151">${escapeXml(d.label)}: ${d.value}문항</text>`);
-    legendY += 22;
+    const pct = total > 0 ? Math.round((d.value / total) * 100) : 0;
+    parts.push(`<rect x="${legendX}" y="${legendY - swatchSize / 2 - 2}" width="${swatchSize}" height="${swatchSize}" rx="3" fill="${d.color}" stroke="${d.color}" stroke-width="0.5"/>`);
+    parts.push(`<text x="${legendX + swatchSize + 10}" y="${legendY + 1}" font-size="13" font-weight="600" fill="#1F2937">${escapeXml(d.label)}</text>`);
+    parts.push(`<text x="${legendX + swatchSize + 10}" y="${legendY + 17}" font-size="11" fill="#94A3B8" font-weight="500">${d.value}문항 · ${pct}%</text>`);
+    legendY += 36;
   }
 
   return svgWrap(parts.join('\n'));
@@ -310,24 +331,40 @@ export function generateAbilityRadarSvg(
   const total = data.reduce((s, d) => s + d.value, 0);
   const maxVal = Math.max(...data.map((d) => d.value), 1);
 
-  const cx = 210, cy = 190, radius = 110;
+  // 차트 영역 확대 (210,190,110 → 230,225,135)
+  const cx = 230, cy = 225, radius = 135;
   const n = data.length;
   const angleStep = (2 * Math.PI) / n;
   const startOffset = -Math.PI / 2;
 
   const parts: string[] = [];
 
-  // 제목
-  parts.push(`<text x="${cx}" y="28" text-anchor="middle" font-size="16" font-weight="700" fill="#374151">능력 영역 분포</text>`);
+  // ── defs: 다각형 그라데이션 + 섀도우 ──
+  parts.push(`<defs>` +
+    `<radialGradient id="grad-ability" cx="50%" cy="50%" r="50%">` +
+      `<stop offset="0%" stop-color="rgba(139,92,246,0.35)"/>` +
+      `<stop offset="100%" stop-color="rgba(139,92,246,0.05)"/>` +
+    `</radialGradient>` +
+    `<filter id="ability-shadow" x="-20%" y="-20%" width="140%" height="140%">` +
+      `<feGaussianBlur in="SourceAlpha" stdDeviation="2"/>` +
+      `<feOffset dx="0" dy="1"/>` +
+      `<feComponentTransfer><feFuncA type="linear" slope="0.2"/></feComponentTransfer>` +
+      `<feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>` +
+    `</filter>` +
+  `</defs>`);
 
-  // 배경 그리드 (3단계)
+  // 제목 (좌측 위 + 강조 라인)
+  parts.push(`<rect x="32" y="26" width="4" height="20" rx="2" fill="#8B5CF6"/>`);
+  parts.push(`<text x="46" y="42" font-size="18" font-weight="700" fill="#1F2937">능력 영역 분포</text>`);
+
+  // 배경 그리드 (3단계) — 더 진하게
   for (const scale of [0.33, 0.66, 1.0]) {
     const r = radius * scale;
     const points = data.map((_, i) => {
       const angle = startOffset + i * angleStep;
       return `${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`;
     }).join(' ');
-    parts.push(`<polygon points="${points}" fill="none" stroke="#E2E8F0" stroke-width="1"/>`);
+    parts.push(`<polygon points="${points}" fill="none" stroke="#E5E7EB" stroke-width="${scale === 1.0 ? 1.5 : 1}"/>`);
   }
 
   // 축 선
@@ -335,46 +372,51 @@ export function generateAbilityRadarSvg(
     const angle = startOffset + i * angleStep;
     const x = cx + radius * Math.cos(angle);
     const y = cy + radius * Math.sin(angle);
-    parts.push(`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#E2E8F0" stroke-width="1"/>`);
+    parts.push(`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#E5E7EB" stroke-width="1"/>`);
   }
 
-  // 데이터 다각형
+  // 데이터 다각형 (그라데이션 + 섀도우)
   if (total > 0) {
     const dataPoints = data.map((d, i) => {
       const angle = startOffset + i * angleStep;
       const r = (d.value / maxVal) * radius;
       return `${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`;
     }).join(' ');
-    parts.push(`<polygon points="${dataPoints}" fill="rgba(139,92,246,0.15)" stroke="#8B5CF6" stroke-width="2.5"/>`);
+    parts.push(`<polygon points="${dataPoints}" fill="url(#grad-ability)" stroke="#8B5CF6" stroke-width="3" stroke-linejoin="round" filter="url(#ability-shadow)"/>`);
 
-    // 데이터 점
+    // 데이터 점 (더 크게 + 흰 보더 + 그림자)
     data.forEach((d, i) => {
       const angle = startOffset + i * angleStep;
       const r = (d.value / maxVal) * radius;
       const px = cx + r * Math.cos(angle);
       const py = cy + r * Math.sin(angle);
-      parts.push(`<circle cx="${px}" cy="${py}" r="5" fill="${d.color}" stroke="white" stroke-width="2"/>`);
+      parts.push(`<circle cx="${px}" cy="${py}" r="7" fill="${d.color}" stroke="white" stroke-width="3"/>`);
+      // 값 표시 (점 위)
+      if (d.value > 0) {
+        parts.push(`<text x="${px}" y="${py - 12}" text-anchor="middle" font-size="11" font-weight="700" fill="#1F2937">${d.value}</text>`);
+      }
     });
   }
 
-  // 라벨
+  // 라벨 (영역명, 더 크게)
   data.forEach((d, i) => {
     const angle = startOffset + i * angleStep;
-    const labelR = radius + 25;
+    const labelR = radius + 28;
     const lx = cx + labelR * Math.cos(angle);
     const ly = cy + labelR * Math.sin(angle);
-    parts.push(`<text x="${lx}" y="${ly}" text-anchor="middle" font-size="12" font-weight="600" fill="#374151">${escapeXml(d.label)}</text>`);
+    parts.push(`<text x="${lx}" y="${ly}" text-anchor="middle" font-size="13" font-weight="700" fill="#1F2937">${escapeXml(d.label)}</text>`);
   });
 
-  // 범례 (오른쪽)
-  const legendX = 390;
-  let legendY = 100;
+  // 범례 (우측 카드)
+  const legendX = 460;
+  let legendY = 110;
+  const swatchSize = 14;
   for (const d of data) {
     const pct = total > 0 ? Math.round((d.value / total) * 100) : 0;
-    parts.push(`<circle cx="${legendX + 5}" cy="${legendY}" r="4" fill="${d.color}"/>`);
-    parts.push(`<text x="${legendX + 14}" y="${legendY + 3}" font-size="11" fill="#374151">${escapeXml(d.label)}</text>`);
-    parts.push(`<text x="${legendX + 14}" y="${legendY + 17}" font-size="10" fill="#6B7280">${d.value}문항 (${pct}%)</text>`);
-    legendY += 32;
+    parts.push(`<rect x="${legendX}" y="${legendY - swatchSize / 2 - 2}" width="${swatchSize}" height="${swatchSize}" rx="3" fill="${d.color}" stroke="${d.color}" stroke-width="0.5"/>`);
+    parts.push(`<text x="${legendX + swatchSize + 10}" y="${legendY + 1}" font-size="13" font-weight="600" fill="#1F2937">${escapeXml(d.label)}</text>`);
+    parts.push(`<text x="${legendX + swatchSize + 10}" y="${legendY + 17}" font-size="11" fill="#94A3B8" font-weight="500">${d.value}문항 · ${pct}%</text>`);
+    legendY += 40;
   }
 
   return svgWrap(parts.join('\n'));
@@ -390,6 +432,24 @@ export function generateCombinedRadarSvg(
   questions: AnalyzedQuestion[],
 ): string {
   const parts: string[] = [];
+
+  // ── defs: 좌·우 다각형 그라데이션 + 섀도우 ──
+  parts.push(`<defs>` +
+    `<radialGradient id="grad-combined-type" cx="50%" cy="50%" r="50%">` +
+      `<stop offset="0%" stop-color="rgba(99,102,241,0.35)"/>` +
+      `<stop offset="100%" stop-color="rgba(99,102,241,0.05)"/>` +
+    `</radialGradient>` +
+    `<radialGradient id="grad-combined-ability" cx="50%" cy="50%" r="50%">` +
+      `<stop offset="0%" stop-color="rgba(139,92,246,0.35)"/>` +
+      `<stop offset="100%" stop-color="rgba(139,92,246,0.05)"/>` +
+    `</radialGradient>` +
+    `<filter id="combined-shadow" x="-20%" y="-20%" width="140%" height="140%">` +
+      `<feGaussianBlur in="SourceAlpha" stdDeviation="2.5"/>` +
+      `<feOffset dx="0" dy="1.5"/>` +
+      `<feComponentTransfer><feFuncA type="linear" slope="0.2"/></feComponentTransfer>` +
+      `<feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>` +
+    `</filter>` +
+  `</defs>`);
 
   // ── 좌측: 출제 영역 분포 (5각형) ──
   const types = ['number', 'algebra', 'function', 'geometry', 'statistics'] as const;
@@ -408,61 +468,66 @@ export function generateCombinedRadarSvg(
   const tAngleStep = (2 * Math.PI) / tn;
   const startOffset = -Math.PI / 2;
 
-  // 좌측 제목
-  parts.push(`<text x="${lcx}" y="40" text-anchor="middle" font-size="18" font-weight="700" fill="#374151">출제 영역 분포</text>`);
+  // 좌측 제목 (강조 라인 + 큰 글씨)
+  parts.push(`<rect x="40" y="32" width="4" height="22" rx="2" fill="#6366F1"/>`);
+  parts.push(`<text x="56" y="50" font-size="20" font-weight="700" fill="#1F2937">출제 영역 분포</text>`);
 
-  // 좌측 배경 그리드
+  // 좌측 배경 그리드 (3단계, 외곽 더 진하게)
   for (const scale of [0.33, 0.66, 1.0]) {
     const r = lRadius * scale;
     const points = typeData.map((_, i) => {
       const angle = startOffset + i * tAngleStep;
       return `${lcx + r * Math.cos(angle)},${lcy + r * Math.sin(angle)}`;
     }).join(' ');
-    parts.push(`<polygon points="${points}" fill="none" stroke="#E2E8F0" stroke-width="1"/>`);
+    parts.push(`<polygon points="${points}" fill="none" stroke="#E5E7EB" stroke-width="${scale === 1.0 ? 1.5 : 1}"/>`);
   }
 
   // 좌측 축 선
   for (let i = 0; i < tn; i++) {
     const angle = startOffset + i * tAngleStep;
-    parts.push(`<line x1="${lcx}" y1="${lcy}" x2="${lcx + lRadius * Math.cos(angle)}" y2="${lcy + lRadius * Math.sin(angle)}" stroke="#E2E8F0" stroke-width="1"/>`);
+    parts.push(`<line x1="${lcx}" y1="${lcy}" x2="${lcx + lRadius * Math.cos(angle)}" y2="${lcy + lRadius * Math.sin(angle)}" stroke="#E5E7EB" stroke-width="1"/>`);
   }
 
-  // 좌측 데이터 다각형
+  // 좌측 데이터 다각형 (그라데이션 + 섀도우)
   if (typeTotal > 0) {
     const dp = typeData.map((d, i) => {
       const angle = startOffset + i * tAngleStep;
       const r = (d.value / typeMax) * lRadius;
       return `${lcx + r * Math.cos(angle)},${lcy + r * Math.sin(angle)}`;
     }).join(' ');
-    parts.push(`<polygon points="${dp}" fill="rgba(99,102,241,0.15)" stroke="#6366F1" stroke-width="2.5"/>`);
+    parts.push(`<polygon points="${dp}" fill="url(#grad-combined-type)" stroke="#6366F1" stroke-width="3" stroke-linejoin="round" filter="url(#combined-shadow)"/>`);
 
     typeData.forEach((d, i) => {
       const angle = startOffset + i * tAngleStep;
       const r = (d.value / typeMax) * lRadius;
-      parts.push(`<circle cx="${lcx + r * Math.cos(angle)}" cy="${lcy + r * Math.sin(angle)}" r="5" fill="${d.color}" stroke="white" stroke-width="2"/>`);
+      const px = lcx + r * Math.cos(angle);
+      const py = lcy + r * Math.sin(angle);
+      parts.push(`<circle cx="${px}" cy="${py}" r="7" fill="${d.color}" stroke="white" stroke-width="3"/>`);
+      if (d.value > 0) {
+        parts.push(`<text x="${px}" y="${py - 12}" text-anchor="middle" font-size="11" font-weight="700" fill="#1F2937">${d.value}</text>`);
+      }
     });
   }
 
-  // 좌측 라벨
+  // 좌측 라벨 (더 크고 강조)
   typeData.forEach((d, i) => {
     const angle = startOffset + i * tAngleStep;
-    const labelR = lRadius + 28;
+    const labelR = lRadius + 32;
     const lx = lcx + labelR * Math.cos(angle);
     const ly = lcy + labelR * Math.sin(angle);
     const pct = typeTotal > 0 ? Math.round((d.value / typeTotal) * 100) : 0;
-    parts.push(`<text x="${lx}" y="${ly - 3}" text-anchor="middle" font-size="12" font-weight="600" fill="#374151">${escapeXml(d.label)}</text>`);
-    parts.push(`<text x="${lx}" y="${ly + 12}" text-anchor="middle" font-size="11" fill="#6B7280">${d.value}문항 (${pct}%)</text>`);
+    parts.push(`<text x="${lx}" y="${ly - 4}" text-anchor="middle" font-size="13" font-weight="700" fill="#1F2937">${escapeXml(d.label)}</text>`);
+    parts.push(`<text x="${lx}" y="${ly + 12}" text-anchor="middle" font-size="11" fill="#94A3B8" font-weight="500">${d.value}문항 · ${pct}%</text>`);
   });
 
-  // ── 구분선 ──
-  parts.push(`<line x1="625" y1="60" x2="625" y2="510" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4,4"/>`);
+  // ── 구분선 (더 우아하게) ──
+  parts.push(`<line x1="625" y1="80" x2="625" y2="490" stroke="#E5E7EB" stroke-width="1.5" stroke-dasharray="6,6"/>`);
 
   // ── 우측: 능력 영역 분포 (4각형) ──
   const abilityKeys = ['calculation', 'understanding', 'problem_solving', 'reasoning'] as const;
   const counts: Record<string, number> = {};
   for (const key of abilityKeys) counts[key] = 0;
   for (const q of questions) {
-    // generateAbilityRadarSvg와 동일 정규화 (대소문자/하이픈 변형 보정)
     const rawDomain = q.ability_domain || TYPE_TO_DOMAIN[q.question_type] || 'calculation';
     const domain = String(rawDomain).toLowerCase().replace(/-/g, '_');
     if (domain in counts) counts[domain]++;
@@ -482,8 +547,9 @@ export function generateCombinedRadarSvg(
   const an = abilityData.length;
   const aAngleStep = (2 * Math.PI) / an;
 
-  // 우측 제목
-  parts.push(`<text x="${rcx}" y="40" text-anchor="middle" font-size="18" font-weight="700" fill="#374151">능력 영역 분포</text>`);
+  // 우측 제목 (강조 라인 + 큰 글씨)
+  parts.push(`<rect x="665" y="32" width="4" height="22" rx="2" fill="#8B5CF6"/>`);
+  parts.push(`<text x="681" y="50" font-size="20" font-weight="700" fill="#1F2937">능력 영역 분포</text>`);
 
   // 우측 배경 그리드
   for (const scale of [0.33, 0.66, 1.0]) {
@@ -492,40 +558,45 @@ export function generateCombinedRadarSvg(
       const angle = startOffset + i * aAngleStep;
       return `${rcx + r * Math.cos(angle)},${rcy + r * Math.sin(angle)}`;
     }).join(' ');
-    parts.push(`<polygon points="${points}" fill="none" stroke="#E2E8F0" stroke-width="1"/>`);
+    parts.push(`<polygon points="${points}" fill="none" stroke="#E5E7EB" stroke-width="${scale === 1.0 ? 1.5 : 1}"/>`);
   }
 
   // 우측 축 선
   for (let i = 0; i < an; i++) {
     const angle = startOffset + i * aAngleStep;
-    parts.push(`<line x1="${rcx}" y1="${rcy}" x2="${rcx + rRadius * Math.cos(angle)}" y2="${rcy + rRadius * Math.sin(angle)}" stroke="#E2E8F0" stroke-width="1"/>`);
+    parts.push(`<line x1="${rcx}" y1="${rcy}" x2="${rcx + rRadius * Math.cos(angle)}" y2="${rcy + rRadius * Math.sin(angle)}" stroke="#E5E7EB" stroke-width="1"/>`);
   }
 
-  // 우측 데이터 다각형
+  // 우측 데이터 다각형 (그라데이션 + 섀도우)
   if (abilityTotal > 0) {
     const dp = abilityData.map((d, i) => {
       const angle = startOffset + i * aAngleStep;
       const r = (d.value / abilityMax) * rRadius;
       return `${rcx + r * Math.cos(angle)},${rcy + r * Math.sin(angle)}`;
     }).join(' ');
-    parts.push(`<polygon points="${dp}" fill="rgba(139,92,246,0.15)" stroke="#8B5CF6" stroke-width="2.5"/>`);
+    parts.push(`<polygon points="${dp}" fill="url(#grad-combined-ability)" stroke="#8B5CF6" stroke-width="3" stroke-linejoin="round" filter="url(#combined-shadow)"/>`);
 
     abilityData.forEach((d, i) => {
       const angle = startOffset + i * aAngleStep;
       const r = (d.value / abilityMax) * rRadius;
-      parts.push(`<circle cx="${rcx + r * Math.cos(angle)}" cy="${rcy + r * Math.sin(angle)}" r="5" fill="${d.color}" stroke="white" stroke-width="2"/>`);
+      const px = rcx + r * Math.cos(angle);
+      const py = rcy + r * Math.sin(angle);
+      parts.push(`<circle cx="${px}" cy="${py}" r="7" fill="${d.color}" stroke="white" stroke-width="3"/>`);
+      if (d.value > 0) {
+        parts.push(`<text x="${px}" y="${py - 12}" text-anchor="middle" font-size="11" font-weight="700" fill="#1F2937">${d.value}</text>`);
+      }
     });
   }
 
-  // 우측 라벨
+  // 우측 라벨 (더 크고 강조)
   abilityData.forEach((d, i) => {
     const angle = startOffset + i * aAngleStep;
-    const labelR = rRadius + 28;
+    const labelR = rRadius + 32;
     const lx = rcx + labelR * Math.cos(angle);
     const ly = rcy + labelR * Math.sin(angle);
     const pct = abilityTotal > 0 ? Math.round((d.value / abilityTotal) * 100) : 0;
-    parts.push(`<text x="${lx}" y="${ly - 3}" text-anchor="middle" font-size="12" font-weight="600" fill="#374151">${escapeXml(d.label)}</text>`);
-    parts.push(`<text x="${lx}" y="${ly + 12}" text-anchor="middle" font-size="11" fill="#6B7280">${d.value}문항 (${pct}%)</text>`);
+    parts.push(`<text x="${lx}" y="${ly - 4}" text-anchor="middle" font-size="13" font-weight="700" fill="#1F2937">${escapeXml(d.label)}</text>`);
+    parts.push(`<text x="${lx}" y="${ly + 12}" text-anchor="middle" font-size="11" fill="#94A3B8" font-weight="500">${d.value}문항 · ${pct}%</text>`);
   });
 
   return svgWrap(parts.join('\n'), COMBINED_WIDTH, COMBINED_HEIGHT);
@@ -566,31 +637,57 @@ export function generateTopicBarSvg(
 
   const svgParts: string[] = [];
 
-  // 제목
-  const chartCenterX = Math.round(barAreaX + barAreaWidth / 2);
-  svgParts.push(`<text x="${chartCenterX}" y="30" text-anchor="middle" font-size="16" font-weight="700" fill="#374151">단원별 출제 현황</text>`);
-
-  // 바 & 라벨
+  // ── defs: 막대별 그라데이션 + 섀도우 ──
   const COLORS = ['#6366F1', '#8B5CF6', '#A78BFA', '#C084FC', '#D946EF', '#EC4899', '#F472B6', '#F9A8D4'];
+  const defs: string[] = ['<defs>'];
+  COLORS.forEach((c, i) => {
+    const light = lightenColor(c, 0.25);
+    defs.push(
+      `<linearGradient id="grad-topic-${i}" x1="0%" y1="0%" x2="100%" y2="0%">` +
+        `<stop offset="0%" stop-color="${c}"/>` +
+        `<stop offset="100%" stop-color="${light}"/>` +
+      `</linearGradient>`,
+    );
+  });
+  defs.push(`<filter id="topic-shadow" x="-5%" y="-50%" width="110%" height="200%">` +
+    `<feGaussianBlur in="SourceAlpha" stdDeviation="1.5"/>` +
+    `<feOffset dx="0" dy="1"/>` +
+    `<feComponentTransfer><feFuncA type="linear" slope="0.2"/></feComponentTransfer>` +
+    `<feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>` +
+  `</filter>`);
+  defs.push('</defs>');
+  svgParts.push(defs.join(''));
+
+  // 제목 (좌측 위 + 강조 라인)
+  svgParts.push(`<rect x="32" y="22" width="4" height="20" rx="2" fill="#6366F1"/>`);
+  svgParts.push(`<text x="46" y="38" font-size="18" font-weight="700" fill="#1F2937">단원별 출제 현황</text>`);
+
+  // 바 height 증가 + gap 증가
+  const barHeightUp = 26;
+  const barGapUp = 10;
+  const startYUp = 60;
 
   sorted.forEach(([topic, stats], i) => {
-    const y = startY + i * (barHeight + barGap);
+    const y = startYUp + i * (barHeightUp + barGapUp);
     const barW = (stats.count / maxCount) * barAreaWidth;
-    const color = COLORS[i % COLORS.length];
 
-    // 단원명 (왼쪽) — 전체 표시
-    svgParts.push(`<text x="${barAreaX - 8}" y="${y + barHeight / 2 + 4}" text-anchor="end" font-size="11" fill="#374151">${escapeXml(topic)}</text>`);
+    // 단원명 (왼쪽) — 더 큰 폰트
+    svgParts.push(`<text x="${barAreaX - 8}" y="${y + barHeightUp / 2 + 5}" text-anchor="end" font-size="13" font-weight="600" fill="#1F2937">${escapeXml(topic)}</text>`);
 
-    // 바
-    svgParts.push(`<rect x="${barAreaX}" y="${y}" width="${Math.max(barW, 4)}" height="${barHeight}" rx="3" fill="${color}" opacity="0.85"/>`);
+    // 배경 트랙 (전체 너비, 회색)
+    svgParts.push(`<rect x="${barAreaX}" y="${y}" width="${barAreaWidth}" height="${barHeightUp}" rx="4" fill="#F1F5F9"/>`);
 
-    // 값 라벨
-    svgParts.push(`<text x="${barAreaX + barW + 8}" y="${y + barHeight / 2 + 4}" font-size="11" font-weight="600" fill="#374151">${stats.count}문항 (${stats.pts}점)</text>`);
+    // 바 (그라데이션 + 섀도우)
+    svgParts.push(`<rect x="${barAreaX}" y="${y}" width="${Math.max(barW, 4)}" height="${barHeightUp}" rx="4" fill="url(#grad-topic-${i % COLORS.length})" filter="url(#topic-shadow)"/>`);
+
+    // 값 라벨 (더 크고 색상 강조)
+    svgParts.push(`<text x="${barAreaX + barW + 10}" y="${y + barHeightUp / 2 + 5}" font-size="13" font-weight="700" fill="#1F2937">${stats.count}문항</text>`);
+    svgParts.push(`<text x="${barAreaX + barW + 10 + 50}" y="${y + barHeightUp / 2 + 5}" font-size="11" fill="#94A3B8" font-weight="500">· ${stats.pts}점</text>`);
   });
 
-  const totalHeight = startY + sorted.length * (barHeight + barGap) + 20;
-  const totalWidth = Math.max(CHART_WIDTH, barAreaX + barAreaWidth + 130);
-  return svgWrap(svgParts.join('\n'), totalWidth, Math.max(totalHeight, 300));
+  const totalHeight = startYUp + sorted.length * (barHeightUp + barGapUp) + 24;
+  const totalWidth = Math.max(CHART_WIDTH, barAreaX + barAreaWidth + 150);
+  return svgWrap(svgParts.join('\n'), totalWidth, Math.max(totalHeight, 320));
 }
 
 // ── 한글 폰트 로딩 (Vercel 서버리스 대응) ──
@@ -741,75 +838,106 @@ export function generateDiscriminationSvg(questions: AnalyzedQuestion[]): string
   const overallGrade = DISCRIM_GRADES.find((g) => g.key === gradeOf(avg))!;
 
   const items: string[] = [];
-  // 제목
-  items.push(`<text x="340" y="28" text-anchor="middle" font-size="16" font-weight="700" fill="#374151">변별력 분석</text>`);
 
-  // 좌측: 원형 게이지 (평균 변별력 지수)
-  const gcx = 165, gcy = 215, gR = 78, gInnerR = 56;
+  // ── defs: 게이지 그라데이션 + 막대 그라데이션 + 섀도우 ──
+  const lightOverall = lightenColor(overallGrade.color, 0.3);
+  const defs: string[] = ['<defs>'];
+  defs.push(
+    `<linearGradient id="grad-gauge" x1="0%" y1="0%" x2="0%" y2="100%">` +
+      `<stop offset="0%" stop-color="${lightOverall}"/>` +
+      `<stop offset="100%" stop-color="${overallGrade.color}"/>` +
+    `</linearGradient>`,
+  );
+  DISCRIM_GRADES.forEach((g, i) => {
+    const light = lightenColor(g.color, 0.3);
+    defs.push(
+      `<linearGradient id="grad-discrim-${i}" x1="0%" y1="0%" x2="0%" y2="100%">` +
+        `<stop offset="0%" stop-color="${light}"/>` +
+        `<stop offset="100%" stop-color="${g.color}"/>` +
+      `</linearGradient>`,
+    );
+  });
+  defs.push(
+    `<filter id="discrim-shadow" x="-20%" y="-20%" width="140%" height="140%">` +
+      `<feGaussianBlur in="SourceAlpha" stdDeviation="2.5"/>` +
+      `<feOffset dx="0" dy="2"/>` +
+      `<feComponentTransfer><feFuncA type="linear" slope="0.18"/></feComponentTransfer>` +
+      `<feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>` +
+    `</filter>`,
+  );
+  defs.push('</defs>');
+  items.push(defs.join(''));
+
+  // 제목 (좌측 위 + 강조 라인)
+  items.push(`<rect x="32" y="22" width="4" height="20" rx="2" fill="${overallGrade.color}"/>`);
+  items.push(`<text x="46" y="38" font-size="18" font-weight="700" fill="#1F2937">변별력 분석</text>`);
+
+  // 좌측: 원형 게이지 (평균 변별력 지수) — 크기 확대
+  const gcx = 175, gcy = 235, gR = 88, gInnerR = 62;
   const ratio = avg / 100;
   const endAngle = -Math.PI / 2 + ratio * 2 * Math.PI;
   const largeArc = ratio > 0.5 ? 1 : 0;
-  // 배경 원
-  items.push(`<circle cx="${gcx}" cy="${gcy}" r="${gR}" fill="${overallGrade.color}1A" stroke="${overallGrade.color}40" stroke-width="1"/>`);
-  // 도넛 호 (실제 평균)
-  const sx = gcx + gR * Math.cos(-Math.PI / 2);
-  const sy = gcy + gR * Math.sin(-Math.PI / 2);
-  const ex = gcx + gR * Math.cos(endAngle);
-  const ey = gcy + gR * Math.sin(endAngle);
-  const ix2 = gcx + gInnerR * Math.cos(endAngle);
-  const iy2 = gcy + gInnerR * Math.sin(endAngle);
-  const ix1 = gcx + gInnerR * Math.cos(-Math.PI / 2);
-  const iy1 = gcy + gInnerR * Math.sin(-Math.PI / 2);
+  // 배경 원 (더 옅게)
+  items.push(`<circle cx="${gcx}" cy="${gcy}" r="${gR}" fill="${overallGrade.color}0F" stroke="${overallGrade.color}30" stroke-width="1.5"/>`);
+  // 도넛 호 (실제 평균, 그라데이션 + 섀도우)
   if (ratio > 0.001) {
-    items.push(`<path d="M${sx},${sy} A${gR},${gR} 0 ${largeArc},1 ${ex},${ey} L${ix2},${iy2} A${gInnerR},${gInnerR} 0 ${largeArc},0 ${ix1},${iy1} Z" fill="${overallGrade.color}"/>`);
+    const sx = gcx + gR * Math.cos(-Math.PI / 2);
+    const sy = gcy + gR * Math.sin(-Math.PI / 2);
+    const ex = gcx + gR * Math.cos(endAngle);
+    const ey = gcy + gR * Math.sin(endAngle);
+    const ix2 = gcx + gInnerR * Math.cos(endAngle);
+    const iy2 = gcy + gInnerR * Math.sin(endAngle);
+    const ix1 = gcx + gInnerR * Math.cos(-Math.PI / 2);
+    const iy1 = gcy + gInnerR * Math.sin(-Math.PI / 2);
+    items.push(`<path d="M${sx},${sy} A${gR},${gR} 0 ${largeArc},1 ${ex},${ey} L${ix2},${iy2} A${gInnerR},${gInnerR} 0 ${largeArc},0 ${ix1},${iy1} Z" fill="url(#grad-gauge)" filter="url(#discrim-shadow)" stroke="white" stroke-width="2"/>`);
   }
-  // 중앙 숫자
-  items.push(`<text x="${gcx}" y="${gcy - 6}" text-anchor="middle" font-size="13" fill="#6B7280">평균</text>`);
-  items.push(`<text x="${gcx}" y="${gcy + 18}" text-anchor="middle" font-size="30" font-weight="700" fill="${overallGrade.color}">${avg}</text>`);
-  items.push(`<text x="${gcx}" y="${gcy + 36}" text-anchor="middle" font-size="11" fill="#6B7280">/100</text>`);
-  // 게이지 아래 등급 라벨
-  items.push(`<rect x="${gcx - 36}" y="${gcy + gR + 16}" width="72" height="24" rx="4" fill="${overallGrade.color}"/>`);
-  items.push(`<text x="${gcx}" y="${gcy + gR + 33}" text-anchor="middle" font-size="13" font-weight="700" fill="white">${overallGrade.label}</text>`);
+  // 중앙 숫자 (더 크게)
+  items.push(`<text x="${gcx}" y="${gcy - 14}" text-anchor="middle" font-size="11" fill="#94A3B8" font-weight="500" letter-spacing="0.1em">AVERAGE</text>`);
+  items.push(`<text x="${gcx}" y="${gcy + 14}" text-anchor="middle" font-size="40" font-weight="800" fill="${overallGrade.color}">${avg}</text>`);
+  items.push(`<text x="${gcx}" y="${gcy + 32}" text-anchor="middle" font-size="11" fill="#64748B" font-weight="600">/ 100</text>`);
+  // 게이지 아래 등급 라벨 (더 크고 강조)
+  items.push(`<rect x="${gcx - 44}" y="${gcy + gR + 18}" width="88" height="28" rx="14" fill="${overallGrade.color}" filter="url(#discrim-shadow)"/>`);
+  items.push(`<text x="${gcx}" y="${gcy + gR + 37}" text-anchor="middle" font-size="14" font-weight="800" fill="white">${overallGrade.label}</text>`);
 
-  // 우측: 4등급 막대 차트
-  const chartLeft = 330;
-  const chartTop = 70;
-  const chartW = 320;
+  // 우측: 4등급 막대 차트 (그라데이션 + 섀도우)
+  const chartLeft = 360;
+  const chartTop = 80;
+  const chartW = 280;
   const chartH = 230;
-  const barAreaH = chartH - 60; // 라벨 영역 제외
-  const barW = 50;
+  const barAreaH = chartH - 64;
+  const barW = 48;
   const barGap = (chartW - 4 * barW) / 5;
   const maxCount = Math.max(...Object.values(counts), 1);
 
   // Y축 가이드 라인 (5개 눈금)
   for (let i = 0; i <= 4; i++) {
     const y = chartTop + barAreaH - (i / 4) * barAreaH;
-    items.push(`<line x1="${chartLeft}" y1="${y}" x2="${chartLeft + chartW}" y2="${y}" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="${i === 0 ? '0' : '3,3'}"/>`);
+    items.push(`<line x1="${chartLeft}" y1="${y}" x2="${chartLeft + chartW}" y2="${y}" stroke="#E5E7EB" stroke-width="${i === 0 ? 1.5 : 1}" stroke-dasharray="${i === 0 ? '0' : '3,3'}"/>`);
   }
 
-  // 4개 막대
+  // 4개 막대 (그라데이션 + 섀도우)
   DISCRIM_GRADES.forEach((g, idx) => {
     const c = counts[g.key];
     const pct = total > 0 ? Math.round((c / total) * 100) : 0;
     const bx = chartLeft + barGap + idx * (barW + barGap);
     const bh = barAreaH * (c / maxCount);
     const by = chartTop + barAreaH - bh;
-    items.push(`<rect x="${bx}" y="${by}" width="${barW}" height="${bh}" rx="3" fill="${g.color}"/>`);
+    items.push(`<rect x="${bx}" y="${by}" width="${barW}" height="${Math.max(bh, 2)}" rx="4" fill="url(#grad-discrim-${idx})" filter="url(#discrim-shadow)"/>`);
     // 막대 위 숫자
     if (c > 0) {
-      items.push(`<text x="${bx + barW / 2}" y="${by - 6}" text-anchor="middle" font-size="13" font-weight="700" fill="${g.color}">${c}</text>`);
+      items.push(`<text x="${bx + barW / 2}" y="${by - 8}" text-anchor="middle" font-size="14" font-weight="800" fill="${g.color}">${c}</text>`);
     }
     // 라벨 (등급명)
-    items.push(`<text x="${bx + barW / 2}" y="${chartTop + barAreaH + 18}" text-anchor="middle" font-size="12" font-weight="600" fill="#374151">${g.label}</text>`);
+    items.push(`<text x="${bx + barW / 2}" y="${chartTop + barAreaH + 20}" text-anchor="middle" font-size="13" font-weight="700" fill="#1F2937">${g.label}</text>`);
     // 퍼센트
-    items.push(`<text x="${bx + barW / 2}" y="${chartTop + barAreaH + 34}" text-anchor="middle" font-size="10" fill="#6B7280">${pct}%</text>`);
+    items.push(`<text x="${bx + barW / 2}" y="${chartTop + barAreaH + 36}" text-anchor="middle" font-size="11" fill="#94A3B8" font-weight="500">${pct}%</text>`);
   });
 
   // 우측 상단 캡션
-  items.push(`<text x="${chartLeft + chartW}" y="${chartTop - 12}" text-anchor="end" font-size="11" fill="#6B7280">총 ${total}문항</text>`);
+  items.push(`<text x="${chartLeft + chartW}" y="${chartTop - 14}" text-anchor="end" font-size="12" fill="#64748B" font-weight="600">총 ${total}문항</text>`);
 
   // 하단 설명
-  items.push(`<text x="${chartLeft + chartW / 2}" y="${chartTop + chartH + 8}" text-anchor="middle" font-size="10" fill="#9CA3AF">변별력 = 난이도·배점·형식 기반 정성 지수 (0~100)</text>`);
+  items.push(`<text x="${chartLeft + chartW / 2}" y="${chartTop + chartH + 16}" text-anchor="middle" font-size="10" fill="#94A3B8">변별력 = 난이도·배점·형식 기반 정성 지수 (0~100)</text>`);
 
   return svgWrap(items.join('\n'));
 }
