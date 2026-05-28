@@ -1,18 +1,18 @@
 /**
- * 네이버 블로그 V4 렌더러 (갈수학학원 스타일 — 테이블 중심)
+ * 네이버 블로그 V4 렌더러 (V2 article-generator 패턴 — 100% 호환)
  *
- * 입력: V4Extension 데이터 (CommentaryResult의 v4_* 필드) + 메타
- * 출력: 네이버 블로그 본문에 그대로 붙여넣을 수 있는 HTML 문자열
+ * V4 = 갈수학학원 스타일 (테이블 중심 앱 화면) → 네이버 복사 시 단순 HTML로 변환
  *
- * 절대 규칙 (V3와 동일 — 검증된 네이버 호환 패턴):
- *  - <table> + 인라인 style만 사용
- *  - 폭 720px 고정
- *  - flex/grid/li/h2 금지
- *  - 모든 컨테이너 word-break: keep-all
- *  - 폰트 폴백 명시
- *  - 행 색상 코딩은 td bgcolor 속성 (CSS background는 네이버에서 사라짐)
+ * V2 article-generator의 검증된 규칙 (article-prompt-builders.ts):
+ *  - <table>, <p>, <ul>, <li>, <ol>, <blockquote>, <h3>, <div> 사용 금지
+ *  - 사용 가능: <h2>, <strong>, <span>, <mark>, <br>, <img>
+ *  - 리스트: "• 항목<br>"
+ *  - 줄바꿈: 문장 끝 <br>, 문단 사이 <br><br>
+ *  - 색상: <span style='color:#XXX'> (작은따옴표)
  *
- * 시안: 사용자 제공 갈수학학원 시험 분석 블로그 스크린샷 (2026-05-27)
+ * 네이버 SmartEditor가 외부 HTML 받을 때 schema 변환에서 table 손실 → V2 규칙으로 회피.
+ *
+ * 시안: 사용자 제공 갈수학학원 블로그 스크린샷 (2026-05-28)
  */
 
 import type { CommentaryResult } from './agents/commentary-agent';
@@ -31,22 +31,19 @@ export interface NaverV4ChartUrls {
   discrimination?: string;
 }
 
-// ── V4 디자인 토큰 (CSS와 일치) ──
+// ── V4 디자인 토큰 (인라인 span background로 사용) ──
 
-const V4_DIFF_ROW_COLORS = [
-  '#E8F5E8', // 1 기본 (연녹)
-  '#F5F5DC', // 2 표준 (베이지)
-  '#FFF4E0', // 3 응용 (연주황)
-  '#FFE0CC', // 4 심화 (살구)
-  '#FFCCCC', // 5 최고난도 (연빨)
-];
+const V4_ACCENT = '#8B4513';
+const V4_HIGHLIGHT_YELLOW = '#FFF3BF';
+const V4_HIGHLIGHT_PINK = '#FFD8D8';
+const V4_HIGHLIGHT_ORANGE = '#FFE8CC';
+const V4_HIGHLIGHT_GREEN = '#D8F5A2';
+
+// 난이도별 형광펜 배경 (span style background) — 5단계
+const V4_DIFF_BG = ['#D8F5A2', '#FFF3BF', '#FFE8CC', '#FFD8D8', '#FFCCCC'];
 const V4_DIFF_LABELS = ['기본', '표준', '응용', '심화', '최고난도'];
-const V4_ACCENT = '#8B4513';      // 갈색 헤딩
-const V4_HIGHLIGHT = '#FFD700';   // 노란 강조
-const V4_HEADER_BG = '#F8F8F8';   // 테이블 헤더 회색
-const V4_BORDER = '#E5E5E5';
 
-// ── 유틸 (V3와 공유 패턴) ──
+// ── 유틸 ──
 
 function escapeHtml(s: string): string {
   return joinKoreanCounters(String(s ?? ''))
@@ -57,14 +54,15 @@ function escapeHtml(s: string): string {
     .replace(/'/g, '&#39;');
 }
 
-function markdownToInlineBold(text: string): string {
-  // 사용자 요청 (2026-05-27): 자동 색상 강조 제거. font-weight만 유지.
-  return escapeHtml(text).replace(/\*\*(.+?)\*\*/g, '<strong style="font-weight:700;">$1</strong>');
+/** **bold** → <strong> (네이버 호환). 색상 강조 X. */
+function md(text: string): string {
+  return escapeHtml(text).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 }
 
+/** 한국어 수사+의존명사 NBSP 묶기 */
 function joinKoreanCounters(text: string): string {
   if (!text) return text;
-  const NBSP = ' ';
+  const NBSP = ' ';
   return text
     .replace(
       /(한|두|세|네|다섯|여섯|일곱|여덟|아홉|열|첫|단|매)\s+(개|명|사람|곳|분|번|줄|문항|점|가지|칸|쪽|마디|학기|과목)/g,
@@ -87,216 +85,134 @@ export function buildNaverV4Html(args: {
   const c = commentary;
   const parts: string[] = [];
 
-  // 외부 컨테이너 (720px 고정 + table-layout:fixed — 네이버 SmartEditor 호환 핵심 패턴)
-  // V3에서 검증: table-layout:fixed 없으면 셀 width%가 무시되어 한 글자씩 세로로 분리됨
-  parts.push(`<table width="720" cellpadding="0" cellspacing="0" border="0" style="width:720px;max-width:720px;table-layout:fixed;margin:0 auto;background:#fff;font-family:'Noto Serif KR','맑은 고딕',serif;color:#2A2A2A;word-break:keep-all;">`);
-
-  // ① 헤더
+  // ① 헤더 (학원/시험명) — h2 + strong + br
   parts.push(renderHeader(c, meta));
 
-  // ② 들어가며 (v1.2.0)
+  // ② 들어가며
   if (c.v4_intro) {
-    parts.push(renderSectionHeading('들어가며'));
-    parts.push(renderIntro(c.v4_intro));
+    parts.push(renderH2('들어가며'));
+    parts.push(`<span style='font-size: 16px;'>${md(c.v4_intro)}</span><br><br>`);
   }
 
-  // ③ 시험 개요 (1등급 컷 포함)
+  // ③ 시험 개요 + 1등급 컷
   if (c.v4_exam_overview) {
-    parts.push(renderSectionHeading('시험 개요 및 1등급 컷 예상'));
+    parts.push(renderH2('시험 개요 및 1등급 컷 예상'));
     parts.push(renderExamOverview(c.v4_exam_overview));
   }
 
-  // ④ 학원 차별화 전략 (v1.2.0)
+  // ④ 학원 차별화 전략
   if (c.v4_academy_strategy && c.v4_academy_strategy.length > 0) {
-    parts.push(renderSectionHeading('1등급 수학을 위한 학원 차별화 전략', `${c.v4_academy_strategy.length}가지`));
+    parts.push(renderH2(`1등급 수학을 위한 학원 차별화 전략 (${c.v4_academy_strategy.length}가지)`));
     parts.push(renderAcademyStrategy(c.v4_academy_strategy));
   }
 
-  // ⑤ 문제 번호별 난이도/단원 (한 줄 해설 컬럼 추가)
+  // ⑤ 문제 번호별 난이도 / 출제 단원 (text list로)
   if (c.v4_difficulty_rows && c.v4_difficulty_rows.length > 0) {
-    parts.push(renderSectionHeading('문제 난이도 · 출제 단원', `${c.v4_difficulty_rows.length}문항`));
-    parts.push(renderDifficultyTable(c.v4_difficulty_rows));
+    parts.push(renderH2(`문제 난이도 · 출제 단원 (${c.v4_difficulty_rows.length}문항)`));
+    parts.push(renderDifficultyList(c.v4_difficulty_rows));
   }
 
   // ⑥ 출제 특징 요약
   if (c.v4_exam_features) {
-    parts.push(renderSectionHeading('출제 특징 요약'));
+    parts.push(renderH2('출제 특징 요약'));
     parts.push(renderExamFeatures(c.v4_exam_features));
   }
 
   // ⑦ 출제 핵심 포인트 (영역별)
   if (c.v4_main_analysis && c.v4_main_analysis.length > 0) {
-    parts.push(renderSectionHeading('출제 핵심 포인트', '영역별'));
+    parts.push(renderH2('출제 핵심 포인트'));
     parts.push(renderMainAnalysis(c.v4_main_analysis));
   }
 
-  // ⑧ 이전 시험과의 비교/대조 (v1.2.0)
+  // ⑧ 이전 시험과의 비교 · 대조
   if (c.v4_previous_comparison) {
-    parts.push(renderSectionHeading('이전 시험과의 비교 · 대조'));
+    parts.push(renderH2('이전 시험과의 비교 · 대조'));
     parts.push(renderPreviousComparison(c.v4_previous_comparison));
   }
 
-  // ⑨ 주요 문항 분석 (v1.2.0)
+  // ⑨ 주요 문항 분석 (킬러 문항)
   if (c.v4_key_questions && c.v4_key_questions.length > 0) {
-    parts.push(renderSectionHeading('주요 문항 분석', `킬러 ${c.v4_key_questions.length}문항`));
+    parts.push(renderH2(`주요 문항 분석 (킬러 ${c.v4_key_questions.length}문항)`));
     parts.push(renderKeyQuestions(c.v4_key_questions));
   }
 
-  // ⑩ 차트 (선택)
+  // ⑩ 차트 (인포그래픽)
   if (chartUrls && Object.values(chartUrls).some((v) => !!v)) {
-    parts.push(renderSectionHeading('시각 분석', '난이도 · 능력 · 단원 · 변별력'));
+    parts.push(renderH2('시각 분석'));
     parts.push(renderCharts(chartUrls));
   }
 
   // ⑪ 다음 시험 대비 전략
   if (c.v4_final_strategy && c.v4_final_strategy.length > 0) {
-    parts.push(renderSectionHeading('다음 시험 대비 전략', '영역별 권장'));
+    parts.push(renderH2('다음 시험 대비 전략'));
     parts.push(renderFinalStrategy(c.v4_final_strategy));
   }
 
   // 푸터
   parts.push(renderFooter(meta));
 
-  parts.push('</table>');
   return parts.filter(Boolean).join('\n');
 }
 
-// ── 블록 렌더러 ──
+// ── 블록 렌더러 (모두 단순 HTML) ──
+
+function renderH2(title: string): string {
+  // V2 패턴: <h2> + 인라인 style. 작은따옴표 사용 (JSON 호환 + V2와 일치)
+  return `<h2 style='font-size: 20px; font-weight: 700; color: #1A1A1A; border-bottom: 2px solid ${V4_ACCENT}; padding-bottom: 6px; margin: 32px 0 16px;'>▶ ${escapeHtml(title)}</h2>`;
+}
 
 function renderHeader(c: CommentaryResult, meta: NaverV4Meta): string {
-  const headerTitle = c.v4_exam_overview?.title || meta.examTitle;
-  const headerSchoolGrade = c.v4_exam_overview
-    ? [c.v4_exam_overview.school, c.v4_exam_overview.grade].filter(Boolean).join(' · ')
-    : [meta.schoolName, meta.grade].filter(Boolean).join(' · ');
+  const title = c.v4_exam_overview?.title || meta.examTitle;
+  const grade = c.v4_exam_overview?.grade || meta.grade;
+  const school = c.v4_exam_overview?.school || meta.schoolName;
   const oneLiner = c.v4_exam_overview?.one_liner;
 
-  return `
-  <tr><td style="padding:24px 0 12px;border-bottom:2px solid ${V4_ACCENT};">
-    ${headerSchoolGrade ? `<p style="margin:0 0 6px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:11px;letter-spacing:0.12em;color:${V4_ACCENT};font-weight:700;text-transform:uppercase;word-break:keep-all;">${escapeHtml(headerSchoolGrade)}</p>` : ''}
-    <p style="margin:0 0 8px;font-family:'Noto Serif KR','맑은 고딕',serif;font-size:24px;font-weight:700;line-height:1.4;color:#1A1A1A;word-break:keep-all;">${escapeHtml(headerTitle)}</p>
-    ${oneLiner ? `<p style="margin:0;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:14px;line-height:1.6;color:#555;word-break:keep-all;">${escapeHtml(oneLiner)}</p>` : ''}
-  </td></tr>`;
-}
-
-function renderSectionHeading(title: string, subtitle?: string): string {
-  // 네이버 호환: nested table 제거. ▶ + 제목 + subtitle을 한 td 안 텍스트로.
-  return `
-  <tr><td style="padding:24px 0 10px;border-bottom:1px solid ${V4_BORDER};font-family:'맑은 고딕',Pretendard,sans-serif;word-break:keep-all;">
-    <span style="font-size:14px;color:#1A1A1A;margin-right:8px;">▶</span>
-    <span style="font-size:16px;font-weight:700;color:#1A1A1A;">${escapeHtml(title)}</span>
-    ${subtitle ? `<span style="font-size:12px;color:#888;font-weight:500;margin-left:8px;">${escapeHtml(subtitle)}</span>` : ''}
-  </td></tr>`;
-}
-
-function renderIntro(intro: string): string {
-  return `
-  <tr><td style="padding:14px 0 0;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr>
-        <td bgcolor="#FFF8E0" style="background:#FFF8E0;border-left:4px solid ${V4_ACCENT};padding:18px 22px;font-family:'Noto Serif KR','맑은 고딕',serif;font-size:15px;line-height:1.85;color:#1A1A1A;word-break:keep-all;">
-          <p style="margin:0;font-family:'Noto Serif KR','맑은 고딕',serif;font-size:15px;line-height:1.85;color:#1A1A1A;word-break:keep-all;">${markdownToInlineBold(intro)}</p>
-        </td>
-      </tr>
-    </table>
-  </td></tr>`;
-}
-
-function renderAcademyStrategy(items: NonNullable<CommentaryResult['v4_academy_strategy']>): string {
-  // 네이버 SmartEditor 호환 — nested table 2-level + border-radius 50% 원형은 사라짐.
-  // 1-level table + bgcolor + 정사각형(36x36)으로 단순화.
-  const trs = items
-    .map(
-      (item, i) => `
-      <tr bgcolor="#FFF4F4" style="background:#FFF4F4;">
-        <td width="44" bgcolor="#BF1722" align="center" valign="middle" style="background:#BF1722;width:44px;height:44px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:16px;font-weight:700;color:#fff;text-align:center;border-bottom:1px solid #FFD0D0;">${i + 1}</td>
-        <td valign="top" style="padding:12px 16px;border-bottom:1px solid #FFD0D0;border-left:1px solid #FFD0D0;word-break:keep-all;">
-          <p style="margin:0 0 4px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:14px;font-weight:700;color:#1A1A1A;word-break:keep-all;">${escapeHtml(item.title)}</p>
-          <p style="margin:0;font-family:'Noto Serif KR','맑은 고딕',serif;font-size:13px;line-height:1.7;color:#555;word-break:keep-all;">${markdownToInlineBold(item.body)}</p>
-        </td>
-      </tr>`,
-    )
-    .join('');
-
-  return `
-  <tr><td style="padding:14px 0 0;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #FFD0D0;border-collapse:collapse;table-layout:fixed;width:100%;">
-      ${trs}
-    </table>
-  </td></tr>`;
-}
-
-function renderPreviousComparison(c: NonNullable<CommentaryResult['v4_previous_comparison']>): string {
-  return `
-  <tr><td style="padding:14px 0 0;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr>
-        <td bgcolor="#FFF8F8" style="background:#FFF8F8;border-left:4px solid #BF1722;padding:16px 20px;font-family:'Noto Serif KR','맑은 고딕',serif;font-size:14px;line-height:1.85;color:#2A2A2A;word-break:keep-all;">
-          <p style="margin:0 0 10px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:14px;font-weight:700;color:#BF1722;word-break:keep-all;">${markdownToInlineBold(c.headline)}</p>
-          <p style="margin:0;font-family:'Noto Serif KR','맑은 고딕',serif;font-size:14px;line-height:1.85;color:#2A2A2A;word-break:keep-all;">${markdownToInlineBold(c.body)}</p>
-        </td>
-      </tr>
-    </table>
-  </td></tr>`;
-}
-
-function renderKeyQuestions(items: NonNullable<CommentaryResult['v4_key_questions']>): string {
-  const blocks = items
-    .map(
-      (kq) => `
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:14px;">
-      <tr>
-        <td bgcolor="#FAFAFA" style="background:#FAFAFA;border-left:4px solid #1A1A1A;padding:14px 18px;">
-          <p style="margin:0 0 8px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:14px;font-weight:700;color:#1A1A1A;word-break:keep-all;">${escapeHtml(kq.title)}</p>
-          <p style="margin:0;font-family:'Noto Serif KR','맑은 고딕',serif;font-size:13px;line-height:1.85;color:#2A2A2A;word-break:keep-all;">${markdownToInlineBold(kq.body)}</p>
-        </td>
-      </tr>
-    </table>`,
-    )
-    .join('');
-
-  return `
-  <tr><td style="padding:14px 0 0;">
-    ${blocks}
-  </td></tr>`;
+  const out: string[] = [];
+  const schoolGrade = [school, grade].filter(Boolean).join(' · ');
+  if (schoolGrade) {
+    out.push(`<span style='font-size: 12px; color: ${V4_ACCENT}; font-weight: 700; letter-spacing: 0.12em;'>${escapeHtml(schoolGrade)}</span><br>`);
+  }
+  out.push(`<strong style='font-size: 26px; color: #1A1A1A;'>${escapeHtml(title)}</strong><br><br>`);
+  if (oneLiner) {
+    out.push(`<span style='font-size: 15px; color: #555;'>${md(oneLiner)}</span><br>`);
+  }
+  return out.join('');
 }
 
 function renderExamOverview(o: NonNullable<CommentaryResult['v4_exam_overview']>): string {
-  const rows: Array<[string, string]> = [
+  // 단순 라벨: 값 형식 + <br>. 표 사용 X (네이버 호환).
+  const lines: Array<[string, string]> = [
     ['시험명', o.title],
     ['학년 · 학교', o.school ? `${o.grade} · ${o.school}` : o.grade],
     ['문항 · 만점', `${o.total_questions}문항 · ${o.total_points}점`],
     ['출제 범위', o.range],
-    ['전체 난이도', `<strong style="font-weight:700;">${escapeHtml(o.avg_difficulty_label)}</strong>`],
+    ['전체 난이도', o.avg_difficulty_label],
     ['최고 난이도', o.peak_difficulty],
   ];
-  if (o.essay_summary) {
-    rows.push(['서술형', o.essay_summary]);
-  }
-  if (o.expected_grade_cut) {
-    rows.push(['예상 등급 컷', `<strong style="font-weight:700;">${escapeHtml(o.expected_grade_cut)}</strong>`]);
-  }
-  rows.push(['한 줄 요약', `<strong style="font-weight:700;">${escapeHtml(o.one_liner)}</strong>`]);
+  if (o.essay_summary) lines.push(['서술형', o.essay_summary]);
+  if (o.expected_grade_cut) lines.push(['예상 등급 컷', o.expected_grade_cut]);
+  lines.push(['한 줄 요약', o.one_liner]);
 
-  const trs = rows
+  return lines
     .map(
-      ([label, value], i) => `
-      <tr ${i < rows.length - 1 ? `style="border-bottom:1px solid #F0F0F0;"` : ''}>
-        <td width="130" bgcolor="${V4_HEADER_BG}" style="background:${V4_HEADER_BG};padding:10px 14px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:13px;font-weight:700;color:#555;vertical-align:top;border-right:1px solid ${V4_BORDER};word-break:keep-all;">${escapeHtml(label)}</td>
-        <td style="padding:10px 14px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:14px;color:#2A2A2A;line-height:1.6;word-break:keep-all;">${value.includes('<strong') ? value : escapeHtml(value)}</td>
-      </tr>`,
+      ([label, value]) =>
+        `<strong style='color: ${V4_ACCENT};'>${escapeHtml(label)}:</strong> <span style='font-size: 15px;'>${md(value)}</span><br>`,
     )
-    .join('');
-
-  return `
-  <tr><td style="padding:14px 0 0;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${V4_BORDER};border-collapse:collapse;table-layout:fixed;width:100%;">
-      ${trs}
-    </table>
-  </td></tr>`;
+    .join('') + '<br>';
 }
 
-function renderDifficultyTable(rows: NonNullable<CommentaryResult['v4_difficulty_rows']>): string {
-  // 번호 순으로 정렬 (서술형 뒤에)
+function renderAcademyStrategy(items: NonNullable<CommentaryResult['v4_academy_strategy']>): string {
+  return items
+    .map(
+      (item, i) =>
+        `<strong style='font-size: 17px; color: ${V4_ACCENT};'>${i + 1}. ${escapeHtml(item.title)}</strong><br>` +
+        `<span style='font-size: 15px;'>${md(item.body)}</span><br><br>`,
+    )
+    .join('');
+}
+
+function renderDifficultyList(rows: NonNullable<CommentaryResult['v4_difficulty_rows']>): string {
+  // 번호 순 정렬 (서술형 뒤)
   const sorted = [...rows].sort((a, b) => {
     const aIsEssay = String(a.question_number).startsWith('서술');
     const bIsEssay = String(b.question_number).startsWith('서술');
@@ -307,104 +223,73 @@ function renderDifficultyTable(rows: NonNullable<CommentaryResult['v4_difficulty
     return aNum - bNum;
   });
 
-  const headerRow = `
-    <tr bgcolor="${V4_HEADER_BG}" style="background:${V4_HEADER_BG};border-bottom:2px solid ${V4_BORDER};">
-      <th width="60" style="padding:10px 12px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:12px;font-weight:700;color:#555;text-align:left;">번호</th>
-      <th style="padding:10px 12px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:12px;font-weight:700;color:#555;text-align:left;">단원 · 핵심 개념</th>
-      <th width="120" style="padding:10px 12px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:12px;font-weight:700;color:#555;text-align:left;">난이도</th>
-      <th width="80" style="padding:10px 12px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:12px;font-weight:700;color:#555;text-align:right;">배점</th>
-    </tr>`;
-
-  const trs = sorted
+  return sorted
     .map((row) => {
       const lv = Number(row.difficulty);
       const validLv = lv >= 1 && lv <= 5 ? lv : 3;
-      const rowBg = V4_DIFF_ROW_COLORS[validLv - 1];
+      const bg = V4_DIFF_BG[validLv - 1];
       const diffLabel = V4_DIFF_LABELS[validLv - 1];
-      return `
-      <tr bgcolor="${rowBg}" style="background:${rowBg};">
-        <td style="padding:8px 12px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:15px;font-weight:700;color:#1A1A1A;border-bottom:1px solid rgba(0,0,0,0.05);word-break:keep-all;">${escapeHtml(String(row.question_number))}</td>
-        <td style="padding:8px 12px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:13px;color:#2A2A2A;border-bottom:1px solid rgba(0,0,0,0.05);word-break:keep-all;">
-          ${escapeHtml(row.topic)}
-          ${row.sub_topic ? `<div style="margin-top:2px;color:#888;font-size:12px;">${escapeHtml(row.sub_topic)}</div>` : ''}
-          ${row.analysis_short ? `<div style="margin-top:4px;color:#666;font-size:12px;line-height:1.5;">${escapeHtml(row.analysis_short)}</div>` : ''}
-        </td>
-        <td style="padding:8px 12px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:13px;color:#2A2A2A;font-weight:600;border-bottom:1px solid rgba(0,0,0,0.05);white-space:nowrap;">Lv${validLv} <span style="color:#888;font-size:12px;font-weight:400;">${diffLabel}</span></td>
-        <td align="right" style="padding:8px 12px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:15px;font-weight:700;color:#1A1A1A;border-bottom:1px solid rgba(0,0,0,0.05);white-space:nowrap;">${row.points}<span style="color:#888;font-size:12px;font-weight:400;"> 점</span></td>
-      </tr>`;
-    })
-    .join('');
 
-  return `
-  <tr><td style="padding:14px 0 0;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${V4_BORDER};border-collapse:collapse;table-layout:fixed;width:100%;">
-      ${headerRow}
-      ${trs}
-    </table>
-  </td></tr>`;
+      // <span style='background:#XXX'> 형광펜은 네이버에서 살아남음
+      const numStr = String(row.question_number);
+      const topic = escapeHtml(row.topic);
+      const lvBadge = `<span style='background: ${bg}; padding: 2px 6px; font-size: 13px; font-weight: 700;'>Lv${validLv} ${diffLabel}</span>`;
+      const points = `<strong>${row.points}점</strong>`;
+
+      let line = `<strong>${escapeHtml(numStr)}번</strong> ${topic} — ${lvBadge} · ${points}<br>`;
+      if (row.analysis_short) {
+        line += `<span style='font-size: 13px; color: #666; padding-left: 20px;'>↳ ${escapeHtml(row.analysis_short)}</span><br>`;
+      }
+      return line;
+    })
+    .join('') + '<br>';
 }
 
 function renderExamFeatures(f: NonNullable<CommentaryResult['v4_exam_features']>): string {
-  return `
-  <tr><td style="padding:14px 0 0;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr>
-        <td bgcolor="${V4_HEADER_BG}" style="background:${V4_HEADER_BG};border-left:4px solid ${V4_ACCENT};padding:18px 22px;font-family:'Noto Serif KR','맑은 고딕',serif;font-size:15px;line-height:1.85;color:#2A2A2A;word-break:keep-all;">
-          <p style="margin:0 0 10px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:15px;font-weight:700;color:#1A1A1A;word-break:keep-all;">${markdownToInlineBold(f.headline)}</p>
-          <p style="margin:0;font-family:'Noto Serif KR','맑은 고딕',serif;font-size:15px;line-height:1.85;color:#2A2A2A;word-break:keep-all;">${markdownToInlineBold(f.body)}</p>
-        </td>
-      </tr>
-    </table>
-  </td></tr>`;
+  // 회색 박스 → mark(노란 형광펜) + 줄바꿈
+  return (
+    `<mark style='background: ${V4_HIGHLIGHT_YELLOW}; padding: 2px 6px;'><strong>${md(f.headline)}</strong></mark><br><br>` +
+    `<span style='font-size: 15px;'>${md(f.body)}</span><br><br>`
+  );
 }
 
 function renderMainAnalysis(items: NonNullable<CommentaryResult['v4_main_analysis']>): string {
-  const blocks = items
+  return items
     .map(
-      (item) => `
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:18px;">
-      <tr>
-        <td style="border-left:3px solid ${V4_HIGHLIGHT};padding:4px 0 4px 14px;">
-          <p style="margin:0 0 8px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:15px;font-weight:700;color:#1A1A1A;word-break:keep-all;">${escapeHtml(item.heading)}</p>
-          <p style="margin:0;font-family:'Noto Serif KR','맑은 고딕',serif;font-size:14px;line-height:1.8;color:#2A2A2A;word-break:keep-all;">${markdownToInlineBold(item.body)}</p>
-        </td>
-      </tr>
-    </table>`,
+      (item) =>
+        `<strong style='font-size: 17px; color: ${V4_ACCENT};'>${escapeHtml(item.heading)}</strong><br>` +
+        `<span style='font-size: 15px;'>${md(item.body)}</span><br><br>`,
     )
     .join('');
+}
 
-  return `
-  <tr><td style="padding:14px 0 0;">
-    ${blocks}
-  </td></tr>`;
+function renderPreviousComparison(c: NonNullable<CommentaryResult['v4_previous_comparison']>): string {
+  return (
+    `<mark style='background: ${V4_HIGHLIGHT_PINK}; padding: 2px 6px;'><strong>${md(c.headline)}</strong></mark><br><br>` +
+    `<span style='font-size: 15px;'>${md(c.body)}</span><br><br>`
+  );
+}
+
+function renderKeyQuestions(items: NonNullable<CommentaryResult['v4_key_questions']>): string {
+  return items
+    .map(
+      (kq) =>
+        `<strong style='font-size: 17px;'>${escapeHtml(kq.title)}</strong><br>` +
+        `<span style='font-size: 15px;'>${md(kq.body)}</span><br><br>`,
+    )
+    .join('');
 }
 
 function renderFinalStrategy(rows: NonNullable<CommentaryResult['v4_final_strategy']>): string {
-  const headerRow = `
-    <tr bgcolor="#FFF8E0" style="background:#FFF8E0;border-bottom:2px solid ${V4_HIGHLIGHT};">
-      <th width="180" style="padding:10px 14px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:12px;font-weight:700;color:${V4_ACCENT};text-align:left;">출제 영역</th>
-      <th width="200" style="padding:10px 14px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:12px;font-weight:700;color:${V4_ACCENT};text-align:left;">현재 상태</th>
-      <th style="padding:10px 14px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:12px;font-weight:700;color:${V4_ACCENT};text-align:left;">다음 시험 대비 액션</th>
-    </tr>`;
-
-  const trs = rows
+  // 영역별 짧은 단락
+  return rows
     .map(
-      (r) => `
-      <tr style="border-bottom:1px solid #F0F0F0;">
-        <td bgcolor="${V4_HEADER_BG}" style="background:${V4_HEADER_BG};padding:10px 14px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:13px;color:${V4_ACCENT};font-weight:700;vertical-align:top;word-break:keep-all;line-height:1.5;">${escapeHtml(r.area)}</td>
-        <td style="padding:10px 14px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:13px;color:#555;vertical-align:top;word-break:keep-all;line-height:1.6;">${markdownToInlineBold(r.current_status)}</td>
-        <td style="padding:10px 14px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:13px;color:#2A2A2A;vertical-align:top;word-break:keep-all;line-height:1.6;">${markdownToInlineBold(r.action)}</td>
-      </tr>`,
+      (row) =>
+        `<strong style='font-size: 16px; color: ${V4_ACCENT};'>${escapeHtml(row.area)}</strong><br>` +
+        `<span style='font-size: 14px; color: #666;'>현재 상태:</span> <span style='font-size: 14px;'>${md(row.current_status)}</span><br>` +
+        `<span style='font-size: 14px; color: #666;'>액션:</span> <span style='font-size: 14px;'>${md(row.action)}</span><br><br>`,
     )
     .join('');
-
-  return `
-  <tr><td style="padding:14px 0 0;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${V4_BORDER};border-collapse:collapse;table-layout:fixed;width:100%;">
-      ${headerRow}
-      ${trs}
-    </table>
-  </td></tr>`;
 }
 
 function renderCharts(chartUrls: NaverV4ChartUrls): string {
@@ -416,33 +301,22 @@ function renderCharts(chartUrls: NaverV4ChartUrls): string {
 
   if (items.length === 0) return '';
 
-  // 1행 1차트로 단순화 — nested table 줄이고 안전한 레이아웃 (이미지 크기 720px로 키움)
-  const trs = items
+  // V2 패턴: <img> + 캡션 span + <br>
+  return items
     .map(
-      ([label, url]) => `
-      <tr>
-        <td align="center" style="padding:12px;border:1px solid ${V4_BORDER};">
-          <img src="${url}" alt="${escapeHtml(label)}" width="640" style="width:640px;max-width:100%;height:auto;display:block;margin:0 auto;" />
-          <p style="margin:8px 0 0;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:11px;color:#888;font-weight:600;text-align:center;">${escapeHtml(label)}</p>
-        </td>
-      </tr>`,
+      ([label, url]) =>
+        `<img src='${url}' alt='${escapeHtml(label)}' style='max-width: 100%; height: auto;' /><br>` +
+        `<span style='font-size: 13px; color: #64748B; text-align: center; display: block;'>▲ ${escapeHtml(label)}</span><br><br>`,
     )
     .join('');
-
-  return `
-  <tr><td style="padding:14px 0 0;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;table-layout:fixed;width:100%;">
-      ${trs}
-    </table>
-  </td></tr>`;
 }
 
 function renderFooter(meta: NaverV4Meta): string {
   const date = meta.analyzedAt ? new Date(meta.analyzedAt).toLocaleDateString('ko-KR') : '';
-  return `
-  <tr><td style="padding:24px 0 12px;border-top:1px solid ${V4_BORDER};">
-    <p style="margin:0;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:11px;color:#888;text-align:center;word-break:keep-all;">
-      MathLab 분석 · ${escapeHtml(meta.examTitle)}${date ? ` · ${escapeHtml(date)}` : ''}
-    </p>
-  </td></tr>`;
+  return (
+    `<br><span style='font-size: 11px; color: #888;'>MathLab 분석 · ${escapeHtml(meta.examTitle)}${date ? ` · ${escapeHtml(date)}` : ''}</span><br>`
+  );
 }
+
+// 외부에서 가져다 쓰지 않지만 export 유지 (legacy 호환)
+export { V4_ACCENT, V4_HIGHLIGHT_YELLOW, V4_HIGHLIGHT_PINK, V4_HIGHLIGHT_ORANGE, V4_HIGHLIGHT_GREEN };
