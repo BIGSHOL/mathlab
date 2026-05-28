@@ -144,20 +144,6 @@ function md(text: string): string {
   return escapeHtml(text).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 }
 
-/** 한글 문장 끝(다./요./네./요? 등) 뒤 공백 → <br> 자동 삽입.
- * 네이버는 긴 단락을 단어 가운데서 잘라 가독성이 떨어짐 → 문장 단위로 줄바꿈.
- * 매칭: 한글로 끝나는 문장 + 마침표/물음표/느낌표 + 공백.
- * 숫자/영문 뒤의 .은 매치 X (예: "Lv3.", "3.5"). */
-function addSentenceBreaks(text: string): string {
-  if (!text) return text;
-  return text.replace(/([가-힣])([.!?])\s+/g, '$1$2<br>');
-}
-
-/** 본문 텍스트용: md() + 문장 단위 줄바꿈. 긴 단락의 가독성 향상. */
-function bodyMd(text: string): string {
-  return addSentenceBreaks(md(text));
-}
-
 /** 한국어 수사+의존명사 NBSP 묶기 */
 function joinKoreanCounters(text: string): string {
   if (!text) return text;
@@ -192,7 +178,7 @@ export function buildNaverV4Html(args: {
   // ② 들어가며
   if (c.v4_intro) {
     parts.push(renderH2('들어가며'));
-    parts.push(`<span style='font-size: 16px; word-break: keep-all;'>${bodyMd(c.v4_intro)}</span><br><br>`);
+    parts.push(`<span style='font-size: 16px;'>${md(c.v4_intro)}</span><br><br>`);
   }
 
   // ③ 시험 개요 + 1등급 컷
@@ -317,7 +303,7 @@ function renderAcademyStrategy(items: NonNullable<CommentaryResult['v4_academy_s
         const bg = i % 2 === 0 ? V4_HIGHLIGHT_YELLOW : V4_HIGHLIGHT_GREEN;
         return (
           `<mark style='background: ${bg}; padding: 3px 8px; font-size: 17px;'><strong style='color: ${V4_ACCENT};'>${num}. ${escapeHtml(item.title)}</strong></mark><br><br>` +
-          `<span style='font-size: 15px; word-break: keep-all;'>${bodyMd(item.body)}</span><br><br>`
+          `<span style='font-size: 15px;'>${md(item.body)}</span><br><br>`
         );
       },
     )
@@ -377,17 +363,17 @@ function renderExamFeatures(f: NonNullable<CommentaryResult['v4_exam_features']>
   // 출제 특징 헤드라인 — 노란 형광펜 + 큰 글씨
   return (
     `<mark style='background: ${V4_HIGHLIGHT_YELLOW}; padding: 4px 10px; font-size: 18px;'><strong>💡 ${md(f.headline)}</strong></mark><br><br>` +
-    `<span style='font-size: 15px; word-break: keep-all;'>${bodyMd(f.body)}</span><br><br>`
+    `<span style='font-size: 15px;'>${md(f.body)}</span><br><br>`
   );
 }
 
 function renderMainAnalysis(items: NonNullable<CommentaryResult['v4_main_analysis']>): string {
-  // 영역별 헤드라인 (◆ 마커 + accent 색상) + 본문 (문장 단위 자동 줄바꿈)
+  // 영역별 헤드라인 (◆ 마커 + accent 색상) + 본문
   return items
     .map(
       (item) =>
         `<strong style='font-size: 17px; color: ${V4_ACCENT};'>◆ ${escapeHtml(item.heading)}</strong><br>` +
-        `<span style='font-size: 15px; word-break: keep-all;'>${bodyMd(item.body)}</span><br><br>`,
+        `<span style='font-size: 15px;'>${md(item.body)}</span><br><br>`,
     )
     .join('');
 }
@@ -396,7 +382,7 @@ function renderPreviousComparison(c: NonNullable<CommentaryResult['v4_previous_c
   // 이전 시험 비교 — 핑크 형광펜 + 큰 글씨
   return (
     `<mark style='background: ${V4_HIGHLIGHT_PINK}; padding: 4px 10px; font-size: 18px;'><strong>📊 ${md(c.headline)}</strong></mark><br><br>` +
-    `<span style='font-size: 15px; word-break: keep-all;'>${bodyMd(c.body)}</span><br><br>`
+    `<span style='font-size: 15px;'>${md(c.body)}</span><br><br>`
   );
 }
 
@@ -406,7 +392,7 @@ function renderKeyQuestions(items: NonNullable<CommentaryResult['v4_key_question
     .map(
       (kq) =>
         `<mark style='background: ${V4_HIGHLIGHT_ORANGE}; padding: 3px 8px; font-size: 17px;'><strong>⚡ ${escapeHtml(kq.title)}</strong></mark><br>` +
-        `<span style='font-size: 15px; word-break: keep-all;'>${bodyMd(kq.body)}</span><br><br>`,
+        `<span style='font-size: 15px;'>${md(kq.body)}</span><br><br>`,
     )
     .join('');
 }
@@ -418,8 +404,8 @@ function renderFinalStrategy(rows: NonNullable<CommentaryResult['v4_final_strate
     .map(
       (row) =>
         `<strong style='font-size: 17px; color: ${V4_ACCENT};'>▸ ${escapeHtml(row.area)}</strong><br>` +
-        `<mark style='background: ${V4_HIGHLIGHT_PINK}; padding: 4px 10px; font-size: 18px;'><strong>현재 상태</strong></mark> <span style='font-size: 15px; word-break: keep-all;'>${bodyMd(row.current_status)}</span><br>` +
-        `<mark style='background: ${V4_HIGHLIGHT_GREEN}; padding: 4px 10px; font-size: 18px;'><strong>실행 액션</strong></mark> <span style='font-size: 15px; word-break: keep-all;'>${bodyMd(row.action)}</span><br><br>`,
+        `<mark style='background: ${V4_HIGHLIGHT_PINK}; padding: 4px 10px; font-size: 18px;'><strong>현재 상태</strong></mark> <span style='font-size: 15px;'>${md(row.current_status)}</span><br>` +
+        `<mark style='background: ${V4_HIGHLIGHT_GREEN}; padding: 4px 10px; font-size: 18px;'><strong>실행 액션</strong></mark> <span style='font-size: 15px;'>${md(row.action)}</span><br><br>`,
     )
     .join('');
 }
