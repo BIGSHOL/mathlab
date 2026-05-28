@@ -15,6 +15,13 @@ const TYPE_MAP: Record<string, string> = {
   discrimination: 'discrimination',
 };
 
+// ── 동시성 락 (in-memory) ──
+// 같은 분석본의 차트 생성이 동시에 여러 번 요청되면 4× 작업 + DB race condition 발생.
+// analysisId 단위로 진행 중 Promise를 공유하여 단 한 번만 생성.
+// Vercel Serverless 인스턴스 단위 격리 — 다른 인스턴스끼리는 별도 lock이지만,
+// 같은 인스턴스 내 4개 동시 호출은 dedupe됨 (실제 케이스의 90%).
+const inFlightGen = new Map<string, Promise<Record<string, string>>>();
+
 /**
  * GET /api/exam-analysis/[id]/chart/[type] — 차트 PNG 이미지 서빙 (네이버 블로그 호환)
  *
@@ -83,8 +90,43 @@ export async function GET(_request: NextRequest, { params }: Params) {
         );
       }
 
+      // ── 동시성 dedupe ──
+      // 같은 analysisId의 차트 생성이 진행 중이면 그 Promise를 await (4×병렬 호출 방어)
+      const lockKey = `${latestAnalysis.id}:${CHART_VERSION}`;
+      let pendingGen = inFlightGen.get(lockKey);
+      if (!pendingGen) {
+        pendingGen = (async () => {
+          try {
+            const generated = await generateAllChartImages(summary, questions) as unknown as Record<string, string>;
+
+            // blog-article extension 업서트 — 기존 article 데이터 보존하면서 chartImages + 버전 머지
+            const existingResult = (articleResult || {}) as Record<string, unknown>;
+            const mergedResult = { ...existingResult, chartImages: generated, chartVersion: CHART_VERSION };
+            const now = new Date();
+            await prisma.examAnalysisExtension.upsert({
+              where: { analysisId_agentType: { analysisId: latestAnalysis.id, agentType: 'blog-article' } },
+              create: {
+                analysisId: latestAnalysis.id,
+                agentType: 'blog-article',
+                result: mergedResult as unknown as Prisma.InputJsonValue,
+                lastRunAt: now,
+              },
+              update: {
+                result: mergedResult as unknown as Prisma.InputJsonValue,
+                lastRunAt: now,
+              },
+            });
+            return generated;
+          } finally {
+            // 끝나면 lock 해제 (성공/실패 무관)
+            inFlightGen.delete(lockKey);
+          }
+        })();
+        inFlightGen.set(lockKey, pendingGen);
+      }
+
       try {
-        chartImages = await generateAllChartImages(summary, questions) as unknown as Record<string, string>;
+        chartImages = await pendingGen;
       } catch (genErr) {
         console.error('[chart GET] lazy 차트 생성 실패:', genErr);
         return NextResponse.json(
@@ -92,24 +134,6 @@ export async function GET(_request: NextRequest, { params }: Params) {
           { status: 500 },
         );
       }
-
-      // blog-article extension 업서트 — 기존 article 데이터 보존하면서 chartImages + 버전 머지
-      const existingResult = (articleResult || {}) as Record<string, unknown>;
-      const mergedResult = { ...existingResult, chartImages, chartVersion: CHART_VERSION };
-      const now = new Date();
-      await prisma.examAnalysisExtension.upsert({
-        where: { analysisId_agentType: { analysisId: latestAnalysis.id, agentType: 'blog-article' } },
-        create: {
-          analysisId: latestAnalysis.id,
-          agentType: 'blog-article',
-          result: mergedResult as unknown as Prisma.InputJsonValue,
-          lastRunAt: now,
-        },
-        update: {
-          result: mergedResult as unknown as Prisma.InputJsonValue,
-          lastRunAt: now,
-        },
-      });
 
       base64 = chartImages?.[imageKey];
       if (!base64) {

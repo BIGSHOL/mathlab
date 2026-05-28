@@ -166,8 +166,10 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
     }
     try {
       // 차트 PNG 미리 워밍업 + URL 수집 (lazy 생성 트리거)
+      // ⚠️ 첫 호출은 serial로 — 4개 병렬 호출 시 각각 generateAllChartImages를 독립 실행 (4× 작업)
+      // 첫 호출(difficulty) 완료 후 DB에 4종 캐시됨 → 나머지 3개 병렬은 cache hit으로 즉시.
       const baseUrl = window.location.origin;
-      toast.info('차트 이미지 준비 중... (최초 5~10초 소요)');
+      toast.info('차트 이미지 생성 중... (최초 30~60초, 이후 즉시)');
       const chartUrls: { topicBar?: string; discrimination?: string; difficulty?: string; abilityRadar?: string } = {};
       const tryFetch = async (
         type: 'topic-bar' | 'discrimination' | 'difficulty' | 'ability-radar',
@@ -179,10 +181,12 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
           if (r.ok) chartUrls[key] = `${baseUrl}/api/exam-analysis/${detail.id}/chart/${type}?v=v2`;
         } catch { /* 차트 없음 — 무시 */ }
       };
+      // 1단계: 첫 차트 단독 호출 — 4종 일괄 생성 + DB 저장
+      await tryFetch('difficulty', 'difficulty');
+      // 2단계: 나머지 3개 병렬 — DB cache hit으로 즉시
       await Promise.all([
         tryFetch('topic-bar', 'topicBar'),
         tryFetch('discrimination', 'discrimination'),
-        tryFetch('difficulty', 'difficulty'),
         tryFetch('ability-radar', 'abilityRadar'),
       ]);
       const hasCharts = Object.keys(chartUrls).length > 0;
@@ -262,10 +266,10 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
     }
     try {
       // 차트 PNG 미리 워밍업 + URL 수집 (lazy 생성 트리거)
-      // GET 요청으로 변경 — chart endpoint가 blog-article 없으면 즉시 generateAllChartImages 호출하여
-      // PNG 4종 생성 + DB 저장. 첫 1개 GET이 5~10초 걸려도 같은 호출에 4개 모두 만들어지므로 후속 cache hit.
+      // ⚠️ 첫 호출은 serial로 — 병렬 시 각 요청이 generateAllChartImages를 독립 실행 (4× 작업).
+      // 첫 호출(difficulty) 완료 후 DB에 4종 캐시됨 → 나머지 3개 병렬은 cache hit으로 즉시.
       const baseUrl = window.location.origin;
-      toast.info('차트 이미지 준비 중... (최초 5~10초 소요)');
+      toast.info('차트 이미지 생성 중... (최초 30~60초, 이후 즉시)');
       const chartUrls: { topicBar?: string; discrimination?: string; difficulty?: string; abilityRadar?: string } = {};
       const tryFetch = async (
         type: 'topic-bar' | 'discrimination' | 'difficulty' | 'ability-radar',
@@ -277,11 +281,12 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
           if (r.ok) chartUrls[key] = `${baseUrl}/api/exam-analysis/${detail.id}/chart/${type}?v=v2`;
         } catch { /* 차트 없음 무시 */ }
       };
-      // 4개 모두 병렬 fetch — 첫 1개가 lazy 생성으로 4개 모두 저장하므로 나머지 cache hit
+      // 1단계: 첫 차트 단독 호출 — 4종 일괄 생성 + DB 저장
+      await tryFetch('difficulty', 'difficulty');
+      // 2단계: 나머지 3개 병렬 — DB cache hit으로 즉시
       await Promise.all([
         tryFetch('topic-bar', 'topicBar'),
         tryFetch('discrimination', 'discrimination'),
-        tryFetch('difficulty', 'difficulty'),
         tryFetch('ability-radar', 'abilityRadar'),
       ]);
       const hasCharts = Object.keys(chartUrls).length > 0;
