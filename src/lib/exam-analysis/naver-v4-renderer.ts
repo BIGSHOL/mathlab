@@ -87,8 +87,9 @@ export function buildNaverV4Html(args: {
   const c = commentary;
   const parts: string[] = [];
 
-  // 외부 컨테이너 (720px 고정)
-  parts.push(`<table width="720" cellpadding="0" cellspacing="0" border="0" style="width:720px;max-width:720px;margin:0 auto;background:#fff;font-family:'Noto Serif KR','맑은 고딕',serif;color:#2A2A2A;">`);
+  // 외부 컨테이너 (720px 고정 + table-layout:fixed — 네이버 SmartEditor 호환 핵심 패턴)
+  // V3에서 검증: table-layout:fixed 없으면 셀 width%가 무시되어 한 글자씩 세로로 분리됨
+  parts.push(`<table width="720" cellpadding="0" cellspacing="0" border="0" style="width:720px;max-width:720px;table-layout:fixed;margin:0 auto;background:#fff;font-family:'Noto Serif KR','맑은 고딕',serif;color:#2A2A2A;word-break:keep-all;">`);
 
   // ① 헤더
   parts.push(renderHeader(c, meta));
@@ -178,19 +179,12 @@ function renderHeader(c: CommentaryResult, meta: NaverV4Meta): string {
 }
 
 function renderSectionHeading(title: string, subtitle?: string): string {
+  // 네이버 호환: nested table 제거. ▶ + 제목 + subtitle을 한 td 안 텍스트로.
   return `
-  <tr><td style="padding:24px 0 10px;border-bottom:1px solid ${V4_BORDER};">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr>
-        <td valign="baseline" style="padding-right:8px;width:20px;">
-          <span style="font-size:14px;color:#1A1A1A;">▶</span>
-        </td>
-        <td valign="baseline">
-          <span style="font-family:'맑은 고딕',Pretendard,sans-serif;font-size:16px;font-weight:700;color:#1A1A1A;word-break:keep-all;">${escapeHtml(title)}</span>
-          ${subtitle ? `<span style="font-family:'맑은 고딕',Pretendard,sans-serif;font-size:12px;color:#888;font-weight:500;margin-left:8px;">${escapeHtml(subtitle)}</span>` : ''}
-        </td>
-      </tr>
-    </table>
+  <tr><td style="padding:24px 0 10px;border-bottom:1px solid ${V4_BORDER};font-family:'맑은 고딕',Pretendard,sans-serif;word-break:keep-all;">
+    <span style="font-size:14px;color:#1A1A1A;margin-right:8px;">▶</span>
+    <span style="font-size:16px;font-weight:700;color:#1A1A1A;">${escapeHtml(title)}</span>
+    ${subtitle ? `<span style="font-size:12px;color:#888;font-weight:500;margin-left:8px;">${escapeHtml(subtitle)}</span>` : ''}
   </td></tr>`;
 }
 
@@ -208,24 +202,16 @@ function renderIntro(intro: string): string {
 }
 
 function renderAcademyStrategy(items: NonNullable<CommentaryResult['v4_academy_strategy']>): string {
+  // 네이버 SmartEditor 호환 — nested table 2-level + border-radius 50% 원형은 사라짐.
+  // 1-level table + bgcolor + 정사각형(36x36)으로 단순화.
   const trs = items
     .map(
       (item, i) => `
-      <tr>
-        <td style="padding:6px 0;">
-          <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFF4F4" style="background:#FFF4F4;border:1px solid #FFD0D0;border-radius:6px;">
-            <tr>
-              <td width="40" valign="top" style="padding:14px 0 14px 14px;">
-                <table cellpadding="0" cellspacing="0" border="0">
-                  <tr><td width="28" height="28" bgcolor="#BF1722" align="center" style="background:#BF1722;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:14px;font-weight:700;color:#fff;border-radius:50%;line-height:28px;">${i + 1}</td></tr>
-                </table>
-              </td>
-              <td valign="top" style="padding:14px 16px 14px 10px;">
-                <p style="margin:0 0 6px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:14px;font-weight:700;color:#1A1A1A;word-break:keep-all;">${escapeHtml(item.title)}</p>
-                <p style="margin:0;font-family:'Noto Serif KR','맑은 고딕',serif;font-size:13px;line-height:1.7;color:#555;word-break:keep-all;">${markdownToInlineBold(item.body)}</p>
-              </td>
-            </tr>
-          </table>
+      <tr bgcolor="#FFF4F4" style="background:#FFF4F4;">
+        <td width="44" bgcolor="#BF1722" align="center" valign="middle" style="background:#BF1722;width:44px;height:44px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:16px;font-weight:700;color:#fff;text-align:center;border-bottom:1px solid #FFD0D0;">${i + 1}</td>
+        <td valign="top" style="padding:12px 16px;border-bottom:1px solid #FFD0D0;border-left:1px solid #FFD0D0;word-break:keep-all;">
+          <p style="margin:0 0 4px;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:14px;font-weight:700;color:#1A1A1A;word-break:keep-all;">${escapeHtml(item.title)}</p>
+          <p style="margin:0;font-family:'Noto Serif KR','맑은 고딕',serif;font-size:13px;line-height:1.7;color:#555;word-break:keep-all;">${markdownToInlineBold(item.body)}</p>
         </td>
       </tr>`,
     )
@@ -233,7 +219,7 @@ function renderAcademyStrategy(items: NonNullable<CommentaryResult['v4_academy_s
 
   return `
   <tr><td style="padding:14px 0 0;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #FFD0D0;border-collapse:collapse;table-layout:fixed;width:100%;">
       ${trs}
     </table>
   </td></tr>`;
@@ -303,7 +289,7 @@ function renderExamOverview(o: NonNullable<CommentaryResult['v4_exam_overview']>
 
   return `
   <tr><td style="padding:14px 0 0;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${V4_BORDER};border-collapse:collapse;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${V4_BORDER};border-collapse:collapse;table-layout:fixed;width:100%;">
       ${trs}
     </table>
   </td></tr>`;
@@ -351,7 +337,7 @@ function renderDifficultyTable(rows: NonNullable<CommentaryResult['v4_difficulty
 
   return `
   <tr><td style="padding:14px 0 0;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${V4_BORDER};border-collapse:collapse;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${V4_BORDER};border-collapse:collapse;table-layout:fixed;width:100%;">
       ${headerRow}
       ${trs}
     </table>
@@ -414,7 +400,7 @@ function renderFinalStrategy(rows: NonNullable<CommentaryResult['v4_final_strate
 
   return `
   <tr><td style="padding:14px 0 0;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${V4_BORDER};border-collapse:collapse;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${V4_BORDER};border-collapse:collapse;table-layout:fixed;width:100%;">
       ${headerRow}
       ${trs}
     </table>
@@ -430,38 +416,23 @@ function renderCharts(chartUrls: NaverV4ChartUrls): string {
 
   if (items.length === 0) return '';
 
-  // 2 × 2 그리드 (table-based — flex/grid 금지)
-  const rows: string[] = [];
-  for (let i = 0; i < items.length; i += 2) {
-    const left = items[i];
-    const right = items[i + 1];
-    rows.push(`
+  // 1행 1차트로 단순화 — nested table 줄이고 안전한 레이아웃 (이미지 크기 720px로 키움)
+  const trs = items
+    .map(
+      ([label, url]) => `
       <tr>
-        <td width="50%" valign="top" style="padding:6px;">
-          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${V4_BORDER};">
-            <tr><td style="padding:12px;text-align:center;">
-              <img src="${left[1]}" alt="${escapeHtml(left[0])}" width="320" style="max-width:100%;height:auto;display:block;margin:0 auto;" />
-              <p style="margin:8px 0 0;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:11px;color:#888;font-weight:600;text-align:center;">${escapeHtml(left[0])}</p>
-            </td></tr>
-          </table>
+        <td align="center" style="padding:12px;border:1px solid ${V4_BORDER};">
+          <img src="${url}" alt="${escapeHtml(label)}" width="640" style="width:640px;max-width:100%;height:auto;display:block;margin:0 auto;" />
+          <p style="margin:8px 0 0;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:11px;color:#888;font-weight:600;text-align:center;">${escapeHtml(label)}</p>
         </td>
-        ${right
-        ? `<td width="50%" valign="top" style="padding:6px;">
-          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${V4_BORDER};">
-            <tr><td style="padding:12px;text-align:center;">
-              <img src="${right[1]}" alt="${escapeHtml(right[0])}" width="320" style="max-width:100%;height:auto;display:block;margin:0 auto;" />
-              <p style="margin:8px 0 0;font-family:'맑은 고딕',Pretendard,sans-serif;font-size:11px;color:#888;font-weight:600;text-align:center;">${escapeHtml(right[0])}</p>
-            </td></tr>
-          </table>
-        </td>`
-        : '<td width="50%" style="padding:6px;">&nbsp;</td>'}
-      </tr>`);
-  }
+      </tr>`,
+    )
+    .join('');
 
   return `
   <tr><td style="padding:14px 0 0;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      ${rows.join('')}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;table-layout:fixed;width:100%;">
+      ${trs}
     </table>
   </td></tr>`;
 }
