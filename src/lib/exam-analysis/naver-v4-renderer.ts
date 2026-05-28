@@ -399,12 +399,13 @@ function renderKeyQuestions(items: NonNullable<CommentaryResult['v4_key_question
 
 function renderFinalStrategy(rows: NonNullable<CommentaryResult['v4_final_strategy']>): string {
   // 영역별: ▸ 마커 + accent 영역명 + 현재/액션 라벨 강조
+  // mark 라벨은 본문보다 살짝 크게(16px) — 형광펜 강조 효과 극대화
   return rows
     .map(
       (row) =>
         `<strong style='font-size: 17px; color: ${V4_ACCENT};'>▸ ${escapeHtml(row.area)}</strong><br>` +
-        `<mark style='background: ${V4_HIGHLIGHT_PINK}; padding: 2px 6px; font-size: 13px;'><strong>현재 상태</strong></mark> <span style='font-size: 15px;'>${md(row.current_status)}</span><br>` +
-        `<mark style='background: ${V4_HIGHLIGHT_GREEN}; padding: 2px 6px; font-size: 13px;'><strong>실행 액션</strong></mark> <span style='font-size: 15px;'>${md(row.action)}</span><br><br>`,
+        `<mark style='background: ${V4_HIGHLIGHT_PINK}; padding: 3px 8px; font-size: 16px;'><strong>현재 상태</strong></mark> <span style='font-size: 15px;'>${md(row.current_status)}</span><br>` +
+        `<mark style='background: ${V4_HIGHLIGHT_GREEN}; padding: 3px 8px; font-size: 16px;'><strong>실행 액션</strong></mark> <span style='font-size: 15px;'>${md(row.action)}</span><br><br>`,
     )
     .join('');
 }
