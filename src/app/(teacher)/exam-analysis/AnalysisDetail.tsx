@@ -174,8 +174,9 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
         key: 'topicBar' | 'discrimination' | 'difficulty' | 'abilityRadar',
       ) => {
         try {
-          const r = await fetch(`/api/exam-analysis/${detail.id}/chart/${type}`);
-          if (r.ok) chartUrls[key] = `${baseUrl}/api/exam-analysis/${detail.id}/chart/${type}`;
+          // ?v=v2 — 차트 버전 bump 시 새 PNG로 강제 갱신 (browser/Naver CDN 캐시 우회)
+          const r = await fetch(`/api/exam-analysis/${detail.id}/chart/${type}?v=v2`);
+          if (r.ok) chartUrls[key] = `${baseUrl}/api/exam-analysis/${detail.id}/chart/${type}?v=v2`;
         } catch { /* 차트 없음 — 무시 */ }
       };
       await Promise.all([
@@ -271,8 +272,9 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
         key: 'topicBar' | 'discrimination' | 'difficulty' | 'abilityRadar',
       ) => {
         try {
-          const r = await fetch(`/api/exam-analysis/${detail.id}/chart/${type}`);
-          if (r.ok) chartUrls[key] = `${baseUrl}/api/exam-analysis/${detail.id}/chart/${type}`;
+          // ?v=v2 — 차트 버전 bump 시 새 PNG로 강제 갱신 (browser/Naver CDN 캐시 우회)
+          const r = await fetch(`/api/exam-analysis/${detail.id}/chart/${type}?v=v2`);
+          if (r.ok) chartUrls[key] = `${baseUrl}/api/exam-analysis/${detail.id}/chart/${type}?v=v2`;
         } catch { /* 차트 없음 무시 */ }
       };
       // 4개 모두 병렬 fetch — 첫 1개가 lazy 생성으로 4개 모두 저장하므로 나머지 cache hit

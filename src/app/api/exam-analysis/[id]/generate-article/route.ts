@@ -85,13 +85,14 @@ export async function POST(request: NextRequest, { params }: Params) {
         send({ type: 'progress', step: 1, totalSteps: 3, message: '차트 이미지 3종 생성 완료' });
 
         // 스트림 중 토큰 치환용 차트 URL 사전 송신 (클라이언트는 placeholder → 실제 <img>로 자연스러운 전환)
+        // ?v=v2 — 차트 디자인 업그레이드 강제 적용 (browser/CDN 캐시 우회)
         send({
           type: 'chart-urls',
           urls: {
-            difficulty: `${baseUrl}/api/exam-analysis/${id}/chart/difficulty`,
-            ability_radar: `${baseUrl}/api/exam-analysis/${id}/chart/ability-radar`,
-            topic_bar: `${baseUrl}/api/exam-analysis/${id}/chart/topic-bar`,
-            discrimination: `${baseUrl}/api/exam-analysis/${id}/chart/discrimination`,
+            difficulty: `${baseUrl}/api/exam-analysis/${id}/chart/difficulty?v=v2`,
+            ability_radar: `${baseUrl}/api/exam-analysis/${id}/chart/ability-radar?v=v2`,
+            topic_bar: `${baseUrl}/api/exam-analysis/${id}/chart/topic-bar?v=v2`,
+            discrimination: `${baseUrl}/api/exam-analysis/${id}/chart/discrimination?v=v2`,
           },
         });
 
@@ -133,24 +134,25 @@ export async function POST(request: NextRequest, { params }: Params) {
 
         // 블로그 글은 분석 화면과 동일하게 난이도 + 능력 영역 + 단원별 + 변별력 네 차트 사용.
         // type_radar/combined_radar는 옛 글에 남아있을 수 있어 폐지 토큰으로 흔적 없이 제거.
+        // ?v=v2 — 차트 디자인 업그레이드 강제 적용 (네이버 블로그 게시물에도 동일하게 적용)
         const chartTokenMap: Record<string, { url: string; alt: string; caption: string }> = {
           '{{CHART:difficulty}}': {
-            url: `${baseUrl}/api/exam-analysis/${id}/chart/difficulty`,
+            url: `${baseUrl}/api/exam-analysis/${id}/chart/difficulty?v=v2`,
             alt: '난이도 분포',
             caption: `▲ ${totalQ}문항 난이도 분포`,
           },
           '{{CHART:ability_radar}}': {
-            url: `${baseUrl}/api/exam-analysis/${id}/chart/ability-radar`,
+            url: `${baseUrl}/api/exam-analysis/${id}/chart/ability-radar?v=v2`,
             alt: '능력 영역 분포',
             caption: '▲ 수학 능력 영역별 분포',
           },
           '{{CHART:topic_bar}}': {
-            url: `${baseUrl}/api/exam-analysis/${id}/chart/topic-bar`,
+            url: `${baseUrl}/api/exam-analysis/${id}/chart/topic-bar?v=v2`,
             alt: '단원별 출제 현황',
             caption: '▲ 단원별 문항 수 및 배점',
           },
           '{{CHART:discrimination}}': {
-            url: `${baseUrl}/api/exam-analysis/${id}/chart/discrimination`,
+            url: `${baseUrl}/api/exam-analysis/${id}/chart/discrimination?v=v2`,
             alt: '변별력 분석',
             caption: '▲ 평균 변별력 지수 + 등급별 문항 분포',
           },

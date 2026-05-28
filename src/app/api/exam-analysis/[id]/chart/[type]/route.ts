@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { generateAllChartImages } from '@/lib/exam-analysis/chart-image-generator';
+import { generateAllChartImages, CHART_VERSION } from '@/lib/exam-analysis/chart-image-generator';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 
 type Params = { params: Promise<{ id: string; type: string }> };
@@ -53,10 +53,22 @@ export async function GET(_request: NextRequest, { params }: Params) {
     }
 
     const articleResult = latestAnalysis.extensions[0]?.result as Record<string, unknown> | undefined;
+    const savedChartVersion = articleResult?.chartVersion as string | undefined;
     let chartImages = articleResult?.chartImages as Record<string, string> | undefined;
     let base64 = chartImages?.[imageKey];
 
-    // ── Lazy 생성: 차트 PNG가 없으면 즉시 생성 + 저장 (V4 네이버 복사 지원) ──
+    // 강제 재생성 옵션 (?regen=1 또는 ?v=새버전)
+    const url = new URL(_request.url);
+    const forceRegen = url.searchParams.get('regen') === '1';
+
+    // ── 차트 버전 mismatch면 캐시 무효화 → 신규 디자인 적용 ──
+    const isStaleVersion = savedChartVersion !== CHART_VERSION;
+    if (isStaleVersion || forceRegen) {
+      base64 = undefined;
+      chartImages = undefined;
+    }
+
+    // ── Lazy 생성: 차트 PNG가 없거나 옛 버전이면 즉시 생성 + 저장 (V4 네이버 복사 지원) ──
     if (!base64) {
       const questions = latestAnalysis.questions as unknown as AnalyzedQuestion[];
       const summary = latestAnalysis.summary as unknown as {
@@ -81,9 +93,9 @@ export async function GET(_request: NextRequest, { params }: Params) {
         );
       }
 
-      // blog-article extension 업서트 — 기존 article 데이터 보존하면서 chartImages만 머지
+      // blog-article extension 업서트 — 기존 article 데이터 보존하면서 chartImages + 버전 머지
       const existingResult = (articleResult || {}) as Record<string, unknown>;
-      const mergedResult = { ...existingResult, chartImages };
+      const mergedResult = { ...existingResult, chartImages, chartVersion: CHART_VERSION };
       const now = new Date();
       await prisma.examAnalysisExtension.upsert({
         where: { analysisId_agentType: { analysisId: latestAnalysis.id, agentType: 'blog-article' } },
@@ -114,7 +126,10 @@ export async function GET(_request: NextRequest, { params }: Params) {
       headers: {
         'Content-Type': 'image/png',
         'Content-Length': String(buffer.length),
-        'Cache-Control': 'public, max-age=31536000, immutable',
+        // immutable 제거 — 차트 버전 bump 시 자동 갱신 가능하도록
+        // 60초 fresh + 1일 stale-while-revalidate (네이버 블로그 트래픽엔 충분)
+        'Cache-Control': 'public, max-age=60, stale-while-revalidate=86400',
+        'X-Chart-Version': CHART_VERSION,
       },
     });
   } catch (error) {

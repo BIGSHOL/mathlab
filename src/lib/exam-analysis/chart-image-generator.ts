@@ -21,6 +21,11 @@ import {
 } from './constants';
 import type { AnalyzedQuestion } from './types';
 
+// ── 차트 버전 — 디자인 업그레이드 시 bump → chart endpoint가 자동 재생성 ──
+// v1: 기본 (그라데이션 없음, 작은 폰트)
+// v2: 그라데이션 + 섀도우 + 큰 폰트 + 강조 라인 (2026-05-28)
+export const CHART_VERSION = 'v2';
+
 // ── SVG 유틸 ──
 
 const CHART_WIDTH = 680;
