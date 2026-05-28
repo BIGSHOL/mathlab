@@ -222,6 +222,26 @@ export function CommentarySection({
             </button>
           </div>
         </div>
+        {/* AI 재분석 진행 표시 (펼친 상태에서도 보이도록 — 사용자 보고 2026-05-28) */}
+        {isRegenerating && (
+          <div className="border-b border-violet-200 bg-gradient-to-r from-violet-50 to-purple-50 px-5 py-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="animate-spin w-4 h-4 border-2 border-violet-600 border-t-transparent rounded-full" />
+                <span className="text-sm font-bold text-violet-900">AI 총평 재분석 중...</span>
+              </div>
+              <span className="text-xs text-violet-700 font-medium">{elapsedSeconds}초 경과</span>
+            </div>
+            <div className="h-1 bg-violet-200 rounded-full overflow-hidden">
+              <div className="h-full bg-violet-600 animate-pulse" style={{ width: '60%' }} />
+            </div>
+            <p className="text-[11px] text-violet-700 mt-2">
+              Claude Sonnet 4.6이 V2 base + V3 확장 필드를 생성 중입니다. 평균 60~120초 소요.
+              {hasV4Data(commentary) && ' V4 데이터는 보존됩니다.'}
+            </p>
+          </div>
+        )}
+
         {/* V3 / V4 콘텐츠 */}
         {viewMode === 'v4' ? (
           hasV4Data(commentary) ? (

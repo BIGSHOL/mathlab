@@ -114,6 +114,18 @@ export async function runExtendedAnalysis(params: {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const jsonResult = JSON.parse(JSON.stringify(agentResult)) as any;
       jsonResult._meta = { promptVersion: agent.promptVersion, generatedAt: new Date().toISOString() };
+      // V4 데이터 보존 — commentary 재분석이 V4 필드(v4_*)를 덮어쓰지 않도록 머지 (사용자 보고 2026-05-28)
+      if (agentType === 'commentary') {
+        const existing = await prisma.examAnalysisExtension.findUnique({
+          where: { analysisId_agentType: { analysisId, agentType } },
+        });
+        const existingResult = (existing?.result as Record<string, unknown>) || {};
+        for (const key of Object.keys(existingResult)) {
+          if (key.startsWith('v4_') || key === '_v4_meta') {
+            jsonResult[key] = existingResult[key];
+          }
+        }
+      }
       const fallbackMsg = agent.lastAiFailure ? `AI 실패(폴백): ${agent.lastAiFailure}` : null;
       await prisma.examAnalysisExtension.upsert({
         where: { analysisId_agentType: { analysisId, agentType } },
@@ -176,6 +188,18 @@ export async function runExtendedAnalysis(params: {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const jsonResult = JSON.parse(JSON.stringify(agentResult)) as any;
       jsonResult._meta = { promptVersion: agent.promptVersion, generatedAt: new Date().toISOString() };
+      // V4 데이터 보존 — commentary 재분석이 V4 필드(v4_*)를 덮어쓰지 않도록 머지 (병렬 경로)
+      if (agentType === 'commentary') {
+        const existing = await prisma.examAnalysisExtension.findUnique({
+          where: { analysisId_agentType: { analysisId, agentType } },
+        });
+        const existingResult = (existing?.result as Record<string, unknown>) || {};
+        for (const key of Object.keys(existingResult)) {
+          if (key.startsWith('v4_') || key === '_v4_meta') {
+            jsonResult[key] = existingResult[key];
+          }
+        }
+      }
       const fallbackMsg = agent.lastAiFailure ? `AI 실패(폴백): ${agent.lastAiFailure}` : null;
       await prisma.examAnalysisExtension.upsert({
         where: { analysisId_agentType: { analysisId, agentType } },
