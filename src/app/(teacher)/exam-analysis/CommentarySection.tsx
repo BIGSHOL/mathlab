@@ -15,6 +15,10 @@ import { toast } from '@/components/ui/Toast';
 const VIEW_MODE_KEY = 'mathlab_commentary_view_mode';
 type ViewMode = 'v3' | 'v4';
 
+// V3 강화 (2026-05-29): V4 핵심 콘텐츠를 V3에 흡수 완료 → V4 토글 비활성화.
+// V4 코드(V4CommentaryView, naver-v4-renderer, generate-v4 등)는 보존 — 재활성 시 true로.
+const V4_TOGGLE_ENABLED = false;
+
 interface CommentarySectionProps {
   commentary: CommentaryResult;
   questions: AnalyzedQuestion[];
@@ -66,6 +70,8 @@ export function CommentarySection({
   const [v4Generating, setV4Generating] = useState(false);
   const [v4ElapsedSeconds, setV4ElapsedSeconds] = useState(0);
   const [v4Logs, setV4Logs] = useState<Array<{ time: string; msg: string }>>([]);
+  // V4 토글 비활성 시 항상 V3 강제 (localStorage에 'v4' 남아있어도 무시)
+  const effectiveViewMode: ViewMode = V4_TOGGLE_ENABLED ? viewMode : 'v3';
 
   // V4 생성 진행 시간 카운터 + 단계별 자동 로그 (분석 progress 패턴)
   useEffect(() => {
@@ -175,35 +181,37 @@ export function CommentarySection({
         {/* 컨트롤 row (재분석 + 체크박스 + 접기) */}
         <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100 bg-slate-50">
           <div className="flex items-center gap-2">
-            <Sparkles className={`w-3.5 h-3.5 ${viewMode === 'v4' ? 'text-amber-700' : 'text-violet-600'}`} />
+            <Sparkles className={`w-3.5 h-3.5 ${effectiveViewMode === 'v4' ? 'text-amber-700' : 'text-violet-600'}`} />
             <span className="text-xs font-bold text-slate-700">AI 시험 총평</span>
-            {/* V3 / V4 segmented control */}
-            <div className="inline-flex border border-slate-300 rounded-sm overflow-hidden ml-1" role="tablist" aria-label="총평 표시 모드">
-              <button
-                type="button"
-                onClick={() => handleViewModeChange('v3')}
-                className={`px-2 py-0.5 text-[10px] font-bold tracking-[0.08em] transition-colors ${
-                  viewMode === 'v3'
-                    ? 'bg-[#BF1722] text-white'
-                    : 'bg-white text-slate-400 hover:text-slate-600'
-                }`}
-                title="NYT Science 매거진 톤"
-              >
-                V3
-              </button>
-              <button
-                type="button"
-                onClick={() => handleViewModeChange('v4')}
-                className={`px-2 py-0.5 text-[10px] font-bold tracking-[0.08em] transition-colors ${
-                  viewMode === 'v4'
-                    ? 'bg-amber-700 text-white'
-                    : 'bg-white text-slate-400 hover:text-slate-600'
-                }`}
-                title="갈수학학원 스타일 (테이블 중심)"
-              >
-                V4
-              </button>
-            </div>
+            {/* V3 / V4 segmented control — V4_TOGGLE_ENABLED=false 시 숨김 (V3 강화로 V4 흡수 완료) */}
+            {V4_TOGGLE_ENABLED && (
+              <div className="inline-flex border border-slate-300 rounded-sm overflow-hidden ml-1" role="tablist" aria-label="총평 표시 모드">
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange('v3')}
+                  className={`px-2 py-0.5 text-[10px] font-bold tracking-[0.08em] transition-colors ${
+                    viewMode === 'v3'
+                      ? 'bg-[#BF1722] text-white'
+                      : 'bg-white text-slate-400 hover:text-slate-600'
+                  }`}
+                  title="NYT Science 매거진 톤"
+                >
+                  V3
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange('v4')}
+                  className={`px-2 py-0.5 text-[10px] font-bold tracking-[0.08em] transition-colors ${
+                    viewMode === 'v4'
+                      ? 'bg-amber-700 text-white'
+                      : 'bg-white text-slate-400 hover:text-slate-600'
+                  }`}
+                  title="갈수학학원 스타일 (테이블 중심)"
+                >
+                  V4
+                </button>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             {!isRegenerating && (
@@ -271,8 +279,8 @@ export function CommentarySection({
           </div>
         )}
 
-        {/* V3 / V4 콘텐츠 */}
-        {viewMode === 'v4' ? (
+        {/* V3 / V4 콘텐츠 (effectiveViewMode — V4 비활성 시 항상 V3) */}
+        {effectiveViewMode === 'v4' ? (
           hasV4Data(commentary) ? (
             <V4CommentaryView commentary={commentary} questions={allQuestions} meta={meta} charts={v3Charts} />
           ) : (

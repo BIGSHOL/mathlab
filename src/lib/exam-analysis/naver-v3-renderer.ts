@@ -92,6 +92,52 @@ function shortenDataLabel(raw: string): string {
 const V3_DIFF_COLORS = ['#2F7B3A', '#6F9C76', '#888', '#DA8B2C', '#BF1722'];
 const V3_DIFF_LABELS = ['기본', '표준', '응용', '심화', '최고난도'];
 
+// ── LaTeX → 유니코드 변환 (네이버 KaTeX 미렌더링 회피, naver-v4-renderer 차용) ──
+
+const SUPER_MAP: Record<string, string> = {
+  '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵',
+  '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '+': '⁺', '-': '⁻', '=': '⁼', 'n': 'ⁿ',
+};
+const SUB_MAP: Record<string, string> = {
+  '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄', '5': '₅',
+  '6': '₆', '7': '₇', '8': '₈', '9': '₉', 'n': 'ₙ', 'k': 'ₖ', 'i': 'ᵢ', 'j': 'ⱼ',
+};
+function toSuperscript(s: string): string | null {
+  let out = '';
+  for (const ch of s) { if (SUPER_MAP[ch] != null) out += SUPER_MAP[ch]; else return null; }
+  return out;
+}
+function toSubscript(s: string): string | null {
+  let out = '';
+  for (const ch of s) { if (SUB_MAP[ch] != null) out += SUB_MAP[ch]; else return null; }
+  return out;
+}
+/** $...$ 안 LaTeX를 유니코드/플레인으로. 네이버 raw $ 노출 방지. */
+function stripLatexForNaver(text: string): string {
+  if (!text) return text;
+  let out = text.replace(/\$([^$\n]+?)\$/g, (_m, tex: string) => {
+    let s = tex;
+    s = s.replace(/\\sqrt\s*\{([^{}]+)\}/g, '√($1)').replace(/\\sqrt\s+(\w)/g, '√$1');
+    s = s.replace(/\\d?frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}/g, '$1/$2');
+    s = s.replace(/\\le(?:q)?\b/g, '≤').replace(/\\ge(?:q)?\b/g, '≥').replace(/\\ne(?:q)?\b/g, '≠');
+    s = s.replace(/\\times\b/g, '×').replace(/\\cdot\b/g, '·').replace(/\\div\b/g, '÷');
+    s = s.replace(/\\pm\b/g, '±').replace(/\\infty\b/g, '∞').replace(/\\pi\b/g, 'π')
+      .replace(/\\theta\b/g, 'θ').replace(/\\alpha\b/g, 'α').replace(/\\beta\b/g, 'β');
+    s = s.replace(/\^\{([^{}]+)\}/g, (_, e) => toSuperscript(e) ?? `^${e}`);
+    s = s.replace(/\^([0-9+\-=n])/g, (_, e) => toSuperscript(e) ?? `^${e}`);
+    s = s.replace(/_\{([^{}]+)\}/g, (_, u) => toSubscript(u) ?? `_${u}`);
+    s = s.replace(/_([0-9nkij])/g, (_, u) => toSubscript(u) ?? `_${u}`);
+    s = s.replace(/\\\\/g, '').replace(/\\([a-zA-Z]+)/g, '$1').replace(/[{}]/g, '');
+    return s.trim();
+  });
+  out = out.replace(/\$/g, '');
+  return out;
+}
+/** LaTeX strip + **bold** → <strong> (V3 강화 신규 섹션 본문용) */
+function mdLatex(text: string): string {
+  return markdownToInlineBold(stripLatexForNaver(String(text ?? '')));
+}
+
 // ── 메인 빌더 ──
 
 export function buildNaverV3Html(args: {
@@ -114,11 +160,31 @@ export function buildNaverV3Html(args: {
   parts.push(renderDifficultyStackedBar(questions));
   parts.push(renderFormatBreakdown(questions));
 
+  // 문항별 난이도·단원 표 (V3 강화 — V4 흡수)
+  if (commentary.v4_difficulty_rows?.length) {
+    parts.push(renderQTable(commentary.v4_difficulty_rows));
+  }
+
+  // 이전 시험 비교 콜아웃 (V3 강화 — 비교 데이터 있을 때만)
+  if (commentary.v4_previous_comparison?.headline) {
+    parts.push(renderPreviousComparison(commentary.v4_previous_comparison));
+  }
+
   // Q&A 섹션들
   if (commentary.blog_qa?.length) {
     commentary.blog_qa.forEach((qa, idx) => {
       parts.push(renderQABlock(qa, idx + 1));
     });
+  }
+
+  // 영역별 출제 분석 (V3 강화 — V4 흡수)
+  if (commentary.v4_main_analysis?.length) {
+    parts.push(renderMainAnalysis(commentary.v4_main_analysis));
+  }
+
+  // 주요 문항 해설 (V3 강화 — V4 흡수)
+  if (commentary.v4_key_questions?.length) {
+    parts.push(renderKeyQuestions(commentary.v4_key_questions));
   }
 
   // 인용구
@@ -129,6 +195,11 @@ export function buildNaverV3Html(args: {
   // 차트 PNG (URL 있을 때만)
   if (chartUrls) {
     parts.push(renderCharts(chartUrls));
+  }
+
+  // 이번 시험 단원별 피드백 (V3 강화 — V4 흡수)
+  if (commentary.v4_final_strategy?.length) {
+    parts.push(renderFinalStrategy(commentary.v4_final_strategy));
   }
 
   // 결론
@@ -480,6 +551,111 @@ function renderConclusion(c: NonNullable<CommentaryResult['conclusion']>): strin
     <p style="margin:0;font-family:'Noto Serif KR',serif;font-size:16px;line-height:1.85;color:#2A2A2A;word-break:keep-all;">${markdownToInlineBold(c.body)}</p>
   </td></tr>
 </table>`;
+}
+
+// ── V3 강화 섹션 렌더러 (V4 핵심 콘텐츠 흡수, 네이버 호환 — 모두 1-level table) ──
+// CLAUDE.md: nested table 2-level 금지(한글 세로 분리) → 제목/콘텐츠 형제 테이블로 분리.
+
+/** 섹션 제목 — 독립 1-level table */
+function v3SectionTitle(sub: string, title: string): string {
+  return `
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 14px;">
+  <tr><td style="padding:0;">
+    <p style="margin:0 0 6px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#BF1722;font-weight:800;">${escapeHtml(sub)}</p>
+    <p style="margin:0;font-family:'Noto Serif KR',serif;font-size:24px;font-weight:700;color:#121212;word-break:keep-all;">${escapeHtml(title)}</p>
+  </td></tr>
+</table>`;
+}
+
+/** 문항별 난이도·단원 표 — 단일 table, Lv는 색상 굵은 텍스트(네이버 safe) */
+function renderQTable(rows: NonNullable<CommentaryResult['v4_difficulty_rows']>): string {
+  const sorted = [...rows].sort((a, b) => {
+    const aE = String(a.question_number).startsWith('서술');
+    const bE = String(b.question_number).startsWith('서술');
+    if (aE && !bE) return 1;
+    if (!aE && bE) return -1;
+    return (parseInt(String(a.question_number), 10) || 0) - (parseInt(String(b.question_number), 10) || 0);
+  });
+  const header = `
+    <tr bgcolor="#121212">
+      <td width="48" style="padding:8px 10px;font-family:Pretendard,sans-serif;font-size:11px;font-weight:800;color:#fff;letter-spacing:0.06em;">번호</td>
+      <td style="padding:8px 10px;font-family:Pretendard,sans-serif;font-size:11px;font-weight:800;color:#fff;letter-spacing:0.06em;">단원 · 핵심 개념</td>
+      <td width="110" style="padding:8px 10px;font-family:Pretendard,sans-serif;font-size:11px;font-weight:800;color:#fff;letter-spacing:0.06em;">난이도</td>
+      <td width="52" align="right" style="padding:8px 10px;font-family:Pretendard,sans-serif;font-size:11px;font-weight:800;color:#fff;letter-spacing:0.06em;">배점</td>
+    </tr>`;
+  const body = sorted.map((row, i) => {
+    const lv = Number(row.difficulty);
+    const validLv = lv >= 1 && lv <= 5 ? lv : 3;
+    const color = V3_DIFF_COLORS[validLv - 1];
+    const label = V3_DIFF_LABELS[validLv - 1];
+    const bg = i % 2 === 0 ? '#fff' : '#FAFAFA';
+    const sub = row.analysis_short
+      ? `<br><span style="font-size:12px;color:#888;word-break:keep-all;">${mdLatex(row.analysis_short)}</span>`
+      : '';
+    return `
+    <tr bgcolor="${bg}">
+      <td style="padding:9px 10px;font-family:'Abril Fatface',serif;font-size:15px;font-weight:700;color:#121212;border-bottom:1px solid #EEE;vertical-align:top;white-space:nowrap;">${escapeHtml(String(row.question_number))}</td>
+      <td style="padding:9px 10px;font-family:Pretendard,sans-serif;font-size:13px;font-weight:600;color:#1A1A1A;border-bottom:1px solid #EEE;vertical-align:top;word-break:keep-all;">${mdLatex(row.topic)}${sub}</td>
+      <td style="padding:9px 10px;font-family:Pretendard,sans-serif;font-size:13px;border-bottom:1px solid #EEE;vertical-align:top;white-space:nowrap;"><strong style="color:${color};font-weight:800;">Lv${validLv}</strong> <span style="color:#888;font-size:12px;">${label}</span></td>
+      <td align="right" style="padding:9px 10px;font-family:Pretendard,sans-serif;font-size:14px;font-weight:700;color:#121212;border-bottom:1px solid #EEE;vertical-align:top;white-space:nowrap;">${row.points}점</td>
+    </tr>`;
+  }).join('');
+  return `${v3SectionTitle('DATA · 문항별 상세', '문항별 난이도 · 출제 단원')}
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 32px;border:1px solid #DDD;border-collapse:collapse;table-layout:fixed;">
+  ${header}${body}
+</table>`;
+}
+
+/** 이전 시험 비교 콜아웃 — 회색 박스 + 빨강 좌측 라인 */
+function renderPreviousComparison(c: NonNullable<CommentaryResult['v4_previous_comparison']>): string {
+  return `
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 32px;background:#F8F8F8;border-left:3px solid #BF1722;">
+  <tr><td style="padding:22px 26px;">
+    <p style="margin:0 0 8px;font-family:Pretendard,sans-serif;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#BF1722;font-weight:800;">COMPARE · 이전 시험과의 비교</p>
+    <p style="margin:0 0 8px;font-family:'Noto Serif KR',serif;font-size:18px;font-weight:700;color:#121212;line-height:1.5;word-break:keep-all;">${mdLatex(c.headline)}</p>
+    <p style="margin:0;font-family:'Noto Serif KR',serif;font-size:15px;line-height:1.8;color:#2A2A2A;word-break:keep-all;">${mdLatex(c.body)}</p>
+  </td></tr>
+</table>`;
+}
+
+/** 영역별 출제 분석 — heading + body 반복 (단일 table, tr 반복) */
+function renderMainAnalysis(items: NonNullable<CommentaryResult['v4_main_analysis']>): string {
+  const blocks = items.map((m) => `
+  <tr><td style="padding:0 0 20px;">
+    <p style="margin:0 0 6px;font-family:'Noto Serif KR',serif;font-size:18px;font-weight:700;color:#121212;word-break:keep-all;">${mdLatex(m.heading)}</p>
+    <p style="margin:0;font-family:'Noto Serif KR',serif;font-size:15px;line-height:1.8;color:#2A2A2A;word-break:keep-all;">${mdLatex(m.body)}</p>
+  </td></tr>`).join('');
+  return `${v3SectionTitle('ANALYSIS · 출제 핵심 포인트', '영역별로 본 출제 의도')}
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 32px;">
+  ${blocks}
+</table>`;
+}
+
+/** 주요 문항 해설 — 각 문항을 독립 1-level table(좌측 빨강 라인)로 */
+function renderKeyQuestions(items: NonNullable<CommentaryResult['v4_key_questions']>): string {
+  const blocks = items.map((kq) => `
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px;border-left:3px solid #BF1722;">
+  <tr><td style="padding:2px 0 2px 16px;">
+    <p style="margin:0 0 6px;font-family:Pretendard,sans-serif;font-size:14px;font-weight:800;color:#121212;word-break:keep-all;">${mdLatex(kq.title)}</p>
+    <p style="margin:0;font-family:'Noto Serif KR',serif;font-size:15px;line-height:1.8;color:#2A2A2A;word-break:keep-all;">${mdLatex(kq.body)}</p>
+  </td></tr>
+</table>`).join('');
+  return `${v3SectionTitle('KILLER · 주요 문항 해설', '점수를 가른 결정적 문항')}
+${blocks}`;
+}
+
+/** 이번 시험 단원별 피드백 — 각 영역을 독립 1-level table(회색 박스)로 */
+function renderFinalStrategy(rows: NonNullable<CommentaryResult['v4_final_strategy']>): string {
+  const blocks = rows.map((r) => `
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 14px;background:#F8F8F8;border:1px solid #EEE;">
+  <tr><td style="padding:16px 20px;">
+    <p style="margin:0 0 10px;font-family:'Noto Serif KR',serif;font-size:17px;font-weight:700;color:#121212;word-break:keep-all;">${mdLatex(r.area)}</p>
+    <p style="margin:0 0 6px;font-family:Pretendard,sans-serif;font-size:14px;line-height:1.7;color:#2A2A2A;word-break:keep-all;"><strong style="color:#888;font-weight:800;font-size:12px;">현재 상태 </strong>${mdLatex(r.current_status)}</p>
+    <p style="margin:0;font-family:Pretendard,sans-serif;font-size:14px;line-height:1.7;color:#2A2A2A;word-break:keep-all;"><strong style="color:#BF1722;font-weight:800;font-size:12px;">실행 액션 </strong>${mdLatex(r.action)}</p>
+  </td></tr>
+</table>`).join('');
+  return `${v3SectionTitle('FEEDBACK · 단원별 학습 방향', '이번 시험 단원별 피드백')}
+${blocks}`;
 }
 
 function renderFooter(meta: NaverV3Meta): string {

@@ -29,6 +29,10 @@ const ArticleEditorModal = dynamic(
   { ssr: false },
 );
 
+// V3 강화 (2026-05-29): V4 콘텐츠를 V3에 흡수 → [V4 네이버 복사] 버튼 비활성화.
+// handleCopyV4Naver + buildNaverV4Html 코드는 보존 (재활성 시 true로).
+const V4_NAVER_COPY_ENABLED = false;
+
 interface AnalysisDetailProps {
   detail: ExamPaperData;
   analyzing: boolean;
@@ -648,7 +652,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
                     V3 네이버 복사
                   </Button>
                 )}
-                {commentary?.v4_exam_overview && (
+                {V4_NAVER_COPY_ENABLED && commentary?.v4_exam_overview && (
                   <Button
                     size="sm"
                     onClick={handleCopyV4Naver}
