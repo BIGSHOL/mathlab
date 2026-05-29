@@ -38,9 +38,12 @@ interface AnalysisDetailProps {
   analyzing: boolean;
   onAnalyze: (id: string) => void;
   onRefresh: () => void;
+  /** 분석 시 총평 자동 생성 옵션 (page.tsx에서 localStorage 관리) */
+  autoCommentary?: boolean;
+  onToggleAutoCommentary?: (v: boolean) => void;
 }
 
-export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: AnalysisDetailProps) {
+export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCommentary = false, onToggleAutoCommentary }: AnalysisDetailProps) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<AnalysisTab>('basic');
   const [showExtractModal, setShowExtractModal] = useState(false);
@@ -429,9 +432,22 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh }: Anal
               </>
             )}
             {(detail.status === 'PENDING' || detail.status === 'FAILED') && (
-              <Button onClick={() => onAnalyze(detail.id)} disabled={analyzing}>
-                {analyzing ? '분석 중...' : '분석 실행'}
-              </Button>
+              <div className="flex items-center gap-3">
+                <Button onClick={() => onAnalyze(detail.id)} disabled={analyzing}>
+                  {analyzing ? '분석 중...' : '분석 실행'}
+                </Button>
+                {onToggleAutoCommentary && (
+                  <label className="flex items-center gap-1.5 text-[12px] text-slate-600 cursor-pointer select-none" title="분석 완료 후 배점·단원이 정상이면 총평(V3)까지 자동 생성합니다">
+                    <input
+                      type="checkbox"
+                      checked={autoCommentary}
+                      onChange={(e) => onToggleAutoCommentary(e.target.checked)}
+                      className="accent-violet-600"
+                    />
+                    분석 시 총평 자동 생성
+                  </label>
+                )}
+              </div>
             )}
 
             {/* 종합 난이도 카드 — 클릭 시 판단 기준 모달 */}

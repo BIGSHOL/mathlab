@@ -120,8 +120,10 @@ export async function runExtendedAnalysis(params: {
           where: { analysisId_agentType: { analysisId, agentType } },
         });
         const existingResult = (existing?.result as Record<string, unknown>) || {};
+        // V3 강화(2026-05-29): commentary가 이제 v4_* 를 직접 생성 → 새 값 우선.
+        // 새 결과에 없는 v4_* 키만 기존값 보존 (V4 비활성 전 데이터 graceful 유지).
         for (const key of Object.keys(existingResult)) {
-          if (key.startsWith('v4_') || key === '_v4_meta') {
+          if ((key.startsWith('v4_') || key === '_v4_meta') && jsonResult[key] === undefined) {
             jsonResult[key] = existingResult[key];
           }
         }
@@ -194,8 +196,10 @@ export async function runExtendedAnalysis(params: {
           where: { analysisId_agentType: { analysisId, agentType } },
         });
         const existingResult = (existing?.result as Record<string, unknown>) || {};
+        // V3 강화(2026-05-29): commentary가 이제 v4_* 를 직접 생성 → 새 값 우선.
+        // 새 결과에 없는 v4_* 키만 기존값 보존 (V4 비활성 전 데이터 graceful 유지).
         for (const key of Object.keys(existingResult)) {
-          if (key.startsWith('v4_') || key === '_v4_meta') {
+          if ((key.startsWith('v4_') || key === '_v4_meta') && jsonResult[key] === undefined) {
             jsonResult[key] = existingResult[key];
           }
         }

@@ -25,6 +25,17 @@ export default function ExamAnalysisPage() {
   const [selectedDetail, setSelectedDetail] = useState<ExamPaperData | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
+  // 분석 시 총평 자동 생성 옵션 (localStorage 기억)
+  const [autoCommentary, setAutoCommentary] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setAutoCommentary(localStorage.getItem('mathlab_auto_commentary') === '1');
+    }
+  }, []);
+  const toggleAutoCommentary = useCallback((v: boolean) => {
+    setAutoCommentary(v);
+    if (typeof window !== 'undefined') localStorage.setItem('mathlab_auto_commentary', v ? '1' : '0');
+  }, []);
 
   // 필터
   const [filterSubject, _setFilterSubject] = useState<string>('');
@@ -120,13 +131,51 @@ export default function ExamAnalysisPage() {
     return () => clearInterval(interval);
   }, [hasAnalyzing]);
 
+  /**
+   * 분석 완료 후 readiness 통과 시 총평 자동 생성 (autoCommentary 옵션 ON일 때).
+   * 배점 합계 ≠ 만점 / 단원 UNKNOWN 이면 건너뛰고 안내 (AnalysisDetail readinessCheck 복제).
+   */
+  const maybeAutoCommentary = useCallback(async (id: string) => {
+    try {
+      const res = await fetch(`/api/exam-analysis/${id}`, { cache: 'no-store' });
+      if (!res.ok) return;
+      const json = await res.json();
+      const analysis = json.data?.analyses?.[0];
+      const questions: Array<{ points?: number | null; topic?: string | null }> = analysis?.questions || [];
+      if (questions.length === 0) return;
+      const expectedTotal = analysis?.totalPoints && analysis.totalPoints > 0 ? analysis.totalPoints : 100;
+      const pointsSum = questions.reduce((s, q) => s + (q.points ?? 0), 0);
+      const missingPoints = questions.filter((q) => q.points == null || q.points === 0).length;
+      const unknownTopics = questions.filter((q) => {
+        const t = (q.topic || '').trim();
+        return !t || /UNKNOWN|미정|unknown/i.test(t);
+      }).length;
+      const ready = pointsSum === expectedTotal && missingPoints === 0 && unknownTopics === 0;
+      if (!ready) {
+        toast.warning('분석 완료. 배점·단원 확인 후 총평을 생성하세요 (자동 생성 건너뜀)');
+        return;
+      }
+      toast.info('총평 자동 생성 중... (30~60초)');
+      const cRes = await fetch(`/api/exam-analysis/${id}/analyze-extended`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agents: ['commentary'], forceRegenerate: false, includeNearby: true, includeYearCompare: true }),
+      });
+      if (cRes.ok) toast.success('분석 + 총평 자동 생성 완료');
+      else toast.error('총평 자동 생성 실패 — 수동으로 생성하세요');
+    } catch {
+      toast.error('총평 자동 생성 중 오류가 발생했습니다');
+    }
+  }, []);
+
   const handleAnalyze = async (id: string) => {
     setAnalyzing(true);
     // 즉시 로컬 상태를 ANALYZING으로 변경 (폴링 트리거 + UI 즉시 반영)
     setItems(prev => prev.map(item =>
       item.id === id ? { ...item, status: 'ANALYZING' as const } : item
     ));
-    toast.info('AI 분석이 시작되었습니다');
+    const willChain = autoCommentary;
+    toast.info(willChain ? 'AI 분석 + 총평 자동 생성을 시작합니다' : 'AI 분석이 시작되었습니다');
     try {
       // fire-and-forget: 서버에 분석 요청, 완료 시 갱신
       fetch(`/api/exam-analysis/${id}/analyze`, { method: 'POST' })
@@ -134,6 +183,9 @@ export default function ExamAnalysisPage() {
           if (!res.ok) {
             const err = await res.json();
             toast.error(err.error?.message || '분석 실패');
+          } else if (willChain) {
+            // 분석 성공 → readiness 통과 시 총평 자동 생성
+            await maybeAutoCommentary(id);
           }
           // 서버 완료 시 즉시 갱신 (silent: 로딩 표시 안 함)
           fetchList(true);
@@ -245,6 +297,8 @@ export default function ExamAnalysisPage() {
             analyzing={analyzing}
             onAnalyze={handleAnalyze}
             onRefresh={() => fetchDetail(selectedDetail.id)}
+            autoCommentary={autoCommentary}
+            onToggleAutoCommentary={toggleAutoCommentary}
           />
         ) : selectedId && !selectedDetail ? (
           <div className="flex flex-col items-center justify-center h-full text-slate-400">
