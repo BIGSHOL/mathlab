@@ -164,6 +164,20 @@ export async function runExtendedAnalysis(params: {
     }
   }
 
+  // commentary용 메타데이터(base scaffolding) 사전 로드 — 분석 직후 백그라운드 생성된 'metadata' extension.
+  // 있으면 commentary 에이전트가 base 인라인 호출 없이 V3 단독 생성 → 속도 ↑ (2026-05-29).
+  // 없으면 에이전트가 폴백으로 즉석 base 생성.
+  let commentaryMetadata: Record<string, unknown> | undefined;
+  if (independentRequested.includes('commentary')) {
+    const metaExt = await prisma.examAnalysisExtension.findUnique({
+      where: { analysisId_agentType: { analysisId, agentType: 'metadata' } },
+    });
+    const metaResult = metaExt?.result as Record<string, unknown> | undefined;
+    if (metaResult?.isReady && !metaExt?.errorMessage) {
+      commentaryMetadata = metaResult;
+    }
+  }
+
   // 독립 에이전트 병렬 실행
   const independentPromises = independentRequested.map(async (agentType) => {
     if (!forceRegenerate) {
@@ -182,6 +196,7 @@ export async function runExtendedAnalysis(params: {
         weaknessProfile,
         learningPlan,
         ...(agentType === 'commentary' && nearbyComparisonData ? { nearbyComparison: nearbyComparisonData } : {}),
+        ...(agentType === 'commentary' && commentaryMetadata ? { metadata: commentaryMetadata } : {}),
       };
 
       const agentResult = await agent.run(input);
