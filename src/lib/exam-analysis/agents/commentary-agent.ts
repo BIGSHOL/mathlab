@@ -946,21 +946,19 @@ ${phases}
     return blocks.join('\n');
   }
 
-  // ── Claude Sonnet으로 AI 분석 오버라이드 ──
-
-  protected async aiAnalysis(input: AgentInput): Promise<Record<string, unknown>> {
+  // ── base(메타데이터) 생성 — V3 scaffolding ──
+  // 분석 직후 백그라운드로 미리 생성해 DB('metadata' extension)에 저장 → 총평 생성 시 재사용.
+  // (overall_comment, 강·약점, 등급전략, 주요문항, 지도권장, 주변/연도 비교 = V3가 읽는 분석 기반)
+  // 화면엔 표시되지 않음 (V3 단일 스타일). generate-metadata 라우트가 호출.
+  async generateMetadata(input: AgentInput): Promise<CommentaryResult> {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       throw new Error('ANTHROPIC_API_KEY 환경변수가 설정되지 않았습니다');
     }
-
     const client = new Anthropic({ apiKey });
     const prompt = this.buildPrompt(input);
 
-    // 24K 토큰 + 스트리밍 (2026-05-29): 16K는 장황한 overall_comment + 주변/연도 비교
-    //   데이터가 붙으면 잦은 잘림(max_tokens 종료) → JSON 파싱 실패 → 규칙 기반 폴백.
-    //   ⚠️ max_tokens>~16K는 Anthropic SDK가 non-streaming 거부("Streaming is required ...") →
-    //   반드시 messages.stream + finalMessage 사용 (generateV3Extension과 동일 패턴).
+    // 24K + 스트리밍 — max_tokens>~16K는 SDK가 non-streaming 거부 (messages.stream 필수)
     const stream = client.messages.stream({
       model: 'claude-sonnet-4-6',
       max_tokens: 24576,
@@ -973,25 +971,37 @@ ${phases}
       .filter((block): block is Anthropic.TextBlock => block.type === 'text')
       .map((block) => block.text)
       .join('');
-
     if (!text) throw new Error('AI 응답이 비어있습니다');
-
-    // stop_reason 이 'max_tokens' 면 응답이 잘렸을 가능성 — 진단 로그
     if (response.stop_reason === 'max_tokens') {
-      console.warn('[commentary-agent] max_tokens 도달 — 응답이 잘렸을 수 있음. partial 파싱 시도.');
+      console.warn('[commentary-agent metadata] max_tokens 도달 — 응답이 잘렸을 수 있음. partial 파싱 시도.');
     }
 
-    // JSON 추출 + 수식 정규화 (base-agent 와 동일 패턴: \dfrac→\frac, \text{한글} 제거, literal \n 복원)
     const result = this.extractJson(text);
     const normalized = deepNormalizeMath(result);
-    const base = this.parseResponse(normalized, input.basicAnalysis.questions) as unknown as CommentaryResult;
+    return this.parseResponse(normalized, input.basicAnalysis.questions) as unknown as CommentaryResult;
+  }
 
-    // V3 신규 필드 별도 호출 (Two-pass). 실패해도 base만 반환 — graceful degradation.
+  // ── Claude Sonnet으로 AI 분석 오버라이드 (총평 생성 = V3 단독 호출) ──
+  // base는 orchestrator가 주입한 메타데이터(input.metadata)를 재사용. 없으면 즉석 생성(폴백).
+  protected async aiAnalysis(input: AgentInput): Promise<Record<string, unknown>> {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      throw new Error('ANTHROPIC_API_KEY 환경변수가 설정되지 않았습니다');
+    }
+
+    // base(메타데이터): 분석 직후 백그라운드로 선생성된 것을 orchestrator가 input.metadata로 주입 → 재사용.
+    // 없으면(구버전 분석본 등) 즉석 생성 — 기존 동작과 동일, 단지 한 번 더 호출(폴백).
+    const injectedMeta = (input as unknown as { metadata?: CommentaryResult }).metadata;
+    const base: CommentaryResult = injectedMeta && injectedMeta.overall_comment
+      ? injectedMeta
+      : await this.generateMetadata(input);
+
+    // V3 신규 필드 호출 (메타데이터를 scaffolding으로). 실패해도 base만 반환 — graceful degradation.
     let v3: V3Extension = {};
     try {
       v3 = await this.generateV3Extension(input, base, apiKey);
     } catch (e) {
-      console.warn('[commentary-agent V3] 확장 실패, legacy 결과만 반환:', e instanceof Error ? e.message : e);
+      console.warn('[commentary-agent V3] 확장 실패, base만 반환:', e instanceof Error ? e.message : e);
     }
 
     return { ...base, ...v3 } as unknown as Record<string, unknown>;
