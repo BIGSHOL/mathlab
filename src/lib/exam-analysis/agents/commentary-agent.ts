@@ -288,6 +288,13 @@ type V3Extension = Pick<
   | 'blog_qa'
   | 'conclusion'
   | 'pull_quote'
+  // V3 강화 (2026-05-29): V4 핵심 5개 콘텐츠를 단일 통합 프롬프트로 흡수.
+  // 필드명은 v4_* 유지 (V4 코드 비활성화 후에도 재활성 시 호환). 렌더링만 V3 스타일.
+  | 'v4_difficulty_rows'
+  | 'v4_main_analysis'
+  | 'v4_key_questions'
+  | 'v4_previous_comparison'
+  | 'v4_final_strategy'
 >;
 
 // ── V4 신규 필드 추출 타입 (lazy Claude 호출용) ──
@@ -346,8 +353,35 @@ const SYSTEM_PROMPT_V3 = `너는 한국 중·고등학교 수학 시험 분석�
   "pull_quote": {
     "text": "시험 핵심을 짧게 압축한 한 문장",
     "cite": "출처 라벨 (예: 매스랩 AI 분석)"
-  }
+  },
+
+  "v4_difficulty_rows": [
+    { "question_number": 1, "topic": "단원 — 핵심 개념", "difficulty": "1", "points": 4, "analysis_short": "한 줄 해설 (예: 기본 정의 확인 — 정확한 암기로 안전 득점)" }
+  ],
+  "v4_main_analysis": [
+    { "heading": "1. 유리수와 순환소수", "body": "이 영역의 출제 분석 2~4 문장. 어떤 개념이 어떻게 출제됐고 어떤 함정이 있는지." }
+  ],
+  "v4_key_questions": [
+    { "question_number": 17, "title": "선택형 17번 — 연립방정식 활용 (Lv4, 5점)", "body": "출제 의도·풀이 핵심·함정을 3~5 문장으로 자세 해설." }
+  ],
+  "v4_previous_comparison": {
+    "headline": "작년/인근 대비 비교 한 줄 (비교 데이터 있을 때만)",
+    "body": "2~3 문장 비교 분석. 데이터 없으면 이 필드 전체 생략(null)."
+  },
+  "v4_final_strategy": [
+    { "area": "이번 시험에 출제된 단원", "current_status": "이번 시험에서 이 단원이 어떻게 출제됐고 학생이 보일 어려움", "action": "이 단원 보완·심화 구체 학습 방법" }
+  ]
 }
+
+## ⭐ V3 강화 필드 (v4_*) — 위 blog_* 와 함께 한 번에 생성
+
+다음 5개 필드는 V3 본문을 풍부하게 만드는 핵심 콘텐츠다. blog_qa 와 별개로 모두 작성:
+
+1. **v4_difficulty_rows** — 모든 문항(1번~마지막). question_number 순서대로. 서술형은 "서술형1" 문자열 OK. difficulty 는 "1"~"5" 문자열. analysis_short 는 한 줄(20자 내외).
+2. **v4_main_analysis** — 출제된 주요 영역 3~5개. heading 은 "숫자. 영역명", body 는 2~4 문장 영역별 분석.
+3. **v4_key_questions** — 변별 핵심 문항 3~5개 (Lv3~Lv5 + 서술형 우선). title 에 번호·단원·(Lv·배점), body 는 3~5 문장 자세 해설.
+4. **v4_previous_comparison** — **비교 데이터(작년/인근) 있을 때만**. 없으면 필드 전체를 null 로. 지어내지 말 것.
+5. **v4_final_strategy** — **이번 시험에 실제 출제된 단원** 3~5개에 대한 단원별 피드백. area=출제 단원(다음 시험 추측 금지), current_status=이번 출제 양상+학생 어려움, action=보완 방법. ❌ "일차함수 선행", "2학기 연계" 같은 미출제 단원 추측 절대 금지.
 
 ## blog_qa 5문항 — 데이터 가용성에 따라 동적 조정 (필수!)
 
@@ -975,7 +1009,9 @@ ${phases}
 
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 16384,
+      // V3 강화 (2026-05-29): blog_* + v4_* 5개 필드 통합 생성 → 출력량 증가.
+      // 특히 v4_difficulty_rows(전 문항) + v4_key_questions(3~5개 자세 해설) 분량 고려해 24576으로 상향.
+      max_tokens: 24576,
       temperature: 0.6,
       system: SYSTEM_PROMPT_V3,
       messages: [{ role: 'user', content: userPrompt }],
@@ -1068,6 +1104,45 @@ ${phases}
             text: normalizeText(String(raw.pull_quote.text ?? '')),
             cite: raw.pull_quote.cite ? normalizeText(String(raw.pull_quote.cite)) : undefined,
           }
+        : undefined,
+      // ── V3 강화: V4 핵심 5개 필드 정규화 (parseV4Response 패턴 차용) ──
+      v4_difficulty_rows: Array.isArray(raw.v4_difficulty_rows)
+        ? raw.v4_difficulty_rows.map((r) => ({
+            question_number: r.question_number ?? '',
+            topic: normalizeText(String(r.topic ?? '')),
+            sub_topic: r.sub_topic ? normalizeText(String(r.sub_topic)) : undefined,
+            difficulty: (['1', '2', '3', '4', '5'].includes(String(r.difficulty))
+              ? String(r.difficulty)
+              : '3') as '1' | '2' | '3' | '4' | '5',
+            points: Number(r.points) || 0,
+            analysis_short: r.analysis_short ? normalizeText(String(r.analysis_short)) : undefined,
+          }))
+        : undefined,
+      v4_main_analysis: Array.isArray(raw.v4_main_analysis)
+        ? raw.v4_main_analysis.map((m) => ({
+            heading: normalizeText(String(m.heading ?? '')),
+            body: normalizeText(String(m.body ?? '')),
+          }))
+        : undefined,
+      v4_key_questions: Array.isArray(raw.v4_key_questions)
+        ? raw.v4_key_questions.map((kq) => ({
+            question_number: kq.question_number ?? '',
+            title: normalizeText(String(kq.title ?? '')),
+            body: normalizeText(String(kq.body ?? '')),
+          }))
+        : undefined,
+      v4_previous_comparison: raw.v4_previous_comparison
+        ? {
+            headline: normalizeText(String(raw.v4_previous_comparison.headline ?? '')),
+            body: normalizeText(String(raw.v4_previous_comparison.body ?? '')),
+          }
+        : undefined,
+      v4_final_strategy: Array.isArray(raw.v4_final_strategy)
+        ? raw.v4_final_strategy.map((s) => ({
+            area: normalizeText(String(s.area ?? '')),
+            current_status: normalizeText(String(s.current_status ?? '')),
+            action: normalizeText(String(s.action ?? '')),
+          }))
         : undefined,
     };
   }
@@ -1399,6 +1474,20 @@ ${questionDetails}
       )
       .join('\n');
 
+    // 문항별 상세 (v4_difficulty_rows / v4_key_questions 생성용 — V3 강화)
+    // 난이도 정규화: concept/pattern/reasoning/creative → 1/2/4/5 (없으면 그대로)
+    const dMap: Record<string, string> = { concept: '1', pattern: '2', reasoning: '4', creative: '5' };
+    const questionDetails = basicAnalysis.questions
+      .map((q) => {
+        const topic = q.topic || '미분류';
+        const rawLv = String(q.difficulty || '3');
+        const lv = dMap[rawLv] || rawLv;
+        const pts = q.points ?? 0;
+        const fmt = q.question_format === 'essay' ? ' [서술형]' : '';
+        return `${q.question_number}번: ${topic} / Lv${lv} / ${pts}점${fmt}`;
+      })
+      .join('\n');
+
     return `## 시험 정보
 - 학교: ${schoolName ?? '(정보 없음)'} ${hasSchool ? '' : '(주변 학교 비교 불가)'}
 - 규모: 총 ${totalQ}문항, ${totalPts}점
@@ -1416,13 +1505,17 @@ ${questionDetails}
 ## 단원별 출제 (상위 ${topicBreakdown.length}개)
 ${topicsLine}
 
+## 문항 전체 (v4_difficulty_rows·v4_key_questions·v4_final_strategy 생성에 사용)
+${questionDetails}
+
 ## 기존 AI 총평 (참고용)
 - overall_comment: ${base.overall_comment.slice(0, 600)}
 - strength_areas: ${(base.strength_areas || []).join(' / ')}
 - improvement_areas: ${(base.improvement_areas || []).join(' / ')}
 - nearby_comparison: ${base.nearby_comparison ? base.nearby_comparison.slice(0, 400) : '(없음)'}
 
-위 데이터로 시스템 프롬프트의 V3 신규 필드 JSON을 작성하세요. **데이터에 없는 숫자/이름을 지어내지 말 것.** 학생 응답이 없으면 grade_cuts는 빈 배열. 학교 정보가 없으면 Q4 (학교 비교)를 생략하고 4문항만 작성.`;
+위 데이터로 시스템 프롬프트의 V3 신규 필드 JSON을 작성하세요. **데이터에 없는 숫자/이름을 지어내지 말 것.** 학생 응답이 없으면 grade_cuts는 빈 배열. 학교 정보가 없으면 Q4 (학교 비교)를 생략하고 4문항만 작성.
+**v4_difficulty_rows는 위 "문항 전체"의 모든 문항을 포함**(번호·단원·Lv·배점은 그대로, analysis_short만 새로 작성). **v4_final_strategy.area는 위 "단원별 출제"에 있는 단원에서만** 선정(다음 시험 추측 금지). **v4_previous_comparison은 비교 데이터 있을 때만**(없으면 null).`;
   }
 
   // ── JSON 추출 (다단계 복구) ──

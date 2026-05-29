@@ -171,11 +171,14 @@ export type AgentType = (typeof AGENT_TYPES)[number];
 // commentary v1.1.0 — 2026-05-26 V3 리디자인 (Q&A 5문항, feature_callout, grade_cuts,
 //   topic_performance, conclusion, pull_quote 등 신규 필드 — Two-pass Claude 호출 추가)
 //   bump으로 기존 분석본은 페이지 진입 시 자동 V3 갱신 (lazy migration)
+// commentary v1.3.0 — 2026-05-29 V3 강화 (V4 핵심 5개 콘텐츠 흡수: v4_difficulty_rows,
+//   v4_main_analysis, v4_key_questions, v4_previous_comparison, v4_final_strategy를
+//   V3 통합 프롬프트로 단일 생성 → 별도 V4 호출 불필요. V4 토글은 비활성화)
 export const AGENT_PROMPT_VERSIONS: Record<AgentType, string> = {
   'weakness': 'v1.0.0',
   'learning': 'v1.0.0',
   'prediction': 'v1.0.0',
-  'commentary': 'v1.2.0',
+  'commentary': 'v1.3.0',
   'topic-strategy': 'v1.0.0',
   'exam-prep': 'v1.0.0',
   'score-level-plan': 'v1.0.0',

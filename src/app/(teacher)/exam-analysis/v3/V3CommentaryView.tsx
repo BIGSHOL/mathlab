@@ -24,6 +24,12 @@ import { QASection } from './QASection';
 import { DifficultyStackedBar } from './DifficultyStackedBar';
 import { FormatBreakdown } from './FormatBreakdown';
 import { KillerMap } from './KillerMap';
+// V3 강화 (2026-05-29): V4 핵심 5개 콘텐츠를 V3 매거진 스타일로 흡수
+import { V3DifficultyTable } from './V3DifficultyTable';
+import { V3MainAnalysis } from './V3MainAnalysis';
+import { V3KeyQuestions } from './V3KeyQuestions';
+import { V3PreviousComparison } from './V3PreviousComparison';
+import { V3FinalStrategy } from './V3FinalStrategy';
 
 export interface V3Meta {
   examTitle: string;
@@ -79,10 +85,20 @@ export function V3CommentaryView({ commentary, questions, meta, charts }: V3Comm
   // Q&A 섹션 번호 시작점 (인포그래픽 섹션이 01)
   const qaStartNum = 2;
   const qaCount = c.blog_qa?.length || 0;
-  const chartsNum = String(qaStartNum + qaCount).padStart(2, '0');
 
   // 차트 섹션 표시 조건 — props로 차트가 들어왔고 적어도 1개 키가 있을 때
   const showCharts = !!charts && Object.values(charts).some((v) => !!v);
+
+  // ── V3 강화 섹션 번호 (Q&A 다음부터 순차 부여) ──
+  // 01 인포그래픽 → 02..(1+qaCount) Q&A → 영역분석 → 주요문항 → 차트 → 단원피드백
+  const hasMainAnalysis = !!c.v4_main_analysis?.length;
+  const hasKeyQuestions = !!c.v4_key_questions?.length;
+  const hasFinalStrategy = !!c.v4_final_strategy?.length;
+  let nextSec = 2 + qaCount;
+  const mainAnalysisNum = hasMainAnalysis ? String(nextSec++).padStart(2, '0') : '';
+  const keyQuestionsNum = hasKeyQuestions ? String(nextSec++).padStart(2, '0') : '';
+  const chartsNum = String(nextSec++).padStart(2, '0');
+  const finalStrategyNum = hasFinalStrategy ? String(nextSec++).padStart(2, '0') : '';
 
   // 차트 URL 변환 (base64면 data URI 자동 prefix, 이미 URL이면 그대로)
   const toSrc = (s?: string) => {
@@ -168,7 +184,16 @@ export function V3CommentaryView({ commentary, questions, meta, charts }: V3Comm
           <FormatBreakdown questions={questions} />
           <KillerMap questions={questions} />
         </div>
+        {/* 문항별 난이도·단원 상세 표 (V4 흡수) */}
+        {c.v4_difficulty_rows && c.v4_difficulty_rows.length > 0 && (
+          <V3DifficultyTable rows={c.v4_difficulty_rows} />
+        )}
       </section>
+
+      {/* ④-b 이전 시험 비교 콜아웃 (비교 데이터 있을 때만) */}
+      {c.v4_previous_comparison?.headline && (
+        <V3PreviousComparison comparison={c.v4_previous_comparison} />
+      )}
 
       {/* ⑤ Q&A 섹션들 (num 02~) */}
       {c.blog_qa?.map((qa, idx) => (
@@ -179,6 +204,16 @@ export function V3CommentaryView({ commentary, questions, meta, charts }: V3Comm
           qaIndex={idx}
         />
       ))}
+
+      {/* ⑤-b 영역별 출제 분석 (V4 흡수) */}
+      {hasMainAnalysis && c.v4_main_analysis && (
+        <V3MainAnalysis items={c.v4_main_analysis} sectionNum={mainAnalysisNum} />
+      )}
+
+      {/* ⑤-c 주요 문항 해설 (V4 흡수) */}
+      {hasKeyQuestions && c.v4_key_questions && (
+        <V3KeyQuestions items={c.v4_key_questions} sectionNum={keyQuestionsNum} />
+      )}
 
       {/* ⑥ 인용구 (검정 상하 라인) */}
       {c.pull_quote && (
@@ -222,6 +257,11 @@ export function V3CommentaryView({ commentary, questions, meta, charts }: V3Comm
             )}
           </div>
         </section>
+      )}
+
+      {/* ⑦-b 이번 시험 단원별 피드백 (V4 흡수) */}
+      {hasFinalStrategy && c.v4_final_strategy && (
+        <V3FinalStrategy rows={c.v4_final_strategy} sectionNum={finalStrategyNum} />
       )}
 
       {/* ⑧ 결론 박스 */}

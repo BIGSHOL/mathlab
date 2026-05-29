@@ -1037,6 +1037,56 @@ body {
 .v3-footer .v3-footer-meta { font-family: var(--font-display, 'Pretendard Variable', sans-serif); font-size: 12px; color: #888; }
 
 /* ──────────────────────────────────────────────
+   V3 강화 (2026-05-29) — V4 핵심 콘텐츠 흡수 컴포넌트 (NYT 매거진 톤)
+   ────────────────────────────────────────────── */
+
+/* 문항별 난이도·단원 표 */
+.v3-qtable { width: 100%; border-collapse: collapse; margin: 24px 0 4px; font-family: var(--font-display, 'Pretendard Variable', sans-serif); }
+.v3-qtable thead th { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #888; font-weight: 800; text-align: left; padding: 8px 10px; border-bottom: 2px solid #121212; }
+.v3-qtable th.v3-qtable-num { width: 56px; }
+.v3-qtable th.v3-qtable-lv { width: 130px; }
+.v3-qtable th.v3-qtable-pts { width: 56px; text-align: right; }
+.v3-qtable tbody td { padding: 10px; border-bottom: 1px solid #EEE; vertical-align: top; }
+.v3-qtable td.v3-qtable-num { font-family: var(--font-abril, 'Abril Fatface', serif); font-size: 16px; font-weight: 700; color: #121212; }
+.v3-qtable td.v3-qtable-pts { text-align: right; font-weight: 700; font-size: 14px; color: #121212; white-space: nowrap; }
+.v3-qtable .v3-qtable-topic-main { display: block; font-size: 14px; font-weight: 600; color: #1A1A1A; word-break: keep-all; }
+.v3-qtable .v3-qtable-topic-sub { display: block; font-size: 12px; color: #888; margin-top: 3px; word-break: keep-all; line-height: 1.5; }
+.v3-qtable .v3-qtable-badge { display: inline-block; min-width: 34px; text-align: center; padding: 2px 7px; border-radius: 3px; color: #fff; font-size: 12px; font-weight: 800; }
+.v3-qtable .v3-qtable-lvlabel { margin-left: 7px; font-size: 12px; color: #888; white-space: nowrap; }
+
+/* 영역별 출제 분석 */
+.v3-analysis-list { display: flex; flex-direction: column; gap: 22px; }
+.v3-analysis-item h4 { font-family: var(--font-serif-kr, 'Noto Serif KR', serif); font-size: 19px; font-weight: 700; color: #121212; margin: 0 0 8px; word-break: keep-all; }
+.v3-analysis-item p { font-family: var(--font-serif-kr, 'Noto Serif KR', serif); font-size: 16px; line-height: 1.8; color: #2A2A2A; margin: 0; word-break: keep-all; }
+.v3-analysis-item p strong { color: #121212; font-weight: 700; }
+
+/* 주요 문항 해설 (킬러) */
+.v3-keyq-list { display: flex; flex-direction: column; gap: 18px; }
+.v3-keyq-item { border-left: 3px solid #BF1722; padding: 4px 0 4px 18px; }
+.v3-keyq-item .v3-keyq-title { font-family: var(--font-display, 'Pretendard Variable', sans-serif); font-size: 15px; font-weight: 800; color: #121212; margin-bottom: 8px; word-break: keep-all; }
+.v3-keyq-item p { font-family: var(--font-serif-kr, 'Noto Serif KR', serif); font-size: 16px; line-height: 1.8; color: #2A2A2A; margin: 0; word-break: keep-all; }
+.v3-keyq-item p strong { color: #121212; font-weight: 700; }
+
+/* 이전 시험 비교 콜아웃 */
+.v3-compare { background: #F8F8F8; border-left: 3px solid #BF1722; padding: 22px 26px; margin: 28px 64px; }
+.v3-compare .v3-compare-lb { font-family: var(--font-display, 'Pretendard Variable', sans-serif); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #BF1722; font-weight: 800; margin-bottom: 10px; }
+.v3-compare .v3-compare-headline { font-family: var(--font-serif-kr, 'Noto Serif KR', serif); font-size: 19px; font-weight: 700; color: #121212; margin-bottom: 8px; line-height: 1.5; word-break: keep-all; }
+.v3-compare p { font-family: var(--font-serif-kr, 'Noto Serif KR', serif); font-size: 16px; line-height: 1.8; color: #2A2A2A; margin: 0; word-break: keep-all; }
+.v3-compare strong { color: #121212; font-weight: 700; }
+
+/* 이번 시험 단원별 피드백 */
+.v3-strategy-list { display: flex; flex-direction: column; gap: 18px; }
+.v3-strategy-item { padding: 16px 20px; background: #F8F8F8; border: 1px solid #EEE; border-radius: 4px; }
+.v3-strategy-item .v3-strategy-area { font-family: var(--font-serif-kr, 'Noto Serif KR', serif); font-size: 17px; font-weight: 700; color: #121212; margin-bottom: 10px; word-break: keep-all; }
+.v3-strategy-line { display: flex; gap: 10px; align-items: baseline; margin-bottom: 6px; }
+.v3-strategy-line:last-child { margin-bottom: 0; }
+.v3-strategy-tag { flex-shrink: 0; font-family: var(--font-display, 'Pretendard Variable', sans-serif); font-size: 10px; font-weight: 800; letter-spacing: 0.06em; padding: 3px 8px; border-radius: 3px; color: #fff; white-space: nowrap; }
+.v3-strategy-tag-now { background: #888; }
+.v3-strategy-tag-act { background: #BF1722; }
+.v3-strategy-text { font-family: var(--font-serif-kr, 'Noto Serif KR', serif); font-size: 15px; line-height: 1.7; color: #2A2A2A; word-break: keep-all; }
+.v3-strategy-text strong { color: #121212; font-weight: 700; }
+
+/* ──────────────────────────────────────────────
    V4 (갈수학학원 스타일) — 테이블 중심 학원 블로그 톤
    사용자 벤치마킹 스크린샷 기반. V3와 prefix 분리, 충돌 0.
    ────────────────────────────────────────────── */
