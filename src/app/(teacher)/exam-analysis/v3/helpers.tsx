@@ -74,10 +74,11 @@ export function markdownToHighlighted(text: string, keyPrefix = ''): React.React
     if (part.startsWith('**') && part.endsWith('**')) {
       const inner = part.slice(2, -2);
       return (
-        <strong key={`${keyPrefix}-b-${i}`}>{renderInlineMath(inner, `${keyPrefix}-bm-${i}`)}</strong>
+        <strong key={`${keyPrefix}-b-${i}`}>{renderInlineMath(inner, `${keyPrefix}-bm-${i}`, { disableHighlight: true })}</strong>
       );
     }
-    return <React.Fragment key={`${keyPrefix}-t-${i}`}>{renderInlineMath(part, `${keyPrefix}-tm-${i}`)}</React.Fragment>;
+    // disableHighlight: V3는 단어별 자동 색상(서술형=파랑 등) 미적용 — AI **bold**만 신뢰
+    return <React.Fragment key={`${keyPrefix}-t-${i}`}>{renderInlineMath(part, `${keyPrefix}-tm-${i}`, { disableHighlight: true })}</React.Fragment>;
   });
 }
 
@@ -95,10 +96,10 @@ export function renderTitleWithEmphasis(text: string, keyPrefix = ''): React.Rea
       const inner = part.slice(1, -1);
       return (
         <span key={`${keyPrefix}-em-${i}`} className="v3-em">
-          {renderInlineMath(inner, `${keyPrefix}-emm-${i}`)}
+          {renderInlineMath(inner, `${keyPrefix}-emm-${i}`, { disableHighlight: true })}
         </span>
       );
     }
-    return <React.Fragment key={`${keyPrefix}-tt-${i}`}>{renderInlineMath(part, `${keyPrefix}-ttm-${i}`)}</React.Fragment>;
+    return <React.Fragment key={`${keyPrefix}-tt-${i}`}>{renderInlineMath(part, `${keyPrefix}-ttm-${i}`, { disableHighlight: true })}</React.Fragment>;
   });
 }
