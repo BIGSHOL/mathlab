@@ -118,12 +118,24 @@ function getExamLabels(item: ExamPaperItem): string[] {
   return extractExamLabels(item.title);
 }
 
-/** 5단계 상태 판별 — 업로드 → 분석중 → 분석완료 → 총평완료 → 글작성 완료 (사용자 제안 라벨) */
-function getDetailedStatus(item: ExamPaperItem): { label: string; color: string } {
+/** 5단계 상태 판별 — 업로드 → 분석중 → 분석완료 → 총평완료 → 글작성 완료 (사용자 제안 라벨)
+ *  구버전 프롬프트로 분석된 COMPLETED 항목은 진행 단계(총평완료 등) 대신 "구버전"으로 표시 →
+ *  "완료"가 최신인 것처럼 오해되는 것 방지 (사용자 요청 2026-05-29). */
+function getDetailedStatus(item: ExamPaperItem): { label: string; color: string; title?: string } {
   if (item.status === 'FAILED') return { label: '실패', color: 'bg-red-50 text-red-600 border-red-200' };
   if (item.status === 'ANALYZING') return { label: '분석중', color: 'bg-amber-50 text-amber-600 border-amber-200' };
   if (item.status === 'PENDING') return { label: '업로드', color: 'bg-slate-50 text-slate-500 border-slate-200' };
-  // COMPLETED — extensions로 세분화
+  // COMPLETED — 구버전이면 진행 단계 무시하고 "구버전" 우선 표시
+  const modelVersion = item.analyses[0]?.modelVersion;
+  if (isStalePrompt(modelVersion)) {
+    const v = extractPromptVersion(modelVersion);
+    return {
+      label: `구버전${v ? ` ${v}` : ''}`,
+      color: 'bg-amber-50 text-amber-700 border-amber-300',
+      title: `구버전 프롬프트(${v || '?'})로 분석됨. 현재 ${PROMPT_VERSION} — 우측 재분석 버튼으로 최신 버전 + V3 총평으로 갱신하세요.`,
+    };
+  }
+  // 최신 버전 — extensions로 세분화
   const exts = item.analyses[0]?.extensions || [];
   const agentTypes = exts.map(e => e.agentType);
   if (agentTypes.includes('blog-article')) return { label: '글작성 완료', color: 'bg-violet-50 text-violet-600 border-violet-200' };
@@ -226,20 +238,15 @@ export function ExamPaperList({
                     {(() => {
                       const s = getDetailedStatus(item);
                       return (
-                        <span className={`inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-sm border ${s.color}`}>
+                        <span
+                          className={`inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-sm border ${s.color}`}
+                          title={s.title}
+                        >
                           {s.label}
                         </span>
                       );
                     })()}
-                    {/* 구버전 프롬프트 뱃지 (분석본이 있고 현재 PROMPT_VERSION과 다를 때만) */}
-                    {item.status === 'COMPLETED' && isStalePrompt(latestAnalysis?.modelVersion) && (
-                      <span
-                        className="inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-sm border bg-slate-100 text-slate-500 border-slate-300"
-                        title={`구버전 프롬프트 (${extractPromptVersion(latestAnalysis?.modelVersion) || '?'}). 현재 ${PROMPT_VERSION} — 우측 재분석 버튼으로 최신 버전으로 갱신할 수 있습니다.`}
-                      >
-                        구버전 {extractPromptVersion(latestAnalysis?.modelVersion) || ''}
-                      </span>
-                    )}
+                    {/* (구버전 배지는 상태 배지로 통합됨 — 위 getDetailedStatus가 구버전 시 라벨 대체) */}
                     {getExamLabels(item).map(label => (
                       <span key={label} className="inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-sm border bg-teal-50 text-teal-600 border-teal-200">
                         {label}
