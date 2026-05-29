@@ -402,17 +402,17 @@ export function CommentarySection({
         </div>
       )}
 
-      {/* V3 안내 배너 — 기존 commentary는 있는데 V3 신규 필드가 없을 때 (lazy migration 안내) */}
+      {/* 구버전 총평 안내 — 기존 commentary는 있는데 최신 양식(blog_qa 등) 필드가 없을 때 */}
       {isExpanded && !isFallback && !isRegenerating && !useV3 && (
         <div className="bg-gradient-to-r from-rose-50 to-amber-50 border border-rose-200 rounded-sm px-3 py-2 mb-3 flex items-center gap-2 text-xs">
           <Sparkles className="w-3.5 h-3.5 text-[#BF1722] shrink-0" />
           <span className="text-slate-700 flex-1">
-            <b className="text-[#BF1722]">V3 새 UI</b> — 잡지 스타일 인포그래픽 · Q&amp;A 인터뷰 · 거대 숫자 헤더로 업그레이드 가능합니다.
+            <b className="text-[#BF1722]">구버전 총평</b> — 문항별 난이도 표 · 영역별 분석 · Q&amp;A · 단원별 피드백 등 최신 양식으로 업그레이드할 수 있습니다.
             <button
               onClick={onRegenerate}
               className="ml-1.5 underline font-bold text-[#BF1722] hover:text-[#9A1219]"
             >
-              V3로 재분석
+              최신 양식으로 재생성
             </button>
           </span>
         </div>

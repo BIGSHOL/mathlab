@@ -170,12 +170,16 @@ export default function ExamAnalysisPage() {
 
   const handleAnalyze = async (id: string) => {
     setAnalyzing(true);
+    // 재분석 대상이 기존에 총평을 갖고 있었는지 (재분석 = 완전 최신화 → 총평도 V3로 자동 재생성)
+    const target = items.find((it) => it.id === id);
+    const hadCommentary = !!target?.analyses?.[0]?.extensions?.some((e) => e.agentType === 'commentary');
     // 즉시 로컬 상태를 ANALYZING으로 변경 (폴링 트리거 + UI 즉시 반영)
     setItems(prev => prev.map(item =>
       item.id === id ? { ...item, status: 'ANALYZING' as const } : item
     ));
-    const willChain = autoCommentary;
-    toast.info(willChain ? 'AI 분석 + 총평 자동 생성을 시작합니다' : 'AI 분석이 시작되었습니다');
+    // 체크박스 ON 이거나, 기존에 총평이 있던 분석본의 재분석이면 → 총평까지 자동 V3 재생성
+    const willChain = autoCommentary || hadCommentary;
+    toast.info(willChain ? 'AI 분석 + V3 총평 자동 생성을 시작합니다' : 'AI 분석이 시작되었습니다');
     try {
       // fire-and-forget: 서버에 분석 요청, 완료 시 갱신
       fetch(`/api/exam-analysis/${id}/analyze`, { method: 'POST' })
