@@ -382,10 +382,12 @@ export class ExamPromptBuilder {
     parts.push(SCHOOL_LEVEL_RULES);
     parts.push(EXAM_SUBJECT_CLASSIFICATION);
     parts.push(POINTS_VALIDATION_RULES);
-    parts.push(DIFFICULTY_SYSTEM_FRAMEWORK);
 
     if (isMath) {
-      // 수학 전용 가이드라인
+      // 수학 전용 가이드라인 — 2축 모델(MATH_DIFFICULTY_SYSTEM_4LEVEL)만 사용.
+      // ⚠️ 공통 DIFFICULTY_SYSTEM_FRAMEWORK는 옛 개념-수 정의 + "애매하면 한 단계 낮게"
+      //   하향 편향이 있어 2축 깊이-우선 모델과 충돌 → 수학에서는 제외 (2026-05-29).
+      //   (충돌로 인해 난이도가 계속 2~3에 몰리고 상향이 안 되던 문제 해결)
       parts.push(MATH_DIFFICULTY_SYSTEM_4LEVEL);
       parts.push(SUBJECT_MATCHING_RULES);
 
@@ -418,7 +420,8 @@ export class ExamPromptBuilder {
         parts.push(prerequisite);
       }
     } else {
-      // 영어 전용 가이드라인
+      // 영어 전용 가이드라인 — 공통 프레임워크 + 영어 루브릭 (기존 유지, 별도 지시 전까지 불변)
+      parts.push(DIFFICULTY_SYSTEM_FRAMEWORK);
       parts.push(ENGLISH_DIFFICULTY_SYSTEM_4LEVEL);
       parts.push(ENGLISH_EVALUATION_SYSTEM);
       parts.push(ENGLISH_QUESTION_STRATEGIES);

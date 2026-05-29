@@ -385,7 +385,9 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
     <div className="max-w-[960px] mx-auto">
       {/* ── 헤더 ── */}
       <div className="mb-5">
-        <div className="flex items-start justify-between gap-4">
+        {/* 좁은 창에서 우측 그룹(버튼+난이도 카드)이 전역 헤더 사용자 메뉴와 겹치지 않도록 flex-wrap →
+            좁아지면 우측 그룹이 제목 아래 줄로 내려감 (2026-05-29 사용자 보고) */}
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
           <div className="min-w-0 flex-1">
             <h2 className="text-xl font-bold text-slate-900 leading-tight">{detail.title}</h2>
             <div className="flex items-center gap-2 mt-2 flex-wrap">
@@ -413,8 +415,8 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
             </div>
           </div>
 
-          {/* 우측: 버튼 + 등급 뱃지 */}
-          <div className="flex items-center gap-3 shrink-0">
+          {/* 우측: 버튼 + 등급 뱃지 — 매우 좁을 땐 내부도 wrap */}
+          <div className="flex flex-wrap items-center gap-3">
             {detail.status === 'COMPLETED' && (
               <>
                 {user?.role === 'SUPER_ADMIN' && (
