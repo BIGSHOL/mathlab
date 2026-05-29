@@ -1007,15 +1007,19 @@ ${phases}
     const client = new Anthropic({ apiKey });
     const userPrompt = this.buildV3UserPrompt(input, base);
 
-    const response = await client.messages.create({
+    // V3 강화 (2026-05-29): blog_* + v4_* 5개 필드 통합 생성 → 출력량 증가로 max_tokens 24576.
+    // ⚠️ max_tokens가 크면(>~16K) Anthropic SDK가 non-streaming 호출을 거부
+    //   ("Streaming is required for operations that may take longer than 10 minutes") →
+    //   반드시 streaming(messages.stream + finalMessage)으로 호출해야 함.
+    //   (이 누락으로 V3 확장이 매번 throw → base만 반환 → blog_qa 없는 '구버전 총평'이 생성됨)
+    const stream = client.messages.stream({
       model: 'claude-sonnet-4-6',
-      // V3 강화 (2026-05-29): blog_* + v4_* 5개 필드 통합 생성 → 출력량 증가.
-      // 특히 v4_difficulty_rows(전 문항) + v4_key_questions(3~5개 자세 해설) 분량 고려해 24576으로 상향.
       max_tokens: 24576,
       temperature: 0.6,
       system: SYSTEM_PROMPT_V3,
       messages: [{ role: 'user', content: userPrompt }],
     });
+    const response = await stream.finalMessage();
 
     if (response.stop_reason === 'max_tokens') {
       console.warn('[commentary-agent V3] max_tokens 도달 — 응답이 잘렸을 수 있음');
