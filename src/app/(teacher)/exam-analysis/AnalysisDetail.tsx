@@ -33,6 +33,10 @@ const ArticleEditorModal = dynamic(
 // handleCopyV4Naver + buildNaverV4Html 코드는 보존 (재활성 시 true로).
 const V4_NAVER_COPY_ENABLED = false;
 
+// V3 일원화 (2026-05-29): 기존 V2 "기출 분석 글 작성"(ArticleEditorModal — 차트 블로그 글) 비활성화.
+// V3 총평 + [네이버 복사]로 일원화. ArticleEditorModal/article-generator 코드는 보존(MD 문서 백업).
+const V2_ARTICLE_ENABLED = false;
+
 interface AnalysisDetailProps {
   detail: ExamPaperData;
   analyzing: boolean;
@@ -258,9 +262,9 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
         selection?.removeAllRanges();
         if (!ok) throw new Error('execCommand copy 실패');
         if (hasCharts) {
-          toast.success('V3 시안 (차트 포함)이 클립보드에 복사되었습니다.');
+          toast.success('총평이 클립보드에 복사되었습니다 (차트 포함). 네이버 블로그에 붙여넣으세요.');
         } else {
-          toast.success('V3 시안이 클립보드에 복사되었습니다. (차트 추가하려면 [기출 분석 글 작성] 먼저 클릭)');
+          toast.success('총평이 클립보드에 복사되었습니다. 네이버 블로그에 붙여넣으세요.');
         }
       } finally {
         document.body.removeChild(container);
@@ -661,25 +665,27 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
             const hasV3 = !!commentary.blog_qa && commentary.blog_qa.length > 0;
             return (
               <div className="flex items-center gap-2 mb-4 flex-wrap">
-                <Button
-                  size="sm"
-                  onClick={() => setShowArticleModal(true)}
-                  className={hasArticle
-                    ? 'bg-slate-700 hover:bg-slate-800 text-white'
-                    : 'bg-emerald-600 hover:bg-emerald-700 text-white'}
-                >
-                  <FileText className="w-4 h-4 mr-1" />
-                  {hasArticle ? '기출 분석 글 확인' : '기출 분석 글 작성'}
-                </Button>
+                {V2_ARTICLE_ENABLED && (
+                  <Button
+                    size="sm"
+                    onClick={() => setShowArticleModal(true)}
+                    className={hasArticle
+                      ? 'bg-slate-700 hover:bg-slate-800 text-white'
+                      : 'bg-emerald-600 hover:bg-emerald-700 text-white'}
+                  >
+                    <FileText className="w-4 h-4 mr-1" />
+                    {hasArticle ? '기출 분석 글 확인' : '기출 분석 글 작성'}
+                  </Button>
+                )}
                 {hasV3 && (
                   <Button
                     size="sm"
                     onClick={handleCopyV3Naver}
                     className="bg-[#BF1722] hover:bg-[#9A1219] text-white"
-                    title="V3 시안(Q&A 인터뷰)을 네이버 블로그용 HTML로 클립보드에 복사"
+                    title="총평을 네이버 블로그용 HTML로 클립보드에 복사 (차트 포함)"
                   >
                     <Copy className="w-4 h-4 mr-1" />
-                    V3 네이버 복사
+                    네이버 복사
                   </Button>
                 )}
                 {V4_NAVER_COPY_ENABLED && commentary?.v4_exam_overview && (
