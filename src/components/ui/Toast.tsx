@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { create } from 'zustand';
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 
@@ -19,9 +19,12 @@ interface ToastStore {
   remove: (id: string) => void;
 }
 
+// 기본 표시 시간: 10초 후 페이드아웃 (2026-05-29 사용자 요청)
+const DEFAULT_DURATION = 10000;
+
 export const useToast = create<ToastStore>((set) => ({
   toasts: [],
-  add: (type, message, duration = 3000) => {
+  add: (type, message, duration = DEFAULT_DURATION) => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     set((s) => ({ toasts: [...s.toasts, { id, type, message, duration }] }));
   },
@@ -31,7 +34,7 @@ export const useToast = create<ToastStore>((set) => ({
 /** toast.success('저장 완료'), toast.error('실패') 등 단축 함수 */
 export const toast = {
   success: (msg: string, ms?: number) => useToast.getState().add('success', msg, ms),
-  error: (msg: string, ms?: number) => useToast.getState().add('error', msg, ms ?? 4000),
+  error: (msg: string, ms?: number) => useToast.getState().add('error', msg, ms),
   warning: (msg: string, ms?: number) => useToast.getState().add('warning', msg, ms),
   info: (msg: string, ms?: number) => useToast.getState().add('info', msg, ms),
 };
@@ -57,23 +60,37 @@ const iconColors: Record<ToastType, string> = {
   info: 'text-blue-500',
 };
 
+// 페이드아웃 애니메이션 시간 (ms) — 종료 트리거 후 실제 제거까지
+const LEAVE_MS = 400;
+
 function ToastItem({ item }: { item: ToastItem }) {
   const remove = useToast((s) => s.remove);
+  const [leaving, setLeaving] = useState(false);
   const Icon = icons[item.type];
 
+  // 페이드아웃 시작 → LEAVE_MS 후 실제 제거 (즉시 unmount 대신 부드럽게)
+  const startLeave = useCallback(() => {
+    setLeaving(true);
+    setTimeout(() => remove(item.id), LEAVE_MS);
+  }, [item.id, remove]);
+
   useEffect(() => {
-    const timer = setTimeout(() => remove(item.id), item.duration);
+    const timer = setTimeout(startLeave, item.duration);
     return () => clearTimeout(timer);
-  }, [item.id, item.duration, remove]);
+  }, [item.duration, startLeave]);
 
   return (
     <div
-      className={`flex items-center gap-2.5 px-4 py-3 rounded-sm border shadow-lg backdrop-blur-sm max-w-sm animate-in slide-in-from-right-full fade-in duration-200 ${styles[item.type]}`}
+      className={`flex items-center gap-2.5 px-4 py-3 rounded-sm border shadow-lg backdrop-blur-sm max-w-sm transition-all duration-[400ms] ease-out ${
+        leaving
+          ? 'opacity-0 translate-x-6'
+          : 'opacity-100 animate-in slide-in-from-right-full fade-in'
+      } ${styles[item.type]}`}
     >
       <Icon className={`w-4.5 h-4.5 shrink-0 ${iconColors[item.type]}`} />
       <p className="text-sm font-medium flex-1">{item.message}</p>
       <button
-        onClick={() => remove(item.id)}
+        onClick={startLeave}
         className="p-0.5 rounded hover:bg-black/5 transition-colors shrink-0"
       >
         <X className="w-3.5 h-3.5 opacity-50" />
