@@ -131,11 +131,16 @@ export default function ExamAnalysisPage() {
     return () => clearInterval(interval);
   }, [hasAnalyzing]);
 
+  // 메타데이터(V3 base scaffolding) 생성 중인 시험지 추적 — 총평 버튼 게이팅용
+  const [metadataGenIds, setMetadataGenIds] = useState<Record<string, boolean>>({});
+
   /**
-   * 분석 완료 후 readiness 통과 시 총평 자동 생성 (autoCommentary 옵션 ON일 때).
+   * 분석 완료 후: readiness 통과 시 V3 총평용 메타데이터를 백그라운드로 선생성.
+   * (base scaffolding을 미리 만들어 두면 총평 클릭 시 V3 단독 호출로 빠르게 생성됨)
+   * willChain(자동 총평)이면 메타데이터 준비 후 이어서 총평까지 생성.
    * 배점 합계 ≠ 만점 / 단원 UNKNOWN 이면 건너뛰고 안내 (AnalysisDetail readinessCheck 복제).
    */
-  const maybeAutoCommentary = useCallback(async (id: string) => {
+  const prepareMetadataAndMaybeCommentary = useCallback(async (id: string, willChain: boolean) => {
     try {
       const res = await fetch(`/api/exam-analysis/${id}`, { cache: 'no-store' });
       if (!res.ok) return;
@@ -152,19 +157,43 @@ export default function ExamAnalysisPage() {
       }).length;
       const ready = pointsSum === expectedTotal && missingPoints === 0 && unknownTopics === 0;
       if (!ready) {
-        toast.warning('분석 완료. 배점·단원 확인 후 총평을 생성하세요 (자동 생성 건너뜀)');
+        toast.warning('분석 완료. 배점·단원 확인 후 총평을 생성하세요');
         return;
       }
-      toast.info('총평 자동 생성 중... (30~60초)');
-      const cRes = await fetch(`/api/exam-analysis/${id}/analyze-extended`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agents: ['commentary'], forceRegenerate: false, includeNearby: true, includeYearCompare: true }),
-      });
-      if (cRes.ok) toast.success('분석 + 총평 자동 생성 완료');
-      else toast.error('총평 자동 생성 실패 — 수동으로 생성하세요');
+
+      // ① 메타데이터 백그라운드 선생성 (총평의 분석 기반) — 이 동안 총평 버튼은 "준비 중"
+      setMetadataGenIds((p) => ({ ...p, [id]: true }));
+      toast.info('V3 총평 준비 중... (분석 기반 생성, 약 10~20초)');
+      try {
+        const mRes = await fetch(`/api/exam-analysis/${id}/generate-metadata`, { method: 'POST' });
+        if (!mRes.ok) {
+          toast.error('총평 준비(메타데이터) 생성 실패 — 잠시 후 [총평 생성]을 시도하세요');
+          return;
+        }
+      } finally {
+        setMetadataGenIds((p) => { const n = { ...p }; delete n[id]; return n; });
+        fetchListRef.current(true);
+        if (selectedIdRef.current === id) fetchDetailRef.current(id);
+      }
+
+      // ② 자동 총평이면 이어서 생성 (메타데이터 사용 → V3 단독 호출로 빠름)
+      if (willChain) {
+        toast.info('총평 자동 생성 중...');
+        const cRes = await fetch(`/api/exam-analysis/${id}/analyze-extended`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agents: ['commentary'], forceRegenerate: false, includeNearby: true, includeYearCompare: true }),
+        });
+        if (cRes.ok) toast.success('분석 + 총평 자동 생성 완료');
+        else toast.error('총평 자동 생성 실패 — 수동으로 생성하세요');
+        fetchListRef.current(true);
+        if (selectedIdRef.current === id) fetchDetailRef.current(id);
+      } else {
+        toast.success('V3 총평 준비 완료 — [총평 생성]을 누르면 빠르게 생성됩니다');
+      }
     } catch {
-      toast.error('총평 자동 생성 중 오류가 발생했습니다');
+      toast.error('총평 준비 중 오류가 발생했습니다');
+      setMetadataGenIds((p) => { const n = { ...p }; delete n[id]; return n; });
     }
   }, []);
 
@@ -187,13 +216,15 @@ export default function ExamAnalysisPage() {
           if (!res.ok) {
             const err = await res.json();
             toast.error(err.error?.message || '분석 실패');
-          } else if (willChain) {
-            // 분석 성공 → readiness 통과 시 총평 자동 생성
-            await maybeAutoCommentary(id);
+            fetchList(true);
+            if (selectedId === id) fetchDetail(id);
+            return;
           }
-          // 서버 완료 시 즉시 갱신 (silent: 로딩 표시 안 함)
+          // 분석 성공 → 즉시 목록/상세 갱신(결과 표시) 후 메타데이터 백그라운드 선생성
+          // (readiness 통과 시. willChain이면 메타데이터 준비 후 총평까지 자동 생성)
           fetchList(true);
           if (selectedId === id) fetchDetail(id);
+          await prepareMetadataAndMaybeCommentary(id, willChain);
         })
         .catch(() => {
           toast.error('분석 요청에 실패했습니다');
@@ -303,6 +334,7 @@ export default function ExamAnalysisPage() {
             onRefresh={() => fetchDetail(selectedDetail.id)}
             autoCommentary={autoCommentary}
             onToggleAutoCommentary={toggleAutoCommentary}
+            metadataGenerating={!!metadataGenIds[selectedDetail.id]}
           />
         ) : selectedId && !selectedDetail ? (
           <div className="flex flex-col items-center justify-center h-full text-slate-400">

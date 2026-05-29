@@ -45,9 +45,11 @@ interface AnalysisDetailProps {
   /** 분석 시 총평 자동 생성 옵션 (page.tsx에서 localStorage 관리) */
   autoCommentary?: boolean;
   onToggleAutoCommentary?: (v: boolean) => void;
+  /** V3 총평용 메타데이터(base scaffolding)를 백그라운드 생성 중인지 — true면 [총평 생성] 차단 */
+  metadataGenerating?: boolean;
 }
 
-export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCommentary = false, onToggleAutoCommentary }: AnalysisDetailProps) {
+export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCommentary = false, onToggleAutoCommentary, metadataGenerating = false }: AnalysisDetailProps) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<AnalysisTab>('basic');
   const [showExtractModal, setShowExtractModal] = useState(false);
@@ -137,6 +139,15 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
   // 총평 데이터: extensions에서 commentary 에이전트 결과 추출
   const commentaryExt = latestAnalysis?.extensions?.find(e => e.agentType === 'commentary');
   const commentary = (commentaryExt?.result as unknown as CommentaryResult) ?? null;
+
+  // V3 메타데이터(base scaffolding) 준비 상태 — 분석 직후 백그라운드 생성됨 (DB 전용, 화면 비노출).
+  // ⚠️ 게이팅은 "클라이언트 신호(metadataGenerating)"로만 판단한다.
+  //    extension 부재로 판단하면 이 기능 이전의 기존 분석본(메타데이터 없음)이 영구 차단되어
+  //    폴백 총평조차 못 쓰게 됨. 기존 분석본은 메타데이터 없이도 총평이 폴백으로 동작해야 한다.
+  //    (새로고침 mid-generation 시 신호 유실 → 폴백 즉석 base 생성으로 graceful 처리)
+  const metadataPending = metadataGenerating;
+  // 총평 생성 가능 = readiness 통과 + 메타데이터 준비 중 아님
+  const commentaryReady = readinessCheck.ready && !metadataPending;
 
   const handleGenerateCommentary = async () => {
     if (!latestAnalysis) return;
@@ -565,14 +576,16 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                       size="sm"
                       className="bg-violet-600 hover:bg-violet-700 text-white disabled:bg-slate-300 disabled:cursor-not-allowed"
                       onClick={handleGenerateCommentary}
-                      disabled={!readinessCheck.ready}
+                      disabled={!commentaryReady}
                       title={
-                        readinessCheck.ready
+                        metadataPending
+                          ? 'V3 총평 준비 중입니다 (분석 기반 데이터 생성). 잠시 후 가능합니다.'
+                          : readinessCheck.ready
                           ? '총평 생성'
                           : '먼저 다음을 완성하세요:\n' + readinessCheck.reasons.map(r => '• ' + r).join('\n')
                       }
                     >
-                      총평 생성
+                      {metadataPending ? '준비 중...' : '총평 생성'}
                     </Button>
                   )}
                   {detail.schoolId && !commentaryLoading && (
@@ -601,7 +614,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                   )}
                 </div>
               </div>
-              {/* ── 총평 생성 차단 경고 ── */}
+              {/* ── 총평 생성 차단 경고 (배점/단원 미완성) ── */}
               {!readinessCheck.ready && !commentaryLoading && (
                 <div className="mt-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-sm">
                   <p className="text-xs font-semibold text-amber-800 mb-1">총평 생성 전 다음을 완성하세요:</p>
@@ -613,6 +626,16 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                   <p className="text-[11px] text-amber-600 mt-1.5 leading-relaxed">
                     아래 문항 테이블에서 <strong>배점은 클릭하여 직접 입력</strong>, <strong>단원은 ✏️ 아이콘으로 수정</strong> 가능합니다.
                   </p>
+                </div>
+              )}
+              {/* ── 메타데이터 준비 중 안내 (배점/단원은 통과, V3 base 백그라운드 생성 중) ── */}
+              {readinessCheck.ready && metadataPending && !commentaryLoading && (
+                <div className="mt-3 px-3 py-2 bg-violet-50 border border-violet-200 rounded-sm flex items-center gap-2.5">
+                  <div className="animate-spin w-3.5 h-3.5 border-2 border-violet-400 border-t-transparent rounded-full shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-violet-800">V3 총평 준비 중... (약 10~20초)</p>
+                    <p className="text-[11px] text-violet-600 leading-relaxed">분석 기반 데이터를 백그라운드로 생성하고 있습니다. 완료되면 [총평 생성]이 활성화됩니다.</p>
+                  </div>
                 </div>
               )}
               {commentaryLoading && (

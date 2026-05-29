@@ -5,8 +5,6 @@ import { Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
-import { renderInlineMath } from './helpers';
-import { FORMAT_BADGE } from './constants';
 import { V3CommentaryView, type V3Meta, type V3ChartImages } from './v3/V3CommentaryView';
 import { V4CommentaryView, hasV4Data } from './v4/V4CommentaryView';
 import { toast } from '@/components/ui/Toast';
@@ -446,22 +444,6 @@ export function CommentarySection({
         </div>
       )}
 
-      {/* 구버전 총평 안내 — 기존 commentary는 있는데 최신 양식(blog_qa 등) 필드가 없을 때 */}
-      {isExpanded && !isFallback && !isRegenerating && !useV3 && (
-        <div className="bg-gradient-to-r from-rose-50 to-amber-50 border border-rose-200 rounded-sm px-3 py-2 mb-3 flex items-center gap-2 text-xs">
-          <Sparkles className="w-3.5 h-3.5 text-[#BF1722] shrink-0" />
-          <span className="text-slate-700 flex-1">
-            <b className="text-[#BF1722]">구버전 총평</b> — 문항별 난이도 표 · 영역별 분석 · Q&amp;A · 단원별 피드백 등 최신 양식으로 업그레이드할 수 있습니다.
-            <button
-              onClick={onRegenerate}
-              className="ml-1.5 underline font-bold text-[#BF1722] hover:text-[#9A1219]"
-            >
-              최신 양식으로 재생성
-            </button>
-          </span>
-        </div>
-      )}
-
       {isRegenerating && (
         <div className="mt-3 px-1">
           <div className="flex items-center justify-between mb-1.5">
@@ -494,221 +476,28 @@ export function CommentarySection({
         </div>
       )}
 
-      {isExpanded && (
-        <div className="space-y-3">
-          {/* 종합 분석 */}
-          {commentary.overall_comment && (
-            <div className="bg-white/70 rounded-sm p-4 border border-violet-200">
-              <h4 className="text-xs font-semibold text-violet-800 mb-2 flex items-center gap-1.5">
-                <span className="w-1 h-3.5 bg-violet-500 rounded-full" />
-                종합 분석
-              </h4>
-              <div className="space-y-2">
-                {commentary.overall_comment.split('\n').filter(Boolean).map((para, i) => (
-                  <p key={i} className="text-sm text-slate-700 leading-relaxed">{renderInlineMath(para.trim())}</p>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 주변 학교 비교 + 연도별 비교 (분리 표시) */}
-          {commentary.nearby_comparison && (() => {
-            const paras = commentary.nearby_comparison!.split('\n').filter(Boolean);
-            const yearParas = paras.filter(p => /이전\s*기출|연도|전년|작년|20\d{2}년.*비교/.test(p));
-            const nearbyParas = paras.filter(p => !yearParas.includes(p));
-            return (
-              <>
-                {includeNearby && nearbyParas.length > 0 && (
-                  <div className="bg-white/70 rounded-sm p-4 border border-cyan-200">
-                    <h4 className="text-xs font-semibold text-cyan-800 mb-2 flex items-center gap-1.5">
-                      <span className="w-1 h-3.5 bg-cyan-500 rounded-full" />
-                      주변 학교 비교
-                    </h4>
-                    <div className="space-y-2">
-                      {nearbyParas.map((para: string, i: number) => (
-                        <p key={i} className="text-sm text-slate-700 leading-relaxed">{renderInlineMath(para.trim())}</p>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {includeYearCompare && yearParas.length > 0 && (
-                  <div className="bg-white/70 rounded-sm p-4 border border-amber-200">
-                    <h4 className="text-xs font-semibold text-amber-800 mb-2 flex items-center gap-1.5">
-                      <span className="w-1 h-3.5 bg-amber-500 rounded-full" />
-                      연도별 비교
-                    </h4>
-                    <div className="space-y-2">
-                      {yearParas.map((para: string, i: number) => (
-                        <p key={i} className="text-sm text-slate-700 leading-relaxed">{renderInlineMath(para.trim())}</p>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            );
-          })()}
-
-          {/* 등급별 점수 확보 전략 */}
-          {commentary.score_strategies && commentary.score_strategies.length > 0 ? (
-            <div>
-              <h4 className="text-xs font-semibold text-indigo-800 mb-2 flex items-center gap-1.5">
-                <span className="w-1 h-3.5 bg-indigo-500 rounded-full" />
-                등급별 점수 확보 전략
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                {commentary.score_strategies.map((s, i) => {
-                  const colors = [
-                    { border: 'border-amber-300', bg: 'bg-amber-50', badge: 'bg-amber-500', label: 'text-amber-800' },
-                    { border: 'border-blue-300', bg: 'bg-blue-50', badge: 'bg-blue-500', label: 'text-blue-800' },
-                    { border: 'border-slate-300', bg: 'bg-slate-50', badge: 'bg-slate-500', label: 'text-slate-700' },
-                  ];
-                  const c = colors[i] || colors[2];
-                  return (
-                    <div key={i} className={`rounded-sm border ${c.border} ${c.bg} p-3`}>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className={`px-1.5 py-0.5 rounded-sm text-[10px] font-bold text-white ${c.badge}`}>
-                          {s.grade.split(' ')[0] || `${i + 1}등급`}
-                        </span>
-                        <span className={`text-xs font-semibold ${c.label}`}>{s.target}</span>
-                      </div>
-                      {s.points && s.points.length > 0 ? (
-                        <ul className="space-y-1">
-                          {s.points.map((p, j) => (
-                            <li key={j} className="flex items-start gap-1.5 text-xs text-slate-700">
-                              <span className="text-slate-400 mt-0.5 shrink-0">•</span>
-                              <span>{renderInlineMath(p)}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : s.strategy ? (
-                        <p className="text-xs text-slate-700 leading-relaxed">{renderInlineMath(s.strategy)}</p>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : commentary.score_strategy ? (
-            <div className="bg-white/70 rounded-sm p-4 border border-indigo-200">
-              <h4 className="text-xs font-semibold text-indigo-800 mb-1.5 flex items-center gap-1.5">
-                <span className="w-1 h-3.5 bg-indigo-500 rounded-full" />
-                점수 확보 전략
-              </h4>
-              <p className="text-sm text-slate-700 leading-relaxed">{renderInlineMath(commentary.score_strategy)}</p>
-            </div>
-          ) : null}
-
-          {/* 강점 & 보완점 (2열) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {commentary.strength_areas?.length > 0 && (
-              <div className="bg-white/70 rounded-sm p-4 border border-green-200">
-                <h4 className="text-xs font-semibold text-green-800 mb-2 flex items-center gap-1.5">
-                  <span className="w-1 h-3.5 bg-green-500 rounded-full" />
-                  강점 영역
-                </h4>
-                <ul className="space-y-1.5">
-                  {commentary.strength_areas.map((s, i) => (
-                    <li key={i} className="flex items-start gap-1.5 text-xs text-slate-700">
-                      <span className="text-green-500 mt-0.5 shrink-0">+</span>
-                      <span>{renderInlineMath(s)}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {commentary.improvement_areas?.length > 0 && (
-              <div className="bg-white/70 rounded-sm p-4 border border-amber-200">
-                <h4 className="text-xs font-semibold text-amber-800 mb-2 flex items-center gap-1.5">
-                  <span className="w-1 h-3.5 bg-amber-500 rounded-full" />
-                  주의 영역
-                </h4>
-                <ul className="space-y-1.5">
-                  {commentary.improvement_areas.map((s, i) => (
-                    <li key={i} className="flex items-start gap-1.5 text-xs text-slate-700">
-                      <span className="text-amber-500 mt-0.5 shrink-0">!</span>
-                      <span>{renderInlineMath(s)}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-
-          {/* 주목할 문항 */}
-          {commentary.notable_questions?.length > 0 && (
-            <div className="bg-white/70 rounded-sm p-4 border border-slate-200">
-              <h4 className="text-xs font-semibold text-slate-800 mb-3 flex items-center gap-1.5">
-                <span className="w-1 h-3.5 bg-slate-500 rounded-full" />
-                주목할 문항
-              </h4>
-              <div className="space-y-2.5">
-                {[...commentary.notable_questions].sort((a, b) => {
-                  const aStr = String(a.question_number);
-                  const bStr = String(b.question_number);
-                  const aIsEssay = /[^\d]/.test(aStr);
-                  const bIsEssay = /[^\d]/.test(bStr);
-                  // 객관식(숫자만) 먼저, 서술형(문자포함) 나중
-                  if (aIsEssay !== bIsEssay) return aIsEssay ? 1 : -1;
-                  // 같은 그룹 내에서는 숫자 추출 후 정렬
-                  const aNum = parseInt(aStr.replace(/\D/g, '')) || 999;
-                  const bNum = parseInt(bStr.replace(/\D/g, '')) || 999;
-                  return aNum - bNum;
-                }).map((q, i) => {
-                  const qRaw = String(q.question_number || i + 1);
-                  const qNumOnly = qRaw.replace(/\D/g, '') || qRaw;
-                  // 실제 문항 매칭: 정확 → 숫자 부분 일치
-                  const matched = allQuestions.find(aq => String(aq.question_number) === qRaw)
-                    || allQuestions.find(aq => String(aq.question_number).replace(/\D/g, '') === qNumOnly);
-                  const format = matched?.question_format || null;
-                  const fmt = format ? FORMAT_BADGE[format] : null;
-                  return (
-                    <div key={i} className="flex items-start gap-3">
-                      <div className="shrink-0 flex flex-col items-center gap-1">
-                        <span className="w-8 h-8 rounded-sm bg-slate-800 text-white flex items-center justify-center text-xs font-bold">
-                          {qNumOnly}
-                        </span>
-                        {fmt && (
-                          <span className={`text-[9px] font-medium px-1 py-0.5 rounded-sm ${fmt.cls}`}>
-                            {fmt.label}
-                          </span>
-                        )}
-                      </div>
-                      <p className="flex-1 text-xs text-slate-700 leading-relaxed pt-1">{renderInlineMath(q.comment)}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* 지도 추천 (teaching_recommendations 우선, 레거시 study_priority 폴백) */}
-          {(() => {
-            const recs = commentary.teaching_recommendations ?? commentary.study_priority ?? [];
-            if (recs.length === 0) return null;
-            return (
-              <div className="bg-white/70 rounded-sm p-4 border border-blue-200">
-                <h4 className="text-xs font-semibold text-blue-800 mb-2 flex items-center gap-1.5">
-                  <span className="w-1 h-3.5 bg-blue-500 rounded-full" />
-                  지도 추천
-                </h4>
-                <div className="space-y-1.5">
-                  {recs.map((sp, i) => (
-                    <div key={i} className="flex items-start gap-2 text-xs">
-                      <span className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                        i === 0 ? 'bg-blue-600 text-white' : i === 1 ? 'bg-blue-400 text-white' : 'bg-blue-100 text-blue-700'
-                      }`}>
-                        {sp.priority}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-slate-800">{sp.topic}</p>
-                        <p className="text-slate-500 mt-0.5">{renderInlineMath(sp.reason)}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })()}
+      {/*
+        레거시(구버전) 총평 펼침 상태 — V3 양식 데이터(blog_qa)가 없을 때.
+        기존 카드형 본문 렌더(종합분석/등급전략/강약점/주목문항/지도추천)는 V3 일원화로 제거(2026-05-29).
+        보존 기록: data/handoff-exam-analysis-v3/legacy-styles-archived.md
+        → 본문 대신 "최신 양식(V3)으로 재생성" 안내만 표시.
+        (isFallback인 경우는 위 amber 경고 배너 + 헤더 [AI 재분석] 버튼으로 안내하므로 여기선 제외)
+      */}
+      {isExpanded && !useV3 && !isFallback && !isRegenerating && (
+        <div className="bg-white/70 rounded-sm p-6 border border-violet-200 flex flex-col items-center text-center">
+          <Sparkles className="w-7 h-7 text-[#BF1722] mb-2.5" />
+          <p className="text-sm font-bold text-slate-900 mb-1">최신 양식(V3)으로 업그레이드하세요</p>
+          <p className="text-xs text-slate-500 mb-4 max-w-md leading-relaxed">
+            이 총평은 구버전 양식입니다. 재생성하면 문항별 난이도 표 · 영역별 분석 · Q&amp;A 인터뷰 · 단원별 피드백이 포함된 매거진 스타일로 만들어집니다.
+          </p>
+          <Button
+            size="sm"
+            onClick={onRegenerate}
+            className="bg-[#BF1722] hover:bg-[#9A1219] text-white"
+          >
+            <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+            최신 양식으로 재생성
+          </Button>
         </div>
       )}
     </div>
