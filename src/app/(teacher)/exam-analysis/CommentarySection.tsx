@@ -70,6 +70,8 @@ export function CommentarySection({
   const [v4Generating, setV4Generating] = useState(false);
   const [v4ElapsedSeconds, setV4ElapsedSeconds] = useState(0);
   const [v4Logs, setV4Logs] = useState<Array<{ time: string; msg: string }>>([]);
+  // 총평 재분석 실시간 로그 (V4 로그와 동일 디자인 — elapsedSeconds prop 기반 마일스톤)
+  const [regenLogs, setRegenLogs] = useState<Array<{ time: string; msg: string }>>([]);
   // V4 토글 비활성 시 항상 V3 강제 (localStorage에 'v4' 남아있어도 무시)
   const effectiveViewMode: ViewMode = V4_TOGGLE_ENABLED ? viewMode : 'v3';
 
@@ -110,6 +112,32 @@ export function CommentarySection({
       });
     }
   }, [v4Generating, v4ElapsedSeconds]);
+
+  // 총평 재분석 단계별 로그 (elapsedSeconds prop 기반). 시험지 전환 후 복귀 시
+  // 지나간 단계를 backfill하여 로그가 비지 않게 함 (key remount로 regenLogs는 시험지별 격리).
+  useEffect(() => {
+    if (!isRegenerating) { setRegenLogs([]); return; }
+    const nowHHMMSS = () => {
+      const d = new Date();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    };
+    const milestones: Array<{ at: number; msg: string }> = [
+      { at: 1, msg: 'Claude Sonnet 4.6 호출 시작' },
+      { at: 4, msg: '시험 데이터 + 단원별 출제 분석 입력 중' },
+      { at: 10, msg: '종합 평가 · 등급별 전략 · 강약점 작성 중' },
+      { at: 20, msg: 'Q&A 인터뷰 · 거대 숫자 헤드라인 생성 중' },
+      { at: 32, msg: '문항별 난이도 표 · 영역별 분석 생성 중' },
+      { at: 44, msg: '주요 킬러 문항 해설 · 단원별 피드백 작성 중' },
+      { at: 56, msg: 'JSON 정규화 + DB 저장 중' },
+    ];
+    setRegenLogs((prev) => {
+      const have = new Set(prev.map((p) => p.msg));
+      const toAdd = milestones.filter((m) => m.at <= elapsedSeconds && !have.has(m.msg));
+      if (toAdd.length === 0) return prev;
+      return [...prev, ...toAdd.map((m) => ({ time: nowHHMMSS(), msg: m.msg }))];
+    });
+  }, [isRegenerating, elapsedSeconds]);
 
   // V4 lazy 생성 핸들러
   const handleGenerateV4 = async (force = false) => {
@@ -273,9 +301,25 @@ export function CommentarySection({
               <div className="h-full bg-violet-600 animate-pulse" style={{ width: '60%' }} />
             </div>
             <p className="text-[11px] text-violet-700 mt-2">
-              Claude Sonnet 4.6이 V2 base + V3 확장 필드를 생성 중입니다. 평균 60~120초 소요.
-              {hasV4Data(commentary) && ' V4 데이터는 보존됩니다.'}
+              Claude Sonnet 4.6이 종합 평가 + V3 강화 필드(문항별 표·영역별 분석·Q&A·단원 피드백)를 생성 중입니다. 평균 60~120초 소요.
             </p>
+            {/* 실시간 실행 로그 (분석 progress / V4 생성과 동일 디자인) */}
+            {regenLogs.length > 0 && (
+              <div className="mt-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[11px] font-semibold text-violet-800">실행 로그</span>
+                  <span className="text-[10px] text-violet-600">{regenLogs.length}개 항목</span>
+                </div>
+                <div className="bg-slate-900 text-slate-100 rounded-sm px-3 py-2 max-h-40 overflow-y-auto font-mono text-[11px] leading-relaxed">
+                  {regenLogs.map((entry, idx) => (
+                    <div key={idx} className="flex gap-2">
+                      <span className="text-slate-400 shrink-0">{entry.time}</span>
+                      <span className="text-slate-100">{entry.msg}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -430,6 +474,23 @@ export function CommentarySection({
               style={{ width: `${Math.min(elapsedSeconds / 60 * 100, 95)}%` }}
             />
           </div>
+          {/* 실시간 실행 로그 (분석 progress / V4 생성과 동일 디자인) */}
+          {regenLogs.length > 0 && (
+            <div className="mt-2.5">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] font-semibold text-violet-800">실행 로그</span>
+                <span className="text-[10px] text-violet-600">{regenLogs.length}개 항목</span>
+              </div>
+              <div className="bg-slate-900 text-slate-100 rounded-sm px-3 py-2 max-h-40 overflow-y-auto font-mono text-[11px] leading-relaxed">
+                {regenLogs.map((entry, idx) => (
+                  <div key={idx} className="flex gap-2">
+                    <span className="text-slate-400 shrink-0">{entry.time}</span>
+                    <span className="text-slate-100">{entry.msg}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
