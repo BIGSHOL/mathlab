@@ -93,7 +93,7 @@ export function CommentarySection({
       { at: 18, msg: '문제 번호별 난이도 · 한 줄 해설 생성 중' },
       { at: 28, msg: '출제 특징 · 핵심 포인트 단락 작성 중' },
       { at: 38, msg: '이전 시험 비교 · 킬러 문항 분석 중' },
-      { at: 48, msg: '다음 시험 대비 전략 작성 중' },
+      { at: 48, msg: '이번 시험 단원별 피드백 작성 중' },
       { at: 58, msg: 'JSON 응답 정규화 + DB 저장 중' },
     ];
     const matched = milestones.find((m) => m.at === v4ElapsedSeconds);

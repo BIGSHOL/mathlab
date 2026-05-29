@@ -1,8 +1,8 @@
 /**
- * V4 기말 대비 전략 테이블
+ * V4 이번 시험 단원별 피드백 테이블
  *
- * 영역별 현재 상태 + 권장 학습 액션을 3열 테이블로 정리.
- * 갈수학학원 스타일 — 실용적 학원 가이드.
+ * 이번 시험에 출제된 단원별 현재 상태 + 보완 학습 액션을 3열 테이블로 정리.
+ * 학원 분석 보고서 스타일 — 실용적 학원 가이드.
  */
 
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
@@ -21,7 +21,7 @@ export function FinalStrategyTable({ rows }: FinalStrategyTableProps) {
         <tr>
           <th style={{ width: '25%' }}>출제 영역</th>
           <th style={{ width: '32%' }}>현재 상태</th>
-          <th style={{ width: '43%' }}>다음 시험 대비 액션</th>
+          <th style={{ width: '43%' }}>실행 액션</th>
         </tr>
       </thead>
       <tbody>
