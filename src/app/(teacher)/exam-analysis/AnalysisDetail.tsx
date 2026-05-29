@@ -49,9 +49,13 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
   const [showExtractModal, setShowExtractModal] = useState(false);
   const [showArticleModal, setShowArticleModal] = useState(false);
   const [showDiffModal, setShowDiffModal] = useState(false);
-  const [commentaryLoading, setCommentaryLoading] = useState(false);
-  const [commentaryStartTime, setCommentaryStartTime] = useState<number | null>(null);
+  // 총평 생성 중인 시험지 추적 (examId → 시작 ms). 시험지 전환에도 살아남도록 Record로 보관.
+  // AnalysisDetail은 시험지 전환 시 unmount되지 않으므로(key 없음) 진행 상태가 유지됨 →
+  // 다른 시험지 봤다가 돌아와도 진행바 복원. fetch promise도 계속 진행되어 생성은 멈추지 않음.
+  const [commentaryGen, setCommentaryGen] = useState<Record<string, number>>({});
   const [commentaryElapsed, setCommentaryElapsed] = useState(0);
+  const genStartedAt = commentaryGen[detail.id] ?? null;
+  const commentaryLoading = genStartedAt !== null;
   const [includeNearby, setIncludeNearby] = useState(true);
   const [includeYearCompare, setIncludeYearCompare] = useState(true);
   const [nearbyCount, setNearbyCount] = useState<number | null>(null);
@@ -67,26 +71,29 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
       .catch(() => { setNearbyCount(0); setYearCount(0); });
   }, [detail.schoolId, detail.grade, detail.id]);
 
-  // 기출지 변경 시 탭 + 총평 생성 상태 초기화
-  // (다른 시험지에서 총평 생성 중인데 이 시험지로 전환하면 진행 프로그레스가 잘못 보이는 버그 방지)
+  // 기출지 변경 시 탭 초기화 + 열린 모달 닫기 (모달이 이전 시험지 데이터로 남는 누수 방지).
+  // 단, 총평 생성 상태(commentaryGen)는 리셋하지 않음 → 시험지 전환 후 돌아와도 진행바 유지
+  // (해당 시험지가 commentaryGen에 있으면 자동 표시. 시험지별 격리는 Record 키로 보장).
   useEffect(() => {
     setActiveTab('basic');
-    setCommentaryLoading(false);
-    setCommentaryStartTime(null);
-    setCommentaryElapsed(0);
+    setShowExtractModal(false);
+    setShowArticleModal(false);
+    setShowDiffModal(false);
   }, [detail.id]);
 
-  // 총평 생성 경과 시간 타이머
+  // 총평 생성 경과 시간 타이머 — 현재 시험지의 생성 시작 시각(genStartedAt) 기준
   useEffect(() => {
-    if (!commentaryLoading || !commentaryStartTime) {
+    if (genStartedAt === null) {
       setCommentaryElapsed(0);
       return;
     }
+    // 즉시 1회 반영 (전환 복귀 시 0→실제값 점프 최소화)
+    setCommentaryElapsed(Math.floor((Date.now() - genStartedAt) / 1000));
     const interval = setInterval(() => {
-      setCommentaryElapsed(Math.floor((Date.now() - commentaryStartTime) / 1000));
+      setCommentaryElapsed(Math.floor((Date.now() - genStartedAt) / 1000));
     }, 1000);
     return () => clearInterval(interval);
-  }, [commentaryLoading, commentaryStartTime]);
+  }, [genStartedAt]);
 
   const latestAnalysis = detail.analyses?.[0];
   const questions = latestAnalysis?.questions || [];
@@ -129,32 +136,33 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
 
   const handleGenerateCommentary = async () => {
     if (!latestAnalysis) return;
-    const startId = detail.id; // 응답 처리 시 시험지 전환 여부 검증용
-    setCommentaryLoading(true);
-    setCommentaryStartTime(Date.now());
+    const startId = detail.id;
+    // 생성 시작 — commentaryGen에 등록 (시험지 전환에도 유지). fetch는 계속 진행됨.
+    setCommentaryGen((p) => ({ ...p, [startId]: Date.now() }));
     try {
       const res = await fetch(`/api/exam-analysis/${startId}/analyze-extended`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ agents: ['commentary'], forceRegenerate: !!commentary, includeNearby, includeYearCompare }),
       });
-      // 사용자가 다른 시험지로 전환했으면 응답 무시 (UI/toast/refresh 모두 영향 X)
-      if (startId !== detail.id) return;
       if (!res.ok) {
         const err = await res.json();
         toast.error(err.error?.message || '총평 생성에 실패했습니다');
         return;
       }
+      // 다른 시험지로 갔어도 완료 토스트는 표시 (생성이 멈추지 않았음을 알림).
       toast.success('총평이 생성되었습니다');
+      // 현재 보고 있는 시험지면 즉시 갱신. 다른 시험지면 돌아올 때 page selection 효과가 자동 재조회.
       onRefresh();
     } catch {
-      if (startId === detail.id) toast.error('총평 생성 중 오류가 발생했습니다');
+      toast.error('총평 생성 중 오류가 발생했습니다');
     } finally {
-      // 같은 시험지에서만 로딩 해제 (다른 시험지로 전환된 경우는 useEffect reset이 처리)
-      if (startId === detail.id) {
-        setCommentaryLoading(false);
-        setCommentaryStartTime(null);
-      }
+      // 이 시험지 생성 종료 — Record에서 제거 (동시에 다른 시험지 생성 중이면 그건 유지)
+      setCommentaryGen((p) => {
+        const n = { ...p };
+        delete n[startId];
+        return n;
+      });
     }
   };
 
@@ -618,6 +626,10 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
             </div>
           ) : (
             <CommentarySection
+              // 시험지별 격리 — 전환 시 remount하여 내부 상태(펼침/v4 진행·로그/viewMode)가
+              // 다른 시험지로 새어나가지 않게 함. 총평 진행바(isRegenerating)는 부모의
+              // 시험지별 commentaryGen에서 주입되므로 remount해도 정확히 유지됨.
+              key={detail.id}
               commentary={commentary}
               questions={questions}
               onRegenerate={handleGenerateCommentary}
