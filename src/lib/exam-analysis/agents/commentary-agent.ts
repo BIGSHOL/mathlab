@@ -957,16 +957,17 @@ ${phases}
     const client = new Anthropic({ apiKey });
     const prompt = this.buildPrompt(input);
 
-    const response = await client.messages.create({
+    // 24K 토큰 + 스트리밍 (2026-05-29): 16K는 장황한 overall_comment + 주변/연도 비교
+    //   데이터가 붙으면 잦은 잘림(max_tokens 종료) → JSON 파싱 실패 → 규칙 기반 폴백.
+    //   ⚠️ max_tokens>~16K는 Anthropic SDK가 non-streaming 거부("Streaming is required ...") →
+    //   반드시 messages.stream + finalMessage 사용 (generateV3Extension과 동일 패턴).
+    const stream = client.messages.stream({
       model: 'claude-sonnet-4-6',
-      // 16K 토큰: 한글 본문(5~8문장 overall_comment + 3등급 score_strategies + strength/improvement
-      //   + notable_questions 3~5개 + teaching_recommendations 5개 + nearby_comparison 5줄) + JSON
-      //   오버헤드 여유. 8K 는 주변 학교 비교 데이터가 붙으면 잦은 잘림(max_tokens 종료) →
-      //   JSON 파싱 실패 → 규칙 기반 폴백 유발. (article-generator.ts 와 동일 패턴)
-      max_tokens: 16384,
+      max_tokens: 24576,
       temperature: this.temperature,
       messages: [{ role: 'user', content: prompt }],
     });
+    const response = await stream.finalMessage();
 
     const text = response.content
       .filter((block): block is Anthropic.TextBlock => block.type === 'text')
