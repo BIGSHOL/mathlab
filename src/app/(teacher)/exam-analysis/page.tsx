@@ -177,12 +177,15 @@ export default function ExamAnalysisPage() {
       }
 
       // ② 자동 총평이면 이어서 생성 (메타데이터 사용 → V3 단독 호출로 빠름)
+      // forceRegenerate: true — 방어적. 재분석(/analyze)이 기존 분석을 deleteMany → extension까지
+      //   cascade 삭제하므로 새 analysisId엔 commentary가 없어 어차피 신선 생성되지만,
+      //   캐시 회귀를 막기 위해 명시적으로 true (체인은 항상 신선한 분석 직후 실행됨).
       if (willChain) {
         toast.info('총평 자동 생성 중...');
         const cRes = await fetch(`/api/exam-analysis/${id}/analyze-extended`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ agents: ['commentary'], forceRegenerate: false, includeNearby: true, includeYearCompare: true }),
+          body: JSON.stringify({ agents: ['commentary'], forceRegenerate: true, includeNearby: true, includeYearCompare: true }),
         });
         if (cRes.ok) toast.success('분석 + 총평 자동 생성 완료');
         else toast.error('총평 자동 생성 실패 — 수동으로 생성하세요');
