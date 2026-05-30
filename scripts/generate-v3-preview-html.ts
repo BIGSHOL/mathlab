@@ -12,6 +12,7 @@
 import type { MergedCommentary } from './generate-v3-preview';
 import type { AnalyzedQuestion, BasicAnalysisResult } from '../src/lib/exam-analysis/types';
 import type { ChartImages } from '../src/lib/exam-analysis/chart-image-generator';
+import { sumPoints } from '../src/lib/exam-analysis/points';
 
 // ── 공통 유틸 ──
 
@@ -88,11 +89,11 @@ function renderDifficultyStackedBar(questions: AnalyzedQuestion[]): string {
       level: lv,
       label: V3_DIFF_LABELS[lv - 1],
       count: lvQ.length,
-      points: lvQ.reduce((s, q) => s + (q.points || 0), 0),
+      points: sumPoints(lvQ.map((q) => q.points)),
       color: V3_DIFF_COLORS[lv - 1],
     };
   });
-  const totalPts = stats.reduce((s, x) => s + x.points, 0);
+  const totalPts = sumPoints(stats.map((x) => x.points));
   if (totalPts === 0) return '';
 
   const segments = stats.filter((s) => s.points > 0).map((s) => {
@@ -129,9 +130,9 @@ function renderFormatBreakdown(questions: AnalyzedQuestion[]): string {
   ];
   const stats = formats.map((f) => {
     const fQ = questions.filter((q) => q.question_format === f.key);
-    return { ...f, count: fQ.length, points: fQ.reduce((s, q) => s + (q.points || 0), 0) };
+    return { ...f, count: fQ.length, points: sumPoints(fQ.map((q) => q.points)) };
   });
-  const totalPts = stats.reduce((s, x) => s + x.points, 0);
+  const totalPts = sumPoints(stats.map((x) => x.points));
   if (totalPts === 0) return '';
 
   const segments = stats.filter((s) => s.points > 0).map((s) => {
@@ -1064,11 +1065,11 @@ function renderDifficultyStackedBarNaver(questions: AnalyzedQuestion[]): string 
       level: lv,
       label: V3_DIFF_LABELS[lv - 1],
       count: lvQ.length,
-      points: lvQ.reduce((s, q) => s + (q.points || 0), 0),
+      points: sumPoints(lvQ.map((q) => q.points)),
       color: V3_DIFF_COLORS[lv - 1],
     };
   });
-  const totalPts = stats.reduce((s, x) => s + x.points, 0);
+  const totalPts = sumPoints(stats.map((x) => x.points));
   if (totalPts === 0) return '';
   const totalCount = stats.reduce((s, x) => s + x.count, 0);
 
@@ -1100,9 +1101,9 @@ function renderFormatBreakdownNaver(questions: AnalyzedQuestion[]): string {
   ];
   const stats = formats.map((f) => {
     const fQ = questions.filter((q) => q.question_format === f.key);
-    return { ...f, count: fQ.length, points: fQ.reduce((s, q) => s + (q.points || 0), 0) };
+    return { ...f, count: fQ.length, points: sumPoints(fQ.map((q) => q.points)) };
   });
-  const totalPts = stats.reduce((s, x) => s + x.points, 0);
+  const totalPts = sumPoints(stats.map((x) => x.points));
   if (totalPts === 0) return '';
 
   // 카드 3개
