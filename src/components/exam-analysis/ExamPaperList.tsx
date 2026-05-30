@@ -4,24 +4,8 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Pagination } from '@/components/ui/Pagination';
 import { FileSearch, Play, Trash2, RotateCw, School, X, RefreshCw } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
-import { PROMPT_VERSION } from '@/lib/exam-analysis/constants';
-
-/**
- * 분석본의 프롬프트 버전이 현재 PROMPT_VERSION과 일치하는지 검사.
- * modelVersion 포맷: "gemini-X.Y-z / prompt vA.B.C"
- * 일치하지 않으면 구버전으로 간주 → 재분석 권장.
- */
-function isStalePrompt(modelVersion: string | null | undefined): boolean {
-  if (!modelVersion) return false;
-  return !modelVersion.includes(`prompt ${PROMPT_VERSION}`);
-}
-
-/** modelVersion에서 prompt vX.Y.Z만 추출 (예: "gemini-3.1-pro-preview / prompt v1.0.5" → "v1.0.5") */
-function extractPromptVersion(modelVersion: string | null | undefined): string | null {
-  if (!modelVersion) return null;
-  const m = modelVersion.match(/prompt\s+(v[\d.]+)/i);
-  return m ? m[1] : null;
-}
+// 구버전 판정/버전 추출 — 공유 헬퍼 사용 (AnalysisDetail과 동일 로직, 중복 제거)
+import { PROMPT_VERSION, isStalePromptVersion, extractPromptVersion } from '@/lib/exam-analysis/constants';
 
 function formatAnalyzedAt(dateStr: string): string {
   const d = new Date(dateStr);
@@ -133,7 +117,7 @@ function getDetailedStatus(
   if (item.status === 'PENDING') return { label: '업로드', color: 'bg-slate-50 text-slate-500 border-slate-200' };
   // COMPLETED — 구버전이면 진행 단계 무시하고 "구버전" 우선 표시
   const modelVersion = item.analyses[0]?.modelVersion;
-  if (isStalePrompt(modelVersion)) {
+  if (isStalePromptVersion(modelVersion)) {
     const v = extractPromptVersion(modelVersion);
     return {
       label: `구버전${v ? ` ${v}` : ''}`,
@@ -299,7 +283,7 @@ export function ExamPaperList({
                     </button>
                   )}
                   {/* 구버전 프롬프트 재분석 버튼 — COMPLETED + stale 일 때만 */}
-                  {item.status === 'COMPLETED' && isStalePrompt(latestAnalysis?.modelVersion) && (
+                  {item.status === 'COMPLETED' && isStalePromptVersion(latestAnalysis?.modelVersion) && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

@@ -35,6 +35,11 @@ interface CommentarySectionProps {
   /** 연도 비교 hover tooltip (포함 연도 목록) */
   yearTitle?: string;
   hasSchool: boolean;
+  /** 구버전(이전 PROMPT_VERSION) 분석본이면 prompt 버전 라벨 — 총평 재생성 차단 + 재분석 유도 */
+  staleVersion?: string | null;
+  /** 기본 재분석 트리거 (구버전일 때 안내 버튼) */
+  onReanalyze?: () => void;
+  reanalyzing?: boolean;
   /** V3 메타 정보 (있으면 V3 헤더에 사용. 없으면 blog_kicker/blog_headline 폴백) */
   examMeta?: {
     title: string;
@@ -65,6 +70,9 @@ export function CommentarySection({
   yearCount,
   yearTitle,
   hasSchool,
+  staleVersion,
+  onReanalyze,
+  reanalyzing = false,
   examMeta,
   v3Charts,
   examPaperId,
@@ -198,6 +206,32 @@ export function CommentarySection({
   // 폴백 감지: 규칙 기반 결과는 overall_comment가 "총 N문항"으로 시작
   const isFallback = commentary.overall_comment?.startsWith('총 ') && !commentary.overall_comment?.includes('이번 시험');
 
+  // 구버전(이전 PROMPT_VERSION) 분석본 — 총평 재생성을 차단하고 재분석 유도.
+  const isStale = !!staleVersion;
+  const staleBanner = isStale ? (
+    <div className="bg-rose-50 border border-rose-200 rounded-sm px-3 py-2.5 flex items-start gap-2.5">
+      <span className="text-rose-500 text-sm mt-0.5 shrink-0">&#9888;</span>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-semibold text-rose-800">
+          이전 버전(<b>{staleVersion}</b>)으로 분석된 시험지입니다
+        </p>
+        <p className="text-[11px] text-rose-600 mt-1 leading-relaxed">
+          구버전 분석 데이터로 총평을 재생성하면 최신 난이도·단원 기준과 어긋납니다. <strong>재분석</strong>으로 최신 분석한 뒤 총평을 생성하세요.
+        </p>
+        {onReanalyze && (
+          <Button
+            size="sm"
+            onClick={onReanalyze}
+            disabled={reanalyzing}
+            className="mt-2 bg-rose-600 hover:bg-rose-700 text-white disabled:bg-slate-300"
+          >
+            {reanalyzing ? '재분석 중...' : '최신 버전으로 재분석'}
+          </Button>
+        )}
+      </div>
+    </div>
+  ) : null;
+
   // V3/V4 모드 — 상단에 작은 컨트롤 row + view 컴포넌트
   if (useV3 && isExpanded) {
     const meta: V3Meta = {
@@ -252,12 +286,14 @@ export function CommentarySection({
                 size="sm"
                 variant="ghost"
                 onClick={onRegenerate}
-                className="text-xs text-slate-400 hover:text-slate-600"
+                disabled={isStale}
+                title={isStale ? `이전 버전(${staleVersion})으로 분석됨 — 재분석 후 총평 가능` : '총평 재생성'}
+                className="text-xs text-slate-400 hover:text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 재분석
               </Button>
             )}
-            {hasSchool && !isRegenerating && (
+            {hasSchool && !isRegenerating && !isStale && (
               <div className="flex items-center gap-3">
                 <label title={nearbyTitle} className={`flex items-center gap-1 text-[11px] cursor-pointer ${nearbyCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
                   <input
@@ -292,6 +328,8 @@ export function CommentarySection({
             </button>
           </div>
         </div>
+        {/* 구버전 분석본 차단 안내 (재분석 유도) */}
+        {staleBanner && <div className="px-3 pt-3">{staleBanner}</div>}
         {/* AI 재분석 진행 표시 (펼친 상태에서도 보이도록 — 사용자 보고 2026-05-28) */}
         {isRegenerating && (
           <div className="border-b border-violet-200 bg-gradient-to-r from-violet-50 to-purple-50 px-5 py-4">
@@ -404,12 +442,14 @@ export function CommentarySection({
               size="sm"
               variant="ghost"
               onClick={onRegenerate}
-              className={`text-xs ${isFallback ? 'text-amber-600 hover:text-amber-700' : 'text-slate-400 hover:text-slate-600'}`}
+              disabled={isStale}
+              title={isStale ? `이전 버전(${staleVersion})으로 분석됨 — 재분석 후 총평 가능` : undefined}
+              className={`text-xs disabled:opacity-40 disabled:cursor-not-allowed ${isFallback ? 'text-amber-600 hover:text-amber-700' : 'text-slate-400 hover:text-slate-600'}`}
             >
               {isFallback ? 'AI 재분석' : '재분석'}
             </Button>
           )}
-          {hasSchool && !isRegenerating && (
+          {hasSchool && !isRegenerating && !isStale && (
             <div className="flex items-center gap-3">
               <label className={`flex items-center gap-1 text-[11px] cursor-pointer ${nearbyCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
                 <input
@@ -444,7 +484,10 @@ export function CommentarySection({
         </div>
       </div>
 
-      {isExpanded && isFallback && !isRegenerating && (
+      {/* 구버전 분석본 차단 안내 (재분석 유도) — 펼친 상태에서 다른 경고보다 우선 */}
+      {isExpanded && isStale && !isRegenerating && <div className="mb-3">{staleBanner}</div>}
+
+      {isExpanded && !isStale && isFallback && !isRegenerating && (
         <div className="bg-amber-50 border border-amber-200 rounded-sm px-3 py-2 mb-3 flex items-center gap-2">
           <span className="text-amber-500 text-xs">&#9888;</span>
           <p className="text-xs text-amber-700">AI 총평 생성에 실패하여 규칙 기반 요약으로 대체되었습니다. &quot;AI 재분석&quot; 버튼으로 다시 시도할 수 있습니다.</p>
@@ -490,7 +533,7 @@ export function CommentarySection({
         → 본문 대신 "최신 양식(V3)으로 재생성" 안내만 표시.
         (isFallback인 경우는 위 amber 경고 배너 + 헤더 [AI 재분석] 버튼으로 안내하므로 여기선 제외)
       */}
-      {isExpanded && !useV3 && !isFallback && !isRegenerating && (
+      {isExpanded && !useV3 && !isFallback && !isStale && !isRegenerating && (
         <div className="bg-white/70 rounded-sm p-6 border border-violet-200 flex flex-col items-center text-center">
           <Sparkles className="w-7 h-7 text-[#BF1722] mb-2.5" />
           <p className="text-sm font-bold text-slate-900 mb-1">최신 양식(V3)으로 업그레이드하세요</p>

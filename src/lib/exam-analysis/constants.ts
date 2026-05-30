@@ -17,6 +17,23 @@
 //   수학은 MATH_DIFFICULTY_SYSTEM_4LEVEL(2축)만 사용하도록 분리, 공통 프레임워크는 영어 전용.
 export const PROMPT_VERSION = 'v1.4.0';
 
+/**
+ * 분석본의 프롬프트 버전이 현재 PROMPT_VERSION과 다른지(=구버전) 검사.
+ * modelVersion 포맷: "gemini-X.Y-z / prompt vA.B.C"
+ * 구버전이면 총평 생성을 사전 차단 → 재분석 유도 (구버전 분석 데이터로 총평 생성 방지).
+ */
+export function isStalePromptVersion(modelVersion: string | null | undefined): boolean {
+  if (!modelVersion) return false;
+  return !modelVersion.includes(`prompt ${PROMPT_VERSION}`);
+}
+
+/** modelVersion에서 prompt vX.Y.Z만 추출 (예: ".../ prompt v1.0.5" → "v1.0.5"). 없으면 null. */
+export function extractPromptVersion(modelVersion: string | null | undefined): string | null {
+  if (!modelVersion) return null;
+  const m = modelVersion.match(/prompt\s+(v[\d.]+)/i);
+  return m ? m[1] : null;
+}
+
 // ── 5단계 난이도 (1=쉬움 ~ 5=어려움) ──
 export const EXAM_DIFFICULTIES = {
   LEVEL_1: { label: '1', labelEn: 'Level 1', level: 1 },

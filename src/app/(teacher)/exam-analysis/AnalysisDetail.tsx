@@ -15,7 +15,7 @@ import { AddToWorkbookButton } from '@/components/workbook-shared/AddToWorkbookB
 import { useAuth } from '@/hooks/useAuth';
 import type { AnalysisSummary } from '@/lib/exam-analysis/types';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
-import { DIFFICULTY_BAR_COLORS } from '@/lib/exam-analysis/constants';
+import { DIFFICULTY_BAR_COLORS, isStalePromptVersion, extractPromptVersion, PROMPT_VERSION } from '@/lib/exam-analysis/constants';
 import { sumPoints, roundPoints, formatPoints } from '@/lib/exam-analysis/points';
 import type { ExamPaperData, AnalysisTab } from './types';
 import { getConfidenceInfo, getOverallDifficultyLevel, getDifficultyBreakdown, interpolateDifficultyColor } from './helpers';
@@ -178,11 +178,22 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
   // V3 메타데이터(base scaffolding) 준비 상태 — 분석 직후 백그라운드 생성됨 (DB 전용, 화면 비노출).
   // metadataPending(= gen.phase==='metadata')은 위에서 gen으로부터 파생. 클라이언트 신호로만 판단해
   // 기존 분석본(메타데이터 없음)이 영구 차단되지 않도록 함(폴백 총평 동작).
-  // 총평 생성 가능 = readiness 통과 + 메타데이터 준비 중 아님
-  const commentaryReady = readinessCheck.ready && !metadataPending;
+
+  // 구버전(이전 PROMPT_VERSION) 분석본 — 총평을 구버전 분석 데이터로 생성하면 품질 불일치.
+  // → 총평 생성/재생성을 사전 차단하고 재분석을 유도한다 (사용자 요청 2026-05-30).
+  const isStaleAnalysis = isStalePromptVersion(latestAnalysis?.modelVersion);
+  const stalePromptLabel = extractPromptVersion(latestAnalysis?.modelVersion);
+
+  // 총평 생성 가능 = readiness 통과 + 메타데이터 준비 중 아님 + 구버전 아님
+  const commentaryReady = readinessCheck.ready && !metadataPending && !isStaleAnalysis;
 
   const handleGenerateCommentary = async () => {
     if (!latestAnalysis) return;
+    // 구버전 분석본 차단 — 재분석 후에만 총평 생성 가능 (모든 진입점 방어: 버튼/재생성)
+    if (isStaleAnalysis) {
+      toast.error(`이전 버전(${stalePromptLabel || '구버전'})으로 분석된 시험지입니다. 먼저 [재분석]으로 최신 분석 후 총평을 생성하세요.`);
+      return;
+    }
     const startId = detail.id;
     // 생성 시작 — commentaryGen에 등록 (시험지 전환에도 유지). fetch는 계속 진행됨.
     setCommentaryGen((p) => ({ ...p, [startId]: Date.now() }));
@@ -609,17 +620,19 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                     <Button
                       size="sm"
                       className="bg-violet-600 hover:bg-violet-700 text-white disabled:bg-slate-300 disabled:cursor-not-allowed"
-                      onClick={handleGenerateCommentary}
-                      disabled={!commentaryReady}
+                      onClick={isStaleAnalysis ? () => onAnalyze(detail.id) : handleGenerateCommentary}
+                      disabled={isStaleAnalysis ? analyzing : !commentaryReady}
                       title={
-                        metadataPending
+                        isStaleAnalysis
+                          ? `이전 버전(${stalePromptLabel || '구버전'})으로 분석됨 — 재분석 후 총평 생성 가능`
+                          : metadataPending
                           ? 'V3 총평 준비 중입니다 (분석 기반 데이터 생성). 잠시 후 가능합니다.'
                           : readinessCheck.ready
                           ? '총평 생성'
                           : '먼저 다음을 완성하세요:\n' + readinessCheck.reasons.map(r => '• ' + r).join('\n')
                       }
                     >
-                      {metadataPending ? '준비 중...' : '총평 생성'}
+                      {isStaleAnalysis ? (analyzing ? '재분석 중...' : '재분석 필요') : metadataPending ? '준비 중...' : '총평 생성'}
                     </Button>
                   )}
                   {detail.schoolId && !commentaryLoading && (
@@ -648,8 +661,30 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                   )}
                 </div>
               </div>
-              {/* ── 총평 생성 차단 경고 (배점/단원 미완성) ── */}
-              {!readinessCheck.ready && !commentaryLoading && (
+              {/* ── 구버전 분석본 차단 (이전 PROMPT_VERSION) — 재분석 유도. 다른 경고보다 우선 ── */}
+              {isStaleAnalysis && !commentaryLoading && (
+                <div className="mt-3 px-3 py-2.5 bg-rose-50 border border-rose-200 rounded-sm flex items-start gap-2.5">
+                  <span className="text-rose-500 text-sm mt-0.5 shrink-0">&#9888;</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-rose-800">
+                      이전 버전(<b>{stalePromptLabel || '구버전'}</b>)으로 분석된 시험지입니다 — 현재 {PROMPT_VERSION}
+                    </p>
+                    <p className="text-[11px] text-rose-600 mt-1 leading-relaxed">
+                      구버전 분석 데이터로 총평을 생성하면 최신 난이도·단원 기준과 어긋납니다. <strong>재분석</strong>으로 최신 분석한 뒤 총평을 생성하세요.
+                    </p>
+                    <Button
+                      size="sm"
+                      onClick={() => onAnalyze(detail.id)}
+                      disabled={analyzing}
+                      className="mt-2 bg-rose-600 hover:bg-rose-700 text-white disabled:bg-slate-300"
+                    >
+                      {analyzing ? '재분석 중...' : '최신 버전으로 재분석'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {/* ── 총평 생성 차단 경고 (배점/단원 미완성) — 구버전이 아닐 때만 ── */}
+              {!isStaleAnalysis && !readinessCheck.ready && !commentaryLoading && (
                 <div className="mt-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-sm">
                   <p className="text-xs font-semibold text-amber-800 mb-1">총평 생성 전 다음을 완성하세요:</p>
                   <ul className="text-[11px] text-amber-700 space-y-0.5 list-disc list-inside">
@@ -663,7 +698,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                 </div>
               )}
               {/* ── 메타데이터 준비 중 (배점/단원 통과, V3 base 백그라운드 생성) — 시험지별 고유 프로그레스 바 ── */}
-              {readinessCheck.ready && metadataPending && !commentaryLoading && (
+              {!isStaleAnalysis && readinessCheck.ready && metadataPending && !commentaryLoading && (
                 <div className="mt-3 px-1">
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-xs font-medium text-violet-700">V3 총평 준비 중...</span>
@@ -716,6 +751,9 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
               yearCount={yearCount}
               yearTitle={yearTitle}
               hasSchool={!!detail.schoolId}
+              staleVersion={isStaleAnalysis ? (stalePromptLabel || '구버전') : null}
+              onReanalyze={() => onAnalyze(detail.id)}
+              reanalyzing={analyzing}
               examMeta={{
                 title: detail.title,
                 grade: detail.grade,
