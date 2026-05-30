@@ -12,6 +12,7 @@ import { hasMinRole } from '@/lib/constants/navigation';
 import type { ExamPaperData } from './types';
 import { AnalysisDetail } from './AnalysisDetail';
 import { sumPoints, roundPoints } from '@/lib/exam-analysis/points';
+import { NarrowScreenGuard } from '@/components/ui/NarrowScreenGuard';
 
 export default function ExamAnalysisPage() {
   const { user } = useAuth();
@@ -270,6 +271,7 @@ export default function ExamAnalysisPage() {
   };
 
   return (
+    <NarrowScreenGuard minWidth={1024} label="기출 분석">
     <div className="flex-1 flex min-h-0">
       {/* 좌측 사이드바 */}
       <aside
@@ -380,5 +382,6 @@ export default function ExamAnalysisPage() {
         )}
       </main>
     </div>
+    </NarrowScreenGuard>
   );
 }
