@@ -6,7 +6,7 @@
  */
 
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
-import { markdownToHighlighted } from './helpers';
+import { markdownToHighlighted, koDifficultyText } from './helpers';
 
 interface Props {
   items: NonNullable<CommentaryResult['v4_key_questions']>;
@@ -24,7 +24,7 @@ export function V3KeyQuestions({ items, sectionNum }: Props) {
       <div className="v3-keyq-list">
         {items.map((kq, i) => (
           <div className="v3-keyq-item" key={`kq-${i}`}>
-            <div className="v3-keyq-title">{kq.title}</div>
+            <div className="v3-keyq-title">{koDifficultyText(kq.title)}</div>
             <p>{markdownToHighlighted(kq.body, `kq-${i}`)}</p>
           </div>
         ))}

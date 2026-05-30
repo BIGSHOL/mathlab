@@ -18,7 +18,7 @@
 
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
-import { markdownToHighlighted, normDiff } from './helpers';
+import { markdownToHighlighted, normDiff, koDifficultyText } from './helpers';
 import { FeatureCallout } from './FeatureCallout';
 import { QASection } from './QASection';
 import { DifficultyStackedBar } from './DifficultyStackedBar';
@@ -113,7 +113,7 @@ export function V3CommentaryView({ commentary, questions, meta, charts }: V3Comm
       <header className="v3-top">
         <span className="v3-kicker">{kicker}</span>
         <h1>{headline}</h1>
-        {dek && <p className="v3-dek">{dek}</p>}
+        {dek && <p className="v3-dek">{koDifficultyText(dek)}</p>}
         <div className="v3-meta">
           <span className="v3-author">매스랩 AI 분석</span>
           <span className="v3-dot">·</span>

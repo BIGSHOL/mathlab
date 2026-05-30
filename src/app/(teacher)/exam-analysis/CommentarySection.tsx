@@ -451,7 +451,7 @@ export function CommentarySection({
           )}
           {hasSchool && !isRegenerating && !isStale && (
             <div className="flex items-center gap-3">
-              <label className={`flex items-center gap-1 text-[11px] cursor-pointer ${nearbyCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
+              <label title={nearbyTitle} className={`flex items-center gap-1 text-[11px] cursor-pointer ${nearbyCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
                 <input
                   type="checkbox"
                   checked={includeNearby && (nearbyCount ?? 0) > 0}
@@ -461,7 +461,7 @@ export function CommentarySection({
                 />
                 주변 {nearbyCount != null && <span className={nearbyCount > 0 ? 'text-violet-500 font-medium' : ''}>({nearbyCount}교)</span>}
               </label>
-              <label className={`flex items-center gap-1 text-[11px] cursor-pointer ${yearCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
+              <label title={yearTitle} className={`flex items-center gap-1 text-[11px] cursor-pointer ${yearCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
                 <input
                   type="checkbox"
                   checked={includeYearCompare && (yearCount ?? 0) > 0}

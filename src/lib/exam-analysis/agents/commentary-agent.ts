@@ -10,6 +10,7 @@ import { BaseAgent, deepNormalizeMath, type AgentInput } from './base-agent';
 import type { AgentType } from '../constants';
 import { DIFFICULTY_LEGACY_MAP, ABILITY_DOMAIN_LABELS } from '../constants';
 import type { BasicAnalysisResult, WeaknessProfile, LearningPlan } from '../types';
+import { roundPoints, formatPoints } from '../points';
 import { MIDDLE_SCHOOL_CURRICULUM } from '../data/curriculum';
 import type { GradeCurriculum } from '../data/curriculum';
 import type { NearbyComparisonData, NearbyExamSummary } from '../nearby-school-data';
@@ -638,7 +639,7 @@ export class CommentaryAgent extends BaseAgent<Record<string, unknown>> {
     }
     const topicSummary = Object.entries(topicStats)
       .sort(([, a], [, b]) => b.count - a.count)
-      .map(([t, s]) => `${t}: ${s.count}문항(${s.pts}점)`)
+      .map(([t, s]) => `${t}: ${s.count}문항(${formatPoints(s.pts)}점)`)
       .join(', ');
 
     // 종합 난이도 Level 계산 (가중 평균)
@@ -663,6 +664,8 @@ export class CommentaryAgent extends BaseAgent<Record<string, unknown>> {
         : (Number(d) >= 1 && Number(d) <= 5) ? Number(d) - 1 : 2;
       diffPoints[lvl] += q.points || 0;
     }
+    // 부동소수점 누적 오차 제거 (4.6 합산이 60.40000000000006 되는 것 방지)
+    for (let i = 0; i < diffPoints.length; i++) diffPoints[i] = roundPoints(diffPoints[i]);
 
     // 학년 추출 + 교육과정 단원 참조 데이터
     const curriculumBlock = this.buildCurriculumReference(basicAnalysis);
@@ -736,7 +739,7 @@ V6. 출력 텍스트 어디에도 **CALCULATION/UNDERSTANDING/PROBLEM_SOLVING/RE
   - Level 3(응용): ${diffCounts[2]}문항, ${diffPoints[2]}점
   - Level 4(심화): ${diffCounts[3]}문항, ${diffPoints[3]}점
   - Level 5(최고난도): ${diffCounts[4]}문항, ${diffPoints[4]}점
-  - Level 1~2 합계: ${diffPoints[0] + diffPoints[1]}점, Level 1~3 합계: ${diffPoints[0] + diffPoints[1] + diffPoints[2]}점, Level 1~4 합계: ${diffPoints[0] + diffPoints[1] + diffPoints[2] + diffPoints[3]}점
+  - Level 1~2 합계: ${roundPoints(diffPoints[0] + diffPoints[1])}점, Level 1~3 합계: ${roundPoints(diffPoints[0] + diffPoints[1] + diffPoints[2])}점, Level 1~4 합계: ${roundPoints(diffPoints[0] + diffPoints[1] + diffPoints[2] + diffPoints[3])}점
 - 유형 분포: 수와연산 ${types.number || 0}, 문자와식 ${types.algebra || 0}, 함수 ${types.function || 0}, 기하 ${types.geometry || 0}, 확률통계 ${types.statistics || 0}
 - 단원별 출제: ${topicSummary}
 ${studentStatsBlock}
@@ -1367,7 +1370,7 @@ ${phases}
     }
     const topicSummary = Object.entries(topicMap)
       .sort((a, b) => b[1].count - a[1].count)
-      .map(([t, v]) => `- ${t}: ${v.count}문항 / ${v.points}점`)
+      .map(([t, v]) => `- ${t}: ${v.count}문항 / ${formatPoints(v.points)}점`)
       .join('\n');
 
     // 문항별 상세 (V4_difficulty_rows 생성 가이드)
@@ -1484,8 +1487,8 @@ ${questionDetails}
     const topicsLine = topicBreakdown
       .map((t) =>
         hasStudentData
-          ? `${t.topic}: ${t.count}문항(${t.pts}점), 정답률 ${t.total > 0 ? Math.round((t.correct / t.total) * 100) : 0}%`
-          : `${t.topic}: ${t.count}문항(${t.pts}점)`,
+          ? `${t.topic}: ${t.count}문항(${formatPoints(t.pts)}점), 정답률 ${t.total > 0 ? Math.round((t.correct / t.total) * 100) : 0}%`
+          : `${t.topic}: ${t.count}문항(${formatPoints(t.pts)}점)`,
       )
       .join('\n');
 
@@ -1881,7 +1884,7 @@ ${questionDetails}
         if (q.points && q.points >= 5) {
           notable.push({
             question_number: Number(q.question_number),
-            comment: `${q.points}점 고배점 문항으로 ${this.difficultyLabel(q.difficulty)} 난이도의 ${this.typeLabel(q.question_type)} 유형입니다.`,
+            comment: `${formatPoints(q.points)}점 고배점 문항으로 ${this.difficultyLabel(q.difficulty)} 난이도의 ${this.typeLabel(q.question_type)} 유형입니다.`,
           });
         }
       }
@@ -1951,7 +1954,7 @@ ${questionDetails}
           reason = `정답률 ${accuracyPct}%로 심화 문제 도전을 권장합니다.`;
         }
       } else {
-        reason = `${item.total}문항 ${item.pts}점 배점으로 출제 비중이 높아 집중 대비가 필요합니다.`;
+        reason = `${item.total}문항 ${formatPoints(item.pts)}점 배점으로 출제 비중이 높아 집중 대비가 필요합니다.`;
       }
 
       recommendations.push({ topic: item.topic, priority, reason });

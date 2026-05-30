@@ -245,7 +245,8 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
         name: name.split(' > ').pop() || name,
         fullName: name,
         ...data,
-        minorList: Array.from(data.minors.entries()).map(([n, d]) => ({ name: n, ...d })),
+        totalPts: roundPoints(data.totalPts), // 부동소수점 누적 오차 제거 (60.40000000000006 → 60.4)
+        minorList: Array.from(data.minors.entries()).map(([n, d]) => ({ name: n, count: d.count, pts: roundPoints(d.pts) })),
       }))
       .sort((a, b) => b.count - a.count);
   }, [questions]);

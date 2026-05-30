@@ -118,7 +118,7 @@ function TableBody({ rows, keyPrefix }: { rows: Row[]; keyPrefix: string }) {
           key={`${keyPrefix}-${i}`}
           className={`v3-data-row v3-data-row-table${r.highlight ? ' v3-highlight' : ''}`}
         >
-          <span className="v3-data-nm">{r.label}</span>
+          <span className="v3-data-nm">{shortenDataLabel(r.label)}</span>
           <span className="v3-data-val">{markdownToHighlighted(r.value, `${keyPrefix}-${i}-v`)}</span>
         </div>
       ))}
@@ -134,7 +134,7 @@ function ComparisonBody({ rows, keyPrefix }: { rows: Row[]; keyPrefix: string })
           key={`${keyPrefix}-${i}`}
           className={`v3-data-row v3-data-row-comparison${r.highlight ? ' v3-highlight' : ''}`}
         >
-          <span className="v3-data-nm">{r.label}</span>
+          <span className="v3-data-nm">{shortenDataLabel(r.label)}</span>
           <span className="v3-data-val">{markdownToHighlighted(r.value, `${keyPrefix}-${i}-v`)}</span>
         </div>
       ))}

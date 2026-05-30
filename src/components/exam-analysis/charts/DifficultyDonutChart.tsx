@@ -30,11 +30,11 @@ interface DifficultyDonutChartProps {
 type ViewMode = 'difficulty' | 'points';
 
 const DIFF_LEVEL_LABELS: Record<string, string> = {
-  '1': 'Lv1 기본',
-  '2': 'Lv2 표준',
-  '3': 'Lv3 응용',
-  '4': 'Lv4 심화',
-  '5': 'Lv5 최고',
+  '1': '1단계 기본',
+  '2': '2단계 표준',
+  '3': '3단계 응용',
+  '4': '4단계 심화',
+  '5': '5단계 최고',
 };
 
 const FORMAT_ITEMS = [

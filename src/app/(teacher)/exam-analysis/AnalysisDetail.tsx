@@ -573,7 +573,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                     </div>
                   </div>
                   <div className="border-l pl-3" style={{ borderColor: `${activeColor}30` }}>
-                    <span className="text-base font-extrabold" style={{ color: activeColor }}>Level {avg.toFixed(1)}</span>
+                    <span className="text-base font-extrabold" style={{ color: activeColor }}>{avg.toFixed(1)}단계</span>
                     {breakdown && (
                       <div className="text-[10px] text-slate-500 font-medium mt-0.5">
                         {breakdown.total}문항 가중평균
@@ -880,7 +880,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <h3 className="text-base font-bold text-slate-800">
-                    시험 난이도 <span style={{ color: activeColor }}>Level {avg.toFixed(1)}</span>
+                    시험 난이도 <span style={{ color: activeColor }}>{avg.toFixed(1)}단계</span>
                     <span className="text-slate-500 font-medium"> ({levelLabel})</span>
                   </h3>
                   {breakdown && (
@@ -905,7 +905,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                 </p>
                 {breakdown && (
                   <p>
-                    이 시험은 분포가 <strong>{distLabel}</strong>로, 가중평균 <strong>{breakdown.weightedAvg.toFixed(2)}점</strong> → <strong>Level {avg.toFixed(1)}</strong>로 산정되었습니다. (정수 그룹: Level {diffLevel})
+                    이 시험은 분포가 <strong>{distLabel}</strong>로, 가중평균 <strong>{breakdown.weightedAvg.toFixed(2)}점</strong> → <strong>{avg.toFixed(1)}단계</strong>로 산정되었습니다. (정수 그룹: {diffLevel}단계)
                   </p>
                 )}
                 <p className="text-xs text-slate-500 pt-2 border-t border-slate-100">

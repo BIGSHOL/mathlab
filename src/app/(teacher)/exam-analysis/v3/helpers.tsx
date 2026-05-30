@@ -54,8 +54,18 @@ export function shortenDataLabel(raw: string): string {
     .replace(/\s*\(Level\s+(\d+)\)\s*/gi, '·$1단계')
     .replace(/\s*\(Lv\s*(\d+)\)\s*/gi, '·$1단계')
     .replace(/^Level\s+(\d+)\s*/i, '$1단계 ')
+    // 인라인 잔존 영문 (예: "Lv3↑ 문항") → "3단계↑ 문항". 소수점 뒤는 제외.
+    .replace(/\bLv\.?\s*([1-5])(?![\d.])/gi, '$1단계')
+    .replace(/\bLevel\s+([1-5])(?![\d.])/gi, '$1단계')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+/** 블로그 노출 AI 텍스트의 잔존 난이도 영문(Lv3/Level 2) → "N단계". plain 렌더 지점(dek/제목 등)용. */
+export function koDifficultyText(raw: string): string {
+  return String(raw ?? '')
+    .replace(/\bLv\.?\s*([1-5])(?![\d.])/gi, '$1단계')
+    .replace(/\bLevel\s+([1-5])(?![\d.])/gi, '$1단계');
 }
 
 /**

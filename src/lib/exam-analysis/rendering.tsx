@@ -192,5 +192,10 @@ export function normalizeKoreanLabels(text: string): string {
       out = out.replace(re, value);
     }
   }
+  // 난이도 영문 표기 → 한글 "N단계" (블로그 노출 영문 제거 — AI가 "응용(Lv3)"처럼 쓴 잔존 영문 정리)
+  // 소수점 뒤(예: "Level 2.7" 가중평균)는 손상 방지 위해 negative lookahead로 제외.
+  out = out
+    .replace(/\bLv\.?\s*([1-5])(?![\d.])/gi, '$1단계')
+    .replace(/\bLevel\s+([1-5])(?![\d.])/gi, '$1단계');
   return out;
 }

@@ -20,6 +20,7 @@ import {
   TYPE_TO_DOMAIN,
 } from './constants';
 import type { AnalyzedQuestion } from './types';
+import { formatPoints } from './points';
 
 // ── 차트 버전 — 디자인 업그레이드 시 bump → chart endpoint가 자동 재생성 ──
 // v1: 기본 (그라데이션 없음, 작은 폰트)
@@ -686,7 +687,7 @@ export function generateTopicBarSvg(
 
     // 값 라벨 (더 크고 색상 강조)
     svgParts.push(`<text x="${barAreaX + barW + 10}" y="${y + barHeightUp / 2 + 5}" font-size="13" font-weight="700" fill="#1F2937">${stats.count}문항</text>`);
-    svgParts.push(`<text x="${barAreaX + barW + 10 + 50}" y="${y + barHeightUp / 2 + 5}" font-size="11" fill="#94A3B8" font-weight="500">· ${stats.pts}점</text>`);
+    svgParts.push(`<text x="${barAreaX + barW + 10 + 50}" y="${y + barHeightUp / 2 + 5}" font-size="11" fill="#94A3B8" font-weight="500">· ${formatPoints(stats.pts)}점</text>`);
   });
 
   const totalHeight = startYUp + sorted.length * (barHeightUp + barGapUp) + 24;
