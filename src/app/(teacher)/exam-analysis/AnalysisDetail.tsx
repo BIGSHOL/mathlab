@@ -351,7 +351,9 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
     try {
       toast.info('실제 V3 화면을 섹션별로 캡처·업로드 중... (수십 초)');
       const { domToPng } = await import('modern-screenshot');
-      const nodes = Array.from(root.querySelectorAll(':scope > header, :scope > section')) as HTMLElement[];
+      // V3 최상위 블록 모두 캡처 (header/kpi-row(div)/section들/conclusion(div)). footer(credits)·초소형 제외.
+      const nodes = (Array.from(root.children) as HTMLElement[])
+        .filter((el) => el.tagName.toLowerCase() !== 'footer' && el.offsetHeight >= 24);
       const blocks: { url: string; summary: string }[] = [];
       let i = 0;
       for (const node of nodes) {
