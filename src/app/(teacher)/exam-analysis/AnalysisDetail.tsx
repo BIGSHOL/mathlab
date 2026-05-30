@@ -240,12 +240,12 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
       toast.error('V3 데이터가 없습니다. 총평 재생성 후 다시 시도하세요.');
       return;
     }
+    const tid = toast.loading('차트 이미지 생성 중... (최초 30~60초)');
     try {
       // 차트 PNG 미리 워밍업 + URL 수집 (lazy 생성 트리거)
       // ⚠️ 첫 호출은 serial로 — 4개 병렬 호출 시 각각 generateAllChartImages를 독립 실행 (4× 작업)
       // 첫 호출(difficulty) 완료 후 DB에 4종 캐시됨 → 나머지 3개 병렬은 cache hit으로 즉시.
       const baseUrl = window.location.origin;
-      toast.info('차트 이미지 생성 중... (최초 30~60초, 이후 즉시)');
       const chartUrls: { topicBar?: string; discrimination?: string; difficulty?: string; abilityRadar?: string } = {};
       const tryFetch = async (
         type: 'topic-bar' | 'discrimination' | 'difficulty' | 'ability-radar',
@@ -318,16 +318,18 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
         const ok = document.execCommand('copy');
         selection?.removeAllRanges();
         if (!ok) throw new Error('execCommand copy 실패');
-        if (hasCharts) {
-          toast.success('총평이 클립보드에 복사되었습니다 (차트 포함). 네이버 블로그에 붙여넣으세요.');
-        } else {
-          toast.success('총평이 클립보드에 복사되었습니다. 네이버 블로그에 붙여넣으세요.');
-        }
+        toast.success(
+          hasCharts
+            ? '총평이 클립보드에 복사되었습니다 (차트 포함). 네이버 블로그에 붙여넣으세요.'
+            : '총평이 클립보드에 복사되었습니다. 네이버 블로그에 붙여넣으세요.',
+          undefined,
+          tid,
+        );
       } finally {
         document.body.removeChild(container);
       }
     } catch (e) {
-      toast.error('복사 실패: ' + (e instanceof Error ? e.message : String(e)));
+      toast.error('복사 실패: ' + (e instanceof Error ? e.message : String(e)), undefined, tid);
     }
   };
 
@@ -348,8 +350,8 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
       const merged = [heading, firstSentence].filter(Boolean).join(' — ');
       return koImg(merged).slice(0, 140);
     };
+    const tid = toast.loading('실제 V3 화면 캡처·업로드 준비 중...');
     try {
-      toast.info('실제 V3 화면을 섹션별로 캡처·업로드 중... (수십 초)');
       const { domToPng } = await import('modern-screenshot');
       // V3 최상위 블록 모두 캡처 (header/kpi-row(div)/section들/conclusion(div)). footer(credits)·초소형 제외.
       const nodes = (Array.from(root.children) as HTMLElement[])
@@ -358,6 +360,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
       let i = 0;
       for (const node of nodes) {
         i += 1;
+        toast.loading(`섹션 캡처·업로드 중... (${i}/${nodes.length})`, tid);
         let dataUrl: string;
         try {
           dataUrl = await domToPng(node, { scale: 2, backgroundColor: '#ffffff' });
@@ -373,7 +376,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
           if (json?.data?.url) blocks.push({ url: json.data.url, summary: summaryOf(node) });
         } catch { /* 업로드 실패한 섹션은 건너뜀 */ }
       }
-      if (!blocks.length) { toast.error('캡처/업로드된 섹션이 없습니다'); return; }
+      if (!blocks.length) { toast.error('캡처/업로드된 섹션이 없습니다', undefined, tid); return; }
 
       const html = `<div style="width:720px;max-width:100%;">${blocks.map((b) =>
         `<p style="text-align:center;margin:0 0 6px;"><img src="${b.url}" style="width:720px;max-width:100%;" /></p>` +
@@ -393,12 +396,12 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
         const ok = document.execCommand('copy');
         selection?.removeAllRanges();
         if (!ok) throw new Error('execCommand copy 실패');
-        toast.success(`${blocks.length}개 섹션 이미지 + 요약이 복사되었습니다. 네이버 블로그에 붙여넣으세요.`);
+        toast.success(`${blocks.length}개 섹션 이미지 + 요약이 복사되었습니다. 네이버 블로그에 붙여넣으세요.`, undefined, tid);
       } finally {
         document.body.removeChild(container);
       }
     } catch (e) {
-      toast.error('이미지 복사 실패: ' + (e instanceof Error ? e.message : String(e)));
+      toast.error('이미지 복사 실패: ' + (e instanceof Error ? e.message : String(e)), undefined, tid);
     }
   };
 
