@@ -14,6 +14,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
+import { sumPoints } from '@/lib/exam-analysis/points';
 import { DIFFICULTY_COLORS as DIFF_COLORS, DIFFICULTY_LEGACY_MAP } from '@/lib/exam-analysis/constants';
 
 interface QuestionPointsChartProps {
@@ -132,7 +133,7 @@ export function QuestionPointsChart({ questions, embedded }: QuestionPointsChart
       .slice(0, 5);
 
     // AI 코멘트 생성
-    const totalPts = data.reduce((s, d) => s + d.points, 0);
+    const totalPts = sumPoints(data.map((d) => d.points));
     const avgPts = data.length > 0 ? totalPts / data.length : 0;
     const maxItem = data.reduce((max, d) => d.points > max.points ? d : max, data[0]);
     const minItem = data.reduce((min, d) => d.points < min.points ? d : min, data[0]);

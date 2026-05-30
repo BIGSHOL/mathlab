@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { DIFFICULTY_COLORS, DIFFICULTY_LABELS as DIFF_LABELS_MAP, DIFFICULTY_LEGACY_MAP, TYPE_TO_DOMAIN, ABILITY_DOMAIN_LABELS, ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
+import { sumPoints, roundPoints, formatPoints } from '@/lib/exam-analysis/points';
 import { ChevronRight, AlertTriangle, Pencil, Check, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { toast } from '@/components/ui/Toast';
@@ -58,16 +59,16 @@ const _FORMAT_LABELS: Record<string, string> = {
 
 /** 배점 신뢰도 판정: 합계가 기준의 ±15% 이내인지 */
 function checkPointsReliable(qs: AnalyzedQuestion[], expectedTotal: number | null) {
-  const total = (expectedTotal && expectedTotal > 0) ? expectedTotal : 100;
+  const total = (expectedTotal && expectedTotal > 0) ? roundPoints(expectedTotal) : 100;
   const nullCount = qs.filter((q) => q.points === null || q.points === 0).length;
-  const pointsSum = qs.reduce((sum, q) => sum + (q.points ?? 0), 0);
+  const pointsSum = sumPoints(qs.map((q) => q.points)); // 부동소수점 오차 제거
   const deviationPct = total > 0 ? Math.round(Math.abs(pointsSum - total) / total * 100) : 0;
 
   if (nullCount > qs.length * 0.5) {
     return { reliable: false, pointsSum, total, deviationPct, reason: `${nullCount}개 문항의 배점을 인식하지 못했습니다` };
   }
   if (deviationPct > 15) {
-    return { reliable: false, pointsSum, total, deviationPct, reason: `배점 합계 ${pointsSum}점 (기준 ${total}점, ${deviationPct}% 차이)` };
+    return { reliable: false, pointsSum, total, deviationPct, reason: `배점 합계 ${formatPoints(pointsSum)}점 (기준 ${total}점, ${deviationPct}% 차이)` };
   }
   return { reliable: true, pointsSum, total, deviationPct, reason: '' };
 }
@@ -84,10 +85,11 @@ function getPointsSuggestion(qs: AnalyzedQuestion[], expectedTotal: number | nul
   newPoints: number;
   reason: string;
 } | null {
-  const total = (expectedTotal && expectedTotal > 0) ? expectedTotal : 100;
-  const pointsSum = qs.reduce((s, q) => s + (q.points ?? 0), 0);
-  const diff = pointsSum - total;
-  // 표준 만점에서 ±1~10점 벗어난 경우만 보정 제안 (그 이상이면 별도 검토 필요)
+  const total = (expectedTotal && expectedTotal > 0) ? roundPoints(expectedTotal) : 100;
+  const pointsSum = sumPoints(qs.map((q) => q.points)); // 부동소수점 오차 제거
+  const diff = roundPoints(pointsSum - total);
+  // 표준 만점에서 ±1~10점 벗어난 경우만 보정 제안 (그 이상이면 별도 검토 필요).
+  // diff가 0이면(부동소수점 오차 포함 정확히 만점) 보정 불필요 → null.
   if (diff === 0 || Math.abs(diff) > 10) return null;
   // 가장 신뢰도 낮은 문항 (배점 > 0 + null/0이 아닌 것 중) → confidence ASC 정렬
   const candidates = qs
@@ -96,7 +98,7 @@ function getPointsSuggestion(qs: AnalyzedQuestion[], expectedTotal: number | nul
   if (candidates.length === 0) return null;
   const target = candidates[0];
   const currentPts = target.points ?? 0;
-  const newPts = currentPts - diff; // diff>0(초과)이면 -, diff<0(부족)이면 +
+  const newPts = roundPoints(currentPts - diff); // diff>0(초과)이면 -, diff<0(부족)이면 + (반올림으로 노이즈 제거)
   if (newPts < 1 || newPts > 50) return null; // 비현실적 배점은 제외
   return {
     needed: true,
@@ -210,7 +212,7 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
     const avg = (arr: typeof questions) => arr.length > 0
       ? Math.round(arr.reduce((s, q) => s + (q.points || 0), 0) / arr.length * 10) / 10
       : 0;
-    const totalPts = (arr: typeof questions) => arr.reduce((s, q) => s + (q.points || 0), 0);
+    const totalPts = (arr: typeof questions) => sumPoints(arr.map((q) => q.points));
     return {
       objective: { count: obj.length, avg: avg(obj), total: totalPts(obj) },
       shortAnswer: { count: short.length, avg: avg(short), total: totalPts(short) },
@@ -319,12 +321,12 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
           <AlertTriangle className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-blue-800">
-              배점 합계 {pointsCheck.pointsSum}점 · 만점 {pointsCheck.total}점에서 {pointsSuggestion.diff > 0 ? '+' : ''}{pointsSuggestion.diff}점 차이
+              배점 합계 {formatPoints(pointsCheck.pointsSum)}점 · 만점 {pointsCheck.total}점에서 {pointsSuggestion.diff > 0 ? '+' : ''}{formatPoints(pointsSuggestion.diff)}점 차이
             </p>
             <p className="text-xs text-blue-700 mt-1">
               가장 신뢰도 낮은 문항을 자동 보정하면 정확한 만점이 됩니다:
               <span className="font-semibold mx-1">
-                {pointsSuggestion.target.question_number}번 {pointsSuggestion.target.points}점 → {pointsSuggestion.newPoints}점
+                {pointsSuggestion.target.question_number}번 {formatPoints(pointsSuggestion.target.points)}점 → {formatPoints(pointsSuggestion.newPoints)}점
               </span>
               <span className="text-blue-500">(사유: {pointsSuggestion.reason})</span>
             </p>
@@ -365,7 +367,7 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
         <EssayAnalysisSection
           questions={questions}
           totalQuestions={total}
-          totalPoints={questions.reduce((s, q) => s + (q.points || 0), 0)}
+          totalPoints={sumPoints(questions.map((q) => q.points))}
         />
       )}
 
@@ -856,9 +858,10 @@ function PointsCell({
   };
   const handleSave = async () => {
     if (!examPaperId) return;
-    const next = parseInt(value, 10);
+    // 소수 배점(4.5, 4.6 등) 허용 — parseInt는 4.6→4로 잘라 데이터를 손상시킴
+    const next = roundPoints(parseFloat(value));
     if (!Number.isFinite(next) || next < 0 || next > 100) {
-      toast.warning('배점은 0~100 사이의 정수입니다');
+      toast.warning('배점은 0~100 사이의 숫자입니다');
       return;
     }
     setSaving(true);
@@ -942,7 +945,7 @@ function PointsCell({
 
   return (
     <div className="group inline-flex items-center gap-0.5">
-      <span>{points}</span>
+      <span>{formatPoints(points)}</span>
       {canEdit && (
         <button
           type="button"

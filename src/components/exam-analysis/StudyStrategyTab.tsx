@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
+import { sumPoints, roundPoints } from '@/lib/exam-analysis/points';
 import type { TopicSummary, ChapterGroup, SectionId, WrongAnswerSummary, ErrorTypeSummary } from './study-strategy/types';
 import { DIFFICULTY_WEIGHT } from './study-strategy/constants';
 
@@ -47,7 +48,7 @@ export function StudyStrategyTab({ questions }: StudyStrategyTabProps) {
   // ── 토픽 분석 데이터 ──
   const { topicSummaries, chapterGroups, totalPoints, essayQuestions, is4Level } = useMemo(() => {
     const topicMap = new Map<string, TopicSummary>();
-    const totalPts = questions.reduce((sum, q) => sum + (q.points || 0), 0);
+    const totalPts = sumPoints(questions.map((q) => q.points));
     const is4L = questions.some(q => ['concept', 'pattern', 'reasoning', 'creative', '1', '2', '3', '4', '5'].includes(q.difficulty));
 
     questions.forEach(q => {
@@ -168,7 +169,7 @@ export function StudyStrategyTab({ questions }: StudyStrategyTabProps) {
       hasData: true,
       wrong: Array.from(byTopic.values()).sort((a, b) => b.lostPoints - a.lostPoints),
       errors: Array.from(byError.values()).filter(e => e.errorType !== 'unknown').sort((a, b) => b.count - a.count),
-      lostPts: wrong.reduce((s, q) => s + (q.points || 0) - (q.earned_points ?? 0), 0),
+      lostPts: roundPoints(wrong.reduce((s, q) => s + (q.points || 0) - (q.earned_points ?? 0), 0)),
       total: graded.length,
       correct: correct.length,
       wrongCount: wrong.length,

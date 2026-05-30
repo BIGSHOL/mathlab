@@ -8,6 +8,7 @@
  */
 
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
+import { sumPoints, formatPoints } from '@/lib/exam-analysis/points';
 import { V3_DIFF_COLORS, V3_DIFF_LABELS, normDiff } from './helpers';
 
 export function DifficultyStackedBar({ questions }: { questions: AnalyzedQuestion[] }) {
@@ -17,11 +18,11 @@ export function DifficultyStackedBar({ questions }: { questions: AnalyzedQuestio
       level: lv,
       label: V3_DIFF_LABELS[lv - 1],
       count: lvQ.length,
-      points: lvQ.reduce((s, q) => s + (q.points || 0), 0),
+      points: sumPoints(lvQ.map((q) => q.points)),
       color: V3_DIFF_COLORS[lv - 1],
     };
   });
-  const totalPts = stats.reduce((s, x) => s + x.points, 0);
+  const totalPts = sumPoints(stats.map((x) => x.points));
   if (totalPts === 0) return null;
 
   // 상단 stacked bar — 정수 % + 합 100 보정 (네이버 width 동기화)
@@ -62,7 +63,7 @@ export function DifficultyStackedBar({ questions }: { questions: AnalyzedQuestio
             <div className="v3-diff-level-header">
               <span className="v3-diff-swatch" style={{ background: s.color }} />
               <span className="v3-diff-label">Lv {s.level} · {s.label}</span>
-              <span className="v3-diff-detail">{s.count}문항 · {s.points}점</span>
+              <span className="v3-diff-detail">{s.count}문항 · {formatPoints(s.points)}점</span>
             </div>
             <div
               className="v3-diff-count-grid"
@@ -86,7 +87,7 @@ export function DifficultyStackedBar({ questions }: { questions: AnalyzedQuestio
         );
       })}
       <p className="v3-info-caption">
-        상단 stacked bar = 배점 비중. 총 {totalPts}점 · {questions.length}문항.
+        상단 stacked bar = 배점 비중. 총 {formatPoints(totalPts)}점 · {questions.length}문항.
       </p>
     </figure>
   );

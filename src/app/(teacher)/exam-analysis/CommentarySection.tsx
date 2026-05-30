@@ -5,6 +5,7 @@ import { Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
+import { sumPoints } from '@/lib/exam-analysis/points';
 import { V3CommentaryView, type V3Meta, type V3ChartImages } from './v3/V3CommentaryView';
 import { V4CommentaryView, hasV4Data } from './v4/V4CommentaryView';
 import { toast } from '@/components/ui/Toast';
@@ -199,7 +200,7 @@ export function CommentarySection({
       schoolName: examMeta?.schoolName ?? null,
       analyzedAt: examMeta?.analyzedAt ?? null,
       totalQuestions: allQuestions.length,
-      totalPoints: allQuestions.reduce((s, q) => s + (q.points || 0), 0),
+      totalPoints: sumPoints(allQuestions.map((q) => q.points)),
       hasStudentData: allQuestions.some((q) => q.is_correct !== null),
     };
     return (

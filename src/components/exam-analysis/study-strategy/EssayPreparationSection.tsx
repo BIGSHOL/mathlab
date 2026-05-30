@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { FileText, ChevronDown, CheckCircle2, AlertTriangle, BookOpen, ClipboardList, BarChart3 } from 'lucide-react';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
+import { sumPoints } from '@/lib/exam-analysis/points';
 import { DIFFICULTY_LABELS, DIFFICULTY_COLORS, ESSAY_CHECKLIST, ESSAY_DEDUCTION_CASES } from './constants';
 import { ESSAY_ADVANCED_GUIDES } from '@/lib/exam-analysis/data/curriculum-strategies';
 
@@ -22,7 +23,7 @@ export function EssayPreparationSection({
 
   // 서술형 문항 총 배점
   const totalEssayPoints = useMemo(
-    () => essayQuestions.reduce((s, q) => s + (q.points || 0), 0),
+    () => sumPoints(essayQuestions.map((q) => q.points)),
     [essayQuestions],
   );
 

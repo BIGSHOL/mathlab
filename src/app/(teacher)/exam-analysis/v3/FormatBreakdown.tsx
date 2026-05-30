@@ -7,6 +7,7 @@
  */
 
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
+import { sumPoints, formatPoints } from '@/lib/exam-analysis/points';
 
 const FORMATS = [
   { key: 'objective' as const, label: '객관식', color: '#121212' },
@@ -17,9 +18,9 @@ const FORMATS = [
 export function FormatBreakdown({ questions }: { questions: AnalyzedQuestion[] }) {
   const stats = FORMATS.map((f) => {
     const fQ = questions.filter((q) => q.question_format === f.key);
-    return { ...f, count: fQ.length, points: fQ.reduce((s, q) => s + (q.points || 0), 0) };
+    return { ...f, count: fQ.length, points: sumPoints(fQ.map((q) => q.points)) };
   });
-  const totalPts = stats.reduce((s, x) => s + x.points, 0);
+  const totalPts = sumPoints(stats.map((x) => x.points));
   if (totalPts === 0) return null;
 
   return (
@@ -46,7 +47,7 @@ export function FormatBreakdown({ questions }: { questions: AnalyzedQuestion[] }
               {s.count}
               <span className="v3-format-unit">문항</span>
             </p>
-            <p className="v3-format-points">{s.points}점</p>
+            <p className="v3-format-points">{formatPoints(s.points)}점</p>
           </div>
         ))}
       </div>

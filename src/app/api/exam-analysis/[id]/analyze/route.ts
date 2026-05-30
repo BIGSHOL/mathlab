@@ -7,6 +7,7 @@ import { detectGradingMarks } from '@/lib/exam-analysis/mark-detector';
 import { crossValidateGrading, consolidateDominantTopic } from '@/lib/exam-analysis/cross-validator';
 import type { ExamContext, AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { PROMPT_VERSION } from '@/lib/exam-analysis/constants';
+import { sumPoints } from '@/lib/exam-analysis/points';
 import { matchSchoolByName } from '@/lib/utils/school-matcher';
 import path from 'path';
 import { readFile } from 'fs/promises';
@@ -168,8 +169,9 @@ export async function POST(request: NextRequest, { params }: Params) {
     await setStep(id, 4);
 
     const totalQuestions = questions.length;
-    const totalPoints = questions.reduce((sum, q) => sum + (q.points || 0), 0);
-    const earnedPoints = questions.reduce((sum, q) => sum + (q.earned_points || 0), 0);
+    // 부동소수점 오차 제거 — 소수 배점(4.6 등) 합산이 100.00000000000003으로 저장되어 전파되는 것 방지
+    const totalPoints = sumPoints(questions.map((q) => q.points));
+    const earnedPoints = sumPoints(questions.map((q) => q.earned_points));
 
     const analysis = await prisma.examAnalysis.create({
       data: {

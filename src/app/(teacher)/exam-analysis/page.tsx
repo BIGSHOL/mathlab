@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { hasMinRole } from '@/lib/constants/navigation';
 import type { ExamPaperData } from './types';
 import { AnalysisDetail } from './AnalysisDetail';
+import { sumPoints, roundPoints } from '@/lib/exam-analysis/points';
 
 export default function ExamAnalysisPage() {
   const { user } = useAuth();
@@ -148,8 +149,8 @@ export default function ExamAnalysisPage() {
       const analysis = json.data?.analyses?.[0];
       const questions: Array<{ points?: number | null; topic?: string | null }> = analysis?.questions || [];
       if (questions.length === 0) return;
-      const expectedTotal = analysis?.totalPoints && analysis.totalPoints > 0 ? analysis.totalPoints : 100;
-      const pointsSum = questions.reduce((s, q) => s + (q.points ?? 0), 0);
+      const expectedTotal = analysis?.totalPoints && analysis.totalPoints > 0 ? roundPoints(analysis.totalPoints) : 100;
+      const pointsSum = sumPoints(questions.map((q) => q.points)); // 부동소수점 오차 제거
       const missingPoints = questions.filter((q) => q.points == null || q.points === 0).length;
       const unknownTopics = questions.filter((q) => {
         const t = (q.topic || '').trim();

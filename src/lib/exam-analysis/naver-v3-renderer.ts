@@ -17,6 +17,7 @@
 
 import type { CommentaryResult } from './agents/commentary-agent';
 import type { AnalyzedQuestion } from './types';
+import { sumPoints, formatPoints } from './points';
 
 export interface NaverV3ChartUrls {
   /** CDN/공개 URL (네이버는 외부 이미지 호스팅 필요) */
@@ -239,7 +240,7 @@ function renderKpiRow(questions: AnalyzedQuestion[], meta: NaverV3Meta): string 
   const weighted = totalDiff > 0 ? counts.reduce((s, c, i) => s + c * (i + 1), 0) / totalDiff : 0;
   const killerPct = totalDiff > 0 ? Math.round((counts[4] / totalDiff) * 100) : 0;
   const essayCount = questions.filter((q) => q.question_format === 'essay').length;
-  const totalPts = questions.reduce((s, q) => s + (q.points || 0), 0);
+  const totalPts = sumPoints(questions.map((q) => q.points));
   void meta;
   return `
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#121212;margin:0 0 32px;">
@@ -258,7 +259,7 @@ function renderKpiRow(questions: AnalyzedQuestion[], meta: NaverV3Meta): string 
     </td>
     <td align="center" style="padding:20px 8px;">
       <p style="margin:0 0 4px;font-family:Pretendard,sans-serif;font-size:10px;letter-spacing:0.14em;color:#888;font-weight:700;">총 배점</p>
-      <p style="margin:0;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:28px;font-weight:900;color:#2F7B3A;line-height:1;">${totalPts}<span style="font-size:14px;color:#888;">점</span></p>
+      <p style="margin:0;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:28px;font-weight:900;color:#2F7B3A;line-height:1;">${formatPoints(totalPts)}<span style="font-size:14px;color:#888;">점</span></p>
     </td>
   </tr>
 </table>`;
@@ -289,11 +290,11 @@ function renderDifficultyStackedBar(questions: AnalyzedQuestion[]): string {
       level: lv,
       label: V3_DIFF_LABELS[lv - 1],
       count: lvQ.length,
-      points: lvQ.reduce((s, q) => s + (q.points || 0), 0),
+      points: sumPoints(lvQ.map((q) => q.points)),
       color: V3_DIFF_COLORS[lv - 1],
     };
   });
-  const totalPts = stats.reduce((s, x) => s + x.points, 0);
+  const totalPts = sumPoints(stats.map((x) => x.points));
   if (totalPts === 0) return '';
   const totalCount = stats.reduce((s, x) => s + x.count, 0);
 
@@ -305,7 +306,7 @@ function renderDifficultyStackedBar(questions: AnalyzedQuestion[]): string {
     <td width="19%" align="center" valign="top" style="padding:14px 4px;background:#fff;border:1px solid #eee;border-top:3px solid ${s.color};">
       <p style="margin:0;font-family:Pretendard,sans-serif;font-size:10px;letter-spacing:0.06em;color:#666;font-weight:700;white-space:nowrap;">Lv ${s.level} · ${s.label}</p>
       <p style="margin:8px 0 2px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:30px;font-weight:900;color:${s.color};line-height:1;">${s.count}<span style="font-size:12px;color:#888;font-weight:400;">문항</span></p>
-      <p style="margin:0;font-family:Pretendard,sans-serif;font-size:12px;color:#444;font-weight:600;">${s.points}점</p>
+      <p style="margin:0;font-family:Pretendard,sans-serif;font-size:12px;color:#444;font-weight:600;">${formatPoints(s.points)}점</p>
     </td>`).join('<td width="1%">&nbsp;</td>');
 
   return `
@@ -315,7 +316,7 @@ function renderDifficultyStackedBar(questions: AnalyzedQuestion[]): string {
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>${cards}</tr>
     </table>
-    <p style="margin:14px 0 0;font-family:Pretendard,sans-serif;font-size:11px;color:#888;line-height:1.5;">총 ${totalPts}점 · ${totalCount}문항. 상단 색상 보더 = 난이도(녹→황→빨 그라데이션).</p>
+    <p style="margin:14px 0 0;font-family:Pretendard,sans-serif;font-size:11px;color:#888;line-height:1.5;">총 ${formatPoints(totalPts)}점 · ${totalCount}문항. 상단 색상 보더 = 난이도(녹→황→빨 그라데이션).</p>
   </td></tr>
 </table>`;
 }
@@ -328,16 +329,16 @@ function renderFormatBreakdown(questions: AnalyzedQuestion[]): string {
   ];
   const stats = formats.map((f) => {
     const fQ = questions.filter((q) => q.question_format === f.key);
-    return { ...f, count: fQ.length, points: fQ.reduce((s, q) => s + (q.points || 0), 0) };
+    return { ...f, count: fQ.length, points: sumPoints(fQ.map((q) => q.points)) };
   });
-  const totalPts = stats.reduce((s, x) => s + x.points, 0);
+  const totalPts = sumPoints(stats.map((x) => x.points));
   if (totalPts === 0) return '';
 
   const cards = stats.map((s) => `
     <td width="33%" align="center" valign="top" style="padding:18px 8px;background:#fff;border:1px solid #eee;border-top:3px solid ${s.color};">
       <p style="margin:0;font-family:Pretendard,sans-serif;font-size:10px;letter-spacing:0.14em;color:#888;font-weight:700;">${s.label}</p>
       <p style="margin:6px 0 2px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:28px;font-weight:900;color:${s.color};line-height:1;">${s.count}<span style="font-size:13px;color:#888;font-weight:400;">문항</span></p>
-      <p style="margin:0;font-family:Pretendard,sans-serif;font-size:12px;color:#444;">${s.points}점</p>
+      <p style="margin:0;font-family:Pretendard,sans-serif;font-size:12px;color:#444;">${formatPoints(s.points)}점</p>
     </td>`).join('<td width="8"></td>');
 
   return `

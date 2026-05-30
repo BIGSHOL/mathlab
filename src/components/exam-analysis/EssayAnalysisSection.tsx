@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { DIFFICULTY_COLORS, DIFFICULTY_LEGACY_MAP } from '@/lib/exam-analysis/constants';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
+import { sumPoints } from '@/lib/exam-analysis/points';
 import { FileText } from 'lucide-react';
 
 interface EssayAnalysisSectionProps {
@@ -32,7 +33,7 @@ export function EssayAnalysisSection({ questions, totalQuestions, totalPoints }:
   // 기본 통계
   const stats = useMemo(() => {
     const count = essayQuestions.length;
-    const pts = essayQuestions.reduce((s, q) => s + (q.points || 0), 0);
+    const pts = sumPoints(essayQuestions.map((q) => q.points));
     const avgPtsPerQ = count > 0 ? (pts / count) : 0;
 
     // 평균 난이도 계산

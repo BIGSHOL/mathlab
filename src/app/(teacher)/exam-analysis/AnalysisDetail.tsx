@@ -16,6 +16,7 @@ import { useAuth } from '@/hooks/useAuth';
 import type { AnalysisSummary } from '@/lib/exam-analysis/types';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import { DIFFICULTY_BAR_COLORS } from '@/lib/exam-analysis/constants';
+import { sumPoints, roundPoints, formatPoints } from '@/lib/exam-analysis/points';
 import type { ExamPaperData, AnalysisTab } from './types';
 import { getConfidenceInfo, getOverallDifficultyLevel, getDifficultyBreakdown, interpolateDifficultyColor } from './helpers';
 import { DIFF_LEVEL_LABELS } from './constants';
@@ -114,11 +115,12 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
     if (!questions.length) return { ready: false, reasons: ['분석 결과가 없습니다'] };
     const reasons: string[] = [];
     // 배점 합계 검증 (totalPoints가 있으면 기준, 없으면 100점 기본)
-    const expectedTotal = totalPoints && totalPoints > 0 ? totalPoints : 100;
-    const pointsSum = questions.reduce((s, q) => s + (q.points ?? 0), 0);
+    // ⚠️ 소수 배점(4.6 등) 합산 부동소수점 오차 제거 — sumPoints/roundPoints 필수
+    const expectedTotal = totalPoints && totalPoints > 0 ? roundPoints(totalPoints) : 100;
+    const pointsSum = sumPoints(questions.map((q) => q.points));
     if (pointsSum !== expectedTotal) {
-      const diff = pointsSum - expectedTotal;
-      reasons.push(`배점 합계 ${pointsSum}점 (만점 ${expectedTotal}점에서 ${diff > 0 ? '+' : ''}${diff}점 차이)`);
+      const diff = roundPoints(pointsSum - expectedTotal);
+      reasons.push(`배점 합계 ${formatPoints(pointsSum)}점 (만점 ${expectedTotal}점에서 ${diff > 0 ? '+' : ''}${formatPoints(diff)}점 차이)`);
     }
     // 미인식 배점 (null/0) 검증
     const missingPoints = questions.filter((q) => q.points === null || q.points === 0).length;
