@@ -616,26 +616,25 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {!commentaryLoading && (
+                  {/* 구버전이면 상단 버튼/옵션 숨김 — 아래 rose 배너의 [최신 버전으로 재분석]이 단일 CTA (버튼 중복 방지) */}
+                  {!commentaryLoading && !isStaleAnalysis && (
                     <Button
                       size="sm"
                       className="bg-violet-600 hover:bg-violet-700 text-white disabled:bg-slate-300 disabled:cursor-not-allowed"
-                      onClick={isStaleAnalysis ? () => onAnalyze(detail.id) : handleGenerateCommentary}
-                      disabled={isStaleAnalysis ? analyzing : !commentaryReady}
+                      onClick={handleGenerateCommentary}
+                      disabled={!commentaryReady}
                       title={
-                        isStaleAnalysis
-                          ? `이전 버전(${stalePromptLabel || '구버전'})으로 분석됨 — 재분석 후 총평 생성 가능`
-                          : metadataPending
+                        metadataPending
                           ? 'V3 총평 준비 중입니다 (분석 기반 데이터 생성). 잠시 후 가능합니다.'
                           : readinessCheck.ready
                           ? '총평 생성'
                           : '먼저 다음을 완성하세요:\n' + readinessCheck.reasons.map(r => '• ' + r).join('\n')
                       }
                     >
-                      {isStaleAnalysis ? (analyzing ? '재분석 중...' : '재분석 필요') : metadataPending ? '준비 중...' : '총평 생성'}
+                      {metadataPending ? '준비 중...' : '총평 생성'}
                     </Button>
                   )}
-                  {detail.schoolId && !commentaryLoading && (
+                  {detail.schoolId && !commentaryLoading && !isStaleAnalysis && (
                     <div className="flex items-center gap-3">
                       <label title={nearbyTitle} className={`flex items-center gap-1 text-[11px] cursor-pointer ${nearbyCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
                         <input
