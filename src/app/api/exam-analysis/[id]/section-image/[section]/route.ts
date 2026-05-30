@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, getTenantFilter } from '@/lib/api';
 import {
   renderSectionImage,
   RENDERABLE_SECTION_KEYS,
@@ -16,14 +15,13 @@ type Params = { params: Promise<{ id: string; section: string }> };
 /**
  * GET /api/exam-analysis/[id]/section-image/[section] — V3 총평 "섹션 이미지" PNG 서빙 (네이버 복사용)
  *
+ * ⚠️ 무인증(공개) — 네이버 서버가 이미지를 가져갈 때 비인증이므로 auth 걸면 401로 못 불러옴.
+ *    차트 엔드포인트(/chart/[type])와 동일 정책. 렌더 내용은 블로그 공개용이라 민감정보 아님.
  * 차트 엔드포인트와 동일 패턴: lazy 생성 + DB 캐시(extension 'section-images') + 버전 무효화 + in-flight dedup.
- * satori→resvg로 매거진 섹션을 PNG화하여 네이버가 가져갈 수 있는 실제 URL로 제공.
  */
 const inFlight = new Map<string, Promise<string | null>>();
 
 export async function GET(req: NextRequest, { params }: Params) {
-  const user = await requireTeacher();
-  if (isResponse(user)) return user;
   const { id, section } = await params;
 
   if (!RENDERABLE_SECTION_KEYS.includes(section)) {
@@ -31,9 +29,8 @@ export async function GET(req: NextRequest, { params }: Params) {
   }
 
   try {
-    const tenantWhere = getTenantFilter(user);
     const examPaper = await prisma.examPaper.findFirst({
-      where: { id, ...tenantWhere },
+      where: { id },
       select: { id: true, title: true, grade: true, schoolName: true },
     });
     if (!examPaper) return NextResponse.json({ error: { code: 'NOT_FOUND', message: '시험지 없음' } }, { status: 404 });
