@@ -17,6 +17,7 @@ import type { AnalysisSummary } from '@/lib/exam-analysis/types';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import { DIFFICULTY_BAR_COLORS, isStalePromptVersion, extractPromptVersion, PROMPT_VERSION } from '@/lib/exam-analysis/constants';
 import { sumPoints, roundPoints, formatPoints } from '@/lib/exam-analysis/points';
+import { buildSectionBlocks, buildNaverImageHtml, sectionBlockImageUrl } from '@/lib/exam-analysis/section-blocks';
 import type { ExamPaperData, AnalysisTab } from './types';
 import { getConfidenceInfo, getOverallDifficultyLevel, getDifficultyBreakdown, interpolateDifficultyColor } from './helpers';
 import { DIFF_LEVEL_LABELS } from './constants';
@@ -327,6 +328,57 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
       }
     } catch (e) {
       toast.error('복사 실패: ' + (e instanceof Error ? e.message : String(e)));
+    }
+  };
+
+  /**
+   * 네이버 "이미지 복사" — 섹션을 이미지화(satori→PNG)해 [이미지][핵심요약] 순으로 클립보드 복사.
+   * 네이버가 매거진 HTML을 뭉개는 한계를 이미지로 우회 + 요약 텍스트로 검색 노출(이중첨부).
+   */
+  const handleCopyNaverImages = async () => {
+    if (!commentary) { toast.error('총평이 없습니다. 먼저 총평을 생성하세요.'); return; }
+    try {
+      const baseUrl = window.location.origin;
+      const sectionMeta = {
+        examTitle: detail.title,
+        grade: detail.grade,
+        schoolName: detail.schoolName ?? null,
+        totalQuestions: questions.length,
+        totalPoints: sumPoints(questions.map((q) => q.points)),
+      };
+      const blocks = buildSectionBlocks(commentary as unknown as Record<string, unknown>, sectionMeta);
+      const url = (b: typeof blocks[number]) => sectionBlockImageUrl(b, baseUrl, detail.id);
+
+      toast.info('섹션 이미지 생성 중... (최초 1~2분, 이후 즉시)');
+      // 워밍업(서버 lazy 생성 트리거) — 섹션은 순차(키별 독립 캐시), 차트는 difficulty 먼저(4종 일괄 생성) 후 병렬.
+      const sections = blocks.filter((b) => b.kind === 'section');
+      const charts = blocks.filter((b) => b.kind === 'chart');
+      for (const b of sections) { try { await fetch(url(b)); } catch { /* 무시 */ } }
+      if (charts.length) {
+        try { await fetch(url(charts[0])); } catch { /* 무시 */ }
+        await Promise.all(charts.slice(1).map((b) => fetch(url(b)).catch(() => {})));
+      }
+
+      const html = buildNaverImageHtml(blocks, { baseUrl, examPaperId: detail.id });
+      const container = document.createElement('div');
+      container.innerHTML = html;
+      container.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;width:720px;font-family:"맑은 고딕",sans-serif;color:#333;text-align:left;';
+      document.body.appendChild(container);
+      try {
+        const range = document.createRange();
+        range.selectNodeContents(container);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        const ok = document.execCommand('copy');
+        selection?.removeAllRanges();
+        if (!ok) throw new Error('execCommand copy 실패');
+        toast.success('이미지 + 요약이 복사되었습니다. 네이버 블로그에 붙여넣으세요.');
+      } finally {
+        document.body.removeChild(container);
+      }
+    } catch (e) {
+      toast.error('이미지 복사 실패: ' + (e instanceof Error ? e.message : String(e)));
     }
   };
 
@@ -786,11 +838,22 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                   <Button
                     size="sm"
                     onClick={handleCopyV3Naver}
-                    className="bg-[#BF1722] hover:bg-[#9A1219] text-white"
-                    title="총평을 네이버 블로그용 HTML로 클립보드에 복사 (차트 포함)"
+                    variant="secondary"
+                    title="총평을 네이버 블로그용 HTML로 클립보드에 복사 (서식 기반)"
                   >
                     <Copy className="w-4 h-4 mr-1" />
-                    네이버 복사
+                    네이버 복사(서식)
+                  </Button>
+                )}
+                {hasV3 && (
+                  <Button
+                    size="sm"
+                    onClick={handleCopyNaverImages}
+                    className="bg-[#BF1722] hover:bg-[#9A1219] text-white"
+                    title="섹션을 이미지화해 [이미지+핵심요약] 순으로 복사 (네이버 서식 한계 우회 + 검색 노출)"
+                  >
+                    <Copy className="w-4 h-4 mr-1" />
+                    네이버 이미지 복사
                   </Button>
                 )}
                 {V4_NAVER_COPY_ENABLED && commentary?.v4_exam_overview && (

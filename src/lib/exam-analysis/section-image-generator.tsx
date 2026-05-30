@@ -1,15 +1,14 @@
 /**
- * V3 총평 "섹션 이미지" 생성기 — 네이버 블로그 복사용.
+ * V3 총평 "섹션 이미지" 생성기 (서버 전용) — 네이버 블로그 복사용.
  *
  * 파이프라인: satori(JSX → SVG, 폰트 임베드 X) → @resvg/resvg-js(SVG → PNG, 폰트 파일).
  * 네이버 SmartEditor가 매거진 HTML(div배경/flex/table)을 뭉개는 한계를 이미지로 우회.
- * SEO를 위해 각 이미지 아래 핵심 텍스트를 실제 본문으로 이중첨부(클립보드 빌더가 처리).
  *
  * - 브라우저 불필요(Vercel 친화) — html2canvas는 Tailwind v4 oklch로 깨지므로 미사용.
  * - 폰트: Noto Sans KR(본문) + Noto Serif KR(헤드라인) OTF. resvg는 woff2 미지원 → OTF.
- * - 동시/후속 호출은 module-level Promise 캐시 재사용(차트 ensureFonts 패턴).
+ * - 순수 블록/요약 로직은 section-blocks.ts(클라이언트-세이프)에 분리.
  *
- * ⚠️ satori는 KaTeX 렌더 불가 → 이미지 텍스트의 $...$ 는 stripMathForImage()로 평문화.
+ * ⚠️ satori는 KaTeX 렌더 불가 → 이미지 텍스트는 koImg()로 평문화(+난이도 영문→단계).
  */
 
 import { writeFileSync, existsSync, statSync, mkdirSync, readFileSync } from 'fs';
@@ -17,6 +16,9 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 import React from 'react';
 import satori from 'satori';
+import { koImg, type SectionMeta, SECTION_IMAGE_VERSION, RENDERABLE_SECTION_KEYS } from './section-blocks';
+export { SECTION_IMAGE_VERSION, RENDERABLE_SECTION_KEYS };
+export type { SectionMeta };
 // Turbopack 네이티브 모듈 정적 import 회피 → 런타임 require (chart-image-generator 패턴)
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const getResvg = () => require('@resvg/resvg-js').Resvg as typeof import('@resvg/resvg-js').Resvg;
@@ -73,21 +75,6 @@ async function ensureSectionFonts() {
   return fontsPromise;
 }
 
-/** 이미지용 수식 평문화 — satori는 KaTeX 불가. 간단 $...$ 만 처리(드묾). */
-export function stripMathForImage(text: string): string {
-  if (!text) return '';
-  return text
-    .replace(/\$\$?([^$]*)\$\$?/g, '$1')   // $..$ / $$..$$ 래퍼 제거
-    .replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, '$1/$2')
-    .replace(/\\times/g, '×').replace(/\\div/g, '÷')
-    .replace(/\\leq/g, '≤').replace(/\\geq/g, '≥').replace(/\\neq/g, '≠')
-    .replace(/\^\{?2\}?/g, '²').replace(/\^\{?3\}?/g, '³')
-    .replace(/\\[a-zA-Z]+/g, '')           // 남은 LaTeX 커맨드 제거
-    .replace(/[{}]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
 const SECTION_IMG_WIDTH = 720;
 
 /** satori React 트리 → PNG Buffer (resvg 래스터, 2x 크기) */
@@ -95,7 +82,6 @@ export async function renderNodeToPng(node: React.ReactNode, width = SECTION_IMG
   const { satoriFonts, fontFiles } = await ensureSectionFonts();
   const svg = await satori(node as React.ReactElement, {
     width,
-    // 높이는 콘텐츠에 맞게 satori가 자동 계산 (height 미지정)
     fonts: satoriFonts.map((f) => ({ name: f.name, data: f.data, weight: f.weight, style: f.style })),
     embedFont: false, // resvg가 fontFiles로 렌더 (SVG 경량화)
   });
@@ -107,31 +93,19 @@ export async function renderNodeToPng(node: React.ReactNode, width = SECTION_IMG
   return Buffer.from(resvg.render().asPng());
 }
 
-// ── POC 섹션: 헤드라인 + dek + KPI 바 ──
+// ── 색상 토큰 (V3 NYT 톤) ──
+const C = { ink: '#121212', red: '#BF1722', amber: '#FFA940', green: '#2F7B3A' };
 
-const C = { ink: '#121212', red: '#BF1722', amber: '#FFA940', green: '#2F7B3A', gray: '#888', cream: '#FFF8E0', line: '#E5E5E5' };
+function s(v: unknown): string { return typeof v === 'string' ? v : ''; }
 
-export interface SectionMeta {
-  examTitle: string;
-  grade: string;
-  schoolName: string | null;
-  totalQuestions: number;
-  totalPoints: number;
-}
-
-/** POC — 헤드라인/dek/KPI 섹션 JSX (satori) */
-export function HeadlineKpiSection(props: {
-  kicker: string;
-  headline: string;
-  dek: string;
-  avgDifficulty: string;   // "2.7"
-  killerPct: number;       // 0~100
-  essayCount: number;
-  totalPoints: number;
+// ── 섹션: 인트로 (헤드라인 + dek + KPI 바) ──
+function HeadlineKpiSection(props: {
+  kicker: string; headline: string; dek: string;
+  avgDifficulty: string; killerPct: number; essayCount: number; totalPoints: number;
 }): React.ReactElement {
   const { kicker, headline, dek, avgDifficulty, killerPct, essayCount, totalPoints } = props;
   const kpi = (label: string, value: string, unit: string, color: string, border: boolean) => (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '22px 8px', borderRight: border ? `1px solid #333` : 'none' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '22px 8px', borderRight: border ? '1px solid #333' : 'none' }}>
       <div style={{ display: 'flex', fontSize: 11, letterSpacing: 1.4, color: '#888', fontWeight: 700, marginBottom: 6 }}>{label}</div>
       <div style={{ display: 'flex', alignItems: 'flex-end' }}>
         <span style={{ fontFamily: 'Noto Serif KR', fontSize: 34, fontWeight: 700, color, lineHeight: 1 }}>{value}</span>
@@ -140,16 +114,10 @@ export function HeadlineKpiSection(props: {
     </div>
   );
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: SECTION_IMG_WIDTH, backgroundColor: '#fff', padding: '34px 36px 0' }}>
-      <div style={{ display: 'flex', fontSize: 12, letterSpacing: 1.6, color: C.red, fontWeight: 700, marginBottom: 14 }}>
-        {stripMathForImage(kicker)}
-      </div>
-      <div style={{ display: 'flex', fontFamily: 'Noto Serif KR', fontSize: 40, fontWeight: 700, color: C.ink, lineHeight: 1.25, letterSpacing: -1, marginBottom: 18 }}>
-        {stripMathForImage(headline)}
-      </div>
-      <div style={{ display: 'flex', fontSize: 17, color: '#333', lineHeight: 1.7, marginBottom: 26 }}>
-        {stripMathForImage(dek)}
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', width: SECTION_IMG_WIDTH, backgroundColor: '#fff', padding: '34px 36px 28px' }}>
+      <div style={{ display: 'flex', fontSize: 12, letterSpacing: 1.6, color: C.red, fontWeight: 700, marginBottom: 14 }}>{koImg(kicker)}</div>
+      <div style={{ display: 'flex', fontFamily: 'Noto Serif KR', fontSize: 40, fontWeight: 700, color: C.ink, lineHeight: 1.25, letterSpacing: -1, marginBottom: 18 }}>{koImg(headline)}</div>
+      <div style={{ display: 'flex', fontSize: 17, color: '#333', lineHeight: 1.7, marginBottom: 26 }}>{koImg(dek)}</div>
       <div style={{ display: 'flex', backgroundColor: '#121212', borderRadius: 2 }}>
         {kpi('평균 난이도', avgDifficulty, '/5', C.amber, true)}
         {kpi('킬러 비중', String(killerPct), '%', '#fff', true)}
@@ -158,4 +126,29 @@ export function HeadlineKpiSection(props: {
       </div>
     </div>
   );
+}
+
+/** 섹션 key → satori PNG. (section-image 엔드포인트가 호출) */
+export async function renderSectionImage(
+  key: string,
+  c: Record<string, unknown>,
+  meta: SectionMeta,
+  kpi: { avgDifficulty: string; killerPct: number; essayCount: number },
+): Promise<Buffer | null> {
+  switch (key) {
+    case 'intro':
+      return renderNodeToPng(
+        HeadlineKpiSection({
+          kicker: s(c.blog_kicker) || '시험 분석',
+          headline: s(c.blog_headline) || '시험 총평',
+          dek: s(c.blog_dek),
+          avgDifficulty: kpi.avgDifficulty,
+          killerPct: kpi.killerPct,
+          essayCount: kpi.essayCount,
+          totalPoints: meta.totalPoints,
+        }),
+      );
+    default:
+      return null;
+  }
 }
