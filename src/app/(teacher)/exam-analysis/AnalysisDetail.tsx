@@ -48,9 +48,11 @@ interface AnalysisDetailProps {
   onToggleAutoCommentary?: (v: boolean) => void;
   /** 현재 시험지의 생성 단계 (page.tsx genState) — metadata(준비) / commentary(자동 총평) + 진행시각 */
   gen?: { phase: 'metadata' | 'commentary'; startMs: number; willChain: boolean } | null;
+  /** 수동 [총평 생성] 시작/종료를 page.tsx에 알림 → 사이드바 배지 실시간 반영 + 완료 시 목록 갱신 */
+  onCommentaryGenChange?: (id: string, started: boolean) => void;
 }
 
-export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCommentary = false, onToggleAutoCommentary, gen = null }: AnalysisDetailProps) {
+export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCommentary = false, onToggleAutoCommentary, gen = null, onCommentaryGenChange }: AnalysisDetailProps) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<AnalysisTab>('basic');
   const [showExtractModal, setShowExtractModal] = useState(false);
@@ -184,6 +186,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
     const startId = detail.id;
     // 생성 시작 — commentaryGen에 등록 (시험지 전환에도 유지). fetch는 계속 진행됨.
     setCommentaryGen((p) => ({ ...p, [startId]: Date.now() }));
+    onCommentaryGenChange?.(startId, true); // 사이드바 배지 "총평 생성중"
     try {
       const res = await fetch(`/api/exam-analysis/${startId}/analyze-extended`, {
         method: 'POST',
@@ -208,6 +211,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
         delete n[startId];
         return n;
       });
+      onCommentaryGenChange?.(startId, false); // 배지 해제 + 목록 갱신(총평완료)
     }
   };
 

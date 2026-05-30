@@ -140,6 +140,16 @@ export default function ExamAnalysisPage() {
   const clearGen = useCallback((id: string) => {
     setGenState((p) => { const n = { ...p }; delete n[id]; return n; });
   }, []);
+  // AnalysisDetail의 수동 [총평 생성]도 사이드바 배지에 실시간 반영 (genState 통합).
+  // 시작: commentary 단계 등록 → 카드 "총평 생성중". 종료: 해제 + 목록 갱신 → "총평완료".
+  const handleCommentaryGenChange = useCallback((id: string, started: boolean) => {
+    if (started) {
+      setGenState((p) => ({ ...p, [id]: { phase: 'commentary', startMs: Date.now(), willChain: false } }));
+    } else {
+      clearGen(id);
+      fetchListRef.current(true); // 총평완료 상태 반영
+    }
+  }, [clearGen]);
 
   /**
    * 분석 완료 후: readiness 통과 시 V3 총평용 메타데이터를 백그라운드로 선생성.
@@ -356,6 +366,7 @@ export default function ExamAnalysisPage() {
             autoCommentary={autoCommentary}
             onToggleAutoCommentary={toggleAutoCommentary}
             gen={genState[selectedDetail.id] ?? null}
+            onCommentaryGenChange={handleCommentaryGenChange}
           />
         ) : selectedId && !selectedDetail ? (
           <div className="flex flex-col items-center justify-center h-full text-slate-400">
