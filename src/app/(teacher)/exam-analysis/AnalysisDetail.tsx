@@ -383,6 +383,27 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
   };
 
   /**
+   * [비교 POC] 클라이언트 캡처 — 실제 V3 화면(.v3)을 modern-screenshot로 그대로 PNG 캡처해 다운로드.
+   * Playwright 서버 캡처와 화질 비교용. (총평 펼친 상태 필요)
+   */
+  const handleCaptureV3Client = async () => {
+    const node = document.querySelector('.v3') as HTMLElement | null;
+    if (!node) { toast.error('총평을 펼쳐 매거진 보기 상태에서 시도하세요'); return; }
+    try {
+      toast.info('V3 화면 캡처 중... (클라이언트)');
+      const { domToPng } = await import('modern-screenshot');
+      const dataUrl = await domToPng(node, { scale: 2, backgroundColor: '#ffffff' });
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = 'v3-client-capture.png';
+      a.click();
+      toast.success('클라이언트 캡처 PNG 다운로드 완료 — 화질을 확인하세요');
+    } catch (e) {
+      toast.error('클라이언트 캡처 실패: ' + (e instanceof Error ? e.message : String(e)));
+    }
+  };
+
+  /**
    * V4 (갈수학학원 스타일) RichText 복사 → 네이버 SmartEditor 붙여넣기
    * V3와 동일 패턴, naver-v4-renderer 사용.
    */
@@ -854,6 +875,11 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                   >
                     <Copy className="w-4 h-4 mr-1" />
                     네이버 이미지 복사
+                  </Button>
+                )}
+                {hasV3 && (
+                  <Button size="sm" variant="ghost" onClick={handleCaptureV3Client} title="[비교용] 실제 V3 화면을 클라이언트에서 그대로 캡처해 PNG 다운로드">
+                    캡처 테스트(클라)
                   </Button>
                 )}
                 {V4_NAVER_COPY_ENABLED && commentary?.v4_exam_overview && (
