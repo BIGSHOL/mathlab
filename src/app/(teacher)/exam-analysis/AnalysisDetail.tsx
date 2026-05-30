@@ -17,7 +17,7 @@ import type { AnalysisSummary } from '@/lib/exam-analysis/types';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import { DIFFICULTY_BAR_COLORS, isStalePromptVersion, extractPromptVersion, PROMPT_VERSION } from '@/lib/exam-analysis/constants';
 import { sumPoints, roundPoints, formatPoints } from '@/lib/exam-analysis/points';
-import { buildSectionBlocks, buildNaverImageHtml, sectionBlockImageUrl } from '@/lib/exam-analysis/section-blocks';
+import { koImg } from '@/lib/exam-analysis/section-blocks';
 import type { ExamPaperData, AnalysisTab } from './types';
 import { getConfidenceInfo, getOverallDifficultyLevel, getDifficultyBreakdown, interpolateDifficultyColor } from './helpers';
 import { DIFF_LEVEL_LABELS } from './constants';
@@ -332,34 +332,52 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
   };
 
   /**
-   * 네이버 "이미지 복사" — 섹션을 이미지화(satori→PNG)해 [이미지][핵심요약] 순으로 클립보드 복사.
-   * 네이버가 매거진 HTML을 뭉개는 한계를 이미지로 우회 + 요약 텍스트로 검색 노출(이중첨부).
+   * 네이버 "이미지 복사" — 실제 V3 화면(.v3)을 섹션별로 그대로 캡처(modern-screenshot) →
+   * Supabase 업로드(공개 URL) → [이미지][핵심요약] 순으로 클립보드 복사.
+   * 네이버가 매거진 HTML을 뭉개는 한계를 "실화면 이미지"로 우회 + 요약 텍스트로 검색 노출(이중첨부).
    */
   const handleCopyNaverImages = async () => {
     if (!commentary) { toast.error('총평이 없습니다. 먼저 총평을 생성하세요.'); return; }
+    const root = document.querySelector('.v3') as HTMLElement | null;
+    if (!root) { toast.error('총평을 펼쳐 매거진 보기 상태에서 시도하세요'); return; }
+    const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const summaryOf = (node: HTMLElement): string => {
+      const heading = (node.querySelector('h1,h2,h3,h4,.v3-section-sub') as HTMLElement | null)?.innerText?.trim() || '';
+      const para = (node.querySelector('p') as HTMLElement | null)?.innerText?.trim() || '';
+      const firstSentence = para.split(/(?<=[.?!。])\s/)[0] || '';
+      const merged = [heading, firstSentence].filter(Boolean).join(' — ');
+      return koImg(merged).slice(0, 140);
+    };
     try {
-      const baseUrl = window.location.origin;
-      const sectionMeta = {
-        examTitle: detail.title,
-        grade: detail.grade,
-        schoolName: detail.schoolName ?? null,
-        totalQuestions: questions.length,
-        totalPoints: sumPoints(questions.map((q) => q.points)),
-      };
-      const blocks = buildSectionBlocks(commentary as unknown as Record<string, unknown>, sectionMeta);
-      const url = (b: typeof blocks[number]) => sectionBlockImageUrl(b, baseUrl, detail.id);
-
-      toast.info('섹션 이미지 생성 중... (최초 1~2분, 이후 즉시)');
-      // 워밍업(서버 lazy 생성 트리거) — 섹션은 순차(키별 독립 캐시), 차트는 difficulty 먼저(4종 일괄 생성) 후 병렬.
-      const sections = blocks.filter((b) => b.kind === 'section');
-      const charts = blocks.filter((b) => b.kind === 'chart');
-      for (const b of sections) { try { await fetch(url(b)); } catch { /* 무시 */ } }
-      if (charts.length) {
-        try { await fetch(url(charts[0])); } catch { /* 무시 */ }
-        await Promise.all(charts.slice(1).map((b) => fetch(url(b)).catch(() => {})));
+      toast.info('실제 V3 화면을 섹션별로 캡처·업로드 중... (수십 초)');
+      const { domToPng } = await import('modern-screenshot');
+      const nodes = Array.from(root.querySelectorAll(':scope > header, :scope > section')) as HTMLElement[];
+      const blocks: { url: string; summary: string }[] = [];
+      let i = 0;
+      for (const node of nodes) {
+        i += 1;
+        let dataUrl: string;
+        try {
+          dataUrl = await domToPng(node, { scale: 2, backgroundColor: '#ffffff' });
+        } catch { continue; }
+        try {
+          const res = await fetch(`/api/exam-analysis/${detail.id}/upload-section-image`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ section: `s${i}`, dataUrl }),
+          });
+          if (!res.ok) continue;
+          const json = await res.json();
+          if (json?.data?.url) blocks.push({ url: json.data.url, summary: summaryOf(node) });
+        } catch { /* 업로드 실패한 섹션은 건너뜀 */ }
       }
+      if (!blocks.length) { toast.error('캡처/업로드된 섹션이 없습니다'); return; }
 
-      const html = buildNaverImageHtml(blocks, { baseUrl, examPaperId: detail.id });
+      const html = `<div style="width:720px;max-width:100%;">${blocks.map((b) =>
+        `<p style="text-align:center;margin:0 0 6px;"><img src="${b.url}" style="width:720px;max-width:100%;" /></p>` +
+        (b.summary ? `<p style="font-size:14px;color:#555;line-height:1.75;margin:0 0 30px;word-break:keep-all;">${esc(b.summary)}</p>` : '')
+      ).join('')}</div>`;
+
       const container = document.createElement('div');
       container.innerHTML = html;
       container.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;width:720px;font-family:"맑은 고딕",sans-serif;color:#333;text-align:left;';
@@ -373,33 +391,12 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
         const ok = document.execCommand('copy');
         selection?.removeAllRanges();
         if (!ok) throw new Error('execCommand copy 실패');
-        toast.success('이미지 + 요약이 복사되었습니다. 네이버 블로그에 붙여넣으세요.');
+        toast.success(`${blocks.length}개 섹션 이미지 + 요약이 복사되었습니다. 네이버 블로그에 붙여넣으세요.`);
       } finally {
         document.body.removeChild(container);
       }
     } catch (e) {
       toast.error('이미지 복사 실패: ' + (e instanceof Error ? e.message : String(e)));
-    }
-  };
-
-  /**
-   * [비교 POC] 클라이언트 캡처 — 실제 V3 화면(.v3)을 modern-screenshot로 그대로 PNG 캡처해 다운로드.
-   * Playwright 서버 캡처와 화질 비교용. (총평 펼친 상태 필요)
-   */
-  const handleCaptureV3Client = async () => {
-    const node = document.querySelector('.v3') as HTMLElement | null;
-    if (!node) { toast.error('총평을 펼쳐 매거진 보기 상태에서 시도하세요'); return; }
-    try {
-      toast.info('V3 화면 캡처 중... (클라이언트)');
-      const { domToPng } = await import('modern-screenshot');
-      const dataUrl = await domToPng(node, { scale: 2, backgroundColor: '#ffffff' });
-      const a = document.createElement('a');
-      a.href = dataUrl;
-      a.download = 'v3-client-capture.png';
-      a.click();
-      toast.success('클라이언트 캡처 PNG 다운로드 완료 — 화질을 확인하세요');
-    } catch (e) {
-      toast.error('클라이언트 캡처 실패: ' + (e instanceof Error ? e.message : String(e)));
     }
   };
 
@@ -875,11 +872,6 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                   >
                     <Copy className="w-4 h-4 mr-1" />
                     네이버 이미지 복사
-                  </Button>
-                )}
-                {hasV3 && (
-                  <Button size="sm" variant="ghost" onClick={handleCaptureV3Client} title="[비교용] 실제 V3 화면을 클라이언트에서 그대로 캡처해 PNG 다운로드">
-                    캡처 테스트(클라)
                   </Button>
                 )}
                 {V4_NAVER_COPY_ENABLED && commentary?.v4_exam_overview && (
