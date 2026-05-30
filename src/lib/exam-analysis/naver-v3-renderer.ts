@@ -83,9 +83,9 @@ function joinKoreanCounters(text: string): string {
  */
 function shortenDataLabel(raw: string): string {
   return String(raw ?? '')
-    .replace(/\s*\(Level\s+(\d+)\)\s*/gi, '·Lv$1')
-    .replace(/\s*\(Lv\s*(\d+)\)\s*/gi, '·Lv$1')
-    .replace(/^Level\s+(\d+)\s*/i, 'Lv$1 ')
+    .replace(/\s*\(Level\s+(\d+)\)\s*/gi, '·$1단계')
+    .replace(/\s*\(Lv\s*(\d+)\)\s*/gi, '·$1단계')
+    .replace(/^Level\s+(\d+)\s*/i, '$1단계 ')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -304,7 +304,7 @@ function renderDifficultyStackedBar(questions: AnalyzedQuestion[]): string {
 
   const cards = stats.map((s) => `
     <td width="19%" align="center" valign="top" style="padding:14px 4px;background:#fff;border:1px solid #eee;border-top:3px solid ${s.color};">
-      <p style="margin:0;font-family:Pretendard,sans-serif;font-size:10px;letter-spacing:0.06em;color:#666;font-weight:700;white-space:nowrap;">Lv ${s.level} · ${s.label}</p>
+      <p style="margin:0;font-family:Pretendard,sans-serif;font-size:10px;letter-spacing:0.06em;color:#666;font-weight:700;white-space:nowrap;">${s.level}단계 · ${s.label}</p>
       <p style="margin:8px 0 2px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:30px;font-weight:900;color:${s.color};line-height:1;">${s.count}<span style="font-size:12px;color:#888;font-weight:400;">문항</span></p>
       <p style="margin:0;font-family:Pretendard,sans-serif;font-size:12px;color:#444;font-weight:600;">${formatPoints(s.points)}점</p>
     </td>`).join('<td width="1%">&nbsp;</td>');
@@ -312,7 +312,7 @@ function renderDifficultyStackedBar(questions: AnalyzedQuestion[]): string {
   return `
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;background:#fafafa;border:1px solid #ddd;">
   <tr><td style="padding:20px 22px;">
-    <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.14em;color:#888;font-weight:800;">FIGURE · 난이도별 배점 분포</p>
+    <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.14em;color:#888;font-weight:800;">도표 · 난이도별 배점 분포</p>
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>${cards}</tr>
     </table>
@@ -344,7 +344,7 @@ function renderFormatBreakdown(questions: AnalyzedQuestion[]): string {
   return `
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;background:#fafafa;border:1px solid #ddd;">
   <tr><td style="padding:20px 22px;">
-    <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.14em;color:#888;font-weight:800;">FIGURE · 문제 형식 분포</p>
+    <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.14em;color:#888;font-weight:800;">도표 · 문제 형식 분포</p>
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>${cards}</tr>
     </table>
@@ -362,8 +362,8 @@ function renderQABlock(qa: QAItem, idx: number): string {
   return `
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0 16px;border-top:1px solid #DDD;">
   <tr><td style="padding-top:18px;">
-    <p style="margin:0 0 10px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.14em;color:#BF1722;font-weight:800;">Q${idx} · 학부모 인터뷰</p>
-    <p style="margin:0 0 14px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:32px;font-weight:900;color:#BF1722;line-height:1;letter-spacing:-0.02em;">Q${idx}.</p>
+    <p style="margin:0 0 10px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.14em;color:#BF1722;font-weight:800;">질문 ${idx} · 학부모 인터뷰</p>
+    <p style="margin:0 0 14px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:32px;font-weight:900;color:#BF1722;line-height:1;letter-spacing:-0.02em;">${idx}.</p>
     <p style="margin:0 0 16px;font-family:'Noto Serif KR',serif;font-size:20px;font-weight:700;color:#121212;line-height:1.4;word-break:keep-all;">${escapeHtml(qa.question)}</p>
     ${answer.map((p) => `<p style="margin:0 0 14px;font-family:'Noto Serif KR',serif;font-size:15px;line-height:1.85;color:#2A2A2A;word-break:keep-all;">${markdownToInlineBold(p)}</p>`).join('')}
   </td></tr>
@@ -527,7 +527,7 @@ function renderCharts(chartUrls: NaverV3ChartUrls): string {
     figs.push(`
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 32px;background:#fafafa;border:1px solid #ddd;">
   <tr><td style="padding:24px 20px;">
-    <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.12em;color:#888;font-weight:700;">FIGURE · 단원별 출제 현황 (상위 8개 단원)</p>
+    <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.12em;color:#888;font-weight:700;">도표 · 단원별 출제 현황 (상위 8개 단원)</p>
     <img src="${escapeHtml(chartUrls.topicBar)}" alt="단원별 출제 현황" style="max-width:100%;height:auto;display:block;margin:0 auto;" />
   </td></tr>
 </table>`);
@@ -536,7 +536,7 @@ function renderCharts(chartUrls: NaverV3ChartUrls): string {
     figs.push(`
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 32px;background:#fafafa;border:1px solid #ddd;">
   <tr><td style="padding:24px 20px;">
-    <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.12em;color:#888;font-weight:700;">FIGURE · 변별력 분석</p>
+    <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.12em;color:#888;font-weight:700;">도표 · 변별력 분석</p>
     <img src="${escapeHtml(chartUrls.discrimination)}" alt="변별력 분석" style="max-width:100%;height:auto;display:block;margin:0 auto;" />
   </td></tr>
 </table>`);
@@ -597,11 +597,11 @@ function renderQTable(rows: NonNullable<CommentaryResult['v4_difficulty_rows']>)
     <tr bgcolor="${bg}">
       <td style="padding:9px 10px;font-family:'Abril Fatface',serif;font-size:15px;font-weight:700;color:#121212;border-bottom:1px solid #EEE;vertical-align:top;white-space:nowrap;">${escapeHtml(String(row.question_number))}</td>
       <td style="padding:9px 10px;font-family:Pretendard,sans-serif;font-size:13px;font-weight:600;color:#1A1A1A;border-bottom:1px solid #EEE;vertical-align:top;word-break:keep-all;">${mdLatex(row.topic)}${sub}</td>
-      <td style="padding:9px 10px;font-family:Pretendard,sans-serif;font-size:13px;border-bottom:1px solid #EEE;vertical-align:top;white-space:nowrap;"><strong style="color:${color};font-weight:800;">Lv${validLv}</strong> <span style="color:#888;font-size:12px;">${label}</span></td>
+      <td style="padding:9px 10px;font-family:Pretendard,sans-serif;font-size:13px;border-bottom:1px solid #EEE;vertical-align:top;white-space:nowrap;"><strong style="color:${color};font-weight:800;">${validLv}단계</strong> <span style="color:#888;font-size:12px;">${label}</span></td>
       <td align="right" style="padding:9px 10px;font-family:Pretendard,sans-serif;font-size:14px;font-weight:700;color:#121212;border-bottom:1px solid #EEE;vertical-align:top;white-space:nowrap;">${row.points}점</td>
     </tr>`;
   }).join('');
-  return `${v3SectionTitle('DATA · 문항별 상세', '문항별 난이도 · 출제 단원')}
+  return `${v3SectionTitle('데이터 · 문항별 상세', '문항별 난이도 · 출제 단원')}
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 32px;border:1px solid #DDD;border-collapse:collapse;table-layout:fixed;">
   ${header}${body}
 </table>`;
@@ -626,7 +626,7 @@ function renderMainAnalysis(items: NonNullable<CommentaryResult['v4_main_analysi
     <p style="margin:0 0 6px;font-family:'Noto Serif KR',serif;font-size:18px;font-weight:700;color:#121212;word-break:keep-all;">${mdLatex(m.heading)}</p>
     <p style="margin:0;font-family:'Noto Serif KR',serif;font-size:15px;line-height:1.8;color:#2A2A2A;word-break:keep-all;">${mdLatex(m.body)}</p>
   </td></tr>`).join('');
-  return `${v3SectionTitle('ANALYSIS · 출제 핵심 포인트', '영역별로 본 출제 의도')}
+  return `${v3SectionTitle('분석 · 출제 핵심 포인트', '영역별로 본 출제 의도')}
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 32px;">
   ${blocks}
 </table>`;
@@ -641,7 +641,7 @@ function renderKeyQuestions(items: NonNullable<CommentaryResult['v4_key_question
     <p style="margin:0;font-family:'Noto Serif KR',serif;font-size:15px;line-height:1.8;color:#2A2A2A;word-break:keep-all;">${mdLatex(kq.body)}</p>
   </td></tr>
 </table>`).join('');
-  return `${v3SectionTitle('KILLER · 주요 문항 해설', '점수를 가른 결정적 문항')}
+  return `${v3SectionTitle('핵심 · 주요 문항 해설', '점수를 가른 결정적 문항')}
 ${blocks}`;
 }
 
@@ -655,7 +655,7 @@ function renderFinalStrategy(rows: NonNullable<CommentaryResult['v4_final_strate
     <p style="margin:0;font-family:Pretendard,sans-serif;font-size:14px;line-height:1.7;color:#2A2A2A;word-break:keep-all;"><strong style="color:#BF1722;font-weight:800;font-size:12px;">실행 액션 </strong>${mdLatex(r.action)}</p>
   </td></tr>
 </table>`).join('');
-  return `${v3SectionTitle('FEEDBACK · 단원별 학습 방향', '이번 시험 단원별 피드백')}
+  return `${v3SectionTitle('피드백 · 단원별 학습 방향', '이번 시험 단원별 피드백')}
 ${blocks}`;
 }
 

@@ -41,7 +41,7 @@ export function DifficultyStackedBar({ questions }: { questions: AnalyzedQuestio
 
   return (
     <figure className="v3-info-fig">
-      <figcaption className="v3-info-label">FIGURE · 난이도별 배점 분포</figcaption>
+      <figcaption className="v3-info-label">도표 · 난이도별 배점 분포</figcaption>
       <div className="v3-diff-stacked">
         {segments.map((s, i) => (
           <div
@@ -54,7 +54,7 @@ export function DifficultyStackedBar({ questions }: { questions: AnalyzedQuestio
         ))}
       </div>
       <p className="v3-info-caption" style={{ marginTop: '10px', marginBottom: '14px' }}>
-        각 난이도: <b>상단 grid = 문항수</b> (최대 {maxCount}칸) · <b>하단 막대 = 배점</b> (최대 {maxPoints}점)
+        각 난이도: <b>위 칸 = 문항 수</b> (최대 {maxCount}칸) · <b>아래 막대 = 배점</b> (최대 {formatPoints(maxPoints)}점)
       </p>
       {stats.map((s) => {
         const ptsPct = Math.round((s.points / maxPoints) * 100);
@@ -62,7 +62,7 @@ export function DifficultyStackedBar({ questions }: { questions: AnalyzedQuestio
           <div key={s.level} className="v3-diff-level-block">
             <div className="v3-diff-level-header">
               <span className="v3-diff-swatch" style={{ background: s.color }} />
-              <span className="v3-diff-label">Lv {s.level} · {s.label}</span>
+              <span className="v3-diff-label">{s.level}단계 · {s.label}</span>
               <span className="v3-diff-detail">{s.count}문항 · {formatPoints(s.points)}점</span>
             </div>
             <div
@@ -87,7 +87,7 @@ export function DifficultyStackedBar({ questions }: { questions: AnalyzedQuestio
         );
       })}
       <p className="v3-info-caption">
-        상단 stacked bar = 배점 비중. 총 {formatPoints(totalPts)}점 · {questions.length}문항.
+        위 누적 막대 = 배점 비중. 총 {formatPoints(totalPts)}점 · {questions.length}문항.
       </p>
     </figure>
   );

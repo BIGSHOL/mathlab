@@ -38,7 +38,7 @@ export function KillerMap({ questions }: { questions: AnalyzedQuestion[] }) {
 
   return (
     <figure className="v3-info-fig">
-      <figcaption className="v3-info-label">FIGURE · 문항별 난이도 지도</figcaption>
+      <figcaption className="v3-info-label">도표 · 문항별 난이도 지도</figcaption>
       <div className="v3-killer-grid">
         {list.map((q, i) => {
           let bg = 'transparent';
@@ -73,19 +73,19 @@ export function KillerMap({ questions }: { questions: AnalyzedQuestion[] }) {
       <div className="v3-killer-legend">
         <span>
           <span className="v3-killer-dot" style={{ borderColor: '#121212' }} />
-          기본·표준 (Lv 1~2)
+          기본·표준 (1~2단계)
         </span>
         <span>
           <span className="v3-killer-dot" style={{ borderColor: '#888' }} />
-          응용 (Lv 3)
+          응용 (3단계)
         </span>
         <span>
           <span className="v3-killer-dot" style={{ background: '#FDE9D7', borderColor: '#DA8B2C' }} />
-          심화 (Lv 4)
+          심화 (4단계)
         </span>
         <span>
           <span className="v3-killer-dot" style={{ background: '#BF1722', borderColor: '#BF1722' }} />
-          최고난도 (Lv 5)
+          최고난도 (5단계)
         </span>
         <span>
           <span className="v3-killer-dot" style={{ background: '#FFF8E0', borderColor: '#DA8B2C' }} />

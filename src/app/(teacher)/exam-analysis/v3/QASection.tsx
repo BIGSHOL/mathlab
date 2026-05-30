@@ -22,7 +22,7 @@ export function QASection({ qa, sectionNum, qaIndex }: QASectionProps) {
   return (
     <section className="v3-section">
       <span className="v3-section-num">{sectionNum}</span>
-      <div className="v3-section-sub">Q{qaIndex + 1} · 학부모 인터뷰</div>
+      <div className="v3-section-sub">질문 {qaIndex + 1} · 학부모 인터뷰</div>
       <h3>{qa.question}</h3>
       {answer.map((p, i) => (
         <p key={`qa-${qaIndex}-${i}`}>{markdownToHighlighted(p, `qa-${qaIndex}-${i}`)}</p>

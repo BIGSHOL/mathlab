@@ -132,8 +132,14 @@ export default function ExamAnalysisPage() {
     return () => clearInterval(interval);
   }, [hasAnalyzing]);
 
-  // 메타데이터(V3 base scaffolding) 생성 중인 시험지 추적 — 총평 버튼 게이팅용
-  const [metadataGenIds, setMetadataGenIds] = useState<Record<string, boolean>>({});
+  // 시험지별 생성 단계 추적 — 'metadata'(V3 base 선생성) → 'commentary'(자동 총평).
+  // startMs로 진행 시간 프로그레스 바 표시, willChain으로 안내 문구 분기.
+  // Record 키=examId라 다른 시험지 진행과 겹치지 않음(고유 프로그레스).
+  type GenPhase = { phase: 'metadata' | 'commentary'; startMs: number; willChain: boolean };
+  const [genState, setGenState] = useState<Record<string, GenPhase>>({});
+  const clearGen = useCallback((id: string) => {
+    setGenState((p) => { const n = { ...p }; delete n[id]; return n; });
+  }, []);
 
   /**
    * 분석 완료 후: readiness 통과 시 V3 총평용 메타데이터를 백그라운드로 선생성.
@@ -162,44 +168,48 @@ export default function ExamAnalysisPage() {
         return;
       }
 
-      // ① 메타데이터 백그라운드 선생성 (총평의 분석 기반) — 이 동안 총평 버튼은 "준비 중"
-      setMetadataGenIds((p) => ({ ...p, [id]: true }));
-      toast.info('V3 총평 준비 중... (분석 기반 생성, 약 10~20초)');
+      // ① 메타데이터 단계 — V3 총평의 분석 기반(base) 선생성. 이 동안 총평 버튼은 "준비 중".
+      setGenState((p) => ({ ...p, [id]: { phase: 'metadata', startMs: Date.now(), willChain } }));
+      let metaOk = false;
       try {
         const mRes = await fetch(`/api/exam-analysis/${id}/generate-metadata`, { method: 'POST' });
-        if (!mRes.ok) {
-          toast.error('총평 준비(메타데이터) 생성 실패 — 잠시 후 [총평 생성]을 시도하세요');
-          return;
-        }
-      } finally {
-        setMetadataGenIds((p) => { const n = { ...p }; delete n[id]; return n; });
-        fetchListRef.current(true);
-        if (selectedIdRef.current === id) fetchDetailRef.current(id);
+        metaOk = mRes.ok;
+        if (!mRes.ok) toast.error('총평 준비(메타데이터) 생성 실패 — 잠시 후 [총평 생성]을 시도하세요');
+      } catch {
+        toast.error('총평 준비 중 오류가 발생했습니다');
       }
+      fetchListRef.current(true);
+      if (selectedIdRef.current === id) fetchDetailRef.current(id);
+      if (!metaOk) { clearGen(id); return; }
 
-      // ② 자동 총평이면 이어서 생성 (메타데이터 사용 → V3 단독 호출로 빠름)
-      // forceRegenerate: true — 방어적. 재분석(/analyze)이 기존 분석을 deleteMany → extension까지
-      //   cascade 삭제하므로 새 analysisId엔 commentary가 없어 어차피 신선 생성되지만,
-      //   캐시 회귀를 막기 위해 명시적으로 true (체인은 항상 신선한 분석 직후 실행됨).
+      // ② willChain(자동 총평 / 기존 총평 있는 재분석)이면 이어서 총평 생성 → commentary 단계.
+      // forceRegenerate: true — 체인은 항상 신선한 분석 직후 실행되므로 기존 총평을 반드시 갱신.
       if (willChain) {
-        toast.info('총평 자동 생성 중...');
-        const cRes = await fetch(`/api/exam-analysis/${id}/analyze-extended`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ agents: ['commentary'], forceRegenerate: true, includeNearby: true, includeYearCompare: true }),
-        });
-        if (cRes.ok) toast.success('분석 + 총평 자동 생성 완료');
-        else toast.error('총평 자동 생성 실패 — 수동으로 생성하세요');
-        fetchListRef.current(true);
-        if (selectedIdRef.current === id) fetchDetailRef.current(id);
+        setGenState((p) => ({ ...p, [id]: { phase: 'commentary', startMs: Date.now(), willChain } }));
+        try {
+          const cRes = await fetch(`/api/exam-analysis/${id}/analyze-extended`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ agents: ['commentary'], forceRegenerate: true, includeNearby: true, includeYearCompare: true }),
+          });
+          if (cRes.ok) toast.success('분석 + V3 총평 자동 생성 완료');
+          else toast.error('총평 자동 생성 실패 — 수동으로 생성하세요');
+        } catch {
+          toast.error('총평 자동 생성 중 오류가 발생했습니다');
+        } finally {
+          clearGen(id);
+          fetchListRef.current(true);
+          if (selectedIdRef.current === id) fetchDetailRef.current(id);
+        }
       } else {
+        clearGen(id);
         toast.success('V3 총평 준비 완료 — [총평 생성]을 누르면 빠르게 생성됩니다');
       }
     } catch {
       toast.error('총평 준비 중 오류가 발생했습니다');
-      setMetadataGenIds((p) => { const n = { ...p }; delete n[id]; return n; });
+      clearGen(id);
     }
-  }, []);
+  }, [clearGen]);
 
   const handleAnalyze = async (id: string) => {
     setAnalyzing(true);
@@ -212,7 +222,13 @@ export default function ExamAnalysisPage() {
     ));
     // 체크박스 ON 이거나, 기존에 총평이 있던 분석본의 재분석이면 → 총평까지 자동 V3 재생성
     const willChain = autoCommentary || hadCommentary;
-    toast.info(willChain ? 'AI 분석 + V3 총평 자동 생성을 시작합니다' : 'AI 분석이 시작되었습니다');
+    toast.info(
+      willChain
+        ? (hadCommentary && !autoCommentary
+            ? 'AI 재분석 후 기존 V3 총평을 자동 갱신합니다'
+            : 'AI 분석 후 V3 총평까지 자동 생성합니다')
+        : 'AI 분석이 시작되었습니다',
+    );
     try {
       // fire-and-forget: 서버에 분석 요청, 완료 시 갱신
       fetch(`/api/exam-analysis/${id}/analyze`, { method: 'POST' })
@@ -311,6 +327,7 @@ export default function ExamAnalysisPage() {
                 item.id === id ? { ...item, ...data } as ExamPaperData : item
               ));
             }}
+            genState={genState}
           />
         ))}
       </aside>
@@ -338,7 +355,7 @@ export default function ExamAnalysisPage() {
             onRefresh={() => fetchDetail(selectedDetail.id)}
             autoCommentary={autoCommentary}
             onToggleAutoCommentary={toggleAutoCommentary}
-            metadataGenerating={!!metadataGenIds[selectedDetail.id]}
+            gen={genState[selectedDetail.id] ?? null}
           />
         ) : selectedId && !selectedDetail ? (
           <div className="flex flex-col items-center justify-center h-full text-slate-400">

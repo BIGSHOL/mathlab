@@ -19,7 +19,7 @@ export function V3MainAnalysis({ items, sectionNum }: Props) {
   return (
     <section className="v3-section">
       <span className="v3-section-num">{sectionNum}</span>
-      <div className="v3-section-sub">ANALYSIS · 출제 핵심 포인트</div>
+      <div className="v3-section-sub">분석 · 출제 핵심 포인트</div>
       <h3>영역별로 본 출제 의도</h3>
       <div className="v3-analysis-list">
         {items.map((item, i) => (

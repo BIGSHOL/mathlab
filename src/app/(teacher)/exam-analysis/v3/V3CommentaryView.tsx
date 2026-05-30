@@ -176,7 +176,7 @@ export function V3CommentaryView({ commentary, questions, meta, charts }: V3Comm
       {/* ④ 섹션 01: 인포그래픽 3종 */}
       <section className="v3-section">
         <span className="v3-section-num">01</span>
-        <div className="v3-section-sub">DATA · 시험의 얼개</div>
+        <div className="v3-section-sub">데이터 · 시험의 얼개</div>
         <h3>한눈에 보는 {meta.totalQuestions}문항의 구조</h3>
         <p>난이도·문제 형식·문항 위치를 시각화하여 시험의 전반적 구성을 빠르게 파악할 수 있도록 정리했습니다. 어떤 구간에 변별이 집중되어 있고, 어디서 점수가 좌우되는지 한 페이지로 확인하세요.</p>
         <DifficultyStackedBar questions={questions} />
@@ -227,32 +227,32 @@ export function V3CommentaryView({ commentary, questions, meta, charts }: V3Comm
       {showCharts && (
         <section className="v3-section">
           <span className="v3-section-num">{chartsNum}</span>
-          <div className="v3-section-sub">CHART · AI 분석 시각화</div>
+          <div className="v3-section-sub">그래프 · AI 분석 시각화</div>
           <h3>4개 차트로 본 시험의 통계</h3>
           <p>분석 화면의 4개 도표 — 난이도 분포·능력 영역·단원 출제 현황·변별력 — 를 그대로 옮겨 왔습니다.</p>
           <div className="v3-charts-grid">
             {charts?.difficulty && (
               <figure className="v3-chart-fig">
                 <img src={toSrc(charts.difficulty)} alt="난이도 분포" />
-                <figcaption>FIGURE 1 — 난이도 분포 (총 {meta.totalQuestions}문항)</figcaption>
+                <figcaption>도표 1 — 난이도 분포 (총 {meta.totalQuestions}문항)</figcaption>
               </figure>
             )}
             {charts?.abilityRadar && (
               <figure className="v3-chart-fig">
                 <img src={toSrc(charts.abilityRadar)} alt="능력 영역" />
-                <figcaption>FIGURE 2 — 능력 영역 분포 (계산력·이해력·문제해결력·추론력)</figcaption>
+                <figcaption>도표 2 — 능력 영역 분포 (계산력·이해력·문제해결력·추론력)</figcaption>
               </figure>
             )}
             {charts?.topicBar && (
               <figure className="v3-chart-fig v3-chart-fig-wide">
                 <img src={toSrc(charts.topicBar)} alt="단원별 출제 현황" />
-                <figcaption>FIGURE 3 — 단원별 출제 현황 (상위 8개 단원)</figcaption>
+                <figcaption>도표 3 — 단원별 출제 현황 (상위 8개 단원)</figcaption>
               </figure>
             )}
             {charts?.discrimination && (
               <figure className="v3-chart-fig v3-chart-fig-wide">
                 <img src={toSrc(charts.discrimination)} alt="변별력 분석" />
-                <figcaption>FIGURE 4 — 변별력 분석 (난이도·배점·형식 기반 지수)</figcaption>
+                <figcaption>도표 4 — 변별력 분석 (난이도·배점·형식 기반 지수)</figcaption>
               </figure>
             )}
           </div>

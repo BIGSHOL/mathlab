@@ -45,14 +45,15 @@ export function joinKoreanCounters(text: string): string {
 }
 
 /**
- * DATA 박스 라벨 압축 — "기본 (Level 1)" → "기본·Lv1" 형태.
+ * 데이터 박스 라벨 압축 — "기본 (Level 1)" → "기본·1단계" 형태.
  * 영문+숫자+한글 혼합 라벨이 좁은 cell에서 한 글자씩 세로 분리되는 문제 방지.
+ * 블로그 노출 라벨이므로 영문(Level/Lv) 제거 → 한글 "N단계".
  */
 export function shortenDataLabel(raw: string): string {
   return String(raw ?? '')
-    .replace(/\s*\(Level\s+(\d+)\)\s*/gi, '·Lv$1')
-    .replace(/\s*\(Lv\s*(\d+)\)\s*/gi, '·Lv$1')
-    .replace(/^Level\s+(\d+)\s*/i, 'Lv$1 ')
+    .replace(/\s*\(Level\s+(\d+)\)\s*/gi, '·$1단계')
+    .replace(/\s*\(Lv\s*(\d+)\)\s*/gi, '·$1단계')
+    .replace(/^Level\s+(\d+)\s*/i, '$1단계 ')
     .replace(/\s+/g, ' ')
     .trim();
 }

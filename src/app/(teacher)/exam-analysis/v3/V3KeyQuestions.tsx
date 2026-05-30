@@ -19,7 +19,7 @@ export function V3KeyQuestions({ items, sectionNum }: Props) {
   return (
     <section className="v3-section">
       <span className="v3-section-num">{sectionNum}</span>
-      <div className="v3-section-sub">KILLER · 주요 문항 해설</div>
+      <div className="v3-section-sub">핵심 · 주요 문항 해설</div>
       <h3>점수를 가른 결정적 문항</h3>
       <div className="v3-keyq-list">
         {items.map((kq, i) => (

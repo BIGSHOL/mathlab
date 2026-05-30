@@ -27,9 +27,13 @@ interface CommentarySectionProps {
   includeNearby: boolean;
   onIncludeNearbyChange: (v: boolean) => void;
   nearbyCount: number | null;
+  /** 주변 학교 hover tooltip (포함 학교명 목록) */
+  nearbyTitle?: string;
   includeYearCompare: boolean;
   onIncludeYearCompareChange: (v: boolean) => void;
   yearCount: number | null;
+  /** 연도 비교 hover tooltip (포함 연도 목록) */
+  yearTitle?: string;
   hasSchool: boolean;
   /** V3 메타 정보 (있으면 V3 헤더에 사용. 없으면 blog_kicker/blog_headline 폴백) */
   examMeta?: {
@@ -55,9 +59,11 @@ export function CommentarySection({
   includeNearby,
   onIncludeNearbyChange,
   nearbyCount,
+  nearbyTitle,
   includeYearCompare,
   onIncludeYearCompareChange,
   yearCount,
+  yearTitle,
   hasSchool,
   examMeta,
   v3Charts,
@@ -253,7 +259,7 @@ export function CommentarySection({
             )}
             {hasSchool && !isRegenerating && (
               <div className="flex items-center gap-3">
-                <label className={`flex items-center gap-1 text-[11px] cursor-pointer ${nearbyCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
+                <label title={nearbyTitle} className={`flex items-center gap-1 text-[11px] cursor-pointer ${nearbyCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
                   <input
                     type="checkbox"
                     checked={includeNearby && (nearbyCount ?? 0) > 0}
@@ -263,7 +269,7 @@ export function CommentarySection({
                   />
                   주변 {nearbyCount != null && <span className={nearbyCount > 0 ? 'text-violet-500 font-medium' : ''}>({nearbyCount}교)</span>}
                 </label>
-                <label className={`flex items-center gap-1 text-[11px] cursor-pointer ${yearCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
+                <label title={yearTitle} className={`flex items-center gap-1 text-[11px] cursor-pointer ${yearCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
                   <input
                     type="checkbox"
                     checked={includeYearCompare && (yearCount ?? 0) > 0}

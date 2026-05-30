@@ -121,9 +121,15 @@ function getExamLabels(item: ExamPaperItem): string[] {
 /** 5단계 상태 판별 — 업로드 → 분석중 → 분석완료 → 총평완료 → 글작성 완료 (사용자 제안 라벨)
  *  구버전 프롬프트로 분석된 COMPLETED 항목은 진행 단계(총평완료 등) 대신 "구버전"으로 표시 →
  *  "완료"가 최신인 것처럼 오해되는 것 방지 (사용자 요청 2026-05-29). */
-function getDetailedStatus(item: ExamPaperItem): { label: string; color: string; title?: string } {
+function getDetailedStatus(
+  item: ExamPaperItem,
+  gen?: { phase: 'metadata' | 'commentary' } | null,
+): { label: string; color: string; title?: string } {
+  // 진행 중 단계(클라이언트 genState)를 우선 — DB 상태보다 실시간으로 표시
+  if (gen?.phase === 'metadata') return { label: '총평 준비중', color: 'bg-violet-50 text-violet-600 border-violet-200 animate-pulse' };
+  if (gen?.phase === 'commentary') return { label: '총평 생성중', color: 'bg-violet-50 text-violet-600 border-violet-200 animate-pulse' };
   if (item.status === 'FAILED') return { label: '실패', color: 'bg-red-50 text-red-600 border-red-200' };
-  if (item.status === 'ANALYZING') return { label: '분석중', color: 'bg-amber-50 text-amber-600 border-amber-200' };
+  if (item.status === 'ANALYZING') return { label: '분석중', color: 'bg-amber-50 text-amber-600 border-amber-200 animate-pulse' };
   if (item.status === 'PENDING') return { label: '업로드', color: 'bg-slate-50 text-slate-500 border-slate-200' };
   // COMPLETED — 구버전이면 진행 단계 무시하고 "구버전" 우선 표시
   const modelVersion = item.analyses[0]?.modelVersion;
@@ -155,6 +161,8 @@ interface ExamPaperListProps {
   onUpdate?: (id: string, data: Partial<ExamPaperItem>) => void;
   selectedId: string | null;
   canEditSchool?: boolean;
+  /** 시험지별 진행 단계 (page.tsx genState) — 'metadata'(총평 준비) / 'commentary'(총평 생성) 실시간 배지용 */
+  genState?: Record<string, { phase: 'metadata' | 'commentary'; startMs: number; willChain: boolean }>;
 }
 
 interface SchoolResult {
@@ -177,6 +185,7 @@ export function ExamPaperList({
   onUpdate,
   selectedId,
   canEditSchool = false,
+  genState,
 }: ExamPaperListProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -236,7 +245,7 @@ export function ExamPaperList({
                   {/* 라벨 줄: 상태 + 학기 + 중간/기말 + 구버전 + 학교 */}
                   <div className="flex items-center gap-1 mt-1 flex-wrap">
                     {(() => {
-                      const s = getDetailedStatus(item);
+                      const s = getDetailedStatus(item, genState?.[item.id]);
                       return (
                         <span
                           className={`inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-sm border ${s.color}`}

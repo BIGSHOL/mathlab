@@ -25,7 +25,7 @@ export function FormatBreakdown({ questions }: { questions: AnalyzedQuestion[] }
 
   return (
     <figure className="v3-info-fig">
-      <figcaption className="v3-info-label">FIGURE · 문제 형식 분포</figcaption>
+      <figcaption className="v3-info-label">도표 · 문제 형식 분포</figcaption>
       <div className="v3-stacked-bar v3-stacked-bar-format" style={{ height: '26px', marginBottom: '14px' }}>
         {stats
           .filter((s) => s.points > 0)

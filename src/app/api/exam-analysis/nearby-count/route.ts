@@ -110,6 +110,7 @@ export async function GET(req: NextRequest) {
 
     // 1. 연도 비교: 같은 학교(schoolId 또는 schoolName) + 같은 학년 + 같은 학기/시험종류 + 다른 연도
     let yearCount = 0;
+    const yearSet = new Set<string>(); // 비교에 포함되는 연도 목록 (hover 표시용)
     {
       const orSchool: Array<Record<string, unknown>> = [];
       if (schoolId) orSchool.push({ schoolId });
@@ -133,31 +134,38 @@ export async function GET(req: NextRequest) {
         if (examSemester && examExamType && (meta.s !== examSemester || meta.t !== examExamType)) continue;
         if (examYear && meta.y === examYear) continue; // 같은 연도면 제외
         yearCount++;
+        if (meta.y) yearSet.add(meta.y);
       }
     }
+    // 연도 오름차순 정렬 (hover 표시용)
+    const years = [...yearSet].sort();
 
     // 2. 주변 비교: 같은 그룹 학교(또는 같은 city+district fallback) + 같은 학년 + 같은 연도 + 같은 학기/시험종류
     let nearbyCount = 0;
+    let nearbySchools: string[] = []; // 비교에 포함되는 주변 학교명 (hover 표시용)
     if (schoolId) {
       const school = await prisma.school.findUnique({
         where: { id: schoolId },
         select: { nearbyGroupId: true, city: true, district: true },
       });
 
+      const idToName = new Map<string, string>();
       let groupSchoolIds: string[] = [];
       if (school?.nearbyGroupId) {
         const groupSchools = await prisma.school.findMany({
           where: { nearbyGroupId: school.nearbyGroupId, id: { not: schoolId } },
-          select: { id: true },
+          select: { id: true, name: true },
         });
         groupSchoolIds = groupSchools.map(s => s.id);
+        groupSchools.forEach(s => idToName.set(s.id, s.name));
       } else if (school?.city && school?.district) {
         // fallback: 같은 시군구의 다른 학교
         const sameAreaSchools = await prisma.school.findMany({
           where: { city: school.city, district: school.district, id: { not: schoolId } },
-          select: { id: true },
+          select: { id: true, name: true },
         });
         groupSchoolIds = sameAreaSchools.map(s => s.id);
+        sameAreaSchools.forEach(s => idToName.set(s.id, s.name));
       }
 
       if (groupSchoolIds.length > 0) {
@@ -180,10 +188,11 @@ export async function GET(req: NextRequest) {
           matchedSchoolIds.add(p.schoolId);
         }
         nearbyCount = matchedSchoolIds.size;
+        nearbySchools = [...matchedSchoolIds].map(id => idToName.get(id)).filter((n): n is string => !!n).sort();
       }
     }
 
-    return NextResponse.json({ data: { nearbyCount, yearCount } });
+    return NextResponse.json({ data: { nearbyCount, yearCount, nearbySchools, years } });
   } catch (error) {
     console.error('[exam-analysis nearby-count GET] 주변 학교 조회 에러:', error);
     return NextResponse.json(

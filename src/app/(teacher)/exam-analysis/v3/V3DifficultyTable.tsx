@@ -7,6 +7,7 @@
  */
 
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
+import { formatPoints } from '@/lib/exam-analysis/points';
 import { V3_DIFF_COLORS, V3_DIFF_LABELS } from './helpers';
 
 interface Props {
@@ -52,11 +53,11 @@ export function V3DifficultyTable({ rows }: Props) {
               </td>
               <td className="v3-qtable-lv">
                 <span className="v3-qtable-badge" style={{ background: color }}>
-                  Lv{validLv}
+                  {validLv}단계
                 </span>
                 <span className="v3-qtable-lvlabel">{label}</span>
               </td>
-              <td className="v3-qtable-pts">{row.points}점</td>
+              <td className="v3-qtable-pts">{formatPoints(row.points)}점</td>
             </tr>
           );
         })}

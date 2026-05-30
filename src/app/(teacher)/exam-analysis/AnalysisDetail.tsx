@@ -46,11 +46,11 @@ interface AnalysisDetailProps {
   /** 분석 시 총평 자동 생성 옵션 (page.tsx에서 localStorage 관리) */
   autoCommentary?: boolean;
   onToggleAutoCommentary?: (v: boolean) => void;
-  /** V3 총평용 메타데이터(base scaffolding)를 백그라운드 생성 중인지 — true면 [총평 생성] 차단 */
-  metadataGenerating?: boolean;
+  /** 현재 시험지의 생성 단계 (page.tsx genState) — metadata(준비) / commentary(자동 총평) + 진행시각 */
+  gen?: { phase: 'metadata' | 'commentary'; startMs: number; willChain: boolean } | null;
 }
 
-export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCommentary = false, onToggleAutoCommentary, metadataGenerating = false }: AnalysisDetailProps) {
+export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCommentary = false, onToggleAutoCommentary, gen = null }: AnalysisDetailProps) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<AnalysisTab>('basic');
   const [showExtractModal, setShowExtractModal] = useState(false);
@@ -61,22 +61,40 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
   // 다른 시험지 봤다가 돌아와도 진행바 복원. fetch promise도 계속 진행되어 생성은 멈추지 않음.
   const [commentaryGen, setCommentaryGen] = useState<Record<string, number>>({});
   const [commentaryElapsed, setCommentaryElapsed] = useState(0);
-  const genStartedAt = commentaryGen[detail.id] ?? null;
+  // 외부(page.tsx 자동 체인) 생성 단계 — gen.phase로 metadata/commentary 분기.
+  const metadataStartedAt = gen?.phase === 'metadata' ? gen.startMs : null;
+  const externalCommentaryStartedAt = gen?.phase === 'commentary' ? gen.startMs : null;
+  const metadataWillChain = !!gen?.willChain;
+  const metadataPending = metadataStartedAt !== null;
+  const [metadataElapsed, setMetadataElapsed] = useState(0);
+  // 총평 진행 = 수동 버튼(commentaryGen) 또는 자동 체인(externalCommentaryStartedAt) 중 활성인 것.
+  const genStartedAt = commentaryGen[detail.id] ?? externalCommentaryStartedAt ?? null;
   const commentaryLoading = genStartedAt !== null;
   const [includeNearby, setIncludeNearby] = useState(true);
   const [includeYearCompare, setIncludeYearCompare] = useState(true);
   const [nearbyCount, setNearbyCount] = useState<number | null>(null);
   const [yearCount, setYearCount] = useState<number | null>(null);
+  const [nearbySchools, setNearbySchools] = useState<string[]>([]); // hover 표시용 학교명
+  const [years, setYears] = useState<string[]>([]); // hover 표시용 비교 연도
 
-  // 주변/연도 기출 건수 조회
+  // 주변/연도 기출 건수 + 목록 조회
   useEffect(() => {
-    if (!detail.schoolId) { setNearbyCount(0); setYearCount(0); return; }
+    if (!detail.schoolId) { setNearbyCount(0); setYearCount(0); setNearbySchools([]); setYears([]); return; }
     const params = new URLSearchParams({ schoolId: detail.schoolId, grade: detail.grade, examPaperId: detail.id });
     fetch(`/api/exam-analysis/nearby-count?${params}`)
       .then(r => r.ok ? r.json() : null)
-      .then(d => { setNearbyCount(d?.data?.nearbyCount ?? 0); setYearCount(d?.data?.yearCount ?? 0); })
-      .catch(() => { setNearbyCount(0); setYearCount(0); });
+      .then(d => {
+        setNearbyCount(d?.data?.nearbyCount ?? 0);
+        setYearCount(d?.data?.yearCount ?? 0);
+        setNearbySchools(Array.isArray(d?.data?.nearbySchools) ? d.data.nearbySchools : []);
+        setYears(Array.isArray(d?.data?.years) ? d.data.years : []);
+      })
+      .catch(() => { setNearbyCount(0); setYearCount(0); setNearbySchools([]); setYears([]); });
   }, [detail.schoolId, detail.grade, detail.id]);
+
+  // hover tooltip 문구
+  const nearbyTitle = nearbySchools.length ? `포함 학교: ${nearbySchools.join(', ')}` : '같은 지역 동일 시기 기출이 없습니다';
+  const yearTitle = years.length ? `비교 연도: ${years.map(y => `${y}년`).join(', ')}` : '같은 학교 다른 연도 기출이 없습니다';
 
   // 기출지 변경 시 탭 초기화 + 열린 모달 닫기 (모달이 이전 시험지 데이터로 남는 누수 방지).
   // 단, 총평 생성 상태(commentaryGen)는 리셋하지 않음 → 시험지 전환 후 돌아와도 진행바 유지
@@ -101,6 +119,19 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
     }, 1000);
     return () => clearInterval(interval);
   }, [genStartedAt]);
+
+  // 메타데이터(V3 총평 준비) 경과 시간 타이머 — 프로그레스 바용
+  useEffect(() => {
+    if (metadataStartedAt === null) {
+      setMetadataElapsed(0);
+      return;
+    }
+    setMetadataElapsed(Math.floor((Date.now() - metadataStartedAt) / 1000));
+    const interval = setInterval(() => {
+      setMetadataElapsed(Math.floor((Date.now() - metadataStartedAt) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [metadataStartedAt]);
 
   const latestAnalysis = detail.analyses?.[0];
   const questions = latestAnalysis?.questions || [];
@@ -143,11 +174,8 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
   const commentary = (commentaryExt?.result as unknown as CommentaryResult) ?? null;
 
   // V3 메타데이터(base scaffolding) 준비 상태 — 분석 직후 백그라운드 생성됨 (DB 전용, 화면 비노출).
-  // ⚠️ 게이팅은 "클라이언트 신호(metadataGenerating)"로만 판단한다.
-  //    extension 부재로 판단하면 이 기능 이전의 기존 분석본(메타데이터 없음)이 영구 차단되어
-  //    폴백 총평조차 못 쓰게 됨. 기존 분석본은 메타데이터 없이도 총평이 폴백으로 동작해야 한다.
-  //    (새로고침 mid-generation 시 신호 유실 → 폴백 즉석 base 생성으로 graceful 처리)
-  const metadataPending = metadataGenerating;
+  // metadataPending(= gen.phase==='metadata')은 위에서 gen으로부터 파생. 클라이언트 신호로만 판단해
+  // 기존 분석본(메타데이터 없음)이 영구 차단되지 않도록 함(폴백 총평 동작).
   // 총평 생성 가능 = readiness 통과 + 메타데이터 준비 중 아님
   const commentaryReady = readinessCheck.ready && !metadataPending;
 
@@ -592,7 +620,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                   )}
                   {detail.schoolId && !commentaryLoading && (
                     <div className="flex items-center gap-3">
-                      <label className={`flex items-center gap-1 text-[11px] cursor-pointer ${nearbyCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
+                      <label title={nearbyTitle} className={`flex items-center gap-1 text-[11px] cursor-pointer ${nearbyCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
                         <input
                           type="checkbox"
                           checked={includeNearby && (nearbyCount ?? 0) > 0}
@@ -602,7 +630,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                         />
                         주변 {nearbyCount != null && <span className={nearbyCount > 0 ? 'text-violet-500 font-medium' : ''}>({nearbyCount}교)</span>}
                       </label>
-                      <label className={`flex items-center gap-1 text-[11px] cursor-pointer ${yearCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
+                      <label title={yearTitle} className={`flex items-center gap-1 text-[11px] cursor-pointer ${yearCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
                         <input
                           type="checkbox"
                           checked={includeYearCompare && (yearCount ?? 0) > 0}
@@ -630,14 +658,23 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                   </p>
                 </div>
               )}
-              {/* ── 메타데이터 준비 중 안내 (배점/단원은 통과, V3 base 백그라운드 생성 중) ── */}
+              {/* ── 메타데이터 준비 중 (배점/단원 통과, V3 base 백그라운드 생성) — 시험지별 고유 프로그레스 바 ── */}
               {readinessCheck.ready && metadataPending && !commentaryLoading && (
-                <div className="mt-3 px-3 py-2 bg-violet-50 border border-violet-200 rounded-sm flex items-center gap-2.5">
-                  <div className="animate-spin w-3.5 h-3.5 border-2 border-violet-400 border-t-transparent rounded-full shrink-0" />
-                  <div>
-                    <p className="text-xs font-semibold text-violet-800">V3 총평 준비 중... (약 10~20초)</p>
-                    <p className="text-[11px] text-violet-600 leading-relaxed">분석 기반 데이터를 백그라운드로 생성하고 있습니다. 완료되면 [총평 생성]이 활성화됩니다.</p>
+                <div className="mt-3 px-1">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-medium text-violet-700">V3 총평 준비 중...</span>
+                    <span className="text-[11px] text-violet-500 tabular-nums">{metadataElapsed}초</span>
                   </div>
+                  <div className="h-1.5 bg-violet-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-violet-400 to-purple-500 rounded-full transition-all duration-1000 ease-linear"
+                      style={{ width: `${Math.min((metadataElapsed / 20) * 100, 95)}%` }}
+                    />
+                  </div>
+                  <p className="text-[11px] text-violet-600 mt-1.5 leading-relaxed">
+                    분석 기반 데이터를 생성하고 있습니다.{' '}
+                    {metadataWillChain ? '완료되면 자동으로 총평이 이어서 생성됩니다.' : '완료되면 [총평 생성]이 활성화됩니다.'}
+                  </p>
                 </div>
               )}
               {commentaryLoading && (
@@ -669,9 +706,11 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
               includeNearby={includeNearby}
               onIncludeNearbyChange={setIncludeNearby}
               nearbyCount={nearbyCount}
+              nearbyTitle={nearbyTitle}
               includeYearCompare={includeYearCompare}
               onIncludeYearCompareChange={setIncludeYearCompare}
               yearCount={yearCount}
+              yearTitle={yearTitle}
               hasSchool={!!detail.schoolId}
               examMeta={{
                 title: detail.title,

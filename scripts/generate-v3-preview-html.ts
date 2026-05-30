@@ -67,12 +67,12 @@ function normDiff(raw: string): string {
   return map[raw] || raw;
 }
 
-/** DATA 박스 라벨 압축 — "기본 (Level 1)" → "기본·Lv1" */
+/** 데이터 박스 라벨 압축 — "기본 (Level 1)" → "기본·1단계" (블로그 노출 → 영문 제거) */
 function shortenDataLabel(raw: string): string {
   return String(raw ?? '')
-    .replace(/\s*\(Level\s+(\d+)\)\s*/gi, '·Lv$1')
-    .replace(/\s*\(Lv\s*(\d+)\)\s*/gi, '·Lv$1')
-    .replace(/^Level\s+(\d+)\s*/i, 'Lv$1 ')
+    .replace(/\s*\(Level\s+(\d+)\)\s*/gi, '·$1단계')
+    .replace(/\s*\(Lv\s*(\d+)\)\s*/gi, '·$1단계')
+    .replace(/^Level\s+(\d+)\s*/i, '$1단계 ')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -107,14 +107,14 @@ function renderDifficultyStackedBar(questions: AnalyzedQuestion[]): string {
     return `
       <div style="display:flex;align-items:center;gap:8px;font-family:'Pretendard Variable',sans-serif;font-size:12px;">
         <span style="width:12px;height:12px;background:${s.color};border-radius:2px;display:inline-block;flex-shrink:0;"></span>
-        <span style="font-weight:700;color:#121212;">Lv ${s.level} ${s.label}</span>
+        <span style="font-weight:700;color:#121212;">${s.level}단계 ${s.label}</span>
         <span style="color:#888;">${s.count}문항 · ${s.points}점 · ${pct}%</span>
       </div>`;
   }).join('');
 
   return `
       <figure class="v3-info-fig">
-        <figcaption class="v3-info-label">FIGURE · 난이도별 배점 분포</figcaption>
+        <figcaption class="v3-info-label">도표 · 난이도별 배점 분포</figcaption>
         <div class="v3-stacked-bar">${segments}</div>
         <div class="v3-stacked-legend">${legend}</div>
         <p class="v3-info-caption">막대 길이는 각 난이도의 <b>배점 비중</b>. 총 ${totalPts}점 · ${questions.length}문항.</p>
@@ -150,7 +150,7 @@ function renderFormatBreakdown(questions: AnalyzedQuestion[]): string {
 
   return `
       <figure class="v3-info-fig">
-        <figcaption class="v3-info-label">FIGURE · 문제 형식 분포</figcaption>
+        <figcaption class="v3-info-label">도표 · 문제 형식 분포</figcaption>
         <div class="v3-stacked-bar" style="height:26px;margin-bottom:14px;">${segments}</div>
         <div class="v3-format-grid">${cards}</div>
       </figure>`;
@@ -202,13 +202,13 @@ function renderKillerMap(questions: AnalyzedQuestion[]): string {
 
   return `
       <figure class="v3-info-fig">
-        <figcaption class="v3-info-label">FIGURE · 문항별 난이도 지도</figcaption>
+        <figcaption class="v3-info-label">도표 · 문항별 난이도 지도</figcaption>
         <div class="v3-killer-grid">${cells}</div>
         <div class="v3-killer-legend">
-          <span><span class="dot" style="border-color:#121212;"></span>기본·표준 (Lv 1~2)</span>
-          <span><span class="dot" style="border-color:#888;"></span>응용 (Lv 3)</span>
-          <span><span class="dot" style="background:#FDE9D7;border-color:#DA8B2C;"></span>심화 (Lv 4)</span>
-          <span><span class="dot" style="background:#BF1722;border-color:#BF1722;"></span>최고난도 (Lv 5)</span>
+          <span><span class="dot" style="border-color:#121212;"></span>기본·표준 (1~2단계)</span>
+          <span><span class="dot" style="border-color:#888;"></span>응용 (3단계)</span>
+          <span><span class="dot" style="background:#FDE9D7;border-color:#DA8B2C;"></span>심화 (4단계)</span>
+          <span><span class="dot" style="background:#BF1722;border-color:#BF1722;"></span>최고난도 (5단계)</span>
           <span><span class="dot" style="background:#FFF8E0;border-color:#DA8B2C;"></span>✎ 서술형</span>
         </div>
       </figure>`;
@@ -289,7 +289,7 @@ export function buildCommentaryHtml(args: BuildHtmlArgs): string {
   const dataInfoSection = `
       <section class="v3-section">
         <span class="num">01</span>
-        <div class="sub">DATA · 시험의 얼개</div>
+        <div class="sub">데이터 · 시험의 얼개</div>
         <h3>한눈에 보는 ${meta.totalQuestions}문항의 구조</h3>
         <p>난이도·문제 형식·문항 위치를 시각화하여 시험의 전반적 구성을 빠르게 파악할 수 있도록 정리했습니다. 어떤 구간에 변별이 집중되어 있고, 어디서 점수가 좌우되는지 한 페이지로 확인하세요.</p>
         ${renderDifficultyStackedBar(questions)}
@@ -306,7 +306,7 @@ export function buildCommentaryHtml(args: BuildHtmlArgs): string {
     return `
       <section class="v3-section">
         <span class="num">${num}</span>
-        <div class="sub">Q${idx + 1} · 학부모 인터뷰</div>
+        <div class="sub">질문 ${idx + 1} · 학부모 인터뷰</div>
         <h3>${escapeHtml(qa.question)}</h3>
         ${qa.answer.map((p) => `<p>${markdownToHighlighted(p)}</p>`).join('\n        ')}
         ${qa.data_box ? renderDataBoxApp(qa.data_box) : ''}
@@ -327,25 +327,25 @@ export function buildCommentaryHtml(args: BuildHtmlArgs): string {
   const chartsSection = `
       <section class="v3-section">
         <span class="num">${chartsNum}</span>
-        <div class="sub">CHART · AI 분석 시각화</div>
+        <div class="sub">그래프 · AI 분석 시각화</div>
         <h3>4개 차트로 본 시험의 통계</h3>
         <p>분석 화면에서 사용되는 4개 도표 — 난이도 분포·능력 영역·단원 출제 현황·변별력 — 를 그대로 옮겨 왔습니다.</p>
         <div class="charts-grid">
           <figure class="chart-fig">
             <img src="${chartDataUri(charts.difficulty)}" alt="난이도 분포" />
-            <figcaption>FIGURE 1 — 난이도 분포 (총 ${meta.totalQuestions}문항)</figcaption>
+            <figcaption>도표 1 — 난이도 분포 (총 ${meta.totalQuestions}문항)</figcaption>
           </figure>
           <figure class="chart-fig">
             <img src="${chartDataUri(charts.abilityRadar)}" alt="능력 영역" />
-            <figcaption>FIGURE 2 — 능력 영역 분포 (계산력·이해력·문제해결력·추론력)</figcaption>
+            <figcaption>도표 2 — 능력 영역 분포 (계산력·이해력·문제해결력·추론력)</figcaption>
           </figure>
           <figure class="chart-fig chart-fig-wide">
             <img src="${chartDataUri(charts.topicBar)}" alt="단원별 출제 현황" />
-            <figcaption>FIGURE 3 — 단원별 출제 현황 (상위 8개 단원)</figcaption>
+            <figcaption>도표 3 — 단원별 출제 현황 (상위 8개 단원)</figcaption>
           </figure>
           <figure class="chart-fig chart-fig-wide">
             <img src="${chartDataUri(charts.discrimination)}" alt="변별력 분석" />
-            <figcaption>FIGURE 4 — 변별력 분석 (난이도·배점·형식 기반 지수)</figcaption>
+            <figcaption>도표 4 — 변별력 분석 (난이도·배점·형식 기반 지수)</figcaption>
           </figure>
         </div>
       </section>`;
@@ -383,7 +383,7 @@ export function buildCommentaryHtml(args: BuildHtmlArgs): string {
     ? `
       <section class="v3-section">
         <span class="num">${String(qaStartNum + (c.blog_qa?.length || 0) + 2).padStart(2, '0')}</span>
-        <div class="sub">ANALYSIS · 강점·주의 영역</div>
+        <div class="sub">분석 · 강점·주의 영역</div>
         <h3>학생이 잘하는 곳, 막힌 곳</h3>
         <div class="sw-grid">
           ${(c.strength_areas || []).length > 0 ? `
@@ -811,8 +811,8 @@ export function buildNaverBlogHtml(args: BuildHtmlArgs): string {
     return `
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0 16px;border-top:1px solid #DDD;">
   <tr><td style="padding-top:18px;">
-    <p style="margin:0 0 10px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.14em;color:#BF1722;font-weight:800;">Q${idx + 1} · 학부모 인터뷰</p>
-    <p style="margin:0 0 14px;font-family:'Bodoni Moda',serif;font-size:32px;font-weight:900;color:#BF1722;line-height:1;letter-spacing:-0.02em;">Q${idx + 1}.</p>
+    <p style="margin:0 0 10px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.14em;color:#BF1722;font-weight:800;">질문 ${idx + 1} · 학부모 인터뷰</p>
+    <p style="margin:0 0 14px;font-family:'Bodoni Moda',serif;font-size:32px;font-weight:900;color:#BF1722;line-height:1;letter-spacing:-0.02em;">${idx + 1}.</p>
     <p style="margin:0 0 16px;font-family:'Noto Serif KR',serif;font-size:20px;font-weight:700;color:#121212;line-height:1.4;word-break:keep-all;">${escapeHtml(qa.question)}</p>
     ${qa.answer.map((p) => `<p style="margin:0 0 14px;font-family:'Noto Serif KR',serif;font-size:15px;line-height:1.85;color:#2A2A2A;word-break:keep-all;">${markdownToInlineBold(p)}</p>`).join('')}
   </td></tr>
@@ -832,14 +832,14 @@ ${naverFormatBar}` : '';
   const chartsBlock = `
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 32px;background:#fafafa;border:1px solid #ddd;">
   <tr><td style="padding:24px 20px;">
-    <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.12em;color:#888;font-weight:700;">FIGURE · 단원별 출제 현황 (상위 8개 단원)</p>
+    <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.12em;color:#888;font-weight:700;">도표 · 단원별 출제 현황 (상위 8개 단원)</p>
     <img src="${chartDataUri(charts.topicBar)}" alt="단원별 출제 현황" style="max-width:100%;height:auto;display:block;margin:0 auto;" />
   </td></tr>
 </table>
 
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 32px;background:#fafafa;border:1px solid #ddd;">
   <tr><td style="padding:24px 20px;">
-    <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.12em;color:#888;font-weight:700;">FIGURE · 변별력 분석 (난이도·배점·형식 기반 지수)</p>
+    <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.12em;color:#888;font-weight:700;">도표 · 변별력 분석 (난이도·배점·형식 기반 지수)</p>
     <img src="${chartDataUri(charts.discrimination)}" alt="변별력 분석" style="max-width:100%;height:auto;display:block;margin:0 auto;" />
   </td></tr>
 </table>`;
@@ -1075,7 +1075,7 @@ function renderDifficultyStackedBarNaver(questions: AnalyzedQuestion[]): string 
 
   const cards = stats.map((s) => `
     <td width="19%" align="center" valign="top" style="padding:14px 4px;background:#fff;border:1px solid #eee;border-top:3px solid ${s.color};">
-      <p style="margin:0;font-family:Pretendard,sans-serif;font-size:10px;letter-spacing:0.06em;color:#666;font-weight:700;white-space:nowrap;">Lv ${s.level} · ${s.label}</p>
+      <p style="margin:0;font-family:Pretendard,sans-serif;font-size:10px;letter-spacing:0.06em;color:#666;font-weight:700;white-space:nowrap;">${s.level}단계 · ${s.label}</p>
       <p style="margin:8px 0 2px;font-family:'Abril Fatface','Bodoni Moda',serif;font-size:30px;font-weight:900;color:${s.color};line-height:1;">${s.count}<span style="font-size:12px;color:#888;font-weight:400;">문항</span></p>
       <p style="margin:0;font-family:Pretendard,sans-serif;font-size:12px;color:#444;font-weight:600;">${s.points}점</p>
     </td>`).join('<td width="1%">&nbsp;</td>');
@@ -1083,7 +1083,7 @@ function renderDifficultyStackedBarNaver(questions: AnalyzedQuestion[]): string 
   return `
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;background:#fafafa;border:1px solid #ddd;">
   <tr><td style="padding:20px 22px;">
-    <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.14em;color:#888;font-weight:800;">FIGURE · 난이도별 배점 분포</p>
+    <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.14em;color:#888;font-weight:800;">도표 · 난이도별 배점 분포</p>
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>${cards}</tr>
     </table>
@@ -1117,7 +1117,7 @@ function renderFormatBreakdownNaver(questions: AnalyzedQuestion[]): string {
   return `
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;background:#fafafa;border:1px solid #ddd;">
   <tr><td style="padding:20px 22px;">
-    <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.14em;color:#888;font-weight:800;">FIGURE · 문제 형식 분포</p>
+    <p style="margin:0 0 14px;font-family:Pretendard,sans-serif;font-size:11px;letter-spacing:0.14em;color:#888;font-weight:800;">도표 · 문제 형식 분포</p>
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>${cards}</tr>
     </table>

@@ -19,7 +19,7 @@ export function V3FinalStrategy({ rows, sectionNum }: Props) {
   return (
     <section className="v3-section">
       <span className="v3-section-num">{sectionNum}</span>
-      <div className="v3-section-sub">FEEDBACK · 단원별 학습 방향</div>
+      <div className="v3-section-sub">피드백 · 단원별 학습 방향</div>
       <h3>이번 시험 단원별 피드백</h3>
       <div className="v3-strategy-list">
         {rows.map((row, i) => (
