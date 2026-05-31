@@ -9,6 +9,14 @@ const LEVEL_MAP: Record<string, number> = {
   concept: 1, pattern: 2, reasoning: 4, creative: 5,
 };
 
+/**
+ * 난이도 가중 지수 k. 1=선형 평균, >1=상위 난이도(응용·심화)에 가중을 더 줘
+ * 체감 난이도를 반영(고난도 비중이 큰 시험의 평균이 올라감). k=2면 배점 가중 제곱평균(RMS).
+ * 실측 예) 분포 6/4/6/4 시험: 선형 2.66 → k1.5 2.79 → k2 2.90 → k2.5 2.99 → k3 3.07.
+ * 더 강/약하게 조절하려면 이 값만 변경 (쉬운 시험은 여전히 낮게 유지되어 분별력 보존).
+ */
+const DIFFICULTY_EXPONENT = 2;
+
 export interface WeightedDifficulty {
   /** 배점 가중 평균 난이도(1.0~5.0). 배점 정보가 없으면 문항수 단순평균. */
   avg: number;
@@ -30,22 +38,24 @@ export function weightedAverageDifficulty(
 ): WeightedDifficulty {
   if (!questions || questions.length === 0) return { avg: 0, usedPoints: false, total: 0 };
 
-  let sumLevelPoints = 0; // Σ(level × points)
+  const k = DIFFICULTY_EXPONENT;
+  let sumLevelPoints = 0; // Σ(level^k × points)
   let sumPoints = 0;      // Σ(points)
-  let sumLevel = 0;       // Σ(level)  — 폴백용
+  let sumLevel = 0;       // Σ(level^k)  — 폴백용
   let n = 0;
 
   for (const q of questions) {
     const level = LEVEL_MAP[String(q.difficulty)] ?? 0;
     if (!level) continue;
     const points = Number(q.points) || 0;
-    sumLevelPoints += level * points;
+    sumLevelPoints += Math.pow(level, k) * points;
     sumPoints += points;
-    sumLevel += level;
+    sumLevel += Math.pow(level, k);
     n += 1;
   }
 
+  // 배점 가중 거듭제곱 평균: (Σ level^k·points / Σ points)^(1/k). k=1이면 일반 가중평균.
   if (n === 0) return { avg: 0, usedPoints: false, total: 0 };
-  if (sumPoints > 0) return { avg: sumLevelPoints / sumPoints, usedPoints: true, total: n };
-  return { avg: sumLevel / n, usedPoints: false, total: n };
+  if (sumPoints > 0) return { avg: Math.pow(sumLevelPoints / sumPoints, 1 / k), usedPoints: true, total: n };
+  return { avg: Math.pow(sumLevel / n, 1 / k), usedPoints: false, total: n };
 }
