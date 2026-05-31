@@ -1212,3 +1212,50 @@ npx tsx scripts/migrate-question-relations.ts  # questionIds Json → 중간테�
 | Zod 스키마 | 5개 |
 | E2E 테스트 | 3개 (Playwright) |
 | 스크립트 | 177개 (.ts/.js/.py, scripts/) |
+
+> ⚠️ 위 통계표는 기출분석 전용화 트림 *이전* 수치(레거시). 현재는 기출분석 외 코드/모델 대거 삭제됨.
+
+---
+
+## 2026-06-01 세션 — 기출분석 전용화 후속 (공개 랜딩 · 난이도 가중 · env/키 · 모델명)
+
+기출분석 단일 제품 전환 이후 후속. 핵심 변경 + 재발 방지 함정 정리.
+
+### A. 공개 랜딩페이지 (`/`)
+- `src/app/page.tsx` → `<LandingPage/>` (이전 `redirect('/exam-analysis')` 대체, 정적 생성).
+- `src/components/landing/`:
+  - `LandingPage.tsx` — 헤더/히어로/신뢰/가치/작동방식/기능/대시보드/CTA/푸터. auth-aware CTA(`useAuth` → 로그인 vs 기출분석 바로가기).
+  - `V3ReportPreview.tsx` — 히어로 우측. **실제 V3 네이버 블로그 리포트 톤**(에디토리얼: 크림 · Noto Serif KR · Bodoni Moda 숫자 · #BF1722 레드 · 다크 KPI 스트립)을 더미데이터로 재현.
+  - `FeatureShowcase.tsx` — "기능 보기" 섹션. 실제 분석 화면 6종(난이도 stacked bar · 단원 배점 · 문항 형식 · **KaTeX 해설** · 주변학교 비교 · 블로그 썸네일).
+  - `DashboardShowcase.tsx` — "교사용 분석 대시보드" 섹션. **실제 recharts**(유형 레이더 + 난이도 도넛) + 변별력 등급카드 + 시험 시간배분 바.
+- **라운드 최소화**(사용자 요청): 카드 16~24px → 6~8px, 칩/배지 full → 4px (V3 샤프 톤). **반응형**: 히어로 2단 분기 `md`→`lg`(태블릿 풀폭 스택), 헤드라인/패딩 fluid.
+- ⚠️ **공개 랜딩 스크롤 함정**: 루트 `layout.tsx` body + globals.css `html,body{overflow:hidden}`(LMS 앱 셸 규약 — 내부 스크롤 컨테이너 전제)이 공개 랜딩까지 적용돼 본문이 잘려 스크롤 불가. → 랜딩 루트에 `h-dvh overflow-y-auto` 자체 스크롤 컨테이너 추가(전역 규약 불변). 진단 시 MCP 프로그램 스크롤은 통하지만 실제 휠은 막히므로 `scrollHeight>clientHeight` + 네이티브 스크롤 여부로 확인.
+
+### B. 평균 난이도 = 배점 가중 *비선형* 평균 (k=2 제곱평균)
+- **공유 헬퍼** `src/lib/exam-analysis/difficulty.ts` `weightedAverageDifficulty(questions)`:
+  `(Σ 난이도ᵏ × 배점 / Σ 배점)^(1/k)`, **`DIFFICULTY_EXPONENT = 2`**(제곱평균/RMS). 배점 없으면 문항수 기준 폴백(`usedPoints` 플래그).
+  - 진화: 문항수 단순평균(2.4) → 배점 선형(2.66) → **k=2 비선형(2.90)**. 응용·심화 비중 큰 시험을 체감에 맞게 ↑, 쉬운 시험은 낮게 유지(분별력 보존 — 실측으로 확인). 강/약은 `DIFFICULTY_EXPONENT` 한 줄.
+- **통일**(흩어진 계산 전부 이 헬퍼로): `(teacher)/exam-analysis/helpers.tsx`(`getOverallDifficultyLevel`/`getDifficultyBreakdown` — `questions` 인자 추가) · `AnalysisDetail`(헤더/모달 라벨·설명) · `v4/helpers.computeExamStats` · `api/.../section-image` · `v3/V3CommentaryView`.
+- ⚠️ `summary.average_difficulty`(ai-engine: **최빈 난이도** 문자열)와 화면의 *가중평균 소수값*은 **별개**. 표시 평균은 항상 헬퍼로 재계산(저장값 아님) → 분석 재실행 없이 **새로고침만으로 반영**.
+- 박스 하이라이트 = `round(가중평균)`(가장 가까운 단계), 숫자/화살표 = 정밀값. 2.7 → box 3 = 의도된 정상.
+
+### C. 난이도 마커(▼) 위치 — px 하드코딩 → 박스 폭 %
+- `AnalysisDetail.tsx` 난이도 바: 마커 `left`를 `(avg-1)*26+12`px(24px 박스 가정) → `…/128*100`% + 컨테이너 `w-full`. 루트 폰트크기/환경으로 박스가 24px가 아닐 때 어긋남 방지(16px root에선 결과 동일).
+- 검증법: 빈 페이지(같은 globals)에 `w-6`/`gap-0.5` 박스 5개 주입 → `getBoundingClientRect`로 실측(16px root: 박스 24px, 행 128px, 중심 [12,38,64,90,116]).
+
+### D. 🔒 모델명 비노출 (핵심규칙 #0)
+- 사용자 UI에서 모델명 금지 → "AI". `'Claude Sonnet 4.6 호출 시작'` → `'AI 분석 호출 시작'` (AnalysisDetail/CommentarySection 진행 로그·상태). 상세는 **핵심 규칙 #0**.
+
+### E. 출제범위(단원) 매핑 버그 — 공통수학2가 공통수학1 단원으로
+- `ExamScopeSelector.getCurriculumKey`: `.find` 절 `grade==='고1' && (k==='공통수학1'||k==='공통수학2')`가 category='공통수학2'여도 키 배열 첫 항 '공통수학1'에 먼저 매칭 → 고1은 항상 공통수학1 단원. **정확 일치(`k===category`) 우선 + 학년 기본값은 category 불명 시에만** 폴백으로 수정. (커리큘럼 데이터 자체는 정상이었음.)
+
+### F. dev 환경 env / API 키 (⚠️ 함정 多)
+- **로컬 키 누락**: `.env.local`에 `SUPABASE_*`/`GEMINI_API_KEY` 없음(프로덕션 env에만 존재) → 업로드 URL 발급·분석 실패. `vercel env pull <tmp> --environment production`로 *누락 키만 병합*(기존 `NEXTAUTH_URL=localhost`·`DATABASE_URL` 보존, 시크릿 비출력).
+- ⚠️ **`vercel env pull`이 값 끝 개행을 dotenv에 literal `\n`(2글자)로 직렬화** → 받은 `GEMINI_API_KEY`가 41자 → Google 400(무효). 진짜 키는 **앞 39자**. prod 런타임은 실제 env라 정상이므로 *"prod는 되는데 dev만 실패"* 의 진짜 원인.
+- **환경별 키 상이**: Anthropic은 로컬에 옛 stale 키(401), prod는 유효(200). `vercel env ls`로 Production/Preview/Development 별 확인.
+- **검증법**: `node --env-file=.env.local`로 Supabase `createSignedUploadUrl` / Google `…/v1beta/models?key=` / Anthropic `/v1/models` 직접 호출해 200 확인(브라우저 로그인 불필요, 시크릿 비출력).
+- `.env.example`에 누락 키 보강(SUPABASE_URL·SUPABASE_SERVICE_ROLE_KEY·ANTHROPIC_API_KEY·DIRECT_URL·CRON_SECRET).
+- ⚠️ **dev 서버 둘이 같은 `.next` 공유 금지** — Turbopack 매니페스트가 깨져 `JSON.parse … is not valid JSON` 런타임 에러 + 페이지 백지. → `next dev` 하나만 실행 + 깨진 `.next` 삭제 후 재기동.
+
+### G. 메타 — 분석/측정 우선
+- "값이 이상하다" 류 보고는 *추측 말고 실측*: DB 직접 쿼리(`node --env-file=.env.local` + Prisma)로 실제 분포·여러 파라미터(k) 값 산출 후 결정. 마커 좌표도 라이브 DOM `getBoundingClientRect`로 측정해 확정.
