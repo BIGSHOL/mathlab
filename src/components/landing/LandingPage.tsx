@@ -8,6 +8,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { LogoIcon } from '@/components/ui/LogoIcon';
 import { Button } from '@/components/ui/Button';
+import { V3ReportPreview } from '@/components/landing/V3ReportPreview';
 
 /** 기출분석 제품 공개 랜딩페이지 (루트 /). design.md 명세 기반. */
 export function LandingPage() {
@@ -61,51 +62,8 @@ export function LandingPage() {
             <p className="mt-4 text-xs text-slate-400">학원에서 받은 계정으로 로그인하세요</p>
           </div>
 
-          {/* 더미 분석 결과 mockup */}
-          <div className="relative">
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-[0_20px_60px_-20px_rgba(15,23,42,0.25)] p-6">
-              <div className="flex items-center justify-between mb-5">
-                <div>
-                  <div className="text-sm font-bold">경신고 1학년 공통수학1</div>
-                  <div className="text-xs text-slate-400">2026 · 1학기 중간 · 20문항</div>
-                </div>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">분석완료</span>
-              </div>
-              <div className="flex items-center gap-6">
-                {/* 난이도 도넛 */}
-                <div className="relative w-28 h-28 shrink-0 rounded-full"
-                  style={{ background: 'conic-gradient(#3B5BDB 0 50%, #6366f1 50% 78%, #c7d2fe 78% 100%)' }}>
-                  <div className="absolute inset-[14px] bg-white rounded-full flex flex-col items-center justify-center">
-                    <span className="text-xl font-black text-primary">20</span>
-                    <span className="text-[10px] text-slate-400">문항</span>
-                  </div>
-                </div>
-                {/* 단원 막대 */}
-                <div className="flex-1 space-y-2.5">
-                  {[['다항식', 82], ['방정식과 부등식', 64], ['도형의 방정식', 45]].map(([label, w]) => (
-                    <div key={label as string}>
-                      <div className="flex justify-between text-xs text-slate-500 mb-1">
-                        <span>{label}</span><span>{w as number}%</span>
-                      </div>
-                      <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                        <div className="h-full rounded-full bg-primary" style={{ width: `${w}%` }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="mt-5 pt-4 border-t border-slate-100">
-                <div className="text-xs font-semibold text-slate-500 mb-1">총평</div>
-                <p className="text-sm text-text-secondary leading-relaxed">
-                  중상 난이도로 다항식 단원 비중이 높습니다. 도형의 방정식에서 킬러문항 2개…
-                </p>
-              </div>
-            </div>
-            {/* 부유 배지 */}
-            <div className="absolute -top-3 -left-3 bg-white rounded-full shadow-md border border-slate-100 px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-primary" /> AI 분석 완료
-            </div>
-          </div>
+          {/* 실제 V3 분석 리포트 프리뷰 (더미데이터) */}
+          <V3ReportPreview />
         </div>
       </section>
 
