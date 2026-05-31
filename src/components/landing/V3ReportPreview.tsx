@@ -51,13 +51,13 @@ export function V3ReportPreview() {
   return (
     <div className="relative">
       {/* 부유 배지 */}
-      <div className="absolute -top-3 -left-3 z-10 bg-white rounded-full shadow-md border border-slate-100 px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5">
+      <div className="absolute -top-3 -left-3 z-10 bg-white rounded-[4px] shadow-md border border-slate-100 px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5">
         <Sparkles className="w-3.5 h-3.5" style={{ color: RED }} /> AI 자동 생성 리포트
       </div>
 
       {/* 페이퍼 문서 (실제 V3 리포트 톤) */}
       <div
-        className="rounded-xl overflow-hidden"
+        className="rounded-[6px] overflow-hidden"
         style={{ background: '#fff', boxShadow: '0 24px 60px -24px rgba(15,23,42,0.32), 0 0 0 1px #e6e2d8' }}
       >
         <div style={{ padding: '26px 24px 22px' }}>
@@ -126,7 +126,7 @@ export function V3ReportPreview() {
           <div style={{ marginTop: 16, paddingTop: 13, borderTop: '1px solid #eee', display: 'flex', alignItems: 'center', gap: 7 }}>
             <span style={{ fontFamily: SANS, fontSize: 11, color: GRAY }}>이어서</span>
             {['단원 분석', '문항 해설', '총평', '블로그 이미지'].map((t) => (
-              <span key={t} style={{ fontFamily: SANS, fontSize: 10.5, color: INK, fontWeight: 600, background: '#f1efe9', borderRadius: 999, padding: '2px 8px' }}>
+              <span key={t} style={{ fontFamily: SANS, fontSize: 10.5, color: INK, fontWeight: 600, background: '#f1efe9', borderRadius: 4, padding: '2px 8px' }}>
                 {t}
               </span>
             ))}

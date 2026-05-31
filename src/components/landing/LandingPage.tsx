@@ -40,12 +40,12 @@ export function LandingPage() {
 
       {/* ── 히어로 ── */}
       <section className="relative overflow-hidden" style={{ background: 'radial-gradient(900px circle at 70% -10%, var(--primary-50), #fff 60%)' }}>
-        <div className="max-w-6xl mx-auto px-6 py-20 md:py-28 grid md:grid-cols-2 gap-12 items-center">
+        <div className="max-w-6xl mx-auto px-6 py-14 sm:py-20 lg:py-28 grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
           <div>
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary bg-indigo-50 px-3 py-1 rounded-full mb-5">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary bg-indigo-50 px-3 py-1 rounded-[4px] mb-5">
               <Sparkles className="w-3.5 h-3.5" /> AI 기반 · 한국 수학 교육과정 특화
             </span>
-            <h1 className="text-4xl md:text-5xl font-black leading-[1.15] tracking-tight">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black leading-[1.15] tracking-tight">
               시험지 한 장이면,<br />
               <span className="text-primary">분석부터 블로그 글까지</span> 자동으로
             </h1>
@@ -81,7 +81,7 @@ export function LandingPage() {
       </section>
 
       {/* ── 핵심 가치 ── */}
-      <section className="max-w-6xl mx-auto px-6 py-20">
+      <section className="max-w-6xl mx-auto px-6 py-14 md:py-20">
         <h2 className="text-2xl md:text-3xl font-black text-center">선생님의 시간을 돌려드립니다</h2>
         <p className="text-center text-text-secondary mt-3">며칠 걸리던 기출 분석을 수 분 안에.</p>
         <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -91,8 +91,8 @@ export function LandingPage() {
             { icon: FileText, title: '해설·총평 자동 생성', desc: '문항별 풀이 해설과 시험 총평을 즉시. 검토만 하면 끝.' },
             { icon: Share2, title: '블로그 콘텐츠 자동화', desc: '분석 결과를 네이버 블로그용 이미지로 한 번에. 학원 홍보까지.' },
           ].map((c) => (
-            <div key={c.title} className="p-6 rounded-2xl border border-slate-200 bg-white hover:shadow-lg hover:-translate-y-0.5 transition-all">
-              <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center mb-4">
+            <div key={c.title} className="p-6 rounded-[6px] border border-slate-200 bg-white hover:shadow-lg hover:-translate-y-0.5 transition-all">
+              <div className="w-11 h-11 rounded-[6px] bg-indigo-50 flex items-center justify-center mb-4">
                 <c.icon className="w-5 h-5 text-primary" />
               </div>
               <h3 className="font-bold mb-1.5">{c.title}</h3>
@@ -104,7 +104,7 @@ export function LandingPage() {
 
       {/* ── 작동 방식 ── */}
       <section id="how" className="bg-slate-50/60 border-y border-slate-100">
-        <div className="max-w-6xl mx-auto px-6 py-20">
+        <div className="max-w-6xl mx-auto px-6 py-14 md:py-20">
           <h2 className="text-2xl md:text-3xl font-black text-center">3단계면 충분합니다</h2>
           <div className="mt-12 grid md:grid-cols-3 gap-6">
             {[
@@ -112,9 +112,9 @@ export function LandingPage() {
               { n: '02', icon: Sparkles, title: 'AI 분석', desc: '수 분 내 난이도·단원·해설·총평을 자동 생성합니다.' },
               { n: '03', icon: Share2, title: '리포트 & 공유', desc: '차트 리포트 확인 후 인쇄·PDF·네이버 블로그 이미지로 공유.' },
             ].map((s) => (
-              <div key={s.n} className="relative p-7 rounded-2xl bg-white border border-slate-200">
+              <div key={s.n} className="relative p-7 rounded-[6px] bg-white border border-slate-200">
                 <span className="absolute top-5 right-6 text-3xl font-black text-slate-100">{s.n}</span>
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                <div className="w-12 h-12 rounded-[6px] bg-primary/10 flex items-center justify-center mb-4">
                   <s.icon className="w-6 h-6 text-primary" />
                 </div>
                 <h3 className="font-bold text-lg mb-1.5">{s.title}</h3>
@@ -126,7 +126,7 @@ export function LandingPage() {
       </section>
 
       {/* ── 기능 상세 ── */}
-      <section id="features" className="max-w-6xl mx-auto px-6 py-20">
+      <section id="features" className="max-w-6xl mx-auto px-6 py-14 md:py-20">
         <h2 className="text-2xl md:text-3xl font-black text-center">기출 분석에 필요한 모든 것</h2>
         <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {[
@@ -137,7 +137,7 @@ export function LandingPage() {
             { icon: Share2, title: '네이버 블로그 이미지', desc: '클릭 한 번으로 블로그 게시용 분석 이미지 세트를 생성.' },
             { icon: Database, title: '문제은행 추출', desc: '분석한 문항을 문제은행으로 추출해 재활용(선택).' },
           ].map((f) => (
-            <div key={f.title} className="p-6 rounded-2xl border border-slate-200 bg-white">
+            <div key={f.title} className="p-6 rounded-[6px] border border-slate-200 bg-white">
               <div className="flex items-center gap-2.5 mb-2">
                 <f.icon className="w-5 h-5 text-primary" />
                 <h3 className="font-bold">{f.title}</h3>
@@ -150,7 +150,7 @@ export function LandingPage() {
 
       {/* ── 마무리 CTA ── */}
       <section className="max-w-6xl mx-auto px-6 pb-20">
-        <div className="rounded-3xl px-8 py-14 text-center text-white"
+        <div className="rounded-[8px] px-6 sm:px-8 py-12 sm:py-14 text-center text-white"
           style={{ background: 'linear-gradient(135deg, var(--primary) 0%, #4338CA 100%)' }}>
           <h2 className="text-2xl md:text-3xl font-black">기출 분석, 이제 AI에게 맡기세요</h2>
           <p className="mt-3 text-white/85">시험지를 올리면 분석·해설·블로그 콘텐츠가 자동으로 준비됩니다.</p>
