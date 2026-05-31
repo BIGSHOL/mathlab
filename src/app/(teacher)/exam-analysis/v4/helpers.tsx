@@ -11,6 +11,7 @@
 
 import React from 'react';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
+import { weightedAverageDifficulty } from '@/lib/exam-analysis/difficulty';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import { renderInlineMath } from '@/lib/exam-analysis/rendering';
 
@@ -144,9 +145,8 @@ export function computeExamStats(questions: AnalyzedQuestion[]): ExamStats {
   }
 
   const totalDiff = counts.reduce((s, c) => s + c, 0);
-  const weighted = totalDiff > 0
-    ? counts.reduce((s, c, i) => s + c * (i + 1), 0) / totalDiff
-    : 0;
+  // 배점 가중 평균 난이도 (배점 없으면 문항수 평균 폴백)
+  const weighted = weightedAverageDifficulty(questions).avg;
   const killerPct = totalDiff > 0 ? Math.round((counts[4] / totalDiff) * 100) : 0;
 
   const answered = questions.filter((q) => q.is_correct !== null);

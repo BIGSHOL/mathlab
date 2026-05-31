@@ -9,6 +9,7 @@ import {
 } from '@/lib/exam-analysis/section-image-generator';
 import { sumPoints } from '@/lib/exam-analysis/points';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
+import { weightedAverageDifficulty } from '@/lib/exam-analysis/difficulty';
 
 type Params = { params: Promise<{ id: string; section: string }> };
 
@@ -59,8 +60,7 @@ export async function GET(req: NextRequest, { params }: Params) {
     if (!base64) {
       const questions = (analysis.questions ?? []) as unknown as AnalyzedQuestion[];
       const total = questions.length || 1;
-      const diffCounts = [1, 2, 3, 4, 5].map((lv) => questions.filter((q) => String(q.difficulty) === String(lv)).length);
-      const weighted = diffCounts.reduce((acc, n, i) => acc + n * (i + 1), 0) / total;
+      const weighted = weightedAverageDifficulty(questions).avg;
       const meta: SectionMeta = {
         examTitle: examPaper.title,
         grade: examPaper.grade,

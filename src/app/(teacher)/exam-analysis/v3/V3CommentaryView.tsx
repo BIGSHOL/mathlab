@@ -18,6 +18,7 @@
 
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
+import { weightedAverageDifficulty } from '@/lib/exam-analysis/difficulty';
 import { markdownToHighlighted, normDiff, koDifficultyText } from './helpers';
 import { FeatureCallout } from './FeatureCallout';
 import { QASection } from './QASection';
@@ -73,7 +74,7 @@ export function V3CommentaryView({ commentary, questions, meta, charts }: V3Comm
     if (lv >= 1 && lv <= 5) counts[lv - 1]++;
   }
   const totalDiff = counts.reduce((s, c2) => s + c2, 0);
-  const weighted = totalDiff > 0 ? counts.reduce((s, c2, i) => s + c2 * (i + 1), 0) / totalDiff : 0;
+  const weighted = weightedAverageDifficulty(questions).avg;
   const killerPct = totalDiff > 0 ? Math.round((counts[4] / totalDiff) * 100) : 0;
   const essayCount = questions.filter((q) => q.question_format === 'essay').length;
   const correctRate = (() => {

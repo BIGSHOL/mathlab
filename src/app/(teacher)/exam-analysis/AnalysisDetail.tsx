@@ -198,7 +198,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
   const totalPoints = latestAnalysis?.totalPoints;
 
   const confidenceInfo = useMemo(() => getConfidenceInfo(questions), [questions]);
-  const diffLevel = useMemo(() => getOverallDifficultyLevel(summary), [summary]);
+  const diffLevel = useMemo(() => getOverallDifficultyLevel(summary, questions), [summary, questions]);
 
   // 총평 생성 사전 차단 — 배점 합계가 만점과 다르거나 단원 UNKNOWN 있으면 차단
   const readinessCheck = useMemo(() => {
@@ -721,7 +721,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
 
             {/* 종합 난이도 카드 — 클릭 시 판단 기준 모달 */}
             {detail.status === 'COMPLETED' && diffLevel > 0 && (() => {
-              const breakdown = getDifficultyBreakdown(summary);
+              const breakdown = getDifficultyBreakdown(summary, questions);
               // 가중평균이 있으면 소수점 위치 기준 그라데이션, 없으면 정수 Level 색
               const avg = breakdown?.weightedAvg ?? diffLevel;
               const activeColor = interpolateDifficultyColor(avg);
@@ -775,7 +775,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                     <span className="text-base font-extrabold" style={{ color: activeColor }}>{avg.toFixed(1)}단계</span>
                     {breakdown && (
                       <div className="text-[10px] text-slate-500 font-medium mt-0.5">
-                        {breakdown.total}문항 가중평균
+                        {breakdown.total}문항 {breakdown.usedPoints ? '배점 가중평균' : '문항수 평균'}
                       </div>
                     )}
                   </div>
@@ -1064,8 +1064,9 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
 
       {/* 시험 난이도 판단 기준 — 간이 모달 */}
       {showDiffModal && diffLevel > 0 && (() => {
-        const breakdown = getDifficultyBreakdown(summary);
+        const breakdown = getDifficultyBreakdown(summary, questions);
         const avg = breakdown?.weightedAvg ?? diffLevel;
+        const avgLabel = breakdown?.usedPoints ? '배점 가중평균' : '문항수 평균';
         const activeColor = interpolateDifficultyColor(avg);
         const levelLabel = DIFF_LEVEL_LABELS[diffLevel] ?? '';
         const distLabel = breakdown
@@ -1088,7 +1089,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                   </h3>
                   {breakdown && (
                     <p className="text-xs text-slate-500 mt-0.5">
-                      가중평균 {breakdown.weightedAvg.toFixed(2)}/5 · 총 {breakdown.total}문항
+                      {avgLabel} {breakdown.weightedAvg.toFixed(2)}/5 · 총 {breakdown.total}문항
                     </p>
                   )}
                 </div>
@@ -1104,11 +1105,11 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
 
               <div className="space-y-2.5 text-sm leading-relaxed text-slate-700">
                 <p>
-                  AI가 시험지의 모든 문항을 <strong>1~5단계</strong> (1=기본 · 2=표준 · 3=응용 · 4=심화 · 5=최고난도) 로 분류한 뒤, 단계별 문항 수에 1~5의 가중치를 곱해 합산하고 총 문항 수로 나눠 <strong>가중평균</strong>을 구합니다.
+                  AI가 시험지의 모든 문항을 <strong>1~5단계</strong> (1=기본 · 2=표준 · 3=응용 · 4=심화 · 5=최고난도) 로 분류한 뒤, <strong>각 문항의 배점을 가중치로</strong> 곱해 합산하고 <strong>총 배점</strong>으로 나눠 <strong>배점 가중평균</strong>을 구합니다. 배점이 큰 고난도 문항일수록 평균에 더 크게 반영됩니다. (배점 정보가 없으면 문항 수 기준 평균)
                 </p>
                 {breakdown && (
                   <p>
-                    이 시험은 분포가 <strong>{distLabel}</strong>로, 가중평균 <strong>{breakdown.weightedAvg.toFixed(2)}점</strong> → <strong>{avg.toFixed(1)}단계</strong>로 산정되었습니다. (정수 그룹: {diffLevel}단계)
+                    이 시험은 분포가 <strong>{distLabel}</strong>로, {avgLabel} <strong>{breakdown.weightedAvg.toFixed(2)}</strong> → <strong>{avg.toFixed(1)}단계</strong>로 산정되었습니다. (정수 그룹: {diffLevel}단계)
                   </p>
                 )}
                 <p className="text-xs text-slate-500 pt-2 border-t border-slate-100">

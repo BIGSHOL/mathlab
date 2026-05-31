@@ -1,5 +1,6 @@
 import type { AnalyzedQuestion, AnalysisSummary } from '@/lib/exam-analysis/types';
 import { DIFFICULTY_BAR_COLORS } from '@/lib/exam-analysis/constants';
+import { weightedAverageDifficulty } from '@/lib/exam-analysis/difficulty';
 
 // renderInlineMath / highlightText / normalizeKoreanLabels 는 lib/exam-analysis/rendering 에서 단일 진실의 원천으로 유지.
 // 페이지/컴포넌트 어디서든 사용하려면 이 helpers 또는 @/lib/exam-analysis/rendering 을 사용.
@@ -43,7 +44,15 @@ export function getConfidenceInfo(questions: AnalyzedQuestion[]) {
 }
 
 // ── 종합 난이도 (1~5) 계산 ──
-export function getOverallDifficultyLevel(summary: AnalysisSummary | null): number {
+// 문항+배점이 있으면 *배점 가중 평균* 우선, 없으면 summary 분포의 문항수 평균으로 폴백.
+export function getOverallDifficultyLevel(
+  summary: AnalysisSummary | null,
+  questions?: readonly AnalyzedQuestion[],
+): number {
+  if (questions && questions.length) {
+    const { avg } = weightedAverageDifficulty(questions);
+    if (avg > 0) return Math.round(avg);
+  }
   if (!summary?.difficulty_distribution) return 0;
   const d = summary.difficulty_distribution;
 
@@ -63,8 +72,12 @@ export function getOverallDifficultyLevel(summary: AnalysisSummary | null): numb
 }
 
 // 난이도 근거 (툴팁용) — 단계별 문항 수 + 가중평균 계산 공식
-export function getDifficultyBreakdown(summary: AnalysisSummary | null): {
-  counts: number[]; total: number; weightedAvg: number;
+// weightedAvg: 문항+배점 있으면 *배점 가중 평균*, 없으면 문항수 평균(usedPoints=false).
+export function getDifficultyBreakdown(
+  summary: AnalysisSummary | null,
+  questions?: readonly AnalyzedQuestion[],
+): {
+  counts: number[]; total: number; weightedAvg: number; usedPoints: boolean;
 } | null {
   if (!summary?.difficulty_distribution) return null;
   const d = summary.difficulty_distribution;
@@ -77,6 +90,13 @@ export function getDifficultyBreakdown(summary: AnalysisSummary | null): {
   ];
   const total = counts.reduce((s, c) => s + c, 0);
   if (!total) return null;
-  const weightedAvg = counts.reduce((s, c, i) => s + c * (i + 1), 0) / total;
-  return { counts, total, weightedAvg };
+  // 폴백: 문항수 가중평균
+  let weightedAvg = counts.reduce((s, c, i) => s + c * (i + 1), 0) / total;
+  let usedPoints = false;
+  // 우선: 배점 가중평균 (문항+배점 있을 때)
+  if (questions && questions.length) {
+    const w = weightedAverageDifficulty(questions);
+    if (w.avg > 0) { weightedAvg = w.avg; usedPoints = w.usedPoints; }
+  }
+  return { counts, total, weightedAvg, usedPoints };
 }
