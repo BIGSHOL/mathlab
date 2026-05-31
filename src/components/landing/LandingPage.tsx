@@ -10,6 +10,7 @@ import { LogoIcon } from '@/components/ui/LogoIcon';
 import { Button } from '@/components/ui/Button';
 import { V3ReportPreview } from '@/components/landing/V3ReportPreview';
 import { FeatureShowcase } from '@/components/landing/FeatureShowcase';
+import { DashboardShowcase } from '@/components/landing/DashboardShowcase';
 
 /** 기출분석 제품 공개 랜딩페이지 (루트 /). design.md 명세 기반. */
 export function LandingPage() {
@@ -131,6 +132,15 @@ export function LandingPage() {
         <h2 className="text-2xl md:text-3xl font-black text-center">기출 분석에 필요한 모든 것</h2>
         <p className="text-center text-text-secondary mt-3">실제 분석 결과 화면을 그대로 — 아래는 더미데이터 예시입니다.</p>
         <FeatureShowcase />
+      </section>
+
+      {/* ── 실제 분석 대시보드 ── */}
+      <section className="bg-slate-50/60 border-y border-slate-100">
+        <div className="max-w-6xl mx-auto px-6 py-14 md:py-20">
+          <h2 className="text-2xl md:text-3xl font-black text-center">교사용 분석 대시보드, 그대로</h2>
+          <p className="text-center text-text-secondary mt-3">난이도 도넛·유형 레이더·변별력·시간 배분까지 — 실제 화면 예시입니다 (더미데이터).</p>
+          <DashboardShowcase />
+        </div>
       </section>
 
       {/* ── 마무리 CTA ── */}
