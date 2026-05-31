@@ -1,23 +1,25 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Building2, Plus, Save } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Building2, Plus, Save, Search } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { toast } from '@/components/ui/Toast';
 import { useAuth } from '@/hooks/useAuth';
-import { AdminTable, type AdminTableColumn } from '@/components/admin-table';
+import { AdminTable, type AdminTableColumn, type AdminTableSort } from '@/components/admin-table';
 
 type Tenant = {
   id: string; slug: string; name: string; logo: string | null;
   isActive: boolean; userCount: number; createdAt: string;
 };
 
-/** 지점(Tenant) 관리 — 기출분석 전용 간소화 (기본 CRUD). SUPER_ADMIN 전용. */
+/** 지점(Tenant) 관리 — 기출분석 전용 간소화 (기본 CRUD + 검색/정렬). SUPER_ADMIN 전용. */
 export default function AdminTenantsPage() {
   const { user } = useAuth();
   const [rows, setRows] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
+  const [q, setQ] = useState('');
+  const [sort, setSort] = useState<AdminTableSort>({ columnId: 'name', direction: 'asc' });
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
@@ -38,6 +40,30 @@ export default function AdminTenantsPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const onSortChange = (columnId: string) =>
+    setSort((s) => (s.columnId === columnId ? { columnId, direction: s.direction === 'asc' ? 'desc' : 'asc' } : { columnId, direction: 'asc' }));
+
+  const view = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    const list = rows.filter((t) => !s || t.name.toLowerCase().includes(s) || t.slug.toLowerCase().includes(s));
+    const dir = sort.direction === 'asc' ? 1 : -1;
+    const val = (t: Tenant): string | number => {
+      switch (sort.columnId) {
+        case 'name': return t.name;
+        case 'slug': return t.slug;
+        case 'users': return t.userCount;
+        case 'active': return t.isActive ? 1 : 0;
+        case 'createdAt': return new Date(t.createdAt).getTime();
+        default: return '';
+      }
+    };
+    return [...list].sort((a, b) => {
+      const va = val(a), vb = val(b);
+      if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir;
+      return String(va).localeCompare(String(vb), 'ko') * dir;
+    });
+  }, [rows, q, sort]);
 
   const create = async () => {
     try {
@@ -77,10 +103,11 @@ export default function AdminTenantsPage() {
   }
 
   const columns: AdminTableColumn<Tenant>[] = [
-    { id: 'name', header: '지점명', render: (t) => <b>{t.name}</b> },
-    { id: 'slug', header: 'slug', render: (t) => <code className="text-xs text-slate-500">{t.slug}</code> },
-    { id: 'users', header: '사용자', render: (t) => `${t.userCount}명` },
-    { id: 'active', header: '상태', render: (t) => (t.isActive ? '활성' : '비활성') },
+    { id: 'name', header: '지점명', sortable: true, render: (t) => <b>{t.name}</b> },
+    { id: 'slug', header: 'slug', sortable: true, render: (t) => <code className="text-xs text-slate-500">{t.slug}</code> },
+    { id: 'users', header: '사용자', sortable: true, render: (t) => `${t.userCount}명` },
+    { id: 'active', header: '상태', sortable: true, render: (t) => (t.isActive ? '활성' : '비활성') },
+    { id: 'createdAt', header: '생성일', sortable: true, render: (t) => new Date(t.createdAt).toLocaleDateString('ko-KR') },
     {
       id: 'actions', header: '', render: (t) => (
         <Button size="sm" variant="secondary" onClick={() => toggleActive(t)}>
@@ -100,6 +127,18 @@ export default function AdminTenantsPage() {
           <Plus className="w-4 h-4 mr-1" /> 새 지점
         </Button>
       </div>
+      <div className="flex gap-2 mb-3 items-center">
+        <div className="relative max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="지점명·slug 검색"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="h-11 pl-9 pr-3 rounded-sm border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 w-64"
+          />
+        </div>
+      </div>
       {showCreate && (
         <div className="mb-4 p-4 border border-slate-200 rounded-lg flex gap-2 items-end bg-slate-50">
           <Input label="지점명" value={name} onChange={(e) => setName(e.target.value)} />
@@ -109,7 +148,15 @@ export default function AdminTenantsPage() {
           </Button>
         </div>
       )}
-      <AdminTable columns={columns} rows={rows} loading={loading} rowKey={(t) => t.id} emptyMessage="지점이 없습니다" />
+      <AdminTable
+        columns={columns}
+        rows={view}
+        loading={loading}
+        rowKey={(t) => t.id}
+        sort={sort}
+        onSortChange={onSortChange}
+        emptyMessage="지점이 없습니다"
+      />
     </div>
   );
 }

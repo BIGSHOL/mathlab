@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Users, Plus, Save, Trash2, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { toast } from '@/components/ui/Toast';
 import { useAuth } from '@/hooks/useAuth';
-import { AdminTable, type AdminTableColumn } from '@/components/admin-table';
+import { AdminTable, type AdminTableColumn, type AdminTableSort } from '@/components/admin-table';
 
 const ROLES = ['TEACHER', 'MANAGER', 'OWNER', 'SUPER_ADMIN'];
 
@@ -16,7 +16,7 @@ type Row = {
 };
 type TenantOpt = { id: string; name: string };
 
-/** 사용자(User) 관리 — 기출분석 전용 간소화 (계정 CRUD). SUPER_ADMIN 전용. */
+/** 사용자(User) 관리 — 기출분석 전용 간소화 (계정 CRUD + 필터/정렬). SUPER_ADMIN 전용. */
 export default function AdminUsersPage() {
   const { user } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
@@ -24,6 +24,8 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
+  const [tenantFilter, setTenantFilter] = useState('');
+  const [sort, setSort] = useState<AdminTableSort>({ columnId: 'createdAt', direction: 'desc' });
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ username: '', name: '', password: '', role: 'TEACHER', tenantId: '' });
 
@@ -33,6 +35,7 @@ export default function AdminUsersPage() {
       const params = new URLSearchParams();
       if (q) params.set('q', q);
       if (roleFilter) params.set('role', roleFilter);
+      if (tenantFilter) params.set('tenantId', tenantFilter);
       const res = await fetch(`/api/admin/users?${params.toString()}`);
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error?.message ?? '불러오기 실패');
@@ -42,7 +45,7 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  }, [q, roleFilter]);
+  }, [q, roleFilter, tenantFilter]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -52,6 +55,28 @@ export default function AdminUsersPage() {
       .then((j) => setTenants((j.data ?? []).map((t: { id: string; name: string }) => ({ id: t.id, name: t.name }))))
       .catch(() => {});
   }, []);
+
+  const onSortChange = (columnId: string) =>
+    setSort((s) => (s.columnId === columnId ? { columnId, direction: s.direction === 'asc' ? 'desc' : 'asc' } : { columnId, direction: 'asc' }));
+
+  const sortedRows = useMemo(() => {
+    const dir = sort.direction === 'asc' ? 1 : -1;
+    const val = (r: Row): string | number => {
+      switch (sort.columnId) {
+        case 'username': return r.username ?? '';
+        case 'name': return r.name ?? '';
+        case 'role': return ROLES.indexOf(r.role);
+        case 'tenant': return r.tenant?.name ?? '';
+        case 'createdAt': return new Date(r.createdAt).getTime();
+        default: return '';
+      }
+    };
+    return [...rows].sort((a, b) => {
+      const va = val(a), vb = val(b);
+      if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir;
+      return String(va).localeCompare(String(vb), 'ko') * dir;
+    });
+  }, [rows, sort]);
 
   const create = async () => {
     try {
@@ -108,20 +133,22 @@ export default function AdminUsersPage() {
   }
 
   const columns: AdminTableColumn<Row>[] = [
-    { id: 'username', header: '아이디', render: (r) => <b>{r.username}</b> },
-    { id: 'name', header: '이름', render: (r) => r.name },
+    { id: 'username', header: '아이디', sortable: true, render: (r) => <b>{r.username}</b> },
+    { id: 'name', header: '이름', sortable: true, render: (r) => r.name },
     {
-      id: 'role', header: '역할', render: (r) => (
+      id: 'role', header: '역할', sortable: true, render: (r) => (
         <select
           className="border border-slate-200 rounded px-1 py-0.5 text-sm"
           value={r.role}
+          onClick={(e) => e.stopPropagation()}
           onChange={(e) => void patch({ id: r.id, role: e.target.value })}
         >
           {ROLES.map((role) => <option key={role} value={role}>{role}</option>)}
         </select>
       ),
     },
-    { id: 'tenant', header: '지점', render: (r) => r.tenant?.name ?? '-' },
+    { id: 'tenant', header: '지점', sortable: true, render: (r) => r.tenant?.name ?? '-' },
+    { id: 'createdAt', header: '생성일', sortable: true, render: (r) => new Date(r.createdAt).toLocaleDateString('ko-KR') },
     {
       id: 'actions', header: '', render: (r) => (
         <div className="flex gap-1">
@@ -146,7 +173,7 @@ export default function AdminUsersPage() {
           <Plus className="w-4 h-4 mr-1" /> 새 계정
         </Button>
       </div>
-      <div className="flex gap-2 mb-3 items-center">
+      <div className="flex gap-2 mb-3 items-center flex-wrap">
         <Input placeholder="아이디·이름 검색" value={q} onChange={(e) => setQ(e.target.value)} />
         <select
           className="border border-slate-200 rounded px-2 h-11 text-sm"
@@ -155,6 +182,14 @@ export default function AdminUsersPage() {
         >
           <option value="">전체 역할</option>
           {ROLES.map((role) => <option key={role} value={role}>{role}</option>)}
+        </select>
+        <select
+          className="border border-slate-200 rounded px-2 h-11 text-sm"
+          value={tenantFilter}
+          onChange={(e) => setTenantFilter(e.target.value)}
+        >
+          <option value="">전체 지점</option>
+          {tenants.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
       </div>
       {showCreate && (
@@ -176,7 +211,15 @@ export default function AdminUsersPage() {
           </div>
         </div>
       )}
-      <AdminTable columns={columns} rows={rows} loading={loading} rowKey={(r) => r.id} emptyMessage="사용자가 없습니다" />
+      <AdminTable
+        columns={columns}
+        rows={sortedRows}
+        loading={loading}
+        rowKey={(r) => r.id}
+        sort={sort}
+        onSortChange={onSortChange}
+        emptyMessage="사용자가 없습니다"
+      />
     </div>
   );
 }
