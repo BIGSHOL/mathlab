@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Sparkles, Database, Download, FileText, X, Copy } from 'lucide-react';
@@ -39,6 +39,35 @@ const V4_NAVER_COPY_ENABLED = false;
 // V3 총평 + [네이버 복사]로 일원화. ArticleEditorModal/article-generator 코드는 보존(MD 문서 백업).
 const V2_ARTICLE_ENABLED = false;
 
+// 네이버 섹션 캡처 캐시 무효화 버전 — 캡처 로직/스타일을 바꾸거나 서버 이미지를 초기화하면 bump.
+// v2: 캡처 이미지 일괄 초기화 + 3일 TTL 도입(2026-05-30) → 기존 v1 클라 캐시 무시.
+// v3: 옆트임 강제 paste는 네이버가 무조건 fit으로 재빌드 → 불가능 확정. 옆트임 실험 제거,
+//     표준(문서너비 720px) 단일 경로로 정리(2026-05-30). 옆트임은 사용자가 네이버에서 수동 적용.
+const NAVER_CAPTURE_VERSION = 'v3';
+// 클라 캐시 유효기간 — 서버 cleanup(3일)과 동일. 만료 시 재캡처(서버가 이미 지웠을 수 있어 죽은 URL 재사용 방지).
+const NAVER_CACHE_TTL_MS = 3 * 24 * 60 * 60 * 1000;
+
+/** 짧은 문자열 해시(djb2) — 캐시 시그니처용. 충돌 위험은 무시 가능 수준. */
+function hashStr(s: string): string {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = (((h << 5) + h) + s.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}
+
+/** el 내부 모든 <img>가 로드될 때까지 대기 (최대 timeoutMs). 자동 펼침 직후 차트 PNG 누락 캡처 방지. */
+function waitForImages(el: HTMLElement, timeoutMs: number): Promise<void> {
+  const pending = (Array.from(el.querySelectorAll('img')) as HTMLImageElement[])
+    .filter((img) => !img.complete || img.naturalWidth === 0);
+  if (pending.length === 0) return Promise.resolve();
+  return Promise.race([
+    Promise.all(pending.map((img) => new Promise<void>((res) => {
+      img.addEventListener('load', () => res(), { once: true });
+      img.addEventListener('error', () => res(), { once: true });
+    }))).then(() => undefined),
+    new Promise<void>((res) => setTimeout(res, timeoutMs)),
+  ]);
+}
+
 interface AnalysisDetailProps {
   detail: ExamPaperData;
   analyzing: boolean;
@@ -59,11 +88,15 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
   const [showExtractModal, setShowExtractModal] = useState(false);
   const [showArticleModal, setShowArticleModal] = useState(false);
   const [showDiffModal, setShowDiffModal] = useState(false);
+  const copyingRef = useRef(false);              // 네이버 이미지 복사 진행 중 재진입(다중 클릭) 차단 — 즉시 동작하는 잠금
+  const [copying, setCopying] = useState(false);  // 버튼 disabled 시각 표시용
   // 총평 생성 중인 시험지 추적 (examId → 시작 ms). 시험지 전환에도 살아남도록 Record로 보관.
   // AnalysisDetail은 시험지 전환 시 unmount되지 않으므로(key 없음) 진행 상태가 유지됨 →
   // 다른 시험지 봤다가 돌아와도 진행바 복원. fetch promise도 계속 진행되어 생성은 멈추지 않음.
   const [commentaryGen, setCommentaryGen] = useState<Record<string, number>>({});
   const [commentaryElapsed, setCommentaryElapsed] = useState(0);
+  // 총평 생성 실시간 로그 — analyze-extended는 비스트리밍이라 경과시간 기준 마일스톤 메시지(V4/재분석과 동일 패턴)
+  const [commentaryLogs, setCommentaryLogs] = useState<Array<{ time: string; msg: string }>>([]);
   // 외부(page.tsx 자동 체인) 생성 단계 — gen.phase로 metadata/commentary 분기.
   const metadataStartedAt = gen?.phase === 'metadata' ? gen.startMs : null;
   const externalCommentaryStartedAt = gen?.phase === 'commentary' ? gen.startMs : null;
@@ -122,6 +155,30 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
     }, 1000);
     return () => clearInterval(interval);
   }, [genStartedAt]);
+
+  // 총평 생성 마일스톤 로그 — 경과시간이 임계치를 넘을 때마다 단계 메시지 추가 (실제 진행을 모사)
+  useEffect(() => {
+    if (!commentaryLoading) { setCommentaryLogs([]); return; }
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const now = new Date();
+    const stamp = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const milestones: Array<{ at: number; msg: string }> = [
+      { at: 1, msg: 'Claude Sonnet 4.6 호출 시작' },
+      { at: 6, msg: '시험 메타 + 문항별 난이도·단원 입력 중' },
+      { at: 14, msg: '종합 평가 + 강·약점 분석 중' },
+      { at: 26, msg: '주변 학교 · 작년 시험 비교 분석 중' },
+      { at: 40, msg: 'V3 매거진 필드 생성 중 (헤드라인 · Q&A 인터뷰)' },
+      { at: 56, msg: '등급컷 추정 · 단원별 성취 분석 중' },
+      { at: 74, msg: '킬러 문항 맵 · 학습 전략 작성 중' },
+      { at: 94, msg: 'JSON 응답 정규화 (영문 enum·수식 보정) 중' },
+      { at: 115, msg: '거의 완료 — DB 저장 중' },
+    ];
+    setCommentaryLogs((prev) => {
+      const toAdd = milestones.filter((m) => commentaryElapsed >= m.at && !prev.some((l) => l.msg === m.msg));
+      if (toAdd.length === 0) return prev;
+      return [...prev, ...toAdd.map((m) => ({ time: stamp, msg: m.msg }))];
+    });
+  }, [commentaryLoading, commentaryElapsed]);
 
   // 메타데이터(V3 총평 준비) 경과 시간 타이머 — 프로그레스 바용
   useEffect(() => {
@@ -235,7 +292,8 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
    * - HEAD 요청으로 chart endpoint 존재 확인 → 있으면 absolute URL로 buildNaverV3Html에 전달.
    * - 없으면 차트 없이 진행 + toast로 안내.
    */
-  const handleCopyV3Naver = async () => {
+  // dormant — [네이버 복사(서식)] 버튼 제거(2026-05-30). 네이버 이미지 복사로 일원화. 재활성 시 _ 제거.
+  const _handleCopyV3Naver = async () => {
     if (!commentary || !commentary.blog_qa?.length) {
       toast.error('V3 데이터가 없습니다. 총평 재생성 후 다시 시도하세요.');
       return;
@@ -340,8 +398,25 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
    */
   const handleCopyNaverImages = async () => {
     if (!commentary) { toast.error('총평이 없습니다. 먼저 총평을 생성하세요.'); return; }
-    const root = document.querySelector('.v3') as HTMLElement | null;
-    if (!root) { toast.error('총평을 펼쳐 매거진 보기 상태에서 시도하세요'); return; }
+    // 다중 클릭 차단 — 캡처/업로드가 진행 중이면 추가 클릭 무시 (병렬 실행 방지)
+    if (copyingRef.current) { toast.info('이미 복사 중입니다. 완료 후 다시 시도하세요.'); return; }
+    copyingRef.current = true;
+    setCopying(true);
+    // .v3 폴링 — 헤더 버튼이 접힌 상태에서 자동으로 펼치므로, 매거진(.v3)이 마운트될 때까지 최대 ~2.5s 대기
+    let root: HTMLElement | null = null;
+    for (let i = 0; i < 25; i++) {
+      root = document.querySelector('.v3') as HTMLElement | null;
+      if (root) break;
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    if (!root) {
+      toast.error('총평 매거진을 찾을 수 없습니다. 다시 시도해 주세요.');
+      copyingRef.current = false;
+      setCopying(false);
+      return;
+    }
+    // 자동 펼침 직후 차트 이미지가 미로드면 빈 차트로 캡처됨 → 이미지 로드 완료 대기 (최대 4s)
+    await waitForImages(root, 4000);
     const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const summaryOf = (node: HTMLElement): string => {
       const heading = (node.querySelector('h1,h2,h3,h4,.v3-section-sub') as HTMLElement | null)?.innerText?.trim() || '';
@@ -350,58 +425,118 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
       const merged = [heading, firstSentence].filter(Boolean).join(' — ');
       return koImg(merged).slice(0, 140);
     };
-    const tid = toast.loading('실제 V3 화면 캡처·업로드 준비 중...');
+    const DISPLAY_W = 720; // 네이버 문서너비 표시 폭 (옆트임은 paste로 강제 불가 — 사용자가 네이버에서 수동 적용)
+
+    // 내용 시그니처 — 총평/문항이 그대로면 재캡처·재업로드 없이 저장된 캡처 URL을 재사용(중복 낭비 방지).
+    //   총평 재생성이나 문항(난이도·배점·유형 등) 수정 시 sig가 바뀌어 자동으로 다시 캡처한다.
+    const qSig = (questions as { difficulty?: unknown; points?: unknown; question_type?: unknown; ability_domain?: unknown; is_correct?: unknown }[])
+      .map((q) => `${q.difficulty}|${q.points}|${q.question_type ?? ''}|${q.ability_domain ?? ''}|${q.is_correct ?? ''}`).join(';');
+    const sig = `${NAVER_CAPTURE_VERSION}|${hashStr(JSON.stringify(commentary))}|${hashStr(qSig)}`;
+    const cacheKey = `mathlab_naver_sec_${detail.id}_std`;
+    let blocks: { url: string; summary: string }[] = [];
     try {
-      const { domToPng } = await import('modern-screenshot');
-      // V3 최상위 블록 모두 캡처 (header/kpi-row(div)/section들/conclusion(div)). footer(credits)·초소형 제외.
-      const nodes = (Array.from(root.children) as HTMLElement[])
-        .filter((el) => el.tagName.toLowerCase() !== 'footer' && el.offsetHeight >= 24);
-      const blocks: { url: string; summary: string }[] = [];
-      let i = 0;
-      for (const node of nodes) {
-        i += 1;
-        toast.loading(`섹션 캡처·업로드 중... (${i}/${nodes.length})`, tid);
-        let dataUrl: string;
-        try {
-          dataUrl = await domToPng(node, { scale: 2, backgroundColor: '#ffffff' });
-        } catch { continue; }
-        try {
-          const res = await fetch(`/api/exam-analysis/${detail.id}/upload-section-image`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ section: `s${i}`, dataUrl }),
-          });
-          if (!res.ok) continue;
-          const json = await res.json();
-          if (json?.data?.url) blocks.push({ url: json.data.url, summary: summaryOf(node) });
-        } catch { /* 업로드 실패한 섹션은 건너뜀 */ }
+      const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null') as { sig?: string; savedAt?: number; blocks?: { url: string; summary: string }[] } | null;
+      // sig 일치 + 3일 이내(서버 cleanup TTL과 동일)일 때만 재사용. 만료/불일치면 재캡처.
+      const fresh = cached?.savedAt != null && (Date.now() - cached.savedAt) < NAVER_CACHE_TTL_MS;
+      if (cached && fresh && cached.sig === sig && Array.isArray(cached.blocks) && cached.blocks.length) blocks = cached.blocks;
+    } catch { /* 캐시 파싱 실패 → 새로 캡처 */ }
+
+    const reused = blocks.length > 0;
+    const tid = toast.loading(reused ? '저장된 캡처 재사용 — 복사 준비 중...' : '실제 V3 화면 캡처·업로드 준비 중...');
+    try {
+      if (!reused) {
+        const { domToPng } = await import('modern-screenshot');
+        // V3 최상위 블록 모두 캡처 (header/kpi-row(div)/section들/conclusion(div)). footer(credits)·초소형 제외.
+        const nodes = (Array.from(root.children) as HTMLElement[])
+          .filter((el) => el.tagName.toLowerCase() !== 'footer' && el.offsetHeight >= 24);
+        let i = 0;
+        for (const node of nodes) {
+          i += 1;
+          toast.loading(`섹션 캡처·업로드 중... (${i}/${nodes.length})`, tid);
+          let dataUrl: string;
+          try {
+            // 섹션의 실제 배경색을 backdrop으로 전달 — dark 섹션(.v3-feature #121212 등)에서
+            // 밝은 텍스트가 흰 배경 위에 찍혀 안 보이는 문제 방지. 투명이면 흰색.
+            const bg = getComputedStyle(node).backgroundColor;
+            const backgroundColor = bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent' ? bg : '#ffffff';
+            dataUrl = await domToPng(node, {
+              scale: 2,
+              backgroundColor,
+              // 브라우저 확장 프로그램이 주입한 floating 오버레이("AI 활용 설정" 토글 등) 제외.
+              // V3 섹션 콘텐츠는 모두 정상 흐름(in-flow)이라 fixed 요소가 없음 → 안전.
+              filter: (el: Node) => {
+                if (el instanceof HTMLElement) {
+                  if (getComputedStyle(el).position === 'fixed') return false;
+                  if (el.hasAttribute('data-html2canvas-ignore')) return false;
+                }
+                return true;
+              },
+            });
+          } catch { continue; }
+          try {
+            const res = await fetch(`/api/exam-analysis/${detail.id}/upload-section-image`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ section: `std_s${i}`, dataUrl }),
+            });
+            if (!res.ok) continue;
+            const json = await res.json();
+            if (json?.data?.url) blocks.push({ url: json.data.url, summary: summaryOf(node) });
+          } catch { /* 업로드 실패한 섹션은 건너뜀 */ }
+        }
+        // 캡처 끝 → 인라인 폭 제거(원래 CSS 흐름 복귀). 저장값 복원이 아니라 '' 클리어 = 동시 실행돼도 stuck 안 됨.
+        root.style.width = '';
+        // 캐시 저장 — 다음 복사 때 동일 내용이면 위 캡처 루프를 통째로 건너뜀
+        try { localStorage.setItem(cacheKey, JSON.stringify({ sig, blocks, savedAt: Date.now() })); } catch { /* 용량 초과 등 무시 */ }
       }
       if (!blocks.length) { toast.error('캡처/업로드된 섹션이 없습니다', undefined, tid); return; }
 
-      const html = `<div style="width:720px;max-width:100%;">${blocks.map((b) =>
-        `<p style="text-align:center;margin:0 0 6px;"><img src="${b.url}" style="width:720px;max-width:100%;" /></p>` +
+      const html = `<div style="width:${DISPLAY_W}px;max-width:100%;">${blocks.map((b) =>
+        `<p style="text-align:center;margin:0 0 6px;"><img src="${b.url}" style="width:${DISPLAY_W}px;max-width:100%;" /></p>` +
         (b.summary ? `<p style="font-size:14px;color:#555;line-height:1.75;margin:0 0 30px;word-break:keep-all;">${esc(b.summary)}</p>` : '')
       ).join('')}</div>`;
 
-      const container = document.createElement('div');
-      container.innerHTML = html;
-      container.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;width:720px;font-family:"맑은 고딕",sans-serif;color:#333;text-align:left;';
-      document.body.appendChild(container);
-      try {
-        const range = document.createRange();
-        range.selectNodeContents(container);
-        const selection = window.getSelection();
-        selection?.removeAllRanges();
-        selection?.addRange(range);
-        const ok = document.execCommand('copy');
-        selection?.removeAllRanges();
-        if (!ok) throw new Error('execCommand copy 실패');
-        toast.success(`${blocks.length}개 섹션 이미지 + 요약이 복사되었습니다. 네이버 블로그에 붙여넣으세요.`, undefined, tid);
-      } finally {
-        document.body.removeChild(container);
+      // 클립보드 복사 — 캡처/업로드(긴 async) 후에는 execCommand의 user-gesture가 만료돼 실패할 수 있음.
+      //   → 모던 Clipboard API 우선(문서 포커스만 있으면 async 후에도 동작). 실패 시 execCommand 폴백.
+      const plain = blocks.map((b) => b.summary).filter(Boolean).join('\n\n');
+      let copied = false;
+      if (navigator.clipboard && typeof window.ClipboardItem !== 'undefined') {
+        try {
+          if (!document.hasFocus()) window.focus();
+          await navigator.clipboard.write([
+            new window.ClipboardItem({
+              'text/html': new Blob([html], { type: 'text/html' }),
+              'text/plain': new Blob([plain], { type: 'text/plain' }),
+            }),
+          ]);
+          copied = true;
+        } catch { /* execCommand 폴백으로 진행 */ }
       }
+      if (!copied) {
+        const container = document.createElement('div');
+        container.innerHTML = html;
+        container.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;width:1000px;font-family:"맑은 고딕",sans-serif;color:#333;text-align:left;';
+        document.body.appendChild(container);
+        try {
+          const range = document.createRange();
+          range.selectNodeContents(container);
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+          copied = document.execCommand('copy');
+          selection?.removeAllRanges();
+        } finally {
+          document.body.removeChild(container);
+        }
+      }
+      if (!copied) throw new Error('클립보드 복사 실패 — 창을 클릭해 포커스를 둔 뒤 다시 시도하세요');
+      toast.success(`${blocks.length}개 섹션 이미지 + 요약이 복사되었습니다.${reused ? ' (저장된 캡처 재사용)' : ''} 네이버 블로그에 붙여넣으세요.`, undefined, tid);
     } catch (e) {
       toast.error('이미지 복사 실패: ' + (e instanceof Error ? e.message : String(e)), undefined, tid);
+    } finally {
+      root.style.width = ''; // 안전망: 에러/동시실행에도 인라인 폭 제거 (stuck 960px 방지)
+      copyingRef.current = false;   // 잠금 해제 → 다시 클릭 가능
+      setCopying(false);
     }
   };
 
@@ -799,9 +934,26 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                   <div className="h-1.5 bg-violet-100 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-violet-400 to-purple-500 rounded-full transition-all duration-1000 ease-linear"
-                      style={{ width: `${Math.min(commentaryElapsed / 50 * 100, 95)}%` }}
+                      style={{ width: `${Math.min((commentaryElapsed / 110) * 100, 96)}%` }}
                     />
                   </div>
+                  {/* 실시간 실행 로그 (분석 progress / V4 생성과 동일 디자인) — 바가 끝에 멈춰도 단계 메시지로 진행 체감 */}
+                  {commentaryLogs.length > 0 && (
+                    <div className="mt-2.5">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[11px] font-semibold text-violet-800">실행 로그</span>
+                        <span className="text-[10px] text-violet-600">{commentaryLogs.length}개 항목</span>
+                      </div>
+                      <div className="bg-slate-900 text-slate-100 rounded-sm px-3 py-2 max-h-40 overflow-y-auto font-mono text-[11px] leading-relaxed">
+                        {commentaryLogs.map((entry, idx) => (
+                          <div key={idx} className="flex gap-2">
+                            <span className="text-slate-400 shrink-0">{entry.time}</span>
+                            <span className="text-slate-100">{entry.msg}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -836,13 +988,15 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
               }}
               examPaperId={detail.id}
               onV4Generated={() => onRefresh()}
+              onCopyImages={handleCopyNaverImages}
+              copyingImages={copying}
             />
           )}
 
-          {/* 기출 분석 글 버튼 (총평 생성 후 활성화) */}
-          {commentary && (() => {
+          {/* 기출 분석 글 / V4 네이버 복사 — 현재 모두 dormant(플래그 false)라 미렌더.
+              네이버 이미지 복사는 "AI 시험 총평" 헤더로 이동(CommentarySection onCopyImages). */}
+          {commentary && (V2_ARTICLE_ENABLED || V4_NAVER_COPY_ENABLED) && (() => {
             const hasArticle = latestAnalysis?.extensions?.some(e => e.agentType === 'blog-article');
-            const hasV3 = !!commentary.blog_qa && commentary.blog_qa.length > 0;
             return (
               <div className="flex items-center gap-2 mb-4 flex-wrap">
                 {V2_ARTICLE_ENABLED && (
@@ -857,28 +1011,6 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                     {hasArticle ? '기출 분석 글 확인' : '기출 분석 글 작성'}
                   </Button>
                 )}
-                {hasV3 && (
-                  <Button
-                    size="sm"
-                    onClick={handleCopyV3Naver}
-                    variant="secondary"
-                    title="총평을 네이버 블로그용 HTML로 클립보드에 복사 (서식 기반)"
-                  >
-                    <Copy className="w-4 h-4 mr-1" />
-                    네이버 복사(서식)
-                  </Button>
-                )}
-                {hasV3 && (
-                  <Button
-                    size="sm"
-                    onClick={handleCopyNaverImages}
-                    className="bg-[#BF1722] hover:bg-[#9A1219] text-white"
-                    title="섹션을 이미지화해 [이미지+핵심요약] 순으로 복사 (네이버 서식 한계 우회 + 검색 노출)"
-                  >
-                    <Copy className="w-4 h-4 mr-1" />
-                    네이버 이미지 복사
-                  </Button>
-                )}
                 {V4_NAVER_COPY_ENABLED && commentary?.v4_exam_overview && (
                   <Button
                     size="sm"
@@ -890,9 +1022,6 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                     V4 네이버 복사
                   </Button>
                 )}
-                <span className="text-[11px] text-slate-400">
-                  {hasArticle ? '저장된 글을 확인하거나 재생성할 수 있습니다' : 'AI가 블로그 글 + 차트 이미지를 자동 생성합니다'}
-                </span>
               </div>
             );
           })()}

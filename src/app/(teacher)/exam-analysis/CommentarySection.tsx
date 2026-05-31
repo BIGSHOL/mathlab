@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
@@ -53,6 +53,10 @@ interface CommentarySectionProps {
   examPaperId?: string;
   /** V4 생성 완료 시 부모에게 알림 (commentary state 갱신용) */
   onV4Generated?: (updatedCommentary: CommentaryResult) => void;
+  /** 네이버 이미지 복사 트리거 (부모의 handleCopyNaverImages). 헤더 버튼에서 호출 — 접혀 있으면 자동 펼친 뒤 실행 */
+  onCopyImages?: () => void;
+  /** 이미지 복사 진행 중 (버튼 disabled 표시) */
+  copyingImages?: boolean;
 }
 
 export function CommentarySection({
@@ -77,6 +81,8 @@ export function CommentarySection({
   v3Charts,
   examPaperId,
   onV4Generated,
+  onCopyImages,
+  copyingImages = false,
 }: CommentarySectionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('v3');
@@ -208,6 +214,21 @@ export function CommentarySection({
 
   // 구버전(이전 PROMPT_VERSION) 분석본 — 총평 재생성을 차단하고 재분석 유도.
   const isStale = !!staleVersion;
+
+  // 네이버 이미지 복사 버튼 — V3 데이터 있을 때만. 접/펼침 양쪽 헤더에 동일 렌더.
+  //   클릭 시 접혀 있으면 자동으로 펼친 뒤(.v3 마운트) 부모 캡처 콜백 실행 → 캡처는 .v3를 폴링.
+  const copyImagesBtn = onCopyImages && useV3 ? (
+    <Button
+      size="sm"
+      onClick={() => { if (!isExpanded) setIsExpanded(true); onCopyImages(); }}
+      disabled={copyingImages}
+      title="총평을 섹션 이미지로 캡처해 네이버 블로그용으로 복사 (접혀 있으면 자동으로 펼칩니다)"
+      className="h-7 px-2 text-xs bg-[#BF1722] hover:bg-[#9A1219] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      <Copy className="w-3.5 h-3.5 mr-1" />
+      {copyingImages ? '복사 중...' : '이미지 복사'}
+    </Button>
+  ) : null;
   const staleBanner = isStale ? (
     <div className="bg-rose-50 border border-rose-200 rounded-sm px-3 py-2.5 flex items-start gap-2.5">
       <span className="text-rose-500 text-sm mt-0.5 shrink-0">&#9888;</span>
@@ -244,12 +265,14 @@ export function CommentarySection({
       hasStudentData: allQuestions.some((q) => q.is_correct !== null),
     };
     return (
-      <div className="bg-white border border-slate-200 rounded-sm mb-5 overflow-hidden">
-        {/* 컨트롤 row (재분석 + 체크박스 + 접기) */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100 bg-slate-50">
-          <div className="flex items-center gap-2">
-            <Sparkles className={`w-3.5 h-3.5 ${effectiveViewMode === 'v4' ? 'text-amber-700' : 'text-violet-600'}`} />
-            <span className="text-xs font-bold text-slate-700">AI 시험 총평</span>
+      <div className="bg-white border border-violet-200 rounded-sm mb-5 overflow-hidden">
+        {/* 컨트롤 row (재분석 + 체크박스 + 접기) — 접힘 상태와 동일한 violet 헤더 디자인으로 통일 */}
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-violet-200 bg-gradient-to-br from-violet-50 to-purple-50">
+          <div className="flex items-center gap-2.5">
+            <div className={`w-7 h-7 ${effectiveViewMode === 'v4' ? 'bg-amber-700' : 'bg-violet-600'} rounded-sm flex items-center justify-center shrink-0`}>
+              <Sparkles className="w-3.5 h-3.5 text-white" />
+            </div>
+            <span className="text-sm font-bold text-slate-900">AI 시험 총평</span>
             {/* V3 / V4 segmented control — V4_TOGGLE_ENABLED=false 시 숨김 (V3 강화로 V4 흡수 완료) */}
             {V4_TOGGLE_ENABLED && (
               <div className="inline-flex border border-slate-300 rounded-sm overflow-hidden ml-1" role="tablist" aria-label="총평 표시 모드">
@@ -281,6 +304,7 @@ export function CommentarySection({
             )}
           </div>
           <div className="flex items-center gap-2">
+            {copyImagesBtn}
             {!isRegenerating && (
               <Button
                 size="sm"
@@ -437,6 +461,7 @@ export function CommentarySection({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {copyImagesBtn}
           {!isRegenerating && (
             <Button
               size="sm"
