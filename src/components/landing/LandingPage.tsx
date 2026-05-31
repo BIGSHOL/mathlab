@@ -18,7 +18,9 @@ export function LandingPage() {
     : { href: '/login', label: '로그인' };
 
   return (
-    <div className="scroll-smooth bg-white text-text-primary">
+    <div className="h-dvh overflow-y-auto scroll-smooth bg-white text-text-primary">
+      {/* 루트 layout의 html/body가 overflow:hidden(LMS 앱 셸 규약)이라
+          공개 랜딩은 자체 스크롤 컨테이너(h-dvh + overflow-y-auto)가 필요. */}
       {/* ── 헤더 ── */}
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-slate-200">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
