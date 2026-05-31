@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import {
   FileSearch, BarChart3, FileText, Share2, Upload, Sparkles,
-  MapPin, Database, ListChecks, Check, ArrowRight,
+  Check, ArrowRight,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { LogoIcon } from '@/components/ui/LogoIcon';
 import { Button } from '@/components/ui/Button';
 import { V3ReportPreview } from '@/components/landing/V3ReportPreview';
+import { FeatureShowcase } from '@/components/landing/FeatureShowcase';
 
 /** 기출분석 제품 공개 랜딩페이지 (루트 /). design.md 명세 기반. */
 export function LandingPage() {
@@ -128,24 +129,8 @@ export function LandingPage() {
       {/* ── 기능 상세 ── */}
       <section id="features" className="max-w-6xl mx-auto px-6 py-14 md:py-20">
         <h2 className="text-2xl md:text-3xl font-black text-center">기출 분석에 필요한 모든 것</h2>
-        <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {[
-            { icon: BarChart3, title: '난이도·점수 차트', desc: '난이도 분포 도넛, 배점 막대, 유형 레이더 차트를 자동 렌더.' },
-            { icon: ListChecks, title: '단원·유형·킬러문항', desc: '단원별 출제 비중과 자주 나오는 유형, 킬러문항을 식별.' },
-            { icon: FileText, title: '문항 해설 & 총평', desc: 'KaTeX 수식이 포함된 문항별 해설과 시험 총평을 생성.' },
-            { icon: MapPin, title: '주변 학교 비교', desc: '우리 지역 학교 기출과 난이도·단원을 비교해 내신을 대비.' },
-            { icon: Share2, title: '네이버 블로그 이미지', desc: '클릭 한 번으로 블로그 게시용 분석 이미지 세트를 생성.' },
-            { icon: Database, title: '문제은행 추출', desc: '분석한 문항을 문제은행으로 추출해 재활용(선택).' },
-          ].map((f) => (
-            <div key={f.title} className="p-6 rounded-[6px] border border-slate-200 bg-white">
-              <div className="flex items-center gap-2.5 mb-2">
-                <f.icon className="w-5 h-5 text-primary" />
-                <h3 className="font-bold">{f.title}</h3>
-              </div>
-              <p className="text-sm text-text-secondary leading-relaxed">{f.desc}</p>
-            </div>
-          ))}
-        </div>
+        <p className="text-center text-text-secondary mt-3">실제 분석 결과 화면을 그대로 — 아래는 더미데이터 예시입니다.</p>
+        <FeatureShowcase />
       </section>
 
       {/* ── 마무리 CTA ── */}
