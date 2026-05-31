@@ -773,7 +773,7 @@ body {
    data/refact2 핸드오프 (HomeworkLayout, QuestionCard, ChoiceList,
    OXButtons, TimerRing, HintPanel, ResultCard, LeaderboardRow)
    ============================================ */
-@import '../styles/v2-components/practice-suite.css';
+/* removed: v2-components/practice-suite.css (exam-analysis-only trim) */
 
 /* ============================================
    Pattern G — 정적 문서 (W2)

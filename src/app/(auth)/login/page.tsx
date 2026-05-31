@@ -56,12 +56,8 @@ export default function LoginPage() {
       return;
     }
 
-    // 라우팅: 데모/관리자/기출분석 전용 계정 분기
-    const target =
-      username === 'demo' ? '/demo'
-      : username === 'injaewon' ? '/exam-analysis/admin'  // 강사 관리/사용 현황 페이지
-      : /^csganga\d+$/i.test(username) ? '/exam-analysis'
-      : '/dashboard';
+    // 기출분석 전용 — 관리자(injaewon)는 사용 현황 페이지, 그 외 기출분석 메인
+    const target = username === 'injaewon' ? '/exam-analysis/admin' : '/exam-analysis';
     window.location.href = target;
   };
 
