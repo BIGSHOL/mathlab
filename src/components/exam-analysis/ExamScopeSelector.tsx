@@ -22,18 +22,19 @@ function getCurriculumKey(grade: string, category: string): { curriculum: Record
   }
 
   if (grade.startsWith('고')) {
-    // 고등은 과목명으로 직접 매칭
+    // 고등은 과목명(category)으로 직접 매칭. ⚠️ 정확 일치를 *반드시* 먼저 —
+    // 예전엔 "grade==='고1' && (k==='공통수학1'||k==='공통수학2')" 절이 find 안에 있어
+    // category가 '공통수학2'여도 키 배열에서 먼저 나오는 '공통수학1'이 매칭돼 단원이 뒤바뀌었음.
     const highKeys = Object.keys(HIGH_SCHOOL_CURRICULUM);
-    const matchKey = highKeys.find(k =>
-      k === category ||
-      k.includes(category) ||
-      (grade === '고1' && (k === '공통수학1' || k === '공통수학2')) ||
-      (grade === '고2' && (k === '대수' || k === '미적분I' || k === '확률과 통계')) ||
-      (grade === '고3' && (k === '미적분II' || k === '기하'))
-    );
+    // 1. 정확 일치 우선 (예: '공통수학2' → '공통수학2')
+    let matchKey = category ? highKeys.find(k => k === category) : undefined;
+    // 2. 부분 일치 — category가 키를 *포함*할 때만 (decorated label 대비; '미적분I'⊂'미적분II' 역방향 오매칭 방지)
+    if (!matchKey && category) {
+      matchKey = highKeys.find(k => category.includes(k));
+    }
     if (matchKey) return { curriculum: HIGH_SCHOOL_CURRICULUM, key: matchKey };
 
-    // 기본값
+    // 3. category 미지정/불명 시에만 학년 기본값
     if (grade === '고1') return { curriculum: HIGH_SCHOOL_CURRICULUM, key: '공통수학1' };
     if (grade === '고2') return { curriculum: HIGH_SCHOOL_CURRICULUM, key: '대수' };
     if (grade === '고3') return { curriculum: HIGH_SCHOOL_CURRICULUM, key: '미적분II' };
