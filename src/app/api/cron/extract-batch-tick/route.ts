@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { processPendingSchedules } from '@/lib/services/exam-extract-batch';
+import { cleanupNaverSections, NAVER_SECTION_TTL_MS } from '@/lib/services/naver-section-cleanup';
 
 export const maxDuration = 300; // 최대 5분 (Vercel Pro)
 
@@ -29,12 +30,22 @@ export async function GET(req: NextRequest) {
 
   try {
     const result = await processPendingSchedules();
+
+    // 네이버 섹션 캡처 이미지 3일 TTL 정리 (실패해도 배치 결과에는 영향 없도록 격리)
+    let naverCleanup: { folders: number; scanned: number; deleted: number } | null = null;
+    try {
+      naverCleanup = await cleanupNaverSections(NAVER_SECTION_TTL_MS, Date.now());
+    } catch (e) {
+      console.error('[cron/extract-batch-tick] naver-sections 정리 실패:', e);
+    }
+
     return NextResponse.json({
       data: {
         processed: result.processed,
         total: result.results.length,
         success: result.results.filter((r) => r.success).length,
         failed: result.results.filter((r) => !r.success).length,
+        naverCleanup,
       },
     });
   } catch (error) {
