@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const page = Math.max(1, Number(searchParams.get('page') || 1));
-  const limit = Math.min(50, Math.max(1, Number(searchParams.get('limit') || 20)));
+  const limit = Math.min(1000, Math.max(1, Number(searchParams.get('limit') || 20)));
   const tenantId = searchParams.get('tenantId') || undefined;
   const search = searchParams.get('search') || undefined;
 
