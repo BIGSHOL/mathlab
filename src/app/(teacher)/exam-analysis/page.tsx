@@ -1,18 +1,21 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, type MouseEvent as ReactMouseEvent } from 'react';
 import { Button } from '@/components/ui/Button';
 import { ExamPaperList } from '@/components/exam-analysis/ExamPaperList';
 import { ExamUploadForm } from '@/components/exam-analysis/ExamUploadForm';
 import { toast } from '@/components/ui/Toast';
 import Link from 'next/link';
-import { Plus, X, Settings2, PanelLeftClose, PanelLeftOpen, FileSearch } from 'lucide-react';
+import { Plus, X, Settings2, PanelLeftClose, PanelLeftOpen, FileSearch, Search } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { hasMinRole } from '@/lib/constants/navigation';
 import type { ExamPaperData } from './types';
 import { AnalysisDetail } from './AnalysisDetail';
 import { sumPoints, roundPoints } from '@/lib/exam-analysis/points';
 import { NarrowScreenGuard } from '@/components/ui/NarrowScreenGuard';
+
+// 기출 분석 필터 — 학년 옵션 (DB grade는 한글 문자열로 저장: 중1/고1 등)
+const GRADE_OPTIONS = ['중1', '중2', '중3', '고1', '고2', '고3'];
 
 export default function ExamAnalysisPage() {
   const { user } = useAuth();
@@ -27,6 +30,43 @@ export default function ExamAnalysisPage() {
   const [selectedDetail, setSelectedDetail] = useState<ExamPaperData | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
+  // 목록 패널 너비(px) — 경계 드래그로 조절. 기본 288(=w-72), 범위 220~560. localStorage 영속.
+  const LIST_MIN_W = 220, LIST_MAX_W = 560, LIST_DEFAULT_W = 288;
+  const [listWidth, setListWidth] = useState(LIST_DEFAULT_W);
+  const [draggingList, setDraggingList] = useState(false);
+  useEffect(() => {
+    try {
+      const s = localStorage.getItem('mathlab_exam_list_w');
+      if (s) setListWidth(Math.min(LIST_MAX_W, Math.max(LIST_MIN_W, Number(s) || LIST_DEFAULT_W)));
+    } catch { /* noop */ }
+  }, []);
+  const startListResize = useCallback((e: ReactMouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startW = listWidth;
+    let latest = startW;
+    setDraggingList(true);
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
+    const onMove = (ev: MouseEvent) => {
+      latest = Math.min(LIST_MAX_W, Math.max(LIST_MIN_W, startW + (ev.clientX - startX)));
+      setListWidth(latest);
+    };
+    const onUp = () => {
+      setDraggingList(false);
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      try { localStorage.setItem('mathlab_exam_list_w', String(latest)); } catch { /* noop */ }
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }, [listWidth]);
+  const resetListWidth = useCallback(() => {
+    setListWidth(LIST_DEFAULT_W);
+    try { localStorage.setItem('mathlab_exam_list_w', String(LIST_DEFAULT_W)); } catch { /* noop */ }
+  }, []);
   // 분석 시 총평 자동 생성 옵션 (localStorage 기억)
   const [autoCommentary, setAutoCommentary] = useState(false);
   useEffect(() => {
@@ -39,9 +79,17 @@ export default function ExamAnalysisPage() {
     if (typeof window !== 'undefined') localStorage.setItem('mathlab_auto_commentary', v ? '1' : '0');
   }, []);
 
-  // 필터
-  const [filterSubject, _setFilterSubject] = useState<string>('');
-  const [filterGrade, _setFilterGrade] = useState<string>('');
+  // 필터 + 검색 (API route.ts가 grade/status/search 지원 — UI만 추가)
+  const [filterSubject] = useState<string>('');   // 수학 전용이라 UI 미노출 (빈 값 = 전체)
+  const [filterGrade, setFilterGrade] = useState<string>('');
+  const [filterStatus, setFilterStatus] = useState<string>('');
+  const [searchInput, setSearchInput] = useState<string>(''); // 입력값(즉시)
+  const [search, setSearch] = useState<string>('');           // 디바운스된 검색어(API 전송)
+  // 검색어 300ms 디바운스 + 페이지 1로 리셋 (마운트 시 빈 값이라 추가 fetch 없음)
+  useEffect(() => {
+    const t = setTimeout(() => { setSearch(searchInput.trim()); setPage(1); }, 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
   const limit = 20;
 
@@ -51,6 +99,8 @@ export default function ExamAnalysisPage() {
       const params = new URLSearchParams({ page: String(page), limit: String(limit) });
       if (filterSubject) params.set('subject', filterSubject);
       if (filterGrade) params.set('grade', filterGrade);
+      if (filterStatus) params.set('status', filterStatus);
+      if (search) params.set('search', search);
       const res = await fetch(`/api/exam-analysis?${params}`);
       if (!res.ok) {
         // 503/500/403 등의 응답을 빈 목록으로 삼키지 말고 사용자에게 노출
@@ -77,7 +127,7 @@ export default function ExamAnalysisPage() {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [page, filterSubject, filterGrade]);
+  }, [page, filterSubject, filterGrade, filterStatus, search]);
 
   useEffect(() => { fetchList(); }, [fetchList]);
 
@@ -275,9 +325,10 @@ export default function ExamAnalysisPage() {
     <div className="flex-1 flex min-h-0">
       {/* 좌측 사이드바 */}
       <aside
-        className={`shrink-0 border-r border-slate-200 bg-white flex-col transition-all duration-200 ${
-          leftPanelCollapsed ? 'w-12 hidden md:flex' : 'w-full md:w-72'
+        className={`shrink-0 border-r border-slate-200 bg-white flex-col ${draggingList ? '' : 'transition-all duration-200'} ${
+          leftPanelCollapsed ? 'w-12 hidden md:flex' : 'w-full md:flex'
         } ${selectedId ? 'hidden md:flex' : 'flex'}`}
+        style={leftPanelCollapsed ? undefined : { width: listWidth }}
       >
         <div className="flex items-center justify-between p-3 border-b border-slate-200">
           {!leftPanelCollapsed && (
@@ -317,32 +368,101 @@ export default function ExamAnalysisPage() {
             </Button>
           </div>
         )}
-        {!leftPanelCollapsed && (loading ? (
-          <div className="p-4 text-center text-sm text-slate-400">불러오는 중...</div>
-        ) : (
-          <ExamPaperList
-            items={items as unknown as Parameters<typeof ExamPaperList>[0]['items']}
-            total={total}
-            page={page}
-            limit={limit}
-            onPageChange={setPage}
-            onSelect={setSelectedId}
-            onAnalyze={handleAnalyze}
-            onDelete={(id) => {
-              if (selectedId === id) { setSelectedId(null); setSelectedDetail(null); }
-              fetchList();
-            }}
-            selectedId={selectedId}
-            canEditSchool={isManagerPlus}
-            onUpdate={(id, data) => {
-              setItems(prev => prev.map(item =>
-                item.id === id ? { ...item, ...data } as ExamPaperData : item
-              ));
-            }}
-            genState={genState}
-          />
-        ))}
+        {/* 검색 + 필터 (학년 / 상태) — API route.ts가 grade/status/search 지원 */}
+        {!leftPanelCollapsed && (
+          <div className="px-2 py-2 border-b border-slate-200 space-y-2 shrink-0">
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+              <input
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="제목·학교 검색"
+                className="w-full pl-7 pr-7 py-1.5 text-sm border border-slate-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40"
+              />
+              {searchInput && (
+                <button
+                  onClick={() => { setSearchInput(''); setSearch(''); setPage(1); }}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600"
+                  title="검색어 지우기"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+            <div className="flex gap-1.5">
+              <select
+                value={filterGrade}
+                onChange={(e) => { setFilterGrade(e.target.value); setPage(1); }}
+                className="flex-1 min-w-0 text-xs border border-slate-200 rounded-sm py-1.5 px-1.5 bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary/40"
+              >
+                <option value="">학년 전체</option>
+                {GRADE_OPTIONS.map((g) => <option key={g} value={g}>{g}</option>)}
+              </select>
+              <select
+                value={filterStatus}
+                onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
+                className="flex-1 min-w-0 text-xs border border-slate-200 rounded-sm py-1.5 px-1.5 bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary/40"
+              >
+                <option value="">상태 전체</option>
+                <option value="COMPLETED">완료</option>
+                <option value="ANALYZING">분석중</option>
+                <option value="PENDING">대기</option>
+                <option value="FAILED">실패</option>
+              </select>
+            </div>
+            {(search || filterGrade || filterStatus) && (
+              <button
+                onClick={() => { setSearchInput(''); setSearch(''); setFilterGrade(''); setFilterStatus(''); setPage(1); }}
+                className="text-[11px] text-slate-400 hover:text-primary transition-colors"
+              >
+                필터 초기화
+              </button>
+            )}
+          </div>
+        )}
+        {/* 목록 (flex-1 스크롤) */}
+        {!leftPanelCollapsed && (
+          <div className="flex-1 min-h-0">
+            {loading ? (
+              <div className="p-4 text-center text-sm text-slate-400">불러오는 중...</div>
+            ) : (
+              <ExamPaperList
+                items={items as unknown as Parameters<typeof ExamPaperList>[0]['items']}
+                total={total}
+                page={page}
+                limit={limit}
+                onPageChange={setPage}
+                onSelect={setSelectedId}
+                onAnalyze={handleAnalyze}
+                onDelete={(id) => {
+                  if (selectedId === id) { setSelectedId(null); setSelectedDetail(null); }
+                  fetchList();
+                }}
+                selectedId={selectedId}
+                canEditSchool={isManagerPlus}
+                onUpdate={(id, data) => {
+                  setItems(prev => prev.map(item =>
+                    item.id === id ? { ...item, ...data } as ExamPaperData : item
+                  ));
+                }}
+                genState={genState}
+              />
+            )}
+          </div>
+        )}
       </aside>
+
+      {/* 목록 패널 너비 조절 드래그 핸들 (접힘 상태·모바일 제외). 더블클릭 시 기본폭 복원 */}
+      {!leftPanelCollapsed && (
+        <div
+          onMouseDown={startListResize}
+          onDoubleClick={resetListWidth}
+          className={`hidden md:block shrink-0 w-1.5 cursor-col-resize transition-colors ${draggingList ? 'bg-primary/50' : 'bg-transparent hover:bg-primary/30'}`}
+          title="드래그하여 목록 너비 조절 (더블클릭: 기본폭)"
+          role="separator"
+          aria-orientation="vertical"
+        />
+      )}
 
       {/* 우측 메인 */}
       <main className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
