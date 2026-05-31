@@ -162,7 +162,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
     const now = new Date();
     const stamp = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
     const milestones: Array<{ at: number; msg: string }> = [
-      { at: 1, msg: 'Claude Sonnet 4.6 호출 시작' },
+      { at: 1, msg: 'AI 분석 호출 시작' },
       { at: 6, msg: '시험 메타 + 문항별 난이도·단원 입력 중' },
       { at: 14, msg: '종합 평가 + 강·약점 분석 중' },
       { at: 26, msg: '주변 학교 · 작년 시험 비교 분석 중' },
@@ -758,10 +758,10 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                         })}
                       </div>
                       {/* ▼ 마커 — 정확한 가중평균 위치 (2.5와 2.9 미세 차이 시각화) */}
-                      <div className="relative h-1.5">
+                      <div className="relative h-1.5 w-full">
                         <div
                           className="absolute top-0 -translate-x-1/2 transition-all"
-                          style={{ left: `${(Math.max(1, Math.min(5, avg)) - 1) * 26 + 12}px` }}
+                          style={{ left: `${((Math.max(1, Math.min(5, avg)) - 1) * 26 + 12) / 128 * 100}%` }}
                           title={`정확한 가중평균: ${avg.toFixed(2)}`}
                         >
                           <svg width="8" height="6" viewBox="0 0 8 6" aria-hidden="true">

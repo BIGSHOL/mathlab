@@ -114,7 +114,7 @@ export function CommentarySection({
       return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
     };
     const milestones: Array<{ at: number; msg: string }> = [
-      { at: 1, msg: 'Claude Sonnet 4.6 호출 시작' },
+      { at: 1, msg: 'AI 분석 호출 시작' },
       { at: 5, msg: '시험 메타 + 단원별 출제 분석 입력 중' },
       { at: 10, msg: '9섹션 구조 생성 중 (들어가며 · 시험 개요 · 학원 전략)' },
       { at: 18, msg: '문제 번호별 난이도 · 한 줄 해설 생성 중' },
@@ -142,7 +142,7 @@ export function CommentarySection({
       return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
     };
     const milestones: Array<{ at: number; msg: string }> = [
-      { at: 1, msg: 'Claude Sonnet 4.6 호출 시작' },
+      { at: 1, msg: 'AI 분석 호출 시작' },
       { at: 4, msg: '시험 데이터 + 단원별 출제 분석 입력 중' },
       { at: 10, msg: '종합 평가 · 등급별 전략 · 강약점 작성 중' },
       { at: 20, msg: 'Q&A 인터뷰 · 거대 숫자 헤드라인 생성 중' },
@@ -368,7 +368,7 @@ export function CommentarySection({
               <div className="h-full bg-violet-600 animate-pulse" style={{ width: '60%' }} />
             </div>
             <p className="text-[11px] text-violet-700 mt-2">
-              Claude Sonnet 4.6이 종합 평가 + V3 강화 필드(문항별 표·영역별 분석·Q&A·단원 피드백)를 생성 중입니다. 평균 60~120초 소요.
+              AI가 종합 평가 + V3 강화 필드(문항별 표·영역별 분석·Q&A·단원 피드백)를 생성 중입니다. 평균 60~120초 소요.
             </p>
             {/* 실시간 실행 로그 (분석 progress / V4 생성과 동일 디자인) */}
             {regenLogs.length > 0 && (
