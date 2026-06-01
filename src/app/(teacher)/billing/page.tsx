@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Script from 'next/script';
 import { useSearchParams } from 'next/navigation';
-import { CreditCard, Check, ShieldAlert } from 'lucide-react';
+import { CreditCard, Check, ShieldAlert, Sparkles, AlertTriangle } from 'lucide-react';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/Button';
@@ -100,15 +100,15 @@ export default function BillingPage() {
       />
 
       {beta ? (
-        <div className="mb-6 px-4 py-3 bg-violet-50 border border-violet-200 rounded-sm flex items-start gap-2.5">
-          <span className="text-violet-500 text-sm mt-0.5 shrink-0">&#10024;</span>
+        <div className="mb-6 px-4 py-3 bg-violet-50 border border-violet-200 rounded-sm flex items-center gap-2.5">
+          <Sparkles className="w-4 h-4 text-violet-500 shrink-0" />
           <p className="text-xs text-violet-700">
             <strong>베타 기간</strong> — 모든 기능(AI 시험 총평 · 주변 학교·연도 비교 포함)을 자유롭게 사용하실 수 있습니다.
           </p>
         </div>
       ) : !lemonSqueezyConfigured ? (
-        <div className="mb-6 px-4 py-3 bg-amber-50 border border-amber-200 rounded-sm flex items-start gap-2.5">
-          <span className="text-amber-500 text-sm mt-0.5 shrink-0">&#9888;</span>
+        <div className="mb-6 px-4 py-3 bg-amber-50 border border-amber-200 rounded-sm flex items-center gap-2.5">
+          <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
           <p className="text-xs text-amber-700">결제 시스템이 준비 중입니다. 현재는 기본 기능을 이용하실 수 있습니다.</p>
         </div>
       ) : null}
