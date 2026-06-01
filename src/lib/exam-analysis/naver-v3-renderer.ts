@@ -576,11 +576,13 @@ function v3SectionTitle(sub: string, title: string): string {
 /** 문항별 난이도·단원 표 — 단일 table, Lv는 색상 굵은 텍스트(네이버 safe) */
 function renderQTable(rows: NonNullable<CommentaryResult['v4_difficulty_rows']>): string {
   const sorted = [...rows].sort((a, b) => {
-    const aE = String(a.question_number).startsWith('서술');
-    const bE = String(b.question_number).startsWith('서술');
+    const aStr = String(a.question_number);
+    const bStr = String(b.question_number);
+    const aE = /^[가-힣]/.test(aStr);
+    const bE = /^[가-힣]/.test(bStr);
     if (aE && !bE) return 1;
     if (!aE && bE) return -1;
-    return (parseInt(String(a.question_number), 10) || 0) - (parseInt(String(b.question_number), 10) || 0);
+    return (parseInt(aStr, 10) || 0) - (parseInt(bStr, 10) || 0);
   });
   const header = `
     <tr bgcolor="#121212">

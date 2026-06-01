@@ -1164,6 +1164,7 @@ npx tsx scripts/migrate-question-relations.ts  # questionIds Json → 중간테�
   - DB 일괄 치환 스크립트: `npx tsx scripts/fix-dfrac.ts --apply`
 - **alert() 사용 금지** → `toast.*()` 사용 (위 7번 규칙 참고)
 - 빌드 확인: 기능 구현 후 `npm run build`로 타입 에러 없는지 확인
+- **커밋 전 항상 원격 최신 확인**: `git fetch origin` → `git status`로 로컬이 origin/main과 동기화되어 있는지 확인 후 커밋. 뒤처진 경우 `git pull --rebase origin main` 먼저 실행
 - **문제 순서 조회 시 반드시 헬퍼 함수 사용**: `getTestQuestionIds()`, `getQuizQuestionIds()`, `getHomeworkDayQuestionIds()` (`@/lib/utils/question-order`)
   - `test.questionIds as string[]` 직접 캐스팅 금지 → 중간테이블 우선 조회 헬퍼 사용
   - 새 시험/퀴즈/숙제 생성 시 Json + 중간테이블 Dual-Write 유지

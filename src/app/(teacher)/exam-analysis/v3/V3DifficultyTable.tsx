@@ -17,13 +17,15 @@ interface Props {
 export function V3DifficultyTable({ rows }: Props) {
   if (!rows || rows.length === 0) return null;
 
-  // 번호 정렬 (서술형은 뒤로)
+  // 번호 정렬 (서술형/서답형 등 한글 시작 번호는 뒤로)
   const sorted = [...rows].sort((a, b) => {
-    const aEssay = String(a.question_number).startsWith('서술');
-    const bEssay = String(b.question_number).startsWith('서술');
+    const aStr = String(a.question_number);
+    const bStr = String(b.question_number);
+    const aEssay = /^[가-힣]/.test(aStr);
+    const bEssay = /^[가-힣]/.test(bStr);
     if (aEssay && !bEssay) return 1;
     if (!aEssay && bEssay) return -1;
-    return (parseInt(String(a.question_number), 10) || 0) - (parseInt(String(b.question_number), 10) || 0);
+    return (parseInt(aStr, 10) || 0) - (parseInt(bStr, 10) || 0);
   });
 
   return (

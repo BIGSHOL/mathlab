@@ -79,7 +79,7 @@ export async function GET(req: NextRequest) {
     // 기출 라벨용 데이터
     prisma.examPaper.findMany({
       where: { schoolId: { not: null }, status: 'COMPLETED' },
-      select: { schoolId: true, grade: true, category: true, title: true, createdAt: true },
+      select: { schoolId: true, grade: true, category: true, title: true, createdAt: true, examScope: true },
     }),
   ]);
 
@@ -166,30 +166,47 @@ const CATEGORY_ABBR: Record<string, string> = {
   '확률과 통계': '확통', '확률과통계': '확통',
 };
 
-function buildExamLabelsMap(papers: Array<{ schoolId: string | null; grade: string; category: string | null; title: string; createdAt: Date }>): Map<string, string[]> {
+const EXAM_CATEGORY_KO: Record<string, string> = {
+  MIDTERM: '중간', FINAL: '기말', MOCK: '모의', OTHER: '기타',
+};
+
+function buildExamLabelsMap(papers: Array<{ schoolId: string | null; grade: string; category: string | null; title: string; createdAt: Date; examScope: unknown }>): Map<string, string[]> {
   const map = new Map<string, string[]>();
   for (const p of papers) {
     if (!p.schoolId) continue;
     const labels = map.get(p.schoolId) || [];
 
-    // 연도: title에서 "2025년" 추출 우선, 없으면 createdAt
+    // examScope에서 구조화 데이터 추출 (우선)
+    const scope = (p.examScope && typeof p.examScope === 'object' && !Array.isArray(p.examScope))
+      ? p.examScope as Record<string, unknown>
+      : null;
+    const scopeYear = scope?.examYear ? String(scope.examYear).slice(-2) : null;
+    const scopeSem = scope?.examSemester != null ? String(scope.examSemester) : null;
+    const scopeCat = scope?.examCategory && typeof scope.examCategory === 'string'
+      ? (EXAM_CATEGORY_KO[scope.examCategory] || scope.examCategory)
+      : null;
+
+    // 연도: examScope.examYear → title → createdAt 순
     const yearMatch = p.title?.match(/(20\d{2})년/);
-    const year = yearMatch ? yearMatch[1].slice(-2) : String(p.createdAt.getFullYear()).slice(-2);
+    const year = scopeYear || (yearMatch ? yearMatch[1].slice(-2) : String(p.createdAt.getFullYear()).slice(-2));
 
     // 학년: "중3" → "3", "고2" → "2"
     const gradeNum = p.grade?.replace(/^[중고]/, '') || '';
     const isHigh = p.grade?.startsWith('고');
 
-    // 고등: category(과목명) 사용 → 26-1-공수1
-    // 중등: 학기+시험종류 → 25-3-1중간
     let suffix = '';
     if (isHigh && p.category) {
       suffix = CATEGORY_ABBR[p.category] || p.category;
+    } else if (scopeSem && scopeCat) {
+      // examScope 완전 데이터: "1중간", "2기말"
+      suffix = `${scopeSem}${scopeCat}`;
+    } else if (scopeCat) {
+      // 학기 없이 시험 종류만: "중간", "기말"
+      suffix = scopeCat;
     } else {
-      // category에서 학기 정보 시도
+      // fallback: category 필드 또는 title 패턴 파싱
       let cat = p.category || '';
       if (!cat || !/\d/.test(cat)) {
-        // title에서 "1학기 중간고사" 추출
         const semMatch = p.title?.match(/(\d)학기\s*(중간|기말|모의)/);
         if (semMatch) cat = `${semMatch[1]}${semMatch[2]}`;
       } else {
@@ -254,7 +271,7 @@ async function handleNearbySchools(schoolId: string) {
     const allIds = [school.id, ...nearbyIds];
     const examPapers = await prisma.examPaper.findMany({
       where: { schoolId: { in: allIds }, status: 'COMPLETED' },
-      select: { schoolId: true, grade: true, category: true, title: true, createdAt: true },
+      select: { schoolId: true, grade: true, category: true, title: true, createdAt: true, examScope: true },
     });
     const examLabelsMap = buildExamLabelsMap(examPapers);
 
