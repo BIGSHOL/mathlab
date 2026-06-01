@@ -1,0 +1,177 @@
+/**
+ * GET /api/admin/evolution
+ *
+ * 자가진화 관측 콘솔 데이터 — 플랫폼 전역(전국 절대 기준) 신호 종합.
+ * 3계층으로 구분:
+ *  ① 작동 중   — 난이도 보정 플라이휠 (교정 → 집계 → 적용)
+ *  ② 수집 중   — 수동 교정/피드백/패턴/레퍼런스 (데이터는 쌓이나 적용은 부분/미흡)
+ *  ③ 버려지는  — 총평/블로그 재생성·복사 신호 (캡처되나 학습 미연동)
+ *
+ * 권한: SUPER_ADMIN
+ */
+
+import { NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
+import { prisma } from '@/lib/db';
+import { requireSuperAdmin, isResponse } from '@/lib/api';
+import { extractPairs, computeStats, type AnalysisLike } from '@/lib/exam-analysis/calibration';
+
+function countMap(rows: { _count: { _all: number } }[], key: string): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const r of rows as unknown as Array<Record<string, unknown> & { _count: { _all: number } }>) {
+    out[String(r[key])] = r._count._all;
+  }
+  return out;
+}
+
+export async function GET() {
+  const user = await requireSuperAdmin();
+  if (isResponse(user)) return user;
+
+  // ── 분석본 스캔 (questions JSON 에서 수동 교정 신호 추출) ──
+  const analyses = await prisma.examAnalysis.findMany({
+    select: { questions: true, createdAt: true, examPaper: { select: { grade: true, schoolName: true } } },
+    orderBy: { createdAt: 'desc' },
+    take: 3000,
+  });
+
+  let totalQuestions = 0;
+  let manualEditedCount = 0;
+  let difficultyCorrected = 0;
+  const likes: AnalysisLike[] = [];
+  const recentCorrections: Array<{ questionType: string; ai: string; teacher: string; at: string | null; school: string | null }> = [];
+
+  for (const a of analyses) {
+    const qs = Array.isArray(a.questions) ? a.questions : [];
+    likes.push({ questions: a.questions, grade: a.examPaper?.grade ?? null });
+    totalQuestions += qs.length;
+    for (const raw of qs) {
+      const q = raw as Record<string, unknown>;
+      if (q.manually_edited) manualEditedCount++;
+      if (q.ai_difficulty != null) {
+        difficultyCorrected++;
+        if (recentCorrections.length < 25) {
+          recentCorrections.push({
+            questionType: typeof q.question_type === 'string' ? q.question_type : 'unknown',
+            ai: String(q.ai_difficulty),
+            teacher: String(q.difficulty),
+            at: typeof q.manually_edited_at === 'string' ? q.manually_edited_at : null,
+            school: a.examPaper?.schoolName ?? null,
+          });
+        }
+      }
+    }
+  }
+
+  // ── ① 난이도 보정 ──
+  const pairs = extractPairs(likes);
+  const liveStats = computeStats(pairs, totalQuestions); // 현재 누적(재계산 시 반영될 값)
+  const calRow = await prisma.difficultyCalibration.findUnique({ where: { subject: 'MATH' } });
+  const appliedBuckets = calRow?.bucketShifts && typeof calRow.bucketShifts === 'object'
+    ? Object.keys(calRow.bucketShifts as Record<string, number>).length
+    : 0;
+
+  // ── ② 피드백 / 패턴 / 레퍼런스 ──
+  const [
+    feedbackTotal,
+    feedbackByType,
+    feedbackByStatus,
+    feedbackWithCorrection,
+    patterns,
+    refByStatus,
+    refTotal,
+  ] = await Promise.all([
+    prisma.examFeedback.count(),
+    prisma.examFeedback.groupBy({ by: ['feedbackType'], _count: { _all: true } }),
+    prisma.examFeedback.groupBy({ by: ['status'], _count: { _all: true } }),
+    prisma.examFeedback.count({ where: { correction: { not: Prisma.AnyNull } } }),
+    prisma.learnedPattern.findMany({
+      orderBy: [{ isActive: 'desc' }, { confidence: 'desc' }],
+      take: 50,
+      select: { patternType: true, description: true, confidence: true, sourceCount: true, isAutoApplied: true, isActive: true, rule: true, updatedAt: true },
+    }),
+    prisma.examQuestionReference.groupBy({ by: ['reviewStatus'], _count: { _all: true } }),
+    prisma.examQuestionReference.count(),
+  ]);
+
+  // 패턴 rule 에 구체 보정값이 있는지 (현재는 {feedbackType, sampleCount} 뿐 → 빈 껍데기 진단)
+  const patternsOut = patterns.map((p) => {
+    const rule = (p.rule && typeof p.rule === 'object' ? p.rule : {}) as Record<string, unknown>;
+    const hasConcreteRule = Object.keys(rule).some((k) => !['feedbackType', 'sampleCount'].includes(k));
+    return {
+      patternType: p.patternType,
+      description: p.description,
+      confidence: p.confidence,
+      sourceCount: p.sourceCount,
+      isAutoApplied: p.isAutoApplied,
+      isActive: p.isActive,
+      hasConcreteRule,
+      updatedAt: p.updatedAt,
+    };
+  });
+
+  // ── ③ 생성물 신호 (총평/블로그/복사) ──
+  const [commentaryRuns, articleRuns, copyEvents, examPapers, schools, analysisCount] = await Promise.all([
+    prisma.examAnalysisExtension.count({ where: { agentType: 'commentary' } }),
+    prisma.examAnalysisExtension.count({ where: { agentType: 'blog-article' } }),
+    prisma.articleCopyEvent.count(),
+    prisma.examPaper.count(),
+    prisma.school.count(),
+    prisma.examAnalysis.count(),
+  ]);
+
+  return NextResponse.json({
+    data: {
+      generatedAt: new Date().toISOString(),
+      scale: { analyses: analysisCount, totalQuestions, examPapers, schools },
+
+      // ① 작동 중 — 난이도 보정
+      difficulty: {
+        active: !!calRow,
+        appliedGlobalBias: calRow?.globalBias ?? 0,
+        appliedBuckets,
+        appliedTotalCorrections: calRow?.totalCorrections ?? 0,
+        lastRecomputedAt: calRow?.updatedAt ?? null,
+        // 현재 누적 (재계산 시 반영될 값)
+        liveCorrections: liveStats.totalCorrections,
+        liveGlobalBias: liveStats.globalBias,
+        liveBuckets: liveStats.buckets.slice(0, 30),
+        pendingDelta: liveStats.totalCorrections - (calRow?.totalCorrections ?? 0),
+        recentCorrections,
+      },
+
+      // ② 수집 중 — 수동 교정/피드백/패턴/레퍼런스
+      collected: {
+        manualEdits: {
+          totalEditedQuestions: manualEditedCount,
+          difficultyCorrected,
+          // 난이도 외 교정(단원/신뢰도)은 원본 미보존이라 정밀 카운트 불가
+          otherEdits: Math.max(0, manualEditedCount - difficultyCorrected),
+        },
+        feedback: {
+          total: feedbackTotal,
+          byType: countMap(feedbackByType, 'feedbackType'),
+          byStatus: countMap(feedbackByStatus, 'status'),
+          withCorrectionValue: feedbackWithCorrection, // correction JSON 채워진 건수 (현재 UI 미전송 → 0 예상)
+        },
+        patterns: {
+          total: patternsOut.length,
+          autoApplied: patternsOut.filter((p) => p.isAutoApplied && p.isActive).length,
+          concreteRuleCount: patternsOut.filter((p) => p.hasConcreteRule).length,
+          list: patternsOut,
+        },
+        references: {
+          total: refTotal,
+          byStatus: countMap(refByStatus, 'reviewStatus'),
+        },
+      },
+
+      // ③ 버려지는 — 생성물 신호
+      generative: {
+        commentaryRuns,
+        articleRuns,
+        copyEvents, // 복사 = 품질 통과 신호이나 학습 미연동
+      },
+    },
+  });
+}
