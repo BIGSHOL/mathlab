@@ -198,11 +198,15 @@ export type AgentType = (typeof AGENT_TYPES)[number];
 // commentary v1.3.0 — 2026-05-29 V3 강화 (V4 핵심 5개 콘텐츠 흡수: v4_difficulty_rows,
 //   v4_main_analysis, v4_key_questions, v4_previous_comparison, v4_final_strategy를
 //   V3 통합 프롬프트로 단일 생성 → 별도 V4 호출 불필요. V4 토글은 비활성화)
+// commentary v1.4.0 — 2026-06-01 "이 시험만의 발견" 인사이트 바 도입. 헤드라인·feature_callout이
+//   전국 상식(서술형 1/3 배점·객관식 위주 등)을 큰 글씨로 만들던 문제 → 리트머스 "옆 학원도
+//   할 수 있는 말인가?" + 4각도(쏠림/시간/감점/변화). buildV3UserPrompt에 "이 시험만의 특이 신호"
+//   데이터 신호 주입(서술형 배점% vs 표준, 서술형/킬러 단원 쏠림 자동 탐지, 배점 독식 단원)
 export const AGENT_PROMPT_VERSIONS: Record<AgentType, string> = {
   'weakness': 'v1.0.0',
   'learning': 'v1.0.0',
   'prediction': 'v1.0.0',
-  'commentary': 'v1.3.0',
+  'commentary': 'v1.4.0',
   'topic-strategy': 'v1.0.0',
   'exam-prep': 'v1.0.0',
   'score-level-plan': 'v1.0.0',

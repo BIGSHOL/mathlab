@@ -324,10 +324,10 @@ const SYSTEM_PROMPT_V3 = `너는 한국 중·고등학교 수학 시험 분석�
   "blog_headline": "시험의 핵심을 한 문장으로 (예: 변별의 무게중심이 이동했다)",
   "blog_dek": "헤드라인을 풀어 설명하는 1~2 문장 부연",
   "feature_callout": {
-    "big_number": "강조할 단일 숫자 (예: 2.9, 17%, -4점)",
+    "big_number": "강조할 단일 숫자 — **이 시험만의 발견**을 담은 수치 (예: 한 단원이 배점 47%, 작년比 -8점, 킬러 17%). ❌ 서술형 총배점·총 100점 같은 전국 공통 수치 금지(상식)",
     "big_number_unit": "단위 (예: /5, 점, %) — 없으면 생략",
     "big_number_label": "그 숫자가 무엇인지 (예: 2025 평균 난이도)",
-    "title": "거대 숫자를 풀어 설명하는 헤드라인 — 일부에 따옴표로 강조 가능 (예: 30문항 중 '17%만' 킬러였다)",
+    "title": "거대 숫자를 풀어 설명하는 헤드라인 — '옆 학원도 할 수 있는 말'이면 금지. 일부에 따옴표로 강조 가능 (예: 30문항 중 '17%만' 킬러였다)",
     "body": ["2~3 문단 부연 설명 — **굵게**로 데이터 인용"]
   },
   "blog_qa": [
@@ -412,18 +412,32 @@ const SYSTEM_PROMPT_V3 = `너는 한국 중·고등학교 수학 시험 분석�
 
 **blog_headline**은 잡지 표지 헤드라인이다. 학부모가 한 줄만 읽어도 시험의 본질이 와닿아야 한다.
 
-### DO (좋은 예)
-- ✅ "변별이 시작되는 지점, 심화 30%"
-- ✅ "기초를 건너뛴 첫 시험"
-- ✅ "표준부터 시작되는 한 학기의 분기점"
-- ✅ "응용·심화로 이동한 변별의 무게중심"
-- ✅ "개념 적용력이 곧 점수가 되는 구조"
-- ✅ "서술형 35점, 풀이 과정이 가른다"
+### ⭐ 최우선 기준 — "이 시험만의 발견" (다른 모든 규칙보다 우선)
+헤드라인·feature_callout·pull_quote는 **그 시험을 직접 분석한 사람만 말할 수 있는 것**이어야 한다.
+리트머스 테스트: **"이걸 옆 학원도 똑같이 말할 수 있는가?"**
+- YES(전국 어디나 해당) → **버려라.** 숫자가 커도 상식을 큰 글씨로 만들면 분석 신뢰도가 떨어진다.
+  - 상식의 예(금지): "서술형이 중요/35점·36점"(전국 30~40%가 이미 표준), "객관식 위주", "총 100점", "어려운 편", "심화가 변별한다"
+- NO(이 시험만의 사실) → **헤드라인 후보.** 입력 데이터의 "이 시험만의 특이 신호" 섹션을 최우선 활용하라.
 
-### DON'T (피해야 할 어조)
-- ❌ "기본 문항 0개, 표준부터 시작하는 응용 중심 시험" — **데이터를 직설적으로 노출 ("0개"로 시작) + 평이한 마무리 ("응용 중심 시험")**
-- ❌ "Lv1이 없고 Lv2/Lv3/Lv4로 구성된 시험" — **데이터를 그대로 옮김. 의미가 없음**
-- ❌ "이번 시험은 어려운 편이다" — **너무 평이하고 모호**
+상식이 떠오르면 버리지 말고, 같은 데이터를 4각도로 더 파라:
+① **쏠림** — 서술형/킬러가 특정 단원에 집중됐나 (예: "서술형 36점이 사실상 한 단원에서 나온다")
+② **시간** — 배점이 같아도 풀이 분량·시간이 다른가 (예: "12점 서술형 1개 = 객관식 3개 풀 시간")
+③ **감점** — 풀이 과정 비중이 유독 큰 채점 구조인가 (예: "답이 맞아도 깎이는 구조")
+④ **변화** — 작년/인근 대비 달라진 점 (변화는 그 자체로 사건 = 가장 강력한 인사이트)
+
+### DO (좋은 예 — "이 시험만의 발견")
+- ✅ "서술형 36점이 한 단원에 몰렸다" (쏠림)
+- ✅ "작년엔 없던 전 문항 서술 구조" (변화)
+- ✅ "응용·심화로 이동한 변별의 무게중심" (의미 함축)
+- ✅ "기초를 건너뛴 첫 시험"
+- ✅ "개념 적용력이 곧 점수가 되는 구조"
+
+### DON'T (상식 / 데이터 직설)
+- ❌ "서술형 35점, 풀이 과정이 가른다" — **전국 1/3이 표준. 옆 학원도 하는 말(상식을 큰 글씨로)**
+- ❌ "객관식 위주 / 총 100점" — **누구나 아는 사실, 발견이 아님**
+- ❌ "기본 문항 0개, 표준부터 시작하는 응용 중심 시험" — **데이터 직설("0개"로 시작) + 평이한 마무리**
+- ❌ "Lv1이 없고 Lv2/Lv3/Lv4로 구성된 시험" — **데이터를 그대로 옮김. 의미 없음**
+- ❌ "이번 시험은 어려운 편이다" — **모호 + 상식**
 - ❌ "30% 심화, 6문항이 심화 단계" — **헤드라인 = 의미, 수치 = feature_callout**
 
 ### 작성 규칙
@@ -1506,6 +1520,40 @@ ${questionDetails}
       })
       .join('\n');
 
+    // ── 이 시험만의 특이 신호 (헤드라인·callout 1순위 소재 — "옆 학원이 못 하는 말") ──
+    // 서술형 1/3 배점·객관식 위주 같은 전국 표준은 발견이 아니다. 표준 대비 *편차/쏠림*만 surface.
+    const leafSeg = (t?: string | null) => { const p = String(t || '미분류').split('>').map((s) => s.trim()); return p[p.length - 1] || '미분류'; };
+    const parentSeg = (t?: string | null) => { const p = String(t || '미분류').split('>').map((s) => s.trim()); return (p.length >= 2 ? p[p.length - 2] : p[p.length - 1]) || '미분류'; };
+    const levelOf = (q: { difficulty?: string | number | null }) => Number(dMap[String(q.difficulty ?? '3')] || String(q.difficulty ?? '3')) || 0;
+
+    // 서술형 배점 비중 vs 전국 표준(~1/3)
+    const essayQs2 = basicAnalysis.questions.filter((q) => q.question_format === 'essay');
+    const essayPts = essayQs2.reduce((s, q) => s + (q.points || 0), 0);
+    const essayPct = totalPts > 0 ? Math.round((essayPts / totalPts) * 100) : 0;
+    const essayClass = essayQs2.length === 0 ? '서술형 없음'
+      : essayPct >= 41 ? `${essayPts}점(${essayPct}%) — 전국 표준(~1/3)보다 높음 → 특징 후보`
+      : essayPct <= 25 ? `${essayPts}점(${essayPct}%) — 전국 표준보다 낮음 → 특징 후보`
+      : `${essayPts}점(${essayPct}%) — 전국 표준(~1/3) 수준 → 그 자체는 헤드라인 금지(상식)`;
+    // 서술형 단원 쏠림 (대단원/부모 기준 — 소단원이 달라도 한 흐름이면 포착)
+    const essayLeafLine = essayQs2.length ? [...new Set(essayQs2.map((q) => leafSeg(q.topic)))].join(', ') : '없음';
+    const essayParentPts: Record<string, number> = {};
+    for (const q of essayQs2) { const t = parentSeg(q.topic); essayParentPts[t] = (essayParentPts[t] || 0) + (q.points || 0); }
+    const essayParentTop = Object.entries(essayParentPts).sort((a, b) => b[1] - a[1])[0];
+    const essayCluster = essayQs2.length >= 2 && essayParentTop && essayPts > 0 && essayParentTop[1] / essayPts >= 0.6
+      ? `⚠️ 쏠림: 서술형 배점의 ${Math.round((essayParentTop[1] / essayPts) * 100)}%가 '${essayParentTop[0]}' 영역에 집중 → 강력한 헤드라인 소재` : '';
+    // 킬러(Lv4~5) 단원 쏠림
+    const killerQs = basicAnalysis.questions.filter((q) => levelOf(q) >= 4);
+    const killerCnt: Record<string, number> = {};
+    for (const q of killerQs) { const t = parentSeg(q.topic); killerCnt[t] = (killerCnt[t] || 0) + 1; }
+    const killerTop = Object.entries(killerCnt).sort((a, b) => b[1] - a[1])[0];
+    const killerCluster = killerQs.length >= 2 && killerTop && killerTop[1] / killerQs.length >= 0.6
+      ? `⚠️ 쏠림: 킬러 ${killerQs.length}개 중 ${killerTop[1]}개가 '${killerTop[0]}'에 집중` : '';
+    // 배점 최다 단원 독식
+    const topByPts = [...topicBreakdown].sort((a, b) => b.pts - a.pts)[0];
+    const topPtsPct = topByPts && totalPts > 0 ? Math.round((topByPts.pts / totalPts) * 100) : 0;
+    const topConcentration = topByPts && topPtsPct >= 40 ? `⚠️ '${topByPts.topic}' 한 단원이 배점 ${topPtsPct}% 독식` : '';
+    const hasDistinctSignal = [essayCluster, killerCluster, topConcentration].some(Boolean);
+
     return `## 시험 정보
 - 학교: ${schoolName ?? '(정보 없음)'} ${hasSchool ? '' : '(주변 학교 비교 불가)'}
 - 규모: 총 ${totalQ}문항, ${totalPts}점
@@ -1514,6 +1562,13 @@ ${questionDetails}
 - 형식: 객관식 ${basicAnalysis.exam_info.format_distribution.objective}문항, 단답형 ${basicAnalysis.exam_info.format_distribution.short_answer}문항, 서술형 ${basicAnalysis.exam_info.format_distribution.essay}문항
 - 유형: 수와연산 ${types.number || 0}, 문자와식 ${types.algebra || 0}, 함수 ${types.function || 0}, 기하 ${types.geometry || 0}, 확률통계 ${types.statistics || 0}
 - 학생 응답 데이터: ${hasStudentData ? '있음' : '없음 (출제 분석만 가능)'}
+
+## 이 시험만의 특이 신호 (헤드라인·feature_callout 1순위 소재 — "옆 학원이 못 하는 말")
+- 서술형 배점: ${essayClass}
+- 서술형 출제 단원: ${essayLeafLine}${essayCluster ? `\n  ${essayCluster}` : ''}
+- 킬러(Lv4~5) ${killerQs.length}문항: ${killerCluster || '여러 단원에 분산'}
+- 배점 최다 단원: ${topByPts ? `${topByPts.topic} ${topPtsPct}%` : '없음'}${topConcentration ? `\n  ${topConcentration}` : ''}
+→ ${hasDistinctSignal ? '위 ⚠️ 신호(표준에서 벗어난 쏠림/독식)를 헤드라인·callout 1순위 소재로 삼아라.' : '뚜렷한 쏠림이 없으면 변화(작년/인근 비교)·난이도 구조에서 "이 시험만의 발견"을 찾아라.'} 서술형이 표준(~1/3) 수준이면 "서술형이 가른다"류 헤드라인은 절대 금지(상식).
 
 ## 비교 데이터 가용성 (Q1 질문 패턴 결정에 사용 — 시스템 프롬프트의 Q1 규칙 따를 것!)
 - 주변 학교 비교 데이터: ${hasNearby ? '✓ 있음' : '✗ 없음'}
