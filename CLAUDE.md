@@ -1413,3 +1413,41 @@ node scripts/geocode-failed-by-keyword.mjs     # 4. 주소 매칭 실패분을 �
 - **범주형 기본은 few-shot 경고** — remap은 초고신뢰(≥10·≥80%)만. 과교정·맥락 무시 위험 회피.
 - **`preserveAndSet`/`PRESERVE_FIELDS`** — 5개 필드(difficulty/points/topic/question_type/ability_domain) 동일 패턴. 새 보정 필드 추가 시 `NUMERIC_FIELDS`/`CATEGORICAL_FIELDS`만 확장.
 - **`db push` 사용** — 동시 billing 작업의 미마이그레이션 모델과 `migrate dev` 충돌 시. migrations는 gitignore라 schema.prisma가 SoT.
+
+---
+
+## 2026-06-01 세션 — 개발 워크플로 함정 (Prisma · dev서버 · Next build · React)
+
+이번 세션에서 **디버깅에 가장 오래 걸린** 실수들. 재발 방지용 규칙으로 박제.
+
+### 1. 🔴 Prisma 스키마 변경 → 반드시 dev 서버 끄고 진행 → 변경 후 재시작
+- **generate EPERM (DLL 잠금)**: dev 서버(Turbopack)가 `query_engine-windows.dll.node`를 점유 중이면 `npx prisma generate` 실패 — `EPERM: operation not permitted, rename ...query_engine-windows.dll.node.tmp`. → dev 서버 중지 후 generate.
+- **실행 중 dev 서버는 `@prisma/client`를 핫리로드 안 함**: 스키마에 새 모델 추가 + generate 해도, **돌고 있던 dev 서버는 메모리의 옛 클라이언트**를 계속 사용 → `prisma.newModel` 이 undefined → 해당 라우트 **런타임 500**. (다른 모델 쓰는 페이지는 멀쩡해서 원인 찾기 어려움.) → **스키마 변경 후 dev 서버 재시작 필수.**
+- **표준 워크플로**: 스키마 변경 → dev 중지 → `prisma generate`/`migrate`/`db push` → dev 재시작.
+
+### 2. 🔴 `migrate dev` 대신 `db push` (동시 미커밋 모델이 있을 때)
+- 다른 작업(예: 동시 진행 billing)이 `schema.prisma`에 모델을 추가했으나 마이그레이션 미생성 상태면, `prisma migrate dev`가 드리프트를 감지해 **"public 스키마 reset 필요"** 경고(= 데이터 전체 증발 위험)를 띄운다.
+- migrations 폴더는 `.gitignore`(SoT는 `schema.prisma`)이므로, **`prisma db push --accept-data-loss`** 로 동기화하면 테이블만 생성/변경하고 **기존 데이터는 보존**. `migrate reset` 절대 금지.
+- (이번 세션 초반 `migrate reset` 으로 개발 DB 증발 → School 5,724개 + 분석본 수 시간 복구. → DB 백업 시스템 구축 계기.)
+
+### 3. 🔴 dev 서버 떠 있을 때 `next build`(production) 금지
+- `npx next build` 가 dev 서버와 **같은 `.next`를 덮어써** Turbopack 매니페스트가 깨짐 → `ENOENT ..._buildManifest.js.tmp` / `app-build-manifest.json` 무한 에러, 페이지 백지/무한 깨짐.
+- **타입 검증은 `npx tsc --noEmit`** 로 (`.next` 안 건드림 — dev 서버와 무충돌). 프로덕션 빌드가 꼭 필요하면 **dev 중지 → `rm -rf .next` → build**.
+- 둘 이상의 dev 서버/빌드가 같은 `.next` 공유도 동일하게 금지.
+
+### 4. 🔴 React `useEffect` 의존성에 `useAuth`의 `user` 객체 넣지 말 것 → 무한 루프
+- **증상**: 페이지가 스켈레톤/로딩에서 **무한 잔류**, 같은 API가 **초당 수회 반복 호출**(dev 로그에 `GET ... 200` 수백 줄), 새로고침 버튼 무한 회전.
+- **원인**: `useEffect(() => { ...fetch() }, [user, load])` — `useAuth`가 **매 렌더마다 새 `user` 객체 ref**를 반환 → fetch→setState→리렌더→`user` ref 변경→effect 재발화→`load()`→무한 루프. (`load`가 `useCallback([])` 로 안정적이어도 `user` 객체가 불안정하면 루프.)
+- **규칙**: effect 의존성엔 **객체 대신 원시값** — `[user?.role]`, `[user?.id]`. 사례: `/admin/evolution` 콘솔 ([page.tsx](src/app/(teacher)/admin/evolution/page.tsx)).
+- **진단법**: "무한 스켈레톤" 보고 시 dev 로그에서 동일 API 반복 호출 여부부터 확인 → 반복이면 effect 의존성 루프, 0회면 fetch 실패(아래 5번).
+
+### 5. 로딩/에러 상태 분리 (무한 스켈레톤 방지)
+- `loading || !data ? <Skeleton/> : <Content/>` 패턴은 **fetch 실패 시** `loading=false`·`data=null` → **스켈레톤 영구 잔류**(에러 안 보임, 사용자는 원인 모름).
+- **규칙**: `error` 상태 별도 + 3분기 — `loading ? Skeleton : !data ? ErrorPanel(메시지+다시시도) : Content`. 실패가 가시화되고 재시도 가능.
+
+### 6. 동시 작업과 공유 파일 커밋 위생
+- 다른 기능(billing 등)과 `schema.prisma`/`package.json`/일부 route를 동시 수정 중이면, 커밋 전 **`git diff <파일>` 로 내 diff만인지 확인**. 상대의 미커밋 산출물(`src/lib/billing/` 등)은 스테이징 제외.
+- `git show HEAD:<파일> | grep <상대키워드>` 로 상대 변경이 **이미 커밋된 baseline인지** 확인 → baseline 위 내 변경만 들어가면 안전. (이번엔 billing의 `TenantSubscription`·`assertAnalysisQuota`가 기커밋 상태라 내 보정 diff만 깔끔히 분리 커밋 가능했음.)
+
+### 메타 — Chrome MCP로 최종 실측
+- "고쳤다"는 추측 금지. UI 버그는 **Chrome MCP로 실제 브라우저에서 검증**: ① 렌더 스크린샷 ② **유휴 중 network 요청 0건**(루프 없음 증명) ③ 새로고침 시 정확히 1요청 ④ console 에러 0. 사례: 자가진화 콘솔 무한루프 픽스 검증.
