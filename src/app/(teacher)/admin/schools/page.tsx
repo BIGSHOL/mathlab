@@ -523,18 +523,9 @@ function NearbyPanel({ data, loading, centerExamLabels = [], onRefresh }: { data
 
   if (data.message) {
     return (
-      <div className="bg-cyan-50/40 border-t border-cyan-200 px-6 py-4 flex items-start gap-6">
+      <div className="bg-cyan-50/40 border-t border-cyan-200 px-6 py-4 space-y-3">
+        <ExamLabelsBlock labels={centerExamLabels} />
         <p className="text-sm text-slate-400">{data.message}</p>
-        {centerExamLabels.length > 0 && (
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <FileText className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-            {centerExamLabels.map((label) => (
-              <span key={label} className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-sm px-2 py-0.5 font-medium">
-                {label}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
     );
   }
@@ -554,6 +545,7 @@ function NearbyPanel({ data, loading, centerExamLabels = [], onRefresh }: { data
 
   return (
     <div className="bg-cyan-50/40 border-t border-cyan-200 px-6 py-4">
+      <ExamLabelsBlock labels={centerExamLabels} />
       <div className="flex items-center justify-between mb-3">
         <h4 className="text-xs font-semibold text-cyan-800 flex items-center gap-1.5">
           <MapPin className="w-3.5 h-3.5" />
@@ -569,16 +561,6 @@ function NearbyPanel({ data, loading, centerExamLabels = [], onRefresh }: { data
           )}
         </h4>
         <div className="flex items-center gap-2">
-          {centerExamLabels.length > 0 && (
-            <div className="flex items-center gap-1 flex-wrap">
-              <FileText className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-              {centerExamLabels.map((label) => (
-                <span key={label} className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-sm px-2 py-0.5 font-medium">
-                  {label}
-                </span>
-              ))}
-            </div>
-          )}
           {!isGrouped && data.data.length > 0 && (
             <button
               onClick={handleSaveGroup}
@@ -673,6 +655,24 @@ function NearbyPanel({ data, loading, centerExamLabels = [], onRefresh }: { data
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/** 기출 목록 블록 — 패널 상단에 항상 표시 */
+function ExamLabelsBlock({ labels }: { labels: string[] }) {
+  if (labels.length === 0) return null;
+  return (
+    <div className="mb-3 flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-sm px-3 py-2">
+      <FileText className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+      <span className="text-[11px] font-semibold text-emerald-700 shrink-0">보유 기출</span>
+      <div className="flex gap-1.5 flex-wrap">
+        {labels.map((label) => (
+          <span key={label} className="text-[11px] text-emerald-800 bg-white border border-emerald-300 rounded-sm px-2 py-0.5 font-medium">
+            {label}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
