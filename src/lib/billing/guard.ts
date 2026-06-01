@@ -7,7 +7,12 @@
  */
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getPlanConfig, type PlanId, type PlanFeature } from './plans';
+import { getPlanConfig, PLAN_RANK, BETA_PLAN, type PlanId, type PlanFeature } from './plans';
+
+/** 베타 기간 여부 (서버 env). true면 전 테넌트 최소 BETA_PLAN으로 승격. */
+export function isBetaAllPro(): boolean {
+  return process.env.BETA_ALL_PRO === '1';
+}
 
 /** UTC 이번 달 / 다음 달 경계 */
 export function monthBounds(now = new Date()) {
@@ -16,8 +21,18 @@ export function monthBounds(now = new Date()) {
   return { monthStart, nextMonthStart };
 }
 
-/** 유효 플랜. 행 없음 → free. 만료(currentPeriodEnd 과거 && status≠active) → free. */
+/**
+ * 유효 플랜. 행 없음 → free. 만료(currentPeriodEnd 과거 && status≠active) → free.
+ * 베타(BETA_ALL_PRO=1): 산출된 플랜이 BETA_PLAN보다 낮으면 BETA_PLAN으로 승격(상위 플랜은 유지 — floor).
+ */
 export async function getTenantPlan(tenantId: string | null | undefined): Promise<PlanId> {
+  const base = await resolveBasePlan(tenantId);
+  if (isBetaAllPro() && PLAN_RANK[base] < PLAN_RANK[BETA_PLAN]) return BETA_PLAN;
+  return base;
+}
+
+/** 베타 보정 전 실제(구독 기반) 플랜. */
+async function resolveBasePlan(tenantId: string | null | undefined): Promise<PlanId> {
   if (!tenantId) return 'free';
   const sub = await prisma.tenantSubscription.findUnique({ where: { tenantId } });
   if (!sub) return 'free';

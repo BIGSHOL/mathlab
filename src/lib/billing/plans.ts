@@ -24,6 +24,15 @@ export const PLANS: Record<PlanId, PlanConfig> = {
 export const PLAN_IDS = Object.keys(PLANS) as PlanId[];
 export const PAID_PLAN_IDS = PLAN_IDS.filter((p) => p !== 'free');
 
+/** 플랜 등급 비교용 랭크 (베타 floor 등에서 사용) */
+export const PLAN_RANK: Record<PlanId, number> = { free: 0, pro: 1, enterprise: 2 };
+
+/**
+ * 베타 기간 전 테넌트에 보장하는 최소 플랜.
+ * 서버 env `BETA_ALL_PRO=1`일 때 모든 테넌트가 최소 이 플랜으로 승격된다(실제 상위 플랜은 유지).
+ */
+export const BETA_PLAN: PlanId = 'pro';
+
 export function isPlanId(x: unknown): x is PlanId {
   return typeof x === 'string' && x in PLANS;
 }

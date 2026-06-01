@@ -17,6 +17,8 @@ export interface SubscriptionState {
   usage: SubUsage;
   features: SubFeatures;
   lemonSqueezyConfigured: boolean;
+  allowDemoUpgrade: boolean;
+  beta: boolean; // 베타 기간(BETA_ALL_PRO) — 전 테넌트 최소 Pro
   loading: boolean;
   refetch: () => Promise<void>;
 }
@@ -27,6 +29,8 @@ const FREE_FALLBACK = {
   usage: { used: 0, limit: 3 as number | null, resetAt: null as string | null },
   features: { commentary: false, nearby: false },
   lemonSqueezyConfigured: false,
+  allowDemoUpgrade: false,
+  beta: false,
 };
 
 const Ctx = createContext<SubscriptionState | null>(null);
@@ -46,6 +50,8 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         usage: j.usage ?? FREE_FALLBACK.usage,
         features: j.features ?? FREE_FALLBACK.features,
         lemonSqueezyConfigured: !!j.lemonSqueezyConfigured,
+        allowDemoUpgrade: !!j.allowDemoUpgrade,
+        beta: !!j.beta,
       });
     } catch {
       setData(FREE_FALLBACK);

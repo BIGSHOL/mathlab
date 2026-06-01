@@ -15,7 +15,7 @@ import { getPlanConfig, type PlanId } from '@/lib/billing/plans';
 
 export default function BillingPage() {
   const { user, isLoading } = useAuth();
-  const { plan, status, usage, lemonSqueezyConfigured, refetch } = useSubscription();
+  const { plan, status, usage, lemonSqueezyConfigured, allowDemoUpgrade, beta, refetch } = useSubscription();
   const params = useSearchParams();
   const [paying, setPaying] = useState<string | null>(null);
 
@@ -99,12 +99,19 @@ export default function BillingPage() {
         ) : undefined}
       />
 
-      {!lemonSqueezyConfigured && (
+      {beta ? (
+        <div className="mb-6 px-4 py-3 bg-violet-50 border border-violet-200 rounded-sm flex items-start gap-2.5">
+          <span className="text-violet-500 text-sm mt-0.5 shrink-0">&#10024;</span>
+          <p className="text-xs text-violet-700">
+            <strong>베타 기간</strong> — 모든 기능(AI 시험 총평 · 주변 학교·연도 비교 포함)을 자유롭게 사용하실 수 있습니다.
+          </p>
+        </div>
+      ) : !lemonSqueezyConfigured ? (
         <div className="mb-6 px-4 py-3 bg-amber-50 border border-amber-200 rounded-sm flex items-start gap-2.5">
           <span className="text-amber-500 text-sm mt-0.5 shrink-0">&#9888;</span>
-          <p className="text-xs text-amber-700">결제 시스템이 아직 연결되지 않았습니다 (준비 중). 현재는 Free 플랜으로 기본 기능을 이용하실 수 있습니다.</p>
+          <p className="text-xs text-amber-700">결제 시스템이 준비 중입니다. 현재는 기본 기능을 이용하실 수 있습니다.</p>
         </div>
-      )}
+      ) : null}
 
       {/* 이번 달 사용량 */}
       <div className="mb-6 p-4 border border-slate-200 rounded-sm bg-white">
@@ -155,6 +162,9 @@ export default function BillingPage() {
                   <Button size="sm" variant="secondary" disabled className="w-full">사용 중</Button>
                 ) : isFree ? (
                   <Button size="sm" variant="secondary" disabled className="w-full">무료</Button>
+                ) : !lemonSqueezyConfigured && !allowDemoUpgrade ? (
+                  // 결제 미설정 + 데모 미허용 → 비활성 "결제 준비 중"
+                  <Button size="sm" variant="secondary" disabled className="w-full">결제 준비 중</Button>
                 ) : (
                   <Button
                     size="sm"
@@ -162,7 +172,7 @@ export default function BillingPage() {
                     loading={paying === card.key}
                     className="w-full bg-violet-600 hover:bg-violet-700 text-white"
                   >
-                    구독하기
+                    {lemonSqueezyConfigured ? '구독하기' : '데모 업그레이드'}
                   </Button>
                 )}
               </div>
@@ -172,8 +182,7 @@ export default function BillingPage() {
       </div>
 
       <p className="text-[11px] text-slate-400 mt-6 leading-relaxed">
-        결제는 Lemon Squeezy(해외 결제 대행)를 통해 처리되며, 구독 변경·취소·결제수단 관리는 &quot;구독 관리&quot;에서 가능합니다.
-        가격은 상품 연결 후 확정됩니다.
+        구독 변경·취소·결제수단 관리는 &quot;구독 관리&quot;에서 할 수 있습니다.
       </p>
     </PageContainer>
   );

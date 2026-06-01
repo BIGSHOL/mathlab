@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireOwner, isResponse } from '@/lib/api';
 import { getPlanConfig } from '@/lib/billing/plans';
-import { getTenantPlan, getMonthlyAnalysisCount, monthBounds } from '@/lib/billing/guard';
+import { getTenantPlan, getMonthlyAnalysisCount, monthBounds, isBetaAllPro } from '@/lib/billing/guard';
 import { isLemonSqueezyConfigured } from '@/lib/billing/lemonsqueezy';
 
 export const dynamic = 'force-dynamic';
@@ -16,19 +16,25 @@ export async function GET() {
   const { nextMonthStart } = monthBounds();
   const resetAt = nextMonthStart.toISOString();
   const configured = isLemonSqueezyConfigured();
+  // 키 미설정이어도 데모 업그레이드 허용 시 클라이언트가 [데모 업그레이드] 버튼 활성화 (게이팅 테스트용)
+  const allowDemoUpgrade = process.env.ALLOW_DEMO_UPGRADE === '1';
 
-  // SUPER_ADMIN 무테넌트(view-as 안 함) — 단일 지점 없음
+  // SUPER_ADMIN 무테넌트(view-as 안 함) — 단일 지점 없음 → 게이팅 면제.
+  // 서버 가드(assert*)도 tenantId 없으면 null(면제) 반환하므로, 클라이언트도 전 기능 해금 + 무제한으로
+  // 맞춰 "서버는 허용하는데 UI만 잠기는" 불일치를 방지한다 (관리자 본인 작업 차단 방지).
   if (!tenantId) {
-    const free = getPlanConfig('free');
     return NextResponse.json({
       data: {
         plan: 'free',
         status: 'inactive',
-        usage: { used: 0, limit: free.monthlyAnalyses, resetAt },
-        features: { commentary: free.commentary, nearby: free.nearby },
+        usage: { used: 0, limit: null, resetAt }, // 무제한
+        features: { commentary: true, nearby: true }, // 전 기능 해금 (서버 면제와 일치)
         lemonSqueezyConfigured: configured,
+        allowDemoUpgrade,
+        beta: isBetaAllPro(),
         currentPeriodEnd: null,
         noTenant: true,
+        exempt: true,
       },
     });
   }
@@ -46,6 +52,8 @@ export async function GET() {
       usage: { used, limit, resetAt },
       features: { commentary: cfg.commentary, nearby: cfg.nearby },
       lemonSqueezyConfigured: configured,
+      allowDemoUpgrade,
+      beta: isBetaAllPro(),
       currentPeriodEnd: sub?.currentPeriodEnd?.toISOString() ?? null,
     },
   });

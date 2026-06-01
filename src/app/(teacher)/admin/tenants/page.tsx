@@ -8,9 +8,18 @@ import { toast } from '@/components/ui/Toast';
 import { useAuth } from '@/hooks/useAuth';
 import { AdminTable, type AdminTableColumn, type AdminTableSort } from '@/components/admin-table';
 
+type PlanId = 'free' | 'pro' | 'enterprise';
 type Tenant = {
   id: string; slug: string; name: string; logo: string | null;
   isActive: boolean; userCount: number; createdAt: string;
+  plan: PlanId; subStatus: string | null; currentPeriodEnd: string | null; managedByLs: boolean;
+};
+
+const PLAN_LABEL: Record<PlanId, string> = { free: '무료', pro: 'Pro', enterprise: 'Enterprise' };
+const PLAN_BADGE: Record<PlanId, string> = {
+  free: 'bg-slate-100 text-slate-500',
+  pro: 'bg-violet-100 text-violet-700',
+  enterprise: 'bg-amber-100 text-amber-700',
 };
 
 /** 지점(Tenant) 관리 — 기출분석 전용 간소화 (기본 CRUD + 검색/정렬). SUPER_ADMIN 전용. */
@@ -23,6 +32,7 @@ export default function AdminTenantsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
+  const [betaAllPro, setBetaAllPro] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -31,6 +41,7 @@ export default function AdminTenantsPage() {
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error?.message ?? '불러오기 실패');
       setRows(json.data ?? []);
+      setBetaAllPro(!!json?.meta?.betaAllPro);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -48,11 +59,13 @@ export default function AdminTenantsPage() {
     const s = q.trim().toLowerCase();
     const list = rows.filter((t) => !s || t.name.toLowerCase().includes(s) || t.slug.toLowerCase().includes(s));
     const dir = sort.direction === 'asc' ? 1 : -1;
+    const planRank: Record<PlanId, number> = { free: 0, pro: 1, enterprise: 2 };
     const val = (t: Tenant): string | number => {
       switch (sort.columnId) {
         case 'name': return t.name;
         case 'slug': return t.slug;
         case 'users': return t.userCount;
+        case 'plan': return planRank[t.plan];
         case 'active': return t.isActive ? 1 : 0;
         case 'createdAt': return new Date(t.createdAt).getTime();
         default: return '';
@@ -98,6 +111,23 @@ export default function AdminTenantsPage() {
     }
   };
 
+  const assignPlan = async (t: Tenant, plan: PlanId) => {
+    if (plan === t.plan) return;
+    try {
+      const res = await fetch('/api/admin/tenants', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: t.id, plan }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error?.message ?? '플랜 변경 실패');
+      toast.success(`${t.name} → ${PLAN_LABEL[plan]} 플랜으로 변경되었습니다`);
+      void load();
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
   if (user && user.role !== 'SUPER_ADMIN') {
     return <div className="p-8 text-center text-slate-500">SUPER_ADMIN 전용 페이지입니다.</div>;
   }
@@ -106,6 +136,24 @@ export default function AdminTenantsPage() {
     { id: 'name', header: '지점명', sortable: true, render: (t) => <b>{t.name}</b> },
     { id: 'slug', header: 'slug', sortable: true, render: (t) => <code className="text-xs text-slate-500">{t.slug}</code> },
     { id: 'users', header: '사용자', sortable: true, render: (t) => `${t.userCount}명` },
+    {
+      id: 'plan', header: '구독', sortable: true, render: (t) => (
+        <div className="flex items-center gap-1.5">
+          <span className={`text-[11px] px-1.5 py-0.5 rounded-full font-bold ${PLAN_BADGE[t.plan]}`}>{PLAN_LABEL[t.plan]}</span>
+          <select
+            value={t.plan}
+            onChange={(e) => assignPlan(t, e.target.value as PlanId)}
+            title={t.managedByLs ? '결제로 생성된 구독입니다. 수동 변경 시 실제 결제 상태와 어긋날 수 있습니다.' : '플랜 수동 배정'}
+            className="text-xs border border-slate-200 rounded-sm pl-1.5 pr-5 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+          >
+            <option value="free">무료</option>
+            <option value="pro">Pro</option>
+            <option value="enterprise">Enterprise</option>
+          </select>
+          {t.managedByLs && <span title="결제 연동 구독" className="text-amber-500 text-xs leading-none">●</span>}
+        </div>
+      ),
+    },
     { id: 'active', header: '상태', sortable: true, render: (t) => (t.isActive ? '활성' : '비활성') },
     { id: 'createdAt', header: '생성일', sortable: true, render: (t) => new Date(t.createdAt).toLocaleDateString('ko-KR') },
     {
@@ -127,6 +175,12 @@ export default function AdminTenantsPage() {
           <Plus className="w-4 h-4 mr-1" /> 새 지점
         </Button>
       </div>
+      {betaAllPro && (
+        <div className="mb-3 px-3 py-2 bg-violet-50 border border-violet-200 rounded-sm text-xs text-violet-700">
+          <strong>베타 기간(BETA_ALL_PRO)</strong> 활성 — 아래 배정 플랜과 무관하게 <b>모든 지점이 최소 Pro로 동작</b> 중입니다.
+          여기서 배정한 플랜은 베타 종료 후 적용됩니다(상위 플랜은 베타 중에도 유지).
+        </div>
+      )}
       <div className="flex gap-2 mb-3 items-center">
         <div className="relative max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
