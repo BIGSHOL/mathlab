@@ -2,9 +2,11 @@
  * 기출 분석 — 단일 문항 수동 수정 API
  *
  * PATCH /api/exam-analysis/[id]/questions/[questionNumber]
- * Body: { topic?: string }
+ * Body: { topic?: string, confidence?: number, difficulty?: '1'..'5' }
  *
- * AI가 'UNKNOWN'으로 남긴 문항을 선생님이 수동으로 단원 지정할 때 사용.
+ * - topic: AI가 'UNKNOWN'으로 남긴 문항의 단원을 선생님이 지정
+ * - difficulty: 선생님이 난이도를 교정 (난이도 보정 학습의 ground truth)
+ *   → 최초 교정 시 AI 원본을 ai_difficulty 에 보존 (보정 플라이휠 학습셋)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -23,6 +25,7 @@ type Params = { params: Promise<{ id: string; questionNumber: string }> };
 const patchSchema = z.object({
   topic: z.string().max(200).optional(),
   confidence: z.number().min(0).max(1).optional(),
+  difficulty: z.enum(['1', '2', '3', '4', '5']).optional(),
 });
 
 export async function PATCH(request: NextRequest, { params }: Params) {
@@ -72,6 +75,13 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
     if (parsed.data.confidence !== undefined) {
       next.confidence = parsed.data.confidence;
+    }
+    if (parsed.data.difficulty !== undefined) {
+      // 난이도 교정: 최초 교정 시 AI 원본을 ai_difficulty 에 보존 (보정 학습용 ground truth)
+      if (current.ai_difficulty == null) {
+        next.ai_difficulty = current.difficulty ?? null;
+      }
+      next.difficulty = parsed.data.difficulty;
     }
     // 수동 편집 표시
     next.manually_edited = true;

@@ -64,9 +64,29 @@ model Tenant {
   users                   User[]
   nearbyGroups            TenantNearbyGroup[]
   questions               Question[]
+  subscription            TenantSubscription?
 
   @@index([slug])
   @@index([isActive])
+}
+
+// FEAT: 구독/결제 (Lemon Squeezy) — 지점(테넌트) 단위 구독. 행 없음 = free/inactive 기본.
+model TenantSubscription {
+  id               String    @id @default(cuid())
+  tenantId         String    @unique
+  plan             String    @default("free")     @db.VarChar(20) // free | pro | enterprise
+  status           String    @default("inactive") @db.VarChar(20) // inactive | active | cancelled | expired | past_due
+  lsCustomerId     String?   @db.VarChar(50)
+  lsSubscriptionId String?   @unique @db.VarChar(50)
+  lsVariantId      Int?
+  currentPeriodEnd DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([plan])
 }
 
 model User {
@@ -704,6 +724,20 @@ model LearnedPattern {
 
   @@index([subject, patternType])
   @@index([isActive, isAutoApplied])
+}
+
+// FEAT: 난이도 보정 플라이휠 — 선생님 교정 누적 → 새 분석 자동 보정 맵 (전국 절대 기준, 전역 집계)
+// raw 신호(교정 쌍)는 ExamAnalysis.questions JSON 이 source of truth.
+// 이 테이블은 recompute job 이 산출한 "적용용 보정 맵"의 빠른 캐시. 과목당 1행(upsert).
+model DifficultyCalibration {
+  id               String      @id @default(cuid())
+  subject          ExamSubject @unique
+  globalBias       Float       @default(0)       // 전역 평균 Δ (게이트 통과 시)
+  bucketShifts     Json        @default("{}")    // { "geometry:3": 0.8, ... } 버킷별 적용 Δ
+  totalCorrections Int         @default(0)        // 학습에 쓰인 교정 표본 수
+  stats            Json?                          // 대시보드용 전체 통계 스냅샷
+  updatedAt        DateTime    @updatedAt
+  createdAt        DateTime    @default(now())
 }
 
 // ══════════════════════════════════════════════════════════════

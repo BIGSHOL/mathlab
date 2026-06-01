@@ -12,11 +12,13 @@
     "db:studio": "prisma studio",
     "db:backup": "node scripts/backup-db.mjs",
     "db:restore": "node scripts/restore-db.mjs",
-    "db:reset": "node scripts/safe-reset.mjs"
+    "db:reset": "node scripts/safe-reset.mjs",
+    "calibration:recompute": "tsx scripts/recompute-difficulty-calibration.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
     "@google/genai": "^1.44.0",
+    "@lemonsqueezy/lemonsqueezy.js": "^4.0.0",
     "@resvg/resvg-js": "^2.6.2",
     "@supabase/supabase-js": "^2.101.1",
     "@tiptap/extension-color": "^3.22.0",

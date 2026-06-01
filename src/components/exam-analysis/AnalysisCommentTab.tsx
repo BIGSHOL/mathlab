@@ -4,12 +4,14 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { DIFFICULTY_COLORS, DIFFICULTY_LEGACY_MAP, QUESTION_TYPE_COLORS, TYPE_TO_DOMAIN, ABILITY_DOMAIN_LABELS, ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
 import { renderInlineMath } from '@/lib/exam-analysis/rendering';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
-import { AlertTriangle, ChevronLeft, Check } from 'lucide-react';
+import { AlertTriangle, ChevronLeft, Check, Pencil } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
 
 interface AnalysisCommentTabProps {
   questions: AnalyzedQuestion[];
   examPaperId?: string;
+  /** 난이도 인라인 교정 콜백 — 부모가 종합 난이도를 즉시 재계산하도록 */
+  onDifficultyEdit?: (questionNumber: number | string, difficulty: string, aiDifficulty: string | null) => void;
 }
 
 const DIFFICULTY_LABELS: Record<string, string> = {
@@ -33,7 +35,7 @@ const FEEDBACK_TYPES = [
   { value: 'other', label: '기타', color: 'bg-gray-400' },
 ] as const;
 
-export function AnalysisCommentTab({ questions, examPaperId }: AnalysisCommentTabProps) {
+export function AnalysisCommentTab({ questions, examPaperId, onDifficultyEdit }: AnalysisCommentTabProps) {
   const [showDiffReason, setShowDiffReason] = useState(false);
 
   const sortedQuestions = useMemo(() =>
@@ -77,6 +79,7 @@ export function AnalysisCommentTab({ questions, examPaperId }: AnalysisCommentTa
               q={q}
               showDiffReason={showDiffReason}
               examPaperId={examPaperId}
+              onDifficultyEdit={onDifficultyEdit}
             />
           ))}
         </div>
@@ -91,10 +94,11 @@ export function AnalysisCommentTab({ questions, examPaperId }: AnalysisCommentTa
 
 // ── 개별 행 ──
 
-function CommentRow({ q, showDiffReason, examPaperId }: {
+function CommentRow({ q, showDiffReason, examPaperId, onDifficultyEdit }: {
   q: AnalyzedQuestion;
   showDiffReason: boolean;
   examPaperId?: string;
+  onDifficultyEdit?: (questionNumber: number | string, difficulty: string, aiDifficulty: string | null) => void;
 }) {
   const [showFeedback, setShowFeedback] = useState(false);
   const [selectedType, setSelectedType] = useState<string | null>(null);
@@ -102,6 +106,50 @@ function CommentRow({ q, showDiffReason, examPaperId }: {
   const [feedbackSent, setFeedbackSent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  // 난이도 인라인 편집
+  const [editingDiff, setEditingDiff] = useState(false);
+  const [savingDiff, setSavingDiff] = useState(false);
+  const diffRef = useRef<HTMLDivElement>(null);
+
+  const curDiff = normalizeDiff(q.difficulty);
+  const aiDiff = q.ai_difficulty != null ? normalizeDiff(String(q.ai_difficulty)) : null;
+  const wasEdited = aiDiff != null && aiDiff !== curDiff;
+
+  // 난이도 편집 팝오버 외부 클릭 닫기
+  useEffect(() => {
+    if (!editingDiff) return;
+    const handler = (e: MouseEvent) => {
+      if (diffRef.current && !diffRef.current.contains(e.target as Node)) setEditingDiff(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [editingDiff]);
+
+  const saveDifficulty = async (newDiff: string) => {
+    if (newDiff === curDiff) { setEditingDiff(false); return; }
+    if (!examPaperId) { toast.error('시험지 정보가 없습니다'); return; }
+    setSavingDiff(true);
+    try {
+      const res = await fetch(`/api/exam-analysis/${examPaperId}/questions/${q.question_number}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ difficulty: newDiff }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || '난이도 수정 실패');
+      }
+      // AI 원본 보존: 최초 교정 시 현재 difficulty 가 원본
+      const preservedAi = q.ai_difficulty != null ? String(q.ai_difficulty) : q.difficulty;
+      onDifficultyEdit?.(q.question_number, newDiff, preservedAi);
+      setEditingDiff(false);
+      toast.success(`${q.question_number}번 난이도 ${newDiff}로 수정`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '난이도 수정에 실패했습니다');
+    } finally {
+      setSavingDiff(false);
+    }
+  };
 
   const shortTopic = q.topic ? q.topic.split(' > ').pop() || q.topic : '-';
 
@@ -159,10 +207,38 @@ function CommentRow({ q, showDiffReason, examPaperId }: {
       <div>
         <div className="flex items-center gap-1 mb-2 flex-wrap">
           <span className="text-[10px] font-medium text-slate-500">난이도</span>
-          <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-bold text-white"
-            style={{ backgroundColor: DIFFICULTY_COLORS[normalizeDiff(q.difficulty)] || DIFFICULTY_COLORS[q.difficulty] || '#94A3B8' }}>
-            {DIFFICULTY_LABELS[q.difficulty] || normalizeDiff(q.difficulty)}
-          </span>
+          {/* 인라인 편집 가능 난이도 배지 */}
+          <div className="relative inline-flex items-center" ref={diffRef}>
+            <button
+              type="button"
+              onClick={() => setEditingDiff((v) => !v)}
+              title={wasEdited ? `선생님 수정 (AI 원본: ${aiDiff})` : '클릭하여 난이도 수정'}
+              className="px-1.5 py-0.5 rounded-sm text-[10px] font-bold text-white inline-flex items-center gap-0.5 hover:ring-2 hover:ring-offset-1 hover:ring-slate-300 transition-all"
+              style={{ backgroundColor: DIFFICULTY_COLORS[curDiff] || '#94A3B8' }}
+            >
+              {DIFFICULTY_LABELS[q.difficulty] || curDiff}
+              {wasEdited && <Pencil className="w-2 h-2 opacity-80" />}
+            </button>
+            {wasEdited && (
+              <span className="ml-0.5 text-[9px] text-slate-400 line-through" title="AI 원본">{aiDiff}</span>
+            )}
+            {editingDiff && (
+              <div className="absolute left-0 top-6 z-50 bg-white rounded-sm shadow-lg border p-1.5 flex items-center gap-1">
+                {['1', '2', '3', '4', '5'].map((lv) => (
+                  <button
+                    key={lv}
+                    type="button"
+                    disabled={savingDiff}
+                    onClick={() => saveDifficulty(lv)}
+                    className={`w-6 h-6 rounded-sm text-[11px] font-bold text-white transition-transform hover:scale-110 disabled:opacity-50 ${lv === curDiff ? 'ring-2 ring-offset-1 ring-slate-400' : ''}`}
+                    style={{ backgroundColor: DIFFICULTY_COLORS[lv] }}
+                  >
+                    {lv}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <span className="text-[10px] text-slate-300 mx-0.5">·</span>
           <span className="text-[10px] font-medium text-slate-500">유형</span>
           <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-semibold"

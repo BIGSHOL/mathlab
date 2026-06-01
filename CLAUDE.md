@@ -1354,3 +1354,24 @@ node scripts/geocode-failed-by-keyword.mjs     # 4. 주소 매칭 실패분을 �
 
 ### G. 메타 — 분석/측정 우선
 - "값이 이상하다" 류 보고는 *추측 말고 실측*: DB 직접 쿼리(`node --env-file=.env.local` + Prisma)로 실제 분포·여러 파라미터(k) 값 산출 후 결정. 마커 좌표도 라이브 DOM `getBoundingClientRect`로 측정해 확정.
+
+---
+
+## 2026-06-01 세션 — 난이도 자가진화 보정 플라이휠
+
+선생님 체감 대비 AI 난이도가 **체계적으로 낮게** 나오는 문제(프롬프트 5차 개정에도 반복)를, 프롬프트 튜닝이 아닌 **ground truth 누적 + 자동 보정 루프**로 해결. 분석할수록 정확해지는 자가진화 구조. **전국 절대 기준** → 보정 데이터는 플랫폼 전역(테넌트 무관) 집계.
+
+### 플라이휠 4단계
+1. **교정 캡처** — `PATCH /api/exam-analysis/[id]/questions/[questionNumber]` 에 `difficulty` 추가. 최초 교정 시 AI 원본을 `ai_difficulty` 에 보존(학습셋). `AnalysisCommentTab` 난이도 배지 클릭 → 1~5 인라인 셀렉터. 부모(`AnalysisDetail`)는 `diffEdits` 오버레이로 종합 난이도 즉시 재계산.
+2. **측정** — `src/lib/exam-analysis/calibration.ts`(순수 함수): `manually_edited && ai_difficulty != difficulty` 쌍 추출 → 전역 편향 mean(Δ), `질문유형:AI난이도` 버킷별 Δ. `GET /api/exam-analysis/calibration/stats`(SUPER_ADMIN) + admin "난이도 보정" 탭.
+3. **보정 맵** — `DifficultyCalibration` 모델(과목당 1행 upsert, 적용용 캐시). `POST /api/exam-analysis/calibration/recompute` + `npm run calibration:recompute`. 게이트: 표본 ≥5 + 방향일관 ≥70% + |Δ|≥0.5 인 버킷만 채택(과보정 방지), 전역 편향은 폴백.
+4. **자동 적용** — `ai-engine.ts::analyzeExam` 에 `calibrationMap` 인자. AI 난이도에 `applyCalibration()`(버킷 우선, 없으면 전역 편향, ±1.5 캡). `ai_difficulty`=원본 보존. `analyze/route.ts` 가 `loadCalibrationMap(prisma)` 로 주입.
+
+### 설계 결정 (재현 시 유지)
+- **프롬프트 few-shot 앵커는 의도적으로 미적용** — 결정적 보정 맵(post-process)과 **이중 보정** 위험(AI가 앵커로 ↑ → 맵이 또 ↑). 맵은 자가조절(재분석마다 `ai_difficulty` 갱신 → AI 개선 시 교정 줄어 맵도 축소). 단일 메커니즘 유지.
+- **k(`DIFFICULTY_EXPONENT`)는 불변** — 보정(per-문항 정확도)과 RMS(집계 가중)는 직교. 보정으로 개별 난이도가 정확해지면 종합도 자동 상향(`weightedAverageDifficulty` 가 `q.difficulty` 를 읽으므로). k 조정 불필요.
+- **재분석 시 교정 보존** — `analyze/route.ts` 가 삭제 전 `manually_edited` 난이도를 보관 → 재생성 후 같은 question_number 에 재적용(새 AI값은 `ai_difficulty` 로 갱신 → 학습 쌍이 현 모델 반영).
+- **순수 함수 분리** — calibration.ts 는 prisma 미import(스크립트/API 양쪽 재사용). DB 로더만 duck-typed 클라이언트 인자.
+
+### 검증 (실측 완료)
+- 24건 상향 교정 시뮬 → recompute → 전역 편향 **+1.00**(너무 낮음 정확 감지) + 버킷 2개 채택. `applyCalibration` 로 `algebra:2→3`, `algebra:3→4`(버킷), `geometry:2→3`(전역 폴백), `algebra:4→5`(캡) 정상.

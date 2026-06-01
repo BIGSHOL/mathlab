@@ -21,6 +21,7 @@ import {
   Users,
   Pencil,
   Save,
+  Gauge,
 } from 'lucide-react';
 import { QUESTION_TYPE_LABELS } from '@/lib/exam-analysis/constants';
 
@@ -934,11 +935,12 @@ function TeachersTab() {
 // 메인 페이지
 // ══════════════════════════════════════
 
-type AdminTabKey = 'references' | 'feedback' | 'teachers';
+type AdminTabKey = 'references' | 'feedback' | 'teachers' | 'calibration';
 
 const ADMIN_TABS = [
   { key: 'references' as const, label: '레퍼런스', icon: BookOpen },
   { key: 'feedback' as const, label: '피드백/학습', icon: MessageSquare },
+  { key: 'calibration' as const, label: '난이도 보정', icon: Gauge },
   { key: 'teachers' as const, label: '강사', icon: Users },
 ];
 
@@ -946,9 +948,11 @@ export default function ExamAnalysisAdminPage() {
   const { user, isLoading: authLoading } = useAuth();
   // injaewon 관리자: 강사 탭만 노출, 기본 활성 탭도 강사
   const isTeacherAdminOnly = user?.username === 'injaewon';
+  // 난이도 보정 탭은 SUPER_ADMIN 전용 (플랫폼 전역 보정 데이터)
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
   const visibleTabs = isTeacherAdminOnly
     ? ADMIN_TABS.filter((t) => t.key === 'teachers')
-    : ADMIN_TABS;
+    : ADMIN_TABS.filter((t) => t.key !== 'calibration' || isSuperAdmin);
   const [activeTab, setActiveTab] = useState<AdminTabKey>('references');
   // activeTab이 visibleTabs에 없으면 강제 보정 (useState 초기값은 user 로드 전 평가되므로)
   const effectiveTab: AdminTabKey =
@@ -1003,7 +1007,150 @@ export default function ExamAnalysisAdminPage() {
       {/* 탭 콘텐츠 */}
       {effectiveTab === 'references' && <ReferenceTab />}
       {effectiveTab === 'feedback' && <FeedbackLearningTab />}
+      {effectiveTab === 'calibration' && <CalibrationTab />}
       {effectiveTab === 'teachers' && <TeachersTab />}
     </PageContainer>
+  );
+}
+
+// ── 난이도 보정 탭 (SUPER_ADMIN) ──
+
+interface CalibrationStatsData {
+  totalCorrections: number;
+  totalAnalyzedQuestions: number;
+  correctionRate: number;
+  globalBias: number;
+  perAiLevel: Record<string, { count: number; meanDelta: number }>;
+  byQuestionType: Record<string, { count: number; meanDelta: number }>;
+  buckets: { key: string; questionType: string; aiLevel: number; sampleCount: number; meanDelta: number; consistent: boolean; applied: boolean }[];
+}
+
+const QTYPE_KO: Record<string, string> = {
+  number: '수와 연산', algebra: '문자와 식', function: '함수',
+  geometry: '기하', statistics: '확률과 통계', unknown: '미분류',
+};
+
+function biasLabel(bias: number): { text: string; color: string } {
+  if (bias >= 0.5) return { text: 'AI가 너무 낮게 평가', color: 'text-red-600' };
+  if (bias >= 0.15) return { text: 'AI가 다소 낮게 평가', color: 'text-amber-600' };
+  if (bias <= -0.5) return { text: 'AI가 너무 높게 평가', color: 'text-red-600' };
+  if (bias <= -0.15) return { text: 'AI가 다소 높게 평가', color: 'text-amber-600' };
+  return { text: '체감과 거의 일치', color: 'text-emerald-600' };
+}
+
+function CalibrationTab() {
+  const [stats, setStats] = useState<CalibrationStatsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [recomputing, setRecomputing] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/exam-analysis/calibration/stats', { cache: 'no-store' });
+      if (!res.ok) throw new Error('통계 조회 실패');
+      const json = await res.json();
+      setStats(json.data);
+    } catch {
+      toast.error('보정 통계를 불러오지 못했습니다');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const recompute = async () => {
+    setRecomputing(true);
+    try {
+      const res = await fetch('/api/exam-analysis/calibration/recompute', { method: 'POST' });
+      if (!res.ok) throw new Error('재계산 실패');
+      const json = await res.json();
+      toast.success(`보정 맵 갱신 완료 (적용 버킷 ${json.data.appliedBuckets}개)`);
+      await load();
+    } catch {
+      toast.error('보정 맵 재계산에 실패했습니다');
+    } finally {
+      setRecomputing(false);
+    }
+  };
+
+  if (loading) return <Skeleton className="h-[400px] w-full" />;
+  if (!stats) return <div className="text-center py-12 text-sm text-slate-400">데이터가 없습니다.</div>;
+
+  const bl = biasLabel(stats.globalBias);
+
+  return (
+    <div className="space-y-5">
+      {/* 안내 + 재계산 */}
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-xs text-slate-500 leading-relaxed max-w-2xl">
+          선생님이 문항 난이도를 교정할수록 시스템이 AI의 체계적 편향을 학습해 새 분석에 자동 반영합니다(전국 절대 기준, 전역 집계).
+          <strong className="text-slate-700"> 분석할수록 정확해지는 자가진화 구조</strong>입니다.
+        </p>
+        <Button size="sm" onClick={recompute} disabled={recomputing}>
+          <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${recomputing ? 'animate-spin' : ''}`} />
+          보정 맵 재계산
+        </Button>
+      </div>
+
+      {/* KPI 카드 */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="border rounded-sm p-4">
+          <div className="text-xs text-slate-500 mb-1">전역 편향</div>
+          <div className="text-2xl font-black">{stats.globalBias >= 0 ? '+' : ''}{stats.globalBias.toFixed(2)}</div>
+          <div className={`text-xs font-medium mt-0.5 ${bl.color}`}>{bl.text}</div>
+        </div>
+        <div className="border rounded-sm p-4">
+          <div className="text-xs text-slate-500 mb-1">교정 표본</div>
+          <div className="text-2xl font-black">{stats.totalCorrections.toLocaleString()}</div>
+          <div className="text-xs text-slate-400 mt-0.5">교정 비율 {(stats.correctionRate * 100).toFixed(1)}%</div>
+        </div>
+        <div className="border rounded-sm p-4">
+          <div className="text-xs text-slate-500 mb-1">분석 문항</div>
+          <div className="text-2xl font-black">{stats.totalAnalyzedQuestions.toLocaleString()}</div>
+          <div className="text-xs text-slate-400 mt-0.5">누적 분석 기준</div>
+        </div>
+      </div>
+
+      {/* 버킷별 보정 */}
+      <div>
+        <h3 className="text-sm font-bold mb-2">유형 × AI난이도 버킷별 보정</h3>
+        {stats.buckets.length === 0 ? (
+          <div className="text-center py-8 text-sm text-slate-400 border rounded-sm">
+            아직 교정 데이터가 없습니다. 분석본의 문항 난이도를 교정하면 학습이 시작됩니다.
+          </div>
+        ) : (
+          <div className="border rounded-sm overflow-hidden">
+            <div className="grid grid-cols-[1fr_70px_70px_90px_70px] bg-slate-50 px-3 py-2 border-b text-xs font-medium text-slate-500">
+              <span>버킷 (유형 · AI난이도)</span>
+              <span className="text-center">표본</span>
+              <span className="text-center">평균 Δ</span>
+              <span className="text-center">방향일관</span>
+              <span className="text-center">적용</span>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {stats.buckets.map((b) => (
+                <div key={b.key} className="grid grid-cols-[1fr_70px_70px_90px_70px] px-3 py-2 text-xs items-center">
+                  <span className="text-slate-700">{QTYPE_KO[b.questionType] || b.questionType} · {b.aiLevel}</span>
+                  <span className="text-center">{b.sampleCount}</span>
+                  <span className={`text-center font-bold ${b.meanDelta > 0 ? 'text-red-500' : b.meanDelta < 0 ? 'text-blue-500' : 'text-slate-400'}`}>
+                    {b.meanDelta >= 0 ? '+' : ''}{b.meanDelta.toFixed(1)}
+                  </span>
+                  <span className="text-center">{b.consistent ? '✓' : '–'}</span>
+                  <span className="text-center">
+                    {b.applied
+                      ? <span className="px-1.5 py-0.5 rounded-sm bg-emerald-100 text-emerald-700 font-medium">적용</span>
+                      : <span className="text-slate-400">대기</span>}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        <p className="text-[11px] text-slate-400 mt-1.5">
+          표본 5건 이상 + 방향 일관성 70% 이상 + |평균 Δ| ≥ 0.5 인 버킷만 자동 적용됩니다(과보정 방지).
+        </p>
+      </div>
+    </div>
   );
 }

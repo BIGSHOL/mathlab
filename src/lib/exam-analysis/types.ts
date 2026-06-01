@@ -10,8 +10,10 @@ export interface AnalyzedQuestion {
   id?: string;
   question_number: number | string;
   question_format: ExamQuestionFormat | null;
-  difficulty: string;  // "1"-"5" (5단계), 구 데이터: "concept"/"pattern"/"reasoning"/"creative"
+  difficulty: string;  // "1"-"5" (5단계). 선생님 수정 또는 보정 적용 시 최종 표시값
   difficulty_reason: string | null;
+  /** AI 원본 난이도 — 선생님 수정/자동 보정 시 원본 보존(보정 학습용). 미수정이면 undefined */
+  ai_difficulty?: string | null;
   question_type: Lowercase<ExamQuestionTypeKey>;
   ability_domain?: Lowercase<AbilityDomainKey> | null; // 수학 능력 영역
   points: number | null;
@@ -19,6 +21,9 @@ export interface AnalyzedQuestion {
   ai_comment: string | null;       // 2문장, 최대 50자
   confidence: number;              // 0.0-1.0
   confidence_reason: string | null;
+  // 수동 수정 추적 (난이도/단원 등 선생님 교정)
+  manually_edited?: boolean;
+  manually_edited_at?: string | null;
   // 학생 답안지 전용
   is_correct: boolean | null;
   student_answer: string | null;

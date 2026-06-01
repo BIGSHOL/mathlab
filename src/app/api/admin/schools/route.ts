@@ -178,7 +178,6 @@ function buildExamLabelsMap(papers: Array<{ schoolId: string | null; grade: stri
     const scope = (p.examScope && typeof p.examScope === 'object' && !Array.isArray(p.examScope))
       ? p.examScope as Record<string, unknown>
       : null;
-    const scopeYear = scope?.examYear ? String(scope.examYear).slice(-2) : null;
     const scopeSem = scope?.examSemester != null ? String(scope.examSemester) : null;
     const scopeCat = scope?.examCategory && typeof scope.examCategory === 'string'
       ? (EXAM_CATEGORY_KO[scope.examCategory] || scope.examCategory)

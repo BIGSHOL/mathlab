@@ -7,6 +7,7 @@
 import { GoogleGenAI } from '@google/genai';
 import type { AnalyzedQuestion, BasicAnalysisResult, ExamPaperClassification } from './types';
 import { CONFIDENCE_THRESHOLDS, TYPE_TO_DOMAIN, TYPE_TO_STANDARD } from './constants';
+import { applyCalibration, type CalibrationMap } from './calibration';
 
 // ── 싱글톤 클라이언트 ──
 
@@ -459,6 +460,7 @@ export async function analyzeExam(
   mimeTypeHint: string,
   combinedPrompt: string,
   modelOverride?: string,
+  calibrationMap?: CalibrationMap | null,
 ): Promise<BasicAnalysisResult> {
   if (!images.length) {
     throw new Error('분석할 이미지가 없습니다');
@@ -486,7 +488,7 @@ export async function analyzeExam(
     }
 
     // 기본값 보정 + question_type 표준화 + ability_domain 매핑
-    const questions = rawResult.questions.map((q, idx) => {
+    const rawQuestions = rawResult.questions.map((q, idx) => {
       const rawType = q.question_type ?? 'calculation';
       const standardType = (TYPE_TO_STANDARD[rawType] || 'algebra') as AnalyzedQuestion['question_type'];
       const abilityDomain = (q.ability_domain || TYPE_TO_DOMAIN[rawType] || TYPE_TO_DOMAIN[standardType] || 'calculation') as NonNullable<AnalyzedQuestion['ability_domain']>;
@@ -508,6 +510,18 @@ export async function analyzeExam(
         error_type: q.error_type ?? null,
       };
     });
+
+    // ── 난이도 보정 플라이휠 적용 ──
+    // 누적된 선생님 교정으로 학습된 보정 맵을 AI 난이도에 적용. AI 원본은 ai_difficulty 에 보존.
+    // 보정으로 변한 문항만 ai_difficulty 기록(보정 사실 추적 + 이후 선생님 재교정 시 학습 제외 가능).
+    const questions = calibrationMap
+      ? rawQuestions.map((q) => {
+          const calibrated = applyCalibration(String(q.difficulty), q.question_type, calibrationMap);
+          return calibrated !== String(q.difficulty)
+            ? { ...q, ai_difficulty: String(q.difficulty), difficulty: calibrated }
+            : q;
+        })
+      : rawQuestions;
 
     // summary 분포를 questions 배열에서 직접 재계산 (AI summary 부정확 방지)
     const recomputedDiffDist: Record<string, number> = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };

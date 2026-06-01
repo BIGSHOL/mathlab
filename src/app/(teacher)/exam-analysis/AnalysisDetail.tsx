@@ -193,7 +193,16 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
   }, [metadataStartedAt]);
 
   const latestAnalysis = detail.analyses?.[0];
-  const questions = latestAnalysis?.questions || [];
+  // 선생님 난이도 교정 오버레이 — 수정 즉시 종합 난이도 재계산 (서버 저장은 PATCH 가 별도 처리)
+  const [diffEdits, setDiffEdits] = useState<Record<string, { difficulty: string; ai_difficulty: string | null }>>({});
+  // 분석본 전환 시 오버레이 초기화
+  useEffect(() => { setDiffEdits({}); }, [latestAnalysis?.id]);
+  const questions = useMemo(() =>
+    (latestAnalysis?.questions || []).map((q) => {
+      const e = diffEdits[String(q.question_number)];
+      return e ? { ...q, difficulty: e.difficulty, ai_difficulty: e.ai_difficulty, manually_edited: true } : q;
+    }),
+  [latestAnalysis?.questions, diffEdits]);
   const summary = (latestAnalysis?.summary || null) as AnalysisSummary | null;
   const totalPoints = latestAnalysis?.totalPoints;
 
@@ -799,6 +808,12 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                         {breakdown.total}문항 {breakdown.usedPoints ? '배점 가중평균' : '문항수 평균'}
                       </div>
                     )}
+                    {(() => {
+                      const editedCount = questions.filter((q) => q.manually_edited && q.ai_difficulty != null).length;
+                      return editedCount > 0 ? (
+                        <div className="text-[10px] text-primary font-medium mt-0.5">선생님 교정 {editedCount}건 반영</div>
+                      ) : null;
+                    })()}
                   </div>
                 </button>
               );
@@ -1054,7 +1069,13 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
             />
           )}
           {activeTab === 'comments' && (
-            <AnalysisCommentTab questions={questions} examPaperId={detail.id} />
+            <AnalysisCommentTab
+              questions={questions}
+              examPaperId={detail.id}
+              onDifficultyEdit={(qNum, difficulty, aiDifficulty) =>
+                setDiffEdits((prev) => ({ ...prev, [String(qNum)]: { difficulty, ai_difficulty: aiDifficulty } }))
+              }
+            />
           )}
           {activeTab === 'strategy' && (
             <StudyStrategyTab

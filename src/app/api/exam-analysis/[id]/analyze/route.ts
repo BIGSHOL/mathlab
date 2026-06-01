@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse, getTenantFilter, notFound, badRequest } from '@/lib/api';
 import { analyzeExam } from '@/lib/exam-analysis/ai-engine';
+import { loadCalibrationMap } from '@/lib/exam-analysis/calibration';
 import { ExamPromptBuilder } from '@/lib/exam-analysis/prompt-builder';
 import { detectGradingMarks } from '@/lib/exam-analysis/mark-detector';
 import { crossValidateGrading, consolidateDominantTopic } from '@/lib/exam-analysis/cross-validator';
@@ -56,8 +57,23 @@ export async function POST(request: NextRequest, { params }: Params) {
     }
   }
 
-  // 재분석 시 기존 분석 결과 삭제 → 처음부터 다시
+  // 재분석 시: 선생님 난이도 교정(ground truth)을 보존했다가 재적용 → 기존 분석 삭제
+  const priorDifficultyEdits: Record<string, string> = {};
   if (examPaper.status === 'COMPLETED' || examPaper.status === 'FAILED') {
+    const prev = await prisma.examAnalysis.findFirst({
+      where: { examPaperId: id },
+      orderBy: { createdAt: 'desc' },
+      select: { questions: true },
+    });
+    if (prev && Array.isArray(prev.questions)) {
+      for (const raw of prev.questions) {
+        const q = raw as Record<string, unknown>;
+        // 난이도를 선생님이 교정한 문항만 보존 (ai_difficulty 존재 = 교정됨)
+        if (q.manually_edited && q.ai_difficulty != null && q.difficulty != null) {
+          priorDifficultyEdits[String(q.question_number)] = String(q.difficulty);
+        }
+      }
+    }
     await prisma.examAnalysis.deleteMany({ where: { examPaperId: id } });
   }
 
@@ -121,15 +137,35 @@ export async function POST(request: NextRequest, { params }: Params) {
     await setStep(id, 3);
 
     const mimeType = examPaper.fileType === 'pdf' ? 'application/pdf' : 'image/jpeg';
+    // 난이도 보정 맵 로드 (누적 교정 학습 결과). 없으면 null → 보정 미적용.
+    const calibrationMap = await loadCalibrationMap(prisma).catch(() => null);
     // 3분 타임아웃 — Gemini 응답이 없으면 강제 중단
     const analysisResult = await Promise.race([
-      analyzeExam(imageDataList, mimeType, promptResult.combined_prompt),
+      analyzeExam(imageDataList, mimeType, promptResult.combined_prompt, undefined, calibrationMap),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('AI 분석 타임아웃 (3분 초과)')), 180_000),
       ),
     ]);
 
     let questions = analysisResult.questions as AnalyzedQuestion[];
+
+    // 재분석 시 선생님 난이도 교정 재적용 (ground truth 보존 — 새 AI값은 ai_difficulty 로 갱신)
+    if (Object.keys(priorDifficultyEdits).length > 0) {
+      questions = questions.map((q) => {
+        const teacher = priorDifficultyEdits[String(q.question_number)];
+        if (teacher && teacher !== String(q.difficulty)) {
+          const aiThisRun = q.ai_difficulty != null ? String(q.ai_difficulty) : String(q.difficulty);
+          return {
+            ...q,
+            ai_difficulty: aiThisRun,
+            difficulty: teacher,
+            manually_edited: true,
+            manually_edited_at: new Date().toISOString(),
+          };
+        }
+        return q;
+      });
+    }
 
     // 채점 마크 감지 + 교차 검증 (학생 답안지)
     let markDetection = null;
