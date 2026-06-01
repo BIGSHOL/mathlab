@@ -83,7 +83,8 @@ export default function EvolutionConsolePage() {
     }
   }, []);
 
-  useEffect(() => { if (user?.role === 'SUPER_ADMIN') void load(); }, [user, load]);
+  // user?.role(원시값) 의존 — user 객체 ref가 매 렌더 바뀌어 무한 load 루프 방지
+  useEffect(() => { if (user?.role === 'SUPER_ADMIN') void load(); }, [user?.role, load]);
 
   const recompute = async () => {
     setRecomputing(true);
