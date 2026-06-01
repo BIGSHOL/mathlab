@@ -25,7 +25,7 @@ export default function TeacherError({
           문제가 발생했습니다
         </h2>
         <p className="text-slate-500 text-sm">
-          일시적인 오류가 발생했습니다. 다시 시도하거나 대시보드로 이동해주세요.
+          일시적인 오류가 발생했습니다. 다시 시도하거나 기출 분석으로 이동해주세요.
         </p>
         <div className="flex gap-3 mt-2">
           <button
@@ -36,11 +36,11 @@ export default function TeacherError({
             다시 시도
           </button>
           <Link
-            href="/overview"
+            href="/exam-analysis"
             className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-sm hover:bg-slate-200 transition-colors text-sm font-medium"
           >
             <Home className="w-4 h-4" />
-            대시보드
+            기출 분석
           </Link>
         </div>
       </div>

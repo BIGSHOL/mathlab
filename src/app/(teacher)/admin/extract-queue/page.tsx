@@ -68,7 +68,7 @@ export default function ExtractQueuePage() {
 
   useEffect(() => {
     if (!isLoading && user && user.role !== 'SUPER_ADMIN') {
-      router.replace('/overview');
+      router.replace('/exam-analysis');
     }
   }, [user, isLoading, router]);
 

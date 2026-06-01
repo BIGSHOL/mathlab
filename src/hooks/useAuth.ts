@@ -33,7 +33,7 @@ export function useAuth() {
   const login = async (username: string, password: string) => {
     const result = await signIn('credentials', { username, password, redirect: false });
     if (result?.error) throw new Error('로그인 실패');
-    router.push('/dashboard');
+    router.push('/exam-analysis');
     router.refresh();
   };
 
