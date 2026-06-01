@@ -84,9 +84,7 @@ export async function GET(req: NextRequest) {
   ]);
 
   // 기출 라벨 맵 생성
-  const examLabelsMap = buildExamLabelsMap(
-    examCountStats as Array<{ schoolId: string | null; grade: string; category: string | null; title: string; createdAt: Date }>
-  );
+  const examLabelsMap = buildExamLabelsMap(examCountStats);
 
   return NextResponse.json({
     data: items.map(s => ({
@@ -319,7 +317,7 @@ async function handleNearbySchools(schoolId: string) {
   const allIds = [school.id, ...nearbyIds];
   const examPapers = await prisma.examPaper.findMany({
     where: { schoolId: { in: allIds }, status: 'COMPLETED' },
-    select: { schoolId: true, grade: true, category: true, title: true, createdAt: true },
+    select: { schoolId: true, grade: true, category: true, title: true, createdAt: true, examScope: true },
   });
   const examLabelsMap = buildExamLabelsMap(examPapers);
 
