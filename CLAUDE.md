@@ -868,7 +868,7 @@ PDF 시험지 업로드 → Gemini AI 분석 → 문항별 난이도/유형/능�
 - 핵심: **개념 1개라도 깊으면 4~5** (단일개념 킬러 포착). "애매하면 한 단계 낮게"는 **(A)폭에만 적용**, (B)깊이 명확 시 하향 금지.
 - v1.4.0에서 수학/영어 프레임워크 분리 — 공통 프레임워크의 하향편향이 2축과 충돌해 2~3 쏠림 발생 → 수학은 2축만 사용.
 - ⚠️ **AI 판정 난이도는 추가로 자가진화 보정맵을 통과**(post-process). 프롬프트(루브릭)와 보정맵(결정적 가산)은 **이중 보정 회피 위해 역할 분리** — 프롬프트엔 숫자 앵커 미적용. 상세: 아래 "난이도 자가진화 보정 플라이휠" + "통합 메타데이터 보정 엔진" 섹션.
-- 집계 표시용 가중평균(k=2 RMS)은 per-문항 보정과 **직교**(`difficulty.ts`, `DIFFICULTY_EXPONENT` 불변).
+- 집계 표시용 가중평균(레벨별 명시 가중 `DIFFICULTY_LEVEL_WEIGHTS`)은 per-문항 보정과 **직교**(`difficulty.ts`). 집계 가중표 튜닝과 per-문항 정확도 보정은 별개 레버.
 
 **핵심 구조 (`src/components/exam-analysis/`, `src/lib/exam-analysis/`):**
 - `AnalysisResultView` — 난이도 도넛차트/배점 토글, 유형 레이더, 단원 출제현황, 문항 테이블
@@ -1344,10 +1344,11 @@ node scripts/geocode-failed-by-keyword.mjs     # 4. 주소 매칭 실패분을 �
 - **라운드 최소화**(사용자 요청): 카드 16~24px → 6~8px, 칩/배지 full → 4px (V3 샤프 톤). **반응형**: 히어로 2단 분기 `md`→`lg`(태블릿 풀폭 스택), 헤드라인/패딩 fluid.
 - ⚠️ **공개 랜딩 스크롤 함정**: 루트 `layout.tsx` body + globals.css `html,body{overflow:hidden}`(LMS 앱 셸 규약 — 내부 스크롤 컨테이너 전제)이 공개 랜딩까지 적용돼 본문이 잘려 스크롤 불가. → 랜딩 루트에 `h-dvh overflow-y-auto` 자체 스크롤 컨테이너 추가(전역 규약 불변). 진단 시 MCP 프로그램 스크롤은 통하지만 실제 휠은 막히므로 `scrollHeight>clientHeight` + 네이티브 스크롤 여부로 확인.
 
-### B. 평균 난이도 = 배점 가중 *비선형* 평균 (k=2 제곱평균)
+### B. 평균 난이도 = **레벨별 명시 가중치**(importance weight) 가중평균
 - **공유 헬퍼** `src/lib/exam-analysis/difficulty.ts` `weightedAverageDifficulty(questions)`:
-  `(Σ 난이도ᵏ × 배점 / Σ 배점)^(1/k)`, **`DIFFICULTY_EXPONENT = 2`**(제곱평균/RMS). 배점 없으면 문항수 기준 폴백(`usedPoints` 플래그).
-  - 진화: 문항수 단순평균(2.4) → 배점 선형(2.66) → **k=2 비선형(2.90)**. 응용·심화 비중 큰 시험을 체감에 맞게 ↑, 쉬운 시험은 낮게 유지(분별력 보존 — 실측으로 확인). 강/약은 `DIFFICULTY_EXPONENT` 한 줄.
+  `Σ(weight[L] × 배점 × 난이도) / Σ(weight[L] × 배점)`, **`DIFFICULTY_LEVEL_WEIGHTS = {1:1, 2:1, 3:2, 4:5, 5:10}`**. 배점 없으면 영향력 가중만으로 폴백(`usedPoints` 플래그). 1~5 스케일 유지(최대=5).
+  - 진화: 문항수 단순평균(2.4) → 배점 선형(2.66) → k=2 제곱평균(2.90) → k=4(3.16) → **레벨별 명시 가중(2026-06-01)**. 거듭제곱평균(지수 k)은 천장(~3.2)에 막혀 "더 올려달라"를 못 맞춤 + "각 난이도별로 가중치를 확실하게 매겨서"라는 요청 → **지수 k를 레벨별 명시 가중표로 교체**(추상적 k보다 레벨별로 보이는 배수가 직관적). 심화(4)=5배·최고(5)=10배 영향 → *차등* 상향(균일 δ 아님): 킬러/심화 있는 시험이 더 높고 쉬운 시험은 그대로(분별력). 실측(분석본 3개): 분포 3/6/7/4/1(능인고, 산술 2.70)→**3.46**, 0/9/8/4/0→3.39, 2/7/9/4/0→3.28.
+  - **트레이드오프**: 상위가중이라 하위 난이도 문항 영향 작음(킬러 1문항 재평가 시 종합 ±0.2). 강/약은 `DIFFICULTY_LEVEL_WEIGHTS` **이 표 한 곳만** 수정(4·5 ↑=강, 예 6/12·7/14 / ↓=약, 예 4/8). 측정 도구: `scripts/measure-difficulty-weighting.mjs`(여러 가중표 실측 비교), `scripts/verify-difficulty.ts`(실제 함수 end-to-end 검증).
 - **통일**(흩어진 계산 전부 이 헬퍼로): `(teacher)/exam-analysis/helpers.tsx`(`getOverallDifficultyLevel`/`getDifficultyBreakdown` — `questions` 인자 추가) · `AnalysisDetail`(헤더/모달 라벨·설명) · `v4/helpers.computeExamStats` · `api/.../section-image` · `v3/V3CommentaryView`.
 - ⚠️ `summary.average_difficulty`(ai-engine: **최빈 난이도** 문자열)와 화면의 *가중평균 소수값*은 **별개**. 표시 평균은 항상 헬퍼로 재계산(저장값 아님) → 분석 재실행 없이 **새로고침만으로 반영**.
 - 박스 하이라이트 = `round(가중평균)`(가장 가까운 단계), 숫자/화살표 = 정밀값. 2.7 → box 3 = 의도된 정상.
@@ -1387,7 +1388,7 @@ node scripts/geocode-failed-by-keyword.mjs     # 4. 주소 매칭 실패분을 �
 
 ### 설계 결정 (재현 시 유지)
 - **프롬프트 few-shot 앵커는 의도적으로 미적용** — 결정적 보정 맵(post-process)과 **이중 보정** 위험(AI가 앵커로 ↑ → 맵이 또 ↑). 맵은 자가조절(재분석마다 `ai_difficulty` 갱신 → AI 개선 시 교정 줄어 맵도 축소). 단일 메커니즘 유지.
-- **k(`DIFFICULTY_EXPONENT`)는 불변** — 보정(per-문항 정확도)과 RMS(집계 가중)는 직교. 보정으로 개별 난이도가 정확해지면 종합도 자동 상향(`weightedAverageDifficulty` 가 `q.difficulty` 를 읽으므로). k 조정 불필요.
+- **집계 가중(`DIFFICULTY_LEVEL_WEIGHTS`)과 per-문항 보정은 직교** — 보정(per-문항 정확도)과 레벨별 명시 가중(집계 표시)은 별개 레버. 보정으로 개별 난이도가 정확해지면 종합도 자동 상향(`weightedAverageDifficulty` 가 `q.difficulty` 를 읽으므로). 집계 가중표는 "고난도를 얼마나 강하게 반영할지"의 정책 레버(2026-06-01 거듭제곱 k → 레벨별 명시 가중으로 교체).
 - **재분석 시 교정 보존** — `analyze/route.ts` 가 삭제 전 `manually_edited` 난이도를 보관 → 재생성 후 같은 question_number 에 재적용(새 AI값은 `ai_difficulty` 로 갱신 → 학습 쌍이 현 모델 반영).
 - **순수 함수 분리** — calibration.ts 는 prisma 미import(스크립트/API 양쪽 재사용). DB 로더만 duck-typed 클라이언트 인자.
 
