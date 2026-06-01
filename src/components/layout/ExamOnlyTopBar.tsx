@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { LogOut, User, Settings, MapPin, FileUp, ListChecks, Building2, Users, FileSearch } from 'lucide-react';
+import { LogOut, User, Settings, MapPin, FileUp, Building2, Users, FileSearch } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 /** SUPER_ADMIN 관리 메뉴 링크 (사이드바 제거 후 유일한 진입점) */
@@ -10,7 +10,6 @@ const ADMIN_LINKS = [
   { href: '/exam-analysis', label: '기출분석', icon: FileSearch },
   { href: '/admin/schools', label: '학교 관리', icon: MapPin },
   { href: '/admin/exam-uploads', label: '기출 업로드', icon: FileUp },
-  { href: '/admin/extract-queue', label: '추출 대기열', icon: ListChecks },
   { href: '/admin/tenants', label: '지점 관리', icon: Building2 },
   { href: '/admin/users', label: '사용자 관리', icon: Users },
 ];
