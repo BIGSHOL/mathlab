@@ -403,6 +403,7 @@ export default function AdminSchoolsPage() {
             <NearbyPanel
               data={selectedSchoolId === s.id ? nearbyData : null}
               loading={nearbyLoading}
+              centerExamLabels={s.examLabels}
               onRefresh={() => fetchNearby(s.id)}
             />
           )}
@@ -421,7 +422,7 @@ export default function AdminSchoolsPage() {
 }
 
 /** 주변 학교 확장 패널 — 행 클릭 시 인라인 표시 */
-function NearbyPanel({ data, loading, onRefresh }: { data: NearbyResult | null; loading: boolean; onRefresh: () => void }) {
+function NearbyPanel({ data, loading, centerExamLabels = [], onRefresh }: { data: NearbyResult | null; loading: boolean; centerExamLabels?: string[]; onRefresh: () => void }) {
   const [saving, setSaving] = useState(false);
   const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
   const [addSearch, setAddSearch] = useState('');
@@ -522,8 +523,18 @@ function NearbyPanel({ data, loading, onRefresh }: { data: NearbyResult | null; 
 
   if (data.message) {
     return (
-      <div className="bg-cyan-50/40 border-t border-cyan-200 px-6 py-4">
+      <div className="bg-cyan-50/40 border-t border-cyan-200 px-6 py-4 flex items-start gap-6">
         <p className="text-sm text-slate-400">{data.message}</p>
+        {centerExamLabels.length > 0 && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <FileText className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+            {centerExamLabels.map((label) => (
+              <span key={label} className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-sm px-2 py-0.5 font-medium">
+                {label}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
@@ -558,11 +569,15 @@ function NearbyPanel({ data, loading, onRefresh }: { data: NearbyResult | null; 
           )}
         </h4>
         <div className="flex items-center gap-2">
-          {data.center.examLabels.length > 0 && (
-            <span className="text-[10px] text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-sm px-1.5 py-0.5">
-              <FileText className="w-3 h-3 inline mr-0.5" />
-              {data.center.examLabels.join(', ')}
-            </span>
+          {centerExamLabels.length > 0 && (
+            <div className="flex items-center gap-1 flex-wrap">
+              <FileText className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+              {centerExamLabels.map((label) => (
+                <span key={label} className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-sm px-2 py-0.5 font-medium">
+                  {label}
+                </span>
+              ))}
+            </div>
           )}
           {!isGrouped && data.data.length > 0 && (
             <button
