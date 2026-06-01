@@ -7,7 +7,7 @@ import { Upload, X, FileText, Image as ImageIcon, Sparkles, AlertTriangle } from
 import { ExamScopeSelector } from './ExamScopeSelector';
 
 interface ExamUploadFormProps {
-  onSuccess: () => void;
+  onSuccess: (newId: string) => void;
   onCancel: () => void;
 }
 
@@ -458,9 +458,11 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
       if (!createRes.ok) {
         throw new Error(await extractErrorMessage(createRes, '시험지 등록에 실패했습니다'));
       }
+      const created = await createRes.json();
+      const newId: string = created.data?.id;
 
       toast.success('시험지가 업로드되었습니다');
-      onSuccess();
+      onSuccess(newId);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '업로드에 실패했습니다');
     } finally {

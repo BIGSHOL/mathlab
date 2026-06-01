@@ -475,7 +475,7 @@ export default function ExamAnalysisPage() {
               </button>
             </div>
             <ExamUploadForm
-              onSuccess={() => { setShowUpload(false); fetchList(); }}
+              onSuccess={(newId) => { setShowUpload(false); fetchList(); if (newId) setSelectedId(newId); }}
               onCancel={() => setShowUpload(false)}
             />
           </div>
