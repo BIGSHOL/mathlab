@@ -23,6 +23,7 @@ import {
 } from './prompt-config-common';
 import type { ExamContext, BuildPromptResponse } from './types';
 import { MIDDLE_SCHOOL_CURRICULUM, HIGH_SCHOOL_CURRICULUM } from './data/curriculum';
+import { CATEGORICAL_FIELDS, buildCategoricalWarnings } from './calibration';
 
 // ── 영어 과목 프롬프트 (인라인, prompt-config-english 미생성 시 대비) ──
 // 영어 관련 설정은 향후 prompt-config-english.ts로 분리 예정
@@ -310,23 +311,33 @@ export class ExamPromptBuilder {
         result.combined_prompt += `\n\n📚 **[참고 레퍼런스 문제]:**\n\n${refLines}`;
       }
 
-      // 학습된 패턴 조회 (confidence >= 0.7, 활성 + 자동적용)
-      const learnedPatterns = await prisma.learnedPattern.findMany({
-        where: {
-          subject: context.subject === '수학' ? 'MATH' : 'ENGLISH',
-          isActive: true,
-          isAutoApplied: true,
-          confidence: { gte: 0.7 },
-        },
-        orderBy: { confidence: 'desc' },
-        take: 5,
+      // 범주형 혼동 학습 — 선생님 교정 누적으로 학습된 구체적 혼동 경고 주입
+      // (기존 LearnedPattern 모호 텍스트를 대체: "X로 보면 N% Y로 교정됨 → 재검토")
+      const subjectKey = context.subject === '수학' ? 'MATH' : 'ENGLISH';
+      const catRows = await prisma.metadataCalibration.findMany({
+        where: { subject: subjectKey, kind: 'categorical' },
       });
-
-      if (learnedPatterns.length > 0) {
-        const patternLines = learnedPatterns.map(p =>
-          `- **${p.patternType}** (신뢰도: ${Math.round(p.confidence * 100)}%): ${p.description}`
-        ).join('\n');
-        result.combined_prompt += `\n\n📝 **[학습된 분석 패턴]:**\n\n${patternLines}`;
+      const warnings: string[] = [];
+      for (const row of catRows) {
+        const cfg = CATEGORICAL_FIELDS.find((c) => c.field === row.field);
+        if (!cfg) continue;
+        const confusion = (row.bucketShifts && typeof row.bucketShifts === 'object'
+          ? row.bucketShifts
+          : {}) as Record<string, Record<string, number>>;
+        const stats = {
+          field: cfg.field,
+          totalCorrections: 0,
+          groups: Object.entries(confusion).map(([ai, corr]) => {
+            const total = Object.values(corr).reduce((s, n) => s + n, 0);
+            const [dominant, domCount] = Object.entries(corr).sort((a, b) => b[1] - a[1])[0] ?? ['', 0];
+            return { ai, total, dominant, dominantFrac: total ? domCount / total : 0, corrections: corr };
+          }),
+        };
+        warnings.push(...buildCategoricalWarnings(stats, cfg.ko));
+      }
+      if (warnings.length > 0) {
+        const lines = warnings.slice(0, 8).map((w) => `- ${w}`).join('\n');
+        result.combined_prompt += `\n\n📝 **[학습된 분류 주의점 — 선생님 교정 누적]:**\n\n${lines}`;
       }
     } catch {
       // DB 접근 실패 시 기본 빌드 결과 그대로 반환

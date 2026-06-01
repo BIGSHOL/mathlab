@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse, getTenantFilter, notFound, badRequest } from '@/lib/api';
 import { assertAnalysisQuota } from '@/lib/billing/guard';
 import { analyzeExam } from '@/lib/exam-analysis/ai-engine';
-import { loadCalibrationMap } from '@/lib/exam-analysis/calibration';
+import { loadCalibrationSet } from '@/lib/exam-analysis/calibration';
 import { ExamPromptBuilder } from '@/lib/exam-analysis/prompt-builder';
 import { detectGradingMarks } from '@/lib/exam-analysis/mark-detector';
 import { crossValidateGrading, consolidateDominantTopic } from '@/lib/exam-analysis/cross-validator';
@@ -62,8 +62,10 @@ export async function POST(request: NextRequest, { params }: Params) {
     }
   }
 
-  // 재분석 시: 선생님 난이도 교정(ground truth)을 보존했다가 재적용 → 기존 분석 삭제
-  const priorDifficultyEdits: Record<string, string> = {};
+  // 재분석 시: 선생님 교정(ground truth)을 전 필드 보존했다가 재적용 → 기존 분석 삭제
+  // 보존 필드: difficulty/points/topic/question_type/ability_domain (각 ai_<field> 존재 = 교정됨)
+  const PRESERVE_FIELDS = ['difficulty', 'points', 'topic', 'question_type', 'ability_domain'] as const;
+  const priorEdits: Record<string, Record<string, unknown>> = {};
   if (examPaper.status === 'COMPLETED' || examPaper.status === 'FAILED') {
     const prev = await prisma.examAnalysis.findFirst({
       where: { examPaperId: id },
@@ -73,10 +75,12 @@ export async function POST(request: NextRequest, { params }: Params) {
     if (prev && Array.isArray(prev.questions)) {
       for (const raw of prev.questions) {
         const q = raw as Record<string, unknown>;
-        // 난이도를 선생님이 교정한 문항만 보존 (ai_difficulty 존재 = 교정됨)
-        if (q.manually_edited && q.ai_difficulty != null && q.difficulty != null) {
-          priorDifficultyEdits[String(q.question_number)] = String(q.difficulty);
+        if (!q.manually_edited) continue;
+        const edits: Record<string, unknown> = {};
+        for (const f of PRESERVE_FIELDS) {
+          if (q[`ai_${f}`] != null && q[f] != null) edits[f] = q[f];
         }
+        if (Object.keys(edits).length > 0) priorEdits[String(q.question_number)] = edits;
       }
     }
     await prisma.examAnalysis.deleteMany({ where: { examPaperId: id } });
@@ -142,11 +146,11 @@ export async function POST(request: NextRequest, { params }: Params) {
     await setStep(id, 3);
 
     const mimeType = examPaper.fileType === 'pdf' ? 'application/pdf' : 'image/jpeg';
-    // 난이도 보정 맵 로드 (누적 교정 학습 결과). 없으면 null → 보정 미적용.
-    const calibrationMap = await loadCalibrationMap(prisma).catch(() => null);
+    // 통합 보정 맵 로드 (전 필드 누적 교정 학습 결과). 없으면 보정 미적용.
+    const calibrationSet = await loadCalibrationSet(prisma).catch(() => null);
     // 3분 타임아웃 — Gemini 응답이 없으면 강제 중단
     const analysisResult = await Promise.race([
-      analyzeExam(imageDataList, mimeType, promptResult.combined_prompt, undefined, calibrationMap),
+      analyzeExam(imageDataList, mimeType, promptResult.combined_prompt, undefined, calibrationSet),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('AI 분석 타임아웃 (3분 초과)')), 180_000),
       ),
@@ -154,21 +158,24 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     let questions = analysisResult.questions as AnalyzedQuestion[];
 
-    // 재분석 시 선생님 난이도 교정 재적용 (ground truth 보존 — 새 AI값은 ai_difficulty 로 갱신)
-    if (Object.keys(priorDifficultyEdits).length > 0) {
+    // 재분석 시 선생님 교정 재적용 (전 필드 ground truth 보존 — 새 AI값은 ai_<field> 로 갱신)
+    if (Object.keys(priorEdits).length > 0) {
+      const nowIso = new Date().toISOString();
       questions = questions.map((q) => {
-        const teacher = priorDifficultyEdits[String(q.question_number)];
-        if (teacher && teacher !== String(q.difficulty)) {
-          const aiThisRun = q.ai_difficulty != null ? String(q.ai_difficulty) : String(q.difficulty);
-          return {
-            ...q,
-            ai_difficulty: aiThisRun,
-            difficulty: teacher,
-            manually_edited: true,
-            manually_edited_at: new Date().toISOString(),
-          };
+        const edits = priorEdits[String(q.question_number)];
+        if (!edits) return q;
+        const next = { ...q } as Record<string, unknown>;
+        let changed = false;
+        for (const [field, teacherVal] of Object.entries(edits)) {
+          if (teacherVal != null && String(teacherVal) !== String(next[field])) {
+            // 이번 AI값을 ai_<field> 로 갱신(학습 쌍이 현 모델 반영), 선생님값 재적용
+            next[`ai_${field}`] = next[`ai_${field}`] ?? next[field];
+            next[field] = teacherVal;
+            changed = true;
+          }
         }
-        return q;
+        if (changed) { next.manually_edited = true; next.manually_edited_at = nowIso; }
+        return next as unknown as AnalyzedQuestion;
       });
     }
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { DIFFICULTY_COLORS, DIFFICULTY_LABELS as DIFF_LABELS_MAP, DIFFICULTY_LEGACY_MAP, TYPE_TO_DOMAIN, ABILITY_DOMAIN_LABELS, ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
+import { DIFFICULTY_COLORS, DIFFICULTY_LABELS as DIFF_LABELS_MAP, DIFFICULTY_LEGACY_MAP, TYPE_TO_DOMAIN, ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { sumPoints, roundPoints, formatPoints } from '@/lib/exam-analysis/points';
 import { ChevronRight, AlertTriangle, Pencil, Check, X } from 'lucide-react';
@@ -44,18 +44,20 @@ function normalizeDifficulty(key: string): string {
   return DIFFICULTY_LEGACY_MAP[key] || key;
 }
 
-const TYPE_LABELS: Record<string, string> = {
-  // 5대 교육과정 영역
-  number: '수와 연산', algebra: '문자와 식', function: '함수',
-  geometry: '기하', statistics: '확률과 통계',
-  // 영어
-  grammar: '문법', vocabulary: '어휘', reading: '독해',
-  listening: '듣기', writing: '서술형', communication: '의사소통',
-};
-
 const _FORMAT_LABELS: Record<string, string> = {
   objective: '객관식', short_answer: '단답형', essay: '서술형',
 };
+
+// 유형·능력 교정 셀렉터 옵션 (수학)
+const TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'number', label: '수와 연산' }, { value: 'algebra', label: '문자와 식' },
+  { value: 'function', label: '함수' }, { value: 'geometry', label: '기하' },
+  { value: 'statistics', label: '확률과 통계' },
+];
+const ABILITY_OPTIONS: { value: string; label: string }[] = [
+  { value: 'calculation', label: '계산력' }, { value: 'understanding', label: '이해력' },
+  { value: 'problem_solving', label: '문제해결력' }, { value: 'reasoning', label: '추론력' },
+];
 
 /** 배점 신뢰도 판정: 합계가 기준의 ±15% 이내인지 */
 function checkPointsReliable(qs: AnalyzedQuestion[], expectedTotal: number | null) {
@@ -112,28 +114,42 @@ function getPointsSuggestion(qs: AnalyzedQuestion[], expectedTotal: number | nul
 // ── 메인 컴포넌트 ──
 
 export function AnalysisResultView({ questions: questionsProp, summary, totalPoints: _totalPoints, earnedPoints: _earnedPoints, examType, examPaperId, grade }: AnalysisResultViewProps) {
-  // 수동 편집된 단원은 로컬 state에 반영 (페이지 리로드 없이 즉시 표시)
+  // 수동 편집 로컬 오버레이 (페이지 리로드 없이 즉시 표시) — 종합 통계도 즉시 갱신
   const [editedTopics, setEditedTopics] = React.useState<Record<string, string>>({});
   const [editedPoints, setEditedPoints] = React.useState<Record<string, number>>({});
+  const [editedTypes, setEditedTypes] = React.useState<Record<string, string>>({});
+  const [editedAbilities, setEditedAbilities] = React.useState<Record<string, string>>({});
   const questions = React.useMemo(() => {
-    if (!Object.keys(editedTopics).length && !Object.keys(editedPoints).length) return questionsProp;
+    const anyEdit = Object.keys(editedTopics).length || Object.keys(editedPoints).length
+      || Object.keys(editedTypes).length || Object.keys(editedAbilities).length;
+    if (!anyEdit) return questionsProp;
     return questionsProp.map((q) => {
       const key = String(q.question_number);
       const topic = editedTopics[key];
       const points = editedPoints[key];
-      if (topic === undefined && points === undefined) return q;
+      const qtype = editedTypes[key];
+      const ability = editedAbilities[key];
+      if (topic === undefined && points === undefined && qtype === undefined && ability === undefined) return q;
       return {
         ...q,
         ...(topic !== undefined ? { topic } : {}),
         ...(points !== undefined ? { points } : {}),
+        ...(qtype !== undefined ? { question_type: qtype as typeof q.question_type } : {}),
+        ...(ability !== undefined ? { ability_domain: ability as typeof q.ability_domain } : {}),
       };
     });
-  }, [questionsProp, editedTopics, editedPoints]);
+  }, [questionsProp, editedTopics, editedPoints, editedTypes, editedAbilities]);
   const handleTopicUpdate = React.useCallback((qNum: string | number, newTopic: string) => {
     setEditedTopics((prev) => ({ ...prev, [String(qNum)]: newTopic }));
   }, []);
   const handlePointsUpdate = React.useCallback((qNum: string | number, newPoints: number) => {
     setEditedPoints((prev) => ({ ...prev, [String(qNum)]: newPoints }));
+  }, []);
+  const handleTypeUpdate = React.useCallback((qNum: string | number, v: string) => {
+    setEditedTypes((prev) => ({ ...prev, [String(qNum)]: v }));
+  }, []);
+  const handleAbilityUpdate = React.useCallback((qNum: string | number, v: string) => {
+    setEditedAbilities((prev) => ({ ...prev, [String(qNum)]: v }));
   }, []);
   const isStudentExam = examType === 'student';
 
@@ -403,7 +419,7 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
                     <span className="text-xs font-semibold text-sky-600">객관식</span>
                     <span className="text-xs text-slate-400 ml-2">{grouped.objective.length}문항</span>
                   </td></tr>
-                  {grouped.objective.map((q, i) => <QRow key={`o-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} grade={grade} onTopicUpdate={handleTopicUpdate} onPointsUpdate={handlePointsUpdate} />)}
+                  {grouped.objective.map((q, i) => <QRow key={`o-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} grade={grade} onTopicUpdate={handleTopicUpdate} onPointsUpdate={handlePointsUpdate} onTypeUpdate={handleTypeUpdate} onAbilityUpdate={handleAbilityUpdate} />)}
                 </>
               )}
               {grouped.shortAnswer.length > 0 && (
@@ -412,7 +428,7 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
                     <span className="text-xs font-semibold text-teal-600">단답형</span>
                     <span className="text-xs text-slate-400 ml-2">{grouped.shortAnswer.length}문항</span>
                   </td></tr>
-                  {grouped.shortAnswer.map((q, i) => <QRow key={`s-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} grade={grade} onTopicUpdate={handleTopicUpdate} onPointsUpdate={handlePointsUpdate} />)}
+                  {grouped.shortAnswer.map((q, i) => <QRow key={`s-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} grade={grade} onTopicUpdate={handleTopicUpdate} onPointsUpdate={handlePointsUpdate} onTypeUpdate={handleTypeUpdate} onAbilityUpdate={handleAbilityUpdate} />)}
                 </>
               )}
               {grouped.essay.length > 0 && (
@@ -421,7 +437,7 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
                     <span className="text-xs font-semibold text-amber-600">서술형</span>
                     <span className="text-xs text-slate-400 ml-2">{grouped.essay.length}문항</span>
                   </td></tr>
-                  {grouped.essay.map((q, i) => <QRow key={`e-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} grade={grade} onTopicUpdate={handleTopicUpdate} onPointsUpdate={handlePointsUpdate} />)}
+                  {grouped.essay.map((q, i) => <QRow key={`e-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} grade={grade} onTopicUpdate={handleTopicUpdate} onPointsUpdate={handlePointsUpdate} onTypeUpdate={handleTypeUpdate} onAbilityUpdate={handleAbilityUpdate} />)}
                 </>
               )}
             </tbody>
@@ -537,13 +553,15 @@ function TopicSection({ topicGroups, maxTopic, total, chartColors }: {
 }
 
 
-function QRow({ q, isStudent, examPaperId, grade, onTopicUpdate, onPointsUpdate }: {
+function QRow({ q, isStudent, examPaperId, grade, onTopicUpdate, onPointsUpdate, onTypeUpdate, onAbilityUpdate }: {
   q: AnalyzedQuestion;
   isStudent: boolean;
   examPaperId?: string;
   grade?: string | null;
   onTopicUpdate?: (qNum: string | number, newTopic: string) => void;
   onPointsUpdate?: (qNum: string | number, newPoints: number) => void;
+  onTypeUpdate?: (qNum: string | number, v: string) => void;
+  onAbilityUpdate?: (qNum: string | number, v: string) => void;
 }) {
   const confPct = Math.round((q.confidence || 0) * 100);
   const confColor = confPct >= 90 ? 'text-emerald-600' : confPct >= 70 ? 'text-yellow-600' : 'text-red-500';
@@ -602,12 +620,27 @@ function QRow({ q, isStudent, examPaperId, grade, onTopicUpdate, onPointsUpdate 
         </span>
       </td>
       <td className="px-3 py-2 text-center whitespace-nowrap">
-        <span className="text-xs text-slate-700">{TYPE_LABELS[q.question_type] || q.question_type}</span>
+        <EnumCell
+          value={q.question_type}
+          aiValue={q.ai_question_type}
+          options={TYPE_OPTIONS}
+          questionNumber={q.question_number}
+          examPaperId={examPaperId}
+          field="question_type"
+          onUpdate={onTypeUpdate}
+        />
       </td>
       <td className="px-3 py-2 text-center whitespace-nowrap">
-        <span className="text-xs font-medium" style={{ color: domainColor }}>
-          {ABILITY_DOMAIN_LABELS[domain] || domain}
-        </span>
+        <EnumCell
+          value={domain}
+          aiValue={q.ai_ability_domain}
+          options={ABILITY_OPTIONS}
+          questionNumber={q.question_number}
+          examPaperId={examPaperId}
+          field="ability_domain"
+          color={domainColor}
+          onUpdate={onAbilityUpdate}
+        />
       </td>
       <td className="px-3 py-2 text-xs text-slate-600">
         <TopicCell
@@ -956,6 +989,81 @@ function PointsCell({
         >
           <Pencil className="w-3 h-3" />
         </button>
+      )}
+    </div>
+  );
+}
+
+// ── 유형·능력 인라인 교정 셀 (혼동맵 학습용 ground truth 수집) ──
+function EnumCell({ value, aiValue, options, questionNumber, examPaperId, field, color, onUpdate }: {
+  value: string;
+  aiValue?: string | null;
+  options: { value: string; label: string }[];
+  questionNumber: string | number;
+  examPaperId?: string;
+  field: 'question_type' | 'ability_domain';
+  color?: string;
+  onUpdate?: (qNum: string | number, v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+  const cur = String(value).toLowerCase();
+  const label = options.find((o) => o.value === cur)?.label || value;
+  const aiNorm = aiValue != null ? String(aiValue).toLowerCase() : null;
+  const edited = aiNorm != null && aiNorm !== cur;
+
+  React.useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [open]);
+
+  const save = async (v: string) => {
+    if (v === cur) { setOpen(false); return; }
+    if (!examPaperId) { toast.error('시험지 정보가 없습니다'); return; }
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/exam-analysis/${examPaperId}/questions/${questionNumber}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: v }),
+      });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || '수정 실패'); }
+      onUpdate?.(questionNumber, v);
+      setOpen(false);
+      toast.success(`${questionNumber}번 ${field === 'question_type' ? '유형' : '능력'} 수정`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '수정 실패');
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <div className="relative inline-flex items-center gap-0.5" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        title={edited ? `선생님 수정 (AI 원본: ${options.find((o) => o.value === aiNorm)?.label || aiNorm})` : '클릭하여 수정'}
+        className="text-xs font-medium hover:underline decoration-dotted"
+        style={color ? { color } : undefined}
+      >
+        {label}
+      </button>
+      {edited && <Pencil className="w-2.5 h-2.5 text-slate-400" />}
+      {open && (
+        <div className="absolute left-1/2 -translate-x-1/2 top-6 z-50 bg-white rounded-sm shadow-lg border py-1 min-w-[110px]">
+          {options.map((o) => (
+            <button
+              key={o.value}
+              type="button"
+              disabled={saving}
+              onClick={() => save(o.value)}
+              className={`w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 ${o.value === cur ? 'font-bold text-primary' : 'text-slate-700'}`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
       )}
     </div>
   );

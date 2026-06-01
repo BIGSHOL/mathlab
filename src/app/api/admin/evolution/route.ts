@@ -14,7 +14,12 @@ import { NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { requireSuperAdmin, isResponse } from '@/lib/api';
-import { extractPairs, computeStats, type AnalysisLike } from '@/lib/exam-analysis/calibration';
+import {
+  NUMERIC_FIELDS, CATEGORICAL_FIELDS,
+  extractNumericPairs, computeNumericStats,
+  extractConfusionPairs, computeCategoricalStats,
+  type AnalysisLike,
+} from '@/lib/exam-analysis/calibration';
 
 function countMap(rows: { _count: { _all: number } }[], key: string): Record<string, number> {
   const out: Record<string, number> = {};
@@ -35,11 +40,12 @@ export async function GET() {
     take: 3000,
   });
 
+  const ALL_FIELDS = ['difficulty', 'points', 'topic', 'question_type', 'ability_domain'] as const;
   let totalQuestions = 0;
   let manualEditedCount = 0;
-  let difficultyCorrected = 0;
+  const perFieldCorrected: Record<string, number> = {};
   const likes: AnalysisLike[] = [];
-  const recentCorrections: Array<{ questionType: string; ai: string; teacher: string; at: string | null; school: string | null }> = [];
+  const recentCorrections: Array<{ field: string; ai: string; teacher: string; at: string | null; school: string | null }> = [];
 
   for (const a of analyses) {
     const qs = Array.isArray(a.questions) ? a.questions : [];
@@ -48,28 +54,65 @@ export async function GET() {
     for (const raw of qs) {
       const q = raw as Record<string, unknown>;
       if (q.manually_edited) manualEditedCount++;
-      if (q.ai_difficulty != null) {
-        difficultyCorrected++;
-        if (recentCorrections.length < 25) {
-          recentCorrections.push({
-            questionType: typeof q.question_type === 'string' ? q.question_type : 'unknown',
-            ai: String(q.ai_difficulty),
-            teacher: String(q.difficulty),
-            at: typeof q.manually_edited_at === 'string' ? q.manually_edited_at : null,
-            school: a.examPaper?.schoolName ?? null,
-          });
+      for (const f of ALL_FIELDS) {
+        if (q[`ai_${f}`] != null) {
+          perFieldCorrected[f] = (perFieldCorrected[f] ?? 0) + 1;
+          if (recentCorrections.length < 25) {
+            recentCorrections.push({
+              field: f,
+              ai: String(q[`ai_${f}`]),
+              teacher: String(q[f]),
+              at: typeof q.manually_edited_at === 'string' ? q.manually_edited_at : null,
+              school: a.examPaper?.schoolName ?? null,
+            });
+          }
         }
       }
     }
   }
 
-  // ── ① 난이도 보정 ──
-  const pairs = extractPairs(likes);
-  const liveStats = computeStats(pairs, totalQuestions); // 현재 누적(재계산 시 반영될 값)
-  const calRow = await prisma.difficultyCalibration.findUnique({ where: { subject: 'MATH' } });
-  const appliedBuckets = calRow?.bucketShifts && typeof calRow.bucketShifts === 'object'
-    ? Object.keys(calRow.bucketShifts as Record<string, number>).length
-    : 0;
+  // ── ① 적용 중인 보정 맵 로드 (MetadataCalibration 전 필드) ──
+  const calRows = await prisma.metadataCalibration.findMany({ where: { subject: 'MATH' } });
+  const calByField = new Map(calRows.map((r) => [r.field, r]));
+
+  // 수치형 필드 (난이도·배점)
+  const numericFields = NUMERIC_FIELDS.map((cfg) => {
+    const live = computeNumericStats(extractNumericPairs(likes, cfg), cfg, totalQuestions);
+    const row = calByField.get(cfg.field);
+    const appliedBuckets = row?.bucketShifts && typeof row.bucketShifts === 'object'
+      ? Object.keys(row.bucketShifts as Record<string, number>).length : 0;
+    return {
+      field: cfg.field,
+      applied: {
+        globalBias: row?.globalBias ?? 0,
+        appliedBuckets,
+        totalCorrections: row?.totalCorrections ?? 0,
+        updatedAt: row?.updatedAt ?? null,
+      },
+      live: {
+        globalBias: live.globalBias,
+        totalCorrections: live.totalCorrections,
+        buckets: live.buckets.slice(0, 20),
+      },
+      pendingDelta: live.totalCorrections - (row?.totalCorrections ?? 0),
+    };
+  });
+
+  // 범주형 필드 (단원·유형·능력)
+  const categoricalFields = CATEGORICAL_FIELDS.map((cfg) => {
+    const live = computeCategoricalStats(extractConfusionPairs(likes, cfg), cfg);
+    const row = calByField.get(cfg.field);
+    return {
+      field: cfg.field,
+      ko: cfg.ko,
+      totalCorrections: live.totalCorrections,
+      appliedGroups: row?.bucketShifts && typeof row.bucketShifts === 'object'
+        ? Object.keys(row.bucketShifts as Record<string, unknown>).length : 0,
+      topConfusions: live.groups.slice(0, 8).map((g) => ({
+        ai: g.ai, dominant: g.dominant, total: g.total, dominantFrac: g.dominantFrac,
+      })),
+    };
+  });
 
   // ── ② 피드백 / 패턴 / 레퍼런스 ──
   const [
@@ -125,28 +168,16 @@ export async function GET() {
       generatedAt: new Date().toISOString(),
       scale: { analyses: analysisCount, totalQuestions, examPapers, schools },
 
-      // ① 작동 중 — 난이도 보정
-      difficulty: {
-        active: !!calRow,
-        appliedGlobalBias: calRow?.globalBias ?? 0,
-        appliedBuckets,
-        appliedTotalCorrections: calRow?.totalCorrections ?? 0,
-        lastRecomputedAt: calRow?.updatedAt ?? null,
-        // 현재 누적 (재계산 시 반영될 값)
-        liveCorrections: liveStats.totalCorrections,
-        liveGlobalBias: liveStats.globalBias,
-        liveBuckets: liveStats.buckets.slice(0, 30),
-        pendingDelta: liveStats.totalCorrections - (calRow?.totalCorrections ?? 0),
-        recentCorrections,
-      },
+      // ① 작동 중 — 통합 보정 (전 필드)
+      numericFields,
+      categoricalFields,
+      recentCorrections,
 
       // ② 수집 중 — 수동 교정/피드백/패턴/레퍼런스
       collected: {
         manualEdits: {
           totalEditedQuestions: manualEditedCount,
-          difficultyCorrected,
-          // 난이도 외 교정(단원/신뢰도)은 원본 미보존이라 정밀 카운트 불가
-          otherEdits: Math.max(0, manualEditedCount - difficultyCorrected),
+          perField: perFieldCorrected,
         },
         feedback: {
           total: feedbackTotal,

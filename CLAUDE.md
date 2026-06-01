@@ -36,6 +36,16 @@
 - 제외: 코드 주석 · 내부 기술 문서(이 CLAUDE.md의 기술 스택 표 등) · 서버 로그는 모델명 유지 가능(사용자 비노출).
 - 새 UI/기능 추가 시 모델명 하드코딩 금지 — 반드시 "AI"로 통일.
 
+### 0-1. 🔒 백엔드/벤더 식별 정보 + 내부 사정 비노출 (사용자 UI)
+
+**사용자에게 보이는 모든 UI에서 결제사·인프라·외부 서비스의 식별 정보나 내부 개발 사정을 노출하지 않는다.** 모델명 규칙(#0)과 동일한 원칙 — 사용자가 알 필요 없는 백엔드 디테일은 전부 감춘다.
+- **결제사명 금지**: "Lemon Squeezy", "레몬스퀴즈", "해외 결제 대행", "Stripe", "토스페이먼츠" 등 PG/결제대행사 이름을 사용자 문구에 쓰지 말 것. 결제 처리 주체는 "구독/결제" 같은 기능명으로만 표기.
+- **내부 개발 사정 금지**: "상품 연결 후 확정", "API 연동 전", "DB 마이그레이션 중", "베타 빌드" 등 *개발자만 알면 되는 진행 상태*를 사용자 본문에 노출 금지. 사용자에겐 결과 상태("준비 중", "곧 제공")만 보여줄 것.
+- **인프라/벤더 금지**: "Supabase", "Vercel", "Prisma", "Gemini", "Anthropic", "NEIS", "카카오 API" 등 내부 스택/외부 API 제공자 이름을 사용자 문구·에러 메시지에 노출 금지.
+- 적용 대상: 안내 배너, footer, 토스트, 에러 메시지, 빈 상태 문구, 버튼 라벨 등 *사용자에게 렌더되는 모든 텍스트*.
+- 제외: 코드 주석 · 내부 기술 문서(이 CLAUDE.md) · 서버 로그 · 환경변수명.
+- 위반 사례(2026-06-01): billing 페이지 footer "결제는 Lemon Squeezy(해외 결제 대행)를 통해 처리되며 ... 가격은 상품 연결 후 확정됩니다" → "구독 변경·취소·결제수단 관리는 구독 관리에서 할 수 있습니다"로 정정.
+
 ### 1. API/DB 존재 여부 반드시 확인 — 모든 데이터는 DB에 저장
 
 **원칙: 프론트엔드에 표시되는 모든 데이터는 반드시 DB를 거쳐야 한다.**
@@ -1375,3 +1385,31 @@ node scripts/geocode-failed-by-keyword.mjs     # 4. 주소 매칭 실패분을 �
 
 ### 검증 (실측 완료)
 - 24건 상향 교정 시뮬 → recompute → 전역 편향 **+1.00**(너무 낮음 정확 감지) + 버킷 2개 채택. `applyCalibration` 로 `algebra:2→3`, `algebra:3→4`(버킷), `geometry:2→3`(전역 폴백), `algebra:4→5`(캡) 정상.
+
+---
+
+## 2026-06-01 세션 — 통합 메타데이터 보정 엔진 (자가진화 전면 확장)
+
+난이도 플라이휠을 **전 문항 메타데이터로 일반화**. `DifficultyCalibration` → **`MetadataCalibration`**(과목×필드 1행)으로 교체. `calibration.ts` 가 필드 무관 엔진. 모델/콘솔/recompute 모두 전 필드 처리.
+
+### 두 종류의 보정
+- **수치형(numeric)** — `difficulty`, `points`: 버킷별 평균 Δ → 새 AI값에 가산(캡). `NUMERIC_FIELDS` 설정(aiKey/valueKey/bucketOfPair/bucketOfFresh/clamp/roundOut). difficulty=`type:level` 버킷·±1.5캡, points=`question_format` 버킷·±5캡.
+- **범주형(categorical)** — `topic`, `question_type`, `ability_domain`: 혼동맵 `{AI값:{정답값:count}}`. 적용 ① **프롬프트 few-shot 경고**(기본·안전, `buildCategoricalWarnings`) — 기존 LearnedPattern 모호 텍스트 대체 ② **초고신뢰 remap**(`applyCategoricalRemap`, 표본≥10+지배≥80%만, 보수적).
+
+### 🚨 배점 편집 버그 동시 해결
+`PointsCell`이 `{points}` PATCH 했으나 zod 스키마에 `points` 없어 **조용히 버려지던** 버그. 새로고침 시 소실. → PATCH 스키마에 `points/question_type/ability_domain` 추가 + 각 최초 교정 시 `ai_<field>` 원본 보존(`preserveAndSet` 헬퍼).
+
+### 핵심 파일
+- `MetadataCalibration` 모델 (`@@unique([subject, field])`). 마이그레이션은 `prisma db push`(동시 진행 billing의 TenantSubscription과 migration 충돌 회피).
+- `calibration.ts` — `NUMERIC_FIELDS`/`CATEGORICAL_FIELDS` 설정 + 제네릭 코어(`extractNumericPairs`/`computeNumericStats`/`buildNumericMap`/`applyNumericField`, `extractConfusionPairs`/`buildConfusionMap`/`buildCategoricalWarnings`/`applyCategoricalRemap`) + `loadCalibrationSet`(전 필드 일괄). 난이도 공개함수(extractPairs/computeStats/applyCalibration)는 back-compat 래퍼(동작 보존).
+- `calibration-recompute.ts` — `recomputeCalibrations(db, now)` 공유 헬퍼(route+script 재사용), 전 필드 upsert.
+- `ai-engine.ts::analyzeExam(calibrationSet)` — 전 numeric 가산 + categorical remap. `analyze/route.ts` 가 `loadCalibrationSet` 주입 + 재분석 시 전 필드 교정 보존(`PRESERVE_FIELDS`).
+- `prompt-builder.ts` — categorical 경고 주입(LearnedPattern 대체).
+- `AnalysisResultView.tsx` — 유형·능력 인라인 셀렉터(`EnumCell`, ai 원본 hover). 배점/단원 셀은 이제 영구 저장.
+- 관측 콘솔(`/admin/evolution`) — 필드별 섹션(수치=편향/버킷, 범주=혼동 상위쌍).
+
+### 설계 결정 (재현 시 유지)
+- **난이도 동작 보존** — 통합 엔진 위에서도 difficulty 결과 동일. 회귀 검증: 24건 시뮬 → **bias 1.00 동일**, `algebra:2→3`/`3→4`. points는 `3pt→5`(bias 2.0), question_type `algebra→function` remap 확인.
+- **범주형 기본은 few-shot 경고** — remap은 초고신뢰(≥10·≥80%)만. 과교정·맥락 무시 위험 회피.
+- **`preserveAndSet`/`PRESERVE_FIELDS`** — 5개 필드(difficulty/points/topic/question_type/ability_domain) 동일 패턴. 새 보정 필드 추가 시 `NUMERIC_FIELDS`/`CATEGORICAL_FIELDS`만 확장.
+- **`db push` 사용** — 동시 billing 작업의 미마이그레이션 모델과 `migrate dev` 충돌 시. migrations는 gitignore라 schema.prisma가 SoT.

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Sparkles, Gauge, Database, MessageSquare, RefreshCw, AlertTriangle,
-  CheckCircle2, Activity, FileText, Copy, ArrowUpRight, ArrowDownRight,
+  Activity, FileText, Copy, ArrowUpRight, ArrowDownRight,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { PageContainer } from '@/components/ui/PageContainer';
@@ -13,23 +13,27 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { toast } from '@/components/ui/Toast';
 
 // ── 타입 ──
+interface NumericField {
+  field: string;
+  applied: { globalBias: number; appliedBuckets: number; totalCorrections: number; updatedAt: string | null };
+  live: { globalBias: number; totalCorrections: number; buckets: { bucket: string; sampleCount: number; meanDelta: number; applied: boolean }[] };
+  pendingDelta: number;
+}
+interface CategoricalField {
+  field: string;
+  ko: string;
+  totalCorrections: number;
+  appliedGroups: number;
+  topConfusions: { ai: string; dominant: string; total: number; dominantFrac: number }[];
+}
 interface EvolutionData {
   generatedAt: string;
   scale: { analyses: number; totalQuestions: number; examPapers: number; schools: number };
-  difficulty: {
-    active: boolean;
-    appliedGlobalBias: number;
-    appliedBuckets: number;
-    appliedTotalCorrections: number;
-    lastRecomputedAt: string | null;
-    liveCorrections: number;
-    liveGlobalBias: number;
-    liveBuckets: { key: string; questionType: string; aiLevel: number; sampleCount: number; meanDelta: number; applied: boolean }[];
-    pendingDelta: number;
-    recentCorrections: { questionType: string; ai: string; teacher: string; at: string | null; school: string | null }[];
-  };
+  numericFields: NumericField[];
+  categoricalFields: CategoricalField[];
+  recentCorrections: { field: string; ai: string; teacher: string; at: string | null; school: string | null }[];
   collected: {
-    manualEdits: { totalEditedQuestions: number; difficultyCorrected: number; otherEdits: number };
+    manualEdits: { totalEditedQuestions: number; perField: Record<string, number> };
     feedback: { total: number; byType: Record<string, number>; byStatus: Record<string, number>; withCorrectionValue: number };
     patterns: { total: number; autoApplied: number; concreteRuleCount: number; list: { patternType: string; description: string; confidence: number; sourceCount: number; isAutoApplied: boolean; isActive: boolean; hasConcreteRule: boolean }[] };
     references: { total: number; byStatus: Record<string, number> };
@@ -37,9 +41,14 @@ interface EvolutionData {
   generative: { commentaryRuns: number; articleRuns: number; copyEvents: number };
 }
 
-const QTYPE_KO: Record<string, string> = {
-  number: '수와 연산', algebra: '문자와 식', function: '함수', geometry: '기하', statistics: '확률과 통계', unknown: '미분류',
+const FIELD_KO: Record<string, string> = {
+  difficulty: '난이도', points: '배점', topic: '단원', question_type: '유형', ability_domain: '능력',
 };
+function biasLabelShort(bias: number): { text: string; color: string } {
+  if (Math.abs(bias) >= 0.5) return { text: bias > 0 ? 'AI 과소평가' : 'AI 과대평가', color: 'text-red-600' };
+  if (Math.abs(bias) >= 0.15) return { text: bias > 0 ? '다소 과소' : '다소 과대', color: 'text-amber-600' };
+  return { text: '근접', color: 'text-emerald-600' };
+}
 const FEEDBACK_KO: Record<string, string> = {
   wrong_difficulty: '난이도오류', wrong_topic: '단원오류', wrong_recognition: '인식오류', other: '기타',
 };
@@ -113,73 +122,83 @@ export default function EvolutionConsolePage() {
             <Kpi label="학교 DB" value={data.scale.schools} />
           </div>
 
-          {/* ① 작동 중 — 난이도 보정 */}
+          {/* ① 작동 중 — 통합 보정 (전 필드) */}
           <Section
             tone="green"
             icon={<Gauge className="w-4 h-4" />}
-            title="작동 중 — 난이도 보정 플라이휠"
-            desc="선생님 교정 → 누적 → 보정맵 → 새 분석 자동 적용. 유일하게 완전 작동하는 자가진화."
+            title="작동 중 — 통합 메타데이터 보정"
+            desc="선생님 교정 → 누적 → 보정맵 → 새 분석 자동 적용. 난이도·배점(수치) + 단원·유형·능력(범주)."
           >
-            <div className="grid grid-cols-4 gap-3 mb-4">
-              <Kpi label="적용 중 전역편향" value={`${data.difficulty.appliedGlobalBias >= 0 ? '+' : ''}${data.difficulty.appliedGlobalBias.toFixed(2)}`} accent={data.difficulty.appliedGlobalBias > 0.15 ? 'red' : data.difficulty.appliedGlobalBias < -0.15 ? 'red' : 'green'} />
-              <Kpi label="적용 버킷" value={data.difficulty.appliedBuckets} />
-              <Kpi label="학습 표본" value={data.difficulty.appliedTotalCorrections} />
-              <Kpi label="현재 누적 교정" value={data.difficulty.liveCorrections} sub={data.difficulty.pendingDelta > 0 ? `+${data.difficulty.pendingDelta} 미반영` : '최신'} />
-            </div>
-
-            {/* 재계산 안내 */}
-            <div className="flex items-center justify-between bg-slate-50 rounded-sm px-3 py-2 mb-4">
-              <div className="text-xs text-slate-600">
-                {data.difficulty.lastRecomputedAt
-                  ? `마지막 재계산: ${new Date(data.difficulty.lastRecomputedAt).toLocaleString('ko-KR')}`
-                  : '아직 보정 맵이 생성되지 않았습니다.'}
-                {data.difficulty.pendingDelta > 0 && (
-                  <span className="ml-2 text-amber-600 font-medium">· 새 교정 {data.difficulty.pendingDelta}건이 아직 반영 안 됨 → 재계산 권장</span>
-                )}
-              </div>
+            <div className="flex items-center justify-end mb-3">
               <Button size="sm" onClick={recompute} disabled={recomputing}>
-                <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${recomputing ? 'animate-spin' : ''}`} />보정 맵 재계산
+                <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${recomputing ? 'animate-spin' : ''}`} />전 필드 보정 맵 재계산
               </Button>
             </div>
 
-            {/* 라이브 버킷 */}
-            {data.difficulty.liveBuckets.length > 0 && (
-              <div className="mb-4">
-                <div className="text-xs font-semibold text-slate-600 mb-1.5">유형×AI난이도 버킷 (현재 누적)</div>
-                <div className="border rounded-sm overflow-hidden">
-                  <div className="grid grid-cols-[1fr_60px_70px_60px] bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-500 border-b">
-                    <span>버킷</span><span className="text-center">표본</span><span className="text-center">평균 Δ</span><span className="text-center">적용</span>
+            {/* 수치형 필드 (난이도·배점) */}
+            <div className="text-xs font-semibold text-slate-600 mb-1.5">수치형 (델타 보정)</div>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {data.numericFields.map((f) => {
+                const bl = biasLabelShort(f.applied.globalBias);
+                return (
+                  <div key={f.field} className="border rounded-sm p-3">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-sm font-bold">{FIELD_KO[f.field] || f.field}</span>
+                      <span className={`text-xs font-medium ${bl.color}`}>{bl.text}</span>
+                    </div>
+                    <div className="flex items-baseline gap-3 text-xs">
+                      <span>편향 <b className="text-base">{f.applied.globalBias >= 0 ? '+' : ''}{f.applied.globalBias.toFixed(2)}</b></span>
+                      <span className="text-slate-400">버킷 {f.applied.appliedBuckets} · 표본 {f.applied.totalCorrections}</span>
+                    </div>
+                    <div className="text-[11px] text-slate-400 mt-1">
+                      현재 누적 {f.live.totalCorrections}건
+                      {f.pendingDelta > 0 && <span className="text-amber-600 font-medium"> · +{f.pendingDelta} 미반영(재계산 권장)</span>}
+                    </div>
                   </div>
-                  <div className="divide-y divide-slate-100 max-h-52 overflow-y-auto">
-                    {data.difficulty.liveBuckets.map((b) => (
-                      <div key={b.key} className="grid grid-cols-[1fr_60px_70px_60px] px-3 py-1.5 text-xs items-center">
-                        <span className="text-slate-700">{QTYPE_KO[b.questionType] || b.questionType} · {b.aiLevel}</span>
-                        <span className="text-center">{b.sampleCount}</span>
-                        <span className={`text-center font-bold ${b.meanDelta > 0 ? 'text-red-500' : b.meanDelta < 0 ? 'text-blue-500' : 'text-slate-400'}`}>{b.meanDelta >= 0 ? '+' : ''}{b.meanDelta.toFixed(1)}</span>
-                        <span className="text-center">{b.applied ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 inline" /> : <span className="text-slate-300">–</span>}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
+                );
+              })}
+            </div>
 
-            {/* 최근 교정 */}
-            {data.difficulty.recentCorrections.length > 0 && (
+            {/* 범주형 필드 (단원·유형·능력) */}
+            <div className="text-xs font-semibold text-slate-600 mb-1.5">범주형 (혼동맵)</div>
+            <div className="space-y-2 mb-4">
+              {data.categoricalFields.map((f) => (
+                <div key={f.field} className="border rounded-sm p-3">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-sm font-bold">{f.ko}</span>
+                    <span className="text-xs text-slate-400">교정 {f.totalCorrections}건 · 적용 혼동 {f.appliedGroups}</span>
+                  </div>
+                  {f.topConfusions.length === 0 ? (
+                    <p className="text-[11px] text-slate-400">아직 혼동 데이터 없음</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {f.topConfusions.map((c, i) => (
+                        <span key={i} className="inline-flex items-center gap-1 text-[11px] bg-slate-50 border rounded-sm px-2 py-1">
+                          <span className="text-slate-500 max-w-[120px] truncate">{c.ai || '∅'}</span>
+                          <ArrowDownRight className="w-3 h-3 text-blue-500" />
+                          <span className="font-bold max-w-[120px] truncate">{c.dominant}</span>
+                          <span className="text-slate-400">{Math.round(c.dominantFrac * 100)}%·{c.total}</span>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* 최근 교정 (전 필드) */}
+            {data.recentCorrections.length > 0 && (
               <div>
                 <div className="text-xs font-semibold text-slate-600 mb-1.5">최근 교정 내역 (AI → 선생님)</div>
                 <div className="flex flex-wrap gap-1.5">
-                  {data.difficulty.recentCorrections.map((c, i) => {
-                    const up = Number(c.teacher) > Number(c.ai);
-                    return (
-                      <span key={i} className="inline-flex items-center gap-1 text-[11px] bg-slate-50 border rounded-sm px-2 py-1" title={c.school ? `${c.school}${c.at ? ' · ' + new Date(c.at).toLocaleDateString('ko-KR') : ''}` : ''}>
-                        <span className="text-slate-500">{QTYPE_KO[c.questionType] || c.questionType}</span>
-                        <span className="font-mono">{c.ai}</span>
-                        {up ? <ArrowUpRight className="w-3 h-3 text-red-500" /> : <ArrowDownRight className="w-3 h-3 text-blue-500" />}
-                        <span className="font-mono font-bold">{c.teacher}</span>
-                      </span>
-                    );
-                  })}
+                  {data.recentCorrections.map((c, i) => (
+                    <span key={i} className="inline-flex items-center gap-1 text-[11px] bg-slate-50 border rounded-sm px-2 py-1" title={c.school ? `${c.school}${c.at ? ' · ' + new Date(c.at).toLocaleDateString('ko-KR') : ''}` : ''}>
+                      <span className="text-slate-500">{FIELD_KO[c.field] || c.field}</span>
+                      <span className="font-mono max-w-[90px] truncate">{c.ai}</span>
+                      <ArrowUpRight className="w-3 h-3 text-slate-400" />
+                      <span className="font-mono font-bold max-w-[90px] truncate">{c.teacher}</span>
+                    </span>
+                  ))}
                 </div>
               </div>
             )}
@@ -192,11 +211,12 @@ export default function EvolutionConsolePage() {
             title="수집 중 — 데이터는 쌓이나 학습 반영은 미흡"
             desc="신호가 DB에 누적되지만 아직 AI 출력을 바꾸지 못하는 영역. 보정 플라이휠로 승격 대상."
           >
-            {/* 수동 교정 */}
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              <Kpi label="수동 교정 문항" value={data.collected.manualEdits.totalEditedQuestions} />
-              <Kpi label="난이도 교정(학습 반영)" value={data.collected.manualEdits.difficultyCorrected} accent="green" />
-              <Kpi label="기타 교정(단원·신뢰도)" value={data.collected.manualEdits.otherEdits} sub="원본 미보존 → 미학습" accent="amber" />
+            {/* 수동 교정 (필드별 — 전부 학습 반영) */}
+            <div className="grid grid-cols-6 gap-2 mb-4">
+              <Kpi label="총 교정 문항" value={data.collected.manualEdits.totalEditedQuestions} />
+              {['difficulty', 'points', 'topic', 'question_type', 'ability_domain'].map((f) => (
+                <Kpi key={f} label={FIELD_KO[f]} value={data.collected.manualEdits.perField[f] ?? 0} accent={(data.collected.manualEdits.perField[f] ?? 0) > 0 ? 'green' : undefined} />
+              ))}
             </div>
 
             {/* 피드백 */}

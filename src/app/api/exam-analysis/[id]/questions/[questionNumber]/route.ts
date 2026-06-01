@@ -2,11 +2,12 @@
  * 기출 분석 — 단일 문항 수동 수정 API
  *
  * PATCH /api/exam-analysis/[id]/questions/[questionNumber]
- * Body: { topic?: string, confidence?: number, difficulty?: '1'..'5' }
+ * Body: { topic?, confidence?, difficulty?, points?, question_type?, ability_domain? }
  *
- * - topic: AI가 'UNKNOWN'으로 남긴 문항의 단원을 선생님이 지정
- * - difficulty: 선생님이 난이도를 교정 (난이도 보정 학습의 ground truth)
- *   → 최초 교정 시 AI 원본을 ai_difficulty 에 보존 (보정 플라이휠 학습셋)
+ * 통합 메타데이터 보정 — 교정 가능한 모든 필드를 ground truth 로 수집.
+ * 각 필드 최초 교정 시 AI 원본을 ai_<field> 에 보존 (보정 플라이휠 학습셋):
+ *   수치형: difficulty→ai_difficulty, points→ai_points
+ *   범주형: topic→ai_topic, question_type→ai_question_type, ability_domain→ai_ability_domain
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -26,6 +27,9 @@ const patchSchema = z.object({
   topic: z.string().max(200).optional(),
   confidence: z.number().min(0).max(1).optional(),
   difficulty: z.enum(['1', '2', '3', '4', '5']).optional(),
+  points: z.number().min(0).max(100).optional(),
+  question_type: z.enum(['number', 'algebra', 'function', 'geometry', 'statistics']).optional(),
+  ability_domain: z.enum(['calculation', 'understanding', 'problem_solving', 'reasoning']).optional(),
 });
 
 export async function PATCH(request: NextRequest, { params }: Params) {
@@ -70,19 +74,19 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const current = questionsArr[idx] as Record<string, unknown>;
     const next: Record<string, unknown> = { ...current };
 
-    if (parsed.data.topic !== undefined) {
-      next.topic = parsed.data.topic.trim() || null;
-    }
     if (parsed.data.confidence !== undefined) {
       next.confidence = parsed.data.confidence;
     }
-    if (parsed.data.difficulty !== undefined) {
-      // 난이도 교정: 최초 교정 시 AI 원본을 ai_difficulty 에 보존 (보정 학습용 ground truth)
-      if (current.ai_difficulty == null) {
-        next.ai_difficulty = current.difficulty ?? null;
-      }
-      next.difficulty = parsed.data.difficulty;
-    }
+    // 보정 학습 대상 필드 — 최초 교정 시 AI 원본을 ai_<field> 에 보존 (ground truth)
+    const preserveAndSet = (field: string, aiKey: string, value: unknown) => {
+      if (current[aiKey] == null) next[aiKey] = current[field] ?? null;
+      next[field] = value;
+    };
+    if (parsed.data.topic !== undefined) preserveAndSet('topic', 'ai_topic', parsed.data.topic.trim() || null);
+    if (parsed.data.difficulty !== undefined) preserveAndSet('difficulty', 'ai_difficulty', parsed.data.difficulty);
+    if (parsed.data.points !== undefined) preserveAndSet('points', 'ai_points', parsed.data.points);
+    if (parsed.data.question_type !== undefined) preserveAndSet('question_type', 'ai_question_type', parsed.data.question_type);
+    if (parsed.data.ability_domain !== undefined) preserveAndSet('ability_domain', 'ai_ability_domain', parsed.data.ability_domain);
     // 수동 편집 표시
     next.manually_edited = true;
     next.manually_edited_at = new Date().toISOString();

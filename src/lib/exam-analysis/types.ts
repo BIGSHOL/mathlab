@@ -15,9 +15,17 @@ export interface AnalyzedQuestion {
   /** AI 원본 난이도 — 선생님 수정/자동 보정 시 원본 보존(보정 학습용). 미수정이면 undefined */
   ai_difficulty?: string | null;
   question_type: Lowercase<ExamQuestionTypeKey>;
+  /** AI 원본 유형 — 교정 시 보존(혼동맵 학습용) */
+  ai_question_type?: string | null;
   ability_domain?: Lowercase<AbilityDomainKey> | null; // 수학 능력 영역
+  /** AI 원본 능력 — 교정 시 보존(혼동맵 학습용) */
+  ai_ability_domain?: string | null;
   points: number | null;
+  /** AI 원본 배점 — 교정 시 보존(보정 학습용) */
+  ai_points?: number | null;
   topic: string | null;             // "과목 > 대단원 > 소단원"
+  /** AI 원본 단원 — 교정 시 보존(혼동맵 학습용) */
+  ai_topic?: string | null;
   ai_comment: string | null;       // 2문장, 최대 50자
   confidence: number;              // 0.0-1.0
   confidence_reason: string | null;
