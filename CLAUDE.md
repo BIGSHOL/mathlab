@@ -857,10 +857,18 @@ if (licenseCheck) return licenseCheck;  // 이용권 없으면 403
 PDF 시험지 업로드 → Gemini AI 분석 → 문항별 난이도/유형/능력/단원 구조화
 
 **프롬프트 버전:** `PROMPT_VERSION` (`src/lib/exam-analysis/constants.ts`)
-- 현재: **v1.0.0** (5대 교육과정 영역, 5단계 난이도, 서술형 통합 규칙)
-- 분석 결과 DB `modelVersion` 필드에 기록 (예: "gemini-2.5-flash / prompt v1.0.0")
+- 현재: **v1.4.0** (5대 교육과정 영역, **5단계 난이도 2축 모델**, 서술형 통합 규칙). 전체 변경 이력은 `constants.ts:8-18` 주석이 SoT.
+- 분석 결과 DB `modelVersion` 필드에 기록 (예: "gemini-3.1-pro-preview / prompt v1.4.0"). 메인 엔진 모델 = `ai-engine.ts:25` `MODEL`, 확장 에이전트 = `gemini-3.5-flash`
 - **프롬프트 변경 시 반드시 `PROMPT_VERSION` 버전 업!** UI에 표시되어 사용자가 버전별 차이 인지 가능
 - 버전 변경 기준: 영역/난이도 체계, 분류 규칙, ai_comment 규칙, 서술형 처리 규칙 변경
+- **별도 버전 상수 3개 (혼동 주의):** ① `PROMPT_VERSION`=`v1.4.0` (시험지 분석 메인) ② `AGENT_PROMPT_VERSIONS.commentary`=`v1.3.0` (AI 총평 V3) ③ `COMMENTARY_V4_PROMPT_VERSION`=`v1.4.0` (V4 총평). 셋은 독립적으로 bump됨.
+
+**난이도 5단계 — 2축 모델 (v1.3.0~v1.4.0):**
+- **(A) 결합 폭(breadth)** = 몇 개 개념/대단원을 엮나 + **(B) 사고 깊이(depth)** = 개념 자체가 고난도거나 비자명한 통찰 필요 → **둘 중 높은 쪽**으로 결정. 정의: `MATH_DIFFICULTY_SYSTEM_4LEVEL` (`prompt-config-math.ts:170`).
+- 핵심: **개념 1개라도 깊으면 4~5** (단일개념 킬러 포착). "애매하면 한 단계 낮게"는 **(A)폭에만 적용**, (B)깊이 명확 시 하향 금지.
+- v1.4.0에서 수학/영어 프레임워크 분리 — 공통 프레임워크의 하향편향이 2축과 충돌해 2~3 쏠림 발생 → 수학은 2축만 사용.
+- ⚠️ **AI 판정 난이도는 추가로 자가진화 보정맵을 통과**(post-process). 프롬프트(루브릭)와 보정맵(결정적 가산)은 **이중 보정 회피 위해 역할 분리** — 프롬프트엔 숫자 앵커 미적용. 상세: 아래 "난이도 자가진화 보정 플라이휠" + "통합 메타데이터 보정 엔진" 섹션.
+- 집계 표시용 가중평균(k=2 RMS)은 per-문항 보정과 **직교**(`difficulty.ts`, `DIFFICULTY_EXPONENT` 불변).
 
 **핵심 구조 (`src/components/exam-analysis/`, `src/lib/exam-analysis/`):**
 - `AnalysisResultView` — 난이도 도넛차트/배점 토글, 유형 레이더, 단원 출제현황, 문항 테이블
