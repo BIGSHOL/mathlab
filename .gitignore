@@ -68,3 +68,9 @@ scripts/test-textbook-shapes-output.html
 
 # Dev server output log
 .dev-out.txt
+
+# DB backups (로컬 백업 — 커밋 금지)
+/backups/
+*.json.gz
+*.sql
+*.dump

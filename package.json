@@ -9,7 +9,10 @@
     "lint": "next lint",
     "test:e2e": "playwright test",
     "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "db:backup": "node scripts/backup-db.mjs",
+    "db:restore": "node scripts/restore-db.mjs",
+    "db:reset": "node scripts/safe-reset.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

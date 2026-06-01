@@ -1193,6 +1193,13 @@ npx prisma generate      # Prisma 클라이언트 재생성
 npx prisma studio        # DB 브라우저
 npx prisma migrate dev   # DB 마이그레이션
 
+# DB 백업/복구 (로컬 안전망 — 아래 "DB 백업/복구 시스템" 섹션 참조)
+npm run db:backup                          # 전체 백업 → backups/*.json.gz
+npm run db:restore                         # 백업 목록 표시
+npm run db:restore -- --latest --dry-run   # 최신 백업 복원 미리보기
+npm run db:restore -- --latest --yes       # 최신 백업으로 복원 (전체 교체)
+npm run db:reset                           # ⚠️ 백업 먼저 뜨고 → prisma migrate reset (안전 가드)
+
 # DB 초기 시드 (DB reset 후 복구 순서)
 node scripts/seed-accounts.mjs                 # 1. Tenant + SUPER_ADMIN + OWNER + TEACHER 시드
 npx tsx scripts/sync-schools.ts                # 2. NEIS API로 전국 중/고 ~5,725개교 수집 (3-5분)
@@ -1203,6 +1210,40 @@ node scripts/geocode-failed-by-keyword.mjs     # 4. 주소 매칭 실패분을 �
 # 운영 데이터 복구 불가 (사용자 누적): ExamPaper/Analysis/Extension, LearnedPattern, ExamFeedback,
 # TenantNearbyGroup, ExamPromptTemplate(코드 fallback 있음)
 ```
+
+## DB 백업/복구 시스템 (2026-06-01 추가)
+
+**배경:** `prisma migrate reset` 으로 개발 DB가 통째로 증발한 사고(School 5,724개 + 분석 데이터 손실, 수 시간 복구) 재발 방지. Supabase/Prisma 는 Firebase 같은 기본 자동 백업이 없음. 신규 의존성 0개의 로컬 안전망.
+
+**구성 (`scripts/`):**
+| 파일 | 역할 |
+|------|------|
+| `backup-common.mjs` | 공유 유틸 — `Prisma.dmmf` 동적 모델 수집, Date/BigInt 직렬화, 시퀀스 메타 |
+| `backup-db.mjs` | 전체 모델 JSON 익스포트 → gzip → `backups/mathlab_YYYYMMDD_HHmmss.json.gz` (최근 14개 유지) |
+| `restore-db.mjs` | 백업 → DB 전체 교체 복원 (`--latest`/`--file=`, `--dry-run`/`--yes`) |
+| `safe-reset.mjs` | `db:reset` — 백업 먼저 뜨고 → `prisma migrate reset` (백업 실패 시 reset 중단) |
+| `setup-backup-schedule.ps1` | Windows 작업 스케줄러 일일 자동 백업 등록 |
+
+**설계 핵심 (수정/확장 시 반드시 유지):**
+1. **모델 동적 수집** — `Prisma.dmmf.datamodel.models` 로 22개 모델 자동 순회. 스키마에 모델 추가해도 백업 대상 자동 반영 (하드코딩 목록 금지 → 드리프트 방지).
+2. **복원 FK 처리** — 트랜잭션 내 `SET LOCAL session_replication_role = replica` 로 FK 체크/트리거 비활성화. **삭제/삽입 순서가 무관**해져 의존성 정렬 불필요 + 자기참조(`Question.variantOf`, `ExamProblemCategory.parent`) 자동 해결. `LOCAL` 이라 트랜잭션 종료 시 GUC 자동 복원 → pgbouncer 풀 커넥션 오염 없음. **일반 `SET` 쓰면 안 됨.**
+3. **복원은 `DIRECT_URL` 전용 클라이언트** — `new PrismaClient({ datasources: { db: { url: DIRECT_URL } } })`. pgbouncer(6543) 우회해야 세션 GUC 적용됨. `$transaction(fn, { timeout: 120000, maxWait: 15000 })` 필수 (대량 insert 가 기본 5s 초과).
+4. **시퀀스 resync** — 복원 후 `setval(pg_get_serial_sequence(...), MAX, COUNT>0)` 로 자동증가 카운터 재동기화 (현재 `User.seq` 1개). 자동 수집되므로 새 autoincrement 필드도 자동 처리.
+5. **직렬화** — `Date→ISO`(자동), `BigInt→{__bigint}`. 복원 시 DMMF 필드 타입 기반 revive. Json 필드는 그대로 통과.
+
+**일일 자동 백업 (로컬):**
+```powershell
+.\scripts\setup-backup-schedule.ps1            # 매일 03:00 등록
+.\scripts\setup-backup-schedule.ps1 -Time "23:30"
+.\scripts\setup-backup-schedule.ps1 -Remove    # 해제
+```
+⚠️ **한계: PC 가 켜져 있어야 동작** (로컬 전용). 오프사이트가 필요하면 ↓ 업그레이드.
+
+**향후 업그레이드 경로:**
+- **GitHub Actions 일일 덤프** (무료, PC 비의존, 오프사이트) — `.github/workflows/` 에 `pg_dump $DATABASE_URL` + artifact 30~90일. CI 환경은 `postgresql-client` 한 줄 설치로 pg_dump 사용 가능 (로컬은 미설치).
+- **Supabase Pro** ($25/월) — daily backup 7일 자동. + PITR(분 단위 복구)는 $125/월.
+
+**주의:** 이 시스템은 데이터(행)만 백업/복원. DB 스키마는 `prisma/schema.prisma`(git) 가 source of truth — 복원 전 스키마가 백업 시점과 일치해야 함 (먼저 `prisma migrate`/`db push` 로 스키마 맞추고 데이터 복원).
 
 ## 코딩 컨벤션
 
