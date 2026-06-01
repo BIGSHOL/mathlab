@@ -1,9 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import {
   FileSearch, BarChart3, FileText, Share2, Upload, Sparkles,
-  Check, ArrowRight,
+  Check, ArrowRight, MessageSquare,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { LogoIcon } from '@/components/ui/LogoIcon';
@@ -11,15 +12,19 @@ import { Button } from '@/components/ui/Button';
 import { V3ReportPreview } from '@/components/landing/V3ReportPreview';
 import { FeatureShowcase } from '@/components/landing/FeatureShowcase';
 import { DashboardShowcase } from '@/components/landing/DashboardShowcase';
+import { InquiryModal } from '@/components/landing/InquiryModal';
 
 /** 기출분석 제품 공개 랜딩페이지 (루트 /). design.md 명세 기반. */
 export function LandingPage() {
   const { user } = useAuth();
+  const [inquiryOpen, setInquiryOpen] = useState(false);
   const cta = user
     ? { href: '/exam-analysis', label: '기출분석 바로가기' }
     : { href: '/login', label: '로그인' };
 
   return (
+    <>
+    {inquiryOpen && <InquiryModal onClose={() => setInquiryOpen(false)} />}
     <div className="h-dvh overflow-y-auto scroll-smooth bg-white text-text-primary">
       {/* 루트 layout의 html/body가 overflow:hidden(LMS 앱 셸 규약)이라
           공개 랜딩은 자체 스크롤 컨테이너(h-dvh + overflow-y-auto)가 필요. */}
@@ -56,14 +61,23 @@ export function LandingPage() {
               네이버 블로그용 자료까지 생성합니다.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link href={cta.href}>
-                <Button size="lg">{user ? '기출분석 바로가기' : '시작하기'}</Button>
-              </Link>
+              {user ? (
+                <Link href="/exam-analysis">
+                  <Button size="lg">기출분석 바로가기</Button>
+                </Link>
+              ) : (
+                <Button size="lg" onClick={() => setInquiryOpen(true)}>
+                  <MessageSquare className="w-4 h-4 mr-2" />도입 문의
+                </Button>
+              )}
               <a href="#features">
                 <Button size="lg" variant="ghost">기능 보기</Button>
               </a>
             </div>
-            <p className="mt-4 text-xs text-slate-400">학원에서 받은 계정으로 로그인하세요</p>
+            <p className="mt-4 text-xs text-slate-400">
+              {user ? '' : '이미 계정이 있으신가요? '}
+              {!user && <Link href="/login" className="underline underline-offset-2 hover:text-slate-600 transition-colors">로그인</Link>}
+            </p>
           </div>
 
           {/* 실제 V3 분석 리포트 프리뷰 (더미데이터) */}
@@ -178,5 +192,6 @@ export function LandingPage() {
         </div>
       </footer>
     </div>
+    </>
   );
 }

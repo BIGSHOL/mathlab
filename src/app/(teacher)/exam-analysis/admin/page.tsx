@@ -834,7 +834,7 @@ function TeachersTab() {
           <thead className="bg-slate-50 text-slate-600 text-xs">
             <tr>
               <th className="px-3 py-2 text-left font-medium">아이디</th>
-              <th className="px-3 py-2 text-left font-medium">이름 (분석자 표시)</th>
+              <th className="px-3 py-2 text-left font-medium w-56">이름 (분석자 표시)</th>
               <th className="px-3 py-2 text-center font-medium">분석</th>
               <th className="px-3 py-2 text-center font-medium">총평</th>
               <th className="px-3 py-2 text-center font-medium">블로그 글</th>
@@ -854,7 +854,7 @@ function TeachersTab() {
                 title="클릭하여 활동 로그 보기"
               >
                 <td className="px-3 py-2 font-mono text-xs text-slate-500">{row.username}</td>
-                <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                <td className="px-3 py-2 w-56" onClick={(e) => e.stopPropagation()}>
                   {editingId === row.id ? (
                     <div className="flex items-center gap-1">
                       <input
@@ -867,7 +867,7 @@ function TeachersTab() {
                         }}
                         autoFocus
                         disabled={saving}
-                        className="border border-primary rounded-sm px-2 py-1 text-sm w-40 focus:outline-none"
+                        className="border border-primary rounded-sm px-2 py-1 text-sm w-32 focus:outline-none"
                       />
                       <Button size="sm" variant="primary" onClick={() => saveEdit(row.id)} disabled={saving}>
                         <Save className="w-3.5 h-3.5" />

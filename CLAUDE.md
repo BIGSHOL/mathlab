@@ -397,6 +397,41 @@ const overallLabel = avg >= 70 ? '높음' : avg >= 50 ? '적정' : avg >= 35 ? '
 - 정확한 원본 값은 `title` 속성에 hover 노출 (예: `title="정확한 가중평균: 2.92"`)
 - 사례: [AnalysisDetail.tsx 난이도 카드의 ▼ 마커](src/app/(teacher)/exam-analysis/AnalysisDetail.tsx)
 
+#### 12-8. 카카오 로컬 API — 키 종류 + KA 헤더 정책 함정 (2026-06-01)
+
+**증상**: `geocode-schools.ts` 실행 시 모든 요청 401 또는 `AccessDeniedError: KA Header is required`
+**원인**: 카카오 디벨로퍼스 키는 4종류이며, 각 키별로 요구사항이 다름
+**키별 동작 (반드시 REST API 키 사용!):**
+| 키 종류 | KA 헤더 | 도메인 등록 | 서버사이드 |
+|---------|---------|------------|-----------|
+| **REST API 키** ✅ | 불필요 | 불필요 | OK |
+| JavaScript 키 | **필수** | **필수** (도메인 mismatch 시 403) | 사실상 불가 |
+| Admin 키 | — | — | 보안 위험 |
+| 네이티브 앱 키 | — | — | 모바일 SDK 전용 |
+
+**확인 방법:** 카카오 디벨로퍼스 → 내 애플리케이션 → 앱 키 페이지에서 "REST API 키" 라벨이 붙은 것 사용
+**테스트:**
+```bash
+node -e "fetch('https://dapi.kakao.com/v2/local/search/address.json?query=' + encodeURIComponent('서울 강남구'), { headers: { Authorization: 'KakaoAK YOUR_KEY' } }).then(r => r.text()).then(console.log)"
+# REST API 키면 정상 응답, JavaScript 키면 'KA Header is required'
+```
+**사례**: [geocode-schools.ts](scripts/geocode-schools.ts) 호출 시 KA 헤더 없이 작동해야 정상 (붙이면 도메인 등록 강제됨)
+
+#### 12-9. NEIS Open API — 키워드 검색 우회 + 주소 비어있는 학교 처리
+
+**상황**: NEIS API에서 받은 학교 주소가 너무 더러워서 카카오 주소 API가 매칭 실패 (행정실 전화번호/사서함/우편번호 혼입, 도로명+지번 동시 표기 등)
+**규칙 (2단계 fallback)**:
+1. 1차: 카카오 **주소 검색 API** (`/v2/local/search/address.json`) — 대부분 자동 처리됨
+2. 2차: 카카오 **키워드 검색 API** (`/v2/local/search/keyword.json?query=학교명&category_group_code=SC4`) — 학교명만으로 검색, `SC4`는 학교 카테고리
+3. 3차: 그래도 안 잡히면 NEIS DB 자체 오류일 가능성 (폐교/신설 미입력) → 수동 확인 후 삭제
+
+**실측 (5,725개교 기준):**
+- 1차 주소 API: **99.8% 성공** (12건 실패)
+- 2차 키워드 API: 11/12 추가 매칭 (잘못 매칭 1건 주의 — 학교명 동음이의 발생, 정합성 검증 필수)
+- 최종 1건은 NEIS 데이터 오류로 DB 삭제
+
+**사례**: [scripts/geocode-failed-by-keyword.mjs](scripts/geocode-failed-by-keyword.mjs) — 키워드 fallback + 매칭 결과 검증 출력
+
 ## 프로젝트 구조
 
 ```
@@ -1040,11 +1075,20 @@ V3 마크업 변경 시 반드시 3곳 모두 동기화:
 - `GET /api/learning/review-daily-test?count=4` — 매 수업 복습 테스트 (3~4문항)
 - `GET /api/learning/review-failed?limit=50` — 탈락 항목 (View-As 지원)
 
-### 고객 지원 시스템
+### 도입 문의 시스템 (2026-06-01 추가)
 
-- `GET /api/help` — 역할별(학생/선생님/관리자) 도움말·FAQ 필터링
-- `POST /api/inquiries` — 문의 등록, 관리자 회신
-- 페이지: `/help` (도움말), `/support` (문의 등록/조회)
+랜딩페이지(`/`)의 "도입 문의" CTA → 신규 학원장 대상 영업 퍼널.
+
+- **모델**: `Inquiry` — `academyName`, `contactName`, `phone`, `email?`, `region?`, `message?`, `status: PENDING|ANSWERED`
+- **API**: `POST /api/inquiries` (인증 불필요, Zod 검증) — 학원명/담당자명/연락처 필수
+- **UI**: `<InquiryModal />` ([src/components/landing/InquiryModal.tsx](src/components/landing/InquiryModal.tsx)) — 비로그인 히어로 + 하단 CTA에서 호출
+- **흐름**: 비로그인 시 헤더 "로그인" + 히어로 "도입 문의" 모달 분리 → 신규 학원장(문의)과 기존 사용자(로그인) 경로 분리
+
+### 사용자 이름 수정 API
+
+- `PATCH /api/users/[id]` — OWNER 이상이 같은 테넌트 사용자의 `name` 필드 수정
+- `/exam-analysis/admin` "강사" 탭의 인라인 이름 편집에서 사용
+- SUPER_ADMIN은 모든 테넌트 사용자 수정 가능, OWNER는 자기 테넌트 한정
 
 ### 게이미피케이션
 
@@ -1134,21 +1178,30 @@ NEXTAUTH_URL=http://localhost:3000
 GEMINI_API_KEY=your-gemini-api-key
 ANTHROPIC_API_KEY=your-anthropic-api-key
 SUPABASE_URL=your-supabase-url
-SUPABASE_ANON_KEY=your-supabase-anon-key
-KAKAO_REST_API_KEY=your-kakao-api-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+KAKAO_REST_API_KEY=your-kakao-rest-api-key  # ⚠️ REST API 키만 작동 (12-8 참조)
+# NEIS_API_KEY는 sync-schools.ts에 내장됨 (공공 API, 키 노출 무방)
 ```
 
 ## 스크립트
 
 ```bash
+# Next.js / Prisma
 npm run dev              # 개발 서버 (Turbopack, 자동 포트 탐색)
 npm run build            # npx prisma generate && next build
 npx prisma generate      # Prisma 클라이언트 재생성
 npx prisma studio        # DB 브라우저
 npx prisma migrate dev   # DB 마이그레이션
-npm run db:seed          # 시드 데이터
-npx tsx scripts/reset-questions.ts  # 문제은행 + 관련 데이터 전체 초기화
-npx tsx scripts/migrate-question-relations.ts  # questionIds Json → 중간테이블 마이그레이션
+
+# DB 초기 시드 (DB reset 후 복구 순서)
+node scripts/seed-accounts.mjs                 # 1. Tenant + SUPER_ADMIN + OWNER + TEACHER 시드
+npx tsx scripts/sync-schools.ts                # 2. NEIS API로 전국 중/고 ~5,725개교 수집 (3-5분)
+npx tsx scripts/sync-schools.ts --type elementary  # 2-1. 초등학교까지 (옵션, ~6,000개 추가)
+npx tsx scripts/geocode-schools.ts             # 3. 카카오 주소 API로 GPS 백필 (~12분)
+node scripts/geocode-failed-by-keyword.mjs     # 4. 주소 매칭 실패분을 키워드 API로 재시도
+
+# 운영 데이터 복구 불가 (사용자 누적): ExamPaper/Analysis/Extension, LearnedPattern, ExamFeedback,
+# TenantNearbyGroup, ExamPromptTemplate(코드 fallback 있음)
 ```
 
 ## 코딩 컨벤션

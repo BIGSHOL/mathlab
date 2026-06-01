@@ -264,6 +264,19 @@ enum InquiryStatus {
   ANSWERED
 }
 
+model Inquiry {
+  id          String        @id @default(cuid())
+  academyName String
+  contactName String
+  phone       String
+  email       String?
+  region      String?
+  message     String?
+  status      InquiryStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
 // FEAT: Diagnostic Test Results
 
 // FEAT: Level Test Configuration
