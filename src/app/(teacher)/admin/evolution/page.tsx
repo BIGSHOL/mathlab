@@ -61,16 +61,23 @@ export default function EvolutionConsolePage() {
   const [data, setData] = useState<EvolutionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [recomputing, setRecomputing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch('/api/admin/evolution', { cache: 'no-store' });
-      if (!res.ok) throw new Error('조회 실패');
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error?.message || `조회 실패 (${res.status})`);
+      }
       const json = await res.json();
       setData(json.data);
-    } catch {
-      toast.error('관측 데이터를 불러오지 못했습니다');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : '관측 데이터를 불러오지 못했습니다';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -110,8 +117,16 @@ export default function EvolutionConsolePage() {
         actions={<Button size="sm" variant="ghost" onClick={load} disabled={loading}><RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />새로고침</Button>}
       />
 
-      {loading || !data ? (
+      {loading ? (
         <Skeleton className="h-[500px] w-full" />
+      ) : !data ? (
+        <div className="border border-red-200 bg-red-50/50 rounded-sm p-8 text-center">
+          <AlertTriangle className="w-8 h-8 text-red-400 mx-auto mb-3" />
+          <p className="text-sm font-semibold text-red-700">관측 데이터를 불러오지 못했습니다</p>
+          {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+          <p className="text-[11px] text-slate-500 mt-2">서버가 방금 갱신된 경우 dev 서버 재시작이 필요할 수 있습니다.</p>
+          <Button size="sm" className="mt-4" onClick={load}><RefreshCw className="w-3.5 h-3.5 mr-1.5" />다시 시도</Button>
+        </div>
       ) : (
         <div className="space-y-6">
           {/* 규모 */}

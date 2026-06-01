@@ -72,7 +72,13 @@ export async function GET() {
   }
 
   // ── ① 적용 중인 보정 맵 로드 (MetadataCalibration 전 필드) ──
-  const calRows = await prisma.metadataCalibration.findMany({ where: { subject: 'MATH' } });
+  // 방어적: 모델 미존재(구버전 Prisma 클라이언트 등) 시에도 라이브 통계는 표시되도록 폴백.
+  let calRows: Array<{ field: string; globalBias: number; bucketShifts: unknown; totalCorrections: number; updatedAt: Date }> = [];
+  try {
+    calRows = await prisma.metadataCalibration.findMany({ where: { subject: 'MATH' } });
+  } catch {
+    calRows = [];
+  }
   const calByField = new Map(calRows.map((r) => [r.field, r]));
 
   // 수치형 필드 (난이도·배점)
