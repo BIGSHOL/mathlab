@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse, getTenantFilter, notFound, badRequest } from '@/lib/api';
+import { assertAnalysisQuota } from '@/lib/billing/guard';
 import { analyzeExam } from '@/lib/exam-analysis/ai-engine';
 import { loadCalibrationMap } from '@/lib/exam-analysis/calibration';
 import { ExamPromptBuilder } from '@/lib/exam-analysis/prompt-builder';
@@ -48,6 +49,10 @@ export async function POST(request: NextRequest, { params }: Params) {
     where: { id, ...tenantWhere },
   });
   if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
+
+  // 구독 월 분석 쿼터 — 재분석은 현재 시험지 제외(곧 deleteMany로 교체되므로)
+  const quotaGate = await assertAnalysisQuota(user.viewingTenantId ?? user.tenantId, id);
+  if (quotaGate) return quotaGate;
 
   if (examPaper.status === 'ANALYZING') {
     // 2분 이상 ANALYZING 상태면 갇힌 것으로 판단 → 재시도 허용

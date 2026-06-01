@@ -1,0 +1,73 @@
+/**
+ * 구독 게이팅 헬퍼 (서버 전용).
+ * - getTenantPlan: 유효 플랜 (행 없음/만료 → free)
+ * - assertAnalysisQuota / assertPlanFeature: NextResponse(403) 또는 null 반환
+ *   → 라우트에서 `const gate = await assert...(); if (gate) return gate;` 패턴.
+ * tenantId 없음(SUPER_ADMIN 무테넌트 등) → 면제(null).
+ */
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
+import { getPlanConfig, type PlanId, type PlanFeature } from './plans';
+
+/** UTC 이번 달 / 다음 달 경계 */
+export function monthBounds(now = new Date()) {
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const nextMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+  return { monthStart, nextMonthStart };
+}
+
+/** 유효 플랜. 행 없음 → free. 만료(currentPeriodEnd 과거 && status≠active) → free. */
+export async function getTenantPlan(tenantId: string | null | undefined): Promise<PlanId> {
+  if (!tenantId) return 'free';
+  const sub = await prisma.tenantSubscription.findUnique({ where: { tenantId } });
+  if (!sub) return 'free';
+  const plan = getPlanConfig(sub.plan).id;
+  if (plan === 'free') return 'free';
+  const expired = !!sub.currentPeriodEnd && sub.currentPeriodEnd.getTime() < Date.now();
+  if (expired && sub.status !== 'active') return 'free';
+  return plan;
+}
+
+/** 이번 달 완료 분석 수 (테넌트 단위). excludeExamPaperId: 재분석 시 현재 시험지 제외. */
+export async function getMonthlyAnalysisCount(tenantId: string, excludeExamPaperId?: string): Promise<number> {
+  const { monthStart, nextMonthStart } = monthBounds();
+  return prisma.examAnalysis.count({
+    where: {
+      examPaper: {
+        tenantId,
+        status: 'COMPLETED',
+        ...(excludeExamPaperId ? { id: { not: excludeExamPaperId } } : {}),
+      },
+      createdAt: { gte: monthStart, lt: nextMonthStart },
+    },
+  });
+}
+
+const FEATURE_LABELS: Record<PlanFeature, string> = { commentary: 'AI 총평', nearby: '주변학교 비교' };
+
+/** 월 분석 한도 검사. 초과 → 403(QUOTA_EXCEEDED), 통과 → null. */
+export async function assertAnalysisQuota(tenantId: string | null | undefined, excludeExamPaperId?: string): Promise<NextResponse | null> {
+  if (!tenantId) return null;
+  const plan = await getTenantPlan(tenantId);
+  const limit = getPlanConfig(plan).monthlyAnalyses;
+  if (!Number.isFinite(limit)) return null; // 무제한
+  const used = await getMonthlyAnalysisCount(tenantId, excludeExamPaperId);
+  if (used >= limit) {
+    return NextResponse.json(
+      { error: { code: 'QUOTA_EXCEEDED', message: `이번 달 분석 한도(${limit}회)를 모두 사용했습니다. 플랜을 업그레이드하면 더 분석할 수 있습니다.` } },
+      { status: 403 },
+    );
+  }
+  return null;
+}
+
+/** 기능 사용 가능 여부. 불가 → 403(FEATURE_LOCKED), 가능 → null. */
+export async function assertPlanFeature(tenantId: string | null | undefined, feature: PlanFeature): Promise<NextResponse | null> {
+  if (!tenantId) return null;
+  const plan = await getTenantPlan(tenantId);
+  if (getPlanConfig(plan)[feature]) return null;
+  return NextResponse.json(
+    { error: { code: 'FEATURE_LOCKED', message: `${FEATURE_LABELS[feature]} 기능은 상위 플랜에서 사용할 수 있습니다.` } },
+    { status: 403 },
+  );
+}

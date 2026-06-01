@@ -37,6 +37,8 @@ interface CommentarySectionProps {
   hasSchool: boolean;
   /** 구버전(이전 PROMPT_VERSION) 분석본이면 prompt 버전 라벨 — 총평 재생성 차단 + 재분석 유도 */
   staleVersion?: string | null;
+  /** AI 총평이 Pro+ 플랜 잠김 상태 — 재생성 버튼 비활성(기존 총평 열람은 허용) */
+  commentaryLocked?: boolean;
   /** 기본 재분석 트리거 (구버전일 때 안내 버튼) */
   onReanalyze?: () => void;
   reanalyzing?: boolean;
@@ -75,6 +77,7 @@ export function CommentarySection({
   yearTitle,
   hasSchool,
   staleVersion,
+  commentaryLocked = false,
   onReanalyze,
   reanalyzing = false,
   examMeta,
@@ -214,6 +217,8 @@ export function CommentarySection({
 
   // 구버전(이전 PROMPT_VERSION) 분석본 — 총평 재생성을 차단하고 재분석 유도.
   const isStale = !!staleVersion;
+  // 재생성/비교옵션 잠금 = 구버전 또는 Pro+ 플랜 미보유 (기존 총평 열람은 항상 허용)
+  const lockRegen = isStale || commentaryLocked;
 
   // 네이버 이미지 복사 버튼 — V3 데이터 있을 때만. 접/펼침 양쪽 헤더에 동일 렌더.
   //   클릭 시 접혀 있으면 자동으로 펼친 뒤(.v3 마운트) 부모 캡처 콜백 실행 → 캡처는 .v3를 폴링.
@@ -310,14 +315,14 @@ export function CommentarySection({
                 size="sm"
                 variant="ghost"
                 onClick={onRegenerate}
-                disabled={isStale}
-                title={isStale ? `이전 버전(${staleVersion})으로 분석됨 — 재분석 후 총평 가능` : '총평 재생성'}
+                disabled={lockRegen}
+                title={isStale ? `이전 버전(${staleVersion})으로 분석됨 — 재분석 후 총평 가능` : commentaryLocked ? 'AI 총평은 Pro 플랜 이상에서 재생성할 수 있습니다' : '총평 재생성'}
                 className="text-xs text-slate-400 hover:text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 재분석
               </Button>
             )}
-            {hasSchool && !isRegenerating && !isStale && (
+            {hasSchool && !isRegenerating && !lockRegen && (
               <div className="flex items-center gap-3">
                 <label title={nearbyTitle} className={`flex items-center gap-1 text-[11px] cursor-pointer ${nearbyCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
                   <input
@@ -467,14 +472,14 @@ export function CommentarySection({
               size="sm"
               variant="ghost"
               onClick={onRegenerate}
-              disabled={isStale}
-              title={isStale ? `이전 버전(${staleVersion})으로 분석됨 — 재분석 후 총평 가능` : undefined}
+              disabled={lockRegen}
+              title={isStale ? `이전 버전(${staleVersion})으로 분석됨 — 재분석 후 총평 가능` : commentaryLocked ? 'AI 총평은 Pro 플랜 이상에서 재생성할 수 있습니다' : undefined}
               className={`text-xs disabled:opacity-40 disabled:cursor-not-allowed ${isFallback ? 'text-amber-600 hover:text-amber-700' : 'text-slate-400 hover:text-slate-600'}`}
             >
               {isFallback ? 'AI 재분석' : '재분석'}
             </Button>
           )}
-          {hasSchool && !isRegenerating && !isStale && (
+          {hasSchool && !isRegenerating && !lockRegen && (
             <div className="flex items-center gap-3">
               <label title={nearbyTitle} className={`flex items-center gap-1 text-[11px] cursor-pointer ${nearbyCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
                 <input
@@ -568,11 +573,16 @@ export function CommentarySection({
           <Button
             size="sm"
             onClick={onRegenerate}
-            className="bg-[#BF1722] hover:bg-[#9A1219] text-white"
+            disabled={commentaryLocked}
+            title={commentaryLocked ? 'AI 총평은 Pro 플랜 이상에서 재생성할 수 있습니다' : undefined}
+            className="bg-[#BF1722] hover:bg-[#9A1219] text-white disabled:bg-slate-300 disabled:cursor-not-allowed"
           >
             <Sparkles className="w-3.5 h-3.5 mr-1.5" />
             최신 양식으로 재생성
           </Button>
+          {commentaryLocked && (
+            <p className="text-[11px] text-violet-600 mt-2">Pro 플랜 이상에서 재생성할 수 있습니다.</p>
+          )}
         </div>
       )}
     </div>

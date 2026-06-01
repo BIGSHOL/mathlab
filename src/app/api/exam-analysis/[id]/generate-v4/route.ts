@@ -4,6 +4,7 @@ import { requireTeacher, isResponse, getTenantFilter, notFound, badRequest } fro
 import { CommentaryAgent } from '@/lib/exam-analysis/agents/commentary-agent';
 import type { BasicAnalysisResult, AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { COMMENTARY_V4_PROMPT_VERSION } from '@/lib/exam-analysis/constants';
+import { assertPlanFeature } from '@/lib/billing/guard';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -28,6 +29,10 @@ export async function POST(request: NextRequest, { params }: Params) {
     where: { id, ...tenantWhere },
   });
   if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
+
+  // AI 총평(V4)은 Pro+ 기능
+  const featureGate = await assertPlanFeature(user.viewingTenantId ?? user.tenantId, 'commentary');
+  if (featureGate) return featureGate;
 
   // 사용자 소속 지점(학원) 이름 조회 — V4 본문의 {학원명} placeholder 치환에 사용
   // 없으면 후처리에서 "우리 학원"으로 fallback

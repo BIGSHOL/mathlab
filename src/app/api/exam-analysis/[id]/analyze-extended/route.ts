@@ -4,6 +4,7 @@ import { requireTeacher, isResponse, getTenantFilter, notFound, badRequest } fro
 import { analyzeExtendedRequestSchema } from '@/lib/exam-analysis/schemas';
 import { runExtendedAnalysis } from '@/lib/exam-analysis/agents/orchestrator';
 import type { AgentType } from '@/lib/exam-analysis/constants';
+import { assertPlanFeature } from '@/lib/billing/guard';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -24,6 +25,12 @@ export async function POST(request: NextRequest, { params }: Params) {
     where: { id, ...tenantWhere },
   });
   if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
+
+  // 총평(commentary) 에이전트는 Pro+ 기능 — 다른 에이전트는 게이트 없음
+  if (agents.includes('commentary')) {
+    const featureGate = await assertPlanFeature(user.viewingTenantId ?? user.tenantId, 'commentary');
+    if (featureGate) return featureGate;
+  }
 
   // 최신 분석 결과 조회
   const latestAnalysis = await prisma.examAnalysis.findFirst({

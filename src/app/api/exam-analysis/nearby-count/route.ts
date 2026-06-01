@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse, getTenantFilter } from '@/lib/api';
+import { assertPlanFeature } from '@/lib/billing/guard';
 
 /**
  * GET /api/exam-analysis/nearby-count?schoolId=xxx&grade=중3&examPaperId=yyy
@@ -18,6 +19,10 @@ import { requireTeacher, isResponse, getTenantFilter } from '@/lib/api';
 export async function GET(req: NextRequest) {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
+
+  // 주변학교·연도 비교는 Pro+ 기능 (클라에서도 단락하지만 서버 방어)
+  const featureGate = await assertPlanFeature(user.viewingTenantId ?? user.tenantId, 'nearby');
+  if (featureGate) return featureGate;
 
   const schoolId = req.nextUrl.searchParams.get('schoolId') || '';
   const grade = req.nextUrl.searchParams.get('grade') || '';

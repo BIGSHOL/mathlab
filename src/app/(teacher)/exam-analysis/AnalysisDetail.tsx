@@ -12,6 +12,7 @@ import { AnalysisCommentTab } from '@/components/exam-analysis/AnalysisCommentTa
 import { StudyStrategyTab } from '@/components/exam-analysis/StudyStrategyTab';
 import { ExtractToBankModal } from '@/components/exam-analysis/ExtractToBankModal';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubscription } from '@/components/providers/SubscriptionProvider';
 import type { AnalysisSummary } from '@/lib/exam-analysis/types';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import { DIFFICULTY_BAR_COLORS, isStalePromptVersion, extractPromptVersion, PROMPT_VERSION } from '@/lib/exam-analysis/constants';
@@ -83,6 +84,7 @@ interface AnalysisDetailProps {
 
 export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCommentary = false, onToggleAutoCommentary, gen = null, onCommentaryGenChange }: AnalysisDetailProps) {
   const { user } = useAuth();
+  const { features } = useSubscription(); // 플랜 기능 게이팅 (commentary/nearby)
   const [activeTab, setActiveTab] = useState<AnalysisTab>('basic');
   const [showExtractModal, setShowExtractModal] = useState(false);
   const [showArticleModal, setShowArticleModal] = useState(false);
@@ -112,8 +114,9 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
   const [nearbySchools, setNearbySchools] = useState<string[]>([]); // hover 표시용 학교명
   const [years, setYears] = useState<string[]>([]); // hover 표시용 비교 연도
 
-  // 주변/연도 기출 건수 + 목록 조회
+  // 주변/연도 기출 건수 + 목록 조회 (주변비교는 Pro+ 기능 — free면 호출 단락 + 403 스팸 방지)
   useEffect(() => {
+    if (!features.nearby) { setNearbyCount(0); setYearCount(0); setNearbySchools([]); setYears([]); return; }
     if (!detail.schoolId) { setNearbyCount(0); setYearCount(0); setNearbySchools([]); setYears([]); return; }
     const params = new URLSearchParams({ schoolId: detail.schoolId, grade: detail.grade, examPaperId: detail.id });
     fetch(`/api/exam-analysis/nearby-count?${params}`)
@@ -125,7 +128,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
         setYears(Array.isArray(d?.data?.years) ? d.data.years : []);
       })
       .catch(() => { setNearbyCount(0); setYearCount(0); setNearbySchools([]); setYears([]); });
-  }, [detail.schoolId, detail.grade, detail.id]);
+  }, [detail.schoolId, detail.grade, detail.id, features.nearby]);
 
   // hover tooltip 문구
   const nearbyTitle = nearbySchools.length ? `포함 학교: ${nearbySchools.join(', ')}` : '같은 지역 동일 시기 기출이 없습니다';
@@ -250,11 +253,19 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
   const isStaleAnalysis = isStalePromptVersion(latestAnalysis?.modelVersion);
   const stalePromptLabel = extractPromptVersion(latestAnalysis?.modelVersion);
 
-  // 총평 생성 가능 = readiness 통과 + 메타데이터 준비 중 아님 + 구버전 아님
-  const commentaryReady = readinessCheck.ready && !metadataPending && !isStaleAnalysis;
+  // AI 총평은 Pro+ 플랜 기능 — free면 잠금 (기존 총평 열람은 허용, 생성/재생성만 차단)
+  const commentaryLocked = !features.commentary;
+
+  // 총평 생성 가능 = readiness 통과 + 메타데이터 준비 중 아님 + 구버전 아님 + 플랜 잠김 아님
+  const commentaryReady = readinessCheck.ready && !metadataPending && !isStaleAnalysis && !commentaryLocked;
 
   const handleGenerateCommentary = async () => {
     if (!latestAnalysis) return;
+    // Pro+ 플랜 기능 잠금 (서버에서도 403 FEATURE_LOCKED 방어)
+    if (commentaryLocked) {
+      toast.error('AI 총평은 Pro 플랜 이상에서 사용할 수 있습니다 — 구독에서 업그레이드하세요');
+      return;
+    }
     // 구버전 분석본 차단 — 재분석 후에만 총평 생성 가능 (모든 진입점 방어: 버튼/재생성)
     if (isStaleAnalysis) {
       toast.error(`이전 버전(${stalePromptLabel || '구버전'})으로 분석된 시험지입니다. 먼저 [재분석]으로 최신 분석 후 총평을 생성하세요.`);
@@ -271,8 +282,8 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
         body: JSON.stringify({ agents: ['commentary'], forceRegenerate: !!commentary, includeNearby, includeYearCompare }),
       });
       if (!res.ok) {
-        const err = await res.json();
-        toast.error(err.error?.message || '총평 생성에 실패했습니다');
+        const err = await res.json().catch(() => null);
+        toast.error(err?.error?.message || (res.status === 403 ? 'AI 총평은 Pro 플랜 이상에서 사용할 수 있습니다 — 구독에서 업그레이드하세요' : '총평 생성에 실패했습니다'));
         return;
       }
       // 다른 시험지로 갔어도 완료 토스트는 표시 (생성이 멈추지 않았음을 알림).
@@ -851,8 +862,8 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {/* 구버전이면 상단 버튼/옵션 숨김 — 아래 rose 배너의 [최신 버전으로 재분석]이 단일 CTA (버튼 중복 방지) */}
-                  {!commentaryLoading && !isStaleAnalysis && (
+                  {/* 구버전/플랜잠김이면 상단 버튼/옵션 숨김 — 아래 배너의 CTA가 단일 진입 (버튼 중복 방지) */}
+                  {!commentaryLoading && !isStaleAnalysis && !commentaryLocked && (
                     <Button
                       size="sm"
                       className="bg-violet-600 hover:bg-violet-700 text-white disabled:bg-slate-300 disabled:cursor-not-allowed"
@@ -869,7 +880,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                       {metadataPending ? '준비 중...' : '총평 생성'}
                     </Button>
                   )}
-                  {detail.schoolId && !commentaryLoading && !isStaleAnalysis && (
+                  {detail.schoolId && !commentaryLoading && !isStaleAnalysis && !commentaryLocked && (
                     <div className="flex items-center gap-3">
                       <label title={nearbyTitle} className={`flex items-center gap-1 text-[11px] cursor-pointer ${nearbyCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
                         <input
@@ -917,8 +928,26 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                   </div>
                 </div>
               )}
-              {/* ── 총평 생성 차단 경고 (배점/단원 미완성) — 구버전이 아닐 때만 ── */}
-              {!isStaleAnalysis && !readinessCheck.ready && !commentaryLoading && (
+              {/* ── 플랜 잠김 (AI 총평 = Pro+ 전용) — 구버전이 아닐 때, readiness보다 우선 ── */}
+              {!isStaleAnalysis && commentaryLocked && !commentaryLoading && (
+                <div className="mt-3 px-3 py-2.5 bg-violet-50 border border-violet-200 rounded-sm flex items-start gap-2.5">
+                  <Sparkles className="w-4 h-4 text-violet-500 mt-0.5 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-violet-800">AI 시험 총평은 Pro 플랜 전용입니다</p>
+                    <p className="text-[11px] text-violet-600 mt-1 leading-relaxed">
+                      Pro 플랜으로 업그레이드하면 시험 전체에 대한 전문가 수준의 종합 평가와 주변 학교·연도 비교를 사용할 수 있습니다.
+                    </p>
+                    <Link
+                      href="/billing"
+                      className="inline-flex items-center gap-1 mt-2 px-2.5 py-1 bg-violet-600 hover:bg-violet-700 text-white text-[11px] font-medium rounded-sm transition-colors"
+                    >
+                      구독 업그레이드
+                    </Link>
+                  </div>
+                </div>
+              )}
+              {/* ── 총평 생성 차단 경고 (배점/단원 미완성) — 구버전·플랜잠김이 아닐 때만 ── */}
+              {!isStaleAnalysis && !commentaryLocked && !readinessCheck.ready && !commentaryLoading && (
                 <div className="mt-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-sm">
                   <p className="text-xs font-semibold text-amber-800 mb-1">총평 생성 전 다음을 완성하세요:</p>
                   <ul className="text-[11px] text-amber-700 space-y-0.5 list-disc list-inside">
@@ -932,7 +961,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                 </div>
               )}
               {/* ── 메타데이터 준비 중 (배점/단원 통과, V3 base 백그라운드 생성) — 시험지별 고유 프로그레스 바 ── */}
-              {!isStaleAnalysis && readinessCheck.ready && metadataPending && !commentaryLoading && (
+              {!isStaleAnalysis && !commentaryLocked && readinessCheck.ready && metadataPending && !commentaryLoading && (
                 <div className="mt-3 px-1">
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-xs font-medium text-violet-700">V3 총평 준비 중...</span>
@@ -1003,6 +1032,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
               yearTitle={yearTitle}
               hasSchool={!!detail.schoolId}
               staleVersion={isStaleAnalysis ? (stalePromptLabel || '구버전') : null}
+              commentaryLocked={commentaryLocked}
               onReanalyze={() => onAnalyze(detail.id)}
               reanalyzing={analyzing}
               examMeta={{

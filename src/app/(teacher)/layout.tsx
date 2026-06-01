@@ -1,4 +1,5 @@
 import { ExamOnlyTopBar } from '@/components/layout/ExamOnlyTopBar';
+import { SubscriptionProvider } from '@/components/providers/SubscriptionProvider';
 import { ToastContainer } from '@/components/ui/Toast';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { getCurrentUser } from '@/lib/auth';
@@ -24,14 +25,16 @@ export default async function TeacherLayout({
 
   return (
     <TenantProvider tenant={tenant}>
-      <div className="h-screen flex bg-background overflow-hidden print:h-auto print:overflow-visible print:bg-white">
-        <ExamOnlyTopBar />
-        <main className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden pb-14 md:pb-0 print:overflow-visible">
-          {children}
-        </main>
-        <ToastContainer />
-        <ConfirmDialog />
-      </div>
+      <SubscriptionProvider>
+        <div className="h-screen flex bg-background overflow-hidden print:h-auto print:overflow-visible print:bg-white">
+          <ExamOnlyTopBar />
+          <main className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden pb-14 md:pb-0 print:overflow-visible">
+            {children}
+          </main>
+          <ToastContainer />
+          <ConfirmDialog />
+        </div>
+      </SubscriptionProvider>
     </TenantProvider>
   );
 }

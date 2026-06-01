@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LogOut, User, Settings, MapPin, FileUp, Building2, Users, FileSearch } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { LogOut, User, Settings, MapPin, FileUp, Building2, Users, FileSearch, CreditCard, Sparkles } from 'lucide-react';
+import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 
 /** SUPER_ADMIN 관리 메뉴 링크 (사이드바 제거 후 유일한 진입점) */
 const ADMIN_LINKS = [
   { href: '/exam-analysis', label: '기출분석', icon: FileSearch },
+  { href: '/admin/evolution', label: '자가진화', icon: Sparkles },
   { href: '/admin/schools', label: '학교 관리', icon: MapPin },
   { href: '/admin/exam-uploads', label: '기출 업로드', icon: FileUp },
   { href: '/admin/tenants', label: '지점 관리', icon: Building2 },
@@ -31,6 +32,7 @@ export function ProfileMenu({ variant = 'floating' }: { variant?: 'floating' | '
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const isOwnerPlus = hasRoleClient(user?.role, 'OWNER');
   const name = user?.name ?? user?.username ?? '사용자';
   const roleLabel = ROLE_LABEL[user?.role ?? ''] ?? '';
 
@@ -54,6 +56,15 @@ export function ProfileMenu({ variant = 'floating' }: { variant?: 'floating' | '
             >
               <Settings className="w-4 h-4" />
             </button>
+          )}
+          {isOwnerPlus && (
+            <Link
+              href="/billing"
+              title="구독/결제"
+              className="p-1.5 rounded-sm text-slate-400 hover:text-violet-600 hover:bg-slate-100 shrink-0 transition-colors"
+            >
+              <CreditCard className="w-4 h-4" />
+            </Link>
           )}
           <button
             onClick={() => logout?.()}
@@ -114,6 +125,16 @@ export function ProfileMenu({ variant = 'floating' }: { variant?: 'floating' | '
             </>
           )}
         </div>
+      )}
+      {isOwnerPlus && (
+        <Link
+          href="/billing"
+          title="구독/결제"
+          className="flex items-center gap-1 text-xs text-slate-600 hover:text-violet-600 border-l border-slate-200 pl-2 transition-colors"
+        >
+          <CreditCard className="w-3.5 h-3.5" />
+          구독
+        </Link>
       )}
       <span className="flex items-center gap-2 border-l border-slate-200 pl-2">
         <User className="w-3.5 h-3.5 text-slate-400" />

@@ -14,6 +14,7 @@ import { AnalysisDetail } from './AnalysisDetail';
 import { sumPoints, roundPoints } from '@/lib/exam-analysis/points';
 import { NarrowScreenGuard } from '@/components/ui/NarrowScreenGuard';
 import { ProfileMenu } from '@/components/layout/ExamOnlyTopBar';
+import { useSubscription, quotaExceeded, quotaLabel } from '@/components/providers/SubscriptionProvider';
 
 // 기출 분석 필터 — 학년 옵션 (DB grade는 한글 문자열로 저장: 중1/고1 등)
 const GRADE_OPTIONS = ['중1', '중2', '중3', '고1', '고2', '고3'];
@@ -30,6 +31,7 @@ export default function ExamAnalysisPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedDetail, setSelectedDetail] = useState<ExamPaperData | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const { usage, refetch: refetchSub } = useSubscription();
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
   // 목록 패널 너비(px) — 경계 드래그로 조절. 기본 288(=w-72), 범위 220~560. localStorage 영속.
   const LIST_MIN_W = 220, LIST_MAX_W = 560, LIST_DEFAULT_W = 288;
@@ -274,6 +276,10 @@ export default function ExamAnalysisPage() {
   }, [clearGen]);
 
   const handleAnalyze = async (id: string) => {
+    if (quotaExceeded(usage)) {
+      toast.error(`이번 달 분석 한도(${usage.limit}회)를 초과했습니다 — 구독에서 업그레이드하세요`);
+      return;
+    }
     setAnalyzing(true);
     // 재분석 대상이 기존에 총평을 갖고 있었는지 (재분석 = 완전 최신화 → 총평도 V3로 자동 재생성)
     const target = items.find((it) => it.id === id);
@@ -296,15 +302,17 @@ export default function ExamAnalysisPage() {
       fetch(`/api/exam-analysis/${id}/analyze`, { method: 'POST' })
         .then(async (res) => {
           if (!res.ok) {
-            const err = await res.json();
-            toast.error(err.error?.message || '분석 실패');
+            const err = await res.json().catch(() => null);
+            toast.error(err?.error?.message || (res.status === 403 ? '분석 한도를 초과했습니다 — 구독에서 업그레이드' : '분석 실패'));
             fetchList(true);
+            refetchSub();
             if (selectedId === id) fetchDetail(id);
             return;
           }
           // 분석 성공 → 즉시 목록/상세 갱신(결과 표시) 후 메타데이터 백그라운드 선생성
           // (readiness 통과 시. willChain이면 메타데이터 준비 후 총평까지 자동 생성)
           fetchList(true);
+          refetchSub(); // 사용량 배지 즉시 갱신
           if (selectedId === id) fetchDetail(id);
           await prepareMetadataAndMaybeCommentary(id, willChain);
         })
@@ -341,6 +349,13 @@ export default function ExamAnalysisPage() {
               <span className="ml-auto px-1.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary shrink-0">
                 {total}
               </span>
+              <Link
+                href="/billing"
+                title={`이번 달 분석 사용량 ${quotaLabel(usage)} · 구독 관리`}
+                className={`px-1.5 py-0.5 rounded-full text-[11px] font-bold shrink-0 transition-colors ${quotaExceeded(usage) ? 'bg-rose-100 text-rose-700 hover:bg-rose-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+              >
+                {quotaLabel(usage)}
+              </Link>
             </div>
           )}
           <button
