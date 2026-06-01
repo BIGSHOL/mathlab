@@ -451,7 +451,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
         let i = 0;
         for (const node of nodes) {
           i += 1;
-          toast.loading(`섹션 캡처·업로드 중... (${i}/${nodes.length})`, tid);
+          toast.loading('섹션 캡처·업로드 중...', tid, { current: i, total: nodes.length });
           let dataUrl: string;
           try {
             // 섹션의 실제 배경색을 backdrop으로 전달 — dark 섹션(.v3-feature #121212 등)에서
@@ -490,10 +490,31 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
       }
       if (!blocks.length) { toast.error('캡처/업로드된 섹션이 없습니다', undefined, tid); return; }
 
-      const html = `<div style="width:${DISPLAY_W}px;max-width:100%;">${blocks.map((b) =>
-        `<p style="text-align:center;margin:0 0 6px;"><img src="${b.url}" style="width:${DISPLAY_W}px;max-width:100%;" /></p>` +
-        (b.summary ? `<p style="font-size:14px;color:#555;line-height:1.75;margin:0 0 30px;word-break:keep-all;">${esc(b.summary)}</p>` : '')
-      ).join('')}</div>`;
+      // 첫 이미지(상단 헤더) 캡션은 항상 "학교 연도 학기 시험종류"로 시작 (검색 노출 강화).
+      //   examScope(Json — 신형 객체/레거시 배열/null)는 진입부 정규화 후 사용. examType은 MIDTERM/FINAL.
+      const examLabel = (() => {
+        const parts: string[] = [];
+        if (detail.schoolName?.trim()) parts.push(detail.schoolName.trim());
+        const scope = detail.examScope;
+        let year: unknown, sem: unknown;
+        if (scope && typeof scope === 'object' && !Array.isArray(scope)) {
+          year = (scope as { examYear?: unknown }).examYear;
+          sem = (scope as { examSemester?: unknown }).examSemester;
+        }
+        const tail: string[] = [];
+        if (typeof year === 'number' || (typeof year === 'string' && year)) tail.push(`${year}년`);
+        if (typeof sem === 'number') tail.push(`${sem}학기`);
+        const etLabel = ({ MIDTERM: '중간', FINAL: '기말' } as Record<string, string>)[detail.examType] ?? '';
+        if (etLabel) tail.push(`${etLabel}고사`);
+        if (tail.length) parts.push(tail.join(' '));
+        return koImg(parts.join(' ')).trim();
+      })();
+
+      const html = `<div style="width:${DISPLAY_W}px;max-width:100%;">${blocks.map((b, idx) => {
+        const cap = idx === 0 && examLabel ? (b.summary ? `${examLabel} — ${b.summary}` : examLabel) : b.summary;
+        return `<p style="text-align:center;margin:0 0 6px;"><img src="${b.url}" style="width:${DISPLAY_W}px;max-width:100%;" /></p>` +
+          (cap ? `<p style="font-size:14px;color:#555;line-height:1.75;margin:0 0 30px;word-break:keep-all;">${esc(cap)}</p>` : '');
+      }).join('')}</div>`;
 
       // 클립보드 복사 — 캡처/업로드(긴 async) 후에는 execCommand의 user-gesture가 만료돼 실패할 수 있음.
       //   → 모던 Clipboard API 우선(문서 포커스만 있으면 async 후에도 동작). 실패 시 execCommand 폴백.

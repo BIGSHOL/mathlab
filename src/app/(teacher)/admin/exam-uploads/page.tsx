@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Search, Trash2, FileText, HardDrive, RefreshCw, ArrowUp, ArrowDown, ChevronsUpDown } from 'lucide-react';
+import { Search, Trash2, FileText, HardDrive, RefreshCw, ArrowUp, ArrowDown, ChevronsUpDown, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 import { PageContainer } from '@/components/ui/PageContainer';
@@ -37,6 +37,15 @@ const STATUS_LABEL: Record<string, { text: string; color: string }> = {
 };
 const SUBJECT_LABEL: Record<string, string> = { MATH: '수학', ENGLISH: '영어' };
 
+// 학교 매핑 상태 — school 관계가 풀리면 매핑됨(School DB 연결 → GPS·주변학교 비교 가능),
+//   schoolName만 있고 관계가 null이면 미매핑(매칭 안 됨 또는 School DB 리셋으로 연결 끊김), 둘 다 없으면 미지정.
+type MapState = 'mapped' | 'unmapped' | 'none';
+function mapStateOf(i: { school: { id: string } | null; schoolName: string | null }): MapState {
+  if (i.school) return 'mapped';
+  if (i.schoolName) return 'unmapped';
+  return 'none';
+}
+
 type SortKey = 'title' | 'tenant' | 'teacher' | 'school' | 'status' | 'questions' | 'createdAt';
 
 function formatBytes(bytes: number): string {
@@ -57,6 +66,7 @@ export default function ExamUploadsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [gradeFilter, setGradeFilter] = useState('');
   const [subjectFilter, setSubjectFilter] = useState('');
+  const [mapFilter, setMapFilter] = useState(''); // '' | 'mapped' | 'unmapped'
   const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({ key: 'createdAt', dir: 'desc' });
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -81,7 +91,7 @@ export default function ExamUploadsPage() {
   useEffect(() => { void fetchData(); }, [fetchData]);
 
   // 필터 변경 시 1페이지로
-  useEffect(() => { setPage(1); }, [search, tenantFilter, statusFilter, gradeFilter, subjectFilter]);
+  useEffect(() => { setPage(1); }, [search, tenantFilter, statusFilter, gradeFilter, subjectFilter, mapFilter]);
 
   // 동적 옵션 (데이터에 존재하는 값만)
   const gradeOptions = useMemo(
@@ -92,6 +102,16 @@ export default function ExamUploadsPage() {
     () => Array.from(new Set(items.map((i) => i.subject).filter(Boolean))) as string[],
     [items],
   );
+  // 학교 매핑 현황 (전체 기준) — 매핑됨 / 미매핑 카운트
+  const mapCounts = useMemo(() => {
+    let mapped = 0, unmapped = 0;
+    for (const i of items) {
+      const s = mapStateOf(i);
+      if (s === 'mapped') mapped++;
+      else if (s === 'unmapped') unmapped++;
+    }
+    return { mapped, unmapped };
+  }, [items]);
 
   // 필터 + 정렬
   const filtered = useMemo(() => {
@@ -104,7 +124,8 @@ export default function ExamUploadsPage() {
       && (!tenantFilter || i.tenantId === tenantFilter)
       && (!statusFilter || i.status === statusFilter)
       && (!gradeFilter || i.grade === gradeFilter)
-      && (!subjectFilter || i.subject === subjectFilter),
+      && (!subjectFilter || i.subject === subjectFilter)
+      && (!mapFilter || mapStateOf(i) === mapFilter),
     );
     const dir = sort.dir === 'asc' ? 1 : -1;
     const val = (i: ExamUpload): string | number => {
@@ -124,7 +145,7 @@ export default function ExamUploadsPage() {
       if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir;
       return String(va).localeCompare(String(vb), 'ko') * dir;
     });
-  }, [items, search, tenantFilter, statusFilter, gradeFilter, subjectFilter, sort]);
+  }, [items, search, tenantFilter, statusFilter, gradeFilter, subjectFilter, mapFilter, sort]);
 
   const totalFiltered = filtered.length;
   const paged = filtered.slice((page - 1) * limit, page * limit);
@@ -206,6 +227,22 @@ export default function ExamUploadsPage() {
             </p>
           </div>
         </div>
+        <button
+          type="button"
+          onClick={() => setMapFilter((f) => (f === 'unmapped' ? '' : 'unmapped'))}
+          title="클릭하면 미매핑만 필터"
+          className={`flex items-center gap-2 px-4 py-3 rounded-sm transition-colors ${mapFilter === 'unmapped' ? 'bg-amber-100 ring-1 ring-amber-300' : 'bg-slate-50 hover:bg-slate-100'}`}
+        >
+          <MapPin className="w-5 h-5 text-slate-500" />
+          <div className="text-left">
+            <p className="text-xs text-slate-600">학교 매핑</p>
+            <p className="text-lg font-bold">
+              <span className="text-green-600">매핑 {mapCounts.mapped}</span>
+              <span className="text-slate-300"> · </span>
+              <span className="text-amber-600">미매핑 {mapCounts.unmapped}</span>
+            </p>
+          </div>
+        </button>
       </div>
 
       {/* 필터 */}
@@ -238,6 +275,11 @@ export default function ExamUploadsPage() {
             {subjectOptions.map((s) => <option key={s} value={s}>{SUBJECT_LABEL[s] ?? s}</option>)}
           </select>
         )}
+        <select value={mapFilter} onChange={(e) => setMapFilter(e.target.value)} className={selectCls}>
+          <option value="">전체 매핑</option>
+          <option value="mapped">매핑됨</option>
+          <option value="unmapped">미매핑</option>
+        </select>
         <Button size="sm" variant="ghost" onClick={fetchData}>
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
         </Button>
@@ -294,7 +336,21 @@ export default function ExamUploadsPage() {
                     <div className="text-slate-700">{item.teacher?.name || '-'}</div>
                     <div className="text-xs text-slate-400">{item.teacher?.email || ''}</div>
                   </td>
-                  <td className="px-3 py-2.5 text-slate-600">{item.school?.name || item.schoolName || '-'}</td>
+                  <td className="px-3 py-2.5">
+                    <div className="text-slate-700">{item.school?.name || item.schoolName || '-'}</div>
+                    {(() => {
+                      const m = mapStateOf(item);
+                      if (m === 'none') return null;
+                      return m === 'mapped' ? (
+                        <span className="inline-block mt-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">매핑됨</span>
+                      ) : (
+                        <span
+                          className="inline-block mt-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700"
+                          title="School DB에 매칭되지 않음 — 주변 학교 비교·GPS 불가"
+                        >미매핑</span>
+                      );
+                    })()}
+                  </td>
                   <td className="px-3 py-2.5 text-center">
                     <span className={`text-xs px-2 py-0.5 rounded-full ${status.color}`}>{status.text}</span>
                   </td>

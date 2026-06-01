@@ -6,17 +6,20 @@ import { CheckCircle, XCircle, AlertTriangle, Info, X, Loader2 } from 'lucide-re
 
 type ToastType = 'success' | 'error' | 'warning' | 'info' | 'loading';
 
+interface ToastProgress { current: number; total: number }
+
 interface ToastItem {
   id: string;
   type: ToastType;
   message: string;
   duration: number; // 0 이하 = 자동 종료 안 함(작업 진행 중 유지)
+  progress?: ToastProgress; // 있으면 % + n등분 세그먼트 바 표시 (진행률)
 }
 
 interface ToastStore {
   toasts: ToastItem[];
   /** id 지정 시 기존 토스트 갱신(upsert), 아니면 새로 추가. 생성/갱신된 id 반환 */
-  add: (type: ToastType, message: string, duration?: number, id?: string) => string;
+  add: (type: ToastType, message: string, duration?: number, id?: string, progress?: ToastProgress) => string;
   remove: (id: string) => void;
 }
 
@@ -26,14 +29,15 @@ let seq = 0;
 
 export const useToast = create<ToastStore>((set) => ({
   toasts: [],
-  add: (type, message, duration = DEFAULT_DURATION, id) => {
+  add: (type, message, duration = DEFAULT_DURATION, id, progress) => {
     const tid = id ?? `t-${++seq}-${Date.now()}`;
     set((s) => {
       if (s.toasts.some((t) => t.id === tid)) {
         // 기존 토스트 갱신 (예: loading → success). duration 바뀌면 ToastItem이 타이머 재설정.
-        return { toasts: s.toasts.map((t) => (t.id === tid ? { ...t, type, message, duration } : t)) };
+        // progress는 갱신값으로 덮어씀 — success/error 등이 progress 없이 부르면 undefined → 바 사라짐.
+        return { toasts: s.toasts.map((t) => (t.id === tid ? { ...t, type, message, duration, progress } : t)) };
       }
-      return { toasts: [...s.toasts, { id: tid, type, message, duration }] };
+      return { toasts: [...s.toasts, { id: tid, type, message, duration, progress }] };
     });
     return tid;
   },
@@ -51,8 +55,9 @@ export const toast = {
   error: (msg: string, ms?: number, id?: string) => useToast.getState().add('error', msg, ms, id),
   warning: (msg: string, ms?: number, id?: string) => useToast.getState().add('warning', msg, ms, id),
   info: (msg: string, ms?: number, id?: string) => useToast.getState().add('info', msg, ms, id),
-  /** 작업 진행 중 유지되는 토스트(자동 종료 안 함). 반환 id로 success/error 갱신 또는 dismiss. */
-  loading: (msg: string, id?: string) => useToast.getState().add('loading', msg, 0, id),
+  /** 작업 진행 중 유지되는 토스트(자동 종료 안 함). 반환 id로 success/error 갱신 또는 dismiss.
+   *  progress {current,total} 주면 % + n등분 세그먼트 바 표시. */
+  loading: (msg: string, id?: string, progress?: ToastProgress) => useToast.getState().add('loading', msg, 0, id, progress),
   dismiss: (id: string) => useToast.getState().remove(id),
 };
 
@@ -101,19 +106,38 @@ function ToastItem({ item }: { item: ToastItem }) {
     return () => clearTimeout(timer);
   }, [item.duration, startLeave]);
 
+  const prog = item.progress && item.progress.total > 0 ? item.progress : null;
+  const pct = prog ? Math.round((Math.min(prog.current, prog.total) / prog.total) * 100) : 0;
+
   return (
     <div
-      className={`flex items-center gap-2.5 px-4 py-3 rounded-sm border shadow-lg backdrop-blur-sm max-w-sm transition-all duration-[400ms] ease-out ${
+      className={`flex items-start gap-2.5 px-4 py-3 rounded-sm border shadow-lg backdrop-blur-sm max-w-sm min-w-[260px] transition-all duration-[400ms] ease-out ${
         leaving
           ? 'opacity-0 translate-x-6'
           : 'opacity-100 animate-in slide-in-from-right-full fade-in'
       } ${styles[item.type]}`}
     >
-      <Icon className={`w-4.5 h-4.5 shrink-0 ${iconColors[item.type]} ${item.type === 'loading' ? 'animate-spin' : ''}`} />
-      <p className="text-sm font-medium flex-1">{item.message}</p>
+      <Icon className={`w-4.5 h-4.5 shrink-0 mt-0.5 ${iconColors[item.type]} ${item.type === 'loading' ? 'animate-spin' : ''}`} />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-medium flex-1">{item.message}</p>
+          {prog && <span className="text-xs font-bold tabular-nums shrink-0">{pct}%</span>}
+        </div>
+        {prog && (
+          // n등분 세그먼트 바 — total개 칸 중 current개 채움
+          <div className="mt-1.5 flex gap-0.5">
+            {Array.from({ length: prog.total }).map((_, idx) => (
+              <div
+                key={idx}
+                className={`h-1.5 flex-1 rounded-[1px] transition-colors duration-200 ${idx < prog.current ? 'bg-primary' : 'bg-slate-200'}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
       <button
         onClick={startLeave}
-        className="p-0.5 rounded hover:bg-black/5 transition-colors shrink-0"
+        className="p-0.5 rounded hover:bg-black/5 transition-colors shrink-0 mt-0.5"
       >
         <X className="w-3.5 h-3.5 opacity-50" />
       </button>

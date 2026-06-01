@@ -13,6 +13,7 @@ import type { ExamPaperData } from './types';
 import { AnalysisDetail } from './AnalysisDetail';
 import { sumPoints, roundPoints } from '@/lib/exam-analysis/points';
 import { NarrowScreenGuard } from '@/components/ui/NarrowScreenGuard';
+import { ProfileMenu } from '@/components/layout/ExamOnlyTopBar';
 
 // 기출 분석 필터 — 학년 옵션 (DB grade는 한글 문자열로 저장: 중1/고1 등)
 const GRADE_OPTIONS = ['중1', '중2', '중3', '고1', '고2', '고3'];
@@ -330,6 +331,8 @@ export default function ExamAnalysisPage() {
         } ${selectedId ? 'hidden md:flex' : 'flex'}`}
         style={leftPanelCollapsed ? undefined : { width: listWidth }}
       >
+        {/* 좌상단 개인 프로필 (이름·역할·관리메뉴·로그아웃) — 우상단 토스트와 겹침 방지로 여기로 이동 */}
+        {!leftPanelCollapsed && <ProfileMenu variant="inline" />}
         <div className="flex items-center justify-between p-3 border-b border-slate-200">
           {!leftPanelCollapsed && (
             <div className="flex items-center gap-2 min-w-0">

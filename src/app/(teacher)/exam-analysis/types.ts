@@ -7,6 +7,8 @@ export interface ExamPaperData {
   grade: string;
   category: string | null;
   examType: string;
+  // 출제범위 메타 — 신형 { topics, examYear, examSemester, examCategory } 객체 / 레거시 string[] / null (Json, 진입부 정규화)
+  examScope?: unknown;
   status: 'PENDING' | 'ANALYZING' | 'COMPLETED' | 'FAILED';
   analysisStep: number;
   schoolName: string | null;

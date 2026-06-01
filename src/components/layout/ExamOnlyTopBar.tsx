@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { LogOut, User, Settings, MapPin, FileUp, Building2, Users, FileSearch } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,15 +15,74 @@ const ADMIN_LINKS = [
   { href: '/admin/users', label: '사용자 관리', icon: Users },
 ];
 
+const ROLE_LABEL: Record<string, string> = {
+  SUPER_ADMIN: '슈퍼관리자',
+  OWNER: '원장',
+  MANAGER: '팀장',
+  TEACHER: '선생님',
+};
+
 /**
- * 기출분석 전용 앱 우측 상단 미니 바.
- * 사용자 이름 + 로그아웃. SUPER_ADMIN 에게는 관리 메뉴 드롭다운 노출.
+ * 공유 프로필 메뉴 — 사용자 이름/역할 + (SUPER_ADMIN) 관리 메뉴 + 로그아웃.
+ * - variant='inline'  : 사이드바 좌상단 임베드용 블록 (기출분석 페이지)
+ * - variant='floating': 우측 상단 떠있는 미니바 (사이드바 없는 admin 페이지)
  */
-export function ExamOnlyTopBar() {
+export function ProfileMenu({ variant = 'floating' }: { variant?: 'floating' | 'inline' }) {
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const name = user?.name ?? user?.username ?? '사용자';
+  const roleLabel = ROLE_LABEL[user?.role ?? ''] ?? '';
 
+  // ── 사이드바 좌상단 인라인 프로필 ──
+  if (variant === 'inline') {
+    return (
+      <div className="px-3 py-2.5 border-b border-slate-200 bg-slate-50/60">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+            <User className="w-4 h-4 text-primary" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-semibold text-slate-800 truncate leading-tight">{name}</div>
+            {roleLabel && <div className="text-[11px] text-slate-400 leading-tight">{roleLabel}</div>}
+          </div>
+          {isSuperAdmin && (
+            <button
+              onClick={() => setOpen((v) => !v)}
+              title="관리 메뉴"
+              className={`p-1.5 rounded-sm shrink-0 transition-colors ${open ? 'bg-primary/10 text-primary' : 'text-slate-400 hover:text-primary hover:bg-slate-100'}`}
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+          )}
+          <button
+            onClick={() => logout?.()}
+            title="로그아웃"
+            className="p-1.5 rounded-sm text-slate-400 hover:text-red-600 hover:bg-slate-100 shrink-0 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+        </div>
+        {isSuperAdmin && open && (
+          <div className="mt-2 space-y-0.5">
+            {ADMIN_LINKS.map(({ href, label, icon: Icon }) => (
+              <Link
+                key={href}
+                href={href}
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 px-2 py-1.5 text-xs text-slate-600 hover:bg-white rounded-sm transition-colors"
+              >
+                <Icon className="w-3.5 h-3.5 text-slate-400" />
+                {label}
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── 우측 상단 떠있는 미니바 (admin 등 사이드바 없는 페이지) ──
   return (
     <div className="fixed top-3 right-4 z-50 flex items-center gap-2 bg-white border border-slate-200 rounded-full shadow-sm px-3 py-1.5 print:hidden">
       {isSuperAdmin && (
@@ -57,9 +117,7 @@ export function ExamOnlyTopBar() {
       )}
       <span className="flex items-center gap-2 border-l border-slate-200 pl-2">
         <User className="w-3.5 h-3.5 text-slate-400" />
-        <span className="text-sm text-slate-700 font-medium">
-          {user?.name ?? user?.username ?? '사용자'}
-        </span>
+        <span className="text-sm text-slate-700 font-medium">{name}</span>
       </span>
       <button
         onClick={() => logout?.()}
@@ -71,4 +129,15 @@ export function ExamOnlyTopBar() {
       </button>
     </div>
   );
+}
+
+/**
+ * 레이아웃에 배치되는 floating 미니바.
+ * 기출분석 페이지(/exam-analysis)에선 사이드바 좌상단 ProfileMenu(inline)가 프로필을 담당하므로 숨긴다
+ * (우상단 토스트와 겹침 방지 — 사용자 요청 2026-06-01).
+ */
+export function ExamOnlyTopBar() {
+  const pathname = usePathname();
+  if (pathname?.startsWith('/exam-analysis')) return null;
+  return <ProfileMenu variant="floating" />;
 }
