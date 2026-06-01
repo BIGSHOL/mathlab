@@ -186,36 +186,32 @@ function buildExamLabelsMap(papers: Array<{ schoolId: string | null; grade: stri
       ? (EXAM_CATEGORY_KO[scope.examCategory] || scope.examCategory)
       : null;
 
-    // 연도: examScope.examYear → title → createdAt 순
+    // 연도: examScope.examYear → title → createdAt 순 (apostrophe 표기: '26)
     const yearMatch = p.title?.match(/(20\d{2})년/);
-    const year = scopeYear || (yearMatch ? yearMatch[1].slice(-2) : String(p.createdAt.getFullYear()).slice(-2));
+    const yearFull = scope?.examYear
+      ? String(scope.examYear)
+      : yearMatch ? yearMatch[1] : String(p.createdAt.getFullYear());
+    const yearLabel = `'${yearFull.slice(-2)}`;
 
-    // 학년: "중3" → "3", "고2" → "2"
-    const gradeNum = p.grade?.replace(/^[중고]/, '') || '';
+    // 학년: "중3" / "고2" 그대로 사용 (숫자만 떼지 않음)
+    const gradeLabel = p.grade || '';
     const isHigh = p.grade?.startsWith('고');
 
+    // 시험 유형 suffix
     let suffix = '';
     if (isHigh && p.category) {
       suffix = CATEGORY_ABBR[p.category] || p.category;
-    } else if (scopeSem && scopeCat) {
-      // examScope 완전 데이터: "1중간", "2기말"
-      suffix = `${scopeSem}${scopeCat}`;
     } else if (scopeCat) {
-      // 학기 없이 시험 종류만: "중간", "기말"
-      suffix = scopeCat;
+      // "1학기 중간", "2학기 기말" — 학기 있으면 앞에 붙이기
+      suffix = scopeSem ? `${scopeSem}학기 ${scopeCat}` : scopeCat;
     } else {
-      // fallback: category 필드 또는 title 패턴 파싱
-      let cat = p.category || '';
-      if (!cat || !/\d/.test(cat)) {
-        const semMatch = p.title?.match(/(\d)학기\s*(중간|기말|모의)/);
-        if (semMatch) cat = `${semMatch[1]}${semMatch[2]}`;
-      } else {
-        cat = cat.replace('학기', '');
-      }
-      suffix = cat;
+      // fallback: title 패턴 파싱
+      const semMatch = p.title?.match(/(\d)학기\s*(중간|기말|모의)/);
+      if (semMatch) suffix = `${semMatch[1]}학기 ${semMatch[2]}`;
+      else if (p.category) suffix = p.category.replace('학기', '');
     }
 
-    const label = [year, gradeNum, suffix].filter(Boolean).join('-');
+    const label = [yearLabel, gradeLabel, suffix].filter(Boolean).join(' ');
     if (label && !labels.includes(label)) labels.push(label);
     map.set(p.schoolId, labels);
   }
