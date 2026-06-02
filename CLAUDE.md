@@ -1505,5 +1505,19 @@ node scripts/geocode-failed-by-keyword.mjs     # 4. 주소 매칭 실패분을 �
 - **보너스(보정 전→후 시각화)**: 같은 축에 마커 2개 — 보정 후 ▼(현재) + 보정 전 ▲(AI 원본, 차이 ≥0.05일 때만). 보정 전 평균은 `weightedAverageDifficulty`에 `difficulty`를 `ai_difficulty ?? difficulty`로 치환해 **동일 공식 재사용**. 무의미하던 변환 텍스트를 "AI 분석 3.8 → 선생님 교정 후 3.9단계 (N건 반영)"로 대체 → "→" 화살표가 *진짜* 의미를 가짐.
 - **교훈**: round 표시는 카테고리 인식엔 좋지만(#12-7), 정밀 헤더값과 **동시 노출**하면 모순으로 읽힌다. 연속 척도는 연속축으로 그려라 — 마커 정렬 문제(px 하드코딩, 박스 폭 % 보정 등 과거 핫픽스)가 근본적으로 사라진다.
 
+### 7. 교정 이벤트 로그 (`MetadataCorrectionLog`) — append-only 수집 레이어
+- **배경**: 자동보정은 폐기(CV)됐지만 *수집*은 안전·유효. "어떤 문제를 자꾸 보정하는지" 추적하려면 **이벤트 단위** 데이터가 필요한데, 기존 구조는 문항 JSON에 **최신 상태만**(`ai_<field>` = 최초 AI, `<field>` = 현재) 남아 **빈도·방향·궤적·시계열을 못 봄**.
+- **모델** `MetadataCorrectionLog` (append-only, **FK 미설정** — 시험지 삭제돼도 이력 보존): `examPaperId·tenantId·questionNumber·field` + `aiValue(최초 AI)·fromValue(직전)·toValue(교정후)` + 맥락 스냅샷(`topic·questionType·aiDifficulty·grade`) + `userId·createdAt`.
+- **수집 훅**: 교정 PATCH(`/api/exam-analysis/[id]/questions/[questionNumber]`)에서 **실제 변경된 필드(from≠to)마다 1행** `createMany` (best-effort try/catch — 로그 실패해도 교정 저장은 성공). `applyField` 헬퍼가 보존(`ai_<field>`)+적용+로그수집을 한 번에.
+- **관측 화면**: `/admin/evolution`(SUPER_ADMIN) "교정 수집 로그" 섹션 — ① 자주 보정되는 패턴 TOP(`groupBy [field,aiValue,toValue,topic]`) ② 반복 교정 문항 2회+(`groupBy [examPaperId,questionNumber,field] + having: { id: { _count: { gt: 1 } } }`) ③ 최근 이벤트 타임라인. `/api/admin/evolution` 응답에 `correctionLog` 블록 추가(방어적 try/catch 폴백).
+- **설계 결정**: 자동 반영 없음(측정·관측 전용). 집계 가중(`DIFFICULTY_LEVEL_WEIGHTS`)·per-문항 보정과 **직교**. 향후 안전한 고도화(프롬프트 few-shot·지점별 보정)의 *데이터 토대*. 기존 교정분(훅 이전)은 로그에 없음 → 필요 시 문항 JSON에서 백필.
+- **검증 패턴**: 브라우저 교정 → PATCH 200 → DB 로그 적재(맥락 포함) → `groupBy/having` 집계 end-to-end 확인 → **테스트 교정·로그 원복**(데모 데이터 오염 방지). Prisma `having` 카운트 필터는 `having: { id: { _count: { gt: N } } }` + `_count: { id: true }` 쌍으로.
+
+### 8. 🔴 dev 서버 포트 충돌 — `localhost`(IPv6 ::1) vs `127.0.0.1`(IPv4) + 다른 프로젝트
+- **증상**: 스키마 변경 후 mathlab dev 재기동했는데 브라우저 `localhost:3000`이 **전혀 다른 프로젝트**(옆 폴더 vite 앱) 화면을 띄움. 같은 :3000인데.
+- **원인**: 다른 프로젝트가 `[::1]:3000`(IPv6 localhost)에 listen 중 + mathlab은 `0.0.0.0:3000`(IPv4)에 bind. Windows `localhost`는 **IPv6(::1) 우선** 해석 → 브라우저가 옆 프로젝트로 감. `127.0.0.1`이어야 IPv4(mathlab). 두 앱이 주소패밀리가 달라 **동시에 :3000 점유** 가능(EADDRINUSE 안 남 → 더 헷갈림).
+- **해결**: 충돌 의심 시 mathlab을 **명시 전용 포트**로 — `PORT=3100 npm run dev`(`scripts/dev.mjs`가 PORT env 우선). 브라우저는 `localhost:3100`(전용 포트는 충돌 없음). 진단: `netstat -ano | grep :3000`로 IPv4(`0.0.0.0`)·IPv6(`[::1]`) 리스너 PID 각각 확인 + `wmic process where "ProcessId=N" get CommandLine`로 어느 프로젝트인지 식별.
+- **스키마 변경 워크플로 재확인**(#1과 연계): dev 중지(DLL 잠금 해제 + 새 모델 핫리로드 안 됨) → `prisma generate` + `db push` → dev 재시작. 재시작 시 위 포트 충돌 주의.
+
 ### 메타 — API 과부하(529) 중 작업 진행
 - compaction(요약)이 500/529로 실패하는 건 Anthropic API 과부하(status.claude.com fetch 자체가 529)일 수 있음 — **일반 도구 호출은 통과**하므로 작업은 계속 가능. 추측 금지하고 status로 확인.
