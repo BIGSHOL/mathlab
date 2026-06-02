@@ -1023,7 +1023,7 @@ V3 동일 fix를 **3곳에 모두 적용**:
 | 낮 | **V3 모드 토글 UI** | commentary-spec.md 옵션. 사용자가 V2/V3 전환 가능 |
 | 낮 | **차트 PNG 네이버 CDN 호스팅** | 현재 base64라 사이즈 큼. 외부 URL로 최적화 |
 | 낮 | **grade_cuts 자동 추정** | 학생 응답 분포 기반. 현재는 AI 추정만 |
-| 낮 | **V3 인쇄 모드 (/print 페이지)** | 인쇄는 여전히 V2 마크업 |
+| ~~낮~~ | ~~**V3 인쇄 모드 (/print 페이지)**~~ | **제거됨(2026-06-02)** — exam-analysis `/print` 삭제(오프라인 수요 없음+V2 부채). 재구축 시 V3 PDF로 (세션 #9 참조) |
 | 매우 낮 | **사용량 통계** | V3 사용 비율, [V3 네이버 복사] 클릭, 학부모 피드백 |
 
 #### 학습된 함정 — 디버깅 시간 주의
@@ -1519,10 +1519,11 @@ node scripts/geocode-failed-by-keyword.mjs     # 4. 주소 매칭 실패분을 �
 - **해결**: 충돌 의심 시 mathlab을 **명시 전용 포트**로 — `PORT=3100 npm run dev`(`scripts/dev.mjs`가 PORT env 우선). 브라우저는 `localhost:3100`(전용 포트는 충돌 없음). 진단: `netstat -ano | grep :3000`로 IPv4(`0.0.0.0`)·IPv6(`[::1]`) 리스너 PID 각각 확인 + `wmic process where "ProcessId=N" get CommandLine`로 어느 프로젝트인지 식별.
 - **스키마 변경 워크플로 재확인**(#1과 연계): dev 중지(DLL 잠금 해제 + 새 모델 핫리로드 안 됨) → `prisma generate` + `db push` → dev 재시작. 재시작 시 위 포트 충돌 주의.
 
-### 9. 내보내기(Export) 버튼 일시 비활성화 (고도화 예정)
-- **현황**: 분석본 헤더의 **"내보내기"** 버튼([AnalysisDetail.tsx](src/app/(teacher)/exam-analysis/AnalysisDetail.tsx) ~804행)을 **일단 비활성화**. 원래 `<Link href={`/exam-analysis/[id]/print`}>`로 인쇄 페이지 이동이었으나, 기능 고도화 예정이라 `<Button disabled title="준비 중">`으로 교체(Link 제거).
-- **재활성화**: `disabled` 제거 + `<Link href={`/exam-analysis/${detail.id}/print`}>`로 다시 감싸기. (print 페이지/라우트는 그대로 살아있음 — 버튼만 끊은 상태)
-- **사용자 노출 문구**: tooltip은 **"준비 중"** 만 (CLAUDE.md #0-1 — "고도화 예정" 등 내부 사정은 코드 주석에만, 사용자엔 결과 상태만).
+### 9. 내보내기(Export `/print`) 제거 (2026-06-02) — 재구축 시 V3 PDF로
+- **결정**: 분석본 **"내보내기"** 버튼 + `/exam-analysis/[id]/print` 페이지를 **삭제**. 헤더 버튼([AnalysisDetail.tsx](src/app/(teacher)/exam-analysis/AnalysisDetail.tsx)) 제거 + `Download` import 정리 + `print/page.tsx` 파일 삭제. (참조처는 그 버튼 하나뿐이라 dead link 없음.)
+- **이유**: ① **블로그 이미지 복사(네이버 V3)** 가 주력 공유 산출물 — print(raw 표)와 채널·품질 격차 큼. ② print는 **V2 마크업**이라 V3와 동기화 안 됨(반쯤 유지되던 부채). ③ **오프라인(종이/PDF) 수요 현재 없음** — 디지털(블로그·카톡) 공유 중심.
+- **재구축 가이드(나중에 오프라인 수요 생기면)**: V2 print를 되살리지 말 것. **"내보내기 = V3 화면을 PDF/이미지로 저장"** 으로 재정의 — 산출물은 V3 하나, 전달 포맷만 둘(클립보드→블로그 / PDF→오프라인)로 중복·부채 방지. (V3 톤은 `naver-v3-renderer.ts` / V3CommentaryView 재사용)
+- **잔존 무관**: `/tests/[id]/print`(시험지 인쇄, 9템플릿)는 **별개 기능 — 영향 없음**. 삭제된 건 기출분석(exam-analysis) 전용 print만.
 
 ### 메타 — API 과부하(529) 중 작업 진행
 - compaction(요약)이 500/529로 실패하는 건 Anthropic API 과부하(status.claude.com fetch 자체가 529)일 수 있음 — **일반 도구 호출은 통과**하므로 작업은 계속 가능. 추측 금지하고 status로 확인.

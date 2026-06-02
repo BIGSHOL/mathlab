@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { Sparkles, Database, Download, FileText, X, Copy } from 'lucide-react';
+import { Sparkles, Database, FileText, X, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Tabs } from '@/components/ui/Tabs';
 import { toast } from '@/components/ui/Toast';
@@ -799,11 +799,8 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                     <Database className="w-4 h-4 mr-1" /> 문제은행에 추가
                   </Button>
                 )}
-                {/* 내보내기 — 일단 비활성화 (기능 고도화 예정, 2026-06-02).
-                    재활성화: disabled 제거 + <Link href={`/exam-analysis/${detail.id}/print`}>로 다시 감싸기. */}
-                <Button size="sm" variant="secondary" disabled title="준비 중">
-                  <Download className="w-4 h-4 mr-1" /> 내보내기
-                </Button>
+                {/* 내보내기(/print) 제거 (2026-06-02) — 오프라인 수요 없음 + V2 부채.
+                    재구축 필요 시 CLAUDE.md "내보내기 제거" 항목 참조(V3 PDF/이미지로 재정의 권장). */}
               </>
             )}
             {(detail.status === 'PENDING' || detail.status === 'FAILED') && (
