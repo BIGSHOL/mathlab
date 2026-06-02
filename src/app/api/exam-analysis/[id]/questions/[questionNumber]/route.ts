@@ -47,7 +47,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const tenantWhere = getTenantFilter(user);
     const examPaper = await prisma.examPaper.findFirst({
       where: { id, ...tenantWhere },
-      select: { id: true },
+      select: { id: true, tenantId: true, grade: true },
     });
     if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
 
@@ -78,15 +78,24 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       next.confidence = parsed.data.confidence;
     }
     // 보정 학습 대상 필드 — 최초 교정 시 AI 원본을 ai_<field> 에 보존 (ground truth)
-    const preserveAndSet = (field: string, aiKey: string, value: unknown) => {
+    // + 실제 변경된 필드는 corrections 에 모아 append-only 이벤트 로그로 기록 (순수 수집 레이어)
+    const corrections: { field: string; aiValue: string | null; fromValue: string | null; toValue: string | null }[] = [];
+    const applyField = (field: string, aiKey: string, value: unknown) => {
+      const fromRaw = current[field];
+      const from = fromRaw == null ? null : String(fromRaw);
+      const to = value == null ? null : String(value);
+      // AI 원본: 이미 보존돼 있으면 그 값, 아니면 현재값(= 최초 교정 직전이 AI 원본)
+      const aiRaw = current[aiKey] != null ? current[aiKey] : current[field];
+      const ai = aiRaw == null ? null : String(aiRaw);
       if (current[aiKey] == null) next[aiKey] = current[field] ?? null;
       next[field] = value;
+      if (from !== to) corrections.push({ field, aiValue: ai, fromValue: from, toValue: to });
     };
-    if (parsed.data.topic !== undefined) preserveAndSet('topic', 'ai_topic', parsed.data.topic.trim() || null);
-    if (parsed.data.difficulty !== undefined) preserveAndSet('difficulty', 'ai_difficulty', parsed.data.difficulty);
-    if (parsed.data.points !== undefined) preserveAndSet('points', 'ai_points', parsed.data.points);
-    if (parsed.data.question_type !== undefined) preserveAndSet('question_type', 'ai_question_type', parsed.data.question_type);
-    if (parsed.data.ability_domain !== undefined) preserveAndSet('ability_domain', 'ai_ability_domain', parsed.data.ability_domain);
+    if (parsed.data.topic !== undefined) applyField('topic', 'ai_topic', parsed.data.topic.trim() || null);
+    if (parsed.data.difficulty !== undefined) applyField('difficulty', 'ai_difficulty', parsed.data.difficulty);
+    if (parsed.data.points !== undefined) applyField('points', 'ai_points', parsed.data.points);
+    if (parsed.data.question_type !== undefined) applyField('question_type', 'ai_question_type', parsed.data.question_type);
+    if (parsed.data.ability_domain !== undefined) applyField('ability_domain', 'ai_ability_domain', parsed.data.ability_domain);
     // 수동 편집 표시
     next.manually_edited = true;
     next.manually_edited_at = new Date().toISOString();
@@ -98,6 +107,33 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       where: { id: latest.id },
       data: { questions: updatedQuestions as never },
     });
+
+    // ── 교정 이벤트 로그 (append-only, best-effort) — 실패해도 교정 저장 자체는 성공 처리 ──
+    if (corrections.length > 0) {
+      try {
+        const ctxTopic = next.topic ?? current.topic;
+        const ctxType = next.question_type ?? current.question_type;
+        const ctxAiDiff = current.ai_difficulty ?? current.difficulty;
+        await prisma.metadataCorrectionLog.createMany({
+          data: corrections.map((c) => ({
+            examPaperId: id,
+            tenantId: examPaper.tenantId ?? null,
+            questionNumber: String(questionNumber),
+            field: c.field,
+            aiValue: c.aiValue,
+            fromValue: c.fromValue,
+            toValue: c.toValue,
+            topic: ctxTopic != null ? String(ctxTopic) : null,
+            questionType: ctxType != null ? String(ctxType) : null,
+            aiDifficulty: ctxAiDiff != null ? String(ctxAiDiff) : null,
+            grade: examPaper.grade ?? null,
+            userId: user.id,
+          })),
+        });
+      } catch (logErr) {
+        console.error('[correction-log] 이벤트 기록 실패(무시):', logErr);
+      }
+    }
 
     return NextResponse.json({ data: { question: next } });
   } catch (error) {

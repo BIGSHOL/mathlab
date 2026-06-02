@@ -746,6 +746,34 @@ model MetadataCalibration {
   @@index([subject])
 }
 
+// 교정 이벤트 로그 (append-only) — 선생님이 메타데이터를 보정한 "모든 이벤트"를 불변 기록.
+// MetadataCalibration(집계 캐시)/문항 JSON(최신 상태)과 달리, 빈도·방향·궤적·시계열을 보존하는
+// 순수 수집 레이어. AI 동작에 영향 없음(자동보정은 비활성 — 측정/관측·향후 안전한 고도화 토대).
+// 변경이 실제로 일어난 경우만(from != to) 1행씩 기록.
+model MetadataCorrectionLog {
+  id             String   @id @default(cuid())
+  examPaperId    String                          // FK 미설정(불변 로그 — 시험지 삭제돼도 이력 보존)
+  tenantId       String?
+  questionNumber String   @db.VarChar(20)
+  field          String   @db.VarChar(20)        // difficulty | topic | points | question_type | ability_domain
+  aiValue        String?  @db.VarChar(220)        // 최초 AI 원본값
+  fromValue      String?  @db.VarChar(220)        // 이 이벤트 직전 값
+  toValue        String?  @db.VarChar(220)        // 교정 후 값
+  // ── 패턴 분석 맥락 (스냅샷) ──
+  topic          String?  @db.VarChar(220)
+  questionType   String?  @db.VarChar(40)
+  aiDifficulty   String?  @db.VarChar(10)         // 이 문항을 AI가 본 난이도(버킷용)
+  grade          String?  @db.VarChar(30)
+  userId         String
+  createdAt      DateTime @default(now())
+
+  @@index([field])
+  @@index([examPaperId, questionNumber])
+  @@index([tenantId])
+  @@index([createdAt])
+  @@index([field, topic])
+}
+
 // ══════════════════════════════════════════════════════════════
 // FEAT: 내신대비 자동학습 시스템 (Exam Campaign)
 // ══════════════════════════════════════════════════════════════

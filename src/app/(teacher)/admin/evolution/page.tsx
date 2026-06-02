@@ -39,6 +39,13 @@ interface EvolutionData {
     references: { total: number; byStatus: Record<string, number> };
   };
   generative: { commentaryRuns: number; articleRuns: number; copyEvents: number };
+  correctionLog: {
+    total: number;
+    perField: Record<string, number>;
+    patternRanking: { field: string; ai: string | null; to: string | null; topic: string | null; count: number }[];
+    repeatQuestions: { examPaperId: string; questionNumber: string; field: string; count: number; school: string | null }[];
+    recentEvents: { field: string; ai: string | null; from: string | null; to: string | null; topic: string | null; aiDifficulty: string | null; questionNumber: string; school: string | null; at: string }[];
+  };
 }
 
 const FIELD_KO: Record<string, string> = {
@@ -310,6 +317,79 @@ export default function EvolutionConsolePage() {
             </div>
             <p className="text-[11px] text-slate-400 mt-2">복사 이벤트 = 「이 글을 실제 사용함」 → 좋은 출력 신호. 향후 few-shot 앵커로 활용 가능.</p>
           </Section>
+
+          {/* ④ 교정 수집 로그 (append-only 이벤트 — 빈도·반복·추이) */}
+          {data.correctionLog && (
+            <Section
+              tone="green"
+              icon={<Database className="w-4 h-4" />}
+              title={`교정 수집 로그 — 자주 보정되는 패턴 (총 ${data.correctionLog.total.toLocaleString()}건)`}
+              desc="선생님이 보정한 모든 이벤트를 불변 기록(빈도·반복·시계열). AI 자동 반영 없음 — 측정·관측 + 향후 안전한 고도화 토대."
+            >
+              {data.correctionLog.total === 0 ? (
+                <span className="text-[11px] text-slate-400">아직 수집된 교정 이벤트가 없습니다. (난이도·단원·배점·유형·능력 보정 시 자동 기록됨)</span>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-5 gap-2">
+                    {['difficulty', 'topic', 'points', 'question_type', 'ability_domain'].map((f) => (
+                      <Kpi key={f} label={FIELD_KO[f]} value={data.correctionLog.perField[f] ?? 0} accent={(data.correctionLog.perField[f] ?? 0) > 0 ? 'green' : undefined} />
+                    ))}
+                  </div>
+
+                  {/* 자주 보정되는 패턴 TOP */}
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-600 mb-1.5 flex items-center gap-1"><ArrowUpRight className="w-3.5 h-3.5" />자주 보정되는 패턴 TOP</h3>
+                    {data.correctionLog.patternRanking.length === 0 ? (
+                      <span className="text-[11px] text-slate-400">—</span>
+                    ) : (
+                      <div className="space-y-1">
+                        {data.correctionLog.patternRanking.map((p, i) => (
+                          <div key={i} className="flex items-center gap-2 text-[11px] border rounded-sm px-2 py-1 bg-white">
+                            <Chip label={FIELD_KO[p.field] ?? p.field} tone="blue" />
+                            <span className="font-mono text-slate-700">{p.ai ?? '–'} <span className="text-slate-400">→</span> <span className="font-bold text-primary">{p.to ?? '–'}</span></span>
+                            {p.topic && <span className="text-slate-400 truncate max-w-[180px]">· {p.topic.split(' > ').pop()}</span>}
+                            <span className="ml-auto font-bold text-slate-700">{p.count}회</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 반복 교정 문항 (2회+) */}
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-600 mb-1.5 flex items-center gap-1"><RefreshCw className="w-3.5 h-3.5" />반복 교정 문항 (2회 이상)</h3>
+                    {data.correctionLog.repeatQuestions.length === 0 ? (
+                      <span className="text-[11px] text-slate-400">반복 교정된 문항 없음</span>
+                    ) : (
+                      <div className="flex flex-wrap gap-1.5">
+                        {data.correctionLog.repeatQuestions.map((r, i) => (
+                          <span key={i} className="text-[11px] border rounded-sm px-2 py-1 bg-white">
+                            {r.school ?? '?'} <b>{r.questionNumber}번</b> <span className="text-slate-400">{FIELD_KO[r.field] ?? r.field}</span> <span className="text-red-600 font-bold">{r.count}회</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 최근 교정 이벤트 타임라인 */}
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-600 mb-1.5 flex items-center gap-1"><Activity className="w-3.5 h-3.5" />최근 교정 이벤트</h3>
+                    <div className="space-y-0.5 max-h-64 overflow-y-auto">
+                      {data.correctionLog.recentEvents.map((e, i) => (
+                        <div key={i} className="flex items-center gap-2 text-[11px] px-2 py-1 hover:bg-slate-50 rounded-sm">
+                          <Chip label={FIELD_KO[e.field] ?? e.field} tone="slate" />
+                          <span className="font-mono">{e.from ?? e.ai ?? '–'} <span className="text-slate-400">→</span> <span className="font-bold text-primary">{e.to ?? '–'}</span></span>
+                          {e.topic && <span className="text-slate-400 truncate max-w-[150px]">{e.topic.split(' > ').pop()}</span>}
+                          <span className="text-slate-400">· {e.school ?? '?'} {e.questionNumber}번</span>
+                          <span className="ml-auto text-slate-300 shrink-0">{new Date(e.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </Section>
+          )}
         </div>
       )}
     </PageContainer>

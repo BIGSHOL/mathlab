@@ -169,6 +169,55 @@ export async function GET() {
     prisma.examAnalysis.count(),
   ]);
 
+  // ── 교정 이벤트 로그 집계 (append-only MetadataCorrectionLog — 빈도·반복·추이) ──
+  // 최신상태 스캔(위 collected)과 달리 "모든 교정 이벤트"라 빈도/반복/시계열을 정확히 봄.
+  // 방어적: 모델/데이터 없을 때도 콘솔 안 깨지도록 폴백.
+  let correctionLog: {
+    total: number;
+    perField: Record<string, number>;
+    patternRanking: { field: string; ai: string | null; to: string | null; topic: string | null; count: number }[];
+    repeatQuestions: { examPaperId: string; questionNumber: string; field: string; count: number; school: string | null }[];
+    recentEvents: { field: string; ai: string | null; from: string | null; to: string | null; topic: string | null; aiDifficulty: string | null; questionNumber: string; school: string | null; at: string }[];
+  } = { total: 0, perField: {}, patternRanking: [], repeatQuestions: [], recentEvents: [] };
+  try {
+    const [logTotal, perFieldRows, patternRows, repeatRows, recentRows] = await Promise.all([
+      prisma.metadataCorrectionLog.count(),
+      prisma.metadataCorrectionLog.groupBy({ by: ['field'], _count: { id: true } }),
+      prisma.metadataCorrectionLog.groupBy({
+        by: ['field', 'aiValue', 'toValue', 'topic'],
+        _count: { id: true },
+        orderBy: { _count: { id: 'desc' } },
+        take: 15,
+      }),
+      prisma.metadataCorrectionLog.groupBy({
+        by: ['examPaperId', 'questionNumber', 'field'],
+        _count: { id: true },
+        having: { id: { _count: { gt: 1 } } },
+        orderBy: { _count: { id: 'desc' } },
+        take: 15,
+      }),
+      prisma.metadataCorrectionLog.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 30,
+        select: { field: true, aiValue: true, fromValue: true, toValue: true, topic: true, aiDifficulty: true, questionNumber: true, examPaperId: true, createdAt: true },
+      }),
+    ]);
+    const paperIds = Array.from(new Set([...recentRows.map((r) => r.examPaperId), ...repeatRows.map((r) => r.examPaperId)]));
+    const papers = paperIds.length > 0
+      ? await prisma.examPaper.findMany({ where: { id: { in: paperIds } }, select: { id: true, schoolName: true } })
+      : [];
+    const schoolMap = new Map(papers.map((p) => [p.id, p.schoolName]));
+    correctionLog = {
+      total: logTotal,
+      perField: Object.fromEntries(perFieldRows.map((r) => [r.field, r._count.id])),
+      patternRanking: patternRows.map((r) => ({ field: r.field, ai: r.aiValue, to: r.toValue, topic: r.topic, count: r._count.id })),
+      repeatQuestions: repeatRows.map((r) => ({ examPaperId: r.examPaperId, questionNumber: r.questionNumber, field: r.field, count: r._count.id, school: schoolMap.get(r.examPaperId) ?? null })),
+      recentEvents: recentRows.map((r) => ({ field: r.field, ai: r.aiValue, from: r.fromValue, to: r.toValue, topic: r.topic, aiDifficulty: r.aiDifficulty, questionNumber: r.questionNumber, school: schoolMap.get(r.examPaperId) ?? null, at: r.createdAt.toISOString() })),
+    };
+  } catch (e) {
+    console.error('[evolution] correctionLog 집계 실패(무시):', e);
+  }
+
   return NextResponse.json({
     data: {
       generatedAt: new Date().toISOString(),
@@ -209,6 +258,9 @@ export async function GET() {
         articleRuns,
         copyEvents, // 복사 = 품질 통과 신호이나 학습 미연동
       },
+
+      // ④ 교정 이벤트 로그 (append-only 수집 — 자주 보정되는 패턴/반복/최근)
+      correctionLog,
     },
   });
 }
