@@ -58,6 +58,24 @@ export function AnalysisCommentTab({ questions, examPaperId, analysisId, onDiffi
         </button>
       </div>
 
+      {/* 난이도 보정 요약 — 어느 문항을 선생님이 보정했는지 한 줄로(배지는 미수정과 동일하게 깔끔히 유지) */}
+      {(() => {
+        const edited = questions.filter((q) => {
+          const ai = q.ai_difficulty != null ? normalizeDiff(String(q.ai_difficulty)) : null;
+          return ai != null && ai !== normalizeDiff(q.difficulty);
+        });
+        if (edited.length === 0) return null;
+        return (
+          <div className="flex items-start gap-1.5 mb-3 text-[11px] flex-wrap">
+            <span className="inline-flex items-center gap-1 font-medium text-primary shrink-0">
+              <Pencil className="w-3 h-3" />선생님 난이도 보정 {edited.length}문항
+            </span>
+            <span className="text-slate-300">·</span>
+            <span className="text-slate-400">{edited.map((q) => q.question_number).join(' · ')}</span>
+          </div>
+        );
+      })()}
+
       {/* 테이블 */}
       <div className="border rounded-sm overflow-hidden">
         <div className="grid grid-cols-[50px_140px_1fr_50px] bg-slate-50 px-3 py-2 border-b text-xs font-medium text-slate-500">
@@ -146,8 +164,13 @@ function CommentRow({ q, showDiffReason, examPaperId, analysisId, onDifficultyEd
 
   return (
     <div className="grid grid-cols-[50px_140px_1fr_50px] px-3 py-2.5 hover:bg-slate-50 items-start">
-      {/* 번호 */}
-      <span className="text-sm font-bold text-slate-800 text-center pt-0.5">{q.question_number}</span>
+      {/* 번호 (+ 보정 점) */}
+      <span className="text-sm font-bold text-slate-800 pt-0.5 inline-flex items-center justify-center gap-1">
+        {q.question_number}
+        {wasEdited && (
+          <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" title={`선생님 난이도 보정 (AI 원본 ${aiDiff} → ${curDiff})`} />
+        )}
+      </span>
 
       {/* 단원 */}
       <span className="text-xs text-slate-600 pt-1">{shortTopic}</span>
@@ -161,16 +184,12 @@ function CommentRow({ q, showDiffReason, examPaperId, analysisId, onDifficultyEd
             <button
               type="button"
               onClick={() => setEditingDiff((v) => !v)}
-              title={wasEdited ? `선생님 수정 (AI 원본: ${aiDiff})` : '클릭하여 난이도 수정'}
+              title="클릭하여 난이도 수정"
               className="px-1.5 py-0.5 rounded-sm text-[10px] font-bold text-white inline-flex items-center gap-0.5 hover:ring-2 hover:ring-offset-1 hover:ring-slate-300 transition-all"
               style={{ backgroundColor: DIFFICULTY_COLORS[curDiff] || '#94A3B8' }}
             >
               {DIFFICULTY_LABELS[q.difficulty] || curDiff}
-              {wasEdited && <Pencil className="w-2 h-2 opacity-80" />}
             </button>
-            {wasEdited && (
-              <span className="ml-0.5 text-[9px] text-slate-400 line-through" title="AI 원본">{aiDiff}</span>
-            )}
             {editingDiff && (
               <div className="absolute left-0 top-6 z-50 bg-white rounded-sm shadow-lg border p-1.5 flex items-center gap-1">
                 {['1', '2', '3', '4', '5'].map((lv) => (
