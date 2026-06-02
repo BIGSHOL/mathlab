@@ -34,7 +34,7 @@ const DOMAIN_LABELS = ABILITY_DOMAIN_LABELS;
 const DOMAIN_COLORS = ABILITY_DOMAIN_COLORS;
 
 export function TypeRadarChart({ data, questions }: TypeRadarChartProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>('type');
+  const [viewMode, setViewMode] = useState<ViewMode>('ability');
 
   // 능력 영역 데이터 계산
   const abilityData = useMemo(() => {
@@ -242,20 +242,20 @@ function Header({
       <div className="ml-auto flex items-center gap-1.5">
         <div className="flex bg-slate-100 rounded-sm p-0.5">
           <button
-            onClick={() => setViewMode('type')}
-            className={`px-2 py-0.5 text-[10px] rounded-sm transition-colors ${
-              viewMode === 'type' ? 'bg-white shadow-sm font-semibold text-slate-800' : 'text-slate-400'
-            }`}
-          >
-            유형
-          </button>
-          <button
             onClick={() => setViewMode('ability')}
             className={`px-2 py-0.5 text-[10px] rounded-sm transition-colors ${
               viewMode === 'ability' ? 'bg-white shadow-sm font-semibold text-slate-800' : 'text-slate-400'
             }`}
           >
             능력
+          </button>
+          <button
+            onClick={() => setViewMode('type')}
+            className={`px-2 py-0.5 text-[10px] rounded-sm transition-colors ${
+              viewMode === 'type' ? 'bg-white shadow-sm font-semibold text-slate-800' : 'text-slate-400'
+            }`}
+          >
+            유형
           </button>
         </div>
       </div>
