@@ -1519,5 +1519,10 @@ node scripts/geocode-failed-by-keyword.mjs     # 4. 주소 매칭 실패분을 �
 - **해결**: 충돌 의심 시 mathlab을 **명시 전용 포트**로 — `PORT=3100 npm run dev`(`scripts/dev.mjs`가 PORT env 우선). 브라우저는 `localhost:3100`(전용 포트는 충돌 없음). 진단: `netstat -ano | grep :3000`로 IPv4(`0.0.0.0`)·IPv6(`[::1]`) 리스너 PID 각각 확인 + `wmic process where "ProcessId=N" get CommandLine`로 어느 프로젝트인지 식별.
 - **스키마 변경 워크플로 재확인**(#1과 연계): dev 중지(DLL 잠금 해제 + 새 모델 핫리로드 안 됨) → `prisma generate` + `db push` → dev 재시작. 재시작 시 위 포트 충돌 주의.
 
+### 9. 내보내기(Export) 버튼 일시 비활성화 (고도화 예정)
+- **현황**: 분석본 헤더의 **"내보내기"** 버튼([AnalysisDetail.tsx](src/app/(teacher)/exam-analysis/AnalysisDetail.tsx) ~804행)을 **일단 비활성화**. 원래 `<Link href={`/exam-analysis/[id]/print`}>`로 인쇄 페이지 이동이었으나, 기능 고도화 예정이라 `<Button disabled title="준비 중">`으로 교체(Link 제거).
+- **재활성화**: `disabled` 제거 + `<Link href={`/exam-analysis/${detail.id}/print`}>`로 다시 감싸기. (print 페이지/라우트는 그대로 살아있음 — 버튼만 끊은 상태)
+- **사용자 노출 문구**: tooltip은 **"준비 중"** 만 (CLAUDE.md #0-1 — "고도화 예정" 등 내부 사정은 코드 주석에만, 사용자엔 결과 상태만).
+
 ### 메타 — API 과부하(529) 중 작업 진행
 - compaction(요약)이 500/529로 실패하는 건 Anthropic API 과부하(status.claude.com fetch 자체가 529)일 수 있음 — **일반 도구 호출은 통과**하므로 작업은 계속 가능. 추측 금지하고 status로 확인.

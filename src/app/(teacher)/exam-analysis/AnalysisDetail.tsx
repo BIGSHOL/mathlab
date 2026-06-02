@@ -799,11 +799,11 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                     <Database className="w-4 h-4 mr-1" /> 문제은행에 추가
                   </Button>
                 )}
-                <Link href={`/exam-analysis/${detail.id}/print`}>
-                  <Button size="sm" variant="secondary">
-                    <Download className="w-4 h-4 mr-1" /> 내보내기
-                  </Button>
-                </Link>
+                {/* 내보내기 — 일단 비활성화 (기능 고도화 예정, 2026-06-02).
+                    재활성화: disabled 제거 + <Link href={`/exam-analysis/${detail.id}/print`}>로 다시 감싸기. */}
+                <Button size="sm" variant="secondary" disabled title="준비 중">
+                  <Download className="w-4 h-4 mr-1" /> 내보내기
+                </Button>
               </>
             )}
             {(detail.status === 'PENDING' || detail.status === 'FAILED') && (
