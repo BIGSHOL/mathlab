@@ -19,71 +19,13 @@ interface CurrUnit {
   subUnits?: Array<{ name: string; subUnits?: Array<{ name: string }> }>;
 }
 
-function flattenUnits(units: CurrUnit[]): string[] {
-  const out: string[] = [];
-  for (const u of units) {
-    if (!u.subUnits || u.subUnits.length === 0) {
-      out.push(u.name);
-      continue;
-    }
-    for (const su of u.subUnits) {
-      if (!su.subUnits || su.subUnits.length === 0) {
-        out.push(`${u.name} > ${su.name}`);
-        continue;
-      }
-      for (const ssu of su.subUnits) {
-        out.push(`${u.name} > ${su.name} > ${ssu.name}`);
-      }
-    }
-  }
-  return out;
-}
-
 /**
- * 학년 표기("중1", "중3", "고1", "고2", "고3", "초1"~"초6")를 받아
- * 선택 가능한 단원 목록을 반환한다.
+ * 학년 표기를 받아 선택 가능한 단원 value 목록(평면)을 반환.
+ * 그룹 옵션(getTopicOptionsGrouped)의 value를 평탄화 — 단일 소스로 포맷 정합 보장
+ * (AI 저장 포맷 "과목 > 대단원 > 중단원" 과 동일).
  */
 export function getTopicOptionsByGrade(grade: string | null | undefined): string[] {
-  if (!grade) return [];
-  const g = grade.trim();
-
-  // 중학교
-  const middleMatch = g.match(/중\s*(\d)/);
-  if (middleMatch) {
-    const gnum = middleMatch[1];
-    const keys = [`${gnum}학년 1학기`, `${gnum}학년 2학기`];
-    const options: string[] = [];
-    for (const k of keys) {
-      const units = MIDDLE_SCHOOL_CURRICULUM[k];
-      if (units) options.push(...flattenUnits(units as CurrUnit[]));
-    }
-    return Array.from(new Set(options));
-  }
-
-  // 초등학교
-  const elemMatch = g.match(/초\s*(\d)/);
-  if (elemMatch) {
-    const gnum = elemMatch[1];
-    const keys = [`${gnum}학년 1학기`, `${gnum}학년 2학기`];
-    const options: string[] = [];
-    for (const k of keys) {
-      const units = ELEMENTARY_SCHOOL_CURRICULUM[k];
-      if (units) options.push(...flattenUnits(units as CurrUnit[]));
-    }
-    return Array.from(new Set(options));
-  }
-
-  // 고등학교 — 전체 과목에서 추출
-  if (/^고/.test(g)) {
-    const options: string[] = [];
-    for (const subjKey of Object.keys(HIGH_SCHOOL_CURRICULUM)) {
-      const units = HIGH_SCHOOL_CURRICULUM[subjKey];
-      if (units) options.push(...flattenUnits(units as CurrUnit[]));
-    }
-    return Array.from(new Set(options));
-  }
-
-  return [];
+  return Array.from(new Set(getTopicOptionsGrouped(grade).flatMap((g) => g.options.map((o) => o.value))));
 }
 
 // ── 그룹화된 옵션 ──
@@ -101,22 +43,24 @@ export interface TopicOptionGroup {
   options: TopicOption[];
 }
 
-/** 한 학기의 units 배열을 그룹 옵션으로 변환 — 대단원별 optgroup */
-function unitsToGroups(units: CurrUnit[], semesterPrefix: string): TopicOptionGroup[] {
+/**
+ * 한 학기/과목의 units 배열을 그룹 옵션으로 변환 — 대단원별 optgroup.
+ * @param labelPrefix optgroup 표시용 prefix (예: "1학기", "공통수학1")
+ * @param valuePrefix 저장 value용 과목 prefix (예: "중2 수학", "공통수학1") — AI 저장 포맷과 일치
+ *
+ * value 포맷 = "과목 > 대단원 > 중단원" (소단원 미제공).
+ * 소단원은 단원별 출제현황 분석에서 미사용 + AI도 중단원까지만 분류 → 중단원까지만 제공해
+ * 선생님 교정값과 AI 분석값의 포맷·그룹핑을 정합시킨다.
+ */
+function unitsToGroups(units: CurrUnit[], labelPrefix: string, valuePrefix: string): TopicOptionGroup[] {
   return units.map((u, idx) => {
-    const groupLabel = `${semesterPrefix} · ${idx + 1}. ${u.name}`;
+    const groupLabel = `${labelPrefix} · ${idx + 1}. ${u.name}`;
     const opts: TopicOption[] = [];
     if (!u.subUnits || u.subUnits.length === 0) {
-      opts.push({ value: u.name, label: u.name });
+      opts.push({ value: `${valuePrefix} > ${u.name}`, label: u.name });
     } else {
       for (const su of u.subUnits) {
-        if (!su.subUnits || su.subUnits.length === 0) {
-          opts.push({ value: `${u.name} > ${su.name}`, label: su.name });
-        } else {
-          for (const ssu of su.subUnits) {
-            opts.push({ value: `${u.name} > ${su.name} > ${ssu.name}`, label: `${su.name} › ${ssu.name}` });
-          }
-        }
+        opts.push({ value: `${valuePrefix} > ${u.name} > ${su.name}`, label: su.name });
       }
     }
     return { label: groupLabel, options: opts };
@@ -138,7 +82,7 @@ export function getTopicOptionsGrouped(grade: string | null | undefined): TopicO
     const groups: TopicOptionGroup[] = [];
     for (const sem of ['1학기', '2학기']) {
       const units = MIDDLE_SCHOOL_CURRICULUM[`${gnum}학년 ${sem}`];
-      if (units) groups.push(...unitsToGroups(units as CurrUnit[], sem));
+      if (units) groups.push(...unitsToGroups(units as CurrUnit[], sem, `중${gnum} 수학`));
     }
     return groups;
   }
@@ -150,7 +94,7 @@ export function getTopicOptionsGrouped(grade: string | null | undefined): TopicO
     const groups: TopicOptionGroup[] = [];
     for (const sem of ['1학기', '2학기']) {
       const units = ELEMENTARY_SCHOOL_CURRICULUM[`${gnum}학년 ${sem}`];
-      if (units) groups.push(...unitsToGroups(units as CurrUnit[], sem));
+      if (units) groups.push(...unitsToGroups(units as CurrUnit[], sem, `초${gnum} 수학`));
     }
     return groups;
   }
@@ -160,7 +104,7 @@ export function getTopicOptionsGrouped(grade: string | null | undefined): TopicO
     const groups: TopicOptionGroup[] = [];
     for (const subjKey of Object.keys(HIGH_SCHOOL_CURRICULUM)) {
       const units = HIGH_SCHOOL_CURRICULUM[subjKey];
-      if (units) groups.push(...unitsToGroups(units as CurrUnit[], subjKey));
+      if (units) groups.push(...unitsToGroups(units as CurrUnit[], subjKey, subjKey));
     }
     return groups;
   }

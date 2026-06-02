@@ -1095,6 +1095,10 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
               earnedPoints={latestAnalysis.earnedPoints ?? null}
               examType={detail.examType}
               examPaperId={detail.id}
+              analysisId={latestAnalysis?.id}
+              onDifficultyEdit={(qNum, difficulty, aiDifficulty) =>
+                setDiffEdits((prev) => ({ ...prev, [String(qNum)]: { difficulty, ai_difficulty: aiDifficulty } }))
+              }
               grade={detail.grade}
             />
           )}
@@ -1102,6 +1106,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
             <AnalysisCommentTab
               questions={questions}
               examPaperId={detail.id}
+              analysisId={latestAnalysis?.id}
               onDifficultyEdit={(qNum, difficulty, aiDifficulty) =>
                 setDiffEdits((prev) => ({ ...prev, [String(qNum)]: { difficulty, ai_difficulty: aiDifficulty } }))
               }
@@ -1141,9 +1146,16 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
         const avgLabel = breakdown?.usedPoints ? '배점 가중평균' : '문항수 평균';
         const activeColor = interpolateDifficultyColor(avg);
         const levelLabel = DIFF_LEVEL_LABELS[diffLevel] ?? '';
-        const distLabel = breakdown
-          ? breakdown.counts.map((c, i) => `${i + 1}단계 ${c}문항`).join(' · ')
-          : '';
+        // 선생님 수동 난이도 보정 내역 (AI 원본 ≠ 교사 교정값인 문항)
+        const normLevel = (v: unknown): string => {
+          const k = String(v ?? '');
+          const legacy: Record<string, string> = { concept: '1', pattern: '2', reasoning: '4', creative: '5' };
+          return legacy[k] || (/^[1-5]$/.test(k) ? k : '');
+        };
+        const diffCorrections = questions
+          .filter((q) => q.manually_edited && q.ai_difficulty != null)
+          .map((q) => ({ num: q.question_number, ai: normLevel(q.ai_difficulty), teacher: normLevel(q.difficulty) }))
+          .filter((c) => c.ai && c.teacher && c.ai !== c.teacher);
         return (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
@@ -1180,9 +1192,41 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                   AI가 시험지의 모든 문항을 <strong>1~5단계</strong> (1=기본 · 2=표준 · 3=응용 · 4=심화 · 5=최고난도) 로 분류한 뒤, <strong>각 문항의 배점을 가중치로</strong> 곱해 합산하고 <strong>총 배점</strong>으로 나눠 <strong>배점 가중평균</strong>을 구합니다. 배점이 큰 고난도 문항일수록 평균에 더 크게 반영됩니다. (배점 정보가 없으면 문항 수 기준 평균)
                 </p>
                 {breakdown && (
-                  <p>
-                    이 시험은 분포가 <strong>{distLabel}</strong>로, {avgLabel} <strong>{breakdown.weightedAvg.toFixed(2)}</strong> → <strong>{avg.toFixed(1)}단계</strong>로 산정되었습니다. (정수 그룹: {diffLevel}단계)
-                  </p>
+                  <div>
+                    <p className="mb-2">
+                      {avgLabel} <strong>{breakdown.weightedAvg.toFixed(2)}</strong> → <strong>{avg.toFixed(1)}단계</strong>로 산정 (정수 그룹: {diffLevel}단계). 문항 분포:
+                    </p>
+                    <div className="rounded-sm border border-slate-100 overflow-hidden">
+                      {[1, 2, 3, 4, 5].map((lv) => {
+                        const c = breakdown.counts[lv - 1] ?? 0;
+                        return (
+                          <div key={lv} className={`flex items-center justify-between px-2.5 py-1 text-xs ${lv > 1 ? 'border-t border-slate-50' : ''}`}>
+                            <span className="flex items-center gap-2">
+                              <span className="w-5 h-5 rounded-sm flex items-center justify-center text-[11px] font-bold text-white" style={{ backgroundColor: interpolateDifficultyColor(lv) }}>{lv}</span>
+                              <span className="text-slate-600">{DIFF_LEVEL_LABELS[lv]}</span>
+                            </span>
+                            <span className="font-semibold text-slate-700">{c}문항</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {diffCorrections.length > 0 && (
+                  <div className="rounded-sm bg-primary/5 border border-primary/10 p-2.5">
+                    <p className="text-xs font-semibold text-primary mb-1.5">✎ 선생님 난이도 보정 {diffCorrections.length}건 반영됨</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {diffCorrections.map((c) => (
+                        <span key={String(c.num)} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-white border border-slate-200 text-[11px]">
+                          <span className="font-semibold text-slate-700">{c.num}번</span>
+                          <span className="text-slate-400 line-through">{c.ai}</span>
+                          <span className="text-slate-300">→</span>
+                          <span className="font-bold" style={{ color: interpolateDifficultyColor(Number(c.teacher)) }}>{c.teacher}</span>
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-1.5">AI 원본 난이도를 선생님이 직접 교정한 문항입니다. 종합 난이도는 교정값 기준으로 재계산됩니다.</p>
+                  </div>
                 )}
                 <p className="text-xs text-slate-500 pt-2 border-t border-slate-100">
                   평균 2.5점 미만은 평이한 시험(Lv 1~2), 3.5점 이상은 변별력이 높은 시험(Lv 4~5)으로 봅니다. 4·5단계 문항 비율이 높을수록 상위권 변별 의도가 강한 시험입니다.

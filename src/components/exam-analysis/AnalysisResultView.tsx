@@ -18,6 +18,7 @@ const DifficultyDonutChart = dynamic(() => import('./charts/DifficultyDonutChart
 import { EssayAnalysisSection } from './EssayAnalysisSection';
 import { DiscriminationSection } from './DiscriminationSection';
 import { InfoTooltip } from './InfoTooltip';
+import { QuestionFeedbackButton } from './QuestionFeedbackButton';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnySummary = Record<string, any> | null;
@@ -30,6 +31,10 @@ interface AnalysisResultViewProps {
   examType: string;
   /** 시험지 ID — 수동 단원 편집 API 호출용 */
   examPaperId?: string;
+  /** 분석본 ID — 피드백 신고 연결용 */
+  analysisId?: string;
+  /** 난이도 인라인 교정 콜백 — 부모(AnalysisDetail)가 종합 난이도를 즉시 재계산 (AI 코멘트 탭과 동일) */
+  onDifficultyEdit?: (questionNumber: number | string, difficulty: string, aiDifficulty: string | null) => void;
   /** 학년 (중1/중3/고1 등) — 편집 시 단원 드롭다운 옵션 필터링 */
   grade?: string | null;
 }
@@ -113,7 +118,7 @@ function getPointsSuggestion(qs: AnalyzedQuestion[], expectedTotal: number | nul
 
 // ── 메인 컴포넌트 ──
 
-export function AnalysisResultView({ questions: questionsProp, summary, totalPoints: _totalPoints, earnedPoints: _earnedPoints, examType, examPaperId, grade }: AnalysisResultViewProps) {
+export function AnalysisResultView({ questions: questionsProp, summary, totalPoints: _totalPoints, earnedPoints: _earnedPoints, examType, examPaperId, analysisId, onDifficultyEdit, grade }: AnalysisResultViewProps) {
   // 수동 편집 로컬 오버레이 (페이지 리로드 없이 즉시 표시) — 종합 통계도 즉시 갱신
   const [editedTopics, setEditedTopics] = React.useState<Record<string, string>>({});
   const [editedPoints, setEditedPoints] = React.useState<Record<string, number>>({});
@@ -275,7 +280,7 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
   }), [questions]);
 
   const total = questions.length;
-  const colSpan = isStudentExam ? 8 : 7;
+  const colSpan = isStudentExam ? 9 : 8;
   const maxTopic = Math.max(...topicGroups.map(t => t.count), 1);
 
   // 신뢰도 평균
@@ -410,6 +415,7 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
                 </th>
                 {isStudentExam && <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 w-14">정답</th>}
                 <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 w-16">신뢰도</th>
+                <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 w-16">피드백</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -419,7 +425,7 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
                     <span className="text-xs font-semibold text-sky-600">객관식</span>
                     <span className="text-xs text-slate-400 ml-2">{grouped.objective.length}문항</span>
                   </td></tr>
-                  {grouped.objective.map((q, i) => <QRow key={`o-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} grade={grade} onTopicUpdate={handleTopicUpdate} onPointsUpdate={handlePointsUpdate} onTypeUpdate={handleTypeUpdate} onAbilityUpdate={handleAbilityUpdate} />)}
+                  {grouped.objective.map((q, i) => <QRow key={`o-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} analysisId={analysisId} onDifficultyEdit={onDifficultyEdit} grade={grade} onTopicUpdate={handleTopicUpdate} onPointsUpdate={handlePointsUpdate} onTypeUpdate={handleTypeUpdate} onAbilityUpdate={handleAbilityUpdate} />)}
                 </>
               )}
               {grouped.shortAnswer.length > 0 && (
@@ -428,7 +434,7 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
                     <span className="text-xs font-semibold text-teal-600">단답형</span>
                     <span className="text-xs text-slate-400 ml-2">{grouped.shortAnswer.length}문항</span>
                   </td></tr>
-                  {grouped.shortAnswer.map((q, i) => <QRow key={`s-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} grade={grade} onTopicUpdate={handleTopicUpdate} onPointsUpdate={handlePointsUpdate} onTypeUpdate={handleTypeUpdate} onAbilityUpdate={handleAbilityUpdate} />)}
+                  {grouped.shortAnswer.map((q, i) => <QRow key={`s-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} analysisId={analysisId} onDifficultyEdit={onDifficultyEdit} grade={grade} onTopicUpdate={handleTopicUpdate} onPointsUpdate={handlePointsUpdate} onTypeUpdate={handleTypeUpdate} onAbilityUpdate={handleAbilityUpdate} />)}
                 </>
               )}
               {grouped.essay.length > 0 && (
@@ -437,7 +443,7 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
                     <span className="text-xs font-semibold text-amber-600">서술형</span>
                     <span className="text-xs text-slate-400 ml-2">{grouped.essay.length}문항</span>
                   </td></tr>
-                  {grouped.essay.map((q, i) => <QRow key={`e-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} grade={grade} onTopicUpdate={handleTopicUpdate} onPointsUpdate={handlePointsUpdate} onTypeUpdate={handleTypeUpdate} onAbilityUpdate={handleAbilityUpdate} />)}
+                  {grouped.essay.map((q, i) => <QRow key={`e-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} analysisId={analysisId} onDifficultyEdit={onDifficultyEdit} grade={grade} onTopicUpdate={handleTopicUpdate} onPointsUpdate={handlePointsUpdate} onTypeUpdate={handleTypeUpdate} onAbilityUpdate={handleAbilityUpdate} />)}
                 </>
               )}
             </tbody>
@@ -553,10 +559,12 @@ function TopicSection({ topicGroups, maxTopic, total, chartColors }: {
 }
 
 
-function QRow({ q, isStudent, examPaperId, grade, onTopicUpdate, onPointsUpdate, onTypeUpdate, onAbilityUpdate }: {
+function QRow({ q, isStudent, examPaperId, analysisId, onDifficultyEdit, grade, onTopicUpdate, onPointsUpdate, onTypeUpdate, onAbilityUpdate }: {
   q: AnalyzedQuestion;
   isStudent: boolean;
   examPaperId?: string;
+  analysisId?: string;
+  onDifficultyEdit?: (qNum: string | number, difficulty: string, aiDifficulty: string | null) => void;
   grade?: string | null;
   onTopicUpdate?: (qNum: string | number, newTopic: string) => void;
   onPointsUpdate?: (qNum: string | number, newPoints: number) => void;
@@ -607,6 +615,9 @@ function QRow({ q, isStudent, examPaperId, grade, onTopicUpdate, onPointsUpdate,
             0%
           </span>
         </td>
+        <td className="px-3 py-2 text-center">
+          <QuestionFeedbackButton q={q} examPaperId={examPaperId} analysisId={analysisId} />
+        </td>
       </tr>
     );
   }
@@ -615,9 +626,7 @@ function QRow({ q, isStudent, examPaperId, grade, onTopicUpdate, onPointsUpdate,
     <tr className="hover:bg-slate-50">
       <td className={`px-3 py-2 font-semibold text-slate-700 whitespace-nowrap ${numSize}`}>{q.question_number}</td>
       <td className="px-3 py-2 text-center">
-        <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold text-white" style={{ backgroundColor: DIFFICULTY_COLORS[normalizeDifficulty(q.difficulty)] || DIFFICULTY_COLORS[q.difficulty] || '#94A3B8' }}>
-          {DIFFICULTY_LABELS[q.difficulty] || normalizeDifficulty(q.difficulty)}
-        </span>
+        <DifficultyCell q={q} examPaperId={examPaperId} onDifficultyEdit={onDifficultyEdit} />
       </td>
       <td className="px-3 py-2 text-center whitespace-nowrap">
         <EnumCell
@@ -674,7 +683,84 @@ function QRow({ q, isStudent, examPaperId, grade, onTopicUpdate, onPointsUpdate,
           {confPct}%
         </span>
       </td>
+      <td className="px-3 py-2 text-center">
+        <QuestionFeedbackButton q={q} examPaperId={examPaperId} analysisId={analysisId} />
+      </td>
     </tr>
+  );
+}
+
+// ══════════════════════════════════════════
+// 난이도 셀 — 인라인 1~5 교정 (AI 코멘트 탭과 동일 동작, 종합 난이도 즉시 재계산)
+// ══════════════════════════════════════════
+
+function DifficultyCell({ q, examPaperId, onDifficultyEdit }: {
+  q: AnalyzedQuestion;
+  examPaperId?: string;
+  onDifficultyEdit?: (qNum: string | number, difficulty: string, aiDifficulty: string | null) => void;
+}) {
+  const [editing, setEditing] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+  const cur = normalizeDifficulty(q.difficulty);
+  const aiDiff = q.ai_difficulty != null ? normalizeDifficulty(String(q.ai_difficulty)) : null;
+  const wasEdited = aiDiff != null && aiDiff !== cur;
+
+  React.useEffect(() => {
+    if (!editing) return;
+    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setEditing(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [editing]);
+
+  const save = async (lv: string) => {
+    if (lv === cur) { setEditing(false); return; }
+    if (!examPaperId) { toast.error('시험지 정보가 없습니다'); return; }
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/exam-analysis/${examPaperId}/questions/${encodeURIComponent(String(q.question_number))}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ difficulty: lv }),
+      });
+      if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err?.error?.message || '난이도 수정 실패'); }
+      const preservedAi = q.ai_difficulty != null ? String(q.ai_difficulty) : q.difficulty;
+      onDifficultyEdit?.(q.question_number, lv, preservedAi);
+      setEditing(false);
+      toast.success(`${q.question_number}번 난이도 ${lv}로 수정`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '난이도 수정에 실패했습니다');
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <div className="relative inline-flex items-center justify-center gap-0.5" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setEditing((v) => !v)}
+        title={wasEdited ? `선생님 수정 (AI 원본: ${aiDiff})` : '클릭하여 난이도 수정'}
+        className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[11px] font-bold text-white hover:ring-2 hover:ring-offset-1 hover:ring-slate-300 transition-all"
+        style={{ backgroundColor: DIFFICULTY_COLORS[cur] || DIFFICULTY_COLORS[q.difficulty] || '#94A3B8' }}
+      >
+        {DIFFICULTY_LABELS[q.difficulty] || cur}
+        {wasEdited && <Pencil className="w-2 h-2 opacity-80" />}
+      </button>
+      {wasEdited && <span className="text-[9px] text-slate-400 line-through" title="AI 원본">{aiDiff}</span>}
+      {editing && (
+        <div className="absolute left-1/2 -translate-x-1/2 top-7 z-50 bg-white rounded-sm shadow-lg border p-1.5 flex items-center gap-1">
+          {['1', '2', '3', '4', '5'].map((lv) => (
+            <button
+              key={lv}
+              type="button"
+              disabled={saving}
+              onClick={() => save(lv)}
+              className={`w-6 h-6 rounded-sm text-[11px] font-bold text-white transition-transform hover:scale-110 disabled:opacity-50 ${lv === cur ? 'ring-2 ring-offset-1 ring-slate-400' : ''}`}
+              style={{ backgroundColor: DIFFICULTY_COLORS[lv] }}
+            >
+              {lv}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -926,11 +1012,10 @@ function PointsCell({
     return (
       <div className="flex items-center gap-0.5 justify-center">
         <input
-          type="number"
-          min={0}
-          max={100}
+          type="text"
+          inputMode="decimal"
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => setValue(e.target.value.replace(/[^0-9.]/g, ''))}
           onKeyDown={(e) => {
             if (e.key === 'Enter') handleSave();
             else if (e.key === 'Escape') handleCancel();
