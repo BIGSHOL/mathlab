@@ -20,6 +20,7 @@ import { sumPoints, roundPoints, formatPoints } from '@/lib/exam-analysis/points
 import { koImg } from '@/lib/exam-analysis/section-blocks';
 import type { ExamPaperData, AnalysisTab } from './types';
 import { getConfidenceInfo, getOverallDifficultyLevel, getDifficultyBreakdown, interpolateDifficultyColor } from './helpers';
+import { weightedAverageDifficulty } from '@/lib/exam-analysis/difficulty';
 import { DIFF_LEVEL_LABELS } from './constants';
 import { CommentarySection } from './CommentarySection';
 import { AnalyzingProgress } from './AnalyzingProgress';
@@ -66,6 +67,70 @@ function waitForImages(el: HTMLElement, timeoutMs: number): Promise<void> {
     }))).then(() => undefined),
     new Promise<void>((res) => setTimeout(res, timeoutMs)),
   ]);
+}
+
+/** 난이도 1~5 연속축 그라데이션 (녹→빨). 0/25/50/75/100% = 1/2/3/4/5단계 위치. */
+const DIFF_GRADIENT = `linear-gradient(to right, ${DIFFICULTY_BAR_COLORS[0]} 0%, ${DIFFICULTY_BAR_COLORS[1]} 25%, ${DIFFICULTY_BAR_COLORS[2]} 50%, ${DIFFICULTY_BAR_COLORS[3]} 75%, ${DIFFICULTY_BAR_COLORS[4]} 100%)`;
+/** 난이도 값(1~5) → 연속축 위치(%). 1=0%, 3=50%, 5=100%. 연속값이라 마커가 축 위치와 정확히 일치. */
+const diffLinePos = (v: number) => ((Math.max(1, Math.min(5, v)) - 1) / 4) * 100;
+const DIFF_ZONE_SHORT = ['기본', '표준', '응용', '심화', '최고'];
+
+/**
+ * 시험 난이도 수직선(연속축) — 1~5 그라데이션 위에 정확한 가중평균 위치를 마커로 표시.
+ * 이산 박스(1·2·3·4·5 강조)는 연속값(예 3.9)과 시각적으로 어긋나므로(헤더 3.9 vs 박스 4) 연속축으로 대체.
+ * aiAvg가 보정 후 avg와 유의미하게 다르면(≥0.05) "보정 전(AI)" 마커를 트랙 아래에 함께 표시.
+ */
+function DifficultyNumberLine({ avg, aiAvg, width, zoneLabels = false }: {
+  avg: number;
+  aiAvg?: number | null;
+  width?: number | string;
+  zoneLabels?: boolean;
+}) {
+  const color = interpolateDifficultyColor(avg);
+  const hasShift = aiAvg != null && aiAvg > 0 && Math.abs(aiAvg - avg) >= 0.05;
+  return (
+    <div className="relative" style={{ width: width ?? '100%' }}>
+      {/* 보정 후(현재) 마커 — 트랙 위, 값 + ▼ */}
+      <div className="relative h-4">
+        <div
+          className="absolute -translate-x-1/2 top-0 flex flex-col items-center"
+          style={{ left: `${diffLinePos(avg)}%` }}
+          title={`가중평균 ${avg.toFixed(2)}`}
+        >
+          <span className="text-[10px] font-extrabold leading-none whitespace-nowrap" style={{ color }}>{avg.toFixed(1)}</span>
+          <svg width="10" height="6" viewBox="0 0 10 6" className="mt-0.5"><polygon points="5,6 0,0 10,0" fill={color} /></svg>
+        </div>
+      </div>
+      {/* 그라데이션 트랙 */}
+      <div className="h-2.5 rounded-full" style={{ background: DIFF_GRADIENT }} />
+      {/* 보정 전(AI) 마커 — 트랙 아래, 유의미한 차이가 있을 때만 */}
+      {hasShift && (
+        <div className="relative h-4">
+          <div
+            className="absolute -translate-x-1/2 top-0 flex flex-col items-center"
+            style={{ left: `${diffLinePos(aiAvg!)}%` }}
+            title={`보정 전(AI 분석) ${aiAvg!.toFixed(2)}`}
+          >
+            <svg width="10" height="6" viewBox="0 0 10 6"><polygon points="5,0 0,6 10,6" fill="#94A3B8" /></svg>
+            <span className="text-[9px] font-medium leading-none text-slate-400 whitespace-nowrap mt-0.5">AI {aiAvg!.toFixed(1)}</span>
+          </div>
+        </div>
+      )}
+      {/* 눈금 1~5 (+ 선택적 구간 라벨) */}
+      <div className={`relative ${zoneLabels ? 'h-8' : 'h-3'} mt-0.5`}>
+        {[1, 2, 3, 4, 5].map((lv) => (
+          <div
+            key={lv}
+            className="absolute -translate-x-1/2 top-0 flex flex-col items-center"
+            style={{ left: `${diffLinePos(lv)}%` }}
+          >
+            <span className="text-[9px] text-slate-400 leading-none">{lv}</span>
+            {zoneLabels && <span className="text-[9px] text-slate-500 leading-tight mt-1">{DIFF_ZONE_SHORT[lv - 1]}</span>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 interface AnalysisDetailProps {
@@ -776,41 +841,8 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                 >
                   <div className="flex flex-col items-center gap-1.5">
                     <span className="text-[10px] font-semibold text-slate-500">시험 난이도</span>
-                    <div className="flex flex-col gap-0.5">
-                      <div className="flex gap-0.5">
-                        {[1, 2, 3, 4, 5].map(level => {
-                          const isActive = level === diffLevel;
-                          const color = DIFFICULTY_BAR_COLORS[level - 1];
-                          return (
-                            <div
-                              key={level}
-                              className={`w-6 h-6 rounded-sm flex items-center justify-center text-[10px] font-bold transition-all ${
-                                isActive ? 'ring-2 ring-offset-1 shadow-sm scale-110' : 'opacity-25'
-                              }`}
-                              style={{
-                                backgroundColor: color,
-                                color: '#fff',
-                                ...(isActive ? { boxShadow: `0 0 0 1.5px #fff, 0 0 0 3px ${activeColor}` } : {}),
-                              }}
-                            >
-                              {level}
-                            </div>
-                          );
-                        })}
-                      </div>
-                      {/* ▼ 마커 — 정확한 가중평균 위치 (2.5와 2.9 미세 차이 시각화) */}
-                      <div className="relative h-1.5 w-full">
-                        <div
-                          className="absolute top-0 -translate-x-1/2 transition-all"
-                          style={{ left: `${((Math.max(1, Math.min(5, avg)) - 1) * 26 + 12) / 128 * 100}%` }}
-                          title={`정확한 가중평균: ${avg.toFixed(2)}`}
-                        >
-                          <svg width="8" height="6" viewBox="0 0 8 6" aria-hidden="true">
-                            <polygon points="4,0 0,6 8,6" fill={activeColor} />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
+                    {/* 연속축 수직선 — 정확한 가중평균 위치에 마커(이산 박스 대비 헤더 값과 정확히 일치) */}
+                    <DifficultyNumberLine avg={avg} width={150} />
                   </div>
                   <div className="border-l pl-3" style={{ borderColor: `${activeColor}30` }}>
                     <span className="text-base font-extrabold" style={{ color: activeColor }}>{avg.toFixed(1)}단계</span>
@@ -1146,6 +1178,11 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
         const avgLabel = breakdown?.usedPoints ? '배점 가중평균' : '문항수 평균';
         const activeColor = interpolateDifficultyColor(avg);
         const levelLabel = DIFF_LEVEL_LABELS[diffLevel] ?? '';
+        // 보정 전(AI 원본) 가중평균 — 각 문항의 difficulty를 ai_difficulty(없으면 현재값)로 치환해 동일 공식 적용
+        const aiAvg = weightedAverageDifficulty(
+          questions.map((q) => ({ ...q, difficulty: String(q.ai_difficulty ?? q.difficulty) })),
+        ).avg;
+        const hasShift = !!breakdown && aiAvg > 0 && Math.abs(aiAvg - avg) >= 0.05;
         // 선생님 수동 난이도 보정 내역 (AI 원본 ≠ 교사 교정값인 문항)
         const normLevel = (v: unknown): string => {
           const k = String(v ?? '');
@@ -1193,9 +1230,23 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                 </p>
                 {breakdown && (
                   <div>
-                    <p className="mb-2">
-                      {avgLabel} <strong>{breakdown.weightedAvg.toFixed(2)}</strong>점을 반올림하여 가장 가까운 정수 단계인 <strong>{diffLevel}단계({levelLabel})</strong>로 분류·강조합니다. 문항 분포:
+                    {/* 연속축 수직선 — 보정 전(AI)/후 위치를 정확히 표시 */}
+                    <div className="px-3 pt-1 pb-2">
+                      <DifficultyNumberLine avg={avg} aiAvg={aiAvg} zoneLabels />
+                    </div>
+                    <p className="mb-2 text-center text-[13px]">
+                      {hasShift ? (
+                        <>
+                          AI 분석 <strong className="text-slate-400 line-through">{aiAvg.toFixed(1)}</strong>
+                          <span className="mx-1 text-slate-400">→</span>
+                          선생님 교정 후 <strong style={{ color: activeColor }}>{avg.toFixed(1)}단계</strong>
+                          <span className="text-slate-400"> ({diffCorrections.length}건 반영)</span>
+                        </>
+                      ) : (
+                        <>{avgLabel} <strong style={{ color: activeColor }}>{avg.toFixed(2)}</strong> / 5단계</>
+                      )}
                     </p>
+                    <p className="text-xs font-medium text-slate-500 mb-1.5">난이도별 문항 분포</p>
                     <div className="rounded-sm border border-slate-100 overflow-hidden">
                       {[1, 2, 3, 4, 5].map((lv) => {
                         const c = breakdown.counts[lv - 1] ?? 0;
