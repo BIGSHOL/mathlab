@@ -3,7 +3,6 @@ import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse, getTenantFilter, notFound, badRequest } from '@/lib/api';
 import { assertAnalysisQuota } from '@/lib/billing/guard';
 import { analyzeExam } from '@/lib/exam-analysis/ai-engine';
-import { loadCalibrationSet } from '@/lib/exam-analysis/calibration';
 import { ExamPromptBuilder } from '@/lib/exam-analysis/prompt-builder';
 import { detectGradingMarks } from '@/lib/exam-analysis/mark-detector';
 import { crossValidateGrading, consolidateDominantTopic } from '@/lib/exam-analysis/cross-validator';
@@ -146,11 +145,13 @@ export async function POST(request: NextRequest, { params }: Params) {
     await setStep(id, 3);
 
     const mimeType = examPaper.fileType === 'pdf' ? 'application/pdf' : 'image/jpeg';
-    // 통합 보정 맵 로드 (전 필드 누적 교정 학습 결과). 없으면 보정 미적용.
-    const calibrationSet = await loadCalibrationSet(prisma).catch(() => null);
+    // ⚠️ 자가진화 자동보정 비활성(2026-06-02): 9개교·85교정 교차검증 결과 per-문항 정확도 악화
+    //   (정확도 54%→40%, MAE 0.516→0.707). 난이도는 학교 상대적이라 전역 보정맵이 부적합 →
+    //   calibrationSet 미전달(원본 AI값 사용). 누적 교정은 측정 벤치마크로만 사용(/admin/evolution).
+    //   수동 교정은 PATCH로 이 시험 분석에 즉시 반영(아래 priorEdits 보존 로직은 그대로 유지).
     // 3분 타임아웃 — Gemini 응답이 없으면 강제 중단
     const analysisResult = await Promise.race([
-      analyzeExam(imageDataList, mimeType, promptResult.combined_prompt, undefined, calibrationSet),
+      analyzeExam(imageDataList, mimeType, promptResult.combined_prompt),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('AI 분석 타임아웃 (3분 초과)')), 180_000),
       ),

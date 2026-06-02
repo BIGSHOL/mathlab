@@ -511,10 +511,10 @@ export async function analyzeExam(
       };
     });
 
-    // ── 통합 보정 플라이휠 적용 ──
-    // 누적 교정으로 학습된 보정을 새 AI 출력에 적용. 변경 필드의 AI 원본은 ai_<field> 에 보존.
-    //  · 수치형(difficulty/points): 버킷 평균 Δ 가산(캡)
-    //  · 범주형(topic/type/ability): 초고신뢰 remap 만(보수적). few-shot 경고는 프롬프트 단계.
+    // ── 통합 보정 플라이휠 적용 (⚠️ 현재 비활성) ──
+    // 호출부(analyze/route.ts)가 calibrationSet 미전달 → 항상 rawQuestions(원본 AI값) 반환.
+    // 자동보정은 교차검증서 per-문항 악화 입증으로 비활성화(2026-06-02). 코드는 가역성 위해 보존.
+    // (calibrationSet 전달 시: 수치형 Δ가산 + 범주형 remap, 원본은 ai_<field> 에 보존.)
     const questions = calibrationSet
       ? rawQuestions.map((q) => {
           const m = { ...q } as Record<string, unknown>;

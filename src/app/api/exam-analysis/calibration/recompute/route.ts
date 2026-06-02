@@ -1,9 +1,10 @@
 /**
  * POST /api/exam-analysis/calibration/recompute
  *
- * 선생님 교정 누적분을 재집계하여 MetadataCalibration(전 필드 적용용 보정 맵)을 갱신.
- * 전국 절대 기준 → 플랫폼 전역(테넌트 무관) 집계. (과목 × 필드) upsert.
- * 권한: SUPER_ADMIN. (수동 트리거; 추후 cron 승격 가능)
+ * 선생님 교정 누적분을 재집계하여 MetadataCalibration 갱신.
+ * ⚠️ 측정 전용(2026-06-02): 자동보정 비활성화로 이 맵은 분석에 적용되지 않음.
+ *    편향 측정 표시(/admin/evolution) + 모델 품질 벤치마크 용도. examPaper별 최신 1개 dedup.
+ * 권한: SUPER_ADMIN. (수동 트리거)
  */
 
 import { NextResponse } from 'next/server';

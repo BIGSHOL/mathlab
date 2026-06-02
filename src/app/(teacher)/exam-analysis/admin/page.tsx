@@ -1065,10 +1065,10 @@ function CalibrationTab() {
       const res = await fetch('/api/exam-analysis/calibration/recompute', { method: 'POST' });
       if (!res.ok) throw new Error('재계산 실패');
       const json = await res.json();
-      toast.success(`보정 맵 갱신 완료 (적용 버킷 ${json.data.appliedBuckets}개)`);
+      toast.success(`편향 측정 갱신 완료 (버킷 ${json.data.appliedBuckets}개)`);
       await load();
     } catch {
-      toast.error('보정 맵 재계산에 실패했습니다');
+      toast.error('편향 측정 갱신에 실패했습니다');
     } finally {
       setRecomputing(false);
     }
@@ -1084,12 +1084,12 @@ function CalibrationTab() {
       {/* 안내 + 재계산 */}
       <div className="flex items-start justify-between gap-3">
         <p className="text-xs text-slate-500 leading-relaxed max-w-2xl">
-          선생님이 문항 난이도를 교정할수록 시스템이 AI의 체계적 편향을 학습해 새 분석에 자동 반영합니다(전국 절대 기준, 전역 집계).
-          <strong className="text-slate-700"> 분석할수록 정확해지는 자가진화 구조</strong>입니다.
+          선생님 교정은 <strong className="text-slate-700">해당 시험 분석에 즉시 반영</strong>됩니다.
+          누적 교정은 AI 난이도 품질을 <strong className="text-slate-700">측정하는 벤치마크</strong>로만 쓰이며, 새 분석에 자동 반영되지 않습니다.
         </p>
         <Button size="sm" onClick={recompute} disabled={recomputing}>
           <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${recomputing ? 'animate-spin' : ''}`} />
-          보정 맵 재계산
+          편향 측정 갱신
         </Button>
       </div>
 
@@ -1114,10 +1114,10 @@ function CalibrationTab() {
 
       {/* 버킷별 보정 */}
       <div>
-        <h3 className="text-sm font-bold mb-2">유형 × AI난이도 버킷별 보정</h3>
+        <h3 className="text-sm font-bold mb-2">유형 × AI난이도 버킷별 편향(측정)</h3>
         {stats.buckets.length === 0 ? (
           <div className="text-center py-8 text-sm text-slate-400 border rounded-sm">
-            아직 교정 데이터가 없습니다. 분석본의 문항 난이도를 교정하면 학습이 시작됩니다.
+            아직 교정 데이터가 없습니다. 분석본의 문항 난이도를 교정하면 측정이 시작됩니다.
           </div>
         ) : (
           <div className="border rounded-sm overflow-hidden">

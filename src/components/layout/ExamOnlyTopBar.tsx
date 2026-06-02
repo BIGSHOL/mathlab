@@ -9,7 +9,7 @@ import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 /** SUPER_ADMIN 관리 메뉴 링크 (사이드바 제거 후 유일한 진입점) */
 const ADMIN_LINKS = [
   { href: '/exam-analysis', label: '기출분석', icon: FileSearch },
-  { href: '/admin/evolution', label: '자가진화', icon: Sparkles },
+  { href: '/admin/evolution', label: '벤치마크', icon: Sparkles },
   { href: '/admin/schools', label: '학교 관리', icon: MapPin },
   { href: '/admin/exam-uploads', label: '기출 업로드', icon: FileUp },
   { href: '/admin/tenants', label: '지점 관리', icon: Building2 },

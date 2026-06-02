@@ -92,10 +92,10 @@ export default function EvolutionConsolePage() {
       const res = await fetch('/api/exam-analysis/calibration/recompute', { method: 'POST' });
       if (!res.ok) throw new Error('재계산 실패');
       const json = await res.json();
-      toast.success(`보정 맵 갱신 완료 (적용 버킷 ${json.data.appliedBuckets}개)`);
+      toast.success(`편향 측정 갱신 완료 (버킷 ${json.data.appliedBuckets}개)`);
       await load();
     } catch {
-      toast.error('보정 맵 재계산에 실패했습니다');
+      toast.error('편향 측정 갱신에 실패했습니다');
     } finally {
       setRecomputing(false);
     }
@@ -111,8 +111,8 @@ export default function EvolutionConsolePage() {
   return (
     <PageContainer maxWidth="xl">
       <PageHeader
-        title="자가진화 관측 콘솔"
-        subtitle="쓸수록 똑똑해지는 시스템 — 무엇이 학습되고, 어떤 데이터가 수집되는지"
+        title="교정 벤치마크 콘솔"
+        subtitle="교사 교정 누적 측정 — 무엇이 수집되고, AI 품질이 어떤지 (자동 반영 아님)"
         icon={<Sparkles className="w-6 h-6" />}
         backHref="/exam-analysis"
         actions={<Button size="sm" variant="ghost" onClick={load} disabled={loading}><RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />새로고침</Button>}
@@ -142,12 +142,12 @@ export default function EvolutionConsolePage() {
           <Section
             tone="green"
             icon={<Gauge className="w-4 h-4" />}
-            title="작동 중 — 통합 메타데이터 보정"
-            desc="선생님 교정 → 누적 → 보정맵 → 새 분석 자동 적용. 난이도·배점(수치) + 단원·유형·능력(범주)."
+            title="측정 — 교사 교정 누적 편향"
+            desc="선생님 교정 → 누적 → 편향 측정. 난이도·배점(수치) + 단원·유형·능력(범주). ⚠️ 새 분석에 자동 적용하지 않음(측정 전용)."
           >
             <div className="flex items-center justify-end mb-3">
               <Button size="sm" onClick={recompute} disabled={recomputing}>
-                <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${recomputing ? 'animate-spin' : ''}`} />전 필드 보정 맵 재계산
+                <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${recomputing ? 'animate-spin' : ''}`} />전 필드 편향 측정 갱신
               </Button>
             </div>
 
@@ -168,7 +168,7 @@ export default function EvolutionConsolePage() {
                     </div>
                     <div className="text-[11px] text-slate-400 mt-1">
                       현재 누적 {f.live.totalCorrections}건
-                      {f.pendingDelta > 0 && <span className="text-amber-600 font-medium"> · +{f.pendingDelta} 미반영(재계산 권장)</span>}
+                      {f.pendingDelta > 0 && <span className="text-amber-600 font-medium"> · +{f.pendingDelta} 측정 전(갱신 권장)</span>}
                     </div>
                   </div>
                 );
@@ -224,10 +224,10 @@ export default function EvolutionConsolePage() {
           <Section
             tone="amber"
             icon={<Database className="w-4 h-4" />}
-            title="수집 중 — 데이터는 쌓이나 학습 반영은 미흡"
-            desc="신호가 DB에 누적되지만 아직 AI 출력을 바꾸지 못하는 영역. 보정 플라이휠로 승격 대상."
+            title="수집 — 교사 교정·피드백 (측정·검토용)"
+            desc="교사 교정·피드백이 DB에 누적됩니다. 새 분석에 자동 반영하지 않고, 분석 화면의 수동 교정과 AI 품질 측정에만 사용."
           >
-            {/* 수동 교정 (필드별 — 전부 학습 반영) */}
+            {/* 수동 교정 (필드별 — 측정 집계) */}
             <div className="grid grid-cols-6 gap-2 mb-4">
               <Kpi label="총 교정 문항" value={data.collected.manualEdits.totalEditedQuestions} />
               {['difficulty', 'points', 'topic', 'question_type', 'ability_domain'].map((f) => (
@@ -300,8 +300,8 @@ export default function EvolutionConsolePage() {
           <Section
             tone="slate"
             icon={<Activity className="w-4 h-4" />}
-            title="버려지는 신호 — 캡처되나 학습 미연동"
-            desc="재생성·복사 횟수는 품질 대용 지표가 될 수 있으나 현재 학습에 쓰이지 않음."
+            title="참고 신호 — 생성물 품질 대용 지표"
+            desc="재생성·복사 횟수는 생성물(총평·블로그) 품질의 대용 지표. 측정·검토 참고용."
           >
             <div className="grid grid-cols-3 gap-3">
               <Kpi label="총평 생성/재생성" value={data.generative.commentaryRuns} icon={<MessageSquare className="w-3.5 h-3.5" />} />

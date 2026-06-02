@@ -867,8 +867,8 @@ PDF 시험지 업로드 → Gemini AI 분석 → 문항별 난이도/유형/능�
 - **(A) 결합 폭(breadth)** = 몇 개 개념/대단원을 엮나 + **(B) 사고 깊이(depth)** = 개념 자체가 고난도거나 비자명한 통찰 필요 → **둘 중 높은 쪽**으로 결정. 정의: `MATH_DIFFICULTY_SYSTEM_4LEVEL` (`prompt-config-math.ts:170`).
 - 핵심: **개념 1개라도 깊으면 4~5** (단일개념 킬러 포착). "애매하면 한 단계 낮게"는 **(A)폭에만 적용**, (B)깊이 명확 시 하향 금지.
 - v1.4.0에서 수학/영어 프레임워크 분리 — 공통 프레임워크의 하향편향이 2축과 충돌해 2~3 쏠림 발생 → 수학은 2축만 사용.
-- ⚠️ **AI 판정 난이도는 추가로 자가진화 보정맵을 통과**(post-process). 프롬프트(루브릭)와 보정맵(결정적 가산)은 **이중 보정 회피 위해 역할 분리** — 프롬프트엔 숫자 앵커 미적용. 상세: 아래 "난이도 자가진화 보정 플라이휠" + "통합 메타데이터 보정 엔진" 섹션.
-- 집계 표시용 가중평균(레벨별 명시 가중 `DIFFICULTY_LEVEL_WEIGHTS`)은 per-문항 보정과 **직교**(`difficulty.ts`). 집계 가중표 튜닝과 per-문항 정확도 보정은 별개 레버.
+- ⚠️ **AI 판정 난이도는 그대로 사용**(2026-06-02 자가진화 자동보정 비활성 — post-process 없음). 선생님 수동 교정만 해당 시험에 즉시 반영. 상세: 아래 "난이도 자가진화 보정 플라이휠" 섹션의 비활성 공지.
+- 집계 표시용 가중평균(레벨별 명시 가중 `DIFFICULTY_LEVEL_WEIGHTS`)은 per-문항 값과 **직교**(`difficulty.ts`). 종합 카드를 올리려면 이 가중표만 조절(per-문항 무해).
 
 **핵심 구조 (`src/components/exam-analysis/`, `src/lib/exam-analysis/`):**
 - `AnalysisResultView` — 난이도 도넛차트/배점 토글, 유형 레이더, 단원 출제현황, 문항 테이블
@@ -1378,7 +1378,9 @@ node scripts/geocode-failed-by-keyword.mjs     # 4. 주소 매칭 실패분을 �
 
 ## 2026-06-01 세션 — 난이도 자가진화 보정 플라이휠
 
-선생님 체감 대비 AI 난이도가 **체계적으로 낮게** 나오는 문제(프롬프트 5차 개정에도 반복)를, 프롬프트 튜닝이 아닌 **ground truth 누적 + 자동 보정 루프**로 해결. 분석할수록 정확해지는 자가진화 구조. **전국 절대 기준** → 보정 데이터는 플랫폼 전역(테넌트 무관) 집계.
+> ⚠️ **2026-06-02 자동보정 전면 비활성화 — 아래 내용은 역사적 기록.** 9개 고교·85교정 교차검증(leave-one-school-out)에서 자동보정이 **per-문항 정확도를 악화**시킴이 증명됨(정확도 53.8%→39.7%, MAE 0.516→0.707; 출처 기반 보정도 0.620으로 악화). 원인: ① AI가 이미 54% 정확 → 일괄 시프트(+반올림)가 *맞은 다수*를 파손, ② 난이도는 학교·학생 **상대적**이라 "전국 단일 보정맵"이라는 단일 진실이 없음. → **자동 적용 차단**(`analyze/route.ts`가 `calibrationSet` 미전달 → ai-engine이 원본 AI값 반환), **수동 교정이 canonical**(PATCH로 이 시험에 즉시 반영), 누적 교정은 **측정 벤치마크**로만 사용(`/admin/evolution`, `recomputeCalibrations`는 측정 전용·examPaper별 dedup). 프롬프트 few-shot 경고 주입도 제거. 종합 카드만 올리려면 `DIFFICULTY_LEVEL_WEIGHTS`(per-문항 무해). 결정 상세: `~/.claude/plans/jazzy-juggling-pearl.md`.
+
+선생님 체감 대비 AI 난이도가 **체계적으로 낮게** 나오는 문제(프롬프트 5차 개정에도 반복)를, 프롬프트 튜닝이 아닌 **ground truth 누적 + 자동 보정 루프**로 해결하려 한 시도(현재 비활성). 분석할수록 정확해지는 자가진화 구조. **전국 절대 기준** → 보정 데이터는 플랫폼 전역(테넌트 무관) 집계.
 
 ### 플라이휠 4단계
 1. **교정 캡처** — `PATCH /api/exam-analysis/[id]/questions/[questionNumber]` 에 `difficulty` 추가. 최초 교정 시 AI 원본을 `ai_difficulty` 에 보존(학습셋). `AnalysisCommentTab` 난이도 배지 클릭 → 1~5 인라인 셀렉터. 부모(`AnalysisDetail`)는 `diffEdits` 오버레이로 종합 난이도 즉시 재계산.
@@ -1398,6 +1400,8 @@ node scripts/geocode-failed-by-keyword.mjs     # 4. 주소 매칭 실패분을 �
 ---
 
 ## 2026-06-01 세션 — 통합 메타데이터 보정 엔진 (자가진화 전면 확장)
+
+> ⚠️ **2026-06-02 자동 적용 비활성** — 위 플라이휠 섹션 참조. `MetadataCalibration`/`calibration.ts`/`recompute`는 보존되나 **분석에 미적용**(측정 벤치마크 전용). `applyNumericField`/`applyCategoricalRemap` 코드는 `ai-engine.ts`에 가역성 위해 남아있으나 호출부가 `calibrationSet` 미전달이라 비활성.
 
 난이도 플라이휠을 **전 문항 메타데이터로 일반화**. `DifficultyCalibration` → **`MetadataCalibration`**(과목×필드 1행)으로 교체. `calibration.ts` 가 필드 무관 엔진. 모델/콘솔/recompute 모두 전 필드 처리.
 

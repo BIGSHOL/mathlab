@@ -1,6 +1,9 @@
 /**
- * 보정 맵 재계산 오케스트레이션 — 전 필드(numeric+categorical)를 집계해 MetadataCalibration upsert.
+ * 보정 맵 재계산 — 전 필드(numeric+categorical)를 집계해 MetadataCalibration upsert.
+ * ⚠️ 측정 전용(2026-06-02): 자동보정 비활성화로 이 맵은 더 이상 분석에 적용되지 않음.
+ *    /admin/evolution 콘솔의 편향 측정 표시 + 모델 품질 벤치마크 용도.
  * calibration.ts 순수 함수 위에서 동작. db 클라이언트는 duck-typed 로 받아 API/스크립트 양쪽 재사용.
+ * examPaper별 최신 분석본 1개만 집계(재업로드 중복 이중 집계 방지 — 측정 정확도).
  */
 
 import {
@@ -30,10 +33,18 @@ export interface RecomputeSummary {
 
 /** 전 필드 보정 재계산 후 MetadataCalibration 갱신. @param now ISO 타임스탬프(순수성 위해 주입) */
 export async function recomputeCalibrations(db: RecomputeDb, now: string, subject = 'MATH'): Promise<RecomputeSummary> {
-  const analyses = await db.examAnalysis.findMany({
-    select: { questions: true, examPaper: { select: { grade: true } } },
+  const rows = await db.examAnalysis.findMany({
+    select: { examPaperId: true, questions: true, examPaper: { select: { grade: true } } },
     orderBy: { createdAt: 'desc' },
     take: 5000,
+  });
+  // examPaper별 최신 분석본 1개만 (재업로드 중복 이중 집계 방지 — 측정 정확도)
+  const seen = new Set<string>();
+  const analyses = rows.filter((a) => {
+    const k = a.examPaperId as string | null;
+    if (!k || seen.has(k)) return false;
+    seen.add(k);
+    return true;
   });
   const likes: AnalysisLike[] = analyses.map((a) => ({ questions: a.questions, grade: a.examPaper?.grade ?? null }));
   let totalAnalyzedQuestions = 0;

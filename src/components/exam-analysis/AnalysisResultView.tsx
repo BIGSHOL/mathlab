@@ -341,7 +341,7 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
               배점 합계 {formatPoints(pointsCheck.pointsSum)}점 · 만점 {pointsCheck.total}점에서 {pointsSuggestion.diff > 0 ? '+' : ''}{formatPoints(pointsSuggestion.diff)}점 차이
             </p>
             <p className="text-xs text-blue-700 mt-1">
-              가장 신뢰도 낮은 문항을 자동 보정하면 정확한 만점이 됩니다:
+              신뢰도 낮은 문항 배점을 제안값으로 조정하면 합계가 만점과 맞습니다:
               <span className="font-semibold mx-1">
                 {pointsSuggestion.target.question_number}번 {formatPoints(pointsSuggestion.target.points)}점 → {formatPoints(pointsSuggestion.newPoints)}점
               </span>
@@ -349,7 +349,7 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
             </p>
             <p className="text-xs font-bold text-red-600 mt-1.5 flex items-start gap-1">
               <span className="shrink-0">⚠️</span>
-              <span>자동 보정은 <u>신뢰도 기반 추정</u>입니다. <strong>반드시 시험지 원본을 확인</strong>한 후 적용하거나, 아래 문항 테이블에서 정확한 배점을 직접 수정해 주세요.</span>
+              <span>이 제안은 <u>신뢰도 기반 추정</u>입니다. <strong>반드시 시험지 원본을 확인</strong>한 후 적용하거나, 아래 문항 테이블에서 정확한 배점을 직접 수정해 주세요.</span>
             </p>
           </div>
           <button
@@ -358,7 +358,7 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
             disabled={applyingFix}
             className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-3 py-1.5 rounded-sm shrink-0"
           >
-            {applyingFix ? '보정 중...' : '자동 보정'}
+            {applyingFix ? '적용 중...' : '배점 제안 적용'}
           </button>
         </div>
       )}
