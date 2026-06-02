@@ -1464,3 +1464,37 @@ node scripts/geocode-failed-by-keyword.mjs     # 4. 주소 매칭 실패분을 �
 
 ### 메타 — Chrome MCP로 최종 실측
 - "고쳤다"는 추측 금지. UI 버그는 **Chrome MCP로 실제 브라우저에서 검증**: ① 렌더 스크린샷 ② **유휴 중 network 요청 0건**(루프 없음 증명) ③ 새로고침 시 정확히 1요청 ④ console 에러 0. 사례: 자가진화 콘솔 무한루프 픽스 검증.
+
+---
+
+## 2026-06-02 세션 — 난이도 자동보정 폐기(CV 증명) + 문항 교정 UX 전탭화
+
+기출분석 문항 메타데이터 교정 UX를 정비하고, **난이도 자가진화 자동보정을 데이터로 폐기**한 세션. 9개 고교 교사 ground truth로 검증해 결론을 뒤집은 과정과, 교정/피드백 UI를 전탭으로 통일하며 만난 함정을 박제.
+
+### 1. 🔴 자동보정은 per-문항 정확도를 *악화*시킨다 — 추측 말고 CV로 증명
+- **가설(틀림)**: "데이터 많이 쌓일수록 정교해진다" → 교사 교정 누적 → 전국 단일 보정맵 → AI 난이도 자동 시프트.
+- **검증**: 9개 고교·85교정으로 **leave-one-school-out 교차검증**(`scripts/calibration-lab.mjs` sim 모드). 결과 — 자동보정 켜면 정확도 **53.8%→39.7%**, MAE **0.516→0.707**. 출처(provenance) 기반 보정도 0.620으로 악화.
+- **원인**: ① AI가 이미 54% 정확 → 일괄 시프트(+반올림)가 *맞은 다수*를 파손. ② 난이도는 학교·학생 **상대적** → "전국 단일 진실"이라는 게 존재하지 않음.
+- **결정**: 자동보정 **전면 비활성**. 수동 교정만 canonical(해당 시험에 즉시 반영), 누적 교정은 **측정 벤치마크 전용**(`/admin/evolution`). 종합 카드만 올리려면 `DIFFICULTY_LEVEL_WEIGHTS`(per-문항 무해).
+- **교훈**: "쌓이면 좋아진다"는 직관이 데이터로 반증될 수 있다. 보정/학습 루프는 **반드시 hold-out CV로 per-항목 정확도를 측정**한 뒤 켤 것. 집계 지표(종합카드)만 좋아지는 것에 속지 말 것. 코드(`applyNumericField`/`applyCategoricalRemap`/`MetadataCalibration`)는 가역성 위해 **남기되 호출부가 `calibrationSet` 미전달**로 비활성 — 삭제보다 차단이 안전.
+
+### 2. 🟡 옵션 value ↔ AI 저장 포맷 불일치는 "조용히" 깨진다 (소단원 함정)
+- **증상**: 단원 드롭다운에 소단원까지 표시되는데 분류된 단원이 자동 선택 안 됨 + 단원별 출제현황 그룹핑이 어긋남.
+- **원인**: AI 저장 포맷 = `과목 > 대단원 > 중단원`(예: `공통수학1 > 다항식 > 다항식의 연산`). 드롭다운 value = `대단원 > 중단원 > 소단원`(**과목 prefix 없음 + 소단원 과다**). 출제현황은 `parts[0:2]`를 그룹·`parts[2]`를 minor로 씀 → AI topic은 그룹=대단원/minor=중단원으로 잡히지만, 소단원까지 고른 교정값은 그룹=중단원으로 **다르게** 묶임.
+- **수정**: 드롭다운을 **중단원까지만** 제공 + value에 **과목 prefix** 포함(`unitsToGroups(units, labelPrefix, valuePrefix)`). `getTopicOptionsByGrade`는 그룹 옵션 평탄화로 단일 소스화 ([topic-options.ts](src/components/exam-analysis/utils/topic-options.ts)).
+- **교훈**: "유형이 중단원으로 표기되는데 소단원이 의미 있나?" 류 의심은 **AI 실제 저장 포맷을 grep으로 확인**하고 옵션 value와 1:1 대조할 것. 드롭다운이 더 깊은 단계를 제공하는 게 친절한 게 아니라 **포맷 정합을 깨는 버그**다. CLAUDE.md V3 함정 #13의 일반화.
+
+### 3. 동일 인터랙션은 공유 컴포넌트로 추출 → 전탭 동작 통일
+- **요구**: 피드백 신고를 AI 코멘트 탭뿐 아니라 문항별 분석 표에서도 *동일하게* + 신고 시 **시험지/문항 전 메타데이터 동봉**.
+- **패턴**: `QuestionFeedbackButton`으로 추출(`{ q, examPaperId, analysisId, align }`). `handleSubmit`이 신고 시점 스냅샷(`correction`: difficulty/ai_difficulty/topic/type/ability/points/comment/confidence …)을 POST. 두 탭이 같은 컴포넌트를 import → 동작·메타데이터 자동 일치.
+- 난이도 인라인 교정도 동일 — AI 코멘트 탭의 `saveDifficulty`(PATCH + ai_difficulty 보존 + `onDifficultyEdit` 콜백)를 문항별 분석 표의 `DifficultyCell`로 복제. 부모(`AnalysisDetail`)가 `diffEdits` 오버레이로 종합 난이도 즉시 재계산.
+- **교훈**: "어느 탭에서든 동일 작동" 요구 = **로컬 state 복붙 금지, 컴포넌트 추출**. 메타데이터 스냅샷은 신고 시점 값으로 굳혀야(렌더 시점 props가 아니라) 검토자가 맥락 보존.
+
+### 4. number input 스피너는 정수 가정 — 소수 배점에 무의미
+- 배점 입력 `type="number"`의 ▲▼는 정수 step → 소수 배점(2.5점 등)엔 의미 없고 방해. → `type="text" inputMode="decimal"` + `onChange`에서 `replace(/[^0-9.]/g, '')`로 숫자·점만 허용. 모바일 숫자 키패드 유지.
+
+### 5. 정렬은 문장 나열 말고 명시 그리드 (난이도 모달)
+- 난이도 분포를 인라인 문장(`기본 3 · 표준 6 · …`)으로 두면 줄바꿈에 따라 정렬이 흐트러짐 → **5행 그리드**(단계 배지+라벨 좌 / 문항수 우 정렬). "선생님 보정 N건 반영" 섹션을 추가해 `{번호} {AI원본}(취소선)→{교사값}` 칩으로 *어떤 문항에 무엇이 적용됐는지* 가시화.
+
+### 메타 — API 과부하(529) 중 작업 진행
+- compaction(요약)이 500/529로 실패하는 건 Anthropic API 과부하(status.claude.com fetch 자체가 529)일 수 있음 — **일반 도구 호출은 통과**하므로 작업은 계속 가능. 추측 금지하고 status로 확인.
