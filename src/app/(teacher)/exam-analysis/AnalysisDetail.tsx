@@ -1194,7 +1194,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                 {breakdown && (
                   <div>
                     <p className="mb-2">
-                      {avgLabel} <strong>{breakdown.weightedAvg.toFixed(2)}</strong> → <strong>{avg.toFixed(1)}단계</strong>로 산정 (정수 그룹: {diffLevel}단계). 문항 분포:
+                      {avgLabel} <strong>{breakdown.weightedAvg.toFixed(2)}</strong>점을 반올림하여 가장 가까운 정수 단계인 <strong>{diffLevel}단계({levelLabel})</strong>로 분류·강조합니다. 문항 분포:
                     </p>
                     <div className="rounded-sm border border-slate-100 overflow-hidden">
                       {[1, 2, 3, 4, 5].map((lv) => {
