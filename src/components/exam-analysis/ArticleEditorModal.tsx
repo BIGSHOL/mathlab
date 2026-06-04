@@ -322,11 +322,12 @@ export function ArticleEditorModal({ examPaperId, schoolName: _schoolName, onClo
     // 10. 보라색(#6741D9) 단원명 강조 → 검정 볼드로 변환 (네이버에서 color leak 방지)
     result = result.replace(/<span\s+style="color:\s*#6741D9;?">/gi, '<span>');
     result = result.replace(/<b\s+style="[^"]*color:\s*#6741D9[^"]*">/gi, '<b>');
-    // 10. 이미지 URL: localhost → Vercel 공개 도메인으로 교체
-    //     (로컬 개발 시 생성된 차트 URL이 localhost로 저장되어 네이버에서 접근 불가)
+    // 10. 이미지 URL: localhost → 공개 도메인으로 교체
+    //     (로컬 개발 시 생성된 차트 URL이 localhost로 저장되어 외부에서 접근 불가)
+    const publicBase = process.env.NEXT_PUBLIC_SITE_URL || 'https://mathlab-mu.vercel.app';
     result = result.replace(
       /(<img\s[^>]*src=")http:\/\/localhost:\d+(\/api\/exam-analysis\/)/gi,
-      '$1https://mathlab-mu.vercel.app$2',
+      `$1${publicBase}$2`,
     );
     return result;
   };

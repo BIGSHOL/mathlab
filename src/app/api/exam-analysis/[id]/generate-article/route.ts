@@ -75,7 +75,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         ? `${forwardedProto}://${request.headers.get('host')}`
         : reqUrl.origin;
       if (baseUrl.includes('localhost')) {
-        baseUrl = 'https://mathlab-mu.vercel.app';
+        baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mathlab-mu.vercel.app';
       }
 
       try {
