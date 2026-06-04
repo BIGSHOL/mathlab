@@ -3,8 +3,6 @@ import { SubscriptionProvider } from '@/components/providers/SubscriptionProvide
 import { ToastContainer } from '@/components/ui/Toast';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { getCurrentUser } from '@/lib/auth';
-import { resolveCurrentTenant } from '@/lib/tenant';
-import { TenantProvider } from '@/components/providers/TenantProvider';
 import { redirect } from 'next/navigation';
 
 /**
@@ -21,20 +19,16 @@ export default async function TeacherLayout({
   // 기출분석은 TEACHER 이상 전용. STUDENT 는 로그인으로.
   if (user.role === 'STUDENT') redirect('/login');
 
-  const tenant = await resolveCurrentTenant();
-
   return (
-    <TenantProvider tenant={tenant}>
-      <SubscriptionProvider>
-        <div className="h-screen flex bg-background overflow-hidden print:h-auto print:overflow-visible print:bg-white">
-          <ExamOnlyTopBar />
-          <main className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden pb-14 md:pb-0 print:overflow-visible">
-            {children}
-          </main>
-          <ToastContainer />
-          <ConfirmDialog />
-        </div>
-      </SubscriptionProvider>
-    </TenantProvider>
+    <SubscriptionProvider>
+      <div className="h-screen flex bg-background overflow-hidden print:h-auto print:overflow-visible print:bg-white">
+        <ExamOnlyTopBar />
+        <main className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden pb-14 md:pb-0 print:overflow-visible">
+          {children}
+        </main>
+        <ToastContainer />
+        <ConfirmDialog />
+      </div>
+    </SubscriptionProvider>
   );
 }

@@ -53,7 +53,7 @@ enum ExamSubject {
 // FEAT: 멀티테넌시 — 지점(학원) 관리
 model Tenant {
   id        String   @id @default(cuid())
-  slug      String   @unique @db.VarChar(50) // 서브도메인: "gangnam" → gangnam.mathlab.com
+  slug      String   @unique @db.VarChar(50) // 지점 식별자 (내부용 — 로고 경로/View-As 등)
   name      String   @db.VarChar(100) // 표시명: "강남점"
   logo      String?  @db.VarChar(500) // 커스텀 로고 URL
   settings  Json? // 지점별 설정 (색상, 기능 토글 등)
