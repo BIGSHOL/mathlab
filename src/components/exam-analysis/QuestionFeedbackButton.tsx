@@ -30,6 +30,7 @@ export function QuestionFeedbackButton({ q, examPaperId, analysisId, align = 'ri
   const [comment, setComment] = useState('');
   const [feedbackSent, setFeedbackSent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dropUp, setDropUp] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -44,6 +45,20 @@ export function QuestionFeedbackButton({ q, examPaperId, analysisId, align = 'ri
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [showFeedback]);
+
+  // 팝업 토글 — 열 때 버튼 아래 가용 공간을 측정해, 부족하면 위로(bottom-7) 펼침.
+  // 마지막 문항 등에서 팝업이 컨테이너 경계를 넘어 스크롤이 생기는 문제 방지.
+  const handleToggle = () => {
+    const next = !showFeedback;
+    if (next && dropdownRef.current) {
+      const rect = dropdownRef.current.getBoundingClientRect();
+      const POPUP_HEIGHT = 230; // 코멘트 단계 포함 최대 추정 높이
+      setDropUp(window.innerHeight - rect.bottom < POPUP_HEIGHT);
+    }
+    setShowFeedback(next);
+    setSelectedType(null);
+    setComment('');
+  };
 
   const handleSubmit = async () => {
     if (!selectedType) return;
@@ -101,7 +116,7 @@ export function QuestionFeedbackButton({ q, examPaperId, analysisId, align = 'ri
       ) : (
         <button
           type="button"
-          onClick={() => { setShowFeedback(!showFeedback); setSelectedType(null); setComment(''); }}
+          onClick={handleToggle}
           className={`text-xs flex items-center gap-0.5 mx-auto transition-colors ${
             showFeedback ? 'text-primary' : 'text-slate-400 hover:text-primary'
           }`}
@@ -113,7 +128,7 @@ export function QuestionFeedbackButton({ q, examPaperId, analysisId, align = 'ri
 
       {/* 드롭다운 (2단계: 유형 선택 → 코멘트 입력) */}
       {showFeedback && !feedbackSent && (
-        <div className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} top-7 z-50 w-52 bg-white rounded-sm shadow-lg border py-1 text-left`}>
+        <div className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} ${dropUp ? 'bottom-7' : 'top-7'} z-50 w-52 bg-white rounded-sm shadow-lg border py-1 text-left`}>
           {selectedType ? (
             <div className="p-2">
               <div className="flex items-center gap-2 mb-2">
