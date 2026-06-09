@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Ticket, RefreshCw } from 'lucide-react';
+import { Ticket, RefreshCw, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
@@ -13,6 +13,13 @@ const FEATURE_LABELS: Record<string, string> = {
   QUIZ: '퀴즈', HOMEWORK: '과제', EXAM_PREP: '시험대비', OX_QUIZ: 'OX퀴즈', WORKBOOK: '워크북',
 };
 const featureLabel = (f: string) => FEATURE_LABELS[f] ?? f;
+
+// 구매 가능한 이용권 상품(para-x 카탈로그와 id 일치). 가격은 결제 화면에서 확정 표시.
+const CREDIT_PRODUCTS = [
+  { id: 'credit-exam-10', label: '기출분석 10회' },
+  { id: 'credit-exam-50', label: '기출분석 50회' },
+  { id: 'credit-worksheet-30', label: '학습지 30회' },
+];
 
 type Pool = { feature: string; balance: number; totalPurchased: number };
 type Lic = { feature: string; allocated: number; used: number };
@@ -116,6 +123,23 @@ export default function EntitlementsPage() {
         <Button size="sm" variant="ghost" onClick={() => void load()}>
           <RefreshCw className="w-4 h-4 mr-1" /> 새로고침
         </Button>
+      </div>
+
+      {/* 이용권 구매 (para-x 결제 → 지점 풀 충전) */}
+      <div className="mb-5 p-4 border border-slate-200 rounded-lg bg-white">
+        <div className="text-sm font-semibold text-slate-700 mb-2.5">이용권 구매</div>
+        <div className="flex flex-wrap gap-2">
+          {CREDIT_PRODUCTS.map((p) => (
+            <a
+              key={p.id}
+              href={`/api/parax/checkout?product=${p.id}`}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-violet-200 bg-violet-50 text-violet-700 text-sm font-semibold hover:bg-violet-100 transition-colors"
+            >
+              <ShoppingCart className="w-3.5 h-3.5" /> {p.label}
+            </a>
+          ))}
+        </div>
+        <p className="text-[11px] text-slate-400 mt-2">결제하면 지점 풀에 충전됩니다. 가격은 결제 화면에서 확인하세요.</p>
       </div>
 
       {/* 지점 풀 잔액 */}

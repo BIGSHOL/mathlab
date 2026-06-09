@@ -152,3 +152,23 @@ npx tsx scripts/migrate-question-relations.ts  # 중간테이블 마이그레이
 | DB 모델 | 52개 |
 | 컴포넌트 | 130개 |
 | 서비스 | 18개 |
+
+## Para-X 결제 연동 (이용권·구독)
+
+[para-x](https://para-x.co.kr)(중앙 결제 허브)에서 결제하면 mathlab 의 이용권/구독에 반영됩니다.
+
+- **이용권(크레딧)**: 원장이 `/entitlements` 에서 구매 → para-x 결제 → 지점 풀 적립 → 학생 배정 → 기출분석 시 차감.
+- **구독(plan)**: 결제페이지 '구독하기' → para-x 토스 빌링 → `TenantSubscription` 갱신 (Lemon Squeezy 대체).
+- **식별**: `/api/parax/checkout` 가 서명 핸드오프 토큰을 발급 → para-x 가 검증 (로그인 원장만).
+
+| 파일 | 역할 |
+|------|------|
+| `src/lib/entitlements/service.ts` | 적립/배정/소비 (grantCredits, allocateToStudent, assert·consumeExamAnalysisCredit) |
+| `src/lib/parax/handoff.ts` | 핸드오프 토큰 발급 (para-x 와 동일 HMAC 알고리즘) |
+| `src/app/api/webhooks/parax/route.ts` | para-x 지급 통지 수신 (서명검증·멱등) |
+| `src/app/api/parax/checkout/route.ts` | 결제 핸드오프 진입 (302 리다이렉트) |
+| `prisma/parax-entitlements.sql` | 이용권 테이블 (수동 적용) |
+
+추가 환경변수: `PARAX_SHARED_SECRET`, `HANDOFF_SHARED_SECRET` (para-x 와 동일 값), `NEXT_PUBLIC_PARAX_CHECKOUT_URL`.
+
+> ⚠️ 이용권 테이블은 `prisma migrate` 가 아니라 `prisma/parax-entitlements.sql` 을 Supabase SQL Editor 에서 실행해 추가합니다(기존 마이그레이션 드리프트 회피). 모델 추가 후 `prisma generate` 만 실행.

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { requireOwner, isResponse, badRequest } from '@/lib/api';
 import { isPlanId, type PlanId } from '@/lib/billing/plans';
 import { monthBounds } from '@/lib/billing/guard';
+import { paraxCheckoutUrl } from '@/lib/parax/handoff';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,6 +38,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ data: { demo: true, configured: false, message: '결제 URL이 설정되지 않았습니다 (NEXT_PUBLIC_PARAX_CHECKOUT_URL).' } });
   }
 
-  const checkoutUrl = `${base}?product=sub-${plan}&type=subscription&tenantId=${encodeURIComponent(tenantId)}`;
+  const checkoutUrl = paraxCheckoutUrl(`sub-${plan}`, { tenantId, userId: user.id, role: user.role });
   return NextResponse.json({ data: { checkoutUrl } });
 }
