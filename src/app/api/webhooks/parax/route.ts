@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { prisma } from '@/lib/db';
 import { grantCredits, isLicenseFeature } from '@/lib/entitlements/service';
+import { isPlanId } from '@/lib/billing/plans';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,9 +61,25 @@ export async function POST(request: NextRequest) {
     }
 
     if (kind === 'subscription') {
-      // Phase 4 골격: 토스 빌링 구독 반영 예정. 지금은 안전하게 수용만(로그).
-      console.log('[Parax Webhook] subscription kind 수신(Phase 4 예정):', orderId, g?.planId);
-      return NextResponse.json({ received: true, deferred: 'subscription handled in Phase 4' });
+      const planId: string = g?.planId;
+      if (!isPlanId(planId) || planId === 'free') {
+        return NextResponse.json({ error: `알 수 없는 plan: ${planId}` }, { status: 400 });
+      }
+      const periodEnd = g?.periodEnd ? new Date(g.periodEnd) : null;
+      const fields = {
+        plan: planId,
+        status: 'active',
+        tossBillingKey: g?.tossBillingKey ?? null,
+        tossCustomerKey: g?.tossCustomerKey ?? null,
+        tossSubscriptionId: g?.tossBillingKey ?? null,
+        currentPeriodEnd: periodEnd,
+      };
+      await prisma.tenantSubscription.upsert({
+        where: { tenantId },
+        create: { tenantId, ...fields },
+        update: fields,
+      });
+      return NextResponse.json({ received: true, plan: planId });
     }
 
     return NextResponse.json({ error: `알 수 없는 kind: ${kind}` }, { status: 400 });

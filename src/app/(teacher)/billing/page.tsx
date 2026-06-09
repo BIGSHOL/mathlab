@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Script from 'next/script';
 import { useSearchParams } from 'next/navigation';
-import { CreditCard, Check, ShieldAlert, Sparkles, AlertTriangle } from 'lucide-react';
+import { CreditCard, Check, ShieldAlert, Sparkles } from 'lucide-react';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/Button';
@@ -15,14 +14,9 @@ import { getPlanConfig, type PlanId } from '@/lib/billing/plans';
 
 export default function BillingPage() {
   const { user, isLoading } = useAuth();
-  const { plan, status, usage, lemonSqueezyConfigured, allowDemoUpgrade, beta, refetch } = useSubscription();
+  const { plan, usage, beta, refetch } = useSubscription();
   const params = useSearchParams();
   const [paying, setPaying] = useState<string | null>(null);
-
-  // lemon.js 임베드 체크아웃 초기화 (스크립트는 이 페이지에만 로드)
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.createLemonSqueezy) window.createLemonSqueezy();
-  }, []);
 
   // 결제 완료 리다이렉트(?success=true) → 토스트 + 3초 후 상태 갱신(웹훅 반영 대기)
   useEffect(() => {
@@ -49,9 +43,9 @@ export default function BillingPage() {
   }
 
   const currentPlan = getPlanConfig(plan);
-  const subscribed = status !== 'inactive' && status !== 'expired';
   const pct = usage.limit ? usage.used / usage.limit : 0;
 
+  // 토스 결제(para-x 결제 허브)로 이동. 체크아웃 URL은 서버에서 tenantId를 붙여 생성.
   const handleUpgrade = async (planKey: PlanId) => {
     setPaying(planKey);
     try {
@@ -61,14 +55,11 @@ export default function BillingPage() {
         body: JSON.stringify({ plan: planKey }),
       });
       const json = await res.json();
-      if (!res.ok) { toast.error(json?.error?.message || '체크아웃 생성에 실패했습니다.'); return; }
+      if (!res.ok) { toast.error(json?.error?.message || '결제 페이지를 열 수 없습니다.'); return; }
       const data = json.data ?? {};
       if (data.upgraded) { toast.success('데모 모드: 플랜이 변경되었습니다.'); await refetch(); return; }
-      if (data.demo) { toast.info(data.message || '결제 시스템 준비 중입니다.'); return; }
-      if (data.checkoutUrl) {
-        if (window.LemonSqueezy?.Url?.Open) window.LemonSqueezy.Url.Open(data.checkoutUrl);
-        else window.open(data.checkoutUrl, '_blank');
-      }
+      if (data.checkoutUrl) { window.location.href = data.checkoutUrl; return; }
+      if (data.message) { toast.info(data.message); return; }
     } catch {
       toast.error('결제 요청 중 오류가 발생했습니다.');
     } finally {
@@ -76,42 +67,22 @@ export default function BillingPage() {
     }
   };
 
-  const openPortal = async () => {
-    try {
-      const res = await fetch('/api/billing/portal');
-      const json = await res.json();
-      if (!res.ok) { toast.error(json?.error?.message || '구독 관리 페이지를 열 수 없습니다.'); return; }
-      if (json.data?.portalUrl) window.open(json.data.portalUrl, '_blank');
-    } catch {
-      toast.error('구독 관리 페이지를 여는 중 오류가 발생했습니다.');
-    }
-  };
-
   return (
     <PageContainer maxWidth="xl">
-      <Script src="https://app.lemonsqueezy.com/js/lemon.js" strategy="lazyOnload" />
       <PageHeader
         title="구독 / 결제"
         subtitle={`현재 플랜: ${currentPlan.label} · 이번 달 분석 ${quotaLabel(usage)}`}
         icon={<CreditCard className="w-6 h-6 text-violet-600" />}
-        actions={subscribed && lemonSqueezyConfigured ? (
-          <Button size="sm" variant="secondary" onClick={openPortal}>구독 관리</Button>
-        ) : undefined}
       />
 
-      {beta ? (
+      {beta && (
         <div className="mb-6 px-4 py-3 bg-violet-50 border border-violet-200 rounded-sm flex items-center gap-2.5">
           <Sparkles className="w-4 h-4 text-violet-500 shrink-0" />
           <p className="text-xs text-violet-700">
             <strong>베타 기간</strong> — 모든 기능(AI 시험 총평 · 주변 학교·연도 비교 포함)을 자유롭게 사용하실 수 있습니다.
           </p>
         </div>
-      ) : !lemonSqueezyConfigured ? (
-        <div className="mb-6 px-4 py-3 bg-amber-50 border border-amber-200 rounded-sm flex items-center gap-2.5">
-          <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
-          <p className="text-xs text-amber-700">결제 시스템이 준비 중입니다. 현재는 기본 기능을 이용하실 수 있습니다.</p>
-        </div>
-      ) : null}
+      )}
 
       {/* 이번 달 사용량 */}
       <div className="mb-6 p-4 border border-slate-200 rounded-sm bg-white">
@@ -162,9 +133,6 @@ export default function BillingPage() {
                   <Button size="sm" variant="secondary" disabled className="w-full">사용 중</Button>
                 ) : isFree ? (
                   <Button size="sm" variant="secondary" disabled className="w-full">무료</Button>
-                ) : !lemonSqueezyConfigured && !allowDemoUpgrade ? (
-                  // 결제 미설정 + 데모 미허용 → 비활성 "결제 준비 중"
-                  <Button size="sm" variant="secondary" disabled className="w-full">결제 준비 중</Button>
                 ) : (
                   <Button
                     size="sm"
@@ -172,7 +140,7 @@ export default function BillingPage() {
                     loading={paying === card.key}
                     className="w-full bg-violet-600 hover:bg-violet-700 text-white"
                   >
-                    {lemonSqueezyConfigured ? '구독하기' : '데모 업그레이드'}
+                    구독하기
                   </Button>
                 )}
               </div>
@@ -182,7 +150,7 @@ export default function BillingPage() {
       </div>
 
       <p className="text-[11px] text-slate-400 mt-6 leading-relaxed">
-        구독 변경·취소·결제수단 관리는 &quot;구독 관리&quot;에서 할 수 있습니다.
+        토스페이먼츠로 안전하게 결제됩니다. 구독 취소·변경은 지점 관리자에게 문의하세요.
       </p>
     </PageContainer>
   );

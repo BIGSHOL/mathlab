@@ -27,7 +27,7 @@ export const PLAN_CARDS: PlanCard[] = [
   {
     key: 'pro',
     name: 'Pro',
-    priceLabel: '준비 중',
+    priceLabel: '₩49,000 / 월',
     monthlyLimit: 50,
     features: { commentary: true, nearby: true },
     bullets: ['월 50회 기출 분석', 'AI 시험 총평 제공', '주변 학교·연도 비교 제공'],
@@ -36,7 +36,7 @@ export const PLAN_CARDS: PlanCard[] = [
   {
     key: 'enterprise',
     name: 'Enterprise',
-    priceLabel: '문의',
+    priceLabel: '₩99,000 / 월',
     monthlyLimit: null,
     features: { commentary: true, nearby: true },
     bullets: ['무제한 기출 분석', 'AI 시험 총평 제공', '주변 학교·연도 비교 제공', '우선 지원'],

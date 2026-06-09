@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireOwner, isResponse, badRequest, serverError } from '@/lib/api';
+import { requireOwner, isResponse, badRequest } from '@/lib/api';
 import { isPlanId, type PlanId } from '@/lib/billing/plans';
-import { createTenantCheckout, isLemonSqueezyConfigured } from '@/lib/billing/lemonsqueezy';
 import { monthBounds } from '@/lib/billing/guard';
 
 export const dynamic = 'force-dynamic';
 
-/** POST /api/billing/checkout — body {plan}. 설정 시 LS 체크아웃 URL, 미설정 시 데모 응답. (OWNER+) */
+/**
+ * POST /api/billing/checkout — body {plan}. 토스(para-x 결제 허브) 구독 체크아웃 URL 반환. (OWNER+)
+ * tenantId 는 서버에서 인증 사용자로부터 결정(클라가 보내지 않음).
+ * 식별은 Phase 5 에서 서명 핸드오프로 교체 예정(현재는 dev: tenantId 직접 전달 → para-x ALLOW_DEV_IDENTITY 필요).
+ */
 export async function POST(request: NextRequest) {
   const user = await requireOwner();
   if (isResponse(user)) return user;
@@ -19,8 +22,9 @@ export async function POST(request: NextRequest) {
   if (!isPlanId(body?.plan) || body.plan === 'free') return badRequest('유효하지 않은 플랜입니다.');
   const plan: PlanId = body.plan;
 
-  if (!isLemonSqueezyConfigured()) {
-    // 미설정: 선택적 데모 업그레이드(테스트용) — ALLOW_DEMO_UPGRADE=1
+  const base = process.env.NEXT_PUBLIC_PARAX_CHECKOUT_URL;
+  if (!base) {
+    // para-x 미설정: 선택적 데모 업그레이드(테스트용) — ALLOW_DEMO_UPGRADE=1
     if (process.env.ALLOW_DEMO_UPGRADE === '1') {
       const { nextMonthStart } = monthBounds();
       await prisma.tenantSubscription.upsert({
@@ -30,12 +34,9 @@ export async function POST(request: NextRequest) {
       });
       return NextResponse.json({ data: { demo: true, upgraded: true, plan, message: '데모 모드: 플랜이 변경되었습니다.' } });
     }
-    return NextResponse.json({ data: { demo: true, configured: false, message: '결제가 아직 설정되지 않았습니다 (데모 모드).' } });
+    return NextResponse.json({ data: { demo: true, configured: false, message: '결제 URL이 설정되지 않았습니다 (NEXT_PUBLIC_PARAX_CHECKOUT_URL).' } });
   }
 
-  // AuthUser엔 email이 없음(NextAuth email 슬롯=username) → 실제 email은 DB에서
-  const dbUser = await prisma.user.findUnique({ where: { id: user.id }, select: { email: true } });
-  const result = await createTenantCheckout(tenantId, plan, dbUser?.email ?? undefined);
-  if (!result.ok || !result.checkoutUrl) return serverError(result.error ?? '체크아웃 생성에 실패했습니다.');
-  return NextResponse.json({ data: { checkoutUrl: result.checkoutUrl } });
+  const checkoutUrl = `${base}?product=sub-${plan}&type=subscription&tenantId=${encodeURIComponent(tenantId)}`;
+  return NextResponse.json({ data: { checkoutUrl } });
 }
