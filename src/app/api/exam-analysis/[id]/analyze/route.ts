@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse, getTenantFilter, notFound, badRequest } from '@/lib/api';
 import { assertAnalysisQuota } from '@/lib/billing/guard';
+import { assertExamAnalysisCredit, consumeExamAnalysisCredit } from '@/lib/entitlements/service';
 import { analyzeExam } from '@/lib/exam-analysis/ai-engine';
 import { ExamPromptBuilder } from '@/lib/exam-analysis/prompt-builder';
 import { detectGradingMarks } from '@/lib/exam-analysis/mark-detector';
@@ -52,6 +53,11 @@ export async function POST(request: NextRequest, { params }: Params) {
   // 구독 월 분석 쿼터 — 재분석은 현재 시험지 제외(곧 deleteMany로 교체되므로)
   const quotaGate = await assertAnalysisQuota(user.viewingTenantId ?? user.tenantId, id);
   if (quotaGate) return quotaGate;
+
+  // 학생 이용권 크레딧 게이트 (AND — 월쿼터에 더해 학생 EXAM_ANALYSIS 크레딧도 필요)
+  // 학생 시험지(studentId 있음)일 때만 적용. 재분석(이미 차감)은 통과.
+  const creditGate = await assertExamAnalysisCredit(examPaper);
+  if (creditGate) return creditGate;
 
   if (examPaper.status === 'ANALYZING') {
     // 2분 이상 ANALYZING 상태면 갇힌 것으로 판단 → 재시도 허용
@@ -255,6 +261,13 @@ export async function POST(request: NextRequest, { params }: Params) {
       where: { id },
       data: { status: 'COMPLETED', analysisStep: 4 },
     });
+
+    // 학생 이용권 1 차감 (학생 시험지일 때만 · 시험지 단위 멱등). 실패해도 분석 결과는 유지.
+    try {
+      await consumeExamAnalysisCredit(examPaper);
+    } catch (e) {
+      console.error('[이용권] 기출분석 차감 실패:', e);
+    }
 
     return NextResponse.json({
       data: {

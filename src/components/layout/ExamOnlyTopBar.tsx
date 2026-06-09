@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LogOut, User, Settings, MapPin, FileUp, Building2, Users, FileSearch, CreditCard, Sparkles } from 'lucide-react';
+import { LogOut, User, Settings, MapPin, FileUp, Building2, Users, FileSearch, CreditCard, Sparkles, Ticket } from 'lucide-react';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 
 /** SUPER_ADMIN 관리 메뉴 링크 (사이드바 제거 후 유일한 진입점) */
@@ -56,6 +56,15 @@ export function ProfileMenu({ variant = 'floating' }: { variant?: 'floating' | '
             >
               <Settings className="w-4 h-4" />
             </button>
+          )}
+          {isOwnerPlus && (
+            <Link
+              href="/entitlements"
+              title="이용권 배정"
+              className="p-1.5 rounded-sm text-slate-400 hover:text-violet-600 hover:bg-slate-100 shrink-0 transition-colors"
+            >
+              <Ticket className="w-4 h-4" />
+            </Link>
           )}
           {isOwnerPlus && (
             <Link
@@ -125,6 +134,16 @@ export function ProfileMenu({ variant = 'floating' }: { variant?: 'floating' | '
             </>
           )}
         </div>
+      )}
+      {isOwnerPlus && (
+        <Link
+          href="/entitlements"
+          title="이용권 배정"
+          className="flex items-center gap-1 text-xs text-slate-600 hover:text-violet-600 border-l border-slate-200 pl-2 transition-colors"
+        >
+          <Ticket className="w-3.5 h-3.5" />
+          이용권
+        </Link>
       )}
       {isOwnerPlus && (
         <Link
