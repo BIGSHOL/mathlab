@@ -115,19 +115,26 @@ async function alreadyConsumed(examPaperId: string): Promise<boolean> {
  */
 export async function assertExamAnalysisCredit(examPaper: ExamPaperLike): Promise<NextResponse | null> {
   if (!examPaper.studentId) return null; // 블랭크/템플릿 → 크레딧 미적용
-  if (await alreadyConsumed(examPaper.id)) return null; // 재분석 — 이미 차감됨
+  try {
+    if (await alreadyConsumed(examPaper.id)) return null; // 재분석 — 이미 차감됨
 
-  const lic = await prisma.studentLicense.findUnique({
-    where: { tenantId_userId_feature: { tenantId: examPaper.tenantId, userId: examPaper.studentId, feature: EXAM_FEATURE } },
-  });
-  const remaining = lic ? lic.allocated - lic.used : 0;
-  if (remaining <= 0) {
-    return NextResponse.json(
-      { error: { code: 'ENTITLEMENT_EXHAUSTED', message: '이 학생의 기출분석 이용권이 부족합니다. 원장에게 배정을 요청하세요.' } },
-      { status: 403 },
-    );
+    const lic = await prisma.studentLicense.findUnique({
+      where: { tenantId_userId_feature: { tenantId: examPaper.tenantId, userId: examPaper.studentId, feature: EXAM_FEATURE } },
+    });
+    const remaining = lic ? lic.allocated - lic.used : 0;
+    if (remaining <= 0) {
+      return NextResponse.json(
+        { error: { code: 'ENTITLEMENT_EXHAUSTED', message: '이 학생의 기출분석 이용권이 부족합니다. 원장에게 배정을 요청하세요.' } },
+        { status: 403 },
+      );
+    }
+    return null;
+  } catch (e) {
+    // fail-open: 이용권 테이블 미배포/일시 오류 시 게이팅을 건너뛰어 기존 분석 흐름을 보호(쿼터만 적용).
+    // 롤아웃 안전장치 — parax-entitlements.sql 적용 전에도 기출분석이 깨지지 않도록.
+    console.error('[이용권] 게이트 확인 실패 — 크레딧 게이팅 건너뜀:', e);
+    return null;
   }
-  return null;
 }
 
 /**
