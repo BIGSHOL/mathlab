@@ -65,6 +65,9 @@ model Tenant {
   nearbyGroups            TenantNearbyGroup[]
   questions               Question[]
   subscription            TenantSubscription?
+  entitlements            TenantEntitlement[]
+  studentLicenses         StudentLicense[]
+  entitlementLedgers      EntitlementLedger[]
 
   @@index([slug])
   @@index([isActive])
@@ -79,6 +82,10 @@ model TenantSubscription {
   lsCustomerId     String?   @db.VarChar(50)
   lsSubscriptionId String?   @unique @db.VarChar(50)
   lsVariantId      Int?
+  // FEAT: 토스페이먼츠 빌링 (para-x 결제 허브) — LS 대체 예정(Phase 4)
+  tossBillingKey     String? @db.VarChar(200)
+  tossCustomerKey    String? @db.VarChar(100)
+  tossSubscriptionId String? @db.VarChar(100)
   currentPeriodEnd DateTime?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
@@ -400,9 +407,56 @@ enum CourseStatus {
 
 // ── 문제 중간테이블 (questionIds Json → 관계형 전환) ──
 
-// FEAT: 이용권 시스템 — 지점 이용권 풀
+// FEAT: 이용권 시스템 — 지점 이용권 풀 (para-x 결제로 충전)
+model TenantEntitlement {
+  id             String         @id @default(cuid())
+  tenantId       String
+  feature        LicenseFeature
+  balance        Int            @default(0) // 남은 이용권 (충전 - 배정)
+  totalPurchased Int            @default(0) // 누적 구매량
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
-// FEAT: 이용권 시스템 — 학생 개별 배정
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, feature])
+  @@index([tenantId])
+}
+
+// FEAT: 이용권 시스템 — 학생 개별 배정 (지점 풀 → 학생, 소비는 Phase 3)
+model StudentLicense {
+  id        String         @id @default(cuid())
+  tenantId  String
+  userId    String
+  feature   LicenseFeature
+  allocated Int            @default(0) // 배정량
+  used      Int            @default(0) // 사용량 (잔여 = allocated - used)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId, feature])
+  @@index([tenantId])
+  @@index([userId])
+}
+
+// FEAT: 이용권 시스템 — 거래 원장 (감사·멱등). refOrderId = para-x 주문당 1행.
+model EntitlementLedger {
+  id         String          @id @default(cuid())
+  tenantId   String
+  userId     String?
+  feature    LicenseFeature?
+  delta      Int // +충전/배정, -소비
+  reason     String          @db.VarChar(20) // purchase | allocate | consume | refund
+  refOrderId String?         @unique
+  amount     Int? // 결제금액(원) — purchase 시
+  createdAt  DateTime        @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt])
+}
 
 // ══════════════════════════════════════════════════════════════
 // FEAT: 기출 분석 (Exam Analysis) — Math Report 이식
