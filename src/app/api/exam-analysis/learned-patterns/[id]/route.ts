@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireOwner, isResponse, badRequest, notFound } from '@/lib/api';
+import { requireSuperAdmin, isResponse, badRequest, notFound } from '@/lib/api';
 
 type Params = { params: Promise<{ id: string }> };
 
-/** PATCH /api/exam-analysis/learned-patterns/[id] — 패턴 수정 (OWNER+) */
+// LearnedPattern은 플랫폼 전역 모델(tenantId 없음) — 쓰기는 SUPER_ADMIN 전용
+
+/** PATCH /api/exam-analysis/learned-patterns/[id] — 패턴 수정 (SUPER_ADMIN) */
 export async function PATCH(request: NextRequest, { params }: Params) {
-  const user = await requireOwner();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
   const { id } = await params;
 
@@ -43,9 +45,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   }
 }
 
-/** DELETE /api/exam-analysis/learned-patterns/[id] — 패턴 삭제 (OWNER+) */
+/** DELETE /api/exam-analysis/learned-patterns/[id] — 패턴 삭제 (SUPER_ADMIN) */
 export async function DELETE(_request: NextRequest, { params }: Params) {
-  const user = await requireOwner();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
   const { id } = await params;
 

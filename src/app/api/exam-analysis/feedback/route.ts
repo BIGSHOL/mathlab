@@ -66,8 +66,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const paper = await prisma.examPaper.findUnique({
-      where: { id: examPaperId },
+    // 테넌트 격리: 접근 가능한 시험지에만 피드백 생성 (GET과 동일 필터)
+    const paper = await prisma.examPaper.findFirst({
+      where: { id: examPaperId, ...getTenantFilter(user) },
       select: { id: true, tenantId: true },
     });
     if (!paper) {

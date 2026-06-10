@@ -390,7 +390,8 @@ function ReferenceTab() {
 // 피드백/학습 탭
 // ══════════════════════════════════════
 
-function FeedbackLearningTab() {
+// LearnedPattern은 플랫폼 전역 데이터 — 생성/수정(API도 SUPER_ADMIN 전용)은 SUPER_ADMIN에게만 노출, 목록 조회는 OWNER+
+function FeedbackLearningTab({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   // 피드백
   const [feedbacks, setFeedbacks] = useState<FeedbackItem[]>([]);
   const [feedbackLoading, setFeedbackLoading] = useState(true);
@@ -533,10 +534,12 @@ function FeedbackLearningTab() {
             <Brain className="w-4 h-4 text-primary" />
             학습 패턴 ({patterns.length}개)
           </h3>
-          <Button size="sm" onClick={handleAnalyze} loading={analyzing}>
-            <Brain className="w-3.5 h-3.5 mr-1" />
-            패턴 학습 실행
-          </Button>
+          {isSuperAdmin && (
+            <Button size="sm" onClick={handleAnalyze} loading={analyzing}>
+              <Brain className="w-3.5 h-3.5 mr-1" />
+              패턴 학습 실행
+            </Button>
+          )}
         </div>
 
         {patternsLoading ? (
@@ -547,7 +550,7 @@ function FeedbackLearningTab() {
           </div>
         ) : patterns.length === 0 ? (
           <div className="border border-slate-200 rounded-sm bg-white py-8 text-center text-sm text-slate-400">
-            학습된 패턴이 없습니다. &quot;패턴 학습 실행&quot;을 클릭하세요.
+            {isSuperAdmin ? '학습된 패턴이 없습니다. "패턴 학습 실행"을 클릭하세요.' : '학습된 패턴이 없습니다.'}
           </div>
         ) : (
           <div className="space-y-3">
@@ -572,18 +575,20 @@ function FeedbackLearningTab() {
                       {new Date(p.updatedAt).toLocaleDateString('ko-KR')} 업데이트
                     </p>
                   </div>
-                  <button
-                    onClick={() => handleToggle(p)}
-                    disabled={togglingId === p.id}
-                    className="p-1 rounded-sm hover:bg-slate-100 transition-colors shrink-0"
-                    title={p.isActive ? '비활성화' : '활성화'}
-                  >
-                    {p.isActive ? (
-                      <ToggleRight className="w-6 h-6 text-primary" />
-                    ) : (
-                      <ToggleLeft className="w-6 h-6 text-slate-400" />
-                    )}
-                  </button>
+                  {isSuperAdmin && (
+                    <button
+                      onClick={() => handleToggle(p)}
+                      disabled={togglingId === p.id}
+                      className="p-1 rounded-sm hover:bg-slate-100 transition-colors shrink-0"
+                      title={p.isActive ? '비활성화' : '활성화'}
+                    >
+                      {p.isActive ? (
+                        <ToggleRight className="w-6 h-6 text-primary" />
+                      ) : (
+                        <ToggleLeft className="w-6 h-6 text-slate-400" />
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -1006,7 +1011,7 @@ export default function ExamAnalysisAdminPage() {
 
       {/* 탭 콘텐츠 */}
       {effectiveTab === 'references' && <ReferenceTab />}
-      {effectiveTab === 'feedback' && <FeedbackLearningTab />}
+      {effectiveTab === 'feedback' && <FeedbackLearningTab isSuperAdmin={isSuperAdmin} />}
       {effectiveTab === 'calibration' && <CalibrationTab />}
       {effectiveTab === 'teachers' && <TeachersTab />}
     </PageContainer>

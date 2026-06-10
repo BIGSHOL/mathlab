@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireOwner, isResponse, badRequest } from '@/lib/api';
+import { requireOwner, requireSuperAdmin, isResponse, badRequest } from '@/lib/api';
 
 /** GET /api/exam-analysis/learned-patterns — 학습된 패턴 목록 (OWNER+) */
 export async function GET(request: NextRequest) {
@@ -46,11 +46,12 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * POST /api/exam-analysis/learned-patterns — 피드백 분석 → 패턴 생성 (OWNER+)
+ * POST /api/exam-analysis/learned-patterns — 피드백 분석 → 패턴 생성 (SUPER_ADMIN)
  * ?action=analyze: 처리 대기 중인 피드백을 분석하여 패턴 자동 생성
+ * LearnedPattern은 플랫폼 전역 모델 — 쓰기는 SUPER_ADMIN 전용 (조회 GET은 OWNER+)
  */
 export async function POST(request: NextRequest) {
-  const user = await requireOwner();
+  const user = await requireSuperAdmin();
   if (isResponse(user)) return user;
 
   const { searchParams } = new URL(request.url);
