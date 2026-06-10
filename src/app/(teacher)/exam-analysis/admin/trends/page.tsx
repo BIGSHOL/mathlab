@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 import { BarChart3, RefreshCw, Sparkles, ChevronDown, ChevronUp, Search } from 'lucide-react';
 import { DIFFICULTY_COLORS, DIFFICULTY_LABELS, QUESTION_TYPE_COLORS } from '@/lib/exam-analysis/constants';
+import { useAuth } from '@/hooks/useAuth';
 
 // ── 타입 ──
 
@@ -49,6 +50,7 @@ const SUBJECT_TABS = [
 ] as const;
 
 export default function TrendsDashboardPage() {
+  const { user } = useAuth();
   const [subject, setSubject] = useState<'MATH' | 'ENGLISH'>('MATH');
   const [grade, setGrade] = useState('');
   const [schoolSearch, setSchoolSearch] = useState('');
@@ -140,9 +142,15 @@ export default function TrendsDashboardPage() {
 
   const stats = data?.stats;
 
+  // UI 가드 — 관리 메뉴(SUPER_ADMIN) 진입 전용 대시보드, 형제 admin 페이지와 통일
+  if (user && user.role !== 'SUPER_ADMIN') {
+    return <div className="p-8 text-center text-slate-500">SUPER_ADMIN 전용 페이지입니다.</div>;
+  }
+
   return (
     <PageContainer maxWidth="xl">
-      <PageHeader title="출제 경향 분석" />
+      {/* backHref — 이 경로는 ExamOnlyTopBar가 숨겨져 복귀 동선이 없어 뒤로가기 제공 */}
+      <PageHeader title="출제 경향 분석" backHref="/exam-analysis" />
 
       {/* ── 필터 바 ── */}
       <div className="flex flex-wrap items-center gap-3 mb-5">

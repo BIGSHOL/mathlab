@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { Pagination } from '@/components/ui/Pagination';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ExamUpload {
   id: string;
@@ -57,6 +58,7 @@ function formatBytes(bytes: number): string {
 }
 
 export default function ExamUploadsPage() {
+  const { user } = useAuth();
   const [items, setItems] = useState<ExamUpload[]>([]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [storage, setStorage] = useState({ totalSize: 0, fileCount: 0 });
@@ -203,6 +205,11 @@ export default function ExamUploadsPage() {
   );
 
   const selectCls = 'text-sm border border-slate-200 rounded-sm px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500';
+
+  // UI 가드 — API는 requireSuperAdmin으로 보호되지만 형제 admin 페이지와 동일한 안내 제공
+  if (user && user.role !== 'SUPER_ADMIN') {
+    return <div className="p-8 text-center text-slate-500">SUPER_ADMIN 전용 페이지입니다.</div>;
+  }
 
   return (
     <PageContainer maxWidth="xl">

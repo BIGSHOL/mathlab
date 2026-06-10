@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Users, Plus, Save, Trash2, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { PageContainer } from '@/components/ui/PageContainer';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { toast } from '@/components/ui/Toast';
 import { useAuth } from '@/hooks/useAuth';
 import { AdminTable, type AdminTableColumn, type AdminTableSort } from '@/components/admin-table';
@@ -164,15 +166,16 @@ export default function AdminUsersPage() {
   ];
 
   return (
-    <div className="p-6 max-w-5xl mx-auto w-full">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-bold flex items-center gap-2">
-          <Users className="w-5 h-5" /> 사용자 관리
-        </h1>
-        <Button size="sm" onClick={() => setShowCreate((v) => !v)}>
-          <Plus className="w-4 h-4 mr-1" /> 새 계정
-        </Button>
-      </div>
+    <PageContainer maxWidth="lg">
+      <PageHeader
+        title="사용자 관리"
+        icon={<Users className="w-6 h-6" />}
+        actions={
+          <Button size="sm" onClick={() => setShowCreate((v) => !v)}>
+            <Plus className="w-4 h-4 mr-1" /> 새 계정
+          </Button>
+        }
+      />
       <div className="flex gap-2 mb-3 items-center flex-wrap">
         <Input placeholder="아이디·이름 검색" value={q} onChange={(e) => setQ(e.target.value)} />
         <select
@@ -193,7 +196,7 @@ export default function AdminUsersPage() {
         </select>
       </div>
       {showCreate && (
-        <div className="mb-4 p-4 border border-slate-200 rounded-lg grid grid-cols-2 gap-2 bg-slate-50">
+        <div className="mb-4 p-4 border border-slate-200 rounded-sm grid grid-cols-2 gap-2 bg-slate-50">
           <Input label="아이디" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
           <Input label="이름" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           <Input label="비밀번호" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
@@ -220,6 +223,6 @@ export default function AdminUsersPage() {
         onSortChange={onSortChange}
         emptyMessage="사용자가 없습니다"
       />
-    </div>
+    </PageContainer>
   );
 }

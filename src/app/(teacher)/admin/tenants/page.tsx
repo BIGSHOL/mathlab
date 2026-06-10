@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Building2, Plus, Save, Search } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { PageContainer } from '@/components/ui/PageContainer';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { toast } from '@/components/ui/Toast';
 import { useAuth } from '@/hooks/useAuth';
 import { AdminTable, type AdminTableColumn, type AdminTableSort } from '@/components/admin-table';
@@ -166,15 +168,16 @@ export default function AdminTenantsPage() {
   ];
 
   return (
-    <div className="p-6 max-w-5xl mx-auto w-full">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-bold flex items-center gap-2">
-          <Building2 className="w-5 h-5" /> 지점 관리
-        </h1>
-        <Button size="sm" onClick={() => setShowCreate((v) => !v)}>
-          <Plus className="w-4 h-4 mr-1" /> 새 지점
-        </Button>
-      </div>
+    <PageContainer maxWidth="lg">
+      <PageHeader
+        title="지점 관리"
+        icon={<Building2 className="w-6 h-6" />}
+        actions={
+          <Button size="sm" onClick={() => setShowCreate((v) => !v)}>
+            <Plus className="w-4 h-4 mr-1" /> 새 지점
+          </Button>
+        }
+      />
       {betaAllPro && (
         <div className="mb-3 px-3 py-2 bg-violet-50 border border-violet-200 rounded-sm text-xs text-violet-700">
           <strong>베타 기간(BETA_ALL_PRO)</strong> 활성 — 아래 배정 플랜과 무관하게 <b>모든 지점이 최소 Pro로 동작</b> 중입니다.
@@ -194,7 +197,7 @@ export default function AdminTenantsPage() {
         </div>
       </div>
       {showCreate && (
-        <div className="mb-4 p-4 border border-slate-200 rounded-lg flex gap-2 items-end bg-slate-50">
+        <div className="mb-4 p-4 border border-slate-200 rounded-sm flex gap-2 items-end bg-slate-50">
           <Input label="지점명" value={name} onChange={(e) => setName(e.target.value)} />
           <Input label="slug (영소문자/숫자/-)" value={slug} onChange={(e) => setSlug(e.target.value)} />
           <Button size="sm" onClick={create}>
@@ -211,6 +214,6 @@ export default function AdminTenantsPage() {
         onSortChange={onSortChange}
         emptyMessage="지점이 없습니다"
       />
-    </div>
+    </PageContainer>
   );
 }
