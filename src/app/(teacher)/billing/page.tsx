@@ -150,7 +150,7 @@ export default function BillingPage() {
       </div>
 
       <p className="text-[11px] text-slate-400 mt-6 leading-relaxed">
-        토스페이먼츠로 안전하게 결제됩니다. 구독 취소·변경은 지점 관리자에게 문의하세요.
+        결제는 안전하게 처리됩니다. 구독 취소·변경은 지점 관리자에게 문의하세요.
       </p>
     </PageContainer>
   );

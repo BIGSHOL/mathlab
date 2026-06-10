@@ -248,7 +248,8 @@ export async function detectGradingMarks(
 
     const responseText = response.text;
     if (!responseText) {
-      return createEmptyResult(['Gemini 응답이 비어있습니다']);
+      // 현재는 DB 저장만 되지만 향후 렌더 경로 대비 모델명 비노출(규칙 #0)
+      return createEmptyResult(['AI 응답이 비어있습니다']);
     }
 
     const rawResult = parseJsonResponse<Record<string, unknown>>(responseText);

@@ -8,6 +8,8 @@
  */
 
 import { markdownToHighlighted } from './helpers';
+// 질문(h3)도 AI 생성 텍스트 — raw $ 노출 방어로 KaTeX 렌더 경유 (답변은 markdownToHighlighted가 처리)
+import { renderInlineMath } from '@/lib/exam-analysis/rendering';
 import { DataBox } from './DataBox';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 
@@ -23,7 +25,7 @@ export function QASection({ qa, sectionNum, qaIndex }: QASectionProps) {
     <section className="v3-section">
       <span className="v3-section-num">{sectionNum}</span>
       <div className="v3-section-sub">질문 {qaIndex + 1} · 학부모 인터뷰</div>
-      <h3>{qa.question}</h3>
+      <h3>{renderInlineMath(qa.question, `qa-q-${qaIndex}`, { disableHighlight: true })}</h3>
       {answer.map((p, i) => (
         <p key={`qa-${qaIndex}-${i}`}>{markdownToHighlighted(p, `qa-${qaIndex}-${i}`)}</p>
       ))}

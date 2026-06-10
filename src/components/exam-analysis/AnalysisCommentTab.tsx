@@ -209,10 +209,17 @@ function CommentRow({ q, showDiffReason, examPaperId, analysisId, onDifficultyEd
           </div>
           <span className="text-[10px] text-slate-300 mx-0.5">·</span>
           <span className="text-[10px] font-medium text-slate-500">유형</span>
-          <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-semibold"
-            style={{ backgroundColor: `${QUESTION_TYPE_COLORS[q.question_type] || '#94A3B8'}20`, color: QUESTION_TYPE_COLORS[q.question_type] || '#94A3B8' }}>
-            {TYPE_LABELS[q.question_type] || q.question_type}
-          </span>
+          {(() => {
+            // AI 반환 키는 대소문자/변형이 섞일 수 있어 정규화 후 매칭 (규칙 12-3 — 아래 능력 블록과 동일 패턴)
+            const type = String(q.question_type || '').toLowerCase();
+            const typeColor = QUESTION_TYPE_COLORS[type] || '#94A3B8';
+            return (
+              <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-semibold"
+                style={{ backgroundColor: `${typeColor}20`, color: typeColor }}>
+                {TYPE_LABELS[type] || q.question_type}
+              </span>
+            );
+          })()}
           <span className="text-[10px] text-slate-300 mx-0.5">·</span>
           <span className="text-[10px] font-medium text-slate-500">능력</span>
           {(() => {

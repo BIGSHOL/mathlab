@@ -154,9 +154,9 @@ async function handleDashboard(
   let confCount = 0;
 
   for (const p of papers) {
-    const analysis = p.analyses[0];
-    if (!analysis?.questions) continue;
-    const qs = analysis.questions as unknown as AnalyzedQuestion[];
+    const rawQuestions = p.analyses[0]?.questions;
+    if (!Array.isArray(rawQuestions)) continue;
+    const qs = rawQuestions as unknown as AnalyzedQuestion[];
     allQuestions.push(...qs);
     for (const q of qs) {
       if (typeof q.confidence === 'number') {
@@ -448,9 +448,9 @@ async function handleSchoolGrouping(examPapers: any[], tenantId: string, subject
     const allQuestions: AnalyzedQuestion[] = [];
 
     for (const p of papers) {
-      const analysis = p.analyses[0];
-      if (!analysis?.questions) continue;
-      allQuestions.push(...(analysis.questions as unknown as AnalyzedQuestion[]));
+      const rawQuestions = p.analyses[0]?.questions;
+      if (!Array.isArray(rawQuestions)) continue;
+      allQuestions.push(...(rawQuestions as unknown as AnalyzedQuestion[]));
     }
 
     if (!allQuestions.length) continue;

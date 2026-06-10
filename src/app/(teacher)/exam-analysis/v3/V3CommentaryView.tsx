@@ -20,6 +20,9 @@ import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-age
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { weightedAverageDifficulty } from '@/lib/exam-analysis/difficulty';
 import { markdownToHighlighted, normDiff, koDifficultyText } from './helpers';
+// raw $ 노출 방어 — AI 생성 텍스트(headline/dek/pull_quote)는 KaTeX 렌더 필수 (CLAUDE.md AI 출력 규칙).
+// React 뷰의 텍스트 렌더 방어이며 마크업 구조 불변 — naver-v3-renderer(정적 HTML)·시안 빌더 3-way sync 대상 아님.
+import { renderInlineMath } from '@/lib/exam-analysis/rendering';
 import { FeatureCallout } from './FeatureCallout';
 import { QASection } from './QASection';
 import { DifficultyStackedBar } from './DifficultyStackedBar';
@@ -113,8 +116,8 @@ export function V3CommentaryView({ commentary, questions, meta, charts }: V3Comm
       {/* ① 헤더 */}
       <header className="v3-top">
         <span className="v3-kicker">{kicker}</span>
-        <h1>{headline}</h1>
-        {dek && <p className="v3-dek">{koDifficultyText(dek)}</p>}
+        <h1>{renderInlineMath(headline, 'v3-hl', { disableHighlight: true })}</h1>
+        {dek && <p className="v3-dek">{renderInlineMath(koDifficultyText(dek), 'v3-dek', { disableHighlight: true })}</p>}
         <div className="v3-meta">
           <span className="v3-author">매스랩 AI 분석</span>
           <span className="v3-dot">·</span>
@@ -219,7 +222,7 @@ export function V3CommentaryView({ commentary, questions, meta, charts }: V3Comm
       {/* ⑥ 인용구 (검정 상하 라인) */}
       {c.pull_quote && (
         <div className="v3-quote-block">
-          <p>&quot;{c.pull_quote.text}&quot;</p>
+          <p>&quot;{renderInlineMath(c.pull_quote.text, 'v3-pq', { disableHighlight: true })}&quot;</p>
           {c.pull_quote.cite && <span className="v3-quote-cite">{c.pull_quote.cite}</span>}
         </div>
       )}

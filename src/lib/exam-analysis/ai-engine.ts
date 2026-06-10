@@ -198,7 +198,8 @@ async function callGeminiVision<T = unknown>({
 
   const responseText = response.text;
   if (!responseText) {
-    throw new Error('Gemini 응답이 비어있습니다');
+    // errorMessage로 DB 저장 후 사용자 화면에 렌더되는 경로 — 모델명 비노출 규칙(#0)
+    throw new Error('AI 응답이 비어있습니다');
   }
 
   if (jsonMode) {

@@ -54,11 +54,22 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   const commentary = commentaryExt.result as unknown as CommentaryResult;
-  const questions = latestAnalysis.questions as unknown as AnalyzedQuestion[];
-  const summary = latestAnalysis.summary as unknown as {
-    difficulty_distribution: Record<string, number>;
-    type_distribution: Record<string, number>;
-  };
+
+  // Json? 필드 진입부 정규화 (규칙 #11) — summary가 null인 분석 행에서 차트 생성 TypeError 방지
+  const questions: AnalyzedQuestion[] = Array.isArray(latestAnalysis.questions)
+    ? (latestAnalysis.questions as unknown as AnalyzedQuestion[])
+    : [];
+  const rawSummary = latestAnalysis.summary;
+  const summary =
+    rawSummary && typeof rawSummary === 'object' && !Array.isArray(rawSummary)
+      ? (rawSummary as unknown as {
+          difficulty_distribution: Record<string, number>;
+          type_distribution: Record<string, number>;
+        })
+      : null;
+  if (!questions.length || !summary) {
+    return badRequest('분석 데이터가 없습니다. 기본 분석을 다시 실행해 주세요');
+  }
 
   // NDJSON 스트리밍 응답
   const encoder = new TextEncoder();

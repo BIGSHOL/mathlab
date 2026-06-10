@@ -780,11 +780,17 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                   <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-sm ${confidenceInfo.color}`}>
                     신뢰도 {confidenceInfo.avg}%
                   </span>
-                  {latestAnalysis?.modelVersion && (
-                    <span className="text-[10px] text-slate-400" title={latestAnalysis.modelVersion}>
-                      {latestAnalysis.modelVersion.includes('prompt') ? latestAnalysis.modelVersion.split('/ ').pop() : `prompt v0`}
-                    </span>
-                  )}
+                  {latestAnalysis?.modelVersion && (() => {
+                    // modelVersion은 "gemini-… / prompt vX.Y.Z" 형태 — 모델명 비노출 규칙(#0): 툴팁 포함 prompt 버전만 표시
+                    const promptLabel = latestAnalysis.modelVersion.includes('prompt')
+                      ? latestAnalysis.modelVersion.split('/ ').pop()
+                      : 'prompt v0';
+                    return (
+                      <span className="text-[10px] text-slate-400" title={promptLabel}>
+                        {promptLabel}
+                      </span>
+                    );
+                  })()}
                 </>
               )}
             </div>
@@ -865,7 +871,8 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
       {/* ── 에러 상태 ── */}
       {detail.status === 'FAILED' && detail.errorMessage && (
         <div className="bg-red-50 border border-red-200 rounded-sm p-3 mb-4 text-sm text-red-700">
-          {detail.errorMessage}
+          {/* 레거시 저장 메시지에 모델명이 남아있을 수 있어 표시 시점에 방어 치환 (규칙 #0) */}
+          {detail.errorMessage.replace(/gemini|claude|anthropic/gi, 'AI')}
         </div>
       )}
 
