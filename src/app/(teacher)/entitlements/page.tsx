@@ -121,6 +121,7 @@ export default function EntitlementsPage() {
       <PageHeader
         title="이용권 배정"
         icon={<Ticket className="w-6 h-6" />}
+        backHref="/exam-analysis"
         actions={
           <Button size="sm" variant="ghost" onClick={() => void load()}>
             <RefreshCw className="w-4 h-4 mr-1" /> 새로고침
