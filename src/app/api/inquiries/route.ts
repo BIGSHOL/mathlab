@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { z } from 'zod';
+import { requireSuperAdmin, isResponse } from '@/lib/api';
 
 const schema = z.object({
   academyName: z.string().min(1, '학원명을 입력하세요').max(100),
@@ -36,6 +37,61 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json(
       { error: { code: 'INTERNAL_ERROR', message: '서버 오류가 발생했습니다' } },
+      { status: 500 }
+    );
+  }
+}
+
+/** GET /api/inquiries — 도입 문의 목록 (SUPER_ADMIN 전용, /admin/inquiries 관리 화면용) */
+export async function GET(req: NextRequest) {
+  const user = await requireSuperAdmin();
+  if (isResponse(user)) return user;
+
+  const { searchParams } = new URL(req.url);
+  const status = searchParams.get('status'); // PENDING | ANSWERED | (빈 값 = 전체)
+
+  try {
+    const where = status === 'PENDING' || status === 'ANSWERED' ? { status: status as 'PENDING' | 'ANSWERED' } : {};
+    const [items, pendingCount] = await Promise.all([
+      prisma.inquiry.findMany({ where, orderBy: { createdAt: 'desc' }, take: 200 }),
+      prisma.inquiry.count({ where: { status: 'PENDING' } }),
+    ]);
+    return NextResponse.json({ data: items, meta: { pendingCount } });
+  } catch {
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_ERROR', message: '문의 목록을 불러오지 못했습니다' } },
+      { status: 500 }
+    );
+  }
+}
+
+const patchSchema = z.object({
+  id: z.string().min(1),
+  status: z.enum(['PENDING', 'ANSWERED']),
+});
+
+/** PATCH /api/inquiries — 문의 상태 변경 (SUPER_ADMIN 전용) */
+export async function PATCH(req: NextRequest) {
+  const user = await requireSuperAdmin();
+  if (isResponse(user)) return user;
+
+  try {
+    const body = await req.json().catch(() => ({}));
+    const parsed = patchSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: '입력값이 올바르지 않습니다' } },
+        { status: 400 }
+      );
+    }
+    const updated = await prisma.inquiry.update({
+      where: { id: parsed.data.id },
+      data: { status: parsed.data.status },
+    });
+    return NextResponse.json({ data: updated });
+  } catch {
+    return NextResponse.json(
+      { error: { code: 'UPDATE_FAILED', message: '문의 상태 변경에 실패했습니다' } },
       { status: 500 }
     );
   }

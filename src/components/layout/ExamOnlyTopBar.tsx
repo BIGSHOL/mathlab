@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LogOut, User, Settings, MapPin, FileUp, Building2, Users, FileSearch, CreditCard, Sparkles, Ticket, BarChart3 } from 'lucide-react';
+import { LogOut, User, Settings, MapPin, FileUp, Building2, Users, FileSearch, CreditCard, Sparkles, Ticket, BarChart3, Inbox } from 'lucide-react';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 
 /** SUPER_ADMIN 관리 메뉴 링크 (사이드바 제거 후 유일한 진입점) */
 const ADMIN_LINKS = [
   { href: '/exam-analysis', label: '기출분석', icon: FileSearch },
+  { href: '/admin/inquiries', label: '도입 문의', icon: Inbox },
   { href: '/admin/evolution', label: '벤치마크', icon: Sparkles },
   { href: '/exam-analysis/admin/trends', label: '트렌드', icon: BarChart3 },
   { href: '/admin/schools', label: '학교 관리', icon: MapPin },
