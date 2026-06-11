@@ -27,6 +27,36 @@ export function InquiryModal({ onClose }: Props) {
     setForm((f) => ({ ...f, [k]: v }));
   }
 
+  /**
+   * 메일 알림 — para-x 랜딩 폼과 동일하게 브라우저에서 Web3Forms로 직접 발송.
+   * (서버 간 호출은 Cloudflare 403 챌린지로 차단되므로 반드시 클라이언트에서)
+   * best-effort: 실패해도 접수(DB)는 이미 성공 — admin 화면(/admin/inquiries)에 항상 남음.
+   */
+  async function notifyByEmail() {
+    const key = process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY;
+    if (!key) return;
+    try {
+      await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          access_key: key,
+          subject: `[MathLAB] 도입 문의 — ${form.academyName}`,
+          from_name: 'MathLAB 도입 문의',
+          학원명: form.academyName,
+          담당자: form.contactName,
+          연락처: form.phone,
+          이메일: form.email || '(미입력)',
+          지역: form.region || '(미입력)',
+          문의내용: form.message || '(없음)',
+          관리화면: `${window.location.origin}/admin/inquiries`,
+        }),
+      });
+    } catch {
+      // 메일 실패 무시 — DB 접수가 source of truth
+    }
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setStatus('loading');
@@ -44,6 +74,7 @@ export function InquiryModal({ onClose }: Props) {
         setStatus('error');
         return;
       }
+      await notifyByEmail(); // 접수 성공 후 메일 알림 (best-effort)
       setStatus('done');
     } catch {
       setErrorMsg('네트워크 오류가 발생했습니다');
