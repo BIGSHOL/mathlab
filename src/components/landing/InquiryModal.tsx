@@ -34,9 +34,12 @@ export function InquiryModal({ onClose }: Props) {
    */
   async function notifyByEmail() {
     const key = process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY;
-    if (!key) return;
+    if (!key) {
+      console.warn('[inquiry-mail] 키 미설정 — 메일 알림 생략');
+      return;
+    }
     try {
-      await fetch('https://api.web3forms.com/submit', {
+      const res = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
@@ -52,8 +55,11 @@ export function InquiryModal({ onClose }: Props) {
           관리화면: `${window.location.origin}/admin/inquiries`,
         }),
       });
-    } catch {
-      // 메일 실패 무시 — DB 접수가 source of truth
+      const body = await res.text().catch(() => '');
+      // 진단 로그 (콘솔 전용 — 사용자 화면 비노출). 실패해도 DB 접수가 source of truth.
+      console.warn('[inquiry-mail] 응답:', res.status, body.slice(0, 300));
+    } catch (e) {
+      console.warn('[inquiry-mail] 전송 실패(네트워크/CORS):', String(e));
     }
   }
 
