@@ -7,7 +7,7 @@
  * [업로드] 클릭 시 짧은 연출 후 onSuccess (서버 업로드 없음).
  */
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Upload, X, FileText, Sparkles, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
@@ -57,6 +57,7 @@ export function DemoUploadForm({ uploadedIdxs, onSuccess, onCancel }: DemoUpload
   const [pickedIdx, setPickedIdx] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const scopeNoticeShown = useRef(false); // 출제범위 고정 안내 토스트 1회만
 
   // 폼 필드 — 샘플 선택 시 자동 채움 (실제 폼의 파일명 파싱과 동일 체감)
   const [title, setTitle] = useState('');
@@ -256,9 +257,21 @@ export function DemoUploadForm({ uploadedIdxs, onSuccess, onCancel }: DemoUpload
         </div>
       </div>
 
-      {/* 출제범위 선택 (실제 컴포넌트 재사용) */}
+      {/* 출제범위 선택 (실제 컴포넌트 재사용) — 데모에선 결과가 샘플 픽스처로 고정이라
+          어떻게 바꿔도 샘플 원본 범위로 즉시 복원 (잘못 고른 범위가 결과와 어긋나는 혼란 방지) */}
       {grade && subject === 'MATH' && (
-        <ExamScopeSelector grade={grade} category={category} selectedTopics={examScope} onChange={setExamScope} />
+        <ExamScopeSelector
+          grade={grade}
+          category={category}
+          selectedTopics={examScope}
+          onChange={() => {
+            if (pickedIdx != null) setExamScope(scopeOf(DEMO_EXAMS[pickedIdx]).topics);
+            if (!scopeNoticeShown.current) {
+              toast.info('데모에서는 샘플 시험지의 출제범위가 그대로 사용됩니다');
+              scopeNoticeShown.current = true;
+            }
+          }}
+        />
       )}
 
       {/* 업로드 전 확인 경고 (실제 폼과 동일) */}
