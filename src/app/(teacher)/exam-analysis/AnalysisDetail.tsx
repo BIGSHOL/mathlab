@@ -18,6 +18,8 @@ import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-age
 import { DIFFICULTY_BAR_COLORS, isStalePromptVersion, extractPromptVersion, PROMPT_VERSION } from '@/lib/exam-analysis/constants';
 import { sumPoints, roundPoints, formatPoints } from '@/lib/exam-analysis/points';
 import { koImg } from '@/lib/exam-analysis/section-blocks';
+import { getDemoNaverBlocks } from '@/lib/demo/naver-blocks';
+import { isDemoExamId } from '@/lib/demo/util';
 import type { ExamPaperData, AnalysisTab } from './types';
 import { getConfidenceInfo, getOverallDifficultyLevel, getDifficultyBreakdown, interpolateDifficultyColor } from './helpers';
 import { weightedAverageDifficulty } from '@/lib/exam-analysis/difficulty';
@@ -516,19 +518,33 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
     const qSig = (questions as { difficulty?: unknown; points?: unknown; question_type?: unknown; ability_domain?: unknown; is_correct?: unknown }[])
       .map((q) => `${q.difficulty}|${q.points}|${q.question_type ?? ''}|${q.ability_domain ?? ''}|${q.is_correct ?? ''}`).join(';');
     const sig = `${NAVER_CAPTURE_VERSION}|${hashStr(JSON.stringify(commentary))}|${hashStr(qSig)}`;
+    const isDemo = isDemoExamId(detail.id);
     const cacheKey = `mathlab_naver_sec_${detail.id}_std`;
     let blocks: { url: string; summary: string }[] = [];
-    try {
-      const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null') as { sig?: string; savedAt?: number; blocks?: { url: string; summary: string }[] } | null;
-      // sig 일치 + 3일 이내(서버 cleanup TTL과 동일)일 때만 재사용. 만료/불일치면 재캡처.
-      const fresh = cached?.savedAt != null && (Date.now() - cached.savedAt) < NAVER_CACHE_TTL_MS;
-      if (cached && fresh && cached.sig === sig && Array.isArray(cached.blocks) && cached.blocks.length) blocks = cached.blocks;
-    } catch { /* 캐시 파싱 실패 → 새로 캡처 */ }
+    if (!isDemo) {
+      try {
+        const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null') as { sig?: string; savedAt?: number; blocks?: { url: string; summary: string }[] } | null;
+        // sig 일치 + 3일 이내(서버 cleanup TTL과 동일)일 때만 재사용. 만료/불일치면 재캡처.
+        const fresh = cached?.savedAt != null && (Date.now() - cached.savedAt) < NAVER_CACHE_TTL_MS;
+        if (cached && fresh && cached.sig === sig && Array.isArray(cached.blocks) && cached.blocks.length) blocks = cached.blocks;
+      } catch { /* 캐시 파싱 실패 → 새로 캡처 */ }
+    }
 
     const reused = blocks.length > 0;
     const tid = toast.loading(reused ? '저장된 캡처 재사용 — 복사 준비 중...' : '실제 V3 화면 캡처·업로드 준비 중...');
     try {
-      if (!reused) {
+      // 데모 — 사전 베이크된 열화 캡처(정적 자산) 사용. 실시간 캡처·업로드를 생략해
+      // user-gesture/포커스 만료와 data URL 대용량(네이버 5MB 제한) 문제를 회피하고,
+      // 진행 토스트로 실제와 같은 진행감만 연출한다 (실제 플로우와 동일한 "URL 목록" 페이로드).
+      if (isDemo) {
+        const demoList = getDemoNaverBlocks(detail.grade);
+        for (let i = 1; i <= demoList.length; i++) {
+          toast.loading('섹션 캡처·업로드 중...', tid, { current: i, total: demoList.length });
+          await new Promise((r) => setTimeout(r, 280));
+        }
+        blocks = demoList.map((b) => ({ url: `${window.location.origin}${b.path}`, summary: b.summary }));
+      }
+      if (!reused && !isDemo) {
         const { domToPng } = await import('modern-screenshot');
         // V3 최상위 블록 모두 캡처 (header/kpi-row(div)/section들/conclusion(div)). footer(credits)·초소형 제외.
         const nodes = (Array.from(root.children) as HTMLElement[])

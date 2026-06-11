@@ -71,6 +71,26 @@ export function useSubscription(): SubscriptionState {
   return v;
 }
 
+/**
+ * 데모 전용 정적 프로바이더 — fetch 없이 Pro 기능 해금 상태를 고정 제공.
+ * 공개 /demo 페이지에서 AnalysisDetail 등 실제 컴포넌트의 플랜 게이트(commentary 등)를
+ * 열어 전 과정을 체험하게 한다. 서버 가드와 무관한 클라이언트 표시 전용 (실제 권한 아님).
+ */
+export function DemoSubscriptionProvider({ children }: { children: React.ReactNode }) {
+  const value: SubscriptionState = {
+    plan: 'pro',
+    status: 'active',
+    usage: { used: 0, limit: null, resetAt: null },
+    features: { commentary: true, nearby: true },
+    lemonSqueezyConfigured: false,
+    allowDemoUpgrade: false,
+    beta: false,
+    loading: false,
+    refetch: async () => {},
+  };
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
 // 순수 헬퍼 — 모든 게이트가 동일 기준으로 읽도록
 export const quotaExceeded = (u: SubUsage) => u.limit !== null && u.used >= u.limit;
 export const quotaLabel = (u: SubUsage) => (u.limit === null ? `${u.used}/무제한` : `${u.used}/${u.limit}`);

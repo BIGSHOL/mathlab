@@ -94,6 +94,12 @@ export default function LoginPage() {
         <p className="text-center text-sm text-text-secondary mt-6">
           비밀번호를 잊으셨나요? 선생님께 문의하세요.
         </p>
+        <p className="text-center text-sm text-text-secondary mt-2">
+          계정이 없으신가요?{' '}
+          <Link href="/demo" className="text-primary font-semibold hover:underline">
+            데모로 먼저 체험해 보세요
+          </Link>
+        </p>
       </div>
     </div>
   );

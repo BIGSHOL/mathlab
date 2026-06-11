@@ -38,6 +38,7 @@ export function LandingPage() {
           <nav className="hidden md:flex items-center gap-7 text-sm text-text-secondary">
             <a href="#features" className="hover:text-text-primary transition-colors">기능</a>
             <a href="#how" className="hover:text-text-primary transition-colors">작동 방식</a>
+            <Link href="/demo" className="hover:text-text-primary transition-colors">데모</Link>
           </nav>
           <Link href={cta.href}>
             <Button size="sm">{cta.label}</Button>
@@ -69,6 +70,11 @@ export function LandingPage() {
                 <Button size="lg" onClick={() => setInquiryOpen(true)}>
                   <MessageSquare className="w-4 h-4 mr-2" />도입 문의
                 </Button>
+              )}
+              {!user && (
+                <Link href="/demo">
+                  <Button size="lg" variant="secondary">데모 체험하기</Button>
+                </Link>
               )}
               <a href="#features">
                 <Button size="lg" variant="ghost">기능 보기</Button>
@@ -169,6 +175,12 @@ export function LandingPage() {
                 {cta.label} <ArrowRight className="w-4 h-4" />
               </button>
             </Link>
+            {!user && (
+              <Link href="/demo"
+                className="inline-flex items-center h-[52px] px-7 rounded-sm border border-white/40 text-white font-bold hover:bg-white/10 transition-colors">
+                데모 체험하기
+              </Link>
+            )}
             <a href="mailto:chrismathone@gmail.com"
               className="inline-flex items-center h-[52px] px-7 rounded-sm border border-white/40 text-white font-bold hover:bg-white/10 transition-colors">
               도입 문의

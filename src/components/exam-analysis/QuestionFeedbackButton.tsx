@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { AlertTriangle, ChevronLeft, Check } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
+import { isDemoExamId } from '@/lib/demo/util';
 
 export const FEEDBACK_TYPES = [
   { value: 'wrong_recognition', label: '인식오류', color: 'bg-red-400' },
@@ -106,6 +107,19 @@ export function QuestionFeedbackButton({ q, examPaperId, analysisId, align = 'ri
       setIsSubmitting(false);
     }
   };
+
+  // 데모(/demo) — 피드백 수집 대상이 아니므로 비활성 표시만
+  if (isDemoExamId(examPaperId)) {
+    return (
+      <span
+        className="inline-flex items-center gap-0.5 text-xs text-slate-300 cursor-not-allowed select-none"
+        title="데모에서는 피드백을 보낼 수 없습니다"
+      >
+        <AlertTriangle className="w-3 h-3" />
+        피드백
+      </span>
+    );
+  }
 
   return (
     <div className="relative inline-block text-center" ref={dropdownRef}>

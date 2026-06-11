@@ -6,6 +6,7 @@ import { FileSearch, Play, Trash2, RotateCw, School, X, RefreshCw } from 'lucide
 import { toast } from '@/components/ui/Toast';
 // 구버전 판정/버전 추출 — 공유 헬퍼 사용 (AnalysisDetail과 동일 로직, 중복 제거)
 import { PROMPT_VERSION, isStalePromptVersion, extractPromptVersion } from '@/lib/exam-analysis/constants';
+import { isDemoExamId } from '@/lib/demo/util';
 
 function formatAnalyzedAt(dateStr: string): string {
   const d = new Date(dateStr);
@@ -176,6 +177,12 @@ export function ExamPaperList({
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!confirm('시험지를 삭제하시겠습니까? 분석 결과도 함께 삭제됩니다.')) return;
+    // 데모(/demo) — 서버 저장이 없으므로 로컬 목록에서만 제거
+    if (isDemoExamId(id)) {
+      toast.success('삭제되었습니다');
+      onDelete(id);
+      return;
+    }
     setDeletingId(id);
     try {
       const res = await fetch(`/api/exam-analysis/${id}`, { method: 'DELETE' });

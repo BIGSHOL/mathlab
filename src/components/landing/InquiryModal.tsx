@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { X, CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
@@ -82,6 +83,11 @@ export function InquiryModal({ onClose }: Props) {
         ) : (
           /* 폼 */
           <form onSubmit={submit} className="px-6 py-5 space-y-4">
+            <p className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-sm text-xs text-slate-500">
+              아직 써보지 않으셨다면, 문의 전에{' '}
+              <Link href="/demo" className="text-primary font-semibold hover:underline">데모로 먼저 체험</Link>
+              해 보실 수 있어요.
+            </p>
             <div className="grid grid-cols-2 gap-3">
               <Field label="학원명" required>
                 <input
