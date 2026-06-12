@@ -17,6 +17,7 @@ import { Reveal, RevealStagger, RevealItem } from '@/components/landing/editoria
 import { FloatingCard } from '@/components/landing/editorial/FloatingCard';
 import { StatStrip, type StatItem } from '@/components/landing/editorial/StatStrip';
 import { SectionHeading } from '@/components/landing/editorial/SectionHeading';
+import { LiveAnalysisCard } from '@/components/landing/editorial/LiveAnalysisCard';
 import { ABRIL, BODONI, GREEN, AMBER, RED, INK } from '@/components/landing/editorial/tokens';
 
 /**
@@ -205,6 +206,11 @@ export function LandingPage() {
               </RevealItem>
             ))}
           </RevealStagger>
+
+          {/* 분석 과정 라이브 연출 — "데모 체험하기" 서사와 연결 */}
+          <Reveal className="mt-10">
+            <LiveAnalysisCard />
+          </Reveal>
         </div>
       </section>
 
