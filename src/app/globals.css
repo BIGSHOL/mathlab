@@ -88,8 +88,8 @@
    ============================================ */
 
 @theme {
-  /* Primary Colors — v2 디자인 시스템(인디고)로 통일됨 */
-  --color-primary: #3B5BDB;
+  /* Primary Colors — para-x 브랜드(brand-indigo)와 통합 (2026-06-12) */
+  --color-primary: #4F46E5;
   --color-primary-hover: #4338CA;
   --color-primary-light: #DDD6FE;
   --color-secondary: #F97316;
@@ -108,11 +108,11 @@
   --color-info: #3B82F6;
   --color-xp-gold: #EAB308;
 
-  /* Surface Colors */
-  --color-surface: #F8FAFC;
-  --color-background: #f6f6f8;
-  --color-text-primary: #1E293B;
-  --color-text-secondary: #64748B;
+  /* Surface Colors — 크림 배경 위 화이트 패널 구도 (para-x 통합) */
+  --color-surface: #FFFFFF;
+  --color-background: #FBFAF7;
+  --color-text-primary: #13142B;
+  --color-text-secondary: #4B4D6B;
 
   /* Shadows */
   --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
@@ -497,10 +497,10 @@ body {
 
 @keyframes pulse-border {
   0%, 100% {
-    box-shadow: 0 0 0 0 var(--color-primary-alpha-30, rgba(19, 91, 236, 0.3));
+    box-shadow: 0 0 0 0 var(--color-primary-alpha-30, rgba(79, 70, 229, 0.3));
   }
   50% {
-    box-shadow: 0 0 0 4px var(--color-primary-alpha-30, rgba(19, 91, 236, 0.3));
+    box-shadow: 0 0 0 4px var(--color-primary-alpha-30, rgba(79, 70, 229, 0.3));
   }
 }
 
@@ -1505,10 +1505,11 @@ body {
 }
 
 /* ============================================
-   브랜드(brand-*) 토큰 — 공개 표면(랜딩/데모/로그인) 전용 (2026-06-12)
+   브랜드(brand-*) 토큰 — para-x 디자인 시스템 (2026-06-12)
    원천 = para-x 디자인 시스템(d:\para-x\index.html :root) — 형제 브랜드 시각 통일.
    잡지(V3) 톤은 제품 산출물 프리뷰(V3ReportPreview 등) 내부에서만 사용 — 페이지 크롬 확장 금지.
-   ⚠️ 기존 --color-ink(#0F172A, v2 슬레이트)·--color-primary(#3B5BDB, 앱)와 별개 토큰 — 혼용 금지.
+   앱 토큰과 통합됨(2026-06-12): --color-primary = brand-indigo(#4F46E5),
+   --color-background = brand-cream(#FBFAF7), --color-text-primary = brand-ink(#13142B).
    TS 상수 거울: src/components/landing/editorial/brand.ts
    ============================================ */
 
