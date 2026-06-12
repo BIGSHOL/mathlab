@@ -4,7 +4,7 @@
  * 원천 = para-x 디자인 시스템 (d:\para-x\index.html :root) — 형제 브랜드 시각 통일.
  * Tailwind 유틸 토큰은 globals.css 말미 `--color-brand-*` / `--shadow-brand-*` / `.brand-*` 참조.
  * 잡지(V3) 톤 상수는 ./tokens.ts — 제품 산출물 프리뷰 내부에서만 사용.
- * ⚠️ 앱 내부 토큰(--color-primary #3B5BDB, --color-ink #0F172A)과 혼용 금지.
+ * 앱 내부 토큰과 통합됨(2026-06-12): --color-primary = INDIGO(#4F46E5), --color-background = CREAM.
  */
 
 // ── 색 ──

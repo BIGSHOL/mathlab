@@ -30,7 +30,7 @@ export function NarrowScreenGuard({ minWidth = 1024, label = '이 화면', child
 
   if (width !== null && width < minWidth) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-12 bg-slate-50/50 min-h-0">
+      <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-12 bg-brand-cream-2/50 min-h-0">
         <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
           <Maximize2 className="w-8 h-8 text-primary" />
         </div>

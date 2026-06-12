@@ -136,9 +136,10 @@ export default function BillingPage() {
                 ) : (
                   <Button
                     size="sm"
+                    variant="brand"
                     onClick={() => handleUpgrade(card.key)}
                     loading={paying === card.key}
-                    className="w-full bg-violet-600 hover:bg-violet-700 text-white"
+                    className="w-full"
                   >
                     구독하기
                   </Button>

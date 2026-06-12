@@ -426,6 +426,6 @@ function Section({ tone, icon, title, desc, children }: { tone: 'green' | 'amber
 }
 
 function Chip({ label, tone }: { label: string; tone?: 'green' | 'amber' | 'blue' | 'slate' }) {
-  const cls = tone === 'green' ? 'bg-emerald-50 text-emerald-700' : tone === 'amber' ? 'bg-amber-50 text-amber-700' : tone === 'blue' ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-600';
+  const cls = tone === 'green' ? 'bg-emerald-50 text-emerald-700' : tone === 'amber' ? 'bg-amber-50 text-amber-700' : tone === 'blue' ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-100 text-slate-600';
   return <span className={`text-[11px] px-1.5 py-0.5 rounded-sm font-medium ${cls}`}>{label}</span>;
 }

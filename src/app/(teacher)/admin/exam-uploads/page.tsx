@@ -218,11 +218,11 @@ export default function ExamUploadsPage() {
 
       {/* 스토리지 요약 */}
       <div className="flex gap-4 mb-6">
-        <div className="flex items-center gap-2 px-4 py-3 bg-blue-50 rounded-sm">
-          <HardDrive className="w-5 h-5 text-blue-500" />
+        <div className="flex items-center gap-2 px-4 py-3 bg-indigo-50 rounded-sm">
+          <HardDrive className="w-5 h-5 text-indigo-500" />
           <div>
-            <p className="text-xs text-blue-600">Storage 사용량</p>
-            <p className="text-lg font-bold text-blue-800">{formatBytes(storage.totalSize)}</p>
+            <p className="text-xs text-indigo-600">Storage 사용량</p>
+            <p className="text-lg font-bold text-indigo-800">{formatBytes(storage.totalSize)}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 rounded-sm">

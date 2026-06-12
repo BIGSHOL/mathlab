@@ -785,7 +785,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
               <span className="inline-flex px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-sm">
                 {detail.grade}
               </span>
-              <span className="inline-flex px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-sm">
+              <span className="inline-flex px-2 py-0.5 bg-sky-100 text-sky-700 text-xs font-medium rounded-sm">
                 {detail.subject === 'MATH' ? '수학' : '영어'}
               </span>
               {detail.status === 'COMPLETED' && questions.length > 0 && (
