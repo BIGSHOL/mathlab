@@ -13,8 +13,24 @@ import { V3ReportPreview } from '@/components/landing/V3ReportPreview';
 import { FeatureShowcase } from '@/components/landing/FeatureShowcase';
 import { DashboardShowcase } from '@/components/landing/DashboardShowcase';
 import { InquiryModal } from '@/components/landing/InquiryModal';
+import { Reveal, RevealStagger, RevealItem } from '@/components/landing/editorial/motion';
+import { FloatingCard } from '@/components/landing/editorial/FloatingCard';
+import { StatStrip, type StatItem } from '@/components/landing/editorial/StatStrip';
+import { BODONI, GREEN, AMBER, RED } from '@/components/landing/editorial/tokens';
 
-/** 기출분석 제품 공개 랜딩페이지 (루트 /). design.md 명세 기반. */
+/**
+ * 기출분석 제품 공개 랜딩페이지 (루트 /).
+ * 디자인 언어: V3 에디토리얼(기출총평 잡지 톤) — 크림 페이퍼 · 잉크 · 레드 · 세리프 헤드라인 · 신문 괘선.
+ */
+
+// 다크 KPI 스트립 — 검증 가능한 제품 사실만 (CLAUDE.md 12-5)
+const STATS: StatItem[] = [
+  { label: '전국 학교 데이터베이스', value: 6004, suffix: '교', color: AMBER },
+  { label: '난이도 판정 체계', value: 5, suffix: '단계' },
+  { label: '능력 영역 분석', value: 4, suffix: '대 영역' },
+  { label: '평균 분석 소요', value: 0, display: '2~3', suffix: '분', color: GREEN },
+];
+
 export function LandingPage() {
   const { user } = useAuth();
   const [inquiryOpen, setInquiryOpen] = useState(false);
@@ -25,82 +41,114 @@ export function LandingPage() {
   return (
     <>
     {inquiryOpen && <InquiryModal onClose={() => setInquiryOpen(false)} />}
-    <div className="h-dvh overflow-y-auto scroll-smooth bg-white text-text-primary">
+    <div className="h-dvh overflow-y-auto scroll-smooth bg-ed-paper text-ed-ink">
       {/* 루트 layout의 html/body가 overflow:hidden(LMS 앱 셸 규약)이라
           공개 랜딩은 자체 스크롤 컨테이너(h-dvh + overflow-y-auto)가 필요. */}
-      {/* ── 헤더 ── */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-slate-200">
+      {/* ── 헤더 (마스트헤드) ── */}
+      <header className="sticky top-0 z-40 bg-ed-paper/90 backdrop-blur border-b border-ed-ink">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <LogoIcon className="w-7 h-7" />
-            <span className="text-lg font-black tracking-tight">MathLAB 기출분석</span>
+            <span className="ed-serif text-lg font-bold tracking-tight">MathLAB 기출분석</span>
           </Link>
-          <nav className="hidden md:flex items-center gap-7 text-sm text-text-secondary">
-            <a href="#features" className="hover:text-text-primary transition-colors">기능</a>
-            <a href="#how" className="hover:text-text-primary transition-colors">작동 방식</a>
-            <Link href="/demo" className="hover:text-text-primary transition-colors">데모</Link>
+          <nav className="hidden md:flex items-center gap-7 text-sm text-[#555]">
+            <a href="#features" className="hover:text-ed-ink transition-colors">기능</a>
+            <a href="#how" className="hover:text-ed-ink transition-colors">작동 방식</a>
+            <Link href="/demo" className="hover:text-ed-ink transition-colors">데모</Link>
           </nav>
           <Link href={cta.href}>
-            <Button size="sm">{cta.label}</Button>
+            <Button size="sm" variant="editorial">{cta.label}</Button>
           </Link>
         </div>
       </header>
 
       {/* ── 히어로 ── */}
-      <section className="relative overflow-hidden" style={{ background: 'radial-gradient(900px circle at 70% -10%, var(--primary-50), #fff 60%)' }}>
-        <div className="max-w-6xl mx-auto px-6 py-14 sm:py-20 lg:py-28 grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
-          <div>
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary bg-indigo-50 px-3 py-1 rounded-[4px] mb-5">
-              <Sparkles className="w-3.5 h-3.5" /> AI 기반 · 한국 수학 교육과정 특화
-            </span>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black leading-[1.15] tracking-tight">
-              시험지 한 장이면,<br />
-              <span className="text-primary">분석부터 블로그 글까지</span> 자동으로
-            </h1>
-            <p className="mt-5 text-lg text-text-secondary leading-relaxed max-w-xl">
-              PDF만 올리면 AI가 난이도·단원·문항 해설·총평을 만들고,
-              네이버 블로그용 자료까지 생성합니다.
-            </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              {user ? (
-                <Link href="/exam-analysis">
-                  <Button size="lg">기출분석 바로가기</Button>
-                </Link>
-              ) : (
-                <Button size="lg" onClick={() => setInquiryOpen(true)}>
-                  <MessageSquare className="w-4 h-4 mr-2" />도입 문의
-                </Button>
-              )}
-              {!user && (
-                <Link href="/demo">
-                  <Button size="lg" variant="secondary">데모 체험하기</Button>
-                </Link>
-              )}
-              <a href="#features">
-                <Button size="lg" variant="ghost">기능 보기</Button>
-              </a>
-            </div>
-            <p className="mt-4 text-xs text-slate-400">
-              {user ? '' : '이미 계정이 있으신가요? '}
-              {!user && <Link href="/login" className="underline underline-offset-2 hover:text-slate-600 transition-colors">로그인</Link>}
-            </p>
-          </div>
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 math-grid-bg ed-grid-fade pointer-events-none" aria-hidden />
+        <div className="relative max-w-6xl mx-auto px-6 py-14 sm:py-20 lg:py-24 grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+          <RevealStagger>
+            <RevealItem>
+              <span className="ed-kicker">
+                <Sparkles className="w-3.5 h-3.5 inline-block mr-1.5 -mt-0.5" />
+                AI 기반 · 한국 수학 교육과정 특화
+              </span>
+            </RevealItem>
+            <RevealItem>
+              <h1 className="ed-serif mt-7 text-4xl sm:text-5xl lg:text-[64px] font-bold leading-[1.12] tracking-[-0.01em]">
+                시험지 한 장이면,<br />
+                <span className="ed-marker">분석부터 블로그 글까지</span> 자동으로
+              </h1>
+            </RevealItem>
+            <RevealItem>
+              <p className="mt-6 text-lg text-[#555] leading-relaxed max-w-xl">
+                PDF만 올리면 AI가 난이도·단원·문항 해설·총평을 만들고,
+                네이버 블로그용 자료까지 생성합니다.
+              </p>
+            </RevealItem>
+            <RevealItem>
+              <div className="mt-9 flex flex-wrap items-center gap-3">
+                {user ? (
+                  <Link href="/exam-analysis">
+                    <Button size="lg" variant="editorial">기출분석 바로가기</Button>
+                  </Link>
+                ) : (
+                  <Button size="lg" variant="editorial" onClick={() => setInquiryOpen(true)}>
+                    <MessageSquare className="w-4 h-4 mr-2" />도입 문의
+                  </Button>
+                )}
+                {!user && (
+                  <Link href="/demo">
+                    <Button size="lg" variant="editorialOutline">데모 체험하기</Button>
+                  </Link>
+                )}
+                <a href="#features">
+                  <Button size="lg" variant="ghost">기능 보기</Button>
+                </a>
+              </div>
+              <p className="mt-4 text-xs text-[#999]">
+                {!user && (
+                  <>이미 계정이 있으신가요?{' '}
+                  <Link href="/login" className="underline underline-offset-2 hover:text-ed-ink transition-colors">로그인</Link></>
+                )}
+              </p>
+            </RevealItem>
+          </RevealStagger>
 
-          {/* 실제 V3 분석 리포트 프리뷰 (더미데이터) */}
-          <V3ReportPreview />
+          {/* 실제 V3 분석 리포트 프리뷰 (더미데이터) + 부유 카드 */}
+          <Reveal delay={0.15} className="relative">
+            <V3ReportPreview />
+            <FloatingCard className="hidden lg:block -left-9 bottom-14" delay={0.8}>
+              <p className="text-[10px] uppercase tracking-[0.14em] font-bold text-ed-gray m-0">평균 분석 소요</p>
+              <p className="m-0 mt-1 leading-none" style={{ fontFamily: BODONI, fontSize: 24, fontWeight: 900, color: RED }}>
+                2~3<span className="text-[13px] text-ed-gray ml-0.5">분</span>
+              </p>
+            </FloatingCard>
+            <FloatingCard className="hidden lg:flex items-center gap-2 -right-7 top-9" delay={0}>
+              <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0" style={{ background: RED }}>
+                <Check className="w-3 h-3 text-white" />
+              </span>
+              <span className="text-xs font-semibold">블로그 이미지 자동 생성</span>
+            </FloatingCard>
+          </Reveal>
         </div>
       </section>
 
       {/* ── 신뢰 스트립 ── */}
-      <section className="border-y border-slate-100 bg-slate-50/60">
-        <div className="max-w-6xl mx-auto px-6 py-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-slate-500">
-          {['AI 기반 자동 분석', '한국 중·고 수학 교육과정 매핑', '내신 · 모의고사 기출 대응', '네이버 블로그 콘텐츠 자동화'].map((t) => (
-            <span key={t} className="inline-flex items-center gap-1.5">
-              <Check className="w-4 h-4 text-primary" /> {t}
+      <section className="border-y border-ed-ink bg-ed-paper-2">
+        <div className="max-w-6xl mx-auto px-6 py-5 flex flex-wrap items-center justify-center gap-y-3">
+          {['AI 기반 자동 분석', '한국 중·고 수학 교육과정 매핑', '내신 · 모의고사 기출 대응', '네이버 블로그 콘텐츠 자동화'].map((t, i) => (
+            <span
+              key={t}
+              className={`inline-flex items-center gap-2 px-5 sm:px-7 text-xs font-semibold tracking-[0.1em] text-[#444] ${i > 0 ? 'sm:border-l sm:border-ed-rule' : ''}`}
+            >
+              <span className="w-2 h-2 bg-ed-red inline-block shrink-0" /> {t}
             </span>
           ))}
         </div>
       </section>
+
+      {/* ── 다크 KPI 스트립 (V3 .v3-kpi-row 모티프) ── */}
+      <StatStrip items={STATS} />
 
       {/* ── 핵심 가치 ── */}
       <section className="max-w-6xl mx-auto px-6 py-14 md:py-20">
@@ -189,17 +237,17 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── 푸터 ── */}
-      <footer className="border-t border-slate-200">
-        <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-500">
+      {/* ── 푸터 (콜로폰) ── */}
+      <footer className="ed-rule-double">
+        <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-[#777]">
           <div className="flex items-center gap-2">
             <LogoIcon className="w-5 h-5" />
-            <span className="font-bold text-text-primary">MathLAB 기출분석</span>
-            <span className="text-slate-400">— 한국 수학 학원을 위한 AI 기출 분석</span>
+            <span className="ed-serif font-bold text-ed-ink">MathLAB 기출분석</span>
+            <span className="text-[#999]">— 한국 수학 학원을 위한 AI 기출 분석</span>
           </div>
-          <div className="flex items-center gap-4">
-            <a href="mailto:chrismathone@gmail.com" className="hover:text-text-primary transition-colors">문의</a>
-            <span className="text-slate-300">© {'2026'} Injaewon MathLAB</span>
+          <div className="flex items-center gap-5 text-xs tracking-[0.1em]">
+            <a href="mailto:chrismathone@gmail.com" className="hover:text-ed-ink transition-colors">문의</a>
+            <span className="text-[#aaa]">© {'2026'} INJAEWON MATHLAB</span>
           </div>
         </div>
       </footer>
