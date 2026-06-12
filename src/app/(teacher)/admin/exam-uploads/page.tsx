@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Search, Trash2, FileText, HardDrive, RefreshCw, ArrowUp, ArrowDown, ChevronsUpDown, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { MathSpinner } from '@/components/ui/MathSpinner';
 import { toast } from '@/components/ui/Toast';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { Pagination } from '@/components/ui/Pagination';
@@ -321,7 +322,12 @@ export default function ExamUploadsPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={8} className="text-center py-12 text-slate-400">로딩 중...</td></tr>
+              <tr><td colSpan={8} className="py-12">
+                <div className="flex flex-col items-center gap-2.5 text-slate-400">
+                  <MathSpinner size="md" />
+                  로딩 중...
+                </div>
+              </td></tr>
             ) : paged.length === 0 ? (
               <tr><td colSpan={8} className="text-center py-12 text-slate-400">조건에 맞는 시험지가 없습니다</td></tr>
             ) : paged.map((item) => {

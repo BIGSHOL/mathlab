@@ -19,7 +19,7 @@ const sizes = {
 export function MathSpinner({ size = 'md', className = '' }: MathSpinnerProps) {
   return (
     <div
-      className={`math-spinner bg-gradient-to-br from-primary to-blue-400 ${sizes[size]} ${className}`}
+      className={`math-spinner bg-gradient-to-br from-primary to-brand-violet ${sizes[size]} ${className}`}
       role="status"
       aria-label="로딩 중"
     />

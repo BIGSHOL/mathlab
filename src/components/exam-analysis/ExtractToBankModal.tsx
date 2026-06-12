@@ -229,7 +229,7 @@ function ExtractingStep({ elapsed }: { elapsed: number }) {
         </div>
         <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-primary to-blue-400 rounded-full transition-all duration-1000"
+            className="h-full bg-gradient-to-r from-brand-indigo to-brand-cyan rounded-full transition-all duration-1000"
             style={{ width: `${Math.min((elapsed / 90) * 100, 95)}%` }}
           />
         </div>

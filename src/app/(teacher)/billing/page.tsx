@@ -6,6 +6,7 @@ import { CreditCard, Check, ShieldAlert, Sparkles } from 'lucide-react';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/Button';
+import { MathSpinner } from '@/components/ui/MathSpinner';
 import { toast } from '@/components/ui/Toast';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import { useSubscription, quotaLabel } from '@/components/providers/SubscriptionProvider';
@@ -28,7 +29,14 @@ export default function BillingPage() {
   }, [params, refetch]);
 
   if (isLoading) {
-    return <PageContainer maxWidth="xl"><div className="py-16 text-center text-sm text-slate-400">불러오는 중...</div></PageContainer>;
+    return (
+      <PageContainer maxWidth="xl">
+        <div className="py-16 flex flex-col items-center gap-3 text-sm text-slate-400">
+          <MathSpinner size="lg" />
+          불러오는 중...
+        </div>
+      </PageContainer>
+    );
   }
   if (!user || !hasRoleClient(user.role, 'OWNER')) {
     return (

@@ -13,6 +13,7 @@ import type { ExamPaperData } from './types';
 import { AnalysisDetail } from './AnalysisDetail';
 import { sumPoints, roundPoints } from '@/lib/exam-analysis/points';
 import { NarrowScreenGuard } from '@/components/ui/NarrowScreenGuard';
+import { MathSpinner } from '@/components/ui/MathSpinner';
 import { ProfileMenu } from '@/components/layout/ExamOnlyTopBar';
 import { useSubscription, quotaExceeded, quotaLabel } from '@/components/providers/SubscriptionProvider';
 
@@ -442,7 +443,10 @@ export default function ExamAnalysisPage() {
         {!leftPanelCollapsed && (
           <div className="flex-1 min-h-0">
             {loading ? (
-              <div className="p-4 text-center text-sm text-slate-400">불러오는 중...</div>
+              <div className="p-6 flex flex-col items-center gap-2.5 text-sm text-slate-400">
+                <MathSpinner size="md" />
+                불러오는 중...
+              </div>
             ) : (
               <ExamPaperList
                 items={items as unknown as Parameters<typeof ExamPaperList>[0]['items']}
@@ -510,7 +514,7 @@ export default function ExamAnalysisPage() {
           />
         ) : selectedId && !selectedDetail ? (
           <div className="flex flex-col items-center justify-center h-full text-slate-400">
-            <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mb-3" />
+            <MathSpinner size="lg" className="mb-3" />
             <p className="text-sm">불러오는 중...</p>
           </div>
         ) : (
