@@ -72,13 +72,13 @@ export default function BillingPage() {
       <PageHeader
         title="구독 / 결제"
         subtitle={`현재 플랜: ${currentPlan.label} · 이번 달 분석 ${quotaLabel(usage)}`}
-        icon={<CreditCard className="w-6 h-6 text-violet-600" />}
+        icon={<CreditCard className="w-6 h-6 text-primary" />}
       />
 
       {beta && (
-        <div className="mb-6 px-4 py-3 bg-violet-50 border border-violet-200 rounded-sm flex items-center gap-2.5">
-          <Sparkles className="w-4 h-4 text-violet-500 shrink-0" />
-          <p className="text-xs text-violet-700">
+        <div className="mb-6 px-4 py-3 bg-indigo-50 border border-indigo-200 rounded-sm flex items-center gap-2.5">
+          <Sparkles className="w-4 h-4 text-primary shrink-0" />
+          <p className="text-xs text-indigo-700">
             <strong>베타 기간</strong> — 모든 기능(AI 시험 총평 · 주변 학교·연도 비교 포함)을 자유롭게 사용하실 수 있습니다.
           </p>
         </div>
@@ -95,7 +95,7 @@ export default function BillingPage() {
         ) : (
           <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all ${pct >= 1 ? 'bg-rose-500' : pct >= 0.8 ? 'bg-amber-500' : 'bg-violet-500'}`}
+              className={`h-full rounded-full transition-all ${pct >= 1 ? 'bg-rose-500' : pct >= 0.8 ? 'bg-amber-500' : 'bg-primary'}`}
               style={{ width: `${Math.min(pct, 1) * 100}%` }}
             />
           </div>
@@ -113,17 +113,18 @@ export default function BillingPage() {
           return (
             <div
               key={card.key}
-              className={`rounded-sm border p-5 flex flex-col ${card.highlight ? 'border-violet-300 ring-1 ring-violet-200' : 'border-slate-200'} ${isCurrent ? 'bg-violet-50/40' : 'bg-white'}`}
+              className={`rounded-sm border p-5 flex flex-col overflow-hidden ${card.highlight ? 'border-indigo-300 ring-1 ring-indigo-200' : 'border-slate-200'} ${isCurrent ? 'bg-indigo-50/40' : 'bg-white'}`}
             >
+              {card.highlight && <div className="h-1 -mx-5 -mt-5 mb-4 bg-[linear-gradient(100deg,#4F46E5,#7C3AED)]" />}
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-bold text-slate-800">{card.name}</h3>
-                {isCurrent && <span className="text-[11px] px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-bold">현재 플랜</span>}
+                {isCurrent && <span className="text-[11px] px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-bold">현재 플랜</span>}
               </div>
               <p className="text-2xl font-extrabold text-slate-900 mt-2">{card.priceLabel}</p>
               <ul className="mt-4 space-y-1.5 flex-1">
                 {card.bullets.map((b, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
-                    <Check className="w-4 h-4 text-violet-500 mt-0.5 shrink-0" />
+                    <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                     {b}
                   </li>
                 ))}

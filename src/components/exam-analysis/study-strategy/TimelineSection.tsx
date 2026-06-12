@@ -9,8 +9,8 @@ interface TimelineSectionProps {
 }
 
 const WEEK_STYLES = [
-  { color: '#3b82f6', bgColor: 'bg-blue-50',   borderColor: 'border-blue-200',   lineColor: 'bg-blue-200'   }, // 4주 전
-  { color: '#8b5cf6', bgColor: 'bg-purple-50', borderColor: 'border-purple-200', lineColor: 'bg-purple-200' }, // 3주 전
+  { color: '#4F46E5', bgColor: 'bg-indigo-50', borderColor: 'border-indigo-200', lineColor: 'bg-indigo-200' }, // 4주 전
+  { color: '#8b5cf6', bgColor: 'bg-violet-50', borderColor: 'border-violet-200', lineColor: 'bg-violet-200' }, // 3주 전
   { color: '#f97316', bgColor: 'bg-orange-50', borderColor: 'border-orange-200', lineColor: 'bg-orange-200' }, // 2주 전
   { color: '#ef4444', bgColor: 'bg-red-50',    borderColor: 'border-red-200',    lineColor: 'bg-red-200'    }, // 1주 전
 ];

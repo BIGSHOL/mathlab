@@ -111,8 +111,8 @@ function getDetailedStatus(
   gen?: { phase: 'metadata' | 'commentary' } | null,
 ): { label: string; color: string; title?: string } {
   // 진행 중 단계(클라이언트 genState)를 우선 — DB 상태보다 실시간으로 표시
-  if (gen?.phase === 'metadata') return { label: '총평 준비중', color: 'bg-violet-50 text-violet-600 border-violet-200 animate-pulse' };
-  if (gen?.phase === 'commentary') return { label: '총평 생성중', color: 'bg-violet-50 text-violet-600 border-violet-200 animate-pulse' };
+  if (gen?.phase === 'metadata') return { label: '총평 준비중', color: 'bg-indigo-50 text-indigo-600 border-indigo-200 animate-pulse' };
+  if (gen?.phase === 'commentary') return { label: '총평 생성중', color: 'bg-indigo-50 text-indigo-600 border-indigo-200 animate-pulse' };
   if (item.status === 'FAILED') return { label: '실패', color: 'bg-red-50 text-red-600 border-red-200' };
   if (item.status === 'ANALYZING') return { label: '분석중', color: 'bg-amber-50 text-amber-600 border-amber-200 animate-pulse' };
   if (item.status === 'PENDING') return { label: '업로드', color: 'bg-slate-50 text-slate-500 border-slate-200' };
@@ -129,7 +129,7 @@ function getDetailedStatus(
   // 최신 버전 — extensions로 세분화
   const exts = item.analyses[0]?.extensions || [];
   const agentTypes = exts.map(e => e.agentType);
-  if (agentTypes.includes('blog-article')) return { label: '글작성 완료', color: 'bg-violet-50 text-violet-600 border-violet-200' };
+  if (agentTypes.includes('blog-article')) return { label: '글작성 완료', color: 'bg-indigo-100 text-indigo-700 border-indigo-300' };
   if (agentTypes.includes('commentary')) return { label: '총평완료', color: 'bg-indigo-50 text-indigo-600 border-indigo-200' };
   return { label: '분석완료', color: 'bg-emerald-50 text-emerald-600 border-emerald-200' };
 }

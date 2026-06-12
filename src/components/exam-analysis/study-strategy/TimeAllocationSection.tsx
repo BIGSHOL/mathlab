@@ -184,15 +184,15 @@ export function TimeAllocationSection({
               borderColor="border-amber-100"
             />
             <TipCard
-              icon={<Lightbulb className="w-3.5 h-3.5 text-blue-600" />}
+              icon={<Lightbulb className="w-3.5 h-3.5 text-indigo-600" />}
               title="절약 팁"
               items={
                 hasSpecificTips && timeTips.savingTips.length > 0
                   ? timeTips.savingTips.slice(0, 3)
                   : ['모르는 문제는 3분 고민 후 표시하고 넘기세요. 마지막에 재도전!']
               }
-              bgColor="bg-blue-50"
-              borderColor="border-blue-100"
+              bgColor="bg-indigo-50"
+              borderColor="border-indigo-100"
             />
           </div>
         </div>

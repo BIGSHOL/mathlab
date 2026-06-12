@@ -270,11 +270,11 @@ export function CommentarySection({
       hasStudentData: allQuestions.some((q) => q.is_correct !== null),
     };
     return (
-      <div className="bg-white border border-violet-200 rounded-sm mb-5 overflow-hidden">
-        {/* 컨트롤 row (재분석 + 체크박스 + 접기) — 접힘 상태와 동일한 violet 헤더 디자인으로 통일 */}
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-violet-200 bg-gradient-to-br from-violet-50 to-purple-50">
+      <div className="bg-white border border-indigo-200 rounded-sm mb-5 overflow-hidden">
+        {/* 컨트롤 row (재분석 + 체크박스 + 접기) — 접힘 상태와 동일한 indigo 헤더 디자인으로 통일 */}
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-indigo-200 bg-gradient-to-br from-indigo-50 to-violet-50/60">
           <div className="flex items-center gap-2.5">
-            <div className={`w-7 h-7 ${effectiveViewMode === 'v4' ? 'bg-amber-700' : 'bg-violet-600'} rounded-sm flex items-center justify-center shrink-0`}>
+            <div className={`w-7 h-7 ${effectiveViewMode === 'v4' ? 'bg-amber-700' : 'bg-[linear-gradient(100deg,#4F46E5,#7C3AED)]'} rounded-sm flex items-center justify-center shrink-0`}>
               <Sparkles className="w-3.5 h-3.5 text-white" />
             </div>
             <span className="text-sm font-bold text-slate-900">AI 시험 총평</span>
@@ -330,9 +330,9 @@ export function CommentarySection({
                     checked={includeNearby && (nearbyCount ?? 0) > 0}
                     onChange={(e) => onIncludeNearbyChange(e.target.checked)}
                     disabled={nearbyCount === 0}
-                    className="w-3 h-3 rounded-sm border-slate-300 text-violet-600 focus:ring-violet-500 disabled:opacity-40"
+                    className="w-3 h-3 rounded-sm border-slate-300 text-primary focus:ring-primary disabled:opacity-40"
                   />
-                  주변 {nearbyCount != null && <span className={nearbyCount > 0 ? 'text-violet-500 font-medium' : ''}>({nearbyCount}교)</span>}
+                  주변 {nearbyCount != null && <span className={nearbyCount > 0 ? 'text-primary font-medium' : ''}>({nearbyCount}교)</span>}
                 </label>
                 <label title={yearTitle} className={`flex items-center gap-1 text-[11px] cursor-pointer ${yearCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
                   <input
@@ -340,9 +340,9 @@ export function CommentarySection({
                     checked={includeYearCompare && (yearCount ?? 0) > 0}
                     onChange={(e) => onIncludeYearCompareChange(e.target.checked)}
                     disabled={yearCount === 0}
-                    className="w-3 h-3 rounded-sm border-slate-300 text-violet-600 focus:ring-violet-500 disabled:opacity-40"
+                    className="w-3 h-3 rounded-sm border-slate-300 text-primary focus:ring-primary disabled:opacity-40"
                   />
-                  연도 {yearCount != null && <span className={yearCount > 0 ? 'text-violet-500 font-medium' : ''}>({yearCount}건)</span>}
+                  연도 {yearCount != null && <span className={yearCount > 0 ? 'text-primary font-medium' : ''}>({yearCount}건)</span>}
                 </label>
               </div>
             )}
@@ -361,26 +361,26 @@ export function CommentarySection({
         {staleBanner && <div className="px-3 pt-3">{staleBanner}</div>}
         {/* AI 재분석 진행 표시 (펼친 상태에서도 보이도록 — 사용자 보고 2026-05-28) */}
         {isRegenerating && (
-          <div className="border-b border-violet-200 bg-gradient-to-r from-violet-50 to-purple-50 px-5 py-4">
+          <div className="border-b border-indigo-200 bg-gradient-to-r from-indigo-50 to-violet-50/60 px-5 py-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <div className="animate-spin w-4 h-4 border-2 border-violet-600 border-t-transparent rounded-full" />
-                <span className="text-sm font-bold text-violet-900">AI 총평 재분석 중...</span>
+                <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full" />
+                <span className="text-sm font-bold text-indigo-900">AI 총평 재분석 중...</span>
               </div>
-              <span className="text-xs text-violet-700 font-medium">{elapsedSeconds}초 경과</span>
+              <span className="text-xs text-indigo-700 font-medium">{elapsedSeconds}초 경과</span>
             </div>
-            <div className="h-1 bg-violet-200 rounded-full overflow-hidden">
-              <div className="h-full bg-violet-600 animate-pulse" style={{ width: '60%' }} />
+            <div className="h-1 bg-indigo-100 rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-brand-indigo to-brand-cyan animate-pulse" style={{ width: '60%' }} />
             </div>
-            <p className="text-[11px] text-violet-700 mt-2">
+            <p className="text-[11px] text-indigo-700 mt-2">
               AI가 종합 평가 + V3 강화 필드(문항별 표·영역별 분석·Q&A·단원 피드백)를 생성 중입니다. 평균 60~120초 소요.
             </p>
             {/* 실시간 실행 로그 (분석 progress / V4 생성과 동일 디자인) */}
             {regenLogs.length > 0 && (
               <div className="mt-3">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[11px] font-semibold text-violet-800">실행 로그</span>
-                  <span className="text-[10px] text-violet-600">{regenLogs.length}개 항목</span>
+                  <span className="text-[11px] font-semibold text-indigo-800">실행 로그</span>
+                  <span className="text-[10px] text-indigo-600">{regenLogs.length}개 항목</span>
                 </div>
                 <div className="bg-slate-900 text-slate-100 rounded-sm px-3 py-2 max-h-40 overflow-y-auto font-mono text-[11px] leading-relaxed">
                   {regenLogs.map((entry, idx) => (
@@ -453,11 +453,11 @@ export function CommentarySection({
   // V3 접힘 또는 legacy → 기존 흐름
 
   return (
-    <div className={`bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-200 rounded-sm mb-5 ${isExpanded ? 'p-5' : 'px-4 py-2.5'}`}>
+    <div className={`bg-gradient-to-br from-indigo-50 to-violet-50/60 border border-indigo-200 rounded-sm mb-5 ${isExpanded ? 'p-5' : 'px-4 py-2.5'}`}>
       {/* 헤더 */}
       <div className={`flex items-center justify-between ${isExpanded ? 'mb-4' : ''}`}>
         <div className="flex items-center gap-2.5">
-          <div className={`${isExpanded ? 'w-9 h-9' : 'w-7 h-7'} bg-violet-600 rounded-sm flex items-center justify-center shrink-0`}>
+          <div className={`${isExpanded ? 'w-9 h-9' : 'w-7 h-7'} bg-[linear-gradient(100deg,#4F46E5,#7C3AED)] rounded-sm flex items-center justify-center shrink-0`}>
             <Sparkles className={`${isExpanded ? 'w-5 h-5' : 'w-3.5 h-3.5'} text-white`} />
           </div>
           <div>
@@ -487,9 +487,9 @@ export function CommentarySection({
                   checked={includeNearby && (nearbyCount ?? 0) > 0}
                   onChange={e => onIncludeNearbyChange(e.target.checked)}
                   disabled={nearbyCount === 0}
-                  className="w-3 h-3 rounded-sm border-slate-300 text-violet-600 focus:ring-violet-500 disabled:opacity-40"
+                  className="w-3 h-3 rounded-sm border-slate-300 text-primary focus:ring-primary disabled:opacity-40"
                 />
-                주변 {nearbyCount != null && <span className={nearbyCount > 0 ? 'text-violet-500 font-medium' : ''}>({nearbyCount}교)</span>}
+                주변 {nearbyCount != null && <span className={nearbyCount > 0 ? 'text-primary font-medium' : ''}>({nearbyCount}교)</span>}
               </label>
               <label title={yearTitle} className={`flex items-center gap-1 text-[11px] cursor-pointer ${yearCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
                 <input
@@ -497,9 +497,9 @@ export function CommentarySection({
                   checked={includeYearCompare && (yearCount ?? 0) > 0}
                   onChange={e => onIncludeYearCompareChange(e.target.checked)}
                   disabled={yearCount === 0}
-                  className="w-3 h-3 rounded-sm border-slate-300 text-violet-600 focus:ring-violet-500 disabled:opacity-40"
+                  className="w-3 h-3 rounded-sm border-slate-300 text-primary focus:ring-primary disabled:opacity-40"
                 />
-                연도 {yearCount != null && <span className={yearCount > 0 ? 'text-violet-500 font-medium' : ''}>({yearCount}건)</span>}
+                연도 {yearCount != null && <span className={yearCount > 0 ? 'text-primary font-medium' : ''}>({yearCount}건)</span>}
               </label>
             </div>
           )}
@@ -527,12 +527,12 @@ export function CommentarySection({
       {isRegenerating && (
         <div className="mt-3 px-1">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-medium text-violet-700">AI 재분석 중...</span>
-            <span className="text-[11px] text-violet-500 tabular-nums">{elapsedSeconds}초</span>
+            <span className="text-xs font-medium text-indigo-700">AI 재분석 중...</span>
+            <span className="text-[11px] text-indigo-500 tabular-nums">{elapsedSeconds}초</span>
           </div>
-          <div className="h-1.5 bg-violet-100 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-indigo-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-violet-400 to-purple-500 rounded-full transition-all duration-1000"
+              className="h-full bg-gradient-to-r from-brand-indigo to-brand-cyan rounded-full transition-all duration-1000"
               style={{ width: `${Math.min(elapsedSeconds / 60 * 100, 95)}%` }}
             />
           </div>
@@ -540,8 +540,8 @@ export function CommentarySection({
           {regenLogs.length > 0 && (
             <div className="mt-2.5">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-semibold text-violet-800">실행 로그</span>
-                <span className="text-[10px] text-violet-600">{regenLogs.length}개 항목</span>
+                <span className="text-[11px] font-semibold text-indigo-800">실행 로그</span>
+                <span className="text-[10px] text-indigo-600">{regenLogs.length}개 항목</span>
               </div>
               <div className="bg-slate-900 text-slate-100 rounded-sm px-3 py-2 max-h-40 overflow-y-auto font-mono text-[11px] leading-relaxed">
                 {regenLogs.map((entry, idx) => (
@@ -564,7 +564,7 @@ export function CommentarySection({
         (isFallback인 경우는 위 amber 경고 배너 + 헤더 [AI 재분석] 버튼으로 안내하므로 여기선 제외)
       */}
       {isExpanded && !useV3 && !isFallback && !isStale && !isRegenerating && (
-        <div className="bg-white/70 rounded-sm p-6 border border-violet-200 flex flex-col items-center text-center">
+        <div className="bg-white/70 rounded-sm p-6 border border-indigo-200 flex flex-col items-center text-center">
           <Sparkles className="w-7 h-7 text-[#BF1722] mb-2.5" />
           <p className="text-sm font-bold text-slate-900 mb-1">최신 양식(V3)으로 업그레이드하세요</p>
           <p className="text-xs text-slate-500 mb-4 max-w-md leading-relaxed">
@@ -581,7 +581,7 @@ export function CommentarySection({
             최신 양식으로 재생성
           </Button>
           {commentaryLocked && (
-            <p className="text-[11px] text-violet-600 mt-2">Pro 플랜 이상에서 재생성할 수 있습니다.</p>
+            <p className="text-[11px] text-indigo-600 mt-2">Pro 플랜 이상에서 재생성할 수 있습니다.</p>
           )}
         </div>
       )}

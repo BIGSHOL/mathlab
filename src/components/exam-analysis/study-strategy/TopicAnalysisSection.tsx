@@ -58,8 +58,8 @@ export function TopicAnalysisSection({
         onClick={onToggleSection}
         className="w-full px-4 py-3.5 flex items-center gap-3 bg-white hover:bg-slate-50 transition-colors"
       >
-        <div className="w-7 h-7 rounded-sm bg-blue-500/15 flex items-center justify-center shrink-0">
-          <BookOpen className="w-3.5 h-3.5 text-blue-600" />
+        <div className="w-7 h-7 rounded-sm bg-indigo-500/15 flex items-center justify-center shrink-0">
+          <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
         </div>
         <div className="flex-1 text-left">
           <span className="text-sm font-semibold text-slate-800">출제 영역별 상세 분석</span>
@@ -118,7 +118,7 @@ export function TopicAnalysisSection({
                         </span>
                       )}
                       {isKeyChapter && (
-                        <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-medium bg-blue-100 text-blue-700 flex items-center gap-0.5">
+                        <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-medium bg-indigo-100 text-indigo-700 flex items-center gap-0.5">
                           <Star className="w-2.5 h-2.5" />
                           핵심 대단원
                         </span>

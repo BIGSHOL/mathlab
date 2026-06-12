@@ -66,8 +66,8 @@ export function LearningStrategiesSection({
         onClick={onToggleSection}
         className="w-full px-4 py-3.5 flex items-center gap-3 bg-white hover:bg-slate-50 transition-colors"
       >
-        <div className="w-7 h-7 rounded-sm bg-purple-500/15 flex items-center justify-center shrink-0">
-          <Lightbulb className="w-3.5 h-3.5 text-purple-600" />
+        <div className="w-7 h-7 rounded-sm bg-indigo-500/15 flex items-center justify-center shrink-0">
+          <Lightbulb className="w-3.5 h-3.5 text-indigo-600" />
         </div>
         <div className="flex-1 text-left">
           <span className="text-sm font-semibold text-slate-800">영역별 학습 전략</span>
@@ -158,9 +158,9 @@ function ExpandedStrategy({ topic, diffKey, color, is4Level }: {
     <div className="border-t border-slate-100 bg-white px-4 py-3 space-y-3">
       {/* 교육과정 기반 맞춤 전략 */}
       {hasCurriculumStrategy ? (
-        <div className="bg-blue-50/50 rounded-sm p-3">
+        <div className="bg-indigo-50/50 rounded-sm p-3">
           <div className="flex items-center gap-1.5 mb-2">
-            <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-bold text-white bg-blue-500">
+            <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-bold text-white bg-primary">
               교육과정 맞춤
             </span>
             <span className="text-xs font-medium text-slate-700">{topic.shortTopic} 학습 전략</span>
@@ -168,7 +168,7 @@ function ExpandedStrategy({ topic, diffKey, color, is4Level }: {
           <ul className="space-y-1.5">
             {curriculumMatch!.strategies.slice(0, 5).map((s: string, i: number) => (
               <li key={i} className="text-xs text-slate-700 flex items-start gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 bg-blue-400" />
+                <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 bg-indigo-400" />
                 {s}
               </li>
             ))}
@@ -202,8 +202,8 @@ function ExpandedStrategy({ topic, diffKey, color, is4Level }: {
                     geometry: '기하', statistics: '확률과 통계',
                   };
                   return (
-                    <div key={type} className="bg-purple-50/50 rounded-sm p-2.5">
-                      <span className="text-[10px] font-medium text-purple-700">{TYPE_LABELS_MAP[type] || type}</span>
+                    <div key={type} className="bg-indigo-50/50 rounded-sm p-2.5">
+                      <span className="text-[10px] font-medium text-indigo-700">{TYPE_LABELS_MAP[type] || type}</span>
                       <ul className="mt-1.5 space-y-1">
                         {strategies.map((s, i) => (
                           <li key={i} className="text-xs text-slate-600 flex items-start gap-1.5">

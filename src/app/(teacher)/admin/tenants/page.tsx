@@ -20,7 +20,7 @@ type Tenant = {
 const PLAN_LABEL: Record<PlanId, string> = { free: '무료', pro: 'Pro', enterprise: 'Enterprise' };
 const PLAN_BADGE: Record<PlanId, string> = {
   free: 'bg-slate-100 text-slate-500',
-  pro: 'bg-violet-100 text-violet-700',
+  pro: 'bg-indigo-100 text-indigo-700',
   enterprise: 'bg-amber-100 text-amber-700',
 };
 
@@ -179,7 +179,7 @@ export default function AdminTenantsPage() {
         }
       />
       {betaAllPro && (
-        <div className="mb-3 px-3 py-2 bg-violet-50 border border-violet-200 rounded-sm text-xs text-violet-700">
+        <div className="mb-3 px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-sm text-xs text-indigo-700">
           <strong>베타 기간(BETA_ALL_PRO)</strong> 활성 — 아래 배정 플랜과 무관하게 <b>모든 지점이 최소 Pro로 동작</b> 중입니다.
           여기서 배정한 플랜은 베타 종료 후 적용됩니다(상위 플랜은 베타 중에도 유지).
         </div>

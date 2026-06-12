@@ -174,7 +174,7 @@ export function CommonMistakesSection({
                       {topic.shortTopic}
                     </span>
                     {hasSpecific && (
-                      <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-medium bg-blue-50 text-blue-600 border border-blue-100 shrink-0">
+                      <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-medium bg-indigo-50 text-indigo-600 border border-indigo-100 shrink-0">
                         교육과정 기반
                       </span>
                     )}

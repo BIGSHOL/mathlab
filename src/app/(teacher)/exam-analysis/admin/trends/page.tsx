@@ -296,7 +296,7 @@ export default function TrendsDashboardPage() {
 
           {/* ── 출제 특징 통계 4카드 ── */}
           {data.featureCards.length > 0 && (
-            <div className="bg-gradient-to-r from-violet-500 to-purple-600 rounded-sm p-4 mb-4">
+            <div className="bg-[linear-gradient(100deg,#4F46E5,#7C3AED)] rounded-sm p-4 mb-4">
               <h3 className="text-sm font-semibold text-white mb-3">출제 특징 통계</h3>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {data.featureCards.map(c => (
@@ -354,7 +354,7 @@ export default function TrendsDashboardPage() {
           <div className="bg-white border rounded-sm p-4 mb-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-purple-500" />
+                <Sparkles className="w-4 h-4 text-primary" />
                 <h3 className="text-sm font-semibold text-slate-900">AI 트렌드 인사이트</h3>
               </div>
               <Button size="sm" variant="secondary" onClick={generateInsight} disabled={insightLoading}>
@@ -365,7 +365,7 @@ export default function TrendsDashboardPage() {
 
             {insight ? (
               <div className="space-y-3">
-                <div className="bg-purple-50 rounded-sm p-3">
+                <div className="bg-indigo-50 rounded-sm p-3">
                   <p className="text-xs text-slate-700">{insight.overallTrend}</p>
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">

@@ -63,7 +63,7 @@ export function ProfileMenu({ variant = 'floating' }: { variant?: 'floating' | '
             <Link
               href="/entitlements"
               title="이용권 배정"
-              className="p-1.5 rounded-sm text-slate-400 hover:text-violet-600 hover:bg-slate-100 shrink-0 transition-colors"
+              className="p-1.5 rounded-sm text-slate-400 hover:text-primary hover:bg-slate-100 shrink-0 transition-colors"
             >
               <Ticket className="w-4 h-4" />
             </Link>
@@ -72,7 +72,7 @@ export function ProfileMenu({ variant = 'floating' }: { variant?: 'floating' | '
             <Link
               href="/billing"
               title="구독/결제"
-              className="p-1.5 rounded-sm text-slate-400 hover:text-violet-600 hover:bg-slate-100 shrink-0 transition-colors"
+              className="p-1.5 rounded-sm text-slate-400 hover:text-primary hover:bg-slate-100 shrink-0 transition-colors"
             >
               <CreditCard className="w-4 h-4" />
             </Link>
@@ -141,7 +141,7 @@ export function ProfileMenu({ variant = 'floating' }: { variant?: 'floating' | '
         <Link
           href="/entitlements"
           title="이용권 배정"
-          className="flex items-center gap-1 text-xs text-slate-600 hover:text-violet-600 border-l border-slate-200 pl-2 transition-colors"
+          className="flex items-center gap-1 text-xs text-slate-600 hover:text-primary border-l border-slate-200 pl-2 transition-colors"
         >
           <Ticket className="w-3.5 h-3.5" />
           이용권
@@ -151,7 +151,7 @@ export function ProfileMenu({ variant = 'floating' }: { variant?: 'floating' | '
         <Link
           href="/billing"
           title="구독/결제"
-          className="flex items-center gap-1 text-xs text-slate-600 hover:text-violet-600 border-l border-slate-200 pl-2 transition-colors"
+          className="flex items-center gap-1 text-xs text-slate-600 hover:text-primary border-l border-slate-200 pl-2 transition-colors"
         >
           <CreditCard className="w-3.5 h-3.5" />
           구독

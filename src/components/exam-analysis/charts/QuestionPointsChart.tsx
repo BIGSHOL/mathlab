@@ -52,7 +52,7 @@ const DIFFICULTY_LEVEL: Record<string, number> = {
   concept: 1, pattern: 2, reasoning: 4, creative: 5,
 };
 
-const LINE_COLOR = '#8b5cf6';
+const LINE_COLOR = '#8b5cf6'; // = brand-violet(#8B5CF6) — 브랜드 팔레트와 동일값이라 유지
 
 export function QuestionPointsChart({ questions, embedded }: QuestionPointsChartProps) {
   const { chartData, maxPoints, formatStats: _formatStats, gapItems, aiComment } = useMemo(() => {
@@ -173,7 +173,7 @@ export function QuestionPointsChart({ questions, embedded }: QuestionPointsChart
     <div className={embedded ? '' : 'bg-white border rounded-sm p-4'}>
       {/* 헤더 */}
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shrink-0">
+        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shrink-0">
           <svg
             width="14"
             height="14"
@@ -334,7 +334,7 @@ export function QuestionPointsChart({ questions, embedded }: QuestionPointsChart
       {/* AI 코멘트 */}
       {aiComment && (
         <p className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 leading-relaxed">
-          <span className="text-violet-500 font-semibold mr-1">AI</span>
+          <span className="text-primary font-semibold mr-1">AI</span>
           {aiComment}
         </p>
       )}
@@ -381,7 +381,7 @@ export function QuestionPointsChart({ questions, embedded }: QuestionPointsChart
               {underpriced.length > 0 && (
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="w-1 h-4 rounded-full bg-blue-500" />
+                    <span className="w-1 h-4 rounded-full bg-indigo-500" />
                     <span className="text-xs font-semibold text-slate-700">배점 대비 난이도 높음</span>
                   </div>
                   <div className="space-y-1.5">
@@ -391,7 +391,7 @@ export function QuestionPointsChart({ questions, embedded }: QuestionPointsChart
                           <span className="text-sm font-bold text-slate-800">{item.name}번</span>
                           <div className="flex items-center gap-1.5">
                             <span className="text-xs text-slate-500">{item.points}점</span>
-                            <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-bold text-white bg-blue-500">
+                            <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-bold text-white bg-primary">
                               {item.gap.toFixed(1)}
                             </span>
                           </div>
