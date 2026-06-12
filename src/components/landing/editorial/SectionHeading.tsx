@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-/** 에디토리얼 섹션 헤딩 — 레드 키커(.ed-kicker) + 세리프 헤드라인 + 보조 설명. */
+/** 브랜드 섹션 헤딩 — 아이브로(.brand-eyebrow) + Pretendard 헤드라인 + 보조 설명 (para-x .sec-title 모티프). */
 export function SectionHeading({
   kicker, title, lede, align = 'center',
 }: {
@@ -12,12 +12,12 @@ export function SectionHeading({
   const alignCls = align === 'center' ? 'items-center text-center' : 'items-start text-left';
   return (
     <div className={`flex flex-col ${alignCls}`}>
-      <span className="ed-kicker">{kicker}</span>
-      <h2 className="ed-serif text-balance mt-5 text-[26px] md:text-[32px] font-bold leading-snug text-ed-ink">
+      <span className="brand-eyebrow">{kicker}</span>
+      <h2 className="text-balance mt-4 text-[28px] md:text-[40px] font-extrabold tracking-[-0.03em] leading-[1.25] text-brand-ink [word-break:keep-all]">
         {title}
       </h2>
       {lede && (
-        <p className="mt-3 text-[15px] text-[#555] leading-relaxed max-w-xl">{lede}</p>
+        <p className="mt-3.5 text-[16px] md:text-[17px] text-brand-ink-soft leading-relaxed max-w-xl">{lede}</p>
       )}
     </div>
   );

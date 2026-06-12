@@ -1,10 +1,10 @@
 'use client';
 
 import { useCountUp } from './useCountUp';
-import { ABRIL, GRAY, INK, SANS } from './tokens';
+import { BRAND_INK } from './brand';
 
 /**
- * 다크 KPI 스트립 — V3 .v3-kpi-row 모티프 (#121212 밴드 + #333 세로 괘선 + Abril 카운트업 숫자).
+ * 다크 스탯 카드 — para-x .stats-card 모티프 (#13142B 라운드 카드 + 래디얼 오버레이 + 카운트업 숫자).
  * ⚠️ 수치는 검증 가능한 제품 사실만 (CLAUDE.md 12-5 — 시장 주장·더미 수치 금지).
  */
 
@@ -16,57 +16,47 @@ export interface StatItem {
   suffix?: string;
   /** 카운트업 대신 고정 표시 (예: '2~3분') */
   display?: string;
-  /** 숫자 색 (기본 #fff — V3 관례상 1개 amber, 1개 green 권장) */
-  color?: string;
+  /** true면 밝은 그라데이션 텍스트로 강조 (para-x .stat em 모티프) */
+  highlight?: boolean;
 }
 
-function StatCell({ item, className }: { item: StatItem; className: string }) {
+function StatCell({ item }: { item: StatItem }) {
   const { ref, value } = useCountUp(item.value);
   const num = Math.round(value).toLocaleString('ko-KR');
   return (
-    <div className={`px-4 py-8 md:py-10 text-center border-[#333] ${className}`}>
-      <p
-        className="uppercase"
-        style={{ fontFamily: SANS, fontSize: 11, letterSpacing: '0.14em', color: GRAY, fontWeight: 700, margin: 0 }}
-      >
-        {item.label}
-      </p>
+    <div className="relative text-center">
       <p
         ref={ref}
-        style={{
-          fontFamily: ABRIL,
-          fontSize: 'clamp(38px, 4.5vw, 56px)',
-          fontWeight: 900,
-          color: item.color ?? '#fff',
-          lineHeight: 1,
-          margin: '12px 0 0',
-        }}
+        className={`m-0 font-extrabold tracking-[-0.03em] leading-none text-[clamp(30px,3.6vw,42px)] ${item.highlight ? 'brand-grad-text-light' : 'text-white'}`}
       >
         {item.display ?? num}
         {item.suffix && (
-          <span style={{ fontFamily: SANS, fontSize: 16, fontWeight: 700, color: GRAY, marginLeft: 5 }}>
-            {item.suffix}
-          </span>
+          <span className="text-[16px] font-bold text-white/45 ml-1">{item.suffix}</span>
         )}
       </p>
+      <p className="m-0 mt-2 text-[13.5px] font-medium text-white/60">{item.label}</p>
     </div>
   );
 }
 
 export function StatStrip({ items }: { items: StatItem[] }) {
   return (
-    <section className="w-full" style={{ background: INK }}>
-      <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4">
-        {items.map((item, i) => {
-          // 모바일 2×2: 좌측 열만 우측 괘선 + 첫 행 하단 괘선 / 데스크탑 4열: 마지막만 괘선 없음
-          const borders = [
-            i % 2 === 0 ? 'border-r' : 'md:border-r',
-            i < 2 ? 'border-b md:border-b-0' : '',
-            i === items.length - 1 ? 'md:border-r-0' : '',
-          ].join(' ');
-          return <StatCell key={item.label} item={item} className={borders} />;
-        })}
-      </div>
-    </section>
+    <div
+      className="relative overflow-hidden rounded-[24px] shadow-brand-lg px-6 py-11 grid grid-cols-2 md:grid-cols-4 gap-9 md:gap-8"
+      style={{ background: BRAND_INK }}
+    >
+      {/* 래디얼 그라데이션 오버레이 (para-x .stats-card::before) */}
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(circle at 12% 0%, rgba(99,102,241,0.4), transparent 45%), radial-gradient(circle at 88% 100%, rgba(14,165,233,0.3), transparent 45%)',
+        }}
+      />
+      {items.map((item) => (
+        <StatCell key={item.label} item={item} />
+      ))}
+    </div>
   );
 }

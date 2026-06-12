@@ -17,9 +17,9 @@ function Card({
   icon: typeof BarChart3; title: string; caption: string; children: ReactNode;
 }) {
   return (
-    <div className="rounded-[4px] border border-[#E6E2D8] bg-white p-5 flex flex-col shadow-ed-paper">
+    <div className="rounded-[16px] border border-brand-line bg-white p-5 flex flex-col shadow-brand-sm">
       <div className="flex items-center gap-2 mb-3.5">
-        <Icon className="w-4 h-4 shrink-0" style={{ color: RED }} />
+        <Icon className="w-4 h-4 shrink-0 text-brand-indigo" />
         <h3 className="font-bold text-[15px]">{title}</h3>
       </div>
       <div className="flex-1">{children}</div>

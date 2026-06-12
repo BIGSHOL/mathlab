@@ -157,34 +157,35 @@ export function DemoClient() {
     <div className="h-dvh flex flex-col bg-slate-50">
       <ToastContainer />
 
-      {/* ── 데모 상단 바 (에디토리얼 잉크 밴드) ── */}
-      <div className="shrink-0 z-40 bg-[#121212] text-white border-b border-[#333]">
+      {/* ── 데모 상단 바 (브랜드 잉크 네이비 밴드) ── */}
+      <div className="shrink-0 z-40 bg-[#13142B] text-white border-b border-white/10">
         <div className="px-4 py-2.5 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2 min-w-0">
-            <Sparkles className="w-4 h-4 text-[#FFA940] shrink-0" />
+            <Sparkles className="w-4 h-4 text-[#A5B4FC] shrink-0" />
             <p className="text-[13px] truncate">
-              <b className="ed-serif font-bold">데모 체험</b>
-              <span className="text-slate-300"> — 샘플 시험지로 실제 화면 그대로 전 과정을 체험합니다. 변경사항은 저장되지 않습니다.</span>
+              <b className="font-extrabold">데모 체험</b>
+              <span className="text-white/60"> — 샘플 시험지로 실제 화면 그대로 전 과정을 체험합니다. 변경사항은 저장되지 않습니다.</span>
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {items.length > 0 && (
               <button
                 onClick={resetAll}
-                className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] text-slate-300 hover:text-white border border-slate-700 hover:border-slate-500 rounded-sm transition-colors"
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] text-white/65 hover:text-white border border-white/20 hover:border-white/50 rounded-full transition-colors"
               >
                 <RotateCcw className="w-3 h-3" /> 처음부터
               </button>
             )}
             <button
               onClick={() => setShowInquiry(true)}
-              className="px-2.5 py-1 text-[12px] font-semibold bg-[#BF1722] hover:bg-[#a01219] rounded-sm transition-colors"
+              className="px-3 py-1 text-[12px] font-semibold rounded-full transition-all hover:-translate-y-px"
+              style={{ background: 'linear-gradient(100deg, #4F46E5, #7C3AED)' }}
             >
               도입 문의
             </button>
             <Link
               href="/login"
-              className="px-2.5 py-1 text-[12px] text-slate-300 hover:text-white border border-slate-700 hover:border-slate-500 rounded-sm transition-colors"
+              className="px-2.5 py-1 text-[12px] text-white/65 hover:text-white border border-white/20 hover:border-white/50 rounded-full transition-colors"
             >
               로그인
             </Link>
@@ -360,29 +361,26 @@ export function DemoClient() {
             <div className="flex flex-col items-center justify-center h-full text-slate-400">
               {items.length === 0 ? (
                 <div className="text-center max-w-md">
-                  <span className="ed-kicker">체험 데모</span>
-                  <p className="ed-serif mt-5 text-[22px] font-bold leading-snug text-[#121212]">
+                  <span className="brand-eyebrow">체험 데모</span>
+                  <p className="mt-4 text-[24px] font-extrabold tracking-[-0.02em] leading-snug text-[#13142B] [word-break:keep-all]">
                     실제 화면 그대로,<br />업로드부터 블로그 복사까지
                   </p>
-                  {/* 진행 스텝 — 거대 Abril 인덱스 */}
+                  {/* 진행 스텝 — 그라데이션 인덱스 */}
                   <div className="mt-6 flex items-stretch justify-center">
                     {[['01', '업로드'], ['02', 'AI 분석'], ['03', '총평·공유']].map(([n, l], i) => (
-                      <div key={n} className={`px-6 text-center ${i > 0 ? 'border-l border-[#E6E2D8]' : ''}`}>
-                        <p
-                          className="leading-none m-0"
-                          style={{ fontFamily: 'var(--font-abril), "Abril Fatface", serif', fontSize: 30, fontWeight: 900, color: '#BF1722', opacity: 0.85 }}
-                        >
+                      <div key={n} className={`px-6 text-center ${i > 0 ? 'border-l border-brand-line' : ''}`}>
+                        <p className="leading-none m-0 text-[28px] font-extrabold tracking-[-0.03em] brand-grad-text">
                           {n}
                         </p>
-                        <p className="mt-1.5 text-[11px] font-bold text-[#555] m-0">{l}</p>
+                        <p className="mt-1.5 text-[11px] font-bold text-[#4B4D6B] m-0">{l}</p>
                       </div>
                     ))}
                   </div>
                   <p className="text-sm mt-5 text-slate-500">
-                    좌측 <b className="text-[#BF1722]">[업로드]</b> 버튼을 눌러 샘플 시험지(PDF)를 올리는 것부터
+                    좌측 <b className="text-brand-indigo">[업로드]</b> 버튼을 눌러 샘플 시험지(PDF)를 올리는 것부터
                     분석 · AI 총평 · 블로그 복사까지 전 과정을 진행해 보세요.
                   </p>
-                  <Button size="sm" variant="editorial" className="mt-5" onClick={() => setShowUpload(true)}>
+                  <Button size="sm" variant="brand" className="mt-5" onClick={() => setShowUpload(true)}>
                     <Plus className="w-4 h-4 mr-1" /> 시험지 업로드
                   </Button>
                 </div>
@@ -402,12 +400,12 @@ export function DemoClient() {
   );
 }
 
-/** 데모 가이드 배너 — 에디토리얼 페이퍼 박스 + 좌측 3px 괘선 (V3 .v3-data-box 모티프). */
+/** 데모 가이드 배너 — 브랜드 크림 박스 + 좌측 3px 포인트선 (진행=잉크 네이비, 완료=인디고). */
 function DemoGuide({ tone, children }: { tone: 'progress' | 'done'; children: React.ReactNode }) {
   return (
     <div
-      className="max-w-[960px] mx-auto mb-4 px-4 py-2.5 text-[13px] text-[#2A2A2A] bg-[#FBF9F4] border border-[#E6E2D8]"
-      style={{ borderLeft: `3px solid ${tone === 'done' ? '#BF1722' : '#121212'}` }}
+      className="max-w-[960px] mx-auto mb-4 px-4 py-2.5 text-[13px] text-[#2A2A2A] bg-brand-cream border border-brand-line rounded-[8px]"
+      style={{ borderLeft: `3px solid ${tone === 'done' ? '#4F46E5' : '#13142B'}` }}
     >
       {children}
     </div>

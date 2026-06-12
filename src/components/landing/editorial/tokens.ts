@@ -1,10 +1,12 @@
 /**
- * 에디토리얼(V3) 디자인 토큰 — 공개 표면(랜딩 `/` · 데모 `/demo` · 로그인 `/login`) 전용.
+ * 잡지(V3) 디자인 토큰 — **제품 산출물 프리뷰 전용** (V3ReportPreview, FeatureShowcase 내부 더미 차트).
  *
  * 원천 = V3 기출총평 톤 (globals.css `.v3-*`, naver-v3-renderer.ts, V3ReportPreview).
  * V3 파일은 불가침(수정 금지)이라 의도적 단방향 복제 — V3 톤 변경 시 여기도 맞출 것.
- * Tailwind 유틸 토큰은 globals.css 말미 `--color-ed-*` / `--shadow-ed-*` / `.ed-*` 참조.
- * ⚠️ 기존 `--color-ink`(#0F172A, v2 슬레이트)와 별개 — 앱 내부 토큰과 혼용 금지.
+ *
+ * ⚠️ 페이지 크롬(헤더/섹션/버튼/카드 등)에는 사용 금지 — 공개 표면의 브랜드 언어는
+ *    para-x 통일(./brand.ts + globals.css `brand-*`)이고, 잡지 톤은 "제품이 만들어내는
+ *    산출물"의 정체성으로 프리뷰 안에서만 유지한다. (2026-06-12 사용자 결정)
  */
 
 // ── 색 ──

@@ -18,19 +18,20 @@ import { FloatingCard } from '@/components/landing/editorial/FloatingCard';
 import { StatStrip, type StatItem } from '@/components/landing/editorial/StatStrip';
 import { SectionHeading } from '@/components/landing/editorial/SectionHeading';
 import { LiveAnalysisCard } from '@/components/landing/editorial/LiveAnalysisCard';
-import { ABRIL, BODONI, GREEN, AMBER, RED, INK } from '@/components/landing/editorial/tokens';
+import { GRAD_DARK_CARD } from '@/components/landing/editorial/brand';
 
 /**
  * 기출분석 제품 공개 랜딩페이지 (루트 /).
- * 디자인 언어: V3 에디토리얼(기출총평 잡지 톤) — 크림 페이퍼 · 잉크 · 레드 · 세리프 헤드라인 · 신문 괘선.
+ * 디자인 언어: para-x 브랜드 시스템 통일 (크림 · 잉크 네이비 · 인디고 그라데이션 · 노란 마커).
+ * 잡지(V3) 톤은 제품 산출물 프리뷰(V3ReportPreview, FeatureShowcase 내부)에서만 유지.
  */
 
-// 다크 KPI 스트립 — 검증 가능한 제품 사실만 (CLAUDE.md 12-5)
+// 다크 스탯 카드 — 검증 가능한 제품 사실만 (CLAUDE.md 12-5)
 const STATS: StatItem[] = [
-  { label: '전국 학교 데이터베이스', value: 6004, suffix: '교', color: AMBER },
+  { label: '전국 학교 데이터베이스', value: 6004, suffix: '교', highlight: true },
   { label: '난이도 판정 체계', value: 5, suffix: '단계' },
   { label: '능력 영역 분석', value: 4, suffix: '대 영역' },
-  { label: '평균 분석 소요', value: 0, display: '2~3', suffix: '분', color: GREEN },
+  { label: '평균 분석 소요', value: 0, display: '2~3', suffix: '분', highlight: true },
 ];
 
 export function LandingPage() {
@@ -43,171 +44,177 @@ export function LandingPage() {
   return (
     <>
     {inquiryOpen && <InquiryModal onClose={() => setInquiryOpen(false)} />}
-    <div className="h-dvh overflow-y-auto scroll-smooth bg-ed-paper text-ed-ink">
+    <div className="h-dvh overflow-y-auto scroll-smooth bg-brand-cream text-brand-ink">
       {/* 루트 layout의 html/body가 overflow:hidden(LMS 앱 셸 규약)이라
           공개 랜딩은 자체 스크롤 컨테이너(h-dvh + overflow-y-auto)가 필요. */}
-      {/* ── 헤더 (마스트헤드) ── */}
-      <header className="sticky top-0 z-40 bg-ed-paper/90 backdrop-blur border-b border-ed-ink">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <LogoIcon className="w-7 h-7" />
-            <span className="ed-serif text-lg font-bold tracking-tight">MathLAB 기출분석</span>
+      {/* ── 헤더 ── */}
+      <header className="sticky top-0 z-40 bg-brand-cream/85 backdrop-blur-md border-b border-brand-line">
+        <div className="max-w-6xl mx-auto px-6 h-[68px] flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5">
+            <LogoIcon className="w-8 h-8" />
+            <span className="text-lg font-extrabold tracking-[-0.02em]">MathLAB 기출분석</span>
           </Link>
-          <nav className="hidden md:flex items-center gap-7 text-sm text-[#555]">
-            <a href="#features" className="hover:text-ed-ink transition-colors">기능</a>
-            <a href="#how" className="hover:text-ed-ink transition-colors">작동 방식</a>
-            <Link href="/demo" className="hover:text-ed-ink transition-colors">데모</Link>
+          <nav className="hidden md:flex items-center gap-7 text-[15px] font-semibold text-brand-ink-soft">
+            <a href="#features" className="hover:text-brand-ink transition-colors">기능</a>
+            <a href="#how" className="hover:text-brand-ink transition-colors">작동 방식</a>
+            <Link href="/demo" className="hover:text-brand-ink transition-colors">데모</Link>
           </nav>
           <Link href={cta.href}>
-            <Button size="sm" variant="editorial">{cta.label}</Button>
+            <Button size="sm" variant="brand">{cta.label}</Button>
           </Link>
         </div>
       </header>
 
       {/* ── 히어로 ── */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 math-grid-bg ed-grid-fade pointer-events-none" aria-hidden />
-        <div className="relative max-w-6xl mx-auto px-6 py-14 sm:py-20 lg:py-24 grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+        {/* 그리드 배경 + 블러 블롭 (para-x .hero-bg 모티프) */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden>
+          <div className="absolute inset-0 math-grid-bg brand-grid-fade" />
+          <div className="absolute w-[480px] h-[480px] rounded-full blur-[90px] opacity-50 -top-40 -right-20 bg-[#6366F1]/30 animate-brand-drift" />
+          <div className="absolute w-[420px] h-[420px] rounded-full blur-[90px] opacity-50 -bottom-52 -left-32 bg-[#0EA5E9]/20 animate-brand-drift [animation-delay:-6s]" />
+          <div className="absolute w-[260px] h-[260px] rounded-full blur-[90px] opacity-50 top-[32%] left-[38%] bg-[#FFC905]/25 animate-brand-drift [animation-delay:-3s]" />
+        </div>
+        <div className="relative max-w-6xl mx-auto px-6 py-14 sm:py-20 lg:py-24 grid lg:grid-cols-2 gap-12 lg:gap-14 items-center">
           <RevealStagger>
             <RevealItem>
-              <span className="ed-kicker">
-                <Sparkles className="w-3.5 h-3.5 inline-block mr-1.5 -mt-0.5" />
+              <span className="inline-flex items-center gap-2 text-[13.5px] font-bold text-brand-indigo bg-brand-indigo/8 border border-brand-indigo/18 px-4 py-2 rounded-full">
+                <span className="w-[7px] h-[7px] rounded-full bg-[#22C55E] animate-pulse shrink-0" />
                 AI 기반 · 한국 수학 교육과정 특화
               </span>
             </RevealItem>
             <RevealItem>
-              <h1 className="ed-serif mt-7 text-4xl sm:text-5xl lg:text-[64px] font-bold leading-[1.12] tracking-[-0.01em]">
+              <h1 className="mt-6 text-[38px] sm:text-5xl lg:text-[62px] font-extrabold tracking-[-0.04em] leading-[1.16] [word-break:keep-all]">
                 시험지 한 장이면,<br />
-                <span className="ed-marker">분석부터 블로그 글까지</span> 자동으로
+                <span className="brand-marker whitespace-nowrap">분석부터 블로그 글까지</span> 자동으로
               </h1>
             </RevealItem>
             <RevealItem>
-              <p className="mt-6 text-lg text-[#555] leading-relaxed max-w-xl">
-                PDF만 올리면 AI가 난이도·단원·문항 해설·총평을 만들고,
+              <p className="mt-6 text-[18px] text-brand-ink-soft leading-[1.75] max-w-[500px]">
+                PDF만 올리면 AI가 <b className="text-brand-ink font-bold">난이도·단원·문항 해설·총평</b>을 만들고,
                 네이버 블로그용 자료까지 생성합니다.
               </p>
             </RevealItem>
             <RevealItem>
-              <div className="mt-9 flex flex-wrap items-center gap-3">
+              <div className="mt-9 flex flex-wrap items-center gap-3.5">
                 {user ? (
                   <Link href="/exam-analysis">
-                    <Button size="lg" variant="editorial">기출분석 바로가기</Button>
+                    <Button size="lg" variant="brand">기출분석 바로가기</Button>
                   </Link>
                 ) : (
-                  <Button size="lg" variant="editorial" onClick={() => setInquiryOpen(true)}>
+                  <Button size="lg" variant="brand" onClick={() => setInquiryOpen(true)}>
                     <MessageSquare className="w-4 h-4 mr-2" />도입 문의
                   </Button>
                 )}
                 {!user && (
                   <Link href="/demo">
-                    <Button size="lg" variant="editorialOutline">데모 체험하기</Button>
+                    <Button size="lg" variant="brandOutline">데모 체험하기</Button>
                   </Link>
                 )}
                 <a href="#features">
                   <Button size="lg" variant="ghost">기능 보기</Button>
                 </a>
               </div>
-              <p className="mt-4 text-xs text-[#999]">
+              <p className="mt-5 text-[13px] font-semibold text-brand-ink-faint">
                 {!user && (
                   <>이미 계정이 있으신가요?{' '}
-                  <Link href="/login" className="underline underline-offset-2 hover:text-ed-ink transition-colors">로그인</Link></>
+                  <Link href="/login" className="underline underline-offset-2 hover:text-brand-ink transition-colors">로그인</Link></>
                 )}
               </p>
             </RevealItem>
           </RevealStagger>
 
-          {/* 실제 V3 분석 리포트 프리뷰 (더미데이터) + 부유 카드 */}
+          {/* 제품 산출물 프리뷰 — 잡지(V3) 톤은 이 안에서만 (브랜드 크롬 속 "산출물 사진" 구도) */}
           <Reveal delay={0.15} className="relative">
             <V3ReportPreview />
             <FloatingCard className="hidden lg:block -left-9 bottom-14" delay={0.8}>
-              <p className="text-[10px] uppercase tracking-[0.14em] font-bold text-ed-gray m-0">평균 분석 소요</p>
-              <p className="m-0 mt-1 leading-none" style={{ fontFamily: BODONI, fontSize: 24, fontWeight: 900, color: RED }}>
-                2~3<span className="text-[13px] text-ed-gray ml-0.5">분</span>
+              <p className="text-[12.5px] font-semibold text-brand-ink-faint m-0">평균 분석 소요</p>
+              <p className="m-0 mt-0.5 text-[21px] font-extrabold tracking-[-0.02em] leading-none text-brand-ink">
+                2~3<span className="text-[13px] text-brand-ink-faint ml-0.5 font-bold">분</span>
               </p>
             </FloatingCard>
             <FloatingCard className="hidden lg:flex items-center gap-2 -right-7 top-9" delay={0}>
-              <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0" style={{ background: RED }}>
-                <Check className="w-3 h-3 text-white" />
+              <span className="w-[18px] h-[18px] rounded-full flex items-center justify-center shrink-0 bg-[#DCFCE7]">
+                <Check className="w-3 h-3 text-[#16A34A]" />
               </span>
-              <span className="text-xs font-semibold">블로그 이미지 자동 생성</span>
+              <span className="text-[13px] font-bold">블로그 이미지 자동 생성</span>
             </FloatingCard>
           </Reveal>
         </div>
       </section>
 
       {/* ── 신뢰 스트립 ── */}
-      <section className="border-y border-ed-ink bg-ed-paper-2">
-        <div className="max-w-6xl mx-auto px-6 py-5 flex flex-wrap items-center justify-center gap-y-3">
-          {['AI 기반 자동 분석', '한국 중·고 수학 교육과정 매핑', '내신 · 모의고사 기출 대응', '네이버 블로그 콘텐츠 자동화'].map((t, i) => (
-            <span
-              key={t}
-              className={`inline-flex items-center gap-2 px-5 sm:px-7 text-xs font-semibold tracking-[0.1em] text-[#444] ${i > 0 ? 'sm:border-l sm:border-ed-rule' : ''}`}
-            >
-              <span className="w-2 h-2 bg-ed-red inline-block shrink-0" /> {t}
+      <section className="border-y border-brand-line bg-brand-cream-2">
+        <div className="max-w-6xl mx-auto px-6 py-5 flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
+          {['AI 기반 자동 분석', '한국 중·고 수학 교육과정 매핑', '내신 · 모의고사 기출 대응', '네이버 블로그 콘텐츠 자동화'].map((t) => (
+            <span key={t} className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-ink-soft">
+              <Check className="w-4 h-4 text-[#16A34A] shrink-0" /> {t}
             </span>
           ))}
         </div>
       </section>
 
-      {/* ── 다크 KPI 스트립 (V3 .v3-kpi-row 모티프) ── */}
-      <StatStrip items={STATS} />
+      {/* ── 다크 스탯 카드 (para-x .stats-card 모티프) ── */}
+      <section className="max-w-6xl mx-auto px-6 pt-14 md:pt-20">
+        <Reveal>
+          <StatStrip items={STATS} />
+        </Reveal>
+      </section>
 
-      {/* ── 핵심 가치 — 신문 괘선 그리드 ── */}
+      {/* ── 핵심 가치 ── */}
       <section className="max-w-6xl mx-auto px-6 py-16 md:py-24">
         <SectionHeading
           kicker="핵심 가치"
           title="선생님의 시간을 돌려드립니다"
           lede="며칠 걸리던 기출 분석을 수 분 안에."
         />
-        <RevealStagger className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-px border border-ed-rule bg-ed-rule">
+        <RevealStagger className="mt-13 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {[
             { icon: FileSearch, title: '자동 기출 분석', desc: '시험지 PDF 업로드 한 번. OCR·문항 추출·난이도 판정까지 AI가.' },
             { icon: BarChart3, title: '난이도·단원 인사이트', desc: '단원별 출제 비중, 난이도 분포, 킬러문항 패턴을 차트로.' },
             { icon: FileText, title: '해설·총평 자동 생성', desc: '문항별 풀이 해설과 시험 총평을 즉시. 검토만 하면 끝.' },
             { icon: Share2, title: '블로그 콘텐츠 자동화', desc: '분석 결과를 네이버 블로그용 이미지로 한 번에. 학원 홍보까지.' },
-          ].map((c, i) => (
-            <RevealItem key={c.title} className="relative bg-ed-paper p-7">
-              <span
-                aria-hidden
-                className="absolute top-4 right-5 leading-none select-none"
-                style={{ fontFamily: ABRIL, fontSize: 64, fontWeight: 900, color: RED, opacity: 0.18 }}
-              >
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <c.icon className="w-5 h-5 text-ed-red mb-5" />
-              <h3 className="ed-serif font-bold text-[19px] mb-2">{c.title}</h3>
-              <p className="text-sm text-[#555] leading-relaxed">{c.desc}</p>
+          ].map((c) => (
+            <RevealItem
+              key={c.title}
+              className="bg-white border border-brand-line rounded-[20px] p-7 shadow-brand-sm hover:shadow-brand-md hover:-translate-y-1.5 hover:border-brand-indigo/25 transition-all duration-300"
+            >
+              <div className="w-12 h-12 rounded-[14px] bg-brand-indigo/8 flex items-center justify-center mb-5">
+                <c.icon className="w-5 h-5 text-brand-indigo" />
+              </div>
+              <h3 className="font-extrabold text-[19px] tracking-[-0.02em] mb-2">{c.title}</h3>
+              <p className="text-[14.5px] text-brand-ink-soft leading-[1.7]">{c.desc}</p>
             </RevealItem>
           ))}
         </RevealStagger>
       </section>
 
-      {/* ── 작동 방식 — 상단 잉크 괘선 카드 ── */}
-      <section id="how" className="bg-ed-paper-2 border-y border-ed-rule">
+      {/* ── 작동 방식 ── */}
+      <section id="how" className="bg-brand-cream-2 border-y border-brand-line">
         <div className="max-w-6xl mx-auto px-6 py-16 md:py-24">
           <SectionHeading kicker="작동 방식" title="3단계면 충분합니다" />
-          <RevealStagger className="mt-12 grid md:grid-cols-3 gap-5">
+          <RevealStagger className="mt-13 grid md:grid-cols-3 gap-5">
             {[
               { n: '01', icon: Upload, title: '업로드', desc: '시험지 PDF를 끌어다 놓습니다.' },
               { n: '02', icon: Sparkles, title: 'AI 분석', desc: '수 분 내 난이도·단원·해설·총평을 자동 생성합니다.' },
               { n: '03', icon: Share2, title: '리포트 & 공유', desc: '차트 리포트 확인 후 네이버 블로그 이미지로 공유.' },
             ].map((s) => (
-              <RevealItem key={s.n} className="relative bg-white border border-ed-rule border-t-[3px] border-t-ed-ink p-7 shadow-ed-paper">
-                <span
-                  aria-hidden
-                  className="absolute top-4 right-6 leading-none select-none"
-                  style={{ fontFamily: ABRIL, fontSize: 56, fontWeight: 900, color: INK, opacity: 0.12 }}
-                >
+              <RevealItem
+                key={s.n}
+                className="relative bg-white border border-brand-line rounded-[20px] p-7 shadow-brand-sm"
+              >
+                <span aria-hidden className="absolute top-5 right-6 text-[44px] font-extrabold tracking-[-0.04em] leading-none select-none brand-grad-text opacity-30">
                   {s.n}
                 </span>
-                <s.icon className="w-6 h-6 text-ed-red mb-4" />
-                <h3 className="ed-serif font-bold text-lg mb-1.5">{s.title}</h3>
-                <p className="text-sm text-[#555] leading-relaxed">{s.desc}</p>
+                <div className="w-12 h-12 rounded-[14px] bg-brand-indigo/8 flex items-center justify-center mb-4">
+                  <s.icon className="w-5 h-5 text-brand-indigo" />
+                </div>
+                <h3 className="font-extrabold text-lg tracking-[-0.02em] mb-1.5">{s.title}</h3>
+                <p className="text-[14.5px] text-brand-ink-soft leading-[1.7]">{s.desc}</p>
               </RevealItem>
             ))}
           </RevealStagger>
 
-          {/* 분석 과정 라이브 연출 — "데모 체험하기" 서사와 연결 */}
+          {/* 분석 과정 라이브 연출 (para-x 라이브 콘솔 모티프) — "데모 체험하기" 서사와 연결 */}
           <Reveal className="mt-10">
             <LiveAnalysisCard />
           </Reveal>
@@ -226,8 +233,8 @@ export function LandingPage() {
         </Reveal>
       </section>
 
-      {/* ── 실제 분석 대시보드 — "잡지에 실린 제품 스크린샷" 프레임 ── */}
-      <section className="bg-ed-paper-2 border-y border-ed-rule">
+      {/* ── 실제 분석 대시보드 — 브라우저 크롬 액자 (제품 스크린샷 구도) ── */}
+      <section className="bg-brand-cream-2 border-y border-brand-line">
         <div className="max-w-6xl mx-auto px-6 py-16 md:py-24">
           <SectionHeading
             kicker="대시보드"
@@ -235,13 +242,13 @@ export function LandingPage() {
             lede="난이도 도넛·유형 레이더·변별력·시간 배분까지 — 실제 화면 예시입니다 (더미데이터)."
           />
           <Reveal className="mt-12">
-            <div className="border border-ed-ink/80 rounded-[6px] overflow-hidden bg-white shadow-ed-float">
+            <div className="border border-brand-line rounded-[16px] overflow-hidden bg-white shadow-brand-lg">
               {/* 브라우저 크롬 캡션 — 앱 화면은 리스킨하지 않고 액자로 의도화 */}
-              <div className="flex items-center gap-1.5 px-4 h-9 border-b border-ed-rule bg-ed-paper">
+              <div className="flex items-center gap-1.5 px-4 h-9 border-b border-brand-line bg-brand-cream">
                 {[0, 1, 2].map((d) => (
-                  <span key={d} className="w-2.5 h-2.5 rounded-full bg-[#d9d4c8]" />
+                  <span key={d} className="w-2.5 h-2.5 rounded-full bg-brand-ink/10" />
                 ))}
-                <span className="ml-2.5 text-[11px] text-ed-gray tracking-[0.08em] font-semibold truncate">
+                <span className="ml-2.5 text-[11px] text-brand-ink-faint tracking-[0.06em] font-semibold truncate">
                   exam-analysis — 실제 분석 화면 (더미데이터)
                 </span>
               </div>
@@ -253,49 +260,61 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── 마무리 CTA — 풀블리드 잉크 밴드 (V3 .v3-feature 모티프) ── */}
-      <section className="max-w-6xl mx-auto px-6 pb-20 pt-2">
+      {/* ── 마무리 CTA — 다크 그라데이션 카드 (para-x contact 모티프) ── */}
+      <section className="max-w-6xl mx-auto px-6 py-16 md:py-20">
         <Reveal>
-          <div className="px-7 sm:px-12 py-12 sm:py-16 text-white" style={{ background: INK }}>
-            <div className="grid lg:grid-cols-[1fr_auto] gap-10 items-center">
+          <div
+            className="relative overflow-hidden rounded-[24px] px-7 sm:px-12 py-12 sm:py-16 text-white shadow-brand-lg"
+            style={{ background: GRAD_DARK_CARD }}
+          >
+            {/* 래디얼 오버레이 */}
+            <div
+              aria-hidden
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background:
+                  'radial-gradient(circle at 20% 0%, rgba(139,92,246,0.25), transparent 50%), radial-gradient(circle at 80% 100%, rgba(14,165,233,0.2), transparent 50%)',
+              }}
+            />
+            <div className="relative grid lg:grid-cols-[1fr_auto] gap-10 items-center">
               <div>
-                <h2 className="ed-serif text-[26px] md:text-[34px] font-bold leading-snug text-white">
-                  기출 분석, 이제 <em className="ed-serif italic" style={{ color: AMBER }}>AI에게 맡기세요</em>
+                <h2 className="text-[28px] md:text-[38px] font-extrabold tracking-[-0.03em] leading-[1.3] [word-break:keep-all]">
+                  기출 분석, 이제 <span className="brand-grad-text-light">AI에게 맡기세요</span>
                 </h2>
-                <p className="mt-4 text-[15px] text-[#ccc] leading-relaxed">
+                <p className="mt-4 text-[15.5px] text-white/65 leading-relaxed">
                   시험지를 올리면 분석·해설·블로그 콘텐츠가 자동으로 준비됩니다.
                 </p>
-                <div className="mt-8 flex flex-wrap items-center gap-3">
+                <div className="mt-8 flex flex-wrap items-center gap-3.5">
                   <Link href={cta.href}>
-                    <Button size="lg" variant="editorial" className="bg-white! text-[#121212]! hover:bg-[#BF1722]! hover:text-white!">
+                    <Button size="lg" variant="brand" className="bg-none! bg-white! text-brand-indigo! shadow-[0_8px_24px_rgba(0,0,0,0.2)]! hover:shadow-[0_14px_36px_rgba(0,0,0,0.28)]!">
                       {cta.label} <ArrowRight className="w-4 h-4 ml-1.5" />
                     </Button>
                   </Link>
                   {!user && (
                     <Link href="/demo">
-                      <Button size="lg" variant="editorialOutline" className="border-white/40! text-white! hover:border-white! hover:bg-white/10!">
+                      <Button size="lg" variant="brandOutline" className="border-white/25! text-white! bg-white/[0.07]! hover:border-white! hover:bg-white/15!">
                         데모 체험하기
                       </Button>
                     </Link>
                   )}
                   <a href="mailto:chrismathone@gmail.com">
-                    <Button size="lg" variant="editorialOutline" className="border-white/40! text-white! hover:border-white! hover:bg-white/10!">
+                    <Button size="lg" variant="brandOutline" className="border-white/25! text-white! bg-white/[0.07]! hover:border-white! hover:bg-white/15!">
                       도입 문의
                     </Button>
                   </a>
                 </div>
               </div>
-              {/* 우측 거대 숫자 2컬럼 (V3 KPI 색 분리) */}
+              {/* 우측 거대 숫자 2컬럼 */}
               <div className="hidden lg:flex items-stretch">
                 {[
-                  { n: '3', l: '단계로 끝', c: '#fff' },
-                  { n: '2~3', l: '분이면 분석 완료', c: AMBER },
+                  { n: '3', l: '단계로 끝', grad: false },
+                  { n: '2~3', l: '분이면 분석 완료', grad: true },
                 ].map((it, i) => (
-                  <div key={it.l} className={`text-center px-10 ${i > 0 ? 'border-l border-[#333]' : ''}`}>
-                    <p className="leading-none m-0" style={{ fontFamily: ABRIL, fontSize: 76, fontWeight: 900, color: it.c }}>
+                  <div key={it.l} className={`text-center px-10 ${i > 0 ? 'border-l border-white/10' : ''}`}>
+                    <p className={`leading-none m-0 text-[64px] font-extrabold tracking-[-0.04em] ${it.grad ? 'brand-grad-text-light' : 'text-white'}`}>
                       {it.n}
                     </p>
-                    <p className="mt-3 text-[11px] tracking-[0.14em] text-[#888] font-bold m-0">{it.l}</p>
+                    <p className="mt-3 text-[12.5px] text-white/50 font-semibold m-0">{it.l}</p>
                   </div>
                 ))}
               </div>
@@ -304,17 +323,17 @@ export function LandingPage() {
         </Reveal>
       </section>
 
-      {/* ── 푸터 (콜로폰) ── */}
-      <footer className="ed-rule-double">
-        <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-[#777]">
+      {/* ── 푸터 ── */}
+      <footer className="border-t border-brand-line">
+        <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-brand-ink-soft">
           <div className="flex items-center gap-2">
             <LogoIcon className="w-5 h-5" />
-            <span className="ed-serif font-bold text-ed-ink">MathLAB 기출분석</span>
-            <span className="text-[#999]">— 한국 수학 학원을 위한 AI 기출 분석</span>
+            <span className="font-extrabold text-brand-ink">MathLAB 기출분석</span>
+            <span className="text-brand-ink-faint">— 한국 수학 학원을 위한 AI 기출 분석</span>
           </div>
-          <div className="flex items-center gap-5 text-xs tracking-[0.1em]">
-            <a href="mailto:chrismathone@gmail.com" className="hover:text-ed-ink transition-colors">문의</a>
-            <span className="text-[#aaa]">© {'2026'} INJAEWON MATHLAB</span>
+          <div className="flex items-center gap-5 text-[13px]">
+            <a href="mailto:chrismathone@gmail.com" className="hover:text-brand-ink transition-colors">문의</a>
+            <span className="text-brand-ink-faint">© {'2026'} Injaewon MathLAB</span>
           </div>
         </div>
       </footer>
