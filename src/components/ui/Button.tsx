@@ -3,7 +3,7 @@
 import { ButtonHTMLAttributes, forwardRef } from 'react';
 import { Loader2 } from 'lucide-react';
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'brand' | 'brandOutline';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -20,6 +20,11 @@ const variantStyles: Record<ButtonVariant, string> = {
   ghost: 'text-text-secondary hover:text-text-primary hover:bg-slate-100',
   danger:
     'bg-red-500 text-white hover:bg-red-600 shadow-sm hover:shadow-md hover:-translate-y-0.5',
+  // 브랜드(para-x 인디고 그라데이션 톤) — 공개 표면(랜딩/데모/로그인) 전용
+  brand:
+    'text-white bg-[linear-gradient(100deg,#4F46E5,#7C3AED)] shadow-[0_8px_24px_rgba(79,70,229,0.35)] hover:shadow-[0_12px_32px_rgba(79,70,229,0.45)] hover:-translate-y-0.5 rounded-[14px]!',
+  brandOutline:
+    'border-[1.5px] border-[#13142B]/15 text-[#13142B] hover:border-[#13142B] hover:-translate-y-0.5 rounded-[14px]!',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {

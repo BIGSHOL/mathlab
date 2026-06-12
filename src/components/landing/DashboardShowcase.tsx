@@ -76,7 +76,7 @@ function Card({
 
 export function DashboardShowcase() {
   return (
-    <div className="mt-12 grid lg:grid-cols-2 gap-5">
+    <div className="pt-5 grid lg:grid-cols-2 gap-5">
       {/* 유형 분포 — 레이더 (recharts) */}
       <Card gradient="from-indigo-500 to-purple-500" icon={Hexagon} title="유형 분포" meta="레이더">
         <div className="flex gap-2 items-center">

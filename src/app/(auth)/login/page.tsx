@@ -39,67 +39,76 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <LogoIcon className="w-8 h-8" />
-            <span className="text-2xl font-black tracking-tight">Injaewon MathLAB</span>
-          </Link>
-          <h1 className="text-2xl font-bold text-text-primary">로그인</h1>
-          <p className="text-text-secondary mt-2">
-            학원에서 받은 계정으로 로그인하세요
-          </p>
-        </div>
+    // 루트 layout의 body가 overflow:hidden(앱 셸 규약)이라 자체 스크롤 컨테이너 필요
+    // (세로 좁은 화면에서 잘리던 버그 픽스 겸용 — 콘텐츠가 짧으면 기존처럼 중앙 정렬)
+    <div className="h-dvh overflow-y-auto bg-brand-cream">
+      <div className="relative min-h-full flex items-center justify-center p-4 py-10">
+        {/* 그리드 배경은 별도 레이어로 — 콘텐츠 래퍼에 mask를 걸면 카드까지 페이드됨 */}
+        <div className="absolute inset-0 math-grid-bg brand-grid-fade pointer-events-none" aria-hidden />
+        <div className="relative w-full max-w-md">
+          <div className="text-center mb-8">
+            <Link href="/" className="inline-flex items-center gap-2 mb-6">
+              <LogoIcon className="w-8 h-8" />
+              <span className="text-2xl font-extrabold tracking-[-0.02em] text-brand-ink">Injaewon MathLAB</span>
+            </Link>
+            <p className="mb-4">
+              <span className="brand-eyebrow">기출분석</span>
+            </p>
+            <h1 className="text-2xl font-extrabold tracking-[-0.02em] text-brand-ink">로그인</h1>
+            <p className="text-brand-ink-soft mt-2">
+              학원에서 받은 계정으로 로그인하세요
+            </p>
+          </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-soft p-8">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            {error && (
-              <div className="p-3 rounded-sm bg-red-50 border border-red-200 text-red-600 text-sm">
-                {error}
-              </div>
-            )}
-            <Input
-              label="아이디"
-              placeholder="학원에서 부여받은 아이디"
-              autoComplete="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-            <div className="relative">
+          <div className="bg-white rounded-[20px] border border-brand-line shadow-brand-lg p-8">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+              {error && (
+                <div className="p-3 rounded-sm bg-red-50 border border-red-200 text-red-600 text-sm">
+                  {error}
+                </div>
+              )}
               <Input
-                label="비밀번호"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="비밀번호를 입력하세요"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                label="아이디"
+                placeholder="학원에서 부여받은 아이디"
+                autoComplete="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-9 text-slate-400 hover:text-slate-600 transition-colors"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-            <Button type="submit" size="lg" className="mt-2 w-full" disabled={loading}>
-              {loading ? '로그인 중...' : '로그인'}
-            </Button>
-          </form>
-        </div>
+              <div className="relative">
+                <Input
+                  label="비밀번호"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="비밀번호를 입력하세요"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-9 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              <Button type="submit" size="lg" variant="brand" className="mt-2 w-full" disabled={loading}>
+                {loading ? '로그인 중...' : '로그인'}
+              </Button>
+            </form>
+          </div>
 
-        <p className="text-center text-sm text-text-secondary mt-6">
-          비밀번호를 잊으셨나요? 선생님께 문의하세요.
-        </p>
-        <p className="text-center text-sm text-text-secondary mt-2">
-          계정이 없으신가요?{' '}
-          <Link href="/demo" className="text-primary font-semibold hover:underline">
-            데모로 먼저 체험해 보세요
-          </Link>
-        </p>
+          <p className="text-center text-sm text-brand-ink-soft mt-6">
+            비밀번호를 잊으셨나요? 선생님께 문의하세요.
+          </p>
+          <p className="text-center text-sm text-brand-ink-soft mt-2">
+            계정이 없으신가요?{' '}
+            <Link href="/demo" className="text-brand-indigo font-semibold hover:underline">
+              데모로 먼저 체험해 보세요
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
