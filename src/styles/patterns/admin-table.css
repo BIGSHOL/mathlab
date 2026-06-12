@@ -374,6 +374,18 @@
   color: var(--ink-3);
   font-size: 14px;
 }
+.adm-empty-icon {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--ink-3);
+}
 
 /* 로딩 스켈레톤 */
 .adm-skeleton-row td {

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { Inbox } from 'lucide-react';
 
 export type AdminTableColumn<T> = {
   /** 컬럼 ID */
@@ -41,6 +42,8 @@ export type AdminTableProps<T> = {
   skeletonRows?: number;
   /** 빈 상태 메시지 */
   emptyMessage?: React.ReactNode;
+  /** 빈 상태 아이콘 (기본 Inbox) */
+  emptyIcon?: React.ReactNode;
   /** 행 클릭 핸들러 */
   onRowClick?: (row: T) => void;
   /** 확장된 행의 키 (renderExpandedRow와 함께 사용) */
@@ -75,6 +78,7 @@ export function AdminTable<T>({
   loading = false,
   skeletonRows = 5,
   emptyMessage = '표시할 데이터가 없습니다.',
+  emptyIcon,
   onRowClick,
   expandedRowKey,
   renderExpandedRow,
@@ -123,6 +127,9 @@ export function AdminTable<T>({
           ) : rows.length === 0 ? (
             <tr>
               <td colSpan={columns.length} className="adm-empty">
+                <span className="adm-empty-icon">
+                  {emptyIcon ?? <Inbox size={20} strokeWidth={1.75} />}
+                </span>
                 {emptyMessage}
               </td>
             </tr>
