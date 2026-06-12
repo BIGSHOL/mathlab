@@ -1,19 +1,13 @@
 import type { ReactNode } from 'react';
 import katex from 'katex';
 import { BarChart3, ListChecks, FileText, MapPin, Share2, Database } from 'lucide-react';
+import { SERIF, BODONI, SANS, RED, INK, GRAY } from '@/components/landing/editorial/tokens';
 
 /**
  * "기능 보기"(#features) 섹션 — 실제 V3 분석 화면(차트·뷰)을 더미데이터로 보여주는 쇼케이스.
  * 디자인 톤: V3 에디토리얼(Pretendard 라벨 + Bodoni Moda 숫자 + #BF1722 레드 + 테이블/CSS 막대).
- * 폰트 변수(--font-serif-kr/--font-bodoni)는 루트 layout 에서 주입.
+ * 톤 상수는 editorial/tokens.ts 공유 (폰트 변수는 루트 layout 에서 주입).
  */
-
-const SERIF = 'var(--font-serif-kr), "Noto Serif KR", serif';
-const BODONI = 'var(--font-bodoni), "Bodoni Moda", serif';
-const SANS = 'Pretendard, system-ui, sans-serif';
-const RED = '#BF1722';
-const INK = '#121212';
-const GRAY = '#888';
 
 const tex = (s: string) => katex.renderToString(s, { throwOnError: false, displayMode: false });
 

@@ -1,19 +1,12 @@
 import { Sparkles } from 'lucide-react';
+import { SERIF, BODONI, SANS, RED, INK, GRAY, ED_FLOAT_SHADOW } from '@/components/landing/editorial/tokens';
 
 /**
  * 실제 V3 분석 리포트(네이버 블로그 톤)를 더미데이터로 재현한 랜딩 히어로 프리뷰.
  * - 디자인 원본: public/v3-preview/naver-blog-merged.html (에디토리얼/매거진 톤)
  * - 크림/화이트 페이퍼 · Noto Serif KR 헤드라인 · Bodoni Moda 숫자 · #BF1722 레드 포인트 · 다크 KPI 스트립
- * - 폰트 변수는 루트 layout.tsx 에서 주입(--font-serif-kr / --font-bodoni) + Pretendard(CDN).
+ * - 톤 상수는 editorial/tokens.ts 공유 (폰트 변수는 루트 layout.tsx 에서 주입).
  */
-
-const SERIF = 'var(--font-serif-kr), "Noto Serif KR", serif';
-const BODONI = 'var(--font-bodoni), "Bodoni Moda", serif';
-const SANS = 'Pretendard, system-ui, sans-serif';
-
-const RED = '#BF1722';
-const INK = '#121212';
-const GRAY = '#888';
 
 /** 난이도별 배점 분포 — 더미 (총 100점 · 19문항) */
 const LEVELS = [
@@ -58,7 +51,7 @@ export function V3ReportPreview() {
       {/* 페이퍼 문서 (실제 V3 리포트 톤) */}
       <div
         className="rounded-[6px] overflow-hidden"
-        style={{ background: '#fff', boxShadow: '0 24px 60px -24px rgba(15,23,42,0.32), 0 0 0 1px #e6e2d8' }}
+        style={{ background: '#fff', boxShadow: ED_FLOAT_SHADOW }}
       >
         <div style={{ padding: '26px 24px 22px' }}>
           {/* eyebrow + 헤드라인 + 덱 */}

@@ -1503,3 +1503,79 @@ body {
   .v4-strategy-title { font-size: 13px; }
   .v4-strategy-body { font-size: 12px; }
 }
+
+/* ============================================
+   에디토리얼(ed-*) 토큰 — 공개 표면(랜딩/데모/로그인) 전용 (2026-06-12)
+   원천 = V3 기출총평 톤(.v3-*, naver-v3-renderer.ts). V3는 불가침이라 단방향 복제.
+   ⚠️ 기존 --color-ink(#0F172A, v2 슬레이트)와 별개 토큰 — 반드시 ed- 접두 사용, 혼용 금지.
+   TS 상수 거울: src/components/landing/editorial/tokens.ts
+   ============================================ */
+
+@theme {
+  --color-ed-paper: #FBF9F4;
+  --color-ed-paper-2: #F4F1E8;
+  --color-ed-ink: #121212;
+  --color-ed-gray: #888888;
+  --color-ed-red: #BF1722;
+  --color-ed-rule: #E6E2D8;
+  --color-ed-rule-dark: #333333;
+  --color-ed-amber: #FFA940;
+
+  --shadow-ed-float: 0 24px 60px -24px rgba(15, 23, 42, 0.32), 0 0 0 1px #e6e2d8;
+  --shadow-ed-paper: 0 6px 18px -10px rgba(15, 23, 42, 0.3);
+}
+
+/* 세리프 헤드라인/본문 (한글 keep-all 포함) */
+.ed-serif {
+  font-family: var(--font-serif-kr), 'Noto Serif KR', serif;
+  word-break: keep-all;
+}
+
+/* 레드 키커 — V3 .v3-kicker 모티프 (uppercase + 하단 레드 괘선) */
+.ed-kicker {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #BF1722;
+  border-bottom: 1.5px solid #BF1722;
+  padding-bottom: 6px;
+}
+
+/* 신문 이중 괘선 (3px 굵은선 + 2px 간격 + 1px 가는선) */
+.ed-rule-double {
+  position: relative;
+  border-top: 3px solid #121212;
+}
+.ed-rule-double::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 0;
+  right: 0;
+  border-top: 1px solid #121212;
+}
+
+/* 형광 마커 (레드, 하단 38% 하이라이트) */
+.ed-marker {
+  background: linear-gradient(transparent 62%, rgba(191, 23, 34, 0.16) 0);
+}
+
+/* 히어로 그리드 페이드 — .math-grid-bg 와 같은 요소에 함께 사용 */
+.ed-grid-fade {
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 0%, black 40%, transparent 100%);
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 0%, black 40%, transparent 100%);
+}
+
+/* 부유 카드 — CSS 키프레임 (무한루프는 컴포지터 처리가 유리) */
+@keyframes ed-floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.animate-ed-floaty {
+  animation: ed-floaty 5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-ed-floaty { animation: none; }
+}
