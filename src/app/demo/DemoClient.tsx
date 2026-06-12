@@ -164,14 +164,14 @@ export function DemoClient() {
             <Sparkles className="w-4 h-4 text-[#A5B4FC] shrink-0" />
             <p className="text-[13px] truncate">
               <b className="font-extrabold">데모 체험</b>
-              <span className="text-white/60"> — 샘플 시험지로 실제 화면 그대로 전 과정을 체험합니다. 변경사항은 저장되지 않습니다.</span>
+              <span className="text-white/75"> — 샘플 시험지로 실제 화면 그대로 전 과정을 체험합니다. 변경사항은 저장되지 않습니다.</span>
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {items.length > 0 && (
               <button
                 onClick={resetAll}
-                className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] text-white/65 hover:text-white border border-white/20 hover:border-white/50 rounded-full transition-colors"
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] text-white/85 hover:text-white border border-white/30 hover:border-white/60 rounded-full transition-colors"
               >
                 <RotateCcw className="w-3 h-3" /> 처음부터
               </button>
@@ -185,7 +185,7 @@ export function DemoClient() {
             </button>
             <Link
               href="/login"
-              className="px-2.5 py-1 text-[12px] text-white/65 hover:text-white border border-white/20 hover:border-white/50 rounded-full transition-colors"
+              className="px-2.5 py-1 text-[12px] text-white/85 hover:text-white border border-white/30 hover:border-white/60 rounded-full transition-colors"
             >
               로그인
             </Link>

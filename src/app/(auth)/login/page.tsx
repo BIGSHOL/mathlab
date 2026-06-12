@@ -42,8 +42,10 @@ export default function LoginPage() {
     // 루트 layout의 body가 overflow:hidden(앱 셸 규약)이라 자체 스크롤 컨테이너 필요
     // (세로 좁은 화면에서 잘리던 버그 픽스 겸용 — 콘텐츠가 짧으면 기존처럼 중앙 정렬)
     <div className="h-dvh overflow-y-auto bg-brand-cream">
-      <div className="min-h-full flex items-center justify-center p-4 py-10 math-grid-bg brand-grid-fade">
-        <div className="w-full max-w-md">
+      <div className="relative min-h-full flex items-center justify-center p-4 py-10">
+        {/* 그리드 배경은 별도 레이어로 — 콘텐츠 래퍼에 mask를 걸면 카드까지 페이드됨 */}
+        <div className="absolute inset-0 math-grid-bg brand-grid-fade pointer-events-none" aria-hidden />
+        <div className="relative w-full max-w-md">
           <div className="text-center mb-8">
             <Link href="/" className="inline-flex items-center gap-2 mb-6">
               <LogoIcon className="w-8 h-8" />

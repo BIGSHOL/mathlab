@@ -94,7 +94,7 @@ export function LiveAnalysisCard() {
                         ? 'bg-[#22C55E] border-[#22C55E]'
                         : active
                           ? 'border-[#A5B4FC] bg-white/5'
-                          : 'border-white/20 bg-white/5'
+                          : 'border-white/30 bg-white/5'
                     }`}
                   >
                     {done && <Check className="w-3 h-3 text-[#0B1020]" />}
@@ -102,7 +102,7 @@ export function LiveAnalysisCard() {
                   </span>
                   <span
                     className={`text-sm transition-colors ${
-                      done || active ? 'text-white font-semibold' : 'text-white/35 font-medium'
+                      done || active ? 'text-white font-semibold' : 'text-white/55 font-medium'
                     }`}
                   >
                     {s.label}
@@ -117,11 +117,11 @@ export function LiveAnalysisCard() {
         <div className="px-6 py-5 border-t md:border-t-0 border-white/10">
           <div className="font-mono text-[12px] leading-relaxed min-h-[104px]">
             {step < 0 ? (
-              <p className="m-0 text-white/35">대기 중…</p>
+              <p className="m-0 text-white/55">대기 중…</p>
             ) : (
               STEPS.slice(0, step + 1).map((s, i) => (
-                <p key={s.label} className={`m-0 ${i === step ? 'text-[#7DD3FC]' : 'text-white/40'}`}>
-                  <span className="text-white/25">{String(i + 1).padStart(2, '0')} ›</span> {s.log}
+                <p key={s.label} className={`m-0 ${i === step ? 'text-[#7DD3FC]' : 'text-white/60'}`}>
+                  <span className="text-white/45">{String(i + 1).padStart(2, '0')} ›</span> {s.log}
                 </p>
               ))
             )}

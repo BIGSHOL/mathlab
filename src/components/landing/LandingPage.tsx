@@ -114,7 +114,7 @@ export function LandingPage() {
                   <Button size="lg" variant="ghost">기능 보기</Button>
                 </a>
               </div>
-              <p className="mt-5 text-[13px] font-semibold text-brand-ink-faint">
+              <p className="mt-5 text-[13px] font-semibold text-brand-ink-soft">
                 {!user && (
                   <>이미 계정이 있으신가요?{' '}
                   <Link href="/login" className="underline underline-offset-2 hover:text-brand-ink transition-colors">로그인</Link></>
@@ -127,9 +127,9 @@ export function LandingPage() {
           <Reveal delay={0.15} className="relative">
             <V3ReportPreview />
             <FloatingCard className="hidden lg:block -left-9 bottom-14" delay={0.8}>
-              <p className="text-[12.5px] font-semibold text-brand-ink-faint m-0">평균 분석 소요</p>
+              <p className="text-[12.5px] font-semibold text-brand-ink-soft m-0">평균 분석 소요</p>
               <p className="m-0 mt-0.5 text-[21px] font-extrabold tracking-[-0.02em] leading-none text-brand-ink">
-                2~3<span className="text-[13px] text-brand-ink-faint ml-0.5 font-bold">분</span>
+                2~3<span className="text-[13px] text-brand-ink-soft ml-0.5 font-bold">분</span>
               </p>
             </FloatingCard>
             <FloatingCard className="hidden lg:flex items-center gap-2 -right-7 top-9" delay={0}>
@@ -202,7 +202,7 @@ export function LandingPage() {
                 key={s.n}
                 className="relative bg-white border border-brand-line rounded-[20px] p-7 shadow-brand-sm"
               >
-                <span aria-hidden className="absolute top-5 right-6 text-[44px] font-extrabold tracking-[-0.04em] leading-none select-none brand-grad-text opacity-30">
+                <span aria-hidden className="absolute top-5 right-6 text-[44px] font-extrabold tracking-[-0.04em] leading-none select-none brand-grad-text opacity-55">
                   {s.n}
                 </span>
                 <div className="w-12 h-12 rounded-[14px] bg-brand-indigo/8 flex items-center justify-center mb-4">
@@ -248,7 +248,7 @@ export function LandingPage() {
                 {[0, 1, 2].map((d) => (
                   <span key={d} className="w-2.5 h-2.5 rounded-full bg-brand-ink/10" />
                 ))}
-                <span className="ml-2.5 text-[11px] text-brand-ink-faint tracking-[0.06em] font-semibold truncate">
+                <span className="ml-2.5 text-[11px] text-brand-ink-soft tracking-[0.06em] font-semibold truncate">
                   exam-analysis — 실제 분석 화면 (더미데이터)
                 </span>
               </div>
@@ -281,7 +281,7 @@ export function LandingPage() {
                 <h2 className="text-[28px] md:text-[38px] font-extrabold tracking-[-0.03em] leading-[1.3] [word-break:keep-all]">
                   기출 분석, 이제 <span className="brand-grad-text-light">AI에게 맡기세요</span>
                 </h2>
-                <p className="mt-4 text-[15.5px] text-white/65 leading-relaxed">
+                <p className="mt-4 text-[15.5px] text-white/80 leading-relaxed">
                   시험지를 올리면 분석·해설·블로그 콘텐츠가 자동으로 준비됩니다.
                 </p>
                 <div className="mt-8 flex flex-wrap items-center gap-3.5">
@@ -292,13 +292,13 @@ export function LandingPage() {
                   </Link>
                   {!user && (
                     <Link href="/demo">
-                      <Button size="lg" variant="brandOutline" className="border-white/25! text-white! bg-white/[0.07]! hover:border-white! hover:bg-white/15!">
+                      <Button size="lg" variant="brandOutline" className="border-white/45! text-white! bg-white/10! hover:border-white! hover:bg-white/20!">
                         데모 체험하기
                       </Button>
                     </Link>
                   )}
                   <a href="mailto:chrismathone@gmail.com">
-                    <Button size="lg" variant="brandOutline" className="border-white/25! text-white! bg-white/[0.07]! hover:border-white! hover:bg-white/15!">
+                    <Button size="lg" variant="brandOutline" className="border-white/45! text-white! bg-white/10! hover:border-white! hover:bg-white/20!">
                       도입 문의
                     </Button>
                   </a>
@@ -314,7 +314,7 @@ export function LandingPage() {
                     <p className={`leading-none m-0 text-[64px] font-extrabold tracking-[-0.04em] ${it.grad ? 'brand-grad-text-light' : 'text-white'}`}>
                       {it.n}
                     </p>
-                    <p className="mt-3 text-[12.5px] text-white/50 font-semibold m-0">{it.l}</p>
+                    <p className="mt-3 text-[12.5px] text-white/70 font-semibold m-0">{it.l}</p>
                   </div>
                 ))}
               </div>
@@ -329,11 +329,11 @@ export function LandingPage() {
           <div className="flex items-center gap-2">
             <LogoIcon className="w-5 h-5" />
             <span className="font-extrabold text-brand-ink">MathLAB 기출분석</span>
-            <span className="text-brand-ink-faint">— 한국 수학 학원을 위한 AI 기출 분석</span>
+            <span className="text-brand-ink-soft">— 한국 수학 학원을 위한 AI 기출 분석</span>
           </div>
           <div className="flex items-center gap-5 text-[13px]">
             <a href="mailto:chrismathone@gmail.com" className="hover:text-brand-ink transition-colors">문의</a>
-            <span className="text-brand-ink-faint">© {'2026'} Injaewon MathLAB</span>
+            <span className="text-brand-ink-soft">© {'2026'} Injaewon MathLAB</span>
           </div>
         </div>
       </footer>

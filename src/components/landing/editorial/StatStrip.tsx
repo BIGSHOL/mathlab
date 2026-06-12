@@ -31,10 +31,10 @@ function StatCell({ item }: { item: StatItem }) {
       >
         {item.display ?? num}
         {item.suffix && (
-          <span className="text-[16px] font-bold text-white/45 ml-1">{item.suffix}</span>
+          <span className="text-[16px] font-bold text-white/65 ml-1">{item.suffix}</span>
         )}
       </p>
-      <p className="m-0 mt-2 text-[13.5px] font-medium text-white/60">{item.label}</p>
+      <p className="m-0 mt-2 text-[13.5px] font-medium text-white/75">{item.label}</p>
     </div>
   );
 }
