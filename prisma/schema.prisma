@@ -68,6 +68,7 @@ model Tenant {
   entitlements            TenantEntitlement[]
   studentLicenses         StudentLicense[]
   entitlementLedgers      EntitlementLedger[]
+  creditLots              EntitlementCreditLot[]
 
   @@index([slug])
   @@index([isActive])
@@ -439,6 +440,28 @@ model StudentLicense {
   @@unique([tenantId, userId, feature])
   @@index([tenantId])
   @@index([userId])
+}
+
+// FEAT: 이용권 시스템 — 충전 단위 Lot (약관 제6조: 충전일로부터 1년 유효, 경과 시 소멸)
+// userId null = 지점 풀 보유분, 값 = 학생 배정분 (배정 시 풀 lot 에서 분할, 만료일 승계).
+// 사용 가능 잔액 = SUM(remaining) WHERE expiresAt > now — 만료는 sweep 없이 조회 시점 계산으로 처리.
+model EntitlementCreditLot {
+  id         String         @id @default(cuid())
+  tenantId   String
+  userId     String? // null = 지점 풀, 값 = 학생 배정분
+  feature    LicenseFeature
+  granted    Int // 이 lot 에 들어온 양
+  remaining  Int // 남은 양 (만료 임박분 우선 — FIFO by expiresAt 로 차감)
+  grantedAt  DateTime       @default(now()) // 충전일 (만료 기산일)
+  expiresAt  DateTime // grantedAt + 1년
+  refOrderId String?        @db.VarChar(120) // 구매 주문 참조 (멱등은 ledger 가 담당)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, feature, expiresAt])
+  @@index([tenantId, userId, feature, expiresAt])
 }
 
 // FEAT: 이용권 시스템 — 거래 원장 (감사·멱등). refOrderId = para-x 주문당 1행.

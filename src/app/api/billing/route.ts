@@ -42,6 +42,7 @@ export async function GET() {
   const sub = await prisma.tenantSubscription.findUnique({ where: { tenantId } });
   const plan = await getTenantPlan(tenantId); // 만료 강등 반영
   const cfg = getPlanConfig(plan);
+  // 쿼터 대상(블랭크/템플릿) 분석만 집계 — 학생 이용권 차감 분석은 쿼터 면제라 사용량에 포함 안 함
   const used = await getMonthlyAnalysisCount(tenantId);
   const limit = Number.isFinite(cfg.monthlyAnalyses) ? cfg.monthlyAnalyses : null; // Infinity → null(무제한)
 

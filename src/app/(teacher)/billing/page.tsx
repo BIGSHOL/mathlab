@@ -108,13 +108,14 @@ export default function BillingPage() {
             />
           </div>
         )}
-        {usage.resetAt && (
-          <p className="text-[11px] text-slate-400 mt-1.5">갱신: {new Date(usage.resetAt).toLocaleDateString('ko-KR')}</p>
-        )}
+        <p className="text-[11px] text-slate-400 mt-1.5">
+          학생 이용권을 사용하는 분석은 월 한도에 포함되지 않습니다.
+          {usage.resetAt && <> · 갱신: {new Date(usage.resetAt).toLocaleDateString('ko-KR')}</>}
+        </p>
       </div>
 
       {/* 플랜 카드 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {PLAN_CARDS.map((card) => {
           const isCurrent = card.key === plan;
           const isFree = card.key === 'free';

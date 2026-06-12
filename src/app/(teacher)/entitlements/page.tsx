@@ -19,12 +19,17 @@ const featureLabel = (f: string) => FEATURE_LABELS[f] ?? f;
 // 구매 가능한 이용권 상품(para-x 카탈로그와 id 일치). 가격은 결제 화면에서 확정 표시.
 const CREDIT_PRODUCTS = [
   { id: 'credit-exam-10', label: '기출분석 10회' },
-  { id: 'credit-exam-50', label: '기출분석 50회' },
-  { id: 'credit-worksheet-30', label: '학습지 30회' },
+  { id: 'credit-exam-20', label: '기출분석 20회' },
+  { id: 'credit-exam-30', label: '기출분석 30회' },
 ];
 
-type Pool = { feature: string; balance: number; totalPurchased: number };
-type Lic = { feature: string; allocated: number; used: number };
+type Pool = { feature: string; balance: number; totalPurchased: number; nextExpiry?: { qty: number; at: string } | null };
+type Lic = { feature: string; allocated: number; used: number; usable?: number };
+
+const formatExpiry = (iso: string) => {
+  const d = new Date(iso);
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+};
 type Student = { id: string; name: string; username: string; grade: number | null; licenses: Lic[] };
 
 /** 이용권 배정 — 원장(OWNER+)이 지점 풀을 학생에게 배정. para-x 결제로 충전된 풀 사용. */
@@ -60,7 +65,8 @@ export default function EntitlementsPage() {
 
   const pool = pools.find((p) => p.feature === feature);
   const licOf = useCallback((s: Student) => s.licenses.find((l) => l.feature === feature), [feature]);
-  const remainingOf = useCallback((s: Student) => { const l = licOf(s); return l ? l.allocated - l.used : 0; }, [licOf]);
+  // 잔여 = 만료분 제외 사용 가능량 (서버 lot 집계 — 구버전 응답은 allocated-used 폴백)
+  const remainingOf = useCallback((s: Student) => { const l = licOf(s); return l ? (l.usable ?? l.allocated - l.used) : 0; }, [licOf]);
 
   const allocate = async (s: Student) => {
     const raw = window.prompt(`${s.name} 학생에게 배정할 ${featureLabel(feature)} 수량`, '5');
@@ -144,6 +150,10 @@ export default function EntitlementsPage() {
           ))}
         </div>
         <p className="text-[11px] text-slate-400 mt-2">결제하면 지점 풀에 충전됩니다. 가격은 결제 화면에서 확인하세요.</p>
+        <p className="text-[11px] text-slate-500 mt-1">
+          이용권(크레딧)은 <b>충전일로부터 1년간 유효</b>하며, 유효기간이 지나면 자동 소멸됩니다.
+          소멸된 이용권은 환불 대상이 아니며, 현금화·양도·대여할 수 없습니다.
+        </p>
       </div>
 
       {/* 지점 풀 잔액 */}
@@ -159,6 +169,11 @@ export default function EntitlementsPage() {
               <div className="text-xs text-slate-500">{featureLabel(f)} 풀 잔여</div>
               <div className="text-2xl font-bold text-slate-800">{p?.balance ?? 0}</div>
               <div className="text-[11px] text-slate-400">누적 구매 {p?.totalPurchased ?? 0}</div>
+              {p?.nextExpiry && (
+                <div className="text-[11px] text-amber-600 mt-0.5">
+                  {p.nextExpiry.qty}개 · {formatExpiry(p.nextExpiry.at)} 만료 예정
+                </div>
+              )}
             </button>
           );
         })}

@@ -10,16 +10,17 @@ import { toast } from '@/components/ui/Toast';
 import { useAuth } from '@/hooks/useAuth';
 import { AdminTable, type AdminTableColumn, type AdminTableSort } from '@/components/admin-table';
 
-type PlanId = 'free' | 'pro' | 'enterprise';
+type PlanId = 'free' | 'basic' | 'pro' | 'enterprise';
 type Tenant = {
   id: string; slug: string; name: string; logo: string | null;
   isActive: boolean; userCount: number; createdAt: string;
   plan: PlanId; subStatus: string | null; currentPeriodEnd: string | null; managedByLs: boolean;
 };
 
-const PLAN_LABEL: Record<PlanId, string> = { free: '무료', pro: 'Pro', enterprise: 'Enterprise' };
+const PLAN_LABEL: Record<PlanId, string> = { free: '무료', basic: 'Basic', pro: 'Pro', enterprise: 'Enterprise' };
 const PLAN_BADGE: Record<PlanId, string> = {
   free: 'bg-slate-100 text-slate-500',
+  basic: 'bg-emerald-100 text-emerald-700',
   pro: 'bg-indigo-100 text-indigo-700',
   enterprise: 'bg-amber-100 text-amber-700',
 };
@@ -61,7 +62,7 @@ export default function AdminTenantsPage() {
     const s = q.trim().toLowerCase();
     const list = rows.filter((t) => !s || t.name.toLowerCase().includes(s) || t.slug.toLowerCase().includes(s));
     const dir = sort.direction === 'asc' ? 1 : -1;
-    const planRank: Record<PlanId, number> = { free: 0, pro: 1, enterprise: 2 };
+    const planRank: Record<PlanId, number> = { free: 0, basic: 1, pro: 2, enterprise: 3 };
     const val = (t: Tenant): string | number => {
       switch (sort.columnId) {
         case 'name': return t.name;
@@ -149,6 +150,7 @@ export default function AdminTenantsPage() {
             className="text-xs border border-slate-200 rounded-sm pl-1.5 pr-5 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
           >
             <option value="free">무료</option>
+            <option value="basic">Basic</option>
             <option value="pro">Pro</option>
             <option value="enterprise">Enterprise</option>
           </select>

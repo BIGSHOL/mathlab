@@ -68,7 +68,7 @@ export async function PATCH(req: NextRequest) {
   // 구독 플랜 수동 배정 (SUPER_ADMIN) — TenantSubscription upsert.
   // free면 status=inactive, 유료면 active + 만료 없음(currentPeriodEnd=null). LS 결제 구독과 별개의 수동 배정.
   if (body.plan !== undefined) {
-    if (!isPlanId(body.plan)) return badRequest('유효한 플랜이 아닙니다 (free|pro|enterprise)');
+    if (!isPlanId(body.plan)) return badRequest('유효한 플랜이 아닙니다 (free|basic|pro|enterprise)');
     const plan = body.plan as string;
     const isFree = plan === 'free';
     await prisma.tenantSubscription.upsert({

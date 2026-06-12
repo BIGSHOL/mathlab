@@ -352,7 +352,7 @@ export default function ExamAnalysisPage() {
               </span>
               <Link
                 href="/billing"
-                title={`이번 달 분석 사용량 ${quotaLabel(usage)} · 구독 관리`}
+                title={`이번 달 분석 사용량 ${quotaLabel(usage)} (학생 이용권 분석 제외) · 구독 관리`}
                 className={`px-1.5 py-0.5 rounded-full text-[11px] font-bold shrink-0 transition-colors ${quotaExceeded(usage) ? 'bg-rose-100 text-rose-700 hover:bg-rose-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
               >
                 {quotaLabel(usage)}

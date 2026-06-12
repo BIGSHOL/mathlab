@@ -76,3 +76,4 @@ scripts/test-textbook-shapes-output.html
 *.dump
 # 예외: para-x 이용권 마이그레이션 SQL은 소스로 버전관리 (백업 아님)
 !prisma/parax-entitlements.sql
+!prisma/manual-migrations/*.sql
