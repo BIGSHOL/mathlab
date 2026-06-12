@@ -16,7 +16,8 @@ import { InquiryModal } from '@/components/landing/InquiryModal';
 import { Reveal, RevealStagger, RevealItem } from '@/components/landing/editorial/motion';
 import { FloatingCard } from '@/components/landing/editorial/FloatingCard';
 import { StatStrip, type StatItem } from '@/components/landing/editorial/StatStrip';
-import { BODONI, GREEN, AMBER, RED } from '@/components/landing/editorial/tokens';
+import { SectionHeading } from '@/components/landing/editorial/SectionHeading';
+import { ABRIL, BODONI, GREEN, AMBER, RED, INK } from '@/components/landing/editorial/tokens';
 
 /**
  * 기출분석 제품 공개 랜딩페이지 (루트 /).
@@ -150,91 +151,151 @@ export function LandingPage() {
       {/* ── 다크 KPI 스트립 (V3 .v3-kpi-row 모티프) ── */}
       <StatStrip items={STATS} />
 
-      {/* ── 핵심 가치 ── */}
-      <section className="max-w-6xl mx-auto px-6 py-14 md:py-20">
-        <h2 className="text-2xl md:text-3xl font-black text-center">선생님의 시간을 돌려드립니다</h2>
-        <p className="text-center text-text-secondary mt-3">며칠 걸리던 기출 분석을 수 분 안에.</p>
-        <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {/* ── 핵심 가치 — 신문 괘선 그리드 ── */}
+      <section className="max-w-6xl mx-auto px-6 py-16 md:py-24">
+        <SectionHeading
+          kicker="핵심 가치"
+          title="선생님의 시간을 돌려드립니다"
+          lede="며칠 걸리던 기출 분석을 수 분 안에."
+        />
+        <RevealStagger className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-px border border-ed-rule bg-ed-rule">
           {[
             { icon: FileSearch, title: '자동 기출 분석', desc: '시험지 PDF 업로드 한 번. OCR·문항 추출·난이도 판정까지 AI가.' },
             { icon: BarChart3, title: '난이도·단원 인사이트', desc: '단원별 출제 비중, 난이도 분포, 킬러문항 패턴을 차트로.' },
             { icon: FileText, title: '해설·총평 자동 생성', desc: '문항별 풀이 해설과 시험 총평을 즉시. 검토만 하면 끝.' },
             { icon: Share2, title: '블로그 콘텐츠 자동화', desc: '분석 결과를 네이버 블로그용 이미지로 한 번에. 학원 홍보까지.' },
-          ].map((c) => (
-            <div key={c.title} className="p-6 rounded-[6px] border border-slate-200 bg-white hover:shadow-lg hover:-translate-y-0.5 transition-all">
-              <div className="w-11 h-11 rounded-[6px] bg-indigo-50 flex items-center justify-center mb-4">
-                <c.icon className="w-5 h-5 text-primary" />
-              </div>
-              <h3 className="font-bold mb-1.5">{c.title}</h3>
-              <p className="text-sm text-text-secondary leading-relaxed">{c.desc}</p>
-            </div>
+          ].map((c, i) => (
+            <RevealItem key={c.title} className="relative bg-ed-paper p-7">
+              <span
+                aria-hidden
+                className="absolute top-4 right-5 leading-none select-none"
+                style={{ fontFamily: ABRIL, fontSize: 64, fontWeight: 900, color: RED, opacity: 0.18 }}
+              >
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <c.icon className="w-5 h-5 text-ed-red mb-5" />
+              <h3 className="ed-serif font-bold text-[19px] mb-2">{c.title}</h3>
+              <p className="text-sm text-[#555] leading-relaxed">{c.desc}</p>
+            </RevealItem>
           ))}
-        </div>
+        </RevealStagger>
       </section>
 
-      {/* ── 작동 방식 ── */}
-      <section id="how" className="bg-slate-50/60 border-y border-slate-100">
-        <div className="max-w-6xl mx-auto px-6 py-14 md:py-20">
-          <h2 className="text-2xl md:text-3xl font-black text-center">3단계면 충분합니다</h2>
-          <div className="mt-12 grid md:grid-cols-3 gap-6">
+      {/* ── 작동 방식 — 상단 잉크 괘선 카드 ── */}
+      <section id="how" className="bg-ed-paper-2 border-y border-ed-rule">
+        <div className="max-w-6xl mx-auto px-6 py-16 md:py-24">
+          <SectionHeading kicker="작동 방식" title="3단계면 충분합니다" />
+          <RevealStagger className="mt-12 grid md:grid-cols-3 gap-5">
             {[
               { n: '01', icon: Upload, title: '업로드', desc: '시험지 PDF를 끌어다 놓습니다.' },
               { n: '02', icon: Sparkles, title: 'AI 분석', desc: '수 분 내 난이도·단원·해설·총평을 자동 생성합니다.' },
-              { n: '03', icon: Share2, title: '리포트 & 공유', desc: '차트 리포트 확인 후 인쇄·PDF·네이버 블로그 이미지로 공유.' },
+              { n: '03', icon: Share2, title: '리포트 & 공유', desc: '차트 리포트 확인 후 네이버 블로그 이미지로 공유.' },
             ].map((s) => (
-              <div key={s.n} className="relative p-7 rounded-[6px] bg-white border border-slate-200">
-                <span className="absolute top-5 right-6 text-3xl font-black text-slate-100">{s.n}</span>
-                <div className="w-12 h-12 rounded-[6px] bg-primary/10 flex items-center justify-center mb-4">
-                  <s.icon className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="font-bold text-lg mb-1.5">{s.title}</h3>
-                <p className="text-sm text-text-secondary leading-relaxed">{s.desc}</p>
-              </div>
+              <RevealItem key={s.n} className="relative bg-white border border-ed-rule border-t-[3px] border-t-ed-ink p-7 shadow-ed-paper">
+                <span
+                  aria-hidden
+                  className="absolute top-4 right-6 leading-none select-none"
+                  style={{ fontFamily: ABRIL, fontSize: 56, fontWeight: 900, color: INK, opacity: 0.12 }}
+                >
+                  {s.n}
+                </span>
+                <s.icon className="w-6 h-6 text-ed-red mb-4" />
+                <h3 className="ed-serif font-bold text-lg mb-1.5">{s.title}</h3>
+                <p className="text-sm text-[#555] leading-relaxed">{s.desc}</p>
+              </RevealItem>
             ))}
-          </div>
+          </RevealStagger>
         </div>
       </section>
 
       {/* ── 기능 상세 ── */}
-      <section id="features" className="max-w-6xl mx-auto px-6 py-14 md:py-20">
-        <h2 className="text-2xl md:text-3xl font-black text-center">기출 분석에 필요한 모든 것</h2>
-        <p className="text-center text-text-secondary mt-3">실제 분석 결과 화면을 그대로 — 아래는 더미데이터 예시입니다.</p>
-        <FeatureShowcase />
+      <section id="features" className="max-w-6xl mx-auto px-6 py-16 md:py-24">
+        <SectionHeading
+          kicker="기능"
+          title="기출 분석에 필요한 모든 것"
+          lede="실제 분석 결과 화면을 그대로 — 아래는 더미데이터 예시입니다."
+        />
+        <Reveal>
+          <FeatureShowcase />
+        </Reveal>
       </section>
 
-      {/* ── 실제 분석 대시보드 ── */}
-      <section className="bg-slate-50/60 border-y border-slate-100">
-        <div className="max-w-6xl mx-auto px-6 py-14 md:py-20">
-          <h2 className="text-2xl md:text-3xl font-black text-center">교사용 분석 대시보드, 그대로</h2>
-          <p className="text-center text-text-secondary mt-3">난이도 도넛·유형 레이더·변별력·시간 배분까지 — 실제 화면 예시입니다 (더미데이터).</p>
-          <DashboardShowcase />
+      {/* ── 실제 분석 대시보드 — "잡지에 실린 제품 스크린샷" 프레임 ── */}
+      <section className="bg-ed-paper-2 border-y border-ed-rule">
+        <div className="max-w-6xl mx-auto px-6 py-16 md:py-24">
+          <SectionHeading
+            kicker="대시보드"
+            title="교사용 분석 대시보드, 그대로"
+            lede="난이도 도넛·유형 레이더·변별력·시간 배분까지 — 실제 화면 예시입니다 (더미데이터)."
+          />
+          <Reveal className="mt-12">
+            <div className="border border-ed-ink/80 rounded-[6px] overflow-hidden bg-white shadow-ed-float">
+              {/* 브라우저 크롬 캡션 — 앱 화면은 리스킨하지 않고 액자로 의도화 */}
+              <div className="flex items-center gap-1.5 px-4 h-9 border-b border-ed-rule bg-ed-paper">
+                {[0, 1, 2].map((d) => (
+                  <span key={d} className="w-2.5 h-2.5 rounded-full bg-[#d9d4c8]" />
+                ))}
+                <span className="ml-2.5 text-[11px] text-ed-gray tracking-[0.08em] font-semibold truncate">
+                  exam-analysis — 실제 분석 화면 (더미데이터)
+                </span>
+              </div>
+              <div className="px-5 pb-5 bg-slate-50/60">
+                <DashboardShowcase />
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 
-      {/* ── 마무리 CTA ── */}
-      <section className="max-w-6xl mx-auto px-6 pb-20">
-        <div className="rounded-[8px] px-6 sm:px-8 py-12 sm:py-14 text-center text-white"
-          style={{ background: 'linear-gradient(135deg, var(--primary) 0%, #4338CA 100%)' }}>
-          <h2 className="text-2xl md:text-3xl font-black">기출 분석, 이제 AI에게 맡기세요</h2>
-          <p className="mt-3 text-white/85">시험지를 올리면 분석·해설·블로그 콘텐츠가 자동으로 준비됩니다.</p>
-          <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-            <Link href={cta.href}>
-              <button className="inline-flex items-center gap-1.5 h-[52px] px-7 rounded-sm bg-white text-primary font-bold hover:bg-slate-50 transition-colors">
-                {cta.label} <ArrowRight className="w-4 h-4" />
-              </button>
-            </Link>
-            {!user && (
-              <Link href="/demo"
-                className="inline-flex items-center h-[52px] px-7 rounded-sm border border-white/40 text-white font-bold hover:bg-white/10 transition-colors">
-                데모 체험하기
-              </Link>
-            )}
-            <a href="mailto:chrismathone@gmail.com"
-              className="inline-flex items-center h-[52px] px-7 rounded-sm border border-white/40 text-white font-bold hover:bg-white/10 transition-colors">
-              도입 문의
-            </a>
+      {/* ── 마무리 CTA — 풀블리드 잉크 밴드 (V3 .v3-feature 모티프) ── */}
+      <section className="max-w-6xl mx-auto px-6 pb-20 pt-2">
+        <Reveal>
+          <div className="px-7 sm:px-12 py-12 sm:py-16 text-white" style={{ background: INK }}>
+            <div className="grid lg:grid-cols-[1fr_auto] gap-10 items-center">
+              <div>
+                <h2 className="ed-serif text-[26px] md:text-[34px] font-bold leading-snug text-white">
+                  기출 분석, 이제 <em className="ed-serif italic" style={{ color: AMBER }}>AI에게 맡기세요</em>
+                </h2>
+                <p className="mt-4 text-[15px] text-[#ccc] leading-relaxed">
+                  시험지를 올리면 분석·해설·블로그 콘텐츠가 자동으로 준비됩니다.
+                </p>
+                <div className="mt-8 flex flex-wrap items-center gap-3">
+                  <Link href={cta.href}>
+                    <Button size="lg" variant="editorial" className="bg-white! text-[#121212]! hover:bg-[#BF1722]! hover:text-white!">
+                      {cta.label} <ArrowRight className="w-4 h-4 ml-1.5" />
+                    </Button>
+                  </Link>
+                  {!user && (
+                    <Link href="/demo">
+                      <Button size="lg" variant="editorialOutline" className="border-white/40! text-white! hover:border-white! hover:bg-white/10!">
+                        데모 체험하기
+                      </Button>
+                    </Link>
+                  )}
+                  <a href="mailto:chrismathone@gmail.com">
+                    <Button size="lg" variant="editorialOutline" className="border-white/40! text-white! hover:border-white! hover:bg-white/10!">
+                      도입 문의
+                    </Button>
+                  </a>
+                </div>
+              </div>
+              {/* 우측 거대 숫자 2컬럼 (V3 KPI 색 분리) */}
+              <div className="hidden lg:flex items-stretch">
+                {[
+                  { n: '3', l: '단계로 끝', c: '#fff' },
+                  { n: '2~3', l: '분이면 분석 완료', c: AMBER },
+                ].map((it, i) => (
+                  <div key={it.l} className={`text-center px-10 ${i > 0 ? 'border-l border-[#333]' : ''}`}>
+                    <p className="leading-none m-0" style={{ fontFamily: ABRIL, fontSize: 76, fontWeight: 900, color: it.c }}>
+                      {it.n}
+                    </p>
+                    <p className="mt-3 text-[11px] tracking-[0.14em] text-[#888] font-bold m-0">{it.l}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* ── 푸터 (콜로폰) ── */}

@@ -93,12 +93,13 @@ export function InquiryModal({ onClose }: Props) {
       {/* 백드롭 */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
-      {/* 모달 */}
-      <div className="relative w-full max-w-lg bg-white rounded-[8px] shadow-2xl overflow-hidden">
+      {/* 모달 — 에디토리얼 톤 (상단 잉크 괘선 + 세리프 타이틀) */}
+      <div className="relative w-full max-w-lg bg-white rounded-[4px] shadow-ed-float overflow-hidden border-t-[3px] border-t-[#121212]">
         {/* 헤더 */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E6E2D8]">
           <div>
-            <h2 className="text-lg font-black">도입 문의</h2>
+            <p className="text-[10px] font-extrabold tracking-[0.16em] uppercase text-[#BF1722] mb-1">MathLAB 기출분석</p>
+            <h2 className="ed-serif text-lg font-bold">도입 문의</h2>
             <p className="text-xs text-slate-500 mt-0.5">남겨주시면 1영업일 내 연락드립니다</p>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-sm hover:bg-slate-100 transition-colors">
@@ -109,13 +110,13 @@ export function InquiryModal({ onClose }: Props) {
         {status === 'done' ? (
           /* 완료 화면 */
           <div className="px-6 py-12 text-center">
-            <CheckCircle2 className="w-14 h-14 text-green-500 mx-auto mb-4" />
-            <h3 className="text-lg font-black mb-1.5">문의가 접수되었습니다</h3>
+            <CheckCircle2 className="w-14 h-14 mx-auto mb-4" style={{ color: '#2F7B3A' }} />
+            <h3 className="ed-serif text-lg font-bold mb-1.5">문의가 접수되었습니다</h3>
             <p className="text-sm text-slate-500 leading-relaxed">
               담당자가 확인 후 <strong>{form.phone}</strong>으로 연락드리겠습니다.<br />
               평일 기준 1영업일 내 연락드립니다.
             </p>
-            <Button className="mt-7" onClick={onClose}>닫기</Button>
+            <Button className="mt-7" variant="editorial" onClick={onClose}>닫기</Button>
           </div>
         ) : (
           /* 폼 */
@@ -195,7 +196,7 @@ export function InquiryModal({ onClose }: Props) {
 
             <div className="flex items-center justify-end gap-2 pt-1">
               <Button type="button" variant="ghost" onClick={onClose}>취소</Button>
-              <Button type="submit" disabled={status === 'loading'}>
+              <Button type="submit" variant="editorial" disabled={status === 'loading'}>
                 {status === 'loading'
                   ? <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" />전송 중</>
                   : '문의 남기기'}

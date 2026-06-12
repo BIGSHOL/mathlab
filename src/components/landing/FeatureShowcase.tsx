@@ -17,13 +17,13 @@ function Card({
   icon: typeof BarChart3; title: string; caption: string; children: ReactNode;
 }) {
   return (
-    <div className="rounded-[6px] border border-slate-200 bg-white p-5 flex flex-col">
+    <div className="rounded-[4px] border border-[#E6E2D8] bg-white p-5 flex flex-col shadow-ed-paper">
       <div className="flex items-center gap-2 mb-3.5">
-        <Icon className="w-4 h-4 text-primary shrink-0" />
+        <Icon className="w-4 h-4 shrink-0" style={{ color: RED }} />
         <h3 className="font-bold text-[15px]">{title}</h3>
       </div>
       <div className="flex-1">{children}</div>
-      <p className="mt-3.5 text-xs text-text-secondary leading-relaxed">{caption}</p>
+      <p className="mt-3.5 text-xs text-[#777] leading-relaxed">{caption}</p>
     </div>
   );
 }
