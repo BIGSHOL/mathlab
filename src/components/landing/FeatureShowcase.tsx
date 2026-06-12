@@ -97,18 +97,17 @@ export function FeatureShowcase() {
         </div>
       </Card>
 
-      {/* 3. 문항 해설 & 총평 (실제 KaTeX) */}
-      <Card icon={FileText} title="문항 해설 & 총평" caption="KaTeX 수식이 포함된 문항별 해설과 시험 총평을 생성합니다.">
+      {/* 3. 문항별 AI 코멘트 & 총평 (실제 KaTeX) */}
+      <Card icon={FileText} title="문항별 AI 코멘트 & 총평" caption="문항마다 출제 포인트 코멘트를 달고, 시험 전체 AI 총평을 생성합니다.">
         <div style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: INK, marginBottom: 8 }}>
-          13번 · 이차방정식 <span style={{ color: GRAY, fontWeight: 400 }}>· 응용</span>
+          13번 · 이차방정식 <span style={{ color: GRAY, fontWeight: 400 }}>· 응용 · 문제해결력</span>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 16, color: '#2A2A2A' }}>
-          <span dangerouslySetInnerHTML={{ __html: tex('x^2 - 5x + 6 = 0') }} />
-          <span dangerouslySetInnerHTML={{ __html: tex('(x-2)(x-3) = 0') }} />
-          <span dangerouslySetInnerHTML={{ __html: tex('x = 2,\\ 3') }} />
-        </div>
+        <p style={{ margin: 0, fontFamily: SANS, fontSize: 13, lineHeight: 1.65, color: '#2A2A2A', wordBreak: 'keep-all' }}>
+          <span dangerouslySetInnerHTML={{ __html: tex('x^2-5x+6=0') }} /> 꼴의 인수분해를 실생활 맥락에 적용.
+          조건을 식으로 옮기는 과정에서 변별이 발생합니다.
+        </p>
         <div style={{ marginTop: 10, display: 'inline-block', background: '#fbf2f2', color: RED, border: `1px solid ${RED}40`, borderRadius: 4, padding: '2px 9px', fontFamily: SANS, fontSize: 11, fontWeight: 700 }}>
-          정답 ②
+          난이도 4 · 심화
         </div>
       </Card>
 
@@ -140,21 +139,21 @@ export function FeatureShowcase() {
         </div>
       </Card>
 
-      {/* 6. 문제은행 추출 */}
-      <Card icon={Database} title="문제은행 추출" caption="분석한 문항을 문제은행으로 추출해 재활용합니다(선택).">
+      {/* 6. 학습 전략 (StudyStrategyTab 실재 섹션 기반) */}
+      <Card icon={Database} title="학습 전략 리포트" caption="분석 결과를 바탕으로 시험 대비 전략을 섹션별로 제시합니다.">
         {([
-          ['13', '이차방정식', '응용', '#DA8B2C'],
-          ['7', '소인수분해', '표준', '#6F9C76'],
-          ['16', '최대공약수', '심화', RED],
-          ['4', '문자의 사용', '표준', '#6F9C76'],
-        ] as const).map(([no, topic, level, c]) => (
+          ['01', '킬러·심화 문항 대비', '4문항'],
+          ['02', '시험 시간 배분 전략', '45분'],
+          ['03', '등급대별 학습 플랜', '3구간'],
+          ['04', '서술형 대비 포인트', '21점'],
+        ] as const).map(([no, label, meta]) => (
           <div key={no} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 0', borderBottom: '1px solid #f0f0f0' }}>
-            <span style={{ fontFamily: BODONI, fontSize: 14, fontWeight: 700, color: INK, width: 22 }}>{no}</span>
-            <span style={{ fontFamily: SANS, fontSize: 12, color: '#2A2A2A', flex: 1 }}>{topic}</span>
-            <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: c, border: `1px solid ${c}55`, borderRadius: 4, padding: '1px 7px' }}>{level}</span>
+            <span style={{ fontFamily: BODONI, fontSize: 14, fontWeight: 700, color: RED, width: 22 }}>{no}</span>
+            <span style={{ fontFamily: SANS, fontSize: 12, color: '#2A2A2A', flex: 1 }}>{label}</span>
+            <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: GRAY, border: '1px solid #ddd', borderRadius: 4, padding: '1px 7px' }}>{meta}</span>
           </div>
         ))}
-        <p style={{ margin: '9px 0 0', fontFamily: SANS, fontSize: 10.5, color: GRAY }}>+ 19문항 전체 추출 가능</p>
+        <p style={{ margin: '9px 0 0', fontFamily: SANS, fontSize: 10.5, color: GRAY }}>단원·취약 유형 분석과 함께 제공</p>
       </Card>
     </div>
   );

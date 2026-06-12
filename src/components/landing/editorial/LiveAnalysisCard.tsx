@@ -15,7 +15,7 @@ import { CONSOLE_BG } from './brand';
 const STEPS = [
   { label: '파일 로드', log: 'exam_2025_mid.pdf · 19문항 감지' },
   { label: '분류 규칙 준비', log: '교육과정 단원 매핑 로드' },
-  { label: 'AI 분석', log: '문항별 난이도·단원·해설 생성 중…' },
+  { label: 'AI 분석', log: '문항별 난이도·단원·코멘트 생성 중…' },
   { label: '검증·저장', log: '배점 합계 100점 확인 · 리포트 생성' },
 ] as const;
 const STEP_MS = [1100, 1100, 3600, 1500]; // 합 ~7.3s + 재시작 대기

@@ -90,7 +90,7 @@ export function LandingPage() {
             </RevealItem>
             <RevealItem>
               <p className="mt-6 text-[18px] text-brand-ink-soft leading-[1.75] max-w-[500px]">
-                PDF만 올리면 AI가 <b className="text-brand-ink font-bold">난이도·단원·문항 해설·총평</b>을 만들고,
+                PDF만 올리면 AI가 <b className="text-brand-ink font-bold">난이도·단원·문항 코멘트·총평</b>을 만들고,
                 네이버 블로그용 자료까지 생성합니다.
               </p>
             </RevealItem>
@@ -171,7 +171,7 @@ export function LandingPage() {
           {[
             { icon: FileSearch, title: '자동 기출 분석', desc: '시험지 PDF 업로드 한 번. OCR·문항 추출·난이도 판정까지 AI가.' },
             { icon: BarChart3, title: '난이도·단원 인사이트', desc: '단원별 출제 비중, 난이도 분포, 킬러문항 패턴을 차트로.' },
-            { icon: FileText, title: '해설·총평 자동 생성', desc: '문항별 풀이 해설과 시험 총평을 즉시. 검토만 하면 끝.' },
+            { icon: FileText, title: '코멘트·총평 자동 생성', desc: '문항별 AI 코멘트와 시험 총평을 즉시. 검토만 하면 끝.' },
             { icon: Share2, title: '블로그 콘텐츠 자동화', desc: '분석 결과를 네이버 블로그용 이미지로 한 번에. 학원 홍보까지.' },
           ].map((c) => (
             <RevealItem
@@ -195,7 +195,7 @@ export function LandingPage() {
           <RevealStagger className="mt-13 grid md:grid-cols-3 gap-5">
             {[
               { n: '01', icon: Upload, title: '업로드', desc: '시험지 PDF를 끌어다 놓습니다.' },
-              { n: '02', icon: Sparkles, title: 'AI 분석', desc: '수 분 내 난이도·단원·해설·총평을 자동 생성합니다.' },
+              { n: '02', icon: Sparkles, title: 'AI 분석', desc: '수 분 내 난이도·단원·코멘트·총평을 자동 생성합니다.' },
               { n: '03', icon: Share2, title: '리포트 & 공유', desc: '차트 리포트 확인 후 네이버 블로그 이미지로 공유.' },
             ].map((s) => (
               <RevealItem
@@ -282,7 +282,7 @@ export function LandingPage() {
                   기출 분석, 이제 <span className="brand-grad-text-light">AI에게 맡기세요</span>
                 </h2>
                 <p className="mt-4 text-[15.5px] text-white/80 leading-relaxed">
-                  시험지를 올리면 분석·해설·블로그 콘텐츠가 자동으로 준비됩니다.
+                  시험지를 올리면 분석·총평·블로그 콘텐츠가 자동으로 준비됩니다.
                 </p>
                 <div className="mt-8 flex flex-wrap items-center gap-3.5">
                   <Link href={cta.href}>

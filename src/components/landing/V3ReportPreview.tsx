@@ -118,7 +118,7 @@ export function V3ReportPreview() {
           {/* 리포트 계속됨 힌트 */}
           <div style={{ marginTop: 16, paddingTop: 13, borderTop: '1px solid #eee', display: 'flex', alignItems: 'center', gap: 7 }}>
             <span style={{ fontFamily: SANS, fontSize: 11, color: GRAY }}>이어서</span>
-            {['단원 분석', '문항 해설', '총평', '블로그 이미지'].map((t) => (
+            {['단원 분석', '문항 코멘트', '총평', '블로그 이미지'].map((t) => (
               <span key={t} style={{ fontFamily: SANS, fontSize: 10.5, color: INK, fontWeight: 600, background: '#f1efe9', borderRadius: 4, padding: '2px 8px' }}>
                 {t}
               </span>
