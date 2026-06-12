@@ -137,7 +137,7 @@ export default function EntitlementsPage() {
             <a
               key={p.id}
               href={`/api/parax/checkout?product=${p.id}`}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-sm border border-violet-200 bg-violet-50 text-violet-700 text-sm font-semibold hover:bg-violet-100 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-sm border border-indigo-200 bg-indigo-50 text-indigo-700 text-sm font-semibold hover:bg-indigo-100 transition-colors"
             >
               <ShoppingCart className="w-3.5 h-3.5" /> {p.label}
             </a>
@@ -154,7 +154,7 @@ export default function EntitlementsPage() {
             <button
               key={f}
               onClick={() => setFeature(f)}
-              className={`text-left p-4 border rounded-sm transition-colors ${f === feature ? 'border-violet-300 bg-violet-50' : 'border-slate-200 bg-white hover:bg-slate-50'}`}
+              className={`text-left p-4 border rounded-sm transition-colors ${f === feature ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 bg-white hover:bg-slate-50'}`}
             >
               <div className="text-xs text-slate-500">{featureLabel(f)} 풀 잔여</div>
               <div className="text-2xl font-bold text-slate-800">{p?.balance ?? 0}</div>
