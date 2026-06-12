@@ -555,7 +555,7 @@ function NearbyPanel({ data, loading, centerExamLabels = [], onRefresh }: { data
             {excludedIds.size > 0 ? ` · ${excludedIds.size}개 제외` : ''})
           </span>
           {isGrouped && (
-            <span className="text-[10px] text-violet-600 bg-violet-50 border border-violet-200 rounded-sm px-1.5 py-0.5">
+            <span className="text-[10px] text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-sm px-1.5 py-0.5">
               그룹 설정됨
             </span>
           )}
@@ -565,7 +565,7 @@ function NearbyPanel({ data, loading, centerExamLabels = [], onRefresh }: { data
             <button
               onClick={handleSaveGroup}
               disabled={saving}
-              className="flex items-center gap-1 text-[10px] text-violet-600 bg-violet-50 border border-violet-200 rounded-sm px-2 py-0.5 hover:bg-violet-100 transition-colors disabled:opacity-50"
+              className="flex items-center gap-1 text-[10px] text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-sm px-2 py-0.5 hover:bg-indigo-100 transition-colors disabled:opacity-50"
             >
               <Save className="w-3 h-3" />
               {saving ? '저장 중...' : '그룹 저장'}
@@ -632,23 +632,23 @@ function NearbyPanel({ data, loading, centerExamLabels = [], onRefresh }: { data
               value={addSearch}
               onChange={(e) => handleAddSearch(e.target.value)}
               placeholder="학교 검색하여 그룹에 추가..."
-              className="w-full pl-7 pr-3 py-1 text-xs border border-violet-200 rounded-sm focus:ring-1 focus:ring-violet-300 outline-none bg-white"
+              className="w-full pl-7 pr-3 py-1 text-xs border border-indigo-200 rounded-sm focus:ring-1 focus:ring-indigo-300 outline-none bg-white"
             />
           </div>
           {addLoading && <p className="text-[10px] text-slate-400 mt-1">검색 중...</p>}
           {addResults.length > 0 && (
-            <div className="mt-1 border border-violet-200 rounded-sm bg-white overflow-hidden">
+            <div className="mt-1 border border-indigo-200 rounded-sm bg-white overflow-hidden">
               {addResults.map((s) => (
                 <button
                   key={s.id}
                   onClick={() => handleAddToGroup(s.id)}
-                  className="w-full flex items-center justify-between px-3 py-1.5 text-xs hover:bg-violet-50 transition-colors border-b border-violet-100 last:border-0"
+                  className="w-full flex items-center justify-between px-3 py-1.5 text-xs hover:bg-indigo-50 transition-colors border-b border-indigo-100 last:border-0"
                 >
                   <div className="text-left">
                     <span className="font-medium text-slate-700">{s.name}</span>
                     {s.district && <span className="text-slate-400 ml-1.5">{s.district}</span>}
                   </div>
-                  <span className="text-violet-500 text-[10px] shrink-0">+ 추가</span>
+                  <span className="text-indigo-500 text-[10px] shrink-0">+ 추가</span>
                 </button>
               ))}
             </div>

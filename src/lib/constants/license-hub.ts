@@ -59,8 +59,8 @@ export const LICENSE_FEATURE_INFO: Record<LicenseFeature, LicenseFeatureInfo> = 
       { label: '수기채점', href: '/manual-grading' },
     ],
     icon: ClipboardCheck,
-    color: 'bg-violet-500',
-    textColor: 'text-violet-500',
+    color: 'bg-primary',
+    textColor: 'text-primary',
   },
   REVENGE: {
     label: '복수전',

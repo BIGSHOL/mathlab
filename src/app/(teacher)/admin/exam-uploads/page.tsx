@@ -204,7 +204,7 @@ export default function ExamUploadsPage() {
     </th>
   );
 
-  const selectCls = 'text-sm border border-slate-200 rounded-sm px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500';
+  const selectCls = 'text-sm border border-slate-200 rounded-sm px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary';
 
   // UI 가드 — API는 requireSuperAdmin으로 보호되지만 형제 admin 페이지와 동일한 안내 제공
   if (user && user.role !== 'SUPER_ADMIN') {
@@ -261,7 +261,7 @@ export default function ExamUploadsPage() {
             placeholder="제목, 학교명, 선생님 검색"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
         <select value={tenantFilter} onChange={(e) => setTenantFilter(e.target.value)} className={selectCls}>
