@@ -303,7 +303,7 @@ export function EssayPreparationSection({
                           </div>
                           <div className="pl-0.5 space-y-1.5">
                             <div className="flex items-start gap-2">
-                              <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-medium bg-blue-100 text-blue-700 shrink-0">
+                              <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-medium bg-indigo-100 text-indigo-700 shrink-0">
                                 템플릿
                               </span>
                               <span className="text-xs text-slate-700">{item.template}</span>
