@@ -130,7 +130,7 @@ function getDetailedStatus(
   const exts = item.analyses[0]?.extensions || [];
   const agentTypes = exts.map(e => e.agentType);
   if (agentTypes.includes('blog-article')) return { label: '글작성 완료', color: 'bg-violet-50 text-violet-600 border-violet-200' };
-  if (agentTypes.includes('commentary')) return { label: '총평완료', color: 'bg-blue-50 text-blue-600 border-blue-200' };
+  if (agentTypes.includes('commentary')) return { label: '총평완료', color: 'bg-indigo-50 text-indigo-600 border-indigo-200' };
   return { label: '분석완료', color: 'bg-emerald-50 text-emerald-600 border-emerald-200' };
 }
 
@@ -217,7 +217,7 @@ export function ExamPaperList({
               key={item.id}
               onClick={() => onSelect(item.id)}
               className={`px-3 py-2.5 border-b cursor-pointer hover:bg-slate-50 transition-colors ${
-                isSelected ? 'bg-blue-50 border-l-2 border-l-primary' : ''
+                isSelected ? 'bg-indigo-50 border-l-2 border-l-primary' : ''
               }`}
             >
               <div className="flex items-start justify-between gap-2">
@@ -482,7 +482,7 @@ function SchoolMatchBadge({ item, onUpdate }: {
               <button
                 key={s.id}
                 onClick={() => handleSelect(s)}
-                className="w-full text-left px-3 py-1.5 text-xs hover:bg-blue-50 transition-colors border-b border-slate-50 last:border-0"
+                className="w-full text-left px-3 py-1.5 text-xs hover:bg-indigo-50 transition-colors border-b border-slate-50 last:border-0"
               >
                 <span className="font-medium text-slate-700">{s.name}</span>
                 <span className="text-slate-400 ml-1">

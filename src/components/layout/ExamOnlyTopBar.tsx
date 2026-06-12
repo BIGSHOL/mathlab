@@ -41,7 +41,7 @@ export function ProfileMenu({ variant = 'floating' }: { variant?: 'floating' | '
   // ── 사이드바 좌상단 인라인 프로필 ──
   if (variant === 'inline') {
     return (
-      <div className="px-3 py-2.5 border-b border-slate-200 bg-slate-50/60">
+      <div className="px-3 py-2.5 border-b border-slate-200 bg-brand-cream-2/60">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
             <User className="w-4 h-4 text-primary" />

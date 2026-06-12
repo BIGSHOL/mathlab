@@ -380,7 +380,7 @@ export default function ExamAnalysisPage() {
                 </Button>
               </Link>
             )}
-            <Button size="sm" className="flex-1" onClick={() => setShowUpload(true)}>
+            <Button size="sm" className="flex-1 bg-[linear-gradient(100deg,#4F46E5,#7C3AED)]" onClick={() => setShowUpload(true)}>
               <Plus className="w-4 h-4 mr-1" />
               업로드
             </Button>
@@ -483,7 +483,7 @@ export default function ExamAnalysisPage() {
       )}
 
       {/* 우측 메인 */}
-      <main className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
+      <main className="flex-1 overflow-y-auto p-6 bg-brand-cream-2/50">
         {showUpload ? (
           <div className="max-w-xl mx-auto">
             <div className="flex items-center justify-between mb-4">
