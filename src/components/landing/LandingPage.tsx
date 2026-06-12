@@ -28,7 +28,7 @@ import { GRAD_DARK_CARD } from '@/components/landing/editorial/brand';
 
 // 다크 스탯 카드 — 검증 가능한 제품 사실만 (CLAUDE.md 12-5)
 const STATS: StatItem[] = [
-  { label: '전국 학교 데이터베이스', value: 6004, suffix: '교', highlight: true },
+  { label: '전국 학교 데이터베이스', value: 6004, suffix: '개교', highlight: true },
   { label: '난이도 판정 체계', value: 5, suffix: '단계' },
   { label: '능력 영역 분석', value: 4, suffix: '대 영역' },
   { label: '평균 분석 소요', value: 0, display: '2~3', suffix: '분', highlight: true },
