@@ -836,7 +836,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                       type="checkbox"
                       checked={autoCommentary}
                       onChange={(e) => onToggleAutoCommentary(e.target.checked)}
-                      className="accent-violet-600"
+                      className="accent-primary"
                     />
                     분석 시 총평 자동 생성
                   </label>
@@ -902,10 +902,10 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
         <>
           {/* AI 총평 섹션 */}
           {!commentary ? (
-            <div className="bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-200 rounded-sm px-4 py-2.5 mb-5">
+            <div className="bg-gradient-to-br from-indigo-50 to-violet-50/60 border border-indigo-200 rounded-sm px-4 py-2.5 mb-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 bg-violet-600 rounded-sm flex items-center justify-center shrink-0">
+                  <div className="w-7 h-7 bg-[linear-gradient(100deg,#4F46E5,#7C3AED)] rounded-sm flex items-center justify-center shrink-0">
                     <Sparkles className="w-3.5 h-3.5 text-white" />
                   </div>
                   <div>
@@ -918,7 +918,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                   {!commentaryLoading && !isStaleAnalysis && !commentaryLocked && (
                     <Button
                       size="sm"
-                      className="bg-violet-600 hover:bg-violet-700 text-white disabled:bg-slate-300 disabled:cursor-not-allowed"
+                      className="bg-primary hover:bg-primary-hover text-white disabled:bg-slate-300 disabled:cursor-not-allowed"
                       onClick={handleGenerateCommentary}
                       disabled={!commentaryReady}
                       title={
@@ -940,9 +940,9 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                           checked={includeNearby && (nearbyCount ?? 0) > 0}
                           onChange={e => setIncludeNearby(e.target.checked)}
                           disabled={nearbyCount === 0}
-                          className="w-3 h-3 rounded-sm border-slate-300 text-violet-600 focus:ring-violet-500 disabled:opacity-40"
+                          className="w-3 h-3 rounded-sm border-slate-300 text-primary focus:ring-primary disabled:opacity-40"
                         />
-                        주변 {nearbyCount != null && <span className={nearbyCount > 0 ? 'text-violet-500 font-medium' : ''}>({nearbyCount}교)</span>}
+                        주변 {nearbyCount != null && <span className={nearbyCount > 0 ? 'text-primary font-medium' : ''}>({nearbyCount}교)</span>}
                       </label>
                       <label title={yearTitle} className={`flex items-center gap-1 text-[11px] cursor-pointer ${yearCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
                         <input
@@ -950,9 +950,9 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                           checked={includeYearCompare && (yearCount ?? 0) > 0}
                           onChange={e => setIncludeYearCompare(e.target.checked)}
                           disabled={yearCount === 0}
-                          className="w-3 h-3 rounded-sm border-slate-300 text-violet-600 focus:ring-violet-500 disabled:opacity-40"
+                          className="w-3 h-3 rounded-sm border-slate-300 text-primary focus:ring-primary disabled:opacity-40"
                         />
-                        연도 {yearCount != null && <span className={yearCount > 0 ? 'text-violet-500 font-medium' : ''}>({yearCount}건)</span>}
+                        연도 {yearCount != null && <span className={yearCount > 0 ? 'text-primary font-medium' : ''}>({yearCount}건)</span>}
                       </label>
                     </div>
                   )}
@@ -982,16 +982,16 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
               )}
               {/* ── 플랜 잠김 (AI 총평 = Pro+ 전용) — 구버전이 아닐 때, readiness보다 우선 ── */}
               {!isStaleAnalysis && commentaryLocked && !commentaryLoading && (
-                <div className="mt-3 px-3 py-2.5 bg-violet-50 border border-violet-200 rounded-sm flex items-start gap-2.5">
-                  <Sparkles className="w-4 h-4 text-violet-500 mt-0.5 shrink-0" />
+                <div className="mt-3 px-3 py-2.5 bg-indigo-50 border border-indigo-200 rounded-sm flex items-start gap-2.5">
+                  <Sparkles className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-violet-800">AI 시험 총평은 Pro 플랜 전용입니다</p>
-                    <p className="text-[11px] text-violet-600 mt-1 leading-relaxed">
+                    <p className="text-xs font-semibold text-indigo-800">AI 시험 총평은 Pro 플랜 전용입니다</p>
+                    <p className="text-[11px] text-indigo-600 mt-1 leading-relaxed">
                       Pro 플랜으로 업그레이드하면 시험 전체에 대한 전문가 수준의 종합 평가와 주변 학교·연도 비교를 사용할 수 있습니다.
                     </p>
                     <Link
                       href="/billing"
-                      className="inline-flex items-center gap-1 mt-2 px-2.5 py-1 bg-violet-600 hover:bg-violet-700 text-white text-[11px] font-medium rounded-sm transition-colors"
+                      className="inline-flex items-center gap-1 mt-2 px-2.5 py-1 bg-[linear-gradient(100deg,#4F46E5,#7C3AED)] hover:opacity-90 text-white text-[11px] font-medium rounded-sm transition-opacity"
                     >
                       구독 업그레이드
                     </Link>
@@ -1016,16 +1016,16 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
               {!isStaleAnalysis && !commentaryLocked && readinessCheck.ready && metadataPending && !commentaryLoading && (
                 <div className="mt-3 px-1">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-medium text-violet-700">V3 총평 준비 중...</span>
-                    <span className="text-[11px] text-violet-500 tabular-nums">{metadataElapsed}초</span>
+                    <span className="text-xs font-medium text-indigo-700">V3 총평 준비 중...</span>
+                    <span className="text-[11px] text-indigo-500 tabular-nums">{metadataElapsed}초</span>
                   </div>
-                  <div className="h-1.5 bg-violet-100 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-indigo-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-violet-400 to-purple-500 rounded-full transition-all duration-1000 ease-linear"
+                      className="h-full bg-gradient-to-r from-brand-indigo to-brand-cyan rounded-full transition-all duration-1000 ease-linear"
                       style={{ width: `${Math.min((metadataElapsed / 20) * 100, 95)}%` }}
                     />
                   </div>
-                  <p className="text-[11px] text-violet-600 mt-1.5 leading-relaxed">
+                  <p className="text-[11px] text-indigo-600 mt-1.5 leading-relaxed">
                     분석 기반 데이터를 생성하고 있습니다.{' '}
                     {metadataWillChain ? '완료되면 자동으로 총평이 이어서 생성됩니다.' : '완료되면 [총평 생성]이 활성화됩니다.'}
                   </p>
@@ -1034,12 +1034,12 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
               {commentaryLoading && (
                 <div className="mt-3 px-1">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-medium text-violet-700">AI 분석 중...</span>
-                    <span className="text-[11px] text-violet-500 tabular-nums">{commentaryElapsed}초</span>
+                    <span className="text-xs font-medium text-indigo-700">AI 분석 중...</span>
+                    <span className="text-[11px] text-indigo-500 tabular-nums">{commentaryElapsed}초</span>
                   </div>
-                  <div className="h-1.5 bg-violet-100 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-indigo-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-violet-400 to-purple-500 rounded-full transition-all duration-1000 ease-linear"
+                      className="h-full bg-gradient-to-r from-brand-indigo to-brand-cyan rounded-full transition-all duration-1000 ease-linear"
                       style={{ width: `${Math.min((commentaryElapsed / 110) * 100, 96)}%` }}
                     />
                   </div>
@@ -1047,8 +1047,8 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                   {commentaryLogs.length > 0 && (
                     <div className="mt-2.5">
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[11px] font-semibold text-violet-800">실행 로그</span>
-                        <span className="text-[10px] text-violet-600">{commentaryLogs.length}개 항목</span>
+                        <span className="text-[11px] font-semibold text-indigo-800">실행 로그</span>
+                        <span className="text-[10px] text-indigo-600">{commentaryLogs.length}개 항목</span>
                       </div>
                       <div className="bg-slate-900 text-slate-100 rounded-sm px-3 py-2 max-h-40 overflow-y-auto font-mono text-[11px] leading-relaxed">
                         {commentaryLogs.map((entry, idx) => (
