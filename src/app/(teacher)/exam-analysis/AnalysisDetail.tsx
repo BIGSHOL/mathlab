@@ -151,7 +151,7 @@ interface AnalysisDetailProps {
 
 export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCommentary = false, onToggleAutoCommentary, gen = null, onCommentaryGenChange }: AnalysisDetailProps) {
   const { user } = useAuth();
-  const { features } = useSubscription(); // 플랜 기능 게이팅 (commentary/nearby)
+  const { features, demo } = useSubscription(); // 플랜 기능 게이팅 (commentary/nearby) + 데모 계정 상태
   const [activeTab, setActiveTab] = useState<AnalysisTab>('basic');
   const [showExtractModal, setShowExtractModal] = useState(false);
   const [showArticleModal, setShowArticleModal] = useState(false);
@@ -323,6 +323,22 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
   // AI 총평은 Pro+ 플랜 기능 — free면 잠금 (기존 총평 열람은 허용, 생성/재생성만 차단)
   const commentaryLocked = !features.commentary;
 
+  // 데모 계정 체험 게이트 — 분석 잔여/권한, 블로그(네이버 복사) 권한
+  const demoAcct = demo && demo.isDemo ? demo : null;
+  const analyzeBlocked = !!demoAcct && (!demoAcct.perms.analyze || demoAcct.remaining <= 0);
+  const analyzeBlockReason = !demoAcct
+    ? undefined
+    : !demoAcct.perms.analyze
+      ? '이 데모 계정은 기출분석 체험 권한이 없습니다'
+      : demoAcct.remaining <= 0
+        ? `데모 체험 횟수(${demoAcct.limit}회)를 모두 사용했습니다`
+        : undefined;
+  const blogDenied = !!demoAcct && !demoAcct.perms.blog;
+  // 총평 잠금 안내 — 데모면 권한 안내, 그 외는 Pro 업그레이드 안내
+  const commentaryLockMsg = demoAcct
+    ? 'AI 총평 체험 권한이 없습니다 — 관리자에게 문의하세요'
+    : 'AI 총평은 Pro 플랜 이상에서 재생성할 수 있습니다';
+
   // 총평 생성 가능 = readiness 통과 + 메타데이터 준비 중 아님 + 구버전 아님 + 플랜 잠김 아님
   const commentaryReady = readinessCheck.ready && !metadataPending && !isStaleAnalysis && !commentaryLocked;
 
@@ -330,7 +346,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
     if (!latestAnalysis) return;
     // Pro+ 플랜 기능 잠금 (서버에서도 403 FEATURE_LOCKED 방어)
     if (commentaryLocked) {
-      toast.error('AI 총평은 Pro 플랜 이상에서 사용할 수 있습니다 — 구독에서 업그레이드하세요');
+      toast.error(commentaryLockMsg);
       return;
     }
     // 구버전 분석본 차단 — 재분석 후에만 총평 생성 가능 (모든 진입점 방어: 버튼/재생성)
@@ -350,7 +366,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
       });
       if (!res.ok) {
         const err = await res.json().catch(() => null);
-        toast.error(err?.error?.message || (res.status === 403 ? 'AI 총평은 Pro 플랜 이상에서 사용할 수 있습니다 — 구독에서 업그레이드하세요' : '총평 생성에 실패했습니다'));
+        toast.error(err?.error?.message || (res.status === 403 ? commentaryLockMsg : '총평 생성에 실패했습니다'));
         return;
       }
       // 다른 시험지로 갔어도 완료 토스트는 표시 (생성이 멈추지 않았음을 알림).
@@ -484,6 +500,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
    */
   const handleCopyNaverImages = async () => {
     if (!commentary) { toast.error('총평이 없습니다. 먼저 총평을 생성하세요.'); return; }
+    if (blogDenied) { toast.error('이 데모 계정은 블로그(네이버 복사) 체험 권한이 없습니다. 관리자에게 문의하세요.'); return; }
     // 다중 클릭 차단 — 캡처/업로드가 진행 중이면 추가 클릭 무시 (병렬 실행 방지)
     if (copyingRef.current) { toast.info('이미 복사 중입니다. 완료 후 다시 시도하세요.'); return; }
     copyingRef.current = true;
@@ -652,6 +669,8 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
       }
       if (!copied) throw new Error('클립보드 복사 실패 — 창을 클릭해 포커스를 둔 뒤 다시 시도하세요');
       toast.success(`${blocks.length}개 섹션 이미지 + 요약이 복사되었습니다.${reused ? ' (저장된 캡처 재사용)' : ''} 네이버 블로그에 붙여넣으세요.`, undefined, tid);
+      // 복사 이벤트 기록 (강사 활동 추적 + 데모 모니터링 '복사' 카운트). fire-and-forget.
+      void fetch(`/api/exam-analysis/${detail.id}/article-copy`, { method: 'POST' }).catch(() => {});
     } catch (e) {
       toast.error('이미지 복사 실패: ' + (e instanceof Error ? e.message : String(e)), undefined, tid);
     } finally {
@@ -827,7 +846,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
             )}
             {(detail.status === 'PENDING' || detail.status === 'FAILED') && (
               <div className="flex items-center gap-3">
-                <Button onClick={() => onAnalyze(detail.id)} disabled={analyzing}>
+                <Button onClick={() => onAnalyze(detail.id)} disabled={analyzing || analyzeBlocked} title={analyzeBlockReason}>
                   {analyzing ? '분석 중...' : '분석 실행'}
                 </Button>
                 {onToggleAutoCommentary && (
@@ -972,7 +991,8 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                     <Button
                       size="sm"
                       onClick={() => onAnalyze(detail.id)}
-                      disabled={analyzing}
+                      disabled={analyzing || analyzeBlocked}
+                      title={analyzeBlockReason}
                       className="mt-2 bg-rose-600 hover:bg-rose-700 text-white disabled:bg-slate-300"
                     >
                       {analyzing ? '재분석 중...' : '최신 버전으로 재분석'}
@@ -985,16 +1005,27 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                 <div className="mt-3 px-3 py-2.5 bg-indigo-50 border border-indigo-200 rounded-sm flex items-start gap-2.5">
                   <Sparkles className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-indigo-800">AI 시험 총평은 Pro 플랜 전용입니다</p>
-                    <p className="text-[11px] text-indigo-600 mt-1 leading-relaxed">
-                      Pro 플랜으로 업그레이드하면 시험 전체에 대한 전문가 수준의 종합 평가와 주변 학교·연도 비교를 사용할 수 있습니다.
-                    </p>
-                    <Link
-                      href="/billing"
-                      className="inline-flex items-center gap-1 mt-2 px-2.5 py-1 bg-[linear-gradient(100deg,#4F46E5,#7C3AED)] hover:opacity-90 text-white text-[11px] font-medium rounded-sm transition-opacity"
-                    >
-                      구독 업그레이드
-                    </Link>
+                    {demoAcct ? (
+                      <>
+                        <p className="text-xs font-semibold text-indigo-800">AI 총평 체험 권한이 없습니다</p>
+                        <p className="text-[11px] text-indigo-600 mt-1 leading-relaxed">
+                          이 데모 계정은 AI 총평 체험이 비활성화되어 있습니다. 관리자에게 문의하세요.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-xs font-semibold text-indigo-800">AI 시험 총평은 Pro 플랜 전용입니다</p>
+                        <p className="text-[11px] text-indigo-600 mt-1 leading-relaxed">
+                          Pro 플랜으로 업그레이드하면 시험 전체에 대한 전문가 수준의 종합 평가와 주변 학교·연도 비교를 사용할 수 있습니다.
+                        </p>
+                        <Link
+                          href="/billing"
+                          className="inline-flex items-center gap-1 mt-2 px-2.5 py-1 bg-[linear-gradient(100deg,#4F46E5,#7C3AED)] hover:opacity-90 text-white text-[11px] font-medium rounded-sm transition-opacity"
+                        >
+                          구독 업그레이드
+                        </Link>
+                      </>
+                    )}
                   </div>
                 </div>
               )}
@@ -1085,6 +1116,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
               hasSchool={!!detail.schoolId}
               staleVersion={isStaleAnalysis ? (stalePromptLabel || '구버전') : null}
               commentaryLocked={commentaryLocked}
+              commentaryLockMsg={commentaryLockMsg}
               onReanalyze={() => onAnalyze(detail.id)}
               reanalyzing={analyzing}
               examMeta={{

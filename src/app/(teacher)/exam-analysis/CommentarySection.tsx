@@ -39,6 +39,8 @@ interface CommentarySectionProps {
   staleVersion?: string | null;
   /** AI 총평이 Pro+ 플랜 잠김 상태 — 재생성 버튼 비활성(기존 총평 열람은 허용) */
   commentaryLocked?: boolean;
+  /** 잠김 안내 문구 — 데모 계정은 권한 안내, 그 외는 Pro 업그레이드 안내 */
+  commentaryLockMsg?: string;
   /** 기본 재분석 트리거 (구버전일 때 안내 버튼) */
   onReanalyze?: () => void;
   reanalyzing?: boolean;
@@ -78,6 +80,7 @@ export function CommentarySection({
   hasSchool,
   staleVersion,
   commentaryLocked = false,
+  commentaryLockMsg = 'AI 총평은 Pro 플랜 이상에서 재생성할 수 있습니다',
   onReanalyze,
   reanalyzing = false,
   examMeta,
@@ -316,7 +319,7 @@ export function CommentarySection({
                 variant="ghost"
                 onClick={onRegenerate}
                 disabled={lockRegen}
-                title={isStale ? `이전 버전(${staleVersion})으로 분석됨 — 재분석 후 총평 가능` : commentaryLocked ? 'AI 총평은 Pro 플랜 이상에서 재생성할 수 있습니다' : '총평 재생성'}
+                title={isStale ? `이전 버전(${staleVersion})으로 분석됨 — 재분석 후 총평 가능` : commentaryLocked ? commentaryLockMsg : '총평 재생성'}
                 className="text-xs text-slate-400 hover:text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 재분석
@@ -473,7 +476,7 @@ export function CommentarySection({
               variant="ghost"
               onClick={onRegenerate}
               disabled={lockRegen}
-              title={isStale ? `이전 버전(${staleVersion})으로 분석됨 — 재분석 후 총평 가능` : commentaryLocked ? 'AI 총평은 Pro 플랜 이상에서 재생성할 수 있습니다' : undefined}
+              title={isStale ? `이전 버전(${staleVersion})으로 분석됨 — 재분석 후 총평 가능` : commentaryLocked ? commentaryLockMsg : undefined}
               className={`text-xs disabled:opacity-40 disabled:cursor-not-allowed ${isFallback ? 'text-amber-600 hover:text-amber-700' : 'text-slate-400 hover:text-slate-600'}`}
             >
               {isFallback ? 'AI 재분석' : '재분석'}
@@ -574,14 +577,14 @@ export function CommentarySection({
             size="sm"
             onClick={onRegenerate}
             disabled={commentaryLocked}
-            title={commentaryLocked ? 'AI 총평은 Pro 플랜 이상에서 재생성할 수 있습니다' : undefined}
+            title={commentaryLocked ? commentaryLockMsg : undefined}
             className="bg-[#BF1722] hover:bg-[#9A1219] text-white disabled:bg-slate-300 disabled:cursor-not-allowed"
           >
             <Sparkles className="w-3.5 h-3.5 mr-1.5" />
             최신 양식으로 재생성
           </Button>
           {commentaryLocked && (
-            <p className="text-[11px] text-indigo-600 mt-2">Pro 플랜 이상에서 재생성할 수 있습니다.</p>
+            <p className="text-[11px] text-indigo-600 mt-2">{commentaryLockMsg}</p>
           )}
         </div>
       )}

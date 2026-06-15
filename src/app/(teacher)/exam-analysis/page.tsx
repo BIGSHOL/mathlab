@@ -6,7 +6,7 @@ import { ExamPaperList } from '@/components/exam-analysis/ExamPaperList';
 import { ExamUploadForm } from '@/components/exam-analysis/ExamUploadForm';
 import { toast } from '@/components/ui/Toast';
 import Link from 'next/link';
-import { Plus, X, Settings2, PanelLeftClose, PanelLeftOpen, FileSearch, Search } from 'lucide-react';
+import { Plus, X, Settings2, PanelLeftClose, PanelLeftOpen, FileSearch, Search, Gauge } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { hasMinRole } from '@/lib/constants/navigation';
 import type { ExamPaperData } from './types';
@@ -15,7 +15,7 @@ import { sumPoints, roundPoints } from '@/lib/exam-analysis/points';
 import { NarrowScreenGuard } from '@/components/ui/NarrowScreenGuard';
 import { MathSpinner } from '@/components/ui/MathSpinner';
 import { ProfileMenu } from '@/components/layout/ExamOnlyTopBar';
-import { useSubscription, quotaExceeded, quotaLabel } from '@/components/providers/SubscriptionProvider';
+import { useSubscription, quotaExceeded } from '@/components/providers/SubscriptionProvider';
 
 // 기출 분석 필터 — 학년 옵션 (DB grade는 한글 문자열로 저장: 중1/고1 등)
 const GRADE_OPTIONS = ['중1', '중2', '중3', '고1', '고2', '고3'];
@@ -32,7 +32,7 @@ export default function ExamAnalysisPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedDetail, setSelectedDetail] = useState<ExamPaperData | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
-  const { usage, refetch: refetchSub } = useSubscription();
+  const { usage, demo, refetch: refetchSub } = useSubscription();
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
   // 목록 패널 너비(px) — 경계 드래그로 조절. 기본 288(=w-72), 범위 220~560. localStorage 영속.
   const LIST_MIN_W = 220, LIST_MAX_W = 560, LIST_DEFAULT_W = 288;
@@ -277,7 +277,17 @@ export default function ExamAnalysisPage() {
   }, [clearGen]);
 
   const handleAnalyze = async (id: string) => {
-    if (quotaExceeded(usage)) {
+    // 데모 계정: 권한·잔여 횟수 사전 차단(서버 왕복 없이 즉시 안내). 그 외: 월 한도 사전 차단.
+    if (demo && demo.isDemo) {
+      if (!demo.perms.analyze) {
+        toast.error('이 데모 계정은 기출분석 체험 권한이 없습니다. 관리자에게 문의하세요.');
+        return;
+      }
+      if (demo.remaining <= 0) {
+        toast.error(`데모 체험 횟수(${demo.limit}회)를 모두 사용했습니다. 정식 도입 문의를 통해 계속 이용하실 수 있습니다.`);
+        return;
+      }
+    } else if (quotaExceeded(usage)) {
       toast.error(`이번 달 분석 한도(${usage.limit}회)를 초과했습니다 — 구독에서 업그레이드하세요`);
       return;
     }
@@ -330,6 +340,23 @@ export default function ExamAnalysisPage() {
     }
   };
 
+  // 사이드바 배지 — 데모 계정은 '체험 잔여/총', 그 외는 월 분석 한도.
+  const dm = demo && demo.isDemo ? demo : null;
+  const quotaIsExceeded = dm ? dm.remaining <= 0 : quotaExceeded(usage);
+  const quotaIsUnlimited = !dm && usage.limit === null;
+  const quotaBadgeText = dm
+    ? `체험 ${dm.remaining}/${dm.limit}`
+    : quotaIsUnlimited ? '무제한' : `${usage.used}/${usage.limit}`;
+  const quotaTitle = dm
+    ? (dm.remaining <= 0
+        ? `데모 체험 분석을 모두 사용했습니다 (총 ${dm.limit}회). 정식 도입 문의로 계속 이용하실 수 있어요.`
+        : `데모 체험 분석 — 남은 ${dm.remaining}회 / 총 ${dm.limit}회`)
+    : quotaIsExceeded
+      ? `이번 달 분석 한도 ${usage.limit}회를 모두 사용했어요. 학생 이용권으로 한 분석은 제외됩니다. 클릭하면 구독·한도를 관리할 수 있어요.`
+      : quotaIsUnlimited
+        ? `이번 달 분석 ${usage.used}회 사용 · 한도 무제한. 클릭하면 구독·한도를 관리할 수 있어요.`
+        : `이번 달 분석 ${usage.used}/${usage.limit}회 사용. 학생 이용권으로 한 분석은 제외됩니다. 클릭하면 구독·한도를 관리할 수 있어요.`;
+
   return (
     <NarrowScreenGuard minWidth={1024} label="기출 분석">
     <div className="flex-1 flex min-h-0">
@@ -352,10 +379,12 @@ export default function ExamAnalysisPage() {
               </span>
               <Link
                 href="/billing"
-                title={`이번 달 분석 사용량 ${quotaLabel(usage)} (학생 이용권 분석 제외) · 구독 관리`}
-                className={`px-1.5 py-0.5 rounded-full text-[11px] font-bold shrink-0 transition-colors ${quotaExceeded(usage) ? 'bg-rose-100 text-rose-700 hover:bg-rose-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                title={quotaTitle}
+                aria-label={quotaTitle}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold shrink-0 transition-colors ${quotaIsExceeded ? 'bg-rose-100 text-rose-700 hover:bg-rose-200' : 'bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200'}`}
               >
-                {quotaLabel(usage)}
+                <Gauge className="w-3 h-3 shrink-0" />
+                <span>{quotaBadgeText}</span>
               </Link>
             </div>
           )}
