@@ -343,6 +343,12 @@ export function FeatureShowcase() {
   const assignRef = useRef<number[]>(Array.from({ length: SLOTS }, (_, i) => i));
   // 빠져나가는 중(플립 exit 애니메이션 ~0.5s)인 카드 — 그 사이 다른 슬롯이 같은 카드를 집어 잠깐 겹치는 것 방지
   const cooldownRef = useRef<Set<number>>(new Set());
+  // 공정 순환(LRU): 카드별 마지막 등장 순번 — 가장 오래전(또는 한 번도) 보여준 카드를 우선 선택
+  // → 모든 카드가 한 번씩 등장한 뒤에야 재등장. 초기 표시(0..5)는 1..6 순번, 미노출(6..9)은 0(최우선).
+  const seqRef = useRef(SLOTS);
+  const lastShownRef = useRef<Record<number, number>>(
+    Object.fromEntries(Array.from({ length: SLOTS }, (_, i) => [i, i + 1])),
+  );
 
   // 각 슬롯이 "각자 다른 주기·위상"으로 독립 플립 → 화면에 없던 카드로 교체.
   // 중복 방지 3중: (1) 현재 표시 6장 제외 (2) 동시노출 금지군(GROUP) 제외 (3) exit 중 카드 쿨다운 제외.
@@ -358,15 +364,19 @@ export function FeatureShowcase() {
       const otherGroups = new Set(
         prev.filter((_, s) => s !== slot).map((i) => GROUP[i]).filter(Boolean),
       );
-      const hidden = POOL.map((_, i) => i).filter(
+      const eligible = POOL.map((_, i) => i).filter(
         (i) => !used.has(i) && !cooldownRef.current.has(i) && !(GROUP[i] && otherGroups.has(GROUP[i])),
       );
-      if (!hidden.length) return;
-      const pick = hidden[Math.floor(Math.random() * hidden.length)];
+      if (!eligible.length) return;
+      // LRU: lastShown 이 가장 작은(=오래전/미노출) 카드 우선, 동률은 랜덤 → 전 카드 1회씩 순환 후 재등장
+      const minSeq = Math.min(...eligible.map((i) => lastShownRef.current[i] ?? 0));
+      const best = eligible.filter((i) => (lastShownRef.current[i] ?? 0) === minSeq);
+      const pick = best[Math.floor(Math.random() * best.length)];
       const leaving = prev[slot];
       const next = [...prev];
       next[slot] = pick;
       assignRef.current = next;
+      lastShownRef.current[pick] = ++seqRef.current;
       cooldownRef.current.add(leaving);
       timers.push(setTimeout(() => cooldownRef.current.delete(leaving), 700));
       setAssign(next);
