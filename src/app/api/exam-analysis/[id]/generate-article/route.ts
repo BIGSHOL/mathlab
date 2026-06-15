@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse, getTenantFilter, notFound, badRequest } from '@/lib/api';
+import { assertDemoFeature } from '@/lib/demo/accounts';
 import { generateExamArticleStream } from '@/lib/exam-analysis/article-generator';
 import { generateAllChartImages } from '@/lib/exam-analysis/chart-image-generator';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
@@ -37,6 +38,10 @@ export async function POST(request: NextRequest, { params }: Params) {
     where: { id, ...tenantWhere },
   });
   if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
+
+  // 데모 계정: 블로그 글 체험 권한 확인
+  const demoGate = await assertDemoFeature(user, 'blog');
+  if (demoGate.response) return demoGate.response;
 
   // 최신 분석 결과 + commentary extension 조회
   const latestAnalysis = await prisma.examAnalysis.findFirst({

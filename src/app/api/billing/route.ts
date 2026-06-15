@@ -1,16 +1,23 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireOwner, isResponse } from '@/lib/api';
+import { requireTeacher, isResponse, forbidden, hasRole } from '@/lib/api';
 import { getPlanConfig } from '@/lib/billing/plans';
 import { getTenantPlan, getMonthlyAnalysisCount, monthBounds, isBetaAllPro } from '@/lib/billing/guard';
 import { isLemonSqueezyConfigured } from '@/lib/billing/lemonsqueezy';
+import { getDemoContext, countDemoUsage } from '@/lib/demo/accounts';
 
 export const dynamic = 'force-dynamic';
 
-/** GET /api/billing — 현재 테넌트 구독 상태 + 이번 달 사용량 (OWNER+). 미설정/행없음에도 free 기본. */
+/**
+ * GET /api/billing — 현재 테넌트 구독 상태 + 이번 달 사용량.
+ * 기본 OWNER+ 전용. 단, **데모 계정(데모 지점 소속 강사)** 은 Pro 기능(총평·블로그·주변비교)을
+ * 체험해야 하므로 강사여도 허용한다(데모 지점은 Pro 고정 → features 해금). 비-데모 강사는 기존대로 비노출.
+ */
 export async function GET() {
-  const user = await requireOwner();
+  const user = await requireTeacher();
   if (isResponse(user)) return user;
+  const demoCtx = await getDemoContext(user);
+  if (!hasRole(user, 'OWNER') && !demoCtx.isDemo) return forbidden();
 
   const tenantId = user.viewingTenantId ?? user.tenantId;
   const { nextMonthStart } = monthBounds();
@@ -35,6 +42,7 @@ export async function GET() {
         currentPeriodEnd: null,
         noTenant: true,
         exempt: true,
+        demo: null,
       },
     });
   }
@@ -46,16 +54,37 @@ export async function GET() {
   const used = await getMonthlyAnalysisCount(tenantId);
   const limit = Number.isFinite(cfg.monthlyAnalyses) ? cfg.monthlyAnalyses : null; // Infinity → null(무제한)
 
+  // 데모 계정: 잔여 체험 횟수 + 계정별 권한을 클라이언트에 노출 → 사전 차단·버튼 비활성·안내에 사용.
+  let demo: {
+    isDemo: true; limit: number; used: number; remaining: number;
+    perms: { analyze: boolean; commentary: boolean; blog: boolean };
+  } | null = null;
+  if (demoCtx.isDemo) {
+    const demoUsed = await countDemoUsage(user.id);
+    demo = {
+      isDemo: true,
+      limit: demoCtx.limit,
+      used: demoUsed,
+      remaining: Math.max(0, demoCtx.limit - demoUsed),
+      perms: demoCtx.perms,
+    };
+  }
+
   return NextResponse.json({
     data: {
       plan,
       status: sub?.status ?? 'inactive',
       usage: { used, limit, resetAt },
-      features: { commentary: cfg.commentary, nearby: cfg.nearby },
+      // 데모 계정은 계정별 '총평' 권한을 반영(클라이언트 UI 잠금/해제). 그 외는 플랜 기준.
+      features: {
+        commentary: demoCtx.isDemo ? demoCtx.perms.commentary : cfg.commentary,
+        nearby: cfg.nearby,
+      },
       lemonSqueezyConfigured: configured,
       allowDemoUpgrade,
       beta: isBetaAllPro(),
       currentPeriodEnd: sub?.currentPeriodEnd?.toISOString() ?? null,
+      demo,
     },
   });
 }

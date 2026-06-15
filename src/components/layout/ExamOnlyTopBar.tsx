@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LogOut, User, Settings, MapPin, FileUp, Building2, Users, FileSearch, CreditCard, Sparkles, Ticket, BarChart3, Inbox } from 'lucide-react';
+import { LogOut, User, Settings, MapPin, FileUp, Building2, Users, FileSearch, CreditCard, Sparkles, Ticket, BarChart3, Inbox, UserPlus } from 'lucide-react';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 
 /** SUPER_ADMIN 관리 메뉴 링크 (사이드바 제거 후 유일한 진입점) */
@@ -16,6 +16,7 @@ const ADMIN_LINKS = [
   { href: '/admin/exam-uploads', label: '기출 업로드', icon: FileUp },
   { href: '/admin/tenants', label: '지점 관리', icon: Building2 },
   { href: '/admin/users', label: '사용자 관리', icon: Users },
+  { href: '/admin/demo', label: '데모 계정', icon: UserPlus },
 ];
 
 const ROLE_LABEL: Record<string, string> = {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse, getTenantFilter, notFound, badRequest } from '@/lib/api';
 import { assertAnalysisGate } from '@/lib/billing/guard';
+import { assertDemoAnalysisLimit } from '@/lib/demo/accounts';
 import { consumeExamAnalysisCredit } from '@/lib/entitlements/service';
 import { analyzeExam } from '@/lib/exam-analysis/ai-engine';
 import { ExamPromptBuilder } from '@/lib/exam-analysis/prompt-builder';
@@ -50,11 +51,16 @@ export async function POST(request: NextRequest, { params }: Params) {
   });
   if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
 
-  // 분석 게이트 — 시험지당 하나만 적용 (AND 아님):
-  // 학생 시험지(studentId 있음) → 학생 EXAM_ANALYSIS 크레딧만 (재분석=이미 차감은 통과, 월 쿼터 면제)
-  // 블랭크/템플릿 → 플랜 월 쿼터만 (재분석은 현재 시험지 제외 — 곧 deleteMany로 교체되므로)
-  const gate = await assertAnalysisGate(examPaper, user.viewingTenantId ?? user.tenantId);
-  if (gate) return gate;
+  // 데모 전용 지점 계정 → 평생 체험 N회 게이트만 적용(일반 월 쿼터/크레딧 면제). 비-데모면 handled=false.
+  const demo = await assertDemoAnalysisLimit(user, examPaper.id);
+  if (demo.response) return demo.response;
+  if (!demo.handled) {
+    // 분석 게이트 — 시험지당 하나만 적용 (AND 아님):
+    // 학생 시험지(studentId 있음) → 학생 EXAM_ANALYSIS 크레딧만 (재분석=이미 차감은 통과, 월 쿼터 면제)
+    // 블랭크/템플릿 → 플랜 월 쿼터만 (재분석은 현재 시험지 제외 — 곧 deleteMany로 교체되므로)
+    const gate = await assertAnalysisGate(examPaper, user.viewingTenantId ?? user.tenantId);
+    if (gate) return gate;
+  }
 
   if (examPaper.status === 'ANALYZING') {
     // 2분 이상 ANALYZING 상태면 갇힌 것으로 판단 → 재시도 허용

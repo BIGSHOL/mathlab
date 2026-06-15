@@ -5,6 +5,7 @@ import { analyzeExtendedRequestSchema } from '@/lib/exam-analysis/schemas';
 import { runExtendedAnalysis } from '@/lib/exam-analysis/agents/orchestrator';
 import type { AgentType } from '@/lib/exam-analysis/constants';
 import { assertPlanFeature } from '@/lib/billing/guard';
+import { assertDemoFeature } from '@/lib/demo/accounts';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -26,10 +27,14 @@ export async function POST(request: NextRequest, { params }: Params) {
   });
   if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
 
-  // 총평(commentary) 에이전트는 Pro+ 기능 — 다른 에이전트는 게이트 없음
+  // 총평(commentary) 에이전트 게이트 — 데모 계정은 계정별 권한, 그 외는 플랜(Pro+). 다른 에이전트는 게이트 없음
   if (agents.includes('commentary')) {
-    const featureGate = await assertPlanFeature(user.viewingTenantId ?? user.tenantId, 'commentary');
-    if (featureGate) return featureGate;
+    const demo = await assertDemoFeature(user, 'commentary');
+    if (demo.response) return demo.response;
+    if (!demo.handled) {
+      const featureGate = await assertPlanFeature(user.viewingTenantId ?? user.tenantId, 'commentary');
+      if (featureGate) return featureGate;
+    }
   }
 
   // 최신 분석 결과 조회

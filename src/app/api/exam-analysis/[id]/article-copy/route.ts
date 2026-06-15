@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse, getTenantFilter, notFound } from '@/lib/api';
+import { assertDemoFeature } from '@/lib/demo/accounts';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -23,6 +24,10 @@ export async function POST(_request: NextRequest, { params }: Params) {
     select: { id: true },
   });
   if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
+
+  // 데모 계정: 블로그 복사 체험 권한 확인
+  const demoGate = await assertDemoFeature(user, 'blog');
+  if (demoGate.response) return demoGate.response;
 
   await prisma.articleCopyEvent.create({
     data: { examPaperId: id, userId: user.id },
