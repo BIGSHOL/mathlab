@@ -11,7 +11,6 @@ import { LogoIcon } from '@/components/ui/LogoIcon';
 import { Button } from '@/components/ui/Button';
 import { V3ReportPreview } from '@/components/landing/V3ReportPreview';
 import { FeatureShowcase } from '@/components/landing/FeatureShowcase';
-import { DashboardShowcase } from '@/components/landing/DashboardShowcase';
 import { InquiryModal } from '@/components/landing/InquiryModal';
 import { Reveal, RevealStagger, RevealItem } from '@/components/landing/editorial/motion';
 import { FloatingCard } from '@/components/landing/editorial/FloatingCard';
@@ -226,42 +225,16 @@ export function LandingPage() {
         <SectionHeading
           kicker="기능"
           title="기출 분석에 필요한 모든 것"
-          lede="실제 분석 결과 화면을 그대로 — 아래는 더미데이터 예시입니다."
+          lede="실제 분석 결과 화면을 그대로 보여드립니다."
         />
         <Reveal>
           <FeatureShowcase />
         </Reveal>
       </section>
 
-      {/* ── 실제 분석 대시보드 — 브라우저 크롬 액자 (제품 스크린샷 구도) ── */}
-      <section className="bg-brand-cream-2 border-y border-brand-line">
-        <div className="max-w-6xl mx-auto px-6 py-16 md:py-24">
-          <SectionHeading
-            kicker="대시보드"
-            title="교사용 분석 대시보드, 그대로"
-            lede="난이도 도넛·유형 레이더·변별력·시간 배분까지 — 실제 화면 예시입니다 (더미데이터)."
-          />
-          <Reveal className="mt-12">
-            <div className="border border-brand-line rounded-[16px] overflow-hidden bg-white shadow-brand-lg">
-              {/* 브라우저 크롬 캡션 — 앱 화면은 리스킨하지 않고 액자로 의도화 */}
-              <div className="flex items-center gap-1.5 px-4 h-9 border-b border-brand-line bg-brand-cream">
-                {[0, 1, 2].map((d) => (
-                  <span key={d} className="w-2.5 h-2.5 rounded-full bg-brand-ink/10" />
-                ))}
-                <span className="ml-2.5 text-[11px] text-brand-ink-soft tracking-[0.06em] font-semibold truncate">
-                  exam-analysis — 실제 분석 화면 (더미데이터)
-                </span>
-              </div>
-              <div className="px-5 pb-5 bg-slate-50/60">
-                <DashboardShowcase />
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
       {/* ── 마무리 CTA — 다크 그라데이션 카드 (para-x contact 모티프) ── */}
-      <section className="max-w-6xl mx-auto px-6 py-16 md:py-20">
+      <section className="bg-brand-cream-2 border-t border-brand-line">
+        <div className="max-w-6xl mx-auto px-6 py-16 md:py-20">
         <Reveal>
           <div
             className="relative overflow-hidden rounded-[24px] px-7 sm:px-12 py-12 sm:py-16 text-white shadow-brand-lg"
@@ -307,33 +280,73 @@ export function LandingPage() {
               {/* 우측 거대 숫자 2컬럼 */}
               <div className="hidden lg:flex items-stretch">
                 {[
-                  { n: '3', l: '단계로 끝', grad: false },
-                  { n: '2~3', l: '분이면 분석 완료', grad: true },
+                  { n: '3', unit: '단계', sub: '로 끝', grad: false },
+                  { n: '2~3', unit: '분', sub: '이면 분석 완료', grad: true },
                 ].map((it, i) => (
-                  <div key={it.l} className={`text-center px-10 ${i > 0 ? 'border-l border-white/10' : ''}`}>
-                    <p className={`leading-none m-0 text-[64px] font-extrabold tracking-[-0.04em] ${it.grad ? 'brand-grad-text-light' : 'text-white'}`}>
-                      {it.n}
+                  <div key={it.unit} className={`text-center px-10 ${i > 0 ? 'border-l border-white/10' : ''}`}>
+                    <p className="leading-none m-0 flex items-baseline justify-center gap-1">
+                      <span className={`text-[64px] font-extrabold tracking-[-0.04em] ${it.grad ? 'brand-grad-text-light' : 'text-white'}`}>
+                        {it.n}
+                      </span>
+                      <span className="text-[22px] font-extrabold" style={{ color: '#FFA940' }}>{it.unit}</span>
                     </p>
-                    <p className="mt-3 text-[12.5px] text-white/70 font-semibold m-0">{it.l}</p>
+                    <p className="mt-3 text-[12.5px] text-white/70 font-semibold m-0">{it.sub}</p>
                   </div>
                 ))}
               </div>
             </div>
           </div>
         </Reveal>
+        </div>
       </section>
 
-      {/* ── 푸터 ── */}
-      <footer className="border-t border-brand-line">
-        <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-brand-ink-soft">
-          <div className="flex items-center gap-2">
-            <LogoIcon className="w-5 h-5" />
-            <span className="font-extrabold text-brand-ink">MathLAB 기출분석</span>
-            <span className="text-brand-ink-soft">— 한국 수학 학원을 위한 AI 기출 분석</span>
+      {/* ── 푸터 (para-x.co.kr 동일 구조) ── */}
+      <footer className="border-t border-brand-line bg-brand-cream">
+        <div className="max-w-6xl mx-auto px-6 pt-16 pb-10">
+          <div className="flex items-start justify-between gap-10 flex-wrap">
+            {/* 브랜드 + 사업자 법적 정보 */}
+            <div>
+              <div className="flex items-center gap-2">
+                <LogoIcon className="w-6 h-6" />
+                <span className="text-lg font-extrabold tracking-[-0.02em] text-brand-ink">MathLAB 기출분석</span>
+              </div>
+              <p className="mt-3 text-sm text-brand-ink-faint max-w-[340px] leading-relaxed">
+                시험지 한 장으로 난이도·유형·단원·변별력 분석부터 학부모용 블로그 리포트까지. 한국 수학 학원을 위한 AI 기출 분석 서비스입니다.
+              </p>
+              <div className="mt-5 grid gap-1.5 text-[12.5px] text-brand-ink-faint leading-relaxed">
+                <span>상호: 파라엑스 · 대표자: 원일</span>
+                <span>사업자등록번호: 496-25-02217 · 통신판매업신고: [제0000-대구수성-0000호]</span>
+                <span>주소: 대구광역시 수성구 동대구로 95, 102동 1202호 (두산동, SK 리더스뷰)</span>
+                <span>고객센터: 053-353-7099 · 운영시간: 월~금 13:00~22:00 · 이메일: onlywon@naver.com</span>
+                <span>개인정보보호책임자: 원일 (onlywon@naver.com)</span>
+              </div>
+            </div>
+            {/* 링크 3열 */}
+            <div className="flex gap-14 flex-wrap">
+              <div>
+                <b className="block text-[13px] font-extrabold tracking-[0.08em] text-brand-ink-faint uppercase mb-3.5">Menu</b>
+                <a href="#features" className="block text-[14.5px] text-brand-ink-soft py-1 font-medium hover:text-brand-ink transition-colors">기능</a>
+                <a href="#how" className="block text-[14.5px] text-brand-ink-soft py-1 font-medium hover:text-brand-ink transition-colors">작동 방식</a>
+                <a href="mailto:onlywon@naver.com" className="block text-[14.5px] text-brand-ink-soft py-1 font-medium hover:text-brand-ink transition-colors">문의</a>
+              </div>
+              <div>
+                <b className="block text-[13px] font-extrabold tracking-[0.08em] text-brand-ink-faint uppercase mb-3.5">Product</b>
+                <a href="https://para-x.co.kr" target="_blank" rel="noopener noreferrer" className="block text-[14.5px] text-brand-ink-soft py-1 font-medium hover:text-brand-ink transition-colors">Para-X 허브 ↗</a>
+                <a href="https://para-x.co.kr/#products" target="_blank" rel="noopener noreferrer" className="block text-[14.5px] text-brand-ink-soft py-1 font-medium hover:text-brand-ink transition-colors">ShortGEN (준비 중)</a>
+                <a href="https://para-x.co.kr/#products" target="_blank" rel="noopener noreferrer" className="block text-[14.5px] text-brand-ink-soft py-1 font-medium hover:text-brand-ink transition-colors">MathGEN (준비 중)</a>
+              </div>
+              <div>
+                <b className="block text-[13px] font-extrabold tracking-[0.08em] text-brand-ink-faint uppercase mb-3.5">Legal</b>
+                <a href="https://para-x.co.kr/terms.html" target="_blank" rel="noopener noreferrer" className="block text-[14.5px] text-brand-ink-soft py-1 font-medium hover:text-brand-ink transition-colors">이용약관</a>
+                <a href="https://para-x.co.kr/privacy.html" target="_blank" rel="noopener noreferrer" className="block text-[14.5px] text-brand-ink-soft py-1 font-medium hover:text-brand-ink transition-colors">개인정보처리방침</a>
+                <a href="https://para-x.co.kr/refund.html" target="_blank" rel="noopener noreferrer" className="block text-[14.5px] text-brand-ink-soft py-1 font-medium hover:text-brand-ink transition-colors">취소·환불 정책</a>
+                <a href="tel:053-353-7099" className="block text-[14.5px] text-brand-ink-soft py-1 font-medium hover:text-brand-ink transition-colors">고객센터</a>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-5 text-[13px]">
-            <a href="mailto:chrismathone@gmail.com" className="hover:text-brand-ink transition-colors">문의</a>
-            <span className="text-brand-ink-soft">© {'2026'} Injaewon MathLAB</span>
+          <div className="mt-12 pt-6 border-t border-brand-line flex justify-between flex-wrap gap-3 text-[13px] text-brand-ink-faint">
+            <span>© {'2026'} Para-X. All rights reserved.</span>
+            <span>Made for educators, powered by automation</span>
           </div>
         </div>
       </footer>

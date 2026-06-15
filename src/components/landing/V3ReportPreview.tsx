@@ -117,10 +117,10 @@ export function V3ReportPreview() {
   const [i, setI] = useState(0);
   const [paused, setPaused] = useState(false);
 
-  // 5.2초 간격 순환 (hover 시 일시정지 — 밀도 높은 카드를 읽을 시간 확보)
+  // 4초 간격 순환 (hover 시 일시정지 — 밀도 높은 카드를 읽을 시간 확보)
   useEffect(() => {
     if (paused) return;
-    const t = setTimeout(() => setI((p) => (p + 1) % REPORTS.length), 5200);
+    const t = setTimeout(() => setI((p) => (p + 1) % REPORTS.length), 4000);
     return () => clearTimeout(t);
   }, [i, paused]);
 
@@ -156,7 +156,7 @@ export function V3ReportPreview() {
               initial={variants.enter}
               animate={variants.center}
               exit={variants.leave}
-              transition={{ duration: reduce ? 0.3 : 0.5, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: reduce ? 0.25 : 0.42, ease: [0.22, 1, 0.36, 1] }}
               style={{ transformOrigin: 'left center', willChange: 'transform, opacity' }}
             >
               {/* eyebrow + 헤드라인 + 덱 */}
@@ -232,19 +232,28 @@ export function V3ReportPreview() {
         </div>
       </div>
 
-      {/* 순환 인디케이터 (현재 분석본) */}
-      <div className="flex items-center justify-center gap-1.5 mt-3" aria-hidden>
-        {REPORTS.map((_, idx) => (
-          <span
+      {/* 순환 인디케이터 (클릭 시 해당 분석본으로 이동) */}
+      <div className="flex items-center justify-center gap-1 mt-3">
+        {REPORTS.map((rep, idx) => (
+          <button
             key={idx}
-            style={{
-              width: idx === i ? 18 : 6,
-              height: 6,
-              borderRadius: 999,
-              background: idx === i ? RED : '#d9d4c8',
-              transition: 'width 0.4s ease, background 0.4s ease',
-            }}
-          />
+            type="button"
+            onClick={() => setI(idx)}
+            aria-label={`${rep.school} 분석 보기`}
+            aria-current={idx === i}
+            style={{ padding: 5, border: 'none', background: 'transparent', cursor: 'pointer', lineHeight: 0 }}
+          >
+            <span
+              style={{
+                display: 'block',
+                width: idx === i ? 18 : 7,
+                height: 7,
+                borderRadius: 999,
+                background: idx === i ? RED : '#cfc9bb',
+                transition: 'width 0.35s ease, background 0.35s ease',
+              }}
+            />
+          </button>
         ))}
       </div>
     </div>
