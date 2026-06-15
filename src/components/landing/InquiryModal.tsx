@@ -131,7 +131,7 @@ export function InquiryModal({ onClose }: Props) {
                 <input
                   value={form.academyName}
                   onChange={(e) => set('academyName', e.target.value)}
-                  placeholder="정화중수학학원"
+                  placeholder="한빛수학학원"
                   className={inputCls}
                   required
                 />

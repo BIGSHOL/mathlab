@@ -117,7 +117,7 @@ export function FeatureShowcase() {
           평균 난이도 (5점 만점)
         </p>
         <Bar label="우리 학원" value="2.8" pct={56} color={RED} />
-        <Bar label="정화중" value="2.8" pct={56} />
+        <Bar label="△△중" value="2.8" pct={56} />
         <Bar label="○○중" value="3.1" pct={62} />
         <Bar label="□□중" value="2.5" pct={50} />
       </Card>
@@ -126,7 +126,7 @@ export function FeatureShowcase() {
       <Card icon={Share2} title="네이버 블로그 이미지" caption="클릭 한 번으로 블로그 게시용 분석 이미지 세트를 생성합니다.">
         <div style={{ background: '#fff', border: '1px solid #e6e2d8', boxShadow: '0 6px 18px -10px rgba(15,23,42,0.3)', padding: 12 }}>
           <p style={{ margin: '0 0 4px', fontFamily: SANS, fontSize: 8.5, letterSpacing: '0.16em', color: RED, fontWeight: 800 }}>
-            시험 분석 · 정화중 중1
+            시험 분석 · 한빛중 중1
           </p>
           <p style={{ margin: '0 0 9px', fontFamily: SERIF, fontSize: 15, fontWeight: 700, color: INK, lineHeight: 1.25, wordBreak: 'keep-all' }}>
             서술형 40점이 당락을 가른다
