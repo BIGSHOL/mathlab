@@ -11,11 +11,20 @@ import type { PlanId } from '@/lib/billing/plans';
 export type SubStatus = 'inactive' | 'active' | 'cancelled' | 'expired' | 'past_due';
 export interface SubUsage { used: number; limit: number | null; resetAt: string | null } // limit null = 무제한
 export interface SubFeatures { commentary: boolean; nearby: boolean }
+/** 데모 계정 체험 상태 — 잔여 분석 횟수 + 계정별 권한(분석/총평/블로그). 비-데모면 null. */
+export interface DemoInfo {
+  isDemo: boolean;
+  limit: number;
+  used: number;
+  remaining: number;
+  perms: { analyze: boolean; commentary: boolean; blog: boolean };
+}
 export interface SubscriptionState {
   plan: PlanId;
   status: SubStatus;
   usage: SubUsage;
   features: SubFeatures;
+  demo: DemoInfo | null;
   lemonSqueezyConfigured: boolean;
   allowDemoUpgrade: boolean;
   beta: boolean; // 베타 기간(BETA_ALL_PRO) — 전 테넌트 최소 Pro
@@ -28,6 +37,7 @@ const FREE_FALLBACK = {
   status: 'inactive' as SubStatus,
   usage: { used: 0, limit: 3 as number | null, resetAt: null as string | null },
   features: { commentary: false, nearby: false },
+  demo: null as DemoInfo | null,
   lemonSqueezyConfigured: false,
   allowDemoUpgrade: false,
   beta: false,
@@ -49,6 +59,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         status: j.status ?? 'inactive',
         usage: j.usage ?? FREE_FALLBACK.usage,
         features: j.features ?? FREE_FALLBACK.features,
+        demo: j.demo ?? null,
         lemonSqueezyConfigured: !!j.lemonSqueezyConfigured,
         allowDemoUpgrade: !!j.allowDemoUpgrade,
         beta: !!j.beta,
@@ -82,6 +93,7 @@ export function DemoSubscriptionProvider({ children }: { children: React.ReactNo
     status: 'active',
     usage: { used: 0, limit: null, resetAt: null },
     features: { commentary: true, nearby: true },
+    demo: null,
     lemonSqueezyConfigured: false,
     allowDemoUpgrade: false,
     beta: false,
