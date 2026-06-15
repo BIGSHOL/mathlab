@@ -157,7 +157,7 @@ const POOL: (() => ReactNode)[] = [
       <p style={{ margin: '0 0 9px', fontFamily: SANS, fontSize: 10, letterSpacing: '0.14em', color: GRAY, fontWeight: 800 }}>
         평균 난이도 (5점 만점)
       </p>
-      <Bar label="우리 학원" value="2.8" pct={56} color={RED} />
+      <Bar label="한빛중 (우리 학교)" value="2.8" pct={56} color={RED} />
       <Bar label="△△중" value="2.8" pct={56} />
       <Bar label="○○중" value="3.1" pct={62} />
       <Bar label="□□중" value="2.5" pct={50} />
