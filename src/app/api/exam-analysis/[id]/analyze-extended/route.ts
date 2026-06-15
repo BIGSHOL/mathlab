@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, getTenantFilter, notFound, badRequest } from '@/lib/api';
+import { requireTeacher, isResponse, notFound, badRequest } from '@/lib/api';
+import { getExamScope } from '@/lib/demo/accounts';
 import { analyzeExtendedRequestSchema } from '@/lib/exam-analysis/schemas';
 import { runExtendedAnalysis } from '@/lib/exam-analysis/agents/orchestrator';
 import type { AgentType } from '@/lib/exam-analysis/constants';
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const { agents, forceRegenerate, includeNearby, includeYearCompare } = parsed.data;
 
-  const tenantWhere = getTenantFilter(user);
+  const tenantWhere = await getExamScope(user);
   const examPaper = await prisma.examPaper.findFirst({
     where: { id, ...tenantWhere },
   });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, getTenantFilter, badRequest } from '@/lib/api';
+import { requireTeacher, isResponse, badRequest } from '@/lib/api';
+import { getExamScope } from '@/lib/demo/accounts';
 import { examPaperCreateSchema, examPaperQuerySchema } from '@/lib/exam-analysis/schemas';
 import { matchSchoolByName } from '@/lib/utils/school-matcher';
 
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
   if (!params.success) return badRequest('잘못된 쿼리 파라미터입니다');
 
   const { page, limit, subject, grade, status, studentId, search } = params.data;
-  const tenantWhere = getTenantFilter(user);
+  const tenantWhere = await getExamScope(user);
 
   try {
     const where: Record<string, unknown> = {

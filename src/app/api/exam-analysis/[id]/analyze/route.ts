@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, getTenantFilter, notFound, badRequest } from '@/lib/api';
+import { requireTeacher, isResponse, notFound, badRequest } from '@/lib/api';
+import { getExamScope } from '@/lib/demo/accounts';
 import { assertAnalysisGate } from '@/lib/billing/guard';
 import { assertDemoAnalysisLimit } from '@/lib/demo/accounts';
 import { consumeExamAnalysisCredit } from '@/lib/entitlements/service';
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   if (isResponse(user)) return user;
   const { id } = await params;
 
-  const tenantWhere = getTenantFilter(user);
+  const tenantWhere = await getExamScope(user);
   const examPaper = await prisma.examPaper.findFirst({
     where: { id, ...tenantWhere },
   });

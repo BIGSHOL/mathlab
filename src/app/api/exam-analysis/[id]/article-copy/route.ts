@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, getTenantFilter, notFound } from '@/lib/api';
+import { requireTeacher, isResponse, notFound } from '@/lib/api';
+import { getExamScope } from '@/lib/demo/accounts';
 import { assertDemoFeature } from '@/lib/demo/accounts';
 
 type Params = { params: Promise<{ id: string }> };
@@ -18,7 +19,7 @@ export async function POST(_request: NextRequest, { params }: Params) {
   const { id } = await params;
 
   // 테넌트 격리: 같은 테넌트 시험지인지 확인
-  const tenantFilter = getTenantFilter(user);
+  const tenantFilter = await getExamScope(user);
   const examPaper = await prisma.examPaper.findFirst({
     where: { id, ...tenantFilter },
     select: { id: true },

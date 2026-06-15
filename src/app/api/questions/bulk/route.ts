@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, validateBody, serverError, getTenantFilter } from '@/lib/api';
+import { requireTeacher, isResponse, validateBody, serverError } from '@/lib/api';
+import { getExamScope } from '@/lib/demo/accounts';
 import { bulkCreateQuestionsSchema } from '@/lib/schemas/question';
 import { autoTag } from '@/lib/services/question-tagger';
 
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
     // 테넌트 격리: 호출자가 접근 가능한 시험지인지 검증 (SUPER_ADMIN은 전체 허용)
     // — 미검증 시 타 지점 examPaperId로 deleteMany+재생성(문제은행 파괴) 가능
     const paper = await prisma.examPaper.findFirst({
-      where: { id: examPaperId, ...getTenantFilter(user) },
+      where: { id: examPaperId, ...await getExamScope(user) },
       select: { id: true, tenantId: true },
     });
     if (!paper) {

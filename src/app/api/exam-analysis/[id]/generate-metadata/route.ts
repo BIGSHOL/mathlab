@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, getTenantFilter, notFound, badRequest } from '@/lib/api';
+import { requireTeacher, isResponse, notFound, badRequest } from '@/lib/api';
+import { getExamScope } from '@/lib/demo/accounts';
 import { CommentaryAgent } from '@/lib/exam-analysis/agents/commentary-agent';
 import { findNearbyExamData } from '@/lib/exam-analysis/nearby-school-data';
 import type { BasicAnalysisResult, AnalyzedQuestion } from '@/lib/exam-analysis/types';
@@ -26,7 +27,7 @@ export async function POST(_request: NextRequest, { params }: Params) {
   if (isResponse(user)) return user;
   const { id } = await params;
 
-  const tenantWhere = getTenantFilter(user);
+  const tenantWhere = await getExamScope(user);
   const examPaper = await prisma.examPaper.findFirst({ where: { id, ...tenantWhere } });
   if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
 

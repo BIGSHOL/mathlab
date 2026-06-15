@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, getTenantFilter, badRequest, notFound } from '@/lib/api';
+import { requireTeacher, isResponse, badRequest, notFound } from '@/lib/api';
+import { getExamScope } from '@/lib/demo/accounts';
 import { examPaperUpdateSchema } from '@/lib/exam-analysis/schemas';
 
 type Params = { params: Promise<{ id: string }> };
@@ -12,7 +13,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
   const { id } = await params;
 
   try {
-    const tenantWhere = getTenantFilter(user);
+    const tenantWhere = await getExamScope(user);
     const examPaper = await prisma.examPaper.findFirst({
       where: { id, ...tenantWhere },
       include: {
@@ -49,7 +50,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const { id } = await params;
 
   try {
-    const tenantWhere = getTenantFilter(user);
+    const tenantWhere = await getExamScope(user);
     const existing = await prisma.examPaper.findFirst({
       where: { id, ...tenantWhere },
     });
@@ -82,7 +83,7 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
   const { id } = await params;
 
   try {
-    const tenantWhere = getTenantFilter(user);
+    const tenantWhere = await getExamScope(user);
     const existing = await prisma.examPaper.findFirst({
       where: { id, ...tenantWhere },
       select: { id: true, fileUrls: true },

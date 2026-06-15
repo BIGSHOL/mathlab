@@ -11,6 +11,8 @@
 import { NextResponse } from 'next/server';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
+import { getTenantFilter } from '@/lib/api/tenant-scope';
+import type { AuthUser } from '@/lib/api/auth';
 
 export const DEMO_TENANT_SLUG = 'demo';
 export const DEMO_TENANT_NAME = '데모 체험';
@@ -139,6 +141,22 @@ export async function getDemoContext(user: { id: string; tenantId: string | null
     limit: parsed.accountLimits[user.id] ?? parsed.demoLimit,
     perms: parsed.accountPerms[user.id] ?? { ...DEFAULT_DEMO_PERMS },
   };
+}
+
+/**
+ * ExamPaper 조회 스코프 — 데모 계정 격리.
+ *
+ * 모든 데모 계정이 같은 데모 지점(tenant)을 공유하므로 tenant 스코프(getTenantFilter)만으로는
+ * 데모 계정끼리 서로의 시험지·분석본이 보인다(목록·상세·수정·삭제까지). 데모 계정이면
+ * teacherId(본인)까지 더해 자기 시험지만 다루도록 격리한다. 비-데모 사용자는 기존 tenant 스코프 그대로.
+ *
+ * ⚠️ teacherId 필드를 가진 ExamPaper 쿼리에만 사용할 것. teacherId 없는 모델
+ *    (examSchoolTrend, examFeedback 목록, User 등)에는 getTenantFilter 를 그대로 쓴다.
+ */
+export async function getExamScope(user: AuthUser): Promise<Record<string, unknown>> {
+  const base = getTenantFilter(user);
+  const ctx = await getDemoContext(user);
+  return ctx.isDemo ? { ...base, teacherId: user.id } : base;
 }
 
 /**

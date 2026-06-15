@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, getTenantFilter, notFound, badRequest } from '@/lib/api';
+import { requireTeacher, isResponse, notFound, badRequest } from '@/lib/api';
+import { getExamScope } from '@/lib/demo/accounts';
 import { assertDemoFeature } from '@/lib/demo/accounts';
 import { generateExamArticleStream } from '@/lib/exam-analysis/article-generator';
 import { generateAllChartImages } from '@/lib/exam-analysis/chart-image-generator';
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     // 빈 body는 OK — 변수 없이 생성 (CTA는 단순 마무리로 degrade)
   }
 
-  const tenantWhere = getTenantFilter(user);
+  const tenantWhere = await getExamScope(user);
   const examPaper = await prisma.examPaper.findFirst({
     where: { id, ...tenantWhere },
   });
@@ -251,7 +252,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
   const { id } = await params;
 
   try {
-    const tenantWhere = getTenantFilter(user);
+    const tenantWhere = await getExamScope(user);
     const examPaper = await prisma.examPaper.findFirst({
       where: { id, ...tenantWhere },
     });
@@ -289,7 +290,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
   const { id } = await params;
 
   try {
-    const tenantWhere = getTenantFilter(user);
+    const tenantWhere = await getExamScope(user);
     const examPaper = await prisma.examPaper.findFirst({
       where: { id, ...tenantWhere },
     });

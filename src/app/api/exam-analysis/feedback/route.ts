@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireTeacher, requireOwner, isResponse, getTenantFilter, badRequest } from '@/lib/api';
+import { getExamScope } from '@/lib/demo/accounts';
 
 const VALID_FEEDBACK_TYPES = ['wrong_topic', 'wrong_difficulty', 'wrong_recognition', 'other'];
 
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
   try {
     // 테넌트 격리: 접근 가능한 시험지에만 피드백 생성 (GET과 동일 필터)
     const paper = await prisma.examPaper.findFirst({
-      where: { id: examPaperId, ...getTenantFilter(user) },
+      where: { id: examPaperId, ...(await getExamScope(user)) },
       select: { id: true, tenantId: true },
     });
     if (!paper) {

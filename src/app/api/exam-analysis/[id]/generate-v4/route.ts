@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, getTenantFilter, notFound, badRequest } from '@/lib/api';
+import { requireTeacher, isResponse, notFound, badRequest } from '@/lib/api';
+import { getExamScope } from '@/lib/demo/accounts';
 import { CommentaryAgent } from '@/lib/exam-analysis/agents/commentary-agent';
 import type { BasicAnalysisResult, AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { COMMENTARY_V4_PROMPT_VERSION } from '@/lib/exam-analysis/constants';
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   const body = await request.json().catch(() => ({}));
   const force = body?.force === true;
 
-  const tenantWhere = getTenantFilter(user);
+  const tenantWhere = await getExamScope(user);
   const examPaper = await prisma.examPaper.findFirst({
     where: { id, ...tenantWhere },
   });

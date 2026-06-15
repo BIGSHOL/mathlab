@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, getTenantFilter, badRequest, notFound } from '@/lib/api';
+import { requireTeacher, isResponse, badRequest, notFound } from '@/lib/api';
+import { getExamScope } from '@/lib/demo/accounts';
 import { getSupabase } from '@/lib/supabase';
 
 type Params = { params: Promise<{ id: string }> };
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (isResponse(user)) return user;
   const { id } = await params;
 
-  const tenantWhere = getTenantFilter(user);
+  const tenantWhere = await getExamScope(user);
   const examPaper = await prisma.examPaper.findFirst({ where: { id, ...tenantWhere }, select: { id: true } });
   if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
 

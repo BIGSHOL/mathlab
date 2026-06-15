@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireTeacher, requireOwner, isResponse, getTenantFilter } from '@/lib/api';
+import { getExamScope } from '@/lib/demo/accounts';
 import { DIFFICULTY_LEGACY_MAP } from '@/lib/exam-analysis/constants';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 
@@ -81,7 +82,7 @@ export async function GET(request: NextRequest) {
   try {
     // ── mode=dashboard: 실시간 집계 ──
     if (modeParam === 'dashboard') {
-      return handleDashboard(tenantWhere, subject, grade, schoolName);
+      return handleDashboard(await getExamScope(user), subject, grade, schoolName);
     }
 
     // ── 기존: ExamSchoolTrend 레코드 조회 ──

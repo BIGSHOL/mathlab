@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, getTenantFilter } from '@/lib/api';
+import { requireTeacher, isResponse } from '@/lib/api';
+import { getExamScope } from '@/lib/demo/accounts';
 import { assertPlanFeature } from '@/lib/billing/guard';
 
 /**
@@ -80,7 +81,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const tenantWhere = getTenantFilter(user);
+    const tenantWhere = await getExamScope(user);
 
     // 시험지 title 에서 examYear 추출하는 헬퍼 (examScope 우선)
     const extractMeta = (p: { title: string | null; examScope: unknown }) => {

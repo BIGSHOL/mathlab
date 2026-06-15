@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, getTenantFilter, notFound, badRequest } from '@/lib/api';
+import { requireTeacher, isResponse, notFound, badRequest } from '@/lib/api';
+import { getExamScope } from '@/lib/demo/accounts';
 import { analyzeExam } from '@/lib/exam-analysis/ai-engine';
 import { ExamPromptBuilder } from '@/lib/exam-analysis/prompt-builder';
 import type { ExamContext } from '@/lib/exam-analysis/types';
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     return badRequest(`허용되지 않은 모델: ${modelParam}. 허용: ${[...ALLOWED_MODELS].join(', ')}`);
   }
 
-  const tenantWhere = getTenantFilter(user);
+  const tenantWhere = await getExamScope(user);
   const examPaper = await prisma.examPaper.findFirst({
     where: { id, ...tenantWhere },
   });
