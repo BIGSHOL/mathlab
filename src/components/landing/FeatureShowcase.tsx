@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import katex from 'katex';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
@@ -308,6 +308,12 @@ const POOL: (() => ReactNode)[] = [
 
 const SLOTS = 6;
 
+/**
+ * 동시 노출 금지군 — 같은 그룹의 카드는 한 화면에 하나만.
+ * POOL[0] 난이도·점수 차트 ↔ POOL[7] 난이도 분포(도넛): 둘 다 난이도 분포라 같이 뜨면 중복으로 보임.
+ */
+const GROUP: Record<number, string> = { 0: 'difficulty', 7: 'difficulty' };
+
 /** 한 슬롯(고정 위치) — 같은 자리에서 카드가 3D 플립으로 다른 카드로 바뀜 */
 function FlipSlot({ cardIdx, reduce }: { cardIdx: number; reduce: boolean }) {
   return (
@@ -334,22 +340,36 @@ export function FeatureShowcase() {
   // 슬롯별 표시 카드 (초기 0..5 — 결정적이라 SSR/하이드레이션 안전)
   const [assign, setAssign] = useState<number[]>(() => Array.from({ length: SLOTS }, (_, i) => i));
   const [paused, setPaused] = useState(false);
+  const assignRef = useRef<number[]>(Array.from({ length: SLOTS }, (_, i) => i));
+  // 빠져나가는 중(플립 exit 애니메이션 ~0.5s)인 카드 — 그 사이 다른 슬롯이 같은 카드를 집어 잠깐 겹치는 것 방지
+  const cooldownRef = useRef<Set<number>>(new Set());
 
-  // 각 슬롯이 "각자 다른 주기·위상"으로 독립 플립 → 화면에 없던 카드로 교체(현재 표시 6장 제외라 중복 없음).
-  // Math.random 은 마운트 후 타이머 콜백(클라이언트)에서만 — 초기 렌더는 결정적.
+  // 각 슬롯이 "각자 다른 주기·위상"으로 독립 플립 → 화면에 없던 카드로 교체.
+  // 중복 방지 3중: (1) 현재 표시 6장 제외 (2) 동시노출 금지군(GROUP) 제외 (3) exit 중 카드 쿨다운 제외.
+  // Math.random 은 마운트 후 타이머 콜백(클라이언트)에서만 — 초기 렌더는 결정적(SSR 안전).
   useEffect(() => {
     if (paused) return;
+    cooldownRef.current.clear();
     const timers: ReturnType<typeof setTimeout>[] = [];
     const flip = (slot: number) => {
-      setAssign((prev) => {
-        const used = new Set(prev);
-        const hidden = POOL.map((_, i) => i).filter((i) => !used.has(i));
-        if (!hidden.length) return prev;
-        const pick = hidden[Math.floor(Math.random() * hidden.length)];
-        const next = [...prev];
-        next[slot] = pick;
-        return next;
-      });
+      const prev = assignRef.current;
+      const used = new Set(prev);
+      // 다른 슬롯들이 점유한 그룹 (현재 슬롯 자신은 교체되므로 제외)
+      const otherGroups = new Set(
+        prev.filter((_, s) => s !== slot).map((i) => GROUP[i]).filter(Boolean),
+      );
+      const hidden = POOL.map((_, i) => i).filter(
+        (i) => !used.has(i) && !cooldownRef.current.has(i) && !(GROUP[i] && otherGroups.has(GROUP[i])),
+      );
+      if (!hidden.length) return;
+      const pick = hidden[Math.floor(Math.random() * hidden.length)];
+      const leaving = prev[slot];
+      const next = [...prev];
+      next[slot] = pick;
+      assignRef.current = next;
+      cooldownRef.current.add(leaving);
+      timers.push(setTimeout(() => cooldownRef.current.delete(leaving), 700));
+      setAssign(next);
     };
     for (let slot = 0; slot < SLOTS; slot++) {
       const interval = 3600 + slot * 650;      // 슬롯마다 다른 주기 → 시간이 갈수록 어긋나며 따로 플립
