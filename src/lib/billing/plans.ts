@@ -12,7 +12,7 @@ export interface PlanConfig {
   id: PlanId;
   label: string;
   monthlyAnalyses: number; // 월 분석 쿼터 — 블랭크/템플릿(크레딧 미차감) 분석 전용 남용 가드 (Infinity = 무제한). 크레딧 차감 분석은 쿼터 면제(assertAnalysisGate)
-  monthlyCredits: number; // 구독 갱신마다 자동 충전되는 EXAM_ANALYSIS 크레딧 (para-x 웹훅이 지급)
+  monthlyCredits: number; // 구독 갱신마다 자동 충전되는 EXAM_ANALYSIS 크레딧 (para-x 웹훅이 지급). 당월 결제주기까지만 유효 — 익월 이월 없음(reset)
   commentary: boolean; // AI 총평
   nearby: boolean; // 주변학교·연도 비교
   lsVariantEnv: string | null; // (레거시 LS) Lemon Squeezy Variant ID 환경변수명 — para-x 플랜은 null

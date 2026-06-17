@@ -3,13 +3,14 @@
  *
  * 시나리오:
  *   0. 서명 불일치 401 / 미지원 planId 400 / free planId 400
- *   1. 최초 구독 결제(basic) → 플랜 upsert + 월 크레딧 20 자동 충전(lot 만료일 +1년)
+ *   1. 최초 구독 결제(basic) → 플랜 upsert + 월 크레딧 20 자동 충전(lot 만료일 = periodEnd, 당월 리셋)
  *   2. 같은 주문 재전송(retry-grants 재발송) → 멱등 (중복 충전 없음, 플랜 upsert 무해)
- *   3. 월 갱신(새 orderId) → 기간 연장 + 크레딧 20 추가 충전
+ *   3. 월 갱신(새 orderId, periodEnd 연장) → 기간 연장 + 크레딧 20 추가(미경과라 누적 표시)
  *   4. 플랜별 수량 매핑 (basic 20 / pro 35 / enterprise 80) — para-x 카탈로그와 정합
  *   5. subscription_canceled → status 만 canceled, 기간말까지 플랜 유지
  *   6. 기간 경과 후 free 강등 (getTenantPlan)
- *   7. kind:'credits' 기존 경로 회귀 확인
+ *   7. kind:'credits' 기존 경로 회귀 확인 (만료일 = 충전일 + 1년)
+ *   8. 구독 lot = periodEnd 만료(당월 리셋) vs 건당 lot = 1년 — 대조 + 결제주기 경과 시 소멸 검증
  *
  * 실행: npx tsx scripts/verify-parax-subscription-webhook.ts
  */
@@ -96,7 +97,11 @@ async function main() {
     const credits1 = r1.json.credits as { qty: number; applied: boolean; expiresAt?: string } | null;
     check('200 + 크레딧 20 지급 응답', r1.status === 200 && credits1?.qty === 20 && credits1?.applied === true,
       `status=${r1.status}, credits=${JSON.stringify(credits1)}`);
-    check('크레딧 만료일 = 충전일 + 1년', nearOneYear(credits1?.expiresAt), `expiresAt=${credits1?.expiresAt}`);
+    check('크레딧 만료일 = periodEnd(결제주기말, 30일 후) — 당월 리셋, 1년 아님',
+      !!credits1?.expiresAt
+        && Math.abs(new Date(credits1.expiresAt).getTime() - new Date(isoIn(30)).getTime()) < 60_000
+        && !nearOneYear(credits1?.expiresAt),
+      `expiresAt=${credits1?.expiresAt}`);
 
     const sub1 = await prisma.tenantSubscription.findUnique({ where: { tenantId: T } });
     check('TenantSubscription: plan=basic, status=active, periodEnd 기록',
@@ -160,6 +165,24 @@ async function main() {
     const r7 = await call({ orderId: 'test-sub-O5', tenantId: T, buyerUserId: null, kind: 'credits', feature: 'EXAM_ANALYSIS', qty: 10, amount: 80000 });
     check('일회성 크레딧 충전 정상 (잔액 155+10=165)', r7.status === 200 && (await poolBalance(T)) === 165,
       `status=${r7.status}, balance=${await poolBalance(T)}`);
+
+    console.log('\n8. 구독 lot = periodEnd 만료(당월 리셋) vs 건당 lot = 1년 + 결제주기 경과 시 소멸');
+    const subLot = await prisma.entitlementCreditLot.findFirst({ where: { tenantId: T, refOrderId: 'test-sub-O1:monthly-credits' } });
+    check('구독 충전분 만료일 ≈ periodEnd(30일 후), 1년 아님',
+      !!subLot && Math.abs(subLot.expiresAt.getTime() - new Date(isoIn(30)).getTime()) < 60_000 && !nearOneYear(subLot.expiresAt.toISOString()),
+      `expiresAt=${subLot?.expiresAt.toISOString()}`);
+    const useLot = await prisma.entitlementCreditLot.findFirst({ where: { tenantId: T, refOrderId: 'test-sub-O5' } });
+    check('건당(kind:credits) 충전분 만료일 = 충전일 + 1년',
+      !!useLot && nearOneYear(useLot.expiresAt.toISOString()), `expiresAt=${useLot?.expiresAt.toISOString()}`);
+    const before8 = await poolBalance(T);
+    // 결제 주기 경과 시뮬레이션: 구독 충전분(O1, 20개)의 만료일을 과거로 → 당월 리셋(소멸) 확인
+    await prisma.entitlementCreditLot.updateMany({
+      where: { tenantId: T, refOrderId: 'test-sub-O1:monthly-credits' },
+      data: { expiresAt: new Date(Date.now() - 86400_000) },
+    });
+    const after8 = await poolBalance(T);
+    check('구독 충전분 결제주기 경과 → 잔액에서 제외(당월 리셋, 20 감소)', before8 - after8 === 20,
+      `before=${before8}, after=${after8}`);
 
     console.log(`\n결과: ${pass} 통과 / ${fail} 실패`);
     if (fail > 0) process.exitCode = 1;

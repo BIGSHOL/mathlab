@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { prisma } from '@/lib/db';
-import { grantCredits, isLicenseFeature } from '@/lib/entitlements/service';
+import { grantCredits, isLicenseFeature, subscriptionCreditExpiryFrom } from '@/lib/entitlements/service';
 import { isPlanId, PLANS } from '@/lib/billing/plans';
 
 export const dynamic = 'force-dynamic';
@@ -12,10 +12,10 @@ export const dynamic = 'force-dynamic';
  * payload: { orderId, tenantId, buyerUserId, kind:'credits'|'subscription'|'subscription_canceled',
  *            feature, qty, planId, amount, periodEnd, currentPeriodEnd }
  * 멱등: EntitlementLedger.refOrderId. 비2xx 면 para-x 가 재시도(retry-grants 재발송).
- * 크레딧 유효기간(약관 제6조): 충전일로부터 1년 — grantCredits 가 lot(expiresAt) 기록, 응답에 expiresAt 포함.
+ * 크레딧 유효기간(약관 제6조): 건당 구매(kind:'credits')는 충전일+1년, 구독 월 포함분은 결제주기 종료일까지(당월 리셋).
  * 구독(kind:'subscription')은 최초 결제·월 갱신마다 들어오며 플랜 upsert + 월 크레딧 자동 충전
- * (PLANS[planId].monthlyCredits → grantCredits, refOrderId=`<orderId>:monthly-credits`)을 함께 수행
- * — 월 충전분도 각 충전일 기준 1년 만료가 동일 적용된다. 갱신마다 orderId 가 달라 매월 새로 지급되고,
+ * (PLANS[planId].monthlyCredits → grantCredits, refOrderId=`<orderId>:monthly-credits`, expiresAt=periodEnd)을 함께 수행
+ * — 구독 포함분은 당월 사용·익월 이월 없음(use-it-or-lose-it). 갱신마다 orderId 가 달라 매월 새로 지급되고,
  * 같은 주문 재전송은 ledger 유니크로 멱등. 크레딧 지급 실패 시 비2xx → para-x 재시도(플랜 upsert 는 멱등이라 재실행 무해).
  */
 export async function POST(request: NextRequest) {
@@ -90,7 +90,8 @@ export async function POST(request: NextRequest) {
         update: fields,
       });
 
-      // 구독 월 크레딧 자동 충전 (마케팅: basic 20 / pro 35 / enterprise 80 회) — 멱등(ledger refOrderId 유니크).
+      // 구독 월 크레딧 자동 충전 (월정액 서비스: basic 20 / pro 35 / enterprise 80 회) — 멱등(ledger refOrderId 유니크).
+      // 만료 = 결제 주기 종료일(periodEnd) → 당월 사용, 익월 이월 없음(reset). 다음 갱신이 새 회차를 지급.
       // 여기서 throw 되면 외부 catch 가 500 반환 → para-x 가 같은 orderId 로 재시도하고,
       // 위 플랜 upsert 는 멱등이라 재실행돼도 무해하다 (부분 실패 수렴).
       const monthlyCredits = PLANS[planId].monthlyCredits;
@@ -100,6 +101,7 @@ export async function POST(request: NextRequest) {
           refOrderId: `${orderId}:monthly-credits`,
           userId: buyerUserId, // 월 갱신(charge-billing)엔 없음 → null
           amount: g?.amount != null ? Number(g.amount) : null,
+          expiresAt: subscriptionCreditExpiryFrom(new Date(), periodEnd), // 당월 결제주기까지만 유효
         });
         credits = { qty: monthlyCredits, applied: result.applied, expiresAt: result.expiresAt };
       }

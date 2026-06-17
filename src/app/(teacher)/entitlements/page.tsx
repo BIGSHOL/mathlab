@@ -18,8 +18,8 @@ const featureLabel = (f: string) => FEATURE_LABELS[f] ?? f;
 
 // 구매 가능한 이용권 상품(para-x 카탈로그와 id 일치). 가격은 결제 화면에서 확정 표시.
 const CREDIT_PRODUCTS = [
+  { id: 'credit-exam-3', label: '기출분석 3회' },
   { id: 'credit-exam-10', label: '기출분석 10회' },
-  { id: 'credit-exam-20', label: '기출분석 20회' },
   { id: 'credit-exam-30', label: '기출분석 30회' },
 ];
 
@@ -151,8 +151,8 @@ export default function EntitlementsPage() {
         </div>
         <p className="text-[11px] text-slate-400 mt-2">결제하면 지점 풀에 충전됩니다. 가격은 결제 화면에서 확인하세요.</p>
         <p className="text-[11px] text-slate-500 mt-1">
-          이용권(크레딧)은 <b>충전일로부터 1년간 유효</b>하며, 유효기간이 지나면 자동 소멸됩니다.
-          소멸된 이용권은 환불 대상이 아니며, 현금화·양도·대여할 수 없습니다.
+          건당 구매한 이용권은 <b>충전일로부터 1년간 유효</b>하고, 구독에 포함된 월 이용권은 <b>해당 결제 주기(당월) 내에만 사용</b>할 수 있으며 미사용분은 이월되지 않습니다.
+          유효기간이 지난 이용권은 자동 소멸되며 환불 대상이 아니고, 현금화·양도·대여할 수 없습니다.
         </p>
       </div>
 

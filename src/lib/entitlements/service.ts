@@ -20,16 +20,29 @@ function isUniqueViolation(e: unknown): boolean {
 }
 
 // ───────────────────────────────────────────────────────────────
-//  크레딧 유효기간 (약관 제6조: 충전일로부터 1년, 경과 시 소멸)
+//  크레딧 유효기간 (약관 제6조)
+//  - 일회성 구매 이용권(건당): 충전일로부터 1년 (creditExpiryFrom)
+//  - 구독 월 포함분: 해당 결제 주기 종료일까지 (subscriptionCreditExpiryFrom) — 당월 사용, 익월 이월 없음(reset)
 //  충전 단위 lot(EntitlementCreditLot)으로 추적 — userId null = 지점 풀, 값 = 학생 배정분.
 //  사용 가능 잔액 = SUM(remaining) WHERE expiresAt > now (만료는 조회 시점 계산, sweep 없음).
-//  차감 순서 = 만료 임박분 우선 (FIFO by expiresAt).
+//  차감 순서 = 만료 임박분 우선 (FIFO by expiresAt) → 당월 소멸 구독분이 1년 건당분보다 먼저 소진.
 // ───────────────────────────────────────────────────────────────
 
-/** 충전일 기준 만료일 — 충전일 + 1년 */
+/** 일회성 구매 이용권 만료 — 충전일 + 1년 */
 export function creditExpiryFrom(grantedAt: Date): Date {
   const d = new Date(grantedAt);
   d.setFullYear(d.getFullYear() + 1);
+  return d;
+}
+
+/**
+ * 구독 월 포함분 만료 — 결제 주기 종료일(periodEnd)까지. 당월 사용, 익월 이월 없음(reset).
+ * periodEnd 가 없거나 과거면 충전일+1개월로 폴백(말일 보정은 setMonth 에 위임).
+ */
+export function subscriptionCreditExpiryFrom(grantedAt: Date, periodEnd?: Date | null): Date {
+  if (periodEnd && periodEnd.getTime() > grantedAt.getTime()) return periodEnd;
+  const d = new Date(grantedAt);
+  d.setMonth(d.getMonth() + 1);
   return d;
 }
 
@@ -54,14 +67,14 @@ export interface GrantResult {
   applied: boolean; // false = 멱등(이미 적립된 주문)
   balance?: number;
   totalPurchased?: number;
-  expiresAt?: string; // 이번 충전분 만료일 (충전일 + 1년)
+  expiresAt?: string; // 이번 충전분 만료일 (건당=충전일+1년, 구독=결제주기 종료일)
 }
 
 /**
  * 지점(Tenant) 이용권 풀에 크레딧 충전 — para-x 결제 승인 → 적립.
- * 원장(EntitlementLedger) 기록 + lot 생성(만료일 = 충전일 + 1년) + 풀(TenantEntitlement) 증가를 한 트랜잭션으로.
- * 구독 월 충전분도 같은 함수로 지급된다(웹훅 subscription 분기가 매 갱신마다 PLANS.monthlyCredits 만큼 호출,
- * refOrderId=`<orderId>:monthly-credits`) → 각 충전일 기준 1년 만료가 동일 적용.
+ * 원장(EntitlementLedger) 기록 + lot 생성 + 풀(TenantEntitlement) 증가를 한 트랜잭션으로.
+ * 만료일: 기본은 충전일+1년(일회성 건당 구매). 구독 월 포함분은 호출부(웹훅 subscription 분기)가
+ *   opts.expiresAt 에 결제 주기 종료일을 넘겨 당월 리셋(익월 이월 없음)을 적용한다.
  * 멱등: refOrderId 가 EntitlementLedger 에서 유니크 → 같은 주문 재시도는 중복 적립 안 함
  *       (선조회 + 유니크 제약 백스톱으로 동시성 레이스까지 차단).
  */
@@ -69,13 +82,14 @@ export async function grantCredits(
   tenantId: string,
   feature: LicenseFeature,
   qty: number,
-  opts: { refOrderId?: string | null; userId?: string | null; amount?: number | null } = {},
+  opts: { refOrderId?: string | null; userId?: string | null; amount?: number | null; expiresAt?: Date | null } = {},
 ): Promise<GrantResult> {
-  const { refOrderId = null, userId = null, amount = null } = opts;
+  const { refOrderId = null, userId = null, amount = null, expiresAt: expiresAtOverride = null } = opts;
   if (!Number.isInteger(qty) || qty <= 0) throw new Error('qty must be a positive integer');
 
   const grantedAt = new Date();
-  const expiresAt = creditExpiryFrom(grantedAt);
+  // 기본 = 건당 1년 만료. 구독 월 포함분은 호출부가 결제주기 종료일을 넘긴다(당월 리셋).
+  const expiresAt = expiresAtOverride ?? creditExpiryFrom(grantedAt);
 
   try {
     return await prisma.$transaction(async (tx) => {
