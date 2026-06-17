@@ -116,7 +116,8 @@ export function V3CommentaryView({ commentary, questions, meta, charts }: V3Comm
       {/* ① 헤더 */}
       <header className="v3-top">
         <span className="v3-kicker">{kicker}</span>
-        <h1>{renderInlineMath(headline, 'v3-hl', { disableHighlight: true })}</h1>
+        {/* 균형 줄바꿈 — 마지막 줄에 어절이 외톨이로 떨어지지 않게 두 줄 길이를 맞춘다(keep-all로 단어 중간 끊김 방지) */}
+        <h1 style={{ textWrap: 'balance', wordBreak: 'keep-all' }}>{renderInlineMath(headline, 'v3-hl', { disableHighlight: true })}</h1>
         {dek && <p className="v3-dek">{renderInlineMath(koDifficultyText(dek), 'v3-dek', { disableHighlight: true })}</p>}
         <div className="v3-meta">
           <span className="v3-author">매스랩 AI 분석</span>
