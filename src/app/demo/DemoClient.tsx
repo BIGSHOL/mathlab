@@ -346,7 +346,7 @@ export function DemoClient() {
               )}
               {selectedItem?.status === 'COMPLETED' && selectedItem.withCommentary && (
                 <DemoGuide tone="done">
-                  여기까지가 전 과정입니다 — 총평 우측 상단 <b>[이미지 복사]</b>로 블로그 발행용 캡처까지 체험할 수 있습니다.
+                  여기까지가 전 과정입니다 — 총평 우측 상단 <b>[블로그용 총평지]</b>로 블로그 발행용 캡처까지 체험할 수 있습니다.
                   도입을 원하시면 상단 <b>[도입 문의]</b>를 이용하세요.
                 </DemoGuide>
               )}

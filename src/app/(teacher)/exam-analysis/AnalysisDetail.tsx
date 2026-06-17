@@ -548,6 +548,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
     }
 
     const reused = blocks.length > 0;
+    let captureComplete = true; // 캡처 누락 없이 전부 잡혔는지 — 부분 캡처면 캐시하지 않는다
     const tid = toast.loading(reused ? '저장된 캡처 재사용 — 복사 준비 중...' : '실제 V3 화면 캡처·업로드 준비 중...');
     try {
       // 데모 — 사전 베이크된 열화 캡처(정적 자산) 사용. 실시간 캡처·업로드를 생략해
@@ -603,8 +604,13 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
         }
         // 캡처 끝 → 인라인 폭 제거(원래 CSS 흐름 복귀). 저장값 복원이 아니라 '' 클리어 = 동시 실행돼도 stuck 안 됨.
         root.style.width = '';
-        // 캐시 저장 — 다음 복사 때 동일 내용이면 위 캡처 루프를 통째로 건너뜀
-        try { localStorage.setItem(cacheKey, JSON.stringify({ sig, blocks, savedAt: Date.now() })); } catch { /* 용량 초과 등 무시 */ }
+        // 모든 섹션을 빠짐없이 캡처했을 때만 캐시. 캡처 도중 화면 전환/클릭으로 .v3 가 떨어져
+        // 일부만 잡히면(중단) 캐시하지 않아, 다음 복사에서 전체를 다시 캡처한다(부분 캡처가 굳는 버그 방지).
+        captureComplete = nodes.length > 0 && blocks.length === nodes.length;
+        try {
+          if (captureComplete) localStorage.setItem(cacheKey, JSON.stringify({ sig, blocks, savedAt: Date.now() }));
+          else localStorage.removeItem(cacheKey);
+        } catch { /* 용량 초과 등 무시 */ }
       }
       if (!blocks.length) { toast.error('캡처/업로드된 섹션이 없습니다', undefined, tid); return; }
 
@@ -668,11 +674,15 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
         }
       }
       if (!copied) throw new Error('클립보드 복사 실패 — 창을 클릭해 포커스를 둔 뒤 다시 시도하세요');
-      toast.success(`${blocks.length}개 섹션 이미지 + 요약이 복사되었습니다.${reused ? ' (저장된 캡처 재사용)' : ''} 네이버 블로그에 붙여넣으세요.`, undefined, tid);
+      if (captureComplete) {
+        toast.success(`${blocks.length}개 섹션 이미지 + 요약이 복사되었습니다.${reused ? ' (저장된 캡처 재사용)' : ''} 네이버 블로그에 붙여넣으세요.`, undefined, tid);
+      } else {
+        toast.error(`일부 섹션만 캡처됐습니다(화면 전환 감지) — ${blocks.length}개만 복사됨. 화면을 그대로 둔 채 [블로그용 총평지]를 다시 누르면 전체가 캡처됩니다.`, undefined, tid);
+      }
       // 복사 이벤트 기록 (강사 활동 추적 + 데모 모니터링 '복사' 카운트). fire-and-forget.
       void fetch(`/api/exam-analysis/${detail.id}/article-copy`, { method: 'POST' }).catch(() => {});
     } catch (e) {
-      toast.error('이미지 복사 실패: ' + (e instanceof Error ? e.message : String(e)), undefined, tid);
+      toast.error('블로그용 총평지 복사 실패: ' + (e instanceof Error ? e.message : String(e)), undefined, tid);
     } finally {
       root.style.width = ''; // 안전망: 에러/동시실행에도 인라인 폭 제거 (stuck 960px 방지)
       copyingRef.current = false;   // 잠금 해제 → 다시 클릭 가능

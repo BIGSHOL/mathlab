@@ -230,11 +230,11 @@ export function CommentarySection({
       size="sm"
       onClick={() => { if (!isExpanded) setIsExpanded(true); onCopyImages(); }}
       disabled={copyingImages}
-      title="총평을 섹션 이미지로 캡처해 네이버 블로그용으로 복사 (접혀 있으면 자동으로 펼칩니다)"
+      title="총평을 섹션 이미지로 캡처해 블로그용 총평지로 복사 (네이버 블로그 붙여넣기용 · 접혀 있으면 자동으로 펼칩니다)"
       className="h-7 px-2 text-xs bg-[#BF1722] hover:bg-[#9A1219] text-white disabled:opacity-50 disabled:cursor-not-allowed"
     >
       <Copy className="w-3.5 h-3.5 mr-1" />
-      {copyingImages ? '복사 중...' : '이미지 복사'}
+      {copyingImages ? '복사 중...' : '블로그용 총평지'}
     </Button>
   ) : null;
   const staleBanner = isStale ? (
@@ -373,7 +373,11 @@ export function CommentarySection({
               <span className="text-xs text-indigo-700 font-medium">{elapsedSeconds}초 경과</span>
             </div>
             <div className="h-1 bg-indigo-100 rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-brand-indigo to-brand-cyan animate-pulse" style={{ width: '60%' }} />
+              {/* 경과시간 비례(평균 60~120초). 실제 % 스트리밍이 없어 시간 기반 추정 — 0에서 시작해 96%까지 상승 */}
+              <div
+                className="h-full bg-gradient-to-r from-brand-indigo to-brand-cyan transition-all duration-1000 ease-linear"
+                style={{ width: `${Math.min((elapsedSeconds / 110) * 100, 96)}%` }}
+              />
             </div>
             <p className="text-[11px] text-indigo-700 mt-2">
               AI가 종합 평가 + V3 강화 필드(문항별 표·영역별 분석·Q&A·단원 피드백)를 생성 중입니다. 평균 60~120초 소요.
