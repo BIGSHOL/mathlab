@@ -1104,7 +1104,7 @@ ${lines.join('\n')}
       // category가 있으면 관련 유형 우선 (키=고등 과목명 유지, 값=4대 영역)
       if (context.category) {
         const categoryTypeMap: Record<string, string[]> = {
-          '공통수학1': ['change_relation', 'number'],
+          '공통수학1': ['change_relation', 'data_possibility'],
           '공통수학2': ['shape_measure', 'change_relation'],
           '대수': ['change_relation'],
           '미적분I': ['change_relation'],
