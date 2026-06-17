@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Ticket, RefreshCw, ShoppingCart } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { Ticket, RefreshCw, ShoppingCart, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { toast } from '@/components/ui/Toast';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
-import { AdminTable, type AdminTableColumn, type AdminTableSort } from '@/components/admin-table';
 
 const FEATURE_LABELS: Record<string, string> = {
   EXAM_ANALYSIS: '기출분석', WORKSHEET: '학습지', CONCEPT: '개념', ARITHMETIC: '연산',
@@ -24,22 +24,17 @@ const CREDIT_PRODUCTS = [
 ];
 
 type Pool = { feature: string; balance: number; totalPurchased: number; nextExpiry?: { qty: number; at: string } | null };
-type Lic = { feature: string; allocated: number; used: number; usable?: number };
 
 const formatExpiry = (iso: string) => {
   const d = new Date(iso);
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 };
-type Student = { id: string; name: string; username: string; grade: number | null; licenses: Lic[] };
 
-/** 이용권 배정 — 원장(OWNER+)이 지점 풀을 학생에게 배정. para-x 결제로 충전된 풀 사용. */
+/** 이용권 — 원장(OWNER+)이 지점 이용권 풀을 확인·충전. 기출분석 시 풀에서 자동 차감(선생님 누구나, 학생 배정 불필요). */
 export default function EntitlementsPage() {
   const { user } = useAuth();
   const [pools, setPools] = useState<Pool[]>([]);
-  const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
-  const [feature, setFeature] = useState('EXAM_ANALYSIS');
-  const [sort, setSort] = useState<AdminTableSort>({ columnId: 'name', direction: 'asc' });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -48,7 +43,6 @@ export default function EntitlementsPage() {
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error?.message ?? '불러오기 실패');
       setPools(json.data?.pools ?? []);
-      setStudents(json.data?.students ?? []);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -57,75 +51,17 @@ export default function EntitlementsPage() {
   }, []);
   useEffect(() => { void load(); }, [load]);
 
-  const featureOptions = useMemo(() => {
-    const set = new Set<string>(pools.map((p) => p.feature));
-    set.add('EXAM_ANALYSIS');
-    return Array.from(set);
-  }, [pools]);
-
-  const pool = pools.find((p) => p.feature === feature);
-  const licOf = useCallback((s: Student) => s.licenses.find((l) => l.feature === feature), [feature]);
-  // 잔여 = 만료분 제외 사용 가능량 (서버 lot 집계 — 구버전 응답은 allocated-used 폴백)
-  const remainingOf = useCallback((s: Student) => { const l = licOf(s); return l ? (l.usable ?? l.allocated - l.used) : 0; }, [licOf]);
-
-  const allocate = async (s: Student) => {
-    const raw = window.prompt(`${s.name} 학생에게 배정할 ${featureLabel(feature)} 수량`, '5');
-    if (raw == null) return;
-    const qty = Number(raw);
-    if (!Number.isInteger(qty) || qty <= 0) { toast.error('양의 정수를 입력하세요'); return; }
-    try {
-      const res = await fetch('/api/entitlements/allocate', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: s.id, feature, qty }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error?.message ?? '배정 실패');
-      toast.success(`${s.name}에게 ${qty}개 배정했습니다`);
-      void load();
-    } catch (e) { toast.error((e as Error).message); }
-  };
-
-  const onSortChange = (columnId: string) =>
-    setSort((s) => (s.columnId === columnId ? { columnId, direction: s.direction === 'asc' ? 'desc' : 'asc' } : { columnId, direction: 'asc' }));
-
-  const sortedStudents = useMemo(() => {
-    const dir = sort.direction === 'asc' ? 1 : -1;
-    const val = (s: Student): string | number => {
-      switch (sort.columnId) {
-        case 'name': return s.name ?? '';
-        case 'username': return s.username ?? '';
-        case 'grade': return s.grade ?? 0;
-        case 'allocated': return licOf(s)?.allocated ?? 0;
-        case 'used': return licOf(s)?.used ?? 0;
-        case 'remaining': return remainingOf(s);
-        default: return '';
-      }
-    };
-    return [...students].sort((a, b) => {
-      const va = val(a), vb = val(b);
-      if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir;
-      return String(va).localeCompare(String(vb), 'ko') * dir;
-    });
-  }, [students, sort, licOf, remainingOf]);
-
   if (user && !hasRoleClient(user.role, 'OWNER')) {
     return <div className="p-8 text-center text-slate-500">원장 전용 페이지입니다.</div>;
   }
 
-  const columns: AdminTableColumn<Student>[] = [
-    { id: 'name', header: '이름', sortable: true, render: (s) => <b>{s.name}</b> },
-    { id: 'username', header: '아이디', sortable: true, render: (s) => <span className="text-slate-500">{s.username}</span> },
-    { id: 'grade', header: '학년', sortable: true, render: (s) => (s.grade ? `${s.grade}학년` : '-') },
-    { id: 'allocated', header: '배정', sortable: true, render: (s) => licOf(s)?.allocated ?? 0 },
-    { id: 'used', header: '사용', sortable: true, render: (s) => licOf(s)?.used ?? 0 },
-    { id: 'remaining', header: '잔여', sortable: true, render: (s) => <b className={remainingOf(s) > 0 ? 'text-emerald-600' : 'text-slate-400'}>{remainingOf(s)}</b> },
-    { id: 'actions', header: '', render: (s) => <Button size="sm" variant="secondary" onClick={() => allocate(s)}>배정</Button> },
-  ];
+  // EXAM_ANALYSIS 는 항상 노출, 그 외 기능은 풀이 있을 때만.
+  const features = Array.from(new Set<string>(['EXAM_ANALYSIS', ...pools.map((p) => p.feature)]));
 
   return (
     <PageContainer maxWidth="lg">
       <PageHeader
-        title="이용권 배정"
+        title="이용권"
         icon={<Ticket className="w-6 h-6" />}
         backHref="/exam-analysis"
         actions={
@@ -149,54 +85,48 @@ export default function EntitlementsPage() {
             </a>
           ))}
         </div>
-        <p className="text-[11px] text-slate-400 mt-2">결제하면 지점 풀에 충전됩니다. 가격은 결제 화면에서 확인하세요.</p>
+        <p className="text-[11px] text-slate-400 mt-2">결제하면 우리 지점 이용권 풀에 충전됩니다. 가격은 결제 화면에서 확인하세요.</p>
         <p className="text-[11px] text-slate-500 mt-1">
           건당 구매한 이용권은 <b>충전일로부터 1년간 유효</b>하고, 구독에 포함된 월 이용권은 <b>해당 결제 주기(당월) 내에만 사용</b>할 수 있으며 미사용분은 이월되지 않습니다.
           유효기간이 지난 이용권은 자동 소멸되며 환불 대상이 아니고, 현금화·양도·대여할 수 없습니다.
         </p>
       </div>
 
-      {/* 지점 풀 잔액 */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-5">
-        {featureOptions.map((f) => {
-          const p = pools.find((x) => x.feature === f);
-          return (
-            <button
-              key={f}
-              onClick={() => setFeature(f)}
-              className={`text-left p-4 border rounded-sm transition-colors ${f === feature ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 bg-white hover:bg-slate-50'}`}
-            >
-              <div className="text-xs text-slate-500">{featureLabel(f)} 풀 잔여</div>
-              <div className="text-2xl font-bold text-slate-800">{p?.balance ?? 0}</div>
-              <div className="text-[11px] text-slate-400">누적 구매 {p?.totalPurchased ?? 0}</div>
-              {p?.nextExpiry && (
-                <div className="text-[11px] text-amber-600 mt-0.5">
-                  {p.nextExpiry.qty}개 · {formatExpiry(p.nextExpiry.at)} 만료 예정
+      {/* 지점 이용권 잔여 */}
+      {loading ? (
+        <div className="py-10 text-center text-sm text-slate-400">불러오는 중…</div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+          {features.map((f) => {
+            const p = pools.find((x) => x.feature === f);
+            return (
+              <div key={f} className="text-left p-4 border border-slate-200 rounded-sm bg-white">
+                <div className="text-xs text-slate-500">{featureLabel(f)} 이용권 잔여</div>
+                <div className="text-2xl font-bold text-slate-800">
+                  {p?.balance ?? 0}<span className="text-sm font-normal text-slate-400 ml-1">회</span>
                 </div>
-              )}
-            </button>
-          );
-        })}
-      </div>
+                <div className="text-[11px] text-slate-400">누적 구매 {p?.totalPurchased ?? 0}</div>
+                {p?.nextExpiry && (
+                  <div className="text-[11px] text-amber-600 mt-0.5">
+                    {p.nextExpiry.qty}개 · {formatExpiry(p.nextExpiry.at)} 만료 예정
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
-      {/* 기능 선택 */}
-      <div className="flex items-center gap-2 mb-3 flex-wrap">
-        <span className="text-sm text-slate-500">기능</span>
-        <select className="border border-slate-200 rounded px-2 h-9 text-sm" value={feature} onChange={(e) => setFeature(e.target.value)}>
-          {featureOptions.map((f) => <option key={f} value={f}>{featureLabel(f)}</option>)}
-        </select>
-        <span className="text-sm text-slate-400">· {featureLabel(feature)} 풀 잔여 <b className="text-slate-700">{pool?.balance ?? 0}</b></span>
+      {/* 사용 안내 + 강사별 활동 */}
+      <div className="p-4 border border-slate-200 rounded-sm bg-slate-50/60 text-sm text-slate-600">
+        <p>
+          기출분석을 실행하면 <b>우리 지점 이용권에서 1회씩 자동 차감</b>됩니다.
+          선생님 누구나 바로 사용할 수 있고, 학생별로 따로 배정할 필요가 없습니다.
+        </p>
+        <Link href="/exam-analysis/admin" className="inline-flex items-center gap-1.5 mt-2 text-indigo-600 hover:text-indigo-700 font-medium">
+          <BarChart3 className="w-3.5 h-3.5" /> 선생님별 분석 활동 보기
+        </Link>
       </div>
-
-      <AdminTable
-        columns={columns}
-        rows={sortedStudents}
-        loading={loading}
-        rowKey={(s) => s.id}
-        sort={sort}
-        onSortChange={onSortChange}
-        emptyMessage="학생이 없습니다"
-      />
     </PageContainer>
   );
 }

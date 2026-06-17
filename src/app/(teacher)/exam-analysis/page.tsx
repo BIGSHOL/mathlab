@@ -342,20 +342,26 @@ export default function ExamAnalysisPage() {
 
   // 사이드바 배지 — 데모 계정은 '체험 잔여/총', 그 외는 월 분석 한도.
   const dm = demo && demo.isDemo ? demo : null;
-  const quotaIsExceeded = dm ? dm.remaining <= 0 : quotaExceeded(usage);
+  const poolBal = usage.poolBalance ?? 0;
+  // 이용권(지점 풀)이 있으면 그걸로 차감 → 한도초과 아님. 풀 0 + 무료한도 소진일 때만 초과.
+  const quotaIsExceeded = dm ? dm.remaining <= 0 : (poolBal <= 0 && quotaExceeded(usage));
   const quotaIsUnlimited = !dm && usage.limit === null;
   const quotaBadgeText = dm
     ? `체험 ${dm.remaining}/${dm.limit}`
-    : quotaIsUnlimited ? '무제한' : `${usage.used}/${usage.limit}`;
+    : poolBal > 0 ? `이용권 ${poolBal}`
+    : quotaIsUnlimited ? '무제한'
+    : `무료 ${usage.used}/${usage.limit}`;
   const quotaTitle = dm
     ? (dm.remaining <= 0
         ? `데모 체험 분석을 모두 사용했습니다 (총 ${dm.limit}회). 정식 도입 문의로 계속 이용하실 수 있어요.`
         : `데모 체험 분석 — 남은 ${dm.remaining}회 / 총 ${dm.limit}회`)
-    : quotaIsExceeded
-      ? `이번 달 분석 한도 ${usage.limit}회를 모두 사용했어요. 학생 이용권으로 한 분석은 제외됩니다. 클릭하면 구독·한도를 관리할 수 있어요.`
-      : quotaIsUnlimited
-        ? `이번 달 분석 ${usage.used}회 사용 · 한도 무제한. 클릭하면 구독·한도를 관리할 수 있어요.`
-        : `이번 달 분석 ${usage.used}/${usage.limit}회 사용. 학생 이용권으로 한 분석은 제외됩니다. 클릭하면 구독·한도를 관리할 수 있어요.`;
+    : poolBal > 0
+      ? `기출분석 이용권 ${poolBal}회 남음. 분석할 때마다 1회씩 차감됩니다. 클릭하면 이용권·구독을 관리할 수 있어요.`
+      : quotaIsExceeded
+        ? `이용권이 없고 이번 달 무료 한도(${usage.limit}회)도 모두 사용했어요. 이용권을 충전하거나 플랜을 업그레이드하세요.`
+        : quotaIsUnlimited
+          ? `무제한 플랜입니다. 클릭하면 구독·한도를 관리할 수 있어요.`
+          : `무료 분석 한도 ${usage.used}/${usage.limit}회 사용(이용권 없음). 클릭하면 이용권·구독을 관리할 수 있어요.`;
 
   return (
     <NarrowScreenGuard minWidth={1024} label="기출 분석">
@@ -405,7 +411,7 @@ export default function ExamAnalysisPage() {
           <div className="flex items-center gap-1 p-2 border-b">
             {isOwnerPlus && (
               <Link href="/exam-analysis/admin" className="flex-none">
-                <Button size="sm" variant="ghost" title="패턴 관리">
+                <Button size="sm" variant="ghost" title="분석 관리 (강사별 통계·레퍼런스·학습 패턴)">
                   <Settings2 className="w-4 h-4" />
                 </Button>
               </Link>

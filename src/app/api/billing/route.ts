@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse, forbidden, hasRole } from '@/lib/api';
 import { getPlanConfig } from '@/lib/billing/plans';
-import { getTenantPlan, getMonthlyAnalysisCount, monthBounds, isBetaAllPro } from '@/lib/billing/guard';
+import { getTenantPlan, getMonthlyQuotaUsed, monthBounds, isBetaAllPro } from '@/lib/billing/guard';
+import { poolUsableBalance } from '@/lib/entitlements/service';
 import { isLemonSqueezyConfigured } from '@/lib/billing/lemonsqueezy';
 import { getDemoContext, countDemoUsage } from '@/lib/demo/accounts';
 
@@ -34,7 +35,7 @@ export async function GET() {
       data: {
         plan: 'free',
         status: 'inactive',
-        usage: { used: 0, limit: null, resetAt }, // 무제한
+        usage: { used: 0, limit: null, resetAt, poolBalance: 0 }, // 무제한
         features: { commentary: true, nearby: true }, // 전 기능 해금 (서버 면제와 일치)
         lemonSqueezyConfigured: configured,
         allowDemoUpgrade,
@@ -50,8 +51,9 @@ export async function GET() {
   const sub = await prisma.tenantSubscription.findUnique({ where: { tenantId } });
   const plan = await getTenantPlan(tenantId); // 만료 강등 반영
   const cfg = getPlanConfig(plan);
-  // 쿼터 대상(블랭크/템플릿) 분석만 집계 — 학생 이용권 차감 분석은 쿼터 면제라 사용량에 포함 안 함
-  const used = await getMonthlyAnalysisCount(tenantId);
+  // used = 이번 달 "무료 한도(quota)로 처리된" 분석 수. 지점 풀(이용권)에서 차감된 분석은 미포함.
+  const used = await getMonthlyQuotaUsed(tenantId);
+  const poolBalance = await poolUsableBalance(tenantId, 'EXAM_ANALYSIS'); // 이용권 잔여(만료 제외)
   const limit = Number.isFinite(cfg.monthlyAnalyses) ? cfg.monthlyAnalyses : null; // Infinity → null(무제한)
 
   // 데모 계정: 잔여 체험 횟수 + 계정별 권한을 클라이언트에 노출 → 사전 차단·버튼 비활성·안내에 사용.
@@ -74,7 +76,7 @@ export async function GET() {
     data: {
       plan,
       status: sub?.status ?? 'inactive',
-      usage: { used, limit, resetAt },
+      usage: { used, limit, resetAt, poolBalance },
       // 데모 계정은 계정별 '총평' 권한을 반영(클라이언트 UI 잠금/해제). 그 외는 플랜 기준.
       features: {
         commentary: demoCtx.isDemo ? demoCtx.perms.commentary : cfg.commentary,

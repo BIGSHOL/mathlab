@@ -9,7 +9,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import type { PlanId } from '@/lib/billing/plans';
 
 export type SubStatus = 'inactive' | 'active' | 'cancelled' | 'expired' | 'past_due';
-export interface SubUsage { used: number; limit: number | null; resetAt: string | null } // limit null = 무제한
+export interface SubUsage { used: number; limit: number | null; resetAt: string | null; poolBalance: number } // used=무료한도 사용, poolBalance=이용권 잔여, limit null = 무제한
 export interface SubFeatures { commentary: boolean; nearby: boolean }
 /** 데모 계정 체험 상태 — 잔여 분석 횟수 + 계정별 권한(분석/총평/블로그). 비-데모면 null. */
 export interface DemoInfo {
@@ -35,7 +35,7 @@ export interface SubscriptionState {
 const FREE_FALLBACK = {
   plan: 'free' as PlanId,
   status: 'inactive' as SubStatus,
-  usage: { used: 0, limit: 3 as number | null, resetAt: null as string | null },
+  usage: { used: 0, limit: 3 as number | null, resetAt: null as string | null, poolBalance: 0 },
   features: { commentary: false, nearby: false },
   demo: null as DemoInfo | null,
   lemonSqueezyConfigured: false,
@@ -91,7 +91,7 @@ export function DemoSubscriptionProvider({ children }: { children: React.ReactNo
   const value: SubscriptionState = {
     plan: 'pro',
     status: 'active',
-    usage: { used: 0, limit: null, resetAt: null },
+    usage: { used: 0, limit: null, resetAt: null, poolBalance: 0 },
     features: { commentary: true, nearby: true },
     demo: null,
     lemonSqueezyConfigured: false,

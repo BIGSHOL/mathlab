@@ -79,7 +79,7 @@ export default function BillingPage() {
     <PageContainer maxWidth="xl">
       <PageHeader
         title="구독 / 결제"
-        subtitle={`현재 플랜: ${currentPlan.label} · 이번 달 분석 ${quotaLabel(usage)}`}
+        subtitle={`현재 플랜: ${currentPlan.label} · 이용권 잔여 ${usage.poolBalance}회`}
         icon={<CreditCard className="w-6 h-6 text-primary" />}
         backHref="/exam-analysis"
       />
@@ -93,26 +93,35 @@ export default function BillingPage() {
         </div>
       )}
 
-      {/* 이번 달 사용량 */}
-      <div className="mb-6 p-4 border border-slate-200 rounded-sm bg-white">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-semibold text-slate-700">이번 달 분석 사용량</span>
-          <span className="text-sm font-bold text-slate-800">{quotaLabel(usage)}</span>
+      {/* 이용권 잔여 + 무료 분석 한도 */}
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* 이용권 잔여(지점 풀) — 모든 기출분석이 여기서 차감 */}
+        <div className="p-4 border border-slate-200 rounded-sm bg-white">
+          <div className="text-sm font-semibold text-slate-700 mb-1">기출분석 이용권 잔여</div>
+          <div className="text-2xl font-bold text-slate-800">{usage.poolBalance}<span className="text-sm font-normal text-slate-400 ml-1">회</span></div>
+          <p className="text-[11px] text-slate-400 mt-1">모든 기출분석은 이용권에서 1회씩 차감됩니다. 이용권 페이지에서 충전하세요.</p>
         </div>
-        {usage.limit === null ? (
-          <p className="text-xs text-slate-400">무제한 플랜입니다.</p>
-        ) : (
-          <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all ${pct >= 1 ? 'bg-rose-500' : pct >= 0.8 ? 'bg-amber-500' : 'bg-primary'}`}
-              style={{ width: `${Math.min(pct, 1) * 100}%` }}
-            />
+        {/* 무료 월 한도 — 이용권이 없을 때의 폴백 */}
+        <div className="p-4 border border-slate-200 rounded-sm bg-white">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-slate-700">무료 분석 한도</span>
+            <span className="text-sm font-bold text-slate-800">{quotaLabel(usage)}</span>
           </div>
-        )}
-        <p className="text-[11px] text-slate-400 mt-1.5">
-          학생 이용권을 사용하는 분석은 월 한도에 포함되지 않습니다.
-          {usage.resetAt && <> · 갱신: {new Date(usage.resetAt).toLocaleDateString('ko-KR')}</>}
-        </p>
+          {usage.limit === null ? (
+            <p className="text-xs text-slate-400">무제한 플랜입니다.</p>
+          ) : (
+            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${pct >= 1 ? 'bg-rose-500' : pct >= 0.8 ? 'bg-amber-500' : 'bg-primary'}`}
+                style={{ width: `${Math.min(pct, 1) * 100}%` }}
+              />
+            </div>
+          )}
+          <p className="text-[11px] text-slate-400 mt-1.5">
+            이용권이 없을 때만 무료 한도가 쓰입니다.
+            {usage.resetAt && <> · 갱신: {new Date(usage.resetAt).toLocaleDateString('ko-KR')}</>}
+          </p>
+        </div>
       </div>
 
       {/* 플랜 카드 */}

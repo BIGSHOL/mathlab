@@ -63,17 +63,6 @@ export async function getMonthlyQuotaUsed(tenantId: string): Promise<number> {
   });
 }
 
-/** 이번 달 완료 분석 수(전체) — billing 표시용. 게이팅은 getMonthlyQuotaUsed/풀 잔액이 담당. */
-export async function getMonthlyAnalysisCount(tenantId: string): Promise<number> {
-  const { monthStart, nextMonthStart } = monthBounds();
-  return prisma.examAnalysis.count({
-    where: {
-      examPaper: { tenantId, status: 'COMPLETED' },
-      createdAt: { gte: monthStart, lt: nextMonthStart },
-    },
-  });
-}
-
 const FEATURE_LABELS: Record<PlanFeature, string> = { commentary: 'AI 총평', nearby: '주변학교 비교' };
 
 /**
