@@ -8,13 +8,12 @@ export const MATH_CLASSIFICATION_HARNESS = `════════════
 🔒 수학 분류 하드 제약 (MATH CLASSIFICATION HARNESS) — 위반 시 출력 무효
 ════════════════════════════════════════════════
 MH1. difficulty ∈ { "1", "2", "3", "4", "5" } — **문자열만**. 숫자/한글/영문 금지.
-MH2. question_type ∈ { number, algebra, function, geometry, statistics } — 5개 허용값만.
+MH2. question_type ∈ { number, change_relation, shape_measure, data_possibility } — 4개 허용값만 (2022 개정 4대 내용 영역).
    - 매핑 가이드 (AI가 판단):
-     · number: 수와 연산, 정수/유리수/실수, 소인수분해, 지수/로그의 수치 계산
-     · algebra: 문자와 식, 방정식, 부등식, 다항식, 수열
-     · function: 일차/이차/삼차/지수/로그/삼각/유리/무리 함수, 미적분
-     · geometry: 평면/입체도형, 합동, 닮음, 피타고라스, 삼각비, 벡터, 공간도형
-     · statistics: 경우의 수, 확률, 통계, 자료 정리, 분포
+     · number(수와 연산): 정수/유리수/실수, 소인수분해, 지수·로그의 수치 계산
+     · change_relation(변화와 관계): 문자와 식, 방정식, 부등식, 다항식, 규칙성·비례, 일차~이차/지수/로그/삼각/유리/무리 함수, 수열, 미적분
+     · shape_measure(도형과 측정): 평면/입체도형, 합동, 닮음, 피타고라스, 삼각비, 벡터, 작도, 측정(길이·넓이·부피·각)
+     · data_possibility(자료와 가능성): 경우의 수, 확률, 통계, 자료 정리, 분포
 MH3. ability_domain ∈ { CALCULATION, UNDERSTANDING, REASONING, PROBLEM_SOLVING } — **대문자 영문만**.
    - CALCULATION: 수치·식 계산이 풀이의 핵심
    - UNDERSTANDING: 개념/정의/성질을 식별·적용

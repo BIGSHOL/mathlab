@@ -25,7 +25,8 @@ import { formatPoints } from './points';
 // ── 차트 버전 — 디자인 업그레이드 시 bump → chart endpoint가 자동 재생성 ──
 // v1: 기본 (그라데이션 없음, 작은 폰트)
 // v2: 그라데이션 + 섀도우 + 큰 폰트 + 강조 라인 (2026-05-28)
-export const CHART_VERSION = 'v2';
+// v3: 유형 5대→4대 영역 전환 (축·라벨·색 변경, 옛 캐시 무효화) (2026-06-17)
+export const CHART_VERSION = 'v3';
 
 // ── SVG 유틸 ──
 
@@ -207,7 +208,7 @@ export function generateDifficultyDonutSvg(
 export function generateTypeRadarSvg(
   distribution: Record<string, number>,
 ): string {
-  const types = ['number', 'algebra', 'function', 'geometry', 'statistics'] as const;
+  const types = ['number', 'change_relation', 'shape_measure', 'data_possibility'] as const;
   const data = types.map((t) => ({
     key: t,
     label: QUESTION_TYPE_LABELS[t] || t,
@@ -458,7 +459,7 @@ export function generateCombinedRadarSvg(
   `</defs>`);
 
   // ── 좌측: 출제 영역 분포 (5각형) ──
-  const types = ['number', 'algebra', 'function', 'geometry', 'statistics'] as const;
+  const types = ['number', 'change_relation', 'shape_measure', 'data_possibility'] as const;
   const typeData = types.map((t) => ({
     key: t,
     label: QUESTION_TYPE_LABELS[t] || t,

@@ -87,9 +87,9 @@ export async function POST(request: NextRequest, { params }: Params) {
       },
       summary: summary || {
         difficulty_distribution: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 },
-        type_distribution: { number: 0, algebra: 0, function: 0, geometry: 0, statistics: 0 },
+        type_distribution: { number: 0, change_relation: 0, shape_measure: 0, data_possibility: 0 },
         average_difficulty: '3',
-        dominant_type: 'algebra',
+        dominant_type: 'change_relation',
       },
       questions,
     };

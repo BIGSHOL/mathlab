@@ -34,27 +34,27 @@ export const TYPE_STRATEGIES: Record<string, string[]> = {
     '부호 실수, 약분 오류 등 반복되는 계산 실수 패턴을 체크리스트로 정리',
     '소인수분해, 유리수/무리수 판별 등 수의 성질을 정확히 이해',
   ],
-  algebra: [
+  change_relation: [
     '문자식의 전개/인수분해 공식을 완벽히 암기하고, 전개 후 검산하는 습관',
-    '방정식/부등식 풀이 시 이항할 때 부호 변경, 양변 나누기 등 기본 규칙 체화',
-    '활용 문제는 조건을 문자로 놓기 → 식 세우기 → 풀이 → 검증 순서로 연습',
+    '방정식/부등식은 이항·부호 변경 등 기본 규칙 체화, 활용 문제는 식 세우기 → 풀이 → 검증',
+    '함수의 그래프를 직접 그려보고(점 찍기 → 연결 → 특성 파악) 이동·변환 원리를 시각적으로 이해',
   ],
-  function: [
-    '함수의 그래프를 직접 그려보는 연습 (점 찍기 → 연결하기 → 특성 파악)',
-    '함수의 이동(평행이동, 대칭이동)과 변환 원리를 시각적으로 이해',
-    '극한/미분/적분은 기본 공식 암기 + 다양한 유형별 풀이법 정리',
-  ],
-  geometry: [
+  shape_measure: [
     '도형의 정의와 성질을 정확히 암기하고, 조건을 그림에 직접 표시하는 습관',
     '증명 문제는 조건 → 근거 → 결론의 논리적 흐름을 연습',
-    '좌표기하/벡터 문제는 공식 암기 + 좌표평면에 그려보기를 병행',
+    '좌표기하/벡터·측정 문제는 공식 암기 + 좌표평면에 그려보기를 병행',
   ],
-  statistics: [
+  data_possibility: [
     '평균, 분산, 표준편차 공식을 완벽히 암기하고 빠르게 계산하는 연습',
     '경우의 수를 체계적으로 세는 방법(수형도, 표, 순열/조합 구분) 연습',
     '확률분포와 정규분포 문제는 공식 적용 순서를 명확히 정리',
   ],
 };
+// 옛 키 호환(과거 분석본) — 신 영역 전략 재사용
+TYPE_STRATEGIES.algebra = TYPE_STRATEGIES.change_relation;
+TYPE_STRATEGIES.function = TYPE_STRATEGIES.change_relation;
+TYPE_STRATEGIES.geometry = TYPE_STRATEGIES.shape_measure;
+TYPE_STRATEGIES.statistics = TYPE_STRATEGIES.data_possibility;
 
 // ── 난이도별 조언 ──
 export const DIFFICULTY_ADVICE: Record<string, string> = {

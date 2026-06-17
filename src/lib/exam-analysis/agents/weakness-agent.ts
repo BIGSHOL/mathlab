@@ -79,10 +79,9 @@ ${summaryJson}
   },
   "type_weakness": {
     "number": {"severity": "...", "main_issue": "..."},
-    "algebra": {"severity": "...", "main_issue": "..."},
-    "function": {"severity": "...", "main_issue": "..."},
-    "geometry": {"severity": "...", "main_issue": "..."},
-    "statistics": {"severity": "...", "main_issue": "..."}
+    "change_relation": {"severity": "...", "main_issue": "..."},
+    "shape_measure": {"severity": "...", "main_issue": "..."},
+    "data_possibility": {"severity": "...", "main_issue": "..."}
   },
   "topic_weaknesses": [
     {"topic": "과목 > 대단원 > 소단원", "severity_score": 0.0, "recommendation": "..."}
@@ -260,10 +259,9 @@ JSON만 반환하세요.`;
 
     const entries: [string, number][] = [
       ['number', dist.number],
-      ['algebra', dist.algebra],
-      ['function', dist.function],
-      ['geometry', dist.geometry],
-      ['statistics', dist.statistics],
+      ['change_relation', dist.change_relation],
+      ['shape_measure', dist.shape_measure],
+      ['data_possibility', dist.data_possibility],
     ];
 
     for (const [key, count] of entries) {

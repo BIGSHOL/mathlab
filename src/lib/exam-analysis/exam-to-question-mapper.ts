@@ -42,14 +42,18 @@ const ABILITY_TO_ABILITY_DOMAIN: Record<string, string> = {
   reasoning: 'REASONING',
 };
 
-// ── 5대 교육과정 영역 매핑 (question_type → domain 필드) ──
+// ── 4대 교육과정 영역 매핑 (question_type → domain 필드, 2022 개정) ──
 
 const QTYPE_TO_DOMAIN: Record<string, string> = {
   number: 'number',
-  algebra: 'algebra',
-  function: 'function',
-  geometry: 'geometry',
-  statistics: 'statistics',
+  change_relation: 'change_relation',
+  shape_measure: 'shape_measure',
+  data_possibility: 'data_possibility',
+  // 옛 키 호환 — 신 영역으로 흡수
+  algebra: 'change_relation',
+  function: 'change_relation',
+  geometry: 'shape_measure',
+  statistics: 'data_possibility',
 };
 
 // ── topic 파싱 ──

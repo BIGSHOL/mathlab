@@ -387,7 +387,7 @@ function fillNumberGaps(result: BasicAnalysisResult): BasicAnalysisResult {
     question_format: 'objective',
     difficulty: '1',
     difficulty_reason: null,
-    question_type: 'algebra' as AnalyzedQuestion['question_type'],
+    question_type: 'change_relation' as AnalyzedQuestion['question_type'],
     ability_domain: null,
     points: perGap,
     topic: null,
@@ -491,7 +491,7 @@ export async function analyzeExam(
     // 기본값 보정 + question_type 표준화 + ability_domain 매핑
     const rawQuestions = rawResult.questions.map((q, idx) => {
       const rawType = q.question_type ?? 'calculation';
-      const standardType = (TYPE_TO_STANDARD[rawType] || 'algebra') as AnalyzedQuestion['question_type'];
+      const standardType = (TYPE_TO_STANDARD[rawType] || 'change_relation') as AnalyzedQuestion['question_type'];
       const abilityDomain = (q.ability_domain || TYPE_TO_DOMAIN[rawType] || TYPE_TO_DOMAIN[standardType] || 'calculation') as NonNullable<AnalyzedQuestion['ability_domain']>;
       return {
         question_number: q.question_number ?? idx + 1,
@@ -533,7 +533,7 @@ export async function analyzeExam(
 
     // summary 분포를 questions 배열에서 직접 재계산 (AI summary 부정확 방지)
     const recomputedDiffDist: Record<string, number> = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
-    const recomputedTypeDist: Record<string, number> = { number: 0, algebra: 0, function: 0, geometry: 0, statistics: 0 };
+    const recomputedTypeDist: Record<string, number> = { number: 0, change_relation: 0, shape_measure: 0, data_possibility: 0 };
     const recomputedFormatDist: Record<string, number> = { objective: 0, short_answer: 0, essay: 0 };
 
     for (const q of questions) {
@@ -542,8 +542,8 @@ export async function analyzeExam(
       if (recomputedDiffDist[diff] !== undefined) {
         recomputedDiffDist[diff]++;
       }
-      // 유형 분포
-      const qType = q.question_type || 'algebra';
+      // 유형 분포 — 옛/raw 키를 4대 영역으로 정규화 후 카운트(옛 분석본·Gemini raw 키 흡수)
+      const qType = TYPE_TO_STANDARD[q.question_type || ''] || q.question_type || 'change_relation';
       if (recomputedTypeDist[qType] !== undefined) {
         recomputedTypeDist[qType]++;
       }
@@ -556,7 +556,7 @@ export async function analyzeExam(
 
     // 가장 많은 난이도/유형 찾기
     const dominantDiff = Object.entries(recomputedDiffDist).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '3';
-    const dominantType = Object.entries(recomputedTypeDist).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'algebra';
+    const dominantType = Object.entries(recomputedTypeDist).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'change_relation';
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rawSchoolName = (rawResult.exam_info as any)?.school_name;

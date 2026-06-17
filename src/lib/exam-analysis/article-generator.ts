@@ -57,10 +57,14 @@ const ARTICLE_ENUM_KO_MAP: Record<string, string> = {
   'PROBLEM SOLVING': '문제해결력',
   REASONING: '추론력',
   NUMBER: '수와 연산',
-  ALGEBRA: '문자와 식',
-  FUNCTION: '함수',
-  GEOMETRY: '기하',
-  STATISTICS: '확률과 통계',
+  CHANGE_RELATION: '변화와 관계',
+  SHAPE_MEASURE: '도형과 측정',
+  DATA_POSSIBILITY: '자료와 가능성',
+  // 옛 토큰 호환
+  ALGEBRA: '변화와 관계',
+  FUNCTION: '변화와 관계',
+  GEOMETRY: '도형과 측정',
+  STATISTICS: '자료와 가능성',
 };
 
 function stripEnglishEnums(text: string): string {

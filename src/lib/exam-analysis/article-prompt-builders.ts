@@ -230,7 +230,7 @@ export function buildFormatRules(blueprint: Blueprint, schoolName: string, grade
 
 ### 영문 enum 사용 금지
 - 능력영역: "계산력 / 이해력 / 문제해결력 / 추론력"만 사용
-- 유형: "수와 연산 / 문자와 식 / 함수 / 기하 / 확률과 통계"만 사용
+- 유형: "수와 연산 / 변화와 관계 / 도형과 측정 / 자료와 가능성"만 사용
 - CALCULATION, PROBLEM_SOLVING, NUMBER, ALGEBRA 등 영문 토큰 글에 한 글자도 포함 금지
 
 ### 차트 토큰

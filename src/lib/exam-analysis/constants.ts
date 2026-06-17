@@ -15,7 +15,9 @@
 // v1.4.0 (2026-05-29): 수학 난이도 충돌 제거 — 공통 DIFFICULTY_SYSTEM_FRAMEWORK(옛 개념-수 정의
 //   + "애매하면 한 단계 낮게" 하향 편향)가 2축 모델과 충돌해 난이도가 계속 2~3에 몰리던 문제.
 //   수학은 MATH_DIFFICULTY_SYSTEM_4LEVEL(2축)만 사용하도록 분리, 공통 프레임워크는 영어 전용.
-export const PROMPT_VERSION = 'v1.4.0';
+// v1.5.0 (2026-06-17): 문항 유형(내용영역) 분류 5대 → 2022 개정 4대 영역 전환.
+//   수와 연산 / 변화와 관계(←문자와 식·함수) / 도형과 측정(←기하) / 자료와 가능성(←확률과 통계).
+export const PROMPT_VERSION = 'v1.5.0';
 
 /**
  * 분석본의 프롬프트 버전이 현재 PROMPT_VERSION과 다른지(=구버전) 검사.
@@ -67,56 +69,60 @@ export const DIFFICULTY_3LEVEL_MAP: Record<string, string> = {
   creative: 'high',
 };
 
-// ── 5대 교육과정 영역 (문항 유형) ──
+// ── 4대 교육과정 영역 (문항 유형, 2022 개정) ──
 export const EXAM_QUESTION_TYPES = {
   NUMBER: { label: '수와 연산', labelEn: 'Number & Operations' },
-  ALGEBRA: { label: '문자와 식', labelEn: 'Algebra' },
-  FUNCTION: { label: '함수', labelEn: 'Functions' },
-  GEOMETRY: { label: '기하', labelEn: 'Geometry' },
-  STATISTICS: { label: '확률과 통계', labelEn: 'Statistics' },
+  CHANGE_RELATION: { label: '변화와 관계', labelEn: 'Change & Relationship' },
+  SHAPE_MEASURE: { label: '도형과 측정', labelEn: 'Geometry & Measurement' },
+  DATA_POSSIBILITY: { label: '자료와 가능성', labelEn: 'Data & Possibility' },
 } as const;
 
 export type ExamQuestionTypeKey = keyof typeof EXAM_QUESTION_TYPES;
 
-// 5대 영역 키 배열
-export const QUESTION_TYPE_KEYS = ['number', 'algebra', 'function', 'geometry', 'statistics'] as const;
+// 4대 영역 키 배열
+export const QUESTION_TYPE_KEYS = ['number', 'change_relation', 'shape_measure', 'data_possibility'] as const;
 
-// 5대 영역 라벨 (lowercase key)
+// 4대 영역 라벨 (lowercase key) + 옛 5대 키 호환 별칭(과거 분석본 라벨 미표시 방지)
 export const QUESTION_TYPE_LABELS: Record<string, string> = {
   number: '수와 연산',
-  algebra: '문자와 식',
-  function: '함수',
-  geometry: '기하',
-  statistics: '확률과 통계',
+  change_relation: '변화와 관계',
+  shape_measure: '도형과 측정',
+  data_possibility: '자료와 가능성',
+  // 옛 키 호환 — 신 영역 라벨로 흡수
+  algebra: '변화와 관계',
+  function: '변화와 관계',
+  geometry: '도형과 측정',
+  statistics: '자료와 가능성',
 };
 
-// ── Gemini raw question_type → 5대 교육과정 영역 정규화 ──
+// ── Gemini raw question_type → 4대 교육과정 영역 정규화 (옛 키도 신 영역으로 흡수) ──
 export const TYPE_TO_STANDARD: Record<string, string> = {
   // 수와 연산
   number: 'number',
-  // 문자와 식
-  algebra: 'algebra',
-  equation: 'algebra',
-  inequality: 'algebra',
-  // 함수
-  function: 'function',
-  graph: 'function',
-  calculus: 'function',
-  trigonometry: 'function',
-  sequence: 'function',
-  // 기하
-  geometry: 'geometry',
-  vector: 'geometry',
-  set: 'geometry',
-  understanding: 'geometry',
-  // 확률과 통계
-  statistics: 'statistics',
-  probability: 'statistics',
-  // 레거시/애매한 키 → topic 기반으로 ai-engine에서 후처리
-  calculation: 'algebra',     // 기본 fallback (대부분 문자와 식)
-  application: 'algebra',     // 응용 → 문자와 식 fallback
-  problem_solving: 'algebra',
-  proof: 'algebra',
+  calculation: 'number',
+  // 변화와 관계 (문자와 식·방정식·부등식·함수·규칙성)
+  change_relation: 'change_relation',
+  algebra: 'change_relation',
+  equation: 'change_relation',
+  inequality: 'change_relation',
+  function: 'change_relation',
+  graph: 'change_relation',
+  calculus: 'change_relation',
+  sequence: 'change_relation',
+  application: 'change_relation',
+  problem_solving: 'change_relation',
+  proof: 'change_relation',
+  // 도형과 측정 (기하·삼각비·벡터·측정)
+  shape_measure: 'shape_measure',
+  geometry: 'shape_measure',
+  vector: 'shape_measure',
+  trigonometry: 'shape_measure',
+  understanding: 'shape_measure',
+  // 자료와 가능성 (확률·통계·경우의 수·집합)
+  data_possibility: 'data_possibility',
+  statistics: 'data_possibility',
+  probability: 'data_possibility',
+  set: 'data_possibility',
 };
 
 // ── 수학 능력 영역 (MathLab 기존 4대 영역과 동일) ──
@@ -129,11 +135,15 @@ export const ABILITY_DOMAINS = {
 
 export type AbilityDomainKey = keyof typeof ABILITY_DOMAINS;
 
-// ── question_type(5대 영역) → ability_domain(4대 능력) 기본 매핑 ──
-// AI가 ability_domain을 직접 반환하므로 이건 fallback용
+// ── question_type(4대 영역) → ability_domain(4대 능력) 기본 매핑 ──
+// AI가 ability_domain을 직접 반환하므로 이건 fallback용. 옛 키도 호환 유지.
 export const TYPE_TO_DOMAIN: Record<string, string> = {
   number: 'calculation',
-  algebra: 'calculation',
+  change_relation: 'understanding',
+  shape_measure: 'understanding',
+  data_possibility: 'problem_solving',
+  // 옛 키 호환
+  algebra: 'understanding',
   function: 'understanding',
   geometry: 'understanding',
   statistics: 'problem_solving',
@@ -202,11 +212,13 @@ export type AgentType = (typeof AGENT_TYPES)[number];
 //   전국 상식(서술형 1/3 배점·객관식 위주 등)을 큰 글씨로 만들던 문제 → 리트머스 "옆 학원도
 //   할 수 있는 말인가?" + 4각도(쏠림/시간/감점/변화). buildV3UserPrompt에 "이 시험만의 특이 신호"
 //   데이터 신호 주입(서술형 배점% vs 표준, 서술형/킬러 단원 쏠림 자동 탐지, 배점 독식 단원)
+// commentary v1.5.0 — 2026-06-17 문항 유형 분류 4대 영역(수와 연산/변화와 관계/도형과 측정/자료와 가능성)
+//   전환에 맞춰 총평 유형 라벨·분포 서술 갱신
 export const AGENT_PROMPT_VERSIONS: Record<AgentType, string> = {
   'weakness': 'v1.0.0',
   'learning': 'v1.0.0',
   'prediction': 'v1.0.0',
-  'commentary': 'v1.4.0',
+  'commentary': 'v1.5.0',
   'topic-strategy': 'v1.0.0',
   'exam-prep': 'v1.0.0',
   'score-level-plan': 'v1.0.0',
@@ -267,14 +279,18 @@ export const DIFFICULTY_LABELS: Record<string, string> = {
   creative: '5',
 };
 
-// ── 5대 영역 색상 (UI용) ──
+// ── 4대 영역 색상 (UI용) ──
 export const QUESTION_TYPE_COLORS: Record<string, string> = {
-  // 5대 교육과정 영역
-  number: '#6366F1',      // indigo
-  algebra: '#8B5CF6',     // purple
-  function: '#EC4899',    // pink
-  geometry: '#14B8A6',    // teal
-  statistics: '#F59E0B',  // amber
+  // 4대 교육과정 영역 (2022 개정)
+  number: '#6366F1',           // indigo
+  change_relation: '#8B5CF6',  // purple
+  shape_measure: '#14B8A6',    // teal
+  data_possibility: '#F59E0B', // amber
+  // 옛 키 호환 — 신 영역 색으로 흡수(과거 분석본 회색폴백 방지)
+  algebra: '#8B5CF6',
+  function: '#8B5CF6',
+  geometry: '#14B8A6',
+  statistics: '#F59E0B',
   // 영어 (별도 체계)
   grammar: '#6366F1',
   vocabulary: '#8B5CF6',

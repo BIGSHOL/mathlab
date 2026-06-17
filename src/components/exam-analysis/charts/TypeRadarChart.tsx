@@ -184,8 +184,8 @@ export function TypeRadarChart({ data, questions }: TypeRadarChartProps) {
           )}
         </div>
 
-        {/* 범례 (0개 포함 전체 표시) */}
-        <div className="w-36 flex flex-col justify-center gap-2">
+        {/* 범례 (0개 포함 전체 표시) — 4대 영역 라벨(변화와 관계/자료와 가능성 6자)이 한 줄에 들어가도록 폭 확보 */}
+        <div className="w-44 flex flex-col justify-center gap-2">
           {allItems.map((item) => {
             const pct = total > 0 ? Math.round((item.value / total) * 100) : 0;
             return (

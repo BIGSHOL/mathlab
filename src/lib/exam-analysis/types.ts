@@ -59,13 +59,12 @@ export interface DifficultyDistribution {
   [key: string]: number | undefined;
 }
 
-// ── 유형 분포 (5대 교육과정 영역) ──
+// ── 유형 분포 (4대 교육과정 영역, 2022 개정) ──
 export interface TypeDistribution {
   number: number;
-  algebra: number;
-  function: number;
-  geometry: number;
-  statistics: number;
+  change_relation: number;
+  shape_measure: number;
+  data_possibility: number;
 }
 
 // ── 분석 요약 ──

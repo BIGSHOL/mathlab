@@ -55,9 +55,8 @@ const _FORMAT_LABELS: Record<string, string> = {
 
 // 유형·능력 교정 셀렉터 옵션 (수학)
 const TYPE_OPTIONS: { value: string; label: string }[] = [
-  { value: 'number', label: '수와 연산' }, { value: 'algebra', label: '문자와 식' },
-  { value: 'function', label: '함수' }, { value: 'geometry', label: '기하' },
-  { value: 'statistics', label: '확률과 통계' },
+  { value: 'number', label: '수와 연산' }, { value: 'change_relation', label: '변화와 관계' },
+  { value: 'shape_measure', label: '도형과 측정' }, { value: 'data_possibility', label: '자료와 가능성' },
 ];
 const ABILITY_OPTIONS: { value: string; label: string }[] = [
   { value: 'calculation', label: '계산력' }, { value: 'understanding', label: '이해력' },
@@ -424,7 +423,7 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
               <tr className="border-b border-slate-200">
                 <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 w-14">번호</th>
                 <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 w-16">난이도</th>
-                <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 w-16">유형</th>
+                <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 w-20">유형</th>
                 <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 w-16">능력</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-slate-500">단원</th>
                 <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 w-14">

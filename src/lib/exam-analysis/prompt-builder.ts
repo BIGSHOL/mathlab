@@ -500,7 +500,7 @@ export class ExamPromptBuilder {
 
     // 문항 유형 분류 키
     const typeKeys = isMath
-      ? '"number"(수와 연산), "algebra"(문자와 식), "function"(함수), "geometry"(기하), "statistics"(확률과 통계)'
+      ? '"number"(수와 연산), "change_relation"(변화와 관계), "shape_measure"(도형과 측정), "data_possibility"(자료와 가능성)'
       : '"grammar", "vocabulary", "reading", "listening", "writing", "communication"';
 
     // 난이도 키
@@ -533,7 +533,7 @@ export class ExamPromptBuilder {
 
     // 분포 키 (유형)
     const typeDistExample = isMath
-      ? `"number": 0, "algebra": 0, "function": 0, "geometry": 0, "statistics": 0`
+      ? `"number": 0, "change_relation": 0, "shape_measure": 0, "data_possibility": 0`
       : `"grammar": 0, "vocabulary": 0, "reading": 0, "listening": 0, "writing": 0, "communication": 0`;
 
     return `🔧 **[필수] JSON 출력 형식**
@@ -570,7 +570,7 @@ export class ExamPromptBuilder {
       ${typeDistExample}
     },
     "average_difficulty": "2",
-    "dominant_type": "algebra"
+    "dominant_type": "change_relation"
   },
   "questions": [
     {
@@ -578,7 +578,7 @@ export class ExamPromptBuilder {
       "question_format": "objective",
       "difficulty": "1",
       "difficulty_reason": "1단계 풀이",
-      "question_type": "algebra",
+      "question_type": "change_relation",
       "ability_domain": "calculation",
       "points": 3,
       "topic": "${topicExample}",
@@ -604,7 +604,7 @@ export class ExamPromptBuilder {
       "question_format": "objective",
       "difficulty": "4",
       "difficulty_reason": "3단계 + 함정",
-      "question_type": "algebra",
+      "question_type": "change_relation",
       "ability_domain": "PROBLEM_SOLVING",
       "points": 5,
       "topic": "${topicExample}",
@@ -617,7 +617,7 @@ export class ExamPromptBuilder {
       "question_format": "essay",
       "difficulty": "3",
       "difficulty_reason": "2개 개념 결합",
-      "question_type": "algebra",
+      "question_type": "change_relation",
       "ability_domain": "REASONING",
       "points": 8,
       "topic": "${topicExample}",
@@ -662,15 +662,15 @@ export class ExamPromptBuilder {
 - **reasoning**(추론력): 증명, 논리적 추론, 반례 찾기, 참/거짓 판별 등 **논리적 사고**가 핵심
 
 예: "제곱근 계산" → question_type: **number**, ability_domain: **calculation**
-예: "이차방정식 풀이" → question_type: **algebra**, ability_domain: **calculation**
-예: "이차함수 그래프 해석" → question_type: **function**, ability_domain: **understanding**
-예: "도형의 넓이 활용 문제" → question_type: **geometry**, ability_domain: **problem_solving**
-예: "확률 추론 문제" → question_type: **statistics**, ability_domain: **reasoning**
+예: "이차방정식 풀이" → question_type: **change_relation**, ability_domain: **calculation**
+예: "이차함수 그래프 해석" → question_type: **change_relation**, ability_domain: **understanding**
+예: "도형의 넓이 활용 문제" → question_type: **shape_measure**, ability_domain: **problem_solving**
+예: "확률 추론 문제" → question_type: **data_possibility**, ability_domain: **reasoning**
 
 ⚠️ question_type과 ability_domain은 **서로 다른 관점**입니다. 기계적으로 같은 값을 넣지 말고 독립적으로 판단하세요.
-- question_type = **교육과정 5대 영역** (이 문제가 어떤 수학 단원에 해당하는가?)
+- question_type = **교육과정 4대 영역(2022 개정)** (이 문제가 어떤 내용 영역에 해당하는가?)
 - ability_domain = **4대 사고력** (이 문제를 풀려면 어떤 능력이 필요한가?)
-- 같은 단원이라도 문제에 따라 필요한 능력이 다릅니다. (예: 기하 단원의 계산 문제 → geometry + calculation)
+- 같은 단원이라도 문제에 따라 필요한 능력이 다릅니다. (예: 도형과 측정 영역의 계산 문제 → shape_measure + calculation)
 
 **summary 규칙:**
 - difficulty_distribution: 각 난이도별 문항 수 (합계 = total_questions)
@@ -1100,17 +1100,17 @@ ${lines.join('\n')}
     const isMath = context.subject.toUpperCase() === 'MATH';
 
     if (isMath) {
-      const types = ['number', 'algebra', 'function', 'geometry', 'statistics'];
-      // category가 있으면 관련 유형 우선
+      const types = ['number', 'change_relation', 'shape_measure', 'data_possibility'];
+      // category가 있으면 관련 유형 우선 (키=고등 과목명 유지, 값=4대 영역)
       if (context.category) {
         const categoryTypeMap: Record<string, string[]> = {
-          '공통수학1': ['algebra', 'number'],
-          '공통수학2': ['geometry', 'function'],
-          '대수': ['function', 'algebra'],
-          '미적분I': ['function', 'algebra'],
-          '미적분II': ['function'],
-          '확률과 통계': ['statistics'],
-          '기하': ['geometry'],
+          '공통수학1': ['change_relation', 'number'],
+          '공통수학2': ['shape_measure', 'change_relation'],
+          '대수': ['change_relation'],
+          '미적분I': ['change_relation'],
+          '미적분II': ['change_relation'],
+          '확률과 통계': ['data_possibility'],
+          '기하': ['shape_measure'],
         };
         return categoryTypeMap[context.category] ?? types;
       }

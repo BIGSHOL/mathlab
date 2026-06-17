@@ -22,10 +22,14 @@ function normalizeDiff(key: string): string {
 // ── 영문 enum → 한글 라벨 (AI 입력/출력 정규화용) ──
 const QUESTION_TYPE_LABELS_KO: Record<string, string> = {
   number: '수와 연산',
-  algebra: '문자와 식',
-  function: '함수',
-  geometry: '기하',
-  statistics: '확률과 통계',
+  change_relation: '변화와 관계',
+  shape_measure: '도형과 측정',
+  data_possibility: '자료와 가능성',
+  // 옛 키 호환(과거 분석본)
+  algebra: '변화와 관계',
+  function: '변화와 관계',
+  geometry: '도형과 측정',
+  statistics: '자료와 가능성',
 };
 
 function toKoreanType(raw: string | null | undefined): string {
@@ -48,10 +52,14 @@ const ENUM_KO_MAP: Record<string, string> = {
   'PROBLEM SOLVING': '문제해결력',
   REASONING: '추론력',
   NUMBER: '수와 연산',
-  ALGEBRA: '문자와 식',
-  FUNCTION: '함수',
-  GEOMETRY: '기하',
-  STATISTICS: '확률과 통계',
+  CHANGE_RELATION: '변화와 관계',
+  SHAPE_MEASURE: '도형과 측정',
+  DATA_POSSIBILITY: '자료와 가능성',
+  // 옛 토큰 차단 호환
+  ALGEBRA: '변화와 관계',
+  FUNCTION: '변화와 관계',
+  GEOMETRY: '도형과 측정',
+  STATISTICS: '자료와 가능성',
 };
 
 function stripEnglishEnums(text: string): string {
@@ -457,7 +465,7 @@ const SYSTEM_PROMPT_V3 = `너는 한국 중·고등학교 수학 시험 분석�
 ## 절대 규칙
 
 1. **데이터에 없는 숫자/이름을 지어내지 말 것.** 학생 응답 분포가 없으면 grade_cuts는 빈 배열. 학교 정보 없으면 Q4 생략.
-2. **영문 enum 금지** — 능력영역은 "계산력/이해력/문제해결력/추론력", 유형은 "수와 연산/문자와 식/함수/기하/확률과 통계". CALCULATION, NUMBER 같은 영문 토큰 한 글자도 출력 금지.
+2. **영문 enum 금지** — 능력영역은 "계산력/이해력/문제해결력/추론력", 유형은 "수와 연산/변화와 관계/도형과 측정/자료와 가능성". CALCULATION, NUMBER 같은 영문 토큰 한 글자도 출력 금지.
 3. **\\dfrac 금지, \\text{한글} 금지.** 단순 정수·점수·한글에 \$ 사용 금지 (보기번호 ①②③④⑤, ㄱㄴㄷ 제외).
 4. **존댓말 "~습니다" 통일.** 평어체 섞지 말 것.
 5. **answer 문단은 3~4줄 이내.** 짧게 끊어 쓰기.
@@ -723,7 +731,7 @@ H2. "## 출력 형식" 섹션에 정의된 키만 사용. 임의 키 추가 금�
 H3. **\$...\$는 진짜 수식에만 사용** — 변수($x$, $a$, $k$), 식($x^2+1$, $\\sqrt{3}$, $\\frac{a}{b}$), LaTeX 명령(\\frac, \\sqrt, \\times 등)이 포함된 경우만. **단순 정수(1, 2, 3, 4, 5)·점수(48점)·문항수(9문항)·한글(기본, 표준, 응용)에는 \$ 사용 금지** — 평문 그대로. 예: "Level 2 (표준) 7문항 34점" (O), "Level $2$ ($표준$) $7$문항 $34$점" (X). \\text{한글}/\\textrm{한글} 금지. \\dfrac 금지 → \\frac.
 H4. 인접 수식 \$A\$\$B\$ 금지 → \$A\$ \$B\$. □→\\square, ○→\\bigcirc.
 H5. 입력 데이터에 없는 문항번호·학교명·배점·점수를 지어내지 말 것. 주변 학교 통계/토픽/배점 분포는 입력값 그대로 인용.
-H6. **영문 enum 사용 절대 금지** — 능력영역은 "계산력/이해력/문제해결력/추론력"으로만, 유형은 "수와 연산/문자와 식/함수/기하/확률과 통계"로만 표기. CALCULATION, UNDERSTANDING, PROBLEM_SOLVING, REASONING, NUMBER, ALGEBRA, FUNCTION, GEOMETRY, STATISTICS 같은 영문 토큰을 출력에 한 글자도 포함하지 말 것. (예: "CALCULATION 영역" ❌, "계산력 영역" ✅)
+H6. **영문 enum 사용 절대 금지** — 능력영역은 "계산력/이해력/문제해결력/추론력"으로만, 유형은 "수와 연산/변화와 관계/도형과 측정/자료와 가능성"으로만 표기. CALCULATION, UNDERSTANDING, PROBLEM_SOLVING, REASONING, NUMBER, CHANGE_RELATION, SHAPE_MEASURE, DATA_POSSIBILITY, ALGEBRA, FUNCTION, GEOMETRY, STATISTICS 같은 영문 토큰을 출력에 한 글자도 포함하지 말 것. (예: "CHANGE_RELATION 영역" ❌, "변화와 관계 영역" ✅)
 
 ════════════════════════════════════════════════
 📤 출력 전 자기검증 (SELF-VERIFY)
@@ -754,7 +762,7 @@ V6. 출력 텍스트 어디에도 **CALCULATION/UNDERSTANDING/PROBLEM_SOLVING/RE
   - Level 4(심화): ${diffCounts[3]}문항, ${diffPoints[3]}점
   - Level 5(최고난도): ${diffCounts[4]}문항, ${diffPoints[4]}점
   - Level 1~2 합계: ${roundPoints(diffPoints[0] + diffPoints[1])}점, Level 1~3 합계: ${roundPoints(diffPoints[0] + diffPoints[1] + diffPoints[2])}점, Level 1~4 합계: ${roundPoints(diffPoints[0] + diffPoints[1] + diffPoints[2] + diffPoints[3])}점
-- 유형 분포: 수와연산 ${types.number || 0}, 문자와식 ${types.algebra || 0}, 함수 ${types.function || 0}, 기하 ${types.geometry || 0}, 확률통계 ${types.statistics || 0}
+- 유형 분포: 수와연산 ${types.number || 0}, 변화와관계 ${types.change_relation || 0}, 도형과측정 ${types.shape_measure || 0}, 자료와가능성 ${types.data_possibility || 0}
 - 단원별 출제: ${topicSummary}
 ${studentStatsBlock}
 ${curriculumBlock}
@@ -890,8 +898,9 @@ ${phases}
     if (!hasSameSchool && !hasNearby) return '';
 
     const TYPE_LABELS: Record<string, string> = {
-      number: '수와연산', algebra: '문자와식', function: '함수',
-      geometry: '기하', statistics: '확률통계',
+      number: '수와연산', change_relation: '변화와관계', shape_measure: '도형과측정', data_possibility: '자료와가능성',
+      // 옛 키 호환
+      algebra: '변화와관계', function: '변화와관계', geometry: '도형과측정', statistics: '자료와가능성',
     };
 
     const formatExamLine = (exam: NearbyExamSummary): string => {
@@ -1560,7 +1569,7 @@ ${questionDetails}
 - 평균 난이도(가중): ${weighted.toFixed(1)} / 5
 - 난이도 분포: 기본(1) ${counts[0]} · 표준(2) ${counts[1]} · 응용(3) ${counts[2]} · 심화(4) ${counts[3]} · 최고난도(5) ${counts[4]}
 - 형식: 객관식 ${basicAnalysis.exam_info.format_distribution.objective}문항, 단답형 ${basicAnalysis.exam_info.format_distribution.short_answer}문항, 서술형 ${basicAnalysis.exam_info.format_distribution.essay}문항
-- 유형: 수와연산 ${types.number || 0}, 문자와식 ${types.algebra || 0}, 함수 ${types.function || 0}, 기하 ${types.geometry || 0}, 확률통계 ${types.statistics || 0}
+- 유형: 수와연산 ${types.number || 0}, 변화와관계 ${types.change_relation || 0}, 도형과측정 ${types.shape_measure || 0}, 자료와가능성 ${types.data_possibility || 0}
 - 학생 응답 데이터: ${hasStudentData ? '있음' : '없음 (출제 분석만 가능)'}
 
 ## 이 시험만의 특이 신호 (헤드라인·feature_callout 1순위 소재 — "옆 학원이 못 하는 말")
@@ -2165,10 +2174,14 @@ ${unitList}`;
   private typeLabel(type: string): string {
     const map: Record<string, string> = {
       number: '수와 연산',
-      algebra: '문자와 식',
-      function: '함수',
-      geometry: '기하',
-      statistics: '확률과 통계',
+      change_relation: '변화와 관계',
+      shape_measure: '도형과 측정',
+      data_possibility: '자료와 가능성',
+      // 옛 키 호환
+      algebra: '변화와 관계',
+      function: '변화와 관계',
+      geometry: '도형과 측정',
+      statistics: '자료와 가능성',
     };
     return map[type] || type;
   }

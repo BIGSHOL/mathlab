@@ -26,8 +26,9 @@ function normalizeDiff(key: string): string {
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  number: '수와 연산', algebra: '문자와 식', function: '함수',
-  geometry: '기하', statistics: '확률과 통계',
+  number: '수와 연산', change_relation: '변화와 관계', shape_measure: '도형과 측정', data_possibility: '자료와 가능성',
+  // 옛 키 호환(과거 분석본)
+  algebra: '변화와 관계', function: '변화와 관계', geometry: '도형과 측정', statistics: '자료와 가능성',
 };
 
 export function AnalysisCommentTab({ questions, examPaperId, analysisId, onDifficultyEdit }: AnalysisCommentTabProps) {
