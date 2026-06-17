@@ -81,6 +81,7 @@ export default function BillingPage() {
         title="구독 / 결제"
         subtitle={`현재 플랜: ${currentPlan.label} · 이번 달 분석 ${quotaLabel(usage)}`}
         icon={<CreditCard className="w-6 h-6 text-primary" />}
+        backHref="/exam-analysis"
       />
 
       {beta && (

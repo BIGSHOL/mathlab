@@ -19,7 +19,7 @@ const maxWidthStyles: Record<NonNullable<PageContainerProps['maxWidth']>, string
 
 export function PageContainer({ maxWidth = 'lg', children, className = '' }: PageContainerProps) {
   return (
-    <div className={`w-full mx-auto px-4 md:px-8 py-6 md:py-8 ${maxWidthStyles[maxWidth]} ${className}`}>
+    <div className={`w-full mx-auto px-4 md:px-8 pt-14 pb-6 md:pb-8 ${maxWidthStyles[maxWidth]} ${className}`}>
       {children}
     </div>
   );
