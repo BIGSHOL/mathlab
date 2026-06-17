@@ -311,7 +311,7 @@ export default function EvolutionConsolePage() {
             desc="재생성·복사 횟수는 생성물(총평·블로그) 품질의 대용 지표. 측정·검토 참고용."
           >
             <div className="grid grid-cols-3 gap-3">
-              <Kpi label="총평 생성/재생성" value={data.generative.commentaryRuns} icon={<MessageSquare className="w-3.5 h-3.5" />} />
+              <Kpi label="총평지 생성/재생성" value={data.generative.commentaryRuns} icon={<MessageSquare className="w-3.5 h-3.5" />} />
               <Kpi label="블로그 글 생성" value={data.generative.articleRuns} icon={<FileText className="w-3.5 h-3.5" />} />
               <Kpi label="글 복사(품질 통과 신호)" value={data.generative.copyEvents} icon={<Copy className="w-3.5 h-3.5" />} accent="green" />
             </div>

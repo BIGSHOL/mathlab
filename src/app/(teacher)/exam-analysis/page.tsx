@@ -239,7 +239,7 @@ export default function ExamAnalysisPage() {
       try {
         const mRes = await fetch(`/api/exam-analysis/${id}/generate-metadata`, { method: 'POST' });
         metaOk = mRes.ok;
-        if (!mRes.ok) toast.error('총평 준비(메타데이터) 생성 실패 — 잠시 후 [총평 생성]을 시도하세요');
+        if (!mRes.ok) toast.error('총평 준비(메타데이터) 생성 실패 — 잠시 후 [총평지 생성]을 시도하세요');
       } catch {
         toast.error('총평 준비 중 오류가 발생했습니다');
       }
@@ -268,7 +268,7 @@ export default function ExamAnalysisPage() {
         }
       } else {
         clearGen(id);
-        toast.success('V3 총평 준비 완료 — [총평 생성]을 누르면 빠르게 생성됩니다');
+        toast.success('V3 총평 준비 완료 — [총평지 생성]을 누르면 빠르게 생성됩니다');
       }
     } catch {
       toast.error('총평 준비 중 오류가 발생했습니다');

@@ -341,7 +341,7 @@ export function DemoClient() {
               )}
               {selectedItem?.status === 'COMPLETED' && !selectedItem.withCommentary && (
                 <DemoGuide tone="done">
-                  분석이 완료되었습니다. 탭에서 결과를 살펴보고, <b>[총평 생성]</b>으로 AI 시험 총평까지 체험해 보세요.
+                  분석이 완료되었습니다. 탭에서 결과를 살펴보고, <b>[총평지 생성]</b>으로 AI 시험 총평까지 체험해 보세요.
                 </DemoGuide>
               )}
               {selectedItem?.status === 'COMPLETED' && selectedItem.withCommentary && (

@@ -523,7 +523,7 @@ export function CommentarySection({
       {isExpanded && !isStale && isFallback && !isRegenerating && (
         <div className="bg-amber-50 border border-amber-200 rounded-sm px-3 py-2 mb-3 flex items-center gap-2">
           <span className="text-amber-500 text-xs">&#9888;</span>
-          <p className="text-xs text-amber-700">AI 총평 생성에 실패하여 규칙 기반 요약으로 대체되었습니다. &quot;AI 재분석&quot; 버튼으로 다시 시도할 수 있습니다.</p>
+          <p className="text-xs text-amber-700">AI 총평지 생성에 실패하여 규칙 기반 요약으로 대체되었습니다. &quot;AI 재분석&quot; 버튼으로 다시 시도할 수 있습니다.</p>
         </div>
       )}
 

@@ -366,7 +366,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
       });
       if (!res.ok) {
         const err = await res.json().catch(() => null);
-        toast.error(err?.error?.message || (res.status === 403 ? commentaryLockMsg : '총평 생성에 실패했습니다'));
+        toast.error(err?.error?.message || (res.status === 403 ? commentaryLockMsg : '총평지 생성에 실패했습니다'));
         return;
       }
       // 다른 시험지로 갔어도 완료 토스트는 표시 (생성이 멈추지 않았음을 알림).
@@ -374,7 +374,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
       // 현재 보고 있는 시험지면 즉시 갱신. 다른 시험지면 돌아올 때 page selection 효과가 자동 재조회.
       onRefresh();
     } catch {
-      toast.error('총평 생성 중 오류가 발생했습니다');
+      toast.error('총평지 생성 중 오류가 발생했습니다');
     } finally {
       // 이 시험지 생성 종료 — Record에서 제거 (동시에 다른 시험지 생성 중이면 그건 유지)
       setCommentaryGen((p) => {
@@ -944,11 +944,11 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                         metadataPending
                           ? 'V3 총평 준비 중입니다 (분석 기반 데이터 생성). 잠시 후 가능합니다.'
                           : readinessCheck.ready
-                          ? '총평 생성'
+                          ? '총평지 생성'
                           : '먼저 다음을 완성하세요:\n' + readinessCheck.reasons.map(r => '• ' + r).join('\n')
                       }
                     >
-                      {metadataPending ? '준비 중...' : '총평 생성'}
+                      {metadataPending ? '준비 중...' : '총평지 생성'}
                     </Button>
                   )}
                   {detail.schoolId && !commentaryLoading && !isStaleAnalysis && !commentaryLocked && (
@@ -1032,7 +1032,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
               {/* ── 총평 생성 차단 경고 (배점/단원 미완성) — 구버전·플랜잠김이 아닐 때만 ── */}
               {!isStaleAnalysis && !commentaryLocked && !readinessCheck.ready && !commentaryLoading && (
                 <div className="mt-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-sm">
-                  <p className="text-xs font-semibold text-amber-800 mb-1">총평 생성 전 다음을 완성하세요:</p>
+                  <p className="text-xs font-semibold text-amber-800 mb-1">총평지 생성 전 다음을 완성하세요:</p>
                   <ul className="text-[11px] text-amber-700 space-y-0.5 list-disc list-inside">
                     {readinessCheck.reasons.map((r, i) => (
                       <li key={i}>{r}</li>
@@ -1058,7 +1058,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                   </div>
                   <p className="text-[11px] text-indigo-600 mt-1.5 leading-relaxed">
                     분석 기반 데이터를 생성하고 있습니다.{' '}
-                    {metadataWillChain ? '완료되면 자동으로 총평이 이어서 생성됩니다.' : '완료되면 [총평 생성]이 활성화됩니다.'}
+                    {metadataWillChain ? '완료되면 자동으로 총평이 이어서 생성됩니다.' : '완료되면 [총평지 생성]이 활성화됩니다.'}
                   </p>
                 </div>
               )}
