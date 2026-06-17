@@ -1,14 +1,15 @@
 /**
  * 구독 게이팅 헬퍼 (서버 전용).
  * - getTenantPlan: 유효 플랜 (행 없음/만료 → free)
- * - assertAnalysisGate: 분석 실행 통합 게이트 — 학생 시험지=크레딧, 블랭크=월 쿼터 (둘 중 하나만)
+ * - assertAnalysisGate: 분석 실행 통합 게이트 — 분석 주체는 선생님. 지점 풀에서 차감(학생 무관),
+ *   풀이 비면 무료 월 한도로 폴백 (학생별 배정 불필요).
  * - assertAnalysisQuota / assertPlanFeature: NextResponse(403) 또는 null 반환
  *   → 라우트에서 `const gate = await assert...(); if (gate) return gate;` 패턴.
  * tenantId 없음(SUPER_ADMIN 무테넌트 등) → 면제(null).
  */
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { assertExamAnalysisCredit } from '@/lib/entitlements/service';
+import { poolUsableBalance, alreadyConsumed } from '@/lib/entitlements/service';
 import { getPlanConfig, PLAN_RANK, BETA_PLAN, type PlanId, type PlanFeature } from './plans';
 
 /** 베타 기간 여부 (서버 env). true면 전 테넌트 최소 BETA_PLAN으로 승격. */
@@ -46,21 +47,28 @@ async function resolveBasePlan(tenantId: string | null | undefined): Promise<Pla
 }
 
 /**
- * 이번 달 완료 분석 수 (테넌트 단위) — 쿼터 대상인 블랭크/템플릿 분석만 집계.
- * 학생 연결 시험지(studentId 있음)는 크레딧으로 게이팅되므로 월 쿼터에서 제외 —
- * 크레딧 분석이 블랭크 한도를 잠식하지 않는다.
- * excludeExamPaperId: 재분석 시 현재 시험지 제외.
+ * 이번 달 "무료 한도(quota)로 처리된 분석" 수 (테넌트 단위).
+ * consumeExamAnalysisCredit 가 풀 차감이 없을 때 남기는 ledger reason='quota' 행을 집계 —
+ * 유료 풀 차감(reason='consume')은 무료 한도를 잠식하지 않는다.
  */
-export async function getMonthlyAnalysisCount(tenantId: string, excludeExamPaperId?: string): Promise<number> {
+export async function getMonthlyQuotaUsed(tenantId: string): Promise<number> {
+  const { monthStart, nextMonthStart } = monthBounds();
+  return prisma.entitlementLedger.count({
+    where: {
+      tenantId,
+      feature: 'EXAM_ANALYSIS',
+      reason: 'quota',
+      createdAt: { gte: monthStart, lt: nextMonthStart },
+    },
+  });
+}
+
+/** 이번 달 완료 분석 수(전체) — billing 표시용. 게이팅은 getMonthlyQuotaUsed/풀 잔액이 담당. */
+export async function getMonthlyAnalysisCount(tenantId: string): Promise<number> {
   const { monthStart, nextMonthStart } = monthBounds();
   return prisma.examAnalysis.count({
     where: {
-      examPaper: {
-        tenantId,
-        studentId: null,
-        status: 'COMPLETED',
-        ...(excludeExamPaperId ? { id: { not: excludeExamPaperId } } : {}),
-      },
+      examPaper: { tenantId, status: 'COMPLETED' },
       createdAt: { gte: monthStart, lt: nextMonthStart },
     },
   });
@@ -69,19 +77,18 @@ export async function getMonthlyAnalysisCount(tenantId: string, excludeExamPaper
 const FEATURE_LABELS: Record<PlanFeature, string> = { commentary: 'AI 총평', nearby: '주변학교 비교' };
 
 /**
- * 월 분석 한도 검사 — 블랭크/템플릿 분석 전용 (Gemini 비용 남용 가드).
- * 학생 이용권(크레딧)을 차감하는 분석에는 적용하지 않는다 → assertAnalysisGate 사용.
- * 초과 → 403(QUOTA_EXCEEDED), 통과 → null.
+ * 무료 월 한도 검사 (지점 풀에 유료 크레딧이 없을 때의 폴백).
+ * 이번 달 'quota' 처리 분석 수가 플랜 한도 이상이면 차단. 초과 → 403, 통과 → null.
  */
-export async function assertAnalysisQuota(tenantId: string | null | undefined, excludeExamPaperId?: string): Promise<NextResponse | null> {
+export async function assertAnalysisQuota(tenantId: string | null | undefined): Promise<NextResponse | null> {
   if (!tenantId) return null;
   const plan = await getTenantPlan(tenantId);
   const limit = getPlanConfig(plan).monthlyAnalyses;
   if (!Number.isFinite(limit)) return null; // 무제한
-  const used = await getMonthlyAnalysisCount(tenantId, excludeExamPaperId);
+  const used = await getMonthlyQuotaUsed(tenantId);
   if (used >= limit) {
     return NextResponse.json(
-      { error: { code: 'QUOTA_EXCEEDED', message: `이번 달 분석 한도(${limit}회)를 모두 사용했습니다. 플랜을 업그레이드하면 더 분석할 수 있습니다. 학생 이용권으로 진행하는 분석은 이 한도에 포함되지 않습니다.` } },
+      { error: { code: 'QUOTA_EXCEEDED', message: `이번 달 무료 분석 한도(${limit}회)를 모두 사용했습니다. 기출분석 이용권을 충전하거나 플랜을 업그레이드하세요.` } },
       { status: 403 },
     );
   }
@@ -89,19 +96,26 @@ export async function assertAnalysisQuota(tenantId: string | null | undefined, e
 }
 
 /**
- * 분석 실행 통합 게이트 — 시험지당 정확히 하나의 게이트만 적용 (AND 게이트 아님):
- * - 학생 연결 시험지(studentId 있음, 크레딧 차감) → 학생 이용권 게이트만. 월 쿼터 면제 —
- *   구매한 크레딧(일회성 팩·이월분 포함)을 플랜 쿼터가 막지 않는다.
- * - 블랭크/템플릿(studentId 없음, 크레딧 미차감) → 플랜 월 쿼터만 (Gemini 비용 남용 가드).
- * quotaTenantId: 쿼터 판정용 테넌트 (라우트에서 user.viewingTenantId ?? user.tenantId).
- * 실패=NextResponse 403, 통과=null.
+ * 분석 실행 통합 게이트 — 분석 주체는 지점 선생님(학생 연결은 선택).
+ * 1) 재분석(이미 차감) → 통과.
+ * 2) 지점 풀에 사용 가능 크레딧 ≥ 1 → 통과 (consume 가 풀에서 1 차감).
+ * 3) 풀이 비면 → 무료 월 한도(플랜) 폴백.
+ * quotaTenantId: 라우트의 user.viewingTenantId ?? user.tenantId (풀/한도 판정 테넌트).
+ * 실패=NextResponse 403, 통과=null. 일시 오류는 fail-open(분석 흐름 보호).
  */
 export async function assertAnalysisGate(
   examPaper: { id: string; tenantId: string; studentId: string | null },
   quotaTenantId: string | null | undefined,
 ): Promise<NextResponse | null> {
-  if (examPaper.studentId) return assertExamAnalysisCredit(examPaper);
-  return assertAnalysisQuota(quotaTenantId, examPaper.id);
+  const tenantId = examPaper.tenantId;
+  try {
+    if (await alreadyConsumed(examPaper.id)) return null; // 재분석 — 이미 차감
+    if ((await poolUsableBalance(tenantId)) >= 1) return null; // 지점 풀에서 차감 예정
+  } catch (e) {
+    console.error('[gate] 풀 확인 실패 — fail-open:', e);
+    return null;
+  }
+  return assertAnalysisQuota(quotaTenantId ?? tenantId); // 무료 월 한도 폴백
 }
 
 /** 기능 사용 가능 여부. 불가 → 403(FEATURE_LOCKED), 가능 → null. */

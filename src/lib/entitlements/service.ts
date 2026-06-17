@@ -198,9 +198,18 @@ type ExamPaperLike = { id: string; tenantId: string; studentId: string | null };
 const consumeRef = (examPaperId: string) => `examPaper:${examPaperId}`;
 
 /** 이 시험지로 이미 차감했는지(재분석 멱등) */
-async function alreadyConsumed(examPaperId: string): Promise<boolean> {
+export async function alreadyConsumed(examPaperId: string): Promise<boolean> {
   const row = await prisma.entitlementLedger.findUnique({ where: { refOrderId: consumeRef(examPaperId) } });
   return !!row;
+}
+
+/** 지점 풀 사용 가능 잔액 (만료 제외, userId=null) — 분석 게이트가 이걸 본다. */
+export async function poolUsableBalance(tenantId: string, feature: LicenseFeature = EXAM_FEATURE): Promise<number> {
+  const agg = await prisma.entitlementCreditLot.aggregate({
+    where: { tenantId, userId: null, feature, remaining: { gt: 0 }, expiresAt: { gt: new Date() } },
+    _sum: { remaining: true },
+  });
+  return agg._sum.remaining ?? 0;
 }
 
 /**
@@ -251,28 +260,42 @@ export async function assertExamAnalysisCredit(examPaper: ExamPaperLike): Promis
 }
 
 /**
- * 기출분석 성공 후 1 차감 — 학생 시험지일 때만, 시험지 단위 멱등(refOrderId=examPaper:<id>).
- * 만료 임박 lot 부터 차감 (FIFO by expiresAt, 만료분 제외). 재분석은 유니크 제약으로 중복 차감 안 함.
- * 사용 가능 lot 이 없으면 카운터만 기록 — 분석은 이미 완료된 시점이므로 실패시키지 않음(fail-open).
+ * 기출분석 성공 후 1 차감 — 분석 주체는 선생님. 시험지당 멱등(refOrderId=examPaper:<id>).
+ * 지점 풀(userId=null)에서 만료 임박분 우선(FIFO) 1 차감 — 학생 연결 여부와 무관.
+ * 풀에 사용 가능 lot 이 있으면 reason='consume'(유료 차감), 없으면 reason='quota'(무료 월 한도분 →
+ * guard 가 이 'quota' 행을 월 단위로 집계해 무료 한도를 판정한다). 재분석은 refOrderId 유니크로 중복 차감 안 함.
+ * 분석은 이미 끝난 시점이라 실패시키지 않음(fail-open).
  */
 export async function consumeExamAnalysisCredit(examPaper: ExamPaperLike): Promise<void> {
   const { studentId, tenantId } = examPaper;
-  if (!studentId) return;
   const now = new Date();
   try {
     await prisma.$transaction(async (tx) => {
-      await tx.entitlementLedger.create({
-        data: { tenantId, userId: studentId, feature: EXAM_FEATURE, delta: -1, reason: 'consume', refOrderId: consumeRef(examPaper.id) },
-      });
       const lot = await tx.entitlementCreditLot.findFirst({
-        where: { tenantId, userId: studentId, feature: EXAM_FEATURE, remaining: { gt: 0 }, expiresAt: { gt: now } },
+        where: { tenantId, userId: null, feature: EXAM_FEATURE, remaining: { gt: 0 }, expiresAt: { gt: now } },
         orderBy: [{ expiresAt: 'asc' }, { createdAt: 'asc' }],
       });
-      if (lot) await takeFromLot(tx, lot.id, 1);
-      await tx.studentLicense.update({
-        where: { tenantId_userId_feature: { tenantId, userId: studentId, feature: EXAM_FEATURE } },
-        data: { used: { increment: 1 } },
+      await tx.entitlementLedger.create({
+        data: {
+          tenantId, userId: studentId ?? null, feature: EXAM_FEATURE,
+          delta: lot ? -1 : 0, reason: lot ? 'consume' : 'quota',
+          refOrderId: consumeRef(examPaper.id),
+        },
       });
+      if (lot) {
+        await takeFromLot(tx, lot.id, 1);
+        await tx.tenantEntitlement.updateMany({
+          where: { tenantId, feature: EXAM_FEATURE },
+          data: { balance: { decrement: 1 } },
+        });
+      }
+      // 학생 연결 시 통계용 카운터도 증가(있을 때만 — 배정 없이도 분석 가능)
+      if (studentId) {
+        await tx.studentLicense.updateMany({
+          where: { tenantId, userId: studentId, feature: EXAM_FEATURE },
+          data: { used: { increment: 1 } },
+        });
+      }
     });
   } catch (e) {
     if (isUniqueViolation(e)) return; // 이미 차감(재분석)
