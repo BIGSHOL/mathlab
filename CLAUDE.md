@@ -2,6 +2,56 @@
 
 > **⚠️ 현재 개발 버전입니다. DB의 모든 데이터는 더미 데이터이며, 초기화/삭제가 자유롭습니다.**
 
+---
+
+## 🚧 최우선 하드 경계 — 수학 랩실 자동화(Lab) 서브시스템 격리 (절대 규칙)
+
+> **이 repo에는 두 개의 제품이 공존한다. ① 라이브 운영 중인 "기출분석"(exam-analysis) ② 은닉 개발 중인 "수학 랩실 자동화 파이프라인"(Lab). Lab 개발은 기출분석을 절대로 건드리지 않는다 — 코드도, DB도, 사용자 화면도.**
+
+### 0대원칙: ADDITIVE-ONLY (기존 코드 0줄 수정)
+- **기출분석 파일은 단 한 줄도 수정하지 않는다.** Lab 작업은 전부 *새 파일 추가*로만 한다. 안 만진 코드는 안 바뀐다 = 회귀 불가능.
+- 유일하게 손대는 공유 파일은 `prisma/schema.prisma` 뿐 → 그것도 **`Lab*` 모델 추가만** (기존 모델/필드/인덱스 무수정).
+- 공유 유틸(`requireAuth`, Supabase 클라이언트, KaTeX, `curriculum.ts` 등)은 **읽기 전용으로 재사용**만. 수정 금지 — 필요하면 `src/lib/lab/` 안에 래퍼/복제.
+
+### 🚫 절대 수정 금지 표면 (기출분석 = 사용자가 보는 모든 것)
+| 표면 | 규칙 |
+|------|------|
+| `src/app/(teacher)/exam-analysis/**`, `src/lib/exam-analysis/**`, `src/components/exam-analysis/**` | 무수정 |
+| `src/app/api/exam-analysis/**`, `billing`, `entitlements`, `admin` 등 기존 API | 무수정 |
+| `navigation.ts` (사이드바/커맨드팔레트) | **무수정** → Lab 메뉴 어디에도 안 뜸 |
+| 랜딩(`src/app/page.tsx`)·공개 페이지·결제/이용권 UI | 무수정 → 마케팅·플랜 변화 0 |
+| `prisma/schema.prisma`의 기존 모델 | 무수정 (Lab* 추가만 허용) |
+
+### 🔒 Lab 네임스페이스 (전부 새 파일)
+- **모델**: `Lab` 프리픽스 — `LabStudent`, `LabConcept`, `LabConceptEdge`, `LabMasteryRecord`, `LabPacingPosition`, `LabPrescription`, `LabPrescriptionItem`, `LabProblem`, `LabWorksheet`, `LabWorksheetProblem`, `LabSubmission`, `LabGradedItem`, `LabReport`. `@@map("lab_*")`로 DB 테이블명 격리. (기존 `Concept`/`Question` 이름 충돌 영구 회피.)
+- **enum**: `Lab` 프리픽스 — `LabTrack`, `LabGenMode`, `LabProblemType`, `LabErrorType`, `LabWorksheetStatus`, `LabReportType`.
+- **라우트**: `src/app/lab/**` (URL `/lab/*`), **API** `src/app/api/lab/**`, **로직** `src/lib/lab/**`.
+
+### 👻 은닉(dark launch) — 일반 사용자에겐 존재 자체가 없음
+- **접근 게이트**: `/lab` 레이아웃에서 `requireSuperAdmin()` → 미인가 시 **`notFound()` (404)**. 리다이렉트 금지(흔적 남김) — 404라야 "원래 없는 페이지"처럼 보임. API도 동일하게 `requireSuperAdmin` 가드.
+- **킬스위치**: 환경변수 `LAB_ENABLED` (기본 off). off면 SUPER_ADMIN도 404 → 프로덕션 배포돼도 아무도 도달 못 함.
+- 사이드바·커맨드팔레트·랜딩·billing에 **링크/언급 일절 없음**. 접근은 직접 URL(북마크)로만.
+
+### 🗄️ DB 안전 (기출분석 데이터 보호)
+- `lab_*` 테이블에 **additive 마이그레이션만**. 기존 테이블 alter/drop 금지.
+- 변경 전 `npm run db:backup`. **`prisma migrate reset` 절대 금지** (과거 개발 DB 증발 사고 — 본문 "DB 백업/복구 시스템" 참조).
+- 실제 DB `migrate`/`db push`는 사용자 확인 후 실행.
+
+### 🏗️ Lab 파이프라인 설계 요약 (척추 = StudentLearningState)
+5단계는 척추 스키마에 대한 **순수 함수**. 모든 산출물 레코드가 `genMode(MANUAL|ASSISTED|AUTO)`를 들고 있어 단계별로 사람↔자동을 독립 플립. **데이터는 역방향으로 흐른다**(채점→진단→처방→공급, `runCycle`이 박제).
+
+| 단계 | 인터페이스(`src/lib/lab/stages.ts`) | 자동화 |
+|------|------|--------|
+| 진단 | `Diagnoser`: 채점결과 → masteryMap(BKT) | 가능 |
+| 처방 | `Prescriber`: mastery+진도 → prescription | 가능(핵심 해자) |
+| 공급 | `Supplier`: prescription → 시험지(HWP) | 반자동 |
+| 채점 | `Grader`: 시험지+답안 → 문항별 정오 | 병목(객관식 쉬움/서술형 어려움) |
+| 보고 | `Reporter`: mastery delta → 리포트 | 가능 |
+
+**빌드 순서** (쉬운 자동화 ≠ 가치 우선순위에 주의): **P0** 척추+dumb 처방(진도표만)+공급+채점 → **P1** 채점 auto(객관식·단답) → **P2** 진단 auto(누적 채점이 공짜로 켬) → **P3** 처방 smart화 → **P4** 보고 auto → **P5** 서술형 채점 auto. ⚠️ HWP 출제 엔진·84개월 진도표 JSON은 현재 repo에 **없음** → 확보 전까지 소규모 합성 개념 그래프로 루프 검증.
+
+---
+
 ## 프로젝트 개요
 
 초등~고등 수학 학원용 학습 관리 플랫폼 (LMS).
