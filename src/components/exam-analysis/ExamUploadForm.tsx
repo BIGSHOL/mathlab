@@ -337,7 +337,8 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
     if (!title) setTitle(parsed.title);
     if (parsed.school) setSchoolName(parsed.school);
     if (parsed.grade) setGrade(parsed.grade);
-    if (parsed.subject) setSubject(parsed.subject);
+    // 과목은 수학 단일 고정 — 파일명이 영어로 감지돼도 무시
+    setSubject('MATH');
     if (parsed.category) setCategory(parsed.category);
     if (parsed.examYear) setExamYear(parsed.examYear);
     if (parsed.examSemester) setExamSemester(parsed.examSemester);
@@ -540,12 +541,12 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">과목 *</label>
           <select
-            value={subject}
-            onChange={e => setSubject(e.target.value as 'MATH' | 'ENGLISH')}
-            className="w-full px-3 py-2 border rounded-sm text-sm"
+            value="MATH"
+            disabled
+            aria-disabled
+            className="w-full px-3 py-2 border rounded-sm text-sm bg-slate-100 text-slate-500 cursor-not-allowed"
           >
             <option value="MATH">수학</option>
-            <option value="ENGLISH">영어</option>
           </select>
         </div>
 
