@@ -23,12 +23,61 @@ export interface GeminiGradeResult {
   rationale?: string;
 }
 
-/** 코드펜스 제거 후 JSON 파싱. */
+/**
+ * LLM JSON 복구 (CLAUDE.md #12-1) — AI가 LaTeX 백슬래시(\times,\frac)·문자열 내 실제 줄바꿈을
+ * 내뱉어 순진한 JSON.parse가 깨지는 것 방지. 문자열 내부만 상태머신으로 이스케이프 보정.
+ *   - 문자열 내 고립 백슬래시(\x) → \\x  (유효 escape \" \\ \/ \b \f \n \r \t \u 는 보존)
+ *   - 문자열 내 실제 제어문자(\n \r \t) → \\n \\r \\t
+ */
+function repairJsonString(s: string): string {
+  let out = '';
+  let inStr = false;
+  let depth = 0; // 중괄호 깊이(문자열 밖)
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (!inStr) {
+      out += ch;
+      if (ch === '"') inStr = true;
+      else if (ch === '{') depth++;
+      else if (ch === '}') depth--;
+      continue;
+    }
+    if (ch === '\\') {
+      const next = s[i + 1];
+      if (next !== undefined && '"\\/bfnrtu'.includes(next)) {
+        out += ch + next; // 유효 escape — 둘 다 보존
+        i++;
+      } else {
+        out += '\\\\'; // 고립 백슬래시(LaTeX) → 이스케이프
+      }
+    } else if (ch === '"') {
+      inStr = false;
+      out += ch;
+    } else if (ch === '\n') out += '\\n';
+    else if (ch === '\r') out += '\\r';
+    else if (ch === '\t') out += '\\t';
+    else out += ch;
+  }
+  // 잘린 응답 salvage(maxOutputTokens 초과) — 미닫힌 문자열·중괄호 보정.
+  if (inStr) out += '"';
+  while (depth-- > 0) out += '}';
+  return out;
+}
+
+/** 코드펜스 제거 후 JSON 파싱(복구 재시도 포함). */
 function parseJson<T>(text: string | undefined): T {
-  if (!text) throw new Error('Lab 채점 AI 빈 응답');
+  if (!text) throw new Error('Lab AI 빈 응답');
   let s = text.trim();
   if (s.startsWith('```')) s = s.replace(/^```[a-zA-Z]*\s*/, '').replace(/\s*```$/, '');
-  return JSON.parse(s) as T;
+  // 본문만 추출(앞뒤 잡텍스트 방어): 첫 { ~ 마지막 }. (없거나 잘리면 원본 유지)
+  const first = s.indexOf('{');
+  const last = s.lastIndexOf('}');
+  if (first >= 0 && last > first) s = s.slice(first, last + 1);
+  try {
+    return JSON.parse(s) as T;
+  } catch {
+    return JSON.parse(repairJsonString(s)) as T; // 복구 후 재시도
+  }
 }
 
 /**
@@ -63,4 +112,82 @@ export async function gradeWithGemini(input: {
     config: { responseMimeType: 'application/json', maxOutputTokens: 512 },
   });
   return parseJson<GeminiGradeResult>(res.text);
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// 문제 생성 (콘텐츠 토대 2단계) — 개념·난이도·유형 → 구조화 문제 본문
+//   ⚠️ 격리: 기출분석/mathgen import 금지. 본 Lab 클라이언트(복제)만 사용.
+//   내부 전용(서버 로그). 사용자 UI엔 'AI'로만(모델명 비노출, CLAUDE.md #0).
+const LAB_GEN_MODEL = 'gemini-2.5-flash';
+
+export type LabGenType = 'MULTIPLE_CHOICE' | 'SHORT_ANSWER' | 'DESCRIPTIVE';
+
+export interface GeminiGenInput {
+  conceptName: string;
+  majorUnit?: string; // 대단원 맥락
+  domain?: string; // 영역
+  bandLabel?: string; // 초등|중등|고등
+  type: LabGenType;
+  difficulty: number; // 1..5
+}
+
+/** AI 원시 생성 결과(유형별 필드 optional). 정규화는 problem-gen에서. */
+export interface GeminiGenRaw {
+  body: string;
+  choices?: string[]; // 객관식 보기(5)
+  answerIndex?: number; // 객관식 정답(1-based)
+  answer?: string; // 단답 정답
+  rubric?: string; // 서술형 채점 루브릭(모범답안+기준)
+  explanation: string; // 풀이
+}
+
+const TYPE_KR: Record<LabGenType, string> = {
+  MULTIPLE_CHOICE: '객관식(보기 5개)',
+  SHORT_ANSWER: '단답형',
+  DESCRIPTIVE: '서술형',
+};
+const DIFF_KR = ['', '기본', '표준', '응용', '심화', '최고난도'];
+
+/** 개념·난이도·유형 → 구조화 문제 1개 생성. */
+export async function generateWithGemini(input: GeminiGenInput): Promise<GeminiGenRaw> {
+  const unit = input.majorUnit ? `${input.majorUnit} > ${input.conceptName}` : input.conceptName;
+  const lvl = DIFF_KR[input.difficulty] ?? '표준';
+  const shape =
+    input.type === 'MULTIPLE_CHOICE'
+      ? '{ "body": "문제 본문", "choices": ["보기1","보기2","보기3","보기4","보기5"], "answerIndex": 1~5(정답 보기 번호), "explanation": "풀이" }'
+      : input.type === 'SHORT_ANSWER'
+        ? '{ "body": "문제 본문", "answer": "정답(KaTeX)", "explanation": "풀이" }'
+        : '{ "body": "문제 본문", "rubric": "모범답안 + 채점기준(부분점수 배분 포함)", "explanation": "풀이" }';
+
+  const prompt = [
+    `너는 한국 ${input.bandLabel ?? ''} 수학 출제 전문가다. 아래 조건의 수학 문제 1개를 한국어로 생성하라.`,
+    '',
+    '[조건]',
+    `- 개념: ${unit}${input.domain ? ` (영역: ${input.domain})` : ''}`,
+    `- 난이도: ${input.difficulty}단계(${lvl}) — 1기본·2표준·3응용·4심화·5최고난도`,
+    `- 유형: ${TYPE_KR[input.type]}`,
+    '',
+    '[작성 규칙]',
+    '- 모든 숫자·영문 변수는 KaTeX 인라인으로: $25$, $a$, $x+y$. (보기 번호 ①②③④⑤·한글 기호 ㄱㄴㄷ은 제외)',
+    '- 분수는 반드시 \\frac (\\dfrac 금지). 수식은 $...$로 감싼다.',
+    '- 영문 용어/약어(enum 등) 노출 금지 — 한국어로만 서술.',
+    '- 본문·보기·해설은 핵심만 간결하게(불필요하게 긴 나열 금지). 해설은 풀이 요지 위주.',
+    input.type === 'MULTIPLE_CHOICE' ? '- 보기는 정확히 5개, 정답 1개. 오답도 흔한 실수에 근거해 그럴듯하게. 보기 텍스트엔 번호(①②③④⑤)·기호 없이 내용만.' : '',
+    input.difficulty >= 4 ? '- 심화/최고난도: 비자명한 통찰 또는 여러 개념의 결합을 요구하라(단순 대입 금지).' : '- 해당 난이도에 맞는 사고 깊이를 유지하라.',
+    '',
+    `[출력] 아래 JSON만 출력(코드펜스·다른 텍스트 금지):`,
+    shape,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const res = await client().models.generateContent({
+    model: LAB_GEN_MODEL,
+    contents: prompt,
+    // ⚠️ gemini-2.5-flash는 thinking 모델 — thinkingBudget 0으로 끄지 않으면 thinking 토큰이
+    //    maxOutputTokens를 먹어 JSON이 잘림("Unexpected end of JSON input"). 생성은 비-thinking로.
+    // 본문+보기+풀이(한글) → 잘림 방지 넉넉히(CLAUDE.md #12-1: 한글×~5토큰).
+    config: { responseMimeType: 'application/json', maxOutputTokens: 4096, thinkingConfig: { thinkingBudget: 0 } },
+  });
+  return parseJson<GeminiGenRaw>(res.text);
 }
