@@ -50,6 +50,11 @@
 
 **빌드 순서** (쉬운 자동화 ≠ 가치 우선순위에 주의): **P0** 척추+dumb 처방(진도표만)+공급+채점 → **P1** 채점 auto(객관식·단답) → **P2** 진단 auto(누적 채점이 공짜로 켬) → **P3** 처방 smart화 → **P4** 보고 auto → **P5** 서술형 채점 auto. ⚠️ HWP 출제 엔진·84개월 진도표 JSON은 현재 repo에 **없음** → 확보 전까지 소규모 합성 개념 그래프로 루프 검증.
 
+> **📌 Lab 현황 + 다른 컴퓨터 재개 — 단일 진실은 [docs/lab/HANDOFF.md](docs/lab/HANDOFF.md)** (특히 §6 새 컴퓨터 셋업 · §7 다음 갈래 · §9b 콘텐츠 전략).
+> **완료**: P0~P5(5단계 전체 자동화) + ②⑤ 코크핏/제출 UI + 콘텐츠 토대 1·2단계(curriculum.ts→실 개념 239개 DB적용 + AI 문제생성기 Gemini Flash). **PR 스택**: `main`←#20(P0)←#21(P1)←…←#25(P5)←#26(코크핏)←#27(`lab/content-foundation`=콘텐츠토대, **스택 팁**). 전부 `BIGSHOL/mathlab`.
+> **다음**: 콘텐츠 토대 3단계 = `LabProblem` 본문/보기/해설 컬럼(additive) + 생성문제 영속 + 데모 실학기 repoint → 실 개념+문제로 루프 구동.
+> ⚠️ Lab 문제생성·서술형채점은 **Lab 자체 Gemini 클라이언트(`src/lib/lab/ai-client.ts`, 복제)** 사용 — 기출분석 `src/lib/exam-analysis/gemini.ts` **무import**(복제>격리침범). `.env.local`·메모리는 git 미포함이라 HANDOFF가 SoT.
+
 ---
 
 ## 프로젝트 개요
