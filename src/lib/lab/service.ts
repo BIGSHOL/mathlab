@@ -181,3 +181,20 @@ export async function generateLabReport(
     type,
   });
 }
+
+/**
+ * [DEV] 코크핏 데모 한 바퀴 — 실제 학생답 제출 UI(⑤) 전까지의 데모 구동기.
+ *   최신 워크시트가 미제출이면 무작위 채점 시뮬(제출+채점) → 한 사이클(채점→진단→처방→공급).
+ *   클릭마다 mastery가 쌓이고 다음 시험지가 나온다. 실제 운영은 submitAnswers(학생 입력)로 대체.
+ */
+export async function labDemoStep(studentId: string) {
+  const latestWs = await prisma.labWorksheet.findFirst({
+    where: { studentId },
+    orderBy: { createdAt: 'desc' },
+    include: { submission: true },
+  });
+  if (latestWs && !latestWs.submission) {
+    await simulateManualGrading(latestWs.id, 0.6);
+  }
+  return runStudentCycle(studentId);
+}

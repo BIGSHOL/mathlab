@@ -18,11 +18,15 @@ export default async function LabLayout({
   // 게이트: 킬스위치 off · 비로그인 · SUPER_ADMIN 아님 → notFound()
   await assertLabAccess();
 
+  // ⚠️ 루트 body가 overflow-hidden(LMS 셸 규약) → 자체 스크롤 컨테이너 필요(h-dvh + overflow-y-auto).
   return (
-    <div className="min-h-dvh bg-slate-950 text-slate-100 overflow-y-auto">
-      <header className="border-b border-slate-800 px-6 py-3 flex items-center gap-3">
-        <span className="text-xs font-mono tracking-widest text-amber-400">🚧 LAB</span>
-        <span className="text-sm text-slate-400">수학 랩실 자동화 — 내부 개발 (은닉)</span>
+    <div className="h-dvh overflow-y-auto bg-slate-50 text-slate-900">
+      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur px-6 py-3 flex items-center gap-2">
+        <span className="text-[11px] font-semibold tracking-wide text-amber-700 bg-amber-50 border border-amber-200 rounded-sm px-2 py-0.5">
+          내부
+        </span>
+        <span className="text-sm font-medium text-slate-700">수학 랩실 자동화</span>
+        <span className="text-xs text-slate-400">— 은닉 개발 콘솔</span>
       </header>
       <main className="px-6 py-8 max-w-5xl mx-auto">{children}</main>
     </div>
