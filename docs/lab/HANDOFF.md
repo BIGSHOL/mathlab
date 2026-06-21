@@ -1,7 +1,7 @@
 # 🚧 수학 랩실 자동화(Lab) — 세션 핸드오프
 
 > **목적**: 세션 간 인수인계. 끊김 없이 이어가기 위한 현재 상태 + 런북.
-> **최종 갱신**: 2026-06-21 (로컬 세션 — **P2 autoDiagnoser(BKT) 구현·검증 완료**) · 이전: P1 autoGrader · P0 DB 검증 · P0 구축
+> **최종 갱신**: 2026-06-22 (로컬 세션 — **P3 smartPrescriber 구현·검증 완료**) · 이전: P2 BKT 진단 · P1 autoGrader · P0 DB 검증·구축
 
 ---
 
@@ -9,8 +9,8 @@
 
 mathlab repo 안에, **라이브 기출분석 제품과 완전 격리된 채 은닉(dark launch) 개발 중**인
 학원 운영 자동화 파이프라인(진단→처방→공급→채점→보고).
-**P0 토대 + P1 채점 auto(객관식·단답) + P2 진단 auto(BKT) 완성.** 모두 실DB end-to-end 검증 PASS.
-다음 갈래는 **코크핏 DB연동(§7 ②)** · **학생답 입력 UI/제출 API(§7 ⑤)** · **P3 처방 smart(핵심 해자)**.
+**P0 토대 + P1 채점 auto + P2 진단 auto(BKT) + P3 처방 smart(핵심 해자) 완성.** 모두 실DB/단위 검증 PASS.
+다음 갈래는 **P4 보고 auto** · **P5 서술형 채점** · **코크핏 DB연동(§7 ②)** · **학생답 입력 UI/제출 API(§7 ⑤)**.
 
 ---
 
@@ -27,12 +27,11 @@ mathlab repo 안에, **라이브 기출분석 제품과 완전 격리된 채 은
 
 | 항목 | 값 |
 |------|----|
-| 작업 브랜치 | `lab/p2-auto-diagnoser` (worktree `F:\mathlab-lab-p1`, `lab/p1-auto-grader`에서 분기) |
-| PR 체인 | P0=#20 ← P1=#21(`lab/p1-auto-grader`) ← **P2=#22 예정(`lab/p2-auto-diagnoser`)**. 모두 `BIGSHOL/mathlab` |
-| **로컬 P0 검증** | ✅ `scripts/lab/verify-p0.ts` PASS |
-| **로컬 P1 검증** | ✅ `scripts/lab/verify-p1.ts` PASS (autoGrader, 진단기-무관 단언으로 갱신) |
-| **로컬 P2 검증** | ✅ **`scripts/lab/verify-p2.ts` PASS** — BKT 단위 + e2e 결정적(DB==순수계산) + 수렴 + 멱등 |
-| DB | ✅ `lab_submission_items`(P1) + `lab_submissions.diagnosedAt`(P2) 추가. additive db push, 기존 행수 무손상 검증 |
+| 작업 브랜치 | `lab/p3-smart-prescriber` (worktree `F:\mathlab-lab-p1`, `lab/p2-auto-diagnoser`에서 분기) |
+| PR 체인 | P0=#20 ← P1=#21 ← P2=#22 ← **P3=#23 예정(`lab/p3-smart-prescriber`)**. 모두 `BIGSHOL/mathlab` |
+| **로컬 P0~P2 검증** | ✅ `verify-p0/p1/p2.ts` PASS (채점·BKT 진단; smartPrescriber 활성에도 회귀 통과) |
+| **로컬 P3 검증** | ✅ **`scripts/lab/verify-p3.ts` PASS** — 정책 단위 + 적응처방 + 선수개념 게이팅 + 약점오버레이 + 해자대비 + cold무회귀 + 통합 |
+| DB | ✅ `lab_submission_items`(P1) + `lab_submissions.diagnosedAt`(P2). **P3는 스키마 변경 없음**(기존 모델만 사용). 기존 행수 무손상 |
 
 > ⚠️ **repo 토폴로지**: 로컬 clone 원격 `mathlab2`는 *트림 이전 낡은 스냅샷* — push/PR은 **`BIGSHOL/mathlab`**(정식, #20/#21 있는 곳). worktree에 `git remote add mathlab-orig https://github.com/BIGSHOL/mathlab.git` 후 사용. additive 여부는 `mathlab-orig/main` 대비로 확인(Lab 작업은 거기서 순수 additive).
 > worktree `node_modules`는 메인(`F:\mathlab`)과 정션 공유 → `prisma generate` 시 메인 클라이언트도 갱신(additive라 무해). `.env`/`.env.local`은 별도 복사.
@@ -58,12 +57,12 @@ mathlab repo 안에, **라이브 기출분석 제품과 완전 격리된 채 은
 | 단계 | 인터페이스 | 현재 구현체 | 다음 전환 |
 |------|-----------|-----------|----------|
 | 진단 | `Diagnoser` | ✅ **`autoDiagnoser` (P2, BKT p(mastered))** | — |
-| 처방 | `Prescriber` | `dumbPrescriber` (진도표만, 약점맵 무시) | **P3 (핵심 해자)** ← 다음 |
+| 처방 | `Prescriber` | ✅ **`smartPrescriber` (P3, BKT 약점·선수개념 적응)** | per-concept 보정 P3b |
 | 공급 | `Supplier` | `manualSupplier` (문제은행→워크시트, HWP 보류) | 반자동 |
 | 채점 | `Grader` | ✅ **`autoGrader` (P1, 객관식·단답)** | 서술형은 P5 |
-| 보고 | `Reporter` | `manualReporter` (숙련도 스냅샷) | P4 |
+| 보고 | `Reporter` | `manualReporter` (숙련도 스냅샷) | **P4** ← 다음 |
 
-**빌드 순서**: P0 → ✅P1(채점 auto) → ✅P2(진단 auto) → P3(처방 smart) → P4(보고 auto) → P5(서술형 채점). ⚠️ 쉬운 자동화 ≠ 가치 우선순위(해자는 처방·서술형 채점).
+**빌드 순서**: P0 → ✅P1(채점) → ✅P2(진단) → ✅**P3(처방 smart=해자)** → P4(보고 auto) → P5(서술형 채점). ⚠️ 쉬운 자동화 ≠ 가치 우선순위(해자는 처방·서술형 채점).
 
 **데이터 흐름** (제출↔채점↔진단 분리):
 ```
@@ -88,14 +87,15 @@ src/lib/lab/
   gate.ts                     # 은닉 게이트
   service.ts                  # runStudentCycle(diagnosedAt 멱등 가드) · loadMasteryMap · submitAnswers(P1) · simulateManualGrading(P0 dev)
   answer-compare.ts           # P1: 객관식/단답 비교·정규화 (자기완결)
-  bkt.ts                      # ★P2: BKT 순수함수 (bktPosterior/bktFold + BKT_PARAMS) — 자기완결
+  bkt.ts                      # P2: BKT 순수함수 (bktPosterior/bktFold + BKT_PARAMS) — 자기완결
+  prescribe-policy.ts         # ★P3: 처방 정책 순수함수 (adaptiveDifficulty/Count + 임계) — 자기완결
   pipeline/
-    index.ts                  # p0Pipeline 조립 (diagnoser=autoDiagnoser, grader=autoGrader)
-    manual-diagnoser.ts       # P0 누적정답률(보존)
-    auto-diagnoser.ts         # ★P2: BKT Diagnoser — graded → p(mastered) upsert
-    dumb-prescriber.ts  manual-supplier.ts  manual-grader.ts  auto-grader.ts(P1)  manual-reporter.ts
+    index.ts                  # p0Pipeline 조립 (diagnoser=autoDiagnoser, prescriber=smartPrescriber, grader=autoGrader)
+    manual-diagnoser.ts  auto-diagnoser.ts(P2 BKT)
+    dumb-prescriber.ts(보존)  smart-prescriber.ts(★P3 약점·선수개념 적응)
+    manual-supplier.ts  manual-grader.ts  auto-grader.ts(P1)  manual-reporter.ts
 scripts/lab/
-  seed-synthetic.ts  verify-p0.ts  verify-p1.ts  verify-p2.ts(★BKT)
+  seed-synthetic.ts  verify-p0.ts  verify-p1.ts  verify-p2.ts(BKT)  verify-p3.ts(★smart 처방)
 docs/lab/HANDOFF.md
 ```
 
@@ -117,6 +117,14 @@ docs/lab/HANDOFF.md
 - **score 의미 전환**: `LabMasteryRecord.score`가 '누적정답률'→'p(mastered)'. 같은 0..1이나 해석 다름. **소비처 안전**(dumbPrescriber는 mastery 무시, manualReporter는 평균·0.6 임계 — 둘 다 타당). P3 smart 처방이 비로소 p(mastered)를 소비.
 - **observationCount는 메타데이터**(관측 수)로만 갱신. **BKT 가중치 아님**.
 - **🔴 멱등성**: `runStudentCycle`이 매 사이클 진단을 부르므로 같은 제출 이중관측 위험(BKT는 순서민감이라 치명적). → `LabSubmission.diagnosedAt`로 **제출당 정확히 1회** 게이트(service가 채점+진단을 `!diagnosedAt`일 때만, 사이클 끝에 마킹). manual/auto 공통 안전. runCycle throw 시 미마킹 → 재시도 안전.
+
+### P3 — smartPrescriber (처방 smart, 핵심 해자)
+- **무엇**: 선수개념 토대 주입 + 진도표 현위치 + 과거 약점 복습(top `MAX_WEAKNESS_OVERLAY`=2). 정책/임계는 `prescribe-policy.ts`(Lab 자체).
+- **난이도/문항(적응)**: BKT `p(mastered)` → `adaptiveDifficulty`(0.4/0.6/0.8/0.95 경계, 1~5; 교정 모드 상한 3) + `adaptiveCount`(약점 3 / 표준 5 / 숙련 6~7).
+- **선수개념 소프트 게이팅**: *약한* 현위치 개념의 *증거 있는 미흡(<`PREREQ_READY_THRESHOLD`=0.7)* 직접 선수개념(`LabConceptEdge`)을 **막지 않고 함께** 처방, **앞 순서**로(토대 보강). 강한/미시도 선수는 제외.
+- **cold 무회귀**: 증거 없는(관측 0) 개념은 dumb 베이스라인(난이도2·5문항) → 첫 사이클은 dumb와 동일.
+- **⚠️ 처방 ephemeral**: `PrescriptionDTO`는 공급으로만 흐르고 **`LabPrescription` 미영속**(P0 설계, `worksheet.prescriptionId=null`). 따라서 `reason`/`genMode='AUTO'`는 *현재 DB에 안 남음*. 분석 추적성(어떤 약점을 자꾸 처방하나)이 필요하면 **처방 영속 + worksheet FK 연결**이 후속 과제(P3b).
+- **⚠️ 난이도 4~5 vs 문제은행**: 합성 시드는 개념당 난이도 [1,2,2,3,2,1](최대 3). 강한 학생에 난이도 4~5 처방 시 supplier가 fallback(다른 난이도 보충)으로 채워 *의도 난이도 손실* — 실문제은행(난이도 4~5 포함) 확보 시 해소. prescriber 버그 아님.
 
 ---
 
@@ -151,12 +159,12 @@ node --env-file=.env.local --import tsx scripts/lab/verify-p2.ts   # P2 진단(B
 
 ## 7. 미결 결정 — 다음 갈래
 
-- ① DB 검증 — ✅ 완료. ③ P1 채점 auto — ✅ 완료(#21). ④ P2 진단 auto(BKT) — ✅ **완료**.
-- **② 코크핏 UI DB연동** ← 후보: `/lab` 정적 코크핏을 실DB로 — 학생/숙련도(p(mastered))/워크시트 + 루프 구동.
-- **⑤ 학생답 입력 UI / 제출 API** ← 후보: `POST /api/lab/submit-answers`(게이트) + 입력 화면. (스캔 `answerRef`+OCR는 P5 서술형과.)
-- **P3 처방 smart(핵심 해자)** ← BKT p(mastered)·선수개념(LabConceptEdge)로 약점 게이팅 처방. dumbPrescriber→smartPrescriber.
-- ⑥ needsReview 검수 큐 소비처(서술형/저신뢰).
-- **P2b BKT 보정**: per-concept 파라미터(LabConcept 필드) + 유형별 pG(MC/단답). 실데이터 확보 후.
+- ① DB 검증 ✅ · ③ P1 채점 auto ✅(#21) · ④ P2 진단 BKT ✅(#22) · **P3 처방 smart ✅(#23)**.
+- **P4 보고 auto** ← 다음(빌드순서): `manualReporter`(숙련도 스냅샷) → `autoReporter`(BKT mastery delta → 학부모/원장 리포트). 스키마(LabReport) 이미 존재.
+- **P5 서술형 채점** ← `autoGrader`의 DESCRIPTIVE(현재 needsReview) 자동화. ⑥ needsReview 검수 큐 소비처도 여기서.
+- **② 코크핏 UI DB연동** ← `/lab` 정적 코크핏을 실DB로(학생/숙련도/워크시트 + 루프 구동).
+- **⑤ 학생답 입력 UI / 제출 API** ← `POST /api/lab/submit-answers`(게이트) + 입력 화면.
+- **P3b 처방 고도화**: 처방 영속(LabPrescription + worksheet FK → reason 추적) · per-concept BKT/난이도 보정 · error-type 가중 · 난이도4~5 문제은행. 실데이터 확보 후.
 
 ---
 
@@ -177,6 +185,6 @@ node --env-file=.env.local --import tsx scripts/lab/verify-p2.ts   # P2 진단(B
 
 ## 9. 한 줄 재개 프롬프트 (새 세션용)
 
-> "수학 랩실 Lab 이어서 개발. **P0·P1(채점 auto)·P2(진단 BKT)는 2026-06-21 완료** (`verify-p0/p1/p2.ts` PASS).
-> `docs/lab/HANDOFF.md`와 CLAUDE.md '최우선 하드 경계' 읽고, §7 **②(코크핏 DB연동)** / **⑤(제출 API·UI)** / **P3(처방 smart=핵심 해자)** 중 선택.
-> ✅ db push 안전(단 migrate diff 0건 확인), `migrate reset` 금지. push/PR은 `BIGSHOL/mathlab`(원격 mathlab2는 낡음). 기출분석 절대 무수정."
+> "수학 랩실 Lab 이어서 개발. **P0·P1(채점)·P2(진단 BKT)·P3(처방 smart)는 완료** (`verify-p0~p3.ts` PASS).
+> `docs/lab/HANDOFF.md`와 CLAUDE.md '최우선 하드 경계' 읽고, §7 **P4(보고 auto)** / **P5(서술형 채점)** / **②(코크핏)** / **⑤(제출 API·UI)** 중 선택.
+> ✅ db push 안전(단 migrate diff 0건 확인), `migrate reset` 금지. push/PR은 `BIGSHOL/mathlab`(원격 mathlab2는 낡음). 기출분석은 형제 라인 — 절대 무수정(동결)."

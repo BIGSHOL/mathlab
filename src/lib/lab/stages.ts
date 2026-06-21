@@ -155,6 +155,9 @@ export async function runCycle(
   });
 
   // 공급: 처방 → 다음 시험지
+  //   ⚠️ PrescriptionDTO는 ephemeral — 공급으로만 흐르고 LabPrescription에 영속하지 않는다(P0 설계: worksheet만 추적,
+  //      worksheet.prescriptionId=null). reason/genMode 등 처방 근거는 현재 DB에 안 남음. 처방 히스토리/추적성이
+  //      필요해지면(P4 보고·분석) service에서 prisma.labPrescription.create()로 영속 + worksheet FK 연결(additive).
   return p.supplier.run({ prescription });
 }
 
