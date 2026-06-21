@@ -29,33 +29,34 @@ export function LabCockpitActions({ studentId }: { studentId: string }) {
   }
 
   const base =
-    'px-3 py-1.5 rounded-sm text-sm font-medium border transition disabled:opacity-40 disabled:cursor-not-allowed';
+    'px-3 py-1.5 rounded-sm text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed';
+  const secondary = `${base} border border-slate-200 bg-white text-slate-700 hover:bg-slate-50`;
   return (
     <div className="flex flex-wrap items-center gap-2">
       <button
-        className={`${base} border-amber-500/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20`}
+        className={`${base} bg-blue-600 text-white hover:bg-blue-700`}
         disabled={!!busy}
         onClick={() => call('/api/lab/demo-step', { studentId }, '데모 사이클')}
       >
         {busy === '데모 사이클' ? '구동 중…' : '▶ 데모 사이클 한 바퀴'}
       </button>
       <button
-        className={`${base} border-sky-500/40 bg-sky-500/10 text-sky-200 hover:bg-sky-500/20`}
+        className={secondary}
         disabled={!!busy}
         onClick={() => call('/api/lab/generate-report', { studentId, type: 'DIRECTOR' }, '원장 리포트')}
       >
         원장 리포트
       </button>
       <button
-        className={`${base} border-emerald-500/40 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20`}
+        className={secondary}
         disabled={!!busy}
         onClick={() => call('/api/lab/generate-report', { studentId, type: 'PARENT' }, '학부모 리포트')}
       >
         학부모 리포트
       </button>
       {msg && (
-        <span className={`text-xs ${msg.ok ? 'text-emerald-400' : 'text-rose-400'}`}>
-          {msg.ok ? '✅' : '❌'} {msg.text}
+        <span className={`text-xs ${msg.ok ? 'text-emerald-600' : 'text-rose-600'}`}>
+          {msg.text}
         </span>
       )}
     </div>
