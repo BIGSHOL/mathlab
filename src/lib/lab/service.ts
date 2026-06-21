@@ -32,13 +32,16 @@ export async function runStudentCycle(studentId: string) {
   const pacing = await prisma.labPacingPosition.findUnique({ where: { studentId } });
   if (!pacing) throw new Error('학생의 진도(pacing) 위치가 없습니다. 시드/배치가 필요합니다.');
 
-  // 최신 제출에서 채점결과 수집
+  // 최신 제출에서 채점결과 수집 — 단, *아직 진단되지 않은* 제출만.
+  //   이미 진단된 제출을 재진단하면 BKT가 같은 관측을 이중 반영(시퀀스 오염)한다.
+  //   diagnosedAt 마커로 진단을 제출당 정확히 1회로 게이트(manual/auto 공통 안전).
   let graded: GradedItemDTO[] = [];
   const latestSub = await prisma.labSubmission.findFirst({
     where: { studentId },
     orderBy: { createdAt: 'desc' },
   });
-  if (latestSub) {
+  const undiagnosed = !!latestSub && !latestSub.diagnosedAt;
+  if (undiagnosed && latestSub) {
     const res = await p0Pipeline.grader.run({
       worksheetId: latestSub.worksheetId,
       answerRef: latestSub.answerRef ?? '',
@@ -55,6 +58,15 @@ export async function runStudentCycle(studentId: string) {
     monthIdx: pacing.monthIdx,
     sessionIdx: pacing.sessionIdx,
   });
+
+  // 진단 반영 완료 표시 (정확히 1회) — 다음 사이클부터 이 제출은 재진단되지 않음.
+  if (undiagnosed && latestSub) {
+    await prisma.labSubmission.update({
+      where: { id: latestSub.id },
+      data: { diagnosedAt: new Date() },
+    });
+  }
+
   return worksheet;
 }
 

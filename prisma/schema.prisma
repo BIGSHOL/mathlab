@@ -1133,6 +1133,7 @@ model LabSubmission {
   student     LabStudent   @relation(fields: [studentId], references: [id])
   answerRef   String? // 스캔/사진 답안 스토리지 키
   gradedAt    DateTime?
+  diagnosedAt DateTime? // 진단(diagnoser)에 반영된 시각 — 이중 관측 방지(정확히 1회). null=미진단
   genMode     LabGenMode   @default(MANUAL)
   createdAt   DateTime     @default(now())
 
