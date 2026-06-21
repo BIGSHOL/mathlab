@@ -1,6 +1,7 @@
 // 🚧 수학 랩실(Lab) — 코크핏 (실DB 연동, MathLab 라이트 디자인)
 //   데모 학생의 척추 상태(mastery/워크시트/리포트)를 실DB에서 읽어 보여주고, 루프를 구동한다.
 //   ⚠️ 게이트는 layout(assertLabAccess)에서 처리 — SUPER_ADMIN + LAB_ENABLED 전제.
+import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { masteryLabel } from '@/lib/lab/report-policy';
 import { LabCockpitActions } from './LabCockpitActions';
@@ -144,7 +145,15 @@ export default async function LabHome() {
                   }`}>{w.status}</span>
                   <span className="text-slate-700">{w._count.problems}문항</span>
                   {w.submission && <span className="text-slate-400">· 채점 {w.submission._count.items}</span>}
-                  <span className="ml-auto text-[11px] text-slate-300 font-mono">{w.id.slice(-6)}</span>
+                  {w.status === 'PRESCRIBED' && !w.submission ? (
+                    <Link href={`/lab/worksheet/${w.id}`} className="ml-auto text-xs font-medium text-blue-600 hover:text-blue-700">
+                      풀기 →
+                    </Link>
+                  ) : w.status === 'SUBMITTED' ? (
+                    <span className="ml-auto text-[11px] text-blue-600">채점 대기</span>
+                  ) : (
+                    <span className="ml-auto text-[11px] text-slate-300 font-mono">{w.id.slice(-6)}</span>
+                  )}
                 </div>
               ))
             )}
