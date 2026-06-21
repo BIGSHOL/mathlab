@@ -24,12 +24,22 @@ export function SolveForm({ worksheetId, problems }: { worksheetId: string; prob
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
-  const answered = problems.filter((p) => ans[p.problemId] !== undefined).length;
+  function isAnswered(p: Problem): boolean {
+    const a = ans[p.problemId] as { choice?: number; value?: string } | undefined;
+    if (!a) return false;
+    return p.type === 'MULTIPLE_CHOICE' ? a.choice != null : (a.value ?? '').trim() !== '';
+  }
+  const answered = problems.filter(isAnswered).length;
 
   async function submit() {
     setBusy(true);
     setMsg(null);
-    const answers = problems.map((p) => ({ problemId: p.problemId, answer: ans[p.problemId] ?? {} }));
+    // 미입력 문항은 유형별 빈 답으로 정규화(오답 처리) — MC {choice:0}, 단답/서술 {value:''}.
+    const answers = problems.map((p) => {
+      const a = ans[p.problemId];
+      if (a !== undefined) return { problemId: p.problemId, answer: a };
+      return { problemId: p.problemId, answer: p.type === 'MULTIPLE_CHOICE' ? { choice: 0 } : { value: '' } };
+    });
     try {
       const res = await fetch('/api/lab/submit-answers', {
         method: 'POST',
@@ -68,6 +78,8 @@ export function SolveForm({ worksheetId, problems }: { worksheetId: string; prob
                   <button
                     key={n}
                     type="button"
+                    aria-label={`문항 ${p.order + 1} 보기 ${n}`}
+                    aria-pressed={sel}
                     onClick={() => setAns((a) => ({ ...a, [p.problemId]: { choice: n } }))}
                     className={`w-9 h-9 rounded-sm border text-sm font-medium transition ${
                       sel ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
@@ -81,12 +93,14 @@ export function SolveForm({ worksheetId, problems }: { worksheetId: string; prob
           ) : p.type === 'SHORT_ANSWER' ? (
             <input
               type="text"
+              aria-label={`문항 ${p.order + 1} 단답 입력`}
               placeholder="답 입력"
               onChange={(e) => setAns((a) => ({ ...a, [p.problemId]: { value: e.target.value } }))}
               className="w-48 rounded-sm border border-slate-200 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
             />
           ) : (
             <textarea
+              aria-label={`문항 ${p.order + 1} 서술 답안`}
               placeholder="서술 답안 입력"
               rows={3}
               onChange={(e) => setAns((a) => ({ ...a, [p.problemId]: { value: e.target.value } }))}
