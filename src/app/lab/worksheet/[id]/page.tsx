@@ -20,13 +20,22 @@ export default async function WorksheetSolve({ params }: { params: Promise<{ id:
   });
   if (!ws) notFound();
 
-  const problems = ws.problems.map((wp) => ({
-    problemId: wp.problemId,
-    order: wp.order,
-    type: wp.problem.type as 'MULTIPLE_CHOICE' | 'SHORT_ANSWER' | 'DESCRIPTIVE',
-    difficulty: wp.problem.difficulty,
-    concept: wp.problem.concept.name,
-  }));
+  const problems = ws.problems.map((wp) => {
+    // 합성 문제라 본문이 없어 정답을 알 길이 없음 → 데모 힌트로 정답값 노출(SUPER_ADMIN 내부 도구).
+    const a = wp.problem.answer as { choice?: number; value?: string } | null;
+    const answerHint =
+      wp.problem.type === 'MULTIPLE_CHOICE'
+        ? a?.choice != null ? `${a.choice}` : ''
+        : a?.value != null ? `${a.value}` : '';
+    return {
+      problemId: wp.problemId,
+      order: wp.order,
+      type: wp.problem.type as 'MULTIPLE_CHOICE' | 'SHORT_ANSWER' | 'DESCRIPTIVE',
+      difficulty: wp.problem.difficulty,
+      concept: wp.problem.concept.name,
+      answerHint,
+    };
+  });
 
   return (
     <div className="space-y-6">

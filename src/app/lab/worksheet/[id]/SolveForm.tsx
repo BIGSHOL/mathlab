@@ -9,6 +9,7 @@ type Problem = {
   type: 'MULTIPLE_CHOICE' | 'SHORT_ANSWER' | 'DESCRIPTIVE';
   difficulty: number;
   concept: string;
+  answerHint?: string;
 };
 
 const TYPE_LABEL: Record<Problem['type'], string> = {
@@ -52,6 +53,11 @@ export function SolveForm({ worksheetId, problems }: { worksheetId: string; prob
           <div className="flex items-center gap-2 mb-2.5">
             <span className="text-sm font-semibold text-slate-900">문항 {p.order + 1}</span>
             <span className="text-[11px] text-slate-400">{p.concept} · 난이도 {p.difficulty} · {TYPE_LABEL[p.type]}</span>
+            {p.answerHint && p.type !== 'DESCRIPTIVE' && (
+              <span className="ml-auto text-[11px] text-amber-600 bg-amber-50 border border-amber-200 rounded-sm px-1.5 py-0.5">
+                데모 정답: {p.answerHint}
+              </span>
+            )}
           </div>
 
           {p.type === 'MULTIPLE_CHOICE' ? (
