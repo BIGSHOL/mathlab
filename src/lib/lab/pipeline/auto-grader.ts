@@ -1,15 +1,18 @@
 // 🚧 Lab P1 — 채점(Grader) auto 구현체 (객관식·단답 자동채점)
 //   학생이 제출한 답(LabSubmissionItem)을 LabProblem.answer(정답)와 비교해
-//   정/오를 산출하고 LabGradedItem을 영속화한다. 서술형은 needsReview로 사람 큐(P5).
+//   정/오를 산출하고 LabGradedItem을 영속화한다.
+//     - 객관식·단답(P1): answer-compare 결정적 비교.
+//     - 서술형(P5): descriptive-grader가 Lab 자체 AI(Gemini)로 채점 → 저신뢰는 needsReview.
 //   genMode=AUTO. manualGrader를 p0Pipeline에서 교체(grader 필드 1줄).
 //
-//   ⚠️ 격리(CLAUDE.md): 기출분석 코드 무import. 비교는 ../answer-compare(Lab 자체).
+//   ⚠️ 격리(CLAUDE.md): 기출분석 코드 무import. 비교/AI 채점 모두 Lab 자체(../answer-compare, ./descriptive-grader).
 //
-//   멱등성: 이미 채점된 제출(items 존재)은 다시 채점하지 않고 그대로 read.
+//   멱등성: 이미 채점된 제출(items 존재)은 다시 채점하지 않고 그대로 read(AI 재호출 비용도 방지).
 //     runStudentCycle이 매 사이클 grader.run을 부르므로 중복 LabGradedItem 생성을 막는다.
 import { prisma } from '@/lib/db';
 import type { Grader, GradedItemDTO } from '../stages';
 import { gradeObjective } from '../answer-compare';
+import { gradeDescriptive } from './descriptive-grader';
 
 export const autoGrader: Grader = {
   mode: 'AUTO',
@@ -18,7 +21,7 @@ export const autoGrader: Grader = {
       where: { worksheetId },
       include: {
         items: { include: { problem: true } }, // 이미 채점된 결과(있으면)
-        submittedAnswers: { include: { problem: true } }, // 학생 raw 답
+        submittedAnswers: { include: { problem: { include: { concept: true } } } }, // 학생 raw 답 + 개념(AI 채점 맥락)
       },
     });
     if (!submission) return { items: [] };
@@ -40,11 +43,20 @@ export const autoGrader: Grader = {
       };
     }
 
-    // 미채점 → 학생 답을 정답과 비교해 정/오 산출.
-    const verdicts = submission.submittedAnswers.map((sa) => ({
-      sa,
-      v: gradeObjective(sa.problem.type, sa.problem.answer, sa.answer),
-    }));
+    // 미채점 → 학생 답을 채점. 객관식·단답은 결정적 비교, 서술형은 AI(gradeDescriptive).
+    const verdicts = await Promise.all(
+      submission.submittedAnswers.map(async (sa) => {
+        if (sa.problem.type === 'DESCRIPTIVE') {
+          const v = await gradeDescriptive({
+            rubric: sa.problem.answer,
+            studentAnswer: sa.answer,
+            conceptName: sa.problem.concept?.name,
+          });
+          return { sa, v };
+        }
+        return { sa, v: gradeObjective(sa.problem.type, sa.problem.answer, sa.answer) };
+      }),
+    );
 
     // 채점 결과 영속화 + 상태 전이(SUBMITTED → GRADED).
     if (verdicts.length > 0) {
