@@ -132,19 +132,20 @@ async function main() {
     console.log('    (이 워크시트엔 짝수-index 단답이 없어 정규화 서브검증 생략)');
   }
 
-  // ── 5) 진단 반영 — mastery == 실제 정답률 (cold start라 score = correct/total)
-  console.log('\n[4] 진단(diagnoser) — mastery가 실제 채점률 반영');
+  // ── 5) 진단 반영 — 채점 결과가 mastery로 흘러 기록됨 (진단기 무관: manual=누적정답률 / auto=BKT)
+  //   ⚠️ 정확한 score 값은 진단기 구현에 의존(P2에서 BKT로 교체) → 여기선 grader 검증이 목적이므로
+  //      '관측수 일치 + score가 부분정답을 반영(0<score<1)'만 단언(진단기 무관). 정확 공식 검증은 verify-p2.
+  console.log('\n[4] 진단 반영 — 채점 결과가 mastery로 흐름(진단기 무관)');
   const mastery = await loadMasteryMap(SID);
   let masteryOk = Object.keys(mastery).length > 0;
   for (const [conceptId, agg] of expByConcept) {
     const m = mastery[conceptId];
-    const exp = agg.total > 0 ? agg.correct / agg.total : 0;
-    const ok = !!m && Math.abs(m.score - exp) < 1e-6;
+    const ok = !!m && m.observationCount === agg.total && m.score > 0 && m.score < 1;
     masteryOk = masteryOk && ok;
     const cname = (await prisma.labConcept.findUnique({ where: { id: conceptId } }))?.name ?? conceptId;
-    console.log(`      · ${cname}: score=${m?.score?.toFixed(3)} (기대 ${exp.toFixed(3)}, 관측 ${m?.observationCount})`);
+    console.log(`      · ${cname}: score=${m?.score?.toFixed(3)} (정답 ${agg.correct}/${agg.total}, 관측 ${m?.observationCount})`);
   }
-  allPass = check('진단: mastery == 실제 정답률(역방향 데이터 흐름)', masteryOk, `concepts=${Object.keys(mastery).length}`) && allPass;
+  allPass = check('진단: 채점→mastery 기록(관측수 일치·부분정답 반영)', masteryOk, `concepts=${Object.keys(mastery).length}`) && allPass;
 
   // ── 6) 루프 닫힘 — 다음 워크시트
   allPass = check('루프: 다음 워크시트 공급', ws2.problemIds.length > 0, `다음 문항 ${ws2.problemIds.length}개`) && allPass;
