@@ -208,8 +208,36 @@ node --env-file=.env.local --import tsx scripts/lab/verify-p2.ts   # P2 진단(B
 
 ---
 
+## 9b. 콘텐츠 확보 전략 (2026-06-22 결정) — 실데이터로 루프 채우기
+
+엔진(P0~P5)·UI(②⑤)는 닫혔다. 남은 핵심은 **합성 데이터 → 실제 개념그래프 + 문제 본문**. 3렌즈 병렬 조사 결론:
+
+| 경로 | 결론 | 막힌 곳 |
+|------|------|---------|
+| **개념그래프** (curriculum.ts→LabConcept) | ✅ 가능 | 선수관계·84개월 진도표 정보 없음 → 순서 휴리스틱 |
+| **AI 문제생성** (Gemini Flash, Lab 격리 복제) | ✅ 채택(베이스라인) | 메인 `mathgen.ts`는 타입만·미구현 → Lab이 처음부터 |
+| **기출/교재 임포트** (Question→LabProblem) | ✅ 매핑 깔끔 | 🔴 Question 0개 → PDF추출 선행 필요 |
+
+**결정(사용자):** 문제 본문 = **AI 생성이 베이스라인**. 단 **상위(고난도/킬러) 문제는 순수 AI 생성 품질에 제약** → 향후 **Claude Code 내부 비전 AI + OCR로 실제 교재/기출 인제스트 → 문제 생성 파이프라인**(G:\ 교재 PDF 54종, 비용절감). 메인 Question 뱅크가 비어 직접 임포트는 막혀 비전/OCR이 우회로.
+
+### ✅ 토대 1단계 완료 — 실 개념그래프 (이 PR)
+- `scripts/lab/seed-curriculum.ts` — curriculum.ts → LabConcept/Edge 변환(읽기 전용 재사용, 격리 준수).
+  - **그레인=중단원**(대단원의 subUnits 첫 레이어). 학기 25개(초12·중6·고7) → `monthIdx`=학기서수(1..25), `sessionIdx`=학기 내 누적.
+  - **domain** 키워드 룰 + 대단원 override(소인수분해→수와연산, 집합과명제→문자와식, 분류하기→확률과통계). `기타` 0건.
+  - **edge** = 같은 (학기·domain) 연속 개념만 보수적 체인(교차도메인 거짓엣지 회피).
+  - id = `lab-cur-{band}-{학기2}-{회차2}` 안정적 → idempotent. `--apply` 없으면 dry-run.
+- **적용 결과**: 239개념 + 172엣지(총 244=239실+5합성 / 177=172+5). **무손실 확정**: School 5724→5724, 합성개념 5→5, 데모마스터리 5→5 불변 → 코크핏 데모 루프 무회귀.
+- 도메인 분포: 기하 69·수와연산 66·문자와식 30·확률과통계 28·함수 27·측정 11·규칙성 8.
+
+### 다음 — 토대 2·3단계
+- **2단계 (AI 문제생성기, 베이스라인)**: `src/lib/lab/problem-gen.ts` + `ai-client.ts` 확장(Gemini Flash, 구조화 출력 {body,choices,answer,explanation,rubric}). 개념·난이도별 LabProblem 생성(`isGenerated=true, source='ai-gemini-flash'`, bodyRef에 LaTeX/HTML). 소규모(한 학기) 먼저 생성→품질 스팟체크. 그 후 데모 학생을 실 학기로 repoint → **실 개념+문제로 루프 구동**.
+- **3단계 (상위문제, 비전/OCR)**: 교재/기출 이미지 → 비전 AI/OCR → 문제 구조화 인제스트(별도 설계). 고난도 보강.
+- **선수관계 정밀화(Phase 2)**: 현재 엣지는 학기·도메인 순서 휴리스틱 → 교육학적 선수관계로 정밀화.
+
+---
+
 ## 9. 한 줄 재개 프롬프트 (새 세션용)
 
-> "수학 랩실 Lab 이어서 개발. **P0~P5 완료 = 5단계 파이프라인 전체 자동화**(채점 객·단+서술형AI·진단BKT·처방smart·보고; `verify-p0~p5.ts` PASS).
-> `docs/lab/HANDOFF.md`와 CLAUDE.md '최우선 하드 경계' 읽고, §7 **②(코크핏 DB연동)** / **⑤(제출 UI·API)** / **⑥(검수 큐)** / **P*b 고도화** 중 선택. 엔진은 닫혔으니 이제 표면(UI)·운영.
+> "수학 랩실 Lab 이어서 개발. **P0~P5 완료 = 5단계 파이프라인 전체 자동화**(채점 객·단+서술형AI·진단BKT·처방smart·보고; `verify-p0~p5.ts` PASS) + **②⑤ 코크핏/제출 UI** + **콘텐츠 토대 1단계(실 개념그래프 239개, `seed-curriculum.ts`)**.
+> `docs/lab/HANDOFF.md`(특히 §9b 콘텐츠 전략)와 CLAUDE.md '최우선 하드 경계' 읽고, 다음 = **콘텐츠 토대 2단계 = AI 문제생성기**(`problem-gen.ts`, Gemini Flash) → 데모를 실 학기로 repoint. 상위문제는 비전/OCR 인제스트(3단계).
 > ✅ db push 안전(단 migrate diff 0건 확인), `migrate reset` 금지. push/PR은 `BIGSHOL/mathlab`(원격 mathlab2는 낡음). 기출분석은 형제 라인 — 절대 무수정(동결)."
