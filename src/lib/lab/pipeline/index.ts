@@ -5,6 +5,7 @@
 //     P1: grader만 manualGrader → autoGrader (객관식·단답 자동채점)
 //     P2: diagnoser만 manualDiagnoser → autoDiagnoser (BKT p(mastered))
 //     P3: prescriber만 dumbPrescriber → smartPrescriber (BKT 약점·선수개념 적응 처방)
+//     P4: reporter만 manualReporter → autoReporter (mastery 스냅샷·성장 → 학부모/원장 리포트)
 //   manual/dumb 구현체는 export로 보존(back-compat·참조용). 객체명 p0Pipeline은 의도적으로 유지.
 import type { Pipeline } from '../stages';
 import { manualDiagnoser } from './manual-diagnoser';
@@ -15,13 +16,14 @@ import { manualSupplier } from './manual-supplier';
 import { manualGrader } from './manual-grader';
 import { autoGrader } from './auto-grader';
 import { manualReporter } from './manual-reporter';
+import { autoReporter } from './auto-reporter';
 
 export const p0Pipeline: Pipeline = {
   diagnoser: autoDiagnoser, // P2: BKT 진단. 멱등성은 service가 diagnosedAt으로 보장.
   prescriber: smartPrescriber, // P3: BKT 약점·선수개념 적응 처방(핵심 해자).
   supplier: manualSupplier,
   grader: autoGrader, // P1: 자동채점(객관식·단답). manual은 멱등 read로 흡수됨.
-  reporter: manualReporter,
+  reporter: autoReporter, // P4: mastery 스냅샷·성장 → 학부모/원장 결정적 리포트.
 };
 
 export {
@@ -33,4 +35,5 @@ export {
   manualGrader,
   autoGrader,
   manualReporter,
+  autoReporter,
 };

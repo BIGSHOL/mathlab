@@ -9,6 +9,11 @@ export async function POST(req: NextRequest) {
   const gate = await guardLabApi();
   if (gate instanceof Response) return gate;
 
+  // dev 전용: 프로덕션에선 LAB_ENABLED·SUPER_ADMIN이어도 무작위 채점 주입 차단(채점 무결성 보호).
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: { code: 'NOT_FOUND', message: 'not found' } }, { status: 404 });
+  }
+
   try {
     const body = await req.json().catch(() => ({}));
     const worksheetId = typeof body?.worksheetId === 'string' ? body.worksheetId : undefined;

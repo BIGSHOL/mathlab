@@ -4,6 +4,10 @@
 import type { MasteryEntry } from './stages';
 
 // ── 임계값 ──
+//   ⚠️ 두 임계는 목적이 다르다(겹쳐 보이지만 의도된 구분):
+//     WEAKNESS_THRESHOLD(0.6) = 현위치 개념을 '교정(remedial)'으로 다룰지(난이도 상한 3).
+//     PREREQ_READY_THRESHOLD(0.7) = 선수개념이 '토대로 충분한지'(미만이면 주입). 토대는 더 확실해야 하므로 보수적.
+//   선수개념 주입은 smart-prescriber가 항상 remedial=true로 처방(상한 3) → '불충분 선수에 어려운 문항' 불가.
 export const WEAKNESS_THRESHOLD = 0.6; // p(mastered) < 0.6 → 약점(처방·교정 대상). manualReporter와 일치.
 export const PREREQ_READY_THRESHOLD = 0.7; // 선수개념이 이 미만이면 '미흡' → 토대 보강 주입.
 export const MAX_WEAKNESS_OVERLAY = 2; // 사이클당 과거 약점 복습 개념 수 상한(과부하 방지).
