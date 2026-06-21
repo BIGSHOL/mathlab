@@ -85,7 +85,7 @@ export default async function LabHome() {
             학습 척추 — 진단·처방·공급·채점·보고가 자동으로 돈다. 버튼으로 한 바퀴씩 구동.
           </p>
         </div>
-        <LabCockpitActions studentId={SID} />
+        <LabCockpitActions studentId={SID} hasPending={worksheets.some((w) => w.status === 'SUBMITTED')} />
       </section>
 
       {/* KPI */}

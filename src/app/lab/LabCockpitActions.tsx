@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-export function LabCockpitActions({ studentId }: { studentId: string }) {
+export function LabCockpitActions({ studentId, hasPending = false }: { studentId: string; hasPending?: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -33,8 +33,17 @@ export function LabCockpitActions({ studentId }: { studentId: string }) {
   const secondary = `${base} border border-slate-200 bg-white text-slate-700 hover:bg-slate-50`;
   return (
     <div className="flex flex-wrap items-center gap-2">
+      {hasPending && (
+        <button
+          className={`${base} bg-emerald-600 text-white hover:bg-emerald-700`}
+          disabled={!!busy}
+          onClick={() => call('/api/lab/run-cycle', { studentId }, '채점')}
+        >
+          {busy === '채점' ? '채점 중…' : '✓ 제출 답 채점하기'}
+        </button>
+      )}
       <button
-        className={`${base} bg-blue-600 text-white hover:bg-blue-700`}
+        className={`${base} ${hasPending ? secondary : 'bg-blue-600 text-white hover:bg-blue-700'}`}
         disabled={!!busy}
         onClick={() => call('/api/lab/demo-step', { studentId }, '데모 사이클')}
       >
