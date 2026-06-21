@@ -155,3 +155,29 @@ export async function submitAnswers(
     return submission;
   });
 }
+
+/**
+ * [P4] 학생 리포트 생성 — 보고는 runCycle과 별개 트리거(주기/수동).
+ *   현재 mastery 스냅샷 + 직전 같은 type 리포트 대비 성장으로 PARENT/DIRECTOR 리포트를 만들어 LabReport에 영속.
+ *   성장(delta)은 autoReporter가 직전 리포트 snapshot과 비교해 계산(시계열 테이블 불필요).
+ *   period 미지정 시 기본 최근 1주.
+ */
+export async function generateLabReport(
+  studentId: string,
+  type: 'PARENT' | 'DIRECTOR',
+  periodStart?: Date,
+  periodEnd?: Date,
+) {
+  const end = periodEnd ?? new Date();
+  const start = periodStart ?? new Date(end.getTime() - 7 * 24 * 60 * 60 * 1000);
+  if (start.getTime() >= end.getTime()) {
+    throw new Error('리포트 기간이 올바르지 않습니다 (periodStart는 periodEnd보다 앞이어야 함).');
+  }
+  return p0Pipeline.reporter.run({
+    studentId,
+    masteryDelta: { studentId, updates: [] }, // 성장은 직전 리포트 비교로 계산 — delta 입력 불필요
+    periodStart: start,
+    periodEnd: end,
+    type,
+  });
+}
