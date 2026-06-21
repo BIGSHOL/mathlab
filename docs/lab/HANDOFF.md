@@ -171,6 +171,7 @@ node --env-file=.env.local --import tsx scripts/lab/verify-p2.ts   # P2 진단(B
 
 - ① DB 검증 ✅ · ③ P1 채점 ✅(#21) · ④ P2 진단 BKT ✅(#22) · **P3 처방 smart ✅(#23)** · **P4 보고 ✅(#24)**.
 - **P5 서술형 채점** ← 다음(마지막 단계): `autoGrader`의 DESCRIPTIVE(현재 needsReview) 자동화. Lab 자체 AI(Claude/Gemini) 호출 + 루브릭(LabProblem.answer) 채점. ⑥ needsReview 검수 큐 소비처도 여기서. ⚠️ 가치 해자(처방과 함께).
+  - **🔴 P5 필수 요구(스택 리뷰 #1)**: 현재 autoGrader가 needsReview 항목을 진단 DTO에서 제외 + `diagnosedAt` 게이트로 제출은 1회만 진단 → 서술형 개념의 mastery가 *영원히 cold*. P5는 서술형 채점 완료 후 **해당 항목을 재진단**해야 함(예: diagnosedAt 재오픈 또는 신규 graded만 증분 진단). 안 하면 서술형 개념 숙련도가 안 쌓임.
 - **② 코크핏 UI DB연동** ← `/lab` 정적 코크핏을 실DB로(학생/숙련도/워크시트/리포트 + 루프 구동).
 - **⑤ 학생답 입력 UI / 제출 API** ← `POST /api/lab/submit-answers`·`/generate-report`(게이트) + 입력/리포트 화면.
 - **P4b 보고 고도화**: AI 내러티브(Lab 자체 호출) · HWP/PDF url 생성 · 리포트 비교 시각화.

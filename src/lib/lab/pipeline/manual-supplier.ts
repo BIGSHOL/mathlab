@@ -26,6 +26,13 @@ export const manualSupplier: Supplier = {
         });
         picked = [...picked, ...more];
       }
+      // 문제은행이 부족하면 부분 충족 — 침묵 실패 방지로 경고(CLAUDE.md "silent caps 금지").
+      //   처방 문항 수와 실제 공급 수가 어긋나면 진단(BKT)이 받는 관측이 줄어든다. 실문제은행 확보 시 해소.
+      if (picked.length < item.count) {
+        console.warn(
+          `[lab/supplier] 문제은행 부족: 개념 ${item.conceptId} 난이도 ${item.difficulty} 요청 ${item.count} → 공급 ${picked.length}`,
+        );
+      }
       problemIds.push(...picked.map((p) => p.id));
     }
 
