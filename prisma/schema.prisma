@@ -1087,6 +1087,7 @@ model LabProblem {
 
   worksheetProblems LabWorksheetProblem[]
   gradedItems       LabGradedItem[]
+  submissionItems   LabSubmissionItem[]
 
   @@index([conceptId, difficulty, type])
   @@map("lab_problems")
@@ -1135,10 +1136,27 @@ model LabSubmission {
   genMode     LabGenMode   @default(MANUAL)
   createdAt   DateTime     @default(now())
 
-  items LabGradedItem[]
+  submittedAnswers LabSubmissionItem[] // 학생 raw 답 (채점 전, SUBMITTED)
+  items            LabGradedItem[] // 채점 결과 (GRADED)
 
   @@index([studentId, gradedAt])
   @@map("lab_submissions")
+}
+
+// ── 채점 입력: 학생이 제출한 문항별 raw 답안 (P1 autoGrader 비교 대상) ──
+//   LabProblem.answer(정답)와 동형으로 저장(객관식 {choice:N} / 단답 {value:'s'}).
+//   제출(SUBMITTED) 시점에 채워지고, autoGrader가 읽어 LabGradedItem(GRADED)을 만든다.
+model LabSubmissionItem {
+  id           String        @id @default(cuid())
+  submissionId String
+  problemId    String
+  submission   LabSubmission @relation(fields: [submissionId], references: [id])
+  problem      LabProblem    @relation(fields: [problemId], references: [id])
+  answer       Json // 학생 제출 답 (정답과 동형: {choice:N} / {value:'s'})
+  order        Int
+
+  @@unique([submissionId, problemId])
+  @@map("lab_submission_items")
 }
 
 model LabGradedItem {

@@ -1,6 +1,7 @@
 // 🚧 Lab P0 — 서비스 계층 (DB 인지 오케스트레이션)
 //   stages.ts의 순수 runCycle을 감싸 DB에서 컨텍스트(숙련도·진도)를 로드하고
 //   채점 결과를 먹여 한 사이클을 돈다. 데이터는 역방향(채점→진단)으로 닫힌다.
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import type { MasteryMap, GradedItemDTO } from './stages';
 import { runCycle } from './stages';
@@ -95,4 +96,50 @@ export async function simulateManualGrading(worksheetId: string, correctRate = 0
   });
 
   return submission;
+}
+
+/**
+ * [P1] 학생 답안 제출 — 워크시트 각 문항에 raw 답(LabSubmissionItem)을 저장하고
+ * 워크시트를 SUBMITTED로 전이한다. 채점은 하지 않는다(autoGrader가 다음 runStudentCycle에서 수행).
+ *   answers: { problemId, answer }[]  (answer는 LabProblem.answer와 동형: {choice:N} / {value:'s'})
+ *   누락 문항은 빈 답({})으로 채워 채점 시 오답 처리된다.
+ * simulateManualGrading(무작위 정/오)을 대체하는 실제 채점 경로의 입력 단계.
+ */
+export async function submitAnswers(
+  worksheetId: string,
+  answers: { problemId: string; answer: unknown }[],
+) {
+  const ws = await prisma.labWorksheet.findUnique({
+    where: { id: worksheetId },
+    include: { problems: { orderBy: { order: 'asc' } } },
+  });
+  if (!ws) throw new Error('worksheet를 찾을 수 없습니다');
+
+  const byProblem = new Map(answers.map((a) => [a.problemId, a.answer]));
+
+  // 제출 생성 + 상태 전이(PRESCRIBED→SUBMITTED)를 원자적으로: 둘 중 하나만 반영되는 일관성 깨짐 방지.
+  return prisma.$transaction(async (tx) => {
+    const submission = await tx.labSubmission.create({
+      data: {
+        worksheetId,
+        studentId: ws.studentId,
+        genMode: 'AUTO',
+        submittedAnswers: {
+          create: ws.problems.map((wp) => ({
+            problemId: wp.problemId,
+            order: wp.order,
+            answer: (byProblem.get(wp.problemId) ?? {}) as Prisma.InputJsonValue,
+          })),
+        },
+      },
+      include: { submittedAnswers: true },
+    });
+
+    await tx.labWorksheet.update({
+      where: { id: worksheetId },
+      data: { status: 'SUBMITTED' },
+    });
+
+    return submission;
+  });
 }
