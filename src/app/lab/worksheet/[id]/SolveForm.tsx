@@ -1,7 +1,8 @@
 'use client';
-// 🚧 Lab ⑤ — 워크시트 풀이 입력 폼 (클라이언트). 유형별 입력 → submit-answers API.
+// 🚧 Lab ⑤ — 워크시트 풀이 입력 폼 (클라이언트). 본문·보기 렌더 + 유형별 입력 → submit-answers API.
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { MathRenderer } from '@/components/math/MathRenderer';
 
 type Problem = {
   problemId: string;
@@ -9,8 +10,12 @@ type Problem = {
   type: 'MULTIPLE_CHOICE' | 'SHORT_ANSWER' | 'DESCRIPTIVE';
   difficulty: number;
   concept: string;
+  body?: string | null;
+  choices?: string[] | null;
   answerHint?: string;
 };
+
+const CIRCLED = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧'];
 
 const TYPE_LABEL: Record<Problem['type'], string> = {
   MULTIPLE_CHOICE: '객관식',
@@ -70,26 +75,60 @@ export function SolveForm({ worksheetId, problems }: { worksheetId: string; prob
             )}
           </div>
 
-          {p.type === 'MULTIPLE_CHOICE' ? (
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((n) => {
-                const sel = (ans[p.problemId] as { choice?: number } | undefined)?.choice === n;
-                return (
-                  <button
-                    key={n}
-                    type="button"
-                    aria-label={`문항 ${p.order + 1} 보기 ${n}`}
-                    aria-pressed={sel}
-                    onClick={() => setAns((a) => ({ ...a, [p.problemId]: { choice: n } }))}
-                    className={`w-9 h-9 rounded-sm border text-sm font-medium transition ${
-                      sel ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    {n}
-                  </button>
-                );
-              })}
+          {/* 본문 (실문제) — 합성 시드는 본문이 없어 생략 */}
+          {p.body && (
+            <div className="text-[15px] text-slate-900 mb-3">
+              <MathRenderer content={p.body} />
             </div>
+          )}
+
+          {p.type === 'MULTIPLE_CHOICE' ? (
+            p.choices && p.choices.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {p.choices.map((ch, ci) => {
+                  const n = ci + 1;
+                  const sel = (ans[p.problemId] as { choice?: number } | undefined)?.choice === n;
+                  return (
+                    <button
+                      key={ci}
+                      type="button"
+                      aria-label={`문항 ${p.order + 1} 보기 ${n}`}
+                      aria-pressed={sel}
+                      onClick={() => setAns((a) => ({ ...a, [p.problemId]: { choice: n } }))}
+                      className={`flex items-start gap-1.5 px-3 py-2 rounded-sm border text-sm text-left transition ${
+                        sel ? 'border-blue-600 bg-blue-50' : 'border-slate-200 bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className={sel ? 'text-blue-600 font-medium' : 'text-slate-400'}>{CIRCLED[ci] ?? n}</span>
+                      <span className="flex-1">
+                        <MathRenderer content={ch} inline />
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              // 보기 없음(합성 폴백) → 1~5 번호 버튼
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((n) => {
+                  const sel = (ans[p.problemId] as { choice?: number } | undefined)?.choice === n;
+                  return (
+                    <button
+                      key={n}
+                      type="button"
+                      aria-label={`문항 ${p.order + 1} 보기 ${n}`}
+                      aria-pressed={sel}
+                      onClick={() => setAns((a) => ({ ...a, [p.problemId]: { choice: n } }))}
+                      className={`w-9 h-9 rounded-sm border text-sm font-medium transition ${
+                        sel ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  );
+                })}
+              </div>
+            )
           ) : p.type === 'SHORT_ANSWER' ? (
             <input
               type="text"

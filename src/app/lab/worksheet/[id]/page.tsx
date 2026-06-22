@@ -1,6 +1,6 @@
 // 🚧 Lab ⑤ — 워크시트 풀이 화면 (실DB)
 //   처방→공급된 워크시트의 문항을 보여주고 학생이 답을 입력·제출한다.
-//   ⚠️ 합성 시드는 문제 본문(bodyRef)이 자리표시자 → 유형별 입력만 노출(데모).
+//   실문제는 본문(body)+보기(choices)를 KaTeX로 렌더. 합성 시드(본문 없음)는 유형별 입력만(데모).
 //   게이트는 layout(assertLabAccess)에서 처리.
 import { prisma } from '@/lib/db';
 import { notFound } from 'next/navigation';
@@ -21,21 +21,27 @@ export default async function WorksheetSolve({ params }: { params: Promise<{ id:
   if (!ws) notFound();
 
   const problems = ws.problems.map((wp) => {
-    // 합성 문제라 본문이 없어 정답을 알 길이 없음 → 데모 힌트로 정답값 노출(SUPER_ADMIN 내부 도구).
-    const a = wp.problem.answer as { choice?: number; value?: string } | null;
+    const p = wp.problem;
+    const a = p.answer as { choice?: number; value?: string } | null;
+    // 합성 문제(본문 없음)일 때만 데모 힌트로 정답값 노출 — 실문제는 본문이 있어 힌트 불필요.
     const answerHint =
-      wp.problem.type === 'MULTIPLE_CHOICE'
-        ? a?.choice != null ? `${a.choice}` : ''
-        : a?.value != null ? `${a.value}` : '';
+      !p.body
+        ? p.type === 'MULTIPLE_CHOICE'
+          ? a?.choice != null ? `${a.choice}` : ''
+          : a?.value != null ? `${a.value}` : ''
+        : '';
     return {
       problemId: wp.problemId,
       order: wp.order,
-      type: wp.problem.type as 'MULTIPLE_CHOICE' | 'SHORT_ANSWER' | 'DESCRIPTIVE',
-      difficulty: wp.problem.difficulty,
-      concept: wp.problem.concept.name,
+      type: p.type as 'MULTIPLE_CHOICE' | 'SHORT_ANSWER' | 'DESCRIPTIVE',
+      difficulty: p.difficulty,
+      concept: p.concept.name,
+      body: p.body ?? null,
+      choices: Array.isArray(p.choices) ? (p.choices as string[]) : null,
       answerHint,
     };
   });
+  const allSynthetic = problems.every((p) => !p.body);
 
   return (
     <div className="space-y-6">
@@ -47,7 +53,9 @@ export default async function WorksheetSolve({ params }: { params: Promise<{ id:
           : ws.status === 'SUBMITTED' ? 'border-blue-200 text-blue-700 bg-blue-50'
           : 'border-slate-200 text-slate-500 bg-slate-50'
         }`}>{ws.status}</span>
-        <span className="ml-auto text-xs text-slate-400">{problems.length}문항 · 합성 문제(본문 보류)</span>
+        <span className="ml-auto text-xs text-slate-400">
+          {problems.length}문항{allSynthetic ? ' · 합성 문제(본문 보류)' : ''}
+        </span>
       </div>
 
       {ws.submission ? (
