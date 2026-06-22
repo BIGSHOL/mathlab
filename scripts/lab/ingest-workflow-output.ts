@@ -37,12 +37,19 @@ function findByConcept(o: unknown): Record<string, unknown[]> | null {
 
 const norm = (s: unknown) => String(s).replace(/\s+/g, '');
 
+/** 워크플로 에이전트가 서술형을 기출분석 관례 `ESSAY`로 줄 수 있음 → Lab enum `DESCRIPTIVE`로 정규화.
+ *  그 외 타입은 그대로 통과(진짜 무효 타입은 parseIngestDoc 검증에서 걸림). */
+function normType(t: unknown): IngestProblemInput['type'] {
+  const s = String(t).toUpperCase().trim();
+  return (s === 'ESSAY' ? 'DESCRIPTIVE' : s) as IngestProblemInput['type'];
+}
+
 /** 워크플로 problem(평면 필드 + diagram JSON 문자열) → IngestProblemInput.
  *  ⚠️ 객관식 answerIndex 보정: 에이전트가 0-based/1-based를 혼용(answerIndex=0·off-by-one) →
  *     `answer` 텍스트(신뢰 신호)가 보기와 일치하면 그 위치(1-based)로 강제 보정. 불일치 시 경고. */
 function toInput(p: Record<string, unknown>): IngestProblemInput {
   const out: IngestProblemInput = {
-    type: p.type as IngestProblemInput['type'],
+    type: normType(p.type),
     difficulty: Number(p.difficulty),
     body: dec(p.body),
     explanation: dec(p.explanation),
