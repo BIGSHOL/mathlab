@@ -37,13 +37,14 @@
       "answerIndex": 2,                       // 객관식 정답(1-based)
       "answer": "$6$",                        // 단답(SHORT_ANSWER)만
       "rubric": "통분 후 $\\frac{5}{6}$ (과정 3 + 답 2)", // 서술형(DESCRIPTIVE)만: 모범답안+기준
-      "explanation": "$x=2$"                  // 해설(없으면 생략/'')
+      "explanation": "$x=2$",                 // 해설(없으면 생략/'')
+      "diagram": [{ "type": "regular_polygon", "params": { "sides": 5 } }] // 도형(선택, §4 도형) — DiagramParam[] 또는 DiagramSpec
     }
   ]
 }
 ```
 
-- 타입별 필수: `MULTIPLE_CHOICE`→`choices`(5)+`answerIndex`, `SHORT_ANSWER`→`answer`, `DESCRIPTIVE`→`rubric`.
+- 타입별 필수: `MULTIPLE_CHOICE`→`choices`(5)+`answerIndex`, `SHORT_ANSWER`→`answer`, `DESCRIPTIVE`→`rubric`. `diagram`은 선택(도형 문항만).
 - 검증은 토대2 `normalizeGenerated` 재사용(보기 5개/answerIndex 1~5/`\dfrac→\frac`/보기마커 제거). 무효 문항은 **거르고 나머지는 살림**(전체 중단 X).
 - 영속 시 `isGenerated=false`(실 교재 문제), `bodyRef='inline'`, `source`=교재.
 
@@ -82,9 +83,13 @@
 - **객관식 보기**: `choices`에 **내용만**(①②③ 마커 없이), 각 항목 `$...$` KaTeX. 5개.
 - **`<보기>`/`<조건>` 박스**(테두리 안 지문·보기): body 안에 blockquote `>` + `<보기>` 마커로(CLAUDE.md box-grid). 박스 본문 **절대 누락 금지**(발문과 질문 "사이" 박스 자주 빠뜨림).
 
-### 도형 (교재 인제스트의 핵심 난점)
-- 그림이 필수인 문항은 본문에 **`[그림]` 플레이스홀더 + 텍스트 서술**(예: `[그림: 반지름 $5$인 원에 내접한 정삼각형]`)로 두고, 정밀 도형은 후속(mathlab DiagramSpec 연동)으로 미룬다.
-- 잘려서 재현 불가한 도형은 그 문항을 **건너뛴다**(저품질 인제스트 방지). 변환기 철학: "잘린 도형은 재현 금지".
+### 도형 (토대4 — `diagram` 필드로 구조화 저작 가능)
+- **도형은 `diagram` 필드에 구조화 스펙으로 저작**한다(공유 `svg-diagrams` 렌더러 읽기전용 재사용 → `LabDiagram`). 두 포맷 허용 — `resolveDiagramSpec`이 `DiagramParam[]`로 통일:
+  - **DiagramSpec 객체**(프리셋, **좌표 불필요** — AI 친화): `triangle`(preset+`angles`+`showAngles`+`angleValues`) · `circle` · `quadrilateral` · `coordinatePlane` · `solid`(`shape`: cube/cylinder/cone/sphere/prism/pyramid) · `composite`. ⚠️ **`polygon` 스펙은 미렌더**(트림된 변환 경로) → 정다각형은 아래 DiagramParam `regular_polygon` 사용.
+  - **DiagramParam[] 배열**(26타입 네이티브, PDF추출과 동형): `regular_polygon`(`{sides:N}`) · `angle_figure`(`{angle,label}`) · `coordinate_plane` · `histogram`·`stem_leaf`(통계) 등.
+- **실측 검증된 작동 포맷**: Spec `triangle`(preset)·`solid` / Param `regular_polygon`·`angle_figure`·`coordinate_plane` (probe로 SVG 생성 확인). 새 타입은 작성 전 `resolveDiagramSpec`+`renderDiagram`으로 SVG 생성되는지 확인 후 사용.
+- 재현 불가(잘림·과복잡)한 도형은 그 문항을 **건너뛴다**. 단순 서술 가능하면 `[그림: …]` 플레이스홀더도 가능하나, **가능하면 구조화 스펙 우선**.
+- ⚠️ 도형 충실도 검증은 숫자 답보다 어렵다(파라미터 오류가 그림을 바꿈) — **교차 재판독 필수**(§3-6).
 
 ### 난이도 (변환기엔 없는 우리 축 — 2축 모델)
 - `difficulty` 1..5 = **(A)결합 폭**(몇 개념 엮나) + **(B)사고 깊이**(개념 자체 고난도/비자명 통찰) 중 **높은 쪽**. 개념 1개라도 깊으면 4~5(단일개념 킬러). 애매하면 폭에만 한 단계 낮게(깊이 명확 시 하향 금지). (CLAUDE.md 기출분석 난이도 2축과 동일.)

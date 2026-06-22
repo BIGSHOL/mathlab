@@ -5,6 +5,7 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { MathRenderer } from '@/components/math/MathRenderer';
+import { LabDiagram } from '../LabDiagram';
 
 export const dynamic = 'force-dynamic'; // 항상 최신 DB
 
@@ -149,6 +150,9 @@ export default async function LabProblemsBrowser({
                       <div className="text-[15px] text-slate-900">
                         <MathRenderer content={p.body ?? '(본문 없음)'} />
                       </div>
+
+                      {/* 도형 (토대4) */}
+                      {p.diagram != null && <LabDiagram spec={p.diagram} />}
 
                       {/* 보기 */}
                       {choices && (

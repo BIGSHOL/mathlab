@@ -45,6 +45,7 @@ export async function persistGeneratedProblems(
         body: g.body,
         choices: g.choices ? (g.choices as Prisma.InputJsonValue) : undefined,
         explanation: g.explanation || null,
+        diagram: g.diagram ? (g.diagram as unknown as Prisma.InputJsonValue) : undefined, // 🚧 토대4: 도형 스펙
         answer: g.answer as Prisma.InputJsonValue,
       },
       select: { id: true },

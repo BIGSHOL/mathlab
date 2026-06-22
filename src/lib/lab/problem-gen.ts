@@ -15,6 +15,8 @@ export interface GeneratedLabProblem {
   answer: Record<string, unknown>; // {choice:N} | {value:'s'} | {rubric:'...'}
   explanation: string;
   source: string; // 생성 모델/출처 태그
+  // 🚧 토대4: 도형 스펙(Json 다형 — DiagramParam[] 배열 or DiagramSpec 객체). 공유 svg-diagrams로 렌더. 비도형은 미설정
+  diagram?: unknown;
 }
 
 const SOURCE_TAG = 'ai-gemini-flash';

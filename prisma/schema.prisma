@@ -1085,6 +1085,7 @@ model LabProblem {
   body        String? // 🚧 토대3: 인라인 본문 (마크다운+KaTeX). 생성/비전인제스트 문제. null이면 bodyRef(스토리지) 폴백
   choices     Json? // 🚧 토대3: 객관식 보기 string[] (객관식만, 그 외 null)
   explanation String? // 🚧 토대3: 해설/풀이 (마크다운+KaTeX)
+  diagram     Json? // 🚧 토대4: 도형 스펙(DiagramSpec, 공유 DiagramRenderer 재사용). 도형 문제만, 그 외 null
   answer      Json // 정답 (객관식 번호 / 단답 / 서술형 채점 루브릭)
   createdAt   DateTime       @default(now())
 

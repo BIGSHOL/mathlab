@@ -38,6 +38,7 @@ export default async function WorksheetSolve({ params }: { params: Promise<{ id:
       concept: p.concept.name,
       body: p.body ?? null,
       choices: Array.isArray(p.choices) ? (p.choices as string[]) : null,
+      diagram: p.diagram ?? null,
       answerHint,
     };
   });

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MathRenderer } from '@/components/math/MathRenderer';
+import { LabDiagram } from '../../LabDiagram';
 
 type Problem = {
   problemId: string;
@@ -12,6 +13,7 @@ type Problem = {
   concept: string;
   body?: string | null;
   choices?: string[] | null;
+  diagram?: unknown;
   answerHint?: string;
 };
 
@@ -81,6 +83,9 @@ export function SolveForm({ worksheetId, problems }: { worksheetId: string; prob
               <MathRenderer content={p.body} />
             </div>
           )}
+
+          {/* 도형 (토대4) */}
+          {p.diagram != null && <LabDiagram spec={p.diagram} className="mb-3" />}
 
           {p.type === 'MULTIPLE_CHOICE' ? (
             p.choices && p.choices.length > 0 ? (

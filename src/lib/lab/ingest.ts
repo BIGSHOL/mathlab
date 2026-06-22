@@ -16,6 +16,26 @@ export interface IngestProblemInput {
   answer?: string; // 단답 정답
   rubric?: string; // 서술형 채점 루브릭(모범답안 + 기준)
   explanation?: string; // 해설/풀이 (없으면 '')
+  // 🚧 토대4: 도형 스펙(도형 문제만). DiagramParam[] 배열(네이티브, PDF추출과 동형) 또는 DiagramSpec 객체.
+  diagram?: unknown;
+}
+
+// 🚧 토대4: 인제스트 diagram 라이트 검증 — 배열(DiagramParam[]) 또는 객체(DiagramSpec). 깊은 검증/미지 타입은 렌더러가 흡수(null 반환).
+function validateDiagram(d: unknown): unknown {
+  if (d == null) return null;
+  if (Array.isArray(d)) {
+    if (d.length === 0) return null;
+    for (const el of d) {
+      if (!el || typeof el !== 'object' || typeof (el as { type?: unknown }).type !== 'string')
+        throw new Error('diagram 배열 원소는 {type, params} 객체여야 함');
+    }
+    return d;
+  }
+  if (typeof d === 'object') {
+    if (typeof (d as { type?: unknown }).type !== 'string') throw new Error('diagram.type(문자열) 누락');
+    return d;
+  }
+  throw new Error('diagram은 배열(DiagramParam[]) 또는 객체(DiagramSpec)여야 함');
 }
 
 /** 한 단원(개념)에 대한 세션 비전 인제스트 문서. */
@@ -68,7 +88,8 @@ export function parseIngestDoc(doc: IngestDoc): ParsedIngest {
         explanation: p.explanation ?? '',
       };
       const g = normalizeGenerated(raw, p.type, p.difficulty);
-      problems.push({ ...g, source: doc.source }); // 교재 출처로 source 교체
+      const diagram = validateDiagram(p.diagram); // 🚧 토대4: 도형 스펙 검증(있으면)
+      problems.push({ ...g, source: doc.source, diagram }); // 교재 출처로 source 교체 + 도형 부착
     } catch (e) {
       errors.push({ index: i, error: e instanceof Error ? e.message : String(e) });
     }
