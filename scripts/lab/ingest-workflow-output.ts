@@ -1,0 +1,124 @@
+// 🚧 Lab 토대3-B — 워크플로 출력 → LabProblem 일괄 인제스트 (₩0 세션비전 확대)
+//   `Workflow` 태스크 출력 파일({...,result:{byConcept:{[conceptId]:[problem...]}}})을 받아
+//   ① HTML 엔티티 디코딩 ② diagram JSON 문자열 파싱 ③ 개념별 검증 ④ source 멱등 영속.
+//   per-page 손 전사 금지(LaTeX 백슬래시·엔티티 오류) → 출력 파일을 이 도구로 일괄 처리.
+//   (INGEST.md §7 워크플로 함정 #7 패턴.)
+//
+//   사용:
+//     node --env-file=.env --import tsx scripts/lab/ingest-workflow-output.ts <task.output> --source "교재명 [워크플로]" [--dry-run] [--replace]
+//   --source   : LabProblem.source (필수, 멱등 키). 같은 source 기존행 있으면 중단(--replace로 교체).
+//   --replace  : 같은 source 기존행 삭제 후 재적재(재개/재실행 누적분 정리). 워크시트 미배정 문항만 안전 — 배정분 있으면 중단.
+//   --dry-run  : 검증만(DB 미기록).
+import { readFileSync } from 'node:fs';
+import { prisma } from '@/lib/db';
+import { parseIngestDoc, type IngestProblemInput } from '@/lib/lab/ingest';
+import { persistGeneratedProblems } from '@/lib/lab/persist';
+
+/** StructuredOutput이 `<`/`>`/`&`를 엔티티로 직렬화 → 디코딩(&amp; 마지막). */
+function dec(s: unknown): string {
+  return typeof s === 'string'
+    ? s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&apos;/g, "'").replace(/&amp;/g, '&')
+    : '';
+}
+
+/** result.byConcept를 출력 구조 어디에 있든 재귀 탐색. */
+function findByConcept(o: unknown): Record<string, unknown[]> | null {
+  if (!o || typeof o !== 'object') return null;
+  const rec = o as Record<string, unknown>;
+  if (rec.byConcept && typeof rec.byConcept === 'object' && !Array.isArray(rec.byConcept)) {
+    return rec.byConcept as Record<string, unknown[]>;
+  }
+  for (const k of Object.keys(rec)) {
+    const r = findByConcept(rec[k]);
+    if (r) return r;
+  }
+  return null;
+}
+
+/** 워크플로 problem(평면 필드 + diagram JSON 문자열) → IngestProblemInput. */
+function toInput(p: Record<string, unknown>): IngestProblemInput {
+  const out: IngestProblemInput = {
+    type: p.type as IngestProblemInput['type'],
+    difficulty: Number(p.difficulty),
+    body: dec(p.body),
+    explanation: dec(p.explanation),
+  };
+  if (Array.isArray(p.choices) && p.choices.length) out.choices = (p.choices as unknown[]).map(dec);
+  if (typeof p.answerIndex === 'number' && p.answerIndex > 0) out.answerIndex = p.answerIndex;
+  if (p.answer && dec(p.answer).trim()) out.answer = dec(p.answer);
+  if (p.rubric && dec(p.rubric).trim()) out.rubric = dec(p.rubric);
+  if (typeof p.diagram === 'string' && p.diagram.trim()) {
+    try { out.diagram = JSON.parse(p.diagram); } catch { /* 잘못된 도형 JSON → 생략(본문만) */ }
+  }
+  return out;
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+  const file = args.find((a) => !a.startsWith('--'));
+  const source = (() => { const i = args.indexOf('--source'); return i >= 0 ? args[i + 1] : null; })();
+  const dryRun = args.includes('--dry-run');
+  const replace = args.includes('--replace');
+  if (!file || !source) {
+    console.error('사용: ingest-workflow-output.ts <task.output> --source "교재명 [워크플로]" [--dry-run] [--replace]');
+    process.exit(2);
+  }
+
+  const data = JSON.parse(readFileSync(file, 'utf8'));
+  const byConcept = findByConcept(data);
+  if (!byConcept) { console.error('❌ result.byConcept 못 찾음'); process.exit(1); }
+
+  const concepts = Object.keys(byConcept).sort();
+  console.log(`📦 출처(source): ${source}`);
+  console.log(`🎯 개념 ${concepts.length}개 · 문항 ${Object.values(byConcept).reduce((s, a) => s + a.length, 0)}개\n`);
+
+  // 멱등: 같은 source 기존행 처리
+  const existing = await prisma.labProblem.count({ where: { source } });
+  if (existing > 0) {
+    if (!replace) {
+      console.error(`⚠️ 같은 source 기존행 ${existing}개. 중복 방지로 중단 — 교체는 --replace.`);
+      await prisma.$disconnect(); process.exit(1);
+    }
+    // 워크시트 배정된 문항이 있으면 삭제 위험 → 중단(안전)
+    const linked = await prisma.labWorksheetProblem.count({ where: { problem: { source } } });
+    if (linked > 0) {
+      console.error(`⚠️ 같은 source 문항 중 ${linked}개가 워크시트에 배정됨 → --replace 거부(데이터 무결성). 수동 확인 필요.`);
+      await prisma.$disconnect(); process.exit(1);
+    }
+    if (!dryRun) {
+      const del = await prisma.labProblem.deleteMany({ where: { source } });
+      console.log(`🧹 --replace: 기존 source ${del.count}개 삭제\n`);
+    }
+  }
+
+  let created = 0;
+  let failed = 0;
+  for (const conceptId of concepts) {
+    const inputs = (byConcept[conceptId] as Record<string, unknown>[]).map(toInput);
+    let parsed;
+    try {
+      parsed = parseIngestDoc({ source, conceptId, problems: inputs });
+    } catch (e) {
+      console.log(`  [${conceptId}] ❌ 문서 오류: ${e instanceof Error ? e.message : String(e)}`);
+      continue;
+    }
+    if (parsed.errors.length) {
+      failed += parsed.errors.length;
+      console.log(`  [${conceptId}] ⚠️ 검증실패 ${parsed.errors.length}: ${parsed.errors.map((e) => `#${e.index} ${e.error}`).join(' | ').slice(0, 200)}`);
+    }
+    // FK 확인
+    const exists = await prisma.labConcept.findUnique({ where: { id: conceptId }, select: { id: true } });
+    if (!exists) { console.log(`  [${conceptId}] ❌ conceptId 없음(스킵)`); continue; }
+
+    if (parsed.problems.length && !dryRun) {
+      const r = await persistGeneratedProblems(conceptId, parsed.problems, { isGenerated: false });
+      created += r.created;
+    }
+    const withDiag = parsed.problems.filter((x) => x.diagram != null).length;
+    console.log(`  [${conceptId}] ${dryRun ? '검증' : '+'}${parsed.problems.length}문항 (도형 ${withDiag})`);
+  }
+  console.log(`\n${dryRun ? '🧪 dry-run 검증' : '✅ 영속'} 완료: ${created || Object.values(byConcept).reduce((s, a) => s + a.length, 0)}문항 (검증실패 ${failed})`);
+  await prisma.$disconnect();
+}
+
+main().catch(async (e) => { console.error(e); await prisma.$disconnect(); process.exit(1); });

@@ -127,7 +127,8 @@
 4. **conceptId 후보 화이트리스트 주입** — 에이전트에 대단원의 중단원 conceptId 목록을 주고 그 중 배정하게(자유텍스트 금지) → 단원매핑 절대규칙 준수. 후보 밖 값은 수집 시 제외.
 5. **per-problem conceptId → (source, conceptId) 그룹 영속** — 한 페이지에 여러 개념 혼재 → 문항별 conceptId로 그룹핑 후 `IngestDoc`(단일 conceptId)로 분할 영속. 중복 가드(source+conceptId)가 재실행 안전 보장.
 6. **🔴 레이트리밋 — 누적형 (2026-06-22 중1-2 실측)** — 다수 페이지 OCR **동시 버스트**는 "Server is temporarily limiting requests (**not your usage limit**)"로 **즉사**(서버 과부하, 내 사용량 아님). 대응: **(a) 3개씩 순차 배치** `for (const g of chunk(PAGES,3)) await pipeline(g, extract, verify)` — 동시 호출 ↓. **(b) `resumeFromRunId`로 재개** — 완료 에이전트는 캐시 즉시 반환, 미완료만 재실행 → 강제종료/부분실패해도 여러 번 재개로 수렴. ⚠️ **누적 window**라 즉시 재개는 또 막힘 → 시간 두고(몇 분). 워크플로는 sleep 불가 → 재개 사이 간격은 사람/턴 cadence로.
-7. **결과 일괄 처리 — 손 전사 금지** — 통과 N문항을 직접 옮기면 LaTeX 백슬래시·엔티티에서 오류. 워크플로 **출력 파일(JSON)을 스크립트로 처리**: 파싱 → 엔티티 디코딩 → `diagram` JSON 문자열 `JSON.parse` → 개념별 `persistGeneratedProblems`. **기존 source 삭제로 멱등**(재실행/재개 누적분 정리). 적대적 검증이 잡은 진짜 오류 실측: 보기 반지름/중심각 오기, 통계 정답 2개(ill-posed)+JSON 내부 모순, body가 다른 페이지와 불일치.
+7. **결과 일괄 처리 — 손 전사 금지** — 통과 N문항을 직접 옮기면 LaTeX 백슬래시·엔티티에서 오류. **재사용 도구** `scripts/lab/ingest-workflow-output.ts`: 워크플로 `*.output` 파일 → `result.byConcept` 재귀탐색 → 엔티티 디코딩 → `diagram` JSON 문자열 `JSON.parse` → 개념별 검증·영속. `--source "교재 [워크플로]"`(멱등 키, 필수) · `--dry-run`(검증만) · `--replace`(같은 source 교체, 단 워크시트 배정분 있으면 거부). 적대적 검증이 잡은 진짜 오류 실측: 보기 반지름/중심각 오기, 통계 정답 2개(ill-posed)+JSON 내부 모순, body가 다른 페이지와 불일치, 숫자 위조(8→7·십일각형→십각형), 정답페이지를 문제로 오인.
+   - ⚠️ **dry-run 후 직접 스팟체크**: 결정적 계산(GCD/LCM·각 합)은 ingest 전 몇 개 손으로 재계산(단일 검증자 한계 보강). 통계 표/그래프 의존 문제는 워크플로가 보수적으로 제외 → byConcept에 안 나옴(정상).
 
 > ⚠️ **재실행 비결정성 주의**: 워크플로 resume가 캐시 미스로 완료분까지 재실행하면 결과가 **달라질 수 있다**(다른 정답·문항수). 이미 영속한 분과 충돌 시, *더 정확한 쪽*을 택해 기존을 `source`로 삭제 후 재적재(워크시트 미배정 문항만 안전 삭제).
 
