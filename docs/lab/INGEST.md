@@ -53,6 +53,7 @@
 
 1. **개념 매핑 확인**(§5): 대상 단원이 어느 `LabConcept`인지 `lab_concepts`에서 id 확정.
 2. **PDF 판독**: `Read`(file_path=교재 PDF, pages=해당 단원 범위). 페이지를 직접 보고 문제를 식별.
+   - ⚠️ **Read는 PDF 100MB 초과를 거부**(교재 전권은 보통 100~200MB). 우회: **PyMuPDF(fitz)** 로 ① 텍스트 레이어를 훑어 단원 페이지를 빠르게 찾고(`doc[i].get_text()`, born-digital이라 수식은 깨지지만 위치 탐색엔 충분) ② **문제 페이지만 PNG로 렌더**(`get_pixmap(matrix=fitz.Matrix(2.2,2.2))` ≈158DPI, 페이지당 ~150KB) → 그 PNG를 `Read`(비전 OCR). 콘솔 cp949 한글 깨짐은 결과를 UTF-8 파일로 써서 우회. (fitz는 변환기가 쓰는 래스터라이저 — 이 머신에 설치됨.)
 3. **JSON 작성**: 본 문서 §4 규칙대로 `IngestDoc` 작성 → `d:\tmp\lab-ingest\<교재>-<단원>.json` 등에 저장.
 4. **dry-run 검증**: `node --env-file=.env --import tsx scripts/lab/ingest-problems.ts <file> --dry-run` → 검증 통과/실패 확인.
 5. **영속**: 같은 명령 `--dry-run` 제거 → DB 기록(같은 source 재실행은 중복 가드로 차단, 재인제스트는 `--force`).

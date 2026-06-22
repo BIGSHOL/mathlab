@@ -32,7 +32,7 @@ mathlab repo 안에, **라이브 기출분석 제품과 완전 격리된 채 은
 | **스택 팁(현재)** | `lab/content-foundation` (PR **#27**, 콘텐츠 토대 1·2·**3단계(스키마+영속 글루)**). 새 머신(2026-06-22~)은 `D:\mathlab` **직접 체크아웃**(worktree 아님). 구 머신은 worktree `F:\mathlab-lab-p1`이었음 |
 | **PR 스택 체인** | `main` ←#20(`claude/amazing-maxwell-blpgou`, P0 척추) ←#21(`lab/p1-auto-grader`) ←#22(`lab/p2-auto-diagnoser`) ←#23(`lab/p3-smart-prescriber`) ←#24(`lab/p4-auto-reporter`) ←#25(`lab/p5-descriptive-grading`) ←#26(`lab/cockpit`, ②⑤ UI) ←#27(`lab/content-foundation`, **TIP**). 전부 `BIGSHOL/mathlab` — **#27만 OPEN, #20~#26 DRAFT**(스택 머지 대기) |
 | **로컬 검증** | ✅ `verify-p0~p5` + `verify-gen` + `verify-persist`(영속 글루) + `verify-ingest`(세션비전 인제스트 경로) = **9/9 PASS**(새 머신 2026-06-22) + `gen-sample.ts` 실Gemini 6/6(품질) |
-| DB(공유 Supabase) | `lab_submission_items`(P1)+`lab_submissions.diagnosedAt`(P2). 개념그래프: `lab_concepts` 244행·`lab_concept_edges` 177행. ✅ **토대 3단계 스키마 적용됨**: `lab_problems`에 `body`/`choices`/`explanation` **nullable 컬럼 추가**(db push, 비파괴 — 행수 30 불변·기존행 전부 null). 생성→영속 글루(`src/lib/lab/persist.ts`) 완료. ⚠️ **문제풀 빈약**(lab_problems 30 = 합성 시드만) → 실 개념×난이도×유형 **백필 필요**(합성 Gemini 또는 세션비전 인제스트) |
+| DB(공유 Supabase) | `lab_submission_items`(P1)+`lab_submissions.diagnosedAt`(P2). 개념그래프: `lab_concepts` 244행·`lab_concept_edges` 177행. ✅ **토대 3단계 스키마 적용됨**: `lab_problems`에 `body`/`choices`/`explanation` **nullable 컬럼 추가**(db push, 비파괴 — 행수 30 불변·기존행 전부 null). 생성→영속 글루(`src/lib/lab/persist.ts`) 완료. **인제스트 파이프라인+파일럿 완료**: `lab_problems` **35행**(합성시드 30 + 동아 중1 소인수분해 실문제 5, `source` LIKE '동아%', isGenerated=false). ⚠️ 아직 빈약 → 단원별 **백필 확대 필요**(세션비전 인제스트 ₩0 / 합성 Gemini) |
 
 > 🖥️ **다른 컴퓨터에서 시작**: `git clone https://github.com/BIGSHOL/mathlab.git` → `git checkout lab/content-foundation`(스택 팁) → **§6 새 컴퓨터 셋업** 따라 `.env.local` 구성. worktree는 *이 머신 사정*이라 새 머신은 그냥 브랜치 체크아웃이면 됨(worktree 불필요).
 > ⚠️ **repo 토폴로지**: 원격 `mathlab2`는 *낡은 스냅샷* — push/PR은 **`BIGSHOL/mathlab`**(origin, 정식). additive 여부는 `origin/main` 대비로 확인.
@@ -256,7 +256,7 @@ npx prisma db push                         # --accept-data-loss 절대 쓰지 �
 - **🎯 다음 = 토대 3단계 마무리 (백필 + repoint + UI)** — 스키마·글루는 준비됨. 남은 것:
   1. **문제풀 백필** — `persistGeneratedProblems` 루프(개념×난이도×유형). 트랙 2갈래:
      - **(A) 합성**(Lab Gemini Flash, 저비용 반복과금, 난이도 4~5·도형 제약) — `generateProblemsForConcept` → persist. 아직 백필 스크립트 미작성.
-     - **✅(B) 세션비전 인제스트 — 파이프라인 구축 완료(2026-06-22)**: `src/lib/lab/ingest.ts` + `scripts/lab/ingest-problems.ts` + `docs/lab/INGEST.md`(데이터계약·작성규칙·SOP, 변환기 `EXAM_OCR_PROMPT` 이식). `verify-ingest` PASS. **남은 건 실 교재 파일럿**: G:\ 교재 PDF를 `Read`(pages)로 판독 → INGEST.md §4 규칙대로 `IngestDoc` JSON 작성 → `ingest-problems.ts`로 영속(API ₩0). 실문제·고품질·도형 포함.
+     - **✅(B) 세션비전 인제스트 — 파이프라인 + 실 교재 파일럿 완료(2026-06-22)**: `src/lib/lab/ingest.ts` + `scripts/lab/ingest-problems.ts` + `docs/lab/INGEST.md`(데이터계약·작성규칙·SOP, 변환기 `EXAM_OCR_PROMPT` 이식). `verify-ingest` PASS. **✅ 파일럿**: G:\ 동아 중1(강옥기) 1단원 소인수분해 단원마무리 → 세션 비전으로 **실문제 5개 인제스트**(난이도 1~4, MC+단답, `lab-cur-mid-13-01`, isGenerated=false, **API ₩0**). ⚠️ 교재 전권 175MB > Read 100MB 제한 → **PyMuPDF(fitz)로 문제 페이지만 PNG 렌더 후 Read**(INGEST.md §3). lab_problems 30→35.
      ⚠️ 백필 시 **난이도 매핑표 1곳 고정**(mathg-gen 4단계↔Lab 5단계, 합성 트랙) + 인제스트는 conceptId 직접 지정(FK 검증, 단원매핑 절대규칙).
   2. **데모 학생 repoint** — 합성 lab-c1..c5 → 실 lab-cur-* (백필된 개념).
   3. **풀이 UI** `worksheet/[id]`가 **실 body·choices 렌더**(현 answerHint 데모 분기 제거) → 실 개념+실 문제로 루프 구동.
