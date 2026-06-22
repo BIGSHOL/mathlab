@@ -29,10 +29,10 @@ mathlab repo 안에, **라이브 기출분석 제품과 완전 격리된 채 은
 
 | 항목 | 값 |
 |------|----|
-| **스택 팁(현재)** | `lab/content-foundation` (PR **#27**, 콘텐츠 토대 1·2단계). 이 머신은 worktree `F:\mathlab-lab-p1` |
+| **스택 팁(현재)** | `lab/content-foundation` (PR **#27**, 콘텐츠 토대 1·2·**3단계(스키마+영속 글루)**). 새 머신(2026-06-22~)은 `D:\mathlab` **직접 체크아웃**(worktree 아님). 구 머신은 worktree `F:\mathlab-lab-p1`이었음 |
 | **PR 스택 체인** | `main` ←#20(`claude/amazing-maxwell-blpgou`, P0 척추) ←#21(`lab/p1-auto-grader`) ←#22(`lab/p2-auto-diagnoser`) ←#23(`lab/p3-smart-prescriber`) ←#24(`lab/p4-auto-reporter`) ←#25(`lab/p5-descriptive-grading`) ←#26(`lab/cockpit`, ②⑤ UI) ←#27(`lab/content-foundation`, **TIP**). 전부 `BIGSHOL/mathlab` — **#27만 OPEN, #20~#26 DRAFT**(스택 머지 대기) |
-| **로컬 검증** | ✅ `verify-p0~p5.ts` PASS(채점·BKT·smart처방·보고·서술형) + ✅ `verify-gen.ts` 7/7(문제생성 정규화, 스텁 $0) + ✅ `gen-sample.ts` 실Gemini 6/6(품질) |
-| DB(공유 Supabase) | `lab_submission_items`(P1)+`lab_submissions.diagnosedAt`(P2). **콘텐츠 토대 1단계 적용됨**: `lab_concepts` 244행(239 실 + 5 합성)·`lab_concept_edges` 177행. ⚠️ **생성 문제는 미영속**(LabProblem에 본문/보기/해설 컬럼 부재 = 3단계 과제) |
+| **로컬 검증** | ✅ `verify-p0~p5.ts` + `verify-gen.ts` + ✅ `verify-persist.ts`(생성→LabProblem 영속 글루, 스텁 $0) = **8/8 PASS**(새 머신 2026-06-22 재검증) + `gen-sample.ts` 실Gemini 6/6(품질) |
+| DB(공유 Supabase) | `lab_submission_items`(P1)+`lab_submissions.diagnosedAt`(P2). 개념그래프: `lab_concepts` 244행·`lab_concept_edges` 177행. ✅ **토대 3단계 스키마 적용됨**: `lab_problems`에 `body`/`choices`/`explanation` **nullable 컬럼 추가**(db push, 비파괴 — 행수 30 불변·기존행 전부 null). 생성→영속 글루(`src/lib/lab/persist.ts`) 완료. ⚠️ **문제풀 빈약**(lab_problems 30 = 합성 시드만) → 실 개념×난이도×유형 **백필 필요**(합성 Gemini 또는 세션비전 인제스트) |
 
 > 🖥️ **다른 컴퓨터에서 시작**: `git clone https://github.com/BIGSHOL/mathlab.git` → `git checkout lab/content-foundation`(스택 팁) → **§6 새 컴퓨터 셋업** 따라 `.env.local` 구성. worktree는 *이 머신 사정*이라 새 머신은 그냥 브랜치 체크아웃이면 됨(worktree 불필요).
 > ⚠️ **repo 토폴로지**: 원격 `mathlab2`는 *낡은 스냅샷* — push/PR은 **`BIGSHOL/mathlab`**(origin, 정식). additive 여부는 `origin/main` 대비로 확인.
@@ -97,6 +97,7 @@ src/lib/lab/
                               #   repairJsonString(LLM JSON 복구: LaTeX 백슬래시·줄바꿈·잘림 salvage)
   problem-gen.ts              # ★토대2: 문제생성 정규화·검증·DI(주입형, 테스트 $0)
                               #   generateProblem/normalizeGenerated/generateProblemsForConcept + set/resetProblemGenerator
+  persist.ts                  # ★토대3: 생성 문제 → LabProblem 영속 글루 (conceptId×difficulty×type 배치, bodyRef='inline' 센티넬)
   pipeline/
     index.ts                  # p0Pipeline 조립 (diagnoser=autoDiagnoser, prescriber=smartPrescriber, grader=autoGrader, reporter=autoReporter)
     manual-diagnoser.ts  auto-diagnoser.ts(P2 BKT)
@@ -111,6 +112,7 @@ scripts/lab/
   seed-synthetic.ts           # P0 데모 시드 (합성 5개념 + 데모학생 lab-student-demo)
   verify-p0~p4.ts  verify-p5.ts(★서술형 스텁)
   verify-gen.ts               # ★토대2: 문제생성 정규화 검증 7/7 PASS (스텁, $0)
+  verify-persist.ts           # ★토대3: 생성→LabProblem 영속 글루 검증 (스텁 $0, 테스트행 생성 후 자동 정리)
   gen-sample.ts               # ★토대2: 실 Gemini 품질 샘플 (DB 미저장, opt-in 소액비용)
   smoke-p5-real-ai.ts         # ★실 Gemini 채점 1콜 (opt-in, LAB_P5_REAL_AI=1)
 docs/lab/HANDOFF.md
@@ -243,11 +245,15 @@ npx prisma db push                         # --accept-data-loss 절대 쓰지 �
 
 ## 7. 미결 결정 — 다음 갈래
 
-- **✅ 완료**: ① DB · ③ P1 채점(#21) · ④ P2 진단(#22) · **P3 처방(#23)** · **P4 보고(#24)** · **P5 서술형 채점(#25)** · **② 코크핏 DB연동(#26)** · **⑤ 학생답 제출 UI/API(#26)** · **콘텐츠 토대 1·2단계(#27, 실 개념 239개 + AI 생성기)**.
-- **🎯 다음 = 콘텐츠 토대 3단계 (최우선)** — 생성기는 문제를 *만들지만 저장 못 함*(LabProblem에 본문/보기/해설 컬럼 부재). 마무리:
-  1. `LabProblem`에 **`body String?` / `choices Json?` / `explanation String?` 컬럼 추가**(Lab 전용 additive — schema.prisma Lab 모델만, dev 끄고 db push, 무손실 확인).
-  2. 생성→저장 스크립트(`generateProblemsForConcept` → LabProblem 영속, `isGenerated=true`) + 데모 학생을 **실 학기로 repoint**(합성 lab-c1..c5 → 실 lab-cur-*).
-  3. 풀이 UI(`worksheet/[id]`)가 **실 본문·보기 렌더** → 합성 데모가 아닌 **실 개념+실 문제로 진단→처방→공급→채점→보고 루프**.
+- **✅ 완료**: ① DB · ③ P1 채점(#21) · ④ P2 진단(#22) · **P3 처방(#23)** · **P4 보고(#24)** · **P5 서술형 채점(#25)** · **② 코크핏 DB연동(#26)** · **⑤ 학생답 제출 UI/API(#26)** · **콘텐츠 토대 1·2단계(#27, 실 개념 239개 + AI 생성기)** · **토대 3단계 스키마+영속 글루(2026-06-22 새 머신)**.
+- **✅ 토대 3단계 — 스키마+영속 글루 완료(2026-06-22)**:
+  1. ✅ `LabProblem`에 **`body String?` / `choices Json?` / `explanation String?` 컬럼 추가** (db push, migrate diff = ADD COLUMN ×3만·비파괴 확인, 행수 30 불변). db:backup 선행.
+  2. ✅ **생성→영속 글루** `src/lib/lab/persist.ts::persistGeneratedProblems(conceptId, problems[])` — `isGenerated=true`·`bodyRef='inline'`·body/choices/explanation/answer 채움. `verify-persist.ts` PASS(스텁 $0).
+- **🎯 다음 = 토대 3단계 마무리 (백필 + repoint + UI)** — 스키마·글루는 준비됨. 남은 것:
+  1. **문제풀 백필** — `generateProblemsForConcept` → `persistGeneratedProblems` 루프(개념×난이도×유형). 트랙 2갈래: **(A) 합성**(Lab Gemini Flash, 저비용 반복과금, 난이도 4~5·도형 제약) / **(B) 세션비전 인제스트**(G:\ 교재 PDF → 변환기 `_CROP_PROMPT`/`EXAM_OCR_PROMPT` 차용 + 세션 비전으로 LabProblem JSON 직접 작성 = **API ₩0**, 실문제·고품질). ⚠️ 백필 시 **난이도 매핑표 1곳 고정**(mathg-gen 4단계↔Lab 5단계) + **프롬프트에 curriculum 단원목록 주입**(conceptId 매칭, 단원매핑 절대규칙).
+  2. **데모 학생 repoint** — 합성 lab-c1..c5 → 실 lab-cur-* (백필된 개념).
+  3. **풀이 UI** `worksheet/[id]`가 **실 body·choices 렌더**(현 answerHint 데모 분기 제거) → 실 개념+실 문제로 루프 구동.
+  - 📋 소스 재사용 결정(2026-06-22 5갈래 조사): 단원=`/d/mathg-gen/src/constants/curriculum.ts`(use-as-is) · 합성 프롬프트/스키마/품질가드=mathg-gen `prompts.ts`·`schema.ts`·`mathDefense.ts`·`sanitize.ts`(port) · 비전인제스트=`/d/시험지 한글화` 프롬프트·SOP 차용(코드 이식 X, Python↔TS+HWP격차). mathgen-ai-2022개정=mathg-gen의 부분집합(reference-only).
 - **콘텐츠 토대 (상위문제, 비전/OCR)** ← 사용자 결정(§9b): 고난도/도형 문제는 순수 AI 생성 한계 → 교재/기출 이미지 **비전 AI + OCR 인제스트**(별도 설계).
 - **⑥ needsReview 사람 검수 큐** ← 저신뢰 서술형/파싱실패 항목 교사 채점 큐 + **검수 후 재진단**(스택리뷰 #1 잔여분).
 - **P5b/P3b/P4b 고도화**: AI feedback 영속·partialScore 가중 BKT / 처방 영속(reason 추적)·per-concept 보정 / AI 내러티브 리포트·HWP url. · **선수관계 정밀화**(휴리스틱 엣지 → 교육학적).

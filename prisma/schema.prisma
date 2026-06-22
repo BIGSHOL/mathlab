@@ -1081,7 +1081,10 @@ model LabProblem {
   difficulty  Int // 1..5
   source      String? // 출처 / 생성 모델
   isGenerated Boolean        @default(false) // AI 생성 여부
-  bodyRef     String // HWP/이미지/LaTeX 본문 참조 (스토리지 키)
+  bodyRef     String // HWP/이미지/LaTeX 본문 참조 (스토리지 키) — 인라인 생성/인제스트는 'inline' 센티넬
+  body        String? // 🚧 토대3: 인라인 본문 (마크다운+KaTeX). 생성/비전인제스트 문제. null이면 bodyRef(스토리지) 폴백
+  choices     Json? // 🚧 토대3: 객관식 보기 string[] (객관식만, 그 외 null)
+  explanation String? // 🚧 토대3: 해설/풀이 (마크다운+KaTeX)
   answer      Json // 정답 (객관식 번호 / 단답 / 서술형 채점 루브릭)
   createdAt   DateTime       @default(now())
 
