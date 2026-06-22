@@ -6,13 +6,20 @@
 //   훅 없음 → 서버/클라이언트 양쪽 컴포넌트에서 사용 가능.
 import { resolveDiagramSpec } from '@/lib/utils/diagram-resolver';
 import { renderDiagram, type DiagramType } from '@/lib/utils/svg-diagrams';
+import type { TriangleParams } from '@/lib/utils/svg-diagrams/types';
+import { renderLabTriangle } from '@/lib/lab/diagram/lab-triangle';
 
 export function LabDiagram({ spec, className }: { spec: unknown; className?: string }) {
   const resolved = resolveDiagramSpec(spec);
   if (resolved.kind !== 'params') return null;
 
   const svgs = resolved.data
-    .map((p) => renderDiagram({ type: p.type as DiagramType, params: p.params }))
+    .map((p) =>
+      // 삼각형은 Lab 렌더러(각을 호/직각 기호로) — 그 외는 공유 svg-diagrams
+      p.type === 'triangle'
+        ? renderLabTriangle(p.params as unknown as TriangleParams)
+        : renderDiagram({ type: p.type as DiagramType, params: p.params }),
+    )
     .filter((s): s is string => !!s);
   if (svgs.length === 0) return null;
 

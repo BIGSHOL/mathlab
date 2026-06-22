@@ -88,6 +88,7 @@
   - **DiagramSpec 객체**(프리셋, **좌표 불필요** — AI 친화): `triangle`(preset+`angles`+`showAngles`+`angleValues`) · `circle` · `quadrilateral` · `coordinatePlane` · `solid`(`shape`: cube/cylinder/cone/sphere/prism/pyramid) · `composite`. ⚠️ **`polygon` 스펙은 미렌더**(트림된 변환 경로) → 정다각형은 아래 DiagramParam `regular_polygon` 사용.
   - **DiagramParam[] 배열**(26타입 네이티브, PDF추출과 동형): `regular_polygon`(`{sides:N}`) · `angle_figure`(`{angle,label}`) · `coordinate_plane` · `histogram`·`stem_leaf`(통계) 등.
 - **실측 검증된 작동 포맷**: Spec `triangle`(preset)·`solid` / Param `regular_polygon`·`angle_figure`·`coordinate_plane` (probe로 SVG 생성 확인). 새 타입은 작성 전 `resolveDiagramSpec`+`renderDiagram`으로 SVG 생성되는지 확인 후 사용.
+- **삼각형은 Lab 전용 렌더러**(`src/lib/lab/diagram/lab-triangle.ts`, 공유 렌더러는 각을 텍스트로만 찍어 보강): 각을 **호(arc)**로, **90°는 직각 기호(⌐)**로 표시. `angles: [{vertex, value}]`만 주면(예: `[{vertex:0,value:"75°"},{vertex:1,value:"60°"},{vertex:2,value:"x"}]`) **세 각으로 꼭짓점을 직접 계산해 라벨과 일치하는 도형**을 그린다(프리셋 좌표 무시). 미지각 1개는 `180−합`으로 보완. 직각 기호는 라벨 `"90°"` 기준.
 - 재현 불가(잘림·과복잡)한 도형은 그 문항을 **건너뛴다**. 단순 서술 가능하면 `[그림: …]` 플레이스홀더도 가능하나, **가능하면 구조화 스펙 우선**.
 - ⚠️ 도형 충실도 검증은 숫자 답보다 어렵다(파라미터 오류가 그림을 바꿈) — **교차 재판독 필수**(§3-6).
 
