@@ -35,7 +35,11 @@ function findByConcept(o: unknown): Record<string, unknown[]> | null {
   return null;
 }
 
-/** 워크플로 problem(평면 필드 + diagram JSON 문자열) → IngestProblemInput. */
+const norm = (s: unknown) => String(s).replace(/\s+/g, '');
+
+/** 워크플로 problem(평면 필드 + diagram JSON 문자열) → IngestProblemInput.
+ *  ⚠️ 객관식 answerIndex 보정: 에이전트가 0-based/1-based를 혼용(answerIndex=0·off-by-one) →
+ *     `answer` 텍스트(신뢰 신호)가 보기와 일치하면 그 위치(1-based)로 강제 보정. 불일치 시 경고. */
 function toInput(p: Record<string, unknown>): IngestProblemInput {
   const out: IngestProblemInput = {
     type: p.type as IngestProblemInput['type'],
@@ -44,7 +48,24 @@ function toInput(p: Record<string, unknown>): IngestProblemInput {
     explanation: dec(p.explanation),
   };
   if (Array.isArray(p.choices) && p.choices.length) out.choices = (p.choices as unknown[]).map(dec);
-  if (typeof p.answerIndex === 'number' && p.answerIndex > 0) out.answerIndex = p.answerIndex;
+
+  if (out.type === 'MULTIPLE_CHOICE' && out.choices && out.choices.length) {
+    const ansText = dec(p.answer);
+    const pos = ansText ? out.choices.findIndex((c) => norm(c) === norm(ansText)) : -1; // 0-based
+    const agentIdx = typeof p.answerIndex === 'number' ? p.answerIndex : null;
+    if (pos >= 0) {
+      out.answerIndex = pos + 1; // answer 텍스트 기준 1-based
+      if (agentIdx !== pos + 1) {
+        console.log(`    ⚠️ answerIndex 보정: agent=${agentIdx} → ${pos + 1} (answer="${ansText.slice(0, 24)}"=보기${pos + 1})`);
+      }
+    } else if (agentIdx && agentIdx > 0) {
+      out.answerIndex = agentIdx; // 텍스트 매칭 실패 → agent값 폴백
+      console.log(`    ❓ answer 텍스트("${ansText.slice(0, 24)}")가 보기와 불일치 → answerIndex=${agentIdx} 사용(수동확인 권장)`);
+    }
+  } else if (typeof p.answerIndex === 'number' && p.answerIndex > 0) {
+    out.answerIndex = p.answerIndex;
+  }
+
   if (p.answer && dec(p.answer).trim()) out.answer = dec(p.answer);
   if (p.rubric && dec(p.rubric).trim()) out.rubric = dec(p.rubric);
   if (typeof p.diagram === 'string' && p.diagram.trim()) {
