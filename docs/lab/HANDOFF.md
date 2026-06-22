@@ -31,7 +31,7 @@ mathlab repo 안에, **라이브 기출분석 제품과 완전 격리된 채 은
 |------|----|
 | **스택 팁(현재)** | `lab/content-foundation` (PR **#27**, 콘텐츠 토대 1·2·**3단계(스키마+영속 글루)**). 새 머신(2026-06-22~)은 `D:\mathlab` **직접 체크아웃**(worktree 아님). 구 머신은 worktree `F:\mathlab-lab-p1`이었음 |
 | **PR 스택 체인** | `main` ←#20(`claude/amazing-maxwell-blpgou`, P0 척추) ←#21(`lab/p1-auto-grader`) ←#22(`lab/p2-auto-diagnoser`) ←#23(`lab/p3-smart-prescriber`) ←#24(`lab/p4-auto-reporter`) ←#25(`lab/p5-descriptive-grading`) ←#26(`lab/cockpit`, ②⑤ UI) ←#27(`lab/content-foundation`, **TIP**). 전부 `BIGSHOL/mathlab` — **#27만 OPEN, #20~#26 DRAFT**(스택 머지 대기) |
-| **로컬 검증** | ✅ `verify-p0~p5.ts` + `verify-gen.ts` + ✅ `verify-persist.ts`(생성→LabProblem 영속 글루, 스텁 $0) = **8/8 PASS**(새 머신 2026-06-22 재검증) + `gen-sample.ts` 실Gemini 6/6(품질) |
+| **로컬 검증** | ✅ `verify-p0~p5` + `verify-gen` + `verify-persist`(영속 글루) + `verify-ingest`(세션비전 인제스트 경로) = **9/9 PASS**(새 머신 2026-06-22) + `gen-sample.ts` 실Gemini 6/6(품질) |
 | DB(공유 Supabase) | `lab_submission_items`(P1)+`lab_submissions.diagnosedAt`(P2). 개념그래프: `lab_concepts` 244행·`lab_concept_edges` 177행. ✅ **토대 3단계 스키마 적용됨**: `lab_problems`에 `body`/`choices`/`explanation` **nullable 컬럼 추가**(db push, 비파괴 — 행수 30 불변·기존행 전부 null). 생성→영속 글루(`src/lib/lab/persist.ts`) 완료. ⚠️ **문제풀 빈약**(lab_problems 30 = 합성 시드만) → 실 개념×난이도×유형 **백필 필요**(합성 Gemini 또는 세션비전 인제스트) |
 
 > 🖥️ **다른 컴퓨터에서 시작**: `git clone https://github.com/BIGSHOL/mathlab.git` → `git checkout lab/content-foundation`(스택 팁) → **§6 새 컴퓨터 셋업** 따라 `.env.local` 구성. worktree는 *이 머신 사정*이라 새 머신은 그냥 브랜치 체크아웃이면 됨(worktree 불필요).
@@ -97,7 +97,8 @@ src/lib/lab/
                               #   repairJsonString(LLM JSON 복구: LaTeX 백슬래시·줄바꿈·잘림 salvage)
   problem-gen.ts              # ★토대2: 문제생성 정규화·검증·DI(주입형, 테스트 $0)
                               #   generateProblem/normalizeGenerated/generateProblemsForConcept + set/resetProblemGenerator
-  persist.ts                  # ★토대3: 생성 문제 → LabProblem 영속 글루 (conceptId×difficulty×type 배치, bodyRef='inline' 센티넬)
+  persist.ts                  # ★토대3: 생성/인제스트 문제 → LabProblem 영속 글루 (conceptId×difficulty×type 배치, bodyRef='inline', opts.isGenerated로 합성/인제스트 구분)
+  ingest.ts                   # ★토대3-B: 세션 비전 인제스트 문서(IngestDoc) 검증·매핑 (normalizeGenerated 재사용 + source 교재 오버라이드)
   pipeline/
     index.ts                  # p0Pipeline 조립 (diagnoser=autoDiagnoser, prescriber=smartPrescriber, grader=autoGrader, reporter=autoReporter)
     manual-diagnoser.ts  auto-diagnoser.ts(P2 BKT)
@@ -113,6 +114,9 @@ scripts/lab/
   verify-p0~p4.ts  verify-p5.ts(★서술형 스텁)
   verify-gen.ts               # ★토대2: 문제생성 정규화 검증 7/7 PASS (스텁, $0)
   verify-persist.ts           # ★토대3: 생성→LabProblem 영속 글루 검증 (스텁 $0, 테스트행 생성 후 자동 정리)
+  verify-ingest.ts            # ★토대3-B: 세션 비전 인제스트 경로 검증 (픽스처 유효3+무효1, $0, 자동 정리)
+  ingest-problems.ts          # ★토대3-B: 인제스트 CLI — 세션 작성 JSON → 검증 → conceptId/중복 가드 → 영속(isGenerated=false)
+docs/lab/INGEST.md            # ★토대3-B: 세션 비전 인제스트 데이터계약 + 작성규칙(변환기 EXAM_OCR_PROMPT 이식) + SOP
   gen-sample.ts               # ★토대2: 실 Gemini 품질 샘플 (DB 미저장, opt-in 소액비용)
   smoke-p5-real-ai.ts         # ★실 Gemini 채점 1콜 (opt-in, LAB_P5_REAL_AI=1)
 docs/lab/HANDOFF.md
@@ -250,7 +254,10 @@ npx prisma db push                         # --accept-data-loss 절대 쓰지 �
   1. ✅ `LabProblem`에 **`body String?` / `choices Json?` / `explanation String?` 컬럼 추가** (db push, migrate diff = ADD COLUMN ×3만·비파괴 확인, 행수 30 불변). db:backup 선행.
   2. ✅ **생성→영속 글루** `src/lib/lab/persist.ts::persistGeneratedProblems(conceptId, problems[])` — `isGenerated=true`·`bodyRef='inline'`·body/choices/explanation/answer 채움. `verify-persist.ts` PASS(스텁 $0).
 - **🎯 다음 = 토대 3단계 마무리 (백필 + repoint + UI)** — 스키마·글루는 준비됨. 남은 것:
-  1. **문제풀 백필** — `generateProblemsForConcept` → `persistGeneratedProblems` 루프(개념×난이도×유형). 트랙 2갈래: **(A) 합성**(Lab Gemini Flash, 저비용 반복과금, 난이도 4~5·도형 제약) / **(B) 세션비전 인제스트**(G:\ 교재 PDF → 변환기 `_CROP_PROMPT`/`EXAM_OCR_PROMPT` 차용 + 세션 비전으로 LabProblem JSON 직접 작성 = **API ₩0**, 실문제·고품질). ⚠️ 백필 시 **난이도 매핑표 1곳 고정**(mathg-gen 4단계↔Lab 5단계) + **프롬프트에 curriculum 단원목록 주입**(conceptId 매칭, 단원매핑 절대규칙).
+  1. **문제풀 백필** — `persistGeneratedProblems` 루프(개념×난이도×유형). 트랙 2갈래:
+     - **(A) 합성**(Lab Gemini Flash, 저비용 반복과금, 난이도 4~5·도형 제약) — `generateProblemsForConcept` → persist. 아직 백필 스크립트 미작성.
+     - **✅(B) 세션비전 인제스트 — 파이프라인 구축 완료(2026-06-22)**: `src/lib/lab/ingest.ts` + `scripts/lab/ingest-problems.ts` + `docs/lab/INGEST.md`(데이터계약·작성규칙·SOP, 변환기 `EXAM_OCR_PROMPT` 이식). `verify-ingest` PASS. **남은 건 실 교재 파일럿**: G:\ 교재 PDF를 `Read`(pages)로 판독 → INGEST.md §4 규칙대로 `IngestDoc` JSON 작성 → `ingest-problems.ts`로 영속(API ₩0). 실문제·고품질·도형 포함.
+     ⚠️ 백필 시 **난이도 매핑표 1곳 고정**(mathg-gen 4단계↔Lab 5단계, 합성 트랙) + 인제스트는 conceptId 직접 지정(FK 검증, 단원매핑 절대규칙).
   2. **데모 학생 repoint** — 합성 lab-c1..c5 → 실 lab-cur-* (백필된 개념).
   3. **풀이 UI** `worksheet/[id]`가 **실 body·choices 렌더**(현 answerHint 데모 분기 제거) → 실 개념+실 문제로 루프 구동.
   - 📋 소스 재사용 결정(2026-06-22 5갈래 조사): 단원=`/d/mathg-gen/src/constants/curriculum.ts`(use-as-is) · 합성 프롬프트/스키마/품질가드=mathg-gen `prompts.ts`·`schema.ts`·`mathDefense.ts`·`sanitize.ts`(port) · 비전인제스트=`/d/시험지 한글화` 프롬프트·SOP 차용(코드 이식 X, Python↔TS+HWP격차). mathgen-ai-2022개정=mathg-gen의 부분집합(reference-only).

@@ -12,17 +12,26 @@ export interface PersistResult {
   problemIds: string[];
 }
 
+export interface PersistOptions {
+  /** AI 합성=true(기본), 비전/OCR 인제스트(실 교재 문제)=false. LabProblem.isGenerated에 반영. */
+  isGenerated?: boolean;
+}
+
 /**
- * 생성된 문제들을 특정 개념(conceptId)에 영속한다.
+ * 생성/인제스트 문제들을 특정 개념(conceptId)에 영속한다.
  * - LabGenType ≡ LabProblemType (MULTIPLE_CHOICE|SHORT_ANSWER|DESCRIPTIVE) — 동형 enum.
  * - 인라인 본문이므로 bodyRef는 'inline' 센티넬(스토리지 참조 부재 표시). body가 실 본문.
  * - choices는 객관식만(그 외 null → 컬럼 미설정). answer는 {choice|value|rubric} Json.
+ * - source는 g.source(합성='ai-gemini-flash' / 인제스트='교재명·페이지') 그대로 기록.
+ * - isGenerated: 합성=true(기본), 비전 인제스트=false(실 교재 문제) — opts로 구분.
  * 멱등성은 호출측 책임(중복 생성 방지가 필요하면 사전 조회). 여기선 받은 만큼 생성.
  */
 export async function persistGeneratedProblems(
   conceptId: string,
   problems: GeneratedLabProblem[],
+  opts: PersistOptions = {},
 ): Promise<PersistResult> {
+  const isGenerated = opts.isGenerated ?? true;
   const problemIds: string[] = [];
   for (const g of problems) {
     const row = await prisma.labProblem.create({
@@ -31,7 +40,7 @@ export async function persistGeneratedProblems(
         type: g.type, // LabGenType ≡ LabProblemType
         difficulty: g.difficulty,
         source: g.source,
-        isGenerated: true,
+        isGenerated,
         bodyRef: 'inline', // 인라인 본문 → 스토리지 키 센티넬
         body: g.body,
         choices: g.choices ? (g.choices as Prisma.InputJsonValue) : undefined,
