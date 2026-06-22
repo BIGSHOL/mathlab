@@ -51,8 +51,8 @@
 **빌드 순서** (쉬운 자동화 ≠ 가치 우선순위에 주의): **P0** 척추+dumb 처방(진도표만)+공급+채점 → **P1** 채점 auto(객관식·단답) → **P2** 진단 auto(누적 채점이 공짜로 켬) → **P3** 처방 smart화 → **P4** 보고 auto → **P5** 서술형 채점 auto. ⚠️ HWP 출제 엔진·84개월 진도표 JSON은 현재 repo에 **없음** → 확보 전까지 소규모 합성 개념 그래프로 루프 검증.
 
 > **📌 Lab 현황 + 다른 컴퓨터 재개 — 단일 진실은 [docs/lab/HANDOFF.md](docs/lab/HANDOFF.md)** (특히 §6 새 컴퓨터 셋업 · §7 다음 갈래 · §9b 콘텐츠 전략).
-> **완료**: P0~P5(5단계 전체 자동화) + ②⑤ 코크핏/제출 UI + 콘텐츠 토대 1·2단계(curriculum.ts→실 개념 239개 DB적용 + AI 문제생성기 Gemini Flash). **PR 스택**: `main`←#20(P0)←#21(P1)←…←#25(P5)←#26(코크핏)←#27(`lab/content-foundation`=콘텐츠토대, **스택 팁**). 전부 `BIGSHOL/mathlab`.
-> **다음**: 콘텐츠 토대 3단계 = `LabProblem` 본문/보기/해설 컬럼(additive) + 생성문제 영속 + 데모 실학기 repoint → 실 개념+문제로 루프 구동.
+> **완료**: P0~P5(5단계 전체 자동화) + ②⑤ 코크핏/제출 UI + 콘텐츠 토대 1·2·3·4단계 + 실 데이터 루프 + **중1 전범위 인제스트 121문항**. 토대3=실 본문/보기/해설/도형 영속 + 데모 학생 중1 실개념 repoint + 풀이 UI 실본문·도형 렌더 + 문제 검수 브라우저(`/lab/problems`). 토대4=`LabProblem.diagram` 컬럼 + 공유 `svg-diagrams` 재사용 + Lab 삼각형 렌더러(각→호/직각기호). 인제스트=중1-1 49 + 중1-2 42(₩0 세션비전 워크플로). **PR 스택**: `main`←#20(P0)←…←#26(코크핏)←#27(`lab/content-foundation`=콘텐츠토대, **스택 팁**). 전부 `BIGSHOL/mathlab`.
+> **다음**: 백필 확대(단원 6 평면도형 각 문제 더 · 다른 교재/학년) 또는 ⑥ 검수큐 · P*b 고도화. 도형 의존 각 문제(평행선·복합)는 Lab 도형타입 확장 시 인제스트 가능.
 > ⚠️ Lab 문제생성·서술형채점은 **Lab 자체 Gemini 클라이언트(`src/lib/lab/ai-client.ts`, 복제)** 사용 — 기출분석 `src/lib/exam-analysis/gemini.ts` **무import**(복제>격리침범). `.env.local`·메모리는 git 미포함이라 HANDOFF가 SoT.
 
 ---
