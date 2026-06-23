@@ -9,6 +9,19 @@ import { SolveForm } from './SolveForm';
 
 export const dynamic = 'force-dynamic';
 
+/** 단답/서술 정답(모범답안) 텍스트 추출 — LabProblem.answer가 문자열/객체 어느 쪽이든 안전(CLAUDE.md #11). */
+function answerText(raw: unknown): string {
+  if (raw == null) return '';
+  if (typeof raw === 'string') return raw;
+  if (typeof raw === 'object') {
+    const o = raw as Record<string, unknown>;
+    for (const k of ['value', 'modelAnswer', 'text', 'answer', 'rubric']) {
+      if (typeof o[k] === 'string') return o[k] as string;
+    }
+  }
+  return '';
+}
+
 export default async function WorksheetSolve({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const ws = await prisma.labWorksheet.findUnique({
@@ -40,6 +53,11 @@ export default async function WorksheetSolve({ params }: { params: Promise<{ id:
       choices: Array.isArray(p.choices) ? (p.choices as string[]) : null,
       diagram: p.diagram ?? null,
       answerHint,
+      // 🔧 [테스트] 자동 응답 도구용 정답 — /lab은 SUPER_ADMIN 내부 콘솔이라 노출 무방(answerHint와 동일 원칙).
+      //    per-문항 화면엔 렌더하지 않음(풀이뷰 깨끗 유지). 자동 채우기 JS만 사용.
+      correctChoice:
+        p.type === 'MULTIPLE_CHOICE' && a && typeof a.choice === 'number' ? a.choice : null,
+      correctValue: p.type !== 'MULTIPLE_CHOICE' ? answerText(p.answer) || null : null,
     };
   });
   const allSynthetic = problems.every((p) => !p.body);
