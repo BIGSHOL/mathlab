@@ -267,6 +267,7 @@ export function SolveForm({ worksheetId, problems }: { worksheetId: string; prob
               type="text"
               aria-label={`문항 ${p.order + 1} 단답 입력`}
               placeholder="답 입력"
+              value={(ans[p.problemId] as { value?: string } | undefined)?.value ?? ''}
               onChange={(e) => setAns((a) => ({ ...a, [p.problemId]: { value: e.target.value } }))}
               className="w-48 rounded-sm border border-slate-200 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
             />
@@ -275,6 +276,7 @@ export function SolveForm({ worksheetId, problems }: { worksheetId: string; prob
               aria-label={`문항 ${p.order + 1} 서술 답안`}
               placeholder="서술 답안 입력"
               rows={3}
+              value={(ans[p.problemId] as { value?: string } | undefined)?.value ?? ''}
               onChange={(e) => setAns((a) => ({ ...a, [p.problemId]: { value: e.target.value } }))}
               className="w-full rounded-sm border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
             />
