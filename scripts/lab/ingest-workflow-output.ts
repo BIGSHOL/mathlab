@@ -78,19 +78,34 @@ function toInput(p: Record<string, unknown>): IngestProblemInput {
   if (typeof p.diagram === 'string' && p.diagram.trim()) {
     try { out.diagram = JSON.parse(p.diagram); } catch { /* 잘못된 도형 JSON → 생략(본문만) */ }
   }
+  // 🚧 토대3-C: 문항별 provenance(에이전트 출력에 있으면)
+  if (typeof p.problemNumber === 'string' && p.problemNumber.trim()) out.problemNumber = p.problemNumber.trim();
+  else if (typeof p.problemNumber === 'number') out.problemNumber = String(p.problemNumber);
+  if (typeof p.sourcePage === 'number' && Number.isInteger(p.sourcePage) && p.sourcePage > 0) out.sourcePage = p.sourcePage;
+  else if (typeof p.sourcePage === 'string' && /^\d+$/.test(p.sourcePage.trim())) out.sourcePage = parseInt(p.sourcePage, 10);
+  if (typeof p.unitLabel === 'string' && p.unitLabel.trim()) out.unitLabel = dec(p.unitLabel);
   return out;
 }
 
 async function main() {
   const args = process.argv.slice(2);
   const file = args.find((a) => !a.startsWith('--'));
-  const source = (() => { const i = args.indexOf('--source'); return i >= 0 ? args[i + 1] : null; })();
+  const flag = (name: string) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : null; };
+  const source = flag('--source');
   const dryRun = args.includes('--dry-run');
   const replace = args.includes('--replace');
   if (!file || !source) {
-    console.error('사용: ingest-workflow-output.ts <task.output> --source "교재명 [워크플로]" [--dry-run] [--replace]');
+    console.error('사용: ingest-workflow-output.ts <task.output> --source "교재명 [워크플로]" [--publisher 지학사] [--source-type "소단원 종합문제"] [--author 장경윤] [--grade 중1] [--book "지학사 중학 수학1"] [--dry-run] [--replace]');
     process.exit(2);
   }
+  // 🚧 토대3-C: 배치 공통 구조화 provenance
+  const publisher = flag('--publisher') ?? undefined;
+  const sourceType = flag('--source-type') ?? undefined;
+  const provenanceBase: Record<string, unknown> = {};
+  const author = flag('--author'); if (author) provenanceBase.author = author;
+  const grade = flag('--grade'); if (grade) provenanceBase.grade = grade;
+  const book = flag('--book'); if (book) provenanceBase.bookTitle = book;
+  const sourceFile = flag('--source-file'); if (sourceFile) provenanceBase.sourceFile = sourceFile;
 
   const data = JSON.parse(readFileSync(file, 'utf8'));
   const byConcept = findByConcept(data);
@@ -125,7 +140,7 @@ async function main() {
     const inputs = (byConcept[conceptId] as Record<string, unknown>[]).map(toInput);
     let parsed;
     try {
-      parsed = parseIngestDoc({ source, conceptId, problems: inputs });
+      parsed = parseIngestDoc({ source, conceptId, problems: inputs, publisher, sourceType, provenanceBase: Object.keys(provenanceBase).length ? provenanceBase : undefined });
     } catch (e) {
       console.log(`  [${conceptId}] ❌ 문서 오류: ${e instanceof Error ? e.message : String(e)}`);
       continue;

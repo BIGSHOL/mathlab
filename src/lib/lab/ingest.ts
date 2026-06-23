@@ -18,6 +18,10 @@ export interface IngestProblemInput {
   explanation?: string; // 해설/풀이 (없으면 '')
   // 🚧 토대4: 도형 스펙(도형 문제만). DiagramParam[] 배열(네이티브, PDF추출과 동형) 또는 DiagramSpec 객체.
   diagram?: unknown;
+  // 🚧 토대3-C: 문항별 provenance(있으면). 배치 공통(publisher/sourceType)은 IngestDoc 레벨.
+  problemNumber?: string; // 원본 문항 번호
+  sourcePage?: number; // 원본 페이지(세션이 푸터/헤더에서 판독)
+  unitLabel?: string; // 원본 단원 표기(대>중>소, 예: "Ⅰ.소인수분해 > 01.소수와 합성수")
 }
 
 // 🚧 토대4: 인제스트 diagram 라이트 검증 — 배열(DiagramParam[]) 또는 객체(DiagramSpec). 깊은 검증/미지 타입은 렌더러가 흡수(null 반환).
@@ -40,9 +44,13 @@ function validateDiagram(d: unknown): unknown {
 
 /** 한 단원(개념)에 대한 세션 비전 인제스트 문서. */
 export interface IngestDoc {
-  source: string; // 출처: 교재명·출판사·페이지 (예: "동아(강옥기) 중1 p.42")
+  source: string; // 출처: 교재명·출판사·페이지 (예: "동아(강옥기) 중1 p.42") — 자유텍스트(레거시)
   conceptId: string; // 대상 LabConcept id (세션이 단원→개념 매핑하여 지정)
   problems: IngestProblemInput[];
+  // 🚧 토대3-C: 배치 공통 구조화 provenance (모든 문항에 적용). 문항별(page 등)은 IngestProblemInput.
+  publisher?: string; // 출판사 (지학사/동아/미래엔/천재)
+  sourceType?: string; // 자료 유형/그룹 (소단원 종합문제/대단원평가/단원마무리/형성평가/소단원학습지/소단원평가)
+  provenanceBase?: Record<string, unknown>; // 배치 공통 기타(author/grade/bookTitle/sourceFile)
 }
 
 export interface ParsedIngest {
@@ -89,7 +97,20 @@ export function parseIngestDoc(doc: IngestDoc): ParsedIngest {
       };
       const g = normalizeGenerated(raw, p.type, p.difficulty);
       const diagram = validateDiagram(p.diagram); // 🚧 토대4: 도형 스펙 검증(있으면)
-      problems.push({ ...g, source: doc.source, diagram }); // 교재 출처로 source 교체 + 도형 부착
+      // 🚧 토대3-C: 구조화 provenance 조립(배치 공통 + 문항별). 빈 값은 생략.
+      const provenance: Record<string, unknown> = { ...(doc.provenanceBase ?? {}) };
+      if (nonEmptyStr(p.problemNumber)) provenance.problemNumber = p.problemNumber;
+      if (nonEmptyStr(p.unitLabel)) provenance.unitLabel = p.unitLabel;
+      const sourcePage = Number.isInteger(p.sourcePage) && (p.sourcePage as number) > 0 ? p.sourcePage : undefined;
+      problems.push({
+        ...g,
+        source: doc.source, // 교재 출처로 source 교체(레거시 자유텍스트)
+        diagram,
+        publisher: nonEmptyStr(doc.publisher) ? doc.publisher : undefined,
+        sourceType: nonEmptyStr(doc.sourceType) ? doc.sourceType : undefined,
+        sourcePage,
+        provenance: Object.keys(provenance).length ? provenance : undefined,
+      });
     } catch (e) {
       errors.push({ index: i, error: e instanceof Error ? e.message : String(e) });
     }

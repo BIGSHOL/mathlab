@@ -38,6 +38,24 @@ function answerText(type: string, answer: unknown): string {
   return typeof a.value === 'string' ? a.value : '';
 }
 
+/** 🚧 토대3-C: provenance 전체를 hover 툴팁 문자열로(출판사·저자·학년·유형·페이지·원본번호). */
+function provenanceTitle(p: {
+  publisher?: string | null; sourceType?: string | null; sourcePage?: number | null;
+  provenance?: unknown; source?: string | null;
+}): string {
+  if (!p.publisher) return p.source ?? '';
+  const prov = p.provenance && typeof p.provenance === 'object' ? (p.provenance as Record<string, unknown>) : {};
+  const parts = [
+    p.publisher,
+    typeof prov.author === 'string' ? `(${prov.author})` : '',
+    typeof prov.grade === 'string' ? prov.grade : '',
+    p.sourceType,
+    p.sourcePage != null ? `p.${p.sourcePage}` : '',
+    typeof prov.problemNumber === 'string' ? `#${prov.problemNumber}` : '',
+  ].filter(Boolean);
+  return parts.join(' · ');
+}
+
 export default async function LabProblemsBrowser({
   searchParams,
 }: {
@@ -139,11 +157,20 @@ export default async function LabProblemsBrowser({
                         <span className="font-medium px-2 py-0.5 rounded-sm border border-slate-200 text-slate-600 bg-slate-50">
                           {TYPE_LABEL[p.type] ?? p.type}
                         </span>
-                        {p.source && (
-                          <span className="ml-auto text-slate-400 truncate max-w-[50%]" title={p.source}>
-                            {p.source}
-                          </span>
-                        )}
+                        {/* 🚧 토대3-C: 구조화 provenance (출판사·자료유형·페이지). 미백필이면 source 폴백. */}
+                        <div className="ml-auto flex items-center gap-1.5 max-w-[58%]" title={provenanceTitle(p)}>
+                          {p.publisher ? (
+                            <>
+                              <span className="font-medium px-1.5 py-0.5 rounded-sm border border-indigo-200 text-indigo-600 bg-indigo-50 shrink-0">
+                                {p.publisher}
+                              </span>
+                              {p.sourceType && <span className="text-slate-500 truncate">{p.sourceType}</span>}
+                              {p.sourcePage != null && <span className="text-slate-400 shrink-0">p.{p.sourcePage}</span>}
+                            </>
+                          ) : (
+                            p.source && <span className="text-slate-400 truncate" title={p.source}>{p.source}</span>
+                          )}
+                        </div>
                       </div>
 
                       {/* 본문 */}

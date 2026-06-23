@@ -40,6 +40,11 @@ export async function persistGeneratedProblems(
         type: g.type, // LabGenType ≡ LabProblemType
         difficulty: g.difficulty,
         source: g.source,
+        // 🚧 토대3-C: 구조화 provenance (있으면 — 인제스트). 합성은 미설정(null).
+        publisher: g.publisher ?? null,
+        sourceType: g.sourceType ?? null,
+        sourcePage: g.sourcePage ?? null,
+        provenance: g.provenance ? (g.provenance as Prisma.InputJsonValue) : undefined,
         isGenerated,
         bodyRef: 'inline', // 인라인 본문 → 스토리지 키 센티넬
         body: g.body,

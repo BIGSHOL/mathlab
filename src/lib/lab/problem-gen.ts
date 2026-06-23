@@ -14,9 +14,14 @@ export interface GeneratedLabProblem {
   choices: string[] | null; // 객관식만
   answer: Record<string, unknown>; // {choice:N} | {value:'s'} | {rubric:'...'}
   explanation: string;
-  source: string; // 생성 모델/출처 태그
+  source: string; // 생성 모델/출처 태그 (자유텍스트, 레거시)
   // 🚧 토대4: 도형 스펙(Json 다형 — DiagramParam[] 배열 or DiagramSpec 객체). 공유 svg-diagrams로 렌더. 비도형은 미설정
   diagram?: unknown;
+  // 🚧 토대3-C: 구조화 provenance (교재 추적). 인제스트에서 채움, 합성은 미설정.
+  publisher?: string; // 출판사
+  sourceType?: string; // 자료 유형/그룹
+  sourcePage?: number; // 원본 페이지
+  provenance?: Record<string, unknown>; // 나머지 구조화(author/grade/book/대중소단원/problemNumber/sourceFile)
 }
 
 const SOURCE_TAG = 'ai-gemini-flash';
