@@ -27,9 +27,16 @@ mathlab repo 안에, **라이브 기출분석 제품과 완전 격리된 채 은
 - **복구법**: 각 워크플로 run의 `journal.jsonl`(`<session>/subagents/workflows/<runId>/journal.jsonl`)에 완료 에이전트의 `{type:'result', result:{problems:[...]}}`가 **디스크에 영속**. 여러 run의 저널을 **병합·중복제거**(키=conceptId+problemNumber+body[:60], 같은 키는 verify가 author 뒤에 오므로 **last 우선**=교정본) → `{byConcept}` JSON → `ingest-workflow-output.ts`로 적재. 228+54 → 중복제거 135 → 검증통과 126(실패 9=rubric 누락 서술형, 정상 제외).
 - **answerIndex 0-based/off-by-one 자동 교정**: 적재 도구가 `answer` 텍스트와 보기 매칭으로 1-based 강제 보정(에이전트가 answerIndex=0 등 오류 줘도 복구).
 
-**⏳ 다음 = 동아 소단원학습지 (준비 완료, 미발사)**:
+**🔄 동아 소단원학습지 (2026-06-23 발사 · 진행 중)**:
 - **자산**: `d:/tmp/lab-donga-sod/` PNG **321개**(0 누락 검증), 매니페스트 `d:/tmp/donga_manifest.json` = **42개 소단원** `[{uid, probPages[], solPages[]}]`. 천재(2-up 단일페이지)와 달리 **소단원당 여러 문제페이지(최대 10p, 5_5) + 별도 정답·해설 페이지** 구조 → 워크플로는 **소단원당 1에이전트**(probPages+solPages 함께 Read, 천재 CATALOG 재사용)로 설계 권장(234페이지 per-page는 author+verify+재시도로 1000 에이전트 상한 근접 위험).
-- **발사 보류 이유**: API 전역 과부하 + 셧다운 반복. 안정화 후 발사하되, 크래시해도 위 저널 하베스트로 무손실 복구 가능.
+- **발사 상태**: 워크플로 발사됨(스크립트 `d:/tmp/lab-ingest-donga-sod.js`, run `wf_866c2a74-3f7`). 문제페이지 4장묶음+소단원 전체 해설페이지 → ~60태스크, CHUNK=2. 진행 중(초반 unit 1_1만 39문항 — 소단원당 다수). **크래시/셧다운 시 저널 하베스트로 무손실 복구**(저널 `<session>/subagents/workflows/wf_866c2a74-3f7/journal.jsonl`, 천재와 동일 절차). 완료 시 `ingest-workflow-output.ts --publisher 동아 --source-type 소단원학습지 --author 강옥기 --grade 중1 --book "동아 중학 수학1(강옥기)"`로 적재.
+
+**🔖 보류 아이디어 — 시험지 한글화 corpus = 고교 확장 시드 (2026-06-23 검토, 결정 보류)**:
+- **소스**: `BIGSHOL/testchange` repo(= 로컬 `D:\시험지 한글화`, 같은 프로젝트). `corpus/<[학교][학년][과목][시험]>/ocr/pN_merged.json` = `{header, questions:[{number, score, contents:[{type:text|equation, value}], choices, sub_questions}]}`. **실 학교 기출 194개**(중학 58[중1 13]·고교 136 / 검수완료 64·원본 130). 수식이 LaTeX꼴(`\frac`·`\circ`·`\begin{cases}`) → KaTeX 변환 용이. 이미 ₩0 OCR·구조화됨.
+- **🔴 직접 적재 불가 이유**: **문제 JSON에 정답 없음**(corpus 전체 answer 필드 0건 — 정답키 페이지는 OCR "대조용"으로만 썼고 per-문제 정답 미저장). Lab은 자동채점 정답지 필수. + 시험문제라 복합·도형/그래프 의존 多(보수적 스킵 대상) + 개념 태깅 필요(학교/시험 단위 → `lab-cur-*` 재매핑).
+- **가치 = 고교**: Lab은 현재 고교 문제 **0개**인데 corpus는 고1~3 확통·미적분·수1/2·공수1/2 **136개(검수 64)**. 중1은 교과서 소단원 인제스트(천재·동아)가 더 우수(자족+진짜 정답)라 corpus 불필요.
+- **정답 확보안(미결정)**: "AI가 내부에서 정답 생성?" 검토 결론 — **단독 생성은 위험**(자동채점 ground truth 오염 + 난이도와 신뢰도 역상관: 킬러일수록 AI 오답↑, 근데 corpus 가치가 바로 고교). **권고 = 하이브리드**: ① 정답키 페이지 OCR로 진짜 정답 추출(ground truth) ② AI는 *없는 풀이/해설* 생성 ③ 교차검증(불일치→`needsReview` 큐) + 객관식 self-consistency(N회 풀이 다수결). **착수 전 파일럿**(시험지 1개로 AI-solve vs 정답키 일치율 난이도별 실측 → 자동채택/검수큐 임계 결정).
+- **d:/tmp 관련 자산**: `lab-jihak`(305p, 적재완료) · `lab-yn111`(103p, 유형의나무 — 정답키 없어 보류) · `lab-ingest3`(364p, 미처리) · `.testkit`(크롭/렌더 스크래치, 코퍼스 아님).
 
 ---
 
