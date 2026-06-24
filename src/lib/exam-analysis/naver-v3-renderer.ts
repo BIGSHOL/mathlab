@@ -18,6 +18,7 @@
 import type { CommentaryResult } from './agents/commentary-agent';
 import type { AnalyzedQuestion } from './types';
 import { sumPoints, formatPoints } from './points';
+import { normalizeFeatureCallout } from './feature-callout';
 
 export interface NaverV3ChartUrls {
   /** CDN/공개 URL (네이버는 외부 이미지 호스팅 필요) */
@@ -158,8 +159,10 @@ export function buildNaverV3Html(args: {
   parts.push(renderHeader(commentary, meta));
   parts.push(renderKpiRow(questions, meta));
 
-  if (commentary.feature_callout) {
-    parts.push(renderFeatureCallout(commentary.feature_callout));
+  // 거대 숫자 박스 — 100%/0% 극단 비율은 절대수로 치환(신뢰성), 불가 시 숨김 (V3CommentaryView와 동일 로직)
+  const normalizedCallout = commentary.feature_callout ? normalizeFeatureCallout(commentary.feature_callout) : null;
+  if (normalizedCallout) {
+    parts.push(renderFeatureCallout(normalizedCallout));
   }
 
   // 인포그래픽 2종 (난이도 stacked + 형식 분포) — 시안 검증
