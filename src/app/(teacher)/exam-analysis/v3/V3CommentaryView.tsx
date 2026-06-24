@@ -24,6 +24,7 @@ import { markdownToHighlighted, normDiff, koDifficultyText } from './helpers';
 // React 뷰의 텍스트 렌더 방어이며 마크업 구조 불변 — naver-v3-renderer(정적 HTML)·시안 빌더 3-way sync 대상 아님.
 import { renderInlineMath } from '@/lib/exam-analysis/rendering';
 import { FeatureCallout } from './FeatureCallout';
+import { normalizeFeatureCallout } from '@/lib/exam-analysis/feature-callout';
 import { QASection } from './QASection';
 import { DifficultyStackedBar } from './DifficultyStackedBar';
 import { FormatBreakdown } from './FormatBreakdown';
@@ -175,8 +176,11 @@ export function V3CommentaryView({ commentary, questions, meta, charts }: V3Comm
         </div>
       </div>
 
-      {/* ③ 피처 박스 (거대 숫자) */}
-      {c.feature_callout && <FeatureCallout callout={c.feature_callout} />}
+      {/* ③ 피처 박스 (거대 숫자) — 100%/0% 극단 비율은 절대수로 치환(신뢰성), 불가 시 숨김 */}
+      {(() => {
+        const fc = c.feature_callout ? normalizeFeatureCallout(c.feature_callout) : null;
+        return fc ? <FeatureCallout callout={fc} /> : null;
+      })()}
 
       {/* ④ 섹션 01: 인포그래픽 3종 */}
       <section className="v3-section">
