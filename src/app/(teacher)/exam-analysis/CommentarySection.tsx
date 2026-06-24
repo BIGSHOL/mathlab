@@ -223,12 +223,22 @@ export function CommentarySection({
   // 재생성/비교옵션 잠금 = 구버전 또는 Pro+ 플랜 미보유 (기존 총평 열람은 항상 허용)
   const lockRegen = isStale || commentaryLocked;
 
+  // 펼칠 때(구버전 총평) 1회 안내 팝업 — "재분석 안 해도 확인·복사 가능" 명시.
+  const staleToastShownRef = useState({ shown: false })[0];
+  const handleToggleExpand = (next: boolean) => {
+    setIsExpanded(next);
+    if (next && isStale && !staleToastShownRef.shown) {
+      staleToastShownRef.shown = true;
+      toast.info('이전 버전으로 분석된 총평입니다. 재분석 없이 내용 확인과 복사가 가능합니다.');
+    }
+  };
+
   // 네이버 이미지 복사 버튼 — V3 데이터 있을 때만. 접/펼침 양쪽 헤더에 동일 렌더.
   //   클릭 시 접혀 있으면 자동으로 펼친 뒤(.v3 마운트) 부모 캡처 콜백 실행 → 캡처는 .v3를 폴링.
   const copyImagesBtn = onCopyImages && useV3 ? (
     <Button
       size="sm"
-      onClick={() => { if (!isExpanded) setIsExpanded(true); onCopyImages(); }}
+      onClick={() => { if (!isExpanded) handleToggleExpand(true); onCopyImages(); }}
       disabled={copyingImages}
       title="총평을 섹션 이미지로 캡처해 블로그용 총평지로 복사 (네이버 블로그 붙여넣기용 · 접혀 있으면 자동으로 펼칩니다)"
       className="h-7 px-2 text-xs bg-[#BF1722] hover:bg-[#9A1219] text-white disabled:opacity-50 disabled:cursor-not-allowed"
@@ -237,27 +247,25 @@ export function CommentarySection({
       {copyingImages ? '복사 중...' : '블로그용 총평지'}
     </Button>
   ) : null;
+  // 구버전 안내 — 차단형(rose 대형 배너)에서 슬림 안내(amber 한 줄)로 축소.
+  //   기존 총평은 그대로 확인·복사 가능하고, 재분석은 선택지로만 제시(2026-06-24 사용자 요청).
   const staleBanner = isStale ? (
-    <div className="bg-rose-50 border border-rose-200 rounded-sm px-3 py-2.5 flex items-start gap-2.5">
-      <span className="text-rose-500 text-sm mt-0.5 shrink-0">&#9888;</span>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold text-rose-800">
-          이전 버전(<b>{staleVersion}</b>)으로 분석된 시험지입니다
-        </p>
-        <p className="text-[11px] text-rose-600 mt-1 leading-relaxed">
-          구버전 분석 데이터로 총평을 재생성하면 최신 난이도·단원 기준과 어긋납니다. <strong>재분석</strong>으로 최신 분석한 뒤 총평을 생성하세요.
-        </p>
-        {onReanalyze && (
-          <Button
-            size="sm"
-            onClick={onReanalyze}
-            disabled={reanalyzing}
-            className="mt-2 bg-rose-600 hover:bg-rose-700 text-white disabled:bg-slate-300"
-          >
-            {reanalyzing ? '재분석 중...' : '최신 버전으로 재분석'}
-          </Button>
-        )}
-      </div>
+    <div className="bg-amber-50 border border-amber-200 rounded-sm px-3 py-2 flex items-center gap-2 flex-wrap">
+      <span className="text-amber-500 text-sm shrink-0">&#9888;</span>
+      <p className="text-[11px] text-amber-800 flex-1 min-w-0 leading-relaxed">
+        이전 버전(<b>{staleVersion}</b>)으로 분석된 총평입니다 — <strong>확인·복사는 그대로 가능</strong>합니다. 최신 난이도·단원 기준으로 갱신하려면 재분석하세요.
+      </p>
+      {onReanalyze && (
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={onReanalyze}
+          disabled={reanalyzing}
+          className="text-[11px] text-amber-700 hover:text-amber-900 disabled:opacity-40 shrink-0 h-6 px-2"
+        >
+          {reanalyzing ? '재분석 중...' : '최신 버전으로 재분석'}
+        </Button>
+      )}
     </div>
   ) : null;
 
@@ -350,7 +358,7 @@ export function CommentarySection({
               </div>
             )}
             <button
-              onClick={() => setIsExpanded(false)}
+              onClick={() => handleToggleExpand(false)}
               className="p-1 text-slate-400 hover:text-slate-600 transition-colors"
               aria-label="접기"
             >
@@ -511,7 +519,7 @@ export function CommentarySection({
             </div>
           )}
           <button
-            onClick={() => setIsExpanded(!isExpanded)}
+            onClick={() => handleToggleExpand(!isExpanded)}
             className="p-1 text-slate-400 hover:text-slate-600 transition-colors"
           >
             <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">

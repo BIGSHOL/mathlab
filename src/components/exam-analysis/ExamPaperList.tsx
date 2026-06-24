@@ -116,17 +116,9 @@ function getDetailedStatus(
   if (item.status === 'FAILED') return { label: '실패', color: 'bg-red-50 text-red-600 border-red-200' };
   if (item.status === 'ANALYZING') return { label: '분석중', color: 'bg-amber-50 text-amber-600 border-amber-200 animate-pulse' };
   if (item.status === 'PENDING') return { label: '업로드', color: 'bg-slate-50 text-slate-500 border-slate-200' };
-  // COMPLETED — 구버전이면 진행 단계 무시하고 "구버전" 우선 표시
-  const modelVersion = item.analyses[0]?.modelVersion;
-  if (isStalePromptVersion(modelVersion)) {
-    const v = extractPromptVersion(modelVersion);
-    return {
-      label: `구버전${v ? ` ${v}` : ''}`,
-      color: 'bg-amber-50 text-amber-700 border-amber-300',
-      title: `구버전 프롬프트(${v || '?'})로 분석됨. 현재 ${PROMPT_VERSION} — 우측 재분석 버튼으로 최신 버전 + V3 총평으로 갱신하세요.`,
-    };
-  }
-  // 최신 버전 — extensions로 세분화
+  // COMPLETED — 실제 진행 단계(분석완료/총평완료/글작성완료)를 항상 표시.
+  //   구버전이어도 진행 상태를 가리지 않는다(기존 총평 확인·복사 가능하므로). 버전 불일치는
+  //   아래 렌더에서 별도 "구버전" 칩으로 병기 (사용자 요청 2026-06-24 — 상태 배지 복원).
   const exts = item.analyses[0]?.extensions || [];
   const agentTypes = exts.map(e => e.agentType);
   if (agentTypes.includes('blog-article')) return { label: '글작성 완료', color: 'bg-indigo-100 text-indigo-700 border-indigo-300' };
@@ -246,7 +238,19 @@ export function ExamPaperList({
                         </span>
                       );
                     })()}
-                    {/* (구버전 배지는 상태 배지로 통합됨 — 위 getDetailedStatus가 구버전 시 라벨 대체) */}
+                    {/* 구버전 칩 — 상태 배지(분석완료/총평완료)는 유지하고 버전 불일치만 별도 병기.
+                        기존 총평은 확인·복사 가능하므로 상태를 가리지 않는다(2026-06-24). */}
+                    {item.status === 'COMPLETED' && isStalePromptVersion(item.analyses[0]?.modelVersion) && (() => {
+                      const v = extractPromptVersion(item.analyses[0]?.modelVersion);
+                      return (
+                        <span
+                          className="inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-sm border bg-amber-50 text-amber-700 border-amber-300"
+                          title={`구버전 프롬프트(${v || '?'})로 분석됨. 현재 ${PROMPT_VERSION} — 기존 총평 확인·복사는 가능하며, 재분석하면 최신 기준 + V3 총평으로 갱신됩니다.`}
+                        >
+                          {`구버전${v ? ` ${v}` : ''}`}
+                        </span>
+                      );
+                    })()}
                     {getExamLabels(item).map(label => (
                       <span key={label} className="inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-sm border bg-teal-50 text-teal-600 border-teal-200">
                         {label}
