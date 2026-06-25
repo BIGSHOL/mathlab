@@ -324,5 +324,38 @@ export function renderLabTriangle(params: TriangleParams): string {
     }
   }
 
+  // 체비안(cevians) — 한 꼭짓점에서 대변으로 그은 선 1개(median/altitude/bisector) + 교점 라벨(예: D).
+  //   auxiliaryLines(3개 전부)와 달리 특정 1개만. altitude는 교점에 직각기호. (Lab 전용 확장 필드)
+  const cevians = (params as { cevians?: { from: number; kind?: string; footLabel?: string }[] }).cevians;
+  if (cevians) {
+    for (const cv of cevians) {
+      const i = cv.from;
+      if (i == null || i < 0 || i > 2) continue;
+      const v = P(i);
+      const p1 = P((i + 1) % 3);
+      const p2 = P((i + 2) % 3);
+      const kind = cv.kind || 'median';
+      let t: Pt;
+      if (kind === 'altitude') t = footOfPerpendicular(v, p1, p2);
+      else if (kind === 'bisector') {
+        const d1 = dist(v, p1);
+        const d2 = dist(v, p2);
+        const r = d2 / (d1 + d2 || 1);
+        t = { x: p1.x + r * (p2.x - p1.x), y: p1.y + r * (p2.y - p1.y) };
+      } else t = midpoint(p1, p2);
+      parts.push(
+        `<line x1="${v.x.toFixed(1)}" y1="${v.y.toFixed(1)}" x2="${t.x.toFixed(1)}" y2="${t.y.toFixed(1)}" stroke="${stroke}" stroke-width="1.5"/>`,
+      );
+      if (kind === 'altitude') parts.push(renderRightAngleMark(t.x, t.y, v.x, v.y, p1.x, p1.y, 9));
+      if (cv.footLabel) {
+        // 교점 라벨은 삼각형 안쪽(중심 방향)으로 — 변 길이 라벨(바깥)과 겹치지 않게.
+        const dx = cx - t.x;
+        const dy = cy - t.y;
+        const d = Math.hypot(dx, dy) || 1;
+        parts.push(katexLabel(t.x + (dx / d) * 14, t.y + (dy / d) * 14, cv.footLabel, { fontSize: 12 }));
+      }
+    }
+  }
+
   return svgWrap(parts.join('\n    '), W, H);
 }
