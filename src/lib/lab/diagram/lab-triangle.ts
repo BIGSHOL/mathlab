@@ -98,6 +98,10 @@ export function renderLabTriangle(params: TriangleParams): string {
   // 보조선·특수점 계산용 Pt 변환(SVG 좌표 기준)
   const P = (i: number): Pt => ({ x: pts[i][0], y: pts[i][1] });
 
+  // segmentLabels(구간 라벨)·연결선이 참조할 점 좌표 맵 — 렌더 진행하며 채운다(특수점·체비안 발).
+  const cevianFeet: Record<string, Pt> = {}; // 체비안 footLabel → 좌표 (예: 'D')
+  const centerPts: Record<string, Pt> = {}; // 특수점 라벨 → 좌표 (I/O/G/H)
+
   // 보조선(중선/수선/각이등분선/수직이등분선) — 회색 점선, 도형 배경
   if (params.auxiliaryLines) {
     for (const aux of params.auxiliaryLines) {
@@ -322,20 +326,52 @@ export function renderLabTriangle(params: TriangleParams): string {
     }
   }
 
-  // 특수점(내심 I·외심 O·무게중심 G·수심 H) — 점 + 라벨
-  if (params.specialPoints) {
-    const map: Record<string, { fn: () => Pt; label: string }> = {
-      incenter: { fn: () => computeIncenter(P(0), P(1), P(2)), label: 'I' },
-      circumcenter: { fn: () => computeCircumcenter(P(0), P(1), P(2)), label: 'O' },
-      centroid: { fn: () => computeCentroid(P(0), P(1), P(2)), label: 'G' },
-      orthocenter: { fn: () => computeOrthocenter(P(0), P(1), P(2)), label: 'H' },
-    };
-    for (const sp of params.specialPoints) {
-      const info = map[sp];
+  // 특수점(내심 I·외심 O·무게중심 G·수심 H) — 점 + 라벨 (+ 선택: 중심→꼭짓점 연결선·등길이 빗금)
+  //   문자열 'incenter'(점만) 또는 객체 {type, connect:'vertices', ticks} 둘 다 허용.
+  //   connect:'vertices'면 외심 반지름(OA·OB·OC)·내심 이등분선(IA·IB·IC) 세그먼트를 그린다.
+  //   ticks:true면 세 연결선에 등길이 빗금 1개씩(외심: 세 반지름이 같음을 표시).
+  const spMap: Record<string, { fn: () => Pt; label: string }> = {
+    incenter: { fn: () => computeIncenter(P(0), P(1), P(2)), label: 'I' },
+    circumcenter: { fn: () => computeCircumcenter(P(0), P(1), P(2)), label: 'O' },
+    centroid: { fn: () => computeCentroid(P(0), P(1), P(2)), label: 'G' },
+    orthocenter: { fn: () => computeOrthocenter(P(0), P(1), P(2)), label: 'H' },
+  };
+  const specialPoints = (params as {
+    specialPoints?: (string | { type?: string; connect?: string; ticks?: boolean; label?: string })[];
+  }).specialPoints;
+  if (specialPoints) {
+    for (const spRaw of specialPoints) {
+      const sp = typeof spRaw === 'string' ? { type: spRaw } : spRaw;
+      const info = sp.type ? spMap[sp.type] : undefined;
       if (!info) continue;
       const pt = info.fn();
+      const lbl = sp.label || info.label;
+      centerPts[lbl] = pt; // segmentLabels 참조용
+      if (sp.connect === 'vertices') {
+        for (let i = 0; i < 3; i++) {
+          const v = P(i);
+          parts.push(
+            `<line x1="${pt.x.toFixed(1)}" y1="${pt.y.toFixed(1)}" x2="${v.x.toFixed(1)}" y2="${v.y.toFixed(1)}" stroke="${stroke}" stroke-width="1.2"/>`,
+          );
+          if (sp.ticks) {
+            const mx = (pt.x + v.x) / 2;
+            const my = (pt.y + v.y) / 2;
+            let dx = v.x - pt.x;
+            let dy = v.y - pt.y;
+            const dl = Math.hypot(dx, dy) || 1;
+            dx /= dl;
+            dy /= dl;
+            const nx = -dy;
+            const ny = dx;
+            const h = 5;
+            parts.push(
+              `<line x1="${(mx - nx * h).toFixed(1)}" y1="${(my - ny * h).toFixed(1)}" x2="${(mx + nx * h).toFixed(1)}" y2="${(my + ny * h).toFixed(1)}" stroke="${stroke}" stroke-width="1.8"/>`,
+            );
+          }
+        }
+      }
       parts.push(`<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="2.6" fill="${stroke}"/>`);
-      parts.push(katexLabel(pt.x + 10, pt.y - 9, info.label, { fontSize: 12 }));
+      parts.push(katexLabel(pt.x + 10, pt.y - 9, lbl, { fontSize: 12 }));
     }
   }
 
@@ -358,6 +394,7 @@ export function renderLabTriangle(params: TriangleParams): string {
         const r = d2 / (d1 + d2 || 1);
         t = { x: p1.x + r * (p2.x - p1.x), y: p1.y + r * (p2.y - p1.y) };
       } else t = midpoint(p1, p2);
+      if (cv.footLabel) cevianFeet[cv.footLabel] = t; // segmentLabels 참조용(예: 'D')
       parts.push(
         `<line x1="${v.x.toFixed(1)}" y1="${v.y.toFixed(1)}" x2="${t.x.toFixed(1)}" y2="${t.y.toFixed(1)}" stroke="${stroke}" stroke-width="1.5"/>`,
       );
@@ -369,6 +406,48 @@ export function renderLabTriangle(params: TriangleParams): string {
         const d = Math.hypot(dx, dy) || 1;
         parts.push(katexLabel(t.x + (dx / d) * 14, t.y + (dy / d) * 14, cv.footLabel, { fontSize: 12 }));
       }
+    }
+  }
+
+  // 구간 라벨(segmentLabels) — 점 사이 선분에 라벨(중선 분할 AG·GD, BD, 반지름 등).
+  //   from/to = 점 참조: 숫자(0~2 꼭짓점) | 'G'/'I'/'O'/'H'(특수점) | 체비안 footLabel(예 'D').
+  //   라벨은 선분 중점에서 도형 중심 반대 방향으로 수직 오프셋(선 위 겹침 방지·바깥 배치).
+  //   ⚠️ 위치정보 없는 레거시 형식(`{label}`만)은 from/to 미해석 → 스킵(본문만). 워크플로는 {from,to,label} 형식으로.
+  const segmentLabels = (params as {
+    segmentLabels?: { from?: unknown; to?: unknown; label?: string; offset?: number }[];
+  }).segmentLabels;
+  if (segmentLabels) {
+    const resolveRef = (ref: unknown): Pt | null => {
+      if (typeof ref === 'number' && ref >= 0 && ref <= 2) return P(ref);
+      if (typeof ref === 'string') {
+        if (/^[0-2]$/.test(ref)) return P(parseInt(ref, 10));
+        if (centerPts[ref]) return centerPts[ref];
+        if (cevianFeet[ref]) return cevianFeet[ref];
+      }
+      return null;
+    };
+    for (const sl of segmentLabels) {
+      if (!sl.label) continue;
+      const a = resolveRef(sl.from);
+      const b = resolveRef(sl.to);
+      if (!a || !b) continue; // 참조 해석 실패 → 스킵
+      const mx = (a.x + b.x) / 2;
+      const my = (a.y + b.y) / 2;
+      let dx = b.x - a.x;
+      let dy = b.y - a.y;
+      const dl = Math.hypot(dx, dy) || 1;
+      dx /= dl;
+      dy /= dl;
+      let nx = -dy;
+      let ny = dx;
+      // 도형 중심에서 먼 쪽으로 수직 오프셋(선 위 겹침 방지)
+      if ((mx + nx - cx) ** 2 + (my + ny - cy) ** 2 < (mx - nx - cx) ** 2 + (my - ny - cy) ** 2) {
+        nx = -nx;
+        ny = -ny;
+      }
+      // 텍스트 폭이 높이보다 커 거의 수직인 선분(중선 등)에선 더 밀어야 안 겹침 → 수평성분 비례 가중.
+      const off = sl.offset ?? 13 + Math.abs(nx) * 6;
+      parts.push(katexLabel(mx + nx * off, my + ny * off, sl.label, { fontSize: 11 }));
     }
   }
 
