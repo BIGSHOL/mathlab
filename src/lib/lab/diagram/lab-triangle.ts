@@ -440,14 +440,19 @@ export function renderLabTriangle(params: TriangleParams): string {
       dy /= dl;
       let nx = -dy;
       let ny = dx;
-      // 도형 중심에서 먼 쪽으로 수직 오프셋(선 위 겹침 방지)
+      // 기본: 도형 중심에서 먼 쪽(바깥). 같은 변/선분에 다른 라벨이 겹칠 땐 offset<0으로 반대편(안쪽)에 배치.
       if ((mx + nx - cx) ** 2 + (my + ny - cy) ** 2 < (mx - nx - cx) ** 2 + (my - ny - cy) ** 2) {
         nx = -nx;
         ny = -ny;
       }
+      const signed = typeof sl.offset === 'number' ? sl.offset : null;
+      if (signed !== null && signed < 0) {
+        nx = -nx;
+        ny = -ny;
+      } // 음수 = 반대편(안쪽)
       // 텍스트 폭이 높이보다 커 거의 수직인 선분(중선 등)에선 더 밀어야 안 겹침 → 수평성분 비례 가중.
-      const off = sl.offset ?? 13 + Math.abs(nx) * 6;
-      parts.push(katexLabel(mx + nx * off, my + ny * off, sl.label, { fontSize: 11 }));
+      const mag = signed !== null ? Math.abs(signed) : 13 + Math.abs(nx) * 6;
+      parts.push(katexLabel(mx + nx * mag, my + ny * mag, sl.label, { fontSize: 11 }));
     }
   }
 
