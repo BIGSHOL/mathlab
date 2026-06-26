@@ -7,6 +7,7 @@
 //     - 90°(라벨 "90°" 또는 기하적 직각) → 직각 기호(⌐, renderRightAngleMark)
 //     - 그 외 → 꼭짓점에 호(arc) + 각 값 라벨(호 바깥 이등분선상)
 import { svgWrap, katexLabel, renderRightAngleMark, COLORS } from '@/lib/utils/svg-diagrams/shared/svg-utils';
+import { LAB_INK, LAB_FILL } from '@/lib/lab/diagram/lab-colors';
 import {
   computeIncenter,
   computeCircumcenter,
@@ -91,7 +92,7 @@ export function renderLabTriangle(params: TriangleParams): string {
   const pts = verts.map(toSvg);
   const W = rangeX * scale + PAD * 2;
   const H = rangeY * scale + PAD * 2;
-  const stroke = params.strokeColor || COLORS.primary;
+  const stroke = params.strokeColor || LAB_INK; // 교재 표준 검정 선(브랜드 블루 대신)
   const parts: string[] = [];
 
   // 보조선·특수점 계산용 Pt 변환(SVG 좌표 기준)
@@ -152,7 +153,7 @@ export function renderLabTriangle(params: TriangleParams): string {
   // 면 + 변
   const ptsStr = pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
   parts.push(
-    `<polygon points="${ptsStr}" fill="#EFF6FF" fill-opacity="0.35" stroke="${stroke}" stroke-width="2"/>`,
+    `<polygon points="${ptsStr}" fill="${LAB_FILL}" fill-opacity="0.6" stroke="${stroke}" stroke-width="2"/>`,
   );
 
   // 직각 기호(rightAngleMarks[]) — angles에 "90°"가 없어도 직각 표시.

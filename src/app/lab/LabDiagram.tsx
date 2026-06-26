@@ -8,6 +8,7 @@ import { resolveDiagramSpec } from '@/lib/utils/diagram-resolver';
 import { renderDiagram, type DiagramType } from '@/lib/utils/svg-diagrams';
 import type { TriangleParams } from '@/lib/utils/svg-diagrams/types';
 import { renderLabTriangle } from '@/lib/lab/diagram/lab-triangle';
+import { recolorToInk } from '@/lib/lab/diagram/lab-colors';
 
 export function LabDiagram({ spec, className }: { spec: unknown; className?: string }) {
   const resolved = resolveDiagramSpec(spec);
@@ -20,7 +21,9 @@ export function LabDiagram({ spec, className }: { spec: unknown; className?: str
         ? renderLabTriangle(p.params as unknown as TriangleParams)
         : renderDiagram({ type: p.type as DiagramType, params: p.params }),
     )
-    .filter((s): s is string => !!s);
+    .filter((s): s is string => !!s)
+    // 공유 렌더러의 브랜드 블루 → 교재 검정(삼각형은 이미 검정, no-op). 공유 유틸 무수정.
+    .map(recolorToInk);
   if (svgs.length === 0) return null;
 
   return (
