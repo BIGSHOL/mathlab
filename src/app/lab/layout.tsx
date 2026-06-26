@@ -27,6 +27,14 @@ export default async function LabLayout({
         </span>
         <span className="text-sm font-medium text-slate-700">수학 랩실 자동화</span>
         <span className="text-xs text-slate-400">— 은닉 개발 콘솔</span>
+        <nav className="ml-auto flex items-center gap-1 text-sm">
+          <a href="/lab" className="px-2.5 py-1 rounded-sm text-slate-500 hover:bg-slate-100 hover:text-slate-800">
+            코크핏
+          </a>
+          <a href="/lab/problems" className="px-2.5 py-1 rounded-sm text-slate-500 hover:bg-slate-100 hover:text-slate-800">
+            문제 검수
+          </a>
+        </nav>
       </header>
       <main className="px-6 py-8 max-w-5xl mx-auto">{children}</main>
     </div>

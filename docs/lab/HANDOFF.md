@@ -1,7 +1,8 @@
 # 🚧 수학 랩실 자동화(Lab) — 세션 핸드오프
 
-> **목적**: 세션 간 인수인계. 끊김 없이 이어가기 위한 현재 상태 + 런북.
-> **최종 갱신**: 2026-06-22 (로컬 세션 — **P5 서술형 AI 채점 완료 = 5단계 파이프라인 전체 자동화**) · 이전: P4 보고 · P3 처방 · P2 진단 · P1 채점 · P0 DB
+> **목적**: 세션 간 + **다른 컴퓨터** 간 인수인계. 끊김 없이 이어가기 위한 현재 상태 + 런북.
+> **최종 갱신**: 2026-06-26 (로컬 세션 — **도형 흑백 렌더 + 삼각형 렌더러 보강(segmentLabels·특수점 연결선) → 잔여 29 + 검수탈락 복구 11 적재 → 라이브 DB 검증 총 2,197문항**[중1 1,061·중2 1,136], 도형 120개). 직전: 2026-06-24 중1 소단원학습지 504(총 1,023). ⚠️ 그 후 **중2 전면 인제스트**(동아 318·지학사 258·미래엔 180·YBM 174·천재 90 + 도형 105 = 1,125)가 들어와 1,023→2,186 — 본 갱신에서 실측 반영) · 이전: 2026-06-22 P0~P5 + 코크핏/제출 UI + 콘텐츠 토대 1·2·3·4단계
+> 🖥️ **다른 컴퓨터에서 이어받기**: 아래 **§6 "새 컴퓨터 셋업"** 먼저 보라. ⚠️ `.env.local`·메모리(`~/.claude/...`)는 **git에 없음** → 이 문서가 단일 진실(SoT).
 
 ---
 
@@ -9,8 +10,66 @@
 
 mathlab repo 안에, **라이브 기출분석 제품과 완전 격리된 채 은닉(dark launch) 개발 중**인
 학원 운영 자동화 파이프라인(진단→처방→공급→채점→보고).
-**🎉 P0~P5 완성 — 5단계(진단·처방·공급·채점·보고) 전체 자동화.** 채점 auto(객/단 + 서술형 AI) + 진단 BKT + 처방 smart(해자) + 보고 auto. 모두 실DB/단위 검증(`verify-p0~p5`) PASS.
-다음 갈래(엔진 완성 → 표면/고도화): **② 코크핏 DB연동** · **⑤ 학생답 입력 UI/제출 API** · **P*b 고도화**(처방 영속·AI 리포트·서술형 feedback 등).
+**🎉 P0~P5 완성 — 5단계 전체 자동화** (채점 auto 객/단+서술형AI · 진단 BKT · 처방 smart 해자 · 보고 auto; `verify-p0~p5` PASS) **+ ②⑤ 코크핏/제출 UI 완료**(`/lab` 실DB 대시보드 + 풀이→제출→채점 루프).
+**+ 콘텐츠 토대 1·2·3·4단계 완료**: ① 실 개념그래프 239개 ② AI 문제생성기 ③ **실 본문/보기/해설/도형 영속 + 실 데이터 루프 배선**(데모 학생 → 중1 실 개념 repoint, 풀이 UI 실본문·도형 렌더) ④ **도형 역량**(`LabProblem.diagram` 컬럼 + 공유 `svg-diagrams` 재사용 + Lab 삼각형 렌더러: 각을 호/직각기호로).
+**+ 중1 인제스트 — `lab_problems` 255문항** (합성 30 + 실교재 225), 전부 **₩0 세션비전 워크플로**. **2교재 커버**: 동아(강옥기) 단원마무리/해결해요 + **미래엔(황선욱) 대단원평가 88**(8개 대단원 전체: 1소인수분해·2정수와유리수·3문자와식·4좌표평면과그래프 = 중1-1 / 6평면도형·7입체도형·8통계 = 중1-2; 5기본도형은 도형의존 多로 보류). 중1 실개념 **25/26 커버(96%)** — 남은 1개 14-03 평행선(도형타입 부재로 정상 보류). 문제 검수 브라우저 `/lab/problems`로 품질 확인.
+**다음 = 백필 확대**(다른 교재[비상·천재 등]/다른 학년[중2 등]으로 deepen) 또는 ⑥ 검수큐 · P*b 고도화. 도형 의존 문제(14-03 평행선·복합도형·그래프 읽기·히스토그램)는 Lab 도형 타입 확장 시 인제스트 가능(현재 보수적 제외).
+
+---
+
+## 2026-06-26 세션 — 도형 흑백 렌더 + 중2 도형 잔여 인제스트 + 라이브 총계 재실측
+
+**라이브 DB 실측(2026-06-26)** — `scripts/lab/_db-state.ts`/`_src-breakdown.ts`로 검증:
+- **총 2,197문항** · 도형(diagram) **120개**. 개념군: mid-13(중1 식·수) 746 · mid-14(중1 기하/통계) 315 · mid-15(중2) 764 · **mid-16(중2 도형) 372**. → **중1 1,061 · 중2 1,136**. (잔여 29 + 복구 11 = 40 신규)
+- 소스 TOP: 동아 중1 소단원학습지 504 · 동아 중2 소단원평가 318 · 지학사 중2 소단원평가 258 · 미래엔 중2 수준별 180 · YBM 중2 소단원평가 174 · 지학사 중1 종합 138 · 천재(김동재) 중1 126 · 천재(김동재) 중2 90 · 천재(김화경) 중1 71 · 미래엔 중2 도형 51 · 지학사 중2 도형 잔여 **29(이번)** · 지학사 중2 도형 15 · 동아 중2 도형 10 + 동아/미래엔 중1 워크플로 잔여들.
+- ⚠️ 2026-06-24 HANDOFF는 중1만(1,023) 박제 — 그 후 **중2 5교재 전면 인제스트(1,125)**가 별도 세션에서 들어왔으나 헤더 미갱신 → 본 세션에서 실측 반영. **교훈: 큰 배치 후 HANDOFF 총계 즉시 갱신**(드리프트 1,163 발생).
+
+**✅ 도형 흑백 렌더 완료(사용자 요청)** — commits `76254981`·`220d8f52`:
+- **선 검정**: 공유 `svg-diagrams`는 브랜드 블루로 그림 → 격리 위해 **수정 불가** → 출력 SVG 문자열의 블루계열만 치환하는 `src/lib/lab/diagram/lab-colors.ts::recolorToInk`(#3B82F6/#60A5FA/#1E40AF/#135bec/#EFF6FF → 검정·중립). `LabDiagram.tsx`가 렌더 후 적용. 삼각형(`lab-triangle.ts`)은 `LAB_INK`로 직접 그림.
+- **글자 검정**: 꼭짓점 문자·각 숫자는 색 미지정 KaTeX(foreignObject) → **페이지 글자색 상속**(블루). `LabDiagram` 컨테이너에 `style={{color:LAB_INK}}` 박아 상속 검정 강제.
+- **각 라벨 스마트 위치**(`lab-triangle.ts`): 좁은 각에서 숫자가 변에 붙던 문제 → 거리 = `16/sin(반각)+6`(좁을수록 이등분선 따라 멀리), 대변의 0.62배로 캡, 그래도 좁으면(여유<9px) **각 바깥**으로. 50°·30° 꼭지각 렌더 검증.
+- ⚠️ 빨강 각 호(묻는 각)·회색 보조선(#999)은 의도적 보존(블루만 대상).
+
+**✅ 중2 도형 잔여 29문항 적재 + 도형 배치 QA 툴킷**(commit `9c162bd6`):
+- 지학사 잔여 워크플로(`wl0v85dv6`, 42문항) → **검수 KEEP 29 / DROP 13**. source=`지학사(장경윤) 중2 도형 잔여 [세션비전·도형렌더]`. 결과 2,157→2,186, 도형 80→109, 중2 도형 332→361.
+- **DROP 13 사유**(렌더러 한계/데이터 오류로 시각 검수 탈락): 16-08×7 `segmentLabels` 미지원(중선 분할 라벨, 위치정보 부재 + 데이터 의미 불일치) · 16-12×1 `gridDivisions`/`shadedCells` 미지원(9등분 색칠 표적) · 16-03×3 외심/내심 의미 왜곡(O 미표시 / 반각→모양 왜곡 / 세그먼트 부재) · 16-09×1 변라벨 `"8    12"`→`"812"` 깨짐+중선 footD 오배치 · 16-05×1 평행사변형인데 사다리꼴 모양(주어진 좌표가 사다리꼴).
+- **동아 잔여 워크플로**(`wgc0uznbw`)는 **주간 한도(weekly limit)로 0바이트 산출** → 이번 배치 제외.
+- **QA 파이프라인**(scripts/lab/, 재사용): `_harvest-render`(output→diagram별 SVG) → `_field-audit`(미지원 키 검출) → `_contact-sheet`(캡션 그리드 PNG, KaTeX 포함, **네이티브 시각 검수**) → `_filter-drops`(탈락 제거) → `ingest-workflow-output`. 퇴화(면적) 검사(`_degen-check`)만으로는 외심/내심 의미 오류 못 잡음 → **콘택트시트 육안 검수 필수**.
+
+**✅ 삼각형 렌더러 보강 완료**(commit `0b804cd6`) — 위 DROP 13 중 **11 복구**(source=`지학사(장경윤) 중2 도형 복구 [세션비전·도형렌더v2]`, 2,186→2,197·도형 109→120). `lab-triangle.ts`에 Lab 전용 추가 필드(공유 svg-diagrams 무수정):
+- **`segmentLabels: [{from, to, label, offset?}]`** — 구간 라벨. `from`/`to` 점 참조: **숫자(0~2 꼭짓점) | 'G'/'I'/'O'/'H'(특수점) | 체비안 footLabel(예 'D')**. 중선 분할(AG·GD)·BD·반지름 라벨. 중점에서 도형중심 반대 수직 오프셋(거의 수직 선분은 텍스트폭 가중). **`offset` 음수 = 반대편(안쪽)** — 같은 변/선분의 두 라벨 분리(예: BD는 변 안쪽, BC 변 라벨은 바깥 / AG는 중선 왼쪽, AD는 오른쪽). ⚠️ 위치정보 없는 레거시 `{label}`만은 미해석 스킵 → **워크플로는 반드시 `{from,to,label}` 형식으로 출력**.
+- **`specialPoints: [{type, connect:'vertices', ticks?}]`**(객체형, 문자열 'incenter'은 점만 — 기존 호환) — 중심→세 꼭짓점 연결선. **외심 반지름 OA·OB·OC(+`ticks`: 등길이 빗금) · 내심 이등분선 IA·IB·IC**. 기존 `auxiliaryLines`의 무효값("OA"/"IB" 무시되던 것) 대체. 검증: 외심(반지름+빗금+각호)·내심(이등분선)·무게중심(AG/GD/BD) 렌더 확인.
+- **복구 11**: 16-08×7 무게중심(segmentLabels 위치형) · 16-03×3 외심/내심(연결선 + 왜곡 angles 제거) · 16-05×1 평행사변형(좌표를 실제 평행사변형으로). 패치=`scripts/lab/_resurrect-patch.ts`.
+
+**📋 향후 렌더러 보강 과제**(남은 미지원):
+- `gridDivisions`/`shadedCells` — 확률 표적(정사각형 N등분 + 색칠). Lab quad 렌더 확장 필요. (16-12 1문항 미복구)
+- **부분각 호(sub-angle arc)** — ∠OAB·∠IBC처럼 변과 연결선 사이 각. 현 `angles`는 두 변 사이만. (외심/내심 일부 각 문제의 각도값 미표시 — 도형은 연결선으로 충분히 illustrative)
+- **임의 비율 체비안 발** — BD:DC=8:12 등 중점/수선발/이등분 외 위치. (16-09 MC#02 1문항 미복구)
+
+---
+
+## 2026-06-23 세션 — 천재 인제스트 + 셧다운 2회 무손실 복구
+
+**완료**: 천재교육(김동재) 중1 소단원평가 **126문항** DB 적재 → **총 519문항**(지학사 138·동아 134·천재 126·미래엔 88·합성 33). source=`천재교육(김동재) 중1 소단원평가 [세션비전]`, provenance(publisher 천재·sourceType 소단원평가·author 김동재·grade 중1). 커버: **식·수 전 범위 13-01~13-13** + 기하/통계 일부(14-01·04·06·10). 빠진 14-xx(02 위치관계·05 합동·07 원과부채꼴·08 다면체·09 회전체·11 줄기와잎·13 상대도수)는 대부분 도형의존 → 보수적 미채택.
+
+**🔴 핵심 교훈 — 워크플로 셧다운 복구 = 저널 하베스트+병합 (₩0, 무손실)**:
+- ₩0 세션비전 전사 워크플로(`lab-ingest-cheonjae-sodan`, scriptPath는 구 세션 `554fcc6d/workflows/scripts/`에 보존)가 **API 전역 과부하(레이트리밋)** + **컴퓨터 셧다운 2회**로 두 번 중단됨.
+- **`resumeFromRunId`는 "same-session only"** → 셧다운 후 새 세션에서 재개하면 캐시 안 이어짐 → **새 run은 처음부터 = 커버리지 후퇴**(원래 run `wf_49197812-21c` 17개념 > 새 run `wf_99d099e9-a8d` 7개념). **교훈: 셧다운/크로스세션 복구는 resume에 의존하지 말고 저널을 직접 하베스트하라.**
+- **복구법**: 각 워크플로 run의 `journal.jsonl`(`<session>/subagents/workflows/<runId>/journal.jsonl`)에 완료 에이전트의 `{type:'result', result:{problems:[...]}}`가 **디스크에 영속**. 여러 run의 저널을 **병합·중복제거**(키=conceptId+problemNumber+body[:60], 같은 키는 verify가 author 뒤에 오므로 **last 우선**=교정본) → `{byConcept}` JSON → `ingest-workflow-output.ts`로 적재. 228+54 → 중복제거 135 → 검증통과 126(실패 9=rubric 누락 서술형, 정상 제외).
+- **answerIndex 0-based/off-by-one 자동 교정**: 적재 도구가 `answer` 텍스트와 보기 매칭으로 1-based 강제 보정(에이전트가 answerIndex=0 등 오류 줘도 복구).
+
+**✅ 동아 소단원학습지 (2026-06-24 완료 — 504문항 적재)**:
+- **자산**: `d:/tmp/lab-donga-sod/` PNG **321개**(0 누락 검증), 매니페스트 `d:/tmp/donga_manifest.json` = **42개 소단원** `[{uid, probPages[], solPages[]}]`. 천재(2-up 단일페이지)와 달리 **소단원당 여러 문제페이지(최대 10p, 5_5) + 별도 정답·해설 페이지** 구조 → 워크플로는 **소단원당 1에이전트**(probPages+solPages 함께 Read, 천재 CATALOG 재사용)로 설계 권장(234페이지 per-page는 author+verify+재시도로 1000 에이전트 상한 근접 위험).
+- **결과**: source=`동아출판(강옥기) 중1 소단원학습지 [세션비전]`, **504문항 / 23개념**(13-01~13-13[그래프 13-11 제외] + 14-01~14-13[평행선 14-03·히스토그램 14-12 제외] = 중1 거의 전범위). 검증실패 13(rubric 누락 서술형·보기개수 오류, 정상 제외).
+- **🔴 다중 세션 무손실 복구(교훈 강화)**: 워크플로가 **레이트리밋+절전으로 수회 중단**. ① 원런 `wf_866c2a74-3f7`(세션 f4aa13a3)이 절전 전까지 13-01~13-10(328문항) → ② 새 세션 단순 resume는 **크로스세션이라 캐시 못 함**(처음부터 재시작 확인됨) → ③ **빠진 단원만 집중하는 tail 스크립트**(`d:/tmp/lab-ingest-donga-tail.js`, 대단원 6·7·8=14-xx 우선→5→4) 새 run `wf_db221d0c-d7a`로 349문항 → ④ **두 저널 병합·중복제거**(677→517) → ⑤ 적재 504. **교훈**: 크로스세션 복구는 resume 대신 ⓐ 저널 하베스트 ⓑ **빠진 부분만 새 스크립트로 집중**(전체 재시작은 done 단원 낭비 + 과부하 시 미커버 도달 전 사망) ⓒ 전 저널 병합.
+- **레이트리밋 관찰**: 전역 과부하라 창이 간헐 개폐(닫히면 즉시 스톨, 열리면 한 창에서 39→328·326→349 폭주). ₩0 대량 워크플로는 한가한 시간대 권장.
+
+**🔖 보류 아이디어 — 시험지 한글화 corpus = 고교 확장 시드 (2026-06-23 검토, 결정 보류)**:
+- **소스**: `BIGSHOL/testchange` repo(= 로컬 `D:\시험지 한글화`, 같은 프로젝트). `corpus/<[학교][학년][과목][시험]>/ocr/pN_merged.json` = `{header, questions:[{number, score, contents:[{type:text|equation, value}], choices, sub_questions}]}`. **실 학교 기출 194개**(중학 58[중1 13]·고교 136 / 검수완료 64·원본 130). 수식이 LaTeX꼴(`\frac`·`\circ`·`\begin{cases}`) → KaTeX 변환 용이. 이미 ₩0 OCR·구조화됨.
+- **🔴 직접 적재 불가 이유**: **문제 JSON에 정답 없음**(corpus 전체 answer 필드 0건 — 정답키 페이지는 OCR "대조용"으로만 썼고 per-문제 정답 미저장). Lab은 자동채점 정답지 필수. + 시험문제라 복합·도형/그래프 의존 多(보수적 스킵 대상) + 개념 태깅 필요(학교/시험 단위 → `lab-cur-*` 재매핑).
+- **가치 = 고교**: Lab은 현재 고교 문제 **0개**인데 corpus는 고1~3 확통·미적분·수1/2·공수1/2 **136개(검수 64)**. 중1은 교과서 소단원 인제스트(천재·동아)가 더 우수(자족+진짜 정답)라 corpus 불필요.
+- **정답 확보안(미결정)**: "AI가 내부에서 정답 생성?" 검토 결론 — **단독 생성은 위험**(자동채점 ground truth 오염 + 난이도와 신뢰도 역상관: 킬러일수록 AI 오답↑, 근데 corpus 가치가 바로 고교). **권고 = 하이브리드**: ① 정답키 페이지 OCR로 진짜 정답 추출(ground truth) ② AI는 *없는 풀이/해설* 생성 ③ 교차검증(불일치→`needsReview` 큐) + 객관식 self-consistency(N회 풀이 다수결). **착수 전 파일럿**(시험지 1개로 AI-solve vs 정답키 일치율 난이도별 실측 → 자동채택/검수큐 임계 결정).
+- **d:/tmp 관련 자산**: `lab-jihak`(305p, 적재완료) · `lab-yn111`(103p, 유형의나무 — 정답키 없어 보류) · `lab-ingest3`(364p, 미처리) · `.testkit`(크롭/렌더 스크래치, 코퍼스 아님).
 
 ---
 
@@ -27,14 +86,14 @@ mathlab repo 안에, **라이브 기출분석 제품과 완전 격리된 채 은
 
 | 항목 | 값 |
 |------|----|
-| 작업 브랜치 | `lab/p5-descriptive-grading` (worktree `F:\mathlab-lab-p1`, `lab/p4-auto-reporter`에서 분기) |
-| PR 체인 | P0=#20 ← P1=#21 ← P2=#22 ← P3=#23 ← P4=#24 ← **P5=#25 예정(`lab/p5-descriptive-grading`)**. 모두 `BIGSHOL/mathlab` |
-| **로컬 P0~P4 검증** | ✅ `verify-p0~p4.ts` PASS (채점·BKT 진단·smart 처방·보고) |
-| **로컬 P5 검증** | ✅ **`scripts/lab/verify-p5.ts` PASS** — descriptiveVerdict 단위 + 빈답 폴백 + e2e(고신뢰→진단포함 / 저신뢰→needsReview 제외). 스텁 주입(실 API 비용 0) |
-| DB | ✅ `lab_submission_items`(P1) + `lab_submissions.diagnosedAt`(P2). **P3·P4·P5는 스키마 변경 없음**(기존 모델만 사용). 기존 행수 무손상 |
+| **스택 팁(현재)** | `lab/content-foundation` (PR **#27**, 콘텐츠 토대 1·2·**3·4단계 + 실데이터 루프 + 중1 전범위 인제스트**). 새 머신(2026-06-22~)은 `D:\mathlab` **직접 체크아웃**(worktree 아님). 구 머신은 worktree `F:\mathlab-lab-p1`이었음 |
+| **PR 스택 체인** | `main` ←#20(`claude/amazing-maxwell-blpgou`, P0 척추) ←#21(`lab/p1-auto-grader`) ←#22(`lab/p2-auto-diagnoser`) ←#23(`lab/p3-smart-prescriber`) ←#24(`lab/p4-auto-reporter`) ←#25(`lab/p5-descriptive-grading`) ←#26(`lab/cockpit`, ②⑤ UI) ←#27(`lab/content-foundation`, **TIP**). 전부 `BIGSHOL/mathlab` — **#27만 OPEN, #20~#26 DRAFT**(스택 머지 대기) |
+| **로컬 검증** | ✅ `verify-p0~p5` + `verify-gen` + `verify-persist`(영속 글루) + `verify-ingest`(세션비전 인제스트 경로) = **9/9 PASS**(새 머신 2026-06-22) + `gen-sample.ts` 실Gemini 6/6(품질) |
+| DB(공유 Supabase) | `lab_submission_items`(P1)+`lab_submissions.diagnosedAt`(P2). 개념그래프: `lab_concepts` 244행·`lab_concept_edges` 177행. ✅ **토대 3·4단계 스키마**: `lab_problems`에 `body`/`choices`/`explanation`(토대3) + **`diagram`**(토대4) **nullable 컬럼**(db push 비파괴, 행수 불변). 생성/인제스트→영속 글루(`persist.ts`) 완료. **인제스트: `lab_problems` 255행** = 합성시드 30 + **실문제 225**(중1 거의 전범위). 중1 실개념 **26개 중 25개 커버(96%)** — 남은 1개는 14-03 평행선(도형타입 부재로 정상 보류). 소스: 동아(강옥기) 단원마무리(1~8)+해결해요/수준별학습지+단원마무리 5(기본도형) + **미래엔(황선욱) 대단원평가 88**(8개 대단원 전체 — 중1-1 단원1·2·3·4=60 + 중1-2 단원6·7·8=28; 단원5 기본도형은 도형의존 多로 보류. 비도형 자족 문항만; 그래프·도형 읽기 문항은 보수적 제외). 전부 `isGenerated=false`, **₩0 세션비전 워크플로**(배치-2~3 OCR→적대적 검증, 풀이 페이지에서 실 정답·해설 추출). 도형(삼각형·정다각형·사각뿔·구) 렌더 검증. 난이도 L2~4(L5=0 — 심화 소스 없음). **워크플로 결과 영속은 `scripts/lab/ingest-workflow-output.ts`**(엔티티 디코딩+diagram 파싱+**객관식 answerIndex↔answer 텍스트 보정**+**`ESSAY`→`DESCRIPTIVE` 타입 정규화**+멱등 source). |
 
-> ⚠️ **repo 토폴로지**: 로컬 clone 원격 `mathlab2`는 *트림 이전 낡은 스냅샷* — push/PR은 **`BIGSHOL/mathlab`**(정식, #20/#21 있는 곳). worktree에 `git remote add mathlab-orig https://github.com/BIGSHOL/mathlab.git` 후 사용. additive 여부는 `mathlab-orig/main` 대비로 확인(Lab 작업은 거기서 순수 additive).
-> worktree `node_modules`는 메인(`F:\mathlab`)과 정션 공유 → `prisma generate` 시 메인 클라이언트도 갱신(additive라 무해). `.env`/`.env.local`은 별도 복사.
+> 🖥️ **다른 컴퓨터에서 시작**: `git clone https://github.com/BIGSHOL/mathlab.git` → `git checkout lab/content-foundation`(스택 팁) → **§6 새 컴퓨터 셋업** 따라 `.env.local` 구성. worktree는 *이 머신 사정*이라 새 머신은 그냥 브랜치 체크아웃이면 됨(worktree 불필요).
+> ⚠️ **repo 토폴로지**: 원격 `mathlab2`는 *낡은 스냅샷* — push/PR은 **`BIGSHOL/mathlab`**(origin, 정식). additive 여부는 `origin/main` 대비로 확인.
+> ⚠️ **이 머신 한정**: worktree `node_modules`는 메인(`F:\mathlab`)과 정션 공유. `.env.local`은 머신별 별도(§6).
 
 ---
 
@@ -90,7 +149,14 @@ src/lib/lab/
   bkt.ts                      # P2: BKT 순수함수 (bktPosterior/bktFold + BKT_PARAMS) — 자기완결
   prescribe-policy.ts         # P3: 처방 정책 순수함수 (adaptiveDifficulty/Count + 임계) — 자기완결
   report-policy.ts            # P4: 보고 정책 순수함수 (masteryLabel/overallLabel/masteryBucket + 임계) — 자기완결
-  ai-client.ts                # ★P5: Lab 자체 Gemini 클라이언트(복제, 격리) — gradeWithGemini. 모델명 서버로그만
+  ai-client.ts                # ★P5+토대2: Lab 자체 Gemini 클라이언트(복제, 격리). 모델명 서버로그만
+                              #   gradeWithGemini(서술형채점) · generateWithGemini(문제생성, thinkingBudget=0)
+                              #   repairJsonString(LLM JSON 복구: LaTeX 백슬래시·줄바꿈·잘림 salvage)
+  problem-gen.ts              # ★토대2: 문제생성 정규화·검증·DI(주입형, 테스트 $0)
+                              #   generateProblem/normalizeGenerated/generateProblemsForConcept + set/resetProblemGenerator
+  persist.ts                  # ★토대3·4: 생성/인제스트 → LabProblem 영속 글루 (body/choices/explanation/diagram, bodyRef='inline', opts.isGenerated)
+  ingest.ts                   # ★토대3-B·4: 세션 비전 인제스트 문서(IngestDoc) 검증·매핑 (normalizeGenerated 재사용 + source 오버라이드 + diagram 검증)
+  diagram/lab-triangle.ts     # ★토대4: Lab 삼각형 렌더러 (각→호/직각기호, 각 값에서 꼭짓점 계산). 공유 svg-utils 재사용
   pipeline/
     index.ts                  # p0Pipeline 조립 (diagnoser=autoDiagnoser, prescriber=smartPrescriber, grader=autoGrader, reporter=autoReporter)
     manual-diagnoser.ts  auto-diagnoser.ts(P2 BKT)
@@ -98,12 +164,26 @@ src/lib/lab/
     manual-supplier.ts  manual-grader.ts(보존)  auto-grader.ts(P1 객·단 + P5 서술형 분기)
     descriptive-grader.ts(★P5 주입형 AI 채점 + descriptiveVerdict 순수)
     manual-reporter.ts(보존)  auto-reporter.ts(P4 학부모/원장 결정적 리포트)
+src/app/lab/                  # ②⑤ UI (#26): page.tsx(코크핏 실DB) · LabCockpitActions.tsx · worksheet/[id]/(풀이, 실본문·도형) · layout.tsx(게이트, 코크핏|검수 내비)
+  problems/page.tsx           # ★토대4: 문제 품질 검수 브라우저(읽기전용, 실교재/합성 필터, KaTeX+도형)
+  LabDiagram.tsx              # ★토대4: 도형 렌더러(공유 svg-diagrams 재사용 → SVG, 삼각형은 lab-triangle 디스패치)
+src/app/api/lab/              # run-cycle · demo-step · submit-answers · generate-report (전부 guardLabApi 게이트)
 scripts/lab/
-  seed-synthetic.ts  verify-p0~p4.ts  verify-p5.ts(★서술형 스텁)  smoke-p5-real-ai.ts(★실 Gemini, opt-in)
+  seed-curriculum.ts          # ★토대1: curriculum.ts → LabConcept/Edge 239+172 (--apply로 DB 적용, 없으면 dry-run)
+  seed-synthetic.ts           # P0 데모 시드 (합성 5개념 + 데모학생 lab-student-demo)
+  repoint-demo.ts             # ★토대3: 데모 학생 → 중1 실개념 repoint (합성 잔여정리 + pacing 13,1 + cold 사이클)
+  verify-p0~p4.ts  verify-p5.ts(★서술형 스텁)
+  verify-gen.ts               # ★토대2: 문제생성 정규화 검증 7/7 PASS (스텁, $0)
+  verify-persist.ts           # ★토대3: 생성→LabProblem 영속 글루 검증 (스텁 $0, 테스트행 생성 후 자동 정리)
+  verify-ingest.ts            # ★토대3-B: 세션 비전 인제스트 경로 검증 (픽스처 유효3+무효1, $0, 자동 정리)
+  ingest-problems.ts          # ★토대3-B: 인제스트 CLI — 세션 작성 JSON → 검증 → conceptId/중복 가드 → 영속(isGenerated=false)
+docs/lab/INGEST.md            # ★토대3-B: 세션 비전 인제스트 데이터계약 + 작성규칙(변환기 EXAM_OCR_PROMPT 이식) + SOP
+  gen-sample.ts               # ★토대2: 실 Gemini 품질 샘플 (DB 미저장, opt-in 소액비용)
+  smoke-p5-real-ai.ts         # ★실 Gemini 채점 1콜 (opt-in, LAB_P5_REAL_AI=1)
 docs/lab/HANDOFF.md
 ```
 
-검증 상태: `tsc --noEmit` 0에러 · 기출분석 변경 0건 · P0/P1/P2 루프 런타임 PASS.
+검증 상태: `tsc --noEmit` 0에러 · 기출분석 변경 0건 · `verify-p0~p5` + `verify-gen` PASS · `gen-sample` 실Gemini 6/6.
 
 ---
 
@@ -151,30 +231,78 @@ docs/lab/HANDOFF.md
 
 ---
 
-## 6. 로컬에서 이어가기 — 런북
+## 6. 이어가기 — 런북
+
+### 🖥️ 새 컴퓨터 셋업 (clone → 재개)
+
+`.env.local`과 메모리(`~/.claude/...`)는 **git에 없으니**(`.gitignore`: `.env*.local`, `.claude/`) 새 머신에서 아래를 직접 구성한다.
 
 ```bash
-git fetch mathlab-orig && git checkout lab/p2-auto-diagnoser   # 또는 worktree F:\mathlab-lab-p1
+# 1) 클론 + 스택 팁 체크아웃
+git clone https://github.com/BIGSHOL/mathlab.git && cd mathlab
+git checkout lab/content-foundation       # 스택 팁(PR #27). worktree 불필요 — 그냥 체크아웃.
+
+# 2) 의존성 + Prisma 클라이언트
 npm install
-npx prisma generate            # Lab* 타입 재생성 (dev 서버 끄고 — DLL 잠금/핫리로드, CLAUDE.md 세션#1)
-# env: .env / .env.local 에 DATABASE_URL · DIRECT_URL (같은 DB)
-npm run db:backup              # 안전망(lab_* 생성 후 실행)
+npx prisma generate                       # Lab* 타입 생성 (dev 서버는 꺼두고 — DLL 잠금/핫리로드)
+```
 
-# 스키마 변경 적용 — ✅ db push 안전. 파괴 구문 0건 먼저:
-npx prisma migrate diff --from-schema-datasource prisma/schema.prisma --to-schema-datamodel prisma/schema.prisma --script
-npx prisma db push             # --accept-data-loss 쓰지 말 것
+**3) `.env.local` 작성** (프로젝트 루트, git 제외). 필요한 키:
 
-node --env-file=.env.local --import tsx scripts/lab/seed-synthetic.ts
+| 키 | 용도 | 비고 |
+|----|------|------|
+| `DATABASE_URL` / `DIRECT_URL` | 공유 Supabase DB | **같은 DB면 개념그래프 239개·데모학생 이미 들어있음**(재시드 불필요). 기존 머신 `.env.local` 복사 또는 Vercel(mathlab) env에서 확보 |
+| `GEMINI_API_KEY` | Lab 문제생성·서술형채점 | ⚠️ **39자**. `vercel env pull`로 받으면 끝에 literal `\n`(2글자) 붙어 41자 → Google 400. 끝 `\n` 제거(앞 39자) |
+| `ANTHROPIC_API_KEY` | (기출분석 총평; Lab은 Gemini 사용) | 선택 |
+| `LAB_ENABLED` | `/lab` 은닉 게이트 해제 | `true` 아니면 SUPER_ADMIN도 404 |
+| `NEXTAUTH_SECRET` / `NEXTAUTH_URL` | 로그인 | `/lab` 접근은 SUPER_ADMIN 계정 필요 |
+
+**SUPER_ADMIN 계정** (`/lab` 게이트 = `requireSuperAdmin` + `LAB_ENABLED`):
+- **같은 공유 DB면 이미 존재** → 본인 SUPER_ADMIN 계정으로 로그인(앱 로그인 페이지) 후 `/lab`.
+- **새/빈 DB면** `node scripts/seed-accounts.mjs` 실행 → Tenant + SUPER_ADMIN(+OWNER/TEACHER) 시드(계정 정보는 스크립트 내부 참조). 그 뒤 로그인.
+
+```bash
+# 4) 개발 서버 + 코크핏
+npm run dev                               # PORT=3100 npm run dev (다른 프로젝트와 :3000 충돌 시)
+#   → http://localhost:3000/lab  (SUPER_ADMIN 로그인 + LAB_ENABLED=true)
+```
+
+### 🔁 검증 런북 (코드만 — DB 무변경/소액)
+
+```bash
 node --env-file=.env.local --import tsx scripts/lab/verify-p0.ts   # P0 루프
 node --env-file=.env.local --import tsx scripts/lab/verify-p1.ts   # P1 채점
 node --env-file=.env.local --import tsx scripts/lab/verify-p2.ts   # P2 진단(BKT)
+node --env-file=.env.local --import tsx scripts/lab/verify-p3.ts   # P3 처방
+node --env-file=.env.local --import tsx scripts/lab/verify-p4.ts   # P4 보고
+node --env-file=.env.local --import tsx scripts/lab/verify-p5.ts   # P5 서술형(스텁, $0)
+node --env-file=.env.local --import tsx scripts/lab/verify-gen.ts  # 토대2 문제생성 정규화(스텁, $0)
+node --env-file=.env.local --import tsx scripts/lab/gen-sample.ts  # 토대2 실Gemini 품질샘플(opt-in 소액, GEMINI_API_KEY 필요)
 #   ⚠️ node_modules/.bin/tsx 셸 shim은 Windows node로 깨짐 → `node --import tsx` 사용
 ```
 
+### 🌱 시드 (새 DB일 때만 — 공유 DB엔 이미 적용됨)
+
+```bash
+node --env-file=.env.local --import tsx scripts/lab/seed-synthetic.ts            # 데모 5개념+데모학생
+node --env-file=.env.local --import tsx scripts/lab/seed-curriculum.ts           # dry-run(확인)
+node --env-file=.env.local --import tsx scripts/lab/seed-curriculum.ts --apply   # 실 개념 239개 적용
+```
+
+### 🗄️ 스키마 변경 시 (예: 토대 3단계 LabProblem 컬럼)
+
+```bash
+npm run db:backup                          # 먼저 백업 (lab_* 생성 후에만 동작)
+# ✅ db push 안전(para-x DB 분리됨). 파괴 구문 0건 먼저 확인:
+npx prisma migrate diff --from-schema-datasource prisma/schema.prisma --to-schema-datamodel prisma/schema.prisma --script
+# 변경 전: dev 서버 끄기(DLL 잠금) → db push → prisma generate → dev 재시작
+npx prisma db push                         # --accept-data-loss 절대 쓰지 말 것. migrate reset 금지.
+```
+
 ### ✅ PR 전 체크리스트 (Lab)
-- [ ] `verify-p0`~`verify-p4` 모두 PASS
-- [ ] `npx tsc --noEmit` 0에러
-- [ ] 기출분석/공유 무수정: `git diff --name-only | grep -E "exam-analysis|navigation|billing|entitlements"` → 0건
+- [ ] `verify-p0`~`verify-p5` + `verify-gen` 모두 PASS
+- [ ] `npx tsc --noEmit` 0에러 (dev 서버 켜둔 채 가능 — `.next` 무관)
+- [ ] 기출분석/공유 무수정: `git diff --name-only | grep -E "exam-analysis|navigation|billing|entitlements|src/app/(?!lab)"` → 0건
 - [ ] 스키마 변경 시 `migrate diff` 파괴 구문 0 + db push 전/후 행수 동일
 - [ ] `npm run db:backup`
 
@@ -182,13 +310,17 @@ node --env-file=.env.local --import tsx scripts/lab/verify-p2.ts   # P2 진단(B
 
 ## 7. 미결 결정 — 다음 갈래
 
-- **5단계 엔진 전부 완료**: ① DB ✅ · ③ P1 채점 ✅(#21) · ④ P2 진단 ✅(#22) · **P3 처방 ✅(#23)** · **P4 보고 ✅(#24)** · **P5 서술형 채점 ✅(#25)**.
-- **다음 = 엔진을 표면으로 + 고도화** (자동화 루프는 닫혔으니 이제 UI·운영·정교화):
-- **② 코크핏 UI DB연동** ← 후보: `/lab` 정적 코크핏을 실DB로(학생/숙련도/워크시트/리포트 + 루프 구동 버튼). 엔진이 다 됐으니 "보이게" 만드는 단계.
-- **⑤ 학생답 입력 UI / 제출 API** ← `POST /api/lab/submit-answers`·`/generate-report`(게이트) + 입력/리포트 화면. (서술형 답 입력 포함.)
-- **⑥ needsReview 사람 검수 큐** ← 저신뢰 서술형/파싱실패 항목을 교사가 채점하는 큐 UI + **검수 후 재진단**(스택리뷰 #1의 잔여분 — 고신뢰는 P5에서 이미 즉시 진단).
-- **P5b 서술형 고도화**: AI feedback 영속(LabGradedItem feedback 필드) · partialScore 가중 BKT · 루브릭 버저닝 · AI 채점 비용 로그.
-- **P3b/P4b 고도화**: 처방 영속(reason 추적)·per-concept 보정 / AI 내러티브 리포트·HWP url.
+- **✅ 완료**: ① DB · ③ P1 채점(#21) · ④ P2 진단(#22) · **P3 처방(#23)** · **P4 보고(#24)** · **P5 서술형 채점(#25)** · **② 코크핏 DB연동(#26)** · **⑤ 학생답 제출 UI/API(#26)** · **콘텐츠 토대 1·2단계(#27, 실 개념 239개 + AI 생성기)** · **토대 3단계 전체(스키마+영속+repoint+UI)** · **토대 4단계(도형 역량)** · **중1 전범위 인제스트(121문항)** (전부 2026-06-22 새 머신, 로컬 커밋).
+- **✅ 토대 3단계 — 완료(2026-06-22)**: 스키마(`body`/`choices`/`explanation` 컬럼) + 영속 글루(`persist.ts`) + **데모 repoint**(`scripts/lab/repoint-demo.ts` — 합성 lab-c* → 중1 실개념 `lab-cur-mid-13-01` 소인수분해, pacing (CURRENT,13,1), cold 사이클로 첫 실 워크시트) + **풀이 UI 실본문**(`worksheet/[id]` + `SolveForm.tsx`가 실 body·choices·도형 렌더, answerHint는 합성 폴백만) + **문제 검수 브라우저** `/lab/problems`(읽기전용, 실교재/합성 필터).
+- **✅ 토대 4단계 — 도형 역량 완료(2026-06-22)**: `LabProblem.diagram Json?` 컬럼(additive, db push 비파괴) + **공유 `svg-diagrams` 읽기전용 재사용**(`LabDiagram.tsx`: `resolveDiagramSpec`+`renderDiagram` → SVG, dangerouslySetInnerHTML). 두 포맷 허용(DiagramParam[] 배열 / DiagramSpec 객체). **Lab 삼각형 렌더러**(`src/lib/lab/diagram/lab-triangle.ts`): 공유 렌더러가 각을 텍스트로만 찍어 보강 — **각을 호(arc), 90°는 직각기호(⌐)**, **각 값에서 꼭짓점 직접 계산**(라벨 충실 도형). 검증 포맷: Spec triangle(preset)·solid / Param regular_polygon·angle_figure·coordinate_plane. ⚠️ polygon Spec은 미렌더(트림된 변환경로). 브라우저 실측(Chrome MCP) 완료.
+- **✅ 인제스트 — 중1 전범위(2026-06-22)**: 세션비전 워크플로(페이지별 OCR→적대적 검증), **전부 ₩0**. 중1-1 49(단원 1~5) + 중1-2 42(단원 6~8: 다각형·원부채꼴·다면체·회전체·겉넓이부피·통계). 학습은 §8·INGEST.md §7 참조(fitz 렌더·엔티티 디코딩·레이트리밋 누적형·resume 캐시).
+- **🎯 다음 = 백필 확대 / 고도화**:
+  1. **인제스트 더** — 단원 6 평면도형 각 문제(삼각형 각은 저작 가능, 일부만 채택됨) · 다른 교재(비상·미래엔 등)로 deepen · 다른 학년(중2 등). 같은 ₩0 워크플로.
+  2. **합성 백필(A)** — Lab Gemini Flash `generateProblemsForConcept` → persist(저비용 반복과금). 아직 백필 스크립트 미작성. ⚠️ 난이도 매핑표 1곳 고정.
+  3. **도형타입 확장** — 평행선·복합도형 각 문제 인제스트하려면 Lab에 해당 도형 렌더 추가(현재 보수적 제외 중).
+  - 📋 소스 재사용 결정(2026-06-22 5갈래 조사): 단원=`/d/mathg-gen/src/constants/curriculum.ts`(use-as-is) · 비전인제스트=`/d/시험지 한글화` 프롬프트·SOP 차용 · 도형=mathlab 자체 `svg-diagrams`(use-as-is, 포팅 불필요).
+- **⑥ needsReview 사람 검수 큐** ← 저신뢰 서술형/파싱실패 항목 교사 채점 큐 + **검수 후 재진단**(스택리뷰 #1 잔여분).
+- **P5b/P3b/P4b 고도화**: AI feedback 영속·partialScore 가중 BKT / 처방 영속(reason 추적)·per-concept 보정 / AI 내러티브 리포트·HWP url. · **선수관계 정밀화**(휴리스틱 엣지 → 교육학적).
 
 ---
 
@@ -203,13 +335,58 @@ node --env-file=.env.local --import tsx scripts/lab/verify-p2.ts   # P2 진단(B
 - **needsReview ⊄ GradedItemDTO**: autoGrader가 제외 → 서술형이 워크시트에 섞여도 mastery 편향 없음(영속만).
 - **P4 리포트는 현재상태 스냅샷**: period는 메타데이터(기간 필터링 아님), 성장은 직전 리포트 대비. 데이터 0건은 '데이터 없음' 리포트로 구분('약점 없이 고르게'와 혼동 방지). ⚠️ 같은 (student,type) 리포트 *동시* 생성은 성장 체인이 어긋날 수 있음(수동/주기라 실무 무위험, 통계는 항상 정확). 고빈도면 직렬화/SERIALIZABLE.
 - **`simulateManualGrading`(P0) 보존**: 무작위 dev 보조. 실제 채점은 submitAnswers+autoGrader.
-- **84개월 진도표 JSON·HWP 엔진 부재**: 합성 시드로 루프 검증 중.
+- **84개월 진도표 JSON·HWP 엔진 부재**: 합성 시드로 루프 검증 중. 실 개념그래프(239)는 토대1단계로 확보, 문제 본문은 토대2(AI생성)로.
 - **스크립트 실행**: `node --env-file=… --import tsx`(`.bin/tsx` shim은 Windows에서 깨짐). `@/` alias는 tsx 정상 해결.
+- **🆕 Gemini thinkingBudget=0 (토대2)**: `gemini-2.5-flash`는 thinking 모델 — `thinkingConfig.thinkingBudget` 미설정 시 thinking 토큰이 `maxOutputTokens`를 먹어 JSON이 잘림(`Unexpected end of JSON input`). 생성은 항상 `thinkingBudget: 0`(+`maxOutputTokens: 4096`).
+- **🆕 LLM JSON 복구 (토대2)**: AI가 LaTeX 백슬래시(`\times`,`\frac`)·문자열 내 실제 줄바꿈을 내뱉어 순진한 `JSON.parse` 깨짐(CLAUDE.md #12-1). `repairJsonString`(문자열 상태머신) — 고립 백슬래시 이스케이프 + 제어문자 보정 + **잘린 응답 salvage**(따옴표/중괄호 균형). `parseJson`은 정상 파싱 먼저, 실패 시 복구 재시도. 그레이더도 이 래퍼를 공유해 더 견고해짐.
+- **🆕 problem-gen DI 주입형 (토대2)**: 테스트는 `setProblemGenerator(stub)` → 결정적·실 API $0(`verify-gen`이 이걸로 7/7). 끝나면 `resetProblemGenerator()`. 품질(실 Gemini)은 `gen-sample.ts`로 별도.
+- **🆕 보기 마커 제거 (토대2)**: AI가 보기 앞에 `①②③④⑤`/`1.`/`(1)`을 끼워넣을 수 있음 → `stripChoiceMarker`로 제거(렌더 시 번호 중복 방지). 정답은 `answerIndex`(1-based) → `LabProblem.answer.choice`로 매핑.
+- **🆕 생성 한계 — 도형 (토대2)**: 기하 문제는 "그림과 같이"로 없는 도형을 참조 → 순수 텍스트 생성의 한계. 고난도·도형은 비전/OCR 경로(§7) 대상. 비-도형 생성 품질은 양호(6/6).
+- **🆕 LabProblem 본문 미영속 (토대2→3)**: 생성기는 `{body, choices, explanation, answer}`를 만들지만 `LabProblem`엔 `bodyRef`(스토리지 키)+`answer`만 있어 **본문/보기/해설을 저장할 컬럼이 없음**. 토대 3단계에서 컬럼 추가(additive) 후 영속.
+- **🆕 도형 렌더 — 공유 svg-diagrams 재사용 (토대4)**: `resolveDiagramSpec`(배열 DiagramParam[] ↔ 객체 DiagramSpec 통일) + `renderDiagram`(SVG 문자열) + `dangerouslySetInnerHTML`(innerHTML 파싱은 SVG 네임스페이스 정상 — ReactMarkdown 변환 함정 회피). ⚠️ 공유 `svg-diagrams`는 **수정 금지**(격리) → 보강은 Lab-local 복제(삼각형 `lab-triangle.ts`). ⚠️ `polygon` DiagramSpec은 변환경로 트림으로 미렌더 → 정다각형은 DiagramParam `regular_polygon`. ⚠️ 삼각형은 **각 값에서 꼭짓점 계산**(프리셋 형상이 라벨 각과 불일치) + 직각기호는 라벨 `"90°"` 기준(기하 감지는 오작동).
+- **🆕 인제스트 워크플로 레이트리밋 — 누적형 (2026-06-22)**: 19페이지 OCR 동시 버스트는 "Server is temporarily limiting requests (not your usage limit)"로 **즉사**(내 사용량 아님, 서버 과부하). **3개씩 순차 배치**로 버스트 완화 + **`resumeFromRunId`로 재개**(완료 에이전트는 캐시 즉시 반환, 미완료만 재실행) → 강제종료/부분실패해도 여러 번 재개로 수렴. 누적 window라 즉시 재개는 또 막힘 → 시간 두고.
+- **🆕 워크플로 결과 처리 (2026-06-22)**: StructuredOutput이 `<`/`>`를 `&lt;`/`&gt;`로 직렬화 → **디코딩 필수**(`&amp;`는 마지막). 도형은 **JSON 문자열**로 옴 → `JSON.parse`. 39문항 손 전사 금지 → **스크립트로 일괄**(출력 파일 파싱→디코딩→파싱→개념별 `persistGeneratedProblems`, 기존 source 삭제로 멱등). 적대적 검증이 진짜 오류 잡음(보기 오기·정답 2개 ill-posed·body 불일치).
+
+---
+
+## 9b. 콘텐츠 확보 전략 (2026-06-22 결정) — 실데이터로 루프 채우기
+
+엔진(P0~P5)·UI(②⑤)는 닫혔다. 남은 핵심은 **합성 데이터 → 실제 개념그래프 + 문제 본문**. 3렌즈 병렬 조사 결론:
+
+| 경로 | 결론 | 막힌 곳 |
+|------|------|---------|
+| **개념그래프** (curriculum.ts→LabConcept) | ✅ 가능 | 선수관계·84개월 진도표 정보 없음 → 순서 휴리스틱 |
+| **AI 문제생성** (Gemini Flash, Lab 격리 복제) | ✅ 채택(베이스라인) | 메인 `mathgen.ts`는 타입만·미구현 → Lab이 처음부터 |
+| **기출/교재 임포트** (Question→LabProblem) | ✅ 매핑 깔끔 | 🔴 Question 0개 → PDF추출 선행 필요 |
+
+**결정(사용자):** 문제 본문 = **AI 생성이 베이스라인**. 단 **상위(고난도/킬러) 문제는 순수 AI 생성 품질에 제약** → 향후 **Claude Code 내부 비전 AI + OCR로 실제 교재/기출 인제스트 → 문제 생성 파이프라인**(G:\ 교재 PDF 54종, 비용절감). 메인 Question 뱅크가 비어 직접 임포트는 막혀 비전/OCR이 우회로.
+
+### ✅ 토대 1단계 완료 — 실 개념그래프 (이 PR)
+- `scripts/lab/seed-curriculum.ts` — curriculum.ts → LabConcept/Edge 변환(읽기 전용 재사용, 격리 준수).
+  - **그레인=중단원**(대단원의 subUnits 첫 레이어). 학기 25개(초12·중6·고7) → `monthIdx`=학기서수(1..25), `sessionIdx`=학기 내 누적.
+  - **domain** 키워드 룰 + 대단원 override(소인수분해→수와연산, 집합과명제→문자와식, 분류하기→확률과통계). `기타` 0건.
+  - **edge** = 같은 (학기·domain) 연속 개념만 보수적 체인(교차도메인 거짓엣지 회피).
+  - id = `lab-cur-{band}-{학기2}-{회차2}` 안정적 → idempotent. `--apply` 없으면 dry-run.
+- **적용 결과**: 239개념 + 172엣지(총 244=239실+5합성 / 177=172+5). **무손실 확정**: School 5724→5724, 합성개념 5→5, 데모마스터리 5→5 불변 → 코크핏 데모 루프 무회귀.
+- 도메인 분포: 기하 69·수와연산 66·문자와식 30·확률과통계 28·함수 27·측정 11·규칙성 8.
+
+### ✅ 토대 2단계 완료 — AI 문제생성기 (2026-06-22, #27)
+- `src/lib/lab/ai-client.ts::generateWithGemini` + `src/lib/lab/problem-gen.ts`(Gemini Flash, Lab 격리 복제).
+  - **흐름**: 개념·난이도·유형 → `generateWithGemini`(구조화 JSON) → `normalizeGenerated`(검증·`LabProblem.answer` 매핑) → `GeneratedLabProblem`.
+  - **견고화**: `thinkingBudget=0`(잘림 방지) + `repairJsonString`(LaTeX 백슬래시·줄바꿈·잘린응답 salvage) + 보기 마커 제거 + `\dfrac→\frac`.
+  - **DI**: `setProblemGenerator(stub)`로 결정적 테스트($0). `verify-gen.ts` **7/7 PASS**, `gen-sample.ts` 실 Gemini **6/6**(중1 정비례 보기형·정육면체 단답·고1 다항식 서술형 부분점수 루브릭 등 양호).
+  - **한계**: 기하 도형 참조("그림과 같이") → 비전/OCR 경로 대상.
+
+### 다음 — 토대 3단계 (영속화) + 정밀화
+- **3단계 (LabProblem 영속화)**: `LabProblem`에 `body`/`choices`/`explanation` 컬럼 추가(additive) → 생성문제 DB 저장 + 데모 실학기 repoint + 풀이 UI 실 본문 렌더 → **실 개념+문제로 루프 구동**. (§7 참조.)
+- **상위문제 (비전/OCR)**: 교재/기출 이미지 → 비전 AI/OCR → 문제 구조화 인제스트(별도 설계). 고난도·도형 보강.
+- **선수관계 정밀화(Phase 2)**: 현재 엣지는 학기·도메인 순서 휴리스틱 → 교육학적 선수관계로 정밀화.
 
 ---
 
 ## 9. 한 줄 재개 프롬프트 (새 세션용)
 
-> "수학 랩실 Lab 이어서 개발. **P0~P5 완료 = 5단계 파이프라인 전체 자동화**(채점 객·단+서술형AI·진단BKT·처방smart·보고; `verify-p0~p5.ts` PASS).
-> `docs/lab/HANDOFF.md`와 CLAUDE.md '최우선 하드 경계' 읽고, §7 **②(코크핏 DB연동)** / **⑤(제출 UI·API)** / **⑥(검수 큐)** / **P*b 고도화** 중 선택. 엔진은 닫혔으니 이제 표면(UI)·운영.
-> ✅ db push 안전(단 migrate diff 0건 확인), `migrate reset` 금지. push/PR은 `BIGSHOL/mathlab`(원격 mathlab2는 낡음). 기출분석은 형제 라인 — 절대 무수정(동결)."
+> "수학 랩실 Lab 이어서 개발. **P0~P5 완료 = 5단계 전체 자동화**(`verify-p0~p5.ts` PASS) + **②⑤ 코크핏/제출 UI(#26)** + **콘텐츠 토대 1·2단계 완료(#27)**: 실 개념그래프 239개(`seed-curriculum.ts --apply`, DB 적용됨) + AI 문제생성기(`problem-gen.ts`/`ai-client.ts`, `verify-gen` 7/7·`gen-sample` 실Gemini 6/6).
+> 스택 팁 = `lab/content-foundation`(PR #27). `docs/lab/HANDOFF.md`(특히 §6 새 컴퓨터 셋업·§7 다음·§9b 콘텐츠 전략)와 CLAUDE.md '최우선 하드 경계' 먼저 읽어라.
+> **다음 = 콘텐츠 토대 3단계** = `LabProblem`에 본문/보기/해설 컬럼 추가(additive) + 생성문제 영속 + 데모 실학기 repoint + 풀이 UI 실 본문 렌더 → 실 개념+문제로 루프 구동. 상위문제는 비전/OCR(별도).
+> ✅ db push 안전(단 migrate diff 0건 확인 + dev 끄고 generate), `migrate reset` 금지. push/PR은 `BIGSHOL/mathlab`(원격 mathlab2는 낡음). 기출분석은 형제 라인 — 절대 무수정(동결)."

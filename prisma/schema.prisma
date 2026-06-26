@@ -1079,9 +1079,18 @@ model LabProblem {
   concept     LabConcept     @relation(fields: [conceptId], references: [id])
   type        LabProblemType
   difficulty  Int // 1..5
-  source      String? // 출처 / 생성 모델
+  source      String? // 출처 / 생성 모델 (자유텍스트, 레거시 — 구조화는 아래 provenance 필드)
+  // 🚧 토대3-C: 구조화 provenance (교재 추적). 전부 nullable — 기존행/합성은 백필/ null.
+  publisher   String? // 출판사 (예: 지학사, 동아, 미래엔, 천재)
+  sourceType  String? // 자료 유형/그룹 (예: 소단원 종합문제, 대단원평가, 단원마무리, 형성평가, 소단원학습지, 소단원평가)
+  sourcePage  Int? // 원본 교재 페이지 번호
+  provenance  Json? // 나머지 구조화: { author, grade, bookTitle, daedanwon, jungdanwon, sodanwon, problemNumber, sourceFile }
   isGenerated Boolean        @default(false) // AI 생성 여부
-  bodyRef     String // HWP/이미지/LaTeX 본문 참조 (스토리지 키)
+  bodyRef     String // HWP/이미지/LaTeX 본문 참조 (스토리지 키) — 인라인 생성/인제스트는 'inline' 센티넬
+  body        String? // 🚧 토대3: 인라인 본문 (마크다운+KaTeX). 생성/비전인제스트 문제. null이면 bodyRef(스토리지) 폴백
+  choices     Json? // 🚧 토대3: 객관식 보기 string[] (객관식만, 그 외 null)
+  explanation String? // 🚧 토대3: 해설/풀이 (마크다운+KaTeX)
+  diagram     Json? // 🚧 토대4: 도형 스펙(DiagramSpec, 공유 DiagramRenderer 재사용). 도형 문제만, 그 외 null
   answer      Json // 정답 (객관식 번호 / 단답 / 서술형 채점 루브릭)
   createdAt   DateTime       @default(now())
 
@@ -1090,6 +1099,7 @@ model LabProblem {
   submissionItems   LabSubmissionItem[]
 
   @@index([conceptId, difficulty, type])
+  @@index([publisher, sourceType]) // 교재별 필터/그룹
   @@map("lab_problems")
 }
 

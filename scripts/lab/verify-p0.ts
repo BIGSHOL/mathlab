@@ -24,6 +24,7 @@ function check(label: string, ok: boolean, detail: string) {
 async function clean() {
   // children → parents 순서로 데모 학생의 트랜잭션 행만 제거
   await prisma.labGradedItem.deleteMany({ where: { submission: { studentId: SID } } });
+  await prisma.labSubmissionItem.deleteMany({ where: { submission: { studentId: SID } } });
   await prisma.labSubmission.deleteMany({ where: { studentId: SID } });
   await prisma.labWorksheetProblem.deleteMany({ where: { worksheet: { studentId: SID } } });
   await prisma.labWorksheet.deleteMany({ where: { studentId: SID } });
