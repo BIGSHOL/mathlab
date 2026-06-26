@@ -227,9 +227,23 @@ export function renderLabTriangle(params: TriangleParams): string {
           `<path d="M ${sx.toFixed(1)} ${sy.toFixed(1)} A ${ARC_R} ${ARC_R} 0 0 ${sweep} ${ex.toFixed(1)} ${ey.toFixed(1)}" fill="none" stroke="${COLORS.red}" stroke-width="2"/>`,
         );
         if (val) {
-          parts.push(
-            katexLabel(Vx + (bx / bl) * (ARC_R + 14), Vy + (by / bl) * (ARC_R + 14), val, { fontSize: 11 }),
-          );
+          // 각 라벨 위치 — 좁은 각일수록 이등분선 따라 더 멀리(변과 겹침 방지).
+          //   거리 d에서 각 변까지 여유 ≈ d·sin(반각) → d = clearance/sin(반각)로 일정 여유 확보.
+          //   대변을 넘지 않게 캡. 그래도 너무 좁으면(여유<9px) 각 '바깥'(이등분선 반대편)으로 뺀다.
+          const dot = Math.max(-1, Math.min(1, u1x * u2x + u1y * u2y));
+          const half = Math.acos(dot) / 2; // 반각(rad)
+          const sinH = Math.max(Math.sin(half), 0.12);
+          const oppMid = midpoint(P((i + 1) % 3), P((i + 2) % 3));
+          const depth = dist(P(i), oppMid);
+          const labelDist = Math.min(Math.max(ARC_R + 12, 16 / sinH + 6), depth * 0.62);
+          let lx = Vx + (bx / bl) * labelDist;
+          let ly = Vy + (by / bl) * labelDist;
+          if (labelDist * sinH < 9) {
+            const out = ARC_R + 16;
+            lx = Vx - (bx / bl) * out; // 각 바깥쪽
+            ly = Vy - (by / bl) * out;
+          }
+          parts.push(katexLabel(lx, ly, val, { fontSize: 11 }));
         }
       }
     }

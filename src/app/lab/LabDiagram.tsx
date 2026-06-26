@@ -8,7 +8,7 @@ import { resolveDiagramSpec } from '@/lib/utils/diagram-resolver';
 import { renderDiagram, type DiagramType } from '@/lib/utils/svg-diagrams';
 import type { TriangleParams } from '@/lib/utils/svg-diagrams/types';
 import { renderLabTriangle } from '@/lib/lab/diagram/lab-triangle';
-import { recolorToInk } from '@/lib/lab/diagram/lab-colors';
+import { recolorToInk, LAB_INK } from '@/lib/lab/diagram/lab-colors';
 
 export function LabDiagram({ spec, className }: { spec: unknown; className?: string }) {
   const resolved = resolveDiagramSpec(spec);
@@ -31,6 +31,8 @@ export function LabDiagram({ spec, className }: { spec: unknown; className?: str
       {svgs.map((svg, i) => (
         <div
           key={i}
+          // color → SVG foreignObject KaTeX 라벨이 상속(페이지 블루 무시, 교재 검정)
+          style={{ color: LAB_INK }}
           className="lab-diagram-svg [&_svg]:max-w-full [&_svg]:h-auto"
           dangerouslySetInnerHTML={{ __html: svg }}
         />
