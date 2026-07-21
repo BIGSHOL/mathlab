@@ -11,7 +11,7 @@ import { AnalysisResultView } from '@/components/exam-analysis/AnalysisResultVie
 import { AnalysisCommentTab } from '@/components/exam-analysis/AnalysisCommentTab';
 import { StudyStrategyTab } from '@/components/exam-analysis/StudyStrategyTab';
 import { ExtractToBankModal } from '@/components/exam-analysis/ExtractToBankModal';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import { useSubscription } from '@/components/providers/SubscriptionProvider';
 import type { AnalysisSummary } from '@/lib/exam-analysis/types';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
@@ -322,6 +322,9 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
 
   // AI 총평은 Pro+ 플랜 기능 — free면 잠금 (기존 총평 열람은 허용, 생성/재생성만 차단)
   const commentaryLocked = !features.commentary;
+  // 구독 변경 가능 여부 — /billing이 OWNER 가드라 강사에겐 업그레이드 CTA를 띄우지 않는다(막다른 링크).
+  // 플랜은 지점 단위 단일 구독이라 강사가 개별 업그레이드할 대상 자체가 없음.
+  const canManageBilling = hasRoleClient(user?.role, 'OWNER');
 
   // 데모 계정 체험 게이트 — 분석 잔여/권한, 블로그(네이버 복사) 권한
   const demoAcct = demo && demo.isDemo ? demo : null;
@@ -1027,13 +1030,17 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                         <p className="text-xs font-semibold text-indigo-800">AI 시험 총평은 Pro 플랜 전용입니다</p>
                         <p className="text-[11px] text-indigo-600 mt-1 leading-relaxed">
                           Pro 플랜으로 업그레이드하면 시험 전체에 대한 전문가 수준의 종합 평가와 주변 학교·연도 비교를 사용할 수 있습니다.
+                          {!canManageBilling && ' 플랜은 지점 단위로 적용되며, 변경은 원장님께 문의하세요.'}
                         </p>
-                        <Link
-                          href="/billing"
-                          className="inline-flex items-center gap-1 mt-2 px-2.5 py-1 bg-[linear-gradient(100deg,#4F46E5,#7C3AED)] hover:opacity-90 text-white text-[11px] font-medium rounded-sm transition-opacity"
-                        >
-                          구독 업그레이드
-                        </Link>
+                        {/* 구독 변경은 지점 관리자 전용(/billing 자체가 OWNER 가드) — 강사에겐 막다른 링크라 미노출 */}
+                        {canManageBilling && (
+                          <Link
+                            href="/billing"
+                            className="inline-flex items-center gap-1 mt-2 px-2.5 py-1 bg-[linear-gradient(100deg,#4F46E5,#7C3AED)] hover:opacity-90 text-white text-[11px] font-medium rounded-sm transition-opacity"
+                          >
+                            구독 업그레이드
+                          </Link>
+                        )}
                       </>
                     )}
                   </div>

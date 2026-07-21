@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireTeacher, isResponse, forbidden, hasRole } from '@/lib/api';
+import { requireTeacher, isResponse, hasRole } from '@/lib/api';
 import { getPlanConfig } from '@/lib/billing/plans';
 import { getTenantPlan, getMonthlyQuotaUsed, monthBounds, isBetaAllPro } from '@/lib/billing/guard';
 import { poolUsableBalance } from '@/lib/entitlements/service';
@@ -11,21 +11,28 @@ export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/billing — 현재 테넌트 구독 상태 + 이번 달 사용량.
- * 기본 OWNER+ 전용. 단, **데모 계정(데모 지점 소속 강사)** 은 Pro 기능(총평·블로그·주변비교)을
- * 체험해야 하므로 강사여도 허용한다(데모 지점은 Pro 고정 → features 해금). 비-데모 강사는 기존대로 비노출.
+ * 플랜은 **지점(Tenant) 단위 단일 구독**이라 그 지점 강사 전원이 동일 플랜을 공유한다
+ * (강사별 플랜/권한 배정은 존재하지 않음). 따라서 강사도 소속 지점의 plan/features/usage를
+ * 읽을 수 있어야 클라이언트 게이트(SubscriptionProvider)가 서버 가드(assertPlanFeature)와 일치한다.
+ * 과거 OWNER+ 전용이던 시절, 강사는 403 → 프로바이더가 FREE_FALLBACK으로 떨어져 Pro 지점인데도
+ * AI 총평·주변학교 비교가 잠기는 오잠금이 있었다 (서버는 허용하는데 UI만 잠김).
+ *
+ * 다만 **결제 관련 필드는 여전히 OWNER+ 전용** — 결제 실행(checkout/portal)은 requireOwner로 별도 차단.
  */
 export async function GET() {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
   const demoCtx = await getDemoContext(user);
-  if (!hasRole(user, 'OWNER') && !demoCtx.isDemo) return forbidden();
+  // 결제 정보 노출/관리 권한 (구독·결제는 지점 관리자 전용). 데모 계정은 체험 업그레이드 UI가 필요해 포함.
+  const canManageBilling = hasRole(user, 'OWNER') || demoCtx.isDemo;
 
   const tenantId = user.viewingTenantId ?? user.tenantId;
   const { nextMonthStart } = monthBounds();
   const resetAt = nextMonthStart.toISOString();
-  const configured = isLemonSqueezyConfigured();
+  // 결제 필드는 비-OWNER에게 미노출 (undefined → 프로바이더가 false로 취급)
+  const configured = canManageBilling ? isLemonSqueezyConfigured() : undefined;
   // 키 미설정이어도 데모 업그레이드 허용 시 클라이언트가 [데모 업그레이드] 버튼 활성화 (게이팅 테스트용)
-  const allowDemoUpgrade = process.env.ALLOW_DEMO_UPGRADE === '1';
+  const allowDemoUpgrade = canManageBilling ? process.env.ALLOW_DEMO_UPGRADE === '1' : undefined;
 
   // SUPER_ADMIN 무테넌트(view-as 안 함) — 단일 지점 없음 → 게이팅 면제.
   // 서버 가드(assert*)도 tenantId 없으면 null(면제) 반환하므로, 클라이언트도 전 기능 해금 + 무제한으로
@@ -85,7 +92,7 @@ export async function GET() {
       lemonSqueezyConfigured: configured,
       allowDemoUpgrade,
       beta: isBetaAllPro(),
-      currentPeriodEnd: sub?.currentPeriodEnd?.toISOString() ?? null,
+      currentPeriodEnd: canManageBilling ? (sub?.currentPeriodEnd?.toISOString() ?? null) : undefined,
       demo,
     },
   });

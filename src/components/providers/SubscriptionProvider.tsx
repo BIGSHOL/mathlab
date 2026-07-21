@@ -52,7 +52,13 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const refetch = useCallback(async () => {
     try {
       const res = await fetch('/api/billing', { cache: 'no-store' });
-      if (!res.ok) { setData(FREE_FALLBACK); return; }
+      if (!res.ok) {
+        // ⚠️ free 폴백은 Pro 지점이어도 총평·주변비교를 잠근다. 조용히 떨어지면 원인 추적이 어려워
+        // (실제로 강사 403 → 오잠금 사례가 있었음) 콘솔에 남긴다.
+        console.warn(`[구독] 상태 조회 실패(${res.status}) — 무료 플랜으로 폴백합니다.`);
+        setData(FREE_FALLBACK);
+        return;
+      }
       const j = (await res.json())?.data ?? {};
       setData({
         plan: j.plan ?? 'free',
