@@ -302,9 +302,9 @@ const scopeLabel = examScopeTopics.length ? examScopeTopics.join(', ') : '미지
   - 기존 데이터 마이그레이션 없이 dual-format 운용하면 반드시 정규화 헬퍼 통과
   - 검색 명령: `grep -rn "필드명" src/ --include="*.ts" --include="*.tsx"`
 
-### 12. AI 출력 · 스트리밍 · UI 표시 — 자주 빠지는 함정 7종
+### 12. AI 출력 · 스트리밍 · UI 표시 · 게이팅 — 자주 빠지는 함정 모음
 
-이번 세션(2026-05-12)에서 실제로 발생해 디버깅이 까다로웠던 사례 모음. 같은 함정에 다시 빠지지 않도록 패턴화.
+실제로 발생해 디버깅이 까다로웠던 사례 모음(2026-05-12 시작, 이후 세션에서 계속 추가). 같은 함정에 다시 빠지지 않도록 패턴화. **새 항목은 번호를 이어서 추가할 것** (제목에 개수를 박지 말 것 — 드리프트 원인).
 
 #### 12-1. AI 모델 max_tokens 한도는 한글 본문 기준으로 산정
 
@@ -441,6 +441,28 @@ node -e "fetch('https://dapi.kakao.com/v2/local/search/address.json?query=' + en
 - 최종 1건은 NEIS 데이터 오류로 DB 삭제
 
 **사례**: [scripts/geocode-failed-by-keyword.mjs](scripts/geocode-failed-by-keyword.mjs) — 키워드 fallback + 매칭 결과 검증 출력
+
+#### 12-10. 🔴 클라이언트 폴백이 서버 가드보다 보수적이면 "조용한 오잠금"이 된다 (2026-07-21)
+
+**증상**: 지점(Tenant)이 **Pro인데** 그 지점 소속 **강사 화면에서만** "AI 시험 총평은 Pro 플랜 전용입니다" 배너 + 주변학교·연도 비교 미표시. 원장 화면은 정상.
+
+**원인 체인** (3단계라 한 곳만 보면 안 잡힘):
+1. `GET /api/billing` 이 **OWNER+ 전용**이라 강사는 **403**
+2. `SubscriptionProvider` 가 비-2xx를 **조용히** `FREE_FALLBACK`(`commentary/nearby=false`)으로 처리
+3. → `commentaryLocked = !features.commentary` → 잠김 배너
+
+**핵심**: 서버 가드 `assertPlanFeature` 는 **tenantId 기준**이라 실제로는 **허용** 상태였다. 즉 *서버는 통과시키는데 UI만 잠긴* 불일치. 권한이 없는 게 아니라 **권한 상태를 못 읽어서** 잠긴 것.
+
+**구조적 전제 (오해 주의)**: 플랜은 `TenantSubscription`(**`tenantId @unique`**) — **지점 단위 단일 구독**이다. `userId` 필드가 없고, 사용자별 플랜/기능 배정 배선은 **어디에도 없다**(유일했던 `/api/entitlements/allocate` 는 410 폐지, 그나마 학생 대상). 사용자별 기능 권한은 **데모 계정 전용**(`demoCtx.perms`)뿐. → "원장이 강사에게 개별 업그레이드"라는 개념 자체가 없으며, **지점이 Pro면 그 지점 강사 전원이 Pro** 여야 정상.
+
+**규칙**:
+1. **게이트 상태 조회 API의 권한 ≤ 그 게이트가 보호하는 기능의 권한.** 기능을 쓸 수 있는 사람은 그 기능의 잠금 여부도 읽을 수 있어야 한다. 조회 엔드포인트를 통째로 막지 말고 **민감 필드만 응답에서 가릴 것**(결제 필드는 `canManageBilling` 분기, 실행 경로 `checkout`/`portal` 은 `requireOwner` 유지).
+2. **기능을 잠그는 방향의 fail-safe 폴백은 반드시 로그를 남길 것.** 조용한 강등은 추적 불가 — 이 버그가 오래 안 잡힌 이유. (`console.warn('[구독] 상태 조회 실패(403) — 무료 플랜으로 폴백')`)
+3. **CTA는 실제 도달 가능한 사용자에게만 렌더.** 강사에게 보이던 [구독 업그레이드]→`/billing` 은 그 페이지가 OWNER 가드라 **막다른 링크**였다.
+
+**진단법**: "특정 역할에서만 기능이 잠긴다" 는 보고 → ① 서버 가드의 판정 기준(tenantId? userId?) 확인 ② **그 상태를 제공하는 조회 API의 권한**과 대조 ③ Network 탭에서 해당 API 상태코드 확인(**403이면 폴백 경로 확정**). 플랜 데이터 자체를 의심하기 전에 **전달 경로**를 먼저 볼 것 — DB는 멀쩡했다.
+
+**사례**: `7669375f` fix(billing) — [api/billing/route.ts](src/app/api/billing/route.ts), [AnalysisDetail.tsx](src/app/(teacher)/exam-analysis/AnalysisDetail.tsx), [SubscriptionProvider.tsx](src/components/providers/SubscriptionProvider.tsx). §12-4(클라이언트·서버 정규화 통일)의 **권한 버전** — 같은 데이터를 양쪽이 다르게 판정하면 사용자는 어디를 믿어야 할지 모른다.
 
 ## 프로젝트 구조
 
