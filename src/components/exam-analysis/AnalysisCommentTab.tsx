@@ -124,6 +124,8 @@ function CommentRow({ q, showDiffReason, examPaperId, analysisId, onDifficultyEd
   const curDiff = normalizeDiff(q.difficulty);
   const aiDiff = q.ai_difficulty != null ? normalizeDiff(String(q.ai_difficulty)) : null;
   const wasEdited = aiDiff != null && aiDiff !== curDiff;
+  // 분석 실패 문항은 difficulty=null — 빈 배지가 아니라 '미정' 입력 유도 (문항별 분석 표와 동일)
+  const diffUnset = !q.difficulty;
 
   // 난이도 편집 팝오버 외부 클릭 닫기
   useEffect(() => {
@@ -185,11 +187,15 @@ function CommentRow({ q, showDiffReason, examPaperId, analysisId, onDifficultyEd
             <button
               type="button"
               onClick={() => setEditingDiff((v) => !v)}
-              title="클릭하여 난이도 수정"
-              className="px-1.5 py-0.5 rounded-sm text-[10px] font-bold text-white inline-flex items-center gap-0.5 hover:ring-2 hover:ring-offset-1 hover:ring-slate-300 transition-all"
-              style={{ backgroundColor: DIFFICULTY_COLORS[curDiff] || '#94A3B8' }}
+              title={diffUnset ? '난이도 미인식 — 클릭하여 지정' : '클릭하여 난이도 수정'}
+              className={
+                diffUnset
+                  ? 'px-1.5 py-0.5 rounded-sm text-[10px] font-medium inline-flex items-center gap-0.5 bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100'
+                  : 'px-1.5 py-0.5 rounded-sm text-[10px] font-bold text-white inline-flex items-center gap-0.5 hover:ring-2 hover:ring-offset-1 hover:ring-slate-300 transition-all'
+              }
+              style={diffUnset ? undefined : { backgroundColor: DIFFICULTY_COLORS[curDiff] || '#94A3B8' }}
             >
-              {DIFFICULTY_LABELS[q.difficulty] || curDiff}
+              {diffUnset ? '미정' : (DIFFICULTY_LABELS[q.difficulty] || curDiff)}
             </button>
             {editingDiff && (
               <div className="absolute left-0 top-6 z-50 bg-white rounded-sm shadow-lg border p-1.5 flex items-center gap-1">

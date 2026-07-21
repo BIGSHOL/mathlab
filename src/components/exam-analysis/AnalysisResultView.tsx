@@ -592,9 +592,11 @@ function QRow({ q, isStudent, examPaperId, analysisId, onDifficultyEdit, grade, 
   const confBg = confPct >= 90 ? 'bg-emerald-50' : confPct >= 70 ? 'bg-yellow-50' : 'bg-red-50';
   const qNum = String(q.question_number);
   const numSize = qNum.length > 2 ? 'text-[10px]' : 'text-sm';
-  // AI가 대문자 enum(CALCULATION/UNDERSTANDING/...)으로 반환하므로 소문자 정규화
-  const rawDomain = q.ability_domain || TYPE_TO_DOMAIN[q.question_type] || 'calculation';
-  const domain = String(rawDomain).toLowerCase();
+  // AI가 대문자 enum(CALCULATION/UNDERSTANDING/...)으로 반환하므로 소문자 정규화.
+  // 유형·능력이 **둘 다** 없으면(= 분석 실패 문항) 추론으로 채우지 않는다 — 'calculation' 기본값을
+  // 넣으면 AI가 판정한 것처럼 보여 오히려 교정을 막는다. 빈 값 → EnumCell이 '미정' 편집 버튼 렌더.
+  const rawDomain = q.ability_domain || TYPE_TO_DOMAIN[q.question_type] || (q.question_type ? 'calculation' : '');
+  const domain = String(rawDomain || '').toLowerCase();
   const domainColor = ABILITY_DOMAIN_COLORS[domain] || '#94A3B8';
   // 난이도 보정 여부 — 번호 옆 점(•)으로 표시(배지는 미수정과 동일하게 깔끔히 유지)
   const curDiff = normalizeDifficulty(q.difficulty);
@@ -602,50 +604,22 @@ function QRow({ q, isStudent, examPaperId, analysisId, onDifficultyEdit, grade, 
   const diffEdited = aiDiff != null && aiDiff !== curDiff;
 
   // ── Placeholder 판별 (v1.0.5 갭 자동 보정) ──
-  // confidence=0이고 ai_comment가 ⚠️로 시작하면 자동 분석 실패 placeholder
+  // confidence=0이고 ai_comment가 ⚠️로 시작하면 자동 분석 실패 placeholder.
+  // ⚠️ 이 행도 **정상 행과 동일한 편집 셀**을 써야 한다 — AI가 못 읽어 선생님이 직접 채워야 하는
+  // 문항인데, 예전엔 전 칸을 정적 '—'로 렌더해 유일하게 수정 불가능한 행이었다(2026-07-21 수정).
   const isPlaceholder = q.confidence === 0 && (q.ai_comment?.startsWith('⚠️') ?? false);
-
-  if (isPlaceholder) {
-    const placeholderTooltip = q.ai_comment || '자동 분석 실패';
-    return (
-      <tr className="bg-amber-50 hover:bg-amber-100/60" title={placeholderTooltip}>
-        <td className={`px-3 py-2 font-semibold text-amber-700 whitespace-nowrap ${numSize}`}>
-          <AlertTriangle className="inline w-3 h-3 mr-0.5 -mt-0.5" />
-          {q.question_number}
-        </td>
-        <td className="px-3 py-2 text-center text-slate-300">—</td>
-        <td className="px-3 py-2 text-center text-slate-300">—</td>
-        <td className="px-3 py-2 text-center text-slate-300">—</td>
-        <td className="px-3 py-2 text-xs text-amber-700 italic">분석 실패 — 수동 확인 필요</td>
-        <td className="px-3 py-2 text-center font-medium whitespace-nowrap">
-          {q.points !== null && q.points > 0 ? (
-            <span className="text-amber-700" title="객관식 평균 기준 자동 추정">
-              {q.points}<span className="text-[10px] ml-0.5">*</span>
-            </span>
-          ) : (
-            <span className="text-amber-600 font-bold text-base">?</span>
-          )}
-        </td>
-        {isStudent && <td className="px-3 py-2 text-center text-slate-300">—</td>}
-        <td className="px-3 py-2 text-center">
-          <span
-            className="inline-block px-1.5 py-0.5 rounded text-[11px] font-medium text-amber-700 bg-amber-100 cursor-help"
-            title={q.confidence_reason || placeholderTooltip}
-          >
-            0%
-          </span>
-        </td>
-        <td className="px-3 py-2 text-center">
-          <QuestionFeedbackButton q={q} examPaperId={examPaperId} analysisId={analysisId} />
-        </td>
-      </tr>
-    );
-  }
+  const placeholderTooltip = q.ai_comment || '자동 분석 실패';
+  // 핵심 4개(난이도·유형·능력·단원)가 모두 채워지면 경고 표시 해제 → 정상 행과 동일하게 보인다
+  const unresolved = isPlaceholder && !(q.difficulty && q.question_type && q.ability_domain && q.topic);
 
   return (
-    <tr className="hover:bg-slate-50">
-      <td className={`px-3 py-2 font-semibold text-slate-700 whitespace-nowrap ${numSize}`}>
+    <tr
+      className={unresolved ? 'bg-amber-50 hover:bg-amber-100/60' : 'hover:bg-slate-50'}
+      title={unresolved ? placeholderTooltip : undefined}
+    >
+      <td className={`px-3 py-2 font-semibold whitespace-nowrap ${numSize} ${unresolved ? 'text-amber-700' : 'text-slate-700'}`}>
         <span className="inline-flex items-center gap-1">
+          {unresolved && <AlertTriangle className="w-3 h-3 shrink-0" />}
           {q.question_number}
           {diffEdited && (
             <span
@@ -707,8 +681,10 @@ function QRow({ q, isStudent, examPaperId, analysisId, onDifficultyEdit, grade, 
       )}
       <td className="px-3 py-2 text-center">
         <span
-          className={`inline-block px-1.5 py-0.5 rounded text-[11px] font-medium ${confColor} ${confBg} ${q.confidence_reason ? 'cursor-help' : ''}`}
-          title={q.confidence_reason || undefined}
+          className={`inline-block px-1.5 py-0.5 rounded text-[11px] font-medium ${
+            isPlaceholder ? 'text-amber-700 bg-amber-100 cursor-help' : `${confColor} ${confBg} ${q.confidence_reason ? 'cursor-help' : ''}`
+          }`}
+          title={isPlaceholder ? (q.confidence_reason || placeholderTooltip) : (q.confidence_reason || undefined)}
         >
           {confPct}%
         </span>
@@ -733,6 +709,8 @@ function DifficultyCell({ q, examPaperId, onDifficultyEdit }: {
   const [saving, setSaving] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
   const cur = normalizeDifficulty(q.difficulty);
+  // 분석 실패(placeholder) 문항은 difficulty=null — 빈 배지 대신 '미정' 입력 유도
+  const unset = !q.difficulty;
 
   React.useEffect(() => {
     if (!editing) return;
@@ -764,11 +742,15 @@ function DifficultyCell({ q, examPaperId, onDifficultyEdit }: {
       <button
         type="button"
         onClick={() => setEditing((v) => !v)}
-        title="클릭하여 난이도 수정"
-        className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[11px] font-bold text-white hover:ring-2 hover:ring-offset-1 hover:ring-slate-300 transition-all"
-        style={{ backgroundColor: DIFFICULTY_COLORS[cur] || DIFFICULTY_COLORS[q.difficulty] || '#94A3B8' }}
+        title={unset ? '난이도 미인식 — 클릭하여 지정' : '클릭하여 난이도 수정'}
+        className={
+          unset
+            ? 'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-medium hover:bg-amber-100'
+            : 'inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[11px] font-bold text-white hover:ring-2 hover:ring-offset-1 hover:ring-slate-300 transition-all'
+        }
+        style={unset ? undefined : { backgroundColor: DIFFICULTY_COLORS[cur] || DIFFICULTY_COLORS[q.difficulty] || '#94A3B8' }}
       >
-        {DIFFICULTY_LABELS[q.difficulty] || cur}
+        {unset ? <><AlertTriangle className="w-3 h-3 shrink-0" />미정</> : (DIFFICULTY_LABELS[q.difficulty] || cur)}
       </button>
       {editing && (
         <div className="absolute left-1/2 -translate-x-1/2 top-7 z-50 bg-white rounded-sm shadow-lg border p-1.5 flex items-center gap-1">
@@ -1107,7 +1089,7 @@ function PointsCell({
 
 // ── 유형·능력 인라인 교정 셀 (혼동맵 학습용 ground truth 수집) ──
 function EnumCell({ value, aiValue, options, questionNumber, examPaperId, field, color, onUpdate }: {
-  value: string;
+  value: string | null | undefined; // 분석 실패 문항은 null — '미정'으로 표시하고 편집은 열어둔다
   aiValue?: string | null;
   options: { value: string; label: string }[];
   questionNumber: string | number;
@@ -1119,8 +1101,9 @@ function EnumCell({ value, aiValue, options, questionNumber, examPaperId, field,
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
-  const cur = String(value).toLowerCase();
-  const label = options.find((o) => o.value === cur)?.label || value;
+  const cur = value ? String(value).toLowerCase() : '';
+  const unset = !cur;
+  const label = unset ? '미정' : (options.find((o) => o.value === cur)?.label || value);
   const aiNorm = aiValue != null ? String(aiValue).toLowerCase() : null;
   const edited = aiNorm != null && aiNorm !== cur;
 
@@ -1154,10 +1137,21 @@ function EnumCell({ value, aiValue, options, questionNumber, examPaperId, field,
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        title={edited ? `선생님 수정 (AI 원본: ${options.find((o) => o.value === aiNorm)?.label || aiNorm})` : '클릭하여 수정'}
-        className="text-xs font-medium hover:underline decoration-dotted"
-        style={color ? { color } : undefined}
+        title={
+          unset
+            ? 'AI가 인식하지 못했습니다 — 클릭하여 지정'
+            : edited
+              ? `선생님 수정 (AI 원본: ${options.find((o) => o.value === aiNorm)?.label || aiNorm})`
+              : '클릭하여 수정'
+        }
+        className={
+          unset
+            ? 'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-medium hover:bg-amber-100'
+            : 'text-xs font-medium hover:underline decoration-dotted'
+        }
+        style={!unset && color ? { color } : undefined}
       >
+        {unset && <AlertTriangle className="w-3 h-3 shrink-0" />}
         {label}
       </button>
       {edited && <Pencil className="w-2.5 h-2.5 text-slate-400" />}

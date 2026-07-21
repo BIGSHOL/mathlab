@@ -28,7 +28,14 @@ const patchSchema = z.object({
   confidence: z.number().min(0).max(1).optional(),
   difficulty: z.enum(['1', '2', '3', '4', '5']).optional(),
   points: z.number().min(0).max(100).optional(),
-  question_type: z.enum(['number', 'algebra', 'function', 'geometry', 'statistics']).optional(),
+  // 교육과정 영역 — 표준은 2022 개정 4영역(TYPE_TO_STANDARD 가 정규화하는 canonical 셋).
+  // UI 드롭다운(TYPE_OPTIONS)은 이 4개만 제공한다. 뒤의 레거시 5분류는 과거 분석본에 저장돼 있어
+  // 하위호환으로 열어둔다(읽을 때 TYPE_TO_STANDARD 로 4영역에 매핑됨).
+  // ⚠️ 여기 enum이 드롭다운 옵션보다 좁으면 교정이 400으로 조용히 실패한다 — 반드시 동기화할 것.
+  question_type: z.enum([
+    'number', 'change_relation', 'shape_measure', 'data_possibility',
+    'algebra', 'function', 'geometry', 'statistics',
+  ]).optional(),
   ability_domain: z.enum(['calculation', 'understanding', 'problem_solving', 'reasoning']).optional(),
 });
 
