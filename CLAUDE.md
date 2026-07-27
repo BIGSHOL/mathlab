@@ -464,6 +464,27 @@ node -e "fetch('https://dapi.kakao.com/v2/local/search/address.json?query=' + en
 
 **사례**: `7669375f` fix(billing) — [api/billing/route.ts](src/app/api/billing/route.ts), [AnalysisDetail.tsx](src/app/(teacher)/exam-analysis/AnalysisDetail.tsx), [SubscriptionProvider.tsx](src/components/providers/SubscriptionProvider.tsx). §12-4(클라이언트·서버 정규화 통일)의 **권한 버전** — 같은 데이터를 양쪽이 다르게 판정하면 사용자는 어디를 믿어야 할지 모른다.
 
+#### 12-11. 🔴 파생값끼리 비교하는 가드는 "검증"이 아니라 항등식이다 + 꼬리 누락은 갭 탐색으로 안 잡힌다 (2026-07-27)
+
+**증상**: 정상 시험지(경명여중1)를 재업로드했더니 **마지막 서술형(10점)이 통째로 사라진** 21문항/90점 분석본이 나왔고, 그 상태로 **AI 총평까지 자동 생성**됨. 4일 전 동일 PDF(바이트 동일)는 22문항/100점으로 정상 분석됨 → 입력이 아니라 **AI 비결정성**.
+
+**원인 체인 (4겹이 전부 뚫림)**:
+1. **가드가 항등식**: `readinessCheck`가 `저장된 totalPoints` vs `문항 배점 합계`를 비교하는데, `analyze/route.ts`가 `totalPoints = sumPoints(questions)`로 저장 → **같은 값끼리 비교** → "배점 합계 ≠ 만점" 차단이 **한 번도 발동한 적 없음**. 동일 코드가 `page.tsx` 자동 체인에도 복제돼 있어 총평이 자동 생성됨.
+2. **감지하고도 삼킴**: `validateAndPenalize`는 AI 신고 만점(100) vs 합계(90)를 **정확히 감지**해 신뢰도를 `min(0.1×0.3, 0.2)=0.03` 깎았다(0.95→0.92, 화면의 "신뢰도 92%"가 그 흔적). 그런데 **유일한 결과가 그 3% 강등** — 노출도 차단도 로그도 없음.
+3. **문항 수 검사는 죽은 코드**: `exam_info.total_questions`를 검증 **전에** `questions.length`로 덮어써서 `questions.length !== exam_info.total_questions`가 영구 false.
+4. **`fillNumberGaps`는 중간 구멍만**: 갭 탐색이 `min..max` 사이만 순회 → 마지막 문항이 없으면 max가 줄 뿐 구멍이 안 생김. 게다가 서술형은 번호가 `"서술형2"` 문자열이라 애초에 탐색 대상 제외 — **실제 누락은 대부분 배점 큰 마지막 서술형**.
+
+**규칙**:
+1. **검증 기준은 반드시 산출물 바깥에서 온 값이어야 한다.** 산출물에서 파생된 값끼리 비교하면 어떤 오류도 못 잡는다. 여기선 AI가 시험지에서 읽은 만점/문항수가 **유일한 독립 기준** → `exam_info.declared_total_*`로 보존하고 절대 합계로 덮어쓰지 않는다. 미신고는 `null`(판정 불가)로 두고 **100 같은 기본값으로 채우지 말 것** — "AI가 100이라 했다"와 "몰라서 100으로 뒀다"를 섞으면 오탐/미탐이 동시에 생긴다.
+2. **불일치를 감지했으면 반드시 가시화하라.** 신뢰도 소수점 강등 같은 "조용한 감점"은 삼키는 것과 같다(§12-10과 동일 병증). 감지 → 재시도 → 잔여분 placeholder 삽입 → readiness 차단 → 배너, 까지 가야 사용자가 안다.
+3. **AI 비결정성은 재시도로 복구하라.** 동일 입력에서 결과가 달라지는 게 원인이면 1회 재분석이 가장 직접적인 해법(비용은 실패 시에만 발생). 채택 기준은 `isBetterPass`(완전한 쪽 > 부족분 적은 쪽 > 문항 많은 쪽).
+4. **누락 감지 로직을 프롬프트로도 방어**: AI가 `total_questions/total_points`를 **자기 출력에 맞춰 신고하면 기준 자체가 사라진다** → "시험지에서 직접 읽은 값이며 questions 배열과 어긋나도 그대로 신고하라"를 명시(v1.6.0).
+5. **동일 판정 로직 복제 금지** — `checkAnalysisReadiness`(`readiness.ts`) 단일 소스로 통합. §12-4의 재발 사례.
+
+**진단법**: "가드가 있는데 안 걸렸다" → 가드가 비교하는 **양쪽 값의 출처**를 먼저 확인. 둘 다 같은 산출물에서 파생됐으면 그 가드는 죽어 있다. 신뢰도/점수 같은 파생 지표가 미세하게 낮으면(예: 정확히 0.03) **이미 감지한 코드가 어딘가 있다는 신호** — 페널티 상수를 역산해 찾을 것.
+
+**사례**: [ai-engine.ts](src/lib/exam-analysis/ai-engine.ts)(`assessCompleteness`/`appendMissingTail`/재시도), [readiness.ts](src/lib/exam-analysis/readiness.ts)(공유 게이트), [types.ts](src/lib/exam-analysis/types.ts)(`AnalysisCompleteness`), [prompt-builder.ts](src/lib/exam-analysis/prompt-builder.ts). 회귀 검증: `npm run verify:completeness` (7 시나리오 — 실패 재현·정상·판정불가·배점초과·구버전 소급차단 금지 포함).
+
 ## 프로젝트 구조
 
 ```

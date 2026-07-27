@@ -13,7 +13,8 @@
     "db:backup": "node scripts/backup-db.mjs",
     "db:restore": "node scripts/restore-db.mjs",
     "db:reset": "node scripts/safe-reset.mjs",
-    "calibration:recompute": "tsx scripts/recompute-difficulty-calibration.ts"
+    "calibration:recompute": "tsx scripts/recompute-difficulty-calibration.ts",
+    "verify:completeness": "tsx scripts/verify-completeness.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

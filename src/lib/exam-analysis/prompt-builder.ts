@@ -673,13 +673,27 @@ export class ExamPromptBuilder {
 - 같은 단원이라도 문제에 따라 필요한 능력이 다릅니다. (예: 도형과 측정 영역의 계산 문제 → shape_measure + calculation)
 
 **summary 규칙:**
-- difficulty_distribution: 각 난이도별 문항 수 (합계 = total_questions)
-- type_distribution: 각 유형별 문항 수 (합계 = total_questions)
+- difficulty_distribution: 각 난이도별 문항 수 (합계 = questions 배열 길이)
+- type_distribution: 각 유형별 문항 수 (합계 = questions 배열 길이)
 - average_difficulty: 가장 많은 난이도 (동률이면 낮은 쪽)
 - dominant_type: 가장 많은 유형
 
 **format_distribution 규칙:**
-- objective + short_answer + essay = total_questions`;
+- objective + short_answer + essay = questions 배열 길이
+
+**🚨 exam_info.total_questions / total_points — 시험지에서 "직접 읽은" 값 (최우선 규칙):**
+이 두 값은 **네가 분석한 결과의 합계가 아니라, 시험지 자체에 있는 값**이다. 누락 검증의 유일한 기준이므로 절대 자기 출력에 맞추지 마라.
+- **total_points**: 시험지에 인쇄된 **만점**(대개 100점). 시험지 머리말/안내문의 "100점 만점" 같은 표기를 그대로 읽어라. 네가 매긴 배점들의 합이 아니다.
+  - 만점 표기가 없으면 시험지에 실제로 인쇄된 각 문항 배점의 총합을 세어라.
+- **total_questions**: 시험지에 실제로 인쇄된 **전체 문항 수**. questions 배열의 길이가 아니다.
+  - 객관식 + 단답형 + 서술형을 **모두** 세어라. 서술형이 뒤쪽 별지에 있어도 반드시 포함.
+- 두 값이 네 questions 배열과 어긋나도 **그대로 신고하라.** 시스템이 그 차이로 누락을 감지해 재분석한다.
+  억지로 맞추면 누락이 영원히 은폐된다.
+
+**🚨 문항 누락 금지 — 마지막 문항까지:**
+- 시험지의 **모든** 문항을 questions 배열에 담아라. 특히 **마지막 페이지의 서술형**이 빠지는 사고가 잦다.
+- 출력 전 스스로 점검: ① questions 배열 길이 = total_questions 인가? ② 배점 합계 = total_points 인가?
+  다르면 빠뜨린 문항이 있는 것이니 **시험지를 다시 훑어 채운 뒤** 출력하라.`;
   }
 
   /**

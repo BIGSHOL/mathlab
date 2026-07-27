@@ -16,7 +16,7 @@ import { useSubscription } from '@/components/providers/SubscriptionProvider';
 import type { AnalysisSummary } from '@/lib/exam-analysis/types';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import { DIFFICULTY_BAR_COLORS, isStalePromptVersion, extractPromptVersion, PROMPT_VERSION } from '@/lib/exam-analysis/constants';
-import { sumPoints, roundPoints, formatPoints } from '@/lib/exam-analysis/points';
+import { checkAnalysisReadiness } from '@/lib/exam-analysis/readiness';
 import { koImg } from '@/lib/exam-analysis/section-blocks';
 import { getDemoNaverBlocks } from '@/lib/demo/naver-blocks';
 import { isDemoExamId } from '@/lib/demo/util';
@@ -279,33 +279,14 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
   const confidenceInfo = useMemo(() => getConfidenceInfo(questions), [questions]);
   const diffLevel = useMemo(() => getOverallDifficultyLevel(summary, questions), [summary, questions]);
 
-  // 총평 생성 사전 차단 — 배점 합계가 만점과 다르거나 단원 UNKNOWN 있으면 차단
-  const readinessCheck = useMemo(() => {
-    if (!questions.length) return { ready: false, reasons: ['분석 결과가 없습니다'] };
-    const reasons: string[] = [];
-    // 배점 합계 검증 (totalPoints가 있으면 기준, 없으면 100점 기본)
-    // ⚠️ 소수 배점(4.6 등) 합산 부동소수점 오차 제거 — sumPoints/roundPoints 필수
-    const expectedTotal = totalPoints && totalPoints > 0 ? roundPoints(totalPoints) : 100;
-    const pointsSum = sumPoints(questions.map((q) => q.points));
-    if (pointsSum !== expectedTotal) {
-      const diff = roundPoints(pointsSum - expectedTotal);
-      reasons.push(`배점 합계 ${formatPoints(pointsSum)}점 (만점 ${expectedTotal}점에서 ${diff > 0 ? '+' : ''}${formatPoints(diff)}점 차이)`);
-    }
-    // 미인식 배점 (null/0) 검증
-    const missingPoints = questions.filter((q) => q.points === null || q.points === 0).length;
-    if (missingPoints > 0) {
-      reasons.push(`${missingPoints}개 문항의 배점이 미인식 상태`);
-    }
-    // 단원 UNKNOWN 검증
-    const unknownTopics = questions.filter((q) => {
-      const t = (q.topic || '').trim();
-      return !t || /UNKNOWN|미정|unknown/i.test(t);
-    }).length;
-    if (unknownTopics > 0) {
-      reasons.push(`${unknownTopics}개 문항의 단원이 미분류 상태`);
-    }
-    return { ready: reasons.length === 0, reasons };
-  }, [questions, totalPoints]);
+  // 총평 생성 사전 차단 — 문항 누락 / 배점 합계 불일치 / 배점·단원 미완성
+  // ⚠️ 판정 로직은 page.tsx(자동 체인)와 공유해야 한다 — 복제하면 한쪽만 고쳐져 드리프트한다
+  const readinessCheck = useMemo(
+    () => checkAnalysisReadiness({ questions, totalPoints, summary }),
+    [questions, totalPoints, summary],
+  );
+  // 문항 누락은 전용 배너(재분석 유도)가 따로 안내 — 인라인 편집으로 고칠 수 있는 사유만 남긴다
+  const editableReasons = readinessCheck.fixableReasons;
 
   // 총평 데이터: extensions에서 commentary 에이전트 결과 추출
   const commentaryExt = latestAnalysis?.extensions?.find(e => e.agentType === 'commentary');
@@ -1013,6 +994,37 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                   </div>
                 </div>
               )}
+              {/* ── 문항 누락 감지 — 배점·단원 수정으로 해결되지 않으므로 재분석을 유도 (구버전 다음 우선순위) ── */}
+              {!isStaleAnalysis && !commentaryLoading && readinessCheck.completeness?.status === 'incomplete' && (
+                <div className="mt-3 px-3 py-2.5 bg-rose-50 border border-rose-200 rounded-sm flex items-start gap-2.5">
+                  <span className="text-rose-500 text-sm mt-0.5 shrink-0">&#9888;</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-rose-800">
+                      {readinessCheck.completeness.pointsShortfall < 0
+                        ? '분석된 배점이 시험지 만점과 맞지 않습니다'
+                        : '자동 분석에서 문항이 누락되었습니다'}
+                    </p>
+                    <p className="text-[11px] text-rose-600 mt-1 leading-relaxed">
+                      {readinessCheck.completeness.reason}
+                      {readinessCheck.completeness.retried && ' (재분석 1회 후에도 동일)'}
+                    </p>
+                    {readinessCheck.completeness.filledQuestions > 0 && (
+                      <p className="text-[11px] text-rose-600 mt-1 leading-relaxed">
+                        누락된 자리에 <strong>임시 문항 {readinessCheck.completeness.filledQuestions}개</strong>를 추가해 두었습니다. 시험지와 대조해 직접 채우거나, <strong>재분석</strong>으로 다시 시도하세요.
+                      </p>
+                    )}
+                    <Button
+                      size="sm"
+                      onClick={() => onAnalyze(detail.id)}
+                      disabled={analyzing || analyzeBlocked}
+                      title={analyzeBlockReason}
+                      className="mt-2 bg-rose-600 hover:bg-rose-700 text-white disabled:bg-slate-300"
+                    >
+                      {analyzing ? '재분석 중...' : '재분석'}
+                    </Button>
+                  </div>
+                </div>
+              )}
               {/* ── 플랜 잠김 (AI 총평 = Pro+ 전용) — 구버전이 아닐 때, readiness보다 우선 ── */}
               {!isStaleAnalysis && commentaryLocked && !commentaryLoading && (
                 <div className="mt-3 px-3 py-2.5 bg-indigo-50 border border-indigo-200 rounded-sm flex items-start gap-2.5">
@@ -1047,11 +1059,11 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                 </div>
               )}
               {/* ── 총평 생성 차단 경고 (배점/단원 미완성) — 구버전·플랜잠김이 아닐 때만 ── */}
-              {!isStaleAnalysis && !commentaryLocked && !readinessCheck.ready && !commentaryLoading && (
+              {!isStaleAnalysis && !commentaryLocked && editableReasons.length > 0 && !commentaryLoading && (
                 <div className="mt-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-sm">
                   <p className="text-xs font-semibold text-amber-800 mb-1">총평지 생성 전 다음을 완성하세요:</p>
                   <ul className="text-[11px] text-amber-700 space-y-0.5 list-disc list-inside">
-                    {readinessCheck.reasons.map((r, i) => (
+                    {editableReasons.map((r, i) => (
                       <li key={i}>{r}</li>
                     ))}
                   </ul>

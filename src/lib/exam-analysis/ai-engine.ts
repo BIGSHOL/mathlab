@@ -5,9 +5,10 @@
  */
 
 import { GoogleGenAI } from '@google/genai';
-import type { AnalyzedQuestion, BasicAnalysisResult, ExamPaperClassification } from './types';
+import type { AnalysisCompleteness, AnalyzedQuestion, BasicAnalysisResult, ExamPaperClassification } from './types';
 import { CONFIDENCE_THRESHOLDS, TYPE_TO_DOMAIN, TYPE_TO_STANDARD } from './constants';
 import { applyNumericField, applyCategoricalRemap, NUMERIC_FIELDS, CATEGORICAL_FIELDS, type CalibrationSet } from './calibration';
+import { roundPoints, sumPoints } from './points';
 
 // ── 싱글톤 클라이언트 ──
 
@@ -282,9 +283,10 @@ function validateAndPenalize(result: BasicAnalysisResult): BasicAnalysisResult {
   const questionsWithPoints = questions.filter((q) => q.points !== null && q.points > 0);
   const pointsSum = questionsWithPoints.reduce((sum, q) => sum + (q.points ?? 0), 0);
 
-  // 총점과 합산이 다른 경우 신뢰도 페널티
-  if (exam_info.total_points > 0 && pointsSum > 0 && pointsSum !== exam_info.total_points) {
-    const ratio = Math.abs(pointsSum - exam_info.total_points) / exam_info.total_points;
+  // 총점과 합산이 다른 경우 신뢰도 페널티 (기준 = AI 신고 만점)
+  const declaredPoints = exam_info.declared_total_points ?? null;
+  if (declaredPoints !== null && declaredPoints > 0 && pointsSum > 0 && pointsSum !== declaredPoints) {
+    const ratio = Math.abs(pointsSum - declaredPoints) / declaredPoints;
     const penalty = Math.min(ratio * 0.3, 0.2); // 최대 20% 페널티
 
     result.questions = questions.map((q) => ({
@@ -294,7 +296,11 @@ function validateAndPenalize(result: BasicAnalysisResult): BasicAnalysisResult {
   }
 
   // 문항 수 불일치 페널티
-  if (exam_info.total_questions > 0 && questions.length !== exam_info.total_questions) {
+  // ⚠️ 반드시 declared_total_questions(AI 신고값)와 비교할 것.
+  // exam_info.total_questions 는 emit된 개수라 questions.length 와 항상 같아 검사가 죽는다
+  // (2026-07-25 경명여중1 누락이 잡히지 않은 직접 원인).
+  const declaredQuestions = exam_info.declared_total_questions ?? null;
+  if (declaredQuestions !== null && declaredQuestions > 0 && questions.length !== declaredQuestions) {
     const penalty = 0.1;
     result.questions = result.questions.map((q) => ({
       ...q,
@@ -303,6 +309,71 @@ function validateAndPenalize(result: BasicAnalysisResult): BasicAnalysisResult {
   }
 
   return result;
+}
+
+// ── 누락 감지 ──
+
+/**
+ * AI 신고값(만점/문항수) 대비 실제 산출물을 대조해 누락 여부를 판정.
+ *
+ * 판정 불가 조건을 명확히 분리한다:
+ *  - AI가 만점/문항수를 신고하지 않음 → 'unverifiable' (오탐 방지: 기준이 없으면 판정하지 않음)
+ *  - 배점 미인식(null) 문항 존재 → 합계 부족이 누락 때문인지 판독 실패 때문인지 구분 불가
+ *    → 'unverifiable' (별도로 readiness가 "배점 미인식"으로 차단하므로 이중 경고 방지)
+ */
+export function assessCompleteness(result: BasicAnalysisResult, retried = false): AnalysisCompleteness {
+  const { exam_info, questions } = result;
+  const declaredQuestions = exam_info.declared_total_questions ?? null;
+  const declaredPoints = exam_info.declared_total_points ?? null;
+  const emittedQuestions = questions.length;
+  const pointsSum = sumPoints(questions.map((q) => q.points));
+  const nullPoints = questions.filter((q) => q.points === null || q.points === 0).length;
+
+  const base = {
+    declaredQuestions,
+    declaredPoints,
+    emittedQuestions,
+    pointsSum,
+    filledQuestions: 0,
+    retried,
+  };
+
+  if (declaredQuestions === null && declaredPoints === null) {
+    return { ...base, status: 'unverifiable', pointsShortfall: 0, reason: 'AI가 만점·문항 수를 판독하지 못해 누락 검증을 하지 못했습니다' };
+  }
+
+  const questionShortfall = declaredQuestions !== null && declaredQuestions > emittedQuestions
+    ? declaredQuestions - emittedQuestions
+    : 0;
+  const pointsShortfall = declaredPoints !== null && declaredPoints > 0
+    ? roundPoints(declaredPoints - pointsSum)
+    : 0;
+
+  // 배점 미인식이 섞여 있으면 점수 부족의 원인을 특정할 수 없다 (문항 수 불일치는 여전히 유효)
+  if (questionShortfall === 0 && nullPoints > 0 && pointsShortfall !== 0) {
+    return { ...base, status: 'unverifiable', pointsShortfall, reason: `${nullPoints}개 문항의 배점이 미인식이라 누락 여부를 확정할 수 없습니다` };
+  }
+
+  if (questionShortfall === 0 && Math.abs(pointsShortfall) < 0.5) {
+    return { ...base, status: 'ok', pointsShortfall: 0, reason: '' };
+  }
+
+  const parts: string[] = [];
+  if (questionShortfall > 0) parts.push(`문항 ${questionShortfall}개 누락 (시험지 ${declaredQuestions}문항 중 ${emittedQuestions}문항만 분석)`);
+  if (pointsShortfall > 0) parts.push(`배점 ${roundPoints(pointsShortfall)}점 부족 (만점 ${declaredPoints}점, 분석 합계 ${pointsSum}점)`);
+  if (pointsShortfall < 0) parts.push(`배점 ${roundPoints(-pointsShortfall)}점 초과 (만점 ${declaredPoints}점, 분석 합계 ${pointsSum}점)`);
+
+  return { ...base, status: 'incomplete', pointsShortfall, reason: parts.join(' · ') };
+}
+
+/** 재분석 결과가 1차보다 나은지 — 완전한 쪽 > 부족분이 적은 쪽 > 문항이 많은 쪽 */
+function isBetterPass(next: AnalysisCompleteness, prev: AnalysisCompleteness): boolean {
+  const rank = (c: AnalysisCompleteness) => (c.status === 'ok' ? 0 : c.status === 'unverifiable' ? 1 : 2);
+  if (rank(next) !== rank(prev)) return rank(next) < rank(prev);
+  const gap = (c: AnalysisCompleteness) =>
+    Math.abs(c.pointsShortfall) + Math.max(0, (c.declaredQuestions ?? 0) - c.emittedQuestions) * 10;
+  if (gap(next) !== gap(prev)) return gap(next) < gap(prev);
+  return next.emittedQuestions > prev.emittedQuestions;
 }
 
 /**
@@ -323,6 +394,86 @@ function validateAndPenalize(result: BasicAnalysisResult): BasicAnalysisResult {
  *
  * 주의: 서술형 문항은 question_number가 "서술형1" 같은 문자열이라 갭 감지 대상에서 제외.
  */
+function makePlaceholder(
+  questionNumber: number,
+  points: number | null,
+  confidenceReason: string,
+  comment: string,
+): AnalyzedQuestion {
+  return {
+    question_number: questionNumber,
+    question_format: 'objective',
+    difficulty: '1',
+    difficulty_reason: null,
+    question_type: 'change_relation' as AnalyzedQuestion['question_type'],
+    ability_domain: null,
+    points,
+    topic: null,
+    ai_comment: comment,
+    confidence: 0,
+    confidence_reason: confidenceReason,
+    is_correct: null,
+    student_answer: null,
+    earned_points: null,
+    error_type: null,
+  };
+}
+
+/**
+ * 꼬리 누락 보정 — 마지막 문항(들)이 통째로 빠진 경우 placeholder 를 뒤에 덧붙인다.
+ *
+ * ⚠️ fillNumberGaps 로는 절대 잡히지 않는다: 갭 탐색이 `min..max` 사이만 순회하므로
+ * 마지막 문항이 없으면 max 가 줄어들 뿐 구멍이 생기지 않는다. 서술형은 번호가 "서술형2" 같은
+ * 문자열이라 애초에 갭 탐색 대상도 아니다 — 실제 누락은 대부분 배점이 큰 마지막 서술형이다.
+ *
+ * 누락 개수 판정:
+ *  - AI 신고 문항수 > 분석된 문항수 → 그 차이만큼
+ *  - 문항수는 모르지만 배점만 부족 → 1개로 간주하고 부족분 전액 배정 (개수는 선생님이 조정)
+ */
+export function appendMissingTail(
+  result: BasicAnalysisResult,
+  completeness: AnalysisCompleteness,
+): { result: BasicAnalysisResult; filled: number } {
+  if (completeness.status !== 'incomplete') return { result, filled: 0 };
+
+  const { declaredQuestions, emittedQuestions, pointsShortfall } = completeness;
+  const questionShortfall = declaredQuestions !== null && declaredQuestions > emittedQuestions
+    ? declaredQuestions - emittedQuestions
+    : 0;
+
+  // 배점만 부족하면 최소 1개 누락으로 간주. 배점 초과(음수)는 판독 오류라 보정 대상 아님.
+  const count = questionShortfall > 0 ? questionShortfall : pointsShortfall > 0 ? 1 : 0;
+  if (count === 0) return { result, filled: 0 };
+
+  const perQuestion = pointsShortfall > 0 ? roundPoints(pointsShortfall / count) : null;
+
+  // 번호는 기존 최대 숫자 번호 다음부터 (서술형 문자열 번호는 무시)
+  let maxNum = 0;
+  for (const q of result.questions) {
+    const n = typeof q.question_number === 'string' ? parseInt(q.question_number, 10) : q.question_number;
+    if (!isNaN(n) && n > maxNum) maxNum = n;
+  }
+
+  const placeholders = Array.from({ length: count }, (_, i) => makePlaceholder(
+    maxNum + i + 1,
+    perQuestion,
+    '자동 분석 누락 — 시험지 확인 필요',
+    perQuestion !== null
+      ? `⚠️ 마지막 문항이 자동 분석에서 누락되었습니다. 시험지를 확인하고 문항 정보를 직접 입력해 주세요. (배점은 부족분 ${roundPoints(pointsShortfall)}점 기준 자동 배정)`
+      : '⚠️ 마지막 문항이 자동 분석에서 누락되었습니다. 시험지를 확인하고 배점과 문항 정보를 직접 입력해 주세요.',
+  ));
+
+  // 누락된 건 "꼬리"이므로 정렬하지 않고 맨 뒤에 붙인다 (서술형 뒤가 실제 위치)
+  return {
+    result: {
+      ...result,
+      exam_info: { ...result.exam_info, total_questions: result.questions.length + count },
+      questions: [...result.questions, ...placeholders],
+    },
+    filled: count,
+  };
+}
+
 function fillNumberGaps(result: BasicAnalysisResult): BasicAnalysisResult {
   const { exam_info, questions } = result;
 
@@ -382,25 +533,14 @@ function fillNumberGaps(result: BasicAnalysisResult): BasicAnalysisResult {
   }
 
   // placeholder 생성
-  const placeholders: AnalyzedQuestion[] = missing.map((n) => ({
-    question_number: n,
-    question_format: 'objective',
-    difficulty: '1',
-    difficulty_reason: null,
-    question_type: 'change_relation' as AnalyzedQuestion['question_type'],
-    ability_domain: null,
-    points: perGap,
-    topic: null,
-    ai_comment: perGap !== null
+  const placeholders: AnalyzedQuestion[] = missing.map((n) => makePlaceholder(
+    n,
+    perGap,
+    reason,
+    perGap !== null
       ? '⚠️ 이 문항은 자동 분석에 실패했습니다. 시험지를 확인하고 정보를 직접 입력해 주세요. (점수는 객관식 평균을 기준으로 자동 추정)'
       : '⚠️ 이 문항은 자동 분석에 실패했습니다. 시험지를 확인하고 점수와 정보를 직접 입력해 주세요.',
-    confidence: 0,
-    confidence_reason: reason,
-    is_correct: null,
-    student_answer: null,
-    earned_points: null,
-    error_type: null,
-  }));
+  ));
 
   // 번호 순으로 정렬 (서술형은 뒤에)
   const merged = [...questions, ...placeholders];
@@ -456,21 +596,13 @@ function validateBasicResult(result: unknown): result is BasicAnalysisResult {
  * @param combinedPrompt - 프롬프트 빌더에서 생성한 통합 프롬프트
  * @returns 구조화된 분석 결과
  */
-export async function analyzeExam(
+async function runAnalysisPass(
   images: string[],
   mimeTypeHint: string,
   combinedPrompt: string,
   modelOverride?: string,
   calibrationSet?: CalibrationSet | null,
 ): Promise<BasicAnalysisResult> {
-  if (!images.length) {
-    throw new Error('분석할 이미지가 없습니다');
-  }
-
-  if (!combinedPrompt.trim()) {
-    throw new Error('분석 프롬프트가 비어있습니다');
-  }
-
   try {
     const rawResult = await callGeminiVision<unknown>({
       images,
@@ -561,11 +693,22 @@ export async function analyzeExam(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rawSchoolName = (rawResult.exam_info as any)?.school_name;
 
+    // AI 신고값 보존 — 누락 감지의 유일한 독립 기준. 산출물 합계로 덮어쓰면 검증이 항등식이 된다.
+    // 미신고(0/비수치)는 100 같은 기본값으로 채우지 않고 null 로 둔다 → '판정 불가'와 구분.
+    const declaredQuestions = typeof rawResult.exam_info.total_questions === 'number' && rawResult.exam_info.total_questions > 0
+      ? rawResult.exam_info.total_questions
+      : null;
+    const declaredPoints = typeof rawResult.exam_info.total_points === 'number' && rawResult.exam_info.total_points > 0
+      ? rawResult.exam_info.total_points
+      : null;
+
     const result: BasicAnalysisResult = {
       exam_info: {
         total_questions: questions.length,
-        total_points: rawResult.exam_info.total_points ?? 100,
+        total_points: declaredPoints ?? 100,
         school_name: typeof rawSchoolName === 'string' ? rawSchoolName : null,
+        declared_total_questions: declaredQuestions,
+        declared_total_points: declaredPoints,
         format_distribution: {
           objective: recomputedFormatDist['objective'] || 0,
           short_answer: recomputedFormatDist['short_answer'] || 0,
@@ -583,7 +726,7 @@ export async function analyzeExam(
 
     // 배점 검증 및 페널티 적용
     const validated = validateAndPenalize(result);
-    // 문항 번호 갭 자동 보정 (v1.0.5)
+    // 문항 번호 갭 자동 보정 (v1.0.5) — 중간 구멍만. 꼬리 누락은 analyzeExam 이 처리
     return fillNumberGaps(validated);
   } catch (error) {
     if (error instanceof Error && error.message.includes('AI 분석 결과')) {
@@ -593,6 +736,61 @@ export async function analyzeExam(
       `시험지 분석 실패: ${error instanceof Error ? error.message : String(error)}`
     );
   }
+}
+
+/**
+ * 시험지 분석 (누락 감지 + 1회 재시도 + 잔여 누락 가시화)
+ *
+ * AI 비결정성 대응 3단계 — 정상 시험지에서 문항이 조용히 사라지는 것을 구조적으로 차단:
+ *  1. 1차 분석 후 AI 신고값(만점/문항수)과 대조 → 누락 감지
+ *  2. 누락이면 재분석 1회 (동일 입력에서 결과가 달라지므로 대부분 여기서 복구)
+ *  3. 그래도 남으면 placeholder 문항으로 삽입 + summary.completeness 에 기록
+ *     → readiness 게이트가 총평 생성을 차단하고 화면에 경고를 띄운다
+ */
+export async function analyzeExam(
+  images: string[],
+  mimeTypeHint: string,
+  combinedPrompt: string,
+  modelOverride?: string,
+  calibrationSet?: CalibrationSet | null,
+): Promise<BasicAnalysisResult> {
+  if (!images.length) {
+    throw new Error('분석할 이미지가 없습니다');
+  }
+
+  if (!combinedPrompt.trim()) {
+    throw new Error('분석 프롬프트가 비어있습니다');
+  }
+
+  let result = await runAnalysisPass(images, mimeTypeHint, combinedPrompt, modelOverride, calibrationSet);
+  let completeness = assessCompleteness(result);
+
+  if (completeness.status === 'incomplete') {
+    console.warn(`[기출분석] 문항 누락 감지 — 재분석 1회 시도: ${completeness.reason}`);
+    try {
+      const retryResult = await runAnalysisPass(images, mimeTypeHint, combinedPrompt, modelOverride, calibrationSet);
+      const retryCompleteness = assessCompleteness(retryResult, true);
+      if (isBetterPass(retryCompleteness, completeness)) {
+        console.warn(`[기출분석] 재분석 채택 (${completeness.emittedQuestions}문항/${completeness.pointsSum}점 → ${retryCompleteness.emittedQuestions}문항/${retryCompleteness.pointsSum}점)`);
+        result = retryResult;
+        completeness = retryCompleteness;
+      } else {
+        completeness = { ...completeness, retried: true };
+      }
+    } catch (e) {
+      // 재분석 실패는 치명적이지 않다 — 1차 결과 + 누락 경고로 진행
+      console.error('[기출분석] 재분석 실패 — 1차 결과 유지:', e);
+      completeness = { ...completeness, retried: true };
+    }
+  }
+
+  // 재분석 후에도 남은 누락은 placeholder 로 가시화 (조용히 짧은 분석본을 만들지 않는다)
+  const { result: filled, filled: filledCount } = appendMissingTail(result, completeness);
+
+  return {
+    ...filled,
+    summary: { ...filled.summary, completeness: { ...completeness, filledQuestions: filledCount } },
+  };
 }
 
 /**

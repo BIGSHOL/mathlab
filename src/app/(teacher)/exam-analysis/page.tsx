@@ -11,7 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { hasMinRole } from '@/lib/constants/navigation';
 import type { ExamPaperData } from './types';
 import { AnalysisDetail } from './AnalysisDetail';
-import { sumPoints, roundPoints } from '@/lib/exam-analysis/points';
+import { checkAnalysisReadiness } from '@/lib/exam-analysis/readiness';
 import { NarrowScreenGuard } from '@/components/ui/NarrowScreenGuard';
 import { MathSpinner } from '@/components/ui/MathSpinner';
 import { ProfileMenu } from '@/components/layout/ExamOnlyTopBar';
@@ -220,16 +220,19 @@ export default function ExamAnalysisPage() {
       const analysis = json.data?.analyses?.[0];
       const questions: Array<{ points?: number | null; topic?: string | null }> = analysis?.questions || [];
       if (questions.length === 0) return;
-      const expectedTotal = analysis?.totalPoints && analysis.totalPoints > 0 ? roundPoints(analysis.totalPoints) : 100;
-      const pointsSum = sumPoints(questions.map((q) => q.points)); // 부동소수점 오차 제거
-      const missingPoints = questions.filter((q) => q.points == null || q.points === 0).length;
-      const unknownTopics = questions.filter((q) => {
-        const t = (q.topic || '').trim();
-        return !t || /UNKNOWN|미정|unknown/i.test(t);
-      }).length;
-      const ready = pointsSum === expectedTotal && missingPoints === 0 && unknownTopics === 0;
-      if (!ready) {
-        toast.warning('분석 완료. 배점·단원 확인 후 총평을 생성하세요');
+      // ⚠️ AnalysisDetail 과 반드시 동일 판정 — 공유 헬퍼 사용 (복제 금지)
+      const readiness = checkAnalysisReadiness({
+        questions,
+        totalPoints: analysis?.totalPoints,
+        summary: analysis?.summary,
+      });
+      if (!readiness.ready) {
+        // 문항 누락은 배점·단원 수정으로 해결되지 않는다 → 재분석을 유도하는 별도 문구
+        toast.warning(
+          readiness.completeness?.status === 'incomplete'
+            ? '분석 완료 — 문항 누락이 감지되었습니다. 분석본을 확인하세요'
+            : '분석 완료. 배점·단원 확인 후 총평을 생성하세요',
+        );
         return;
       }
 

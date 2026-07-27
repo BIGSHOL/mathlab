@@ -67,12 +67,35 @@ export interface TypeDistribution {
   data_possibility: number;
 }
 
+// ── 분석 누락 감지 ──
+/**
+ * AI가 시험지에서 읽어낸 만점/문항수(ground truth) 대비 실제 산출물 대조 결과.
+ *
+ * ⚠️ 존재 이유: AI 비결정성으로 정상 시험지에서도 마지막 문항이 통째로 누락될 수 있다
+ * (2026-07-25 경명여중1: 동일 PDF 재분석에서 22문항/100점 → 21문항/90점).
+ * 누락은 번호 갭이 아니라 "꼬리 잘림"으로 나타나므로 번호 시퀀스만으로는 감지 불가 →
+ * AI 신고값을 유일한 독립 기준으로 보존해 대조한다. 절대 산출물 합계로 덮어쓰지 말 것.
+ */
+export interface AnalysisCompleteness {
+  status: 'ok' | 'incomplete' | 'unverifiable';
+  declaredQuestions: number | null;  // AI가 신고한 문항 수 (없으면 null)
+  declaredPoints: number | null;     // AI가 신고한 만점 (없으면 null)
+  emittedQuestions: number;          // 실제 분석된 문항 수 (보정 전)
+  pointsSum: number;                 // 실제 배점 합계 (보정 전)
+  pointsShortfall: number;           // declaredPoints - pointsSum (양수 = 부족)
+  filledQuestions: number;           // 누락 보정으로 삽입한 placeholder 수
+  retried: boolean;                  // 누락 감지로 재분석을 시도했는지
+  reason: string;                    // 사유 (한국어, 사용자 노출)
+}
+
 // ── 분석 요약 ──
 export interface AnalysisSummary {
   difficulty_distribution: DifficultyDistribution;
   type_distribution: TypeDistribution;
   average_difficulty: string;
   dominant_type: string;
+  /** 누락 감지 결과 — 총평 생성 게이트(readiness)의 판정 근거 */
+  completeness?: AnalysisCompleteness | null;
 }
 
 // ── 시험지 정보 ──
@@ -80,6 +103,17 @@ export interface ExamInfo {
   total_questions: number;
   total_points: number;
   school_name?: string | null;
+  /**
+   * AI가 시험지에서 직접 읽어낸 문항 수 — 누락 감지의 기준(ground truth).
+   * ⚠️ emit된 문항 수로 덮어쓰면 문항 수 불일치 검사가 항등식이 되어 죽는다.
+   */
+  declared_total_questions?: number | null;
+  /**
+   * AI가 시험지에서 직접 읽어낸 만점 — 배점 합계 검증의 기준.
+   * null = AI가 신고하지 않음(검증 불가). 기본값 100으로 채워 넣지 말 것 —
+   * "AI가 100점이라 했다"와 "몰라서 100으로 뒀다"를 구분해야 오탐/미탐을 막는다.
+   */
+  declared_total_points?: number | null;
   format_distribution: {
     objective: number;
     short_answer: number;
