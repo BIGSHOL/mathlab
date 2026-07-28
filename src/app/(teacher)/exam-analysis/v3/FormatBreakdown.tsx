@@ -10,9 +10,9 @@ import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { sumPoints, formatPoints } from '@/lib/exam-analysis/points';
 
 const FORMATS = [
-  { key: 'objective' as const, label: '객관식', color: '#121212' },
-  { key: 'short_answer' as const, label: '단답형', color: '#888' },
-  { key: 'essay' as const, label: '서술형', color: '#BF1722' },
+  { key: 'objective' as const, label: '객관식', color: 'var(--v3-ink)' },
+  { key: 'short_answer' as const, label: '단답형', color: 'var(--v3-muted)' },
+  { key: 'essay' as const, label: '서술형', color: 'var(--v3-accent)' },
 ];
 
 export function FormatBreakdown({ questions }: { questions: AnalyzedQuestion[] }) {

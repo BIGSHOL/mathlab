@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Sparkles, Copy } from 'lucide-react';
+import { Sparkles, Copy, SlidersHorizontal, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import { sumPoints } from '@/lib/exam-analysis/points';
 import { V3CommentaryView, type V3Meta, type V3ChartImages } from './v3/V3CommentaryView';
 import { V4CommentaryView, hasV4Data } from './v4/V4CommentaryView';
+import { TemplateEditor, TemplateEditorActions } from './v3/blocks/TemplateEditor';
+import type { CommentaryTemplateConfig } from '@/lib/exam-analysis/blocks/types';
 import { toast } from '@/components/ui/Toast';
 
 /** 사용자 뷰 모드 (localStorage 키) */
@@ -99,6 +101,16 @@ export function CommentarySection({
   const [regenLogs, setRegenLogs] = useState<Array<{ time: string; msg: string }>>([]);
   // V4 토글 비활성 시 항상 V3 강제 (localStorage에 'v4' 남아있어도 무시)
   const effectiveViewMode: ViewMode = V4_TOGGLE_ENABLED ? viewMode : 'v3';
+
+  // ── 모듈식 템플릿 (테마 + 블록 구성) ──
+  // savedTemplate = 서버에 저장된 값 / draftTemplate = 편집 중인 값(미리보기에 즉시 반영).
+  const [templateOpen, setTemplateOpen] = useState(false);
+  const [savedTemplate, setSavedTemplate] = useState<CommentaryTemplateConfig | null>(null);
+  const [draftTemplate, setDraftTemplate] = useState<CommentaryTemplateConfig | null>(null);
+  const [templateSaving, setTemplateSaving] = useState(false);
+  const [templateSource, setTemplateSource] = useState<'analysis' | 'tenant' | 'default' | null>(null);
+  const [saveAsTenantDefault, setSaveAsTenantDefault] = useState(false);
+  const templateDirty = JSON.stringify(draftTemplate) !== JSON.stringify(savedTemplate);
 
   // V4 생성 진행 시간 카운터 + 단계별 자동 로그 (분석 progress 패턴)
   useEffect(() => {
@@ -223,6 +235,70 @@ export function CommentarySection({
   // 재생성/비교옵션 잠금 = 구버전 또는 Pro+ 플랜 미보유 (기존 총평 열람은 항상 허용)
   const lockRegen = isStale || commentaryLocked;
 
+  // 저장된 템플릿 로드 (분석본 개별 → 지점 기본 → 코드 기본, 서버가 해석해서 내려준다).
+  // ⚠️ 의존성은 원시값만 — 객체를 넣으면 매 렌더 새 ref 라 무한 루프가 된다 (CLAUDE.md 개발 워크플로 #4).
+  useEffect(() => {
+    if (!examPaperId || !useV3) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/exam-analysis/${examPaperId}/template`, { cache: 'no-store' });
+        if (!res.ok) {
+          // 조용한 폴백 금지 — 기본 템플릿으로 렌더되지만 원인을 남긴다 (CLAUDE.md §12-10)
+          console.warn(`[총평 템플릿] 조회 실패(${res.status}) — 기본 템플릿으로 표시`);
+          return;
+        }
+        const json = await res.json();
+        const config = json?.data?.config as CommentaryTemplateConfig | undefined;
+        if (!cancelled && config) {
+          setSavedTemplate(config);
+          setDraftTemplate(config);
+          setTemplateSource(json?.data?.source ?? null);
+        }
+      } catch (e) {
+        console.warn('[총평 템플릿] 조회 오류 — 기본 템플릿으로 표시', e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [examPaperId, useV3]);
+
+  const handleSaveTemplate = async () => {
+    if (!examPaperId || !draftTemplate) return;
+    setTemplateSaving(true);
+    try {
+      const res = await fetch(`/api/exam-analysis/${examPaperId}/template`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: draftTemplate, saveAsTenantDefault }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        toast.error(json?.error?.message || '템플릿을 저장하지 못했습니다');
+        return;
+      }
+      const config = json?.data?.config as CommentaryTemplateConfig;
+      setSavedTemplate(config);
+      setDraftTemplate(config);
+      setTemplateSource('analysis');
+      toast.success(
+        json?.data?.savedTenantDefault
+          ? '템플릿을 저장하고 지점 기본값으로 지정했습니다'
+          : '템플릿을 저장했습니다',
+      );
+      setTemplateOpen(false);
+    } catch {
+      toast.error('템플릿을 저장하지 못했습니다');
+    } finally {
+      setTemplateSaving(false);
+    }
+  };
+
+  const handleCancelTemplate = () => {
+    setDraftTemplate(savedTemplate);
+    setSaveAsTenantDefault(false);
+    setTemplateOpen(false);
+  };
+
   // 펼칠 때(구버전 총평) 1회 안내 팝업 — "재분석 안 해도 확인·복사 가능" 명시.
   const staleToastShownRef = useState({ shown: false })[0];
   const handleToggleExpand = (next: boolean) => {
@@ -245,6 +321,21 @@ export function CommentarySection({
     >
       <Copy className="w-3.5 h-3.5 mr-1" />
       {copyingImages ? '복사 중...' : '블로그용 총평지'}
+    </Button>
+  ) : null;
+
+  // 템플릿 편집 토글 — 펼친 V3 화면에서만. examPaperId 없으면 저장 대상이 없어 숨김.
+  const templateBtn = useV3 && examPaperId ? (
+    <Button
+      size="sm"
+      variant="ghost"
+      onClick={() => setTemplateOpen((v) => !v)}
+      title="테마와 블록 구성(순서·표시·표현)을 바꿔 총평 레이아웃을 조합합니다"
+      className={`text-xs h-7 px-2 ${templateOpen ? 'text-primary bg-primary/10' : 'text-slate-400 hover:text-slate-600'}`}
+    >
+      <SlidersHorizontal className="w-3.5 h-3.5 mr-1" />
+      템플릿
+      {templateDirty && <span className="ml-1 w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" title="저장하지 않은 변경" />}
     </Button>
   ) : null;
   // 구버전 안내 — 차단형(rose 대형 배너)에서 슬림 안내(amber 한 줄)로 축소.
@@ -320,6 +411,7 @@ export function CommentarySection({
             )}
           </div>
           <div className="flex items-center gap-2">
+            {templateBtn}
             {copyImagesBtn}
             {!isRegenerating && (
               <Button
@@ -460,7 +552,62 @@ export function CommentarySection({
             </div>
           )
         ) : (
-          <V3CommentaryView commentary={commentary} questions={allQuestions} meta={meta} charts={v3Charts} />
+          <V3CommentaryView commentary={commentary} questions={allQuestions} meta={meta} charts={v3Charts} template={draftTemplate} />
+        )}
+
+        {/* 템플릿 편집 드로어 — position:fixed 라 블로그 캡처에서 자동 제외된다
+            (AnalysisDetail::handleCopyNaverImages 의 filter 가 fixed 요소를 버림).
+            사이드바로 붙이면 .v3 폭이 줄어 캡처 이미지까지 좁아지므로 반드시 떠 있는 형태를 유지할 것. */}
+        {templateOpen && draftTemplate && (
+          <div className="fixed top-0 right-0 z-40 h-dvh w-[360px] bg-white border-l border-slate-200 shadow-[0_0_40px_rgba(0,0,0,0.08)] flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 shrink-0">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">총평 템플릿</h3>
+                <p className="text-[11px] text-slate-400">
+                  {templateSource === 'tenant'
+                    ? '지점 기본값을 사용 중입니다'
+                    : templateSource === 'default'
+                      ? '기본 템플릿을 사용 중입니다'
+                      : '이 분석본 전용 설정입니다'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleCancelTemplate}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                title="닫기"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4">
+              <TemplateEditor
+                value={draftTemplate}
+                onChange={setDraftTemplate}
+                commentary={commentary}
+                questions={allQuestions}
+              />
+            </div>
+
+            <div className="px-4 pb-3 shrink-0">
+              <label className="flex items-center gap-2 text-[11px] text-slate-500 cursor-pointer py-2">
+                <input
+                  type="checkbox"
+                  checked={saveAsTenantDefault}
+                  onChange={(e) => setSaveAsTenantDefault(e.target.checked)}
+                  className="w-3.5 h-3.5 accent-[#135bec] cursor-pointer"
+                />
+                이 구성을 지점 기본값으로 지정 <span className="text-slate-400">(원장 이상)</span>
+              </label>
+              <TemplateEditorActions
+                onSave={handleSaveTemplate}
+                onCancel={handleCancelTemplate}
+                saving={templateSaving}
+                dirty={templateDirty}
+              />
+            </div>
+          </div>
         )}
       </div>
     );

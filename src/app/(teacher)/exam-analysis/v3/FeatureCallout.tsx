@@ -10,12 +10,19 @@
 import { markdownToHighlighted, renderTitleWithEmphasis } from './helpers';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 
-export function FeatureCallout({ callout }: { callout: NonNullable<CommentaryResult['feature_callout']> }) {
+export function FeatureCallout({
+  callout,
+  className,
+}: {
+  callout: NonNullable<CommentaryResult['feature_callout']>;
+  /** variant 수식 클래스 (예: 'v3-feature-banner'). 루트가 이미 .v3-feature 이므로 래핑 금지 — 클래스로만 변형. */
+  className?: string;
+}) {
   // body 가 string 일 가능성 가드 (엣지케이스 #3)
   const bodyArray = Array.isArray(callout.body) ? callout.body : callout.body ? [callout.body] : [];
 
   return (
-    <section className="v3-feature">
+    <section className={className ? `v3-feature ${className}` : 'v3-feature'}>
       <div className="v3-feature-lhs">
         <h2>{renderTitleWithEmphasis(callout.title, 'fc-title')}</h2>
         {bodyArray.map((p, i) => (

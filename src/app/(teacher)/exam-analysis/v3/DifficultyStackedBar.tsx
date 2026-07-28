@@ -65,15 +65,19 @@ export function DifficultyStackedBar({ questions }: { questions: AnalyzedQuestio
               <span className="v3-diff-label">{s.level}단계 · {s.label}</span>
               <span className="v3-diff-detail">{s.count}문항 · {formatPoints(s.points)}점</span>
             </div>
+            {/* 칸 색은 --cell 로만 전달 — 인라인 background 를 박으면 골격별
+                viz 패밀리(점형·테두리형 등)가 덮어쓸 수 없다 (DataBox 와 동일 규약) */}
             <div
               className="v3-diff-count-grid"
-              style={{ gridTemplateColumns: `repeat(${maxCount}, 1fr)` }}
+              style={{
+                gridTemplateColumns: `repeat(${maxCount}, 1fr)`,
+                ['--cell' as string]: s.color,
+              } as React.CSSProperties}
             >
               {Array.from({ length: maxCount }).map((_, idx) => (
                 <div
                   key={idx}
-                  className="v3-diff-count-cell"
-                  style={{ background: idx < s.count ? s.color : '#DDD' }}
+                  className={`v3-diff-count-cell ${idx < s.count ? 'is-on' : 'is-off'}`}
                 />
               ))}
             </div>

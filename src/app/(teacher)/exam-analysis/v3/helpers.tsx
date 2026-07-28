@@ -13,8 +13,12 @@
 import React from 'react';
 import { renderInlineMath } from '../helpers';
 
-// V3 톤 난이도 색상 (녹색→회색→황색→빨강 그라데이션) — 시안 확정
-export const V3_DIFF_COLORS = ['#2F7B3A', '#6F9C76', '#888', '#DA8B2C', '#BF1722'] as const;
+// 난이도 5단계 색 — 테마 램프 CSS 변수 참조 (SoT: commentary-themes.ts `diff`).
+// 기본(.v3 = NYT)은 기존 확정값(녹·옅녹·회·황·빨)과 동일하고, 테마 클래스가 붙으면 램프가 통째로 교체된다.
+// 인라인 style(background/color)로만 쓰이므로 var() 참조가 DOM 렌더·캡처(computed style) 모두 안전.
+export const V3_DIFF_COLORS = [
+  'var(--v3-diff-1)', 'var(--v3-diff-2)', 'var(--v3-diff-3)', 'var(--v3-diff-4)', 'var(--v3-diff-5)',
+] as const;
 export const V3_DIFF_LABELS = ['기본', '표준', '응용', '심화', '최고난도'] as const;
 
 /** 4단계 레거시 → 5단계 정규화 */

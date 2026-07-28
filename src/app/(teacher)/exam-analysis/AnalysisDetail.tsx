@@ -504,8 +504,22 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
     }
     // 자동 펼침 직후 차트 이미지가 미로드면 빈 차트로 캡처됨 → 이미지 로드 완료 대기 (최대 4s)
     await waitForImages(root, 4000);
+    // 서체 로딩 대기 — 레이아웃(골격)마다 다른 웹폰트를 쓰고 preload 를 끈 것도 있어서,
+    // 기다리지 않으면 첫 캡처가 폴백 서체로 찍혀 블로그 이미지의 활자가 화면과 달라진다.
+    // 폰트가 영영 안 오는 경우를 대비해 3초에서 끊는다(폴백 서체로라도 캡처하는 편이 낫다).
+    try {
+      await Promise.race([
+        document.fonts?.ready ?? Promise.resolve(),
+        new Promise((r) => setTimeout(r, 3000)),
+      ]);
+    } catch { /* fonts API 미지원 브라우저 — 그대로 진행 */ }
     const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const summaryOf = (node: HTMLElement): string => {
+      // 1순위: 블록 레지스트리가 심어 둔 의도된 요약 (v3/blocks/registry.tsx::blockAttrs).
+      //   블로그 본문에 실제 텍스트로 들어가 검색 노출을 담당하므로, 블록이 스스로 문장을 정하는 편이 정확하다.
+      const declared = node.dataset?.blockSummary?.trim();
+      if (declared) return koImg(declared).slice(0, 140);
+      // 2순위: DOM 휴리스틱 — 별도 컴포넌트가 루트를 만드는 블록(Q&A·피처 등)용 폴백.
       const heading = (node.querySelector('h1,h2,h3,h4,.v3-section-sub') as HTMLElement | null)?.innerText?.trim() || '';
       const para = (node.querySelector('p') as HTMLElement | null)?.innerText?.trim() || '';
       const firstSentence = para.split(/(?<=[.?!。])\s/)[0] || '';
@@ -518,7 +532,13 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
     //   총평 재생성이나 문항(난이도·배점·유형 등) 수정 시 sig가 바뀌어 자동으로 다시 캡처한다.
     const qSig = (questions as { difficulty?: unknown; points?: unknown; question_type?: unknown; ability_domain?: unknown; is_correct?: unknown }[])
       .map((q) => `${q.difficulty}|${q.points}|${q.question_type ?? ''}|${q.ability_domain ?? ''}|${q.is_correct ?? ''}`).join(';');
-    const sig = `${NAVER_CAPTURE_VERSION}|${hashStr(JSON.stringify(commentary))}|${hashStr(qSig)}`;
+    // 레이아웃 시그니처 — 모듈식 템플릿(테마·블록 순서/표시/variant)이 바뀌면 캡처를 다시 떠야 한다.
+    //   템플릿 state 를 prop 으로 끌어오는 대신 **실제 렌더된 DOM**에서 뽑는다:
+    //   캡처 대상이 곧 이 DOM 이므로 어떤 경로로 바뀌었든 항상 정확하다.
+    const layoutSig = `${root.className}|${Array.from(root.children)
+      .map((el) => el.getAttribute('data-block-id') || el.className)
+      .join(',')}`;
+    const sig = `${NAVER_CAPTURE_VERSION}|${hashStr(JSON.stringify(commentary))}|${hashStr(qSig)}|${hashStr(layoutSig)}`;
     const isDemo = isDemoExamId(detail.id);
     const cacheKey = `mathlab_naver_sec_${detail.id}_std`;
     let blocks: { url: string; summary: string }[] = [];

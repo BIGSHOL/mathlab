@@ -42,20 +42,20 @@ export function KillerMap({ questions }: { questions: AnalyzedQuestion[] }) {
       <div className="v3-killer-grid">
         {list.map((q, i) => {
           let bg = 'transparent';
-          let border = '#121212';
-          let textColor = '#121212';
+          let border = 'var(--v3-ink)';
+          let textColor = 'var(--v3-ink)';
           if (q.diff === '5') {
-            bg = '#BF1722';
-            border = '#BF1722';
-            textColor = '#fff';
+            bg = 'var(--v3-accent)';
+            border = 'var(--v3-accent)';
+            textColor = 'var(--v3-paper)';
           } else if (q.diff === '4') {
-            bg = '#FDE9D7';
-            border = '#DA8B2C';
+            bg = 'var(--v3-conclusion-bg)';
+            border = 'var(--v3-gold)';
           } else if (q.diff === '3') {
-            border = '#888';
+            border = 'var(--v3-muted)';
           }
           if (q.isEssay) {
-            bg = q.diff === '5' ? '#BF1722' : '#FFF8E0';
+            bg = q.diff === '5' ? 'var(--v3-accent)' : 'var(--v3-conclusion-bg)';
           }
           return (
             <div
@@ -72,23 +72,23 @@ export function KillerMap({ questions }: { questions: AnalyzedQuestion[] }) {
       </div>
       <div className="v3-killer-legend">
         <span>
-          <span className="v3-killer-dot" style={{ borderColor: '#121212' }} />
+          <span className="v3-killer-dot" style={{ borderColor: 'var(--v3-ink)' }} />
           기본·표준 (1~2단계)
         </span>
         <span>
-          <span className="v3-killer-dot" style={{ borderColor: '#888' }} />
+          <span className="v3-killer-dot" style={{ borderColor: 'var(--v3-muted)' }} />
           응용 (3단계)
         </span>
         <span>
-          <span className="v3-killer-dot" style={{ background: '#FDE9D7', borderColor: '#DA8B2C' }} />
+          <span className="v3-killer-dot" style={{ background: 'var(--v3-conclusion-bg)', borderColor: 'var(--v3-gold)' }} />
           심화 (4단계)
         </span>
         <span>
-          <span className="v3-killer-dot" style={{ background: '#BF1722', borderColor: '#BF1722' }} />
+          <span className="v3-killer-dot" style={{ background: 'var(--v3-accent)', borderColor: 'var(--v3-accent)' }} />
           최고난도 (5단계)
         </span>
         <span>
-          <span className="v3-killer-dot" style={{ background: '#FFF8E0', borderColor: '#DA8B2C' }} />
+          <span className="v3-killer-dot" style={{ background: 'var(--v3-conclusion-bg)', borderColor: 'var(--v3-gold)' }} />
           ✎ 서술형
         </span>
       </div>

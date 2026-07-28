@@ -19,6 +19,7 @@ import type { CommentaryResult } from './agents/commentary-agent';
 import type { AnalyzedQuestion } from './types';
 import { sumPoints, formatPoints } from './points';
 import { normalizeFeatureCallout } from './feature-callout';
+import { getCommentaryTheme } from './commentary-themes';
 
 export interface NaverV3ChartUrls {
   /** CDN/공개 URL (네이버는 외부 이미지 호스팅 필요) */
@@ -96,8 +97,10 @@ function shortenDataLabel(raw: string): string {
     .trim();
 }
 
-const V3_DIFF_COLORS = ['#2F7B3A', '#6F9C76', '#888', '#DA8B2C', '#BF1722'];
+// 난이도 5색 — 테마 램프(SoT: commentary-themes.ts `diff`)를 hex 리터럴로 직참조.
+// 네이버는 인라인 style만 살아남으므로 CSS 변수 불가 → buildNaverV3Html(themeId)에서 램프를 resolve해 전달.
 const V3_DIFF_LABELS = ['기본', '표준', '응용', '심화', '최고난도'];
+type DiffRamp = readonly [string, string, string, string, string];
 
 // ── LaTeX → 유니코드 변환 (네이버 KaTeX 미렌더링 회피, naver-v4-renderer 차용) ──
 
@@ -152,8 +155,11 @@ export function buildNaverV3Html(args: {
   chartUrls?: NaverV3ChartUrls;
   meta: NaverV3Meta;
   questions: AnalyzedQuestion[];
+  /** 총평 템플릿의 테마 id — 난이도 램프 색 결정. 미지정 시 NYT(기존 동작). 재활성 시 저장된 템플릿 themeId 전달할 것. */
+  themeId?: string;
 }): string {
   const { commentary, chartUrls, meta, questions } = args;
+  const diffRamp = getCommentaryTheme(args.themeId).colors.diff;
   const parts: string[] = [];
 
   parts.push(renderHeader(commentary, meta));
@@ -166,12 +172,12 @@ export function buildNaverV3Html(args: {
   }
 
   // 인포그래픽 2종 (난이도 stacked + 형식 분포) — 시안 검증
-  parts.push(renderDifficultyStackedBar(questions));
+  parts.push(renderDifficultyStackedBar(questions, diffRamp));
   parts.push(renderFormatBreakdown(questions));
 
   // 문항별 난이도·단원 표 (V3 강화 — V4 흡수)
   if (commentary.v4_difficulty_rows?.length) {
-    parts.push(renderQTable(commentary.v4_difficulty_rows));
+    parts.push(renderQTable(commentary.v4_difficulty_rows, diffRamp));
   }
 
   // 이전 시험 비교 콜아웃 (V3 강화 — 비교 데이터 있을 때만)
@@ -291,7 +297,7 @@ function renderFeatureCallout(fc: NonNullable<CommentaryResult['feature_callout'
 // 5카드 가로 배치 패턴으로 전환하면서 NAVER_BAR_WIDTH 사용 안 함 (inline-block span px 너비가 네이버에서 제거됨)
 // td bgcolor + width% 패턴은 콘텐츠 풍부한 카드(형식 분포 패턴)에만 적용
 
-function renderDifficultyStackedBar(questions: AnalyzedQuestion[]): string {
+function renderDifficultyStackedBar(questions: AnalyzedQuestion[], ramp: DiffRamp): string {
   const stats = [1, 2, 3, 4, 5].map((lv) => {
     const lvQ = questions.filter((q) => normDiff(String(q.difficulty)) === String(lv));
     return {
@@ -299,7 +305,7 @@ function renderDifficultyStackedBar(questions: AnalyzedQuestion[]): string {
       label: V3_DIFF_LABELS[lv - 1],
       count: lvQ.length,
       points: sumPoints(lvQ.map((q) => q.points)),
-      color: V3_DIFF_COLORS[lv - 1],
+      color: ramp[lv - 1],
     };
   });
   const totalPts = sumPoints(stats.map((x) => x.points));
@@ -324,7 +330,7 @@ function renderDifficultyStackedBar(questions: AnalyzedQuestion[]): string {
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>${cards}</tr>
     </table>
-    <p style="margin:14px 0 0;font-family:Pretendard,sans-serif;font-size:11px;color:#888;line-height:1.5;">총 ${formatPoints(totalPts)}점 · ${totalCount}문항. 상단 색상 보더 = 난이도(녹→황→빨 그라데이션).</p>
+    <p style="margin:14px 0 0;font-family:Pretendard,sans-serif;font-size:11px;color:#888;line-height:1.5;">총 ${formatPoints(totalPts)}점 · ${totalCount}문항. 상단 색상 보더 = 난이도 단계 색.</p>
   </td></tr>
 </table>`;
 }
@@ -577,7 +583,7 @@ function v3SectionTitle(sub: string, title: string): string {
 }
 
 /** 문항별 난이도·단원 표 — 단일 table, Lv는 색상 굵은 텍스트(네이버 safe) */
-function renderQTable(rows: NonNullable<CommentaryResult['v4_difficulty_rows']>): string {
+function renderQTable(rows: NonNullable<CommentaryResult['v4_difficulty_rows']>, ramp: DiffRamp): string {
   const sorted = [...rows].sort((a, b) => {
     const aStr = String(a.question_number);
     const bStr = String(b.question_number);
@@ -597,7 +603,7 @@ function renderQTable(rows: NonNullable<CommentaryResult['v4_difficulty_rows']>)
   const body = sorted.map((row, i) => {
     const lv = Number(row.difficulty);
     const validLv = lv >= 1 && lv <= 5 ? lv : 3;
-    const color = V3_DIFF_COLORS[validLv - 1];
+    const color = ramp[validLv - 1];
     const label = V3_DIFF_LABELS[validLv - 1];
     const bg = i % 2 === 0 ? '#fff' : '#FAFAFA';
     const sub = row.analysis_short
