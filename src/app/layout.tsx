@@ -32,6 +32,12 @@ const bodoniModa = Bodoni_Moda({
 export const metadata: Metadata = {
   title: 'Injaewon MathLAB - 수학 학습 플랫폼',
   description: '초등~고등 학생들을 위한 게이미피케이션 수학 학습 플랫폼',
+  // 네이버 서치어드바이저 소유확인. 지우면 소유확인이 해제된다.
+  verification: {
+    other: {
+      'naver-site-verification': 'fffd2fb5480df4c43dd010c93be52e86ef162cc9',
+    },
+  },
 };
 
 export default function RootLayout({
