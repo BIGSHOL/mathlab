@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { CreditCard, Check, ShieldAlert, Sparkles } from 'lucide-react';
+import { CreditCard, Check, ShieldAlert, Sparkles, ShoppingCart } from 'lucide-react';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/Button';
@@ -11,6 +12,7 @@ import { toast } from '@/components/ui/Toast';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import { useSubscription, quotaLabel } from '@/components/providers/SubscriptionProvider';
 import { PLAN_CARDS } from '@/lib/constants/billing';
+import { CREDIT_PRODUCTS, paraxCheckoutHref } from '@/lib/constants/parax-products';
 import { getPlanConfig, type PlanId } from '@/lib/billing/plans';
 
 export default function BillingPage() {
@@ -78,7 +80,7 @@ export default function BillingPage() {
   return (
     <PageContainer maxWidth="xl">
       <PageHeader
-        title="구독 / 결제"
+        title="결제"
         subtitle={`현재 플랜: ${currentPlan.label} · 이용권 잔여 ${usage.poolBalance}회`}
         icon={<CreditCard className="w-6 h-6 text-primary" />}
         backHref="/exam-analysis"
@@ -99,7 +101,7 @@ export default function BillingPage() {
         <div className="p-4 border border-slate-200 rounded-sm bg-white">
           <div className="text-sm font-semibold text-slate-700 mb-1">기출분석 이용권 잔여</div>
           <div className="text-2xl font-bold text-slate-800">{usage.poolBalance}<span className="text-sm font-normal text-slate-400 ml-1">회</span></div>
-          <p className="text-[11px] text-slate-400 mt-1">모든 기출분석은 이용권에서 1회씩 차감됩니다. 이용권 페이지에서 충전하세요.</p>
+          <p className="text-[11px] text-slate-400 mt-1">모든 기출분석은 이용권에서 1회씩 차감됩니다. 아래에서 충전할 수 있습니다.</p>
         </div>
         {/* 무료 월 한도 — 이용권이 없을 때의 폴백 */}
         <div className="p-4 border border-slate-200 rounded-sm bg-white">
@@ -124,7 +126,8 @@ export default function BillingPage() {
         </div>
       </div>
 
-      {/* 플랜 카드 */}
+      {/* ── 월 결제 (정기결제) ── */}
+      <h2 className="text-sm font-semibold text-slate-700 mb-2.5">월 결제</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {PLAN_CARDS.map((card) => {
           const isCurrent = card.key === plan;
@@ -170,8 +173,33 @@ export default function BillingPage() {
         })}
       </div>
 
+      <p className="text-[11px] text-slate-400 mt-3 leading-relaxed">
+        매달 자동 결제되며 이용권이 자동 충전됩니다. 언제든 해지할 수 있고, 해지해도 결제한 기간이 끝날 때까지 이용할 수 있습니다.
+      </p>
+
+      {/* ── 횟수 결제 (일회성 이용권) ── */}
+      <h2 className="text-sm font-semibold text-slate-700 mt-8 mb-2.5">횟수 결제</h2>
+      <div className="p-4 border border-slate-200 rounded-sm bg-white">
+        <div className="flex flex-wrap gap-2">
+          {CREDIT_PRODUCTS.map((p) => (
+            <a
+              key={p.id}
+              href={paraxCheckoutHref(p.id)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-sm border border-indigo-200 bg-indigo-50 text-indigo-700 text-sm font-semibold hover:bg-indigo-100 transition-colors"
+            >
+              <ShoppingCart className="w-3.5 h-3.5" /> {p.label}
+            </a>
+          ))}
+        </div>
+        <p className="text-[11px] text-slate-400 mt-2">필요할 때마다 구매하는 일회성 이용권입니다. 가격은 결제 화면에서 확인하세요.</p>
+        <p className="text-[11px] text-slate-500 mt-1">
+          건당 구매한 이용권은 <b>충전일로부터 1년간 유효</b>하고, 구독에 포함된 월 이용권은 <b>해당 결제 주기(당월) 내에만 사용</b>할 수 있으며 미사용분은 이월되지 않습니다.
+          유효기간이 지난 이용권은 자동 소멸되며 환불 대상이 아니고, 현금화·양도·대여할 수 없습니다.
+        </p>
+      </div>
+
       <p className="text-[11px] text-slate-400 mt-6 leading-relaxed">
-        결제는 안전하게 처리됩니다. 구독 취소·변경은 지점 관리자에게 문의하세요.
+        결제는 안전하게 처리됩니다. 충전된 이용권 배정은 <Link href="/entitlements" className="text-indigo-600 hover:text-indigo-700 font-medium">이용권</Link> 페이지에서 할 수 있습니다.
       </p>
     </PageContainer>
   );
