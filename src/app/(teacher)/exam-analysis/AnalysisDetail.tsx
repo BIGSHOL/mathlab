@@ -10,12 +10,13 @@ import { toast } from '@/components/ui/Toast';
 import { AnalysisResultView } from '@/components/exam-analysis/AnalysisResultView';
 import { AnalysisCommentTab } from '@/components/exam-analysis/AnalysisCommentTab';
 import { StudyStrategyTab } from '@/components/exam-analysis/StudyStrategyTab';
+import { EnglishStudyStrategyTab } from '@/components/exam-analysis/EnglishStudyStrategyTab';
 import { ExtractToBankModal } from '@/components/exam-analysis/ExtractToBankModal';
 import { useAuth, hasRoleClient } from '@/hooks/useAuth';
 import { useSubscription } from '@/components/providers/SubscriptionProvider';
 import type { AnalysisSummary } from '@/lib/exam-analysis/types';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
-import { DIFFICULTY_BAR_COLORS, isStalePromptVersion, extractPromptVersion, PROMPT_VERSION } from '@/lib/exam-analysis/constants';
+import { DIFFICULTY_BAR_COLORS, isStalePromptVersion, extractPromptVersion, CURRENT_PROMPT_VERSION } from '@/lib/exam-analysis/constants';
 import { checkAnalysisReadiness } from '@/lib/exam-analysis/readiness';
 import { koImg } from '@/lib/exam-analysis/section-blocks';
 import { getDemoNaverBlocks } from '@/lib/demo/naver-blocks';
@@ -23,6 +24,7 @@ import { isDemoExamId } from '@/lib/demo/util';
 import type { ExamPaperData, AnalysisTab } from './types';
 import { getConfidenceInfo, getOverallDifficultyLevel, getDifficultyBreakdown, interpolateDifficultyColor } from './helpers';
 import { weightedAverageDifficulty } from '@/lib/exam-analysis/difficulty';
+import { ENGLISH_STUDY_AGENT } from '@/lib/exam-analysis/english-study-pack';
 import { DIFF_LEVEL_LABELS } from './constants';
 import { CommentarySection } from './CommentarySection';
 import { AnalyzingProgress } from './AnalyzingProgress';
@@ -183,6 +185,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
 
   // 주변/연도 기출 건수 + 목록 조회 (주변비교는 Pro+ 기능 — free면 호출 단락 + 403 스팸 방지)
   useEffect(() => {
+    if (detail.subject === 'ENGLISH') { setNearbyCount(0); setYearCount(0); setNearbySchools([]); setYears([]); return; }
     if (!features.nearby) { setNearbyCount(0); setYearCount(0); setNearbySchools([]); setYears([]); return; }
     if (!detail.schoolId) { setNearbyCount(0); setYearCount(0); setNearbySchools([]); setYears([]); return; }
     const params = new URLSearchParams({ schoolId: detail.schoolId, grade: detail.grade, examPaperId: detail.id });
@@ -195,7 +198,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
         setYears(Array.isArray(d?.data?.years) ? d.data.years : []);
       })
       .catch(() => { setNearbyCount(0); setYearCount(0); setNearbySchools([]); setYears([]); });
-  }, [detail.schoolId, detail.grade, detail.id, features.nearby]);
+  }, [detail.schoolId, detail.grade, detail.id, detail.subject, features.nearby]);
 
   // hover tooltip 문구
   const nearbyTitle = nearbySchools.length ? `포함 학교: ${nearbySchools.join(', ')}` : '같은 지역 동일 시기 기출이 없습니다';
@@ -291,6 +294,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
   // 총평 데이터: extensions에서 commentary 에이전트 결과 추출
   const commentaryExt = latestAnalysis?.extensions?.find(e => e.agentType === 'commentary');
   const commentary = (commentaryExt?.result as unknown as CommentaryResult) ?? null;
+  const englishStudyExt = latestAnalysis?.extensions?.find((e) => e.agentType === ENGLISH_STUDY_AGENT);
 
   // V3 메타데이터(base scaffolding) 준비 상태 — 분석 직후 백그라운드 생성됨 (DB 전용, 화면 비노출).
   // metadataPending(= gen.phase==='metadata')은 위에서 gen으로부터 파생. 클라이언트 신호로만 판단해
@@ -298,11 +302,13 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
 
   // 구버전(이전 PROMPT_VERSION) 분석본 — 총평을 구버전 분석 데이터로 생성하면 품질 불일치.
   // → 총평 생성/재생성을 사전 차단하고 재분석을 유도한다 (사용자 요청 2026-05-30).
-  const isStaleAnalysis = isStalePromptVersion(latestAnalysis?.modelVersion);
+  const isEnglish = detail.subject === 'ENGLISH';
+  const isStaleAnalysis = isStalePromptVersion(latestAnalysis?.modelVersion, detail.subject);
   const stalePromptLabel = extractPromptVersion(latestAnalysis?.modelVersion);
+  const isSuperAdmin = hasRoleClient(user?.role, 'SUPER_ADMIN');
 
-  // AI 총평은 Pro+ 플랜 기능 — free면 잠금 (기존 총평 열람은 허용, 생성/재생성만 차단)
-  const commentaryLocked = !features.commentary;
+  // AI 총평은 Pro+ 플랜 기능 — free면 잠금. 영어 총평은 아직 일반 계정 준비 중, 슈퍼만 생성.
+  const commentaryLocked = isEnglish ? !isSuperAdmin : !features.commentary;
   // 구독 변경 가능 여부 — /billing이 OWNER 가드라 강사에겐 업그레이드 CTA를 띄우지 않는다(막다른 링크).
   // 플랜은 지점 단위 단일 구독이라 강사가 개별 업그레이드할 대상 자체가 없음.
   const canManageBilling = hasRoleClient(user?.role, 'OWNER');
@@ -319,7 +325,9 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
         : undefined;
   const blogDenied = !!demoAcct && !demoAcct.perms.blog;
   // 총평 잠금 안내 — 데모면 권한 안내, 그 외는 Pro 업그레이드 안내
-  const commentaryLockMsg = demoAcct
+  const commentaryLockMsg = isEnglish
+    ? '영어 총평은 준비 중입니다'
+    : demoAcct
     ? 'AI 총평 체험 권한이 없습니다 — 관리자에게 문의하세요'
     : 'AI 총평은 Pro 플랜 이상에서 재생성할 수 있습니다';
 
@@ -849,7 +857,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
           <div className="flex flex-wrap items-center gap-3">
             {detail.status === 'COMPLETED' && (
               <>
-                {user?.role === 'SUPER_ADMIN' && (
+                {user?.role === 'SUPER_ADMIN' && !isEnglish && (
                   <Button size="sm" variant="secondary" onClick={() => setShowExtractModal(true)}>
                     <Database className="w-4 h-4 mr-1" /> 문제은행에 추가
                   </Button>
@@ -863,7 +871,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                 <Button onClick={() => onAnalyze(detail.id)} disabled={analyzing || analyzeBlocked} title={analyzeBlockReason}>
                   {analyzing ? '분석 중...' : '분석 실행'}
                 </Button>
-                {onToggleAutoCommentary && (
+                {onToggleAutoCommentary && !isEnglish && (
                   <label className="flex items-center gap-1.5 text-[12px] text-slate-600 cursor-pointer select-none" title="분석 완료 후 배점·단원이 정상이면 총평(V3)까지 자동 생성합니다">
                     <input
                       type="checkbox"
@@ -927,7 +935,12 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
 
       {/* ── 분석 중 ── (latestAnalysis가 있으면 stale status 무시 — 분석 결과가 있다 = 완료) */}
       {detail.status === 'ANALYZING' && !latestAnalysis && (
-        <AnalyzingProgress serverStep={detail.analysisStep} />
+        <AnalyzingProgress
+          key={detail.id}
+          serverStep={detail.analysisStep}
+          subject={detail.subject}
+          serverLogs={detail.analysisProgress}
+        />
       )}
 
       {/* ── 분석 완료 ── */}
@@ -997,7 +1010,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                   <span className="text-rose-500 text-sm mt-0.5 shrink-0">&#9888;</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-rose-800">
-                      이전 버전(<b>{stalePromptLabel || '구버전'}</b>)으로 분석된 시험지입니다 — 현재 {PROMPT_VERSION}
+                      이전 버전(<b>{stalePromptLabel || '구버전'}</b>)으로 분석된 시험지입니다 — 현재 {CURRENT_PROMPT_VERSION[detail.subject === 'ENGLISH' ? 'ENGLISH' : 'MATH']}
                     </p>
                     <p className="text-[11px] text-rose-600 mt-1 leading-relaxed">
                       구버전 분석 데이터로 총평을 생성하면 최신 난이도·단원 기준과 어긋납니다. <strong>재분석</strong>으로 최신 분석한 뒤 총평을 생성하세요.
@@ -1050,7 +1063,14 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                 <div className="mt-3 px-3 py-2.5 bg-indigo-50 border border-indigo-200 rounded-sm flex items-start gap-2.5">
                   <Sparkles className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                   <div className="flex-1 min-w-0">
-                    {demoAcct ? (
+                    {isEnglish ? (
+                      <>
+                        <p className="text-xs font-semibold text-indigo-800">영어 총평은 준비 중입니다</p>
+                        <p className="text-[11px] text-indigo-600 mt-1 leading-relaxed">
+                          영어 시험 총평은 아직 열려 있지 않습니다. 문항별 분석은 아래에서 볼 수 있습니다.
+                        </p>
+                      </>
+                    ) : demoAcct ? (
                       <>
                         <p className="text-xs font-semibold text-indigo-800">AI 총평 체험 권한이 없습니다</p>
                         <p className="text-[11px] text-indigo-600 mt-1 leading-relaxed">
@@ -1059,18 +1079,17 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                       </>
                     ) : (
                       <>
-                        <p className="text-xs font-semibold text-indigo-800">AI 시험 총평은 Pro 플랜 전용입니다</p>
+                        <p className="text-xs font-semibold text-indigo-800">AI 시험 총평은 상위 플랜 기능입니다</p>
                         <p className="text-[11px] text-indigo-600 mt-1 leading-relaxed">
-                          Pro 플랜으로 업그레이드하면 시험 전체에 대한 전문가 수준의 종합 평가와 주변 학교·연도 비교를 사용할 수 있습니다.
-                          {!canManageBilling && ' 플랜은 지점 단위로 적용되며, 변경은 원장님께 문의하세요.'}
+                          상위 플랜이면 시험 전체에 대한 종합 평가와 주변 학교·연도 비교를 사용할 수 있습니다.
+                          {!canManageBilling && ' 플랜 변경은 원장님께 문의하세요.'}
                         </p>
-                        {/* 구독 변경은 지점 관리자 전용(/billing 자체가 OWNER 가드) — 강사에겐 막다른 링크라 미노출 */}
                         {canManageBilling && (
                           <Link
                             href="/billing"
                             className="inline-flex items-center gap-1 mt-2 px-2.5 py-1 bg-[linear-gradient(100deg,#4F46E5,#7C3AED)] hover:opacity-90 text-white text-[11px] font-medium rounded-sm transition-opacity"
                           >
-                            구독 업그레이드
+                            구독 관리
                           </Link>
                         )}
                       </>
@@ -1162,7 +1181,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
               onIncludeYearCompareChange={setIncludeYearCompare}
               yearCount={yearCount}
               yearTitle={yearTitle}
-              hasSchool={!!detail.schoolId}
+              hasSchool={!!detail.schoolId && !isEnglish}
               staleVersion={isStaleAnalysis ? (stalePromptLabel || '구버전') : null}
               commentaryLocked={commentaryLocked}
               commentaryLockMsg={commentaryLockMsg}
@@ -1233,6 +1252,7 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
                 setDiffEdits((prev) => ({ ...prev, [String(qNum)]: { difficulty, ai_difficulty: aiDifficulty } }))
               }
               grade={detail.grade}
+              subject={detail.subject}
             />
           )}
           {activeTab === 'comments' && (
@@ -1243,13 +1263,25 @@ export function AnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, autoCo
               onDifficultyEdit={(qNum, difficulty, aiDifficulty) =>
                 setDiffEdits((prev) => ({ ...prev, [String(qNum)]: { difficulty, ai_difficulty: aiDifficulty } }))
               }
+              subject={detail.subject}
             />
           )}
           {activeTab === 'strategy' && (
-            <StudyStrategyTab
-              questions={questions}
-              grade={detail.grade}
-            />
+            isEnglish ? (
+              <EnglishStudyStrategyTab
+                questions={questions}
+                grade={detail.grade}
+                examPaperId={detail.id}
+                analysisId={latestAnalysis?.id}
+                storedPack={englishStudyExt?.result}
+                onStored={onRefresh}
+              />
+            ) : (
+              <StudyStrategyTab
+                questions={questions}
+                grade={detail.grade}
+              />
+            )
           )}
         </>
       )}

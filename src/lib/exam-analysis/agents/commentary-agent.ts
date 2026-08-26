@@ -2171,7 +2171,7 @@ ${unitList}`;
     return map[nd] || map[diff] || diff;
   }
 
-  private typeLabel(type: string): string {
+  private typeLabel(type: string | null | undefined): string {
     const map: Record<string, string> = {
       number: '수와 연산',
       change_relation: '변화와 관계',
@@ -2183,6 +2183,7 @@ ${unitList}`;
       geometry: '도형과 측정',
       statistics: '자료와 가능성',
     };
+    if (!type) return '미분류';
     return map[type] || type;
   }
 

@@ -3,9 +3,21 @@
  * Python Pydantic 모델에서 1:1 이식
  */
 
-import type { ExamQuestionTypeKey, ExamQuestionFormat, GradingStatus, AgentType, AbilityDomainKey } from './constants';
+import type { ExamQuestionFormat, GradingStatus, AgentType } from './constants';
 
 // ── 문항 분석 결과 (기본 분석) ──
+/** 영어 학습 대책 — 시험지에 나온 단어 */
+export interface EnglishKeyTerm {
+  word: string;
+  meaning: string | null;
+}
+
+/** 영어 학습 대책 — 시험지에 나온 구문 */
+export interface EnglishKeyStructure {
+  pattern: string;
+  meaning: string | null;
+}
+
 export interface AnalyzedQuestion {
   id?: string;
   question_number: number | string;
@@ -14,10 +26,10 @@ export interface AnalyzedQuestion {
   difficulty_reason: string | null;
   /** AI 원본 난이도 — 선생님 수정/자동 보정 시 원본 보존(보정 학습용). 미수정이면 undefined */
   ai_difficulty?: string | null;
-  question_type: Lowercase<ExamQuestionTypeKey>;
+  question_type: string | null;
   /** AI 원본 유형 — 교정 시 보존(혼동맵 학습용) */
   ai_question_type?: string | null;
-  ability_domain?: Lowercase<AbilityDomainKey> | null; // 수학 능력 영역
+  ability_domain?: string | null;
   /** AI 원본 능력 — 교정 시 보존(혼동맵 학습용) */
   ai_ability_domain?: string | null;
   points: number | null;
@@ -27,6 +39,10 @@ export interface AnalyzedQuestion {
   /** AI 원본 단원 — 교정 시 보존(혼동맵 학습용) */
   ai_topic?: string | null;
   ai_comment: string | null;       // 2문장, 최대 50자
+  /** 영어 전용 — 해당 문항 지문·선지에 실제로 나온 핵심 단어. 없으면 생략 */
+  key_vocab?: EnglishKeyTerm[] | null;
+  /** 영어 전용 — 해당 문항에 실제로 나온 문법 구문. 없으면 생략 */
+  key_structures?: EnglishKeyStructure[] | null;
   confidence: number;              // 0.0-1.0
   confidence_reason: string | null;
   // 수동 수정 추적 (난이도/단원 등 선생님 교정)
@@ -59,13 +75,8 @@ export interface DifficultyDistribution {
   [key: string]: number | undefined;
 }
 
-// ── 유형 분포 (4대 교육과정 영역, 2022 개정) ──
-export interface TypeDistribution {
-  number: number;
-  change_relation: number;
-  shape_measure: number;
-  data_possibility: number;
-}
+// ── 유형 분포 (수학 4영역 또는 영어 6유형 — 엔진이 questions 에서 재계산) ──
+export type TypeDistribution = Record<string, number>;
 
 // ── 분석 누락 감지 ──
 /**
@@ -309,6 +320,7 @@ export interface AgentResult {
 
 // ── 프롬프트 빌더 ──
 export interface ExamContext {
+  /** 'MATH' | 'ENGLISH' — 한글 라벨을 넣지 말 것 */
   subject: string;
   grade_level: string | null;
   unit: string | null;

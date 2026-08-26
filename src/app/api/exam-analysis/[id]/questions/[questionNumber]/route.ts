@@ -32,12 +32,19 @@ const patchSchema = z.object({
   // UI 드롭다운(TYPE_OPTIONS)은 이 4개만 제공한다. 뒤의 레거시 5분류는 과거 분석본에 저장돼 있어
   // 하위호환으로 열어둔다(읽을 때 TYPE_TO_STANDARD 로 4영역에 매핑됨).
   // ⚠️ 여기 enum이 드롭다운 옵션보다 좁으면 교정이 400으로 조용히 실패한다 — 반드시 동기화할 것.
-  question_type: z.enum([
-    'number', 'change_relation', 'shape_measure', 'data_possibility',
-    'algebra', 'function', 'geometry', 'statistics',
-  ]).optional(),
-  ability_domain: z.enum(['calculation', 'understanding', 'problem_solving', 'reasoning']).optional(),
+  question_type: z.string().max(40).optional(),
+  ability_domain: z.string().max(40).optional(),
 });
+
+const MATH_TYPES = new Set([
+  'number', 'change_relation', 'shape_measure', 'data_possibility',
+  'algebra', 'function', 'geometry', 'statistics',
+]);
+const ENGLISH_TYPES = new Set([
+  'grammar', 'vocabulary', 'reading', 'listening', 'writing', 'communication',
+]);
+const MATH_ABILITIES = new Set(['calculation', 'understanding', 'problem_solving', 'reasoning']);
+const ENGLISH_ABILITIES = new Set(['accuracy', 'understanding', 'reasoning', 'expression']);
 
 export async function PATCH(request: NextRequest, { params }: Params) {
   const user = await requireTeacher();
@@ -54,9 +61,23 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const tenantWhere = await getExamScope(user);
     const examPaper = await prisma.examPaper.findFirst({
       where: { id, ...tenantWhere },
-      select: { id: true, tenantId: true, grade: true },
+      select: { id: true, tenantId: true, grade: true, subject: true },
     });
     if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
+
+    const isEnglish = examPaper.subject === 'ENGLISH';
+    if (parsed.data.question_type) {
+      const allowed = isEnglish ? ENGLISH_TYPES : MATH_TYPES;
+      if (!allowed.has(parsed.data.question_type)) {
+        return badRequest('입력값이 올바르지 않습니다');
+      }
+    }
+    if (parsed.data.ability_domain) {
+      const allowed = isEnglish ? ENGLISH_ABILITIES : MATH_ABILITIES;
+      if (!allowed.has(parsed.data.ability_domain)) {
+        return badRequest('입력값이 올바르지 않습니다');
+      }
+    }
 
     // 최신 분석 가져오기 (여러 분석 있을 수 있음 — 가장 최근 것만 수정)
     const latest = await prisma.examAnalysis.findFirst({

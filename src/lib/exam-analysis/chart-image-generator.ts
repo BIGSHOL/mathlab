@@ -323,7 +323,7 @@ export function generateAbilityRadarSvg(
   const counts: Record<string, number> = {};
   for (const key of abilityKeys) counts[key] = 0;
   for (const q of questions) {
-    const rawDomain = q.ability_domain || TYPE_TO_DOMAIN[q.question_type] || 'calculation';
+    const rawDomain = q.ability_domain || (q.question_type ? TYPE_TO_DOMAIN[q.question_type] : undefined) || 'calculation';
     const domain = String(rawDomain).toLowerCase().replace(/-/g, '_');
     if (domain in counts) counts[domain]++;
   }
@@ -535,7 +535,7 @@ export function generateCombinedRadarSvg(
   const counts: Record<string, number> = {};
   for (const key of abilityKeys) counts[key] = 0;
   for (const q of questions) {
-    const rawDomain = q.ability_domain || TYPE_TO_DOMAIN[q.question_type] || 'calculation';
+    const rawDomain = q.ability_domain || (q.question_type ? TYPE_TO_DOMAIN[q.question_type] : undefined) || 'calculation';
     const domain = String(rawDomain).toLowerCase().replace(/-/g, '_');
     if (domain in counts) counts[domain]++;
   }

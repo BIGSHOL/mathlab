@@ -14,7 +14,10 @@
     "db:restore": "node scripts/restore-db.mjs",
     "db:reset": "node scripts/safe-reset.mjs",
     "calibration:recompute": "tsx scripts/recompute-difficulty-calibration.ts",
-    "verify:completeness": "tsx scripts/verify-completeness.ts"
+    "verify:completeness": "tsx scripts/verify-completeness.ts",
+    "verify:english": "tsx scripts/verify-english-taxonomy.ts",
+    "generate:english-textbooks": "tsx scripts/generate-english-textbooks.ts",
+    "verify:cli-llm": "tsx scripts/verify-cli-llm.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

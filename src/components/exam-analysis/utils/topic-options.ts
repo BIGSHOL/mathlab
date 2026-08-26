@@ -13,6 +13,8 @@ import {
   HIGH_SCHOOL_CURRICULUM,
   ELEMENTARY_SCHOOL_CURRICULUM,
 } from '@/lib/constants/curriculum';
+import { getEnglishTopicOptionsGrouped } from '@/lib/exam-analysis/english-topics';
+import { toExamSubjectKey } from '@/lib/exam-analysis/subject';
 
 interface CurrUnit {
   name: string;
@@ -24,8 +26,12 @@ interface CurrUnit {
  * 그룹 옵션(getTopicOptionsGrouped)의 value를 평탄화 — 단일 소스로 포맷 정합 보장
  * (AI 저장 포맷 "과목 > 대단원 > 중단원" 과 동일).
  */
-export function getTopicOptionsByGrade(grade: string | null | undefined): string[] {
-  return Array.from(new Set(getTopicOptionsGrouped(grade).flatMap((g) => g.options.map((o) => o.value))));
+export function getTopicOptionsByGrade(
+  grade: string | null | undefined,
+  subject: string | null | undefined = 'MATH',
+  opts?: { includeListening?: boolean },
+): string[] {
+  return Array.from(new Set(getTopicOptionsGrouped(grade, subject, opts).flatMap((g) => g.options.map((o) => o.value))));
 }
 
 // ── 그룹화된 옵션 ──
@@ -71,9 +77,17 @@ function unitsToGroups(units: CurrUnit[], labelPrefix: string, valuePrefix: stri
  * 학년별 단원 옵션을 대단원 그룹으로 반환 — select + optgroup에 활용.
  * 정렬: 1학기 → 2학기, 각 학기 내에서 curriculum.ts 정의 순서.
  */
-export function getTopicOptionsGrouped(grade: string | null | undefined): TopicOptionGroup[] {
+export function getTopicOptionsGrouped(
+  grade: string | null | undefined,
+  subject: string | null | undefined = 'MATH',
+  opts?: { includeListening?: boolean },
+): TopicOptionGroup[] {
   if (!grade) return [];
   const g = grade.trim();
+
+  if (toExamSubjectKey(subject) === 'ENGLISH') {
+    return getEnglishTopicOptionsGrouped(g, opts);
+  }
 
   // 중학교
   const middleMatch = g.match(/중\s*(\d)/);

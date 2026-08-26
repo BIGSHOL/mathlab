@@ -4,25 +4,9 @@
  * ai-engine.ts의 Gemini Vision 호출 인프라를 재사용
  */
 
-import { GoogleGenAI } from '@google/genai';
 import type { MarkDetectionResult, GradingMark } from './types';
 import { CONFIDENCE_THRESHOLDS } from './constants';
-import { parseJsonResponse, getMimeType } from './ai-engine';
-
-// ── 싱글톤 클라이언트 (ai-engine.ts와 동일 인스턴스 공유를 위해 별도 관리) ──
-
-let _client: GoogleGenAI | null = null;
-
-function getClient(): GoogleGenAI {
-  if (!_client) {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new Error('GEMINI_API_KEY 환경변수가 설정되지 않았습니다');
-    _client = new GoogleGenAI({ apiKey });
-  }
-  return _client;
-}
-
-const MODEL = 'gemini-3.5-flash';
+import { callExamVision } from './ai-engine';
 
 // ── 채점 마크 감지 프롬프트 ──
 
@@ -182,16 +166,6 @@ function inferGradingStatus(
   return 'partially_graded';
 }
 
-// ── base64 data URI prefix 제거 ──
-
-function stripDataUriPrefix(base64: string): string {
-  const commaIdx = base64.indexOf(',');
-  if (commaIdx !== -1 && base64.startsWith('data:')) {
-    return base64.slice(commaIdx + 1);
-  }
-  return base64;
-}
-
 // ── 빈 결과 생성 ──
 
 function createEmptyResult(notes: string[]): MarkDetectionResult {
@@ -219,40 +193,14 @@ export async function detectGradingMarks(
     return createEmptyResult(['이미지 데이터가 비어있습니다']);
   }
 
-  const client = getClient();
-  const mimeType = getMimeType(imageBase64);
-  const data = stripDataUriPrefix(imageBase64);
-
   try {
-    const response = await client.models.generateContent({
-      model: MODEL,
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            {
-              inlineData: {
-                mimeType,
-                data,
-              },
-            },
-            { text: MARK_DETECTION_PROMPT },
-          ],
-        },
-      ],
-      config: {
-        temperature: 0.05,
-        responseMimeType: 'application/json',
-      },
+    const rawResult = await callExamVision<Record<string, unknown>>({
+      images: [imageBase64],
+      prompt: MARK_DETECTION_PROMPT,
+      jsonMode: true,
+      temperature: 0.05,
+      mimeTypeHint: _mimeTypeHint,
     });
-
-    const responseText = response.text;
-    if (!responseText) {
-      // 현재는 DB 저장만 되지만 향후 렌더 경로 대비 모델명 비노출(규칙 #0)
-      return createEmptyResult(['AI 응답이 비어있습니다']);
-    }
-
-    const rawResult = parseJsonResponse<Record<string, unknown>>(responseText);
 
     // marks 배열 파싱 및 검증
     const rawMarks = Array.isArray(rawResult.marks) ? rawResult.marks : [];

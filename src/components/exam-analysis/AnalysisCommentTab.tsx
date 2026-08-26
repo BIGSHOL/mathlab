@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { DIFFICULTY_COLORS, DIFFICULTY_LEGACY_MAP, QUESTION_TYPE_COLORS, TYPE_TO_DOMAIN, ABILITY_DOMAIN_LABELS, ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
+import { DIFFICULTY_COLORS, DIFFICULTY_LEGACY_MAP, QUESTION_TYPE_COLORS, TYPE_TO_DOMAIN, ABILITY_DOMAIN_LABELS, ABILITY_DOMAIN_COLORS, ENGLISH_TYPE_TO_DOMAIN, ENGLISH_ABILITY_DOMAIN_LABELS, ENGLISH_ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
+import { questionTypeLabel, toExamSubjectKey } from '@/lib/exam-analysis/subject';
 import { renderInlineMath } from '@/lib/exam-analysis/rendering';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { Pencil } from 'lucide-react';
@@ -14,6 +15,7 @@ interface AnalysisCommentTabProps {
   analysisId?: string;
   /** 난이도 인라인 교정 콜백 — 부모가 종합 난이도를 즉시 재계산하도록 */
   onDifficultyEdit?: (questionNumber: number | string, difficulty: string, aiDifficulty: string | null) => void;
+  subject?: string;
 }
 
 const DIFFICULTY_LABELS: Record<string, string> = {
@@ -25,13 +27,8 @@ function normalizeDiff(key: string): string {
   return DIFFICULTY_LEGACY_MAP[key] || key;
 }
 
-const TYPE_LABELS: Record<string, string> = {
-  number: '수와 연산', change_relation: '변화와 관계', shape_measure: '도형과 측정', data_possibility: '자료와 가능성',
-  // 옛 키 호환(과거 분석본)
-  algebra: '변화와 관계', function: '변화와 관계', geometry: '도형과 측정', statistics: '자료와 가능성',
-};
-
-export function AnalysisCommentTab({ questions, examPaperId, analysisId, onDifficultyEdit }: AnalysisCommentTabProps) {
+export function AnalysisCommentTab({ questions, examPaperId, analysisId, onDifficultyEdit, subject = 'MATH' }: AnalysisCommentTabProps) {
+  const isEnglish = toExamSubjectKey(subject) === 'ENGLISH';
   const [showDiffReason, setShowDiffReason] = useState(false);
 
   const sortedQuestions = useMemo(() =>
@@ -95,6 +92,7 @@ export function AnalysisCommentTab({ questions, examPaperId, analysisId, onDiffi
               examPaperId={examPaperId}
               analysisId={analysisId}
               onDifficultyEdit={onDifficultyEdit}
+              subject={subject}
             />
           ))}
         </div>
@@ -109,13 +107,15 @@ export function AnalysisCommentTab({ questions, examPaperId, analysisId, onDiffi
 
 // ── 개별 행 ──
 
-function CommentRow({ q, showDiffReason, examPaperId, analysisId, onDifficultyEdit }: {
+function CommentRow({ q, showDiffReason, examPaperId, analysisId, onDifficultyEdit, subject = 'MATH' }: {
   q: AnalyzedQuestion;
   showDiffReason: boolean;
   examPaperId?: string;
   analysisId?: string;
   onDifficultyEdit?: (questionNumber: number | string, difficulty: string, aiDifficulty: string | null) => void;
+  subject?: string;
 }) {
+  const isEnglish = toExamSubjectKey(subject) === 'ENGLISH';
   // 난이도 인라인 편집
   const [editingDiff, setEditingDiff] = useState(false);
   const [savingDiff, setSavingDiff] = useState(false);
@@ -223,20 +223,26 @@ function CommentRow({ q, showDiffReason, examPaperId, analysisId, onDifficultyEd
             return (
               <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-semibold"
                 style={{ backgroundColor: `${typeColor}20`, color: typeColor }}>
-                {TYPE_LABELS[type] || q.question_type}
+                {questionTypeLabel(type, subject) || q.question_type}
               </span>
             );
           })()}
           <span className="text-[10px] text-slate-300 mx-0.5">·</span>
           <span className="text-[10px] font-medium text-slate-500">능력</span>
           {(() => {
-            const rawDomain = q.ability_domain || TYPE_TO_DOMAIN[q.question_type] || 'calculation';
+            const fallback = q.question_type
+              ? (isEnglish ? ENGLISH_TYPE_TO_DOMAIN[q.question_type] : TYPE_TO_DOMAIN[q.question_type])
+              : undefined;
+            const rawDomain = q.ability_domain || fallback || (isEnglish ? 'accuracy' : 'calculation');
             const domain = String(rawDomain).toLowerCase();
-            const domainColor = ABILITY_DOMAIN_COLORS[domain] || '#94A3B8';
+            const domainColor = (isEnglish ? ENGLISH_ABILITY_DOMAIN_COLORS : ABILITY_DOMAIN_COLORS)[domain] || '#94A3B8';
+            const domainLabel = isEnglish
+              ? (ENGLISH_ABILITY_DOMAIN_LABELS[domain] || ABILITY_DOMAIN_LABELS[domain] || domain)
+              : (ABILITY_DOMAIN_LABELS[domain] || domain);
             return (
               <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-semibold"
                 style={{ backgroundColor: `${domainColor}20`, color: domainColor }}>
-                {ABILITY_DOMAIN_LABELS[domain] || domain}
+                {domainLabel}
               </span>
             );
           })()}

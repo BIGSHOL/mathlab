@@ -11,6 +11,8 @@ export interface ExamPaperData {
   examScope?: unknown;
   status: 'PENDING' | 'ANALYZING' | 'COMPLETED' | 'FAILED';
   analysisStep: number;
+  /** 실제 파이프라인 로그 (분석 중에만 GET 이 실어 줌) */
+  analysisProgress?: Array<{ time: string; msg: string }>;
   schoolName: string | null;
   schoolId: string | null;
   school: { id: string; name: string; district: string } | null;

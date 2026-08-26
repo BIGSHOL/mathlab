@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse, badRequest, notFound } from '@/lib/api';
 import { getExamScope } from '@/lib/demo/accounts';
 import { examPaperUpdateSchema } from '@/lib/exam-analysis/schemas';
+import { getAnalysisProgress } from '@/lib/exam-analysis/analysis-progress';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -33,7 +34,12 @@ export async function GET(_request: NextRequest, { params }: Params) {
 
     if (!examPaper) return notFound('시험지를 찾을 수 없습니다');
 
-    return NextResponse.json({ data: examPaper });
+    return NextResponse.json({
+      data: {
+        ...examPaper,
+        analysisProgress: examPaper.status === 'ANALYZING' ? getAnalysisProgress(id) : [],
+      },
+    });
   } catch (error) {
     console.error('[exam-analysis GET] 상세 조회 에러:', error);
     return NextResponse.json(

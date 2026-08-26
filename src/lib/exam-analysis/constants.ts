@@ -29,15 +29,35 @@ export const PROMPT_VERSION = 'v1.6.0';
  * modelVersion 포맷: "gemini-X.Y-z / prompt vA.B.C"
  * 구버전이면 총평 생성을 사전 차단 → 재분석 유도 (구버전 분석 데이터로 총평 생성 방지).
  */
-export function isStalePromptVersion(modelVersion: string | null | undefined): boolean {
+// en-v1.1.0: 교과서 레슨 출제범위
+// en-v1.2.0: 내신 지필고사는 원칙적으로 듣기 없음. 대화문은 communication/reading.
+// en-v1.3.0: 문항 코멘트는 쉬운 한국어 (호혜적·함축·환언·스캔 품질 등 금지)
+// key_vocab / key_structures 는 영어 학습 대책용 선택 필드. 분류 규칙 변경이 아니라서 버전은 유지.
+export const ENGLISH_PROMPT_VERSION = 'en-v1.3.0';
+
+export const CURRENT_PROMPT_VERSION = {
+  MATH: PROMPT_VERSION,
+  ENGLISH: ENGLISH_PROMPT_VERSION,
+} as const;
+
+/**
+ * 분석본의 프롬프트 버전이 해당 과목의 현재 버전과 다른지(=구버전) 검사.
+ * modelVersion 포맷: "gemini-X.Y-z / prompt vA.B.C" 또는 "… / prompt en-vA.B.C"
+ * 영어 분석본이 수학 v1.6.0 미포함이라 구버전으로 오판되지 않게 subject 를 넘긴다.
+ */
+export function isStalePromptVersion(
+  modelVersion: string | null | undefined,
+  subject: 'MATH' | 'ENGLISH' = 'MATH',
+): boolean {
   if (!modelVersion) return false;
-  return !modelVersion.includes(`prompt ${PROMPT_VERSION}`);
+  const expected = CURRENT_PROMPT_VERSION[subject] ?? PROMPT_VERSION;
+  return !modelVersion.includes(`prompt ${expected}`);
 }
 
-/** modelVersion에서 prompt vX.Y.Z만 추출 (예: ".../ prompt v1.0.5" → "v1.0.5"). 없으면 null. */
+/** modelVersion에서 prompt 버전만 추출 (예: "…/ prompt v1.0.5" → "v1.0.5", "…/ prompt en-v1.0.0" → "en-v1.0.0"). */
 export function extractPromptVersion(modelVersion: string | null | undefined): string | null {
   if (!modelVersion) return null;
-  const m = modelVersion.match(/prompt\s+(v[\d.]+)/i);
+  const m = modelVersion.match(/prompt\s+((?:en-)?v[\d.]+)/i);
   return m ? m[1] : null;
 }
 
@@ -168,6 +188,117 @@ export const ABILITY_DOMAIN_COLORS: Record<string, string> = {
   problem_solving: ABILITY_DOMAINS.PROBLEM_SOLVING.color,
   reasoning: ABILITY_DOMAINS.REASONING.color,
 };
+
+// ── 영어 문항 유형 (내신 6유형) — 수학 TYPE_TO_STANDARD 와 분리 ──
+export const ENGLISH_QUESTION_TYPES = {
+  GRAMMAR: { label: '어법', labelEn: 'Grammar' },
+  VOCABULARY: { label: '어휘', labelEn: 'Vocabulary' },
+  READING: { label: '독해', labelEn: 'Reading' },
+  LISTENING: { label: '듣기', labelEn: 'Listening' },
+  WRITING: { label: '서술·영작', labelEn: 'Writing' },
+  COMMUNICATION: { label: '의사소통', labelEn: 'Communication' },
+} as const;
+
+export const ENGLISH_QUESTION_TYPE_KEYS = [
+  'grammar', 'vocabulary', 'reading', 'listening', 'writing', 'communication',
+] as const;
+
+/** 내신 화면 기본 축 — 듣기는 문항이 있을 때만 범례/레이더에 합류. */
+export const ENGLISH_NAESIN_TYPE_KEYS = ENGLISH_QUESTION_TYPE_KEYS.filter(
+  (k) => k !== 'listening',
+) as Exclude<(typeof ENGLISH_QUESTION_TYPE_KEYS)[number], 'listening'>[];
+
+export type EnglishQuestionTypeKey = (typeof ENGLISH_QUESTION_TYPE_KEYS)[number];
+
+export const ENGLISH_QUESTION_TYPE_LABELS: Record<string, string> = {
+  grammar: '어법',
+  vocabulary: '어휘',
+  reading: '독해',
+  listening: '듣기',
+  writing: '서술·영작',
+  communication: '의사소통',
+};
+
+/** Gemini raw → 영어 6유형. 수학 TYPE_TO_STANDARD 에 영어 키를 넣지 말 것. */
+export const ENGLISH_TYPE_TO_STANDARD: Record<string, string> = {
+  grammar: 'grammar',
+  어법: 'grammar',
+  문법: 'grammar',
+  grammar_error: 'grammar',
+  vocabulary: 'vocabulary',
+  vocab: 'vocabulary',
+  어휘: 'vocabulary',
+  reading: 'reading',
+  독해: 'reading',
+  reading_main_idea: 'reading',
+  reading_detail: 'reading',
+  reading_inference: 'reading',
+  listening: 'listening',
+  듣기: 'listening',
+  writing: 'writing',
+  영작: 'writing',
+  서술형: 'writing',
+  sentence_completion: 'writing',
+  communication: 'communication',
+  회화: 'communication',
+  대화: 'communication',
+  conversation: 'communication',
+};
+
+export const ENGLISH_ABILITY_DOMAINS = {
+  ACCURACY: { label: '정확성', labelEn: 'Accuracy', color: '#3B82F6' },
+  UNDERSTANDING: { label: '이해력', labelEn: 'Understanding', color: '#10B981' },
+  REASONING: { label: '추론력', labelEn: 'Reasoning', color: '#8B5CF6' },
+  EXPRESSION: { label: '표현력', labelEn: 'Expression', color: '#F97316' },
+} as const;
+
+export const ENGLISH_ABILITY_KEYS = ['accuracy', 'understanding', 'reasoning', 'expression'] as const;
+
+export const ENGLISH_ABILITY_DOMAIN_LABELS: Record<string, string> = {
+  accuracy: '정확성',
+  understanding: '이해력',
+  reasoning: '추론력',
+  expression: '표현력',
+};
+
+export const ENGLISH_ABILITY_DOMAIN_COLORS: Record<string, string> = {
+  accuracy: ENGLISH_ABILITY_DOMAINS.ACCURACY.color,
+  understanding: ENGLISH_ABILITY_DOMAINS.UNDERSTANDING.color,
+  reasoning: ENGLISH_ABILITY_DOMAINS.REASONING.color,
+  expression: ENGLISH_ABILITY_DOMAINS.EXPRESSION.color,
+};
+
+export const ENGLISH_TYPE_TO_DOMAIN: Record<string, string> = {
+  grammar: 'accuracy',
+  vocabulary: 'accuracy',
+  reading: 'understanding',
+  listening: 'understanding',
+  writing: 'expression',
+  communication: 'expression',
+};
+
+/** 프롬프트용 6유형 표. prompt-config-english 의 ENGLISH_EVALUATION_SYSTEM(내신 이원화)과 다름. */
+export const ENGLISH_TYPE_TAXONOMY = `📊 **영어 평가 유형 분류:**
+
+| 유형 | 설명 |
+|------|------|
+| grammar | 어법/문법 |
+| vocabulary | 어휘 |
+| reading | 독해 |
+| listening | 듣기 (내신 지필고사는 원칙적으로 없음. 듣기 전용 문항이 명시된 경우만) |
+| writing | 서술형/영작 |
+| communication | 의사소통 |
+
+**내신 분류 규칙:** 지필고사에는 원칙적으로 듣기 문항이 없다. 대화문·회화 지문은 communication 또는 reading. listening은 시험지에 듣기 전용 문항이 명시된 경우에만.`;
+
+export const ENGLISH_QUESTION_STRATEGIES_INLINE = `📝 **영어 문항 유형별 분석 전략:**
+
+- **어법(grammar)**: 밑줄 친 부분의 문법 요소 파악, 준동사/시제/수일치 등
+- **어휘(vocabulary)**: 문맥상 의미 파악, 동의어/반의어
+- **독해(reading)**: 주제, 요지, 제목, 빈칸, 순서, 삽입, 요약
+- **듣기(listening)**: 내신 지필고사는 원칙적으로 없음. 듣기 전용 문항이 명시된 경우만
+- **서술형(writing)**: 문장 완성, 영작, 조건 영작
+- **의사소통(communication)**: 대화문·상황 표현 (듣기가 아님)`;
 
 // ── 문항 형식 ──
 export const EXAM_QUESTION_FORMATS = ['objective', 'short_answer', 'essay'] as const;

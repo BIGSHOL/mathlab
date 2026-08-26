@@ -4,6 +4,14 @@ import { useState, useCallback, useEffect, useRef, type MouseEvent as ReactMouse
 import { Button } from '@/components/ui/Button';
 import { ExamPaperList } from '@/components/exam-analysis/ExamPaperList';
 import { ExamUploadForm } from '@/components/exam-analysis/ExamUploadForm';
+import { DevCliPicker } from '@/components/exam-analysis/DevCliPicker';
+import {
+  ANALYZE_STUCK_BUFFER_MS,
+  CLI_ANALYZE_TIMEOUT_MS,
+  EXAM_CLI_STORAGE_KEY,
+  GEMINI_ANALYZE_TIMEOUT_MS,
+  parseCliKind,
+} from '@/lib/exam-analysis/cli-kind';
 import { toast } from '@/components/ui/Toast';
 import Link from 'next/link';
 import { Plus, X, Settings2, PanelLeftClose, PanelLeftOpen, FileSearch, Search, Gauge } from 'lucide-react';
@@ -19,6 +27,22 @@ import { useSubscription, quotaExceeded } from '@/components/providers/Subscript
 
 // 기출 분석 필터 — 학년 옵션 (DB grade는 한글 문자열로 저장: 중1/고1 등)
 const GRADE_OPTIONS = ['중1', '중2', '중3', '고1', '고2', '고3'];
+
+function buildAnalyzeRequest(): RequestInit {
+  if (process.env.NODE_ENV !== 'development') return { method: 'POST' };
+  let cli: ReturnType<typeof parseCliKind>;
+  try {
+    cli = parseCliKind(window.localStorage.getItem(EXAM_CLI_STORAGE_KEY));
+  } catch {
+    cli = undefined;
+  }
+  if (!cli) return { method: 'POST' };
+  return {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ cli }),
+  };
+}
 
 export default function ExamAnalysisPage() {
   const { user } = useAuth();
@@ -168,21 +192,24 @@ export default function ExamAnalysisPage() {
       return;
     }
 
-    const MAX_POLLS = 60; // 최대 3분 (3초 × 60)
+    // 개발 CLI 는 최대 22분, 운영 Gemini 는 3분 + 버퍼. 서버 stuck 복구와 맞춤.
+    const pollMs = 3000;
+    const capMs = process.env.NODE_ENV === 'development'
+      ? CLI_ANALYZE_TIMEOUT_MS + ANALYZE_STUCK_BUFFER_MS
+      : GEMINI_ANALYZE_TIMEOUT_MS + ANALYZE_STUCK_BUFFER_MS;
+    const maxPolls = Math.ceil(capMs / pollMs);
     const interval = setInterval(() => {
       pollCountRef.current++;
-      if (pollCountRef.current > MAX_POLLS) {
+      if (pollCountRef.current > maxPolls) {
         clearInterval(interval);
-        // 클라이언트에서 강제로 ANALYZING → FAILED 전환 (무한폴링 방지)
-        setItems(prev => prev.map(item =>
-          item.status === 'ANALYZING' ? { ...item, status: 'FAILED' as const } : item
-        ));
-        toast.warning('분석 시간이 초과되었습니다. 다시 시도해주세요.');
+        fetchListRef.current(true);
+        if (selectedIdRef.current) fetchDetailRef.current(selectedIdRef.current);
+        toast.warning('분석이 시간 제한에 가깝습니다. 상태를 다시 확인합니다.');
         return;
       }
       fetchListRef.current(true);
       if (selectedIdRef.current) fetchDetailRef.current(selectedIdRef.current);
-    }, 3000);
+    }, pollMs);
 
     return () => clearInterval(interval);
   }, [hasAnalyzing]);
@@ -303,7 +330,7 @@ export default function ExamAnalysisPage() {
       item.id === id ? { ...item, status: 'ANALYZING' as const } : item
     ));
     // 체크박스 ON 이거나, 기존에 총평이 있던 분석본의 재분석이면 → 총평까지 자동 V3 재생성
-    const willChain = autoCommentary || hadCommentary;
+    const willChain = target?.subject !== 'ENGLISH' && (autoCommentary || hadCommentary);
     toast.info(
       willChain
         ? (hadCommentary && !autoCommentary
@@ -313,7 +340,7 @@ export default function ExamAnalysisPage() {
     );
     try {
       // fire-and-forget: 서버에 분석 요청, 완료 시 갱신
-      fetch(`/api/exam-analysis/${id}/analyze`, { method: 'POST' })
+      fetch(`/api/exam-analysis/${id}/analyze`, buildAnalyzeRequest())
         .then(async (res) => {
           if (!res.ok) {
             const err = await res.json().catch(() => null);
@@ -425,6 +452,7 @@ export default function ExamAnalysisPage() {
             </Button>
           </div>
         )}
+        {!leftPanelCollapsed && <DevCliPicker />}
         {/* 검색 + 필터 (학년 / 상태) — API route.ts가 grade/status/search 지원 */}
         {!leftPanelCollapsed && (
           <div className="px-2 py-2 border-b border-slate-200 space-y-2 shrink-0">

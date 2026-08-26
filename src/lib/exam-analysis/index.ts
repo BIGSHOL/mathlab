@@ -7,6 +7,11 @@ export * from './constants';
 export * from './types';
 export * from './schemas';
 export { ExamPromptBuilder } from './prompt-builder';
-export { analyzeExam } from './ai-engine';
+export { analyzeExam, callExamVision } from './ai-engine';
 export { detectGradingMarks } from './mark-detector';
+export {
+  isCliExamAnalysisEnabled,
+  getExamAnalysisTimeoutMs,
+  getExamAnalysisModelVersion,
+} from './cli-llm';
 export { crossValidateGrading, consolidateDominantTopic } from './cross-validator';

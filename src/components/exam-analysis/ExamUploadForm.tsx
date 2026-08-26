@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 import { Upload, X, FileText, Image as ImageIcon, Sparkles, AlertTriangle } from 'lucide-react';
 import { ExamScopeSelector } from './ExamScopeSelector';
+import { getEnglishCoursesForGrade, getEnglishTextbooks } from '@/lib/exam-analysis/english-textbooks';
 
 interface ExamUploadFormProps {
   onSuccess: (newId: string) => void;
@@ -53,11 +54,13 @@ const SUBJECT_ABBR_MAP: Record<string, { subject: 'MATH' | 'ENGLISH'; category: 
   '수상': { subject: 'MATH', category: '' },
   '수하': { subject: 'MATH', category: '' },
   // 영어
-  '영1': { subject: 'ENGLISH', category: '' },
-  '영2': { subject: 'ENGLISH', category: '' },
+  '영1': { subject: 'ENGLISH', category: '영어Ⅰ' },
+  '영2': { subject: 'ENGLISH', category: '영어Ⅱ' },
+  '공영1': { subject: 'ENGLISH', category: '공통영어1' },
+  '공영2': { subject: 'ENGLISH', category: '공통영어2' },
   '영어': { subject: 'ENGLISH', category: '' },
-  '독작': { subject: 'ENGLISH', category: '' },
-  '회화': { subject: 'ENGLISH', category: '' },
+  '독작': { subject: 'ENGLISH', category: '영어 독해와 작문' },
+  '회화': { subject: 'ENGLISH', category: '실생활 영어 회화' },
 };
 
 interface ParsedMetadata {
@@ -321,6 +324,7 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
   const [examSemester, setExamSemester] = useState(''); // "1" | "2"
   const [examCategory, setExamCategory] = useState(''); // MIDTERM | FINAL | MOCK | OTHER
   const [examScope, setExamScope] = useState<string[]>([]);
+  const [textbookId, setTextbookId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [autoFilled, setAutoFilled] = useState(false);
@@ -337,8 +341,13 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
     if (!title) setTitle(parsed.title);
     if (parsed.school) setSchoolName(parsed.school);
     if (parsed.grade) setGrade(parsed.grade);
-    // 과목은 수학 단일 고정 — 파일명이 영어로 감지돼도 무시
-    setSubject('MATH');
+    if (parsed.subject) {
+      setSubject(parsed.subject);
+      if (parsed.subject === 'ENGLISH') {
+        setExamScope([]);
+        setTextbookId('');
+      }
+    }
     if (parsed.category) setCategory(parsed.category);
     if (parsed.examYear) setExamYear(parsed.examYear);
     if (parsed.examSemester) setExamSemester(parsed.examSemester);
@@ -449,6 +458,7 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
           examType,
           schoolName: schoolName.trim() || null,
           examScope: examScope.length > 0 ? examScope : null,
+          textbookId: subject === 'ENGLISH' && textbookId ? textbookId : null,
           examYear: examYear ? Number(examYear) : null,
           examSemester: examSemester ? Number(examSemester) : null,
           examCategory: examCategory || null,
@@ -541,12 +551,18 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">과목 *</label>
           <select
-            value="MATH"
-            disabled
-            aria-disabled
-            className="w-full px-3 py-2 border rounded-sm text-sm bg-slate-100 text-slate-500 cursor-not-allowed"
+            value={subject}
+            onChange={e => {
+              const next = e.target.value as 'MATH' | 'ENGLISH';
+              setSubject(next);
+              setCategory('');
+              setExamScope([]);
+              setTextbookId('');
+            }}
+            className="w-full px-3 py-2 border rounded-sm text-sm"
           >
             <option value="MATH">수학</option>
+            <option value="ENGLISH">영어</option>
           </select>
         </div>
 
@@ -554,7 +570,7 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
           <label className="block text-sm font-medium text-slate-700 mb-1">학년 *</label>
           <select
             value={grade}
-            onChange={e => { setGrade(e.target.value); setCategory(''); setExamScope([]); }}
+            onChange={e => { setGrade(e.target.value); setCategory(''); setExamScope([]); setTextbookId(''); }}
             className="w-full px-3 py-2 border rounded-sm text-sm"
           >
             <option value="">선택</option>
@@ -569,12 +585,56 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
             <label className="block text-sm font-medium text-slate-700 mb-1">세부 과목</label>
             <select
               value={category}
-              onChange={e => setCategory(e.target.value)}
+              onChange={e => { setCategory(e.target.value); setExamScope([]); }}
               className="w-full px-3 py-2 border rounded-sm text-sm"
             >
               <option value="">자동 감지</option>
               {CATEGORY_OPTIONS[grade].map(c => (
                 <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {subject === 'ENGLISH' && getEnglishCoursesForGrade(grade).filter((c) => c !== grade).length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">세부 과목</label>
+            <select
+              value={category}
+              onChange={e => { setCategory(e.target.value); setTextbookId(''); setExamScope([]); }}
+              className="w-full px-3 py-2 border rounded-sm text-sm"
+            >
+              <option value="">선택</option>
+              {getEnglishCoursesForGrade(grade).map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {subject === 'ENGLISH' && grade && (
+          <div className="col-span-2">
+            <label className="block text-sm font-medium text-slate-700 mb-1">교과서</label>
+            <select
+              value={textbookId}
+              onChange={e => { setTextbookId(e.target.value); setExamScope([]); }}
+              className="w-full px-3 py-2 border rounded-sm text-sm"
+              disabled={
+                getEnglishCoursesForGrade(grade).filter((c) => c !== grade).length > 0 && !category
+              }
+            >
+              <option value="">
+                {grade === '중3'
+                  ? '중3은 2027 적용 — 단원 미공고'
+                  : (getEnglishCoursesForGrade(grade).filter((c) => c !== grade).length > 0 && !category
+                    ? '세부 과목을 먼저 선택'
+                    : '선택')}
+              </option>
+              {getEnglishTextbooks(
+                grade,
+                getEnglishCoursesForGrade(grade).filter((c) => c !== grade).length > 0 ? category : undefined,
+              ).map(b => (
+                <option key={b.id} value={b.id}>{b.displayName} ({b.lessons.length}단원)</option>
               ))}
             </select>
           </div>
@@ -641,14 +701,29 @@ export function ExamUploadForm({ onSuccess, onCancel }: ExamUploadFormProps) {
         </div>
       </div>
 
-      {/* 출제범위 선택 */}
       {grade && subject === 'MATH' && (
         <ExamScopeSelector
           grade={grade}
           category={category}
           selectedTopics={examScope}
           onChange={setExamScope}
+          subject={subject}
         />
+      )}
+      {grade && subject === 'ENGLISH' && textbookId && (
+        <ExamScopeSelector
+          grade={grade}
+          category={category}
+          selectedTopics={examScope}
+          onChange={setExamScope}
+          subject={subject}
+          textbookId={textbookId}
+        />
+      )}
+      {grade && subject === 'ENGLISH' && !textbookId && grade !== '중3' && (
+        <p className="text-xs text-slate-500 px-0.5">
+          교과서를 고르면 해당 책의 Lesson/Unit을 출제범위로 선택할 수 있습니다. 문항 유형(어법·어휘·독해) 분류는 분석 시 자동으로 붙습니다.
+        </p>
       )}
 
       {/* 업로드 전 확인 경고 */}

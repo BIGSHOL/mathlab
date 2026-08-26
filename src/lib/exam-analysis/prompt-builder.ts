@@ -21,149 +21,18 @@ import {
   SCHOOL_LEVEL_RULES,
   DIFFICULTY_SYSTEM_FRAMEWORK,
 } from './prompt-config-common';
+import {
+  ENGLISH_DIFFICULTY_SYSTEM_4LEVEL,
+  getEnglishTopicsForGrade,
+  getEnglishMistakesForGrade,
+  getEnglishWritingGuideIfNeeded,
+} from './prompt-config-english';
+import { ENGLISH_QUESTION_STRATEGIES_INLINE, ENGLISH_TYPE_TAXONOMY } from './constants';
+import { isMathSubject, toExamSubjectKey } from './subject';
+import { formatEnglishAllowedTopicsPrompt, getEnglishAllowedTopicValues } from './english-topics';
+import { describeEnglishExamScope } from './english-textbooks';
 import type { ExamContext, BuildPromptResponse } from './types';
 import { MIDDLE_SCHOOL_CURRICULUM, HIGH_SCHOOL_CURRICULUM } from './data/curriculum';
-
-// ── 영어 과목 프롬프트 (인라인, prompt-config-english 미생성 시 대비) ──
-// 영어 관련 설정은 향후 prompt-config-english.ts로 분리 예정
-
-const ENGLISH_TOPICS: Record<string, string> = {
-  '중1': `[중1 영어]
-- 문법: be동사, 일반동사 현재형, 인칭대명사, 명사의 복수형, 전치사
-- 읽기: 짧은 대화문, 안내문, 일상 주제 지문
-- 어휘: 기초 생활 어휘 500단어 수준`,
-
-  '중2': `[중2 영어]
-- 문법: 과거형, 진행형, 비교급/최상급, 접속사, to부정사, 동명사
-- 읽기: 편지, 이메일, 설명문, 서사문
-- 어휘: 중급 어휘 800단어 수준`,
-
-  '중3': `[중3 영어]
-- 문법: 현재완료, 수동태, 관계대명사, 분사, 간접의문문
-- 읽기: 논설문, 과학 지문, 문화 비교
-- 어휘: 고급 중학 어휘 1200단어 수준`,
-
-  '고1': `[고1 영어]
-- 문법: 관계부사, 가정법, 분사구문, 강조/도치
-- 읽기: 수능형 독해 (빈칸, 순서, 삽입, 요약)
-- 어휘: 수능 기초 어휘`,
-
-  '고2': `[고2 영어]
-- 문법: 복합관계사, 가정법 과거완료, 혼합가정법
-- 읽기: 수능 유형 심화 (함축의미, 장문독해, 어법)
-- 어휘: 수능 핵심 어휘`,
-
-  '고3': `[고3 영어]
-- 문법: 전 범위 통합
-- 읽기: 수능/모의고사 실전 유형 전체
-- 어휘: 수능 완성 어휘`,
-};
-
-const ENGLISH_COMMON_MISTAKES: Record<string, string> = {
-  '중학': `**중학 영어 주요 실수:**
-- 3인칭 단수 -s 누락 (He play → He plays)
-- 시제 혼용 (과거/현재 혼동)
-- 관계대명사 who/which/that 구분 실패
-- to부정사/동명사 목적어 구분`,
-
-  '고등': `**고등 영어 주요 실수:**
-- 가정법 시제 오류 (If I was → If I were)
-- 분사구문 주어 불일치
-- 수능 빈칸추론에서 논리적 연결 실패
-- 어법 문제에서 준동사(to-v/v-ing/p.p.) 구분 실패`,
-};
-
-const ENGLISH_DIFFICULTY_SYSTEM_4LEVEL = `🚨 **영어 난이도 5단계 시스템**:
-
-**난이도 값은 반드시 문자열 "1", "2", "3", "4", "5" 중 하나를 사용하세요.**
-
-### 1️⃣ "1" (기본) - 기본 문법/어휘 확인
-- 단순 문법 규칙 적용, 기초 어휘 의미 파악
-- 정답률 85% 이상 예상
-
-### 2️⃣ "2" (표준) - 알려진 문제 유형 적용
-- 수능 기출 유형 (빈칸, 순서, 삽입 등), 문법 복합 적용
-- 정답률 60-85% 예상
-
-### 3️⃣ "3" (응용) - 문맥 응용/변형
-- 문맥 기반 응용, 복합 문법 적용, 환언 추론
-- 정답률 45-65% 예상
-
-### 4️⃣ "4" (심화) - 추론/분석 필요
-- 함축 의미 파악, 장문 독해, 복합 문법 판단
-- 정답률 25-45% 예상
-
-### 5️⃣ "5" (최고난도) - 고난도 추론
-- 빈칸추론 킬러, 복합 장문, 간접 쓰기
-- 정답률 25% 이하`;
-
-const ENGLISH_QUESTION_STRATEGIES = `📝 **영어 문항 유형별 분석 전략:**
-
-- **어법(grammar)**: 밑줄 친 부분의 문법 요소 파악, 준동사/시제/수일치 등
-- **어휘(vocabulary)**: 문맥상 의미 파악, 동의어/반의어
-- **독해(reading)**: 주제, 요지, 제목, 빈칸, 순서, 삽입, 요약
-- **듣기(listening)**: 대화 상황 파악, 화자 의도
-- **서술형(writing)**: 문장 완성, 영작, 조건 영작`;
-
-const ENGLISH_EVALUATION_SYSTEM = `📊 **영어 평가 유형 분류:**
-
-| 유형 | 설명 |
-|------|------|
-| grammar | 어법/문법 |
-| vocabulary | 어휘 |
-| reading | 독해 |
-| listening | 듣기 |
-| writing | 서술형/영작 |
-| communication | 의사소통 |`;
-
-function getEnglishTopicsForGrade(gradeLevel: string | null): string {
-  if (!gradeLevel) {
-    const middle = ['중1', '중2', '중3'].map(g => ENGLISH_TOPICS[g] ?? '').filter(Boolean).join('\n\n');
-    const high = ['고1', '고2', '고3'].map(g => ENGLISH_TOPICS[g] ?? '').filter(Boolean).join('\n\n');
-    return `### 【중학교 영어】\n\n${middle}\n\n### 【고등학교 영어】\n\n${high}`;
-  }
-
-  if (gradeLevel.startsWith('중')) {
-    const topics = ['중1', '중2', '중3'].map(g => ENGLISH_TOPICS[g] ?? '').filter(Boolean).join('\n\n');
-    return `### 【중학교 영어】\n\n${topics}`;
-  }
-
-  if (gradeLevel.startsWith('고')) {
-    const topics = ['고1', '고2', '고3'].map(g => ENGLISH_TOPICS[g] ?? '').filter(Boolean).join('\n\n');
-    return `### 【고등학교 영어】\n\n${topics}`;
-  }
-
-  const middle = ['중1', '중2', '중3'].map(g => ENGLISH_TOPICS[g] ?? '').filter(Boolean).join('\n\n');
-  const high = ['고1', '고2', '고3'].map(g => ENGLISH_TOPICS[g] ?? '').filter(Boolean).join('\n\n');
-  return `### 【중학교 영어】\n\n${middle}\n\n### 【고등학교 영어】\n\n${high}`;
-}
-
-function getEnglishMistakesForGrade(gradeLevel: string | null): string {
-  if (!gradeLevel) {
-    return Object.values(ENGLISH_COMMON_MISTAKES).join('\n\n');
-  }
-  if (gradeLevel.startsWith('중')) return ENGLISH_COMMON_MISTAKES['중학'] ?? '';
-  if (gradeLevel.startsWith('고')) return ENGLISH_COMMON_MISTAKES['고등'] ?? '';
-  return Object.values(ENGLISH_COMMON_MISTAKES).join('\n\n');
-}
-
-function getEnglishWritingGuideIfNeeded(hasEssay: boolean): string {
-  if (!hasEssay) return '';
-  return `📝 **영어 서술형 채점 가이드**
-
-**채점 기준:**
-- 문법 정확성: 30-40%
-- 내용 적절성: 30-40%
-- 표현의 자연스러움: 10-20%
-- 조건 충족 여부: 10-20%
-
-**흔한 감점 요인:**
-1. 주어-동사 수일치 오류
-2. 시제 불일치
-3. 조건에서 요구한 문법 요소 미사용
-4. 철자 오류 (기본 단어)
-5. 문장 구조 불완전 (주어/동사 누락)`;
-}
 
 // ══════════════════════════════════════════
 // ExamPromptBuilder 클래스
@@ -185,23 +54,28 @@ export class ExamPromptBuilder {
       context.category
     );
 
-    // 허용 소단원 목록 (DB 1:1 매칭용)
-    if (context.subject === '수학' || context.subject.toUpperCase() === 'MATH') {
+    // 허용 소단원 목록 (DB 1:1 매칭용) — 수학/영어 각각 드롭다운과 동일 함수
+    if (isMathSubject(context.subject)) {
       const allowedTopics = this.getAllowedTopicNames(context.grade_level);
       if (allowedTopics) {
         guidelines.push(allowedTopics);
       }
+    } else {
+      const enTopics = formatEnglishAllowedTopicsPrompt(context.grade_level);
+      if (enTopics) guidelines.push(enTopics);
     }
 
-    // 학기/시험종류 기반 기본 제약 (출제범위 미설정 시에도 동작)
-    const periodHint = this.buildPeriodHint(context);
-    if (periodHint) {
-      guidelines.push(periodHint);
+    // 학기/시험종류 기반 기본 제약 (수학 전용 — 영어는 교과서 레슨 출제범위를 씀)
+    if (isMathSubject(context.subject)) {
+      const periodHint = this.buildPeriodHint(context);
+      if (periodHint) {
+        guidelines.push(periodHint);
+      }
     }
 
-    // 출제범위가 있으면 가이드라인에 강제 추가 (HARD 제약)
     if (context.exam_scope && context.exam_scope.length > 0) {
-      guidelines.push(`🎯 **[ABSOLUTE] 출제범위 제한 — 이 규칙은 그림/시각 증거보다 우선합니다**
+      if (isMathSubject(context.subject)) {
+        guidelines.push(`🎯 **[ABSOLUTE] 출제범위 제한 — 이 규칙은 그림/시각 증거보다 우선합니다**
 
 이 시험의 출제범위는 다음 단원으로 **완전히 한정**되어 있습니다:
 
@@ -213,6 +87,19 @@ export class ExamPromptBuilder {
 3. ✅ 문제의 풀이가 출제범위의 개념(인수분해·이차방정식·제곱근 등)을 사용한다면 그 단원을 선택하라. 설령 문제에 원이 등장해도 **원의 성질** 단원이 아니다.
 4. ✅ 출제범위 밖으로 분류하고 싶다면 **반드시 \`chapter: "UNKNOWN"\`, \`topic: "UNKNOWN"\`, \`confidence ≤ 0.4\`로 반환**하라. 사용자가 나중에 직접 편집한다. 틀린 단원보다 UNKNOWN이 낫다.
 5. 자기 검증(V 체크): 모든 문항의 chapter 가 출제범위 단원 내에 있는가? 아니면 UNKNOWN으로 교체하라.`);
+      } else {
+        guidelines.push(`📘 **[참고] 이 시험의 교과서 출제 레슨**
+
+선생님이 선택한 출제범위(교과서 Lesson/Unit)는 다음과 같습니다:
+
+${describeEnglishExamScope(context.exam_scope)}
+
+**규칙:**
+- 지문·대화 소재가 위 레슨과 맞는지 **참고**하라.
+- 레슨에 **문법**이 있으면 어법 문항 분류의 힌트로만 쓴다. 시험지에 없는 문법을 만들어 넣지 말 것.
+- 문항 \`topic\` 필드는 레슨 제목이 아니라 **허용 소단원 목록**(문법/어휘/독해 항목)을 사용하라.
+- 레슨명을 topic 에 복사하지 말 것.`);
+      }
     }
 
     const combined = this.combinePrompts({
@@ -253,7 +140,7 @@ export class ExamPromptBuilder {
       // DB 템플릿 조회 (활성, 최신 버전)
       const dbTemplate = await prisma.examPromptTemplate.findFirst({
         where: {
-          subject: context.subject === '수학' ? 'MATH' : 'ENGLISH',
+          subject: toExamSubjectKey(context.subject),
           agentType: 'basic',
           isActive: true,
         },
@@ -263,7 +150,7 @@ export class ExamPromptBuilder {
       // DB 에러 패턴 조회
       const errorPatterns = await prisma.examErrorPattern.findMany({
         where: {
-          subject: context.subject === '수학' ? 'MATH' : 'ENGLISH',
+          subject: toExamSubjectKey(context.subject),
           isActive: true,
         },
         orderBy: { frequency: 'desc' },
@@ -295,7 +182,7 @@ export class ExamPromptBuilder {
       // 승인된 레퍼런스 조회 (같은 grade, 최대 5건)
       const approvedRefs = await prisma.examQuestionReference.findMany({
         where: {
-          subject: context.subject === '수학' ? 'MATH' : 'ENGLISH',
+          subject: toExamSubjectKey(context.subject),
           reviewStatus: 'approved',
           ...(context.grade_level ? { grade: context.grade_level } : {}),
         },
@@ -324,7 +211,7 @@ export class ExamPromptBuilder {
    * 기본 시스템 프롬프트 (역할 정의)
    */
   private static getBasePrompt(context: ExamContext): string {
-    const isMath = context.subject.toUpperCase() === 'MATH';
+    const isMath = isMathSubject(context.subject);
 
     const gradeInfo = context.grade_level ? ` (${context.grade_level})` : '';
     const categoryInfo = context.category ? ` — ${context.category}` : '';
@@ -360,7 +247,7 @@ export class ExamPromptBuilder {
    * 과목/학년별 분석 가이드라인 조합
    */
   private static getAnalysisGuidelines(context: ExamContext): string[] {
-    const isMath = context.subject.toUpperCase() === 'MATH';
+    const isMath = isMathSubject(context.subject);
     const parts: string[] = [];
 
     // 공통 규칙
@@ -408,8 +295,8 @@ export class ExamPromptBuilder {
       // 영어 전용 가이드라인 — 공통 프레임워크 + 영어 루브릭 (기존 유지, 별도 지시 전까지 불변)
       parts.push(DIFFICULTY_SYSTEM_FRAMEWORK);
       parts.push(ENGLISH_DIFFICULTY_SYSTEM_4LEVEL);
-      parts.push(ENGLISH_EVALUATION_SYSTEM);
-      parts.push(ENGLISH_QUESTION_STRATEGIES);
+      parts.push(ENGLISH_TYPE_TAXONOMY);
+      parts.push(ENGLISH_QUESTION_STRATEGIES_INLINE);
 
       // 학년별 토픽
       const topics = getEnglishTopicsForGrade(context.grade_level);
@@ -495,7 +382,7 @@ export class ExamPromptBuilder {
     gradeLevel: string | null,
     category: string | null
   ): string {
-    const isMath = subject.toUpperCase() === 'MATH';
+    const isMath = isMathSubject(subject);
     const isStudent = paperType === 'student';
 
     // 문항 유형 분류 키
@@ -536,6 +423,87 @@ export class ExamPromptBuilder {
       ? `"number": 0, "change_relation": 0, "shape_measure": 0, "data_possibility": 0`
       : `"grammar": 0, "vocabulary": 0, "reading": 0, "listening": 0, "writing": 0, "communication": 0`;
 
+    const dominantTypeExample = isMath ? 'change_relation' : 'reading';
+    const q1Type = isMath ? 'change_relation' : 'grammar';
+    const q1Ability = isMath ? 'calculation' : 'accuracy';
+    const q2Type = isMath ? 'number' : 'vocabulary';
+    const q2Ability = isMath ? 'understanding' : 'accuracy';
+    const q16Type = isMath ? 'change_relation' : 'reading';
+    const q16Ability = isMath ? 'PROBLEM_SOLVING' : 'reasoning';
+    const qEssayType = isMath ? 'change_relation' : 'writing';
+    const qEssayAbility = isMath ? 'REASONING' : 'expression';
+    const q1Comment = isMath
+      ? '핵심 개념을 직접 확인하는 문제입니다. 공식을 정확히 암기하면 쉽게 풀 수 있습니다.'
+      : '기본 어법 규칙을 직접 확인하는 문제입니다. 교과서 문장을 정확히 암기하면 쉽게 풀 수 있습니다.';
+    const q2Comment = isMath
+      ? '전형적인 유형 적용 문제입니다. 풀이 순서를 익히면 안정적으로 정답할 수 있습니다.'
+      : '문맥에 맞는 어휘를 고르는 문제입니다. 주변 문장을 함께 보면 안정적으로 정답할 수 있습니다.';
+    const q16Comment = isMath
+      ? '여러 단계 식 변형이 필요한 응용 문제입니다. 함정 요소가 있으므로 검산이 필수입니다.'
+      : '빈칸의 논리를 추론해야 하는 독해 문제입니다. 앞뒤 문장의 연결을 확인하는 것이 핵심입니다.';
+    const qEssayComment = isMath
+      ? '두 개념을 연결하여 단계적으로 풀어야 하는 서술형입니다. 부분 점수가 가능합니다.'
+      : '조건에 맞는 문장을 영작하는 서술형입니다. 요구 문법 요소를 빠짐없이 써야 합니다.';
+    const enKeyGrammar = isMath
+      ? ''
+      : `,
+      "key_vocab": [],
+      "key_structures": [{ "pattern": "who / which / that", "meaning": "사람 who, 사물 which" }]`;
+    const enKeyVocab = isMath
+      ? ''
+      : `,
+      "key_vocab": [{ "word": "however", "meaning": "그러나" }],
+      "key_structures": []`;
+    const enKeyEmpty = isMath
+      ? ''
+      : `,
+      "key_vocab": [],
+      "key_structures": []`;
+    const typeFieldRule = isMath
+      ? `${typeKeys} 중 하나 — **문제의 수학적 형태/소재** 기준`
+      : `${typeKeys} 중 하나 — **어법·어휘·독해 등 문항 유형** 기준`;
+    const abilityFieldRule = isMath
+      ? '"calculation"(계산력), "understanding"(이해력), "problem_solving"(문제해결력), "reasoning"(추론력) 중 하나 — **풀이에 요구되는 사고력** 기준'
+      : '"accuracy"(정확성), "understanding"(이해력), "reasoning"(추론력), "expression"(표현력) 중 하나 — **풀이에 요구되는 사고력** 기준';
+    const typeVsAbility = isMath
+      ? `**⚠️ question_type vs ability_domain 구분 (매우 중요!):**
+
+| | question_type (유형) | ability_domain (능력) |
+|---|---|---|
+| **기준** | 문제의 **수학적 소재/형태** | 풀이에 **요구되는 사고력** |
+| **판단법** | "이 문제는 무엇에 대한 문제인가?" | "이 문제를 풀려면 어떤 능력이 필요한가?" |
+
+- **calculation**(계산력): 공식 대입, 사칙연산, 방정식 풀이 등 **절차적 계산**이 핵심
+- **understanding**(이해력): 개념 정의, 성질 파악, 그래프 해석 등 **개념 이해**가 핵심
+- **problem_solving**(문제해결력): 조건 해석, 식 세우기, 전략 수립 등 **응용/문장제**가 핵심
+- **reasoning**(추론력): 증명, 논리적 추론, 반례 찾기, 참/거짓 판별 등 **논리적 사고**가 핵심
+
+예: "제곱근 계산" → question_type: **number**, ability_domain: **calculation**
+예: "이차방정식 풀이" → question_type: **change_relation**, ability_domain: **calculation**
+예: "이차함수 그래프 해석" → question_type: **change_relation**, ability_domain: **understanding**
+예: "도형의 넓이 활용 문제" → question_type: **shape_measure**, ability_domain: **problem_solving**
+예: "확률 추론 문제" → question_type: **data_possibility**, ability_domain: **reasoning**
+
+⚠️ question_type과 ability_domain은 **서로 다른 관점**입니다. 기계적으로 같은 값을 넣지 말고 독립적으로 판단하세요.
+- question_type = **교육과정 4대 영역(2022 개정)** (이 문제가 어떤 내용 영역에 해당하는가?)
+- ability_domain = **4대 사고력** (이 문제를 풀려면 어떤 능력이 필요한가?)
+- 같은 단원이라도 문제에 따라 필요한 능력이 다릅니다. (예: 도형과 측정 영역의 계산 문제 → shape_measure + calculation)`
+      : `**⚠️ question_type vs ability_domain 구분 (매우 중요!):**
+
+| | question_type (유형) | ability_domain (능력) |
+|---|---|---|
+| **기준** | 문항의 **평가 영역** | 풀이에 **요구되는 사고력** |
+| **판단법** | "이 문제는 어법/어휘/독해/듣기/영작 중 무엇인가?" | "정확성·이해·추론·표현 중 무엇이 핵심인가?" |
+
+- **accuracy**(정확성): 어법 형태, 수일치, 시제, 어휘 형태가 핵심
+- **understanding**(이해력): 세부정보, 문맥 어휘, 듣기 정보 파악이 핵심
+- **reasoning**(추론력): 빈칸, 함축, 순서, 삽입이 핵심
+- **expression**(표현력): 영작, 문장 완성, 대화 완성이 핵심
+
+예: "3인칭 단수 -s" → question_type: **grammar**, ability_domain: **accuracy**
+예: "빈칸 추론" → question_type: **reading**, ability_domain: **reasoning**
+예: "조건 영작" → question_type: **writing**, ability_domain: **expression**`;
+
     return `🔧 **[필수] JSON 출력 형식**
 
 반드시 아래 형식의 JSON만 출력하세요. 추가 텍스트 없이 JSON만!
@@ -570,7 +538,7 @@ export class ExamPromptBuilder {
       ${typeDistExample}
     },
     "average_difficulty": "2",
-    "dominant_type": "change_relation"
+    "dominant_type": "${dominantTypeExample}"
   },
   "questions": [
     {
@@ -578,11 +546,11 @@ export class ExamPromptBuilder {
       "question_format": "objective",
       "difficulty": "1",
       "difficulty_reason": "1단계 풀이",
-      "question_type": "change_relation",
-      "ability_domain": "calculation",
+      "question_type": "${q1Type}",
+      "ability_domain": "${q1Ability}",
       "points": 3,
       "topic": "${topicExample}",
-      "ai_comment": "핵심 개념을 직접 확인하는 문제입니다. 공식을 정확히 암기하면 쉽게 풀 수 있습니다.",
+      "ai_comment": "${q1Comment}"${enKeyGrammar},
       "confidence": 0.97,
       "confidence_reason": "문항 내용 명확"${studentFields ? ',' + studentFields : ''}
     },
@@ -591,11 +559,11 @@ export class ExamPromptBuilder {
       "question_format": "objective",
       "difficulty": "2",
       "difficulty_reason": "유형 적용",
-      "question_type": "number",
-      "ability_domain": "understanding",
+      "question_type": "${q2Type}",
+      "ability_domain": "${q2Ability}",
       "points": 3,
       "topic": "${topicExample}",
-      "ai_comment": "전형적인 유형 적용 문제입니다. 풀이 순서를 익히면 안정적으로 정답할 수 있습니다.",
+      "ai_comment": "${q2Comment}"${enKeyVocab},
       "confidence": 0.92,
       "confidence_reason": "문항 내용 명확"${studentFieldsWrong ? ',' + studentFieldsWrong : ''}
     },
@@ -604,11 +572,11 @@ export class ExamPromptBuilder {
       "question_format": "objective",
       "difficulty": "4",
       "difficulty_reason": "3단계 + 함정",
-      "question_type": "change_relation",
-      "ability_domain": "PROBLEM_SOLVING",
+      "question_type": "${q16Type}",
+      "ability_domain": "${q16Ability}",
       "points": 5,
       "topic": "${topicExample}",
-      "ai_comment": "여러 단계 식 변형이 필요한 응용 문제입니다. 함정 요소가 있으므로 검산이 필수입니다.",
+      "ai_comment": "${q16Comment}"${enKeyEmpty},
       "confidence": 0.82,
       "confidence_reason": "배점 추정"
     },
@@ -617,11 +585,11 @@ export class ExamPromptBuilder {
       "question_format": "essay",
       "difficulty": "3",
       "difficulty_reason": "2개 개념 결합",
-      "question_type": "change_relation",
-      "ability_domain": "REASONING",
+      "question_type": "${qEssayType}",
+      "ability_domain": "${qEssayAbility}",
       "points": 8,
       "topic": "${topicExample}",
-      "ai_comment": "두 개념을 연결하여 단계적으로 풀어야 하는 서술형입니다. 부분 점수가 가능합니다.",
+      "ai_comment": "${qEssayComment}"${enKeyEmpty},
       "confidence": 0.78,
       "confidence_reason": "비정형 유형"
     }
@@ -636,12 +604,18 @@ export class ExamPromptBuilder {
 | question_number | 시험지에 표기된 번호 (소문제: "1-1", "1-2" 등) |
 | question_format | ${formatKeys} 중 하나 |
 | difficulty | ${difficultyKeys} 중 하나. **H11 절대 기준 + H12 6축 + H13 분포 강제 + H14 위치 휴리스틱 엄수**. 모든 문항을 "3"으로 몰지 말 것. |
-| difficulty_reason | 난이도 판정 이유, **최대 15자**. 어떤 축(개념결합/풀이단계/추상도/함정/시간/친숙도)으로 평가했는지 명시 권장 (예: "3단계 풀이", "함정 변형", "2개 개념 결합") |
-| question_type | ${typeKeys} 중 하나 — **문제의 수학적 형태/소재** 기준 |
-| ability_domain | "calculation"(계산력), "understanding"(이해력), "problem_solving"(문제해결력), "reasoning"(추론력) 중 하나 — **풀이에 요구되는 사고력** 기준 |
+| difficulty_reason | ${isMath
+      ? '난이도 판정 이유, **최대 15자**. 어떤 축(개념결합/풀이단계/추상도/함정/시간/친숙도)으로 평가했는지 명시 권장 (예: "3단계 풀이", "함정 변형", "2개 개념 결합")'
+      : '난이도 이유, **최대 15자, 쉬운 말**. 예: "바꿔 말하기", "숨은 뜻", "조건 영작". 호혜적·함축·환언·스캔 품질 금지'} |
+| question_type | ${typeFieldRule} |
+| ability_domain | ${abilityFieldRule} |
 | points | 배점 (숫자), 불분명 시 null |
 | topic | "과목명 > 대단원 > 소단원" (공백 포함 > 구분) |
-| ai_comment | **정확히 2문장, 존댓말(~입니다/~합니다), 각 문장 20~40자. 1문장: 출제 의도/핵심 개념, 2문장: 풀이 포인트/주의점. 수식이 불명확하면 "스캔 품질로 인해 일부 수식 판독이 어렵습니다"로 표현. ❌ "문제가 잘못되었다", "조건이 모순이다" 등 출제 오류를 지적하는 표현 금지 — 시험지는 검증된 출제물임!** |
+| ai_comment | ${isMath
+      ? '**정확히 2문장, 존댓말(~입니다/~합니다), 각 문장 20~40자. 1문장: 출제 의도/핵심 개념, 2문장: 풀이 포인트/주의점. 수식이 불명확하면 "글씨가 흐려 일부는 추정했습니다"로 표현. ❌ 출제 오류 지적 금지.**'
+      : '**정확히 2문장, 존댓말, 각 문장 20~40자. 중학교 학부모가 바로 읽는 쉬운 말만.** 호혜적·함축·환언·스캔 품질·준학술 한자어 금지. 1문장: 무엇을 묻는지, 2문장: 어떻게 보면 되는지. 예: "서로 주고받는 이야기의 중심 생각을 묻습니다. 글 전체를 먼저 읽고 고르면 됩니다."'} |${isMath ? '' : `
+| key_vocab | 그 문항 지문·선지·빈칸에 **실제로 나온** 핵심 단어만. 최대 4개. \`{ "word", "meaning" }\`. meaning은 쉬운 한국어 10자 안. 없으면 \`[]\`. 없는 단어 창작 금지. |
+| key_structures | 그 문항에 **실제로 나온** 문법 구문만. 최대 3개. \`{ "pattern", "meaning" }\`. 예: "too ~ to", "If I were ~". 없으면 \`[]\`. 없는 구문 창작 금지. |`}
 | confidence | 0.0~1.0. **H15 5단계 매핑 엄수 + H17 분포 강제**. 모든 문항을 0.95로 출력 금지 — 약 30%는 0.85 이하가 정상. |
 | confidence_reason | 신뢰도 판정 근거 (최대 20자). **허용 사유만 사용**: "문항 내용 명확"(0.90+), "비정형 유형"(0.75~0.89), "배점 추정"(0.70~0.89), "출제범위 의심"(0.60~0.79), "스캔 품질 낮음"(0.50~0.74), "판독 실패 — 번호만 인식"(0.00~0.29). **H16 매핑 엄수**. ❌ "계산 결과가 선택지에 없음", "정답이 보기에 없음", "문제 오류 의심" 등 풀이 검산 기반 사유 금지 — 너는 메타데이터만 추출하며 풀이를 수행하지 않는다. |${isStudent ? `
 | is_correct | true/false/null (정오 판별, 판단 불가 시 null) |
@@ -649,28 +623,7 @@ export class ExamPromptBuilder {
 | earned_points | 획득 점수 (서술형 부분점수 가능, 판단 불가 시 null) |
 | error_type | "calculation_error"/"concept_gap"/"careless"/"time_pressure"/"misread"/null |` : ''}
 
-**⚠️ question_type vs ability_domain 구분 (매우 중요!):**
-
-| | question_type (유형) | ability_domain (능력) |
-|---|---|---|
-| **기준** | 문제의 **수학적 소재/형태** | 풀이에 **요구되는 사고력** |
-| **판단법** | "이 문제는 무엇에 대한 문제인가?" | "이 문제를 풀려면 어떤 능력이 필요한가?" |
-
-- **calculation**(계산력): 공식 대입, 사칙연산, 방정식 풀이 등 **절차적 계산**이 핵심
-- **understanding**(이해력): 개념 정의, 성질 파악, 그래프 해석 등 **개념 이해**가 핵심
-- **problem_solving**(문제해결력): 조건 해석, 식 세우기, 전략 수립 등 **응용/문장제**가 핵심
-- **reasoning**(추론력): 증명, 논리적 추론, 반례 찾기, 참/거짓 판별 등 **논리적 사고**가 핵심
-
-예: "제곱근 계산" → question_type: **number**, ability_domain: **calculation**
-예: "이차방정식 풀이" → question_type: **change_relation**, ability_domain: **calculation**
-예: "이차함수 그래프 해석" → question_type: **change_relation**, ability_domain: **understanding**
-예: "도형의 넓이 활용 문제" → question_type: **shape_measure**, ability_domain: **problem_solving**
-예: "확률 추론 문제" → question_type: **data_possibility**, ability_domain: **reasoning**
-
-⚠️ question_type과 ability_domain은 **서로 다른 관점**입니다. 기계적으로 같은 값을 넣지 말고 독립적으로 판단하세요.
-- question_type = **교육과정 4대 영역(2022 개정)** (이 문제가 어떤 내용 영역에 해당하는가?)
-- ability_domain = **4대 사고력** (이 문제를 풀려면 어떤 능력이 필요한가?)
-- 같은 단원이라도 문제에 따라 필요한 능력이 다릅니다. (예: 도형과 측정 영역의 계산 문제 → shape_measure + calculation)
+${typeVsAbility}
 
 **summary 규칙:**
 - difficulty_distribution: 각 난이도별 문항 수 (합계 = questions 배열 길이)
@@ -718,7 +671,7 @@ export class ExamPromptBuilder {
    - 금지: \`\`\`json\\n{...}\\n\`\`\`  /  "분석 결과입니다: {...}"
    - 허용: \`{ "questions": [...] }\`
 H2. 난이도(difficulty) 필드는 **문자열** "1" | "2" | "3" | "4" | "5" 중 하나만. 숫자형(1), "상/중/하", "easy/hard" 등 금지.
-H3. 수학 영역(question_type)은 **정확히** 다음 5개 중 하나: number | algebra | function | geometry | statistics. 그 외 값 금지.
+${isMathSubject(parts.subject) ? `H3. 수학 영역(question_type)은 **정확히** 다음 5개 중 하나: number | algebra | function | geometry | statistics. 그 외 값 금지.
 H4. 능력(ability_domain)은 **정확히** 다음 4개 중 하나: CALCULATION | UNDERSTANDING | REASONING | PROBLEM_SOLVING. 소문자, 한글, 기타 값 금지.
 H5. 모든 수식은 KaTeX 문법으로 작성.
    - 금지: \`\\dfrac{a}{b}\` → 반드시 \`\\frac{a}{b}\`
@@ -726,7 +679,10 @@ H5. 모든 수식은 KaTeX 문법으로 작성.
    - 금지: \`$A$$B$\` 인접 → \`$A$ $B$\` (공백 필수)
    - 숫자와 영문 변수는 \`$...$\` 래핑: \`25\` → \`$25$\`, \`x\` → \`$x$\`
    - 다단계 계산식은 \`\\begin{aligned} ... \\end{aligned}\` 사용
-H6. 도형 기호는 LaTeX 명령 사용: □ → \`\\square\`, △ → \`\\triangle\`, ∠ → \`\\angle\`.
+H6. 도형 기호는 LaTeX 명령 사용: □ → \`\\square\`, △ → \`\\triangle\`, ∠ → \`\\angle\`.` : `H3. 영어 유형(question_type)은 **정확히** 다음 6개 중 하나: grammar | vocabulary | reading | listening | writing | communication. 그 외 값 금지.
+   - 내신 지필고사에는 원칙적으로 듣기 문항이 없다. 대화문·회화는 communication 또는 reading.
+   - listening은 시험지에 듣기 전용 문항이 명시된 경우에만.
+H4. 능력(ability_domain)은 **정확히** 다음 4개 중 하나: accuracy | understanding | reasoning | expression. 대문자, 한글, 기타 값 금지.`}
 H7. OCR 오류 의심 문자(£ ¥ ¢ Á Ñ ¼ 등) 사용 금지. 불명확하면 해당 필드를 빈 문자열로.
 H8. 추측 금지 — 이미지에서 확인 불가능한 정보는 confidence를 0.3 이하로 낮추고, 텍스트 필드는 빈 문자열("")로 둘 것. 허구 단원명/배점 생성 금지.
 H9. topic 필드는 아래 "소단원 분류 목록"이 제공된 경우 **그 목록의 문자열과 정확히 동일하게만** 기재 (오타/공백/구분자 변형 금지).
@@ -800,9 +756,12 @@ H17. **모든 문항을 동일 confidence(예: 0.95)로 출력 금지** — 학�
 ════════════════════════════════════════════════
 V1. 응답 첫 글자가 \`{\` 이고 마지막 글자가 \`}\` 인가? (코드펜스/서술문 없음)
 V2. 모든 difficulty 값이 "1"~"5" 문자열인가?
-V3. 모든 question_type 값이 5개 허용값 내인가? (number/algebra/function/geometry/statistics)
+${isMathSubject(parts.subject) ? `V3. 모든 question_type 값이 5개 허용값 내인가? (number/algebra/function/geometry/statistics)
 V4. 모든 ability_domain 값이 4개 허용값 내인가? (CALCULATION/UNDERSTANDING/REASONING/PROBLEM_SOLVING)
-V5. 수식 내 \`\\dfrac\` 0건, \`$한글$\` 0건, 인접 \`$A$$B$\` 0건인가?
+V5. 수식 내 \`\\dfrac\` 0건, \`$한글$\` 0건, 인접 \`$A$$B$\` 0건인가?` : `V3. 모든 question_type 값이 6개 허용값 내인가? (grammar/vocabulary/reading/listening/writing/communication)
+V4. 모든 ability_domain 값이 4개 허용값 내인가? (accuracy/understanding/reasoning/expression)
+V5. 지문·선지에 raw LaTeX/\`$...$\` 를 넣지 않았는가?
+V14. key_vocab / key_structures 는 해당 문항에 실제로 나온 표현만인가? 없으면 빈 배열 [] 인가?`}
 V6. 모든 question_number가 실제 시험지에 존재하는가? 소문항(1)(2)을 별도 문항으로 분리하지 않았는가?
 V7. 배점 합계가 시험지 총점(보통 100점)에 근접하는가?
 V8. 추측성 단원명/설명이 없는가? 불확실한 항목은 confidence를 0.3 이하로 낮췄는가?
@@ -909,25 +868,16 @@ V13. **신뢰도 ↔ 사유 매핑 검증** — "문항 내용 명확"인데 con
    * 영어 topic 예시 생성
    */
   private static getEnglishTopicExample(gradeLevel: string | null): string {
-    if (gradeLevel) {
-      const gradeExamples: Record<string, string> = {
-        '중1': '중1 영어 > 문법 > be동사',
-        '중2': '중2 영어 > 문법 > 비교급과 최상급',
-        '중3': '중3 영어 > 문법 > 현재완료',
-        '고1': '고1 영어 > 독해 > 빈칸추론',
-        '고2': '고2 영어 > 독해 > 장문독해',
-        '고3': '고3 영어 > 독해 > 빈칸추론',
-      };
-      return gradeExamples[gradeLevel] ?? '고1 영어 > 독해 > 빈칸추론';
-    }
-    return '고1 영어 > 독해 > 빈칸추론';
+    const values = getEnglishAllowedTopicValues(gradeLevel);
+    if (values[0]) return values[0];
+    return '중1 영어 > 문법 > be동사 (am, is, are)';
   }
 
   /**
    * 사용된 템플릿 목록 수집
    */
   private static collectUsedTemplates(context: ExamContext): string[] {
-    const isMath = context.subject.toUpperCase() === 'MATH';
+    const isMath = isMathSubject(context.subject);
     const templates: string[] = [
       'SCHOOL_LEVEL_RULES',
       'EXAM_SUBJECT_CLASSIFICATION',
@@ -1111,7 +1061,7 @@ ${lines.join('\n')}
    * 매칭된 문제 유형 수집
    */
   private static collectMatchedProblemTypes(context: ExamContext): string[] {
-    const isMath = context.subject.toUpperCase() === 'MATH';
+    const isMath = isMathSubject(context.subject);
 
     if (isMath) {
       const types = ['number', 'change_relation', 'shape_measure', 'data_possibility'];

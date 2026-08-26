@@ -5,6 +5,7 @@ import { getExamScope } from '@/lib/demo/accounts';
 import { analyzeExam } from '@/lib/exam-analysis/ai-engine';
 import { ExamPromptBuilder } from '@/lib/exam-analysis/prompt-builder';
 import type { ExamContext } from '@/lib/exam-analysis/types';
+import { toExamSubjectKey } from '@/lib/exam-analysis/subject';
 import path from 'path';
 import { readFile } from 'fs/promises';
 
@@ -116,8 +117,9 @@ export async function POST(request: NextRequest, { params }: Params) {
       }
     }
 
+    const subjectKey = toExamSubjectKey(examPaper.subject);
     const context: ExamContext = {
-      subject: examPaper.subject === 'MATH' ? '수학' : '영어',
+      subject: subjectKey,
       grade_level: examPaper.grade,
       unit: examPaper.unit,
       category: examPaper.category,
@@ -137,7 +139,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     const aiStart = Date.now();
     // 5분 타임아웃 (Pro Preview 등 느린 모델 대응)
     const analysisResult = await Promise.race([
-      analyzeExam(imageDataList, mimeType, promptResult.combined_prompt, modelParam),
+      analyzeExam(imageDataList, mimeType, promptResult.combined_prompt, modelParam, undefined, subjectKey),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('AI 분석 타임아웃 (5분 초과)')), 300_000),
       ),

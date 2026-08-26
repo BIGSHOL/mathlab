@@ -4,6 +4,7 @@ import { requireTeacher, isResponse, badRequest } from '@/lib/api';
 import { getExamScope } from '@/lib/demo/accounts';
 import { examPaperCreateSchema, examPaperQuerySchema } from '@/lib/exam-analysis/schemas';
 import { matchSchoolByName } from '@/lib/utils/school-matcher';
+import { getExamAnalysisStuckMs } from '@/lib/exam-analysis/cli-llm';
 
 /** GET /api/exam-analysis — 시험지 목록 조회 */
 export async function GET(request: NextRequest) {
@@ -32,11 +33,12 @@ export async function GET(request: NextRequest) {
       }),
     };
 
-    // 2분 이상 ANALYZING 상태에 갇힌 시험지 자동 FAILED 복구
-    const stuckThreshold = new Date(Date.now() - 2 * 60 * 1000);
+    // ANALYZING 이 라우트 타임아웃(+버퍼)보다 오래면 갇힌 것으로 보고 복구.
+    // 로컬 CLI 는 10~22분이라 2분 컷이면 살아 있는 분석을 실패로 덮어쓴다.
+    const stuckThreshold = new Date(Date.now() - getExamAnalysisStuckMs());
     await prisma.examPaper.updateMany({
       where: { ...tenantWhere, status: 'ANALYZING', updatedAt: { lt: stuckThreshold } },
-      data: { status: 'FAILED', errorMessage: 'ANALYZING 상태 타임아웃 (자동 복구)' },
+      data: { status: 'FAILED', errorMessage: '분석이 시간 제한을 넘겨 중단되었습니다. 다시 실행해 주세요.' },
     });
 
     const [items, total] = await Promise.all([
@@ -136,13 +138,15 @@ export async function POST(request: NextRequest) {
     const hasScopeMeta =
       parsed.data.examYear != null ||
       parsed.data.examSemester != null ||
-      parsed.data.examCategory != null;
+      parsed.data.examCategory != null ||
+      !!parsed.data.textbookId;
     const scopeValue: unknown = hasScopeMeta
       ? {
           topics: parsed.data.examScope || [],
           examYear: parsed.data.examYear ?? null,
           examSemester: parsed.data.examSemester ?? null,
           examCategory: parsed.data.examCategory ?? null,
+          ...(parsed.data.textbookId ? { textbookId: parsed.data.textbookId } : {}),
         }
       : (parsed.data.examScope || undefined);
 

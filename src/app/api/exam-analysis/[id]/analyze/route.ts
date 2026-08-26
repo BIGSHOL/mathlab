@@ -6,13 +6,29 @@ import { assertAnalysisGate } from '@/lib/billing/guard';
 import { assertDemoAnalysisLimit } from '@/lib/demo/accounts';
 import { consumeExamAnalysisCredit } from '@/lib/entitlements/service';
 import { analyzeExam } from '@/lib/exam-analysis/ai-engine';
+import {
+  getExamAnalysisModelVersion,
+  getExamAnalysisTimeoutLabel,
+  getExamAnalysisTimeoutMs,
+  isProductionRuntime,
+  parseCliKind,
+  runWithCliKind,
+  type CliKind,
+} from '@/lib/exam-analysis/cli-llm';
 import { ExamPromptBuilder } from '@/lib/exam-analysis/prompt-builder';
 import { detectGradingMarks } from '@/lib/exam-analysis/mark-detector';
 import { crossValidateGrading, consolidateDominantTopic } from '@/lib/exam-analysis/cross-validator';
 import type { ExamContext, AnalyzedQuestion } from '@/lib/exam-analysis/types';
-import { PROMPT_VERSION } from '@/lib/exam-analysis/constants';
+import { CURRENT_PROMPT_VERSION } from '@/lib/exam-analysis/constants';
+import { toExamSubjectKey } from '@/lib/exam-analysis/subject';
 import { sumPoints } from '@/lib/exam-analysis/points';
 import { matchSchoolByName } from '@/lib/utils/school-matcher';
+import {
+  clearAnalysisProgress,
+  pushAnalysisProgress,
+  resetAnalysisProgress,
+} from '@/lib/exam-analysis/analysis-progress';
+import { ANALYZING_STEP_LOGS } from '@/lib/exam-analysis/analyzing-progress-copy';
 import path from 'path';
 import { readFile } from 'fs/promises';
 
@@ -33,11 +49,25 @@ async function loadFileAsBase64(fileUrl: string): Promise<string> {
 type Params = { params: Promise<{ id: string }> };
 
 /** 분석 단계 업데이트 헬퍼 */
-async function setStep(id: string, step: number) {
+async function setStep(id: string, step: number, subjectKey: 'MATH' | 'ENGLISH' = 'MATH') {
   await prisma.examPaper.update({
     where: { id },
     data: { analysisStep: step },
   });
+  const msg = ANALYZING_STEP_LOGS[subjectKey][step - 1];
+  if (msg) pushAnalysisProgress(id, msg);
+}
+
+async function readCliKindFromRequest(request: NextRequest): Promise<CliKind | undefined> {
+  if (isProductionRuntime()) return undefined;
+  try {
+    const text = await request.text();
+    if (!text.trim()) return undefined;
+    const body = JSON.parse(text) as { cli?: unknown };
+    return parseCliKind(body?.cli);
+  } catch {
+    return undefined;
+  }
 }
 
 /** POST /api/exam-analysis/[id]/analyze — 기본 분석 실행 */
@@ -45,6 +75,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   const user = await requireTeacher();
   if (isResponse(user)) return user;
   const { id } = await params;
+  const cliKind = await readCliKindFromRequest(request);
 
   const tenantWhere = await getExamScope(user);
   const examPaper = await prisma.examPaper.findFirst({
@@ -64,9 +95,8 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   if (examPaper.status === 'ANALYZING') {
-    // 2분 이상 ANALYZING 상태면 갇힌 것으로 판단 → 재시도 허용
-    const stuckMinutes = (Date.now() - new Date(examPaper.updatedAt).getTime()) / 60000;
-    if (stuckMinutes < 2) {
+    const elapsedMs = Date.now() - new Date(examPaper.updatedAt).getTime();
+    if (elapsedMs < getExamAnalysisTimeoutMs()) {
       return badRequest('이미 분석이 진행 중입니다');
     }
   }
@@ -96,14 +126,17 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   // 상태 → ANALYZING, step 0
+  const subjectKeyEarly = toExamSubjectKey(examPaper.subject);
+  resetAnalysisProgress(id);
   await prisma.examPaper.update({
     where: { id },
     data: { status: 'ANALYZING', analysisStep: 0, errorMessage: null },
   });
 
   try {
+    return await runWithCliKind(cliKind, async () => {
     // ── Step 1: 파일 로드 ──
-    await setStep(id, 1);
+    await setStep(id, 1, subjectKeyEarly);
 
     const fileUrls = examPaper.fileUrls.split(',');
     const imageDataList: string[] = [];
@@ -111,9 +144,10 @@ export async function POST(request: NextRequest, { params }: Params) {
     for (const fileUrl of fileUrls) {
       imageDataList.push(await loadFileAsBase64(fileUrl));
     }
+    pushAnalysisProgress(id, `시험지 파일 ${imageDataList.length}개 로드 완료`);
 
     // ── Step 2: 분류 + 프롬프트 구성 ──
-    await setStep(id, 2);
+    await setStep(id, 2, subjectKeyEarly);
 
     // examPaper.examScope JSON에 저장된 메타(연도/학기/종류) 추출
     const scopeRaw = examPaper.examScope as unknown;
@@ -136,8 +170,9 @@ export async function POST(request: NextRequest, { params }: Params) {
       }
     }
 
+    const subjectKey = toExamSubjectKey(examPaper.subject);
     const context: ExamContext = {
-      subject: examPaper.subject === 'MATH' ? '수학' : '영어',
+      subject: subjectKey,
       grade_level: examPaper.grade,
       unit: examPaper.unit,
       category: examPaper.category,
@@ -150,22 +185,33 @@ export async function POST(request: NextRequest, { params }: Params) {
     };
 
     const promptResult = await ExamPromptBuilder.buildWithDbContext(context);
+    pushAnalysisProgress(id, '분석 규칙 구성 완료');
 
     // ── Step 3: AI 문항 분석 (가장 오래 걸림) ──
-    await setStep(id, 3);
+    await setStep(id, 3, subjectKeyEarly);
 
     const mimeType = examPaper.fileType === 'pdf' ? 'application/pdf' : 'image/jpeg';
     // ⚠️ 자가진화 자동보정 비활성(2026-06-02): 9개교·85교정 교차검증 결과 per-문항 정확도 악화
     //   (정확도 54%→40%, MAE 0.516→0.707). 난이도는 학교 상대적이라 전역 보정맵이 부적합 →
     //   calibrationSet 미전달(원본 AI값 사용). 누적 교정은 측정 벤치마크로만 사용(/admin/evolution).
     //   수동 교정은 PATCH로 이 시험 분석에 즉시 반영(아래 priorEdits 보존 로직은 그대로 유지).
-    // 3분 타임아웃 — Gemini 응답이 없으면 강제 중단
+    // Gemini: 3분 / 로컬 CLI: 22분(비전 툴콜 + 1회 재분석 여유)
+    const analysisTimeoutMs = getExamAnalysisTimeoutMs();
     const analysisResult = await Promise.race([
-      analyzeExam(imageDataList, mimeType, promptResult.combined_prompt),
+      analyzeExam(
+        imageDataList,
+        mimeType,
+        promptResult.combined_prompt,
+        undefined,
+        undefined,
+        subjectKey,
+        (msg) => pushAnalysisProgress(id, msg),
+      ),
       new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('AI 분석 타임아웃 (3분 초과)')), 180_000),
+        setTimeout(() => reject(new Error(getExamAnalysisTimeoutLabel())), analysisTimeoutMs),
       ),
     ]);
+    pushAnalysisProgress(id, `문항 ${analysisResult.questions.length}개 수신, 검증 중`);
 
     let questions = analysisResult.questions as AnalyzedQuestion[];
 
@@ -225,7 +271,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     // ── Step 4: DB 저장 (Gemini 호출 후 DB 연결 재확인) ──
     // PgBouncer 유휴 연결 끊김 방지: 간단한 쿼리로 커넥션 활성화
     await prisma.$executeRaw`SELECT 1`;
-    await setStep(id, 4);
+    await setStep(id, 4, subjectKey);
 
     const totalQuestions = questions.length;
     // 부동소수점 오차 제거 — 소수 배점(4.6 등) 합산이 100.00000000000003으로 저장되어 전파되는 것 방지
@@ -243,7 +289,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         markDetection: markDetection ? JSON.parse(JSON.stringify(markDetection)) as any : null,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         crossValidation: crossValidation ? JSON.parse(JSON.stringify(crossValidation)) as any : null,
-        modelVersion: `gemini-3.1-pro-preview / prompt ${PROMPT_VERSION}`,
+        modelVersion: getExamAnalysisModelVersion(CURRENT_PROMPT_VERSION[subjectKey]),
         totalQuestions,
         totalPoints: totalPoints || null,
         earnedPoints: earnedPoints || null,
@@ -265,6 +311,8 @@ export async function POST(request: NextRequest, { params }: Params) {
       where: { id },
       data: { status: 'COMPLETED', analysisStep: 4 },
     });
+    pushAnalysisProgress(id, '분석 완료');
+    clearAnalysisProgress(id);
 
     // 학생 이용권 1 차감 (학생 시험지일 때만 · 시험지 단위 멱등). 실패해도 분석 결과는 유지.
     try {
@@ -281,6 +329,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         totalPoints,
         earnedPoints,
       },
+    });
     });
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : '분석 중 오류가 발생했습니다';

@@ -16,67 +16,79 @@ import {
   QUESTION_TYPE_LABELS,
   QUESTION_TYPE_COLORS,
   TYPE_TO_STANDARD,
+  ENGLISH_NAESIN_TYPE_KEYS,
+  ENGLISH_QUESTION_TYPE_KEYS,
+  ENGLISH_QUESTION_TYPE_LABELS,
+  ENGLISH_ABILITY_KEYS,
+  ENGLISH_ABILITY_DOMAIN_LABELS,
+  ENGLISH_ABILITY_DOMAIN_COLORS,
+  ENGLISH_TYPE_TO_DOMAIN,
 } from '@/lib/exam-analysis/constants';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
+import { normalizeQuestionType, toExamSubjectKey } from '@/lib/exam-analysis/subject';
 
 type ViewMode = 'type' | 'ability';
 
 interface TypeRadarChartProps {
   data: Record<string, number>;
   questions?: AnalyzedQuestion[];
+  subject?: 'MATH' | 'ENGLISH' | string;
 }
 
-const STANDARD_TYPE_KEYS = QUESTION_TYPE_KEYS;
-const STANDARD_TYPE_LABELS = QUESTION_TYPE_LABELS;
-const STANDARD_TYPE_COLORS = QUESTION_TYPE_COLORS;
-
-const DOMAIN_LABELS = ABILITY_DOMAIN_LABELS;
-const DOMAIN_COLORS = ABILITY_DOMAIN_COLORS;
-
-export function TypeRadarChart({ data, questions }: TypeRadarChartProps) {
+export function TypeRadarChart({ data, questions, subject = 'MATH' }: TypeRadarChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('ability');
+  const isEnglish = toExamSubjectKey(subject) === 'ENGLISH';
 
   // 능력 영역 데이터 계산
   const abilityData = useMemo(() => {
     if (!questions?.length) return {};
     const counts: Record<string, number> = {};
     for (const q of questions) {
-      const rawDomain = q.ability_domain || TYPE_TO_DOMAIN[q.question_type] || 'calculation';
-      const domain = String(rawDomain).toLowerCase();
+      const fallback = isEnglish
+        ? (q.question_type ? ENGLISH_TYPE_TO_DOMAIN[q.question_type] : undefined)
+        : (q.question_type ? TYPE_TO_DOMAIN[q.question_type] : undefined);
+      const rawDomain = q.ability_domain || fallback || (isEnglish ? 'accuracy' : 'calculation');
+      const domain = String(rawDomain).toLowerCase().replace(/-/g, '_');
       counts[domain] = (counts[domain] || 0) + 1;
     }
     return counts;
-  }, [questions]);
+  }, [questions, isEnglish]);
 
-  // 유형 데이터: Gemini raw → 6대 표준 유형으로 통합
   const standardTypeData = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const [key, value] of Object.entries(data)) {
       if (value <= 0) continue;
-      const standard = TYPE_TO_STANDARD[key] || 'calculation';
+      const standard = isEnglish
+        ? (normalizeQuestionType('ENGLISH', key) || key)
+        : (TYPE_TO_STANDARD[key] || key);
       counts[standard] = (counts[standard] || 0) + value;
     }
     return counts;
-  }, [data]);
+  }, [data, isEnglish]);
 
-  // 전체 항목 (범례용 — 0개 포함)
   const allItems = useMemo(() => {
     if (viewMode === 'ability') {
-      const ALL_DOMAINS = ['calculation', 'understanding', 'problem_solving', 'reasoning'] as const;
-      return ALL_DOMAINS.map((key) => ({
+      const keys = isEnglish ? ENGLISH_ABILITY_KEYS : (['calculation', 'understanding', 'problem_solving', 'reasoning'] as const);
+      const labels = isEnglish ? ENGLISH_ABILITY_DOMAIN_LABELS : ABILITY_DOMAIN_LABELS;
+      const colors = isEnglish ? ENGLISH_ABILITY_DOMAIN_COLORS : ABILITY_DOMAIN_COLORS;
+      return keys.map((key) => ({
         key,
-        label: DOMAIN_LABELS[key],
+        label: labels[key],
         value: abilityData[key] || 0,
-        color: DOMAIN_COLORS[key] || '#94A3B8',
+        color: colors[key] || '#94A3B8',
       }));
     }
-    return STANDARD_TYPE_KEYS.map((key) => ({
+    const keys = isEnglish
+      ? ((standardTypeData.listening || 0) > 0 ? ENGLISH_QUESTION_TYPE_KEYS : ENGLISH_NAESIN_TYPE_KEYS)
+      : QUESTION_TYPE_KEYS;
+    const labels = isEnglish ? ENGLISH_QUESTION_TYPE_LABELS : QUESTION_TYPE_LABELS;
+    return keys.map((key) => ({
       key,
-      label: STANDARD_TYPE_LABELS[key],
+      label: labels[key],
       value: standardTypeData[key] || 0,
-      color: STANDARD_TYPE_COLORS[key] || '#94A3B8',
+      color: QUESTION_TYPE_COLORS[key] || '#94A3B8',
     }));
-  }, [abilityData, standardTypeData, viewMode]);
+  }, [abilityData, standardTypeData, viewMode, isEnglish]);
 
   const total = allItems.reduce((s, i) => s + i.value, 0);
   // 레이더 차트 데이터 (값이 있는 항목만 다각형 구성, 0인 항목은 범례에만 표시)

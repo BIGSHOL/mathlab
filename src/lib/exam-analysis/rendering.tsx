@@ -10,6 +10,7 @@
 import { Fragment, type ReactNode } from 'react';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
+import { simplifyExamKorean } from './simple-korean';
 
 // ── KaTeX inline 수식 렌더링 헬퍼 ──
 /**
@@ -184,7 +185,7 @@ const KO_LABEL_MAP: Record<string, string> = {
  */
 export function normalizeKoreanLabels(text: string): string {
   if (!text) return text;
-  let out = text;
+  let out = simplifyExamKorean(text);
   for (const [key, value] of Object.entries(KO_LABEL_MAP)) {
     // 영문 대문자 enum은 단어 경계 + 정확 매칭
     if (/^[A-Z_ ]+$/.test(key)) {

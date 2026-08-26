@@ -5,7 +5,7 @@ import { Pagination } from '@/components/ui/Pagination';
 import { FileSearch, Play, Trash2, RotateCw, School, X, RefreshCw } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
 // 구버전 판정/버전 추출 — 공유 헬퍼 사용 (AnalysisDetail과 동일 로직, 중복 제거)
-import { PROMPT_VERSION, isStalePromptVersion, extractPromptVersion } from '@/lib/exam-analysis/constants';
+import { CURRENT_PROMPT_VERSION, isStalePromptVersion, extractPromptVersion } from '@/lib/exam-analysis/constants';
 import { isDemoExamId } from '@/lib/demo/util';
 
 function formatAnalyzedAt(dateStr: string): string {
@@ -240,12 +240,12 @@ export function ExamPaperList({
                     })()}
                     {/* 구버전 칩 — 상태 배지(분석완료/총평완료)는 유지하고 버전 불일치만 별도 병기.
                         기존 총평은 확인·복사 가능하므로 상태를 가리지 않는다(2026-06-24). */}
-                    {item.status === 'COMPLETED' && isStalePromptVersion(item.analyses[0]?.modelVersion) && (() => {
+                    {item.status === 'COMPLETED' && isStalePromptVersion(item.analyses[0]?.modelVersion, item.subject) && (() => {
                       const v = extractPromptVersion(item.analyses[0]?.modelVersion);
                       return (
                         <span
                           className="inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-sm border bg-amber-50 text-amber-700 border-amber-300"
-                          title={`구버전 프롬프트(${v || '?'})로 분석됨. 현재 ${PROMPT_VERSION} — 기존 총평 확인·복사는 가능하며, 재분석하면 최신 기준 + V3 총평으로 갱신됩니다.`}
+                          title={`구버전 프롬프트(${v || '?'})로 분석됨. 현재 ${CURRENT_PROMPT_VERSION[item.subject]} — 기존 총평 확인·복사는 가능하며, 재분석하면 최신 기준으로 갱신됩니다.`}
                         >
                           {`구버전${v ? ` ${v}` : ''}`}
                         </span>
@@ -256,15 +256,26 @@ export function ExamPaperList({
                         {label}
                       </span>
                     ))}
-                    {/* 학교 매칭 뱃지 (인라인) */}
-                    {canEditSchool ? (
-                      <SchoolMatchBadge item={item} onUpdate={onUpdate} />
-                    ) : item.school ? (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-sm px-1.5 py-0.5">
-                        <School className="w-2.5 h-2.5" />
-                        {item.school.name}
+                    {/* 과목 + 학교 — 학교명 왼쪽에 과목 라벨 */}
+                    <span className="inline-flex items-center gap-1">
+                      <span
+                        className={`inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-sm border ${
+                          item.subject === 'ENGLISH'
+                            ? 'bg-violet-50 text-violet-700 border-violet-200'
+                            : 'bg-sky-50 text-sky-700 border-sky-200'
+                        }`}
+                      >
+                        {item.subject === 'ENGLISH' ? '영어' : '수학'}
                       </span>
-                    ) : null}
+                      {canEditSchool ? (
+                        <SchoolMatchBadge item={item} onUpdate={onUpdate} />
+                      ) : item.school ? (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-sm px-1.5 py-0.5">
+                          <School className="w-2.5 h-2.5" />
+                          {item.school.name}
+                        </span>
+                      ) : null}
+                    </span>
                   </div>
                   {/* 실행자 메타 라인 — 분석/총평/글 누가 했는지 (있는 것만) */}
                   {(() => {
@@ -294,20 +305,20 @@ export function ExamPaperList({
                     </button>
                   )}
                   {/* 구버전 프롬프트 재분석 버튼 — COMPLETED + stale 일 때만 */}
-                  {item.status === 'COMPLETED' && isStalePromptVersion(latestAnalysis?.modelVersion) && (
+                  {item.status === 'COMPLETED' && isStalePromptVersion(latestAnalysis?.modelVersion, item.subject) && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         const oldVer = extractPromptVersion(latestAnalysis?.modelVersion) || '?';
                         if (!confirm(
                           `구버전 프롬프트(${oldVer})로 분석된 시험지입니다.\n` +
-                          `현재 버전(${PROMPT_VERSION})으로 재분석하시겠습니까?\n\n` +
+                          `현재 버전(${CURRENT_PROMPT_VERSION[item.subject]})으로 재분석하시겠습니까?\n\n` +
                           `※ 기존 분석 결과와 총평/블로그 글은 삭제됩니다.`,
                         )) return;
                         onAnalyze(item.id);
                       }}
                       className="p-1 text-amber-500 hover:text-amber-700"
-                      title={`구버전(${extractPromptVersion(latestAnalysis?.modelVersion) || '?'}) → ${PROMPT_VERSION} 재분석`}
+                      title={`구버전(${extractPromptVersion(latestAnalysis?.modelVersion) || '?'}) → ${CURRENT_PROMPT_VERSION[item.subject]} 재분석`}
                     >
                       <RefreshCw className="w-4 h-4" />
                     </button>

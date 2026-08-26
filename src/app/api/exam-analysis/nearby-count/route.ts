@@ -39,14 +39,16 @@ export async function GET(req: NextRequest) {
     let examSemester: string | null = null;
     let examExamType: string | null = null;
     let currentSchoolName: string | null = null;
+    let currentSubject: 'MATH' | 'ENGLISH' | null = null;
 
     if (examPaperId) {
       const currentPaper = await prisma.examPaper.findUnique({
         where: { id: examPaperId },
-        select: { title: true, examScope: true, schoolName: true },
+        select: { title: true, examScope: true, schoolName: true, subject: true },
       });
       if (currentPaper) {
         currentSchoolName = currentPaper.schoolName;
+        currentSubject = currentPaper.subject === 'ENGLISH' ? 'ENGLISH' : 'MATH';
         // 1) examScope JSON 에서 우선 읽기
         const scope = (currentPaper.examScope ?? null) as unknown as
           | { examYear?: number; examSemester?: number; examCategory?: string }
@@ -128,6 +130,7 @@ export async function GET(req: NextRequest) {
               ...tenantWhere,
               OR: orSchool,
               grade: grade || undefined,
+              ...(currentSubject ? { subject: currentSubject } : {}),
               id: examPaperId ? { not: examPaperId } : undefined,
               status: 'COMPLETED',
             },
@@ -180,6 +183,7 @@ export async function GET(req: NextRequest) {
             ...tenantWhere,
             schoolId: { in: groupSchoolIds },
             grade: grade || undefined,
+            ...(currentSubject ? { subject: currentSubject } : {}),
             status: 'COMPLETED',
           },
           select: { schoolId: true, title: true, examScope: true },

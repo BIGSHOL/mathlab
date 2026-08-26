@@ -13,6 +13,7 @@ export const examPaperCreateSchema = z.object({
   category: z.string().max(50).optional().nullable(),
   unit: z.string().max(200).optional().nullable(),
   examScope: z.array(z.string()).optional().nullable(),
+  textbookId: z.string().max(120).optional().nullable(),
   schoolName: z.string().max(100).optional().nullable(),
   schoolId: z.string().max(50).optional().nullable(),
   examType: z.enum(['blank', 'student']).default('blank'),

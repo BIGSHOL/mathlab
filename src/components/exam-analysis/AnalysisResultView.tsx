@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { DIFFICULTY_COLORS, DIFFICULTY_LABELS as DIFF_LABELS_MAP, DIFFICULTY_LEGACY_MAP, TYPE_TO_DOMAIN, ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
+import { DIFFICULTY_COLORS, DIFFICULTY_LABELS as DIFF_LABELS_MAP, DIFFICULTY_LEGACY_MAP, TYPE_TO_DOMAIN, ABILITY_DOMAIN_COLORS, ENGLISH_TYPE_TO_DOMAIN, ENGLISH_ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
+import { toExamSubjectKey } from '@/lib/exam-analysis/subject';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { sumPoints, roundPoints, formatPoints } from '@/lib/exam-analysis/points';
 import { ChevronRight, AlertTriangle, Pencil, Check, X } from 'lucide-react';
@@ -37,6 +38,7 @@ interface AnalysisResultViewProps {
   onDifficultyEdit?: (questionNumber: number | string, difficulty: string, aiDifficulty: string | null) => void;
   /** 학년 (중1/중3/고1 등) — 편집 시 단원 드롭다운 옵션 필터링 */
   grade?: string | null;
+  subject?: 'MATH' | 'ENGLISH' | string;
 }
 
 const DIFFICULTY_LABELS: Record<string, string> = {
@@ -53,14 +55,23 @@ const _FORMAT_LABELS: Record<string, string> = {
   objective: '객관식', short_answer: '단답형', essay: '서술형',
 };
 
-// 유형·능력 교정 셀렉터 옵션 (수학)
-const TYPE_OPTIONS: { value: string; label: string }[] = [
+const MATH_TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: 'number', label: '수와 연산' }, { value: 'change_relation', label: '변화와 관계' },
   { value: 'shape_measure', label: '도형과 측정' }, { value: 'data_possibility', label: '자료와 가능성' },
 ];
-const ABILITY_OPTIONS: { value: string; label: string }[] = [
+const ENGLISH_TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'grammar', label: '어법' }, { value: 'vocabulary', label: '어휘' },
+  { value: 'reading', label: '독해' },
+  { value: 'writing', label: '서술·영작' }, { value: 'communication', label: '의사소통' },
+];
+const ENGLISH_LISTENING_OPTION = { value: 'listening', label: '듣기' };
+const MATH_ABILITY_OPTIONS: { value: string; label: string }[] = [
   { value: 'calculation', label: '계산력' }, { value: 'understanding', label: '이해력' },
   { value: 'problem_solving', label: '문제해결력' }, { value: 'reasoning', label: '추론력' },
+];
+const ENGLISH_ABILITY_OPTIONS: { value: string; label: string }[] = [
+  { value: 'accuracy', label: '정확성' }, { value: 'understanding', label: '이해력' },
+  { value: 'reasoning', label: '추론력' }, { value: 'expression', label: '표현력' },
 ];
 
 /** 배점 신뢰도 판정: 합계가 기준의 ±15% 이내인지 */
@@ -117,7 +128,8 @@ function getPointsSuggestion(qs: AnalyzedQuestion[], expectedTotal: number | nul
 
 // ── 메인 컴포넌트 ──
 
-export function AnalysisResultView({ questions: questionsProp, summary, totalPoints: _totalPoints, earnedPoints: _earnedPoints, examType, examPaperId, analysisId, onDifficultyEdit, grade }: AnalysisResultViewProps) {
+export function AnalysisResultView({ questions: questionsProp, summary, totalPoints: _totalPoints, earnedPoints: _earnedPoints, examType, examPaperId, analysisId, onDifficultyEdit, grade, subject = 'MATH' }: AnalysisResultViewProps) {
+  const isEnglish = toExamSubjectKey(subject) === 'ENGLISH';
   // 수동 편집 로컬 오버레이 (페이지 리로드 없이 즉시 표시) — 종합 통계도 즉시 갱신
   const [editedTopics, setEditedTopics] = React.useState<Record<string, string>>({});
   const [editedPoints, setEditedPoints] = React.useState<Record<string, number>>({});
@@ -374,7 +386,7 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
 
         {/* 유형/능력 레이더 */}
         {summary?.type_distribution && (
-          <TypeRadarChart data={summary.type_distribution as Record<string, number>} questions={questions} />
+          <TypeRadarChart data={summary.type_distribution as Record<string, number>} questions={questions} subject={subject} />
         )}
       </div>
 
@@ -441,7 +453,7 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
                     <span className="text-xs font-semibold text-sky-600">객관식</span>
                     <span className="text-xs text-slate-400 ml-2">{grouped.objective.length}문항</span>
                   </td></tr>
-                  {grouped.objective.map((q, i) => <QRow key={`o-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} analysisId={analysisId} onDifficultyEdit={onDifficultyEdit} grade={grade} onTopicUpdate={handleTopicUpdate} onPointsUpdate={handlePointsUpdate} onTypeUpdate={handleTypeUpdate} onAbilityUpdate={handleAbilityUpdate} />)}
+                  {grouped.objective.map((q, i) => <QRow key={`o-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} analysisId={analysisId} onDifficultyEdit={onDifficultyEdit} grade={grade} subject={subject} onTopicUpdate={handleTopicUpdate} onPointsUpdate={handlePointsUpdate} onTypeUpdate={handleTypeUpdate} onAbilityUpdate={handleAbilityUpdate} />)}
                 </>
               )}
               {grouped.shortAnswer.length > 0 && (
@@ -450,7 +462,7 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
                     <span className="text-xs font-semibold text-teal-600">단답형</span>
                     <span className="text-xs text-slate-400 ml-2">{grouped.shortAnswer.length}문항</span>
                   </td></tr>
-                  {grouped.shortAnswer.map((q, i) => <QRow key={`s-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} analysisId={analysisId} onDifficultyEdit={onDifficultyEdit} grade={grade} onTopicUpdate={handleTopicUpdate} onPointsUpdate={handlePointsUpdate} onTypeUpdate={handleTypeUpdate} onAbilityUpdate={handleAbilityUpdate} />)}
+                  {grouped.shortAnswer.map((q, i) => <QRow key={`s-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} analysisId={analysisId} onDifficultyEdit={onDifficultyEdit} grade={grade} subject={subject} onTopicUpdate={handleTopicUpdate} onPointsUpdate={handlePointsUpdate} onTypeUpdate={handleTypeUpdate} onAbilityUpdate={handleAbilityUpdate} />)}
                 </>
               )}
               {grouped.essay.length > 0 && (
@@ -459,7 +471,7 @@ export function AnalysisResultView({ questions: questionsProp, summary, totalPoi
                     <span className="text-xs font-semibold text-amber-600">서술형</span>
                     <span className="text-xs text-slate-400 ml-2">{grouped.essay.length}문항</span>
                   </td></tr>
-                  {grouped.essay.map((q, i) => <QRow key={`e-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} analysisId={analysisId} onDifficultyEdit={onDifficultyEdit} grade={grade} onTopicUpdate={handleTopicUpdate} onPointsUpdate={handlePointsUpdate} onTypeUpdate={handleTypeUpdate} onAbilityUpdate={handleAbilityUpdate} />)}
+                  {grouped.essay.map((q, i) => <QRow key={`e-${i}`} q={q} isStudent={isStudentExam} examPaperId={examPaperId} analysisId={analysisId} onDifficultyEdit={onDifficultyEdit} grade={grade} subject={subject} onTopicUpdate={handleTopicUpdate} onPointsUpdate={handlePointsUpdate} onTypeUpdate={handleTypeUpdate} onAbilityUpdate={handleAbilityUpdate} />)}
                 </>
               )}
             </tbody>
@@ -575,18 +587,24 @@ function TopicSection({ topicGroups, maxTopic, total, chartColors }: {
 }
 
 
-function QRow({ q, isStudent, examPaperId, analysisId, onDifficultyEdit, grade, onTopicUpdate, onPointsUpdate, onTypeUpdate, onAbilityUpdate }: {
+function QRow({ q, isStudent, examPaperId, analysisId, onDifficultyEdit, grade, subject = 'MATH', onTopicUpdate, onPointsUpdate, onTypeUpdate, onAbilityUpdate }: {
   q: AnalyzedQuestion;
   isStudent: boolean;
   examPaperId?: string;
   analysisId?: string;
   onDifficultyEdit?: (qNum: string | number, difficulty: string, aiDifficulty: string | null) => void;
   grade?: string | null;
+  subject?: string;
   onTopicUpdate?: (qNum: string | number, newTopic: string) => void;
   onPointsUpdate?: (qNum: string | number, newPoints: number) => void;
   onTypeUpdate?: (qNum: string | number, v: string) => void;
   onAbilityUpdate?: (qNum: string | number, v: string) => void;
 }) {
+  const isEnglish = toExamSubjectKey(subject) === 'ENGLISH';
+  const TYPE_OPTIONS = isEnglish
+    ? (q.question_type === 'listening' ? [...ENGLISH_TYPE_OPTIONS, ENGLISH_LISTENING_OPTION] : ENGLISH_TYPE_OPTIONS)
+    : MATH_TYPE_OPTIONS;
+  const ABILITY_OPTIONS = isEnglish ? ENGLISH_ABILITY_OPTIONS : MATH_ABILITY_OPTIONS;
   const confPct = Math.round((q.confidence || 0) * 100);
   const confColor = confPct >= 90 ? 'text-emerald-600' : confPct >= 70 ? 'text-yellow-600' : 'text-red-500';
   const confBg = confPct >= 90 ? 'bg-emerald-50' : confPct >= 70 ? 'bg-yellow-50' : 'bg-red-50';
@@ -595,9 +613,12 @@ function QRow({ q, isStudent, examPaperId, analysisId, onDifficultyEdit, grade, 
   // AI가 대문자 enum(CALCULATION/UNDERSTANDING/...)으로 반환하므로 소문자 정규화.
   // 유형·능력이 **둘 다** 없으면(= 분석 실패 문항) 추론으로 채우지 않는다 — 'calculation' 기본값을
   // 넣으면 AI가 판정한 것처럼 보여 오히려 교정을 막는다. 빈 값 → EnumCell이 '미정' 편집 버튼 렌더.
-  const rawDomain = q.ability_domain || TYPE_TO_DOMAIN[q.question_type] || (q.question_type ? 'calculation' : '');
+  const domainFallback = q.question_type
+    ? (isEnglish ? ENGLISH_TYPE_TO_DOMAIN[q.question_type] : TYPE_TO_DOMAIN[q.question_type])
+    : undefined;
+  const rawDomain = q.ability_domain || domainFallback || (q.question_type ? (isEnglish ? 'accuracy' : 'calculation') : '');
   const domain = String(rawDomain || '').toLowerCase();
-  const domainColor = ABILITY_DOMAIN_COLORS[domain] || '#94A3B8';
+  const domainColor = (isEnglish ? ENGLISH_ABILITY_DOMAIN_COLORS : ABILITY_DOMAIN_COLORS)[domain] || '#94A3B8';
   // 난이도 보정 여부 — 번호 옆 점(•)으로 표시(배지는 미수정과 동일하게 깔끔히 유지)
   const curDiff = normalizeDifficulty(q.difficulty);
   const aiDiff = q.ai_difficulty != null ? normalizeDifficulty(String(q.ai_difficulty)) : null;
@@ -661,6 +682,7 @@ function QRow({ q, isStudent, examPaperId, analysisId, onDifficultyEdit, grade, 
           questionNumber={q.question_number}
           examPaperId={examPaperId}
           grade={grade}
+          subject={subject}
           onTopicUpdate={onTopicUpdate}
         />
       </td>
@@ -781,12 +803,14 @@ function TopicCell({
   questionNumber,
   examPaperId,
   grade,
+  subject = 'MATH',
   onTopicUpdate,
 }: {
   topic: string | null | undefined;
   questionNumber: string | number;
   examPaperId?: string;
   grade?: string | null;
+  subject?: string;
   onTopicUpdate?: (qNum: string | number, newTopic: string) => void;
 }) {
   const [editing, setEditing] = React.useState(false);
@@ -795,8 +819,15 @@ function TopicCell({
 
   const currentTopic = (topic || '').trim();
   const isUnknown = !currentTopic || /UNKNOWN|미정|unknown/i.test(currentTopic);
-  const options = React.useMemo(() => getTopicOptionsByGrade(grade), [grade]);
-  const groupedOptions = React.useMemo(() => getTopicOptionsGrouped(grade), [grade]);
+  const includeListening = toExamSubjectKey(subject) === 'ENGLISH' && currentTopic.includes(' > 듣기');
+  const options = React.useMemo(
+    () => getTopicOptionsByGrade(grade, subject, { includeListening }),
+    [grade, subject, includeListening],
+  );
+  const groupedOptions = React.useMemo(
+    () => getTopicOptionsGrouped(grade, subject, { includeListening }),
+    [grade, subject, includeListening],
+  );
   const canEdit = !!examPaperId;
 
   // currentTopic을 옵션 value 형식으로 정규화 — AI가 저장하는 형식은

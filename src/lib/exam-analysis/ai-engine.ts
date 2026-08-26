@@ -5,10 +5,20 @@
  */
 
 import { GoogleGenAI } from '@google/genai';
-import type { AnalysisCompleteness, AnalyzedQuestion, BasicAnalysisResult, ExamPaperClassification } from './types';
-import { CONFIDENCE_THRESHOLDS, TYPE_TO_DOMAIN, TYPE_TO_STANDARD } from './constants';
+import type { AnalysisCompleteness, AnalyzedQuestion, BasicAnalysisResult, EnglishKeyStructure, EnglishKeyTerm, ExamPaperClassification } from './types';
+import { CONFIDENCE_THRESHOLDS } from './constants';
+import type { ExamSubjectKey } from './constants';
+import {
+  defaultQuestionType,
+  emptyTypeDistribution,
+  normalizeAbilityDomain,
+  normalizeQuestionType,
+  toExamSubjectKey,
+} from './subject';
 import { applyNumericField, applyCategoricalRemap, NUMERIC_FIELDS, CATEGORICAL_FIELDS, type CalibrationSet } from './calibration';
 import { roundPoints, sumPoints } from './points';
+import { callCliVision, isCliExamAnalysisEnabled } from './cli-llm';
+import { isEnglishStudyJunk } from './english-study-pack';
 
 // ── 싱글톤 클라이언트 ──
 
@@ -63,27 +73,41 @@ function stripDataUriPrefix(base64: string): string {
 }
 
 /**
+ * 코드펜스·앞뒤 설명 문장을 걷어내고 JSON 객체/배열만 남긴다.
+ * CLI 가 "시험지를 읽겠습니다.{...}" 처럼 JSON 앞에 한국어를 붙이는 경우가 있다.
+ */
+export function isolateJsonPayload(text: string): string {
+  let cleaned = text.trim();
+
+  const fence = cleaned.match(/```(?:json)?\s*\n?([\s\S]*?)```/);
+  if (fence) {
+    cleaned = fence[1].trim();
+  } else if (cleaned.startsWith('```')) {
+    const lines = cleaned.split('\n');
+    lines.shift();
+    if (lines[lines.length - 1]?.trim() === '```') lines.pop();
+    cleaned = lines.join('\n').trim();
+  }
+
+  const objStart = cleaned.indexOf('{');
+  const arrStart = cleaned.indexOf('[');
+  let start = -1;
+  if (objStart === -1) start = arrStart;
+  else if (arrStart === -1) start = objStart;
+  else start = Math.min(objStart, arrStart);
+  if (start < 0) return cleaned;
+
+  const closer = cleaned[start] === '{' ? '}' : ']';
+  const end = cleaned.lastIndexOf(closer);
+  if (end > start) return cleaned.slice(start, end + 1);
+  return cleaned.slice(start);
+}
+
+/**
  * JSON 응답에서 코드 펜스(```json ... ```) 제거 후 파싱
  */
 export function parseJsonResponse<T = unknown>(text: string): T {
-  let cleaned = text.trim();
-
-  // ```json ... ``` 또는 ``` ... ``` 제거
-  const codeFenceRegex = /^```(?:json)?\s*\n?([\s\S]*?)\n?\s*```$/;
-  const match = cleaned.match(codeFenceRegex);
-  if (match) {
-    cleaned = match[1].trim();
-  }
-
-  // 여전히 ``` 로 시작하면 첫 줄과 마지막 줄 제거
-  if (cleaned.startsWith('```')) {
-    const lines = cleaned.split('\n');
-    lines.shift(); // 첫 줄 (```)
-    if (lines[lines.length - 1]?.trim() === '```') {
-      lines.pop();
-    }
-    cleaned = lines.join('\n').trim();
-  }
+  const cleaned = isolateJsonPayload(text);
 
   try {
     return JSON.parse(cleaned) as T;
@@ -148,11 +172,20 @@ interface GeminiVisionCallOptions {
   temperature?: number;
   mimeTypeHint?: string;     // 파일 형식 힌트 (image/jpeg, application/pdf 등)
   modelOverride?: string;    // 모델 ID override (기본: MODEL 상수 = gemini-3.1-pro-preview)
+  onProgress?: (msg: string) => void;
 }
 
 /**
- * Gemini Vision API 호출 (이미지 + 텍스트 프롬프트)
+ * 비전 호출 공개 엔트리 — 문항 분석·분류·채점마크가 같은 프로바이더를 탄다.
+ * modelOverride 가 있으면 (모델 비교 목업) 항상 Gemini 경로.
+ * 로컬 CLI 모드에서는 Gemini SDK 를 타지 않는다.
  */
+export async function callExamVision<T = unknown>(
+  opts: GeminiVisionCallOptions,
+): Promise<T> {
+  return callGeminiVision<T>(opts);
+}
+
 async function callGeminiVision<T = unknown>({
   images,
   prompt,
@@ -160,7 +193,17 @@ async function callGeminiVision<T = unknown>({
   temperature = 0.1,
   mimeTypeHint,
   modelOverride,
+  onProgress,
 }: GeminiVisionCallOptions): Promise<T> {
+  if (isCliExamAnalysisEnabled() && !modelOverride) {
+    onProgress?.('AI 분석 호출 (시험지 읽는 중)');
+    const responseText = await callCliVision({ images, prompt, mimeTypeHint, onProgress });
+    onProgress?.('AI 응답 수신, JSON 정리 중');
+    if (jsonMode) return parseJsonResponse<T>(responseText);
+    return responseText as unknown as T;
+  }
+
+  onProgress?.('AI 분석 호출');
   const client = getClient();
 
   // 이미지 파트 구성
@@ -399,13 +442,14 @@ function makePlaceholder(
   points: number | null,
   confidenceReason: string,
   comment: string,
+  subject: ExamSubjectKey = 'MATH',
 ): AnalyzedQuestion {
   return {
     question_number: questionNumber,
     question_format: 'objective',
     difficulty: '1',
     difficulty_reason: null,
-    question_type: 'change_relation' as AnalyzedQuestion['question_type'],
+    question_type: defaultQuestionType(subject),
     ability_domain: null,
     points,
     topic: null,
@@ -433,6 +477,7 @@ function makePlaceholder(
 export function appendMissingTail(
   result: BasicAnalysisResult,
   completeness: AnalysisCompleteness,
+  subject: ExamSubjectKey = 'MATH',
 ): { result: BasicAnalysisResult; filled: number } {
   if (completeness.status !== 'incomplete') return { result, filled: 0 };
 
@@ -461,6 +506,7 @@ export function appendMissingTail(
     perQuestion !== null
       ? `⚠️ 마지막 문항이 자동 분석에서 누락되었습니다. 시험지를 확인하고 문항 정보를 직접 입력해 주세요. (배점은 부족분 ${roundPoints(pointsShortfall)}점 기준 자동 배정)`
       : '⚠️ 마지막 문항이 자동 분석에서 누락되었습니다. 시험지를 확인하고 배점과 문항 정보를 직접 입력해 주세요.',
+    subject,
   ));
 
   // 누락된 건 "꼬리"이므로 정렬하지 않고 맨 뒤에 붙인다 (서술형 뒤가 실제 위치)
@@ -474,7 +520,7 @@ export function appendMissingTail(
   };
 }
 
-function fillNumberGaps(result: BasicAnalysisResult): BasicAnalysisResult {
+function fillNumberGaps(result: BasicAnalysisResult, subject: ExamSubjectKey = 'MATH'): BasicAnalysisResult {
   const { exam_info, questions } = result;
 
   // 객관식/단답형(숫자 번호) 문항만 갭 감지 대상
@@ -540,6 +586,7 @@ function fillNumberGaps(result: BasicAnalysisResult): BasicAnalysisResult {
     perGap !== null
       ? '⚠️ 이 문항은 자동 분석에 실패했습니다. 시험지를 확인하고 정보를 직접 입력해 주세요. (점수는 객관식 평균을 기준으로 자동 추정)'
       : '⚠️ 이 문항은 자동 분석에 실패했습니다. 시험지를 확인하고 점수와 정보를 직접 입력해 주세요.',
+    subject,
   ));
 
   // 번호 순으로 정렬 (서술형은 뒤에)
@@ -572,6 +619,47 @@ function fillNumberGaps(result: BasicAnalysisResult): BasicAnalysisResult {
 /**
  * 분석 결과 기본 구조 검증
  */
+function toEnglishKeyTerms(raw: unknown): EnglishKeyTerm[] {
+  if (!Array.isArray(raw)) return [];
+  const out: EnglishKeyTerm[] = [];
+  for (const row of raw.slice(0, 6)) {
+    if (!row || typeof row !== 'object') continue;
+    const r = row as Record<string, unknown>;
+    const word = String(r.word ?? r.text ?? r.pattern ?? '').trim();
+    if (!word || word.length > 80 || isEnglishStudyJunk(word)) continue;
+    const meaning = typeof r.meaning === 'string' ? r.meaning.trim().slice(0, 40) || null : null;
+    out.push({ word, meaning });
+  }
+  return out;
+}
+
+function toEnglishKeyStructures(raw: unknown): EnglishKeyStructure[] {
+  if (!Array.isArray(raw)) return [];
+  const out: EnglishKeyStructure[] = [];
+  for (const row of raw.slice(0, 6)) {
+    if (!row || typeof row !== 'object') continue;
+    const r = row as Record<string, unknown>;
+    const pattern = String(r.pattern ?? r.text ?? r.word ?? '').trim();
+    if (!pattern || pattern.length > 80 || isEnglishStudyJunk(pattern)) continue;
+    const meaning = typeof r.meaning === 'string' ? r.meaning.trim().slice(0, 40) || null : null;
+    out.push({ pattern, meaning });
+  }
+  return out;
+}
+
+function parseEnglishKeyFields(q: AnalyzedQuestion): {
+  key_vocab?: EnglishKeyTerm[];
+  key_structures?: EnglishKeyStructure[];
+} {
+  const rec = q as unknown as Record<string, unknown>;
+  const vocab = toEnglishKeyTerms(rec.key_vocab);
+  const structures = toEnglishKeyStructures(rec.key_structures);
+  const out: { key_vocab?: EnglishKeyTerm[]; key_structures?: EnglishKeyStructure[] } = {};
+  if (vocab.length) out.key_vocab = vocab;
+  if (structures.length) out.key_structures = structures;
+  return out;
+}
+
 function validateBasicResult(result: unknown): result is BasicAnalysisResult {
   if (!result || typeof result !== 'object') return false;
 
@@ -602,6 +690,8 @@ async function runAnalysisPass(
   combinedPrompt: string,
   modelOverride?: string,
   calibrationSet?: CalibrationSet | null,
+  subject: ExamSubjectKey = 'MATH',
+  onProgress?: (msg: string) => void,
 ): Promise<BasicAnalysisResult> {
   try {
     const rawResult = await callGeminiVision<unknown>({
@@ -611,6 +701,7 @@ async function runAnalysisPass(
       temperature: 0.1,
       mimeTypeHint: mimeTypeHint,
       modelOverride,
+      onProgress,
     });
 
     // 구조 검증
@@ -622,9 +713,9 @@ async function runAnalysisPass(
 
     // 기본값 보정 + question_type 표준화 + ability_domain 매핑
     const rawQuestions = rawResult.questions.map((q, idx) => {
-      const rawType = q.question_type ?? 'calculation';
-      const standardType = (TYPE_TO_STANDARD[rawType] || 'change_relation') as AnalyzedQuestion['question_type'];
-      const abilityDomain = (q.ability_domain || TYPE_TO_DOMAIN[rawType] || TYPE_TO_DOMAIN[standardType] || 'calculation') as NonNullable<AnalyzedQuestion['ability_domain']>;
+      const standardType = normalizeQuestionType(subject, q.question_type);
+      const abilityDomain = normalizeAbilityDomain(subject, q.ability_domain, standardType);
+      const englishKeys = subject === 'ENGLISH' ? parseEnglishKeyFields(q) : {};
       return {
         question_number: q.question_number ?? idx + 1,
         question_format: q.question_format ?? null,
@@ -635,6 +726,7 @@ async function runAnalysisPass(
         points: q.points ?? null,
         topic: q.topic ?? null,
         ai_comment: q.ai_comment ?? null,
+        ...englishKeys,
         confidence: typeof q.confidence === 'number' ? q.confidence : CONFIDENCE_THRESHOLDS.MEDIUM,
         confidence_reason: q.confidence_reason ?? null,
         is_correct: q.is_correct ?? null,
@@ -665,7 +757,7 @@ async function runAnalysisPass(
 
     // summary 분포를 questions 배열에서 직접 재계산 (AI summary 부정확 방지)
     const recomputedDiffDist: Record<string, number> = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
-    const recomputedTypeDist: Record<string, number> = { number: 0, change_relation: 0, shape_measure: 0, data_possibility: 0 };
+    const recomputedTypeDist: Record<string, number> = emptyTypeDistribution(subject);
     const recomputedFormatDist: Record<string, number> = { objective: 0, short_answer: 0, essay: 0 };
 
     for (const q of questions) {
@@ -674,9 +766,8 @@ async function runAnalysisPass(
       if (recomputedDiffDist[diff] !== undefined) {
         recomputedDiffDist[diff]++;
       }
-      // 유형 분포 — 옛/raw 키를 4대 영역으로 정규화 후 카운트(옛 분석본·Gemini raw 키 흡수)
-      const qType = TYPE_TO_STANDARD[q.question_type || ''] || q.question_type || 'change_relation';
-      if (recomputedTypeDist[qType] !== undefined) {
+      const qType = q.question_type;
+      if (qType && recomputedTypeDist[qType] !== undefined) {
         recomputedTypeDist[qType]++;
       }
       // 형식 분포
@@ -688,7 +779,7 @@ async function runAnalysisPass(
 
     // 가장 많은 난이도/유형 찾기
     const dominantDiff = Object.entries(recomputedDiffDist).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '3';
-    const dominantType = Object.entries(recomputedTypeDist).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'change_relation';
+    const dominantType = Object.entries(recomputedTypeDist).sort((a, b) => b[1] - a[1])[0]?.[0] ?? defaultQuestionType(subject);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rawSchoolName = (rawResult.exam_info as any)?.school_name;
@@ -727,7 +818,7 @@ async function runAnalysisPass(
     // 배점 검증 및 페널티 적용
     const validated = validateAndPenalize(result);
     // 문항 번호 갭 자동 보정 (v1.0.5) — 중간 구멍만. 꼬리 누락은 analyzeExam 이 처리
-    return fillNumberGaps(validated);
+    return fillNumberGaps(validated, subject);
   } catch (error) {
     if (error instanceof Error && error.message.includes('AI 분석 결과')) {
       throw error;
@@ -753,6 +844,8 @@ export async function analyzeExam(
   combinedPrompt: string,
   modelOverride?: string,
   calibrationSet?: CalibrationSet | null,
+  subject: ExamSubjectKey = 'MATH',
+  onProgress?: (msg: string) => void,
 ): Promise<BasicAnalysisResult> {
   if (!images.length) {
     throw new Error('분석할 이미지가 없습니다');
@@ -762,13 +855,15 @@ export async function analyzeExam(
     throw new Error('분석 프롬프트가 비어있습니다');
   }
 
-  let result = await runAnalysisPass(images, mimeTypeHint, combinedPrompt, modelOverride, calibrationSet);
+  const subjectKey = toExamSubjectKey(subject);
+  let result = await runAnalysisPass(images, mimeTypeHint, combinedPrompt, modelOverride, calibrationSet, subjectKey, onProgress);
   let completeness = assessCompleteness(result);
 
   if (completeness.status === 'incomplete') {
+    onProgress?.('문항 누락 감지 — 재분석 중');
     console.warn(`[기출분석] 문항 누락 감지 — 재분석 1회 시도: ${completeness.reason}`);
     try {
-      const retryResult = await runAnalysisPass(images, mimeTypeHint, combinedPrompt, modelOverride, calibrationSet);
+      const retryResult = await runAnalysisPass(images, mimeTypeHint, combinedPrompt, modelOverride, calibrationSet, subjectKey, onProgress);
       const retryCompleteness = assessCompleteness(retryResult, true);
       if (isBetterPass(retryCompleteness, completeness)) {
         console.warn(`[기출분석] 재분석 채택 (${completeness.emittedQuestions}문항/${completeness.pointsSum}점 → ${retryCompleteness.emittedQuestions}문항/${retryCompleteness.pointsSum}점)`);
@@ -785,7 +880,7 @@ export async function analyzeExam(
   }
 
   // 재분석 후에도 남은 누락은 placeholder 로 가시화 (조용히 짧은 분석본을 만들지 않는다)
-  const { result: filled, filled: filledCount } = appendMissingTail(result, completeness);
+  const { result: filled, filled: filledCount } = appendMissingTail(result, completeness, subjectKey);
 
   return {
     ...filled,

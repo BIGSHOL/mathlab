@@ -135,7 +135,7 @@ export async function findNearbyExamData(analysisId: string): Promise<NearbyComp
 
   const examPaper = await prisma.examPaper.findUnique({
     where: { id: analysis.examPaperId },
-    select: { id: true, schoolName: true, schoolId: true, title: true, grade: true, category: true, tenantId: true },
+    select: { id: true, schoolName: true, schoolId: true, title: true, grade: true, category: true, tenantId: true, subject: true },
   });
   if (!examPaper?.schoolId && !examPaper?.schoolName) return empty;
 
@@ -189,6 +189,7 @@ export async function findNearbyExamData(analysisId: string): Promise<NearbyComp
         : { schoolName: examPaper.schoolName }),
       id: { not: examPaper.id },
       grade: examGrade, // 같은 학년만
+      subject: examPaper.subject,
       status: 'COMPLETED',
     },
     select: { id: true, title: true },
@@ -292,6 +293,7 @@ export async function findNearbyExamData(analysisId: string): Promise<NearbyComp
       ...tenantFilter,
       schoolId: { in: [...nearbyIdToName.keys()] },
       grade: examGrade, // 같은 학년
+      subject: examPaper.subject,
       status: 'COMPLETED',
     },
     select: { id: true, title: true, schoolId: true, schoolName: true },

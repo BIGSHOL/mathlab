@@ -196,9 +196,13 @@ export function DemoUploadForm({ uploadedIdxs, onSuccess, onCancel }: DemoUpload
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">과목 *</label>
-          <select value={subject} onChange={(e) => setSubject(e.target.value as 'MATH' | 'ENGLISH')} className="w-full px-3 py-2 border rounded-sm text-sm">
+          <select
+            value="MATH"
+            disabled
+            aria-disabled
+            className="w-full px-3 py-2 border rounded-sm text-sm bg-slate-100 text-slate-500 cursor-not-allowed"
+          >
             <option value="MATH">수학</option>
-            <option value="ENGLISH">영어</option>
           </select>
         </div>
 
