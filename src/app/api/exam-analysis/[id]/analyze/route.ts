@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import type { ExamAnalysis, ExamAnalysisExtension, ExamPaperStatus } from '@prisma/client';
 import { toUserFacingError } from '@/lib/exam-analysis/shared/error-message';
 import { requireTeacher, isResponse, notFound, badRequest } from '@/lib/api';
 import { getExamScope } from '@/lib/demo/accounts';
@@ -51,6 +52,71 @@ async function loadFileAsBase64(fileUrl: string): Promise<string> {
 }
 
 type Params = { params: Promise<{ id: string }> };
+
+/**
+ * 재분석 직전에 떠 두는 스냅샷 — 기존 분석 행 + 확장(총평) + 시험지 상태.
+ * 재분석은 기존 분석을 **먼저** 지운다(분석 중 화면이 옛 결과를 완료로 오인하지 않도록:
+ * AnalysisDetail 의 진행률 UI 가 `status==='ANALYZING' && !latestAnalysis` 조건이다).
+ * 그 사이 파일 로드나 AI 호출이 실패하면 ExamAnalysisExtension 이 Cascade 라 **총평까지
+ * 통째로 날아간다** — 되돌릴 방법이 없다. 그래서 지우기 전에 원본을 떠 둔다.
+ */
+type AnalysisSnapshot = {
+  paper: { status: ExamPaperStatus; errorMessage: string | null; analysisStep: number };
+  analyses: Array<ExamAnalysis & { extensions: ExamAnalysisExtension[] }>;
+};
+
+/**
+ * 스냅샷을 **같은 id 로** 되돌린다. id 를 유지해야 FK 가 없어 Cascade 로 지워지지 않는
+ * 참조들(ExamQuestionReference·ExamFeedback·ExamPatternMatchHistory 의 analysisId)이
+ * 다시 유효해진다 — 새 id 로 만들면 그 행들은 영구 미아가 된다.
+ */
+async function restoreAnalyses(paperId: string, snap: AnalysisSnapshot) {
+  for (const a of snap.analyses) {
+    await prisma.examAnalysis.create({
+      data: {
+        id: a.id,
+        examPaperId: paperId,
+        /* eslint-disable @typescript-eslint/no-explicit-any */
+        questions: a.questions as any,
+        summary: a.summary as any,
+        markDetection: a.markDetection as any,
+        crossValidation: a.crossValidation as any,
+        /* eslint-enable @typescript-eslint/no-explicit-any */
+        modelVersion: a.modelVersion,
+        totalQuestions: a.totalQuestions,
+        totalPoints: a.totalPoints,
+        earnedPoints: a.earnedPoints,
+        analyzedAt: a.analyzedAt,
+        analyzedBy: a.analyzedBy,
+        createdAt: a.createdAt,
+      },
+    });
+    for (const e of a.extensions) {
+      await prisma.examAnalysisExtension.create({
+        data: {
+          id: e.id,
+          analysisId: a.id,
+          agentType: e.agentType,
+          result: e.result as never,
+          errorMessage: e.errorMessage,
+          lastRunBy: e.lastRunBy,
+          lastRunAt: e.lastRunAt,
+          createdAt: e.createdAt,
+        },
+      });
+    }
+  }
+  // 시험지도 재분석 이전 상태로. FAILED 로 두면 화면이 '분석 결과 + 완료' 조건을 못 만족해
+  // 되살린 결과가 보이지 않는다.
+  await prisma.examPaper.update({
+    where: { id: paperId },
+    data: {
+      status: snap.paper.status,
+      errorMessage: snap.paper.errorMessage,
+      analysisStep: snap.paper.analysisStep,
+    },
+  });
+}
 
 /** 분석 단계 업데이트 헬퍼 */
 async function setStep(id: string, step: number, subjectKey: 'MATH' | 'ENGLISH' = 'MATH') {
@@ -105,16 +171,25 @@ export async function POST(request: NextRequest, { params }: Params) {
     }
   }
 
+  // 원본 파일이 없으면 아무것도 건드리지 않고 즉시 반려. 아래 삭제까지 갔다가 파일 로드에서
+  // 실패하면 기존 분석·총평을 잃는다 — 되살릴 수는 있지만 애초에 안 지우는 게 낫다.
+  const fileUrlList = examPaper.fileUrls.split(',').map((u) => u.trim()).filter(Boolean);
+  if (fileUrlList.length === 0) {
+    return badRequest('원본 시험지 파일이 없어 재분석할 수 없습니다. 시험지를 다시 업로드해 주세요.');
+  }
+
   // 재분석 시: 선생님 교정(ground truth)을 전 필드 보존했다가 재적용 → 기존 분석 삭제
   // 보존 필드: difficulty/points/topic/question_type/ability_domain (각 ai_<field> 존재 = 교정됨)
   const PRESERVE_FIELDS = ['difficulty', 'points', 'topic', 'question_type', 'ability_domain'] as const;
   const priorEdits: Record<string, Record<string, unknown>> = {};
+  let snapshot: AnalysisSnapshot | null = null;
   if (examPaper.status === 'COMPLETED' || examPaper.status === 'FAILED') {
-    const prev = await prisma.examAnalysis.findFirst({
+    const prevRows = await prisma.examAnalysis.findMany({
       where: { examPaperId: id },
       orderBy: { createdAt: 'desc' },
-      select: { questions: true },
+      include: { extensions: true },
     });
+    const prev = prevRows[0];
     if (prev && Array.isArray(prev.questions)) {
       for (const raw of prev.questions) {
         const q = raw as Record<string, unknown>;
@@ -125,6 +200,17 @@ export async function POST(request: NextRequest, { params }: Params) {
         }
         if (Object.keys(edits).length > 0) priorEdits[String(q.question_number)] = edits;
       }
+    }
+    // 실패 시 되돌릴 원본 확보 (위 AnalysisSnapshot 주석 참고)
+    if (prevRows.length > 0) {
+      snapshot = {
+        paper: {
+          status: examPaper.status,
+          errorMessage: examPaper.errorMessage,
+          analysisStep: examPaper.analysisStep,
+        },
+        analyses: prevRows,
+      };
     }
     await prisma.examAnalysis.deleteMany({ where: { examPaperId: id } });
   }
@@ -137,15 +223,18 @@ export async function POST(request: NextRequest, { params }: Params) {
     data: { status: 'ANALYZING', analysisStep: 0, errorMessage: null },
   });
 
+  // 새 분석이 실제로 만들어졌는지 — 만들어진 뒤의 실패에까지 스냅샷을 되돌리면
+  // 새 분석과 옛 분석이 함께 남는다.
+  let newAnalysisCreated = false;
+
   try {
     return await runWithCliKind(cliKind, async () => {
     // ── Step 1: 파일 로드 ──
     await setStep(id, 1, subjectKeyEarly);
 
-    const fileUrls = examPaper.fileUrls.split(',');
     const imageDataList: string[] = [];
 
-    for (const fileUrl of fileUrls) {
+    for (const fileUrl of fileUrlList) {
       imageDataList.push(await loadFileAsBase64(fileUrl));
     }
     pushAnalysisProgress(id, `시험지 파일 ${imageDataList.length}개 로드 완료`, PROGRESS_STAGE.LOAD_DONE);
@@ -304,6 +393,8 @@ export async function POST(request: NextRequest, { params }: Params) {
       },
     });
 
+    newAnalysisCreated = true;
+
     // 저신뢰/고난도 문항 레퍼런스 자동 수집
     try {
       const { collectLowConfidenceReferences } = await import('@/lib/exam-analysis/reference-collector');
@@ -342,13 +433,34 @@ export async function POST(request: NextRequest, { params }: Params) {
     // 그대로 토스트에 떴다 (적대적 리뷰 2.2, CLAUDE.md #0-1).
     console.error('[기출분석] 분석 실패:', error);
     const errorMsg = toUserFacingError(error, '시험지 분석에 실패했습니다. 다시 시도해 주세요.');
-    await prisma.examPaper.update({
-      where: { id },
-      data: { status: 'FAILED', errorMessage: errorMsg, analysisStep: 0 },
-    });
+
+    // 새 분석이 만들어지기 전에 실패했고 직전 분석을 떠 뒀다면 되돌린다 —
+    // 재분석 한 번 실패했다고 기존 분석과 총평(재생성 비용이 큰 산출물)을 잃지 않게.
+    let restored = false;
+    if (snapshot && !newAnalysisCreated) {
+      try {
+        await restoreAnalyses(id, snapshot);
+        restored = true;
+      } catch (e) {
+        // 복구까지 실패하면 아래에서 평소대로 FAILED 로 남긴다 (원래 오류를 가리지 않는다)
+        console.error('[기출분석] 직전 분석 복구 실패:', e);
+      }
+    }
+
+    if (!restored) {
+      await prisma.examPaper.update({
+        where: { id },
+        data: { status: 'FAILED', errorMessage: errorMsg, analysisStep: 0 },
+      });
+    }
 
     return NextResponse.json(
-      { error: { code: 'ANALYSIS_FAILED', message: errorMsg } },
+      {
+        error: {
+          code: 'ANALYSIS_FAILED',
+          message: restored ? `${errorMsg} 기존 분석 결과는 그대로 유지됩니다.` : errorMsg,
+        },
+      },
       { status: 500 }
     );
   }
