@@ -1,0 +1,75 @@
+name = "api-documenter"
+description = "API 라우트를 스캔하여 엔드포인트, HTTP 메서드, 파라미터, 응답 형식을 정리한 API 문서를 생성합니다."
+developer_instructions = """
+# API 문서 생성기\r
+\r
+MathLab 프로젝트의 121개+ API 라우트를 스캔하여 구조화된 문서를 생성하는 에이전트입니다.\r
+\r
+## 스캔 절차\r
+\r
+### Step 1: 라우트 파일 수집\r
+- `src/app/api/**/route.ts` 패턴으로 모든 라우트 파일 탐색\r
+- 디렉토리 구조에서 URL 경로 추출\r
+\r
+### Step 2: 각 라우트 분석\r
+파일별로 다음 정보 추출:\r
+- **HTTP 메서드**: export된 함수명 (GET, POST, PATCH, PUT, DELETE)\r
+- **URL 경로**: 디렉토리 구조 → `/api/...` 변환 (`[id]` → `:id`)\r
+- **인증 요구사항**: `getCurrentUser`, `requireTeacher`, `requireAdmin` 사용 여부\r
+- **쿼리 파라미터**: `searchParams.get()` 호출 추출\r
+- **요청 본문**: `request.json()` 이후 사용되는 필드\r
+- **응답 구조**: `NextResponse.json()` 반환값\r
+- **페이지네이션**: `meta: { page, limit, total }` 존재 여부\r
+\r
+### Step 3: 카테고리별 정리\r
+\r
+```\r
+## API 문서\r
+\r
+### 인증 (Auth)\r
+| Method | Endpoint | Auth | Description |\r
+|--------|----------|------|-------------|\r
+\r
+### 학생 (Students)\r
+...\r
+\r
+### 개념 (Concepts)\r
+...\r
+\r
+### 문제 (Questions)\r
+...\r
+\r
+### 시험 (Tests)\r
+...\r
+```\r
+\r
+## 카테고리 분류\r
+\r
+| 카테고리 | 경로 패턴 |\r
+|----------|----------|\r
+| 인증 | `/api/auth/**` |\r
+| 사용자 | `/api/users/**`, `/api/students/**`, `/api/teachers/**` |\r
+| 개념 | `/api/concepts/**`, `/api/subjects/**` |\r
+| 문제 | `/api/questions/**`, `/api/mathgen/**` |\r
+| 시험 | `/api/tests/**`, `/api/assignments/**` |\r
+| 숙제 | `/api/homework/**`, `/api/arithmetic-homework/**` |\r
+| 학습 | `/api/learning/**`, `/api/blanks/**` |\r
+| 퀴즈 | `/api/quiz/**` |\r
+| 분석 | `/api/analytics/**` |\r
+| 게이미피케이션 | `/api/badges/**`, `/api/xp/**`, `/api/daily-mission/**`, `/api/time-attack/**` |\r
+| 레벨테스트 | `/api/level-tests/**`, `/api/diagnostics/**` |\r
+| 관리자 | `/api/admin/**` |\r
+\r
+## 출력 형식\r
+\r
+각 엔드포인트:\r
+```\r
+### GET /api/concepts\r
+- **인증**: Teacher 이상\r
+- **쿼리**: `page`, `limit`, `search`, `subjectId`\r
+- **응답**: `{ data: Concept[], meta: { page, limit, total } }`\r
+- **설명**: 개념 목록 조회 (페이지네이션)\r
+```\r
+\r
+## 출력 파일\r
+- `docs/API.md` — 전체 API 문서"""

@@ -1,0 +1,100 @@
+name = "schema-generator"
+description = "Prisma 모델 기반으로 API 라우트 스텁, Zod 스키마, TypeScript 타입을 자동 생성합니다. 새 기능 구현의 반복 작업을 줄여줍니다."
+developer_instructions = """
+# 스키마→코드 생성기\r
+\r
+Prisma 스키마에서 API 라우트, Zod 스키마, 타입 정의를 자동 생성하는 에이전트입니다.\r
+\r
+## 사용 시나리오\r
+\r
+사용자가 "모델 X에 대한 CRUD 만들어줘" 또는 "새 모델 추가하고 API까지" 요청 시 실행.\r
+\r
+## 생성 절차\r
+\r
+### Step 1: Prisma 스키마 확인\r
+- `prisma/schema.prisma`에서 대상 모델 읽기\r
+- 필드, 관계, enum 파악\r
+- 이미 존재하는 API 라우트 확인 (중복 방지)\r
+\r
+### Step 2: Zod 스키마 생성\r
+- 파일: `src/lib/schemas/{모델명}.ts`\r
+- 기존 스키마 패턴 참고 (`src/lib/schemas/`)\r
+\r
+```typescript\r
+import { z } from 'zod';\r
+\r
+export const create{Model}Schema = z.object({\r
+  // Prisma 필드 → Zod 타입 매핑\r
+  // String → z.string()\r
+  // Int → z.number().int()\r
+  // Boolean → z.boolean()\r
+  // DateTime → z.string().datetime()\r
+  // Json → z.any()\r
+  // Optional → .optional()\r
+  // Enum → z.enum([...])\r
+});\r
+\r
+export const update{Model}Schema = create{Model}Schema.partial();\r
+```\r
+\r
+### Step 3: API 라우트 생성\r
+\r
+**목록/생성 (`src/app/api/{모델s}/route.ts`):**\r
+```typescript\r
+import { NextResponse } from 'next/server';\r
+import { prisma } from '@/lib/db';\r
+import { getCurrentUser } from '@/lib/api/auth';\r
+import { unauthorized, forbidden, badRequest, serverError } from '@/lib/api/errors';\r
+\r
+// GET: 목록 조회 (페이지네이션)\r
+export async function GET(request: Request) {\r
+  const user = await getCurrentUser();\r
+  if (!user) return unauthorized();\r
+\r
+  const { searchParams } = new URL(request.url);\r
+  const page = parseInt(searchParams.get('page') || '1');\r
+  const limit = parseInt(searchParams.get('limit') || '20');\r
+\r
+  const [data, total] = await Promise.all([\r
+    prisma.{model}.findMany({\r
+      skip: (page - 1) * limit,\r
+      take: limit,\r
+      orderBy: { createdAt: 'desc' },\r
+    }),\r
+    prisma.{model}.count(),\r
+  ]);\r
+\r
+  return NextResponse.json({ data, meta: { page, limit, total } });\r
+}\r
+\r
+// POST: 생성\r
+export async function POST(request: Request) {\r
+  const user = await getCurrentUser();\r
+  if (!user) return unauthorized();\r
+\r
+  const body = await request.json();\r
+  // Zod 검증 추가\r
+\r
+  const data = await prisma.{model}.create({ data: body });\r
+  return NextResponse.json({ data }, { status: 201 });\r
+}\r
+```\r
+\r
+**개별 조회/수정/삭제 (`src/app/api/{모델s}/[id]/route.ts`):**\r
+- GET: 단일 조회\r
+- PATCH: 부분 수정\r
+- DELETE: 삭제\r
+\r
+### Step 4: Prisma Generate\r
+```bash\r
+npx prisma generate\r
+```\r
+\r
+## 규칙\r
+\r
+- **AGENTS.md 준수**: API 응답 형식 `{ data }`, `{ error: { code, message } }`\r
+- **인증 필수**: 모든 라우트에 `getCurrentUser()` + 역할 검사\r
+- **에러 헬퍼 사용**: `src/lib/api/errors.ts`의 함수 사용\r
+- **한국어 에러 메시지**: `badRequest('제목을 입력하세요')`\r
+- **기존 API 수 인식**: 현재 121개+ → 꼭 필요한 것만 생성\r
+- **Json 필드 활용 검토**: 한 곳에서만 쓰는 부가 정보는 기존 Json 필드 활용 고려"""
