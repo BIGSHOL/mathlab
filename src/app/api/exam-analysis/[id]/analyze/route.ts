@@ -26,8 +26,11 @@ import { sumPoints } from '@/lib/exam-analysis/points';
 import { matchSchoolByName } from '@/lib/utils/school-matcher';
 import {
   clearAnalysisProgress,
+  cliProgressStage,
+  PROGRESS_STAGE,
   pushAnalysisProgress,
   resetAnalysisProgress,
+  stageForStep,
 } from '@/lib/exam-analysis/analysis-progress';
 import { ANALYZING_STEP_LOGS } from '@/lib/exam-analysis/analyzing-progress-copy';
 import path from 'path';
@@ -56,7 +59,7 @@ async function setStep(id: string, step: number, subjectKey: 'MATH' | 'ENGLISH' 
     data: { analysisStep: step },
   });
   const msg = ANALYZING_STEP_LOGS[subjectKey][step - 1];
-  if (msg) pushAnalysisProgress(id, msg);
+  if (msg) pushAnalysisProgress(id, msg, stageForStep(step));
 }
 
 async function readCliKindFromRequest(request: NextRequest): Promise<CliKind | undefined> {
@@ -145,7 +148,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     for (const fileUrl of fileUrls) {
       imageDataList.push(await loadFileAsBase64(fileUrl));
     }
-    pushAnalysisProgress(id, `시험지 파일 ${imageDataList.length}개 로드 완료`);
+    pushAnalysisProgress(id, `시험지 파일 ${imageDataList.length}개 로드 완료`, PROGRESS_STAGE.LOAD_DONE);
 
     // ── Step 2: 분류 + 프롬프트 구성 ──
     await setStep(id, 2, subjectKeyEarly);
@@ -186,7 +189,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     };
 
     const promptResult = await ExamPromptBuilder.buildWithDbContext(context);
-    pushAnalysisProgress(id, '분석 규칙 구성 완료');
+    pushAnalysisProgress(id, '분석 규칙 구성 완료', PROGRESS_STAGE.RULES_DONE);
 
     // ── Step 3: AI 문항 분석 (가장 오래 걸림) ──
     await setStep(id, 3, subjectKeyEarly);
@@ -208,13 +211,13 @@ export async function POST(request: NextRequest, { params }: Params) {
         undefined,
         undefined,
         subjectKey,
-        (msg) => pushAnalysisProgress(id, msg),
+        (msg) => pushAnalysisProgress(id, msg, cliProgressStage(msg)),
       ),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error(getExamAnalysisTimeoutLabel())), analysisTimeoutMs),
       ),
     ]);
-    pushAnalysisProgress(id, `문항 ${analysisResult.questions.length}개 수신, 검증 중`);
+    pushAnalysisProgress(id, `문항 ${analysisResult.questions.length}개 수신, 검증 중`, PROGRESS_STAGE.RECEIVED);
 
     let questions = analysisResult.questions as AnalyzedQuestion[];
 
@@ -314,7 +317,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       where: { id },
       data: { status: 'COMPLETED', analysisStep: 4 },
     });
-    pushAnalysisProgress(id, '분석 완료');
+    pushAnalysisProgress(id, '분석 완료', PROGRESS_STAGE.DONE);
     clearAnalysisProgress(id);
 
     // 학생 이용권 1 차감 (학생 시험지일 때만 · 시험지 단위 멱등). 실패해도 분석 결과는 유지.

@@ -8,6 +8,16 @@ import {
 
 type LogEntry = { time: string; msg: string };
 
+/**
+ * 로그 상자 최대 높이 — **40줄까지는 스크롤 없이 세로로 자란다.**
+ * 예전엔 `max-h-40`(=10rem, 약 9줄) 고정이라 로그가 곧바로 내부 스크롤에 갇혔다.
+ *
+ * 11px · leading-relaxed(1.625) 기준 한 줄 ≈ 17.9px, 위아래 패딩(py-2) 16px.
+ * 문구가 길어 줄바꿈되면 40줄보다 일찍 상한에 닿을 수 있다 — 상한이지 보장값이 아니다.
+ */
+const LOG_MAX_LINES = 40;
+const LOG_MAX_HEIGHT_PX = Math.round(LOG_MAX_LINES * 11 * 1.625) + 16;
+
 function nowHHMMSS() {
   const d = new Date();
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -57,7 +67,7 @@ export function AnalyzingProgress({
     }
   }, [serverStep, stepLogs, serverLogs]);
 
-  const liveTool = (serverLogs ?? []).some((l) => l.msg.includes('읽는 중') || l.msg.includes('페이지를 확인'));
+  const liveTool = (serverLogs ?? []).some((l) => l.msg.includes('읽는 중') || l.msg.includes('확인하는 중'));
   const displayLogs: LogEntry[] = [...logs];
   if (serverStep === 3 && elapsed >= 30 && !liveTool) {
     const waitLine = { time: nowHHMMSS(), msg: `AI 응답을 기다리는 중 (${elapsed}초 경과)` };
@@ -66,10 +76,12 @@ export function AnalyzingProgress({
     else displayLogs.push(waitLine);
   }
 
+  // 로그 상자는 스크롤 없이 세로로 자란다. 40줄을 넘어설 때만 안에서 스크롤한다.
+  // (상자가 자라는 동안 굳이 맨 아래로 끌 필요가 없다 — 화면에 다 보이기 때문.)
   useEffect(() => {
-    if (logScrollRef.current) {
-      logScrollRef.current.scrollTop = logScrollRef.current.scrollHeight;
-    }
+    const el = logScrollRef.current;
+    if (!el) return;
+    if (el.scrollHeight > el.clientHeight) el.scrollTop = el.scrollHeight;
   }, [displayLogs.length, elapsed]);
 
   return (
@@ -90,8 +102,8 @@ export function AnalyzingProgress({
           </div>
           <div
             ref={logScrollRef}
-            className="bg-slate-900 text-slate-100 rounded-sm px-3 py-2 max-h-40 overflow-y-auto font-mono text-[11px] leading-relaxed"
-            style={{ scrollbarWidth: 'thin' }}
+            className="bg-slate-900 text-slate-100 rounded-sm px-3 py-2 overflow-y-auto font-mono text-[11px] leading-relaxed"
+            style={{ maxHeight: LOG_MAX_HEIGHT_PX, scrollbarWidth: 'thin' }}
           >
             {displayLogs.map((entry, idx) => (
               <div key={idx} className="flex gap-2">
