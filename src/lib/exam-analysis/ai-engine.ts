@@ -420,6 +420,62 @@ function isBetterPass(next: AnalysisCompleteness, prev: AnalysisCompleteness): b
 }
 
 /**
+ * questions 배열에서 분포를 **파생**한다. summary 는 절대 독립 저장하지 않는다.
+ *
+ * ⚠️ placeholder 삽입(fillNumberGaps / appendMissingTail)은 분포 계산 뒤에 일어나므로,
+ *    삽입 후 반드시 다시 돌려야 한다. 안 그러면 `questions.length` 와
+ *    `difficulty_distribution` 합이 어긋난 모순된 분석본이 저장된다.
+ *
+ * 난이도가 null(판독 실패)인 문항은 어느 단계에도 계상하지 않는다 — 모르는 것을 아는 척하지 않는다.
+ * 따라서 분포 합 ≤ questions.length 이며, 그 차이가 곧 '미정' 문항 수다.
+ */
+function tallyQuestions(questions: AnalyzedQuestion[], subject: ExamSubjectKey) {
+  const difficulty: Record<string, number> = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
+  const type: Record<string, number> = emptyTypeDistribution(subject);
+  const format = { objective: 0, short_answer: 0, essay: 0 };
+
+  for (const q of questions) {
+    if (q.difficulty != null) {
+      const diff = String(q.difficulty);
+      if (difficulty[diff] !== undefined) difficulty[diff]++;
+    }
+    const qType = q.question_type;
+    if (qType && type[qType] !== undefined) type[qType]++;
+    const qFormat = (q.question_format || 'objective') as keyof typeof format;
+    if (format[qFormat] !== undefined) format[qFormat]++;
+  }
+
+  return {
+    difficulty,
+    type,
+    format,
+    dominantDifficulty: Object.entries(difficulty).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '3',
+    dominantType: Object.entries(type).sort((a, b) => b[1] - a[1])[0]?.[0] ?? defaultQuestionType(subject),
+  };
+}
+
+/** placeholder 가 추가된 뒤 exam_info·summary 를 questions 와 다시 맞춘다. */
+function syncSummary(result: BasicAnalysisResult, subject: ExamSubjectKey): BasicAnalysisResult {
+  const dist = tallyQuestions(result.questions, subject);
+  return {
+    ...result,
+    exam_info: {
+      ...result.exam_info,
+      total_questions: result.questions.length,
+      format_distribution: dist.format,
+    },
+    summary: {
+      ...result.summary,
+      difficulty_distribution: dist.difficulty as unknown as BasicAnalysisResult['summary']['difficulty_distribution'],
+      type_distribution: dist.type as unknown as BasicAnalysisResult['summary']['type_distribution'],
+      average_difficulty: dist.dominantDifficulty,
+      dominant_type: dist.dominantType,
+    },
+  };
+}
+
+
+/**
  * 문항 번호 갭 자동 보정 (v1.0.5)
  *
  * AI가 일부 문항을 판독하지 못해 question_number 시퀀스에 갭이 생긴 경우,
@@ -447,7 +503,8 @@ function makePlaceholder(
   return {
     question_number: questionNumber,
     question_format: 'objective',
-    difficulty: '1',
+    // 판독하지 못한 문항이다 — 난이도를 아는 척하지 않는다 (미정으로 두어 집계에서 빠진다).
+    difficulty: null,
     difficulty_reason: null,
     question_type: defaultQuestionType(subject),
     ability_domain: null,
@@ -719,7 +776,10 @@ async function runAnalysisPass(
       return {
         question_number: q.question_number ?? idx + 1,
         question_format: q.question_format ?? null,
-        difficulty: q.difficulty ?? '1',
+        // ⚠️ null 을 '1'(기본)로 바꾸지 말 것.
+        // H10 이 AI 에게 "판독 불가면 difficulty 를 null 로 두라"고 지시해 놓고
+        // 그 null 을 기본 난이도로 둔갑시키면, 못 읽은 문항이 쉬운 문항으로 집계된다.
+        difficulty: q.difficulty ?? null,
         difficulty_reason: q.difficulty_reason ?? null,
         question_type: standardType,
         ability_domain: abilityDomain,
@@ -755,31 +815,7 @@ async function runAnalysisPass(
         })
       : rawQuestions;
 
-    // summary 분포를 questions 배열에서 직접 재계산 (AI summary 부정확 방지)
-    const recomputedDiffDist: Record<string, number> = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
-    const recomputedTypeDist: Record<string, number> = emptyTypeDistribution(subject);
-    const recomputedFormatDist: Record<string, number> = { objective: 0, short_answer: 0, essay: 0 };
-
-    for (const q of questions) {
-      // 난이도 분포
-      const diff = String(q.difficulty);
-      if (recomputedDiffDist[diff] !== undefined) {
-        recomputedDiffDist[diff]++;
-      }
-      const qType = q.question_type;
-      if (qType && recomputedTypeDist[qType] !== undefined) {
-        recomputedTypeDist[qType]++;
-      }
-      // 형식 분포
-      const qFormat = q.question_format || 'objective';
-      if (recomputedFormatDist[qFormat] !== undefined) {
-        recomputedFormatDist[qFormat]++;
-      }
-    }
-
-    // 가장 많은 난이도/유형 찾기
-    const dominantDiff = Object.entries(recomputedDiffDist).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '3';
-    const dominantType = Object.entries(recomputedTypeDist).sort((a, b) => b[1] - a[1])[0]?.[0] ?? defaultQuestionType(subject);
+    const dist = tallyQuestions(questions, subject);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rawSchoolName = (rawResult.exam_info as any)?.school_name;
@@ -800,25 +836,22 @@ async function runAnalysisPass(
         school_name: typeof rawSchoolName === 'string' ? rawSchoolName : null,
         declared_total_questions: declaredQuestions,
         declared_total_points: declaredPoints,
-        format_distribution: {
-          objective: recomputedFormatDist['objective'] || 0,
-          short_answer: recomputedFormatDist['short_answer'] || 0,
-          essay: recomputedFormatDist['essay'] || 0,
-        },
+        format_distribution: dist.format,
       },
       summary: {
-        difficulty_distribution: recomputedDiffDist as unknown as BasicAnalysisResult['summary']['difficulty_distribution'],
-        type_distribution: recomputedTypeDist as unknown as BasicAnalysisResult['summary']['type_distribution'],
-        average_difficulty: dominantDiff,
-        dominant_type: dominantType,
+        difficulty_distribution: dist.difficulty as unknown as BasicAnalysisResult['summary']['difficulty_distribution'],
+        type_distribution: dist.type as unknown as BasicAnalysisResult['summary']['type_distribution'],
+        average_difficulty: dist.dominantDifficulty,
+        dominant_type: dist.dominantType,
       },
       questions,
     };
 
     // 배점 검증 및 페널티 적용
     const validated = validateAndPenalize(result);
-    // 문항 번호 갭 자동 보정 (v1.0.5) — 중간 구멍만. 꼬리 누락은 analyzeExam 이 처리
-    return fillNumberGaps(validated, subject);
+    // 문항 번호 갭 자동 보정 (v1.0.5) — 중간 구멍만. 꼬리 누락은 analyzeExam 이 처리.
+    // placeholder 가 끼어들므로 분포를 반드시 다시 파생시킨다 (안 하면 questions 와 summary 가 어긋난다).
+    return syncSummary(fillNumberGaps(validated, subject), subject);
   } catch (error) {
     if (error instanceof Error && error.message.includes('AI 분석 결과')) {
       throw error;
@@ -881,10 +914,12 @@ export async function analyzeExam(
 
   // 재분석 후에도 남은 누락은 placeholder 로 가시화 (조용히 짧은 분석본을 만들지 않는다)
   const { result: filled, filled: filledCount } = appendMissingTail(result, completeness, subjectKey);
+  // 꼬리 placeholder 도 분포를 흔든다 → questions 기준으로 다시 파생 (fillNumberGaps 와 동일 이유)
+  const synced = syncSummary(filled, subjectKey);
 
   return {
-    ...filled,
-    summary: { ...filled.summary, completeness: { ...completeness, filledQuestions: filledCount } },
+    ...synced,
+    summary: { ...synced.summary, completeness: { ...completeness, filledQuestions: filledCount } },
   };
 }
 

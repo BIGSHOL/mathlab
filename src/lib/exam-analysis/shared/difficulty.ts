@@ -1,4 +1,19 @@
+import { DIFFICULTY_LEGACY_MAP } from './constants';
 import type { AnalyzedQuestion } from '../types';
+
+/**
+ * 난이도 키 정규화 — 구 키(concept/pattern/reasoning/creative) → "1"~"5".
+ *
+ * **null/빈 값은 null 로 통과시킨다.** 기본값("1")으로 채우면 판독 실패 문항이
+ * 쉬운 문항으로 둔갑해 분포·가중평균·종합 난이도가 전부 낮게 왜곡된다.
+ * 호출부는 null 을 '미정'으로 표시할 책임이 있다.
+ *
+ * (같은 한 줄짜리 구현이 컴포넌트마다 8벌 복제돼 있던 것을 여기로 모았다.)
+ */
+export function normalizeDifficultyKey(key: string | null | undefined): string | null {
+  if (key == null || key === '') return null;
+  return DIFFICULTY_LEGACY_MAP[key] || key;
+}
 
 /**
  * 난이도 키(신/구) → 1~5 레벨 매핑.

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { normalizeDifficultyKey as normalizeDiff } from '@/lib/exam-analysis/shared/difficulty';
 import {
   ComposedChart,
   Bar,
@@ -23,9 +24,6 @@ interface QuestionPointsChartProps {
 }
 
 /** 난이도 키를 5단계로 정규화 */
-function normalizeDiff(key: string): string {
-  return DIFFICULTY_LEGACY_MAP[key] || key;
-}
 
 // 난이도별 색상
 const COLORS: Record<string, string> = {
@@ -79,8 +77,8 @@ export function QuestionPointsChart({ questions, embedded }: QuestionPointsChart
         name: displayName,
         points: q.points || 0,
         difficulty: normalizedDiff,
-        diffLevel: DIFFICULTY_LEVEL[normalizedDiff] || Number(normalizedDiff) || 1,
-        color: COLORS[normalizedDiff] || COLORS[diff] || '#94A3B8',
+        diffLevel: DIFFICULTY_LEVEL[normalizedDiff ?? ''] || Number(normalizedDiff ?? '') || 1,
+        color: COLORS[normalizedDiff ?? ''] || COLORS[diff ?? ''] || '#94A3B8',
         format: q.question_format || 'objective',
       };
     });
@@ -370,7 +368,7 @@ export function QuestionPointsChart({ questions, embedded }: QuestionPointsChart
                           </div>
                         </div>
                         <p className="text-[11px] text-slate-500">
-                          {DIFFICULTY_LABELS[item.difficulty]} 난이도에 비해 배점이 높아 쉽게 점수를 얻을 수 있습니다
+                          {DIFFICULTY_LABELS[item.difficulty ?? '']} 난이도에 비해 배점이 높아 쉽게 점수를 얻을 수 있습니다
                         </p>
                       </div>
                     ))}
@@ -397,7 +395,7 @@ export function QuestionPointsChart({ questions, embedded }: QuestionPointsChart
                           </div>
                         </div>
                         <p className="text-[11px] text-slate-500">
-                          {DIFFICULTY_LABELS[item.difficulty]} 난이도인데 배점이 낮아 노력 대비 점수 효율이 낮습니다
+                          {DIFFICULTY_LABELS[item.difficulty ?? '']} 난이도인데 배점이 낮아 노력 대비 점수 효율이 낮습니다
                         </p>
                       </div>
                     ))}

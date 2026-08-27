@@ -328,6 +328,7 @@ risks의 impact_on_goal은 "critical", "high", "medium", "low" 중 하나입니�
 
     for (const q of analysis.questions) {
       const diff = q.difficulty;
+      if (diff == null) continue;   // 미정 문항은 난이도별 대응력 집계에서 제외
       if (!difficultyGroups[diff]) {
         difficultyGroups[diff] = { correct: 0, total: 0 };
       }

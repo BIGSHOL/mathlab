@@ -6,6 +6,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import { normalizeDifficultyKey as normalizeDiff } from '../shared/difficulty';
 import { BaseAgent, deepNormalizeMath, type AgentInput } from './base-agent';
 import type { AgentType } from '../constants';
 import { DIFFICULTY_LEGACY_MAP, ABILITY_DOMAIN_LABELS } from '../constants';
@@ -17,9 +18,6 @@ import { MIDDLE_SCHOOL_CURRICULUM } from '../data/curriculum';
 import type { GradeCurriculum } from '../data/curriculum';
 import type { NearbyComparisonData, NearbyExamSummary } from '../nearby-school-data';
 
-function normalizeDiff(key: string): string {
-  return DIFFICULTY_LEGACY_MAP[key] || key;
-}
 
 // ── 영문 enum → 한글 라벨 (AI 입력/출력 정규화용) ──
 const QUESTION_TYPE_LABELS_KO: Record<string, string> = {
@@ -1945,7 +1943,7 @@ ${questionDetails}
     if (hasStudentData) {
       // 쉬운 문제를 틀림
       const wrongEasy = analysis.questions.filter(
-        (q) => q.is_correct === false && (['1', '2'].includes(normalizeDiff(q.difficulty))),
+        (q) => q.is_correct === false && (['1', '2'].includes(normalizeDiff(q.difficulty) ?? '')),
       );
       for (const q of wrongEasy.slice(0, 2)) {
         notable.push({
@@ -1956,7 +1954,7 @@ ${questionDetails}
 
       // 어려운 문제를 맞힘
       const correctHard = analysis.questions.filter(
-        (q) => q.is_correct === true && (['4', '5'].includes(normalizeDiff(q.difficulty))),
+        (q) => q.is_correct === true && (['4', '5'].includes(normalizeDiff(q.difficulty) ?? '')),
       );
       for (const q of correctHard.slice(0, 1)) {
         notable.push({
@@ -2178,7 +2176,7 @@ ${unitList}`;
     return groups;
   }
 
-  private difficultyLabel(diff: string): string {
+  private difficultyLabel(diff: string | null): string {
     const nd = normalizeDiff(diff);
     const map: Record<string, string> = {
       '1': '기본(1)',
@@ -2191,7 +2189,7 @@ ${unitList}`;
       reasoning: '심화(4)',
       creative: '최고난도(5)',
     };
-    return map[nd] || map[diff] || diff;
+    return map[nd ?? ''] || map[diff ?? ''] || diff || '미정';
   }
 
   private typeLabel(type: string | null | undefined): string {

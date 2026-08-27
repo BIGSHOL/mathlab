@@ -219,7 +219,7 @@ export function mergeExtractedWithAnalysis(
         section,
         questionNum: ext.questionNum,
         pageNum: ext.pageNum,
-        difficulty: EXAM_DIFF_TO_QUESTION[meta.difficulty] || (ext.difficulty as QuestionDifficulty) || 'MEDIUM',
+        difficulty: EXAM_DIFF_TO_QUESTION[meta.difficulty ?? ''] || (ext.difficulty as QuestionDifficulty) || 'MEDIUM',
         type: resolveType(rawType, finalChoices),
         content: ext.content,
         choices: finalChoices,

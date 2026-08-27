@@ -199,7 +199,9 @@ export interface ArticleGenerationResult {
 
 // ── 분석 헬퍼 (블로그 본문 정성 표현용) ──
 
-function normalizeDiffNum(key: string | number): number {
+function normalizeDiffNum(key: string | number | null | undefined): number | null {
+  // 미정(판독 실패)은 3(응용)으로 채우지 않는다 — 집계에서 빼야 종합 난이도가 왜곡되지 않는다.
+  if (key == null || key === '') return null;
   const k = String(key);
   const mapped = DIFFICULTY_LEGACY_MAP[k] || k;
   const n = Number(mapped);
@@ -217,6 +219,7 @@ function calcPointsDifficultyGaps(questions: AnalyzedQuestion[]): {
   const cntByLevel: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
   for (const q of questions) {
     const lv = normalizeDiffNum(q.difficulty);
+    if (lv == null) continue;   // 미정 문항은 배점-난이도 통계에서 제외
     sumByLevel[lv] += q.points || 0;
     cntByLevel[lv]++;
   }
@@ -226,13 +229,14 @@ function calcPointsDifficultyGaps(questions: AnalyzedQuestion[]): {
   const items = questions
     .map((q) => {
       const lv = normalizeDiffNum(q.difficulty);
+      if (lv == null) return null;   // 미정 문항은 배점 과소·과대 판정 대상 아님
       const points = q.points || 0;
       const expected = avgByLevel[lv] || 3;
       const gap = points - expected;
       const gapRatio = expected > 0 ? Math.abs(gap) / expected : 0;
       return { num: q.question_number, points, level: lv, gap, gapRatio };
     })
-    .filter((i) => i.gapRatio > 0.3)
+    .filter((i): i is NonNullable<typeof i> => i != null && i.gapRatio > 0.3)
     .sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap));
 
   const overpriced = items.filter((i) => i.gap > 0).slice(0, 3).map(({ num, points, level }) => ({ num, points, level }));

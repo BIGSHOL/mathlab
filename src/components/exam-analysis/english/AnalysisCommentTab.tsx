@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { normalizeDifficultyKey as normalizeDiff } from '@/lib/exam-analysis/shared/difficulty';
 import { DIFFICULTY_COLORS, DIFFICULTY_LEGACY_MAP, QUESTION_TYPE_COLORS, ABILITY_DOMAIN_LABELS, ENGLISH_TYPE_TO_DOMAIN, ENGLISH_ABILITY_DOMAIN_LABELS, ENGLISH_ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
 import { questionTypeLabel } from '@/lib/exam-analysis/subject';
 import { renderInlineMath } from '@/lib/exam-analysis/rendering';
@@ -15,9 +16,6 @@ const DIFFICULTY_LABELS: Record<string, string> = {
   concept: '1', pattern: '2', reasoning: '4', creative: '5',
 };
 
-function normalizeDiff(key: string): string {
-  return DIFFICULTY_LEGACY_MAP[key] || key;
-}
 
 export function EnglishAnalysisCommentTab({ questions, examPaperId, analysisId, onDifficultyEdit }: AnalysisCommentTabProps) {
   const [showDiffReason, setShowDiffReason] = useState(false);
@@ -181,9 +179,9 @@ function CommentRow({ q, showDiffReason, examPaperId, analysisId, onDifficultyEd
                   ? 'px-1.5 py-0.5 rounded-sm text-[10px] font-medium inline-flex items-center gap-0.5 bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100'
                   : 'px-1.5 py-0.5 rounded-sm text-[10px] font-bold text-white inline-flex items-center gap-0.5 hover:ring-2 hover:ring-offset-1 hover:ring-slate-300 transition-all'
               }
-              style={diffUnset ? undefined : { backgroundColor: DIFFICULTY_COLORS[curDiff] || '#94A3B8' }}
+              style={diffUnset ? undefined : { backgroundColor: DIFFICULTY_COLORS[curDiff ?? ''] || '#94A3B8' }}
             >
-              {diffUnset ? '미정' : (DIFFICULTY_LABELS[q.difficulty] || curDiff)}
+              {diffUnset ? '미정' : (DIFFICULTY_LABELS[q.difficulty ?? ''] || curDiff)}
             </button>
             {editingDiff && (
               <div className="absolute left-0 top-6 z-50 bg-white rounded-sm shadow-lg border p-1.5 flex items-center gap-1">

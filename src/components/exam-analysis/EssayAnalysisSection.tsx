@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { normalizeDifficultyKey as normalizeDiff } from '@/lib/exam-analysis/shared/difficulty';
 import { DIFFICULTY_COLORS, DIFFICULTY_LEGACY_MAP } from '@/lib/exam-analysis/constants';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { sumPoints } from '@/lib/exam-analysis/points';
@@ -12,9 +13,6 @@ interface EssayAnalysisSectionProps {
   totalPoints: number;
 }
 
-function normalizeDiff(key: string): string {
-  return DIFFICULTY_LEGACY_MAP[key] || key;
-}
 
 const DIFFICULTY_LABELS: Record<string, string> = {
   '1': '1(기본)', '2': '2(표준)', '3': '3(응용)', '4': '4(심화)', '5': '5(최고)',
@@ -39,7 +37,7 @@ export function EssayAnalysisSection({ questions, totalQuestions, totalPoints }:
     // 평균 난이도 계산
     const diffLevels: Record<string, number> = { '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, concept: 1, pattern: 2, reasoning: 4, creative: 5 };
     const avgDiffLevel = count > 0
-      ? essayQuestions.reduce((s, q) => s + (diffLevels[normalizeDiff(q.difficulty)] || diffLevels[q.difficulty] || 3), 0) / count
+      ? essayQuestions.reduce((s, q) => s + (diffLevels[normalizeDiff(q.difficulty) ?? ''] || diffLevels[q.difficulty ?? ''] || 3), 0) / count
       : 0;
     const avgDiffKey = avgDiffLevel >= 4.5 ? '5'
       : avgDiffLevel >= 3.5 ? '4'
@@ -63,7 +61,7 @@ export function EssayAnalysisSection({ questions, totalQuestions, totalPoints }:
     const counts: Record<string, number> = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
     for (const q of essayQuestions) {
       const nd = normalizeDiff(q.difficulty);
-      counts[nd] = (counts[nd] || 0) + 1;
+      if (nd != null) counts[nd] = (counts[nd] || 0) + 1;   // 미정 제외
     }
     const total = essayQuestions.length || 1;
     return DIFFICULTY_ORDER

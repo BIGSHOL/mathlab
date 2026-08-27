@@ -1,13 +1,11 @@
 'use client';
 
 import { useMemo } from 'react';
+import { normalizeDifficultyKey as normalizeDiff } from '@/lib/exam-analysis/shared/difficulty';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { DIFFICULTY_LEGACY_MAP } from '@/lib/exam-analysis/constants';
 import { InfoTooltip } from './InfoTooltip';
 
-function normalizeDiff(key: string): string {
-  return DIFFICULTY_LEGACY_MAP[key] || key;
-}
 
 interface DiscriminationSectionProps {
   questions: AnalyzedQuestion[];
@@ -67,7 +65,7 @@ function calculateDiscriminationScore(q: AnalyzedQuestion): number {
     '4': 0.8,
     '5': 1.0,
   };
-  const mult = difficultyMultiplier[nd] || 0.5;
+  const mult = difficultyMultiplier[nd ?? ''] || 0.5;
 
   // 기본 점수: 배점 * 난이도 가중치 (정규화를 위해 10으로 나눔)
   let base = (points * mult) / 10 * 100;

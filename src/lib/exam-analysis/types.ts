@@ -22,7 +22,12 @@ export interface AnalyzedQuestion {
   id?: string;
   question_number: number | string;
   question_format: ExamQuestionFormat | null;
-  difficulty: string;  // "1"-"5" (5단계). 선생님 수정 또는 보정 적용 시 최종 표시값
+  /**
+   * "1"~"5" (5단계). 선생님 수정 또는 보정 적용 시 최종 표시값.
+   * **null = 판독 실패/미정** — 분포·가중평균 어디에도 계상하지 않는다.
+   * (기본값 "1" 로 채우면 못 읽은 문항이 쉬운 문항으로 둔갑한다.)
+   */
+  difficulty: string | null;
   difficulty_reason: string | null;
   /** AI 원본 난이도 — 선생님 수정/자동 보정 시 원본 보존(보정 학습용). 미수정이면 undefined */
   ai_difficulty?: string | null;

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { normalizeDifficultyKey as normalizeDifficulty } from '@/lib/exam-analysis/shared/difficulty';
 import { DIFFICULTY_COLORS, DIFFICULTY_LABELS as DIFF_LABELS_MAP, DIFFICULTY_LEGACY_MAP, TYPE_TO_DOMAIN, ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { sumPoints, roundPoints, formatPoints } from '@/lib/exam-analysis/points';
@@ -27,9 +28,6 @@ const DIFFICULTY_LABELS: Record<string, string> = {
 };
 
 /** 난이도 키를 5단계로 정규화 */
-function normalizeDifficulty(key: string): string {
-  return DIFFICULTY_LEGACY_MAP[key] || key;
-}
 
 const _FORMAT_LABELS: Record<string, string> = {
   objective: '객관식', short_answer: '단답형', essay: '서술형',
@@ -187,7 +185,7 @@ export function MathAnalysisResultView({ questions: questionsProp, summary, tota
     for (const [key, val] of Object.entries(d)) {
       if (!val || typeof val !== 'number') continue;
       const normalized = normalizeDifficulty(key);
-      if (counts[normalized] !== undefined) {
+      if (normalized != null && counts[normalized] !== undefined) {
         counts[normalized] += val;
       }
     }
@@ -733,9 +731,9 @@ function DifficultyCell({ q, examPaperId, onDifficultyEdit }: {
             ? 'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-medium hover:bg-amber-100'
             : 'inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[11px] font-bold text-white hover:ring-2 hover:ring-offset-1 hover:ring-slate-300 transition-all'
         }
-        style={unset ? undefined : { backgroundColor: DIFFICULTY_COLORS[cur] || DIFFICULTY_COLORS[q.difficulty] || '#94A3B8' }}
+        style={unset ? undefined : { backgroundColor: DIFFICULTY_COLORS[cur ?? ''] || DIFFICULTY_COLORS[q.difficulty ?? ''] || '#94A3B8' }}
       >
-        {unset ? <><AlertTriangle className="w-3 h-3 shrink-0" />미정</> : (DIFFICULTY_LABELS[q.difficulty] || cur)}
+        {unset ? <><AlertTriangle className="w-3 h-3 shrink-0" />미정</> : (DIFFICULTY_LABELS[q.difficulty ?? ''] || cur)}
       </button>
       {editing && (
         <div className="absolute left-1/2 -translate-x-1/2 top-7 z-50 bg-white rounded-sm shadow-lg border p-1.5 flex items-center gap-1">

@@ -73,9 +73,9 @@ export function EssayPreparationSection({
                     <div className="flex items-center gap-1.5">
                       <span
                         className="px-1.5 py-0.5 rounded-sm text-[10px] font-bold text-white"
-                        style={{ backgroundColor: DIFFICULTY_COLORS[q.difficulty] || '#94A3B8' }}
+                        style={{ backgroundColor: DIFFICULTY_COLORS[q.difficulty ?? ''] || '#94A3B8' }}
                       >
-                        {DIFFICULTY_LABELS[q.difficulty] || q.difficulty}
+                        {DIFFICULTY_LABELS[q.difficulty ?? ''] || q.difficulty || '미정'}
                       </span>
                       <span className="text-xs text-slate-500 font-medium">
                         {q.points || 0}점

@@ -89,7 +89,9 @@ export interface Blueprint {
 
 // ── 내부 헬퍼 ──
 
-function normalizeDiffNum(key: string | number): number {
+function normalizeDiffNum(key: string | number | null | undefined): number | null {
+  // 미정(판독 실패)은 3(응용)으로 채우지 않는다 — 집계에서 빼야 종합 난이도가 왜곡되지 않는다.
+  if (key == null || key === '') return null;
   const k = String(key);
   const mapped = DIFFICULTY_LEGACY_MAP[k] || k;
   const n = Number(mapped);
@@ -116,7 +118,7 @@ export function classifySignals(input: {
   const discrimScores = questions.map((q) => {
     const points = q.points || 3;
     const nd = normalizeDiffNum(q.difficulty);
-    const mult = ({ 1: 0.3, 2: 0.5, 3: 0.65, 4: 0.8, 5: 1.0 } as Record<number, number>)[nd] || 0.5;
+    const mult = (nd != null ? ({ 1: 0.3, 2: 0.5, 3: 0.65, 4: 0.8, 5: 1.0 } as Record<number, number>)[nd] : undefined) || 0.5;
     let base = (points * mult) / 10 * 100;
     if (q.question_format === 'essay') base *= 1.2;
     if ((nd === 1 || nd === 2) && points >= 5) base *= 0.7;
@@ -135,7 +137,10 @@ export function classifySignals(input: {
 
   // 난이도
   const diffCounts: [number, number, number, number, number] = [0, 0, 0, 0, 0];
-  for (const q of questions) diffCounts[normalizeDiffNum(q.difficulty) - 1]++;
+  for (const q of questions) {
+    const nd = normalizeDiffNum(q.difficulty);
+    if (nd != null) diffCounts[nd - 1]++;   // 미정은 계상하지 않는다
+  }
   const lowDiffShare = totalQuestions ? (diffCounts[0] + diffCounts[1]) / totalQuestions : 0;
   const highDiffShare = totalQuestions ? (diffCounts[3] + diffCounts[4]) / totalQuestions : 0;
 
@@ -144,7 +149,7 @@ export function classifySignals(input: {
   const essayPts = essays.reduce((s, q) => s + (q.points || 0), 0);
   const essayWeightPct = totalPoints ? Math.round((essayPts / totalPoints) * 100) : 0;
   const essayAvgLevelNum = essays.length
-    ? essays.reduce((s, q) => s + normalizeDiffNum(q.difficulty), 0) / essays.length
+    ? essays.reduce((s, q) => s + (normalizeDiffNum(q.difficulty) ?? 0), 0) / essays.length
     : 0;
   const essayAvgLevelLabel = essays.length === 0 ? '없음'
     : essayAvgLevelNum < 1.5 ? '기본 수준'
@@ -200,6 +205,7 @@ export function classifySignals(input: {
   const cntByLevel: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
   for (const q of questions) {
     const lv = normalizeDiffNum(q.difficulty);
+    if (lv == null) continue;   // 미정 문항은 배점-난이도 통계에서 제외
     sumByLevel[lv] += q.points || 0;
     cntByLevel[lv]++;
   }
@@ -209,6 +215,7 @@ export function classifySignals(input: {
   let underpricedCount = 0;
   for (const q of questions) {
     const lv = normalizeDiffNum(q.difficulty);
+    if (lv == null) continue;   // 미정 문항은 배점 과소·과대 판정 대상 아님
     const expected = avgByLevel[lv] || 3;
     const gap = (q.points || 0) - expected;
     const gapRatio = expected > 0 ? Math.abs(gap) / expected : 0;
