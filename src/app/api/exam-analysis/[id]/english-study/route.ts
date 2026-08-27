@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse, notFound, badRequest } from '@/lib/api';
 import { getExamScope } from '@/lib/demo/accounts';
+import { isStalePromptVersion } from '@/lib/exam-analysis/constants';
 import { toExamSubjectKey } from '@/lib/exam-analysis/subject';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import {
@@ -98,13 +99,11 @@ export async function POST(request: NextRequest, { params }: Params) {
   if (!latest) return badRequest('기본 분석을 먼저 실행하세요');
 
   const existing = latest.extensions[0];
-  if (!force && existing?.result && !existing.errorMessage) {
-    const parsed = parseEnglishStudyResult(existing.result);
-    // 버전이 다르면(=추출 규칙이 그 사이 바뀌었으면) 캐시를 버리고 다시 뽑는다.
-    // 버전 검사가 없던 시절엔 규칙을 고쳐도 옛 결과가 영원히 반환됐다.
-    if (parsed && isCurrentEnglishStudyPack(parsed)) {
-      return NextResponse.json({ data: parsed });
-    }
+  // 저장된 팩은 버전과 무관하게 붙잡아 둔다 — 재생성이 실패하면 이게 마지막 방어선이다.
+  // (버전 검사만 넣고 폴백을 안 두면, 규칙이 바뀐 순간 멀쩡히 보이던 화면이 에러로 바뀐다.)
+  const cachedPack = existing?.result ? parseEnglishStudyResult(existing.result) : null;
+  if (!force && cachedPack && !existing?.errorMessage && isCurrentEnglishStudyPack(cachedPack)) {
+    return NextResponse.json({ data: cachedPack });
   }
 
   const questions = (Array.isArray(latest.questions) ? latest.questions : []) as unknown as AnalyzedQuestion[];
@@ -139,17 +138,33 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ data: pack });
   } catch (e) {
     const failMsg = e instanceof Error ? e.message : '단어·구문 정리에 실패했습니다';
-    console.warn('[영어 학습대책] 시험지 본문 추출 실패 — 문항 분석분으로 폴백:', failMsg);
+    console.warn('[영어 학습대책] 시험지 본문 추출 실패:', failMsg);
+
+    // 폴백 사슬 — 빈손보다 낫다: 문항 분석분 → 직전 캐시(구버전이라도)
     if (fromQuestions) {
       // ⚠️ errorMessage 를 남겨야 한다. 성공으로 저장하면 일시적 실패가
       //    캐시에 굳어 다시는 본문을 훑지 않는다.
       await savePack(latest.id, user.id, fromQuestions, failMsg);
       return NextResponse.json({ data: fromQuestions });
     }
-    const msg = failMsg;
-    const userMsg = msg.includes('GEMINI') || msg.includes('API')
+    if (cachedPack) {
+      console.warn('[영어 학습대책] 직전 저장분으로 폴백 (재생성 실패)');
+      return NextResponse.json({ data: cachedPack });
+    }
+
+    // 재료가 아예 없다. 원인을 특정해 사용자가 할 일을 알려준다.
+    // 구버전 분석본에는 문항별 key_vocab / key_structures 자체가 없어서
+    // 본문 추출이 실패하면 폴백할 것이 남지 않는다 → "다시 정리"가 아니라 "다시 분석"이 답이다.
+    const staleAnalysis = isStalePromptVersion(latest.modelVersion, 'ENGLISH');
+    if (staleAnalysis) {
+      return badRequest(
+        '이 시험지는 예전 버전으로 분석되어 문항에 단어·구문 정보가 없습니다. 시험지를 다시 분석하면 채워집니다.',
+      );
+    }
+
+    const userMsg = failMsg.includes('GEMINI') || failMsg.includes('API')
       ? '단어·구문 정리에 실패했습니다'
-      : msg;
+      : failMsg;
     try {
       await savePack(
         latest.id,

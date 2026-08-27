@@ -89,6 +89,17 @@ export async function extractEnglishStudyFromExam(opts: {
   });
   // AI가 센 count 는 **시험지 본문 등장 횟수** → source: 'exam'
   const pack = stampEnglishStudyPack(parseEnglishStudyResult(raw, 'exam'), 'exam');
-  if (!pack) throw new Error('시험지에서 단어·구문을 찾지 못했습니다');
+  if (!pack) {
+    // 파싱 0건은 원인이 갈린다 — 응답 자체가 비었나, 다 걸러졌나(독해 유형명·한글 등).
+    // 사용자 문구는 그대로 두고 서버 로그로만 구분한다.
+    const rec = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+    const rawVocab = Array.isArray(rec.vocab) ? rec.vocab.length : -1;
+    const rawStruct = Array.isArray(rec.structures) ? rec.structures.length : -1;
+    console.warn(
+      `[영어 학습대책] 추출 0건 — 응답 vocab=${rawVocab} structures=${rawStruct} ` +
+      `(-1 = 배열 아님/응답 없음, 0 = AI가 빈 배열 반환, 1+ = 전부 필터에 걸러짐)`,
+    );
+    throw new Error('시험지에서 단어·구문을 찾지 못했습니다');
+  }
   return pack;
 }
