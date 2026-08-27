@@ -10,12 +10,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { poolUsableBalance, alreadyConsumed } from '@/lib/entitlements/service';
-import { getPlanConfig, PLAN_RANK, BETA_PLAN, type PlanId, type PlanFeature } from './plans';
-
-/** 베타 기간 여부 (서버 env). true면 전 테넌트 최소 BETA_PLAN으로 승격. */
-export function isBetaAllPro(): boolean {
-  return process.env.BETA_ALL_PRO === '1';
-}
+import { getPlanConfig, type PlanId, type PlanFeature } from './plans';
 
 /** UTC 이번 달 / 다음 달 경계 */
 export function monthBounds(now = new Date()) {
@@ -25,17 +20,12 @@ export function monthBounds(now = new Date()) {
 }
 
 /**
- * 유효 플랜. 행 없음 → free. 만료(currentPeriodEnd 과거 && status≠active) → free.
- * 베타(BETA_ALL_PRO=1): 산출된 플랜이 BETA_PLAN보다 낮으면 BETA_PLAN으로 승격(상위 플랜은 유지 — floor).
+ * 유효 플랜 — 구독 행이 유일한 근거다. 행 없음 → free.
+ * 만료(currentPeriodEnd 과거 && status≠active) → free.
+ * env 스위치 하나로 전 지점을 일괄 승격하던 베타 floor 는 제거됐다(결제 없이 유료 기능이 열리던 경로).
+ * 결제 없이 플랜을 올려야 하면 SUPER_ADMIN 이 /admin/tenants 에서 지점별로 명시 배정한다.
  */
 export async function getTenantPlan(tenantId: string | null | undefined): Promise<PlanId> {
-  const base = await resolveBasePlan(tenantId);
-  if (isBetaAllPro() && PLAN_RANK[base] < PLAN_RANK[BETA_PLAN]) return BETA_PLAN;
-  return base;
-}
-
-/** 베타 보정 전 실제(구독 기반) 플랜. */
-async function resolveBasePlan(tenantId: string | null | undefined): Promise<PlanId> {
   if (!tenantId) return 'free';
   const sub = await prisma.tenantSubscription.findUnique({ where: { tenantId } });
   if (!sub) return 'free';

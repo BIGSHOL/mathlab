@@ -14,7 +14,7 @@ type PlanId = 'free' | 'basic' | 'pro' | 'enterprise';
 type Tenant = {
   id: string; slug: string; name: string; logo: string | null;
   isActive: boolean; userCount: number; createdAt: string;
-  plan: PlanId; subStatus: string | null; currentPeriodEnd: string | null; managedByLs: boolean;
+  plan: PlanId; subStatus: string | null; currentPeriodEnd: string | null; managedByPayment: boolean;
 };
 
 const PLAN_LABEL: Record<PlanId, string> = { free: '무료', basic: 'Basic', pro: 'Pro', enterprise: 'Enterprise' };
@@ -35,7 +35,6 @@ export default function AdminTenantsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
-  const [betaAllPro, setBetaAllPro] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -44,7 +43,6 @@ export default function AdminTenantsPage() {
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error?.message ?? '불러오기 실패');
       setRows(json.data ?? []);
-      setBetaAllPro(!!json?.meta?.betaAllPro);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -146,7 +144,7 @@ export default function AdminTenantsPage() {
           <select
             value={t.plan}
             onChange={(e) => assignPlan(t, e.target.value as PlanId)}
-            title={t.managedByLs ? '결제로 생성된 구독입니다. 수동 변경 시 실제 결제 상태와 어긋날 수 있습니다.' : '플랜 수동 배정'}
+            title={t.managedByPayment ? '결제로 생성된 구독입니다. 수동 변경 시 실제 결제 상태와 어긋날 수 있습니다.' : '플랜 수동 배정'}
             className="text-xs border border-slate-200 rounded-sm pl-1.5 pr-5 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
           >
             <option value="free">무료</option>
@@ -154,7 +152,7 @@ export default function AdminTenantsPage() {
             <option value="pro">Pro</option>
             <option value="enterprise">Enterprise</option>
           </select>
-          {t.managedByLs && <span title="결제 연동 구독" className="text-amber-500 text-xs leading-none">●</span>}
+          {t.managedByPayment && <span title="결제 연동 구독" className="text-amber-500 text-xs leading-none">●</span>}
         </div>
       ),
     },
@@ -180,12 +178,6 @@ export default function AdminTenantsPage() {
           </Button>
         }
       />
-      {betaAllPro && (
-        <div className="mb-3 px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-sm text-xs text-indigo-700">
-          <strong>베타 기간(BETA_ALL_PRO)</strong> 활성 — 아래 배정 플랜과 무관하게 <b>모든 지점이 최소 Pro로 동작</b> 중입니다.
-          여기서 배정한 플랜은 베타 종료 후 적용됩니다(상위 플랜은 베타 중에도 유지).
-        </div>
-      )}
       <div className="flex gap-2 mb-3 items-center">
         <div className="relative max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />

@@ -2,9 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse, hasRole } from '@/lib/api';
 import { getPlanConfig } from '@/lib/billing/plans';
-import { getTenantPlan, getMonthlyQuotaUsed, monthBounds, isBetaAllPro } from '@/lib/billing/guard';
+import { getTenantPlan, getMonthlyQuotaUsed, monthBounds } from '@/lib/billing/guard';
 import { poolUsableBalance } from '@/lib/entitlements/service';
-import { isLemonSqueezyConfigured } from '@/lib/billing/lemonsqueezy';
 import { getDemoContext, countDemoUsage } from '@/lib/demo/accounts';
 
 export const dynamic = 'force-dynamic';
@@ -29,10 +28,6 @@ export async function GET() {
   const tenantId = user.viewingTenantId ?? user.tenantId;
   const { nextMonthStart } = monthBounds();
   const resetAt = nextMonthStart.toISOString();
-  // 결제 필드는 비-OWNER에게 미노출 (undefined → 프로바이더가 false로 취급)
-  const configured = canManageBilling ? isLemonSqueezyConfigured() : undefined;
-  // 키 미설정이어도 데모 업그레이드 허용 시 클라이언트가 [데모 업그레이드] 버튼 활성화 (게이팅 테스트용)
-  const allowDemoUpgrade = canManageBilling ? process.env.ALLOW_DEMO_UPGRADE === '1' : undefined;
 
   // SUPER_ADMIN 무테넌트(view-as 안 함) — 단일 지점 없음 → 게이팅 면제.
   // 서버 가드(assert*)도 tenantId 없으면 null(면제) 반환하므로, 클라이언트도 전 기능 해금 + 무제한으로
@@ -44,9 +39,7 @@ export async function GET() {
         status: 'inactive',
         usage: { used: 0, limit: null, resetAt, poolBalance: 0 }, // 무제한
         features: { commentary: true, nearby: true }, // 전 기능 해금 (서버 면제와 일치)
-        lemonSqueezyConfigured: configured,
-        allowDemoUpgrade,
-        beta: isBetaAllPro(),
+        billingManaged: false,
         currentPeriodEnd: null,
         noTenant: true,
         exempt: true,
@@ -89,9 +82,9 @@ export async function GET() {
         commentary: demoCtx.isDemo ? demoCtx.perms.commentary : cfg.commentary,
         nearby: cfg.nearby,
       },
-      lemonSqueezyConfigured: configured,
-      allowDemoUpgrade,
-      beta: isBetaAllPro(),
+      // 결제 허브가 관리하는 정기결제 구독인지 — true 일 때만 결제 페이지가 [구독 해지]를 노출한다.
+      // (SUPER_ADMIN 이 수동 배정한 플랜은 허브에 구독이 없어 해지 대상이 아니다.)
+      billingManaged: canManageBilling ? !!(sub?.tossBillingKey || sub?.tossSubscriptionId) : undefined,
       currentPeriodEnd: canManageBilling ? (sub?.currentPeriodEnd?.toISOString() ?? null) : undefined,
       demo,
     },

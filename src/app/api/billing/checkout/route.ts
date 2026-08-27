@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
 import { requireOwner, isResponse, badRequest } from '@/lib/api';
 import { isPlanId, type PlanId } from '@/lib/billing/plans';
-import { monthBounds } from '@/lib/billing/guard';
 import { paraxCheckoutUrl } from '@/lib/parax/handoff';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * POST /api/billing/checkout — body {plan}. 토스(para-x 결제 허브) 구독 체크아웃 URL 반환. (OWNER+)
+ * POST /api/billing/checkout — body {plan}. 구독 체크아웃 URL 반환. (OWNER+)
  * tenantId 는 서버에서 인증 사용자로부터 결정(클라가 보내지 않음).
- * 식별은 Phase 5 에서 서명 핸드오프로 교체 예정(현재는 dev: tenantId 직접 전달 → para-x ALLOW_DEV_IDENTITY 필요).
+ * 구매자 식별은 서명 핸드오프 토큰(mintHandoffToken)으로 전달된다 — 클라이언트가 위조할 수 없다.
  */
 export async function POST(request: NextRequest) {
   const user = await requireOwner();
@@ -23,19 +21,14 @@ export async function POST(request: NextRequest) {
   if (!isPlanId(body?.plan) || body.plan === 'free') return badRequest('유효하지 않은 플랜입니다.');
   const plan: PlanId = body.plan;
 
-  const base = process.env.NEXT_PUBLIC_PARAX_CHECKOUT_URL;
-  if (!base) {
-    // para-x 미설정: 선택적 데모 업그레이드(테스트용) — ALLOW_DEMO_UPGRADE=1
-    if (process.env.ALLOW_DEMO_UPGRADE === '1') {
-      const { nextMonthStart } = monthBounds();
-      await prisma.tenantSubscription.upsert({
-        where: { tenantId },
-        create: { tenantId, plan, status: 'active', currentPeriodEnd: nextMonthStart },
-        update: { plan, status: 'active', currentPeriodEnd: nextMonthStart },
-      });
-      return NextResponse.json({ data: { demo: true, upgraded: true, plan, message: '데모 모드: 플랜이 변경되었습니다.' } });
-    }
-    return NextResponse.json({ data: { demo: true, configured: false, message: '결제 URL이 설정되지 않았습니다 (NEXT_PUBLIC_PARAX_CHECKOUT_URL).' } });
+  // 결제를 거치지 않고 플랜을 부여하는 경로는 두지 않는다 — 유료 플랜의 유일한 출처는
+  // 결제 허브 웹훅(/api/webhooks/parax)과 SUPER_ADMIN 수동 배정(/api/admin/tenants) 뿐이다.
+  if (!process.env.NEXT_PUBLIC_PARAX_CHECKOUT_URL) {
+    console.error('[billing/checkout] NEXT_PUBLIC_PARAX_CHECKOUT_URL 미설정');
+    return NextResponse.json(
+      { error: { code: 'NOT_CONFIGURED', message: '지금은 결제를 진행할 수 없습니다. 잠시 후 다시 시도해 주세요.' } },
+      { status: 503 },
+    );
   }
 
   const checkoutUrl = paraxCheckoutUrl(`sub-${plan}`, { tenantId, userId: user.id, role: user.role });

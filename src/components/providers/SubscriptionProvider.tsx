@@ -25,9 +25,10 @@ export interface SubscriptionState {
   usage: SubUsage;
   features: SubFeatures;
   demo: DemoInfo | null;
-  lemonSqueezyConfigured: boolean;
-  allowDemoUpgrade: boolean;
-  beta: boolean; // 베타 기간(BETA_ALL_PRO) — 전 테넌트 최소 Pro
+  /** 결제 허브가 관리하는 정기결제 구독 — true 일 때만 해지 UI를 노출한다. 비-OWNER 에겐 항상 false. */
+  billingManaged: boolean;
+  /** 현재 결제 주기 종료일(ISO). 해지 후 언제까지 쓸 수 있는지 표시용. 비-OWNER 에겐 null. */
+  currentPeriodEnd: string | null;
   loading: boolean;
   refetch: () => Promise<void>;
 }
@@ -38,9 +39,8 @@ const FREE_FALLBACK = {
   usage: { used: 0, limit: 3 as number | null, resetAt: null as string | null, poolBalance: 0 },
   features: { commentary: false, nearby: false },
   demo: null as DemoInfo | null,
-  lemonSqueezyConfigured: false,
-  allowDemoUpgrade: false,
-  beta: false,
+  billingManaged: false,
+  currentPeriodEnd: null as string | null,
 };
 
 const Ctx = createContext<SubscriptionState | null>(null);
@@ -66,9 +66,8 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         usage: j.usage ?? FREE_FALLBACK.usage,
         features: j.features ?? FREE_FALLBACK.features,
         demo: j.demo ?? null,
-        lemonSqueezyConfigured: !!j.lemonSqueezyConfigured,
-        allowDemoUpgrade: !!j.allowDemoUpgrade,
-        beta: !!j.beta,
+        billingManaged: !!j.billingManaged,
+        currentPeriodEnd: j.currentPeriodEnd ?? null,
       });
     } catch {
       setData(FREE_FALLBACK);
@@ -100,9 +99,8 @@ export function DemoSubscriptionProvider({ children }: { children: React.ReactNo
     usage: { used: 0, limit: null, resetAt: null, poolBalance: 0 },
     features: { commentary: true, nearby: true },
     demo: null,
-    lemonSqueezyConfigured: false,
-    allowDemoUpgrade: false,
-    beta: false,
+    billingManaged: false,
+    currentPeriodEnd: null,
     loading: false,
     refetch: async () => {},
   };

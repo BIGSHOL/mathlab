@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
   const signature = request.headers.get('x-parax-signature') || '';
   if (!signature || !rawBody) return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
 
-  // HMAC-SHA256 서명검증 (LS 웹훅과 동일 패턴 — 길이비교 후 timingSafeEqual)
+  // HMAC-SHA256 서명검증 — 길이 비교 후 timingSafeEqual (길이가 다르면 timingSafeEqual 이 throw)
   const hmac = crypto.createHmac('sha256', secret).update(rawBody).digest();
   const sigBuf = Buffer.from(signature, 'hex');
   if (sigBuf.length !== hmac.length || !crypto.timingSafeEqual(sigBuf, hmac)) {

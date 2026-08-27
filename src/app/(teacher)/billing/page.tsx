@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { CreditCard, Check, ShieldAlert, Sparkles, ShoppingCart } from 'lucide-react';
+import { CreditCard, Check, ShieldAlert, ShoppingCart } from 'lucide-react';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/Button';
@@ -17,9 +17,10 @@ import { getPlanConfig, type PlanId } from '@/lib/billing/plans';
 
 export default function BillingPage() {
   const { user, isLoading } = useAuth();
-  const { plan, usage, beta, refetch } = useSubscription();
+  const { plan, usage, billingManaged, currentPeriodEnd, refetch } = useSubscription();
   const params = useSearchParams();
   const [paying, setPaying] = useState<string | null>(null);
+  const [cancelStep, setCancelStep] = useState<'idle' | 'confirm' | 'working'>('idle');
 
   // 결제 완료 리다이렉트(?success=true) → 토스트 + 3초 후 상태 갱신(웹훅 반영 대기)
   useEffect(() => {
@@ -55,7 +56,7 @@ export default function BillingPage() {
   const currentPlan = getPlanConfig(plan);
   const pct = usage.limit ? usage.used / usage.limit : 0;
 
-  // 토스 결제(para-x 결제 허브)로 이동. 체크아웃 URL은 서버에서 tenantId를 붙여 생성.
+  // 결제 허브로 이동. 체크아웃 URL은 서버에서 tenantId를 붙여 생성.
   const handleUpgrade = async (planKey: PlanId) => {
     setPaying(planKey);
     try {
@@ -66,14 +67,33 @@ export default function BillingPage() {
       });
       const json = await res.json();
       if (!res.ok) { toast.error(json?.error?.message || '결제 페이지를 열 수 없습니다.'); return; }
-      const data = json.data ?? {};
-      if (data.upgraded) { toast.success('데모 모드: 플랜이 변경되었습니다.'); await refetch(); return; }
-      if (data.checkoutUrl) { window.location.href = data.checkoutUrl; return; }
-      if (data.message) { toast.info(data.message); return; }
+      const checkoutUrl = json.data?.checkoutUrl;
+      if (checkoutUrl) { window.location.href = checkoutUrl; return; }
+      toast.error('결제 페이지를 열 수 없습니다.');
     } catch {
       toast.error('결제 요청 중 오류가 발생했습니다.');
     } finally {
       setPaying(null);
+    }
+  };
+
+  // 정기결제 해지 — 기간말 해지(결제한 기간이 끝날 때까지 이용 가능). 서버가 결제 허브에 서명 요청을 전달한다.
+  const handleCancel = async () => {
+    setCancelStep('working');
+    try {
+      const res = await fetch('/api/billing/cancel', { method: 'POST' });
+      const json = await res.json();
+      if (!res.ok) { toast.error(json?.error?.message || '해지 처리에 실패했습니다.'); setCancelStep('confirm'); return; }
+      toast.success(
+        json.data?.alreadyCanceled
+          ? '이미 해지 신청이 접수된 구독입니다.'
+          : '해지가 접수되었습니다. 결제한 기간이 끝날 때까지 계속 이용하실 수 있습니다.',
+      );
+      setCancelStep('idle');
+      await refetch();
+    } catch {
+      toast.error('해지 요청 중 오류가 발생했습니다.');
+      setCancelStep('confirm');
     }
   };
 
@@ -86,14 +106,6 @@ export default function BillingPage() {
         backHref="/exam-analysis"
       />
 
-      {beta && (
-        <div className="mb-6 px-4 py-3 bg-indigo-50 border border-indigo-200 rounded-sm flex items-center gap-2.5">
-          <Sparkles className="w-4 h-4 text-primary shrink-0" />
-          <p className="text-xs text-indigo-700">
-            <strong>베타 기간</strong> — 모든 기능(AI 시험 총평 · 주변 학교·연도 비교 포함)을 자유롭게 사용하실 수 있습니다.
-          </p>
-        </div>
-      )}
 
       {/* 이용권 잔여 + 무료 분석 한도 */}
       <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -176,6 +188,48 @@ export default function BillingPage() {
       <p className="text-[11px] text-slate-400 mt-3 leading-relaxed">
         매달 자동 결제되며 이용권이 자동 충전됩니다. 언제든 해지할 수 있고, 해지해도 결제한 기간이 끝날 때까지 이용할 수 있습니다.
       </p>
+
+      {/* ── 구독 관리 (해지) ── */}
+      {/* 여전법 시행령 §6조의16: 정기결제는 영업시간과 무관하게 신청 가능한 해지 채널이 있어야 한다.
+          로그인한 원장이 상담 없이 즉시 해지할 수 있도록 이 자리에 상시 노출한다. */}
+      <h2 className="text-sm font-semibold text-slate-700 mt-8 mb-2.5">구독 관리</h2>
+      <div className="p-4 border border-slate-200 rounded-sm bg-white">
+        {billingManaged ? (
+          <>
+            <p className="text-sm text-slate-600">
+              현재 <b>{currentPlan.label}</b> 플랜이 매달 자동 결제되고 있습니다.
+              {currentPeriodEnd && <> 다음 결제일은 {new Date(currentPeriodEnd).toLocaleDateString('ko-KR')} 입니다.</>}
+            </p>
+            {cancelStep === 'idle' ? (
+              <Button size="sm" variant="secondary" className="mt-3" onClick={() => setCancelStep('confirm')}>
+                구독 해지
+              </Button>
+            ) : (
+              <div className="mt-3 p-3 bg-rose-50 border border-rose-200 rounded-sm">
+                <p className="text-xs text-rose-700 leading-relaxed">
+                  해지하면 다음 결제부터 청구되지 않습니다.
+                  {currentPeriodEnd
+                    ? <> 이미 결제한 기간인 <b>{new Date(currentPeriodEnd).toLocaleDateString('ko-KR')}</b>까지는 그대로 이용하실 수 있습니다.</>
+                    : <> 이미 결제한 기간이 끝날 때까지는 그대로 이용하실 수 있습니다.</>}
+                  <br />구독에 포함된 월 이용권 중 사용하지 않은 분은 해당 결제 주기가 끝나면 소멸됩니다.
+                </p>
+                <div className="flex gap-2 mt-3">
+                  <Button size="sm" variant="danger" onClick={handleCancel} loading={cancelStep === 'working'}>
+                    해지하기
+                  </Button>
+                  <Button size="sm" variant="secondary" onClick={() => setCancelStep('idle')} disabled={cancelStep === 'working'}>
+                    유지하기
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <p className="text-sm text-slate-500">
+            현재 자동 결제 중인 구독이 없습니다. 월 결제를 시작하면 이곳에서 언제든 직접 해지하실 수 있습니다.
+          </p>
+        )}
+      </div>
 
       {/* ── 횟수 결제 (일회성 이용권) ── */}
       <h2 className="text-sm font-semibold text-slate-700 mt-8 mb-2.5">횟수 결제</h2>

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireSuperAdmin, isResponse, badRequest } from '@/lib/api';
 import { getPlanConfig, isPlanId } from '@/lib/billing/plans';
-import { isBetaAllPro } from '@/lib/billing/guard';
 
 /**
  * 지점(Tenant) 관리 — 기출분석 전용 앱용 간소화 버전.
@@ -19,7 +18,7 @@ export async function GET() {
     select: {
       id: true, slug: true, name: true, logo: true, isActive: true, createdAt: true,
       _count: { select: { users: true } },
-      subscription: { select: { plan: true, status: true, currentPeriodEnd: true, lsSubscriptionId: true } },
+      subscription: { select: { plan: true, status: true, currentPeriodEnd: true, tossBillingKey: true, tossSubscriptionId: true } },
     },
   });
   return NextResponse.json({
@@ -33,10 +32,10 @@ export async function GET() {
         plan: storedPlan,
         subStatus: sub?.status ?? null,
         currentPeriodEnd: sub?.currentPeriodEnd ?? null,
-        managedByLs: !!sub?.lsSubscriptionId, // LS 결제로 생성된 구독이면 수동 변경 주의
+        // 결제(정기결제 빌링)로 생성된 구독이면 수동 변경 주의 — 결제 허브가 다음 갱신 때 덮어쓴다
+        managedByPayment: !!(sub?.tossBillingKey || sub?.tossSubscriptionId),
       };
     }),
-    meta: { betaAllPro: isBetaAllPro() }, // 베타면 전 지점 최소 Pro로 동작 중
   });
 }
 
@@ -66,7 +65,7 @@ export async function PATCH(req: NextRequest) {
   if (!id) return badRequest('id는 필수입니다');
 
   // 구독 플랜 수동 배정 (SUPER_ADMIN) — TenantSubscription upsert.
-  // free면 status=inactive, 유료면 active + 만료 없음(currentPeriodEnd=null). LS 결제 구독과 별개의 수동 배정.
+  // free면 status=inactive, 유료면 active + 만료 없음(currentPeriodEnd=null). 결제 허브 구독과 별개의 수동 배정.
   if (body.plan !== undefined) {
     if (!isPlanId(body.plan)) return badRequest('유효한 플랜이 아닙니다 (free|basic|pro|enterprise)');
     const plan = body.plan as string;

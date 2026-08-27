@@ -7,7 +7,7 @@
  *   node --env-file=.env.local scripts/set-tenant-plan.mjs --slug=csganga enterprise
  *
  * plan: free | pro | enterprise (기본 pro)
- * - 유료 플랜: status=active, currentPeriodEnd=null(만료 없음) — LS 결제와 별개의 수동 배정
+ * - 유료 플랜: status=active, currentPeriodEnd=null(만료 없음) — 결제 허브 구독과 별개의 수동 배정
  * - free: status=inactive
  */
 import { PrismaClient } from '@prisma/client';

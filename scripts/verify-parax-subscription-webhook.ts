@@ -23,7 +23,6 @@ import { PLANS } from '../src/lib/billing/plans';
 
 // 웹훅/플랜 판정이 읽는 env — 호출 시점에 읽으므로 import 이후 설정해도 적용됨
 process.env.PARAX_SHARED_SECRET = process.env.PARAX_SHARED_SECRET || 'test-parax-secret';
-process.env.BETA_ALL_PRO = '0'; // 베타 floor 가 플랜 판정을 가리지 않게
 
 const SLUG = 'test-parax-sub-webhook';
 let pass = 0, fail = 0;

@@ -158,7 +158,7 @@ npx tsx scripts/migrate-question-relations.ts  # 중간테이블 마이그레이
 [para-x](https://para-x.co.kr)(중앙 결제 허브)에서 결제하면 mathlab 의 이용권/구독에 반영됩니다.
 
 - **이용권(크레딧)**: 원장이 `/entitlements` 에서 구매 → para-x 결제 → 지점 풀 적립 → 학생 배정 → 기출분석 시 차감.
-- **구독(plan)**: 결제페이지 '구독하기' → para-x 토스 빌링 → `TenantSubscription` 갱신 (Lemon Squeezy 대체).
+- **구독(plan)**: 결제페이지 '구독하기' → para-x 토스 빌링 → `TenantSubscription` 갱신.
 - **식별**: `/api/parax/checkout` 가 서명 핸드오프 토큰을 발급 → para-x 가 검증 (로그인 원장만).
 
 | 파일 | 역할 |

@@ -10,7 +10,6 @@ import { prisma } from '../src/lib/db';
 import { grantCredits, consumeExamAnalysisCredit, poolUsableBalance } from '../src/lib/entitlements/service';
 import { assertAnalysisGate, getMonthlyQuotaUsed } from '../src/lib/billing/guard';
 
-process.env.BETA_ALL_PRO = '0'; // 베타 floor 가 free 플랜 판정을 가리지 않게
 const SLUG = 'test-pool-consumption';
 let pass = 0, fail = 0;
 

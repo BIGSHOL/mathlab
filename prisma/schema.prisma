@@ -74,16 +74,19 @@ model Tenant {
   @@index([isActive])
 }
 
-// FEAT: 구독/결제 (Lemon Squeezy) — 지점(테넌트) 단위 구독. 행 없음 = free/inactive 기본.
+// FEAT: 구독/결제 (토스페이먼츠 빌링, para-x 결제 허브 경유) — 지점(테넌트) 단위 구독.
+// 행 없음 = free/inactive 기본. 쓰기 경로는 셋뿐이다:
+//   ① /api/webhooks/parax        — 결제 허브의 지급·해지 통지 (정상 경로)
+//   ② /api/billing/cancel        — 허브가 해지를 확인해 준 뒤 로컬 상태를 같은 값으로 수렴(멱등)
+//   ③ /api/admin/tenants (PATCH) — SUPER_ADMIN 수동 배정
+// ⚠️ DB에는 폐지된 Lemon Squeezy 컬럼(ls_customer_id / ls_subscription_id / ls_variant_id)이
+//    아직 물리적으로 남아 있다(데이터 0건, 참조 코드 없음). 별도 DDL 로 정리 예정.
 model TenantSubscription {
   id               String    @id @default(cuid())
   tenantId         String    @unique
   plan             String    @default("free")     @db.VarChar(20) // free | pro | enterprise
   status           String    @default("inactive") @db.VarChar(20) // inactive | active | cancelled | expired | past_due
-  lsCustomerId     String?   @db.VarChar(50)
-  lsSubscriptionId String?   @unique @db.VarChar(50)
-  lsVariantId      Int?
-  // FEAT: 토스페이먼츠 빌링 (para-x 결제 허브) — LS 대체 예정(Phase 4)
+  // 토스페이먼츠 빌링키 (para-x 결제 허브가 웹훅으로 전달)
   tossBillingKey     String? @db.VarChar(200)
   tossCustomerKey    String? @db.VarChar(100)
   tossSubscriptionId String? @db.VarChar(100)
