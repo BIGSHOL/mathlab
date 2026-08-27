@@ -14,6 +14,7 @@ import type { BasicAnalysisResult, WeaknessProfile, LearningPlan } from '../type
 import { abilityDomainLabel, questionTypeLabel, toExamSubjectKey } from '../shared/subject';
 import { inputSubject, isEnglishInput, subjectLabel } from './subject-input';
 import { roundPoints, formatPoints } from '../shared/points';
+import { weightedAverageDifficulty } from '../shared/difficulty';
 import { MIDDLE_SCHOOL_CURRICULUM } from '../data/curriculum';
 import type { GradeCurriculum } from '../data/curriculum';
 import type { NearbyComparisonData, NearbyExamSummary } from '../nearby-school-data';
@@ -734,7 +735,6 @@ export class CommentaryAgent extends BaseAgent<Record<string, unknown>> {
       .map(([t, s]) => `${t}: ${s.count}문항(${formatPoints(s.pts)}점)`)
       .join(', ');
 
-    // 종합 난이도 Level 계산 (가중 평균)
     const diffCounts = [
       diff['1'] || diff.concept || 0,
       diff['2'] || diff.pattern || 0,
@@ -742,10 +742,12 @@ export class CommentaryAgent extends BaseAgent<Record<string, unknown>> {
       diff['4'] || diff.reasoning || 0,
       diff['5'] || diff.creative || 0,
     ];
-    const diffTotal = diffCounts.reduce((s, c) => s + c, 0);
-    const overallLevel = diffTotal > 0
-      ? Math.round(diffCounts.reduce((s, c, i) => s + c * (i + 1), 0) / diffTotal)
-      : 3;
+    // 종합 난이도 — **화면과 반드시 같은 공식**(레벨별 영향력 가중 × 배점).
+    // 예전엔 여기만 단순 문항수 평균이라, 9×Lv1+1×Lv5 시험이 화면에선 Level 3,
+    // 총평·블로그에선 Level 1 로 나왔다. 강사와 학부모가 같은 시험을 두 단계 다르게
+    // 설명받는 상황 (적대적 리뷰 1.5). 공식은 weightedAverageDifficulty 하나로 통일한다.
+    const { avg: weightedAvg } = weightedAverageDifficulty(basicAnalysis.questions);
+    const overallLevel = weightedAvg > 0 ? Math.round(weightedAvg) : 3;
     const LEVEL_LABELS = ['', '기본', '표준', '응용', '심화', '최고난도'];
 
     // 난이도별 배점 합계 (정확한 수치 → AI 추정 방지)

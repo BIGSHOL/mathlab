@@ -70,7 +70,9 @@ function cleanMeaning(raw: unknown): string | null {
 }
 
 function cleanCount(raw: unknown): number {
-  const n = typeof raw === 'number' ? raw : Number(raw);
+  // AI가 "2회" / "3번" 처럼 단위를 붙여 보내는 경우가 있다. Number("2회") 는 NaN 이라
+  // 그대로 두면 2가 1로 축소된다 → 앞쪽 숫자를 먼저 뽑는다.
+  const n = typeof raw === 'number' ? raw : Number(String(raw ?? '').trim().match(/^\d+(?:\.\d+)?/)?.[0] ?? NaN);
   if (!Number.isFinite(n) || n < 1) return 1;
   return Math.min(99, Math.round(n));
 }
@@ -238,9 +240,17 @@ export function buildEnglishStudyFromQuestions(questions: AnalyzedQuestion[]): E
   const structures: unknown[] = [];
   for (const q of questions) {
     const trap = isHardQuestion(q);
+    // ⚠️ **문항 안에서 먼저 중복을 제거한다.** count 는 "표현이 등장한 문항 수" 계약인데,
+    //    한 문항이 `however` / `However` 를 둘 다 담고 있으면 mergeTerms 가 합산해
+    //    count 2 → 화면에 "2문항"으로 표시된다. 실제로는 1문항이다 (적대적 리뷰 1.6).
+    const seenWords = new Set<string>();
+    const seenPatterns = new Set<string>();
     if (Array.isArray(q.key_vocab)) {
       for (const v of q.key_vocab) {
         if (!v || typeof v !== 'object') continue;
+        const key = cleanText(v.word).toLowerCase();
+        if (!key || seenWords.has(key)) continue;
+        seenWords.add(key);
         vocab.push({
           word: v.word,
           meaning: v.meaning,
@@ -252,6 +262,9 @@ export function buildEnglishStudyFromQuestions(questions: AnalyzedQuestion[]): E
     if (Array.isArray(q.key_structures)) {
       for (const s of q.key_structures) {
         if (!s || typeof s !== 'object') continue;
+        const key = cleanText(s.pattern).toLowerCase();
+        if (!key || seenPatterns.has(key)) continue;
+        seenPatterns.add(key);
         structures.push({
           pattern: s.pattern,
           meaning: s.meaning,

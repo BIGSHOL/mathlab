@@ -18,12 +18,10 @@ import {
   ENGLISH_NAESIN_TYPE_KEYS,
   ENGLISH_QUESTION_TYPE_KEYS,
   ENGLISH_QUESTION_TYPE_LABELS,
-  ENGLISH_TYPE_TO_DOMAIN,
   QUESTION_TYPE_COLORS,
   QUESTION_TYPE_LABELS,
-  TYPE_TO_DOMAIN,
 } from '../constants';
-import { toExamSubjectKey } from './subject';
+import { normalizeAbilityDomain, toExamSubjectKey } from './subject';
 import type { AnalyzedQuestion } from '../types';
 
 const MATH_TYPE_KEYS = ['number', 'change_relation', 'shape_measure', 'data_possibility'] as const;
@@ -84,19 +82,16 @@ export function countAbilities(
   questions: AnalyzedQuestion[],
   axes: ChartAxis[] = getAbilityAxes(subject),
 ): Record<string, number> {
-  const isEnglish = toExamSubjectKey(subject) === 'ENGLISH';
-  const typeToDomain = isEnglish ? ENGLISH_TYPE_TO_DOMAIN : TYPE_TO_DOMAIN;
-  const fallbackDomain = isEnglish ? 'accuracy' : 'calculation';
-
   const counts: Record<string, number> = {};
   for (const axis of axes) counts[axis.key] = 0;
 
   for (const q of questions) {
-    const raw = q.ability_domain
-      || (q.question_type ? typeToDomain[q.question_type] : undefined)
-      || fallbackDomain;
-    const domain = String(raw).toLowerCase().replace(/-/g, '_');
-    if (domain in counts) counts[domain] += 1;
+    // ⚠️ 모양만 소문자화하면 안 된다. 영어에서 AI가 수학 레거시 값('CALCULATION',
+    //    'Problem-Solving')을 뱉으면 존재하지 않는 축으로 떨어져 그냥 사라진다.
+    //    공용 정규화기는 그 변환(calculation→accuracy, problem_solving→expression)을
+    //    이미 갖고 있는데 여기서 우회하고 있었다 (적대적 리뷰 1.7).
+    const domain = normalizeAbilityDomain(subject, q.ability_domain, q.question_type);
+    if (domain && domain in counts) counts[domain] += 1;
   }
   return counts;
 }

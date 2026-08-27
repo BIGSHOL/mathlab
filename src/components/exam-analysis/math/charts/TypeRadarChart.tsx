@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { countAbilities } from '@/lib/exam-analysis/shared/chart-axes';
 import {
   RadarChart,
   PolarGrid,
@@ -9,7 +10,6 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import {
-  TYPE_TO_DOMAIN,
   ABILITY_DOMAIN_LABELS,
   ABILITY_DOMAIN_COLORS,
   QUESTION_TYPE_KEYS,
@@ -25,17 +25,12 @@ export function MathTypeRadarChart({ data, questions }: TypeRadarChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('ability');
 
   // 능력 영역 데이터 계산
-  const abilityData = useMemo(() => {
-    if (!questions?.length) return {};
-    const counts: Record<string, number> = {};
-    for (const q of questions) {
-      const fallback = q.question_type ? TYPE_TO_DOMAIN[q.question_type] : undefined;
-      const rawDomain = q.ability_domain || fallback || 'calculation';
-      const domain = String(rawDomain).toLowerCase().replace(/-/g, '_');
-      counts[domain] = (counts[domain] || 0) + 1;
-    }
-    return counts;
-  }, [questions]);
+  // 서버 차트(블로그 PNG)와 **같은 함수**를 쓴다 — 두 곳이 다르게 세면
+  // 사용자는 어느 쪽을 믿어야 할지 모른다 (CLAUDE.md #12-4).
+  const abilityData = useMemo(
+    () => (questions?.length ? countAbilities('MATH', questions) : {}),
+    [questions],
+  );
 
   const standardTypeData = useMemo(() => {
     const counts: Record<string, number> = {};

@@ -20,6 +20,7 @@ import katex from 'katex';
 import type { AnalyzedQuestion } from './types';
 import type { CommentaryResult } from './agents/commentary-agent';
 import { DIFFICULTY_LEGACY_MAP } from './constants';
+import { weightedAverageDifficulty } from './shared/difficulty';
 import { toExamSubjectKey } from './shared/subject';
 import { normalizeMathText } from '@/lib/pdf-extract-engine/ai/post-processor';
 import {
@@ -303,11 +304,10 @@ function buildArticlePrompt(
     if (f in formats) formats[f as keyof typeof formats]++;
   }
 
-  // 종합 난이도 (가중 평균)
-  const diffTotal = signals.diffCounts.reduce((s, c) => s + c, 0) || 1;
-  const overallLevel = Math.round(
-    signals.diffCounts.reduce((s, c, i) => s + c * (i + 1), 0) / diffTotal,
-  );
+  // 종합 난이도 — **화면·총평과 반드시 같은 공식**(레벨별 영향력 가중 × 배점).
+  // 주석은 "가중 평균"이라 써 있었지만 실제로는 단순 문항수 평균이었다 (적대적 리뷰 1.5).
+  const { avg: weightedAvg } = weightedAverageDifficulty(analysis.questions);
+  const overallLevel = weightedAvg > 0 ? Math.round(weightedAvg) : 3;
 
   // FactsBlockInput 구성
   const facts: FactsBlockInput = {
