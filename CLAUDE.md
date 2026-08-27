@@ -485,6 +485,31 @@ node -e "fetch('https://dapi.kakao.com/v2/local/search/address.json?query=' + en
 
 **사례**: [ai-engine.ts](src/lib/exam-analysis/ai-engine.ts)(`assessCompleteness`/`appendMissingTail`/재시도), [readiness.ts](src/lib/exam-analysis/readiness.ts)(공유 게이트), [types.ts](src/lib/exam-analysis/types.ts)(`AnalysisCompleteness`), [prompt-builder.ts](src/lib/exam-analysis/prompt-builder.ts). 회귀 검증: `npm run verify:completeness` (7 시나리오 — 실패 재현·정상·판정불가·배점초과·구버전 소급차단 금지 포함).
 
+#### 12-12. 🔴 사용자에게 보일 에러는 "금지어 가리기"로 못 막는다 — 화이트리스트로 (2026-08-27)
+
+**증상**: 시험지 분석 실패 토스트에 `시험지 분석 실패: AI 실행기가 종료되었습니다 (code 1) Error: When using --print, --output-format=stream-json requires --verbose` 가 그대로 노출. 다른 경우엔 `AI_API_KEY 환경변수가 설정되지 않았습니다`.
+
+**원인**: UI가 **모델명만** 치환하는 블랙리스트였다 — `detail.errorMessage.replace(/gemini|claude|anthropic/gi, 'AI')`. 규칙 #0(모델명)은 지켰지만 #0-1(인프라·내부 사정)은 전혀 못 막았다. 환경변수명·CLI 플래그·영문 예외·스택·ORM 내부 메시지가 전부 통과. 게다가 `analyze/route.ts` 가 **원문을 DB(`ExamPaper.errorMessage`)에 저장**해 새로고침해도 계속 보였다.
+
+**규칙**:
+1. **사용자 노출 에러는 `toUserFacingError()` 를 거친다** (`src/lib/exam-analysis/shared/error-message.ts`). `errorMessage: e.message` / `message: errorMsg` 를 직접 쓰지 말 것. **DB 저장 시점에도 정제**해야 한다(표시 시점만 막으면 레거시 행이 남는다).
+2. **화이트리스트로 설계한다** — "우리가 한국어로 던진 문구만 통과, 나머지는 원인 범주별 한국어로 치환". 금지어 목록은 새 실행기·SDK가 붙을 때마다 늘려야 하고 한 번 빠뜨리면 그대로 샌다. 위 유출이 정확히 그 방식이라 발생했다.
+3. **원문은 `console.error` 로 남긴다** — 디버깅 정보를 잃지 않으면서 사용자에게만 감춘다. "정제 = 정보 삭제"가 아니다.
+4. **원인 범주를 구분해 할 일을 알려준다** — 전부 "실패했습니다"로 뭉개면 사용자가 재시도해야 할지 파일을 다시 올려야 할지 모른다. (연결/한도/시간초과/파일/응답형식)
+
+**회귀 검사**: `npx tsx scripts/parity/check-error-message.ts` — 실제 유출된 메시지 8종이 가려지는지 + 정상 안내 문구 6종이 그대로 통과하는지 양방향 고정.
+
+#### 12-13. 🟡 "무엇을 썼는지" 목록을 손으로 적으면 반드시 산출물과 어긋난다 (2026-08-27)
+
+**증상**: 영어 분석의 진단 metadata(`used_templates`)가 프롬프트에 **넣지도 않은** 템플릿을 썼다고 보고하고, 실제 주입한 것은 빠뜨렸다. 난이도 표 이름도 실제(`_4LEVEL`)와 다른 `_5LEVEL`로 기록.
+
+**원인**: 프롬프트를 조립하는 코드와 "사용 목록"을 만드는 코드가 **따로** 존재했다. 프롬프트가 진화하는 동안 목록은 그대로 남았다.
+
+**규칙**: 산출물과 그 산출물을 설명하는 메타데이터는 **한 곳에서 파생**시킬 것. `getGuidelineBlocks()` 가 `{name, text}` 를 반환하고, 본문은 `.map(b => b.text)`, 목록은 `.map(b => b.name)` — 구조적으로 어긋날 수 없다. §12-4(클라이언트·서버 정규화 통일)의 **메타데이터 버전**.
+
+**부수 효과 주의**: 이런 리팩터는 "출력이 안 바뀌었다"를 증명해야 한다. 바이트 대조 하네스(`scripts/parity/`)로 영어 프롬프트 **변경 0** 을 확인하고 커밋했다.
+
+
 ## 프로젝트 구조
 
 ```
