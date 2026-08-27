@@ -184,7 +184,6 @@ export class EnglishExamPromptBuilder {
     }
 
     return result;
-    return result;
   }
 
   /** 기본 시스템 프롬프트 (역할 정의) */
@@ -205,42 +204,56 @@ export class EnglishExamPromptBuilder {
 5. confidence: 0.0~1.0 (불확실하면 낮게)`;
   }
 
-  /** 학년별 분석 가이드라인 조합 */
-  private static getAnalysisGuidelines(context: ExamContext): string[] {
-    const parts: string[] = [];
+  /**
+   * 프롬프트에 실제로 들어가는 블록을 **이름과 함께** 만든다.
+   *
+   * 이 하나가 프롬프트 본문(`getAnalysisGuidelines`)과 진단용 목록(`collectUsedTemplates`)의
+   * 공통 출처다. 예전엔 둘이 따로 적혀 있어서, 넣지도 않은 `ENGLISH_EVALUATION_SYSTEM`/
+   * `ENGLISH_QUESTION_STRATEGIES` 를 썼다고 보고하고 실제 주입한 `ENGLISH_TYPE_TAXONOMY`/
+   * `ENGLISH_QUESTION_STRATEGIES_INLINE` 은 빠뜨렸다. 난이도 표 이름도 실제(_4LEVEL)와
+   * 다른 `_5LEVEL` 로 기록됐다 (적대적 리뷰 3.4).
+   * 진단 metadata 가 틀리면 "무엇으로 분석했는가"를 되짚을 수 없다.
+   */
+  private static getGuidelineBlocks(context: ExamContext): Array<{ name: string; text: string }> {
+    const blocks: Array<{ name: string; text: string }> = [];
 
     // 공통 규칙
-    parts.push(SCHOOL_LEVEL_RULES);
-    parts.push(EXAM_SUBJECT_CLASSIFICATION);
-    parts.push(POINTS_VALIDATION_RULES);
+    blocks.push({ name: 'SCHOOL_LEVEL_RULES', text: SCHOOL_LEVEL_RULES });
+    blocks.push({ name: 'EXAM_SUBJECT_CLASSIFICATION', text: EXAM_SUBJECT_CLASSIFICATION });
+    blocks.push({ name: 'POINTS_VALIDATION_RULES', text: POINTS_VALIDATION_RULES });
 
-      // 영어 전용 가이드라인 — 공통 프레임워크 + 영어 루브릭 (기존 유지, 별도 지시 전까지 불변)
-      // 세 번째 난이도 기준을 넣지 않는다 — DIFFICULTY_SYSTEM_FRAMEWORK 는 옛 개념-수 정의 +
-      // "애매하면 한 단계 낮게" 하향 편향이라 영어 루브릭과 충돌한다
-      // (수학도 v1.4.0 에서 같은 이유로 제외했다). 영어의 유일한 기준은 아래 한 장이다.
-      parts.push(ENGLISH_DIFFICULTY_SYSTEM_4LEVEL);
-      parts.push(ENGLISH_TYPE_TAXONOMY);
-      parts.push(ENGLISH_QUESTION_STRATEGIES_INLINE);
+    // 영어 전용 가이드라인 — 공통 프레임워크 + 영어 루브릭 (기존 유지, 별도 지시 전까지 불변)
+    // 세 번째 난이도 기준을 넣지 않는다 — DIFFICULTY_SYSTEM_FRAMEWORK 는 옛 개념-수 정의 +
+    // "애매하면 한 단계 낮게" 하향 편향이라 영어 루브릭과 충돌한다
+    // (수학도 v1.4.0 에서 같은 이유로 제외했다). 영어의 유일한 기준은 아래 한 장이다.
+    blocks.push({ name: 'ENGLISH_DIFFICULTY_SYSTEM_4LEVEL', text: ENGLISH_DIFFICULTY_SYSTEM_4LEVEL });
+    blocks.push({ name: 'ENGLISH_TYPE_TAXONOMY', text: ENGLISH_TYPE_TAXONOMY });
+    blocks.push({ name: 'ENGLISH_QUESTION_STRATEGIES_INLINE', text: ENGLISH_QUESTION_STRATEGIES_INLINE });
 
-      // 학년별 토픽
-      const topics = getEnglishTopicsForGrade(context.grade_level);
-      if (topics) {
-        parts.push(`📖 **영어 단원 분류표:**\n\n${topics}`);
-      }
+    // 학년별 토픽
+    const topics = getEnglishTopicsForGrade(context.grade_level);
+    if (topics) {
+      blocks.push({ name: 'ENGLISH_TOPICS', text: `📖 **영어 단원 분류표:**\n\n${topics}` });
+    }
 
-      // 학년별 흔한 실수
-      const mistakes = getEnglishMistakesForGrade(context.grade_level);
-      if (mistakes) {
-        parts.push(`⚠️ **흔한 실수 유형:**\n\n${mistakes}`);
-      }
+    // 학년별 흔한 실수
+    const mistakes = getEnglishMistakesForGrade(context.grade_level);
+    if (mistakes) {
+      blocks.push({ name: 'ENGLISH_COMMON_MISTAKES', text: `⚠️ **흔한 실수 유형:**\n\n${mistakes}` });
+    }
 
-      // 영어 서술형 가이드
-      const writingGuide = getEnglishWritingGuideIfNeeded(context.has_essay);
-      if (writingGuide) {
-        parts.push(writingGuide);
-      }
+    // 영어 서술형 가이드
+    const writingGuide = getEnglishWritingGuideIfNeeded(context.has_essay);
+    if (writingGuide) {
+      blocks.push({ name: 'ENGLISH_WRITING_GUIDE', text: writingGuide });
+    }
 
-    return parts.filter(p => p.trim() !== '');
+    return blocks.filter(b => b.text.trim() !== '');
+  }
+
+  /** 학년별 분석 가이드라인 조합 */
+  private static getAnalysisGuidelines(context: ExamContext): string[] {
+    return this.getGuidelineBlocks(context).map(b => b.text);
   }
 
   /** 요구 JSON 스키마 출력 */
@@ -470,24 +483,12 @@ ${typeVsAbility}
     return '중1 영어 > 문법 > be동사 (am, is, are)';
   }
 
-  /** 사용된 템플릿 목록 수집 */
+  /**
+   * 사용된 템플릿 목록 — **실제 주입된 블록에서 그대로 뽑는다**(별도 목록을 손으로 적지 않는다).
+   * 손으로 적으면 프롬프트가 바뀔 때마다 어긋난다 (적대적 리뷰 3.4).
+   */
   private static collectUsedTemplates(context: ExamContext): string[] {
-    const templates: string[] = [
-      'SCHOOL_LEVEL_RULES',
-      'EXAM_SUBJECT_CLASSIFICATION',
-      'POINTS_VALIDATION_RULES',
-    ];
-
-      templates.push('ENGLISH_DIFFICULTY_SYSTEM_5LEVEL');
-      templates.push('ENGLISH_EVALUATION_SYSTEM');
-      templates.push('ENGLISH_QUESTION_STRATEGIES');
-      templates.push('ENGLISH_TOPICS');
-
-      if (context.has_essay) {
-        templates.push('ENGLISH_WRITING_GUIDE');
-      }
-
-    return templates;
+    return this.getGuidelineBlocks(context).map(b => b.name);
   }
 
   /** 매칭된 문제 유형 수집 */
