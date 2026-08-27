@@ -9,7 +9,10 @@
 // en-v1.2.0: 내신 지필고사는 원칙적으로 듣기 없음. 대화문은 communication/reading.
 // en-v1.3.0: 문항 코멘트는 쉬운 한국어 (호혜적·함축·환언·스캔 품질 등 금지)
 // key_vocab / key_structures 는 영어 학습 대책용 선택 필드. 분류 규칙 변경이 아니라서 버전은 유지.
-export const ENGLISH_PROMPT_VERSION = 'en-v1.3.0';
+// en-v1.4.0: 난이도 기준 단일화 — 공용 프레임의 수학 기준(90%+·개념결합·식변형·번호위치)과
+//            DIFFICULTY_SYSTEM_FRAMEWORK 를 제거하고 영어 루브릭 하나만 남김.
+//            H12 평가 축을 어휘·구문·추론·지문량·선지함정·친숙도로 교체, H14 는 번호 대신 유형 기준.
+export const ENGLISH_PROMPT_VERSION = 'en-v1.4.0';
 
 // ── 영어 문항 유형 (내신 6유형) — 수학 TYPE_TO_STANDARD 와 분리 ──
 export const ENGLISH_QUESTION_TYPES = {

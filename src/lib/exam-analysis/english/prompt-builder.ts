@@ -12,7 +12,6 @@ import {
   POINTS_VALIDATION_RULES,
   EXAM_SUBJECT_CLASSIFICATION,
   SCHOOL_LEVEL_RULES,
-  DIFFICULTY_SYSTEM_FRAMEWORK,
 } from '../prompt-config-common';
 import {
   ENGLISH_DIFFICULTY_SYSTEM_4LEVEL,
@@ -37,6 +36,43 @@ const SELF_VERIFY = `V3. 모든 question_type 값이 6개 허용값 내인가? (
 V4. 모든 ability_domain 값이 4개 허용값 내인가? (accuracy/understanding/reasoning/expression)
 V5. 지문·선지에 raw LaTeX/\`$...$\` 를 넣지 않았는가?
 V14. key_vocab / key_structures 는 해당 문항에 실제로 나온 표현만인가? 없으면 빈 배열 [] 인가?`;
+
+/**
+ * H11~H14 — **영어 내신 전용** 난이도 기준.
+ *
+ * 공용 프레임에 있던 수학 기준(정답률 90%+, 개념 결합 수, 식 변형, 추상도, 번호 위치)이
+ * 영어 루브릭(85%+, 어법·독해 축)과 정면 충돌해 한 프롬프트에 경계 두 벌이 들어가 있었다
+ * (적대적 리뷰 1.3). 경계는 ENGLISH_DIFFICULTY_SYSTEM_4LEVEL 한 곳만 쓰도록 위임한다.
+ */
+const DIFFICULTY_RULES = `────────────────────────────────────────────────
+📊 H11~H14. 난이도(difficulty) 기준 — 영어 내신 전용
+────────────────────────────────────────────────
+H11. **5단계 경계는 위 "영어 난이도 5단계 시스템"의 정답률 기준을 그대로 따른다.**
+   그 표가 이 시험의 유일한 난이도 기준이다. 다른 과목의 경계(90%+ 등)를 끌어오지 말 것.
+
+H12. **난이도는 다음 6개 축으로 종합 판단** — 한 축만 보지 말 것:
+   ① **어휘 수준**: 교과서 필수어 ↔ 문맥 추론이 필요한 다의어·관용구
+   ② **구문 복잡도**: 단문 ↔ 관계절·분사구문·도치 등 중첩 구조
+   ③ **추론 단계**: 지문에 그대로 있음 ↔ 두 문장 이상을 엮어야 답이 나옴
+   ④ **지문 길이·정보량**: 짧은 대화 ↔ 여러 단락 + 세부정보 대조
+   ⑤ **선지 함정**: 오답이 명백 ↔ 지문 일부만 맞는 매력적 오답
+   ⑥ **친숙도**: 교과서에 나온 그대로 ↔ 처음 보는 소재·변형
+
+H13. **자연스러운 분포 강제** — 학교 내신 시험은 다음 분포가 일반적:
+   - 1단계: 5~15% / 2단계: 20~35% / 3단계: 25~40% / 4단계: 15~30% / 5단계: 0~10%
+   - ❌ **모든 문항을 3에 몰아넣지 말 것** — "확실하지 않으면 3"으로 분류는 금지
+   - ❌ **모든 문항을 같은 난이도로 출력하지 말 것** — 5종류 중 최소 3종류는 사용해야 함 (10문항 이상 시험지 기준)
+   - ✅ 서술형·빈칸 추론·순서 배열 등 변별 문항은 적극적으로 4를 부여
+
+H14. **문항 유형별 경향 (참고용)** — 강제 아니지만 의심 신호:
+   - 단순 어법·어휘 문항이 4~5단계? → 의심 (보통 기본 확인)
+   - 빈칸 추론·순서·삽입·조건 영작이 1~2단계? → 의심 (보통 다단계 추론)
+   - ⚠️ 영어 내신은 유형별로 묶어 출제하는 경우가 많아 **번호 위치보다 유형**이 신호다.
+     위 신호가 발생하면 추론 단계와 어휘·구문 수준을 다시 점검할 것`;
+
+/** V10~V11 — 영어 기준 자기검증 (번호 위치 대신 문항 유형으로 판단) */
+const DIFFICULTY_SELF_VERIFY = `V10. **난이도 분포 검증** — 10문항 이상이면 5단계 중 최소 3종류 사용? 모두 같은 난이도면 H13 위반.
+V11. **난이도 유형 검증** — 어법·어휘 문항이 모두 4단계 이상? 또는 빈칸 추론·영작이 모두 1~2단계? H14 신호 점검 후 재평가했는가?`;
 
 export class EnglishExamPromptBuilder {
   /** 전체 프롬프트를 조립하여 반환한다. */
@@ -67,7 +103,12 @@ ${describeEnglishExamScope(context.exam_scope)}
 
     const combined = combinePrompts(
       { base, guidelines, paperType, schema },
-      { hardConstraints: HARD_CONSTRAINTS, selfVerify: SELF_VERIFY },
+      {
+        hardConstraints: HARD_CONSTRAINTS,
+        selfVerify: SELF_VERIFY,
+        difficultyRules: DIFFICULTY_RULES,
+        difficultySelfVerify: DIFFICULTY_SELF_VERIFY,
+      },
     );
 
     return {
@@ -190,7 +231,9 @@ ${describeEnglishExamScope(context.exam_scope)}
     parts.push(POINTS_VALIDATION_RULES);
 
       // 영어 전용 가이드라인 — 공통 프레임워크 + 영어 루브릭 (기존 유지, 별도 지시 전까지 불변)
-      parts.push(DIFFICULTY_SYSTEM_FRAMEWORK);
+      // 세 번째 난이도 기준을 넣지 않는다 — DIFFICULTY_SYSTEM_FRAMEWORK 는 옛 개념-수 정의 +
+      // "애매하면 한 단계 낮게" 하향 편향이라 영어 루브릭과 충돌한다
+      // (수학도 v1.4.0 에서 같은 이유로 제외했다). 영어의 유일한 기준은 아래 한 장이다.
       parts.push(ENGLISH_DIFFICULTY_SYSTEM_4LEVEL);
       parts.push(ENGLISH_TYPE_TAXONOMY);
       parts.push(ENGLISH_QUESTION_STRATEGIES_INLINE);
@@ -449,7 +492,6 @@ ${typeVsAbility}
       'SCHOOL_LEVEL_RULES',
       'EXAM_SUBJECT_CLASSIFICATION',
       'POINTS_VALIDATION_RULES',
-      'DIFFICULTY_SYSTEM_FRAMEWORK',
     ];
 
       templates.push('ENGLISH_DIFFICULTY_SYSTEM_5LEVEL');
