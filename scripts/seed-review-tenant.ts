@@ -16,6 +16,15 @@
  *    심사역에게 실제 학원 고객의 시험지를 노출하지 않기 위한 것이니 원본으로 바꾸지 말 것.
  * ⚠️ 원본 PDF 는 없다(fileUrls=''). 시드된 3건의 '재분석'은 동작하지 않는다 —
  *    심사역이 확인할 신규 업로드→분석 경로는 크레딧으로 정상 동작한다.
+ *
+ * ⚠️ 시드본은 픽스처를 뜬 시점의 프롬프트 버전(v1.4.0)이라 총평에 '구버전' 안내와
+ *    [최신 버전으로 재분석] 버튼이 뜬다. 안내대로 확인·복사는 그대로 되지만,
+ *    그 버튼을 누르면 analyze 라우트가 파일을 읽기 전에 기존 분석을 먼저 지우므로
+ *    (analyze/route.ts 의 examAnalysis.deleteMany → loadFileAsBase64('') 실패 →
+ *    status=FAILED) 큐레이션된 분석·총평이 사라진다. 크레딧은 성공 경로에서만
+ *    차감되므로 소모되지 않는다.
+ *    → 그렇게 깨졌으면 이 스크립트를 --apply 로 다시 돌리면 원상 복구된다
+ *      (examPaper 를 COMPLETED 로 upsert 하고 분석·확장을 픽스처에서 재생성).
  */
 import { prisma } from '../src/lib/db';
 import { grantCredits } from '../src/lib/entitlements/service';
@@ -120,6 +129,9 @@ async function main() {
       fileType: 'pdf',
       status: f.status,
       analysisStep: f.analysisStep ?? 4,
+      // 실패한 재분석 뒤 다시 돌렸을 때 이전 오류 문구가 남지 않도록 항상 비운다 —
+      // status 만 COMPLETED 로 되돌리면 화면에 죽은 에러가 계속 보인다.
+      errorMessage: null,
       createdAt: f.createdAt ? new Date(f.createdAt) : new Date(),
     };
     await prisma.examPaper.upsert({ where: { id: pid }, create: { id: pid, ...paperData }, update: paperData });
