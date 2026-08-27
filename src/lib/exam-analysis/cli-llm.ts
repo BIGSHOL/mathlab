@@ -366,6 +366,10 @@ async function runClaude(bin: string, cwd: string, prompt: string, onLine?: (lin
     args: [
       '-p',
       '--output-format', 'stream-json',
+      // Claude CLI 는 --print 와 stream-json 을 함께 쓰면 --verbose 를 요구한다.
+      // 없으면 실행 즉시 code 1 로 죽는다:
+      //   "When using --print, --output-format=stream-json requires --verbose"
+      '--verbose',
       '--bare',
       '--dangerously-skip-permissions',
       '--allowedTools', 'Read',
