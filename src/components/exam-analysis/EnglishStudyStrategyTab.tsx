@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AlertTriangle, Languages, Quote, Repeat2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { toast } from '@/components/ui/Toast';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
@@ -33,6 +34,11 @@ interface EnglishStudyStrategyTabProps {
   analysisId?: string;
   storedPack?: unknown;
   onStored?: () => void;
+  /**
+   * 분석 직후 페이지가 백그라운드로 추출을 돌리는 중인가.
+   * true 면 이 탭은 **직접 호출하지 않는다** — 같은 AI 호출이 두 번 나가는 걸 막는다.
+   */
+  preparing?: boolean;
 }
 
 function studyRequestBody(extra: Record<string, unknown> = {}): string {
@@ -53,6 +59,7 @@ export function EnglishStudyStrategyTab({
   analysisId,
   storedPack,
   onStored,
+  preparing = false,
 }: EnglishStudyStrategyTabProps) {
   const fromQuestions = useMemo(() => buildEnglishStudyFromQuestions(questions), [questions]);
   // 저장된 팩이라도 **구버전이면 쓰지 않는다** — 추출 규칙이 바뀌었는데 옛 결과를 보여주면
@@ -80,6 +87,9 @@ export function EnglishStudyStrategyTab({
   }, [seed, seedEnough]);
 
   useEffect(() => {
+    // 페이지가 이미 백그라운드로 뽑고 있으면 여기서 또 부르지 않는다 (중복 과금 방지).
+    // 끝나면 부모가 storedPack 을 갱신해 주므로 seed 로 자연히 채워진다.
+    if (preparing) return;
     if (seedEnough || !examPaperId || !analysisId) {
       if (!analysisId) {
         setLoading(false);
@@ -131,7 +141,7 @@ export function EnglishStudyStrategyTab({
       }
     })();
     return () => { cancelled = true; };
-  }, [examPaperId, analysisId, seedEnough, fromQuestions, onStored]);
+  }, [examPaperId, analysisId, seedEnough, fromQuestions, onStored, preparing]);
 
   const retry = async () => {
     if (!examPaperId) return;
@@ -162,6 +172,11 @@ export function EnglishStudyStrategyTab({
       setLoading(false);
     }
   };
+
+  // 분석 직후 백그라운드 추출 중 — 탭을 먼저 눌러도 진행 상황이 보여야 한다.
+  if (preparing) {
+    return <PreparingView hasSeed={!!pack} />;
+  }
 
   if (loading && !pack) {
     return (
@@ -319,6 +334,29 @@ function Board({
         </div>
       </div>
       <div className="px-4 py-3">{children}</div>
+    </div>
+  );
+}
+
+/** 분석 직후 백그라운드 추출이 도는 동안의 화면. 끝나면 부모가 새 팩을 내려준다. */
+function PreparingView({ hasSeed }: { hasSeed: boolean }) {
+  return (
+    <div className="space-y-4">
+      <div className="border rounded-sm bg-white px-4 py-5 flex items-start gap-3">
+        <MathSpinner size="sm" className="mt-0.5 shrink-0" />
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-slate-800">시험지에서 단어·구문을 뽑고 있습니다</p>
+          <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+            분석 직후 자동으로 진행됩니다. 끝나면 이 화면이 바뀌니 다른 탭을 보고 계셔도 됩니다.
+            {hasSeed && ' 지금은 문항 분석에서 모은 표현만 있습니다.'}
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {Array.from({ length: 8 }, (_, i) => (
+          <Skeleton key={i} className="h-9 w-28 rounded-sm" />
+        ))}
+      </div>
     </div>
   );
 }

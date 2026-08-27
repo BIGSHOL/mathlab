@@ -12,7 +12,7 @@ interface AnalysisDetailProps {
   onRefresh: () => void;
   autoCommentary?: boolean;
   onToggleAutoCommentary?: (value: boolean) => void;
-  gen?: { phase: 'metadata' | 'commentary'; startMs: number; willChain: boolean } | null;
+  gen?: { phase: 'metadata' | 'commentary' | 'englishStudy'; startMs: number; willChain: boolean } | null;
   onCommentaryGenChange?: (id: string, started: boolean) => void;
 }
 

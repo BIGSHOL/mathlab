@@ -143,7 +143,7 @@ interface AnalysisDetailProps {
   autoCommentary?: boolean;
   onToggleAutoCommentary?: (v: boolean) => void;
   /** 현재 시험지의 생성 단계 (page.tsx genState) — metadata(준비) / commentary(자동 총평) + 진행시각 */
-  gen?: { phase: 'metadata' | 'commentary'; startMs: number; willChain: boolean } | null;
+  gen?: { phase: 'metadata' | 'commentary' | 'englishStudy'; startMs: number; willChain: boolean } | null;
   /** 수동 [총평 생성] 시작/종료를 page.tsx에 알림 → 사이드바 배지 실시간 반영 + 완료 시 목록 갱신 */
   onCommentaryGenChange?: (id: string, started: boolean) => void;
 }
@@ -1199,6 +1199,7 @@ export function EnglishAnalysisDetail({ detail, analyzing, onAnalyze, onRefresh,
           )}
           {activeTab === 'strategy' && (
             <EnglishStudyStrategyTab
+              preparing={gen?.phase === 'englishStudy'}
               questions={questions}
               grade={detail.grade}
               examPaperId={detail.id}

@@ -108,11 +108,13 @@ function getExamLabels(item: ExamPaperItem): string[] {
  *  "완료"가 최신인 것처럼 오해되는 것 방지 (사용자 요청 2026-05-29). */
 function getDetailedStatus(
   item: ExamPaperItem,
-  gen?: { phase: 'metadata' | 'commentary' } | null,
+  gen?: { phase: 'metadata' | 'commentary' | 'englishStudy' } | null,
 ): { label: string; color: string; title?: string } {
   // 진행 중 단계(클라이언트 genState)를 우선 — DB 상태보다 실시간으로 표시
   if (gen?.phase === 'metadata') return { label: '총평 준비중', color: 'bg-indigo-50 text-indigo-600 border-indigo-200 animate-pulse' };
   if (gen?.phase === 'commentary') return { label: '총평지 생성중', color: 'bg-indigo-50 text-indigo-600 border-indigo-200 animate-pulse' };
+  // 영어 — 분석 후 백그라운드로 도는 학습 대책 추출
+  if (gen?.phase === 'englishStudy') return { label: '학습대책 준비중', color: 'bg-indigo-50 text-indigo-600 border-indigo-200 animate-pulse' };
   if (item.status === 'FAILED') return { label: '실패', color: 'bg-red-50 text-red-600 border-red-200' };
   if (item.status === 'ANALYZING') return { label: '분석중', color: 'bg-amber-50 text-amber-600 border-amber-200 animate-pulse' };
   if (item.status === 'PENDING') return { label: '업로드', color: 'bg-slate-50 text-slate-500 border-slate-200' };
@@ -138,8 +140,11 @@ interface ExamPaperListProps {
   onUpdate?: (id: string, data: Partial<ExamPaperItem>) => void;
   selectedId: string | null;
   canEditSchool?: boolean;
-  /** 시험지별 진행 단계 (page.tsx genState) — 'metadata'(총평 준비) / 'commentary'(총평 생성) 실시간 배지용 */
-  genState?: Record<string, { phase: 'metadata' | 'commentary'; startMs: number; willChain: boolean }>;
+  /**
+   * 시험지별 진행 단계 (page.tsx genState) — 실시간 배지용.
+   * 'metadata'(총평 준비) / 'commentary'(총평 생성) / 'englishStudy'(영어 학습대책 추출)
+   */
+  genState?: Record<string, { phase: 'metadata' | 'commentary' | 'englishStudy'; startMs: number; willChain: boolean }>;
 }
 
 interface SchoolResult {
