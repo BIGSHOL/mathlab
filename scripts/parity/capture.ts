@@ -12,7 +12,7 @@ import { dirname } from 'path';
 import { createHash } from 'crypto';
 
 import { ExamPromptBuilder } from '../../src/lib/exam-analysis/prompt-builder';
-import { CommentaryAgent } from '../../src/lib/exam-analysis/agents/commentary-agent';
+import { CommentaryAgent, buildSystemPromptV3, buildSystemPromptV4 } from '../../src/lib/exam-analysis/agents/commentary-agent';
 import { buildSystemBase, buildFormatRules, buildOutputSchema } from '../../src/lib/exam-analysis/article-prompt-builders';
 import { buildBlueprint, classifyArchetype } from '../../src/lib/exam-analysis/article-archetype';
 import type { Signals } from '../../src/lib/exam-analysis/article-archetype';
@@ -53,6 +53,12 @@ const basic = (qs: typeof MATH_QUESTIONS, sum: typeof MATH_SUMMARY) => ({
 put('math.commentary.buildPrompt', agent.buildPrompt({ basicAnalysis: basic(MATH_QUESTIONS, MATH_SUMMARY), subject: 'MATH' }));
 put('math.commentary.buildPrompt.noSubject', agent.buildPrompt({ basicAnalysis: basic(MATH_QUESTIONS, MATH_SUMMARY) }));
 put('english.commentary.buildPrompt', agent.buildPrompt({ basicAnalysis: basic(ENGLISH_QUESTIONS, ENGLISH_SUMMARY), subject: 'ENGLISH' }));
+
+// V3/V4 블로그 프롬프트 — 지금까지 회귀 감시 밖이었다(적대적 리뷰 5.5에서 모순 발견).
+put('math.commentary.v3System', buildSystemPromptV3('수학'));
+put('math.commentary.v4System', buildSystemPromptV4('수학'));
+put('english.commentary.v3System', buildSystemPromptV3('영어'));
+put('english.commentary.v4System', buildSystemPromptV4('영어'));
 
 // ── 3. 블로그 글 프롬프트 빌더 ──
 const signals = { discriminationLabel: '적정', essayRatio: 0.2, killerRatio: 0.15, topTopicShare: 0.3, avgDifficulty: 3 } as unknown as Signals;
