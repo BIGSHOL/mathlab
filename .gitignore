@@ -33,6 +33,10 @@ yarn-error.log*
 # env files
 .env*.local
 .env
+# 로컬 백업본 — vercel env pull 전에 뜨는 스냅샷. 시크릿이 들어있으니 절대 커밋 금지.
+.env.bak-*
+.env.local.bak-*
+.env.*.bak*
 
 # vercel
 .vercel
