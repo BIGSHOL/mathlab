@@ -90,6 +90,7 @@ export async function POST(_request: NextRequest, { params }: Params) {
 
         const metadata = await agent.generateMetadata({
           basicAnalysis,
+          subject: examPaper.subject,
           ...(nearbyComparison ? { nearbyComparison } : {}),
         } as unknown as Parameters<typeof agent.generateMetadata>[0]);
 

@@ -4,6 +4,7 @@
  */
 
 import { BaseAgent, type AgentInput } from './base-agent';
+import { subjectLabel } from './subject-input';
 import type {
   LearningPlan,
   LearningPhase,
@@ -63,7 +64,7 @@ V3. phases duration 합이 총 8주인가?
 V4. 언급한 단원이 모두 입력 취약점 목록에 존재하는가?
 ════════════════════════════════════════════════
 
-당신은 수학 학습 계획 전문가입니다. 학생의 취약점 분석 결과를 바탕으로 8주 학습 계획을 수립하세요.
+당신은 ${subjectLabel(input)} 학습 계획 전문가입니다. 학생의 취약점 분석 결과를 바탕으로 8주 학습 계획을 수립하세요.
 
 ## 시험 분석 데이터
 

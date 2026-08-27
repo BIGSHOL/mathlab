@@ -98,7 +98,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       try {
         // Step 1: 차트 이미지 생성
         send({ type: 'progress', step: 1, totalSteps: 3, message: '차트 이미지 생성 중...' });
-        const chartImages = await generateAllChartImages(summary, questions);
+        const chartImages = await generateAllChartImages(summary, questions, examPaper.subject);
         send({ type: 'progress', step: 1, totalSteps: 3, message: '차트 이미지 3종 생성 완료' });
 
         // 스트림 중 토큰 치환용 차트 URL 사전 송신 (클라이언트는 placeholder → 실제 <img>로 자연스러운 전환)
@@ -125,6 +125,7 @@ export async function POST(request: NextRequest, { params }: Params) {
               category: examPaper.category,
               unit: examPaper.unit,
               examScope: examPaper.examScope,
+              subject: examPaper.subject,
             },
             analysis: {
               questions,

@@ -20,6 +20,7 @@ import katex from 'katex';
 import type { AnalyzedQuestion } from './types';
 import type { CommentaryResult } from './agents/commentary-agent';
 import { DIFFICULTY_LEGACY_MAP } from './constants';
+import { toExamSubjectKey } from './shared/subject';
 import { normalizeMathText } from '@/lib/pdf-extract-engine/ai/post-processor';
 import {
   classifySignals,
@@ -65,6 +66,15 @@ const ARTICLE_ENUM_KO_MAP: Record<string, string> = {
   FUNCTION: '변화와 관계',
   GEOMETRY: '도형과 측정',
   STATISTICS: '자료와 가능성',
+  // 영어 6유형·4능력 — 수학 텍스트엔 등장하지 않는 토큰이라 함께 둬도 안전
+  GRAMMAR: '어법',
+  VOCABULARY: '어휘',
+  READING: '독해',
+  LISTENING: '듣기',
+  WRITING: '서술·영작',
+  COMMUNICATION: '의사소통',
+  ACCURACY: '정확성',
+  EXPRESSION: '표현력',
 };
 
 function stripEnglishEnums(text: string): string {
@@ -151,6 +161,8 @@ export interface ArticleGenerationInput {
     category: string | null;
     unit: string | null;
     examScope: unknown;
+    /** 과목 — 페르소나·enum 규칙·태그의 과목명 분기용. 없으면 수학(기존 동작 유지). */
+    subject?: string | null;
   };
   analysis: {
     questions: AnalyzedQuestion[];
@@ -238,6 +250,7 @@ function buildArticlePrompt(
 
   const schoolName = examPaper.schoolName || '해당 학교';
   const grade = examPaper.grade || '';
+  const subject = examPaper.subject ?? null;
   const totalQ = analysis.totalQuestions;
   const totalPts = analysis.totalPoints;
 
@@ -260,7 +273,8 @@ function buildArticlePrompt(
     hasNearbyCompare: !!commentary.nearby_comparison,
   });
   const blueprint = buildBlueprint(signals);
-  const selectedModules = composeBlueprint(signals, blueprint, schoolName, grade);
+  const subjectName = toExamSubjectKey(subject) === 'ENGLISH' ? '영어' : '수학';
+  const selectedModules = composeBlueprint(signals, blueprint, schoolName, grade, subjectName);
 
   // 배점-난이도 갭 (display 라벨)
   const gaps = calcPointsDifficultyGaps(analysis.questions);
@@ -317,16 +331,17 @@ function buildArticlePrompt(
     blueprint,
     schoolName,
     grade,
+    subjectName,
     variables,
   };
 
   // 프롬프트 조립
   const prompt = assembleArticlePrompt({
-    systemBase: buildSystemBase(variables),
+    systemBase: buildSystemBase(variables, subject),
     archetypeHeader: buildArchetypeHeader(blueprint),
     factsAndData: buildFactsAndDataBlock(facts),
     sectionGuides: buildSectionGuides(selectedModules, ctx, signals),
-    formatRules: buildFormatRules(blueprint, schoolName, grade),
+    formatRules: buildFormatRules(blueprint, schoolName, grade, subject),
     outputSchema: buildOutputSchema(blueprint, schoolName, grade),
   });
 

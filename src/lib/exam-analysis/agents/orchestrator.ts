@@ -54,8 +54,12 @@ export async function runExtendedAnalysis(params: {
   // 기본 분석 조회
   const analysis = await prisma.examAnalysis.findUnique({
     where: { id: analysisId },
+    include: { examPaper: { select: { subject: true } } },
   });
   if (!analysis) throw new Error('분석 결과를 찾을 수 없습니다');
+
+  // 과목 — 에이전트 프롬프트 페르소나·라벨 분기용. 없으면 에이전트가 수학으로 폴백한다.
+  const subject = analysis.examPaper?.subject ?? null;
 
   const basicResult = {
     questions: analysis.questions,
@@ -99,6 +103,7 @@ export async function runExtendedAnalysis(params: {
       const agent = await getAgent(agentType);
       const input: AgentInput = {
         basicAnalysis: basicResult,
+        subject,
         weaknessProfile,
         learningPlan,
       };
@@ -193,6 +198,7 @@ export async function runExtendedAnalysis(params: {
       const agent = await getAgent(agentType);
       const input: AgentInput = {
         basicAnalysis: basicResult,
+        subject,
         weaknessProfile,
         learningPlan,
         ...(agentType === 'commentary' && nearbyComparisonData ? { nearbyComparison: nearbyComparisonData } : {}),

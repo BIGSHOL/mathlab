@@ -7,6 +7,7 @@
  */
 
 import { BaseAgent, type AgentInput } from './base-agent';
+import { subjectLabel } from './subject-input';
 import type { AgentType } from '../constants';
 import type {
   PerformancePrediction,
@@ -39,7 +40,7 @@ export class PredictionAgent extends BaseAgent<PerformancePrediction> {
     const { basicAnalysis, weaknessProfile, learningPlan } = input as PredictionInput;
 
     const systemInstruction =
-      '당신은 수학 교육 성과 예측 전문가입니다. 학생의 현재 수준과 학습 계획을 바탕으로 성과를 예측하세요.';
+      `당신은 ${subjectLabel(input)} 교육 성과 예측 전문가입니다. 학생의 현재 수준과 학습 계획을 바탕으로 성과를 예측하세요.`;
 
     const analysisData = JSON.stringify({
       exam_info: basicAnalysis.exam_info,

@@ -4,6 +4,7 @@
  */
 
 import { BaseAgent, type AgentInput } from './base-agent';
+import { subjectLabel } from './subject-input';
 import type {
   WeaknessProfile,
   SeverityInfo,
@@ -60,7 +61,7 @@ V3. example_questions의 번호가 모두 입력 문항 목록에 존재하는�
 V4. severity ∈ {critical, high, medium, low} 만 사용했는가?
 ════════════════════════════════════════════════
 
-당신은 수학 교육 전문가입니다. 시험 분석 결과를 바탕으로 학생의 취약점을 분석하세요.
+당신은 ${subjectLabel(input)} 교육 전문가입니다. 시험 분석 결과를 바탕으로 학생의 취약점을 분석하세요.
 
 ## 분석 데이터
 

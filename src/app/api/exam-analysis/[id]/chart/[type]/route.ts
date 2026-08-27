@@ -45,6 +45,8 @@ export async function GET(_request: NextRequest, { params }: Params) {
         id: true,
         questions: true,
         summary: true,
+        // 과목 — 레이더 축(수학 4능력 vs 영어 4능력) 분기용
+        examPaper: { select: { subject: true } },
         extensions: {
           where: { agentType: 'blog-article' },
           select: { result: true },
@@ -97,7 +99,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
       if (!pendingGen) {
         pendingGen = (async () => {
           try {
-            const generated = await generateAllChartImages(summary, questions) as unknown as Record<string, string>;
+            const generated = await generateAllChartImages(summary, questions, latestAnalysis.examPaper?.subject) as unknown as Record<string, string>;
 
             // blog-article extension 업서트 — 기존 article 데이터 보존하면서 chartImages + 버전 머지
             const existingResult = (articleResult || {}) as Record<string, unknown>;

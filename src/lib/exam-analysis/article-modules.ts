@@ -47,6 +47,8 @@ export interface BuildChunkContext {
   blueprint: Blueprint;
   schoolName: string;
   grade: string;
+  /** 과목명 — H2/제목 템플릿의 {{SUBJECT}} 치환용 ("수학" | "영어") */
+  subjectName: string;
   variables: ArticleVariables;
 }
 
@@ -82,7 +84,7 @@ export const MODULE_POOL: SectionModule[] = [
     h2Candidates: [], // blueprint.openingH2Candidates 사용
     buildChunk: (s, ctx) => {
       const openingPool = ctx.blueprint.openingH2Candidates
-        .map((h) => `  · "${h.replace(/{{SCHOOL}}/g, ctx.schoolName).replace(/{{GRADE}}/g, ctx.grade)}"`)
+        .map((h) => `  · "${h.replace(/{{SCHOOL}}/g, ctx.schoolName).replace(/{{GRADE}}/g, ctx.grade).replace(/{{SUBJECT}}/g, ctx.subjectName)}"`)
         .join('\n');
       return `### 섹션: 시험 개요 (도입)
 - archetype: **${ctx.archetype}** — ${ctx.blueprint.reason}
@@ -104,7 +106,7 @@ ${openingPool}
     lengthHint: (s) => s.discrimOverall === '높음' ? 'long' : s.discrimOverall === '낮음' ? 'short' : 'medium',
     chartToken: () => 'difficulty',
     h2Candidates: [
-      '{{SCHOOL}} {{GRADE}} 수학 난이도 분석',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} 난이도 분석',
       '{{SCHOOL}} {{GRADE}} 난이도 지형 — 어디서 갈리는가',
       '{{SCHOOL}} {{GRADE}} 시험 난이도 — 등급 라인의 좌표',
     ],
@@ -137,7 +139,7 @@ ${openingPool}
     chartToken: () => 'discrimination',
     h2Candidates: [
       '{{SCHOOL}} {{GRADE}} 변별력 진단 — 시험이 무엇을 묻는가',
-      '{{SCHOOL}} {{GRADE}} 수학 — 변별력이 만든 격차',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} — 변별력이 만든 격차',
       '{{SCHOOL}} {{GRADE}} 시험 — 점수 차이가 어디서 생기는가',
     ],
     buildChunk: (s) => {
@@ -165,7 +167,7 @@ ${openingPool}
     h2Candidates: [
       '{{SCHOOL}} {{GRADE}} 서술형 — 풀이 과정이 곧 점수',
       '{{SCHOOL}} {{GRADE}} 시험 서술형 비중 분석',
-      '{{SCHOOL}} {{GRADE}} 수학 — 서술형이 만드는 격차',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} — 서술형이 만드는 격차',
     ],
     buildChunk: (s) => `### 섹션: 서술형 비중
 - 서술형 ${s.essayCount}문항 / 배점 ${s.essayPts}점 (전체의 ${s.essayWeightPct}%)
@@ -187,7 +189,7 @@ ${openingPool}
     h2Candidates: [
       '{{SCHOOL}} {{GRADE}} 단원별 출제 — 어디에 시간을 써야 하는가',
       '{{SCHOOL}} {{GRADE}} 시험 — 한 단원이 점수를 좌우',
-      '{{SCHOOL}} {{GRADE}} 수학 — 핵심 단원 집중도',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} — 핵심 단원 집중도',
     ],
     buildChunk: (s) => {
       const top1 = s.topicStats[0];
@@ -215,7 +217,7 @@ ${topName2 ? `- 두번째 단원: ${topName2} (${top2?.pts}점)` : ''}
     h2Candidates: [
       '{{SCHOOL}} {{GRADE}} 단원별 출제 — 어느 단원도 비울 수 없는 시험',
       '{{SCHOOL}} {{GRADE}} 시험 단원 구성 — 골고루 묻는 시험',
-      '{{SCHOOL}} {{GRADE}} 수학 — 단원별 배점 균형',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} — 단원별 배점 균형',
     ],
     buildChunk: (s) => {
       const top3 = s.topicStats.slice(0, 3)
@@ -238,9 +240,9 @@ ${topName2 ? `- 두번째 단원: ${topName2} (${top2?.pts}점)` : ''}
     lengthHint: () => 'medium',
     chartToken: () => 'ability_radar',
     h2Candidates: [
-      '{{SCHOOL}} {{GRADE}} 수학 능력 영역 — 무엇을 잘해야 하는가',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} 능력 영역 — 무엇을 잘해야 하는가',
       '{{SCHOOL}} {{GRADE}} 시험 — 요구되는 사고력 분포',
-      '{{SCHOOL}} {{GRADE}} 수학 — 핵심 능력 진단',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} — 핵심 능력 진단',
     ],
     buildChunk: (s) => {
       const labels: Record<string, string> = {
@@ -269,9 +271,9 @@ ${topName2 ? `- 두번째 단원: ${topName2} (${top2?.pts}점)` : ''}
     priority: (s) => 45 + s.lv5Count * 8,
     lengthHint: (s) => (s.diffCounts[3] + s.diffCounts[4]) >= 6 ? 'long' : 'medium',
     h2Candidates: [
-      '{{SCHOOL}} {{GRADE}} 수학 — 점수를 만드는 문항들',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} — 점수를 만드는 문항들',
       '{{SCHOOL}} {{GRADE}} 시험 — 당락을 가르는 문항',
-      '{{SCHOOL}} {{GRADE}} 수학 — 반드시 짚어야 할 문항',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} — 반드시 짚어야 할 문항',
     ],
     buildChunk: (s, ctx) => {
       const long = (s.diffCounts[3] + s.diffCounts[4]) >= 6;
@@ -293,7 +295,7 @@ ${topName2 ? `- 두번째 단원: ${topName2} (${top2?.pts}점)` : ''}
     priority: (s) => 30 + (s.overpricedCount + s.underpricedCount) * 10,
     lengthHint: () => 'short',
     h2Candidates: [
-      '{{SCHOOL}} {{GRADE}} 수학 — 배점이 알려주는 우선순위',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} — 배점이 알려주는 우선순위',
       '{{SCHOOL}} {{GRADE}} 시험 — 노력 대비 점수가 다른 문항',
     ],
     buildChunk: (s) => `### 섹션: 배점 함정
@@ -311,9 +313,9 @@ ${topName2 ? `- 두번째 단원: ${topName2} (${top2?.pts}점)` : ''}
     priority: (s) => s.discrimOverall === '낮음' ? 0 : 70,
     lengthHint: (s) => s.discrimOverall === '높음' ? 'long' : 'medium',
     h2Candidates: [
-      '{{SCHOOL}} {{GRADE}} 수학 — 등급별 점수 확보 전략',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} — 등급별 점수 확보 전략',
       '{{SCHOOL}} {{GRADE}} 시험 — 점수대별 공략법',
-      '{{SCHOOL}} {{GRADE}} 수학 — 어디서부터 채워야 하는가',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} — 어디서부터 채워야 하는가',
     ],
     buildChunk: (s, ctx) => {
       const bands = ctx.blueprint.gradeBands;
@@ -337,7 +339,7 @@ ${bandList}
     priority: (s) => 35 + Math.max(0, (s.totalQuestions - 20) * 2),
     lengthHint: () => 'short',
     h2Candidates: [
-      '{{SCHOOL}} {{GRADE}} 수학 — 시간 배분 전략',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} — 시간 배분 전략',
       '{{SCHOOL}} {{GRADE}} 시험 — 50분을 어떻게 쓸 것인가',
     ],
     buildChunk: (s) => `### 섹션: 시간 관리
@@ -375,9 +377,9 @@ ${bandList}
     priority: () => 25,
     lengthHint: () => 'medium',
     h2Candidates: [
-      '{{SCHOOL}} {{GRADE}} 수학 — 학습 방향 제안',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} — 학습 방향 제안',
       '{{SCHOOL}} {{GRADE}} 시험 대비 — 어디부터 시작할까',
-      '{{SCHOOL}} {{GRADE}} 수학 — 우선순위 학습 가이드',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} — 우선순위 학습 가이드',
     ],
     buildChunk: (s, ctx) => {
       const top3 = s.topicStats.slice(0, 3)
@@ -411,6 +413,7 @@ export function composeBlueprint(
   blueprint: Blueprint,
   schoolName: string,
   grade: string,
+  subjectName = '수학',
 ): SelectedModule[] {
   const allowed = blueprint.allowedModules.length
     ? new Set(blueprint.allowedModules)
@@ -475,7 +478,10 @@ export function composeBlueprint(
       : item.module.h2Candidates;
     if (!pool.length) return `${schoolName} ${grade}`;
     const idx = Math.floor(Math.random() * pool.length);
-    return pool[idx].replace(/{{SCHOOL}}/g, schoolName).replace(/{{GRADE}}/g, grade);
+    return pool[idx]
+      .replace(/{{SCHOOL}}/g, schoolName)
+      .replace(/{{GRADE}}/g, grade)
+      .replace(/{{SUBJECT}}/g, subjectName);
   };
 
   for (const item of opening) item.h2 = pickH2(item, blueprint.openingH2Candidates);

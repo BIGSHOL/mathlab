@@ -3,7 +3,7 @@
  * Python Pydantic 모델에서 1:1 이식
  */
 
-import type { ExamQuestionFormat, GradingStatus, AgentType } from './constants';
+import type { ExamQuestionFormat, GradingStatus, AgentType } from './shared/constants';
 
 // ── 문항 분석 결과 (기본 분석) ──
 /** 영어 학습 대책 — 시험지에 나온 단어 */

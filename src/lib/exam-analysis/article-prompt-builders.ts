@@ -16,23 +16,30 @@ import { TONE_GUIDES } from './article-archetype';
 import type { SelectedModule, ArticleVariables, BuildChunkContext } from './article-modules';
 import { buildAntiPatternsRules } from './article-anti-patterns';
 import { QUESTION_TYPE_LABELS } from './constants';
+import { toExamSubjectKey } from './shared/subject';
+
+/** 과목명 — 프롬프트 페르소나·태그에 쓰는 표기. 미지정이면 수학(기존 동작 유지). */
+function subjectName(subject?: string | null): string {
+  return toExamSubjectKey(subject) === 'ENGLISH' ? '영어' : '수학';
+}
 
 const LEVEL_NAMES = ['', '기본', '표준', '응용', '심화', '최고난도'];
 
 // ── 1. 시스템 베이스 (정체성·톤·학원 변수) ──
 
-export function buildSystemBase(variables: ArticleVariables): string {
+export function buildSystemBase(variables: ArticleVariables, subject?: string | null): string {
   const academy = variables.academyName?.trim();
   const teacher = variables.teacherName?.trim();
   const tag = variables.branchTag?.trim();
+  const subj = subjectName(subject);
   const identityLine = academy
-    ? `당신은 "${academy}"${teacher ? `의 ${teacher} 원장/강사` : '의 수학 원장'} 명의로 발행되는 블로그 글을 쓰는 분석가입니다.${tag ? ` 학원 특색: "${tag}".` : ''}`
-    : `당신은 한 수학 학원의 원장 명의로 발행되는 블로그 글을 쓰는 분석가입니다.`;
+    ? `당신은 "${academy}"${teacher ? `의 ${teacher} 원장/강사` : `의 ${subj} 원장`} 명의로 발행되는 블로그 글을 쓰는 분석가입니다.${tag ? ` 학원 특색: "${tag}".` : ''}`
+    : `당신은 한 ${subj} 학원의 원장 명의로 발행되는 블로그 글을 쓰는 분석가입니다.`;
 
   return `${identityLine}
 
 ## 글의 정체성
-- 독자: 학부모 (수학을 잘 모르는 분들도 이해 가능해야 함)
+- 독자: 학부모 (${subj}을 잘 모르는 분들도 이해 가능해야 함)
 - 목적: 학원의 전문성과 분석력을 보여 신뢰를 얻고 상담 문의로 이어지게 함
 - 톤: 분석가의 차분한 칼럼체. 격식체("~합니다") 기본 + 자연스러운 변형 표현 적극 사용
 - 사람이 직접 분석하고 쓴 것처럼 보여야 함 — AI가 작성했다는 인상 절대 금지`;
@@ -210,7 +217,9 @@ ${sectionBlocks}`;
 
 // ── 5. 글쓰기 규칙 (수식·enum·HTML·SEO·자연 글쓰기 — 기존 article-generator 유지부) ──
 
-export function buildFormatRules(blueprint: Blueprint, schoolName: string, grade: string): string {
+export function buildFormatRules(blueprint: Blueprint, schoolName: string, grade: string, subject?: string | null): string {
+  const subj = subjectName(subject);
+  const isEnglish = toExamSubjectKey(subject) === 'ENGLISH';
   const allowedCharts = blueprint.charts.map((c) => `{{CHART:${c}}}`).join(', ');
   const forbiddenCharts = ['difficulty', 'ability_radar', 'topic_bar']
     .filter((c) => !blueprint.charts.includes(c as Blueprint['charts'][number]))
@@ -229,8 +238,8 @@ export function buildFormatRules(blueprint: Blueprint, schoolName: string, grade
 - 복잡한 수식은 자연어로: "A² 의 제곱근은 A 의 절댓값"
 
 ### 영문 enum 사용 금지
-- 능력영역: "계산력 / 이해력 / 문제해결력 / 추론력"만 사용
-- 유형: "수와 연산 / 변화와 관계 / 도형과 측정 / 자료와 가능성"만 사용
+- 능력영역: ${isEnglish ? '"정확성 / 이해력 / 추론력 / 표현력"' : '"계산력 / 이해력 / 문제해결력 / 추론력"'}만 사용
+- 유형: ${isEnglish ? '"어법 / 어휘 / 독해 / 듣기 / 서술·영작 / 의사소통"' : '"수와 연산 / 변화와 관계 / 도형과 측정 / 자료와 가능성"'}만 사용
 - CALCULATION, PROBLEM_SOLVING, NUMBER, ALGEBRA 등 영문 토큰 글에 한 글자도 포함 금지
 
 ### 차트 토큰
@@ -243,7 +252,7 @@ ${forbiddenChartsLine}
 - **H2**: 모든 섹션에 \\<h2\\>. 모든 H2에 "${schoolName} ${grade}" 포함
 - **키워드 빈도**: "${schoolName}" 10~14회, "${grade}" 5~8회. 같은 문단에 학교명 2회 이상 금지
 - **문단**: 2~4문장씩, 문장당 40자 이내 권장
-- **태그**: 8~12개. 필수 #${schoolName.replace(/\s/g, '')} #${schoolName.replace(/\s/g, '')}기출 #${schoolName.replace(/\s/g, '')}수학 #${grade ? grade.replace(/\s/g, '') + '수학' : '중학수학'} #기출분석 #수학기출분석
+- **태그**: 8~12개. 필수 #${schoolName.replace(/\s/g, '')} #${schoolName.replace(/\s/g, '')}기출 #${schoolName.replace(/\s/g, '')}${subj} #${grade ? grade.replace(/\s/g, '') + subj : `중학${subj}`} #기출분석 #${subj}기출분석
 
 ### HTML 서식 (네이버 100% 호환)
 - content는 HTML. 마크다운(##, **, -) 금지

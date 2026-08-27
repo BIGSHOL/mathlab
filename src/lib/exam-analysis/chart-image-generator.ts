@@ -11,16 +11,11 @@ const getResvg = () => require('@resvg/resvg-js').Resvg as typeof import('@resvg
 import { writeFileSync, existsSync, statSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import {
-  DIFFICULTY_COLORS,
-  QUESTION_TYPE_COLORS,
-  QUESTION_TYPE_LABELS,
-  ABILITY_DOMAIN_LABELS,
-  ABILITY_DOMAIN_COLORS,
-  TYPE_TO_DOMAIN,
-} from './constants';
+// 유형·능력 라벨/색/축은 chart-axes 로 이관 (과목별 분리) — 여기선 난이도 색만 직접 쓴다.
+import { DIFFICULTY_COLORS } from './constants';
 import type { AnalyzedQuestion } from './types';
-import { formatPoints } from './points';
+import { countAbilities, getAbilityAxes, getTypeAxes } from './shared/chart-axes';
+import { formatPoints } from './shared/points';
 
 // ── 차트 버전 — 디자인 업그레이드 시 bump → chart endpoint가 자동 재생성 ──
 // v1: 기본 (그라데이션 없음, 작은 폰트)
@@ -207,13 +202,11 @@ export function generateDifficultyDonutSvg(
 
 export function generateTypeRadarSvg(
   distribution: Record<string, number>,
+  subject?: string | null,
 ): string {
-  const types = ['number', 'change_relation', 'shape_measure', 'data_possibility'] as const;
-  const data = types.map((t) => ({
-    key: t,
-    label: QUESTION_TYPE_LABELS[t] || t,
-    value: distribution[t] || 0,
-    color: QUESTION_TYPE_COLORS[t] || '#94A3B8',
+  const data = getTypeAxes(subject, distribution).map((axis) => ({
+    ...axis,
+    value: distribution[axis.key] || 0,
   }));
 
   const total = data.reduce((s, d) => s + d.value, 0);
@@ -314,25 +307,15 @@ export function generateTypeRadarSvg(
 
 export function generateAbilityRadarSvg(
   questions: AnalyzedQuestion[],
+  subject?: string | null,
 ): string {
-  const abilityKeys = ['calculation', 'understanding', 'problem_solving', 'reasoning'] as const;
+  // 축·집계는 chart-axes 로 일원화 (과목별 축 + AI 변형값 정규화 + 유형→능력 폴백)
+  const axes = getAbilityAxes(subject);
+  const counts = countAbilities(subject, questions, axes);
 
-  // 문항별 ability_domain 집계 — AnalysisResultView/TypeRadarChart와 동일한 견고 정규화:
-  // 1) raw 값 toLowerCase (AI가 'CALCULATION', 'Problem-Solving' 등 변형 반환해도 매칭)
-  // 2) ability_domain 비어 있으면 question_type → TYPE_TO_DOMAIN fallback
-  const counts: Record<string, number> = {};
-  for (const key of abilityKeys) counts[key] = 0;
-  for (const q of questions) {
-    const rawDomain = q.ability_domain || (q.question_type ? TYPE_TO_DOMAIN[q.question_type] : undefined) || 'calculation';
-    const domain = String(rawDomain).toLowerCase().replace(/-/g, '_');
-    if (domain in counts) counts[domain]++;
-  }
-
-  const data = abilityKeys.map((key) => ({
-    key,
-    label: ABILITY_DOMAIN_LABELS[key] || key,
-    value: counts[key] || 0,
-    color: ABILITY_DOMAIN_COLORS[key] || '#94A3B8',
+  const data = axes.map((axis) => ({
+    ...axis,
+    value: counts[axis.key] || 0,
   }));
 
   const total = data.reduce((s, d) => s + d.value, 0);
@@ -437,6 +420,7 @@ const COMBINED_HEIGHT = 550;
 export function generateCombinedRadarSvg(
   distribution: Record<string, number>,
   questions: AnalyzedQuestion[],
+  subject?: string | null,
 ): string {
   const parts: string[] = [];
 
@@ -459,12 +443,9 @@ export function generateCombinedRadarSvg(
   `</defs>`);
 
   // ── 좌측: 출제 영역 분포 (5각형) ──
-  const types = ['number', 'change_relation', 'shape_measure', 'data_possibility'] as const;
-  const typeData = types.map((t) => ({
-    key: t,
-    label: QUESTION_TYPE_LABELS[t] || t,
-    value: distribution[t] || 0,
-    color: QUESTION_TYPE_COLORS[t] || '#94A3B8',
+  const typeData = getTypeAxes(subject, distribution).map((axis) => ({
+    ...axis,
+    value: distribution[axis.key] || 0,
   }));
 
   const typeTotal = typeData.reduce((s, d) => s + d.value, 0);
@@ -531,20 +512,11 @@ export function generateCombinedRadarSvg(
   parts.push(`<line x1="625" y1="80" x2="625" y2="490" stroke="#E5E7EB" stroke-width="1.5" stroke-dasharray="6,6"/>`);
 
   // ── 우측: 능력 영역 분포 (4각형) ──
-  const abilityKeys = ['calculation', 'understanding', 'problem_solving', 'reasoning'] as const;
-  const counts: Record<string, number> = {};
-  for (const key of abilityKeys) counts[key] = 0;
-  for (const q of questions) {
-    const rawDomain = q.ability_domain || (q.question_type ? TYPE_TO_DOMAIN[q.question_type] : undefined) || 'calculation';
-    const domain = String(rawDomain).toLowerCase().replace(/-/g, '_');
-    if (domain in counts) counts[domain]++;
-  }
-
-  const abilityData = abilityKeys.map((key) => ({
-    key,
-    label: ABILITY_DOMAIN_LABELS[key] || key,
-    value: counts[key] || 0,
-    color: ABILITY_DOMAIN_COLORS[key] || '#94A3B8',
+  const abilityAxes = getAbilityAxes(subject);
+  const abilityCounts = countAbilities(subject, questions, abilityAxes);
+  const abilityData = abilityAxes.map((axis) => ({
+    ...axis,
+    value: abilityCounts[axis.key] || 0,
   }));
 
   const abilityTotal = abilityData.reduce((s, d) => s + d.value, 0);
@@ -962,9 +934,10 @@ export interface ChartImages {
 export async function generateAllChartImages(
   summary: { difficulty_distribution: Record<string, number>; type_distribution: Record<string, number> },
   questions: AnalyzedQuestion[],
+  subject?: string | null,
 ): Promise<ChartImages> {
   const diffSvg = generateDifficultyDonutSvg(summary.difficulty_distribution);
-  const abilityRadarSvg = generateAbilityRadarSvg(questions);
+  const abilityRadarSvg = generateAbilityRadarSvg(questions, subject);
   const topicBarSvg = generateTopicBarSvg(questions);
   const discrimSvg = generateDiscriminationSvg(questions);
 

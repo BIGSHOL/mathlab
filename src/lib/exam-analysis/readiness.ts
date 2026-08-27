@@ -11,7 +11,7 @@
  *   산출물에서 파생된 값끼리 비교하면 어떤 누락도 잡히지 않는다. CLAUDE.md §12-4 의 재발 사례.
  */
 
-import { formatPoints, roundPoints, sumPoints } from './points';
+import { formatPoints, roundPoints, sumPoints } from './shared/points';
 import type { AnalysisCompleteness } from './types';
 
 export interface ReadinessQuestion {

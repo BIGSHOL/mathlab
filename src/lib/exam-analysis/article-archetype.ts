@@ -292,9 +292,9 @@ const BLUEPRINT_PROTOS: Record<Archetype, Omit<Blueprint, 'archetype' | 'reason'
       { label: '기초층', cutDesc: '69점 이하', subFocus: '기본 문항 100% 확보가 첫 목표' },
     ],
     openingH2Candidates: [
-      '{{SCHOOL}} {{GRADE}} 수학 시험 — 실수가 곧 점수입니다',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} 시험 — 실수가 곧 점수입니다',
       '{{SCHOOL}} {{GRADE}} 시험 개요 — 기본 점수부터 다시 보기',
-      '{{SCHOOL}} {{GRADE}} 수학 — 흔들리는 한 문제가 등급을 가릅니다',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} — 흔들리는 한 문제가 등급을 가릅니다',
     ],
     allowedModules: [
       'exam_overview', 'difficulty_landscape', 'discrimination_spotlight',
@@ -312,9 +312,9 @@ const BLUEPRINT_PROTOS: Record<Archetype, Omit<Blueprint, 'archetype' | 'reason'
       { label: '중상위권', cutDesc: '75~84점', subFocus: '응용 안정 + 심화 최소 1문항' },
     ],
     openingH2Candidates: [
-      '{{SCHOOL}} {{GRADE}} 수학 — 진짜 승부는 마지막 3문항에서',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} — 진짜 승부는 마지막 3문항에서',
       '{{SCHOOL}} {{GRADE}} 시험 — 최상위권을 가른 결정적 차이',
-      '{{SCHOOL}} {{GRADE}} 수학 — 90점 라인에서 갈리는 시험',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} — 90점 라인에서 갈리는 시험',
     ],
     allowedModules: [
       'exam_overview', 'difficulty_landscape', 'discrimination_spotlight', 'notable_questions_pack',
@@ -331,9 +331,9 @@ const BLUEPRINT_PROTOS: Record<Archetype, Omit<Blueprint, 'archetype' | 'reason'
       { label: 'C등급', cutDesc: '69점 이하', subFocus: '객관식·단답형 안전 확보 + 서술형 1단계라도 적기' },
     ],
     openingH2Candidates: [
-      '{{SCHOOL}} {{GRADE}} 수학 — 풀이 과정이 곧 점수인 시험',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} — 풀이 과정이 곧 점수인 시험',
       '{{SCHOOL}} {{GRADE}} 시험 — 서술형 한 문항이 등급을 바꿉니다',
-      '{{SCHOOL}} {{GRADE}} 수학 — 답보다 과정을 묻는 시험',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} — 답보다 과정을 묻는 시험',
     ],
     allowedModules: [
       'exam_overview', 'essay_focus', 'difficulty_landscape', 'topic_concentration', 'topic_balance',
@@ -351,9 +351,9 @@ const BLUEPRINT_PROTOS: Record<Archetype, Omit<Blueprint, 'archetype' | 'reason'
       { label: 'C등급', cutDesc: '69점 이하', subFocus: '초점 단원 기본 문항부터 우선 학습' },
     ],
     openingH2Candidates: [
-      '{{SCHOOL}} {{GRADE}} 수학 — 한 단원에 시험의 절반이 걸렸습니다',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} — 한 단원에 시험의 절반이 걸렸습니다',
       '{{SCHOOL}} {{GRADE}} 시험 — 핵심 단원 하나가 등급을 좌우',
-      '{{SCHOOL}} {{GRADE}} 수학 — 집중 단원 마스터가 곧 합격선',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} — 집중 단원 마스터가 곧 합격선',
     ],
     allowedModules: [
       'exam_overview', 'topic_concentration', 'difficulty_landscape', 'ability_dominance',
@@ -371,9 +371,9 @@ const BLUEPRINT_PROTOS: Record<Archetype, Omit<Blueprint, 'archetype' | 'reason'
       { label: 'C등급', cutDesc: '69점 이하' },
     ],
     openingH2Candidates: [
-      '{{SCHOOL}} {{GRADE}} 수학 — 출제 경향 한눈에 보기',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} — 출제 경향 한눈에 보기',
       '{{SCHOOL}} {{GRADE}} 시험 개요 — 균형 잡힌 구성의 의미',
-      '{{SCHOOL}} {{GRADE}} 수학 — 어느 단원도 놓칠 수 없는 시험',
+      '{{SCHOOL}} {{GRADE}} {{SUBJECT}} — 어느 단원도 놓칠 수 없는 시험',
     ],
     allowedModules: [
       'exam_overview', 'difficulty_landscape', 'discrimination_spotlight', 'essay_focus',

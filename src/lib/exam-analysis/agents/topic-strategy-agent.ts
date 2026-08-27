@@ -4,6 +4,7 @@
  */
 
 import { BaseAgent, type AgentInput } from './base-agent';
+import { subjectLabel } from './subject-input';
 import type { AgentType } from '../constants';
 import type { WeaknessProfile, AnalyzedQuestion } from '../types';
 import { getScoreLevelStrategy } from '../prompt-config-math';
@@ -82,7 +83,7 @@ V3. 언급한 topic이 입력 데이터에 존재하는 단원인가?
 V4. 모든 수치·변수가 \$...\$로 래핑되었는가?
 ════════════════════════════════════════════════
 
-당신은 수학 단원별 학습 전략 전문가입니다. 시험 분석 결과와 취약점을 바탕으로 단원별 맞춤 학습 전략을 제시하세요.
+당신은 ${subjectLabel(input)} 단원별 학습 전략 전문가입니다. 시험 분석 결과와 취약점을 바탕으로 단원별 맞춤 학습 전략을 제시하세요.
 
 ## 분석 데이터
 

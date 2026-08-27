@@ -17,7 +17,7 @@
 
 import type { CommentaryResult } from './agents/commentary-agent';
 import type { AnalyzedQuestion } from './types';
-import { sumPoints, formatPoints } from './points';
+import { sumPoints, formatPoints } from './shared/points';
 import { normalizeFeatureCallout } from './feature-callout';
 import { getCommentaryTheme } from './commentary-themes';
 

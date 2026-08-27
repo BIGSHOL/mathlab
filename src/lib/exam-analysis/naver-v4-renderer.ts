@@ -16,6 +16,7 @@
  */
 
 import type { CommentaryResult } from './agents/commentary-agent';
+import { toExamSubjectKey } from './shared/subject';
 
 export interface NaverV4Meta {
   examTitle: string;
@@ -24,6 +25,8 @@ export interface NaverV4Meta {
   analyzedAt: string | null;
   /** 학원명 — V4 본문 {학원명} placeholder 치환에 사용. null이면 "우리 학원" 사용. */
   academyName?: string | null;
+  /** 과목 — 섹션 제목의 과목명("1등급 수학을 위한 …")에 사용. 미지정 시 수학(기존 동작 유지). */
+  subject?: string | null;
 }
 
 export interface NaverV4ChartUrls {
@@ -167,6 +170,8 @@ export function buildNaverV4Html(args: {
   chartUrls?: NaverV4ChartUrls;
 }): string {
   const { commentary, meta, chartUrls } = args;
+  // 영어 분석본에 "1등급 수학을 위한"이 박히던 문제 — 과목명을 meta 에서 받는다.
+  const subjectName = toExamSubjectKey(meta.subject) === 'ENGLISH' ? '영어' : '수학';
   // 학원명 치환 기준 설정 — tenant 이름 있으면 사용, 없으면 "우리 학원"
   setAcademyReplacement(meta.academyName);
   const c = commentary;
@@ -189,7 +194,7 @@ export function buildNaverV4Html(args: {
 
   // ④ 학원 차별화 전략
   if (c.v4_academy_strategy && c.v4_academy_strategy.length > 0) {
-    parts.push(renderH2(`1등급 수학을 위한 학원 차별화 전략 (${c.v4_academy_strategy.length}가지)`));
+    parts.push(renderH2(`1등급 ${subjectName}을 위한 학원 차별화 전략 (${c.v4_academy_strategy.length}가지)`));
     parts.push(renderAcademyStrategy(c.v4_academy_strategy));
   }
 

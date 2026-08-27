@@ -113,6 +113,8 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     const v4Extension = await agent.generateV4Extension({
       basicAnalysis,
+      // 과목 — 프롬프트 페르소나("너는 … 영어 학원 강사다") 분기용
+      subject: examPaper.subject,
       // 다음 시험 인식용 메타 (buildV4UserPrompt가 사용)
       examCategory,
       grade: examPaper.grade,

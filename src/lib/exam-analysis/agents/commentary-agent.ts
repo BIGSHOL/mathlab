@@ -10,7 +10,9 @@ import { BaseAgent, deepNormalizeMath, type AgentInput } from './base-agent';
 import type { AgentType } from '../constants';
 import { DIFFICULTY_LEGACY_MAP, ABILITY_DOMAIN_LABELS } from '../constants';
 import type { BasicAnalysisResult, WeaknessProfile, LearningPlan } from '../types';
-import { roundPoints, formatPoints } from '../points';
+import { abilityDomainLabel, questionTypeLabel, toExamSubjectKey } from '../shared/subject';
+import { inputSubject, isEnglishInput, subjectLabel } from './subject-input';
+import { roundPoints, formatPoints } from '../shared/points';
 import { MIDDLE_SCHOOL_CURRICULUM } from '../data/curriculum';
 import type { GradeCurriculum } from '../data/curriculum';
 import type { NearbyComparisonData, NearbyExamSummary } from '../nearby-school-data';
@@ -32,14 +34,21 @@ const QUESTION_TYPE_LABELS_KO: Record<string, string> = {
   statistics: '자료와 가능성',
 };
 
-function toKoreanType(raw: string | null | undefined): string {
+/**
+ * 과목 판별 — AgentInput.subject 가 없으면 수학으로 본다(기존 분석본 하위호환).
+ * 수학 경로의 프롬프트·라벨은 이 값이 MATH 일 때 종전과 100% 동일해야 한다.
+ */
+
+function toKoreanType(raw: string | null | undefined, subject?: string | null): string {
   if (!raw) return '미분류';
+  if (subject !== undefined) return questionTypeLabel(raw, subject);
   const k = String(raw).toLowerCase();
   return QUESTION_TYPE_LABELS_KO[k] || raw;
 }
 
-function toKoreanAbility(raw: string | null | undefined): string {
-  if (!raw) return '계산력';
+function toKoreanAbility(raw: string | null | undefined, subject?: string | null): string {
+  if (!raw) return toExamSubjectKey(subject) === 'ENGLISH' ? '정확성' : '계산력';
+  if (subject !== undefined) return abilityDomainLabel(raw, subject);
   const k = String(raw).toLowerCase();
   return ABILITY_DOMAIN_LABELS[k] || raw;
 }
@@ -60,6 +69,15 @@ const ENUM_KO_MAP: Record<string, string> = {
   FUNCTION: '변화와 관계',
   GEOMETRY: '도형과 측정',
   STATISTICS: '자료와 가능성',
+  // 영어 6유형·4능력 — 수학 텍스트에는 등장하지 않는 토큰이라 함께 둬도 안전
+  GRAMMAR: '어법',
+  VOCABULARY: '어휘',
+  READING: '독해',
+  LISTENING: '듣기',
+  WRITING: '서술·영작',
+  COMMUNICATION: '의사소통',
+  ACCURACY: '정확성',
+  EXPRESSION: '표현력',
 };
 
 function stripEnglishEnums(text: string): string {
@@ -323,7 +341,7 @@ export type V4Extension = Pick<
 
 // ── V3 시스템 프롬프트 (blog-prompt-spec.md + Phase 0 시안 검증 완료) ──
 
-const SYSTEM_PROMPT_V3 = `너는 한국 중·고등학교 수학 시험 분석가다. 학원이 학부모에게 보여줄 블로그 글을 위한 신규 V3 필드를 생성한다.
+const buildSystemPromptV3 = (subj: string) => `너는 한국 중·고등학교 ${subj} 시험 분석가다. 학원이 학부모에게 보여줄 블로그 글을 위한 신규 V3 필드를 생성한다.
 
 ## 출력 형식 — 오직 아래 키만 포함한 JSON 객체 하나만 출력 (코드펜스/설명문 금지)
 
@@ -484,9 +502,9 @@ const SYSTEM_PROMPT_V3 = `너는 한국 중·고등학교 수학 시험 분석�
 // v1.3.0 (2026-05-28) — 특정 학원명 노출 금지 규칙 강화 + placeholder {학원명} 패턴 도입
 // 9섹션 구조 (들어가며 / 시험개요+1등급컷 / 학원전략 / 문제난이도 / 출제특징 / 출제핵심포인트 / 이전시험비교 / 주요문항분석 / 기말대비전략)
 
-const SYSTEM_PROMPT_V4 = `너는 한국 중·고등학교 수학 학원 강사다. 학원 블로그에 게시할 **시험 기출 분석 글**을 작성한다.
+const buildSystemPromptV4 = (subj: string) => `너는 한국 중·고등학교 ${subj} 학원 강사다. 학원 블로그에 게시할 **시험 기출 분석 글**을 작성한다.
 
-한국 수학 학원의 일반적 블로그 스타일을 따른다. 특징:
+한국 ${subj} 학원의 일반적 블로그 스타일을 따른다. 특징:
 - **학원 강사가 학부모에게 직접 설명하는 톤** (매거진 X, 보고서 톤 O)
 - **테이블 + 자유 단락 결합** (모든 정보를 표로 X — 단락도 풍부)
 - **특정 킬러 문항을 골라서 자세 해설** (영역별 일반 분석 + 문항별 구체 분석)
@@ -517,7 +535,7 @@ const SYSTEM_PROMPT_V4 = `너는 한국 중·고등학교 수학 학원 강사�
     "one_liner": "한 줄 요약 — 변별력 위주, 응용 비중 높음"
   },
 
-  "v4_intro": "▶ 들어가며 — 학부모/학생에게 시험의 첫인상을 전달하는 2~3 문장. 학원 분석 보고서 톤. 예: '이번 영신여고 1학년 수학 중간고사는 단순 계산보다 그래프 해석 능력을 다각도로 평가하는 문제가 다수 출제되었습니다. 작년과 비교하면 변별 문항이 늘어났고, 풀이 과정을 단계별로 정리하지 못한 학생은 부분 감점을 피하기 어려웠을 것으로 예상됩니다.'",
+  "v4_intro": "▶ 들어가며 — 학부모/학생에게 시험의 첫인상을 전달하는 2~3 문장. 학원 분석 보고서 톤. 예: '이번 영신여고 1학년 ${subj} 중간고사는 단순 암기보다 응용 능력을 다각도로 평가하는 문제가 다수 출제되었습니다. 작년과 비교하면 변별 문항이 늘어났고, 풀이 과정을 단계별로 정리하지 못한 학생은 부분 감점을 피하기 어려웠을 것으로 예상됩니다.'",
 
   "v4_academy_strategy": [
     {
@@ -646,6 +664,9 @@ export class CommentaryAgent extends BaseAgent<Record<string, unknown>> {
 
   buildPrompt(input: AgentInput): string {
     const { basicAnalysis } = input;
+    const subject = inputSubject(input);
+    const isEnglish = isEnglishInput(input);
+    const subjLabel = subjectLabel(input);
 
     const totalQ = basicAnalysis.questions.length;
     const totalPts = basicAnalysis.exam_info.total_points;
@@ -711,8 +732,8 @@ export class CommentaryAgent extends BaseAgent<Record<string, unknown>> {
       번호: q.question_number,
       형식: FORMAT_LABELS[q.question_format || ''] || '객관식',
       난이도: q.difficulty,
-      유형: toKoreanType(q.question_type),
-      능력영역: toKoreanAbility(q.ability_domain),
+      유형: toKoreanType(q.question_type, subject),
+      능력영역: toKoreanAbility(q.ability_domain, subject),
       단원: q.topic,
       배점: q.points,
       ...(hasStudentData ? {
@@ -731,7 +752,9 @@ H2. "## 출력 형식" 섹션에 정의된 키만 사용. 임의 키 추가 금�
 H3. **\$...\$는 진짜 수식에만 사용** — 변수($x$, $a$, $k$), 식($x^2+1$, $\\sqrt{3}$, $\\frac{a}{b}$), LaTeX 명령(\\frac, \\sqrt, \\times 등)이 포함된 경우만. **단순 정수(1, 2, 3, 4, 5)·점수(48점)·문항수(9문항)·한글(기본, 표준, 응용)에는 \$ 사용 금지** — 평문 그대로. 예: "Level 2 (표준) 7문항 34점" (O), "Level $2$ ($표준$) $7$문항 $34$점" (X). \\text{한글}/\\textrm{한글} 금지. \\dfrac 금지 → \\frac.
 H4. 인접 수식 \$A\$\$B\$ 금지 → \$A\$ \$B\$. □→\\square, ○→\\bigcirc.
 H5. 입력 데이터에 없는 문항번호·학교명·배점·점수를 지어내지 말 것. 주변 학교 통계/토픽/배점 분포는 입력값 그대로 인용.
-H6. **영문 enum 사용 절대 금지** — 능력영역은 "계산력/이해력/문제해결력/추론력"으로만, 유형은 "수와 연산/변화와 관계/도형과 측정/자료와 가능성"으로만 표기. CALCULATION, UNDERSTANDING, PROBLEM_SOLVING, REASONING, NUMBER, CHANGE_RELATION, SHAPE_MEASURE, DATA_POSSIBILITY, ALGEBRA, FUNCTION, GEOMETRY, STATISTICS 같은 영문 토큰을 출력에 한 글자도 포함하지 말 것. (예: "CHANGE_RELATION 영역" ❌, "변화와 관계 영역" ✅)
+H6. ${isEnglish
+      ? '**영문 enum 사용 절대 금지** — 능력영역은 "정확성/이해력/추론력/표현력"으로만, 유형은 "어법/어휘/독해/듣기/서술·영작/의사소통"으로만 표기. GRAMMAR, VOCABULARY, READING, LISTENING, WRITING, COMMUNICATION, ACCURACY, UNDERSTANDING, REASONING, EXPRESSION 같은 영문 토큰을 출력에 한 글자도 포함하지 말 것. (예: "READING 영역" ❌, "독해 영역" ✅). ⚠️ 지문·선지에서 인용한 실제 영어 단어·문장은 이 금지 대상이 아니다 — 분류 라벨만 한글로 쓰라는 뜻이다.'
+      : '**영문 enum 사용 절대 금지** — 능력영역은 "계산력/이해력/문제해결력/추론력"으로만, 유형은 "수와 연산/변화와 관계/도형과 측정/자료와 가능성"으로만 표기. CALCULATION, UNDERSTANDING, PROBLEM_SOLVING, REASONING, NUMBER, CHANGE_RELATION, SHAPE_MEASURE, DATA_POSSIBILITY, ALGEBRA, FUNCTION, GEOMETRY, STATISTICS 같은 영문 토큰을 출력에 한 글자도 포함하지 말 것. (예: "CHANGE_RELATION 영역" ❌, "변화와 관계 영역" ✅)'}
 
 ════════════════════════════════════════════════
 📤 출력 전 자기검증 (SELF-VERIFY)
@@ -741,10 +764,10 @@ V2. \\dfrac·\\text{한글}·백틱이 없는가?
 V3. 언급한 문항번호·학교명이 모두 입력 데이터에 존재하는가?
 V4. \$...\$가 **진짜 수식에만** 쓰였는가? 단순 정수("1", "2", "9문항", "48점")나 한글("기본", "표준")에 \$가 붙어 있지 않은가? (보기번호 ①②③④⑤, ㄱㄴㄷ 제외)
 V5. 추측성 단정("반드시 나올 것", "100% 출제") 대신 입력 데이터 근거 표현을 썼는가?
-V6. 출력 텍스트 어디에도 **CALCULATION/UNDERSTANDING/PROBLEM_SOLVING/REASONING/NUMBER/ALGEBRA/FUNCTION/GEOMETRY/STATISTICS** 영문 enum 단어가 없는가? (한글 라벨로만 표기)
+V6. 출력 텍스트 어디에도 ${isEnglish ? '**GRAMMAR/VOCABULARY/READING/LISTENING/WRITING/COMMUNICATION/ACCURACY/EXPRESSION**' : '**CALCULATION/UNDERSTANDING/PROBLEM_SOLVING/REASONING/NUMBER/ALGEBRA/FUNCTION/GEOMETRY/STATISTICS**'} 영문 enum 단어가 없는가? (한글 라벨로만 표기)
 ════════════════════════════════════════════════
 
-당신은 수학 교육 전문가이자 기출 시험 분석 컨설턴트입니다.
+당신은 ${subjLabel} 교육 전문가이자 기출 시험 분석 컨설턴트입니다.
 학원 원장/선생님이 학부모 상담 및 학생 지도에 바로 활용할 수 있는 전문 분석 리포트를 작성하세요.
 
 이 총평은 기출 분석 시스템의 3개 탭(기본 분석, AI 코멘트, 학습 대책)을 종합하는 최상위 요약입니다.
@@ -1053,7 +1076,7 @@ ${phases}
       model: 'claude-sonnet-4-6',
       max_tokens: 24576,
       temperature: 0.6,
-      system: SYSTEM_PROMPT_V3,
+      system: buildSystemPromptV3(subjectLabel(input)),
       messages: [{ role: 'user', content: userPrompt }],
     });
     const response = await stream.finalMessage();
@@ -1215,7 +1238,7 @@ ${phases}
       model: 'claude-sonnet-4-6',
       max_tokens: 16384,
       temperature: 0.5,
-      system: SYSTEM_PROMPT_V4,
+      system: buildSystemPromptV4(subjectLabel(input)),
       messages: [{ role: 'user', content: userPrompt }],
     });
 

@@ -14,9 +14,9 @@ import {
   normalizeAbilityDomain,
   normalizeQuestionType,
   toExamSubjectKey,
-} from './subject';
+} from './shared/subject';
 import { applyNumericField, applyCategoricalRemap, NUMERIC_FIELDS, CATEGORICAL_FIELDS, type CalibrationSet } from './calibration';
-import { roundPoints, sumPoints } from './points';
+import { roundPoints, sumPoints } from './shared/points';
 import { callCliVision, isCliExamAnalysisEnabled } from './cli-llm';
 import { isEnglishStudyJunk } from './english-study-pack';
 
