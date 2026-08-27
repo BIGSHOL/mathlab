@@ -1,11 +1,27 @@
 /**
  * 영어 학습 대책 — 시험지에 나온 단어·구문만 다룬다.
  * 독해 유형명(빈칸 추론, 글의 구조)이나 문항 번호는 구문이 아니다.
+ *
+ * ⚠️ 이 팩은 **두 경로**로 만들어지고, 경로에 따라 `count` 가 세는 대상이 다르다.
+ *   - `source: 'exam'`      — AI가 시험지 본문을 훑어 센 **등장 횟수** (표시: "3회")
+ *   - `source: 'questions'` — 이미 분석된 문항의 key_vocab 을 모은 **문항 수** (표시: "3문항")
+ *   같은 숫자를 양쪽 다 "회"로 적으면 읽는 사람이 무엇을 센 값인지 알 수 없다 → `countUnitLabel()` 사용.
  */
 import { simplifyExamKorean } from './simple-korean';
 import type { AnalyzedQuestion } from './types';
 
 export const ENGLISH_STUDY_AGENT = 'english-study';
+
+/**
+ * 학습 대책 팩 파이프라인 버전.
+ * 추출 프롬프트·정규화 규칙·팩 구조가 바뀌면 **반드시 올릴 것.**
+ * 저장된 팩의 버전이 이 값과 다르면 캐시를 버리고 다시 뽑는다
+ * (버전이 없던 시절엔 규칙을 고쳐도 옛 결과가 영원히 반환됐다).
+ */
+export const ENGLISH_STUDY_PACK_VERSION = 'es-v1.1.0';
+
+/** 팩을 만든 경로 — `count` 의 단위를 결정한다. */
+export type EnglishStudySource = 'exam' | 'questions';
 
 export interface EnglishStudyTerm {
   word: string;
@@ -24,6 +40,10 @@ export interface EnglishStudyStructure {
 export interface EnglishStudyExtracted {
   vocab: EnglishStudyTerm[];
   structures: EnglishStudyStructure[];
+  /** 만들어진 경로. `count` 단위가 여기에 달려 있다. */
+  source: EnglishStudySource;
+  /** 생성 당시 파이프라인 버전. 없으면 버전 도입 이전의 구팩. */
+  version?: string;
 }
 
 /** 독해 유형·문항 번호 — 구문/단어로 쓰면 안 됨 */
@@ -123,7 +143,16 @@ function mergeStructures(list: EnglishStudyStructure[]): EnglishStudyStructure[]
   return Array.from(map.values()).sort((a, b) => b.count - a.count || a.pattern.localeCompare(b.pattern));
 }
 
-export function parseEnglishStudyResult(raw: unknown): EnglishStudyExtracted | null {
+/**
+ * 저장된 팩 / AI 응답을 공통 형태로 파싱.
+ *
+ * `source` 는 팩에 적혀 있으면 그대로, 없으면 `fallbackSource`(기본 'exam').
+ * AI 응답에는 source·version 이 없으므로 호출부(추출기·문항 빌더)가 찍어 준다.
+ */
+export function parseEnglishStudyResult(
+  raw: unknown,
+  fallbackSource: EnglishStudySource = 'exam',
+): EnglishStudyExtracted | null {
   if (!raw || typeof raw !== 'object') return null;
   const rec = raw as Record<string, unknown>;
   const vocabRaw = Array.isArray(rec.vocab) ? rec.vocab : [];
@@ -133,7 +162,66 @@ export function parseEnglishStudyResult(raw: unknown): EnglishStudyExtracted | n
     structRaw.map(parseStructure).filter((v): v is EnglishStudyStructure => v != null),
   );
   if (vocab.length === 0 && structures.length === 0) return null;
-  return { vocab, structures };
+  const source: EnglishStudySource = rec.source === 'questions' || rec.source === 'exam'
+    ? rec.source
+    : fallbackSource;
+  return {
+    vocab,
+    structures,
+    source,
+    ...(typeof rec.version === 'string' ? { version: rec.version } : {}),
+  };
+}
+
+/** 저장된 팩이 지금 파이프라인으로 만든 것인가 (아니면 캐시를 버리고 재생성). */
+export function isCurrentEnglishStudyPack(pack: EnglishStudyExtracted | null | undefined): boolean {
+  return pack?.version === ENGLISH_STUDY_PACK_VERSION;
+}
+
+/** `count` 뒤에 붙일 단위 — 경로마다 세는 대상이 다르다. */
+export function countUnitLabel(source: EnglishStudySource): string {
+  return source === 'questions' ? '문항' : '회';
+}
+
+/** `count >= 2` 묶음의 제목 — 단위가 다르면 제목도 달라야 한다. */
+export function frequentTitle(source: EnglishStudySource, kind: '단어' | '구문'): string {
+  return source === 'questions'
+    ? `여러 문항에 나온 ${kind}`
+    : `자주 나온 ${kind}`;
+}
+
+/** `count >= 2` 묶음이 비었을 때 문구 — 단위에 맞춰야 오해가 없다. */
+export function frequentEmptyText(source: EnglishStudySource, kind: '단어' | '구문'): string {
+  return source === 'questions'
+    ? `두 문항 이상에 걸쳐 나온 ${kind}가 없습니다. 아래 목록을 보세요.`
+    : `두 번 이상 나온 ${kind}가 없습니다. 아래 목록을 보세요.`;
+}
+
+/**
+ * `trap` 묶음의 제목.
+ *
+ * ⚠️ 예전 제목은 "자주 틀리는 단어·구문"이었는데 **틀린 라벨**이다.
+ *    이 제품은 학생 답안지를 받지 않으므로 오답률을 알 수 없다.
+ *    실제 `trap` 의 근거는 경로마다 다르다:
+ *      - questions: 난이도 4~5 문항에 나왔다는 사실뿐
+ *      - exam:      AI가 "혼동하기 쉽거나 고난도 문항에 쓰였다"고 표시
+ */
+export function trapTitle(source: EnglishStudySource): string {
+  return source === 'questions'
+    ? '고난도 문항에 나온 단어·구문'
+    : '헷갈리기 쉬운 단어·구문';
+}
+
+export function trapHint(source: EnglishStudySource): string {
+  return source === 'questions'
+    ? '난이도 4~5단계 문항에 등장한 표현입니다.'
+    : '혼동하기 쉽거나 고난도 문항에 쓰인 표현입니다.';
+}
+
+export function trapEmptyText(source: EnglishStudySource): string {
+  return source === 'questions'
+    ? '난이도 4~5단계 문항에서 뽑힌 표현이 없습니다.'
+    : '따로 표시된 표현이 없습니다.';
 }
 
 function isHardQuestion(q: AnalyzedQuestion): boolean {
@@ -173,7 +261,17 @@ export function buildEnglishStudyFromQuestions(questions: AnalyzedQuestion[]): E
       }
     }
   }
-  return parseEnglishStudyResult({ vocab, structures });
+  // count = 해당 표현이 등장한 **문항 수** (본문 등장 횟수가 아니다) → source 로 단위를 못 박는다.
+  return stampEnglishStudyPack(parseEnglishStudyResult({ vocab, structures }, 'questions'), 'questions');
+}
+
+/** 팩에 경로·버전을 찍는다. 저장·캐시 판정의 기준이 된다. */
+export function stampEnglishStudyPack(
+  pack: EnglishStudyExtracted | null,
+  source: EnglishStudySource,
+): EnglishStudyExtracted | null {
+  if (!pack) return null;
+  return { ...pack, source, version: ENGLISH_STUDY_PACK_VERSION };
 }
 
 export function splitEnglishStudy(pack: EnglishStudyExtracted): {

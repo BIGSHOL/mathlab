@@ -8,6 +8,7 @@ import { callExamVision } from './ai-engine';
 import type { AnalyzedQuestion } from './types';
 import {
   parseEnglishStudyResult,
+  stampEnglishStudyPack,
   type EnglishStudyExtracted,
 } from './english-study-pack';
 import { ENGLISH_QUESTION_TYPE_LABELS } from './constants';
@@ -86,7 +87,8 @@ export async function extractEnglishStudyFromExam(opts: {
     temperature: 0.1,
     mimeTypeHint: opts.mimeTypeHint,
   });
-  const pack = parseEnglishStudyResult(raw);
+  // AI가 센 count 는 **시험지 본문 등장 횟수** → source: 'exam'
+  const pack = stampEnglishStudyPack(parseEnglishStudyResult(raw, 'exam'), 'exam');
   if (!pack) throw new Error('시험지에서 단어·구문을 찾지 못했습니다');
   return pack;
 }

@@ -8,6 +8,8 @@ import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import {
   ENGLISH_STUDY_AGENT,
   buildEnglishStudyFromQuestions,
+  ENGLISH_STUDY_PACK_VERSION,
+  isCurrentEnglishStudyPack,
   parseEnglishStudyResult,
   type EnglishStudyExtracted,
 } from '@/lib/exam-analysis/english-study-pack';
@@ -96,9 +98,13 @@ export async function POST(request: NextRequest, { params }: Params) {
   if (!latest) return badRequest('기본 분석을 먼저 실행하세요');
 
   const existing = latest.extensions[0];
-  if (!force && existing?.result) {
+  if (!force && existing?.result && !existing.errorMessage) {
     const parsed = parseEnglishStudyResult(existing.result);
-    if (parsed) return NextResponse.json({ data: parsed });
+    // 버전이 다르면(=추출 규칙이 그 사이 바뀌었으면) 캐시를 버리고 다시 뽑는다.
+    // 버전 검사가 없던 시절엔 규칙을 고쳐도 옛 결과가 영원히 반환됐다.
+    if (parsed && isCurrentEnglishStudyPack(parsed)) {
+      return NextResponse.json({ data: parsed });
+    }
   }
 
   const questions = (Array.isArray(latest.questions) ? latest.questions : []) as unknown as AnalyzedQuestion[];
@@ -109,6 +115,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   const fileUrls = examPaper.fileUrls.split(',').map((u) => u.trim()).filter(Boolean);
   if (!fileUrls.length) {
     if (fromQuestions) {
+      // 파일이 없는 건 재시도해도 달라지지 않는 종착 상태 → 에러 없이 저장(캐시 유효).
       await savePack(latest.id, user.id, fromQuestions);
       return NextResponse.json({ data: fromQuestions });
     }
@@ -131,16 +138,25 @@ export async function POST(request: NextRequest, { params }: Params) {
     await savePack(latest.id, user.id, pack);
     return NextResponse.json({ data: pack });
   } catch (e) {
+    const failMsg = e instanceof Error ? e.message : '단어·구문 정리에 실패했습니다';
+    console.warn('[영어 학습대책] 시험지 본문 추출 실패 — 문항 분석분으로 폴백:', failMsg);
     if (fromQuestions) {
-      await savePack(latest.id, user.id, fromQuestions);
+      // ⚠️ errorMessage 를 남겨야 한다. 성공으로 저장하면 일시적 실패가
+      //    캐시에 굳어 다시는 본문을 훑지 않는다.
+      await savePack(latest.id, user.id, fromQuestions, failMsg);
       return NextResponse.json({ data: fromQuestions });
     }
-    const msg = e instanceof Error ? e.message : '단어·구문 정리에 실패했습니다';
+    const msg = failMsg;
     const userMsg = msg.includes('GEMINI') || msg.includes('API')
       ? '단어·구문 정리에 실패했습니다'
       : msg;
     try {
-      await savePack(latest.id, user.id, { vocab: [], structures: [] }, userMsg);
+      await savePack(
+        latest.id,
+        user.id,
+        { vocab: [], structures: [], source: 'exam', version: ENGLISH_STUDY_PACK_VERSION },
+        userMsg,
+      );
     } catch {
       /* 로그 실패해도 본 에러를 반환 */
     }
