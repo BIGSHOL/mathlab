@@ -14,6 +14,7 @@ import { useSubscription } from '@/components/providers/SubscriptionProvider';
 import type { AnalysisSummary } from '@/lib/exam-analysis/types';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import { DIFFICULTY_BAR_COLORS, isStalePromptVersion, extractPromptVersion, CURRENT_PROMPT_VERSION } from '@/lib/exam-analysis/constants';
+import { toUserFacingError } from '@/lib/exam-analysis/shared/error-message';
 import { checkAnalysisReadiness } from '@/lib/exam-analysis/readiness';
 import { koImg } from '@/lib/exam-analysis/section-blocks';
 import { getDemoNaverBlocks } from '@/lib/demo/naver-blocks';
@@ -866,7 +867,7 @@ export function EnglishAnalysisDetail({ detail, analyzing, onAnalyze, onRefresh,
                     <span className="text-base font-extrabold" style={{ color: activeColor }}>{avg.toFixed(1)}단계</span>
                     {breakdown && (
                       <div className="text-[10px] text-slate-500 font-medium mt-0.5">
-                        {breakdown.total}문항 {breakdown.usedPoints ? '배점 가중평균' : '문항수 평균'}
+                        {breakdown.total}문항 {breakdown.usedPoints ? '배점·영향력 가중평균' : '영향력 가중평균'}
                       </div>
                     )}
                     {(() => {
@@ -886,8 +887,9 @@ export function EnglishAnalysisDetail({ detail, analyzing, onAnalyze, onRefresh,
       {/* ── 에러 상태 ── */}
       {detail.status === 'FAILED' && detail.errorMessage && (
         <div className="bg-red-50 border border-red-200 rounded-sm p-3 mb-4 text-sm text-red-700">
-          {/* 레거시 저장 메시지에 모델명이 남아있을 수 있어 표시 시점에 방어 치환 (규칙 #0) */}
-          {detail.errorMessage.replace(/gemini|claude|anthropic/gi, 'AI')}
+          {/* 서버가 이미 정제해 저장하지만, 그 전에 쌓인 레거시 행엔 환경변수목·CLI 플래그가
+              그대로 남아 있다 — 표시 시점에도 같은 함수로 한 번 더 거른다 (적대적 리뷰 2.2) */}
+          {toUserFacingError(detail.errorMessage)}
         </div>
       )}
 
@@ -1227,7 +1229,7 @@ export function EnglishAnalysisDetail({ detail, analyzing, onAnalyze, onRefresh,
       {showDiffModal && diffLevel > 0 && (() => {
         const breakdown = getDifficultyBreakdown(summary, questions);
         const avg = breakdown?.weightedAvg ?? diffLevel;
-        const avgLabel = breakdown?.usedPoints ? '배점 가중평균' : '문항수 평균';
+        const avgLabel = breakdown?.usedPoints ? '배점·영향력 가중평균' : '영향력 가중평균';
         const activeColor = interpolateDifficultyColor(avg);
         const levelLabel = DIFF_LEVEL_LABELS[diffLevel] ?? '';
         // 보정 전(AI 원본) 가중평균 — 각 문항의 difficulty를 ai_difficulty(없으면 현재값)로 치환해 동일 공식 적용
@@ -1278,7 +1280,7 @@ export function EnglishAnalysisDetail({ detail, analyzing, onAnalyze, onRefresh,
 
               <div className="space-y-2.5 text-sm leading-relaxed text-slate-700">
                 <p>
-                  AI가 시험지의 모든 문항을 <strong>1~5단계</strong> (1=기본 · 2=표준 · 3=응용 · 4=심화 · 5=최고난도) 로 분류한 뒤, <strong>각 문항의 배점을 가중치로</strong> 곱해 합산하고 <strong>총 배점</strong>으로 나눠 <strong>배점 가중평균</strong>을 구합니다. 배점이 큰 고난도 문항일수록 평균에 더 크게 반영됩니다. (배점 정보가 없으면 문항 수 기준 평균)
+                  AI가 시험지의 모든 문항을 <strong>1~5단계</strong> (1=기본 · 2=표준 · 3=응용 · 4=심화 · 5=최고난도) 로 분류한 뒤, 각 문항에 <strong>배점</strong>과 <strong>난이도별 영향력 가중치</strong>(3단계 2배 · 4단계 5배 · 5단계 10배)를 함께 곱해 가중평균을 냅니다. 어려운 문항일수록 종합 난이도를 강하게 끌어올립니다 — 변별 문항이 시험의 체감 난이도를 좌우하기 때문입니다. (배점이 인식되지 않으면 영향력 가중치만 적용)
                 </p>
                 {breakdown && (
                   <div>

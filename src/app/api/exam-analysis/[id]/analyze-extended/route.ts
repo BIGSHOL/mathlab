@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { toUserFacingError } from '@/lib/exam-analysis/shared/error-message';
 import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse, notFound, badRequest } from '@/lib/api';
 import { getExamScope } from '@/lib/demo/accounts';
@@ -57,7 +58,8 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     return NextResponse.json({ data: results });
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : '확장 분석에 실패했습니다';
+    console.error('[기출분석] 확장 분석 실패:', error);
+    const errorMsg = toUserFacingError(error, '확장 분석에 실패했습니다. 다시 시도해 주세요.');
     return NextResponse.json(
       { error: { code: 'EXTENDED_ANALYSIS_FAILED', message: errorMsg } },
       { status: 500 }

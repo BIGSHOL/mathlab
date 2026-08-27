@@ -5,6 +5,7 @@ import { requireTeacher, isResponse, notFound, badRequest } from '@/lib/api';
 import { getExamScope } from '@/lib/demo/accounts';
 import { isStalePromptVersion } from '@/lib/exam-analysis/constants';
 import { toExamSubjectKey } from '@/lib/exam-analysis/subject';
+import { toUserFacingError } from '@/lib/exam-analysis/shared/error-message';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import {
   ENGLISH_STUDY_AGENT,
@@ -173,9 +174,8 @@ export async function POST(request: NextRequest, { params }: Params) {
       );
     }
 
-    const userMsg = failMsg.includes('GEMINI') || failMsg.includes('API')
-      ? '단어·구문 정리에 실패했습니다'
-      : failMsg;
+    // 벤더·환경변수·CLI 흔적을 지운 사용자 문구 (CLAUDE.md #0-1)
+    const userMsg = toUserFacingError(failMsg, '단어·구문 정리에 실패했습니다. 다시 시도해 주세요.');
     try {
       await savePack(
         latest.id,

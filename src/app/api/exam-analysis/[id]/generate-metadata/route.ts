@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { toUserFacingError } from '@/lib/exam-analysis/shared/error-message';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse, notFound, badRequest } from '@/lib/api';
@@ -118,7 +119,7 @@ export async function POST(_request: NextRequest, { params }: Params) {
           },
         });
       } catch (e) {
-        const msg = e instanceof Error ? e.message : '메타데이터 생성 실패';
+        const msg = toUserFacingError(e, '메타데이터 생성에 실패했습니다. 다시 시도해 주세요.');
         console.error('[generate-metadata] 실패:', e);
         // 실패 기록 — UI가 재시도 가능하도록
         const now = new Date();

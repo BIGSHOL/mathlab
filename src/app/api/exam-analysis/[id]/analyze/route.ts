@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { toUserFacingError } from '@/lib/exam-analysis/shared/error-message';
 import { requireTeacher, isResponse, notFound, badRequest } from '@/lib/api';
 import { getExamScope } from '@/lib/demo/accounts';
 import { assertAnalysisGate } from '@/lib/billing/guard';
@@ -334,7 +335,10 @@ export async function POST(request: NextRequest, { params }: Params) {
     });
     });
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : '분석 중 오류가 발생했습니다';
+    // 원문은 서버 로그에만. 사용자에게는 정제 문구만 준다 — 예전엔 CLI 플래그·환경변수명이
+    // 그대로 토스트에 떴다 (적대적 리뷰 2.2, CLAUDE.md #0-1).
+    console.error('[기출분석] 분석 실패:', error);
+    const errorMsg = toUserFacingError(error, '시험지 분석에 실패했습니다. 다시 시도해 주세요.');
     await prisma.examPaper.update({
       where: { id },
       data: { status: 'FAILED', errorMessage: errorMsg, analysisStep: 0 },
