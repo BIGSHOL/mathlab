@@ -15,7 +15,7 @@ import type { Blueprint } from './article-archetype';
 import { TONE_GUIDES } from './article-archetype';
 import type { SelectedModule, ArticleVariables, BuildChunkContext } from './article-modules';
 import { buildAntiPatternsRules } from './article-anti-patterns';
-import { QUESTION_TYPE_LABELS } from './constants';
+import { getTypeAxes } from './shared/chart-axes';
 import { toExamSubjectKey } from './shared/subject';
 
 /** 과목명 — 프롬프트 페르소나·태그에 쓰는 표기. 미지정이면 수학(기존 동작 유지). */
@@ -72,6 +72,8 @@ export interface FactsBlockInput {
   diffCounts: [number, number, number, number, number];
   diffPoints: number[];
   typeDistribution: Record<string, number>;
+  /** 과목 — 유형 라벨을 고른다. 없으면 수학(기존 동작 유지). */
+  subject?: string | null;
   topicStats: Array<{ topic: string; count: number; pts: number }>;
   commentary: CommentaryResult;
   // 정성 분석 (수치 노출 금지)
@@ -97,8 +99,11 @@ export function buildFactsAndDataBlock(facts: FactsBlockInput): string {
   const diffLines = diffCounts.map((count, i) =>
     `  - Level ${i + 1}(${LEVEL_NAMES[i + 1]}): ${count}문항`).join('\n');
 
-  const typeLines = Object.entries(QUESTION_TYPE_LABELS)
-    .map(([key, label]) => `  - ${label}: ${typeDistribution[key] || 0}문항`)
+  // 예전엔 수학 QUESTION_TYPE_LABELS 전체를 순회해, 영어 시험지 글에도 "수와 연산 0문항" 같은
+  // 수학 라벨만 8줄 들어가고 영어 유형은 한 건도 나오지 않았다 (적대적 리뷰 1.4).
+  // 레거시 별칭까지 순회해 같은 라벨이 중복 출력되던 문제도 함께 사라진다.
+  const typeLines = getTypeAxes(facts.subject, typeDistribution)
+    .map((axis) => `  - ${axis.label}: ${typeDistribution[axis.key] || 0}문항`)
     .join('\n');
 
   const topicLines = topicStats

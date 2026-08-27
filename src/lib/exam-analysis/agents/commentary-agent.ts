@@ -9,7 +9,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { normalizeDifficultyKey as normalizeDiff } from '../shared/difficulty';
 import { BaseAgent, deepNormalizeMath, type AgentInput } from './base-agent';
 import type { AgentType } from '../constants';
-import { DIFFICULTY_LEGACY_MAP, ABILITY_DOMAIN_LABELS } from '../constants';
+import { ABILITY_DOMAIN_LABELS } from '../constants';
 import type { BasicAnalysisResult, WeaknessProfile, LearningPlan } from '../types';
 import { abilityDomainLabel, questionTypeLabel, toExamSubjectKey } from '../shared/subject';
 import { inputSubject, isEnglishInput, subjectLabel } from './subject-input';
@@ -655,6 +655,42 @@ R9. **raw HTML 금지** — body 안에 <span style="color:...">, <font color>, 
 // ── 에이전트 구현 ──
 
 /**
+ * 유형 분포를 프롬프트 한 줄로. **과목별 키만** 쓴다.
+ *
+ * 예전에는 수학 4대 영역 라벨이 하드코딩돼 있어, 영어 시험지 총평 프롬프트에도
+ * "수와연산 0, 변화와관계 0, 도형과측정 0, 자료와가능성 0" 이 들어갔다 (적대적 리뷰 1.4).
+ * 같은 프롬프트가 다른 곳에서는 "영어 라벨만 쓰라"고 지시하므로 입력 자체가 모순이었다.
+ *
+ * ⚠️ 수학 라벨은 공백 없는 압축형("수와연산")이며 이 자리 전용이다 — 바꾸면 프롬프트가 달라진다.
+ */
+const TYPE_DIST_LABELS: Record<string, Record<string, string>> = {
+  MATH: {
+    number: '수와연산',
+    change_relation: '변화와관계',
+    shape_measure: '도형과측정',
+    data_possibility: '자료와가능성',
+  },
+  ENGLISH: {
+    grammar: '어법',
+    vocabulary: '어휘',
+    reading: '독해',
+    listening: '듣기',
+    writing: '서술형',
+    communication: '의사소통',
+  },
+};
+
+function typeDistributionLine(subject: string | null | undefined, types: Record<string, number>): string {
+  const key = toExamSubjectKey(subject);
+  const labels = TYPE_DIST_LABELS[key];
+  return Object.entries(labels)
+    // 내신 지필에는 원칙적으로 듣기가 없다 → 문항이 있을 때만 노출 (화면 레이더와 같은 규약)
+    .filter(([k]) => !(key === 'ENGLISH' && k === 'listening' && !(types[k] > 0)))
+    .map(([k, label]) => `${label} ${types[k] || 0}`)
+    .join(', ');
+}
+
+/**
  * 학생 답안 데이터가 실제로 있는가.
  *
  * ⚠️ `is_correct !== null` 로 판정하면 안 된다 — `undefined !== null` 이 참이라
@@ -798,7 +834,7 @@ V6. 출력 텍스트 어디에도 ${isEnglish ? '**GRAMMAR/VOCABULARY/READING/LI
   - Level 4(심화): ${diffCounts[3]}문항, ${diffPoints[3]}점
   - Level 5(최고난도): ${diffCounts[4]}문항, ${diffPoints[4]}점
   - Level 1~2 합계: ${roundPoints(diffPoints[0] + diffPoints[1])}점, Level 1~3 합계: ${roundPoints(diffPoints[0] + diffPoints[1] + diffPoints[2])}점, Level 1~4 합계: ${roundPoints(diffPoints[0] + diffPoints[1] + diffPoints[2] + diffPoints[3])}점
-- 유형 분포: 수와연산 ${types.number || 0}, 변화와관계 ${types.change_relation || 0}, 도형과측정 ${types.shape_measure || 0}, 자료와가능성 ${types.data_possibility || 0}
+- 유형 분포: ${typeDistributionLine(subject, types)}
 - 단원별 출제: ${topicSummary}
 ${studentStatsBlock}
 ${curriculumBlock}
@@ -1503,6 +1539,7 @@ ${questionDetails}
 
   /** V3 user prompt — 시안 단계의 buildUserPrompt와 동일 구조 (검증됨) */
   private buildV3UserPrompt(input: AgentInput, base: CommentaryResult): string {
+    const subject = inputSubject(input);
     const { basicAnalysis } = input;
     const totalQ = basicAnalysis.questions.length;
     const totalPts = basicAnalysis.exam_info.total_points;
@@ -1605,7 +1642,7 @@ ${questionDetails}
 - 평균 난이도(가중): ${weighted.toFixed(1)} / 5
 - 난이도 분포: 기본(1) ${counts[0]} · 표준(2) ${counts[1]} · 응용(3) ${counts[2]} · 심화(4) ${counts[3]} · 최고난도(5) ${counts[4]}
 - 형식: 객관식 ${basicAnalysis.exam_info.format_distribution.objective}문항, 단답형 ${basicAnalysis.exam_info.format_distribution.short_answer}문항, 서술형 ${basicAnalysis.exam_info.format_distribution.essay}문항
-- 유형: 수와연산 ${types.number || 0}, 변화와관계 ${types.change_relation || 0}, 도형과측정 ${types.shape_measure || 0}, 자료와가능성 ${types.data_possibility || 0}
+- 유형: ${typeDistributionLine(subject, types)}
 - 학생 응답 데이터: ${hasStudentData ? '있음' : '없음 (출제 분석만 가능)'}
 
 ## 이 시험만의 특이 신호 (헤드라인·feature_callout 1순위 소재 — "옆 학원이 못 하는 말")

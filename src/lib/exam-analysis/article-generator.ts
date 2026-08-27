@@ -315,6 +315,7 @@ function buildArticlePrompt(
     diffCounts: signals.diffCounts,
     diffPoints,
     typeDistribution: analysis.summary.type_distribution as Record<string, number>,
+    subject,   // 유형 라벨을 과목별로 고르기 위해 전달 (수학 라벨 주입 방지)
     topicStats: signals.topicStats.map((t) => ({ topic: t.topic, count: t.count, pts: t.pts })),
     commentary,
     discrim: { overallLabel: signals.discrimOverall, poorRatioLabel: signals.poorRatioLabel },
