@@ -1,10 +1,11 @@
 /**
  * 판독 실패 문항(1.1) 회귀 검사 — 적대적 리뷰 지적 재현용.
  *
- * 확인하는 계약 3가지:
+ * 확인하는 계약 4가지:
  *   ① AI가 `difficulty: null` 로 신고한 문항을 기본(1)으로 둔갑시키지 않는다
  *   ② 시스템이 끼워 넣는 placeholder 도 난이도 미정이다
  *   ③ placeholder 삽입 후에도 `summary.difficulty_distribution` 합 + 미정 수 = questions.length
+ *   ④ 답안이 없는데 "정답률 0%" 같은 가짜 통계를 만들지 않는다 (리뷰 1.2)
  *
  * 실행: npx tsx scripts/parity/check-unreadable-questions.ts
  */
@@ -93,9 +94,19 @@ ok(
   `${distSum} + ${undecided} = ${distSum + undecided} vs ${filled.questions.length}`,
 );
 
+// ── 1.2 학생 답안 판정 (리뷰 지적) ──
+console.log('\n── ④ 답안 없는 시험지에서 가짜 정답률이 안 생기는가 ──');
+const strict = (qs: Array<{ is_correct?: unknown }>) =>
+  qs.some((x) => x.is_correct === true || x.is_correct === false);
+const loose = (qs: Array<{ is_correct?: unknown }>) =>
+  qs.some((x) => (x as { is_correct: unknown }).is_correct !== null);
+
+const legacy = [{}, {}];                       // 구버전 문항 — is_correct 키 자체가 없음
+const badAi = [{ is_correct: 'false' }, { is_correct: null }];  // AI가 문자열 반환
+ok(!strict(legacy), '레거시(키 없음) → 답안 없음', `느슨한 판정이었다면 ${loose(legacy)}`);
+ok(!strict(badAi), '문자열 "false" → 답안 없음', `느슨한 판정이었다면 ${loose(badAi)}`);
+ok(strict([{ is_correct: true }]), '진짜 boolean 은 답안 있음');
+
 console.log('\n──────────────────────────────');
-if (fail) {
-  console.log(`❌ ${fail}건 실패`);
-  process.exit(1);
-}
+if (fail) { console.log(`❌ ${fail}건 실패`); process.exit(1); }
 console.log('✅ 전부 통과');

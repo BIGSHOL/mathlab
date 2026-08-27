@@ -789,7 +789,8 @@ async function runAnalysisPass(
         ...englishKeys,
         confidence: typeof q.confidence === 'number' ? q.confidence : CONFIDENCE_THRESHOLDS.MEDIUM,
         confidence_reason: q.confidence_reason ?? null,
-        is_correct: q.is_correct ?? null,
+        // 스키마 밖 값(예: 문자열 "false")을 그대로 두면 하류가 "답안 있음"으로 오판한다 → boolean 만 통과.
+        is_correct: typeof q.is_correct === 'boolean' ? q.is_correct : null,
         student_answer: q.student_answer ?? null,
         earned_points: q.earned_points ?? null,
         error_type: q.error_type ?? null,

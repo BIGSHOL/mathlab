@@ -654,6 +654,21 @@ R9. **raw HTML 금지** — body 안에 <span style="color:...">, <font color>, 
 
 // ── 에이전트 구현 ──
 
+/**
+ * 학생 답안 데이터가 실제로 있는가.
+ *
+ * ⚠️ `is_correct !== null` 로 판정하면 안 된다 — `undefined !== null` 이 참이라
+ *    필드가 아예 없는 레거시 문항(또는 AI가 `"false"` 같은 문자열을 준 경우)이
+ *    모두 "답안 있음"으로 잡힌다. 그러면 `=== true`/`=== false` 집계는 0이라
+ *    **"정답 0 / 오답 0 · 정답률 0%"** 라는 가짜 통계가 AI 프롬프트로 들어간다.
+ *
+ * 이 제품은 학생 답안지를 받지 않으므로 정상 경로에서는 항상 false 여야 한다.
+ * 판정은 반드시 **엄격한 boolean 존재 확인**으로 한다.
+ */
+function hasStudentAnswers(questions: Array<{ is_correct?: unknown }>): boolean {
+  return questions.some((q) => q.is_correct === true || q.is_correct === false);
+}
+
 export class CommentaryAgent extends BaseAgent<Record<string, unknown>> {
   readonly agentType: AgentType = 'commentary';
   readonly temperature = 0.5;
@@ -712,7 +727,7 @@ export class CommentaryAgent extends BaseAgent<Record<string, unknown>> {
     const curriculumBlock = this.buildCurriculumReference(basicAnalysis);
 
     // 정답 통계 (학생 답안지인 경우)
-    const hasStudentData = basicAnalysis.questions.some((q) => q.is_correct !== null);
+    const hasStudentData = hasStudentAnswers(basicAnalysis.questions);
     let studentStatsBlock = '';
     if (hasStudentData) {
       const correct = basicAnalysis.questions.filter((q) => q.is_correct === true).length;
@@ -1508,7 +1523,7 @@ ${questionDetails}
       if (!topicStats[t]) topicStats[t] = { count: 0, correct: 0, total: 0, pts: 0 };
       topicStats[t].count++;
       topicStats[t].pts += q.points || 0;
-      if (q.is_correct !== null) {
+      if (q.is_correct === true || q.is_correct === false) {
         topicStats[t].total++;
         if (q.is_correct === true) topicStats[t].correct++;
       }
@@ -1518,7 +1533,7 @@ ${questionDetails}
       .sort((a, b) => b.count - a.count)
       .slice(0, 8);
 
-    const hasStudentData = basicAnalysis.questions.some((q) => q.is_correct !== null);
+    const hasStudentData = hasStudentAnswers(basicAnalysis.questions);
     const schoolName = basicAnalysis.exam_info.school_name ?? null;
     const hasSchool = !!schoolName;
     // 비교 데이터 가용성 — base.nearby_comparison 텍스트 길이로 판단
@@ -1765,7 +1780,7 @@ ${questionDetails}
       : '';
 
     // 학생 데이터 유무에 따라 분기
-    const hasStudentData = analysis.questions.some((q) => q.is_correct !== null);
+    const hasStudentData = hasStudentAnswers(analysis.questions);
     let studentNote = '';
     if (hasStudentData) {
       const correct = analysis.questions.filter((q) => q.is_correct === true).length;
@@ -1844,7 +1859,7 @@ ${questionDetails}
 
   private findStrengthAreas(analysis: BasicAnalysisResult): string[] {
     const strengths: string[] = [];
-    const hasStudentData = analysis.questions.some((q) => q.is_correct !== null);
+    const hasStudentData = hasStudentAnswers(analysis.questions);
 
     if (hasStudentData) {
       // 난이도별 정답률 분석
@@ -1888,7 +1903,7 @@ ${questionDetails}
 
   private findImprovementAreas(analysis: BasicAnalysisResult): string[] {
     const improvements: string[] = [];
-    const hasStudentData = analysis.questions.some((q) => q.is_correct !== null);
+    const hasStudentData = hasStudentAnswers(analysis.questions);
 
     if (hasStudentData) {
       // 난이도별 약점
@@ -1938,7 +1953,7 @@ ${questionDetails}
 
   private findNotableQuestions(analysis: BasicAnalysisResult): NotableQuestion[] {
     const notable: NotableQuestion[] = [];
-    const hasStudentData = analysis.questions.some((q) => q.is_correct !== null);
+    const hasStudentData = hasStudentAnswers(analysis.questions);
 
     if (hasStudentData) {
       // 쉬운 문제를 틀림
@@ -1989,7 +2004,7 @@ ${questionDetails}
   // ── 규칙 기반: 지도 추천 ──
 
   private generateTeachingRecommendations(analysis: BasicAnalysisResult): TeachingRecommendation[] {
-    const hasStudentData = analysis.questions.some((q) => q.is_correct !== null);
+    const hasStudentData = hasStudentAnswers(analysis.questions);
     const topicStats: Record<string, { correct: number; total: number; pts: number }> = {};
 
     for (const q of analysis.questions) {
