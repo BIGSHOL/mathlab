@@ -278,7 +278,8 @@ export function EnglishAnalysisResultView({ questions: questionsProp, summary, t
         <InfoTooltip content={
           <>
             <p className="font-semibold mb-1">신뢰도란?</p>
-            <p className="mb-2">AI가 각 문항의 <strong>메타데이터(난이도·유형·단원·배점)</strong>를 얼마나 확신하는지 나타내는 수치입니다. 문항별 신뢰도의 평균값으로 계산됩니다.</p>
+            <p className="mb-2">AI가 각 문항의 <strong>메타데이터(난이도·유형·단원·배점)</strong>를 판별하면서 <strong>스스로 매긴</strong> 확신도의 평균입니다.</p>
+            <p className="mb-2">정답과 대조해 측정한 정확도가 <strong>아니므로</strong>, 이 수치가 높다고 분석이 맞다는 보장은 아닙니다. <strong>어느 문항부터 검토할지 고를 때</strong> 쓰세요 — 난이도·단원은 문항별로 직접 교정할 수 있습니다.</p>
             <p className="font-semibold mb-1">신뢰도가 낮아지는 경우:</p>
             <ul className="list-disc list-inside space-y-0.5 mb-2">
               <li>문항 텍스트가 불명확하거나 스캔 품질이 낮음</li>
