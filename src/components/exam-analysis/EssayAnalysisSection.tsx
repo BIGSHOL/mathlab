@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { normalizeDifficultyKey as normalizeDiff } from '@/lib/exam-analysis/shared/difficulty';
-import { DIFFICULTY_COLORS, DIFFICULTY_LEGACY_MAP } from '@/lib/exam-analysis/constants';
+import { DIFFICULTY_COLORS } from '@/lib/exam-analysis/constants';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { sumPoints } from '@/lib/exam-analysis/points';
 import { FileText } from 'lucide-react';

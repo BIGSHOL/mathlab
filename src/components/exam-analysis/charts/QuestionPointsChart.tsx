@@ -16,7 +16,7 @@ import {
 } from 'recharts';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { sumPoints } from '@/lib/exam-analysis/points';
-import { DIFFICULTY_COLORS as DIFF_COLORS, DIFFICULTY_LEGACY_MAP } from '@/lib/exam-analysis/constants';
+import { DIFFICULTY_COLORS as DIFF_COLORS } from '@/lib/exam-analysis/constants';
 
 interface QuestionPointsChartProps {
   questions: AnalyzedQuestion[];

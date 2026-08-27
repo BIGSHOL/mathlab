@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { normalizeDifficultyKey as normalizeDifficulty } from '@/lib/exam-analysis/shared/difficulty';
-import { DIFFICULTY_COLORS, DIFFICULTY_LABELS as DIFF_LABELS_MAP, DIFFICULTY_LEGACY_MAP, ENGLISH_TYPE_TO_DOMAIN, ENGLISH_ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
+import { DIFFICULTY_COLORS, DIFFICULTY_LABELS as DIFF_LABELS_MAP, ENGLISH_TYPE_TO_DOMAIN, ENGLISH_ABILITY_DOMAIN_COLORS } from '@/lib/exam-analysis/constants';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { sumPoints, roundPoints, formatPoints } from '@/lib/exam-analysis/points';
 import { ChevronRight, AlertTriangle, Pencil, Check, X } from 'lucide-react';

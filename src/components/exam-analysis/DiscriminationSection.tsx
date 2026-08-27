@@ -3,7 +3,6 @@
 import { useMemo } from 'react';
 import { normalizeDifficultyKey as normalizeDiff } from '@/lib/exam-analysis/shared/difficulty';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
-import { DIFFICULTY_LEGACY_MAP } from '@/lib/exam-analysis/constants';
 import { InfoTooltip } from './InfoTooltip';
 
 
