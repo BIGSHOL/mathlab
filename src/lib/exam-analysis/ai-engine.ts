@@ -62,6 +62,24 @@ export function getMimeType(input: string): string {
 }
 
 /**
+ * base64 앞머리(매직바이트)로 실제 이미지 형식을 판별한다.
+ *
+ * 업로드는 png/jpg/webp 를 받는데 분석 라우트가 "pdf 아니면 image/jpeg" 로 **한 값을 고정**해
+ * PNG·WEBP 를 JPEG 라고 신고하고 있었다. 여러 장이 섞이면 더 어긋난다 (적대적 리뷰 1.10).
+ * 파일 URL 확장자는 서명 URL 쿼리스트링 때문에 믿기 어려워 바이트로 본다.
+ */
+export function detectMimeFromBase64(input: string): string | null {
+  const b64 = input.startsWith('data:') ? input.slice(input.indexOf(',') + 1) : input;
+  const head = b64.slice(0, 12);
+  if (head.startsWith('iVBORw0KGgo')) return 'image/png';
+  if (head.startsWith('/9j/')) return 'image/jpeg';
+  if (head.startsWith('UklGR')) return 'image/webp';   // RIFF
+  if (head.startsWith('JVBER')) return 'application/pdf';
+  if (head.startsWith('R0lGOD')) return 'image/gif';
+  return null;
+}
+
+/**
  * base64 데이터에서 data URI prefix 제거
  */
 function stripDataUriPrefix(base64: string): string {
@@ -106,7 +124,10 @@ export function isolateJsonPayload(text: string): string {
 /**
  * JSON 응답에서 코드 펜스(```json ... ```) 제거 후 파싱
  */
-export function parseJsonResponse<T = unknown>(text: string): T {
+export function parseJsonResponse<T = unknown>(
+  text: string,
+  onRepair?: (kind: 'truncated' | 'escape') => void,
+): T {
   const cleaned = isolateJsonPayload(text);
 
   try {
@@ -123,7 +144,11 @@ export function parseJsonResponse<T = unknown>(text: string): T {
     fixed = fixed.replace(/,\s*([}\]])/g, '$1');
     fixed = fixed.replace(/:\s*undefined\b/g, ': null');
     try {
-      return JSON.parse(fixed) as T;
+      const parsed = JSON.parse(fixed) as T;
+      // 괄호를 자동으로 닫아 살려낸 응답이다 = **뒤가 잘렸다**는 뜻.
+      // 호출부가 "완결된 결과"로 오해하고 캐시에 굳히지 않도록 알린다 (적대적 리뷰 1.8).
+      onRepair?.('truncated');
+      return parsed;
     } catch {
       // ── 2단계: invalid escape character 자동 정정 ──
       // Gemini가 ai_comment 등에 LaTeX(\dfrac, \frac, \(, \) 등)를 JSON 이스케이프 없이 출력하면
@@ -173,6 +198,11 @@ interface GeminiVisionCallOptions {
   mimeTypeHint?: string;     // 파일 형식 힌트 (image/jpeg, application/pdf 등)
   modelOverride?: string;    // 모델 ID override (기본: MODEL 상수 = gemini-3.1-pro-preview)
   onProgress?: (msg: string) => void;
+  /**
+   * 응답 JSON 을 자동 복구해서 살렸을 때 호출된다.
+   * 'truncated' = 뒤가 잘려 괄호를 닫아 준 경우 → 결과가 불완전하다는 뜻.
+   */
+  onRepair?: (kind: 'truncated' | 'escape') => void;
 }
 
 /**
@@ -194,12 +224,13 @@ async function callGeminiVision<T = unknown>({
   mimeTypeHint,
   modelOverride,
   onProgress,
+  onRepair,
 }: GeminiVisionCallOptions): Promise<T> {
   if (isCliExamAnalysisEnabled() && !modelOverride) {
     onProgress?.('AI 분석 호출 (시험지 읽는 중)');
     const responseText = await callCliVision({ images, prompt, mimeTypeHint, onProgress });
     onProgress?.('AI 응답 수신, JSON 정리 중');
-    if (jsonMode) return parseJsonResponse<T>(responseText);
+    if (jsonMode) return parseJsonResponse<T>(responseText, onRepair);
     return responseText as unknown as T;
   }
 
@@ -208,7 +239,8 @@ async function callGeminiVision<T = unknown>({
 
   // 이미지 파트 구성
   const imageParts = images.map((img) => {
-    const mimeType = mimeTypeHint || getMimeType(img);
+    // 힌트가 없으면 이미지 스스로 밝히게 한다 (여러 장이 형식이 섞여도 각자 맞는 값)
+    const mimeType = mimeTypeHint || detectMimeFromBase64(img) || getMimeType(img);
     const data = stripDataUriPrefix(img);
     return {
       inlineData: {
@@ -247,7 +279,7 @@ async function callGeminiVision<T = unknown>({
   }
 
   if (jsonMode) {
-    return parseJsonResponse<T>(responseText);
+    return parseJsonResponse<T>(responseText, onRepair);
   }
 
   return responseText as unknown as T;

@@ -27,10 +27,14 @@ import {
 
 type Params = { params: Promise<{ id: string }> };
 
+/**
+ * PDF 만 형식이 확정이다. 이미지는 빈 힌트를 반환해 **파일별 매직바이트**로 판별하게 한다.
+ * 예전엔 첫 파일 확장자로 전부를 단정해, 여러 장이 섞이면 뒤 장들의 형식을 잘못 신고했다
+ * (적대적 리뷰 1.10).
+ */
 function mimeFromPaper(fileType: string, firstUrl: string): string {
   if (fileType === 'pdf' || firstUrl.toLowerCase().endsWith('.pdf')) return 'application/pdf';
-  if (firstUrl.toLowerCase().endsWith('.png')) return 'image/png';
-  return 'image/jpeg';
+  return '';
 }
 
 async function savePack(
@@ -134,7 +138,14 @@ export async function POST(request: NextRequest, { params }: Params) {
         grade: examPaper.grade,
       });
     });
-    await savePack(latest.id, user.id, pack);
+    // 잘린 응답은 "완결본"이 아니다 → errorMessage 를 남겨 다음 요청에 다시 뽑게 한다.
+    // 결과 자체는 돌려준다(앞쪽 몇 건이라도 보는 편이 빈손보다 낫다).
+    await savePack(
+      latest.id,
+      user.id,
+      pack,
+      pack.truncated ? '응답이 잘려 일부만 정리되었습니다 — 다시 시도하면 더 채워집니다' : null,
+    );
     return NextResponse.json({ data: pack });
   } catch (e) {
     const failMsg = e instanceof Error ? e.message : '단어·구문 정리에 실패했습니다';

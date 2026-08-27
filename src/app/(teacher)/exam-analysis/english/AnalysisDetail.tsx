@@ -1205,6 +1205,10 @@ export function EnglishAnalysisDetail({ detail, analyzing, onAnalyze, onRefresh,
               examPaperId={detail.id}
               analysisId={latestAnalysis?.id}
               storedPack={englishStudyExt?.result}
+              // 저장분에 실패 표시가 붙어 있으면 완결본이 아니다 → 탭이 다시 뽑도록 알린다.
+              // 예전엔 result 만 넘겨서, 서버가 재시도용으로 남긴 errorMessage 가 여기서 사라졌다
+              // (적대적 리뷰 1.11 — 자동 복구가 영영 안 돌았다).
+              storedIncomplete={!!englishStudyExt?.errorMessage}
               onStored={onRefresh}
             />
           )}

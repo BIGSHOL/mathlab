@@ -78,28 +78,7 @@ export class EnglishExamPromptBuilder {
   /** 전체 프롬프트를 조립하여 반환한다. */
   static build(context: ExamContext): BuildPromptResponse {
     const base = this.getBasePrompt(context);
-    const guidelines = this.getAnalysisGuidelines(context);
-    const paperType = getPaperTypeInstructions(context.paper_type);
-    const schema = this.getJsonSchema(context.paper_type, context.grade_level);
-
-    // 허용 소단원 목록 (DB 1:1 매칭용) — 드롭다운과 동일 함수
-    const enTopics = formatEnglishAllowedTopicsPrompt(context.grade_level);
-    if (enTopics) guidelines.push(enTopics);
-
-    // 수학과 달리 학기 힌트를 쓰지 않는다 — 교과서 레슨 출제범위가 그 자리를 대신한다.
-    if (context.exam_scope && context.exam_scope.length > 0) {
-      guidelines.push(`📘 **[참고] 이 시험의 교과서 출제 레슨**
-
-선생님이 선택한 출제범위(교과서 Lesson/Unit)는 다음과 같습니다:
-
-${describeEnglishExamScope(context.exam_scope)}
-
-**규칙:**
-- 지문·대화 소재가 위 레슨과 맞는지 **참고**하라.
-- 레슨에 **문법**이 있으면 어법 문항 분류의 힌트로만 쓴다. 시험지에 없는 문법을 만들어 넣지 말 것.
-- 문항 \`topic\` 필드는 레슨 제목이 아니라 **허용 소단원 목록**(문법/어휘/독해 항목)을 사용하라.
-- 레슨명을 topic 에 복사하지 말 것.`);
-    }
+    const { guidelines, paperType, schema } = this.collectParts(context);
 
     const combined = combinePrompts(
       { base, guidelines, paperType, schema },
@@ -165,6 +144,11 @@ ${describeEnglishExamScope(context.exam_scope)}
       if (dbTemplate) {
         const customBase = dbTemplate.template;
         result.base_prompt = customBase;
+        // ⚠️ combined_prompt 도 **반드시** 다시 조립한다.
+        //    실제 AI 호출은 combined_prompt 하나만 쓰는데(analyze/route.ts) 예전에는
+        //    base_prompt·used_templates 만 바꿔서, 관리자는 템플릿이 적용됐다고 믿지만
+        //    분석은 코드 기본값 그대로였다 (적대적 리뷰 1.9).
+        result.combined_prompt = this.assembleCombined(context, customBase);
         result.used_templates.push(`DB:${dbTemplate.name}(v${dbTemplate.version})`);
       }
 
@@ -509,5 +493,49 @@ ${typeVsAbility}
   /** 매칭된 문제 유형 수집 */
   private static collectMatchedProblemTypes(): string[] {
     return ['grammar', 'vocabulary', 'reading', 'listening', 'writing', 'communication'];
+  }
+
+  /**
+   * 가이드라인·시험지유형·스키마를 모은다. `build()` 와 DB 템플릿 재조립이 **같은 것**을 써야
+   * 커스텀 base 를 얹어도 나머지가 어긋나지 않는다 (적대적 리뷰 1.9).
+   */
+  private static collectParts(context: ExamContext): { guidelines: string[]; paperType: string; schema: string } {
+    const guidelines = this.getAnalysisGuidelines(context);
+    const paperType = getPaperTypeInstructions(context.paper_type);
+    const schema = this.getJsonSchema(context.paper_type, context.grade_level);
+
+    // 허용 소단원 목록 (DB 1:1 매칭용) — 드롭다운과 동일 함수
+    const enTopics = formatEnglishAllowedTopicsPrompt(context.grade_level);
+    if (enTopics) guidelines.push(enTopics);
+
+    // 수학과 달리 학기 힌트를 쓰지 않는다 — 교과서 레슨 출제범위가 그 자리를 대신한다.
+    if (context.exam_scope && context.exam_scope.length > 0) {
+      guidelines.push(`📘 **[참고] 이 시험의 교과서 출제 레슨**
+
+선생님이 선택한 출제범위(교과서 Lesson/Unit)는 다음과 같습니다:
+
+${describeEnglishExamScope(context.exam_scope)}
+
+**규칙:**
+- 지문·대화 소재가 위 레슨과 맞는지 **참고**하라.
+- 레슨에 **문법**이 있으면 어법 문항 분류의 힌트로만 쓴다. 시험지에 없는 문법을 만들어 넣지 말 것.
+- 문항 \`topic\` 필드는 레슨 제목이 아니라 **허용 소단원 목록**(문법/어휘/독해 항목)을 사용하라.
+- 레슨명을 topic 에 복사하지 말 것.`);
+    }
+
+    return { guidelines, paperType, schema };
+  }
+
+  /** DB 템플릿이 base 를 교체했을 때 실제 호출용 프롬프트를 다시 조립한다. */
+  private static assembleCombined(context: ExamContext, base: string): string {
+    return combinePrompts(
+      { base, ...this.collectParts(context) },
+      {
+        hardConstraints: HARD_CONSTRAINTS,
+        selfVerify: SELF_VERIFY,
+        difficultyRules: DIFFICULTY_RULES,
+        difficultySelfVerify: DIFFICULTY_SELF_VERIFY,
+      },
+    );
   }
 }

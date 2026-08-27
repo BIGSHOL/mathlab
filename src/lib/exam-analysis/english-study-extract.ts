@@ -80,15 +80,25 @@ export async function extractEnglishStudyFromExam(opts: {
   questions: AnalyzedQuestion[];
   grade?: string | null;
 }): Promise<EnglishStudyExtracted> {
+  let truncated = false;
   const raw = await callExamVision<unknown>({
     images: opts.images,
     prompt: buildPrompt(opts.questions, opts.grade),
     jsonMode: true,
     temperature: 0.1,
     mimeTypeHint: opts.mimeTypeHint,
+    // 응답이 잘려 자동 복구된 경우를 붙잡는다 — 앞쪽 몇 건만 남은 결과를
+    // 완결본으로 캐시에 굳히지 않기 위해서다 (적대적 리뷰 1.8).
+    onRepair: (kind) => { if (kind === 'truncated') truncated = true; },
   });
   // AI가 센 count 는 **시험지 본문 등장 횟수** → source: 'exam'
-  const pack = stampEnglishStudyPack(parseEnglishStudyResult(raw, 'exam'), 'exam');
+  const parsedPack = stampEnglishStudyPack(parseEnglishStudyResult(raw, 'exam'), 'exam');
+  const pack = parsedPack && truncated ? { ...parsedPack, truncated: true } : parsedPack;
+  if (truncated) {
+    console.warn(
+      `[영어 학습대책] 응답이 잘려 자동 복구됨 — 단어 ${pack?.vocab.length ?? 0} / 구문 ${pack?.structures.length ?? 0}건만 확보. 캐시하지 않는다.`,
+    );
+  }
   if (!pack) {
     // 파싱 0건은 원인이 갈린다 — 응답 자체가 비었나, 다 걸러졌나(독해 유형명·한글 등).
     // 사용자 문구는 그대로 두고 서버 로그로만 구분한다.

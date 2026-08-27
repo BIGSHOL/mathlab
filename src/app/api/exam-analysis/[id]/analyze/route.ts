@@ -190,7 +190,9 @@ export async function POST(request: NextRequest, { params }: Params) {
     // ── Step 3: AI 문항 분석 (가장 오래 걸림) ──
     await setStep(id, 3, subjectKeyEarly);
 
-    const mimeType = examPaper.fileType === 'pdf' ? 'application/pdf' : 'image/jpeg';
+    // PDF 만 형식이 확정이다. 이미지는 빈 힌트를 줘서 파일별 매직바이트로 판별하게 한다
+    // — 'image/jpeg' 로 고정하면 PNG·WEBP 를 잘못 신고하게 된다 (적대적 리뷰 1.10).
+    const mimeType = examPaper.fileType === 'pdf' ? 'application/pdf' : '';
     // ⚠️ 자가진화 자동보정 비활성(2026-06-02): 9개교·85교정 교차검증 결과 per-문항 정확도 악화
     //   (정확도 54%→40%, MAE 0.516→0.707). 난이도는 학교 상대적이라 전역 보정맵이 부적합 →
     //   calibrationSet 미전달(원본 AI값 사용). 누적 교정은 측정 벤치마크로만 사용(/admin/evolution).

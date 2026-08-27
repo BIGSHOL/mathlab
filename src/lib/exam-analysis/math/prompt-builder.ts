@@ -82,36 +82,7 @@ export class MathExamPromptBuilder {
   /** 전체 프롬프트를 조립하여 반환한다. */
   static build(context: ExamContext): BuildPromptResponse {
     const base = this.getBasePrompt(context);
-    const guidelines = this.getAnalysisGuidelines(context);
-    const paperType = getPaperTypeInstructions(context.paper_type);
-    const schema = this.getJsonSchema(context.paper_type, context.grade_level, context.category);
-
-    // 허용 소단원 목록 (DB 1:1 매칭용) — 드롭다운과 동일 함수
-    const allowedTopics = this.getAllowedTopicNames(context.grade_level);
-    if (allowedTopics) {
-      guidelines.push(allowedTopics);
-    }
-
-    // 학기/시험종류 기반 기본 제약
-    const periodHint = this.buildPeriodHint(context);
-    if (periodHint) {
-      guidelines.push(periodHint);
-    }
-
-    if (context.exam_scope && context.exam_scope.length > 0) {
-      guidelines.push(`🎯 **[ABSOLUTE] 출제범위 제한 — 이 규칙은 그림/시각 증거보다 우선합니다**
-
-이 시험의 출제범위는 다음 단원으로 **완전히 한정**되어 있습니다:
-
-**출제범위**: ${context.exam_scope.join(' / ')}
-
-**절대 규칙 (위반 시 분석 무효):**
-1. ❌ **출제범위 밖 단원으로 chapter/section 을 배정하지 말 것.** 그림에 원·삼각형·그래프 등이 보여도, 실제 **풀이 과정에 필요한 개념**이 출제범위에 속하는지로 판단하라.
-2. ❌ 시각적 장식(도형 그림)만으로 단원을 유추하는 것을 금지한다. 문제의 **요구하는 계산/추론/공식**을 기준으로 하라.
-3. ✅ 문제의 풀이가 출제범위의 개념(인수분해·이차방정식·제곱근 등)을 사용한다면 그 단원을 선택하라. 설령 문제에 원이 등장해도 **원의 성질** 단원이 아니다.
-4. ✅ 출제범위 밖으로 분류하고 싶다면 **반드시 \`chapter: "UNKNOWN"\`, \`topic: "UNKNOWN"\`, \`confidence ≤ 0.4\`로 반환**하라. 사용자가 나중에 직접 편집한다. 틀린 단원보다 UNKNOWN이 낫다.
-5. 자기 검증(V 체크): 모든 문항의 chapter 가 출제범위 단원 내에 있는가? 아니면 UNKNOWN으로 교체하라.`);
-    }
+    const { guidelines, paperType, schema } = this.collectParts(context);
 
     const combined = combinePrompts(
       { base, guidelines, paperType, schema },
@@ -177,6 +148,11 @@ export class MathExamPromptBuilder {
       if (dbTemplate) {
         const customBase = dbTemplate.template;
         result.base_prompt = customBase;
+        // ⚠️ combined_prompt 도 **반드시** 다시 조립한다.
+        //    실제 AI 호출은 combined_prompt 하나만 쓰는데(analyze/route.ts) 예전에는
+        //    base_prompt·used_templates 만 바꿔서, 관리자는 템플릿이 적용됐다고 믿지만
+        //    분석은 코드 기본값 그대로였다 (적대적 리뷰 1.9).
+        result.combined_prompt = this.assembleCombined(context, customBase);
         result.used_templates.push(`DB:${dbTemplate.name}(v${dbTemplate.version})`);
       }
 
@@ -723,5 +699,57 @@ ${lines.join('\n')}
         return categoryTypeMap[context.category] ?? types;
       }
       return types;
+  }
+
+  /**
+   * 가이드라인·시험지유형·스키마를 모은다. `build()` 와 DB 템플릿 재조립이 **같은 것**을 써야
+   * 커스텀 base 를 얹어도 나머지가 어긋나지 않는다 (적대적 리뷰 1.9).
+   */
+  private static collectParts(context: ExamContext): { guidelines: string[]; paperType: string; schema: string } {
+    const guidelines = this.getAnalysisGuidelines(context);
+    const paperType = getPaperTypeInstructions(context.paper_type);
+    const schema = this.getJsonSchema(context.paper_type, context.grade_level, context.category);
+
+    // 허용 소단원 목록 (DB 1:1 매칭용) — 드롭다운과 동일 함수
+    const allowedTopics = this.getAllowedTopicNames(context.grade_level);
+    if (allowedTopics) {
+      guidelines.push(allowedTopics);
+    }
+
+    // 학기/시험종류 기반 기본 제약
+    const periodHint = this.buildPeriodHint(context);
+    if (periodHint) {
+      guidelines.push(periodHint);
+    }
+
+    if (context.exam_scope && context.exam_scope.length > 0) {
+      guidelines.push(`🎯 **[ABSOLUTE] 출제범위 제한 — 이 규칙은 그림/시각 증거보다 우선합니다**
+
+이 시험의 출제범위는 다음 단원으로 **완전히 한정**되어 있습니다:
+
+**출제범위**: ${context.exam_scope.join(' / ')}
+
+**절대 규칙 (위반 시 분석 무효):**
+1. ❌ **출제범위 밖 단원으로 chapter/section 을 배정하지 말 것.** 그림에 원·삼각형·그래프 등이 보여도, 실제 **풀이 과정에 필요한 개념**이 출제범위에 속하는지로 판단하라.
+2. ❌ 시각적 장식(도형 그림)만으로 단원을 유추하는 것을 금지한다. 문제의 **요구하는 계산/추론/공식**을 기준으로 하라.
+3. ✅ 문제의 풀이가 출제범위의 개념(인수분해·이차방정식·제곱근 등)을 사용한다면 그 단원을 선택하라. 설령 문제에 원이 등장해도 **원의 성질** 단원이 아니다.
+4. ✅ 출제범위 밖으로 분류하고 싶다면 **반드시 \`chapter: "UNKNOWN"\`, \`topic: "UNKNOWN"\`, \`confidence ≤ 0.4\`로 반환**하라. 사용자가 나중에 직접 편집한다. 틀린 단원보다 UNKNOWN이 낫다.
+5. 자기 검증(V 체크): 모든 문항의 chapter 가 출제범위 단원 내에 있는가? 아니면 UNKNOWN으로 교체하라.`);
+    }
+
+    return { guidelines, paperType, schema };
+  }
+
+  /** DB 템플릿이 base 를 교체했을 때 실제 호출용 프롬프트를 다시 조립한다. */
+  private static assembleCombined(context: ExamContext, base: string): string {
+    return combinePrompts(
+      { base, ...this.collectParts(context) },
+      {
+        hardConstraints: HARD_CONSTRAINTS,
+        selfVerify: SELF_VERIFY,
+        difficultyRules: DIFFICULTY_RULES,
+        difficultySelfVerify: DIFFICULTY_SELF_VERIFY,
+      },
+    );
   }
 }

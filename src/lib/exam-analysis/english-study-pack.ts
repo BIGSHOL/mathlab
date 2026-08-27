@@ -44,6 +44,14 @@ export interface EnglishStudyExtracted {
   source: EnglishStudySource;
   /** 생성 당시 파이프라인 버전. 없으면 버전 도입 이전의 구팩. */
   version?: string;
+  /**
+   * AI 응답 JSON 이 잘려서 자동 복구로 살려낸 결과인가.
+   *
+   * 학습팩에는 "응답이 완결됐는가"를 판별할 독립 총개수가 없어, 뒤가 잘려도
+   * 앞쪽 몇 건만으로 검증을 통과해 정상 캐시로 굳었다 (적대적 리뷰 1.8).
+   * true 면 캐시를 신뢰하지 않고 다음 요청에 다시 뽑는다.
+   */
+  truncated?: boolean;
 }
 
 /** 독해 유형·문항 번호 — 구문/단어로 쓰면 안 됨 */

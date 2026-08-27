@@ -39,6 +39,11 @@ interface EnglishStudyStrategyTabProps {
    * true 면 이 탭은 **직접 호출하지 않는다** — 같은 AI 호출이 두 번 나가는 걸 막는다.
    */
   preparing?: boolean;
+  /**
+   * 저장된 팩에 실패·잘림 표시(errorMessage)가 붙어 있는가.
+   * true 면 완결본이 아니므로 seed 로 인정하지 않고 다시 뽑는다.
+   */
+  storedIncomplete?: boolean;
 }
 
 function studyRequestBody(extra: Record<string, unknown> = {}): string {
@@ -60,14 +65,18 @@ export function EnglishStudyStrategyTab({
   storedPack,
   onStored,
   preparing = false,
+  storedIncomplete = false,
 }: EnglishStudyStrategyTabProps) {
   const fromQuestions = useMemo(() => buildEnglishStudyFromQuestions(questions), [questions]);
   // 저장된 팩이라도 **구버전이면 쓰지 않는다** — 추출 규칙이 바뀌었는데 옛 결과를 보여주면
   // 규칙 개선이 영원히 사용자에게 도달하지 않는다.
   const parsedStored = useMemo(() => {
+    // 구버전이거나 실패·잘림 표시가 붙은 저장분은 쓰지 않는다 —
+    // 서버가 재시도하라고 남긴 신호를 여기서 삼키면 자동 복구가 영영 돌지 않는다.
+    if (storedIncomplete) return null;
     const parsed = parseEnglishStudyResult(storedPack);
     return parsed && isCurrentEnglishStudyPack(parsed) ? parsed : null;
-  }, [storedPack]);
+  }, [storedPack, storedIncomplete]);
   const seed = parsedStored ?? fromQuestions;
   const seedEnough = !!seed && seed.vocab.length + seed.structures.length >= 5;
 
