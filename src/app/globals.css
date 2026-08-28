@@ -2059,6 +2059,21 @@ body {
   font-weight: 700; text-align: center;
 }
 
+/* ── 다크 테마(terminal) 라벨 보정 ────────────────────────────────────────
+   `--v3-ink` 는 **본문 글자색이자 채움색**으로 겸용된다. 밝은 지면에서는 둘 다
+   near-black 이라 "ink 로 칠한 면 위에 on-dark(흰) 라벨"이 잘 보였다.
+   지면이 어두워지면 ink 가 밝아져 그 가정이 깨진다(흰 글씨 on 흰 면, 대비 1.09).
+   accent·muted·난이도 램프의 밝은 단계도 같은 문제라, 다크 테마에서만 라벨을
+   지면색(어두움)으로 뒤집는다. 근본 해결은 채움색과 글자색 토큰 분리이나
+   11개 밝은 테마의 캡처를 바꾸게 되므로 여기서는 다크만 보정한다. */
+.v3.v3-theme-terminal .v3-diff-stacked > div,
+.v3.v3-theme-terminal .v3-strategy-tag,
+.v3.v3-theme-terminal .v3-qtable-badge,
+/* 형식 분포 막대는 세그먼트를 ink·muted·accent 로 칠한다(FormatBreakdown) — 셋 다 다크에선 밝다 */
+.v3.v3-theme-terminal .v3-stacked-bar-format > div {
+  color: var(--v3-paper);
+}
+
 /* ── V3 Wrapped 스토리(storySlide) ────────────────────────────────────────
    한 화면에 숫자 하나. 각 장이 `.v3` 의 **최상위 형제**라 블로그 캡처에서
    장마다 이미지 한 장이 된다(감싸면 한 덩어리로 합쳐진다 — registry 주석 참조).
@@ -2306,7 +2321,7 @@ body {
 
 /* V3 결론 박스 */
 .v3-conclusion { background: var(--v3-conclusion-bg); padding: calc(var(--v3-section-y) * 0.9) var(--v3-gutter); margin: 0; border-top: 1px solid var(--v3-line); }
-.v3-conclusion h3 { font-family: var(--v3-font-head); font-size: 22px; font-weight: 700; margin: 0 0 14px; }
+.v3-conclusion h3 { font-family: var(--v3-font-head); font-size: 22px; font-weight: 700; margin: 0 0 14px; color: var(--v3-ink); }
 .v3-conclusion .v3-conclusion-sub { font-family: var(--v3-font-label); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--v3-accent); font-weight: 800; margin-bottom: 10px; }
 .v3-conclusion p { font-family: var(--v3-font-body); font-size: 16px; line-height: 1.85; color: var(--v3-body); margin: 0; word-break: keep-all; }
 
