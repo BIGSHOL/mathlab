@@ -2814,6 +2814,347 @@ body {
   word-break: keep-all;
 }
 
+/* ── V3 성적표(gradeSheet) ──────────────────────────────────────────────
+   칸 용지 표. 카드 그림자·큰 둥근모서리를 쓰면 웹 타일이 되어 성적표가 아니다.
+   도장은 accent 테두리만 — 면을 칠하고 흰 글자를 올리면 terminal/chalkboard 에서
+   흰 글씨 on 밝은 면이 된다 (ink 가 글자색·채움색 겸용). */
+.v3-gs {
+  position: relative;
+  margin: 20px var(--v3-gutter);
+  padding: 18px 18px 16px;
+  background: var(--v3-paper);
+  border: 2px solid var(--v3-ink);
+  border-radius: 2px;
+}
+.v3-gs-head { margin-bottom: 12px; padding-right: 84px; }
+.v3-gs-kicker {
+  display: block;
+  font-family: var(--v3-font-label);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: var(--v3-accent);
+  margin-bottom: 4px;
+}
+.v3-gs-who {
+  display: block;
+  font-family: var(--v3-font-head);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--v3-ink);
+  word-break: keep-all;
+}
+.v3-gs-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-family: var(--v3-font-label);
+}
+.v3-gs-table th,
+.v3-gs-table td {
+  border: 1px solid var(--v3-ink);
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--v3-ink);
+  text-align: center;
+  word-break: keep-all;
+}
+.v3-gs-table th {
+  background: var(--v3-paper-alt);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+}
+.v3-gs-table .v3-gs-topic { text-align: left; font-weight: 700; }
+.v3-gs-table tfoot th,
+.v3-gs-table tfoot td { font-weight: 800; background: var(--v3-paper-alt); }
+/* 심화 단원 — 행을 색으로 칠하지 않는다. 왼쪽 악센트 + 도장 라벨만. */
+.v3-gs-hot td:first-child { box-shadow: inset 3px 0 0 var(--v3-accent); }
+.v3-gs-mark {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 5px;
+  border: 1px solid var(--v3-accent);
+  border-radius: 2px;
+  color: var(--v3-accent);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  vertical-align: middle;
+}
+.v3-gs-note {
+  position: relative;
+  margin-top: 12px;
+  padding: 10px 12px 28px;
+  border: 1px solid var(--v3-ink);
+  min-height: 84px;
+  /* 소견란 밑줄 — 테마 선색만 써서 13 팔레트를 따라간다 */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 27px,
+    var(--v3-line) 27px,
+    var(--v3-line) 28px
+  );
+}
+.v3-gs-note-label {
+  display: block;
+  font-family: var(--v3-font-label);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--v3-accent);
+  margin-bottom: 6px;
+}
+.v3-gs-note p {
+  margin: 0;
+  font-family: var(--v3-font-body);
+  font-size: 14px;
+  line-height: 28px;
+  color: var(--v3-ink);
+  word-break: keep-all;
+}
+.v3-gs-sign {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  font-family: var(--v3-font-label);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--v3-ink);
+  border-bottom: 1px solid var(--v3-ink);
+  min-width: 88px;
+  text-align: right;
+}
+.v3-gs-stamp {
+  position: absolute;
+  right: 14px;
+  top: 12px;
+  width: 64px;
+  height: 64px;
+  border: 3px solid var(--v3-accent);
+  border-radius: 50%;
+  color: var(--v3-accent);
+  font-family: var(--v3-font-head);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-18deg);
+  pointer-events: none;
+  opacity: 0.88;
+}
+.v3-gs-tight .v3-gs-table th,
+.v3-gs-tight .v3-gs-table td { padding: 5px 8px; font-size: 12px; }
+.v3-gs-tight .v3-gs-note { min-height: 64px; padding-bottom: 24px; }
+
+/* ── V3 4컷(comicStrip) ────────────────────────────────────────────────
+   컷마다 `.v3` 최상위 형제라 블로그 캡처가 장마다 쪼개진다 (감싸면 한 장).
+   말풍선 배경은 paper, 컷 지면은 paper-alt. ink 면을 칠하지 않는다. */
+.v3-comic {
+  position: relative;
+  container-type: inline-size;
+  margin: 14px var(--v3-gutter);
+  padding: 18px 20px 22px;
+  background: var(--v3-paper-alt);
+  border: 3px solid var(--v3-ink);
+  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 10px;
+  overflow: hidden;
+}
+.v3-comic-panel { min-height: 280px; aspect-ratio: 5 / 4; }
+.v3-comic-square { aspect-ratio: 1 / 1; }
+.v3-comic-idx {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  font-family: var(--v3-font-label);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: var(--v3-muted);
+  font-weight: 700;
+}
+.v3-comic-kicker {
+  font-family: var(--v3-font-label);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--v3-accent);
+}
+.v3-comic-big {
+  font-family: var(--v3-font-num);
+  font-size: 22cqw;
+  line-height: 0.9;
+  color: var(--v3-gold);
+  display: block;
+  word-break: keep-all;
+}
+.v3-comic-big-xl { font-size: 36cqw; }
+.v3-comic-big-lg { font-size: 28cqw; }
+.v3-comic-big-md { font-size: 22cqw; }
+.v3-comic-big-sm { font-size: 14cqw; }
+.v3-comic-big em {
+  font-style: normal;
+  font-size: 0.32em;
+  color: var(--v3-muted);
+  margin-left: 0.08em;
+}
+.v3-comic-bubble {
+  position: relative;
+  margin: 4px 0 0;
+  padding: 12px 14px 14px;
+  background: var(--v3-paper);
+  border: 2px solid var(--v3-ink);
+  border-radius: 2px;
+  font-family: var(--v3-font-body);
+  font-size: clamp(13px, 2.4cqw, 18px);
+  line-height: 1.65;
+  color: var(--v3-ink);
+  word-break: keep-all;
+}
+.v3-comic-bubble::after {
+  content: '';
+  position: absolute;
+  left: 22px;
+  top: -8px;
+  width: 12px;
+  height: 12px;
+  background: var(--v3-paper);
+  border-left: 2px solid var(--v3-ink);
+  border-top: 2px solid var(--v3-ink);
+  transform: rotate(45deg);
+}
+
+/* ── V3 레시피(recipeCard) ──────────────────────────────────────────────
+   재료 목록 + 조리 순서 + 맵기. 막대/표는 인포그래픽과 같은 문서가 되므로 쓰지 않는다.
+   고추는 CSS 도형 — 이모지는 테마 accent 를 못 따른다. 면 위 글자 없음. */
+.v3-recipe {
+  margin: 20px var(--v3-gutter);
+  padding: 18px 20px 16px;
+  background: var(--v3-paper);
+  border: 1px solid var(--v3-line);
+  border-top: 4px solid var(--v3-accent);
+  border-radius: 2px;
+}
+.v3-recipe-head { margin-bottom: 14px; }
+.v3-recipe-kicker {
+  display: block;
+  font-family: var(--v3-font-label);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: var(--v3-accent);
+  margin-bottom: 4px;
+}
+.v3-recipe-who {
+  display: block;
+  font-family: var(--v3-font-head);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--v3-ink);
+  word-break: keep-all;
+}
+.v3-recipe-heat {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 8px;
+  font-family: var(--v3-font-label);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--v3-muted);
+}
+.v3-recipe-heat em { font-style: normal; margin-right: 8px; }
+.v3-recipe-chili {
+  display: inline-block;
+  width: 8px;
+  height: 13px;
+  margin-left: 3px;
+  border: 1px solid var(--v3-line);
+  border-radius: 40% 40% 55% 55%;
+  background: transparent;
+}
+.v3-recipe-chili.is-on {
+  background: var(--v3-accent);
+  border-color: var(--v3-accent);
+}
+.v3-recipe-label {
+  display: block;
+  font-family: var(--v3-font-label);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--v3-muted);
+  margin-bottom: 8px;
+}
+.v3-recipe-ings ul,
+.v3-recipe-steps ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.v3-recipe-ings li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--v3-line);
+  font-family: var(--v3-font-body);
+}
+.v3-recipe-ings li:last-child { border-bottom: none; }
+.v3-recipe-ings b {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--v3-ink);
+  word-break: keep-all;
+}
+.v3-recipe-ings em {
+  font-style: normal;
+  font-family: var(--v3-font-num);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--v3-accent);
+  line-height: 1;
+}
+.v3-recipe-ings span {
+  font-family: var(--v3-font-label);
+  font-size: 12px;
+  color: var(--v3-muted);
+  white-space: nowrap;
+}
+.v3-recipe-steps { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--v3-line-soft); }
+.v3-recipe-steps ol { counter-reset: v3rp; }
+.v3-recipe-steps li {
+  counter-increment: v3rp;
+  display: flex;
+  gap: 10px;
+  padding: 7px 0;
+  font-family: var(--v3-font-body);
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--v3-ink);
+  word-break: keep-all;
+}
+.v3-recipe-steps li::before {
+  content: counter(v3rp);
+  flex-shrink: 0;
+  color: var(--v3-accent);
+  font-family: var(--v3-font-num);
+  font-weight: 800;
+  font-size: 16px;
+  line-height: 1.4;
+  min-width: 1.2em;
+}
+.v3-recipe-board .v3-recipe-ings em { font-size: 26px; }
+.v3-recipe-board .v3-recipe-ings b { font-size: 17px; }
+
 /* V3 인포그래픽 (인라인) */
 .v3-info-fig { margin: 24px 0; padding: 22px 26px; background: var(--v3-paper-alt); border: 1px solid var(--v3-line-soft); border-radius: 4px; }
 .v3-info-label { font-family: var(--v3-font-label); font-size: 11px; letter-spacing: 0.14em; color: var(--v3-muted); font-weight: 800; margin: 0 0 14px; text-transform: uppercase; }

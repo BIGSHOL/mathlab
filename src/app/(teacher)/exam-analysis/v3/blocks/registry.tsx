@@ -15,7 +15,7 @@ import { Fragment } from 'react';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { weightedAverageDifficulty } from '@/lib/exam-analysis/difficulty';
-import { sumPoints } from '@/lib/exam-analysis/points';
+import { formatPoints, roundPoints, sumPoints } from '@/lib/exam-analysis/points';
 import { renderInlineMath } from '@/lib/exam-analysis/rendering';
 import { normalizeFeatureCallout } from '@/lib/exam-analysis/feature-callout';
 import type {
@@ -2206,6 +2206,426 @@ function renderBento(props: BlockRenderProps, twoCol: boolean) {
   );
 }
 
+// ── 단원 집계 (gradeSheet · recipeCard 공유) ────────────────────────────
+// topic 은 `과목 > 대단원 > 중단원`. 마지막 조각(중단원)으로 묶는다.
+// 대단원으로 묶으면 한 시험이 2~3행으로 뭉쳐 성적표·재료 목록이 의미를 잃는다.
+
+interface TopicStatRow {
+  topic: string;
+  count: number;
+  points: number;
+  avgDiff: number;
+}
+
+function collectTopicRows(questions: AnalyzedQuestion[]): TopicStatRow[] {
+  const map = new Map<string, { wDiff: number; wSum: number; points: number; count: number }>();
+  const order: string[] = [];
+  for (const q of questions) {
+    const topic = topicMidUnit(q.topic);
+    if (!map.has(topic)) order.push(topic);
+    const pts = typeof q.points === 'number' && q.points > 0 ? q.points : 0;
+    const lv = questionDiff(q);
+    const cur = map.get(topic) ?? { wDiff: 0, wSum: 0, points: 0, count: 0 };
+    cur.count += 1;
+    cur.points += pts;
+    // 난이도를 못 읽은 문항은 평균에 넣지 않는다 — 0으로 넣으면 단원이 쉬워 보인다.
+    if (lv > 0) {
+      const w = pts > 0 ? pts : 1;
+      cur.wDiff += w * lv;
+      cur.wSum += w;
+    }
+    map.set(topic, cur);
+  }
+  return order.map((topic) => {
+    const v = map.get(topic)!;
+    return {
+      topic,
+      count: v.count,
+      points: roundPoints(v.points),
+      avgDiff: v.wSum > 0 ? v.wDiff / v.wSum : 0,
+    };
+  });
+}
+
+/** 정수 % 로 접되 합이 반드시 100. 버림만 하면 99·101이 나와 재료 배합이 안 맞는다. */
+function sharesTo100(weights: number[]): number[] {
+  const total = weights.reduce((s, w) => s + w, 0);
+  if (total <= 0) return weights.map(() => 0);
+  const raw = weights.map((w) => (w / total) * 100);
+  const floors = raw.map((v) => Math.floor(v));
+  const leftover = 100 - floors.reduce((s, n) => s + n, 0);
+  const order = raw
+    .map((v, i) => ({ i, frac: v - Math.floor(v) }))
+    .sort((a, b) => b.frac - a.frac);
+  const out = [...floors];
+  for (let k = 0; k < leftover; k++) out[order[k % order.length].i] += 1;
+  return out;
+}
+
+// ── 복고 성적표 (gradeSheet) ─────────────────────────────────────────────
+// 칸 용지 표 — 웹 카드가 되면 "성적표"가 아니라 KPI 타일이다.
+// 강조는 빨간 도장(테마 accent 원형). 행을 색 면으로 칠하면 다크에서 글자가 사라진다.
+
+function gradeComment(c: CommentaryResult): string {
+  return (c.conclusion?.body || c.v4_final_strategy?.[0]?.action || '').trim();
+}
+
+function summaryGrade(props: BlockRenderProps) {
+  const rows = collectTopicRows(props.questions);
+  return rows.length ? `성적표 — 단원 ${rows.length}개 · 문항 ${props.questions.length}` : '';
+}
+
+const gradeSheetBlock: CommentaryBlockDef = {
+  id: 'gradeSheet',
+  label: '성적표',
+  description: '칸 용지 성적표 — 단원×문항수·배점·평균난이도 + 담임 소견',
+  defaultEnabled: false,
+  available: (_c, questions) => collectTopicRows(questions).length > 0,
+  summary: summaryGrade,
+  variants: [
+    {
+      id: 'sheet',
+      label: '칸 용지',
+      hint: '괘선 표 + 도장 — 기본',
+      render: (props) => renderGradeSheet(props, false),
+    },
+    {
+      id: 'tight',
+      label: '밀집',
+      hint: '행 간격 좁게',
+      render: (props) => renderGradeSheet(props, true),
+    },
+  ],
+};
+
+function renderGradeSheet(props: BlockRenderProps, tight: boolean) {
+  const rows = collectTopicRows(props.questions);
+  if (!rows.length) return null;
+  const { commentary: c, questions: qs, meta, copy } = props;
+  const who = [meta.schoolName, meta.grade, meta.examTitle].filter(Boolean).join(' · ');
+  const comment = gradeComment(c);
+  const totalCount = qs.length;
+  const totalPts = roundPoints(rows.reduce((s, r) => s + r.points, 0)) || meta.totalPoints;
+  const killerN = rows.filter((r) => r.avgDiff >= 4).length;
+
+  return (
+    <div
+      className={`v3-gs${tight ? ' v3-gs-tight' : ''}`}
+      {...blockAttrs('gradeSheet', summaryGrade(props))}
+    >
+      <div className="v3-gs-head">
+        <span className="v3-gs-kicker">성적표</span>
+        {who ? <strong className="v3-gs-who">{who}</strong> : null}
+      </div>
+
+      <table className="v3-gs-table">
+        <thead>
+          <tr>
+            <th scope="col">단원</th>
+            <th scope="col">문항수</th>
+            <th scope="col">배점</th>
+            <th scope="col">평균난이도</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => {
+            const hot = r.avgDiff >= 4;
+            return (
+              <tr key={r.topic} className={hot ? 'v3-gs-hot' : undefined}>
+                <td className="v3-gs-topic">{r.topic}</td>
+                <td>{r.count}</td>
+                <td>{formatPoints(r.points)}</td>
+                <td>
+                  {r.avgDiff > 0 ? r.avgDiff.toFixed(1) : '—'}
+                  {hot ? (
+                    <span className="v3-gs-mark" aria-label="심화 단원">
+                      심화
+                    </span>
+                  ) : null}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th scope="row">합계</th>
+            <td>{totalCount}</td>
+            <td>{formatPoints(totalPts)}</td>
+            <td>{killerN > 0 ? `심화 ${killerN}단원` : '—'}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div className="v3-gs-note">
+        <span className="v3-gs-note-label">담임 소견</span>
+        {comment ? (
+          <p>{markdownToHighlighted(comment, 'v3-gs-note')}</p>
+        ) : (
+          <p className="v3-gs-note-empty">&nbsp;</p>
+        )}
+        <span className="v3-gs-sign">{copy.author}</span>
+      </div>
+
+      {/* 도장은 면 채움이 아니라 테두리만. accent 면에 흰 글자를 올리면 다크에서 사라진다. */}
+      <span className="v3-gs-stamp" aria-hidden>
+        확인
+      </span>
+    </div>
+  );
+}
+
+// ── 4컷 만화 (comicStrip) ────────────────────────────────────────────────
+// 4컷 고정. 각 컷 = 말풍선 + 숫자 하나. 표를 쓰면 만화가 아니라 리포트 칸이 된다.
+//
+// ⚠️ 컷을 <div> 하나로 감싸면 안 된다. 블로그 캡처가 `.v3` 의 최상위 자식마다 PNG 를
+//    뜨므로, 감싸는 순간 4컷이 거대한 이미지 한 장이 된다. Fragment 로 최상위 형제로
+//    흘려보내고 data-block-id 는 컷마다 다르게 (comicStrip-0 … comicStrip-3).
+//    섹션 번호는 블록당 하나만 배정되므로 numberCount=0 — 컷 번호는 내부에서 센다.
+
+interface ComicPanel {
+  key: string;
+  title: string;
+  big: string;
+  unit?: string;
+  bubble: string;
+}
+
+function buildComicPanels(props: BlockRenderProps): ComicPanel[] {
+  const { commentary: c, questions: qs, meta } = props;
+  const total = qs.length;
+  const avg = weightedAverageDifficulty(qs);
+  const killer = qs.filter((q) => questionDiff(q) >= 4);
+  const essays = qs.filter(isEssayQuestion);
+  const essayPts = sumPoints(essays.map((q) => q.points));
+  const clusters = collectKillerClusters(qs);
+  const next = c.v4_final_strategy?.[0]?.action || c.improvement_areas?.[0] || '';
+  const nextN = Math.max(1, c.v4_final_strategy?.length || c.improvement_areas?.length || 1);
+
+  return [
+    {
+      key: 'tease',
+      title: '예고',
+      big: avg.avg > 0 ? avg.avg.toFixed(1) : String(total),
+      unit: avg.avg > 0 ? '/5' : '문항',
+      bubble: clipLine(c.blog_dek || c.blog_headline || `${meta.examTitle} 분석`, 90),
+    },
+    {
+      key: 'killer',
+      title: '킬러 쏠림',
+      big: String(killer.length),
+      unit: '문항',
+      bubble: clipLine(
+        clusters[0]
+          ? `${clusters[0].topic}에 심화 ${clusters[0].count}문항이 몰렸습니다.`
+          : killer.length
+            ? `심화 이상 ${killer.length}문항입니다.`
+            : '심화 문항 없이 고르게 출제됐습니다.',
+        90,
+      ),
+    },
+    {
+      key: 'trap',
+      title: '함정',
+      big: String(essayPts > 0 ? essayPts : essays.length),
+      unit: essayPts > 0 ? '점' : '문항',
+      bubble: clipLine(
+        essays.length
+          ? `서술형 ${essays.length}문항 · ${formatPoints(essayPts)}점. 여기서 갈립니다.`
+          : '서술형 없이 객관식·단답으로만 구성됐습니다.',
+        90,
+      ),
+    },
+    {
+      key: 'hw',
+      title: '다음 숙제',
+      big: String(nextN),
+      unit: '가지',
+      bubble: clipLine(next || '틀린 문항부터 다시 풀어 보세요.', 90),
+    },
+  ];
+}
+
+function summaryComic(props: BlockRenderProps) {
+  return `${props.meta.examTitle} — 4컷 요약`;
+}
+
+const comicStripBlock: CommentaryBlockDef = {
+  id: 'comicStrip',
+  label: '4컷',
+  description: '예고 → 킬러 쏠림 → 서술형 함정 → 다음 숙제',
+  defaultEnabled: false,
+  // 한 블록이 컷 4장을 뱉는데 번호는 블록당 하나라, 받으면 첫 컷에만 붙고 나머지가 빈다.
+  numberCount: () => 0,
+  available: (_c, questions) => questions.length > 0,
+  summary: summaryComic,
+  variants: [
+    {
+      id: 'panel',
+      label: '4컷',
+      hint: '세로 컷 — 기본',
+      render: (props) => renderComic(props, 'v3-comic-panel'),
+    },
+    {
+      id: 'square',
+      label: '정사각',
+      hint: '블로그용 1:1',
+      render: (props) => renderComic(props, 'v3-comic-square'),
+    },
+  ],
+};
+
+function renderComic(props: BlockRenderProps, shapeClass: string) {
+  const panels = buildComicPanels(props);
+  if (!panels.length) return null;
+
+  return (
+    <Fragment>
+      {panels.map((p, i) => (
+        <div
+          key={p.key}
+          className={`v3-comic ${shapeClass}`}
+          data-block-id={`comicStrip-${i}`}
+          data-block-summary={`${p.title} — ${p.big}${p.unit ?? ''}`}
+        >
+          <span className="v3-comic-idx">
+            {i + 1} / 4
+          </span>
+          <span className="v3-comic-kicker">{p.title}</span>
+          <span className={`v3-comic-big v3-comic-big-${bigSizeClass(p.big)}`}>
+            {p.big}
+            {p.unit ? <em>{p.unit}</em> : null}
+          </span>
+          <p className="v3-comic-bubble">{markdownToHighlighted(p.bubble, `v3-cm-${p.key}`)}</p>
+        </div>
+      ))}
+    </Fragment>
+  );
+}
+
+// ── 레시피 카드 (recipeCard) ─────────────────────────────────────────────
+// 재료 = 단원별 배점 % (합 100). 막대/표가 되면 인포그래픽과 같은 문서가 된다.
+// 조리 순서 = 우선 단원 → 나중 단원 (improvement_areas / v4_final_strategy).
+// 맵기 = 평균 난이도 1~5 를 고추 도형 개수로. 이모지는 테마 색을 못 따른다.
+
+function recipeSteps(c: CommentaryResult, rows: TopicStatRow[]): string[] {
+  const steps: string[] = [];
+  const seen = new Set<string>();
+  const push = (s: string) => {
+    const t = s.replace(/\s+/g, ' ').trim();
+    if (!t) return;
+    const key = t.slice(0, 28);
+    if (seen.has(key)) return;
+    seen.add(key);
+    steps.push(t);
+  };
+  for (const a of c.improvement_areas ?? []) push(String(a));
+  for (const s of c.v4_final_strategy ?? []) {
+    push([s.area, s.action].filter(Boolean).join(' — '));
+  }
+  // AI 전략이 비면 매운 단원부터 — 빈 조리법은 레시피 카드가 아니다.
+  if (steps.length < 3) {
+    const rest = [...rows].sort((a, b) => b.avgDiff - a.avgDiff || b.points - a.points);
+    for (const r of rest) {
+      if (steps.length >= 5) break;
+      push(`${r.topic}부터 다시 훑기`);
+    }
+  }
+  return steps.slice(0, 5);
+}
+
+function recipeHeat(questions: AnalyzedQuestion[]): number {
+  const avg = weightedAverageDifficulty(questions).avg;
+  if (!(avg > 0)) return 0;
+  return Math.max(1, Math.min(5, Math.round(avg)));
+}
+
+function summaryRecipe(props: BlockRenderProps) {
+  const rows = [...collectTopicRows(props.questions)].sort((a, b) => b.points - a.points);
+  const top = rows[0];
+  return top ? `레시피 — 주재료 ${top.topic}` : '';
+}
+
+const recipeCardBlock: CommentaryBlockDef = {
+  id: 'recipeCard',
+  label: '레시피',
+  description: '단원 배점 재료 목록 · 공부 순서 · 맵기',
+  defaultEnabled: false,
+  available: (_c, questions) => collectTopicRows(questions).length > 0,
+  summary: summaryRecipe,
+  variants: [
+    {
+      id: 'card',
+      label: '레시피 카드',
+      hint: '재료 + 조리 + 맵기 — 기본',
+      render: (props) => renderRecipe(props, false),
+    },
+    {
+      id: 'board',
+      label: '레시피 보드',
+      hint: '재료를 크게',
+      render: (props) => renderRecipe(props, true),
+    },
+  ],
+};
+
+function renderRecipe(props: BlockRenderProps, board: boolean) {
+  const rows = collectTopicRows(props.questions);
+  if (!rows.length) return null;
+  const { commentary: c, questions: qs, meta } = props;
+  const who = [meta.schoolName, meta.grade, meta.examTitle].filter(Boolean).join(' · ');
+  const sorted = [...rows].sort((a, b) => b.points - a.points || b.count - a.count);
+  const weights = sorted.map((r) => (r.points > 0 ? r.points : r.count));
+  const pcts = sharesTo100(weights);
+  const steps = recipeSteps(c, rows);
+  const heat = recipeHeat(qs);
+
+  return (
+    <div
+      className={`v3-recipe${board ? ' v3-recipe-board' : ''}`}
+      {...blockAttrs('recipeCard', summaryRecipe(props))}
+    >
+      <div className="v3-recipe-head">
+        <span className="v3-recipe-kicker">레시피</span>
+        {who ? <strong className="v3-recipe-who">{who}</strong> : null}
+        <span className="v3-recipe-heat" aria-label={`맵기 ${heat}단계`}>
+          <em>맵기</em>
+          {Array.from({ length: 5 }, (_, i) => (
+            <i key={i} className={`v3-recipe-chili${i < heat ? ' is-on' : ''}`} />
+          ))}
+        </span>
+      </div>
+
+      <div className="v3-recipe-ings">
+        <span className="v3-recipe-label">재료</span>
+        <ul>
+          {sorted.map((r, i) => (
+            <li key={r.topic}>
+              <b>{r.topic}</b>
+              <em>{pcts[i]}%</em>
+              <span>
+                {r.count}문항
+                {r.points > 0 ? ` · ${formatPoints(r.points)}점` : ''}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {steps.length > 0 ? (
+        <div className="v3-recipe-steps">
+          <span className="v3-recipe-label">조리 순서</span>
+          <ol>
+            {steps.map((s, i) => (
+              <li key={`st-${i}`}>{markdownToHighlighted(s, `v3-rp-st-${i}`)}</li>
+            ))}
+          </ol>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 const footerBlock: CommentaryBlockDef = {
   id: 'footer',
   label: '푸터',
@@ -2246,6 +2666,9 @@ export const COMMENTARY_BLOCKS: CommentaryBlockDef[] = [
   statRadarBlock,
   rxCardBlock,
   bentoGridBlock,
+  gradeSheetBlock,
+  comicStripBlock,
+  recipeCardBlock,
   pullQuoteBlock,
   chartsBlock,
   finalStrategyBlock,
