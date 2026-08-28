@@ -2032,6 +2032,87 @@ body {
   font-weight: 700; text-align: center;
 }
 
+/* ── V3 Wrapped 스토리(storySlide) ────────────────────────────────────────
+   한 화면에 숫자 하나. 각 장이 `.v3` 의 **최상위 형제**라 블로그 캡처에서
+   장마다 이미지 한 장이 된다(감싸면 한 덩어리로 합쳐진다 — registry 주석 참조).
+   비율은 aspect-ratio 로 잡아 폭이 달라져도 9:16 / 1:1 이 유지된다. */
+.v3-story {
+  /* 장 번호를 절대배치하므로 기준 컨테이닝 블록이 반드시 여기여야 한다.
+     빠뜨리면 번호가 조상 기준으로 잡혀 카드 한가운데 떠 버린다. */
+  position: relative;
+  /* 카드 폭 기준 단위(cqw)를 쓰기 위한 컨테이닝 컨텍스트.
+     지면 토큰(--v3-hero-num)은 A4 같은 본문 기준이라 9:16 카드에서는 작고,
+     vw 는 뷰포트 기준이라 고정폭 문서·zoom 미리보기에서 어긋난다. */
+  container-type: inline-size;
+  margin: 14px var(--v3-gutter);
+  padding: 8% 9%;
+  background: var(--v3-surface-dark, #12100E);
+  color: var(--v3-on-dark);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  overflow: hidden;
+}
+.v3-story-portrait { aspect-ratio: 9 / 16; }
+.v3-story-square { aspect-ratio: 1 / 1; }
+/* 장 번호 — 넘기는 형식임을 알리는 유일한 크롬 */
+.v3-story-idx {
+  position: absolute;
+  top: 6%;
+  left: 9%;
+  font-family: var(--v3-font-label);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  color: var(--v3-on-dark-soft);
+  opacity: 0.55;
+}
+.v3-story-big {
+  font-family: var(--v3-font-num);
+  /* 크기는 길이 등급으로 (registry::bigSizeClass) — 단일 값이면 짧은 숫자는 작고 긴 값은 넘친다 */
+  font-size: 24cqw;
+  line-height: 0.9;
+  color: var(--v3-gold);
+  display: block;
+  word-break: keep-all;
+}
+.v3-story-big-xl { font-size: 46cqw; }
+.v3-story-big-lg { font-size: 36cqw; }
+.v3-story-big-md { font-size: 24cqw; }
+.v3-story-big-sm { font-size: 15cqw; }
+.v3-story-big em {
+  font-style: normal;
+  font-size: 0.32em;
+  color: var(--v3-on-dark-soft);
+  margin-left: 0.08em;
+}
+.v3-story-label {
+  font-family: var(--v3-font-label);
+  font-size: clamp(13px, 2.4cqw, 24px);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--v3-on-dark);
+  word-break: keep-all;
+}
+.v3-story-body {
+  font-family: var(--v3-font-body);
+  font-size: clamp(13px, 2.3cqw, 22px);
+  line-height: 1.75;
+  color: var(--v3-on-dark-soft);
+  word-break: keep-all;
+}
+/* 표지 — 숫자 대신 시험 이름이 주인공 */
+.v3-story-cover { justify-content: flex-end; }
+.v3-story-title {
+  font-family: var(--v3-font-head);
+  font-size: clamp(26px, 4.4vw, 46px);
+  line-height: 1.25;
+  font-weight: 700;
+  color: var(--v3-on-dark);
+  word-break: keep-all;
+}
+
 /* ── V3 시험지 히트맵(heatmapGrid) ────────────────────────────────────────
    집계 막대가 아니라 시험지 배열 자체를 그린다. 칸 수가 시험마다 다르므로
    auto-fill 로 폭에 맞춰 접히게 두고(고정 열 수 금지), 칸은 정사각을 유지한다. */

@@ -15,6 +15,7 @@ import { Fragment } from 'react';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { weightedAverageDifficulty } from '@/lib/exam-analysis/difficulty';
+import { sumPoints } from '@/lib/exam-analysis/points';
 import { renderInlineMath } from '@/lib/exam-analysis/rendering';
 import { normalizeFeatureCallout } from '@/lib/exam-analysis/feature-callout';
 import type {
@@ -978,6 +979,177 @@ function renderHeatmap(props: BlockRenderProps, showPoints: boolean) {
   );
 }
 
+// ── Wrapped 스토리 ───────────────────────────────────────────────────────
+// 다른 블록이 "한 지면에 모든 것"이라면 이건 **한 화면에 숫자 하나**다.
+// 스크롤이 아니라 넘기며 보는 형식이라 학부모·학생에게 그대로 공유된다.
+//
+// ⚠️ 슬라이드를 <div> 하나로 감싸면 안 된다. 블로그 캡처가 `.v3` 의 **최상위 자식마다**
+//    PNG 를 뜨므로, 감싸는 순간 8~10장이 거대한 이미지 한 장으로 합쳐진다.
+//    Fragment 로 슬라이드를 최상위 형제로 흘려보내면 장마다 이미지 한 장이 된다.
+//    (types.ts 가 이 반환 형태를 명시적으로 허용한다.)
+
+interface StoryCard {
+  key: string;
+  /** 화면을 채우는 값 — 슬라이드당 하나 */
+  big: string;
+  /** big 뒤에 붙는 작은 단위 (5, %, 점 …) */
+  unit?: string;
+  label: string;
+  body?: string;
+}
+
+/** 슬라이드 목록 — 데이터가 없는 장은 통째로 빠진다(빈 화면을 넘기게 두지 않는다) */
+function buildStoryCards(props: BlockRenderProps): StoryCard[] {
+  const { commentary: c, questions: qs, meta } = props;
+  const cards: StoryCard[] = [];
+
+  const total = qs.length;
+  const killer = qs.filter((q) => Number(normDiff(String(q.difficulty))) >= 4);
+  const essays = qs.filter((q) => q.question_format === 'essay' || /서답|서술/.test(String(q.question_number ?? '')));
+  const essayPts = sumPoints(essays.map((q) => q.points));
+  const avg = weightedAverageDifficulty(qs);
+
+  if (avg.avg > 0) {
+    cards.push({
+      key: 'diff',
+      big: avg.avg.toFixed(1),
+      unit: '/5',
+      label: '이번 시험 평균 난이도',
+      body: c.blog_dek,
+    });
+  }
+  if (total > 0) {
+    cards.push({
+      key: 'killer',
+      big: String(killer.length),
+      unit: `/${total}`,
+      label: '심화 이상 문항',
+      body: killer.length
+        ? `${total}문항 중 ${killer.length}문항이 4단계 이상이었습니다.`
+        : '4단계 이상 문항은 출제되지 않았습니다.',
+    });
+  }
+  if (essays.length > 0 && meta.totalPoints > 0) {
+    cards.push({
+      key: 'essay',
+      big: String(essayPts),
+      unit: '점',
+      label: `서술형 ${essays.length}문항 배점`,
+      body: `만점 ${meta.totalPoints}점 가운데 ${Math.round((essayPts / meta.totalPoints) * 100)}%가 서술형입니다.`,
+    });
+  }
+
+  // 가장 약했던 단원 — 정답률 데이터가 있으면 그걸, 없으면 AI 가 꼽은 보완점
+  const weakest = (c.topic_performance ?? []).filter((t) => t.label === 'weak').sort((a, b) => a.correct_rate - b.correct_rate)[0];
+  if (weakest) {
+    cards.push({
+      key: 'weak',
+      big: `${Math.round(weakest.correct_rate * 100)}`,
+      unit: '%',
+      label: `가장 어려웠던 단원 · ${weakest.topic}`,
+      body: `${weakest.question_count}문항이 나왔고 정답률이 가장 낮았습니다.`,
+    });
+  } else if (c.improvement_areas[0]) {
+    cards.push({ key: 'weak', big: '1', unit: '순위', label: '가장 먼저 보완할 것', body: c.improvement_areas[0] });
+  }
+
+  const notable = c.notable_questions?.[0];
+  if (notable?.comment) {
+    cards.push({ key: 'notable', big: String(notable.question_number), unit: '번', label: '주목할 문항', body: notable.comment });
+  }
+
+  const next = c.v4_final_strategy?.[0]?.action ?? c.teaching_recommendations?.[0]?.topic;
+  if (next) {
+    cards.push({ key: 'next', big: '1', unit: '가지', label: '다음 시험까지 할 일', body: next });
+  }
+
+  return cards;
+}
+
+function summaryStory(props: BlockRenderProps) {
+  const n = buildStoryCards(props).length;
+  return n ? `${props.meta.examTitle} — 숫자로 보는 요약 ${n}장` : '';
+}
+
+const storySlideBlock: CommentaryBlockDef = {
+  id: 'storySlide',
+  label: '스토리 슬라이드',
+  description: '한 화면에 숫자 하나 — 넘기며 보는 9:16 카드',
+  defaultEnabled: false,
+  // 섹션 번호를 쓰지 않는다. 한 블록이 여러 장을 뱉는데 번호는 블록당 하나만 배정되므로,
+  // 번호를 받으면 첫 장에만 붙고 나머지는 비어 어긋나 보인다. 장 번호는 내부에서 센다.
+  numberCount: () => 0,
+  available: (_c, questions) => questions.length > 0,
+  summary: summaryStory,
+  variants: [
+    {
+      id: 'story',
+      label: '9:16 스토리',
+      hint: '세로 카드 — 공유용',
+      render: (props) => renderStory(props, 'v3-story-portrait'),
+    },
+    {
+      id: 'square',
+      label: '정사각',
+      hint: '블로그 본문에 붙이기 좋은 1:1',
+      render: (props) => renderStory(props, 'v3-story-square'),
+    },
+  ],
+};
+
+/** big 문자열 길이 → 크기 등급. 한글은 폭이 넓어 2배로 센다. */
+function bigSizeClass(big: string): 'xl' | 'lg' | 'md' | 'sm' {
+  const width = [...big].reduce((n, ch) => n + (/[가-힣]/.test(ch) ? 2 : 1), 0);
+  if (width <= 2) return 'xl';
+  if (width <= 3) return 'lg';
+  if (width <= 5) return 'md';
+  return 'sm';
+}
+
+function renderStory(props: BlockRenderProps, shapeClass: string) {
+  const cards = buildStoryCards(props);
+  if (!cards.length) return null;
+  const { meta } = props;
+  const totalSlides = cards.length + 1; // 표지 포함
+
+  return (
+    <Fragment>
+      {/* 표지 — 나머지 장과 같은 최상위 형제여야 캡처가 장마다 쪼개진다 */}
+      <div
+        className={`v3-story ${shapeClass} v3-story-cover`}
+        data-block-id="storySlide-0"
+        data-block-summary={summaryStory(props)}
+      >
+        <span className="v3-story-idx">1 / {totalSlides}</span>
+        <span className="v3-story-label">{[meta.schoolName, meta.grade].filter(Boolean).join(' ')}</span>
+        <strong className="v3-story-title">{meta.examTitle}</strong>
+        <span className="v3-story-body">숫자로 보는 이번 시험</span>
+      </div>
+
+      {cards.map((card, i) => (
+        <div
+          key={card.key}
+          className={`v3-story ${shapeClass}`}
+          data-block-id={`storySlide-${i + 1}`}
+          data-block-summary={`${card.label} — ${card.big}${card.unit ?? ''}`}
+        >
+          <span className="v3-story-idx">
+            {i + 2} / {totalSlides}
+          </span>
+          {/* 숫자 크기는 길이로 나눈다 — big 이 "3.8" 일 때와 "서답형6" 일 때 같은 크기를 쓰면
+              전자는 작아 보이고 후자는 카드 밖으로 넘친다. */}
+          <span className={`v3-story-big v3-story-big-${bigSizeClass(card.big)}`}>
+            {card.big}
+            {card.unit && <em>{card.unit}</em>}
+          </span>
+          <span className="v3-story-label">{card.label}</span>
+          {card.body && <span className="v3-story-body">{markdownToHighlighted(card.body, `v3-st-${card.key}`)}</span>}
+        </div>
+      ))}
+    </Fragment>
+  );
+}
+
 const footerBlock: CommentaryBlockDef = {
   id: 'footer',
   label: '푸터',
@@ -1011,6 +1183,7 @@ export const COMMENTARY_BLOCKS: CommentaryBlockDef[] = [
   keyQuestionsBlock,
   letterBodyBlock,
   heatmapGridBlock,
+  storySlideBlock,
   pullQuoteBlock,
   chartsBlock,
   finalStrategyBlock,
