@@ -16,6 +16,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import { generateText } from './shared/commentary-llm';
 import katex from 'katex';
 import type { AnalyzedQuestion } from './types';
 import type { CommentaryResult } from './agents/commentary-agent';
@@ -532,32 +533,17 @@ export async function generateExamArticle(
   input: ArticleGenerationInput,
   variables: ArticleVariables = {},
 ): Promise<ArticleGenerationResult> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error('ANTHROPIC_API_KEY 환경변수가 설정되지 않았습니다');
-  }
-
-  const client = new Anthropic({ apiKey });
   const { prompt, archetype, blueprintInfo } = buildArticlePrompt(input, variables);
 
-  const response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    // 16K 토큰: 한글 본문(약 2,500~3,200자) + JSON 오버헤드 + HTML 마크업 여유
-    max_tokens: 16384,
+  // 16K 토큰: 한글 본문(약 2,500~3,200자) + JSON 오버헤드 + HTML 마크업 여유
+  const { text } = await generateText({
+    label: 'article',
+    user: prompt,
+    maxTokens: 16384,
     temperature: 0.75,
-    messages: [{ role: 'user', content: prompt }],
   });
 
-  const text = response.content
-    .filter((block): block is Anthropic.TextBlock => block.type === 'text')
-    .map((block) => block.text)
-    .join('');
-
   if (!text) throw new Error('AI 응답이 비어있습니다');
-
-  if (response.stop_reason === 'max_tokens') {
-    console.warn('[article-generator] max_tokens 도달 — 응답이 잘렸을 수 있음. partial 파싱 시도.');
-  }
 
   const raw = extractJson(text);
   return buildResult(raw, archetype, blueprintInfo);
@@ -593,10 +579,14 @@ export async function generateExamArticleStream(
 
   let fullText = '';
 
+  // ⚠️ 이 경로만 Anthropic 직결이다 — 토큰 단위 delta 가 필요해 commentary-llm(비스트리밍)을
+  //    쓸 수 없다. 기능 자체가 비활성(V2_ARTICLE_ENABLED=false)이라 이중 프로바이더 스트리밍을
+  //    새로 만들지 않았다. **재활성화한다면** 여기부터 게이트웨이에 스트리밍을 추가할 것.
+  //    Sonnet 5 규격: temperature 금지(400), thinking 생략 시 adaptive 로 켜져 예산을 잠식.
   const stream = client.messages.stream({
-    model: 'claude-sonnet-4-6',
+    model: 'claude-sonnet-5',
     max_tokens: 16384,
-    temperature: 0.75,
+    thinking: { type: 'disabled' },
     messages: [{ role: 'user', content: prompt }],
   });
 

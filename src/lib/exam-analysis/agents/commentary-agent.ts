@@ -5,7 +5,7 @@
  * - 출제 경향, 난이도 분석, 지도 방향 제시
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import { generateText } from '../shared/commentary-llm';
 import { normalizeDifficultyKey as normalizeDiff } from '../shared/difficulty';
 import { BaseAgent, deepNormalizeMath, type AgentInput } from './base-agent';
 import type { AgentType } from '../constants';
@@ -1044,29 +1044,18 @@ ${phases}
   // (overall_comment, 강·약점, 등급전략, 주요문항, 지도권장, 주변/연도 비교 = V3가 읽는 분석 기반)
   // 화면엔 표시되지 않음 (V3 단일 스타일). generate-metadata 라우트가 호출.
   async generateMetadata(input: AgentInput): Promise<CommentaryResult> {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      throw new Error('ANTHROPIC_API_KEY 환경변수가 설정되지 않았습니다');
-    }
-    const client = new Anthropic({ apiKey });
     const prompt = this.buildPrompt(input);
 
-    // 24K + 스트리밍 — max_tokens>~16K는 SDK가 non-streaming 거부 (messages.stream 필수)
-    const stream = client.messages.stream({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 24576,
+    const { text, truncated } = await generateText({
+      label: 'metadata',
+      user: prompt,
+      maxTokens: 24576,
       temperature: this.temperature,
-      messages: [{ role: 'user', content: prompt }],
+      json: true,
     });
-    const response = await stream.finalMessage();
-
-    const text = response.content
-      .filter((block): block is Anthropic.TextBlock => block.type === 'text')
-      .map((block) => block.text)
-      .join('');
     if (!text) throw new Error('AI 응답이 비어있습니다');
-    if (response.stop_reason === 'max_tokens') {
-      console.warn('[commentary-agent metadata] max_tokens 도달 — 응답이 잘렸을 수 있음. partial 파싱 시도.');
+    if (truncated) {
+      console.warn('[commentary-agent metadata] 출력 상한 도달 — 응답이 잘렸을 수 있음. partial 파싱 시도.');
     }
 
     const result = this.extractJson(text);
@@ -1074,14 +1063,9 @@ ${phases}
     return this.parseResponse(normalized, input.basicAnalysis.questions) as unknown as CommentaryResult;
   }
 
-  // ── Claude Sonnet으로 AI 분석 오버라이드 (총평 생성 = V3 단독 호출) ──
+  // ── 총평 생성 = V3 단독 호출 (모델 선택·폴백은 commentary-llm 이 담당) ──
   // base는 orchestrator가 주입한 메타데이터(input.metadata)를 재사용. 없으면 즉석 생성(폴백).
   protected async aiAnalysis(input: AgentInput): Promise<Record<string, unknown>> {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      throw new Error('ANTHROPIC_API_KEY 환경변수가 설정되지 않았습니다');
-    }
-
     // base(메타데이터): 분석 직후 백그라운드로 선생성된 것을 orchestrator가 input.metadata로 주입 → 재사용.
     // 없으면(구버전 분석본 등) 즉석 생성 — 기존 동작과 동일, 단지 한 번 더 호출(폴백).
     const injectedMeta = (input as unknown as { metadata?: CommentaryResult }).metadata;
@@ -1092,7 +1076,7 @@ ${phases}
     // V3 신규 필드 호출 (메타데이터를 scaffolding으로). 실패해도 base만 반환 — graceful degradation.
     let v3: V3Extension = {};
     try {
-      v3 = await this.generateV3Extension(input, base, apiKey);
+      v3 = await this.generateV3Extension(input, base);
     } catch (e) {
       console.warn('[commentary-agent V3] 확장 실패, base만 반환:', e instanceof Error ? e.message : e);
     }
@@ -1100,39 +1084,29 @@ ${phases}
     return { ...base, ...v3 } as unknown as Record<string, unknown>;
   }
 
-  // ── V3 신규 필드 별도 Claude 호출 (Two-pass) ──
+  // ── V3 신규 필드 별도 호출 (Two-pass) ──
   // Phase 0 시안 단계에서 검증된 프롬프트와 정규화 패턴 사용 (scripts/generate-v3-preview.ts 기반)
 
   private async generateV3Extension(
     input: AgentInput,
     base: CommentaryResult,
-    apiKey: string,
   ): Promise<V3Extension> {
-    const client = new Anthropic({ apiKey });
     const userPrompt = this.buildV3UserPrompt(input, base);
 
     // V3 강화 (2026-05-29): blog_* + v4_* 5개 필드 통합 생성 → 출력량 증가로 max_tokens 24576.
-    // ⚠️ max_tokens가 크면(>~16K) Anthropic SDK가 non-streaming 호출을 거부
-    //   ("Streaming is required for operations that may take longer than 10 minutes") →
-    //   반드시 streaming(messages.stream + finalMessage)으로 호출해야 함.
-    //   (이 누락으로 V3 확장이 매번 throw → base만 반환 → blog_qa 없는 '구버전 총평'이 생성됨)
-    const stream = client.messages.stream({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 24576,
-      temperature: 0.6,
+    // 스트리밍·추론 토큰 여유·폴백은 commentary-llm 이 처리한다.
+    const { text, truncated } = await generateText({
+      label: 'v3-extension',
       system: buildSystemPromptV3(subjectLabel(input)),
-      messages: [{ role: 'user', content: userPrompt }],
+      user: userPrompt,
+      maxTokens: 24576,
+      temperature: 0.6,
+      json: true,
     });
-    const response = await stream.finalMessage();
 
-    if (response.stop_reason === 'max_tokens') {
-      console.warn('[commentary-agent V3] max_tokens 도달 — 응답이 잘렸을 수 있음');
+    if (truncated) {
+      console.warn('[commentary-agent V3] 출력 상한 도달 — 응답이 잘렸을 수 있음');
     }
-
-    const text = response.content
-      .filter((b): b is Anthropic.TextBlock => b.type === 'text')
-      .map((b) => b.text)
-      .join('');
 
     if (!text) throw new Error('V3 응답 비어있음');
 
@@ -1271,29 +1245,20 @@ ${phases}
    *   - examSemester: number (1 또는 2)
    */
   async generateV4Extension(input: AgentInput): Promise<V4Extension> {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      throw new Error('ANTHROPIC_API_KEY 환경변수가 설정되지 않았습니다');
-    }
-    const client = new Anthropic({ apiKey });
     const userPrompt = this.buildV4UserPrompt(input);
 
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 16384,
-      temperature: 0.5,
+    const { text, truncated } = await generateText({
+      label: 'v4-extension',
       system: buildSystemPromptV4(subjectLabel(input)),
-      messages: [{ role: 'user', content: userPrompt }],
+      user: userPrompt,
+      maxTokens: 16384,
+      temperature: 0.5,
+      json: true,
     });
 
-    if (response.stop_reason === 'max_tokens') {
-      console.warn('[commentary-agent V4] max_tokens 도달 — 응답이 잘렸을 수 있음');
+    if (truncated) {
+      console.warn('[commentary-agent V4] 출력 상한 도달 — 응답이 잘렸을 수 있음');
     }
-
-    const text = response.content
-      .filter((b): b is Anthropic.TextBlock => b.type === 'text')
-      .map((b) => b.text)
-      .join('');
 
     if (!text) throw new Error('V4 응답 비어있음');
 
