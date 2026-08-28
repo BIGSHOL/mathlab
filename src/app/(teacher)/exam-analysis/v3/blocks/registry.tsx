@@ -1694,6 +1694,518 @@ function renderChat(props: BlockRenderProps, leftAlign: boolean) {
   );
 }
 
+// ── 스카우트 카드 (statRadar) ────────────────────────────────────────────
+// 선수 카드: SVG 레이더 + 스탯 4~5개 + 스카우트 노트 3줄.
+// 시간 축을 두지 않는 이유: 문항 소요시간 필드가 없다. 없으면 가짜 축이 된다.
+// 영문 enum 은 라벨 표에만 한글을 두고 raw 값은 정규화 키로만 쓴다.
+
+const ABILITY_AXES = [
+  { key: 'calculation', label: '계산력' },
+  { key: 'understanding', label: '이해력' },
+  { key: 'problem_solving', label: '문제해결력' },
+  { key: 'reasoning', label: '추론력' },
+] as const;
+
+function normAbilityKey(v: unknown): string {
+  return String(v ?? '').toLowerCase().replace(/-/g, '_');
+}
+
+interface ScoutStat {
+  key: string;
+  label: string;
+  value: number;
+}
+
+function collectScoutStats(questions: AnalyzedQuestion[]): ScoutStat[] {
+  const total = questions.length;
+  if (total === 0) return [];
+
+  const abilityCounts: Record<string, number> = {
+    calculation: 0,
+    understanding: 0,
+    problem_solving: 0,
+    reasoning: 0,
+  };
+  let hardCount = 0;
+  let essayCount = 0;
+  for (const q of questions) {
+    const k = normAbilityKey(q.ability_domain);
+    if (k in abilityCounts) abilityCounts[k] += 1;
+    if (questionDiff(q) >= 4) hardCount += 1;
+    if (isEssayQuestion(q)) essayCount += 1;
+  }
+
+  const stats: ScoutStat[] = [];
+  for (const ax of ABILITY_AXES) {
+    const n = abilityCounts[ax.key];
+    // 실제 문항이 있는 축만 — 0% 축을 그리면 "없는 능력"이 "약한 능력"으로 읽힌다.
+    if (n > 0) stats.push({ key: ax.key, label: ax.label, value: Math.round((n / total) * 100) });
+  }
+  if (hardCount > 0) {
+    stats.push({ key: 'hard', label: '심화', value: Math.round((hardCount / total) * 100) });
+  }
+  if (essayCount > 0) {
+    stats.push({ key: 'essay', label: '서술형', value: Math.round((essayCount / total) * 100) });
+  }
+  // 4~5축이 카드로 읽힌다. 6개면 서술형을 접어 심화(킬러)를 남긴다.
+  return stats.slice(0, 5);
+}
+
+function clipLine(s: string, max: number): string {
+  const t = s.replace(/\s+/g, ' ').trim();
+  return t.length <= max ? t : `${t.slice(0, max - 1)}…`;
+}
+
+function scoutNotes(c: CommentaryResult): { label: string; text: string }[] {
+  const out: { label: string; text: string }[] = [];
+  if (c.strength_areas?.[0]) out.push({ label: '강점', text: clipLine(c.strength_areas[0], 86) });
+  if (c.improvement_areas?.[0]) out.push({ label: '보완', text: clipLine(c.improvement_areas[0], 86) });
+  const s0 = c.v4_final_strategy?.[0];
+  const next = s0 ? [s0.area, s0.action].filter(Boolean).join(' — ') : '';
+  if (next) out.push({ label: '다음', text: clipLine(next, 86) });
+  return out.slice(0, 3);
+}
+
+function summaryScout(props: BlockRenderProps) {
+  const bits = collectScoutStats(props.questions).map((s) => `${s.label} ${s.value}%`);
+  return bits.length ? `스카우트 카드 — ${bits.join(', ')}` : '';
+}
+
+function radarPolygon(values: number[], max: number, cx: number, cy: number, r: number): string {
+  const n = values.length;
+  if (n === 0 || max <= 0) return '';
+  return values
+    .map((v, i) => {
+      const rr = (v / max) * r;
+      const a = -Math.PI / 2 + (i * 2 * Math.PI) / n;
+      return `${(cx + rr * Math.cos(a)).toFixed(1)},${(cy + rr * Math.sin(a)).toFixed(1)}`;
+    })
+    .join(' ');
+}
+
+function ScoutRadar({ stats }: { stats: ScoutStat[] }) {
+  const n = stats.length;
+  const cx = 100;
+  const cy = 100;
+  const r = 72;
+  const max = Math.max(...stats.map((s) => s.value), 1);
+  const rings = [0.25, 0.5, 0.75, 1];
+  const dataPts = radarPolygon(
+    stats.map((s) => s.value),
+    max,
+    cx,
+    cy,
+    r,
+  );
+
+  return (
+    <svg
+      className="v3-scout-svg"
+      viewBox="0 0 200 200"
+      role="img"
+      aria-label={stats.map((s) => `${s.label} ${s.value}%`).join(', ')}
+    >
+      {rings.map((k) => (
+        <polygon
+          key={k}
+          points={radarPolygon(Array(n).fill(max * k) as number[], max, cx, cy, r)}
+          fill="none"
+          stroke="var(--v3-line-soft)"
+          strokeWidth="1"
+        />
+      ))}
+      {Array.from({ length: n }, (_, i) => {
+        const a = -Math.PI / 2 + (i * 2 * Math.PI) / n;
+        return (
+          <line
+            key={i}
+            x1={cx}
+            y1={cy}
+            x2={(cx + r * Math.cos(a)).toFixed(1)}
+            y2={(cy + r * Math.sin(a)).toFixed(1)}
+            stroke="var(--v3-line-soft)"
+            strokeWidth="1"
+          />
+        );
+      })}
+      {n >= 3 && dataPts ? (
+        <polygon
+          points={dataPts}
+          fill="var(--v3-accent)"
+          fillOpacity="0.18"
+          stroke="var(--v3-accent)"
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+      ) : null}
+      {n >= 3
+        ? stats.map((s, i) => {
+            const rr = (s.value / max) * r;
+            const a = -Math.PI / 2 + (i * 2 * Math.PI) / n;
+            return (
+              <circle
+                key={s.key}
+                cx={(cx + rr * Math.cos(a)).toFixed(1)}
+                cy={(cy + rr * Math.sin(a)).toFixed(1)}
+                r="3.5"
+                fill="var(--v3-paper)"
+                stroke="var(--v3-accent)"
+                strokeWidth="2"
+              />
+            );
+          })
+        : null}
+    </svg>
+  );
+}
+
+const statRadarBlock: CommentaryBlockDef = {
+  id: 'statRadar',
+  label: '스카우트 카드',
+  description: '능력 레이더 · 스탯 · 스카우트 노트 3줄',
+  // 스카우트 프리셋 전용 — 기존 문서 하단에 선수 카드가 붙으면 총평이 두 벌이 된다
+  defaultEnabled: false,
+  available: (_c, questions) => collectScoutStats(questions).length > 0,
+  summary: summaryScout,
+  variants: [
+    {
+      id: 'card',
+      label: '선수 카드',
+      hint: '레이더와 스탯을 가로로 — 기본',
+      render: (props) => renderScout(props, false),
+    },
+    {
+      id: 'stack',
+      label: '세로',
+      hint: '레이더 위, 스탯 아래',
+      render: (props) => renderScout(props, true),
+    },
+  ],
+};
+
+function renderScout(props: BlockRenderProps, stack: boolean) {
+  const stats = collectScoutStats(props.questions);
+  if (!stats.length) return null;
+  const notes = scoutNotes(props.commentary);
+  const { meta } = props;
+  const ovr = weightedAverageDifficulty(props.questions).avg;
+  const who = [meta.schoolName, meta.grade].filter(Boolean).join(' ');
+
+  return (
+    <div className={`v3-scout${stack ? ' v3-scout-stack' : ''}`} {...blockAttrs('statRadar', summaryScout(props))}>
+      <div className="v3-scout-head">
+        <span className="v3-scout-kicker">스카우트 리포트</span>
+        <strong className="v3-scout-name">{meta.examTitle}</strong>
+        {who ? <span className="v3-scout-who">{who}</span> : null}
+        {ovr > 0 ? (
+          <span className="v3-scout-ovr">
+            <em>{ovr.toFixed(1)}</em>
+            <small>종합</small>
+          </span>
+        ) : null}
+      </div>
+      <div className="v3-scout-body">
+        {stats.length >= 3 ? (
+          <div className="v3-scout-radar">
+            <ScoutRadar stats={stats} />
+          </div>
+        ) : null}
+        <ul className="v3-scout-stats">
+          {stats.map((s) => (
+            <li key={s.key}>
+              <span>{s.label}</span>
+              <b>
+                {s.value}
+                <i>%</i>
+              </b>
+            </li>
+          ))}
+        </ul>
+      </div>
+      {notes.length > 0 ? (
+        <div className="v3-scout-notes">
+          {notes.map((n) => (
+            <p key={n.label}>
+              <b>{n.label}</b>
+              {markdownToHighlighted(n.text, `v3-sc-${n.label}`)}
+            </p>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// ── 처방전 (rxCard) ─────────────────────────────────────────────────────
+// 진단 / 처방 / 예후 3칸. 빈 칸은 통째로 접는다 — 빈 처방전이 되면 신뢰가 깨진다.
+// 진단 단원은 topic 마지막 조각(중단원)으로 묶는다. 대단원으로 묶으면 한 시험이
+// 2~3덩어리로 뭉쳐 "어디에 심화가 몰렸는지"가 안 보인다 (weatherStrip 과 같은 이유).
+
+function collectKillerClusters(questions: AnalyzedQuestion[]): { topic: string; count: number }[] {
+  const map = new Map<string, number>();
+  for (const q of questions) {
+    if (questionDiff(q) < 4) continue;
+    const topic = topicMidUnit(q.topic);
+    map.set(topic, (map.get(topic) ?? 0) + 1);
+  }
+  return [...map.entries()]
+    .map(([topic, count]) => ({ topic, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+function rxPrescription(c: CommentaryResult): string[] {
+  const fromAreas = (c.improvement_areas ?? []).filter(Boolean).slice(0, 3);
+  if (fromAreas.length) return fromAreas;
+  return (c.v4_final_strategy ?? [])
+    .map((s) => s.area)
+    .filter(Boolean)
+    .slice(0, 3);
+}
+
+function rxPrognosis(c: CommentaryResult): string {
+  return (c.conclusion?.body || c.v4_final_strategy?.[0]?.action || '').trim();
+}
+
+interface RxCol {
+  key: 'dx' | 'rx' | 'px';
+  title: string;
+  lines: string[];
+}
+
+function collectRxCols(c: CommentaryResult, questions: AnalyzedQuestion[]): RxCol[] {
+  const cols: RxCol[] = [];
+  const dx = collectKillerClusters(questions);
+  if (dx.length) {
+    cols.push({
+      key: 'dx',
+      title: '진단',
+      lines: dx.slice(0, 4).map((d) => `${d.topic} · 심화 ${d.count}문항`),
+    });
+  }
+  const rx = rxPrescription(c);
+  if (rx.length) cols.push({ key: 'rx', title: '처방', lines: rx });
+  const px = rxPrognosis(c);
+  if (px) cols.push({ key: 'px', title: '예후', lines: [px] });
+  return cols;
+}
+
+function summaryRx(props: BlockRenderProps) {
+  const cols = collectRxCols(props.commentary, props.questions);
+  return cols.length ? `처방전 — ${cols.map((c) => c.title).join(' · ')}` : '';
+}
+
+const rxCardBlock: CommentaryBlockDef = {
+  id: 'rxCard',
+  label: '처방전',
+  description: '진단 · 처방 · 예후 3칸. 빈 칸은 접힘',
+  defaultEnabled: false,
+  available: (c, questions) => collectRxCols(c, questions).length > 0,
+  summary: summaryRx,
+  variants: [
+    {
+      id: 'sheet',
+      label: '처방전',
+      hint: '가로 3칸 — 기본',
+      render: (props) => renderRx(props, false),
+    },
+    {
+      id: 'stack',
+      label: '세로',
+      hint: '칸을 아래로 쌓음',
+      render: (props) => renderRx(props, true),
+    },
+  ],
+};
+
+function renderRx(props: BlockRenderProps, stack: boolean) {
+  const cols = collectRxCols(props.commentary, props.questions);
+  if (!cols.length) return null;
+  const { meta, copy } = props;
+  const who = [meta.schoolName, meta.grade, meta.examTitle].filter(Boolean).join(' · ');
+
+  return (
+    <div className={`v3-rx${stack ? ' v3-rx-stack' : ''}`} {...blockAttrs('rxCard', summaryRx(props))}>
+      <div className="v3-rx-mark" aria-hidden>
+        Rx
+      </div>
+      <div className="v3-rx-head">
+        <span className="v3-rx-kicker">처방전</span>
+        {who ? <strong className="v3-rx-who">{who}</strong> : null}
+      </div>
+      <div className="v3-rx-cols">
+        {cols.map((col) => (
+          <div key={col.key} className="v3-rx-col">
+            <span className="v3-rx-col-title">{col.title}</span>
+            {col.lines.map((line, i) => (
+              <p key={`${col.key}-${i}`}>{markdownToHighlighted(line, `v3-rx-${col.key}-${i}`)}</p>
+            ))}
+          </div>
+        ))}
+      </div>
+      <div className="v3-rx-sign">
+        <span>{meta.analyzedAt ? new Date(meta.analyzedAt).toLocaleDateString('ko-KR') : ''}</span>
+        <span className="v3-rx-sign-line">{copy.author}</span>
+      </div>
+    </div>
+  );
+}
+
+// ── 벤토 그리드 (bentoGrid) ──────────────────────────────────────────────
+// 위계는 타일 크기만으로. 색·테두리로 중요도를 나누면 "큰 칸"이 아니라
+// "빨간 칸"이 되고, 다크 테마에서 겸용 토큰이 먼저 깨진다.
+// 값은 이미 있는 집계만 재조합한다 — 새 분석 필드를 만들지 않는다.
+
+interface BentoTile {
+  key: string;
+  size: 'hero' | 'sm' | 'wide';
+  kicker: string;
+  value: string;
+  unit?: string;
+  caption?: string;
+}
+
+function mostTestedTopic(questions: AnalyzedQuestion[]): { topic: string; count: number; points: number } | null {
+  const map = new Map<string, { count: number; points: number }>();
+  for (const q of questions) {
+    const topic = topicMidUnit(q.topic);
+    const cur = map.get(topic) ?? { count: 0, points: 0 };
+    cur.count += 1;
+    cur.points += typeof q.points === 'number' ? q.points : 0;
+    map.set(topic, cur);
+  }
+  let best: { topic: string; count: number; points: number } | null = null;
+  for (const [topic, v] of map) {
+    if (!best || v.count > best.count || (v.count === best.count && v.points > best.points)) {
+      best = { topic, ...v };
+    }
+  }
+  return best;
+}
+
+function collectBentoTiles(props: BlockRenderProps): BentoTile[] {
+  const { questions: qs, commentary: c } = props;
+  if (!qs.length) return [];
+  const tiles: BentoTile[] = [];
+  const used = new Set<string>();
+
+  const clusters = collectKillerClusters(qs);
+  const top = mostTestedTopic(qs);
+  const avg = weightedAverageDifficulty(qs);
+  const essays = qs.filter(isEssayQuestion);
+  const essayPts = sumPoints(essays.map((q) => q.points));
+  const hardN = qs.filter((q) => questionDiff(q) >= 4).length;
+  const hardPct = Math.round((hardN / qs.length) * 100);
+  const one = c.blog_dek || c.v4_exam_overview?.one_liner || c.overall_comment || '';
+
+  if (clusters[0]) {
+    tiles.push({
+      key: 'killer',
+      size: 'hero',
+      kicker: '킬러 쏠림',
+      value: clusters[0].topic,
+      caption: `심화 ${clusters[0].count}문항이 이 단원에 몰렸습니다`,
+    });
+    used.add('killer');
+  } else if (top) {
+    tiles.push({
+      key: 'topic',
+      size: 'hero',
+      kicker: '최다 출제',
+      value: top.topic,
+      caption: `${top.count}문항 · ${top.points}점`,
+    });
+    used.add('topic');
+  }
+
+  if (avg.avg > 0) {
+    tiles.push({ key: 'diff', size: 'sm', kicker: '평균 난이도', value: avg.avg.toFixed(1), unit: '/5' });
+  }
+  tiles.push({ key: 'hard', size: 'sm', kicker: '심화 비중', value: String(hardPct), unit: '%' });
+  if (essays.length > 0) {
+    tiles.push({
+      key: 'essay',
+      size: 'sm',
+      kicker: '서술형 배점',
+      value: String(essayPts),
+      unit: '점',
+      caption: `${essays.length}문항`,
+    });
+  }
+  if (top && !used.has('topic')) {
+    tiles.push({
+      key: 'topic',
+      size: 'sm',
+      kicker: '최다 출제',
+      value: top.topic,
+      caption: `${top.count}문항`,
+    });
+  }
+  if (one) {
+    tiles.push({
+      key: 'line',
+      size: 'wide',
+      kicker: '한 줄 총평',
+      value: clipLine(one, 48),
+    });
+  }
+  return tiles;
+}
+
+function summaryBento(props: BlockRenderProps) {
+  const tiles = collectBentoTiles(props);
+  const hero = tiles.find((t) => t.size === 'hero');
+  return hero ? `벤토 — ${hero.kicker} ${hero.value}` : tiles.length ? '벤토 요약' : '';
+}
+
+const bentoGridBlock: CommentaryBlockDef = {
+  id: 'bentoGrid',
+  label: '벤토 그리드',
+  description: '타일 크기로만 위계. 큰 칸은 킬러, 작은 칸은 숫자',
+  defaultEnabled: false,
+  available: (_c, questions) => questions.length > 0,
+  summary: summaryBento,
+  variants: [
+    {
+      id: 'three',
+      label: '3열',
+      hint: '히어로 2×2 + KPI — 기본',
+      render: (props) => renderBento(props, false),
+    },
+    {
+      id: 'two',
+      label: '2열',
+      hint: '좁은 지면용',
+      render: (props) => renderBento(props, true),
+    },
+  ],
+};
+
+function renderBento(props: BlockRenderProps, twoCol: boolean) {
+  const tiles = collectBentoTiles(props);
+  if (!tiles.length) return null;
+
+  return (
+    <div
+      className={`v3-bento${twoCol ? ' v3-bento-two' : ''}`}
+      {...blockAttrs('bentoGrid', summaryBento(props))}
+    >
+      {tiles.map((t) => (
+        <div
+          key={t.key}
+          className={`v3-bento-tile v3-bento-${t.size}${t.key === 'line' ? ' v3-bento-copy' : ''}`}
+        >
+          <span className="v3-bento-kicker">{t.kicker}</span>
+          <strong className="v3-bento-value">
+            {t.key === 'line' ? markdownToHighlighted(t.value, 'v3-bento-line') : t.value}
+            {t.unit ? <em>{t.unit}</em> : null}
+          </strong>
+          {t.caption ? <span className="v3-bento-cap">{t.caption}</span> : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const footerBlock: CommentaryBlockDef = {
   id: 'footer',
   label: '푸터',
@@ -1731,6 +2243,9 @@ export const COMMENTARY_BLOCKS: CommentaryBlockDef[] = [
   weatherStripBlock,
   subwayMapBlock,
   bubbleThreadBlock,
+  statRadarBlock,
+  rxCardBlock,
+  bentoGridBlock,
   pullQuoteBlock,
   chartsBlock,
   finalStrategyBlock,
