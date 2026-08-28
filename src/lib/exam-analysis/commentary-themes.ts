@@ -352,6 +352,39 @@ const TERMINAL: CommentaryThemeColors = {
   diff: ['#1F8A58', '#2A78B0', '#6E7886', '#C07A12', '#C4332A'],
 };
 
+/**
+ * 칠판 — 두 번째 다크 테마. 터미널이 계기판이라면 이건 **수업 직후의 판서**다.
+ *
+ * 분필 톤(흰빛이 도는 회색)을 본문에, 노란 분필을 강조로. 터미널(청록 계기판)과
+ * 겹치지 않게 초록 지면 + 따뜻한 강조로 갈랐다.
+ * 난이도 램프는 **라벨을 지면색(어두움)으로 뒤집는 전제**로 골랐다 — globals.css 의
+ * 다크 테마 라벨 보정 참조. 흰 라벨을 유지하려면 L4 가 2.76 까지 떨어져 기준(2.8)에
+ * 걸리고, 그걸 맞추려면 심화 단계가 탁한 올리브가 되어 의미가 흐려진다.
+ * 현재 값: 트랙(paperAlt) 대비 3.02~4.49, 지면색 라벨 대비 3.43~5.11.
+ */
+const CHALKBOARD: CommentaryThemeColors = {
+  accent: '#F2C14E',
+  gold: '#F2C14E',
+  pos: '#7FBF6A',
+  ink: '#F0EDE4',
+  surfaceDark: '#101A14',
+  onDark: '#FAF8F2',
+  onDarkSoft: '#D6D2C4',
+  body: '#DAD6C8',
+  bodySoft: '#B8B4A6',
+  muted: '#8E9A8C',
+  paper: '#1B2A22',
+  paperAlt: '#22342A',
+  paperFoot: '#18261E',
+  line: '#3A4E42',
+  lineSoft: '#2C3E34',
+  conclusionBg: '#243A2C',
+  quoteLine: '#F2C14E',
+  darkLine: '#3A4E42',
+  goldGlow: 'rgba(242, 193, 78, 0.26)',
+  diff: ['#4E9E5F', '#5C8FB0', '#8A93A0', '#C98A2B', '#C05A4A'],
+};
+
 /** 플럼 — 딥플럼 서페이스 + 마젠타 강조. 아이보리 바탕의 개성파 에디토리얼. */
 const PLUM: CommentaryThemeColors = {
   accent: '#8E2F62',
@@ -389,6 +422,7 @@ export const COMMENTARY_THEMES: CommentaryTheme[] = [
   { id: 'burgundy', label: '버건디', description: '블러시 지면 + 와인 버건디 — 프리미엄 매거진 톤', colors: BURGUNDY },
   { id: 'plum', label: '플럼', description: '아이보리 지면 + 딥플럼·골드 — 개성파 프레스티지 톤', colors: PLUM },
   { id: 'terminal', label: '터미널', description: '다크 계기판 — 모노스페이스·숫자 우선', colors: TERMINAL },
+  { id: 'chalkboard', label: '칠판', description: '초록 칠판 + 분필 — 수업 직후 판서 톤', colors: CHALKBOARD },
 ];
 
 export const DEFAULT_THEME_ID = 'nyt';

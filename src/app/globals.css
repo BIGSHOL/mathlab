@@ -1144,6 +1144,33 @@ body {
   --v3-diff-4: #C07A12;
   --v3-diff-5: #C4332A;
 }
+/* 칠판 — 초록 칠판 + 분필 — 수업 직후 판서 톤 */
+.v3.v3-theme-chalkboard {
+  --v3-accent: #F2C14E;
+  --v3-gold: #F2C14E;
+  --v3-pos: #7FBF6A;
+  --v3-ink: #F0EDE4;
+  --v3-surface-dark: #101A14;
+  --v3-on-dark: #FAF8F2;
+  --v3-on-dark-soft: #D6D2C4;
+  --v3-body: #DAD6C8;
+  --v3-body-soft: #B8B4A6;
+  --v3-muted: #8E9A8C;
+  --v3-paper: #1B2A22;
+  --v3-paper-alt: #22342A;
+  --v3-paper-foot: #18261E;
+  --v3-line: #3A4E42;
+  --v3-line-soft: #2C3E34;
+  --v3-conclusion-bg: #243A2C;
+  --v3-quote-line: #F2C14E;
+  --v3-dark-line: #3A4E42;
+  --v3-gold-glow: rgba(242, 193, 78, 0.26);
+  --v3-diff-1: #4E9E5F;
+  --v3-diff-2: #5C8FB0;
+  --v3-diff-3: #8A93A0;
+  --v3-diff-4: #C98A2B;
+  --v3-diff-5: #C05A4A;
+}
 /* 골격: 매거진 — 기본 (대형 명조 헤드라인 · 넓은 여백 · 거대 섹션 번호) */
 .v3 {
   --v3-font-head: var(--font-serif-kr, 'Noto Serif KR', serif);
@@ -2070,7 +2097,13 @@ body {
 .v3.v3-theme-terminal .v3-strategy-tag,
 .v3.v3-theme-terminal .v3-qtable-badge,
 /* 형식 분포 막대는 세그먼트를 ink·muted·accent 로 칠한다(FormatBreakdown) — 셋 다 다크에선 밝다 */
-.v3.v3-theme-terminal .v3-stacked-bar-format > div {
+.v3.v3-theme-terminal .v3-stacked-bar-format > div,
+/* 칠판도 같은 이유로 라벨을 뒤집는다. 다크 테마가 늘면 여기에 선택자를 더하는 대신
+   `[data-dark]` 같은 표식을 테마에 넣는 편이 낫다 — 지금은 둘뿐이라 명시로 둔다. */
+.v3.v3-theme-chalkboard .v3-diff-stacked > div,
+.v3.v3-theme-chalkboard .v3-strategy-tag,
+.v3.v3-theme-chalkboard .v3-qtable-badge,
+.v3.v3-theme-chalkboard .v3-stacked-bar-format > div {
   color: var(--v3-paper);
 }
 
