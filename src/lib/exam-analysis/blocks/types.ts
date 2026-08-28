@@ -54,21 +54,36 @@ export interface BlockVariant {
   render: (props: BlockRenderProps) => ReactNode;
 }
 
-export type BlockId =
-  | 'header'
-  | 'kpi'
-  | 'feature'
-  | 'infographic'
-  | 'difficultyTable'
-  | 'previousComparison'
-  | 'qa'
-  | 'mainAnalysis'
-  | 'keyQuestions'
-  | 'pullQuote'
-  | 'charts'
-  | 'finalStrategy'
-  | 'conclusion'
-  | 'footer';
+/**
+ * 블록 id 전수 — **런타임 값이 원본**이고 타입은 여기서 파생된다.
+ *
+ * 유니온 타입만 두면 저장된 Json 을 검증할 방법이 없어(타입은 런타임에 사라진다)
+ * `parseTemplateConfig` 가 `as BlockId` 로 거짓 캐스팅할 수밖에 없었다 (CLAUDE.md #11 위반).
+ * 배열을 원본으로 두면 타입과 화이트리스트가 구조적으로 어긋날 수 없다.
+ */
+export const BLOCK_IDS = [
+  'header',
+  'kpi',
+  'feature',
+  'infographic',
+  'difficultyTable',
+  'previousComparison',
+  'qa',
+  'mainAnalysis',
+  'keyQuestions',
+  'pullQuote',
+  'charts',
+  'finalStrategy',
+  'conclusion',
+  'footer',
+] as const;
+
+export type BlockId = (typeof BLOCK_IDS)[number];
+
+/** 저장된 Json 의 문자열이 실제 블록 id 인지 — 좁히기(narrowing)까지 수행 */
+export function isBlockId(v: unknown): v is BlockId {
+  return typeof v === 'string' && (BLOCK_IDS as readonly string[]).includes(v);
+}
 
 export interface CommentaryBlockDef {
   id: BlockId;
@@ -77,6 +92,17 @@ export interface CommentaryBlockDef {
   description?: string;
   /** true면 사용자가 끄거나 순서를 바꿀 수 없다 (헤더/푸터) */
   locked?: boolean;
+  /**
+   * 저장된 템플릿에 이 블록이 **없을 때** 켤지 여부. `normalizeTemplate` 의 자동 추가 경로가 읽는다.
+   *
+   * ⚠️ 선택 필드(`optIn?`)로 두지 않는 이유: 새 블록을 추가하며 깜빡 빠뜨리면
+   * 다시 "전부 자동 ON" 으로 돌아가 기존 분석본 전체에 그 블록이 튀어나온다.
+   * 필수로 두어 컴파일러가 매번 판단을 강제한다.
+   *
+   * - `true`  — 기존 문서에도 소급 적용해야 하는 기본 구성 블록
+   * - `false` — 특정 프리셋(손편지·히트맵 등)에서만 쓰는 블록. 프리셋이 명시적으로 켠다.
+   */
+  defaultEnabled: boolean;
   /** 렌더에 필요한 데이터가 있는지 — false면 편집 UI에서 "데이터 없음"으로 비활성 표시 */
   available: (commentary: CommentaryResult, questions: AnalyzedQuestion[]) => boolean;
   /**

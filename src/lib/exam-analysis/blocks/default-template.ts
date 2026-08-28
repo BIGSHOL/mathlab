@@ -5,7 +5,8 @@
  * 즉 아무것도 고르지 않은 기존 분석본은 지금까지와 똑같이 보여야 한다(회귀 방지 기준).
  */
 
-import type { CommentaryTemplateConfig } from './types';
+import type { CommentaryTemplateConfig, TemplateBlockConfig } from './types';
+import { isBlockId } from './types';
 import { DEFAULT_THEME_ID } from '../commentary-themes';
 import { DEFAULT_LAYOUT_ID } from '../commentary-layouts';
 import { DEFAULT_COPY_ID } from '../commentary-copy';
@@ -36,11 +37,21 @@ export const DEFAULT_TEMPLATE: CommentaryTemplateConfig = {
 export function parseTemplateConfig(raw: unknown): CommentaryTemplateConfig {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return DEFAULT_TEMPLATE;
   const obj = raw as { themeId?: unknown; layoutId?: unknown; copyId?: unknown; blocks?: unknown };
-  const blocks = Array.isArray(obj.blocks)
-    ? obj.blocks.filter(
-        (b): b is { id: string; variant: string; enabled: boolean } =>
-          !!b && typeof b === 'object' && typeof (b as { id?: unknown }).id === 'string',
-      )
+  // 모르는 블록 id 는 여기서 버린다 — `as BlockId` 로 통과시키면 타입만 속이고
+  // 실제 판별은 하류(normalizeTemplate)에 떠넘기는 꼴이 된다 (CLAUDE.md #11).
+  const blocks: TemplateBlockConfig[] = Array.isArray(obj.blocks)
+    ? obj.blocks.flatMap((b) => {
+        if (!b || typeof b !== 'object' || Array.isArray(b)) return [];
+        const rec = b as Record<string, unknown>;
+        if (!isBlockId(rec.id)) return []; // 모르는 블록 id 는 버린다
+        return [
+          {
+            id: rec.id, // isBlockId 가 BlockId 로 좁혀 준 값 — 캐스팅 없음
+            variant: typeof rec.variant === 'string' ? rec.variant : '',
+            enabled: rec.enabled !== false,
+          },
+        ];
+      })
     : [];
   if (!blocks.length) return DEFAULT_TEMPLATE;
   return {
@@ -48,10 +59,6 @@ export function parseTemplateConfig(raw: unknown): CommentaryTemplateConfig {
     // layoutId 는 나중에 추가된 축 — 이전에 저장된 설정에는 없으므로 기본 골격으로 폴백
     layoutId: typeof obj.layoutId === 'string' ? obj.layoutId : DEFAULT_LAYOUT_ID,
     copyId: typeof obj.copyId === 'string' ? obj.copyId : DEFAULT_COPY_ID,
-    blocks: blocks.map((b) => ({
-      id: b.id as CommentaryTemplateConfig['blocks'][number]['id'],
-      variant: typeof b.variant === 'string' ? b.variant : '',
-      enabled: b.enabled !== false,
-    })),
+    blocks,
   };
 }

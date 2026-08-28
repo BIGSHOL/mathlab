@@ -17,7 +17,8 @@
     "verify:completeness": "tsx scripts/verify-completeness.ts",
     "verify:english": "tsx scripts/verify-english-taxonomy.ts",
     "generate:english-textbooks": "tsx scripts/generate-english-textbooks.ts",
-    "verify:cli-llm": "tsx scripts/verify-cli-llm.ts"
+    "verify:cli-llm": "tsx scripts/verify-cli-llm.ts",
+    "verify:template-blocks": "tsx scripts/parity/check-template-blocks.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

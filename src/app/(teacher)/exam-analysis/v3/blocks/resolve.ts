@@ -18,7 +18,9 @@ import { COMMENTARY_BLOCKS, getBlockDef } from './registry';
 
 /**
  * 저장된 설정을 현재 레지스트리에 맞춰 정합화.
- * - 저장 이후 **새로 추가된 블록**은 기본값(켜짐)으로 뒤에 붙는다 → 신규 기능이 조용히 누락되지 않음
+ * - 저장 이후 **새로 추가된 블록**은 `def.defaultEnabled` 를 따라 뒤에 붙는다.
+ *   기본 구성 블록(`true`)은 켜져서 신규 기능이 조용히 누락되지 않고,
+ *   특정 프리셋 전용 블록(`false`)은 꺼진 채 붙어 기존 문서에 멋대로 나타나지 않는다.
  * - 레지스트리에서 **사라진 블록**은 버린다
  * - 없어진 variant 를 가리키면 첫 variant 로 폴백
  * - locked 블록은 항상 켜진 상태로 강제
@@ -36,13 +38,14 @@ export function normalizeTemplate(config: CommentaryTemplateConfig | null | unde
     blocks.push({ id: def.id, variant, enabled: def.locked ? true : bc.enabled !== false });
   }
 
-  // 레지스트리에만 있는 신규 블록을 기본 순서 위치 감각에 맞춰 뒤에 추가
+  // 레지스트리에만 있는 신규 블록을 뒤에 추가.
+  // locked 는 끌 수 없으므로 defaultEnabled 보다 우선한다(둘이 어긋나도 locked 가 이긴다).
   for (const def of COMMENTARY_BLOCKS) {
     if (seen.has(def.id)) continue;
     const fallbackVariant =
       DEFAULT_TEMPLATE.blocks.find((b) => b.id === def.id)?.variant ?? def.variants[0].id;
     const variant = def.variants.find((v) => v.id === fallbackVariant)?.id ?? def.variants[0].id;
-    blocks.push({ id: def.id, variant, enabled: true });
+    blocks.push({ id: def.id, variant, enabled: def.locked === true || def.defaultEnabled });
   }
 
   // 푸터는 항상 마지막 (사용자가 순서를 흩뜨려도 크레딧이 중간에 끼지 않게)

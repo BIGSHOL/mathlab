@@ -188,6 +188,7 @@ const headerBlock: CommentaryBlockDef = {
   label: '헤더',
   description: '키커 · 헤드라인 · 요약문 · 메타',
   locked: true,
+  defaultEnabled: true,
   available: () => true,
   summary: summaryHeader,
   variants: [
@@ -266,6 +267,7 @@ const kpiBlock: CommentaryBlockDef = {
   id: 'kpi',
   label: '핵심 지표 4종',
   description: '평균 난이도 · 킬러 비중 · 서술형 · 정답률(총배점)',
+  defaultEnabled: true,
   available: (_c, questions) => questions.length > 0,
   summary: summaryKpi,
   variants: [
@@ -372,6 +374,7 @@ const featureBlock: CommentaryBlockDef = {
   id: 'feature',
   label: '피처 박스',
   description: '이번 시험의 한 문장 + 거대 숫자',
+  defaultEnabled: true,
   available: (c) => !!c.feature_callout,
   summary: ({ commentary: c }) => {
     const fc = c.feature_callout ? normalizeFeatureCallout(c.feature_callout) : null;
@@ -403,6 +406,7 @@ const infographicBlock: CommentaryBlockDef = {
   id: 'infographic',
   label: '인포그래픽',
   description: '난이도 분포 바 · 형식 분포 · 문항 지도',
+  defaultEnabled: true,
   available: (_c, questions) => questions.length > 0,
   numberCount: () => 1,
   summary: summaryInfographic,
@@ -486,6 +490,7 @@ const difficultyTableBlock: CommentaryBlockDef = {
   id: 'difficultyTable',
   label: '문항별 난이도표',
   description: '문항 번호 · 난이도 · 단원 · 배점 상세 표',
+  defaultEnabled: true,
   available: (c) => !!c.v4_difficulty_rows?.length,
   summary: summaryDifficultyTable,
   variants: [
@@ -509,6 +514,7 @@ const previousComparisonBlock: CommentaryBlockDef = {
   id: 'previousComparison',
   label: '이전 시험 비교',
   description: '작년/지난 시험 대비 변화',
+  defaultEnabled: true,
   available: (c) => !!c.v4_previous_comparison?.headline,
   summary: ({ commentary: c }) =>
     c.v4_previous_comparison?.headline ? koDifficultyText(c.v4_previous_comparison.headline).slice(0, 140) : '',
@@ -528,6 +534,7 @@ const qaBlock: CommentaryBlockDef = {
   id: 'qa',
   label: 'Q&A 인터뷰',
   description: '질문–답변 형식의 핵심 해설',
+  defaultEnabled: true,
   available: (c) => !!c.blog_qa?.length,
   numberCount: (c) => c.blog_qa?.length || 0,
   // 반복 블록이라 요약은 DOM 휴리스틱(섹션별 heading+첫문장)에 맡긴다
@@ -564,6 +571,7 @@ const mainAnalysisBlock: CommentaryBlockDef = {
   id: 'mainAnalysis',
   label: '영역별 출제 분석',
   description: '단원/영역별 출제 경향 해설',
+  defaultEnabled: true,
   available: (c) => !!c.v4_main_analysis?.length,
   numberCount: () => 1,
   summary: () => '영역별 출제 분석 — 어느 단원에서 어떤 유형이 나왔는지 정리했습니다.',
@@ -583,6 +591,7 @@ const keyQuestionsBlock: CommentaryBlockDef = {
   id: 'keyQuestions',
   label: '주요 문항 해설',
   description: '변별 문항 중심 해설',
+  defaultEnabled: true,
   available: (c) => !!c.v4_key_questions?.length,
   numberCount: () => 1,
   summary: () => '주요 문항 해설 — 점수를 가른 문항의 접근법을 짚었습니다.',
@@ -602,6 +611,7 @@ const pullQuoteBlock: CommentaryBlockDef = {
   id: 'pullQuote',
   label: '인용구',
   description: '한 문장 강조 인용',
+  defaultEnabled: true,
   available: (c) => !!c.pull_quote?.text,
   summary: summaryPullQuote,
   variants: [
@@ -624,6 +634,7 @@ const chartsBlock: CommentaryBlockDef = {
   id: 'charts',
   label: '분석 차트 4종',
   description: '난이도 · 능력 영역 · 단원 출제 · 변별력',
+  defaultEnabled: true,
   available: () => true, // 차트 주입 여부는 렌더 시점 props 로 판단
   numberCount: () => 1,
   summary: summaryCharts,
@@ -710,6 +721,7 @@ const finalStrategyBlock: CommentaryBlockDef = {
   id: 'finalStrategy',
   label: '단원별 피드백',
   description: '단원별 현재 상태 + 실행 과제',
+  defaultEnabled: true,
   available: (c) => !!c.v4_final_strategy?.length,
   numberCount: () => 1,
   summary: () => '단원별 피드백 — 지금 상태와 다음 시험까지 해야 할 일을 단원별로 정리했습니다.',
@@ -729,6 +741,7 @@ const conclusionBlock: CommentaryBlockDef = {
   id: 'conclusion',
   label: '결론',
   description: '다음 시험을 준비하는 학생에게',
+  defaultEnabled: true,
   available: (c) => !!c.conclusion?.body,
   summary: summaryConclusion,
   variants: [
@@ -751,6 +764,7 @@ const footerBlock: CommentaryBlockDef = {
   id: 'footer',
   label: '푸터',
   locked: true,
+  defaultEnabled: true,
   available: () => true,
   summary: () => '',
   variants: [
