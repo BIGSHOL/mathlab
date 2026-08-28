@@ -353,6 +353,78 @@ export const COMMENTARY_PRESETS: readonly CommentaryPreset[] = [
       pullQuote: { variant: 'accent' },
     },
   },
+  {
+    id: 'weather',
+    label: '시험 날씨',
+    hint: '단원별 배점×난이도를 맑음·흐림·비·폭풍으로. 예보 스트립이 본문',
+    audience: 'parent',
+    themeId: 'sky',
+    layoutId: 'quiet',
+    copyId: 'parent',
+    changes: {
+      // 표·차트는 끈다. 켜 두면 "예보"가 아니라 리포트 위에 아이콘을 얹은 것처럼 읽힌다.
+      header: { variant: 'centered' },
+      weatherStrip: { variant: 'strip', enabled: true },
+      feature: { enabled: false },
+      infographic: { enabled: false },
+      difficultyTable: { enabled: false },
+      qa: { enabled: false },
+      pullQuote: { enabled: false },
+      charts: { enabled: false },
+    },
+    // 예보가 히어로 — 헤드라인 다음에 바로 날씨가 온다
+    order: ['header', 'weatherStrip', 'kpi'],
+  },
+  {
+    id: 'subway',
+    label: '노선도',
+    hint: '단원 = 역. 4단계 이상은 환승, 서술형은 급행. 시험 한 줄의 지도',
+    audience: 'teacher',
+    themeId: 'mono',
+    layoutId: 'grid',
+    copyId: 'official',
+    changes: {
+      // 노선이 이미 단원·난이도·서술형을 보여 준다. 표까지 두면 같은 지도를 두 번 읽힌다.
+      header: { variant: 'editorial' },
+      subwayMap: { variant: 'line', enabled: true },
+      feature: { enabled: false },
+      infographic: { enabled: false },
+      difficultyTable: { enabled: false },
+      previousComparison: { enabled: false },
+      qa: { enabled: false },
+      pullQuote: { enabled: false },
+      charts: { enabled: false },
+    },
+    order: ['header', 'subwayMap', 'kpi'],
+  },
+  {
+    id: 'kakaotalk',
+    label: '대화',
+    hint: '선생님↔학부모 말풍선. 한 버블이 한 인사이트',
+    audience: 'parent',
+    themeId: 'teal',
+    layoutId: 'card',
+    copyId: 'parent',
+    changes: {
+      // 말풍선이 Q&A·총평·전략을 대화로 다시 엮는다. 같은 내용의 분석 섹션을 남겨 두면
+      // 채팅 아래에 리포트가 한 장 더 붙어 "대화"가 깨진다.
+      header: { variant: 'letterhead' },
+      bubbleThread: { variant: 'chat', enabled: true },
+      kpi: { enabled: false },
+      feature: { enabled: false },
+      infographic: { enabled: false },
+      difficultyTable: { enabled: false },
+      previousComparison: { enabled: false },
+      qa: { enabled: false },
+      mainAnalysis: { enabled: false },
+      keyQuestions: { enabled: false },
+      pullQuote: { enabled: false },
+      charts: { enabled: false },
+      finalStrategy: { enabled: false },
+      conclusion: { enabled: false },
+    },
+    order: ['header', 'bubbleThread'],
+  },
 ] as const;
 
 export function getPreset(id: string | null | undefined): CommentaryPreset | null {

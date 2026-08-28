@@ -1200,6 +1200,493 @@ function renderStory(props: BlockRenderProps, shapeClass: string) {
   );
 }
 
+// ── 단원 묶기 (weatherStrip · subwayMap 공유) ────────────────────────────
+// topic 저장 형식은 `과목 > 대단원 > 중단원`. 예보·노선은 중단원 단위로 묶는다.
+// 마지막 칸(소단원으로 잘못 저장된 경우)이 아니라 **마지막에서 두 번째**를 쓰는 이유:
+// 같은 중단원 문항이 소단원만 달라져 역·날씨가 쪼개지면 시험 한 장의 지도가 안 된다.
+
+function topicMidUnit(topic: string | null | undefined): string {
+  const parts = String(topic ?? '')
+    .split('>')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (parts.length >= 2) return parts[parts.length - 2];
+  return parts[parts.length - 1] || '미분류';
+}
+
+function questionDiff(q: AnalyzedQuestion): number {
+  if (q.difficulty == null) return 0;
+  const lv = Number(normDiff(String(q.difficulty)));
+  return lv >= 1 && lv <= 5 ? lv : 0;
+}
+
+function isEssayQuestion(q: AnalyzedQuestion): boolean {
+  return q.question_format === 'essay' || /서답|서술/.test(String(q.question_number ?? ''));
+}
+
+// ── 시험 날씨 스트립 ─────────────────────────────────────────────────────
+// 단원별 배점×난이도를 맑음/흐림/비/폭풍 4단계로 접어 **가로 예보**로 그린다.
+// 표를 쓰면 인포그래픽과 같은 문서가 되므로, 스트립 + 한 줄 예보만 본문으로 둔다.
+
+type WeatherKind = 'sunny' | 'cloudy' | 'rain' | 'storm';
+
+const WEATHER_LABEL: Record<WeatherKind, string> = {
+  sunny: '맑음',
+  cloudy: '흐림',
+  rain: '비',
+  storm: '폭풍',
+};
+
+interface TopicWeather {
+  topic: string;
+  points: number;
+  count: number;
+  avgDiff: number;
+  kind: WeatherKind;
+}
+
+function weatherFromAvg(avg: number): WeatherKind {
+  // 가중평균 난이도(1~5)를 4단 예보로. 4단계(심화)부터 폭풍 — 킬러 단원이 묻히지 않게.
+  if (avg >= 4) return 'storm';
+  if (avg >= 3.2) return 'rain';
+  if (avg >= 2.4) return 'cloudy';
+  return 'sunny';
+}
+
+function collectTopicWeather(questions: AnalyzedQuestion[]): TopicWeather[] {
+  const map = new Map<string, { wDiff: number; wSum: number; points: number; count: number }>();
+  for (const q of questions) {
+    const topic = topicMidUnit(q.topic);
+    const pts = typeof q.points === 'number' && q.points > 0 ? q.points : 0;
+    const lv = questionDiff(q);
+    const cur = map.get(topic) ?? { wDiff: 0, wSum: 0, points: 0, count: 0 };
+    cur.count += 1;
+    cur.points += pts;
+    // 난이도를 못 읽은 문항은 가중평균에 넣지 않는다 — 0으로 넣으면 단원이 맑음으로 둔갑한다.
+    if (lv > 0) {
+      const w = pts > 0 ? pts : 1;
+      cur.wDiff += w * lv;
+      cur.wSum += w;
+    }
+    map.set(topic, cur);
+  }
+  const rows: TopicWeather[] = [];
+  for (const [topic, v] of map) {
+    const avgDiff = v.wSum > 0 ? v.wDiff / v.wSum : 0;
+    rows.push({
+      topic,
+      points: v.points,
+      count: v.count,
+      avgDiff,
+      kind: weatherFromAvg(avgDiff > 0 ? avgDiff : 2.4),
+    });
+  }
+  // 폭풍이 왼쪽에 오게 — 예보에서 먼저 경고하는 쪽.
+  return rows.sort((a, b) => b.avgDiff - a.avgDiff || b.points - a.points);
+}
+
+function forecastLine(rows: TopicWeather[]): string {
+  if (!rows.length) return '';
+  const stormish = [...rows]
+    .filter((r) => r.kind === 'storm' || r.kind === 'rain')
+    .sort((a, b) => Number(b.kind === 'storm') - Number(a.kind === 'storm') || b.points - a.points);
+  const sunnish = [...rows]
+    .filter((r) => r.kind === 'sunny' || r.kind === 'cloudy')
+    .sort((a, b) => Number(b.kind === 'sunny') - Number(a.kind === 'sunny') || b.points - a.points);
+  const bits: string[] = [];
+  if (stormish[0]) bits.push(`${stormish[0].topic} ${WEATHER_LABEL[stormish[0].kind]}`);
+  if (sunnish[0] && sunnish[0].topic !== stormish[0]?.topic) {
+    bits.push(`${sunnish[0].topic} ${WEATHER_LABEL[sunnish[0].kind]}`);
+  }
+  if (!bits.length) bits.push(`${rows[0].topic} ${WEATHER_LABEL[rows[0].kind]}`);
+  return `이번 시험 날씨: ${bits.join(', ')}`;
+}
+
+/** 날씨 아이콘 — currentColor 만 써서 12 테마를 따라간다. 면 채움 글자는 올리지 않는다. */
+function WeatherGlyph({ kind }: { kind: WeatherKind }) {
+  if (kind === 'sunny') {
+    return (
+      <svg viewBox="0 0 32 32" className="v3-wx-glyph" aria-hidden>
+        <circle cx="16" cy="16" r="6" fill="currentColor" />
+        {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => {
+          const r = (deg * Math.PI) / 180;
+          return (
+            <line
+              key={deg}
+              x1={16 + Math.cos(r) * 9}
+              y1={16 + Math.sin(r) * 9}
+              x2={16 + Math.cos(r) * 13}
+              y2={16 + Math.sin(r) * 13}
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          );
+        })}
+      </svg>
+    );
+  }
+  if (kind === 'cloudy') {
+    return (
+      <svg viewBox="0 0 32 32" className="v3-wx-glyph" aria-hidden>
+        <ellipse cx="12" cy="18" rx="7" ry="5" fill="currentColor" opacity="0.85" />
+        <ellipse cx="20" cy="17" rx="8" ry="6" fill="currentColor" />
+      </svg>
+    );
+  }
+  if (kind === 'rain') {
+    return (
+      <svg viewBox="0 0 32 32" className="v3-wx-glyph" aria-hidden>
+        <ellipse cx="16" cy="13" rx="9" ry="6" fill="currentColor" />
+        <line x1="10" y1="22" x2="8" y2="28" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        <line x1="16" y1="22" x2="14" y2="28" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        <line x1="22" y1="22" x2="20" y2="28" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 32 32" className="v3-wx-glyph" aria-hidden>
+      <ellipse cx="15" cy="12" rx="9" ry="6" fill="currentColor" />
+      <path d="M18 16 L12 22 H16 L13 28 L22 20 H17 Z" fill="currentColor" />
+    </svg>
+  );
+}
+
+function summaryWeather(props: BlockRenderProps) {
+  const rows = collectTopicWeather(props.questions);
+  return forecastLine(rows) || `단원 예보 ${rows.length}곳`;
+}
+
+const weatherStripBlock: CommentaryBlockDef = {
+  id: 'weatherStrip',
+  label: '시험 날씨',
+  description: '단원별 배점×난이도를 맑음·흐림·비·폭풍 가로 예보로',
+  defaultEnabled: false,
+  available: (_c, questions) => questions.length > 0,
+  summary: summaryWeather,
+  numberCount: () => 1,
+  variants: [
+    {
+      id: 'strip',
+      label: '예보 스트립',
+      hint: '한 줄 예보 + 가로 칸 — 기본',
+      render: (props) => renderWeather(props, 'strip'),
+    },
+    {
+      id: 'poster',
+      label: '포스터',
+      hint: '예보 문장이 크고, 칸은 아이콘만',
+      render: (props) => renderWeather(props, 'poster'),
+    },
+  ],
+};
+
+function renderWeather(props: BlockRenderProps, variant: 'strip' | 'poster') {
+  const rows = collectTopicWeather(props.questions);
+  if (!rows.length) return null;
+  const line = forecastLine(rows);
+  const poster = variant === 'poster';
+
+  return (
+    <section className={`v3-section v3-weather${poster ? ' v3-weather-poster' : ''}`} {...blockAttrs('weatherStrip', summaryWeather(props))}>
+      <span className="v3-section-num">{props.sectionNum}</span>
+      <div className="v3-section-sub">단원 예보</div>
+      <h3>{poster ? line : '이번 시험의 날씨'}</h3>
+      {!poster && <p className="v3-weather-line">{line}</p>}
+
+      <div className="v3-weather-strip" role="list">
+        {rows.map((r) => (
+          <div key={r.topic} className={`v3-weather-cell v3-weather-${r.kind}`} role="listitem" title={`${r.topic} · ${WEATHER_LABEL[r.kind]} · ${r.points}점`}>
+            <span className="v3-weather-icon">
+              <WeatherGlyph kind={r.kind} />
+            </span>
+            <span className="v3-weather-kind">{WEATHER_LABEL[r.kind]}</span>
+            {!poster && <span className="v3-weather-topic">{r.topic}</span>}
+            {!poster && r.points > 0 && <span className="v3-weather-pts">{r.points}점</span>}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ── 단원 노선도 ──────────────────────────────────────────────────────────
+// 단원 = 역, 4단계 이상 문항이 있는 단원 = 환승(큰 원), 서술형 포함 = 급행 정차.
+// 역 수는 시험마다 다르므로 좌표를 고정하지 않고, 1줄(≤6) / 2줄(U턴)로 펼친다.
+
+interface SubwayStation {
+  topic: string;
+  transfer: boolean;
+  express: boolean;
+  count: number;
+}
+
+function collectStations(questions: AnalyzedQuestion[]): SubwayStation[] {
+  const map = new Map<string, SubwayStation>();
+  for (const q of questions) {
+    const topic = topicMidUnit(q.topic);
+    const cur = map.get(topic) ?? { topic, transfer: false, express: false, count: 0 };
+    cur.count += 1;
+    if (questionDiff(q) >= 4) cur.transfer = true;
+    if (isEssayQuestion(q)) cur.express = true;
+    map.set(topic, cur);
+  }
+  // 출제 순서를 유지한다 — 가나다 정렬하면 시험지 앞뒤가 노선에서 뒤집힌다.
+  const order: string[] = [];
+  for (const q of questions) {
+    const t = topicMidUnit(q.topic);
+    if (!order.includes(t)) order.push(t);
+  }
+  return order.flatMap((t) => {
+    const s = map.get(t);
+    return s ? [s] : [];
+  });
+}
+
+function layoutStationPoints(n: number, width: number, height: number): { x: number; y: number }[] {
+  const padX = 56;
+  const padY = 38;
+  const usable = Math.max(width - padX * 2, 1);
+  if (n <= 1) return [{ x: width / 2, y: height / 2 }];
+  if (n <= 6) {
+    return Array.from({ length: n }, (_, i) => ({
+      x: padX + (i * usable) / (n - 1),
+      y: height / 2,
+    }));
+  }
+  // 두 줄 U턴 — 1줄이 넘치면 라벨이 겹친다. 오른쪽에서 접어 내려가 급행처럼 이어진다.
+  const n1 = Math.ceil(n / 2);
+  const n2 = n - n1;
+  const xs = Array.from({ length: n1 }, (_, i) => padX + (n1 === 1 ? usable / 2 : (i * usable) / (n1 - 1)));
+  const y1 = padY;
+  const y2 = height - padY;
+  const pts: { x: number; y: number }[] = [];
+  for (let i = 0; i < n1; i++) pts.push({ x: xs[i], y: y1 });
+  for (let j = 0; j < n2; j++) pts.push({ x: xs[n1 - 1 - j], y: y2 });
+  return pts;
+}
+
+function summarySubway(props: BlockRenderProps) {
+  const st = collectStations(props.questions);
+  const tr = st.filter((s) => s.transfer).length;
+  const ex = st.filter((s) => s.express).length;
+  return `단원 노선 ${st.length}역 · 환승 ${tr} · 급행 ${ex}`;
+}
+
+const subwayMapBlock: CommentaryBlockDef = {
+  id: 'subwayMap',
+  label: '단원 노선도',
+  description: '단원을 역으로 잇고, 킬러 단원은 환승, 서술형은 급행',
+  defaultEnabled: false,
+  available: (_c, questions) => questions.length > 0,
+  summary: summarySubway,
+  numberCount: () => 1,
+  variants: [
+    {
+      id: 'line',
+      label: '노선',
+      hint: '가로 1~2줄 — 기본',
+      render: (props) => renderSubway(props, false),
+    },
+    {
+      id: 'compact',
+      label: '압축',
+      hint: '라벨을 짧게 — 단원이 많을 때',
+      render: (props) => renderSubway(props, true),
+    },
+  ],
+};
+
+function wrapStationLabel(s: string, max: number): string[] {
+  if (s.length <= max) return [s];
+  return [s.slice(0, max), s.slice(max)];
+}
+
+function renderSubway(props: BlockRenderProps, compact: boolean) {
+  const stations = collectStations(props.questions);
+  if (!stations.length) return null;
+
+  const twoRows = stations.length > 6;
+  const width = 720;
+  const height = twoRows ? 200 : 132;
+  const pts = layoutStationPoints(stations.length, width, height);
+  const maxChars = compact ? 5 : twoRows ? 7 : 6;
+  const d = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+
+  return (
+    <section className="v3-section v3-subway" {...blockAttrs('subwayMap', summarySubway(props))}>
+      <span className="v3-section-num">{props.sectionNum}</span>
+      <div className="v3-section-sub">출제 노선</div>
+      <h3>단원 노선도</h3>
+
+      <svg className="v3-subway-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={summarySubway(props)}>
+        {/* 노선 — 역보다 아래 레이어. ink 는 글자색 겸 채움이라 다크에서도 선이 보인다. */}
+        <path d={d} fill="none" stroke="var(--v3-ink)" strokeWidth="6" strokeLinejoin="round" strokeLinecap="round" />
+        {stations.map((s, i) => {
+          const p = pts[i];
+          const r = s.transfer ? 11 : 6;
+          // 한 줄은 홀수 위/짝수 아래, 두 줄은 윗줄 위·아랫줄 아래 — 라벨이 선과 겹치지 않게.
+          const labelBelow = twoRows ? p.y > height / 2 : i % 2 === 1;
+          const lines = wrapStationLabel(s.topic, maxChars);
+          const labelY = labelBelow ? p.y + r + 14 : p.y - r - 8 - (lines.length - 1) * 12;
+          return (
+            <g key={s.topic}>
+              {/* 급행 링은 역 원 바깥 — 원 안에 그리면 환승 점이 가린다. */}
+              {s.express && (
+                <circle
+                  cx={p.x}
+                  cy={p.y}
+                  r={r + 4}
+                  fill="none"
+                  stroke="var(--v3-accent)"
+                  strokeWidth="2.5"
+                />
+              )}
+              <circle
+                cx={p.x}
+                cy={p.y}
+                r={r}
+                fill="var(--v3-paper)"
+                stroke="var(--v3-ink)"
+                strokeWidth={s.transfer ? 3.5 : 2}
+              />
+              {s.transfer && (
+                <circle cx={p.x} cy={p.y} r={4} fill="var(--v3-ink)" />
+              )}
+              <text
+                x={p.x}
+                y={labelY}
+                textAnchor="middle"
+                fill="var(--v3-ink)"
+                fontSize="11"
+                fontFamily="var(--v3-font-label)"
+                fontWeight={s.transfer ? 800 : 600}
+              >
+                {lines.map((ln, li) => (
+                  <tspan key={li} x={p.x} dy={li === 0 ? 0 : 12}>
+                    {ln}
+                  </tspan>
+                ))}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+
+      <div className="v3-subway-legend">
+        <span>
+          <i className="v3-subway-leg-xfer" />
+          환승 · 4단계 이상
+        </span>
+        <span>
+          <i className="v3-subway-leg-exp" />
+          급행 · 서술형
+        </span>
+      </div>
+    </section>
+  );
+}
+
+// ── 말풍선 스레드 ────────────────────────────────────────────────────────
+// 선생님↔학부모 대화. 한 버블 = 한 인사이트.
+// blog_qa 가 있으면 질문=학부모 / 답변=선생님. 없으면 총평·보완점·전략으로 조립한다.
+// 최상위는 채팅창 하나 — 캡처가 말풍선마다 쪼개지면 대화가 아니라 카드 더미가 된다.
+
+type ChatWho = 'teacher' | 'parent';
+interface ChatBubble {
+  who: ChatWho;
+  text: string;
+}
+
+function buildChatBubbles(c: CommentaryResult): ChatBubble[] {
+  const out: ChatBubble[] = [];
+  if (c.blog_qa?.length) {
+    for (const qa of c.blog_qa) {
+      if (qa.question) out.push({ who: 'parent', text: qa.question });
+      const answer = (qa.answer ?? []).filter(Boolean).join('\n');
+      if (answer) out.push({ who: 'teacher', text: answer });
+    }
+    return out;
+  }
+  if (c.overall_comment) {
+    out.push({ who: 'parent', text: '이번 시험 전체적으로 어땠나요?' });
+    out.push({ who: 'teacher', text: c.overall_comment });
+  }
+  const areas = (c.improvement_areas ?? []).filter(Boolean);
+  if (areas.length) {
+    out.push({ who: 'parent', text: '어떤 부분을 먼저 보완하면 좋을까요?' });
+    for (const a of areas) out.push({ who: 'teacher', text: a });
+  }
+  const plans = c.v4_final_strategy ?? [];
+  if (plans.length) {
+    out.push({ who: 'parent', text: '다음 시험은 어떻게 준비하면 될까요?' });
+    for (const p of plans) {
+      const text = [p.area, p.action].filter(Boolean).join(' — ');
+      if (text) out.push({ who: 'teacher', text });
+    }
+  }
+  return out;
+}
+
+function summaryChat(props: BlockRenderProps) {
+  const n = buildChatBubbles(props.commentary).length;
+  return n ? `선생님과의 대화 ${n}개` : '';
+}
+
+const bubbleThreadBlock: CommentaryBlockDef = {
+  id: 'bubbleThread',
+  label: '대화 말풍선',
+  description: '선생님↔학부모 스레드. 한 버블이 한 인사이트',
+  defaultEnabled: false,
+  available: (c) => buildChatBubbles(c).length > 0,
+  summary: summaryChat,
+  variants: [
+    {
+      id: 'chat',
+      label: '대화방',
+      hint: '학부모 오른쪽 · 선생님 왼쪽 — 기본',
+      render: (props) => renderChat(props, false),
+    },
+    {
+      id: 'thread',
+      label: '스레드',
+      hint: '양쪽 왼쪽 정렬 — 댓글형',
+      render: (props) => renderChat(props, true),
+    },
+  ],
+};
+
+function renderChat(props: BlockRenderProps, leftAlign: boolean) {
+  const bubbles = buildChatBubbles(props.commentary);
+  if (!bubbles.length) return null;
+
+  return (
+    <div className={`v3-chat${leftAlign ? ' v3-chat-thread' : ''}`} {...blockAttrs('bubbleThread', summaryChat(props))}>
+      <div className="v3-chat-head">
+        <span className="v3-chat-avatar" aria-hidden>
+          선
+        </span>
+        <div className="v3-chat-who">
+          <strong>매스랩 선생님</strong>
+          <span>시험 분석</span>
+        </div>
+      </div>
+      <div className="v3-chat-body">
+        {bubbles.map((b, i) => (
+          <div key={`cb-${i}`} className={`v3-chat-row v3-chat-${b.who}`}>
+            {b.who === 'teacher' && <span className="v3-chat-avatar v3-chat-avatar-sm" aria-hidden>선</span>}
+            <div className="v3-chat-bubble">
+              {b.text.split('\n').map((para, pi) => (
+                <p key={pi}>{markdownToHighlighted(para, `v3-chat-${i}-${pi}`)}</p>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const footerBlock: CommentaryBlockDef = {
   id: 'footer',
   label: '푸터',
@@ -1234,6 +1721,9 @@ export const COMMENTARY_BLOCKS: CommentaryBlockDef[] = [
   letterBodyBlock,
   heatmapGridBlock,
   storySlideBlock,
+  weatherStripBlock,
+  subwayMapBlock,
+  bubbleThreadBlock,
   pullQuoteBlock,
   chartsBlock,
   finalStrategyBlock,
