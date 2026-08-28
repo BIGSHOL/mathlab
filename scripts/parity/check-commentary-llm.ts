@@ -21,8 +21,23 @@ const read = (p: string) => readFileSync(p, 'utf8');
 
 console.log('\n── ① 모델 문자열이 게이트웨이 한 곳에만 있는가 ──');
 const gw = read(GATEWAY);
-ok(/const DEEPSEEK_MODEL = 'deepseek-v4-pro'/.test(gw), '1차 모델은 deepseek-v4-pro');
+const chain = (gw.match(/PROVIDER_CHAIN = \[([^\]]*)\]/) || [])[1] || '';
+ok(/'gemini'/.test(chain), `1차는 gemini (chain=${chain.replace(/\s+/g, ' ').trim()})`);
+ok(/'anthropic'/.test(chain), '폴백에 anthropic 이 있다');
+ok(/const GEMINI_MODEL = 'gemini-3\.7-flash'/.test(gw), '총평 1차 모델은 gemini-3.7-flash');
 ok(/const CLAUDE_MODEL = 'claude-sonnet-5'/.test(gw), '폴백 모델은 claude-sonnet-5');
+
+// 시험지 분석 모델은 단일 상수에서 파생돼야 한다 (§12-13 — 기록만 옛 모델로 남던 자리)
+const examModel = readFileSync('src/lib/exam-analysis/shared/exam-model.ts', 'utf8');
+ok(/EXAM_ANALYSIS_MODEL = 'gemini-3\.7-flash'/.test(examModel), '시험지 분석 모델은 gemini-3.7-flash');
+const cli = readFileSync('src/lib/exam-analysis/cli-llm.ts', 'utf8');
+// 주석은 제외 — 옛 값이 왜 문제였는지 설명하는 문장까지 잡으면 검사가 거짓 경보로 죽는다
+const cliCode = cli.split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n');
+ok(!/gemini-3\.\d/.test(cliCode), 'modelVersion 기록이 모델명을 손으로 적지 않는다',
+   (cliCode.match(/gemini-3\.\d[\w.-]*/g) || []).join(', '));
+ok(/EXAM_ANALYSIS_MODEL/.test(cli), 'modelVersion 이 같은 상수에서 파생된다');
+const engine = readFileSync('src/lib/exam-analysis/ai-engine.ts', 'utf8');
+ok(/MODEL = EXAM_ANALYSIS_MODEL/.test(engine), 'ai-engine 도 같은 상수를 쓴다');
 
 // 호출부에 모델 문자열이 흩어져 있으면 게이트웨이를 우회한 것이다.
 // 예외: article-generator 의 스트리밍 경로는 delta 가 필요해 직결을 유지한다(주석으로 명시됨).
@@ -46,8 +61,8 @@ const streamCall = articleSrc.slice(articleSrc.indexOf('client.messages.stream')
 ok(!/temperature:/.test(streamCall.slice(0, 400)), 'article 스트리밍도 temperature 를 싣지 않는다');
 
 console.log('\n── ③ 폴백이 조용하지 않은가 (§12-10) ──');
-ok(/console\.warn\([^)]*폴백/.test(gw), '폴백 시 경고 로그를 남긴다');
-ok(/DEEPSEEK_API_KEY 없음/.test(gw), '1차 키 부재도 로그로 남긴다');
+ok(/console\.warn\([^)]*실패 → 다음 단계/.test(gw), '단계 실패 시 경고 로그를 남긴다');
+ok(/키 없음 — 건너뜀/.test(gw), '키 부재도 로그로 남긴다');
 
 console.log('\n── ④ 추론 토큰 여유분 ──');
 // DeepSeek 은 추론 모델이라 max_tokens 가 사고+본문 합계 상한이다.

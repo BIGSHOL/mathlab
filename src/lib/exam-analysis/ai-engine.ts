@@ -19,6 +19,7 @@ import { applyNumericField, applyCategoricalRemap, NUMERIC_FIELDS, CATEGORICAL_F
 import { roundPoints, sumPoints } from './shared/points';
 import { callCliVision, isCliExamAnalysisEnabled } from './cli-llm';
 import { isEnglishStudyJunk } from './english-study-pack';
+import { EXAM_ANALYSIS_MODEL } from './shared/exam-model';
 
 // ── 싱글톤 클라이언트 ──
 
@@ -33,7 +34,18 @@ function getClient(): GoogleGenAI {
   return _client;
 }
 
-const MODEL = 'gemini-3.1-pro-preview';
+/**
+ * 시험지 분석 메인 모델.
+ *
+ * 2026-08-28: `gemini-3.1-pro-preview` → `gemini-3.7-flash`.
+ * ⚠️ pro → flash 는 능력 등급이 내려가는 방향이다. 이 작업(문항 추출·배점 판독·
+ *    난이도 2축 판정)은 §12-11 이 기록한 "마지막 서술형이 통째로 사라지는" 실패가
+ *    실제로 났던 자리다. 그 방어(assessCompleteness → 재시도 → placeholder →
+ *    readiness 차단)는 그대로 살아 있으므로 누락은 차단되지만, **모델을 바꾼 뒤에는
+ *    `npm run verify:completeness` 와 실제 시험지 재분석으로 문항 수·배점 합계를
+ *    반드시 대조할 것.** 분석 결과의 `modelVersion` 에 이 값이 기록된다.
+ */
+export const MODEL = EXAM_ANALYSIS_MODEL;
 
 // ── 유틸 함수 ──
 
@@ -196,7 +208,7 @@ interface GeminiVisionCallOptions {
   jsonMode?: boolean;        // responseMimeType: 'application/json' 사용 여부
   temperature?: number;
   mimeTypeHint?: string;     // 파일 형식 힌트 (image/jpeg, application/pdf 등)
-  modelOverride?: string;    // 모델 ID override (기본: MODEL 상수 = gemini-3.1-pro-preview)
+  modelOverride?: string;    // 모델 ID override (기본: 위 MODEL 상수)
   onProgress?: (msg: string) => void;
   /**
    * 응답 JSON 을 자동 복구해서 살렸을 때 호출된다.

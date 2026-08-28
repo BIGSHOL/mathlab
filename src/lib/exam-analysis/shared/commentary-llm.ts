@@ -1,5 +1,9 @@
 /**
- * 총평·분석글 생성용 텍스트 LLM 게이트웨이 — **1차 DeepSeek, 폴백 Claude**.
+ * 총평·분석글 생성용 텍스트 LLM 게이트웨이.
+ *
+ * 순서는 **`PROVIDER_CHAIN` 한 줄**이 정한다 — 현재 `gemini` → `anthropic`.
+ * 앞의 것이 하드 실패하면 다음으로 넘어간다. 모델을 바꾸는 일이 잦아 순서를
+ * 데이터로 뺐다: 구현은 셋 다 살아 있고, 체인에서 빼도 코드는 그대로 남는다.
  *
  * 왜 한 곳으로 모으나: 모델 호출이 commentary-agent 3곳 + article-generator 2곳에
  * 흩어져 있었고, 각자 모델명·max_tokens·temperature 를 따로 들고 있었다. 모델을 바꾸려면
@@ -10,6 +14,14 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenAI } from '@google/genai';
+
+/** 시도 순서 — 앞에서부터, 키가 있고 성공할 때까지 */
+const PROVIDER_CHAIN = ['gemini', 'anthropic'] as const;
+type Provider = (typeof PROVIDER_CHAIN)[number] | 'deepseek';
+
+/** 1차 모델 — 시험지 분석과 같은 계열(gemini-3.7-flash) */
+const GEMINI_MODEL = 'gemini-3.7-flash';
 
 /** 1차 모델 — DeepSeek 추론 모델 (OpenAI 호환 엔드포인트) */
 const DEEPSEEK_MODEL = 'deepseek-v4-pro';
@@ -52,7 +64,7 @@ export interface LlmTextRequest {
 
 export interface LlmTextResult {
   text: string;
-  provider: 'deepseek' | 'anthropic';
+  provider: Provider;
   model: string;
   /** 출력이 상한에 걸려 잘렸을 가능성 — 호출부가 부분 복구를 시도해야 한다 */
   truncated: boolean;
@@ -66,6 +78,37 @@ interface DeepSeekResponse {
   choices?: DeepSeekChoice[];
   usage?: { completion_tokens?: number; completion_tokens_details?: { reasoning_tokens?: number } };
   error?: { message?: string };
+}
+
+async function callGemini(req: LlmTextRequest, apiKey: string): Promise<LlmTextResult> {
+  const client = new GoogleGenAI({ apiKey });
+  const started = Date.now();
+
+  const res = await client.models.generateContent({
+    model: GEMINI_MODEL,
+    contents: [{ role: 'user', parts: [{ text: req.user }] }],
+    config: {
+      ...(req.system ? { systemInstruction: { parts: [{ text: req.system }] } } : {}),
+      maxOutputTokens: req.maxTokens,
+      ...(req.temperature != null ? { temperature: req.temperature } : {}),
+      ...(req.json ? { responseMimeType: 'application/json' } : {}),
+    },
+  });
+
+  const text = res.text ?? '';
+  const finish = res.candidates?.[0]?.finishReason;
+  if (!text.trim()) {
+    // ⚠️ throw 문구에 벤더명을 넣지 않는다 (#0-1) — 진단은 로그로만 (§12-12)
+    console.error(`[commentary-llm] ${req.label} 1차 모델 실패: 빈 응답 (finish=${finish})`);
+    throw new Error('AI 응답을 받지 못했습니다');
+  }
+
+  console.log(
+    `[commentary-llm] ${req.label} gemini ${Date.now() - started}ms ` +
+      `(출력 ${res.usageMetadata?.candidatesTokenCount ?? '?'} 토큰, finish=${finish})`,
+  );
+
+  return { text, provider: 'gemini', model: GEMINI_MODEL, truncated: finish === 'MAX_TOKENS' };
 }
 
 async function callDeepSeek(req: LlmTextRequest, apiKey: string): Promise<LlmTextResult> {
@@ -152,31 +195,44 @@ async function callClaude(req: LlmTextRequest, apiKey: string): Promise<LlmTextR
 }
 
 /**
- * 텍스트 생성 — DeepSeek 먼저, 실패하면 Claude.
+ * 텍스트 생성 — `PROVIDER_CHAIN` 순서대로 시도.
  *
  * 폴백 조건은 **하드 실패만**(키 없음·네트워크·비-2xx·빈 응답). 잘림(`truncated`)은
  * 폴백 사유가 아니다 — 호출부가 정규식 부분 복구를 이미 갖고 있고(§12-1), 잘린 응답
- * 하나 때문에 두 번째 모델까지 돌리면 비용과 지연이 두 배가 된다.
+ * 하나 때문에 다음 모델까지 돌리면 비용과 지연이 두 배가 된다.
+ *
+ * 조용한 폴백 금지(§12-10) — 어느 단계가 왜 실패했는지 반드시 로그에 남긴다.
  */
 export async function generateText(req: LlmTextRequest): Promise<LlmTextResult> {
-  const deepseekKey = process.env.DEEPSEEK_API_KEY?.trim();
-  const anthropicKey = process.env.ANTHROPIC_API_KEY?.trim();
+  const providers: Record<Provider, { key?: string; call: (r: LlmTextRequest, k: string) => Promise<LlmTextResult> }> = {
+    gemini: { key: process.env.GEMINI_API_KEY?.trim(), call: callGemini },
+    anthropic: { key: process.env.ANTHROPIC_API_KEY?.trim(), call: callClaude },
+    deepseek: { key: process.env.DEEPSEEK_API_KEY?.trim(), call: callDeepSeek },
+  };
 
-  if (deepseekKey) {
-    try {
-      return await callDeepSeek(req, deepseekKey);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      if (!anthropicKey) throw e;
-      // 조용한 폴백 금지 — 어느 쪽이 왜 실패했는지 로그에 남긴다 (§12-10)
-      console.warn(`[commentary-llm] ${req.label} 1차 실패 → 폴백 모델로 재시도: ${msg}`);
+  let lastError: unknown = null;
+  let attempted = 0;
+
+  for (const name of PROVIDER_CHAIN) {
+    const { key, call } = providers[name];
+    if (!key) {
+      console.warn(`[commentary-llm] ${req.label} ${name} 키 없음 — 건너뜀`);
+      continue;
     }
-  } else if (anthropicKey) {
-    console.warn(`[commentary-llm] ${req.label} DEEPSEEK_API_KEY 없음 → anthropic 으로 진행`);
+    attempted += 1;
+    try {
+      return await call(req, key);
+    } catch (e) {
+      lastError = e;
+      const msg = e instanceof Error ? e.message : String(e);
+      console.warn(`[commentary-llm] ${req.label} ${name} 실패 → 다음 단계로: ${msg}`);
+    }
   }
 
-  if (!anthropicKey) {
+  if (attempted === 0) {
+    // 키가 하나도 없다 — 설정 문제. 벤더·환경변수명은 사용자에게 노출하지 않는다(#0-1).
+    console.error(`[commentary-llm] ${req.label} 사용 가능한 모델 키가 없습니다 (chain=${PROVIDER_CHAIN.join(',')})`);
     throw new Error('총평 생성에 필요한 설정이 없습니다');
   }
-  return callClaude(req, anthropicKey);
+  throw lastError instanceof Error ? lastError : new Error('AI 응답을 받지 못했습니다');
 }

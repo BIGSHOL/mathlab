@@ -25,6 +25,7 @@ import {
   type CliKind,
 } from './cli-kind';
 import { progressFromCliNdjsonLine } from './analysis-progress';
+import { EXAM_ANALYSIS_MODEL } from './shared/exam-model';
 
 export type { CliKind } from './cli-kind';
 export { CLI_KIND_ORDER, CLI_KIND_LABEL, parseCliKind } from './cli-kind';
@@ -97,10 +98,16 @@ export function getExamAnalysisTimeoutLabel(): string {
   return `AI 분석 타임아웃 (${minutes}분 초과)`;
 }
 
-/** DB modelVersion 용 — 사용자 UI 는 prompt 버전만 보여야 한다 (규칙 #0). */
+/**
+ * DB modelVersion 용 — 사용자 UI 는 prompt 버전만 보여야 한다 (규칙 #0).
+ *
+ * ⚠️ 모델명을 여기 손으로 적지 말 것. 예전엔 `'gemini-3.1-pro-preview'` 가 박혀 있어
+ *    ai-engine 의 MODEL 을 바꾸면 **기록만 옛 모델로 남았다**(§12-13: 산출물과 그
+ *    메타데이터를 따로 적으면 반드시 어긋난다). 이제 같은 상수에서 파생시킨다.
+ */
 export function getExamAnalysisModelVersion(promptVersion: string): string {
   if (isCliExamAnalysisEnabled()) return `cli / prompt ${promptVersion}`;
-  return `gemini-3.1-pro-preview / prompt ${promptVersion}`;
+  return `${EXAM_ANALYSIS_MODEL} / prompt ${promptVersion}`;
 }
 
 export async function resolveExamAnalysisCli(): Promise<ResolvedCli> {
