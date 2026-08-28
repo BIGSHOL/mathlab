@@ -44,14 +44,15 @@ export function DevCliPicker() {
 
     (async () => {
       let available: CliKind[] = [];
-      let defaultKind: CliKind | null = null;
       try {
         const res = await fetch('/api/exam-analysis/cli-options', { cache: 'no-store' });
         if (res.ok) {
           const json = (await res.json()) as CliOptionsResponse;
           if (!json.data?.enabled) return;
           available = json.data.available ?? [];
-          defaultKind = json.data.defaultKind;
+          // 응답의 defaultKind 는 쓰지 않는다 — 서버 기본값은 SERVER_DEFAULT(빈 값)로
+          // 표현하고, 실제 선택은 서버가 요청 시점에 한다. 여기서 미리 특정 CLI 로
+          // 굳히면 "고른 적 없는 CLI 가 켜져 있는" 예전 문제가 되돌아온다.
         }
       } catch {
         /* PATH 조회 실패해도 드롭다운은 보여 준다 */
