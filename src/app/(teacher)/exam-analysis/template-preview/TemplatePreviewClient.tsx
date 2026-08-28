@@ -12,7 +12,7 @@
  * 헤더/푸터가 locked 라 normalizeTemplate 이 항상 켜 버린다. 그래서 variant.render 를 직접 부른다.
  */
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
@@ -21,7 +21,7 @@ import { DEFAULT_TEMPLATE } from '@/lib/exam-analysis/blocks/default-template';
 import { COMMENTARY_THEMES, themeClassName } from '@/lib/exam-analysis/commentary-themes';
 import { COMMENTARY_LAYOUTS, VIZ_LABELS } from '@/lib/exam-analysis/commentary-layouts';
 import { COMMENTARY_COPIES, getCommentaryCopy } from '@/lib/exam-analysis/commentary-copy';
-import { COMMENTARY_PRESETS, presetToConfig } from '@/lib/exam-analysis/commentary-presets';
+import { COMMENTARY_PRESETS, presetToConfig, AUDIENCE_LABELS, type PresetAudience } from '@/lib/exam-analysis/commentary-presets';
 import { V3CommentaryView } from '../v3/V3CommentaryView';
 import { COMMENTARY_BLOCKS } from '../v3/blocks/registry';
 
@@ -33,6 +33,50 @@ interface Props {
   currentId: string;
 }
 
+
+/**
+ * 화면에 들어올 때만 실제로 그린다.
+ *
+ * 프리셋이 25종이 되면서 전부 한 번에 렌더하면 V3 문서 25개가 동시에 DOM 에 올라간다.
+ * `zoom` 은 **보이는 크기만** 줄일 뿐 노드 수를 줄이지 않으므로 축소로는 해결되지 않는다.
+ * 한 번 그린 문서는 다시 지우지 않는다 — 스크롤을 오갈 때마다 재생성하면 더 느리다.
+ */
+function LazyDoc({ minHeight, children }: { minHeight: number; children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    if (shown) return;
+    const el = ref.current;
+    if (!el) return;
+    // rootMargin 을 넉넉히 둬서 스크롤이 닿기 전에 미리 그린다(빈 칸이 스쳐 지나가지 않게)
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setShown(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: '700px 0px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [shown]);
+
+  return (
+    <div ref={ref} style={shown ? undefined : { minHeight }}>
+      {shown ? (
+        children
+      ) : (
+        <div
+          className="flex items-center justify-center border border-dashed border-slate-200 rounded-sm bg-slate-50 text-[11px] text-slate-400"
+          style={{ height: minHeight }}
+        >
+          스크롤하면 표시됩니다
+        </div>
+      )}
+    </div>
+  );
+}
 
 /**
  * 고정 폭(1080px) 문서를 축소해 카드 안에 담는다 — 브라우저 줌 없이 나란히 비교하기 위함.
@@ -186,29 +230,59 @@ export function TemplatePreviewClient({ commentary, questions, meta, options, cu
         </div>
       )}
 
-      {/* ② 프리셋 조합 — 전체 문서 */}
+      {/* ② 프리셋 조합 — 완성된 문서 전종. 대상별로 묶고, 화면에 들어올 때만 그린다 */}
       {tab === 'presets' && (
-        <div className="flex flex-wrap gap-6">
-          {COMMENTARY_PRESETS.map((p) => (
-            <div key={p.id}>
-              <div className="mb-1.5">
-                <span className="text-[13px] font-bold text-slate-900">{p.label}</span>
-                <span className="ml-2 text-[10px] text-slate-400 uppercase tracking-wider">
-                  {p.layoutId} · {p.themeId} · {p.copyId}
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 mb-2 max-w-[300px] h-8">{p.hint}</p>
-              <ScaledDoc scale={0.3}>
-                <V3CommentaryView
-                  commentary={commentary}
-                  questions={questions}
-                  meta={meta}
-                  template={presetToConfig(p)}
-                />
-              </ScaledDoc>
+        <>
+          {/* 점프 바 — 25종이라 스크롤만으로는 원하는 걸 못 찾는다 */}
+          <div className="sticky top-0 z-10 -mt-2 mb-4 py-2 bg-white/95 backdrop-blur border-b border-slate-100">
+            <div className="flex flex-wrap gap-1">
+              {COMMENTARY_PRESETS.map((p) => (
+                <a
+                  key={p.id}
+                  href={`#preset-${p.id}`}
+                  className="px-2 py-0.5 text-[11px] rounded-sm border border-slate-200 text-slate-600 hover:border-primary hover:text-primary"
+                >
+                  {p.label}
+                </a>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+
+          {(Object.keys(AUDIENCE_LABELS) as PresetAudience[]).map((aud) => {
+            const group = COMMENTARY_PRESETS.filter((p) => p.audience === aud);
+            if (!group.length) return null;
+            return (
+              <section key={aud} className="mb-8">
+                <h3 className="text-[12px] font-bold text-slate-400 tracking-wider mb-3">
+                  {AUDIENCE_LABELS[aud]}용 <span className="text-slate-300">({group.length})</span>
+                </h3>
+                <div className="flex flex-wrap gap-6">
+                  {group.map((p) => (
+                    <div key={p.id} id={`preset-${p.id}`} className="scroll-mt-16">
+                      <div className="mb-1.5">
+                        <span className="text-[13px] font-bold text-slate-900">{p.label}</span>
+                        <span className="ml-2 text-[10px] text-slate-400 uppercase tracking-wider">
+                          {p.layoutId} · {p.themeId} · {p.copyId}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 mb-2 max-w-[300px] h-8">{p.hint}</p>
+                      <LazyDoc minHeight={520}>
+                        <ScaledDoc scale={0.3}>
+                          <V3CommentaryView
+                            commentary={commentary}
+                            questions={questions}
+                            meta={meta}
+                            template={presetToConfig(p)}
+                          />
+                        </ScaledDoc>
+                      </LazyDoc>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </>
       )}
 
       {/* ②-b 문체 4종 — 지면에 박히는 고정 문구 비교. 축소하면 글자가 안 보이므로 크게 렌더 */}
