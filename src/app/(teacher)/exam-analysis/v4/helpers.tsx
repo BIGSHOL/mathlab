@@ -14,6 +14,7 @@ import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { weightedAverageDifficulty } from '@/lib/exam-analysis/difficulty';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import { renderInlineMath } from '@/lib/exam-analysis/rendering';
+import { correctRatePct } from '@/lib/exam-analysis/shared/student-answers';
 
 // V3 helpers 일부만 재export (markdownToHighlighted는 V4 자체 구현 — 자동 색상 강조 X)
 export { normDiff, V3_DIFF_LABELS, V3_DIFF_COLORS } from '../v3/helpers';
@@ -149,10 +150,8 @@ export function computeExamStats(questions: AnalyzedQuestion[]): ExamStats {
   const weighted = weightedAverageDifficulty(questions).avg;
   const killerPct = totalDiff > 0 ? Math.round((counts[4] / totalDiff) * 100) : 0;
 
-  const answered = questions.filter((q) => q.is_correct !== null);
-  const correctRate = answered.length === 0
-    ? null
-    : Math.round((answered.filter((q) => q.is_correct === true).length / answered.length) * 100);
+  // 엄격 판정 필수 — `is_correct !== null` 은 레거시 문항을 "답안 있음"으로 잡아 정답률 0% 를 지어낸다
+  const correctRate = correctRatePct(questions);
 
   return {
     totalQuestions: questions.length,

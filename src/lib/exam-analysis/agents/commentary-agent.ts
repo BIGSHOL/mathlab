@@ -18,6 +18,7 @@ import { weightedAverageDifficulty } from '../shared/difficulty';
 import { MIDDLE_SCHOOL_CURRICULUM } from '../data/curriculum';
 import type { GradeCurriculum } from '../data/curriculum';
 import type { NearbyComparisonData, NearbyExamSummary } from '../nearby-school-data';
+import { hasStudentAnswers } from '../shared/student-answers';
 
 
 // ── 영문 enum → 한글 라벨 (AI 입력/출력 정규화용) ──
@@ -691,20 +692,6 @@ function typeDistributionLine(subject: string | null | undefined, types: Record<
     .join(', ');
 }
 
-/**
- * 학생 답안 데이터가 실제로 있는가.
- *
- * ⚠️ `is_correct !== null` 로 판정하면 안 된다 — `undefined !== null` 이 참이라
- *    필드가 아예 없는 레거시 문항(또는 AI가 `"false"` 같은 문자열을 준 경우)이
- *    모두 "답안 있음"으로 잡힌다. 그러면 `=== true`/`=== false` 집계는 0이라
- *    **"정답 0 / 오답 0 · 정답률 0%"** 라는 가짜 통계가 AI 프롬프트로 들어간다.
- *
- * 이 제품은 학생 답안지를 받지 않으므로 정상 경로에서는 항상 false 여야 한다.
- * 판정은 반드시 **엄격한 boolean 존재 확인**으로 한다.
- */
-function hasStudentAnswers(questions: Array<{ is_correct?: unknown }>): boolean {
-  return questions.some((q) => q.is_correct === true || q.is_correct === false);
-}
 
 export class CommentaryAgent extends BaseAgent<Record<string, unknown>> {
   readonly agentType: AgentType = 'commentary';

@@ -4,12 +4,18 @@
  * 실제 DB 의 분석본 하나를 골라 **테마 4종 · 프리셋 조합 · 블록별 variant** 를 한 화면에 늘어놓는다.
  * 드로어 편집기로 하나씩 바꿔 보는 것과 달리, 선택지 전체를 동시에 눈으로 비교하는 용도.
  *
- * 인증은 (teacher) 레이아웃이 이미 강제한다 (미로그인/STUDENT → /login).
+ * ⚠️ 인증(레이아웃의 미로그인/STUDENT 차단)만으로는 부족하다 — **인가**가 따로 필요하다.
+ * 이 화면은 실제 분석본을 읽으므로 테넌트 스코프를 걸지 않으면 아무 강사나 전 지점 분석본을 본다.
+ * ExamPaper 를 읽는 모든 경로와 동일하게 `getExamScope(user)` 를 통과시킬 것(데모 계정은 본인 것만).
  * 차트 4종은 분석 화면에서 별도 렌더되므로 여기서는 전달하지 않는다 → 차트 블록은 자동 생략된다.
  */
 
+import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth';
+import { getExamScope } from '@/lib/demo/accounts';
 import { sumPoints } from '@/lib/exam-analysis/points';
+import { hasStudentAnswers } from '@/lib/exam-analysis/shared/student-answers';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import type { BlockMeta } from '@/lib/exam-analysis/blocks/types';
@@ -24,9 +30,14 @@ interface PageProps {
 export default async function TemplatePreviewPage({ searchParams }: PageProps) {
   const { id } = await searchParams;
 
+  const user = await getCurrentUser();
+  if (!user || user.role === 'STUDENT') redirect('/login');
+  // ExamAnalysis 자체에는 tenantId 가 없다 → 소유 시험지(ExamPaper) 쪽으로 스코프를 건다
+  const examScope = await getExamScope(user);
+
   // 총평(commentary)이 있는 분석본만 후보 — 없는 시험지를 고르면 볼 게 없다
   const candidates = await prisma.examAnalysis.findMany({
-    where: { extensions: { some: { agentType: 'commentary' } } },
+    where: { extensions: { some: { agentType: 'commentary' } }, examPaper: { is: examScope } },
     orderBy: { createdAt: 'desc' },
     select: {
       examPaperId: true,
@@ -51,7 +62,7 @@ export default async function TemplatePreviewPage({ searchParams }: PageProps) {
   }
 
   const analysis = await prisma.examAnalysis.findFirst({
-    where: { examPaperId: targetId },
+    where: { examPaperId: targetId, examPaper: { is: examScope } },
     orderBy: { createdAt: 'desc' },
     select: {
       questions: true,
@@ -78,7 +89,7 @@ export default async function TemplatePreviewPage({ searchParams }: PageProps) {
     analyzedAt: analysis.analyzedAt ? analysis.analyzedAt.toISOString() : null,
     totalQuestions: questions.length,
     totalPoints: sumPoints(questions.map((q) => q.points)),
-    hasStudentData: questions.some((q) => q.is_correct !== null),
+    hasStudentData: hasStudentAnswers(questions),
   };
 
   return (

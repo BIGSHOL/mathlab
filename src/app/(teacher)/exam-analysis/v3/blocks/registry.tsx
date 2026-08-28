@@ -17,6 +17,7 @@ import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { weightedAverageDifficulty } from '@/lib/exam-analysis/difficulty';
 import { formatPoints, roundPoints, sumPoints } from '@/lib/exam-analysis/points';
 import { renderInlineMath } from '@/lib/exam-analysis/rendering';
+import { correctRatePct } from '@/lib/exam-analysis/shared/student-answers';
 import { normalizeFeatureCallout } from '@/lib/exam-analysis/feature-callout';
 import type {
   BlockRenderProps,
@@ -55,15 +56,12 @@ function computeKpis(questions: AnalyzedQuestion[]): Kpis {
     if (lv >= 1 && lv <= 5) counts[lv - 1]++;
   }
   const total = counts.reduce((s, c) => s + c, 0);
-  const answered = questions.filter((q) => q.is_correct !== null);
   return {
     weighted: weightedAverageDifficulty(questions).avg,
     killerPct: total > 0 ? Math.round((counts[4] / total) * 100) : 0,
     essayCount: questions.filter((q) => q.question_format === 'essay').length,
-    correctRate:
-      answered.length === 0
-        ? null
-        : Math.round((answered.filter((q) => q.is_correct === true).length / answered.length) * 100),
+    // 엄격 판정 필수 — `is_correct !== null` 은 레거시 문항을 "답안 있음"으로 잡아 정답률 0% 를 지어낸다
+    correctRate: correctRatePct(questions),
   };
 }
 

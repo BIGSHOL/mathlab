@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import { sumPoints } from '@/lib/exam-analysis/points';
+import { hasStudentAnswers } from '@/lib/exam-analysis/shared/student-answers';
 import { V3CommentaryView, type V3Meta, type V3ChartImages } from './v3/V3CommentaryView';
 import { V4CommentaryView, hasV4Data } from './v4/V4CommentaryView';
 import { TemplateEditor, TemplateEditorActions } from './v3/blocks/TemplateEditor';
@@ -369,7 +370,7 @@ export function CommentarySection({
       analyzedAt: examMeta?.analyzedAt ?? null,
       totalQuestions: allQuestions.length,
       totalPoints: sumPoints(allQuestions.map((q) => q.points)),
-      hasStudentData: allQuestions.some((q) => q.is_correct !== null),
+      hasStudentData: hasStudentAnswers(allQuestions),
     };
     return (
       <div className="bg-white border border-indigo-200 rounded-sm mb-5 overflow-hidden">
