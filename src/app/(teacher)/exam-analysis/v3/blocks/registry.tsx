@@ -227,6 +227,30 @@ const headerBlock: CommentaryBlockDef = {
       },
     },
     {
+      id: 'letterhead',
+      label: '편지지 머리',
+      // 헤더는 locked 라 끌 수 없다. 손편지에 대형 헤드라인이 얹히면 편지가 아니라
+      // 잡지 표지가 되므로, 학교·시험명만 한 줄로 두는 '편지지 머리'를 따로 둔다.
+      hint: '학교·시험명 한 줄만 — 손편지용',
+      render: (props) => {
+        const { meta } = props;
+        return (
+          <header className="v3-top v3-top-letterhead" {...blockAttrs('header', summaryHeader(props))}>
+            <span className="v3-kicker">{meta.examTitle}</span>
+            <div className="v3-meta">
+              <span className="v3-author">{props.copy.author}</span>
+              {analyzedDate(meta) && (
+                <>
+                  <span className="v3-dot">·</span>
+                  <span>{analyzedDate(meta)}</span>
+                </>
+              )}
+            </div>
+          </header>
+        );
+      },
+    },
+    {
       id: 'centered',
       label: '센터드',
       hint: '중앙 정렬 + 상하 괘선 — 리포트 표지 톤',
@@ -760,6 +784,110 @@ const conclusionBlock: CommentaryBlockDef = {
   ],
 };
 
+// ── 손편지 본문 ───────────────────────────────────────────────────────────
+// 기존 블록들은 "섹션 번호 + 소제목 + 데이터"를 전제로 짜여 있어, 조합만 바꿔서는
+// 손편지가 되지 않는다(번호가 붙은 분석 섹션과 인터뷰 구조가 그대로 남는다).
+// 그래서 같은 데이터를 **편지 한 통의 흐름**으로 다시 엮는 전용 블록을 둔다.
+//   인사말 → 이번 시험 요약 → 관찰 → 준비 제안 → 맺음말 + 서명 → (학부모 문체면) 용어 풀이
+// 최상위 요소 하나만 반환하므로 블로그 캡처에서도 편지 한 장 = 이미지 한 장이 된다.
+
+function summaryLetter(props: BlockRenderProps) {
+  const first = (props.commentary.blog_dek || props.commentary.overall_comment || '').split(/(?<=[.!?])\s/)[0];
+  return first ? `학부모 안내 — ${first}`.slice(0, 120) : '';
+}
+
+const letterBodyBlock: CommentaryBlockDef = {
+  id: 'letterBody',
+  label: '손편지 본문',
+  description: '인사말 · 관찰 · 준비 제안 · 맺음말을 편지 한 통으로',
+  // 손편지 프리셋에서만 쓴다 — 기존 문서에 저절로 붙으면 총평이 두 번 나온다
+  defaultEnabled: false,
+  available: (c) => !!c.overall_comment,
+  summary: summaryLetter,
+  variants: [
+    {
+      id: 'serif',
+      label: '크림지',
+      hint: '세리프 본문 · 서명란 — 기본',
+      render: (props) => renderLetter(props, ''),
+    },
+    {
+      id: 'plain',
+      label: '백지',
+      hint: '배경 없이 활자만',
+      render: (props) => renderLetter(props, ' v3-letter-plain'),
+    },
+  ],
+};
+
+function renderLetter(props: BlockRenderProps, extraClass: string) {
+  const { commentary: c, meta, copy } = props;
+  if (!c.overall_comment) return null;
+
+  const who = [meta.schoolName, meta.grade].filter(Boolean).join(' ');
+  const greeting = who ? `${who} 학부모님께` : '학부모님께';
+
+  // 관찰 — 영역별 분석이 있으면 그 본문을, 없으면 보완점을 문장으로
+  const observations: string[] = c.v4_main_analysis?.length
+    ? c.v4_main_analysis.map((m) => m.body).filter(Boolean)
+    : c.improvement_areas.filter(Boolean);
+
+  // 준비 제안 — 표(area/action)를 편지에 어울리게 한 문장씩으로 편다
+  const suggestions: string[] = c.v4_final_strategy?.length
+    ? c.v4_final_strategy.map((r) => [r.area, r.action].filter(Boolean).join(' — '))
+    : (c.teaching_recommendations ?? [])
+        .map((t) => (typeof t === 'string' ? t : [t.topic, t.reason].filter(Boolean).join(' — ')))
+        .filter(Boolean);
+
+  // 용어 풀이 — 본문에 **실제로 등장한** 용어만. 안 쓴 말을 설명하면 편지가 사전이 된다.
+  const haystack = [c.blog_dek, c.overall_comment, ...observations, ...suggestions, c.conclusion?.body]
+    .filter(Boolean)
+    .join(' ');
+  const terms = (copy.glossary ?? []).filter((g) => haystack.includes(g.term));
+
+  return (
+    <div className={`v3-letter${extraClass}`} {...blockAttrs('letterBody', summaryLetter(props))}>
+      <p className="v3-letter-greeting">{greeting}</p>
+
+      {c.blog_dek && <p className="v3-letter-lead">{markdownToHighlighted(c.blog_dek, 'v3-lt-dek')}</p>}
+      <p>{markdownToHighlighted(c.overall_comment, 'v3-lt-body')}</p>
+
+      {observations.map((t, i) => (
+        <p key={`obs-${i}`}>{markdownToHighlighted(t, `v3-lt-obs-${i}`)}</p>
+      ))}
+
+      {suggestions.length > 0 && (
+        <>
+          <p className="v3-letter-turn">다음 시험까지는 이렇게 준비하시면 좋겠습니다.</p>
+          {suggestions.map((t, i) => (
+            <p key={`sug-${i}`} className="v3-letter-suggest">
+              {markdownToHighlighted(t, `v3-lt-sug-${i}`)}
+            </p>
+          ))}
+        </>
+      )}
+
+      {c.conclusion?.body && <p>{markdownToHighlighted(c.conclusion.body, 'v3-lt-concl')}</p>}
+
+      <p className="v3-letter-sign">
+        <span>{meta.analyzedAt ? new Date(meta.analyzedAt).toLocaleDateString('ko-KR') : ''}</span>
+        <span>{copy.letterSignoff ?? copy.author}</span>
+      </p>
+
+      {terms.length > 0 && (
+        <div className="v3-letter-terms">
+          <span className="v3-letter-terms-title">용어 풀이</span>
+          {terms.map((g) => (
+            <p key={g.term}>
+              <b>{g.term}</b> {g.plain}
+            </p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const footerBlock: CommentaryBlockDef = {
   id: 'footer',
   label: '푸터',
@@ -791,6 +919,7 @@ export const COMMENTARY_BLOCKS: CommentaryBlockDef[] = [
   qaBlock,
   mainAnalysisBlock,
   keyQuestionsBlock,
+  letterBodyBlock,
   pullQuoteBlock,
   chartsBlock,
   finalStrategyBlock,

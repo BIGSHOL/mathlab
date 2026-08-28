@@ -2032,6 +2032,84 @@ body {
   font-weight: 700; text-align: center;
 }
 
+/* 편지지 머리 — 헤드라인 없이 발신 정보만. 아래 편지 본문이 주인공이라 최대한 물러난다 */
+.v3-top.v3-top-letterhead { padding-bottom: 18px; }
+.v3-top-letterhead .v3-kicker { font-size: 13px; letter-spacing: 0.04em; color: var(--v3-ink); font-weight: 700; }
+.v3-top-letterhead .v3-meta { margin-top: 8px; }
+
+/* ── V3 손편지(letterBody) ──────────────────────────────────────────────
+   차트·표·섹션 번호가 없는 편지 한 통. 다른 블록이 "제목 + 데이터"라면
+   이건 문단만 이어지는 지면이라 좌우 여백을 크게 잡아 읽는 폭을 좁힌다.
+   테마 변수만 참조하므로 팔레트 11종에 그대로 따라간다. */
+.v3-letter {
+  margin: 30px var(--v3-gutter);
+  padding: 46px 52px;
+  background: var(--v3-conclusion-bg);
+  border: 1px solid var(--v3-line-soft);
+  border-radius: 4px;
+}
+.v3-letter.v3-letter-plain { background: transparent; border: none; padding: 30px 0; }
+.v3-letter p {
+  font-family: var(--v3-font-body);
+  font-size: 17px;
+  line-height: 2;
+  color: var(--v3-ink);
+  margin: 0 0 18px;
+  max-width: 640px;
+  word-break: keep-all;
+}
+.v3-letter-greeting {
+  font-family: var(--v3-font-head);
+  font-size: 20px !important;
+  font-weight: 700;
+  margin-bottom: 26px !important;
+}
+.v3-letter-lead { font-weight: 600; }
+/* 편지의 방향이 바뀌는 지점 — 관찰에서 제안으로 */
+.v3-letter-turn { margin-top: 30px !important; font-weight: 600; }
+.v3-letter-suggest {
+  padding-left: 16px;
+  border-left: 2px solid var(--v3-accent);
+  margin-bottom: 12px !important;
+}
+.v3-letter-sign {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  max-width: 640px;
+  margin-top: 40px !important;
+  padding-top: 18px;
+  border-top: 1px solid var(--v3-line-soft);
+  font-family: var(--v3-font-label);
+  font-size: 13px !important;
+  color: var(--v3-muted);
+}
+.v3-letter-sign span:last-child { font-weight: 700; color: var(--v3-ink); }
+/* 용어 풀이 — 본문이 아니라 각주. 본문 치환 대신 뜻만 덧붙인다 */
+.v3-letter-terms {
+  margin-top: 30px;
+  padding: 18px 20px;
+  background: var(--v3-paper-alt);
+  border-radius: 3px;
+  max-width: 640px;
+}
+.v3-letter-terms-title {
+  display: block;
+  font-family: var(--v3-font-label);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  font-weight: 800;
+  color: var(--v3-muted);
+  margin-bottom: 10px;
+}
+.v3-letter-terms p {
+  font-size: 13px !important;
+  line-height: 1.7 !important;
+  margin: 0 0 6px !important;
+  color: var(--v3-muted);
+}
+.v3-letter-terms p b { color: var(--v3-ink); font-weight: 700; margin-right: 4px; }
+
 /* V3 인포그래픽 (인라인) */
 .v3-info-fig { margin: 24px 0; padding: 22px 26px; background: var(--v3-paper-alt); border: 1px solid var(--v3-line-soft); border-radius: 4px; }
 .v3-info-label { font-family: var(--v3-font-label); font-size: 11px; letter-spacing: 0.14em; color: var(--v3-muted); font-weight: 800; margin: 0 0 14px; text-transform: uppercase; }

@@ -58,9 +58,22 @@ async function main() {
   console.log('\n[3] presetToConfig 전개 ───────────────────────────');
   for (const p of COMMENTARY_PRESETS) {
     const cfg = presetToConfig(p);
-    const sameCount = cfg.blocks.length === DEFAULT_TEMPLATE.blocks.length;
-    const noDup = new Set(cfg.blocks.map((b) => b.id)).size === cfg.blocks.length;
-    ok(sameCount && noDup, `${p.id.padEnd(12)} 블록 ${cfg.blocks.length}개, 중복 없음`);
+    const ids: string[] = cfg.blocks.map((b) => b.id);
+    const noDup = new Set(ids).size === ids.length;
+    // 개수만 세면 기본 템플릿에 없는 블록(letterBody)이 조용히 버려져도 통과한다.
+    // 기본 전부 + changes 로 새로 끌어온 것이 **모두** 들어왔는지를 본다.
+    const missing = [
+      ...DEFAULT_TEMPLATE.blocks.map((b) => b.id).filter((id) => !ids.includes(id)),
+      ...Object.keys(p.changes).filter((id) => !ids.includes(id)),
+    ];
+    ok(
+      noDup && missing.length === 0,
+      `${p.id.padEnd(12)} 블록 ${ids.length}개${missing.length ? ' — 누락: ' + missing.join(',') : ''}${noDup ? '' : ' — 중복'}`,
+    );
+    for (const [id, c] of Object.entries(p.changes)) {
+      if (c?.enabled !== true) continue;
+      ok(cfg.blocks.find((b) => b.id === id)?.enabled === true, `${p.id.padEnd(12)} ${id} 이(가) 켜진 채 전개된다`);
+    }
   }
 
   console.log('\n[4] 상수 오염 방지 ────────────────────────────────');

@@ -43,6 +43,19 @@ export interface CommentaryCopy {
 
   /** Q&A 섹션 소제목 (n = 1-based 질문 번호) */
   qaSubLabel: (n: number) => string;
+
+  /** 손편지(letterBody) 맺음 서명. 없으면 블록이 author 로 폴백한다 */
+  letterSignoff?: string;
+
+  /**
+   * 용어 풀이 — 학부모용 문체에서 본문 아래에 붙는 각주.
+   *
+   * ⚠️ **본문을 치환하지 않는다.** AI 본문에서 "변별력"을 "실력 차이가 드러나는 정도"로
+   * 바꾸면 한국어 조사가 깨지고("변별력이" → "…정도이"), AI 생성 텍스트는 문체 팩이
+   * 건드리지 않는다는 이 파일의 계약도 무너진다.
+   * 대신 **본문에 실제로 등장한 용어만** 골라 아래에 뜻을 보여 준다.
+   */
+  glossary?: readonly { term: string; plain: string }[];
 }
 
 /** 에디토리얼 — 기존 문구 그대로 (회귀 기준선) */
@@ -132,6 +145,17 @@ const PARENT: CommentaryCopy = {
   conclusionKicker: '마무리 · 다음 시험을 위해',
   conclusionTitle: '다음 시험, 이렇게 준비하면 좋아요',
   qaSubLabel: (n) => `궁금해요 ${n}`,
+  letterSignoff: '매스랩 드림',
+  // 학원 안에서는 당연한 말이지만 가정에서는 처음 듣는 말들. 본문에 나온 것만 표시된다.
+  glossary: [
+    { term: '변별력', plain: '학생들 사이의 실력 차이가 점수로 드러나는 정도' },
+    { term: '서술형', plain: '답만 쓰는 것이 아니라 풀이 과정까지 직접 써서 내는 문제' },
+    { term: '킬러', plain: '한 시험에서 정답률이 가장 낮은, 가장 어려운 문제' },
+    { term: '배점', plain: '문제 하나에 걸린 점수' },
+    { term: '난이도', plain: '문제가 어려운 정도. 이 분석에서는 1(기본)~5(최고난도)로 나눕니다' },
+    { term: '단원', plain: '교과서에서 하나의 주제로 묶어 놓은 학습 범위' },
+    { term: '출제 범위', plain: '이번 시험에 나오기로 정해져 있던 단원의 범위' },
+  ],
 };
 
 export const COMMENTARY_COPIES: CommentaryCopy[] = [EDITORIAL, PRESS, OFFICIAL, PARENT];

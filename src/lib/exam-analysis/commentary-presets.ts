@@ -60,6 +60,15 @@ export function presetToConfig(preset: CommentaryPreset): CommentaryTemplateConf
     return { id: b.id, variant: c?.variant ?? b.variant, enabled: c?.enabled ?? b.enabled };
   });
 
+  // 기본 템플릿에 없는 블록(letterBody 처럼 프리셋 전용으로 새로 만든 것)도 changes 에
+  // 적었으면 반드시 포함시킨다. 기본 목록만 순회하면 그 지정이 **조용히 버려지고**,
+  // normalizeTemplate 이 defaultEnabled=false 로 꺼진 채 다시 붙여 프리셋이 빈 껍데기가 된다.
+  const present = new Set(blocks.map((b) => b.id));
+  for (const [id, c] of Object.entries(preset.changes) as [BlockId, { variant?: string; enabled?: boolean }][]) {
+    if (present.has(id)) continue;
+    blocks.push({ id, variant: c.variant ?? '', enabled: c.enabled !== false });
+  }
+
   const order = preset.order;
   const sorted = order
     ? [...blocks].sort((a, b) => {
@@ -154,6 +163,35 @@ export const COMMENTARY_PRESETS: readonly CommentaryPreset[] = [
       pullQuote: { variant: 'rule' },
       conclusion: { variant: 'ink' },
     },
+  },
+  {
+    id: 'letter',
+    label: '손편지',
+    hint: '차트 0 · 세리프 본문 · 서명란. 가정으로 그대로 보내는 편지 한 통',
+    audience: 'parent',
+    themeId: 'sepia',
+    layoutId: 'quiet',
+    copyId: 'parent',
+    changes: {
+      // 편지지 머리만 남기고, 지면을 "숫자로 보여 주는" 블록을 전부 끈다.
+      // 하나라도 켜져 있으면 편지가 아니라 리포트에 인사말을 붙인 것처럼 읽힌다.
+      header: { variant: 'letterhead' },
+      letterBody: { variant: 'serif', enabled: true },
+      kpi: { enabled: false },
+      feature: { enabled: false },
+      infographic: { enabled: false },
+      difficultyTable: { enabled: false },
+      previousComparison: { enabled: false },
+      qa: { enabled: false },
+      // 편지 본문이 이미 이 내용을 산문으로 품고 있어 그대로 두면 같은 말이 두 번 나온다
+      mainAnalysis: { enabled: false },
+      keyQuestions: { enabled: false },
+      pullQuote: { enabled: false },
+      charts: { enabled: false },
+      finalStrategy: { enabled: false },
+      conclusion: { enabled: false },
+    },
+    order: ['header', 'letterBody'],
   },
   {
     id: 'quiet',

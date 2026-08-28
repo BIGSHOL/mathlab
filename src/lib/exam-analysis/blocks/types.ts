@@ -71,6 +71,7 @@ export const BLOCK_IDS = [
   'qa',
   'mainAnalysis',
   'keyQuestions',
+  'letterBody',
   'pullQuote',
   'charts',
   'finalStrategy',
