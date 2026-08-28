@@ -2512,8 +2512,11 @@ body {
   gap: 8px;
   max-width: 86%;
 }
-.v3-chat-teacher { align-self: flex-start; }
-.v3-chat-parent { align-self: flex-end; flex-direction: row-reverse; }
+/* 좌우 배치 — 학부모가 왼쪽(묻는 쪽), 선생님이 오른쪽(답하는 쪽).
+   답변이 길고 굵은 강조가 많아 오른쪽 정렬이 시선의 종착점과 맞는다.
+   선생님 행만 아바타가 붙으므로 row-reverse 로 아바타를 바깥(오른쪽)에 둔다. */
+.v3-chat-parent { align-self: flex-start; }
+.v3-chat-teacher { align-self: flex-end; flex-direction: row-reverse; }
 .v3-chat-bubble {
   padding: 10px 12px;
   border-radius: 6px;

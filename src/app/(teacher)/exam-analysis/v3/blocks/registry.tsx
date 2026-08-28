@@ -1650,18 +1650,27 @@ function buildChatBubbles(c: CommentaryResult, questions: AnalyzedQuestion[] = [
       for (const para of qa.answer ?? []) push('teacher', para);
     }
   } else {
+    // 폴백 — AI 가 blog_qa 를 못 만든 경우. 여기서도 **전제를 담은 질문**을 쓴다.
+    // "전체적으로 어땠나요" 류는 어느 시험에나 붙어서 대화가 아니라 설문지로 읽힌다.
+    const n = questions.length;
+    const pts = sumPoints(questions.map((q) => q.points));
+    const essays = questions.filter(isEssayQuestion).length;
+    const essayPts = sumPoints(questions.filter(isEssayQuestion).map((q) => q.points));
+
     if (c.overall_comment) {
-      push('parent', '이번 시험 전체적으로 어땠나요?');
+      push('parent', n ? `${n}문항에 ${formatPoints(pts)}점이면, 한 문항 무게가 꽤 큰 편인가요?` : '이번 시험은 어떤 구성인가요?');
       push('teacher', c.overall_comment);
     }
     const areas = (c.improvement_areas ?? []).filter(Boolean);
     if (areas.length) {
-      push('parent', '어떤 부분을 먼저 보완하면 좋을까요?');
+      push('parent', essays
+        ? `서술형 ${essays}문항이 ${formatPoints(essayPts)}점이면, 거기부터 잡아야 하는 건가요?`
+        : '점수를 가장 많이 잃는 지점은 어디인가요?');
       for (const a of areas) push('teacher', a);
     }
     const plans = c.v4_final_strategy ?? [];
     if (plans.length) {
-      push('parent', '다음 시험은 어떻게 준비하면 될까요?');
+      push('parent', '그러면 지금부터 순서를 정한다면 무엇부터인가요?');
       for (const p of plans) {
         const text = [p.area, p.action].filter(Boolean).join(' — ');
         if (text) push('teacher', text);
@@ -1671,7 +1680,7 @@ function buildChatBubbles(c: CommentaryResult, questions: AnalyzedQuestion[] = [
 
   // Q&A 가 구성·약점·다음 시험만 다루면 강점·킬러 문항·점수 전략이 빠진다. 있는 값만 덧붙인다.
   if (c.strength_areas?.[0]) {
-    push('parent', '잘 나온 부분은 어디인가요?');
+    push('parent', '그런데 반대로, 이미 잘 잡혀 있는 쪽은 어디인가요?');
     push('teacher', clipLine(c.strength_areas[0], 160));
   }
   const keyQ = c.v4_key_questions?.[0];
@@ -1688,7 +1697,7 @@ function buildChatBubbles(c: CommentaryResult, questions: AnalyzedQuestion[] = [
     const head = [strat.grade, strat.target].filter(Boolean).join(' ');
     const text = clipLine([head, pts || strat.strategy].filter(Boolean).join(' — '), 160);
     if (text) {
-      push('parent', '점수는 어떻게 쌓으면 되나요?');
+      push('parent', '그럼 목표 등급을 두고 보면, 어디까지 맞아야 하는 건가요?');
       push('teacher', text);
     }
   }
@@ -1701,7 +1710,7 @@ function buildChatBubbles(c: CommentaryResult, questions: AnalyzedQuestion[] = [
     const top = axes.map((a) => ({ a, n: counts[a.key] ?? 0 })).sort((x, y) => y.n - x.n)[0];
     if (top && top.n > 0 && top.n / n >= 0.5) {
       const rest = axes.filter((a) => a.key !== top.a.key).map((a) => a.label).join('·');
-      push('parent', '능력 영역은 어떻게 나뉘나요?');
+      push('parent', '그 비중이면 결국 어느 힘을 키워야 한다는 뜻인가요?');
       push(
         'teacher',
         `${top.a.label} ${top.n}문항(${Math.round((top.n / n) * 100)}%)입니다. 나머지 ${n - top.n}문항이 ${rest}입니다.`,
@@ -1727,7 +1736,7 @@ const bubbleThreadBlock: CommentaryBlockDef = {
     {
       id: 'chat',
       label: '대화방',
-      hint: '학부모 오른쪽 · 선생님 왼쪽 — 기본',
+      hint: '학부모 왼쪽 · 선생님 오른쪽 — 기본',
       render: (props) => renderChat(props, false),
     },
     {
