@@ -1,3 +1,5 @@
 {
-  "regions": ["icn1"]
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["icn1"],
+  "fluid": true
 }

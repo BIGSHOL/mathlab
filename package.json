@@ -25,7 +25,8 @@
     "verify:render": "tsx scripts/parity/check-block-render.ts",
     "verify:capture-sig": "tsx scripts/parity/check-capture-sig.ts",
     "verify:contrast": "tsx scripts/parity/check-theme-contrast.ts",
-    "verify:llm": "tsx scripts/parity/check-commentary-llm.ts"
+    "verify:llm": "tsx scripts/parity/check-commentary-llm.ts",
+    "verify:duration": "tsx scripts/parity/check-function-duration.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

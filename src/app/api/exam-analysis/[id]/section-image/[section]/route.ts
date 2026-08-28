@@ -11,6 +11,18 @@ import { sumPoints } from '@/lib/exam-analysis/points';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { weightedAverageDifficulty } from '@/lib/exam-analysis/difficulty';
 
+/**
+ * 이 라우트는 AI 호출이 끝날 때까지 요청 안에서 기다린다 — 짧은 API 가 아니다.
+ * 300초는 Hobby 플랜의 함수 실행 상한이자 기본값이며(fluid compute 기준),
+ * Pro 로 올라가도 그대로 유효하다. 분석 자체 예산은 GEMINI_ANALYZE_TIMEOUT_MS(180초)라
+ * 여유가 있다. 이 값을 줄이면 분석이 끝나기 전에 함수가 잘린다.
+ *
+ * ⚠️ vercel.json 의 `supportsCancellation` 을 켜지 말 것. Vercel 은 기본적으로
+ * 클라이언트 연결이 끊겨도 함수를 끝까지 돌린다(취소는 opt-in). 그래서 사용자가
+ * 분석 도중 페이지를 떠나도 결과가 DB 에 저장된다 — 켜는 순간 그게 깨진다.
+ */
+export const maxDuration = 300;
+
 type Params = { params: Promise<{ id: string; section: string }> };
 
 /**
