@@ -21,6 +21,7 @@ import { correctRatePct } from '@/lib/exam-analysis/shared/student-answers';
 import { normalizeFeatureCallout } from '@/lib/exam-analysis/feature-callout';
 import type {
   BlockRenderProps,
+  BlockChartImages,
   CommentaryBlockDef,
   BlockMeta,
 } from '@/lib/exam-analysis/blocks/types';
@@ -74,6 +75,11 @@ function kicker(c: CommentaryResult, meta: BlockMeta): string {
 
 function analyzedDate(meta: BlockMeta): string {
   return meta.analyzedAt ? meta.analyzedAt.slice(0, 10) : '';
+}
+
+/** 차트가 하나라도 주입됐는가 — 게이트와 렌더 가드가 같은 판정을 공유한다 */
+function hasAnyChart(charts?: BlockChartImages): charts is BlockChartImages {
+  return !!charts && Object.values(charts).some(Boolean);
 }
 
 /** 차트 문자열 → img src (base64면 data URI prefix) */
@@ -317,7 +323,7 @@ const kpiBlock: CommentaryBlockDef = {
   label: '핵심 지표 4종',
   description: '평균 난이도 · 킬러 비중 · 서술형 · 정답률(총배점)',
   defaultEnabled: true,
-  available: (_c, questions) => questions.length > 0,
+  available: ({ questions }) => questions.length > 0,
   summary: summaryKpi,
   variants: [
     {
@@ -448,7 +454,7 @@ const featureBlock: CommentaryBlockDef = {
   label: '피처 박스',
   description: '이번 시험의 한 문장 + 거대 숫자',
   defaultEnabled: true,
-  available: (c) => !!c.feature_callout,
+  available: ({ commentary: c }) => !!c.feature_callout,
   summary: ({ commentary: c }) => {
     const fc = c.feature_callout ? normalizeFeatureCallout(c.feature_callout) : null;
     return fc?.body?.[0] ? koDifficultyText(String(fc.body[0])).slice(0, 140) : '';
@@ -480,7 +486,7 @@ const infographicBlock: CommentaryBlockDef = {
   label: '인포그래픽',
   description: '난이도 분포 바 · 형식 분포 · 문항 지도',
   defaultEnabled: true,
-  available: (_c, questions) => questions.length > 0,
+  available: ({ questions }) => questions.length > 0,
   numberCount: () => 1,
   summary: summaryInfographic,
   variants: [
@@ -564,7 +570,7 @@ const difficultyTableBlock: CommentaryBlockDef = {
   label: '문항별 난이도표',
   description: '문항 번호 · 난이도 · 단원 · 배점 상세 표',
   defaultEnabled: true,
-  available: (c) => !!c.v4_difficulty_rows?.length,
+  available: ({ commentary: c }) => !!c.v4_difficulty_rows?.length,
   summary: summaryDifficultyTable,
   variants: [
     {
@@ -588,7 +594,7 @@ const previousComparisonBlock: CommentaryBlockDef = {
   label: '이전 시험 비교',
   description: '작년/지난 시험 대비 변화',
   defaultEnabled: true,
-  available: (c) => !!c.v4_previous_comparison?.headline,
+  available: ({ commentary: c }) => !!c.v4_previous_comparison?.headline,
   summary: ({ commentary: c }) =>
     c.v4_previous_comparison?.headline ? koDifficultyText(c.v4_previous_comparison.headline).slice(0, 140) : '',
   variants: [
@@ -608,7 +614,7 @@ const qaBlock: CommentaryBlockDef = {
   label: 'Q&A 인터뷰',
   description: '질문–답변 형식의 핵심 해설',
   defaultEnabled: true,
-  available: (c) => !!c.blog_qa?.length,
+  available: ({ commentary: c }) => !!c.blog_qa?.length,
   numberCount: (c) => c.blog_qa?.length || 0,
   // 반복 블록이라 요약은 DOM 휴리스틱(섹션별 heading+첫문장)에 맡긴다
   summary: () => '',
@@ -645,7 +651,7 @@ const mainAnalysisBlock: CommentaryBlockDef = {
   label: '영역별 출제 분석',
   description: '단원/영역별 출제 경향 해설',
   defaultEnabled: true,
-  available: (c) => !!c.v4_main_analysis?.length,
+  available: ({ commentary: c }) => !!c.v4_main_analysis?.length,
   numberCount: () => 1,
   summary: () => '영역별 출제 분석 — 어느 단원에서 어떤 유형이 나왔는지 정리했습니다.',
   variants: [
@@ -665,7 +671,7 @@ const keyQuestionsBlock: CommentaryBlockDef = {
   label: '주요 문항 해설',
   description: '변별 문항 중심 해설',
   defaultEnabled: true,
-  available: (c) => !!c.v4_key_questions?.length,
+  available: ({ commentary: c }) => !!c.v4_key_questions?.length,
   numberCount: () => 1,
   summary: () => '주요 문항 해설 — 점수를 가른 문항의 접근법을 짚었습니다.',
   variants: [
@@ -685,7 +691,7 @@ const pullQuoteBlock: CommentaryBlockDef = {
   label: '인용구',
   description: '한 문장 강조 인용',
   defaultEnabled: true,
-  available: (c) => !!c.pull_quote?.text,
+  available: ({ commentary: c }) => !!c.pull_quote?.text,
   summary: summaryPullQuote,
   variants: [
     {
@@ -708,7 +714,9 @@ const chartsBlock: CommentaryBlockDef = {
   label: '분석 차트 4종',
   description: '난이도 · 능력 영역 · 단원 출제 · 변별력',
   defaultEnabled: true,
-  available: () => true, // 차트 주입 여부는 렌더 시점 props 로 판단
+  // 차트가 실제로 주입됐을 때만 통과. `() => true` 로 두면 렌더가 null 을 반환하면서도
+  // 섹션 번호는 소비해 번호가 건너뛰고, 편집기의 "데이터 없음" 표시도 거짓이 된다.
+  available: ({ charts }) => hasAnyChart(charts),
   numberCount: () => 1,
   summary: summaryCharts,
   variants: [
@@ -717,7 +725,7 @@ const chartsBlock: CommentaryBlockDef = {
       label: '2열 그리드',
       render: (props) => {
         const { charts, meta, sectionNum } = props;
-        if (!charts || !Object.values(charts).some(Boolean)) return null;
+        if (!hasAnyChart(charts)) return null;
         return (
           <section className="v3-section" {...blockAttrs('charts', summaryCharts())}>
             <span className="v3-section-num">{sectionNum}</span>
@@ -760,7 +768,7 @@ const chartsBlock: CommentaryBlockDef = {
       hint: '차트를 세로로 크게 — 모바일 가독성 우선',
       render: (props) => {
         const { charts, meta, sectionNum } = props;
-        if (!charts || !Object.values(charts).some(Boolean)) return null;
+        if (!hasAnyChart(charts)) return null;
         const figs: { src?: string; alt: string; cap: string }[] = [
           { src: charts.difficulty, alt: '난이도 분포', cap: `도표 1 — 난이도 분포 (총 ${meta.totalQuestions}문항)` },
           { src: charts.abilityRadar, alt: '능력 영역', cap: '도표 2 — 능력 영역 분포 (계산력·이해력·문제해결력·추론력)' },
@@ -795,7 +803,7 @@ const finalStrategyBlock: CommentaryBlockDef = {
   label: '단원별 피드백',
   description: '단원별 현재 상태 + 실행 과제',
   defaultEnabled: true,
-  available: (c) => !!c.v4_final_strategy?.length,
+  available: ({ commentary: c }) => !!c.v4_final_strategy?.length,
   numberCount: () => 1,
   summary: () => '단원별 피드백 — 지금 상태와 다음 시험까지 해야 할 일을 단원별로 정리했습니다.',
   variants: [
@@ -815,7 +823,7 @@ const conclusionBlock: CommentaryBlockDef = {
   label: '결론',
   description: '다음 시험을 준비하는 학생에게',
   defaultEnabled: true,
-  available: (c) => !!c.conclusion?.body,
+  available: ({ commentary: c }) => !!c.conclusion?.body,
   summary: summaryConclusion,
   variants: [
     {
@@ -851,7 +859,7 @@ const letterBodyBlock: CommentaryBlockDef = {
   description: '인사말 · 관찰 · 준비 제안 · 맺음말을 편지 한 통으로',
   // 손편지 프리셋에서만 쓴다 — 기존 문서에 저절로 붙으면 총평이 두 번 나온다
   defaultEnabled: false,
-  available: (c) => !!c.overall_comment,
+  available: ({ commentary: c }) => !!c.overall_comment,
   summary: summaryLetter,
   variants: [
     {
@@ -957,7 +965,7 @@ const heatmapGridBlock: CommentaryBlockDef = {
   label: '시험지 히트맵',
   description: '문항을 번호 순 격자로 — 칸 색은 난이도, 테두리는 서술형',
   defaultEnabled: false,
-  available: (_c, questions) => questions.length > 0,
+  available: ({ questions }) => questions.length > 0,
   summary: summaryHeatmap,
   numberCount: () => 1,
   variants: [
@@ -1127,7 +1135,7 @@ const storySlideBlock: CommentaryBlockDef = {
   // 섹션 번호를 쓰지 않는다. 한 블록이 여러 장을 뱉는데 번호는 블록당 하나만 배정되므로,
   // 번호를 받으면 첫 장에만 붙고 나머지는 비어 어긋나 보인다. 장 번호는 내부에서 센다.
   numberCount: () => 0,
-  available: (_c, questions) => questions.length > 0,
+  available: ({ questions }) => questions.length > 0,
   summary: summaryStory,
   variants: [
     {
@@ -1367,7 +1375,7 @@ const weatherStripBlock: CommentaryBlockDef = {
   label: '시험 날씨',
   description: '단원별 배점×난이도를 맑음·흐림·비·폭풍 가로 예보로',
   defaultEnabled: false,
-  available: (_c, questions) => questions.length > 0,
+  available: ({ questions }) => questions.length > 0,
   summary: summaryWeather,
   numberCount: () => 1,
   variants: [
@@ -1483,7 +1491,7 @@ const subwayMapBlock: CommentaryBlockDef = {
   label: '단원 노선도',
   description: '단원을 역으로 잇고, 킬러 단원은 환승, 서술형은 급행',
   defaultEnabled: false,
-  available: (_c, questions) => questions.length > 0,
+  available: ({ questions }) => questions.length > 0,
   summary: summarySubway,
   numberCount: () => 1,
   variants: [
@@ -1688,7 +1696,7 @@ const bubbleThreadBlock: CommentaryBlockDef = {
   label: '대화 말풍선',
   description: '선생님↔학부모 스레드. 한 버블이 한 인사이트',
   defaultEnabled: false,
-  available: (c, questions) => buildChatBubbles(c, questions).length > 0,
+  available: ({ commentary: c, questions }) => buildChatBubbles(c, questions).length > 0,
   summary: summaryChat,
   variants: [
     {
@@ -1970,7 +1978,7 @@ const statRadarBlock: CommentaryBlockDef = {
   description: '능력 레이더 · 스탯 · 스카우트 노트 3줄',
   // 스카우트 프리셋 전용 — 기존 문서 하단에 선수 카드가 붙으면 총평이 두 벌이 된다
   defaultEnabled: false,
-  available: (_c, questions) => collectScoutStats(questions).length > 0,
+  available: ({ questions }) => collectScoutStats(questions).length > 0,
   summary: summaryScout,
   variants: [
     {
@@ -2147,7 +2155,7 @@ const rxCardBlock: CommentaryBlockDef = {
   label: '처방전',
   description: '진단 · 처방 · 예후 3칸. 빈 칸은 접힘',
   defaultEnabled: false,
-  available: (c, questions) => collectRxCols(c, questions).length > 0,
+  available: ({ commentary: c, questions }) => collectRxCols(c, questions).length > 0,
   summary: summaryRx,
   variants: [
     {
@@ -2310,7 +2318,7 @@ const bentoGridBlock: CommentaryBlockDef = {
   label: '벤토 그리드',
   description: '타일 크기로만 위계. 큰 칸은 킬러, 작은 칸은 숫자',
   defaultEnabled: false,
-  available: (_c, questions) => questions.length > 0,
+  available: ({ questions }) => questions.length > 0,
   summary: summaryBento,
   variants: [
     {
@@ -2428,7 +2436,7 @@ const gradeSheetBlock: CommentaryBlockDef = {
   label: '성적표',
   description: '칸 용지 성적표 — 단원×문항수·배점·평균난이도 + 담임 소견',
   defaultEnabled: false,
-  available: (_c, questions) => collectTopicRows(questions).length > 0,
+  available: ({ questions }) => collectTopicRows(questions).length > 0,
   summary: summaryGrade,
   variants: [
     {
@@ -2649,7 +2657,7 @@ const comicStripBlock: CommentaryBlockDef = {
   defaultEnabled: false,
   // 한 블록이 컷 4장을 뱉는데 번호는 블록당 하나라, 받으면 첫 컷에만 붙고 나머지가 빈다.
   numberCount: () => 0,
-  available: (_c, questions) => questions.length > 0,
+  available: ({ questions }) => questions.length > 0,
   summary: summaryComic,
   variants: [
     {
@@ -2748,7 +2756,7 @@ const recipeCardBlock: CommentaryBlockDef = {
   label: '레시피',
   description: '단원 배점 재료 목록 · 공부 순서 · 맵기',
   defaultEnabled: false,
-  available: (_c, questions) => collectTopicRows(questions).length > 0,
+  available: ({ questions }) => collectTopicRows(questions).length > 0,
   summary: summaryRecipe,
   variants: [
     {

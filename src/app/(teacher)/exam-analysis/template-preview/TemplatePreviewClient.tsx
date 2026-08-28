@@ -108,15 +108,18 @@ export function TemplatePreviewClient({ commentary, questions, meta, options, cu
   const router = useRouter();
   const [tab, setTab] = useState<'layouts' | 'presets' | 'themes' | 'copy' | 'variants'>('layouts');
 
+  // 게이트 입력 — 렌더 입력에서 sectionNum/copy 만 뺀 것(BlockAvailabilityInput).
+  // 두 상수를 따로 적으면 게이트와 렌더가 서로 다른 데이터를 보게 되므로 하나에서 파생시킨다.
+  const availabilityInput = { commentary, questions, meta, charts: undefined };
   const renderProps = {
-    commentary, questions, meta, charts: undefined, sectionNum: '01',
+    ...availabilityInput, sectionNum: '01',
     copy: getCommentaryCopy('editorial'),
   };
 
   // variant 가 2개 이상인 블록만 비교 대상.
-  // charts 는 제외 — 이 페이지는 차트 PNG 를 전달하지 않아 두 variant 모두 null 을 렌더한다(빈 상자).
+  // (차트 블록은 이 페이지가 PNG 를 전달하지 않으므로 available 이 스스로 걸러낸다.)
   const comparableBlocks = COMMENTARY_BLOCKS.filter(
-    (b) => b.id !== 'charts' && b.variants.length > 1 && b.available(commentary, questions),
+    (b) => b.variants.length > 1 && b.available(availabilityInput),
   );
 
   return (
@@ -307,7 +310,7 @@ export function TemplatePreviewClient({ commentary, questions, meta, options, cu
                     <ScaledDoc scale={0.62}>
                       <div className="v3">{info?.variants[1].render({ ...props, sectionNum: '01' })}</div>
                     </ScaledDoc>
-                    {concl?.available(commentary, questions) && (
+                    {concl?.available(availabilityInput) && (
                       <ScaledDoc scale={0.62}>
                         <div className="v3">{concl.variants[0].render(props)}</div>
                       </ScaledDoc>

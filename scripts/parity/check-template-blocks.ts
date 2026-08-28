@@ -72,8 +72,22 @@ async function main() {
     pull_quote: { text: '인용문' },
   } as unknown as CommentaryResult;
 
-  const renderedIds = (cfg: CommentaryTemplateConfig | null) =>
-    resolveBlocks(cfg, commentary, questions).map((b) => b.def.id);
+  // 게이트 입력 — 렌더가 받는 것과 같은 데이터(BlockAvailabilityInput).
+  // charts 는 주입하지 않는다: 실제 분석 화면도 차트를 별도 컴포넌트로 그리므로
+  // 차트 블록은 게이트에서 걸러지는 것이 정상 동작이다.
+  const meta = {
+    examTitle: '더미 시험', schoolName: '더미중', grade: '중2',
+    analyzedAt: '2026-01-01T00:00:00.000Z',
+    totalQuestions: questions.length, totalPoints: 100, hasStudentData: false,
+  };
+  const input = { commentary, questions, meta, charts: undefined };
+
+  // 차트가 실제로 주입된 경우 — 분석 화면이 차트 PNG 를 넘겨 준 상태
+  const inputWithCharts = { ...input, charts: { difficulty: 'iVBORw0KGgo=' } };
+
+  const resolved = (cfg: CommentaryTemplateConfig | null, inp = input) => resolveBlocks(cfg, inp);
+  const renderedIds = (cfg: CommentaryTemplateConfig | null, inp = input) =>
+    resolved(cfg, inp).map((b) => b.def.id);
 
   console.log('\n[1] 기존 저장 설정 + 신규 블록 ─────────────────────');
 
@@ -136,13 +150,52 @@ async function main() {
   ok(!parsed.blocks.some((b) => String(b.id) === '악의적인값'), '모르는 블록 id 가 통과하지 않는다');
 
   console.log('\n[4] 기본 템플릿 렌더 목록 회귀 ─────────────────────');
-  const rendered = renderedIds(null);
+  // 차트를 주입한 경우가 DEFAULT_TEMPLATE 전체와 일치하는 기준선이다.
+  // (차트 미주입을 기준으로 삼으면 "차트가 빠지는 게 정상"인지 "버그로 빠진 것"인지 구분할 수 없다.)
+  const rendered = renderedIds(null, inputWithCharts);
   const expected = DEFAULT_TEMPLATE.blocks.map((b) => b.id);
   ok(
     JSON.stringify(rendered) === JSON.stringify(expected),
     `저장 없는 분석본의 렌더 순서가 DEFAULT_TEMPLATE 과 같다\n        기대: ${expected.join(' → ')}\n        실제: ${rendered.join(' → ')}`,
   );
   ok(rendered.length === known.length, `렌더 블록 수 ${rendered.length} = 기본 템플릿 ${known.length}`);
+
+  console.log('\n[5] 게이트 ↔ 렌더 일치 ────────────────────────────');
+  // 게이트가 렌더보다 좁게 보면 "통과했는데 화면에 없는" 블록이 생기고, 그 블록이 소비한
+  // 섹션 번호만큼 번호가 건너뛴다. 실제로 차트 블록이 `available: () => true` 라 08 이 결번이었다.
+  ok(
+    !renderedIds(null).includes('charts'),
+    '차트 미주입 시 차트 블록이 게이트에서 걸러진다 (렌더가 null 인 채로 통과하지 않는다)',
+  );
+  ok(renderedIds(null, inputWithCharts).includes('charts'), '차트 주입 시 차트 블록이 통과한다');
+
+  // 섹션 번호는 01 부터 빈틈없이 이어져야 한다 — 결번/중복은 곧 유령 블록의 흔적이다.
+  for (const [label, inp] of [['차트 없음', input], ['차트 있음', inputWithCharts]] as const) {
+    const numbered = resolved(null, inp)
+      .map((b) => ({ id: b.def.id, num: b.sectionNum, count: b.def.numberCount?.(commentary) ?? 0 }))
+      .filter((x) => x.count > 0);
+    let expectNum = 1;
+    const bad: string[] = [];
+    for (const x of numbered) {
+      const want = String(expectNum).padStart(2, '0');
+      if (x.num !== want) bad.push(`${x.id}=${x.num}(기대 ${want})`);
+      expectNum += x.count;
+    }
+    ok(
+      bad.length === 0,
+      `[${label}] 섹션 번호가 01 부터 빈틈없이 이어진다${bad.length ? ' — 어긋남: ' + bad.join(', ') : ` (${numbered.length}개 블록)`}`,
+    );
+  }
+
+  // 번호를 소비하는 블록의 게이트가 입력을 아예 안 보면(`() => true`) 렌더가 비어도 통과한다.
+  // 렌더 결과를 실행해 볼 수는 없으므로, 그 형태 자체를 위반으로 고정한다.
+  const numberedBlindGates = COMMENTARY_BLOCKS.filter(
+    (d) => (d.numberCount?.(commentary) ?? 0) > 0 && d.available.length === 0,
+  );
+  ok(
+    numberedBlindGates.length === 0,
+    `섹션 번호를 쓰는 블록의 게이트가 입력을 본다 (입력 무시: ${numberedBlindGates.map((d) => d.id).join(',') || '없음'})`,
+  );
 
   console.log(`\n${fail === 0 ? '통과' : `실패 ${fail}건`} — 총 검사 완료\n`);
   process.exit(fail === 0 ? 0 : 1);

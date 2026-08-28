@@ -44,7 +44,7 @@ interface V3CommentaryViewProps {
 }
 
 export function V3CommentaryView({ commentary, questions, meta, charts, template }: V3CommentaryViewProps) {
-  const blocks = resolveBlocks(template, commentary, questions);
+  const blocks = resolveBlocks(template, { commentary, questions, meta, charts });
   const normalized = normalizeTemplate(template);
   // 테마(팔레트) · 레이아웃(골격)은 직교 — 루트에 둘 다 붙는다.
   // viz(계량 위젯 패밀리)는 골격이 결정 → 골격을 바꾸면 그래프 생김새도 함께 갈린다.

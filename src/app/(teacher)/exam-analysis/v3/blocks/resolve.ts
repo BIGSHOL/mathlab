@@ -6,9 +6,8 @@
  * 블록을 끄거나 순서를 바꾸면 번호가 어긋나던 구조였다. 이제 순서만 바꾸면 번호가 따라온다.
  */
 
-import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
-import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import type {
+  BlockAvailabilityInput,
   CommentaryTemplateConfig,
   ResolvedBlock,
   TemplateBlockConfig,
@@ -62,11 +61,16 @@ export function normalizeTemplate(config: CommentaryTemplateConfig | null | unde
   };
 }
 
-/** 렌더 대상 블록 해석 — enabled + available 을 통과한 블록만, 섹션 번호 부여 */
+/**
+ * 렌더 대상 블록 해석 — enabled + available 을 통과한 블록만, 섹션 번호 부여.
+ *
+ * ⚠️ `input` 은 렌더가 받는 것과 **같은 데이터**여야 한다(`BlockAvailabilityInput`).
+ * 게이트가 렌더보다 좁게 보면 통과했는데 아무것도 안 나오는 블록이 생기고,
+ * 그 블록이 소비한 섹션 번호만큼 번호가 건너뛴다.
+ */
 export function resolveBlocks(
   config: CommentaryTemplateConfig | null | undefined,
-  commentary: CommentaryResult,
-  questions: AnalyzedQuestion[],
+  input: BlockAvailabilityInput,
 ): ResolvedBlock[] {
   const normalized = normalizeTemplate(config);
   const out: ResolvedBlock[] = [];
@@ -76,10 +80,10 @@ export function resolveBlocks(
     if (!bc.enabled) continue;
     const def = getBlockDef(bc.id);
     if (!def) continue;
-    if (!def.available(commentary, questions)) continue;
+    if (!def.available(input)) continue;
 
     const variant = def.variants.find((v) => v.id === bc.variant) ?? def.variants[0];
-    const count = def.numberCount?.(commentary) ?? 0;
+    const count = def.numberCount?.(input.commentary) ?? 0;
     const sectionNum = count > 0 ? String(nextNum).padStart(2, '0') : '';
     nextNum += count;
 

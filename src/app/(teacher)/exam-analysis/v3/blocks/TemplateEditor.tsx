@@ -11,9 +11,11 @@
 import { useState } from 'react';
 import { GripVertical, ChevronUp, ChevronDown, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
-import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
-import type { CommentaryTemplateConfig, TemplateBlockConfig } from '@/lib/exam-analysis/blocks/types';
+import type {
+  BlockAvailabilityInput,
+  CommentaryTemplateConfig,
+  TemplateBlockConfig,
+} from '@/lib/exam-analysis/blocks/types';
 import { DEFAULT_TEMPLATE } from '@/lib/exam-analysis/blocks/default-template';
 import { COMMENTARY_THEMES } from '@/lib/exam-analysis/commentary-themes';
 import { COMMENTARY_LAYOUTS, LAYOUT_GROUPS, VIZ_LABELS } from '@/lib/exam-analysis/commentary-layouts';
@@ -25,12 +27,14 @@ import { normalizeTemplate } from './resolve';
 interface Props {
   value: CommentaryTemplateConfig;
   onChange: (next: CommentaryTemplateConfig) => void;
-  /** available() 판정용 — 데이터가 없는 블록은 비활성 표시 */
-  commentary: CommentaryResult;
-  questions: AnalyzedQuestion[];
+  /**
+   * available() 판정용 — 데이터가 없는 블록은 비활성 표시.
+   * 렌더가 받는 것과 **같은 입력**이어야 편집기의 "데이터 없음" 표시가 실제 결과와 일치한다.
+   */
+  input: BlockAvailabilityInput;
 }
 
-export function TemplateEditor({ value, onChange, commentary, questions }: Props) {
+export function TemplateEditor({ value, onChange, input }: Props) {
   const config = normalizeTemplate(value);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
@@ -58,13 +62,17 @@ export function TemplateEditor({ value, onChange, commentary, questions }: Props
 
   const enabledCount = config.blocks.filter((b) => {
     const def = getBlockDef(b.id);
-    return b.enabled && def?.available(commentary, questions);
+    return b.enabled && def?.available(input);
   }).length;
 
   // 지금 구성이 어떤 프리셋과 정확히 같은지 — 사용자가 "여기서 뭘 건드렸나"를 알 수 있게.
-  // 6종뿐이라 매 렌더 비교해도 저렴하고, 저장된 id 를 믿지 않으므로 항상 실제 구성과 일치한다.
+  // 저장된 id 를 믿지 않고 실제 구성을 비교하므로 항상 화면과 일치한다.
+  // ⚠️ 양쪽 모두 normalizeTemplate 을 거쳐야 한다. config 는 정규화 결과(레지스트리 전 블록)인데
+  //    presetToConfig 는 기본 템플릿 + 델타만 내므로, 정규화 없이 비교하면 블록 수부터 달라
+  //    **어떤 프리셋도 영원히 '선택됨'으로 표시되지 않는다.**
+  const configJson = JSON.stringify(config);
   const activePresetId =
-    COMMENTARY_PRESETS.find((p) => JSON.stringify(presetToConfig(p)) === JSON.stringify(config))?.id ?? null;
+    COMMENTARY_PRESETS.find((p) => JSON.stringify(normalizeTemplate(presetToConfig(p))) === configJson)?.id ?? null;
 
   return (
     <div className="flex flex-col gap-5">
@@ -237,7 +245,7 @@ ${layout.traits}`}
           {config.blocks.map((bc, idx) => {
             const def = getBlockDef(bc.id);
             if (!def) return null;
-            const hasData = def.available(commentary, questions);
+            const hasData = def.available(input);
             const locked = !!def.locked;
             const dimmed = !hasData || !bc.enabled;
             const isDragOver = overIdx === idx && dragIdx !== null && dragIdx !== idx;

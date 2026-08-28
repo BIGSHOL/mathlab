@@ -586,8 +586,7 @@ export function CommentarySection({
               <TemplateEditor
                 value={draftTemplate}
                 onChange={setDraftTemplate}
-                commentary={commentary}
-                questions={allQuestions}
+                input={{ commentary, questions: allQuestions, meta, charts: v3Charts }}
               />
             </div>
 

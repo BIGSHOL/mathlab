@@ -45,6 +45,15 @@ export interface BlockChartImages {
   discrimination?: string;
 }
 
+/**
+ * 게이트(`available`)가 보는 입력 — **렌더 입력에서 파생**시켜 구조적으로 어긋날 수 없게 한다.
+ *
+ * `sectionNum` 은 게이트 통과 이후에 배정되므로(순환), `copy` 는 고정 문구라 데이터 유무와
+ * 무관하므로 뺀다. 그 외 데이터는 렌더가 보는 것과 **정확히 같다** — 렌더 입력에 필드가
+ * 늘면 게이트도 자동으로 그 필드를 본다.
+ */
+export type BlockAvailabilityInput = Omit<BlockRenderProps, 'sectionNum' | 'copy'>;
+
 /** 한 블록의 표현 변형 — 같은 데이터를 다른 레이아웃으로 */
 export interface BlockVariant {
   id: string;
@@ -115,8 +124,16 @@ export interface CommentaryBlockDef {
    * - `false` — 특정 프리셋(손편지·히트맵 등)에서만 쓰는 블록. 프리셋이 명시적으로 켠다.
    */
   defaultEnabled: boolean;
-  /** 렌더에 필요한 데이터가 있는지 — false면 편집 UI에서 "데이터 없음"으로 비활성 표시 */
-  available: (commentary: CommentaryResult, questions: AnalyzedQuestion[]) => boolean;
+  /**
+   * 렌더에 필요한 데이터가 있는지 — false면 편집 UI에서 "데이터 없음"으로 비활성 표시.
+   *
+   * ⚠️ 입력은 반드시 `BlockAvailabilityInput`(= 렌더 입력에서 파생) 이어야 한다.
+   * 게이트가 렌더보다 **좁게** 보면 "통과했는데 아무것도 안 나오는" 블록이 생긴다.
+   * 실제 사례: 차트 블록이 `charts` 를 볼 수 없어 `() => true` 로 두고 렌더에서 null 을
+   * 반환했다 → 섹션 번호는 소비하고 화면에는 없어 **번호가 08 을 건너뛰었고**,
+   * 편집기의 "데이터 없음" 표시와 프리셋 블록 수도 전부 거짓이 됐다.
+   */
+  available: (input: BlockAvailabilityInput) => boolean;
   /**
    * 이 블록이 소비하는 섹션 번호 개수. 기본 0(번호 없음).
    * Q&A 처럼 반복 렌더되는 블록은 개수만큼 소비한다.
