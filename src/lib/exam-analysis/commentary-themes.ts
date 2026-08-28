@@ -320,6 +320,38 @@ const BURGUNDY: CommentaryThemeColors = {
   diff: ['#207D63', '#71805F', '#927082', '#A9731E', '#A0143C'], // 그린→세이지→모브→골드→와인
 };
 
+/**
+ * 터미널 — 유일한 다크 테마.
+ *
+ * 나머지 팔레트는 전부 밝은 지면(잡지)이다. 원장 계기판은 숫자 가독성이 최우선이라
+ * paper 를 어둡게, ink/body 를 밝게 뒤집는다. 난이도 램프는 트랙(paperAlt)과
+ * 스택바 라벨(onDark) 양쪽에서 2.8:1 을 동시에 맞춰야 해서 중간 명도대만 쓴다
+ * (너무 밝으면 흰 글씨가, 너무 어두우면 트랙이 삼킨다).
+ */
+const TERMINAL: CommentaryThemeColors = {
+  accent: '#3DDC97',
+  gold: '#E8B84A',
+  pos: '#4ADE80',
+  ink: '#E8EEF4',
+  surfaceDark: '#080B0E',
+  onDark: '#F4F7FA',
+  onDarkSoft: '#C5CDD6',
+  body: '#C9D2DC',
+  bodySoft: '#A3ADB8',
+  muted: '#8A94A0',
+  paper: '#0C1014',
+  paperAlt: '#151B22',
+  paperFoot: '#10151A',
+  line: '#2A3340',
+  lineSoft: '#1E2630',
+  conclusionBg: '#14201A',
+  quoteLine: '#3DDC97',
+  darkLine: '#2A3340',
+  goldGlow: 'rgba(232, 184, 74, 0.28)',
+  // L1 그린 → L3 슬레이트 → L5 레드. vs paperAlt ≥ 3.18, vs onDark ≥ 3.24, 인접 RGB ≥ 75
+  diff: ['#1F8A58', '#2A78B0', '#6E7886', '#C07A12', '#C4332A'],
+};
+
 /** 플럼 — 딥플럼 서페이스 + 마젠타 강조. 아이보리 바탕의 개성파 에디토리얼. */
 const PLUM: CommentaryThemeColors = {
   accent: '#8E2F62',
@@ -356,6 +388,7 @@ export const COMMENTARY_THEMES: CommentaryTheme[] = [
   { id: 'terracotta', label: '테라코타', description: '러스트·웜크림 — 세피아보다 밝은 생기 웜톤', colors: TERRACOTTA },
   { id: 'burgundy', label: '버건디', description: '블러시 지면 + 와인 버건디 — 프리미엄 매거진 톤', colors: BURGUNDY },
   { id: 'plum', label: '플럼', description: '아이보리 지면 + 딥플럼·골드 — 개성파 프레스티지 톤', colors: PLUM },
+  { id: 'terminal', label: '터미널', description: '다크 계기판 — 모노스페이스·숫자 우선', colors: TERMINAL },
 ];
 
 export const DEFAULT_THEME_ID = 'nyt';

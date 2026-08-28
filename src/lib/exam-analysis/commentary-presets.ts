@@ -244,6 +244,27 @@ export const COMMENTARY_PRESETS: readonly CommentaryPreset[] = [
     order: ['header', 'storySlide'],
   },
   {
+    id: 'terminal',
+    label: '터미널',
+    hint: '다크 계기판 · 모노스페이스 · 숫자 먼저, 서술 나중',
+    audience: 'owner',
+    themeId: 'terminal',
+    // compact = 밀도 최대 + spark(얇은 라인). 레이아웃을 새로 만들지 않고 골격만 고른다.
+    layoutId: 'compact',
+    copyId: 'official',
+    changes: {
+      header: { variant: 'terminal' },
+      kpi: { variant: 'terminal' },
+      // 거대숫자 피처·인용구는 잡지 장치. 켜 두면 계기판 위에 표지가 한 장 더 얹힌다.
+      feature: { enabled: false },
+      infographic: { variant: 'full' },
+      qa: { variant: 'ledger' },
+      pullQuote: { enabled: false },
+    },
+    // 표·지표(kpi·난이도표·인포그래픽·차트)가 서술(본분석·Q&A)보다 앞. 이 순서가 차별성 지문이다.
+    order: ['header', 'kpi', 'difficultyTable', 'infographic', 'charts', 'mainAnalysis', 'qa'],
+  },
+  {
     id: 'quiet',
     label: '여백',
     hint: '여백 극대화 · 얇은 활자 · 괘선 최소. 차분한 읽기',

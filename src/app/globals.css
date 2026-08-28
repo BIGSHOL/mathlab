@@ -1117,6 +1117,33 @@ body {
   --v3-diff-4: #A67718;
   --v3-diff-5: #8E2F62;
 }
+/* 터미널 — 다크 계기판 — 모노스페이스·숫자 우선 */
+.v3.v3-theme-terminal {
+  --v3-accent: #3DDC97;
+  --v3-gold: #E8B84A;
+  --v3-pos: #4ADE80;
+  --v3-ink: #E8EEF4;
+  --v3-surface-dark: #080B0E;
+  --v3-on-dark: #F4F7FA;
+  --v3-on-dark-soft: #C5CDD6;
+  --v3-body: #C9D2DC;
+  --v3-body-soft: #A3ADB8;
+  --v3-muted: #8A94A0;
+  --v3-paper: #0C1014;
+  --v3-paper-alt: #151B22;
+  --v3-paper-foot: #10151A;
+  --v3-line: #2A3340;
+  --v3-line-soft: #1E2630;
+  --v3-conclusion-bg: #14201A;
+  --v3-quote-line: #3DDC97;
+  --v3-dark-line: #2A3340;
+  --v3-gold-glow: rgba(232, 184, 74, 0.28);
+  --v3-diff-1: #1F8A58;
+  --v3-diff-2: #2A78B0;
+  --v3-diff-3: #6E7886;
+  --v3-diff-4: #C07A12;
+  --v3-diff-5: #C4332A;
+}
 /* 골격: 매거진 — 기본 (대형 명조 헤드라인 · 넓은 여백 · 거대 섹션 번호) */
 .v3 {
   --v3-font-head: var(--font-serif-kr, 'Noto Serif KR', serif);
@@ -2839,6 +2866,72 @@ body {
 .v3-kpi-spec-row .lb { font-family: var(--v3-font-label); font-size: 12px; font-weight: 700; color: var(--v3-body-soft); letter-spacing: 0.04em; }
 .v3-kpi-spec-row .v { font-family: var(--v3-font-num); font-size: 18px; font-weight: 700; color: var(--v3-ink); }
 .v3-kpi-spec-row .v .u { font-size: 12px; color: var(--v3-muted); margin-left: 3px; }
+
+/* 헤더 — 터미널 (대형 헤드라인 대신 모노 한 줄. compact 의 .v3-top 보더보다 나중에 선언해 이김) */
+.v3-top.v3-top-terminal {
+  padding: 8px var(--v3-gutter);
+  background: var(--v3-paper);
+  border-bottom: 1px solid var(--v3-line);
+}
+.v3-top-terminal .v3-term-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 8px;
+  font-family: var(--font-nanum-coding, 'Nanum Gothic Coding', monospace);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--v3-ink);
+  letter-spacing: 0;
+  line-height: 1.4;
+}
+.v3-top-terminal .v3-term-line .k { color: var(--v3-gold); }
+.v3-top-terminal .v3-term-line .v { color: var(--v3-ink); }
+.v3-top-terminal .v3-term-line .sep { color: var(--v3-muted); font-weight: 400; }
+
+/* KPI — 터미널 (dark 4컬럼을 모노 라벨-값 2열 행으로 압축) */
+.v3-kpi-row.v3-kpi-row-terminal {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--v3-surface-dark);
+  padding: 6px var(--v3-gutter) 8px;
+  gap: 0 28px;
+  border-bottom: 1px solid var(--v3-dark-line);
+}
+.v3-kpi-term-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  font-family: var(--font-nanum-coding, 'Nanum Gothic Coding', monospace);
+  padding: 4px 0;
+  border-bottom: 1px solid var(--v3-dark-line);
+}
+.v3-kpi-term-row:nth-last-child(-n+2) { border-bottom: none; }
+.v3-kpi-term-row .lb {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--v3-muted);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.v3-kpi-term-row .dots {
+  flex: 1 1 auto;
+  min-width: 8px;
+  border-bottom: 1px dotted var(--v3-dark-line);
+  transform: translateY(-4px);
+}
+.v3-kpi-term-row .v {
+  flex: 0 0 auto;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--v3-on-dark);
+  font-variant-numeric: tabular-nums;
+}
+.v3-kpi-term-row .v .u { font-size: 11px; color: var(--v3-muted); margin-left: 2px; font-weight: 400; }
+.v3-kpi-row-terminal .v3-kpi-tone-gold .v { color: var(--v3-gold); }
+.v3-kpi-row-terminal .v3-kpi-tone-pos .v { color: var(--v3-pos); }
 
 /* ──────────────────────────────────────────────
    V4 (갈수학학원 스타일) — 테이블 중심 학원 블로그 톤

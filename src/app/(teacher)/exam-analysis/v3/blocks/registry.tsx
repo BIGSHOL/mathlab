@@ -252,6 +252,32 @@ const headerBlock: CommentaryBlockDef = {
       },
     },
     {
+      id: 'terminal',
+      label: '터미널',
+      // 대형 헤드라인은 잡지 표지용. 계기판은 학교·시험·규모만 한 줄로 두고 숫자를 바로 보여 준다.
+      hint: '학교·시험·문항수·만점 모노 한 줄 — 계기판',
+      render: (props) => {
+        const { meta } = props;
+        const bits: { key: string; text: string; kind: 'k' | 'v' }[] = [];
+        if (meta.schoolName) bits.push({ key: 'school', text: meta.schoolName, kind: 'k' });
+        bits.push({ key: 'exam', text: meta.examTitle, kind: meta.schoolName ? 'v' : 'k' });
+        bits.push({ key: 'q', text: `${meta.totalQuestions}문항`, kind: 'v' });
+        bits.push({ key: 'p', text: `${meta.totalPoints}점`, kind: 'v' });
+        return (
+          <header className="v3-top v3-top-terminal" {...blockAttrs('header', summaryHeader(props))}>
+            <div className="v3-term-line">
+              {bits.map((b, i) => (
+                <Fragment key={b.key}>
+                  {i > 0 && <span className="sep">·</span>}
+                  <span className={b.kind}>{b.text}</span>
+                </Fragment>
+              ))}
+            </div>
+          </header>
+        );
+      },
+    },
+    {
       id: 'centered',
       label: '센터드',
       hint: '중앙 정렬 + 상하 괘선 — 리포트 표지 톤',
@@ -367,6 +393,30 @@ const kpiBlock: CommentaryBlockDef = {
                 </div>
               ))}
             </div>
+          </div>
+        );
+      },
+    },
+    {
+      id: 'terminal',
+      label: '터미널',
+      // dark 4컬럼은 거대 숫자 + 여백으로 지면을 장악한다. 계기판은 같은 4지표를
+      // 모노 라벨-값 행으로 붙여 높이를 줄이고, 값을 오른쪽 고정폭에 맞춘다.
+      hint: '모노 고정폭 라벨-값 행 — 계기판',
+      render: (props) => {
+        const items = kpiItems(computeKpis(props.questions), props.meta);
+        return (
+          <div className="v3-kpi-row v3-kpi-row-terminal" {...blockAttrs('kpi', summaryKpi(props))}>
+            {items.map((it) => (
+              <div key={it.key} className={`v3-kpi-term-row v3-kpi-tone-${it.tone}`}>
+                <span className="lb">{it.label}</span>
+                <span className="dots" aria-hidden="true" />
+                <span className="v">
+                  {it.value}
+                  <span className="u">{it.unit}</span>
+                </span>
+              </div>
+            ))}
           </div>
         );
       },
