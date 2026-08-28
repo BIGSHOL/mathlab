@@ -8,12 +8,13 @@
  */
 
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
-import { sumPoints, formatPoints } from '@/lib/exam-analysis/points';
-import { V3_DIFF_COLORS, V3_DIFF_LABELS, normDiff } from './helpers';
+import { sumPoints, formatPoints, integerPercents } from '@/lib/exam-analysis/points';
+import { questionLevel } from '@/lib/exam-analysis/shared/difficulty';
+import { V3_DIFF_COLORS, V3_DIFF_LABELS } from './helpers';
 
 export function DifficultyStackedBar({ questions }: { questions: AnalyzedQuestion[] }) {
   const stats = [1, 2, 3, 4, 5].map((lv) => {
-    const lvQ = questions.filter((q) => normDiff(String(q.difficulty)) === String(lv));
+    const lvQ = questions.filter((q) => questionLevel(q.difficulty) === lv);
     return {
       level: lv,
       label: V3_DIFF_LABELS[lv - 1],
@@ -25,16 +26,11 @@ export function DifficultyStackedBar({ questions }: { questions: AnalyzedQuestio
   const totalPts = sumPoints(stats.map((x) => x.points));
   if (totalPts === 0) return null;
 
-  // 상단 stacked bar — 정수 % + 합 100 보정 (네이버 width 동기화)
-  const segments = stats.filter((s) => s.points > 0).map((s) => ({
-    pct: Math.round((s.points / totalPts) * 100),
-    color: s.color,
-    label: s.label,
-  }));
-  const sumInt = segments.reduce((s, x) => s + x.pct, 0);
-  if (sumInt !== 100 && segments.length > 0) {
-    segments[0].pct += 100 - sumInt;
-  }
+  // 상단 stacked bar — 정수 % + 합 100 보정 (네이버 width 동기화).
+  // 보정은 최대잉여법(integerPercents) — 잔여를 첫 칸에 몰아주던 예전 방식은 첫 칸만 부풀었다.
+  const visible = stats.filter((s) => s.points > 0);
+  const visiblePcts = integerPercents(visible.map((s) => s.points));
+  const segments = visible.map((s, i) => ({ pct: visiblePcts[i], color: s.color, label: s.label }));
 
   const maxCount = Math.max(...stats.map((s) => s.count), 1);
   const maxPoints = Math.max(...stats.map((s) => s.points), 1);

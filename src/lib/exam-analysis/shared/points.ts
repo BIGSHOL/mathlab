@@ -32,3 +32,30 @@ export function formatPoints(n: number | null | undefined): string {
   if (n == null) return '';
   return String(roundPoints(n));
 }
+
+/**
+ * 값 목록 → **합이 정확히 100 인 정수 퍼센트**.
+ *
+ * 각 항목을 따로 `Math.round` 하면 합이 99 나 101 이 되는데, 표의 합계 행에 `100%` 를
+ * 하드코딩해 두면 열의 합과 어긋난 것이 그대로 보인다(합계만 맞고 항목이 안 맞음).
+ * 최대잉여법으로 남는 1을 소수부가 큰 항목부터 나눠 준다 — 표시값끼리 항상 정합한다.
+ *
+ * 총합이 0이면 전부 0을 돌려준다(0으로 나누지 않는다).
+ */
+export function integerPercents(values: readonly number[]): number[] {
+  const total = values.reduce((s, v) => s + (v > 0 ? v : 0), 0);
+  if (total <= 0) return values.map(() => 0);
+  const exact = values.map((v) => ((v > 0 ? v : 0) / total) * 100);
+  const floors = exact.map((v) => Math.floor(v));
+  let remain = 100 - floors.reduce((s, v) => s + v, 0);
+  const out = [...floors];
+  const order = exact
+    .map((v, i) => ({ i, frac: v - Math.floor(v) }))
+    .sort((a, b) => b.frac - a.frac);
+  for (const { i } of order) {
+    if (remain <= 0) break;
+    out[i] += 1;
+    remain -= 1;
+  }
+  return out;
+}

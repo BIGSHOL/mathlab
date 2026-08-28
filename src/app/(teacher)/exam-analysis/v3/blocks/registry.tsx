@@ -26,7 +26,8 @@ import type {
   BlockMeta,
 } from '@/lib/exam-analysis/blocks/types';
 
-import { markdownToHighlighted, normDiff, koDifficultyText, V3_DIFF_COLORS, V3_DIFF_LABELS } from '../helpers';
+import { markdownToHighlighted, koDifficultyText, V3_DIFF_COLORS, V3_DIFF_LABELS } from '../helpers';
+import { questionLevel, countByLevel } from '@/lib/exam-analysis/shared/difficulty';
 import { FeatureCallout } from '../FeatureCallout';
 import { QASection } from '../QASection';
 import type { DataBoxStyle } from '../DataBox';
@@ -51,11 +52,7 @@ interface Kpis {
 }
 
 function computeKpis(questions: AnalyzedQuestion[]): Kpis {
-  const counts = [0, 0, 0, 0, 0];
-  for (const q of questions) {
-    const lv = Number(normDiff(String(q.difficulty)));
-    if (lv >= 1 && lv <= 5) counts[lv - 1]++;
-  }
+  const { counts } = countByLevel(questions);
   const total = counts.reduce((s, c) => s + c, 0);
   return {
     weighted: weightedAverageDifficulty(questions).avg,
@@ -76,6 +73,13 @@ function kicker(c: CommentaryResult, meta: BlockMeta): string {
 function analyzedDate(meta: BlockMeta): string {
   return meta.analyzedAt ? meta.analyzedAt.slice(0, 10) : '';
 }
+
+/**
+ * 난이도 판독 실패 문항의 표시 — 5단계 램프 어디에도 넣지 않는다.
+ * `--v3-line` 은 13개 테마 전부가 가진 중립 구분선 색이라 다크 팔레트에서도 뒤집힌다.
+ */
+const UNKNOWN_FILL = 'var(--v3-line)';
+const UNKNOWN_LABEL = '미판독';
 
 /** 차트가 하나라도 주입됐는가 — 게이트와 렌더 가드가 같은 판정을 공유한다 */
 function hasAnyChart(charts?: BlockChartImages): charts is BlockChartImages {
@@ -887,7 +891,7 @@ function renderLetter(props: BlockRenderProps, extraClass: string) {
   // 관찰 — 영역별 분석이 있으면 그 본문을, 없으면 보완점을 문장으로
   const observations: string[] = c.v4_main_analysis?.length
     ? c.v4_main_analysis.map((m) => m.body).filter(Boolean)
-    : c.improvement_areas.filter(Boolean);
+    : (c.improvement_areas ?? []).filter(Boolean);
 
   // 준비 제안 — 표(area/action)를 편지에 어울리게 한 문장씩으로 편다
   const suggestions: string[] = c.v4_final_strategy?.length
@@ -956,7 +960,7 @@ function renderLetter(props: BlockRenderProps, extraClass: string) {
 function summaryHeatmap(props: BlockRenderProps) {
   const qs = props.questions;
   if (!qs.length) return '';
-  const hard = qs.filter((q) => Number(normDiff(String(q.difficulty))) >= 4).length;
+  const hard = qs.filter((q) => (questionLevel(q.difficulty) ?? 0) >= 4).length;
   return `문항 배치 히트맵 — 총 ${qs.length}문항 중 심화 이상 ${hard}문항`;
 }
 
@@ -993,7 +997,7 @@ function renderHeatmap(props: BlockRenderProps, showPoints: boolean) {
     q.question_format === 'essay' || /서답|서술/.test(String(q.question_number ?? ''));
 
   const levels = [1, 2, 3, 4, 5];
-  const counts = levels.map((lv) => qs.filter((q) => Number(normDiff(String(q.difficulty))) === lv).length);
+  const { counts, unknown: unknownCount } = countByLevel(qs);
 
   return (
     <section className="v3-section v3-heatmap" {...blockAttrs('heatmapGrid', summaryHeatmap(props))}>
@@ -1003,17 +1007,19 @@ function renderHeatmap(props: BlockRenderProps, showPoints: boolean) {
 
       <div className="v3-heatmap-grid">
         {qs.map((q, i) => {
-          const lv = Number(normDiff(String(q.difficulty))) || 1;
+          // 판독 실패는 '기본'(초록)으로 칠하지 않는다 — 쉬운 문항으로 둔갑해
+          // 범례 합계와도 어긋난다. 중립색 + '미판독' 라벨로 사실대로 표시한다.
+          const lv = questionLevel(q.difficulty);
           const essay = isEssay(q);
           return (
             <div
               key={`hm-${q.question_number ?? i}`}
-              className={`v3-heatmap-cell${essay ? ' v3-heatmap-essay' : ''}${lv >= 4 ? ' v3-heatmap-killer' : ''}`}
-              style={{ background: V3_DIFF_COLORS[lv - 1] }}
-              title={`${q.question_number}번 · ${V3_DIFF_LABELS[lv - 1]} · ${q.points ?? 0}점`}
+              className={`v3-heatmap-cell${essay ? ' v3-heatmap-essay' : ''}${(lv ?? 0) >= 4 ? ' v3-heatmap-killer' : ''}`}
+              style={{ background: lv ? V3_DIFF_COLORS[lv - 1] : UNKNOWN_FILL }}
+              title={`${q.question_number}번 · ${lv ? V3_DIFF_LABELS[lv - 1] : UNKNOWN_LABEL} · ${formatPoints(q.points) || 0}점`}
             >
               <span className="v3-heatmap-no">{q.question_number}</span>
-              {showPoints && <span className="v3-heatmap-pt">{q.points ?? 0}</span>}
+              {showPoints && <span className="v3-heatmap-pt">{formatPoints(q.points) || 0}</span>}
             </div>
           );
         })}
@@ -1026,6 +1032,12 @@ function renderHeatmap(props: BlockRenderProps, showPoints: boolean) {
             {V3_DIFF_LABELS[lv - 1]} {counts[lv - 1]}
           </span>
         ))}
+        {unknownCount > 0 && (
+          <span className="v3-heatmap-leg">
+            <i style={{ background: UNKNOWN_FILL }} />
+            {UNKNOWN_LABEL} {unknownCount}
+          </span>
+        )}
         <span className="v3-heatmap-leg">
           <i className="v3-heatmap-leg-essay" />
           서술형 {qs.filter(isEssay).length}
@@ -1060,7 +1072,7 @@ function buildStoryCards(props: BlockRenderProps): StoryCard[] {
   const cards: StoryCard[] = [];
 
   const total = qs.length;
-  const killer = qs.filter((q) => Number(normDiff(String(q.difficulty))) >= 4);
+  const killer = qs.filter((q) => (questionLevel(q.difficulty) ?? 0) >= 4);
   const essays = qs.filter((q) => q.question_format === 'essay' || /서답|서술/.test(String(q.question_number ?? '')));
   const essayPts = sumPoints(essays.map((q) => q.points));
   const avg = weightedAverageDifficulty(qs);
@@ -1105,7 +1117,7 @@ function buildStoryCards(props: BlockRenderProps): StoryCard[] {
       label: `가장 어려웠던 단원 · ${weakest.topic}`,
       body: `${weakest.question_count}문항이 나왔고 정답률이 가장 낮았습니다.`,
     });
-  } else if (c.improvement_areas[0]) {
+  } else if (c.improvement_areas?.[0]) {
     cards.push({ key: 'weak', big: '1', unit: '순위', label: '가장 먼저 보완할 것', body: c.improvement_areas[0] });
   }
 
@@ -1227,10 +1239,9 @@ function topicMidUnit(topic: string | null | undefined): string {
   return parts[parts.length - 1] || '미분류';
 }
 
+/** 난이도 1~5, 판독 불가는 0 — 가중합에서 제외하기 위한 표현 */
 function questionDiff(q: AnalyzedQuestion): number {
-  if (q.difficulty == null) return 0;
-  const lv = Number(normDiff(String(q.difficulty)));
-  return lv >= 1 && lv <= 5 ? lv : 0;
+  return questionLevel(q.difficulty) ?? 0;
 }
 
 function isEssayQuestion(q: AnalyzedQuestion): boolean {
@@ -1288,7 +1299,8 @@ function collectTopicWeather(questions: AnalyzedQuestion[]): TopicWeather[] {
     const avgDiff = v.wSum > 0 ? v.wDiff / v.wSum : 0;
     rows.push({
       topic,
-      points: v.points,
+      // 소수 배점 누적은 반드시 반올림 — 4.6×3 이 13.799999999999999 로 새어 나갔다
+      points: roundPoints(v.points),
       count: v.count,
       avgDiff,
       kind: weatherFromAvg(avgDiff > 0 ? avgDiff : 2.4),
@@ -1409,13 +1421,13 @@ function renderWeather(props: BlockRenderProps, variant: 'strip' | 'poster') {
 
       <div className="v3-weather-strip" role="list">
         {rows.map((r) => (
-          <div key={r.topic} className={`v3-weather-cell v3-weather-${r.kind}`} role="listitem" title={`${r.topic} · ${WEATHER_LABEL[r.kind]} · ${r.points}점`}>
+          <div key={r.topic} className={`v3-weather-cell v3-weather-${r.kind}`} role="listitem" title={`${r.topic} · ${WEATHER_LABEL[r.kind]} · ${formatPoints(r.points)}점`}>
             <span className="v3-weather-icon">
               <WeatherGlyph kind={r.kind} />
             </span>
             <span className="v3-weather-kind">{WEATHER_LABEL[r.kind]}</span>
             {!poster && <span className="v3-weather-topic">{r.topic}</span>}
-            {!poster && r.points > 0 && <span className="v3-weather-pts">{r.points}점</span>}
+            {!poster && r.points > 0 && <span className="v3-weather-pts">{formatPoints(r.points)}점</span>}
           </div>
         ))}
       </div>
@@ -2232,7 +2244,7 @@ function mostTestedTopic(questions: AnalyzedQuestion[]): { topic: string; count:
   let best: { topic: string; count: number; points: number } | null = null;
   for (const [topic, v] of map) {
     if (!best || v.count > best.count || (v.count === best.count && v.points > best.points)) {
-      best = { topic, ...v };
+      best = { topic, ...v, points: roundPoints(v.points) };
     }
   }
   return best;
@@ -2268,7 +2280,7 @@ function collectBentoTiles(props: BlockRenderProps): BentoTile[] {
       size: 'hero',
       kicker: '최다 출제',
       value: top.topic,
-      caption: `${top.count}문항 · ${top.points}점`,
+      caption: `${top.count}문항 · ${formatPoints(top.points)}점`,
     });
     used.add('topic');
   }

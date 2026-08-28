@@ -7,23 +7,43 @@
  */
 
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
-import { sumPoints, formatPoints } from '@/lib/exam-analysis/points';
-import { normDiff, V3_DIFF_LABELS, V3_DIFF_COLORS } from './helpers';
+import { sumPoints, formatPoints, integerPercents } from '@/lib/exam-analysis/points';
+import { questionLevel } from '@/lib/exam-analysis/shared/difficulty';
+import { V3_DIFF_LABELS, V3_DIFF_COLORS } from './helpers';
 
 export function DifficultyNumericTable({ questions }: { questions: AnalyzedQuestion[] }) {
-  const rows = [0, 1, 2, 3, 4].map((i) => {
-    const qs = questions.filter((q) => Number(normDiff(String(q.difficulty))) === i + 1);
+  const levelRows = [0, 1, 2, 3, 4].map((i) => {
+    const qs = questions.filter((q) => questionLevel(q.difficulty) === i + 1);
     return {
-      level: i + 1,
-      label: V3_DIFF_LABELS[i],
-      color: V3_DIFF_COLORS[i],
+      key: String(i + 1),
+      label: `${i + 1}단계 · ${V3_DIFF_LABELS[i]}`,
+      color: V3_DIFF_COLORS[i] as string,
       count: qs.length,
       points: sumPoints(qs.map((q) => q.points)),
     };
   });
+  // 난이도를 못 읽은 문항을 조용히 빼면 합계 행이 전체 문항 수와 어긋나는데 화면엔 그 사실이 안 보인다.
+  // 있을 때만 행을 하나 더 세워 사실대로 드러낸다.
+  const unknownQs = questions.filter((q) => questionLevel(q.difficulty) === null);
+  const rows = unknownQs.length
+    ? [
+        ...levelRows,
+        {
+          key: 'unknown',
+          label: '미판독',
+          color: 'var(--v3-line)',
+          count: unknownQs.length,
+          points: sumPoints(unknownQs.map((q) => q.points)),
+        },
+      ]
+    : levelRows;
+
   const totalCount = rows.reduce((s, r) => s + r.count, 0);
-  const totalPoints = rows.reduce((s, r) => s + r.points, 0);
-  const pct = (v: number, total: number) => (total > 0 ? Math.round((v / total) * 100) : 0);
+  const totalPoints = sumPoints(rows.map((r) => r.points));
+  // 각 행을 따로 반올림하면 열의 합이 99/101 이 되는데, 합계 행에 100% 를 박아 두면 어긋난 게 보인다.
+  // 표시값끼리 정합하도록 합 100 보정된 정수 퍼센트를 쓴다.
+  const pcts = integerPercents(rows.map((r) => r.points));
+  const totalPct = pcts.reduce((s, v) => s + v, 0);
 
   return (
     <table className="v3-numtable">
@@ -36,15 +56,15 @@ export function DifficultyNumericTable({ questions }: { questions: AnalyzedQuest
         </tr>
       </thead>
       <tbody>
-        {rows.map((r) => (
-          <tr key={r.level} className={r.count === 0 ? 'v3-numtable-empty' : undefined}>
+        {rows.map((r, i) => (
+          <tr key={r.key} className={r.count === 0 ? 'v3-numtable-empty' : undefined}>
             <td className="v3-numtable-lv">
               <span className="v3-numtable-dot" style={{ background: r.color }} />
-              {r.level}단계 · {r.label}
+              {r.label}
             </td>
             <td className="v3-numtable-n">{r.count}</td>
             <td className="v3-numtable-n">{formatPoints(r.points)}</td>
-            <td className="v3-numtable-n">{pct(r.points, totalPoints)}%</td>
+            <td className="v3-numtable-n">{pcts[i]}%</td>
           </tr>
         ))}
       </tbody>
@@ -53,7 +73,7 @@ export function DifficultyNumericTable({ questions }: { questions: AnalyzedQuest
           <td className="v3-numtable-lv">합계</td>
           <td className="v3-numtable-n">{totalCount}</td>
           <td className="v3-numtable-n">{formatPoints(totalPoints)}</td>
-          <td className="v3-numtable-n">100%</td>
+          <td className="v3-numtable-n">{totalPct}%</td>
         </tr>
       </tfoot>
     </table>

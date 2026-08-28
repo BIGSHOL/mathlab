@@ -21,7 +21,8 @@
     "verify:template-blocks": "tsx scripts/parity/check-template-blocks.ts",
     "verify:presets": "tsx scripts/parity/check-commentary-presets.ts",
     "verify:clip": "tsx scripts/parity/check-clip-line.ts",
-    "verify:answers": "tsx scripts/parity/check-student-answers.ts"
+    "verify:answers": "tsx scripts/parity/check-student-answers.ts",
+    "verify:render": "tsx scripts/parity/check-block-render.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

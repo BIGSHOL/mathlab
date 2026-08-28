@@ -15,15 +15,58 @@ export function normalizeDifficultyKey(key: string | null | undefined): string |
   return DIFFICULTY_LEGACY_MAP[key] || key;
 }
 
-/**
- * 난이도 키(신/구) → 1~5 레벨 매핑.
- * 구 키: concept=1, pattern=2, reasoning=4, creative=5 (3단계 구 키는 없음)
- */
 const LEVEL_MAP: Record<string, number> = {
   '1': 1, '2': 2, '3': 3, '4': 4, '5': 5,
   concept: 1, pattern: 2, reasoning: 4, creative: 5,
 };
 
+/** 난이도 1~5. 판독 불가는 이 집합에 속하지 않는다. */
+export type DifficultyLevel = 1 | 2 | 3 | 4 | 5;
+
+/**
+ * 어떤 값이든 받아 난이도 1~5 로 — **판독 불가면 `null`**.
+ *
+ * `normalizeDifficultyKey` 는 인자 타입이 `string` 이라 호출부가 `String(q.difficulty)` 로
+ * 감싸는데, 그 순간 `null`/`undefined` 가 문자열 `"null"`/`"undefined"` 가 되어
+ * null 체크를 통과해 버린다. 그 뒤 `Number(...)` 가 NaN 을 내고, 각 컴포넌트가
+ * `|| 1` · `Math.max(NaN,1)` 같은 서로 다른 방식으로 NaN 을 흡수하면서
+ * **판독 실패 문항이 화면마다 다른 모습**(초록 '기본' 칸 / 투명 점 / 'undefined' 툴팁)이 됐다.
+ *
+ * `unknown` 을 받아 그 경로를 원천 차단한다. 미판독은 반드시 `null` 로 나오며,
+ * 호출부는 그것을 '미판독'으로 **표시할 책임**을 진다(조용히 1로 채우지 말 것).
+ */
+export function questionLevel(raw: unknown): DifficultyLevel | null {
+  if (raw == null) return null;
+  const key = String(raw).trim();
+  if (!key || key === 'null' || key === 'undefined' || key === 'NaN') return null;
+  const lv = LEVEL_MAP[key];
+  return lv === undefined ? null : (lv as DifficultyLevel);
+}
+
+/**
+ * 난이도별 문항 수 + **미판독 수**.
+ *
+ * 미판독을 따로 돌려주는 이유: 5칸만 세면 합계가 전체 문항 수와 어긋나는데
+ * 화면에는 그 사실이 안 보인다(범례 합 ≠ 칸 개수). 세는 쪽이 알려 줘야 표시할 수 있다.
+ */
+export function countByLevel(questions: readonly { difficulty?: unknown }[]): {
+  counts: number[];
+  unknown: number;
+} {
+  const counts = [0, 0, 0, 0, 0];
+  let unknown = 0;
+  for (const q of questions) {
+    const lv = questionLevel(q.difficulty);
+    if (lv === null) unknown += 1;
+    else counts[lv - 1] += 1;
+  }
+  return { counts, unknown };
+}
+
+/**
+ * 난이도 키(신/구) → 1~5 레벨 매핑.
+ * 구 키: concept=1, pattern=2, reasoning=4, creative=5 (3단계 구 키는 없음)
+ */
 /**
  * 레벨별 '영향력' 가중치(importance weight) — 각 난이도 문항이 종합 난이도에 미치는 영향력 배수.
  * 고난도일수록 크게 → 킬러/심화 문항이 종합을 강하게 끌어올린다("어려운 문제가 난이도를 정의").

@@ -7,13 +7,13 @@
  */
 
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
-import { normDiff } from './helpers';
+import { questionLevel } from '@/lib/exam-analysis/shared/difficulty';
 
 export function KillerMap({ questions }: { questions: AnalyzedQuestion[] }) {
   const list = questions
     .map((q) => ({
       num: q.question_number,
-      diff: normDiff(String(q.difficulty)),
+      diff: questionLevel(q.difficulty),
       isEssay: q.question_format === 'essay',
     }))
     .sort((a, b) => {
@@ -44,18 +44,22 @@ export function KillerMap({ questions }: { questions: AnalyzedQuestion[] }) {
           let bg = 'transparent';
           let border = 'var(--v3-ink)';
           let textColor = 'var(--v3-ink)';
-          if (q.diff === '5') {
+          if (q.diff === null) {
+            // 난이도 미판독 — 1~2단계(기본·표준)와 같은 모양으로 두면 쉬운 문항으로 읽힌다
+            border = 'var(--v3-line)';
+            textColor = 'var(--v3-muted)';
+          } else if (q.diff === 5) {
             bg = 'var(--v3-accent)';
             border = 'var(--v3-accent)';
             textColor = 'var(--v3-paper)';
-          } else if (q.diff === '4') {
+          } else if (q.diff === 4) {
             bg = 'var(--v3-conclusion-bg)';
             border = 'var(--v3-gold)';
-          } else if (q.diff === '3') {
+          } else if (q.diff === 3) {
             border = 'var(--v3-muted)';
           }
           if (q.isEssay) {
-            bg = q.diff === '5' ? 'var(--v3-accent)' : 'var(--v3-conclusion-bg)';
+            bg = q.diff === 5 ? 'var(--v3-accent)' : 'var(--v3-conclusion-bg)';
           }
           return (
             <div
