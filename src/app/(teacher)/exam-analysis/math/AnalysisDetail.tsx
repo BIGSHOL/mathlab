@@ -31,7 +31,7 @@ import { buildNaverV3Html } from '@/lib/exam-analysis/naver-v3-renderer';
 import { buildNaverV4Html } from '@/lib/exam-analysis/naver-v4-renderer';
 import { sumPoints } from '@/lib/exam-analysis/points';
 import { buildNaverCaptureSig, NAVER_CAPTURE_VERSION } from '@/lib/exam-analysis/naver-capture-sig';
-import { COMMENTARY_BLOCKS } from '../v3/blocks/registry';
+import { COMMENTARY_BLOCKS, clipCaption } from '../v3/blocks/registry';
 
 const ArticleEditorModal = dynamic(
   () => import('@/components/exam-analysis/ArticleEditorModal').then((m) => ({ default: m.ArticleEditorModal })),
@@ -524,13 +524,13 @@ export function MathAnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, au
       // 1순위: 블록 레지스트리가 심어 둔 의도된 요약 (v3/blocks/registry.tsx::blockAttrs).
       //   블로그 본문에 실제 텍스트로 들어가 검색 노출을 담당하므로, 블록이 스스로 문장을 정하는 편이 정확하다.
       const declared = node.dataset?.blockSummary?.trim();
-      if (declared) return koImg(declared).slice(0, 140);
+      if (declared) return clipCaption(koImg(declared));
       // 2순위: DOM 휴리스틱 — 별도 컴포넌트가 루트를 만드는 블록(Q&A·피처 등)용 폴백.
       const heading = (node.querySelector('h1,h2,h3,h4,.v3-section-sub') as HTMLElement | null)?.innerText?.trim() || '';
       const para = (node.querySelector('p') as HTMLElement | null)?.innerText?.trim() || '';
       const firstSentence = para.split(/(?<=[.?!。])\s/)[0] || '';
       const merged = [heading, firstSentence].filter(Boolean).join(' — ');
-      return koImg(merged).slice(0, 140);
+      return clipCaption(koImg(merged));
     };
     const DISPLAY_W = 720; // 네이버 문서너비 표시 폭 (옆트임은 paste로 강제 불가 — 사용자가 네이버에서 수동 적용)
 

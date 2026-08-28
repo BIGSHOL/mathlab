@@ -109,7 +109,7 @@ function blockAttrs(id: string, summary: string) {
 
 // 요약 문구는 def.summary 와 렌더 속성이 **같은 함수**를 공유한다 (두 곳에 복붙하면 반드시 어긋난다).
 const summaryHeader = ({ commentary, meta }: BlockRenderProps) =>
-  commentary.blog_dek ? koDifficultyText(commentary.blog_dek).slice(0, 140) : `${meta.examTitle} 시험 분석`;
+  commentary.blog_dek ? clipLine(koDifficultyText(commentary.blog_dek), 140) : `${meta.examTitle} 시험 분석`;
 
 const summaryKpi = ({ questions, meta }: BlockRenderProps) => {
   const k = computeKpis(questions);
@@ -117,14 +117,21 @@ const summaryKpi = ({ questions, meta }: BlockRenderProps) => {
   return `핵심 지표 — 평균 난이도 ${k.weighted.toFixed(1)}/5, 킬러 비중 ${k.killerPct}%, 서술형 ${k.essayCount}문항, ${last}.`;
 };
 
-const summaryInfographic = ({ meta }: BlockRenderProps) =>
-  `한눈에 보는 ${meta.totalQuestions}문항의 구조 — 난이도·문제 형식·문항 위치를 시각화했습니다.`;
+/**
+ * 인포그래픽 캡션 — **그 variant 가 실제로 그린 것만** 말한다.
+ *
+ * 캡션은 블로그 본문에 텍스트로 실리므로 이미지에 대한 사실 주장이다. 예전엔 variant 와
+ * 무관하게 "난이도·문제 형식·문항 위치를 시각화했습니다" 로 고정돼 있어, 난이도 바만 그리는
+ * variant 에서도 없는 그림 두 개를 있다고 말했다.
+ */
+const summaryInfographic = ({ meta }: BlockRenderProps, drew = '난이도·문제 형식·문항 위치') =>
+  `한눈에 보는 ${meta.totalQuestions}문항의 구조 — ${drew}를 시각화했습니다.`;
 
 const summaryDifficultyTable = () =>
   '문항별 난이도·단원·배점 상세 — 어떤 문항이 어느 단원에서 몇 점인지 정리했습니다.';
 
 const summaryPullQuote = ({ commentary }: BlockRenderProps) =>
-  commentary.pull_quote?.text ? koDifficultyText(commentary.pull_quote.text).slice(0, 140) : '';
+  commentary.pull_quote?.text ? clipLine(koDifficultyText(commentary.pull_quote.text), 140) : '';
 
 const summaryCharts = () => '분석 차트 — 난이도 분포·능력 영역·단원별 출제 현황·변별력 지수.';
 
@@ -177,7 +184,7 @@ function renderQuote(props: BlockRenderProps, extraClass: string) {
 }
 
 const summaryConclusion = ({ commentary }: BlockRenderProps) =>
-  commentary.conclusion?.body ? koDifficultyText(commentary.conclusion.body).slice(0, 140) : '';
+  commentary.conclusion?.body ? clipLine(koDifficultyText(commentary.conclusion.body), 140) : '';
 
 /** KPI 항목 4종 — dark/light variant 가 공유 */
 function kpiItems(k: Kpis, meta: BlockMeta) {
@@ -462,7 +469,7 @@ const featureBlock: CommentaryBlockDef = {
   available: ({ commentary: c }) => !!c.feature_callout,
   summary: ({ commentary: c }) => {
     const fc = c.feature_callout ? normalizeFeatureCallout(c.feature_callout) : null;
-    return fc?.body?.[0] ? koDifficultyText(String(fc.body[0])).slice(0, 140) : '';
+    return fc?.body?.[0] ? clipLine(koDifficultyText(String(fc.body[0])), 140) : '';
   },
   variants: [
     {
@@ -523,7 +530,7 @@ const infographicBlock: CommentaryBlockDef = {
       render: (props) => {
         const { questions, meta, sectionNum } = props;
         return (
-        <section className="v3-section" {...blockAttrs('infographic', summaryInfographic(props))}>
+        <section className="v3-section" {...blockAttrs('infographic', summaryInfographic(props, '난이도 분포'))}>
           <span className="v3-section-num">{sectionNum}</span>
           <div className="v3-section-sub">{props.copy.infographicSub}</div>
           <h3>{props.copy.infographicTitle(meta.totalQuestions)}</h3>
@@ -540,7 +547,7 @@ const infographicBlock: CommentaryBlockDef = {
       render: (props) => {
         const { questions, meta, sectionNum } = props;
         return (
-        <section className="v3-section" {...blockAttrs('infographic', summaryInfographic(props))}>
+        <section className="v3-section" {...blockAttrs('infographic', summaryInfographic(props, '난이도별 문항 수와 배점'))}>
           <span className="v3-section-num">{sectionNum}</span>
           <div className="v3-section-sub">{props.copy.infographicSub}</div>
           <h3>{props.copy.infographicTitle(meta.totalQuestions)}</h3>
@@ -557,7 +564,7 @@ const infographicBlock: CommentaryBlockDef = {
       render: (props) => {
         const { questions, meta, sectionNum } = props;
         return (
-        <section className="v3-section" {...blockAttrs('infographic', summaryInfographic(props))}>
+        <section className="v3-section" {...blockAttrs('infographic', summaryInfographic(props, '문항별 난이도와 배점'))}>
           <span className="v3-section-num">{sectionNum}</span>
           <div className="v3-section-sub">{props.copy.infographicSub}</div>
           <h3>{props.copy.infographicTitle(meta.totalQuestions)}</h3>
@@ -601,7 +608,7 @@ const previousComparisonBlock: CommentaryBlockDef = {
   defaultEnabled: true,
   available: ({ commentary: c }) => !!c.v4_previous_comparison?.headline,
   summary: ({ commentary: c }) =>
-    c.v4_previous_comparison?.headline ? koDifficultyText(c.v4_previous_comparison.headline).slice(0, 140) : '',
+    c.v4_previous_comparison?.headline ? clipLine(koDifficultyText(c.v4_previous_comparison.headline), 140) : '',
   variants: [
     {
       id: 'callout',
@@ -2874,6 +2881,13 @@ const footerBlock: CommentaryBlockDef = {
 
 /** 전체 블록 레지스트리 — 배열 순서가 기본 템플릿의 기본 순서 */
 /** 회귀 검사(scripts/parity/check-clip-line.ts) 전용 노출 — 런타임 동작에는 쓰이지 않는다 */
+/**
+ * 블로그 이미지 캡션 잘라내기 — 캡처 경로(AnalysisDetail::summaryOf)와 블록의 summary 가
+ * **같은 규칙**을 쓰게 공개한다. 한쪽만 글자 수로 자르면 같은 문장이 지면과 캡션에서
+ * 다르게 끊긴다.
+ */
+export const clipCaption = (s: string, max = 140) => clipLine(s, max);
+
 export const __clipLineForTest = clipLine;
 
 export const COMMENTARY_BLOCKS: CommentaryBlockDef[] = [
