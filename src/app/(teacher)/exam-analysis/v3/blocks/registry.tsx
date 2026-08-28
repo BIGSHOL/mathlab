@@ -1605,38 +1605,83 @@ interface ChatBubble {
   text: string;
 }
 
-function buildChatBubbles(c: CommentaryResult): ChatBubble[] {
+function buildChatBubbles(c: CommentaryResult, questions: AnalyzedQuestion[] = []): ChatBubble[] {
   const out: ChatBubble[] = [];
+  const seen = new Set<string>();
+  const push = (who: ChatWho, text: string) => {
+    const t = String(text ?? '').replace(/\s+/g, ' ').trim();
+    if (!t) return;
+    const key = t.slice(0, 40);
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push({ who, text: t });
+  };
+
   if (c.blog_qa?.length) {
     for (const qa of c.blog_qa) {
-      if (qa.question) out.push({ who: 'parent', text: qa.question });
-      const answer = (qa.answer ?? []).filter(Boolean).join('\n');
-      if (answer) out.push({ who: 'teacher', text: answer });
+      if (qa.question) push('parent', qa.question);
+      // 한 버블 = 한 인사이트. 답변 문단을 붙이면 2~3개짜리 리포트가 되어 대화로 안 읽힌다.
+      for (const para of qa.answer ?? []) push('teacher', para);
     }
-    return out;
+  } else {
+    if (c.overall_comment) {
+      push('parent', '이번 시험 전체적으로 어땠나요?');
+      push('teacher', c.overall_comment);
+    }
+    const areas = (c.improvement_areas ?? []).filter(Boolean);
+    if (areas.length) {
+      push('parent', '어떤 부분을 먼저 보완하면 좋을까요?');
+      for (const a of areas) push('teacher', a);
+    }
+    const plans = c.v4_final_strategy ?? [];
+    if (plans.length) {
+      push('parent', '다음 시험은 어떻게 준비하면 될까요?');
+      for (const p of plans) {
+        const text = [p.area, p.action].filter(Boolean).join(' — ');
+        if (text) push('teacher', text);
+      }
+    }
   }
-  if (c.overall_comment) {
-    out.push({ who: 'parent', text: '이번 시험 전체적으로 어땠나요?' });
-    out.push({ who: 'teacher', text: c.overall_comment });
+
+  // Q&A 가 구성·약점·다음 시험만 다루면 강점·킬러 문항·점수 전략이 빠진다. 있는 값만 덧붙인다.
+  if (c.strength_areas?.[0]) {
+    push('parent', '잘 나온 부분은 어디인가요?');
+    push('teacher', clipLine(c.strength_areas[0], 160));
   }
-  const areas = (c.improvement_areas ?? []).filter(Boolean);
-  if (areas.length) {
-    out.push({ who: 'parent', text: '어떤 부분을 먼저 보완하면 좋을까요?' });
-    for (const a of areas) out.push({ who: 'teacher', text: a });
+  const keyQ = c.v4_key_questions?.[0];
+  const notable = c.notable_questions?.[0];
+  if (keyQ?.title || notable?.comment) {
+    push('parent', '유독 어려운 문항이 있나요?');
+    const title = keyQ?.title || (notable ? `${notable.question_number}번` : '');
+    const body = clipLine(keyQ?.body || notable?.comment || '', 160);
+    push('teacher', [title, body].filter(Boolean).join('. '));
   }
-  const plans = c.v4_final_strategy ?? [];
-  if (plans.length) {
-    out.push({ who: 'parent', text: '다음 시험은 어떻게 준비하면 될까요?' });
-    for (const p of plans) {
-      const text = [p.area, p.action].filter(Boolean).join(' — ');
-      if (text) out.push({ who: 'teacher', text });
+  const strat = c.score_strategies?.[0];
+  if (strat) {
+    const pts = (strat.points ?? []).filter(Boolean).slice(0, 2).join(' ');
+    const head = [strat.grade, strat.target].filter(Boolean).join(' ');
+    const text = clipLine([head, pts || strat.strategy].filter(Boolean).join(' — '), 160);
+    if (text) {
+      push('parent', '점수는 어떻게 쌓으면 되나요?');
+      push('teacher', text);
+    }
+  }
+  if (!c.blog_qa?.length && questions.length) {
+    const n = questions.length;
+    const calc = questions.filter((q) => normAbilityKey(q.ability_domain) === 'calculation').length;
+    if (calc > 0 && calc / n >= 0.5) {
+      push('parent', '능력 영역은 어떻게 나뉘나요?');
+      push(
+        'teacher',
+        `계산력 ${calc}문항(${Math.round((calc / n) * 100)}%)입니다. 나머지 ${n - calc}문항이 이해·문제해결·추론입니다.`,
+      );
     }
   }
   return out;
 }
 
 function summaryChat(props: BlockRenderProps) {
-  const n = buildChatBubbles(props.commentary).length;
+  const n = buildChatBubbles(props.commentary, props.questions).length;
   return n ? `선생님과의 대화 ${n}개` : '';
 }
 
@@ -1645,7 +1690,7 @@ const bubbleThreadBlock: CommentaryBlockDef = {
   label: '대화 말풍선',
   description: '선생님↔학부모 스레드. 한 버블이 한 인사이트',
   defaultEnabled: false,
-  available: (c) => buildChatBubbles(c).length > 0,
+  available: (c, questions) => buildChatBubbles(c, questions).length > 0,
   summary: summaryChat,
   variants: [
     {
@@ -1664,7 +1709,7 @@ const bubbleThreadBlock: CommentaryBlockDef = {
 };
 
 function renderChat(props: BlockRenderProps, leftAlign: boolean) {
-  const bubbles = buildChatBubbles(props.commentary);
+  const bubbles = buildChatBubbles(props.commentary, props.questions);
   if (!bubbles.length) return null;
 
   return (
@@ -1695,7 +1740,9 @@ function renderChat(props: BlockRenderProps, leftAlign: boolean) {
 }
 
 // ── 스카우트 카드 (statRadar) ────────────────────────────────────────────
-// 선수 카드: SVG 레이더 + 스탯 4~5개 + 스카우트 노트 3줄.
+// 선수 카드: SVG 레이더(능력 비율만) + 스탯 + 심화·서술형 별도 줄 + 스카우트 노트 3줄.
+// 심화·서술형을 레이더에 넣지 않는 이유: 앞 4축은 능력 문항 비율(합 100%)인데
+// 심화는 난이도≥4 비중이라 분모가 다르다. 같은 도형에 섞으면 축이 거짓이 된다.
 // 시간 축을 두지 않는 이유: 문항 소요시간 필드가 없다. 없으면 가짜 축이 된다.
 // 영문 enum 은 라벨 표에만 한글을 두고 raw 값은 정규화 키로만 쓴다.
 
@@ -1714,9 +1761,11 @@ interface ScoutStat {
   key: string;
   label: string;
   value: number;
+  unit?: string;
+  hint?: string;
 }
 
-function collectScoutStats(questions: AnalyzedQuestion[]): ScoutStat[] {
+function collectAbilityStats(questions: AnalyzedQuestion[]): ScoutStat[] {
   const total = questions.length;
   if (total === 0) return [];
 
@@ -1726,29 +1775,61 @@ function collectScoutStats(questions: AnalyzedQuestion[]): ScoutStat[] {
     problem_solving: 0,
     reasoning: 0,
   };
-  let hardCount = 0;
-  let essayCount = 0;
   for (const q of questions) {
     const k = normAbilityKey(q.ability_domain);
     if (k in abilityCounts) abilityCounts[k] += 1;
-    if (questionDiff(q) >= 4) hardCount += 1;
-    if (isEssayQuestion(q)) essayCount += 1;
   }
 
   const stats: ScoutStat[] = [];
   for (const ax of ABILITY_AXES) {
     const n = abilityCounts[ax.key];
     // 실제 문항이 있는 축만 — 0% 축을 그리면 "없는 능력"이 "약한 능력"으로 읽힌다.
-    if (n > 0) stats.push({ key: ax.key, label: ax.label, value: Math.round((n / total) * 100) });
+    if (n > 0) stats.push({ key: ax.key, label: ax.label, value: Math.round((n / total) * 100), unit: '%' });
   }
+  return stats;
+}
+
+function collectScoutExtras(questions: AnalyzedQuestion[]): ScoutStat[] {
+  if (!questions.length) return [];
+  let hardCount = 0;
+  let hardPts = 0;
+  let essayCount = 0;
+  let essayPts = 0;
+  for (const q of questions) {
+    const pts = typeof q.points === 'number' ? q.points : 0;
+    if (questionDiff(q) >= 4) {
+      hardCount += 1;
+      hardPts += pts;
+    }
+    if (isEssayQuestion(q)) {
+      essayCount += 1;
+      essayPts += pts;
+    }
+  }
+  const extras: ScoutStat[] = [];
   if (hardCount > 0) {
-    stats.push({ key: 'hard', label: '심화', value: Math.round((hardCount / total) * 100) });
+    extras.push({
+      key: 'hard',
+      label: '심화',
+      value: hardCount,
+      unit: '문항',
+      hint: hardPts > 0 ? `${formatPoints(hardPts)}점` : undefined,
+    });
   }
   if (essayCount > 0) {
-    stats.push({ key: 'essay', label: '서술형', value: Math.round((essayCount / total) * 100) });
+    extras.push({
+      key: 'essay',
+      label: '서술형',
+      value: essayCount,
+      unit: '문항',
+      hint: essayPts > 0 ? `${formatPoints(essayPts)}점` : undefined,
+    });
   }
-  // 4~5축이 카드로 읽힌다. 6개면 서술형을 접어 심화(킬러)를 남긴다.
-  return stats.slice(0, 5);
+  return extras;
+}
+
+function collectScoutStats(questions: AnalyzedQuestion[]): ScoutStat[] {
+  return [...collectAbilityStats(questions), ...collectScoutExtras(questions)];
 }
 
 /**
@@ -1780,16 +1861,20 @@ function clipLine(s: string, max: number): string {
 
 function scoutNotes(c: CommentaryResult): { label: string; text: string }[] {
   const out: { label: string; text: string }[] = [];
-  if (c.strength_areas?.[0]) out.push({ label: '강점', text: clipLine(c.strength_areas[0], 86) });
-  if (c.improvement_areas?.[0]) out.push({ label: '보완', text: clipLine(c.improvement_areas[0], 86) });
+  // 86자는 카드 폭 대비 한 줄에서 끊겨 "…목표를"처럼 보인다. 2~3줄(≈160자)까지 올린다.
+  if (c.strength_areas?.[0]) out.push({ label: '강점', text: clipLine(c.strength_areas[0], 160) });
+  if (c.improvement_areas?.[0]) out.push({ label: '보완', text: clipLine(c.improvement_areas[0], 160) });
   const s0 = c.v4_final_strategy?.[0];
   const next = s0 ? [s0.area, s0.action].filter(Boolean).join(' — ') : '';
-  if (next) out.push({ label: '다음', text: clipLine(next, 86) });
+  if (next) out.push({ label: '다음', text: clipLine(next, 160) });
   return out.slice(0, 3);
 }
 
 function summaryScout(props: BlockRenderProps) {
-  const bits = collectScoutStats(props.questions).map((s) => `${s.label} ${s.value}%`);
+  const bits = collectScoutStats(props.questions).map((s) => {
+    const unit = s.unit ?? '%';
+    return `${s.label} ${s.value}${unit}${s.hint ? ` ${s.hint}` : ''}`;
+  });
   return bits.length ? `스카우트 카드 — ${bits.join(', ')}` : '';
 }
 
@@ -1906,8 +1991,9 @@ const statRadarBlock: CommentaryBlockDef = {
 };
 
 function renderScout(props: BlockRenderProps, stack: boolean) {
-  const stats = collectScoutStats(props.questions);
-  if (!stats.length) return null;
+  const axes = collectAbilityStats(props.questions);
+  const extras = collectScoutExtras(props.questions);
+  if (!axes.length && !extras.length) return null;
   const notes = scoutNotes(props.commentary);
   const { meta } = props;
   const ovr = weightedAverageDifficulty(props.questions).avg;
@@ -1927,23 +2013,39 @@ function renderScout(props: BlockRenderProps, stack: boolean) {
         ) : null}
       </div>
       <div className="v3-scout-body">
-        {stats.length >= 3 ? (
+        {axes.length >= 3 ? (
           <div className="v3-scout-radar">
-            <ScoutRadar stats={stats} />
+            <ScoutRadar stats={axes} />
           </div>
         ) : null}
-        <ul className="v3-scout-stats">
-          {stats.map((s) => (
+        {axes.length > 0 ? (
+          <ul className="v3-scout-stats">
+            {axes.map((s) => (
+              <li key={s.key}>
+                <span>{s.label}</span>
+                <b>
+                  {s.value}
+                  <i>{s.unit ?? '%'}</i>
+                </b>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+      {extras.length > 0 ? (
+        <ul className="v3-scout-extra">
+          {extras.map((s) => (
             <li key={s.key}>
               <span>{s.label}</span>
               <b>
                 {s.value}
-                <i>%</i>
+                <i>{s.unit ?? ''}</i>
               </b>
+              {s.hint ? <em>{s.hint}</em> : null}
             </li>
           ))}
         </ul>
-      </div>
+      ) : null}
       {notes.length > 0 ? (
         <div className="v3-scout-notes">
           {notes.map((n) => (
@@ -1976,16 +2078,37 @@ function collectKillerClusters(questions: AnalyzedQuestion[]): { topic: string; 
 }
 
 function rxPrescription(c: CommentaryResult): string[] {
-  const fromAreas = (c.improvement_areas ?? []).filter(Boolean).slice(0, 3);
-  if (fromAreas.length) return fromAreas;
-  return (c.v4_final_strategy ?? [])
-    .map((s) => s.area)
+  // improvement_areas 는 출제 비판 문단이라 단원 3개가 안 보인다.
+  // 전략·지도 권장에 단원명이 있으므로 그걸 처방으로 쓴다.
+  const fromStrategy = (c.v4_final_strategy ?? [])
+    .map((s) => {
+      const area = (s.area || '').trim();
+      const action = clipLine((s.action || s.current_status || '').trim(), 140);
+      if (!area && !action) return '';
+      return action ? `${area} — ${action}` : area;
+    })
     .filter(Boolean)
     .slice(0, 3);
+  if (fromStrategy.length) return fromStrategy;
+
+  const fromTeach = [...(c.teaching_recommendations ?? [])]
+    .sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99))
+    .map((t) => {
+      const topic = topicMidUnit(t.topic);
+      const reason = clipLine((t.reason || '').trim(), 140);
+      return reason ? `${topic} — ${reason}` : topic;
+    })
+    .filter(Boolean)
+    .slice(0, 3);
+  if (fromTeach.length) return fromTeach;
+
+  return (c.improvement_areas ?? []).filter(Boolean).slice(0, 3).map((a) => clipLine(a, 140));
 }
 
 function rxPrognosis(c: CommentaryResult): string {
-  return (c.conclusion?.body || c.v4_final_strategy?.[0]?.action || '').trim();
+  const body = (c.conclusion?.body || '').trim();
+  if (body) return body;
+  return (c.v4_final_strategy?.[0]?.action || '').trim();
 }
 
 interface RxCol {
@@ -1996,14 +2119,19 @@ interface RxCol {
 
 function collectRxCols(c: CommentaryResult, questions: AnalyzedQuestion[]): RxCol[] {
   const cols: RxCol[] = [];
+  const dxLines: string[] = [];
+  const avg = weightedAverageDifficulty(questions);
+  if (avg.avg > 0) dxLines.push(`종합 난이도 ${avg.avg.toFixed(1)}`);
+  const essays = questions.filter(isEssayQuestion);
+  const essayPts = sumPoints(essays.map((q) => q.points));
+  if (essays.length) dxLines.push(`서술형 ${essays.length}문항 · ${formatPoints(essayPts)}점`);
   const dx = collectKillerClusters(questions);
-  if (dx.length) {
-    cols.push({
-      key: 'dx',
-      title: '진단',
-      lines: dx.slice(0, 4).map((d) => `${d.topic} · 심화 ${d.count}문항`),
-    });
+  for (const d of dx.slice(0, 3)) {
+    const clusterQs = questions.filter((q) => questionDiff(q) >= 4 && topicMidUnit(q.topic) === d.topic);
+    const pts = sumPoints(clusterQs.map((q) => q.points));
+    dxLines.push(`${d.topic} · 심화 ${d.count}문항${pts > 0 ? ` ${formatPoints(pts)}점` : ''}`);
   }
+  if (dxLines.length) cols.push({ key: 'dx', title: '진단', lines: dxLines });
   const rx = rxPrescription(c);
   if (rx.length) cols.push({ key: 'rx', title: '처방', lines: rx });
   const px = rxPrognosis(c);
@@ -2413,6 +2541,60 @@ interface ComicPanel {
   bubble: string;
 }
 
+function comicKillerBubble(qs: AnalyzedQuestion[], clusters: { topic: string; count: number }[]): string {
+  const killer = qs.filter((q) => questionDiff(q) >= 4);
+  if (!clusters[0]) {
+    if (!killer.length) return '심화 문항 없이 고르게 출제됐습니다.';
+    const pts = sumPoints(killer.map((q) => q.points));
+    const diffs = killer.map(questionDiff).filter((d) => d > 0);
+    const minD = diffs.length ? Math.min(...diffs) : 0;
+    const maxD = diffs.length ? Math.max(...diffs) : 0;
+    const diffLabel = !diffs.length ? '' : minD === maxD ? `난이도 ${minD}` : `난이도 ${minD}~${maxD}`;
+    const ptsLabel = pts > 0 ? `${formatPoints(pts)}점` : '';
+    const extra = [diffLabel, ptsLabel].filter(Boolean).join(' · ');
+    return extra ? `심화 이상 ${killer.length}문항입니다. ${extra}입니다.` : `심화 이상 ${killer.length}문항입니다.`;
+  }
+  const top = clusters[0];
+  const clusterQs = killer.filter((q) => topicMidUnit(q.topic) === top.topic);
+  const pts = sumPoints(clusterQs.map((q) => q.points));
+  const diffs = clusterQs.map(questionDiff).filter((d) => d > 0);
+  const minD = diffs.length ? Math.min(...diffs) : 0;
+  const maxD = diffs.length ? Math.max(...diffs) : 0;
+  const detail = [
+    diffs.length ? (minD === maxD ? `난이도 ${minD}` : `난이도 ${minD}~${maxD}`) : '',
+    pts > 0 ? `${formatPoints(pts)}점` : '',
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  const allPts = sumPoints(killer.map((q) => q.points));
+  const rest =
+    killer.length > top.count
+      ? `시험 전체 심화는 ${killer.length}문항${allPts > 0 ? ` ${formatPoints(allPts)}점` : ''}`
+      : '';
+  const bits = [detail, rest].filter(Boolean);
+  let s = `${top.topic}에 심화 ${top.count}문항이 몰렸습니다.`;
+  if (bits.length) s += ` ${bits.join('이고, ')}입니다.`;
+  return s;
+}
+
+function comicEssayBubble(essays: AnalyzedQuestion[], essayPts: number): string {
+  if (!essays.length) return '서술형 없이 객관식·단답으로만 구성됐습니다.';
+  const ptsMap = new Map<string, number>();
+  for (const q of essays) {
+    const t = topicMidUnit(q.topic);
+    ptsMap.set(t, (ptsMap.get(t) ?? 0) + (typeof q.points === 'number' ? q.points : 0));
+  }
+  const ranked = [...ptsMap.keys()].sort((a, b) => (ptsMap.get(b) ?? 0) - (ptsMap.get(a) ?? 0));
+  const n = ranked.length;
+  const span =
+    n === 1
+      ? `${ranked[0]}에 몰려 있고`
+      : n <= 3
+        ? `${ranked.join('·')}에 걸쳐 있고`
+        : `${ranked.slice(0, 2).join('·')} 등 ${n}단원에 걸쳐 있고`;
+  return `서술형 ${essays.length}문항 · ${formatPoints(essayPts)}점입니다. ${span}, 여기서 갈립니다.`;
+}
+
 function buildComicPanels(props: BlockRenderProps): ComicPanel[] {
   const { commentary: c, questions: qs, meta } = props;
   const total = qs.length;
@@ -2423,6 +2605,8 @@ function buildComicPanels(props: BlockRenderProps): ComicPanel[] {
   const clusters = collectKillerClusters(qs);
   const next = c.v4_final_strategy?.[0]?.action || c.improvement_areas?.[0] || '';
   const nextN = Math.max(1, c.v4_final_strategy?.length || c.improvement_areas?.length || 1);
+  // 말풍선 목표 60~100자. 2·3컷이 한 문장이라 앞뒤와 균형이 안 맞아, 있는 숫자만 한 문장 더 붙인다.
+  const bubbleMax = 100;
 
   return [
     {
@@ -2430,40 +2614,28 @@ function buildComicPanels(props: BlockRenderProps): ComicPanel[] {
       title: '예고',
       big: avg.avg > 0 ? avg.avg.toFixed(1) : String(total),
       unit: avg.avg > 0 ? '/5' : '문항',
-      bubble: clipLine(c.blog_dek || c.blog_headline || `${meta.examTitle} 분석`, 90),
+      bubble: clipLine(c.blog_dek || c.blog_headline || `${meta.examTitle} 분석`, bubbleMax),
     },
     {
       key: 'killer',
       title: '킬러 쏠림',
       big: String(killer.length),
       unit: '문항',
-      bubble: clipLine(
-        clusters[0]
-          ? `${clusters[0].topic}에 심화 ${clusters[0].count}문항이 몰렸습니다.`
-          : killer.length
-            ? `심화 이상 ${killer.length}문항입니다.`
-            : '심화 문항 없이 고르게 출제됐습니다.',
-        90,
-      ),
+      bubble: clipLine(comicKillerBubble(qs, clusters), bubbleMax),
     },
     {
       key: 'trap',
       title: '함정',
       big: String(essayPts > 0 ? essayPts : essays.length),
       unit: essayPts > 0 ? '점' : '문항',
-      bubble: clipLine(
-        essays.length
-          ? `서술형 ${essays.length}문항 · ${formatPoints(essayPts)}점. 여기서 갈립니다.`
-          : '서술형 없이 객관식·단답으로만 구성됐습니다.',
-        90,
-      ),
+      bubble: clipLine(comicEssayBubble(essays, essayPts), bubbleMax),
     },
     {
       key: 'hw',
       title: '다음 숙제',
       big: String(nextN),
       unit: '가지',
-      bubble: clipLine(next || '틀린 문항부터 다시 풀어 보세요.', 90),
+      bubble: clipLine(next || '틀린 문항부터 다시 풀어 보세요.', bubbleMax),
     },
   ];
 }
@@ -2541,10 +2713,15 @@ function recipeSteps(c: CommentaryResult, rows: TopicStatRow[]): string[] {
     seen.add(key);
     steps.push(t);
   };
-  for (const a of c.improvement_areas ?? []) push(String(a));
+  // 조리 순서는 단원명부터. improvement_areas 를 먼저 쓰면 출제 비판 문단이 되고 재료와 안 맞다.
   for (const s of c.v4_final_strategy ?? []) {
-    push([s.area, s.action].filter(Boolean).join(' — '));
+    const action = clipLine((s.action || '').trim(), 90);
+    push([s.area, action].filter(Boolean).join(' — '));
   }
+  for (const t of [...(c.teaching_recommendations ?? [])].sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99))) {
+    push(`${topicMidUnit(t.topic)} — ${clipLine((t.reason || '').trim(), 90)}`);
+  }
+  for (const a of c.improvement_areas ?? []) push(clipLine(String(a), 90));
   // AI 전략이 비면 매운 단원부터 — 빈 조리법은 레시피 카드가 아니다.
   if (steps.length < 3) {
     const rest = [...rows].sort((a, b) => b.avgDiff - a.avgDiff || b.points - a.points);
@@ -2619,18 +2796,31 @@ function renderRecipe(props: BlockRenderProps, board: boolean) {
       </div>
 
       <div className="v3-recipe-ings">
-        <span className="v3-recipe-label">재료</span>
+        <span className="v3-recipe-label">재료 {sorted.length}종</span>
         <ul>
-          {sorted.map((r, i) => (
-            <li key={r.topic}>
-              <b>{r.topic}</b>
-              <em>{pcts[i]}%</em>
-              <span>
-                {r.count}문항
-                {r.points > 0 ? ` · ${formatPoints(r.points)}점` : ''}
-              </span>
-            </li>
-          ))}
+          {sorted.map((r, i) => {
+            let hardN = 0;
+            let essayN = 0;
+            for (const q of qs) {
+              if (topicMidUnit(q.topic) !== r.topic) continue;
+              if (questionDiff(q) >= 4) hardN += 1;
+              if (isEssayQuestion(q)) essayN += 1;
+            }
+            const bits = [
+              `${r.count}문항`,
+              r.points > 0 ? `${formatPoints(r.points)}점` : '',
+              r.avgDiff > 0 ? `난이도 ${r.avgDiff.toFixed(1)}` : '',
+              hardN > 0 ? `심화 ${hardN}` : '',
+              essayN > 0 ? `서술 ${essayN}` : '',
+            ].filter(Boolean);
+            return (
+              <li key={r.topic}>
+                <b>{r.topic}</b>
+                <em>{pcts[i]}%</em>
+                <span>{bits.join(' · ')}</span>
+              </li>
+            );
+          })}
         </ul>
       </div>
 

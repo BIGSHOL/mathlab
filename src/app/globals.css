@@ -2628,10 +2628,10 @@ body {
   background: var(--v3-paper-alt);
 }
 .v3-scout-notes p {
-  margin: 0 0 8px;
+  margin: 0 0 10px;
   font-family: var(--v3-font-body);
   font-size: 13px;
-  line-height: 1.65;
+  line-height: 1.7;
   color: var(--v3-body);
   word-break: keep-all;
 }
@@ -2645,6 +2645,53 @@ body {
 }
 .v3-scout-stack .v3-scout-body { flex-direction: column; }
 .v3-scout-stack .v3-scout-radar { width: 220px; max-width: 100%; }
+/* 심화·서술형은 능력 비율과 분모가 달라 레이더 밖 한 줄로 뺀다 */
+.v3-scout-extra {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--v3-line-soft);
+  background: var(--v3-paper);
+}
+.v3-scout-extra li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  padding: 10px 18px 12px;
+  border-right: 1px solid var(--v3-line-soft);
+}
+.v3-scout-extra li:last-child { border-right: none; }
+.v3-scout-extra span {
+  font-family: var(--v3-font-label);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--v3-muted);
+}
+.v3-scout-extra b {
+  font-family: var(--v3-font-num);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--v3-ink);
+  line-height: 1;
+}
+.v3-scout-extra i {
+  font-style: normal;
+  font-size: 0.5em;
+  color: var(--v3-muted);
+  margin-left: 2px;
+}
+.v3-scout-extra em {
+  font-style: normal;
+  font-family: var(--v3-font-label);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--v3-accent);
+}
 
 /* ── V3 처방전(rxCard) ────────────────────────────────────────────────────
    괘선·Rx 마크·서명란. 칸 배경은 paper — ink 채움 위에 흰 글자를 올리지 않는다.
@@ -2967,7 +3014,7 @@ body {
   gap: 10px;
   overflow: hidden;
 }
-.v3-comic-panel { min-height: 280px; aspect-ratio: 5 / 4; }
+.v3-comic-panel { min-height: 300px; aspect-ratio: 5 / 4; }
 .v3-comic-square { aspect-ratio: 1 / 1; }
 .v3-comic-idx {
   position: absolute;
@@ -3100,8 +3147,9 @@ body {
 }
 .v3-recipe-ings li {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: 10px;
+  gap: 6px 10px;
   padding: 8px 0;
   border-bottom: 1px dashed var(--v3-line);
   font-family: var(--v3-font-body);
@@ -3124,10 +3172,11 @@ body {
   line-height: 1;
 }
 .v3-recipe-ings span {
+  flex: 1 0 100%;
   font-family: var(--v3-font-label);
   font-size: 12px;
   color: var(--v3-muted);
-  white-space: nowrap;
+  word-break: keep-all;
 }
 .v3-recipe-steps { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--v3-line-soft); }
 .v3-recipe-steps ol { counter-reset: v3rp; }
