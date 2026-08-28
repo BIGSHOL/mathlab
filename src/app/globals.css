@@ -1865,7 +1865,7 @@ body {
 }
 
 /* V3 데이터 박스 */
-.v3-data-box { background: var(--v3-paper-alt); border-left: 3px solid var(--v3-accent); padding: 18px 22px; margin: 20px 0; }
+.v3-data-box { background: var(--v3-paper-alt); color: var(--v3-ink); border-left: 3px solid var(--v3-accent); padding: 18px 22px; margin: 20px 0; }
 .v3-data-box .v3-data-box-lb { font-family: var(--v3-font-label); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--v3-muted); font-weight: 800; margin-bottom: 12px; }
 .v3-data-box .v3-data-row { display: grid; gap: 12px; align-items: center; padding: 6px 0; }
 .v3-data-box .v3-data-row-comparison { grid-template-columns: 90px 1fr; }
@@ -1873,9 +1873,9 @@ body {
 .v3-data-box .v3-data-row-bars { grid-template-columns: minmax(120px, 160px) minmax(0, 1fr) minmax(88px, auto); }
 .v3-data-box .v3-data-row-table { grid-template-columns: 100px 1fr; border-bottom: 1px solid var(--v3-line-soft); }
 .v3-data-box .v3-data-row-table:last-child { border-bottom: none; }
-.v3-data-box .v3-data-row .v3-data-nm { font-family: var(--v3-font-label); font-size: 13px; font-weight: 700; word-break: keep-all; }
+.v3-data-box .v3-data-row .v3-data-nm { font-family: var(--v3-font-label); font-size: 13px; font-weight: 700; color: var(--v3-ink); word-break: keep-all; }
 .v3-data-box .v3-data-row .v3-data-val { font-family: var(--v3-font-label); font-size: 13px; color: var(--v3-body); word-break: keep-all; }
-.v3-data-box .v3-data-row .v3-data-v-num { font-family: var(--v3-font-num); font-size: 16px; font-weight: 700; text-align: right; white-space: nowrap; }
+.v3-data-box .v3-data-row .v3-data-v-num { font-family: var(--v3-font-num); font-size: 16px; font-weight: 700; color: var(--v3-ink); text-align: right; white-space: nowrap; }
 .v3-data-box .v3-data-row .v3-data-track { height: 6px; background: var(--v3-line); position: relative; }
 .v3-data-box .v3-data-row .v3-data-track .v3-data-fill { height: 100%; background: var(--v3-surface-dark); }
 .v3-data-box .v3-data-row .v3-data-track .v3-data-fill.v3-up { background: var(--v3-pos); }
@@ -1902,8 +1902,8 @@ body {
 /* V3 데이터 박스 — 이산 grid 시각화 (사용자 피드백) */
 .v3-data-row-grid { margin: 0 0 14px; }
 .v3-data-row-grid-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
-.v3-data-row-grid .v3-data-nm { font-family: var(--v3-font-label); font-size: 13px; font-weight: 700; word-break: keep-all; }
-.v3-data-row-grid .v3-data-v-num { font-family: var(--v3-font-num); font-size: 14px; font-weight: 700; white-space: nowrap; }
+.v3-data-row-grid .v3-data-nm { font-family: var(--v3-font-label); font-size: 13px; font-weight: 700; color: var(--v3-ink); word-break: keep-all; }
+.v3-data-row-grid .v3-data-v-num { font-family: var(--v3-font-num); font-size: 14px; font-weight: 700; color: var(--v3-ink); white-space: nowrap; }
 .v3-data-grid { display: grid; gap: 3px; }
 .v3-data-grid-cell { height: 14px; border-radius: 2px; }
 .v3-data-grid-cell.is-on { background: var(--cell, var(--v3-ink)); }
@@ -2107,6 +2107,35 @@ body {
   color: var(--v3-paper);
 }
 
+/* ── 다크·미니멀: 겸용 토큰 형제 보정 (§12-15 후속) ──────────────────────
+   위 블록이 고친 건 스택바·뱃지·형식막대. 같은 병의 형제가 레이아웃 크롬·
+   히트맵·도트에 남아 있었다. 밝은 테마 캡처는 건드리지 않고 여기만 덮는다.
+   - 타블로이드 마스트헤드: ink 채움 + on-dark 글자 → 다크에서 흰 on 흰
+     정답 짝은 surface-dark + on-dark (billboard·conclusion-ink 와 동일)
+   - 진 섹션 제목: 골드 띠 위 ink 상속 → 다크에서 ink 가 밝아 빈 노란 띠
+   - 히트맵 칸 번호: ink 가 다크에서 밝아져 중간 명도 램프와 충돌 → paper
+   - 도트 번호: on-dark(흰) 가 칠판 램프에서 전부 실패 → paper
+   - 미니멀 L4·L5 칸은 거의 흑이라 잉크색 번호가 묻힘 → paper */
+.v3.v3-theme-terminal .v3-layout-tabloid .v3-top,
+.v3.v3-theme-chalkboard .v3-layout-tabloid .v3-top {
+  background: var(--v3-surface-dark);
+  color: var(--v3-on-dark);
+}
+.v3.v3-theme-terminal .v3-layout-zine .v3-section h3,
+.v3.v3-theme-chalkboard .v3-layout-zine .v3-section h3 {
+  color: var(--v3-paper);
+}
+.v3.v3-theme-terminal .v3-heatmap-cell,
+.v3.v3-theme-chalkboard .v3-heatmap-cell {
+  color: var(--v3-paper);
+}
+.v3.v3-theme-chalkboard .v3-dot {
+  color: var(--v3-paper);
+}
+.v3.v3-theme-mono .v3-heatmap-killer {
+  color: var(--v3-paper);
+}
+
 /* ── V3 Wrapped 스토리(storySlide) ────────────────────────────────────────
    한 화면에 숫자 하나. 각 장이 `.v3` 의 **최상위 형제**라 블로그 캡처에서
    장마다 이미지 한 장이 된다(감싸면 한 덩어리로 합쳐진다 — registry 주석 참조).
@@ -2205,9 +2234,10 @@ body {
   align-items: center;
   justify-content: center;
   gap: 2px;
-  /* 난이도 램프는 밝은 색도 있어 흰 글자를 쓰면 저난도 칸이 안 보인다 → 잉크색 고정 */
-  color: #12100E;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  /* 난이도 램프는 밝은 색도 있어 흰 글자를 쓰면 저난도 칸이 안 보인다 → 잉크(밝은 테마=near-black).
+     다크 테마는 ink 가 뒤집히므로 아래 다크 보정 블록에서 paper 로 덮는다. */
+  color: var(--v3-ink);
+  border: 1px solid var(--v3-line);
 }
 .v3-heatmap-no {
   font-family: var(--v3-font-label);
@@ -2219,7 +2249,7 @@ body {
 }
 .v3-heatmap-pt { font-family: var(--v3-font-label); font-size: 10px; opacity: 0.72; }
 /* 서술형은 색이 아니라 테두리로 구분한다 — 색은 이미 난이도가 쓰고 있다 */
-.v3-heatmap-essay { border: 2px dashed rgba(0, 0, 0, 0.55); }
+.v3-heatmap-essay { border: 2px dashed var(--v3-ink); }
 .v3-heatmap-killer { box-shadow: inset 0 0 0 2px var(--v3-accent); }
 .v3-heatmap-legend {
   display: flex;
@@ -2236,7 +2266,7 @@ body {
   width: 11px; height: 11px; border-radius: 2px; display: inline-block;
   border: 1px solid rgba(0, 0, 0, 0.12);
 }
-.v3-heatmap-leg-essay { background: transparent; border: 2px dashed rgba(0, 0, 0, 0.55) !important; }
+.v3-heatmap-leg-essay { background: transparent; border: 2px dashed var(--v3-ink) !important; }
 
 /* 편지지 머리 — 헤드라인 없이 발신 정보만. 아래 편지 본문이 주인공이라 최대한 물러난다 */
 .v3-top.v3-top-letterhead { padding-bottom: 18px; }
@@ -3540,7 +3570,8 @@ body {
 .v3-layout-zine .v3-top { background: var(--v3-conclusion-bg); border-bottom: 3px solid var(--v3-ink); }
 .v3-layout-zine .v3-section { border-bottom: 3px dashed var(--v3-ink); }
 .v3-layout-zine .v3-section h3 {
-  display: inline-block; background: var(--v3-gold); padding: 4px 12px; transform: rotate(-0.6deg);
+  display: inline-block; background: var(--v3-gold); color: var(--v3-ink);
+  padding: 4px 12px; transform: rotate(-0.6deg);
 }
 .v3-layout-zine .v3-section .v3-section-num { opacity: 0.9; color: var(--v3-accent); }
 
@@ -3729,7 +3760,8 @@ body {
 .v3-dotmatrix-grid { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
 .v3-dot {
   display: inline-flex; align-items: center; justify-content: center; border-radius: 50%;
-  color: #fff; font-family: var(--v3-font-label); font-weight: 800; flex-shrink: 0;
+  /* #fff 하드코딩이면 칠판 램프(중간 명도)에서 5단계가 전부 실패한다. on-dark 는 밝은 테마에서 흰색. */
+  color: var(--v3-on-dark); font-family: var(--v3-font-label); font-weight: 800; flex-shrink: 0;
 }
 .v3-dot-sm { width: 21px; height: 21px; font-size: 9px; }
 .v3-dot-md { width: 28px; height: 28px; font-size: 11px; }

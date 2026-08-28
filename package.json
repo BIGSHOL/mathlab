@@ -23,7 +23,8 @@
     "verify:clip": "tsx scripts/parity/check-clip-line.ts",
     "verify:answers": "tsx scripts/parity/check-student-answers.ts",
     "verify:render": "tsx scripts/parity/check-block-render.ts",
-    "verify:capture-sig": "tsx scripts/parity/check-capture-sig.ts"
+    "verify:capture-sig": "tsx scripts/parity/check-capture-sig.ts",
+    "verify:contrast": "tsx scripts/parity/check-theme-contrast.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
