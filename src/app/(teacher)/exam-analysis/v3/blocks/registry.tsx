@@ -1205,12 +1205,19 @@ function renderStory(props: BlockRenderProps, shapeClass: string) {
 // 마지막 칸(소단원으로 잘못 저장된 경우)이 아니라 **마지막에서 두 번째**를 쓰는 이유:
 // 같은 중단원 문항이 소단원만 달라져 역·날씨가 쪼개지면 시험 한 장의 지도가 안 된다.
 
+/**
+ * topic 문자열 → 묶음 단위.
+ *
+ * AI 저장 포맷은 `과목 > 대단원 > 중단원`(예: `공통수학1 > 방정식과 부등식 > 복소수`)이라
+ * **마지막 조각(중단원)**으로 묶는다. 대단원으로 묶으면 한 시험이 2~3덩어리로 뭉쳐
+ * 예보는 전부 같은 날씨가 되고 노선도는 역이 두 개뿐인 그림이 된다.
+ * 조각이 하나뿐인 레거시 값은 그대로 쓴다.
+ */
 function topicMidUnit(topic: string | null | undefined): string {
   const parts = String(topic ?? '')
     .split('>')
     .map((s) => s.trim())
     .filter(Boolean);
-  if (parts.length >= 2) return parts[parts.length - 2];
   return parts[parts.length - 1] || '미분류';
 }
 
