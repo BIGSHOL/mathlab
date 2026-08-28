@@ -16,11 +16,12 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
-import type { BlockMeta, CommentaryTemplateConfig, BlockId } from '@/lib/exam-analysis/blocks/types';
+import type { BlockMeta } from '@/lib/exam-analysis/blocks/types';
 import { DEFAULT_TEMPLATE } from '@/lib/exam-analysis/blocks/default-template';
 import { COMMENTARY_THEMES, themeClassName } from '@/lib/exam-analysis/commentary-themes';
 import { COMMENTARY_LAYOUTS, VIZ_LABELS } from '@/lib/exam-analysis/commentary-layouts';
 import { COMMENTARY_COPIES, getCommentaryCopy } from '@/lib/exam-analysis/commentary-copy';
+import { COMMENTARY_PRESETS, presetToConfig } from '@/lib/exam-analysis/commentary-presets';
 import { V3CommentaryView } from '../v3/V3CommentaryView';
 import { COMMENTARY_BLOCKS } from '../v3/blocks/registry';
 
@@ -32,29 +33,6 @@ interface Props {
   currentId: string;
 }
 
-/** 기본 템플릿에서 골격·팔레트·블록 구성을 바꾼 사본 */
-function tweak(
-  base: CommentaryTemplateConfig,
-  themeId: string,
-  layoutId: string,
-  copyId: string,
-  changes: Partial<Record<BlockId, { variant?: string; enabled?: boolean }>>,
-  order?: BlockId[],
-): CommentaryTemplateConfig {
-  const blocks = base.blocks.map((b) => {
-    const c = changes[b.id];
-    return c ? { ...b, ...c } : b;
-  });
-  // order 가 주어지면 그 순서를 앞쪽에 강제 (나머지는 기존 순서 유지)
-  const sorted = order
-    ? [...blocks].sort((a, b) => {
-        const ia = order.indexOf(a.id);
-        const ib = order.indexOf(b.id);
-        return (ia < 0 ? 999 + blocks.indexOf(a) : ia) - (ib < 0 ? 999 + blocks.indexOf(b) : ib);
-      })
-    : blocks;
-  return { themeId, layoutId, copyId, blocks: sorted };
-}
 
 /**
  * 고정 폭(1080px) 문서를 축소해 카드 안에 담는다 — 브라우저 줌 없이 나란히 비교하기 위함.
@@ -81,108 +59,6 @@ function ScaledDoc({
   );
 }
 
-/**
- * 프리셋 — 골격(layout)까지 갈아끼워 "다른 문서"로 읽히게 구성.
- * 팔레트만 바꾸면 같은 문서로 보이므로, 각 프리셋은 layout · theme · 블록 순서/표시를 함께 바꾼다.
- */
-const PRESETS: {
-  name: string;
-  hint: string;
-  themeId: string;
-  layoutId: string;
-  copyId: string;
-  changes: Parameters<typeof tweak>[4];
-  order?: BlockId[];
-}[] = [
-  {
-    name: '매거진',
-    hint: '기존 골격 — 대형 명조 · 넓은 여백. 회귀 확인 기준',
-    themeId: 'nyt',
-    layoutId: 'magazine',
-    copyId: 'editorial',
-    changes: {},
-  },
-  {
-    name: '신문',
-    hint: '중앙 마스트헤드 + 본문 2단 조판 + 괘선. 밀도 최대',
-    themeId: 'mono',
-    layoutId: 'newspaper',
-    copyId: 'press',
-    changes: {
-      header: { variant: 'centered' },
-      kpi: { variant: 'spec' },
-      feature: { variant: 'banner' },
-      infographic: { variant: 'dots' },
-      qa: { variant: 'ledger' },
-      pullQuote: { variant: 'rule' },
-    },
-  },
-  {
-    name: '리포트 (데이터 우선)',
-    hint: '전면 산세리프 · 번호 배지 · 표를 앞으로, 서술을 뒤로',
-    themeId: 'brand',
-    layoutId: 'report',
-    copyId: 'official',
-    changes: {
-      header: { variant: 'editorial' },
-      kpi: { variant: 'spec' },
-      infographic: { variant: 'table' },
-      qa: { variant: 'plain' },
-      pullQuote: { enabled: false },
-      conclusion: { variant: 'ink' },
-    },
-    // 데이터 우선 — 표·인포그래픽을 Q&A 앞으로 끌어올린다
-    order: ['header', 'kpi', 'infographic', 'difficultyTable', 'mainAnalysis', 'feature', 'qa'],
-  },
-  {
-    name: '카드 (학부모 배포)',
-    hint: '블록마다 분리된 카드 · 회색 지면 · 표 최소, 서술 중심',
-    themeId: 'sepia',
-    layoutId: 'card',
-    copyId: 'parent',
-    changes: {
-      header: { variant: 'centered' },
-      kpi: { variant: 'light' },
-      feature: { variant: 'split' },
-      infographic: { variant: 'bars-only' },
-      qa: { variant: 'chip' },
-      difficultyTable: { enabled: false },
-      pullQuote: { variant: 'accent' },
-    },
-  },
-  {
-    name: '브루탈',
-    hint: '초굵은 디스플레이 · 각진 테두리 · 두꺼운 괘선. 시선 강탈형',
-    themeId: 'nyt',
-    layoutId: 'brutal',
-    copyId: 'press',
-    changes: {
-      header: { variant: 'editorial' },
-      kpi: { variant: 'hero' },
-      feature: { variant: 'split' },
-      infographic: { variant: 'full' },
-      qa: { variant: 'chip' },
-      pullQuote: { variant: 'rule' },
-      conclusion: { variant: 'ink' },
-    },
-  },
-  {
-    name: '여백',
-    hint: '여백 극대화 · 얇은 활자 · 괘선 최소. 차분한 읽기',
-    themeId: 'mono',
-    layoutId: 'quiet',
-    copyId: 'editorial',
-    changes: {
-      header: { variant: 'centered' },
-      kpi: { variant: 'light' },
-      feature: { variant: 'banner' },
-      infographic: { variant: 'table' },
-      qa: { variant: 'plain' },
-      difficultyTable: { enabled: false },
-      pullQuote: { variant: 'accent' },
-    },
-  },
-];
 
 export function TemplatePreviewClient({ commentary, questions, meta, options, currentId }: Props) {
   const router = useRouter();
@@ -230,7 +106,7 @@ export function TemplatePreviewClient({ commentary, questions, meta, options, cu
         <div className="ml-auto inline-flex border border-slate-200 rounded-sm overflow-hidden">
           {([
             ['layouts', `레이아웃 ${COMMENTARY_LAYOUTS.length}종`],
-            ['presets', `프리셋 ${PRESETS.length}종`],
+            ['presets', `프리셋 ${COMMENTARY_PRESETS.length}종`],
             ['themes', `테마 ${COMMENTARY_THEMES.length}종`],
             ['copy', `문체 ${COMMENTARY_COPIES.length}종`],
             ['variants', '블록별 variant'],
@@ -313,10 +189,10 @@ export function TemplatePreviewClient({ commentary, questions, meta, options, cu
       {/* ② 프리셋 조합 — 전체 문서 */}
       {tab === 'presets' && (
         <div className="flex flex-wrap gap-6">
-          {PRESETS.map((p) => (
-            <div key={p.name}>
+          {COMMENTARY_PRESETS.map((p) => (
+            <div key={p.id}>
               <div className="mb-1.5">
-                <span className="text-[13px] font-bold text-slate-900">{p.name}</span>
+                <span className="text-[13px] font-bold text-slate-900">{p.label}</span>
                 <span className="ml-2 text-[10px] text-slate-400 uppercase tracking-wider">
                   {p.layoutId} · {p.themeId} · {p.copyId}
                 </span>
@@ -327,7 +203,7 @@ export function TemplatePreviewClient({ commentary, questions, meta, options, cu
                   commentary={commentary}
                   questions={questions}
                   meta={meta}
-                  template={tweak(DEFAULT_TEMPLATE, p.themeId, p.layoutId, p.copyId, p.changes, p.order)}
+                  template={presetToConfig(p)}
                 />
               </ScaledDoc>
             </div>

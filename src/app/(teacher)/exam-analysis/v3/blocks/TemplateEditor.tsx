@@ -18,6 +18,7 @@ import { DEFAULT_TEMPLATE } from '@/lib/exam-analysis/blocks/default-template';
 import { COMMENTARY_THEMES } from '@/lib/exam-analysis/commentary-themes';
 import { COMMENTARY_LAYOUTS, LAYOUT_GROUPS, VIZ_LABELS } from '@/lib/exam-analysis/commentary-layouts';
 import { COMMENTARY_COPIES } from '@/lib/exam-analysis/commentary-copy';
+import { COMMENTARY_PRESETS, presetToConfig, AUDIENCE_LABELS } from '@/lib/exam-analysis/commentary-presets';
 import { getBlockDef } from './registry';
 import { normalizeTemplate } from './resolve';
 
@@ -60,8 +61,50 @@ export function TemplateEditor({ value, onChange, commentary, questions }: Props
     return b.enabled && def?.available(commentary, questions);
   }).length;
 
+  // 지금 구성이 어떤 프리셋과 정확히 같은지 — 사용자가 "여기서 뭘 건드렸나"를 알 수 있게.
+  // 6종뿐이라 매 렌더 비교해도 저렴하고, 저장된 id 를 믿지 않으므로 항상 실제 구성과 일치한다.
+  const activePresetId =
+    COMMENTARY_PRESETS.find((p) => JSON.stringify(presetToConfig(p)) === JSON.stringify(config))?.id ?? null;
+
   return (
     <div className="flex flex-col gap-5">
+      {/* ── 프리셋 — 레이아웃·테마·문체·블록 구성을 한 묶음으로 적용. 아래 축들의 상위 개념이라 맨 위. ── */}
+      <section>
+        <div className="flex items-baseline justify-between mb-2">
+          <h4 className="text-[13px] font-bold text-slate-900">
+            프리셋 <span className="text-slate-400 font-medium">({COMMENTARY_PRESETS.length}종)</span>
+          </h4>
+          <span className="text-[11px] text-slate-400">
+            {activePresetId ? '아래 축을 바꾸면 해제됩니다' : '직접 구성 중'}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-1.5">
+          {COMMENTARY_PRESETS.map((preset) => {
+            const active = activePresetId === preset.id;
+            return (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => onChange(presetToConfig(preset))}
+                title={preset.hint}
+                className={`px-2.5 py-2 rounded-sm border text-left transition-colors cursor-pointer ${
+                  active
+                    ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
+                    : 'border-slate-200 hover:border-slate-300 bg-white'
+                }`}
+              >
+                <span className="flex items-baseline gap-1.5">
+                  <span className={`text-[12px] font-bold ${active ? 'text-primary' : 'text-slate-800'}`}>
+                    {preset.label}
+                  </span>
+                  <span className="text-[9px] text-slate-400 shrink-0">{AUDIENCE_LABELS[preset.audience]}</span>
+                </span>
+                <span className="block text-[9px] text-slate-400 leading-snug mt-0.5 truncate">{preset.hint}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
       {/* ── 레이아웃(골격) — 결과물 인상을 가장 크게 바꾸는 축이라 맨 위.
              25종이라 평면 나열이 불가능 → 그룹으로 묶는다. ── */}
       <section>
