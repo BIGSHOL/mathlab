@@ -194,6 +194,29 @@ export const COMMENTARY_PRESETS: readonly CommentaryPreset[] = [
     order: ['header', 'letterBody'],
   },
   {
+    id: 'heatmap',
+    label: '시험지 히트맵',
+    hint: '집계 대신 시험지 배열 자체를 그린다. 어려운 구간이 어디 몰렸는지가 한눈에',
+    audience: 'teacher',
+    themeId: 'nyt',
+    layoutId: 'grid',
+    copyId: 'official',
+    changes: {
+      header: { variant: 'editorial' },
+      kpi: { variant: 'spec' },
+      heatmapGrid: { variant: 'grid', enabled: true },
+      // 히트맵이 이미 문항별 난이도·배점을 다 보여 준다. 표까지 두면 같은 걸 두 번 읽힌다.
+      difficultyTable: { enabled: false },
+      infographic: { enabled: false },
+      feature: { enabled: false },
+      qa: { enabled: false },
+      pullQuote: { enabled: false },
+      charts: { enabled: false },
+    },
+    // 히트맵이 히어로 — 헤드라인 다음에 바로 시험지가 온다
+    order: ['header', 'heatmapGrid', 'kpi'],
+  },
+  {
     id: 'quiet',
     label: '여백',
     hint: '여백 극대화 · 얇은 활자 · 괘선 최소. 차분한 읽기',

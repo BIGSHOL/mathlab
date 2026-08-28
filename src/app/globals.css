@@ -2032,6 +2032,56 @@ body {
   font-weight: 700; text-align: center;
 }
 
+/* ── V3 시험지 히트맵(heatmapGrid) ────────────────────────────────────────
+   집계 막대가 아니라 시험지 배열 자체를 그린다. 칸 수가 시험마다 다르므로
+   auto-fill 로 폭에 맞춰 접히게 두고(고정 열 수 금지), 칸은 정사각을 유지한다. */
+.v3-heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  gap: 6px;
+  margin: 18px 0 14px;
+}
+.v3-heatmap-cell {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  /* 난이도 램프는 밝은 색도 있어 흰 글자를 쓰면 저난도 칸이 안 보인다 → 잉크색 고정 */
+  color: #12100E;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+.v3-heatmap-no {
+  font-family: var(--v3-font-label);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+  word-break: keep-all;
+}
+.v3-heatmap-pt { font-family: var(--v3-font-label); font-size: 10px; opacity: 0.72; }
+/* 서술형은 색이 아니라 테두리로 구분한다 — 색은 이미 난이도가 쓰고 있다 */
+.v3-heatmap-essay { border: 2px dashed rgba(0, 0, 0, 0.55); }
+.v3-heatmap-killer { box-shadow: inset 0 0 0 2px var(--v3-accent); }
+.v3-heatmap-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  font-family: var(--v3-font-label);
+  font-size: 11px;
+  color: var(--v3-muted);
+  font-weight: 700;
+}
+.v3-heatmap-leg { display: inline-flex; align-items: center; gap: 5px; }
+.v3-heatmap-leg i {
+  width: 11px; height: 11px; border-radius: 2px; display: inline-block;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+.v3-heatmap-leg-essay { background: transparent; border: 2px dashed rgba(0, 0, 0, 0.55) !important; }
+
 /* 편지지 머리 — 헤드라인 없이 발신 정보만. 아래 편지 본문이 주인공이라 최대한 물러난다 */
 .v3-top.v3-top-letterhead { padding-bottom: 18px; }
 .v3-top-letterhead .v3-kicker { font-size: 13px; letter-spacing: 0.04em; color: var(--v3-ink); font-weight: 700; }

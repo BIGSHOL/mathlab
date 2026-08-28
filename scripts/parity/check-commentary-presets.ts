@@ -94,6 +94,42 @@ async function main() {
     '매거진 프리셋 = 기본 템플릿 (변경 없는 프리셋의 전개 결과가 원본과 동일)',
   );
 
+  console.log('');
+  console.log('[6] 차별성 (수락 기준) ────────────────────────────');
+  // "MAGAZINE 과 블록 순서가 같은 스킨은 실패" — 팔레트만 바꾼 프리셋이 늘어나는 것을 막는다.
+  // 켜진 블록의 **순서열**을 지문으로 삼는다. 색·활자는 여기 안 들어간다(그건 스킨이다).
+  const fingerprint = (preset: (typeof COMMENTARY_PRESETS)[number]) =>
+    presetToConfig(preset)
+      .blocks.filter((b) => b.enabled)
+      .map((b) => b.id)
+      .join('>');
+
+  // 기존 부채 — 이 3종은 수락 기준이 생기기 전에 만들어졌고 실제로 매거진의 스킨이다.
+  // 지우지 않고 여기 적어 둔다: 목록이 곧 "아직 문서로 갈리지 않은 프리셋"의 명세다.
+  // **새로 추가하는 프리셋은 절대 여기 넣지 마라.** 넣는 순간 이 검사는 무의미해진다.
+  const KNOWN_SKINS = new Set(['newspaper', 'brutal', 'quiet']);
+
+  const seenFp = new Map<string, string>();
+  for (const preset of COMMENTARY_PRESETS) {
+    const fp = fingerprint(preset);
+    const twin = seenFp.get(fp);
+    if (twin && KNOWN_SKINS.has(preset.id)) {
+      console.log(`  skip  ${preset.id.padEnd(12)} '${twin}' 의 스킨 — 기존 부채로 기록됨(새 프리셋은 불가)`);
+      continue;
+    }
+    ok(!twin, `${preset.id.padEnd(12)} ${twin ? `블록 순서가 '${twin}' 와 동일 — 스킨 변형이다` : '블록 순서가 고유하다'}`);
+    if (!twin) seenFp.set(fp, preset.id);
+  }
+  // 부채 목록이 낡는 것도 막는다 — 스킨을 고쳐 고유해졌으면 목록에서 빼야 한다
+  for (const id of KNOWN_SKINS) {
+    const preset = COMMENTARY_PRESETS.find((x) => x.id === id);
+    if (!preset) { ok(false, `KNOWN_SKINS 의 '${id}' 가 카탈로그에 없다 — 목록을 정리하라`); continue; }
+    const fp = fingerprint(preset);
+    const isDup = COMMENTARY_PRESETS.some((x) => x.id !== id && fingerprint(x) === fp);
+    ok(isDup, `KNOWN_SKINS '${id}' 는 여전히 스킨이다 (고유해졌으면 목록에서 뺄 것)`);
+  }
+  console.log(`       (고유한 문서 골격 ${seenFp.size}종 / 프리셋 ${COMMENTARY_PRESETS.length}종)`);
+
   console.log(`\n${fail === 0 ? '통과' : `실패 ${fail}건`} — 총 검사 완료\n`);
   process.exit(fail === 0 ? 0 : 1);
 }

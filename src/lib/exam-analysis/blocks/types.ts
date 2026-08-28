@@ -72,6 +72,7 @@ export const BLOCK_IDS = [
   'mainAnalysis',
   'keyQuestions',
   'letterBody',
+  'heatmapGrid',
   'pullQuote',
   'charts',
   'finalStrategy',

@@ -23,7 +23,7 @@ import type {
   BlockMeta,
 } from '@/lib/exam-analysis/blocks/types';
 
-import { markdownToHighlighted, normDiff, koDifficultyText } from '../helpers';
+import { markdownToHighlighted, normDiff, koDifficultyText, V3_DIFF_COLORS, V3_DIFF_LABELS } from '../helpers';
 import { FeatureCallout } from '../FeatureCallout';
 import { QASection } from '../QASection';
 import type { DataBoxStyle } from '../DataBox';
@@ -888,6 +888,96 @@ function renderLetter(props: BlockRenderProps, extraClass: string) {
   );
 }
 
+// ── 시험지 히트맵 ────────────────────────────────────────────────────────
+// 다른 블록이 "난이도별 몇 문항"으로 **집계**를 보여 준다면, 이건 시험지 자체를 그린다.
+// 1번부터 끝까지 칸 하나가 문항 하나 — 어려운 구간이 앞에 몰렸는지 뒤에 몰렸는지,
+// 서술형이 어디 붙었는지가 집계로는 안 보이고 배열로만 보인다.
+//
+// 격자 크기는 고정하지 않는다. 문항 수는 시험마다 다르고(20·21·22…),
+// 번호도 정수가 아니라 "서답형3" 같은 문자열이 섞인다.
+
+function summaryHeatmap(props: BlockRenderProps) {
+  const qs = props.questions;
+  if (!qs.length) return '';
+  const hard = qs.filter((q) => Number(normDiff(String(q.difficulty))) >= 4).length;
+  return `문항 배치 히트맵 — 총 ${qs.length}문항 중 심화 이상 ${hard}문항`;
+}
+
+const heatmapGridBlock: CommentaryBlockDef = {
+  id: 'heatmapGrid',
+  label: '시험지 히트맵',
+  description: '문항을 번호 순 격자로 — 칸 색은 난이도, 테두리는 서술형',
+  defaultEnabled: false,
+  available: (_c, questions) => questions.length > 0,
+  summary: summaryHeatmap,
+  numberCount: () => 1,
+  variants: [
+    {
+      id: 'grid',
+      label: '격자',
+      hint: '칸마다 번호와 배점 — 기본',
+      render: (props) => renderHeatmap(props, true),
+    },
+    {
+      id: 'compact',
+      label: '압축',
+      hint: '번호만 — 문항이 많을 때',
+      render: (props) => renderHeatmap(props, false),
+    },
+  ],
+};
+
+function renderHeatmap(props: BlockRenderProps, showPoints: boolean) {
+  const { questions: qs, sectionNum, copy } = props;
+  if (!qs.length) return null;
+
+  // 서술형 판별 — question_format 이 없던 시절 데이터도 있어 번호 문자열까지 본다
+  const isEssay = (q: (typeof qs)[number]) =>
+    q.question_format === 'essay' || /서답|서술/.test(String(q.question_number ?? ''));
+
+  const levels = [1, 2, 3, 4, 5];
+  const counts = levels.map((lv) => qs.filter((q) => Number(normDiff(String(q.difficulty))) === lv).length);
+
+  return (
+    <section className="v3-section v3-heatmap" {...blockAttrs('heatmapGrid', summaryHeatmap(props))}>
+      <span className="v3-section-num">{sectionNum}</span>
+      <div className="v3-section-sub">{copy.difficultyTableSub}</div>
+      <h3>문항 배치 한눈에 보기</h3>
+
+      <div className="v3-heatmap-grid">
+        {qs.map((q, i) => {
+          const lv = Number(normDiff(String(q.difficulty))) || 1;
+          const essay = isEssay(q);
+          return (
+            <div
+              key={`hm-${q.question_number ?? i}`}
+              className={`v3-heatmap-cell${essay ? ' v3-heatmap-essay' : ''}${lv >= 4 ? ' v3-heatmap-killer' : ''}`}
+              style={{ background: V3_DIFF_COLORS[lv - 1] }}
+              title={`${q.question_number}번 · ${V3_DIFF_LABELS[lv - 1]} · ${q.points ?? 0}점`}
+            >
+              <span className="v3-heatmap-no">{q.question_number}</span>
+              {showPoints && <span className="v3-heatmap-pt">{q.points ?? 0}</span>}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="v3-heatmap-legend">
+        {levels.map((lv) => (
+          <span key={lv} className="v3-heatmap-leg">
+            <i style={{ background: V3_DIFF_COLORS[lv - 1] }} />
+            {V3_DIFF_LABELS[lv - 1]} {counts[lv - 1]}
+          </span>
+        ))}
+        <span className="v3-heatmap-leg">
+          <i className="v3-heatmap-leg-essay" />
+          서술형 {qs.filter(isEssay).length}
+        </span>
+      </div>
+    </section>
+  );
+}
+
 const footerBlock: CommentaryBlockDef = {
   id: 'footer',
   label: '푸터',
@@ -920,6 +1010,7 @@ export const COMMENTARY_BLOCKS: CommentaryBlockDef[] = [
   mainAnalysisBlock,
   keyQuestionsBlock,
   letterBodyBlock,
+  heatmapGridBlock,
   pullQuoteBlock,
   chartsBlock,
   finalStrategyBlock,
