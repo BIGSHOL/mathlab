@@ -107,12 +107,30 @@ export const fullCommentary = {
   v4_final_strategy: [{ heading: '전략', body: '본문' }],
 } as unknown as CommentaryResult;
 
+/**
+ * 영어 시험지 — 능력·유형 축이 수학과 다른 집합이다.
+ * 수학 4능력(계산력·이해력·문제해결력·추론력)을 블록에 하드코딩하면 이 픽스처에서
+ * 축이 전부 0으로 떨어져 스카우트 카드·대화 블록이 통째로 사라진다.
+ */
+export const englishQuestions: AnalyzedQuestion[] = Array.from({ length: 18 }, (_, i) =>
+  q({
+    question_number: String(i + 1),
+    difficulty: String((i % 5) + 1),
+    points: 5,
+    question_type: ['reading', 'grammar', 'vocabulary', 'writing'][i % 4],
+    ability_domain: ['accuracy', 'understanding', 'reasoning', 'expression'][i % 4],
+    question_format: i < 14 ? 'objective' : 'essay',
+    topic: '영어 > 독해 > 주제·요지 추론',
+  }),
+);
+
 export const QUESTION_FIXTURES: Array<[string, AnalyzedQuestion[]]> = [
   ['정상 20문항', normalQuestions],
   ['1문항', singleQuestion],
   ['열화(난이도/배점/단원 결손)', degenerateQuestions],
   ['전 문항 동일', uniformQuestions],
   ['40문항', manyQuestions],
+  ['영어 18문항', englishQuestions],
   ['0문항', []],
 ];
 

@@ -160,6 +160,23 @@ async function main() {
   );
   ok(rendered.length === known.length, `렌더 블록 수 ${rendered.length} = 기본 템플릿 ${known.length}`);
 
+  // locked 블록의 자리 — 헤더는 처음, 푸터는 마지막. 편집기가 끌지는 못해도
+  // **다른 블록을 헤더 위로 올리는 것**은 막히지 않아 제호가 두 번째로 밀렸다.
+  const shuffled = normalizeTemplate({
+    ...DEFAULT_TEMPLATE,
+    blocks: [
+      DEFAULT_TEMPLATE.blocks[DEFAULT_TEMPLATE.blocks.length - 1], // footer 를 맨 앞으로
+      DEFAULT_TEMPLATE.blocks[1],                                  // kpi 를 header 앞으로
+      ...DEFAULT_TEMPLATE.blocks.slice(0, 1),
+      ...DEFAULT_TEMPLATE.blocks.slice(2, -1),
+    ],
+  });
+  ok(shuffled.blocks[0].id === 'header', `순서를 흩뜨려도 헤더가 처음이다 (실제: ${shuffled.blocks[0].id})`);
+  ok(
+    shuffled.blocks[shuffled.blocks.length - 1].id === 'footer',
+    `순서를 흩뜨려도 푸터가 마지막이다 (실제: ${shuffled.blocks[shuffled.blocks.length - 1].id})`,
+  );
+
   console.log('\n[5] 게이트 ↔ 렌더 일치 ────────────────────────────');
   // 게이트가 렌더보다 좁게 보면 "통과했는데 화면에 없는" 블록이 생기고, 그 블록이 소비한
   // 섹션 번호만큼 번호가 건너뛴다. 실제로 차트 블록이 `available: () => true` 라 08 이 결번이었다.

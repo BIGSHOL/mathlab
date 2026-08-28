@@ -1171,6 +1171,7 @@ export function EnglishAnalysisDetail({ detail, analyzing, onAnalyze, onRefresh,
               reanalyzing={analyzing}
               examMeta={{
                 title: detail.title,
+                subject: 'ENGLISH',
                 grade: detail.grade,
                 schoolName: detail.schoolName ?? null,
                 analyzedAt: latestAnalysis?.analyzedAt ?? null,

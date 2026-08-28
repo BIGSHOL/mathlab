@@ -1224,6 +1224,7 @@ export function MathAnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, au
               reanalyzing={analyzing}
               examMeta={{
                 title: detail.title,
+                subject: 'MATH',
                 grade: detail.grade,
                 schoolName: detail.schoolName ?? null,
                 analyzedAt: latestAnalysis?.analyzedAt ?? null,

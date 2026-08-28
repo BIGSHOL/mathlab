@@ -30,6 +30,11 @@ export interface BlockRenderProps {
 
 export interface BlockMeta {
   examTitle: string;
+  /**
+   * 과목 키('MATH' | 'ENGLISH' …). 능력·유형 축이 과목마다 다르므로 지면이 알아야 한다.
+   * 없으면 수학으로 취급 — 영어 시험지에서 축이 전부 0으로 떨어져 블록이 통째로 사라진다.
+   */
+  subject?: string | null;
   schoolName: string | null;
   grade: string;
   analyzedAt: string | null;

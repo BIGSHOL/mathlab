@@ -74,7 +74,8 @@ async function main() {
 
   for (const [qLabel, questions] of QUESTION_FIXTURES) {
     for (const [cLabel, commentary] of COMMENTARY_FIXTURES) {
-      const meta = { ...META, totalQuestions: questions.length };
+      const isEnglish = qLabel.startsWith('영어');
+      const meta = { ...META, subject: isEnglish ? 'ENGLISH' : 'MATH', totalQuestions: questions.length };
       // 차트는 주입/미주입 두 경우를 모두 돈다 — 미주입만 돌면 차트 블록의 variant 들이
       // 게이트에서 걸려 **한 번도 렌더되지 않는다**(그게 이 하네스의 사각지대가 된다).
       for (const charts of CHART_FIXTURES) {
@@ -130,6 +131,24 @@ async function main() {
       }
       }
     }
+  }
+
+  // 과목 중립성 — 수학 문항으로 통과하는 블록은 같은 크기의 영어 문항으로도 통과해야 한다.
+  // 능력·유형 축을 블록 안에 하드코딩하면 영어 시험지에서 축이 전부 0으로 떨어져
+  // 게이트가 막고 **블록이 통째로 사라진다**(에러도 빈 화면도 아니라 그냥 없다).
+  {
+    const mathQs = QUESTION_FIXTURES.find(([l]) => l.startsWith('정상'))![1];
+    const engQs = QUESTION_FIXTURES.find(([l]) => l.startsWith('영어'))![1];
+    const commentary = COMMENTARY_FIXTURES[1][1];
+    const mk = (qs: typeof mathQs, subject: string) => ({
+      commentary, questions: qs, charts: undefined,
+      meta: { ...META, subject, totalQuestions: qs.length },
+    });
+    const onlyMath = COMMENTARY_BLOCKS.filter(
+      (d) => d.available(mk(mathQs, 'MATH')) && !d.available(mk(engQs, 'ENGLISH')),
+    ).map((d) => d.id);
+    if (onlyMath.length) bad('과목 중립성', `수학에서만 통과하는 블록: ${onlyMath.join(', ')}`);
+    else console.log('  ✅ 과목 중립성 — 수학에서 통과하는 블록이 영어에서도 통과한다');
   }
 
   console.log(`  렌더 ${rendered}회 · 게이트 차단 ${gated}회`);

@@ -182,6 +182,10 @@ export async function POST(request: NextRequest, { params }: Params) {
   // 보존 필드: difficulty/points/topic/question_type/ability_domain (각 ai_<field> 존재 = 교정됨)
   const PRESERVE_FIELDS = ['difficulty', 'points', 'topic', 'question_type', 'ability_domain'] as const;
   const priorEdits: Record<string, Record<string, unknown>> = {};
+  // 총평 템플릿(테마·골격·문체·블록 구성)은 ExamAnalysisExtension(agentType='template')에 산다.
+  // 분석본을 지우면 확장도 함께 사라지므로, 교정값과 같은 방식으로 보존했다가 재적용한다.
+  // 안 그러면 재분석에 **성공**할 때마다 사용자가 고른 템플릿이 말없이 기본값으로 돌아간다.
+  let priorTemplate: unknown = null;
   let snapshot: AnalysisSnapshot | null = null;
   if (examPaper.status === 'COMPLETED' || examPaper.status === 'FAILED') {
     const prevRows = await prisma.examAnalysis.findMany({
@@ -201,6 +205,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         if (Object.keys(edits).length > 0) priorEdits[String(q.question_number)] = edits;
       }
     }
+    priorTemplate = prev?.extensions.find((e) => e.agentType === 'template')?.result ?? null;
     // 실패 시 되돌릴 원본 확보 (위 AnalysisSnapshot 주석 참고)
     if (prevRows.length > 0) {
       snapshot = {
@@ -394,6 +399,24 @@ export async function POST(request: NextRequest, { params }: Params) {
     });
 
     newAnalysisCreated = true;
+
+    // 보존해 둔 총평 템플릿을 새 분석본에 다시 붙인다 (실패해도 분석 자체는 성공으로 둔다)
+    if (priorTemplate) {
+      try {
+        await prisma.examAnalysisExtension.create({
+          data: {
+            analysisId: analysis.id,
+            agentType: 'template',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            result: priorTemplate as any,
+            lastRunBy: user.id,
+            lastRunAt: new Date(),
+          },
+        });
+      } catch (e) {
+        console.error('[analyze] 총평 템플릿 복원 실패:', e);
+      }
+    }
 
     // 저신뢰/고난도 문항 레퍼런스 자동 수집
     try {

@@ -76,6 +76,32 @@ async function main() {
     }
   }
 
+  // 결론은 마지막에 온다 — 이건 지면의 의미이지 취향이 아니다.
+  // `order` 는 앞머리만 적고 나머지를 기본 순서로 흘려보내는 접두사 표기라, order 에 conclusion 을
+  // 적어 두고 켜진 블록을 빠뜨리면 그 블록이 `999 + index` 꼬리로 밀려 **결론 뒤에** 뜬다.
+  // (실제 사례: frontpage 가 previousComparison 을 빠뜨려 '작년 대비'가 결론 다음에 나왔다.)
+  // 예외는 의도적으로 결론을 앞에 두는 프리셋뿐 — 이유와 함께 여기 적는다.
+  const CONCLUSION_FIRST = new Map([
+    ['chalkboard', '판서는 "오늘 이것만 기억해라"를 맨 위에 적는다 — 결론이 헤더 다음'],
+  ]);
+  for (const p of COMMENTARY_PRESETS) {
+    const ids = presetToConfig(p)
+      .blocks.filter((b) => b.enabled && b.id !== 'footer')
+      .map((b) => b.id);
+    const ci = ids.indexOf('conclusion');
+    if (ci < 0) continue;
+    const after = ids.slice(ci + 1);
+    const why = CONCLUSION_FIRST.get(p.id);
+    if (why) {
+      console.log(`  skip  ${p.id.padEnd(12)} 결론을 앞에 두는 프리셋 — ${why}`);
+      continue;
+    }
+    ok(
+      after.length === 0,
+      `${p.id.padEnd(12)} 결론이 마지막이다${after.length ? ' — 뒤에 밀린 블록: ' + after.join(',') : ''}`,
+    );
+  }
+
   console.log('\n[4] 상수 오염 방지 ────────────────────────────────');
   // 편집기가 프리셋을 적용한 뒤 variant 를 바꿔도 원본 상수가 변하면 안 된다
   const a = presetToConfig(COMMENTARY_PRESETS[0]);

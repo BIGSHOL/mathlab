@@ -355,7 +355,7 @@ export const COMMENTARY_PRESETS: readonly CommentaryPreset[] = [
       qa: { enabled: false },
       keyQuestions: { enabled: false },
     },
-    order: ['header', 'pullQuote', 'mainAnalysis', 'kpi', 'difficultyTable', 'finalStrategy', 'conclusion'],
+    order: ['header', 'pullQuote', 'mainAnalysis', 'kpi', 'previousComparison', 'difficultyTable', 'finalStrategy', 'conclusion'],
   },
   {
     id: 'labnote',

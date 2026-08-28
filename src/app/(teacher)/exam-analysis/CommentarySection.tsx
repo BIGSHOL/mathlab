@@ -53,6 +53,8 @@ interface CommentarySectionProps {
     grade: string;
     schoolName: string | null;
     analyzedAt: string | null;
+    /** 'MATH' | 'ENGLISH' — 능력·유형 축이 과목마다 다르다 */
+    subject?: string | null;
   };
   /** V3 차트 PNG (선택). 분석 화면에서 차트가 이미 별도 렌더 중이면 미전달. */
   v3Charts?: V3ChartImages;
@@ -365,6 +367,7 @@ export function CommentarySection({
   if (useV3 && isExpanded) {
     const meta: V3Meta = {
       examTitle: examMeta?.title || '',
+      subject: examMeta?.subject ?? null,
       grade: examMeta?.grade || '',
       schoolName: examMeta?.schoolName ?? null,
       analyzedAt: examMeta?.analyzedAt ?? null,

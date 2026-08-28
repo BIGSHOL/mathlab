@@ -7,9 +7,9 @@
 
 import type { CommentaryTemplateConfig, TemplateBlockConfig } from './types';
 import { isBlockId } from './types';
-import { DEFAULT_THEME_ID } from '../commentary-themes';
-import { DEFAULT_LAYOUT_ID } from '../commentary-layouts';
-import { DEFAULT_COPY_ID } from '../commentary-copy';
+import { DEFAULT_THEME_ID, COMMENTARY_THEMES } from '../commentary-themes';
+import { DEFAULT_LAYOUT_ID, COMMENTARY_LAYOUTS } from '../commentary-layouts';
+import { DEFAULT_COPY_ID, COMMENTARY_COPIES } from '../commentary-copy';
 
 export const DEFAULT_TEMPLATE: CommentaryTemplateConfig = {
   themeId: DEFAULT_THEME_ID,
@@ -33,7 +33,18 @@ export const DEFAULT_TEMPLATE: CommentaryTemplateConfig = {
   ],
 };
 
-/** 저장된 설정(Json)을 안전하게 파싱 — 형식이 깨졌으면 기본 템플릿 */
+/** 카탈로그에 실재하는 id 만 통과 — 없는 id 는 조용한 폴백이 아니라 명시 기본값으로 */
+function pickId(raw: unknown, known: readonly { id: string }[], fallback: string): string {
+  return typeof raw === 'string' && known.some((x) => x.id === raw) ? raw : fallback;
+}
+
+/**
+ * 저장된 설정(Json)을 안전하게 파싱 — 형식이 깨졌으면 기본 템플릿.
+ *
+ * ⚠️ 블록 id 만 화이트리스트하면 부족하다. themeId·layoutId·copyId 도 카탈로그와 대조해야
+ * 한다 — `typeof === 'string'` 만 보면 PUT 이 임의 문자열을 **영구 저장**하고, 렌더 시점에
+ * `themeClassName()` 이 빈 문자열로 폴백해 "저장은 됐는데 아무 일도 안 일어나는" 상태가 된다.
+ */
 export function parseTemplateConfig(raw: unknown): CommentaryTemplateConfig {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return DEFAULT_TEMPLATE;
   const obj = raw as { themeId?: unknown; layoutId?: unknown; copyId?: unknown; blocks?: unknown };
@@ -53,12 +64,13 @@ export function parseTemplateConfig(raw: unknown): CommentaryTemplateConfig {
         ];
       })
     : [];
-  if (!blocks.length) return DEFAULT_TEMPLATE;
   return {
-    themeId: typeof obj.themeId === 'string' ? obj.themeId : DEFAULT_THEME_ID,
+    themeId: pickId(obj.themeId, COMMENTARY_THEMES, DEFAULT_THEME_ID),
     // layoutId 는 나중에 추가된 축 — 이전에 저장된 설정에는 없으므로 기본 골격으로 폴백
-    layoutId: typeof obj.layoutId === 'string' ? obj.layoutId : DEFAULT_LAYOUT_ID,
-    copyId: typeof obj.copyId === 'string' ? obj.copyId : DEFAULT_COPY_ID,
-    blocks,
+    layoutId: pickId(obj.layoutId, COMMENTARY_LAYOUTS, DEFAULT_LAYOUT_ID),
+    copyId: pickId(obj.copyId, COMMENTARY_COPIES, DEFAULT_COPY_ID),
+    // 블록이 통째로 깨졌으면 블록만 기본값으로 되돌린다.
+    // 예전엔 여기서 DEFAULT_TEMPLATE 을 통째로 반환해 **사용자가 고른 테마·골격·문체까지 함께 버렸다**.
+    blocks: blocks.length ? blocks : DEFAULT_TEMPLATE.blocks,
   };
 }

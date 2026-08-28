@@ -47,7 +47,13 @@ export function normalizeTemplate(config: CommentaryTemplateConfig | null | unde
     blocks.push({ id: def.id, variant, enabled: def.locked === true || def.defaultEnabled });
   }
 
-  // 푸터는 항상 마지막 (사용자가 순서를 흩뜨려도 크레딧이 중간에 끼지 않게)
+  // 헤더는 항상 처음, 푸터는 항상 마지막 (사용자가 순서를 흩뜨려도 제호가 중간에 끼지 않게).
+  // 둘 다 locked 이라 편집기가 끌지 못하지만, **다른 블록을 헤더 위로 올리는 것**은 막히지 않아
+  // ▲ 한 번으로 제호가 두 번째 자리로 밀렸다. locked 의 의미를 여기서 최종적으로 강제한다.
+  const headerIdx = blocks.findIndex((b) => b.id === 'header');
+  if (headerIdx > 0) {
+    blocks.unshift(blocks.splice(headerIdx, 1)[0]);
+  }
   const footerIdx = blocks.findIndex((b) => b.id === 'footer');
   if (footerIdx >= 0 && footerIdx !== blocks.length - 1) {
     blocks.push(blocks.splice(footerIdx, 1)[0]);

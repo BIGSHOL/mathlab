@@ -28,6 +28,7 @@ import type {
 
 import { markdownToHighlighted, koDifficultyText, V3_DIFF_COLORS, V3_DIFF_LABELS } from '../helpers';
 import { questionLevel, countByLevel } from '@/lib/exam-analysis/shared/difficulty';
+import { getAbilityAxes, countAbilities } from '@/lib/exam-analysis/shared/chart-axes';
 import { FeatureCallout } from '../FeatureCallout';
 import { QASection } from '../QASection';
 import type { DataBoxStyle } from '../DataBox';
@@ -1623,7 +1624,7 @@ interface ChatBubble {
   text: string;
 }
 
-function buildChatBubbles(c: CommentaryResult, questions: AnalyzedQuestion[] = []): ChatBubble[] {
+function buildChatBubbles(c: CommentaryResult, questions: AnalyzedQuestion[] = [], subject?: string | null): ChatBubble[] {
   const out: ChatBubble[] = [];
   const seen = new Set<string>();
   const push = (who: ChatWho, text: string) => {
@@ -1685,13 +1686,18 @@ function buildChatBubbles(c: CommentaryResult, questions: AnalyzedQuestion[] = [
     }
   }
   if (!c.blog_qa?.length && questions.length) {
+    // 능력 축은 과목마다 다르다 — 수학의 '계산력' 을 박아 두면 영어 시험지에서 이 대화가 통째로 빠졌다.
+    // 축 정의는 화면 레이더·서버 차트와 같은 것을 쓰고, **가장 많은 축**을 골라 말한다.
     const n = questions.length;
-    const calc = questions.filter((q) => normAbilityKey(q.ability_domain) === 'calculation').length;
-    if (calc > 0 && calc / n >= 0.5) {
+    const axes = getAbilityAxes(subject);
+    const counts = countAbilities(subject, questions, axes);
+    const top = axes.map((a) => ({ a, n: counts[a.key] ?? 0 })).sort((x, y) => y.n - x.n)[0];
+    if (top && top.n > 0 && top.n / n >= 0.5) {
+      const rest = axes.filter((a) => a.key !== top.a.key).map((a) => a.label).join('·');
       push('parent', '능력 영역은 어떻게 나뉘나요?');
       push(
         'teacher',
-        `계산력 ${calc}문항(${Math.round((calc / n) * 100)}%)입니다. 나머지 ${n - calc}문항이 이해·문제해결·추론입니다.`,
+        `${top.a.label} ${top.n}문항(${Math.round((top.n / n) * 100)}%)입니다. 나머지 ${n - top.n}문항이 ${rest}입니다.`,
       );
     }
   }
@@ -1699,7 +1705,7 @@ function buildChatBubbles(c: CommentaryResult, questions: AnalyzedQuestion[] = [
 }
 
 function summaryChat(props: BlockRenderProps) {
-  const n = buildChatBubbles(props.commentary, props.questions).length;
+  const n = buildChatBubbles(props.commentary, props.questions, props.meta.subject).length;
   return n ? `선생님과의 대화 ${n}개` : '';
 }
 
@@ -1708,7 +1714,7 @@ const bubbleThreadBlock: CommentaryBlockDef = {
   label: '대화 말풍선',
   description: '선생님↔학부모 스레드. 한 버블이 한 인사이트',
   defaultEnabled: false,
-  available: ({ commentary: c, questions }) => buildChatBubbles(c, questions).length > 0,
+  available: ({ commentary: c, questions, meta }) => buildChatBubbles(c, questions, meta.subject).length > 0,
   summary: summaryChat,
   variants: [
     {
@@ -1727,7 +1733,7 @@ const bubbleThreadBlock: CommentaryBlockDef = {
 };
 
 function renderChat(props: BlockRenderProps, leftAlign: boolean) {
-  const bubbles = buildChatBubbles(props.commentary, props.questions);
+  const bubbles = buildChatBubbles(props.commentary, props.questions, props.meta.subject);
   if (!bubbles.length) return null;
 
   return (
@@ -1764,16 +1770,6 @@ function renderChat(props: BlockRenderProps, leftAlign: boolean) {
 // 시간 축을 두지 않는 이유: 문항 소요시간 필드가 없다. 없으면 가짜 축이 된다.
 // 영문 enum 은 라벨 표에만 한글을 두고 raw 값은 정규화 키로만 쓴다.
 
-const ABILITY_AXES = [
-  { key: 'calculation', label: '계산력' },
-  { key: 'understanding', label: '이해력' },
-  { key: 'problem_solving', label: '문제해결력' },
-  { key: 'reasoning', label: '추론력' },
-] as const;
-
-function normAbilityKey(v: unknown): string {
-  return String(v ?? '').toLowerCase().replace(/-/g, '_');
-}
 
 interface ScoutStat {
   key: string;
@@ -1783,24 +1779,24 @@ interface ScoutStat {
   hint?: string;
 }
 
-function collectAbilityStats(questions: AnalyzedQuestion[]): ScoutStat[] {
+/**
+ * 능력 축 통계 — **과목별 축**을 쓴다.
+ *
+ * 예전엔 수학 4능력(계산력·이해력·문제해결력·추론력)을 이 파일에 하드코딩했다. 영어 시험지는
+ * ability_domain 이 다른 집합(정확성·이해력·추론력·표현력)이라 네 축이 전부 0으로 떨어졌고,
+ * `available` 이 `collectScoutStats(...).length > 0` 이라 **스카우트 카드가 통째로 사라졌다**.
+ * 화면 레이더·서버 차트가 이미 쓰는 공용 축 정의를 그대로 쓴다 (CLAUDE.md §12-4).
+ */
+function collectAbilityStats(questions: AnalyzedQuestion[], subject?: string | null): ScoutStat[] {
   const total = questions.length;
   if (total === 0) return [];
 
-  const abilityCounts: Record<string, number> = {
-    calculation: 0,
-    understanding: 0,
-    problem_solving: 0,
-    reasoning: 0,
-  };
-  for (const q of questions) {
-    const k = normAbilityKey(q.ability_domain);
-    if (k in abilityCounts) abilityCounts[k] += 1;
-  }
+  const axes = getAbilityAxes(subject);
+  const counts = countAbilities(subject, questions, axes);
 
   const stats: ScoutStat[] = [];
-  for (const ax of ABILITY_AXES) {
-    const n = abilityCounts[ax.key];
+  for (const ax of axes) {
+    const n = counts[ax.key] ?? 0;
     // 실제 문항이 있는 축만 — 0% 축을 그리면 "없는 능력"이 "약한 능력"으로 읽힌다.
     if (n > 0) stats.push({ key: ax.key, label: ax.label, value: Math.round((n / total) * 100), unit: '%' });
   }
@@ -1846,8 +1842,8 @@ function collectScoutExtras(questions: AnalyzedQuestion[]): ScoutStat[] {
   return extras;
 }
 
-function collectScoutStats(questions: AnalyzedQuestion[]): ScoutStat[] {
-  return [...collectAbilityStats(questions), ...collectScoutExtras(questions)];
+function collectScoutStats(questions: AnalyzedQuestion[], subject?: string | null): ScoutStat[] {
+  return [...collectAbilityStats(questions, subject), ...collectScoutExtras(questions)];
 }
 
 /**
@@ -1889,7 +1885,7 @@ function scoutNotes(c: CommentaryResult): { label: string; text: string }[] {
 }
 
 function summaryScout(props: BlockRenderProps) {
-  const bits = collectScoutStats(props.questions).map((s) => {
+  const bits = collectScoutStats(props.questions, props.meta.subject).map((s) => {
     const unit = s.unit ?? '%';
     return `${s.label} ${s.value}${unit}${s.hint ? ` ${s.hint}` : ''}`;
   });
@@ -1990,7 +1986,7 @@ const statRadarBlock: CommentaryBlockDef = {
   description: '능력 레이더 · 스탯 · 스카우트 노트 3줄',
   // 스카우트 프리셋 전용 — 기존 문서 하단에 선수 카드가 붙으면 총평이 두 벌이 된다
   defaultEnabled: false,
-  available: ({ questions }) => collectScoutStats(questions).length > 0,
+  available: ({ questions, meta }) => collectScoutStats(questions, meta.subject).length > 0,
   summary: summaryScout,
   variants: [
     {
@@ -2009,7 +2005,7 @@ const statRadarBlock: CommentaryBlockDef = {
 };
 
 function renderScout(props: BlockRenderProps, stack: boolean) {
-  const axes = collectAbilityStats(props.questions);
+  const axes = collectAbilityStats(props.questions, props.meta.subject);
   const extras = collectScoutExtras(props.questions);
   if (!axes.length && !extras.length) return null;
   const notes = scoutNotes(props.commentary);
