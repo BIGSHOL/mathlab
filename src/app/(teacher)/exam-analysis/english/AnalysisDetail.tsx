@@ -28,6 +28,9 @@ import { CommentarySection } from '../CommentarySection';
 import { AnalyzingProgress } from '../AnalyzingProgress';
 import { buildNaverV3Html } from '@/lib/exam-analysis/naver-v3-renderer';
 import { buildNaverV4Html } from '@/lib/exam-analysis/naver-v4-renderer';
+import { sumPoints } from '@/lib/exam-analysis/points';
+import { buildNaverCaptureSig, NAVER_CAPTURE_VERSION } from '@/lib/exam-analysis/naver-capture-sig';
+import { COMMENTARY_BLOCKS } from '../v3/blocks/registry';
 
 const ArticleEditorModal = dynamic(
   () => import('@/components/exam-analysis/ArticleEditorModal').then((m) => ({ default: m.ArticleEditorModal })),
@@ -42,20 +45,9 @@ const V4_NAVER_COPY_ENABLED = false;
 // V3 총평 + [네이버 복사]로 일원화. ArticleEditorModal/article-generator 코드는 보존(MD 문서 백업).
 const V2_ARTICLE_ENABLED = false;
 
-// 네이버 섹션 캡처 캐시 무효화 버전 — 캡처 로직/스타일을 바꾸거나 서버 이미지를 초기화하면 bump.
-// v2: 캡처 이미지 일괄 초기화 + 3일 TTL 도입(2026-05-30) → 기존 v1 클라 캐시 무시.
-// v3: 옆트임 강제 paste는 네이버가 무조건 fit으로 재빌드 → 불가능 확정. 옆트임 실험 제거,
-//     표준(문서너비 720px) 단일 경로로 정리(2026-05-30). 옆트임은 사용자가 네이버에서 수동 적용.
-const NAVER_CAPTURE_VERSION = 'v3';
+// 캡처 캐시 버전·시그니처 조립은 naver-capture-sig.ts (v4). 여기 TTL 만 둔다.
 // 클라 캐시 유효기간 — 서버 cleanup(3일)과 동일. 만료 시 재캡처(서버가 이미 지웠을 수 있어 죽은 URL 재사용 방지).
 const NAVER_CACHE_TTL_MS = 3 * 24 * 60 * 60 * 1000;
-
-/** 짧은 문자열 해시(djb2) — 캐시 시그니처용. 충돌 위험은 무시 가능 수준. */
-function hashStr(s: string): string {
-  let h = 5381;
-  for (let i = 0; i < s.length; i++) h = (((h << 5) + h) + s.charCodeAt(i)) | 0;
-  return (h >>> 0).toString(36);
-}
 
 /** el 내부 모든 <img>가 로드될 때까지 대기 (최대 timeoutMs). 자동 펼침 직후 차트 PNG 누락 캡처 방지. */
 function waitForImages(el: HTMLElement, timeoutMs: number): Promise<void> {
@@ -529,10 +521,8 @@ export function EnglishAnalysisDetail({ detail, analyzing, onAnalyze, onRefresh,
     };
     const DISPLAY_W = 720; // 네이버 문서너비 표시 폭 (옆트임은 paste로 강제 불가 — 사용자가 네이버에서 수동 적용)
 
-    // 내용 시그니처 — 총평/문항이 그대로면 재캡처·재업로드 없이 저장된 캡처 URL을 재사용(중복 낭비 방지).
-    //   총평 재생성이나 문항(난이도·배점·유형 등) 수정 시 sig가 바뀌어 자동으로 다시 캡처한다.
-    const qSig = (questions as { difficulty?: unknown; points?: unknown; question_type?: unknown; ability_domain?: unknown; is_correct?: unknown }[])
-      .map((q) => `${q.difficulty}|${q.points}|${q.question_type ?? ''}|${q.ability_domain ?? ''}|${q.is_correct ?? ''}`).join(';');
+    // 내용 시그니처 — 총평/문항/지면 메타가 그대로면 재캡처·재업로드 없이 저장된 URL을 재사용.
+    //   조립은 naver-capture-sig.ts (문항 PATCH 필드 전수 + BlockMeta + 레지스트리 구조).
     // 레이아웃 시그니처 — 모듈식 템플릿(테마·블록 순서/표시/variant)이 바뀌면 캡처를 다시 떠야 한다.
     //   템플릿 state 를 prop 으로 끌어오는 대신 **실제 렌더된 DOM**에서 뽑는다:
     //   캡처 대상이 곧 이 DOM 이므로 어떤 경로로 바뀌었든 항상 정확하다.
@@ -541,7 +531,21 @@ export function EnglishAnalysisDetail({ detail, analyzing, onAnalyze, onRefresh,
     const layoutSig = `${root.className}|${root.getAttribute('data-template-signature') ?? ''}|${Array.from(root.children)
       .map((el) => el.getAttribute('data-block-id') || el.className)
       .join(',')}`;
-    const sig = `${NAVER_CAPTURE_VERSION}|${hashStr(JSON.stringify(commentary))}|${hashStr(qSig)}|${hashStr(layoutSig)}`;
+    const sig = buildNaverCaptureSig({
+      commentary,
+      questions,
+      meta: {
+        examTitle: detail.title || '',
+        schoolName: detail.schoolName ?? null,
+        grade: detail.grade || '',
+        analyzedAt: latestAnalysis?.analyzedAt ?? null,
+        totalQuestions: questions.length,
+        totalPoints: sumPoints(questions.map((q) => q.points)),
+      },
+      layoutSig,
+      registryBlocks: COMMENTARY_BLOCKS,
+      version: NAVER_CAPTURE_VERSION,
+    });
     const isDemo = isDemoExamId(detail.id);
     const cacheKey = `mathlab_naver_sec_${detail.id}_std`;
     let blocks: { url: string; summary: string }[] = [];
