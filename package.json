@@ -19,7 +19,8 @@
     "generate:english-textbooks": "tsx scripts/generate-english-textbooks.ts",
     "verify:cli-llm": "tsx scripts/verify-cli-llm.ts",
     "verify:template-blocks": "tsx scripts/parity/check-template-blocks.ts",
-    "verify:presets": "tsx scripts/parity/check-commentary-presets.ts"
+    "verify:presets": "tsx scripts/parity/check-commentary-presets.ts",
+    "verify:clip": "tsx scripts/parity/check-clip-line.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

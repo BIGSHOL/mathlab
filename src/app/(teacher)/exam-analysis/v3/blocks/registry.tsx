@@ -1751,9 +1751,31 @@ function collectScoutStats(questions: AnalyzedQuestion[]): ScoutStat[] {
   return stats.slice(0, 5);
 }
 
+/**
+ * 길이 제한 안에서 **말이 끊기지 않는 지점**까지만 남긴다.
+ *
+ * 글자 수로 그냥 자르면 "…이 단원에 몰렸습니" 처럼 단어 중간이 끊겨 데이터가 아니라
+ * 고장으로 읽힌다. AI 문장은 대개 100~200자라 카드형 블록(스카우트·벤토·4컷)에서는
+ * 거의 매번 걸린다.
+ *
+ * 우선순위: ① 문장 부호에서 끝내기(가장 자연스럽다 — 말줄임표도 필요 없다)
+ *          ② 어절 경계(공백)에서 끊고 말줄임표
+ *          ③ 둘 다 너무 앞이면 그때만 글자 단위
+ * 너무 앞에서 끊기면 정보가 사라지므로 각 후보에 최소 위치 조건을 둔다.
+ * 문장 경계는 35%만 넘으면 채택한다 — 짧아도 **완결된 한 문장**이 잘린 두 문장보다 낫다.
+ */
 function clipLine(s: string, max: number): string {
   const t = s.replace(/\s+/g, ' ').trim();
-  return t.length <= max ? t : `${t.slice(0, max - 1)}…`;
+  if (t.length <= max) return t;
+  const head = t.slice(0, max);
+
+  const sentence = head.match(/^[\s\S]*[.!?](?=\s|$)/)?.[0];
+  if (sentence && sentence.length >= max * 0.35) return sentence.trim();
+
+  const space = head.lastIndexOf(' ');
+  if (space >= max * 0.6) return `${head.slice(0, space).trim()}…`;
+
+  return `${head.slice(0, max - 1)}…`;
 }
 
 function scoutNotes(c: CommentaryResult): { label: string; text: string }[] {
@@ -2647,6 +2669,9 @@ const footerBlock: CommentaryBlockDef = {
 };
 
 /** 전체 블록 레지스트리 — 배열 순서가 기본 템플릿의 기본 순서 */
+/** 회귀 검사(scripts/parity/check-clip-line.ts) 전용 노출 — 런타임 동작에는 쓰이지 않는다 */
+export const __clipLineForTest = clipLine;
+
 export const COMMENTARY_BLOCKS: CommentaryBlockDef[] = [
   headerBlock,
   kpiBlock,
