@@ -87,9 +87,23 @@ export function getExamAnalysisTimeoutMs(): number {
   return isCliExamAnalysisEnabled() ? CLI_ROUTE_TIMEOUT_MS : GEMINI_ROUTE_TIMEOUT_MS;
 }
 
-/** 이 시간 이상 ANALYZING 이고 updatedAt 이 안 바뀌면 갇힌 것으로 본다. */
+/**
+ * 이 시간 이상 ANALYZING 이고 updatedAt 이 안 바뀌면 갇힌 것으로 본다.
+ *
+ * ⚠️ 실행 중인 분석의 예산과 **다른 문맥에서** 계산된다. 갇힘 감지는 목록 폴링 같은
+ * 별개 요청에서 도는데 그 요청에는 ALS(요청별 CLI 선택)가 없다. 그래서
+ * `getExamAnalysisTimeoutMs()` 를 그대로 쓰면, 브라우저가 CLI(22분 예산)로 띄운 분석을
+ * 감지기는 env 만 보고 "Gemini(3분)" 로 판정해 **4분 만에 실패 처리**한다.
+ * (2026-08-28 실측: 20:43:15 시작 → 20:47:14 FAILED, 정확히 3분+1분.)
+ *
+ * 늦게 정리하는 건 행이 잠깐 더 남는 것뿐이지만, 일찍 죽이는 건 **정상 분석을 파괴**한다.
+ * 그래서 운영이 아닌 곳에서는 두 예산 중 **큰 쪽**으로 판정한다.
+ */
 export function getExamAnalysisStuckMs(): number {
-  return getExamAnalysisTimeoutMs() + ANALYZE_STUCK_BUFFER_MS;
+  const budget = isProductionRuntime()
+    ? GEMINI_ROUTE_TIMEOUT_MS
+    : Math.max(CLI_ROUTE_TIMEOUT_MS, GEMINI_ROUTE_TIMEOUT_MS);
+  return budget + ANALYZE_STUCK_BUFFER_MS;
 }
 
 export function getExamAnalysisTimeoutLabel(): string {
@@ -106,7 +120,12 @@ export function getExamAnalysisTimeoutLabel(): string {
  *    메타데이터를 따로 적으면 반드시 어긋난다). 이제 같은 상수에서 파생시킨다.
  */
 export function getExamAnalysisModelVersion(promptVersion: string): string {
-  if (isCliExamAnalysisEnabled()) return `cli / prompt ${promptVersion}`;
+  // 실행기 종류까지 남긴다. 예전엔 `cli` 라고만 적어서 나중에 "그 분석은 어느 CLI 였나"를
+  // 물으면 답할 수 없었다 — 실제로 CLI 성공 기록 1건의 실행기를 특정하지 못했다.
+  if (isCliExamAnalysisEnabled()) {
+    const kind = cliAls.getStore();
+    return `cli:${kind ?? requestedKind()} / prompt ${promptVersion}`;
+  }
   return `${EXAM_ANALYSIS_MODEL} / prompt ${promptVersion}`;
 }
 
