@@ -57,9 +57,17 @@ export function V3CommentaryView({ commentary, questions, meta, charts, template
     .filter(Boolean)
     .join(' ');
   const copy = getCommentaryCopy(normalized.copyId);
+  // 캡처 캐시가 variant 전환을 놓치지 않게 — data-block-id 는 블록 id 만 담아서
+  // 인터뷰(막대)→칩 같이 표현만 바꾸면 3일 캐시가 옛 이미지를 그대로 재사용했다.
+  const templateSignature = [
+    normalized.themeId,
+    normalized.layoutId,
+    normalized.copyId,
+    normalized.blocks.map((b) => `${b.id}:${b.variant}:${b.enabled}`).join(','),
+  ].join('|');
 
   return (
-    <div className={rootCls}>
+    <div className={rootCls} data-template-signature={templateSignature}>
       {blocks.map(({ def, variant, sectionNum }) => (
         <Fragment key={def.id}>
           {variant.render({ commentary, questions, meta, charts, sectionNum, copy })}

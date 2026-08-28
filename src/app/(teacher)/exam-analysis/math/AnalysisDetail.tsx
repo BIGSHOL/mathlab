@@ -72,6 +72,20 @@ function waitForImages(el: HTMLElement, timeoutMs: number): Promise<void> {
   ]);
 }
 
+/**
+ * 캡처 backdrop 색 — 섹션 자신이 투명이면 불투명 조상까지 거슬러 올라간다.
+ * 다크 톤은 `.v3` 루트에만 배경이 있고 자식은 투명인 경우가 있어, 자식만 보면 흰 바탕에 밝은 글자가 찍힌다.
+ */
+function nearestOpaqueBackground(el: HTMLElement): string {
+  let cur: HTMLElement | null = el;
+  while (cur) {
+    const bg = getComputedStyle(cur).backgroundColor;
+    if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') return bg;
+    cur = cur.parentElement;
+  }
+  return '#ffffff';
+}
+
 /** 난이도 1~5 연속축 그라데이션 (녹→빨). 0/25/50/75/100% = 1/2/3/4/5단계 위치. */
 const DIFF_GRADIENT = `linear-gradient(to right, ${DIFFICULTY_BAR_COLORS[0]} 0%, ${DIFFICULTY_BAR_COLORS[1]} 25%, ${DIFFICULTY_BAR_COLORS[2]} 50%, ${DIFFICULTY_BAR_COLORS[3]} 75%, ${DIFFICULTY_BAR_COLORS[4]} 100%)`;
 /** 난이도 값(1~5) → 연속축 위치(%). 1=0%, 3=50%, 5=100%. 연속값이라 마커가 축 위치와 정확히 일치. */
@@ -535,7 +549,9 @@ export function MathAnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, au
     // 레이아웃 시그니처 — 모듈식 템플릿(테마·블록 순서/표시/variant)이 바뀌면 캡처를 다시 떠야 한다.
     //   템플릿 state 를 prop 으로 끌어오는 대신 **실제 렌더된 DOM**에서 뽑는다:
     //   캡처 대상이 곧 이 DOM 이므로 어떤 경로로 바뀌었든 항상 정확하다.
-    const layoutSig = `${root.className}|${Array.from(root.children)
+    //   data-template-signature 가 variant 까지 담는다. data-block-id 만으로는 표현 전환이 안 잡혀
+    //   3일 캐시가 옛 이미지를 재사용했다. 구버전 DOM 은 빈 문자열로 폴백.
+    const layoutSig = `${root.className}|${root.getAttribute('data-template-signature') ?? ''}|${Array.from(root.children)
       .map((el) => el.getAttribute('data-block-id') || el.className)
       .join(',')}`;
     const sig = `${NAVER_CAPTURE_VERSION}|${hashStr(JSON.stringify(commentary))}|${hashStr(qSig)}|${hashStr(layoutSig)}`;
@@ -553,6 +569,7 @@ export function MathAnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, au
 
     const reused = blocks.length > 0;
     let captureComplete = true; // 캡처 누락 없이 전부 잡혔는지 — 부분 캡처면 캐시하지 않는다
+    let failedSections = 0; // 캡처/업로드 실패 구간 — 침묵하면 붙여넣은 뒤에야 빈 자리를 안다
     const tid = toast.loading(reused ? '저장된 캡처 재사용 — 복사 준비 중...' : '실제 V3 화면 캡처·업로드 준비 중...');
     try {
       // 데모 — 사전 베이크된 열화 캡처(정적 자산) 사용. 실시간 캡처·업로드를 생략해
@@ -577,10 +594,9 @@ export function MathAnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, au
           toast.loading('섹션 캡처·업로드 중...', tid, { current: i, total: nodes.length });
           let dataUrl: string;
           try {
-            // 섹션의 실제 배경색을 backdrop으로 전달 — dark 섹션(.v3-feature #121212 등)에서
-            // 밝은 텍스트가 흰 배경 위에 찍혀 안 보이는 문제 방지. 투명이면 흰색.
-            const bg = getComputedStyle(node).backgroundColor;
-            const backgroundColor = bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent' ? bg : '#ffffff';
+            // 섹션(또는 가장 가까운 불투명 조상)의 배경색을 backdrop으로 전달 —
+            // 자식이 투명하고 .v3 루트만 어두우면 흰 바탕에 밝은 글자가 찍혀 사라지는 걸 막는다.
+            const backgroundColor = nearestOpaqueBackground(node);
             dataUrl = await domToPng(node, {
               scale: 2,
               backgroundColor,
@@ -594,17 +610,33 @@ export function MathAnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, au
                 return true;
               },
             });
-          } catch { continue; }
+          } catch (e) {
+            // 한 구간 실패가 전체 복사를 막지 않게 건너뛰되, 침묵하면 블로그에서 빈 자리를 나중에야 안다
+            failedSections += 1;
+            console.warn('[블로그 이미지] 섹션 캡처 실패', e);
+            continue;
+          }
           try {
             const res = await fetch(`/api/exam-analysis/${detail.id}/upload-section-image`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ section: `std_s${i}`, dataUrl }),
             });
-            if (!res.ok) continue;
+            if (!res.ok) {
+              failedSections += 1;
+              console.warn('[블로그 이미지] 섹션 업로드 실패', res.status);
+              continue;
+            }
             const json = await res.json();
             if (json?.data?.url) blocks.push({ url: json.data.url, summary: summaryOf(node) });
-          } catch { /* 업로드 실패한 섹션은 건너뜀 */ }
+            else {
+              failedSections += 1;
+              console.warn('[블로그 이미지] 섹션 업로드 응답에 URL이 없습니다');
+            }
+          } catch (e) {
+            failedSections += 1;
+            console.warn('[블로그 이미지] 섹션 업로드 실패', e);
+          }
         }
         // 캡처 끝 → 인라인 폭 제거(원래 CSS 흐름 복귀). 저장값 복원이 아니라 '' 클리어 = 동시 실행돼도 stuck 안 됨.
         root.style.width = '';
@@ -616,7 +648,16 @@ export function MathAnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, au
           else localStorage.removeItem(cacheKey);
         } catch { /* 용량 초과 등 무시 */ }
       }
-      if (!blocks.length) { toast.error('캡처/업로드된 섹션이 없습니다', undefined, tid); return; }
+      if (!blocks.length) {
+        toast.error(
+          failedSections > 0
+            ? `${failedSections}개 구간을 이미지로 만들지 못했습니다. 다시 시도해 주세요.`
+            : '캡처/업로드된 섹션이 없습니다',
+          undefined,
+          tid,
+        );
+        return;
+      }
 
       // 첫 이미지(상단 헤더) 캡션은 항상 "학교 연도 학기 시험종류"로 시작 (검색 노출 강화).
       //   examScope(Json — 신형 객체/레거시 배열/null)는 진입부 정규화 후 사용. examType은 MIDTERM/FINAL.
@@ -678,7 +719,9 @@ export function MathAnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, au
         }
       }
       if (!copied) throw new Error('클립보드 복사 실패 — 창을 클릭해 포커스를 둔 뒤 다시 시도하세요');
-      if (captureComplete) {
+      if (failedSections > 0) {
+        toast.warning(`${failedSections}개 구간을 이미지로 만들지 못했습니다. 다시 시도해 주세요.`, undefined, tid);
+      } else if (captureComplete) {
         toast.success(`${blocks.length}개 섹션 이미지 + 요약이 복사되었습니다.${reused ? ' (저장된 캡처 재사용)' : ''} 네이버 블로그에 붙여넣으세요.`, undefined, tid);
       } else {
         toast.error(`일부 섹션만 캡처됐습니다(화면 전환 감지) — ${blocks.length}개만 복사됨. 화면을 그대로 둔 채 [블로그용 총평지]를 다시 누르면 전체가 캡처됩니다.`, undefined, tid);
