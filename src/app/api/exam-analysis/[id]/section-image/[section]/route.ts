@@ -10,6 +10,7 @@ import {
 import { sumPoints } from '@/lib/exam-analysis/points';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { weightedAverageDifficulty } from '@/lib/exam-analysis/difficulty';
+import { isEssay } from '@/lib/exam-analysis/shared/question-format';
 
 /**
  * 이 라우트는 AI 호출이 끝날 때까지 요청 안에서 기다린다 — 짧은 API 가 아니다.
@@ -83,7 +84,7 @@ export async function GET(req: NextRequest, { params }: Params) {
       const kpi = {
         avgDifficulty: weighted.toFixed(1),
         killerPct: Math.round((questions.filter((q) => ['4', '5'].includes(String(q.difficulty))).length / total) * 100),
-        essayCount: questions.filter((q) => q.question_format === 'essay').length,
+        essayCount: questions.filter(isEssay).length,
       };
 
       const lockKey = `${analysis.id}:${SECTION_IMAGE_VERSION}:${section}`;

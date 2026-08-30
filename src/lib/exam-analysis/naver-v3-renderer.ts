@@ -20,6 +20,7 @@ import type { AnalyzedQuestion } from './types';
 import { sumPoints, formatPoints } from './shared/points';
 import { normalizeFeatureCallout } from './feature-callout';
 import { getCommentaryTheme } from './commentary-themes';
+import { isEssay, resolveQuestionFormat } from './shared/question-format';
 
 export interface NaverV3ChartUrls {
   /** CDN/공개 URL (네이버는 외부 이미지 호스팅 필요) */
@@ -253,7 +254,7 @@ function renderKpiRow(questions: AnalyzedQuestion[], meta: NaverV3Meta): string 
   const totalDiff = counts.reduce((s, c) => s + c, 0);
   const weighted = totalDiff > 0 ? counts.reduce((s, c, i) => s + c * (i + 1), 0) / totalDiff : 0;
   const killerPct = totalDiff > 0 ? Math.round((counts[4] / totalDiff) * 100) : 0;
-  const essayCount = questions.filter((q) => q.question_format === 'essay').length;
+  const essayCount = questions.filter(isEssay).length;
   const totalPts = sumPoints(questions.map((q) => q.points));
   void meta;
   return `
@@ -342,7 +343,8 @@ function renderFormatBreakdown(questions: AnalyzedQuestion[]): string {
     { key: 'essay', label: '서술형', color: '#BF1722' },
   ];
   const stats = formats.map((f) => {
-    const fQ = questions.filter((q) => q.question_format === f.key);
+    // 형식 정규화 경유 — 형식이 비었거나 변형 표기인 문항이 어느 카드에도 안 잡히던 문제.
+    const fQ = questions.filter((q) => resolveQuestionFormat(q) === f.key);
     return { ...f, count: fQ.length, points: sumPoints(fQ.map((q) => q.points)) };
   });
   const totalPts = sumPoints(stats.map((x) => x.points));

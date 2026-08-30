@@ -24,6 +24,7 @@ import { DIFFICULTY_LEGACY_MAP } from './constants';
 import { weightedAverageDifficulty } from './shared/difficulty';
 import { toExamSubjectKey } from './shared/subject';
 import { normalizeMathText } from '@/lib/pdf-extract-engine/ai/post-processor';
+import { formatDistribution } from './shared/question-format';
 import {
   classifySignals,
   buildBlueprint,
@@ -298,12 +299,8 @@ function buildArticlePrompt(
     diffPoints[lvl] += q.points || 0;
   }
 
-  // 형식 분포
-  const formats = { objective: 0, short_answer: 0, essay: 0 };
-  for (const q of analysis.questions) {
-    const f = q.question_format || 'objective';
-    if (f in formats) formats[f as keyof typeof formats]++;
-  }
+  // 형식 분포 (정규화 경유 — 변형 표기가 누락되지 않는다)
+  const formats = formatDistribution(analysis.questions);
 
   // 종합 난이도 — **화면·총평과 반드시 같은 공식**(레벨별 영향력 가중 × 배점).
   // 주석은 "가중 평균"이라 써 있었지만 실제로는 단순 문항수 평균이었다 (적대적 리뷰 1.5).

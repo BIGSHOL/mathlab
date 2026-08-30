@@ -11,6 +11,7 @@ import type { AgentType } from '../constants';
 import type { WeaknessProfile, LearningPlan, BasicAnalysisResult } from '../types';
 import type { AgentInput } from './base-agent';
 import { findNearbyExamData } from '../nearby-school-data';
+import { formatDistribution, type FormatSourceQuestion } from '../shared/question-format';
 
 // 에이전트 lazy import (순환 참조 방지)
 async function getAgent(agentType: AgentType) {
@@ -61,13 +62,20 @@ export async function runExtendedAnalysis(params: {
   // 과목 — 에이전트 프롬프트 페르소나·라벨 분기용. 없으면 에이전트가 수학으로 폴백한다.
   const subject = analysis.examPaper?.subject ?? null;
 
+  // `questions` 는 Prisma `Json` 이라 런타임에 무엇이든 올 수 있다 — 배열 메서드를 쓰기 전에
+  // 한 번 정규화한다(CLAUDE.md §11). 배열이 아니면 형식 분포는 빈 집계가 된다.
+  const questionList = Array.isArray(analysis.questions)
+    ? (analysis.questions as unknown as FormatSourceQuestion[])
+    : [];
+
   const basicResult = {
     questions: analysis.questions,
     summary: analysis.summary,
     exam_info: {
       total_questions: analysis.totalQuestions || 0,
       total_points: analysis.totalPoints || 0,
-      format_distribution: { objective: 0, short_answer: 0, essay: 0 },
+      // 예전엔 0,0,0 이라 에이전트가 형식 구성을 전혀 모른 채 분석했다.
+      format_distribution: formatDistribution(questionList),
     },
   } as unknown as BasicAnalysisResult;
 

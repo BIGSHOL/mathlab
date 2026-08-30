@@ -15,6 +15,7 @@ import { weightedAverageDifficulty } from '@/lib/exam-analysis/difficulty';
 import type { CommentaryResult } from '@/lib/exam-analysis/agents/commentary-agent';
 import { renderInlineMath } from '@/lib/exam-analysis/rendering';
 import { correctRatePct } from '@/lib/exam-analysis/shared/student-answers';
+import { isEssay } from '@/lib/exam-analysis/shared/question-format';
 
 // V3 helpers 일부만 재export (markdownToHighlighted는 V4 자체 구현 — 자동 색상 강조 X)
 export { normDiff, V3_DIFF_LABELS, V3_DIFF_COLORS } from '../v3/helpers';
@@ -139,7 +140,7 @@ export function computeExamStats(questions: AnalyzedQuestion[]): ExamStats {
     const lv = Number(lvStr === '1' || lvStr === '2' || lvStr === '3' || lvStr === '4' || lvStr === '5' ? lvStr : '3');
     if (lv >= 1 && lv <= 5) counts[lv - 1]++;
     totalPoints += q.points || 0;
-    if (q.question_format === 'essay') {
+    if (isEssay(q)) {
       essayCount++;
       essayPoints += q.points || 0;
     }

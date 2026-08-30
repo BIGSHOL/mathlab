@@ -16,6 +16,7 @@ import { DIFFICULTY_COLORS } from './constants';
 import type { AnalyzedQuestion } from './types';
 import { countAbilities, getAbilityAxes, getTypeAxes } from './shared/chart-axes';
 import { formatPoints } from './shared/points';
+import { isEssay } from './shared/question-format';
 
 // ── 차트 버전 — 디자인 업그레이드 시 bump → chart endpoint가 자동 재생성 ──
 // v1: 기본 (그라데이션 없음, 작은 폰트)
@@ -789,7 +790,7 @@ function calcDiscriminationScore(q: AnalyzedQuestion): number {
   const nd = dMap[dRaw] || dRaw;
   const mult = ({ '1': 0.3, '2': 0.5, '3': 0.65, '4': 0.8, '5': 1.0 } as Record<string, number>)[nd] || 0.5;
   let base = (points * mult) / 10 * 100;
-  if (q.question_format === 'essay') base *= 1.2;
+  if (isEssay(q)) base *= 1.2;
   if ((nd === '1' || nd === '2') && points >= 5) base *= 0.7;
   if ((nd === '4' || nd === '5') && points >= 4) base *= 1.15;
   return Math.min(100, Math.max(0, Math.round(base)));

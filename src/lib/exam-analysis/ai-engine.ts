@@ -20,6 +20,7 @@ import { roundPoints, sumPoints } from './shared/points';
 import { callCliVision, isCliExamAnalysisEnabled } from './cli-llm';
 import { isEnglishStudyJunk } from './english-study-pack';
 import { EXAM_ANALYSIS_MODEL } from './shared/exam-model';
+import { isEssay, formatDistribution } from './shared/question-format';
 
 // ── 싱글톤 클라이언트 ──
 
@@ -476,7 +477,6 @@ function isBetterPass(next: AnalysisCompleteness, prev: AnalysisCompleteness): b
 function tallyQuestions(questions: AnalyzedQuestion[], subject: ExamSubjectKey) {
   const difficulty: Record<string, number> = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
   const type: Record<string, number> = emptyTypeDistribution(subject);
-  const format = { objective: 0, short_answer: 0, essay: 0 };
 
   for (const q of questions) {
     if (q.difficulty != null) {
@@ -485,9 +485,11 @@ function tallyQuestions(questions: AnalyzedQuestion[], subject: ExamSubjectKey) 
     }
     const qType = q.question_type;
     if (qType && type[qType] !== undefined) type[qType]++;
-    const qFormat = (q.question_format || 'objective') as keyof typeof format;
-    if (format[qFormat] !== undefined) format[qFormat]++;
   }
+
+  // 형식 집계는 정규화를 거친다 — 예전엔 AI 가 'Essay' 같은 변형을 주면 세 칸
+  // 어디에도 안 들어가 합계가 문항 수보다 작아졌다.
+  const format = formatDistribution(questions);
 
   return {
     difficulty,
@@ -626,7 +628,7 @@ function fillNumberGaps(result: BasicAnalysisResult, subject: ExamSubjectKey = '
 
   // 객관식/단답형(숫자 번호) 문항만 갭 감지 대상
   const numericQuestions = questions.filter((q) => {
-    if (q.question_format === 'essay') return false;
+    if (isEssay(q)) return false;
     const n = typeof q.question_number === 'string'
       ? parseInt(q.question_number, 10)
       : q.question_number;
@@ -693,8 +695,8 @@ function fillNumberGaps(result: BasicAnalysisResult, subject: ExamSubjectKey = '
   // 번호 순으로 정렬 (서술형은 뒤에)
   const merged = [...questions, ...placeholders];
   const sorted = merged.sort((a, b) => {
-    const aIsEssay = a.question_format === 'essay';
-    const bIsEssay = b.question_format === 'essay';
+    const aIsEssay = isEssay(a);
+    const bIsEssay = isEssay(b);
     if (aIsEssay && !bIsEssay) return 1;
     if (!aIsEssay && bIsEssay) return -1;
 

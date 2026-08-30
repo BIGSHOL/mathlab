@@ -26,6 +26,7 @@ import { MIDDLE_SCHOOL_CURRICULUM } from '../data/curriculum';
 import type { GradeCurriculum } from '../data/curriculum';
 import type { NearbyComparisonData, NearbyExamSummary } from '../nearby-school-data';
 import { hasStudentAnswers } from '../shared/student-answers';
+import { isEssay, resolveQuestionFormat, formatDistribution } from '../shared/question-format';
 
 
 // ── 영문 enum → 한글 라벨 (AI 입력/출력 정규화용) ──
@@ -794,7 +795,7 @@ export class CommentaryAgent extends BaseAgent<Record<string, unknown>> {
     // AI 가 한글 라벨로 사고하도록 입력 데이터의 영문 enum 을 한글로 사전 변환
     const questionsData = basicAnalysis.questions.map((q) => ({
       번호: q.question_number,
-      형식: FORMAT_LABELS[q.question_format || ''] || '객관식',
+      형식: FORMAT_LABELS[resolveQuestionFormat(q)],
       난이도: q.difficulty,
       유형: toKoreanType(q.question_type, subject),
       능력영역: toKoreanAbility(q.ability_domain, subject),
@@ -1445,7 +1446,7 @@ ${phases}
     const peakDiffText = sum > 0 ? `Lv${peakIdx + 1} ${peakLabels[peakIdx].split(' ')[1]} ${counts[peakIdx]}문항` : '미분류';
 
     // 서술형 요약
-    const essayQs = basicAnalysis.questions.filter((q) => q.question_format === 'essay');
+    const essayQs = basicAnalysis.questions.filter(isEssay);
     const essayPoints = essayQs.reduce((s, q) => s + (q.points || 0), 0);
     const essaySummary = essayQs.length > 0 ? `서술형 ${essayQs.length}문항 · ${essayPoints}점` : 'null';
 
@@ -1590,7 +1591,7 @@ ${questionDetails}
     const levelOf = (q: { difficulty?: string | number | null }) => Number(normalizeLevel(q.difficulty ?? '3') ?? 0);
 
     // 서술형 배점 비중 vs 전국 표준(~1/3)
-    const essayQs2 = basicAnalysis.questions.filter((q) => q.question_format === 'essay');
+    const essayQs2 = basicAnalysis.questions.filter(isEssay);
     const essayPts = essayQs2.reduce((s, q) => s + (q.points || 0), 0);
     const essayPct = totalPts > 0 ? Math.round((essayPts / totalPts) * 100) : 0;
     const essayClass = essayQs2.length === 0 ? '서술형 없음'
@@ -1859,7 +1860,7 @@ ${questionDetails}
     const essayCount = analysis.exam_info.format_distribution.essay || 0;
     if (essayCount > 0) {
       const essayPts = analysis.questions
-        .filter((q) => q.question_format === 'essay')
+        .filter(isEssay)
         .reduce((s, q) => s + (q.points || 0), 0);
       const totalPts = analysis.exam_info.total_points;
       const essayPtsPct = totalPts > 0 ? Math.round((essayPts / totalPts) * 100) : 0;

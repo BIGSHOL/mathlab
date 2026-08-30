@@ -6,6 +6,7 @@ import { CommentaryAgent } from '@/lib/exam-analysis/agents/commentary-agent';
 import type { BasicAnalysisResult, AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { COMMENTARY_V4_PROMPT_VERSION } from '@/lib/exam-analysis/constants';
 import { assertPlanFeature } from '@/lib/billing/guard';
+import { formatDistribution } from '@/lib/exam-analysis/shared/question-format';
 
 /**
  * 이 라우트는 AI 호출이 끝날 때까지 요청 안에서 기다린다 — 짧은 API 가 아니다.
@@ -95,7 +96,8 @@ export async function POST(request: NextRequest, { params }: Params) {
         total_questions: latestAnalysis.totalQuestions || questions.length,
         total_points: latestAnalysis.totalPoints || 100,
         school_name: examPaper.schoolName || null,
-        format_distribution: { objective: 0, short_answer: 0, essay: 0 },
+        // 예전엔 0,0,0 을 넣어 총평 프롬프트가 "객관식 0문항"을 읽었다.
+        format_distribution: formatDistribution(questions),
       },
       summary: summary || {
         difficulty_distribution: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 },

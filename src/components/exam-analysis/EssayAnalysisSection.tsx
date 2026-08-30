@@ -6,6 +6,7 @@ import { DIFFICULTY_COLORS } from '@/lib/exam-analysis/constants';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { sumPoints } from '@/lib/exam-analysis/points';
 import { FileText } from 'lucide-react';
+import { isEssay } from '@/lib/exam-analysis/shared/question-format';
 
 interface EssayAnalysisSectionProps {
   questions: AnalyzedQuestion[];
@@ -24,7 +25,7 @@ const DIFFICULTY_ORDER = ['1', '2', '3', '4', '5'] as const;
 export function EssayAnalysisSection({ questions, totalQuestions, totalPoints }: EssayAnalysisSectionProps) {
   // 서술형 문항만 필터
   const essayQuestions = useMemo(
-    () => questions.filter(q => q.question_format === 'essay'),
+    () => questions.filter(isEssay),
     [questions],
   );
 

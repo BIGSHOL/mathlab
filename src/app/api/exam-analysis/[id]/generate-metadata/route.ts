@@ -8,6 +8,7 @@ import { CommentaryAgent } from '@/lib/exam-analysis/agents/commentary-agent';
 import { findNearbyExamData } from '@/lib/exam-analysis/nearby-school-data';
 import type { BasicAnalysisResult, AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { AGENT_PROMPT_VERSIONS } from '@/lib/exam-analysis/constants';
+import { formatDistribution } from '@/lib/exam-analysis/shared/question-format';
 
 /**
  * 이 라우트는 AI 호출이 끝날 때까지 요청 안에서 기다린다 — 짧은 API 가 아니다.
@@ -71,12 +72,7 @@ export async function POST(_request: NextRequest, { params }: Params) {
         const questions = latestAnalysis.questions as unknown as AnalyzedQuestion[];
         const summary = latestAnalysis.summary as unknown as BasicAnalysisResult['summary'] | null;
         // 형식 분포 정확 집계 (base 프롬프트가 사용)
-        const fmt = { objective: 0, short_answer: 0, essay: 0 };
-        for (const q of questions) {
-          if (q.question_format === 'essay') fmt.essay++;
-          else if (q.question_format === 'short_answer') fmt.short_answer++;
-          else fmt.objective++;
-        }
+        const fmt = formatDistribution(questions);
         const basicAnalysis: BasicAnalysisResult = {
           exam_info: {
             total_questions: latestAnalysis.totalQuestions || questions.length,

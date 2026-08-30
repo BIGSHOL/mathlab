@@ -21,6 +21,7 @@ import { EssayAnalysisSection } from '../EssayAnalysisSection';
 import { DiscriminationSection } from '../DiscriminationSection';
 import { InfoTooltip } from '../InfoTooltip';
 import { QuestionFeedbackButton } from '../QuestionFeedbackButton';
+import { groupByFormat } from '@/lib/exam-analysis/shared/question-format';
 
 const DIFFICULTY_LABELS: Record<string, string> = {
   '1': '1', '2': '2', '3': '3', '4': '4', '5': '5',
@@ -207,9 +208,9 @@ export function EnglishAnalysisResultView({ questions: questionsProp, summary, t
 
   // 배점 평균 (객관식 / 단답형 / 서술형)
   const pointsAvg = useMemo(() => {
-    const obj = questions.filter(q => q.question_format === 'objective');
-    const short = questions.filter(q => q.question_format === 'short_answer');
-    const ess = questions.filter(q => q.question_format === 'essay');
+    // groupByFormat 은 반드시 세 칸 중 하나에 넣는다 — 형식이 비어 있거나
+    // AI 가 'Essay' 같은 변형을 준 문항이 어느 칸에도 안 들어가 합계가 모자라던 문제.
+    const { objective: obj, short_answer: short, essay: ess } = groupByFormat(questions);
     const avg = (arr: typeof questions) => arr.length > 0
       ? Math.round(arr.reduce((s, q) => s + (q.points || 0), 0) / arr.length * 10) / 10
       : 0;
@@ -253,11 +254,11 @@ export function EnglishAnalysisResultView({ questions: questionsProp, summary, t
   }, [questions]);
 
   // 문항 그룹 (객관식 / 단답형 / 서술형 분리)
-  const grouped = useMemo(() => ({
-    objective: questions.filter(q => q.question_format === 'objective'),
-    shortAnswer: questions.filter(q => q.question_format === 'short_answer'),
-    essay: questions.filter(q => q.question_format === 'essay'),
-  }), [questions]);
+  const grouped = useMemo(() => {
+    // 형식 미상 문항이 표에서 통째로 사라지던 버그 — groupByFormat 은 전수 분배를 보장한다.
+    const g = groupByFormat(questions);
+    return { objective: g.objective, shortAnswer: g.short_answer, essay: g.essay };
+  }, [questions]);
 
   const total = questions.length;
   const colSpan = isStudentExam ? 9 : 8;

@@ -4,6 +4,7 @@ import { requireTeacher, requireOwner, isResponse, getTenantFilter } from '@/lib
 import { getExamScope } from '@/lib/demo/accounts';
 import { DIFFICULTY_LEGACY_MAP } from '@/lib/exam-analysis/constants';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
+import { resolveQuestionFormat } from '@/lib/exam-analysis/shared/question-format';
 
 // ── 타입 ──
 
@@ -209,7 +210,7 @@ async function handleDashboard(
   // ── 형식 분포 ──
   const fmtMap: Record<string, { count: number; pts: number }> = {};
   for (const q of allQuestions) {
-    const f = q.question_format || 'objective';
+    const f = resolveQuestionFormat(q);
     if (!fmtMap[f]) fmtMap[f] = { count: 0, pts: 0 };
     fmtMap[f].count++;
     fmtMap[f].pts += q.points || 0;

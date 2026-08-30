@@ -42,6 +42,7 @@ import { V3MainAnalysis } from '../V3MainAnalysis';
 import { V3KeyQuestions } from '../V3KeyQuestions';
 import { V3PreviousComparison } from '../V3PreviousComparison';
 import { V3FinalStrategy } from '../V3FinalStrategy';
+import { isEssay } from '@/lib/exam-analysis/shared/question-format';
 
 // ── 공유 계산 ──
 
@@ -58,7 +59,7 @@ function computeKpis(questions: AnalyzedQuestion[]): Kpis {
   return {
     weighted: weightedAverageDifficulty(questions).avg,
     killerPct: total > 0 ? Math.round((counts[4] / total) * 100) : 0,
-    essayCount: questions.filter((q) => q.question_format === 'essay').length,
+    essayCount: questions.filter(isEssay).length,
     // 엄격 판정 필수 — `is_correct !== null` 은 레거시 문항을 "답안 있음"으로 잡아 정답률 0% 를 지어낸다
     correctRate: correctRatePct(questions),
   };
@@ -1000,10 +1001,8 @@ function renderHeatmap(props: BlockRenderProps, showPoints: boolean) {
   const { questions: qs, sectionNum, copy } = props;
   if (!qs.length) return null;
 
-  // 서술형 판별 — question_format 이 없던 시절 데이터도 있어 번호 문자열까지 본다
-  const isEssay = (q: (typeof qs)[number]) =>
-    q.question_format === 'essay' || /서답|서술/.test(String(q.question_number ?? ''));
-
+  // 서술형 판별은 shared/question-format 의 isEssay 하나만 쓴다
+  // (형식 필드가 없던 시절 데이터를 번호로 복구하는 로직도 그 안에 있다).
   const levels = [1, 2, 3, 4, 5];
   const { counts, unknown: unknownCount } = countByLevel(qs);
 
@@ -1081,7 +1080,7 @@ function buildStoryCards(props: BlockRenderProps): StoryCard[] {
 
   const total = qs.length;
   const killer = qs.filter((q) => (questionLevel(q.difficulty) ?? 0) >= 4);
-  const essays = qs.filter((q) => q.question_format === 'essay' || /서답|서술/.test(String(q.question_number ?? '')));
+  const essays = qs.filter(isEssay);
   const essayPts = sumPoints(essays.map((q) => q.points));
   const avg = weightedAverageDifficulty(qs);
 
@@ -1252,9 +1251,6 @@ function questionDiff(q: AnalyzedQuestion): number {
   return questionLevel(q.difficulty) ?? 0;
 }
 
-function isEssayQuestion(q: AnalyzedQuestion): boolean {
-  return q.question_format === 'essay' || /서답|서술/.test(String(q.question_number ?? ''));
-}
 
 // ── 시험 날씨 스트립 ─────────────────────────────────────────────────────
 // 단원별 배점×난이도를 맑음/흐림/비/폭풍 4단계로 접어 **가로 예보**로 그린다.
@@ -1461,7 +1457,7 @@ function collectStations(questions: AnalyzedQuestion[]): SubwayStation[] {
     const cur = map.get(topic) ?? { topic, transfer: false, express: false, count: 0 };
     cur.count += 1;
     if (questionDiff(q) >= 4) cur.transfer = true;
-    if (isEssayQuestion(q)) cur.express = true;
+    if (isEssay(q)) cur.express = true;
     map.set(topic, cur);
   }
   // 출제 순서를 유지한다 — 가나다 정렬하면 시험지 앞뒤가 노선에서 뒤집힌다.
@@ -1654,8 +1650,8 @@ function buildChatBubbles(c: CommentaryResult, questions: AnalyzedQuestion[] = [
     // "전체적으로 어땠나요" 류는 어느 시험에나 붙어서 대화가 아니라 설문지로 읽힌다.
     const n = questions.length;
     const pts = sumPoints(questions.map((q) => q.points));
-    const essays = questions.filter(isEssayQuestion).length;
-    const essayPts = sumPoints(questions.filter(isEssayQuestion).map((q) => q.points));
+    const essays = questions.filter(isEssay).length;
+    const essayPts = sumPoints(questions.filter(isEssay).map((q) => q.points));
 
     if (c.overall_comment) {
       push('parent', n ? `${n}문항에 ${formatPoints(pts)}점이면, 한 문항 무게가 꽤 큰 편인가요?` : '이번 시험은 어떤 구성인가요?');
@@ -1831,7 +1827,7 @@ function collectScoutExtras(questions: AnalyzedQuestion[]): ScoutStat[] {
       hardCount += 1;
       hardPts += pts;
     }
-    if (isEssayQuestion(q)) {
+    if (isEssay(q)) {
       essayCount += 1;
       essayPts += pts;
     }
@@ -2152,7 +2148,7 @@ function collectRxCols(c: CommentaryResult, questions: AnalyzedQuestion[]): RxCo
   const dxLines: string[] = [];
   const avg = weightedAverageDifficulty(questions);
   if (avg.avg > 0) dxLines.push(`종합 난이도 ${avg.avg.toFixed(1)}`);
-  const essays = questions.filter(isEssayQuestion);
+  const essays = questions.filter(isEssay);
   const essayPts = sumPoints(essays.map((q) => q.points));
   if (essays.length) dxLines.push(`서술형 ${essays.length}문항 · ${formatPoints(essayPts)}점`);
   const dx = collectKillerClusters(questions);
@@ -2271,7 +2267,7 @@ function collectBentoTiles(props: BlockRenderProps): BentoTile[] {
   const clusters = collectKillerClusters(qs);
   const top = mostTestedTopic(qs);
   const avg = weightedAverageDifficulty(qs);
-  const essays = qs.filter(isEssayQuestion);
+  const essays = qs.filter(isEssay);
   const essayPts = sumPoints(essays.map((q) => q.points));
   const hardN = qs.filter((q) => questionDiff(q) >= 4).length;
   const hardPct = Math.round((hardN / qs.length) * 100);
@@ -2630,7 +2626,7 @@ function buildComicPanels(props: BlockRenderProps): ComicPanel[] {
   const total = qs.length;
   const avg = weightedAverageDifficulty(qs);
   const killer = qs.filter((q) => questionDiff(q) >= 4);
-  const essays = qs.filter(isEssayQuestion);
+  const essays = qs.filter(isEssay);
   const essayPts = sumPoints(essays.map((q) => q.points));
   const clusters = collectKillerClusters(qs);
   const next = c.v4_final_strategy?.[0]?.action || c.improvement_areas?.[0] || '';
@@ -2834,7 +2830,7 @@ function renderRecipe(props: BlockRenderProps, board: boolean) {
             for (const q of qs) {
               if (topicMidUnit(q.topic) !== r.topic) continue;
               if (questionDiff(q) >= 4) hardN += 1;
-              if (isEssayQuestion(q)) essayN += 1;
+              if (isEssay(q)) essayN += 1;
             }
             const bits = [
               `${r.count}문항`,

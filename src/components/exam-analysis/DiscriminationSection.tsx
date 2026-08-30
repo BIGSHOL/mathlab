@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { normalizeDifficultyKey as normalizeDiff } from '@/lib/exam-analysis/shared/difficulty';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { InfoTooltip } from './InfoTooltip';
+import { isEssay } from '@/lib/exam-analysis/shared/question-format';
 
 
 interface DiscriminationSectionProps {
@@ -70,7 +71,7 @@ function calculateDiscriminationScore(q: AnalyzedQuestion): number {
   let base = (points * mult) / 10 * 100;
 
   // 서술형 보너스 +20%
-  if (q.question_format === 'essay') {
+  if (isEssay(q)) {
     base *= 1.2;
   }
 

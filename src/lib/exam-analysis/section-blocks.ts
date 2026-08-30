@@ -8,7 +8,8 @@
  * ⚠️ satori/fs/resvg import 금지 — 클라이언트 번들에 들어가므로 순수 함수만.
  */
 
-export const SECTION_IMAGE_VERSION = 'v1';
+// v2 (2026-08-30): 서술형 판정 통일 — essayCount 가 달라질 수 있어 옛 PNG 재사용 방지.
+export const SECTION_IMAGE_VERSION = 'v2';
 
 /** 현재 satori로 PNG 생성 가능한 섹션 key (나머지는 차트/추후 확장) */
 export const RENDERABLE_SECTION_KEYS = ['intro'];

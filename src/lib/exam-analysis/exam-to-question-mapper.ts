@@ -7,6 +7,7 @@
  */
 
 import type { AnalyzedQuestion } from './types';
+import { isEssay, resolveQuestionFormat } from './shared/question-format';
 
 // ── 난이도 매핑: 기출분석 5단계 → Question 4단계 ──
 
@@ -178,7 +179,9 @@ export function mergeExtractedWithAnalysis(
   const maxObjectiveNum = Math.max(
     0,
     ...analyzed
-      .filter(q => q.question_format === 'objective' || q.question_format === 'short_answer')
+      // 서술형만 빼는 게 의도다. 예전엔 형식이 비어 있는 문항까지 함께 빠져
+      // maxObjectiveNum 이 실제보다 작아졌다.
+      .filter(q => !isEssay(q))
       .map(q => {
         const n = typeof q.question_number === 'number'
           ? q.question_number
@@ -208,9 +211,9 @@ export function mergeExtractedWithAnalysis(
     if (meta) {
       matchedNums.add(ext.questionNum);
       const { chapter, section } = parseTopicToChapter(meta.topic);
-      const rawType = meta.question_format
-        ? EXAM_FORMAT_TO_TYPE[meta.question_format] || (ext.type as QuestionType) || 'SHORT_ANSWER'
-        : (ext.type as QuestionType) || 'SHORT_ANSWER';
+      const rawType = EXAM_FORMAT_TO_TYPE[resolveQuestionFormat(meta)]
+        || (ext.type as QuestionType)
+        || 'SHORT_ANSWER';
       const finalChoices = ext.choices.length > 0 ? ext.choices : undefined;
 
       questions.push({

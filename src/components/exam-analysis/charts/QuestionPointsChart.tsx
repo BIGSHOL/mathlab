@@ -17,6 +17,7 @@ import {
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { sumPoints } from '@/lib/exam-analysis/points';
 import { DIFFICULTY_COLORS as DIFF_COLORS } from '@/lib/exam-analysis/constants';
+import { resolveQuestionFormat } from '@/lib/exam-analysis/shared/question-format';
 
 interface QuestionPointsChartProps {
   questions: AnalyzedQuestion[];
@@ -79,7 +80,7 @@ export function QuestionPointsChart({ questions, embedded }: QuestionPointsChart
         difficulty: normalizedDiff,
         diffLevel: DIFFICULTY_LEVEL[normalizedDiff ?? ''] || Number(normalizedDiff ?? '') || 1,
         color: COLORS[normalizedDiff ?? ''] || COLORS[diff ?? ''] || '#94A3B8',
-        format: q.question_format || 'objective',
+        format: resolveQuestionFormat(q),
       };
     });
 

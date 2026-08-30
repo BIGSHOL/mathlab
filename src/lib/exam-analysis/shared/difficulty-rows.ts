@@ -23,6 +23,7 @@
  * 템플릿 문자열을 갖고 있으면 반드시 갈라진다 — 실제로 V3 에만 레거시 난이도 변환이
  * 있고 V4 에는 없었다. 산출물과 그 산출물을 설명하는 입력을 한 곳에서 파생시킨다(§12-13).
  */
+import { isEssay } from './question-format';
 
 /** 문항표 한 행. `CommentaryResult['v4_difficulty_rows']` 의 원소 타입. */
 export type DifficultyRow = {
@@ -112,7 +113,7 @@ export function formatQuestionLine(q: RowSourceQuestion): string {
   const topic = q.topic || '미분류';
   const lv = normalizeLevel(q.difficulty) ?? '?';
   const pts = q.points ?? 0;
-  const fmt = q.question_format === 'essay' ? ' [서술형]' : '';
+  const fmt = isEssay(q) ? ' [서술형]' : '';
   const comment = (q.ai_comment || '').trim();
   const reason = (q.difficulty_reason || '').trim();
   return (

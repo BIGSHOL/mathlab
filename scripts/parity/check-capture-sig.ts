@@ -59,7 +59,11 @@ const base = () =>
   });
 
 console.log('── 캡처 시그니처 (naver-capture-sig) ──');
-ok(NAVER_CAPTURE_VERSION === 'v4', '버전이 v4', NAVER_CAPTURE_VERSION);
+// 버전 핀은 트립와이어다 — 올릴 때 "왜 올렸는지"를 여기 남기게 만든다.
+// v4 → v5 (2026-08-30): 서술형 판정을 shared/question-format 로 통일.
+//   형식이 비었거나 변형 표기인 문항이 이제 올바른 칸에 들어가 형식 분포·서술형
+//   카운트가 실린 지면이 달라진다. 블록 id 는 그대로라 구조 서명으로는 안 잡힌다.
+ok(NAVER_CAPTURE_VERSION === 'v5', '버전이 v5', NAVER_CAPTURE_VERSION);
 
 const a = base();
 const b = buildNaverCaptureSig({

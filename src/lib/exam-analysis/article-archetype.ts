@@ -10,6 +10,7 @@
 
 import type { AnalyzedQuestion } from './types';
 import { DIFFICULTY_LEGACY_MAP } from './constants';
+import { isEssay } from './shared/question-format';
 
 // ── 5가지 Archetype ──
 export type Archetype =
@@ -120,7 +121,7 @@ export function classifySignals(input: {
     const nd = normalizeDiffNum(q.difficulty);
     const mult = (nd != null ? ({ 1: 0.3, 2: 0.5, 3: 0.65, 4: 0.8, 5: 1.0 } as Record<number, number>)[nd] : undefined) || 0.5;
     let base = (points * mult) / 10 * 100;
-    if (q.question_format === 'essay') base *= 1.2;
+    if (isEssay(q)) base *= 1.2;
     if ((nd === 1 || nd === 2) && points >= 5) base *= 0.7;
     if ((nd === 4 || nd === 5) && points >= 4) base *= 1.15;
     return Math.min(100, Math.max(0, Math.round(base)));
@@ -145,7 +146,7 @@ export function classifySignals(input: {
   const highDiffShare = totalQuestions ? (diffCounts[3] + diffCounts[4]) / totalQuestions : 0;
 
   // 서술형
-  const essays = questions.filter((q) => q.question_format === 'essay');
+  const essays = questions.filter(isEssay);
   const essayPts = essays.reduce((s, q) => s + (q.points || 0), 0);
   const essayWeightPct = totalPoints ? Math.round((essayPts / totalPoints) * 100) : 0;
   const essayAvgLevelNum = essays.length

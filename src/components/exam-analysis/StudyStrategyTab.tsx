@@ -17,6 +17,7 @@ import { LevelStrategiesSection } from './study-strategy/LevelStrategiesSection'
 import { TimelineSection } from './study-strategy/TimelineSection';
 import { PersonalizedStrategySection } from './study-strategy/PersonalizedStrategySection';
 import { GradeConnectionsSection } from './study-strategy/GradeConnectionsSection';
+import { isEssay } from '@/lib/exam-analysis/shared/question-format';
 
 interface StudyStrategyTabProps {
   questions: AnalyzedQuestion[];
@@ -72,11 +73,14 @@ export function StudyStrategyTab({ questions }: StudyStrategyTabProps) {
       if (q.difficulty) s.difficulties.push(q.difficulty);
       if (q.question_type) s.types.push(q.question_type);
 
-      const isEssay = q.question_format === 'essay' || q.question_format === 'short_answer';
+      // 이 값은 아래에서 `서술형 N번` / `서술형 N문항` 라벨로 렌더되고,
+      // 학습 전략 문구도 "풀이 과정을 논리적으로 작성"이라고 말한다.
+      // 단답형을 섞으면 [분석] 탭과 문항수가 어긋난다 — 풀이 채점 대상만 센다.
+      const essay = isEssay(q);
       const qNum = typeof q.question_number === 'number' ? q.question_number
         : parseInt(String(q.question_number).replace(/\D/g, '')) || 0;
 
-      if (isEssay) { s.essayCount++; if (qNum) s.essayNumbers.push(qNum); }
+      if (essay) { s.essayCount++; if (qNum) s.essayNumbers.push(qNum); }
       else { if (qNum) s.questionNumbers.push(qNum); }
     });
 
@@ -127,7 +131,7 @@ export function StudyStrategyTab({ questions }: StudyStrategyTabProps) {
       topicSummaries: sorted,
       chapterGroups: Array.from(chapterMap.values()).sort((a, b) => b.totalPoints - a.totalPoints),
       totalPoints: totalPts,
-      essayQuestions: questions.filter(q => q.question_format === 'essay' || q.question_format === 'short_answer'),
+      essayQuestions: questions.filter(isEssay),
       is4Level: is4L,
     };
   }, [questions]);

@@ -27,7 +27,8 @@
     "verify:contrast": "tsx scripts/parity/check-theme-contrast.ts",
     "verify:llm": "tsx scripts/parity/check-commentary-llm.ts",
     "verify:duration": "tsx scripts/parity/check-function-duration.ts",
-    "verify:rows": "tsx scripts/parity/check-difficulty-rows.ts"
+    "verify:rows": "tsx scripts/parity/check-difficulty-rows.ts",
+    "verify:format": "tsx scripts/parity/check-question-format.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

@@ -32,7 +32,10 @@ export function hashStr(s: string): string {
  *     (2) `.v3-*` CSS 의 색·타이포·간격만 바뀐 경우 — 구조 서명은 토큰 값을 보지 않는다
  *     (3) 캡처 파이프라인 자체(폭, html-to-image 옵션, 후처리, 이미지 포맷)가 바뀐 경우
  */
-export const NAVER_CAPTURE_VERSION = 'v4';
+// v5 (2026-08-30): 서술형 판정을 shared/question-format 로 통일. 형식이 비어 있거나
+//   변형 표기인 문항이 이제 올바른 칸에 들어가므로, 블록 id 는 그대로인데 형식 분포·
+//   서술형 카운트가 실린 지면이 달라진다 — 위 (1) 조항.
+export const NAVER_CAPTURE_VERSION = 'v5';
 
 /**
  * 문항 시그니처에 넣는 필드.

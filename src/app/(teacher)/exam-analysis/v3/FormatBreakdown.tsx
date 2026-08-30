@@ -8,6 +8,7 @@
 
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { sumPoints, formatPoints } from '@/lib/exam-analysis/points';
+import { resolveQuestionFormat } from '@/lib/exam-analysis/shared/question-format';
 
 const FORMATS = [
   { key: 'objective' as const, label: '객관식', color: 'var(--v3-ink)' },
@@ -17,7 +18,8 @@ const FORMATS = [
 
 export function FormatBreakdown({ questions }: { questions: AnalyzedQuestion[] }) {
   const stats = FORMATS.map((f) => {
-    const fQ = questions.filter((q) => q.question_format === f.key);
+    // 형식 정규화 경유 — 형식이 비었거나 변형 표기인 문항이 어느 카드에도 안 잡히던 문제.
+    const fQ = questions.filter((q) => resolveQuestionFormat(q) === f.key);
     return { ...f, count: fQ.length, points: sumPoints(fQ.map((q) => q.points)) };
   });
   const totalPts = sumPoints(stats.map((x) => x.points));

@@ -8,13 +8,14 @@
 
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { questionLevel } from '@/lib/exam-analysis/shared/difficulty';
+import { isEssay as isEssayQuestion } from '@/lib/exam-analysis/shared/question-format';
 
 export function KillerMap({ questions }: { questions: AnalyzedQuestion[] }) {
   const list = questions
     .map((q) => ({
       num: q.question_number,
       diff: questionLevel(q.difficulty),
-      isEssay: q.question_format === 'essay',
+      isEssay: isEssayQuestion(q),
     }))
     .sort((a, b) => {
       const numA = Number(String(a.num).replace(/\D/g, '')) || 0;
