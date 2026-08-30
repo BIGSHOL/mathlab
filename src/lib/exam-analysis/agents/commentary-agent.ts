@@ -1597,6 +1597,11 @@ ${questionDetails}
     // 예전엔 이 변환이 V3 에만 있어 같은 문항이 두 경로에서 다른 Lv 로 실렸다(§12-4).
     const questionDetails = formatQuestionDetails(basicAnalysis.questions);
 
+    // 핵심 문항 개수를 시험 규모에 연동한다. 예전엔 3~5개 고정이라 30문항·서술형6개 시험과
+    // 15문항 시험이 같은 분량을 받았다. 상한 8개 — 더 늘어나면 "핵심"이 아니고 출력도 밀린다.
+    const kqCount = Math.min(8, Math.max(3, basicAnalysis.questions.filter(isEssay).length + 2,
+      Math.round(basicAnalysis.questions.length / 5)));
+
     // ── 이 시험만의 특이 신호 (헤드라인·callout 1순위 소재 — "옆 학원이 못 하는 말") ──
     // 서술형 1/3 배점·객관식 위주 같은 전국 표준은 발견이 아니다. 표준 대비 *편차/쏠림*만 surface.
     const leafSeg = (t?: string | null) => { const p = String(t || '미분류').split('>').map((s) => s.trim()); return p[p.length - 1] || '미분류'; };
@@ -1666,7 +1671,7 @@ ${questionDetails}
 - nearby_comparison: ${base.nearby_comparison ? base.nearby_comparison.slice(0, 400) : '(없음)'}
 
 위 데이터로 시스템 프롬프트의 V3 신규 필드 JSON을 작성하세요. **데이터에 없는 숫자/이름을 지어내지 말 것.** 학생 응답이 없으면 grade_cuts는 빈 배열. 학교 정보가 없으면 Q4 (학교 비교)를 생략하고 4문항만 작성.
-**v4_difficulty_rows는 위 "문항 전체"의 모든 문항을 포함**하되, 네가 새로 쓰는 것은 **analysis_short 뿐**이다 — 번호·단원·Lv·배점은 시스템이 문항 데이터에서 직접 채우므로 네가 적은 값은 무시된다(question_number 는 조인 키이므로 위 목록의 표기를 그대로 쓸 것). **v4_final_strategy.area는 위 "단원별 출제"에 있는 단원에서만** 선정(다음 시험 추측 금지). **v4_previous_comparison은 비교 데이터 있을 때만**(없으면 null).`;
+**v4_difficulty_rows는 위 "문항 전체"의 모든 문항을 포함**하되, 네가 새로 쓰는 것은 **analysis_short 뿐**이다 — 번호·단원·Lv·배점은 시스템이 문항 데이터에서 직접 채우므로 네가 적은 값은 무시된다(question_number 는 조인 키이므로 위 목록의 표기를 그대로 쓸 것). **v4_key_questions 는 ${kqCount}개** 작성(이 시험 규모에 맞춰 산출된 수 — Lv3~Lv5 · 서술형 우선). **v4_final_strategy.area는 위 "단원별 출제"에 있는 단원에서만** 선정(다음 시험 추측 금지). **v4_previous_comparison은 비교 데이터 있을 때만**(없으면 null).`;
   }
 
   // ── JSON 추출 (다단계 복구) ──

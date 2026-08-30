@@ -7,6 +7,46 @@ import { sumPoints } from '@/lib/exam-analysis/points';
 import { DIFFICULTY_LABELS, DIFFICULTY_COLORS, ESSAY_CHECKLIST, ESSAY_DEDUCTION_CASES } from './constants';
 import { ESSAY_ADVANCED_GUIDES } from '@/lib/exam-analysis/data/curriculum-strategies';
 
+/**
+ * 배점별 서술 분량 가이드.
+ *
+ * 예전엔 이 목록이 JSX 안에 인라인으로 박혀 있어 **문항과 따로 놀았다** —
+ * 이 시험의 9점짜리 서술형을 보면서도 "7점 이상은 이렇게 쓰세요"를
+ * 사용자가 직접 매칭해야 했다. 상수로 빼서 문항 카드에 조인한다.
+ */
+const ESSAY_LENGTH_TIERS = [
+  {
+    max: 4,
+    points: '3~4점',
+    guide: '핵심 풀이 2~3줄 + 답',
+    detail: '간결하게 핵심만 서술. 공식 적용 1줄 + 계산 1~2줄 + 최종 답',
+    barWidth: '40%',
+    color: 'bg-emerald-500',
+  },
+  {
+    max: 6,
+    points: '5~6점',
+    guide: '조건 정리 1줄 + 풀이 3~4줄 + 답',
+    detail: '주어진 조건을 먼저 정리하고, 풀이 과정을 단계별로 전개',
+    barWidth: '65%',
+    color: 'bg-amber-500',
+  },
+  {
+    max: Number.POSITIVE_INFINITY,
+    points: '7점 이상',
+    guide: '조건 정리 + 풀이 전략 + 상세 풀이 + 검증 + 답',
+    detail: '완전한 논술형 답안. 조건 정리, 사용할 정리 명시, 상세 풀이, 답 검증까지',
+    barWidth: '100%',
+    color: 'bg-red-500',
+  },
+] as const;
+
+/** 배점을 모르면 null — 모르는 것을 추측해 가이드를 붙이지 않는다. */
+function lengthTierFor(points: number | null | undefined) {
+  if (typeof points !== 'number' || !Number.isFinite(points) || points <= 0) return null;
+  return ESSAY_LENGTH_TIERS.find((t) => points <= t.max) ?? null;
+}
+
 interface EssayPreparationSectionProps {
   essayQuestions: AnalyzedQuestion[];
   isSectionExpanded: boolean;
@@ -60,7 +100,8 @@ export function EssayPreparationSection({
           {/* 서술형 문항 카드 그리드 (2x2) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {essayQuestions.map(q => {
-              const topic = q.topic ? q.topic.split(' > ').pop() || q.topic : '미분류';
+              const topic = q.topic ? q.topic.split(' > ').pop() || q.topic : '미분류';
+              const tier = lengthTierFor(q.points);
               return (
                 <div
                   key={String(q.question_number)}
@@ -83,6 +124,18 @@ export function EssayPreparationSection({
                     </div>
                   </div>
                   <p className="text-xs text-slate-600 truncate">{topic}</p>
+                  {/* 시험지를 보고 이미 뽑아 둔 근거. 예전엔 버리고 번호·난이도·배점만 보였다. */}
+                  {q.ai_comment && (
+                    <p className="text-[11px] text-slate-500 leading-relaxed mt-1.5">{q.ai_comment}</p>
+                  )}
+                  {q.difficulty_reason && (
+                    <p className="text-[10px] text-slate-400 mt-1">난이도 근거: {q.difficulty_reason}</p>
+                  )}
+                  {tier && (
+                    <p className="text-[10px] text-slate-500 mt-1.5 pt-1.5 border-t border-slate-200/70">
+                      <span className="font-semibold text-slate-600">{tier.points}</span> · {tier.guide}
+                    </p>
+                  )}
                 </div>
               );
             })}
@@ -211,29 +264,7 @@ export function EssayPreparationSection({
               <h4 className="text-sm font-semibold text-slate-800">배점별 서술 분량 가이드</h4>
             </div>
             <div className="space-y-2">
-              {[
-                {
-                  points: '3~4점',
-                  guide: '핵심 풀이 2~3줄 + 답',
-                  detail: '간결하게 핵심만 서술. 공식 적용 1줄 + 계산 1~2줄 + 최종 답',
-                  barWidth: '40%',
-                  color: 'bg-emerald-500',
-                },
-                {
-                  points: '5~6점',
-                  guide: '조건 정리 1줄 + 풀이 3~4줄 + 답',
-                  detail: '주어진 조건을 먼저 정리하고, 풀이 과정을 단계별로 전개',
-                  barWidth: '65%',
-                  color: 'bg-amber-500',
-                },
-                {
-                  points: '7점 이상',
-                  guide: '조건 정리 + 풀이 전략 + 상세 풀이 + 검증 + 답',
-                  detail: '완전한 논술형 답안. 조건 정리, 사용할 정리 명시, 상세 풀이, 답 검증까지',
-                  barWidth: '100%',
-                  color: 'bg-red-500',
-                },
-              ].map((item, idx) => (
+              {ESSAY_LENGTH_TIERS.map((item, idx) => (
                 <div key={idx} className="rounded-sm shadow-sm p-3 bg-slate-50/50">
                   <div className="flex items-center gap-2 mb-1.5">
                     <span className={`px-2 py-0.5 rounded-sm text-[10px] font-bold text-white ${item.color}`}>
