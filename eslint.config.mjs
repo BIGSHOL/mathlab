@@ -10,6 +10,8 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  // 사문화된 코드 보관소 — 빌드·타입체크·린트 대상이 아니다 (tsconfig exclude 와 짝)
+  { ignores: ['_archive/**'] },
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
   {
     rules: {
