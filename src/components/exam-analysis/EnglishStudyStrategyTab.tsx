@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { AlertTriangle, Brain, Languages, Quote, Repeat2, Target } from 'lucide-react';
+import { AlertTriangle, Brain, GraduationCap, Languages, Quote, Repeat2, Target } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -32,6 +32,9 @@ import { collectQuestionEvidence } from '@/lib/exam-analysis/shared/question-evi
 import { QuestionEvidenceList } from './QuestionEvidenceList';
 import { buildAbilityBreakdown } from '@/lib/exam-analysis/shared/ability-breakdown';
 import { AbilityBreakdownView } from './AbilityBreakdownView';
+import { englishLevelStrategiesFor } from '@/lib/exam-analysis/shared/english-level-strategy';
+import { weightedAverageDifficulty } from '@/lib/exam-analysis/shared/difficulty';
+import { EnglishLevelStrategies } from './EnglishLevelStrategies';
 
 interface EnglishStudyStrategyTabProps {
   questions: AnalyzedQuestion[];
@@ -66,6 +69,7 @@ function studyRequestBody(extra: Record<string, unknown> = {}): string {
 
 export function EnglishStudyStrategyTab({
   questions,
+  grade,
   examPaperId,
   analysisId,
   storedPack,
@@ -88,6 +92,15 @@ export function EnglishStudyStrategyTab({
 
   // 능력 축 — 문항 메타데이터만 쓰므로 단어·구문 추출과 무관하다(같은 이유로 로딩·실패 때도 보인다).
   const abilityBreakdown = useMemo(() => buildAbilityBreakdown('ENGLISH', questions), [questions]);
+
+  // 수준별 전략 — 고등 전용 데이터라 중학 시험지에서는 빈 배열이 오고 블록이 안 생긴다.
+  const levelStrategies = useMemo(() => englishLevelStrategiesFor(grade), [grade]);
+  const examProfile = useMemo(() => {
+    if (!questions.length) return undefined;
+    const hard = questions.filter((q) => isHighDifficulty(q.difficulty)).length;
+    const w = weightedAverageDifficulty(questions);
+    return { hardRatio: hard / questions.length, avgDifficulty: w.avg > 0 ? w.avg : null };
+  }, [questions]);
   // 저장된 팩이라도 **구버전이면 쓰지 않는다** — 추출 규칙이 바뀌었는데 옛 결과를 보여주면
   // 규칙 개선이 영원히 사용자에게 도달하지 않는다.
   const parsedStored = useMemo(() => {
@@ -240,11 +253,23 @@ export function EnglishStudyStrategyTab({
     </Board>
   ) : null;
 
+  const levelBoard = levelStrategies.length > 0 ? (
+    <Board
+      title="수준별 학습 전략"
+      hint={`${levelStrategies.length}단계`}
+      icon={<GraduationCap className="w-3.5 h-3.5 text-blue-600" />}
+      iconBg="bg-blue-500/15"
+    >
+      <EnglishLevelStrategies strategies={levelStrategies} profile={examProfile} />
+    </Board>
+  ) : null;
+
   // 문항 메타데이터만 쓰는 블록들 — 세 분기 어디서나 같이 보여야 한다.
   const headBoards = (
     <>
       {focusBoard}
       {abilityBoard}
+      {levelBoard}
     </>
   );
 
