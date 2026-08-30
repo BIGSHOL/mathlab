@@ -8,6 +8,7 @@ import { DIFFICULTY_WEIGHT } from './study-strategy/constants';
 
 // 섹션 컴포넌트
 import { TopicAnalysisSection } from './study-strategy/TopicAnalysisSection';
+import { AbilitySection } from './study-strategy/AbilitySection';
 import { LearningStrategiesSection } from './study-strategy/LearningStrategiesSection';
 import { EssayPreparationSection } from './study-strategy/EssayPreparationSection';
 import { TimeAllocationSection } from './study-strategy/TimeAllocationSection';
@@ -19,6 +20,7 @@ import { PersonalizedStrategySection } from './study-strategy/PersonalizedStrate
 import { GradeConnectionsSection } from './study-strategy/GradeConnectionsSection';
 import { isEssay } from '@/lib/exam-analysis/shared/question-format';
 import { collectQuestionEvidence } from '@/lib/exam-analysis/shared/question-evidence';
+import { buildAbilityBreakdown } from '@/lib/exam-analysis/shared/ability-breakdown';
 
 interface StudyStrategyTabProps {
   questions: AnalyzedQuestion[];
@@ -26,7 +28,7 @@ interface StudyStrategyTabProps {
 }
 
 const ALL_SECTIONS: SectionId[] = [
-  'personalized', 'topicAnalysis', 'learningStrategies', 'essay',
+  'personalized', 'topicAnalysis', 'ability', 'learningStrategies', 'essay',
   'timeAllocation', 'mistakes', 'connections', 'killer', 'levelStrategies', 'timeline',
 ];
 
@@ -145,6 +147,9 @@ export function StudyStrategyTab({ questions }: StudyStrategyTabProps) {
     };
   }, [questions]);
 
+  // 능력 축은 단원 축과 직교한다 — 같은 문항을 "무엇을" 대신 "어떤 힘으로" 로 묶는다.
+  const abilityBreakdown = useMemo(() => buildAbilityBreakdown('MATH', questions), [questions]);
+
   // ── 정오답 분석 ──
   const gradingAnalysis = useMemo(() => {
     const graded = questions.filter(q => q.is_correct === true || q.is_correct === false);
@@ -223,6 +228,13 @@ export function StudyStrategyTab({ questions }: StudyStrategyTabProps) {
         is4Level={is4Level}
         isSectionExpanded={expandedSections.has('topicAnalysis')}
         onToggleSection={() => toggleSection('topicAnalysis')}
+      />
+
+      {/* 2-1. 능력 영역별 배점 — 단원(무엇을) 옆의 다른 축(어떤 힘을) */}
+      <AbilitySection
+        breakdown={abilityBreakdown}
+        isSectionExpanded={expandedSections.has('ability')}
+        onToggleSection={() => toggleSection('ability')}
       />
 
       {/* 3. 영역별 학습 전략 */}

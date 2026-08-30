@@ -76,6 +76,7 @@ export interface ErrorTypeSummary {
 
 export type SectionId =
   | 'topicAnalysis'
+  | 'ability'
   | 'learningStrategies'
   | 'essay'
   | 'timeAllocation'

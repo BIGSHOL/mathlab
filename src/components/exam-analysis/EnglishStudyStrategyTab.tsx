@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { AlertTriangle, Languages, Quote, Repeat2, Target } from 'lucide-react';
+import { AlertTriangle, Brain, Languages, Quote, Repeat2, Target } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -30,6 +30,8 @@ import { isHighDifficulty } from '@/lib/exam-analysis/shared/difficulty';
 import { isEssay } from '@/lib/exam-analysis/shared/question-format';
 import { collectQuestionEvidence } from '@/lib/exam-analysis/shared/question-evidence';
 import { QuestionEvidenceList } from './QuestionEvidenceList';
+import { buildAbilityBreakdown } from '@/lib/exam-analysis/shared/ability-breakdown';
+import { AbilityBreakdownView } from './AbilityBreakdownView';
 
 interface EnglishStudyStrategyTabProps {
   questions: AnalyzedQuestion[];
@@ -83,6 +85,9 @@ export function EnglishStudyStrategyTab({
   );
   const focusEvidence = useMemo(() => collectQuestionEvidence(focusQuestions), [focusQuestions]);
   const focusMissing = focusQuestions.length - focusEvidence.length;
+
+  // 능력 축 — 문항 메타데이터만 쓰므로 단어·구문 추출과 무관하다(같은 이유로 로딩·실패 때도 보인다).
+  const abilityBreakdown = useMemo(() => buildAbilityBreakdown('ENGLISH', questions), [questions]);
   // 저장된 팩이라도 **구버전이면 쓰지 않는다** — 추출 규칙이 바뀌었는데 옛 결과를 보여주면
   // 규칙 개선이 영원히 사용자에게 도달하지 않는다.
   const parsedStored = useMemo(() => {
@@ -224,10 +229,29 @@ export function EnglishStudyStrategyTab({
     </Board>
   ) : null;
 
+  const abilityBoard = abilityBreakdown.groups.length > 0 ? (
+    <Board
+      title="능력 영역별 배점"
+      hint={`${abilityBreakdown.groups.length}개 영역`}
+      icon={<Brain className="w-3.5 h-3.5 text-teal-600" />}
+      iconBg="bg-teal-500/15"
+    >
+      <AbilityBreakdownView breakdown={abilityBreakdown} />
+    </Board>
+  ) : null;
+
+  // 문항 메타데이터만 쓰는 블록들 — 세 분기 어디서나 같이 보여야 한다.
+  const headBoards = (
+    <>
+      {focusBoard}
+      {abilityBoard}
+    </>
+  );
+
   if (loading && !pack) {
     return (
       <div className="space-y-4">
-        {focusBoard}
+        {headBoards}
         <p className="text-sm text-slate-600">
           시험지에 적힌 영어 단어와 구문을 찾고 있습니다. 빈칸 추론 같은 유형 이름이 아니라, 실제로 나온 표현만 모읍니다.
         </p>
@@ -243,7 +267,7 @@ export function EnglishStudyStrategyTab({
   if (error || !pack) {
     return (
       <div className="space-y-4">
-        {focusBoard}
+        {headBoards}
         <div className="border rounded-sm bg-white p-6 text-center space-y-3">
           <p className="text-sm text-slate-600">{error || '시험지에서 단어·구문을 찾지 못했습니다'}</p>
           <Button size="sm" onClick={retry}>다시 정리</Button>
@@ -262,9 +286,9 @@ export function EnglishStudyStrategyTab({
 
   return (
     <div className="space-y-4">
-      {/* 문항 근거를 먼저 — 아래 안내문은 단어·구문 보드를 설명하는 것이라
+      {/* 문항 메타데이터 블록을 먼저 — 아래 안내문은 단어·구문 보드를 설명하는 것이라
           그 문장과 보드 사이에 다른 블록이 끼면 글이 어긋난다. */}
-      {focusBoard}
+      {headBoards}
 
       <p className="text-sm text-slate-600 leading-relaxed">
         {source === 'questions' ? (
