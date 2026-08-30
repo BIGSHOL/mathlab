@@ -91,7 +91,7 @@
 **원칙: 동일한 데이터는 어떤 페이지에서든 동일한 형태로 렌더링해야 한다.**
 - 문제 내용, 객관식 보기, 블록인용(보기 박스), 정답/풀이 등 같은 항목은 모든 곳에서 동일 뷰
 - 폭, 간격, 스타일이 페이지마다 달라지면 안 됨 → 편집/수정 시 이질감 발생
-- 공통 렌더링 컴포넌트(`MathRenderer`, `EditableMathRenderer`) 사용을 통일
+- 공통 렌더링 컴포넌트 `MathRenderer` 로 통일 (EditableMathRenderer 는 2026-04-15 에 흡수됨 — 별도 컴포넌트 없음)
 - 객관식 보기: 항상 `grid-cols-2` + 테두리 박스 스타일 (`px-3 py-2 bg-slate-50 rounded-sm border`)
 - 새 뷰/페이지 추가 시 기존 렌더링 패턴을 반드시 확인 후 동일하게 적용
 
@@ -228,7 +228,7 @@ toast.info('AI가 분석 중입니다');
 **UI 표준:**
 - 모서리 둥글기: `rounded-sm` 표준 — `rounded-lg` 사용 금지 (Card, Badge 등 컴포넌트 내부 제외)
 - 버튼: 반드시 `<Button>` 컴포넌트 사용 — 커스텀 button 스타일 직접 작성 금지
-- 빈 상태: `<LoadingEmptyState>` 컴포넌트 사용 권장
+- 빈 상태: 공용 컴포넌트 없음 — `<p className="text-xs text-slate-400 py-4 text-center">…없습니다</p>` 인라인 패턴 (`LoadingEmptyState` 는 `_archive/` 로 이관됨)
 - 로딩: `<Skeleton>` 컴포넌트 사용 — `animate-pulse` 직접 사용 지양
 - 스크롤바: 글로벌 thin 스크롤바 적용 (5px, 반투명) — 숨기려면 `.no-scrollbar` 클래스 사용
 - 페이지네이션: `<Pagination>` 컴포넌트 사용, 사이드바 등 좁은 영역은 `compact` prop 사용
@@ -557,56 +557,47 @@ node -e "fetch('https://dapi.kakao.com/v2/local/search/address.json?query=' + en
 
 ## 프로젝트 구조
 
+> **`_archive/`** — 기출분석 전용화로 사문화된 코드의 보관소(2026-08-30, 77파일 10,415줄).
+> 원래 상대경로를 그대로 유지하므로 **되살릴 땐 `_archive/` 접두사만 떼면 된다.**
+> `tsconfig.json` · `eslint.config.mjs` · `.vercelignore` 에서 제외 — 빌드·타입체크·배포 대상이 아니다.
+> 여기서 뭔가를 import 하고 있다면 그건 실수다. 묶음별 되돌리기: `git revert <해당 chore(정리) 커밋>`
+
 ```
 src/
 ├── app/
-│   ├── (student)/     # 학생 페이지 (dashboard, subjects, concepts, practice, my-tests, ranking, quiz, quiz-join, profile, diagnostics, solve, help-public, updates)
-│   ├── (teacher)/     # 선생님 페이지 (overview, students, concepts, questions, tests, homework, analytics, quiz, worksheet, manual-grading, reports, level-test, courses, licenses, exam-analysis, settings, updates, help, support, student-preview, admin)
-│   ├── api/           # API 라우트 (162+ endpoints)
+│   ├── (auth)/        # 로그인
+│   ├── (teacher)/     # 선생님 페이지 (exam-analysis, admin, billing, entitlements)
+│   ├── demo/          # 비로그인 체험 (익명화 픽스처)
+│   ├── api/           # admin, auth, billing, entitlements, exam-analysis,
+│   │                  # inquiries, parax, questions, schools, users, webhooks
+│   ├── page.tsx       # 공개 랜딩
 │   └── globals.css    # Tailwind 테마 + 디자인 토큰
 ├── components/
-│   ├── layout/        # Sidebar, DashboardShell, CommandPalette
-│   ├── ui/            # Button, Pagination, Toast, Skeleton, MotionStagger, XpToast, PageContainer, Tabs, MathSpinner 등 공통 UI
-│   ├── providers/     # SessionProvider, TenantProvider (NextAuth + 멀티테넌트)
-│   ├── math/          # MathRenderer, EditableMathRenderer, DiagramRenderer, DiagramEditorPopup, ProblemDisplay
-│   ├── learning/      # 개념학습, 빈칸연습
-│   ├── test/          # 시험 응시, 제출, AssignPanel
-│   ├── homework/      # 숙제 계획, 응시 (ConceptHomeworkTab, QuestionHomeworkTab)
-│   ├── teacher/       # 선생님 전용 (학생관리, 개념관리, 시험관리)
-│   ├── bulk-import/   # 일괄 가져오기
-│   ├── curriculum/    # 교육과정 트리
-│   ├── gamification/  # 랭킹, XP 표시
-│   ├── ranking/       # 랭킹 UI 컴포넌트 (TopThreePodium, RankingList, RankingInsights, RankChangeIndicator)
-│   ├── student/       # 학생 전용 (DailyMissionCard, DailyQuestionCard, DashboardGamification, RevengeBanner)
-│   ├── report/        # 레벨테스트 보고서 렌더링
-│   ├── exam-analysis/ # 기출 분석 (AnalysisResultView, TypeRadarChart, StudyStrategyTab, ArticleEditorModal, ExtractToBankModal)
-│   ├── worksheet-wizard/  # 학습지 3단계 위자드 (Step1~3)
-│   ├── level-test-editor/ # 레벨테스트 편집기
-│   ├── level-test/    # 레벨테스트 결과 표시 (ChapterMasteryGrid, DifficultyBreakdown 등)
-│   ├── manual-grading/    # 수기 채점 인터페이스
-│   ├── charts/        # 학습분석 차트
-│   ├── updates/       # 업데이트 공지
-│   └── print-preview/ # 인쇄 모드
+│   ├── exam-analysis/ # 기출 분석 UI (본체)
+│   ├── ui/            # Button, Input, Toast, Skeleton, Pagination, Tabs,
+│   │                  # PageContainer, PageHeader, ConfirmDialog, MathSpinner,
+│   │                  # LogoIcon, NarrowScreenGuard
+│   ├── math/          # MathRenderer + shared/
+│   ├── providers/     # SessionProvider, SubscriptionProvider
+│   ├── layout/        # ExamOnlyTopBar
+│   ├── admin-table/   # 관리자 표
+│   └── landing/       # 공개 랜딩
 ├── lib/
 │   ├── auth.ts        # NextAuth 설정
 │   ├── db.ts          # Prisma 싱글톤 클라이언트
-│   ├── tenant.ts      # 멀티테넌트 유틸
-│   ├── view-as.ts     # 선생님→학생 뷰 전환
-│   ├── api/           # API 헬퍼 레이어 (auth, errors, helpers, tenant-scope, license-guard, validation, homework-grid)
-│   ├── schemas/       # Zod 검증 스키마 (auth, concept, gamification, learning, question)
-│   ├── services/      # 핵심 비즈니스 로직 (22개 서비스)
-│   ├── utils/         # 유틸 (blank-generator, pdf-processor, features, curriculumMapping, xp, format, question-order, diagram-resolver, answer-status, date-engine, level-test-feedback, activity)
-│   │   └── svg-diagrams/  # SVG 다이어그램 렌더링 시스템 (26개 타입)
-│   ├── pdf-extract-engine/  # PDF 추출 엔진 (core, ai, hooks, presets — 14파일)
-│   ├── exam-analysis/       # 기출 분석 (types, constants, agents, article-generator, chart-image, nearby-school — 5대 영역/4대 능력/5단계 난이도)
-│   ├── diagram/       # 프리셋 기반 구조화 다이어그램 시스템 (DiagramSpec 6유형)
-│   ├── diagram-presets/   # 교육과정별 다이어그램 프리셋 (초72+중81+고56=209개)
-│   ├── constants/     # 교육과정 데이터, 연산 카테고리, 라벨, 시험전략, 학교(6,004개 GPS), 교재
-│   └── data/          # 정적 데이터 (업데이트 로그, 도움말)
-├── hooks/             # useAuth, useLearning, useGamification, useFeatureFlags, useBadgeCheck, useSpeed, useFetch, useTests, usePreviewScale, useLicenses, useQuestions 등
-├── stores/            # Zustand 글로벌 스토어 (gamification, wizard, manualGrading, xpNotification, updateNotification, license, conceptEditor)
-├── types/             # 공통 타입 정의 (diagram.ts, mathgen.ts, pdf-extract.ts, report.ts 등)
-└── scripts/           # DB 초기화, 시드 스크립트 (43+ 파일: TS/JS/Python)
+│   ├── exam-analysis/ # 기출 분석 엔진 (agents, blocks, data, english, math, shared)
+│   ├── api/           # API 헬퍼 (auth, errors, helpers, tenant-scope, validation)
+│   ├── billing/       # 구독 플랜 게이팅 (guard, plans)
+│   ├── entitlements/  # 이용 권한 (service)
+│   ├── demo/          # 데모 계정·픽스처 (accounts, demo-exams.json, naver-blocks, util)
+│   ├── parax/         # parax 연동 (handoff)
+│   ├── pdf-extract-engine/  # PDF 추출 (core, ai, hooks, presets)
+│   ├── services/      # gemini.ts, question-tagger.ts
+│   ├── schemas/       # question.ts (Zod)
+│   ├── constants/     # curriculum, schools(GPS), navigation, billing, site 등
+│   └── utils/         # box-grid.ts, school-matcher.ts
+├── hooks/             # useAuth, useExtractToBank
+└── types/             # index.ts(UserRole 등), mathgen.ts, diagram.ts, pdf-extract.ts
 ```
 
 ## 주요 도메인
@@ -787,68 +778,28 @@ PDF 업로드 → 수동 분석 → status=COMPLETED
 2. **문제 편집**: AI 생성 문제 검토/수정/삭제/추가
 3. **최종 설정**: 제목, 시간, 배점 설정 후 저장
 
-### SVG 다이어그램 시스템
+### SVG 다이어그램 시스템 — `_archive/` 로 이관됨 (2026-08-30)
 
-두 가지 병렬 시스템이 존재하며, DB에는 `diagramSpec Json?` (구조화) + `diagramSVG String?` (레거시 1개) 필드로 저장:
+기출분석 전용화로 **문제 생성·PDF 다이어그램 렌더링 경로가 사라져** 코드 전체가 사문화됐다.
+`DiagramParam[]` 26개 타입, `DiagramSpec` 6유형, 교육과정 프리셋 209개, `DiagramRenderer`,
+`DiagramEditorPopup` 모두 **삭제가 아니라 이관**이다 — `_archive/src/lib/utils/svg-diagrams/` 등.
 
-**1. DiagramParam[] (SVG-Diagrams, 26개 타입)** — `src/lib/utils/svg-diagrams/`
-- 용도: PDF 추출 시 Gemini가 반환하는 파라미터 배열 → SVG 렌더링
-- 진입점: `renderDiagram(data)` in `index.ts`
-- 공유 유틸: `svg-utils.ts` (svgWrap, line, text, katexLabel, circle, rect, arrowHead, COLORS)
-- 각 타입별 normalize 함수가 Gemini의 불규칙한 파라미터명 처리
-- **초등 (13):** number_line, fraction_circle, fraction_rect, place_value, dot_array, flow_chart, bar_chart, line_graph, picture_graph, pie_chart, band_chart, angle_figure, clock_face
-- **중등 (13):** coordinate_plane, circle, triangle, quadrilateral, function_graph, venn_diagram, regular_polygon, histogram, stem_leaf, solid_figure, net_diagram, tree_diagram, scatter_plot
-  - `shapes.ts`에 circle/triangle/quadrilateral/regular_polygon 4개 서브렌더러 통합
+- 되살리려면 경로에서 `_archive/` 접두사만 떼면 된다 (전부 100% 동일 rename)
+- 묶음 단위 되돌리기: `git revert 9231e5ab` (다이어그램 34파일)
+- `_archive/` 는 `tsconfig.json` · `eslint.config.mjs` · `.vercelignore` 에서 제외 — 빌드·타입체크·배포 대상 아님
+- DB `Question.diagramSpec` / `diagramSVG` 컬럼은 **그대로 남아 있다** (데이터 보존)
 
-**2. DiagramSpec (프리셋 기반, 6개 유형 + 17개 프리셋)** — `src/lib/diagram/`
-- 용도: AI 문제 생성 시 좌표 없이 프리셋+속성만으로 정확한 도형 생성
-- 렌더러: `src/lib/diagram/shapes/` — triangle, circle, quadrilateral, coordinate, solid (5개 파일)
-- 정규화: `src/lib/diagram/normalize.ts` — 프리셋 → 좌표 자동 계산
-- 타입 정의: `src/types/diagram.ts`
-
-| 유형 | 프리셋/기능 |
-|------|------------|
-| `triangle` | right, equilateral, isosceles, scalene, right-isosceles + 특수점(내심/외심/무게중심/수심), 보조선(중선/수선/각이등분선/수직이등분선), 내접원/외접원, 외각연장선/외각호 |
-| `circle` | 현, 접선, 호, 중심각, 원주각, 내접다각형, 반지름선 |
-| `quadrilateral` | square, rectangle, parallelogram, rhombus, trapezoid, general + 대각선, 합동표시(빗금), 평행표시(화살표), 직각표시 |
-| `coordinatePlane` | 함수그래프(수식→자동계산), 점, 직선/선분, 영역색칠 |
-| `solid` | cube, cylinder, cone, sphere, prism, pyramid |
-| `composite` | 위 도형들 조합 (소문항 2개 이상 도형 배치) |
-
-**통합 렌더러:** `DiagramRenderer.tsx` — `resolveDiagramSpec()` (`src/lib/utils/diagram-resolver.ts`)로 런타임 판별
-- `DiagramSpec` (단일 객체, AI 생성) → `renderDiagram` from `@/lib/diagram/renderer`
-- `DiagramParam[]` (배열, PDF 추출) → `renderDiagram` from `@/lib/utils/svg-diagrams`
-- DB `diagramSpec Json?` 필드에 두 포맷이 혼재 → 런타임 다형성으로 처리
-- `diagramSVG String?` — 레거시 raw SVG (현재 1개만 존재, 폴백 렌더링)
-
-**3. 교육과정 프리셋 (209개)** — `src/lib/diagram-presets/`
-- 학교급/학년/학기/단원별로 교육적으로 의미 있는 다이어그램 기본값을 미리 정의
-- 초등 72개 (1~6학년, 12학기) + 중등 81개 (1~3학년, 6학기) + 고등 56개 (7과목)
-- 총 25개 학년/학기 키 커버
-- 트리 구조: 학교급 → 학년/학기 → 단원 → 프리셋 목록
-- 검색: `searchPresets(query)`, 학년별 그룹: `groupPresetsByGrade(level)`
-
-**4. 렌더 디스패처 + normalize** — `src/lib/utils/svg-diagrams/index.ts`
-- `renderDiagram({ type, params })` 단일 진입점. 26개 타입 switch로 분기.
-- Gemini가 반환하는 불규칙 파라미터명(`totalParts`/`parts`/`denominator` 등)을 타입별 `normalize*()` 함수로 정규화한 뒤 렌더.
-- 함수 그래프 표현식은 `shared/expression-parser.ts`의 안전 파서(재귀 하강)로 평가 — `new Function` 사용 금지.
-
-**편집기:** `DiagramEditorPopup.tsx` — 26개 DiagramParam 타입 모두 GUI 편집 가능
-- 타입별 기본 파라미터: `src/components/math/diagram-editor/types.ts`
-
-**DB 현황:** diagramSpec 927개 / diagramSVG 1개 (레거시)
+⚠️ 새 코드에서 `@/lib/utils/svg-diagrams`, `@/lib/diagram`, `@/lib/utils/diagram-resolver` 를
+import 하지 말 것 — 지금은 존재하지 않는 경로다.
 
 ### 수학 렌더링 컴포넌트 (`src/components/math/`)
 
 | 컴포넌트 | 용도 |
 |----------|------|
-| `MathRenderer` | 마크다운+LaTeX+SVG+GFM 테이블 렌더링. `onMathClick` prop 시 수식 클릭 편집 모드 활성 (원본 content 좌표 보존). EditableMathRenderer 흡수 통합 (2026-04-15) |
-| `DiagramRenderer` | DiagramSpec / DiagramParam[] 통합 → SVG 렌더링 (런타임 판별) |
-| `DiagramEditorPopup` | 26개 DiagramParam 타입 GUI 편집기 |
-| `ProblemDisplay` | 문제 전체 표시 (보기, 풀이, 인쇄) |
-| `MathLivePopup` | MathLive 수식 입력 팝업 |
-| `InlineMathText` | 인라인 수학 표시 |
+| `MathRenderer` | 마크다운+LaTeX+GFM 테이블 렌더링. `onMathClick` prop 시 수식 클릭 편집 모드 활성 (원본 content 좌표 보존). EditableMathRenderer 흡수 통합 (2026-04-15) |
 
+`DiagramRenderer` · `DiagramEditorPopup` · `ProblemDisplay` · `MathLivePopup` · `InlineMathText` 는
+기출분석 전용화 과정에서 제거/이관됐다 (위 섹션 참조).
 ### 문제(Question) 시스템
 
 **DB 모델:** Question — content(마크다운), choices(JSON), answer, explanation, diagramSpec(구조화 JSON), diagramSVG(레거시)
