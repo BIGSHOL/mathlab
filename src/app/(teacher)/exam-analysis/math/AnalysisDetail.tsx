@@ -33,6 +33,7 @@ import { sumPoints } from '@/lib/exam-analysis/points';
 import { buildNaverCaptureSig, NAVER_CAPTURE_VERSION } from '@/lib/exam-analysis/naver-capture-sig';
 import { COMMENTARY_BLOCKS, clipCaption } from '../v3/blocks/registry';
 import { readExamRound } from '@/lib/exam-analysis/shared/exam-round';
+import { ExamStatsPanel } from '@/components/exam-analysis/ExamStatsPanel';
 
 const ArticleEditorModal = dynamic(
   () => import('@/components/exam-analysis/ArticleEditorModal').then((m) => ({ default: m.ArticleEditorModal })),
@@ -987,6 +988,12 @@ export function MathAnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, au
       {/* ── 분석 완료 ── */}
       {latestAnalysis && detail.status === 'COMPLETED' && (
         <>
+          {/* 학교 공지 지표 — 값이 없으면 카드 대신 한 줄짜리 입력 경로만 렌더된다.
+              성적표는 시험 2~4주 뒤에 나오므로 발행 후 갱신이 정상 경로다. */}
+          <div className="mb-4">
+            <ExamStatsPanel examPaperId={detail.id} raw={detail.examStats} onSaved={onRefresh} />
+          </div>
+
           {/* AI 총평 섹션 */}
           {!commentary ? (
             <div className="bg-gradient-to-br from-indigo-50 to-violet-50/60 border border-indigo-200 rounded-sm px-4 py-2.5 mb-5">

@@ -27,6 +27,7 @@ import type { GradeCurriculum } from '../data/curriculum';
 import type { NearbyComparisonData, NearbyExamSummary } from '../nearby-school-data';
 import { hasStudentAnswers } from '../shared/student-answers';
 import { isEssay, resolveQuestionFormat, formatDistribution } from '../shared/question-format';
+import { examStatsPromptBlock, readExamStats } from '../shared/exam-stats';
 
 
 // ── 영문 enum → 한글 라벨 (AI 입력/출력 정규화용) ──
@@ -937,7 +938,7 @@ ${hasStudentData ? '- 쉬운 문제를 틀렸거나 어려운 문제를 맞힌 �
 - "~입니다", "~됩니다" 체를 사용하세요.
 - 학생에게 말하는 대화체("잘했어요", "화이팅" 등)를 절대 사용하지 마세요.
 - 수치와 데이터를 근거로 제시하세요.
-- 각 항목은 완결된 문장으로 작성하세요 (중간에 잘리지 않도록).${this.buildNearbyComparisonBlock(input)}${this.buildExtendedDataBlock(input)}`;
+- 각 항목은 완결된 문장으로 작성하세요 (중간에 잘리지 않도록).${this.buildExamStatsBlock(input)}${this.buildNearbyComparisonBlock(input)}${this.buildExtendedDataBlock(input)}`;
   }
 
   /** 학습 대책 탭 데이터 (weaknessProfile + learningPlan)를 프롬프트에 주입 */
@@ -983,6 +984,19 @@ ${phases}
   }
 
   /** 주변 학교 기출 비교 데이터 블록 생성 */
+  /**
+   * 학교 공지 실측 지표 블록.
+   *
+   * **값이 없으면 빈 문자열** — 헤딩만 남기면 AI 가 그 칸을 채우려 든다.
+   * 이건 시험 2~4주 뒤에 사람이 입력하는 값이라 대부분의 분석본에서는 없다.
+   * (buildNearbyComparisonBlock 이 데이터 없을 때 블록 자체를 생략하는 것과 같은 이유)
+   */
+  private buildExamStatsBlock(input: AgentInput): string {
+    const raw = (input as { examStats?: unknown }).examStats;
+    if (!raw) return '';
+    return examStatsPromptBlock(readExamStats(raw)) ?? '';
+  }
+
   private buildNearbyComparisonBlock(input: AgentInput): string {
     const nearby = input.nearbyComparison as NearbyComparisonData | undefined;
     if (!nearby) return '';
@@ -1640,7 +1654,7 @@ ${questionDetails}
 - → Q1 질문은 위 4가지 패턴 중 하나로만 출력. 비교 데이터 없으면 답변에서도 비교 표현 금지.
 
 ## 단원별 출제 (상위 ${topicBreakdown.length}개)
-${topicsLine}
+${topicsLine}${this.buildExamStatsBlock(input)}
 
 ## 문항 전체 (v4_difficulty_rows·v4_key_questions·v4_final_strategy 생성에 사용)
 ${questionDetails}

@@ -9,6 +9,8 @@ export interface ExamPaperData {
   examType: string;
   // 출제범위 메타 — 신형 { topics, examYear, examSemester, examCategory } 객체 / 레거시 string[] / null (Json, 진입부 정규화)
   examScope?: unknown;
+  // 학교 공지 실측 지표 — 대부분 null (Json, shared/exam-stats.ts 의 readExamStats 로 정규화)
+  examStats?: unknown;
   status: 'PENDING' | 'ANALYZING' | 'COMPLETED' | 'FAILED';
   analysisStep: number;
   /** 실제 파이프라인 로그 (분석 중에만 GET 이 실어 줌) */

@@ -31,7 +31,43 @@ export const examPaperUpdateSchema = z.object({
   grade: z.string().optional(),
   category: z.string().max(50).optional().nullable(),
   unit: z.string().max(200).optional().nullable(),
-  examScope: z.array(z.string()).optional().nullable(),
+  // ⚠️ 배열만 받으면 신형 `{ topics, examYear, examSemester, examCategory }` 객체가
+  //    통째로 배열로 덮여 회차 메타가 사라진다(주변학교 비교·블로그 캡션이 이걸 읽는다).
+  //    지금은 이 PATCH 에 examScope 를 보내는 클라이언트가 없지만, 생기는 순간
+  //    조용히 파괴되므로 두 형태를 모두 받는다.
+  examScope: z
+    .union([
+      z.array(z.string()),
+      z.object({
+        topics: z.array(z.string()).optional(),
+        examYear: z.number().optional().nullable(),
+        examSemester: z.number().optional().nullable(),
+        examCategory: z.string().optional().nullable(),
+      }).passthrough(),
+    ])
+    .optional()
+    .nullable(),
+  /** 학교 공지 실측 지표. 값이 하나도 없으면 서버가 null 로 정규화해 컬럼을 비운다.
+   *  `enteredBy`/`enteredAt` 은 **서버가 찍는다** — 클라이언트가 입력자를 사칭하지 못하게. */
+  examStats: z
+    .object({
+      subjectAverage: z.number().min(0).max(100).optional().nullable(),
+      examinees: z.number().min(0).max(100000).optional().nullable(),
+      standardDeviation: z.number().min(0).max(100).optional().nullable(),
+      achievement: z
+        .object({
+          A: z.number().min(0).max(100).optional().nullable(),
+          B: z.number().min(0).max(100).optional().nullable(),
+          C: z.number().min(0).max(100).optional().nullable(),
+          D: z.number().min(0).max(100).optional().nullable(),
+          E: z.number().min(0).max(100).optional().nullable(),
+        })
+        .optional()
+        .nullable(),
+      source: z.string().max(60).optional().nullable(),
+    })
+    .optional()
+    .nullable(),
   schoolName: z.string().max(100).optional().nullable(),
   schoolId: z.string().max(50).optional().nullable(),
   examType: z.enum(['blank', 'student']).optional(),

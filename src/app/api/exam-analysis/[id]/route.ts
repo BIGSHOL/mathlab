@@ -4,6 +4,7 @@ import { requireTeacher, isResponse, badRequest, notFound } from '@/lib/api';
 import { getExamScope } from '@/lib/demo/accounts';
 import { examPaperUpdateSchema } from '@/lib/exam-analysis/schemas';
 import { getAnalysisProgress } from '@/lib/exam-analysis/analysis-progress';
+import { readExamStats, toStoredExamStats } from '@/lib/exam-analysis/shared/exam-stats';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -66,10 +67,27 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const parsed = examPaperUpdateSchema.safeParse(body);
     if (!parsed.success) return badRequest('입력값이 올바르지 않습니다');
 
+    // 실측 지표는 사람이 옮겨 적은 값이라 **누가 언제 넣었는지**를 함께 남긴다(§12-5).
+    // 입력자는 서버가 찍는다 — 클라이언트가 보낸 값을 믿으면 사칭이 가능하다.
+    // 수치가 하나도 없으면 빈 객체를 남기지 않고 컬럼을 비운다.
+    const { examStats, ...rest } = parsed.data;
+    const data: Record<string, unknown> = { ...rest };
+    if (examStats !== undefined) {
+      data.examStats = examStats === null
+        ? null
+        : toStoredExamStats(
+            readExamStats({
+              ...examStats,
+              enteredBy: user.name || null,
+              enteredAt: new Date().toISOString(),
+            }),
+          );
+    }
+
     const updated = await prisma.examPaper.update({
       where: { id },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      data: parsed.data as any,
+      data: data as any,
     });
 
     return NextResponse.json({ data: updated });

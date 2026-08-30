@@ -499,6 +499,12 @@ model ExamPaper {
   category               String?         @db.VarChar(50)
   unit                   String?         @db.VarChar(200)
   examScope              Json?
+  /// 학교가 공지한 실측 성적 지표 — 과목평균·응시자수·성취도 A~E 분포.
+  /// **대부분의 시험지에서 영원히 null 이다.** 성적표는 시험 2~4주 뒤에 나오므로
+  /// "시험 직후 발행" 워크플로 밖이고, 학교가 공지하지 않으면 알 방법이 없다.
+  /// 부분 입력(평균만 알고 분포는 모름)이 정상이라 축마다 독립적으로 null 을 허용한다.
+  /// 형태·정규화는 shared/exam-stats.ts 단일 소스. 절대 기본값으로 채우지 말 것(§12-11).
+  examStats              Json?
   schoolName             String?         @db.VarChar(100)
   schoolId               String?         @db.VarChar(50) // FK → School (자동 매칭)
   examType               String          @default("blank") @db.VarChar(20)
