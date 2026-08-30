@@ -26,7 +26,7 @@ import { MIDDLE_SCHOOL_CURRICULUM } from '../data/curriculum';
 import type { GradeCurriculum } from '../data/curriculum';
 import type { NearbyComparisonData, NearbyExamSummary } from '../nearby-school-data';
 import { hasStudentAnswers } from '../shared/student-answers';
-import { isEssay, resolveQuestionFormat, formatDistribution } from '../shared/question-format';
+import { isEssay, resolveQuestionFormat } from '../shared/question-format';
 import { examStatsPromptBlock, readExamStats } from '../shared/exam-stats';
 
 
