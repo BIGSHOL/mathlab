@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { AlertTriangle, Languages, Quote, Repeat2 } from 'lucide-react';
+import { AlertTriangle, Languages, Quote, Repeat2, Target } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -26,6 +26,10 @@ import {
   type EnglishStudyStructure,
   type EnglishStudyTerm,
 } from '@/lib/exam-analysis/english-study-pack';
+import { isHighDifficulty } from '@/lib/exam-analysis/shared/difficulty';
+import { isEssay } from '@/lib/exam-analysis/shared/question-format';
+import { collectQuestionEvidence } from '@/lib/exam-analysis/shared/question-evidence';
+import { QuestionEvidenceList } from './QuestionEvidenceList';
 
 interface EnglishStudyStrategyTabProps {
   questions: AnalyzedQuestion[];
@@ -68,6 +72,17 @@ export function EnglishStudyStrategyTab({
   storedIncomplete = false,
 }: EnglishStudyStrategyTabProps) {
   const fromQuestions = useMemo(() => buildEnglishStudyFromQuestions(questions), [questions]);
+
+  // ── 이 시험에서 특히 볼 문항 ──
+  // 이 탭은 여태 단어·구문 목록뿐이었다. 무엇을 외울지는 알려 주는데 **어느 문항이 왜 어려웠는지**
+  // 는 한 줄도 없었다. 문항마다 AI 소견(ai_comment/difficulty_reason)이 붙어 있는데 문항표에서만
+  // 쓰이고 여기서는 버려졌다. 수학 탭의 킬러 문항 블록과 같은 근거·같은 술어를 쓴다.
+  const focusQuestions = useMemo(
+    () => questions.filter((q) => isHighDifficulty(q.difficulty) || isEssay(q)),
+    [questions],
+  );
+  const focusEvidence = useMemo(() => collectQuestionEvidence(focusQuestions), [focusQuestions]);
+  const focusMissing = focusQuestions.length - focusEvidence.length;
   // 저장된 팩이라도 **구버전이면 쓰지 않는다** — 추출 규칙이 바뀌었는데 옛 결과를 보여주면
   // 규칙 개선이 영원히 사용자에게 도달하지 않는다.
   const parsedStored = useMemo(() => {
@@ -187,9 +202,32 @@ export function EnglishStudyStrategyTab({
     return <PreparingView hasSeed={!!pack} />;
   }
 
+  // 단어·구문 추출과 **무관한** 근거이므로, 추출이 로딩 중이거나 실패해도 같이 숨기지 않는다.
+  // (수학 킬러 섹션에서 카탈로그 매칭 실패가 우리 근거까지 가리던 것과 같은 실수를 반복하지 않는다.)
+  const focusBoard = focusEvidence.length > 0 ? (
+    <Board
+      title="이 시험에서 특히 볼 문항"
+      hint={`${focusEvidence.length}개`}
+      icon={<Target className="w-3.5 h-3.5 text-red-600" />}
+      iconBg="bg-red-500/15"
+    >
+      <p className="text-[11px] text-slate-400 mb-2">
+        난이도 4~5단계이거나 서술형인 문항입니다. 아래 문장은 AI가 시험지를 보고 적은 소견입니다.
+      </p>
+      <QuestionEvidenceList items={focusEvidence} keyPrefix="en" />
+      {/* 대상 문항과 목록 개수가 다를 수 있다 — 세는 쪽이 알려 줘야 잘린 줄 알지 않는다 */}
+      {focusMissing > 0 && (
+        <p className="text-[10px] text-slate-400 mt-2 pt-2 border-t border-slate-100">
+          대상 {focusQuestions.length}문항 중 소견이 기록된 {focusEvidence.length}개입니다
+        </p>
+      )}
+    </Board>
+  ) : null;
+
   if (loading && !pack) {
     return (
       <div className="space-y-4">
+        {focusBoard}
         <p className="text-sm text-slate-600">
           시험지에 적힌 영어 단어와 구문을 찾고 있습니다. 빈칸 추론 같은 유형 이름이 아니라, 실제로 나온 표현만 모읍니다.
         </p>
@@ -204,9 +242,12 @@ export function EnglishStudyStrategyTab({
 
   if (error || !pack) {
     return (
-      <div className="border rounded-sm bg-white p-6 text-center space-y-3">
-        <p className="text-sm text-slate-600">{error || '시험지에서 단어·구문을 찾지 못했습니다'}</p>
-        <Button size="sm" onClick={retry}>다시 정리</Button>
+      <div className="space-y-4">
+        {focusBoard}
+        <div className="border rounded-sm bg-white p-6 text-center space-y-3">
+          <p className="text-sm text-slate-600">{error || '시험지에서 단어·구문을 찾지 못했습니다'}</p>
+          <Button size="sm" onClick={retry}>다시 정리</Button>
+        </div>
       </div>
     );
   }
@@ -221,6 +262,10 @@ export function EnglishStudyStrategyTab({
 
   return (
     <div className="space-y-4">
+      {/* 문항 근거를 먼저 — 아래 안내문은 단어·구문 보드를 설명하는 것이라
+          그 문장과 보드 사이에 다른 블록이 끼면 글이 어긋난다. */}
+      {focusBoard}
+
       <p className="text-sm text-slate-600 leading-relaxed">
         {source === 'questions' ? (
           <>

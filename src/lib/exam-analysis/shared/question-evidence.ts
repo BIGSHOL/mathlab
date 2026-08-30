@@ -38,6 +38,29 @@ export interface QuestionEvidence {
   reason: string | null;
 }
 
+/**
+ * `difficulty_reason` 을 배지로 붙일지, 문단으로 풀지 가르는 길이.
+ *
+ * 실측(2026-08-30): 이 필드는 두 과목 모두 **짧은 태그**다 —
+ * 수학 "1단계 풀이"(평균 8자), 영어 "글 순서 맞추기"(평균 8자·최대 10자).
+ * 반면 `ai_comment` 는 47~53자 문장이다. 즉 읽을 내용은 comment 쪽에 있다.
+ * 태그를 문단으로 크게 뽑으면 정작 본문이 밀려난다.
+ *
+ * 상한을 넉넉히 두는 이유: 프롬프트가 바뀌어 근거가 길어지면 배지가 줄을 깨뜨리므로,
+ * 그때는 문단으로 흐르게 둔다.
+ */
+export const REASON_TAG_MAXLEN = 20;
+
+/** 짧은 태그인가 — true 면 번호 옆 배지, false 면 아래 문단으로 렌더한다. */
+export function isTagLikeReason(reason: string | null): boolean {
+  if (!reason) return false;
+  const t = reason.trim();
+  // 빈 문자열은 "짧으니 배지" 가 아니다 — 내용 없는 배지가 붙는다.
+  // (toQuestionEvidence 가 앞에서 걸러 주지만, 헬퍼 자체가 혼자서도 옳아야 한다.)
+  if (!t) return false;
+  return t.length <= REASON_TAG_MAXLEN && !/[.。\n]/.test(t);
+}
+
 /** 공백뿐인 문자열은 없는 것으로 친다. */
 function clean(v: unknown): string | null {
   if (typeof v !== 'string') return null;

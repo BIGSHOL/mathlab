@@ -6,8 +6,7 @@ import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { findKillerPatterns } from '@/lib/exam-analysis/data/curriculum-strategies';
 import { isHighDifficulty } from '@/lib/exam-analysis/shared/difficulty';
 import { collectQuestionEvidence } from '@/lib/exam-analysis/shared/question-evidence';
-import { renderInlineMath } from '@/lib/exam-analysis/rendering';
-import { DIFFICULTY_COLORS, DIFFICULTY_LABELS } from './constants';
+import { QuestionEvidenceList } from '../QuestionEvidenceList';
 
 interface KillerPatternsSectionProps {
   questions: AnalyzedQuestion[];
@@ -90,42 +89,9 @@ export function KillerPatternsSection({
                   고난도 문항 {highEvidence.length}개
                 </span>
               </div>
-              <ul className="divide-y divide-red-50 bg-white">
-                {highEvidence.map((ev) => (
-                  <li key={ev.number} className="px-3 py-2">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <span className="text-[11px] font-bold text-slate-700">{ev.number}번</span>
-                      {ev.difficulty && (
-                        <span
-                          className="px-1 py-0.5 rounded-sm text-[9px] font-bold text-white"
-                          style={{ backgroundColor: DIFFICULTY_COLORS[ev.difficulty] || '#94A3B8' }}
-                        >
-                          {DIFFICULTY_LABELS[ev.difficulty] || ev.difficulty}
-                        </span>
-                      )}
-                      {ev.points !== null && (
-                        <span className="text-[10px] text-slate-500 tabular-nums">{ev.points}점</span>
-                      )}
-                      {ev.isEssay && (
-                        <span className="text-[9px] font-medium text-amber-700 bg-amber-50 px-1 py-0.5 rounded-sm">
-                          서술형
-                        </span>
-                      )}
-                    </div>
-                    {/* AI 생성 텍스트 — renderInlineMath 를 거치지 않으면 raw $ 가 노출된다 */}
-                    {ev.reason && (
-                      <p className="text-[11px] text-slate-600 leading-relaxed">
-                        {renderInlineMath(ev.reason, `kp-r-${ev.number}`)}
-                      </p>
-                    )}
-                    {ev.comment && (
-                      <p className="text-[10px] text-slate-400 mt-0.5">
-                        {renderInlineMath(ev.comment, `kp-c-${ev.number}`)}
-                      </p>
-                    )}
-                  </li>
-                ))}
-              </ul>
+              <div className="bg-white px-3 py-2">
+                <QuestionEvidenceList items={highEvidence} keyPrefix="kp" />
+              </div>
               {/* 배지(고난도 N문항)와 목록 개수가 다를 수 있다 — 그 차이를 화면이 밝힌다.
                   세는 쪽이 알려 주지 않으면 사용자는 목록이 잘린 줄 안다. */}
               {evidenceMissing > 0 && (

@@ -13,6 +13,8 @@
  */
 import {
   collectQuestionEvidence,
+  isTagLikeReason,
+  REASON_TAG_MAXLEN,
   toQuestionEvidence,
 } from '../../src/lib/exam-analysis/shared/question-evidence';
 import type { AnalyzedQuestion } from '../../src/lib/exam-analysis/types';
@@ -136,6 +138,25 @@ console.log('\n── ⑨ 서술형 판정은 공유 술어를 따른다 ──'
   const ev2 = toQuestionEvidence(q({ question_number: 5, question_format: 'objective', ai_comment: 'x' }));
   ok(ev2?.isEssay === false, '객관식은 서술형 아님');
 }
+
+console.log('\n── ⑩ 난이도 근거는 배지인가 문단인가 ──');
+// 실측(2026-08-30): difficulty_reason 은 두 과목 모두 짧은 태그다 —
+// 수학 "1단계 풀이"(평균 8자), 영어 "글 순서 맞추기"(평균 8자·최대 10자).
+// 반면 ai_comment 는 47~53자 문장이다. 처음엔 근거를 크게 놓았다가 실측에서 뒤집었다.
+ok(isTagLikeReason('1단계 풀이'), '수학 실제 값 "1단계 풀이" → 배지');
+ok(isTagLikeReason('글 순서 맞추기'), '영어 실제 값 "글 순서 맞추기" → 배지');
+ok(isTagLikeReason('여러 칸 영어 쓰기'), '영어 최장 값도 배지');
+ok(!isTagLikeReason(null), 'null 은 배지 아님');
+ok(!isTagLikeReason('   '), '공백뿐이면 배지 아님');
+ok(
+  !isTagLikeReason('보조선을 그어야 보이는 관계라 한 번에 떠올리기 어렵고 계산량도 많다'),
+  '문장으로 길어지면 문단으로 흐른다',
+);
+ok(!isTagLikeReason('짧지만 문장이다.'), '마침표가 있으면 문단 (태그가 아니다)');
+ok(
+  isTagLikeReason('a'.repeat(REASON_TAG_MAXLEN)) && !isTagLikeReason('a'.repeat(REASON_TAG_MAXLEN + 1)),
+  `경계값 ${REASON_TAG_MAXLEN}자에서 갈린다`,
+);
 
 console.log('\n──────────────────────────────');
 if (fail) { console.log(`❌ ${fail}건 실패`); process.exit(1); }
