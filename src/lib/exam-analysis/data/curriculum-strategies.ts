@@ -6,6 +6,7 @@
  */
 
 import type { AnalyzedQuestion } from '../types';
+import { isHighDifficulty } from '../shared/difficulty';
 import {
   generateTimeStrategies,
   getEssayGuideByCategory,
@@ -158,7 +159,7 @@ export function findKillerPatterns(questions: AnalyzedQuestion[]): KillerPattern
   // 고난도 문항 토픽
   const hardTopics = new Set(
     questions
-      .filter(q => { const d = String(q.difficulty); return d === '4' || d === '5' || d === 'reasoning' || d === 'creative'; })
+      .filter(q => isHighDifficulty(q.difficulty))
       .filter(q => q.topic)
       .flatMap(q => q.topic!.split(' > ').map(s => s.trim())),
   );

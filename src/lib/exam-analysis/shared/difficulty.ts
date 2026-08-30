@@ -44,6 +44,21 @@ export function questionLevel(raw: unknown): DifficultyLevel | null {
 }
 
 /**
+ * 고난도(심화 4 · 최고난도 5) 문항인가 — **미판독은 false**.
+ *
+ * 같은 판정이 `d === '4' || d === '5' || d === 'reasoning' || d === 'creative'` 형태로
+ * 여러 곳에 복제돼 있었고, 복제본마다 구 키를 넣은 것도 있고 빼먹은 것도 있었다.
+ * 화면의 "고난도 N문항" 배지와 그 아래 목록이 서로 다른 복제본을 쓰면 **개수와 내용이 어긋난다**(§12-13).
+ * 세는 쪽과 고르는 쪽은 반드시 이 함수 하나를 써야 한다.
+ *
+ * 미판독을 고난도로 치지 않는 이유: 못 읽은 문항을 킬러로 올리면 근거 없는 경고가 된다.
+ */
+export function isHighDifficulty(raw: unknown): boolean {
+  const lv = questionLevel(raw);
+  return lv !== null && lv >= 4;
+}
+
+/**
  * 난이도별 문항 수 + **미판독 수**.
  *
  * 미판독을 따로 돌려주는 이유: 5칸만 세면 합계가 전체 문항 수와 어긋나는데

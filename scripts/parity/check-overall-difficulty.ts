@@ -7,7 +7,7 @@
  * 실행: npx tsx scripts/parity/check-overall-difficulty.ts
  */
 import { readFileSync } from 'fs';
-import { weightedAverageDifficulty } from '../../src/lib/exam-analysis/shared/difficulty';
+import { isHighDifficulty, weightedAverageDifficulty } from '../../src/lib/exam-analysis/shared/difficulty';
 import type { AnalyzedQuestion } from '../../src/lib/exam-analysis/types';
 
 let fail = 0;
@@ -44,6 +44,33 @@ ok(
   !/const overallLevel[\s\S]{0,120}reduce\(\(s, c, i\) => s \+ c \* \(i \+ 1\)/.test(article),
   '블로그에 단순 평균 잔존 없음',
 );
+
+// ── 고난도 술어 단일화 (2026-08-30) ──
+// `d === '4' || d === '5' || d === 'reasoning' || d === 'creative'` 가 여러 곳에 복제돼 있었고
+// 복제본마다 구 키를 넣은 것/빼먹은 것이 섞여 있었다. isHighDifficulty 로 모으면서
+// **동작이 바뀌지 않았음**을 증명한다 — 리팩터는 "출력이 그대로"를 보여야 한다(§12-13).
+console.log('\n── 고난도 판정: 옛 복제본과 동일한 결과 ──');
+{
+  const legacyPredicate = (v: unknown) => {
+    const d = String(v);
+    return d === '4' || d === '5' || d === 'reasoning' || d === 'creative';
+  };
+  const samples: unknown[] = [
+    '1', '2', '3', '4', '5',
+    'concept', 'pattern', 'reasoning', 'creative',
+    null, undefined, '', '   ', 'NaN', 'null', 'undefined',
+    0, 4, 5, '6', '0', 'high', 'medium', 'low',
+  ];
+  const diverged = samples.filter((s) => isHighDifficulty(s) !== legacyPredicate(s));
+  // String(null) === 'null' 이라 옛 술어도 false 였다 → 전 표본에서 동일해야 한다
+  ok(diverged.length === 0, '전 표본에서 옛 술어와 동일', diverged.length ? JSON.stringify(diverged) : '23종 일치');
+
+  ok(isHighDifficulty('4') && isHighDifficulty('5'), 'Lv4·Lv5 는 고난도');
+  ok(isHighDifficulty('reasoning') && isHighDifficulty('creative'), '구 키 reasoning·creative 도 고난도');
+  ok(!isHighDifficulty('3') && !isHighDifficulty('pattern'), 'Lv3 이하는 아님');
+  ok(!isHighDifficulty(null) && !isHighDifficulty(undefined), '미판독은 고난도가 아니다 (근거 없는 경고 방지)');
+  ok(!isHighDifficulty('6') && !isHighDifficulty('high'), '척도 밖 값은 고난도가 아니다');
+}
 
 console.log('\n──────────────────────────────');
 if (fail) {

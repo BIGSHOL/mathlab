@@ -4,6 +4,10 @@ import { useState, useMemo } from 'react';
 import { Skull, ChevronDown } from 'lucide-react';
 import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { findKillerPatterns } from '@/lib/exam-analysis/data/curriculum-strategies';
+import { isHighDifficulty } from '@/lib/exam-analysis/shared/difficulty';
+import { collectQuestionEvidence } from '@/lib/exam-analysis/shared/question-evidence';
+import { renderInlineMath } from '@/lib/exam-analysis/rendering';
+import { DIFFICULTY_COLORS, DIFFICULTY_LABELS } from './constants';
 
 interface KillerPatternsSectionProps {
   questions: AnalyzedQuestion[];
@@ -21,11 +25,15 @@ export function KillerPatternsSection({
   // 킬러 패턴 탐색
   const killerPatterns = useMemo(() => findKillerPatterns(questions), [questions]);
 
-  // 최상위/심화 문항 수 계산
-  const highDiffCount = useMemo(
-    () => questions.filter(q => { const d = String(q.difficulty); return d === '5' || d === '4' || d === 'creative' || d === 'reasoning'; }).length,
-    [questions],
-  );
+  // 최상위/심화 문항 — 배지 개수와 아래 목록이 **같은 술어**를 써야 어긋나지 않는다(§12-13).
+  const highDiffQuestions = useMemo(() => questions.filter(q => isHighDifficulty(q.difficulty)), [questions]);
+  const highDiffCount = highDiffQuestions.length;
+
+  // 이 시험의 킬러 문항 근거. 아래 패턴 카드는 전부 정적 카탈로그(KILLER_QUESTION_TYPES)라
+  // 단원 이름만 맞으면 어느 시험에서나 같은 함정 설명이 나온다 — 정작 "이 시험의 어느 문항이
+  // 왜 어려웠나" 는 빠져 있었다. AI 가 시험지를 보고 쓴 소견을 카탈로그 위에 놓는다.
+  const highEvidence = useMemo(() => collectQuestionEvidence(highDiffQuestions), [highDiffQuestions]);
+  const evidenceMissing = highDiffCount - highEvidence.length;
 
   const toggleUnit = (name: string) => {
     setExpandedUnits(prev => {
@@ -36,8 +44,10 @@ export function KillerPatternsSection({
     });
   };
 
-  // 킬러 패턴이 없으면 섹션 자체를 렌더하지 않음
-  if (killerPatterns.length === 0) return null;
+  // 예전엔 카탈로그 매칭이 실패하면(단원 이름이 KILLER_QUESTION_TYPES 키워드와 안 맞으면)
+  // **이 시험에 고난도 문항이 있어도** 섹션이 통째로 사라졌다. 우리 손에 있는 근거를
+  // 카탈로그 커버리지 때문에 숨기지 않는다 — 둘 중 하나라도 있으면 렌더한다.
+  if (killerPatterns.length === 0 && highEvidence.length === 0) return null;
 
   return (
     <div className="border rounded-sm overflow-hidden bg-white">
@@ -70,6 +80,62 @@ export function KillerPatternsSection({
       {/* 확장 내용 */}
       {isSectionExpanded && (
         <div className="px-4 pb-4 border-t">
+          {highEvidence.length > 0 && (
+            <div className="mt-3 rounded-sm border border-red-100 overflow-hidden">
+              <div className="flex items-center gap-1.5 px-3 py-2 bg-red-50/60">
+                <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-bold text-white bg-red-600">
+                  이 시험
+                </span>
+                <span className="text-xs font-medium text-slate-700">
+                  고난도 문항 {highEvidence.length}개
+                </span>
+              </div>
+              <ul className="divide-y divide-red-50 bg-white">
+                {highEvidence.map((ev) => (
+                  <li key={ev.number} className="px-3 py-2">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="text-[11px] font-bold text-slate-700">{ev.number}번</span>
+                      {ev.difficulty && (
+                        <span
+                          className="px-1 py-0.5 rounded-sm text-[9px] font-bold text-white"
+                          style={{ backgroundColor: DIFFICULTY_COLORS[ev.difficulty] || '#94A3B8' }}
+                        >
+                          {DIFFICULTY_LABELS[ev.difficulty] || ev.difficulty}
+                        </span>
+                      )}
+                      {ev.points !== null && (
+                        <span className="text-[10px] text-slate-500 tabular-nums">{ev.points}점</span>
+                      )}
+                      {ev.isEssay && (
+                        <span className="text-[9px] font-medium text-amber-700 bg-amber-50 px-1 py-0.5 rounded-sm">
+                          서술형
+                        </span>
+                      )}
+                    </div>
+                    {/* AI 생성 텍스트 — renderInlineMath 를 거치지 않으면 raw $ 가 노출된다 */}
+                    {ev.reason && (
+                      <p className="text-[11px] text-slate-600 leading-relaxed">
+                        {renderInlineMath(ev.reason, `kp-r-${ev.number}`)}
+                      </p>
+                    )}
+                    {ev.comment && (
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        {renderInlineMath(ev.comment, `kp-c-${ev.number}`)}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {/* 배지(고난도 N문항)와 목록 개수가 다를 수 있다 — 그 차이를 화면이 밝힌다.
+                  세는 쪽이 알려 주지 않으면 사용자는 목록이 잘린 줄 안다. */}
+              {evidenceMissing > 0 && (
+                <p className="px-3 py-1.5 text-[10px] text-slate-400 bg-red-50/30">
+                  고난도 {highDiffCount}문항 중 소견이 기록된 {highEvidence.length}개입니다
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="space-y-2 pt-3">
             {killerPatterns.map(kp => {
               const isOpen = expandedUnits.has(kp.unitName);

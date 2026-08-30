@@ -31,7 +31,8 @@
     "verify:format": "tsx scripts/parity/check-question-format.ts",
     "verify:round": "tsx scripts/parity/check-exam-round.ts",
     "verify:stats": "tsx scripts/parity/check-exam-stats.ts",
-    "verify:evidence": "tsx scripts/parity/check-question-evidence.ts"
+    "verify:evidence": "tsx scripts/parity/check-question-evidence.ts",
+    "verify:difficulty": "tsx scripts/parity/check-overall-difficulty.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
