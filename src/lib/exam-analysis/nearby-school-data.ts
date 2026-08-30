@@ -9,6 +9,7 @@
  */
 
 import { prisma } from '@/lib/db';
+import { readExamRound, isSameRound } from './shared/exam-round';
 
 // ── 타입 ──
 
@@ -135,17 +136,14 @@ export async function findNearbyExamData(analysisId: string): Promise<NearbyComp
 
   const examPaper = await prisma.examPaper.findUnique({
     where: { id: analysis.examPaperId },
-    select: { id: true, schoolName: true, schoolId: true, title: true, grade: true, category: true, tenantId: true, subject: true },
+    select: { id: true, schoolName: true, schoolId: true, title: true, grade: true, category: true, tenantId: true, subject: true, examScope: true },
   });
   if (!examPaper?.schoolId && !examPaper?.schoolName) return empty;
 
-  // 학년/연도/학기/시험종류 추출 (같은 조건 기출만 비교)
+  // 학년은 DB 정규 컬럼이라 정규화가 필요 없다. 회차는 구조화 메타(examScope) 우선 —
+  // 예전엔 이 파일만 제목 정규식을 쓰면서 nearby-count 와 정규식마저 달랐다(§12-4).
   const examGrade = examPaper.grade || ''; // "중3", "고1"
-  const yearMatch = examPaper.title?.match(/(20\d{2})년/);
-  const examYear = yearMatch ? yearMatch[1] : null; // "2025"
-  const semMatch = examPaper.title?.match(/(\d)학기\s*(중간|기말|모의)/);
-  const examSemester = semMatch ? semMatch[1] : null; // "1" or "2"
-  const examExamType = semMatch ? semMatch[2] : null;  // "중간" or "기말"
+  const currentRound = readExamRound(examPaper);
 
   // 2. schoolId(FK) 우선, 없으면 schoolName으로 매칭
   const school = examPaper.schoolId
@@ -296,23 +294,16 @@ export async function findNearbyExamData(analysisId: string): Promise<NearbyComp
       subject: examPaper.subject,
       status: 'COMPLETED',
     },
-    select: { id: true, title: true, schoolId: true, schoolName: true },
+    select: { id: true, title: true, schoolId: true, schoolName: true, examScope: true },
     orderBy: { createdAt: 'desc' },
   });
 
-  // 같은 연도 + 학기 + 시험종류 필터 (title에서 추출)
-  const nearbyPapers = nearbyPapersRaw.filter(p => {
-    if (!p.title) return false;
-    if (examYear) {
-      const y = p.title.match(/(20\d{2})년/);
-      if (!y || y[1] !== examYear) return false;
-    }
-    if (examSemester && examExamType) {
-      const s = p.title.match(/(\d)학기\s*(중간|기말|모의)/);
-      if (!s || s[1] !== examSemester || s[2] !== examExamType) return false;
-    }
-    return true;
-  });
+  // 같은 연도 + 학기 + 시험종류만 비교 대상.
+  // 제목이 없어도 examScope 로 회차가 확정되면 통과한다 — 예전엔 `!p.title` 로 무조건
+  // 탈락시켜, 메타는 갖췄지만 제목이 빈 시험지가 비교에서 통째로 빠졌다.
+  const nearbyPapers = nearbyPapersRaw.filter((p) =>
+    isSameRound(currentRound, readExamRound(p), { year: true, semester: true, category: true }),
+  );
 
   if (nearbyPapers.length === 0) return result;
 

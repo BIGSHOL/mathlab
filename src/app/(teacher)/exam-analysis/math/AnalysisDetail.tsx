@@ -32,6 +32,7 @@ import { buildNaverV4Html } from '@/lib/exam-analysis/naver-v4-renderer';
 import { sumPoints } from '@/lib/exam-analysis/points';
 import { buildNaverCaptureSig, NAVER_CAPTURE_VERSION } from '@/lib/exam-analysis/naver-capture-sig';
 import { COMMENTARY_BLOCKS, clipCaption } from '../v3/blocks/registry';
+import { readExamRound } from '@/lib/exam-analysis/shared/exam-round';
 
 const ArticleEditorModal = dynamic(
   () => import('@/components/exam-analysis/ArticleEditorModal').then((m) => ({ default: m.ArticleEditorModal })),
@@ -664,21 +665,19 @@ export function MathAnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, au
       }
 
       // 첫 이미지(상단 헤더) 캡션은 항상 "학교 연도 학기 시험종류"로 시작 (검색 노출 강화).
-      //   examScope(Json — 신형 객체/레거시 배열/null)는 진입부 정규화 후 사용. examType은 MIDTERM/FINAL.
+      //   회차는 shared/exam-round 가 examScope(Json — 신형 객체/레거시 배열/null)를
+      //   정규화해 읽고, 없으면 제목에서 보충한다.
+      //   ⚠️ 예전엔 `detail.examType` 을 MIDTERM/FINAL 로 매핑했는데, 그 필드는 실제로
+      //   'blank' | 'student'(답안지 유무) 라 **항상 undefined** → 캡션에 중간/기말이
+      //   한 번도 붙지 않았다. 시험종류는 examScope.examCategory 에 있다.
       const examLabel = (() => {
         const parts: string[] = [];
         if (detail.schoolName?.trim()) parts.push(detail.schoolName.trim());
-        const scope = detail.examScope;
-        let year: unknown, sem: unknown;
-        if (scope && typeof scope === 'object' && !Array.isArray(scope)) {
-          year = (scope as { examYear?: unknown }).examYear;
-          sem = (scope as { examSemester?: unknown }).examSemester;
-        }
+        const round = readExamRound(detail);
         const tail: string[] = [];
-        if (typeof year === 'number' || (typeof year === 'string' && year)) tail.push(`${year}년`);
-        if (typeof sem === 'number') tail.push(`${sem}학기`);
-        const etLabel = ({ MIDTERM: '중간', FINAL: '기말' } as Record<string, string>)[detail.examType] ?? '';
-        if (etLabel) tail.push(`${etLabel}고사`);
+        if (round.year) tail.push(`${round.year}년`);
+        if (round.semester) tail.push(`${round.semester}학기`);
+        if (round.categoryKo) tail.push(`${round.categoryKo}고사`);
         if (tail.length) parts.push(tail.join(' '));
         return koImg(parts.join(' ')).trim();
       })();

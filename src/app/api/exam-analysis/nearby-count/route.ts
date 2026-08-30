@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { requireTeacher, isResponse } from '@/lib/api';
 import { getExamScope } from '@/lib/demo/accounts';
 import { assertPlanFeature } from '@/lib/billing/guard';
+import { readExamRound } from '@/lib/exam-analysis/shared/exam-round';
 
 /**
  * GET /api/exam-analysis/nearby-count?schoolId=xxx&grade=중3&examPaperId=yyy
@@ -49,71 +50,21 @@ export async function GET(req: NextRequest) {
       if (currentPaper) {
         currentSchoolName = currentPaper.schoolName;
         currentSubject = currentPaper.subject === 'ENGLISH' ? 'ENGLISH' : 'MATH';
-        // 1) examScope JSON 에서 우선 읽기
-        const scope = (currentPaper.examScope ?? null) as unknown as
-          | { examYear?: number; examSemester?: number; examCategory?: string }
-          | null;
-        if (scope && typeof scope === 'object' && !Array.isArray(scope)) {
-          if (typeof scope.examYear === 'number') examYear = String(scope.examYear);
-          if (typeof scope.examSemester === 'number') examSemester = String(scope.examSemester);
-          if (typeof scope.examCategory === 'string') {
-            // CATEGORY enum → title 표기 정규식 그룹과 매핑
-            const map: Record<string, string> = {
-              MIDTERM: '중간',
-              FINAL: '기말',
-              MOCK: '모의',
-            };
-            examExamType = map[scope.examCategory] ?? null;
-          }
-        }
-        // 2) title fallback
-        if (currentPaper.title) {
-          if (!examYear) {
-            const yearMatch = currentPaper.title.match(/(20\d{2})년?/);
-            if (yearMatch) examYear = yearMatch[1];
-          }
-          if (!examSemester || !examExamType) {
-            const semMatch = currentPaper.title.match(/(\d)학기\s*(중간|기말|모의)/);
-            if (semMatch) {
-              if (!examSemester) examSemester = semMatch[1];
-              if (!examExamType) examExamType = semMatch[2];
-            }
-          }
-        }
+        // 회차 판정은 shared/exam-round 하나만 쓴다 — 이 파일과 nearby-school-data 가
+        // 각자 정규식을 가지고 있어 배지의 건수와 총평에 들어가는 데이터가 어긋날 수 있었다.
+        const round = readExamRound(currentPaper);
+        examYear = round.year;
+        examSemester = round.semester;
+        examExamType = round.categoryKo;
       }
     }
 
     const tenantWhere = await getExamScope(user);
 
-    // 시험지 title 에서 examYear 추출하는 헬퍼 (examScope 우선)
+    // 후보 시험지의 회차도 같은 헬퍼로 읽는다.
     const extractMeta = (p: { title: string | null; examScope: unknown }) => {
-      const scope = p.examScope as
-        | { examYear?: number; examSemester?: number; examCategory?: string }
-        | null
-        | undefined;
-      let y: string | null = null;
-      let s: string | null = null;
-      let t: string | null = null;
-      if (scope && typeof scope === 'object' && !Array.isArray(scope)) {
-        if (typeof scope.examYear === 'number') y = String(scope.examYear);
-        if (typeof scope.examSemester === 'number') s = String(scope.examSemester);
-        if (typeof scope.examCategory === 'string') {
-          const map: Record<string, string> = { MIDTERM: '중간', FINAL: '기말', MOCK: '모의' };
-          t = map[scope.examCategory] ?? null;
-        }
-      }
-      if (p.title) {
-        if (!y) {
-          const ym = p.title.match(/(20\d{2})년?/);
-          if (ym) y = ym[1];
-        }
-        const sm = p.title.match(/(\d)학기\s*(중간|기말|모의)/);
-        if (sm) {
-          if (!s) s = sm[1];
-          if (!t) t = sm[2];
-        }
-      }
-      return { y, s, t };
+      const r = readExamRound(p);
+      return { y: r.year, s: r.semester, t: r.categoryKo };
     };
 
     // 1. 연도 비교: 같은 학교(schoolId 또는 schoolName) + 같은 학년 + 같은 학기/시험종류 + 다른 연도
