@@ -15,6 +15,13 @@ import { abilityDomainLabel, questionTypeLabel, toExamSubjectKey } from '../shar
 import { inputSubject, isEnglishInput, subjectLabel } from './subject-input';
 import { roundPoints, formatPoints } from '../shared/points';
 import { weightedAverageDifficulty } from '../shared/difficulty';
+import {
+  formatQuestionDetails,
+  normalizeLevel,
+  reconcileDifficultyRows,
+  type DifficultyRow,
+  type RowSourceQuestion,
+} from '../shared/difficulty-rows';
 import { MIDDLE_SCHOOL_CURRICULUM } from '../data/curriculum';
 import type { GradeCurriculum } from '../data/curriculum';
 import type { NearbyComparisonData, NearbyExamSummary } from '../nearby-school-data';
@@ -256,15 +263,11 @@ export interface CommentaryResult {
     body: string;               // 짧은 설명 (1~2 문장)
   }>;
 
-  /** V4 문제 번호별 난이도/단원 매핑 (행 색상 코딩) */
-  v4_difficulty_rows?: Array<{
-    question_number: string | number;
-    topic: string;              // "이차방정식의 활용 — 거리·속력·시간"
-    sub_topic?: string;         // 세부 개념 (선택)
-    difficulty: '1' | '2' | '3' | '4' | '5';
-    points: number;
-    analysis_short?: string;    // 한 줄 해설 (v1.2.0 추가, 갈수학 "문항 분석" 컬럼)
-  }>;
+  /** V4 문제 번호별 난이도/단원 매핑 (행 색상 코딩).
+   *  행 골격(번호·단원·난이도·배점)은 AI 응답이 아니라 `questions[]` 에서 파생된다 —
+   *  `shared/difficulty-rows.ts::reconcileDifficultyRows` 참조. AI 가 채우는 것은
+   *  `analysis_short`·`sub_topic` 뿐이다. */
+  v4_difficulty_rows?: DifficultyRow[];
 
   /** V4 출제 특징 요약 (회색 박스 안 자연 단락) */
   v4_exam_features?: {
@@ -404,7 +407,7 @@ export const buildSystemPromptV3 = (subj: string) => `너는 한국 중·고등�
 
 다음 5개 필드는 V3 본문을 풍부하게 만드는 핵심 콘텐츠다. blog_qa 와 별개로 모두 작성:
 
-1. **v4_difficulty_rows** — 모든 문항(1번~마지막). question_number 순서대로. 서술형은 "서술형1" 문자열 OK. difficulty 는 "1"~"5" 문자열. analysis_short 는 한 줄(20자 내외).
+1. **v4_difficulty_rows** — 모든 문항(1번~마지막). question_number 순서대로, 서술형 번호는 **입력 문항 목록의 표기를 그대로**(조인 키). 네가 새로 쓰는 값은 **analysis_short(한 줄, 20자 내외)** 뿐이며 topic·difficulty·points 는 시스템이 문항 데이터로 덮어쓴다.
 2. **v4_main_analysis** — 출제된 주요 영역 3~5개. heading 은 "숫자. 영역명", body 는 2~4 문장 영역별 분석.
 3. **v4_key_questions** — 변별 핵심 문항 3~5개 (Lv3~Lv5 + 서술형 우선). title 에 번호·단원·(Lv·배점), body 는 3~5 문장 자세 해설.
 4. **v4_previous_comparison** — **비교 데이터(작년/인근) 있을 때만**. 없으면 필드 전체를 null 로. 지어내지 말 것.
@@ -629,7 +632,7 @@ export const buildSystemPromptV4 = (subj: string) => `너는 한국 중·고등�
 ## 절대 규칙
 
 R1. **모든 필드 채울 것** — undefined/null 최소화. v4_main_analysis와 v4_final_strategy는 최소 3개 항목.
-R2. **v4_difficulty_rows는 모든 문항 포함** — question_number 1번부터 마지막 번호까지. 서술형은 "서술형1" 같은 문자열도 OK.
+R2. **v4_difficulty_rows는 모든 문항 포함** — question_number 1번부터 마지막 번호까지. 서술형 번호는 **입력 문항 목록의 표기를 그대로** 쓸 것(조인 키). 네가 새로 쓰는 값은 analysis_short 뿐이며, topic·difficulty·points 는 시스템이 문항 데이터로 덮어쓴다.
 R3. **영문 enum 한글 변환** — CALCULATION → 계산력 / NUMBER → 수와 연산 등. AI가 받는 데이터는 이미 한글이지만 출력에서도 영문 enum 사용 금지.
 R4. **수식 KaTeX 표기** — \\dfrac 금지(\\frac만), \$ 안에 한글 금지, 인접 \$A\$\$B\$ 금지. body 안에 수식 가능.
 R5. **markdown bold 강조** — body 안에 **굵게**로 핵심 강조. v4_exam_features.body, v4_main_analysis[].body 활용.
@@ -1145,11 +1148,11 @@ ${phases}
 
     const raw = JSON.parse(json) as V3Extension;
     const normalized = deepNormalizeMath(raw) as V3Extension;
-    return this.parseV3Response(normalized);
+    return this.parseV3Response(normalized, input.basicAnalysis.questions);
   }
 
   /** V3 응답에 stripEnglishEnums 재귀 적용 (nested 필드까지 — Plan agent 검토 반영) */
-  private parseV3Response(raw: V3Extension): V3Extension {
+  private parseV3Response(raw: V3Extension, questions?: readonly RowSourceQuestion[]): V3Extension {
     return {
       blog_kicker: raw.blog_kicker ? normalizeText(String(raw.blog_kicker)) : undefined,
       blog_headline: raw.blog_headline ? normalizeText(String(raw.blog_headline)) : undefined,
@@ -1211,18 +1214,21 @@ ${phases}
           }
         : undefined,
       // ── V3 강화: V4 핵심 5개 필드 정규화 (parseV4Response 패턴 차용) ──
-      v4_difficulty_rows: Array.isArray(raw.v4_difficulty_rows)
-        ? raw.v4_difficulty_rows.map((r) => ({
-            question_number: r.question_number ?? '',
-            topic: normalizeText(String(r.topic ?? '')),
-            sub_topic: r.sub_topic ? normalizeText(String(r.sub_topic)) : undefined,
-            difficulty: (['1', '2', '3', '4', '5'].includes(String(r.difficulty))
-              ? String(r.difficulty)
-              : '3') as '1' | '2' | '3' | '4' | '5',
-            points: Number(r.points) || 0,
-            analysis_short: r.analysis_short ? normalizeText(String(r.analysis_short)) : undefined,
-          }))
-        : undefined,
+      // 행 골격은 AI 응답이 아니라 questions[] 에서 파생한다 — 선생님 교정이 즉시 반영되고,
+      // AI 가 문항을 빠뜨리거나 숫자를 잘못 베껴도 표가 틀릴 수 없다.
+      v4_difficulty_rows: reconcileDifficultyRows(
+        Array.isArray(raw.v4_difficulty_rows)
+          ? raw.v4_difficulty_rows.map((r) => ({
+              question_number: r.question_number ?? '',
+              topic: normalizeText(String(r.topic ?? '')),
+              sub_topic: r.sub_topic ? normalizeText(String(r.sub_topic)) : undefined,
+              difficulty: r.difficulty,
+              points: r.points,
+              analysis_short: r.analysis_short ? normalizeText(String(r.analysis_short)) : undefined,
+            }))
+          : undefined,
+        questions,
+      ),
       v4_main_analysis: Array.isArray(raw.v4_main_analysis)
         ? raw.v4_main_analysis.map((m) => ({
             heading: normalizeText(String(m.heading ?? '')),
@@ -1300,13 +1306,17 @@ ${phases}
 
     // 학원명 인식 — input의 academyName 또는 fallback "우리 학원"
     const academyName = (input as unknown as { academyName?: string | null }).academyName || null;
-    return this.parseV4Response(normalized, academyName);
+    return this.parseV4Response(normalized, academyName, input.basicAnalysis.questions);
   }
 
   /** V4 응답 정규화 — stripRawHtml + stripEnglishEnums + 학원명 placeholder 치환 + 필수 필드 fallback
    *  raw HTML 색상(span style=color, mark, font) 제거 + 영문 enum 한글 변환
    *  학원명 처리: {학원명} placeholder + 다른 학원명 잔여(갈수학학원 등) → academyName 또는 "우리 학원" */
-  private parseV4Response(raw: V4Extension, academyName: string | null = null): V4Extension {
+  private parseV4Response(
+    raw: V4Extension,
+    academyName: string | null = null,
+    questions?: readonly RowSourceQuestion[],
+  ): V4Extension {
     // 학원명 치환 헬퍼 (AI가 placeholder 무시하고 "갈수학학원" 등 직접 적었을 때 강제 치환)
     const replacement = academyName?.trim() || '우리 학원';
     const stripAcademy = (text: string): string => {
@@ -1348,18 +1358,21 @@ ${phases}
             body: norm(s.body),
           }))
         : undefined,
-      v4_difficulty_rows: Array.isArray(raw.v4_difficulty_rows)
-        ? raw.v4_difficulty_rows.map((r) => ({
-            question_number: r.question_number ?? '',
-            topic: norm(r.topic),
-            sub_topic: r.sub_topic ? norm(r.sub_topic) : undefined,
-            difficulty: (['1', '2', '3', '4', '5'].includes(String(r.difficulty))
-              ? String(r.difficulty)
-              : '3') as '1' | '2' | '3' | '4' | '5',
-            points: Number(r.points) || 0,
-            analysis_short: r.analysis_short ? norm(r.analysis_short) : undefined,
-          }))
-        : undefined,
+      // 골격은 questions[] 파생 — V3 경로(parseV3Response)와 반드시 같은 헬퍼를 쓴다.
+      // 예전엔 두 곳에 같은 로직이 복붙돼 있어 한쪽만 고치면 §12-4 위반이 됐다.
+      v4_difficulty_rows: reconcileDifficultyRows(
+        Array.isArray(raw.v4_difficulty_rows)
+          ? raw.v4_difficulty_rows.map((r) => ({
+              question_number: r.question_number ?? '',
+              topic: norm(r.topic),
+              sub_topic: r.sub_topic ? norm(r.sub_topic) : undefined,
+              difficulty: r.difficulty,
+              points: r.points,
+              analysis_short: r.analysis_short ? norm(r.analysis_short) : undefined,
+            }))
+          : undefined,
+        questions,
+      ),
       v4_exam_features: raw.v4_exam_features
         ? {
             headline: norm(raw.v4_exam_features.headline),
@@ -1451,17 +1464,10 @@ ${phases}
       .map(([t, v]) => `- ${t}: ${v.count}문항 / ${formatPoints(v.points)}점`)
       .join('\n');
 
-    // 문항별 상세 (V4_difficulty_rows 생성 가이드)
-    const questionDetails = basicAnalysis.questions
-      .map((q) => {
-        const num = q.question_number;
-        const topic = q.topic || '미분류';
-        const lv = q.difficulty || '3';
-        const pts = q.points ?? 0;
-        const fmt = q.question_format === 'essay' ? '[서술형]' : '';
-        return `${num}번: ${topic} / Lv${lv} / ${pts}점 ${fmt}`;
-      })
-      .join('\n');
+    // 문항별 상세 (v4_difficulty_rows 생성 가이드) — V3 와 같은 포맷을 공유한다.
+    // 예전엔 번호·단원·Lv·배점 네 값만 실어, 시험지를 보고 이미 뽑아 둔 ai_comment 를
+    // 버리고 숫자에서 해설을 지어내게 만들었다. formatQuestionDetails 가 근거까지 싣는다.
+    const questionDetails = formatQuestionDetails(basicAnalysis.questions);
 
     return `## 시험 메타데이터
 
@@ -1571,25 +1577,17 @@ ${questionDetails}
       )
       .join('\n');
 
-    // 문항별 상세 (v4_difficulty_rows / v4_key_questions 생성용 — V3 강화)
-    // 난이도 정규화: concept/pattern/reasoning/creative → 1/2/4/5 (없으면 그대로)
-    const dMap: Record<string, string> = { concept: '1', pattern: '2', reasoning: '4', creative: '5' };
-    const questionDetails = basicAnalysis.questions
-      .map((q) => {
-        const topic = q.topic || '미분류';
-        const rawLv = String(q.difficulty || '3');
-        const lv = dMap[rawLv] || rawLv;
-        const pts = q.points ?? 0;
-        const fmt = q.question_format === 'essay' ? ' [서술형]' : '';
-        return `${q.question_number}번: ${topic} / Lv${lv} / ${pts}점${fmt}`;
-      })
-      .join('\n');
+    // 문항별 상세 (v4_difficulty_rows / v4_key_questions 생성용 — V4 와 같은 포맷을 공유).
+    // 레거시 난이도 키(concept/pattern/…) 정규화는 formatQuestionDetails 안으로 옮겼다 —
+    // 예전엔 이 변환이 V3 에만 있어 같은 문항이 두 경로에서 다른 Lv 로 실렸다(§12-4).
+    const questionDetails = formatQuestionDetails(basicAnalysis.questions);
 
     // ── 이 시험만의 특이 신호 (헤드라인·callout 1순위 소재 — "옆 학원이 못 하는 말") ──
     // 서술형 1/3 배점·객관식 위주 같은 전국 표준은 발견이 아니다. 표준 대비 *편차/쏠림*만 surface.
     const leafSeg = (t?: string | null) => { const p = String(t || '미분류').split('>').map((s) => s.trim()); return p[p.length - 1] || '미분류'; };
     const parentSeg = (t?: string | null) => { const p = String(t || '미분류').split('>').map((s) => s.trim()); return (p.length >= 2 ? p[p.length - 2] : p[p.length - 1]) || '미분류'; };
-    const levelOf = (q: { difficulty?: string | number | null }) => Number(dMap[String(q.difficulty ?? '3')] || String(q.difficulty ?? '3')) || 0;
+    // 레거시 키(concept/pattern/…) 변환은 normalizeLevel 이 담당. 판독 불가는 0(집계 제외).
+    const levelOf = (q: { difficulty?: string | number | null }) => Number(normalizeLevel(q.difficulty ?? '3') ?? 0);
 
     // 서술형 배점 비중 vs 전국 표준(~1/3)
     const essayQs2 = basicAnalysis.questions.filter((q) => q.question_format === 'essay');
@@ -1653,7 +1651,7 @@ ${questionDetails}
 - nearby_comparison: ${base.nearby_comparison ? base.nearby_comparison.slice(0, 400) : '(없음)'}
 
 위 데이터로 시스템 프롬프트의 V3 신규 필드 JSON을 작성하세요. **데이터에 없는 숫자/이름을 지어내지 말 것.** 학생 응답이 없으면 grade_cuts는 빈 배열. 학교 정보가 없으면 Q4 (학교 비교)를 생략하고 4문항만 작성.
-**v4_difficulty_rows는 위 "문항 전체"의 모든 문항을 포함**(번호·단원·Lv·배점은 그대로, analysis_short만 새로 작성). **v4_final_strategy.area는 위 "단원별 출제"에 있는 단원에서만** 선정(다음 시험 추측 금지). **v4_previous_comparison은 비교 데이터 있을 때만**(없으면 null).`;
+**v4_difficulty_rows는 위 "문항 전체"의 모든 문항을 포함**하되, 네가 새로 쓰는 것은 **analysis_short 뿐**이다 — 번호·단원·Lv·배점은 시스템이 문항 데이터에서 직접 채우므로 네가 적은 값은 무시된다(question_number 는 조인 키이므로 위 목록의 표기를 그대로 쓸 것). **v4_final_strategy.area는 위 "단원별 출제"에 있는 단원에서만** 선정(다음 시험 추측 금지). **v4_previous_comparison은 비교 데이터 있을 때만**(없으면 null).`;
   }
 
   // ── JSON 추출 (다단계 복구) ──

@@ -117,11 +117,16 @@ export type AgentType = (typeof AGENT_TYPES)[number];
 //   데이터 신호 주입(서술형 배점% vs 표준, 서술형/킬러 단원 쏠림 자동 탐지, 배점 독식 단원)
 // commentary v1.5.0 — 2026-06-17 문항 유형 분류 4대 영역(수와 연산/변화와 관계/도형과 측정/자료와 가능성)
 //   전환에 맞춰 총평 유형 라벨·분포 서술 갱신
+// commentary v1.7.0 — 2026-08-30 문항표를 문항 데이터에서 파생. ① 프롬프트에 문항별 ai_comment·
+//   difficulty_reason 주입(예전엔 번호·단원·Lv·배점 네 값만 실어 해설을 숫자에서 지어냈다)
+//   ② v4_difficulty_rows 골격(번호·단원·난이도·배점)을 AI 응답이 아니라 questions[] 에서 파생 →
+//   선생님 교정이 블로그 표에 즉시 반영되고 AI 누락으로 행이 사라지지 않는다
+//   (shared/difficulty-rows.ts, 회귀검사 scripts/parity/check-difficulty-rows.ts)
 export const AGENT_PROMPT_VERSIONS: Record<AgentType, string> = {
   'weakness': 'v1.0.0',
   'learning': 'v1.0.0',
   'prediction': 'v1.0.0',
-  'commentary': 'v1.6.0',
+  'commentary': 'v1.7.0',
   'topic-strategy': 'v1.0.0',
   'exam-prep': 'v1.0.0',
   'score-level-plan': 'v1.0.0',
@@ -136,8 +141,10 @@ export const AGENT_PROMPT_VERSIONS: Record<AgentType, string> = {
  * v1.2.0 (2026-05-27): 일치율 90% — 5개 신규 필드 (v4_intro / v4_academy_strategy / v4_previous_comparison / v4_key_questions / v4_difficulty_rows[].analysis_short / v4_exam_overview.expected_grade_cut) + 9섹션 재정렬 + ✏→▶ 헤딩 변경
  * v1.3.0 (2026-05-28): 특정 학원명 노출 금지 + {학원명} placeholder 도입 (tenant.name 자동 치환, 없으면 "우리 학원")
  * v1.4.0 (2026-05-28): v4_final_strategy 의미 변경 — "다음 시험 대비" → "이번 시험 출제 단원별 피드백" (다음 시험 추측 금지)
+ * v1.5.0 (2026-08-30): 문항표 골격을 questions[] 에서 파생 + 프롬프트에 문항별 ai_comment·difficulty_reason 주입
+ *   (V3 와 동일 변경 — shared/difficulty-rows.ts 를 양쪽이 공유하므로 버전도 함께 올린다)
  */
-export const COMMENTARY_V4_PROMPT_VERSION = 'v1.4.0';
+export const COMMENTARY_V4_PROMPT_VERSION = 'v1.5.0';
 
 // ── 템플릿 유형 ──
 export const TEMPLATE_TYPES = ['detailed', 'summary', 'parent', 'print'] as const;
