@@ -228,7 +228,7 @@ toast.info('AI가 분석 중입니다');
 **UI 표준:**
 - 모서리 둥글기: `rounded-sm` 표준 — `rounded-lg` 사용 금지 (Card, Badge 등 컴포넌트 내부 제외)
 - 버튼: 반드시 `<Button>` 컴포넌트 사용 — 커스텀 button 스타일 직접 작성 금지
-- 빈 상태: 공용 컴포넌트 없음 — `<p className="text-xs text-slate-400 py-4 text-center">…없습니다</p>` 인라인 패턴 (`LoadingEmptyState` 는 `_archive/` 로 이관됨)
+- 빈 상태: 공용 컴포넌트 없음 — `<p className="text-xs text-slate-400 py-4 text-center">…없습니다</p>` 인라인 패턴 (`LoadingEmptyState` 는 레포에서 제거됨)
 - 로딩: `<Skeleton>` 컴포넌트 사용 — `animate-pulse` 직접 사용 지양
 - 스크롤바: 글로벌 thin 스크롤바 적용 (5px, 반투명) — 숨기려면 `.no-scrollbar` 클래스 사용
 - 페이지네이션: `<Pagination>` 컴포넌트 사용, 사이드바 등 좁은 영역은 `compact` prop 사용
@@ -557,10 +557,16 @@ node -e "fetch('https://dapi.kakao.com/v2/local/search/address.json?query=' + en
 
 ## 프로젝트 구조
 
-> **`_archive/`** — 기출분석 전용화로 사문화된 코드의 보관소(2026-08-30, 77파일 10,415줄).
-> 원래 상대경로를 그대로 유지하므로 **되살릴 땐 `_archive/` 접두사만 떼면 된다.**
-> `tsconfig.json` · `eslint.config.mjs` · `.vercelignore` 에서 제외 — 빌드·타입체크·배포 대상이 아니다.
-> 여기서 뭔가를 import 하고 있다면 그건 실수다. 묶음별 되돌리기: `git revert <해당 chore(정리) 커밋>`
+> **사문화 코드는 레포에 없다** — 기출분석 전용화로 아무 데서도 import 되지 않게 된
+> 77파일 10,415줄을 2026-08-30 에 레포 **밖**(`F:/mathlab-archive/`)으로 뺐다.
+> 레포 안에 두면 빌드에는 무해하지만(번들 흔적 0건) grep·IDE 검색에 계속 섞이고 원격에도 푸시된다.
+>
+> **되살리기** — 살아 있던 시절부터 추적되던 파일이라 히스토리에 영구 보존돼 있다:
+> `git checkout <이관커밋>^ -- src/lib/utils/svg-diagrams/`
+> 이관 커밋: `9231e5ab`(다이어그램 34) `045dbc59`(UI 27) `93e4e6fa`(스키마 7) `75103c80`(lib 9)
+>
+> `_archive/` 는 `.gitignore` · `tsconfig.json` · `eslint.config.mjs` · `.vercelignore` 에 모두
+> 걸려 있다 — 로컬에서 다시 꺼내 놔도 커밋·타입체크·배포에 새어 들어가지 않는다.
 
 ```
 src/
@@ -778,15 +784,14 @@ PDF 업로드 → 수동 분석 → status=COMPLETED
 2. **문제 편집**: AI 생성 문제 검토/수정/삭제/추가
 3. **최종 설정**: 제목, 시간, 배점 설정 후 저장
 
-### SVG 다이어그램 시스템 — `_archive/` 로 이관됨 (2026-08-30)
+### SVG 다이어그램 시스템 — 레포에서 제거됨 (2026-08-30)
 
 기출분석 전용화로 **문제 생성·PDF 다이어그램 렌더링 경로가 사라져** 코드 전체가 사문화됐다.
 `DiagramParam[]` 26개 타입, `DiagramSpec` 6유형, 교육과정 프리셋 209개, `DiagramRenderer`,
-`DiagramEditorPopup` 모두 **삭제가 아니라 이관**이다 — `_archive/src/lib/utils/svg-diagrams/` 등.
+`DiagramEditorPopup` 모두 지금은 **워킹트리에 없다.**
 
-- 되살리려면 경로에서 `_archive/` 접두사만 떼면 된다 (전부 100% 동일 rename)
-- 묶음 단위 되돌리기: `git revert 9231e5ab` (다이어그램 34파일)
-- `_archive/` 는 `tsconfig.json` · `eslint.config.mjs` · `.vercelignore` 에서 제외 — 빌드·타입체크·배포 대상 아님
+- 되살리기: `git checkout 9231e5ab^ -- src/lib/utils/svg-diagrams/` (히스토리에 영구 보존)
+- 편의 사본: `F:/mathlab-archive/src/lib/utils/svg-diagrams/` (원래 상대경로 유지)
 - DB `Question.diagramSpec` / `diagramSVG` 컬럼은 **그대로 남아 있다** (데이터 보존)
 
 ⚠️ 새 코드에서 `@/lib/utils/svg-diagrams`, `@/lib/diagram`, `@/lib/utils/diagram-resolver` 를
@@ -799,7 +804,7 @@ import 하지 말 것 — 지금은 존재하지 않는 경로다.
 | `MathRenderer` | 마크다운+LaTeX+GFM 테이블 렌더링. `onMathClick` prop 시 수식 클릭 편집 모드 활성 (원본 content 좌표 보존). EditableMathRenderer 흡수 통합 (2026-04-15) |
 
 `DiagramRenderer` · `DiagramEditorPopup` · `ProblemDisplay` · `MathLivePopup` · `InlineMathText` 는
-기출분석 전용화 과정에서 제거/이관됐다 (위 섹션 참조).
+기출분석 전용화 과정에서 제거됐다 (위 섹션의 복구 방법 참조).
 ### 문제(Question) 시스템
 
 **DB 모델:** Question — content(마크다운), choices(JSON), answer, explanation, diagramSpec(구조화 JSON), diagramSVG(레거시)
