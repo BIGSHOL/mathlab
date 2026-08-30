@@ -18,6 +18,7 @@ import { TimelineSection } from './study-strategy/TimelineSection';
 import { PersonalizedStrategySection } from './study-strategy/PersonalizedStrategySection';
 import { GradeConnectionsSection } from './study-strategy/GradeConnectionsSection';
 import { isEssay } from '@/lib/exam-analysis/shared/question-format';
+import { collectQuestionEvidence } from '@/lib/exam-analysis/shared/question-evidence';
 
 interface StudyStrategyTabProps {
   questions: AnalyzedQuestion[];
@@ -49,6 +50,7 @@ export function StudyStrategyTab({ questions }: StudyStrategyTabProps) {
   // ── 토픽 분석 데이터 ──
   const { topicSummaries, chapterGroups, totalPoints, essayQuestions, is4Level } = useMemo(() => {
     const topicMap = new Map<string, TopicSummary>();
+    const topicQuestions = new Map<string, AnalyzedQuestion[]>();
     const totalPts = sumPoints(questions.map((q) => q.points));
     const is4L = questions.some(q => ['concept', 'pattern', 'reasoning', 'creative', '1', '2', '3', '4', '5'].includes(q.difficulty ?? ''));
 
@@ -63,9 +65,14 @@ export function StudyStrategyTab({ questions }: StudyStrategyTabProps) {
           questionCount: 0, totalPoints: 0, percentage: 0,
           difficulties: [], types: [],
           essayCount: 0, essayNumbers: [],
-          avgDifficulty: 0, features: [], questionNumbers: [],
+          avgDifficulty: 0, features: [], questionNumbers: [], evidence: [],
         });
       }
+
+      // 근거 추출은 아래 마무리 단계에서 한 번에 한다 — 여기서는 원본 문항만 모아 둔다.
+      const bucket = topicQuestions.get(rawTopic);
+      if (bucket) bucket.push(q);
+      else topicQuestions.set(rawTopic, [q]);
 
       const s = topicMap.get(rawTopic)!;
       s.questionCount++;
@@ -92,6 +99,8 @@ export function StudyStrategyTab({ questions }: StudyStrategyTabProps) {
       if (s.essayCount > 0) s.features.push(`서술형 ${s.essayCount}번`);
       if (s.avgDifficulty >= 3) s.features.push('고난도 집중');
       if (s.percentage >= 20) s.features.push('핵심 단원');
+      // AI 소견이 붙은 문항만 남는다 — 하나도 없으면 빈 배열이고 화면은 블록을 숨긴다.
+      s.evidence = collectQuestionEvidence(topicQuestions.get(s.topic) ?? []);
     });
 
     const sorted = Array.from(topicMap.values()).sort((a, b) => b.totalPoints - a.totalPoints);

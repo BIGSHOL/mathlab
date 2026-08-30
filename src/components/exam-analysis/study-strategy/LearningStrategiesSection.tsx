@@ -3,8 +3,12 @@
 import { useState } from 'react';
 import { Lightbulb, ChevronDown } from 'lucide-react';
 import type { TopicSummary } from './types';
-import { DIFFICULTY_ADVICE, TYPE_STRATEGIES, DIFFICULTY_LABELS } from './constants';
+import { DIFFICULTY_ADVICE, TYPE_STRATEGIES, DIFFICULTY_LABELS, DIFFICULTY_COLORS } from './constants';
 import { findMatchingStrategies } from '@/lib/exam-analysis/data/curriculum-strategies';
+import { renderInlineMath } from '@/lib/exam-analysis/rendering';
+
+/** 근거 문항 표시 상한 — 아코디언을 연 상태라도 한 단원이 10문항이면 조언이 밀려난다. */
+const EVIDENCE_LIMIT = 5;
 
 interface LearningStrategiesSectionProps {
   topicSummaries: TopicSummary[];
@@ -158,8 +162,68 @@ function ExpandedStrategy({ topic, diffKey, color, is4Level }: {
   // 2. 유형별 폴백
   const uniqueTypes = Array.from(new Set(topic.types));
 
+  // 3. 이 시험의 근거 — 아래 조언들은 전부 정적 카탈로그라 어느 시험에서나 같은 문장이 나온다.
+  //    AI 가 이 시험지를 보고 쓴 문항 소견을 맨 위에 놓아 "그래서 이 시험은?" 에 답한다.
+  //    근거가 없는 분석본(구버전·저신뢰)에서는 배열이 비어 블록 자체가 사라진다.
+  const shownEvidence = topic.evidence.slice(0, EVIDENCE_LIMIT);
+  const hiddenEvidence = topic.evidence.length - shownEvidence.length;
+
   return (
     <div className="border-t border-slate-100 bg-white px-4 py-3 space-y-3">
+      {topic.evidence.length > 0 && (
+        <div className="rounded-sm border border-slate-200 overflow-hidden">
+          <div className="flex items-center gap-1.5 px-3 py-2 bg-slate-50">
+            <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-bold text-white bg-slate-700">
+              이 시험
+            </span>
+            <span className="text-xs font-medium text-slate-700">
+              출제 근거 {topic.evidence.length}문항
+            </span>
+          </div>
+          <ul className="divide-y divide-slate-100">
+            {shownEvidence.map((ev) => (
+              <li key={ev.number} className="px-3 py-2">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-[11px] font-bold text-slate-700">{ev.number}번</span>
+                  {ev.difficulty && (
+                    <span
+                      className="px-1 py-0.5 rounded-sm text-[9px] font-bold text-white"
+                      style={{ backgroundColor: DIFFICULTY_COLORS[ev.difficulty] || '#94A3B8' }}
+                    >
+                      {DIFFICULTY_LABELS[ev.difficulty] || ev.difficulty}
+                    </span>
+                  )}
+                  {ev.points !== null && (
+                    <span className="text-[10px] text-slate-500 tabular-nums">{ev.points}점</span>
+                  )}
+                  {ev.isEssay && (
+                    <span className="text-[9px] font-medium text-amber-700 bg-amber-50 px-1 py-0.5 rounded-sm">
+                      서술형
+                    </span>
+                  )}
+                </div>
+                {/* AI 생성 텍스트 — renderInlineMath 를 거치지 않으면 raw $ 가 그대로 노출된다 */}
+                {ev.comment && (
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    {renderInlineMath(ev.comment, `ls-c-${ev.number}`)}
+                  </p>
+                )}
+                {ev.reason && (
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    난이도 근거: {renderInlineMath(ev.reason, `ls-r-${ev.number}`)}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+          {hiddenEvidence > 0 && (
+            <p className="px-3 py-1.5 text-[10px] text-slate-400 bg-slate-50/50">
+              배점이 큰 문항부터 {EVIDENCE_LIMIT}개를 보여 주고 있습니다 · 외 {hiddenEvidence}문항
+            </p>
+          )}
+        </div>
+      )}
+
       {/* 교육과정 기반 맞춤 전략 */}
       {hasCurriculumStrategy ? (
         <div className="bg-indigo-50/50 rounded-sm p-3">

@@ -6,6 +6,7 @@ import type { AnalyzedQuestion } from '@/lib/exam-analysis/types';
 import { sumPoints } from '@/lib/exam-analysis/points';
 import { DIFFICULTY_LABELS, DIFFICULTY_COLORS, ESSAY_CHECKLIST, ESSAY_DEDUCTION_CASES } from './constants';
 import { ESSAY_ADVANCED_GUIDES } from '@/lib/exam-analysis/data/curriculum-strategies';
+import { renderInlineMath } from '@/lib/exam-analysis/rendering';
 
 /**
  * 배점별 서술 분량 가이드.
@@ -100,7 +101,7 @@ export function EssayPreparationSection({
           {/* 서술형 문항 카드 그리드 (2x2) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {essayQuestions.map(q => {
-              const topic = q.topic ? q.topic.split(' > ').pop() || q.topic : '미분류';
+              const topic = q.topic ? q.topic.split(' > ').pop() || q.topic : '미분류';
               const tier = lengthTierFor(q.points);
               return (
                 <div
@@ -125,11 +126,17 @@ export function EssayPreparationSection({
                   </div>
                   <p className="text-xs text-slate-600 truncate">{topic}</p>
                   {/* 시험지를 보고 이미 뽑아 둔 근거. 예전엔 버리고 번호·난이도·배점만 보였다. */}
+                  {/* AI 생성 텍스트는 renderInlineMath 를 거쳐야 한다 — 그냥 출력하면
+                      수식이 raw `$...$` 로 노출되고 영문 enum 방어막도 통과하지 않는다. */}
                   {q.ai_comment && (
-                    <p className="text-[11px] text-slate-500 leading-relaxed mt-1.5">{q.ai_comment}</p>
+                    <p className="text-[11px] text-slate-500 leading-relaxed mt-1.5">
+                      {renderInlineMath(q.ai_comment, `essay-c-${q.question_number}`)}
+                    </p>
                   )}
                   {q.difficulty_reason && (
-                    <p className="text-[10px] text-slate-400 mt-1">난이도 근거: {q.difficulty_reason}</p>
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      난이도 근거: {renderInlineMath(q.difficulty_reason, `essay-r-${q.question_number}`)}
+                    </p>
                   )}
                   {tier && (
                     <p className="text-[10px] text-slate-500 mt-1.5 pt-1.5 border-t border-slate-200/70">
