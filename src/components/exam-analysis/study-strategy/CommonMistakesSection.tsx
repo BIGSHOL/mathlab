@@ -73,6 +73,9 @@ interface TopicMistakeData {
   specificPrevention: string[] | null;
   // 제네릭 폴백
   genericMistakes: MistakeItem[];
+  /** 이 시험에서 이 단원에 해당하는 문항 번호 — 일반론을 실제 시험지에 붙여 준다 */
+  questionNumbers: number[];
+  essayNumbers: number[];
 }
 
 export function CommonMistakesSection({
@@ -93,6 +96,8 @@ export function CommonMistakesSection({
           specificMistakes: specific?.mistakes ?? null,
           specificPrevention: specific?.prevention ?? null,
           genericMistakes: generateGenericMistakes(t),
+          questionNumbers: [...t.questionNumbers].sort((a, b) => a - b),
+          essayNumbers: [...t.essayNumbers].sort((a, b) => a - b),
         };
       }),
     [topicSummaries],
@@ -134,8 +139,13 @@ export function CommonMistakesSection({
         <div className="w-7 h-7 rounded-sm bg-red-500/15 flex items-center justify-center shrink-0">
           <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
         </div>
+        {/* ⚠️ 예전 제목 "자주 하는 실수 유형" 은 틀린 라벨이었다 — 이 제품은 학생 답안지를
+            받지 않아 무엇을 자주 틀리는지 알 수 없다. 여기 있는 것은 교육과정에서 알려진
+            단원별 주의점이다. 영어 탭은 같은 이유로 이미 제목을 고쳤는데(EnglishStudyStrategyTab
+            의 trapTitle) 수학 탭만 남아 있었다. */}
         <div className="flex-1 text-left">
-          <span className="text-sm font-semibold text-slate-800">자주 하는 실수 유형</span>
+          <span className="text-sm font-semibold text-slate-800">실수하기 쉬운 지점</span>
+          <span className="text-xs text-slate-400 ml-2">단원별로 알려진 주의점</span>
         </div>
         <ChevronDown
           className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
@@ -148,9 +158,11 @@ export function CommonMistakesSection({
       {isSectionExpanded && (
         <div className="px-4 pb-4 border-t pt-3">
           {/* 요약 */}
+          {/* "N개 유형의 실수가 예상됩니다" 는 예측한 적 없는 수치였다 —
+              카탈로그에서 단원 이름으로 꺼낸 항목 수일 뿐이다(§12-5). 근거를 그대로 말한다. */}
           <p className="text-xs text-slate-500 mb-3">
-            {topicSummaries.length}개 단원에서 총 {totalMistakes}개 유형의 실수가 예상됩니다.
-            단원을 펼쳐 상세 내용을 확인하세요.
+            {topicSummaries.length}개 단원에 대해 알려진 주의점 {totalMistakes}개입니다.
+            학생 답안을 받지 않으므로 <strong className="font-medium text-slate-600">실제 오답 기록이 아닙니다</strong>.
           </p>
 
           {/* 단원별 리스트 */}
@@ -179,7 +191,7 @@ export function CommonMistakesSection({
                       </span>
                     )}
                     <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-medium bg-red-50 text-red-600 border border-red-100 shrink-0">
-                      실수 {mistakeCount}개
+                      주의점 {mistakeCount}개
                     </span>
                     <ChevronDown
                       className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${
@@ -191,6 +203,21 @@ export function CommonMistakesSection({
                   {/* 실수 상세 (확장) */}
                   {isOpen && (
                     <div className="border-t border-slate-100 bg-white px-3 py-2.5">
+                      {/* 일반론을 이 시험지에 묶어 준다 — 아래 주의점이 어느 문항 얘기인지
+                          알 수 있어야 실제로 쓸 수 있다. 문항 번호는 사실이라 추정이 아니다. */}
+                      {(topic.questionNumbers.length > 0 || topic.essayNumbers.length > 0) && (
+                        <p className="text-[11px] text-slate-500 mb-2.5 pb-2 border-b border-slate-100">
+                          <span className="font-medium text-slate-600">이 시험 해당 문항</span>
+                          {topic.questionNumbers.length > 0 && (
+                            <span className="ml-1.5">{topic.questionNumbers.join('·')}번</span>
+                          )}
+                          {topic.essayNumbers.length > 0 && (
+                            <span className="ml-1.5 text-amber-700">
+                              서술형 {topic.essayNumbers.join('·')}번
+                            </span>
+                          )}
+                        </p>
+                      )}
                       {hasSpecific ? (
                         /* 교육과정 기반 2컬럼 레이아웃 */
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
