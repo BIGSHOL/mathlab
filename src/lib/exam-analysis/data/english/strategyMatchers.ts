@@ -16,11 +16,11 @@ const ALL_ENGLISH_CURRICULUM = [
 ];
 
 /**
- * 토픽 키워드 매칭 여부 확인
+ * 토픽 키워드 매칭 여부 확인 (느슨) — 아래 getEnglishStrategiesByQuestionType 전용.
+ * 문항 topic 매칭에는 쓰지 말 것. 양방향 부분문자열이라 오매칭이 난다(matchEnglishStrategy 주석 참고).
  */
 function isEnglishTopicMatch(keywords: string[], searchTerm: string): boolean {
   const normalizedSearch = searchTerm.toLowerCase().trim();
-
   return keywords.some(keyword => {
     const normalizedKeyword = keyword.toLowerCase().trim();
     return (
@@ -30,35 +30,84 @@ function isEnglishTopicMatch(keywords: string[], searchTerm: string): boolean {
   });
 }
 
-/**
- * 단일 토픽에 대한 전략 검색
- */
-export function findEnglishStrategies(topic: string): TopicStrategy | null {
-  // 토픽에서 소단원 추출 (예: "영어 > 문법 > 관계대명사" → "관계대명사")
-  const topicParts = topic.split('>').map(p => p.trim());
-  const searchTerms = topicParts.length > 0 ? topicParts : [topic];
+/** 매칭 결과 — 단원 이름과 확신도를 함께 돌려준다(화면이 근거를 밝힐 수 있도록). */
+export interface EnglishStrategyMatch {
+  unit: string;
+  strategy: TopicStrategy;
+  /** 100=키워드 정확일치, 40~99=부분일치. 40 미만은 반환하지 않는다. */
+  score: number;
+  /** 무엇으로 맞췄는지 (툴팁·디버깅용) */
+  via: string;
+}
 
+/**
+ * 문항 topic("고1 영어 > 문법 > 가정법 과거, 과거완료")의 **소단원**만 뽑고 괄호 주석·구두점을 턴다.
+ * "빈칸 추론 (단어·구)" → "빈칸 추론"
+ */
+function leafOf(topic: string): string {
+  const leaf = topic.split('>').pop()?.trim() ?? topic;
+  return leaf
+    .replace(/\([^)]*\)/g, '')
+    .replace(/[,·]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * 문항 topic → 학습 전략. **확신이 없으면 null.**
+ *
+ * ## 왜 엄격해야 하는가 (2026-08-30)
+ * 예전 구현은 키워드와 검색어를 **양방향 부분문자열**로 비교했다. 실제 시험지 8개 topic 으로
+ * 재 보니 이런 일이 났다:
+ *   - "가정법 과거, 과거완료" → **현재완료** 전략 (안에 든 "과거완료" 글자가 완료시제에 먼저 걸림)
+ *   - 독해 4유형(주제·요지 / 글의 구조 / 함축적 의미 / 세부 정보 파악)이 **전부 같은 항목**으로 뭉침
+ *
+ * 틀린 특정 조언은 일반론보다 나쁘다 — 구체적이라 더 믿게 된다.
+ * 그래서 점수제로 바꾸고 임계값(40) 아래는 **아무것도 주지 않는다**. 못 맞추면 화면이 비는 게 맞다.
+ */
+export function matchEnglishStrategy(topic: string): EnglishStrategyMatch | null {
+  const leaf = leafOf(topic);
+  if (!leaf) return null;
+
+  // 소단원이 여러 개념을 담을 때 앞머리도 후보로 ("가정법 과거 과거완료" → "가정법")
+  const candidates = [leaf];
+  const head = leaf.split(' ')[0];
+  if (head && head !== leaf && head.length >= 2) candidates.push(head);
+
+  let best: EnglishStrategyMatch | null = null;
   for (const curriculum of ALL_ENGLISH_CURRICULUM) {
     for (const unit of curriculum.units) {
-      for (const topicStrategy of unit.topics) {
-        // 각 검색어에 대해 매칭 시도
-        for (const searchTerm of searchTerms) {
-          if (isEnglishTopicMatch(topicStrategy.keywords, searchTerm)) {
-            return topicStrategy;
-          }
-        }
-
-        // 단원명도 매칭 시도
-        for (const searchTerm of searchTerms) {
-          if (unit.name.toLowerCase().includes(searchTerm.toLowerCase())) {
-            return topicStrategy;
+      for (const strategy of unit.topics) {
+        for (const rawKeyword of strategy.keywords) {
+          const keyword = rawKeyword.trim();
+          for (const candidate of candidates) {
+            let score = 0;
+            let via = '';
+            if (keyword === candidate) {
+              score = 100;
+              via = `정확일치 "${keyword}"`;
+            } else if (candidate.includes(keyword) && keyword.length >= 3) {
+              score = 60 + keyword.length;
+              via = `키워드 "${keyword}"`;
+            } else if (keyword.includes(candidate) && candidate.length >= 3) {
+              score = 40 + candidate.length;
+              via = `키워드 "${keyword}"`;
+            }
+            if (score > (best?.score ?? 0)) best = { unit: unit.name, strategy, score, via };
           }
         }
       }
     }
   }
+  return best && best.score >= 40 ? best : null;
+}
 
-  return null;
+/**
+ * 단일 토픽에 대한 전략 검색 (전략만 필요할 때).
+ * 판정은 matchEnglishStrategy 단일 소스를 따른다.
+ */
+export function findEnglishStrategies(topic: string): TopicStrategy | null {
+  return matchEnglishStrategy(topic)?.strategy ?? null;
 }
 
 /**

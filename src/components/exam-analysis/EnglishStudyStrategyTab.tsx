@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { AlertTriangle, Brain, GraduationCap, Languages, Quote, Repeat2, Target } from 'lucide-react';
+import { AlertTriangle, Brain, GraduationCap, Languages, Lightbulb, Quote, Repeat2, Target } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { MathSpinner } from '@/components/ui/MathSpinner';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -35,6 +35,8 @@ import { AbilityBreakdownView } from './AbilityBreakdownView';
 import { englishLevelStrategiesFor } from '@/lib/exam-analysis/shared/english-level-strategy';
 import { weightedAverageDifficulty } from '@/lib/exam-analysis/shared/difficulty';
 import { EnglishLevelStrategies } from './EnglishLevelStrategies';
+import { buildEnglishTopicStrategies, matchedStrategyCount } from '@/lib/exam-analysis/shared/english-topic-strategy';
+import { EnglishTopicStrategies } from './EnglishTopicStrategies';
 
 interface EnglishStudyStrategyTabProps {
   questions: AnalyzedQuestion[];
@@ -95,6 +97,8 @@ export function EnglishStudyStrategyTab({
 
   // 수준별 전략 — 고등 전용 데이터라 중학 시험지에서는 빈 배열이 오고 블록이 안 생긴다.
   const levelStrategies = useMemo(() => englishLevelStrategiesFor(grade), [grade]);
+  // 단원별 전략 — 매칭 못 한 단원에는 전략을 붙이지 않는다(문항 근거만 남는다).
+  const topicGroups = useMemo(() => buildEnglishTopicStrategies(questions), [questions]);
   const examProfile = useMemo(() => {
     if (!questions.length) return undefined;
     const hard = questions.filter((q) => isHighDifficulty(q.difficulty)).length;
@@ -264,11 +268,23 @@ export function EnglishStudyStrategyTab({
     </Board>
   ) : null;
 
+  const topicBoard = topicGroups.length > 0 ? (
+    <Board
+      title="단원별 학습 전략"
+      hint={`${topicGroups.length}개 단원 · 전략 ${matchedStrategyCount(topicGroups)}개`}
+      icon={<Lightbulb className="w-3.5 h-3.5 text-indigo-600" />}
+      iconBg="bg-indigo-500/15"
+    >
+      <EnglishTopicStrategies groups={topicGroups} />
+    </Board>
+  ) : null;
+
   // 문항 메타데이터만 쓰는 블록들 — 세 분기 어디서나 같이 보여야 한다.
   const headBoards = (
     <>
       {focusBoard}
       {abilityBoard}
+      {topicBoard}
       {levelBoard}
     </>
   );
