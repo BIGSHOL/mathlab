@@ -248,12 +248,62 @@ function CommentRow({ q, showDiffReason, examPaperId, analysisId, onDifficultyEd
             난이도 근거: {renderInlineMath(q.difficulty_reason, `dr-${q.question_number}`)}
           </p>
         )}
+        {/* 이 문항에 실제로 나온 단어·구문. 분석 단계에서 문항별로 이미 뽑아 저장하는데
+            (ai-engine 의 parseEnglishKeyFields) 문항 단위로 보여주는 곳이 없었다 —
+            유일한 소비처인 학습팩이 전 문항을 하나로 병합하며 문항 귀속을 없앤다.
+            구버전 분석본에는 필드 자체가 없으므로 optional 로만 읽는다. */}
+        <KeyTermChips vocab={q.key_vocab} structures={q.key_structures} num={q.question_number} />
       </div>
 
       {/* 피드백 — 공유 컴포넌트(어느 탭에서든 동일 작동 + 문항 메타데이터 스냅샷 포함) */}
       <div className="text-center pt-0.5">
         <QuestionFeedbackButton q={q} examPaperId={examPaperId} analysisId={analysisId} align="right" />
       </div>
+    </div>
+  );
+}
+
+/**
+ * 문항별 핵심 단어·구문 칩.
+ *
+ * 값이 없으면 (구버전 분석본·수학 시험지·AI 가 빈 배열을 준 문항) 아무것도 렌더하지
+ * 않는다 — 빈 라벨만 남으면 "분석이 빠졌다"는 인상을 준다.
+ */
+function KeyTermChips({
+  vocab,
+  structures,
+  num,
+}: {
+  vocab?: { word: string; meaning: string | null }[] | null;
+  structures?: { pattern: string; meaning: string | null }[] | null;
+  num: number | string;
+}) {
+  const words = Array.isArray(vocab) ? vocab.filter((v) => v?.word) : [];
+  const patterns = Array.isArray(structures) ? structures.filter((s) => s?.pattern) : [];
+  if (!words.length && !patterns.length) return null;
+
+  return (
+    <div className="flex flex-wrap gap-1 mt-1.5">
+      {words.map((v, i) => (
+        <span
+          key={`kv-${num}-${i}`}
+          title={v.meaning || undefined}
+          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-slate-100 text-[10px] text-slate-600"
+        >
+          <span className="font-semibold text-slate-800">{v.word}</span>
+          {v.meaning && <span className="text-slate-400">{v.meaning}</span>}
+        </span>
+      ))}
+      {patterns.map((s, i) => (
+        <span
+          key={`ks-${num}-${i}`}
+          title={s.meaning || undefined}
+          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-sky-50 text-[10px] text-sky-700 border border-sky-100"
+        >
+          <span className="font-semibold">{s.pattern}</span>
+          {s.meaning && <span className="text-sky-400">{s.meaning}</span>}
+        </span>
+      ))}
     </div>
   );
 }

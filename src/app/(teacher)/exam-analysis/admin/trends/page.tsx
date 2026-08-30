@@ -15,14 +15,14 @@ interface DiffStat { difficulty: string; count: number; pct: number; avgPoints: 
 interface TypeStat { questionType: string; count: number; pct: number; avgDifficulty: string }
 interface FormatStat { format: string; count: number; pct: number; avgPoints: number }
 interface TopicStat { topic: string; count: number; pct: number; avgDifficulty: string; totalPoints: number }
-interface TextbookStat { textbook: string; count: number; pct: number; chapters: string[] }
+interface SubjectStat { subject: string; count: number; pct: number; chapters: string[] }
 interface FeatureCard { key: string; label: string; value: string; description: string }
 
 interface DashboardData {
   stats: { totalExams: number; totalQuestions: number; avgQuestionsPerExam: number; avgConfidence: number };
   distributions: { difficulty: DiffStat[]; questionType: TypeStat[]; questionFormat: FormatStat[] };
   topicFrequency: TopicStat[];
-  textbookTrends: TextbookStat[];
+  subjectTrends: SubjectStat[];
   featureCards: FeatureCard[];
 }
 
@@ -107,7 +107,7 @@ export default function TrendsDashboardPage() {
           questionType: data.distributions.questionType,
           questionFormat: data.distributions.questionFormat,
           topicFrequency: data.topicFrequency,
-          textbookTrends: data.textbookTrends,
+          subjectTrends: data.subjectTrends,
         }),
       });
       const json = await res.json();
@@ -270,15 +270,15 @@ export default function TrendsDashboardPage() {
               </div>
             </div>
 
-            {/* 교과서별 출제 경향 */}
-            {data.textbookTrends.length > 0 && (
+            {/* 과목·학년별 출제 분포 — topic 첫 세그먼트 집계이지 교과서가 아니다 */}
+            {data.subjectTrends.length > 0 && (
               <div className="bg-white border rounded-sm p-4">
-                <h3 className="text-sm font-semibold text-slate-900 mb-3">교과서별 출제 경향</h3>
+                <h3 className="text-sm font-semibold text-slate-900 mb-3">과목·학년별 출제 분포</h3>
                 <div className="space-y-2">
-                  {data.textbookTrends.map(t => (
-                    <div key={t.textbook} className="border rounded-sm p-2.5">
+                  {data.subjectTrends.map(t => (
+                    <div key={t.subject} className="border rounded-sm p-2.5">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-semibold text-slate-800">{t.textbook}</span>
+                        <span className="text-xs font-semibold text-slate-800">{t.subject}</span>
                         <span className="text-primary text-xs font-bold">{t.count}문항 ({t.pct}%)</span>
                       </div>
                       {t.chapters.length > 0 && (

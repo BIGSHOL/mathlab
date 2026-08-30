@@ -22,7 +22,7 @@ interface InsightInput {
   questionType: Array<{ questionType: string; count: number; pct: number }>;
   questionFormat: Array<{ format: string; count: number; pct: number }>;
   topicFrequency: Array<{ topic: string; count: number; pct: number }>;
-  textbookTrends: Array<{ textbook: string; count: number; pct: number }>;
+  subjectTrends: Array<{ subject: string; count: number; pct: number }>;
 }
 
 interface TrendInsight {
@@ -100,7 +100,7 @@ async function generateInsight(input: InsightInput): Promise<TrendInsight> {
 - 유형 분포: ${typeSummary}
 - 형식 분포: ${formatSummary}
 - 주요 단원: ${topTopics}
-- 교과서: ${input.textbookTrends.map(t => t.textbook).join(', ')}
+- 과목·학년 범위: ${input.subjectTrends.map(t => t.subject).join(', ')}
 
 ## JSON 형식
 {
@@ -132,9 +132,11 @@ function generateRuleBasedInsight(input: InsightInput): TrendInsight {
   const essayPct = essayFmt?.pct || 0;
 
   const overallTrend = `${input.totalExams}개 시험지, ${input.totalQuestions}개 문항을 분석한 결과, ` +
-    (input.textbookTrends.length > 1
-      ? `복수 교과서(${input.textbookTrends.length}종)의 내용이 통합 출제되고 있습니다.`
-      : `단일 교과서 범위에서 출제되고 있습니다.`) +
+    // 예전엔 "복수 교과서 N종이 통합 출제"라 썼지만, 이 값은 교과서가 아니라
+    // 과목·학년 라벨이라 사실이 아니었다.
+    (input.subjectTrends.length > 1
+      ? `${input.subjectTrends.length}개 과목·학년에 걸쳐 출제되고 있습니다.`
+      : `단일 과목·학년 범위에서 출제되고 있습니다.`) +
     (highPct > 30 ? ` 심화·최고난도 문항이 ${Math.round(highPct)}%로 상위권 변별력이 높습니다.` : '');
 
   const keyPatterns: string[] = [];

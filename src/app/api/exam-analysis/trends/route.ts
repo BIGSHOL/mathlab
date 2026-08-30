@@ -37,8 +37,18 @@ interface FormatStat {
   avgPoints: number;
 }
 
-interface TextbookStat {
-  textbook: string;
+/**
+ * topic 경로의 첫 세그먼트별 집계.
+ *
+ * ⚠️ 이건 **교과서가 아니라 과목·학년 라벨**이다. topic 포맷이
+ * `과목 > 대단원 > 중단원`(예: `중2 수학 > 수와 연산 > 정수와 유리수`)이라
+ * 첫 세그먼트는 `중2 수학` 이다. 게다가 cross-validator 가 시험지 안의 모든 문항을
+ * dominant 과목 접두사로 덮어쓰므로 이 축은 **시험지당 1값으로 붕괴**한다.
+ * 예전엔 이걸 "교과서 N종"이라 표시해, 학년이 섞인 관리자 화면에서
+ * "복수 교과서가 통합 출제" 같은 사실이 아닌 문장을 만들어냈다.
+ */
+interface SubjectStat {
+  subject: string;
   count: number;
   pct: number;
   chapters: string[];
@@ -144,7 +154,7 @@ async function handleDashboard(
         stats: { totalExams: 0, totalQuestions: 0, avgQuestionsPerExam: 0, avgConfidence: 0 },
         distributions: { difficulty: [], questionType: [], questionFormat: [] },
         topicFrequency: [],
-        textbookTrends: [],
+        subjectTrends: [],
         featureCards: [],
       },
     });
@@ -244,7 +254,7 @@ async function handleDashboard(
       totalPoints: Math.round(v.pts * 10) / 10,
     }));
 
-  // ── 교과서별 출제 경향 ──
+  // ── 과목/학년별 출제 분포 (topic 첫 세그먼트) ──
   const tbMap: Record<string, { count: number; chapters: Set<string> }> = {};
   for (const q of allQuestions) {
     if (!q.topic) continue;
@@ -255,10 +265,10 @@ async function handleDashboard(
     tbMap[tb].count++;
     if (ch) tbMap[tb].chapters.add(ch);
   }
-  const textbookTrends: TextbookStat[] = Object.entries(tbMap)
+  const subjectTrends: SubjectStat[] = Object.entries(tbMap)
     .sort(([, a], [, b]) => b.count - a.count)
     .map(([k, v]) => ({
-      textbook: k,
+      subject: k,
       count: v.count,
       pct: totalQuestions > 0 ? Math.round(v.count / totalQuestions * 1000) / 10 : 0,
       chapters: Array.from(v.chapters),
@@ -286,10 +296,10 @@ async function handleDashboard(
 
   const featureCards = [
     {
-      key: 'textbook',
-      label: '교과서 연계성',
-      value: `${textbookTrends.length}종`,
-      description: textbookTrends.slice(0, 2).map(t => t.textbook).join(', ') || '분석중',
+      key: 'subject',
+      label: '과목·학년 범위',
+      value: `${subjectTrends.length}종`,
+      description: subjectTrends.slice(0, 2).map(t => t.subject).join(', ') || '분석중',
     },
     {
       key: 'balance',
@@ -316,7 +326,7 @@ async function handleDashboard(
       stats: { totalExams, totalQuestions, avgQuestionsPerExam, avgConfidence },
       distributions: { difficulty, questionType, questionFormat },
       topicFrequency,
-      textbookTrends,
+      subjectTrends,
       featureCards,
     },
   });
