@@ -558,15 +558,15 @@ node -e "fetch('https://dapi.kakao.com/v2/local/search/address.json?query=' + en
 ## 프로젝트 구조
 
 > **사문화 코드는 레포에 없다** — 기출분석 전용화로 아무 데서도 import 되지 않게 된
-> 77파일 10,415줄을 2026-08-30 에 레포 **밖**(`F:/mathlab-archive/`)으로 뺐다.
-> 레포 안에 두면 빌드에는 무해하지만(번들 흔적 0건) grep·IDE 검색에 계속 섞이고 원격에도 푸시된다.
+> 77파일 10,415줄을 2026-08-30 에 레포 **밖 `F:/mathlab-archive/`** 로 뺐다.
+> 전체 목록·검증 방법·복구법: **[docs/DEAD_CODE_ARCHIVE_2026-08.md](docs/DEAD_CODE_ARCHIVE_2026-08.md)**
 >
-> **되살리기** — 살아 있던 시절부터 추적되던 파일이라 히스토리에 영구 보존돼 있다:
-> `git checkout <이관커밋>^ -- src/lib/utils/svg-diagrams/`
+> 되살릴 땐 그 폴더가 없어도 된다 — 살아 있던 시절부터 추적되던 파일이라 히스토리에 영구 보존돼 있다:
+> `git checkout 9231e5ab^ -- src/lib/utils/svg-diagrams/` (`^` 필수)
 > 이관 커밋: `9231e5ab`(다이어그램 34) `045dbc59`(UI 27) `93e4e6fa`(스키마 7) `75103c80`(lib 9)
 >
-> `_archive/` 는 `.gitignore` · `tsconfig.json` · `eslint.config.mjs` · `.vercelignore` 에 모두
-> 걸려 있다 — 로컬에서 다시 꺼내 놔도 커밋·타입체크·배포에 새어 들어가지 않는다.
+> `_archive/` 는 `.gitignore` · `tsconfig.json` · `eslint.config.mjs` · `.vercelignore` 4곳에서
+> 차단된다 — 로컬에서 다시 꺼내 놔도 커밋·타입체크·린트·배포에 새어 들어가지 않는다.
 
 ```
 src/
