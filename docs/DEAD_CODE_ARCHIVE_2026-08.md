@@ -171,4 +171,64 @@ commentary-agent.ts:29:42  Error: 'formatDistribution' is defined but never used
 |---|---|
 | `src/types/diagram.ts` · `pdf-extract.ts` | **의도적으로 남김.** `mathgen.ts` 가 `./diagram` 으로 재수출한다. 실제 소비되는 건 `CurriculumUnit` 뿐이라 잘라내면 2개 더 나가지만, 순수 이동이 아니라 파일 내용 편집이라 보류 |
 | `src/lib/pdf-extract-engine.7z` | 15KB 압축 파일이 `src/` 안에 있다. import 되지 않으므로 무해하나 위치가 어색 |
-| Prisma 모델 5개 | `ExamExtractSchedule`, `ExamProblemCategory`, `ExamProblemType`, `ExamPatternExample`, `ExamPatternMatchHistory` — **참조 0건 + 행 0건.** 제거하려면 `prisma db push` 금지(스키마 밖 테이블 16개가 날아간다), 개별 SQL 필요 |
+| ~~Prisma 모델 5개~~ | **2026-08-31 제거 완료** — 아래 "후속: Prisma 모델 정리" 참조 |
+
+---
+
+## 후속: Prisma 모델 정리 (2026-08-31)
+
+참조 0건·행 0건이던 **5개 모델**을 스키마와 DB 양쪽에서 제거했다.
+
+| 모델 | 무엇이었나 |
+|---|---|
+| `ExamExtractSchedule` | 야간 배치 추출 스케줄 (서비스·API·Cron 은 이미 제거돼 있었다) |
+| `ExamProblemCategory` | 오답 패턴 **대분류** ┐ Category ← Type 계층 |
+| `ExamProblemType` | 오답 패턴 **유형** ┘ |
+| `ExamPatternExample` | 패턴 예시 (`patternId` 에 FK 조차 없던 고아 테이블) |
+| `ExamPatternMatchHistory` | 패턴 매칭 이력 |
+
+### 이웃 두 개는 남겼다 — 행이 0이어도 코드가 읽는다
+
+같은 "패턴 시스템" 블록 안에 있지만 **살아 있는 코드가 조회**한다. 행이 0이라 항상 빈 결과를
+받지만 양쪽 다 `if (length > 0)` 폴백이 있어 정상 동작한다.
+
+| 모델 | 읽는 곳 |
+|---|---|
+| `ExamErrorPattern` | `math/prompt-builder.ts`, `english/prompt-builder.ts` — `findMany` |
+| `ExamPromptTemplate` | `/api/exam-analysis/templates` 전체 CRUD (4파일) |
+
+> "행 0 = 죽었다"로 판단하면 안 된다. **읽는 코드가 있으면 살아 있는 것**이다.
+
+### 부수 변경 — 살아 있는 테이블 하나를 건드렸다
+
+`ExamErrorPattern."problemTypeId"` 칼럼을 함께 지웠다. `ExamProblemType` 이 사라지면
+이 FK 가 가리킬 곳이 없기 때문이다. 안전한 근거:
+
+- 실 사용부는 `name`·`errorType`·`frequency`·`feedbackMessage`·`description` **스칼라만** select
+- 사전 확인: 총 0행 중 `problemTypeId` 채워진 행 **0건**
+
+### ⚠️ `prisma db push` 를 쓰면 안 되는 이유 (실측)
+
+`prisma migrate diff` 로 DB↔스키마 차이를 뽑아 보면 이렇게 나온다:
+
+```
+DROP TABLE "lab_concept_edges";
+DROP TABLE "lab_problems";
+...                                    ← lab_* 14개 + parax_* 2개
+ALTER TABLE "TenantSubscription" DROP COLUMN "lsCustomerId", ...
+```
+
+이 DB 의 public 스키마에는 **`schema.prisma` 밖 테이블 16개**가 함께 산다. `db push` 는
+"스키마에 없으면 지운다"이므로 이것들을 전부 날린다. 그래서 항상
+`prisma/manual-migrations/*.sql` 로 **개별 DDL** 을 쓴다.
+
+제거 후 다시 diff 를 떠서 **드롭한 5개와 `problemTypeId` 가 더는 나오지 않음**을 확인했다
+(= DB 와 스키마가 그 부분에서 동기화됨). 남은 diff 는 `lab_*` 16개와 이전부터 보류 중인
+`TenantSubscription` 칼럼 3개뿐이다.
+
+### 실행 기록
+
+- SQL: `prisma/manual-migrations/drop-dead-pattern-taxonomy.sql` (멱등, 트랜잭션, `CASCADE` 미사용)
+- 드롭 직전 5개 테이블 행 수 재확인 → 전부 0 → 하나라도 0이 아니면 중단하도록 가드
+- 실행 후 `lab_*`/`parax_*` **16개 → 16개 변동 없음** 확인
+- `tsc` 0 에러 · 회귀 검사 22/22 · `next build` exit 0

@@ -725,37 +725,17 @@ Additive 구조 — 상위 역할이 하위 역할 메뉴를 포함 (`src/lib/co
 - `QuestionViewEditModal.tsx::ExplanationRegenerateButton` — 편집 폼의 해설 라벨 영역
 - 기존 해설 있으면 confirm 다이얼로그, editForm만 업데이트 (사용자가 저장 버튼으로 확정)
 
-### 기출 시험지 배치 추출 시스템
+### ~~기출 시험지 배치 추출 시스템~~ — 제거됨 (2026-08-31)
 
-분석 완료된 ExamPaper를 SUPER_ADMIN이 승인하면 Vercel Cron이 야간에 일괄 추출 → 지점 전용 문제은행 저장.
+야간 Cron 일괄 추출은 **코드도 테이블도 없다.** 서비스(`exam-extract-batch.ts`),
+API 4종(`/api/admin/extract-queue`, `/extract-schedule`, `/api/cron/extract-batch-tick`),
+UI(`/admin/extract-queue`), `vercel.json` 의 cron 설정, 그리고 `ExamExtractSchedule`
+테이블까지 전부 사라졌다. `CRON_SECRET` 환경변수도 더 이상 쓰이지 않는다.
 
-**플로우:**
-```
-PDF 업로드 → 수동 분석 → status=COMPLETED
-   → SUPER_ADMIN 대시보드에서 체크 + 승인
-   → 지금 실행 / 예약 실행 (Vercel Cron 5분 간격 틱)
-   → Gemini 추출 → ExamPaper.tenantId 주입 → Question 저장
-```
-
-**스키마:**
-- `ExamPaper`: `extractApproved`, `extractApprovedBy/At`, `extractAttempts`, `lastExtractError`
-- `Question.examPaperId` FK (시험지별 문제 추적, idempotent 재추출)
-- `ExamExtractSchedule` — 예약 스케줄 + 실행 결과 로그 (PENDING|RUNNING|DONE|FAILED|CANCELLED)
-
-**핵심 서비스:** `src/lib/services/exam-extract-batch.ts`
-- `extractAndSaveExamPaper()` — 단일 시험지 Gemini 추출 + idempotent 저장 (기존 Question 삭제 후 재생성)
-- `processPendingSchedules()` — 도래한 스케줄 순차 실행, 틱당 최대 5건 (남으면 다음 틱)
-
-**API:**
-- `GET /api/admin/extract-queue` — 시험지 목록 (filter: pending/approved/extracted/all)
-- `POST /api/admin/extract-queue/approve` — 일괄 승인/취소
-- `POST /api/admin/extract-schedule` — 즉시 실행 or scheduledAt 예약
-- `DELETE /api/admin/extract-schedule/[id]` — PENDING 스케줄 취소
-- `GET /api/cron/extract-batch-tick` — Cron 틱 (CRON_SECRET 인증)
-
-**배포 환경변수:** `CRON_SECRET` 필수 (Vercel env, Cron 헤더 Bearer 인증용)
-**Vercel Cron 설정:** `vercel.json` → `*/5 * * * *`
-**UI:** `/admin/extract-queue` (SUPER_ADMIN 전용)
+- 마지막까지 남아 있던 `ExamExtractSchedule` 모델·테이블 제거: `prisma/manual-migrations/drop-dead-pattern-taxonomy.sql`
+- **남아 있는 것**: `ExamPaper.extractApproved` / `extractApprovedBy` / `extractedToBankAt`
+  칼럼과 `Question.examPaperId` FK. 수동 추출(`ExtractToBankModal` → `/api/exam-analysis/[id]/extract-to-bank`)이
+  아직 이 칼럼들을 쓴다 — 배치만 없어졌지 추출 기능 자체가 없어진 게 아니다.
 
 **교과서 PDF 보유 현황 (G:\, 22개정):**
 
@@ -1212,7 +1192,7 @@ V3 마크업 변경 시 반드시 3곳 모두 동기화:
 **관리:** FeatureFlag, Classroom, Tenant
 **이용권:** TenantLicense, StudentLicense, LicenseUsageLog (10개 LicenseFeature enum)
 **학습과정:** LearningCourse, LearningCourseConcept, LearningCourseEnrollment
-**기출분석:** ExamPaper, ExamAnalysisResult, ExamAnalysisComment, ExamAnalysisTemplate, ExamArticle, School, SchoolGroupOverride, ExamExtractSchedule (배치 추출)
+**기출분석:** ExamPaper, ExamAnalysisResult, ExamAnalysisComment, ExamAnalysisTemplate, ExamArticle, School, SchoolGroupOverride
 **지원:** Inquiry (문의/회신)
 **기타:** StudentProfile(XP/레벨), PointTransaction, DiagnosticResult, ConceptMemo, SpacedReviewItem
 
@@ -1313,7 +1293,7 @@ node scripts/geocode-failed-by-keyword.mjs     # 4. 주소 매칭 실패분을 �
 
 **설계 핵심 (수정/확장 시 반드시 유지):**
 1. **모델 동적 수집** — `Prisma.dmmf.datamodel.models` 로 22개 모델 자동 순회. 스키마에 모델 추가해도 백업 대상 자동 반영 (하드코딩 목록 금지 → 드리프트 방지).
-2. **복원 FK 처리** — 트랜잭션 내 `SET LOCAL session_replication_role = replica` 로 FK 체크/트리거 비활성화. **삭제/삽입 순서가 무관**해져 의존성 정렬 불필요 + 자기참조(`Question.variantOf`, `ExamProblemCategory.parent`) 자동 해결. `LOCAL` 이라 트랜잭션 종료 시 GUC 자동 복원 → pgbouncer 풀 커넥션 오염 없음. **일반 `SET` 쓰면 안 됨.**
+2. **복원 FK 처리** — 트랜잭션 내 `SET LOCAL session_replication_role = replica` 로 FK 체크/트리거 비활성화. **삭제/삽입 순서가 무관**해져 의존성 정렬 불필요 + 자기참조(`Question.variantOf`) 자동 해결. `LOCAL` 이라 트랜잭션 종료 시 GUC 자동 복원 → pgbouncer 풀 커넥션 오염 없음. **일반 `SET` 쓰면 안 됨.**
 3. **복원은 `DIRECT_URL` 전용 클라이언트** — `new PrismaClient({ datasources: { db: { url: DIRECT_URL } } })`. pgbouncer(6543) 우회해야 세션 GUC 적용됨. `$transaction(fn, { timeout: 120000, maxWait: 15000 })` 필수 (대량 insert 가 기본 5s 초과).
 4. **시퀀스 resync** — 복원 후 `setval(pg_get_serial_sequence(...), MAX, COUNT>0)` 로 자동증가 카운터 재동기화 (현재 `User.seq` 1개). 자동 수집되므로 새 autoincrement 필드도 자동 처리.
 5. **직렬화** — `Date→ISO`(자동), `BigInt→{__bigint}`. 복원 시 DMMF 필드 타입 기반 revive. Json 필드는 그대로 통과.

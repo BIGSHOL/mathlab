@@ -79,7 +79,7 @@ type AnalysisSnapshot = {
 
 /**
  * 스냅샷을 **같은 id 로** 되돌린다. id 를 유지해야 FK 가 없어 Cascade 로 지워지지 않는
- * 참조들(ExamQuestionReference·ExamFeedback·ExamPatternMatchHistory 의 analysisId)이
+ * 참조들(ExamQuestionReference·ExamFeedback 의 analysisId)이
  * 다시 유효해진다 — 새 id 로 만들면 그 행들은 영구 미아가 된다.
  */
 async function restoreAnalyses(paperId: string, snap: AnalysisSnapshot) {

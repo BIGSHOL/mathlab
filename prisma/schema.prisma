@@ -538,23 +538,6 @@ model ExamPaper {
   @@index([status, extractApproved, extractedToBankAt])
 }
 
-// ExamPaper 배치 추출 스케줄
-model ExamExtractSchedule {
-  id           String    @id @default(cuid())
-  tenantId     String? // 스케줄 생성 지점 (참고용)
-  scheduledAt  DateTime // 실행 예정 시각
-  status       String    @default("PENDING") @db.VarChar(20) // PENDING | RUNNING | DONE | FAILED | CANCELLED
-  examPaperIds String[] // 처리할 시험지 ID 목록
-  createdBy    String // SUPER_ADMIN userId
-  createdAt    DateTime  @default(now())
-  startedAt    DateTime?
-  finishedAt   DateTime?
-  result       Json? // { success, failed, skipped, errors: [{id, error}] }
-
-  @@index([status, scheduledAt])
-  @@index([createdBy])
-}
-
 model ExamAnalysis {
   id              String    @id @default(cuid())
   examPaperId     String
@@ -615,45 +598,8 @@ model ArticleCopyEvent {
 
 // ── 패턴 시스템 (오답 패턴 DB) ──
 
-model ExamProblemCategory {
-  id          String      @id @default(cuid())
-  subject     ExamSubject
-  name        String      @db.VarChar(100)
-  nameEn      String?     @db.VarChar(100)
-  description String?     @db.Text
-  parentId    String?
-  sortOrder   Int         @default(0)
-  isActive    Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-
-  parent       ExamProblemCategory?  @relation("ExamCategoryHierarchy", fields: [parentId], references: [id])
-  children     ExamProblemCategory[] @relation("ExamCategoryHierarchy")
-  problemTypes ExamProblemType[]
-
-  @@index([subject])
-  @@index([parentId])
-}
-
-model ExamProblemType {
-  id          String   @id @default(cuid())
-  categoryId  String
-  name        String   @db.VarChar(200)
-  description String?  @db.Text
-  gradelevels Json?
-  keywords    Json?
-  sortOrder   Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-
-  category      ExamProblemCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  errorPatterns ExamErrorPattern[]
-
-  @@index([categoryId])
-}
-
 model ExamErrorPattern {
   id                String      @id @default(cuid())
-  problemTypeId     String?
   subject           ExamSubject
   name              String      @db.VarChar(200)
   description       String      @db.Text
@@ -668,11 +614,7 @@ model ExamErrorPattern {
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 
-  problemType  ExamProblemType?          @relation(fields: [problemTypeId], references: [id], onDelete: SetNull)
-  matchHistory ExamPatternMatchHistory[]
-
   @@index([subject])
-  @@index([problemTypeId])
 }
 
 model ExamPromptTemplate {
@@ -691,33 +633,6 @@ model ExamPromptTemplate {
 
   @@unique([subject, agentType, version])
   @@index([subject, agentType, isActive])
-}
-
-model ExamPatternExample {
-  id        String      @id @default(cuid())
-  patternId String
-  subject   ExamSubject
-  input     String      @db.Text
-  output    String      @db.Text
-  metadata  Json?
-  createdAt DateTime    @default(now())
-
-  @@index([patternId])
-  @@index([subject])
-}
-
-model ExamPatternMatchHistory {
-  id          String   @id @default(cuid())
-  patternId   String
-  analysisId  String
-  questionNum Int
-  confidence  Float
-  matchedAt   DateTime @default(now())
-
-  pattern ExamErrorPattern @relation(fields: [patternId], references: [id], onDelete: Cascade)
-
-  @@index([patternId])
-  @@index([analysisId])
 }
 
 // ── 트렌드 + 참조 문제 ──

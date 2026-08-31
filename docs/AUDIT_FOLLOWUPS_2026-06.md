@@ -22,11 +22,13 @@
 - [ ] **V2 article 체인 삭제** — `V2_ARTICLE_ENABLED=false`(AnalysisDetail.tsx)지만 `ArticleEditorModal`이 `V4_NAVER_COPY_ENABLED` 경유로 렌더될 수 있어 **도달성 조사 선행**.
   - 대상: `src/lib/exam-analysis/article-generator.ts`, `article-anti-patterns.ts`, `article-seo.ts`, `article-archetype.ts`, `src/app/api/exam-analysis/[id]/generate-article/route.ts` (~2K LoC)
   - 삭제 시 generate-article의 플랜 게이트 부재 이슈(V2만 미게이트)도 함께 소멸하는지 확인
-- [ ] **스키마 정리** — dead model 5종 + orphan enum 10종 + dead 스키마 파일
-  - dead model: `ExamExtractSchedule`, `ExamProblemCategory`, `ExamProblemType`, `ExamPatternExample`, `ExamPatternMatchHistory` (src/ 참조 0건)
-  - orphan enum: `Stage`, `PointTransactionType`, `ShopItemCategory`, `AssignmentStatus`, `QuizStatus`, `CourseStatus`, `ExamCampaignType`, `ExamCampaignStatus`, `WorkbookSectionItemKind`, `AnswerSpaceSize`
-  - `src/lib/schemas/workbook.ts` 삭제 (워크북 모델 트림 후 잔재)
-  - ⚠️ 워크플로: dev 중지 → `prisma generate` + `db push` → dev 재시작 (CLAUDE.md 규칙)
+- [~] **스키마 정리** — dead model 5종 ✅ + dead 스키마 파일 ✅ + orphan enum 10종 ⬜
+  - ~~dead model~~: **2026-08-31 제거 완료** — `prisma/manual-migrations/drop-dead-pattern-taxonomy.sql`.
+    상세: [DEAD_CODE_ARCHIVE_2026-08.md](DEAD_CODE_ARCHIVE_2026-08.md) "후속: Prisma 모델 정리"
+  - ~~`src/lib/schemas/workbook.ts`~~: 2026-08-30 레포 밖으로 이관 완료
+  - orphan enum(남음): `Stage`, `PointTransactionType`, `ShopItemCategory`, `AssignmentStatus`, `QuizStatus`, `CourseStatus`, `ExamCampaignType`, `ExamCampaignStatus`, `WorkbookSectionItemKind`, `AnswerSpaceSize`
+  - ⚠️ **`db push` 금지** (위 문서 참조 — public 스키마에 schema.prisma 밖 테이블 16개가 산다).
+    워크플로: dev 중지 → `prisma generate` + `prisma/manual-migrations/*.sql` 개별 DDL → dev 재시작
 - [ ] **`src/lib/supabase.ts::uploadExamFile`** — 호출처 0건 dead code, 벤더명("Supabase") 에러 메시지 포함. 삭제 권장.
 
 ### 2. 일관성 / 리팩토링
