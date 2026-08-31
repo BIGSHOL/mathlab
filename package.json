@@ -36,7 +36,8 @@
     "verify:claims": "tsx scripts/parity/check-unfounded-claims.ts",
     "verify:ability": "tsx scripts/parity/check-ability-breakdown.ts",
     "verify:en-level": "tsx scripts/parity/check-english-level-strategy.ts",
-    "verify:en-topic": "tsx scripts/parity/check-english-topic-strategy.ts"
+    "verify:en-topic": "tsx scripts/parity/check-english-topic-strategy.ts",
+    "verify:prices": "tsx scripts/parity/check-product-prices.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
