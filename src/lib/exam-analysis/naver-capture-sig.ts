@@ -35,7 +35,9 @@ export function hashStr(s: string): string {
 // v5 (2026-08-30): 서술형 판정을 shared/question-format 로 통일. 형식이 비어 있거나
 //   변형 표기인 문항이 이제 올바른 칸에 들어가므로, 블록 id 는 그대로인데 형식 분포·
 //   서술형 카운트가 실린 지면이 달라진다 — 위 (1) 조항.
-export const NAVER_CAPTURE_VERSION = 'v5';
+// v6 (2026-09-11): 에디토리얼 문체의 Q&A 소제목을 「질문 N · 학부모 인터뷰」→「QN」으로 변경.
+//   블록 id·variant id 는 그대로라 구조 서명이 안 바뀐다 — 위 (1) 조항. 안 올리면 3일간 옛 문구 캡처가 붙는다.
+export const NAVER_CAPTURE_VERSION = 'v6';
 
 /**
  * 문항 시그니처에 넣는 필드.
