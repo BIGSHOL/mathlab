@@ -244,8 +244,9 @@ export function ExamPaperList({
                       );
                     })()}
                     {/* 구버전 칩 — 상태 배지(분석완료/총평완료)는 유지하고 버전 불일치만 별도 병기.
-                        기존 총평은 확인·복사 가능하므로 상태를 가리지 않는다(2026-06-24). */}
-                    {item.status === 'COMPLETED' && isStalePromptVersion(item.analyses[0]?.modelVersion, item.subject) && (() => {
+                        기존 총평은 확인·복사 가능하므로 상태를 가리지 않는다(2026-06-24).
+                        데모 픽스처는 v1.4.0 으로 동결된 재생본이라 제외 — 재분석해도 풀리지 않는다(2026-09-11). */}
+                    {item.status === 'COMPLETED' && !isDemoExamId(item.id) && isStalePromptVersion(item.analyses[0]?.modelVersion, item.subject) && (() => {
                       const v = extractPromptVersion(item.analyses[0]?.modelVersion);
                       return (
                         <span
@@ -309,8 +310,8 @@ export function ExamPaperList({
                       {item.status === 'FAILED' ? <RotateCw className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                     </button>
                   )}
-                  {/* 구버전 프롬프트 재분석 버튼 — COMPLETED + stale 일 때만 */}
-                  {item.status === 'COMPLETED' && isStalePromptVersion(latestAnalysis?.modelVersion, item.subject) && (
+                  {/* 구버전 프롬프트 재분석 버튼 — COMPLETED + stale 일 때만 (데모 픽스처 제외) */}
+                  {item.status === 'COMPLETED' && !isDemoExamId(item.id) && isStalePromptVersion(latestAnalysis?.modelVersion, item.subject) && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

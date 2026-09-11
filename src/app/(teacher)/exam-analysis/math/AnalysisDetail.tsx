@@ -306,7 +306,9 @@ export function MathAnalysisDetail({ detail, analyzing, onAnalyze, onRefresh, au
 
   // 구버전(이전 PROMPT_VERSION) 분석본 — 총평을 구버전 분석 데이터로 생성하면 품질 불일치.
   // → 총평 생성/재생성을 사전 차단하고 재분석을 유도한다 (사용자 요청 2026-05-30).
-  const isStaleAnalysis = isStalePromptVersion(latestAnalysis?.modelVersion, 'MATH');
+  //   데모 픽스처는 v1.4.0 으로 동결된 재생본이라 제외한다 — 재분석해도 같은 픽스처가 나와 풀 수 없는
+  //   경고가 되고, 총평 단계(데모 3단계)를 막아 체험이 거기서 끝났다(2026-09-11).
+  const isStaleAnalysis = !isDemoExamId(detail.id) && isStalePromptVersion(latestAnalysis?.modelVersion, 'MATH');
   const stalePromptLabel = extractPromptVersion(latestAnalysis?.modelVersion);
 
   // AI 총평은 Pro+ 플랜 기능 — free면 잠금.
