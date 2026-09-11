@@ -63,7 +63,9 @@ console.log('── 캡처 시그니처 (naver-capture-sig) ──');
 // v4 → v5 (2026-08-30): 서술형 판정을 shared/question-format 로 통일.
 //   형식이 비었거나 변형 표기인 문항이 이제 올바른 칸에 들어가 형식 분포·서술형
 //   카운트가 실린 지면이 달라진다. 블록 id 는 그대로라 구조 서명으로는 안 잡힌다.
-ok(NAVER_CAPTURE_VERSION === 'v5', '버전이 v5', NAVER_CAPTURE_VERSION);
+// v5 → v6 (2026-09-11): 에디토리얼 문체 Q&A 소제목 「질문 N · 학부모 인터뷰」→「QN」.
+//   렌더러 카피만 바뀌고 블록·variant id 는 그대로라 구조 서명으로는 안 잡힌다.
+ok(NAVER_CAPTURE_VERSION === 'v6', '버전이 v6', NAVER_CAPTURE_VERSION);
 
 const a = base();
 const b = buildNaverCaptureSig({
