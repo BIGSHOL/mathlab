@@ -1,7 +1,7 @@
 /**
  * V3 Q&A 단일 섹션
  *
- * 빨강 outlined 큰 번호(num) + 키커(Q1 · 학부모 인터뷰) + 질문(28px Noto Serif) +
+ * 빨강 outlined 큰 번호(num) + 키커(Q1) + 질문(28px Noto Serif) +
  * 답변 문단들(17px + 형광펜) + DataBox.
  *
  * 시안: scripts/generate-v3-preview-html.ts::buildCommentaryHtml 의 qaSections JSX 버전
@@ -28,7 +28,7 @@ export function QASection({ qa, sectionNum, qaIndex, subLabel, dataBoxStyle = 'b
   return (
     <section className="v3-section">
       <span className="v3-section-num">{sectionNum}</span>
-      <div className="v3-section-sub">{subLabel ?? `질문 ${qaIndex + 1} · 학부모 인터뷰`}</div>
+      <div className="v3-section-sub">{subLabel ?? `Q${qaIndex + 1}`}</div>
       <h3>{renderInlineMath(qa.question, `qa-q-${qaIndex}`, { disableHighlight: true })}</h3>
       {answer.map((p, i) => (
         <p key={`qa-${qaIndex}-${i}`}>{markdownToHighlighted(p, `qa-${qaIndex}-${i}`)}</p>

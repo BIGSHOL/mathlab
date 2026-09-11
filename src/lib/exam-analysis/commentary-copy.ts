@@ -78,7 +78,7 @@ const EDITORIAL: CommentaryCopy = {
   chartsBodyStack: '분석 화면의 4개 도표를 세로로 크게 배치했습니다.',
   conclusionKicker: 'CONCLUSION · 다음 시험을 준비하는 학생에게',
   conclusionTitle: '다음 시험을 준비하는 학생에게',
-  qaSubLabel: (n) => `질문 ${n} · 학부모 인터뷰`,
+  qaSubLabel: (n) => `Q${n}`,
 };
 
 /** 기사체 — 단정적 종결, 신문 골격과 어울린다 */
