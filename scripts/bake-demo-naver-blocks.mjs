@@ -71,7 +71,8 @@ try {
     // deviceScaleFactor 1 — 스케일은 domToPng({scale:2})가 담당 (production과 동일)
     const page = await browser.newPage({ viewport: { width: 1380, height: 1000 } });
     console.log(`\n── ${grade} (${key}) 진행 중...`);
-    await page.goto(BASE + '/demo', { waitUntil: 'networkidle' });
+    // 막 띄운 dev 서버는 /demo 첫 컴파일에 20초 안팎이 걸려 기본 30초 networkidle 을 넘긴다
+    await page.goto(BASE + '/demo', { waitUntil: 'networkidle', timeout: 120000 });
     // 실전형 플로우: 빈 상태 [시험지 업로드] → 폼 → 드롭존 → 샘플 선택 → [업로드] → [분석 실행]
     await page.getByRole('button', { name: /시험지 업로드/ }).click();
     await page.getByText('클릭하거나 파일을 드래그하세요').click();
@@ -79,7 +80,8 @@ try {
     await page.locator('form').getByRole('button', { name: '업로드', exact: true }).click();
     await page.getByRole('button', { name: '분석 실행', exact: true }).last().click({ timeout: 15000 });
     await page.getByText('기본 분석', { exact: true }).waitFor({ timeout: 40000 });
-    await page.getByRole('button', { name: '총평 생성' }).click();
+    // 버튼명은 [총평지 생성] — 옛 이름('총평 생성')으로 찾으면 부분일치도 안 돼 여기서 멈춘다
+    await page.getByRole('button', { name: '총평지 생성', exact: true }).click();
     await page.getByText('총평이 생성되었습니다').waitFor({ timeout: 30000 });
     // V3 펼침 (접힘 헤더의 chevron)
     await page.locator('button:has(svg path[d="M19 9l-7 7-7-7"])').first().click();
