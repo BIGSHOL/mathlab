@@ -363,6 +363,64 @@ export function CommentarySection({
     </div>
   ) : null;
 
+  // 헤더 우측 컨트롤 — 접힘·펼침 두 헤더가 **이 한 벌을 같은 자리에** 렌더한다.
+  //   예전엔 분기마다 따로 적혀 있어서, 펼칠 때 React 가 자리(index) 기준으로 DOM 을 재사용했다.
+  //   첫 자리 [블로그용 총평지] 노드가 [템플릿]으로, 둘째 자리 [재분석] 노드가 [블로그용 총평지]로
+  //   바뀌고, Button 의 transition-all 이 배경·글자색을 200ms 동안 옮겨 칠해 버튼이 흔들려 보였다
+  //   (2026-09-11 실측 — 펼친 직후 [템플릿]이 인디고 배경을 물려받아 있었다).
+  //   → 템플릿 버튼은 펼쳤을 때만 보이지만 자리는 항상 차지한다(`isExpanded && …`). 순서를 바꾸지 말 것.
+  const headerControls = (
+    <div className="flex items-center gap-2">
+      {isExpanded && templateBtn}
+      {copyImagesBtn}
+      {!isRegenerating && (
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={onRegenerate}
+          disabled={lockRegen}
+          title={isStale ? `이전 버전(${staleVersion})으로 분석됨 — 재분석 후 총평 가능` : commentaryLocked ? commentaryLockMsg : '총평 재생성'}
+          className={`text-xs disabled:opacity-40 disabled:cursor-not-allowed ${isFallback ? 'text-amber-600 hover:text-amber-700' : 'text-slate-400 hover:text-slate-600'}`}
+        >
+          {isFallback ? 'AI 재분석' : '재분석'}
+        </Button>
+      )}
+      {hasSchool && !isRegenerating && !lockRegen && (
+        <div className="flex items-center gap-3">
+          <label title={nearbyTitle} className={`flex items-center gap-1 text-[11px] cursor-pointer ${nearbyCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
+            <input
+              type="checkbox"
+              checked={includeNearby && (nearbyCount ?? 0) > 0}
+              onChange={(e) => onIncludeNearbyChange(e.target.checked)}
+              disabled={nearbyCount === 0}
+              className="w-3 h-3 rounded-sm border-slate-300 text-primary focus:ring-primary disabled:opacity-40"
+            />
+            주변 {nearbyCount != null && <span className={nearbyCount > 0 ? 'text-primary font-medium' : ''}>({nearbyCount}교)</span>}
+          </label>
+          <label title={yearTitle} className={`flex items-center gap-1 text-[11px] cursor-pointer ${yearCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
+            <input
+              type="checkbox"
+              checked={includeYearCompare && (yearCount ?? 0) > 0}
+              onChange={(e) => onIncludeYearCompareChange(e.target.checked)}
+              disabled={yearCount === 0}
+              className="w-3 h-3 rounded-sm border-slate-300 text-primary focus:ring-primary disabled:opacity-40"
+            />
+            연도 {yearCount != null && <span className={yearCount > 0 ? 'text-primary font-medium' : ''}>({yearCount}건)</span>}
+          </label>
+        </div>
+      )}
+      <button
+        onClick={() => handleToggleExpand(!isExpanded)}
+        className="p-1 text-slate-400 hover:text-slate-600 transition-colors"
+        aria-label={isExpanded ? '접기' : '펼치기'}
+      >
+        <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+    </div>
+  );
+
   // V3/V4 모드 — 상단에 작은 컨트롤 row + view 컴포넌트
   if (useV3 && isExpanded) {
     const meta: V3Meta = {
@@ -414,55 +472,7 @@ export function CommentarySection({
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            {templateBtn}
-            {copyImagesBtn}
-            {!isRegenerating && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={onRegenerate}
-                disabled={lockRegen}
-                title={isStale ? `이전 버전(${staleVersion})으로 분석됨 — 재분석 후 총평 가능` : commentaryLocked ? commentaryLockMsg : '총평 재생성'}
-                className="text-xs text-slate-400 hover:text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                재분석
-              </Button>
-            )}
-            {hasSchool && !isRegenerating && !lockRegen && (
-              <div className="flex items-center gap-3">
-                <label title={nearbyTitle} className={`flex items-center gap-1 text-[11px] cursor-pointer ${nearbyCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
-                  <input
-                    type="checkbox"
-                    checked={includeNearby && (nearbyCount ?? 0) > 0}
-                    onChange={(e) => onIncludeNearbyChange(e.target.checked)}
-                    disabled={nearbyCount === 0}
-                    className="w-3 h-3 rounded-sm border-slate-300 text-primary focus:ring-primary disabled:opacity-40"
-                  />
-                  주변 {nearbyCount != null && <span className={nearbyCount > 0 ? 'text-primary font-medium' : ''}>({nearbyCount}교)</span>}
-                </label>
-                <label title={yearTitle} className={`flex items-center gap-1 text-[11px] cursor-pointer ${yearCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
-                  <input
-                    type="checkbox"
-                    checked={includeYearCompare && (yearCount ?? 0) > 0}
-                    onChange={(e) => onIncludeYearCompareChange(e.target.checked)}
-                    disabled={yearCount === 0}
-                    className="w-3 h-3 rounded-sm border-slate-300 text-primary focus:ring-primary disabled:opacity-40"
-                  />
-                  연도 {yearCount != null && <span className={yearCount > 0 ? 'text-primary font-medium' : ''}>({yearCount}건)</span>}
-                </label>
-              </div>
-            )}
-            <button
-              onClick={() => handleToggleExpand(false)}
-              className="p-1 text-slate-400 hover:text-slate-600 transition-colors"
-              aria-label="접기"
-            >
-              <svg className="w-4 h-4 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-          </div>
+          {headerControls}
         </div>
         {/* 구버전 분석본 차단 안내 (재분석 유도) */}
         {staleBanner && <div className="px-3 pt-3">{staleBanner}</div>}
@@ -630,53 +640,7 @@ export function CommentarySection({
             {isExpanded && <p className="text-[11px] text-slate-500">전문가 수준의 종합 평가 및 인사이트</p>}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {copyImagesBtn}
-          {!isRegenerating && (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={onRegenerate}
-              disabled={lockRegen}
-              title={isStale ? `이전 버전(${staleVersion})으로 분석됨 — 재분석 후 총평 가능` : commentaryLocked ? commentaryLockMsg : undefined}
-              className={`text-xs disabled:opacity-40 disabled:cursor-not-allowed ${isFallback ? 'text-amber-600 hover:text-amber-700' : 'text-slate-400 hover:text-slate-600'}`}
-            >
-              {isFallback ? 'AI 재분석' : '재분석'}
-            </Button>
-          )}
-          {hasSchool && !isRegenerating && !lockRegen && (
-            <div className="flex items-center gap-3">
-              <label title={nearbyTitle} className={`flex items-center gap-1 text-[11px] cursor-pointer ${nearbyCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
-                <input
-                  type="checkbox"
-                  checked={includeNearby && (nearbyCount ?? 0) > 0}
-                  onChange={e => onIncludeNearbyChange(e.target.checked)}
-                  disabled={nearbyCount === 0}
-                  className="w-3 h-3 rounded-sm border-slate-300 text-primary focus:ring-primary disabled:opacity-40"
-                />
-                주변 {nearbyCount != null && <span className={nearbyCount > 0 ? 'text-primary font-medium' : ''}>({nearbyCount}교)</span>}
-              </label>
-              <label title={yearTitle} className={`flex items-center gap-1 text-[11px] cursor-pointer ${yearCount === 0 ? 'text-slate-400' : 'text-slate-500'}`}>
-                <input
-                  type="checkbox"
-                  checked={includeYearCompare && (yearCount ?? 0) > 0}
-                  onChange={e => onIncludeYearCompareChange(e.target.checked)}
-                  disabled={yearCount === 0}
-                  className="w-3 h-3 rounded-sm border-slate-300 text-primary focus:ring-primary disabled:opacity-40"
-                />
-                연도 {yearCount != null && <span className={yearCount > 0 ? 'text-primary font-medium' : ''}>({yearCount}건)</span>}
-              </label>
-            </div>
-          )}
-          <button
-            onClick={() => handleToggleExpand(!isExpanded)}
-            className="p-1 text-slate-400 hover:text-slate-600 transition-colors"
-          >
-            <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-        </div>
+        {headerControls}
       </div>
 
       {/* 구버전 분석본 차단 안내 (재분석 유도) — 펼친 상태에서 다른 경고보다 우선 */}
